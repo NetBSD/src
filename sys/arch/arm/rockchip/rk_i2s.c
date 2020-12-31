@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.3 2020/02/29 05:51:10 isaki Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.4 2020/12/31 06:44:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.3 2020/02/29 05:51:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.4 2020/12/31 06:44:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -536,7 +536,8 @@ rk_i2s_clock_init(struct rk_i2s_softc *sc)
 	}
 
 	/* Enable bus clock */
-	if (fdtbus_clock_enable(phandle, "i2s_hclk", true) != 0) {
+	error = fdtbus_clock_enable(phandle, "i2s_hclk", true);
+	if (error != 0) {
 		aprint_error(": couldn't enable i2s_hclk clock: %d\n", error);
 		return error;
 	}
