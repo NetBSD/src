@@ -46,6 +46,28 @@ For: end for 1
 For: loop body:
 .  info ${:Ureplaced}
 make: "directive-for-escape.mk" line 78: replaced
+For: end for 1
+For: loop body:
+.  info .        $$i: ${:Uinner}
+.  info .      $${i}: ${:Uinner}
+.  info .   $${i:M*}: ${:Uinner:M*}
+.  info .      $$(i): $(:Uinner)
+.  info .   $$(i:M*): $(:Uinner:M*)
+.  info . $${i$${:U}}: ${i${:U}}
+.  info .    $${i\}}: ${:Uinner\}}	# XXX: unclear why SubstVarLong needs this
+.  info .     $${i2}: ${i2}
+.  info .     $${i,}: ${i,}
+.  info .  adjacent: ${:Uinner}${:Uinner}${:Uinner:M*}${:Uinner}
+make: "directive-for-escape.mk" line 86: .        $i: inner
+make: "directive-for-escape.mk" line 87: .      ${i}: inner
+make: "directive-for-escape.mk" line 88: .   ${i:M*}: inner
+make: "directive-for-escape.mk" line 89: .      $(i): inner
+make: "directive-for-escape.mk" line 90: .   $(i:M*): inner
+make: "directive-for-escape.mk" line 91: . ${i${:U}}: outer
+make: "directive-for-escape.mk" line 92: .    ${i\}}: inner}
+make: "directive-for-escape.mk" line 93: .     ${i2}: two
+make: "directive-for-escape.mk" line 94: .     ${i,}: comma
+make: "directive-for-escape.mk" line 95: .  adjacent: innerinnerinnerinner
 make: no target to make.
 
 make: stopped in unit-tests
