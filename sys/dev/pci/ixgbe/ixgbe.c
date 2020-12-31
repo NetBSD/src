@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.276 2020/12/26 06:27:38 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.277 2020/12/31 12:34:33 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -258,12 +258,11 @@ static int	ixgbe_sysctl_debug(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wol_enable(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wufc(SYSCTLFN_PROTO);
 
-/* Legacy (single vector) interrupt handler */
-static int	ixgbe_legacy_irq(void *);
-
-/* The MSI/MSI-X Interrupt handlers */
+/* Interrupt functions */
 static int	ixgbe_msix_que(void *);
 static int	ixgbe_msix_admin(void *);
+static void	ixgbe_intr_admin_common(struct adapter *, u32, u32 *);
+static int	ixgbe_legacy_irq(void *);
 
 /* Event handlers running on workqueue */
 static void	ixgbe_handle_que(void *);
@@ -3089,11 +3088,9 @@ ixgbe_msix_admin(void *arg)
 {
 	struct adapter	*adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
-	u32		eicr, eicr_mask;
+	u32		eicr;
 	u32		eims_orig;
 	u32		eims_disable = 0;
-	u32		task_requests = 0;
-	s32		retval;
 
 	++adapter->admin_irqev.ev_count;
 
@@ -3115,10 +3112,26 @@ ixgbe_msix_admin(void *arg)
 	/* Clear all OTHER interrupts with write */
 	IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr);
 
+	ixgbe_intr_admin_common(adapter, eicr, &eims_disable);
+
+	/* Re-enable some OTHER interrupts */
+	IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig & ~eims_disable);
+
+	return 1;
+} /* ixgbe_msix_admin */
+
+static void
+ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
+	u32		eicr_mask;
+	u32		task_requests = 0;
+	s32		retval;
+
 	/* Link status change */
 	if (eicr & IXGBE_EICR_LSC) {
 		task_requests |= IXGBE_REQUEST_TASK_LSC;
-		eims_disable |= IXGBE_EIMS_LSC;
+		*eims_disable |= IXGBE_EIMS_LSC;
 	}
 
 	if (ixgbe_is_sfp(hw)) {
@@ -3138,13 +3151,13 @@ ixgbe_msix_admin(void *arg)
 		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
 			&& (eicr & IXGBE_EICR_LSC))) {
 			task_requests |= IXGBE_REQUEST_TASK_MOD;
-			eims_disable |= IXGBE_EIMS_LSC;
+			*eims_disable |= IXGBE_EIMS_LSC;
 		}
 
 		if ((hw->mac.type == ixgbe_mac_82599EB) &&
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
-			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
+			*eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
 		}
 	}
 
@@ -3154,7 +3167,7 @@ ixgbe_msix_admin(void *arg)
 			if (!atomic_cas_uint(&adapter->fdir_reinit, 0, 1)) {
 				task_requests |= IXGBE_REQUEST_TASK_FDIR;
 				/* Disable the interrupt */
-				eims_disable |= IXGBE_EIMS_FLOW_DIR;
+				*eims_disable |= IXGBE_EIMS_FLOW_DIR;
 			}
 		}
 
@@ -3162,7 +3175,7 @@ ixgbe_msix_admin(void *arg)
 			device_printf(adapter->dev,
 			    "CRITICAL: ECC ERROR!! Please Reboot!!\n");
 			/* Disable interrupt to prevent log spam */
-			eims_disable |= IXGBE_EICR_ECC;
+			*eims_disable |= IXGBE_EICR_ECC;
 		}
 
 		/* Check for over temp condition */
@@ -3172,7 +3185,7 @@ ixgbe_msix_admin(void *arg)
 				if (!(eicr & IXGBE_EICR_GPI_SDP0_X550EM_a))
 					break;
 				/* Disable interrupt to prevent log spam */
-				eims_disable |= IXGBE_EICR_GPI_SDP0_X550EM_a;
+				*eims_disable |= IXGBE_EICR_GPI_SDP0_X550EM_a;
 
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
@@ -3184,7 +3197,7 @@ ixgbe_msix_admin(void *arg)
 				if (!(eicr & IXGBE_EICR_TS))
 					break;
 				/* Disable interrupt to prevent log spam */
-				eims_disable |= IXGBE_EIMS_TS;
+				*eims_disable |= IXGBE_EIMS_TS;
 
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
@@ -3199,7 +3212,7 @@ ixgbe_msix_admin(void *arg)
 		if ((adapter->feat_en & IXGBE_FEATURE_SRIOV) &&
 		    (eicr & IXGBE_EICR_MAILBOX)) {
 			task_requests |= IXGBE_REQUEST_TASK_MBX;
-			eims_disable |= IXGBE_EIMS_MAILBOX;
+			*eims_disable |= IXGBE_EIMS_MAILBOX;
 		}
 	}
 
@@ -3208,7 +3221,7 @@ ixgbe_msix_admin(void *arg)
 		retval = ixgbe_check_fan_failure(adapter, eicr, true);
 		if (retval == IXGBE_ERR_FAN_FAILURE) {
 			/* Disable interrupt to prevent log spam */
-			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
+			*eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
 		}
 	}
 
@@ -3216,7 +3229,7 @@ ixgbe_msix_admin(void *arg)
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
 	    (eicr & IXGBE_EICR_GPI_SDP0_X540)) {
 		task_requests |= IXGBE_REQUEST_TASK_PHY;
-		eims_disable |= IXGBE_EICR_GPI_SDP0_X540;
+		*eims_disable |= IXGBE_EICR_GPI_SDP0_X540;
 	}
 
 	if (task_requests != 0) {
@@ -3226,11 +3239,7 @@ ixgbe_msix_admin(void *arg)
 		mutex_exit(&adapter->admin_mtx);
 	}
 
-	/* Re-enable some OTHER interrupts */
-	IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig & ~eims_disable);
-
-	return 1;
-} /* ixgbe_msix_admin */
+}
 
 static void
 ixgbe_eitr_write(struct adapter *adapter, uint32_t index, uint32_t itr)
@@ -5189,12 +5198,10 @@ ixgbe_legacy_irq(void *arg)
 	struct adapter	*adapter = que->adapter;
 	struct ixgbe_hw	*hw = &adapter->hw;
 	struct		tx_ring *txr = adapter->tx_rings;
-	u32		eicr, eicr_mask;
+	u32		eicr;
 	u32		eims_orig;
 	u32		eims_enable = 0;
 	u32		eims_disable = 0;
-	u32		task_requests = 0;
-	s32		retval;
 
 	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
 	/*
@@ -5239,116 +5246,7 @@ ixgbe_legacy_irq(void *arg)
 	} else
 		eims_enable |= IXGBE_EIMC_RTX_QUEUE;
 
-	/* Link status change */
-	if (eicr & IXGBE_EICR_LSC) {
-		task_requests |= IXGBE_REQUEST_TASK_LSC;
-		eims_disable |= IXGBE_EIMS_LSC;
-	}
-
-	if (ixgbe_is_sfp(hw)) {
-		/* Pluggable optics-related interrupt */
-		if (hw->mac.type >= ixgbe_mac_X540)
-			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
-		else
-			eicr_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
-
-		/*
-		 *  An interrupt might not arrive when a module is inserted.
-		 * When an link status change interrupt occurred and the driver
-		 * still regard SFP as unplugged, issue the module softint
-		 * and then issue LSC interrupt.
-		 */
-		if ((eicr & eicr_mask)
-		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
-			&& (eicr & IXGBE_EICR_LSC))) {
-			task_requests |= IXGBE_REQUEST_TASK_MOD;
-			eims_disable |= IXGBE_EIMS_LSC;
-		}
-
-		if ((hw->mac.type == ixgbe_mac_82599EB) &&
-		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
-			task_requests |= IXGBE_REQUEST_TASK_MSF;
-			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
-		}
-	}
-
-	if (adapter->hw.mac.type != ixgbe_mac_82598EB) {
-		if ((adapter->feat_en & IXGBE_FEATURE_FDIR) &&
-		    (eicr & IXGBE_EICR_FLOW_DIR)) {
-			if (!atomic_cas_uint(&adapter->fdir_reinit, 0, 1)) {
-				task_requests |= IXGBE_REQUEST_TASK_FDIR;
-				/* Disable the interrupt */
-				eims_disable |= IXGBE_EIMS_FLOW_DIR;
-			}
-		}
-
-		if (eicr & IXGBE_EICR_ECC) {
-			device_printf(adapter->dev,
-			    "CRITICAL: ECC ERROR!! Please Reboot!!\n");
-			/* Disable interrupt to prevent log spam */
-			eims_disable |= IXGBE_EICR_ECC;
-		}
-
-		/* Check for over temp condition */
-		if (adapter->feat_en & IXGBE_FEATURE_TEMP_SENSOR) {
-			switch (adapter->hw.mac.type) {
-			case ixgbe_mac_X550EM_a:
-				if (!(eicr & IXGBE_EICR_GPI_SDP0_X550EM_a))
-					break;
-				/* Disable interrupt to prevent log spam */
-				eims_disable |= IXGBE_EICR_GPI_SDP0_X550EM_a;
-
-				retval = hw->phy.ops.check_overtemp(hw);
-				if (retval != IXGBE_ERR_OVERTEMP)
-					break;
-				device_printf(adapter->dev, "CRITICAL: OVER TEMP!! PHY IS SHUT DOWN!!\n");
-				device_printf(adapter->dev, "System shutdown required!\n");
-				break;
-			default:
-				if (!(eicr & IXGBE_EICR_TS))
-					break;
-				/* Disable interrupt to prevent log spam */
-				eims_disable |= IXGBE_EIMS_TS;
-
-				retval = hw->phy.ops.check_overtemp(hw);
-				if (retval != IXGBE_ERR_OVERTEMP)
-					break;
-				device_printf(adapter->dev, "CRITICAL: OVER TEMP!! PHY IS SHUT DOWN!!\n");
-				device_printf(adapter->dev, "System shutdown required!\n");
-				break;
-			}
-		}
-
-		/* Check for VF message */
-		if ((adapter->feat_en & IXGBE_FEATURE_SRIOV) &&
-		    (eicr & IXGBE_EICR_MAILBOX)) {
-			task_requests |= IXGBE_REQUEST_TASK_MBX;
-			eims_disable |= IXGBE_EIMS_MAILBOX;
-		}
-	}
-
-	/* Check for fan failure */
-	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
-		retval = ixgbe_check_fan_failure(adapter, eicr, true);
-		if (retval == IXGBE_ERR_FAN_FAILURE) {
-			/* Disable interrupt to prevent log spam */
-			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
-		}
-	}
-
-	/* External PHY interrupt */
-	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
-	    (eicr & IXGBE_EICR_GPI_SDP0_X540)) {
-		task_requests |= IXGBE_REQUEST_TASK_PHY;
-		eims_disable |= IXGBE_EICR_GPI_SDP0_X540;
-	}
-
-	if (task_requests != 0) {
-		mutex_enter(&adapter->admin_mtx);
-		adapter->task_requests |= task_requests;
-		ixgbe_schedule_admin_tasklet(adapter);
-		mutex_exit(&adapter->admin_mtx);
-	}
+	ixgbe_intr_admin_common(adapter, eicr, &eims_disable);
 
 	/* Re-enable some interrupts */
 	IXGBE_WRITE_REG(hw, IXGBE_EIMS,
