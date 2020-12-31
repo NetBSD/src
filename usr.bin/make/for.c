@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.131 2020/12/31 13:56:56 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.132 2020/12/31 14:10:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.131 2020/12/31 13:56:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.132 2020/12/31 14:10:04 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -356,7 +356,8 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
  * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
-SubstVarLong(For *f, const char **pp, const char **inout_mark, char endc)
+SubstVarLong(For *f, const char **pp, const char *bodyEnd, char endc,
+	     const char **inout_mark)
 {
 	size_t i;
 	const char *p = *pp;
@@ -366,7 +367,8 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char endc)
 		char *varname = forVar->name;
 		size_t varnameLen = forVar->nameLen;
 
-		/* XXX: undefined behavior for p if varname is longer than p? */
+		if (varnameLen >= (size_t)(bodyEnd - p))
+			continue;
 		if (memcmp(p, varname, varnameLen) != 0)
 			continue;
 		/* XXX: why test for backslash here? */
@@ -437,16 +439,18 @@ found:
 static void
 ForSubstBody(For *f)
 {
-	const char *p;
+	const char *p, *bodyEnd;
 	const char *mark;	/* where the last replacement left off */
 
 	Buf_Empty(&f->curBody);
 
 	mark = f->body.data;
+	bodyEnd = f->body.data + f->body.len;
 	for (p = mark; (p = strchr(p, '$')) != NULL;) {
 		if (p[1] == '{' || p[1] == '(') {
 			p += 2;
-			SubstVarLong(f, &p, &mark, p[-1] == '{' ? '}' : ')');
+			SubstVarLong(f, &p, bodyEnd, p[-1] == '{' ? '}' : ')',
+			    &mark);
 		} else if (p[1] != '\0') {
 			SubstVarShort(f, p + 1, &mark);
 			p += 2;
@@ -454,7 +458,7 @@ ForSubstBody(For *f)
 			break;
 	}
 
-	Buf_AddBytesBetween(&f->curBody, mark, f->body.data + f->body.len);
+	Buf_AddBytesBetween(&f->curBody, mark, bodyEnd);
 }
 
 /*
