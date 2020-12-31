@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.59 2020/12/28 20:29:57 thorpej Exp $
+# $NetBSD: files.fdt,v 1.60 2020/12/31 15:12:33 ryo Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -20,6 +20,10 @@ file	dev/fdt/fixedregulator.c		fregulator
 device	gregulator
 attach	gregulator at fdt
 file	dev/fdt/gpioregulator.c			gregulator
+
+device	pregulator
+attach	pregulator at fdt
+file	dev/fdt/pwmregulator.c			pregulator
 
 device	fclock: clk
 attach	fclock at fdt
