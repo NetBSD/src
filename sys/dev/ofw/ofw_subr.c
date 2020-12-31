@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.40 2020/07/16 21:32:44 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.41 2020/12/31 15:10:46 ryo Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.40 2020/07/16 21:32:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.41 2020/12/31 15:10:46 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,6 +603,23 @@ of_getprop_uint32(int node, const char *prop, uint32_t *val)
 	return 0;
 }
 
+int
+of_getprop_uint32_array(int node, const char *prop, uint32_t *array, int n)
+{
+	uint32_t *v = array;
+	int len;
+
+	len = OF_getprop(node, prop, array, n * sizeof(*v));
+	if (len < (int)(n * sizeof(*v)))
+		return -1;
+
+	for (; n > 0; n--) {
+		BE32TOH(*v);
+		v++;
+	}
+
+	return 0;
+}
 /*
  * Get the value of a uint64 property, compensating for host byte order.
  * Returns 0 on success, non-zero on failure.
