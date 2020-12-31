@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.71 2020/06/27 13:34:20 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.72 2020/12/31 15:09:12 ryo Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.71 2020/06/27 13:34:20 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.72 2020/12/31 15:09:12 ryo Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -379,7 +379,7 @@ dwc_gmac_reset(struct dwc_gmac_softc *sc)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE)
 	    | GMAC_BUSMODE_RESET);
-	for (cnt = 0; cnt < 3000; cnt++) {
+	for (cnt = 0; cnt < 30000; cnt++) {
 		if ((bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE)
 		    & GMAC_BUSMODE_RESET) == 0)
 			return 0;
