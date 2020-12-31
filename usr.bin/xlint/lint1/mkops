@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkops,v 1.10 2020/12/30 11:39:55 rillig Exp $
+#	$NetBSD: mkops,v 1.11 2020/12/31 16:19:05 rillig Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,8 +28,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# allow AWK to be overriden
-: ${AWK:=awk}
+# allow AWK to be overridden
+: "${AWK:=awk}"
 
 
 while getopts ch f
@@ -44,37 +44,44 @@ do
 	esac
 done
 
-shift $(expr ${OPTIND} - 1)
+# shellcheck disable=SC2003
+shift "$(expr ${OPTIND} - 1)"
 
+# shellcheck disable=SC2016
 $AWK -F'	' -v v=$v '
+function println(s)
+{
+	printf("%s\n", s);
+}
+
 function display(fmt, last, comment)
 {
 	printf(fmt, last);
 	if (comment != "")
 		printf("\t/* pseudo op not used in trees */");
-	printf("\n");
+	println("");
 }
 
 BEGIN {
 	print "/* Automatically generated file; do not edit */";
 	if (v == "h") {
-		printf("typedef enum {\n");
+		println("typedef enum {");
 		FIRST = "";
 		LAST = "";
 		LASTCOMMENT= "";
 	}
 	if (v == "c") {
-		printf("#include <sys/types.h>\n");
-		printf("#include \"op.h\"\n");
-		printf("#include \"param.h\"\n");
-		printf("#ifndef __arraycount\n");
-		printf("#define __arraycount(a) (sizeof(a) / sizeof(a[0]))\n");
-		printf("#endif /* __arraycount */\n");
-		printf("mod_t modtab[NOPS];\n");
-		printf("static const struct {\n");
-		printf("\tmod_t\tm;\n");
-		printf("\tunsigned char\tok;\n");
-		printf("} imods[] = {\n");
+		println("#include <sys/types.h>");
+		println("#include \"op.h\"");
+		println("#include \"param.h\"");
+		println("#ifndef __arraycount");
+		println("#define __arraycount(a) (sizeof(a) / sizeof(a[0]))");
+		println("#endif /* __arraycount */");
+		println("mod_t modtab[NOPS];");
+		println("static const struct {");
+		println("\tmod_t\tm;");
+		println("\tunsigned char\tok;");
+		println("} imods[] = {");
 	}
 }
 
@@ -107,25 +114,25 @@ END {
 	if (v == "h") {
 		display("\t%s,", LAST, LASTCOMMENT);
 		printf("#define\tNOPS\t((int)%s + 1)\n", LAST);
-		printf("} op_t;\n");
-		printf("const char *getopname(op_t);\n");
-		printf("void initmtab(void);\n");
+		println("} op_t;");
+		println("const char *getopname(op_t);");
+		println("void initmtab(void);");
 	}
 	if (v == "c") {
-		printf("};\n");
-		printf("const char *\n");
-		printf("getopname(op_t op) {\n");
-		printf("\treturn imods[op].m.m_name;\n");
-		printf("}\n");
-		printf("void\n");
-		printf("initmtab(void)\n");
-		printf("{\n");
-		printf("\tsize_t i;\n");
-		printf("\n");
-		printf("\tfor (i = 0; i < __arraycount(imods); i++)\n");
-		printf("\t\tif (imods[i].ok)\n");
-		printf("\t\t\tmodtab[i] = imods[i].m;\n");
-		printf("}\n");
+		println("};");
+		println("const char *");
+		println("getopname(op_t op) {");
+		println("\treturn imods[op].m.m_name;");
+		println("}");
+		println("void");
+		println("initmtab(void)");
+		println("{");
+		println("\tsize_t i;");
+		println("");
+		println("\tfor (i = 0; i < __arraycount(imods); i++)");
+		println("\t\tif (imods[i].ok)");
+		println("\t\t\tmodtab[i] = imods[i].m;");
+		println("}");
 	}
 }
 ' "$@"
