@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.165 2020/12/22 22:31:50 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.166 2020/12/31 17:39:36 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -254,9 +254,9 @@ meta_name(char *mname, size_t mnamelen,
      * So we use realpath() just to get the dirname, and leave the
      * basename as given to us.
      */
-    if ((cp = strrchr(tname, '/'))) {
-	if (cached_realpath(tname, buf)) {
-	    if ((rp = strrchr(buf, '/'))) {
+    if ((cp = strrchr(tname, '/')) != NULL) {
+	if (cached_realpath(tname, buf) != NULL) {
+	    if ((rp = strrchr(buf, '/')) != NULL) {
 		rp++;
 		cp++;
 		if (strcmp(cp, rp) != 0)
@@ -327,7 +327,7 @@ is_submake(const char *cmd, GNode *gn)
 	p_len = strlen(p_make);
     }
     cp = strchr(cmd, '$');
-    if ((cp)) {
+    if (cp != NULL) {
 	(void)Var_Subst(cmd, gn, VARE_WANTRES, &mp);
 	/* TODO: handle errors */
 	cmd = mp;
@@ -374,7 +374,7 @@ printCMD(const char *cmd, FILE *fp, GNode *gn)
 {
     char *cmd_freeIt = NULL;
 
-    if (strchr(cmd, '$')) {
+    if (strchr(cmd, '$') != NULL) {
 	(void)Var_Subst(cmd, gn, VARE_WANTRES, &cmd_freeIt);
 	/* TODO: handle errors */
 	cmd = cmd_freeIt;
@@ -451,7 +451,7 @@ meta_needed(GNode *gn, const char *dname,
     }
 
     /* make sure these are canonical */
-    if (cached_realpath(dname, objdir_realpath))
+    if (cached_realpath(dname, objdir_realpath) != NULL)
 	dname = objdir_realpath;
 
     /* If we aren't in the object directory, don't create a meta file. */
@@ -575,7 +575,7 @@ meta_init(void)
 
 
 #define get_mode_bf(bf, token) \
-    if ((cp = strstr(make_mode, token))) \
+    if ((cp = strstr(make_mode, token)) != NULL) \
 	bf = boolValue(cp + sizeof (token) - 1)
 
 /*
@@ -593,15 +593,15 @@ meta_mode_init(const char *make_mode)
     writeMeta = TRUE;
 
     if (make_mode != NULL) {
-	if (strstr(make_mode, "env"))
+	if (strstr(make_mode, "env") != NULL)
 	    metaEnv = TRUE;
-	if (strstr(make_mode, "verb"))
+	if (strstr(make_mode, "verb") != NULL)
 	    metaVerbose = TRUE;
-	if (strstr(make_mode, "read"))
+	if (strstr(make_mode, "read") != NULL)
 	    writeMeta = FALSE;
-	if (strstr(make_mode, "nofilemon"))
+	if (strstr(make_mode, "nofilemon") != NULL)
 	    useFilemon = FALSE;
-	if (strstr(make_mode, "ignore-cmd"))
+	if (strstr(make_mode, "ignore-cmd") != NULL)
 	    metaIgnoreCMDs = TRUE;
 	if (useFilemon)
 	    get_mode_bf(filemonMissing, "missing-filemon=");
@@ -814,7 +814,7 @@ meta_job_output(Job *job, char *cp, const char *nl)
 		(void)Var_Subst("${" MAKE_META_PREFIX "}",
 				VAR_GLOBAL, VARE_WANTRES, &meta_prefix);
 		/* TODO: handle errors */
-		if ((cp2 = strchr(meta_prefix, '$')))
+		if ((cp2 = strchr(meta_prefix, '$')) != NULL)
 		    meta_prefix_len = (size_t)(cp2 - meta_prefix);
 		else
 		    meta_prefix_len = strlen(meta_prefix);
@@ -843,7 +843,7 @@ meta_cmd_finish(void *pbmp)
 	pbm = &Mybm;
 
 #ifdef USE_FILEMON
-    if (pbm->filemon) {
+    if (pbm->filemon != NULL) {
 	while (filemon_process(pbm->filemon) > 0)
 	    continue;
 	if (filemon_close(pbm->filemon) == -1)
@@ -1046,7 +1046,7 @@ meta_ignore(GNode *gn, const char *p)
 #define DEQUOTE(p) if (*p == '\'') {	\
     char *ep; \
     p++; \
-    if ((ep = strchr(p, '\''))) \
+    if ((ep = strchr(p, '\'')) != NULL) \
 	*ep = '\0'; \
     }
 
@@ -1377,7 +1377,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 		    /* ignore anything containing the string "tmp" */
 		    /* XXX: The arguments to strstr must be swapped. */
-		    if ((strstr("tmp", p)))
+		    if (strstr("tmp", p) != NULL)
 			break;
 
 		    if ((link_src != NULL && cached_lstat(p, &cst) < 0) ||
@@ -1493,9 +1493,9 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    char *cmd = cmdNode->datum;
 		    Boolean hasOODATE = FALSE;
 
-		    if (strstr(cmd, "$?"))
+		    if (strstr(cmd, "$?") != NULL)
 			hasOODATE = TRUE;
-		    else if ((cp = strstr(cmd, ".OODATE"))) {
+		    else if ((cp = strstr(cmd, ".OODATE")) != NULL) {
 			/* check for $[{(].OODATE[:)}] */
 			if (cp > cmd + 2 && cp[-2] == '$')
 			    hasOODATE = TRUE;
@@ -1508,7 +1508,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    (void)Var_Subst(cmd, gn, VARE_WANTRES|VARE_UNDEFERR, &cmd);
 		    /* TODO: handle errors */
 
-		    if ((cp = strchr(cmd, '\n'))) {
+		    if ((cp = strchr(cmd, '\n')) != NULL) {
 			int n;
 
 			/*

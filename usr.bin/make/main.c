@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.507 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.508 2020/12/31 17:39:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.507 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.508 2020/12/31 17:39:36 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -828,12 +828,12 @@ MakeMode(void)
 	}
 
 	if (mode.str[0] != '\0') {
-		if (strstr(mode.str, "compat")) {
+		if (strstr(mode.str, "compat") != NULL) {
 			opts.compatMake = TRUE;
 			forceJobs = FALSE;
 		}
 #if USE_META
-		if (strstr(mode.str, "meta"))
+		if (strstr(mode.str, "meta") != NULL)
 			meta_mode_init(mode.str);
 #endif
 	}
@@ -844,7 +844,7 @@ MakeMode(void)
 static void
 PrintVar(const char *varname, Boolean expandVars)
 {
-	if (strchr(varname, '$')) {
+	if (strchr(varname, '$') != NULL) {
 		char *evalue;
 		(void)Var_Subst(varname, VAR_GLOBAL, VARE_WANTRES, &evalue);
 		/* TODO: handle errors */
