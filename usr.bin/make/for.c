@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.123 2020/12/30 14:28:32 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.124 2020/12/31 03:10:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.123 2020/12/30 14:28:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.124 2020/12/31 03:10:29 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -448,7 +448,7 @@ ForReadMore(void *v_arg, size_t *out_len)
 	const char *body_end;
 	char *cmds_str;
 
-	if (f->sub_next + f->vars.len > f->items.len) {
+	if (f->sub_next == f->items.len) {
 		/* No more iterations */
 		For_Free(f);
 		return NULL;
