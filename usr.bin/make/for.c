@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.130 2020/12/31 13:37:33 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.131 2020/12/31 13:56:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.130 2020/12/31 13:37:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.131 2020/12/31 13:56:56 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -352,7 +352,7 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
 }
 
 /*
- * While expanding the body of a .for loop, replace the inner part of an
+ * While expanding the body of a .for loop, replace the variable name of an
  * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
@@ -374,7 +374,10 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char endc)
 		    p[varnameLen] != '\\')
 			continue;
 
-		/* Found a variable match. Replace with :U<value> */
+		/*
+		 * Found a variable match.  Skip over the variable name and
+		 * instead add ':U<value>' to the current body.
+		 */
 		Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
 		Buf_AddStr(&f->curBody, ":U");
 		Buf_AddEscaped(&f->curBody,
@@ -382,10 +385,9 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char endc)
 
 		p += varnameLen;
 		*inout_mark = p;
-		break;
+		*pp = p;
+		return;
 	}
-
-	*pp = p;
 }
 
 /*
