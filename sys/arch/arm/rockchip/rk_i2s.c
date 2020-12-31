@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.4 2020/12/31 06:44:11 mrg Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.5 2020/12/31 20:47:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.4 2020/12/31 06:44:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.5 2020/12/31 20:47:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,6 +118,9 @@ static const struct rk_i2s_config rk3399_i2s_config = {
 };
 
 static const struct of_compat_data compat_data[] = {
+	{ "rockchip,rk3066-i2s",        0 },
+	{ "rockchip,rk3188-i2s",        0 },
+	{ "rockchip,rk3288-i2s",        0 },
 	{ "rockchip,rk3399-i2s",	(uintptr_t)&rk3399_i2s_config },
 	{ NULL }
 };
