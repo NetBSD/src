@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.126 2020/12/31 03:33:10 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.127 2020/12/31 03:49:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.126 2020/12/31 03:33:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.127 2020/12/31 03:49:36 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -325,16 +325,16 @@ NeedsEscapes(const char *word, char endc)
  * The result is later unescaped by ApplyModifier_Defined.
  */
 static void
-Buf_AddEscaped(Buffer *cmds, const char *item, char ech)
+Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
 {
 	char ch;
 
-	if (!NeedsEscapes(item, ech)) {
+	if (!NeedsEscapes(item, endc)) {
 		Buf_AddStr(cmds, item);
 		return;
 	}
 
-	/* Escape ':', '$', '\\' and 'ech' - these will be removed later by
+	/* Escape ':', '$', '\\' and 'endc' - these will be removed later by
 	 * :U processing, see ApplyModifier_Defined. */
 	while ((ch = *item++) != '\0') {
 		if (ch == '$') {
@@ -345,7 +345,7 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char ech)
 				continue;
 			}
 			Buf_AddByte(cmds, '\\');
-		} else if (ch == ':' || ch == '\\' || ch == ech)
+		} else if (ch == ':' || ch == '\\' || ch == endc)
 			Buf_AddByte(cmds, '\\');
 		Buf_AddByte(cmds, ch);
 	}
@@ -356,7 +356,7 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char ech)
  * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
-SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
+SubstVarLong(For *f, const char **pp, const char **inout_mark, char endc)
 {
 	size_t i;
 	const char *p = *pp;
@@ -370,7 +370,7 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 		if (memcmp(p, varname, varnameLen) != 0)
 			continue;
 		/* XXX: why test for backslash here? */
-		if (p[varnameLen] != ':' && p[varnameLen] != ech &&
+		if (p[varnameLen] != ':' && p[varnameLen] != endc &&
 		    p[varnameLen] != '\\')
 			continue;
 
@@ -378,7 +378,7 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 		Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
 		Buf_AddStr(&f->curBody, ":U");
 		Buf_AddEscaped(&f->curBody,
-		    f->items.words[f->sub_next + i], ech);
+		    f->items.words[f->sub_next + i], endc);
 
 		p += varnameLen;
 		*inout_mark = p;
