@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.124 2020/12/31 03:10:29 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.125 2020/12/31 03:19:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.124 2020/12/31 03:10:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.125 2020/12/31 03:19:00 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -459,13 +459,11 @@ ForReadMore(void *v_arg, size_t *out_len)
 	mark = Buf_GetAll(&f->body, NULL);
 	body_end = mark + Buf_Len(&f->body);
 	for (p = mark; (p = strchr(p, '$')) != NULL;) {
-		if (p[1] == '{') {
+		char ch = p[1];
+		if (ch == '{' || ch == '(') {
 			p += 2;
-			SubstVarLong(f, &p, &mark, '}');
-		} else if (p[1] == '(') {
-			p += 2;
-			SubstVarLong(f, &p, &mark, ')');
-		} else if (p[1] != '\0') {
+			SubstVarLong(f, &p, &mark, ch == '{' ? '}' : ')');
+		} else if (ch != '\0') {
 			p++;
 			SubstVarShort(f, &p, &mark);
 		} else
