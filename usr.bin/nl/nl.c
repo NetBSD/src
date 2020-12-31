@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.14 2020/12/30 01:42:31 ginsbach Exp $	*/
+/*	$NetBSD: nl.c,v 1.15 2020/12/31 04:07:37 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.14 2020/12/30 01:42:31 ginsbach Exp $");
+__RCSID("$NetBSD: nl.c,v 1.15 2020/12/31 04:07:37 ginsbach Exp $");
 #endif    
 
 #include <errno.h>
@@ -332,13 +332,13 @@ filter(void)
 		if (donumber) {
 			consumed = snprintf(intbuffer, intbuffersize, format,
 			    width, line);
-			(void)printf("%s",
-			    intbuffer + max(0, consumed - width));
+			(void)printf("%s%s",
+			    intbuffer + max(0, consumed - width), sep);
 			line += incr;
 		} else {
-			(void)printf("%*s", width, "");
+			(void)printf("%*s%*s", width, "", (int)strlen(sep), "");
 		}
-		(void)printf("%s%s", sep, buffer);
+		(void)printf("%s", buffer);
 
 		if (ferror(stdout))
 			err(EXIT_FAILURE, "output error");
