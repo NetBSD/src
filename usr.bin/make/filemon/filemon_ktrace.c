@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.8 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.9 2020/12/31 17:39:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -772,7 +772,7 @@ filemon_sys_exit(struct filemon *F, const struct filemon_key *key,
 	const register_t *args = (const void *)&call[1];
 	int status = (int)args[0];
 
-	if (F->out) {
+	if (F->out != NULL) {
 		fprintf(F->out, "X %jd %d\n", (intmax_t)key->pid, status);
 		if (key->pid == F->child) {
 			fprintf(F->out, "# Bye bye\n");
