@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.128 2020/12/31 04:31:36 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.129 2020/12/31 04:38:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.128 2020/12/31 04:31:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.129 2020/12/31 04:38:55 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -429,6 +429,15 @@ SubstVarShort(For *f, const char **pp, const char **inout_mark)
 /*
  * Compute the body for the current iteration by copying the unexpanded body,
  * replacing the expressions for the iteration variables on the way.
+ *
+ * Using variable expressions ensures that the .for loop can't generate
+ * syntax, and that the later parsing will still see a variable.
+ * This code assumes that the variable with the empty name will never be
+ * defined, see unit-tests/varname-empty.mk for more details.
+ *
+ * The detection of substitutions of the loop control variable is naive.
+ * Many of the modifiers use \ to escape $ (not $) so it is possible
+ * to contrive a makefile where an unwanted substitution happens.
  */
 static void
 ForSubstBody(For *f)
@@ -454,17 +463,8 @@ ForSubstBody(For *f)
 }
 
 /*
- * Scan the for loop body and replace references to the loop variables
- * with variable references that expand to the required text.
- *
- * Using variable expressions ensures that the .for loop can't generate
- * syntax, and that the later parsing will still see a variable.
- * This code assumes that the variable with the empty name will never be
- * defined, see unit-tests/varname-empty.mk for more details.
- *
- * The detection of substitutions of the loop control variable is naive.
- * Many of the modifiers use \ to escape $ (not $) so it is possible
- * to contrive a makefile where an unwanted substitution happens.
+ * Compute the body for the current iteration by copying the unexpanded body,
+ * replacing the expressions for the iteration variables on the way.
  */
 static char *
 ForReadMore(void *v_arg, size_t *out_len)
