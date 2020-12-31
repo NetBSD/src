@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.1 2020/12/31 03:05:12 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.2 2020/12/31 13:23:43 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -58,4 +58,22 @@ VALUES=		$${UNDEF:U\$$\$$ {{}} end}
 # dollar sign is kept as-is.
 .for i in ${:U\$}
 .  info ${i}
+.endfor
+
+# As of 2020-12-31, the name of the iteration variable can even contain
+# colons, which then affects variable expressions having this exact modifier.
+# This is clearly an unintended side effect of the implementation.
+NUMBERS=	one two three
+.for NUMBERS:M*e in replaced
+.  info ${NUMBERS} ${NUMBERS:M*e}
+.endfor
+
+# As of 2020-12-31, the name of the iteration variable can contain braces,
+# which gets even more surprising than colons, since it allows to replace
+# sequences of variable expressions.  There is no practical use case for
+# this, though.
+BASENAME=	one
+EXT=		.c
+.for BASENAME}${EXT in replaced
+.  info ${BASENAME}${EXT}
 .endfor
