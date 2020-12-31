@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.32 2020/05/14 08:34:19 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.33 2020/12/31 02:16:14 uwe Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.32 2020/05/14 08:34:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.33 2020/12/31 02:16:14 uwe Exp $");
 
 #include "vlan.h"
 
@@ -1844,7 +1844,7 @@ enet_init_regs(struct enet_softc *sc, int init)
 	    sc->sc_rxdesc_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* enable interrupts */
-	val = ENET_EIMR | ENET_EIR_TXF | ENET_EIR_RXF | ENET_EIR_EBERR;
+	val = ENET_EIR_TXF | ENET_EIR_RXF | ENET_EIR_EBERR;
 	if (sc->sc_imxtype == 7)
 		val |= ENET_EIR_TXF2 | ENET_EIR_RXF2 | ENET_EIR_TXF1 |
 		    ENET_EIR_RXF1;
