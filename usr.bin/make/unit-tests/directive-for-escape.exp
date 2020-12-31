@@ -38,6 +38,14 @@ For: end for 1
 For: loop body:
 .  info ${:U\$}
 make: "directive-for-escape.mk" line 60: $
+For: end for 1
+For: loop body:
+.  info ${NUMBERS} ${:Ureplaced}
+make: "directive-for-escape.mk" line 68: one two three replaced
+For: end for 1
+For: loop body:
+.  info ${:Ureplaced}
+make: "directive-for-escape.mk" line 78: replaced
 make: no target to make.
 
 make: stopped in unit-tests
