@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.127 2020/12/31 03:49:36 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.128 2020/12/31 04:31:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.127 2020/12/31 03:49:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.128 2020/12/31 04:31:36 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -427,6 +427,33 @@ SubstVarShort(For *f, const char **pp, const char **inout_mark)
 }
 
 /*
+ * Compute the body for the current iteration by copying the unexpanded body,
+ * replacing the expressions for the iteration variables on the way.
+ */
+static void
+ForSubstBody(For *f)
+{
+	const char *p;
+	const char *mark;	/* where the last replacement left off */
+
+	Buf_Empty(&f->curBody);
+
+	mark = f->body.data;
+	for (p = mark; (p = strchr(p, '$')) != NULL;) {
+		if (p[1] == '{' || p[1] == '(') {
+			p += 2;
+			SubstVarLong(f, &p, &mark, p[-1] == '{' ? '}' : ')');
+		} else if (p[1] != '\0') {
+			p++;
+			SubstVarShort(f, &p, &mark);
+		} else
+			break;
+	}
+
+	Buf_AddBytesBetween(&f->curBody, mark, f->body.data + f->body.len);
+}
+
+/*
  * Scan the for loop body and replace references to the loop variables
  * with variable references that expand to the required text.
  *
@@ -443,10 +470,6 @@ static char *
 ForReadMore(void *v_arg, size_t *out_len)
 {
 	For *f = v_arg;
-	const char *p;
-	const char *mark;	/* where the last replacement left off */
-	const char *body_end;
-	char *cmds_str;
 
 	if (f->sub_next == f->items.len) {
 		/* No more iterations */
@@ -454,30 +477,12 @@ ForReadMore(void *v_arg, size_t *out_len)
 		return NULL;
 	}
 
-	Buf_Empty(&f->curBody);
-
-	mark = Buf_GetAll(&f->body, NULL);
-	body_end = mark + Buf_Len(&f->body);
-	for (p = mark; (p = strchr(p, '$')) != NULL;) {
-		if (p[1] == '{' || p[1] == '(') {
-			p += 2;
-			SubstVarLong(f, &p, &mark, p[-1] == '{' ? '}' : ')');
-		} else if (p[1] != '\0') {
-			p++;
-			SubstVarShort(f, &p, &mark);
-		} else
-			break;
-
-	}
-	Buf_AddBytesBetween(&f->curBody, mark, body_end);
-
-	*out_len = Buf_Len(&f->curBody);
-	cmds_str = Buf_GetAll(&f->curBody, NULL);
-	DEBUG1(FOR, "For: loop body:\n%s", cmds_str);
-
+	ForSubstBody(f);
+	DEBUG1(FOR, "For: loop body:\n%s", f->curBody.data);
 	f->sub_next += f->vars.len;
 
-	return cmds_str;
+	*out_len = f->curBody.len;
+	return f->curBody.data;
 }
 
 /* Run the .for loop, imitating the actions of an include file. */
