@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.38 2020/12/30 13:17:42 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.39 2020/12/31 18:51:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.38 2020/12/30 13:17:42 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.39 2020/12/31 18:51:28 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -527,6 +527,28 @@ label(int typ, sym_t *sym, tnode_t *tn)
 	reached = 1;
 }
 
+static tnode_t *
+check_controlling_expression(tnode_t *tn)
+{
+	tspec_t t = tn->tn_type->t_tspec;
+
+	if (tn != NULL)
+		tn = cconv(tn);
+	if (tn != NULL)
+		tn = promote(NOOP, 0, tn);
+
+	if (tn != NULL && !tspec_is_scalar(t)) {
+		/* C99 6.5.15p4 for the ?: operator; see typeok:QUEST */
+		/* C99 6.8.4.1p1 for if statements */
+		/* C99 6.8.5p2 for while, do and for loops */
+		/* controlling expressions must have scalar type */
+		error(204);
+		return NULL;
+	}
+
+	return tn;
+}
+
 /*
  * T_IF T_LPARN expr T_RPARN
  */
@@ -535,10 +557,9 @@ if1(tnode_t *tn)
 {
 
 	if (tn != NULL)
-		tn = cconv(tn);
+		tn = check_controlling_expression(tn);
 	if (tn != NULL)
-		tn = promote(NOOP, 0, tn);
-	expr(tn, 0, 1, 0);
+		expr(tn, 0, 1, 0);
 	pushctrl(T_IF);
 }
 
@@ -690,14 +711,7 @@ while1(tnode_t *tn)
 	}
 
 	if (tn != NULL)
-		tn = cconv(tn);
-	if (tn != NULL)
-		tn = promote(NOOP, 0, tn);
-	if (tn != NULL && !tspec_is_scalar(tn->tn_type->t_tspec)) {
-		/* controlling expressions must have scalar type */
-		error(204);
-		tn = NULL;
-	}
+		tn = check_controlling_expression(tn);
 
 	pushctrl(T_WHILE);
 	cstk->c_loop = 1;
@@ -763,14 +777,7 @@ do2(tnode_t *tn)
 		reached = 1;
 
 	if (tn != NULL)
-		tn = cconv(tn);
-	if (tn != NULL)
-		tn = promote(NOOP, 0, tn);
-	if (tn != NULL && !tspec_is_scalar(tn->tn_type->t_tspec)) {
-		/* controlling expressions must have scalar type */
-		error(204);
-		tn = NULL;
-	}
+		tn = check_controlling_expression(tn);
 
 	if (tn != NULL && tn->tn_op == CON) {
 		if (tspec_is_int(tn->tn_type->t_tspec)) {
@@ -828,14 +835,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 		expr(tn1, 0, 0, 1);
 
 	if (tn2 != NULL)
-		tn2 = cconv(tn2);
-	if (tn2 != NULL)
-		tn2 = promote(NOOP, 0, tn2);
-	if (tn2 != NULL && !tspec_is_scalar(tn2->tn_type->t_tspec)) {
-		/* controlling expressions must have scalar type */
-		error(204);
-		tn2 = NULL;
-	}
+		tn2 = check_controlling_expression(tn2);
 	if (tn2 != NULL)
 		expr(tn2, 0, 1, 1);
 

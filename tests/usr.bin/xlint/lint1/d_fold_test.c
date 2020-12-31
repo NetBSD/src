@@ -1,0 +1,70 @@
+# 2 "d_fold_test.c"
+
+/*
+ * Test how expressions are handled in a context where they are tested for
+ * truthiness, such as in the condition of an if statement.
+ */
+
+struct s {
+	int member;
+};
+
+union u {
+	int member;
+};
+
+enum e {
+	E
+};
+
+struct arr {
+	int arr[4];
+};
+
+/* C99 6.2.5p2 */
+void if_Bool(_Bool b)			{ if (b) return; }
+
+/* C99 6.2.5p3 */
+void if_char(char c)			{ if (c) return; }
+
+/* C99 6.2.5p4 */
+void if_signed_char(signed char sc)	{ if (sc) return; }
+void if_short_int(short s)		{ if (s) return; }
+void if_int(int i)			{ if (i) return; }
+void if_long_int(long int l)		{ if (l) return; }
+void if_long_long_int(long long int ll)	{ if (ll) return; }
+
+/* C99 6.2.5p6 */
+void if_unsigned_char(unsigned char uc)			{ if (uc) return; }
+void if_unsigned_short_int(unsigned short us)		{ if (us) return; }
+void if_unsigned_int(unsigned int ui)			{ if (ui) return; }
+void if_unsigned_long_int(unsigned long int ul)		{ if (ul) return; }
+void if_unsigned_long_long_int(unsigned long long int ull) { if (ull) return; }
+
+/* C99 6.2.5p10 */
+void if_float(float f)			{ if (f) return; }
+void if_double(double d)		{ if (d) return; }
+void if_long_double(long double ld)	{ if (ld) return; }
+
+/* C99 6.2.5p11 */
+void if_float_Complex(float _Complex fc)		{ if (fc) return; }
+void if_double_Complex(double _Complex dc)		{ if (dc) return; }
+void if_long_double_Complex(long double _Complex ldc)	{ if (ldc) return; }
+
+/* C99 6.2.5p16 */
+void if_enum(enum e e)			{ if (e) return; }
+
+/* C99 6.2.5p20 */
+void if_array(struct arr arr)		{ if (arr.arr) return; }
+void if_struct(struct s s)		{ if (s) return; }
+void if_union(union u u)		{ if (u) return; }
+void if_function(void (*f)(void))	{ if (f) return; }
+void if_pointer(void *p)		{ if (p) return; }
+
+/* C99 6.8.5 */
+void while_struct(struct s s)		{ while (s) return; }
+void for_struct(struct s s)		{ for (;s;) return; }
+void do_while_struct(struct s s)	{ do { return; } while (s); }
+
+/* C99 6.5.15 does not require a scalar type, curiously. */
+int conditional_struct(struct s s)	{ return s ? 1 : 2; }

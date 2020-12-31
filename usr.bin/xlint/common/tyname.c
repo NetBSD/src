@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.16 2020/12/29 13:33:03 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.17 2020/12/31 18:51:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.16 2020/12/29 13:33:03 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.17 2020/12/31 18:51:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -87,6 +87,8 @@ basic_type_name(tspec_t t)
 	case DCOMPLEX:	return "double _Complex";
 	case LCOMPLEX:	return "long double _Complex";
 	case COMPLEX:	return "_Complex";
+	case SIGNED:	return "signed";
+	case UNSIGN:	return "unsigned";
 	default:
 		LERROR("basic_type_name(%d)", t);
 		return NULL;
@@ -204,6 +206,8 @@ tyname(char *buf, size_t bufsiz, const type_t *tp)
 	case FCOMPLEX:
 	case DCOMPLEX:
 	case LCOMPLEX:
+	case SIGNED:
+	case UNSIGN:
 		(void)snprintf(buf, bufsiz, "%s%s", cv, s);
 		break;
 	case PTR:

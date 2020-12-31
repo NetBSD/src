@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2020/12/30 13:15:07 rillig Exp $
+# $NetBSD: Makefile,v 1.22 2020/12/31 18:51:28 rillig Exp $
 
 NOMAN=		# defined
 
@@ -50,6 +50,8 @@ FILES+=		d_cvt_in_ternary.c
 FILES+=		d_decl_old_style_arguments.c
 FILES+=		d_decl_old_style_arguments.exp
 FILES+=		d_ellipsis_in_switch.c
+FILES+=		d_fold_test.c
+FILES+=		d_fold_test.exp
 FILES+=		d_gcc_compound_statements1.c
 FILES+=		d_gcc_compound_statements2.c
 FILES+=		d_gcc_compound_statements3.c
