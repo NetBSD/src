@@ -1,0 +1,44 @@
+For: end for 1
+For: loop body:
+.  info ${:U!"#$%&'()*+,-./0-9\:;<=>?@A-Z[\\]_^a-z{|\}~}
+make: Unclosed variable specification (expecting '}') for "" (value "!"") modifier U
+make: "directive-for-escape.mk" line 19: !"
+For: end for 1
+For: loop body:
+.  info ${:U!"\\\\#$%&'()*+,-./0-9\:;<=>?@A-Z[\\]_^a-z{|\}~}
+make: Unclosed variable specification (expecting '}') for "" (value "!"\\") modifier U
+make: "directive-for-escape.mk" line 29: !"\\
+For: end for 1
+For: loop body:
+.  info ${:U\$}
+make: "directive-for-escape.mk" line 41: $
+For: loop body:
+.  info ${:U${V}}
+make: "directive-for-escape.mk" line 41: value
+For: loop body:
+.  info ${:U${V:=-with-modifier}}
+make: "directive-for-escape.mk" line 41: value-with-modifier
+For: loop body:
+.  info ${:U$(V)}
+make: "directive-for-escape.mk" line 41: value
+For: loop body:
+.  info ${:U$(V:=-with-modifier)}
+make: "directive-for-escape.mk" line 41: value-with-modifier
+For: end for 1
+For: loop body:
+.  info ${:U\${UNDEF\:U\\$\\$}
+make: "directive-for-escape.mk" line 52: ${UNDEF:U\$
+For: loop body:
+.  info ${:U{{\}\}}
+make: "directive-for-escape.mk" line 52: {{}}
+For: loop body:
+.  info ${:Uend\}}
+make: "directive-for-escape.mk" line 52: end}
+For: end for 1
+For: loop body:
+.  info ${:U\$}
+make: "directive-for-escape.mk" line 60: $
+make: no target to make.
+
+make: stopped in unit-tests
+exit status 2
