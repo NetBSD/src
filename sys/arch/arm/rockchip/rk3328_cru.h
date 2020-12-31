@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_cru.h,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk3328_cru.h,v 1.2 2020/12/31 11:36:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -180,7 +180,7 @@
 #define RK3328_HCLK_TSP			309
 #define RK3328_HCLK_GMAC		310
 #define RK3328_HCLK_I2S0_8CH		311
-#define RK3328_HCLK_I2S1_8CH		313
+#define RK3328_HCLK_I2S1_8CH		312
 #define RK3328_HCLK_I2S2_2CH		313
 #define RK3328_HCLK_SPDIF_8CH		314
 #define RK3328_HCLK_VOP			315
