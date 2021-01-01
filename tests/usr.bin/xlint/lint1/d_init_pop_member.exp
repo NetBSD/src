@@ -1,4 +1,2 @@
 (47): undefined struct/union member: capital [101]
-(47): warning: bit-field initializer does not fit [180]
 (57): undefined struct/union member: capital [101]
-(57): warning: bit-field initializer does not fit [180]
