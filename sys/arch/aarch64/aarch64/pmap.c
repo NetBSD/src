@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41.2.7 2021/01/01 12:38:49 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41.2.8 2021/01/01 12:54:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.7 2021/01/01 12:38:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.8 2021/01/01 12:54:07 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -879,12 +879,26 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
  *
  */
 void
-pmap_procwr(struct proc *p, vaddr_t va, int len)
+pmap_procwr(struct proc *p, vaddr_t sva, int len)
 {
 
-	/* We only need to do anything if it is the current process. */
-	if (p == curproc)
-		cpu_icache_sync_range(va, len);
+	if (__predict_true(p == curproc))
+		cpu_icache_sync_range(sva, len);
+	else {
+		struct pmap *pm = p->p_vmspace->vm_map.pmap;
+		paddr_t pa;
+		vaddr_t va, eva;
+		int tlen;
+
+		for (va = sva; len > 0; va = eva, len -= tlen) {
+			eva = uimin(va + len, trunc_page(va + PAGE_SIZE));
+			tlen = eva - va;
+			if (!pmap_extract(pm, va, &pa))
+				continue;
+			va = AARCH64_PA_TO_KVA(pa);
+			cpu_icache_sync_range(va, tlen);
+		}
+	}
 }
 
 static pt_entry_t
