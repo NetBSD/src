@@ -175,22 +175,22 @@
 /* #undef HAVE_ERR_LOAD_CRYPTO_STRINGS */
 
 /* Define to 1 if you have the `event_assign' function. */
-/* #undef HAVE_EVENT_ASSIGN */
+#define HAVE_EVENT_ASSIGN 1
 
 /* Define to 1 if you have the `event_base_free' function. */
-/* #undef HAVE_EVENT_BASE_FREE */
+#define HAVE_EVENT_BASE_FREE 1
 
 /* Define to 1 if you have the `event_base_get_method' function. */
-/* #undef HAVE_EVENT_BASE_GET_METHOD */
+#define HAVE_EVENT_BASE_GET_METHOD 1
 
 /* Define to 1 if you have the `event_base_new' function. */
-/* #undef HAVE_EVENT_BASE_NEW */
+#define HAVE_EVENT_BASE_NEW 1
 
 /* Define to 1 if you have the `event_base_once' function. */
-/* #undef HAVE_EVENT_BASE_ONCE */
+#define HAVE_EVENT_BASE_ONCE 1
 
 /* Define to 1 if you have the <event.h> header file. */
-/* #undef HAVE_EVENT_H */
+#define HAVE_EVENT_H 1
 
 /* Define to 1 if you have the `EVP_aes_256_cbc' function. */
 #define HAVE_EVP_AES_256_CBC 1
@@ -792,7 +792,7 @@
 /* #undef USE_IPSET */
 
 /* Define if you want to use internal select based events */
-#define USE_MINI_EVENT 1
+/* #undef USE_MINI_EVENT */
 
 /* Define this to enable client TCP Fast Open. */
 /* #undef USE_MSG_FASTOPEN */
