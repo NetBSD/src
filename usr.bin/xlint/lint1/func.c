@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.39 2020/12/31 18:51:28 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.40 2021/01/01 00:00:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.39 2020/12/31 18:51:28 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.40 2021/01/01 00:00:24 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -483,10 +483,10 @@ label(int typ, sym_t *sym, tnode_t *tn)
 					break;
 			}
 			if (cl != NULL && tspec_is_uint(nv.v_tspec)) {
-				/* duplicate case in switch, %lu */
+				/* duplicate case in switch: %lu */
 				error(200, (u_long)nv.v_quad);
 			} else if (cl != NULL) {
-				/* duplicate case in switch, %ld */
+				/* duplicate case in switch: %ld */
 				error(199, (long)nv.v_quad);
 			} else {
 				/*
@@ -1046,7 +1046,7 @@ global_clean_up_decl(int silent)
 	if (nargusg != -1) {
 		if (!silent) {
 			curr_pos = argsused_pos;
-			/* must precede function definition: %s */
+			/* must precede function definition: ** %s ** */
 			warning(282, "ARGSUSED");
 		}
 		nargusg = -1;
@@ -1054,7 +1054,7 @@ global_clean_up_decl(int silent)
 	if (nvararg != -1) {
 		if (!silent) {
 			curr_pos = vapos;
-			/* must precede function definition: %s */
+			/* must precede function definition: ** %s ** */
 			warning(282, "VARARGS");
 		}
 		nvararg = -1;
@@ -1062,7 +1062,7 @@ global_clean_up_decl(int silent)
 	if (prflstrg != -1) {
 		if (!silent) {
 			curr_pos = printflike_pos;
-			/* must precede function definition: %s */
+			/* must precede function definition: ** %s ** */
 			warning(282, "PRINTFLIKE");
 		}
 		prflstrg = -1;
@@ -1070,7 +1070,7 @@ global_clean_up_decl(int silent)
 	if (scflstrg != -1) {
 		if (!silent) {
 			curr_pos = scanflike_pos;
-			/* must precede function definition: %s */
+			/* must precede function definition: ** %s ** */
 			warning(282, "SCANFLIKE");
 		}
 		scflstrg = -1;
@@ -1126,7 +1126,7 @@ varargs(int n)
 		return;
 	}
 	if (nvararg != -1) {
-		/* duplicate use of  ** %s ** */
+		/* duplicate use of ** %s ** */
 		warning(281, "VARARGS");
 	}
 	nvararg = n;

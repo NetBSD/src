@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.48 2020/12/30 11:04:48 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.49 2021/01/01 00:00:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.48 2020/12/30 11:04:48 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.49 2021/01/01 00:00:24 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -397,7 +397,7 @@ initstack_check_too_many(void)
 	if (istk->i_remaining == 0 && !istk->i_nolimit && !istk->i_namedmem) {
 		switch (istk->i_type->t_tspec) {
 		case ARRAY:
-			/* too many array initializers */
+			/* too many array initializers, expected %d */
 			error(173, istk->i_type->t_dim);
 			break;
 		case STRUCT:
@@ -422,7 +422,7 @@ initstack_next_brace(void)
 	DPRINTF(("%s\n", __func__));
 	if (initstk->i_type != NULL &&
 	    tspec_is_scalar(initstk->i_type->t_tspec)) {
-		/* invalid initializer */
+		/* invalid initializer type %s */
 		error(176, tyname(buf, sizeof(buf), initstk->i_type));
 		initerr = 1;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.87 2020/12/30 13:17:42 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.88 2021/01/01 00:00:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.87 2020/12/30 13:17:42 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.88 2021/01/01 00:00:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -562,7 +562,7 @@ add_qualifier(tqual_t q)
 
 	if (q == CONST) {
 		if (dcs->d_const) {
-			/* duplicate "%s" */
+			/* duplicate '%s' */
 			warning(10, "const");
 		}
 		dcs->d_const = 1;
@@ -572,7 +572,7 @@ add_qualifier(tqual_t q)
 		if (q != VOLATILE)
 			LERROR("add_qualifier()");
 		if (dcs->d_volatile) {
-			/* duplicate "%s" */
+			/* duplicate '%s' */
 			warning(10, "volatile");
 		}
 		dcs->d_volatile = 1;
@@ -772,7 +772,7 @@ deftyp(void)
 				l = NOTSPEC;
 				t = DOUBLE;
 				if (!tflag)
-					/* use 'double' instead of ...  */
+					/* use 'double' instead of 'long ... */
 					warning(6);
 			}
 			break;
@@ -828,7 +828,7 @@ deftyp(void)
 		}
 	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PARG) {
 		if (scl != NOSCL && scl != REG) {
-			/* only "register" valid ... */
+			/* only register valid ... */
 			error(9);
 			scl = NOSCL;
 		}
@@ -839,13 +839,13 @@ deftyp(void)
 	if (dcs->d_const && dcs->d_type->t_const) {
 		if (!dcs->d_type->t_typedef)
 			LERROR("deftyp()");
-		/* typedef already qualified with "%s" */
+		/* typedef already qualified with '%s' */
 		warning(68, "const");
 	}
 	if (dcs->d_volatile && dcs->d_type->t_volatile) {
 		if (!dcs->d_type->t_typedef)
 			LERROR("deftyp()");
-		/* typedef already qualified with "%s" */
+		/* typedef already qualified with '%s' */
 		warning(68, "volatile");
 	}
 
@@ -1034,7 +1034,7 @@ check_type(sym_t *sym)
 				error(17);
 				return;
 			} else if (t == VOID) {
-				/* illegal use of void */
+				/* illegal use of 'void' */
 				error(18);
 				*tpp = gettyp(INT);
 #if 0	/* errors are produced by length() */
@@ -1052,7 +1052,7 @@ check_type(sym_t *sym)
 				if (sym->s_scl != ABSTRACT) {
 					if (sym->s_name == unnamed)
 						LERROR("check_type()");
-					/* void param cannot have name: %s */
+					/* void param. cannot have name: %s */
 					error(61, sym->s_name);
 					*tpp = gettyp(INT);
 				}
@@ -1066,7 +1066,7 @@ check_type(sym_t *sym)
 		}
 		if (t == VOID && to != PTR) {
 			if (tp->t_const || tp->t_volatile) {
-				/* inappropriate qualifiers with "void" */
+				/* inappropriate qualifiers with 'void' */
 				warning(69);
 				tp->t_const = tp->t_volatile = 0;
 			}
@@ -1149,7 +1149,7 @@ declarator_1_struct_union(sym_t *dsym)
 			}
 		}
 		if ((len = tp->t_flen) < 0 || len > (ssize_t)size(t)) {
-			/* illegal bit-field size */
+			/* illegal bit-field size: %d */
 			error(36, len);
 			tp->t_flen = size(t);
 		} else if (len == 0 && dsym->s_name != unnamed) {
@@ -1276,14 +1276,14 @@ merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
 	} else {
 		if (p2->p_const) {
 			if (p1->p_const) {
-				/* duplicate %s */
+				/* duplicate '%s' */
 				warning(10, "const");
 			}
 			p1->p_const = 1;
 		}
 		if (p2->p_volatile) {
 			if (p1->p_volatile) {
-				/* duplicate %s */
+				/* duplicate '%s' */
 				warning(10, "volatile");
 			}
 			p1->p_volatile = 1;
@@ -1347,7 +1347,7 @@ add_array(sym_t *decl, int dim, int n)
 	tp->t_dim = n;
 
 	if (n < 0) {
-		/* negative array dimension */
+		/* negative array dimension (%d) */
 		error(20, n);
 		n = 0;
 	} else if (n == 0 && dim) {
@@ -1433,7 +1433,7 @@ new_style_function(sym_t *decl, sym_t *args)
 	for (arg = args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_type->t_tspec == VOID) {
 			if (n > 1 || arg->s_next != NULL) {
-				/* "void" must be sole parameter */
+				/* void must be sole parameter */
 				error(60);
 				arg->s_type = gettyp(INT);
 			}
@@ -1707,7 +1707,7 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 					    tag->s_name);
 				tag = pushdown(tag);
 			} else if (tag->s_scl != scl) {
-				/* base type is really "%s %s" */
+				/* base type is really '%s %s' */
 				warning(45, storage_class_name(tag->s_scl),
 				    tag->s_name);
 			}
@@ -1720,7 +1720,7 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 			tag = pushdown(tag);
 			dcs->d_next->d_nedecl = 1;
 		} else if (tag->s_scl != scl) {
-			/* base type is really "%s %s" */
+			/* base type is really '%s %s' */
 			warning(45, storage_class_name(tag->s_scl),
 			    tag->s_name);
 			/* declaration introduces new type in ANSI C: %s %s */
@@ -2274,7 +2274,7 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 		 * not set we print only a warning.
 		 */
 		if (!eqtype(arg->s_type, parg->s_type, 1, 1, &dowarn) || dowarn) {
-			/* prototype does not match old-style def., arg #%d */
+			/* prototype does not match old style defn., arg #%d */
 			error(299, n);
 			msg = 1;
 		}
@@ -2477,7 +2477,7 @@ check_func_old_style_arguments(void)
 	 */
 	for (arg = args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_defarg) {
-			/* argument type defaults to int: %s */
+			/* argument type defaults to 'int': %s */
 			warning(32, arg->s_name);
 			arg->s_defarg = 0;
 			mark_as_set(arg);
@@ -3053,7 +3053,7 @@ check_label_usage(sym_t *lab)
 
 	if (lab->s_set && !lab->s_used) {
 		curr_pos = lab->s_set_pos;
-		/* label %s unused in function %s */
+		/* %s unused in function %s */
 		warning(192, lab->s_name, funcsym->s_name);
 	} else if (!lab->s_set) {
 		curr_pos = lab->s_use_pos;
@@ -3143,7 +3143,7 @@ check_global_variable(sym_t *sym)
 		if (sym->s_type->t_tspec == FUNC) {
 			if (sym->s_used && sym->s_def != DEF) {
 				curr_pos = sym->s_use_pos;
-				/* static func. called but not def.. */
+				/* static func. called but not def... */
 				error(225, sym->s_name);
 			}
 		}
@@ -3155,7 +3155,7 @@ check_global_variable(sym_t *sym)
 						/* static function %s unused */
 						warning(236, sym->s_name);
 				} else {
-					/* static function %s decl. but ... */
+					/* static function %s declared but... */
 					warning(290, sym->s_name);
 				}
 			} else if (!sym->s_set) {
