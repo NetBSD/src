@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7.2.1 2020/05/02 16:26:04 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7.2.2 2021/01/01 12:58:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7.2.1 2020/05/02 16:26:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7.2.2 2021/01/01 12:58:35 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7.2.1 2020/05/02 16:26:04 mar
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/lwp.h>
+#include <sys/ptrace.h>
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
@@ -93,6 +94,30 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		tf->tf_spsr |= SPSR_A32_T;
 }
 
+int
+netbsd32_ptrace_translate_request(int req)
+{
+
+	switch (req) {
+	case 0 ... PT_FIRSTMACH - 1:
+		return req;
+	case PT32_GETREGS:
+		return PT_GETREGS;
+	case PT32_SETREGS:
+		return PT_SETREGS;
+	case PT32_GETFPREGS:
+		return PT_GETFPREGS;
+	case PT32_SETFPREGS:
+		return PT_SETFPREGS;
+	/* not implemented for arm32 */
+	case PT32_STEP:
+	case PT32_SETSTEP:
+	case PT32_CLEARSTEP:
+	default:
+		return -1;
+	}
+}
+
 /* aarch32 fpscr register is assigned to two registers fpsr/fpcr on aarch64 */
 #define FPSR_BITS							\
 	(FPSR_N32|FPSR_Z32|FPSR_C32|FPSR_V32|FPSR_QC|			\
@@ -101,7 +126,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	(FPCR_AHP|FPCR_DN|FPCR_FZ|FPCR_RMODE|FPCR_STRIDE|FPCR_LEN|	\
 	 FPCR_IDE|FPCR_IXE|FPCR_UFE|FPCR_OFE|FPCR_DZE|FPCR_IOE)
 
-static int
+int
 netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 {
 	struct proc * const p = l->l_proc;
@@ -125,7 +150,7 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 	return 0;
 }
 
-static int
+int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *fpregs,
     size_t *lenp)
 {
@@ -159,6 +184,68 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *fpregs,
 #else
 		fpregs->fpr_vfp.vfp_regs[i] = pcb->pcb_fpregs.fp_reg[i].u64[0];
 #endif
+	}
+
+	return 0;
+}
+
+int
+netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
+{
+	struct proc * const p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_utf;
+	int i;
+
+	if ((p->p_flag & PK_32) == 0)
+		return EINVAL;
+
+	if (regs->r_pc >= VM_MAXUSER_ADDRESS32 ||
+	    regs->r_sp >= VM_MAXUSER_ADDRESS32)
+		return EINVAL;
+
+	for (i = 0; i < 13; i++)
+		tf->tf_reg[i] = regs->r[i];	/* r0-r12 */
+	tf->tf_reg[13] = regs->r_sp;		/* r13 = sp */
+	tf->tf_reg[14] = regs->r_lr;		/* r14 = lr */
+	tf->tf_pc = regs->r_pc;			/* r15 = pc */
+	tf->tf_spsr &= ~(SPSR_NZCV | SPSR_A32_T);
+	tf->tf_spsr |= regs->r_cpsr & (SPSR_NZCV | SPSR_A32_T);
+
+	/* THUMB CODE? */
+	if (regs->r_pc & 1)
+		tf->tf_spsr |= SPSR_A32_T;
+
+	return 0;
+}
+
+int
+netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *fpregs,
+    size_t len)
+{
+	struct proc * const p = l->l_proc;
+	struct pcb * const pcb = lwp_getpcb(l);
+	int i;
+
+	if ((p->p_flag & PK_32) == 0)
+		return EINVAL;
+
+	KASSERT(len <= sizeof(*fpregs));
+	fpu_discard(l, true);		// set used flag
+
+	pcb->pcb_fpregs.fpsr = fpregs->fpr_vfp.vfp_fpscr & FPSR_BITS;
+	pcb->pcb_fpregs.fpcr = fpregs->fpr_vfp.vfp_fpscr & FPCR_BITS;
+
+	CTASSERT(__arraycount(fpregs->fpr_vfp.vfp_regs) ==
+	    __arraycount(pcb->pcb_fpregs.fp_reg) + 1);
+	for (i = 0; i < __arraycount(pcb->pcb_fpregs.fp_reg); i++) {
+#ifdef __AARCH64EB__
+		pcb->pcb_fpregs.fp_reg[i].u64[0] = 0;
+		pcb->pcb_fpregs.fp_reg[i].u64[1] =
+#else
+		pcb->pcb_fpregs.fp_reg[i].u64[1] = 0;
+		pcb->pcb_fpregs.fp_reg[i].u64[0] =
+#endif
+		    fpregs->fpr_vfp.vfp_regs[i];
 	}
 
 	return 0;
