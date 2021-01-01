@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.44 2021/01/01 11:09:40 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.45 2021/01/01 11:14:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.44 2021/01/01 11:09:40 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.45 2021/01/01 11:14:06 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -451,7 +451,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	if (t == LONG || t == ULONG ||
 	    t == QUAD || t == UQUAD) {
 		if (tflag)
-			/* case label must be of type ... */
+			/* case label must be of type `int' in traditional C */
 			warning(203);
 	}
 
