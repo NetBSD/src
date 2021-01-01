@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.8 2020/02/06 00:32:07 rjs Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.9 2021/01/01 07:18:23 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.8 2020/02/06 00:32:07 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.9 2021/01/01 07:18:23 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,6 +61,7 @@ static const char * compatible[] = {
 	"amlogic,meson8b-dwmac",
 	"amlogic,meson-gx-dwmac",
 	"amlogic,meson-gxbb-dwmac",
+	"amlogic,meson-axg-dwmac",
 	NULL
 };
 
@@ -101,7 +102,8 @@ meson_dwmac_set_mode_rgmii(int phandle, bus_space_tag_t bst,
 	u_int tx_delay;
 	uint32_t val;
 
-	const u_int div = clk_get_rate(clkin) / 250000000;
+#define DIV_ROUND_OFF(x, y)	(((x) + (y) / 2) / (y))
+	const u_int div = DIV_ROUND_OFF(clk_get_rate(clkin), 250000000);
 
 	if (of_getprop_uint32(phandle, "amlogic,tx-delay-ns", &tx_delay) != 0)
 		tx_delay = 2;
@@ -153,6 +155,8 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 	struct dwc_gmac_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	int miiclk, phandle_phy, phy = MII_PHY_ANY;
+	u_int miiclk_rate;
 	bus_space_handle_t prgeth_bsh;
 	struct fdtbus_reset *rst_gmac;
 	struct clk *clk_gmac, *clk_in[2];
@@ -196,6 +200,12 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": missing 'phy-mode' property\n");
 		return;
 	}
+	phandle_phy = fdtbus_get_phandle(phandle, "phy-handle");
+	if (phandle_phy > 0) {
+		of_getprop_uint32(phandle_phy, "reg", &phy);
+	} else {
+		phandle_phy = phandle;
+	}
 
 	if (strcmp(phy_mode, "rgmii") == 0) {
 		meson_dwmac_set_mode_rgmii(phandle, sc->sc_bst, prgeth_bsh, clk_in[0]);
@@ -226,10 +236,24 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	if (meson_dwmac_reset(phandle) != 0)
+	if (meson_dwmac_reset(phandle_phy) != 0)
 		aprint_error_dev(self, "PHY reset failed\n");
 
-	dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_100_150M_DIV62);
+	miiclk_rate = clk_get_rate(clk_gmac);
+	if (miiclk_rate > 250 * 1000 * 1000)
+		miiclk = GMAC_MII_CLK_250_300M_DIV124;
+	else if (miiclk_rate > 150 * 1000 * 1000)
+		miiclk = GMAC_MII_CLK_150_250M_DIV102;
+	else if (miiclk_rate > 100 * 1000 * 1000)
+		miiclk = GMAC_MII_CLK_100_150M_DIV62;
+	else if (miiclk_rate > 60 * 1000 * 1000)
+		miiclk = GMAC_MII_CLK_60_100M_DIV42;
+	else if (miiclk_rate > 35 * 1000 * 1000)
+		miiclk = GMAC_MII_CLK_35_60M_DIV26;
+	else
+		miiclk = GMAC_MII_CLK_25_35M_DIV16;
+
+	dwc_gmac_attach(sc, phy, miiclk);
 }
 
 CFATTACH_DECL_NEW(meson_dwmac, sizeof(struct dwc_gmac_softc),
