@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.40 2021/01/01 00:00:24 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.41 2021/01/01 09:11:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.40 2021/01/01 00:00:24 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.41 2021/01/01 09:11:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -172,8 +172,8 @@ popctrl(int env)
 	cstk_t	*ci;
 	clst_t	*cl;
 
-	if (cstk == NULL || cstk->c_env != env)
-		LERROR("popctrl()");
+	lint_assert(cstk != NULL);
+	lint_assert(cstk->c_env == env);
 
 	cstk = (ci = cstk)->c_next;
 
@@ -225,8 +225,7 @@ funcdef(sym_t *fsym)
 	 */
 	for (sym = dcs->d_fpsyms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_blklev != -1) {
-			if (sym->s_blklev != 1)
-				LERROR("funcdef()");
+			lint_assert(sym->s_blklev == 1);
 			inssym(1, sym);
 		}
 	}
@@ -269,13 +268,11 @@ funcdef(sym_t *fsym)
 	n = 1;
 	for (arg = fsym->s_type->t_args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_scl == ABSTRACT) {
-			if (arg->s_name != unnamed)
-				LERROR("funcdef()");
+			lint_assert(arg->s_name == unnamed);
 			/* formal parameter lacks name: param #%d */
 			error(59, n);
 		} else {
-			if (arg->s_name == unnamed)
-				LERROR("funcdef()");
+			lint_assert(arg->s_name != unnamed);
 		}
 		n++;
 	}
@@ -394,8 +391,8 @@ funcend(void)
 	 * remove all symbols declared during argument declaration from
 	 * the symbol table
 	 */
-	if (dcs->d_next != NULL || dcs->d_ctx != EXTERN)
-		LERROR("funcend()");
+	lint_assert(dcs->d_next == NULL);
+	lint_assert(dcs->d_ctx == EXTERN);
 	rmsyms(dcs->d_fpsyms);
 
 	/* must be set on level 0 */
@@ -451,8 +448,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 
 		if (tn != NULL) {
 
-			if (ci->c_swtype == NULL)
-				LERROR("label()");
+			lint_assert(ci->c_swtype != NULL);
 
 			if (reached && !ftflg) {
 				if (hflag)
@@ -652,8 +648,7 @@ switch2(void)
 	sym_t	*esym;
 	clst_t	*cl;
 
-	if (cstk->c_swtype == NULL)
-		LERROR("switch2()");
+	lint_assert(cstk->c_swtype != NULL);
 
 	/*
 	 * If the switch expression was of type enumeration, count the case
@@ -662,8 +657,7 @@ switch2(void)
 	 */
 	if (cstk->c_swtype->t_isenum) {
 		nenum = nclab = 0;
-		if (cstk->c_swtype->t_enum == NULL)
-			LERROR("switch2()");
+		lint_assert(cstk->c_swtype->t_enum != NULL);
 		for (esym = cstk->c_swtype->t_enum->elem;
 		     esym != NULL; esym = esym->s_next) {
 			nenum++;

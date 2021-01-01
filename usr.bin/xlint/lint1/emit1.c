@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.29 2020/12/30 11:14:03 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.30 2021/01/01 09:11:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.29 2020/12/30 11:14:03 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.30 2021/01/01 09:11:40 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -498,8 +498,7 @@ outfstrg(strg_t *strg)
 	int	c, oc, first;
 	u_char	*cp;
 
-	if (strg->st_tspec != CHAR)
-		LERROR("outfstrg()");
+	lint_assert(strg->st_tspec == CHAR);
 
 	cp = strg->st_cp;
 
