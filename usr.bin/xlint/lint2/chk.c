@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.29 2020/12/30 10:46:11 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.30 2021/01/01 11:58:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.29 2020/12/30 10:46:11 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.30 2021/01/01 11:58:03 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -519,7 +519,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			}
 		}
 
-		if (styp(t1) == styp(t2)) {
+		if (signed_type(t1) == signed_type(t2)) {
 
 			/*
 			 * types differ only in signedness; get information
@@ -901,7 +901,7 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			if (!noasgn) {
 				if (t1 != PTR) {
 					inconarg(hte, call, n);
-				} else if (t2 != styp(sz)) {
+				} else if (t2 != signed_type(sz)) {
 					inconarg(hte, call, n);
 				} else if (hflag && t2 != sz) {
 					inconarg(hte, call, n);
@@ -1242,7 +1242,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *dowarn)
 			 */
 			if (sflag || hflag || to != PTR)
 				return 0;
-			if (styp(t) != styp(tp2->t_tspec))
+			if (signed_type(t) != signed_type(tp2->t_tspec))
 				return 0;
 		}
 
