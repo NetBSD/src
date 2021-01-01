@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.7 2021/01/01 11:51:47 jmcneill Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.8 2021/01/01 11:58:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.7 2021/01/01 11:51:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.8 2021/01/01 11:58:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -262,10 +262,15 @@ CFATTACH_DECL_NEW(mesongx_mmc, sizeof(struct mesongx_mmc_softc),
 #define MMC_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 
+enum {
+	MESONGX_MMC_V2 = 2,
+	MESONGX_MMC_V3 = 3,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson-gx-mmc",	2 },
-	{ "amlogic,meson-gxbb-mmc",	2 },
-	{ "amlogic,meson-axg-mmc",	3 },
+	{ "amlogic,meson-gx-mmc",	MESONGX_MMC_V2 },
+	{ "amlogic,meson-gxbb-mmc",	MESONGX_MMC_V2 },
+	{ "amlogic,meson-axg-mmc",	MESONGX_MMC_V3 },
 	{ NULL }
 };
 
@@ -492,7 +497,7 @@ mesongx_mmc_set_clock(struct mesongx_mmc_softc *sc, u_int freq, bool ddr)
 		return ERANGE;
 
 	val = MMC_READ(sc, SD_EMMC_CLOCK);
-	if (sc->sc_hwtype == 3)
+	if (sc->sc_hwtype == MESONGX_MMC_V3)
 		val |= CLOCK_CFG_V3_ALWAYS_ON;
 	else
 		val |= CLOCK_CFG_V2_ALWAYS_ON;
