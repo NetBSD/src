@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1004 2020/12/31 18:51:28 rillig Exp $
+# $NetBSD: mi,v 1.1005 2021/01/01 01:07:07 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5798,6 +5798,8 @@
 ./usr/tests/usr.bin/xlint/lint1/d_nested_structs.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_nolimit_init.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_packed_structs.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_return_type.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_return_type.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_shift_to_narrower_type.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_struct_init_nested.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_struct_init_nested.exp	tests-usr.bin-tests	compattestfile,atf
