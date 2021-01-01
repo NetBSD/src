@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.53 2021/01/01 19:15:58 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.54 2021/01/01 19:28:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.53 2021/01/01 19:15:58 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.54 2021/01/01 19:28:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -49,6 +49,19 @@ __RCSID("$NetBSD: init.c,v 1.53 2021/01/01 19:15:58 rillig Exp $");
 
 /*
  * Type of stack which is used for initialisation of aggregate types.
+ *
+ * XXX: Since C99, a stack is an inappropriate data structure for modelling
+ * an initialization, since the designators don't have to be listed in a
+ * particular order and can designate parts of sub-objects.  The member names
+ * of non-leaf structs may thus appear repeatedly, as demonstrated in
+ * d_init_pop_member.c.
+ *
+ * XXX: During initialization, there may be members of the top-level struct
+ * that are partially initialized.  The simple i_remaining cannot model this
+ * appropriately.
+ *
+ * See C99 6.7.8, which spans 6 pages full of tricky details and carefully
+ * selected examples.
  */
 typedef	struct istk {
 	type_t	*i_type;		/* type of initialisation */
