@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.6 2021/01/01 07:17:36 ryo Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.7 2021/01/01 11:51:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.6 2021/01/01 07:17:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.7 2021/01/01 11:51:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.6 2021/01/01 07:17:36 ryo Exp $");
 #define	 CALOUT_CALI_SETUP			__BITS(15,8)
 #define	 CALOUT_CALI_VLD			__BIT(7)
 #define	 CALOUT_CALI_IDX			__BITS(5,0)
-#define SD_EMMC_V3_ADJUST		0x0c
+#define	SD_EMMC_V3_ADJUST		0x0c
 #define	SD_EMMC_START			0x40
 #define	 START_DESC_ADDR			__BITS(31,2)
 #define	 START_DESC_BUSY			__BIT(1)
