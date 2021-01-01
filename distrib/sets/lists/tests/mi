@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1005 2021/01/01 01:07:07 rillig Exp $
+# $NetBSD: mi,v 1.1006 2021/01/01 16:50:47 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5793,6 +5793,8 @@
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_variable_array_init.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_incorrect_array_size.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_incorrect_array_size.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_init_pop_member.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_init_pop_member.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_long_double_int.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_long_double_int.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_nested_structs.c		tests-usr.bin-tests	compattestfile,atf
