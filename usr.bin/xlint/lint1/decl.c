@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.89 2021/01/01 01:26:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.90 2021/01/01 01:29:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.89 2021/01/01 01:26:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.90 2021/01/01 01:29:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1352,7 +1352,7 @@ add_array(sym_t *decl, int dim, int n)
 		n = 0;
 	} else if (n == 0 && dim) {
 		/* zero sized array is a C99 extension */
-		c99ism(322, dim);
+		c99ism(322);
 	} else if (n == 0 && !dim) {
 		setcomplete(tp, 0);
 	}
@@ -3212,7 +3212,7 @@ print_previous_declaration(int msg, sym_t *psym)
 	cpos = curr_pos;
 	curr_pos = psym->s_def_pos;
 	if (msg != -1) {
-		message(msg, psym->s_name);
+		message(msg);
 	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
 		/* previous definition of %s */
 		message(261, psym->s_name);
