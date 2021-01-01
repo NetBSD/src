@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2019/05/26 02:49:12 christos Exp $
+# $NetBSD: Makefile,v 1.5 2021/01/01 20:38:36 roy Exp $
 
 .include <bsd.init.mk>
 
@@ -55,7 +55,6 @@ log.c \
 lookup3.c \
 lruhash.c \
 mesh.c \
-mini_event.c \
 modstack.c \
 module.c \
 msgencode.c \
@@ -93,7 +92,6 @@ val_sigcrypt.c \
 val_utils.c \
 validator.c \
 view.c \
-winsock_event.c \
 wire2str.c
 
 LIBDPLIBS+= ${DPLIBS}
