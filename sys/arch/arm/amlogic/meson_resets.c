@@ -1,4 +1,4 @@
-/* $NetBSD: meson_resets.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_resets.c,v 1.3 2021/01/01 07:15:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_resets.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_resets.c,v 1.3 2021/01/01 07:15:18 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_resets.c,v 1.2 2019/02/25 19:30:17 jmcneill Ex
 
 static const char * compatible[] = {
 	"amlogic,meson8b-reset",
+	"amlogic,meson-axg-reset",
 	"amlogic,meson-gxbb-reset",
 	NULL
 };
