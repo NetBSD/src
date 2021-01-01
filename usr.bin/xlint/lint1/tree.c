@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.111 2021/01/01 01:42:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.112 2021/01/01 11:09:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.111 2021/01/01 01:42:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.112 2021/01/01 11:09:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -208,7 +208,7 @@ getnnode(sym_t *sym, int ntok)
 	if (sym->s_scl == NOSCL) {
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
-		if (ntok == T_LPARN) {
+		if (ntok == T_LPAREN) {
 			if (sflag) {
 				/* function implicitly declared to ... */
 				warning(215);

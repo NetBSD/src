@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.43 2021/01/01 11:01:03 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.44 2021/01/01 11:09:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.43 2021/01/01 11:01:03 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.44 2021/01/01 11:09:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -553,7 +553,7 @@ check_controlling_expression(tnode_t *tn)
 }
 
 /*
- * T_IF T_LPARN expr T_RPARN
+ * T_IF T_LPAREN expr T_RPAREN
  */
 void
 if1(tnode_t *tn)
@@ -595,7 +595,7 @@ if3(int els)
 }
 
 /*
- * T_SWITCH T_LPARN expr T_RPARN
+ * T_SWITCH T_LPAREN expr T_RPAREN
  */
 void
 switch1(tnode_t *tn)
@@ -699,7 +699,7 @@ switch2(void)
 }
 
 /*
- * T_WHILE T_LPARN expr T_RPARN
+ * T_WHILE T_LPAREN expr T_RPAREN
  */
 void
 while1(tnode_t *tn)
@@ -803,7 +803,7 @@ do2(tnode_t *tn)
 }
 
 /*
- * T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN
+ * T_FOR T_LPAREN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPAREN
  */
 void
 for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
