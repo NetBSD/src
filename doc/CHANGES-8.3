@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.64 2020/12/28 19:54:42 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.65 2021/01/01 13:21:11 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1512,4 +1512,9 @@ sys/arch/hp300/dev/hil_intio.c			1.4
 	Fix a longstanding bug in hilkbd (and dnkbd) console attachment
 	to make ddb(4) and kernel prompts for root device work.
 	[tsutsui, ticket #1642]
+
+sys/ufs/ufs/ufs_quota1.c			1.23
+
+	Avoid out of bounds array access.
+	[nia, ticket #1645]
 
