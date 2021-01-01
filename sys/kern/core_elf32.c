@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.58 2019/01/22 03:44:44 kamil Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.58.4.1 2021/01/01 13:04:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.58 2019/01/22 03:44:44 kamil Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.58.4.1 2021/01/01 13:04:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -66,6 +66,10 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.58 2019/01/22 03:44:44 kamil Exp $"
 #include <uvm/uvm_extern.h>
 
 #ifdef COREDUMP
+
+#ifdef COMPAT_NETBSD32
+#include <machine/netbsd32_machdep.h>
+#endif
 
 struct writesegs_state {
 	Elf_Phdr *psections;
@@ -489,8 +493,13 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 	if (error)
 		return (error);
 
-	ELFNAMEEND(coredump_savenote)(ns, PT_GETREGS, name, &intreg,
-	    sizeof(intreg));
+	ELFNAMEEND(coredump_savenote)(ns,
+#if ELFSIZE == 32 && defined(PT32_GETREGS)
+	    PT32_GETREGS,
+#else
+	    PT_GETREGS,
+#endif
+	    name, &intreg, sizeof(intreg));
 
 #ifdef PT_GETFPREGS
 	freglen = sizeof(freg);
@@ -498,7 +507,13 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 	if (error)
 		return (error);
 
-	ELFNAMEEND(coredump_savenote)(ns, PT_GETFPREGS, name, &freg, freglen);
+	ELFNAMEEND(coredump_savenote)(ns,
+#  if ELFSIZE == 32 && defined(PT32_GETFPREGS)
+	    PT32_GETFPREGS,
+#  else
+	    PT_GETFPREGS,
+#  endif
+	    name, &freg, freglen);
 #endif
 	/* XXX Add hook for machdep per-LWP notes. */
 	return (0);
