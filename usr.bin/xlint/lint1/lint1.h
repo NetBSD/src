@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.45 2020/12/30 11:39:55 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.46 2021/01/01 19:15:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -353,20 +353,6 @@ typedef	struct dinfo {
 	sym_t	*d_fpsyms;	/* symbols defined in prototype */
 	struct	dinfo *d_next;	/* next level */
 } dinfo_t;
-
-/*
- * Type of stack which is used for initialisation of aggregate types.
- */
-typedef	struct	istk {
-	type_t	*i_type;		/* type of initialisation */
-	type_t	*i_subt;		/* type of next level */
-	u_int	i_brace : 1;		/* need } for pop */
-	u_int	i_nolimit : 1;		/* incomplete array type */
-	u_int	i_namedmem : 1;		/* has c9x named members */
-	sym_t	*i_mem;			/* next structure member */
-	int	i_remaining;		/* # of remaining elements */
-	struct	istk *i_next;		/* previous level */
-} istk_t;
 
 /*
  * Used to collect information about pointers and qualifiers in
