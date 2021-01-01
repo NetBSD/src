@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.123 2021/01/01 01:26:02 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.124 2021/01/01 09:28:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.123 2021/01/01 01:26:02 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.124 2021/01/01 09:28:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2126,8 +2126,7 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 	switch (dcs->d_ctx) {
 	case EXTERN:
 		if (renaming != NULL) {
-			if (decl->s_rename != NULL)
-				LERROR("idecl(rename)");
+			lint_assert(decl->s_rename == NULL);
 
 			s = getlblk(1, renaming->sb_len + 1);
 	                (void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);

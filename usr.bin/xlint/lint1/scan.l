@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.106 2021/01/01 01:26:02 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.107 2021/01/01 09:28:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.106 2021/01/01 01:26:02 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.107 2021/01/01 09:28:22 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -505,8 +505,7 @@ name(void)
 	sb->sb_sym = sym;
 
 	if (sym != NULL) {
-		if (blklev < sym->s_blklev)
-			LERROR("name()");
+		lint_assert(blklev >= sym->s_blklev);
 		sb->sb_name = sym->s_name;
 		sb->sb_len = strlen(sym->s_name);
 		tok = sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
@@ -621,8 +620,7 @@ icon(int base)
 	errno = 0;
 
 	uq = strtouq(cp, &eptr, base);
-	if (eptr != cp + len)
-		LERROR("icon()");
+	lint_assert(eptr == cp + len);
 	if (errno != 0)
 		/* integer constant out of range */
 		warning(252);
@@ -1473,7 +1471,7 @@ getsym(sbuf_t *sb)
 
 	if (sym != NULL) {
 		if (sym->s_kind != symtyp)
-			LERROR("storesym(%d, %d)", sym->s_kind, symtyp);
+			LERROR("getsym(%d, %d)", sym->s_kind, symtyp);
 		symtyp = FVFT;
 		freesb(sb);
 		return sym;
@@ -1491,8 +1489,7 @@ getsym(sbuf_t *sb)
 		di = dcs;
 		while (di->d_next != NULL && di->d_next->d_next != NULL)
 			di = di->d_next;
-		if (di->d_ctx != AUTO)
-			LERROR("storesym()");
+		lint_assert(di->d_ctx == AUTO);
 	} else {
 		sym = getblk(sizeof (sym_t));
 		sym->s_name = sb->sb_name;
@@ -1600,8 +1597,8 @@ inssym(int bl, sym_t *sym)
 	sym->s_rlink = &symtab[h];
 	symtab[h] = sym;
 	sym->s_blklev = bl;
-	if (sym->s_link != NULL && sym->s_blklev < sym->s_link->s_blklev)
-		LERROR("inssym()");
+	lint_assert(sym->s_link == NULL ||
+	    sym->s_blklev >= sym->s_link->s_blklev);
 }
 
 /*
@@ -1641,8 +1638,7 @@ pushdown(sym_t *sym)
 
 	h = hash(sym->s_name);
 	nsym = getblk(sizeof (sym_t));
-	if (sym->s_blklev > blklev)
-		LERROR("pushdown()");
+	lint_assert(sym->s_blklev <= blklev);
 	nsym->s_name = sym->s_name;
 	UNIQUE_CURR_POS(nsym->s_def_pos);
 	nsym->s_kind = sym->s_kind;
@@ -1677,10 +1673,9 @@ freeyyv(void *sp, int tok)
 		strg_t *strg = *(strg_t **)sp;
 		if (strg->st_tspec == CHAR) {
 			free(strg->st_cp);
-		} else if (strg->st_tspec == WCHAR) {
-			free(strg->st_wcp);
 		} else {
-			LERROR("fryylv()");
+			lint_assert(strg->st_tspec == WCHAR);
+			free(strg->st_wcp);
 		}
 		free(strg);
 	}
