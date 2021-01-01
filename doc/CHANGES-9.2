@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.29 2020/12/28 20:24:05 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.30 2021/01/01 13:19:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1332,4 +1332,59 @@ sys/dev/hdaudio/hdaudio.c			1.13
 
 	Fix crash if a codec reports 0 nodes.
 	[jmcneill, ticket #1166]
+
+sys/arch/arm/nvidia/tegra_ahcisata.c		1.13
+sys/dev/ata/satareg.h				1.6
+sys/dev/ic/ahcisata_core.c			1.84,1.85,1.88-1.92
+sys/dev/ic/ahcisatavar.h			1.26
+
+	PR 48214 (and others): fix reset handling and interrupt
+	acknowledge by following the specification more cloesly.
+	Remove the AHCI_QUIRK_SKIP_RESET quirk.
+	[jmcneill, ticket #1167]
+
+sys/arch/aarch64/aarch64/trap.c			1.21,1.26
+
+	Support ARMv6 userland for COMPAT_NETBSD32 on aarch64.
+	[rin, ticket #1169]
+
+sys/arch/aarch64/aarch64/cpufunc.c		1.22,1.23 (patch)
+sys/arch/aarch64/aarch64/pmap.c			1.81
+
+	Fix cache coloring for aarch64.
+	[rin, ticket #1170]
+
+sys/arch/aarch64/aarch64/pmap.c			1.82,1.83
+
+	aarch64: fix pmap_procwr() for applications that modify other
+	process's text segments (like gdb).
+	[rin, ticket #1171]
+
+sys/arch/aarch64/aarch64/netbsd32_machdep.c	1.14,1.15
+sys/arch/aarch64/aarch64/trap.c			1.30
+sys/arch/aarch64/include/netbsd32_machdep.h	1.4 (patch)
+sys/arch/aarch64/include/ptrace.h		1.10
+
+	Add support of ptrace(2) for COMPAT_NETBSD32.
+	[rin, ticket #1172]
+
+sys/kern/core_elf32.c				1.65 (patch)
+
+	Fix 32-bit core file format for aarch64.
+	[rin, ticket #1173]
+
+sys/arch/aarch64/aarch64/vm_machdep.c		1.9 (patch)
+
+	Fix clone(2) for COMPAT_NETBSD32.
+	[rin, ticket #1174]
+
+sys/arch/aarch64/aarch64/trap.c			1.28,1.31,1.32 (patch)
+
+	Improve emulation for 32-bit instructions on aarch64.
+	[rin, ticket #1175]
+
+sys/ufs/ufs/ufs_quota1.c			1.23
+
+	Avoid out of bounds array access.
+	[nia, ticket #1176]
 
