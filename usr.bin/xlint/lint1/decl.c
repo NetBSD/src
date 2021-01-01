@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.96 2021/01/01 13:43:34 kre Exp $ */
+/* $NetBSD: decl.c,v 1.97 2021/01/01 14:11:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.96 2021/01/01 13:43:34 kre Exp $");
+__RCSID("$NetBSD: decl.c,v 1.97 2021/01/01 14:11:20 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -612,11 +612,6 @@ popdecl(void)
 	di = dcs;
 	dcs = di->d_next;
 	switch (di->d_ctx) {
-	case EXTERN:
-		/* there is nothing after external declarations */
-		lint_assert(0);
-		/* NOTREACHED */
-		/* XXX gcc is stupid enough not to know that, hence: */ break;
 	case MOS:
 	case MOU:
 	case ENUMCON:
@@ -662,6 +657,9 @@ popdecl(void)
 		/* usage of arguments will be checked by funcend() */
 		rmsyms(di->d_dlsyms);
 		break;
+	case EXTERN:
+		/* there is nothing after external declarations */
+		/* FALLTHROUGH */
 	default:
 		lint_assert(0);
 	}
