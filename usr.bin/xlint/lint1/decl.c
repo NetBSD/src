@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.93 2021/01/01 09:28:22 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.94 2021/01/01 11:41:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.93 2021/01/01 09:28:22 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.94 2021/01/01 11:41:01 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -302,9 +302,10 @@ add_type(type_t *tp)
 	if (t == COMPLEX) {
 		if (dcs->d_cmod == FLOAT)
 			t = FCOMPLEX;
-		else if (dcs->d_cmod == DOUBLE) {
+		else if (dcs->d_cmod == DOUBLE)
 			t = DCOMPLEX;
-		} else
+		else
+			/* Invalid type %s for _Complex */
 			error(308, tspec_name(dcs->d_cmod));
 		dcs->d_cmod = NOTSPEC;
 	}
@@ -528,6 +529,7 @@ setpackedsize(type_t *tp)
 		}
 		break;
 	default:
+		/* %s attribute ignored for %s */
 		warning(326, "packed", tyname(buf, sizeof(buf), tp));
 		break;
 	}
@@ -1038,8 +1040,10 @@ check_type(sym_t *sym)
 			} else if (incompl(tp)) {
 				/* array of incomplete type */
 				if (sflag) {
+					/* array of incomplete type */
 					error(301);
 				} else {
+					/* array of incomplete type */
 					warning(301);
 				}
 #endif
@@ -1110,10 +1114,7 @@ declarator_1_struct_union(sym_t *dsym)
 			if (bitfieldtype_ok == 0) {
 				if (sflag) {
 					char buf[64];
-					/*
-					 * bit-field type '%s' invalid in
-					 * ANSI C
-					 */
+					/* bit-field type '%s' invalid ... */
 					warning(273,
 					    tyname(buf, sizeof(buf), tp));
 				} else if (pflag) {
@@ -1714,6 +1715,7 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 			    tag->s_name);
 			/* declaration introduces new type in ANSI C: %s %s */
 			if (!sflag) {
+				/* decl. introduces new type in ANSI C: %s %s */
 				warning(44, storage_class_name(scl),
 				    tag->s_name);
 			}
@@ -2066,6 +2068,7 @@ check_redeclaration(sym_t *dsym, int *dowarn)
 	 */
 	/* redeclaration of %s; ANSI C requires "static" */
 	if (sflag) {
+		/* redeclaration of %s; ANSI C requires static */
 		warning(30, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 	}
@@ -2613,18 +2616,18 @@ decl1loc(sym_t *dsym, int initflg)
 
 			switch (dsym->s_scl) {
 			case AUTO:
-				/* automatic hides external declaration: %s */
 				if (hflag)
+					/* automatic hides external decl.: %s */
 					warning(86, dsym->s_name);
 				break;
 			case STATIC:
-				/* static hides external declaration: %s */
 				if (hflag)
+					/* static hides external decl.: %s */
 					warning(87, dsym->s_name);
 				break;
 			case TYPEDEF:
-				/* typedef hides external declaration: %s */
 				if (hflag)
+					/* typedef hides external decl.: %s */
 					warning(88, dsym->s_name);
 				break;
 			case EXTERN:
@@ -2762,8 +2765,10 @@ check_init(sym_t *sym)
 	} else if (sym->s_scl == EXTERN && sym->s_def == DECL) {
 		/* cannot initialize "extern" declaration: %s */
 		if (dcs->d_ctx == EXTERN) {
+			/* cannot initialize extern declaration: %s */
 			warning(26, sym->s_name);
 		} else {
+			/* cannot initialize extern declaration: %s */
 			error(26, sym->s_name);
 			erred = 1;
 		}
@@ -2848,10 +2853,11 @@ check_size(sym_t *dsym)
 
 	if (length(dsym->s_type, dsym->s_name) == 0 &&
 	    dsym->s_type->t_tspec == ARRAY && dsym->s_type->t_dim == 0) {
-		/* empty array declaration: %s */
 		if (tflag) {
+			/* empty array declaration: %s */
 			warning(190, dsym->s_name);
 		} else {
+			/* empty array declaration: %s */
 			error(190, dsym->s_name);
 		}
 	}
@@ -3173,10 +3179,11 @@ check_global_variable_size(sym_t *sym)
 		curr_pos = sym->s_def_pos;
 		if (length(sym->s_type, sym->s_name) == 0 &&
 		    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
-			/* empty array declaration: %s */
 			if (tflag || (sym->s_scl == EXTERN && !sflag)) {
+				/* empty array declaration: %s */
 				warning(190, sym->s_name);
 			} else {
+				/* empty array declaration: %s */
 				error(190, sym->s_name);
 			}
 		}

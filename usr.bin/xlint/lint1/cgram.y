@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.126 2021/01/01 11:09:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.127 2021/01/01 11:41:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.126 2021/01/01 11:09:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.127 2021/01/01 11:41:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -801,6 +801,7 @@ member_declaration:
 		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
+			/* anonymous struct/union members is a C9X feature */
 			warning(49);
 		/* add all the members of the anonymous struct/union */
 		$$ = dcs->d_type->t_str->memb;
@@ -810,6 +811,7 @@ member_declaration:
 		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
+			/* anonymous struct/union members is a C9X feature */
 			warning(49);
 		$$ = dcs->d_type->t_str->memb;
 		/* add all the members of the anonymous struct/union */
@@ -1363,10 +1365,12 @@ range:
 init_field:
 	  T_LBRACK range T_RBRACK {
 		if (!Sflag)
+			/* array initializer with des.s is a C9X feature */
 			warning(321);
 	  }
 	| point identifier {
 		if (!Sflag)
+			/* struct or union member name in initializer is ... */
 			warning(313);
 		push_member($2);
 	  }
@@ -1380,6 +1384,7 @@ init_field_list:
 init_by_name:
 	  init_field_list T_ASSIGN
 	| identifier T_COLON {
+		/* GCC style struct or union member name in initializer */
 		gnuism(315);
 		push_member($1);
 	  }
@@ -1511,6 +1516,7 @@ stmnt_d_list:
 	  stmnt_list
 	| stmnt_d_list declaration_list stmnt_list {
 		if (!Sflag)
+			/* declarations after statements is a C9X feature */
 			c99ism(327);
 	}
 	;
@@ -1712,6 +1718,7 @@ for_start:
 for_exprs:
 	  for_start declspecs deftyp notype_init_decls T_SEMI opt_expr
 	  T_SEMI opt_expr T_RPAREN {
+		/* variable declaration in for loop */
 		c99ism(325);
 		for1(NULL, $6, $8);
 		CLRWFLGS(__FILE__, __LINE__);
@@ -1867,6 +1874,7 @@ term:
 		initsym = mktempsym(duptyp($4->tn_type));
 		mblklev++;
 		blklev++;
+		/* ({ }) is a GCC extension */
 		gnuism(320);
 	} comp_stmnt_rbrace T_RPAREN {
 		$$ = getnnode(initsym, 0);
@@ -1877,6 +1885,7 @@ term:
 		initsym = mktempsym($3->tn_type);
 		mblklev++;
 		blklev++;
+		/* ({ }) is a GCC extension */
 		gnuism(320);
 	} comp_stmnt_rbrace T_RPAREN {
 		$$ = getnnode(initsym, 0);
@@ -1971,7 +1980,8 @@ term:
 		idecl(tmp, 1, NULL);
 	  } init_lbrace init_expr_list init_rbrace {
 		if (!Sflag)
-			gnuism(319);
+			 /* compound literals are a C9X/GCC extension */
+			 gnuism(319);
 		$$ = getnnode(initsym, 0);
 	  }
 	;
@@ -2017,6 +2027,7 @@ point_or_arrow:
 point:
 	  T_STROP {
 		if ($1 != POINT) {
+			/* syntax error '%s' */
 			error(249, yytext);
 		}
 	  }
@@ -2039,6 +2050,7 @@ identifier:
 int
 yyerror(const char *msg)
 {
+	/* syntax error '%s' */
 	error(249, yytext);
 	if (++sytxerr >= 5)
 		norecover();

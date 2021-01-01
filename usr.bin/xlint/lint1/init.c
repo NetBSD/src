@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.49 2021/01/01 00:00:24 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.50 2021/01/01 11:41:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.49 2021/01/01 00:00:24 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.50 2021/01/01 11:41:01 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -191,6 +191,7 @@ initstack_pop_item(void)
 				return;
 			}
 		}
+		/* undefined struct/union member: %s */
 		error(101, namedmem->n_name);
 		DPRINTF(("%s: end rhs.name=%s\n", __func__, namedmem->n_name));
 		pop_member();
@@ -472,7 +473,7 @@ init_lbrace(void)
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
 	    initstk->i_next == NULL) {
 		if (tflag && !tspec_is_scalar(initstk->i_subt->t_tspec))
-			/* no automatic aggregate initialization in trad. C*/
+			/* no automatic aggregate initialization in trad. C */
 			warning(188);
 	}
 
