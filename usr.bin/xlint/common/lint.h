@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.18 2020/12/30 10:46:11 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.19 2021/01/01 11:51:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -81,9 +81,10 @@ typedef enum {
 	COMPLEX,	/* _Complex */
 	FCOMPLEX,	/* float _Complex */
 	DCOMPLEX,	/* double _Complex */
-	LCOMPLEX,	/* long double _Complex */
-	NTSPEC
+	LCOMPLEX	/* long double _Complex */
+#define NTSPEC (LCOMPLEX + 1)
 } tspec_t;
+
 
 /*
  * size of types, name and classification
@@ -118,15 +119,13 @@ extern	ttab_t	ttab[];
 
 
 typedef	enum {
-	NODECL,			/* until now not declared */
+	NODECL,			/* not declared until now */
 	DECL,			/* declared */
 	TDEF,			/* tentative defined */
 	DEF			/* defined */
 } def_t;
 
-/*
- * Following structure contains some data used for the output buffer.
- */
+/* Some data used for the output buffer. */
 typedef	struct	ob {
 	char	*o_buf;		/* buffer */
 	char	*o_end;		/* first byte after buffer */
