@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.88 2021/01/01 00:00:24 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.89 2021/01/01 01:26:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.88 2021/01/01 00:00:24 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.89 2021/01/01 01:26:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1176,7 +1176,7 @@ declarator_1_struct_union(sym_t *dsym)
 	 */
 	if ((sz = length(dsym->s_type, dsym->s_name)) == 0) {
 		if (t == ARRAY && dsym->s_type->t_dim == 0) {
-			/* illegal zero sized structure member: %s */
+			/* zero sized array in struct is a C99 extension: %s */
 			c99ism(39, dsym->s_name);
 		}
 	}
@@ -1351,7 +1351,7 @@ add_array(sym_t *decl, int dim, int n)
 		error(20, n);
 		n = 0;
 	} else if (n == 0 && dim) {
-		/* zero array dimension */
+		/* zero sized array is a C99 extension */
 		c99ism(322, dim);
 	} else if (n == 0 && !dim) {
 		setcomplete(tp, 0);
