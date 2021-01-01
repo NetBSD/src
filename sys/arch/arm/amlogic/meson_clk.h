@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk.h,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_clk.h,v 1.4 2021/01/01 07:21:58 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -196,6 +196,22 @@ struct meson_clk_mux {
 const char *meson_clk_mux_get_parent(struct meson_clk_softc *,
 			       struct meson_clk_clk *);
 
+#define	MESON_CLK_MUX_RATE(_id, _name, _parents, _reg, _sel,		\
+			   _getratefn, _setratefn, _flags)		\
+	[_id] = {							\
+		.type = MESON_CLK_MUX,					\
+		.base.name = (_name),					\
+		.base.flags = 0,					\
+		.u.mux.parents = (_parents),				\
+		.u.mux.nparents = __arraycount(_parents),		\
+		.u.mux.reg = (_reg),					\
+		.u.mux.sel = (_sel),					\
+		.u.mux.flags = (_flags),				\
+		.get_rate = _getratefn,					\
+		.set_rate = _setratefn,					\
+		.get_parent = meson_clk_mux_get_parent,			\
+	}
+
 #define	MESON_CLK_MUX(_id, _name, _parents, _reg, _sel, _flags)		\
 	[_id] = {							\
 		.type = MESON_CLK_MUX,					\
@@ -235,8 +251,13 @@ struct meson_clk_pll {
 
 u_int	meson_clk_pll_get_rate(struct meson_clk_softc *,
 			       struct meson_clk_clk *);
+int	meson_clk_pll_set_rate(struct meson_clk_softc *,
+			       struct meson_clk_clk *, u_int new_rate);
 const char *meson_clk_pll_get_parent(struct meson_clk_softc *,
 				     struct meson_clk_clk *);
+int	meson_clk_pll_wait_lock(struct meson_clk_softc *sc,
+				struct meson_clk_pll *pll);
+
 
 #define	MESON_CLK_PLL_RATE(_id, _name, _parent, _enable, _m, _n, _frac, _l,	\
 		      _reset, _setratefn, _flags)			\
@@ -368,5 +389,12 @@ void	meson_clk_write(struct meson_clk_softc *, bus_size_t, uint32_t);
 #define	CLK_UNLOCK	meson_clk_unlock
 #define	CLK_READ	meson_clk_read
 #define	CLK_WRITE	meson_clk_write
+#define CLK_WRITE_BITS(sc, reg, mask, val)			\
+	do {							\
+		uint32_t _cwb_tmp_ = CLK_READ((sc), (reg));	\
+		_cwb_tmp_ &= ~(mask);				\
+		_cwb_tmp_ |= __SHIFTIN((val), (mask));		\
+		CLK_WRITE((sc), (reg), _cwb_tmp_);		\
+	} while (0 /*CONSTCOND*/)
 
 #endif /* _ARM_MESON_CLK_H */
