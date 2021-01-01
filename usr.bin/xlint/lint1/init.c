@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.52 2021/01/01 19:11:19 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.53 2021/01/01 19:15:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.52 2021/01/01 19:11:19 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.53 2021/01/01 19:15:58 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -45,6 +45,28 @@ __RCSID("$NetBSD: init.c,v 1.52 2021/01/01 19:11:19 rillig Exp $");
 #include <string.h>
 
 #include "lint1.h"
+
+
+/*
+ * Type of stack which is used for initialisation of aggregate types.
+ */
+typedef	struct istk {
+	type_t	*i_type;		/* type of initialisation */
+	type_t	*i_subt;		/* type of next level */
+	u_int	i_brace : 1;		/* need } for pop */
+	u_int	i_nolimit : 1;		/* incomplete array type */
+	u_int	i_namedmem : 1;		/* has c9x named members */
+	sym_t	*i_mem;			/* next structure member */
+	int	i_remaining;		/* # of remaining elements */
+	struct	istk *i_next;		/* previous level */
+} istk_t;
+
+typedef struct namlist {
+	const char *n_name;
+	struct namlist *n_prev;
+	struct namlist *n_next;
+} namlist_t;
+
 
 /*
  * initerr is set as soon as a fatal error occurred in an initialisation.
@@ -58,12 +80,6 @@ sym_t	*initsym;
 
 /* Points to the top element of the initialisation stack. */
 istk_t	*initstk;
-
-typedef struct namlist {
-	const char *n_name;
-	struct namlist *n_prev;
-	struct namlist *n_next;
-} namlist_t;
 
 /* Points to a c9x named member; */
 namlist_t	*namedmem = NULL;
