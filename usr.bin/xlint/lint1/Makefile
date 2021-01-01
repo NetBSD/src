@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2019/11/11 22:45:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.54 2021/01/01 14:51:44 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,6 @@ CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 
 CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
 
-LINTFLAGS=	-aehpz
 BINDIR=		/usr/libexec
 
 CLEANFILES+=	${MAN}
