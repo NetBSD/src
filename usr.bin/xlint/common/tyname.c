@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.17 2020/12/31 18:51:28 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.18 2021/01/01 01:42:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.17 2020/12/31 18:51:28 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.18 2021/01/01 01:42:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: tyname.c,v 1.17 2020/12/31 18:51:28 rillig Exp $");
 #endif
 
 const char *
-basic_type_name(tspec_t t)
+tspec_name(tspec_t t)
 {
 	switch (t) {
 	case BOOL:	return "_Bool";
@@ -90,7 +90,7 @@ basic_type_name(tspec_t t)
 	case SIGNED:	return "signed";
 	case UNSIGN:	return "unsigned";
 	default:
-		LERROR("basic_type_name(%d)", t);
+		LERROR("tspec_name(%d)", t);
 		return NULL;
 	}
 }
@@ -172,7 +172,7 @@ tyname(char *buf, size_t bufsiz, const type_t *tp)
 	if ((t = tp->t_tspec) == INT && tp->t_isenum)
 		t = ENUM;
 
-	s = basic_type_name(t);
+	s = tspec_name(t);
 
 	cv[0] = '\0';
 	if (tp->t_const)
