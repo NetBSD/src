@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.10 2019/08/14 15:08:53 skrll Exp $
+#	$NetBSD: files.meson,v 1.11 2021/01/01 07:21:58 ryo Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -32,6 +32,16 @@ device	gxbbaoclkc: meson_clk
 attach	gxbbaoclkc at fdt with mesongxbb_aoclkc
 file	arch/arm/amlogic/mesongxbb_aoclkc.c	mesongxbb_aoclkc
 
+# Meson G12[AB] clock controller
+device	g12clkc: meson_clk
+attach	g12clkc at fdt with mesong12_clkc
+file	arch/arm/amlogic/mesong12_clkc.c	mesong12_clkc
+
+# Meson G12[AB] AO clock controller
+device	g12aoclkc: meson_clk
+attach	g12aoclkc at fdt with mesong12_aoclkc
+file	arch/arm/amlogic/mesong12_aoclkc.c	mesong12_aoclkc
+
 # Meson reset controller
 device	mesonresets
 attach	mesonresets at fdt with meson_resets
@@ -52,6 +62,7 @@ device	mesonpinctrl: gpiobus
 attach	mesonpinctrl at fdt with meson_pinctrl
 file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
 file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
+file	arch/arm/amlogic/mesong12a_pinctrl.c	meson_pinctrl & soc_mesong12
 file	arch/arm/amlogic/mesongxbb_pinctrl.c	meson_pinctrl & soc_mesongxbb
 file	arch/arm/amlogic/mesongxl_pinctrl.c	meson_pinctrl & soc_mesongxl
 
@@ -84,6 +95,21 @@ file	arch/arm/amlogic/mesongxl_usb2phy.c	mesongxl_usb2phy
 device	mesongxlu3phy
 attach	mesongxlu3phy at fdt with mesongxl_usb3phy
 file	arch/arm/amlogic/mesongxl_usb3phy.c	mesongxl_usb3phy
+
+# Meson G12 USB2 PHY
+device	mesong12u2phy
+attach	mesong12u2phy at fdt with mesong12_usb2phy
+file	arch/arm/amlogic/mesong12_usb2phy.c	mesong12_usb2phy
+
+# Meson G12 USB3/PCIE PHY
+device	mesong12u3pphy
+attach	mesong12u3pphy at fdt with mesong12_usb3pciephy
+file	arch/arm/amlogic/mesong12_usb3pciephy.c	mesong12_usb3pciephy
+
+# Meson G12 USB
+device	mesonusbctrl
+attach	mesonusbctrl at fdt with meson_usbctrl
+file	arch/arm/amlogic/meson_usbctrl.c	meson_usbctrl
 
 # RTC
 device	mesonrtc
@@ -118,6 +144,16 @@ file	arch/arm/amlogic/mesongx_wdt.c		mesongx_wdt
 device	meson6timer
 attach	meson6timer at fdt with meson6_timer
 file	arch/arm/amlogic/meson6_timer.c		meson6_timer
+
+# Meson PWM
+device	mesonpwm
+attach	mesonpwm at fdt with meson_pwm
+file	arch/arm/amlogic/meson_pwm.c		meson_pwm
+
+# Meson Thermal
+device	mesonthermal
+attach	mesonthermal at fdt with meson_thermal
+file	arch/arm/amlogic/meson_thermal.c	meson_thermal
 
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON

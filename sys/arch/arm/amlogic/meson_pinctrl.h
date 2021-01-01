@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.h,v 1.3 2019/04/19 19:07:56 jmcneill Exp $ */
+/* $NetBSD: meson_pinctrl.h,v 1.4 2021/01/01 07:21:58 ryo Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -63,6 +63,11 @@ struct meson_pinctrl_group {
 	u_int bit;
 	u_int bank[MESON_PINCTRL_MAXBANK];
 	u_int nbank;
+
+	/* when (mask != 0), func/mask are used instead of 'u_int bit' */
+	uint32_t func;
+	uint32_t mask;
+
 };
 
 struct meson_pinctrl_config {
@@ -86,6 +91,11 @@ extern const struct meson_pinctrl_config mesongxbb_periphs_pinctrl_config;
 #ifdef SOC_MESONGXL
 extern const struct meson_pinctrl_config mesongxl_aobus_pinctrl_config;
 extern const struct meson_pinctrl_config mesongxl_periphs_pinctrl_config;
+#endif
+
+#ifdef SOC_MESONG12
+extern const struct meson_pinctrl_config mesong12a_aobus_pinctrl_config;
+extern const struct meson_pinctrl_config mesong12a_periphs_pinctrl_config;
 #endif
 
 #endif /* !_MESON_PINCTRL_H */

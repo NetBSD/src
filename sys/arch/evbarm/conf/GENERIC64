@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.169 2020/12/29 01:48:22 thorpej Exp $
+#	$NetBSD: GENERIC64,v 1.170 2021/01/01 07:21:58 ryo Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -13,6 +13,7 @@ maxusers	64
 options 	CPU_CORTEX
 options 	CPU_THUNDERX
 options 	SOC_BCM2837
+options 	SOC_MESONG12
 options 	SOC_MESONGXBB
 options 	SOC_MESONGXL
 options 	SOC_RK3328
@@ -119,6 +120,7 @@ fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
 fregulator*	at fdt? pass 4
 gregulator*	at fdt? pass 4
+pregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 wskbd*		at gpiokeys? console ? mux 1
 gpioleds*	at fdt?
@@ -176,6 +178,8 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
+g12aoclkc*	at fdt? pass 2		# Amlogic Meson G12 AO clock controller
+g12clkc*	at fdt? pass 2		# Amlogic Meson G12 EE clock controller
 gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
 gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB/GXL EE clock controller
 imx8mqccm*	at fdt? pass 2		# NXP iMX8MQ CCM
@@ -205,6 +209,7 @@ rkgpio*		at rkiomux?		# Rockchip GPIO
 gpio*		at gpiobus?
 
 # PWM controller
+mesonpwm*	at fdt? pass 3		# Amlogic PWM
 rkpwm*		at fdt? pass 3		# Rockchip PWM
 sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
@@ -451,13 +456,17 @@ pwmbacklight*	at fdt?			# PWM Backlight controls
 pwmfan*		at fdt?			# PWM Fan controls
 
 # Thermal throttling controller
+mesonthermal*	at fdt?			# Amlogic thermal sensor controller
 sunxithermal*	at fdt?			# Allwinner thermal sensor controller
 tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 rktsadc*	at fdt?			# RockChip TSASC
 
 # USB
 imx8mqusbphy*	at fdt? pass 9		# IMX USB PHY
+mesonusbctrl*	at fdt?			# Amlogic Meson USB-Glue (dwc2 and dwc3)
 mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
+mesong12u2phy*	at fdt? pass 9		# Amlogic Meson G12 USB2 PHY
+mesong12u3pphy*	at fdt? pass 9		# Amlogic Meson G12 USB3/PCIe PHY
 mesongxlu2phy*	at fdt? pass 9		# Amlogic Meson GXL USB2 PHY
 mesongxlu3phy*	at fdt? pass 9		# Amlogic Meson GXL USB3 PHY
 rkusb*		at fdt? pass 9		# Rockchip USB PHY
