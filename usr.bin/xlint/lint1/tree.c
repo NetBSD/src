@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.109 2021/01/01 01:07:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.110 2021/01/01 01:38:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.109 2021/01/01 01:07:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.110 2021/01/01 01:38:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2190,42 +2190,27 @@ static void
 warn_incompatible_types(op_t op, tspec_t lt, tspec_t rt)
 {
 	mod_t	*mp;
-	int e = 0;
 
 	mp = &modtab[op];
 
 	if (lt == VOID || (mp->m_binary && rt == VOID)) {
 		/* void type illegal in expression */
-		e = 109;
+		error(109);
 	} else if (op == ASSIGN) {
 		if ((lt == STRUCT || lt == UNION) &&
 		    (rt == STRUCT || rt == UNION)) {
-			/* assignment of different structures */
-			e = 240;
+			/* assignment of different structures (%s != %s) */
+			error(240, basic_type_name(lt), basic_type_name(rt));
 		} else {
-			/* assignment type mismatch */
-			e = 171;
+			/* assignment type mismatch (%s != %s) */
+			error(171, basic_type_name(lt), basic_type_name(rt));
 		}
 	} else if (mp->m_binary) {
-		/* operands of %s have incompatible types */
-		e = 107;
+		/* operands of '%s' have incompatible types (%s != %s) */
+		error(107, mp->m_name, basic_type_name(lt), basic_type_name(rt));
 	} else {
-		/* operand of %s has incompatible type */
-		e = 108;
-	}
-	switch (e) {
-	case 0:
-		return;
-	case 109:
-		error(e);
-		return;
-	case 108:
-	case 107:
-		error(e, mp->m_name, basic_type_name(lt), basic_type_name(rt));
-		return;
-	default:
-		error(e, basic_type_name(lt), basic_type_name(rt));
-		return;
+		/* operand of '%s' has incompatible type (%s != %s) */
+		error(108, mp->m_name, basic_type_name(lt), basic_type_name(rt));
 	}
 }
 
