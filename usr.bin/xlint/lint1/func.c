@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.45 2021/01/01 11:14:06 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.46 2021/01/01 11:41:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.45 2021/01/01 11:14:06 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.46 2021/01/01 11:41:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -787,7 +787,8 @@ do2(tnode_t *tn)
 			cstk->c_infinite = tn->tn_val->v_ldbl != 0.0;
 		}
 		if (!cstk->c_infinite && cstk->c_cont)
-		    error(323);
+			/* continue in 'do ... while (0)' loop */
+			error(323);
 	}
 
 	expr(tn, 0, 1, 1);
