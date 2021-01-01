@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.3 2021/01/01 01:26:02 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.4 2021/01/01 11:41:01 rillig Exp $
 
 --[[
 
@@ -45,6 +45,7 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
   comment = string.gsub(comment, "conv%.", "conversion")
   comment = string.gsub(comment, "decl%.", "declaration")
   comment = string.gsub(comment, "defn%.", "definition")
+  comment = string.gsub(comment, "des%.s", "designators")
   comment = string.gsub(comment, "expr%.", "expression")
   comment = string.gsub(comment, "func%.", "function")
   comment = string.gsub(comment, "incomp%.", "incompatible")
@@ -80,11 +81,15 @@ local function collect_errors(fname, msgs)
     lineno = lineno + 1
 
     local func, id = line:match("^%s+(%w+)%((%d+)[),]")
+    id = tonumber(id)
     if func == "error" or func == "warning" or func == "c99ism" or
        func == "gnuism" or func == "message" then
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
-        check_message(fname, lineno, tonumber(id), comment, msgs, errors)
+        check_message(fname, lineno, id, comment, msgs, errors)
+      else
+        errors:add("%s:%d: missing comment for %d: /* %s */",
+          fname, lineno, id, msgs[id])
       end
     end
 

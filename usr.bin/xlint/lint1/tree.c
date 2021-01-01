@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.112 2021/01/01 11:09:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.113 2021/01/01 11:41:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.112 2021/01/01 11:09:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.113 2021/01/01 11:41:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -227,13 +227,16 @@ getnnode(sym_t *sym, int ntok)
 				if (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
 				    strcmp(sym->s_name, "__PRETTY_FUNCTION__")
 				    == 0) {
+					/* __FUNCTION__/__PRETTY_FUNCTION... */
 					gnuism(316);
 					fixtype = 1;
 				} else if (strcmp(sym->s_name, "__func__") == 0) {
 					if (!Sflag)
+						/* __func__ is a C9X feature */
 						warning(317);
 					fixtype = 1;
 				} else {
+					/* %s undefined */
 					error(99, sym->s_name);
 					fixtype = 0;
 				}
@@ -412,10 +415,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 * to a struct/union, but the right operand is not member of it.
 	 */
 	if (str != NULL) {
-		/* illegal member use: %s */
 		if (eq && tflag) {
+			/* illegal member use: %s */
 			warning(102, msym->s_name);
 		} else {
+			/* illegal member use: %s */
 			error(102, msym->s_name);
 		}
 		return msym;
@@ -427,10 +431,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (eq) {
 		if (op == POINT) {
-			/* left operand of "." must be struct/union object */
 			if (tflag) {
+				/* left operand of '.' must be struct/... */
 				warning(103);
 			} else {
+				/* left operand of '.' must be struct/... */
 				error(103);
 			}
 		} else {
@@ -438,9 +443,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			/* left operand of "->" must be pointer to ... */
 			if (tflag && tn->tn_type->t_tspec == PTR) {
 				tyname(buf, sizeof(buf), tn->tn_type);
+				/* left operand of '->' must be pointer ... */
 				warning(104, buf);
 			} else {
 				tyname(buf, sizeof(buf), tn->tn_type);
+				/* left operand of '->' must be pointer ... */
 				error(104, buf);
 			}
 		}
@@ -785,17 +792,17 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (!ln->tn_lvalue) {
 			if (ln->tn_op == CVT && ln->tn_cast &&
 			    ln->tn_left->tn_op == LOAD) {
-				/* a cast to non-ptr does not yield an lvalue */
 				if (ln->tn_type->t_tspec == PTR)
 					break;
+				/* a cast does not yield an lvalue */
 				error(163);
 			}
 			/* %soperand of '%s' must be lvalue */
 			error(114, "", mp->m_name);
 			return 0;
 		} else if (ltp->t_const) {
-			/* %soperand of '%s' must be modifiable lvalue */
 			if (!tflag)
+				/* %soperand of '%s' must be modifiable ... */
 				warning(115, "", mp->m_name);
 		}
 		break;
@@ -805,9 +812,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		} else if (!ln->tn_lvalue) {
 			if (ln->tn_op == CVT && ln->tn_cast &&
 			    ln->tn_left->tn_op == LOAD) {
-				/* a cast to non-ptr does not yield an lvalue */
 				if (ln->tn_type->t_tspec == PTR)
 					break;
+				/* a cast does not yield an lvalue */
 				error(163);
 			}
 			/* %soperand of '%s' must be lvalue */
@@ -1080,9 +1087,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (!ln->tn_lvalue) {
 			if (ln->tn_op == CVT && ln->tn_cast &&
 			    ln->tn_left->tn_op == LOAD) {
-				/* a cast to non-ptr does not yield an lvalue */
 				if (ln->tn_type->t_tspec == PTR)
 					break;
+				/* a cast does not yield an lvalue */
 				error(163);
 			}
 			/* %soperand of '%s' must be lvalue */
@@ -1090,8 +1097,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			return 0;
 		} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
 					    has_constant_member(ltp))) {
-			/* %soperand of %s must be modifiable lvalue */
 			if (!tflag)
+				/* %soperand of '%s' must be modifiable lvalue */
 				warning(115, "left ", mp->m_name);
 		}
 		break;
@@ -1795,12 +1802,13 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 
 	if (Pflag && psize(nt) > psize(ot) &&
 	    tspec_is_uint(nt) != tspec_is_uint(ot)) {
-		/* conversion to %s may sign-extend incorrectly (, arg #%d) */
 		if (aflag && pflag) {
 			if (op == FARG) {
+				/* conversion to '%s' may sign-extend ... */
 				warning(297, tyname(lbuf, sizeof(lbuf), tp),
 				    arg);
 			} else {
+				/* conversion to '%s' may sign-extend ... */
 				warning(131, tyname(lbuf, sizeof(lbuf), tp));
 			}
 		}
@@ -1812,6 +1820,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		case MINUS:
 		case MULT:
 		case SHL:
+			/* suggest cast from '%s' to '%s' on op %s to ... */
 			warning(324,
 			    tyname(rbuf, sizeof(rbuf), gettyp(ot)),
 			    tyname(lbuf, sizeof(lbuf), tp),
@@ -1828,11 +1837,13 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		/* conversion from '%s' may lose accuracy */
 		if (aflag) {
 			if (op == FARG) {
+				/* conv. from '%s' to '%s' may lose ... */
 				warning(298,
 				    tyname(rbuf, sizeof(rbuf), tn->tn_type),
 				    tyname(lbuf, sizeof(lbuf), tp),
 				    arg);
 			} else {
+				/* conv. from '%s' to '%s' may lose accuracy */
 				warning(132,
 				    tyname(rbuf, sizeof(rbuf), tn->tn_type),
 				    tyname(lbuf, sizeof(lbuf), tp));
@@ -2078,10 +2089,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			if (nsz > osz &&
 			    (nv->v_quad & qbmasks[osz - 1]) != 0 &&
 			    (nv->v_quad & xmask) != xmask) {
-				/*
-				 * extra bits set to 0 in conversion
-				 * of '%s' to '%s', op %s
-				 */
+				/* extra bits set to 0 in conv. of '%s' ... */
 				warning(309,
 				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
 				    tyname(rbuf, sizeof(rbuf), tp),
@@ -2390,6 +2398,7 @@ build_real_imag(op_t op, tnode_t *ln)
 		cn = new_int_const_node(FLOAT, (int64_t)1);
 		break;
 	default:
+		/* __%s__ is illegal for type %s */
 		error(276, op == REAL ? "real" : "imag",
 		    tyname(buf, sizeof(buf), ln->tn_type));
 		return NULL;
@@ -2409,8 +2418,8 @@ build_ampersand(tnode_t *tn, int noign)
 	tspec_t	t;
 
 	if (!noign && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
-		/* & before array or function: ignored */
 		if (tflag)
+			/* '&' before array or function: ignored */
 			warning(127);
 		return tn;
 	}
@@ -3024,6 +3033,7 @@ build_offsetof(type_t *tp, sym_t *sym)
 #endif
 	tspec_t t = tp->t_tspec;
 	if (t != STRUCT && t != UNION)
+		/* unacceptable operand of '%s' */
 		error(111, "offsetof");
 
 	// XXX: wrong size, no checking for sym fixme
@@ -3166,6 +3176,7 @@ cast(tnode_t *tn, type_t *tp)
 		sym_t *m;
 		str_t *str = tp->t_str;
 		if (!Sflag) {
+			/* union cast is a C9X feature */
 			error(328);
 			return NULL;
 		}
@@ -3179,12 +3190,13 @@ cast(tnode_t *tn, type_t *tp)
 				return tn;
 			}
 		}
+		/* type '%s' is not a member of '%s' */
 		error(329, tyname(buf, sizeof(buf), tn->tn_type),
 		    tyname(buf1, sizeof(buf1), tp));
 		return NULL;
 	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
-		/* invalid cast expression */
 		if (!Sflag || nt == ARRAY || nt == FUNC) {
+			/* invalid cast expression */
 			error(147);
 			return NULL;
 		}
@@ -3421,10 +3433,11 @@ constant(tnode_t *tn, int required)
 		v->v_quad = 1;
 	}
 
-	/* integral constant expression expected */
 	if (required)
+		/* integral constant expression expected */
 		error(55);
 	else
+		/* variable array dimension is a C99/GCC extension */
 		c99ism(318);
 
 	if (!tspec_is_int(v->v_tspec))
@@ -3676,8 +3689,8 @@ check_expr_misc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdi
 			outcall(tn, vctx || tctx, rvdisc);
 		break;
 	case EQ:
-		/* equality operator "==" found where "=" was exp. */
 		if (hflag && eqwarn)
+			/* operator '==' found where '=' was expected */
 			warning(160);
 		break;
 	case CON:
