@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.91 2021/01/01 01:42:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.92 2021/01/01 09:11:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.91 2021/01/01 01:42:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.92 2021/01/01 09:11:40 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -201,8 +201,7 @@ setcomplete(type_t *tp, int complete)
 	} else if (t == STRUCT || t == UNION) {
 		tp->t_str->sincompl = !complete;
 	} else {
-		if (t != ENUM)
-			LERROR("setcomplete()");
+		lint_assert(t == ENUM);
 		tp->t_enum->eincompl = !complete;
 	}
 }
@@ -258,14 +257,15 @@ add_type(type_t *tp)
 	printf("%s: %s\n", __func__, tyname(buf, sizeof(buf), tp));
 #endif
 	if (tp->t_typedef) {
-		if (dcs->d_type != NULL || dcs->d_atyp != NOTSPEC ||
-		    dcs->d_lmod != NOTSPEC || dcs->d_smod != NOTSPEC) {
-			/*
-			 * something like "typedef int a; int a b;"
-			 * This should not happen with current grammar.
-			 */
-			LERROR("add_type()");
-		}
+		/*
+		 * something like "typedef int a; int a b;"
+		 * This should not happen with current grammar.
+		 */
+		lint_assert(dcs->d_type == NULL);
+		lint_assert(dcs->d_atyp == NOTSPEC);
+		lint_assert(dcs->d_lmod == NOTSPEC);
+		lint_assert(dcs->d_smod == NOTSPEC);
+
 		dcs->d_type = tp;
 		return;
 	}
@@ -569,8 +569,7 @@ add_qualifier(tqual_t q)
 	} else {
 		if (q == THREAD)
 			return;
-		if (q != VOLATILE)
-			LERROR("add_qualifier()");
+		lint_assert(q == VOLATILE);
 		if (dcs->d_volatile) {
 			/* duplicate '%s' */
 			warning(10, "volatile");
@@ -610,8 +609,7 @@ popdecl(void)
 	if (dflag)
 		(void)printf("popdecl(%p %d)\n", dcs, (int)dcs->d_ctx);
 
-	if (dcs->d_next == NULL)
-		LERROR("popdecl()");
+	lint_assert(dcs->d_next != NULL);
 	di = dcs;
 	dcs = di->d_next;
 	switch (di->d_ctx) {
@@ -745,9 +743,10 @@ deftyp(void)
 	    tp == NULL)
 		t = c;
 
-	if (tp != NULL && (t != NOTSPEC || s != NOTSPEC || l != NOTSPEC)) {
-		/* should never happen */
-		LERROR("deftyp()");
+	if (tp != NULL) {
+		lint_assert(t == NOTSPEC);
+		lint_assert(s == NOTSPEC);
+		lint_assert(l == NOTSPEC);
 	}
 
 	if (tp == NULL) {
@@ -837,14 +836,12 @@ deftyp(void)
 	dcs->d_scl = scl;
 
 	if (dcs->d_const && dcs->d_type->t_const) {
-		if (!dcs->d_type->t_typedef)
-			LERROR("deftyp()");
+		lint_assert(dcs->d_type->t_typedef);
 		/* typedef already qualified with '%s' */
 		warning(68, "const");
 	}
 	if (dcs->d_volatile && dcs->d_type->t_volatile) {
-		if (!dcs->d_type->t_typedef)
-			LERROR("deftyp()");
+		lint_assert(dcs->d_type->t_typedef);
 		/* typedef already qualified with '%s' */
 		warning(68, "volatile");
 	}
@@ -956,8 +953,8 @@ getbound(type_t *tp)
 			a = WORST_ALIGN(1) * CHAR_BIT;
 		}
 	}
-	if (a < CHAR_BIT || a > WORST_ALIGN(1) * CHAR_BIT)
-		LERROR("getbound()");
+	lint_assert(a >= CHAR_BIT);
+	lint_assert(a <= WORST_ALIGN(1) * CHAR_BIT);
 	return a;
 }
 
@@ -1050,8 +1047,7 @@ check_type(sym_t *sym)
 		} else if (to == NOTSPEC && t == VOID) {
 			if (dcs->d_ctx == PARG) {
 				if (sym->s_scl != ABSTRACT) {
-					if (sym->s_name == unnamed)
-						LERROR("check_type()");
+					lint_assert(sym->s_name != unnamed);
 					/* void param. cannot have name: %s */
 					error(61, sym->s_name);
 					*tpp = gettyp(INT);
@@ -1088,13 +1084,11 @@ declarator_1_struct_union(sym_t *dsym)
 	int	o = 0;	/* Appease gcc */
 	scl_t	sc;
 
-	if ((sc = dsym->s_scl) != MOS && sc != MOU)
-		LERROR("declarator_1_struct_union()");
+	lint_assert((sc = dsym->s_scl) == MOS || sc == MOU);
 
 	if (dcs->d_rdcsym != NULL) {
-		if ((sc = dcs->d_rdcsym->s_scl) != MOS && sc != MOU)
-			/* should be ensured by storesym() */
-			LERROR("declarator_1_struct_union()");
+		/* should be ensured by storesym() */
+		lint_assert((sc = dcs->d_rdcsym->s_scl) == MOS || sc == MOU);
 		if (dsym->s_styp == dcs->d_rdcsym->s_styp) {
 			/* duplicate member name: %s */
 			error(33, dsym->s_name);
@@ -1604,8 +1598,7 @@ old_style_function_name(sym_t *sym)
 		if (blklev == sym->s_blklev) {
 			/* redeclaration of formal parameter %s */
 			error(21, sym->s_name);
-			if (!sym->s_defarg)
-				LERROR("old_style_function_name()");
+			lint_assert(sym->s_defarg);
 		}
 		sym = pushdown(sym);
 	}
@@ -1635,10 +1628,9 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		scl = STRTAG;
 	} else if (kind == UNION) {
 		scl = UNIONTAG;
-	} else if (kind == ENUM) {
-		scl = ENUMTAG;
 	} else {
-		LERROR("mktag()");
+		lint_assert(kind == ENUM);
+		scl = ENUMTAG;
 	}
 
 	if (tag != NULL) {
@@ -2311,8 +2303,8 @@ complete_type(sym_t *dsym, sym_t *ssym)
 	src = ssym->s_type;
 
 	while ((dst = *dstp) != NULL) {
-		if (src == NULL || dst->t_tspec != src->t_tspec)
-			LERROR("complete_type()");
+		lint_assert(src != NULL);
+		lint_assert(dst->t_tspec == src->t_tspec);
 		if (dst->t_tspec == ARRAY) {
 			if (dst->t_dim == 0 && src->t_dim != 0) {
 				*dstp = dst = duptyp(dst);
@@ -2791,8 +2783,7 @@ abstract_name(void)
 {
 	sym_t	*sym;
 
-	if (dcs->d_ctx != ABSTRACT && dcs->d_ctx != PARG)
-		LERROR("abstract_name()");
+	lint_assert(dcs->d_ctx == ABSTRACT || dcs->d_ctx == PARG);
 
 	sym = getblk(sizeof (sym_t));
 
@@ -2964,8 +2955,7 @@ static void
 check_argument_usage(int novar, sym_t *arg)
 {
 
-	if (!arg->s_set)
-		LERROR("check_argument_usage()");
+	lint_assert(arg->s_set);
 
 	if (novar)
 		return;
@@ -2983,8 +2973,8 @@ check_variable_usage(int novar, sym_t *sym)
 	scl_t	sc;
 	sym_t	*xsym;
 
-	if (blklev == 0 || sym->s_blklev == 0)
-		LERROR("check_variable_usage()");
+	lint_assert(blklev != 0);
+	lint_assert(sym->s_blklev != 0);
 
 	/* errors in expressions easily cause lots of these warnings */
 	if (nerr != 0)
@@ -3048,8 +3038,8 @@ static void
 check_label_usage(sym_t *lab)
 {
 
-	if (blklev != 1 || lab->s_blklev != 1)
-		LERROR("check_label_usage()");
+	lint_assert(blklev == 1);
+	lint_assert(lab->s_blklev == 1);
 
 	if (lab->s_set && !lab->s_used) {
 		curr_pos = lab->s_set_pos;
@@ -3119,8 +3109,7 @@ check_global_symbols(void)
 		} else if (sym->s_kind == FTAG) {
 			check_tag_usage(sym);
 		} else {
-			if (sym->s_kind != FMEMBER)
-				LERROR("check_global_symbols()");
+			lint_assert(sym->s_kind == FMEMBER);
 		}
 	}
 
@@ -3134,8 +3123,7 @@ check_global_variable(sym_t *sym)
 	if (sym->s_scl == TYPEDEF || sym->s_scl == ENUMCON)
 		return;
 
-	if (sym->s_scl != EXTERN && sym->s_scl != STATIC)
-		LERROR("check_global_variable()");
+	lint_assert(sym->s_scl == EXTERN || sym->s_scl == STATIC);
 
 	check_global_variable_size(sym);
 
