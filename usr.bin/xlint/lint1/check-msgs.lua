@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.1 2020/12/31 22:48:33 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.2 2021/01/01 00:00:24 rillig Exp $
 
 --[[
 
@@ -36,12 +36,28 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
     return
   end
 
+  msg = string.gsub(msg, "/%*", "**")
+  msg = string.gsub(msg, "%*/", "**")
+  comment = string.gsub(comment, "arg%.", "argument")
+  comment = string.gsub(comment, "bitop%.", "bitwise operation")
+  comment = string.gsub(comment, "comb%.", "combination")
+  comment = string.gsub(comment, "conv%.", "conversion")
+  comment = string.gsub(comment, "decl%.", "declaration")
+  comment = string.gsub(comment, "defn%.", "definition")
+  comment = string.gsub(comment, "expr%.", "expression")
+  comment = string.gsub(comment, "func%.", "function")
+  comment = string.gsub(comment, "incomp%.", "incompatible")
+  comment = string.gsub(comment, "init%.", "initialize")
+  comment = string.gsub(comment, "param%.", "parameter")
+  comment = string.gsub(comment, "poss%.", "possibly")
+  comment = string.gsub(comment, "trad%.", "traditional")
+
   if comment == msg then
     return
   end
 
-  local prefix = comment:match("(.*) %.%.%.$")
-  if prefix ~= nil and msg:find(prefix) == 1 then
+  local prefix = comment:match("^(.-)%s*%.%.%.$")
+  if prefix ~= nil and msg:find(prefix, 1, 1) == 1 then
     return
   end
 
@@ -66,7 +82,7 @@ local function collect_errors(fname, msgs)
       id = line:match("^%s+error%((%d+)[),]")
     end
     if id ~= nil then
-      local comment = prev:match("^%s+/%*%s+(.+)%s+%*/$")
+      local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
         check_message(fname, lineno, tonumber(id), comment, msgs, errors)
       end
