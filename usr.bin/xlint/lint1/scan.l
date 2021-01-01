@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.108 2021/01/01 11:09:40 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.109 2021/01/01 11:51:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.108 2021/01/01 11:09:40 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.109 2021/01/01 11:51:15 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -739,9 +739,6 @@ icon(int base)
 	case DCOMPLEX:
 	case LCOMPLEX:
 	case COMPLEX:
-		break;
-
-	case NTSPEC:	/* this value unused */
 		break;
 	}
 
