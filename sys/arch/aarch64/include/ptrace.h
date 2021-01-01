@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.9 2019/06/18 21:18:11 kamil Exp $ */
+/* $NetBSD: ptrace.h,v 1.9.2.1 2021/01/01 12:58:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -65,6 +65,25 @@
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xa0, 0x01, 0x20, 0xd4 })
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile("brk #13" ::: "memory")
 #define PTRACE_BREAKPOINT_SIZE	4
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd32.h"
+#endif
+
+#ifdef COMPAT_NETBSD32
+#include <machine/netbsd32_machdep.h>
+
+#define process_read_regs32	netbsd32_process_read_regs
+#define process_read_fpregs32	netbsd32_process_read_fpregs
+
+#define process_write_regs32	netbsd32_process_write_regs
+#define process_write_fpregs32	netbsd32_process_write_fpregs
+
+#define process_reg32		struct reg32
+#define process_fpreg32		struct fpreg32
+
+#define PTRACE_TRANSLATE_REQUEST32(x) netbsd32_ptrace_translate_request(x)
+#endif /* COMPAT_NETBSD32 */
 
 #elif defined(__arm__)
 

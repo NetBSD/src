@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2018/10/12 01:28:58 ryo Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.2.4.1 2021/01/01 12:58:35 martin Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -6,6 +6,18 @@
 #include <sys/ucontext.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/siginfo.h>
+
+/*
+ * arm ptrace constants
+ * Please keep in sync with sys/arch/arm/include/ptrace.h.
+ */
+#define PT32_STEP	(PT_FIRSTMACH + 0) /* Not implemented */
+#define PT32_GETREGS	(PT_FIRSTMACH + 1)
+#define PT32_SETREGS	(PT_FIRSTMACH + 2)
+#define PT32_GETFPREGS	(PT_FIRSTMACH + 5)
+#define PT32_SETFPREGS	(PT_FIRSTMACH + 6)
+#define PT32_SETSTEP	(PT_FIRSTMACH + 7) /* Not implemented */
+#define PT32_CLEARSTEP	(PT_FIRSTMACH + 8) /* Not implemented */
 
 #define NETBSD32_POINTER_TYPE uint32_t
 typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
@@ -103,8 +115,17 @@ struct netbsd32_cpustate {
 #define ARM_FPU_USED		3
 
 struct netbsd32_arm_sync_icache_args {
-	netbsd32_uintptr_t addr;	/* Virtual start address */
-	netbsd32_size_t len;		/* Region size */
+	uint32_t addr;		/* Virtual start address */
+	uint32_t len;		/* Region size */
 };
+
+/* Translate ptrace() PT_* request from 32-bit userland to kernel. */
+int netbsd32_ptrace_translate_request(int);
+
+int netbsd32_process_read_regs(struct lwp *, struct reg32 *);
+int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *, size_t *);
+
+int netbsd32_process_write_regs(struct lwp *, const struct reg32 *);
+int netbsd32_process_write_fpregs(struct lwp *, const struct fpreg32 *, size_t);
 
 #endif /* _MACHINE_NETBSD32_H_ */
