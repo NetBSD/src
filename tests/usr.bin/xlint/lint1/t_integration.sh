@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.15 2020/12/31 18:51:28 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.16 2021/01/01 01:07:08 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,6 +76,7 @@ test_case cast_typeof
 test_case decl_old_style_arguments
 test_case fold_test
 test_case gcc_extension
+test_case return_type
 test_case type_question_colon
 test_case typefun
 test_case typename_as_var

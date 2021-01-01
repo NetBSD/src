@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.108 2021/01/01 00:00:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.109 2021/01/01 01:07:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.108 2021/01/01 00:00:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.109 2021/01/01 01:07:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1369,6 +1369,7 @@ static void
 check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
+	char lbuf[128], rbuf[128];
 
 	mp = &modtab[op];
 
@@ -1384,7 +1385,8 @@ check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			break;
 		case RETURN:
 			/* return value type mismatch (%s) and (%s) */
-			warning(211);
+			warning(211, tyname(lbuf, sizeof(lbuf), ln->tn_type),
+			    tyname(rbuf, sizeof(rbuf), rn->tn_type));
 			break;
 		default:
 			/* enum type mismatch, op %s */
