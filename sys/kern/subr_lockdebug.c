@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.78 2021/01/01 14:04:17 riastradh Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.79 2021/01/01 14:08:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.78 2021/01/01 14:04:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.79 2021/01/01 14:08:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -784,12 +784,12 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
 		return;
 	}
 
-	printf_nolog("%s error: %s,%zu: %s\n\n", ld->ld_lockops->lo_name,
+	printf("%s error: %s,%zu: %s\n\n", ld->ld_lockops->lo_name,
 	    func, line, msg);
-	lockdebug_dump(curlwp, ld, printf_nolog);
+	lockdebug_dump(curlwp, ld, printf);
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
-	printf_nolog("\n");
+	printf("\n");
 	if (dopanic)
 		panic("LOCKDEBUG: %s error: %s,%zu: %s",
 		    ld->ld_lockops->lo_name, func, line, msg);
@@ -1039,14 +1039,14 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 	if (atomic_inc_uint_nv(&ld_panic) > 1)
 		return;
 
-	printf_nolog("%s error: %s,%zu: %s\n\n"
+	printf("%s error: %s,%zu: %s\n\n"
 	    "lock address : %#018lx\n"
 	    "current cpu  : %18d\n"
 	    "current lwp  : %#018lx\n",
 	    ops->lo_name, func, line, msg, (long)lock,
 	    (int)cpu_index(curcpu()), (long)curlwp);
-	(*ops->lo_dump)(lock, printf_nolog);
-	printf_nolog("\n");
+	(*ops->lo_dump)(lock, printf);
+	printf("\n");
 
 	panic("lock error: %s: %s,%zu: %s: lock %p cpu %d lwp %p",
 	    ops->lo_name, func, line, msg, lock, cpu_index(curcpu()), curlwp);
