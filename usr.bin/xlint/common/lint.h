@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.19 2021/01/01 11:51:15 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.20 2021/01/01 11:58:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -93,8 +93,8 @@ typedef	struct {
 	size_t	tt_sz;			/* size in bits */
 	size_t	tt_psz;			/* size, different from tt_sz
 					   if pflag is set */
-	tspec_t	tt_styp;		/* signed counterpart */
-	tspec_t	tt_utyp;		/* unsigned counterpart */
+	tspec_t	tt_signed_counterpart;
+	tspec_t	tt_unsigned_counterpart;
 	u_int	tt_is_int : 1;		/* 1 if integer type */
 	u_int	tt_is_uint : 1;		/* 1 if unsigned integer type */
 	u_int	tt_is_float : 1;	/* 1 if floating point type */
@@ -106,8 +106,8 @@ typedef	struct {
 
 #define size(t)			(ttab[t].tt_sz)
 #define psize(t)		(ttab[t].tt_psz)
-#define styp(t)			(ttab[t].tt_styp)
-#define utyp(t)			(ttab[t].tt_utyp)
+#define signed_type(t)		(ttab[t].tt_signed_counterpart)
+#define unsigned_type(t)	(ttab[t].tt_unsigned_counterpart)
 #define tspec_is_int(t)		(ttab[t].tt_is_int)
 #define tspec_is_uint(t)	(ttab[t].tt_is_uint)
 #define tspec_is_float(t)	(ttab[t].tt_is_float)

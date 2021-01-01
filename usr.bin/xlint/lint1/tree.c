@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.113 2021/01/01 11:41:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.114 2021/01/01 11:58:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.113 2021/01/01 11:41:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.114 2021/01/01 11:58:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1666,7 +1666,7 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 		}
 		t = tl[i];
 		if (u && tspec_is_int(t) && !tspec_is_uint(t))
-			t = utyp(t);
+			t = unsigned_type(t);
 	}
 
 	if (t != lt) {
@@ -1775,7 +1775,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		 * and the msb of the argument is not set, print no warning
 		 */
 		if (ptn->tn_op == CON && tspec_is_int(nt) &&
-		    styp(nt) == styp(ot) &&
+		    signed_type(nt) == signed_type(ot) &&
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else {
