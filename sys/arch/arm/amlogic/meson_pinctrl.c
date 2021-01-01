@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.6 2019/10/01 23:32:52 jmcneill Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.7 2021/01/01 07:21:58 ryo Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.6 2019/10/01 23:32:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.7 2021/01/01 07:21:58 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,6 +84,10 @@ static const struct of_compat_data compat_data[] = {
 	{ "amlogic,meson-gxl-aobus-pinctrl",	(uintptr_t)&mesongxl_aobus_pinctrl_config },
 	{ "amlogic,meson-gxl-periphs-pinctrl",	(uintptr_t)&mesongxl_periphs_pinctrl_config },
 #endif
+#ifdef SOC_MESONG12
+	{ "amlogic,meson-g12a-aobus-pinctrl",	(uintptr_t)&mesong12a_aobus_pinctrl_config },
+	{ "amlogic,meson-g12a-periphs-pinctrl",	(uintptr_t)&mesong12a_periphs_pinctrl_config },
+#endif
 	{ NULL, 0 }
 };
 
@@ -129,10 +133,16 @@ meson_pinctrl_set_group(struct meson_pinctrl_softc *sc,
 	uint32_t val;
 
 	val = MUX_READ(sc, group->reg);
-	if (enable)
-		val |= __BIT(group->bit);
-	else
-		val &= ~__BIT(group->bit);
+	if (group->mask == 0) {
+		if (enable)
+			val |= __BIT(group->bit);
+		else
+			val &= ~__BIT(group->bit);
+	} else {
+		val &= ~group->mask;
+		if (enable)
+			val |= __SHIFTIN(group->func, group->mask);
+	}
 	MUX_WRITE(sc, group->reg, val);
 }
 
@@ -432,17 +442,19 @@ meson_pinctrl_initres(struct meson_pinctrl_softc *sc)
 				aprint_error(": couldn't map mux registers\n");
 				return ENXIO;
 			}
-			if (fdtbus_get_reg_byname(child, "pull", &addr, &size) != 0 ||
-			    bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_pull) != 0) {
-				aprint_error(": couldn't map pull registers\n");
-				return ENXIO;
-			}
 			if (fdtbus_get_reg_byname(child, "gpio", &addr, &size) != 0 ||
 			    bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_gpio) != 0) {
 				aprint_error(": couldn't map gpio registers\n");
 				return ENXIO;
 			}
 
+			/* pull register is optional */
+			if (fdtbus_get_reg_byname(child, "pull", &addr, &size) == 0) {
+				if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_pull) != 0) {
+					aprint_error(": couldn't map pull registers\n");
+					return ENXIO;
+				}
+			}
 			/* pull-enable register is optional */
 			if (fdtbus_get_reg_byname(child, "pull-enable", &addr, &size) == 0) {
 				if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_pull_enable) != 0) {
