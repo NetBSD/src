@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.77 2020/05/15 13:09:02 maxv Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.78 2021/01/01 14:04:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.77 2020/05/15 13:09:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.78 2021/01/01 14:04:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -603,7 +603,7 @@ lockdebug_unlocked(const char *func, size_t line,
 			    ld_chain);
 		}
 		ld->ld_flags &= ~LD_LOCKED;
-		ld->ld_unlocked = where;		
+		ld->ld_unlocked = where;
 		ld->ld_lwp = NULL;
 	}
 	__cpu_simple_unlock(&ld->ld_spinlock);
@@ -612,7 +612,7 @@ lockdebug_unlocked(const char *func, size_t line,
 
 /*
  * lockdebug_barrier:
- *	
+ *
  *	Panic if we hold more than one specified lock, and optionally, if we
  *	hold any sleep locks.
  */
@@ -1023,7 +1023,7 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 	int s;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(func, line, lock, 
+	if ((ld = lockdebug_lookup(func, line, lock,
 			(uintptr_t) __builtin_return_address(0))) != NULL) {
 		lockdebug_abort1(func, line, ld, s, msg, true);
 		return;
