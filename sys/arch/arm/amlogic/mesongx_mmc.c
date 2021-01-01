@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.5 2019/04/21 13:08:48 jmcneill Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.6 2021/01/01 07:17:36 ryo Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.5 2019/04/21 13:08:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.6 2021/01/01 07:17:36 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,10 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.5 2019/04/21 13:08:48 jmcneill Exp
 #include <dev/fdt/fdtvar.h>
 
 #define	SD_EMMC_CLOCK			0x00
-#define	 CLOCK_CFG_IRQ_SDIO_SLEEP		__BIT(25)
-#define	 CLOCK_CFG_ALWAYS_ON			__BIT(24)
-#define	 CLOCK_CFG_RX_DELAY			__BITS(23,20)
-#define	 CLOCK_CFG_TX_DELAY			__BITS(19,16)
+#define	 CLOCK_CFG_V2_IRQ_SDIO_SLEEP		__BIT(25)
+#define	 CLOCK_CFG_V2_ALWAYS_ON			__BIT(24)
+#define	 CLOCK_CFG_V2_RX_DELAY			__BITS(23,20)
+#define	 CLOCK_CFG_V2_TX_DELAY			__BITS(19,16)
+#define	 CLOCK_CFG_V3_IRQ_SDIO_SLEEP		__BIT(29)
+#define	 CLOCK_CFG_V3_ALWAYS_ON			__BIT(28)
+#define	 CLOCK_CFG_V3_RX_DELAY			__BITS(27,22)
+#define	 CLOCK_CFG_V3_TX_DELAY			__BITS(21,16)
 #define	 CLOCK_CFG_SRAM_PD			__BITS(15,14)
 #define	 CLOCK_CFG_RX_PHASE			__BITS(13,12)
 #define	 CLOCK_CFG_TX_PHASE			__BITS(11,10)
@@ -56,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.5 2019/04/21 13:08:48 jmcneill Exp
 #define	 CLOCK_CFG_SRC				__BITS(7,6)
 #define	 CLOCK_CFG_DIV				__BITS(5,0)
 #define	SD_EMMC_DELAY			0x04
-#define	SD_EMMC_ADJUST			0x08
+#define	SD_EMMC_ADJUST			0x08	/* V2 */
 #define	 ADJUST_ADJ_DELAY			__BITS(21,16)
 #define	 ADJUST_CALI_RISE			__BIT(14)
 #define	 ADJUST_ADJ_ENABLE			__BIT(13)
@@ -66,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.5 2019/04/21 13:08:48 jmcneill Exp
 #define	 CALOUT_CALI_SETUP			__BITS(15,8)
 #define	 CALOUT_CALI_VLD			__BIT(7)
 #define	 CALOUT_CALI_IDX			__BITS(5,0)
+#define SD_EMMC_V3_ADJUST		0x0c
 #define	SD_EMMC_START			0x40
 #define	 START_DESC_ADDR			__BITS(31,2)
 #define	 START_DESC_BUSY			__BIT(1)
@@ -214,6 +219,7 @@ struct mesongx_mmc_softc {
 
 	device_t		sc_sdmmc_dev;
 	uint32_t		sc_host_ocr;
+	int			sc_hwtype;
 
 	struct sdmmc_command	*sc_cmd;
 
@@ -257,8 +263,9 @@ CFATTACH_DECL_NEW(mesongx_mmc, sizeof(struct mesongx_mmc_softc),
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 
 static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson-gx-mmc",	1 },
-	{ "amlogic,meson-gxbb-mmc",	1 },
+	{ "amlogic,meson-gx-mmc",	2 },
+	{ "amlogic,meson-gxbb-mmc",	2 },
+	{ "amlogic,meson-axg-mmc",	3 },
 	{ NULL }
 };
 
@@ -279,6 +286,8 @@ mesongx_mmc_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
+
+	sc->sc_hwtype = (int)of_search_compatible(phandle, compat_data)->data;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -483,7 +492,10 @@ mesongx_mmc_set_clock(struct mesongx_mmc_softc *sc, u_int freq, bool ddr)
 		return ERANGE;
 
 	val = MMC_READ(sc, SD_EMMC_CLOCK);
-	val |= CLOCK_CFG_ALWAYS_ON;
+	if (sc->sc_hwtype == 3)
+		val |= CLOCK_CFG_V3_ALWAYS_ON;
+	else
+		val |= CLOCK_CFG_V2_ALWAYS_ON;
 	val &= ~CLOCK_CFG_RX_PHASE;
 	val |= __SHIFTIN(0, CLOCK_CFG_RX_PHASE);
 	val &= ~CLOCK_CFG_TX_PHASE;
