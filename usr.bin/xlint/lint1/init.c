@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.50 2021/01/01 11:41:01 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.51 2021/01/01 16:50:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.50 2021/01/01 11:41:01 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.51 2021/01/01 16:50:47 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -78,13 +78,17 @@ static	int	initstack_string(tnode_t *);
 #endif
 
 void
-push_member(sb)
-	sbuf_t *sb;
+push_member(sbuf_t *sb)
 {
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
 	nam->n_name = sb->sb_name;
 	DPRINTF(("%s: %s %p\n", __func__, nam->n_name, nam));
 	if (namedmem == NULL) {
+		/*
+		 * XXX: Why is this a circular list?
+		 * XXX: Why is this a doubly-linked list?
+		 * A simple stack should suffice.
+		 */
 		nam->n_prev = nam->n_next = nam;
 		namedmem = nam;
 	} else {
@@ -105,7 +109,7 @@ pop_member(void)
 	} else {
 		namlist_t *nam = namedmem;
 		namedmem = namedmem->n_next;
-		namedmem->n_next = nam->n_next;
+		namedmem->n_next = nam->n_next; /* FIXME: inner circle */
 		namedmem->n_prev = nam->n_prev;
 		free(nam);
 	}
