@@ -1,4 +1,4 @@
-/* $NetBSD: pwmregulator.c,v 1.1 2020/12/31 15:12:33 ryo Exp $ */
+/* $NetBSD: pwmregulator.c,v 1.2 2021/01/01 03:07:51 ryo Exp $ */
 
 /*
  * Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmregulator.c,v 1.1 2020/12/31 15:12:33 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmregulator.c,v 1.2 2021/01/01 03:07:51 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ struct voltage_duty {
 struct pwmregulator_softc {
 	device_t sc_dev;
 	pwm_tag_t sc_pwm;
+	struct fdtbus_gpio_pin *sc_pin;
 	struct voltage_duty *sc_voltage_table;
 	int sc_voltage_table_num;
 	int sc_phandle;
@@ -132,8 +133,6 @@ pwmregulator_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_dutycycle_unit) != 0)
 		sc->sc_dutycycle_unit = 100;
 
-	len = of_getprop_uint32_array(phandle, "pwm-dutycycle-range",
-	    sc->sc_dutycycle_range, 2);
 	if (of_getprop_uint32_array(phandle, "pwm-dutycycle-range",
 	    sc->sc_dutycycle_range, 2) != 0) {
 		sc->sc_dutycycle_range[0] = 0;
@@ -193,6 +192,10 @@ pwmregulator_acquire(device_t dev)
 {
 	struct pwmregulator_softc * const sc = device_private(dev);
 
+	/* "enable-gpios" is optional */
+	sc->sc_pin = fdtbus_gpio_acquire(sc->sc_phandle, "enable-gpios",
+	    GPIO_PIN_OUTPUT);
+
 	sc->sc_pwm = fdtbus_pwm_acquire(sc->sc_phandle, "pwms");
 	if (sc->sc_pwm == NULL)
 		return ENXIO;
@@ -205,6 +208,11 @@ pwmregulator_release(device_t dev)
 {
 	struct pwmregulator_softc * const sc = device_private(dev);
 
+	if (sc->sc_pin != NULL) {
+		fdtbus_gpio_write(sc->sc_pin, 0);
+		fdtbus_gpio_release(sc->sc_pin);
+	}
+
 	sc->sc_pwm = NULL;
 }
 
@@ -212,14 +220,22 @@ static int
 pwmregulator_enable(device_t dev, bool enable)
 {
 	struct pwmregulator_softc * const sc = device_private(dev);
+	int error;
 
 	if (sc->sc_pwm == NULL)
 		return ENXIO;
 
-	if (enable)
-		return pwm_enable(sc->sc_pwm);
-	else
-		return pwm_disable(sc->sc_pwm);
+	if (enable) {
+		if (sc->sc_pin != NULL)
+			fdtbus_gpio_write(sc->sc_pin, 1);
+		error = pwm_enable(sc->sc_pwm);
+	} else {
+		error = pwm_disable(sc->sc_pwm);
+		if (sc->sc_pin != NULL)
+			fdtbus_gpio_write(sc->sc_pin, 0);
+	}
+
+	return error;
 }
 
 static int
