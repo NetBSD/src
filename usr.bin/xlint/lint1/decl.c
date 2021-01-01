@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.90 2021/01/01 01:29:30 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.91 2021/01/01 01:42:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.90 2021/01/01 01:29:30 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.91 2021/01/01 01:42:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -305,7 +305,7 @@ add_type(type_t *tp)
 		else if (dcs->d_cmod == DOUBLE) {
 			t = DCOMPLEX;
 		} else
-			error(308, basic_type_name(dcs->d_cmod));
+			error(308, tspec_name(dcs->d_cmod));
 		dcs->d_cmod = NOTSPEC;
 	}
 
@@ -800,7 +800,7 @@ deftyp(void)
 		case LCOMPLEX:
 			break;
 		default:
-			LERROR("deftyp(%s)", basic_type_name(t));
+			LERROR("deftyp(%s)", tspec_name(t));
 		}
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 			dcs->d_terr = 1;
