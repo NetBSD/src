@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.42 2021/01/01 10:55:28 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.43 2021/01/01 11:01:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.42 2021/01/01 10:55:28 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.43 2021/01/01 11:01:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -413,82 +413,91 @@ named_label(sym_t *sym)
 	reached = 1;
 }
 
-void
-case_label(tnode_t *tn)
+static void
+check_case_label(tnode_t *tn, cstk_t *ci)
 {
-	cstk_t	*ci;
 	clst_t	*cl;
 	val_t	*v;
 	val_t	nv;
 	tspec_t	t;
 
+	if (ci == NULL) {
+		/* case not in switch */
+		error(195);
+		return;
+	}
+
+	if (tn != NULL && tn->tn_op != CON) {
+		/* non-constant case expression */
+		error(197);
+		return;
+	}
+
+	if (tn != NULL && !tspec_is_int(tn->tn_type->t_tspec)) {
+		/* non-integral case expression */
+		error(198);
+		return;
+	}
+
+	lint_assert(ci->c_swtype != NULL);
+
+	if (reached && !ftflg) {
+		if (hflag)
+			/* fallthrough on case statement */
+			warning(220);
+	}
+
+	t = tn->tn_type->t_tspec;
+	if (t == LONG || t == ULONG ||
+	    t == QUAD || t == UQUAD) {
+		if (tflag)
+			/* case label must be of type ... */
+			warning(203);
+	}
+
+	/*
+	 * get the value of the expression and convert it
+	 * to the type of the switch expression
+	 */
+	v = constant(tn, 1);
+	(void) memset(&nv, 0, sizeof nv);
+	cvtcon(CASE, 0, ci->c_swtype, &nv, v);
+	free(v);
+
+	/* look if we had this value already */
+	for (cl = ci->c_clst; cl != NULL; cl = cl->cl_next) {
+		if (cl->cl_val.v_quad == nv.v_quad)
+			break;
+	}
+	if (cl != NULL && tspec_is_uint(nv.v_tspec)) {
+		/* duplicate case in switch: %lu */
+		error(200, (u_long)nv.v_quad);
+	} else if (cl != NULL) {
+		/* duplicate case in switch: %ld */
+		error(199, (long)nv.v_quad);
+	} else {
+		/*
+		 * append the value to the list of
+		 * case values
+		 */
+		cl = xcalloc(1, sizeof (clst_t));
+		cl->cl_val = nv;
+		cl->cl_next = ci->c_clst;
+		ci->c_clst = cl;
+	}
+}
+
+void
+case_label(tnode_t *tn)
+{
+	cstk_t	*ci;
+
 	/* find the stack entry for the innermost switch statement */
 	for (ci = cstk; ci != NULL && !ci->c_switch; ci = ci->c_next)
 		continue;
 
-	if (ci == NULL) {
-		/* case not in switch */
-		error(195);
-		tn = NULL;
-	} else if (tn != NULL && tn->tn_op != CON) {
-		/* non-constant case expression */
-		error(197);
-		tn = NULL;
-	} else if (tn != NULL && !tspec_is_int(tn->tn_type->t_tspec)) {
-		/* non-integral case expression */
-		error(198);
-		tn = NULL;
-	}
+	check_case_label(tn, ci);
 
-	if (tn != NULL) {
-
-		lint_assert(ci->c_swtype != NULL);
-
-		if (reached && !ftflg) {
-			if (hflag)
-				/* fallthrough on case statement */
-				warning(220);
-		}
-
-		t = tn->tn_type->t_tspec;
-		if (t == LONG || t == ULONG ||
-		    t == QUAD || t == UQUAD) {
-			if (tflag)
-				/* case label must be of type ... */
-				warning(203);
-		}
-
-		/*
-		 * get the value of the expression and convert it
-		 * to the type of the switch expression
-		 */
-		v = constant(tn, 1);
-		(void) memset(&nv, 0, sizeof nv);
-		cvtcon(CASE, 0, ci->c_swtype, &nv, v);
-		free(v);
-
-		/* look if we had this value already */
-		for (cl = ci->c_clst; cl != NULL; cl = cl->cl_next) {
-			if (cl->cl_val.v_quad == nv.v_quad)
-				break;
-		}
-		if (cl != NULL && tspec_is_uint(nv.v_tspec)) {
-			/* duplicate case in switch: %lu */
-			error(200, (u_long)nv.v_quad);
-		} else if (cl != NULL) {
-			/* duplicate case in switch: %ld */
-			error(199, (long)nv.v_quad);
-		} else {
-			/*
-			 * append the value to the list of
-			 * case values
-			 */
-			cl = xcalloc(1, sizeof (clst_t));
-			cl->cl_val = nv;
-			cl->cl_next = ci->c_clst;
-			ci->c_clst = cl;
-		}
-	}
 	tfreeblk();
 
 	reached = 1;
