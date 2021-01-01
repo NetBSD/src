@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.54 2021/01/01 19:28:51 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.55 2021/01/01 20:02:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,10 +37,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.54 2021/01/01 19:28:51 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.55 2021/01/01 20:02:56 rillig Exp $");
 #endif
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -74,6 +73,19 @@ typedef	struct istk {
 	struct	istk *i_next;		/* previous level */
 } istk_t;
 
+/*
+ * The names for a nested C99 initialization designator, in a circular list.
+ *
+ * Example:
+ *	struct stat st = {
+ *		.st_size = 123,
+ *		.st_mtim.tv_sec = 45,
+ *		.st_mtim.tv_nsec
+ *	};
+ *
+ *	During initialization, this list first contains ["st_size"], then
+ *	["st_mtim", "tv_sec"], then ["st_mtim", "tv_nsec"].
+ */
 typedef struct namlist {
 	const char *n_name;
 	struct namlist *n_prev;
@@ -144,6 +156,21 @@ pop_member(void)
 	}
 }
 
+static void
+named_member_dprint(void)
+{
+	namlist_t *name;
+
+	if (namedmem == NULL)
+		return;
+	name = namedmem;
+	DPRINTF(("named member:"));
+	do {
+		DPRINTF((" %s", name->n_name));
+		name = name->n_next;
+	} while (name != namedmem);
+	DPRINTF(("\n"));
+}
 
 /*
  * Initialize the initialisation stack by putting an entry for the variable
@@ -546,6 +573,8 @@ mkinit(tnode_t *tn)
 	DPRINTF(("%s: type=%s, value=%s\n", __func__,
 	    tyname(buf, sizeof(buf), tn->tn_type),
 	    print_tnode(sbuf, sizeof(sbuf), tn)));
+	named_member_dprint();
+
 	if (initerr || tn == NULL)
 		return;
 
