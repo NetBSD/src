@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.5 2020/12/31 20:47:06 mrg Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.6 2021/01/01 11:44:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.5 2020/12/31 20:47:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.6 2021/01/01 11:44:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -587,8 +587,12 @@ rk_i2s_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
-	sc->sc_grf = fdtbus_syscon_acquire(phandle, "rockchip,grf");
-	if (sc->sc_grf != NULL && sc->sc_conf->oe_mask != 0) {
+	if (sc->sc_conf != NULL && sc->sc_conf->oe_mask != 0) {
+		sc->sc_grf = fdtbus_syscon_acquire(phandle, "rockchip,grf");
+		if (sc->sc_grf == NULL) {
+			aprint_error(": couldn't find grf\n");
+			return;
+		}
 		syscon_lock(sc->sc_grf);
 		val = __SHIFTIN(sc->sc_conf->oe_val, sc->sc_conf->oe_mask);
 		val |= (sc->sc_conf->oe_mask << 16);
