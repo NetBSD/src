@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.125 2021/01/01 10:55:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.126 2021/01/01 11:09:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.125 2021/01/01 10:55:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.126 2021/01/01 11:09:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -137,7 +137,7 @@ anonymize(sym_t *s)
 	pqinf_t	*y_pqinf;
 };
 
-%token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPARN T_RPARN
+%token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
 %token	<y_op>		T_STROP
 %token	<y_op>		T_UNOP
 %token	<y_op>		T_INCDEC
@@ -260,7 +260,7 @@ anonymize(sym_t *s)
 %left	T_ADDOP
 %left	T_MULT T_DIVOP
 %right	T_UNOP T_INCDEC T_SIZEOF TBUILTIN_SIZEOF T_ALIGNOF T_REAL T_IMAG
-%left	T_LPARN T_LBRACK T_STROP
+%left	T_LPAREN T_LBRACK T_STROP
 
 %token	<y_sb>		T_NAME
 %token	<y_sb>		T_TYPENAME
@@ -538,23 +538,23 @@ type_attribute_bounded_type:
 
 type_attribute_spec:
 	  /* empty */
-	| T_AT_DEPRECATED T_LPARN string T_RPARN
+	| T_AT_DEPRECATED T_LPAREN string T_RPAREN
 	| T_AT_DEPRECATED
-	| T_AT_ALIGNED T_LPARN constant T_RPARN
-	| T_AT_ALLOC_SIZE T_LPARN constant T_COMMA constant T_RPARN
-	| T_AT_ALLOC_SIZE T_LPARN constant T_RPARN
-	| T_AT_BOUNDED T_LPARN type_attribute_bounded_type
-	  T_COMMA constant T_COMMA constant T_RPARN
-	| T_AT_SENTINEL T_LPARN constant T_RPARN
+	| T_AT_ALIGNED T_LPAREN constant T_RPAREN
+	| T_AT_ALLOC_SIZE T_LPAREN constant T_COMMA constant T_RPAREN
+	| T_AT_ALLOC_SIZE T_LPAREN constant T_RPAREN
+	| T_AT_BOUNDED T_LPAREN type_attribute_bounded_type
+	  T_COMMA constant T_COMMA constant T_RPAREN
+	| T_AT_SENTINEL T_LPAREN constant T_RPAREN
 	| T_AT_SENTINEL
-	| T_AT_FORMAT_ARG T_LPARN constant T_RPARN
-	| T_AT_NONNULL T_LPARN constant T_RPARN
-	| T_AT_MODE T_LPARN T_NAME T_RPARN
-	| T_AT_ALIAS T_LPARN string T_RPARN
-	| T_AT_OPTIMIZE T_LPARN string T_RPARN
-	| T_AT_PCS T_LPARN string T_RPARN
-	| T_AT_SECTION T_LPARN string T_RPARN
-	| T_AT_TLS_MODEL T_LPARN string T_RPARN
+	| T_AT_FORMAT_ARG T_LPAREN constant T_RPAREN
+	| T_AT_NONNULL T_LPAREN constant T_RPAREN
+	| T_AT_MODE T_LPAREN T_NAME T_RPAREN
+	| T_AT_ALIAS T_LPAREN string T_RPAREN
+	| T_AT_OPTIMIZE T_LPAREN string T_RPAREN
+	| T_AT_PCS T_LPAREN string T_RPAREN
+	| T_AT_SECTION T_LPAREN string T_RPAREN
+	| T_AT_TLS_MODEL T_LPAREN string T_RPAREN
 	| T_AT_ALIGNED
 	| T_AT_CONSTRUCTOR
 	| T_AT_DESTRUCTOR
@@ -573,8 +573,8 @@ type_attribute_spec:
 	| T_AT_TUNION
 	| T_AT_GNU_INLINE
 	| T_AT_ALWAYS_INLINE
-	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
-	    constant T_COMMA constant T_RPARN
+	| T_AT_FORMAT T_LPAREN type_attribute_format_type T_COMMA
+	    constant T_COMMA constant T_RPAREN
 	| T_AT_USED {
 		add_attr_used();
 	}
@@ -583,7 +583,7 @@ type_attribute_spec:
 	}
 	| T_AT_WARN_UNUSED_RESULT
 	| T_AT_WEAK
-	| T_AT_VISIBILITY T_LPARN constant T_RPARN
+	| T_AT_VISIBILITY T_LPAREN constant T_RPAREN
 	| T_QUAL {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
@@ -596,11 +596,11 @@ type_attribute_spec_list:
 	;
 
 type_attribute:
-	  T_ATTRIBUTE T_LPARN T_LPARN {
+	  T_ATTRIBUTE T_LPAREN T_LPAREN {
 	    attron = 1;
 	} type_attribute_spec_list {
 	    attron = 0;
-	} T_RPARN T_RPARN
+	} T_RPAREN T_RPAREN
 	| T_PACKED {
 		addpacked();
 	}
@@ -1034,7 +1034,7 @@ notype_direct_decl:
 	  T_NAME {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPARN type_decl T_RPARN {
+	| T_LPAREN type_decl T_RPAREN {
 		$$ = $2;
 	  }
 	| type_attribute notype_direct_decl {
@@ -1067,7 +1067,7 @@ type_direct_decl:
 	  identifier {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPARN type_decl T_RPARN {
+	| T_LPAREN type_decl T_RPAREN {
 		$$ = $2;
 	  }
 	| type_attribute type_direct_decl {
@@ -1110,7 +1110,7 @@ direct_param_decl:
 	| identifier {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPARN notype_param_decl T_RPARN {
+	| T_LPAREN notype_param_decl T_RPAREN {
 		$$ = $2;
 	  }
 	| direct_param_decl T_LBRACK T_RBRACK {
@@ -1139,7 +1139,7 @@ direct_notype_param_decl:
 	  identifier {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPARN notype_param_decl T_RPARN {
+	| T_LPAREN notype_param_decl T_RPAREN {
 		$$ = $2;
 	  }
 	| direct_notype_param_decl T_LBRACK T_RBRACK {
@@ -1199,7 +1199,7 @@ type_qualifier:
 	;
 
 param_list:
-	  id_list_lparn identifier_list T_RPARN {
+	  id_list_lparn identifier_list T_RPAREN {
 		$$ = $2;
 	  }
 	| abs_decl_param_list {
@@ -1208,7 +1208,7 @@ param_list:
 	;
 
 id_list_lparn:
-	  T_LPARN {
+	  T_LPAREN {
 		blklev++;
 		pushdecl(PARG);
 	  }
@@ -1227,20 +1227,20 @@ identifier_list:
 	;
 
 abs_decl_param_list:
-	  abs_decl_lparn T_RPARN {
+	  abs_decl_lparn T_RPAREN {
 		$$ = NULL;
 	  }
-	| abs_decl_lparn vararg_parameter_type_list T_RPARN {
+	| abs_decl_lparn vararg_parameter_type_list T_RPAREN {
 		dcs->d_proto = 1;
 		$$ = $2;
 	  }
-	| abs_decl_lparn error T_RPARN {
+	| abs_decl_lparn error T_RPAREN {
 		$$ = NULL;
 	  }
 	;
 
 abs_decl_lparn:
-	  T_LPARN {
+	  T_LPAREN {
 		blklev++;
 		pushdecl(PARG);
 	  }
@@ -1308,11 +1308,11 @@ opt_asm_or_symbolrename:		/* expect only one */
 	  /* empty */ {
 		$$ = NULL;
 	  }
-	| T_ASM T_LPARN T_STRING T_RPARN {
+	| T_ASM T_LPAREN T_STRING T_RPAREN {
 		freeyyv(&$3, T_STRING);
 		$$ = NULL;
 	  }
-	| T_SYMBOLRENAME T_LPARN T_NAME T_RPARN {
+	| T_SYMBOLRENAME T_LPAREN T_NAME T_RPAREN {
 		$$ = $3;
 	  }
 	;
@@ -1437,7 +1437,7 @@ abs_decl:
 	;
 
 direct_abs_decl:
-	  T_LPARN abs_decl T_RPARN {
+	  T_LPAREN abs_decl T_RPAREN {
 		$$ = $2;
 	  }
 	| T_LBRACK T_RBRACK {
@@ -1618,14 +1618,14 @@ if_without_else:
 	;
 
 if_expr:
-	  T_IF T_LPARN expr T_RPARN {
+	  T_IF T_LPAREN expr T_RPAREN {
 		if1($3);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
 switch_expr:
-	  T_SWITCH T_LPARN expr T_RPARN {
+	  T_SWITCH T_LPAREN expr T_RPAREN {
 		switch1($3);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
@@ -1642,7 +1642,7 @@ association_list:
 	;
 
 generic_expr:
-	  T_GENERIC T_LPARN expr T_COMMA association_list T_RPARN {
+	  T_GENERIC T_LPAREN expr T_COMMA association_list T_RPAREN {
 		$$ = $3;
 	  }
 	;
@@ -1685,7 +1685,7 @@ iteration_stmnt:
 	;
 
 while_expr:
-	  T_WHILE T_LPARN expr T_RPARN {
+	  T_WHILE T_LPAREN expr T_RPAREN {
 		while1($3);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
@@ -1698,25 +1698,25 @@ do:
 	;
 
 do_while_expr:
-	  T_WHILE T_LPARN expr T_RPARN T_SEMI {
+	  T_WHILE T_LPAREN expr T_RPAREN T_SEMI {
 		$$ = $3;
 	  }
 	;
 
 for_start:
-	  T_FOR T_LPARN {
+	  T_FOR T_LPAREN {
 		pushdecl(AUTO);
 		blklev++;
 	  }
 	;
 for_exprs:
 	  for_start declspecs deftyp notype_init_decls T_SEMI opt_expr
-	  T_SEMI opt_expr T_RPARN {
+	  T_SEMI opt_expr T_RPAREN {
 		c99ism(325);
 		for1(NULL, $6, $8);
 		CLRWFLGS(__FILE__, __LINE__);
 	    }
-	  | for_start opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
+	  | for_start opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPAREN {
 		for1($2, $4, $6);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
@@ -1759,10 +1759,10 @@ goto:
 	;
 
 asm_stmnt:
-	  T_ASM T_LPARN read_until_rparn T_SEMI {
+	  T_ASM T_LPAREN read_until_rparn T_SEMI {
 		setasm();
 	  }
-	| T_ASM T_QUAL T_LPARN read_until_rparn T_SEMI {
+	| T_ASM T_QUAL T_LPAREN read_until_rparn T_SEMI {
 		setasm();
 	  }
 	| T_ASM error
@@ -1856,29 +1856,29 @@ term:
 	| T_CON {
 		$$ = getcnode(gettyp($1->v_tspec), $1);
 	  }
-	| T_LPARN expr T_RPARN {
+	| T_LPAREN expr T_RPAREN {
 		if ($2 != NULL)
 			$2->tn_parenthesized = 1;
 		$$ = $2;
 	  }
-	| T_LPARN comp_stmnt_lbrace declaration_list expr_stmnt_list {
+	| T_LPAREN comp_stmnt_lbrace declaration_list expr_stmnt_list {
 		blklev--;
 		mblklev--;
 		initsym = mktempsym(duptyp($4->tn_type));
 		mblklev++;
 		blklev++;
 		gnuism(320);
-	} comp_stmnt_rbrace T_RPARN {
+	} comp_stmnt_rbrace T_RPAREN {
 		$$ = getnnode(initsym, 0);
 	}
-	| T_LPARN comp_stmnt_lbrace expr_stmnt_list {
+	| T_LPAREN comp_stmnt_lbrace expr_stmnt_list {
 		blklev--;
 		mblklev--;
 		initsym = mktempsym($3->tn_type);
 		mblklev++;
 		blklev++;
 		gnuism(320);
-	} comp_stmnt_rbrace T_RPARN {
+	} comp_stmnt_rbrace T_RPAREN {
 		$$ = getnnode(initsym, 0);
 	}
 	| term T_INCDEC {
@@ -1906,10 +1906,10 @@ term:
 	| term T_LBRACK expr T_RBRACK {
 		$$ = build(STAR, build(PLUS, $1, $3), NULL);
 	  }
-	| term T_LPARN T_RPARN {
+	| term T_LPAREN T_RPAREN {
 		$$ = funccall($1, NULL);
 	  }
-	| term T_LPARN func_arg_list T_RPARN {
+	| term T_LPAREN func_arg_list T_RPAREN {
 		$$ = funccall($1, $3);
 	  }
 	| term point_or_arrow T_NAME {
@@ -1941,13 +1941,13 @@ term:
 	| T_EXTENSION term {
 		$$ = $2;
 	  }
-	| T_REAL T_LPARN term T_RPARN {
+	| T_REAL T_LPAREN term T_RPAREN {
 		$$ = build(REAL, $3, NULL);
 	  }
-	| T_IMAG T_LPARN term T_RPARN {
+	| T_IMAG T_LPAREN term T_RPAREN {
 		$$ = build(IMAG, $3, NULL);
 	  }
-	| T_BUILTIN_OFFSETOF T_LPARN type_name T_COMMA identifier T_RPARN
+	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN
 						    %prec T_BUILTIN_OFFSETOF {
 		symtyp = FMEMBER;
 		$$ = build_offsetof($3, getsym($5));
@@ -1957,16 +1957,16 @@ term:
 		if ($$ != NULL)
 			check_expr_misc($2, 0, 0, 0, 0, 0, 1);
 	  }
-	| T_SIZEOF T_LPARN type_name T_RPARN		%prec T_SIZEOF {
+	| T_SIZEOF T_LPAREN type_name T_RPAREN		%prec T_SIZEOF {
 		$$ = build_sizeof($3);
 	  }
-	| T_ALIGNOF T_LPARN type_name T_RPARN		%prec T_ALIGNOF {
+	| T_ALIGNOF T_LPAREN type_name T_RPAREN		%prec T_ALIGNOF {
 		$$ = build_alignof($3);
 	  }
-	| T_LPARN type_name T_RPARN term		%prec T_UNOP {
+	| T_LPAREN type_name T_RPAREN term		%prec T_UNOP {
 		$$ = cast($4, $2);
 	  }
-	| T_LPARN type_name T_RPARN			%prec T_UNOP {
+	| T_LPAREN type_name T_RPAREN			%prec T_UNOP {
 		sym_t *tmp = mktempsym($2);
 		idecl(tmp, 1, NULL);
 	  } init_lbrace init_expr_list init_rbrace {
@@ -2175,8 +2175,8 @@ ignuptorp(void)
 	freeyyv(&yylval, yychar);
 
 	level = 1;
-	while (yychar != T_RPARN || --level > 0) {
-		if (yychar == T_LPARN) {
+	while (yychar != T_RPAREN || --level > 0) {
+		if (yychar == T_LPAREN) {
 			level++;
 		} else if (yychar <= 0) {
 			break;
