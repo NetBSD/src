@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.17.4.2 2019/12/09 15:19:31 martin Exp $ */
+/* $NetBSD: trap.c,v 1.17.4.3 2021/01/01 12:31:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.17.4.2 2019/12/09 15:19:31 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.17.4.3 2021/01/01 12:31:19 martin Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -348,6 +348,111 @@ interrupt(struct trapframe *tf)
 	cpu_dosoftints();
 }
 
+#ifdef COMPAT_NETBSD32
+
+/*
+ * 32-bit length Thumb instruction. See ARMv7 DDI0406A A6.3.
+ */
+#define THUMB_32BIT(hi) (((hi) & 0xe000) == 0xe000 && ((hi) & 0x1800))
+
+static int
+fetch_arm_insn(struct trapframe *tf, uint32_t *insn)
+{
+
+	/* THUMB? */
+	if (tf->tf_spsr & SPSR_A32_T) {
+		uint16_t *pc = (uint16_t *)(tf->tf_pc & ~1UL); /* XXX */
+		uint16_t hi, lo;
+
+		if (ufetch_16(pc, &hi))
+			return -1;
+
+		if (!THUMB_32BIT(hi)) {
+			/* 16-bit Thumb instruction */
+			*insn = hi;
+			return 2;
+		}
+
+		/* 32-bit Thumb instruction */
+		if (ufetch_16(pc + 1, &lo))
+			return -1;
+
+		*insn = ((uint32_t)hi << 16) | lo;
+		return 4;
+	}
+
+	if (ufetch_32((uint32_t *)tf->tf_pc, insn))
+		return -1;
+
+	return 4;
+}
+
+enum emul_arm_result {
+	EMUL_ARM_SUCCESS = 0,
+	EMUL_ARM_UNKNOWN,
+	EMUL_ARM_FAULT,
+};
+
+static enum emul_arm_result
+emul_arm_insn(struct trapframe *tf)
+{
+	uint32_t insn;
+	int insn_size;
+
+	insn_size = fetch_arm_insn(tf, &insn);
+
+	switch (insn_size) {
+	case 2:
+		/* T32-16bit instruction */
+
+		/* XXX: some T32 IT instruction deprecated should be emulated */
+		break;
+	case 4:
+		/* T32-32bit instruction, or A32 instruction */
+
+		/*
+		 * Emulate ARMv6 instructions with cache operations
+		 * register (c7), that can be used in user mode.
+		 */
+		switch (insn & 0x0fff0fff) {
+		case 0x0e070f95:
+			/*
+			 * mcr p15, 0, <Rd>, c7, c5, 4
+			 * (flush prefetch buffer)
+			 */
+			__asm __volatile("isb sy" ::: "memory");
+			goto emulated;
+		case 0x0e070f9a:
+			/*
+			 * mcr p15, 0, <Rd>, c7, c10, 4
+			 * (data synchronization barrier)
+			 */
+			__asm __volatile("dsb sy" ::: "memory");
+			goto emulated;
+		case 0x0e070fba:
+			/*
+			 * mcr p15, 0, <Rd>, c7, c10, 5
+			 * (data memory barrier)
+			 */
+			__asm __volatile("dmb sy" ::: "memory");
+			goto emulated;
+		default:
+			break;
+		}
+		break;
+	default:
+		return EMUL_ARM_FAULT;
+	}
+
+	/* unknown, or unsupported instruction */
+	return EMUL_ARM_UNKNOWN;
+
+ emulated:
+	tf->tf_pc += insn_size;
+	return EMUL_ARM_SUCCESS;
+}
+#endif /* COMPAT_NETBSD32 */
+
 void
 trap_el0_32sync(struct trapframe *tf)
 {
@@ -395,11 +500,26 @@ trap_el0_32sync(struct trapframe *tf)
 		userret(l);
 		break;
 
+	case ESR_EC_UNKNOWN:
+		switch (emul_arm_insn(tf)) {
+		case EMUL_ARM_SUCCESS:
+			break;
+		case EMUL_ARM_UNKNOWN:
+			goto unknown;
+		case EMUL_ARM_FAULT:
+			do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+			    (void *)tf->tf_pc, esr);
+			break;
+		}
+		userret(l);
+		break;
+
 	case ESR_EC_CP15_RT:
 	case ESR_EC_CP15_RRT:
 	case ESR_EC_CP14_RT:
 	case ESR_EC_CP14_DT:
 	case ESR_EC_CP14_RRT:
+unknown:
 #endif /* COMPAT_NETBSD32 */
 	default:
 #ifdef DDB
