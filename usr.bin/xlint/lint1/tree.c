@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.110 2021/01/01 01:38:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.111 2021/01/01 01:42:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.110 2021/01/01 01:38:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.111 2021/01/01 01:42:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2200,17 +2200,17 @@ warn_incompatible_types(op_t op, tspec_t lt, tspec_t rt)
 		if ((lt == STRUCT || lt == UNION) &&
 		    (rt == STRUCT || rt == UNION)) {
 			/* assignment of different structures (%s != %s) */
-			error(240, basic_type_name(lt), basic_type_name(rt));
+			error(240, tspec_name(lt), tspec_name(rt));
 		} else {
 			/* assignment type mismatch (%s != %s) */
-			error(171, basic_type_name(lt), basic_type_name(rt));
+			error(171, tspec_name(lt), tspec_name(rt));
 		}
 	} else if (mp->m_binary) {
 		/* operands of '%s' have incompatible types (%s != %s) */
-		error(107, mp->m_name, basic_type_name(lt), basic_type_name(rt));
+		error(107, mp->m_name, tspec_name(lt), tspec_name(rt));
 	} else {
 		/* operand of '%s' has incompatible type (%s != %s) */
-		error(108, mp->m_name, basic_type_name(lt), basic_type_name(rt));
+		error(108, mp->m_name, tspec_name(lt), tspec_name(rt));
 	}
 }
 
