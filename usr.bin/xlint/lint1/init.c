@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.51 2021/01/01 16:50:47 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.52 2021/01/01 19:11:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.51 2021/01/01 16:50:47 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.52 2021/01/01 19:11:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -109,8 +109,8 @@ pop_member(void)
 	} else {
 		namlist_t *nam = namedmem;
 		namedmem = namedmem->n_next;
-		namedmem->n_next = nam->n_next; /* FIXME: inner circle */
-		namedmem->n_prev = nam->n_prev;
+		nam->n_prev->n_next = nam->n_next;
+		nam->n_next->n_prev = nam->n_prev;
 		free(nam);
 	}
 }
