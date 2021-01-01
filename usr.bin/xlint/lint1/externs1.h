@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.42 2020/12/30 13:17:42 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.43 2021/01/01 10:55:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -248,7 +248,9 @@ extern	void	popctrl(int);
 extern	void	check_statement_reachable(void);
 extern	void	funcdef(sym_t *);
 extern	void	funcend(void);
-extern	void	label(int, sym_t *, tnode_t *);
+extern	void	named_label(sym_t *);
+extern	void	case_label(tnode_t *);
+extern	void	default_label(void);
 extern	void	if1(tnode_t *);
 extern	void	if2(void);
 extern	void	if3(int);

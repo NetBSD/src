@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.124 2021/01/01 09:28:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.125 2021/01/01 10:55:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.124 2021/01/01 09:28:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.125 2021/01/01 10:55:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1490,19 +1490,19 @@ labeled_stmnt:
 label:
 	  T_NAME T_COLON {
 		symtyp = FLABEL;
-		label(T_NAME, getsym($1), NULL);
+		named_label(getsym($1));
 	  }
 	| T_CASE constant T_COLON {
-		label(T_CASE, NULL, $2);
+		case_label($2);
 		ftflg = 1;
 	}
 	| T_CASE constant T_ELLIPSE constant T_COLON {
 		/* XXX: We don't fill all cases */
-		label(T_CASE, NULL, $2);
+		case_label($2);
 		ftflg = 1;
 	}
 	| T_DEFAULT T_COLON {
-		label(T_DEFAULT, NULL, NULL);
+		default_label();
 		ftflg = 1;
 	  }
 	;
