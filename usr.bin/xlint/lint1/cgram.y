@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.122 2020/12/30 13:17:42 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.123 2021/01/01 01:26:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.122 2020/12/30 13:17:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.123 2021/01/01 01:26:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -365,19 +365,19 @@ ext_decl:
 data_def:
 	  T_SEMI {
 		if (sflag) {
-			/* syntax error: empty declaration */
+			/* empty declaration */
 			error(0);
 		} else if (!tflag) {
-			/* syntax error: empty declaration */
+			/* empty declaration */
 			warning(0);
 		}
 	  }
 	| clrtyp deftyp notype_init_decls T_SEMI {
 		if (sflag) {
-			/* old style declaration; add "int" */
+			/* old style declaration; add int */
 			error(1);
 		} else if (!tflag) {
-			/* old style declaration; add "int" */
+			/* old style declaration; add int */
 			warning(1);
 		}
 	  }
@@ -412,7 +412,7 @@ data_def:
 func_def:
 	  func_decl {
 		if ($1->s_type->t_tspec != FUNC) {
-			/* syntax error */
+			/* syntax error '%s' */
 			error(249, yytext);
 			YYERROR;
 		}
@@ -756,10 +756,10 @@ member_declaration_list_with_rbrace:
 	  }
 	| member_declaration_list T_RBRACE {
 		if (sflag) {
-			/* syntax req. ";" after last struct/union member */
+			/* syntax req. ';' after last struct/union member */
 			error(66);
 		} else {
-			/* syntax req. ";" after last struct/union member */
+			/* syntax req. ';' after last struct/union member */
 			warning(66);
 		}
 		$$ = $1;
@@ -949,10 +949,10 @@ enums_with_opt_comma:
 	  }
 	| enums T_COMMA {
 		if (sflag) {
-			/* trailing "," prohibited in enum declaration */
+			/* trailing ',' prohibited in enum declaration */
 			error(54);
 		} else {
-			/* trailing "," prohibited in enum declaration */
+			/* trailing ',' prohibited in enum declaration */
 			c99ism(54);
 		}
 		$$ = $1;
@@ -1256,10 +1256,10 @@ vararg_parameter_type_list:
 	  }
 	| T_ELLIPSE {
 		if (sflag) {
-			/* ANSI C requires formal parameter before "..." */
+			/* ANSI C requires formal parameter before '...' */
 			error(84);
 		} else if (!tflag) {
-			/* ANSI C requires formal parameter before "..." */
+			/* ANSI C requires formal parameter before '...' */
 			warning(84);
 		}
 		dcs->d_vararg = 1;

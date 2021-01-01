@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.2 2021/01/01 00:00:24 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.3 2021/01/01 01:26:02 rillig Exp $
 
 --[[
 
@@ -38,6 +38,7 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
 
   msg = string.gsub(msg, "/%*", "**")
   msg = string.gsub(msg, "%*/", "**")
+  msg = string.gsub(msg, "\\(.)", "%1")
   comment = string.gsub(comment, "arg%.", "argument")
   comment = string.gsub(comment, "bitop%.", "bitwise operation")
   comment = string.gsub(comment, "comb%.", "combination")
@@ -49,6 +50,7 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
   comment = string.gsub(comment, "incomp%.", "incompatible")
   comment = string.gsub(comment, "init%.", "initialize")
   comment = string.gsub(comment, "param%.", "parameter")
+  comment = string.gsub(comment, "req%.", "requires")
   comment = string.gsub(comment, "poss%.", "possibly")
   comment = string.gsub(comment, "trad%.", "traditional")
 
@@ -77,11 +79,9 @@ local function collect_errors(fname, msgs)
   for line in f:lines() do
     lineno = lineno + 1
 
-    local id = line:match("^%s+warning%((%d+)[),]")
-    if id == nil then
-      id = line:match("^%s+error%((%d+)[),]")
-    end
-    if id ~= nil then
+    local func, id = line:match("^%s+(%w+)%((%d+)[),]")
+    if func == "error" or func == "warning" or func == "c99ism" or
+       func == "gnuism" or func == "message" then
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
         check_message(fname, lineno, tonumber(id), comment, msgs, errors)

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.105 2020/12/30 11:56:10 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.106 2021/01/01 01:26:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.105 2020/12/30 11:56:10 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.106 2021/01/01 01:26:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1018,7 +1018,7 @@ getescc(int d)
 		switch (c = inpc()) {
 		case '"':
 			if (tflag && d == '\'')
-				/* \" inside character constant undef. ... */
+				/* \" inside character constants undef... */
 				warning(262);
 			return '"';
 		case '\'':
@@ -1067,7 +1067,7 @@ getescc(int d)
 				warning(77, c);
 			pbc = c;
 			if (v > TARG_UCHAR_MAX) {
-				/* character escape does not fit in char. */
+				/* character escape does not fit in character */
 				warning(76);
 				v &= CHAR_MASK;
 			}
