@@ -1,8 +1,9 @@
-# $NetBSD: var-op-expand.mk,v 1.10 2020/12/28 00:19:41 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.11 2021/01/01 23:07:48 sjg Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
 
+.MAKE.SAVE_DOLLARS:=      yes
 
 # If the right-hand side does not contain a dollar sign, the ':=' assignment
 # operator has the same effect as the '=' assignment operator.
