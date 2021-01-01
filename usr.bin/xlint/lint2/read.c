@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.34 2020/12/30 11:39:55 rillig Exp $ */
+/* $NetBSD: read.c,v 1.35 2021/01/01 11:51:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.34 2020/12/30 11:39:55 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.35 2021/01/01 11:51:15 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -734,8 +734,6 @@ inptype(const char *cp, const char **epp)
 	case LCOMPLEX:
 	case COMPLEX:
 		break;
-	case NTSPEC:
-		abort();
 	}
 
 	*epp = cp;
@@ -968,10 +966,6 @@ gettlen(const char *cp, const char **epp)
 	case LCOMPLEX:
 	case COMPLEX:
 		break;
-#ifndef __COVERITY__
-	case NTSPEC:
-		abort();
-#endif
 	}
 
 	*epp = cp;
