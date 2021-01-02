@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.46 2021/01/01 19:15:58 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.47 2021/01/02 01:06:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -127,7 +127,7 @@ typedef struct {
 typedef	struct {
 	u_int	size;		/* size in bit */
 	u_int	align : 15;	/* alignment in bit */
-	u_int	sincompl : 1;	/* set if incomplete type */
+	bool	sincompl : 1;	/* set if incomplete type */
 	struct	sym *memb;	/* list of members */
 	struct	sym *stag;	/* symbol table entry of tag */
 	struct	sym *stdef;	/* symbol table entry of first typename */
@@ -137,7 +137,7 @@ typedef	struct {
  * same as above for enums
  */
 typedef	struct {
-	u_int	eincompl : 1;	/* incomplete enum type */
+	bool	eincompl : 1;	/* incomplete enum type */
 	struct	sym *elem;	/* list of enumerators */
 	struct	sym *etag;	/* symbol table entry of tag */
 	struct	sym *etdef;	/* symbol table entry of first typename */
@@ -149,15 +149,15 @@ typedef	struct {
  */
 struct type {
 	tspec_t	t_tspec;	/* type specifier */
-	u_int	t_aincompl : 1;	/* incomplete array type */
-	u_int	t_const : 1;	/* const modifier */
-	u_int	t_volatile : 1;	/* volatile modifier */
-	u_int	t_proto : 1;	/* function prototype (t_args valid) */
-	u_int	t_vararg : 1;	/* prototype with ... */
-	u_int	t_typedef : 1;	/* type defined with typedef */
-	u_int	t_isfield : 1;	/* type is bitfield */
-	u_int	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */
-	u_int	t_ispacked : 1;	/* type is packed */
+	bool	t_aincompl : 1;	/* incomplete array type */
+	bool	t_const : 1;	/* const modifier */
+	bool	t_volatile : 1;	/* volatile modifier */
+	bool	t_proto : 1;	/* function prototype (t_args valid) */
+	bool	t_vararg : 1;	/* prototype with ... */
+	bool	t_typedef : 1;	/* type defined with typedef */
+	bool	t_isfield : 1;	/* type is bitfield */
+	bool	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */
+	bool	t_ispacked : 1;	/* type is packed */
 	union {
 		int	_t_dim;		/* dimension */
 		str_t	*_t_str;	/* struct/union tag */
@@ -226,16 +226,16 @@ typedef	struct sym {
 	pos_t	s_use_pos;	/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
 	void   *s_keyword;
-	u_int	s_bitfield : 1;
-	u_int	s_set : 1;	/* variable set, label defined */
-	u_int	s_used : 1;	/* variable/label used */
-	u_int	s_arg : 1;	/* symbol is function argument */
-	u_int	s_reg : 1;	/* symbol is register variable */
-	u_int	s_defarg : 1;	/* undefined symbol in old style function
+	bool	s_bitfield : 1;
+	bool	s_set : 1;	/* variable set, label defined */
+	bool	s_used : 1;	/* variable/label used */
+	bool	s_arg : 1;	/* symbol is function argument */
+	bool	s_reg : 1;	/* symbol is register variable */
+	bool	s_defarg : 1;	/* undefined symbol in old style function
 				   definition */
-	u_int	s_rimpl : 1;	/* return value of function implicit decl. */
-	u_int	s_osdef : 1;	/* symbol stems from old style function def. */
-	u_int	s_inline : 1;	/* true if this is an inline function */
+	bool	s_rimpl : 1;	/* return value of function implicit decl. */
+	bool	s_osdef : 1;	/* symbol stems from old style function def. */
+	bool	s_inline : 1;	/* true if this is an inline function */
 	struct	sym *s_ext_sym;	/* for local declared external symbols pointer
 				   to external symbol with same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
@@ -284,9 +284,9 @@ typedef	struct sbuf {
 typedef	struct tnode {
 	op_t	tn_op;		/* operator */
 	type_t	*tn_type;	/* type */
-	u_int	tn_lvalue : 1;	/* node is lvalue */
-	u_int	tn_cast : 1;	/* if tn_op == CVT, it's an explicit cast */
-	u_int	tn_parenthesized : 1; /* node parenthesized */
+	bool	tn_lvalue : 1;	/* node is lvalue */
+	bool	tn_cast : 1;	/* if tn_op == CVT, it's an explicit cast */
+	bool	tn_parenthesized : 1;
 	union {
 		struct {
 			struct	tnode *_tn_left;	/* (left) operand */
@@ -332,18 +332,18 @@ typedef	struct dinfo {
 	int	d_offset;	/* offset of next structure member */
 	int	d_stralign;	/* alignment required for current structure */
 	scl_t	d_ctx;		/* context of declaration */
-	u_int	d_const : 1;	/* const in declaration specifiers */
-	u_int	d_volatile : 1;	/* volatile in declaration specifiers */
-	u_int	d_inline : 1;	/* inline in declaration specifiers */
-	u_int	d_mscl : 1;	/* multiple storage classes */
-	u_int	d_terr : 1;	/* invalid type combination */
-	u_int	d_nedecl : 1;	/* 1 if at least a tag is declared */
-	u_int	d_vararg : 1;	/* ... in in current function decl. */
-	u_int	d_proto : 1;	/* current funct. decl. is prototype */
-	u_int	d_notyp : 1;	/* set if no type specifier was present */
-	u_int	d_asm : 1;	/* set if d_ctx == AUTO and asm() present */
-	u_int	d_ispacked : 1;	/* packed */
-	u_int	d_used : 1;	/* used */
+	bool	d_const : 1;	/* const in declaration specifiers */
+	bool	d_volatile : 1;	/* volatile in declaration specifiers */
+	bool	d_inline : 1;	/* inline in declaration specifiers */
+	bool	d_mscl : 1;	/* multiple storage classes */
+	bool	d_terr : 1;	/* invalid type combination */
+	bool	d_nedecl : 1;	/* if at least one tag is declared */
+	bool	d_vararg : 1;	/* ... in in current function decl. */
+	bool	d_proto : 1;	/* current function decl. is prototype */
+	bool	d_notyp : 1;	/* set if no type specifier was present */
+	bool	d_asm : 1;	/* set if d_ctx == AUTO and asm() present */
+	bool	d_ispacked : 1;	/* packed */
+	bool	d_used : 1;	/* used */
 	type_t	*d_tagtyp;	/* tag during member declaration */
 	sym_t	*d_fargs;	/* list of arguments during function def. */
 	pos_t	d_fdpos;	/* position of function definition */
@@ -360,8 +360,8 @@ typedef	struct dinfo {
  */
 typedef	struct pqinf {
 	int	p_pcnt;			/* number of asterisks */
-	u_int	p_const : 1;
-	u_int	p_volatile : 1;
+	bool	p_const : 1;
+	bool	p_volatile : 1;
 	struct	pqinf *p_next;
 } pqinf_t;
 
@@ -378,16 +378,16 @@ typedef	struct clst {
  */
 typedef struct cstk {
 	int	c_env;			/* type of statement (T_IF, ...) */
-	u_int	c_loop : 1;		/* continue && break are valid */
-	u_int	c_switch : 1;		/* case && break are valid */
-	u_int	c_break : 1;		/* loop/switch has break */
-	u_int	c_cont : 1;		/* loop has continue */
-	u_int	c_default : 1;		/* switch has default */
-	u_int	c_infinite : 1;		/* break condition always false
+	bool	c_loop : 1;		/* continue && break are valid */
+	bool	c_switch : 1;		/* case && break are valid */
+	bool	c_break : 1;		/* loop/switch has break */
+	bool	c_cont : 1;		/* loop has continue */
+	bool	c_default : 1;		/* switch has default */
+	bool	c_infinite : 1;		/* break condition always false
 					   (for (;;), while (1)) */
-	u_int	c_rchif : 1;		/* end of if-branch reached */
-	u_int	c_noretval : 1;		/* had "return;" */
-	u_int	c_retval : 1;		/* had "return (e);" */
+	bool	c_rchif : 1;		/* end of if-branch reached */
+	bool	c_noretval : 1;		/* had "return;" */
+	bool	c_retval : 1;		/* had "return (e);" */
 	type_t	*c_swtype;		/* type of switch expression */
 	clst_t	*c_clst;		/* list of case values */
 	struct	mbl *c_fexprm;		/* saved memory for end of loop
