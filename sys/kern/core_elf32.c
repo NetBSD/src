@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.58.4.1 2021/01/01 13:04:08 martin Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.58.4.2 2021/01/02 10:23:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.58.4.1 2021/01/01 13:04:08 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.58.4.2 2021/01/02 10:23:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.58.4.1 2021/01/01 13:04:08 martin E
 #ifdef COREDUMP
 
 #ifdef COMPAT_NETBSD32
-#include <machine/netbsd32_machdep.h>
+#include <compat/netbsd32/netbsd32.h>
 #endif
 
 struct writesegs_state {
