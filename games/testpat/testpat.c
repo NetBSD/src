@@ -1,4 +1,4 @@
-/* $NetBSD: testpat.c,v 1.1 2021/01/02 03:21:39 nat Exp $ */
+/* $NetBSD: testpat.c,v 1.2 2021/01/02 12:10:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -66,9 +66,9 @@ int main(int argc, char *argv[]) {
 
 	if (argc > 2) {
 		endwin();
-		errx(EINVAL, "usage: testpat [title]");	
+		errx(EINVAL, "usage: testpat [title]");
 	}
-	
+
 	if (argc == 2 && strlen(argv[1]) < (size_t)COLS)
 		snprintf(title, sizeof(title), "%s", argv[1]);
 	else if (argc == 2 && (int)strlen(argv[1]) > COLS) {
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
 	if (colourOK) {
 		start_color();
- 
+
 	    	init_pair( 0, COLOR_WHITE, COLOR_BLACK );
 	    	init_pair( 1, COLOR_WHITE, COLOR_RED );
 	    	init_pair( 2, COLOR_WHITE, COLOR_GREEN );
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
 			mvaddch(i, col, 32 | A_REVERSE);
 		}
 	}
-	
+
 	/* Add title segment. */
 	for (i = roundf(1 * grid_unit); i < roundf(2 * grid_unit); i++) {
 		if (colourOK)
@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
 			mvaddch(i, col, ' ');
 	}
 
-	i = roundf(1.4 * grid_unit); 
+	i = roundf(1.4 * grid_unit);
 
 	col = y_limit - (strlen(title) / 2) + circle_pos[y_limit / 2][0];
 		mvprintw(i, col, "%s", title);
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
 					mvaddch(line, xpos, ' ');
 		}
 
-		for (col = roundf((9.5 * grid_unit * 2)); col < 
+		for (col = roundf((9.5 * grid_unit * 2)); col <
 		    roundf((13 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -263,7 +263,7 @@ int main(int argc, char *argv[]) {
 		if (colourOK)
 	    		attrset(COLOR_PAIR(colour));
 
-		if (i == 0) 
+		if (i == 0)
 			spacing_start = 0;
 		else
 			spacing_start = (spacing * i) + spacing_residual;
@@ -293,7 +293,7 @@ int main(int argc, char *argv[]) {
 		    col++)
 			mvaddch(line, col, ' ');
 
-		for (col = roundf((1.5 * grid_unit * 2)); col < 
+		for (col = roundf((1.5 * grid_unit * 2)); col <
 		    roundf((4.3 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
 					mvaddch(line, xpos, 120 | A_ALTCHARSET);
 		}
 
-		for (col = roundf((4.3 * grid_unit * 2)); col < 
+		for (col = roundf((4.3 * grid_unit * 2)); col <
 		    roundf((7.6 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
 					mvaddch(line, xpos, '|');
 		}
 
-		for (col = roundf((7.6 * grid_unit * 2)); col < 
+		for (col = roundf((7.6 * grid_unit * 2)); col <
 		    roundf((11.5 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
 
-		for (col = roundf((0 * grid_unit * 2)); col < 
+		for (col = roundf((0 * grid_unit * 2)); col <
 		    roundf((4 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -332,7 +332,7 @@ int main(int argc, char *argv[]) {
 					mvaddch(line, xpos, ' ');
 		}
 
-		for (col = roundf((4 * grid_unit * 2)); col < 
+		for (col = roundf((4 * grid_unit * 2)); col <
 		    roundf((6.5 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -343,7 +343,7 @@ int main(int argc, char *argv[]) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_WHITE));
 
-		for (col = roundf((6.5 * grid_unit * 2)); col < 
+		for (col = roundf((6.5 * grid_unit * 2)); col <
 		    roundf((9 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) {
 					mvaddch(line, xpos, 97 | A_ALTCHARSET);
 		}
 
-		for (col = roundf((9 * grid_unit * 2)); col < 
+		for (col = roundf((9 * grid_unit * 2)); col <
 		    roundf((13 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -406,7 +406,7 @@ int main(int argc, char *argv[]) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_RED));
 
-		for (col = roundf((6 * grid_unit * 2)); col < 
+		for (col = roundf((6 * grid_unit * 2)); col <
 		    roundf((7 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
 				if (xpos >= circle_pos[line][0] &&
@@ -417,7 +417,7 @@ int main(int argc, char *argv[]) {
 
 	if (colourOK)
     		attrset(COLOR_PAIR(COLOR_BLACK));
-	
+
 	for (line = 6 * grid_unit; line <= (7 * grid_unit) + 1; line++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
