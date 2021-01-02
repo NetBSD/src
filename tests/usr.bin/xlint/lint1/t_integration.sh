@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.18 2021/01/02 10:22:44 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.19 2021/01/02 11:12:34 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -147,17 +147,19 @@ test_case long_double_int	"Checks for confusion of 'long double' with" \
 
 test_case all_messages
 all_messages_body() {
-	local srcdir status msg base
+	local srcdir status msg base flags
 
 	srcdir="$(atf_get_srcdir)"
 	status="0"
 
 	for msg in $(seq 0 329); do
 		base="$(printf '%s/msg_%03d' "${srcdir}" "${msg}")"
+		flags="$(sed -n 's,^/\* lint1-flags: \(.*\) \*/$,\1,p' "${base}.c")"
+		flags="${flags:--g -S -w}"
 
-		# shellcheck disable=SC2154
+		# shellcheck disable=SC2154 disable=SC2086
 		${Atf_Check} -s not-exit:0 -o "file:${base}.exp" -e empty \
-		    ${LINT1} -g -S -w "${base}.c" /dev/null \
+		    ${LINT1} ${flags} "${base}.c" /dev/null \
 		|| status="1"
 	done
 	return "${status}"
