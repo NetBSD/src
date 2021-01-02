@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.43 2021/01/01 10:55:28 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.44 2021/01/02 18:44:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -239,7 +239,7 @@ extern	pos_t	scanflike_pos;
 extern	int	constcond_flag;
 extern	int	llibflg;
 extern	int	lwarn;
-extern	int	bitfieldtype_ok;
+extern	bool	bitfieldtype_ok;
 extern	int	plibflg;
 extern	int	quadflg;
 

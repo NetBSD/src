@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.102 2021/01/02 18:26:44 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.103 2021/01/02 18:44:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.102 2021/01/02 18:26:44 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.103 2021/01/02 18:44:58 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1106,7 +1106,7 @@ declarator_1_struct_union(sym_t *dsym)
 		 */
 		if (t == CHAR || t == UCHAR || t == SCHAR ||
 		    t == SHORT || t == USHORT || t == ENUM) {
-			if (bitfieldtype_ok == 0) {
+			if (!bitfieldtype_ok) {
 				if (sflag) {
 					/* bit-field type '%s' invalid ... */
 					warning(273, type_name(tp));
@@ -1116,7 +1116,7 @@ declarator_1_struct_union(sym_t *dsym)
 				}
 			}
 		} else if (t == INT && dcs->d_smod == NOTSPEC) {
-			if (pflag && bitfieldtype_ok == 0) {
+			if (pflag && !bitfieldtype_ok) {
 				/* nonportable bit-field type */
 				warning(34);
 			}
@@ -1127,7 +1127,7 @@ declarator_1_struct_union(sym_t *dsym)
 			 * Integer types not dealt with above are
 			 * okay only if BITFIELDTYPE is in effect.
 			 */
-			if (bitfieldtype_ok == 0 || tspec_is_int(t) == 0) {
+			if (!bitfieldtype_ok || !tspec_is_int(t)) {
 				/* illegal bit-field type */
 				warning(35);
 				sz = tp->t_flen;
@@ -1194,7 +1194,7 @@ declarator_1_struct_union(sym_t *dsym)
 	 * Clear the BITFIELDTYPE indicator after processing each
 	 * structure element.
 	 */
-	bitfieldtype_ok = 0;
+	bitfieldtype_ok = false;
 
 	return dsym;
 }
