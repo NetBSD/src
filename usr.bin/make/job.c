@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.391 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.392 2021/01/02 20:09:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.391 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.392 2021/01/02 20:09:06 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1736,41 +1736,42 @@ JobStart(GNode *gn, Boolean special)
 }
 
 /*
- * Print the output of the shell command, skipping the noPrint command of
- * the shell, if any.
+ * Print the output of the shell command, skipping the noPrint text of the
+ * shell, if any.  The default shell does not have noPrint though, which means
+ * that in all practical cases, handling the output is left to the caller.
  */
 static char *
-JobOutput(char *cp, char *endp)
+JobOutput(char *cp, char *endp)	/* XXX: should all be const */
 {
-	char *ecp;
+	char *ecp;		/* XXX: should be const */
 
 	if (shell->noPrint == NULL || shell->noPrint[0] == '\0')
 		return cp;
 
+	/*
+	 * XXX: What happens if shell->noPrint occurs on the boundary of
+	 * the buffer?  To work correctly in all cases, this should rather
+	 * be a proper stream filter instead of doing string matching on
+	 * selected chunks of the output.
+	 */
 	while ((ecp = strstr(cp, shell->noPrint)) != NULL) {
 		if (ecp != cp) {
-			*ecp = '\0';
+			*ecp = '\0';	/* XXX: avoid writing to the buffer */
 			/*
 			 * The only way there wouldn't be a newline after
 			 * this line is if it were the last in the buffer.
-			 * however, since the non-printable comes after it,
+			 * however, since the noPrint output comes after it,
 			 * there must be a newline, so we don't print one.
 			 */
+			/* XXX: What about null bytes in the output? */
 			(void)fprintf(stdout, "%s", cp);
 			(void)fflush(stdout);
 		}
 		cp = ecp + shell->noPrintLen;
-		if (cp != endp) {
-			/*
-			 * Still more to print, look again after skipping
-			 * the whitespace following the non-printable
-			 * command.
-			 */
-			cp++;
-			pp_skip_whitespace(&cp);
-		} else {
-			return cp;
-		}
+		if (cp == endp)
+			break;
+		cp++;		/* skip over the (XXX: assumed) newline */
+		pp_skip_whitespace(&cp);
 	}
 	return cp;
 }
