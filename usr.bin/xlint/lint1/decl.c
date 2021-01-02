@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.99 2021/01/02 16:33:39 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.100 2021/01/02 17:17:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.99 2021/01/02 16:33:39 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.100 2021/01/02 17:17:00 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -303,9 +303,11 @@ add_type(type_t *tp)
 			t = FCOMPLEX;
 		else if (dcs->d_cmod == DOUBLE)
 			t = DCOMPLEX;
-		else
-			/* Invalid type %s for _Complex */
-			error(308, tspec_name(dcs->d_cmod));
+		else {
+			/* Invalid type for _Complex */
+			error(308);
+			t = DCOMPLEX; /* just as a fallback */
+		}
 		dcs->d_cmod = NOTSPEC;
 	}
 

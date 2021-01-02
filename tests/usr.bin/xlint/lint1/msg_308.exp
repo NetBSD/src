@@ -1,1 +1,3 @@
-msg_308.c(12): syntax error ':' [249]
+msg_308.c(9): Invalid type for _Complex [308]
+msg_308.c(10): Invalid type for _Complex [308]
+msg_308.c(10): illegal type combination [4]
