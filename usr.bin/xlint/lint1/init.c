@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.56 2021/01/02 01:06:15 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.57 2021/01/02 03:49:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.56 2021/01/02 01:06:15 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.57 2021/01/02 03:49:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -207,15 +207,12 @@ initstack_init(void)
 static void
 initstack_pop_item(void)
 {
-#ifdef DEBUG
-	char	buf[64];
-#endif
 	istk_t	*istk;
 	sym_t	*m;
 
 	istk = initstk;
 	DPRINTF(("%s: pop type=%s, brace=%d remaining=%d named=%d\n", __func__,
-	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
+	    type_name(istk->i_type ? istk->i_type : istk->i_subt),
 	    istk->i_brace, istk->i_remaining, istk->i_namedmem));
 
 	initstk = istk->i_next;
@@ -224,7 +221,7 @@ initstack_pop_item(void)
 	lint_assert(istk != NULL);
 
 	DPRINTF(("%s: top type=%s, brace=%d remaining=%d named=%d\n", __func__,
-	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
+	    type_name(istk->i_type ? istk->i_type : istk->i_subt),
 	    istk->i_brace, istk->i_remaining, istk->i_namedmem));
 
 	istk->i_remaining--;
@@ -237,7 +234,7 @@ initstack_pop_item(void)
 
 		DPRINTF(("%s: named remaining=%d type=%s, rhs.name=%s\n",
 		    __func__, istk->i_remaining,
-		    tyname(buf, sizeof(buf), istk->i_type), namedmem->n_name));
+		    type_name(istk->i_type), namedmem->n_name));
 
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
 			DPRINTF(("%s: pop lhs.name=%s rhs.name=%s\n", __func__,
@@ -309,9 +306,6 @@ initstack_pop_nobrace(void)
 static void
 initstack_push(void)
 {
-#ifdef DEBUG
-	char	buf[64];
-#endif
 	istk_t	*istk, *inxt;
 	int	cnt;
 	sym_t	*m;
@@ -320,8 +314,7 @@ initstack_push(void)
 
 	/* Extend an incomplete array type by one element */
 	if (istk->i_remaining == 0) {
-		DPRINTF(("%s(extend) %s\n", __func__,
-		    tyname(buf, sizeof(buf), istk->i_type)));
+		DPRINTF(("%s(extend) %s\n", __func__, type_name(istk->i_type)));
 		/*
 		 * Inside of other aggregate types must not be an incomplete
 		 * type.
@@ -345,7 +338,7 @@ initstack_push(void)
 again:
 	istk = initstk;
 
-	DPRINTF(("%s(%s)\n", __func__, tyname(buf, sizeof(buf), istk->i_type)));
+	DPRINTF(("%s(%s)\n", __func__, type_name(istk->i_type)));
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
 		if (namedmem) {
@@ -368,7 +361,7 @@ again:
 		istk->i_nolimit = incompl(istk->i_type);
 		istk->i_remaining = istk->i_type->t_dim;
 		DPRINTF(("%s: elements array %s[%d] %s\n", __func__,
-		    tyname(buf, sizeof(buf), istk->i_subt), istk->i_remaining,
+		    type_name(istk->i_subt), istk->i_remaining,
 		    namedmem ? namedmem->n_name : "*none*"));
 		break;
 	case UNION:
@@ -385,7 +378,7 @@ again:
 		}
 		cnt = 0;
 		DPRINTF(("%s: lookup type=%s, name=%s named=%d\n", __func__,
-		    tyname(buf, sizeof(buf), istk->i_type),
+		    type_name(istk->i_type),
 		    namedmem ? namedmem->n_name : "*none*", istk->i_namedmem));
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
 			if (m->s_bitfield && m->s_name == unnamed)
@@ -419,8 +412,7 @@ again:
 		}
 		istk->i_brace = 1;
 		DPRINTF(("%s: unnamed type=%s, brace=%d\n", __func__,
-		    tyname(buf, sizeof(buf),
-			istk->i_type ? istk->i_type : istk->i_subt),
+		    type_name(istk->i_type ? istk->i_type : istk->i_subt),
 		    istk->i_brace));
 		if (cnt == 0) {
 			/* cannot init. struct/union with no named member */
@@ -478,13 +470,12 @@ initstack_check_too_many(void)
 static void
 initstack_next_brace(void)
 {
-	char buf[64];
 
 	DPRINTF(("%s\n", __func__));
 	if (initstk->i_type != NULL &&
 	    tspec_is_scalar(initstk->i_type->t_tspec)) {
 		/* invalid initializer type %s */
-		error(176, tyname(buf, sizeof(buf), initstk->i_type));
+		error(176, type_name(initstk->i_type));
 		initerr = 1;
 	}
 	if (!initerr)
@@ -493,9 +484,7 @@ initstack_next_brace(void)
 		initstack_push();
 	if (!initerr) {
 		initstk->i_brace = 1;
-		DPRINTF(("%s: %p %s\n", __func__,
-		    namedmem,
-		    tyname(buf, sizeof(buf),
+		DPRINTF(("%s: %p %s\n", __func__, namedmem, type_name(
 			initstk->i_type ? initstk->i_type : initstk->i_subt)));
 	}
 }
@@ -567,11 +556,11 @@ mkinit(tnode_t *tn)
 	struct	mbl *tmem;
 	scl_t	sc;
 #ifdef DEBUG
-	char	buf[64], sbuf[64];
+	char	sbuf[64];
 #endif
 
 	DPRINTF(("%s: type=%s, value=%s\n", __func__,
-	    tyname(buf, sizeof(buf), tn->tn_type),
+	    type_name(tn->tn_type),
 	    print_tnode(sbuf, sizeof(sbuf), tn)));
 	named_member_dprint();
 
