@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.18 2021/01/01 01:42:55 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.19 2021/01/02 01:36:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.18 2021/01/01 01:42:55 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.19 2021/01/02 01:36:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -57,10 +57,12 @@ const char *
 tspec_name(tspec_t t)
 {
 	switch (t) {
+	case SIGNED:	return "signed";
+	case UNSIGN:	return "unsigned";
 	case BOOL:	return "_Bool";
 	case CHAR:	return "char";
-	case UCHAR:	return "unsigned char";
 	case SCHAR:	return "signed char";
+	case UCHAR:	return "unsigned char";
 	case SHORT:	return "short";
 	case USHORT:	return "unsigned short";
 	case INT:	return "int";
@@ -77,18 +79,16 @@ tspec_name(tspec_t t)
 	case DOUBLE:	return "double";
 	case LDOUBLE:	return "long double";
 	case VOID:	return "void";
-	case PTR:	return "pointer";
-	case ENUM:	return "enum";
 	case STRUCT:	return "struct";
 	case UNION:	return "union";
-	case FUNC:	return "function";
+	case ENUM:	return "enum";
+	case PTR:	return "pointer";
 	case ARRAY:	return "array";
+	case FUNC:	return "function";
+	case COMPLEX:	return "_Complex";
 	case FCOMPLEX:	return "float _Complex";
 	case DCOMPLEX:	return "double _Complex";
 	case LCOMPLEX:	return "long double _Complex";
-	case COMPLEX:	return "_Complex";
-	case SIGNED:	return "signed";
-	case UNSIGN:	return "unsigned";
 	default:
 		LERROR("tspec_name(%d)", t);
 		return NULL;
