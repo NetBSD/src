@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.46 2021/01/01 11:41:01 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.47 2021/01/02 18:44:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.46 2021/01/01 11:41:01 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.47 2021/01/02 18:44:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -138,10 +138,10 @@ int	llibflg;
 int	lwarn = LWARN_ALL;
 
 /*
- * Nonzero if bitfield type errors are suppressed by a BITFIELDTYPE
+ * Whether bitfield type errors are suppressed by a BITFIELDTYPE
  * directive.
  */
-int	bitfieldtype_ok;
+bool	bitfieldtype_ok;
 
 /*
  * Nonzero if complaints about use of "long long" are suppressed in
@@ -1261,10 +1261,10 @@ bitfieldtype(int n)
 {
 
 #ifdef DEBUG
-	printf("%s, %d: bitfieldtype_ok = 1\n", curr_pos.p_file,
+	printf("%s, %d: bitfieldtype_ok = true\n", curr_pos.p_file,
 	    curr_pos.p_line);
 #endif
-	bitfieldtype_ok = 1;
+	bitfieldtype_ok = true;
 }
 
 /*
