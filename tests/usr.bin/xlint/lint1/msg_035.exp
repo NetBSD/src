@@ -1,4 +1,3 @@
-msg_035.c(33): warning: illegal bit-field type [35]
 msg_035.c(41): warning: illegal bit-field type [35]
 msg_035.c(42): warning: illegal bit-field type [35]
 msg_035.c(43): warning: illegal bit-field type [35]
