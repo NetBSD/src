@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.30 2021/01/01 11:58:03 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.31 2021/01/02 03:49:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.30 2021/01/01 11:58:03 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.31 2021/01/02 03:49:26 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -320,12 +320,10 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 			eq = eqtype(xt1 = tp1, xt2 = tp2, 0, 0, 0, &dowarn);
 		}
 		if (!eq || (sflag && dowarn)) {
-			char b1[64], b2[64];
 			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value declared inconsistently\t%s  ::  %s */
-			msg(5, hte->h_name, tyname(b1, sizeof(b1), xt1),
-			    tyname(b2, sizeof(b2), xt2), pos1,
-			    mkpos(&sym->s_pos));
+			msg(5, hte->h_name, type_name(xt1), type_name(xt2),
+			    pos1, mkpos(&sym->s_pos));
 			free(pos1);
 		}
 	}
@@ -452,7 +450,6 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	tspec_t	t1, t2;
 	arginf_t *ai, *ai1;
 	char	*pos1;
-	char	tyname1[64], tyname2[64];
 
 	/*
 	 * If a function definition is available (def != NULL), we compair the
@@ -590,10 +587,8 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 
 	pos1 = xstrdup(mkpos(pos1p));
 	/* %s, arg %d used inconsistently\t%s[%s]  ::  %s[%s] */
-	msg(6, hte->h_name, n, pos1,
-	    tyname(tyname1, sizeof(tyname1), arg1),
-	    mkpos(&call->f_pos),
-	    tyname(tyname2, sizeof(tyname2), arg2));
+	msg(6, hte->h_name, n, pos1, type_name(arg1),
+	    mkpos(&call->f_pos), type_name(arg2));
 	free(pos1);
 }
 
@@ -1157,13 +1152,11 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 			dowarn = 0;
 			eq = eqtype(xt1 = *ap1, xt2 = *ap2, 1, osdef, 0, &dowarn);
 			if (!eq || dowarn) {
-				char b1[64], b2[64];
 				pos1 = xstrdup(mkpos(&sym1->s_pos));
 				pos2 = mkpos(&sym->s_pos);
 				/* %s, arg %d declared inconsistently ... */
 				msg(11, hte->h_name, n + 1,
-				    tyname(b1, sizeof(b1), xt1),
-				    tyname(b2, sizeof(b2), xt2), pos1, pos2);
+				    type_name(xt1), type_name(xt2), pos1, pos2);
 				free(pos1);
 			}
 			n++;
