@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.55 2021/01/01 20:02:56 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.56 2021/01/02 01:06:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.55 2021/01/01 20:02:56 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.56 2021/01/02 01:06:15 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -65,9 +65,9 @@ __RCSID("$NetBSD: init.c,v 1.55 2021/01/01 20:02:56 rillig Exp $");
 typedef	struct istk {
 	type_t	*i_type;		/* type of initialisation */
 	type_t	*i_subt;		/* type of next level */
-	u_int	i_brace : 1;		/* need } for pop */
-	u_int	i_nolimit : 1;		/* incomplete array type */
-	u_int	i_namedmem : 1;		/* has c9x named members */
+	bool	i_brace : 1;		/* need } for pop */
+	bool	i_nolimit : 1;		/* incomplete array type */
+	bool	i_namedmem : 1;		/* has c9x named members */
 	sym_t	*i_mem;			/* next structure member */
 	int	i_remaining;		/* # of remaining elements */
 	struct	istk *i_next;		/* previous level */

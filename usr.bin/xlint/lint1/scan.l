@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.109 2021/01/01 11:51:15 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.110 2021/01/02 01:06:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.109 2021/01/01 11:51:15 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.110 2021/01/02 01:06:15 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -199,10 +199,10 @@ static	struct	kwtab {
 	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 	tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
 	tqual_t	kw_tqual;	/* type qual. fi kw_token T_QUAL */
-	u_int	kw_c89 : 1;	/* c89 keyword */
-	u_int	kw_c99 : 1;	/* c99 keyword */
-	u_int	kw_gcc : 1;	/* GCC keyword */
-	u_int	kw_attr : 1;	/* GCC attribute, keyword */
+	bool	kw_c89 : 1;	/* C89 keyword */
+	bool	kw_c99 : 1;	/* C99 keyword */
+	bool	kw_gcc : 1;	/* GCC keyword */
+	bool	kw_attr : 1;	/* GCC attribute, keyword */
 	u_int	kw_deco : 3;	/* 1 = name, 2 = __name, 4 = __name__ */
 } kwtab[] = {
 #ifdef INT128_SIZE

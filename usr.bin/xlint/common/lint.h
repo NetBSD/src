@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.20 2021/01/01 11:58:03 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.21 2021/01/02 01:06:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,9 +38,10 @@
 #endif
 
 #include <sys/types.h>
-#include <stddef.h>
 #include <err.h>
 #include <inttypes.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #include "param.h"
@@ -95,12 +96,12 @@ typedef	struct {
 					   if pflag is set */
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;
-	u_int	tt_is_int : 1;		/* 1 if integer type */
-	u_int	tt_is_uint : 1;		/* 1 if unsigned integer type */
-	u_int	tt_is_float : 1;	/* 1 if floating point type */
-	u_int	tt_is_arith : 1;	/* 1 if arithmetic type */
-	u_int	tt_is_scalar : 1;	/* 1 if scalar type */
-	u_int	tt_is_complex : 1;	/* 1 if complex type */
+	bool	tt_is_int : 1;		/* integer type */
+	bool	tt_is_uint : 1;		/* unsigned integer type */
+	bool	tt_is_float : 1;	/* floating point type */
+	bool	tt_is_arith : 1;	/* arithmetic type */
+	bool	tt_is_scalar : 1;	/* scalar type */
+	bool	tt_is_complex : 1;	/* complex type */
 	const char *tt_name;		/* name of the type */
 } ttab_t;
 

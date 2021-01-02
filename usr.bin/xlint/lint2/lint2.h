@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.11 2020/12/30 10:46:11 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.12 2021/01/02 01:06:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -39,14 +39,14 @@
  */
 struct type {
 	tspec_t	t_tspec;	/* type specifier */
-	u_int	t_const : 1;	/* constant */
-	u_int	t_volatile : 1;	/* volatile */
-	u_int	t_vararg : 1;	/* function has variable number of arguments */
-	u_int	t_isenum : 1;	/* enum type */
-	u_int	t_proto : 1;	/* this is a prototype */
-	u_int	t_istag : 1;	/* tag with _t_tag valid */
-	u_int	t_istynam : 1;	/* tag with _t_tynam valid */
-	u_int	t_isuniqpos : 1; /* tag with _t_uniqpos valid */
+	bool	t_const : 1;	/* constant */
+	bool	t_volatile : 1;	/* volatile */
+	bool	t_vararg : 1;	/* function has variable number of arguments */
+	bool	t_isenum : 1;	/* enum type */
+	bool	t_proto : 1;	/* this is a prototype */
+	bool	t_istag : 1;	/* tag with _t_tag valid */
+	bool	t_istynam : 1;	/* tag with _t_tynam valid */
+	bool	t_isuniqpos : 1; /* tag with _t_uniqpos valid */
 	union {
 		int	_t_dim;		/* if the type is an ARRAY than this
 					   is the dimension of the array. */
@@ -82,10 +82,10 @@ struct type {
  */
 typedef	struct arginf {
 	int	a_num;		/* # of argument (1..) */
-	u_int	a_zero : 1;	/* argument is 0 */
-	u_int	a_pcon : 1;	/* msb of argument is not set */
-	u_int	a_ncon : 1;	/* msb of argument is set */
-	u_int	a_fmt : 1;	/* a_fstrg points to format string */
+	bool	a_zero : 1;	/* argument is 0 */
+	bool	a_pcon : 1;	/* msb of argument is not set */
+	bool	a_ncon : 1;	/* msb of argument is set */
+	bool	a_fmt : 1;	/* a_fstrg points to format string */
 	char	*a_fstrg;	/* format string */
 	struct	arginf *a_next;	/* information for next const. argument */
 } arginf_t;
@@ -118,13 +118,13 @@ typedef	struct sym {
 #else
 		def_t	s_def;
 #endif
-		u_int	s_rval : 1;	/* function has return value */
-		u_int	s_inline : 1;	/* function is inline */
-		u_int	s_osdef : 1;	/* old style function definition */
-		u_int	s_static : 1;	/* symbol is static */
-		u_int	s_va : 1;	/* check only first s_nva arguments */
-		u_int	s_prfl : 1;	/* printflike */
-		u_int	s_scfl : 1;	/* scanflike */
+		bool	s_rval : 1;	/* function has return value */
+		bool	s_inline : 1;	/* function is inline */
+		bool	s_osdef : 1;	/* old style function definition */
+		bool	s_static : 1;	/* symbol is static */
+		bool	s_va : 1;	/* check only first s_nva arguments */
+		bool	s_prfl : 1;	/* printflike */
+		bool	s_scfl : 1;	/* scanflike */
 		u_short	s_type;		/* type */
 		struct	sym *s_next;	/* next symbol with same name */
 	} s_s;
@@ -150,8 +150,8 @@ typedef	struct sym {
  */
 typedef	struct fcall {
 	pos_t	f_pos;		/* position of call */
-	u_int	f_rused : 1;	/* return value used */
-	u_int	f_rdisc : 1;	/* return value discarded (casted to void) */
+	bool	f_rused : 1;	/* return value used */
+	bool	f_rdisc : 1;	/* return value discarded (casted to void) */
 	u_short	f_type;		/* types of expected return value and args */
 	arginf_t *f_args;	/* information about constant arguments */
 	struct	fcall *f_next;	/* next call of same function */
@@ -171,9 +171,9 @@ typedef	struct usym {
  */
 typedef	struct hte {
 	const	char *h_name;	/* name */
-	u_int	h_used : 1;	/* symbol is used */
-	u_int	h_def : 1;	/* symbol is defined */
-	u_int	h_static : 1;	/* static symbol */
+	bool	h_used : 1;	/* symbol is used */
+	bool	h_def : 1;	/* symbol is defined */
+	bool	h_static : 1;	/* static symbol */
 	sym_t	*h_syms;	/* declarations and definitions */
 	sym_t	**h_lsym;	/* points to s_next of last decl./def. */
 	fcall_t	*h_calls;	/* function calls */
