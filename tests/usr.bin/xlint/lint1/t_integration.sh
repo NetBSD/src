@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.17 2021/01/01 16:50:47 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.18 2021/01/02 10:22:44 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -144,6 +144,25 @@ test_case incorrect_array_size
 
 test_case long_double_int	"Checks for confusion of 'long double' with" \
 				"'long int'; PR bin/39639"
+
+test_case all_messages
+all_messages_body() {
+	local srcdir status msg base
+
+	srcdir="$(atf_get_srcdir)"
+	status="0"
+
+	for msg in $(seq 0 329); do
+		base="$(printf '%s/msg_%03d' "${srcdir}" "${msg}")"
+
+		# shellcheck disable=SC2154
+		${Atf_Check} -s not-exit:0 -o "file:${base}.exp" -e empty \
+		    ${LINT1} -g -S -w "${base}.c" /dev/null \
+		|| status="1"
+	done
+	return "${status}"
+}
+
 
 atf_init_test_cases()
 {
