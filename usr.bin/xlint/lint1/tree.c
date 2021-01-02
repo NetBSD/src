@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.115 2021/01/02 03:49:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.116 2021/01/02 18:26:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.115 2021/01/02 03:49:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.116 2021/01/02 18:26:44 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1968,7 +1968,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		case LCOMPLEX:
 			max = LDBL_MAX;		min = -LDBL_MAX;	break;
 		default:
-			lint_assert(0);
+			lint_assert(/*CONSTCOND*/0);
 		}
 		if (v->v_ldbl > max || v->v_ldbl < min) {
 			lint_assert(nt != LDOUBLE);
@@ -2805,7 +2805,7 @@ fold(tnode_t *tn)
 		q = utyp ? (int64_t)(ul | ur) : sl | sr;
 		break;
 	default:
-		lint_assert(0);
+		lint_assert(/*CONSTCOND*/0);
 	}
 
 	/* XXX does not work for quads. */
@@ -2864,7 +2864,7 @@ fold_test(tnode_t *tn)
 		v->v_quad = l || r;
 		break;
 	default:
-		lint_assert(0);
+		lint_assert(/*CONSTCOND*/0);
 	}
 
 	return getcnode(tn->tn_type, v);
@@ -2943,7 +2943,7 @@ fold_float(tnode_t *tn)
 		v->v_quad = l != r;
 		break;
 	default:
-		lint_assert(0);
+		lint_assert(/*CONSTCOND*/0);
 	}
 
 	lint_assert(fpe || !isnan((double)v->v_ldbl));

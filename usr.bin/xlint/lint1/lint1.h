@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.47 2021/01/02 01:06:15 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.48 2021/01/02 18:26:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -70,7 +70,7 @@ typedef struct {
 		curr_pos.p_uniq++;					\
 		if (curr_pos.p_file == csrc_pos.p_file)			\
 			csrc_pos.p_uniq++;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * Strings cannot be referenced to simply by a pointer to its first
