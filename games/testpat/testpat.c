@@ -1,4 +1,4 @@
-/* $NetBSD: testpat.c,v 1.2 2021/01/02 12:10:17 jmcneill Exp $ */
+/* $NetBSD: testpat.c,v 1.3 2021/01/02 12:12:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
 		printf("\n");
 		return EXIT_FAILURE;
 	}
+	curs_set(0);
 
 	if (argc > 2) {
 		endwin();
