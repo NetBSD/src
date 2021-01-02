@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.59 2020/11/10 21:47:41 kamil Exp $
+# $NetBSD: mi,v 1.60 2021/01/02 03:24:01 nat Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -85,6 +85,7 @@
 ./usr/games/snscore				games-games-bin
 ./usr/games/strfile				games-utils-bin
 ./usr/games/teachgammon				games-games-bin
+./usr/games/testpat				games-games-bin
 ./usr/games/tetris				games-games-bin
 ./usr/games/trek				games-games-bin
 ./usr/games/unstr				games-utils-bin
@@ -256,6 +257,7 @@
 ./usr/share/man/cat6/rot13.0			games-utils-catman	.cat
 ./usr/share/man/cat6/sail.0			games-games-catman	.cat
 ./usr/share/man/cat6/snake.0			games-games-catman	.cat
+./usr/share/man/cat6/testpat.0			games-games-catman	.cat
 ./usr/share/man/cat6/tetris.0			games-games-catman	.cat
 ./usr/share/man/cat6/trek.0			games-games-catman	.cat
 ./usr/share/man/cat6/wargames.0			games-games-catman	.cat
@@ -311,6 +313,7 @@
 ./usr/share/man/html6/rot13.html		games-utils-htmlman	html
 ./usr/share/man/html6/sail.html			games-games-htmlman	html
 ./usr/share/man/html6/snake.html		games-games-htmlman	html
+./usr/share/man/html6/testpat.html		games-games-htmlman	html
 ./usr/share/man/html6/tetris.html		games-games-htmlman	html
 ./usr/share/man/html6/trek.html			games-games-htmlman	html
 ./usr/share/man/html6/wargames.html		games-games-htmlman	html
@@ -368,6 +371,7 @@
 ./usr/share/man/man6/rot13.6			games-utils-man		.man
 ./usr/share/man/man6/sail.6			games-games-man		.man
 ./usr/share/man/man6/snake.6			games-games-man		.man
+./usr/share/man/man6/testpat.6			games-games-man		.man
 ./usr/share/man/man6/tetris.6			games-games-man		.man
 ./usr/share/man/man6/trek.6			games-games-man		.man
 ./usr/share/man/man6/wargames.6			games-games-man		.man
