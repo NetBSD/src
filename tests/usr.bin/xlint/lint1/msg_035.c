@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_035.c,v 1.3 2021/01/02 16:12:39 rillig Exp $	*/
+/*	$NetBSD: msg_035.c,v 1.4 2021/01/02 16:33:39 rillig Exp $	*/
 # 3 "msg_035.c"
 
 // Test for message: illegal bit-field type [35]
@@ -30,7 +30,7 @@ typedef void (example_function)(int, const char *);
 struct example {
 	signed signed_flag: 1;
 	unsigned unsigned_flag: 1;
-	_Bool boolean_flag: 1;		// FIXME: allowed since C99 6.7.2.1p5
+	_Bool boolean_flag: 1;
 	char char_flag: 1;
 	signed char signed_char_flag: 1;
 	unsigned char unsigned_char_flag: 1;
