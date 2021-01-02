@@ -1,12 +1,12 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.4 2021/01/01 11:41:01 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.5 2021/01/02 01:12:38 rillig Exp $
 
 --[[
 
-Check that the message text in the C source matches the actual user-visible
-message text.
+usage: lua ./check-msgs.lua *.c
 
-usage: ./check-diagnostics *.c
+Check that the message text in the comments of the C source code matches the
+actual user-visible message text in err.c.
 
 ]]
 
@@ -39,6 +39,7 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
   msg = string.gsub(msg, "/%*", "**")
   msg = string.gsub(msg, "%*/", "**")
   msg = string.gsub(msg, "\\(.)", "%1")
+
   comment = string.gsub(comment, "arg%.", "argument")
   comment = string.gsub(comment, "bitop%.", "bitwise operation")
   comment = string.gsub(comment, "comb%.", "combination")
