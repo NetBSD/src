@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.98 2021/01/02 03:49:25 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.99 2021/01/02 16:33:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.98 2021/01/02 03:49:25 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.99 2021/01/02 16:33:39 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1118,7 +1118,7 @@ declarator_1_struct_union(sym_t *dsym)
 				/* nonportable bit-field type */
 				warning(34);
 			}
-		} else if (t != INT && t != UINT) {
+		} else if (t != INT && t != UINT && t != BOOL) {
 			/*
 			 * Non-integer types are always illegal for
 			 * bitfields, regardless of BITFIELDTYPE.
