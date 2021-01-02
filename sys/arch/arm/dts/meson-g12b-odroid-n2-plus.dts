@@ -1,0 +1,228 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2019 BayLibre, SAS
+ * Author: Neil Armstrong <narmstrong@baylibre.com>
+ */
+
+/dts-v1/;
+
+#include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dts"
+
+/ {
+	compatible = "hardkernel,odroid-n2-plus", "amlogic,s922x", "amlogic,g12b";
+	model = "Hardkernel ODROID-N2Plus";
+
+	vddcpu_a: regulator-vddcpu-a {
+		regulator-min-microvolt = <680000>;
+		regulator-max-microvolt = <1040000>;
+
+		pwms = <&pwm_ab 0 1500 0>;
+
+		/delete-property/ pwm-dutycycle-range;
+
+		/* Voltage Duty-Cycle */
+		voltage-table = <1040000 0>,
+			<1030000 3>,
+			<1020000 6>,
+			<1010000 8>,
+			<1000000 11>,
+			<990000 14>,
+			<980000 17>,
+			<970000 20>,
+			<960000 23>,
+			<950000 26>,
+			<940000 29>,
+			<930000 31>,
+			<920000 34>,
+			<910000 37>,
+			<900000 40>,
+			<890000 43>,
+			<880000 45>,
+			<870000 48>,
+			<860000 51>,
+			<850000 54>,
+			<840000 56>,
+			<830000 59>,
+			<820000 62>,
+			<810000 65>,
+			<800000 68>,
+			<790000 70>,
+			<780000 73>,
+			<770000 76>,
+			<760000 79>,
+			<750000 81>,
+			<740000 84>,
+			<730000 87>,
+			<720000 89>,
+			<710000 92>,
+			<700000 95>,
+			<690000 98>,
+			<680000 100>;
+	};
+
+	vddcpu_b: regulator-vddcpu-b {
+		regulator-min-microvolt = <680000>;
+		regulator-max-microvolt = <1040000>;
+
+		pwms = <&pwm_AO_cd 1 1500 0>;
+
+		/delete-property/ pwm-dutycycle-range;
+
+		/* Voltage Duty-Cycle */
+		voltage-table = <1040000 0>,
+			<1030000 3>,
+			<1020000 6>,
+			<1010000 8>,
+			<1000000 11>,
+			<990000 14>,
+			<980000 17>,
+			<970000 20>,
+			<960000 23>,
+			<950000 26>,
+			<940000 29>,
+			<930000 31>,
+			<920000 34>,
+			<910000 37>,
+			<900000 40>,
+			<890000 43>,
+			<880000 45>,
+			<870000 48>,
+			<860000 51>,
+			<850000 54>,
+			<840000 56>,
+			<830000 59>,
+			<820000 62>,
+			<810000 65>,
+			<800000 68>,
+			<790000 70>,
+			<780000 73>,
+			<770000 76>,
+			<760000 79>,
+			<750000 81>,
+			<740000 84>,
+			<730000 87>,
+			<720000 89>,
+			<710000 92>,
+			<700000 95>,
+			<690000 98>,
+			<680000 100>;
+	};
+
+	/delete-node/ opp-table-0;
+	cpu_opp_table_0: opp-table-0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp00 {
+			opp-hz = /bits/ 64 <500000000>;
+			opp-microvolt = <730000>;
+		};
+		opp01 {
+			opp-hz = /bits/ 64 <667000000>;
+			opp-microvolt = <730000>;
+		};
+		opp02 {
+			opp-hz = /bits/ 64 <1000000000>;
+			opp-microvolt = <760000>;
+		};
+		opp03 {
+			opp-hz = /bits/ 64 <1200000000>;
+			opp-microvolt = <780000>;
+		};
+		opp04 {
+			opp-hz = /bits/ 64 <1398000000>;
+			opp-microvolt = <810000>;
+		};
+		opp05 {
+			opp-hz = /bits/ 64 <1512000000>;
+			opp-microvolt = <860000>;
+		};
+		opp06 {
+			opp-hz = /bits/ 64 <1608000000>;
+			opp-microvolt = <900000>;
+		};
+		opp07 {
+			opp-hz = /bits/ 64 <1704000000>;
+			opp-microvolt = <960000>;
+		};
+		opp08 {
+			opp-hz = /bits/ 64 <1800000000>;
+			opp-microvolt = <1020000>;
+		};
+		opp09 {
+			opp-hz = /bits/ 64 <1908000000>;
+			opp-microvolt = <1030000>;
+		};
+		opp10 {
+			opp-hz = /bits/ 64 <2016000000>;
+			opp-microvolt = <1040000>;
+		};
+	};
+
+	/delete-node/ opp-table-1;
+	cpub_opp_table_1: opp-table-1 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp00 {
+			opp-hz = /bits/ 64 <500000000>;
+			opp-microvolt = <730000>;
+		};
+		opp01 {
+			opp-hz = /bits/ 64 <667000000>;
+			opp-microvolt = <730000>;
+		};
+		opp02 {
+			opp-hz = /bits/ 64 <1000000000>;
+			opp-microvolt = <730000>;
+		};
+		opp03 {
+			opp-hz = /bits/ 64 <1200000000>;
+			opp-microvolt = <750000>;
+		};
+		opp04 {
+			opp-hz = /bits/ 64 <1398000000>;
+			opp-microvolt = <770000>;
+		};
+		opp05 {
+			opp-hz = /bits/ 64 <1512000000>;
+			opp-microvolt = <770000>;
+		};
+		opp06 {
+			opp-hz = /bits/ 64 <1608000000>;
+			opp-microvolt = <780000>;
+		};
+		opp07 {
+			opp-hz = /bits/ 64 <1704000000>;
+			opp-microvolt = <790000>;
+		};
+		opp08 {
+			opp-hz = /bits/ 64 <1800000000>;
+			opp-microvolt = <830000>;
+		};
+		opp09 {
+			opp-hz = /bits/ 64 <1908000000>;
+			opp-microvolt = <860000>;
+		};
+		opp10 {
+			opp-hz = /bits/ 64 <2016000000>;
+			opp-microvolt = <910000>;
+		};
+		opp11 {
+			opp-hz = /bits/ 64 <2100000000>;
+			opp-microvolt = <960000>;
+		};
+		opp12 {
+			opp-hz = /bits/ 64 <2208000000>;
+			opp-microvolt = <1030000>;
+		};
+		opp13 {
+			opp-hz = /bits/ 64 <2304000000>;
+			opp-microvolt = <1030000>;
+		};
+		opp14 {
+			opp-hz = /bits/ 64 <2400000000>;
+			opp-microvolt = <1040000>;
+		};
+	};
+};
