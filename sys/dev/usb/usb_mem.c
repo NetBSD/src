@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.77 2020/05/15 06:26:44 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.78 2021/01/02 12:39:03 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.77 2020/05/15 06:26:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.78 2021/01/02 12:39:03 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -179,9 +179,16 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		goto destroy;
 
 	*dmap = b;
+
 #ifdef USB_FRAG_DMA_WORKAROUND
-	memset(b->kaddr, 0, b->size);
+	flags |= USBMALLOC_ZERO;
 #endif
+	if ((flags & USBMALLOC_ZERO) != 0) {
+		memset(b->kaddr, 0, b->size);
+		bus_dmamap_sync(b->tag, b->map, 0, b->size,
+		    BUS_DMASYNC_PREWRITE);
+	}
+
 	mutex_enter(&usb_blk_lock);
 
 	return USBD_NORMAL_COMPLETION;
