@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.31 2021/01/01 09:28:22 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.32 2021/01/02 18:26:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.31 2021/01/01 09:28:22 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.32 2021/01/02 18:26:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -128,7 +128,7 @@ outtype(type_t *tp)
 		case DCOMPLEX:	t = 'X';	s = '\0';	break;
 		case LCOMPLEX:	t = 'X';	s = 'l';	break;
 		default:
-			lint_assert(0);
+			lint_assert(/*CONSTCOND*/0);
 		}
 		if (tp->t_const)
 			outchar('c');
@@ -268,7 +268,7 @@ outsym(sym_t *sym, scl_t sc, def_t def)
 		outchar('e');
 		break;
 	default:
-		lint_assert(0);
+		lint_assert(/*CONSTCOND*/0);
 	}
 	if (llibflg && def != DECL) {
 		/*
