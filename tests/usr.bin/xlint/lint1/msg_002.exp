@@ -1,1 +1,1 @@
-msg_002.c(6): syntax error ':' [249]
+msg_002.c(6): warning: empty declaration [2]

@@ -1,1 +1,1 @@
-msg_005.c(6): syntax error ':' [249]
+msg_005.c(7): warning: modifying typedef with 'long'; only qualifiers allowed [5]
