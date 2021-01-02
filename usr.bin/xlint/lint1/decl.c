@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.100 2021/01/02 17:17:00 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.101 2021/01/02 18:06:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.100 2021/01/02 17:17:00 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.101 2021/01/02 18:06:01 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -387,7 +387,7 @@ tdeferr(type_t *td, tspec_t t)
 		if (t2 == CHAR || t2 == SHORT || t2 == INT || t2 == LONG ||
 		    t2 == QUAD) {
 			if (!tflag)
-				/* modifying typedef with ... */
+				/* modifying typedef with '%s'; only ... */
 				warning(5, ttab[t].tt_name);
 			td = duptyp(gettyp(merge_type_specifiers(t2, t)));
 			td->t_typedef = 1;
@@ -396,7 +396,7 @@ tdeferr(type_t *td, tspec_t t)
 		break;
 	case SHORT:
 		if (t2 == INT || t2 == UINT) {
-			/* modifying typedef with ... */
+			/* modifying typedef with '%s'; only qualifiers ... */
 			warning(5, "short");
 			td = duptyp(gettyp(t2 == INT ? SHORT : USHORT));
 			td->t_typedef = 1;

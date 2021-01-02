@@ -1,1 +1,4 @@
-msg_004.c(6): syntax error ':' [249]
+msg_004.c(13): Invalid type for _Complex [308]
+msg_004.c(13): illegal type combination [4]
+msg_004.c(17): illegal type combination [4]
+msg_004.c(21): illegal type combination [4]

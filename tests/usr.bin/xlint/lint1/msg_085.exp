@@ -1,1 +1,2 @@
-msg_085.c(6): syntax error ':' [249]
+msg_085.c(6): warning: dubious tag declaration: struct stat [85]
+msg_085.c(8): warning: struct ok never defined [233]
