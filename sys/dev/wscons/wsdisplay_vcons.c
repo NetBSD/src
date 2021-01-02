@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.44 2020/12/28 00:14:18 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.45 2021/01/02 03:00:56 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.44 2020/12/28 00:14:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.45 2021/01/02 03:00:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 					 * and flags we don't need to do
 					 * anything here
 					 */
-					if (acmp == cmp)
+					if (acmp == cmp && start == -1)
 						goto next;
 					/*
 					 * see if we can optimize things a
