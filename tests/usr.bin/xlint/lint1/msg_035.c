@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_035.c,v 1.2 2021/01/02 15:55:54 rillig Exp $	*/
+/*	$NetBSD: msg_035.c,v 1.3 2021/01/02 16:12:39 rillig Exp $	*/
 # 3 "msg_035.c"
 
 // Test for message: illegal bit-field type [35]
+
+/*
+ * In traditional C, only unsigned int is a portable bit-field type.
+ *
+ * In C89, only int, signed int and unsigned int are allowed (3.5.2.1p7).
+ *
+ * In C99 and C11, only _Bool, signed int and unsigned int are allowed,
+ * plus implementation-defined types (6.7.2.1p5).
+ */
 
 typedef struct {
 	int dummy;
@@ -46,7 +55,6 @@ struct example {
 	unsigned int array_flag[4]: 1;
 	example_function function_flag: 1;
 // FIXME: aborts:	_Complex complex_flag: 1;
-	_Complex complex_flag: 1;
 	float _Complex float_complex_flag: 1;
 	double _Complex double_complex_flag: 1;
 	long double _Complex long_double_complex_flag: 1;
