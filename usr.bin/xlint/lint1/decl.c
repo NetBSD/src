@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.97 2021/01/01 14:11:20 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.98 2021/01/02 03:49:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.97 2021/01/01 14:11:20 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.98 2021/01/02 03:49:25 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -253,8 +253,7 @@ add_type(type_t *tp)
 {
 	tspec_t	t;
 #ifdef DEBUG
-	char buf[1024];
-	printf("%s: %s\n", __func__, tyname(buf, sizeof(buf), tp));
+	printf("%s: %s\n", __func__, type_name(tp));
 #endif
 	if (tp->t_typedef) {
 		/*
@@ -505,7 +504,6 @@ setpackedsize(type_t *tp)
 {
 	str_t *sp;
 	sym_t *mem;
-	char buf[256];
 
 	switch (tp->t_tspec) {
 	case STRUCT:
@@ -527,7 +525,7 @@ setpackedsize(type_t *tp)
 		break;
 	default:
 		/* %s attribute ignored for %s */
-		warning(326, "packed", tyname(buf, sizeof(buf), tp));
+		warning(326, "packed", type_name(tp));
 		break;
 	}
 }
@@ -731,8 +729,7 @@ deftyp(void)
 	scl = dcs->d_scl;
 
 #ifdef DEBUG
-	char buf[1024];
-	printf("%s: %s\n", __func__, tyname(buf, sizeof(buf), tp));
+	printf("%s: %s\n", __func__, type_name(tp));
 #endif
 	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && c == NOTSPEC &&
 	    tp == NULL)
@@ -1109,10 +1106,8 @@ declarator_1_struct_union(sym_t *dsym)
 		    t == SHORT || t == USHORT || t == ENUM) {
 			if (bitfieldtype_ok == 0) {
 				if (sflag) {
-					char buf[64];
 					/* bit-field type '%s' invalid ... */
-					warning(273,
-					    tyname(buf, sizeof(buf), tp));
+					warning(273, type_name(tp));
 				} else if (pflag) {
 					/* nonportable bit-field type */
 					warning(34);
