@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_035.c,v 1.4 2021/01/02 16:33:39 rillig Exp $	*/
+/*	$NetBSD: msg_035.c,v 1.5 2021/01/02 17:17:00 rillig Exp $	*/
 # 3 "msg_035.c"
 
 // Test for message: illegal bit-field type [35]
@@ -54,7 +54,7 @@ struct example {
 	void *pointer_flag: 1;
 	unsigned int array_flag[4]: 1;
 	example_function function_flag: 1;
-// FIXME: aborts:	_Complex complex_flag: 1;
+	_Complex complex_flag: 1;
 	float _Complex float_complex_flag: 1;
 	double _Complex double_complex_flag: 1;
 	long double _Complex long_double_complex_flag: 1;
