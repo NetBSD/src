@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.101 2021/01/02 18:06:01 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.102 2021/01/02 18:26:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.101 2021/01/02 18:06:01 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.102 2021/01/02 18:26:44 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -661,7 +661,7 @@ popdecl(void)
 		/* there is nothing after external declarations */
 		/* FALLTHROUGH */
 	default:
-		lint_assert(0);
+		lint_assert(/*CONSTCOND*/0);
 	}
 	free(di);
 }
@@ -1566,7 +1566,7 @@ declarator_name(sym_t *sym)
 		}
 		break;
 	default:
-		lint_assert(0);
+		lint_assert(/*CONSTCOND*/0);
 	}
 	sym->s_scl = sc;
 
@@ -1749,7 +1749,7 @@ storage_class_name(scl_t sc)
 	case STRTAG:	s = "struct";	break;
 	case UNIONTAG:	s = "union";	break;
 	case ENUMTAG:	s = "enum";	break;
-	default:	lint_assert(0);
+	default:	lint_assert(/*CONSTCOND*/0);
 	}
 	return s;
 }
@@ -2629,7 +2629,7 @@ decl1loc(sym_t *dsym, int initflg)
 				 */
 				break;
 			default:
-				lint_assert(0);
+				lint_assert(/*CONSTCOND*/0);
 			}
 
 		} else if (dcs->d_rdcsym->s_blklev == blklev) {
@@ -3074,7 +3074,7 @@ check_tag_usage(sym_t *sym)
 		warning(235, sym->s_name);
 		break;
 	default:
-		lint_assert(0);
+		lint_assert(/*CONSTCOND*/0);
 	}
 }
 
