@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.114 2021/01/01 11:58:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.115 2021/01/02 03:49:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.114 2021/01/01 11:58:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.115 2021/01/02 03:49:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -97,7 +97,6 @@ static char *
 dumpnode(char *buf, size_t len, tnode_t *tn) {
 	const char *n = getopname(tn->tn_op);
 	const char *s;
-	char tbuf[256];
 
 	switch (tn->tn_op) {
 	case NAME:
@@ -126,7 +125,7 @@ dumpnode(char *buf, size_t len, tnode_t *tn) {
 
 
 	snprintf(buf, len, "%s: (%s) = %s [%s, %s]", n,
-	    tyname(tbuf, sizeof(tbuf), tn->tn_type), s, lb, rb);
+	    type_name(tn->tn_type), s, lb, rb);
 	return buf;
 }
 #endif
@@ -439,16 +438,13 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 				error(103);
 			}
 		} else {
-			char buf[64];
 			/* left operand of "->" must be pointer to ... */
 			if (tflag && tn->tn_type->t_tspec == PTR) {
-				tyname(buf, sizeof(buf), tn->tn_type);
 				/* left operand of '->' must be pointer ... */
-				warning(104, buf);
+				warning(104, type_name(tn->tn_type));
 			} else {
-				tyname(buf, sizeof(buf), tn->tn_type);
 				/* left operand of '->' must be pointer ... */
-				error(104, buf);
+				error(104, type_name(tn->tn_type));
 			}
 		}
 	} else {
@@ -704,7 +700,6 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	tspec_t	lt, rt = NOTSPEC, lst = NOTSPEC, rst = NOTSPEC, olt = NOTSPEC,
 	    ort = NOTSPEC;
 	type_t	*ltp, *rtp = NULL, *lstp = NULL, *rstp = NULL;
-	char lbuf[128], rbuf[128];
 	tnode_t	*tn;
 
 	mp = &modtab[op];
@@ -968,10 +963,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 				    "pointer" : "integer";
 				const char *rx = rt == PTR ?
 				    "pointer" : "integer";
-				tyname(lbuf, sizeof(lbuf), ltp);
-				tyname(rbuf, sizeof(rbuf), rtp);
 				/* illegal combination of %s (%s) and ... */
-				warning(123, lx, lbuf, rx, rbuf, mp->m_name);
+				warning(123, lx, type_name(ltp),
+				    rx, type_name(rtp), mp->m_name);
 			} else {
 				warn_incompatible_types(op, lt, rt);
 				return 0;
@@ -1015,10 +1009,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		    (tspec_is_int(lt) && rt == PTR)) {
 			const char *lx = lt == PTR ?  "pointer" : "integer";
 			const char *rx = rt == PTR ?  "pointer" : "integer";
-			tyname(lbuf, sizeof(lbuf), ltp);
-			tyname(rbuf, sizeof(rbuf), rtp);
 			/* illegal combination of %s (%s) and %s (%s), op %s */
-			warning(123, lx, lbuf, rx, rbuf, mp->m_name);
+			warning(123, lx, type_name(ltp),
+			    rx, type_name(rtp), mp->m_name);
 			break;
 		}
 
@@ -1196,7 +1189,6 @@ check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
 	mod_t	*mp;
 	const	char *lts, *rts;
-	char lbuf[128], rbuf[128];
 
 	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
@@ -1248,21 +1240,21 @@ check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		    ((!lstp->t_const && rstp->t_const) ||
 		     (!lstp->t_volatile && rstp->t_volatile))) {
 			/* left side has not all qualifiers of right */
-			tyname(lbuf, sizeof(lbuf), lstp);
-			tyname(rbuf, sizeof(rbuf), rstp);
 			switch (op) {
 			case INIT:
 			case RETURN:
 				/* incompatible pointer types (%s != %s) */
-				warning(182, lbuf, rbuf);
+				warning(182, type_name(lstp), type_name(rstp));
 				break;
 			case FARG:
 				/* argument has incompatible pointer type... */
-				warning(153, arg, lbuf, rbuf);
+				warning(153,
+				    arg, type_name(lstp), type_name(rstp));
 				break;
 			default:
 				/* operands have incompatible pointer type... */
-				warning(128, mp->m_name, lbuf, rbuf);
+				warning(128, mp->m_name,
+				    type_name(lstp), type_name(rstp));
 				break;
 			}
 		}
@@ -1273,22 +1265,22 @@ check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	    (tspec_is_int(lt) && rt == PTR)) {
 		const char *lx = lt == PTR ? "pointer" : "integer";
 		const char *rx = rt == PTR ? "pointer" : "integer";
-		tyname(lbuf, sizeof(lbuf), ltp);
-		tyname(rbuf, sizeof(rbuf), rtp);
 
 		switch (op) {
 		case INIT:
 		case RETURN:
 			/* illegal combination of %s (%s) and %s (%s) */
-			warning(183, lx, lbuf, rx, rbuf);
+			warning(183, lx, type_name(ltp), rx, type_name(rtp));
 			break;
 		case FARG:
 			/* illegal comb. of %s (%s) and %s (%s), arg #%d */
-			warning(154, lx, lbuf, rx, rbuf, arg);
+			warning(154,
+			    lx, type_name(ltp), rx, type_name(rtp), arg);
 			break;
 		default:
 			/* illegal combination of %s (%s) and %s (%s), op %s */
-			warning(123, lx, lbuf, rx, rbuf, mp->m_name);
+			warning(123,
+			    lx, type_name(ltp), rx, type_name(rtp), mp->m_name);
 			break;
 		}
 		return 1;
@@ -1302,8 +1294,7 @@ check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			break;
 		case FARG:
 			/* arg. has incomp. pointer type, arg #%d (%s != %s) */
-			warning(153, arg, tyname(lbuf, sizeof(lbuf), ltp),
-			    tyname(rbuf, sizeof(rbuf), rtp));
+			warning(153, arg, type_name(ltp), type_name(rtp));
 			break;
 		default:
 			warn_incompatible_pointers(mp, ltp, rtp);
@@ -1315,13 +1306,11 @@ check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	switch (op) {
 	case INIT:
 		/* initialisation type mismatch (%s) and (%s) */
-		error(185, tyname(lbuf, sizeof(lbuf), ltp),
-		    tyname(rbuf, sizeof(rbuf), rtp));
+		error(185, type_name(ltp), type_name(rtp));
 		break;
 	case RETURN:
 		/* return value type mismatch (%s) and (%s) */
-		error(211, tyname(lbuf, sizeof(lbuf), ltp),
-		    tyname(rbuf, sizeof(rbuf), rtp));
+		error(211, type_name(ltp), type_name(rtp));
 		break;
 	case FARG:
 		/* argument is incompatible with prototype, arg #%d */
@@ -1376,7 +1365,6 @@ static void
 check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
-	char lbuf[128], rbuf[128];
 
 	mp = &modtab[op];
 
@@ -1392,8 +1380,8 @@ check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			break;
 		case RETURN:
 			/* return value type mismatch (%s) and (%s) */
-			warning(211, tyname(lbuf, sizeof(lbuf), ln->tn_type),
-			    tyname(rbuf, sizeof(rbuf), rn->tn_type));
+			warning(211,
+			    type_name(ln->tn_type), type_name(rn->tn_type));
 			break;
 		default:
 			/* enum type mismatch, op %s */
@@ -1414,7 +1402,6 @@ check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 static void
 check_enum_int_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
-	char lbuf[64], rbuf[64];
 
 	if (!eflag)
 		return;
@@ -1432,23 +1419,20 @@ check_enum_int_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			return;
 		}
 		/* initialisation of '%s' with '%s' */
-		warning(277, tyname(lbuf, sizeof(lbuf), ln->tn_type),
-		    tyname(rbuf, sizeof(rbuf), rn->tn_type));
+		warning(277, type_name(ln->tn_type), type_name(rn->tn_type));
 		break;
 	case FARG:
 		/* combination of '%s' and '%s', arg #%d */
-		warning(278, tyname(lbuf, sizeof(lbuf), ln->tn_type),
-		    tyname(rbuf, sizeof(rbuf), rn->tn_type), arg);
+		warning(278,
+		    type_name(ln->tn_type), type_name(rn->tn_type), arg);
 		break;
 	case RETURN:
 		/* combination of '%s' and '%s' in return */
-		warning(279, tyname(lbuf, sizeof(lbuf), ln->tn_type),
-		    tyname(rbuf, sizeof(rbuf), rn->tn_type));
+		warning(279, type_name(ln->tn_type), type_name(rn->tn_type));
 		break;
 	default:
 		/* combination of '%s' and '%s', op %s */
-		warning(242, tyname(lbuf, sizeof(lbuf), ln->tn_type),
-		    tyname(rbuf, sizeof(rbuf), rn->tn_type),
+		warning(242, type_name(ln->tn_type), type_name(rn->tn_type),
 		    modtab[op].m_name);
 		break;
 	}
@@ -1738,7 +1722,6 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 			   tnode_t *tn)
 {
 	tnode_t	*ptn;
-	char buf[64];
 
 	if (!tspec_is_arith(nt) || !tspec_is_arith(ot))
 		return;
@@ -1764,7 +1747,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		/* representation and/or width change */
 		if (!tspec_is_int(ot) || psize(ot) > psize(INT)) {
 			/* conversion to '%s' due to prototype, arg #%d */
-			warning(259, tyname(buf, sizeof(buf), tp), arg);
+			warning(259, type_name(tp), arg);
 		}
 	} else if (hflag) {
 		/*
@@ -1780,7 +1763,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 			/* ok */
 		} else {
 			/* conversion to '%s' due to prototype, arg #%d */
-			warning(259, tyname(buf, sizeof(buf), tp), arg);
+			warning(259, type_name(tp), arg);
 		}
 	}
 }
@@ -1793,7 +1776,8 @@ static void
 check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 			 tnode_t *tn)
 {
-	char lbuf[64], rbuf[64], opbuf[16];
+	char opbuf[16];
+
 	if (tn->tn_op == CON)
 		return;
 
@@ -1805,11 +1789,10 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		if (aflag && pflag) {
 			if (op == FARG) {
 				/* conversion to '%s' may sign-extend ... */
-				warning(297, tyname(lbuf, sizeof(lbuf), tp),
-				    arg);
+				warning(297, type_name(tp), arg);
 			} else {
 				/* conversion to '%s' may sign-extend ... */
-				warning(131, tyname(lbuf, sizeof(lbuf), tp));
+				warning(131, type_name(tp));
 			}
 		}
 	}
@@ -1821,9 +1804,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		case MULT:
 		case SHL:
 			/* suggest cast from '%s' to '%s' on op %s to ... */
-			warning(324,
-			    tyname(rbuf, sizeof(rbuf), gettyp(ot)),
-			    tyname(lbuf, sizeof(lbuf), tp),
+			warning(324, type_name(gettyp(ot)), type_name(tp),
 			    print_tnode(opbuf, sizeof(opbuf), tn));
 			break;
 		default:
@@ -1839,14 +1820,11 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 			if (op == FARG) {
 				/* conv. from '%s' to '%s' may lose ... */
 				warning(298,
-				    tyname(rbuf, sizeof(rbuf), tn->tn_type),
-				    tyname(lbuf, sizeof(lbuf), tp),
-				    arg);
+				    type_name(tn->tn_type), type_name(tp), arg);
 			} else {
 				/* conv. from '%s' to '%s' may lose accuracy */
 				warning(132,
-				    tyname(rbuf, sizeof(rbuf), tn->tn_type),
-				    tyname(lbuf, sizeof(lbuf), tp));
+				    type_name(tn->tn_type), type_name(tp));
 			}
 		}
 	}
@@ -1858,7 +1836,6 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 static void
 check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 {
-	char buf[64];
 
 	if (tn->tn_op == CON)
 		return;
@@ -1871,10 +1848,10 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 	if (psize(nt) < psize(PTR)) {
 		if (pflag && size(nt) >= size(PTR)) {
 			/* conv. of pointer to '%s' may lose bits */
-			warning(134, tyname(buf, sizeof(buf), tp));
+			warning(134, type_name(tp));
 		} else {
 			/* conv. of pointer to '%s' loses bits */
-			warning(133, tyname(buf, sizeof(buf), tp));
+			warning(133, type_name(tp));
 		}
 	}
 }
@@ -1942,7 +1919,6 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 void
 cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 {
-	char lbuf[64], rbuf[64];
 	tspec_t	ot, nt;
 	ldbl_t	max = 0.0, min = 0.0;
 	int	sz, rchk;
@@ -1999,14 +1975,11 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			if (op == FARG) {
 				/* conv. of '%s' to '%s' is out of range, ... */
 				warning(295,
-				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
-				    tyname(rbuf, sizeof(rbuf), tp),
-				    arg);
+				    type_name(gettyp(ot)), type_name(tp), arg);
 			} else {
 				/* conversion of '%s' to '%s' is out of range */
 				warning(119,
-				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
-				    tyname(rbuf, sizeof(rbuf), tp));
+				    type_name(gettyp(ot)), type_name(tp));
 			}
 			v->v_ldbl = v->v_ldbl > 0 ? max : min;
 		}
@@ -2090,10 +2063,8 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			    (nv->v_quad & qbmasks[osz - 1]) != 0 &&
 			    (nv->v_quad & xmask) != xmask) {
 				/* extra bits set to 0 in conv. of '%s' ... */
-				warning(309,
-				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
-				    tyname(rbuf, sizeof(rbuf), tp),
-				    modtab[op].m_name);
+				warning(309, type_name(gettyp(ot)),
+				    type_name(tp), modtab[op].m_name);
 			} else if (nsz < osz &&
 				   (v->v_quad & xmask) != xmask &&
 				   (v->v_quad & xmask) != 0) {
@@ -2155,14 +2126,11 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			} else if (op == FARG) {
 				/* conv. of '%s' to '%s' is out of range, ... */
 				warning(295,
-				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
-				    tyname(rbuf, sizeof(rbuf), tp),
-				    arg);
+				    type_name(gettyp(ot)), type_name(tp), arg);
 			} else {
 				/* conversion of '%s' to '%s' is out of range */
 				warning(119,
-				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
-				    tyname(rbuf, sizeof(rbuf), tp));
+				    type_name(gettyp(ot)), type_name(tp));
 			}
 		} else if (nv->v_quad != v->v_quad) {
 			if (op == ASSIGN && tp->t_isfield) {
@@ -2177,14 +2145,11 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			} else if (op == FARG) {
 				/* conv. of '%s' to '%s' is out of range, ... */
 				warning(295,
-				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
-				    tyname(rbuf, sizeof(rbuf), tp),
-				    arg);
+				    type_name(gettyp(ot)), type_name(tp), arg);
 			} else {
 				/* conversion of '%s' to '%s' is out of range */
 				warning(119,
-				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
-				    tyname(rbuf, sizeof(rbuf), tp));
+				    type_name(gettyp(ot)), type_name(tp));
 			}
 		}
 	}
@@ -2383,7 +2348,6 @@ static tnode_t *
 build_real_imag(op_t op, tnode_t *ln)
 {
 	tnode_t	*cn, *ntn;
-	char buf[64];
 
 	lint_assert(ln != NULL);
 
@@ -2400,7 +2364,7 @@ build_real_imag(op_t op, tnode_t *ln)
 	default:
 		/* __%s__ is illegal for type %s */
 		error(276, op == REAL ? "real" : "imag",
-		    tyname(buf, sizeof(buf), ln->tn_type));
+		    type_name(ln->tn_type));
 		return NULL;
 	}
 	ntn = new_tnode(op, cn->tn_type, ln, cn);
@@ -3172,7 +3136,6 @@ cast(tnode_t *tn, type_t *tp)
 		 * But this seams really questionable.
 		 */
 	} else if (nt == UNION) {
-		char buf[256], buf1[256];
 		sym_t *m;
 		str_t *str = tp->t_str;
 		if (!Sflag) {
@@ -3191,8 +3154,7 @@ cast(tnode_t *tn, type_t *tp)
 			}
 		}
 		/* type '%s' is not a member of '%s' */
-		error(329, tyname(buf, sizeof(buf), tn->tn_type),
-		    tyname(buf1, sizeof(buf1), tp));
+		error(329, type_name(tn->tn_type), type_name(tp));
 		return NULL;
 	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
 		if (!Sflag || nt == ARRAY || nt == FUNC) {
@@ -3282,9 +3244,8 @@ funccall(tnode_t *func, tnode_t *args)
 
 	if (func->tn_type->t_tspec != PTR ||
 	    func->tn_type->t_subt->t_tspec != FUNC) {
-		char buf[256];
 		/* illegal function (type %s) */
-		error(149, tyname(buf, sizeof(buf), func->tn_type));
+		error(149, type_name(func->tn_type));
 		return NULL;
 	}
 
@@ -3839,7 +3800,6 @@ check_array_index(tnode_t *tn, int amper)
 static void
 check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
-	char buf[64];
 	tspec_t	lt, rt;
 	mod_t	*mp;
 
@@ -3871,12 +3831,11 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	    rn->tn_op == CON && rn->tn_val->v_quad <= 0) {
 		if (rn->tn_val->v_quad < 0) {
 			/* comparison of %s with %s, op %s */
-			warning(162, tyname(buf, sizeof(buf), ln->tn_type),
+			warning(162, type_name(ln->tn_type),
 			    "negative constant", mp->m_name);
 		} else if (op == LT || op == GE || (hflag && op == LE)) {
 			/* comparison of %s with %s, op %s */
-			warning(162, tyname(buf, sizeof(buf), ln->tn_type),
-			    "0", mp->m_name);
+			warning(162, type_name(ln->tn_type), "0", mp->m_name);
 		}
 		return;
 	}
@@ -3885,11 +3844,10 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		if (ln->tn_val->v_quad < 0) {
 			/* comparison of %s with %s, op %s */
 			warning(162, "negative constant",
-			    tyname(buf, sizeof(buf), rn->tn_type), mp->m_name);
+			    type_name(rn->tn_type), mp->m_name);
 		} else if (op == GT || op == LE || (hflag && op == GE)) {
 			/* comparison of %s with %s, op %s */
-			warning(162, "0", tyname(buf, sizeof(buf), rn->tn_type),
-			    mp->m_name);
+			warning(162, "0", type_name(rn->tn_type), mp->m_name);
 		}
 		return;
 	}
@@ -4011,7 +3969,7 @@ cat_strings(strg_t *strg1, strg_t *strg2)
 	else
 		COPY(st_wcp);
 
-	strg1->st_len = len - 1; /* - NUL */;
+	strg1->st_len = len - 1; /* - NUL */
 	free(strg2);
 
 	return strg1;
