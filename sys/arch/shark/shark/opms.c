@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.30 2020/07/22 01:24:40 msaitoh Exp $        */
+/*      $NetBSD: opms.c,v 1.31 2021/01/03 17:28:33 thorpej Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.30 2020/07/22 01:24:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.31 2021/01/03 17:28:33 thorpej Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -966,7 +966,7 @@ filt_opmsrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	splx(s);
 }
 
@@ -990,12 +990,10 @@ int
 opmskqfilter(dev_t dev, struct knote *kn)
 {
 	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
-	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &opmsread_filtops;
 		break;
 
@@ -1006,7 +1004,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = spltty();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_rsel, kn);
 	splx(s);
 
 	return (0);
