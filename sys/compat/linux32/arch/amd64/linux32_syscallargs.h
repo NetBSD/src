@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscallargs.h,v 1.81.2.2 2020/12/17 03:05:50 thorpej Exp $ */
+/* $NetBSD: linux32_syscallargs.h,v 1.81.2.3 2021/01/03 16:13:07 thorpej Exp $ */
 
 /*
  * System call argument lists.
@@ -1077,6 +1077,24 @@ struct linux32_sys_pipe2_args {
 };
 check_syscall_args(linux32_sys_pipe2)
 
+struct linux32_sys_preadv_args {
+	syscallarg(int) fd;
+	syscallarg(const netbsd32_iovecp_t) iovp;
+	syscallarg(int) iovcnt;
+	syscallarg(netbsd32_u_long) off_lo;
+	syscallarg(netbsd32_u_long) off_hi;
+};
+check_syscall_args(linux32_sys_preadv)
+
+struct linux32_sys_pwritev_args {
+	syscallarg(int) fd;
+	syscallarg(const netbsd32_iovecp_t) iovp;
+	syscallarg(int) iovcnt;
+	syscallarg(netbsd32_u_long) off_lo;
+	syscallarg(netbsd32_u_long) off_hi;
+};
+check_syscall_args(linux32_sys_pwritev)
+
 /*
  * System call prototypes.
  */
@@ -1544,5 +1562,9 @@ int	linux32_sys_eventfd2(struct lwp *, const struct linux32_sys_eventfd2_args *,
 int	linux32_sys_dup3(struct lwp *, const struct linux32_sys_dup3_args *, register_t *);
 
 int	linux32_sys_pipe2(struct lwp *, const struct linux32_sys_pipe2_args *, register_t *);
+
+int	linux32_sys_preadv(struct lwp *, const struct linux32_sys_preadv_args *, register_t *);
+
+int	linux32_sys_pwritev(struct lwp *, const struct linux32_sys_pwritev_args *, register_t *);
 
 #endif /* _LINUX32_SYS_SYSCALLARGS_H_ */

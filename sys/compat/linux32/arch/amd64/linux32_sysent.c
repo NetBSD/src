@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.81.2.2 2020/12/17 03:05:50 thorpej Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.81.2.3 2021/01/03 16:13:07 thorpej Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.81.2.2 2020/12/17 03:05:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.81.2.3 2021/01/03 16:13:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -1265,11 +1265,13 @@ struct sysent linux32_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 332 = filler */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 333 = filler */
+		ns(struct linux32_sys_preadv_args),
+		.sy_call = (sy_call_t *)linux32_sys_preadv
+	},		/* 333 = preadv */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 334 = filler */
+		ns(struct linux32_sys_pwritev_args),
+		.sy_call = (sy_call_t *)linux32_sys_pwritev
+	},		/* 334 = pwritev */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 335 = filler */

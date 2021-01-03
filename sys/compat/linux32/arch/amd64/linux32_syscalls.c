@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscalls.c,v 1.81.2.2 2020/12/17 03:05:50 thorpej Exp $ */
+/* $NetBSD: linux32_syscalls.c,v 1.81.2.3 2021/01/03 16:13:07 thorpej Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.81.2.2 2020/12/17 03:05:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.81.2.3 2021/01/03 16:13:07 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -372,8 +372,8 @@ const char *const linux32_syscallnames[] = {
 	/* 330 */	"dup3",
 	/* 331 */	"pipe2",
 	/* 332 */	"#332 (unimplemented inotify_init1)",
-	/* 333 */	"#333 (unimplemented preadv)",
-	/* 334 */	"#334 (unimplemented pwritev)",
+	/* 333 */	"preadv",
+	/* 334 */	"pwritev",
 	/* 335 */	"#335 (unimplemented rt_tgsigqueueinfo)",
 	/* 336 */	"#336 (unimplemented perf_counter_open)",
 	/* 337 */	"#337 (unimplemented recvmmsg)",
@@ -891,8 +891,8 @@ const char *const altlinux32_syscallnames[] = {
 	/* 330 */	NULL, /* dup3 */
 	/* 331 */	NULL, /* pipe2 */
 	/* 332 */	NULL, /* unimplemented inotify_init1 */
-	/* 333 */	NULL, /* unimplemented preadv */
-	/* 334 */	NULL, /* unimplemented pwritev */
+	/* 333 */	NULL, /* preadv */
+	/* 334 */	NULL, /* pwritev */
 	/* 335 */	NULL, /* unimplemented rt_tgsigqueueinfo */
 	/* 336 */	NULL, /* unimplemented perf_counter_open */
 	/* 337 */	NULL, /* unimplemented recvmmsg */
