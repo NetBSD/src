@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.59 2021/01/03 19:10:47 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.60 2021/01/03 20:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.59 2021/01/03 19:10:47 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.60 2021/01/03 20:31:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -582,7 +582,7 @@ mkinit(tnode_t *tn)
 	 */
 	if ((sc == AUTO || sc == REG) &&
 	    initsym->s_type->t_tspec != ARRAY && initstk->i_next == NULL) {
-		ln = getnnode(initsym, 0);
+		ln = new_name_node(initsym, 0);
 		ln->tn_type = tduptyp(ln->tn_type);
 		ln->tn_type->t_const = 0;
 		tn = build(ASSIGN, ln, tn);

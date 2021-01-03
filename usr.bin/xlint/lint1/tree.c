@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.120 2021/01/03 19:10:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.121 2021/01/03 20:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.120 2021/01/03 19:10:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.121 2021/01/03 20:31:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: tree.c,v 1.120 2021/01/03 19:10:47 rillig Exp $");
 #include "lint1.h"
 #include "cgram.h"
 
-static	tnode_t	*new_int_const_node(tspec_t, int64_t);
+static	tnode_t	*new_integer_constant_node(tspec_t, int64_t);
 static	void	check_pointer_comparison(op_t, tnode_t *, tnode_t *);
 static	int	check_assign_types_compatible(op_t, int, tnode_t *, tnode_t *);
 static	void	check_bad_enum_operation(op_t, tnode_t *, tnode_t *);
@@ -162,7 +162,7 @@ tincref(type_t *tp, tspec_t t)
  * Create a node for a constant.
  */
 tnode_t *
-getcnode(type_t *tp, val_t *v)
+new_constant_node(type_t *tp, val_t *v)
 {
 	tnode_t	*n;
 
@@ -177,11 +177,8 @@ getcnode(type_t *tp, val_t *v)
 	return n;
 }
 
-/*
- * Create a node for a integer constant.
- */
 static tnode_t *
-new_int_const_node(tspec_t t, int64_t q)
+new_integer_constant_node(tspec_t t, int64_t q)
 {
 	tnode_t	*n;
 
@@ -199,7 +196,7 @@ new_int_const_node(tspec_t t, int64_t q)
  * ntok is the token which follows the name.
  */
 tnode_t *
-getnnode(sym_t *sym, int ntok)
+new_name_node(sym_t *sym, int ntok)
 {
 	tnode_t	*n;
 
@@ -247,7 +244,7 @@ getnnode(sym_t *sym, int ntok)
 	}
 
 	if (sym->s_kind != FVFT && sym->s_kind != FMEMBER)
-		LERROR("getnnode(%d)", sym->s_kind);
+		LERROR("new_name_node(%d)", sym->s_kind);
 
 	n = getnode();
 	n->tn_type = sym->s_type;
@@ -265,11 +262,8 @@ getnnode(sym_t *sym, int ntok)
 	return n;
 }
 
-/*
- * Create a node for a string.
- */
 tnode_t *
-getsnode(strg_t *strg)
+new_string_node(strg_t *strg)
 {
 	size_t	len;
 	tnode_t	*n;
@@ -2300,9 +2294,11 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 #if PTRDIFF_IS_LONG
-	ctn = new_int_const_node(LONG, rn->tn_sym->s_value.v_quad / CHAR_BIT);
+	ctn = new_integer_constant_node(LONG,
+	    rn->tn_sym->s_value.v_quad / CHAR_BIT);
 #else
-	ctn = new_int_const_node(INT, rn->tn_sym->s_value.v_quad / CHAR_BIT);
+	ctn = new_integer_constant_node(INT,
+	    rn->tn_sym->s_value.v_quad / CHAR_BIT);
 #endif
 
 	ntn = new_tnode(PLUS, tincref(rn->tn_type, PTR), ln, ctn);
@@ -2334,7 +2330,7 @@ build_prepost_incdec(op_t op, tnode_t *ln)
 	if (ln->tn_type->t_tspec == PTR) {
 		cn = plength(ln->tn_type);
 	} else {
-		cn = new_int_const_node(INT, (int64_t)1);
+		cn = new_integer_constant_node(INT, (int64_t)1);
 	}
 	ntn = new_tnode(op, ln->tn_type, ln, cn);
 
@@ -2353,13 +2349,13 @@ build_real_imag(op_t op, tnode_t *ln)
 
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
-		cn = new_int_const_node(LDOUBLE, (int64_t)1);
+		cn = new_integer_constant_node(LDOUBLE, (int64_t)1);
 		break;
 	case DCOMPLEX:
-		cn = new_int_const_node(DOUBLE, (int64_t)1);
+		cn = new_integer_constant_node(DOUBLE, (int64_t)1);
 		break;
 	case FCOMPLEX:
-		cn = new_int_const_node(FLOAT, (int64_t)1);
+		cn = new_integer_constant_node(FLOAT, (int64_t)1);
 		break;
 	default:
 		/* __%s__ is illegal for type %s */
@@ -2668,7 +2664,7 @@ plength(type_t *tp)
 	st = INT;
 #endif
 
-	return new_int_const_node(st, (int64_t)(elem * elsz / CHAR_BIT));
+	return new_integer_constant_node(st, (int64_t)(elem * elsz / CHAR_BIT));
 }
 
 /*
@@ -2818,7 +2814,7 @@ fold(tnode_t *tn)
 
 	v->v_quad = xsign(q, t, -1);
 
-	cn = getcnode(tn->tn_type, v);
+	cn = new_constant_node(tn->tn_type, v);
 
 	return cn;
 }
@@ -2867,7 +2863,7 @@ fold_test(tnode_t *tn)
 		lint_assert(/*CONSTCOND*/0);
 	}
 
-	return getcnode(tn->tn_type, v);
+	return new_constant_node(tn->tn_type, v);
 }
 
 /*
@@ -2964,7 +2960,7 @@ fold_float(tnode_t *tn)
 	    fpe = 0;
 	}
 
-	return getcnode(tn->tn_type, v);
+	return new_constant_node(tn->tn_type, v);
 }
 
 
@@ -2980,7 +2976,7 @@ build_sizeof(type_t *tp)
 #else
 	st = UINT;
 #endif
-	return new_int_const_node(st, tsize(tp) / CHAR_BIT);
+	return new_integer_constant_node(st, tsize(tp) / CHAR_BIT);
 }
 
 /*
@@ -3001,7 +2997,7 @@ build_offsetof(type_t *tp, sym_t *sym)
 		error(111, "offsetof");
 
 	// XXX: wrong size, no checking for sym fixme
-	return new_int_const_node(st, tsize(tp) / CHAR_BIT);
+	return new_integer_constant_node(st, tsize(tp) / CHAR_BIT);
 }
 
 int64_t
@@ -3111,7 +3107,7 @@ build_alignof(type_t *tp)
 	st = UINT;
 #endif
 
-	return new_int_const_node(st, (int64_t)getbound(tp) / CHAR_BIT);
+	return new_integer_constant_node(st, (int64_t)getbound(tp) / CHAR_BIT);
 }
 
 /*
@@ -3210,7 +3206,7 @@ funcarg(tnode_t *args, tnode_t *arg)
 	 * will not change.
 	 */
 	if (arg == NULL)
-		arg = new_int_const_node(INT, (int64_t)0);
+		arg = new_integer_constant_node(INT, (int64_t)0);
 
 	ntn = new_tnode(PUSH, arg->tn_type, arg, args);
 
