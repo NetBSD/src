@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.51 2020/12/29 15:39:59 skrll Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.52 2021/01/03 10:31:37 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.51 2020/12/29 15:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.52 2021/01/03 10:31:37 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -392,9 +392,9 @@ set_busreg(pci_chipset_tag_t pc, pcitag_t tag, int prim, int sec, int sub)
 {
 	pcireg_t	busreg;
 
-	busreg  =  __SHIFTIN(prim, PCI_BRIDGE_BUS_PRIMARY);
-	busreg |=  __SHIFTIN(sec,  PCI_BRIDGE_BUS_SECONDARY);
-	busreg |=  __SHIFTIN(sub,  PCI_BRIDGE_BUS_SUBORDINATE);
+	busreg  = __SHIFTIN(prim, PCI_BRIDGE_BUS_PRIMARY);
+	busreg |= __SHIFTIN(sec,  PCI_BRIDGE_BUS_SECONDARY);
+	busreg |= __SHIFTIN(sub,  PCI_BRIDGE_BUS_SUBORDINATE);
 	pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG, busreg);
 }
 
@@ -647,7 +647,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		reg_end = PCI_MAPREG_PCB_END;
 
 		busreg = pci_conf_read(pb->pc, tag, PCI_BUSNUM);
-		busreg  =  (busreg & 0xff000000) |
+		busreg = (busreg & 0xff000000) |
 		    __SHIFTIN(pb->busno, PCI_BRIDGE_BUS_PRIMARY) |
 		    __SHIFTIN(pb->next_busno, PCI_BRIDGE_BUS_SECONDARY) |
 		    __SHIFTIN(pb->next_busno, PCI_BRIDGE_BUS_SUBORDINATE);
