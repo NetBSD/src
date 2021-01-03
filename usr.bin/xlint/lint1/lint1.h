@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.48 2021/01/02 18:26:44 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.49 2021/01/03 18:48:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,6 +33,7 @@
  */
 
 #include "lint.h"
+#include "err-msgs.h"
 #include "op.h"
 
 /*
@@ -435,3 +436,26 @@ typedef	struct err_set {
 #endif
 
 extern err_set	msgset;
+
+
+#ifdef DEBUG
+#  include "err-msgs.h"
+
+/* ARGSUSED */
+static inline void __attribute__((format(printf, 1, 2)))
+check_printf(const char *fmt, ...)
+{
+}
+
+#  define wrap_check_printf(func, id, args...)				\
+	do {								\
+		check_printf(__CONCAT(MSG_, id), ##args);		\
+		(func)(id, ##args);					\
+	} while (/*CONSTCOND*/0)
+
+#  define error(id, args...) wrap_check_printf(error, id, ##args)
+#  define warning(id, args...) wrap_check_printf(warning, id, ##args)
+#  define message(id, args...) wrap_check_printf(message, id, ##args)
+#  define gnuism(id, args...) wrap_check_printf(gnuism, id, ##args)
+#  define c99ism(id, args...) wrap_check_printf(c99ism, id, ##args)
+#endif

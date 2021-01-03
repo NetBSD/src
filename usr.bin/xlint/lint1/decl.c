@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.106 2021/01/03 17:42:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.107 2021/01/03 18:48:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.106 2021/01/03 17:42:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.107 2021/01/03 18:48:37 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3206,7 +3206,7 @@ print_previous_declaration(int msg, sym_t *psym)
 	cpos = curr_pos;
 	curr_pos = psym->s_def_pos;
 	if (msg != -1) {
-		message(msg);
+		(message)(msg);
 	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
 		/* previous definition of %s */
 		message(261, psym->s_name);
