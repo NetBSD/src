@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.48 2021/01/03 20:04:08 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.49 2021/01/03 20:14:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.48 2021/01/03 20:04:08 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.49 2021/01/03 20:14:38 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -97,15 +97,15 @@ int	nvararg = -1;
 pos_t	vapos;
 
 /*
- * Both prflstr and scflstrg contain the number of the argument which
- * shall be used to check the types of remaining arguments (for PRINTFLIKE
- * and SCANFLIKE).
+ * Both printflike_argnum and scanflike_argnum contain the 1-based number
+ * of the string argument which shall be used to check the types of remaining
+ * arguments (for PRINTFLIKE and SCANFLIKE).
  *
  * printflike_pos and scanflike_pos are the positions of the last PRINTFLIKE
  * or SCANFLIKE comment.
  */
-int	prflstrg = -1;
-int	scflstrg = -1;
+int	printflike_argnum = -1;
+int	scanflike_argnum = -1;
 pos_t	printflike_pos;
 pos_t	scanflike_pos;
 
@@ -1061,21 +1061,21 @@ global_clean_up_decl(int silent)
 		}
 		nvararg = -1;
 	}
-	if (prflstrg != -1) {
+	if (printflike_argnum != -1) {
 		if (!silent) {
 			curr_pos = printflike_pos;
 			/* must precede function definition: ** %s ** */
 			warning(282, "PRINTFLIKE");
 		}
-		prflstrg = -1;
+		printflike_argnum = -1;
 	}
-	if (scflstrg != -1) {
+	if (scanflike_argnum != -1) {
 		if (!silent) {
 			curr_pos = scanflike_pos;
 			/* must precede function definition: ** %s ** */
 			warning(282, "SCANFLIKE");
 		}
-		scflstrg = -1;
+		scanflike_argnum = -1;
 	}
 
 	curr_pos = cpos;
@@ -1153,11 +1153,11 @@ printflike(int n)
 		warning(280, "PRINTFLIKE");
 		return;
 	}
-	if (prflstrg != -1) {
+	if (printflike_argnum != -1) {
 		/* duplicate use of ** %s ** */
 		warning(281, "PRINTFLIKE");
 	}
-	prflstrg = n;
+	printflike_argnum = n;
 	printflike_pos = curr_pos;
 }
 
@@ -1179,11 +1179,11 @@ scanflike(int n)
 		warning(280, "SCANFLIKE");
 		return;
 	}
-	if (scflstrg != -1) {
+	if (scanflike_argnum != -1) {
 		/* duplicate use of ** %s ** */
 		warning(281, "SCANFLIKE");
 	}
-	scflstrg = n;
+	scanflike_argnum = n;
 	scanflike_pos = curr_pos;
 }
 
