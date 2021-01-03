@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.60 2021/01/02 17:17:00 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.61 2021/01/03 15:51:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.60 2021/01/02 17:17:00 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.61 2021/01/03 15:51:16 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -183,7 +183,7 @@ const	char *msgs[] = {
 	"negative shift",					      /* 121 */
 	"shift greater than size of object",			      /* 122 */
 	"illegal combination of %s (%s) and %s (%s), op %s",	      /* 123 */
-	"illegal pointer combination, op %s",			      /* 124 */
+	"illegal pointer combination (%s) and (%s), op %s",	      /* 124 */
 	"ANSI C forbids ordered comparisons of pointers to functions",/* 125 */
 	"incompatible types in conditional",			      /* 126 */
 	"'&' before array or function: ignored",		      /* 127 */
