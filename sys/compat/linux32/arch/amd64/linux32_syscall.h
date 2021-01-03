@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.81.2.2 2020/12/17 03:05:50 thorpej Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.81.2.3 2021/01/03 16:13:07 thorpej Exp $ */
 
 /*
  * System call numbers.
@@ -740,6 +740,12 @@
 
 /* syscall: "pipe2" ret: "int" args: "netbsd32_intp" "int" */
 #define	LINUX32_SYS_pipe2	331
+
+/* syscall: "preadv" ret: "int" args: "int" "const netbsd32_iovecp_t" "int" "netbsd32_u_long" "netbsd32_u_long" */
+#define	LINUX32_SYS_preadv	333
+
+/* syscall: "pwritev" ret: "int" args: "int" "const netbsd32_iovecp_t" "int" "netbsd32_u_long" "netbsd32_u_long" */
+#define	LINUX32_SYS_pwritev	334
 
 #define	LINUX32_SYS_MAXSYSCALL	351
 #define	LINUX32_SYS_NSYSENT	512
