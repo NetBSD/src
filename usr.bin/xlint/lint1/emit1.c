@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.32 2021/01/02 18:26:44 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.33 2021/01/03 20:14:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.32 2021/01/02 18:26:44 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.33 2021/01/03 20:14:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -330,25 +330,25 @@ outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
 	/* flags */
 
 	/* both SCANFLIKE and PRINTFLIKE imply VARARGS */
-	if (prflstrg != -1) {
-		nvararg = prflstrg;
-	} else if (scflstrg != -1) {
-		nvararg = scflstrg;
+	if (printflike_argnum != -1) {
+		nvararg = printflike_argnum;
+	} else if (scanflike_argnum != -1) {
+		nvararg = scanflike_argnum;
 	}
 
 	if (nvararg != -1) {
 		outchar('v');
 		outint(nvararg);
 	}
-	if (scflstrg != -1) {
+	if (scanflike_argnum != -1) {
 		outchar('S');
-		outint(scflstrg);
+		outint(scanflike_argnum);
 	}
-	if (prflstrg != -1) {
+	if (printflike_argnum != -1) {
 		outchar('P');
-		outint(prflstrg);
+		outint(printflike_argnum);
 	}
-	nvararg = prflstrg = scflstrg = -1;
+	nvararg = printflike_argnum = scanflike_argnum = -1;
 
 	outchar('d');
 
