@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.45 2021/01/03 17:42:45 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.46 2021/01/03 20:14:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -232,9 +232,9 @@ extern	int	nargusg;
 extern	pos_t	argsused_pos;
 extern	int	nvararg;
 extern	pos_t	vapos;
-extern	int	prflstrg;
+extern	int	printflike_argnum;
 extern	pos_t	printflike_pos;
-extern	int	scflstrg;
+extern	int	scanflike_argnum;
 extern	pos_t	scanflike_pos;
 extern	int	constcond_flag;
 extern	int	llibflg;
