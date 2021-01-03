@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.110 2021/01/02 01:06:15 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.111 2021/01/03 17:42:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.110 2021/01/02 01:06:15 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.111 2021/01/03 17:42:45 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1316,8 +1316,8 @@ slashslashcomment(void)
 	int c;
 
 	if (!Sflag && !gflag)
-		/* // comments only supported in C99 */
-		(void)gnuism(312, tflag ? "traditional" : "ANSI");
+		/* %s C does not support // comments */
+		gnuism(312, tflag ? "traditional" : "ANSI");
 
 	while ((c = inpc()) != EOF && c != '\n')
 		continue;
