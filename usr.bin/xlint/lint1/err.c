@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.63 2021/01/03 17:42:45 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.64 2021/01/03 18:48:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.63 2021/01/03 17:42:45 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.64 2021/01/03 18:48:37 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -464,7 +464,7 @@ vwarning(int n, va_list ap)
 }
 
 void
-error(int n, ...)
+(error)(int n, ...)
 {
 	va_list	ap;
 
@@ -502,7 +502,7 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 }
 
 void
-warning(int n, ...)
+(warning)(int n, ...)
 {
 	va_list	ap;
 
@@ -512,7 +512,7 @@ warning(int n, ...)
 }
 
 void
-message(int n, ...)
+(message)(int n, ...)
 {
 	va_list	ap;
 	const	char *fn;
@@ -535,7 +535,7 @@ message(int n, ...)
  * "right"... [perry, 2 Nov 2002]
 */
 void
-c99ism(int n, ...)
+(c99ism)(int n, ...)
 {
 	va_list	ap;
 	bool extensions_ok = Sflag || gflag;
@@ -550,7 +550,7 @@ c99ism(int n, ...)
 }
 
 void
-gnuism(int n, ...)
+(gnuism)(int n, ...)
 {
 	va_list	ap;
 
