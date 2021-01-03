@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.107 2021/01/03 18:48:37 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.108 2021/01/03 19:10:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.107 2021/01/03 18:48:37 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.108 2021/01/03 19:10:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -494,7 +494,7 @@ static size_t
 bitfieldsize(sym_t **mem)
 {
 	size_t len = (*mem)->s_type->t_flen;
-	while (*mem && (*mem)->s_type->t_isfield) {
+	while (*mem && (*mem)->s_type->t_bitfield) {
 		len += (*mem)->s_type->t_flen;
 		*mem = (*mem)->s_next;
 	}
@@ -513,7 +513,7 @@ setpackedsize(type_t *tp)
 		sp = tp->t_str;
 		sp->size = 0;
 		for (mem = sp->memb; mem != NULL; mem = mem->s_next) {
-			if (mem->s_type->t_isfield) {
+			if (mem->s_type->t_bitfield) {
 				sp->size += bitfieldsize(&mem);
 				if (mem == NULL)
 					break;
@@ -1148,7 +1148,7 @@ declarator_1_struct_union(sym_t *dsym)
 		if (dsym->s_scl == MOU) {
 			/* illegal use of bit-field */
 			error(41);
-			dsym->s_type->t_isfield = 0;
+			dsym->s_type->t_bitfield = false;
 			dsym->s_bitfield = 0;
 		}
 	} else if (t == FUNC) {
@@ -1238,7 +1238,7 @@ bitfield(sym_t *dsym, int len)
 		dsym->s_blklev = -1;
 	}
 	dsym->s_type = duptyp(dsym->s_type);
-	dsym->s_type->t_isfield = 1;
+	dsym->s_type->t_bitfield = true;
 	dsym->s_type->t_flen = len;
 	dsym->s_bitfield = 1;
 	return dsym;
@@ -1787,7 +1787,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 		/* bind anonymous members to the structure */
 		if (mem->s_styp == NULL) {
 			mem->s_styp = sp;
-			if (mem->s_type->t_isfield) {
+			if (mem->s_type->t_bitfield) {
 				sp->size += bitfieldsize(&mem);
 				if (mem == NULL)
 					break;
