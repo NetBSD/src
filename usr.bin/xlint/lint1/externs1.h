@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.46 2021/01/03 20:14:38 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.47 2021/01/03 20:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -198,9 +198,9 @@ extern	void	print_previous_declaration(int, sym_t *);
  */
 extern	type_t	*incref(type_t *, tspec_t);
 extern	type_t	*tincref(type_t *, tspec_t);
-extern	tnode_t	*getcnode(type_t *, val_t *);
-extern	tnode_t	*getnnode(sym_t *, int);
-extern	tnode_t	*getsnode(strg_t *);
+extern	tnode_t	*new_constant_node(type_t *, val_t *);
+extern	tnode_t	*new_name_node(sym_t *, int);
+extern	tnode_t	*new_string_node(strg_t *);
 extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
 extern	tnode_t	*build(op_t, tnode_t *, tnode_t *);
 extern	tnode_t	*cconv(tnode_t *);
