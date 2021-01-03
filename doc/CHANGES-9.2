@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.31 2021/01/02 10:24:42 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.32 2021/01/03 12:52:54 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1387,4 +1387,11 @@ sys/ufs/ufs/ufs_quota1.c			1.23
 
 	Avoid out of bounds array access.
 	[nia, ticket #1176]
+
+sys/kern/init_main.c				(apply patch)
+
+	PR kern/55906: create the aiodone workqueue before running
+	mountroothooks.
+	[khorben, #1177]
+
 
