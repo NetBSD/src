@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.54 2019/09/23 15:24:44 christos Exp $
+.\"	$NetBSD: df.1,v 1.55 2021/01/03 01:43:12 ginsbach Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl aglnW
+.Op Fl acglnW
 .Op Fl Ghkm | Fl ihkm | Fl Pk
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
@@ -72,6 +72,8 @@ Show all mount points,
 including those that were mounted with the
 .Dv MNT_IGNORE
 flag.
+.It Fl c
+Display a grand total for all shown mount points.
 .It Fl G
 Display all the fields of the structure(s) returned by
 .Xr statvfs 2 .
