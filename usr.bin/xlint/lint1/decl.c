@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.104 2021/01/03 16:59:59 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.105 2021/01/03 17:11:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.104 2021/01/03 16:59:59 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.105 2021/01/03 17:11:19 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1923,8 +1923,12 @@ decl1ext(sym_t *dsym, int initflg)
 		if (!redec && !check_redeclaration(dsym, (dowarn = 0, &dowarn))) {
 
 			if (dowarn) {
-				/* redeclaration of %s */
-				(*(sflag ? error : warning))(27, dsym->s_name);
+				if (sflag)
+					/* redeclaration of %s */
+					error(27, dsym->s_name);
+				else
+					/* redeclaration of %s */
+					warning(27, dsym->s_name);
 				print_previous_declaration(-1, rdsym);
 			}
 
@@ -2534,8 +2538,12 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 			msg = 1;
 		}
 	} else if (dowarn) {
-		/* type does not match prototype: %s */
-		(*(sflag ? error : warning))(58, arg->s_name);
+		if (sflag)
+			/* type does not match prototype: %s */
+			error(58, arg->s_name);
+		else
+			/* type does not match prototype: %s */
+			warning(58, arg->s_name);
 		msg = 1;
 	}
 
