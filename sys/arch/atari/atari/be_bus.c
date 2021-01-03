@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.16 2019/11/10 21:16:25 chs Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.17 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.16 2019/11/10 21:16:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.17 2021/01/03 17:42:10 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <machine/cpu.h>
 #include <sys/bus.h>
 
@@ -178,12 +178,12 @@ beb_alloc_bus_space_tag(bus_space_tag_t storage)
 
 	/*
 	 * Allow the caller to specify storage space for the tag. This
-	 * is used during console config (when malloc() can't be used).
+	 * is used during console config (when kmem_alloc() can't be used).
 	 */
 	if (storage != NULL)
 		beb_t = storage;
 	else {
-		beb_t = malloc(sizeof(*beb_t), M_TEMP, M_WAITOK);
+		beb_t = kmem_alloc(sizeof(*beb_t), KM_SLEEP);
 	}
 	memset(beb_t, 0, sizeof(*beb_t));
 	

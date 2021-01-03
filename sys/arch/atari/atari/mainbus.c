@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2019/11/10 21:16:25 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2019/11/10 21:16:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2021/01/03 17:42:10 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <machine/cpu.h>
 #include <sys/bus.h>
 
@@ -167,8 +167,7 @@ mb_alloc_bus_space_tag(void)
 {
 	bus_space_tag_t	mb_t;
 
-	/* Not really M_TEMP, is it.. */
-	mb_t = malloc(sizeof(*mb_t), M_TEMP, M_WAITOK|M_ZERO);
+	mb_t = kmem_zalloc(sizeof(*mb_t), KM_SLEEP);
 	mb_t->abs_p_1   = mb_bus_space_peek_1;
 	mb_t->abs_p_2   = mb_bus_space_peek_2;
 	mb_t->abs_p_4   = mb_bus_space_peek_4;
@@ -237,8 +236,7 @@ void
 mb_free_bus_space_tag(bus_space_tag_t mb_t)
 {
 
-	/* Not really M_TEMP, is it.. */
-	free(mb_t, M_TEMP);
+	kmem_free(mb_t, sizeof(*mb_t));
 }
 
 static int

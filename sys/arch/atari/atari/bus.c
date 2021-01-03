@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.60 2018/03/10 03:44:43 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.61 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,12 +33,12 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.60 2018/03/10 03:44:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.61 2021/01/03 17:42:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
@@ -330,6 +330,14 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
 	return m68k_btop(addr + off);
 }
 
+static size_t
+_bus_dmamap_mapsize(int const nsegments)
+{
+	KASSERT(nsegments > 0); 
+	return sizeof(struct atari_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+}
+
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -340,7 +348,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct atari_bus_dmamap *map;
 	void *mapstore;
-	size_t mapsize;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
@@ -354,13 +361,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct atari_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return ENOMEM;
 
-	memset(mapstore, 0, mapsize);
 	map = (struct atari_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -383,7 +387,7 @@ void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	free(map, M_DMAMAP);
+	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
 }
 
 /*
