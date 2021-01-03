@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2367 2020/12/04 18:27:18 christos Exp $
+#	$NetBSD: mi,v 1.2367.2.1 2021/01/03 16:49:31 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3074,6 +3074,7 @@
 ./usr/include/sys/errno.h			comp-c-include
 ./usr/include/sys/evcnt.h			comp-c-include
 ./usr/include/sys/event.h			comp-c-include
+./usr/include/sys/eventfd.h			comp-c-include
 ./usr/include/sys/exec.h			comp-c-include
 ./usr/include/sys/exec_aout.h			comp-c-include
 ./usr/include/sys/exec_coff.h			comp-c-include
@@ -3225,6 +3226,7 @@
 ./usr/include/sys/time.h			comp-c-include
 ./usr/include/sys/timeb.h			comp-c-include
 ./usr/include/sys/timepps.h			comp-c-include
+./usr/include/sys/timerfd.h			comp-c-include
 ./usr/include/sys/times.h			comp-c-include
 ./usr/include/sys/timespec.h			comp-c-include
 ./usr/include/sys/timex.h			comp-c-include
