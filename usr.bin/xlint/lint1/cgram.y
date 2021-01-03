@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.127 2021/01/01 11:41:01 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.128 2021/01/03 20:31:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.127 2021/01/01 11:41:01 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.128 2021/01/03 20:31:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1855,13 +1855,13 @@ term:
 		/* XXX really necessary? */
 		if (yychar < 0)
 			yychar = yylex();
-		$$ = getnnode(getsym($1), yychar);
+		$$ = new_name_node(getsym($1), yychar);
 	  }
 	| string {
-		$$ = getsnode($1);
+		$$ = new_string_node($1);
 	  }
 	| T_CON {
-		$$ = getcnode(gettyp($1->v_tspec), $1);
+		$$ = new_constant_node(gettyp($1->v_tspec), $1);
 	  }
 	| T_LPAREN expr T_RPAREN {
 		if ($2 != NULL)
@@ -1877,7 +1877,7 @@ term:
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	} comp_stmnt_rbrace T_RPAREN {
-		$$ = getnnode(initsym, 0);
+		$$ = new_name_node(initsym, 0);
 	}
 	| T_LPAREN comp_stmnt_lbrace expr_stmnt_list {
 		blklev--;
@@ -1888,7 +1888,7 @@ term:
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	} comp_stmnt_rbrace T_RPAREN {
-		$$ = getnnode(initsym, 0);
+		$$ = new_name_node(initsym, 0);
 	}
 	| term T_INCDEC {
 		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
@@ -1936,7 +1936,7 @@ term:
 				$1 = cconv($1);
 			}
 			msym = struct_or_union_member($1, $2, getsym($3));
-			$$ = build($2, $1, getnnode(msym, 0));
+			$$ = build($2, $1, new_name_node(msym, 0));
 		} else {
 			$$ = NULL;
 		}
@@ -1982,7 +1982,7 @@ term:
 		if (!Sflag)
 			 /* compound literals are a C9X/GCC extension */
 			 gnuism(319);
-		$$ = getnnode(initsym, 0);
+		$$ = new_name_node(initsym, 0);
 	  }
 	;
 
