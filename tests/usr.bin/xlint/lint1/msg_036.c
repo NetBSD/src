@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_036.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_036.c,v 1.2 2021/01/03 15:35:00 rillig Exp $	*/
 # 3 "msg_036.c"
 
 // Test for message: illegal bit-field size: %d [36]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+struct example {
+	unsigned int too_large: 100000;
+	unsigned int negative: -1;
+	unsigned int ok: 3;
+};

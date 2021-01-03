@@ -1,1 +1,1 @@
-msg_087.c(6): syntax error ':' [249]
+msg_087.c(13): warning: static hides external declaration: counter [87]
