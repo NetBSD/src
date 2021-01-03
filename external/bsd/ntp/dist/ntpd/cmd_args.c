@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.7 2021/01/03 15:33:05 roy Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -181,9 +181,11 @@ getCmdOpts(
 	if (HAVE_OPT( UPDATEINTERVAL )) {
 		long val = OPT_VALUE_UPDATEINTERVAL;
 
-		if (val >= 0)
+		if (val >= 0) {
 			interface_interval = val;
-		else {
+			if (interface_interval == 0)
+				disable_dynamic_updates = 1;
+		} else {
 			fprintf(stderr,
 				"command line interface update interval %ld must not be negative\n",
 				val);
