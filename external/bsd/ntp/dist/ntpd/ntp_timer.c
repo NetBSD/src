@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.8 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.9 2021/01/03 15:33:05 roy Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -423,9 +423,11 @@ timer(void)
 	/*
 	 * Interface update timer
 	 */
-	if (interface_interval && interface_timer <= current_time) {
-		timer_interfacetimeout(current_time +
-		    interface_interval);
+	if (!disable_dynamic_updates &&
+	    interface_timer && interface_timer <= current_time) {
+		if (interface_interval)
+			timer_interfacetimeout(current_time +
+			    interface_interval);
 		DPRINTF(2, ("timer: interface update\n"));
 		interface_update(NULL, NULL);
 	}
