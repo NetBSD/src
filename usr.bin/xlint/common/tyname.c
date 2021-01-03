@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.20 2021/01/02 03:49:25 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.21 2021/01/03 15:55:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.20 2021/01/02 03:49:25 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.21 2021/01/03 15:55:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -256,6 +256,37 @@ sametype(const type_t *t1, const type_t *t2)
 	}
 }
 
+static void
+type_name_of_function(buffer *buf, const type_t *tp)
+{
+	const char *sep = "";
+
+	buf_add(buf, "(");
+	if (tp->t_proto) {
+#ifdef t_enum /* lint1 */
+		sym_t *arg;
+
+		for (arg = tp->t_args; arg != NULL; arg = arg->s_next) {
+			buf_add(buf, sep), sep = ", ";
+			buf_add(buf, type_name(arg->s_type));
+		}
+#else /* lint2 */
+		type_t **argtype;
+
+		for (argtype = tp->t_args; *argtype != NULL; argtype++) {
+			buf_add(buf, sep), sep = ", ";
+			buf_add(buf, type_name(*argtype));
+		}
+#endif
+	}
+	if (tp->t_vararg) {
+		buf_add(buf, sep), sep = ", ";
+		buf_add(buf, "...");
+	}
+	buf_add(buf, ") returning ");
+	buf_add(buf, type_name(tp->t_subt));
+}
+
 const char *
 type_name(const type_t *tp)
 {
@@ -301,7 +332,6 @@ type_name(const type_t *tp)
 	case DOUBLE:
 	case LDOUBLE:
 	case VOID:
-	case FUNC:
 	case COMPLEX:
 	case FCOMPLEX:
 	case DCOMPLEX:
@@ -339,8 +369,12 @@ type_name(const type_t *tp)
 		buf_add_int(&buf, tp->t_dim);
 		buf_add(&buf, "]");
 		break;
+	case FUNC:
+		type_name_of_function(&buf, tp);
+		break;
+
 	default:
-		LERROR("tyname(%d)", t);
+		LERROR("type_name(%d)", t);
 	}
 
 	name = intern(buf.data);
