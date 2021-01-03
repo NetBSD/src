@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.105 2021/01/03 17:11:19 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.106 2021/01/03 17:42:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.105 2021/01/03 17:11:19 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.106 2021/01/03 17:42:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -317,7 +317,7 @@ add_type(type_t *tp)
 		dcs->d_lmod = NOTSPEC;
 		if (!quadflg)
 			/* %s C does not support 'long long' */
-			(void)c99ism(265, tflag ? "traditional" : "c89");
+			c99ism(265, tflag ? "traditional" : "c89");
 	}
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {
@@ -1778,8 +1778,8 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 		sp->size = dcs->d_offset;
 
 	if (sp->size == 0) {
-		/* zero sized %s */
-		(void)c99ism(47, ttab[t].tt_name);
+		/* zero sized %s is a C9X feature */
+		c99ism(47, ttab[t].tt_name);
 	}
 
 	n = 0;
@@ -2531,7 +2531,8 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 	if (!eqtype(tp, ptp, 1, 1, &dowarn)) {
 		if (eqtype(tp, ptp, 1, 0, &dowarn)) {
 			/* type does not match prototype: %s */
-			msg = gnuism(58, arg->s_name);
+			gnuism(58, arg->s_name);
+			msg = sflag || !gflag;
 		} else {
 			/* type does not match prototype: %s */
 			error(58, arg->s_name);
