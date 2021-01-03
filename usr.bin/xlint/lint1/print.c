@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.7 2020/12/30 10:56:51 rillig Exp $	*/
+/*	$NetBSD: print.c,v 1.8 2021/01/03 18:35:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,13 +35,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.7 2020/12/30 10:56:51 rillig Exp $");
+__RCSID("$NetBSD: print.c,v 1.8 2021/01/03 18:35:51 rillig Exp $");
 #endif
 
 #include <stdio.h>
 
 #include "lint1.h"
-#include "externs1.h"
 
 static const char *str_op_t[] =
 {
