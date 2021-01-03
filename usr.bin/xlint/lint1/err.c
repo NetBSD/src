@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.62 2021/01/03 16:59:59 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.63 2021/01/03 17:42:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.62 2021/01/03 16:59:59 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.63 2021/01/03 17:42:45 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -534,44 +534,31 @@ message(int n, ...)
  * forward? We need to answer that and then we can fix this to be
  * "right"... [perry, 2 Nov 2002]
 */
-int
+void
 c99ism(int n, ...)
 {
 	va_list	ap;
-	int	msg;
+	bool extensions_ok = Sflag || gflag;
 
 	va_start(ap, n);
-	if (sflag && !(Sflag || gflag)) {
+	if (sflag && !extensions_ok) {
 		verror(n, ap);
-		msg = 1;
-	} else if (!sflag && (Sflag || gflag)) {
-		msg = 0;
-	} else {
+	} else if (sflag || !extensions_ok) {
 		vwarning(n, ap);
-		msg = 1;
 	}
 	va_end(ap);
-
-	return msg;
 }
 
-int
+void
 gnuism(int n, ...)
 {
 	va_list	ap;
-	int	msg;
 
 	va_start(ap, n);
 	if (sflag && !gflag) {
 		verror(n, ap);
-		msg = 1;
-	} else if (!sflag && gflag) {
-		msg = 0;
-	} else {
+	} else if (sflag || !gflag) {
 		vwarning(n, ap);
-		msg = 1;
 	}
 	va_end(ap);
-
-	return msg;
 }
