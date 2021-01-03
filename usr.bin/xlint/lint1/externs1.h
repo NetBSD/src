@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.47 2021/01/03 20:31:08 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.48 2021/01/03 20:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -212,8 +212,8 @@ extern	tnode_t	*build_sizeof(type_t *);
 extern	tnode_t	*build_offsetof(type_t *, sym_t *);
 extern	tnode_t	*build_alignof(type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
-extern	tnode_t	*funcarg(tnode_t *, tnode_t *);
-extern	tnode_t	*funccall(tnode_t *, tnode_t *);
+extern	tnode_t	*new_function_argument_node(tnode_t *, tnode_t *);
+extern	tnode_t	*new_function_call_node(tnode_t *, tnode_t *);
 extern	val_t	*constant(tnode_t *, int);
 extern	void	expr(tnode_t *, int, int, int);
 extern	void	check_expr_misc(tnode_t *, int, int, int, int, int, int);
