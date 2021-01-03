@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2018/08/27 09:52:16 jmcneill Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.12.1 2021/01/03 16:34:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2018/08/27 09:52:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.12.1 2021/01/03 16:34:53 thorpej Exp $");
 
 #include "opt_md.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +171,13 @@ cpu_configure(void)
 {
 	struct mainbus_attach_args maa;
 	struct cfdata *cf;
+
+#ifdef DDB
+	if (boothowto & RB_KDB) {
+		printf("Entering DDB...\n");
+		cpu_Debugger();
+	}
+#endif
 
 	(void) splhigh();
 

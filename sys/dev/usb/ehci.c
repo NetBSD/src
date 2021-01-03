@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.282.2.1 2020/12/14 14:38:09 thorpej Exp $ */
+/*	$NetBSD: ehci.c,v 1.282.2.2 2021/01/03 16:35:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.282.2.1 2020/12/14 14:38:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.282.2.2 2021/01/03 16:35:02 thorpej Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4138,7 +4138,6 @@ ehci_device_intr_abort(struct usbd_xfer *xfer)
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
 	/*
 	 * XXX - abort_xfer uses ehci_sync_hc, which syncs via the advance

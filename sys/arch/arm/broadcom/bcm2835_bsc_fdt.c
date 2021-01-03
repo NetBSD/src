@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.2 2020/05/31 23:52:19 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.2.2.1 2021/01/03 16:34:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.2 2020/05/31 23:52:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.2.2.1 2021/01/03 16:34:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,6 +128,8 @@ bsciic_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_acquire_bus = bsciic_acquire_bus;
 	sc->sc_i2c.ic_release_bus = bsciic_release_bus;
 	sc->sc_i2c.ic_exec = bsciic_exec;
+
+	fdtbus_register_i2c_controller(&sc->sc_i2c, phandle);
 
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_i2c, iicbus_print);
 }

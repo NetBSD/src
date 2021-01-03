@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.7 2020/09/15 09:28:20 ryo Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.7.2.1 2021/01/03 16:34:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.7 2020/09/15 09:28:20 ryo Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.7.2.1 2021/01/03 16:34:50 thorpej Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -85,6 +85,7 @@ in_el2:
 	bic	x2, x2, #CPACR_FPEN
 	orr	x2, x2, #CPACR_FPEN_ALL
 	msr	cpacr_el1, x2
+	isb
 
 	/* Don't trap to EL2 on access to various registers. */
 	mov	x2, #CPTR_RES1

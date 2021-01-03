@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.61.2.1 2020/12/14 14:38:05 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.61.2.2 2021/01/03 16:34:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,10 +77,6 @@ struct fdtbus_interrupt_controller_func {
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 	void	(*mask)(device_t, void *);
 	void	(*unmask)(device_t, void *);
-};
-
-struct fdtbus_i2c_controller_func {
-	i2c_tag_t (*get_tag)(device_t);
 };
 
 struct fdtbus_spi_controller_func {
@@ -277,8 +273,7 @@ struct fdt_dma_range {
 
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
-int		fdtbus_register_i2c_controller(device_t, int,
-		    const struct fdtbus_i2c_controller_func *);
+int		fdtbus_register_i2c_controller(i2c_tag_t, int);
 int		fdtbus_register_spi_controller(device_t, int,
 		    const struct fdtbus_spi_controller_func *);
 int		fdtbus_register_gpio_controller(device_t, int,
@@ -331,6 +326,7 @@ void		fdtbus_intr_unmask(int, void *);
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
 bool		fdtbus_intr_str_raw(int, const u_int *, char *, size_t);
+int		fdtbus_gpio_count(int, const char *);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire(int, const char *, int);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire_index(int, const char *, int, int);
 void		fdtbus_gpio_release(struct fdtbus_gpio_pin *);

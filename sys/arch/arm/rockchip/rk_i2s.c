@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.3 2020/02/29 05:51:10 isaki Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.3.8.1 2021/01/03 16:34:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.3 2020/02/29 05:51:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.3.8.1 2021/01/03 16:34:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,6 +118,9 @@ static const struct rk_i2s_config rk3399_i2s_config = {
 };
 
 static const struct of_compat_data compat_data[] = {
+	{ "rockchip,rk3066-i2s",        0 },
+	{ "rockchip,rk3188-i2s",        0 },
+	{ "rockchip,rk3288-i2s",        0 },
 	{ "rockchip,rk3399-i2s",	(uintptr_t)&rk3399_i2s_config },
 	{ NULL }
 };
@@ -536,7 +539,8 @@ rk_i2s_clock_init(struct rk_i2s_softc *sc)
 	}
 
 	/* Enable bus clock */
-	if (fdtbus_clock_enable(phandle, "i2s_hclk", true) != 0) {
+	error = fdtbus_clock_enable(phandle, "i2s_hclk", true);
+	if (error != 0) {
 		aprint_error(": couldn't enable i2s_hclk clock: %d\n", error);
 		return error;
 	}
@@ -583,8 +587,12 @@ rk_i2s_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
-	sc->sc_grf = fdtbus_syscon_acquire(phandle, "rockchip,grf");
-	if (sc->sc_grf != NULL && sc->sc_conf->oe_mask != 0) {
+	if (sc->sc_conf != NULL && sc->sc_conf->oe_mask != 0) {
+		sc->sc_grf = fdtbus_syscon_acquire(phandle, "rockchip,grf");
+		if (sc->sc_grf == NULL) {
+			aprint_error(": couldn't find grf\n");
+			return;
+		}
 		syscon_lock(sc->sc_grf);
 		val = __SHIFTIN(sc->sc_conf->oe_val, sc->sc_conf->oe_mask);
 		val |= (sc->sc_conf->oe_mask << 16);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.50 2020/10/20 23:03:30 jmcneill Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.50.2.1 2021/01/03 16:34:58 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.50 2020/10/20 23:03:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.50.2.1 2021/01/03 16:34:58 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -138,6 +138,7 @@ typedef struct _s_pciconf_dev_t {
 	pcitag_t	tag;
 	pci_chipset_tag_t	pc;
 	struct _s_pciconf_bus_t	*ppb;		/* I am really a bridge */
+	pcireg_t	ea_cap_ptr;
 } pciconf_dev_t;
 
 typedef struct _s_pciconf_win_t {
@@ -391,9 +392,9 @@ set_busreg(pci_chipset_tag_t pc, pcitag_t tag, int prim, int sec, int sub)
 {
 	pcireg_t	busreg;
 
-	busreg  =  __SHIFTIN(prim, PCI_BRIDGE_BUS_PRIMARY);
-	busreg |=  __SHIFTIN(sec,  PCI_BRIDGE_BUS_SECONDARY);
-	busreg |=  __SHIFTIN(sub,  PCI_BRIDGE_BUS_SUBORDINATE);
+	busreg  = __SHIFTIN(prim, PCI_BRIDGE_BUS_PRIMARY);
+	busreg |= __SHIFTIN(sec,  PCI_BRIDGE_BUS_SECONDARY);
+	busreg |= __SHIFTIN(sub,  PCI_BRIDGE_BUS_SUBORDINATE);
 	pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG, busreg);
 }
 
@@ -600,11 +601,20 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	pd->tag = tag;
 	pd->ppb = NULL;
 	pd->enable = mode;
+	pd->ea_cap_ptr = 0;
 
 	classreg = pci_conf_read(pb->pc, tag, PCI_CLASS_REG);
 
 	cmd = pci_conf_read(pb->pc, tag, PCI_COMMAND_STATUS_REG);
 	bhlc = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
+
+	if (pci_get_capability(pb->pc, tag, PCI_CAP_EA, &pd->ea_cap_ptr,
+	    NULL)) {
+		/* XXX Skip devices with EA for now. */
+		print_tag(pb->pc, tag);
+		printf("skipping devices with Enhanced Allocations\n");
+		return 0;
+	}
 
 	if (PCI_CLASS(classreg) != PCI_CLASS_BRIDGE
 	    && PCI_HDRTYPE_TYPE(bhlc) != PCI_HDRTYPE_PPB) {
@@ -637,7 +647,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		reg_end = PCI_MAPREG_PCB_END;
 
 		busreg = pci_conf_read(pb->pc, tag, PCI_BUSNUM);
-		busreg  =  (busreg & 0xff000000) |
+		busreg = (busreg & 0xff000000) |
 		    __SHIFTIN(pb->busno, PCI_BRIDGE_BUS_PRIMARY) |
 		    __SHIFTIN(pb->next_busno, PCI_BRIDGE_BUS_SECONDARY) |
 		    __SHIFTIN(pb->next_busno, PCI_BRIDGE_BUS_SUBORDINATE);

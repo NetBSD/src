@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.56.2.1 2020/12/14 14:38:05 thorpej Exp $
+# $NetBSD: files.fdt,v 1.56.2.2 2021/01/03 16:34:57 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -20,6 +20,10 @@ file	dev/fdt/fixedregulator.c		fregulator
 device	gregulator
 attach	gregulator at fdt
 file	dev/fdt/gpioregulator.c			gregulator
+
+device	pregulator
+attach	pregulator at fdt
+file	dev/fdt/pwmregulator.c			pregulator
 
 device	fclock: clk
 attach	fclock at fdt
@@ -53,6 +57,10 @@ file	dev/fdt/fdt_panel.c			panel_fdt
 device	dispcon: fdt_port, drmkms, ddc_read_edid
 attach	dispcon at fdt with dispcon_hdmi
 file	dev/fdt/hdmi_connector.c		dispcon_hdmi
+
+device	iicmux: i2cbus, i2cmux
+attach	iicmux at fdt with iicmux_fdt
+file	dev/fdt/i2cmux_fdt.c			iicmux_fdt
 
 file	dev/fdt/fdt_memory.c			fdtbase
 file	dev/fdt/fdt_openfirm.c			fdtbase
