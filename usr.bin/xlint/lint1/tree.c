@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.119 2021/01/03 18:35:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.120 2021/01/03 19:10:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.119 2021/01/03 18:35:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.120 2021/01/03 19:10:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -759,7 +759,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		 * struct_or_union_member().
 		 * Here we only must check for totally wrong things.
 		 */
-		if (lt == FUNC || lt == VOID || ltp->t_isfield ||
+		if (lt == FUNC || lt == VOID || ltp->t_bitfield ||
 		    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
 			/* Without tflag we got already an error */
 			if (tflag)
@@ -815,7 +815,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			error(114, "", mp->m_name);
 			return 0;
 		} else if (tspec_is_scalar(lt)) {
-			if (ltp->t_isfield) {
+			if (ltp->t_bitfield) {
 				/* cannot take address of bit-field */
 				error(112);
 				return 0;
@@ -1530,7 +1530,7 @@ promote(op_t op, int farg, tnode_t *tn)
 		 * if INT can represent all possible values of the previous
 		 * type.
 		 */
-		if (tn->tn_type->t_isfield) {
+		if (tn->tn_type->t_bitfield) {
 			len = tn->tn_type->t_flen;
 			if (size(INT) > len) {
 				t = INT;
@@ -2028,14 +2028,14 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 	case LCOMPLEX:
 		break;
 	default:
-		sz = tp->t_isfield ? tp->t_flen : size(nt);
+		sz = tp->t_bitfield ? tp->t_flen : size(nt);
 		nv->v_quad = xsign(nv->v_quad, nt, sz);
 		break;
 	}
 
 	if (rchk && op != CVT) {
 		osz = size(ot);
-		nsz = tp->t_isfield ? tp->t_flen : size(nt);
+		nsz = tp->t_bitfield ? tp->t_flen : size(nt);
 		xmask = qlmasks[nsz] ^ qlmasks[osz];
 		xmsk1 = qlmasks[nsz] ^ qlmasks[osz - 1];
 		/*
@@ -2107,13 +2107,13 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			 *	i = c;			** yields -128 **
 			 *	i = (unsigned char)c;	** yields 128 **
 			 */
-			if (op == ASSIGN && tp->t_isfield) {
+			if (op == ASSIGN && tp->t_bitfield) {
 				/* precision lost in bit-field assignment */
 				warning(166);
 			} else if (op == ASSIGN) {
 				/* constant truncated by assignment */
 				warning(165);
-			} else if (op == INIT && tp->t_isfield) {
+			} else if (op == INIT && tp->t_bitfield) {
 				/* bit-field initializer does not fit */
 				warning(180);
 			} else if (op == INIT) {
@@ -2132,10 +2132,10 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				    type_name(gettyp(ot)), type_name(tp));
 			}
 		} else if (nv->v_quad != v->v_quad) {
-			if (op == ASSIGN && tp->t_isfield) {
+			if (op == ASSIGN && tp->t_bitfield) {
 				/* precision lost in bit-field assignment */
 				warning(166);
-			} else if (op == INIT && tp->t_isfield) {
+			} else if (op == INIT && tp->t_bitfield) {
 				/* bit-field initializer out of range */
 				warning(11);
 			} else if (op == CASE) {
@@ -2309,7 +2309,7 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	if (ln->tn_op == CON)
 		ntn = fold(ntn);
 
-	if (rn->tn_type->t_isfield) {
+	if (rn->tn_type->t_bitfield) {
 		ntn = new_tnode(FSEL, ntn->tn_type->t_subt, ntn, NULL);
 	} else {
 		ntn = new_tnode(STAR, ntn->tn_type->t_subt, ntn, NULL);
@@ -2591,7 +2591,7 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 	} else if (op != SHRASS) {
 		if (op == ASSIGN || lt != PTR) {
 			if (lt != rt ||
-			    (ln->tn_type->t_isfield && rn->tn_op == CON)) {
+			    (ln->tn_type->t_bitfield && rn->tn_op == CON)) {
 				rn = convert(op, 0, ln->tn_type, rn);
 				rt = lt;
 			}
@@ -3046,7 +3046,7 @@ tsize(type_t *tp)
 		}
 		/* FALLTHROUGH */
 	default:
-		if (tp->t_isfield) {
+		if (tp->t_bitfield) {
 			/* cannot take size/alignment of bit-field */
 			error(145);
 		}
@@ -3092,7 +3092,7 @@ build_alignof(type_t *tp)
 	case ENUM:
 		break;
 	default:
-		if (tp->t_isfield) {
+		if (tp->t_bitfield) {
 			/* cannot take size/alignment of bit-field */
 			error(145);
 			return 0;
