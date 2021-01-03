@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.67 2019/06/29 16:41:18 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.68 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2019/06/29 16:41:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2021/01/03 17:42:10 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2019/06/29 16:41:18 tsutsui Exp $"
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
@@ -105,8 +105,7 @@ cpu_rootconf(void)
 		md_major = devsw_name2blk("md", NULL, 0);
 		if (md_major >= 0) {
 			for (i = 0; i < RAMD_NDEV; i++) {
-				cf = malloc(sizeof(*cf), M_DEVBUF,
-				    M_ZERO|M_WAITOK);
+				cf = kmem_zalloc(sizeof(*cf), KM_SLEEP);
 				if (cf == NULL)
 					break;	/* XXX */
 				cf->cf_name = md_cd.cd_name;

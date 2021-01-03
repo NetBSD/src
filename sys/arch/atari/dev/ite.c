@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.79 2019/06/29 16:41:19 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.80 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.79 2019/06/29 16:41:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.80 2021/01/03 17:42:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.79 2019/06/29 16:41:19 tsutsui Exp $");
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -361,8 +361,8 @@ iteinit(dev_t dev)
 		return;
 	if (atari_realconfig) {
 		if (sc->kbdmap && sc->kbdmap != &ascii_kbdmap)
-			free(sc->kbdmap, M_DEVBUF);
-		sc->kbdmap = malloc(sizeof(struct kbdmap), M_DEVBUF, M_WAITOK);
+			kmem_free(sc->kbdmap, sizeof(*sc->kbdmap));
+		sc->kbdmap = kmem_alloc(sizeof(*sc->kbdmap), KM_SLEEP);
 		memcpy(sc->kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 	}
 	else
@@ -373,7 +373,7 @@ iteinit(dev_t dev)
 	SUBR_INIT(sc);
 	SUBR_CURSOR(sc, DRAW_CURSOR);
 	if (sc->tabs == NULL)
-		sc->tabs = malloc(MAX_TABS * sizeof(u_char),M_DEVBUF,M_WAITOK);
+		sc->tabs = kmem_alloc(MAX_TABS * sizeof(u_char), KM_SLEEP);
 	ite_reset(sc);
 	sc->flags |= ITE_INITED;
 }

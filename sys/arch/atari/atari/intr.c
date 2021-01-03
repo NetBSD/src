@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2019/11/10 21:16:25 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.28 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2019/11/10 21:16:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2021/01/03 17:42:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
 #include <sys/device.h>
@@ -112,8 +112,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	u_long		*hard_vec;
 	int		s;
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 	ih->ih_fun    = ih_fun;
 	ih->ih_arg    = ih_arg;
 	ih->ih_type   = type;
@@ -127,7 +126,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	switch (type & (AUTO_VEC|USER_VEC)) {
 	case AUTO_VEC:
 		if (vector < AVEC_MIN || vector > AVEC_MAX) {
-			free(ih, M_DEVBUF);
+			kmem_free(ih, sizeof(*ih));
 			return NULL;
 		}
 		vec_list = &autovec_list[vector-1];
@@ -136,7 +135,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 		break;
 	case USER_VEC:
 		if (vector < UVEC_MIN || vector > UVEC_MAX) {
-			free(ih, M_DEVBUF);
+			kmem_free(ih, sizeof(*ih));
 			return NULL;
 		}
 		vec_list = &uservec_list[vector];
@@ -145,7 +144,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 		break;
 	default:
 		printf("%s: bogus vector type\n", __func__);
-		free(ih, M_DEVBUF);
+		kmem_free(ih, sizeof(*ih));
 		return NULL;
 	}
 
@@ -181,7 +180,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	 */
 	cur_vec = vec_list->lh_first;
 	if (cur_vec->ih_type & FAST_VEC) {
-		free(ih, M_DEVBUF);
+		kmem_free(ih, sizeof(*ih));
 		printf("intr_establish: vector cannot be shared\n");
 		return NULL;
 	}
@@ -259,7 +258,7 @@ intr_disestablish(struct intrhand *ih)
 		*hard_vec = (u_long)intr_glue;
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 	return 1;
 }
 

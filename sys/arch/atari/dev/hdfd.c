@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.86 2019/11/10 21:16:25 chs Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.87 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.86 2019/11/10 21:16:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.87 2021/01/03 17:42:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.86 2019/11/10 21:16:25 chs Exp $");
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
@@ -1426,8 +1426,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return EINVAL;
 		}
 
-		fd_formb = malloc(sizeof(struct ne7_fd_formb),
-		    M_TEMP, M_WAITOK);
+		fd_formb = kmem_alloc(sizeof(*fd_formb), KM_SLEEP);
 		fd_formb->head = form_cmd->head;
 		fd_formb->cyl = form_cmd->cylinder;
 		fd_formb->transfer_rate = fd->sc_type->rate;
@@ -1451,7 +1450,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		
 		error = fdformat(dev, fd_formb, l->l_proc);
-		free(fd_formb, M_TEMP);
+		kmem_free(fd_formb, sizeof(*fd_formb));
 		return error;
 
 	case FDIOCGETOPTS:		/* get drive options */
