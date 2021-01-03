@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.108 2021/01/03 19:10:47 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.109 2021/01/03 19:15:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.108 2021/01/03 19:10:47 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.109 2021/01/03 19:15:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -536,7 +536,7 @@ void
 addpacked(void)
 {
 	if (dcs->d_type == NULL)
-		dcs->d_ispacked = 1;
+		dcs->d_packed = 1;
 	else
 		setpackedsize(dcs->d_type);
 }
@@ -1639,7 +1639,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		if (tag->s_scl == NOSCL) {
 			tag->s_scl = scl;
 			tag->s_type = tp = getblk(sizeof (type_t));
-			tp->t_ispacked = dcs->d_ispacked;
+			tp->t_packed = dcs->d_packed;
 		} else {
 			tp = tag->s_type;
 		}
@@ -1651,7 +1651,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		tag->s_scl = scl;
 		tag->s_blklev = -1;
 		tag->s_type = tp = getblk(sizeof (type_t));
-		tp->t_ispacked = dcs->d_ispacked;
+		tp->t_packed = dcs->d_packed;
 		dcs->d_next->d_nedecl = 1;
 	}
 
@@ -1772,7 +1772,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	sp = tp->t_str;
 	sp->align = dcs->d_stralign;
 	sp->memb = fmem;
-	if (tp->t_ispacked)
+	if (tp->t_packed)
 		setpackedsize(tp);
 	else
 		sp->size = dcs->d_offset;
