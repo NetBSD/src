@@ -1,1 +1,1 @@
-(9): warning: illegal pointer combination, op p == p [124]
+(9): warning: illegal pointer combination (pointer to long double) and (pointer to long), op p == p [124]
