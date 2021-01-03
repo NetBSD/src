@@ -1,1 +1,3 @@
-msg_074.c(6): syntax error ':' [249]
+msg_074.c(6): no hex digits follow \x [74]
+msg_074.c(7): no hex digits follow \x [74]
+msg_074.c(7): warning: multi-character character constant [294]

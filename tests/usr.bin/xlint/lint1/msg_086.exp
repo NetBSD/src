@@ -1,1 +1,1 @@
-msg_086.c(6): syntax error ':' [249]
+msg_086.c(13): warning: automatic hides external declaration: identifier [86]

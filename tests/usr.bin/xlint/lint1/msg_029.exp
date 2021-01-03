@@ -1,1 +1,1 @@
-msg_029.c(6): syntax error ':' [249]
+msg_029.c(9): warning: previously declared extern, becomes static: function [29]
