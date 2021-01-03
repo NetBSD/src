@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.34 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: md_root.c,v 1.35 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,12 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.34 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.35 2021/01/03 17:42:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/device.h>
@@ -129,13 +129,13 @@ md_open_hook(int unit, struct md_conf *md)
 	ri = &rd_info[unit];
 	if (md->md_type != MD_UNCONFIGURED)
 		return;	/* Only configure once */
-	md->md_addr = malloc(ri->ramd_size, M_DEVBUF, M_WAITOK);
+	md->md_addr = kmem_alloc(ri->ramd_size, KM_SLEEP);
 	md->md_size = ri->ramd_size;
 	if (md->md_addr == NULL)
 		return;
 	if (ri->ramd_flag & RAMD_LOAD) {
 		if (loaddisk(md, ri->ramd_dev, curlwp)) {
-			free(md->md_addr, M_DEVBUF);
+			kmem_free(md->md_addr, ri->ramd_size);
 			md->md_addr = NULL;
 			return;
 		}

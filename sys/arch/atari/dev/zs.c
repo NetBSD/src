@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.78 2018/02/08 09:05:17 dholland Exp $	*/
+/*	$NetBSD: zs.c,v 1.79 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.78 2018/02/08 09:05:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.79 2021/01/03 17:42:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.78 2018/02/08 09:05:17 dholland Exp $");
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -409,8 +409,8 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 		ym2149_ser2(1);
 
 	if (cs->cs_rbuf == NULL) {
-		cs->cs_rbuf = malloc(ZLRB_RING_SIZE * sizeof(int), M_DEVBUF,
-		    M_WAITOK);
+		cs->cs_rbuf = kmem_alloc(ZLRB_RING_SIZE * sizeof(int),
+		    KM_SLEEP);
 	}
 
 	tp = cs->cs_ttyp;

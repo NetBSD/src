@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.58 2019/05/04 08:30:06 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.59 2021/01/03 17:42:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.58 2019/05/04 08:30:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.59 2021/01/03 17:42:10 thorpej Exp $");
 
 #include "opt_mbtype.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.58 2019/05/04 08:30:06 tsutsui Exp
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #define _ATARI_BUS_DMA_PRIVATE
 #include <sys/bus.h>
@@ -367,9 +367,8 @@ enable_pci_devices(void)
 		case PCI_CLASS_DISPLAY:
 			if (csr & (PCI_COMMAND_MEM_ENABLE |
 			    PCI_COMMAND_MASTER_ENABLE)) {
-				p = malloc(sizeof(struct pci_memreg),
-				    M_TEMP, M_WAITOK);
-				memset(p, 0, sizeof(struct pci_memreg));
+				p = kmem_zalloc(sizeof(struct pci_memreg),
+				    KM_SLEEP);
 				p->dev = dev;
 				p->csr = csr;
 				p->tag = tag;
@@ -392,9 +391,8 @@ enable_pci_devices(void)
 			if (mask == 0)
 				continue; /* Register unused */
 
-			p = malloc(sizeof(struct pci_memreg),
-			    M_TEMP, M_WAITOK);
-			memset(p, 0, sizeof(struct pci_memreg));
+			p = kmem_zalloc(sizeof(struct pci_memreg),
+			    KM_SLEEP);
 			p->dev = dev;
 			p->csr = csr;
 			p->tag = tag;
@@ -636,14 +634,14 @@ enable_pci_devices(void)
 	while (p != NULL) {
 		q = p;
 		LIST_REMOVE(q, link);
-		free(p, M_WAITOK);
+		kmem_free(p, sizeof(*p));
 		p = LIST_FIRST(&iolist);
 	}
 	p = LIST_FIRST(&memlist);
 	while (p != NULL) {
 		q = p;
 		LIST_REMOVE(q, link);
-		free(p, M_WAITOK);
+		kmem_free(p, sizeof(*p));
 		p = LIST_FIRST(&memlist);
 	}
 }
