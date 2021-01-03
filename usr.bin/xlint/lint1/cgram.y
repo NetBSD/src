@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.129 2021/01/03 20:38:26 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.130 2021/01/03 21:33:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.129 2021/01/03 20:38:26 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.130 2021/01/03 21:33:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -568,7 +568,7 @@ type_attribute_spec:
 	| T_AT_RETURNS_TWICE
 	| T_AT_PACKED {
 		addpacked();
-	}
+	  }
 	| T_AT_PURE
 	| T_AT_TUNION
 	| T_AT_GNU_INLINE
@@ -577,17 +577,17 @@ type_attribute_spec:
 	    constant T_COMMA constant T_RPAREN
 	| T_AT_USED {
 		add_attr_used();
-	}
+	  }
 	| T_AT_UNUSED {
 		add_attr_used();
-	}
+	  }
 	| T_AT_WARN_UNUSED_RESULT
 	| T_AT_WEAK
 	| T_AT_VISIBILITY T_LPAREN constant T_RPAREN
 	| T_QUAL {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
-	}
+	  }
 	;
 
 type_attribute_spec_list:
@@ -598,14 +598,14 @@ type_attribute_spec_list:
 type_attribute:
 	  T_ATTRIBUTE T_LPAREN T_LPAREN {
 	    attron = 1;
-	} type_attribute_spec_list {
+	  } type_attribute_spec_list {
 	    attron = 0;
-	} T_RPAREN T_RPAREN
+	  } T_RPAREN T_RPAREN
 	| T_PACKED {
 		addpacked();
-	}
+	  }
 	| T_NORETURN {
-	}
+	  }
 	;
 
 type_attribute_list:
@@ -1041,7 +1041,7 @@ notype_direct_decl:
 	  }
 	| type_attribute notype_direct_decl {
 		$$ = $2;
-	}
+	  }
 	| notype_direct_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
@@ -1074,7 +1074,7 @@ type_direct_decl:
 	  }
 	| type_attribute type_direct_decl {
 		$$ = $2;
-	}
+	  }
 	| type_direct_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
@@ -1453,7 +1453,7 @@ direct_abs_decl:
 	  }
 	| type_attribute direct_abs_decl {
 		$$ = $2;
-	}
+	  }
 	| direct_abs_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
@@ -1500,12 +1500,12 @@ label:
 	| T_CASE constant T_COLON {
 		case_label($2);
 		ftflg = 1;
-	}
+	  }
 	| T_CASE constant T_ELLIPSE constant T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
 		ftflg = 1;
-	}
+	  }
 	| T_DEFAULT T_COLON {
 		default_label();
 		ftflg = 1;
@@ -1518,7 +1518,7 @@ stmnt_d_list:
 		if (!Sflag)
 			/* declarations after statements is a C9X feature */
 			c99ism(327);
-	}
+	  }
 	;
 
 comp_stmnt:
@@ -1581,14 +1581,14 @@ expr_stmnt_val:
 	| non_expr_stmnt {
 		$$ = getnode();
 		$$->tn_type = gettyp(VOID);
-	}
+	  }
 	;
 
 expr_stmnt_list:
 	  expr_stmnt_val
 	| expr_stmnt_list expr_stmnt_val {
 		$$ = $2;
-	}
+	  }
 	;
 
 selection_stmnt:
@@ -1876,9 +1876,9 @@ term:
 		blklev++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
-	} comp_stmnt_rbrace T_RPAREN {
+	 } comp_stmnt_rbrace T_RPAREN {
 		$$ = new_name_node(initsym, 0);
-	}
+	 }
 	| T_LPAREN comp_stmnt_lbrace expr_stmnt_list {
 		blklev--;
 		mblklev--;
@@ -1887,9 +1887,9 @@ term:
 		blklev++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
-	} comp_stmnt_rbrace T_RPAREN {
+	 } comp_stmnt_rbrace T_RPAREN {
 		$$ = new_name_node(initsym, 0);
-	}
+	 }
 	| term T_INCDEC {
 		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
 	  }
