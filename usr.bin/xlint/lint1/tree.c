@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.117 2021/01/03 15:51:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.118 2021/01/03 17:42:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.117 2021/01/03 15:51:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.118 2021/01/03 17:42:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -660,9 +660,9 @@ cconv(tnode_t *tn)
 	 */
 	if (tn->tn_type->t_tspec == ARRAY) {
 		if (!tn->tn_lvalue) {
-			/* %soperand of '%s' must be lvalue */
 			/* XXX print correct operator */
-			(void)gnuism(114, "", modtab[AMPER].m_name);
+			/* %soperand of '%s' must be lvalue */
+			gnuism(114, "", modtab[AMPER].m_name);
 		}
 		tn = new_tnode(AMPER, tincref(tn->tn_type->t_subt, PTR),
 			     tn, NULL);
@@ -2631,7 +2631,7 @@ plength(type_t *tp)
 		break;
 	case VOID:
 		/* cannot do pointer arithmetic on operand of ... */
-		(void)gnuism(136);
+		gnuism(136);
 		break;
 	case STRUCT:
 	case UNION:
