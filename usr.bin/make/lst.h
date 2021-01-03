@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.94 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.95 2021/01/03 21:12:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -90,11 +90,7 @@ typedef struct ListNode ListNode;
 struct ListNode {
 	ListNode *prev;		/* previous node in list, or NULL */
 	ListNode *next;		/* next node in list, or NULL */
-	union {
-		void *datum;	/* datum associated with this element */
-		const struct GNode *priv_gnode; /* alias, just for debugging */
-		const char *priv_str; /* alias, just for debugging */
-	};
+	void *datum;		/* datum associated with this element */
 };
 
 struct List {
