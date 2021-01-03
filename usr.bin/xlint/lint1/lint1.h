@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.51 2021/01/03 19:15:36 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.52 2021/01/03 20:04:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -377,7 +377,7 @@ typedef	struct clst {
 /*
  * Used to keep information about nested control statements.
  */
-typedef struct cstk {
+typedef struct control_statement {
 	int	c_env;			/* type of statement (T_IF, ...) */
 	bool	c_loop : 1;		/* continue && break are valid */
 	bool	c_switch : 1;		/* case && break are valid */
@@ -396,7 +396,7 @@ typedef struct cstk {
 	tnode_t	*c_f3expr;		/* end of loop expr in for() */
 	pos_t	c_fpos;			/* position of end of loop expr */
 	pos_t	c_cfpos;	        /* same for csrc_pos */
-	struct	cstk *c_next;		/* outer control statement */
+	struct	control_statement *c_surrounding;
 } cstk_t;
 
 typedef struct {

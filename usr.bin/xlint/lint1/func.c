@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.47 2021/01/02 18:44:58 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.48 2021/01/03 20:04:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.47 2021/01/02 18:44:58 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.48 2021/01/03 20:04:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -75,8 +75,8 @@ int	rchflg;
  */
 int	ftflg;
 
-/* Top element of stack for control statements */
-cstk_t	*cstk;
+/* The innermost control statement */
+cstk_t	*cstmt;
 
 /*
  * Number of arguments which will be checked for usage in following
@@ -159,8 +159,8 @@ pushctrl(int env)
 
 	ci = xcalloc(1, sizeof (cstk_t));
 	ci->c_env = env;
-	ci->c_next = cstk;
-	cstk = ci;
+	ci->c_surrounding = cstmt;
+	cstmt = ci;
 }
 
 /*
@@ -172,10 +172,10 @@ popctrl(int env)
 	cstk_t	*ci;
 	clst_t	*cl;
 
-	lint_assert(cstk != NULL);
-	lint_assert(cstk->c_env == env);
+	lint_assert(cstmt != NULL);
+	lint_assert(cstmt->c_env == env);
 
-	cstk = (ci = cstk)->c_next;
+	cstmt = (ci = cstmt)->c_surrounding;
 
 	while ((cl = ci->c_clst) != NULL) {
 		ci->c_clst = cl->cl_next;
@@ -347,7 +347,7 @@ funcend(void)
 	int	n;
 
 	if (reached) {
-		cstk->c_noretval = 1;
+		cstmt->c_noretval = 1;
 		if (funcsym->s_type->t_subt->t_tspec != VOID &&
 		    !funcsym->s_rimpl) {
 			/* func. %s falls off bottom without returning value */
@@ -360,7 +360,7 @@ funcend(void)
 	 * declared to be int. Otherwise the wrong return statement
 	 * has already printed a warning.
 	 */
-	if (cstk->c_noretval && cstk->c_retval && funcsym->s_rimpl)
+	if (cstmt->c_noretval && cstmt->c_retval && funcsym->s_rimpl)
 		/* function %s has return (e); and return; */
 		warning(216, funcsym->s_name);
 
@@ -383,7 +383,7 @@ funcend(void)
 	if (dcs->d_scl == EXTERN && funcsym->s_inline) {
 		outsym(funcsym, funcsym->s_scl, DECL);
 	} else {
-		outfdef(funcsym, &dcs->d_fdpos, cstk->c_retval,
+		outfdef(funcsym, &dcs->d_fdpos, cstmt->c_retval,
 			funcsym->s_osdef, dcs->d_fargs);
 	}
 
@@ -493,7 +493,7 @@ case_label(tnode_t *tn)
 	cstk_t	*ci;
 
 	/* find the stack entry for the innermost switch statement */
-	for (ci = cstk; ci != NULL && !ci->c_switch; ci = ci->c_next)
+	for (ci = cstmt; ci != NULL && !ci->c_switch; ci = ci->c_surrounding)
 		continue;
 
 	check_case_label(tn, ci);
@@ -509,7 +509,7 @@ default_label(void)
 	cstk_t	*ci;
 
 	/* find the stack entry for the innermost switch statement */
-	for (ci = cstk; ci != NULL && !ci->c_switch; ci = ci->c_next)
+	for (ci = cstmt; ci != NULL && !ci->c_switch; ci = ci->c_surrounding)
 		continue;
 
 	if (ci == NULL) {
@@ -574,7 +574,7 @@ void
 if2(void)
 {
 
-	cstk->c_rchif = reached ? 1 : 0;
+	cstmt->c_rchif = reached ? 1 : 0;
 	reached = 1;
 }
 
@@ -587,7 +587,7 @@ if3(int els)
 {
 
 	if (els) {
-		reached |= cstk->c_rchif;
+		reached |= cstmt->c_rchif;
 	} else {
 		reached = 1;
 	}
@@ -638,8 +638,8 @@ switch1(tnode_t *tn)
 	expr(tn, 1, 0, 1);
 
 	pushctrl(T_SWITCH);
-	cstk->c_switch = 1;
-	cstk->c_swtype = tp;
+	cstmt->c_switch = 1;
+	cstmt->c_swtype = tp;
 
 	reached = rchflg = 0;
 	ftflg = 1;
@@ -655,36 +655,36 @@ switch2(void)
 	sym_t	*esym;
 	clst_t	*cl;
 
-	lint_assert(cstk->c_swtype != NULL);
+	lint_assert(cstmt->c_swtype != NULL);
 
 	/*
 	 * If the switch expression was of type enumeration, count the case
 	 * labels and the number of enumerators. If both counts are not
 	 * equal print a warning.
 	 */
-	if (cstk->c_swtype->t_isenum) {
+	if (cstmt->c_swtype->t_isenum) {
 		nenum = nclab = 0;
-		lint_assert(cstk->c_swtype->t_enum != NULL);
-		for (esym = cstk->c_swtype->t_enum->elem;
+		lint_assert(cstmt->c_swtype->t_enum != NULL);
+		for (esym = cstmt->c_swtype->t_enum->elem;
 		     esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
-		for (cl = cstk->c_clst; cl != NULL; cl = cl->cl_next)
+		for (cl = cstmt->c_clst; cl != NULL; cl = cl->cl_next)
 			nclab++;
-		if (hflag && eflag && nenum != nclab && !cstk->c_default) {
+		if (hflag && eflag && nenum != nclab && !cstmt->c_default) {
 			/* enumeration value(s) not handled in switch */
 			warning(206);
 		}
 	}
 
-	if (cstk->c_break) {
+	if (cstmt->c_break) {
 		/*
 		 * end of switch alway reached (c_break is only set if the
 		 * break statement can be reached).
 		 */
 		reached = 1;
-	} else if (!cstk->c_default &&
-		   (!hflag || !cstk->c_swtype->t_isenum || nenum != nclab)) {
+	} else if (!cstmt->c_default &&
+		   (!hflag || !cstmt->c_swtype->t_isenum || nenum != nclab)) {
 		/*
 		 * there are possible values which are not handled in
 		 * switch
@@ -715,12 +715,12 @@ while1(tnode_t *tn)
 		tn = check_controlling_expression(tn);
 
 	pushctrl(T_WHILE);
-	cstk->c_loop = 1;
+	cstmt->c_loop = 1;
 	if (tn != NULL && tn->tn_op == CON) {
 		if (tspec_is_int(tn->tn_type->t_tspec)) {
-			cstk->c_infinite = tn->tn_val->v_quad != 0;
+			cstmt->c_infinite = tn->tn_val->v_quad != 0;
 		} else {
-			cstk->c_infinite = tn->tn_val->v_ldbl != 0.0;
+			cstmt->c_infinite = tn->tn_val->v_ldbl != 0.0;
 		}
 	}
 
@@ -739,7 +739,7 @@ while2(void)
 	 * The end of the loop can be reached if it is no endless loop
 	 * or there was a break statement which was reached.
 	 */
-	reached = !cstk->c_infinite || cstk->c_break;
+	reached = !cstmt->c_infinite || cstmt->c_break;
 	rchflg = 0;
 
 	popctrl(T_WHILE);
@@ -759,7 +759,7 @@ do1(void)
 	}
 
 	pushctrl(T_DO);
-	cstk->c_loop = 1;
+	cstmt->c_loop = 1;
 }
 
 /*
@@ -774,7 +774,7 @@ do2(tnode_t *tn)
 	 * If there was a continue statement, the expression controlling the
 	 * loop is reached.
 	 */
-	if (cstk->c_cont)
+	if (cstmt->c_cont)
 		reached = 1;
 
 	if (tn != NULL)
@@ -782,11 +782,11 @@ do2(tnode_t *tn)
 
 	if (tn != NULL && tn->tn_op == CON) {
 		if (tspec_is_int(tn->tn_type->t_tspec)) {
-			cstk->c_infinite = tn->tn_val->v_quad != 0;
+			cstmt->c_infinite = tn->tn_val->v_quad != 0;
 		} else {
-			cstk->c_infinite = tn->tn_val->v_ldbl != 0.0;
+			cstmt->c_infinite = tn->tn_val->v_ldbl != 0.0;
 		}
-		if (!cstk->c_infinite && cstk->c_cont)
+		if (!cstmt->c_infinite && cstmt->c_cont)
 			/* continue in 'do ... while (0)' loop */
 			error(323);
 	}
@@ -797,7 +797,7 @@ do2(tnode_t *tn)
 	 * The end of the loop is only reached if it is no endless loop
 	 * or there was a break statement which could be reached.
 	 */
-	reached = !cstk->c_infinite || cstk->c_break;
+	reached = !cstmt->c_infinite || cstmt->c_break;
 	rchflg = 0;
 
 	popctrl(T_DO);
@@ -821,17 +821,17 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	}
 
 	pushctrl(T_FOR);
-	cstk->c_loop = 1;
+	cstmt->c_loop = 1;
 
 	/*
 	 * Store the tree memory for the reinitialisation expression.
 	 * Also remember this expression itself. We must check it at
 	 * the end of the loop to get "used but not set" warnings correct.
 	 */
-	cstk->c_fexprm = tsave();
-	cstk->c_f3expr = tn3;
-	cstk->c_fpos = curr_pos;
-	cstk->c_cfpos = csrc_pos;
+	cstmt->c_fexprm = tsave();
+	cstmt->c_f3expr = tn3;
+	cstmt->c_fpos = curr_pos;
+	cstmt->c_cfpos = csrc_pos;
 
 	if (tn1 != NULL)
 		expr(tn1, 0, 0, 1);
@@ -842,12 +842,12 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 		expr(tn2, 0, 1, 1);
 
 	if (tn2 == NULL) {
-		cstk->c_infinite = 1;
+		cstmt->c_infinite = 1;
 	} else if (tn2->tn_op == CON) {
 		if (tspec_is_int(tn2->tn_type->t_tspec)) {
-			cstk->c_infinite = tn2->tn_val->v_quad != 0;
+			cstmt->c_infinite = tn2->tn_val->v_quad != 0;
 		} else {
-			cstk->c_infinite = tn2->tn_val->v_ldbl != 0.0;
+			cstmt->c_infinite = tn2->tn_val->v_ldbl != 0.0;
 		}
 	}
 
@@ -866,17 +866,17 @@ for2(void)
 	pos_t	cpos, cspos;
 	tnode_t	*tn3;
 
-	if (cstk->c_cont)
+	if (cstmt->c_cont)
 		reached = 1;
 
 	cpos = curr_pos;
 	cspos = csrc_pos;
 
 	/* Restore the tree memory for the reinitialisation expression */
-	trestor(cstk->c_fexprm);
-	tn3 = cstk->c_f3expr;
-	curr_pos = cstk->c_fpos;
-	csrc_pos = cstk->c_cfpos;
+	trestor(cstmt->c_fexprm);
+	tn3 = cstmt->c_f3expr;
+	curr_pos = cstmt->c_fpos;
+	csrc_pos = cstmt->c_cfpos;
 
 	/* simply "statement not reached" would be confusing */
 	if (!reached && !rchflg) {
@@ -895,7 +895,7 @@ for2(void)
 	csrc_pos = cspos;
 
 	/* An endless loop without break will never terminate */
-	reached = cstk->c_break || !cstk->c_infinite;
+	reached = cstmt->c_break || !cstmt->c_infinite;
 	rchflg = 0;
 
 	popctrl(T_FOR);
@@ -924,9 +924,9 @@ dobreak(void)
 {
 	cstk_t	*ci;
 
-	ci = cstk;
+	ci = cstmt;
 	while (ci != NULL && !ci->c_loop && !ci->c_switch)
-		ci = ci->c_next;
+		ci = ci->c_surrounding;
 
 	if (ci == NULL) {
 		/* break outside loop or switch */
@@ -950,7 +950,7 @@ docont(void)
 {
 	cstk_t	*ci;
 
-	for (ci = cstk; ci != NULL && !ci->c_loop; ci = ci->c_next)
+	for (ci = cstmt; ci != NULL && !ci->c_loop; ci = ci->c_surrounding)
 		continue;
 
 	if (ci == NULL) {
@@ -976,7 +976,7 @@ doreturn(tnode_t *tn)
 	cstk_t	*ci;
 	op_t	op;
 
-	for (ci = cstk; ci->c_next != NULL; ci = ci->c_next)
+	for (ci = cstmt; ci->c_surrounding != NULL; ci = ci->c_surrounding)
 		continue;
 
 	if (tn != NULL) {
