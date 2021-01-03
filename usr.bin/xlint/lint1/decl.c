@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.109 2021/01/03 19:15:36 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.110 2021/01/03 20:14:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.109 2021/01/03 19:15:36 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.110 2021/01/03 20:14:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2389,14 +2389,16 @@ check_func_lint_directives(void)
 	tspec_t t;
 
 	/* check for illegal combinations of lint directives */
-	if (prflstrg != -1 && scflstrg != -1) {
+	if (printflike_argnum != -1 && scanflike_argnum != -1) {
 		/* can't be used together: ** PRINTFLIKE ** ** SCANFLIKE ** */
 		warning(289);
-		prflstrg = scflstrg = -1;
+		printflike_argnum = scanflike_argnum = -1;
 	}
-	if (nvararg != -1 && (prflstrg != -1 || scflstrg != -1)) {
+	if (nvararg != -1 &&
+	    (printflike_argnum != -1 || scanflike_argnum != -1)) {
 		/* dubious use of ** VARARGS ** with ** %s ** */
-		warning(288, prflstrg != -1 ? "PRINTFLIKE" : "SCANFLIKE");
+		warning(288,
+		    printflike_argnum != -1 ? "PRINTFLIKE" : "SCANFLIKE");
 		nvararg = -1;
 	}
 
@@ -2417,22 +2419,23 @@ check_func_lint_directives(void)
 		warning(283, "VARARGS");
 		nvararg = 0;
 	}
-	if (prflstrg > narg) {
+	if (printflike_argnum > narg) {
 		/* argument number mismatch with directive: ** %s ** */
 		warning(283, "PRINTFLIKE");
-		prflstrg = -1;
-	} else if (prflstrg == 0) {
-		prflstrg = -1;
+		printflike_argnum = -1;
+	} else if (printflike_argnum == 0) {
+		printflike_argnum = -1;
 	}
-	if (scflstrg > narg) {
+	if (scanflike_argnum > narg) {
 		/* argument number mismatch with directive: ** %s ** */
 		warning(283, "SCANFLIKE");
-		scflstrg = -1;
-	} else if (scflstrg == 0) {
-		scflstrg = -1;
+		scanflike_argnum = -1;
+	} else if (scanflike_argnum == 0) {
+		scanflike_argnum = -1;
 	}
-	if (prflstrg != -1 || scflstrg != -1) {
-		narg = prflstrg != -1 ? prflstrg : scflstrg;
+	if (printflike_argnum != -1 || scanflike_argnum != -1) {
+		narg = printflike_argnum != -1
+		    ? printflike_argnum : scanflike_argnum;
 		arg = dcs->d_fargs;
 		for (n = 1; n < narg; n++)
 			arg = arg->s_next;
@@ -2441,7 +2444,7 @@ check_func_lint_directives(void)
 		     t != UCHAR && t != SCHAR)) {
 			/* arg. %d must be 'char *' for PRINTFLIKE/SCANFLIKE */
 			warning(293, narg);
-			prflstrg = scflstrg = -1;
+			printflike_argnum = scanflike_argnum = -1;
 		}
 	}
 }
