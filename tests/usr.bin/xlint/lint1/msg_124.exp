@@ -1,1 +1,3 @@
-msg_124.c(6): syntax error ':' [249]
+msg_124.c(16): warning: illegal pointer combination, op p = p [124]
+msg_124.c(17): warning: illegal pointer combination, op p = p [124]
+msg_124.c(18): warning: illegal pointer combination, op p = p [124]
