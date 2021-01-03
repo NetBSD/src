@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2021/01/01 14:51:44 rillig Exp $
+#	$NetBSD: Makefile,v 1.55 2021/01/03 18:48:37 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -38,9 +38,11 @@ LDADD+=		-ll
 DPADD+=		${LIBL}
 .endif
 
+.include "Makefile.err-msgs-h"
 .include "Makefile.ops-h"
 .include "Makefile.ops-c"
 
 .include <bsd.prog.mk>
 
 ${SRCS}: ops.h
+${SRCS:Nerr.c}: err-msgs.h
