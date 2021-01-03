@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.28 2021/01/01 17:21:47 roy Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.29 2021/01/03 15:33:05 roy Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -455,8 +455,13 @@ init_io(void)
 {
 	/* Init buffer free list and stat counters */
 	init_recvbuff(RECV_INIT);
+#ifdef SO_RERROR
+	/* route(4) overflow can be observed */
+	interface_interval = 0;
+#else
 	/* update interface every 5 minutes as default */
 	interface_interval = 300;
+#endif
 
 #ifdef WORK_PIPE
 	addremove_io_fd = &ntpd_addremove_io_fd;
