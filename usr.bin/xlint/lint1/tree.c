@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.118 2021/01/03 17:42:45 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.119 2021/01/03 18:35:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.118 2021/01/03 17:42:45 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.119 2021/01/03 18:35:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: tree.c,v 1.118 2021/01/03 17:42:45 rillig Exp $");
 
 #include "lint1.h"
 #include "cgram.h"
-#include "externs1.h"
 
 static	tnode_t	*new_int_const_node(tspec_t, int64_t);
 static	void	check_pointer_comparison(op_t, tnode_t *, tnode_t *);
