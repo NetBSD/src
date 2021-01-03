@@ -1,1 +1,2 @@
-msg_036.c(6): syntax error ':' [249]
+msg_036.c(7): illegal bit-field size: 160 [36]
+msg_036.c(8): illegal bit-field size: 255 [36]

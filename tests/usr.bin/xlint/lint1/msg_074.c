@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_074.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_074.c,v 1.2 2021/01/03 15:35:00 rillig Exp $	*/
 # 3 "msg_074.c"
 
 // Test for message: no hex digits follow \x [74]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+char invalid_hex = '\x';
+char invalid_hex_letter = '\xg';
+char valid_hex = '\xff';
+char valid_single_digit_hex = '\xa';
