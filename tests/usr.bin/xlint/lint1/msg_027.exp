@@ -1,1 +1,1 @@
-msg_027.c(6): syntax error ':' [249]
+msg_027.c(8): redeclaration of identifier [27]
