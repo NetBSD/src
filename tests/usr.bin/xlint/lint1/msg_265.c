@@ -1,7 +1,13 @@
-/*	$NetBSD: msg_265.c,v 1.1 2021/01/02 10:22:44 rillig Exp $	*/
+/*	$NetBSD: msg_265.c,v 1.2 2021/01/03 20:20:01 rillig Exp $	*/
 # 3 "msg_265.c"
 
-// Test for message: %s C does not support 'long long' [265]
+/* Test for message: %s C does not support 'long long' [265] */
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -w */
+
+long long unsupported_variable;
+
+/*LONGLONG*/
+long long suppressed_variable;
+
+long long another_unsupported_variable;

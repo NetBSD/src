@@ -1,1 +1,2 @@
-msg_265.c(6): syntax error ':' [249]
+msg_265.c(8): warning: c89 C does not support 'long long' [265]
+msg_265.c(13): warning: c89 C does not support 'long long' [265]
