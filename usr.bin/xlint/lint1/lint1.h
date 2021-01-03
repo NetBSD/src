@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.50 2021/01/03 19:10:47 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.51 2021/01/03 19:15:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -158,7 +158,7 @@ struct type {
 	bool	t_typedef : 1;	/* type defined with typedef */
 	bool	t_bitfield : 1;
 	bool	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */
-	bool	t_ispacked : 1;	/* type is packed */
+	bool	t_packed : 1;
 	union {
 		int	_t_dim;		/* dimension */
 		str_t	*_t_str;	/* struct/union tag */
@@ -343,8 +343,8 @@ typedef	struct dinfo {
 	bool	d_proto : 1;	/* current function decl. is prototype */
 	bool	d_notyp : 1;	/* set if no type specifier was present */
 	bool	d_asm : 1;	/* set if d_ctx == AUTO and asm() present */
-	bool	d_ispacked : 1;	/* packed */
-	bool	d_used : 1;	/* used */
+	bool	d_packed : 1;
+	bool	d_used : 1;
 	type_t	*d_tagtyp;	/* tag during member declaration */
 	sym_t	*d_fargs;	/* list of arguments during function def. */
 	pos_t	d_fdpos;	/* position of function definition */
