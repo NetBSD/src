@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.121 2021/01/03 20:31:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.122 2021/01/03 20:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.121 2021/01/03 20:31:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.122 2021/01/03 20:38:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3192,11 +3192,12 @@ cast(tnode_t *tn, type_t *tp)
 
 /*
  * Create the node for a function argument.
- * All necessary conversions and type checks are done in funccall(), because
- * in funcarg() we have no information about expected argument types.
+ * All necessary conversions and type checks are done in
+ * new_function_call_node because new_function_argument_node has no
+ * information about expected argument types.
  */
 tnode_t *
-funcarg(tnode_t *args, tnode_t *arg)
+new_function_argument_node(tnode_t *args, tnode_t *arg)
 {
 	tnode_t	*ntn;
 
@@ -3218,7 +3219,7 @@ funcarg(tnode_t *args, tnode_t *arg)
  * function arguments and insert conversions, if necessary.
  */
 tnode_t *
-funccall(tnode_t *func, tnode_t *args)
+new_function_call_node(tnode_t *func, tnode_t *args)
 {
 	tnode_t	*ntn;
 	op_t	fcop;

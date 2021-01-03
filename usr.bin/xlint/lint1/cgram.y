@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.128 2021/01/03 20:31:08 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.129 2021/01/03 20:38:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.128 2021/01/03 20:31:08 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.129 2021/01/03 20:38:26 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1916,10 +1916,10 @@ term:
 		$$ = build(STAR, build(PLUS, $1, $3), NULL);
 	  }
 	| term T_LPAREN T_RPAREN {
-		$$ = funccall($1, NULL);
+		$$ = new_function_call_node($1, NULL);
 	  }
 	| term T_LPAREN func_arg_list T_RPAREN {
-		$$ = funccall($1, $3);
+		$$ = new_function_call_node($1, $3);
 	  }
 	| term point_or_arrow T_NAME {
 		if ($1 != NULL) {
@@ -2010,10 +2010,10 @@ string2:
 
 func_arg_list:
 	  expr						%prec T_COMMA {
-		$$ = funcarg(NULL, $1);
+		$$ = new_function_argument_node(NULL, $1);
 	  }
 	| func_arg_list T_COMMA expr {
-		$$ = funcarg($1, $3);
+		$$ = new_function_argument_node($1, $3);
 	  }
 	;
 
