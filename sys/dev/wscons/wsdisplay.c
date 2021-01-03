@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.160 2019/12/06 07:12:39 maxv Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.160.8.1 2021/01/03 16:35:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.160 2019/12/06 07:12:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.160.8.1 2021/01/03 16:35:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.160 2019/12/06 07:12:39 maxv Exp $")
 #include <dev/cons.h>
 
 #include "locators.h"
+#include "ioconf.h"
 
 #ifdef WSDISPLAY_MULTICONS
 static bool wsdisplay_multicons_enable = true;
@@ -177,8 +178,6 @@ struct wsdisplay_scroll_data wsdisplay_default_scroll_values = {
 };
 #endif
 
-extern struct cfdriver wsdisplay_cd;
-
 /* Autoconfiguration definitions. */
 static int wsdisplay_emul_match(device_t , cfdata_t, void *);
 static void wsdisplay_emul_attach(device_t, device_t, void *);
@@ -255,8 +254,11 @@ static int (*wsdisplay_cons_kbd_getc)(dev_t);
 static void (*wsdisplay_cons_kbd_pollc)(dev_t, int);
 
 static struct consdev wsdisplay_cons = {
-	NULL, NULL, wsdisplay_getc, wsdisplay_cnputc,
-	wsdisplay_pollc, NULL, NULL, NULL, NODEV, CN_NORMAL
+	.cn_getc = wsdisplay_getc,
+	.cn_putc = wsdisplay_cnputc,
+	.cn_pollc = wsdisplay_pollc,
+	.cn_dev = NODEV,
+	.cn_pri = CN_NORMAL
 };
 
 #ifndef WSDISPLAY_DEFAULTSCREENS

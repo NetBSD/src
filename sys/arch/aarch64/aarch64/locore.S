@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.74 2020/10/22 07:16:06 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.74.2.1 2021/01/03 16:34:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.74 2020/10/22 07:16:06 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.74.2.1 2021/01/03 16:34:50 thorpej Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -250,6 +250,7 @@ init_sysregs:
 
 	/* No trap system register access, and Trap FP/SIMD access */
 	msr	cpacr_el1, xzr
+	isb
 
 	/* allow to read CNTVCT_EL0 and CNTFRQ_EL0 from EL0 */
 	mrs	x0, cntkctl_el1

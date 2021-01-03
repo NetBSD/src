@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.45.2.1 2020/12/14 14:38:09 thorpej Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.45.2.2 2021/01/03 16:35:01 thorpej Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2080,7 +2080,8 @@ enum {
 #define IXGBE_FTQF_QUEUE_ENABLE		0x80000000
 
 /* Interrupt clear mask */
-#define IXGBE_IRQ_CLEAR_MASK	0xFFFFFFFF
+#define IXGBE_IRQ_CLEAR_MASK		0xFFFFFFFF
+#define IXGBE_MSIX_OTHER_CLEAR_MASK	0xFFFF0000
 
 /* Interrupt Vector Allocation Registers */
 #define IXGBE_IVAR_REG_NUM		25
@@ -4323,7 +4324,7 @@ struct ixgbe_hw {
 
 #define IXGBE_ERR_NOT_TRUSTED			-50 /* XXX NetBSD */
 #define IXGBE_ERR_NOT_IN_PROMISC		-51 /* XXX NetBSD */
-
+#define IXGBE_ERR_FAN_FAILURE			-52 /* XXX NetBSD */
 #define IXGBE_NOT_IMPLEMENTED			0x7FFFFFFF
 
 

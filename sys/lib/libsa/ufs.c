@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.76 2019/04/02 22:25:10 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.76.12.1 2021/01/03 16:35:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -122,6 +122,7 @@ struct salfs {
 typedef struct salfs FS;
 #define fs_magic	lfs_dlfs_u.u_32.dlfs_magic
 #define fs_maxsymlinklen lfs_dlfs_u.u_32.dlfs_maxsymlinklen
+#define lfs_version	lfs_dlfs_u.u_32.dlfs_version
 
 #define FS_MAGIC	LFS_MAGIC
 #define SBLOCKSIZE	LFS_SBPAD
@@ -582,7 +583,7 @@ ufs_open(const char *path, struct open_file *f)
 		if (rc)
 			goto out;
 		if (buf_size != SBLOCKSIZE ||
-#ifdef LIBSA_FFS
+#ifdef LIBSA_LFS
 		    fs->lfs_version != REQUIRED_LFS_VERSION ||
 #endif
 		    fs->fs_magic != FS_MAGIC) {

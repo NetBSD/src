@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.71.2.1 2020/12/14 14:38:09 thorpej Exp $ */
+/* $NetBSD: ixgbe.h,v 1.71.2.2 2021/01/03 16:35:01 thorpej Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -769,12 +769,13 @@ bool ixgbe_txeof(struct tx_ring *);
 bool ixgbe_rxeof(struct ix_queue *);
 
 #define IXGBE_REQUEST_TASK_MOD		0x01
-#define IXGBE_REQUEST_TASK_MSF		0x02
-#define IXGBE_REQUEST_TASK_MBX		0x04
-#define IXGBE_REQUEST_TASK_FDIR		0x08
-#define IXGBE_REQUEST_TASK_PHY		0x10
-#define IXGBE_REQUEST_TASK_LSC		0x20
-#define IXGBE_REQUEST_TASK_NEED_ACKINTR	0x80
+#define IXGBE_REQUEST_TASK_MOD_WOI	0x02
+#define IXGBE_REQUEST_TASK_MSF		0x04
+#define IXGBE_REQUEST_TASK_MSF_WOI	0x08
+#define IXGBE_REQUEST_TASK_MBX		0x10
+#define IXGBE_REQUEST_TASK_FDIR		0x20
+#define IXGBE_REQUEST_TASK_PHY		0x40
+#define IXGBE_REQUEST_TASK_LSC		0x80
 
 /* For NetBSD */
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);

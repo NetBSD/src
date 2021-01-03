@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.77.2.1 2020/12/14 14:37:52 thorpej Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.77.2.2 2021/01/03 16:34:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,16 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.77.2.1 2020/12/14 14:37:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.77.2.2 2021/01/03 16:34:53 thorpej Exp $");
 
-#include "opt_machdep.h"
-#include "opt_bootconfig.h"
-#include "opt_ddb.h"
-#include "opt_md.h"
 #include "opt_arm_debug.h"
-#include "opt_multiprocessor.h"
+#include "opt_bootconfig.h"
 #include "opt_cpuoptions.h"
+#include "opt_ddb.h"
 #include "opt_efi.h"
+#include "opt_machdep.h"
+#include "opt_md.h"
+#include "opt_multiprocessor.h"
 
 #include "genfb.h"
 #include "ukbd.h"
@@ -474,8 +474,10 @@ fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
 	while (len >= 24) {
 		const paddr_t pa = be64toh(map[0]);
 		const vaddr_t va = be64toh(map[1]);
-		const uint64_t sz = be64toh(map[2]);
-		VPRINTF("%s: %s %lx-%lx (%lx-%lx)\n", __func__, prop, pa, pa+sz-1, va, va+sz-1);
+		const size_t sz = be64toh(map[2]);
+		VPRINTF("%s: %s %" PRIxPADDR "-%" PRIxVADDR "(%" PRIxVADDR
+		    "-%" PRIxVSIZE "\n", __func__, prop, pa, pa + sz - 1,
+		    va, va + sz - 1);
 		arm_efirt_md_map_range(va, pa, sz, type);
 		map += 3;
 		len -= 24;
@@ -625,6 +627,8 @@ initarm(void *arg)
 	parse_mi_bootargs(boot_args);
 
 	VPRINTF("Memory regions:\n");
+
+	/* Populate fdt_physmem / nfdt_physmem for initarm_common */
 	fdt_memory_foreach(fdt_add_boot_physmem, &memory_size);
 
 	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,

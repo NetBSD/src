@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.39 2020/07/16 21:32:44 jmcneill Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.39.2.1 2021/01/03 16:34:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,6 +132,7 @@ void	of_enter_spi_devs(prop_dictionary_t, int, size_t);
 bool	of_hasprop(int, const char *);
 #define of_getprop_bool	of_hasprop
 int	of_getprop_uint32(int, const char *, uint32_t *);
+int	of_getprop_uint32_array(int, const char *, uint32_t *, int);
 int	of_getprop_uint64(int, const char *, uint64_t *);
 
 #endif /*_OPENFIRM_H_*/
