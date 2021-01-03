@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.49 2021/01/03 18:48:37 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.50 2021/01/03 19:10:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -156,7 +156,7 @@ struct type {
 	bool	t_proto : 1;	/* function prototype (t_args valid) */
 	bool	t_vararg : 1;	/* prototype with ... */
 	bool	t_typedef : 1;	/* type defined with typedef */
-	bool	t_isfield : 1;	/* type is bitfield */
+	bool	t_bitfield : 1;
 	bool	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */
 	bool	t_ispacked : 1;	/* type is packed */
 	union {

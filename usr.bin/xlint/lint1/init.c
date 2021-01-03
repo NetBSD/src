@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.58 2021/01/03 17:42:45 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.59 2021/01/03 19:10:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.58 2021/01/03 17:42:45 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.59 2021/01/03 19:10:47 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -633,7 +633,7 @@ mkinit(tnode_t *tn)
 	expr(tn, 1, 0, 1);
 	trestor(tmem);
 
-	if (tspec_is_int(lt) && ln->tn_type->t_isfield && !tspec_is_int(rt)) {
+	if (tspec_is_int(lt) && ln->tn_type->t_bitfield && !tspec_is_int(rt)) {
 		/*
 		 * Bit-fields can be initialized in trad. C only by integer
 		 * constants.
@@ -643,7 +643,7 @@ mkinit(tnode_t *tn)
 			warning(186);
 	}
 
-	if (lt != rt || (initstk->i_type->t_isfield && tn->tn_op == CON))
+	if (lt != rt || (initstk->i_type->t_bitfield && tn->tn_op == CON))
 		tn = convert(INIT, 0, initstk->i_type, tn);
 
 	if (tn != NULL && tn->tn_op != CON) {
