@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.21 2013/12/17 01:28:04 joerg Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.22 2021/01/04 15:13:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.21 2013/12/17 01:28:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.22 2021/01/04 15:13:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ init_interrupt_masks(void)
 {
 
 	/*
-	 * disable all interrups until handlers are installed.
+	 * disable all interrupts until handlers are installed.
 	 */
 	memset(pxa2x0_imask, 0, sizeof(pxa2x0_imask));
 

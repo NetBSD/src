@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.29 2019/02/08 19:55:40 palle Exp $ */
+ /* $NetBSD: TODO,v 1.30 2021/01/04 15:13:06 skrll Exp $ */
 
 Things to be done:
 
@@ -28,7 +28,7 @@ sun4v:
 - ci_tsb_desc->td_ctxidx: -1 or 1?
 - MP support - currently bypassed in pmap_bootstrap() for sun4v
 - vpci.c/vpcivar.h: cleanup FIXMEs
-- interrups not handled properly (com at ebus only...)
+- interrupts not handled properly (com at ebus only...)
 - mpt(4) complains: mpt0: Phy 0: Link Status Unknown
 - man pages for drivers imported from OpenBSD lke vpci, vbus, cbus, vdsk, ldc etc.
 - vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly

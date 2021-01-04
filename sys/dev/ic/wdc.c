@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.303 2020/06/03 18:25:26 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.304 2021/01/04 15:13:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.303 2020/06/03 18:25:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.304 2021/01/04 15:13:06 skrll Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -343,7 +343,7 @@ wdc_drvprobe(struct ata_channel *chp)
 		     (st1 & WDCS_DRDY)))
 			break;
 #ifdef WDC_NO_IDS
-		/* cannot kpause here (can't enable IPL_BIO interrups),
+		/* cannot kpause here (can't enable IPL_BIO interrupts),
 		 * delay instead
 		 */
 		delay(1000000 / hz);
