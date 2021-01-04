@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.12 2019/08/13 17:03:11 tnn Exp $ */
+/* $NetBSD: arspi.c,v 1.13 2021/01/04 17:42:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.12 2019/08/13 17:03:11 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.13 2021/01/04 17:42:29 thorpej Exp $");
 
 #include "locators.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.12 2019/08/13 17:03:11 tnn Exp $");
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -260,8 +260,9 @@ arspi_transfer(void *cookie, struct spi_transfer *st)
 	st->st_busprivate = NULL;
 	if ((rv = arspi_make_job(st)) != 0) {
 		if (st->st_busprivate) {
-			free(st->st_busprivate, M_DEVBUF);
+			struct arspi_job *job = st->st_busprivate;
 			st->st_busprivate = NULL;
+			kmem_free(job, sizeof(*job));
 		}
 		spi_done(st, rv);
 		return rv;
@@ -382,7 +383,7 @@ arspi_done(struct arspi_softc *sc, int err)
 			sc->sc_transfer = NULL;
 			st->st_busprivate = NULL;
 			spi_done(st, err);
-			free(job, M_DEVBUF);
+			kmem_free(job, sizeof(*job));
 		}
 	}
 done:
@@ -470,10 +471,7 @@ arspi_make_job(struct spi_transfer *st)
 	uint8_t byte;
 	int i, rv;
 
-	job = malloc(sizeof (struct arspi_job), M_DEVBUF, M_ZERO);
-	if (job == NULL) {
-		return ENOMEM;
-	}
+	job = kmem_zalloc(sizeof (struct arspi_job), KM_SLEEP);
 
 	st->st_busprivate = job;
 

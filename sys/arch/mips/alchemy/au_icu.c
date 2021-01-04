@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.30 2019/11/10 21:16:29 chs Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.31 2021/01/04 17:35:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.30 2019/11/10 21:16:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.31 2021/01/04 17:35:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.30 2019/11/10 21:16:29 chs Exp $");
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <mips/locore.h>
@@ -199,7 +199,7 @@ au_intr_establish(int irq, int req, int level, int type,
 	if (req > 1)
 		panic("au_intr_establish: bogus request %d", req);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
@@ -305,7 +305,7 @@ au_intr_disestablish(void *cookie)
 
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 void

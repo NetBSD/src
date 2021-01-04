@@ -1,4 +1,4 @@
-/* $NetBSD: ar_intr.c,v 1.6 2019/11/10 21:16:29 chs Exp $ */
+/* $NetBSD: ar_intr.c,v 1.7 2021/01/04 17:42:29 thorpej Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.6 2019/11/10 21:16:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.7 2021/01/04 17:42:29 thorpej Exp $");
 
 #define __INTR_PRIVATE
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.6 2019/11/10 21:16:29 chs Exp $");
 #include <sys/intr.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
@@ -110,7 +110,7 @@ genath_cpu_intr_establish(int intr, int (*func)(void *), void *arg)
 {
 	struct atheros_intrhand	*ih;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = intr;
@@ -138,7 +138,7 @@ genath_cpu_intr_disestablish(void *arg)
 	LIST_REMOVE(ih, ih_q);
 
 	splx(s);
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 static void *
@@ -150,7 +150,7 @@ genath_misc_intr_establish(int irq, int (*func)(void *), void *arg)
 	int s;
 
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
@@ -188,7 +188,7 @@ genath_misc_intr_disestablish(void *arg)
 	}
 
 	splx(s);
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 
