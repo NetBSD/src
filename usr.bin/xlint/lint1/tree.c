@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.125 2021/01/04 21:17:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.126 2021/01/04 21:30:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.125 2021/01/04 21:17:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.126 2021/01/04 21:30:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -91,64 +91,27 @@ static	void	check_precedence_confusion(tnode_t *);
 
 extern sig_atomic_t fpe;
 
-#if 0
-static char *
-dumpnode(char *buf, size_t len, tnode_t *tn) {
-	const char *n = getopname(tn->tn_op);
-	const char *s;
-
-	switch (tn->tn_op) {
-	case NAME:
-		s = tn->tn_sym->s_name;
-		break;
-	case CON:
-	case STRING:
-		s = "*";	/* todo */
-		break;
-	default:
-		s = NULL;
-		break;
-	}
-	char lb[1024];
-	char rb[1024];
-
-	if (s == NULL && tn->tn_left != NULL)
-		dumpnode(lb, sizeof(lb), tn->tn_left);
-	else
-		strcpy(lb, "(null)");
-
-	if (s == NULL && tn->tn_right != NULL)
-		dumpnode(rb, sizeof(rb), tn->tn_right);
-	else
-		strcpy(rb, "(null)");
-
-
-	snprintf(buf, len, "%s: (%s) = %s [%s, %s]", n,
-	    type_name(tn->tn_type), s, lb, rb);
-	return buf;
-}
-#endif
-
 #ifdef DEBUG
 static void
 dprint_node(const tnode_t *tn)
 {
 	static int indent = 0;
 
-	op_t op = tn->tn_op;
+	op_t op;
 
 	if (tn == NULL) {
 		printf("%*s" "null\n", indent, "");
 		return;
 	}
 
+	op = tn->tn_op;
 	printf("%*s%s: %s%s%s",
 	    indent, "",
 	    op == CVT && !tn->tn_cast ? "convert" :
 		op == NAME ? "name" : getopname(op),
 	    type_name(tn->tn_type), tn->tn_lvalue ? " lvalue" : "",
 	    tn->tn_parenthesized ? " ()" : "");
-	indent += 2;
+
 	if (op == NAME)
 		printf(" %s\n", tn->tn_sym->s_name);
 	else if (op == CON)
@@ -157,11 +120,13 @@ dprint_node(const tnode_t *tn)
 		printf(" length=%zu\n", tn->tn_string->st_len);
 	else {
 		printf("\n");
+
+		indent += 2;
 		dprint_node(tn->tn_left);
-		if (modtab[op].m_binary)
+		if (modtab[op].m_binary || tn->tn_right != NULL)
 			dprint_node(tn->tn_right);
+		indent -= 2;
 	}
-	indent -= 2;
 }
 #else
 /*ARGSUSED*/
