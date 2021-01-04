@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.9 2020/07/16 11:49:37 jmcneill Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.10 2021/01/04 17:22:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.9 2020/07/16 11:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.10 2021/01/04 17:22:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <net/if.h>
@@ -177,10 +177,7 @@ octpip_init(struct octpip_attach_args *aa, struct octpip_softc **rsc)
 	struct octpip_softc *sc;
 	int status;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc == NULL)
-		panic("can't allocate memory: %s", __func__);
-
+	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_port = aa->aa_port;
 	sc->sc_regt = aa->aa_regt;
 	sc->sc_tag_type = aa->aa_tag_type;
