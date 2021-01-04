@@ -1,4 +1,4 @@
-/*	$NetBSD: vrtc.c,v 1.2 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: vrtc.c,v 1.3 2021/01/04 14:48:52 thorpej Exp $	*/
 /*	$OpenBSD: vrtc.c,v 1.1 2008/03/08 19:19:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -18,7 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
@@ -57,7 +57,7 @@ vrtc_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF,M_WAITOK);
+	handle = kmem_alloc(sizeof(struct todr_chip_handle), KM_SLEEP);
 	handle->cookie = self;
 	handle->todr_gettime = vrtc_gettime;
 	handle->todr_settime = vrtc_settime;
