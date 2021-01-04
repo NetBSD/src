@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.129 2021/01/04 22:41:56 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.130 2021/01/04 23:17:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.129 2021/01/04 22:41:56 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.130 2021/01/04 23:17:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4017,18 +4017,22 @@ check_precedence_confusion(tnode_t *tn)
 		 * that demonstrates an actual change in behavior when this
 		 * bug gets fixed.
 		 *
-		 * Right now, the condition is always false.  To make it true
-		 * after fixing the typo, the right-hand operand must be an
-		 * explicit cast or an implicit conversion that is
-		 * parenthesized.  For the right-hand operand itself, this
-		 * would already be done using the line below the loop.
+		 * rn must be a chain of casts and conversions, and at least
+		 * one of these must be a parenthesized cast.
 		 *
-		 * To make a difference, the right-hand operand must not be
-		 * parenthesized, but its indirect cast or conversion must be.
+		 * The argument of the innermost cast or conversion must not
+		 * be parenthesized.
 		 *
-		 * An implicit conversion is never parenthesized.  Therefore
-		 * this must be a cast that is later converted, to build a
-		 * chain.
+		 * The argument of the innermost cast or conversion must be
+		 * an expression with confusing precedence.  Since all these
+		 * expressions have lower precedence than a cast, these can
+		 * only appear as a parenthesized expression.  This in turn
+		 * makes the whole loop superfluous.
+		 *
+		 * An edge case might be due to constant folding, if the
+		 * nodes created from constant folding did not preserve
+		 * tn_parenthesized properly.  But that would be another bug,
+		 * so it doesn't count as an argument.
 		 */
 		for (rn = tn->tn_right; tn->tn_op == CVT; rn = rn->tn_left)
 			rparn |= rn->tn_parenthesized;
