@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.132 2021/01/04 23:50:46 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.133 2021/01/04 23:58:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.132 2021/01/04 23:50:46 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.133 2021/01/04 23:58:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -608,7 +608,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		return NULL;
 
 	/* Print a warning if precedence confusion is possible */
-	if (mp->m_tpconf)
+	if (mp->m_possible_precedence_confusion)
 		check_precedence_confusion(ntn);
 
 	/*
@@ -3997,6 +3997,9 @@ check_precedence_confusion(tnode_t *tn)
 		return;
 
 	mp = &modtab[tn->tn_op];
+	lint_assert(mp->m_binary);
+
+	dprint_node(tn);
 
 	lparn = 0;
 	for (ln = tn->tn_left; ln->tn_op == CVT; ln = ln->tn_left)
@@ -4004,15 +4007,11 @@ check_precedence_confusion(tnode_t *tn)
 	lparn |= ln->tn_parenthesized;
 	lop = ln->tn_op;
 
-	dprint_node(tn);
-
-	if (mp->m_binary) {
-		rparn = 0;
-		for (rn = tn->tn_right; rn->tn_op == CVT; rn = rn->tn_left)
-			rparn |= rn->tn_parenthesized;
+	rparn = 0;
+	for (rn = tn->tn_right; rn->tn_op == CVT; rn = rn->tn_left)
 		rparn |= rn->tn_parenthesized;
-		rop = rn->tn_op;
-	}
+	rparn |= rn->tn_parenthesized;
+	rop = rn->tn_op;
 
 	dowarn = 0;
 
