@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.21 2021/01/02 01:06:15 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.22 2021/01/04 01:11:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -135,5 +135,13 @@ typedef	struct	ob {
 } ob_t;
 
 typedef struct type type_t;
+
+typedef struct target_platform {
+	const char *pl_name;
+	tspec_t pl_char_type;
+	size_t pl_long_pointer_size;
+	tspec_t pl_intptr_type;		/* either INT or LONG */
+	size_t pl_sizeof_long_double;	/* either 8, 12 or 16 */
+} target_platform;
 
 #include "externs.h"

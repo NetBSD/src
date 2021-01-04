@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.13 2020/12/30 11:39:55 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.14 2021/01/04 01:11:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.13 2020/12/30 11:39:55 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.14 2021/01/04 01:11:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -113,10 +113,10 @@ inittyp(void)
 				      1, 1, 0, 1, 1, 0, "__uint128_t" } },
 #endif
 
-		{ FLOAT,    { FLOAT_SIZE, 4 * CHAR_BIT,
+		{ FLOAT,    { 32, 4 * CHAR_BIT,
 				      FLOAT, FLOAT,
 				      0, 0, 1, 1, 1, 0, "float" } },
-		{ DOUBLE,   { DOUBLE_SIZE, 8 * CHAR_BIT,
+		{ DOUBLE,   { 64, 8 * CHAR_BIT,
 				      DOUBLE, DOUBLE,
 				      0, 0, 1, 1, 1, 0, "double" } },
 		{ LDOUBLE,  { LDOUBLE_SIZE, 10 * CHAR_BIT,

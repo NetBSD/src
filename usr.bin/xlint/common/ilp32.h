@@ -1,4 +1,4 @@
-/*	$NetBSD: ilp32.h,v 1.3 2012/03/27 19:24:03 christos Exp $	*/
+/*	$NetBSD: ilp32.h,v 1.4 2021/01/04 01:11:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*
- * Type sizes for IPL32 platforms (int, long, pointer: 32-bit)
+ * Type sizes for ILP32 platforms (int, long, pointer: 32-bit)
  */
 
 #define	CHAR_SIZE	(CHAR_BIT)

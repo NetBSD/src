@@ -1,4 +1,4 @@
-/*	$NetBSD: lp64.h,v 1.7 2018/11/16 20:49:08 scole Exp $	*/
+/*	$NetBSD: lp64.h,v 1.8 2021/01/04 01:11:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -53,11 +53,11 @@
 #define	TARG_SCHAR_MIN	((-TARG_CHAR_MAX) - 1)
 #define	TARG_UCHAR_MAX	((unsigned char) -1)
 
-#define	TARG_SHRT_MAX	((int16_t) (((uint16_t) -1) >> 1))
-#define	TARG_SHRT_MIN	((-TARG_SHRT_MAX) - 1)
-#define	TARG_USHRT_MAX	((uint16_t) -1)
+#define	TARG_SHRT_MAX	32767
+#define	TARG_SHRT_MIN	(-32768)
+#define	TARG_USHRT_MAX	65535
 
-#define	TARG_INT_MAX	((int32_t) (((uint32_t) -1) >> 1))
+#define	TARG_INT_MAX	(2147483647)
 #define	TARG_INT_MIN	((-TARG_INT_MAX) - 1)
 #define	TARG_UINT_MAX	((uint32_t) -1)
 
