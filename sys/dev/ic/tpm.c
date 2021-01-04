@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.16 2019/10/09 14:03:58 maxv Exp $	*/
+/*	$NetBSD: tpm.c,v 1.17 2021/01/04 18:22:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,17 +48,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.16 2019/10/09 14:03:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.17 2021/01/04 18:22:19 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/bus.h>
 #include <sys/pmf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <dev/ic/tpmreg.h>
 #include <dev/ic/tpmvar.h>

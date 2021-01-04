@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmvar.h,v 1.7 2019/10/09 14:03:58 maxv Exp $	*/
+/*	$NetBSD: tpmvar.h,v 1.8 2021/01/04 18:22:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,6 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	DEV_IC_TPMVAR_H
+#define	DEV_IC_TPMVAR_H
+
+#include <sys/types.h>
+
 #define TPM_API_VERSION		1
 
 enum tpm_version {
@@ -53,6 +58,10 @@ struct tpm_ioc_getinfo {
 #define TPM_IOC_GETINFO		_IOR ('N',  0, struct tpm_ioc_getinfo)
 
 #ifdef _KERNEL
+
+#include <sys/bus.h>
+#include <sys/device_if.h>
+#include <sys/mutex.h>
 
 struct tpm_softc;
 
@@ -88,3 +97,5 @@ bool tpm_suspend(device_t, const pmf_qual_t *);
 bool tpm_resume(device_t, const pmf_qual_t *);
 
 #endif
+
+#endif	/* DEV_IC_TPMVAR_H */
