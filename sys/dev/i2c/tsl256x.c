@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256x.c,v 1.8 2020/01/15 05:56:57 thorpej Exp $ */
+/* $NetBSD: tsl256x.c,v 1.9 2021/01/04 21:59:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.8 2020/01/15 05:56:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.9 2021/01/04 21:59:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ tsllux_match(device_t parent, cfdata_t match, void *aux)
 	if (iic_acquire_bus(ia->ia_tag, 0) != 0)
 		return (0);
 	error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
-	    TSL256x_REG_ID | COMMAND_CMD, &id_reg, 0);
+	    TSL256x_REG_ID | COMMAND6x_CMD, &id_reg, 0);
 	iic_release_bus(ia->ia_tag, 0);
 
 	if (error)
@@ -165,15 +165,15 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 	have_i2c = true;
 
 	/* Power on the device and clear any pending interrupts. */
-	if (tsllux_write1(sc, TSL256x_REG_CONTROL | COMMAND_CLEAR,
-			  CONTROL_POWER_ON)) {
+	if (tsllux_write1(sc, TSL256x_REG_CONTROL | COMMAND6x_CLEAR,
+			  CONTROL6x_POWER_ON)) {
 		aprint_error_dev(self, ": unable to power on device\n");
 		goto out;
 	}
 	sc->sc_poweron = 1;
 
 	/* Make sure interrupts are disabled. */
-	if (tsllux_write1(sc, TSL256x_REG_INTERRUPT | COMMAND_CLEAR, 0)) {
+	if (tsllux_write1(sc, TSL256x_REG_INTERRUPT | COMMAND6x_CLEAR, 0)) {
 		aprint_error_dev(self, ": unable to disable interrupts\n");
 		goto out;
 	}
@@ -184,8 +184,8 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 
 	/* Inititalize timing to reasonable defaults. */
 	sc->sc_auto_gain = true;
-	sc->sc_gain = TIMING_GAIN_16X;
-	if (tsllux_set_integration_time(sc, TIMING_INTEG_101ms)) {
+	sc->sc_gain = TIMING6x_GAIN_16X;
+	if (tsllux_set_integration_time(sc, TIMING6x_INTEG_101ms)) {
 		aprint_error_dev(self, ": unable to set integration time\n");
 		goto out;
 	}
@@ -289,11 +289,11 @@ tsllux_sysctl_gain(SYSCTLFN_ARGS)
 	mutex_enter(&sc->sc_lock);
 
 	switch (sc->sc_gain) {
-	case TIMING_GAIN_1X:
+	case TIMING6x_GAIN_1X:
 		val = 1;
 		break;
 	
-	case TIMING_GAIN_16X:
+	case TIMING6x_GAIN_16X:
 		val = 16;
 		break;
 	
@@ -310,11 +310,11 @@ tsllux_sysctl_gain(SYSCTLFN_ARGS)
 
 	switch (val) {
 	case 1:
-		new_gain = TIMING_GAIN_1X;
+		new_gain = TIMING6x_GAIN_1X;
 		break;
 	
 	case 16:
-		new_gain = TIMING_GAIN_16X;
+		new_gain = TIMING6x_GAIN_16X;
 		break;
 	
 	default:
@@ -349,15 +349,15 @@ tsllux_sysctl_itime(SYSCTLFN_ARGS)
 	mutex_enter(&sc->sc_lock);
 
 	switch (sc->sc_itime) {
-	case TIMING_INTEG_13_7ms:
+	case TIMING6x_INTEG_13_7ms:
 		val = 13;
 		break;
 	
-	case TIMING_INTEG_101ms:
+	case TIMING6x_INTEG_101ms:
 		val = 101;
 		break;
 	
-	case TIMING_INTEG_402ms:
+	case TIMING6x_INTEG_402ms:
 	default:
 		val = 402;
 		break;
@@ -372,15 +372,15 @@ tsllux_sysctl_itime(SYSCTLFN_ARGS)
 	switch (val) {
 	case 13:
 	case 14:
-		new_itime = TIMING_INTEG_13_7ms;
+		new_itime = TIMING6x_INTEG_13_7ms;
 		break;
 	
 	case 101:
-		new_itime = TIMING_INTEG_101ms;
+		new_itime = TIMING6x_INTEG_101ms;
 		break;
 	
 	case 402:
-		new_itime = TIMING_INTEG_402ms;
+		new_itime = TIMING6x_INTEG_402ms;
 		break;
 	
 	default:
@@ -478,26 +478,26 @@ tsllux_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 /*
  * Allow pending interrupts to be cleared as part of another operation.
  */
-#define	REGMASK		(COMMAND_REGMASK | COMMAND_CLEAR)
+#define	REGMASK6x		(COMMAND6x_REGMASK | COMMAND6x_CLEAR)
 
 static int
 tsllux_read1(struct tsllux_softc *sc, uint8_t reg, uint8_t *valp)
 {
-	reg = (reg & REGMASK) | COMMAND_CMD;
+	reg = (reg & REGMASK6x) | COMMAND6x_CMD;
 	return (iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, valp, 0));
 }
 
 static int
 tsllux_read2(struct tsllux_softc *sc, uint8_t reg, uint16_t *valp)
 {
-	reg = (reg & REGMASK) | COMMAND_CMD | COMMAND_WORD;
+	reg = (reg & REGMASK6x) | COMMAND6x_CMD | COMMAND6x_WORD;
 	return (iic_smbus_read_word(sc->sc_i2c, sc->sc_addr, reg, valp, 0));
 }
 
 static int
 tsllux_write1(struct tsllux_softc *sc, uint8_t reg, uint8_t val)
 {
-	reg = (reg & REGMASK) | COMMAND_CMD;
+	reg = (reg & REGMASK6x) | COMMAND6x_CMD;
 	return (iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val, 0));
 }
 
@@ -505,7 +505,7 @@ tsllux_write1(struct tsllux_softc *sc, uint8_t reg, uint8_t val)
 static int
 tsllux_write2(struct tsllux_softc *sc, uint8_t reg, uint16_t val)
 {
-	reg = (reg & REGMASK) | COMMAND_CMD | COMMAND_WORD;
+	reg = (reg & REGMASK6x) | COMMAND6x_CMD | COMMAND6x_WORD;
 	return (iic_smbus_write_word(sc->sc_i2c, sc->sc_addr, reg, val, 0));
 }
 #endif
@@ -521,7 +521,7 @@ tsllux_poweron(struct tsllux_softc *sc)
 		uint8_t val;
 
 		error = tsllux_write1(sc, TSL256x_REG_CONTROL,
-				      CONTROL_POWER_ON);
+				      CONTROL6x_POWER_ON);
 		if (error)
 			return (error);
 
@@ -529,7 +529,7 @@ tsllux_poweron(struct tsllux_softc *sc)
 		if (error)
 			return (error);
 
-		if (val != CONTROL_POWER_ON) {
+		if (val != CONTROL6x_POWER_ON) {
 			aprint_error_dev(sc->sc_dev,
 					 "failed to power on sensor\n");
 			return (EIO);
@@ -543,7 +543,7 @@ tsllux_poweroff(struct tsllux_softc *sc)
 {
 	if (sc->sc_poweron && --sc->sc_poweron == 0)
 		return (tsllux_write1(sc, TSL256x_REG_CONTROL,
-				      CONTROL_POWER_OFF));
+				      CONTROL6x_POWER_OFF));
 	return (0);
 }
 
@@ -553,9 +553,9 @@ tsllux_set_integration_time(struct tsllux_softc *sc, uint8_t time)
 	int error;
 
 	switch (time) {
-	case TIMING_INTEG_13_7ms:
-	case TIMING_INTEG_101ms:
-	case TIMING_INTEG_402ms:
+	case TIMING6x_INTEG_13_7ms:
+	case TIMING6x_INTEG_101ms:
+	case TIMING6x_INTEG_402ms:
 		break;
 	
 	default:
@@ -595,8 +595,8 @@ tsllux_set_gain(struct tsllux_softc *sc, uint8_t gain)
 	int error;
 
 	switch (gain) {
-	case TIMING_GAIN_1X:
-	case TIMING_GAIN_16X:
+	case TIMING6x_GAIN_1X:
+	case TIMING6x_GAIN_16X:
 		break;
 	
 	default:
@@ -630,17 +630,17 @@ tsllux_wait_for_adcs(struct tsllux_softc *sc)
 	int ms;
 
 	switch (sc->sc_itime) {
-	case TIMING_INTEG_13_7ms:
+	case TIMING6x_INTEG_13_7ms:
 		/* Wait 15ms for 13.7ms integration */
 		ms = 15;
 		break;
 	
-	case TIMING_INTEG_101ms:
+	case TIMING6x_INTEG_101ms:
 		/* Wait 120ms for 101ms integration */
 		ms = 120;
 		break;
 	
-	case TIMING_INTEG_402ms:
+	case TIMING6x_INTEG_402ms:
 	default:
 		/* Wait 450ms for 402ms integration */
 		ms = 450;
@@ -757,17 +757,17 @@ tsllux_get_sensor_data(struct tsllux_softc *sc, uint16_t *broadband,
 
 	/* Set the hi / lo threshold based on current integration time. */
 	switch (sc->sc_itime) {
-	case TIMING_INTEG_13_7ms:
+	case TIMING6x_INTEG_13_7ms:
 		hi = TSL2561_AGC_THI_13MS;
 		lo = TSL2561_AGC_TLO_13MS;
 		break;
 	
-	case TIMING_INTEG_101ms:
+	case TIMING6x_INTEG_101ms:
 		hi = TSL2561_AGC_THI_101MS;
 		lo = TSL2561_AGC_TLO_101MS;
 		break;
 	
-	case TIMING_INTEG_402ms:
+	case TIMING6x_INTEG_402ms:
 	default:
 		hi = TSL2561_AGC_THI_402MS;
 		lo = TSL2561_AGC_TLO_402MS;
@@ -779,19 +779,19 @@ tsllux_get_sensor_data(struct tsllux_softc *sc, uint16_t *broadband,
 			goto out;
 
 		if (did_adjust_gain == false) {
-			if (adc0 < lo && sc->sc_gain == TIMING_GAIN_1X) {
+			if (adc0 < lo && sc->sc_gain == TIMING6x_GAIN_1X) {
 				/* Increase the gain and try again. */
 				if ((error =
 				     tsllux_set_gain0(sc,
-				     		      TIMING_GAIN_16X)) != 0)
+				     		      TIMING6x_GAIN_16X)) != 0)
 					goto out;
 				did_adjust_gain = true;
 			} else if (adc0 > hi &&
-				   sc->sc_gain == TIMING_GAIN_16X) {
+				   sc->sc_gain == TIMING6x_GAIN_16X) {
 				/* Decrease the gain and try again. */
 				if ((error =
 				     tsllux_set_gain0(sc,
-				     		      TIMING_GAIN_1X)) != 0)
+				     		      TIMING6x_GAIN_1X)) != 0)
 					goto out;
 				did_adjust_gain = true;
 			} else {
@@ -955,15 +955,15 @@ tsllux_get_lux(struct tsllux_softc *sc, uint32_t *luxp,
 	 * just return a "max brightness" value.
 	 */
 	switch (sc->sc_itime) {
-	case TIMING_INTEG_13_7ms:
+	case TIMING6x_INTEG_13_7ms:
 		clip_threshold = TSL2561_CLIPPING_13MS;
 		break;
 	
-	case TIMING_INTEG_101ms:
+	case TIMING6x_INTEG_101ms:
 		clip_threshold = TSL2561_CLIPPING_101MS;
 		break;
 	
-	case TIMING_INTEG_402ms:
+	case TIMING6x_INTEG_402ms:
 	default:
 		clip_threshold = TSL2561_CLIPPING_402MS;
 		break;
@@ -976,21 +976,21 @@ tsllux_get_lux(struct tsllux_softc *sc, uint32_t *luxp,
 
 	/* Get correct scale factor based on integration time. */
 	switch (sc->sc_itime) {
-	case TIMING_INTEG_13_7ms:
+	case TIMING6x_INTEG_13_7ms:
 		scale = TSL2561_LUX_CHSCALE_TINT0;
 		break;
 	
-	case TIMING_INTEG_101ms:
+	case TIMING6x_INTEG_101ms:
 		scale = TSL2561_LUX_CHSCALE_TINT1;
 		break;
 	
-	case TIMING_INTEG_402ms:
+	case TIMING6x_INTEG_402ms:
 	default:
 		scale = (1 << TSL2561_LUX_CHSCALE);
 	}
 
 	/* Scale for gain. */
-	if (sc->sc_gain == TIMING_GAIN_1X)
+	if (sc->sc_gain == TIMING6x_GAIN_1X)
 		scale <<= 4;
 	
 	/* Scale the channel values. */
