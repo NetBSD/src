@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_169.c,v 1.2 2021/01/04 15:52:51 rillig Exp $	*/
+/*	$NetBSD: msg_169.c,v 1.3 2021/01/04 22:41:56 rillig Exp $	*/
 # 3 "msg_169.c"
 
 // Test for message: precedence confusion possible: parenthesize! [169]
@@ -146,5 +146,6 @@ expected_precedence(int a, int b, int c)
 	ok = a + b * c;
 }
 
-// TODO: add a test with unsigned long instead of unsigned, to demonstrate
-//  that the typo in
+// TODO: add a test with unsigned long instead of unsigned, trying to
+//  demonstrate that the typo in check_precedence_confusion actually has an
+//  effect.
