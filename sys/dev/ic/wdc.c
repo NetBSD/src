@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.305 2021/01/04 15:13:50 skrll Exp $ */
+/*	$NetBSD: wdc.c,v 1.306 2021/01/04 15:14:32 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.305 2021/01/04 15:13:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.306 2021/01/04 15:14:32 skrll Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -372,7 +372,7 @@ wdc_drvprobe(struct ata_channel *chp)
 		 * Init error counter so that an error within the first xfers
 		 * will trigger a downgrade
 		 */
-		chp->ch_drive[i].n_dmaerrs = NERRS_MAX-1;
+		chp->ch_drive[i].n_dmaerrs = NERRS_MAX - 1;
 #endif
 
 		/* If controller can't do 16bit flag the drives as 32bit */
