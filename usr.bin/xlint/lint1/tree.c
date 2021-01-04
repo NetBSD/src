@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.122 2021/01/03 20:38:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.123 2021/01/04 15:52:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.122 2021/01/03 20:38:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.123 2021/01/04 15:52:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4001,6 +4001,15 @@ check_precedence_confusion(tnode_t *tn)
 
 	if (mp->m_binary) {
 		rparn = 0;
+		/*
+		 * FIXME: There is a typo "tn->tn_op == CVT", which should
+		 * rather be "rn->tn_op".  Since tn must be a binary operator,
+		 * it can never be CVT.
+		 *
+		 * Before fixing this though, there should be a unit test
+		 * that demonstrates an actual change in behavior when this
+		 * bug gets fixed.
+		 */
 		for (rn = tn->tn_right; tn->tn_op == CVT; rn = rn->tn_left)
 			rparn |= rn->tn_parenthesized;
 		rparn |= rn->tn_parenthesized;
