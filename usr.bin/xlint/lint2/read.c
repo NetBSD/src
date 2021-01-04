@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.35 2021/01/01 11:51:15 rillig Exp $ */
+/* $NetBSD: read.c,v 1.36 2021/01/04 22:26:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.35 2021/01/01 11:51:15 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.36 2021/01/04 22:26:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -62,7 +62,7 @@ static	short	*inpfns;
 static	size_t	ninpfns;
 
 /*
- * The array pointed to by *fnames maps file name indizes to file names.
+ * The array pointed to by *fnames maps file name indices to file names.
  * Indices of type short are used instead of pointers to save memory.
  */
 const	char **fnames;
@@ -87,7 +87,7 @@ static	size_t	tlstlen;		/* length of tlst */
 
 static	hte_t **renametab;
 
-/* index of current C source file (as spezified at the command line) */
+/* index of current C source file (as specified at the command line) */
 static	int	csrcfile;
 
 
@@ -498,7 +498,7 @@ decldef(pos_t *posp, const char *cp)
 	}
 
 	if (symp == NULL) {
-		/* allocsym reserviert keinen Platz fuer s_nva */
+		/* allocsym does not reserve space for s_nva */
 		if (sym.s_va || sym.s_prfl || sym.s_scfl) {
 			symp = xalloc(sizeof (sym_t));
 			*symp = sym;
@@ -519,7 +519,7 @@ decldef(pos_t *posp, const char *cp)
 }
 
 /*
- * Read an u-record (emited by lint1 if a symbol was used).
+ * Read an u-record (emitted by lint1 if a symbol was used).
  */
 static void
 usedsym(pos_t *posp, const char *cp)

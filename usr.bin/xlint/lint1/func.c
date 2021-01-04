@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.49 2021/01/03 20:14:38 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.50 2021/01/04 22:26:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.49 2021/01/03 20:14:38 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.50 2021/01/04 22:26:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ int	reached = 1;
 int	rchflg;
 
 /*
- * In conjunction with reached ontrols printing of "fallthrough on ..."
+ * In conjunction with reached, controls printing of "fallthrough on ..."
  * warnings.
  * Reset by each statement and set by FALLTHROUGH, switch (switch1())
  * and case (label()).
@@ -70,7 +70,7 @@ int	rchflg;
  * Control statements if, for, while and switch do not reset ftflg because
  * this must be done by the controlled statement. At least for if this is
  * important because ** FALLTHROUGH ** after "if (expr) stmnt" is evaluated
- * before the following token, wich causes reduction of above.
+ * before the following token, which causes reduction of above.
  * This means that ** FALLTHROUGH ** after "if ..." would always be ignored.
  */
 int	ftflg;
@@ -294,8 +294,12 @@ funcdef(sym_t *fsym)
 			 * be printed in check_func_lint_directives().
 			 */
 			if (dowarn && !fsym->s_osdef) {
-				/* redeclaration of %s */
-				(*(sflag ? error : warning))(27, fsym->s_name);
+				if (sflag)
+					/* redeclaration of %s */
+					error(27, fsym->s_name);
+				else
+					/* redeclaration of %s */
+					warning(27, fsym->s_name);
 				print_previous_declaration(-1, rdsym);
 			}
 
@@ -1188,7 +1192,7 @@ scanflike(int n)
 }
 
 /*
- * Set the linenumber for a CONSTCOND comment. At this and the following
+ * Set the line number for a CONSTCOND comment. At this and the following
  * line no warnings about constants in conditional contexts are printed.
  */
 /* ARGSUSED */
