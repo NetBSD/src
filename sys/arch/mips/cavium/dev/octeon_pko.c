@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pko.c,v 1.5 2020/06/23 05:15:33 simonb Exp $	*/
+/*	$NetBSD: octeon_pko.c,v 1.6 2021/01/04 17:22:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.5 2020/06/23 05:15:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.6 2021/01/04 17:22:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <mips/locore.h>
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_faureg.h>
@@ -56,10 +56,7 @@ octpko_init(struct octpko_attach_args *aa, struct octpko_softc **rsc)
 	struct octpko_softc *sc;
 	int status;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc == NULL)
-		panic("can't allocate memory: %s", __func__);
-
+	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_port = aa->aa_port;
 	sc->sc_regt = aa->aa_regt;
 	sc->sc_cmdptr = aa->aa_cmdptr;

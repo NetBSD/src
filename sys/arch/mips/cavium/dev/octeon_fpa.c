@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpa.c,v 1.8 2020/06/23 05:14:18 simonb Exp $	*/
+/*	$NetBSD: octeon_fpa.c,v 1.9 2021/01/04 17:22:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,12 +29,12 @@
 #undef	FPADEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.8 2020/06/23 05:14:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.9 2021/01/04 17:22:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/locore.h>
@@ -113,10 +113,8 @@ octfpa_buf_init(int poolno, size_t size, size_t nelems, struct octfpa_buf **rfb)
 	paddr_t paddr;
 
 	nsegs = 1/* XXX */;
-	fb = malloc(sizeof(*fb) + sizeof(*fb->fb_dma_segs) * nsegs, M_DEVBUF,
-	    M_WAITOK | M_ZERO);
-	if (fb == NULL)
-		return 1;
+	fb = kmem_zalloc(sizeof(*fb) + sizeof(*fb->fb_dma_segs) * nsegs,
+	    KM_SLEEP);
 	fb->fb_poolno = poolno;
 	fb->fb_size = size;
 	fb->fb_nelems = nelems;
