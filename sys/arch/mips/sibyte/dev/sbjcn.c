@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.31 2019/11/10 21:16:30 chs Exp $ */
+/* $NetBSD: sbjcn.c,v 1.32 2021/01/04 18:19:53 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.31 2019/11/10 21:16:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.32 2021/01/04 18:19:53 thorpej Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.31 2019/11/10 21:16:30 chs Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 
@@ -322,7 +322,7 @@ sbjcn_attach_channel(struct sbjcn_softc *sc, int chan, int intr)
 	tp->t_hwiflow = sbjcn_hwiflow;
 
 	ch->ch_tty = tp;
-	ch->ch_rbuf = malloc(sbjcn_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	ch->ch_rbuf = kmem_alloc(sbjcn_rbuf_size << 1, KM_SLEEP);
 	ch->ch_ebuf = ch->ch_rbuf + (sbjcn_rbuf_size << 1);
 
 	tty_attach(tp);
