@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.42 2020/07/16 13:32:05 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.43 2021/01/04 18:09:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2020/07/16 13:32:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2021/01/04 18:09:01 thorpej Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2020/07/16 13:32:05 simonb Exp $");
 #include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -285,6 +285,22 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 }
 #endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
 
+static size_t 
+_bus_dmamap_mapsize(int const nsegments)
+{ 
+	KASSERT(nsegments > 0);
+	return sizeof(struct mips_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+}
+
+static size_t
+_bus_dmamap_cookiesize(int const nsegments)
+{
+	KASSERT(nsegments > 0);
+	return sizeof(struct mips_bus_dma_cookie) +
+	    (sizeof(bus_dma_segment_t) * nsegments);
+}
+
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -295,9 +311,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct mips_bus_dmamap *map;
 	void *mapstore;
-	size_t mapsize;
-	const int mallocflags = M_ZERO |
-	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	const int allocflags =
+	    ((flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
 
 	int error = 0;
 
@@ -313,9 +328,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct mips_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP, mallocflags)) == NULL)
+	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
+	     allocflags)) == NULL)
 		return (ENOMEM);
 
 	map = mapstore;
@@ -336,7 +350,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	struct mips_bus_dma_cookie *cookie;
 	int cookieflags;
 	void *cookiestore;
-	size_t cookiesize;
 
 	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh)
 		map->_dm_bounce_thresh = 0;
@@ -356,13 +369,11 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 		return 0;
 	}
 
-	cookiesize = sizeof(struct mips_bus_dma_cookie) +
-	    (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
-
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DMAMAP, mallocflags)) == NULL) {
+	if ((cookiestore = kmem_zalloc(_bus_dmamap_cookiesize(nsegments),
+	     allocflags)) == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
@@ -403,13 +414,13 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 		if (cookie->id_flags & _BUS_DMA_HAS_BOUNCE)
 			_bus_dma_free_bouncebuf(t, map);
 		STAT_INCR(bounced_destroys);
-		free(cookie, M_DMAMAP);
+		kmem_free(cookie, _bus_dmamap_cookiesize(map->_dm_segcnt));
 	} else
 #endif
 	STAT_INCR(destroys);
 	if (map->dm_nsegs > 0)
 		STAT_INCR(unloads);
-	free(map, M_DMAMAP);
+	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
 }
 
 /*
@@ -1325,8 +1336,8 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 		return 0;
 	}
 
-	if ((*newtag = malloc(sizeof(struct mips_bus_dma_tag), M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	if ((*newtag = kmem_alloc(sizeof(struct mips_bus_dma_tag),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return ENOMEM;
 
 	**newtag = *tag;
@@ -1354,7 +1365,7 @@ _bus_dmatag_destroy(bus_dma_tag_t tag)
 	case 0:
 		break;				/* not allocated with malloc */
 	case 1:
-		free(tag, M_DMAMAP);		/* last reference to tag */
+		kmem_free(tag, sizeof(*tag));	/* last reference to tag */
 		break;
 	default:
 		(tag->_tag_needs_free)--;	/* one less reference */
