@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.114 2020/12/29 01:47:51 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.115 2021/01/04 22:09:35 thorpej Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -342,7 +342,7 @@ file	dev/i2c/imt.c				imt
 # Taos TSL256x ambient light sensor
 device	tsllux: sysmon_envsys
 attach	tsllux at iic
-file	dev/i2c/tsl256x.c			tsllux
+file	dev/i2c/tsllux.c			tsllux
 
 # Philips/NXP TEA5767 
 device tea5767radio : radiodev
