@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.22 2021/01/04 15:13:06 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.23 2021/01/04 15:13:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -16,7 +16,7 @@
  *    must display the following acknowledgement:
  *	This product includes software developed for the NetBSD Project by
  *	Genetec Corporation.
- * 4. The name of Genetec Corporation may not be used to endorse or 
+ * 4. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.22 2021/01/04 15:13:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.23 2021/01/04 15:13:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static int stray_interrupt(void *);
 static void init_interrupt_masks(void);
 
 /*
- * interrupt dispatch table. 
+ * interrupt dispatch table.
  */
 #ifdef MULTIPLE_HANDLERS_ON_ONE_IRQ
 struct intrhand {
@@ -173,14 +173,14 @@ pxa2x0_irq_handler(void *arg)
 		/* Enable interrupt */
 #endif
 #ifndef MULTIPLE_HANDLERS_ON_ONE_IRQ
-		(* handler[irqno].func)( 
+		(* handler[irqno].func)(
 			handler[irqno].cookie == 0
 			? frame : handler[irqno].cookie );
 #else
 		/* process all handlers for this interrupt.
 		   XXX not yet */
 #endif
-		
+
 #ifdef notyet
 		/* Disable interrupt */
 #endif
