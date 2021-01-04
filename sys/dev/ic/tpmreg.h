@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.6 2019/10/09 07:30:58 maxv Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.7 2021/01/04 18:22:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
+#ifndef	DEV_IC_TPMREG_H
+#define	DEV_IC_TPMREG_H
+
+#include <sys/types.h>
+
+#include <sys/cdefs.h>
+#include <sys/endian.h>
+
+#if (_BYTE_ORDER == _LITTLE_ENDIAN)
 #define TPM_BE16(a)	bswap16(a)
 #define TPM_BE32(a)	bswap32(a)
 #else
@@ -105,3 +113,5 @@ struct tpm_header {
  * Five localities, 4K per locality.
  */
 #define	TPM_SPACE_SIZE	0x5000
+
+#endif	/* DEV_IC_TPMREG_H */
