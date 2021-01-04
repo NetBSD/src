@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2020/07/07 03:38:47 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2021/01/04 15:56:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/autoconf.h>
 #include <sys/bus.h>
@@ -120,8 +120,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
-	    M_WAITOK);
+	genppc_pct = kmem_alloc(sizeof(struct genppc_pci_chipset), KM_SLEEP);
 	ibmnws_pci_get_chipset_tag_indirect (genppc_pct);
 
 #ifdef PCI_NETBSD_CONFIGURE
