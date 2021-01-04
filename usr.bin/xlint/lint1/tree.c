@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.127 2021/01/04 22:26:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.128 2021/01/04 22:33:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.127 2021/01/04 22:26:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.128 2021/01/04 22:33:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3646,10 +3646,8 @@ check_expr_misc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdi
 			check_array_index(ln->tn_left, 0);
 		break;
 	case CALL:
-		if (ln->tn_op != AMPER || ln->tn_left->tn_op != NAME)
-			LERROR("check_expr_misc(op=%s != %s || %s != %s)",
-			    getopname(ln->tn_op), getopname(AMPER),
-			    getopname(ln->tn_left->tn_op), getopname(NAME));
+		lint_assert(ln->tn_op == AMPER);
+		lint_assert(ln->tn_left->tn_op == NAME);
 		if (!szof)
 			outcall(tn, vctx || tctx, rvdisc);
 		break;
