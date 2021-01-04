@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.62 2020/06/13 05:31:28 jdc Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.63 2021/01/04 15:29:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.62 2020/06/13 05:31:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.63 2021/01/04 15:29:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1218,7 +1218,7 @@ filt_tctrlrdetach(struct knote *kn)
 	int s;
 
 	s = splts102();
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	splx(s);
 }
 
@@ -1243,12 +1243,10 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 {
 	struct tctrl_softc *sc = device_lookup_private(&tctrl_cd,
 						       TCTRL_STD_DEV);
-	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &tctrlread_filtops;
 		break;
 
@@ -1259,7 +1257,7 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = splts102();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_rsel, kn);
 	splx(s);
 
 	return (0);

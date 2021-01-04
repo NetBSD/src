@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.28 2018/09/03 16:29:27 riastradh Exp $ */
+/* $NetBSD: satmgr.c,v 1.29 2021/01/04 15:36:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -589,7 +589,7 @@ filt_rdetach(struct knote *kn)
 	struct satmgr_softc *sc = kn->kn_hook;
 
 	mutex_enter(&sc->sc_lock);
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -613,11 +613,9 @@ static int
 satkqfilter(dev_t dev, struct knote *kn)
 {
 	struct satmgr_softc *sc = device_lookup_private(&satmgr_cd, 0);
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &read_filtops;
 		break;
 
@@ -628,7 +626,7 @@ satkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	mutex_enter(&sc->sc_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_rsel, kn);
 	mutex_exit(&sc->sc_lock);
 
 	return 0;
