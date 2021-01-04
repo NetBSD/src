@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.15 2020/06/23 05:17:13 simonb Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.16 2021/01/04 17:22:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.15 2020/06/23 05:17:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.16 2021/01/04 17:22:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.15 2020/06/23 05:17:13 simonb Exp $
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/cdefs.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/syslog.h>
 
 #include <mips/locore.h>
@@ -218,8 +218,8 @@ octgmx_attach(device_t parent, device_t self, void *aux)
 
 	octgmx_init(sc);
 
-	sc->sc_ports = malloc(sizeof(*sc->sc_ports) * sc->sc_nports, M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	sc->sc_ports = kmem_zalloc(sizeof(*sc->sc_ports) * sc->sc_nports,
+	    KM_SLEEP);
 
 	for (i = 0; i < sc->sc_nports; i++) {
 		port = GMX_PORT_NUM(sc->sc_unitno, i);
