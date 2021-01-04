@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.111 2021/01/03 17:42:45 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.112 2021/01/04 22:26:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.111 2021/01/03 17:42:45 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.112 2021/01/04 22:26:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1340,7 +1340,7 @@ clrwflgs(void)
 }
 
 /*
- * Strings are stored in a dynamically alloceted buffer and passed
+ * Strings are stored in a dynamically allocated buffer and passed
  * in yylval.y_xstrg to the parser. The parser or the routines called
  * by the parser are responsible for freeing this buffer.
  */

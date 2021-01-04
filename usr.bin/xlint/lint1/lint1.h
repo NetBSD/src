@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.52 2021/01/03 20:04:08 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.53 2021/01/04 22:26:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -51,9 +51,9 @@
 #define WORST_ALIGN(x) (((x) + AVAL) & ~AVAL)
 #endif
 
-#define LWARN_BAD	-3
-#define LWARN_ALL	-2
-#define LWARN_NONE	-1
+#define LWARN_BAD	(-3)
+#define LWARN_ALL	(-2)
+#define LWARN_NONE	(-1)
 
 /*
  * Describes the position of a declaration or anything else.
@@ -116,7 +116,7 @@ typedef struct {
 #define v_ldbl	v_u._v_ldbl
 
 /*
- * Structures of type str_t uniqely identify structures. This can't
+ * Structures of type str_t uniquely identify structures. This can't
  * be done in structures of type type_t, because these are copied
  * if they must be modified. So it would not be possible to check
  * if two structures are identical by comparing the pointers to

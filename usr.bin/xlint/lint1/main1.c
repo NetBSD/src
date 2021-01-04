@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.31 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.32 2021/01/04 22:26:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.31 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.32 2021/01/04 22:26:50 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: main1.c,v 1.31 2020/12/29 11:35:11 rillig Exp $");
 int	yflag;
 
 /*
- * Print warnings if an assignment of an integertype to another integertype
+ * Print warnings if an assignment of an integer type to another integer type
  * causes an implicit narrowing conversion. If aflag is 1, these warnings
  * are printed only if the source type is at least as wide as long. If aflag
  * is greater than 1, they are always printed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.9 2016/09/05 00:40:30 sevan Exp $	*/
+/*	$NetBSD: main2.c,v 1.10 2021/01/04 22:26:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.9 2016/09/05 00:40:30 sevan Exp $");
+__RCSID("$NetBSD: main2.c,v 1.10 2021/01/04 22:26:51 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -72,7 +72,7 @@ int	tflag;
 
 /*
  * If a complaint stems from a included file, print the name of the included
- * file instead of the name spezified at the command line followed by '?'
+ * file instead of the name specified at the command line followed by '?'
  */
 int	Hflag;
 
