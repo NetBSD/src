@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.33 2021/01/03 20:14:38 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.34 2021/01/04 22:26:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.33 2021/01/03 20:14:38 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.34 2021/01/04 22:26:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -88,7 +88,7 @@ static	void	outfstrg(strg_t *);
  *				2 n typename		only type name
  *
  * spaces are only for better readability
- * additionaly it is possible to prepend the characters 'c' (for const)
+ * additionally it is possible to prepend the characters 'c' (for const)
  * and 'v' (for volatile)
  */
 void
@@ -401,7 +401,7 @@ outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
  * write out all information necessary for lint2 to check function
  * calls
  *
- * rvused is set if the return value is used (asigned to a variable)
+ * rvused is set if the return value is used (assigned to a variable)
  * rvdisc is set if the return value is not used and not ignored
  * (casted to void)
  */
@@ -490,7 +490,7 @@ outcall(tnode_t *tn, int rvused, int rvdisc)
 
 /*
  * extracts potential format specifiers for printf() and scanf() and
- * writes them, enclosed in "" and qouted if necessary, to the output buffer
+ * writes them, enclosed in "" and quoted if necessary, to the output buffer
  */
 static void
 outfstrg(strg_t *strg)

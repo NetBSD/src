@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.21 2021/01/03 15:55:18 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.22 2021/01/04 22:26:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.21 2021/01/03 15:55:18 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.22 2021/01/04 22:26:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -280,7 +280,7 @@ type_name_of_function(buffer *buf, const type_t *tp)
 #endif
 	}
 	if (tp->t_vararg) {
-		buf_add(buf, sep), sep = ", ";
+		buf_add(buf, sep);
 		buf_add(buf, "...");
 	}
 	buf_add(buf, ") returning ");

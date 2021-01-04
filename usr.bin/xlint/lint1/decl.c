@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.110 2021/01/03 20:14:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.111 2021/01/04 22:26:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.110 2021/01/03 20:14:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.111 2021/01/04 22:26:50 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: decl.c,v 1.110 2021/01/03 20:14:38 rillig Exp $");
 
 const	char *unnamed = "<unnamed>";
 
-/* shared type structures for arithmtic types and void */
+/* shared type structures for arithmetic types and void */
 static	type_t	*typetab;
 
 /* value of next enumerator during declaration of enum types */
@@ -672,7 +672,7 @@ popdecl(void)
  *
  * This is used to mark compound statements which have, possibly in
  * nested compound statements, asm statements. For these compound
- * statements no warnings about unused or unitialized variables are
+ * statements no warnings about unused or uninitialized variables are
  * printed.
  *
  * There is no need to clear d_asm in dinfo structs with context AUTO,
@@ -877,7 +877,7 @@ merge_type_specifiers(tspec_t t, tspec_t s)
 /*
  * Return the length of a type in bits.
  *
- * Printing a message if the outhermost dimension of an array is 0 must
+ * Printing a message if the outermost dimension of an array is 0 must
  * be done by the caller. All other problems are reported by length()
  * if name is not NULL.
  */
@@ -977,7 +977,7 @@ lnklst(sym_t *l1, sym_t *l2)
  * message if it is not.
  *
  * Invalid types are:
- * - arrays of incomlete types or functions
+ * - arrays of incomplete types or functions
  * - functions returning arrays or functions
  * - void types other than type of function or pointer
  */
@@ -1898,7 +1898,7 @@ decl1ext(sym_t *dsym, int initflg)
 	if (plibflg && llibflg &&
 	    dsym->s_type->t_tspec == FUNC && dsym->s_type->t_proto) {
 		/*
-		 * With both LINTLIBRARY and PROTOLIB the prototyp is
+		 * With both LINTLIBRARY and PROTOLIB the prototype is
 		 * written as a function definition to the output file.
 		 */
 		rval = dsym->s_type->t_subt->t_tspec != VOID;

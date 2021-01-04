@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.51 2020/12/29 11:35:11 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.52 2021/01/04 22:26:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.51 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.52 2021/01/04 22:26:51 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ static	char	*p2out;
 /* flags always passed to cc(1) */
 static	char	**cflags;
 
-/* flags for cc(1), controled by sflag/tflag */
+/* flags for cc(1), controlled by sflag/tflag */
 static	char	**lcflags;
 
 /* flags for lint1 */
