@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.8 2019/11/10 21:16:29 chs Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.9 2021/01/04 18:11:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,14 +67,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.8 2019/11/10 21:16:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.9 2021/01/04 18:11:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/intr.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <mips/locore.h>
 #include <mips/adm5120/include/adm5120reg.h>
@@ -191,7 +191,7 @@ adm5120_intr_establish(int irq, int priority, int (*func)(void *), void *arg)
 	if (irq < 0 || irq >= NIRQS)
 		panic("adm5120_intr_establish: bogus IRQ %d", irq);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
@@ -259,7 +259,7 @@ adm5120_intr_disestablish(void *cookie)
 
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 void
 evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
