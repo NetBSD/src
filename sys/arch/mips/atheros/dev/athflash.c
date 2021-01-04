@@ -1,4 +1,4 @@
-/* $NetBSD: athflash.c,v 1.11 2019/11/10 21:16:30 chs Exp $ */
+/* $NetBSD: athflash.c,v 1.12 2021/01/04 17:42:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -82,13 +82,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.11 2019/11/10 21:16:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.12 2021/01/04 17:42:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -251,7 +251,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 	sc->sc_size = flash_ids[i].flash_size;
 	sc->sc_sector_size = flash_ids[i].sector_size;
 
-	sc->sc_buf = malloc(sc->sc_sector_size, M_DEVBUF, M_WAITOK);
+	sc->sc_buf = kmem_alloc(sc->sc_sector_size, KM_SLEEP);
 
 	printf("\n");
 }
