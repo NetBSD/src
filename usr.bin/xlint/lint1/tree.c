@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.130 2021/01/04 23:17:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.131 2021/01/04 23:47:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.130 2021/01/04 23:17:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.131 2021/01/04 23:47:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4011,28 +4011,11 @@ check_precedence_confusion(tnode_t *tn)
 		/*
 		 * FIXME: There is a typo "tn->tn_op == CVT", which should
 		 * rather be "rn->tn_op".  Since tn must be a binary operator,
-		 * it can never be CVT.
+		 * it can never be CVT, so the loop is never taken.
 		 *
-		 * Before fixing this though, there should be a unit test
-		 * that demonstrates an actual change in behavior when this
-		 * bug gets fixed.
-		 *
-		 * rn must be a chain of casts and conversions, and at least
-		 * one of these must be a parenthesized cast.
-		 *
-		 * The argument of the innermost cast or conversion must not
-		 * be parenthesized.
-		 *
-		 * The argument of the innermost cast or conversion must be
-		 * an expression with confusing precedence.  Since all these
-		 * expressions have lower precedence than a cast, these can
-		 * only appear as a parenthesized expression.  This in turn
-		 * makes the whole loop superfluous.
-		 *
-		 * An edge case might be due to constant folding, if the
-		 * nodes created from constant folding did not preserve
-		 * tn_parenthesized properly.  But that would be another bug,
-		 * so it doesn't count as an argument.
+		 * Since the loop is never taken, if the right-hand operand
+		 * is CVT, it is not followed to the actually interesting
+		 * operator.
 		 */
 		for (rn = tn->tn_right; tn->tn_op == CVT; rn = rn->tn_left)
 			rparn |= rn->tn_parenthesized;
