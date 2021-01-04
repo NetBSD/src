@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.7 2021/01/04 18:22:19 riastradh Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.8 2021/01/04 18:26:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -113,5 +113,25 @@ struct tpm_header {
  * Five localities, 4K per locality.
  */
 #define	TPM_SPACE_SIZE	0x5000
+
+#define	TPM_TAG_RQU_COMMAND		0x00c1
+#define	TPM_TAG_RSP_COMMAND		0x00c4
+
+#define	TPM_ORD_GetRandom		0x00000046
+
+/* TPM_RESULT return codes */
+#define	TPM_AUTHFAIL			1
+#define	TPM_BADINDEX			2
+#define	TPM_BAD_PARAMETER		3
+#define	TPM_AUDITFAILURE		4
+#define	TPM_CLEAR_DISABLED		5
+#define	TPM_DEACTIVATED			6
+#define	TPM_DISABLED			7
+#define	TPM_DISABLED_CMD		8
+#define	TPM_FAIL			9
+#define	TPM_BAD_ORDINAL			10
+/* ... */
+
+#define	TPM_NON_FATAL			0x800
 
 #endif	/* DEV_IC_TPMREG_H */

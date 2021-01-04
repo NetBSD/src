@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmvar.h,v 1.8 2021/01/04 18:22:19 riastradh Exp $	*/
+/*	$NetBSD: tpmvar.h,v 1.9 2021/01/04 18:26:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@ struct tpm_ioc_getinfo {
 #include <sys/bus.h>
 #include <sys/device_if.h>
 #include <sys/mutex.h>
+#include <sys/rndsource.h>
+#include <sys/workqueue.h>
 
 struct tpm_softc;
 
@@ -91,6 +93,11 @@ struct tpm_softc {
 	uint32_t sc_rev;
 	uint32_t sc_status;
 	uint32_t sc_caps;
+
+	struct krndsource sc_rnd;
+	struct workqueue *sc_rndwq;
+	struct work sc_rndwk;
+	volatile unsigned sc_rndpending;
 };
 
 bool tpm_suspend(device_t, const pmf_qual_t *);
