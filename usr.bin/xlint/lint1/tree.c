@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.124 2021/01/04 17:06:20 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.125 2021/01/04 21:17:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.124 2021/01/04 17:06:20 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.125 2021/01/04 21:17:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -126,6 +126,48 @@ dumpnode(char *buf, size_t len, tnode_t *tn) {
 	snprintf(buf, len, "%s: (%s) = %s [%s, %s]", n,
 	    type_name(tn->tn_type), s, lb, rb);
 	return buf;
+}
+#endif
+
+#ifdef DEBUG
+static void
+dprint_node(const tnode_t *tn)
+{
+	static int indent = 0;
+
+	op_t op = tn->tn_op;
+
+	if (tn == NULL) {
+		printf("%*s" "null\n", indent, "");
+		return;
+	}
+
+	printf("%*s%s: %s%s%s",
+	    indent, "",
+	    op == CVT && !tn->tn_cast ? "convert" :
+		op == NAME ? "name" : getopname(op),
+	    type_name(tn->tn_type), tn->tn_lvalue ? " lvalue" : "",
+	    tn->tn_parenthesized ? " ()" : "");
+	indent += 2;
+	if (op == NAME)
+		printf(" %s\n", tn->tn_sym->s_name);
+	else if (op == CON)
+		printf(" value=?\n");
+	else if (op == STRING)
+		printf(" length=%zu\n", tn->tn_string->st_len);
+	else {
+		printf("\n");
+		dprint_node(tn->tn_left);
+		if (modtab[op].m_binary)
+			dprint_node(tn->tn_right);
+	}
+	indent -= 2;
+}
+#else
+/*ARGSUSED*/
+static void
+dprint_node(const tnode_t *tn)
+{
 }
 #endif
 
@@ -3971,48 +4013,6 @@ cat_strings(strg_t *strg1, strg_t *strg2)
 
 	return strg1;
 }
-
-#ifdef DEBUG
-static void
-dprint_node(const tnode_t *tn)
-{
-	static int indent = 0;
-
-	op_t op = tn->tn_op;
-
-	if (tn == NULL) {
-		printf("%*s" "null\n", indent, "");
-		return;
-	}
-
-	printf("%*s%s: %s%s%s",
-	    indent, "",
-	    op == CVT && !tn->tn_cast ? "convert" :
-	    op == NAME ? "name" : getopname(op),
-	    type_name(tn->tn_type), tn->tn_lvalue ? " lvalue" : "",
-	    tn->tn_parenthesized ? " ()" : "");
-	indent += 2;
-	if (op == NAME)
-		printf(" %s\n", tn->tn_sym->s_name);
-	else if (op == CON)
-		printf(" value=?\n");
-	else if (op == STRING)
-		printf(" length=%zu\n", tn->tn_string->st_len);
-	else {
-		printf("\n");
-		dprint_node(tn->tn_left);
-		if (modtab[op].m_binary)
-			dprint_node(tn->tn_right);
-	}
-	indent -= 2;
-}
-#else
-/*ARGSUSED*/
-static void
-dprint_node(const tnode_t *tn)
-{
-}
-#endif
 
 /*
  * Print a warning if the given node has operands which should be
