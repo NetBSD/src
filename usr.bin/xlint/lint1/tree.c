@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.128 2021/01/04 22:33:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.129 2021/01/04 22:41:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.128 2021/01/04 22:33:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.129 2021/01/04 22:41:56 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4016,6 +4016,19 @@ check_precedence_confusion(tnode_t *tn)
 		 * Before fixing this though, there should be a unit test
 		 * that demonstrates an actual change in behavior when this
 		 * bug gets fixed.
+		 *
+		 * Right now, the condition is always false.  To make it true
+		 * after fixing the typo, the right-hand operand must be an
+		 * explicit cast or an implicit conversion that is
+		 * parenthesized.  For the right-hand operand itself, this
+		 * would already be done using the line below the loop.
+		 *
+		 * To make a difference, the right-hand operand must not be
+		 * parenthesized, but its indirect cast or conversion must be.
+		 *
+		 * An implicit conversion is never parenthesized.  Therefore
+		 * this must be a cast that is later converted, to build a
+		 * chain.
 		 */
 		for (rn = tn->tn_right; tn->tn_op == CVT; rn = rn->tn_left)
 			rparn |= rn->tn_parenthesized;
