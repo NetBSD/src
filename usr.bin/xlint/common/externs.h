@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.10 2021/01/02 03:49:25 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.11 2021/01/04 01:11:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -74,3 +74,8 @@ extern	void	outint(int);
 #define outname(a)	outname1(__FILE__, __LINE__, a);
 extern	void	outname1(const char *, size_t, const char *);
 extern	void	outsrc(const char *);
+
+/*
+ * platforms.c
+ */
+extern	const target_platform *platform(void);
