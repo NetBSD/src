@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.99 2020/06/14 01:40:05 chs Exp $ */
+/*	$NetBSD: sbus.c,v 1.100 2021/01/04 14:48:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.99 2020/06/14 01:40:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.100 2021/01/04 14:48:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -246,8 +247,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sb.sb_flush = &sc->sc_flush;
 
 	/* give us a nice name.. */
-	name = malloc(32, M_DEVBUF, M_WAITOK);
-	snprintf(name, 32, "%s dvma", device_xname(self));
+	name = kmem_asprintf("%s dvma", device_xname(self));
 
 	iommu_init(name, &sc->sc_is, 0, -1);
 
@@ -591,7 +591,7 @@ sbus_alloc_dmatag(struct sbus_softc *sc)
 {
 	bus_dma_tag_t sdt, psdt = sc->sc_dmatag;
 
-	sdt = malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_WAITOK);
+	sdt = kmem_alloc(sizeof(*sdt), KM_SLEEP);
 	sdt->_cookie = sc;
 	sdt->_parent = psdt;
 #define PCOPY(x)	sdt->x = psdt->x

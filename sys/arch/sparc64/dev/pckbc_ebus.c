@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_ebus.c,v 1.3 2018/10/13 20:11:48 macallan Exp $ */
+/*	$NetBSD: pckbc_ebus.c,v 1.4 2021/01/04 14:48:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,13 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ebus.c,v 1.3 2018/10/13 20:11:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ebus.c,v 1.4 2021/01/04 14:48:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 
@@ -154,8 +154,7 @@ pckbc_ebus_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		memset(t, 0, sizeof(struct pckbc_internal));
+		t = kmem_zalloc(sizeof(struct pckbc_internal), KM_SLEEP);
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;

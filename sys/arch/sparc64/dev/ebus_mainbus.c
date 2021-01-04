@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.17 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.18 2021/01/04 14:48:51 thorpej Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.17 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.18 2021/01/04 14:48:51 thorpej Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -38,7 +38,7 @@ extern int ebus_debug;
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 
@@ -186,7 +186,7 @@ ebus_mainbus_alloc_bus_tag(struct ebus_softc *sc,
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
+	bt = kmem_zalloc(sizeof(*bt), KM_SLEEP);
 	bt->cookie = sc;
 	bt->parent = parent;
 	bt->type = type;
