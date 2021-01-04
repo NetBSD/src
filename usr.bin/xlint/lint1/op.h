@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.8 2021/01/02 01:06:15 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.9 2021/01/04 23:58:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -49,7 +49,7 @@ typedef	struct {
 	bool	m_sideeff : 1;	/* operator has side effect */
 	bool	m_tlansiu : 1;	/* warn if left op. is unsign. in ANSI C */
 	bool	m_transiu : 1;	/* warn if right op. is unsign. in ANSI C */
-	bool	m_tpconf : 1;	/* test possible precedence confusion */
+	bool	m_possible_precedence_confusion : 1;
 	bool	m_comp : 1;	/* operator performs comparison */
 	bool	m_valid_on_enum : 1;	/* valid operation on enums */
 	bool	m_bad_on_enum : 1;	/* dubious operation on enums */
