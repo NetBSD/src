@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_169.c,v 1.3 2021/01/04 22:41:56 rillig Exp $	*/
+/*	$NetBSD: msg_169.c,v 1.4 2021/01/04 23:47:27 rillig Exp $	*/
 # 3 "msg_169.c"
 
 // Test for message: precedence confusion possible: parenthesize! [169]
@@ -146,6 +146,36 @@ expected_precedence(int a, int b, int c)
 	ok = a + b * c;
 }
 
-// TODO: add a test with unsigned long instead of unsigned, trying to
-//  demonstrate that the typo in check_precedence_confusion actually has an
-//  effect.
+/*
+ * Before tree.c 1.132 from 2021-01-04, there was a typo in
+ * check_precedence_confusion that prevented the right-hand operand from
+ * being flagged as possibly confusing if there was an implicit conversion
+ * or an explicit cast between the main operator ('|') and the nested
+ * operator ('&').
+ */
+void
+implicit_conversion_to_long(long la, int a)
+{
+	int ok;
+
+	ok = a & a | la;	/* always marked as confusing */
+	ok = la | a & a;	/* marked as confusing since tree.c 1.132 */
+
+	ok = (a & a) | la;	/* always ok */
+	ok = la | (a & a);	/* always ok */
+
+	/*
+	 * Before tree.c 1.132, this expression didn't generate a warning
+	 * because the right-hand operand was CVT, and there is no confusing
+	 * precedence between BITOR and CVT.
+	 *
+	 * Since tree.c 1.132, this expression doesn't generate a warning
+	 * because the right-hand operand is parenthesized.  There is no way
+	 * to have the right operand casted and at the same time not
+	 * parenthesized since the cast operator has higher precedence.
+	 *
+	 * In summary, there is no visible change, but the implementation is
+	 * now works as intended.
+	 */
+	ok = la | (int)(a & a);	/* always ok */
+}
