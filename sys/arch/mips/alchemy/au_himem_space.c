@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.15 2019/11/10 21:16:29 chs Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.16 2021/01/04 17:35:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.15 2019/11/10 21:16:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.16 2021/01/04 17:35:12 thorpej Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.15 2019/11/10 21:16:29 chs Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/endian.h>
 #include <uvm/uvm.h>
 
@@ -692,8 +692,7 @@ au_himem_space_init(bus_space_tag_t bst, const char *name,
 {
 	au_himem_cookie_t	*c;
 
-	c = malloc(sizeof (struct au_himem_cookie), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	c = kmem_zalloc(sizeof (struct au_himem_cookie), KM_SLEEP);
 	c->c_name = name;
 	c->c_start = start;
 	c->c_end = end;
