@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.21 2020/12/30 10:46:11 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.22 2021/01/04 22:29:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.21 2020/12/30 10:46:11 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.22 2021/01/04 22:29:00 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -218,20 +218,23 @@ xnewblk(void)
 	return mb;
 }
 
-/*
- * Allocate new memory. If the first block of the list has not enough
- * free space, or there is no first block, get a new block. The new
- * block is taken from the free list or, if there is no block on the
- * free list, is allocated using xnewblk(). If a new block is allocated
- * it is initialized with zero. Blocks taken from the free list are
- * zero'd in xfreeblk().
- */
+/* Allocate new memory, initialized with zero. */
 static void *
 xgetblk(mbl_t **mbp, size_t s)
 {
 	mbl_t	*mb;
 	void	*p;
 	size_t	t = 0;
+
+	/*
+	 * If the first block of the list has not enough free space,
+	 * or there is no first block, get a new block. The new block
+	 * is taken from the free list or, if there is no block on the
+	 * free list, is allocated using xnewblk().
+	 *
+	 * If a new block is allocated it is initialized with zero.
+	 * Blocks taken from the free list are zero'd in xfreeblk().
+	 */
 
 	s = WORST_ALIGN(s);
 	if ((mb = *mbp) == NULL || mb->nfree < s) {
