@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256xreg.h,v 1.1 2018/05/27 05:31:20 thorpej Exp $ */
+/* $NetBSD: tsl256xreg.h,v 1.2 2021/01/04 21:59:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -53,28 +53,28 @@
  */
 
 /* COMMAND - Specifies register address and other parameters */
-#define	COMMAND_REGMASK		0x0f	/* register address mask */
-#define	COMMAND_BLOCK		0x10	/* transaction uses block read/write */
-#define	COMMAND_WORD		0x20	/* transaction uses word read/write */
-#define	COMMAND_CLEAR		0x40	/* clear pending interrupt */
-#define	COMMAND_CMD		0x80	/* Select command register; MBO */
+#define	COMMAND6x_REGMASK		0x0f	/* register address mask */
+#define	COMMAND6x_BLOCK		0x10	/* transaction uses block read/write */
+#define	COMMAND6x_WORD		0x20	/* transaction uses word read/write */
+#define	COMMAND6x_CLEAR		0x40	/* clear pending interrupt */
+#define	COMMAND6x_CMD		0x80	/* Select command register; MBO */
 
 
 /* CONTROL - Control of basic functions */
 #define	TSL256x_REG_CONTROL	0x0
-#define	CONTROL_POWER_OFF	0x00
-#define	CONTROL_POWER_ON	0x03
+#define	CONTROL6x_POWER_OFF	0x00
+#define	CONTROL6x_POWER_ON	0x03
 
 
 /* TIMING - Integration time / gain control */
 #define	TSL256x_REG_TIMING	0x1
-#define	TIMING_INTEG_13_7ms	0x00	/* 13.7ms integration time */
-#define	TIMING_INTEG_101ms	0x01	/* 101ms integration time */
-#define	TIMING_INTEG_402ms	0x02	/* 402ms integration time */
-#define	TIMING_INTEG_MANUAL	0x03	/* use manual timing */
-#define	TIMING_MANUAL		0x08	/* manual timing; 1 starts, 0 stops */
-#define	TIMING_GAIN_1X		0x00
-#define	TIMING_GAIN_16X		0x10
+#define	TIMING6x_INTEG_13_7ms	0x00	/* 13.7ms integration time */
+#define	TIMING6x_INTEG_101ms	0x01	/* 101ms integration time */
+#define	TIMING6x_INTEG_402ms	0x02	/* 402ms integration time */
+#define	TIMING6x_INTEG_MANUAL	0x03	/* use manual timing */
+#define	TIMING6x_MANUAL		0x08	/* manual timing; 1 starts, 0 stops */
+#define	TIMING6x_GAIN_1X	0x00
+#define	TIMING6x_GAIN_16X	0x10
 
 
 /* THRESHLOWLOW - Low byte of low interrupt threshold */
@@ -95,10 +95,10 @@
 
 /* INTERRUPT - Interrupt control */
 #define	TSL256x_REG_INTERRUPT	0x6
-#define	INTERRUPT_LEVEL		0x01	/* Level-triggered interrupt */
-#define	INTERRUPT_SMB_ALERT	0x02	/* SMB Alert compliant interrupt */
-#define	INTERRUPT_TEST		0x03	/* interrupt test */
-#define	INTERRUPT_PERSIST(x)	((x) << 4)
+#define	INTERRUPT6x_LEVEL	0x01	/* Level-triggered interrupt */
+#define	INTERRUPT6x_SMB_ALERT	0x02	/* SMB Alert compliant interrupt */
+#define	INTERRUPT6x_TEST	0x03	/* interrupt test */
+#define	INTERRUPT6x_PERSIST(x)	((x) << 4)
 		/*
 		 * Interrupt persist settings:
 		 * 0 - Every ADC cycle generates an interrupt
@@ -118,10 +118,10 @@
 
 /* ID - Part number / Rev ID */
 #define	TSL256x_REG_ID		0xa
-#define	ID_GET_PARTNO(x)	(((x) & 0xf0) >> 4)
-#define		ID_PARTNO_TSL2560	0x0
-#define		ID_PARTNO_TSL2561	0x1
-#define	ID_GET_REVNO(x)		((x) & 0x0f)
+#define	ID6x_GET_PARTNO(x)	(((x) & 0xf0) >> 4)
+#define		ID6x_PARTNO_TSL2560	0x0
+#define		ID6x_PARTNO_TSL2561	0x1
+#define	ID6x_GET_REVNO(x)	((x) & 0x0f)
 
 
 /* 0xb - Reserved */
