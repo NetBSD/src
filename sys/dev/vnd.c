@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.277 2020/04/23 09:40:08 jdolecek Exp $	*/
+/*	$NetBSD: vnd.c,v 1.278 2021/01/04 16:17:26 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.277 2020/04/23 09:40:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.278 2021/01/04 16:17:26 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1456,8 +1456,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 * Compute missing cylinder count from size
 			 */
 			if (vnd->sc_geom.vng_ncylinders == 0)
-				vnd->sc_geom.vng_ncylinders = vnd->sc_size /
-					(vnd->sc_geom.vng_ntracks *
+				vnd->sc_geom.vng_ncylinders = vnd->sc_size / (
+					(vnd->sc_geom.vng_secsize / DEV_BSIZE) *
+					vnd->sc_geom.vng_ntracks *
 					vnd->sc_geom.vng_nsectors);
 
 			/*
