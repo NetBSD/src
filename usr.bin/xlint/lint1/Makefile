@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.55 2021/01/03 18:48:37 rillig Exp $
+#	$NetBSD: Makefile,v 1.56 2021/01/05 23:50:29 rillig Exp $
 
 .include <bsd.own.mk>
 
 PROG=		lint1
 SRCS=		cgram.y decl.c emit.c emit1.c err.c func.c init.c inittyp.c \
-		main1.c mem.c mem1.c print.c scan.l tree.c tyname.c
+		main1.c mem.c mem1.c ops.c print.c scan.l tree.c tyname.c
 
 MAN=		lint.7
 YHEADER=
@@ -38,11 +38,9 @@ LDADD+=		-ll
 DPADD+=		${LIBL}
 .endif
 
+ops.o: ops.def
+
 .include "Makefile.err-msgs-h"
-.include "Makefile.ops-h"
-.include "Makefile.ops-c"
+${SRCS:Nerr.c}: err-msgs.h
 
 .include <bsd.prog.mk>
-
-${SRCS}: ops.h
-${SRCS:Nerr.c}: err-msgs.h
