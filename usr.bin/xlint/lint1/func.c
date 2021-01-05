@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.50 2021/01/04 22:26:50 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.51 2021/01/05 00:22:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.50 2021/01/04 22:26:50 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.51 2021/01/05 00:22:04 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -496,7 +496,7 @@ case_label(tnode_t *tn)
 {
 	cstk_t	*ci;
 
-	/* find the stack entry for the innermost switch statement */
+	/* find the innermost switch statement */
 	for (ci = cstmt; ci != NULL && !ci->c_switch; ci = ci->c_surrounding)
 		continue;
 
@@ -512,7 +512,7 @@ default_label(void)
 {
 	cstk_t	*ci;
 
-	/* find the stack entry for the innermost switch statement */
+	/* find the innermost switch statement */
 	for (ci = cstmt; ci != NULL && !ci->c_switch; ci = ci->c_surrounding)
 		continue;
 
