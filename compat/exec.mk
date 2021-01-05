@@ -1,4 +1,4 @@
-#	$NetBSD: exec.mk,v 1.4 2018/09/20 02:51:21 macallan Exp $
+#	$NetBSD: exec.mk,v 1.5 2021/01/05 11:08:00 simonb Exp $
 
 # this makefile fragment can be included to modify the default
 # ABI a program is compiled with.  this is designed to be used
@@ -7,6 +7,7 @@
 
 # currently this file is used by these Makefiles:
 #
+#   external/bsd/ipf/Makefile.inc 
 #   sbin/savecore/Makefile
 #   usr.bin/fstat/Makefile
 #   usr.bin/netstat/Makefile
@@ -22,7 +23,9 @@
 # can be considered "not a bug".  all the *stat tools should
 # be converted to use sysctl(3) on the running kernel, and
 # anyone who needs kvm-access on crash dumps can build their
-# own 64 bit version as necessary.
+# own 64 bit version as necessary.  ipfilter doesn't use
+# 64-bit alignment/size safe structures.
+# 
 
 # mips64 defaults to 32 bit userland, but with a 64 bit kernel
 # most kvm-using tools are happier with 64 bit.
