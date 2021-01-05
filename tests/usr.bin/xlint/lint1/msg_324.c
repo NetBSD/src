@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_324.c,v 1.2 2021/01/05 22:38:51 rillig Exp $	*/
+/*	$NetBSD: msg_324.c,v 1.3 2021/01/05 23:20:53 rillig Exp $	*/
 # 3 "msg_324.c"
 
 // Test for message: suggest cast from '%s' to '%s' on op %s to avoid overflow [324]
@@ -37,4 +37,16 @@ example(char c, int i, unsigned u)
 	l = i >> c;
 	ul = u / c;
 	ul = u % c;
+
+	/*
+	 * Assigning the result of an increment or decrement operator to a
+	 * differently-sized type is no unusual that there is no need to warn
+	 * about it.  It's also more unlikely that there is an actual loss
+	 * since this only happens for a single value of the old type, unlike
+	 * "ul = u * u", which has many more possibilities for overflowing.
+	 */
+	ul = u++;
+	ul = ++u;
+	ul = u--;
+	ul = --u;
 }
