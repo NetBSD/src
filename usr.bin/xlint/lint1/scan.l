@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.112 2021/01/04 22:26:50 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.113 2021/01/05 17:13:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.112 2021/01/04 22:26:50 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.113 2021/01/05 17:13:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -175,6 +175,9 @@ incline(void)
 {
 	curr_pos.p_line++;
 	curr_pos.p_uniq = 0;
+#ifdef DEBUG
+	printf("parsing %s:%d\n", curr_pos.p_file, curr_pos.p_line);
+#endif
 	if (curr_pos.p_file == csrc_pos.p_file) {
 		csrc_pos.p_line++;
 		csrc_pos.p_uniq = 0;
