@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.9 2021/01/04 23:58:19 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.10 2021/01/05 23:50:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -60,4 +60,13 @@ typedef	struct {
 
 extern mod_t   modtab[];
 
-#include "ops.h"
+#define begin_ops() typedef enum {
+#define op(name, repr, \
+		bi, lo, in, sc, ar, fo, va, ts, ba, se, \
+		lu, ru, pc, cm, ve, de, ew, ic, active) \
+	name,
+#define end_ops() } op_t;
+#include "ops.def"
+
+const char *getopname(op_t);
+void initmtab(void);
