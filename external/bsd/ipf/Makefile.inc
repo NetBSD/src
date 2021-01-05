@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2020/09/06 07:20:26 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2021/01/05 11:07:59 simonb Exp $
 
 WARNS?=	1	# XXX -Wcast-qual -Wshadow
 CWARNFLAGS.clang+=	-Wno-format -Wno-tautological-compare \
@@ -39,3 +39,5 @@ COPTS+=	${GCC_NO_STRINGOP_TRUNCATION}
 	${UDIST}/lib	\
 	${UDIST}/tools	\
 	${UDIST}/man
+
+.include "../../compat/exec.mk"
