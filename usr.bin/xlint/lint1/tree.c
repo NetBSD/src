@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.133 2021/01/04 23:58:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.134 2021/01/05 00:17:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.133 2021/01/04 23:58:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.134 2021/01/05 00:17:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3977,6 +3977,46 @@ cat_strings(strg_t *strg1, strg_t *strg2)
 	return strg1;
 }
 
+static bool
+is_confusing_precedence(op_t op, op_t lop, bool lparen, op_t rop, bool rparen)
+{
+
+	if (op == SHL || op == SHR) {
+		if (!lparen && (lop == PLUS || lop == MINUS)) {
+			return true;
+		} else if (!rparen && (rop == PLUS || rop == MINUS)) {
+			return true;
+		}
+		return false;
+	}
+
+	if (op == LOGOR) {
+		if (!lparen && lop == LOGAND) {
+			return true;
+		} else if (!rparen && rop == LOGAND) {
+			return true;
+		}
+		return false;
+	}
+
+	lint_assert(op == AND || op == XOR || op == OR);
+	if (!lparen && lop != op) {
+		if (lop == PLUS || lop == MINUS) {
+			return true;
+		} else if (lop == AND || lop == XOR) {
+			return true;
+		}
+	}
+	if (!rparen && rop != op) {
+		if (rop == PLUS || rop == MINUS) {
+			return true;
+		} else if (rop == AND || rop == XOR) {
+			return true;
+		}
+	}
+	return false;
+}
+
 /*
  * Print a warning if the given node has operands which should be
  * parenthesized.
@@ -3988,10 +4028,9 @@ static void
 check_precedence_confusion(tnode_t *tn)
 {
 	tnode_t	*ln, *rn;
-	op_t	lop, rop = NOOP;
-	int	lparn, rparn = 0;
+	op_t	lop, rop;
+	bool	lparn, rparn;
 	mod_t	*mp;
-	int	dowarn;
 
 	if (!hflag)
 		return;
@@ -4001,117 +4040,20 @@ check_precedence_confusion(tnode_t *tn)
 
 	dprint_node(tn);
 
-	lparn = 0;
+	lparn = false;
 	for (ln = tn->tn_left; ln->tn_op == CVT; ln = ln->tn_left)
 		lparn |= ln->tn_parenthesized;
 	lparn |= ln->tn_parenthesized;
 	lop = ln->tn_op;
 
-	rparn = 0;
+	rparn = false;
 	for (rn = tn->tn_right; rn->tn_op == CVT; rn = rn->tn_left)
 		rparn |= rn->tn_parenthesized;
 	rparn |= rn->tn_parenthesized;
 	rop = rn->tn_op;
 
-	dowarn = 0;
-
-	switch (tn->tn_op) {
-	case SHL:
-	case SHR:
-		if (!lparn && (lop == PLUS || lop == MINUS)) {
-			dowarn = 1;
-		} else if (!rparn && (rop == PLUS || rop == MINUS)) {
-			dowarn = 1;
-		}
-		break;
-	case LOGOR:
-		if (!lparn && lop == LOGAND) {
-			dowarn = 1;
-		} else if (!rparn && rop == LOGAND) {
-			dowarn = 1;
-		}
-		break;
-	case AND:
-	case XOR:
-	case OR:
-		if (!lparn && lop != tn->tn_op) {
-			if (lop == PLUS || lop == MINUS) {
-				dowarn = 1;
-			} else if (lop == AND || lop == XOR) {
-				dowarn = 1;
-			}
-		}
-		if (!dowarn && !rparn && rop != tn->tn_op) {
-			if (rop == PLUS || rop == MINUS) {
-				dowarn = 1;
-			} else if (rop == AND || rop == XOR) {
-				dowarn = 1;
-			}
-		}
-		break;
-		/* LINTED206: (enumeration values not handled in switch) */
-	case DECAFT:
-	case XORASS:
-	case SHLASS:
-	case NOOP:
-	case ARROW:
-	case ORASS:
-	case POINT:
-	case NAME:
-	case NOT:
-	case COMPL:
-	case CON:
-	case INC:
-	case STRING:
-	case DEC:
-	case INCBEF:
-	case DECBEF:
-	case INCAFT:
-	case FSEL:
-	case CALL:
-	case COMMA:
-	case CVT:
-	case ICALL:
-	case LOAD:
-	case PUSH:
-	case RETURN:
-	case INIT:
-	case CASE:
-	case FARG:
-	case SUBASS:
-	case ADDASS:
-	case MODASS:
-	case DIVASS:
-	case MULASS:
-	case ASSIGN:
-	case COLON:
-	case QUEST:
-	case LOGAND:
-	case NE:
-	case EQ:
-	case GE:
-	case GT:
-	case LE:
-	case LT:
-	case MINUS:
-	case PLUS:
-	case MOD:
-	case DIV:
-	case MULT:
-	case AMPER:
-	case STAR:
-	case UMINUS:
-	case SHRASS:
-	case UPLUS:
-	case ANDASS:
-	case REAL:
-	case IMAG:
-		break;
-	}
-
-	if (dowarn) {
+	if (is_confusing_precedence(tn->tn_op, lop, lparn, rop, rparn)) {
 		/* precedence confusion possible: parenthesize! */
 		warning(169);
 	}
-
 }
