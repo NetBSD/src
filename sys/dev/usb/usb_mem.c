@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.79 2021/01/05 16:15:09 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.80 2021/01/05 18:00:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.79 2021/01/05 16:15:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.80 2021/01/05 18:00:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,9 +74,9 @@ struct usb_frag_dma {
 	LIST_ENTRY(usb_frag_dma) ufd_next;
 };
 
-Static usbd_status	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
-			    u_int, usb_dma_block_t **);
-Static void		usb_block_freemem(usb_dma_block_t *);
+Static int	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
+		    u_int, usb_dma_block_t **);
+Static void	usb_block_freemem(usb_dma_block_t *);
 
 LIST_HEAD(usb_dma_block_qh, usb_dma_block);
 Static struct usb_dma_block_qh usb_blk_freelist =
@@ -104,7 +104,7 @@ usb_mem_init(void)
 	return 0;
 }
 
-Static usbd_status
+Static int
 usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
     u_int flags, usb_dma_block_t **dmap)
 {
@@ -135,7 +135,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 			usb_blk_nfree--;
 			*dmap = b;
 			DPRINTFN(6, "free list size=%ju", b->size, 0, 0, 0);
-			return USBD_NORMAL_COMPLETION;
+			return 0;
 		}
 	}
 
@@ -191,7 +191,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	mutex_enter(&usb_blk_lock);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 
  destroy:
 	bus_dmamap_destroy(tag, b->map);
@@ -255,7 +255,7 @@ usb_block_freemem(usb_dma_block_t *b)
 	usb_blk_nfree++;
 }
 
-usbd_status
+int
 usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, u_int flags,
     usb_dma_t *p)
 {
@@ -335,7 +335,7 @@ usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, u_int flags,
 	mutex_exit(&usb_blk_lock);
 	DPRINTFN(5, "use frag=%#jx size=%jd", (uintptr_t)f, size, 0, 0);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.314 2020/12/22 01:07:23 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.315 2021/01/05 18:00:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.314 2020/12/22 01:07:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.315 2021/01/05 18:00:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -399,7 +399,6 @@ ohci_soft_ed_t *
 ohci_alloc_sed(ohci_softc_t *sc)
 {
 	ohci_soft_ed_t *sed;
-	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
 
@@ -410,8 +409,8 @@ ohci_alloc_sed(ohci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
-		    OHCI_ED_ALIGN, USBMALLOC_COHERENT, &dma);
+		int err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
+		    OHCI_ED_ALIGN, 0 /*!USBMALLOC_COHERENT*/, &dma);
 		if (err)
 			return NULL;
 
@@ -458,7 +457,6 @@ ohci_soft_td_t *
 ohci_alloc_std(ohci_softc_t *sc)
 {
 	ohci_soft_td_t *std;
-	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
 
@@ -469,8 +467,8 @@ ohci_alloc_std(ohci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
-		    OHCI_TD_ALIGN, USBMALLOC_COHERENT, &dma);
+		int err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
+		   OHCI_TD_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
 
@@ -711,7 +709,6 @@ ohci_soft_itd_t *
 ohci_alloc_sitd(ohci_softc_t *sc)
 {
 	ohci_soft_itd_t *sitd;
-	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
 
@@ -722,7 +719,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		err = usb_allocmem(&sc->sc_bus, OHCI_SITD_SIZE * OHCI_SITD_CHUNK,
+		int err = usb_allocmem(&sc->sc_bus, OHCI_SITD_SIZE * OHCI_SITD_CHUNK,
 		    OHCI_ITD_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
@@ -829,8 +826,8 @@ ohci_init(ohci_softc_t *sc)
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
-	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE,
-	    OHCI_HCCA_ALIGN, USBMALLOC_COHERENT, &sc->sc_hccadma);
+	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE,	OHCI_HCCA_ALIGN,
+	    USBMALLOC_COHERENT, &sc->sc_hccadma);
 	if (err) {
 		sc->sc_hcca = NULL;
 		return err;
@@ -2143,10 +2140,10 @@ ohci_open(struct usbd_pipe *pipe)
 		switch (xfertype) {
 		case UE_CONTROL:
 			pipe->up_methods = &ohci_device_ctrl_methods;
-			err = usb_allocmem(&sc->sc_bus,
+			int error = usb_allocmem(&sc->sc_bus,
 			    sizeof(usb_device_request_t), 0,
 			    USBMALLOC_COHERENT, &opipe->ctrl.reqdma);
-			if (err)
+			if (error)
 				goto bad;
 			mutex_enter(&sc->sc_lock);
 			ohci_add_ed(sc, sed, sc->sc_ctrl_head);
