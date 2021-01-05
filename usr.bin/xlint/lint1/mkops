@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkops,v 1.12 2021/01/05 21:32:47 rillig Exp $
+#	$NetBSD: mkops,v 1.13 2021/01/05 21:40:42 rillig Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -95,11 +95,11 @@ BEGIN {
 			}
 		}
 		FIRST = LAST;
-		LAST = $2;
+		LAST = $1;
 		LASTCOMMENT = $5;
 	}
 	if (v == "c")
-		printf("\t{ /* %s */\t{ %s, \"%s\" }, %d },\n", $2, $3, $1, $4);
+		printf("\t{ /* %s */\t{ %s, \"%s\" }, %d },\n", $1, $3, $2, $4);
 }
 
 END {
