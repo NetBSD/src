@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.305 2020/12/22 01:07:23 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.306 2021/01/05 18:00:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.305 2020/12/22 01:07:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.306 2021/01/05 18:00:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -433,7 +433,6 @@ uhci_globalreset(uhci_softc_t *sc)
 int
 uhci_init(uhci_softc_t *sc)
 {
-	usbd_status err;
 	int i, j;
 	uhci_soft_qh_t *clsqh, *chsqh, *bsqh, *sqh, *lsqh;
 	uhci_soft_td_t *std;
@@ -454,7 +453,7 @@ uhci_init(uhci_softc_t *sc)
 	uhci_reset(sc);
 
 	/* Allocate and initialize real frame array. */
-	err = usb_allocmem(&sc->sc_bus,
+	int err = usb_allocmem(&sc->sc_bus,
 	    UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
 	    UHCI_FRAMELIST_ALIGN, USBMALLOC_COHERENT, &sc->sc_dma);
 	if (err)
@@ -1835,7 +1834,6 @@ uhci_soft_td_t *
 uhci_alloc_std(uhci_softc_t *sc)
 {
 	uhci_soft_td_t *std;
-	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
 
@@ -1846,7 +1844,7 @@ uhci_alloc_std(uhci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		err = usb_allocmem(&sc->sc_bus, UHCI_STD_SIZE * UHCI_STD_CHUNK,
+		int err = usb_allocmem(&sc->sc_bus, UHCI_STD_SIZE * UHCI_STD_CHUNK,
 		    UHCI_TD_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
@@ -1902,7 +1900,6 @@ uhci_soft_qh_t *
 uhci_alloc_sqh(uhci_softc_t *sc)
 {
 	uhci_soft_qh_t *sqh;
-	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
 
@@ -1913,7 +1910,7 @@ uhci_alloc_sqh(uhci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		err = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
+		int err = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
 		    UHCI_QH_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
@@ -3465,7 +3462,6 @@ uhci_open(struct usbd_pipe *pipe)
 	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(pipe);
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
-	usbd_status err = USBD_NOMEM;
 	int ival;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
@@ -3509,7 +3505,7 @@ uhci_open(struct usbd_pipe *pipe)
 				uhci_free_std(sc, upipe->ctrl.setup);
 				goto bad;
 			}
-			err = usb_allocmem(&sc->sc_bus,
+			int err = usb_allocmem(&sc->sc_bus,
 			    sizeof(usb_device_request_t), 0,
 			    USBMALLOC_COHERENT, &upipe->ctrl.reqdma);
 			if (err) {
