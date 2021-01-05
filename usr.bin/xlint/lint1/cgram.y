@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.130 2021/01/03 21:33:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.131 2021/01/05 00:02:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.130 2021/01/03 21:33:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.131 2021/01/05 00:02:52 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -259,7 +259,7 @@ anonymize(sym_t *s)
 %left	T_SHFTOP
 %left	T_ADDOP
 %left	T_MULT T_DIVOP
-%right	T_UNOP T_INCDEC T_SIZEOF TBUILTIN_SIZEOF T_ALIGNOF T_REAL T_IMAG
+%right	T_UNOP T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
 %left	T_LPAREN T_LBRACK T_STROP
 
 %token	<y_sb>		T_NAME
