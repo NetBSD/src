@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.32 2018/09/03 16:29:22 riastradh Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.33 2021/01/06 13:00:51 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.32 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.33 2021/01/06 13:00:51 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -116,7 +116,9 @@ static int amidisplaycc_setemulcmap(struct amidisplaycc_screen *,
 static int amidisplaycc_cmapioctl(view_t *, u_long, struct wsdisplay_cmap *);
 static int amidisplaycc_setcmap(view_t *, struct wsdisplay_cmap *);
 static int amidisplaycc_getcmap(view_t *, struct wsdisplay_cmap *);
-static int amidisplaycc_gfxscreen(struct amidisplaycc_softc *, int);
+static int amidisplaycc_setgfxview(struct amidisplaycc_softc *, int);
+static void amidisplaycc_initgfxview(struct amidisplaycc_softc *);
+static int amidisplaycc_getfbinfo(struct amidisplaycc_softc *, struct wsdisplayio_fbinfo *);
 
 static int amidisplaycc_setfont(struct amidisplaycc_screen *, const char *);
 static const struct wsdisplay_font * amidisplaycc_getbuiltinfont(void);
@@ -364,8 +366,6 @@ amidisplaycc_cninit(struct consdev  * cd)
 	long    attr;
 	int     x;
 	int     y;
-
-	/* Yeah, we got the console! */
 
 	/*
 	 * This will do the basic stuff we also need.
@@ -1042,9 +1042,9 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 
 	case WSDISPLAYIO_SMODE:
 		if (INTDATA == WSDISPLAYIO_MODE_EMUL)
-			return amidisplaycc_gfxscreen(adp, 0);
+			return amidisplaycc_setgfxview(adp, 0);
 		if (INTDATA == WSDISPLAYIO_MODE_MAPPED)
-			return amidisplaycc_gfxscreen(adp, 1);
+			return amidisplaycc_setgfxview(adp, 1);
 		return (EINVAL);
 
 	case WSDISPLAYIO_GINFO:
@@ -1059,6 +1059,9 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 		return (amidisplaycc_cmapioctl(adp->gfxview,
 					       cmd,
 					       (struct wsdisplay_cmap*)data));
+	case WSDISPLAYIO_GET_FBINFO:
+		amidisplaycc_initgfxview(adp);
+		return amidisplaycc_getfbinfo(adp, data);
 	}
 
 	return (EPASSTHROUGH);
@@ -1068,6 +1071,52 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 #undef FBINFO
 }
 
+static int
+amidisplaycc_getfbinfo(struct amidisplaycc_softc *adp, struct wsdisplayio_fbinfo *fbinfo)
+{
+	bmap_t *bm;
+
+	KASSERT(adp);
+
+	if (adp->gfxview == NULL) {
+		return ENOMEM;
+	}
+
+	bm = adp->gfxview->bitmap;
+	KASSERT(bm);
+
+	/* Depth 1 since current X wsfb driver doesn't support multiple bitplanes */
+	memset(fbinfo, 0, sizeof(*fbinfo));
+	fbinfo->fbi_fbsize = bm->bytes_per_row * bm->rows;
+	fbinfo->fbi_fboffset = 0;
+	fbinfo->fbi_width = bm->bytes_per_row * 8;
+	fbinfo->fbi_height = bm->rows;
+	fbinfo->fbi_stride = bm->bytes_per_row;
+	fbinfo->fbi_bitsperpixel = 1;
+	fbinfo->fbi_pixeltype = WSFB_CI;
+	fbinfo->fbi_flags = 0;
+	fbinfo->fbi_subtype.fbi_cmapinfo.cmap_entries = 1 << adp->gfxdepth;
+
+	return (0);
+}
+
+/*
+ * Initialize (but not display) the view used for graphics.
+ */
+static void
+amidisplaycc_initgfxview(struct amidisplaycc_softc *adp)
+{
+	dimen_t dimension;
+
+	if (adp->gfxview == NULL) {
+		/* First time here, create the screen */
+		dimension.width = adp->gfxwidth;
+		dimension.height = adp->gfxheight;
+		adp->gfxview = grf_alloc_view(NULL,
+			&dimension,
+			adp->gfxdepth);
+	}
+}
 
 /*
  * Switch to either emulation (text) or mapped (graphics) mode
@@ -1076,12 +1125,9 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
  *
  * Once the extra screen is created, it never goes away.
  */
-
 static int
-amidisplaycc_gfxscreen(struct amidisplaycc_softc *adp, int on)
+amidisplaycc_setgfxview(struct amidisplaycc_softc *adp, int on)
 {
-	dimen_t  dimension;
-
 	dprintf("amidisplaycc: switching to %s mode.\n",
 		on ? "mapped" : "emul");
 
@@ -1105,22 +1151,7 @@ amidisplaycc_gfxscreen(struct amidisplaycc_softc *adp, int on)
 	}
 
 	/* switch to mapped mode then */
-
-	if (adp->gfxview == NULL) {
-		/* First time here, create the screen */
-
-		dimension.width = adp->gfxwidth;
-		dimension.height = adp->gfxheight;
-
-		dprintf("amidisplaycc: preparing mapped screen %dx%dx%d\n",
-			dimension.width,
-			dimension.height,
-			adp->gfxdepth);
-
-		adp->gfxview = grf_alloc_view(NULL,
-					      &dimension,
-					      adp->gfxdepth);
-	}
+	amidisplaycc_initgfxview(adp);
 
 	if (adp->gfxview) {
 		adp->gfxon = 1;
