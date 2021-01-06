@@ -1,4 +1,4 @@
-/* $NetBSD: pciconf_indirect.c,v 1.6 2015/10/02 05:22:52 msaitoh Exp $ */
+/* $NetBSD: pciconf_indirect.c,v 1.7 2021/01/06 08:17:46 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.6 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.7 2021/01/06 08:17:46 rin Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -51,10 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.6 2015/10/02 05:22:52 msaitoh
 #include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
-
-#if NISA > 0
-#include <dev/isa/isavar.h>
-#endif
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
