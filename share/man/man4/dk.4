@@ -1,4 +1,4 @@
-.\"	$NetBSD: dk.4,v 1.10 2021/01/06 14:07:43 wiz Exp $
+.\"	$NetBSD: dk.4,v 1.11 2021/01/06 17:13:23 kre Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" Jonathan A. Kollasch used vnd(4) as the template for this man page.
 .\"
-.Dd October 26, 2020
+.Dd January 6, 2021
 .Dt DK 4
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ Wedges may be configured manually with
 .Xr dkctl 8
 or automatically by the kernel upon the attachment of the physical disk.
 .Pp
-Wedges needs to have a unique name.
+Wedges need to have a unique name.
 If a duplicate name is detected during
 auto-discovery, that partition is ignored.
 .Sh KERNEL OPTIONS
@@ -77,13 +77,19 @@ that is not of type
 .Dv FS_UNUSED ,
 a wedge is created and named after the
 .Va d_packname
-field followed by "/" and the partition letter a..p.
+field followed by
+.Sq \&/
+and the partition letter
+.So a Sc Ns \&.. Ns So p Sc Ns \&.
 .Pp
 When the
 .Va d_packname
-is empty or has the value "fictitious", the regular partition names
+is empty or has the value
+.Do fictitious Dc Ns \&,
+the regular partition names
 are used as wedge names, i.e. the device name, unit number and
-partition letter, for example "wd0a".
+partition letter, for example
+.Do wd0a Dc Ns \&.
 .It Dv DKWEDGE_METHOD_GPT
 Extensible Firmware Interface Globally Unique Identifier Partition Table
 (GPT) detection method.
@@ -98,8 +104,12 @@ with support for Extended MBRs.
 .Pp
 For every partition in the MBR a wedge is created and named like a
 regular partition name, i.e. the device name, unit number and a
-partition letter, for example "wd0e".
-Primary partitions start with "e", extended partitions start with "i".
+partition letter, for example
+.Do wd0e Dc Ns \&.
+Primary partitions start with
+.So e Sc Ns \&,
+extended partitions start with
+.So i Sc Ns \&.
 .It Dv DKWEDGE_METHOD_RDB
 Amiga Rigid Disk Block (RDB) partitioning detection method.
 .It Dv DKWEDGE_METHOD_APPLE
