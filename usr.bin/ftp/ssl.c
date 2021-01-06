@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.8 2019/04/07 00:44:54 christos Exp $	*/
+/*	$NetBSD: ssl.c,v 1.9 2021/01/06 04:43:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.8 2019/04/07 00:44:54 christos Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.9 2021/01/06 04:43:14 lukem Exp $");
 #endif
 
 #include <time.h>
@@ -356,6 +356,10 @@ fetch_wait(struct fetch_connect *conn, ssize_t rlen, struct timeval *timeout)
 		if (quit_time > 0) {
 			gettimeofday(&now, NULL);
 			if (!timercmp(timeout, &now, >)) {
+				fprintf(ttyout, "\r\n%s: transfer aborted"
+				    " because stalled for %lu sec.\r\n",
+				    getprogname(), (unsigned long)quit_time);
+				errno = ETIMEDOUT;
 				conn->iserr = ETIMEDOUT;
 				return -1;
 			}

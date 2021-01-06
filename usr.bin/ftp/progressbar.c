@@ -1,7 +1,7 @@
-/*	$NetBSD: progressbar.c,v 1.23 2019/06/22 23:40:33 christos Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.24 2021/01/06 04:43:14 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.23 2019/06/22 23:40:33 christos Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.24 2021/01/06 04:43:14 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -193,7 +193,7 @@ progressmeter(int flag)
 	if (quit_time > 0 || progress) {
 #endif /* !STANDALONE_PROGRESS */
 		if (flag == -1) {
-			(void)xsignal_restart(SIGALRM, updateprogressmeter, 1);
+			(void)xsignal(SIGALRM, updateprogressmeter);
 			alarmtimer(1);		/* set alarm timer for 1 Hz */
 		} else if (flag == 1) {
 			alarmtimer(0);
@@ -404,73 +404,21 @@ alarmtimer(int wait)
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
-
 /*
- * Install a POSIX signal handler, allowing the invoker to set whether
- * the signal should be restartable or not
+ * Install a non-restartable POSIX signal handler.
  */
 sigfunc
-xsignal_restart(int sig, sigfunc func, int restartable)
+xsignal(int sig, sigfunc func)
 {
 	struct sigaction act, oact;
 	act.sa_handler = func;
 
 	sigemptyset(&act.sa_mask);
-#if defined(SA_RESTART)			/* 4.4BSD, Posix(?), SVR4 */
-	act.sa_flags = restartable ? SA_RESTART : 0;
-#elif defined(SA_INTERRUPT)		/* SunOS 4.x */
-	act.sa_flags = restartable ? 0 : SA_INTERRUPT;
-#else
-#error "system must have SA_RESTART or SA_INTERRUPT"
+	act.sa_flags = 0;
+#if defined(SA_INTERRUPT)		/* SunOS 4.x */
+	act.sa_flags = SA_INTERRUPT;
 #endif
 	if (sigaction(sig, &act, &oact) < 0)
 		return (SIG_ERR);
 	return (oact.sa_handler);
-}
-
-/*
- * Install a signal handler with the `restartable' flag set dependent upon
- * which signal is being set. (This is a wrapper to xsignal_restart())
- */
-sigfunc
-xsignal(int sig, sigfunc func)
-{
-	int restartable;
-
-	/*
-	 * Some signals print output or change the state of the process.
-	 * There should be restartable, so that reads and writes are
-	 * not affected.  Some signals should cause program flow to change;
-	 * these signals should not be restartable, so that the system call
-	 * will return with EINTR, and the program will go do something
-	 * different.  If the signal handler calls longjmp() or siglongjmp(),
-	 * it doesn't matter if it's restartable.
-	 */
-
-	switch(sig) {
-#ifdef SIGINFO
-	case SIGINFO:
-#endif
-	case SIGQUIT:
-	case SIGUSR1:
-	case SIGUSR2:
-	case SIGWINCH:
-		restartable = 1;
-		break;
-
-	case SIGALRM:
-	case SIGINT:
-	case SIGPIPE:
-		restartable = 0;
-		break;
-
-	default:
-		/*
-		 * This is unpleasant, but I don't know what would be better.
-		 * Right now, this "can't happen"
-		 */
-		errx(1, "xsignal_restart: called with signal %d", sig);
-	}
-
-	return(xsignal_restart(sig, func, restartable));
 }
