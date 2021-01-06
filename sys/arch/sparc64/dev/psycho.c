@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.129 2021/01/04 14:48:51 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.130 2021/01/06 20:04:30 palle Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.129 2021/01/04 14:48:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.130 2021/01/06 20:04:30 palle Exp $");
 
 #include "opt_ddb.h"
 
@@ -769,7 +769,7 @@ psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
 static struct extent *
 psycho_alloc_extent(struct psycho_pbm *pp, int node, int ss, const char *name)
 {
-	struct psycho_registers *pa = NULL;
+	struct psycho_registers *pa = kmem_zalloc(sizeof *pa, KM_SLEEP);
 	struct psycho_ranges *pr;
 	struct extent *ex;
 	bus_addr_t baddr, addr;
