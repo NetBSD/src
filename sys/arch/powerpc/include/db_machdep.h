@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.28 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.29 2021/01/06 08:14:34 rin Exp $	*/
 
 /* 
  * Mach Operating System
@@ -71,8 +71,8 @@ extern	db_regs_t	ddb_regs;		/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst, addr)	(BKPT_INST)
 
-#ifndef PPC_IBM4XX
-#define SR_SINGLESTEP	0x400
+#if !defined(PPC_BOOKE) && !defined(PPC_IBM4XX)
+#define	SR_SINGLESTEP	0x400		/* PSL_SE, available only for oea */
 #define	db_clear_single_step(regs)	((regs)->msr &= ~SR_SINGLESTEP)
 #define	db_set_single_step(regs)	((regs)->msr |=  SR_SINGLESTEP)
 #else
