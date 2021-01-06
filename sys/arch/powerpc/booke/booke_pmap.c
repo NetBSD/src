@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.30 2020/12/20 16:38:25 skrll Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.31 2021/01/06 07:56:19 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.30 2020/12/20 16:38:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.31 2021/01/06 07:56:19 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -62,7 +62,7 @@ void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
 	struct pmap * const pmap = p->p_vmspace->vm_map.pmap;
-	vsize_t off = va & PAGE_SIZE;
+	vsize_t off = va & PAGE_MASK;
 
 	kpreempt_disable();
 	for (const vaddr_t eva = va + len; va < eva; off = 0) {
@@ -78,8 +78,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 			continue;
 		}
 		kpreempt_enable();
-		dcache_wb(pte_to_paddr(pt_entry), segeva - va);
-		icache_inv(pte_to_paddr(pt_entry), segeva - va);
+		dcache_wb(pte_to_paddr(pt_entry) + off, segeva - va);
+		icache_inv(pte_to_paddr(pt_entry) + off, segeva - va);
 		kpreempt_disable();
 		va = segeva;
 	}
