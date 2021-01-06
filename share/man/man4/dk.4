@@ -1,4 +1,4 @@
-.\"	$NetBSD: dk.4,v 1.9 2021/01/06 10:19:27 wiz Exp $
+.\"	$NetBSD: dk.4,v 1.10 2021/01/06 14:07:43 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,6 +53,7 @@ to an area of a physical disk.
 Wedges may be configured manually with
 .Xr dkctl 8
 or automatically by the kernel upon the attachment of the physical disk.
+.Pp
 Wedges needs to have a unique name.
 If a duplicate name is detected during
 auto-discovery, that partition is ignored.
@@ -60,11 +61,13 @@ auto-discovery, that partition is ignored.
 .Bl -tag -width DKWEDGE_METHOD_BSDLABEL
 .It Dv DKWEDGE_AUTODISCOVER
 Automatically detect and configure wedges using any available methods.
+.Pp
 Currently only
 .Dv DKWEDGE_METHOD_GPT
 and
 .Dv DKWEDGE_METHOD_APPLE
 are enabled by default.
+.Pp
 For each partition found, a wedge with a corresponding name is created.
 .It Dv DKWEDGE_METHOD_BSDLABEL
 BSD disklabel detection method.
@@ -75,6 +78,7 @@ that is not of type
 a wedge is created and named after the
 .Va d_packname
 field followed by "/" and the partition letter a..p.
+.Pp
 When the
 .Va d_packname
 is empty or has the value "fictitious", the regular partition names
@@ -83,6 +87,7 @@ partition letter, for example "wd0a".
 .It Dv DKWEDGE_METHOD_GPT
 Extensible Firmware Interface Globally Unique Identifier Partition Table
 (GPT) detection method.
+.Pp
 For every GPT partition a wedge is created and named after the
 partition label.
 GPT partitions are UTF-16-encoded, this is converted into UTF-8.
@@ -90,6 +95,7 @@ If a partition has no label, its UUID is used instead.
 .It Dv DKWEDGE_METHOD_MBR
 IBM PC-compatible Master Boot Record (MBR) partitioning detection method,
 with support for Extended MBRs.
+.Pp
 For every partition in the MBR a wedge is created and named like a
 regular partition name, i.e. the device name, unit number and a
 partition letter, for example "wd0e".
