@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 2020/09/10 02:45:28 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 2021/01/06 08:04:57 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.35 2020/09/10 02:45:28 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.36 2021/01/06 08:04:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -43,34 +43,32 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.35 2020/09/10 02:45:28 rin Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/siginfo.h>
-#include <sys/lwp.h>
-#include <sys/proc.h>
 #include <sys/cpu.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/siginfo.h>
+#include <sys/systm.h>
+
+#include <ddb/ddb.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <powerpc/pcb.h>
-#include <powerpc/userret.h>
-#include <powerpc/psl.h>
-#include <powerpc/instr.h>
 #include <powerpc/altivec.h>		/* use same interface for SPE */
-
+#include <powerpc/instr.h>
+#include <powerpc/pcb.h>
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
-#include <powerpc/booke/spr.h>
-#include <powerpc/booke/cpuvar.h>
+#include <powerpc/trap.h>
+#include <powerpc/userret.h>
 
 #include <powerpc/fpu/fpu_extern.h>
 
-#include <powerpc/db_machdep.h>
-#include <ddb/db_interface.h>
-
-#include <powerpc/trap.h>
-#include <powerpc/booke/trap.h>
+#include <powerpc/booke/cpuvar.h>
 #include <powerpc/booke/pte.h>
+#include <powerpc/booke/spr.h>
+#include <powerpc/booke/trap.h>
 
 void trap(enum ppc_booke_exceptions, struct trapframe *);
 
