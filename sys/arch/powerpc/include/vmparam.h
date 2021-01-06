@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 2020/07/06 08:26:10 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25 2021/01/06 08:17:46 rin Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -6,7 +6,6 @@
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
 #include "opt_ppcarch.h"
-#include "opt_uvm.h"
 #endif
 
 /*
