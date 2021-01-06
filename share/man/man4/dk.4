@@ -1,4 +1,4 @@
-.\"	$NetBSD: dk.4,v 1.8 2021/01/05 22:17:40 mlelstv Exp $
+.\"	$NetBSD: dk.4,v 1.9 2021/01/06 10:19:27 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,48 +53,46 @@ to an area of a physical disk.
 Wedges may be configured manually with
 .Xr dkctl 8
 or automatically by the kernel upon the attachment of the physical disk.
-
-Wedges needs to have a unique name. If a duplicate name is detected during
-autodiscovery, that partition is ignored.
+Wedges needs to have a unique name.
+If a duplicate name is detected during
+auto-discovery, that partition is ignored.
 .Sh KERNEL OPTIONS
 .Bl -tag -width DKWEDGE_METHOD_BSDLABEL
 .It Dv DKWEDGE_AUTODISCOVER
 Automatically detect and configure wedges using any available methods.
-Currently only DKWEDGE_METHOD_GPT and DKWEDGE_METHOD_APPLE are enabled
-by default.
-
+Currently only
+.Dv DKWEDGE_METHOD_GPT
+and
+.Dv DKWEDGE_METHOD_APPLE
+are enabled by default.
 For each partition found, a wedge with a corresponding name is created.
 .It Dv DKWEDGE_METHOD_BSDLABEL
 BSD disklabel detection method.
-
 For each configured partition in the
 .Xr disklabel 5
 that is not of type
-.Va FS_UNUSED,
+.Dv FS_UNUSED ,
 a wedge is created and named after the
 .Va d_packname
 field followed by "/" and the partition letter a..p.
-
 When the
 .Va d_packname
-is empty or has the value "fictitious" the regular partition names
+is empty or has the value "fictitious", the regular partition names
 are used as wedge names, i.e. the device name, unit number and
 partition letter, for example "wd0a".
 .It Dv DKWEDGE_METHOD_GPT
 Extensible Firmware Interface Globally Unique Identifier Partition Table
 (GPT) detection method.
-
 For every GPT partition a wedge is created and named after the
 partition label.
 GPT partitions are UTF-16-encoded, this is converted into UTF-8.
-If a partition has no label, it's UUID is used instead.
+If a partition has no label, its UUID is used instead.
 .It Dv DKWEDGE_METHOD_MBR
 IBM PC-compatible Master Boot Record (MBR) partitioning detection method,
 with support for Extended MBRs.
-
 For every partition in the MBR a wedge is created and named like a
 regular partition name, i.e. the device name, unit number and a
-parititon letter, for example "wd0e".
+partition letter, for example "wd0e".
 Primary partitions start with "e", extended partitions start with "i".
 .It Dv DKWEDGE_METHOD_RDB
 Amiga Rigid Disk Block (RDB) partitioning detection method.
