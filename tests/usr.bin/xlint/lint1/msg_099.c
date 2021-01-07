@@ -1,7 +1,11 @@
-/*	$NetBSD: msg_099.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_099.c,v 1.2 2021/01/07 00:38:46 rillig Exp $	*/
 # 3 "msg_099.c"
 
 // Test for message: %s undefined [99]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+void
+example(int defined_variable)
+{
+	int ok = defined_variable;
+	int error = undefined_variable;
+}

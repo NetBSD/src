@@ -1,1 +1,1 @@
-msg_099.c(6): syntax error ':' [249]
+msg_099.c(10): undefined_variable undefined [99]
