@@ -1,4 +1,4 @@
-.\" $NetBSD: bc.1,v 1.4 2021/01/07 20:12:59 uwe Exp $
+.\" $NetBSD: bc.1,v 1.5 2021/01/07 20:22:34 uwe Exp $
 .\"
 .\" bc.1 - the bc manual
 .\"
@@ -726,10 +726,11 @@ That definition is then used until another
 definition function for the same name is encountered.
 The new definition then replaces the older definition.
 A function is defined as follows:
-.Bd -literal
+.Bd -literal -offset indent
 define name ( parameters ) { newline
     auto_list   statement_list }
 .Ed
+.Pp
 A function call is just an expression of the form
 .Do Ar name ( Ar parameters ) Dc .
 .Pp
@@ -829,7 +830,7 @@ This version of
 will allow any number of newlines before and after the opening brace of the
 function.
 For example, the following definitions are legal.
-.Bd -literal
+.Bd -literal -offset indent
 define d (n) { return (2*n); }
 define d (n)
   { return (2*n); }
@@ -851,7 +852,7 @@ is placed between the key word
 .Ic define
 and the function name.
 For example, consider the following session.
-.Bd -literal
+.Bd -literal -offset indent
 define py (y) { print "--->", y, "<---", "\n"; }
 define void px (x) { print "--->", x, "<---", "\n"; }
 py(1)
@@ -860,6 +861,7 @@ py(1)
 px(1)
 --->1<---
 .Ed
+.Pp
 Since
 .Ar py
 is not a void function, the call of
@@ -938,7 +940,7 @@ the following will assign the value of
 .Ar pi
 to the shell variable
 .Ar pi .
-.Bd -literal
+.Bd -literal -offset indent
 pi=$(echo "scale=10; 4*a(1)" | bc -l)
 .Ed
 .Pp
@@ -946,7 +948,7 @@ The following is the definition of the exponential function used in the
 math library.
 This function is written in POSIX
 .Nm .
-.Bd -literal
+.Bd -literal -offset indent
 scale = 20
 
 /* Uses the fact that e^x = (e^(x/2))^2
@@ -994,7 +996,7 @@ The following is code that uses the extended features of
 to implement a simple program for calculating checkbook balances.
 This program is best kept in a file so that it can be used many times
 without having to retype it at every use.
-.Bd -literal
+.Bd -literal -offset indent
 scale=2
 print "\enCheck book program!\en"
 print "  Remember, deposits are negative transactions.\en"
@@ -1014,7 +1016,7 @@ quit
 .Ed
 .Pp
 The following is the definition of the recursive factorial function.
-.Bd -literal
+.Bd -literal -offset indent
 define f (x) {
   if (x <= 1) return (1);
   return (f(x-1) * x);
