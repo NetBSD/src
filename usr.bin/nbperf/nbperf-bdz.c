@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.9 2014/04/30 21:04:58 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.9 2014/04/30 21:04:58 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -66,10 +66,11 @@ __RCSID("$NetBSD: nbperf-bdz.c,v 1.9 2014/04/30 21:04:58 joerg Exp $");
  * the index of the authoritive vertex.
  */
 
-#include "graph3.h"
+#define GRAPH_SIZE 3
+#include "graph2.h"
 
 struct state {
-	struct graph3 graph;
+	struct SIZED(graph) graph;
 	uint32_t *visited;
 	uint32_t *holes64k;
 	uint16_t *holes64;
@@ -80,7 +81,7 @@ struct state {
 static void
 assign_nodes(struct state *state)
 {
-	struct edge3 *e;
+	struct SIZED(edge) *e;
 	size_t i, j;
 	uint32_t t, r, holes;
 
@@ -90,29 +91,29 @@ assign_nodes(struct state *state)
 	for (i = 0; i < state->graph.e; ++i) {
 		j = state->graph.output_order[i];
 		e = &state->graph.edges[j];
-		if (!state->visited[e->left]) {
+		if (!state->visited[e->vertices[0]]) {
 			r = 0;
-			t = e->left;
-		} else if (!state->visited[e->middle]) {
+			t = e->vertices[0];
+		} else if (!state->visited[e->vertices[1]]) {
 			r = 1;
-			t = e->middle;
+			t = e->vertices[1];
 		} else {
-			if (state->visited[e->right])
+			if (state->visited[e->vertices[2]])
 				abort();
 			r = 2;
-			t = e->right;
+			t = e->vertices[2];
 		}
 
 		state->visited[t] = 2 + j;
-		if (state->visited[e->left] == 0)
-			state->visited[e->left] = 1;
-		if (state->visited[e->middle] == 0)
-			state->visited[e->middle] = 1;
-		if (state->visited[e->right] == 0)
-			state->visited[e->right] = 1;
+		if (state->visited[e->vertices[0]] == 0)
+			state->visited[e->vertices[0]] = 1;
+		if (state->visited[e->vertices[1]] == 0)
+			state->visited[e->vertices[1]] = 1;
+		if (state->visited[e->vertices[2]] == 0)
+			state->visited[e->vertices[2]] = 1;
 
-		state->g[t] = (9 + r - state->g[e->left] - state->g[e->middle]
-		    - state->g[e->right]) % 3;
+		state->g[t] = (9 + r - state->g[e->vertices[0]] - state->g[e->vertices[1]]
+		    - state->g[e->vertices[2]]) % 3;
 	}
 
 	holes = 0;
@@ -226,6 +227,16 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
 	    state->graph.v);
 
+	if (state->graph.hash_fudge & 1)
+		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");
+
+	if (state->graph.hash_fudge & 2) {
+		fprintf(nbperf->output,
+		    "\th[2] ^= (h[0] == h[2] || h[1] == h[2]);\n");
+		fprintf(nbperf->output,
+		    "\th[2] ^= 2 * (h[0] == h[2] || h[1] == h[2]);\n");
+	}
+
 	fprintf(nbperf->output,
 	    "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) &1)\n"
 	    "\t      + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
@@ -273,6 +284,8 @@ bpz_compute(struct nbperf *nbperf)
 		++v;
 	if (v < 10)
 		v = 10;
+	if (nbperf->allow_hash_fudging)
+		v |= 3;
 
 	graph3_setup(&state.graph, v, e);
 
@@ -287,9 +300,9 @@ bpz_compute(struct nbperf *nbperf)
 	    state.result_map == NULL)
 		err(1, "malloc failed");
 
-	if (graph3_hash(nbperf, &state.graph))
+	if (SIZED2(_hash)(nbperf, &state.graph))
 		goto failed;
-	if (graph3_output_order(&state.graph))
+	if (SIZED2(_output_order)(&state.graph))
 		goto failed;
 	assign_nodes(&state);
 	print_hash(nbperf, &state);
@@ -297,7 +310,7 @@ bpz_compute(struct nbperf *nbperf)
 	retval = 0;
 
 failed:
-	graph3_free(&state.graph);
+	SIZED2(_free)(&state.graph);
 	free(state.visited);
 	free(state.g);
 	free(state.holes64k);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.5 2013/01/31 16:32:02 joerg Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.6 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.5 2013/01/31 16:32:02 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.6 2021/01/07 16:03:08 joerg Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: nbperf.c,v 1.5 2013/01/31 16:32:02 joerg Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "nbperf.h"
@@ -115,8 +116,9 @@ main(int argc, char **argv)
 	    .map_output = NULL,
 	    .output = NULL,
 	    .static_hash = 0,
-	    .first_round = 1,
+	    .check_duplicates = 0,
 	    .has_duplicates = 0,
+	    .allow_hash_fudging = 0,
 	};
 	FILE *input;
 	size_t curlen = 0, curalloc = 0;
@@ -132,7 +134,7 @@ main(int argc, char **argv)
 
 	set_hash(&nbperf, "mi_vector_hash");
 
-	while ((ch = getopt(argc, argv, "a:c:h:i:m:n:o:ps")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:fh:i:m:n:o:ps")) != -1) {
 		switch (ch) {
 		case 'a':
 			/* Accept bdz as alias for netbsd-6 compat. */
@@ -151,6 +153,9 @@ main(int argc, char **argv)
 			nbperf.c = strtod(optarg, &eos);
 			if (errno || eos[0] || !nbperf.c)
 				errx(2, "Invalid argument for -c");
+			break;
+		case 'f':
+			nbperf.allow_hash_fudging = 1;
 			break;
 		case 'h':
 			set_hash(&nbperf, optarg);
@@ -241,10 +246,18 @@ main(int argc, char **argv)
 	nbperf.keylens = keylens;
 
 	looped = 0;
-	while ((*build_hash)(&nbperf)) {
-		if (nbperf.has_duplicates)
+	int rv;
+	for (;;) {
+		rv = (*build_hash)(&nbperf);
+		if (!rv)
+			break;
+		if (nbperf.has_duplicates) {
+			fputc('\n', stderr);
 			errx(1, "Duplicate keys detected");
+		}
 		fputc('.', stderr);
+		if (!looped)
+			nbperf.check_duplicates = 1;
 		looped = 1;
 		if (max_iterations == 0xffffffffU)
 			continue;

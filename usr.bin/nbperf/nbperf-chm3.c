@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-chm3.c,v 1.1 2009/08/15 16:21:05 joerg Exp $	*/
+/*	$NetBSD: nbperf-chm3.c,v 1.2 2021/01/07 16:03:08 joerg Exp $	*/
 
-#define BUILD_CHM3
+#define GRAPH_SIZE 3
 #include "nbperf-chm.c"

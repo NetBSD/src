@@ -1,4 +1,4 @@
-/*	$NetBSD: graph2.h,v 1.1 2009/08/15 16:21:05 joerg Exp $	*/
+/*	$NetBSD: graph2.h,v 1.2 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,32 +32,57 @@
  */
 
 /*
- * Implementation of common 2-graph routines:
- * - build a 2-graph with hash-pairs as edges
- * - check a 2-graph for acyclicness and compute an output order
+ * Implementation of common 2/3-graph routines:
+ * - build a 2/3-graph with hash-pairs as edges
+ * - check a 2/3-graph for acyclicness and compute an output order
+*
+ * For each vertex in the 2/3-graph, the incidence lists need to kept.
+ * Avoid storing the full list by just XORing the indices of the still
+ * incident edges and the number of such edges as that's all the peeling
+ * computation needs. This is inspired by:
+ *   Cache-Oblivious Peeling of Random Hypergraphs by Djamal Belazzougui,
+ *   Paolo Boldi, Giuseppe Ottaviano, Rossano Venturini, and Sebastiano
+ *   Vigna. https://arxiv.org/abs/1312.0526
+ *
+ * Unlike in the paper, we don't care about external storage and have
+ * the edge list at hand all the time. As such, no ordering is necessary
+ * and the vertices of the edge don't have to be copied.
+ *
+ * The core observation of the paper above is that for a degree of one,
+ * the incident edge can be obtained directly.
  */
 
-struct vertex2 {
-	uint32_t l_edge, r_edge;
+#ifndef GRAPH_SIZE
+#define GRAPH_SIZE 2
+#endif
+
+#define SIZED__(n, i) n ## i
+#define SIZED_(n, i) SIZED__(n, i)
+#define SIZED(n) SIZED_(n, GRAPH_SIZE)
+#define SIZED2__(n, i, m) n ## i ## m
+#define SIZED2_(n, i, m) SIZED2__(n, i, m)
+#define SIZED2(n) SIZED2_(graph, GRAPH_SIZE, n)
+
+struct SIZED(vertex) {
+	uint32_t degree, edges;
 };
 
-struct edge2 {
-	uint32_t left, right;
-	uint32_t l_prev, l_next;
-	uint32_t r_prev, r_next;
+struct SIZED(edge) {
+	uint32_t vertices[GRAPH_SIZE];
 };
 
-struct graph2 {
-	struct vertex2 *verts;
-	struct edge2 *edges;
+struct SIZED(graph) {
+	struct SIZED(vertex) *verts;
+	struct SIZED(edge) *edges;
 	uint32_t output_index;
 	uint32_t *output_order;
 	uint8_t *visited;
 	uint32_t e, v;
+	int hash_fudge;
 };
 
-void	graph2_setup(struct graph2 *, uint32_t, uint32_t);
-void	graph2_free(struct graph2 *);
+void	SIZED2(_setup)(struct SIZED(graph) *, uint32_t, uint32_t);
+void	SIZED2(_free)(struct SIZED(graph) *);
 
-int	graph2_hash(struct nbperf *, struct graph2 *);
-int	graph2_output_order(struct graph2 *graph);
+int	SIZED2(_hash)(struct nbperf *, struct SIZED(graph) *);
+int	SIZED2(_output_order)(struct SIZED(graph) *graph);

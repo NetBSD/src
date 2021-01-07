@@ -1,4 +1,4 @@
-/*	$NetBSD: graph2.c,v 1.4 2011/10/21 23:47:11 joerg Exp $	*/
+/*	$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph2.c,v 1.4 2011/10/21 23:47:11 joerg Exp $");
+__RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -47,16 +47,14 @@ __RCSID("$NetBSD: graph2.c,v 1.4 2011/10/21 23:47:11 joerg Exp $");
 #include "nbperf.h"
 #include "graph2.h"
 
-static const uint32_t unused = 0xffffffffU;
-
 void
-graph2_setup(struct graph2 *graph, uint32_t v, uint32_t e)
+SIZED2(_setup)(struct SIZED(graph) *graph, uint32_t v, uint32_t e)
 {
 	graph->v = v;
 	graph->e = e;
 
-	graph->verts = calloc(sizeof(struct vertex2), v);
-	graph->edges = calloc(sizeof(struct edge2), e);
+	graph->verts = calloc(sizeof(*graph->verts), v);
+	graph->edges = calloc(sizeof(*graph->edges), e);
 	graph->output_order = calloc(sizeof(uint32_t), e);
 
 	if (graph->verts == NULL || graph->edges == NULL ||
@@ -65,7 +63,7 @@ graph2_setup(struct graph2 *graph, uint32_t v, uint32_t e)
 }
 
 void
-graph2_free(struct graph2 *graph)
+SIZED2(_free)(struct SIZED(graph) *graph)
 {
 	free(graph->verts);
 	free(graph->edges);
@@ -76,136 +74,180 @@ graph2_free(struct graph2 *graph)
 	graph->output_order = NULL;
 }
 
-static int
-graph2_check_duplicates(struct nbperf *nbperf, struct graph2 *graph)
-{
-	struct vertex2 *v;
-	struct edge2 *e, *e2;
-	uint32_t i, j;
+static struct nbperf *sorting_nbperf;
+static struct SIZED(graph) *sorting_graph;
+static int sorting_found;
 
-	for (i = 0; i < graph->e; ++i) {
-		e = &graph->edges[i];
-		v = &graph->verts[e->left];
-		j = v->l_edge;
-		e2 = &graph->edges[j];
-		for (;;) {
-			if (i < j && e->right == e2->right &&
-			    nbperf->keylens[i] == nbperf->keylens[j] &&
-			    memcmp(nbperf->keys[i], nbperf->keys[j],
-			    nbperf->keylens[i]) == 0) {
-				nbperf->has_duplicates = 1;
-				return -1;
-			}
-			if (e2->l_next == unused)
-				break;
-			j = e2->l_next;
-			e2 = &graph->edges[j];
-		}		
+static int sorting_cmp(const void *a_, const void *b_)
+{
+	const uint32_t *a = a_, *b = b_;
+	int i;
+	const struct SIZED(edge) *ea = &sorting_graph->edges[*a],
+	    *eb = &sorting_graph->edges[*b];
+	for (i = 0; i < GRAPH_SIZE; ++i) {
+		if (ea->vertices[i] < eb->vertices[i])
+			return -1;
+		if (ea->vertices[i] > eb->vertices[i])
+			return 1;
 	}
+	if (sorting_nbperf->keylens[*a] < sorting_nbperf->keylens[*b])
+		return -1;
+	if (sorting_nbperf->keylens[*a] > sorting_nbperf->keylens[*b])
+		return 1;
+	i = memcmp(sorting_nbperf->keys[*a], sorting_nbperf->keys[*b],
+	    sorting_nbperf->keylens[*a]);
+	if (i == 0)
+		sorting_found = 1;
+	return i;
+}
+
+static int
+SIZED2(_check_duplicates)(struct nbperf *nbperf, struct SIZED(graph) *graph)
+{
+	size_t i;
+	uint32_t *key_index = calloc(sizeof(*key_index), graph->e);
+
+	if (key_index == NULL)
+		err(1, "malloc failed");
+	for (i = 0; i < graph->e; ++i)
+		key_index[i] = i;
+
+	sorting_nbperf = nbperf;
+	sorting_graph = graph;
+	sorting_found = 0;
+	qsort(key_index, graph->e, sizeof(*key_index), sorting_cmp);
+	if (sorting_found)
+		goto found_dups;
+	/*
+	 * Any duplicate must have been found as part of the qsort,
+	 * as it can't sort consecutive elements in the output without
+	 * comparing them at least once.
+	 */
+
+	free(key_index);
 	return 0;
+ found_dups:
+	nbperf->has_duplicates = 1;
+	return -1;
+}
+
+static inline void
+SIZED2(_add_edge)(struct SIZED(graph) *graph, uint32_t edge)
+{
+	struct SIZED(edge) *e = graph->edges + edge;
+	struct SIZED(vertex) *v;
+	size_t i;
+
+	for (i = 0; i < GRAPH_SIZE; ++i) {
+		v = graph->verts + e->vertices[i];
+		v->edges ^= edge;
+		++v->degree;
+	}
+}
+
+static inline void
+SIZED2(_remove_edge)(struct SIZED(graph) *graph, uint32_t edge)
+{
+	struct SIZED(edge) *e = graph->edges + edge;
+	struct SIZED(vertex) *v;
+	size_t i;
+
+	for (i = 0; i < GRAPH_SIZE; ++i) {
+		v = graph->verts + e->vertices[i];
+		v->edges ^= edge;
+		--v->degree;
+	}
+}
+
+static inline void
+SIZED2(_remove_vertex)(struct SIZED(graph) *graph, uint32_t vertex)
+{
+	struct SIZED(vertex) *v = graph->verts + vertex;
+	uint32_t e;
+
+	if (v->degree == 1) {
+		e = v->edges;
+		graph->output_order[--graph->output_index] = e;
+		SIZED2(_remove_edge)(graph, e);
+	}
 }
 
 int
-graph2_hash(struct nbperf *nbperf, struct graph2 *graph)
+SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 {
-	struct vertex2 *v;
+	struct SIZED(edge) *e;
 	uint32_t hashes[NBPERF_MAX_HASH_SIZE];
-	size_t i;
+	size_t i, j;
+
+#if GRAPH_SIZE == 2
+	if (nbperf->allow_hash_fudging && (graph->v & 1) != 1)
+		errx(1, "vertex count must have lowest bit set");
+#else
+	if (nbperf->allow_hash_fudging && (graph->v & 3) != 3)
+		errx(1, "vertex count must have lowest 2 bits set");
+#endif
+
+
+	memset(graph->verts, 0, sizeof(*graph->verts) * graph->v);
+	graph->hash_fudge = 0;
 
 	for (i = 0; i < graph->e; ++i) {
 		(*nbperf->compute_hash)(nbperf,
 		    nbperf->keys[i], nbperf->keylens[i], hashes);
-		graph->edges[i].left = hashes[0] % graph->v;
-		graph->edges[i].right = hashes[1] % graph->v;
-		if (graph->edges[i].left == graph->edges[i].right)
-			return -1;
+		e = graph->edges + i;
+		for (j = 0; j < GRAPH_SIZE; ++j) {
+			e->vertices[j] = hashes[j] % graph->v;
+			if (j == 1 && e->vertices[0] == e->vertices[1]) {
+				if (!nbperf->allow_hash_fudging)
+					return -1;
+				e->vertices[1] ^= 1; /* toogle bit to differ */
+				graph->hash_fudge |= 1;
+			}
+#if GRAPH_SIZE == 3
+			if (j == 2 && (e->vertices[0] == e->vertices[2] ||
+			    e->vertices[1] == e->vertices[2])) {
+				if (!nbperf->allow_hash_fudging)
+					return -1;
+				graph->hash_fudge |= 2;
+				e->vertices[2] ^= 1;
+				e->vertices[2] ^= 2 * (e->vertices[0] == e->vertices[2] ||
+				    e->vertices[1] == e->vertices[2]);
+			}
+#endif
+		}
 	}
 
-	for (i = 0; i < graph->v; ++i) {
-		graph->verts[i].l_edge = unused;
-		graph->verts[i].r_edge = unused;
-	}
+	for (i = 0; i < graph->e; ++i)
+		SIZED2(_add_edge)(graph, i);
 
-	for (i = 0; i < graph->e; ++i) {
-		v = &graph->verts[graph->edges[i].left];
-		if (v->l_edge != unused)
-			graph->edges[v->l_edge].l_prev = i;
-		graph->edges[i].l_next = v->l_edge;
-		graph->edges[i].l_prev = unused;
-		v->l_edge = i;
-
-		v = &graph->verts[graph->edges[i].right];
-		if (v->r_edge != unused)
-			graph->edges[v->r_edge].r_prev = i;
-		graph->edges[i].r_next = v->r_edge;
-		graph->edges[i].r_prev = unused;
-		v->r_edge = i;
-	}
-
-	if (nbperf->first_round) {
-		nbperf->first_round = 0;
-		return graph2_check_duplicates(nbperf, graph);
+	if (nbperf->check_duplicates) {
+		nbperf->check_duplicates = 0;
+		return SIZED2(_check_duplicates)(nbperf, graph);
 	}
 
 	return 0;
 }
 
-static void
-graph2_remove_vertex(struct graph2 *graph, struct vertex2 *v)
-{
-	struct edge2 *e;
-	struct vertex2 *v2;
-
-	for (;;) {
-		if (v->l_edge != unused && v->r_edge != unused)
-			break;
-		if (v->l_edge == unused && v->r_edge == unused)
-			break;
-
-		if (v->l_edge != unused) {
-			e = &graph->edges[v->l_edge];
-			if (e->l_next != unused)
-				break;
-			v->l_edge = unused; /* No other elements possible! */
-			v2 = &graph->verts[e->right];
-			if (e->r_prev == unused)
-				v2->r_edge = e->r_next;
-			else
-				graph->edges[e->r_prev].r_next = e->r_next;
-			if (e->r_next != unused)
-				graph->edges[e->r_next].r_prev = e->r_prev;
-			v = v2;
-		} else {
-			e = &graph->edges[v->r_edge];
-			if (e->r_next != unused)
-				break;
-			v->r_edge = unused; /* No other elements possible! */
-			v2 = &graph->verts[e->left];
-			if (e->l_prev == unused)
-				v2->l_edge = e->l_next;
-			else
-				graph->edges[e->l_prev].l_next = e->l_next;
-			if (e->l_next != unused)
-				graph->edges[e->l_next].l_prev = e->l_prev;
-			v = v2;
-		}
-
-		graph->output_order[--graph->output_index] = e - graph->edges;
-	}
-}
-
 int
-graph2_output_order(struct graph2 *graph)
+SIZED2(_output_order)(struct SIZED(graph) *graph)
 {
-	size_t i;
+	size_t i, j;
+	struct SIZED(edge) *e2;
 
 	graph->output_index = graph->e;
 
 	for (i = 0; i < graph->v; ++i)
-		graph2_remove_vertex(graph, &graph->verts[i]);
+		SIZED2(_remove_vertex)(graph, i);
 
-	if (graph->output_index != 0)
+	for (i = graph->e; graph->output_index > 0 && i > graph->output_index;) {
+		e2 = graph->edges + graph->output_order[--i];
+		for (j = 0; j < GRAPH_SIZE; ++j)
+			SIZED2(_remove_vertex)(graph, e2->vertices[j]);
+	}
+
+	if (graph->output_index != 0) {
 		return -1;
+	}
 
 	return 0;
 }
