@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.h,v 1.4 2013/01/31 16:32:02 joerg Exp $	*/
+/*	$NetBSD: nbperf.h,v 1.5 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,10 +38,11 @@ struct nbperf {
 	FILE *map_output;
 	const char *hash_name;
 	int static_hash;
+	int allow_hash_fudging;
 	size_t n;
 	const void * __restrict * keys;
 	const size_t *keylens;
-	int first_round, has_duplicates;
+	int check_duplicates, has_duplicates;
 
 	double c;
 
