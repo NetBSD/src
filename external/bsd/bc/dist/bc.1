@@ -1,4 +1,4 @@
-.\" $NetBSD: bc.1,v 1.3 2021/01/07 19:49:13 uwe Exp $
+.\" $NetBSD: bc.1,v 1.4 2021/01/07 20:12:59 uwe Exp $
 .\"
 .\" bc.1 - the bc manual
 .\"
@@ -1085,7 +1085,7 @@ may contain letters, numbers and the underscore character.
 .It strings
 Strings are not allowed to contain NUL characters.
 POSIX says all characters must be included in strings.
-.Ic last
+.It Ic last
 POSIX
 .Nm
 does not have a
@@ -1094,7 +1094,9 @@ variable.
 Some implementations
 of
 .Nm
-use the period (.) in a similar way.
+use the period
+.Pq Ql \&.
+in a similar way.
 .It comparisons
 POSIX
 .Nm
@@ -1118,7 +1120,7 @@ POSIX
 requires all expressions to be present in the
 .Ic for
 statement.
-.It && , || , \&!
+.It Li && , || , \&!
 POSIX
 .Nm
 does not have the logical operators.
@@ -1162,7 +1164,7 @@ requires the opening brace on the same line as the
 key word and the
 .Ic auto
 statement on the next line.
-.It  =+ , =- , =* , =/ , =% , =^
+.It Li =+ , =- , =* , =/ , =% , =^
 POSIX
 .Nm
 does not require these
