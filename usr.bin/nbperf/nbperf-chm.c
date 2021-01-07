@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-chm.c,v 1.3 2011/10/21 23:47:11 joerg Exp $	*/
+/*	$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-chm.c,v 1.3 2011/10/21 23:47:11 joerg Exp $");
+__RCSID("$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -45,11 +45,7 @@ __RCSID("$NetBSD: nbperf-chm.c,v 1.3 2011/10/21 23:47:11 joerg Exp $");
 
 #include "nbperf.h"
 
-#ifdef BUILD_CHM3
-#include "graph3.h"
-#else
 #include "graph2.h"
-#endif
 
 /*
  * A full description of the algorithm can be found in:
@@ -78,60 +74,74 @@ __RCSID("$NetBSD: nbperf-chm.c,v 1.3 2011/10/21 23:47:11 joerg Exp $");
  */
 
 struct state {
-#ifdef BUILD_CHM3
-	struct graph3 graph;
-#else
-	struct graph2 graph;
-#endif
+	struct SIZED(graph) graph;
 	uint32_t *g;
 	uint8_t *visited;
 };
 
+#if GRAPH_SIZE == 3
 static void
 assign_nodes(struct state *state)
 {
-#ifdef BUILD_CHM3
-	struct edge3 *e;
-#else
-	struct edge2 *e;
-#endif
+	struct SIZED(edge) *e;
 	size_t i;
-	uint32_t e_idx;
+	uint32_t e_idx, v0, v1, v2, g;
 
 	for (i = 0; i < state->graph.e; ++i) {
 		e_idx = state->graph.output_order[i];
 		e = &state->graph.edges[e_idx];
-
-#ifdef BUILD_CHM3
-		if (!state->visited[e->left]) {
-			state->g[e->left] = (2 * state->graph.e + e_idx
-			    - state->g[e->middle] - state->g[e->right])
-			    % state->graph.e;
-		} else if (!state->visited[e->middle]) {
-			state->g[e->middle] = (2 * state->graph.e + e_idx
-			    - state->g[e->left] - state->g[e->right])
-			    % state->graph.e;
+		if (!state->visited[e->vertices[0]]) {
+			v0 = e->vertices[0];
+			v1 = e->vertices[1];
+			v2 = e->vertices[2];
+		} else if (!state->visited[e->vertices[1]]) {
+			v0 = e->vertices[1];
+			v1 = e->vertices[0];
+			v2 = e->vertices[2];
 		} else {
-			state->g[e->right] = (2 * state->graph.e + e_idx
-			    - state->g[e->left] - state->g[e->middle])
-			    % state->graph.e;
+			v0 = e->vertices[2];
+			v1 = e->vertices[0];
+			v2 = e->vertices[1];
 		}
-		state->visited[e->left] = 1;
-		state->visited[e->middle] = 1;
-		state->visited[e->right] = 1;
-#else
-		if (!state->visited[e->left]) {
-			state->g[e->left] = (state->graph.e + e_idx
-			    - state->g[e->right]) % state->graph.e;
-		} else {
-			state->g[e->right] = (state->graph.e + e_idx
-			    - state->g[e->left]) % state->graph.e;
+		g = e_idx - state->g[v1] - state->g[v2];
+		if (g >= state->graph.e) {
+			g += state->graph.e;
+			if (g >= state->graph.e)
+				g += state->graph.e;
 		}
-		state->visited[e->left] = 1;
-		state->visited[e->right] = 1;
-#endif
+		state->g[v0] = g;
+		state->visited[v0] = 1;
+		state->visited[v1] = 1;
+		state->visited[v2] = 1;
 	}
 }
+#else
+static void
+assign_nodes(struct state *state)
+{
+	struct SIZED(edge) *e;
+	size_t i;
+	uint32_t e_idx, v0, v1, g;
+
+	for (i = 0; i < state->graph.e; ++i) {
+		e_idx = state->graph.output_order[i];
+		e = &state->graph.edges[e_idx];
+		if (!state->visited[e->vertices[0]]) {
+			v0 = e->vertices[0];
+			v1 = e->vertices[1];
+		} else {
+			v0 = e->vertices[1];
+			v1 = e->vertices[0];
+		}
+		g = e_idx - state->g[v1];
+		if (g >= state->graph.e)
+			g += state->graph.e;
+		state->g[v0] = g;
+		state->visited[v0] = 1;
+		state->visited[v1] = 1;
+	}
+}
+#endif
 
 static void
 print_hash(struct nbperf *nbperf, struct state *state)
@@ -175,15 +185,34 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "\t};\n");
 	fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
-#ifdef BUILD_CHM3
-	fprintf(nbperf->output, "\treturn (g[h[0] %% %" PRIu32 "] + "
-	    "g[h[1] %% %" PRIu32 "] + "
-	    "g[h[2] %% %" PRIu32"]) %% %" PRIu32 ";\n",
-	    state->graph.v, state->graph.v, state->graph.v, state->graph.e);
+
+	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
+	    state->graph.v);
+	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
+	    state->graph.v);
+#if GRAPH_SIZE == 3
+	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+	    state->graph.v);
+#endif
+
+	if (state->graph.hash_fudge & 1)
+		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");
+
+#if GRAPH_SIZE == 3
+	if (state->graph.hash_fudge & 2) {
+		fprintf(nbperf->output,
+		    "\th[2] ^= (h[0] == h[2] || h[1] == h[2]);\n");
+		fprintf(nbperf->output,
+		    "\th[2] ^= 2 * (h[0] == h[2] || h[1] == h[2]);\n");
+	}
+#endif
+
+#if GRAPH_SIZE == 3
+	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
+	    "%" PRIu32 ";\n", state->graph.e);
 #else
-	fprintf(nbperf->output, "\treturn (g[h[0] %% %" PRIu32 "] + "
-	    "g[h[1] %% %" PRIu32"]) %% %" PRIu32 ";\n",
-	    state->graph.v, state->graph.v, state->graph.e);
+	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]]) %% "
+	    "%" PRIu32 ";\n", state->graph.e);
 #endif
 	fprintf(nbperf->output, "}\n");
 
@@ -194,7 +223,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 }
 
 int
-#ifdef BUILD_CHM3
+#if GRAPH_SIZE == 3
 chm3_compute(struct nbperf *nbperf)
 #else
 chm_compute(struct nbperf *nbperf)
@@ -204,7 +233,7 @@ chm_compute(struct nbperf *nbperf)
 	int retval = -1;
 	uint32_t v, e;
 
-#ifdef BUILD_CHM3
+#if GRAPH_SIZE == 3
 	if (nbperf->c == 0)
 		nbperf-> c = 1.24;
 
@@ -227,14 +256,18 @@ chm_compute(struct nbperf *nbperf)
 	(*nbperf->seed_hash)(nbperf);
 	e = nbperf->n;
 	v = nbperf->c * nbperf->n;
-#ifdef BUILD_CHM3
+#if GRAPH_SIZE == 3
 	if (v == 1.24 * nbperf->n)
 		++v;
 	if (v < 10)
 		v = 10;
+	if (nbperf->allow_hash_fudging)
+		v |= 3;
 #else
 	if (v == 2 * nbperf->n)
 		++v;
+	if (nbperf->allow_hash_fudging)
+		v |= 1;
 #endif
 
 	state.g = calloc(sizeof(uint32_t), v);
@@ -242,30 +275,18 @@ chm_compute(struct nbperf *nbperf)
 	if (state.g == NULL || state.visited == NULL)
 		err(1, "malloc failed");
 
-#ifdef BUILD_CHM3
-	graph3_setup(&state.graph, v, e);
-	if (graph3_hash(nbperf, &state.graph))
+	SIZED2(_setup)(&state.graph, v, e);
+	if (SIZED2(_hash)(nbperf, &state.graph))
 		goto failed;
-	if (graph3_output_order(&state.graph))
+	if (SIZED2(_output_order)(&state.graph))
 		goto failed;
-#else
-	graph2_setup(&state.graph, v, e);
-	if (graph2_hash(nbperf, &state.graph))
-		goto failed;
-	if (graph2_output_order(&state.graph))
-		goto failed;
-#endif
 	assign_nodes(&state);
 	print_hash(nbperf, &state);
 
 	retval = 0;
 
 failed:
-#ifdef BUILD_CHM3
-	graph3_free(&state.graph);
-#else
-	graph2_free(&state.graph);
-#endif
+	SIZED2(_free)(&state.graph);
 	free(state.g);
 	free(state.visited);
 	return retval;
