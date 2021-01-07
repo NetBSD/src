@@ -1,4 +1,4 @@
-# $NetBSD: jobs-error-nested-make.mk,v 1.1 2020/12/01 17:50:04 rillig Exp $
+# $NetBSD: jobs-error-nested-make.mk,v 1.2 2021/01/07 18:11:23 sjg Exp $
 #
 # Ensure that in jobs mode, when a command fails, the current directory is
 # printed, to aid in debugging, even if the target is marked as .MAKE.
@@ -16,5 +16,5 @@
 all: .PHONY .MAKE
 	${MAKE} -f ${MAKEFILE} nested
 
-nested: .PHONY .MAKE
+nested: .PHONY
 	false
