@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.75 2020/12/22 01:07:23 riastradh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.76 2021/01/07 13:25:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.75 2020/12/22 01:07:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.76 2021/01/07 13:25:51 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -375,7 +375,6 @@ dwc2_open(struct usbd_pipe *pipe)
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	uint8_t addr = dev->ud_addr;
 	uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
-	usbd_status err;
 
 	DPRINTF("pipe %p addr %d xfertype %d dir %s\n", pipe, addr, xfertype,
 	    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN ? "in" : "out");
@@ -404,10 +403,10 @@ dwc2_open(struct usbd_pipe *pipe)
 	switch (xfertype) {
 	case UE_CONTROL:
 		pipe->up_methods = &dwc2_device_ctrl_methods;
-		err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t),
+		int err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t),
 		    0, USBMALLOC_COHERENT, &dpipe->req_dma);
 		if (err)
-			return err;
+			return USBD_NOMEM;
 		break;
 	case UE_INTERRUPT:
 		pipe->up_methods = &dwc2_device_intr_methods;
