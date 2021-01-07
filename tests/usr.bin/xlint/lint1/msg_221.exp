@@ -1,1 +1,1 @@
-msg_221.c(6): syntax error ':' [249]
+msg_221.c(10): warning: initialisation of unsigned with negative constant [221]
