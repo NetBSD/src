@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.43 2021/01/04 18:09:01 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.44 2021/01/07 17:28:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2021/01/04 18:09:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.44 2021/01/07 17:28:20 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -293,6 +293,7 @@ _bus_dmamap_mapsize(int const nsegments)
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 }
 
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
 static size_t
 _bus_dmamap_cookiesize(int const nsegments)
 {
@@ -300,6 +301,7 @@ _bus_dmamap_cookiesize(int const nsegments)
 	return sizeof(struct mips_bus_dma_cookie) +
 	    (sizeof(bus_dma_segment_t) * nsegments);
 }
+#endif
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
