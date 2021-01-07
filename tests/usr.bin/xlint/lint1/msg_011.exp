@@ -1,1 +1,6 @@
-msg_011.c(6): syntax error ':' [249]
+msg_011.c(11): warning: bit-field initializer does not fit [180]
+msg_011.c(12): warning: bit-field initializer does not fit [180]
+msg_011.c(13): warning: bit-field initializer does not fit [180]
+msg_011.c(21): warning: bit-field initializer does not fit [180]
+msg_011.c(22): warning: bit-field initializer does not fit [180]
+msg_011.c(23): warning: initialisation of unsigned with negative constant [221]

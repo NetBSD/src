@@ -1,1 +1,1 @@
-msg_180.c(6): syntax error ':' [249]
+msg_180.c(10): warning: bit-field initializer does not fit [180]
