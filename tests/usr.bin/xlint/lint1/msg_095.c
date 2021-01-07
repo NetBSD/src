@@ -1,7 +1,19 @@
-/*	$NetBSD: msg_095.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_095.c,v 1.2 2021/01/07 00:38:46 rillig Exp $	*/
 # 3 "msg_095.c"
 
 // Test for message: declaration hides earlier one: %s [95]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -ghSw */
+
+int identifier;
+
+int
+example(int identifier)
+{
+
+	{
+		int identifier = 3;
+	}
+
+	return identifier;
+}

@@ -1,1 +1,2 @@
-msg_094.c(6): syntax error ':' [249]
+msg_094.c(7): illegal storage class [8]
+msg_094.c(9): function has illegal storage class: register_example [94]
