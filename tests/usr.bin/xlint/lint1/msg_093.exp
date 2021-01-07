@@ -1,1 +1,1 @@
-msg_093.c(6): syntax error ':' [249]
+msg_093.c(9): warning: dubious static function at block level: nested [93]
