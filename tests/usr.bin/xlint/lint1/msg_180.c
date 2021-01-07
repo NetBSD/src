@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_180.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_180.c,v 1.2 2021/01/07 18:37:41 rillig Exp $	*/
 # 3 "msg_180.c"
 
 // Test for message: bit-field initializer does not fit [180]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+struct example {
+	unsigned int a: 5;
+	unsigned int b: 5;
+} example_var = {
+    32,
+    31
+};

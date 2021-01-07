@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_007.c,v 1.1 2021/01/02 10:22:42 rillig Exp $	*/
+/*	$NetBSD: msg_007.c,v 1.2 2021/01/07 18:37:41 rillig Exp $	*/
 # 3 "msg_007.c"
 
 // Test for message: only one storage class allowed [7]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+extern static void example(void);
+extern extern_function(void);

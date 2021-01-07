@@ -1,7 +1,21 @@
-/*	$NetBSD: msg_010.c,v 1.1 2021/01/02 10:22:42 rillig Exp $	*/
+/*	$NetBSD: msg_010.c,v 1.2 2021/01/07 18:37:41 rillig Exp $	*/
 # 3 "msg_010.c"
 
 // Test for message: duplicate '%s' [10]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+inline inline void
+double_inline(void)
+{
+}
+
+const const int
+double_const(void)
+{
+	return 0;
+}
+
+volatile volatile int
+double_volatile(void)
+{
+	return 0;
+}
