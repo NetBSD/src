@@ -1,1 +1,1 @@
-msg_007.c(6): syntax error ':' [249]
+msg_007.c(6): only one storage class allowed [7]

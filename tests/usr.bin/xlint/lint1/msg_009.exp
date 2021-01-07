@@ -1,1 +1,4 @@
-msg_009.c(6): syntax error ':' [249]
+msg_009.c(6): only register valid as formal parameter storage class [9]
+msg_009.c(7): only register valid as formal parameter storage class [9]
+msg_009.c(8): only register valid as formal parameter storage class [9]
+msg_009.c(9): only register valid as formal parameter storage class [9]
