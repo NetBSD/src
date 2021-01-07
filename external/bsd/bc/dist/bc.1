@@ -1,4 +1,4 @@
-.\" $NetBSD: bc.1,v 1.5 2021/01/07 20:22:34 uwe Exp $
+.\" $NetBSD: bc.1,v 1.6 2021/01/07 20:37:33 uwe Exp $
 .\"
 .\" bc.1 - the bc manual
 .\"
@@ -411,10 +411,10 @@ They all appear as
 See the section on functions for user defined functions.
 The standard functions are:
 .Bl -tag -width 20n
-.It Ic length ( Ar expression )
+.It Fn length expression
 The value of the length function is the number of significant digits in the
 expression.
-.It Ic read ( )
+.It Fn read
 The read function (an extension) will read a number from the standard
 input, regardless of where the function occurs.
 Beware, this can cause problems with the mixing of data and program in
@@ -426,10 +426,10 @@ The value of the read function is the number read from
 the standard input using the current value of the variable
 .Ic ibase
 for the conversion base.
-.It Ic scale ( Ar expression )
+.It Fn scale expression
 The value of the scale function is the number of digits after the decimal
 point in the expression.
-.It Ic sqrt ( Ar expression )
+.It Fn sqrt expression
 The value of the sqrt function is the square root of the expression.
 If
 the expression is negative, a run time error is generated.
@@ -813,7 +813,7 @@ Changes of
 .Ic ibase
 will be ignored during the execution of the function except for the
 standard function
-.Ic read ,
+.Fn read ,
 which will always use the current value
 of
 .Ic ibase
@@ -863,22 +863,22 @@ px(1)
 .Ed
 .Pp
 Since
-.Ar py
+.Fn py
 is not a void function, the call of
-.Ar py ( 1 )
+.Ql py(1)
 prints the desired output and then prints a second line that is the value of
 the function.
 Since the value of a function that is not given an
 explicit return statement is zero, the zero is printed.
 For
-.Ar px ( 1 ) ,
+.Ql px(1) ,
 no zero is printed because the function is a void function.
 .Pp
 Also, call by variable for arrays was added.
 To declare
 a call by variable array, the declaration of the array parameter in the
 function definition looks like
-.Do Ar name [ ] Dc .
+.Do Fa name Ns Li [] Dc .
 The call to the
 function remains the same as call by value arrays.
 .Ss MATH LIBRARY
@@ -891,18 +891,33 @@ The math functions will calculate their
 results to the scale set at the time of their call.
 The math library defines the following functions:
 .Bl -tag -width 15n
-.It Ic s ( Ar x )
-The sine of x, x is in radians.
-.It Ic c ( Ar x )
-The cosine of x, x is in radians.
-.It Ic a ( Ar x )
-The arctangent of x, arctangent returns radians.
-.It Ic l ( Ar x )
-The natural logarithm of x.
-.It Ic e ( Ar x )
-The exponential function of raising e to the value x.
-.It Ic j ( n , x )
-The Bessel function of integer order n of x.
+.It Fn s x
+The sine of
+.Fa x ,
+.Fa x
+is in radians.
+.It Fn c x
+The cosine of
+.Fa x ,
+.Fa x
+is in radians.
+.It Fn a x
+The arctangent of
+.FA x ,
+arctangent returns radians.
+.It Fn l x
+The natural logarithm of
+.Fa x .
+.It Fn e x
+The exponential function of raising
+.Va e
+to the value
+.Fa x .
+.It Fn j n x
+The Bessel function of integer order
+.Fa n
+of
+.Fa x .
 .El
 .Sh ENVIRONMENT
 The following environment variables are processed by
