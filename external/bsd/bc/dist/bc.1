@@ -1,4 +1,4 @@
-.\" $NetBSD: bc.1,v 1.6 2021/01/07 20:37:33 uwe Exp $
+.\" $NetBSD: bc.1,v 1.7 2021/01/07 21:21:35 uwe Exp $
 .\"
 .\" bc.1 - the bc manual
 .\"
@@ -128,7 +128,8 @@ In POSIX
 .Nm
 all names are a single lower case letter.)
 The type of variable is clear by the context
-because all array variable names will be followed by brackets ([]).
+because all array variable names will be followed by brackets
+.Pq Ql [] .
 .Pp
 There are four special variables,
 .Ic scale ,
@@ -156,9 +157,9 @@ as well as used in expressions.
 Comments in
 .Nm
 start with the characters
-.Dq Ic /*
+.Ql /*
 and end with the characters
-.Dq Ic */ .
+.Ql */ .
 Comments may start anywhere and appear as a single space in the input.
 (This causes comments to delimit other input items.
 For example, a comment can not be found in the middle of
@@ -170,7 +171,7 @@ To support the use of scripts for
 .Nm ,
 a single line comment has been added as an extension.
 A single line comment starts at a
-.Dq Ic #
+.Ql #
 character and continues to the next end of the line.
 The end of line
 character is not part of the comment and is processed normally.
@@ -205,13 +206,15 @@ Lower case letters are variable names.)
 Single digit numbers always
 have the value of the digit regardless of the value of
 .Ic ibase .
-(i.e. A = 10.)
+(i.e.\&
+.Ql A
+=\~10.)
 For multi-digit numbers,
 .Nm
 changes all input digits greater or equal to ibase to the value of
 .Ic ibase - 1 .
 This makes the number
-.Dq ZZZ
+.Ql ZZZ
 always be the largest 3 digit number of the input base.
 .Pp
 Full expressions are similar to many other high level languages.
@@ -362,25 +365,41 @@ The result is 1 if either expression is non-zero.
 The expression precedence is as follows: (lowest to highest)
 .Bl -enum -offset indent
 .It
-|| operator, left associative
+.Ql ||
+operator, left associative
 .It
-&& operator, left associative
+.Ql &&
+operator, left associative
 .It
-! operator, nonassociative
+.Ql \&!
+operator, nonassociative
 .It
 Relational operators, left associative
 .It
 Assignment operator, right associative
 .It
-+ and - operators, left associative
+.Ql +
+and
+.Ql -
+operators, left associative
 .It
-*, / and % operators, left associative
+.Ql * ,
+.Ql /
+and
+.Ql %
+operators, left associative
 .It
-^ operator, right associative
+.Ql ^
+operator, right associative
 .It
-unary - operator, nonassociative
+unary
+.Ql -
+operator, nonassociative
 .It
-++ and -- operators, nonassociative
+.Ql ++
+and
+.Ql --
+operators, nonassociative
 .El
 .Pp
 This precedence was chosen so that POSIX compliant
@@ -389,16 +408,16 @@ programs will run correctly.
 This will cause the use of the relational and logical operators to
 have some unusual behavior when used with assignment expressions.
 Consider the expression:
-.Dl Ic a = 3 < 5
+.Dl a = 3 < 5
 .Pp
 Most C programmers would assume this would assign the result of
-.Dq Ic 3 < 5
+.Dq Li 3 < 5
 (the value 1) to the variable
-.Dq Ic a .
+.Va a .
 What this does in
 .Nm
 is assign the value 3 to the variable
-.Dq Ic a
+.Va a
 and then compare 3 to 5.
 It is best to use parenthesis when using relational and logical operators
 with the assignment operators.
@@ -407,7 +426,7 @@ There are a few more special expressions that are provided in
 .Nm .
 These have to do with user defined functions and standard functions.
 They all appear as
-.Do Ar name ( Ar parameters ) Dc .
+.Do Ar name Ns Li \&( Ns Ar parameters Ns Li \&) Dc .
 See the section on functions for user defined functions.
 The standard functions are:
 .Bl -tag -width 20n
@@ -462,7 +481,9 @@ newlines.
 The following is a list of
 .Nm
 statements and what they do:
-(Things enclosed in brackets ([]) are optional parts of the
+(Things enclosed in brackets
+.Pq Oo Oc
+are optional parts of the
 statement.)
 .Bl -tag -width 15n
 .It Ar expression
@@ -518,8 +539,9 @@ The newly assigned value will remain until the next number is printed
 or another value is assigned to
 .Ic last .
 (Some installations may allow the
-use of a single period (.) which is not part of a number as a short
-hand notation for
+use of a single period
+.Pq Ql \&.
+which is not part of a number as a short hand notation for
 .Ic last . )
 .It Ar "string"
 The
@@ -544,25 +566,26 @@ value is printed and assigned to the variable
 Strings in the
 .Ic print
 statement are printed to the output and may contain special characters.
-Special characters start with the backslash character (\e).
+Special characters start with the backslash character
+.Pq Ql \e .
 The special characters recognized by
 .Nm
 are
-.Sq a
+.Ql a
 (alert or bell),
-.Sq b
+.Ql b
 (backspace),
-.Sq f
+.Ql f
 (form feed),
-.Sq n
+.Ql n
 (newline),
-.Sq r
+.Ql r
 (carriage return),
-.Sq q
+.Ql q
 (double quote),
-.Sq t
+.Ql t
 (tab), and
-.Sq \e
+.Ql \e
 (backslash).
 Any other character following the backslash will be ignored.
 .It { Ar statement_list }
@@ -647,7 +670,7 @@ requires all three expressions.)
 The following is equivalent code for the
 .Ic for
 statement:
-.Bd -literal
+.Bd -literal -offset indent
 expression1;
 while (expression2) {
    statement;
