@@ -1,7 +1,18 @@
-/*	$NetBSD: msg_167.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_167.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_167.c"
 
 // Test for message: array subscript cannot be negative: %ld [167]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+void
+example(int *ptr)
+{
+	int arr[6];
+
+	arr[-3] = 13;
+
+	/*
+	 * Since the pointer may have been initialized with "arr + 3",
+	 * subtracting from its address is allowed.
+	 */
+	ptr[-3] = 13;
+}

@@ -1,1 +1,2 @@
-msg_143.c(6): syntax error ':' [249]
+msg_143.c(11): cannot take size/alignment of incomplete type [143]
+msg_143.c(6): warning: struct incomplete never defined [233]

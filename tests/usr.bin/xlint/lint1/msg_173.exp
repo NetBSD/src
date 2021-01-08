@@ -1,1 +1,1 @@
-msg_173.c(6): syntax error ':' [249]
+msg_173.c(6): too many array initializers, expected 3 [173]

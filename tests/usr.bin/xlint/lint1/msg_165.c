@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_165.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_165.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_165.c"
 
 // Test for message: constant truncated by assignment [165]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+void
+example(void)
+{
+	unsigned char ch;
+
+	ch = 0x1234;
+}

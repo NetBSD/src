@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_084.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_084.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_084.c"
 
 // Test for message: ANSI C requires formal parameter before '...' [84]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+void only_ellipsis(...)
+{
+}
+
+void ok_ellipsis(const char *fmt, ...)
+{
+}

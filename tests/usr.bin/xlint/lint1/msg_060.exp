@@ -1,1 +1,4 @@
-msg_060.c(6): syntax error ':' [249]
+msg_060.c(7): void must be sole parameter [60]
+msg_060.c(8): void must be sole parameter [60]
+msg_060.c(8): void must be sole parameter [60]
+msg_060.c(8): void must be sole parameter [60]

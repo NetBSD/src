@@ -1,7 +1,14 @@
-/*	$NetBSD: msg_101.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_101.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_101.c"
 
 // Test for message: undefined struct/union member: %s [101]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+struct point {
+	int x, y;
+};
+
+int
+get_z(const struct point *p)
+{
+	return p.z;
+}

@@ -1,1 +1,1 @@
-msg_167.c(6): syntax error ':' [249]
+msg_167.c(11): warning: array subscript cannot be negative: -3 [167]

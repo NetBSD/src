@@ -1,1 +1,3 @@
-msg_109.c(6): syntax error ':' [249]
+msg_109.c(9): void type illegal in expression [109]
+msg_109.c(9): warning: function example expects to return value [214]
+msg_109.c(7): warning: argument arg unused in function example [231]

@@ -1,1 +1,2 @@
-msg_084.c(6): syntax error ':' [249]
+msg_084.c(6): warning: ANSI C requires formal parameter before '...' [84]
+msg_084.c(10): warning: argument fmt unused in function ok_ellipsis [231]

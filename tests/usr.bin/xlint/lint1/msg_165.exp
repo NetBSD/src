@@ -1,1 +1,1 @@
-msg_165.c(6): syntax error ':' [249]
+msg_165.c(11): warning: constant truncated by assignment [165]

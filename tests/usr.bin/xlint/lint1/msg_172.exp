@@ -1,1 +1,1 @@
-msg_172.c(6): syntax error ':' [249]
+msg_172.c(12): too many struct/union initializers [172]

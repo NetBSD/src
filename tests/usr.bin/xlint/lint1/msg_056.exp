@@ -1,1 +1,2 @@
-msg_056.c(6): syntax error ':' [249]
+msg_056.c(7): warning: integer constant out of range [252]
+msg_056.c(8): warning: integral constant too large [56]

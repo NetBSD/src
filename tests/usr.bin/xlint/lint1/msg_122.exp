@@ -1,1 +1,1 @@
-msg_122.c(6): syntax error ':' [249]
+msg_122.c(9): warning: shift greater than size of object [122]

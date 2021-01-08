@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_136.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_136.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_136.c"
 
 // Test for message: cannot do pointer arithmetic on operand of unknown size [136]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+struct incomplete;
+
+const struct incomplete *
+example(const struct incomplete *ptr)
+{
+	return ptr + 5;
+}

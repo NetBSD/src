@@ -1,7 +1,14 @@
-/*	$NetBSD: msg_164.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_164.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_164.c"
 
 // Test for message: assignment of negative constant to unsigned type [164]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+void
+example(void)
+{
+	unsigned char uch = -3;
+
+	uch = -5;
+	uch += -7;
+	uch *= -1;
+}

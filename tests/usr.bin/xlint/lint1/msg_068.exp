@@ -1,1 +1,1 @@
-msg_068.c(6): syntax error ':' [249]
+msg_068.c(8): warning: typedef already qualified with 'const' [68]

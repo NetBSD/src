@@ -1,7 +1,13 @@
-/*	$NetBSD: msg_150.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_150.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_150.c"
 
 // Test for message: argument mismatch: %d arg%s passed, %d expected [150]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+int
+add2(int, int);
+
+int
+example(void)
+{
+	return add2(2, 3, 5, 7);
+}

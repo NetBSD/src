@@ -1,7 +1,8 @@
-/*	$NetBSD: msg_081.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_081.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_081.c"
 
 // Test for message: \a undefined in traditional C [81]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -Stw */
+
+char str[] = "The bell\a rings";
