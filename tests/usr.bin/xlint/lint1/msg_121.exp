@@ -1,1 +1,1 @@
-msg_121.c(6): syntax error ':' [249]
+msg_121.c(9): warning: negative shift [121]

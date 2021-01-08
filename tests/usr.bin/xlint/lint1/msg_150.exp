@@ -1,1 +1,1 @@
-msg_150.c(6): syntax error ':' [249]
+msg_150.c(12): argument mismatch: 4 args passed, 2 expected [150]

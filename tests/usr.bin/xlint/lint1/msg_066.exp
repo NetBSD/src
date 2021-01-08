@@ -1,1 +1,1 @@
-msg_066.c(6): syntax error ':' [249]
+msg_066.c(8): warning: syntax requires ';' after last struct/union member [66]

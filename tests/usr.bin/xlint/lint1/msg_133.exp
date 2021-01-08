@@ -1,1 +1,1 @@
-msg_133.c(6): syntax error ':' [249]
+msg_133.c(9): warning: conversion of pointer to 'char' loses bits [133]

@@ -1,1 +1,6 @@
-msg_115.c(6): syntax error ':' [249]
+msg_115.c(10): warning: left operand of '=' must be modifiable lvalue [115]
+msg_115.c(11): warning: left operand of '+=' must be modifiable lvalue [115]
+msg_115.c(12): warning: left operand of '-=' must be modifiable lvalue [115]
+msg_115.c(13): warning: left operand of '*=' must be modifiable lvalue [115]
+msg_115.c(14): warning: left operand of '/=' must be modifiable lvalue [115]
+msg_115.c(15): warning: left operand of '%=' must be modifiable lvalue [115]
