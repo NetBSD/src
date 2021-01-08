@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.393 2021/01/08 04:36:44 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.394 2021/01/08 21:46:50 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.393 2021/01/08 04:36:44 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.394 2021/01/08 21:46:50 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2864,7 +2864,7 @@ Job_TokenWithdraw(void)
 		       errno == EAGAIN)
 			continue;
 		if (shouldDieQuietly(NULL, 1))
-			exit(2);
+			exit(6);	/* we aborted */
 		Fatal("A failure has been detected "
 		      "in another branch of the parallel make");
 	}
