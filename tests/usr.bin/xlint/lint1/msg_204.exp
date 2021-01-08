@@ -1,1 +1,2 @@
-msg_204.c(6): syntax error ':' [249]
+msg_204.c(19): controlling expressions must have scalar type [204]
+msg_204.c(28): controlling expressions must have scalar type [204]
