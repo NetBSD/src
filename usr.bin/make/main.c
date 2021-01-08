@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.508 2020/12/31 17:39:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.509 2021/01/08 21:46:50 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.508 2020/12/31 17:39:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.509 2021/01/08 21:46:50 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2132,16 +2132,16 @@ PrintOnError(GNode *gn, const char *msg)
 		Var_Stats();
 	}
 
-	/* we generally want to keep quiet if a sub-make died */
-	if (shouldDieQuietly(gn, -1))
-		return;
+	if (errorNode != NULL)
+		return;		/* we've been here! */
 
 	if (msg != NULL)
 		printf("%s", msg);
 	printf("\n%s: stopped in %s\n", progname, curdir);
 
-	if (errorNode != NULL)
-		return;		/* we've been here! */
+	/* we generally want to keep quiet if a sub-make died */
+	if (shouldDieQuietly(gn, -1))
+		return;
 
 	if (gn != NULL)
 		SetErrorVars(gn);
