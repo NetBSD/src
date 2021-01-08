@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.51 2021/01/05 00:22:04 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.52 2021/01/08 01:40:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.51 2021/01/05 00:22:04 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.52 2021/01/08 01:40:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -537,6 +537,8 @@ default_label(void)
 static tnode_t *
 check_controlling_expression(tnode_t *tn)
 {
+	// FIXME: dereference before null check
+	// FIXME: This is evaluated too early; see test msg_204
 	tspec_t t = tn->tn_type->t_tspec;
 
 	if (tn != NULL)
