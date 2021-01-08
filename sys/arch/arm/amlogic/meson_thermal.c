@@ -1,4 +1,4 @@
-/* $NetBSD: meson_thermal.c,v 1.1 2021/01/01 07:21:58 ryo Exp $ */
+/* $NetBSD: meson_thermal.c,v 1.2 2021/01/08 00:13:20 macallan Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_thermal.c,v 1.1 2021/01/01 07:21:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_thermal.c,v 1.2 2021/01/08 00:13:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -226,7 +226,8 @@ meson_thermal_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_refresh = meson_thermal_refresh;
 	sc->sc_sensor_temp.units = ENVSYS_STEMP;
 	sc->sc_sensor_temp.state = ENVSYS_SINVALID;
-	snprintf(sc->sc_sensor_temp.desc, ENVSYS_DESCLEN, sc->sc_conf->name);
+	snprintf(sc->sc_sensor_temp.desc, ENVSYS_DESCLEN,
+	    "%s", sc->sc_conf->name);
 
 	sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor_temp);
 	sysmon_envsys_register(sc->sc_sme);
