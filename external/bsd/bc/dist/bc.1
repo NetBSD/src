@@ -1,4 +1,4 @@
-.\" $NetBSD: bc.1,v 1.8 2021/01/07 23:57:25 uwe Exp $
+.\" $NetBSD: bc.1,v 1.9 2021/01/08 01:17:03 uwe Exp $
 .\"
 .\" bc.1 - the bc manual
 .\"
@@ -231,42 +231,42 @@ Legal values of the variable
 are 0 to the maximum number representable by a C integer.
 .Pp
 In the following descriptions of legal expressions,
-.Dq expr
+.Ar expr
 refers to a complete expression and
-.Dq var
+.Ar var
 refers to a simple or an array variable.
 A simple variable is just a
-.Ic name
+.Dq Ar name
 and an array variable is specified as
-.Ic name[expr] .
+.Do Ar name Ns Ic \&[ Ns Ar expr Ns Ic \&] Dc .
 Unless specifically mentioned the scale of the result is the maximum scale of the
 expressions involved.
 .Bl -tag -width 15n
-.It Ic "- expr"
+.It Ic \&- Ns Ar expr
 The result is the negation of the expression.
-.It Ic "++ var"
+.It Ic \&++ Ns Ar var
 The variable is incremented by one and the new value is the result of
 the expression.
-.It Ic "-- var"
+.It Ic \&-- Ns Ar var
 The variable is decremented by one and the new value is the result of the
 expression.
-.It Ic "var ++"
+.It Ar var Ns Ic \&++
 The result of the expression is the value of
 the variable and then the variable is incremented by one.
-.It Ic "var --"
+.It Ar var Ns Ic \&--
 The result of the expression is the value of the variable and then
 the variable is decremented by one.
-.It Ic "expr + expr"
+.It Ar expr Ic \&+ Ar expr
 The result of the expression is the sum of the two expressions.
-.It Ic "expr - expr"
+.It Ar expr Ic \&- Ar expr
 The result of the expression is the difference of the two expressions.
-.It Ic "expr * expr"
+.It Ar expr Ic \&* Ar expr
 The result of the expression is the product of the two expressions.
-.It Ic "expr / expr"
+.It Ar expr Ic \&/ Ar expr
 The result of the expression is the quotient of the two expressions.
 The scale of the result is the value of the variable
 .Ic scale .
-.It Ic "expr % expr"
+.It Ar expr Ic \&% Ar expr
 The result of the expression is the remainder and it is computed in the
 following way:
 To compute a%b, first a/b is computed to
@@ -280,7 +280,7 @@ If
 .Ic scale
 is set to zero and both expressions are integers this expression is the
 integer remainder function.
-.It Ic "expr ^ expr"
+.It Ar expr Ic \&^ Ar expr
 The result of the expression is the value of the first raised to the
 second.
 The second expression must be an integer.
@@ -299,19 +299,19 @@ and the scale of the first expression.
 scale(a))).)
 It should be noted
 that expr^0 will always return the value of 1.
-.It Ic "( expr )"
+.It Ic \&( Ns Ar expr Ns Ic \&)
 This alters the standard precedence to force the evaluation of the
 expression.
-.It Ic "var = expr"
+.It Ar var Ic \&= Ar expr
 The variable is assigned the value of the expression.
-.It Ic "var <op>= expr"
+.It Ar var Ao Ns Ar op Ns Ac Ns Ic \&= Ar expr
 This is equivalent to
-.Ic "var = var <op> expr"
+.Ar var Ic \&= Ar var Ao Ns Ar op Ns Ac Ar expr
 with the exception that the
-.Dq Ic var
+.Ar var
 part is evaluated only once.
 This can make a difference if
-.Dq Ic var
+.Ar var
 is an array.
 .El
 .Pp
@@ -330,18 +330,36 @@ statements and that only one relational test may be
 done in them.)
 The relational operators are:
 .Bl -tag -width 15n
-.It Ic "expr1 < expr2"
-The result is 1 if expr1 is strictly less than expr2.
-.It Ic "expr1 <= expr2"
-The result is 1 if expr1 is less than or equal to expr2.
-.It Ic "expr1 > expr2"
-The result is 1 if expr1 is strictly greater than expr2.
-.It Ic "expr1 >= expr2"
-The result is 1 if expr1 is greater than or equal to expr2.
-.It Ic "expr1 == expr2"
-The result is 1 if expr1 is equal to expr2.
-.It Ic "expr1 != expr2"
-The result is 1 if expr1 is not equal to expr2.
+.It Ar expr\s-2\d\fR1\fP\u\s+2 Ic \&< Ar expr\s-2\d\fR2\fP\u\s+2
+The result is 1 if
+.Ar expr\s-2\d\fR1\fP\u\s+2
+is strictly less than
+.Ar expr\s-2\d\fR2\fP\u\s+2 .
+.It Ar expr\s-2\d\fR1\fP\u\s+2 Ic \&<= Ar expr\s-2\d\fR2\fP\u\s+2
+The result is 1 if
+.Ar expr\s-2\d\fR1\fP\u\s+2
+is less than or equal to
+.Ar expr\s-2\d\&2\u\s+2 .
+.It Ar expr\s-2\d\fR1\fP\u\s+2 Ic \&> Ar expr\s-2\d\fR2\fP\u\s+2
+The result is 1 if
+.Ar expr\s-2\d\fR1\fP\u\s+2
+is strictly greater than
+.Ar expr\s-2\d\&2\u\s+2 .
+.It Ar expr\s-2\d\fR1\fP\u\s+2 Ic \&>= Ar expr\s-2\d\fR2\fP\u\s+2
+The result is 1 if
+.Ar expr\s-2\d\fR1\fP\u\s+2
+is greater than or equal to
+.Ar expr\s-2\d\&2\u\s+2 .
+.It Ar expr\s-2\d\fR1\fP\u\s+2 Ic \&== Ar expr\s-2\d\fR2\fP\u\s+2
+The result is 1 if
+.Ar expr\s-2\d\fR1\fP\u\s+2
+is equal to
+.Ar expr\s-2\d\&2\u\s+2 .
+.It Ar expr\s-2\d\fR1\fP\u\s+2 Ic \&!= Ar expr\s-2\d\fR2\fP\u\s+2
+The result is 1 if
+.Ar expr\s-2\d\fR1\fP\u\s+2
+is not equal to
+.Ar expr\s-2\d\&2\u\s+2 .
 .El
 .Pp
 Boolean operations are also legal.
@@ -355,11 +373,13 @@ The result of all boolean operations are 0 and 1
 The boolean
 operators are:
 .Bl -tag -width 15n
-.It Ic "!expr"
-The result is 1 if expr is 0.
-.It Ic "expr && expr"
+.It Ic \&! Ns Ar expr
+The result is 1 if
+.Ar expr
+is 0.
+.It Ar expr Ic \&&& Ar expr
 The result is 1 if both expressions are non-zero.
-.It Ic "expr || expr"
+.It Ar expr Ic \&|| Ar expr
 The result is 1 if either expression is non-zero.
 .El
 .Pp
@@ -427,7 +447,7 @@ There are a few more special expressions that are provided in
 .Nm .
 These have to do with user defined functions and standard functions.
 They all appear as
-.Do Ar name Ns Li \&( Ns Ar parameters Ns Li \&) Dc .
+.Do Ar name Ns Ic \&( Ns Ar parameters Ns Ic \&) Dc .
 See the section on functions for user defined functions.
 The standard functions are:
 .Bl -tag -width 20n
@@ -473,8 +493,10 @@ Because newlines
 are statement separators, it is possible to hide a newline by using
 the backslash character.
 The sequence
-.Dq Ic \e<nl> ,
-where <nl> is the newline appears to
+.Dq Ic \e Ns Ao nl Ac ,
+where
+.Aq nl
+is the newline appears to
 .Nm
 as whitespace instead of a newline.
 A statement list is a series of statements separated by semicolons and
@@ -496,9 +518,9 @@ If the expression is not an assignment statement, the
 expression is evaluated and printed to the output.
 After the number is printed, a newline is printed.
 For example,
-.Dq Ic a=1
+.Dq Li a=1
 is an assignment statement and
-.Do Ic ( a=1 ) Dc
+.Dq Li (a=1)
 is an expression that has an embedded assignment.
 All numbers that are printed are printed in the base
 specified by the variable
@@ -521,7 +543,7 @@ base ten value of
 Since numbers are of arbitrary
 precision, some numbers may not be printable on a single output line.
 These long numbers will be split across lines using the
-.Dq \e
+.Ql \e
 as the last character on a line.
 The maximum number of characters printed
 per line is 70.
@@ -544,7 +566,7 @@ use of a single period
 .Pq Ql \&.
 which is not part of a number as a short hand notation for
 .Ic last . )
-.It Ar "string"
+.It Ic \*q Ns Ar string\| Ns Ic \*q
 The
 .Ar string
 is printed to the output.
@@ -589,36 +611,37 @@ are
 .Ql \e
 (backslash).
 Any other character following the backslash will be ignored.
-.It { Ar statement_list }
+.It Ic \&{ Ar statement_list Ic \&}
 This is the compound statement.
 It allows multiple statements to be grouped together for execution.
-.It Ic if ( Ar expression ) Ar statement1 [ Ic else Ar statement2 ]
+.It Ic if \&( Ns Ar expression Ns Ic \&) Ar statement\s-2\d\fR1\fP\u\s+2 \
+ Oo Ic else Ar statement\s-2\d\fR2\fP\u\s+2 Oc
 The
 .Ic if
 statement evaluates the
 .Ar expression
 and executes
-.Ar statement1
+.Ar statement\s-2\d\fR1\fP\u\s+2
 or
-.Ar statement2
+.Ar statement\s-2\d\fR2\fP\u\s+2
 depending on the value of the
 .Ar expression .
 If the
 .Ar expression
 is non-zero,
-.Ar statement1
+.Ar statement\s-2\d\fR1\fP\u\s+2
 is executed.
 If
-.Ar statement2
+.Ar statement\s-2\d\fR2\fP\u\s+2
 is present and the value of the
 .Ar expression
 is 0, then
-.Ar statement2
+.Ar statement\s-2\d\fR2\fP\u\s+2
 is executed.
 (The
 .Ic else
 clause is an extension.)
-.It Ic while ( Ar expression ) Ar statement
+.It Ic while \&( Ns Ar expression Ns Ic \&) Ar statement
 The
 .Ic while
 statement will execute the
@@ -635,34 +658,39 @@ Termination of the loop is caused by a zero
 value or the execution of a
 .Ic break
 statement.
-.It Ic for ( [ Ar expression1 ] ; [ Ar expression2 ] ; [ Ar expression3 ] ) Ar statement
+.It Ic for \&( Ns \
+ Oo Ar expression\s-2\d\fR1\fP\u\s+2 Oc Ns Ic \&; \
+ Oo Ar expression\s-2\d\fR2\fP\u\s+2 Oc Ns Ic \&; \
+ Oo Ar expression\s-2\d\fR3\fP\u\s+2 Oc Ns Ic \&) \
+ Ar statement
 The
 .Ic for
 statement controls repeated execution of the
 .Ar statement .
-.Ar Expression1
+.Ar expression\s-2\d\fR1\fP\u\s+2
 is evaluated before the loop.
-.Ar Expression2
+.Ar expression\s-2\d\fR2\fP\u\s+2
 is evaluated
 before each execution of the
 .Ar statement .
 If it is non-zero, the
 .Ar statement
-is evaluated.
+is executed.
 If it is zero, the loop is terminated.
-After each execution of the statement,
-.Ar expression3
+After each execution of the
+.Ar statement ,
+.Ar expression\s-2\d\fR3\fP\u\s+2
 is evaluated before the reevaluation of
-.Ar expression2 .
+.Ar expression\s-2\d\fR2\fP\u\s+2 .
 If
-.Ar expression1
+.Ar expression\s-2\d\fR1\fP\u\s+2
 or
-.Ar expression3
+.Ar expression\s-2\d\fR3\fP\u\s+2
 are missing, nothing is evaluated at the point they would be evaluated.
 If
-.Ar expression2
+.Ar expression\s-2\d\fR2\fP\u\s+2
 is missing, it is the same as substituting the value 1 for
-.Ar expression2 .
+.Ar expression\s-2\d\fR2\fP\u\s+2 .
 (The optional expressions are an
 extension.
 POSIX
@@ -704,7 +732,7 @@ to terminate because the halt is not executed.
 .It Ic return
 Return the value 0 from a function.
 (See the section on functions.)
-.It Ic return ( Ar expression )
+.It Ic return Ic \&( Ns Ar expression Ns Ic \&)
 Return the value of the expression from a function.
 (See the section on  functions.)
 As an extension, the parenthesis are not required.
@@ -756,7 +784,7 @@ define name ( parameters ) { newline
 .Ed
 .Pp
 A function call is just an expression of the form
-.Do Ar name ( Ar parameters ) Dc .
+.Do Ar name Ns Ic \&( Ns Ar parameters Ns Ic \&) Dc .
 .Pp
 Parameters are numbers or arrays (an extension).
 In the function definition, zero or more parameters are defined by
@@ -764,7 +792,7 @@ listing their names separated by commas.
 All parameters are call by value parameters.
 Arrays are specified in the parameter definition by
 the notation
-.Do Ar name [ ] Dc .
+.Do Fa name Ns Ic \&[] Dc .
 In the function call, actual parameters
 are full expressions for number parameters.
 The same notation is used
@@ -781,7 +809,7 @@ is an optional list of variables that are for
 .Dq local
 use.
 The syntax of the auto list (if present) is
-.Do Ic auto Ar name , ... ; Dc .
+.Do Ic auto Ar name Ns Ic \&, Ar \&... Ns Ic \&; Dc .
 (The semicolon is optional.)
 Each
 .Ar name
@@ -798,8 +826,16 @@ restored.
 The parameters are really auto variables that are initialized to a
 value provided in the function call.
 Auto variables are different than traditional local variables
-because if function A calls function B, B may access function
-A's auto variables by just using the same name, unless function B has
+because if function
+.Ar A
+calls function
+.Ar B ,
+.Ar B
+may access function
+.Ar A Ns 's
+auto variables by just using the same name, unless function
+.Ar B
+has
 called them auto variables.
 Due to the fact that auto variables and parameters are pushed onto a
 stack,
@@ -819,11 +855,11 @@ The first form,
 .Dq Ic return ,
 returns the value 0 to the calling expression.
 The second form,
-.Do Ic return ( Ar expression ) Dc ,
+.Do Ic return Ic \&( Ns Ar expression Ns Ic \&) Dc ,
 computes the value of the expression
 and returns that value to the calling expression.
 There is an implied
-.Do Ic return ( 0 ) Dc
+.Dq Li return (0)
 at the end of every function.
 This allows a function
 to terminate and return 0 without an explicit return statement.
@@ -902,7 +938,7 @@ Also, call by variable for arrays was added.
 To declare
 a call by variable array, the declaration of the array parameter in the
 function definition looks like
-.Do Fa name Ns Li [] Dc .
+.Do Fa name Ns Ic \&[] Dc .
 The call to the
 function remains the same as call by value arrays.
 .Ss MATH LIBRARY
@@ -927,7 +963,7 @@ The cosine of
 is in radians.
 .It Fn a x
 The arctangent of
-.FA x ,
+.Fa x ,
 arctangent returns radians.
 .It Fn l x
 The natural logarithm of
@@ -1124,7 +1160,9 @@ have single letter names for functions, variables and arrays.
 They have been extended to be multi-character names that start with a letter and
 may contain letters, numbers and the underscore character.
 .It strings
-Strings are not allowed to contain NUL characters.
+Strings are not allowed to contain
+.Tn NUL
+characters.
 POSIX says all characters must be included in strings.
 .It Ic last
 POSIX
@@ -1165,11 +1203,11 @@ statement.
 POSIX
 .Nm
 does not have the logical operators.
-.It Ic read No function
+.It Fn read No function
 POSIX
 .Nm
 does not have a
-.Ic read
+.Fn read
 function.
 .It Ic print No statement
 POSIX
