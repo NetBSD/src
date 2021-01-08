@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.32 2021/01/03 12:52:54 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.33 2021/01/08 13:01:54 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1394,4 +1394,10 @@ sys/kern/init_main.c				(apply patch)
 	mountroothooks.
 	[khorben, #1177]
 
+compat/exec.mk					1.5
+external/bsd/ipf/Makefile.inc			1.6
+
+	ipf(4): build tools as 64bit binaries on mips64 (where most
+	userland is 32bit). Works around missing COMPAT_NETBSD32 for ipf.
+	[simonb, ticket #1183]
 
