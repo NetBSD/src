@@ -1,4 +1,4 @@
-/* $NetBSD: testpat.c,v 1.3 2021/01/02 12:12:26 jmcneill Exp $ */
+/* $NetBSD: testpat.c,v 1.4 2021/01/08 15:16:04 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -25,6 +25,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: testpat.c,v 1.4 2021/01/08 15:16:04 christos Exp $");
+
+#include <sys/types.h>
+#include <sys/time.h>
 
 #include <curses.h>
 #include <err.h>
@@ -34,69 +39,66 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
+
+static int colour_list[6] = {
+	COLOR_YELLOW,
+	COLOR_CYAN,
+	COLOR_GREEN,
+	COLOR_MAGENTA,
+	COLOR_RED,
+	COLOR_BLUE,
+};
+static int numcolours = (int)__arraycount(colour_list);
 
 int main(int argc, char *argv[]) {
 	int i, col, colour, line, x_limit, y_limit, colourOK, spacing;
 	int xpos, ypos, spacing_residual, spacing_start, spacing_end;
-	int grid_x, grid_y;
+	int grid_x, grid_y, **circle_pos;
+	size_t ncpos;
 	float grid_unit;
-
-	char title[255] = "NetBSD";
-	int numcolours = 6;
-
-	int colour_list[6] = {
-		COLOR_YELLOW,
-		COLOR_CYAN,
-		COLOR_GREEN,
-		COLOR_MAGENTA,
-		COLOR_RED,
-		COLOR_BLUE,
-	};
-
+	const char *title = "NetBSD";
 	float coord_x, circle_int;
 	float a_axis, b_axis;
 
-	if (!(initscr())) {
-		printf("\nUnknown terminal type.");
-		printf("\n");
-		return EXIT_FAILURE;
+	if (!initscr()) {
+		errx(EXIT_FAILURE, "Unknown terminal type");
 	}
+
 	curs_set(0);
 
 	if (argc > 2) {
 		endwin();
-		errx(EINVAL, "usage: testpat [title]");
+		fprintf(stderr, "Usage: %s <title>", getprogname());
+		return EXIT_FAILURE;
 	}
 
-	if (argc == 2 && strlen(argv[1]) < (size_t)COLS)
-		snprintf(title, sizeof(title), "%s", argv[1]);
-	else if (argc == 2 && (int)strlen(argv[1]) > COLS) {
-		endwin();
-		errx(EINVAL, "title string must be less than display columns");
+	if (argc == 2) {
+		title = argv[1];
+		if (strlen(title) >= (size_t)COLS) {
+			endwin();
+			errx(EXIT_FAILURE,
+			    "Title string is longer than display cols");
+		}
 	}
 
 	colourOK = has_colors();
 
 	if (COLS < 13 || LINES < 13) {
 		endwin();
-		printf("\nTerminal size must be at least 72x25.");
-		printf("\n");
-		return EXIT_FAILURE;
+		errx(EXIT_FAILURE, "Terminal size must be at least 72x25.");
 	}
 
 	if (colourOK) {
 		start_color();
 
-	    	init_pair( 0, COLOR_WHITE, COLOR_BLACK );
-	    	init_pair( 1, COLOR_WHITE, COLOR_RED );
-	    	init_pair( 2, COLOR_WHITE, COLOR_GREEN );
-	    	init_pair( 3, COLOR_WHITE, COLOR_YELLOW );
-	    	init_pair( 4, COLOR_WHITE, COLOR_BLUE );
-	    	init_pair( 5, COLOR_WHITE, COLOR_MAGENTA );
-	    	init_pair( 6, COLOR_WHITE, COLOR_CYAN );
-	    	init_pair( 7, COLOR_BLACK, COLOR_WHITE );
+	    	init_pair(0, COLOR_WHITE, COLOR_BLACK);
+	    	init_pair(1, COLOR_WHITE, COLOR_RED);
+	    	init_pair(2, COLOR_WHITE, COLOR_GREEN);
+	    	init_pair(3, COLOR_WHITE, COLOR_YELLOW);
+	    	init_pair(4, COLOR_WHITE, COLOR_BLUE);
+	    	init_pair(5, COLOR_WHITE, COLOR_MAGENTA);
+	    	init_pair(6, COLOR_WHITE, COLOR_CYAN);
+	    	init_pair(7, COLOR_BLACK, COLOR_WHITE);
 
 		attrset(COLOR_PAIR(0));
 	}
@@ -113,11 +115,21 @@ int main(int argc, char *argv[]) {
 	grid_y = grid_unit;
 	grid_x = grid_unit * 2;
 
-	int circle_pos[y_limit][2];
-	memset(circle_pos, -1, sizeof(circle_pos));
+	
+	ncpos = y_limit * sizeof(*circle_pos)
+	    + y_limit * 2 * sizeof(**circle_pos);
+	circle_pos = malloc(ncpos);
+	if (circle_pos == NULL) {
+		endwin();
+		errx(EXIT_FAILURE, "Can't allocate circle positions");
+	}
+	for (i = 0; i < y_limit; i++) {
+	    circle_pos[i] = (void *)&circle_pos[y_limit + i * 2];
+	    circle_pos[i][0] = circle_pos[i][1] = -1;
+	}
 
 	for (i = 0; i < y_limit; i++) {
-		/* Draw an elipse (looks more circular.) */
+		/* Draw an ellipse (looks more circular.) */
 		circle_int = (i - a_axis) / a_axis;
 		circle_int = 1 - powf(circle_int, 2);
 		circle_int = circle_int * powf(b_axis, 2);
@@ -200,8 +212,8 @@ int main(int argc, char *argv[]) {
     			attrset(COLOR_PAIR(COLOR_BLACK));
 
 		for (col = roundf((4 * grid_unit * 2) +
-		    circle_pos[y_limit /2][0]); col <= roundf((9 * grid_unit
-		    * 2) + circle_pos[y_limit /2][0]); col++)
+		    circle_pos[y_limit / 2][0]); col <= roundf((9 * grid_unit
+		    * 2) + circle_pos[y_limit / 2][0]); col++)
 			mvaddch(i, col, ' ');
 	}
 
@@ -435,7 +447,8 @@ int main(int argc, char *argv[]) {
 	for (col = 1; col < x_limit; col = col + grid_x) {
 		xpos = col;
 		while (xpos < col + grid_x - 1) {
-			if (xpos >= circle_pos[line][0] && xpos < circle_pos[line][1])
+			if (xpos >= circle_pos[line][0]
+			    && xpos < circle_pos[line][1])
 				mvaddch(line, xpos, 113 | A_ALTCHARSET);
 			xpos++;
 		}
