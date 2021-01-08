@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.392 2021/01/02 20:09:06 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.393 2021/01/08 04:36:44 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.392 2021/01/02 20:09:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.393 2021/01/08 04:36:44 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2850,6 +2850,7 @@ Job_TokenWithdraw(void)
 			Fatal("job pipe read: %s", strerror(errno));
 		}
 		DEBUG1(JOB, "(%d) blocked for token\n", getpid());
+		wantToken = 1;
 		return FALSE;
 	}
 
