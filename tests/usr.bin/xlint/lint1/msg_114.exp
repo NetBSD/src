@@ -1,1 +1,3 @@
-msg_114.c(6): syntax error ':' [249]
+msg_114.c(9): operand of 'x++' must be lvalue [114]
+msg_114.c(12): operand of 'x++' must be lvalue [114]
+msg_114.c(7): warning: argument a unused in function example [231]

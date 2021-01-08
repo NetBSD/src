@@ -1,1 +1,1 @@
-msg_156.c(6): syntax error ':' [249]
+msg_156.c(24): warning: enum type mismatch, arg #1 [156]

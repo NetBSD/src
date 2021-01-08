@@ -1,1 +1,2 @@
-msg_145.c(6): syntax error ':' [249]
+msg_145.c(16): cannot take size/alignment of bit-field [145]
+msg_145.c(24): cannot take size/alignment of bit-field [145]

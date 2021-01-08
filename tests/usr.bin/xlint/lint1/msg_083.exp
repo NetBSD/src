@@ -1,1 +1,1 @@
-msg_083.c(6): syntax error ':' [249]
+msg_083.c(9): warning: storage class after type is obsolescent [83]

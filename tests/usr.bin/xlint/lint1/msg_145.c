@@ -1,7 +1,25 @@
-/*	$NetBSD: msg_145.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_145.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
 # 3 "msg_145.c"
 
 // Test for message: cannot take size/alignment of bit-field [145]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+struct bits {
+	unsigned one: 1;
+	unsigned eight: 8;
+};
+
+unsigned long
+sizeof_one(void)
+{
+	struct bits local_bits;
+
+	return sizeof(local_bits.one);
+}
+
+unsigned long
+sizeof_eight(void)
+{
+	struct bits local_bits;
+
+	return sizeof(local_bits.eight);
+}
