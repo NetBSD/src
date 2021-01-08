@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.65 2021/01/01 13:21:11 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.66 2021/01/08 13:03:54 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1517,4 +1517,11 @@ sys/ufs/ufs/ufs_quota1.c			1.23
 
 	Avoid out of bounds array access.
 	[nia, ticket #1645]
+
+compat/exec.mk					1.5
+external/bsd/ipf/Makefile.inc			1.6
+
+	ipf(4): build tools as 64bit binaries on mips64 (where most
+	userland is 32bit). Works around missing COMPAT_NETBSD32 for ipf.
+	[simonb, ticket #1646]
 
