@@ -1,1 +1,2 @@
-msg_136.c(6): syntax error ':' [249]
+msg_136.c(11): cannot do pointer arithmetic on operand of unknown size [136]
+msg_136.c(6): warning: struct incomplete never defined [233]

@@ -1,1 +1,1 @@
-msg_174.c(6): syntax error ':' [249]
+msg_174.c(12): too many initializers [174]

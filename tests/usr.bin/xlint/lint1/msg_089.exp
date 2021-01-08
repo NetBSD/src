@@ -1,1 +1,2 @@
-msg_089.c(6): syntax error ':' [249]
+msg_089.c(7): typedef redeclared: number [89]
+msg_089.c(8): typedef redeclared: number [89]

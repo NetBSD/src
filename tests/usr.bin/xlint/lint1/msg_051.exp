@@ -1,1 +1,4 @@
-msg_051.c(6): syntax error ':' [249]
+msg_051.c(12): parameter mismatch: 2 declared, 3 defined [51]
+msg_051.c(10): warning: argument a unused in function example [231]
+msg_051.c(10): warning: argument b unused in function example [231]
+msg_051.c(10): warning: argument c unused in function example [231]
