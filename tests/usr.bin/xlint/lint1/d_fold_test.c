@@ -58,7 +58,7 @@ void if_enum(enum e e)			{ if (e) return; }
 void if_array(struct arr arr)		{ if (arr.arr) return; }
 void if_struct(struct s s)		{ if (s) return; }
 void if_union(union u u)		{ if (u) return; }
-void if_function(void (*f)(void))	{ if (f) return; }
+void if_function(void)			{ if (if_function) return; }
 void if_pointer(void *p)		{ if (p) return; }
 
 /* C99 6.8.5 */

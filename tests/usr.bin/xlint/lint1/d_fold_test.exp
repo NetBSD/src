@@ -1,5 +1,3 @@
-d_fold_test.c(58): controlling expressions must have scalar type [204]
-d_fold_test.c(58): warning: argument arr unused in function if_array [231]
 d_fold_test.c(59): controlling expressions must have scalar type [204]
 d_fold_test.c(59): warning: argument s unused in function if_struct [231]
 d_fold_test.c(60): controlling expressions must have scalar type [204]
