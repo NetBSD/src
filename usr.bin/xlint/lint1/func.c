@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.52 2021/01/08 01:40:03 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.53 2021/01/08 02:11:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.52 2021/01/08 01:40:03 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.53 2021/01/08 02:11:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -537,16 +537,13 @@ default_label(void)
 static tnode_t *
 check_controlling_expression(tnode_t *tn)
 {
-	// FIXME: dereference before null check
-	// FIXME: This is evaluated too early; see test msg_204
-	tspec_t t = tn->tn_type->t_tspec;
 
 	if (tn != NULL)
 		tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
 
-	if (tn != NULL && !tspec_is_scalar(t)) {
+	if (tn != NULL && !tspec_is_scalar(tn->tn_type->t_tspec)) {
 		/* C99 6.5.15p4 for the ?: operator; see typeok:QUEST */
 		/* C99 6.8.4.1p1 for if statements */
 		/* C99 6.8.5p2 for while, do and for loops */
