@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2017/01/11 12:19:43 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.3.6.1 2021/01/08 13:02:56 martin Exp $
 
 WARNS?=	1	# XXX -Wcast-qual -Wshadow
 CWARNFLAGS.clang+=	-Wno-format -Wno-tautological-compare \
@@ -36,3 +36,5 @@ CLEANFILES+=	y.tab.c y.tab.h
 	${UDIST}/lib	\
 	${UDIST}/tools	\
 	${UDIST}/man
+
+.include "../../compat/exec.mk"
