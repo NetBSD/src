@@ -1,1 +1,2 @@
-msg_160.c(6): syntax error ':' [249]
+msg_160.c(12): warning: operator '==' found where '=' was expected [160]
+msg_160.c(12): warning: operator '==' found where '=' was expected [160]
