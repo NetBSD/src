@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.77 2019/10/04 11:39:44 mrg Exp $	*/
+/*	$NetBSD: commands.c,v 1.78 2021/01/09 18:22:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.77 2019/10/04 11:39:44 mrg Exp $");
+__RCSID("$NetBSD: commands.c,v 1.78 2021/01/09 18:22:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2232,7 +2232,7 @@ tn(int argc, char *argv[])
     }
     freeaddrinfo(res0);
     if (net < 0 || connected == 0) {
-	warnx("%s", cause);
+	warn("%s", cause);
 	return 0;
     }
 
