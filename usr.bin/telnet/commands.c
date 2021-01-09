@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.78 2021/01/09 18:22:42 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.79 2021/01/09 18:26:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.78 2021/01/09 18:22:42 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.79 2021/01/09 18:26:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2086,7 +2086,7 @@ tn(int argc, char *argv[])
 {
     struct addrinfo hints, *res, *res0;
     const char *cause = "telnet: unknown";
-    int error;
+    int error, serrno = 0;
     char *cmd, *hostp = 0;
     const char *portp = 0;
     const char *user = 0;
@@ -2193,6 +2193,7 @@ tn(int argc, char *argv[])
 	printf("Trying %s...\n", sockaddr_ntop(res->ai_addr));
 	net = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (net < 0) {
+	    serrno = errno;
 	    cause = "telnet: socket";
 	    continue;
 	}
@@ -2203,11 +2204,13 @@ tn(int argc, char *argv[])
 
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 	if (setpolicy(net, res, ipsec_policy_in) < 0) {
+	    serrno = errno;
 	    (void) NetClose(net);
 	    net = -1;
 	    continue;
 	}
 	if (setpolicy(net, res, ipsec_policy_out) < 0) {
+	    serrno = errno;
 	    (void) NetClose(net);
 	    net = -1;
 	    continue;
@@ -2218,6 +2221,7 @@ tn(int argc, char *argv[])
 	    if (res->ai_next) {
 		warn("Connect to address %s: ", sockaddr_ntop(res->ai_addr));
 	    }
+	    serrno = errno;
 	    cause = "Unable to connect to remote host";
 	    (void) NetClose(net);
 	    net = -1;
@@ -2232,7 +2236,7 @@ tn(int argc, char *argv[])
     }
     freeaddrinfo(res0);
     if (net < 0 || connected == 0) {
-	warn("%s", cause);
+	warnc(serrno, "%s", cause);
 	return 0;
     }
 
