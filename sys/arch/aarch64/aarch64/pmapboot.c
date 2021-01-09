@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.14 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.15 2021/01/09 13:42:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.14 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.15 2021/01/09 13:42:25 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -240,8 +240,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 	    va, pa, size, blocksize, attr);
 
 	pa &= ~(blocksize - 1);
+	va_end = (va + size + blocksize - 1) & ~(blocksize - 1);
 	va &= ~(blocksize - 1);
-	va_end = (va + size + blocksize- 1) & ~(blocksize - 1);
 #ifdef OPTIMIZE_TLB_CONTIG
 	va_start = va;
 #endif
@@ -473,8 +473,8 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 	vsize_t left, mapsize, nblocks;
 	int nskip = 0;
 
-	va = trunc_page(va);
 	vend = round_page(va + size);
+	va = trunc_page(va);
 	left = vend - va;
 
 	/* align the start address to L2 blocksize */
