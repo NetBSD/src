@@ -1,9 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: 02-wedgenames,v 1.4 2016/08/15 12:54:40 mlelstv Exp $
+# $NetBSD: 02-wedgenames,v 1.5 2021/01/09 14:00:05 mlelstv Exp $
 #
 # Try to maintain symlinks to wedge devices
 #
+
+export LC_ALL=C
 
 event="$1"
 shift
@@ -11,11 +13,72 @@ devices=$@
 
 wedgedir=/dev/wedges
 
+recurse()
+{
+	test -d "$1" && ls -1af "$1" \
+	| while read n; do
+		case $n in
+		.|..) ;;
+		*)
+			echo "$1/$n"
+			if [ -L "$1/$n" ]; then
+				: #nothing
+			elif [ -d "$1/$n" ]; then
+				recurse "$1/$n"
+			fi
+			;;
+		esac
+	done
+}
+
+simple_readlink()
+{
+	local x
+
+	x=$(test -e "$1" && ls -ld "$1")
+	case $x in
+	*'-> '*) echo ${x#*-> };;
+	esac
+}
+
+ordtable=$(
+	for n1 in 0 1 2 3 4 5 6 7 8 9 a b c d e f; do
+	for n2 in 0 1 2 3 4 5 6 7 8 9 a b c d e f; do
+		echo "\$'\x$n1$n2') x=$n1$n2;;"
+	done
+	done
+)
+
+ord()
+{
+	local x
+	eval "case \$1 in $ordtable esac"
+	echo -n $x
+}
+
+encode()
+{
+	local a
+
+	a=$1
+	while [ -n "$a" ]; do
+		c="${a%"${a#?}"}"
+		a=${a#?}
+		case $c in
+		[[:alnum:]._:\;!^$\&~\(\)[\]{}=,+\-/])
+			;;
+		*)
+			c='%%'$(ord "$c")
+			;;
+		esac
+		echo -n "$c"
+	done
+}
+
 remove_wedge() {
-	test -d $wedgedir && find $wedgedir -print \
-	| sed -e 's# #\\ #g' \
+	recurse "$wedgedir" \
 	| while read w; do
-		t=$(readlink "$w")
+		t=$(simple_readlink "$w")
 		if [ x"$t" = x"/dev/$1" ]; then
 			rm -f "$w"
 			basedir=$(dirname "$w")
@@ -25,43 +88,27 @@ remove_wedge() {
 }
 
 add_wedge() {
-	n=$(dkctl "$1" getwedgeinfo \
-		| sed -ne '1s#^[^:]*: ##p' \
-		| awk -v GOOD='._:;!^$&~()[]{}=,+-/' '
-		BEGIN {
-			for (i=0; i<256; ++i)
-				ord[sprintf("%c",i)] = i
-		}
-		{
-			n = length($0)
-			o = ""
-			for (i=1; i<=n; ++i) {
-				c = substr($0,i,1)
-				if (c ~ /^[[:alnum:]]$/ || index(GOOD,c) > 0) {
-					o = o c
-				} else {
-					o = o sprintf("%%%02x",ord[c])
-				}
-			}
-			printf "%s",o
-		}'
-	)
-	case $n in
-	"") ;;
-	*)
-		test -d $wedgedir || mkdir -m 755 $wedgedir
-		basedir=$(dirname "$wedgedir/$n")
-		test -d "$basedir" || mkdir -p -m 755 "$basedir"
-		if oldlink=$(readlink "$wedgedir/$n"); then
-			if [ x"$oldlink" != "/dev/$1" ]; then
-				rm -f "$wedgedir/$n"
+	dkctl "$1" getwedgeinfo \
+	| while read l; do
+		case $l in
+		*': '*)
+			n="${l#*: }"
+			n=$(encode "$n")
+			test -d $wedgedir || mkdir -m 755 $wedgedir
+			basedir=$(dirname "$wedgedir/$n")
+			test -d "$basedir" || mkdir -p -m 755 "$basedir"
+			if oldlink=$(simple_readlink "$wedgedir/$n"); then
+				if [ x"$oldlink" != x"/dev/$1" ]; then
+					rm -f "$wedgedir/$n"
+					ln -s "/dev/$1" "$wedgedir/$n"
+				fi
+			else
 				ln -s "/dev/$1" "$wedgedir/$n"
 			fi
-		else
-			ln -s "/dev/$1" "$wedgedir/$n"
-		fi
-		;;
-	esac
+			;;
+		esac
+		break
+	done
 }
 
 for device in $devices; do
