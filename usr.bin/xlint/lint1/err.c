@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.64 2021/01/03 18:48:37 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.65 2021/01/09 17:21:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.64 2021/01/03 18:48:37 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.65 2021/01/09 17:21:33 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ const	char *msgs[] = {
 	"non-unique member requires struct/union %s",		      /* 105 */
 	"left operand of '->' must be pointer",			      /* 106 */
 	"operands of '%s' have incompatible types (%s != %s)",	      /* 107 */
-	"operand of '%s' has incompatible type (%s != %s)",	      /* 108 */
+	"operand of '%s' has invalid type (%s)",		      /* 108 */
 	"void type illegal in expression",			      /* 109 */
 	"pointer to function is not allowed here",		      /* 110 */
 	"unacceptable operand of '%s'",				      /* 111 */
