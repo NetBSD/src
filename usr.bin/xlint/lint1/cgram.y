@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.131 2021/01/05 00:02:52 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.132 2021/01/09 02:38:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.131 2021/01/05 00:02:52 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.132 2021/01/09 02:38:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: cgram.y,v 1.131 2021/01/05 00:02:52 rillig Exp $");
 #include "lint1.h"
 
 extern char *yytext;
+
 /*
  * Contains the level of current declaration. 0 is extern.
  * Used for symbol table entries.
@@ -146,7 +147,7 @@ anonymize(sym_t *s)
 %token			T_TYPEOF
 %token			T_EXTENSION
 %token			T_ALIGNOF
-%token	<y_op>		T_MULT
+%token	<y_op>		T_ASTERISK
 %token	<y_op>		T_DIVOP
 %token	<y_op>		T_ADDOP
 %token	<y_op>		T_SHFTOP
@@ -258,7 +259,7 @@ anonymize(sym_t *s)
 %left	T_RELOP
 %left	T_SHFTOP
 %left	T_ADDOP
-%left	T_MULT T_DIVOP
+%left	T_ASTERISK T_DIVOP
 %right	T_UNOP T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
 %left	T_LPAREN T_LBRACK T_STROP
 
@@ -1174,7 +1175,7 @@ pointer:
 	;
 
 asterisk:
-	  T_MULT {
+	  T_ASTERISK {
 		$$ = xcalloc(1, sizeof (pqinf_t));
 		$$->p_pcnt = 1;
 	  }
@@ -1797,7 +1798,7 @@ constant:
 	;
 
 expr:
-	  expr T_MULT expr {
+	  expr T_ASTERISK expr {
 		$$ = build(MULT, $1, $3);
 	  }
 	| expr T_DIVOP expr {
@@ -1896,7 +1897,7 @@ term:
 	| T_INCDEC term {
 		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
 	  }
-	| T_MULT term {
+	| T_ASTERISK term {
 		$$ = build(STAR, $2, NULL);
 	  }
 	| T_AND term {
