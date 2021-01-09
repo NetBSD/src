@@ -43,7 +43,6 @@
 #include "lcp.h"	/* lcp_close(), lcp_fsm */
 #endif
 
-static const char rcsid[] = RCSID;
 
 /*
  * Unfortunately there is a bug in zlib which means that using a
@@ -57,8 +56,8 @@ static const char rcsid[] = RCSID;
 /*
  * Command-line options.
  */
-static int setbsdcomp __P((char **));
-static int setdeflate __P((char **));
+static int setbsdcomp (char **);
+static int setdeflate (char **);
 static char bsd_value[8];
 static char deflate_value[8];
 
@@ -164,17 +163,17 @@ static option_t ccp_option_list[] = {
 /*
  * Protocol entry points from main code.
  */
-static void ccp_init __P((int unit));
-static void ccp_open __P((int unit));
-static void ccp_close __P((int unit, char *));
-static void ccp_lowerup __P((int unit));
-static void ccp_lowerdown __P((int));
-static void ccp_input __P((int unit, u_char *pkt, int len));
-static void ccp_protrej __P((int unit));
-static int  ccp_printpkt __P((u_char *pkt, int len,
-			      void (*printer) __P((void *, char *, ...)),
-			      void *arg));
-static void ccp_datainput __P((int unit, u_char *pkt, int len));
+static void ccp_init (int unit);
+static void ccp_open (int unit);
+static void ccp_close (int unit, char *);
+static void ccp_lowerup (int unit);
+static void ccp_lowerdown (int);
+static void ccp_input (int unit, u_char *pkt, int len);
+static void ccp_protrej (int unit);
+static int  ccp_printpkt (u_char *pkt, int len,
+			  void (*printer)(void *, char *, ...),
+			  void *arg);
+static void ccp_datainput (int unit, u_char *pkt, int len);
 
 struct protent ccp_protent = {
     PPP_CCP,
@@ -205,18 +204,18 @@ ccp_options ccp_hisoptions[NUM_PPP];	/* what we agreed to do */
 /*
  * Callbacks for fsm code.
  */
-static void ccp_resetci __P((fsm *));
-static int  ccp_cilen __P((fsm *));
-static void ccp_addci __P((fsm *, u_char *, int *));
-static int  ccp_ackci __P((fsm *, u_char *, int));
-static int  ccp_nakci __P((fsm *, u_char *, int, int));
-static int  ccp_rejci __P((fsm *, u_char *, int));
-static int  ccp_reqci __P((fsm *, u_char *, int *, int));
-static void ccp_up __P((fsm *));
-static void ccp_down __P((fsm *));
-static int  ccp_extcode __P((fsm *, int, int, u_char *, int));
-static void ccp_rack_timeout __P((void *));
-static char *method_name __P((ccp_options *, ccp_options *));
+static void ccp_resetci (fsm *);
+static int  ccp_cilen (fsm *);
+static void ccp_addci (fsm *, u_char *, int *);
+static int  ccp_ackci (fsm *, u_char *, int);
+static int  ccp_nakci (fsm *, u_char *, int, int);
+static int  ccp_rejci (fsm *, u_char *, int);
+static int  ccp_reqci (fsm *, u_char *, int *, int);
+static void ccp_up (fsm *);
+static void ccp_down (fsm *);
+static int  ccp_extcode (fsm *, int, int, u_char *, int);
+static void ccp_rack_timeout (void *);
+static char *method_name (ccp_options *, ccp_options *);
 
 static fsm_callbacks ccp_callbacks = {
     ccp_resetci,
@@ -258,8 +257,7 @@ static int all_rejected[NUM_PPP];	/* we rejected all peer's options */
  * Option parsing.
  */
 static int
-setbsdcomp(argv)
-    char **argv;
+setbsdcomp(char **argv)
 {
     int rbits, abits;
     char *str, *endp;
@@ -297,8 +295,7 @@ setbsdcomp(argv)
 }
 
 static int
-setdeflate(argv)
-    char **argv;
+setdeflate(char **argv)
 {
     int rbits, abits;
     char *str, *endp;
@@ -348,8 +345,7 @@ setdeflate(argv)
  * ccp_init - initialize CCP.
  */
 static void
-ccp_init(unit)
-    int unit;
+ccp_init(int unit)
 {
     fsm *f = &ccp_fsm[unit];
 
@@ -384,8 +380,7 @@ ccp_init(unit)
  * ccp_open - CCP is allowed to come up.
  */
 static void
-ccp_open(unit)
-    int unit;
+ccp_open(int unit)
 {
     fsm *f = &ccp_fsm[unit];
 
@@ -407,9 +402,7 @@ ccp_open(unit)
  * ccp_close - Terminate CCP.
  */
 static void
-ccp_close(unit, reason)
-    int unit;
-    char *reason;
+ccp_close(int unit, char *reason)
 {
     ccp_flags_set(unit, 0, 0);
     fsm_close(&ccp_fsm[unit], reason);
@@ -419,8 +412,7 @@ ccp_close(unit, reason)
  * ccp_lowerup - we may now transmit CCP packets.
  */
 static void
-ccp_lowerup(unit)
-    int unit;
+ccp_lowerup(int unit)
 {
     fsm_lowerup(&ccp_fsm[unit]);
 }
@@ -429,8 +421,7 @@ ccp_lowerup(unit)
  * ccp_lowerdown - we may not transmit CCP packets.
  */
 static void
-ccp_lowerdown(unit)
-    int unit;
+ccp_lowerdown(int unit)
 {
     fsm_lowerdown(&ccp_fsm[unit]);
 }
@@ -439,10 +430,7 @@ ccp_lowerdown(unit)
  * ccp_input - process a received CCP packet.
  */
 static void
-ccp_input(unit, p, len)
-    int unit;
-    u_char *p;
-    int len;
+ccp_input(int unit, u_char *p, int len)
 {
     fsm *f = &ccp_fsm[unit];
     int oldstate;
@@ -475,11 +463,7 @@ ccp_input(unit, p, len)
  * Handle a CCP-specific code.
  */
 static int
-ccp_extcode(f, code, id, p, len)
-    fsm *f;
-    int code, id;
-    u_char *p;
-    int len;
+ccp_extcode(fsm *f, int code, int id, u_char *p, int len)
 {
     switch (code) {
     case CCP_RESETREQ:
@@ -508,8 +492,7 @@ ccp_extcode(f, code, id, p, len)
  * ccp_protrej - peer doesn't talk CCP.
  */
 static void
-ccp_protrej(unit)
-    int unit;
+ccp_protrej(int unit)
 {
     ccp_flags_set(unit, 0, 0);
     fsm_lowerdown(&ccp_fsm[unit]);
@@ -527,8 +510,7 @@ ccp_protrej(unit)
  * ccp_resetci - initialize at start of negotiation.
  */
 static void
-ccp_resetci(f)
-    fsm *f;
+ccp_resetci(fsm *f)
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
     u_char opt_buf[CCP_MAX_OPTION_LENGTH];
@@ -540,6 +522,9 @@ ccp_resetci(f)
     if (go->mppe) {
 	ccp_options *ao = &ccp_allowoptions[f->unit];
 	int auth_mschap_bits = auth_done[f->unit];
+#ifdef USE_EAPTLS
+	int auth_eap_bits = auth_done[f->unit];
+#endif
 	int numbits;
 
 	/*
@@ -567,8 +552,23 @@ ccp_resetci(f)
 	    lcp_close(f->unit, "MPPE required but not available");
 	    return;
 	}
+
+#ifdef USE_EAPTLS
+    /*
+     * MPPE is also possible in combination with EAP-TLS.
+     * It is not possible to detect if we're doing EAP or EAP-TLS
+     * at this stage, hence we accept all forms of EAP. If TLS is
+     * not used then the MPPE keys will not be derived anyway.
+     */
+	/* Leave only the eap auth bits set */
+	auth_eap_bits &= (EAP_WITHPEER | EAP_PEER );
+
+	if ((numbits == 0) && (auth_eap_bits == 0)) {
+	    error("MPPE required, but MS-CHAP[v2] nor EAP-TLS auth are performed.");
+#else
 	if (!numbits) {
 	    error("MPPE required, but MS-CHAP[v2] auth not performed.");
+#endif
 	    lcp_close(f->unit, "MPPE required but not available");
 	    return;
 	}
@@ -670,13 +670,13 @@ ccp_resetci(f)
  * ccp_cilen - Return total length of our configuration info.
  */
 static int
-ccp_cilen(f)
-    fsm *f;
+  ccp_cilen(fsm *f)
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
 
     return (go->bsd_compress? CILEN_BSD_COMPRESS: 0)
-	+ (go->deflate? CILEN_DEFLATE: 0)
+	+ (go->deflate && go->deflate_correct? CILEN_DEFLATE: 0)
+	+ (go->deflate && go->deflate_draft? CILEN_DEFLATE: 0)
 	+ (go->predictor_1? CILEN_PREDICTOR_1: 0)
 	+ (go->predictor_2? CILEN_PREDICTOR_2: 0)
 	+ (go->mppe? CILEN_MPPE: 0);
@@ -686,10 +686,7 @@ ccp_cilen(f)
  * ccp_addci - put our requests in a packet.
  */
 static void
-ccp_addci(f, p, lenp)
-    fsm *f;
-    u_char *p;
-    int *lenp;
+  ccp_addci(fsm *f, u_char *p, int *lenp)
 {
     int res;
     ccp_options *go = &ccp_gotoptions[f->unit];
@@ -805,10 +802,7 @@ ccp_addci(f, p, lenp)
  * 1 iff the packet was OK.
  */
 static int
-ccp_ackci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
+  ccp_ackci(fsm *f, u_char *p, int len)
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
     u_char *p0 = p;
@@ -894,11 +888,7 @@ ccp_ackci(f, p, len)
  * Returns 1 iff the nak was OK.
  */
 static int
-ccp_nakci(f, p, len, treat_as_reject)
-    fsm *f;
-    u_char *p;
-    int len;
-    int treat_as_reject;
+  ccp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
     ccp_options no;		/* options we've seen already */
@@ -984,10 +974,7 @@ ccp_nakci(f, p, len, treat_as_reject)
  * ccp_rejci - reject some of our suggested compression methods.
  */
 static int
-ccp_rejci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
+ccp_rejci(fsm *f, u_char *p, int len)
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
     ccp_options try;		/* options to request next time */
@@ -1066,11 +1053,7 @@ ccp_rejci(f, p, len)
  * appropriately.
  */
 static int
-ccp_reqci(f, p, lenp, dont_nak)
-    fsm *f;
-    u_char *p;
-    int *lenp;
-    int dont_nak;
+ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak)
 {
     int ret, newret, res;
     u_char *p0, *retp;
@@ -1357,8 +1340,7 @@ ccp_reqci(f, p, lenp, dont_nak)
  * Make a string name for a compression method (or 2).
  */
 static char *
-method_name(opt, opt2)
-    ccp_options *opt, *opt2;
+method_name(ccp_options *opt, ccp_options *opt2)
 {
     static char result[64];
 
@@ -1422,8 +1404,7 @@ method_name(opt, opt2)
  * CCP has come up - inform the kernel driver and log a message.
  */
 static void
-ccp_up(f)
-    fsm *f;
+ccp_up(fsm *f)
 {
     ccp_options *go = &ccp_gotoptions[f->unit];
     ccp_options *ho = &ccp_hisoptions[f->unit];
@@ -1456,8 +1437,7 @@ ccp_up(f)
  * CCP has gone down - inform the kernel driver.
  */
 static void
-ccp_down(f)
-    fsm *f;
+ccp_down(fsm *f)
 {
     if (ccp_localstate[f->unit] & RACK_PENDING)
 	UNTIMEOUT(ccp_rack_timeout, f);
@@ -1486,11 +1466,8 @@ static char *ccp_codenames[] = {
 };
 
 static int
-ccp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+ccp_printpkt(u_char *p, int plen,
+	     void (*printer) (void *, char *, ...), void *arg)
 {
     u_char *p0, *optend;
     int code, id, len;
@@ -1619,10 +1596,7 @@ ccp_printpkt(p, plen, printer, arg)
  * compression :-(, otherwise we issue the reset-request.
  */
 static void
-ccp_datainput(unit, pkt, len)
-    int unit;
-    u_char *pkt;
-    int len;
+ccp_datainput(int unit, u_char *pkt, int len)
 {
     fsm *f;
 
@@ -1663,8 +1637,7 @@ ccp_datainput(unit, pkt, len)
  * Timeout waiting for reset-ack.
  */
 static void
-ccp_rack_timeout(arg)
-    void *arg;
+ccp_rack_timeout(void *arg)
 {
     fsm *f = arg;
 

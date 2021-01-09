@@ -28,8 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: utils.c,v 1.25 2008/06/03 12:06:37 paulus Exp "
-
+#include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -59,16 +58,15 @@
 #include "fsm.h"
 #include "lcp.h"
 
-static const char rcsid[] = RCSID;
 
 #if defined(SUNOS4)
 extern char *strerror();
 #endif
 
-static void logit __P((int, char *, va_list));
-static void log_write __P((int, char *));
-static void vslp_printer __P((void *, char *, ...));
-static void format_packet __P((u_char *, int, printer_func, void *));
+static void logit(int, char *, va_list);
+static void log_write(int, char *);
+static void vslp_printer(void *, char *, ...);
+static void format_packet(u_char *, int, printer_func, void *);
 
 struct buffer_info {
     char *ptr;
@@ -80,10 +78,7 @@ struct buffer_info {
  * always leaves destination null-terminated (for len > 0).
  */
 size_t
-strlcpy(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
+strlcpy(char *dest, const char *src, size_t len)
 {
     size_t ret = strlen(src);
 
@@ -103,10 +98,7 @@ strlcpy(dest, src, len)
  * always leaves destination null-terminated (for len > 0).
  */
 size_t
-strlcat(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
+strlcat(char *dest, const char *src, size_t len)
 {
     size_t dlen = strlen(dest);
 
@@ -123,22 +115,12 @@ strlcat(dest, src, len)
  * Returns the number of chars put into buf.
  */
 int
-slprintf __V((char *buf, int buflen, char *fmt, ...))
+slprintf(char *buf, int buflen, char *fmt, ...)
 {
     va_list args;
     int n;
 
-#if defined(__STDC__)
     va_start(args, fmt);
-#else
-    char *buf;
-    int buflen;
-    char *fmt;
-    va_start(args);
-    buf = va_arg(args, char *);
-    buflen = va_arg(args, int);
-    fmt = va_arg(args, char *);
-#endif
     n = vslprintf(buf, buflen, fmt, args);
     va_end(args);
     return n;
@@ -150,11 +132,7 @@ slprintf __V((char *buf, int buflen, char *fmt, ...))
 #define OUTCHAR(c)	(buflen > 0? (--buflen, *buf++ = (c)): 0)
 
 int
-vslprintf(buf, buflen, fmt, args)
-    char *buf;
-    int buflen;
-    char *fmt;
-    va_list args;
+vslprintf(char *buf, int buflen, char *fmt, va_list args)
 {
     int c, i, n;
     int width, prec, fillch;
@@ -167,6 +145,7 @@ vslprintf(buf, buflen, fmt, args)
     u_int32_t ip;
     static char hexchars[] = "0123456789abcdef";
     struct buffer_info bufinfo;
+    int termch;
 
     buf0 = buf;
     --buflen;
@@ -300,13 +279,17 @@ vslprintf(buf, buflen, fmt, args)
 		    p = (unsigned char *)"<NULL>";
 	    if (fillch == '0' && prec >= 0) {
 		n = prec;
+		termch = -1;	/* matches no unsigned char value */
 	    } else {
-		n = strlen((char *)p);
-		if (prec >= 0 && n > prec)
+		n = buflen;
+		if (prec != -1 && n > prec)
 		    n = prec;
+		termch = 0;	/* stop on null byte */
 	    }
 	    while (n > 0 && buflen > 0) {
 		c = *p++;
+		if (c == termch)
+		    break;
 		--n;
 		if (!quoted && c >= 0x80) {
 		    OUTCHAR('M');
@@ -386,9 +369,9 @@ vslprintf(buf, buflen, fmt, args)
 	    }
 	    len = num + sizeof(num) - 1 - str;
 	} else {
-	    len = strlen(str);
-	    if (prec >= 0 && len > prec)
-		len = prec;
+	    for (len = 0; len < buflen && (prec == -1 || len < prec); ++len)
+		if (str[len] == 0)
+		    break;
 	}
 	if (width > 0) {
 	    if (width > buflen)
@@ -413,21 +396,13 @@ vslprintf(buf, buflen, fmt, args)
  * vslp_printer - used in processing a %P format
  */
 static void
-vslp_printer __V((void *arg, char *fmt, ...))
+vslp_printer(void *arg, char *fmt, ...)
 {
     int n;
     va_list pvar;
     struct buffer_info *bi;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    void *arg;
-    char *fmt;
-    va_start(pvar);
-    arg = va_arg(pvar, void *);
-    fmt = va_arg(pvar, char *);
-#endif
 
     bi = (struct buffer_info *) arg;
     n = vslprintf(bi->ptr, bi->len, fmt, pvar);
@@ -443,11 +418,7 @@ vslp_printer __V((void *arg, char *fmt, ...))
  */
 
 void
-log_packet(p, len, prefix, level)
-    u_char *p;
-    int len;
-    char *prefix;
-    int level;
+log_packet(u_char *p, int len, char *prefix, int level)
 {
 	init_pr_log(prefix, level);
 	format_packet(p, len, pr_log, &level);
@@ -460,11 +431,7 @@ log_packet(p, len, prefix, level)
  * calling `printer(arg, format, ...)' to output it.
  */
 static void
-format_packet(p, len, printer, arg)
-    u_char *p;
-    int len;
-    printer_func printer;
-    void *arg;
+format_packet(u_char *p, int len, printer_func printer, void *arg)
 {
     int i, n;
     u_short proto;
@@ -514,9 +481,7 @@ static char *linep;		/* current pointer within line */
 static int llevel;		/* level for logging */
 
 void
-init_pr_log(prefix, level)
-     const char *prefix;
-     int level;
+init_pr_log(const char *prefix, int level)
 {
 	linep = line;
 	if (prefix != NULL) {
@@ -527,7 +492,7 @@ init_pr_log(prefix, level)
 }
 
 void
-end_pr_log()
+end_pr_log(void)
 {
 	if (linep != line) {
 		*linep = 0;
@@ -539,22 +504,14 @@ end_pr_log()
  * pr_log - printer routine for outputting to syslog
  */
 void
-pr_log __V((void *arg, char *fmt, ...))
+pr_log(void *arg, char *fmt, ...)
 {
 	int l, n;
 	va_list pvar;
 	char *p, *eol;
 	char buf[256];
 
-#if defined(__STDC__)
 	va_start(pvar, fmt);
-#else
-	void *arg;
-	char *fmt;
-	va_start(pvar);
-	arg = va_arg(pvar, void *);
-	fmt = va_arg(pvar, char *);
-#endif
 
 	n = vslprintf(buf, sizeof(buf), fmt, pvar);
 	va_end(pvar);
@@ -598,11 +555,7 @@ pr_log __V((void *arg, char *fmt, ...))
  * printer.
  */
 void
-print_string(p, len, printer, arg)
-    char *p;
-    int len;
-    printer_func printer;
-    void *arg;
+print_string(char *p, int len, printer_func printer, void *arg)
 {
     int c;
 
@@ -625,7 +578,7 @@ print_string(p, len, printer, arg)
 		printer(arg, "\\t");
 		break;
 	    default:
-		printer(arg, "\\%.3o", c);
+		printer(arg, "\\%.3o", (unsigned char) c);
 	    }
 	}
     }
@@ -636,10 +589,7 @@ print_string(p, len, printer, arg)
  * logit - does the hard work for fatal et al.
  */
 static void
-logit(level, fmt, args)
-    int level;
-    char *fmt;
-    va_list args;
+logit(int level, char *fmt, va_list args)
 {
     char buf[1024];
 
@@ -648,9 +598,7 @@ logit(level, fmt, args)
 }
 
 static void
-log_write(level, buf)
-    int level;
-    char *buf;
+log_write(int level, char *buf)
 {
     syslog(level, "%s", buf);
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
@@ -668,17 +616,11 @@ log_write(level, buf)
  * fatal - log an error message and die horribly.
  */
 void
-fatal __V((char *fmt, ...))
+fatal(char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
 
     logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
@@ -690,17 +632,11 @@ fatal __V((char *fmt, ...))
  * error - log an error message.
  */
 void
-error __V((char *fmt, ...))
+error(char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
 
     logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
@@ -711,17 +647,11 @@ error __V((char *fmt, ...))
  * warn - log a warning message.
  */
 void
-warn __V((char *fmt, ...))
+warn(char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
 
     logit(LOG_WARNING, fmt, pvar);
     va_end(pvar);
@@ -731,17 +661,11 @@ warn __V((char *fmt, ...))
  * notice - log a notice-level message.
  */
 void
-notice __V((char *fmt, ...))
+notice(char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
 
     logit(LOG_NOTICE, fmt, pvar);
     va_end(pvar);
@@ -751,17 +675,11 @@ notice __V((char *fmt, ...))
  * info - log an informational message.
  */
 void
-info __V((char *fmt, ...))
+info(char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
 
     logit(LOG_INFO, fmt, pvar);
     va_end(pvar);
@@ -771,17 +689,11 @@ info __V((char *fmt, ...))
  * dbglog - log a debug message.
  */
 void
-dbglog __V((char *fmt, ...))
+dbglog(char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
 
     logit(LOG_DEBUG, fmt, pvar);
     va_end(pvar);
@@ -831,7 +743,7 @@ complete_read(int fd, void *buf, size_t count)
 	for (done = 0; done < count; ) {
 		nb = read(fd, ptr, count - done);
 		if (nb < 0) {
-			if (errno == EINTR)
+			if (errno == EINTR && !got_sigterm)
 				continue;
 			return -1;
 		}
@@ -862,8 +774,7 @@ static char lock_file[MAXPATHLEN];
  * lock - create a lock file for the named device
  */
 int
-lock(dev)
-    char *dev;
+lock(char *dev)
 {
 #ifdef LOCKLIB
     int result;
@@ -991,8 +902,7 @@ lock(dev)
  * between when the parent died and the child rewrote the lockfile).
  */
 int
-relock(pid)
-    int pid;
+relock(int pid)
 {
 #ifdef LOCKLIB
     /* XXX is there a way to do this? */
@@ -1027,7 +937,7 @@ relock(pid)
  * unlock - remove our lockfile
  */
 void
-unlock()
+unlock(void)
 {
     if (lock_file[0]) {
 #ifdef LOCKLIB

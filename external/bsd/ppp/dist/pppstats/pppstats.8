@@ -7,6 +7,8 @@ pppstats \- print PPP statistics
 [
 .B \-a
 ] [
+.B \-d
+] [
 .B \-v
 ] [
 .B \-r
@@ -40,6 +42,9 @@ Display absolute values rather than deltas.  With this option, all
 reports show statistics for the time since the link was initiated.
 Without this option, the second and subsequent reports show statistics
 for the time since the last report.
+.TP
+.B \-d
+Show data rate (kB/s) instead of bytes.
 .TP
 .B \-c \fIcount
 Repeat the display

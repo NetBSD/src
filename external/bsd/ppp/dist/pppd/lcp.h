@@ -38,8 +38,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Id: lcp.h,v 1.20 2004/11/14 22:53:42 carlsonj Exp 
  */
 
 /*
@@ -122,11 +120,11 @@ extern lcp_options lcp_hisoptions[];
 #define MINMRU	128		/* No MRUs below this */
 #define MAXMRU	16384		/* Normally limit MRU to this */
 
-void lcp_open __P((int));
-void lcp_close __P((int, char *));
-void lcp_lowerup __P((int));
-void lcp_lowerdown __P((int));
-void lcp_sprotrej __P((int, u_char *, int));	/* send protocol reject */
+void lcp_open(int);
+void lcp_close(int, char *);
+void lcp_lowerup(int);
+void lcp_lowerdown(int);
+void lcp_sprotrej(int, u_char *, int);	/* send protocol reject */
 
 extern struct protent lcp_protent;
 

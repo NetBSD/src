@@ -41,8 +41,8 @@
 #include <des.h>
 #endif
 
-extern bool	DesSetkey __P((u_char *));
-extern bool	DesEncrypt __P((u_char *, u_char *));
-extern bool	DesDecrypt __P((u_char *, u_char *));
+extern bool	DesSetkey(u_char *);
+extern bool	DesEncrypt(u_char *, u_char *);
+extern bool	DesDecrypt(u_char *, u_char *);
 
 #endif /* PPPCRYPT_H */

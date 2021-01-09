@@ -68,8 +68,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: tty.c,v 1.27 2008/07/01 12:27:56 paulus Exp "
-
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -83,7 +81,6 @@
 #include <netdb.h>
 #include <utmp.h>
 #include <pwd.h>
-#include <setjmp.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -98,28 +95,28 @@
 #include "fsm.h"
 #include "lcp.h"
 
-void tty_process_extra_options __P((void));
-void tty_check_options __P((void));
-int  connect_tty __P((void));
-void disconnect_tty __P((void));
-void tty_close_fds __P((void));
-void cleanup_tty __P((void));
-void tty_do_send_config __P((int, u_int32_t, int, int));
+void tty_process_extra_options(void);
+void tty_check_options(void);
+int  connect_tty(void);
+void disconnect_tty(void);
+void tty_close_fds(void);
+void cleanup_tty(void);
+void tty_do_send_config(int, u_int32_t, int, int);
 
-static int setdevname __P((char *, char **, int));
-static int setspeed __P((char *, char **, int));
-static int setxonxoff __P((char **));
-static int setescape __P((char **));
-static void printescape __P((option_t *, void (*)(void *, char *,...),void *));
-static void finish_tty __P((void));
-static int start_charshunt __P((int, int));
-static void stop_charshunt __P((void *, int));
-static void charshunt_done __P((void *));
-static void charshunt __P((int, int, char *));
-static int record_write __P((FILE *, int code, u_char *buf, int nb,
-			     struct timeval *));
-static int open_socket __P((char *));
-static void maybe_relock __P((void *, int));
+static int setdevname(char *, char **, int);
+static int setspeed(char *, char **, int);
+static int setxonxoff(char **);
+static int setescape(char **);
+static void printescape(option_t *, void (*)(void *, char *,...),void *);
+static void finish_tty(void);
+static int start_charshunt(int, int);
+static void stop_charshunt(void *, int);
+static void charshunt_done(void *);
+static void charshunt(int, int, char *);
+static int record_write(FILE *, int code, u_char *buf, int nb,
+			struct timeval *);
+static int open_socket(char *);
+static void maybe_relock(void *, int);
 
 static int pty_master;		/* fd for master side of pty */
 static int pty_slave;		/* fd for slave side of pty */
@@ -266,10 +263,7 @@ struct channel tty_channel = {
  * potentially a speed value.
  */
 static int
-setspeed(arg, argv, doit)
-    char *arg;
-    char **argv;
-    int doit;
+setspeed(char *arg, char **argv, int doit)
 {
 	char *ptr;
 	int spd;
@@ -291,10 +285,7 @@ setspeed(arg, argv, doit)
  * potentially a device name.
  */
 static int
-setdevname(cp, argv, doit)
-    char *cp;
-    char **argv;
-    int doit;
+setdevname(char *cp, char **argv, int doit)
 {
 	struct stat statbuf;
 	char dev[MAXPATHLEN];
@@ -333,8 +324,7 @@ setdevname(cp, argv, doit)
 }
 
 static int
-setxonxoff(argv)
-    char **argv;
+setxonxoff(char **argv)
 {
 	lcp_wantoptions[0].asyncmap |= 0x000A0000;	/* escape ^S and ^Q */
 	lcp_wantoptions[0].neg_asyncmap = 1;
@@ -347,8 +337,7 @@ setxonxoff(argv)
  * setescape - add chars to the set we escape on transmission.
  */
 static int
-setescape(argv)
-    char **argv;
+setescape(char **argv)
 {
     int n, ret;
     char *p, *endp;
@@ -376,10 +365,7 @@ setescape(argv)
 }
 
 static void
-printescape(opt, printer, arg)
-    option_t *opt;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+printescape(option_t *opt, void (*printer)(void *, char *, ...), void *arg)
 {
 	int n;
 	int first = 1;
@@ -402,7 +388,7 @@ printescape(opt, printer, arg)
 /*
  * tty_init - do various tty-related initializations.
  */
-void tty_init()
+void tty_init(void)
 {
     add_notifier(&pidchange, maybe_relock, 0);
     the_channel = &tty_channel;
@@ -413,7 +399,7 @@ void tty_init()
  * tty_process_extra_options - work out which tty device we are using
  * and read its options file.
  */
-void tty_process_extra_options()
+void tty_process_extra_options(void)
 {
 	using_pty = notty || ptycommand != NULL || pty_socket != NULL;
 	if (using_pty)
@@ -445,7 +431,7 @@ void tty_process_extra_options()
  * tty_check_options - do consistency checks on the options we were given.
  */
 void
-tty_check_options()
+tty_check_options(void)
 {
 	struct stat statbuf;
 	int fdflags;
@@ -515,7 +501,7 @@ tty_check_options()
  * That is, open the serial port, set its speed and mode, and run
  * the connector and/or welcomer.
  */
-int connect_tty()
+int connect_tty(void)
 {
 	char *connector;
 	int fdflags;
@@ -773,7 +759,7 @@ int connect_tty()
 }
 
 
-void disconnect_tty()
+void disconnect_tty(void)
 {
 	if (disconnect_script == NULL || hungup)
 		return;
@@ -787,7 +773,7 @@ void disconnect_tty()
 	stop_charshunt(NULL, 0);
 }
 
-void tty_close_fds()
+void tty_close_fds(void)
 {
 	if (pty_slave >= 0)
 		close(pty_slave);
@@ -798,7 +784,7 @@ void tty_close_fds()
 	/* N.B. ttyfd will == either pty_slave or real_ttyfd */
 }
 
-void cleanup_tty()
+void cleanup_tty(void)
 {
 	if (real_ttyfd >= 0)
 		finish_tty();
@@ -814,10 +800,7 @@ void cleanup_tty()
  * We set the extended transmit ACCM here as well.
  */
 void
-tty_do_send_config(mtu, accm, pcomp, accomp)
-    int mtu;
-    u_int32_t accm;
-    int pcomp, accomp;
+tty_do_send_config(int mtu, u_int32_t accm, int pcomp, int accomp)
 {
 	tty_set_xaccm(xmit_accm);
 	tty_send_config(mtu, accm, pcomp, accomp);
@@ -827,7 +810,7 @@ tty_do_send_config(mtu, accm, pcomp, accomp)
  * finish_tty - restore the terminal device to its original settings
  */
 static void
-finish_tty()
+finish_tty(void)
 {
 	/* drop dtr to hang up */
 	if (!default_device && modem) {
@@ -856,9 +839,7 @@ finish_tty()
  * maybe_relock - our PID has changed, maybe update the lock file.
  */
 static void
-maybe_relock(arg, pid)
-    void *arg;
-    int pid;
+maybe_relock(void *arg, int pid)
 {
     if (locked)
 	relock(pid);
@@ -869,8 +850,7 @@ maybe_relock(arg, pid)
  * host and port.
  */
 static int
-open_socket(dest)
-    char *dest;
+open_socket(char *dest)
 {
     char *sep, *endp = NULL;
     int sock, port = -1;
@@ -923,8 +903,7 @@ open_socket(dest)
  * start_charshunt - create a child process to run the character shunt.
  */
 static int
-start_charshunt(ifd, ofd)
-    int ifd, ofd;
+start_charshunt(int ifd, int ofd)
 {
     int cpid;
 
@@ -953,16 +932,13 @@ start_charshunt(ifd, ofd)
 }
 
 static void
-charshunt_done(arg)
-    void *arg;
+charshunt_done(void *arg)
 {
 	charshunt_pid = 0;
 }
 
 static void
-stop_charshunt(arg, sig)
-    void *arg;
-    int sig;
+stop_charshunt(void *arg, int sig)
 {
 	if (charshunt_pid)
 		kill(charshunt_pid, (sig == SIGINT? sig: SIGTERM));
@@ -975,9 +951,7 @@ stop_charshunt(arg, sig)
  * (We assume ofd >= ifd which is true the way this gets called. :-).
  */
 static void
-charshunt(ifd, ofd, record_file)
-    int ifd, ofd;
-    char *record_file;
+charshunt(int ifd, int ofd, char *record_file)
 {
     int n, nfds;
     fd_set ready, writey;
@@ -1072,7 +1046,7 @@ charshunt(ifd, ofd, record_file)
     pty_readable = stdin_readable = 1;
 
     ilevel = olevel = 0;
-    gettimeofday(&levelt, NULL);
+    get_time(&levelt);
     if (max_data_rate) {
 	max_level = max_data_rate / 10;
 	if (max_level < 100)
@@ -1121,7 +1095,7 @@ charshunt(ifd, ofd, record_file)
 	    int nbt;
 	    struct timeval now;
 
-	    gettimeofday(&now, NULL);
+	    get_time(&now);
 	    dt = (now.tv_sec - levelt.tv_sec
 		  + (now.tv_usec - levelt.tv_usec) / 1e6);
 	    nbt = (int)(dt * max_data_rate);
@@ -1225,12 +1199,7 @@ charshunt(ifd, ofd, record_file)
 }
 
 static int
-record_write(f, code, buf, nb, tp)
-    FILE *f;
-    int code;
-    u_char *buf;
-    int nb;
-    struct timeval *tp;
+record_write(FILE *f, int code, u_char *buf, int nb, struct timeval *tp)
 {
     struct timeval now;
     int diff;

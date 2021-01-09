@@ -50,13 +50,13 @@ bool multilink_master;		/* we own the multilink bundle */
 extern TDB_CONTEXT *pppdb;
 extern char db_key[];
 
-static void make_bundle_links __P((int append));
-static void remove_bundle_link __P((void));
-static void iterate_bundle_links __P((void (*func) __P((char *))));
+static void make_bundle_links(int append);
+static void remove_bundle_link(void);
+static void iterate_bundle_links(void (*func)(char *));
 
-static int get_default_epdisc __P((struct epdisc *));
-static int parse_num __P((char *str, const char *key, int *valp));
-static int owns_unit __P((TDB_DATA pid, int unit));
+static int get_default_epdisc(struct epdisc *);
+static int parse_num(char *str, const char *key, int *valp);
+static int owns_unit(TDB_DATA pid, int unit);
 
 #define set_ip_epdisc(ep, addr) do {	\
 	ep->length = 4;			\
@@ -74,7 +74,7 @@ static int owns_unit __P((TDB_DATA pid, int unit));
 #define process_exists(n)	(kill((n), 0) == 0 || errno != ESRCH)
 
 void
-mp_check_options()
+mp_check_options(void)
 {
 	lcp_options *wo = &lcp_wantoptions[0];
 	lcp_options *ao = &lcp_allowoptions[0];
@@ -102,7 +102,7 @@ mp_check_options()
  * if we are doing multilink.
  */
 int
-mp_join_bundle()
+mp_join_bundle(void)
 {
 	lcp_options *go = &lcp_gotoptions[0];
 	lcp_options *ho = &lcp_hisoptions[0];
@@ -204,7 +204,7 @@ mp_join_bundle()
 			/* make sure the string is null-terminated */
 			rec.dptr[rec.dsize-1] = 0;
 			/* parse the interface number */
-			parse_num(rec.dptr, "IFNAME=ppp", &unit);
+			parse_num(rec.dptr, "UNIT=", &unit);
 			/* check the pid value */
 			if (!parse_num(rec.dptr, "PPPD_PID=", &pppd_pid)
 			    || !process_exists(pppd_pid)
@@ -240,7 +240,7 @@ mp_join_bundle()
 	return 0;
 }
 
-void mp_exit_bundle()
+void mp_exit_bundle(void)
 {
 	lock_db();
 	remove_bundle_link();
@@ -258,7 +258,7 @@ static void sendhup(char *str)
 	}
 }
 
-void mp_bundle_terminated()
+void mp_bundle_terminated(void)
 {
 	TDB_DATA key;
 
@@ -325,7 +325,7 @@ static void make_bundle_links(int append)
 		free(p);
 }
 
-static void remove_bundle_link()
+static void remove_bundle_link(void)
 {
 	TDB_DATA key, rec;
 	char entry[32];
@@ -388,10 +388,7 @@ static void iterate_bundle_links(void (*func)(char *))
 }
 
 static int
-parse_num(str, key, valp)
-     char *str;
-     const char *key;
-     int *valp;
+parse_num(char *str, const char *key, int *valp)
 {
 	char *p, *endp;
 	int i;
@@ -412,15 +409,13 @@ parse_num(str, key, valp)
  * Check whether the pppd identified by `key' still owns ppp unit `unit'.
  */
 static int
-owns_unit(key, unit)
-     TDB_DATA key;
-     int unit;
+owns_unit(TDB_DATA key, int unit)
 {
 	char ifkey[32];
 	TDB_DATA kd, vd;
 	int ret = 0;
 
-	slprintf(ifkey, sizeof(ifkey), "IFNAME=ppp%d", unit);
+	slprintf(ifkey, sizeof(ifkey), "UNIT=%d", unit);
 	kd.dptr = ifkey;
 	kd.dsize = strlen(ifkey);
 	vd = tdb_fetch(pppdb, kd);
@@ -433,16 +428,13 @@ owns_unit(key, unit)
 }
 
 static int
-get_default_epdisc(ep)
-     struct epdisc *ep;
+get_default_epdisc(struct epdisc *ep)
 {
-	char *p;
 	struct hostent *hp;
 	u_int32_t addr;
 
 	/* First try for an ethernet MAC address */
-	p = get_first_ethernet();
-	if (p != 0 && get_if_hwaddr(ep->value, p) >= 0) {
+	if (get_first_ether_hwaddr(ep->value) >= 0) {
 		ep->class = EPD_MAC;
 		ep->length = 6;
 		return 1;
@@ -474,8 +466,7 @@ static char *endp_class_names[] = {
 };
 
 char *
-epdisc_to_str(ep)
-     struct epdisc *ep;
+epdisc_to_str(struct epdisc *ep)
 {
 	static char str[MAX_ENDP_LEN*3+8];
 	u_char *p = ep->value;
@@ -525,9 +516,7 @@ static int hexc_val(int c)
 }
 
 int
-str_to_epdisc(ep, str)
-     struct epdisc *ep;
-     char *str;
+str_to_epdisc(struct epdisc *ep, char *str)
 {
 	int i, l;
 	char *p, *endp;
@@ -589,4 +578,3 @@ str_to_epdisc(ep, str)
 	ep->length = l;
 	return 1;
 }
-

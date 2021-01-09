@@ -120,6 +120,9 @@ extern int (*chap_verify_hook)(char *name, char *ourname, int id,
 /* Called by digest code to register a digest type */
 extern void chap_register_digest(struct chap_digest_type *);
 
+/* Lookup a digest handler by type */
+extern struct chap_digest_type *chap_find_digest(int digest_code);
+
 /* Called by authentication code to start authenticating the peer. */
 extern void chap_auth_peer(int unit, char *our_name, int digest_code);
 

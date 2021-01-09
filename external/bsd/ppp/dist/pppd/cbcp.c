@@ -33,8 +33,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: cbcp.c,v 1.17 2006/05/22 00:04:07 paulus Exp "
-
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -45,12 +43,11 @@
 #include "fsm.h"
 #include "lcp.h"
 
-static const char rcsid[] = RCSID;
 
 /*
  * Options.
  */
-static int setcbcp __P((char **));
+static int setcbcp (char **);
 
 static option_t cbcp_option_list[] = {
     { "callback", o_special, (void *)setcbcp,
@@ -61,14 +58,14 @@ static option_t cbcp_option_list[] = {
 /*
  * Protocol entry points.
  */
-static void cbcp_init      __P((int unit));
-static void cbcp_open      __P((int unit));
-static void cbcp_lowerup   __P((int unit));
-static void cbcp_input     __P((int unit, u_char *pkt, int len));
-static void cbcp_protrej   __P((int unit));
-static int  cbcp_printpkt  __P((u_char *pkt, int len,
-				void (*printer) __P((void *, char *, ...)),
-				void *arg));
+static void cbcp_init      (int unit);
+static void cbcp_open      (int unit);
+static void cbcp_lowerup   (int unit);
+static void cbcp_input     (int unit, u_char *pkt, int len);
+static void cbcp_protrej   (int unit);
+static int  cbcp_printpkt  (u_char *pkt, int len,
+			    void (*printer)(void *, char *, ...),
+			    void *arg);
 
 struct protent cbcp_protent = {
     PPP_CBCP,
@@ -94,16 +91,15 @@ cbcp_state cbcp[NUM_PPP];
 
 /* internal prototypes */
 
-static void cbcp_recvreq __P((cbcp_state *us, u_char *pckt, int len));
-static void cbcp_resp __P((cbcp_state *us));
-static void cbcp_up __P((cbcp_state *us));
-static void cbcp_recvack __P((cbcp_state *us, u_char *pckt, int len));
-static void cbcp_send __P((cbcp_state *us, int code, u_char *buf, int len));
+static void cbcp_recvreq (cbcp_state *us, u_char *pckt, int len);
+static void cbcp_resp (cbcp_state *us);
+static void cbcp_up (cbcp_state *us);
+static void cbcp_recvack (cbcp_state *us, u_char *pckt, int len);
+static void cbcp_send (cbcp_state *us, int code, u_char *buf, int len);
 
 /* option processing */
 static int
-setcbcp(argv)
-    char **argv;
+setcbcp(char **argv)
 {
     lcp_wantoptions[0].neg_cbcp = 1;
     cbcp_protent.enabled_flag = 1;
@@ -117,8 +113,7 @@ setcbcp(argv)
 
 /* init state */
 static void
-cbcp_init(iface)
-    int iface;
+cbcp_init(int iface)
 {
     cbcp_state *us;
 
@@ -130,8 +125,7 @@ cbcp_init(iface)
 
 /* lower layer is up */
 static void
-cbcp_lowerup(iface)
-    int iface;
+cbcp_lowerup(int iface)
 {
     cbcp_state *us = &cbcp[iface];
 
@@ -143,18 +137,14 @@ cbcp_lowerup(iface)
 }
 
 static void
-cbcp_open(unit)
-    int unit;
+cbcp_open(int unit)
 {
     dbglog("cbcp_open");
 }
 
 /* process an incomming packet */
 static void
-cbcp_input(unit, inpacket, pktlen)
-    int unit;
-    u_char *inpacket;
-    int pktlen;
+cbcp_input(int unit, u_char *inpacket, int pktlen)
 {
     u_char *inp;
     u_char code, id;
@@ -224,11 +214,8 @@ char *cbcp_optionnames[] = {
 
 /* pretty print a packet */
 static int
-cbcp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+cbcp_printpkt(u_char *p, int plen,
+	      void (*printer) (void *, char *, ...), void *arg)
 {
     int code, opt, id, len, olen, delay;
     u_char *pstart;
@@ -302,10 +289,7 @@ cbcp_printpkt(p, plen, printer, arg)
 
 /* received CBCP request */
 static void
-cbcp_recvreq(us, pckt, pcktlen)
-    cbcp_state *us;
-    u_char *pckt;
-    int pcktlen;
+cbcp_recvreq(cbcp_state *us, u_char *pckt, int pcktlen)
 {
     u_char type, opt_len, delay, addr_type;
     char address[256];
@@ -361,8 +345,7 @@ cbcp_recvreq(us, pckt, pcktlen)
 }
 
 static void
-cbcp_resp(us)
-    cbcp_state *us;
+cbcp_resp(cbcp_state *us)
 {
     u_char cb_type;
     u_char buf[256];
@@ -417,11 +400,7 @@ cbcp_resp(us)
 }
 
 static void
-cbcp_send(us, code, buf, len)
-    cbcp_state *us;
-    int code;
-    u_char *buf;
-    int len;
+cbcp_send(cbcp_state *us, int code, u_char *buf, int len)
 {
     u_char *outp;
     int outlen;
@@ -443,10 +422,7 @@ cbcp_send(us, code, buf, len)
 }
 
 static void
-cbcp_recvack(us, pckt, len)
-    cbcp_state *us;
-    u_char *pckt;
-    int len;
+cbcp_recvack(cbcp_state *us, u_char *pckt, int len)
 {
     u_char type, delay, addr_type;
     int opt_len;
@@ -479,8 +455,7 @@ cbcp_recvack(us, pckt, len)
 
 /* ok peer will do callback */
 static void
-cbcp_up(us)
-    cbcp_state *us;
+cbcp_up(cbcp_state *us)
 {
     persist = 0;
     status = EXIT_CALLBACK;

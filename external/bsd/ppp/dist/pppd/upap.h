@@ -38,8 +38,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Id: upap.h,v 1.8 2002/12/04 23:03:33 paulus Exp 
  */
 
 /*
@@ -104,7 +102,7 @@ typedef struct upap_state {
 
 extern upap_state upap[];
 
-void upap_authwithpeer __P((int, char *, char *));
-void upap_authpeer __P((int));
+void upap_authwithpeer(int, char *, char *);
+void upap_authpeer(int);
 
 extern struct protent pap_protent;

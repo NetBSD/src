@@ -94,25 +94,24 @@
 #include "pppcrypt.h"
 #include "magic.h"
 
-static const char rcsid[] = RCSID;
 
 
-static void	ascii2unicode __P((char[], int, u_char[]));
-static void	NTPasswordHash __P((u_char *, int, u_char[MD4_SIGNATURE_SIZE]));
-static void	ChallengeResponse __P((u_char *, u_char *, u_char[24]));
-static void	ChapMS_NT __P((u_char *, char *, int, u_char[24]));
-static void	ChapMS2_NT __P((u_char *, u_char[16], char *, char *, int,
-				u_char[24]));
+static void	ascii2unicode (char[], int, u_char[]);
+static void	NTPasswordHash (u_char *, int, u_char[MD4_SIGNATURE_SIZE]);
+static void	ChallengeResponse (u_char *, u_char *, u_char[24]);
+static void	ChapMS_NT (u_char *, char *, int, u_char[24]);
+static void	ChapMS2_NT (u_char *, u_char[16], char *, char *, int,
+				u_char[24]);
 static void	GenerateAuthenticatorResponsePlain
-			__P((char*, int, u_char[24], u_char[16], u_char *,
-			     char *, u_char[41]));
+			(char*, int, u_char[24], u_char[16], u_char *,
+			 char *, u_char[41]);
 #ifdef MSLANMAN
-static void	ChapMS_LANMan __P((u_char *, char *, int, u_char *));
+static void	ChapMS_LANMan (u_char *, char *, int, u_char *);
 #endif
 
 #ifdef MPPE
-static void	Set_Start_Key __P((u_char *, char *, int));
-static void	SetMasterKeys __P((char *, int, u_char[24], int));
+static void	Set_Start_Key (u_char *, char *, int);
+static void	SetMasterKeys (char *, int, u_char[24], int);
 #endif
 
 #ifdef MSLANMAN
@@ -424,6 +423,8 @@ chapms2_check_success(int id, unsigned char *msg, int len)
 	len -= MS_AUTH_RESPONSE_LENGTH;
 	if ((len >= 3) && !strncmp((char *)msg, " M=", 3)) {
 		msg += 3; /* Eat the delimiter */
+	} else 	if ((len >= 2) && !strncmp((char *)msg, "M=", 2)) {
+		msg += 2; /* Eat the delimiter */
 	} else if (len) {
 		/* Packet has extra text which does not begin " M=" */
 		error("MS-CHAPv2 Success packet is badly formed.");

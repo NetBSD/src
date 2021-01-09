@@ -55,20 +55,26 @@ int (*chap_verify_hook)(char *name, char *ourname, int id,
 /*
  * Option variables.
  */
-int chap_timeout_time = 3;
+int chap_server_timeout_time = 3;
 int chap_max_transmits = 10;
 int chap_rechallenge_time = 0;
+int chap_client_timeout_time = 60;
+int chapms_strip_domain = 0;
 
 /*
  * Command-line options.
  */
 static option_t chap_option_list[] = {
-	{ "chap-restart", o_int, &chap_timeout_time,
-	  "Set timeout for CHAP", OPT_PRIO },
+	{ "chap-restart", o_int, &chap_server_timeout_time,
+	  "Set timeout for CHAP (as server)", OPT_PRIO },
 	{ "chap-max-challenge", o_int, &chap_max_transmits,
 	  "Set max #xmits for challenge", OPT_PRIO },
 	{ "chap-interval", o_int, &chap_rechallenge_time,
 	  "Set interval for rechallenge", OPT_PRIO },
+	{ "chap-timeout", o_int, &chap_client_timeout_time,
+	  "Set timeout for CHAP (as client)", OPT_PRIO },
+	{ "chapms-strip-domain", o_bool, &chapms_strip_domain,
+	  "Strip the domain prefix before the Username", 1 },
 	{ NULL }
 };
 
@@ -114,7 +120,8 @@ static struct chap_server_state {
 static void chap_init(int unit);
 static void chap_lowerup(int unit);
 static void chap_lowerdown(int unit);
-static void chap_timeout(void *arg);
+static void chap_server_timeout(void *arg);
+static void chap_client_timeout(void *arg);
 static void chap_generate_challenge(struct chap_server_state *ss);
 static void chap_handle_response(struct chap_server_state *ss, int code,
 		unsigned char *pkt, int len);
@@ -129,7 +136,7 @@ static void chap_handle_status(struct chap_client_state *cs, int code, int id,
 static void chap_protrej(int unit);
 static void chap_input(int unit, unsigned char *pkt, int pktlen);
 static int chap_print_pkt(unsigned char *p, int plen,
-		void (*printer) __P((void *, char *, ...)), void *arg);
+		void (*printer)(void *, char *, ...), void *arg);
 
 /* List of digest types that we know about */
 static struct chap_digest_type *chap_digests;
@@ -160,6 +167,18 @@ chap_register_digest(struct chap_digest_type *dp)
 }
 
 /*
+ * Lookup a digest type by code
+ */
+struct chap_digest_type *
+chap_find_digest(int digest_code) {
+    struct chap_digest_type *dp = NULL;
+	for (dp = chap_digests; dp != NULL; dp = dp->next)
+		if (dp->code == digest_code)
+			break;
+    return dp;
+}
+
+/*
  * chap_lowerup - we can start doing stuff now.
  */
 static void
@@ -171,7 +190,7 @@ chap_lowerup(int unit)
 	cs->flags |= LOWERUP;
 	ss->flags |= LOWERUP;
 	if (ss->flags & AUTH_STARTED)
-		chap_timeout(ss);
+		chap_server_timeout(ss);
 }
 
 static void
@@ -180,9 +199,11 @@ chap_lowerdown(int unit)
 	struct chap_client_state *cs = &client;
 	struct chap_server_state *ss = &server;
 
+	if (cs->flags & TIMEOUT_PENDING)
+		UNTIMEOUT(chap_client_timeout, cs);
 	cs->flags = 0;
 	if (ss->flags & TIMEOUT_PENDING)
-		UNTIMEOUT(chap_timeout, ss);
+		UNTIMEOUT(chap_server_timeout, ss);
 	ss->flags = 0;
 }
 
@@ -214,7 +235,7 @@ chap_auth_peer(int unit, char *our_name, int digest_code)
 	ss->id = (unsigned char)(drand48() * 256);
 	ss->flags |= AUTH_STARTED;
 	if (ss->flags & LOWERUP)
-		chap_timeout(ss);
+		chap_server_timeout(ss);
 }
 
 /*
@@ -240,16 +261,17 @@ chap_auth_with_peer(int unit, char *our_name, int digest_code)
 
 	cs->digest = dp;
 	cs->name = our_name;
-	cs->flags |= AUTH_STARTED;
+	cs->flags |= AUTH_STARTED | TIMEOUT_PENDING;
+	TIMEOUT(chap_client_timeout, cs, chap_client_timeout_time);
 }
 
 /*
- * chap_timeout - It's time to send another challenge to the peer.
+ * chap_server_timeout - It's time to send another challenge to the peer.
  * This could be either a retransmission of a previous challenge,
  * or a new challenge to start re-authentication.
  */
 static void
-chap_timeout(void *arg)
+chap_server_timeout(void *arg)
 {
 	struct chap_server_state *ss = arg;
 
@@ -268,7 +290,19 @@ chap_timeout(void *arg)
 	output(0, ss->challenge, ss->challenge_pktlen);
 	++ss->challenge_xmits;
 	ss->flags |= TIMEOUT_PENDING;
-	TIMEOUT(chap_timeout, arg, chap_timeout_time);
+	TIMEOUT(chap_server_timeout, arg, chap_server_timeout_time);
+}
+
+/* chap_client_timeout - Authentication with peer timed out. */
+static void
+chap_client_timeout(void *arg)
+{
+	struct chap_client_state *cs = arg;
+
+	cs->flags &= ~TIMEOUT_PENDING;
+	cs->flags |= AUTH_DONE | AUTH_FAILED;
+	error("CHAP authentication timed out");
+	auth_withpeer_fail(0, PPP_CHAP);
 }
 
 /*
@@ -327,7 +361,7 @@ chap_handle_response(struct chap_server_state *ss, int id,
 
 		if (ss->flags & TIMEOUT_PENDING) {
 			ss->flags &= ~TIMEOUT_PENDING;
-			UNTIMEOUT(chap_timeout, ss);
+			UNTIMEOUT(chap_server_timeout, ss);
 		}
 
 		if (explicit_remote) {
@@ -336,6 +370,14 @@ chap_handle_response(struct chap_server_state *ss, int id,
 			/* Null terminate and clean remote name. */
 			slprintf(rname, sizeof(rname), "%.*v", len, name);
 			name = rname;
+
+			/* strip the MS domain name */
+			if (chapms_strip_domain && strrchr(rname, '\\')) {
+				char tmp[MAXNAMELEN+1];
+
+				strcpy(tmp, strrchr(rname, '\\') + 1);
+				strcpy(rname, tmp);
+			}
 		}
 
 		if (chap_verify_hook)
@@ -392,7 +434,7 @@ chap_handle_response(struct chap_server_state *ss, int id,
 						  name, strlen(name));
 			if (chap_rechallenge_time) {
 				ss->flags |= TIMEOUT_PENDING;
-				TIMEOUT(chap_timeout, ss,
+				TIMEOUT(chap_server_timeout, ss,
 					chap_rechallenge_time);
 			}
 		}
@@ -495,6 +537,9 @@ chap_handle_status(struct chap_client_state *cs, int code, int id,
 		return;
 	cs->flags |= AUTH_DONE;
 
+	UNTIMEOUT(chap_client_timeout, cs);
+	cs->flags &= ~TIMEOUT_PENDING;
+
 	if (code == CHAP_SUCCESS) {
 		/* used for MS-CHAP v2 mutual auth, yuck */
 		if (cs->digest->check_success != NULL) {
@@ -562,7 +607,7 @@ chap_protrej(int unit)
 
 	if (ss->flags & TIMEOUT_PENDING) {
 		ss->flags &= ~TIMEOUT_PENDING;
-		UNTIMEOUT(chap_timeout, ss);
+		UNTIMEOUT(chap_server_timeout, ss);
 	}
 	if (ss->flags & AUTH_STARTED) {
 		ss->flags = 0;
@@ -584,7 +629,7 @@ static char *chap_code_names[] = {
 
 static int
 chap_print_pkt(unsigned char *p, int plen,
-	       void (*printer) __P((void *, char *, ...)), void *arg)
+	       void (*printer)(void *, char *, ...), void *arg)
 {
 	int code, id, len;
 	int clen, nlen;

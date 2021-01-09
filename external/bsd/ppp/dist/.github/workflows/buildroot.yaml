@@ -1,0 +1,56 @@
+name: Buildroot
+on: [push, pull_request]
+
+jobs:
+  buildroot:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        defconfig_name: [qemu_x86_defconfig, qemu_x86_64_defconfig, raspberrypi4_defconfig, raspberrypi4_64_defconfig, qemu_ppc64le_pseries_defconfig, qemu_mips32r2_malta_defconfig, qemu_mips64_malta_defconfig]
+        libc_name: [glibc, uclibc, musl]
+    steps:
+      - name: Checkout Buildroot sources
+        run: git clone --depth=1 --branch=2020.11.1 https://git.busybox.net/buildroot
+      - name: Select latest PPP version
+        working-directory: buildroot/package/pppd
+        run: |
+          # Allow package to build when musl libc is selected
+          sed -i '/depends on !BR2_TOOLCHAIN_USES_MUSL/d' Config.in
+          # Upstream version always needs OpenSSL
+          sed -i '/select BR2_PACKAGE_OPENSSL/c\\select BR2_PACKAGE_OPENSSL' Config.in
+          # Do not check for package hash, so there is no need to compute it
+          rm pppd.hash
+          # Buildroot patch is already applied upstream
+          rm -f 0001-pppd-Fix-bounds-check.patch
+          # Get package sources from head of master branch
+          sed -i "/PPPD_VERSION =/c\\PPPD_VERSION = ${GITHUB_SHA}" pppd.mk
+          sed -i '/PPPD_SITE =/c\\PPPD_SITE = https://github.com/paulusmack/ppp' pppd.mk
+          sed -i '9iPPPD_SITE_METHOD = git' pppd.mk
+          # Plugin rp-pppoe has been renamed in "pppoe"
+          sed -i 's/rp-pppoe/pppoe/g' pppd.mk
+      - name: Enable PPP build
+        working-directory: buildroot
+        run: |
+          # Enable all Buildroot PPP options as everything is built by upstream build system
+          echo "BR2_PACKAGE_PPPD=y" >> configs/${{ matrix.defconfig_name }}
+          echo "BR2_PACKAGE_PPPD_FILTER=y" >> configs/${{ matrix.defconfig_name }}
+          echo "BR2_PACKAGE_PPPD_RADIUS=y" >> configs/${{ matrix.defconfig_name }}
+          echo "BR2_PACKAGE_PPPD_OVERWRITE_RESOLV_CONF=y" >> configs/${{ matrix.defconfig_name }}
+      - name: Select glibc
+        if: ${{ matrix.libc_name == 'glibc' }}
+        working-directory: buildroot
+        run: echo "BR2_TOOLCHAIN_BUILDROOT_GLIBC=y" >> configs/${{ matrix.defconfig_name }}
+      - name: Select uClibc
+        if: ${{ matrix.libc_name == 'uclibc' }}
+        working-directory: buildroot
+        run: echo "BR2_TOOLCHAIN_BUILDROOT_UCLIBC=y" >> configs/${{ matrix.defconfig_name }}
+      - name: Select musl
+        if: ${{ matrix.libc_name == 'musl' }}
+        working-directory: buildroot
+        run: echo "BR2_TOOLCHAIN_BUILDROOT_MUSL=y" >> configs/${{ matrix.defconfig_name }}
+      - name: Configure Buildroot
+        working-directory: buildroot
+        run: make ${{ matrix.defconfig_name }}
+      - name: Build
+        working-directory: buildroot
+        run: make

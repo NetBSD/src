@@ -121,6 +121,23 @@ the gateway, when IPCP negotiation is successfully completed.
 This entry is removed when the PPP connection is broken.  This option
 is privileged if the \fInodefaultroute\fR option has been specified.
 .TP
+.B defaultroute-metric
+Define the metric of the \fIdefaultroute\fR and only add it if there
+is no other default route with the same metric.  With the default
+value of -1, the route is only added if there is no default route at
+all.
+.TP
+.B defaultroute6
+Add a default IPv6 route to the system routing tables, using the peer as
+the gateway, when IPv6CP negotiation is successfully completed.
+This entry is removed when the PPP connection is broken.  This option
+is privileged if the \fInodefaultroute6\fR option has been specified.
+.TP
+.B replacedefaultroute
+This option is a flag to the defaultroute option. If defaultroute is
+set and this flag is also set, pppd replaces an existing default route
+with the new default route.  This option is privileged.
+.TP
 .B disconnect \fIscript
 Execute the command specified by \fIscript\fR, by passing it to a
 shell, after
@@ -248,6 +265,12 @@ Alternatively, a value of 0 for \fInr\fR or \fInt\fR disables
 compression in the corresponding direction.  Use \fInobsdcomp\fR or
 \fIbsdcomp 0\fR to disable BSD-Compress compression entirely.
 .TP
+.B ca \fIca-file
+(EAP-TLS) Use the file \fIca-file\fR as the X.509 Certificate Authority
+(CA) file (in PEM format), needed for setting up an EAP-TLS connection.
+This option is used on the client-side in conjunction with the \fBcert\fR
+and \fBkey\fR options.
+.TP
 .B cdtrcts
 Use a non-standard hardware flow control (i.e. DTR/CTS) to control
 the flow of data on the serial port.  If neither the \fIcrtscts\fR,
@@ -258,6 +281,12 @@ Some serial ports (such as Macintosh serial ports) lack a true
 RTS output. Such serial ports use this mode to implement true
 bi-directional flow control. The sacrifice is that this flow
 control mode does not permit using DTR as a modem control line.
+.TP
+.B cert \fIcertfile
+(EAP-TLS) Use the file \fIcertfile\fR as the X.509 certificate (in PEM
+format), needed for setting up an EAP-TLS connection. This option is
+used on the client-side in conjunction with the \fBca\fR and 
+\fBkey\fR options.
 .TP
 .B chap\-interval \fIn
 If this option is given, pppd will rechallenge the peer every \fIn\fR
@@ -270,6 +299,15 @@ Set the maximum number of CHAP challenge transmissions to \fIn\fR
 .B chap\-restart \fIn
 Set the CHAP restart interval (retransmission timeout for challenges)
 to \fIn\fR seconds (default 3).
+.TP
+.B chap-timeout \fIn
+Set timeout for CHAP authentication by peer to \fIn\fR seconds (default 60).
+.TP
+.B chapms\-strip\-domain
+Some Windows 9x/ME clients might be transmitting the MS domain before the
+username in the provided client name. This option enables stripping the domain
+from the client name on the server side before matching it against the secret
+file.
 .TP
 .B child\-timeout \fIn
 When exiting, wait for up to \fIn\fR seconds for any child processes
@@ -286,6 +324,18 @@ valid PPP packet is received from the peer, pppd will commence
 negotiation by sending its first LCP packet.  The default value is
 1000 (1 second).  This wait period only applies if the \fBconnect\fR
 or \fBpty\fR option is used.
+.TP
+.B crl \fIfilename
+(EAP-TLS) Use the file \fIfilename\fR as the Certificate Revocation List
+to check for the validity of the peer's certificate. This option is not
+mandatory for setting up an EAP-TLS connection. Also see the \fBcrl-dir\fR
+option.
+.TP
+.B crl-dir \fIdirectory
+(EAP-TLS) Use the directory \fIdirectory\fR to scan for CRL files in
+has format ($hash.r0) to check for the validity of the peer's certificate.
+This option is not mandatory for setting up an EAP-TLS connection.
+Also see the \fBcrl\fR option.
 .TP
 .B debug
 Enables connection debugging facilities.
@@ -458,6 +508,11 @@ With this option, pppd will accept the peer's idea of our local IPv6
 interface identifier, even if the local IPv6 interface identifier
 was specified in an option.
 .TP
+.B ipv6cp\-accept\-remote
+With this option, pppd will accept the peer's idea of its (remote)
+IPv6 interface identifier, even if the remote IPv6 interface
+identifier was specified in an option.
+.TP
 .B ipv6cp\-max\-configure \fIn
 Set the maximum number of IPv6CP configure-request transmissions to
 \fIn\fR (default 10).
@@ -551,12 +606,23 @@ transmitted packets be printed.  On most systems, messages printed by
 the kernel are logged by syslog(1) to a file as directed in the
 /etc/syslog.conf configuration file.
 .TP
+.B key \fIkeyfile
+(EAP-TLS) Use the file \fIkeyfile\fR as the private key file (in PEM
+format), needed for setting up an EAP-TLS connection. This option is
+used on the client-side in conjunction with the \fBca\fR and 
+\fBcert\fR options.
+.TP
 .B ktune
 Enables pppd to alter kernel settings as appropriate.  Under Linux,
 pppd will enable IP forwarding (i.e. set /proc/sys/net/ipv4/ip_forward
 to 1) if the \fIproxyarp\fR option is used, and will enable the
 dynamic IP address option (i.e. set /proc/sys/net/ipv4/ip_dynaddr to
 1) in demand mode if the local address changes.
+.TP
+.B lcp\-echo\-adaptive
+If this option is used with the \fIlcp\-echo\-failure\fR option then
+pppd will send LCP echo\-request frames only if no traffic was received
+from the peer since the last echo\-request was sent.
 .TP
 .B lcp\-echo\-failure \fIn
 If this option is given, pppd will presume the peer to be dead
@@ -709,6 +775,9 @@ name to \fIname\fR.)
 Disable Address/Control compression in both directions (send and
 receive).
 .TP
+.B need-peer-eap
+(EAP-TLS) Require the peer to verify our authentication credentials.
+.TP
 .B noauth
 Do not require the peer to authenticate itself.  This option is
 privileged.
@@ -734,7 +803,16 @@ disable both forms of hardware flow control.
 .TP
 .B nodefaultroute
 Disable the \fIdefaultroute\fR option.  The system administrator who
-wishes to prevent users from creating default routes with pppd
+wishes to prevent users from adding a default route with pppd
+can do so by placing this option in the /etc/ppp/options file.
+.TP
+.B noreplacedefaultroute
+Disable the \fIreplacedefaultroute\fR option. This allows to disable a
+\fIreplacedefaultroute\fR option set previously in the configuration.
+.TP
+.B nodefaultroute6
+Disable the \fIdefaultroute6\fR option.  The system administrator who
+wishes to prevent users from adding a default route with pppd
 can do so by placing this option in the /etc/ppp/options file.
 .TP
 .B nodeflate
@@ -1065,6 +1143,10 @@ When operating as an EAP SRP\-SHA1 client, attempt to use the pseudonym
 stored in ~/.ppp_pseudonym first as the identity, and save in this
 file any pseudonym offered by the peer during authentication.
 .TP
+.B stop\-bits \fIn
+Set the number of stop bits for the serial port. Valid values are 1 or 2.
+The default value is 1.
+.TP
 .B sync
 Use synchronous HDLC serial encoding instead of asynchronous.
 The device used by pppd with this option must have sync support.
@@ -1073,7 +1155,13 @@ under Linux and FreeBSD 2.2.8 and later.
 .TP
 .B unit \fInum
 Sets the ppp unit number (for a ppp0 or ppp1 etc interface name) for outbound
-connections.
+connections.  If the unit is already in use a dynamically allocated number will
+be used.
+.TP
+.B ifname \fIstring
+Set the ppp interface name for outbound connections.  If the interface name is
+already in use, or if the name cannot be used for any other reason, pppd will
+terminate.
 .TP
 .B unset \fIname
 Remove a variable from the environment variable for scripts that are
@@ -1087,6 +1175,15 @@ With this option, pppd will detach from its controlling terminal once
 it has successfully established the ppp connection (to the point where
 the first network control protocol, usually the IP control protocol,
 has come up).
+.TP
+.B up_sdnotify
+Use this option to run pppd in systemd service units of Type=notify
+(\fBup_sdnotify\fR implies \fBnodetach\fR).
+When \fBup_sdnotify\fR is enabled, pppd will notify systemd once
+it has successfully established the ppp connection (to the point where
+the first network control protocl, usually the IP control protocol,
+has come up). This option is only availble when pppd is compiled with
+systemd support.
 .TP
 .B usehostname
 Enforce the use of the hostname (with domain name appended, if given)
@@ -1120,6 +1217,49 @@ overridden by a non-privileged user.
 .B xonxoff
 Use software flow control (i.e. XON/XOFF) to control the flow of data on
 the serial port.
+.SH PPPOE OPTIONS
+To establish PPP link over Ethernet (PPPoE) it is needed to load pppd's
+\fBplugin pppoe.so\fR and then specify option \fBnic-\fIinterface\fR
+instead of modem options \fIttyname\fR and \fIspeed\fR.
+Recognized pppd's PPPoE options are:
+.TP
+.B nic-\fIinterface
+Use the ethernet device \fIinterface\fR to communicate with the peer.
+For example, establishing PPPoE link on \fIeth0\fR interface is done
+by specifying ppp'd option \fBnic-eth0\fR. Prefix \fBnic-\fR for this
+option may be avoided if interface name is unambiguous and does not
+look like any other pppd's option.
+.TP
+.B pppoe-service \fIname
+Connect to specified PPPoE service name. For backward compatibility also
+\fBrp_pppoe_service\fP option name is supported.
+.TP
+.B pppoe-ac \fIname
+Connect to specified PPPoE access concentrator name. For backward
+compatibility also \fBrp_pppoe_ac\fP option name is supported.
+.TP
+.B pppoe-sess \fIsessid\fP:\fImacaddr
+Attach to existing PPPoE session. For backward compatibility also
+\fBrp_pppoe_sess\fP option name is supported.
+.TP
+.B pppoe-verbose \fIn
+Be verbose about discovered access concentrators. For backward
+compatibility also \fBrp_pppoe_verbose\fP option name is supported.
+.TP
+.B pppoe-mac \fImacaddr
+Connect to specified MAC address.
+.TP
+.B pppoe-host-uniq \fIstring
+Set the PPPoE Host-Uniq tag to the supplied hex string.
+By default PPPoE Host-Uniq tag is set to the pppd's process PID.
+For backward compatibility this option may be specified without
+\fBpppoe-\fP prefix.
+.TP
+.B pppoe-padi-timeout \fIn
+Initial timeout for discovery packets in seconds (default 5).
+.TP
+.B pppoe-padi-attempts \fIn
+Number of discovery attempts (default 3).
 .SH OPTIONS FILES
 Options can be taken from files as well as the command line.  Pppd
 reads options from the files /etc/ppp/options, ~/.ppprc and
@@ -1641,6 +1781,9 @@ the connection.
 .B LINKNAME
 The logical name of the link, set with the \fIlinkname\fR option.
 .TP
+.B CALL_FILE
+The value of the \fIcall\fR option.
+.TP
 .B DNS1
 If the peer supplies DNS server addresses, this variable is set to the
 first DNS server address supplied (whether or not the usepeerdns
@@ -1821,6 +1964,11 @@ July 1994.
 Simpson, W.A.
 .I PPP in HDLC-like Framing.
 July 1994.
+.TP
+.B RFC1990
+Sklower, K.; et al.,
+.I The PPP Multilink Protocol (MP).
+August 1996.
 .TP
 .B RFC2284
 Blunk, L.; Vollbrecht, J.,

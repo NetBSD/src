@@ -40,8 +40,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: ipcp.c,v 1.73 2008/05/26 08:33:22 paulus Exp "
-
 /*
  * TODO:
  */
@@ -55,13 +53,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 #include "pppd.h"
 #include "fsm.h"
 #include "ipcp.h"
 #include "pathnames.h"
 
-static const char rcsid[] = RCSID;
 
 /* global vars */
 ipcp_options ipcp_wantoptions[NUM_PPP];	/* Options that we want to request */
@@ -75,13 +73,13 @@ bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
 bool	noremoteip = 0;		/* Let him have no IP address */
 
 /* Hook for a plugin to know when IP protocol has come up */
-void (*ip_up_hook) __P((void)) = NULL;
+void (*ip_up_hook)(void) = NULL;
 
 /* Hook for a plugin to know when IP protocol has come down */
-void (*ip_down_hook) __P((void)) = NULL;
+void (*ip_down_hook)(void) = NULL;
 
 /* Hook for a plugin to choose the remote IP address */
-void (*ip_choose_hook) __P((u_int32_t *)) = NULL;
+void (*ip_choose_hook)(u_int32_t *) = NULL;
 
 /* Notifiers for when IPCP goes up and down */
 struct notifier *ip_up_notifier = NULL;
@@ -100,16 +98,16 @@ static char netmask_str[20];		/* string form of netmask value */
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
-static void ipcp_resetci __P((fsm *));	/* Reset our CI */
-static int  ipcp_cilen __P((fsm *));	        /* Return length of our CI */
-static void ipcp_addci __P((fsm *, u_char *, int *)); /* Add our CI */
-static int  ipcp_ackci __P((fsm *, u_char *, int));	/* Peer ack'd our CI */
-static int  ipcp_nakci __P((fsm *, u_char *, int, int));/* Peer nak'd our CI */
-static int  ipcp_rejci __P((fsm *, u_char *, int));	/* Peer rej'd our CI */
-static int  ipcp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
-static void ipcp_up __P((fsm *));		/* We're UP */
-static void ipcp_down __P((fsm *));		/* We're DOWN */
-static void ipcp_finished __P((fsm *));	/* Don't need lower layer */
+static void ipcp_resetci (fsm *);	/* Reset our CI */
+static int  ipcp_cilen (fsm *);	        /* Return length of our CI */
+static void ipcp_addci (fsm *, u_char *, int *); /* Add our CI */
+static int  ipcp_ackci (fsm *, u_char *, int);	/* Peer ack'd our CI */
+static int  ipcp_nakci (fsm *, u_char *, int, int);/* Peer nak'd our CI */
+static int  ipcp_rejci (fsm *, u_char *, int);	/* Peer rej'd our CI */
+static int  ipcp_reqci (fsm *, u_char *, int *, int); /* Rcv CI */
+static void ipcp_up (fsm *);		/* We're UP */
+static void ipcp_down (fsm *);		/* We're DOWN */
+static void ipcp_finished (fsm *);	/* Don't need lower layer */
 
 fsm ipcp_fsm[NUM_PPP];		/* IPCP fsm structure */
 
@@ -134,12 +132,12 @@ static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
 /*
  * Command-line options.
  */
-static int setvjslots __P((char **));
-static int setdnsaddr __P((char **));
-static int setwinsaddr __P((char **));
-static int setnetmask __P((char **));
-int setipaddr __P((char *, char **, int));
-static void printipaddr __P((option_t *, void (*)(void *, char *,...),void *));
+static int setvjslots (char **);
+static int setdnsaddr (char **);
+static int setwinsaddr (char **);
+static int setnetmask (char **);
+int setipaddr (char *, char **, int);
+static void printipaddr (option_t *, void (*)(void *, char *,...),void *);
 
 static option_t ipcp_option_list[] = {
     { "noip", o_bool, &ipcp_protent.enabled_flag,
@@ -175,10 +173,10 @@ static option_t ipcp_option_list[] = {
     { "noipdefault", o_bool, &disable_defaultip,
       "Don't use name for default IP adrs", 1 },
 
-    { "ms-dns", 1, (void *)setdnsaddr,
-      "DNS address for the peer's use" },
-    { "ms-wins", 1, (void *)setwinsaddr,
-      "Nameserver for SMB over TCP/IP for peer" },
+    { "ms-dns", o_special, (void *)setdnsaddr,
+      "DNS address for the peer's use", OPT_A2LIST },
+    { "ms-wins", o_special, (void *)setwinsaddr,
+      "Nameserver for SMB over TCP/IP for peer", OPT_A2LIST },
 
     { "ipcp-restart", o_int, &ipcp_fsm[0].timeouttime,
       "Set timeout for IPCP", OPT_PRIO },
@@ -198,6 +196,15 @@ static option_t ipcp_option_list[] = {
       "disable defaultroute option", OPT_ALIAS | OPT_A2CLR,
       &ipcp_wantoptions[0].default_route },
 
+#ifdef __linux__
+    { "replacedefaultroute", o_bool,
+				&ipcp_wantoptions[0].replace_default_route,
+      "Replace default route", OPT_PRIV | 1
+    },
+    { "noreplacedefaultroute", o_bool,
+				&ipcp_wantoptions[0].replace_default_route,
+      "Do not replace default route", 0 },
+#endif
     { "proxyarp", o_bool, &ipcp_wantoptions[0].proxy_arp,
       "Add proxy ARP entry", OPT_ENABLE|1, &ipcp_allowoptions[0].proxy_arp },
     { "noproxyarp", o_bool, &ipcp_allowoptions[0].proxy_arp,
@@ -237,19 +244,19 @@ static option_t ipcp_option_list[] = {
 /*
  * Protocol entry points from main code.
  */
-static void ipcp_init __P((int));
-static void ipcp_open __P((int));
-static void ipcp_close __P((int, char *));
-static void ipcp_lowerup __P((int));
-static void ipcp_lowerdown __P((int));
-static void ipcp_input __P((int, u_char *, int));
-static void ipcp_protrej __P((int));
-static int  ipcp_printpkt __P((u_char *, int,
-			       void (*) __P((void *, char *, ...)), void *));
-static void ip_check_options __P((void));
-static int  ip_demand_conf __P((int));
-static int  ip_active_pkt __P((u_char *, int));
-static void create_resolv __P((u_int32_t, u_int32_t));
+static void ipcp_init (int);
+static void ipcp_open (int);
+static void ipcp_close (int, char *);
+static void ipcp_lowerup (int);
+static void ipcp_lowerdown (int);
+static void ipcp_input (int, u_char *, int);
+static void ipcp_protrej (int);
+static int  ipcp_printpkt (u_char *, int,
+			   void (*) (void *, char *, ...), void *);
+static void ip_check_options (void);
+static int  ip_demand_conf (int);
+static int  ip_active_pkt (u_char *, int);
+static void create_resolv (u_int32_t, u_int32_t);
 
 struct protent ipcp_protent = {
     PPP_IPCP,
@@ -271,9 +278,9 @@ struct protent ipcp_protent = {
     ip_active_pkt
 };
 
-static void ipcp_clear_addrs __P((int, u_int32_t, u_int32_t));
-static void ipcp_script __P((char *, int));	/* Run an up/down script */
-static void ipcp_script_done __P((void *));
+static void ipcp_clear_addrs (int, u_int32_t, u_int32_t, bool);
+static void ipcp_script (char *, int);	/* Run an up/down script */
+static void ipcp_script_done (void *);
 
 /*
  * Lengths of configuration options.
@@ -302,8 +309,7 @@ static pid_t ipcp_script_pid;
  * Make a string representation of a network IP address.
  */
 char *
-ip_ntoa(ipaddr)
-u_int32_t ipaddr;
+ip_ntoa(u_int32_t ipaddr)
 {
     static char b[64];
 
@@ -319,8 +325,7 @@ u_int32_t ipaddr;
  * setvjslots - set maximum number of connection slots for VJ compression
  */
 static int
-setvjslots(argv)
-    char **argv;
+setvjslots(char **argv)
 {
     int value;
 
@@ -340,8 +345,7 @@ setvjslots(argv)
  * setdnsaddr - set the dns address(es)
  */
 static int
-setdnsaddr(argv)
-    char **argv;
+setdnsaddr(char **argv)
 {
     u_int32_t dns;
     struct hostent *hp;
@@ -376,8 +380,7 @@ setdnsaddr(argv)
  * the caller to the existing WINS server on a Windows NT platform.
  */
 static int
-setwinsaddr(argv)
-    char **argv;
+setwinsaddr(char **argv)
 {
     u_int32_t wins;
     struct hostent *hp;
@@ -413,10 +416,7 @@ setwinsaddr(argv)
  * Not static so that plugins can call it to set the addresses
  */
 int
-setipaddr(arg, argv, doit)
-    char *arg;
-    char **argv;
-    int doit;
+setipaddr(char *arg, char **argv, int doit)
 {
     struct hostent *hp;
     char *colon;
@@ -480,10 +480,7 @@ setipaddr(arg, argv, doit)
 }
 
 static void
-printipaddr(opt, printer, arg)
-    option_t *opt;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+printipaddr(option_t *opt, void (*printer) (void *, char *, ...), void *arg)
 {
 	ipcp_options *wo = &ipcp_wantoptions[0];
 
@@ -498,8 +495,7 @@ printipaddr(opt, printer, arg)
  * setnetmask - set the netmask to be used on the interface.
  */
 static int
-setnetmask(argv)
-    char **argv;
+setnetmask(char **argv)
 {
     u_int32_t mask;
     int n;
@@ -526,9 +522,7 @@ setnetmask(argv)
 }
 
 int
-parse_dotted_ip(p, vp)
-    char *p;
-    u_int32_t *vp;
+parse_dotted_ip(char *p, u_int32_t *vp)
 {
     int n;
     u_int32_t v, b;
@@ -563,8 +557,7 @@ parse_dotted_ip(p, vp)
  * ipcp_init - Initialize IPCP.
  */
 static void
-ipcp_init(unit)
-    int unit;
+ipcp_init(int unit)
 {
     fsm *f = &ipcp_fsm[unit];
     ipcp_options *wo = &ipcp_wantoptions[unit];
@@ -615,8 +608,7 @@ ipcp_init(unit)
  * ipcp_open - IPCP is allowed to come up.
  */
 static void
-ipcp_open(unit)
-    int unit;
+ipcp_open(int unit)
 {
     fsm_open(&ipcp_fsm[unit]);
     ipcp_is_open = 1;
@@ -627,9 +619,7 @@ ipcp_open(unit)
  * ipcp_close - Take IPCP down.
  */
 static void
-ipcp_close(unit, reason)
-    int unit;
-    char *reason;
+ipcp_close(int unit, char *reason)
 {
     fsm_close(&ipcp_fsm[unit], reason);
 }
@@ -639,8 +629,7 @@ ipcp_close(unit, reason)
  * ipcp_lowerup - The lower layer is up.
  */
 static void
-ipcp_lowerup(unit)
-    int unit;
+ipcp_lowerup(int unit)
 {
     fsm_lowerup(&ipcp_fsm[unit]);
 }
@@ -650,8 +639,7 @@ ipcp_lowerup(unit)
  * ipcp_lowerdown - The lower layer is down.
  */
 static void
-ipcp_lowerdown(unit)
-    int unit;
+ipcp_lowerdown(int unit)
 {
     fsm_lowerdown(&ipcp_fsm[unit]);
 }
@@ -661,10 +649,7 @@ ipcp_lowerdown(unit)
  * ipcp_input - Input IPCP packet.
  */
 static void
-ipcp_input(unit, p, len)
-    int unit;
-    u_char *p;
-    int len;
+ipcp_input(int unit, u_char *p, int len)
 {
     fsm_input(&ipcp_fsm[unit], p, len);
 }
@@ -676,8 +661,7 @@ ipcp_input(unit, p, len)
  * Pretend the lower layer went down, so we shut up.
  */
 static void
-ipcp_protrej(unit)
-    int unit;
+ipcp_protrej(int unit)
 {
     fsm_lowerdown(&ipcp_fsm[unit]);
 }
@@ -688,8 +672,7 @@ ipcp_protrej(unit)
  * Called by fsm_sconfreq, Send Configure Request.
  */
 static void
-ipcp_resetci(f)
-    fsm *f;
+ipcp_resetci(fsm *f)
 {
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
@@ -721,8 +704,7 @@ ipcp_resetci(f)
  * Called by fsm_sconfreq, Send Configure Request.
  */
 static int
-ipcp_cilen(f)
-    fsm *f;
+ipcp_cilen(fsm *f)
 {
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
@@ -765,10 +747,7 @@ ipcp_cilen(f)
  * Called by fsm_sconfreq, Send Configure Request.
  */
 static void
-ipcp_addci(f, ucp, lenp)
-    fsm *f;
-    u_char *ucp;
-    int *lenp;
+ipcp_addci(fsm *f, u_char *ucp, int *lenp)
 {
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     int len = *lenp;
@@ -872,10 +851,7 @@ ipcp_addci(f, ucp, lenp)
  *	1 - Ack was good.
  */
 static int
-ipcp_ackci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
+ipcp_ackci(fsm *f, u_char *p, int len)
 {
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     u_short cilen, citype, cishort;
@@ -1016,11 +992,7 @@ bad:
  *	1 - Nak was good.
  */
 static int
-ipcp_nakci(f, p, len, treat_as_reject)
-    fsm *f;
-    u_char *p;
-    int len;
-    int treat_as_reject;
+ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 {
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     u_char cimaxslotindex, cicflag;
@@ -1265,10 +1237,7 @@ bad:
  * Callback from fsm_rconfnakrej.
  */
 static int
-ipcp_rejci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
+ipcp_rejci(fsm *f, u_char *p, int len)
 {
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     u_char cimaxslotindex, ciflag, cilen;
@@ -1416,11 +1385,7 @@ bad:
  * CONFNAK; returns CONFREJ if it can't return CONFACK.
  */
 static int
-ipcp_reqci(f, inp, len, reject_if_disagree)
-    fsm *f;
-    u_char *inp;		/* Requested CIs */
-    int *len;			/* Length of requested CIs */
-    int reject_if_disagree;
+ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 {
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
     ipcp_options *ho = &ipcp_hisoptions[f->unit];
@@ -1705,7 +1670,7 @@ endswitch:
  * and assign appropriate defaults.
  */
 static void
-ip_check_options()
+ip_check_options(void)
 {
     struct hostent *hp;
     u_int32_t local;
@@ -1737,8 +1702,7 @@ ip_check_options()
  * IPCP were up, for use with dial-on-demand.
  */
 static int
-ip_demand_conf(u)
-    int u;
+ip_demand_conf(int u)
 {
     ipcp_options *wo = &ipcp_wantoptions[u];
 
@@ -1761,7 +1725,8 @@ ip_demand_conf(u)
     if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
 	return 0;
     if (wo->default_route)
-	if (sifdefaultroute(u, wo->ouraddr, wo->hisaddr))
+	if (sifdefaultroute(u, wo->ouraddr, wo->hisaddr,
+					    wo->replace_default_route))
 	    default_route_set[u] = 1;
     if (wo->proxy_arp)
 	if (sifproxyarp(u, wo->hisaddr))
@@ -1781,13 +1746,13 @@ ip_demand_conf(u)
  * Configure the IP network interface appropriately and bring it up.
  */
 static void
-ipcp_up(f)
-    fsm *f;
+ipcp_up(fsm *f)
 {
     u_int32_t mask;
     ipcp_options *ho = &ipcp_hisoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
+    int ifindex;
 
     IPCPDEBUG(("ipcp: up"));
 
@@ -1849,7 +1814,8 @@ ipcp_up(f)
      */
     if (demand) {
 	if (go->ouraddr != wo->ouraddr || ho->hisaddr != wo->hisaddr) {
-	    ipcp_clear_addrs(f->unit, wo->ouraddr, wo->hisaddr);
+	    ipcp_clear_addrs(f->unit, wo->ouraddr, wo->hisaddr,
+				      wo->replace_default_route);
 	    if (go->ouraddr != wo->ouraddr) {
 		warn("Local IP address changed to %I", go->ouraddr);
 		script_setenv("OLDIPLOCAL", ip_ntoa(wo->ouraddr), 0);
@@ -1874,7 +1840,8 @@ ipcp_up(f)
 
 	    /* assign a default route through the interface if required */
 	    if (ipcp_wantoptions[f->unit].default_route) 
-		if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr))
+		if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr,
+					     wo->replace_default_route))
 		    default_route_set[f->unit] = 1;
 
 	    /* Make a proxy ARP entry if requested. */
@@ -1901,8 +1868,17 @@ ipcp_up(f)
 	}
 #endif
 
+	ifindex = if_nametoindex(ifname);
+
 	/* run the pre-up script, if any, and wait for it to finish */
 	ipcp_script(_PATH_IPPREUP, 1);
+
+	/* check if preup script renamed the interface */
+	if (!if_indextoname(ifindex, ifname)) {
+            error("Interface index %d failed to get renamed by a pre-up script", ifindex);
+	    ipcp_close(f->unit, "Interface configuration failed");
+	    return;
+	}
 
 	/* bring the interface up for IP */
 	if (!sifup(f->unit)) {
@@ -1924,7 +1900,8 @@ ipcp_up(f)
 
 	/* assign a default route through the interface if required */
 	if (ipcp_wantoptions[f->unit].default_route) 
-	    if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr))
+	    if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr,
+					 wo->replace_default_route))
 		default_route_set[f->unit] = 1;
 
 	/* Make a proxy ARP entry if requested. */
@@ -1958,7 +1935,7 @@ ipcp_up(f)
      */
     if (ipcp_script_state == s_down && ipcp_script_pid == 0) {
 	ipcp_script_state = s_up;
-	ipcp_script(_PATH_IPUP, 0);
+	ipcp_script(path_ipup, 0);
     }
 }
 
@@ -1970,8 +1947,7 @@ ipcp_up(f)
  * and delete routes through it.
  */
 static void
-ipcp_down(f)
-    fsm *f;
+ipcp_down(fsm *f)
 {
     IPCPDEBUG(("ipcp: down"));
     /* XXX a bit IPv4-centric here, we only need to get the stats
@@ -2002,13 +1978,13 @@ ipcp_down(f)
 	sifnpmode(f->unit, PPP_IP, NPMODE_DROP);
 	sifdown(f->unit);
 	ipcp_clear_addrs(f->unit, ipcp_gotoptions[f->unit].ouraddr,
-			 ipcp_hisoptions[f->unit].hisaddr);
+			 ipcp_hisoptions[f->unit].hisaddr, 0);
     }
 
     /* Execute the ip-down script */
     if (ipcp_script_state == s_up && ipcp_script_pid == 0) {
 	ipcp_script_state = s_down;
-	ipcp_script(_PATH_IPDOWN, 0);
+	ipcp_script(path_ipdown, 0);
     }
 }
 
@@ -2018,16 +1994,21 @@ ipcp_down(f)
  * proxy arp entries, etc.
  */
 static void
-ipcp_clear_addrs(unit, ouraddr, hisaddr)
-    int unit;
-    u_int32_t ouraddr;  /* local address */
-    u_int32_t hisaddr;  /* remote address */
+ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute)
 {
     if (proxy_arp_set[unit]) {
 	cifproxyarp(unit, hisaddr);
 	proxy_arp_set[unit] = 0;
     }
-    if (default_route_set[unit]) {
+    /* If replacedefaultroute, sifdefaultroute will be called soon
+     * with replacedefaultroute set and that will overwrite the current
+     * default route. This is the case only when doing demand, otherwise
+     * during demand, this cifdefaultroute would restore the old default
+     * route which is not what we want in this case. In the non-demand
+     * case, we'll delete the default route and restore the old if there
+     * is one saved by an sifdefaultroute with replacedefaultroute.
+     */
+    if (!replacedefaultroute && default_route_set[unit]) {
 	cifdefaultroute(unit, ouraddr, hisaddr);
 	default_route_set[unit] = 0;
     }
@@ -2039,8 +2020,7 @@ ipcp_clear_addrs(unit, ouraddr, hisaddr)
  * ipcp_finished - possibly shut down the lower layers.
  */
 static void
-ipcp_finished(f)
-    fsm *f;
+ipcp_finished(fsm *f)
 {
 	if (ipcp_is_open) {
 		ipcp_is_open = 0;
@@ -2054,21 +2034,20 @@ ipcp_finished(f)
  * has finished.
  */
 static void
-ipcp_script_done(arg)
-    void *arg;
+ipcp_script_done(void *arg)
 {
     ipcp_script_pid = 0;
     switch (ipcp_script_state) {
     case s_up:
 	if (ipcp_fsm[0].state != OPENED) {
 	    ipcp_script_state = s_down;
-	    ipcp_script(_PATH_IPDOWN, 0);
+	    ipcp_script(path_ipdown, 0);
 	}
 	break;
     case s_down:
 	if (ipcp_fsm[0].state == OPENED) {
 	    ipcp_script_state = s_up;
-	    ipcp_script(_PATH_IPUP, 0);
+	    ipcp_script(path_ipup, 0);
 	}
 	break;
     }
@@ -2080,9 +2059,7 @@ ipcp_script_done(arg)
  * interface-name tty-name speed local-IP remote-IP.
  */
 static void
-ipcp_script(script, wait)
-    char *script;
-    int wait;
+ipcp_script(char *script, int wait)
 {
     char strspeed[32], strlocal[32], strremote[32];
     char *argv[8];
@@ -2110,8 +2087,7 @@ ipcp_script(script, wait)
  * create_resolv - create the replacement resolv.conf file
  */
 static void
-create_resolv(peerdns1, peerdns2)
-    u_int32_t peerdns1, peerdns2;
+create_resolv(u_int32_t peerdns1, u_int32_t peerdns2)
 {
     FILE *f;
 
@@ -2142,11 +2118,8 @@ static char *ipcp_codenames[] = {
 };
 
 static int
-ipcp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+ipcp_printpkt(u_char *p, int plen,
+	      void (*printer) (void *, char *, ...), void *arg)
 {
     int code, id, len, olen;
     u_char *pstart, *optend;
@@ -2286,9 +2259,7 @@ ipcp_printpkt(p, plen, printer, arg)
 #define get_tcpflags(x)	(((unsigned char *)(x))[13])
 
 static int
-ip_active_pkt(pkt, len)
-    u_char *pkt;
-    int len;
+ip_active_pkt(u_char *pkt, int len)
 {
     u_char *tcp;
     int hlen;

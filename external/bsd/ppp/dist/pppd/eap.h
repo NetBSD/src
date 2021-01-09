@@ -59,6 +59,18 @@ extern "C" {
 #define	EAPT_NOKIACARD		18	/* Nokia IP smart card */
 #define	EAPT_SRP		19	/* Secure Remote Password */
 /* 20 is deprecated */
+#define	EAPT_TTLS		21	/* EAP Tunneled TLS Authentication Protocol RFC5281 */
+#define	EAPT_RAS		22	/* Remote Access Service */
+#define	EAPT_AKA		23	/* EAP method for 3rd Generation Authentication and Key Agreement RFC4187 */
+#define	EAPT_3COM		24	/* EAP-3Com Wireless */
+#define	EAPT_PEAP		25	/* Protected EAP */
+#define	EAPT_MSCHAPV2		26	/* EAP-MSCHAPv2 RFC-draft-kamath-pppext-eap-mschapv2-02 */
+
+/* OpCodes for MSCHAPv2 */
+#define CHAP_CHALLENGE		1
+#define CHAP_RESPONSE		2
+#define CHAP_SUCCESS		3
+#define CHAP_FAILURE		4
 
 /* EAP SRP-SHA1 Subtypes */
 #define	EAPSRP_CHALLENGE	1	/* Request 1 - Challenge */
@@ -84,10 +96,21 @@ enum eap_state_code {
 	eapClosed,	/* Authentication not in use */
 	eapListen,	/* Client ready (and timer running) */
 	eapIdentify,	/* EAP Identify sent */
+	eapTlsStart,	/* Send EAP-TLS start packet */
+	eapTlsRecv,	/* Receive EAP-TLS tls data */
+	eapTlsSendAck,	/* Send EAP-TLS ack */
+	eapTlsSend,	/* Send EAP-TLS tls data */
+	eapTlsRecvAck,	/* Receive EAP-TLS ack */
+	eapTlsRecvClient, 	/* Receive EAP-TLS auth response from client*/
+	eapTlsSendAlert,	/* Send EAP-TLS tls alert (server)*/
+	eapTlsRecvAlertAck,	/* Receive EAP-TLS ack after sending alert */
+	eapTlsRecvSuccess,	/* Receive EAP success */
+	eapTlsRecvFailure,	/* Receive EAP failure */
 	eapSRP1,	/* Sent EAP SRP-SHA1 Subtype 1 */
 	eapSRP2,	/* Sent EAP SRP-SHA1 Subtype 2 */
 	eapSRP3,	/* Sent EAP SRP-SHA1 Subtype 3 */
 	eapMD5Chall,	/* Sent MD5-Challenge */
+	eapMSCHAPv2Chall,	/* Sent MSCHAPv2-Challenge */
 	eapOpen,	/* Completed authentication */
 	eapSRP4,	/* Sent EAP SRP-SHA1 Subtype 4 */
 	eapBadAuth	/* Failed authentication */
@@ -95,9 +118,18 @@ enum eap_state_code {
 
 #define	EAP_STATES	\
 	"Initial", "Pending", "Closed", "Listen", "Identify", \
-	"SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
+	"TlsStart", "TlsRecv", "TlsSendAck", "TlsSend", "TlsRecvAck", "TlsRecvClient",\
+	"TlsSendAlert", "TlsRecvAlertAck" , "TlsRecvSuccess", "TlsRecvFailure", \
+	"SRP1", "SRP2", "SRP3", "MD5Chall", "MSCHAPv2Chall", "Open", "SRP4", "BadAuth"
 
-#define	eap_client_active(esp)	((esp)->es_client.ea_state == eapListen)
+#ifdef USE_EAPTLS
+#define	eap_client_active(esp)	((esp)->es_client.ea_state != eapInitial &&\
+				 (esp)->es_client.ea_state != eapPending &&\
+				 (esp)->es_client.ea_state != eapClosed)
+#else
+#define eap_client_active(esp)	((esp)->es_client.ea_state == eapListen)
+#endif /* USE_EAPTLS */
+
 #define	eap_server_active(esp)	\
 	((esp)->es_server.ea_state >= eapIdentify && \
 	 (esp)->es_server.ea_state <= eapMD5Chall)
@@ -112,11 +144,20 @@ struct eap_auth {
 	u_short ea_namelen;	/* Length of our name */
 	u_short ea_peerlen;	/* Length of peer's name */
 	enum eap_state_code ea_state;
+#ifdef USE_EAPTLS
+	enum eap_state_code ea_prev_state;
+#endif
+#ifdef CHAPMS
+        struct chap_digest_type *digest;
+#endif
 	u_char ea_id;		/* Current id */
 	u_char ea_requests;	/* Number of Requests sent/received */
 	u_char ea_responses;	/* Number of Responses */
 	u_char ea_type;		/* One of EAPT_* */
 	u_int32_t ea_keyflags;	/* SRP shared key usage flags */
+#ifdef USE_EAPTLS
+	bool ea_using_eaptls;
+#endif
 };
 
 /*
@@ -139,14 +180,19 @@ typedef struct eap_state {
  * Timeouts.
  */
 #define	EAP_DEFTIMEOUT		3	/* Timeout (seconds) for rexmit */
+#ifdef USE_EAPTLS
+#define	EAP_DEFTRANSMITS	30	/* max # times to transmit */
+					/* certificates can be long ... */
+#else
 #define	EAP_DEFTRANSMITS	10	/* max # times to transmit */
+#endif /* USE_EAPTLS */
 #define	EAP_DEFREQTIME		20	/* Time to wait for peer request */
 #define	EAP_DEFALLOWREQ		20	/* max # times to accept requests */
 
 extern eap_state eap_states[];
 
-void eap_authwithpeer __P((int unit, char *localname));
-void eap_authpeer __P((int unit, char *localname));
+void eap_authwithpeer (int unit, char *localname);
+void eap_authpeer (int unit, char *localname);
 
 extern struct protent eap_protent;
 

@@ -116,10 +116,7 @@ static pam_handle_t *pamh = NULL;
  */
 
 static int conversation (int num_msg,
-#ifndef SOL2
-    const
-#endif
-    struct pam_message **msg,
+    const struct pam_message **msg,
     struct pam_response **resp, void *appdata_ptr)
 {
     int replies = 0;
@@ -164,12 +161,7 @@ static struct pam_conv pam_conv_data = {
 #endif /* #ifdef USE_PAM */
 
 int
-session_start(flags, user, passwd, ttyName, msg)
-    const int flags;
-    const char *user;
-    const char *passwd;
-    const char *ttyName;
-    char **msg;
+session_start(const int flags, const char *user, const char *passwd, const char *ttyName, char **msg)
 {
 #ifdef USE_PAM
     bool ok = 1;
@@ -384,8 +376,8 @@ session_start(flags, user, passwd, ttyName, msg)
                 memset((void *)&ll, 0, sizeof(ll));
 		(void)time(&tnow);
                 ll.ll_time = tnow;
-                (void)strncpy(ll.ll_line, ttyName, sizeof(ll.ll_line));
-                (void)strncpy(ll.ll_host, ifname, sizeof(ll.ll_host));
+                strlcpy(ll.ll_line, ttyName, sizeof(ll.ll_line));
+                strlcpy(ll.ll_host, ifname, sizeof(ll.ll_host));
                 (void)write(fd, (char *)&ll, sizeof(ll));
                 (void)close(fd);
             }
