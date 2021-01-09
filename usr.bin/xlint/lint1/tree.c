@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.135 2021/01/05 17:37:57 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.136 2021/01/09 14:10:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.135 2021/01/05 17:37:57 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.136 2021/01/09 14:10:15 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1464,7 +1464,7 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 		if (rn->tn_op != CON)
 			break;
 		rnum = rn->tn_val->v_quad;
-		l = tsize(ln->tn_type) / CHAR_BIT;
+		l = tsize(ln->tn_type) / CHAR_SIZE;
 		t = ln->tn_type->t_tspec;
 		switch (l) {
 		case 8:
@@ -2302,10 +2302,10 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 
 #if PTRDIFF_IS_LONG
 	ctn = new_integer_constant_node(LONG,
-	    rn->tn_sym->s_value.v_quad / CHAR_BIT);
+	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
 #else
 	ctn = new_integer_constant_node(INT,
-	    rn->tn_sym->s_value.v_quad / CHAR_BIT);
+	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
 #endif
 
 	ntn = new_tnode(PLUS, tincref(rn->tn_type, PTR), ln, ctn);
@@ -2663,7 +2663,7 @@ plength(type_t *tp)
 	}
 
 	if (elsz == 0)
-		elsz = CHAR_BIT;
+		elsz = CHAR_SIZE;
 
 #if PTRDIFF_IS_LONG
 	st = LONG;
@@ -2671,7 +2671,7 @@ plength(type_t *tp)
 	st = INT;
 #endif
 
-	return new_integer_constant_node(st, (int64_t)(elem * elsz / CHAR_BIT));
+	return new_integer_constant_node(st, (int64_t)(elem * elsz / CHAR_SIZE));
 }
 
 /*
@@ -2983,7 +2983,7 @@ build_sizeof(type_t *tp)
 #else
 	st = UINT;
 #endif
-	return new_integer_constant_node(st, tsize(tp) / CHAR_BIT);
+	return new_integer_constant_node(st, tsize(tp) / CHAR_SIZE);
 }
 
 /*
@@ -3004,7 +3004,7 @@ build_offsetof(type_t *tp, sym_t *sym)
 		error(111, "offsetof");
 
 	// XXX: wrong size, no checking for sym fixme
-	return new_integer_constant_node(st, tsize(tp) / CHAR_BIT);
+	return new_integer_constant_node(st, tsize(tp) / CHAR_SIZE);
 }
 
 int64_t
@@ -3114,7 +3114,7 @@ build_alignof(type_t *tp)
 	st = UINT;
 #endif
 
-	return new_integer_constant_node(st, (int64_t)getbound(tp) / CHAR_BIT);
+	return new_integer_constant_node(st, (int64_t)getbound(tp) / CHAR_SIZE);
 }
 
 /*
@@ -3776,7 +3776,7 @@ check_array_index(tnode_t *tn, int amper)
 	/* Get the size of one array element */
 	if ((elsz = length(ln->tn_type->t_subt, NULL)) == 0)
 		return;
-	elsz /= CHAR_BIT;
+	elsz /= CHAR_SIZE;
 
 	/* Change the unit of the index from bytes to element size. */
 	if (tspec_is_uint(rn->tn_type->t_tspec)) {
@@ -3817,14 +3817,14 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 
 	if ((hflag || pflag) && lt == CHAR && rn->tn_op == CON &&
 	    (rn->tn_val->v_quad < 0 ||
-	     rn->tn_val->v_quad > (int)~(~0U << (CHAR_BIT - 1)))) {
+	     rn->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)))) {
 		/* nonportable character comparison, op %s */
 		warning(230, mp->m_name);
 		return;
 	}
 	if ((hflag || pflag) && rt == CHAR && ln->tn_op == CON &&
 	    (ln->tn_val->v_quad < 0 ||
-	     ln->tn_val->v_quad > (int)~(~0U << (CHAR_BIT - 1)))) {
+	     ln->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)))) {
 		/* nonportable character comparison, op %s */
 		warning(230, mp->m_name);
 		return;
