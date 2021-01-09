@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.233 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.234 2021/01/09 16:06:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.233 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.234 2021/01/09 16:06:09 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -286,6 +286,7 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 }
 
 /* Test whether the given variable is defined. */
+/*ARGSUSED*/
 static Boolean
 FuncDefined(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -296,6 +297,7 @@ FuncDefined(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 }
 
 /* See if the given target is being made. */
+/*ARGSUSED*/
 static Boolean
 FuncMake(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -308,6 +310,7 @@ FuncMake(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 }
 
 /* See if the given file exists. */
+/*ARGSUSED*/
 static Boolean
 FuncExists(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -323,6 +326,7 @@ FuncExists(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 }
 
 /* See if the given node exists and is an actual target. */
+/*ARGSUSED*/
 static Boolean
 FuncTarget(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -334,6 +338,7 @@ FuncTarget(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
  * See if the given node exists and is an actual target with commands
  * associated with it.
  */
+/*ARGSUSED*/
 static Boolean
 FuncCommands(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -697,6 +702,7 @@ done_lhs:
  * The argument to empty() is a variable name, optionally followed by
  * variable modifiers.
  */
+/*ARGSUSED*/
 static size_t
 ParseEmptyArg(const char **pp, Boolean doEval,
 	      const char *func MAKE_ATTR_UNUSED, char **out_arg)
@@ -733,6 +739,7 @@ ParseEmptyArg(const char **pp, Boolean doEval,
 	return magic_res;
 }
 
+/*ARGSUSED*/
 static Boolean
 FuncEmpty(size_t arglen, const char *arg MAKE_ATTR_UNUSED)
 {

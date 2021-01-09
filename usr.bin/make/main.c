@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.509 2021/01/08 21:46:50 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.510 2021/01/09 16:06:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.509 2021/01/08 21:46:50 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.510 2021/01/09 16:06:09 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1012,11 +1012,11 @@ InitVarMachineArch(void)
 		const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 		size_t len = sizeof machine_arch_buf;
 
-		if (sysctl(mib, __arraycount(mib), machine_arch_buf,
-			&len, NULL, 0) < 0) {
-		    (void)fprintf(stderr, "%s: sysctl failed (%s).\n", progname,
-			strerror(errno));
-		    exit(2);
+		if (sysctl(mib, (unsigned int)__arraycount(mib),
+		    machine_arch_buf, &len, NULL, 0) < 0) {
+			(void)fprintf(stderr, "%s: sysctl failed (%s).\n",
+			    progname, strerror(errno));
+			exit(2);
 		}
 
 		return machine_arch_buf;
