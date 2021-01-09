@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.138 2021/01/09 18:15:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.139 2021/01/09 18:21:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.138 2021/01/09 18:15:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.139 2021/01/09 18:21:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -709,6 +709,42 @@ typeok_incdec(mod_t *const mp, tnode_t *const ln, type_t *const ltp)
 	return true;
 }
 
+static bool
+typeok_amper(mod_t *const mp,
+	     tnode_t *const ln, type_t *const ltp, tspec_t const lt)
+{
+	if (lt == ARRAY || lt == FUNC) {
+		/* ok, a warning comes later (in build_ampersand()) */
+	} else if (!ln->tn_lvalue) {
+		if (ln->tn_op == CVT && ln->tn_cast &&
+		    ln->tn_left->tn_op == LOAD) {
+			if (ln->tn_type->t_tspec == PTR)
+				return true;
+			/* a cast does not yield an lvalue */
+			error(163);
+		}
+		/* %soperand of '%s' must be lvalue */
+		error(114, "", mp->m_name);
+		return false;
+	} else if (tspec_is_scalar(lt)) {
+		if (ltp->t_bitfield) {
+			/* cannot take address of bit-field */
+			error(112);
+			return false;
+		}
+	} else if (lt != STRUCT && lt != UNION) {
+		/* unacceptable operand of '%s' */
+		error(111, mp->m_name);
+		return false;
+	}
+	if (ln->tn_op == NAME && ln->tn_sym->s_reg) {
+		/* cannot take address of register %s */
+		error(113, ln->tn_sym->s_name);
+		return false;
+	}
+	return true;
+}
+
 /*
  * Perform most type checks. First the types are checked using
  * the information from modtab[]. After that it is done by hand for
@@ -810,35 +846,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			return 0;
 		break;
 	case AMPER:
-		if (lt == ARRAY || lt == FUNC) {
-			/* ok, a warning comes later (in build_ampersand()) */
-		} else if (!ln->tn_lvalue) {
-			if (ln->tn_op == CVT && ln->tn_cast &&
-			    ln->tn_left->tn_op == LOAD) {
-				if (ln->tn_type->t_tspec == PTR)
-					break;
-				/* a cast does not yield an lvalue */
-				error(163);
-			}
-			/* %soperand of '%s' must be lvalue */
-			error(114, "", mp->m_name);
+		if (!typeok_amper(mp, ln, ltp, lt))
 			return 0;
-		} else if (tspec_is_scalar(lt)) {
-			if (ltp->t_bitfield) {
-				/* cannot take address of bit-field */
-				error(112);
-				return 0;
-			}
-		} else if (lt != STRUCT && lt != UNION) {
-			/* unacceptable operand of '%s' */
-			error(111, mp->m_name);
-			return 0;
-		}
-		if (ln->tn_op == NAME && ln->tn_sym->s_reg) {
-			/* cannot take address of register %s */
-			error(113, ln->tn_sym->s_name);
-			return 0;
-		}
 		break;
 	case STAR:
 		/* until now there were no type checks for this operator */
