@@ -13,6 +13,8 @@ pppdump \- convert PPP record file to readable format
 ]] [
 .B \-r
 ] [
+.B \-a
+] [
 .B \-m \fImru
 ] [
 .I file \fR...
@@ -53,6 +55,9 @@ or Deflate methods.
 Reverses the direction indicators, so that `sent' is printed for
 bytes or packets received, and `rcvd' is printed for bytes or packets
 sent.
+.TP
+.B \-a
+Prints absolute times.
 .TP
 .B \-m \fImru
 Use \fImru\fR as the MRU (maximum receive unit) for both directions of

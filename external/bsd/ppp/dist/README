@@ -61,8 +61,73 @@ use any IP address.  (This only applies where the peer is
 authenticating itself to you, of course.)
 
 
-What's new in ppp-2.4.7.
+What's new in ppp-2.4.9.
 ************************
+
+* Support for new EAP (Extensible Authentication Protocol) methods:
+  - Support for EAP-TLS, from Jan Just Keijser and others
+  - Support for EAP-MSCHAPv2, from Eivind Næss, Thomas Omerzu, Tijs
+    Van Buggenhout and others
+
+* New pppd options:
+  - chap-timeout
+  - chapms-strip-domain
+  - replacedefaultroute
+  - noreplacedefaultroute
+  - ipv6cp-accept-remote
+  - lcp-echo-adaptive
+  - ip-up-script
+  - ip-down-script
+  - ca
+  - capath
+  - cert
+  - key
+  - crl-dir
+  - crl
+  - max-tls-version
+  - need-peer-eap
+
+* Fixes for CVE-2020-8597 and CVE-2015-3310.
+
+* libpcap is now required when compiling on Linux (previously, if
+  libpcap was not present, pppd would be compiled without packet
+  filtering support).
+
+* The rp-pppoe plugin has been renamed to pppoe, to distinguish it
+  from the upstream rp-pppoe code.  Its options have changed names,
+  but the old names are kept as aliases.
+
+* The configure script now supports cross-compilation.
+
+* Many bug fixes and cleanups.
+  
+
+What was new in ppp-2.4.8.
+**************************
+
+* New pppd options have been added:
+  - ifname, to set the name for the PPP interface device
+  - defaultroute-metric, to set the metric for the default route
+  - defaultroute6, to add an IPv6 default route (with nodefaultroute6
+    to prevent adding an IPv6 default route)
+  - up_sdnotify, to have pppd notify systemd when the link is up.
+
+* The rp-pppoe plugin has new options:
+  - host-uniq, to set the Host-Uniq value to send
+  - pppoe-padi-timeout, to set the timeout for discovery packets
+  - pppoe-padi-attempts, to set the number of discovery attempts.
+
+* Added the CLASS attribute in radius packets.
+
+* Sundry bug fixes.
+
+* Fixed warnings and issues found by static analysis.
+
+* Added Submitting-patches.md.
+
+
+What was new in ppp-2.4.7.
+**************************
 
 * Fixed a potential security issue in parsing option files (CVE-2014-3158).
 

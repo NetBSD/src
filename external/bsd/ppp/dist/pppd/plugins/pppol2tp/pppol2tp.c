@@ -148,6 +148,10 @@ static int setdevname_pppol2tp(char **argv)
 		fatal("PPPoL2TP kernel driver not installed");
 	}
 
+	pppol2tp_fd_str = strdup(*argv);
+	if (pppol2tp_fd_str == NULL)
+		novm("PPPoL2TP FD");
+
 	/* Setup option defaults. Compression options are disabled! */
 
 	modem = 0;
