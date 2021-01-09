@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.c,v 1.1 2021/01/05 23:50:29 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.1 2021/01/09 21:37:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
