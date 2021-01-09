@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootaa64.c,v 1.4 2021/01/09 13:15:15 jmcneill Exp $	*/
+/*	$NetBSD: efibootaa64.c,v 1.5 2021/01/09 13:19:27 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -56,7 +56,7 @@ efi_boot_kernel(u_long marks[MARK_MAX])
 	fdt_start = (u_long)efi_fdt_data();
 	fdt_size = efi_fdt_size();
 
-	aarch64_dcache_wbinv_range(kernel_entry, kernel_size);
+	aarch64_dcache_wbinv_range(kernel_start, kernel_size);
 	if (efi_fdt_size() > 0) {
 		aarch64_dcache_wbinv_range(fdt_start, fdt_size);
 	}
