@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.132 2021/01/09 02:38:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.133 2021/01/09 03:08:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.132 2021/01/09 02:38:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.133 2021/01/09 03:08:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -314,8 +314,8 @@ anonymize(sym_t *s)
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
 %type	<y_tnode>	expr
-%type	<y_tnode>	expr_stmnt_val
-%type	<y_tnode>	expr_stmnt_list
+%type	<y_tnode>	expr_statement_val
+%type	<y_tnode>	expr_statement_list
 %type	<y_tnode>	term
 %type	<y_tnode>	generic_expr
 %type	<y_tnode>	func_arg_list
@@ -352,7 +352,7 @@ translation_unit:
 	;
 
 ext_decl:
-	  asm_stmnt
+	  asm_statement
 	| func_def {
 		global_clean_up_decl(0);
 		CLRWFLGS(__FILE__, __LINE__);
@@ -433,7 +433,7 @@ func_def:
 		check_func_lint_directives();
 		check_func_old_style_arguments();
 		pushctrl(0);
-	  } comp_stmnt {
+	  } compound_statement {
 		funcend();
 		popctrl(0);
 	  }
@@ -1474,23 +1474,23 @@ direct_abs_decl:
 	| direct_abs_decl type_attribute_list
 	;
 
-non_expr_stmnt:
-	  labeled_stmnt
-	| comp_stmnt
-	| selection_stmnt
-	| iteration_stmnt
-	| jump_stmnt {
+non_expr_statement:
+	  labeled_statement
+	| compound_statement
+	| selection_statement
+	| iteration_statement
+	| jump_statement {
 		ftflg = 0;
 	  }
-	| asm_stmnt
+	| asm_statement
 
-stmnt:
-	  expr_stmnt
-	| non_expr_stmnt
+statement:
+	  expr_statement
+	| non_expr_statement
 	;
 
-labeled_stmnt:
-	  label stmnt
+labeled_statement:
+	  label statement
 	;
 
 label:
@@ -1513,23 +1513,24 @@ label:
 	  }
 	;
 
-stmnt_d_list:
-	  stmnt_list
-	| stmnt_d_list declaration_list stmnt_list {
+statement_d_list:
+	  statement_list
+	| statement_d_list declaration_list statement_list {
 		if (!Sflag)
 			/* declarations after statements is a C9X feature */
 			c99ism(327);
 	  }
 	;
 
-comp_stmnt:
-	  comp_stmnt_lbrace comp_stmnt_rbrace
-	| comp_stmnt_lbrace stmnt_d_list comp_stmnt_rbrace
-	| comp_stmnt_lbrace declaration_list comp_stmnt_rbrace
-	| comp_stmnt_lbrace declaration_list stmnt_d_list comp_stmnt_rbrace
+compound_statement:
+	  compound_statement_lbrace compound_statement_rbrace
+	| compound_statement_lbrace statement_d_list compound_statement_rbrace
+	| compound_statement_lbrace declaration_list compound_statement_rbrace
+	| compound_statement_lbrace declaration_list statement_d_list
+	    compound_statement_rbrace
 	;
 
-comp_stmnt_lbrace:
+compound_statement_lbrace:
 	  T_LBRACE {
 		blklev++;
 		mblklev++;
@@ -1537,7 +1538,7 @@ comp_stmnt_lbrace:
 	  }
 	;
 
-comp_stmnt_rbrace:
+compound_statement_rbrace:
 	  T_RBRACE {
 		popdecl();
 		freeblk();
@@ -1547,15 +1548,15 @@ comp_stmnt_rbrace:
 	  }
 	;
 
-stmnt_list:
-	  stmnt
-	| stmnt_list stmnt {
+statement_list:
+	  statement
+	| statement_list statement {
 		RESTORE(__FILE__, __LINE__);
 	  }
-	| stmnt_list error T_SEMI
+	| statement_list error T_SEMI
 	;
 
-expr_stmnt:
+expr_statement:
 	  expr T_SEMI {
 		expr($1, 0, 0, 0);
 		ftflg = 0;
@@ -1570,7 +1571,7 @@ expr_stmnt:
  * ({ [[decl-list] stmt-list] }).
  * XXX: This is not well tested.
  */
-expr_stmnt_val:
+expr_statement_val:
 	  expr T_SEMI {
 		/* XXX: We should really do that only on the last name */
 		if ($1->tn_op == NAME)
@@ -1579,20 +1580,20 @@ expr_stmnt_val:
 		expr($1, 0, 0, 0);
 		ftflg = 0;
 	  }
-	| non_expr_stmnt {
+	| non_expr_statement {
 		$$ = getnode();
 		$$->tn_type = gettyp(VOID);
 	  }
 	;
 
-expr_stmnt_list:
-	  expr_stmnt_val
-	| expr_stmnt_list expr_stmnt_val {
+expr_statement_list:
+	  expr_statement_val
+	| expr_statement_list expr_statement_val {
 		$$ = $2;
 	  }
 	;
 
-selection_stmnt:
+selection_statement:
 	  if_without_else {
 		SAVE(__FILE__, __LINE__);
 		if2();
@@ -1601,7 +1602,7 @@ selection_stmnt:
 	| if_without_else T_ELSE {
 		SAVE(__FILE__, __LINE__);
 		if2();
-	  } stmnt {
+	  } statement {
 		CLRWFLGS(__FILE__, __LINE__);
 		if3(1);
 	  }
@@ -1609,7 +1610,7 @@ selection_stmnt:
 		CLRWFLGS(__FILE__, __LINE__);
 		if3(0);
 	  }
-	| switch_expr stmnt {
+	| switch_expr statement {
 		CLRWFLGS(__FILE__, __LINE__);
 		switch2();
 	  }
@@ -1620,7 +1621,7 @@ selection_stmnt:
 	;
 
 if_without_else:
-	  if_expr stmnt
+	  if_expr statement
 	| if_expr error
 	;
 
@@ -1654,14 +1655,14 @@ generic_expr:
 	  }
 	;
 
-do_stmnt:
-	  do stmnt {
+do_statement:
+	  do statement {
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
-iteration_stmnt:
-	  while_expr stmnt {
+iteration_statement:
+	  while_expr statement {
 		CLRWFLGS(__FILE__, __LINE__);
 		while2();
 	  }
@@ -1669,7 +1670,7 @@ iteration_stmnt:
 		CLRWFLGS(__FILE__, __LINE__);
 		while2();
 	  }
-	| do_stmnt do_while_expr {
+	| do_statement do_while_expr {
 		do2($2);
 		ftflg = 0;
 	  }
@@ -1677,7 +1678,7 @@ iteration_stmnt:
 		CLRWFLGS(__FILE__, __LINE__);
 		do2(NULL);
 	  }
-	| for_exprs stmnt {
+	| for_exprs statement {
 		CLRWFLGS(__FILE__, __LINE__);
 		for2();
 		popdecl();
@@ -1739,7 +1740,7 @@ opt_expr:
 	  }
 	;
 
-jump_stmnt:
+jump_statement:
 	  goto identifier T_SEMI {
 		dogoto(getsym($2));
 	  }
@@ -1766,7 +1767,7 @@ goto:
 	  }
 	;
 
-asm_stmnt:
+asm_statement:
 	  T_ASM T_LPAREN read_until_rparn T_SEMI {
 		setasm();
 	  }
@@ -1869,7 +1870,8 @@ term:
 			$2->tn_parenthesized = 1;
 		$$ = $2;
 	  }
-	| T_LPAREN comp_stmnt_lbrace declaration_list expr_stmnt_list {
+	| T_LPAREN compound_statement_lbrace declaration_list
+	    expr_statement_list {
 		blklev--;
 		mblklev--;
 		initsym = mktempsym(duptyp($4->tn_type));
@@ -1877,10 +1879,10 @@ term:
 		blklev++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
-	 } comp_stmnt_rbrace T_RPAREN {
+	 } compound_statement_rbrace T_RPAREN {
 		$$ = new_name_node(initsym, 0);
 	 }
-	| T_LPAREN comp_stmnt_lbrace expr_stmnt_list {
+	| T_LPAREN compound_statement_lbrace expr_statement_list {
 		blklev--;
 		mblklev--;
 		initsym = mktempsym($3->tn_type);
@@ -1888,7 +1890,7 @@ term:
 		blklev++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
-	 } comp_stmnt_rbrace T_RPAREN {
+	 } compound_statement_rbrace T_RPAREN {
 		$$ = new_name_node(initsym, 0);
 	 }
 	| term T_INCDEC {
