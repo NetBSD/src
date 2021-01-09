@@ -1,4 +1,4 @@
-/* $NetBSD: targparam.h,v 1.2 2021/01/09 13:58:43 rillig Exp $ */
+/* $NetBSD: targparam.h,v 1.3 2021/01/09 14:10:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -45,8 +45,8 @@
 #define	SIZEOF_IS_ULONG		1
 #define INTPTR_IS_LONG		1
 
-#define	FLOAT_SIZE		(4 * CHAR_BIT)
-#define	DOUBLE_SIZE		(8 * CHAR_BIT)
-#define	LDOUBLE_SIZE		(16 * CHAR_BIT)
+#define	FLOAT_SIZE		32
+#define	DOUBLE_SIZE		64
+#define	LDOUBLE_SIZE		128
 
-#define	ENUM_SIZE		(4 * CHAR_BIT)
+#define	ENUM_SIZE		32

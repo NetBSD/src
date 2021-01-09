@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.112 2021/01/09 13:12:13 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.113 2021/01/09 14:10:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.112 2021/01/09 13:12:13 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.113 2021/01/09 14:10:15 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -942,16 +942,16 @@ getbound(type_t *tp)
 	} else if (t == FUNC) {
 		/* compiler takes alignment of function */
 		error(14);
-		a = WORST_ALIGN(1) * CHAR_BIT;
+		a = WORST_ALIGN(1) * CHAR_SIZE;
 	} else {
 		if ((a = size(t)) == 0) {
-			a = CHAR_BIT;
-		} else if (a > WORST_ALIGN(1) * CHAR_BIT) {
-			a = WORST_ALIGN(1) * CHAR_BIT;
+			a = CHAR_SIZE;
+		} else if (a > WORST_ALIGN(1) * CHAR_SIZE) {
+			a = WORST_ALIGN(1) * CHAR_SIZE;
 		}
 	}
-	lint_assert(a >= CHAR_BIT);
-	lint_assert(a <= WORST_ALIGN(1) * CHAR_BIT);
+	lint_assert(a >= CHAR_SIZE);
+	lint_assert(a <= WORST_ALIGN(1) * CHAR_SIZE);
 	return a;
 }
 
@@ -1659,7 +1659,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		tp->t_tspec = kind;
 		if (kind != ENUM) {
 			tp->t_str = getblk(sizeof (str_t));
-			tp->t_str->align = CHAR_BIT;
+			tp->t_str->align = CHAR_SIZE;
 			tp->t_str->stag = tag;
 		} else {
 			tp->t_isenum = 1;
