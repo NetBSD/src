@@ -1,1 +1,2 @@
-msg_116.c(9): illegal pointer subtraction [116]
+msg_116.c(15): illegal pointer subtraction [116]
+msg_116.c(27): illegal pointer subtraction [116]
