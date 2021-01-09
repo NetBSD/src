@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.137 2021/01/09 17:21:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.138 2021/01/09 18:15:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.137 2021/01/09 17:21:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.138 2021/01/09 18:15:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -686,6 +686,29 @@ cconv(tnode_t *tn)
 	return tn;
 }
 
+static bool
+typeok_incdec(mod_t *const mp, tnode_t *const ln, type_t *const ltp)
+{
+	/* operand has scalar type (checked in typeok) */
+	if (!ln->tn_lvalue) {
+		if (ln->tn_op == CVT && ln->tn_cast &&
+		    ln->tn_left->tn_op == LOAD) {
+			if (ln->tn_type->t_tspec == PTR)
+				return true;
+			/* a cast does not yield an lvalue */
+			error(163);
+		}
+		/* %soperand of '%s' must be lvalue */
+		error(114, "", mp->m_name);
+		return false;
+	} else if (ltp->t_const) {
+		if (!tflag)
+			/* %soperand of '%s' must be modifiable ... */
+			warning(115, "", mp->m_name);
+	}
+	return true;
+}
+
 /*
  * Perform most type checks. First the types are checked using
  * the information from modtab[]. After that it is done by hand for
@@ -783,23 +806,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case DECAFT:
 	case INCBEF:
 	case DECBEF:
-		/* operands have scalar types (checked above) */
-		if (!ln->tn_lvalue) {
-			if (ln->tn_op == CVT && ln->tn_cast &&
-			    ln->tn_left->tn_op == LOAD) {
-				if (ln->tn_type->t_tspec == PTR)
-					break;
-				/* a cast does not yield an lvalue */
-				error(163);
-			}
-			/* %soperand of '%s' must be lvalue */
-			error(114, "", mp->m_name);
+		if (!typeok_incdec(mp, ln, ltp))
 			return 0;
-		} else if (ltp->t_const) {
-			if (!tflag)
-				/* %soperand of '%s' must be modifiable ... */
-				warning(115, "", mp->m_name);
-		}
 		break;
 	case AMPER:
 		if (lt == ARRAY || lt == FUNC) {
