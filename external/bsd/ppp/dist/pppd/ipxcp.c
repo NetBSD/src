@@ -47,10 +47,9 @@
 #define RCSID	"Id: ipxcp.c,v 1.24 2005/08/25 23:59:34 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: ipxcp.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
+__RCSID("$NetBSD: ipxcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #endif
 #ifdef IPX_CHANGE
-
 
 /*
  * TODO:
@@ -85,17 +84,17 @@ ipxcp_options ipxcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
-static void ipxcp_resetci __P((fsm *));	/* Reset our CI */
-static int  ipxcp_cilen __P((fsm *));		/* Return length of our CI */
-static void ipxcp_addci __P((fsm *, u_char *, int *)); /* Add our CI */
-static int  ipxcp_ackci __P((fsm *, u_char *, int));	/* Peer ack'd our CI */
-static int  ipxcp_nakci __P((fsm *, u_char *, int, int));/* Peer nak'd our CI */
-static int  ipxcp_rejci __P((fsm *, u_char *, int));	/* Peer rej'd our CI */
-static int  ipxcp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
-static void ipxcp_up __P((fsm *));		/* We're UP */
-static void ipxcp_down __P((fsm *));		/* We're DOWN */
-static void ipxcp_finished __P((fsm *));	/* Don't need lower layer */
-static void ipxcp_script __P((fsm *, char *)); /* Run an up/down script */
+static void ipxcp_resetci (fsm *);	/* Reset our CI */
+static int  ipxcp_cilen (fsm *);		/* Return length of our CI */
+static void ipxcp_addci (fsm *, u_char *, int *); /* Add our CI */
+static int  ipxcp_ackci (fsm *, u_char *, int);	/* Peer ack'd our CI */
+static int  ipxcp_nakci (fsm *, u_char *, int, int);/* Peer nak'd our CI */
+static int  ipxcp_rejci (fsm *, u_char *, int);	/* Peer rej'd our CI */
+static int  ipxcp_reqci (fsm *, u_char *, int *, int); /* Rcv CI */
+static void ipxcp_up (fsm *);		/* We're UP */
+static void ipxcp_down (fsm *);		/* We're DOWN */
+static void ipxcp_finished (fsm *);	/* Don't need lower layer */
+static void ipxcp_script (fsm *, char *); /* Run an up/down script */
 
 fsm ipxcp_fsm[NUM_PPP];		/* IPXCP fsm structure */
 
@@ -120,10 +119,10 @@ static fsm_callbacks ipxcp_callbacks = { /* IPXCP callback routines */
 /*
  * Command-line options.
  */
-static int setipxnode __P((char **));
-static void printipxnode __P((option_t *,
-			      void (*)(void *, char *, ...), void *));
-static int setipxname __P((char **));
+static int setipxnode (char **);
+static void printipxnode (option_t *,
+			  void (*)(void *, char *, ...), void *);
+static int setipxname (char **);
 
 static option_t ipxcp_option_list[] = {
     { "ipx", o_bool, &ipxcp_protent.enabled_flag,
@@ -177,15 +176,15 @@ static option_t ipxcp_option_list[] = {
  * Protocol entry points.
  */
 
-static void ipxcp_init __P((int));
-static void ipxcp_open __P((int));
-static void ipxcp_close __P((int, char *));
-static void ipxcp_lowerup __P((int));
-static void ipxcp_lowerdown __P((int));
-static void ipxcp_input __P((int, u_char *, int));
-static void ipxcp_protrej __P((int));
-static int  ipxcp_printpkt __P((u_char *, int,
-				void (*) __P((void *, char *, ...)), void *));
+static void ipxcp_init (int);
+static void ipxcp_open (int);
+static void ipxcp_close (int, char *);
+static void ipxcp_lowerup (int);
+static void ipxcp_lowerdown (int);
+static void ipxcp_input (int, u_char *, int);
+static void ipxcp_protrej (int);
+static int  ipxcp_printpkt (u_char *, int,
+			    void (*) (void *, char *, ...), void *);
 
 struct protent ipxcp_protent = {
     PPP_IPXCP,
@@ -224,7 +223,7 @@ struct protent ipxcp_protent = {
 
 static int ipxcp_is_up;
 
-static char *ipx_ntoa __P((u_int32_t));
+static char *ipx_ntoa (u_int32_t);
 
 /* Used in printing the node number */
 #define NODE(base) base[0], base[1], base[2], base[3], base[4], base[5]
@@ -237,8 +236,7 @@ static char *ipx_ntoa __P((u_int32_t));
  */
 
 static short int
-to_external(internal)
-short int internal;
+to_external(short int internal)
 {
     short int  external;
 
@@ -255,8 +253,7 @@ short int internal;
  */
 
 static char *
-ipx_ntoa(ipxaddr)
-u_int32_t ipxaddr;
+ipx_ntoa(u_int32_t ipxaddr)
 {
     static char b[64];
     slprintf(b, sizeof(b), "%x", ipxaddr);
@@ -265,8 +262,7 @@ u_int32_t ipxaddr;
 
 
 static u_char *
-setipxnodevalue(src,dst)
-u_char *src, *dst;
+setipxnodevalue(u_char *src, u_char *dst)
 {
     int indx;
     int item;
@@ -293,8 +289,7 @@ u_char *src, *dst;
 static int ipx_prio_our, ipx_prio_his;
 
 static int
-setipxnode(argv)
-    char **argv;
+setipxnode(char **argv)
 {
     u_char *end;
     int have_his = 0;
@@ -304,7 +299,7 @@ setipxnode(argv)
     memset (our_node, 0, 6);
     memset (his_node, 0, 6);
 
-    end = setipxnodevalue (*argv, our_node);
+    end = setipxnodevalue ((u_char *)*argv, our_node);
     if (*end == ':') {
 	have_his = 1;
 	end = setipxnodevalue (++end, his_node);
@@ -328,10 +323,7 @@ setipxnode(argv)
 }
 
 static void
-printipxnode(opt, printer, arg)
-    option_t *opt;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+printipxnode(option_t *opt, void (*printer) (void *, char *, ...), void *arg)
 {
 	unsigned char *p;
 
@@ -347,8 +339,7 @@ printipxnode(opt, printer, arg)
 }
 
 static int
-setipxname (argv)
-    char **argv;
+setipxname (char **argv)
 {
     u_char *dest = ipxcp_wantoptions[0].name;
     char *src  = *argv;
@@ -384,8 +375,7 @@ setipxname (argv)
  * ipxcp_init - Initialize IPXCP.
  */
 static void
-ipxcp_init(unit)
-    int unit;
+ipxcp_init(int unit)
 {
     fsm *f = &ipxcp_fsm[unit];
 
@@ -421,8 +411,7 @@ ipxcp_init(unit)
  */
 
 static void
-copy_node (src, dst)
-u_char *src, *dst;
+copy_node (u_char *src, u_char *dst)
 {
     memcpy (dst, src, sizeof (ipxcp_wantoptions[0].our_node));
 }
@@ -432,8 +421,7 @@ u_char *src, *dst;
  */
 
 static int
-compare_node (src, dst)
-u_char *src, *dst;
+compare_node (u_char *src, u_char *dst)
 {
     return memcmp (dst, src, sizeof (ipxcp_wantoptions[0].our_node)) == 0;
 }
@@ -443,8 +431,7 @@ u_char *src, *dst;
  */
 
 static int
-zero_node (node)
-u_char *node;
+zero_node (u_char *node)
 {
     int indx;
     for (indx = 0; indx < sizeof (ipxcp_wantoptions[0].our_node); ++indx)
@@ -458,8 +445,7 @@ u_char *node;
  */
 
 static void
-inc_node (node)
-u_char *node;
+inc_node (u_char *node)
 {
     u_char   *outp;
     u_int32_t magic_num;
@@ -475,8 +461,7 @@ u_char *node;
  * ipxcp_open - IPXCP is allowed to come up.
  */
 static void
-ipxcp_open(unit)
-    int unit;
+ipxcp_open(int unit)
 {
     fsm_open(&ipxcp_fsm[unit]);
 }
@@ -485,9 +470,7 @@ ipxcp_open(unit)
  * ipxcp_close - Take IPXCP down.
  */
 static void
-ipxcp_close(unit, reason)
-    int unit;
-    char *reason;
+ipxcp_close(int unit, char *reason)
 {
     fsm_close(&ipxcp_fsm[unit], reason);
 }
@@ -497,8 +480,7 @@ ipxcp_close(unit, reason)
  * ipxcp_lowerup - The lower layer is up.
  */
 static void
-ipxcp_lowerup(unit)
-    int unit;
+ipxcp_lowerup(int unit)
 {
     fsm_lowerup(&ipxcp_fsm[unit]);
 }
@@ -508,8 +490,7 @@ ipxcp_lowerup(unit)
  * ipxcp_lowerdown - The lower layer is down.
  */
 static void
-ipxcp_lowerdown(unit)
-    int unit;
+ipxcp_lowerdown(int unit)
 {
     fsm_lowerdown(&ipxcp_fsm[unit]);
 }
@@ -519,10 +500,7 @@ ipxcp_lowerdown(unit)
  * ipxcp_input - Input IPXCP packet.
  */
 static void
-ipxcp_input(unit, p, len)
-    int unit;
-    u_char *p;
-    int len;
+ipxcp_input(int unit, u_char *p, int len)
 {
     fsm_input(&ipxcp_fsm[unit], p, len);
 }
@@ -534,8 +512,7 @@ ipxcp_input(unit, p, len)
  * Pretend the lower layer went down, so we shut up.
  */
 static void
-ipxcp_protrej(unit)
-    int unit;
+ipxcp_protrej(int unit)
 {
     fsm_lowerdown(&ipxcp_fsm[unit]);
 }
@@ -545,8 +522,7 @@ ipxcp_protrej(unit)
  * ipxcp_resetci - Reset our CI.
  */
 static void
-ipxcp_resetci(f)
-    fsm *f;
+ipxcp_resetci(fsm *f)
 {
     wo->req_node = wo->neg_node && ao->neg_node;
     wo->req_nn	 = wo->neg_nn	&& ao->neg_nn;
@@ -593,8 +569,7 @@ ipxcp_resetci(f)
  */
 
 static int
-ipxcp_cilen(f)
-    fsm *f;
+ipxcp_cilen(fsm *f)
 {
     int len;
 
@@ -614,10 +589,7 @@ ipxcp_cilen(f)
  * ipxcp_addci - Add our desired CIs to a packet.
  */
 static void
-ipxcp_addci(f, ucp, lenp)
-    fsm *f;
-    u_char *ucp;
-    int *lenp;
+ipxcp_addci(fsm *f, u_char *ucp, int *lenp)
 {
 /*
  * Add the options to the record.
@@ -663,10 +635,7 @@ ipxcp_addci(f, ucp, lenp)
  *	1 - Ack was good.
  */
 static int
-ipxcp_ackci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
+ipxcp_ackci(fsm *f, u_char *p, int len)
 {
     u_short cilen, citype, cishort;
     u_char cichar;
@@ -770,11 +739,7 @@ ipxcp_ackci(f, p, len)
  */
 
 static int
-ipxcp_nakci(f, p, len, treat_as_reject)
-    fsm *f;
-    u_char *p;
-    int len;
-    int treat_as_reject;
+ipxcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 {
     u_char citype, cilen, *next;
     u_short s;
@@ -883,10 +848,7 @@ bad:
  * ipxcp_rejci - Reject some of our CIs.
  */
 static int
-ipxcp_rejci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
+ipxcp_rejci(fsm *f, u_char *p, int len)
 {
     u_short cilen, citype, cishort;
     u_char cichar;
@@ -994,11 +956,7 @@ ipxcp_rejci(f, p, len)
  * CONFNAK; returns CONFREJ if it can't return CONFACK.
  */
 static int
-ipxcp_reqci(f, inp, len, reject_if_disagree)
-    fsm *f;
-    u_char *inp;		/* Requested CIs */
-    int *len;			/* Length of requested CIs */
-    int reject_if_disagree;
+ipxcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree)
 {
     u_char *cip, *next;		/* Pointer to current and next CIs */
     u_short cilen, citype;	/* Parsed len, type */
@@ -1201,7 +1159,7 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
 	case IPX_ROUTER_NAME:
 	    if (cilen >= CILEN_NAME) {
 		int name_size = cilen - CILEN_NAME;
-		if (name_size > sizeof (ho->name))
+		if (name_size >= sizeof (ho->name))
 		    name_size = sizeof (ho->name) - 1;
 		memset (ho->name, 0, sizeof (ho->name));
 		memcpy (ho->name, p, name_size);
@@ -1297,8 +1255,7 @@ endswitch:
  */
 
 static void
-ipxcp_up(f)
-    fsm *f;
+ipxcp_up(fsm *f)
 {
     int unit = f->unit;
 
@@ -1376,8 +1333,7 @@ ipxcp_up(f)
  */
 
 static void
-ipxcp_down(f)
-    fsm *f;
+ipxcp_down(fsm *f)
 {
     IPXCPDEBUG(("ipxcp: down"));
 
@@ -1396,8 +1352,7 @@ ipxcp_down(f)
  * ipxcp_finished - possibly shut down the lower layers.
  */
 static void
-ipxcp_finished(f)
-    fsm *f;
+ipxcp_finished(fsm *f)
 {
     np_finished(f->unit, PPP_IPX);
 }
@@ -1408,9 +1363,7 @@ ipxcp_finished(f)
  * interface-name tty-name speed local-IPX remote-IPX networks.
  */
 static void
-ipxcp_script(f, script)
-    fsm *f;
-    char *script;
+ipxcp_script(fsm *f, char *script)
 {
     char strspeed[32],	 strlocal[32],	   strremote[32];
     char strnetwork[32], strpid[32];
@@ -1477,11 +1430,8 @@ static char *ipxcp_codenames[] = {
 };
 
 static int
-ipxcp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+ipxcp_printpkt(u_char *p, int plen,
+	       void (*printer) (void *, char *, ...), void *arg)
 {
     int code, id, len, olen;
     u_char *pstart, *optend;

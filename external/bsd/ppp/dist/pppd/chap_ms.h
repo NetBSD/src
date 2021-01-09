@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: chap_ms.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * chap_ms.h - Challenge Handshake Authentication Protocol definitions.
@@ -89,16 +89,16 @@ extern void set_mppe_enc_types(int, int);
 #define MS_CHAP2_AUTHENTICATEE 0
 #define MS_CHAP2_AUTHENTICATOR 1
 
-void ChapMS __P((u_char *, char *, int, u_char *));
-void ChapMS2 __P((u_char *, u_char *, char *, char *, int,
-		  u_char *, u_char[MS_AUTH_RESPONSE_LENGTH+1], int));
+void ChapMS (u_char *, char *, int, u_char *);
+void ChapMS2 (u_char *, u_char *, char *, char *, int,
+	      u_char *, u_char[MS_AUTH_RESPONSE_LENGTH+1], int);
 #ifdef MPPE
-void mppe_set_keys __P((u_char *, u_char[MD4_SIGNATURE_SIZE]));
+void mppe_set_keys (u_char *, u_char[MD4_SIGNATURE_SIZE]);
 void mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 		    u_char NTResponse[24], int IsServer);
 #endif
 
-void	ChallengeHash __P((u_char[16], u_char *, char *, u_char[8]));
+void	ChallengeHash (u_char[16], u_char *, char *, u_char[8]);
 
 void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 			u_char NTResponse[24], u_char PeerChallenge[16],

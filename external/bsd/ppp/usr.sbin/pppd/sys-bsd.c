@@ -121,6 +121,13 @@ __RCSID("NetBSD: sys-bsd.c,v 1.68 2013/06/24 20:43:48 christos Exp ");
 #endif
 #include <ifaddrs.h>
 
+#define s6_addr32 __u6_addr.__u6_addr32	/* Non-standard */
+
+#define IN6_SOCKADDR_FROM_EUI64(s, eui64) do { \
+	(s)->sin6_family = AF_INET6; \
+	(s)->sin6_addr.s6_addr32[0] = htonl(0xfe800000); \
+	eui64_copy(eui64, (s)->sin6_addr.s6_addr32[2]); \
+	} while(0)
 #ifndef IN6_LLADDR_FROM_EUI64
 #ifdef __KAME__
 #define IN6_LLADDR_FROM_EUI64(sin6, eui64) do {			\
@@ -194,6 +201,8 @@ static int if6_is_up;		/* the interface is currently up */
 #endif /* INET6 */
 static u_int32_t ifaddrs[2];	/* local and remote addresses we set */
 static u_int32_t default_route_gateway;	/* gateway addr for default route */
+static eui64_t  default_route_gateway6; /* Gateway for default IPv6 route added
+*/ 
 static u_int32_t proxy_arp_addr;	/* remote addr for proxy arp */
 
 /* Prototypes for procedures local to this file. */
@@ -298,6 +307,8 @@ sys_cleanup(void)
 	cifaddr(0, ifaddrs[0], ifaddrs[1]);
     if (default_route_gateway)
 	cifdefaultroute(0, 0, default_route_gateway);
+    if (default_route_gateway6.e32[0] != 0 || default_route_gateway6.e32[1] != 0)
+	cif6defaultroute(0, default_route_gateway6, default_route_gateway6);
     if (proxy_arp_addr)
 	cifproxyarp(0, proxy_arp_addr);
     doing_cleanup = 0;
@@ -1569,8 +1580,10 @@ cifaddr(int u, u_int32_t o, u_int32_t h)
  * sifdefaultroute - assign a default route through the address given.
  */
 int
-sifdefaultroute(int u, u_int32_t l, u_int32_t g)
+sifdefaultroute(int u, u_int32_t l, u_int32_t g, bool replace)
 {
+    if (replace)
+	dodefaultroute(g, 'c');
     return dodefaultroute(g, 's');
 }
 
@@ -1643,6 +1656,73 @@ dodefaultroute(u_int32_t g, int cmd)
     close(routes);
     default_route_gateway = (cmd == 's') ? g : 0;
     return 1;
+}
+
+
+/*
+ * dodefaultroute - assign/clear a default route through the address given.
+ */
+static int
+dodefaultroute6(int u, eui64_t l, eui64_t g, char cmd)
+{
+    struct {
+	struct rt_msghdr rtm;
+	struct sockaddr_in6 dst;
+	struct sockaddr_in6 gw;
+    } rmsg;
+    static int seq;
+    int rtsock;
+
+#if defined(__USLC__)
+    g = l;			/* use the local address as gateway */
+#endif
+    memset(&rmsg, 0, sizeof(rmsg));
+
+    rmsg.rtm.rtm_msglen = sizeof (rmsg);
+    rmsg.rtm.rtm_version = RTM_VERSION;
+    rmsg.rtm.rtm_type = cmd == 's' ? RTM_ADD : RTM_DELETE;
+    rmsg.rtm.rtm_flags = RTF_GATEWAY;
+    rmsg.rtm.rtm_addrs = RTA_DST | RTA_GATEWAY;
+    rmsg.rtm.rtm_pid = getpid();
+    rmsg.rtm.rtm_seq = seq++;
+
+    rmsg.dst.sin6_family = AF_INET6;
+
+    rmsg.gw.sin6_family = AF_INET6;
+    IN6_SOCKADDR_FROM_EUI64(&rmsg.gw, g);
+
+    rtsock = socket(PF_ROUTE, SOCK_RAW, 0);
+
+    if (rtsock < 0) {
+	error("Can't %s default route: %m", cmd == 's' ? "add" : "remove");
+	return 0;
+    }
+
+    if (write(rtsock, &rmsg, sizeof(rmsg)) < 0)
+	error("Can't %s default route: %m", cmd == 's' ? "add" : "remove");
+
+    close(rtsock);
+
+    default_route_gateway6 = g;
+    return 1;
+}
+
+/*
+ * sif6defaultroute - assign a default route through the address given.
+ */
+int
+sif6defaultroute(int u, eui64_t l, eui64_t g)
+{
+	return dodefaultroute6(u, l, g, 's');
+}
+
+/*
+ * cif6defaultroute - delete a default route through the address given.
+ */
+int
+cif6defaultroute(int u, eui64_t l, eui64_t g)
+{
+	return dodefaultroute6(u, l, g, 'c');
 }
 
 #if RTM_VERSION >= 3
@@ -1902,40 +1982,45 @@ get_if_hwaddr(u_char *addr, char *name)
 }
 
 /*
- * get_first_ethernet - return the name of the first ethernet-style
- * interface on this system.
+ * get_first_ether_hwaddr - get the hardware address for the first
+ * ethernet-style interface on this system.
  */
-char *
-get_first_ethernet(void)
+int
+get_first_ether_hwaddr(u_char *addr)
 {
-    static char ifname[IFNAMSIZ];
-    struct ifaddrs *ifap, *ifa;
+	struct if_nameindex *if_ni, *i;
+	struct ifreq ifreq;
+	int ret, sock_fd;
 
-    /*
-     * Scan through the system's network interfaces.
-     */
-    if (getifaddrs(&ifap) != 0) {
-	warn("%s: getifaddrs: %m", __func__);
-	return NULL;
-    }
-    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-	/*
-	 * Check the interface's internet address.
-	 */
-	if (ifa->ifa_addr->sa_family != AF_INET)
-	    continue;
-	/*
-	 * Check that the interface is up, and not point-to-point or loopback.
-	 */
-	if ((ifa->ifa_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK))
-	    != IFF_UP) {
-	    strlcpy(ifname, ifa->ifa_name, sizeof(ifname));
-	    freeifaddrs(ifap);
-	    return ifname;
+	sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock_fd < 0)
+		return -1;
+
+	if_ni = if_nameindex();
+	if (!if_ni) {
+		close(sock_fd);
+		return -1;
 	}
-    }
-    freeifaddrs(ifap);
-    return NULL;
+
+	ret = -1;
+
+	for (i = if_ni; !(i->if_index == 0 && i->if_name == NULL); i++) {
+		struct sockaddr_dl *sdl = (struct sockaddr_dl *)
+		    &ifreq.ifr_addr;
+		sdl->sdl_family = AF_LINK;
+		strlcpy(ifreq.ifr_name, i->if_name, sizeof(ifreq.ifr_name));
+		ret = ioctl(sock_fd, SIOCGIFADDR, &ifreq);
+		if (ret >= 0 && sdl->sdl_family == AF_LINK) {
+			memcpy(addr, LLADDR(sdl), sdl->sdl_alen);
+			break;
+		}
+		ret = -1;
+	}
+
+	if_freenameindex(if_ni);
+	close(sock_fd);
+
+	return ret;
 }
 
 /*
@@ -2093,53 +2178,13 @@ unlock(void)
 }
 #endif
 
-#ifdef INET6
-/*
- * ether_to_eui64 - Convert 48-bit Ethernet address into 64-bit EUI
+
+/********************************************************************
  *
- * convert the 48-bit MAC address of eth0 into EUI 64. caller also assumes
- * that the system has a properly configured Ethernet interface for this
- * function to return non-zero.
+ * get_time - Get current time, monotonic if possible.
  */
 int
-ether_to_eui64(eui64_t *p_eui64)
+get_time(struct timeval *tv)
 {
-    struct ifaddrs *ifap, *ifa;
-
-    if (getifaddrs(&ifap) != 0) {
-	warn("%s: getifaddrs: %m", __func__);
-	return 0;
-    }
-    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-	/*
-	 * Check the interface's internet address.
-	 */
-	if (ifa->ifa_addr->sa_family != AF_LINK)
-	    continue;
-	/*
-	 * Check that the interface is up, and not point-to-point or loopback.
-	 */
-	if ((ifa->ifa_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK)) == IFF_UP)
-	{
-	    /*
-	     * And convert the EUI-48 into EUI-64, per RFC 2472 [sec 4.1]
-	     */
-	    unsigned char *ptr = (void *)ifa->ifa_addr;
-	    p_eui64->e8[0] = ptr[0] | 0x02;
-	    p_eui64->e8[1] = ptr[1];
-	    p_eui64->e8[2] = ptr[2];
-	    p_eui64->e8[3] = 0xFF;
-	    p_eui64->e8[4] = 0xFE;
-	    p_eui64->e8[5] = ptr[3];
-	    p_eui64->e8[6] = ptr[4];
-	    p_eui64->e8[7] = ptr[5];
-	    freeifaddrs(ifap);
-	    return 1;
-	}
-    }
-    warn("%s: can't find a link address", __func__);
-    freeifaddrs(ifap);
-
-    return 0;
+    return gettimeofday(tv, NULL);
 }
-#endif

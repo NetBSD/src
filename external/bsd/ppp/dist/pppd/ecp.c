@@ -1,4 +1,4 @@
-/*	$NetBSD: ecp.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: ecp.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * ecp.c - PPP Encryption Control Protocol.
@@ -60,12 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-#if 0
-#define RCSID	"Id: ecp.c,v 1.4 2004/11/04 10:02:26 paulus Exp "
-static const char rcsid[] = RCSID;
-#else
-__RCSID("$NetBSD: ecp.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
-#endif
+__RCSID("$NetBSD: ecp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 
 #include <string.h>
 
@@ -85,20 +80,20 @@ static option_t ecp_option_list[] = {
 /*
  * Protocol entry points from main code.
  */
-static void ecp_init __P((int unit));
+static void ecp_init (int unit);
 /*
-static void ecp_open __P((int unit));
-static void ecp_close __P((int unit, char *));
-static void ecp_lowerup __P((int unit));
-static void ecp_lowerdown __P((int));
-static void ecp_input __P((int unit, u_char *pkt, int len));
-static void ecp_protrej __P((int unit));
+static void ecp_open (int unit);
+static void ecp_close (int unit, char *);
+static void ecp_lowerup (int unit);
+static void ecp_lowerdown (int);
+static void ecp_input (int unit, u_char *pkt, int len);
+static void ecp_protrej (int unit);
 */
-static int  ecp_printpkt __P((u_char *pkt, int len,
-			      void (*printer) __P((void *, char *, ...)),
-			      void *arg));
+static int  ecp_printpkt (u_char *pkt, int len,
+			  void (*printer)(void *, char *, ...),
+			  void *arg);
 /*
-static void ecp_datainput __P((int unit, u_char *pkt, int len));
+static void ecp_datainput (int unit, u_char *pkt, int len);
 */
 
 struct protent ecp_protent = {
@@ -149,8 +144,7 @@ static fsm_callbacks ecp_callbacks = {
  * ecp_init - initialize ECP.
  */
 static void
-ecp_init(unit)
-    int unit;
+ecp_init(int unit)
 {
     fsm *f = &ecp_fsm[unit];
 
@@ -168,11 +162,8 @@ ecp_init(unit)
 
 
 static int
-ecp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
+ecp_printpkt(u_char *p, int plen,
+	     void (*printer)(void *, char *, ...), void *arg)
 {
     return 0;
 }

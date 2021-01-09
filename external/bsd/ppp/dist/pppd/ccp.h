@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: ccp.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * ccp.h - Definitions for PPP Compression Control Protocol.
@@ -39,7 +39,7 @@ typedef struct ccp_options {
     bool predictor_2;		/* do Predictor-2? */
     bool deflate_correct;	/* use correct code for deflate? */
     bool deflate_draft;		/* use draft RFC code for deflate? */
-    u_short mppe;		/* do MPPE? */
+    u_char mppe;		/* MPPE bitfield */
     u_short bsd_bits;		/* # bits/code for BSD Compress */
     u_short deflate_size;	/* lg(window size) for Deflate */
     short method;		/* code for chosen compression method */

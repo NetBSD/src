@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: ipxcp.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * ipxcp.h - IPX Control Protocol definitions.
@@ -40,8 +40,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Id: ipxcp.h,v 1.5 2002/12/04 23:03:32 paulus Exp 
  */
 
 /*

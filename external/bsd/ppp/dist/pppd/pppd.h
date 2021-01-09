@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.5 2017/01/12 23:06:23 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.6 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -52,6 +52,9 @@
 #define __PPPD_H__
 
 #include <stdio.h>		/* for FILE */
+#include <stdlib.h>		/* for encrypt */
+#include <unistd.h>		/* for setkey */
+#include <stdarg.h>
 #include <limits.h>		/* for NGROUPS_MAX */
 #include <stddef.h>		/* offsetof() */
 #include <sys/param.h>		/* for MAXPATHLEN and BSD4_4, if defined */
@@ -59,16 +62,6 @@
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
 #include "patchlevel.h"
-
-#if defined(__STDC__)
-#include <stdarg.h>
-#define __V(x)	x
-#else
-#include <varargs.h>
-#define __V(x)	(va_alist) va_dcl
-#define const
-#define volatile
-#endif
 
 #ifdef INET6
 #include "eui64.h"
@@ -83,6 +76,16 @@
 #define MAXARGS		1	/* max # args to a command */
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
 #define MAXSECRETLEN	256	/* max length of password or secret */
+#define MAXIFNAMELEN	32	/* max length of interface name; or use IFNAMSIZ, can we
+				   always include net/if.h? */
+
+/*
+ * If PPP_DRV_NAME is not defined, use the default "ppp" as the device name.
+ * Where should PPP_DRV_NAME come from? Do we include it here?
+ */
+#if !defined(PPP_DRV_NAME)
+#define PPP_DRV_NAME	"ppp"
+#endif /* !defined(PPP_DRV_NAME) */
 
 /*
  * Option descriptor structure.
@@ -200,8 +203,8 @@ struct epdisc {
 #define EPD_MAGIC	4
 #define EPD_PHONENUM	5
 
-typedef void (*notify_func) __P((void *, int));
-typedef void (*printer_func) __P((void *, char *, ...));
+typedef void (*notify_func)(void *, int);
+typedef void (*printer_func)(void *, char *, ...);
 
 struct notifier {
     struct notifier *next;
@@ -213,6 +216,7 @@ struct notifier {
  * Global variables.
  */
 
+extern int	got_sigterm;	/* SIGINT or SIGTERM was received */
 extern int	hungup;		/* Physical layer has disconnected */
 extern int	ifunit;		/* Interface unit number */
 extern char	ifname[];	/* Interface name */
@@ -287,6 +291,9 @@ extern int	inspeed;	/* Input/Output speed requested */
 extern u_int32_t netmask;	/* IP netmask to set on interface */
 extern bool	lockflag;	/* Create lock file to lock the serial dev */
 extern bool	nodetach;	/* Don't detach from controlling tty */
+#ifdef SYSTEMD
+extern bool	up_sdnotify;	/* Notify systemd once link is up (implies nodetach) */
+#endif
 extern bool	updetach;	/* Detach from controlling tty when link up */
 extern bool	master_detach;	/* Detach when multilink master without link */
 extern char	*initializer;	/* Script to initialize physical link */
@@ -320,12 +327,21 @@ extern bool	tune_kernel;	/* May alter kernel settings as necessary */
 extern int	connect_delay;	/* Time to delay after connect script */
 extern int	max_data_rate;	/* max bytes/sec through charshunt */
 extern int	req_unit;	/* interface unit number to use */
+extern char	path_ipup[MAXPATHLEN]; /* pathname of ip-up script */
+extern char	path_ipdown[MAXPATHLEN]; /* pathname of ip-down script */
+extern char	req_ifname[MAXIFNAMELEN]; /* interface name to use */
 extern bool	multilink;	/* enable multilink operation */
 extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
 extern char	*bundle_name;	/* bundle name for multilink */
 extern bool	dump_options;	/* print out option values */
 extern bool	dryrun;		/* check everything, print options, exit */
 extern int	child_wait;	/* # seconds to wait for children at end */
+
+#ifdef USE_EAPTLS
+extern char	*crl_dir;
+extern char	*crl_file;
+extern char *max_tls_version;
+#endif /* USE_EAPTLS */
 
 #ifdef MAXOCTETS
 extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
@@ -404,34 +420,33 @@ extern int  option_priority;	/* priority of current options */
 struct protent {
     u_short protocol;		/* PPP protocol number */
     /* Initialization procedure */
-    void (*init) __P((int unit));
+    void (*init)(int unit);
     /* Process a received packet */
-    void (*input) __P((int unit, u_char *pkt, int len));
+    void (*input)(int unit, u_char *pkt, int len);
     /* Process a received protocol-reject */
-    void (*protrej) __P((int unit));
+    void (*protrej)(int unit);
     /* Lower layer has come up */
-    void (*lowerup) __P((int unit));
+    void (*lowerup)(int unit);
     /* Lower layer has gone down */
-    void (*lowerdown) __P((int unit));
+    void (*lowerdown)(int unit);
     /* Open the protocol */
-    void (*open) __P((int unit));
+    void (*open)(int unit);
     /* Close the protocol */
-    void (*close) __P((int unit, char *reason));
+    void (*close)(int unit, char *reason);
     /* Print a packet in readable form */
-    int  (*printpkt) __P((u_char *pkt, int len, printer_func printer,
-			  void *arg));
+    int  (*printpkt)(u_char *pkt, int len, printer_func printer, void *arg);
     /* Process a received data packet */
-    void (*datainput) __P((int unit, u_char *pkt, int len));
+    void (*datainput)(int unit, u_char *pkt, int len);
     bool enabled_flag;		/* 0 iff protocol is disabled */
     char *name;			/* Text name of protocol */
     char *data_name;		/* Text name of corresponding data protocol */
     option_t *options;		/* List of command-line options */
     /* Check requested options, assign defaults */
-    void (*check_options) __P((void));
+    void (*check_options)(void);
     /* Configure interface for demand-dial */
-    int  (*demand_conf) __P((int unit));
+    int  (*demand_conf)(int unit);
     /* Say whether to bring up link for this pkt */
-    int  (*active_pkt) __P((u_char *pkt, int len));
+    int  (*active_pkt)(u_char *pkt, int len);
 };
 
 /* Table of pointers to supported protocols */
@@ -448,25 +463,25 @@ struct channel {
 	/* set of options for this channel */
 	option_t *options;
 	/* find and process a per-channel options file */
-	void (*process_extra_options) __P((void));
+	void (*process_extra_options)(void);
 	/* check all the options that have been given */
-	void (*check_options) __P((void));
+	void (*check_options)(void);
 	/* get the channel ready to do PPP, return a file descriptor */
-	int  (*connect) __P((void));
+	int  (*connect)(void);
 	/* we're finished with the channel */
-	void (*disconnect) __P((void));
+	void (*disconnect)(void);
 	/* put the channel into PPP `mode' */
-	int  (*establish_ppp) __P((int));
+	int  (*establish_ppp)(int);
 	/* take the channel out of PPP `mode', restore loopback if demand */
-	void (*disestablish_ppp) __P((int));
+	void (*disestablish_ppp)(int);
 	/* set the transmit-side PPP parameters of the channel */
-	void (*send_config) __P((int, u_int32_t, int, int));
+	void (*send_config)(int, u_int32_t, int, int);
 	/* set the receive-side PPP parameters of the channel */
-	void (*recv_config) __P((int, u_int32_t, int, int));
+	void (*recv_config)(int, u_int32_t, int, int);
 	/* cleanup on error or normal exit */
-	void (*cleanup) __P((void));
+	void (*cleanup)(void);
 	/* close the device, called in children after fork */
-	void (*close) __P((void));
+	void (*close)(void);
 };
 
 extern struct channel *the_channel;
@@ -491,117 +506,117 @@ extern struct userenv *userenv_list;
  */
 
 /* Procedures exported from main.c. */
-void set_ifunit __P((int));	/* set stuff that depends on ifunit */
-void detach __P((void));	/* Detach from controlling tty */
-void die __P((int));		/* Cleanup and exit */
-void quit __P((void));		/* like die(1) */
-void novm __P((char *));	/* Say we ran out of memory, and die */
-void timeout __P((void (*func)(void *), void *arg, int s, int us));
+void set_ifunit(int);	/* set stuff that depends on ifunit */
+void detach(void);	/* Detach from controlling tty */
+void die(int);		/* Cleanup and exit */
+void quit(void);		/* like die(1) */
+void novm(char *);	/* Say we ran out of memory, and die */
+void timeout(void (*func)(void *), void *arg, int s, int us);
 				/* Call func(arg) after s.us seconds */
-void untimeout __P((void (*func)(void *), void *arg));
+void untimeout(void (*func)(void *), void *arg);
 				/* Cancel call to func(arg) */
-void record_child __P((int, char *, void (*) (void *), void *, int));
-pid_t safe_fork __P((int, int, int));	/* Fork & close stuff in child */
-int  device_script __P((char *cmd, int in, int out, int dont_wait));
+void record_child(int, char *, void (*) (void *), void *, int);
+pid_t safe_fork(int, int, int);	/* Fork & close stuff in child */
+int  device_script(char *cmd, int in, int out, int dont_wait);
 				/* Run `cmd' with given stdin and stdout */
-pid_t run_program __P((char *prog, char **args, int must_exist,
-		       void (*done)(void *), void *arg, int wait));
+pid_t run_program(char *prog, char **args, int must_exist,
+		  void (*done)(void *), void *arg, int wait);
 				/* Run program prog with args in child */
-void reopen_log __P((void));	/* (re)open the connection to syslog */
-void print_link_stats __P((void)); /* Print stats, if available */
-void reset_link_stats __P((int)); /* Reset (init) stats when link goes up */
-void update_link_stats __P((int)); /* Get stats at link termination */
-void script_setenv __P((char *, char *, int));	/* set script env var */
-void script_unsetenv __P((char *));		/* unset script env var */
-void new_phase __P((int));	/* signal start of new phase */
-void add_notifier __P((struct notifier **, notify_func, void *));
-void remove_notifier __P((struct notifier **, notify_func, void *));
-void notify __P((struct notifier *, int));
-int  ppp_send_config __P((int, int, u_int32_t, int, int));
-int  ppp_recv_config __P((int, int, u_int32_t, int, int));
-const char *protocol_name __P((int));
-void remove_pidfiles __P((void));
-void lock_db __P((void));
-void unlock_db __P((void));
+void reopen_log(void);	/* (re)open the connection to syslog */
+void print_link_stats(void); /* Print stats, if available */
+void reset_link_stats(int); /* Reset (init) stats when link goes up */
+void update_link_stats(int); /* Get stats at link termination */
+void script_setenv(char *, char *, int);	/* set script env var */
+void script_unsetenv(char *);		/* unset script env var */
+void new_phase(int);	/* signal start of new phase */
+void add_notifier(struct notifier **, notify_func, void *);
+void remove_notifier(struct notifier **, notify_func, void *);
+void notify(struct notifier *, int);
+int  ppp_send_config(int, int, u_int32_t, int, int);
+int  ppp_recv_config(int, int, u_int32_t, int, int);
+const char *protocol_name(int);
+void remove_pidfiles(void);
+void lock_db(void);
+void unlock_db(void);
 
 /* Procedures exported from tty.c. */
-void tty_init __P((void));
+void tty_init(void);
 
 /* Procedures exported from utils.c. */
-void log_packet __P((u_char *, int, char *, int));
+void log_packet(u_char *, int, char *, int);
 				/* Format a packet and log it with syslog */
-void print_string __P((char *, int,  printer_func, void *));
+void print_string(char *, int,  printer_func, void *);
 				/* Format a string for output */
-int slprintf __P((char *, int, char *, ...));		/* sprintf++ */
-int vslprintf __P((char *, int, char *, va_list));	/* vsprintf++ */
-size_t strlcpy __P((char *, const char *, size_t));	/* safe strcpy */
-size_t strlcat __P((char *, const char *, size_t));	/* safe strncpy */
-void dbglog __P((char *, ...));	/* log a debug message */
-void info __P((char *, ...));	/* log an informational message */
-void notice __P((char *, ...));	/* log a notice-level message */
-void warn __P((char *, ...));	/* log a warning message */
-void error __P((char *, ...));	/* log an error message */
-void fatal __P((char *, ...));	/* log an error message and die(1) */
-void init_pr_log __P((const char *, int)); /* initialize for using pr_log */
-void pr_log __P((void *, char *, ...));	/* printer fn, output to syslog */
-void end_pr_log __P((void));	/* finish up after using pr_log */
-void dump_packet __P((const char *, u_char *, int));
+int slprintf(char *, int, char *, ...);		/* sprintf++ */
+int vslprintf(char *, int, char *, va_list);	/* vsprintf++ */
+size_t strlcpy(char *, const char *, size_t);	/* safe strcpy */
+size_t strlcat(char *, const char *, size_t);	/* safe strncpy */
+void dbglog(char *, ...);	/* log a debug message */
+void info(char *, ...);	/* log an informational message */
+void notice(char *, ...);	/* log a notice-level message */
+void warn(char *, ...);	/* log a warning message */
+void error(char *, ...);	/* log an error message */
+void fatal(char *, ...);	/* log an error message and die(1) */
+void init_pr_log(const char *, int); /* initialize for using pr_log */
+void pr_log(void *, char *, ...);	/* printer fn, output to syslog */
+void end_pr_log(void);	/* finish up after using pr_log */
+void dump_packet(const char *, u_char *, int);
 				/* dump packet to debug log if interesting */
-ssize_t complete_read __P((int, void *, size_t));
+ssize_t complete_read(int, void *, size_t);
 				/* read a complete buffer */
 
 /* Procedures exported from auth.c */
-void link_required __P((int));	  /* we are starting to use the link */
-void start_link __P((int));	  /* bring the link up now */
-void link_terminated __P((int));  /* we are finished with the link */
-void link_down __P((int));	  /* the LCP layer has left the Opened state */
-void upper_layers_down __P((int));/* take all NCPs down */
-void link_established __P((int)); /* the link is up; authenticate now */
-void start_networks __P((int));   /* start all the network control protos */
-void continue_networks __P((int)); /* start network [ip, etc] control protos */
-void np_up __P((int, int));	  /* a network protocol has come up */
-void np_down __P((int, int));	  /* a network protocol has gone down */
-void np_finished __P((int, int)); /* a network protocol no longer needs link */
-void auth_peer_fail __P((int, int));
+void link_required(int);	  /* we are starting to use the link */
+void start_link(int);	  /* bring the link up now */
+void link_terminated(int);  /* we are finished with the link */
+void link_down(int);	  /* the LCP layer has left the Opened state */
+void upper_layers_down(int);/* take all NCPs down */
+void link_established(int); /* the link is up; authenticate now */
+void start_networks(int);   /* start all the network control protos */
+void continue_networks(int); /* start network [ip, etc] control protos */
+void np_up(int, int);	  /* a network protocol has come up */
+void np_down(int, int);	  /* a network protocol has gone down */
+void np_finished(int, int); /* a network protocol no longer needs link */
+void auth_peer_fail(int, int);
 				/* peer failed to authenticate itself */
-void auth_peer_success __P((int, int, int, char *, int));
+void auth_peer_success(int, int, int, char *, int);
 				/* peer successfully authenticated itself */
-void auth_withpeer_fail __P((int, int));
+void auth_withpeer_fail(int, int);
 				/* we failed to authenticate ourselves */
-void auth_withpeer_success __P((int, int, int));
+void auth_withpeer_success(int, int, int);
 				/* we successfully authenticated ourselves */
-void auth_check_options __P((void));
+void auth_check_options(void);
 				/* check authentication options supplied */
-void auth_reset __P((int));	/* check what secrets we have */
-int  check_passwd __P((int, char *, int, char *, int, char **));
+void auth_reset(int);	/* check what secrets we have */
+int  check_passwd(int, char *, int, char *, int, char **);
 				/* Check peer-supplied username/password */
-int  get_secret __P((int, char *, char *, char *, int *, int));
+int  get_secret(int, char *, char *, char *, int *, int);
 				/* get "secret" for chap */
-int  get_srp_secret __P((int unit, char *client, char *server, char *secret,
-    int am_server));
-int  auth_ip_addr __P((int, u_int32_t));
+int  get_srp_secret(int unit, char *client, char *server, char *secret,
+    int am_server);
+int  auth_ip_addr(int, u_int32_t);
 				/* check if IP address is authorized */
-int  auth_number __P((void));	/* check if remote number is authorized */
-int  bad_ip_adrs __P((u_int32_t));
+int  auth_number(void);	/* check if remote number is authorized */
+int  bad_ip_adrs(u_int32_t);
 				/* check if IP address is unreasonable */
 
 /* Procedures exported from demand.c */
-void demand_conf __P((void));	/* config interface(s) for demand-dial */
-void demand_block __P((void));	/* set all NPs to queue up packets */
-void demand_unblock __P((void)); /* set all NPs to pass packets */
-void demand_discard __P((void)); /* set all NPs to discard packets */
-void demand_rexmit __P((int));	/* retransmit saved frames for an NP */
-int  loop_chars __P((unsigned char *, int)); /* process chars from loopback */
-int  loop_frame __P((unsigned char *, int)); /* should we bring link up? */
+void demand_conf(void);	/* config interface(s) for demand-dial */
+void demand_block(void);	/* set all NPs to queue up packets */
+void demand_unblock(void); /* set all NPs to pass packets */
+void demand_discard(void); /* set all NPs to discard packets */
+void demand_rexmit(int);	/* retransmit saved frames for an NP */
+int  loop_chars(unsigned char *, int); /* process chars from loopback */
+int  loop_frame(unsigned char *, int); /* should we bring link up? */
 
 /* Procedures exported from multilink.c */
 #ifdef HAVE_MULTILINK
-void mp_check_options __P((void)); /* Check multilink-related options */
-int  mp_join_bundle __P((void));  /* join our link to an appropriate bundle */
-void mp_exit_bundle __P((void));  /* have disconnected our link from bundle */
-void mp_bundle_terminated __P((void));
-char *epdisc_to_str __P((struct epdisc *)); /* string from endpoint discrim. */
-int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
+void mp_check_options(void); /* Check multilink-related options */
+int  mp_join_bundle(void);  /* join our link to an appropriate bundle */
+void mp_exit_bundle(void);  /* have disconnected our link from bundle */
+void mp_bundle_terminated(void);
+char *epdisc_to_str(struct epdisc *); /* string from endpoint discrim. */
+int  str_to_epdisc(struct epdisc *, char *); /* endpt disc. from str */
 #else
 #define mp_bundle_terminated()	/* nothing */
 #define mp_exit_bundle()	/* nothing */
@@ -610,148 +625,159 @@ int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
 #endif
 
 /* Procedures exported from sys-*.c */
-void sys_init __P((void));	/* Do system-dependent initialization */
-void sys_cleanup __P((void));	/* Restore system state before exiting */
-int  sys_check_options __P((void)); /* Check options specified */
-void sys_close __P((void));	/* Clean up in a child before execing */
-int  ppp_available __P((void));	/* Test whether ppp kernel support exists */
-int  get_pty __P((int *, int *, char *, int));	/* Get pty master/slave */
-int  open_ppp_loopback __P((void)); /* Open loopback for demand-dialling */
-int  tty_establish_ppp __P((int));  /* Turn serial port into a ppp interface */
-void tty_disestablish_ppp __P((int)); /* Restore port to normal operation */
-void generic_disestablish_ppp __P((int dev_fd)); /* Restore device setting */
-int  generic_establish_ppp __P((int dev_fd)); /* Make a ppp interface */
-void make_new_bundle __P((int, int, int, int)); /* Create new bundle */
-int  bundle_attach __P((int));	/* Attach link to existing bundle */
-void cfg_bundle __P((int, int, int, int)); /* Configure existing bundle */
-void destroy_bundle __P((void)); /* Tell driver to destroy bundle */
-void clean_check __P((void));	/* Check if line was 8-bit clean */
-void set_up_tty __P((int, int)); /* Set up port's speed, parameters, etc. */
-void restore_tty __P((int));	/* Restore port's original parameters */
-void setdtr __P((int, int));	/* Raise or lower port's DTR line */
-void output __P((int, u_char *, int)); /* Output a PPP packet */
-void wait_input __P((struct timeval *));
+void sys_init(void);	/* Do system-dependent initialization */
+void sys_cleanup(void);	/* Restore system state before exiting */
+int  sys_check_options(void); /* Check options specified */
+void sys_close(void);	/* Clean up in a child before execing */
+int  ppp_available(void);	/* Test whether ppp kernel support exists */
+int  get_pty(int *, int *, char *, int);	/* Get pty master/slave */
+int  open_ppp_loopback(void); /* Open loopback for demand-dialling */
+int  tty_establish_ppp(int);  /* Turn serial port into a ppp interface */
+void tty_disestablish_ppp(int); /* Restore port to normal operation */
+void generic_disestablish_ppp(int dev_fd); /* Restore device setting */
+int  generic_establish_ppp(int dev_fd); /* Make a ppp interface */
+void make_new_bundle(int, int, int, int); /* Create new bundle */
+int  bundle_attach(int);	/* Attach link to existing bundle */
+void cfg_bundle(int, int, int, int); /* Configure existing bundle */
+void destroy_bundle(void); /* Tell driver to destroy bundle */
+void clean_check(void);	/* Check if line was 8-bit clean */
+void set_up_tty(int, int); /* Set up port's speed, parameters, etc. */
+void restore_tty(int);	/* Restore port's original parameters */
+void setdtr(int, int);	/* Raise or lower port's DTR line */
+void output(int, u_char *, int); /* Output a PPP packet */
+void wait_input(struct timeval *);
 				/* Wait for input, with timeout */
-void add_fd __P((int));		/* Add fd to set to wait for */
-void remove_fd __P((int));	/* Remove fd from set to wait for */
-int  read_packet __P((u_char *)); /* Read PPP packet */
-int  get_loop_output __P((void)); /* Read pkts from loopback */
-void tty_send_config __P((int, u_int32_t, int, int));
+void add_fd(int);		/* Add fd to set to wait for */
+void remove_fd(int);	/* Remove fd from set to wait for */
+int  read_packet(u_char *); /* Read PPP packet */
+int  get_loop_output(void); /* Read pkts from loopback */
+void tty_send_config(int, u_int32_t, int, int);
 				/* Configure i/f transmit parameters */
-void tty_set_xaccm __P((ext_accm));
+void tty_set_xaccm(ext_accm);
 				/* Set extended transmit ACCM */
-void tty_recv_config __P((int, u_int32_t, int, int));
+void tty_recv_config(int, u_int32_t, int, int);
 				/* Configure i/f receive parameters */
-int  ccp_test __P((int, u_char *, int, int));
+int  ccp_test(int, u_char *, int, int);
 				/* Test support for compression scheme */
-void ccp_flags_set __P((int, int, int));
+void ccp_flags_set(int, int, int);
 				/* Set kernel CCP state */
-int  ccp_fatal_error __P((int)); /* Test for fatal decomp error in kernel */
-int  get_idle_time __P((int, struct ppp_idle *));
+int  ccp_fatal_error(int); /* Test for fatal decomp error in kernel */
+int  get_idle_time(int, struct ppp_idle *);
 				/* Find out how long link has been idle */
-int  get_ppp_stats __P((int, struct pppd_stats *));
+int  get_ppp_stats(int, struct pppd_stats *);
 				/* Return link statistics */
-void netif_set_mtu __P((int, int)); /* Set PPP interface MTU */
-int  netif_get_mtu __P((int));      /* Get PPP interface MTU */
-int  sifvjcomp __P((int, int, int, int));
+void netif_set_mtu(int, int); /* Set PPP interface MTU */
+int  netif_get_mtu(int);      /* Get PPP interface MTU */
+int  sifvjcomp(int, int, int, int);
 				/* Configure VJ TCP header compression */
-int  sifup __P((int));		/* Configure i/f up for one protocol */
-int  sifnpmode __P((int u, int proto, enum NPmode mode));
+int  sifup(int);		/* Configure i/f up for one protocol */
+int  sifnpmode(int u, int proto, enum NPmode mode);
 				/* Set mode for handling packets for proto */
-int  sifdown __P((int));	/* Configure i/f down for one protocol */
-int  sifaddr __P((int, u_int32_t, u_int32_t, u_int32_t));
+int  sifdown(int);	/* Configure i/f down for one protocol */
+int  sifaddr(int, u_int32_t, u_int32_t, u_int32_t);
 				/* Configure IPv4 addresses for i/f */
-int  cifaddr __P((int, u_int32_t, u_int32_t));
+int  cifaddr(int, u_int32_t, u_int32_t);
 				/* Reset i/f IP addresses */
 #ifdef INET6
-int  ether_to_eui64(eui64_t *p_eui64);	/* convert eth0 hw address to EUI64 */
-int  sif6up __P((int));		/* Configure i/f up for IPv6 */
-int  sif6down __P((int));	/* Configure i/f down for IPv6 */
-int  sif6addr __P((int, eui64_t, eui64_t));
+int  sif6up(int);		/* Configure i/f up for IPv6 */
+int  sif6down(int);	/* Configure i/f down for IPv6 */
+int  sif6addr(int, eui64_t, eui64_t);
 				/* Configure IPv6 addresses for i/f */
-int  cif6addr __P((int, eui64_t, eui64_t));
+int  cif6addr(int, eui64_t, eui64_t);
 				/* Remove an IPv6 address from i/f */
 #endif
-int  sifdefaultroute __P((int, u_int32_t, u_int32_t));
+int  sifdefaultroute(int, u_int32_t, u_int32_t, bool replace_default_rt);
 				/* Create default route through i/f */
-int  cifdefaultroute __P((int, u_int32_t, u_int32_t));
+int  cifdefaultroute(int, u_int32_t, u_int32_t);
 				/* Delete default route through i/f */
-int  sifproxyarp __P((int, u_int32_t));
+#ifdef INET6
+int  sif6defaultroute(int, eui64_t, eui64_t);
+				/* Create default IPv6 route through i/f */
+int  cif6defaultroute(int, eui64_t, eui64_t);
+				/* Delete default IPv6 route through i/f */
+#endif
+int  sifproxyarp(int, u_int32_t);
 				/* Add proxy ARP entry for peer */
-int  cifproxyarp __P((int, u_int32_t));
+int  cifproxyarp(int, u_int32_t);
 				/* Delete proxy ARP entry for peer */
-u_int32_t GetMask __P((u_int32_t)); /* Get appropriate netmask for address */
-int  lock __P((char *));	/* Create lock file for device */
-int  relock __P((int));		/* Rewrite lock file with new pid */
-void unlock __P((void));	/* Delete previously-created lock file */
-void logwtmp __P((const char *, const char *, const char *));
+u_int32_t GetMask(u_int32_t); /* Get appropriate netmask for address */
+int  lock(char *);	/* Create lock file for device */
+int  relock(int);		/* Rewrite lock file with new pid */
+void unlock(void);	/* Delete previously-created lock file */
+void logwtmp(const char *, const char *, const char *);
 				/* Write entry to wtmp file */
-int  get_host_seed __P((void));	/* Get host-dependent random number seed */
-int  have_route_to __P((u_int32_t)); /* Check if route to addr exists */
+int  get_host_seed(void);	/* Get host-dependent random number seed */
+int  have_route_to(u_int32_t); /* Check if route to addr exists */
 #ifdef PPP_FILTER
-int  set_filters __P((struct bpf_program *, struct bpf_program *,
-	struct bpf_program *, struct bpf_program *));
+int  set_filters(struct bpf_program *passin, struct bpf_program *passout,
+    struct bpf_program *activein, struct bpf_program *activeout);
 				/* Set filter programs in kernel */
 #endif
 #ifdef IPX_CHANGE
-int  sipxfaddr __P((int, unsigned long, unsigned char *));
-int  cipxfaddr __P((int));
+int  sipxfaddr(int, unsigned long, unsigned char *);
+int  cipxfaddr(int);
 #endif
-int  get_if_hwaddr __P((u_char *addr, char *name));
-char *get_first_ethernet __P((void));
+int  get_if_hwaddr(u_char *addr, char *name);
+int  get_first_ether_hwaddr(u_char *addr);
+int get_time(struct timeval *);
+				/* Get current time, monotonic if possible. */
 
 /* Procedures exported from options.c */
-int setipaddr __P((char *, char **, int)); /* Set local/remote ip addresses */
-int  parse_args __P((int argc, char **argv));
+int setipaddr(char *, char **, int); /* Set local/remote ip addresses */
+int  parse_args(int argc, char **argv);
 				/* Parse options from arguments given */
-int  options_from_file __P((char *filename, int must_exist, int check_prot,
-			    int privileged));
+int  options_from_file(char *filename, int must_exist, int check_prot,
+		       int privileged);
 				/* Parse options from an options file */
-int  options_from_user __P((void)); /* Parse options from user's .ppprc */
-int  options_for_tty __P((void)); /* Parse options from /etc/ppp/options.tty */
-int  options_from_list __P((struct wordlist *, int privileged));
+int  options_from_user(void); /* Parse options from user's .ppprc */
+int  options_for_tty(void); /* Parse options from /etc/ppp/options.tty */
+int  options_from_list(struct wordlist *, int privileged);
 				/* Parse options from a wordlist */
-int  getword __P((FILE *f, char *word, int *newlinep, char *filename));
+int  getword(FILE *f, char *word, int *newlinep, char *filename);
 				/* Read a word from a file */
-void option_error __P((char *fmt, ...));
+void option_error(char *fmt, ...);
 				/* Print an error message about an option */
-int int_option __P((char *, int *));
+int int_option(char *, int *);
 				/* Simplified number_option for decimal ints */
-void add_options __P((option_t *)); /* Add extra options */
-void check_options __P((void));	/* check values after all options parsed */
-int  override_value __P((const char *, int, const char *));
+void add_options(option_t *); /* Add extra options */
+void check_options(void);	/* check values after all options parsed */
+int  override_value(char *, int, const char *);
 				/* override value if permitted by priority */
-void print_options __P((printer_func, void *));
+void print_options(printer_func, void *);
 				/* print out values of all options */
 
-int parse_dotted_ip __P((char *, u_int32_t *));
+int parse_dotted_ip(char *, u_int32_t *);
 
 /*
  * Hooks to enable plugins to change various things.
  */
-extern int (*new_phase_hook) __P((int));
-extern int (*idle_time_hook) __P((struct ppp_idle *));
-extern int (*holdoff_hook) __P((void));
-extern int (*pap_check_hook) __P((void));
-extern int (*pap_auth_hook) __P((char *user, char *passwd, char **msgp,
-				 struct wordlist **paddrs,
-				 struct wordlist **popts));
-extern void (*pap_logout_hook) __P((void));
-extern int (*pap_passwd_hook) __P((char *user, char *passwd));
-extern int (*allowed_address_hook) __P((u_int32_t addr));
-extern void (*ip_up_hook) __P((void));
-extern void (*ip_down_hook) __P((void));
-extern void (*ip_choose_hook) __P((u_int32_t *));
-extern void (*ipv6_up_hook) __P((void));
-extern void (*ipv6_down_hook) __P((void));
+extern int (*new_phase_hook)(int);
+extern int (*idle_time_hook)(struct ppp_idle *);
+extern int (*holdoff_hook)(void);
+extern int (*pap_check_hook)(void);
+extern int (*pap_auth_hook)(char *user, char *passwd, char **msgp,
+			    struct wordlist **paddrs,
+			    struct wordlist **popts);
+extern void (*pap_logout_hook)(void);
+extern int (*pap_passwd_hook)(char *user, char *passwd);
+extern int (*allowed_address_hook)(u_int32_t addr);
+extern void (*ip_up_hook)(void);
+extern void (*ip_down_hook)(void);
+extern void (*ip_choose_hook)(u_int32_t *);
+extern void (*ipv6_up_hook)(void);
+extern void (*ipv6_down_hook)(void);
 
-extern int (*chap_check_hook) __P((void));
-extern int (*chap_passwd_hook) __P((char *user, char *passwd));
-extern void (*multilink_join_hook) __P((void));
+extern int (*chap_check_hook)(void);
+extern int (*chap_passwd_hook)(char *user, char *passwd);
+extern void (*multilink_join_hook)(void);
+
+#ifdef USE_EAPTLS
+extern int (*eaptls_passwd_hook)(char *user, char *passwd);
+#endif
 
 /* Let a plugin snoop sent and received packets.  Useful for L2TP */
-extern void (*snoop_recv_hook) __P((unsigned char *p, int len));
-extern void (*snoop_send_hook) __P((unsigned char *p, int len));
+extern void (*snoop_recv_hook)(unsigned char *p, int len);
+extern void (*snoop_send_hook)(unsigned char *p, int len);
 
 /*
  * Inline versions of get/put char/short/long.
