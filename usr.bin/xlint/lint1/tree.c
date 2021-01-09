@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.139 2021/01/09 18:21:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.140 2021/01/09 19:07:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.139 2021/01/09 18:21:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.140 2021/01/09 19:07:07 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -745,6 +745,274 @@ typeok_amper(mod_t *const mp,
 	return true;
 }
 
+static bool
+typeok_star(tspec_t lt)
+{
+	/* until now there were no type checks for this operator */
+	if (lt != PTR) {
+		/* cannot dereference non-pointer type */
+		error(96);
+		return false;
+	}
+	return true;
+}
+
+static bool
+typeok_plus(op_t op, tspec_t lt, tspec_t rt)
+{
+	/* operands have scalar types (checked above) */
+	if ((lt == PTR && !tspec_is_int(rt)) ||
+	    (rt == PTR && !tspec_is_int(lt))) {
+		warn_incompatible_types(op, lt, rt);
+		return false;
+	}
+	return true;
+}
+
+static bool
+typeok_minus(op_t op, tspec_t lt, type_t *lstp, tspec_t rt, type_t *rstp)
+{
+	/* operands have scalar types (checked above) */
+	if (lt == PTR && (!tspec_is_int(rt) && rt != PTR)) {
+		warn_incompatible_types(op, lt, rt);
+		return false;
+	} else if (rt == PTR && lt != PTR) {
+		warn_incompatible_types(op, lt, rt);
+		return false;
+	}
+	if (lt == PTR && rt == PTR) {
+		if (!eqtype(lstp, rstp, 1, 0, NULL)) {
+			/* illegal pointer subtraction */
+			error(116);
+		}
+	}
+	return true;
+}
+
+static void
+typeok_shr(mod_t *mp,
+	   tnode_t *ln, tspec_t lt, tspec_t olt,
+	   tspec_t rt, tspec_t ort)
+{
+	/* operands have integer types (checked above) */
+	if (pflag && !tspec_is_uint(lt)) {
+		/*
+		 * The left operand is signed. This means that
+		 * the operation is (possibly) nonportable.
+		 */
+		if (ln->tn_op != CON) {
+			/* bitop. on signed value possibly nonportable */
+			warning(117);
+		} else if (ln->tn_val->v_quad < 0) {
+			/* bitop. on signed value nonportable */
+			warning(120);
+		}
+	} else if (!tflag && !sflag &&
+		   !tspec_is_uint(olt) && tspec_is_uint(ort)) {
+		/*
+		 * The left operand would become unsigned in
+		 * traditional C.
+		 */
+		if (hflag &&
+		    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
+			/* semantics of '%s' change in ANSI C; ... */
+			warning(118, mp->m_name);
+		}
+	} else if (!tflag && !sflag &&
+		   !tspec_is_uint(olt) && !tspec_is_uint(ort) &&
+		   psize(lt) < psize(rt)) {
+		/*
+		 * In traditional C the left operand would be extended,
+		 * possibly with 1, and then shifted.
+		 */
+		if (hflag &&
+		    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
+			/* semantics of '%s' change in ANSI C; use ... */
+			warning(118, mp->m_name);
+		}
+	}
+}
+
+static void
+typeok_shl(mod_t *mp, tspec_t lt, tspec_t rt) {
+	/*
+	 * ANSI C does not perform balancing for shift operations,
+	 * but traditional C does. If the width of the right operand
+	 * is greater than the width of the left operand, than in
+	 * traditional C the left operand would be extended to the
+	 * width of the right operand. For SHL this may result in
+	 * different results.
+	 */
+	if (psize(lt) < psize(rt)) {
+		/*
+		 * XXX If both operands are constant, make sure
+		 * that there is really a difference between
+		 * ANSI C and traditional C.
+		 */
+		if (hflag)
+			/* semantics of '%s' change in ANSI C; use ... */
+			warning(118, mp->m_name);
+	}
+}
+
+static void
+typeok_shift(tspec_t lt, tnode_t *rn, tspec_t rt)
+{
+	if (rn->tn_op == CON) {
+		if (!tspec_is_uint(rt) && rn->tn_val->v_quad < 0) {
+			/* negative shift */
+			warning(121);
+		} else if ((uint64_t)rn->tn_val->v_quad == (uint64_t)size(lt)) {
+			/* shift equal to size of object */
+			warning(267);
+		} else if ((uint64_t)rn->tn_val->v_quad > (uint64_t)size(lt)) {
+			/* shift greater than size of object */
+			warning(122);
+		}
+	}
+}
+
+static bool
+typeok_eq(tnode_t *ln, tspec_t lt, tspec_t lst,
+	  tnode_t *rn, tspec_t rt, tspec_t rst)
+{
+	if (lt == PTR && ((rt == PTR && rst == VOID) ||
+			  tspec_is_int(rt))) {
+		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
+			return true;
+	}
+	if (rt == PTR && ((lt == PTR && lst == VOID) ||
+			  tspec_is_int(lt))) {
+		if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
+			return true;
+	}
+	return false;
+}
+
+static bool
+typeok_ordered_comparison(op_t op, mod_t *mp,
+			  tnode_t *ln, type_t *ltp, tspec_t lt,
+			  tnode_t *rn, type_t *rtp, tspec_t rt)
+{
+	if ((lt == PTR || rt == PTR) && lt != rt) {
+		if (tspec_is_int(lt) || tspec_is_int(rt)) {
+			const char *lx = lt == PTR ?
+			    "pointer" : "integer";
+			const char *rx = rt == PTR ?
+			    "pointer" : "integer";
+			/* illegal combination of %s (%s) and ... */
+			warning(123, lx, type_name(ltp),
+			    rx, type_name(rtp), mp->m_name);
+		} else {
+			warn_incompatible_types(op, lt, rt);
+			return false;
+		}
+	} else if (lt == PTR && rt == PTR) {
+		check_pointer_comparison(op, ln, rn);
+	}
+	return true;
+}
+
+static bool
+typeok_quest(tspec_t lt, tnode_t **rn)
+{
+	if (!tspec_is_scalar(lt)) {
+		/* first operand must have scalar type, op ? : */
+		error(170);
+		return false;
+	}
+	while ((*rn)->tn_op == CVT)
+		*rn = (*rn)->tn_left;
+	lint_assert((*rn)->tn_op == COLON);
+	return true;
+}
+
+static bool
+typeok_colon(mod_t *mp,
+	     tnode_t *ln, type_t *ltp, tspec_t lt, type_t *lstp, tspec_t lst,
+	     tnode_t *rn, type_t *rtp, tspec_t rt, type_t *rstp, tspec_t rst)
+{
+	if (tspec_is_arith(lt) && tspec_is_arith(rt))
+		return true;
+
+	if (lt == STRUCT && rt == STRUCT && ltp->t_str == rtp->t_str)
+		return true;
+	if (lt == UNION && rt == UNION && ltp->t_str == rtp->t_str)
+		return true;
+
+	/* combination of any pointer and 0, 0L or (void *)0 is ok */
+	if (lt == PTR && ((rt == PTR && rst == VOID) || tspec_is_int(rt))) {
+		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
+			return true;
+	}
+	if (rt == PTR && ((lt == PTR && lst == VOID) || tspec_is_int(lt))) {
+		if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
+			return true;
+	}
+
+	if ((lt == PTR && tspec_is_int(rt)) ||
+	    (tspec_is_int(lt) && rt == PTR)) {
+		const char *lx = lt == PTR ?  "pointer" : "integer";
+		const char *rx = rt == PTR ?  "pointer" : "integer";
+		/* illegal combination of %s (%s) and %s (%s), op %s */
+		warning(123, lx, type_name(ltp),
+		    rx, type_name(rtp), mp->m_name);
+		return true;
+	}
+
+	if (lt == VOID || rt == VOID) {
+		if (lt != VOID || rt != VOID)
+			/* incompatible types in conditional */
+			warning(126);
+		return true;
+	}
+
+	if (lt == PTR && rt == PTR && ((lst == VOID && rst == FUNC) ||
+				       (lst == FUNC && rst == VOID))) {
+		/* (void *)0 handled above */
+		if (sflag)
+			/* ANSI C forbids conv. of %s to %s, op %s */
+			warning(305, "function pointer", "'void *'",
+			    mp->m_name);
+		return true;
+	}
+
+	if (rt == PTR && lt == PTR) {
+		if (eqptrtype(lstp, rstp, 1))
+			return true;
+		if (!eqtype(lstp, rstp, 1, 0, NULL))
+			warn_incompatible_pointers(mp, ltp, rtp);
+		return true;
+	}
+
+	/* incompatible types in conditional */
+	error(126);
+	return false;
+}
+
+static bool
+typeok_assign(mod_t *mp, tnode_t *ln, type_t *ltp, tspec_t lt)
+{
+	if (!ln->tn_lvalue) {
+		if (ln->tn_op == CVT && ln->tn_cast &&
+		    ln->tn_left->tn_op == LOAD) {
+			if (ln->tn_type->t_tspec == PTR)
+				return true;
+			/* a cast does not yield an lvalue */
+			error(163);
+		}
+		/* %soperand of '%s' must be lvalue */
+		error(114, "left ", mp->m_name);
+		return false;
+	} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
+				    has_constant_member(ltp))) {
+		if (!tflag)
+			/* %soperand of '%s' must be modifiable lvalue */
+			warning(115, "left ", mp->m_name);
+	}
+	return true;
+}
+
 /*
  * Perform most type checks. First the types are checked using
  * the information from modtab[]. After that it is done by hand for
@@ -850,108 +1118,24 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			return 0;
 		break;
 	case STAR:
-		/* until now there were no type checks for this operator */
-		if (lt != PTR) {
-			/* cannot dereference non-pointer type */
-			error(96);
+		if (!typeok_star(lt))
 			return 0;
-		}
 		break;
 	case PLUS:
-		/* operands have scalar types (checked above) */
-		if ((lt == PTR && !tspec_is_int(rt)) ||
-		    (rt == PTR && !tspec_is_int(lt))) {
-			warn_incompatible_types(op, lt, rt);
+		if (!typeok_plus(op, lt, rt))
 			return 0;
-		}
 		break;
 	case MINUS:
-		/* operands have scalar types (checked above) */
-		if (lt == PTR && (!tspec_is_int(rt) && rt != PTR)) {
-			warn_incompatible_types(op, lt, rt);
+		if (!typeok_minus(op, lt, lstp, rt, rstp))
 			return 0;
-		} else if (rt == PTR && lt != PTR) {
-			warn_incompatible_types(op, lt, rt);
-			return 0;
-		}
-		if (lt == PTR && rt == PTR) {
-			if (!eqtype(lstp, rstp, 1, 0, NULL)) {
-				/* illegal pointer subtraction */
-				error(116);
-			}
-		}
 		break;
 	case SHR:
-		/* operands have integer types (checked above) */
-		if (pflag && !tspec_is_uint(lt)) {
-			/*
-			 * The left operand is signed. This means that
-			 * the operation is (possibly) nonportable.
-			 */
-			if (ln->tn_op != CON) {
-				/* bitop. on signed value poss. nonportable */
-				warning(117);
-			} else if (ln->tn_val->v_quad < 0) {
-				/* bitop. on signed value nonportable */
-				warning(120);
-			}
-		} else if (!tflag && !sflag &&
-		    !tspec_is_uint(olt) && tspec_is_uint(ort)) {
-			/*
-			 * The left operand would become unsigned in
-			 * traditional C.
-			 */
-			if (hflag &&
-			    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
-				/* semantics of '%s' change in ANSI C; ... */
-				warning(118, mp->m_name);
-			}
-		} else if (!tflag && !sflag &&
-		    !tspec_is_uint(olt) && !tspec_is_uint(ort) &&
-			   psize(lt) < psize(rt)) {
-			/*
-			 * In traditional C the left operand would be extended,
-			 * possibly with 1, and then shifted.
-			 */
-			if (hflag &&
-			    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
-				/* semantics of '%s' change in ANSI C; ... */
-				warning(118, mp->m_name);
-			}
-		}
+		typeok_shr(mp, ln, lt, olt, rt, ort);
 		goto shift;
 	case SHL:
-		/*
-		 * ANSI C does not perform balancing for shift operations,
-		 * but traditional C does. If the width of the right operand
-		 * is greater than the width of the left operand, than in
-		 * traditional C the left operand would be extended to the
-		 * width of the right operand. For SHL this may result in
-		 * different results.
-		 */
-		if (psize(lt) < psize(rt)) {
-			/*
-			 * XXX If both operands are constant, make sure
-			 * that there is really a difference between
-			 * ANSI C and traditional C.
-			 */
-			if (hflag)
-				/* semantics of '%s' change in ANSI C; ... */
-				warning(118, mp->m_name);
-		}
+		typeok_shl(mp, lt, rt);
 	shift:
-		if (rn->tn_op == CON) {
-			if (!tspec_is_uint(rt) && rn->tn_val->v_quad < 0) {
-				/* negative shift */
-				warning(121);
-			} else if ((uint64_t)rn->tn_val->v_quad == (uint64_t)size(lt)) {
-				/* shift equal to size of object */
-				warning(267);
-			} else if ((uint64_t)rn->tn_val->v_quad > (uint64_t)size(lt)) {
-				/* shift greater than size of object */
-				warning(122);
-			}
-		}
+		typeok_shift(lt, rn, rt);
 		break;
 	case EQ:
 	case NE:
@@ -959,108 +1143,27 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		 * Accept some things which are allowed with EQ and NE,
 		 * but not with ordered comparisons.
 		 */
-		if (lt == PTR && ((rt == PTR && rst == VOID) ||
-				  tspec_is_int(rt))) {
-			if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
-				break;
-		}
-		if (rt == PTR && ((lt == PTR && lst == VOID) ||
-				  tspec_is_int(lt))) {
-			if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
-				break;
-		}
+		if (typeok_eq(ln, lt, lst, rn, rt, rst))
+			break;
 		/* FALLTHROUGH */
 	case LT:
 	case GT:
 	case LE:
 	case GE:
-		if ((lt == PTR || rt == PTR) && lt != rt) {
-			if (tspec_is_int(lt) || tspec_is_int(rt)) {
-				const char *lx = lt == PTR ?
-				    "pointer" : "integer";
-				const char *rx = rt == PTR ?
-				    "pointer" : "integer";
-				/* illegal combination of %s (%s) and ... */
-				warning(123, lx, type_name(ltp),
-				    rx, type_name(rtp), mp->m_name);
-			} else {
-				warn_incompatible_types(op, lt, rt);
-				return 0;
-			}
-		} else if (lt == PTR && rt == PTR) {
-			check_pointer_comparison(op, ln, rn);
-		}
+		if (!typeok_ordered_comparison(op, mp,
+		    ln, ltp, lt, rn, rtp, rt))
+			return 0;
 		break;
 	case QUEST:
-		if (!tspec_is_scalar(lt)) {
-			/* first operand must have scalar type, op ? : */
-			error(170);
+		if (!typeok_quest(lt, &rn))
 			return 0;
-		}
-		while (rn->tn_op == CVT)
-			rn = rn->tn_left;
-		lint_assert(rn->tn_op == COLON);
 		break;
 	case COLON:
-		if (tspec_is_arith(lt) && tspec_is_arith(rt))
-			break;
-
-		if (lt == STRUCT && rt == STRUCT && ltp->t_str == rtp->t_str)
-			break;
-		if (lt == UNION && rt == UNION && ltp->t_str == rtp->t_str)
-			break;
-
-		/* combination of any pointer and 0, 0L or (void *)0 is ok */
-		if (lt == PTR && ((rt == PTR && rst == VOID) ||
-				  tspec_is_int(rt))) {
-			if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
-				break;
-		}
-		if (rt == PTR && ((lt == PTR && lst == VOID) ||
-				  tspec_is_int(lt))) {
-			if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
-				break;
-		}
-
-		if ((lt == PTR && tspec_is_int(rt)) ||
-		    (tspec_is_int(lt) && rt == PTR)) {
-			const char *lx = lt == PTR ?  "pointer" : "integer";
-			const char *rx = rt == PTR ?  "pointer" : "integer";
-			/* illegal combination of %s (%s) and %s (%s), op %s */
-			warning(123, lx, type_name(ltp),
-			    rx, type_name(rtp), mp->m_name);
-			break;
-		}
-
-		if (lt == VOID || rt == VOID) {
-			if (lt != VOID || rt != VOID)
-				/* incompatible types in conditional */
-				warning(126);
-			break;
-		}
-
-		if (lt == PTR && rt == PTR && ((lst == VOID && rst == FUNC) ||
-					       (lst == FUNC && rst == VOID))) {
-			/* (void *)0 handled above */
-			if (sflag)
-				/* ANSI C forbids conv. of %s to %s, op %s */
-				warning(305, "function pointer", "'void *'",
-					mp->m_name);
-			break;
-		}
-
-		if (rt == PTR && lt == PTR) {
-			if (eqptrtype(lstp, rstp, 1))
-				break;
-			if (!eqtype(lstp, rstp, 1, 0, NULL))
-				warn_incompatible_pointers(mp, ltp, rtp);
-			break;
-		}
-
-		/* incompatible types in conditional */
-		error(126);
-		return 0;
-
+		if (!typeok_colon(mp,
+		    ln, ltp, lt, lstp, lst,
+		    rn, rtp, rt, rstp, rst))
+			return 0;
+		break;
 	case ASSIGN:
 	case INIT:
 	case FARG:
@@ -1094,23 +1197,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case ORASS:
 		goto assign;
 	assign:
-		if (!ln->tn_lvalue) {
-			if (ln->tn_op == CVT && ln->tn_cast &&
-			    ln->tn_left->tn_op == LOAD) {
-				if (ln->tn_type->t_tspec == PTR)
-					break;
-				/* a cast does not yield an lvalue */
-				error(163);
-			}
-			/* %soperand of '%s' must be lvalue */
-			error(114, "left ", mp->m_name);
+		if (!typeok_assign(mp, ln, ltp, lt))
 			return 0;
-		} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
-					    has_constant_member(ltp))) {
-			if (!tflag)
-				/* %soperand of '%s' must be modifiable lvalue */
-				warning(115, "left ", mp->m_name);
-		}
 		break;
 	case COMMA:
 		if (!modtab[ln->tn_op].m_sideeff)
