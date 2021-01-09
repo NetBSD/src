@@ -1,4 +1,4 @@
-/* $NetBSD: targparam.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: targparam.h,v 1.2 2021/01/09 13:58:43 rillig Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,11 +35,11 @@
 #include "schar.h"
 #include "lp64.h"
 
-/*    
+/*
  * Should be set to 1 if the difference of two pointers is of type long
  * or the value of sizeof is of type unsigned long.  Note this MUST be
  * kept in sync with the compiler!
- */     
+ */
 
 #define	PTRDIFF_IS_LONG		1
 #define	SIZEOF_IS_ULONG		1
