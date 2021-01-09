@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.134 2021/01/09 03:28:47 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.135 2021/01/09 13:12:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.134 2021/01/09 03:28:47 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.135 2021/01/09 13:12:13 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -294,7 +294,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enums
 %type	<y_sym>		enumerator
-%type	<y_sym>		ename
+%type	<y_sym>		enumeration_constant
 %type	<y_sym>		notype_direct_decl
 %type	<y_sym>		type_direct_decl
 %type	<y_pqinf>	pointer
@@ -975,15 +975,15 @@ enums:
 	;
 
 enumerator:
-	  ename {
-		$$ = ename($1, enumval, 1);
+	  enumeration_constant {
+		$$ = enumeration_constant($1, enumval, 1);
 	  }
-	| ename T_ASSIGN constant {
-		$$ = ename($1, toicon($3, 1), 0);
+	| enumeration_constant T_ASSIGN constant {
+		$$ = enumeration_constant($1, toicon($3, 1), 0);
 	  }
 	;
 
-ename:
+enumeration_constant:		/* C99 6.4.4.3 */
 	  identifier {
 		$$ = getsym($1);
 	  }
