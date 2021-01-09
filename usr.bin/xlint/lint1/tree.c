@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.140 2021/01/09 19:07:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.141 2021/01/09 19:13:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.140 2021/01/09 19:07:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.141 2021/01/09 19:13:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1020,7 +1020,7 @@ typeok_assign(mod_t *mp, tnode_t *ln, type_t *ltp, tspec_t lt)
  *
  * If the types are ok, typeok() returns 1, otherwise 0.
  */
-int
+bool
 typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
@@ -1044,26 +1044,26 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	if (mp->m_requires_integer) {
 		if (!tspec_is_int(lt) || (mp->m_binary && !tspec_is_int(rt))) {
 			warn_incompatible_types(op, lt, rt);
-			return 0;
+			return false;
 		}
 	} else if (mp->m_requires_integer_or_complex) {
 		if ((!tspec_is_int(lt) && !tspec_is_complex(lt)) ||
 		    (mp->m_binary &&
 		     (!tspec_is_int(rt) && !tspec_is_complex(rt)))) {
 			warn_incompatible_types(op, lt, rt);
-			return 0;
+			return false;
 		}
 	} else if (mp->m_requires_scalar) {
 		if (!tspec_is_scalar(lt) ||
 		    (mp->m_binary && !tspec_is_scalar(rt))) {
 			warn_incompatible_types(op, lt, rt);
-			return 0;
+			return false;
 		}
 	} else if (mp->m_requires_arith) {
 		if (!tspec_is_arith(lt) ||
 		    (mp->m_binary && !tspec_is_arith(rt))) {
 			warn_incompatible_types(op, lt, rt);
-			return 0;
+			return false;
 		}
 	}
 
@@ -1093,7 +1093,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (tflag)
 				/* unacceptable operand of '%s' */
 				error(111, mp->m_name);
-			return 0;
+			return false;
 		}
 		/* Now we have an object we can create a pointer to */
 		break;
@@ -1103,7 +1103,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (tflag)
 				/* unacceptable operand of '%s' */
 				error(111, mp->m_name);
-			return 0;
+			return false;
 		}
 		break;
 	case INCAFT:
@@ -1111,23 +1111,23 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case INCBEF:
 	case DECBEF:
 		if (!typeok_incdec(mp, ln, ltp))
-			return 0;
+			return false;
 		break;
 	case AMPER:
 		if (!typeok_amper(mp, ln, ltp, lt))
-			return 0;
+			return false;
 		break;
 	case STAR:
 		if (!typeok_star(lt))
-			return 0;
+			return false;
 		break;
 	case PLUS:
 		if (!typeok_plus(op, lt, rt))
-			return 0;
+			return false;
 		break;
 	case MINUS:
 		if (!typeok_minus(op, lt, lstp, rt, rstp))
-			return 0;
+			return false;
 		break;
 	case SHR:
 		typeok_shr(mp, ln, lt, olt, rt, ort);
@@ -1152,24 +1152,24 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case GE:
 		if (!typeok_ordered_comparison(op, mp,
 		    ln, ltp, lt, rn, rtp, rt))
-			return 0;
+			return false;
 		break;
 	case QUEST:
 		if (!typeok_quest(lt, &rn))
-			return 0;
+			return false;
 		break;
 	case COLON:
 		if (!typeok_colon(mp,
 		    ln, ltp, lt, lstp, lst,
 		    rn, rtp, rt, rstp, rst))
-			return 0;
+			return false;
 		break;
 	case ASSIGN:
 	case INIT:
 	case FARG:
 	case RETURN:
 		if (!check_assign_types_compatible(op, arg, ln, rn))
-			return 0;
+			return false;
 		goto assign;
 	case MULASS:
 	case DIVASS:
@@ -1180,7 +1180,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		/* operands have scalar types (checked above) */
 		if ((lt == PTR && !tspec_is_int(rt)) || rt == PTR) {
 			warn_incompatible_types(op, lt, rt);
-			return 0;
+			return false;
 		}
 		goto assign;
 	case SHLASS:
@@ -1198,7 +1198,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		goto assign;
 	assign:
 		if (!typeok_assign(mp, ln, ltp, lt))
-			return 0;
+			return false;
 		break;
 	case COMMA:
 		if (!modtab[ln->tn_op].m_sideeff)
@@ -1246,7 +1246,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		check_enum_int_mismatch(op, arg, ln, rn);
 	}
 
-	return 1;
+	return true;
 }
 
 static void
