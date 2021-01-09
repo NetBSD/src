@@ -1,4 +1,4 @@
-/*	$NetBSD: pppcrypt.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: pppcrypt.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * pppcrypt.c - PPP/DES linkage for MS-CHAP and EAP SRP-SHA1
@@ -43,8 +43,8 @@
 #include <des.h>
 #endif
 
-extern bool	DesSetkey __P((u_char *));
-extern bool	DesEncrypt __P((u_char *, u_char *));
-extern bool	DesDecrypt __P((u_char *, u_char *));
+extern bool	DesSetkey(u_char *);
+extern bool	DesEncrypt(u_char *, u_char *);
+extern bool	DesDecrypt(u_char *, u_char *);
 
 #endif /* PPPCRYPT_H */

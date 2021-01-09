@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: eui64.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * eui64.h - EUI64 routines for IPv6CP.
@@ -34,8 +34,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: eui64.h,v 1.6 2002/12/04 23:03:32 paulus Exp 
-*/
+ */
 
 #ifndef __EUI64_H__
 #define __EUI64_H__
@@ -110,7 +109,7 @@ typedef union
 				} while (0)
 #define eui64_setlo32(e, l)	eui64_set32(e, l)
 
-char *eui64_ntoa __P((eui64_t));	/* Returns ascii representation of id */
+char *eui64_ntoa(eui64_t);	/* Returns ascii representation of id */
 
 #endif /* __EUI64_H__ */
 

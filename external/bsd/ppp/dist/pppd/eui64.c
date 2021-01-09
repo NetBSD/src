@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: eui64.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * eui64.c - EUI64 routines for IPv6CP.
@@ -34,16 +34,10 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp 
  */
 
 #include <sys/cdefs.h>
-#if 0
-#define RCSID	"Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp "
-static const char rcsid[] = RCSID;
-#else
-__RCSID("$NetBSD: eui64.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
-#endif
+__RCSID("$NetBSD: eui64.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 
 #include "pppd.h"
 
@@ -52,8 +46,7 @@ __RCSID("$NetBSD: eui64.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
  * eui64_ntoa - Make an ascii representation of an interface identifier
  */
 char *
-eui64_ntoa(e)
-    eui64_t e;
+eui64_ntoa(eui64_t e)
 {
     static char buf[32];
 

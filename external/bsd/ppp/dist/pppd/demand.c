@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: demand.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -35,7 +35,7 @@
 #define RCSID	"Id: demand.c,v 1.20 2005/08/25 12:14:18 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: demand.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
+__RCSID("$NetBSD: demand.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -77,13 +77,13 @@ struct packet {
 struct packet *pend_q;
 struct packet *pend_qtail;
 
-static int active_packet __P((unsigned char *, int));
+static int active_packet(unsigned char *, int);
 
 /*
  * demand_conf - configure the interface for doing dial-on-demand.
  */
 void
-demand_conf()
+demand_conf(void)
 {
     int i;
     struct protent *protp;
@@ -125,7 +125,7 @@ demand_conf()
  * demand_block - set each network protocol to block further packets.
  */
 void
-demand_block()
+demand_block(void)
 {
     int i;
     struct protent *protp;
@@ -141,7 +141,7 @@ demand_block()
  * with an error.
  */
 void
-demand_discard()
+demand_discard(void)
 {
     struct packet *pkt, *nextpkt;
     int i;
@@ -168,7 +168,7 @@ demand_discard()
  * demand_unblock - set each enabled network protocol to pass packets.
  */
 void
-demand_unblock()
+demand_unblock(void)
 {
     int i;
     struct protent *protp;
@@ -222,9 +222,7 @@ static u_short fcstab[256] = {
  * Return value is 1 if we need to bring up the link, 0 otherwise.
  */
 int
-loop_chars(p, n)
-    unsigned char *p;
-    int n;
+loop_chars(unsigned char *p, int n)
 {
     int c, rv;
 
@@ -274,9 +272,7 @@ loop_chars(p, n)
  * bring up the link.
  */
 int
-loop_frame(frame, len)
-    unsigned char *frame;
-    int len;
+loop_frame(unsigned char *frame, int len)
 {
     struct packet *pkt;
 
@@ -307,8 +303,7 @@ loop_frame(frame, len)
  * loopback, now that the real serial link is up.
  */
 void
-demand_rexmit(proto)
-    int proto;
+demand_rexmit(int proto)
 {
     struct packet *pkt, *prev, *nextpkt;
 
@@ -338,12 +333,7 @@ demand_rexmit(proto)
  * that is, whether it is worth bringing up the link for.
  */
 static int
-/*###340 [cc] error: static declaration of 'active_packet' follows non-static declaration%%%*/
-/*###340 [cc] error: function declaration isn't a prototype%%%*/
-/*###340 [cc] error: 'active_packet' defined but not used%%%*/
-active_packet(p, len)
-    unsigned char *p;
-    int len;
+active_packet(unsigned char *p, int len)
 {
     int proto, i;
     struct protent *protp;

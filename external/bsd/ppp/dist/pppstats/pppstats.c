@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * print PPP statistics:
@@ -43,7 +43,7 @@
 static const char rcsid[] = "Id: pppstats.c,v 1.29 2002/10/27 12:56:26 fcusack Exp ";
 #endif
 #else
-__RCSID("$NetBSD: pppstats.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
+__RCSID("$NetBSD: pppstats.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -95,7 +95,6 @@ int	aflag;			/* print absolute values, not deltas */
 int	dflag;			/* print data rates, not bytes */
 int	interval, count;
 int	infinite;
-int	unit;
 int	s;			/* socket or /dev/ppp file descriptor */
 int	signalled;		/* set if alarm goes off "early" */
 char	*progname;
@@ -118,16 +117,16 @@ extern char *optarg;
 #define SL_DRV_NAME    "sl"
 #endif /* !defined(SL_DRV_NAME) */
 
-static void usage __P((void));
-static void catchalarm __P((int));
-static void get_ppp_stats __P((struct ppp_stats *));
-static void get_ppp_cstats __P((struct ppp_comp_stats *));
-static void intpr __P((void));
+static void usage(void);
+static void catchalarm(int);
+static void get_ppp_stats(struct ppp_stats *);
+static void get_ppp_cstats(struct ppp_comp_stats *);
+static void intpr(void);
 
-int main __P((int, char *argv[]));
+int main(int, char *argv[]);
 
 static void
-usage()
+usage(void)
 {
     fprintf(stderr, "Usage: %s [-a|-d] [-v|-r|-z] [-c count] [-w wait] [interface]\n",
 	    progname);
@@ -139,8 +138,7 @@ usage()
  * Sets a flag to not wait for the alarm.
  */
 static void
-catchalarm(arg)
-    int arg;
+catchalarm(int arg)
 {
     signalled = 1;
 }
@@ -148,8 +146,7 @@ catchalarm(arg)
 
 #ifndef STREAMS
 static void
-get_ppp_stats(curp)
-    struct ppp_stats *curp;
+get_ppp_stats(struct ppp_stats *curp)
 {
     struct ifpppstatsreq req;
 
@@ -161,7 +158,8 @@ get_ppp_stats(curp)
 #define ifr_name ifr__name
 #endif
 
-    strncpy(req.ifr_name, interface, sizeof(req.ifr_name));
+    strncpy(req.ifr_name, interface, IFNAMSIZ);
+    req.ifr_name[IFNAMSIZ - 1] = 0;
     if (ioctl(s, SIOCGPPPSTATS, &req) < 0) {
 	fprintf(stderr, "%s: ", progname);
 	if (errno == ENOTTY)
@@ -174,8 +172,7 @@ get_ppp_stats(curp)
 }
 
 static void
-get_ppp_cstats(csp)
-    struct ppp_comp_stats *csp;
+get_ppp_cstats(struct ppp_comp_stats *csp)
 {
     struct ifpppcstatsreq creq;
 
@@ -187,7 +184,8 @@ get_ppp_cstats(csp)
 #define ifr_name ifr__name
 #endif
 
-    strncpy(creq.ifr_name, interface, sizeof(creq.ifr_name));
+    strncpy(creq.ifr_name, interface, IFNAMSIZ);
+    creq.ifr_name[IFNAMSIZ - 1] = 0;
     if (ioctl(s, SIOCGPPPCSTATS, &creq) < 0) {
 	fprintf(stderr, "%s: ", progname);
 	if (errno == ENOTTY) {
@@ -229,9 +227,7 @@ get_ppp_cstats(csp)
 #else	/* STREAMS */
 
 int
-strioctl(fd, cmd, ptr, ilen, olen)
-    int fd, cmd, ilen, olen;
-    char *ptr;
+strioctl(int fd, int cmd, char *ptr, int ilen, int olen)
 {
     struct strioctl str;
 
@@ -248,8 +244,7 @@ strioctl(fd, cmd, ptr, ilen, olen)
 }
 
 static void
-get_ppp_stats(curp)
-    struct ppp_stats *curp;
+get_ppp_stats(struct ppp_stats *curp)
 {
     if (strioctl(s, PPPIO_GETSTAT, curp, 0, sizeof(*curp)) < 0) {
 	fprintf(stderr, "%s: ", progname);
@@ -262,8 +257,7 @@ get_ppp_stats(curp)
 }
 
 static void
-get_ppp_cstats(csp)
-    struct ppp_comp_stats *csp;
+get_ppp_cstats(struct ppp_comp_stats *csp)
 {
     if (strioctl(s, PPPIO_GETCSTAT, csp, 0, sizeof(*csp)) < 0) {
 	fprintf(stderr, "%s: ", progname);
@@ -297,7 +291,7 @@ get_ppp_cstats(csp)
  * First line printed is cumulative.
  */
 static void
-intpr()
+intpr(void)
 {
     register int line = 0;
     sigset_t oldmask, mask;
@@ -456,12 +450,11 @@ intpr()
 }
 
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     int c;
 #ifdef STREAMS
+    int unit;
     char *dev;
 #endif
 
@@ -526,11 +519,6 @@ main(argc, argv)
     if (argc > 0)
 	interface = argv[0];
 
-    if (sscanf(interface, fmt, &unit) != 1) {
-	fprintf(stderr, "%s: invalid interface '%s' specified\n",
-		progname, interface);
-    }
-
 #ifndef STREAMS
     {
 	struct ifreq ifr;
@@ -546,7 +534,8 @@ main(argc, argv)
 #undef  ifr_name
 #define ifr_name ifr_ifrn.ifrn_name
 #endif
-	strncpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
+	strncpy(ifr.ifr_name, interface, IFNAMSIZ);
+	ifr.ifr_name[IFNAMSIZ - 1] = 0;
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 	    fprintf(stderr, "%s: nonexistent interface '%s' specified\n",
 		    progname, interface);
@@ -555,6 +544,11 @@ main(argc, argv)
     }
 
 #else	/* STREAMS */
+    if (sscanf(interface, PPP_DRV_NAME "%d", &unit) != 1) {
+	fprintf(stderr, "%s: invalid interface '%s' specified\n",
+		progname, interface);
+    }
+
 #ifdef __osf__
     dev = "/dev/streams/ppp";
 #else
