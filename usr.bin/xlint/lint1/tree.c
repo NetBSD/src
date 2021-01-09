@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.142 2021/01/09 23:02:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.143 2021/01/09 23:18:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.142 2021/01/09 23:02:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.143 2021/01/09 23:18:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -789,11 +789,22 @@ typeok_minus(op_t op, type_t *ltp, tspec_t lt, type_t *rtp, tspec_t rt)
 	return true;
 }
 
-static void
-typeok_shr(mod_t *mp,
-	   tnode_t *ln, tspec_t lt, tspec_t olt,
-	   tspec_t rt, tspec_t ort)
+static const tnode_t *
+before_promotion_and_balancing(const tnode_t *tn)
 {
+	while (tn->tn_op == CVT && !tn->tn_cast)
+		tn = tn->tn_left;
+	return tn;
+}
+
+static void
+typeok_shr(mod_t *mp, tnode_t *ln, tspec_t lt, tnode_t *rn, tspec_t rt)
+{
+	tspec_t olt, ort;
+
+	olt = before_promotion_and_balancing(ln)->tn_type->t_tspec;
+	ort = before_promotion_and_balancing(rn)->tn_type->t_tspec;
+
 	/* operands have integer types (checked above) */
 	if (pflag && !tspec_is_uint(lt)) {
 		/*
@@ -1031,9 +1042,8 @@ bool
 typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
-	tspec_t	lt, rt, olt = NOTSPEC, ort = NOTSPEC;
+	tspec_t	lt, rt;
 	type_t	*ltp, *rtp;
-	tnode_t	*tn;
 
 	mp = &modtab[op];
 
@@ -1072,19 +1082,6 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			warn_incompatible_types(op, lt, rt);
 			return false;
 		}
-	}
-
-	if (op == SHL || op == SHR || op == SHLASS || op == SHRASS) {
-		/*
-		 * For these operations we need the types before promotion
-		 * and balancing.
-		 */
-		for (tn=ln; tn->tn_op==CVT && !tn->tn_cast; tn=tn->tn_left)
-			continue;
-		olt = tn->tn_type->t_tspec;
-		for (tn=rn; tn->tn_op==CVT && !tn->tn_cast; tn=tn->tn_left)
-			continue;
-		ort = tn->tn_type->t_tspec;
 	}
 
 	switch (op) {
@@ -1137,7 +1134,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			return false;
 		break;
 	case SHR:
-		typeok_shr(mp, ln, lt, olt, rt, ort);
+		typeok_shr(mp, ln, lt, rn, rt);
 		goto shift;
 	case SHL:
 		typeok_shl(mp, lt, rt);
