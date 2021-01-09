@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.20 2021/01/02 19:22:42 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.21 2021/01/09 14:33:53 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -152,10 +152,25 @@ all_messages_body() {
 	srcdir="$(atf_get_srcdir)"
 	ok="true"
 
+	# shellcheck disable=SC2016
+	extract_flags_awk='
+		BEGIN {
+			flags = "-g -S -w"
+		}
+		/^\/\* (lint1-flags|lint1-extra-flags): .*\*\/$/ {
+			if ($2 == "lint1-flags:")
+				flags = ""
+			for (i = 3; i < NF; i++)
+				flags = flags " " $i
+		}
+		END {
+			print flags
+		}
+	'
+
 	for msg in $(seq 0 329); do
 		base="$(printf '%s/msg_%03d' "${srcdir}" "${msg}")"
-		flags="$(sed -n 's,^/\* lint1-flags: \(.*\) \*/$,\1,p' "${base}.c")"
-		flags="${flags:--g -S -w}"
+		flags="$(awk "$extract_flags_awk" "${base}.c")"
 
 		# shellcheck disable=SC2154 disable=SC2086
 		${Atf_Check} -s not-exit:0 -o "file:${base}.exp" -e empty \
