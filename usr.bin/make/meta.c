@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.166 2020/12/31 17:39:36 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.167 2021/01/09 16:06:09 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -403,7 +403,7 @@ printCMDs(GNode *gn, FILE *fp)
 	} \
 	return FALSE; \
     } \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 
 /*
@@ -1694,7 +1694,7 @@ meta_compat_parent(pid_t child)
 	    fflush(stdout);
 	    buf[nread] = '\0';
 	    meta_job_output(NULL, buf, "");
-	} while (0);
+	} while (/*CONSTCOND*/0);
 	if (metafd != -1 && FD_ISSET(metafd, &readfds)) {
 	    if (meta_job_event(NULL) <= 0)
 		metafd = -1;

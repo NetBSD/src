@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.132 2020/12/31 14:10:04 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.133 2021/01/09 16:06:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.132 2020/12/31 14:10:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.133 2021/01/09 16:06:09 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -478,7 +478,7 @@ ForReadMore(void *v_arg, size_t *out_len)
 
 	ForSubstBody(f);
 	DEBUG1(FOR, "For: loop body:\n%s", f->curBody.data);
-	f->sub_next += f->vars.len;
+	f->sub_next += (unsigned int)f->vars.len;
 
 	*out_len = f->curBody.len;
 	return f->curBody.data;
