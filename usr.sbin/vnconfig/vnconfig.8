@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.45 2018/10/07 20:30:50 wiz Exp $
+.\"	$NetBSD: vnconfig.8,v 1.46 2021/01/09 23:54:26 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)vnconfig.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd November 6, 2015
+.Dd January 10, 2021
 .Dt VNDCONFIG 8
 .Os
 .Sh NAME
@@ -239,6 +239,13 @@ Configures the vnode disk
 .Pa vnd0
 emulating the geometry of 512 bytes per sector, 18 sectors per track,
 2 tracks per cylinder, and 80 cylinders total.
+.Pp
+.Dl vndconfig vnd0 /tmp/image.udf 2048/1/1/0
+.Pp
+Configures the vnode disk
+.Pa vnd0
+for an UDF image to be used with
+.Xr mount_udf 8 .
 .Pp
 .Dl vndconfig -t floppy vnd0 /tmp/floppy.img
 .Pp
