@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.15 2021/01/04 01:12:20 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.16 2021/01/09 14:10:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.15 2021/01/04 01:12:20 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.16 2021/01/09 14:10:15 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -71,64 +71,68 @@ inittyp(void)
 		{ BOOL,	    { CHAR_SIZE, 1,
 				      BOOL, BOOL,
 				      1, 1, 0, 1, 1, 0, "_Bool" } },
-		{ CHAR,	    { CHAR_SIZE, CHAR_BIT,
+		{ CHAR,	    { CHAR_SIZE, 8,
 				      SCHAR, UCHAR,
 				      1, 0, 0, 1, 1, 0, "char" } },
-		{ SCHAR,    { CHAR_SIZE, CHAR_BIT,
+		{ SCHAR,    { CHAR_SIZE, 8,
 				      SCHAR, UCHAR,
 				      1, 0, 0, 1, 1, 0, "signed char" } },
-		{ UCHAR,    { CHAR_SIZE, CHAR_BIT,
+		{ UCHAR,    { CHAR_SIZE, 8,
 				      SCHAR, UCHAR,
 				      1, 1, 0, 1, 1, 0, "unsigned char" } },
-		{ SHORT,    { SHORT_SIZE, 2 * CHAR_BIT,
+		{ SHORT,    { SHORT_SIZE, 16,
 				      SHORT, USHORT,
 				      1, 0, 0, 1, 1, 0, "short" } },
-		{ USHORT,   { SHORT_SIZE, 2 * CHAR_BIT,
+		{ USHORT,   { SHORT_SIZE, 16,
 				      SHORT, USHORT,
 				      1, 1, 0, 1, 1, 0, "unsigned short" } },
-		{ INT,      { INT_SIZE, INT_RSIZE * CHAR_BIT,
+		{ INT,      { INT_SIZE, INT_RSIZE * 8,
 				      INT, UINT,
 				      1, 0, 0, 1, 1, 0, "int" } },
-		{ UINT,     { INT_SIZE, INT_RSIZE * CHAR_BIT,
+		{ UINT,     { INT_SIZE, INT_RSIZE * 8,
 				      INT, UINT,
 				      1, 1, 0, 1, 1, 0, "unsigned int" } },
-		{ LONG,     { LONG_SIZE, 4 * CHAR_BIT,
+		{ LONG,     { LONG_SIZE, 32,
 				      LONG, ULONG,
 				      1, 0, 0, 1, 1, 0, "long" } },
-		{ ULONG,    { LONG_SIZE, 4 * CHAR_BIT,
+		{ ULONG,    { LONG_SIZE, 32,
 				      LONG, ULONG,
 				      1, 1, 0, 1, 1, 0, "unsigned long" } },
-		{ QUAD,     { QUAD_SIZE, 8 * CHAR_BIT,
+		{ QUAD,     { QUAD_SIZE, 64,
 				      QUAD, UQUAD,
 				      1, 0, 0, 1, 1, 0, "long long" } },
-		{ UQUAD,    { QUAD_SIZE, 8 * CHAR_BIT,
+		{ UQUAD,    { QUAD_SIZE, 64,
 				      QUAD, UQUAD,
 				      1, 1, 0, 1, 1, 0, "unsigned long long" } },
 #ifdef INT128_SIZE
-		{ INT128,   { INT128_SIZE, 16 * CHAR_BIT,
+		{ INT128,   { INT128_SIZE, 128,
 				      INT128, UINT128,
 				      1, 0, 0, 1, 1, 0, "__int128_t" } },
-		{ UINT128,  { INT128_SIZE, 16 * CHAR_BIT,
+		{ UINT128,  { INT128_SIZE, 128,
 				      INT128, UINT128,
 				      1, 1, 0, 1, 1, 0, "__uint128_t" } },
 #endif
 
-		{ FLOAT,    { FLOAT_SIZE, 4 * CHAR_BIT,
+		{ FLOAT,    { FLOAT_SIZE, 32,
 				      FLOAT, FLOAT,
 				      0, 0, 1, 1, 1, 0, "float" } },
-		{ DOUBLE,   { DOUBLE_SIZE, 8 * CHAR_BIT,
+		{ DOUBLE,   { DOUBLE_SIZE, 64,
 				      DOUBLE, DOUBLE,
 				      0, 0, 1, 1, 1, 0, "double" } },
-		{ LDOUBLE,  { LDOUBLE_SIZE, 10 * CHAR_BIT,
+		{ LDOUBLE,  { LDOUBLE_SIZE, 80,
 				      LDOUBLE, LDOUBLE,
 				      0, 0, 1, 1, 1, 0, "long double" } },
-		{ FCOMPLEX,   { FLOAT_SIZE * 2, 4 * CHAR_BIT * 2,
+		{ FCOMPLEX,   { FLOAT_SIZE * 2, 32 * 2,
 				      FCOMPLEX, FCOMPLEX,
 				      0, 0, 1, 1, 1, 1, "float _Complex" } },
-		{ DCOMPLEX,   { DOUBLE_SIZE * 2, 8 * CHAR_BIT * 2,
+		{ DCOMPLEX,   { DOUBLE_SIZE * 2, 64 * 2,
 				      DCOMPLEX, DCOMPLEX,
 				      0, 0, 1, 1, 1, 1, "double _Complex" } },
-		{ LCOMPLEX,   { LDOUBLE_SIZE * 2, 8 * CHAR_BIT * 2,
+		/*
+		 * XXX: with -p, LCOMPLEX.tt_psz != 2 * LDOUBLE.tt_psz.
+		 * This may or may not have been intentional.
+		 */
+		{ LCOMPLEX,   { LDOUBLE_SIZE * 2, 64 * 2,
 				      LCOMPLEX, LCOMPLEX,
 				      0, 0, 1, 1, 1, 1, "long double _Complex" } },
 		{ VOID,     { -1, -1,
@@ -140,10 +144,10 @@ inittyp(void)
 		{ UNION,    { -1, -1,
 				      UNION, UNION,
 				      0, 0, 0, 0, 0, 0, "union" } },
-		{ ENUM,     { ENUM_SIZE, 3 * CHAR_BIT,
+		{ ENUM,     { ENUM_SIZE, 24,
 				      ENUM, ENUM,
 				      1, 0, 0, 1, 1, 0, "enum" } },
-		{ PTR,      { PTR_SIZE, 4 * CHAR_BIT,
+		{ PTR,      { PTR_SIZE, 32,
 				      PTR, PTR,
 				      0, 1, 0, 0, 1, 0, "pointer" } },
 		{ ARRAY,    { -1, -1,

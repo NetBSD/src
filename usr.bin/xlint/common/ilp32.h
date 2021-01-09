@@ -1,4 +1,4 @@
-/*	$NetBSD: ilp32.h,v 1.4 2021/01/04 01:11:01 rillig Exp $	*/
+/*	$NetBSD: ilp32.h,v 1.5 2021/01/09 14:10:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -39,16 +39,16 @@
  * Type sizes for ILP32 platforms (int, long, pointer: 32-bit)
  */
 
-#define	CHAR_SIZE	(CHAR_BIT)
-#define	SHORT_SIZE	(2 * CHAR_BIT)
-#define	INT_SIZE	(4 * CHAR_BIT)
-#define	LONG_SIZE	(4 * CHAR_BIT)
-#define	QUAD_SIZE	(8 * CHAR_BIT)
-#define	PTR_SIZE	(4 * CHAR_BIT)
+#define	CHAR_SIZE	8
+#define	SHORT_SIZE	16
+#define	INT_SIZE	32
+#define	LONG_SIZE	32
+#define	QUAD_SIZE	64
+#define	PTR_SIZE	32
 
-#define	TARG_SCHAR_MAX	((signed char) (((unsigned char) -1) >> 1))
+#define	TARG_SCHAR_MAX	((int8_t) (((uint8_t) -1) >> 1))
 #define	TARG_SCHAR_MIN	((-TARG_CHAR_MAX) - 1)
-#define	TARG_UCHAR_MAX	((unsigned char) -1)
+#define	TARG_UCHAR_MAX	((uint8_t) -1)
 
 #define	TARG_SHRT_MAX	((int16_t) (((uint16_t) -1) >> 1))
 #define	TARG_SHRT_MIN	((-TARG_SHRT_MAX) - 1)
