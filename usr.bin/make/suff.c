@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.333 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.334 2021/01/09 16:06:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.333 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.334 2021/01/09 16:06:09 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -615,6 +615,7 @@ Suff_AddTransform(const char *name)
 	gn->type = OP_TRANSFORM;
 
 	{
+		/* TODO: Avoid the redundant parsing here. */
 		Boolean ok = ParseTransform(name, &srcSuff, &targSuff);
 		assert(ok);
 		(void)ok;
@@ -1012,6 +1013,7 @@ Candidate_New(char *name, char *prefix, Suffix *suff, Candidate *parent,
 }
 
 /* Add a new candidate to the list. */
+/*ARGSUSED*/
 static void
 CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
 		  Suffix *suff, const char *debug_tag)
