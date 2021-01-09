@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.111 2021/01/04 22:26:50 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.112 2021/01/09 13:12:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.111 2021/01/04 22:26:50 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.112 2021/01/09 13:12:13 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1822,7 +1822,7 @@ complete_tag_enum(type_t *tp, sym_t *fmem)
  * impl is 1 if the value of the enumerator was not explicitly specified.
  */
 sym_t *
-ename(sym_t *sym, int val, int impl)
+enumeration_constant(sym_t *sym, int val, int impl)
 {
 
 	if (sym->s_scl) {
