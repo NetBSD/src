@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1772 2020/12/31 07:54:13 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.1773 2021/01/09 16:44:35 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1235,12 +1235,13 @@ Location:	external/ibm-public/postfix/dist
 Notes:
 
 Package:	ppp
-Version:	2.4.7
-Current Vers:	2.4.7
+Version:	2.4.9
+Current Vers:	2.4.9
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:
 Home Page:
-GIT root:	git://ozlabs.org/~paulus/ppp.git
+Date: 		2021-01-09
+GIT root:	https://github.com/paulusmack/ppp.git
 Mailing List:
 Responsible:	christos, cube
 License:	BSD (3-clause)
