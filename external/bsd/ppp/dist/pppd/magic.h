@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: magic.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * magic.h - PPP Magic Number definitions.
@@ -40,12 +40,10 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Id: magic.h,v 1.5 2003/06/11 23:56:26 paulus Exp 
  */
 
-void magic_init __P((void));	/* Initialize the magic number generator */
-u_int32_t magic __P((void));	/* Returns the next magic number */
+void magic_init (void);	/* Initialize the magic number generator */
+u_int32_t magic (void);	/* Returns the next magic number */
 
 /* Fill buffer with random bytes */
-void random_bytes __P((unsigned char *buf, int len));
+void random_bytes (unsigned char *buf, int len);

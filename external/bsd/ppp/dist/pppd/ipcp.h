@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: ipcp.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -40,8 +40,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Id: ipcp.h,v 1.14 2002/12/04 23:03:32 paulus Exp 
  */
 
 /*
@@ -72,6 +70,7 @@ typedef struct ipcp_options {
     bool old_addrs;		/* Use old (IP-Addresses) option? */
     bool req_addr;		/* Ask peer to send IP address? */
     bool default_route;		/* Assign default route through interface? */
+    bool replace_default_route;	/* Replace default route through interface? */
     bool proxy_arp;		/* Make proxy ARP entry for peer? */
     bool neg_vj;		/* Van Jacobson Compression? */
     bool old_vj;		/* use old (short) form of VJ option? */
@@ -93,6 +92,6 @@ extern ipcp_options ipcp_gotoptions[];
 extern ipcp_options ipcp_allowoptions[];
 extern ipcp_options ipcp_hisoptions[];
 
-char *ip_ntoa __P((u_int32_t));
+char *ip_ntoa(u_int32_t);
 
 extern struct protent ipcp_protent;
