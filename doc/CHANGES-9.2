@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.33 2021/01/08 13:01:54 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.34 2021/01/09 19:31:08 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1400,4 +1400,9 @@ external/bsd/ipf/Makefile.inc			1.6
 	ipf(4): build tools as 64bit binaries on mips64 (where most
 	userland is 32bit). Works around missing COMPAT_NETBSD32 for ipf.
 	[simonb, ticket #1183]
+
+sbin/fsck/partutil.c				1.17
+
+	Deal with disk devices not supporting DIOCGDISKINFO.
+	[tsutsui, ticket #1184]
 
