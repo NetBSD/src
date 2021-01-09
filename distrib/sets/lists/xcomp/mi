@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.223 2020/11/10 21:47:41 kamil Exp $
+#	 $NetBSD: mi,v 1.224 2021/01/09 02:40:44 uki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4416,4 +4416,3 @@
 ./usr/libdata/lint/llib-lxkbfile.ln			xcomp-libxkbfile-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxkbui.ln			xcomp-libxkbui-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxshmfence.ln			xcomp-libxshmfence-lintlib	lint,xorg
-./var/db/obsolete/xcomp					xbase-sys-root	xorg
