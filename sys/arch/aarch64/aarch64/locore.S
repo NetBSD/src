@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.75 2020/12/26 00:55:26 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.76 2021/01/09 15:07:42 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.75 2020/12/26 00:55:26 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.76 2021/01/09 15:07:42 jmcneill Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -865,7 +865,8 @@ init_mmutable:
 	sub	x2, x2, x1			/* size = _end - start */
 	add	x2, x2, #PMAPBOOT_PAGEALLOCMAX	/* for pmapboot_pagealloc() */
 	mov	x3, #L2_SIZE			/* blocksize */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW	/* attr */
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB | LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN
 	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
@@ -879,7 +880,7 @@ init_mmutable:
 	mov	x1, x8				/* pa */
 	mov	x2, #L2_SIZE			/* size */
 	mov	x3, #L2_SIZE			/* blocksize */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB | LX_BLKPAG_AP_RW
 	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN	/* attr */
 	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
