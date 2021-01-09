@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2020/11/10 21:47:41 kamil Exp $
+# $NetBSD: mi,v 1.47 2021/01/09 02:40:44 uki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -38,4 +38,3 @@
 ./usr/X11R7/man/man1/Xserver.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/Xvfb.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man5/SecurityPolicy.5			xserver-obsolete	obsolete
-./var/db/obsolete/xserver				xbase-sys-root	xorg

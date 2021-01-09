@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.164 2020/12/27 21:13:18 reinoud Exp $
+# $NetBSD: mi,v 1.165 2021/01/09 02:40:44 uki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1738,3 +1738,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions	base-sys-usr	xorg
 ./usr/libdata/debug/usr/X11R7/libexec			base-sys-usr	xorg
 ./var/db/obsolete/xbase					xbase-sys-root	xorg
+./var/db/obsolete/xcomp					xbase-sys-root	xorg
+./var/db/obsolete/xdebug				xbase-sys-root		xorg,debug
+./var/db/obsolete/xetc					xbase-sys-root	xorg
+./var/db/obsolete/xfont					xbase-sys-root	xorg
+./var/db/obsolete/xserver				xbase-sys-root	xorg
