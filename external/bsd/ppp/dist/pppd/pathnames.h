@@ -1,9 +1,7 @@
-/*	$NetBSD: pathnames.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
 
 /*
  * define path names
- *
- * Id: pathnames.h,v 1.18 2005/08/25 23:59:34 paulus Exp 
  */
 
 #ifdef HAVE_PATHS_H
@@ -23,6 +21,13 @@
 #define _PATH_UPAPFILE 	 _ROOT_PATH "/etc/ppp/pap-secrets"
 #define _PATH_CHAPFILE 	 _ROOT_PATH "/etc/ppp/chap-secrets"
 #define _PATH_SRPFILE 	 _ROOT_PATH "/etc/ppp/srp-secrets"
+
+#ifdef USE_EAPTLS
+#define _PATH_EAPTLSCLIFILE	_ROOT_PATH "/etc/ppp/eaptls-client"
+#define _PATH_EAPTLSSERVFILE	_ROOT_PATH "/etc/ppp/eaptls-server"
+#define _PATH_OPENSSLCONFFILE	_ROOT_PATH "/etc/ppp/openssl.cnf"
+#endif /* USE_EAPTLS */
+
 #define _PATH_SYSOPTIONS _ROOT_PATH "/etc/ppp/options"
 #define _PATH_IPUP	 _ROOT_PATH "/etc/ppp/ip-up"
 #define _PATH_IPDOWN	 _ROOT_PATH "/etc/ppp/ip-down"
