@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.141 2021/01/09 19:13:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.142 2021/01/09 23:02:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.141 2021/01/09 19:13:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.142 2021/01/09 23:02:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -770,7 +770,7 @@ typeok_plus(op_t op, tspec_t lt, tspec_t rt)
 }
 
 static bool
-typeok_minus(op_t op, tspec_t lt, type_t *lstp, tspec_t rt, type_t *rstp)
+typeok_minus(op_t op, type_t *ltp, tspec_t lt, type_t *rtp, tspec_t rt)
 {
 	/* operands have scalar types (checked above) */
 	if (lt == PTR && (!tspec_is_int(rt) && rt != PTR)) {
@@ -781,7 +781,7 @@ typeok_minus(op_t op, tspec_t lt, type_t *lstp, tspec_t rt, type_t *rstp)
 		return false;
 	}
 	if (lt == PTR && rt == PTR) {
-		if (!eqtype(lstp, rstp, 1, 0, NULL)) {
+		if (!eqtype(ltp->t_subt, rtp->t_subt, 1, 0, NULL)) {
 			/* illegal pointer subtraction */
 			error(116);
 		}
@@ -873,15 +873,14 @@ typeok_shift(tspec_t lt, tnode_t *rn, tspec_t rt)
 }
 
 static bool
-typeok_eq(tnode_t *ln, tspec_t lt, tspec_t lst,
-	  tnode_t *rn, tspec_t rt, tspec_t rst)
+typeok_eq(tnode_t *ln, tspec_t lt, tnode_t *rn, tspec_t rt)
 {
-	if (lt == PTR && ((rt == PTR && rst == VOID) ||
+	if (lt == PTR && ((rt == PTR && rn->tn_type->t_tspec == VOID) ||
 			  tspec_is_int(rt))) {
 		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
 			return true;
 	}
-	if (rt == PTR && ((lt == PTR && lst == VOID) ||
+	if (rt == PTR && ((lt == PTR && ln->tn_type->t_tspec == VOID) ||
 			  tspec_is_int(lt))) {
 		if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
 			return true;
@@ -929,9 +928,12 @@ typeok_quest(tspec_t lt, tnode_t **rn)
 
 static bool
 typeok_colon(mod_t *mp,
-	     tnode_t *ln, type_t *ltp, tspec_t lt, type_t *lstp, tspec_t lst,
-	     tnode_t *rn, type_t *rtp, tspec_t rt, type_t *rstp, tspec_t rst)
+	     tnode_t *ln, type_t *ltp, tspec_t lt,
+	     tnode_t *rn, type_t *rtp, tspec_t rt)
 {
+	type_t *lstp, *rstp;
+	tspec_t lst, rst;
+
 	if (tspec_is_arith(lt) && tspec_is_arith(rt))
 		return true;
 
@@ -939,6 +941,11 @@ typeok_colon(mod_t *mp,
 		return true;
 	if (lt == UNION && rt == UNION && ltp->t_str == rtp->t_str)
 		return true;
+
+	lstp = lt == PTR ? ltp->t_subt : NULL;
+	rstp = rt == PTR ? rtp->t_subt : NULL;
+	lst = lstp != NULL ? lstp->t_tspec : NOTSPEC;
+	rst = rstp != NULL ? rstp->t_tspec : NOTSPEC;
 
 	/* combination of any pointer and 0, 0L or (void *)0 is ok */
 	if (lt == PTR && ((rt == PTR && rst == VOID) || tspec_is_int(rt))) {
@@ -1024,21 +1031,21 @@ bool
 typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
-	tspec_t	lt, rt = NOTSPEC, lst = NOTSPEC, rst = NOTSPEC, olt = NOTSPEC,
-	    ort = NOTSPEC;
-	type_t	*ltp, *rtp = NULL, *lstp = NULL, *rstp = NULL;
+	tspec_t	lt, rt, olt = NOTSPEC, ort = NOTSPEC;
+	type_t	*ltp, *rtp;
 	tnode_t	*tn;
 
 	mp = &modtab[op];
 
 	lint_assert((ltp = ln->tn_type) != NULL);
+	lt = ltp->t_tspec;
 
-	if ((lt = ltp->t_tspec) == PTR)
-		lst = (lstp = ltp->t_subt)->t_tspec;
 	if (mp->m_binary) {
 		lint_assert((rtp = rn->tn_type) != NULL);
-		if ((rt = rtp->t_tspec) == PTR)
-			rst = (rstp = rtp->t_subt)->t_tspec;
+		rt = rtp->t_tspec;
+	} else {
+		rtp = NULL;
+		rt = NOTSPEC;
 	}
 
 	if (mp->m_requires_integer) {
@@ -1126,7 +1133,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			return false;
 		break;
 	case MINUS:
-		if (!typeok_minus(op, lt, lstp, rt, rstp))
+		if (!typeok_minus(op, ltp, lt, rtp, rt))
 			return false;
 		break;
 	case SHR:
@@ -1143,7 +1150,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		 * Accept some things which are allowed with EQ and NE,
 		 * but not with ordered comparisons.
 		 */
-		if (typeok_eq(ln, lt, lst, rn, rt, rst))
+		if (typeok_eq(ln, lt, rn, rt))
 			break;
 		/* FALLTHROUGH */
 	case LT:
@@ -1159,9 +1166,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			return false;
 		break;
 	case COLON:
-		if (!typeok_colon(mp,
-		    ln, ltp, lt, lstp, lst,
-		    rn, rtp, rt, rstp, rst))
+		if (!typeok_colon(mp, ln, ltp, lt, rn, rtp, rt))
 			return false;
 		break;
 	case ASSIGN:
