@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.133 2021/01/09 03:08:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.134 2021/01/09 03:28:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.133 2021/01/09 03:08:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.134 2021/01/09 03:28:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -346,14 +346,14 @@ program:
 	| translation_unit
 	;
 
-translation_unit:
-	  ext_decl
-	| translation_unit ext_decl
+translation_unit:		/* C99 6.9 */
+	  external_declaration
+	| translation_unit external_declaration
 	;
 
-ext_decl:
+external_declaration:		/* C99 6.9 */
 	  asm_statement
-	| func_def {
+	| function_definition {
 		global_clean_up_decl(0);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
@@ -410,7 +410,7 @@ data_def:
 	  }
 	;
 
-func_def:
+function_definition:		/* C99 6.9.1 */
 	  func_decl {
 		if ($1->s_type->t_tspec != FUNC) {
 			/* syntax error '%s' */
@@ -427,7 +427,7 @@ func_def:
 		pushdecl(ARG);
 		if (lwarn == LWARN_NONE)
 			$1->s_used = 1;
-	  } opt_arg_declaration_list {
+	  } arg_declaration_list_opt {
 		popdecl();
 		blklev--;
 		check_func_lint_directives();
@@ -451,7 +451,7 @@ func_decl:
 	  }
 	;
 
-opt_arg_declaration_list:
+arg_declaration_list_opt:
 	  /* empty */
 	| arg_declaration_list
 	;
@@ -1484,12 +1484,12 @@ non_expr_statement:
 	  }
 	| asm_statement
 
-statement:
+statement:			/* C99 6.8 */
 	  expr_statement
 	| non_expr_statement
 	;
 
-labeled_statement:
+labeled_statement:		/* C99 6.8.1 */
 	  label statement
 	;
 
@@ -1522,7 +1522,7 @@ statement_d_list:
 	  }
 	;
 
-compound_statement:
+compound_statement:		/* C99 6.8.2 */
 	  compound_statement_lbrace compound_statement_rbrace
 	| compound_statement_lbrace statement_d_list compound_statement_rbrace
 	| compound_statement_lbrace declaration_list compound_statement_rbrace
@@ -1593,7 +1593,7 @@ expr_statement_list:
 	  }
 	;
 
-selection_statement:
+selection_statement:		/* C99 6.8.4 */
 	  if_without_else {
 		SAVE(__FILE__, __LINE__);
 		if2();
@@ -1661,7 +1661,7 @@ do_statement:
 	  }
 	;
 
-iteration_statement:
+iteration_statement:		/* C99 6.8.5 */
 	  while_expr statement {
 		CLRWFLGS(__FILE__, __LINE__);
 		while2();
@@ -1740,7 +1740,7 @@ opt_expr:
 	  }
 	;
 
-jump_statement:
+jump_statement:			/* C99 6.8.6 */
 	  goto identifier T_SEMI {
 		dogoto(getsym($2));
 	  }
