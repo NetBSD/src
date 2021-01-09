@@ -71,5 +71,10 @@ find . -type f -name '.gitignore' | while read m; do
 	rm -f ${m}
 	echo -n "${m} "
 done
+echo -n "Removing .github... "
+find . -type f -name '.github' | while read m; do
+	rm -fr ${m}
+	echo -n "${m} "
+done
 echo; echo
 cleantags .
