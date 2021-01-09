@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.394 2021/01/08 21:46:50 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.395 2021/01/09 16:06:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.394 2021/01/08 21:46:50 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.395 2021/01/09 16:06:09 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -599,6 +599,7 @@ JobCondPassSig(int signo)
  *
  * Sends a token on the child exit pipe to wake us up from select()/poll().
  */
+/*ARGSUSED*/
 static void
 JobChildSig(int signo MAKE_ATTR_UNUSED)
 {
@@ -609,6 +610,7 @@ JobChildSig(int signo MAKE_ATTR_UNUSED)
 
 
 /* Resume all stopped jobs. */
+/*ARGSUSED*/
 static void
 JobContinueSig(int signo MAKE_ATTR_UNUSED)
 {
@@ -2065,8 +2067,10 @@ Job_CatchOutput(void)
 		switch (count) {
 		case 0:
 			Punt("unexpected eof on token pipe");
+			/*NOTREACHED*/
 		case -1:
 			Punt("token pipe read: %s", strerror(errno));
+			/*NOTREACHED*/
 		case 1:
 			if (token == DO_JOB_RESUME[0])
 				/*

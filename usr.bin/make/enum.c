@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.13 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: enum.c,v 1.14 2021/01/09 16:06:09 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: enum.c,v 1.13 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: enum.c,v 1.14 2021/01/09 16:06:09 rillig Exp $");
 
 /*
  * Convert a bitset into a string representation, showing the names of the
@@ -88,4 +88,5 @@ Enum_ValueToString(int value, const EnumToStringSpec *spec)
 			return spec->es_name;
 	}
 	abort(/* unknown enum value */);
+	/*NOTREACHED*/
 }

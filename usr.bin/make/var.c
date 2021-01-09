@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.778 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.779 2021/01/09 16:06:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.778 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.779 2021/01/09 16:06:09 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1235,6 +1235,7 @@ typedef void (*ModifyWordsCallback)(const char *word, SepBuf *buf, void *data);
  * Callback for ModifyWords to implement the :H modifier.
  * Add the dirname of the given word to the buffer.
  */
+/*ARGSUSED*/
 static void
 ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1249,6 +1250,7 @@ ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
  * Callback for ModifyWords to implement the :T modifier.
  * Add the basename of the given word to the buffer.
  */
+/*ARGSUSED*/
 static void
 ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1259,6 +1261,7 @@ ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
  * Callback for ModifyWords to implement the :E modifier.
  * Add the filename suffix of the given word to the buffer, if it exists.
  */
+/*ARGSUSED*/
 static void
 ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1271,6 +1274,7 @@ ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
  * Callback for ModifyWords to implement the :R modifier.
  * Add the basename of the given word to the buffer.
  */
+/*ARGSUSED*/
 static void
 ModifyWord_Root(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1690,6 +1694,7 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
  * Callback for ModifyWords to implement the :tA modifier.
  * Replace each word with the result of realpath() if successful.
  */
+/*ARGSUSED*/
 static void
 ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
@@ -2789,6 +2794,7 @@ ApplyModifier_Quote(const char **pp, const char *val, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 }
 
+/*ARGSUSED*/
 static void
 ModifyWord_Copy(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
@@ -3105,7 +3111,7 @@ ApplyModifier_Order(const char **pp, const char *val, ApplyModifiersState *st)
 
 /* :? then : else */
 static ApplyModifierResult
-ApplyModifier_IfElse(const char **pp, const char *val, ApplyModifiersState *st)
+ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 {
 	char *then_expr, *else_expr;
 	VarParseResult res;
@@ -3461,7 +3467,7 @@ ApplyModifier(const char **pp, const char *val, ApplyModifiersState *st)
 	case 'S':
 		return ApplyModifier_Subst(pp, val, st);
 	case '?':
-		return ApplyModifier_IfElse(pp, val, st);
+		return ApplyModifier_IfElse(pp, st);
 #ifndef NO_REGEX
 	case 'C':
 		return ApplyModifier_Regex(pp, val, st);
