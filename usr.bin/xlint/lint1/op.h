@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.10 2021/01/05 23:50:29 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.11 2021/01/09 17:36:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -40,8 +40,9 @@ typedef	struct {
 	bool	m_binary : 1;	/* binary operator */
 	bool	m_logical : 1;	/* logical operator, result is int */
 	bool	m_requires_integer : 1;
-	bool	m_requires_scalar : 1;
+	bool	m_requires_integer_or_complex : 1;
 	bool	m_requires_arith : 1;
+	bool	m_requires_scalar : 1;
 	bool	m_fold : 1;	/* operands should be folded */
 	bool	m_vctx : 1;	/* value context for left operand */
 	bool	m_tctx : 1;	/* test context for left operand */
@@ -54,7 +55,6 @@ typedef	struct {
 	bool	m_valid_on_enum : 1;	/* valid operation on enums */
 	bool	m_bad_on_enum : 1;	/* dubious operation on enums */
 	bool	m_eqwarn : 1;	/* warning if on operand stems from == */
-	bool	m_requires_integer_or_complex : 1;
 	const char *m_name;	/* name of op. */
 } mod_t;
 
