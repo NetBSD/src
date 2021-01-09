@@ -1,1 +1,1 @@
-msg_108.c(6): syntax error ':' [249]
+msg_108.c(24): operand of '~' has invalid type (struct) [108]
