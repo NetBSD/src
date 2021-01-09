@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.53 2021/01/08 02:11:45 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.54 2021/01/09 03:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.53 2021/01/08 02:11:45 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.54 2021/01/09 03:08:54 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -69,8 +69,8 @@ int	rchflg;
  *
  * Control statements if, for, while and switch do not reset ftflg because
  * this must be done by the controlled statement. At least for if this is
- * important because ** FALLTHROUGH ** after "if (expr) stmnt" is evaluated
- * before the following token, which causes reduction of above.
+ * important because ** FALLTHROUGH ** after "if (expr) statement" is
+ * evaluated before the following token, which causes reduction of above.
  * This means that ** FALLTHROUGH ** after "if ..." would always be ignored.
  */
 int	ftflg;
@@ -583,7 +583,7 @@ if2(void)
 
 /*
  * if_without_else
- * if_without_else T_ELSE stmnt
+ * if_without_else T_ELSE statement
  */
 void
 if3(int els)
@@ -649,7 +649,7 @@ switch1(tnode_t *tn)
 }
 
 /*
- * switch_expr stmnt
+ * switch_expr statement
  */
 void
 switch2(void)
@@ -731,7 +731,7 @@ while1(tnode_t *tn)
 }
 
 /*
- * while_expr stmnt
+ * while_expr statement
  * while_expr error
  */
 void
@@ -766,7 +766,7 @@ do1(void)
 }
 
 /*
- * do stmnt do_while_expr
+ * do statement do_while_expr
  * do error
  */
 void
@@ -860,7 +860,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 }
 
 /*
- * for_exprs stmnt
+ * for_exprs statement
  * for_exprs error
  */
 void
