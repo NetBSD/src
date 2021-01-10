@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.60 2021/01/03 20:31:08 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.61 2021/01/10 00:05:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.60 2021/01/03 20:31:08 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.61 2021/01/10 00:05:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -327,8 +327,7 @@ initstack_push(void)
 	}
 
 	lint_assert(istk->i_remaining > 0);
-	lint_assert(istk->i_type == NULL ||
-	    !tspec_is_scalar(istk->i_type->t_tspec));
+	lint_assert(istk->i_type == NULL || !is_scalar(istk->i_type->t_tspec));
 
 	initstk = xcalloc(1, sizeof (istk_t));
 	initstk->i_next = istk;
@@ -472,8 +471,7 @@ initstack_next_brace(void)
 {
 
 	DPRINTF(("%s\n", __func__));
-	if (initstk->i_type != NULL &&
-	    tspec_is_scalar(initstk->i_type->t_tspec)) {
+	if (initstk->i_type != NULL && is_scalar(initstk->i_type->t_tspec)) {
 		/* invalid initializer type %s */
 		error(176, type_name(initstk->i_type));
 		initerr = 1;
@@ -494,8 +492,7 @@ initstack_next_nobrace(void)
 {
 
 	DPRINTF(("%s\n", __func__));
-	if (initstk->i_type == NULL &&
-	    !tspec_is_scalar(initstk->i_subt->t_tspec)) {
+	if (initstk->i_type == NULL && !is_scalar(initstk->i_subt->t_tspec)) {
 		/* {}-enclosed initializer required */
 		error(181);
 	}
@@ -505,7 +502,7 @@ initstack_next_nobrace(void)
 		initstack_check_too_many();
 	while (!initerr) {
 		if ((initstk->i_type != NULL &&
-		     tspec_is_scalar(initstk->i_type->t_tspec)))
+		     is_scalar(initstk->i_type->t_tspec)))
 			break;
 		initstack_push();
 	}
@@ -521,7 +518,7 @@ init_lbrace(void)
 
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
 	    initstk->i_next == NULL) {
-		if (tflag && !tspec_is_scalar(initstk->i_subt->t_tspec))
+		if (tflag && !is_scalar(initstk->i_subt->t_tspec))
 			/* no automatic aggregate initialization in trad. C */
 			warning(188);
 	}
@@ -620,7 +617,7 @@ mkinit(tnode_t *tn)
 	lt = ln->tn_type->t_tspec;
 	rt = tn->tn_type->t_tspec;
 
-	lint_assert(tspec_is_scalar(lt));
+	lint_assert(is_scalar(lt));
 
 	if (!typeok(INIT, 0, ln, tn))
 		return;
@@ -633,7 +630,7 @@ mkinit(tnode_t *tn)
 	expr(tn, 1, 0, 1);
 	trestor(tmem);
 
-	if (tspec_is_int(lt) && ln->tn_type->t_bitfield && !tspec_is_int(rt)) {
+	if (is_integer(lt) && ln->tn_type->t_bitfield && !is_integer(rt)) {
 		/*
 		 * Bit-fields can be initialized in trad. C only by integer
 		 * constants.
