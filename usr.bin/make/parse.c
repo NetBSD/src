@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.525 2020/12/31 17:39:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.526 2021/01/10 21:20:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.525 2020/12/31 17:39:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.526 2021/01/10 21:20:46 rillig Exp $");
 
 /* types and constants */
 
@@ -2218,7 +2218,7 @@ ParseDoInclude(char *line /* XXX: bad name */)
 		endc = '"';
 
 	/* Skip to matching delimiter */
-	for (cp = ++file; *cp && *cp != endc; cp++)
+	for (cp = ++file; *cp != '\0' && *cp != endc; cp++)
 		continue;
 
 	if (*cp != endc) {
@@ -2508,7 +2508,7 @@ ParseGmakeExport(char *line)
 
 	pp_skip_whitespace(&variable);
 
-	for (value = variable; *value && *value != '='; value++)
+	for (value = variable; *value != '\0' && *value != '='; value++)
 		continue;
 
 	if (*value != '=') {

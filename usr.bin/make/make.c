@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.233 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.234 2021/01/10 21:20:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.233 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.234 2021/01/10 21:20:46 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -418,7 +418,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 		}
 		(void)Var_Subst(gn->uname, pgn, VARE_WANTRES, &gn->name);
 		/* TODO: handle errors */
-		if (gn->uname && strcmp(gn->name, gn->uname) != 0) {
+		if (gn->uname != NULL && strcmp(gn->name, gn->uname) != 0) {
 			/* See if we have a target for this node. */
 			GNode *tgn = Targ_FindNode(gn->name);
 			if (tgn != NULL)
