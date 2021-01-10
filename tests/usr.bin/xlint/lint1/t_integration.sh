@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.22 2021/01/10 11:24:42 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.23 2021/01/10 17:43:46 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,6 +66,7 @@ test_case bltinoffsetof
 test_case c99_anon_struct
 test_case c99_anon_union
 test_case c99_bool
+test_case c99_bool_strict
 test_case c99_compound_literal_comma
 test_case c99_decls_after_stmt2
 test_case c99_flex_array_packed
