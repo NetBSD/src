@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.117 2021/01/10 14:09:57 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.118 2021/01/10 14:12:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.117 2021/01/10 14:09:57 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.118 2021/01/10 14:12:48 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2029,20 +2029,20 @@ check_redeclaration(sym_t *dsym, int *dowarn)
 		/* redefinition of %s */
 		error(28, dsym->s_name);
 		print_previous_declaration(-1, rsym);
-		return(1);
+		return 1;
 	}
 	if (!eqtype(rsym->s_type, dsym->s_type, 0, 0, dowarn)) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
-		return(1);
+		return 1;
 	}
 	if (rsym->s_scl == EXTERN && dsym->s_scl == EXTERN)
-		return(0);
+		return 0;
 	if (rsym->s_scl == STATIC && dsym->s_scl == STATIC)
-		return(0);
+		return 0;
 	if (rsym->s_scl == STATIC && dsym->s_def == DECL)
-		return(0);
+		return 0;
 	if (rsym->s_scl == EXTERN && rsym->s_def == DEF) {
 		/*
 		 * All cases except "int a = 1; static int a;" are caught
@@ -2051,13 +2051,13 @@ check_redeclaration(sym_t *dsym, int *dowarn)
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
-		return(1);
+		return 1;
 	}
 	if (rsym->s_scl == EXTERN) {
 		/* previously declared extern, becomes static: %s */
 		warning(29, dsym->s_name);
 		print_previous_declaration(-1, rsym);
-		return(0);
+		return 0;
 	}
 	/*
 	 * Now it's one of:
