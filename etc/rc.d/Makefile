@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.109 2020/09/08 12:54:36 martin Exp $
+# $NetBSD: Makefile,v 1.110 2021/01/10 23:24:25 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ CONFIGFILES=\
 		ccd cgd clearcritlocal cleartmp cron \
 		devpubd dhcpcd dhcpd dhcpd6 dhcrelay dmesg \
 		downinterfaces \
-		envsys \
+		entropy envsys \
 		fsck fsck_root ftp_proxy ftpd \
 		gpio \
 		hostapd httpd \

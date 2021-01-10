@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.263 2020/09/08 12:52:44 martin Exp $
+# $NetBSD: mi,v 1.264 2021/01/10 23:24:25 riastradh Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -214,6 +214,7 @@
 ./etc/rc.d/dhcrelay				etc-dhcpd-rc
 ./etc/rc.d/dmesg				etc-sys-rc
 ./etc/rc.d/downinterfaces			etc-sys-rc
+./etc/rc.d/entropy				etc-sys-rc
 ./etc/rc.d/envsys				etc-sys-rc
 ./etc/rc.d/fixsb				etc-obsolete		obsolete
 ./etc/rc.d/fsck					etc-sys-rc

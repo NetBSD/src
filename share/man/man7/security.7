@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.15 2017/07/03 21:30:59 wiz Exp $
+.\" $NetBSD: security.7,v 1.16 2021/01/10 23:24:26 riastradh Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -56,6 +56,9 @@ Information filtering
 .It
 Administrative security
 .El
+.Pp
+See also
+.Xr entropy 7 .
 .Ss Veriexec
 .Em Veriexec
 is a file integrity subsystem.
@@ -450,6 +453,7 @@ fetch_pkg_vulnerabilities=YES
 .Sh SEE ALSO
 .Xr ssp 3 ,
 .Xr options 4 ,
+.Xr entropy 7 ,
 .Xr paxctl 8 ,
 .Xr sysctl 8 ,
 .Xr veriexec 8 ,

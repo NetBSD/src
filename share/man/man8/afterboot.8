@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.75 2020/10/05 14:54:24 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.76 2021/01/10 23:24:26 riastradh Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -107,6 +107,26 @@ See
 .Xr daily.conf 5
 and
 .Xr security.conf 5
+for more details.
+.Ss Entropy
+If your machine does not have a hardware random number generator, it
+may not be safe to use on the internet until it has enough entropy to
+generate unpredictable secrets for programs like web browsers and
+.Xr ssh 1 .
+You can use
+.Xr rndctl 8
+to list the entropy sources with
+.Ic rndctl -l ,
+or save entropy from another machine running
+.Nx
+with
+.Ic rndctl -S
+and load it on this one with
+.Ic rndctl -L
+(as long as there are no eavesdroppers on the medium between the two
+machines).
+See
+.Xr entropy 7
 for more details.
 .Ss Login
 On a fresh install with no other user accounts, login as

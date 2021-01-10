@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.42 2020/12/02 14:18:13 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.43 2021/01/10 23:24:26 riastradh Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -47,6 +47,9 @@ system, if configured do to so from
 .Pp
 The variables described below can be set to "NO" to disable the test:
 .Bl -tag -width check_pkg_vulnerabilities
+.It Sy check_entropy
+This checks whether the system has enough entropy
+.Pq see Xr entropy 7 .
 .It Sy check_passwd
 This checks the
 .Pa /etc/master.passwd
