@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.119 2021/01/10 18:13:42 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.120 2021/01/10 18:22:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.119 2021/01/10 18:13:42 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.120 2021/01/10 18:22:52 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -79,8 +79,8 @@ static	void	check_argument_usage(int, sym_t *);
 static	void	check_variable_usage(int, sym_t *);
 static	void	check_label_usage(sym_t *);
 static	void	check_tag_usage(sym_t *);
-static	void	check_global_variable(sym_t *);
-static	void	check_global_variable_size(sym_t *);
+static	void	check_global_variable(const sym_t *);
+static	void	check_global_variable_size(const sym_t *);
 
 /*
  * initializes all global vars used in declarations
@@ -3126,7 +3126,48 @@ check_global_symbols(void)
 }
 
 static void
-check_global_variable(sym_t *sym)
+check_unused_static_global_variable(const sym_t *sym)
+{
+	curr_pos = sym->s_def_pos;
+	if (sym->s_type->t_tspec == FUNC) {
+		if (sym->s_def == DEF) {
+			if (!sym->s_inline)
+				/* static function %s unused */
+				warning(236, sym->s_name);
+		} else {
+			/* static function %s declared but not defined */
+			warning(290, sym->s_name);
+		}
+	} else if (!sym->s_set) {
+		/* static variable %s unused */
+		warning(226, sym->s_name);
+	} else {
+		/* static variable %s set but not used */
+		warning(307, sym->s_name);
+	}
+}
+
+static void
+check_static_global_variable(const sym_t *sym)
+{
+	if (sym->s_type->t_tspec == FUNC && sym->s_used && sym->s_def != DEF) {
+		curr_pos = sym->s_use_pos;
+		/* static function called but not defined: %s() */
+		error(225, sym->s_name);
+	}
+
+	if (!sym->s_used)
+		check_unused_static_global_variable(sym);
+
+	if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
+		curr_pos = sym->s_def_pos;
+		/* const object %s should have initializer */
+		warning(227, sym->s_name);
+	}
+}
+
+static void
+check_global_variable(const sym_t *sym)
 {
 
 	if (sym->s_scl == TYPEDEF || sym->s_scl == ENUMCON)
@@ -3139,43 +3180,12 @@ check_global_variable(sym_t *sym)
 
 	check_global_variable_size(sym);
 
-	if (sym->s_scl == STATIC) {
-		if (sym->s_type->t_tspec == FUNC) {
-			if (sym->s_used && sym->s_def != DEF) {
-				curr_pos = sym->s_use_pos;
-				/* static func. called but not def... */
-				error(225, sym->s_name);
-			}
-		}
-		if (!sym->s_used) {
-			curr_pos = sym->s_def_pos;
-			if (sym->s_type->t_tspec == FUNC) {
-				if (sym->s_def == DEF) {
-					if (!sym->s_inline)
-						/* static function %s unused */
-						warning(236, sym->s_name);
-				} else {
-					/* static function %s declared but... */
-					warning(290, sym->s_name);
-				}
-			} else if (!sym->s_set) {
-				/* static variable %s unused */
-				warning(226, sym->s_name);
-			} else {
-				/* static variable %s set but not used */
-				warning(307, sym->s_name);
-			}
-		}
-		if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
-			curr_pos = sym->s_def_pos;
-			/* const object %s should have initializer */
-			warning(227, sym->s_name);
-		}
-	}
+	if (sym->s_scl == STATIC)
+		check_static_global_variable(sym);
 }
 
 static void
-check_global_variable_size(sym_t *sym)
+check_global_variable_size(const sym_t *sym)
 {
 
 	if (sym->s_def == TDEF) {
