@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.115 2021/01/09 14:10:15 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.116 2021/01/10 00:05:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.115 2021/01/09 14:10:15 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.116 2021/01/10 00:05:46 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -764,7 +764,7 @@ int
 sign(int64_t q, tspec_t t, int len)
 {
 
-	if (t == PTR || tspec_is_uint(t))
+	if (t == PTR || is_uinteger(t))
 		return 0;
 	return msb(q, t, len);
 }
@@ -788,7 +788,7 @@ xsign(int64_t q, tspec_t t, int len)
 	if (len <= 0)
 		len = size(t);
 
-	if (t == PTR || tspec_is_uint(t) || !sign(q, t, len)) {
+	if (t == PTR || is_uinteger(t) || !sign(q, t, len)) {
 		q &= qlmasks[len];
 	} else {
 		q |= qumasks[len];
