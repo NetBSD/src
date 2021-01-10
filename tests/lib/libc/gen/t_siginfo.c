@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.42 2020/10/13 06:55:25 rin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.43 2021/01/10 20:46:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -479,6 +479,12 @@ ATF_TC_BODY(sigbus_adraln, tc)
 #if (defined(__m68k__) && !defined(__mc68010__)) || \
     defined(__aarch64__)
 	atf_tc_skip("No SIGBUS signal for unaligned accesses");
+#endif
+
+#if defined(__mips__)
+	if (isQEMU())
+		atf_tc_expect_fail("QEMU fails to trap unaligned accesses with "
+		    "correct ENTRYHI");
 #endif
 
 	sa.sa_flags = SA_SIGINFO;
