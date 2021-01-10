@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool.c,v 1.1 2021/01/10 11:24:42 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool.c,v 1.2 2021/01/10 12:29:46 rillig Exp $	*/
 # 3 "d_bool.c"
 
 /*
@@ -47,3 +47,55 @@ int double_0_5_converts_to_true_[(_Bool)0.5 ? 1 : -1]; // FIXME 20
 
 int double_1_0_converts_to_false[(_Bool)1.0 ? -1 : 1];
 int double_1_0_converts_to_true_[(_Bool)1.0 ? 1 : -1];
+
+_Bool
+bool_to_bool(_Bool b)
+{
+	return b;
+}
+
+_Bool
+char_to_bool(char c)
+{
+	return c;
+}
+
+_Bool
+int_to_bool(int i)
+{
+	return i;
+}
+
+_Bool
+double_to_bool(double d)
+{
+	return d;
+}
+
+enum color {
+	RED
+};
+
+_Bool
+enum_to_bool(enum color e)
+{
+	return e;
+}
+
+_Bool
+pointer_to_bool(const char *p)
+{
+	return p; // FIXME 183
+}
+
+_Bool
+function_pointer_to_bool(void (*f)(void))
+{
+	return f; // FIXME 183
+}
+
+_Bool
+complex_to_bool(double _Complex c)
+{
+	return c;
+}
