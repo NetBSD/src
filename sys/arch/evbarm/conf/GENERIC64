@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.170 2021/01/01 07:21:58 ryo Exp $
+#	$NetBSD: GENERIC64,v 1.171 2021/01/10 19:20:16 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -444,8 +444,8 @@ options 	FONT_BOLD16x32
 
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
-nouveau*	at pci? dev ? function ?
-nouveaufb*	at nouveaufbbus?
+#nouveau*	at pci? dev ? function ?
+#nouveaufb*	at nouveaufbbus?
 radeon*		at pci? dev ? function ? # AMD Radeon
 radeondrmkmsfb*	at radeonfbbus?
 
