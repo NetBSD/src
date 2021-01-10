@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.136 2021/01/09 14:10:15 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.137 2021/01/10 00:05:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.136 2021/01/09 14:10:15 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.137 2021/01/10 00:05:46 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2112,7 +2112,7 @@ toicon(tnode_t *tn, int required)
 		error(55);
 	} else {
 		i = (int)v->v_quad;
-		if (tspec_is_uint(t)) {
+		if (is_uinteger(t)) {
 			if (uq_gt((uint64_t)v->v_quad,
 				  (uint64_t)TARG_INT_MAX)) {
 				/* integral constant too large */

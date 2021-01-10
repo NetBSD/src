@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.23 2021/01/04 01:12:20 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.24 2021/01/10 00:05:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -96,10 +96,10 @@ typedef	struct {
 					   if pflag is set */
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;
-	bool	tt_is_int : 1;		/* integer type */
-	bool	tt_is_uint : 1;		/* unsigned integer type */
-	bool	tt_is_float : 1;	/* floating point type */
-	bool	tt_is_arith : 1;	/* arithmetic type */
+	bool	tt_is_integer : 1;	/* integer type */
+	bool	tt_is_uinteger : 1;	/* unsigned integer type */
+	bool	tt_is_floating : 1;	/* floating point type */
+	bool	tt_is_arithmetic : 1;	/* arithmetic type */
 	bool	tt_is_scalar : 1;	/* scalar type */
 	bool	tt_is_complex : 1;	/* complex type */
 	const char *tt_name;		/* name of the type */
@@ -109,12 +109,12 @@ typedef	struct {
 #define psize(t)		(ttab[t].tt_psz)
 #define signed_type(t)		(ttab[t].tt_signed_counterpart)
 #define unsigned_type(t)	(ttab[t].tt_unsigned_counterpart)
-#define tspec_is_int(t)		(ttab[t].tt_is_int)
-#define tspec_is_uint(t)	(ttab[t].tt_is_uint)
-#define tspec_is_float(t)	(ttab[t].tt_is_float)
-#define tspec_is_arith(t)	(ttab[t].tt_is_arith)
-#define tspec_is_complex(t)	(ttab[t].tt_is_complex)
-#define tspec_is_scalar(t)	(ttab[t].tt_is_scalar)
+#define is_integer(t)		(ttab[t].tt_is_integer)
+#define is_uinteger(t)		(ttab[t].tt_is_uinteger)
+#define is_floating(t)		(ttab[t].tt_is_floating)
+#define is_arithmetic(t)	(ttab[t].tt_is_arithmetic)
+#define is_complex(t)		(ttab[t].tt_is_complex)
+#define is_scalar(t)		(ttab[t].tt_is_scalar)
 
 extern	ttab_t	ttab[];
 
