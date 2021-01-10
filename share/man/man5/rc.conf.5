@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.187 2020/09/11 12:20:01 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.188 2021/01/10 23:24:26 riastradh Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -439,6 +439,35 @@ from the output of
 .Xr dmesg 8 .
 Passes
 .Sy dmesg_flags .
+.It Sy entropy
+A string,
+.Sq Li check
+or
+.Sq Li wait .
+If set, then during boot-up, after
+.Sy random_seed
+and
+.Sy rndctl ,
+check for or wait until enough entropy before any networking is
+enabled.
+.Pp
+If not enough entropy is available, then:
+.Bl -bullet -compact
+.It
+With
+.Sq Li entropy=check ,
+stop multiuser boot and enter single-user mode instead.
+.It
+With
+.Sq Li entropy=wait ,
+wait until enough entropy is available.
+.El
+.Pp
+Note that
+.Sq Li entropy=wait
+may cause the system to hang indefinitely at boot if it has neither a
+random seed nor any hardware random number generators \(em use with
+care.
 .It Sy envsys
 Boolean value.
 Sets preferences for the environmental systems framework,
