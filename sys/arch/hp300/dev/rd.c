@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.102 2020/09/29 02:49:56 msaitoh Exp $	*/
+/*	$NetBSD: rd.c,v 1.103 2021/01/10 00:58:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.102 2020/09/29 02:49:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.103 2021/01/10 00:58:56 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -384,7 +384,7 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 {
 	struct rd_describe *desc = sc != NULL ? &sc->sc_rddesc : NULL;
 	u_char stat, cmd[3];
-	char name[7];
+	char name[7], pbuf[9];
 	int i, id, n, ctlr, slave;
 
 	ctlr = device_unit(parent);
@@ -487,11 +487,13 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	 * XXX blocks.  ICK!
 	 */
 	aprint_normal(": %s\n", rdidentinfo[id].ri_desc);
-	aprint_normal_dev(sc->sc_dev, "%d cylinders, %d heads, %d blocks,"
-	    " %d bytes/block\n",
-	    rdidentinfo[id].ri_ncyl,
-	    rdidentinfo[id].ri_ntpc, rdidentinfo[id].ri_nblocks,
-	    DEV_BSIZE);
+	format_bytes(pbuf, sizeof(pbuf),
+	    rdidentinfo[id].ri_nblocks * DEV_BSIZE);
+	aprint_normal_dev(sc->sc_dev, "%s, %d cyl, %d head, %d sec,"
+	    " %d bytes/block x %u blocks\n",
+	    pbuf, rdidentinfo[id].ri_ncyl, rdidentinfo[id].ri_ntpc,
+	    rdidentinfo[id].ri_nbpt,
+	    DEV_BSIZE, rdidentinfo[id].ri_nblocks);
 
 	return 1;
 }
