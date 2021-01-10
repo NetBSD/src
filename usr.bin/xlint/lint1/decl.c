@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.118 2021/01/10 14:12:48 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.119 2021/01/10 18:13:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.118 2021/01/10 14:12:48 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.119 2021/01/10 18:13:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3131,6 +3131,9 @@ check_global_variable(sym_t *sym)
 
 	if (sym->s_scl == TYPEDEF || sym->s_scl == ENUMCON)
 		return;
+
+	if (sym->s_scl == NOSCL)
+		return;		/* May be caused by a syntax error. */
 
 	lint_assert(sym->s_scl == EXTERN || sym->s_scl == STATIC);
 
