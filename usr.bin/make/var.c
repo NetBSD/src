@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.780 2021/01/10 21:20:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.781 2021/01/10 23:59:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.780 2021/01/10 21:20:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.781 2021/01/10 23:59:53 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1536,7 +1536,7 @@ tryagain:
 		args->matched = TRUE;
 		SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
 
-		for (rp = args->replace; *rp; rp++) {
+		for (rp = args->replace; *rp != '\0'; rp++) {
 			if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
 				SepBuf_AddBytes(buf, rp + 1, 1);
 				rp++;
@@ -1840,7 +1840,7 @@ VarHash(const char *str)
 	size_t i;
 
 	size_t len;
-	for (len = len2; len;) {
+	for (len = len2; len != 0;) {
 		uint32_t k = 0;
 		switch (len) {
 		default:

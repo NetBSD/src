@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.11 2021/01/10 21:20:47 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.12 2021/01/10 23:59:53 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -519,10 +519,10 @@ top:	/* If the child has exited, nothing to do.  */
 		return 0;
 
 	/* If we're waiting for input, read some.  */
-	if (F->resid) {
+	if (F->resid > 0) {
 		nread = fread(F->p, 1, F->resid, F->in);
 		if (nread == 0) {
-			if (feof(F->in))
+			if (feof(F->in) != 0)
 				return 0;
 			assert(ferror(F->in) != 0);
 			/*
@@ -539,7 +539,7 @@ top:	/* If the child has exited, nothing to do.  */
 		assert(nread <= F->resid);
 		F->p += nread;
 		F->resid -= nread;
-		if (F->resid)	/* may be more events */
+		if (F->resid > 0)	/* may be more events */
 			return 1;
 	}
 
