@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2021/01/10 17:43:46 rillig Exp $
+# $NetBSD: Makefile,v 1.28 2021/01/10 18:06:38 rillig Exp $
 
 NOMAN=		# defined
 
@@ -67,6 +67,8 @@ FILES+=		d_incorrect_array_size.c
 FILES+=		d_incorrect_array_size.exp
 FILES+=		d_init_pop_member.c
 FILES+=		d_init_pop_member.exp
+FILES+=		d_lint_assert.c
+FILES+=		d_lint_assert.exp
 FILES+=		d_long_double_int.c
 FILES+=		d_long_double_int.exp
 FILES+=		d_nested_structs.c
