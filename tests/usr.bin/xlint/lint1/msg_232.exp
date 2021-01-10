@@ -1,1 +1,1 @@
-msg_232.c(6): syntax error ':' [249]
+msg_232.c(10): warning: label unused_label unused in function example [232]
