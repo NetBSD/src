@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.254 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.255 2021/01/10 21:20:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -137,7 +137,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.254 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.255 2021/01/10 21:20:46 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -1168,7 +1168,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 				if ((file = DirLookupSubdir(dot, name)) != NULL)
 					return file;
 			}
-			if (cur && (file = DirLookupSubdir(cur, name)) != NULL)
+			if (cur != NULL &&
+			    (file = DirLookupSubdir(cur, name)) != NULL)
 				return file;
 		}
 
@@ -1186,12 +1187,13 @@ Dir_FindFile(const char *name, SearchPath *path)
 		}
 
 		if (seenDotLast) {
-			if (dot && !checkedDot) {
+			if (dot != NULL && !checkedDot) {
 				checkedDot = TRUE;
 				if ((file = DirLookupSubdir(dot, name)) != NULL)
 					return file;
 			}
-			if (cur && (file = DirLookupSubdir(cur, name)) != NULL)
+			if (cur != NULL &&
+			    (file = DirLookupSubdir(cur, name)) != NULL)
 				return file;
 		}
 
@@ -1219,7 +1221,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		 */
 		DEBUG0(DIR, "   Trying exact path matches...\n");
 
-		if (!seenDotLast && cur &&
+		if (!seenDotLast && cur != NULL &&
 		    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
 			if (file[0] == '\0') {
 				free(file);
@@ -1241,7 +1243,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 			}
 		}
 
-		if (seenDotLast && cur &&
+		if (seenDotLast && cur != NULL &&
 		    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
 			if (file[0] == '\0') {
 				free(file);
@@ -1418,7 +1420,7 @@ ResolveFullName(GNode *gn)
 			fullName = ResolveMovedDepends(gn);
 
 		DEBUG2(DIR, "Found '%s' as '%s'\n",
-			   gn->name, fullName ? fullName : "(not found)");
+		    gn->name, fullName != NULL ? fullName : "(not found)");
 	}
 
 	if (fullName == NULL)
