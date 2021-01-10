@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1712 2020/12/27 21:13:18 reinoud Exp $
+# $NetBSD: mi,v 1.1713 2021/01/10 23:24:25 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2340,6 +2340,7 @@
 ./usr/share/man/cat7/c99.0			man-reference-catman	.cat
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	.cat
 ./usr/share/man/cat7/editline.0			man-sys-catman		.cat
+./usr/share/man/cat7/entropy.0			man-reference-catman	.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
 ./usr/share/man/cat7/glob.0			man-reference-catman	.cat
 ./usr/share/man/cat7/groups.0			man-reference-catman	.cat
@@ -2367,6 +2368,7 @@
 ./usr/share/man/cat7/pcap-linktype.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pcap-tstamp.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
+./usr/share/man/cat7/random.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
 ./usr/share/man/cat7/rfc6056.0			man-reference-catman	.cat
@@ -5465,6 +5467,7 @@
 ./usr/share/man/html7/c99.html			man-reference-htmlman	html
 ./usr/share/man/html7/des_modes.html		man-reference-htmlman	html
 ./usr/share/man/html7/editline.html		man-sys-htmlman		html
+./usr/share/man/html7/entropy.html		man-reference-htmlman	html
 ./usr/share/man/html7/environ.html		man-reference-htmlman	html
 ./usr/share/man/html7/glob.html			man-reference-htmlman	html
 ./usr/share/man/html7/groups.html		man-reference-htmlman	html
@@ -5488,6 +5491,7 @@
 ./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-tstamp.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
+./usr/share/man/html7/random.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
 ./usr/share/man/html7/rfc6056.html		man-reference-htmlman	html
@@ -8560,6 +8564,7 @@
 ./usr/share/man/man7/c99.7			man-reference-man	.man
 ./usr/share/man/man7/des_modes.7		man-reference-man	.man
 ./usr/share/man/man7/editline.7			man-sys-man		.man
+./usr/share/man/man7/entropy.7			man-reference-man	.man
 ./usr/share/man/man7/environ.7			man-reference-man	.man
 ./usr/share/man/man7/glob.7			man-reference-man	.man
 ./usr/share/man/man7/groups.7			man-reference-man	.man
@@ -8586,6 +8591,7 @@
 ./usr/share/man/man7/pcap-linktype.7		man-netutil-man		.man
 ./usr/share/man/man7/pcap-tstamp.7		man-netutil-man		.man
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
+./usr/share/man/man7/random.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
 ./usr/share/man/man7/rfc6056.7			man-reference-man	.man
