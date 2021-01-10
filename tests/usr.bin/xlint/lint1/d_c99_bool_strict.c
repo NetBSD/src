@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.1 2021/01/10 17:43:46 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.2 2021/01/10 21:45:50 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -23,7 +23,7 @@
  * its main operator is _Bool.
  */
 
-// Not yet implemented: /* lint1-extra-flags: -B */
+// Not yet implemented: /* lint1-extra-flags: -T */
 
 /*
  * The header <stdbool.h> defines the macros bool = _Bool, false = 0 and
@@ -250,3 +250,34 @@ enum SB006_bool_constant_expression {
 
 	LOGAND = 0 && 1,	/* ok */
 };
+
+enum BitSet {
+	ONE = 1 << 0,
+	TWO = 1 << 1,
+	FOUR = 1 << 2
+};
+
+/*
+ * It is debatable whether it is a good idea to allow expressions like these
+ * for _Bool.  The strict rules above ensure that the code works in the same
+ * way whether or not the special rule C99 6.3.1.2 is active or not.
+ *
+ * If the code were to switch away from the C99 bool type to an ordinary
+ * unsigned integer type, the behavior might silently change.  Because the
+ * rule C99 6.3.1.2 is no longer active in that case, high bits of the enum
+ * constant may get lost, thus evaluating to false even though a bit is set.
+ *
+ * It's probably better to not allow this kind of expressions, even though
+ * it may be popular, especially in usr.bin/make.
+ */
+int
+S007_allow_flag_test_on_bit_set_enums(enum BitSet bs)
+{
+	if (bs & ONE)
+		return 1;
+	if (!(bs & TWO))
+		return 2;
+	if (bs & FOUR)
+		return 2;
+	return 4;
+}
