@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.137 2021/01/10 00:05:46 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.138 2021/01/10 14:07:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.137 2021/01/10 00:05:46 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.138 2021/01/10 14:07:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1281,13 +1281,13 @@ parameter_type_list:
 
 parameter_declaration:
 	  declmods deftyp {
-		$$ = decl1arg(abstract_name(), 0);
+		$$ = declare_argument(abstract_name(), 0);
 	  }
 	| declspecs deftyp {
-		$$ = decl1arg(abstract_name(), 0);
+		$$ = declare_argument(abstract_name(), 0);
 	  }
 	| declmods deftyp notype_param_decl {
-		$$ = decl1arg($3, 0);
+		$$ = declare_argument($3, 0);
 	  }
 	/*
 	 * param_decl is needed because of following conflict:
@@ -1297,13 +1297,13 @@ parameter_declaration:
 	 * This grammar realizes the second case.
 	 */
 	| declspecs deftyp param_decl {
-		$$ = decl1arg($3, 0);
+		$$ = declare_argument($3, 0);
 	  }
 	| declmods deftyp abs_decl {
-		$$ = decl1arg($3, 0);
+		$$ = declare_argument($3, 0);
 	  }
 	| declspecs deftyp abs_decl {
-		$$ = decl1arg($3, 0);
+		$$ = declare_argument($3, 0);
 	  }
 	;
 
@@ -2157,7 +2157,7 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 			freeyyv(&renaming, T_NAME);
 			break;
 		}
-		(void)decl1arg(decl, initflg);
+		(void)declare_argument(decl, initflg);
 		break;
 	case AUTO:
 		if (renaming != NULL) {
@@ -2166,7 +2166,7 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 			freeyyv(&renaming, T_NAME);
 			break;
 		}
-		decl1loc(decl, initflg);
+		declare_local(decl, initflg);
 		break;
 	default:
 		LERROR("idecl(%d)", dcs->d_ctx);
