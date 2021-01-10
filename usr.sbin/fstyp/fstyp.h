@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.h,v 1.8 2020/01/01 09:08:52 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.h,v 1.9 2021/01/10 12:38:40 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -74,5 +74,7 @@ int	fstyp_zfs(FILE *, char *, size_t);
 
 int	fsvtyp_hammer(const char *, char *, size_t);
 int	fsvtyp_hammer_partial(const char *, char *, size_t);
+int	fsvtyp_hammer2(const char *, char *, size_t);
+int	fsvtyp_hammer2_partial(const char *, char *, size_t);
 
 #endif /* !FSTYP_H */

@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer2.c,v 1.6 2020/09/23 14:39:23 tkusumi Exp $      */
+/*        $NetBSD: hammer2.c,v 1.7 2021/01/10 12:38:40 tkusumi Exp $      */
 
 /*-
  * Copyright (c) 2017-2019 The DragonFly Project
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.6 2020/09/23 14:39:23 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.7 2021/01/10 12:38:40 tkusumi Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,28 +35,93 @@ __KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.6 2020/09/23 14:39:23 tkusumi Exp $");
 #include <string.h>
 #include <err.h>
 #include <assert.h>
+#include <uuid.h>
 
 #include "fstyp.h"
 #include "hammer2_disk.h"
 
-static hammer2_volume_data_t*
-read_voldata(FILE *fp)
+static ssize_t
+get_file_size(FILE *fp)
 {
-	hammer2_volume_data_t *voldata;
+	ssize_t siz;
 
-	voldata = read_buf(fp, 0, sizeof(*voldata));
-	if (voldata == NULL)
-		err(1, "failed to read volume data");
+	if (fseek(fp, 0, SEEK_END) == -1) {
+		warnx("hammer2: failed to seek media end");
+		return (-1);
+	}
 
-	return (voldata);
+	siz = ftell(fp);
+	if (siz == -1) {
+		warnx("hammer2: failed to tell media end");
+		return (-1);
+	}
+
+	return (siz);
+}
+
+static hammer2_volume_data_t *
+read_voldata(FILE *fp, int i)
+{
+	if (i < 0 || i >= HAMMER2_NUM_VOLHDRS)
+		return (NULL);
+
+	if ((hammer2_off_t)i * (hammer2_off_t)HAMMER2_ZONE_BYTES64 >= (hammer2_off_t)get_file_size(fp))
+		return (NULL);
+
+	return (read_buf(fp, (off_t)i * (off_t)HAMMER2_ZONE_BYTES64,
+	    sizeof(hammer2_volume_data_t)));
 }
 
 static int
-test_voldata(const hammer2_volume_data_t *voldata)
+test_voldata(FILE *fp)
 {
-	if (voldata->magic != HAMMER2_VOLUME_ID_HBO &&
-	    voldata->magic != HAMMER2_VOLUME_ID_ABO)
-		return (1);
+	hammer2_volume_data_t *voldata;
+	int i;
+	static int count = 0;
+	static uuid_t fsid, fstype;
+
+	for (i = 0; i < HAMMER2_NUM_VOLHDRS; i++) {
+		if ((hammer2_off_t)i * (hammer2_off_t)HAMMER2_ZONE_BYTES64 >= (hammer2_off_t)get_file_size(fp))
+			break;
+		voldata = read_voldata(fp, i);
+		if (voldata == NULL) {
+			warnx("hammer2: failed to read volume data");
+			return (1);
+		}
+		if (voldata->magic != HAMMER2_VOLUME_ID_HBO &&
+		    voldata->magic != HAMMER2_VOLUME_ID_ABO) {
+			free(voldata);
+			return (1);
+		}
+		if (voldata->volu_id > HAMMER2_MAX_VOLUMES - 1) {
+			free(voldata);
+			return (1);
+		}
+		if (voldata->nvolumes > HAMMER2_MAX_VOLUMES) {
+			free(voldata);
+			return (1);
+		}
+
+		if (count == 0) {
+			count = voldata->nvolumes;
+			memcpy(&fsid, &voldata->fsid, sizeof(fsid));
+			memcpy(&fstype, &voldata->fstype, sizeof(fstype));
+		} else {
+			if (voldata->nvolumes != count) {
+				free(voldata);
+				return (1);
+			}
+			if (!uuid_equal(&fsid, &voldata->fsid, NULL)) {
+				free(voldata);
+				return (1);
+			}
+			if (!uuid_equal(&fstype, &voldata->fstype, NULL)) {
+				free(voldata);
+				return (1);
+			}
+		}
+		free(voldata);
+	}
 
 	return (0);
 }
@@ -66,7 +131,7 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 {
 	hammer2_media_data_t *media;
 	hammer2_off_t io_off, io_base;
-	size_t bytes, io_bytes, boff;
+	size_t bytes, io_bytes, boff, fbytes;
 
 	bytes = (bref->data_off & HAMMER2_OFF_MASK_RADIX);
 	if (bytes)
@@ -74,30 +139,44 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 	*media_bytes = bytes;
 
 	if (!bytes) {
-		warnx("blockref has no data");
+		warnx("hammer2: blockref has no data");
 		return (NULL);
 	}
 
 	io_off = bref->data_off & ~HAMMER2_OFF_MASK_RADIX;
 	io_base = io_off & ~(hammer2_off_t)(HAMMER2_LBUFSIZE - 1);
-	boff = (size_t)(io_off - io_base);
+	boff = io_off - io_base;
 
 	io_bytes = HAMMER2_LBUFSIZE;
 	while (io_bytes + boff < bytes)
 		io_bytes <<= 1;
 
 	if (io_bytes > sizeof(hammer2_media_data_t)) {
-		warnx("invalid I/O bytes");
+		warnx("hammer2: invalid I/O bytes");
 		return (NULL);
 	}
 
-	if (fseek(fp, (long int)io_base, SEEK_SET) == -1) {
-		warnx("failed to seek media");
+	/*
+	 * XXX fp is currently always root volume, so read fails if io_base is
+	 * beyond root volume limit. Fail with a message before read_buf() then.
+	 */
+	fbytes = (size_t)get_file_size(fp);
+	if ((ssize_t)fbytes == -1) {
+		warnx("hammer2: failed to get media size");
+		return (NULL);
+	}
+	if (io_base >= fbytes) {
+		warnx("hammer2: XXX read beyond HAMMER2 root volume limit unsupported");
+		return (NULL);
+	}
+
+	if (fseeko(fp, (off_t)io_base, SEEK_SET) == -1) {
+		warnx("hammer2: failed to seek media");
 		return (NULL);
 	}
 	media = read_buf(fp, (off_t)io_base, io_bytes);
 	if (media == NULL) {
-		warnx("failed to read media");
+		warnx("hammer2: failed to read media");
 		return (NULL);
 	}
 	if (boff)
@@ -140,8 +219,10 @@ find_pfs(FILE *fp, const hammer2_blockref_t *bref, const char *pfs, bool *res)
 					    strlen(pfs)))
 						*res = true;
 				}
-			} else
-				assert(0);
+			} else {
+				free(media);
+				return (-1);
+			}
 		}
 		break;
 	case HAMMER2_BREF_TYPE_INDIRECT:
@@ -173,7 +254,7 @@ extract_device_name(const char *devpath)
 	char *p, *head;
 
 	if (!devpath)
-		return NULL;
+		return (NULL);
 
 	p = strdup(devpath);
 	head = p;
@@ -187,18 +268,18 @@ extract_device_name(const char *devpath)
 		p++;
 		if (*p == 0) {
 			free(head);
-			return NULL;
+			return (NULL);
 		}
 		p = strdup(p);
 		free(head);
-		return p;
+		return (p);
 	}
 
-	return head;
+	return (head);
 }
 
 static int
-read_label(FILE *fp, char *label, size_t size)
+read_label(FILE *fp, char *label, size_t size, const char *devpath)
 {
 	hammer2_blockref_t broot, best, *bref;
 	hammer2_media_data_t *vols[HAMMER2_NUM_VOLHDRS], *media;
@@ -209,16 +290,20 @@ read_label(FILE *fp, char *label, size_t size)
 	char *devname;
 
 	best_i = -1;
+	memset(vols, 0, sizeof(vols));
 	memset(&best, 0, sizeof(best));
 
 	for (i = 0; i < HAMMER2_NUM_VOLHDRS; i++) {
+		if ((hammer2_off_t)i * (hammer2_off_t)HAMMER2_ZONE_BYTES64 >= (hammer2_off_t)get_file_size(fp))
+			break;
 		memset(&broot, 0, sizeof(broot));
 		broot.type = HAMMER2_BREF_TYPE_VOLUME;
-		broot.data_off = ((hammer2_off_t)i *
-		    (hammer2_off_t)HAMMER2_ZONE_BYTES64) | HAMMER2_PBUFRADIX;
-		vols[i] = read_buf(fp,
-		    (off_t)(broot.data_off & ~HAMMER2_OFF_MASK_RADIX),
-		    sizeof(*vols[i]));
+		broot.data_off = ((hammer2_off_t)i * (hammer2_off_t)HAMMER2_ZONE_BYTES64) | HAMMER2_PBUFRADIX;
+		vols[i] = (void*)read_voldata(fp, i);
+		if (vols[i] == NULL) {
+			warnx("hammer2: failed to read volume data");
+			goto fail;
+		}
 		broot.mirror_tid = vols[i]->voldata.mirror_tid;
 		if (best_i < 0 || best.mirror_tid < broot.mirror_tid) {
 			best_i = i;
@@ -228,7 +313,7 @@ read_label(FILE *fp, char *label, size_t size)
 
 	bref = &vols[best_i]->voldata.sroot_blockset.blockref[0];
 	if (bref->type != HAMMER2_BREF_TYPE_INODE) {
-		warnx("blockref type is not inode");
+		/* Don't print error as devpath could be non-root volume. */
 		goto fail;
 	}
 
@@ -298,15 +383,132 @@ fail:
 int
 fstyp_hammer2(FILE *fp, char *label, size_t size)
 {
-	hammer2_volume_data_t *voldata;
+	hammer2_volume_data_t *voldata = read_voldata(fp, 0);
 	int error = 1;
 
-	voldata = read_voldata(fp);
-	if (test_voldata(voldata))
+	if (voldata->volu_id != HAMMER2_ROOT_VOLUME)
+		goto fail;
+	if (voldata->nvolumes != 0)
+		goto fail;
+	if (test_voldata(fp))
 		goto fail;
 
-	error = read_label(fp, label, size);
+	error = read_label(fp, label, size, NULL);
 fail:
 	free(voldata);
 	return (error);
+}
+
+static int
+__fsvtyp_hammer2(const char *blkdevs, char *label, size_t size, int partial)
+{
+	hammer2_volume_data_t *voldata = NULL;
+	FILE *fp = NULL;
+	char *dup = NULL, *target_label = NULL, *p, *volpath, *rootvolpath;
+	char x[HAMMER2_MAX_VOLUMES];
+	int i, volid, error = 1;
+
+	if (!blkdevs)
+		goto fail;
+
+	memset(x, 0, sizeof(x));
+	p = dup = strdup(blkdevs);
+	if ((p = strchr(p, '@')) != NULL) {
+		*p++ = '\0';
+		target_label = p;
+	}
+	p = dup;
+
+	volpath = NULL;
+	rootvolpath = NULL;
+	volid = -1;
+	while (p) {
+		volpath = p;
+		if ((p = strchr(p, ':')) != NULL)
+			*p++ = '\0';
+		if ((fp = fopen(volpath, "r")) == NULL) {
+			warnx("hammer2: failed to open %s", volpath);
+			goto fail;
+		}
+		if (test_voldata(fp))
+			break;
+		voldata = read_voldata(fp, 0);
+		fclose(fp);
+		if (voldata == NULL) {
+			warnx("hammer2: failed to read volume data");
+			goto fail;
+		}
+		volid = voldata->volu_id;
+		free(voldata);
+		voldata = NULL;
+		if (volid < 0 || volid >= HAMMER2_MAX_VOLUMES)
+			goto fail;
+		x[volid]++;
+		if (volid == HAMMER2_ROOT_VOLUME)
+			rootvolpath = volpath;
+	}
+
+	/* If no rootvolpath, proceed only if partial mode with volpath. */
+	if (rootvolpath)
+		volpath = rootvolpath;
+	else if (!partial || !volpath)
+		goto fail;
+	if ((fp = fopen(volpath, "r")) == NULL) {
+		warnx("hammer2: failed to open %s", volpath);
+		goto fail;
+	}
+	voldata = read_voldata(fp, 0);
+	if (voldata == NULL) {
+		warnx("hammer2: failed to read volume data");
+		goto fail;
+	}
+
+	if (volid == -1)
+		goto fail;
+	if (partial)
+		goto success;
+
+	for (i = 0; i < HAMMER2_MAX_VOLUMES; i++)
+		if (x[i] > 1)
+			goto fail;
+	for (i = 0; i < HAMMER2_MAX_VOLUMES; i++)
+		if (x[i] == 0)
+			break;
+	if (voldata->nvolumes != i)
+		goto fail;
+	for (; i < HAMMER2_MAX_VOLUMES; i++)
+		if (x[i] != 0)
+			goto fail;
+success:
+	/* Reconstruct @label format path using only root volume. */
+	if (target_label) {
+		size_t siz = strlen(volpath) + strlen(target_label) + 2;
+		p = calloc(1, siz);
+		snprintf(p, siz, "%s@%s", volpath, target_label);
+		volpath = p;
+	}
+	error = read_label(fp, label, size, volpath);
+	if (target_label)
+		free(p);
+	/* If in partial mode, read label but ignore error. */
+	if (partial)
+		error = 0;
+fail:
+	if (fp)
+		fclose(fp);
+	free(voldata);
+	free(dup);
+	return (error);
+}
+
+int
+fsvtyp_hammer2(const char *blkdevs, char *label, size_t size)
+{
+	return (__fsvtyp_hammer2(blkdevs, label, size, 0));
+}
+
+int
+fsvtyp_hammer2_partial(const char *blkdevs, char *label, size_t size)
+{
+	return (__fsvtyp_hammer2(blkdevs, label, size, 1));
 }
