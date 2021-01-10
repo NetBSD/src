@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.396 2021/01/10 21:20:46 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.397 2021/01/10 23:59:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.396 2021/01/10 21:20:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.397 2021/01/10 23:59:53 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1539,7 +1539,7 @@ JobMakeArgv(Job *job, char **argv)
 		    (!job->echo ? "" :
 			(shell->echoFlag != NULL ? shell->echoFlag : "")));
 
-		if (args[1]) {
+		if (args[1] != '\0') {
 			argv[argc] = args;
 			argc++;
 		}
@@ -2286,7 +2286,7 @@ Job_Init(void)
 static void
 DelSig(int sig)
 {
-	if (sigismember(&caught_signals, sig))
+	if (sigismember(&caught_signals, sig) != 0)
 		(void)bmake_signal(sig, SIG_DFL);
 }
 
@@ -2557,7 +2557,7 @@ JobInterrupt(Boolean runINTERRUPT, int signo)
 		gn = job->node;
 
 		JobDeleteTarget(gn);
-		if (job->pid) {
+		if (job->pid != 0) {
 			DEBUG2(JOB,
 			    "JobInterrupt passing signal %d to child %d.\n",
 			    signo, job->pid);
@@ -2728,7 +2728,7 @@ clearfd(Job *job)
 		 * pollfd number should be even.
 		 */
 		assert(nfds_per_job() == 2);
-		if (i % 2)
+		if (i % 2 != 0)
 			Punt("odd-numbered fd with meta");
 		nJobs--;
 	}
