@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.166 2020/12/29 08:04:59 jdc Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.167 2021/01/10 13:17:44 ryoon Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.166 2020/12/29 08:04:59 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.167 2021/01/10 13:17:44 ryoon Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1546,7 +1546,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	if (asid->bDescriptorType != UDESC_CS_INTERFACE ||
 	    asid->bDescriptorSubtype != AS_GENERAL)
 		return USBD_INVAL;
-	DPRINTF("asid: bTerminakLink=%d wFormatTag=%d\n",
+	DPRINTF("asid: bTerminalLink=%d wFormatTag=%d\n",
 		 asid->bTerminalLink, UGETW(asid->wFormatTag));
 	offs += asid->bLength;
 	if (offs > size)
