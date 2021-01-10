@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.167 2021/01/10 13:17:44 ryoon Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.168 2021/01/10 15:50:16 ryoon Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.167 2021/01/10 13:17:44 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.168 2021/01/10 15:50:16 ryoon Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1786,7 +1786,7 @@ uaudio_identify_as(struct uaudio_softc *sc,
 			     id->bNumEndpoints);
 			break;
 		}
-		id = uaudio_find_iface(tbuf, size, &offs,UISUBCLASS_AUDIOSTREAM);
+		id = uaudio_find_iface(tbuf, size, &offs, UISUBCLASS_AUDIOSTREAM);
 		if (id == NULL)
 			break;
 	}
