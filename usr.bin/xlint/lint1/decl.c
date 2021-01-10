@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.115 2021/01/10 13:54:13 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.116 2021/01/10 14:07:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.115 2021/01/10 13:54:13 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.116 2021/01/10 14:07:34 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ static	int	check_old_style_definition(sym_t *, sym_t *);
 static	int	check_prototype_declaration(sym_t *, sym_t *);
 static	sym_t	*new_style_function(sym_t *, sym_t *);
 static	void	old_style_function(sym_t *, sym_t *);
-static	void	ledecl(sym_t *);
+static	void	declare_external_in_block(sym_t *);
 static	int	check_init(sym_t *);
 static	void	check_argument_usage(int, sym_t *);
 static	void	check_variable_usage(int, sym_t *);
@@ -1549,8 +1549,8 @@ declarator_name(sym_t *sym)
 			/*
 			 * XXX somewhat ugly because we dont know whether
 			 * this is AUTO or EXTERN (functions). If we are
-			 * wrong it must be corrected in decl1loc(), where
-			 * we have the necessary type information.
+			 * wrong it must be corrected in declare_local(),
+			 * where we have the necessary type information.
 			 */
 			sc = AUTO;
 			sym->s_def = DEF;
@@ -2074,7 +2074,7 @@ check_redeclaration(sym_t *dsym, int *dowarn)
 }
 
 static int
-chkqual(type_t *tp1, type_t *tp2, int ignqual)
+qualifiers_correspond(type_t *tp1, type_t *tp2, int ignqual)
 {
 	if (tp1->t_const != tp2->t_const && !ignqual && !tflag)
 		return 0;
@@ -2091,7 +2091,7 @@ eqptrtype(type_t *tp1, type_t *tp2, int ignqual)
 	if (tp1->t_tspec != VOID && tp2->t_tspec != VOID)
 		return 0;
 
-	if (!chkqual(tp1, tp2, ignqual))
+	if (!qualifiers_correspond(tp1, tp2, ignqual))
 		return 0;
 
 	return 1;
@@ -2133,7 +2133,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
 		if (t != tp2->t_tspec)
 			return 0;
 
-		if (!chkqual(tp1, tp2, ignqual))
+		if (!qualifiers_correspond(tp1, tp2, ignqual))
 			return 0;
 
 		if (t == STRUCT || t == UNION)
@@ -2324,7 +2324,7 @@ complete_type(sym_t *dsym, sym_t *ssym)
  * Completes the declaration of a single argument.
  */
 sym_t *
-decl1arg(sym_t *sym, int initflg)
+declare_argument(sym_t *sym, int initflg)
 {
 	tspec_t	t;
 
@@ -2558,7 +2558,7 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
  * Completes a single local declaration/definition.
  */
 void
-decl1loc(sym_t *dsym, int initflg)
+declare_local(sym_t *dsym, int initflg)
 {
 
 	/* Correct a mistake done in declarator_name(). */
@@ -2601,7 +2601,7 @@ decl1loc(sym_t *dsym, int initflg)
 	check_type(dsym);
 
 	if (dcs->d_rdcsym != NULL && dsym->s_scl == EXTERN)
-		ledecl(dsym);
+		declare_external_in_block(dsym);
 
 	if (dsym->s_scl == EXTERN) {
 		/*
@@ -2637,7 +2637,8 @@ decl1loc(sym_t *dsym, int initflg)
 				break;
 			case EXTERN:
 				/*
-				 * Warnings and errors are printed in ledecl()
+				 * Warnings and errors are printed in
+				 * declare_external_in_block()
 				 */
 				break;
 			default:
@@ -2699,7 +2700,7 @@ decl1loc(sym_t *dsym, int initflg)
  * Processes (re)declarations of external symbols inside blocks.
  */
 static void
-ledecl(sym_t *dsym)
+declare_external_in_block(sym_t *dsym)
 {
 	int	eqt, dowarn;
 	sym_t	*esym;
