@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.241 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.242 2021/01/10 21:20:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -136,7 +136,7 @@
  * A boolean type is defined as an integer, not an enum, for historic reasons.
  * The only allowed values are the constants TRUE and FALSE (1 and 0).
  */
-#if defined(USE_C99_BOOLEAN)
+#if defined(lint) || defined(USE_C99_BOOLEAN)
 #include <stdbool.h>
 typedef bool Boolean;
 #define FALSE false

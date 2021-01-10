@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.10 2021/01/09 16:06:09 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.11 2021/01/10 21:20:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@ top:	/* If the child has exited, nothing to do.  */
 		if (nread == 0) {
 			if (feof(F->in))
 				return 0;
-			assert(ferror(F->in));
+			assert(ferror(F->in) != 0);
 			/*
 			 * If interrupted or would block, there may be
 			 * more events.  Otherwise fail.
@@ -619,7 +619,7 @@ show_paths(struct filemon *F, const struct filemon_state *S,
 	 * Ignore it if it failed or yielded EJUSTRETURN (-2), or if
 	 * we're not producing output.
 	 */
-	if (ret->ktr_error && ret->ktr_error != -2)
+	if (ret->ktr_error != 0 && ret->ktr_error != -2)
 		return;
 	if (F->out == NULL)
 		return;
@@ -645,7 +645,7 @@ show_retval(struct filemon *F, const struct filemon_state *S,
 	 * Ignore it if it failed or yielded EJUSTRETURN (-2), or if
 	 * we're not producing output.
 	 */
-	if (ret->ktr_error && ret->ktr_error != -2)
+	if (ret->ktr_error != 0 && ret->ktr_error != -2)
 		return;
 	if (F->out == NULL)
 		return;

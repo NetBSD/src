@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.779 2021/01/09 16:06:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.780 2021/01/10 21:20:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.779 2021/01/09 16:06:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.780 2021/01/10 21:20:47 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -347,7 +347,7 @@ CanonicalVarname(const char *name)
 			break;
 		case 'S':
 			if (strcmp(name, ".SHELL") == 0) {
-				if (!shellPath)
+				if (shellPath == NULL)
 					Shell_Init();
 			}
 			break;
@@ -805,7 +805,7 @@ ClearEnv(void)
 	environ = savedEnv = newenv;
 	newenv[0] = NULL;
 	newenv[1] = NULL;
-	if (cp && *cp)
+	if (cp != NULL && *cp != '\0')
 		setenv(MAKE_LEVEL_ENV, cp, 1);
 }
 

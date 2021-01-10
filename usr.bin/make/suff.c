@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.334 2021/01/09 16:06:09 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.335 2021/01/10 21:20:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.334 2021/01/09 16:06:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.335 2021/01/10 21:20:46 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -288,7 +288,7 @@ Suffix_Unassign(Suffix **var)
 static const char *
 StrTrimPrefix(const char *pref, const char *str)
 {
-	while (*str && *pref == *str) {
+	while (*str != '\0' && *pref == *str) {
 		pref++;
 		str++;
 	}

@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.167 2021/01/09 16:06:09 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.168 2021/01/10 21:20:46 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -124,7 +124,7 @@ meta_open_filemon(BuildMon *pbm)
 
     pbm->mon_fd = -1;
     pbm->filemon = NULL;
-    if (!useFilemon || !pbm->mfp)
+    if (!useFilemon || pbm->mfp == NULL)
 	return;
 
     pbm->filemon = filemon_open();
@@ -523,7 +523,7 @@ meta_create(BuildMon *pbm, GNode *gn)
     fprintf(fp, "CWD %s\n", getcwd(buf, sizeof buf));
     fprintf(fp, "TARGET %s\n", tname);
     cp = GNode_VarOodate(gn);
-    if (cp && *cp) {
+    if (cp != NULL && *cp != '\0') {
 	fprintf(fp, "OODATE %s\n", cp);
     }
     if (metaEnv) {
@@ -700,7 +700,7 @@ meta_job_child(Job *job)
     }
     if (pbm->mfp != NULL) {
 	close(fileno(pbm->mfp));
-	if (useFilemon && pbm->filemon) {
+	if (useFilemon && pbm->filemon != NULL) {
 	    pid_t pid;
 
 	    pid = getpid();
@@ -723,7 +723,7 @@ meta_job_parent(Job *job, pid_t pid)
     } else {
 	pbm = &Mybm;
     }
-    if (useFilemon && pbm->filemon) {
+    if (useFilemon && pbm->filemon != NULL) {
 	filemon_setpid_parent(pbm->filemon, pid);
     }
 #endif
@@ -740,7 +740,7 @@ meta_job_fd(Job *job)
     } else {
 	pbm = &Mybm;
     }
-    if (useFilemon && pbm->filemon) {
+    if (useFilemon && pbm->filemon != NULL) {
 	return filemon_readfd(pbm->filemon);
     }
 #endif
@@ -758,7 +758,7 @@ meta_job_event(Job *job)
     } else {
 	pbm = &Mybm;
     }
-    if (useFilemon && pbm->filemon) {
+    if (useFilemon && pbm->filemon != NULL) {
 	return filemon_process(pbm->filemon);
     }
 #endif
@@ -967,7 +967,7 @@ path_starts_with(const char *path, const char *prefix)
     return path[n] == '\0' || path[n] == '/';
 }
 
-static int
+static Boolean
 meta_ignore(GNode *gn, const char *p)
 {
     char fname[MAXPATHLEN];
@@ -1037,7 +1037,7 @@ meta_ignore(GNode *gn, const char *p)
  * if we detect this we want to reproduce it.
  * Setting oodate TRUE will have that effect.
  */
-#define CHECK_VALID_META(p) if (!(p && *p)) { \
+#define CHECK_VALID_META(p) if (!(p != NULL && *p != '\0')) { \
     warnx("%s: %d: malformed", fname, lineno); \
     oodate = TRUE; \
     continue; \
@@ -1436,7 +1436,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			}
 			sdirs[sdx++] = NULL;
 
-			for (sdp = sdirs; *sdp && !found; sdp++) {
+			for (sdp = sdirs; *sdp != NULL && !found; sdp++) {
 #ifdef DEBUG_META_MODE
 			    DEBUG3(META, "%s: %d: looking for: %s\n",
 				   fname, lineno, *sdp);
@@ -1579,7 +1579,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 	    const char *cp = NULL;
 
 	    /* if target is in .CURDIR we do not need a meta file */
-	    if (gn->path && (cp = strrchr(gn->path, '/')) && cp > gn->path) {
+	    if (gn->path != NULL && (cp = strrchr(gn->path, '/')) != NULL &&
+		(cp > gn->path)) {
 		if (strncmp(curdir, gn->path, (size_t)(cp - gn->path)) != 0) {
 		    cp = NULL;		/* not in .CURDIR */
 		}
@@ -1655,7 +1656,7 @@ meta_compat_parent(pid_t child)
     close(childPipe[1]);			/* child side */
     outfd = childPipe[0];
 #ifdef USE_FILEMON
-    metafd = Mybm.filemon ? filemon_readfd(Mybm.filemon) : -1;
+    metafd = Mybm.filemon != NULL ? filemon_readfd(Mybm.filemon) : -1;
 #else
     metafd = -1;
 #endif
@@ -1680,7 +1681,7 @@ meta_compat_parent(pid_t child)
 	    err(1, "select");
 	}
 
-	if (outfd != -1 && FD_ISSET(outfd, &readfds)) do {
+	if (outfd != -1 && FD_ISSET(outfd, &readfds) != 0) do {
 	    /* XXX this is not line-buffered */
 	    ssize_t nread = read(outfd, buf, sizeof buf - 1);
 	    if (nread == -1)
@@ -1695,7 +1696,7 @@ meta_compat_parent(pid_t child)
 	    buf[nread] = '\0';
 	    meta_job_output(NULL, buf, "");
 	} while (/*CONSTCOND*/0);
-	if (metafd != -1 && FD_ISSET(metafd, &readfds)) {
+	if (metafd != -1 && FD_ISSET(metafd, &readfds) != 0) {
 	    if (meta_job_event(NULL) <= 0)
 		metafd = -1;
 	}
