@@ -1,0 +1,2 @@
+d_c99_bool_strict.c(88): warning: illegal combination of pointer (pointer to void) and integer (_Bool), op = [123]
+d_c99_bool_strict.c(208): warning: illegal combination of pointer (pointer to void) and integer (_Bool), op = [123]
