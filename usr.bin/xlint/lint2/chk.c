@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.32 2021/01/04 22:26:51 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.33 2021/01/10 00:05:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.32 2021/01/04 22:26:51 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.33 2021/01/10 00:05:46 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -492,7 +492,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	 */
 	t1 = arg1->t_tspec;
 	t2 = arg2->t_tspec;
-	if (tspec_is_int(t1) && tspec_is_int(t2) &&
+	if (is_integer(t1) && is_integer(t2) &&
 	    !arg1->t_isenum && !arg2->t_isenum) {
 		if (promote) {
 			/*
@@ -571,7 +571,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			}
 		}
 
-	} else if (t1 == PTR && tspec_is_int(t2)) {
+	} else if (t1 == PTR && is_integer(t2)) {
 		for (ai = call->f_args; ai != NULL; ai = ai->a_next) {
 			if (ai->a_num == n)
 				break;

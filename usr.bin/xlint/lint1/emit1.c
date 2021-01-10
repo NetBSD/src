@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.34 2021/01/04 22:26:50 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.35 2021/01/10 00:05:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.34 2021/01/04 22:26:50 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.35 2021/01/10 00:05:46 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -442,7 +442,7 @@ outcall(tnode_t *tn, int rvused, int rvdisc)
 			continue;
 		arg = arg->tn_left;
 		if (arg->tn_op == CON) {
-			if (tspec_is_int(t = arg->tn_type->t_tspec)) {
+			if (is_integer(t = arg->tn_type->t_tspec)) {
 				/*
 				 * XXX it would probably be better to
 				 * explicitly test the sign

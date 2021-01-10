@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.54 2021/01/09 03:08:54 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.55 2021/01/10 00:05:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.54 2021/01/09 03:08:54 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.55 2021/01/10 00:05:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -437,7 +437,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		return;
 	}
 
-	if (tn != NULL && !tspec_is_int(tn->tn_type->t_tspec)) {
+	if (tn != NULL && !is_integer(tn->tn_type->t_tspec)) {
 		/* non-integral case expression */
 		error(198);
 		return;
@@ -473,7 +473,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		if (cl->cl_val.v_quad == nv.v_quad)
 			break;
 	}
-	if (cl != NULL && tspec_is_uint(nv.v_tspec)) {
+	if (cl != NULL && is_uinteger(nv.v_tspec)) {
 		/* duplicate case in switch: %lu */
 		error(200, (u_long)nv.v_quad);
 	} else if (cl != NULL) {
@@ -543,7 +543,7 @@ check_controlling_expression(tnode_t *tn)
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
 
-	if (tn != NULL && !tspec_is_scalar(tn->tn_type->t_tspec)) {
+	if (tn != NULL && !is_scalar(tn->tn_type->t_tspec)) {
 		/* C99 6.5.15p4 for the ?: operator; see typeok:QUEST */
 		/* C99 6.8.4.1p1 for if statements */
 		/* C99 6.8.5p2 for while, do and for loops */
@@ -610,7 +610,7 @@ switch1(tnode_t *tn)
 		tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
-	if (tn != NULL && !tspec_is_int(tn->tn_type->t_tspec)) {
+	if (tn != NULL && !is_integer(tn->tn_type->t_tspec)) {
 		/* switch expression must have integral type */
 		error(205);
 		tn = NULL;
@@ -720,7 +720,7 @@ while1(tnode_t *tn)
 	pushctrl(T_WHILE);
 	cstmt->c_loop = 1;
 	if (tn != NULL && tn->tn_op == CON) {
-		if (tspec_is_int(tn->tn_type->t_tspec)) {
+		if (is_integer(tn->tn_type->t_tspec)) {
 			cstmt->c_infinite = tn->tn_val->v_quad != 0;
 		} else {
 			cstmt->c_infinite = tn->tn_val->v_ldbl != 0.0;
@@ -784,7 +784,7 @@ do2(tnode_t *tn)
 		tn = check_controlling_expression(tn);
 
 	if (tn != NULL && tn->tn_op == CON) {
-		if (tspec_is_int(tn->tn_type->t_tspec)) {
+		if (is_integer(tn->tn_type->t_tspec)) {
 			cstmt->c_infinite = tn->tn_val->v_quad != 0;
 		} else {
 			cstmt->c_infinite = tn->tn_val->v_ldbl != 0.0;
@@ -847,7 +847,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	if (tn2 == NULL) {
 		cstmt->c_infinite = 1;
 	} else if (tn2->tn_op == CON) {
-		if (tspec_is_int(tn2->tn_type->t_tspec)) {
+		if (is_integer(tn2->tn_type->t_tspec)) {
 			cstmt->c_infinite = tn2->tn_val->v_quad != 0;
 		} else {
 			cstmt->c_infinite = tn2->tn_val->v_ldbl != 0.0;
