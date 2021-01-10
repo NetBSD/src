@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.52 2021/01/10 14:07:34 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.53 2021/01/10 14:09:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -174,7 +174,7 @@ extern	sym_t	*enumeration_constant(sym_t *, int, int);
 extern	void	decl1ext(sym_t *, int);
 extern	void	copy_usage_info(sym_t *, sym_t *);
 extern	int	check_redeclaration(sym_t *, int *);
-extern	int	eqptrtype(type_t *, type_t *, int);
+extern	bool	eqptrtype(const type_t *, const type_t *, int);
 extern	int	eqtype(type_t *, type_t *, int, int, int *);
 extern	void	complete_type(sym_t *, sym_t *);
 extern	sym_t	*declare_argument(sym_t *, int);
