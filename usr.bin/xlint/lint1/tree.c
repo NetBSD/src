@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.144 2021/01/10 00:05:46 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.145 2021/01/10 00:12:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.144 2021/01/10 00:05:46 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.145 2021/01/10 00:12:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4082,37 +4082,33 @@ is_confusing_precedence(op_t op, op_t lop, bool lparen, op_t rop, bool rparen)
 {
 
 	if (op == SHL || op == SHR) {
-		if (!lparen && (lop == PLUS || lop == MINUS)) {
+		if (!lparen && (lop == PLUS || lop == MINUS))
 			return true;
-		} else if (!rparen && (rop == PLUS || rop == MINUS)) {
+		if (!rparen && (rop == PLUS || rop == MINUS))
 			return true;
-		}
 		return false;
 	}
 
 	if (op == LOGOR) {
-		if (!lparen && lop == LOGAND) {
+		if (!lparen && lop == LOGAND)
 			return true;
-		} else if (!rparen && rop == LOGAND) {
+		if (!rparen && rop == LOGAND)
 			return true;
-		}
 		return false;
 	}
 
 	lint_assert(op == AND || op == XOR || op == OR);
 	if (!lparen && lop != op) {
-		if (lop == PLUS || lop == MINUS) {
+		if (lop == PLUS || lop == MINUS)
 			return true;
-		} else if (lop == AND || lop == XOR) {
+		if (lop == AND || lop == XOR)
 			return true;
-		}
 	}
 	if (!rparen && rop != op) {
-		if (rop == PLUS || rop == MINUS) {
+		if (rop == PLUS || rop == MINUS)
 			return true;
-		} else if (rop == AND || rop == XOR) {
+		if (rop == AND || rop == XOR)
 			return true;
-		}
 	}
 	return false;
 }
