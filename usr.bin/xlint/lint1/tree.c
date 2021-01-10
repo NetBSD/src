@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.147 2021/01/10 12:34:56 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.148 2021/01/10 12:46:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.147 2021/01/10 12:34:56 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.148 2021/01/10 12:46:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1296,6 +1296,9 @@ check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		rst = (rstp = rtp->t_subt)->t_tspec;
 	mp = &modtab[op];
 
+	if (lt == BOOL && is_scalar(rt))	/* C99 6.3.1.2 */
+		return 1;
+
 	if (is_arithmetic(lt) && is_arithmetic(rt))
 		return 1;
 
@@ -1787,7 +1790,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 				 is_integer(ot)) && tn->tn_op == CON &&
 		   tn->tn_val->v_quad == 0) {
 		/* 0, 0L and (void *)0 may be assigned to any pointer. */
-	} else if (is_integer(nt) && ot == PTR) {
+	} else if (is_integer(nt) && nt != BOOL && ot == PTR) {
 		check_pointer_integer_conversion(op, nt, tp, tn);
 	} else if (nt == PTR && ot == PTR) {
 		check_pointer_conversion(op, tn, tp);
@@ -1948,10 +1951,10 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 
 	if (psize(nt) < psize(PTR)) {
 		if (pflag && size(nt) >= size(PTR)) {
-			/* conv. of pointer to '%s' may lose bits */
+			/* conversion of pointer to '%s' may lose bits */
 			warning(134, type_name(tp));
 		} else {
-			/* conv. of pointer to '%s' loses bits */
+			/* conversion of pointer to '%s' loses bits */
 			warning(133, type_name(tp));
 		}
 	}
