@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.51 2021/01/10 11:17:53 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.52 2021/01/10 14:07:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -177,11 +177,11 @@ extern	int	check_redeclaration(sym_t *, int *);
 extern	int	eqptrtype(type_t *, type_t *, int);
 extern	int	eqtype(type_t *, type_t *, int, int, int *);
 extern	void	complete_type(sym_t *, sym_t *);
-extern	sym_t	*decl1arg(sym_t *, int);
+extern	sym_t	*declare_argument(sym_t *, int);
 extern	void	check_func_lint_directives(void);
 extern	void	check_func_old_style_arguments(void);
 
-extern	void	decl1loc(sym_t *, int);
+extern	void	declare_local(sym_t *, int);
 extern	sym_t	*abstract_name(void);
 extern	void	global_clean_up(void);
 extern	sym_t	*declare_1_abstract(sym_t *);
