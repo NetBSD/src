@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.55 2021/01/10 00:05:46 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.56 2021/01/10 11:17:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.55 2021/01/10 00:05:46 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.56 2021/01/10 11:17:53 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -465,7 +465,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	 */
 	v = constant(tn, 1);
 	(void) memset(&nv, 0, sizeof nv);
-	cvtcon(CASE, 0, ci->c_swtype, &nv, v);
+	convert_constant(CASE, 0, ci->c_swtype, &nv, v);
 	free(v);
 
 	/* look if we had this value already */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.145 2021/01/10 00:12:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.146 2021/01/10 11:17:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.145 2021/01/10 00:12:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.146 2021/01/10 11:17:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1803,7 +1803,8 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	} else {
 		ntn->tn_op = CON;
 		ntn->tn_val = tgetblk(sizeof (val_t));
-		cvtcon(op, arg, ntn->tn_type, ntn->tn_val, tn->tn_val);
+		convert_constant(op, arg, ntn->tn_type, ntn->tn_val,
+		    tn->tn_val);
 	}
 
 	return ntn;
@@ -2017,7 +2018,7 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
  * v		old constant
  */
 void
-cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
+convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 {
 	tspec_t	ot, nt;
 	ldbl_t	max = 0.0, min = 0.0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.50 2021/01/09 19:13:17 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.51 2021/01/10 11:17:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -207,7 +207,7 @@ extern	tnode_t	*cconv(tnode_t *);
 extern	bool	typeok(op_t, int, tnode_t *, tnode_t *);
 extern	tnode_t	*promote(op_t, int, tnode_t *);
 extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);
-extern	void	cvtcon(op_t, int, type_t *, val_t *, val_t *);
+extern	void	convert_constant(op_t, int, type_t *, val_t *, val_t *);
 extern	tnode_t	*build_sizeof(type_t *);
 extern	tnode_t	*build_offsetof(type_t *, sym_t *);
 extern	tnode_t	*build_alignof(type_t *);
