@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool.c,v 1.3 2021/01/10 12:34:56 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool.c,v 1.4 2021/01/10 12:46:38 rillig Exp $	*/
 # 3 "d_bool.c"
 
 /*
@@ -26,8 +26,8 @@ int int_256_converts_to_true_[(_Bool)256 ? 1 : -1];
 int null_pointer_converts_to_false[(_Bool)(void *)0 ? -1 : 1];
 int null_pointer_converts_to_true_[(_Bool)(void *)0 ? 1 : -1];
 
-int nonnull_pointer_converts_to_false[(_Bool)"not null" ? -1 : 1]; // FIXME 133
-int nonnull_pointer_converts_to_true_[(_Bool)"not null" ? 1 : -1]; // FIXME 133
+int nonnull_pointer_converts_to_false[(_Bool)"not null" ? -1 : 1];
+int nonnull_pointer_converts_to_true_[(_Bool)"not null" ? 1 : -1];
 
 int double_minus_1_0_converts_to_false[(_Bool)-1.0 ? -1 : 1];
 int double_minus_1_0_converts_to_true_[(_Bool)-1.0 ? 1 : -1];
@@ -85,13 +85,13 @@ enum_to_bool(enum color e)
 _Bool
 pointer_to_bool(const char *p)
 {
-	return p; // FIXME 183
+	return p;
 }
 
 _Bool
 function_pointer_to_bool(void (*f)(void))
 {
-	return f; // FIXME 183
+	return f;
 }
 
 _Bool
