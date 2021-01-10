@@ -1,5 +1,5 @@
-/*	$NetBSD: d_c99_bool.c,v 1.4 2021/01/10 12:46:38 rillig Exp $	*/
-# 3 "d_bool.c"
+/*	$NetBSD: d_c99_bool.c,v 1.5 2021/01/10 13:17:24 rillig Exp $	*/
+# 3 "d_c99_bool.c"
 
 /*
  * C99 6.3.1.2 says: "When any scalar value is converted to _Bool, the result
@@ -9,7 +9,7 @@
  * invoke undefined behavior.
  */
 
-/* Below, the wrong assertions produce warning 20. */
+/* Below, each wrong assertion produces "negative array dimension" [20]. */
 
 int int_0_converts_to_false[(_Bool)0 ? -1 : 1];
 int int_0_converts_to_true_[(_Bool)0 ? 1 : -1];
@@ -26,8 +26,17 @@ int int_256_converts_to_true_[(_Bool)256 ? 1 : -1];
 int null_pointer_converts_to_false[(_Bool)(void *)0 ? -1 : 1];
 int null_pointer_converts_to_true_[(_Bool)(void *)0 ? 1 : -1];
 
-int nonnull_pointer_converts_to_false[(_Bool)"not null" ? -1 : 1];
-int nonnull_pointer_converts_to_true_[(_Bool)"not null" ? 1 : -1];
+/*
+ * XXX: lint does not treat the address of a global variable as a constant
+ * expression.  This goes against C99 6.6p7 but is probably not too relevant
+ * in practice.
+ *
+ * The call to constant(tn, 0) defaults to 1, then.  This is why neither of
+ * the following array declarations generates an error message.
+ */
+char ch;
+int nonnull_pointer_converts_to_false[(_Bool)&ch ? -1 : 1];
+int nonnull_pointer_converts_to_true_[(_Bool)&ch ? 1 : -1];
 
 int double_minus_1_0_converts_to_false[(_Bool)-1.0 ? -1 : 1];
 int double_minus_1_0_converts_to_true_[(_Bool)-1.0 ? 1 : -1];
