@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.146 2021/01/10 11:17:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.147 2021/01/10 12:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.146 2021/01/10 11:17:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.147 2021/01/10 12:34:56 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2030,10 +2030,16 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 	nt = nv->v_tspec = tp->t_tspec;
 	rchk = 0;
 
+	if (nt == BOOL) {	/* C99 6.3.1.2 */
+		nv->v_ansiu = 0;
+		nv->v_quad = ot == FLOAT || ot == DOUBLE || ot == LDOUBLE
+		    ? v->v_ldbl != 0.0
+		    : v->v_quad != 0;
+		return;
+	}
+
 	if (ot == FLOAT || ot == DOUBLE || ot == LDOUBLE) {
 		switch (nt) {
-		case BOOL:
-			max = 1;		min = 0;		break;
 		case CHAR:
 			max = TARG_CHAR_MAX;	min = TARG_CHAR_MIN;	break;
 		case UCHAR:
