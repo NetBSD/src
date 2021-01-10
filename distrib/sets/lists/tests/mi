@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1008 2021/01/10 11:24:42 rillig Exp $
+# $NetBSD: mi,v 1.1009 2021/01/10 17:43:46 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5747,6 +5747,8 @@
 ./usr/tests/usr.bin/xlint/lint1/d_c99_anon_union.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_bool.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_bool.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_bool_strict.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_bool_strict.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_split.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_compound_literal_comma.c	tests-usr.bin-tests	compattestfile,atf
