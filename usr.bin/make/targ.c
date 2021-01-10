@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.159 2020/12/18 15:47:34 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.160 2021/01/10 23:59:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.159 2020/12/18 15:47:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.160 2021/01/10 23:59:53 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -514,7 +514,7 @@ Targ_PrintNode(GNode *gn, int pass)
 		}
 		PrintNodeNamesLine("implicit parents", &gn->implicitParents);
 	} else {
-		if (gn->unmade)
+		if (gn->unmade != 0)
 			debug_printf("# %d unmade children\n", gn->unmade);
 	}
 
