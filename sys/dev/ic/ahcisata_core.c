@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.94 2020/12/29 08:00:48 skrll Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.95 2021/01/11 16:48:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.94 2020/12/29 08:00:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.95 2021/01/11 16:48:35 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -729,7 +729,7 @@ ahci_intr_port_common(struct ata_channel *chp)
 		 * commands active before we start processing.
 		 */
 
-		for (slot=0; slot < sc->sc_ncmds; slot++) {
+		for (slot = 0; slot < sc->sc_ncmds; slot++) {
 			if ((aslots & __BIT(slot)) != 0 &&
 			    (sact & __BIT(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
