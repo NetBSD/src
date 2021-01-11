@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.35 2021/01/10 00:05:46 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.36 2021/01/11 19:29:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.35 2021/01/10 00:05:46 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.36 2021/01/11 19:29:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -92,7 +92,7 @@ static	void	outfstrg(strg_t *);
  * and 'v' (for volatile)
  */
 void
-outtype(type_t *tp)
+outtype(const type_t *tp)
 {
 	int	t, s, na;
 	sym_t	*arg;
@@ -166,7 +166,7 @@ outtype(type_t *tp)
  * it uses its own output buffer for conversion
  */
 const char *
-ttos(type_t *tp)
+ttos(const type_t *tp)
 {
 	static	ob_t	tob;
 	ob_t	tmp;
@@ -226,7 +226,7 @@ outtt(sym_t *tag, sym_t *tdef)
  * not here
  */
 void
-outsym(sym_t *sym, scl_t sc, def_t def)
+outsym(const sym_t *sym, scl_t sc, def_t def)
 {
 
 	/*
@@ -301,10 +301,11 @@ outsym(sym_t *sym, scl_t sc, def_t def)
  * they are called with proper argument types
  */
 void
-outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
+outfdef(const sym_t *fsym, const pos_t *posp, int rval, int osdef,
+	const sym_t *args)
 {
-	int	narg;
-	sym_t	*arg;
+	int narg;
+	const sym_t *arg;
 
 	/* reset the buffer */
 	outclr();
@@ -406,7 +407,7 @@ outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
  * (casted to void)
  */
 void
-outcall(tnode_t *tn, int rvused, int rvdisc)
+outcall(const tnode_t *tn, int rvused, int rvdisc)
 {
 	tnode_t	*args, *arg;
 	int	narg, n, i;
@@ -591,7 +592,7 @@ outfstrg(strg_t *strg)
  * writes a record if sym was used
  */
 void
-outusg(sym_t *sym)
+outusg(const sym_t *sym)
 {
 	/* reset buffer */
 	outclr();

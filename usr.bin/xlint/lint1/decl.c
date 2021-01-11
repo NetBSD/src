@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.120 2021/01/10 18:22:52 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.121 2021/01/11 19:29:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.120 2021/01/10 18:22:52 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.121 2021/01/11 19:29:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -67,8 +67,8 @@ static	void	settdsym(type_t *, sym_t *);
 static	tspec_t	merge_type_specifiers(tspec_t, tspec_t);
 static	void	align(int, int);
 static	sym_t	*newtag(sym_t *, scl_t, int, int);
-static	int	eqargs(type_t *, type_t *, int *);
-static	int	mnoarg(type_t *, int *);
+static	int	eqargs(const type_t *, const type_t *, int *);
+static	int	mnoarg(const type_t *, int *);
 static	int	check_old_style_definition(sym_t *, sym_t *);
 static	int	check_prototype_declaration(sym_t *, sym_t *);
 static	sym_t	*new_style_function(sym_t *, sym_t *);
@@ -172,7 +172,7 @@ tduptyp(const type_t *tp)
  * struct, union or enum type.
  */
 int
-incompl(type_t *tp)
+incompl(const type_t *tp)
 {
 	tspec_t	t;
 
@@ -882,7 +882,7 @@ merge_type_specifiers(tspec_t t, tspec_t s)
  * if name is not NULL.
  */
 int
-length(type_t *tp, const char *name)
+length(const type_t *tp, const char *name)
 {
 	int	elem, elsz;
 
@@ -926,7 +926,7 @@ length(type_t *tp, const char *name)
  * Get the alignment of the given Type in bits.
  */
 int
-getbound(type_t *tp)
+getbound(const type_t *tp)
 {
 	size_t	a;
 	tspec_t	t;
@@ -2108,7 +2108,8 @@ eqptrtype(const type_t *tp1, const type_t *tp2, int ignqual)
  *		compatible with a prototype
  */
 int
-eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
+eqtype(const type_t *tp1, const type_t *tp2,
+       int ignqual, int promot, int *dowarn)
 {
 	tspec_t	t;
 
@@ -2171,7 +2172,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
  * Compares the parameter types of two prototypes.
  */
 static int
-eqargs(type_t *tp1, type_t *tp2, int *dowarn)
+eqargs(const type_t *tp1, const type_t *tp2, int *dowarn)
 {
 	sym_t	*a1, *a2;
 
@@ -2205,7 +2206,7 @@ eqargs(type_t *tp1, type_t *tp2, int *dowarn)
  *	   is applied on it
  */
 static int
-mnoarg(type_t *tp, int *dowarn)
+mnoarg(const type_t *tp, int *dowarn)
 {
 	sym_t	*arg;
 	tspec_t	t;
@@ -3213,7 +3214,7 @@ check_global_variable_size(const sym_t *sym)
  * Prints information about location of previous definition/declaration.
  */
 void
-print_previous_declaration(int msg, sym_t *psym)
+print_previous_declaration(int msg, const sym_t *psym)
 {
 	pos_t	cpos;
 
