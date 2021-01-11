@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.24 2020/04/05 20:59:38 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.25 2021/01/11 17:00:18 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.24 2020/04/05 20:59:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.25 2021/01/11 17:00:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -2391,10 +2391,10 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 	 */
 	hsotg->status_buf = NULL;
 	if (hsotg->core_params->dma_enable > 0) {
-		retval = usb_allocmem(&hsotg->hsotg_sc->sc_bus,
+		int error = usb_allocmem(&hsotg->hsotg_sc->sc_bus,
 		    DWC2_HCD_STATUS_BUF_SIZE, 0, USBMALLOC_COHERENT,
 		    &hsotg->status_buf_usbdma);
-		if (!retval) {
+		if (!error) {
 			hsotg->status_buf = KERNADDR(&hsotg->status_buf_usbdma, 0);
 			hsotg->status_buf_dma = DMAADDR(&hsotg->status_buf_usbdma, 0);
 		}
@@ -2402,6 +2402,7 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 		hsotg->status_buf = kmem_zalloc(DWC2_HCD_STATUS_BUF_SIZE,
 					  KM_SLEEP);
 
+	/* retval is already -ENOMEM */
 	if (!hsotg->status_buf)
 		goto error3;
 
