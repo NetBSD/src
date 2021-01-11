@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.13 2020/10/30 06:57:08 skrll Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.14 2021/01/11 07:49:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.13 2020/10/30 06:57:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.14 2021/01/11 07:49:04 simonb Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -149,7 +149,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 
 	switch (*mode) {
 	case 'a':
-		db_printf("PID  %10s %18s %18s %18s\n",
+		db_printf("PID   %-16s %18s %18s %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'l':
@@ -180,7 +180,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 
 		switch (*mode) {
 		case 'a':
-			db_printf("%10.10s %18lx %18lx %18lx\n",
+			db_printf(" %-16.16s %18lx %18lx %18lx\n",
 			    p.p_comm, (long)pp,
 			    (long)(lp != NULL ? l.l_addr : 0),
 			    (long)p.p_vmspace);
