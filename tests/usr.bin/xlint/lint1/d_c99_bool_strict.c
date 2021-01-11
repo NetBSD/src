@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.2 2021/01/10 21:45:50 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.3 2021/01/11 00:28:28 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -21,6 +21,15 @@
  * SB006: A constant integer expression is compatible with type _Bool if
  * it is an integer constant with value 0 or 1, or if the result type of
  * its main operator is _Bool.
+ *
+ * SB007: Expressions like "flags & FLAG" are compatible with _Bool if
+ * they appear in a context where they are immediately compared to zero.
+ * Assigning to a _Bool variable does not count as such a context, to
+ * allow programs to be compiled without silent changes on a compiler that
+ * is lacking the special _Bool type.
+ *
+ * SB008: Bit fields in struct may be based on _Bool.  These bit fields
+ * typically have type _Bool:1 and can be converted to _Bool and back.
  */
 
 // Not yet implemented: /* lint1-extra-flags: -T */
@@ -251,33 +260,157 @@ enum SB006_bool_constant_expression {
 	LOGAND = 0 && 1,	/* ok */
 };
 
-enum BitSet {
-	ONE = 1 << 0,
-	TWO = 1 << 1,
-	FOUR = 1 << 2
+/*
+ * An efficient implementation technique for a collection of boolean flags
+ * is an enum.  The enum declaration groups the available constants, and as
+ * of 2020, compilers such as GCC and Clang have basic support for detecting
+ * type mismatches on enums.
+ */
+
+enum Flags {
+	FLAG0 = 1 << 0,
+	FLAG1 = 1 << 1,
+	FLAG28 = 1 << 28
 };
 
 /*
- * It is debatable whether it is a good idea to allow expressions like these
- * for _Bool.  The strict rules above ensure that the code works in the same
- * way whether or not the special rule C99 6.3.1.2 is active or not.
- *
- * If the code were to switch away from the C99 bool type to an ordinary
- * unsigned integer type, the behavior might silently change.  Because the
- * rule C99 6.3.1.2 is no longer active in that case, high bits of the enum
- * constant may get lost, thus evaluating to false even though a bit is set.
- *
- * It's probably better to not allow this kind of expressions, even though
- * it may be popular, especially in usr.bin/make.
+ * The usual way to query one of the flags is demonstrated below.
  */
-int
-S007_allow_flag_test_on_bit_set_enums(enum BitSet bs)
+
+extern void println(const char *);
+
+void
+query_flag_from_enum_bit_set(enum Flags flags)
 {
-	if (bs & ONE)
-		return 1;
-	if (!(bs & TWO))
-		return 2;
-	if (bs & FOUR)
-		return 2;
-	return 4;
+
+	if (flags & FLAG0)
+		println("FLAG0 is set");
+
+	if ((flags & FLAG1) != 0)
+		println("FLAG1 is set");
+
+	if ((flags & (FLAG0 | FLAG1)) == (FLAG0 | FLAG1))
+		println("FLAG0 and FLAG1 are both set");
+	if (flags & FLAG0 && flags & FLAG1)
+		println("FLAG0 and FLAG1 are both set");
+
+	if ((flags & (FLAG0 | FLAG1)) != 0)
+		println("At least one of FLAG0 and FLAG1 is set");
+
+	if (flags & FLAG28)
+		println("FLAG28 is set");
+}
+
+/*
+ * In all the above conditions (or controlling expressions, as the C standard
+ * calls them), the result of the operator '&' is compared against 0.  This
+ * makes this pattern work, no matter whether the bits are in the low-value
+ * range or in the high-value range (such as FLAG28, which has the value
+ * 1073741824, which is more than what fits into an unsigned char).  Even
+ * if an enum could be extended to larger types than int, this pattern
+ * would work.
+ */
+
+/*
+ * There is a crucial difference between a _Bool variable and an ordinary
+ * integer variable though.  C99 6.3.1.2 defines a conversion from an
+ * arbitrary scalar type to _Bool as (value != 0 ? 1 : 0).  This means that
+ * even if _Bool is implemented as an 8-bit unsigned integer, assigning 256
+ * to it would still result in the value 1 being stored.  Storing 256 in an
+ * ordinary 8-bit unsigned integer would result in the value 0 being stored.
+ * See the test d_c99_bool.c for more details.
+ *
+ * Because of this, expressions like (flags & FLAG28) are only allowed in
+ * bool context if they are guaranteed not to be truncated, even if the
+ * result were to be stored in a plain unsigned integer.
+ */
+
+void
+SB007_allow_flag_test_on_bit_set_enums(enum Flags flags)
+{
+	bool b;
+
+	/*
+	 * FLAG0 has the value 1 and can therefore be stored in a bool
+	 * variable without truncation.  Nevertheless this special case
+	 * is not allowed because it would be too confusing if FLAG0 would
+	 * work and all the other flags wouldn't.
+	 */
+	b = flags & FLAG0;
+
+	/*
+	 * Assuming that FLAG1 is set in flags, a _Bool variable stores this
+	 * as 1, as defined by C99 6.3.1.2.  An unsigned char variable would
+	 * store it as 2, as that is the integer value of FLAG1.  Since FLAG1
+	 * fits in an unsigned char, no truncation takes place.
+	 */
+	b = flags & FLAG1;
+
+	/*
+	 * In a _Bool variable, FLAG28 is stored as 1, as above.  In an
+	 * unsigned char, the stored value would be 0 since bit 28 is out of
+	 * range for an unsigned char, which usually has 8 significant bits.
+	 */
+	b = flags & FLAG28;
+}
+
+/* A bool bit field is compatible with bool. Other bit fields are not. */
+
+struct flags {
+	bool bool_flag: 1;
+	unsigned uint_flag: 1;
+};
+
+void
+SB008_flags_from_bit_fields(const struct flags *flags)
+{
+	bool b;
+
+	b = flags->bool_flag;	/* ok */
+	b = flags->uint_flag;	/* not ok */
+}
+
+/* Test implicit conversion when returning a value from a function. */
+
+bool
+returning_bool(bool b, int i, const char *p)
+{
+	if (i > 0)
+		return b;	/* ok */
+	if (i < 0)
+		return i;	/* not ok */
+	return p;		/* not ok */
+}
+
+char
+returning_char(bool b, int i, const char *p)
+{
+	if (i > 0)
+		return b;	/* not ok */
+	if (i < 0)
+		return i;	/* not ok, but not related to bool */
+	return p;		/* not ok */
+}
+
+/* Test passing arguments to a function. */
+
+extern void taking_arguments(bool, int, const char *, ...);
+
+void
+passing_arguments(bool b, int i, const char *p)
+{
+	/* No conversion necessary. */
+	taking_arguments(b, i, p);
+
+	/* Implicitly converting bool to other scalar types. */
+	taking_arguments(b, b, b);
+
+	/* Implicitly converting int to bool (arg #1). */
+	taking_arguments(i, i, i);
+
+	/* Implicitly converting pointer to bool (arg #1). */
+	taking_arguments(p, p, p);
+
+	/* Passing bool as vararg. */
+	taking_arguments(b, i, p, b, i, p);
 }
