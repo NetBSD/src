@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.43 2021/01/10 20:46:14 skrll Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.44 2021/01/11 07:17:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -482,9 +482,9 @@ ATF_TC_BODY(sigbus_adraln, tc)
 #endif
 
 #if defined(__mips__)
-	if (isQEMU())
-		atf_tc_expect_fail("QEMU fails to trap unaligned accesses with "
-		    "correct ENTRYHI");
+	/* no way of detecting if on GXemul, so disable everywhere for now */
+	atf_tc_expect_fail("GXemul fails to trap unaligned accesses with "
+	    "correct ENTRYHI");
 #endif
 
 	sa.sa_flags = SA_SIGINFO;
