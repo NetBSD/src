@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.150 2020/04/06 14:31:06 hannken Exp $ */
+/* $NetBSD: udf_subr.c,v 1.151 2021/01/11 22:01:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.150 2020/04/06 14:31:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.151 2021/01/11 22:01:15 skrll Exp $");
 #endif /* not lint */
 
 
@@ -928,7 +928,7 @@ udf_read_anchors(struct udf_mount *ump)
 	positions[1] =   track_end-256;
 	positions[2] =   track_end;
 	positions[3] = track_start+512;	/* [UDF 2.60/6.11.2] */
-	/* XXX shouldn't +512 be prefered above +256 for compat with Roxio CD */
+	/* XXX shouldn't +512 be preferred over +256 for compat with Roxio CD */
 
 	ok = 0;
 	anchorsp = ump->anchors;

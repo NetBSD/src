@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.61 2020/11/30 17:06:02 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.62 2021/01/11 22:01:14 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.61 2020/11/30 17:06:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.62 2021/01/11 22:01:14 skrll Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -129,7 +129,7 @@ struct xenevt_d {
 #define XENEVT_F_OVERFLOW 0x01 /* ring overflow */
 #define XENEVT_F_FREE 0x02 /* free entry */
 	struct selinfo sel; /* used by poll */
-	struct cpu_info *ci; /* prefered CPU for events for this device */
+	struct cpu_info *ci; /* preferred CPU for events for this device */
 };
 
 static struct intrhand *xenevt_ih;
