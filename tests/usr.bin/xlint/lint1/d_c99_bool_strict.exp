@@ -1,2 +1,6 @@
-d_c99_bool_strict.c(88): warning: illegal combination of pointer (pointer to void) and integer (_Bool), op = [123]
-d_c99_bool_strict.c(208): warning: illegal combination of pointer (pointer to void) and integer (_Bool), op = [123]
+d_c99_bool_strict.c(97): warning: illegal combination of pointer (pointer to void) and integer (_Bool), op = [123]
+d_c99_bool_strict.c(217): warning: illegal combination of pointer (pointer to void) and integer (_Bool), op = [123]
+d_c99_bool_strict.c(392): warning: illegal combination of integer (char) and pointer (pointer to const char) [183]
+d_c99_bool_strict.c(406): warning: illegal combination of pointer (pointer to const char) and integer (_Bool), arg #3 [154]
+d_c99_bool_strict.c(409): warning: illegal combination of pointer (pointer to const char) and integer (int), arg #3 [154]
+d_c99_bool_strict.c(412): warning: illegal combination of integer (int) and pointer (pointer to const char), arg #2 [154]
