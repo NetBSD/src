@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.395 2020/11/01 18:51:02 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.396 2021/01/11 17:18:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.395 2020/11/01 18:51:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.396 2021/01/11 17:18:51 skrll Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -548,7 +548,7 @@ siggetinfo(sigpend_t *sp, ksiginfo_t *out, int signo)
 		if (ksi->ksi_signo != signo)
 			continue;
 		if (count++ > 0) /* Only remove the first, count all of them */
-			continue; 
+			continue;
 		TAILQ_REMOVE(&sp->sp_info, ksi, ksi_list);
 		KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
 		KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
@@ -578,7 +578,7 @@ out:
  *	Fetch the first pending signal from a set.  Optionally, also fetch
  *	or manufacture a ksiginfo element.  Returns the number of the first
  *	pending signal, or zero.
- */ 
+ */
 int
 sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 {
@@ -646,7 +646,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 			return 0;
 		}
 	}
-	
+
 	if (count >= SIGQUEUE_MAX) {
 #ifdef DIAGNOSTIC
 		printf("%s(%d): Signal queue is full signal=%d\n",
@@ -656,7 +656,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	}
 	ksi->ksi_flags |= KSI_QUEUED;
 	TAILQ_INSERT_TAIL(&sp->sp_info, ksi, ksi_list);
-	
+
 	return 0;
 }
 
@@ -715,7 +715,7 @@ sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
  *
  *	This should only ever be called with (l == curlwp), unless the
  *	result does not matter (procfs, sysctl).
- */ 
+ */
 int
 sigispending(struct lwp *l, int signo)
 {
@@ -990,7 +990,7 @@ repeat:
 	const bool ignored = action == SIG_IGN;
 	if (masked || ignored) {
 		mutex_enter(&ps->sa_mutex);
-		sigdelset(mask, signo);	
+		sigdelset(mask, signo);
 		sigdelset(&p->p_sigctx.ps_sigcatch, signo);
 		sigdelset(&p->p_sigctx.ps_sigignore, signo);
 		sigdelset(&SIGACTION_PS(ps, signo).sa_mask, signo);
@@ -2004,7 +2004,7 @@ issignal(struct lwp *l)
 
 			/*
 			 * If there is a pending stop signal to process with
-			 * default action, stop here, then clear the signal. 
+			 * default action, stop here, then clear the signal.
 			 * However, if process is member of an orphaned
 			 * process group, ignore tty stop signals.
 			 */
@@ -2231,7 +2231,7 @@ killproc(struct proc *p, const char *why)
  * if appropriate.  We bypass the normal tests for masked and caught
  * signals, allowing unrecoverable failures to terminate the process without
  * changing signal state.  Mark the accounting record with the signal
- * termination.  If dumping core, save the signal number for the debugger. 
+ * termination.  If dumping core, save the signal number for the debugger.
  * Calls exit and does not return.
  */
 void
@@ -2443,7 +2443,7 @@ proc_stop(struct proc *p, int signo)
  * interruptably into the LSSTOP state.
  *
  * Note that we are not concerned about keeping all LWPs stopped while the
- * process is stopped: stopped LWPs can awaken briefly to handle signals. 
+ * process is stopped: stopped LWPs can awaken briefly to handle signals.
  * What we do need to ensure is that all LWPs in a stopping process have
  * stopped at least once, so that notification can be sent to the parent
  * process.
