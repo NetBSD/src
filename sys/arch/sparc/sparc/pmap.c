@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.369 2020/12/09 11:35:44 uwe Exp $ */
+/*	$NetBSD: pmap.c,v 1.370 2021/01/11 06:12:43 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.369 2020/12/09 11:35:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.370 2021/01/11 06:12:43 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -907,13 +907,20 @@ pgt_page_alloc(struct pool *pp, int flags)
 	paddr_t pa;
 
 	/* Allocate a page of physical memory */
-	if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
-		return (NULL);
+	while ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL &&
+	       (flags & PR_WAITOK) != 0) {
+		uvm_wait("pgtpg");
+	}
+	if (pg == NULL) {
+		KASSERT((flags & PR_WAITOK) == 0);
+		return NULL;
+	}
 
 	/* Allocate virtual memory */
 	va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY |
 		((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK));
 	if (va == 0) {
+		KASSERT((flags & PR_WAITOK) == 0);
 		uvm_pagefree(pg);
 		return (NULL);
 	}
