@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.53 2021/01/10 14:09:57 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.54 2021/01/11 19:29:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -141,7 +141,7 @@ extern	void	initdecl(void);
 extern	type_t	*gettyp(tspec_t);
 extern	type_t	*duptyp(const type_t *);
 extern	type_t	*tduptyp(const type_t *);
-extern	int	incompl(type_t *);
+extern	int	incompl(const type_t *);
 extern	void	setcomplete(type_t *, int);
 extern	void	add_storage_class(scl_t);
 extern	void	add_type(type_t *);
@@ -153,8 +153,8 @@ extern	void	popdecl(void);
 extern	void	setasm(void);
 extern	void	clrtyp(void);
 extern	void	deftyp(void);
-extern	int	length(type_t *, const char *);
-extern	int	getbound(type_t *);
+extern	int	length(const type_t *, const char *);
+extern	int	getbound(const type_t *);
 extern	sym_t	*lnklst(sym_t *, sym_t *);
 extern	void	check_type(sym_t *);
 extern	sym_t	*declarator_1_struct_union(sym_t *);
@@ -175,7 +175,7 @@ extern	void	decl1ext(sym_t *, int);
 extern	void	copy_usage_info(sym_t *, sym_t *);
 extern	int	check_redeclaration(sym_t *, int *);
 extern	bool	eqptrtype(const type_t *, const type_t *, int);
-extern	int	eqtype(type_t *, type_t *, int, int, int *);
+extern	int	eqtype(const type_t *, const type_t *, int, int, int *);
 extern	void	complete_type(sym_t *, sym_t *);
 extern	sym_t	*declare_argument(sym_t *, int);
 extern	void	check_func_lint_directives(void);
@@ -191,7 +191,7 @@ extern	void	mark_as_used(sym_t *, int, int);
 extern	void	check_usage(dinfo_t *);
 extern	void	check_usage_sym(int, sym_t *);
 extern	void	check_global_symbols(void);
-extern	void	print_previous_declaration(int, sym_t *);
+extern	void	print_previous_declaration(int, const sym_t *);
 
 /*
  * tree.c
@@ -204,7 +204,7 @@ extern	tnode_t	*new_string_node(strg_t *);
 extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
 extern	tnode_t	*build(op_t, tnode_t *, tnode_t *);
 extern	tnode_t	*cconv(tnode_t *);
-extern	bool	typeok(op_t, int, tnode_t *, tnode_t *);
+extern	bool	typeok(op_t, int, const tnode_t *, const tnode_t *);
 extern	tnode_t	*promote(op_t, int, tnode_t *);
 extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);
 extern	void	convert_constant(op_t, int, type_t *, val_t *, val_t *);
@@ -216,7 +216,7 @@ extern	tnode_t	*new_function_argument_node(tnode_t *, tnode_t *);
 extern	tnode_t	*new_function_call_node(tnode_t *, tnode_t *);
 extern	val_t	*constant(tnode_t *, int);
 extern	void	expr(tnode_t *, int, int, int);
-extern	void	check_expr_misc(tnode_t *, int, int, int, int, int, int);
+extern	void	check_expr_misc(const tnode_t *, int, int, int, int, int, int);
 extern	int	conaddr(tnode_t *, sym_t **, ptrdiff_t *);
 extern	strg_t	*cat_strings(strg_t *, strg_t *);
 extern  int64_t tsize(type_t *);
@@ -296,12 +296,12 @@ extern	void	push_member(sbuf_t *);
 /*
  * emit.c
  */
-extern	void	outtype(type_t *);
-extern	const	char *ttos(type_t *);
-extern	void	outsym(sym_t *, scl_t, def_t);
-extern	void	outfdef(sym_t *, pos_t *, int, int, sym_t *);
-extern	void	outcall(tnode_t *, int, int);
-extern	void	outusg(sym_t *);
+extern	void	outtype(const type_t *);
+extern	const	char *ttos(const type_t *);
+extern	void	outsym(const sym_t *, scl_t, def_t);
+extern	void	outfdef(const sym_t *, const pos_t *, int, int, const sym_t *);
+extern	void	outcall(const tnode_t *, int, int);
+extern	void	outusg(const sym_t *);
 
 /*
  * print.c
