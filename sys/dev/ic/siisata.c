@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.45 2021/01/11 16:48:03 skrll Exp $ */
+/* $NetBSD: siisata.c,v 1.46 2021/01/11 16:48:35 skrll Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.45 2021/01/11 16:48:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.46 2021/01/11 16:48:35 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -604,7 +604,7 @@ process:
 		 */
 		uint32_t aslots = ata_queue_active(chp);
 
-		for (int slot=0; slot < SIISATA_MAX_SLOTS; slot++) {
+		for (int slot = 0; slot < SIISATA_MAX_SLOTS; slot++) {
 			if ((aslots & __BIT(slot)) != 0 &&
 			    (pss & PR_PXSS(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
