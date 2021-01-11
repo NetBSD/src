@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.26 2020/10/22 07:31:15 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.27 2021/01/11 17:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.26 2020/10/22 07:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.27 2021/01/11 17:12:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -439,7 +439,6 @@ set_cpufuncs(void)
 	struct cpu_info * const ci = curcpu();
 	const uint64_t ctr = reg_ctr_el0_read();
 	const uint64_t clidr = reg_clidr_el1_read();
-	const uint32_t midr __unused = reg_midr_el1_read();
 
 	/* install default functions */
 	ci->ci_cpufuncs.cf_set_ttbr0 = aarch64_set_ttbr0;
@@ -463,6 +462,8 @@ set_cpufuncs(void)
 	}
 
 #ifdef CPU_THUNDERX
+	const uint32_t midr = reg_midr_el1_read();
+
 	/* Cavium erratum 27456 */
 	if ((midr == CPU_ID_THUNDERXP1d0) ||
 	    (midr == CPU_ID_THUNDERXP1d1) ||
