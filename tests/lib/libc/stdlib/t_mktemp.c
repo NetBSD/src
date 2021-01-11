@@ -1,4 +1,4 @@
-/* $NetBSD: t_mktemp.c,v 1.3 2020/11/01 18:19:54 gson Exp $ */
+/* $NetBSD: t_mktemp.c,v 1.4 2021/01/11 20:31:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2013, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mktemp.c,v 1.3 2020/11/01 18:19:54 gson Exp $");
+__RCSID("$NetBSD: t_mktemp.c,v 1.4 2021/01/11 20:31:34 christos Exp $");
 
 #include <sys/stat.h>
 
@@ -79,10 +79,17 @@ ATF_TC_HEAD(mktemp_large_template, tc)
 ATF_TC_BODY(mktemp_large_template, tc)
 {
 	const char *path = "/tmp/mktemp.XXXXXX";
-	char template[PATH_MAX] = { 0 };
+	char *template;
 	size_t i;
+	long name_max;
+	size_t tlen;
 
-	atf_tc_expect_fail("PR lib/55441");
+	name_max = pathconf("/tmp/", _PC_NAME_MAX);
+	ATF_REQUIRE(name_max > 0);
+
+	tlen = (size_t)name_max + sizeof("/tmp/");
+	template = malloc(tlen);
+	ATF_REQUIRE(template != NULL);
 
 	ATF_REQUIRE(strcpy(template, path) != NULL);
 	ATF_REQUIRE(mktemp(template) != NULL);
@@ -90,16 +97,17 @@ ATF_TC_BODY(mktemp_large_template, tc)
 	ATF_REQUIRE(strcmp(template, path) != 0);
 	ATF_REQUIRE(strncmp(template, "/tmp/mktemp.", 12) == 0);
 
-	(void)memset(template, '\0', sizeof(template));
+	(void)memset(template, '\0', tlen);
 	(void)strcpy(template, "/tmp/mktemp.");
 
-	for (i = 12; i < sizeof(template) - 1; i++)
+	for (i = 12; i < tlen - 1; i++)
 		template[i] = 'X';
 
 	ATF_REQUIRE(mktemp(template) != NULL);
-	ATF_REQUIRE(strlen(template) == sizeof(template) - 1);
+	ATF_REQUIRE(strlen(template) == tlen - 1);
 	ATF_REQUIRE(strcmp(template, path) != 0);
 	ATF_REQUIRE(strncmp(template, "/tmp/mktemp.", 12) == 0);
+	free(template);
 }
 
 ATF_TC(mkstemp_basic);
