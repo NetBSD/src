@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.14 2008/08/11 21:51:14 skrll Exp $	*/
+/*	$NetBSD: ras.h,v 1.15 2021/01/11 21:51:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004, 2007 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ __END_DECLS
 
 /*
  * RAS_START_ASM and RAS_END_ASM are for use within assembly code.
- * This is the prefered method of coding a RAS.
+ * This is the preferred method of coding a RAS.
  */
 #define	RAS_START_ASM(name)						\
 	.globl _C_LABEL(__CONCAT(name,_ras_start))	 _ASM_LS_CHAR	\
