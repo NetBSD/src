@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.25 2020/12/11 03:00:09 thorpej Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.26 2021/01/11 02:18:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.25 2020/12/11 03:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.26 2021/01/11 02:18:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.25 2020/12/11 03:00:09 thorpej Ex
 #include <sys/sha1.h>		/* for boot seed checksum */
 #include <sys/stdint.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/xcall.h>
@@ -1026,7 +1027,7 @@ entropy_do_consolidate(void)
 	E->pending -= diff;
 	if (__predict_false(E->needed > 0)) {
 		if (ratecheck(&lasttime, &interval))
-			printf("entropy: WARNING:"
+			log(LOG_DEBUG, "entropy: WARNING:"
 			    " consolidating less than full entropy\n");
 	}
 
