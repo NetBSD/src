@@ -121,6 +121,8 @@ __RCSID("NetBSD: sys-bsd.c,v 1.68 2013/06/24 20:43:48 christos Exp ");
 #endif
 #include <ifaddrs.h>
 
+#ifdef INET6
+
 #define s6_addr32 __u6_addr.__u6_addr32	/* Non-standard */
 
 #define IN6_SOCKADDR_FROM_EUI64(s, eui64) do { \
@@ -146,8 +148,10 @@ __RCSID("NetBSD: sys-bsd.c,v 1.68 2013/06/24 20:43:48 christos Exp ");
 	sin6.s6_addr16[0] = htons(0xfe80);			\
 	eui64_copy(eui64, sin6.s6_addr32[2]);			\
 } while (/*CONSTCOND*/0)
-#endif
-#endif
+#endif /* __KAME__ */
+#endif /* IN6_LLADDR_FROM_EUI64 */
+
+#endif /* INET6 */
 
 #if RTM_VERSION >= 3
 #include <sys/param.h>
@@ -201,8 +205,9 @@ static int if6_is_up;		/* the interface is currently up */
 #endif /* INET6 */
 static u_int32_t ifaddrs[2];	/* local and remote addresses we set */
 static u_int32_t default_route_gateway;	/* gateway addr for default route */
-static eui64_t  default_route_gateway6; /* Gateway for default IPv6 route added
-*/ 
+#ifdef INET6
+static eui64_t  default_route_gateway6; /* Gateway for default IPv6 route added */
+#endif /* INET6 */
 static u_int32_t proxy_arp_addr;	/* remote addr for proxy arp */
 
 /* Prototypes for procedures local to this file. */
@@ -307,8 +312,10 @@ sys_cleanup(void)
 	cifaddr(0, ifaddrs[0], ifaddrs[1]);
     if (default_route_gateway)
 	cifdefaultroute(0, 0, default_route_gateway);
+#ifdef INET6
     if (default_route_gateway6.e32[0] != 0 || default_route_gateway6.e32[1] != 0)
 	cif6defaultroute(0, default_route_gateway6, default_route_gateway6);
+#endif
     if (proxy_arp_addr)
 	cifproxyarp(0, proxy_arp_addr);
     doing_cleanup = 0;
@@ -1659,6 +1666,7 @@ dodefaultroute(u_int32_t g, int cmd)
 }
 
 
+#ifdef INET6
 /*
  * dodefaultroute - assign/clear a default route through the address given.
  */
@@ -1724,6 +1732,8 @@ cif6defaultroute(int u, eui64_t l, eui64_t g)
 {
 	return dodefaultroute6(u, l, g, 'c');
 }
+
+#endif
 
 #if RTM_VERSION >= 3
 
