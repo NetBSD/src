@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.44 2020/12/25 12:33:03 skrll Exp $ */
+/* $NetBSD: siisata.c,v 1.45 2021/01/11 16:48:03 skrll Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.44 2020/12/25 12:33:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.45 2021/01/11 16:48:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -561,7 +561,7 @@ siisata_intr_port(struct siisata_channel *schp)
 			 * We don't expect the recovery to trigger error,
 			 * but handle this just in case.
 			 */
-			if (!ISSET(chp->ch_flags, ATACH_RECOVERING)) 
+			if (!ISSET(chp->ch_flags, ATACH_RECOVERING))
 				recover = true;
 			else {
 				aprint_error_dev(sc->sc_atac.atac_dev,
@@ -841,7 +841,7 @@ siisata_probe_drive(struct ata_channel *chp)
 		}
 		if (timed_out) {
 			aprint_error_dev(sc->sc_atac.atac_dev,
-			    "timed out waiting for PORT_READY on port %d, " 
+			    "timed out waiting for PORT_READY on port %d, "
 			    "reinitializing\n", chp->ch_channel);
 			if (siisata_reinit_port(chp, -1))
 				siisata_reset_channel(chp, AT_WAIT);
