@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.62 2021/01/11 22:01:14 skrll Exp $      */
+/*      $NetBSD: xenevt.c,v 1.63 2021/01/11 22:02:28 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.62 2021/01/11 22:01:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.63 2021/01/11 22:02:28 skrll Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -158,7 +158,7 @@ static evtchn_port_t xenevt_alloc_event(void)
 	op.u.alloc_unbound.dom = DOMID_SELF;
 	op.u.alloc_unbound.remote_dom = DOMID_SELF;
 	if (HYPERVISOR_event_channel_op(&op) != 0)
-		panic("%s: Failed to allocate loopback event\n", __func__);	
+		panic("%s: Failed to allocate loopback event\n", __func__);
 
 	return op.u.alloc_unbound.port;
 }
@@ -604,7 +604,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	case IOCTL_EVTCHN_UNBIND:
 	{
 		struct ioctl_evtchn_unbind *unbind = addr;
-		
+
 		if (unbind->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
@@ -625,7 +625,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	case IOCTL_EVTCHN_NOTIFY:
 	{
 		struct ioctl_evtchn_notify *notify = addr;
-		
+
 		if (notify->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
@@ -645,11 +645,11 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	return 0;
 }
 
-/*      
- * Support for poll() system call  
+/*
+ * Support for poll() system call
  *
  * Return true if the specific operation will not block indefinitely.
- */      
+ */
 
 static int
 xenevt_fpoll(struct file *fp, int events)
