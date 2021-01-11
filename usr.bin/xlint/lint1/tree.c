@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.149 2021/01/11 19:29:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.150 2021/01/11 20:04:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.149 2021/01/11 19:29:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.150 2021/01/11 20:04:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1037,33 +1037,10 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 	return true;
 }
 
-/*
- * Perform most type checks. First the types are checked using
- * the information from modtab[]. After that it is done by hand for
- * more complicated operators and type combinations.
- *
- * If the types are ok, typeok() returns 1, otherwise 0.
- */
-bool
-typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
+/* Check the types using the information from modtab[]. */
+static bool
+typeok_scalar(op_t op, const mod_t *mp, tspec_t lt, tspec_t rt)
 {
-	mod_t	*mp;
-	tspec_t	lt, rt;
-	type_t	*ltp, *rtp;
-
-	mp = &modtab[op];
-
-	lint_assert((ltp = ln->tn_type) != NULL);
-	lt = ltp->t_tspec;
-
-	if (mp->m_binary) {
-		lint_assert((rtp = rn->tn_type) != NULL);
-		rt = rtp->t_tspec;
-	} else {
-		rtp = NULL;
-		rt = NOTSPEC;
-	}
-
 	if (mp->m_requires_integer) {
 		if (!is_integer(lt) || (mp->m_binary && !is_integer(rt))) {
 			warn_incompatible_types(op, lt, rt);
@@ -1087,7 +1064,15 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 			return false;
 		}
 	}
+	return true;
+}
 
+/* Check the types for specific operators and type combinations. */
+static bool
+typeok_op(op_t op, const mod_t *mp, int arg,
+	  const tnode_t *ln, const type_t *ltp, tspec_t lt,
+	  const tnode_t *rn, const type_t *rtp, tspec_t rt)
+{
 	switch (op) {
 	case POINT:
 		/*
@@ -1239,18 +1224,54 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	case IMAG:
 		break;
 	}
+	return true;
+}
 
+static void
+typeok_enum(op_t op, const mod_t *mp, int arg,
+	    const tnode_t *ln, const type_t *ltp,
+	    const tnode_t *rn, const type_t *rtp)
+{
 	if (mp->m_bad_on_enum &&
 	    (ltp->t_isenum || (mp->m_binary && rtp->t_isenum))) {
 		check_bad_enum_operation(op, ln, rn);
 	} else if (mp->m_valid_on_enum &&
-	    (ltp->t_isenum && rtp && rtp->t_isenum)) {
+		   (ltp->t_isenum && rtp && rtp->t_isenum)) {
 		check_enum_type_mismatch(op, arg, ln, rn);
 	} else if (mp->m_valid_on_enum &&
-	    (ltp->t_isenum || (rtp && rtp->t_isenum))) {
+		   (ltp->t_isenum || (rtp && rtp->t_isenum))) {
 		check_enum_int_mismatch(op, arg, ln, rn);
 	}
+}
 
+/* Perform most type checks. Return whether the types are ok. */
+bool
+typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
+{
+	mod_t	*mp;
+	tspec_t	lt, rt;
+	type_t	*ltp, *rtp;
+
+	mp = &modtab[op];
+
+	lint_assert((ltp = ln->tn_type) != NULL);
+	lt = ltp->t_tspec;
+
+	if (mp->m_binary) {
+		lint_assert((rtp = rn->tn_type) != NULL);
+		rt = rtp->t_tspec;
+	} else {
+		rtp = NULL;
+		rt = NOTSPEC;
+	}
+
+	if (!typeok_scalar(op, mp, lt, rt))
+		return false;
+
+	if (!typeok_op(op, mp, arg, ln, ltp, lt, rn, rtp, rt))
+		return false;
+
+	typeok_enum(op, mp, arg, ln, ltp, rn, rtp);
 	return true;
 }
 
