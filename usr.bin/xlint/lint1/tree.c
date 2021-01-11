@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.148 2021/01/10 12:46:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.149 2021/01/11 19:29:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.148 2021/01/10 12:46:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.149 2021/01/11 19:29:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -51,17 +51,23 @@ __RCSID("$NetBSD: tree.c,v 1.148 2021/01/10 12:46:38 rillig Exp $");
 #include "cgram.h"
 
 static	tnode_t	*new_integer_constant_node(tspec_t, int64_t);
-static	void	check_pointer_comparison(op_t, tnode_t *, tnode_t *);
-static	int	check_assign_types_compatible(op_t, int, tnode_t *, tnode_t *);
-static	void	check_bad_enum_operation(op_t, tnode_t *, tnode_t *);
-static	void	check_enum_type_mismatch(op_t, int, tnode_t *, tnode_t *);
-static	void	check_enum_int_mismatch(op_t, int, tnode_t *, tnode_t *);
+static	void	check_pointer_comparison(op_t,
+					 const tnode_t *, const tnode_t *);
+static	int	check_assign_types_compatible(op_t, int,
+					      const tnode_t *, const tnode_t *);
+static	void	check_bad_enum_operation(op_t,
+					 const tnode_t *, const tnode_t *);
+static	void	check_enum_type_mismatch(op_t, int,
+				         const tnode_t *, const tnode_t *);
+static	void	check_enum_int_mismatch(op_t, int,
+					const tnode_t *, const tnode_t *);
 static	tnode_t	*new_tnode(op_t, type_t *, tnode_t *, tnode_t *);
 static	void	balance(op_t, tnode_t **, tnode_t **);
 static	void	warn_incompatible_types(op_t, tspec_t, tspec_t);
-static	void	warn_incompatible_pointers(mod_t *, type_t *, type_t *);
+static	void	warn_incompatible_pointers(const mod_t *,
+					   const type_t *, const type_t *);
 static	void	merge_qualifiers(type_t **, type_t *, type_t *);
-static	int	has_constant_member(type_t *);
+static	bool	has_constant_member(const type_t *);
 static	void	check_prototype_conversion(int, tspec_t, tspec_t, type_t *,
 					   tnode_t *);
 static	void	check_integer_conversion(op_t, int, tspec_t, tspec_t, type_t *,
@@ -83,8 +89,8 @@ static	tnode_t	*fold_test(tnode_t *);
 static	tnode_t	*fold_float(tnode_t *);
 static	tnode_t	*check_function_arguments(type_t *, tnode_t *);
 static	tnode_t	*check_prototype_argument(int, type_t *, tnode_t *);
-static	void	check_null_effect(tnode_t *);
-static	void	display_expression(tnode_t *, int);
+static	void	check_null_effect(const tnode_t *);
+static	void	display_expression(const tnode_t *, int);
 static	void	check_array_index(tnode_t *, int);
 static	void	check_integer_comparison(op_t, tnode_t *, tnode_t *);
 static	void	check_precedence_confusion(tnode_t *);
@@ -687,13 +693,13 @@ cconv(tnode_t *tn)
 }
 
 static bool
-typeok_incdec(mod_t *const mp, tnode_t *const ln, type_t *const ltp)
+typeok_incdec(const mod_t *mp, const tnode_t *tn, const type_t *tp)
 {
 	/* operand has scalar type (checked in typeok) */
-	if (!ln->tn_lvalue) {
-		if (ln->tn_op == CVT && ln->tn_cast &&
-		    ln->tn_left->tn_op == LOAD) {
-			if (ln->tn_type->t_tspec == PTR)
+	if (!tn->tn_lvalue) {
+		if (tn->tn_op == CVT && tn->tn_cast &&
+		    tn->tn_left->tn_op == LOAD) {
+			if (tn->tn_type->t_tspec == PTR)
 				return true;
 			/* a cast does not yield an lvalue */
 			error(163);
@@ -701,7 +707,7 @@ typeok_incdec(mod_t *const mp, tnode_t *const ln, type_t *const ltp)
 		/* %soperand of '%s' must be lvalue */
 		error(114, "", mp->m_name);
 		return false;
-	} else if (ltp->t_const) {
+	} else if (tp->t_const) {
 		if (!tflag)
 			/* %soperand of '%s' must be modifiable ... */
 			warning(115, "", mp->m_name);
@@ -710,15 +716,15 @@ typeok_incdec(mod_t *const mp, tnode_t *const ln, type_t *const ltp)
 }
 
 static bool
-typeok_amper(mod_t *const mp,
-	     tnode_t *const ln, type_t *const ltp, tspec_t const lt)
+typeok_amper(const mod_t *mp,
+	     const tnode_t *tn, const type_t *tp, tspec_t t)
 {
-	if (lt == ARRAY || lt == FUNC) {
+	if (t == ARRAY || t == FUNC) {
 		/* ok, a warning comes later (in build_ampersand()) */
-	} else if (!ln->tn_lvalue) {
-		if (ln->tn_op == CVT && ln->tn_cast &&
-		    ln->tn_left->tn_op == LOAD) {
-			if (ln->tn_type->t_tspec == PTR)
+	} else if (!tn->tn_lvalue) {
+		if (tn->tn_op == CVT && tn->tn_cast &&
+		    tn->tn_left->tn_op == LOAD) {
+			if (tn->tn_type->t_tspec == PTR)
 				return true;
 			/* a cast does not yield an lvalue */
 			error(163);
@@ -726,30 +732,30 @@ typeok_amper(mod_t *const mp,
 		/* %soperand of '%s' must be lvalue */
 		error(114, "", mp->m_name);
 		return false;
-	} else if (is_scalar(lt)) {
-		if (ltp->t_bitfield) {
+	} else if (is_scalar(t)) {
+		if (tp->t_bitfield) {
 			/* cannot take address of bit-field */
 			error(112);
 			return false;
 		}
-	} else if (lt != STRUCT && lt != UNION) {
+	} else if (t != STRUCT && t != UNION) {
 		/* unacceptable operand of '%s' */
 		error(111, mp->m_name);
 		return false;
 	}
-	if (ln->tn_op == NAME && ln->tn_sym->s_reg) {
+	if (tn->tn_op == NAME && tn->tn_sym->s_reg) {
 		/* cannot take address of register %s */
-		error(113, ln->tn_sym->s_name);
+		error(113, tn->tn_sym->s_name);
 		return false;
 	}
 	return true;
 }
 
 static bool
-typeok_star(tspec_t lt)
+typeok_star(tspec_t t)
 {
 	/* until now there were no type checks for this operator */
-	if (lt != PTR) {
+	if (t != PTR) {
 		/* cannot dereference non-pointer type */
 		error(96);
 		return false;
@@ -769,7 +775,9 @@ typeok_plus(op_t op, tspec_t lt, tspec_t rt)
 }
 
 static bool
-typeok_minus(op_t op, type_t *ltp, tspec_t lt, type_t *rtp, tspec_t rt)
+typeok_minus(op_t op,
+	     const type_t *ltp, tspec_t lt,
+	     const type_t *rtp, tspec_t rt)
 {
 	/* operands have scalar types (checked above) */
 	if (lt == PTR && (!is_integer(rt) && rt != PTR)) {
@@ -797,7 +805,9 @@ before_promotion_and_balancing(const tnode_t *tn)
 }
 
 static void
-typeok_shr(mod_t *mp, tnode_t *ln, tspec_t lt, tnode_t *rn, tspec_t rt)
+typeok_shr(const mod_t *mp,
+	   const tnode_t *ln, tspec_t lt,
+	   const tnode_t *rn, tspec_t rt)
 {
 	tspec_t olt, ort;
 
@@ -842,7 +852,7 @@ typeok_shr(mod_t *mp, tnode_t *ln, tspec_t lt, tnode_t *rn, tspec_t rt)
 }
 
 static void
-typeok_shl(mod_t *mp, tspec_t lt, tspec_t rt) {
+typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt) {
 	/*
 	 * ANSI C does not perform balancing for shift operations,
 	 * but traditional C does. If the width of the right operand
@@ -864,7 +874,7 @@ typeok_shl(mod_t *mp, tspec_t lt, tspec_t rt) {
 }
 
 static void
-typeok_shift(tspec_t lt, tnode_t *rn, tspec_t rt)
+typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
 	if (rn->tn_op == CON) {
 		if (!is_uinteger(rt) && rn->tn_val->v_quad < 0) {
@@ -881,7 +891,7 @@ typeok_shift(tspec_t lt, tnode_t *rn, tspec_t rt)
 }
 
 static bool
-typeok_eq(tnode_t *ln, tspec_t lt, tnode_t *rn, tspec_t rt)
+typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
 	if (lt == PTR && ((rt == PTR && rn->tn_type->t_tspec == VOID) ||
 			  is_integer(rt))) {
@@ -897,9 +907,9 @@ typeok_eq(tnode_t *ln, tspec_t lt, tnode_t *rn, tspec_t rt)
 }
 
 static bool
-typeok_ordered_comparison(op_t op, mod_t *mp,
-			  tnode_t *ln, type_t *ltp, tspec_t lt,
-			  tnode_t *rn, type_t *rtp, tspec_t rt)
+typeok_ordered_comparison(op_t op, const mod_t *mp,
+			  const tnode_t *ln, const type_t *ltp, tspec_t lt,
+			  const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
 	if ((lt == PTR || rt == PTR) && lt != rt) {
 		if (is_integer(lt) || is_integer(rt)) {
@@ -921,7 +931,7 @@ typeok_ordered_comparison(op_t op, mod_t *mp,
 }
 
 static bool
-typeok_quest(tspec_t lt, tnode_t **rn)
+typeok_quest(tspec_t lt, const tnode_t **rn)
 {
 	if (!is_scalar(lt)) {
 		/* first operand must have scalar type, op ? : */
@@ -935,9 +945,9 @@ typeok_quest(tspec_t lt, tnode_t **rn)
 }
 
 static bool
-typeok_colon(mod_t *mp,
-	     tnode_t *ln, type_t *ltp, tspec_t lt,
-	     tnode_t *rn, type_t *rtp, tspec_t rt)
+typeok_colon(const mod_t *mp,
+	     const tnode_t *ln, const type_t *ltp, tspec_t lt,
+	     const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
 	type_t *lstp, *rstp;
 	tspec_t lst, rst;
@@ -1005,7 +1015,7 @@ typeok_colon(mod_t *mp,
 }
 
 static bool
-typeok_assign(mod_t *mp, tnode_t *ln, type_t *ltp, tspec_t lt)
+typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 {
 	if (!ln->tn_lvalue) {
 		if (ln->tn_op == CVT && ln->tn_cast &&
@@ -1035,7 +1045,7 @@ typeok_assign(mod_t *mp, tnode_t *ln, type_t *ltp, tspec_t lt)
  * If the types are ok, typeok() returns 1, otherwise 0.
  */
 bool
-typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
 	mod_t	*mp;
 	tspec_t	lt, rt;
@@ -1245,7 +1255,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 }
 
 static void
-check_pointer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
+check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 {
 	type_t	*ltp, *rtp;
 	tspec_t	lt, rt;
@@ -1283,7 +1293,8 @@ check_pointer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
  * If the types are (almost) compatible, 1 is returned, otherwise 0.
  */
 static int
-check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+check_assign_types_compatible(op_t op, int arg,
+			      const tnode_t *ln, const tnode_t *rn)
 {
 	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
@@ -1431,7 +1442,7 @@ check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
  * enum type, is applied to an enum type.
  */
 static void
-check_bad_enum_operation(op_t op, tnode_t *ln, tnode_t *rn)
+check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 {
 	mod_t	*mp;
 
@@ -1464,7 +1475,7 @@ check_bad_enum_operation(op_t op, tnode_t *ln, tnode_t *rn)
  * Prints a warning if an operator is applied to two different enum types.
  */
 static void
-check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
 	mod_t	*mp;
 
@@ -1502,7 +1513,7 @@ check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
  * types.
  */
 static void
-check_enum_int_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
 
 	if (!eflag)
@@ -2303,7 +2314,8 @@ warn_incompatible_types(op_t op, tspec_t lt, tspec_t rt)
  * Print an appropriate warning.
  */
 static void
-warn_incompatible_pointers(mod_t *mp, type_t *ltp, type_t *rtp)
+warn_incompatible_pointers(const mod_t *mp,
+			   const type_t *ltp, const type_t *rtp)
 {
 	tspec_t	lt, rt;
 
@@ -2364,8 +2376,8 @@ merge_qualifiers(type_t **tpp, type_t *tp1, type_t *tp2)
  * Returns 1 if the given structure or union has a constant member
  * (maybe recursively).
  */
-static int
-has_constant_member(type_t *tp)
+static bool
+has_constant_member(const type_t *tp)
 {
 	sym_t	*m;
 	tspec_t	t;
@@ -2375,13 +2387,13 @@ has_constant_member(type_t *tp)
 	for (m = tp->t_str->memb; m != NULL; m = m->s_next) {
 		tp = m->s_type;
 		if (tp->t_const)
-			return 1;
+			return true;
 		if ((t = tp->t_tspec) == STRUCT || t == UNION) {
 			if (has_constant_member(m->s_type))
-				return 1;
+				return true;
 		}
 	}
-	return 0;
+	return false;
 }
 
 /*
@@ -3571,7 +3583,7 @@ expr(tnode_t *tn, int vctx, int tctx, int dofreeblk)
 }
 
 static void
-check_null_effect(tnode_t *tn)
+check_null_effect(const tnode_t *tn)
 {
 
 	if (!hflag)
@@ -3618,7 +3630,7 @@ check_null_effect(tnode_t *tn)
  * only used for debugging
  */
 static void
-display_expression(tnode_t *tn, int offs)
+display_expression(const tnode_t *tn, int offs)
 {
 	uint64_t uq;
 
@@ -3675,8 +3687,8 @@ display_expression(tnode_t *tn, int offs)
  */
 /* ARGSUSED */
 void
-check_expr_misc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
-	int szof)
+check_expr_misc(const tnode_t *tn, int vctx, int tctx,
+		int eqwarn, int fcall, int rvdisc, int szof)
 {
 	tnode_t	*ln, *rn;
 	mod_t	*mp;
