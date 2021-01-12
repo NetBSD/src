@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.6 2021/01/07 16:03:08 joerg Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.6 2021/01/07 16:03:08 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -62,7 +62,7 @@ void usage(void)
 	exit(1);
 }
 
-#if HAVE_NBTOOL_CONFIG_H && !defined(__NetBSD__)
+#if HAVE_NBTOOL_CONFIG_H
 #define	arc4random() rand()
 #endif
 
