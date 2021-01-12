@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.65 2021/01/09 17:21:33 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.66 2021/01/12 20:42:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.65 2021/01/09 17:21:33 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.66 2021/01/12 20:42:01 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -389,6 +389,14 @@ const	char *msgs[] = {
 	"declarations after statements is a C9X feature",	      /* 327 */
 	"union cast is a C9X feature",				      /* 328 */
 	"type '%s' is not a member of '%s'",			      /* 329 */
+	"operand of '%s' must be bool, not '%s'",		      /* 330 */
+	"left operand of '%s' must be bool, not '%s'",		      /* 331 */
+	"right operand of '%s' must be bool, not '%s'",		      /* 332 */
+	"controlling expression must be bool, not '%s'",	      /* 333 */
+	"argument #%d expects '%s', gets passed '%s'",		      /* 334 */
+	"operand of '%s' must not be bool",			      /* 335 */
+	"left operand of '%s' must not be bool",		      /* 336 */
+	"right operand of '%s' must not be bool",		      /* 337 */
 };
 
 /*

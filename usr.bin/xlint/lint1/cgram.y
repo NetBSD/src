@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.138 2021/01/10 14:07:34 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.139 2021/01/12 20:42:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.138 2021/01/10 14:07:34 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.139 2021/01/12 20:42:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2097,6 +2097,11 @@ toicon(tnode_t *tn, int required)
 
 	v = constant(tn, required);
 
+	if (tn == NULL) {
+		i = 1;
+		goto done;
+	}
+
 	/*
 	 * Abstract declarations are used inside expression. To free
 	 * the memory would be a fatal error.
@@ -2126,6 +2131,8 @@ toicon(tnode_t *tn, int required)
 			}
 		}
 	}
+
+done:
 	free(v);
 	return i;
 }

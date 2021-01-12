@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.10 2021/01/04 22:26:51 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.11 2021/01/12 20:42:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.10 2021/01/04 22:26:51 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.11 2021/01/12 20:42:01 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -68,6 +68,7 @@ int	pflag;
  */
 int	sflag;
 
+bool	Tflag;
 int	tflag;
 
 /*
@@ -100,10 +101,13 @@ main(int argc, char *argv[])
 	libs = xcalloc(1, sizeof (char *));
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "hpstxuC:HFl:")) != -1) {
+	while ((c = getopt(argc, argv, "hpstxuC:HTFl:")) != -1) {
 		switch (c) {
 		case 's':
 			sflag = 1;
+			break;
+		case 'T':
+			Tflag = true;
 			break;
 		case 't':
 			tflag = 1;
