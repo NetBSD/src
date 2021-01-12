@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.12 2021/01/04 01:12:20 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.13 2021/01/12 20:42:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -35,6 +35,8 @@
  * main[12].c
  */
 extern	int	pflag;
+/* Treat _Bool as incompatible to all other scalar types. */
+extern	bool	Tflag;
 
 /*
  * inittyp.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.150 2021/01/11 20:04:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.151 2021/01/12 20:42:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.150 2021/01/11 20:04:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.151 2021/01/12 20:42:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -603,7 +603,8 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		ntn = build_real_imag(op, ln);
 		break;
 	default:
-		rtp = mp->m_logical ? gettyp(INT) : ln->tn_type;
+		rtp = mp->m_returns_bool
+		    ? gettyp(Tflag ? BOOL : INT) : ln->tn_type;
 		lint_assert(mp->m_binary || rn == NULL);
 		ntn = new_tnode(op, rtp, ln, rn);
 		break;
@@ -690,6 +691,61 @@ cconv(tnode_t *tn)
 	}
 
 	return tn;
+}
+
+static const tnode_t *
+before_conversion(const tnode_t *tn)
+{
+	while (tn->tn_op == CVT && !tn->tn_cast)
+		tn = tn->tn_left;
+	return tn;
+}
+
+static bool
+is_strict_bool_constant(const tnode_t *tn)
+{
+	tspec_t t;
+
+	tn = before_conversion(tn);
+	t = tn->tn_type->t_tspec;
+
+	if (t == BOOL)
+		return true;
+
+	return t == INT && tn->tn_op == CON &&
+	       (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1);
+}
+
+/* In strict bool mode, see if the node's type is compatible with bool. */
+bool
+is_strict_bool(const tnode_t *tn)
+{
+	tspec_t t;
+
+	tn = before_conversion(tn);
+	t = tn->tn_type->t_tspec;
+
+	if (t == BOOL)
+		return true;
+
+	if (t == INT && tn->tn_op == CON &&
+	    (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1))
+		return true;
+
+	/* For enums that are used as bit sets, allow "flags & FLAG". */
+	if (tn->tn_op == AND &&
+	    tn->tn_left->tn_op == CVT &&
+	    tn->tn_left->tn_type->t_tspec == INT && !tn->tn_left->tn_cast &&
+	    tn->tn_left->tn_left->tn_type->t_tspec == ENUM &&
+	    /*
+	     * XXX: Somehow the type information got lost here.  The type
+	     * of the enum constant on the right-hand side should still be
+	     * ENUM, but is INT.
+	     */
+	    tn->tn_right->tn_type->t_tspec == INT)
+		return true;
+
+	return false;
 }
 
 static bool
@@ -796,14 +852,6 @@ typeok_minus(op_t op,
 	return true;
 }
 
-static const tnode_t *
-before_promotion_and_balancing(const tnode_t *tn)
-{
-	while (tn->tn_op == CVT && !tn->tn_cast)
-		tn = tn->tn_left;
-	return tn;
-}
-
 static void
 typeok_shr(const mod_t *mp,
 	   const tnode_t *ln, tspec_t lt,
@@ -811,8 +859,8 @@ typeok_shr(const mod_t *mp,
 {
 	tspec_t olt, ort;
 
-	olt = before_promotion_and_balancing(ln)->tn_type->t_tspec;
-	ort = before_promotion_and_balancing(rn)->tn_type->t_tspec;
+	olt = before_conversion(ln)->tn_type->t_tspec;
+	ort = before_conversion(rn)->tn_type->t_tspec;
 
 	/* operands have integer types (checked above) */
 	if (pflag && !is_uinteger(lt)) {
@@ -1037,9 +1085,125 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 	return true;
 }
 
+/*
+ * For assignment operators in strict bool mode, the type check is stricter
+ * than for operators that compare to 0.  Code that passes this strict check
+ * can be compiled in a pre-C99 environment that doesn't implement the
+ * special rule C99 6.3.1.2, without silent change in behavior.
+ */
+static bool
+typeok_strict_bool_assign(op_t op, int arg,
+			  const tnode_t *ln, tspec_t lt,
+			  const tnode_t *rn, tspec_t rt)
+{
+	if ((lt == BOOL) == (rt == BOOL))
+		return true;
+
+	if (lt == BOOL && is_strict_bool_constant(rn))
+		return true;
+
+	if (op == FARG) {
+		/* argument #%d expects '%s', gets passed '%s' */
+		error(334,
+		    arg,
+		    tspec_name(ln->tn_type->t_tspec),
+		    tspec_name(rn->tn_type->t_tspec));
+	} else if (op == RETURN) {
+		/* return value type mismatch (%s) and (%s) */
+		error(211,
+		    type_name(ln->tn_type),
+		    type_name(rn->tn_type));
+		return false;
+	} else {
+		/* operands of '%s' have incompatible types (%s != %s) */
+		error(107,
+		    getopname(op),
+		    tspec_name(ln->tn_type->t_tspec),
+		    tspec_name(rn->tn_type->t_tspec));
+	}
+
+	return false;
+}
+
+/*
+ * In strict bool mode, check whether the types of the operands match the
+ * operator.
+ */
+static bool
+typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
+			  const tnode_t *ln,
+			  const tnode_t *rn)
+
+{
+	tspec_t lt, rt;
+
+	ln = before_conversion(ln);
+	lt = ln->tn_type->t_tspec;
+
+	if (rn != NULL) {
+		rn = before_conversion(rn);
+		rt = rn->tn_type->t_tspec;
+	} else {
+		rt = NOTSPEC;
+	}
+
+	if (op == ASSIGN || op == FARG || op == RETURN || op == COLON)
+		return typeok_strict_bool_assign(op, arg, ln, lt, rn, rt);
+
+	if (mp->m_takes_only_bool || op == QUEST) {
+		bool binary = mp->m_binary;
+		bool lbool = is_strict_bool(ln);
+		bool ok = true;
+
+		if (!binary && !lbool) {
+			/* operand of '%s' must be bool, not '%s' */
+			error(330, getopname(op), tspec_name(lt));
+			ok = false;
+		}
+		if (binary && !lbool) {
+			/* left operand of '%s' must be bool, not '%s' */
+			error(331, getopname(op), tspec_name(lt));
+			ok = false;
+		}
+		if (binary && op != QUEST && !is_strict_bool(rn)) {
+			/* right operand of '%s' must be bool, not '%s' */
+			error(332, getopname(op), tspec_name(rt));
+			ok = false;
+		}
+		return ok;
+	}
+
+	if (!mp->m_takes_bool) {
+		bool binary = mp->m_binary;
+		bool lbool = before_conversion(ln)->tn_type->t_tspec == BOOL;
+		bool ok = true;
+
+		if (!binary && lbool) {
+			/* operand of '%s' must not be bool */
+			error(335, getopname(op));
+			ok = false;
+		}
+		if (binary && lbool) {
+			/* left operand of '%s' must not be bool */
+			error(336, getopname(op));
+			ok = false;
+		}
+		if (binary && before_conversion(rn)->tn_type->t_tspec == BOOL) {
+			/* right operand of '%s' must not be bool */
+			error(337, getopname(op));
+			ok = false;
+		}
+		return ok;
+	}
+
+	return true;
+}
+
 /* Check the types using the information from modtab[]. */
 static bool
-typeok_scalar(op_t op, const mod_t *mp, tspec_t lt, tspec_t rt)
+typeok_scalar(op_t op, const mod_t *mp,
+	      const tnode_t *ln, tspec_t lt,
+	      const tnode_t *rn, tspec_t rt)
 {
 	if (mp->m_requires_integer) {
 		if (!is_integer(lt) || (mp->m_binary && !is_integer(rt))) {
@@ -1265,7 +1429,9 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 		rt = NOTSPEC;
 	}
 
-	if (!typeok_scalar(op, mp, lt, rt))
+	if (Tflag && !typeok_scalar_strict_bool(op, mp, arg, ln, rn))
+		return false;
+	if (!typeok_scalar(op, mp, ln, lt, rn, rt))
 		return false;
 
 	if (!typeok_op(op, mp, arg, ln, ltp, lt, rn, rtp, rt))
@@ -2980,7 +3146,7 @@ fold_test(tnode_t *tn)
 
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = tn->tn_type->t_tspec;
-	lint_assert(tn->tn_type->t_tspec == INT);
+	lint_assert(v->v_tspec == INT || (Tflag && v->v_tspec == BOOL));
 
 	if (is_floating(tn->tn_left->tn_type->t_tspec)) {
 		l = tn->tn_left->tn_val->v_ldbl != 0.0;
@@ -3522,6 +3688,8 @@ constant(tnode_t *tn, int required)
 
 	if (tn == NULL) {
 		lint_assert(nerr != 0);
+		if (dflag)
+			printf("constant node is null; returning 1 instead\n");
 		v->v_tspec = INT;
 		v->v_quad = 1;
 		return v;

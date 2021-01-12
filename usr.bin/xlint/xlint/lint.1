@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.41 2020/05/24 09:55:43 wiz Exp $
+.\" $NetBSD: lint.1,v 1.42 2021/01/12 20:42:01 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 23, 2020
+.Dd Jan 12, 2021
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd a C program verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl abceFgHhPprVvwxz
+.Op Fl abceFgHhPprTVvwxz
 .Op Fl i | Fl nu
 .Op Fl S | Fl s | Fl t
 .Op Fl B Ar directory
@@ -54,7 +54,7 @@
 .Op Fl Z Ar cpparg
 .Ar
 .Nm lint
-.Op Fl abceFgHhprVvwz
+.Op Fl abceFgHhprTVvwz
 .Op Fl S | Fl s | Fl t
 .Fl C Ar library
 .Op Fl B Ar directory
@@ -369,6 +369,10 @@ With the
 flag,
 .Li __STRICT_ANSI__
 is a predefined preprocessor macro.
+.It Fl T
+Treat
+.Sy _Bool
+as a data type that is incompatible with all other scalar types.
 .It Fl t
 Traditional C mode.
 .Li __STDC__
