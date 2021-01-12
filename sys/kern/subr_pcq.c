@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.11 2019/12/16 18:50:44 ad Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.12 2021/01/12 19:36:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.11 2019/12/16 18:50:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.12 2021/01/12 19:36:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -180,7 +180,7 @@ pcq_get(pcq_t *pcq)
 
 	/*
 	 * Ensure that update to pcq_items[] becomes globally visible
-	 * before the update to pcq_pc.  If it were reodered to occur
+	 * before the update to pcq_pc.  If it were reordered to occur
 	 * after it, we could in theory wipe out a modification made
 	 * to pcq_items[] by pcq_put().
 	 */
