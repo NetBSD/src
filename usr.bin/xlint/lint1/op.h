@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.11 2021/01/09 17:36:10 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.12 2021/01/12 20:42:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,9 @@
  */
 typedef	struct {
 	bool	m_binary : 1;	/* binary operator */
-	bool	m_logical : 1;	/* logical operator, result is int */
+	bool	m_returns_bool : 1; /* logical operator, result is 0 or 1 */
+	bool	m_takes_bool : 1; /* only in strict bool mode */
+	bool	m_takes_only_bool : 1; /* only in strict bool mode */
 	bool	m_requires_integer : 1;
 	bool	m_requires_integer_or_complex : 1;
 	bool	m_requires_arith : 1;
@@ -62,7 +64,7 @@ extern mod_t   modtab[];
 
 #define begin_ops() typedef enum {
 #define op(name, repr, \
-		bi, lo, in, sc, ar, fo, va, ts, ba, se, \
+		bi, lo, tb, to, in, sc, ar, fo, va, ts, ba, se, \
 		lu, ru, pc, cm, ve, de, ew, ic, active) \
 	name,
 #define end_ops() } op_t;

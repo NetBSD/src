@@ -1,9 +1,9 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.3 2021/01/11 00:28:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.4 2021/01/12 20:42:01 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
- * Experimental feature:  allow to treat _Bool as incompatible with all
- * scalar types.  This means:
+ * The option -T treats _Bool as incompatible with all other scalar types.
+ * This means:
  *
  * SB001: Controlling expressions in 'if', 'while', 'for', '?:' must be of
  * type _Bool instead of scalar.
@@ -18,9 +18,9 @@
  *
  * SB005: There is no implicit conversion from _Bool to any other type.
  *
- * SB006: A constant integer expression is compatible with type _Bool if
- * it is an integer constant with value 0 or 1, or if the result type of
- * its main operator is _Bool.
+ * SB006: An expression is compatible with type _Bool if its main operator
+ * returns type _Bool, or if the expression is an integer constant expression
+ * with value 0 or 1.
  *
  * SB007: Expressions like "flags & FLAG" are compatible with _Bool if
  * they appear in a context where they are immediately compared to zero.
@@ -32,7 +32,7 @@
  * typically have type _Bool:1 and can be converted to _Bool and back.
  */
 
-// Not yet implemented: /* lint1-extra-flags: -T */
+/* lint1-extra-flags: -T */
 
 /*
  * The header <stdbool.h> defines the macros bool = _Bool, false = 0 and
@@ -61,23 +61,23 @@ SB001_controlling_expression(bool b, int i, double d, const void *p)
 		return;
 
 	/* Not allowed: 2 is not a boolean expression. */
-	if (/*CONSTCOND*/2)
+	if (/*CONSTCOND*/2)	/* expect: 333 */
 		return;
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (i)
+	if (i)			/* expect: 333 */
 		return;
 	if (i != 0)
 		return;
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (d)
+	if (d)			/* expect: 333 */
 		return;
 	if (d != 0.0)
 		return;
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (p)
+	if (p)			/* expect: 333 */
 		return;
 	if (p != (void *)0)
 		return;
@@ -88,15 +88,15 @@ SB001_controlling_expression(bool b, int i, double d, const void *p)
 }
 
 void
-SB002_operator_result(bool b)
+SB002_operator_result_type(bool b)
 {
 	b = b;
-	char c = b;
-	int i = b;
-	double d = b;
-	void *p = b;
+	char c = b;		/* expect: 107 */
+	int i = b;		/* expect: 107 */
+	double d = b;		/* expect: 107 */
+	void *p = b;		/* expect: 107 */
 
-	/* These assignments are all ok. */
+	/* The right-hand sides of these assignments are all ok. */
 	b = !b;
 	b = i == i;
 	b = i != i;
@@ -108,59 +108,70 @@ SB002_operator_result(bool b)
 	b = b || b;
 
 	/*
-	 * These assignments are not ok, they implicitly convert from bool
-	 * to int.
+	 * The right-hand sides of these assignments are not ok, they
+	 * implicitly convert from bool to int.
 	 */
-	i = !b;
-	i = i == i;
-	i = i != i;
-	i = i < i;
-	i = i <= i;
-	i = i >= i;
-	i = i > i;
-	i = b && b;
-	i = b || b;
+	i = !b;			/* expect: 107 */
+	i = i == i;		/* expect: 107 */
+	i = i != i;		/* expect: 107 */
+	i = i < i;		/* expect: 107 */
+	i = i <= i;		/* expect: 107 */
+	i = i >= i;		/* expect: 107 */
+	i = i > i;		/* expect: 107 */
+	i = b && b;		/* expect: 107 */
+	i = b || b;		/* expect: 107 */
 }
 
-void
+int
 SB003_operands(bool b, int i)
 {
 
-	/* These assignments are ok. */
+	/* The right-hand sides of these assignments are ok. */
 	b = !b;
 	b = b && b;
 	b = b || b;
 
-	/* These assignments implicitly convert from scalar to bool. */
-	b = !i;
-	b = i && i;
-	b = i || i;
+	/*
+	 * The right-hand sides of these assignments implicitly convert from
+	 * scalar to bool.
+	 */
+	b = !i;			/* expect: 330 */
+	b = i && i;		/* expect: 331, 332 */
+	b = i || i;		/* expect: 331, 332 */
+
+	b = b && 0;
+	b = 0 && b;
+	b = b || 0;
+	b = 0 || b;
+
+	return i;
 }
 
+/*ARGSUSED*/
 void
-SB004_non_bool_operands(bool b, unsigned u)
+SB004_operators_and_bool_operands(bool b, unsigned u)
 {
 	b = !b;			/* ok */
-	b = ~b;			/* not ok */
-	++b;			/* not ok */
-	--b;			/* not ok */
-	b++;			/* not ok */
-	b--;			/* not ok */
-	b = +b;			/* not ok */
-	b = -b;			/* not ok */
+	b = ~b;			/* expect: 335 */
+	++b;			/* expect: 335 */
+	--b;			/* expect: 335 */
+	b++;			/* expect: 335 */
+	b--;			/* expect: 335 */
+	b = +b;			/* expect: 335 */
+	b = -b;			/* expect: 335 */
 
-	b = b * b;		/* not ok */
-	b = b / b;		/* not ok */
-	b = b % b;		/* not ok */
-	b = b + b;		/* not ok */
-	b = b - b;		/* not ok */
-	b = b << b;		/* not ok */
-	b = b >> b;		/* not ok */
+	b = b * b;		/* expect: 336, 337 */
+	b = b / b;		/* expect: 336, 337 */
+	b = b % b;		/* expect: 336, 337 */
+	b = b + b;		/* expect: 336, 337 */
+	b = b - b;		/* expect: 336, 337 */
+	b = b << b;		/* expect: 336, 337 */
+	b = b >> b;		/* expect: 336, 337 */
 
-	b = b < b;		/* not ok */
-	b = b <= b;		/* not ok */
-	b = b > b;		/* not ok */
-	b = b >= b;		/* not ok */
+	b = b < b;		/* expect: 336, 337 */
+	b = b <= b;		/* expect: 336, 337 */
+	b = b > b;		/* expect: 336, 337 */
+	b = b >= b;		/* expect: 336, 337 */
 	b = b == b;		/* ok */
 	b = b != b;		/* ok */
 
@@ -172,37 +183,38 @@ SB004_non_bool_operands(bool b, unsigned u)
 	b = b ? b : b;		/* ok */
 
 	b = b;			/* ok */
-	b *= b;			/* not ok */
-	b /= b;			/* not ok */
-	b %= b;			/* not ok */
-	b += b;			/* not ok */
-	b -= b;			/* not ok */
-	b <<= b;		/* not ok */
-	b >>= b;		/* not ok */
+	b *= b;			/* expect: 336, 337 */
+	b /= b;			/* expect: 336, 337 */
+	b %= b;			/* expect: 336, 337 */
+	b += b;			/* expect: 336, 337 */
+	b -= b;			/* expect: 336, 337 */
+	b <<= b;		/* expect: 336, 337 */
+	b >>= b;		/* expect: 336, 337 */
 	b &= b;			/* ok */
 	b ^= b;			/* ok */
 	b |= b;			/* ok */
 
 	/* Operations with mixed types. */
-	u = b * u;		/* not ok */
-	u = u * b;		/* not ok */
-	u = b / u;		/* not ok */
-	u = u / b;		/* not ok */
-	u = b % u;		/* not ok */
-	u = u % b;		/* not ok */
-	u = b + u;		/* not ok */
-	u = u + b;		/* not ok */
-	u = b - u;		/* not ok */
-	u = u - b;		/* not ok */
-	u = b << u;		/* not ok */
-	u = u << b;		/* not ok */
-	u = b >> u;		/* not ok */
-	u = u >> b;		/* not ok */
+	u = b * u;		/* expect: 336 */
+	u = u * b;		/* expect: 337 */
+	u = b / u;		/* expect: 336 */
+	u = u / b;		/* expect: 337 */
+	u = b % u;		/* expect: 336 */
+	u = u % b;		/* expect: 337 */
+	u = b + u;		/* expect: 336 */
+	u = u + b;		/* expect: 337 */
+	u = b - u;		/* expect: 336 */
+	u = u - b;		/* expect: 337 */
+	u = b << u;		/* expect: 336 */
+	u = u << b;		/* expect: 337 */
+	u = b >> u;		/* expect: 336 */
+	u = u >> b;		/* expect: 337 */
 	u = b ? u : u;		/* ok */
-	u = b ? b : u;		/* not ok */
-	u = b ? u : b;		/* not ok */
+	u = b ? b : u;		/* expect: 107 */
+	u = b ? u : b;		/* expect: 107 */
 }
 
+/*ARGSUSED*/
 void
 SB005_convert_from_bool_to_scalar(bool b)
 {
@@ -211,10 +223,10 @@ SB005_convert_from_bool_to_scalar(bool b)
 	double d;
 	void *p;
 
-	i = b;			/* not ok */
-	u = b;			/* not ok */
-	d = b;			/* not ok */
-	p = b;			/* not ok */
+	i = b;			/* expect: 107 */
+	u = b;			/* expect: 107 */
+	d = b;			/* expect: 107 */
+	p = b;			/* expect: 107 */
 }
 
 enum SB006_bool_constant_expression {
@@ -225,27 +237,32 @@ enum SB006_bool_constant_expression {
 	INT1 = 1 ? 100 : 101,
 
 	/* Not ok: 2 is not a boolean constant (neither 0 nor 1). */
-	INT2 = 2 ? 100 : 101,
+	INT2 = 2 ? 100 : 101,	/* expect: 331 */
 
 	/*
-	 * Not ok: the intermediate expression "2 - 2" has return type
-	 * scalar, not bool.  It is irrelevant that the final result
-	 * is 0, which would be a boolean constant.
+	 * The intermediate expression "2" has type int, which is not
+	 * compatible with _Bool.  The expression "2 - 2" is an integer
+	 * constant expression with value 0 and is thus a bool constant
+	 * expression.  This particular case probably does not occur in
+	 * practice.
 	 */
 	ARITH = (2 - 2) ? 100 : 101,
 
 	/*
-	 * Ok: The 13 and 12 are not boolean expressions, but they
-	 * are not in the calculation path that leads to the final
-	 * result.  The important point is that the operator '>' has
-	 * return type bool.
+	 * These two variants of an expression can occur when a preprocessor
+	 * macro is either defined to 1 or left empty, as in lint1/ops.def.
 	 */
+	BINARY_PLUS = (1 + 0) ? 100 : 101,
+	UNARY_PLUS = (+0) ? 100 : 101,
+
+	/* The main operator '>' has return type bool. */
 	Q1 = (13 > 12) ? 100 : 101,
 
 	/*
-	 * Not ok: The 7 is irrelevant for the final result of the
-	 * expression, yet it turns the result type of the operator
-	 * '?:' to be int, not bool.
+	 * The 7 is part of the integer constant expression, but it is
+	 * irrelevant for the final result.  The expression in parentheses
+	 * is an integer constant expression with value 1 and thus is a
+	 * bool constant expression.
 	 */
 	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,
 
@@ -277,7 +294,8 @@ enum Flags {
  * The usual way to query one of the flags is demonstrated below.
  */
 
-extern void println(const char *);
+extern void
+println(const char *);
 
 void
 query_flag_from_enum_bit_set(enum Flags flags)
@@ -291,6 +309,7 @@ query_flag_from_enum_bit_set(enum Flags flags)
 
 	if ((flags & (FLAG0 | FLAG1)) == (FLAG0 | FLAG1))
 		println("FLAG0 and FLAG1 are both set");
+
 	if (flags & FLAG0 && flags & FLAG1)
 		println("FLAG0 and FLAG1 are both set");
 
@@ -306,52 +325,53 @@ query_flag_from_enum_bit_set(enum Flags flags)
  * calls them), the result of the operator '&' is compared against 0.  This
  * makes this pattern work, no matter whether the bits are in the low-value
  * range or in the high-value range (such as FLAG28, which has the value
- * 1073741824, which is more than what fits into an unsigned char).  Even
- * if an enum could be extended to larger types than int, this pattern
+ * 1073741824, which is more than what would fit into an unsigned char).
+ * Even if an enum could be extended to larger types than int, this pattern
  * would work.
  */
 
 /*
  * There is a crucial difference between a _Bool variable and an ordinary
- * integer variable though.  C99 6.3.1.2 defines a conversion from an
- * arbitrary scalar type to _Bool as (value != 0 ? 1 : 0).  This means that
- * even if _Bool is implemented as an 8-bit unsigned integer, assigning 256
- * to it would still result in the value 1 being stored.  Storing 256 in an
- * ordinary 8-bit unsigned integer would result in the value 0 being stored.
- * See the test d_c99_bool.c for more details.
+ * integer variable.  C99 6.3.1.2 defines a conversion from an arbitrary
+ * scalar value to _Bool as equivalent to (value != 0 ? 1 : 0).  This means
+ * that even if _Bool is implemented as an 8-bit unsigned integer, assigning
+ * 256 to it would still result in the value 1 being stored.  Storing 256 in
+ * an ordinary 8-bit unsigned integer would result in the value 0 being
+ * stored.  See the test d_c99_bool.c for more details.
  *
  * Because of this, expressions like (flags & FLAG28) are only allowed in
  * bool context if they are guaranteed not to be truncated, even if the
  * result were to be stored in a plain unsigned integer.
  */
 
+/*ARGSUSED*/
 void
 SB007_allow_flag_test_on_bit_set_enums(enum Flags flags)
 {
 	bool b;
 
 	/*
-	 * FLAG0 has the value 1 and can therefore be stored in a bool
-	 * variable without truncation.  Nevertheless this special case
-	 * is not allowed because it would be too confusing if FLAG0 would
-	 * work and all the other flags wouldn't.
+	 * FLAG0 has the value 1 and thus can be stored in a bool variable
+	 * without truncation.  Nevertheless this special case is not allowed
+	 * because it would be too confusing if FLAG0 would work and all the
+	 * other flags wouldn't.
 	 */
-	b = flags & FLAG0;
+	b = flags & FLAG0;	/* expect: 107 */
 
 	/*
 	 * Assuming that FLAG1 is set in flags, a _Bool variable stores this
-	 * as 1, as defined by C99 6.3.1.2.  An unsigned char variable would
-	 * store it as 2, as that is the integer value of FLAG1.  Since FLAG1
-	 * fits in an unsigned char, no truncation takes place.
+	 * as 1, as defined by C99 6.3.1.2.  A uint8_t variable would store
+	 * it as 2, as that is the integer value of FLAG1.  Since FLAG1 fits
+	 * in a uint8_t, no truncation takes place.
 	 */
-	b = flags & FLAG1;
+	b = flags & FLAG1;	/* expect: 107 */
 
 	/*
-	 * In a _Bool variable, FLAG28 is stored as 1, as above.  In an
-	 * unsigned char, the stored value would be 0 since bit 28 is out of
-	 * range for an unsigned char, which usually has 8 significant bits.
+	 * In a _Bool variable, FLAG28 is stored as 1, since it is unequal to
+	 * zero.  In a uint8_t, the stored value would be 0 since bit 28 is
+	 * out of range for a uint8_t and thus gets truncated.
 	 */
-	b = flags & FLAG28;
+	b = flags & FLAG28;	/* expect: 107 */
 }
 
 /* A bool bit field is compatible with bool. Other bit fields are not. */
@@ -361,40 +381,64 @@ struct flags {
 	unsigned uint_flag: 1;
 };
 
+/*ARGSUSED*/
 void
-SB008_flags_from_bit_fields(const struct flags *flags)
+SB008_bit_fields(const struct flags *flags)
 {
 	bool b;
 
 	b = flags->bool_flag;	/* ok */
-	b = flags->uint_flag;	/* not ok */
+	b = flags->uint_flag;	/* expect: 107 */
+	flags->bool_flag = b;
+	flags->uint_flag = b;	/* expect: 107 */
 }
 
 /* Test implicit conversion when returning a value from a function. */
 
+/*ARGSUSED*/
 bool
 returning_bool(bool b, int i, const char *p)
 {
 	if (i > 0)
 		return b;	/* ok */
 	if (i < 0)
-		return i;	/* not ok */
-	return p;		/* not ok */
+		return i;	/* expect: 211 */
+	return p;		/* expect: 211 */
 }
 
+/*ARGSUSED*/
 char
 returning_char(bool b, int i, const char *p)
 {
 	if (i > 0)
-		return b;	/* not ok */
+		return b;	/* expect: 211 */
 	if (i < 0)
-		return i;	/* not ok, but not related to bool */
-	return p;		/* not ok */
+		return i;	/* XXX: narrowing conversion */
+	return p;		/* expect: 183 */
+}
+
+bool
+return_constant_false(void)
+{
+	return 0;
+}
+
+bool
+return_constant_true(void)
+{
+	return 1;
+}
+
+bool
+return_invalid_integer(void)
+{
+	return 2;		/* expect: 211 */
 }
 
 /* Test passing arguments to a function. */
 
-extern void taking_arguments(bool, int, const char *, ...);
+extern void
+taking_arguments(bool, int, const char *, ...);
 
 void
 passing_arguments(bool b, int i, const char *p)
@@ -403,14 +447,77 @@ passing_arguments(bool b, int i, const char *p)
 	taking_arguments(b, i, p);
 
 	/* Implicitly converting bool to other scalar types. */
-	taking_arguments(b, b, b);
+	taking_arguments(b, b, b);	/* expect: 334, 334 */
 
 	/* Implicitly converting int to bool (arg #1). */
-	taking_arguments(i, i, i);
+	taking_arguments(i, i, i);	/* expect: 334, 154 */
 
 	/* Implicitly converting pointer to bool (arg #1). */
-	taking_arguments(p, p, p);
+	taking_arguments(p, p, p);	/* expect: 334, 154 */
 
 	/* Passing bool as vararg. */
-	taking_arguments(b, i, p, b, i, p);
+	taking_arguments(b, i, p, b, i, p); /* expect: arg#4 */ // TODO
+
+	/* Passing a bool constant. */
+	taking_arguments(0, i, p);
+
+	/* Passing a bool constant. */
+	taking_arguments(1, i, p);
+
+	/* Trying to pass an invalid integer. */
+	taking_arguments(2, i, p);	/* expect: 334 */
+}
+
+/*
+ * This is just normal access to a bool member of a struct, to ensure that
+ * these produce no errors.
+ */
+void
+struct_access_operators(void)
+{
+	struct bool_struct {
+		bool b;
+	};
+
+	/* Initialize and assign using boolean constants. */
+	bool b = 0;
+	b = 1;
+
+	/* Access a struct member using the '.' operator. */
+	struct bool_struct bs = { 1 };
+	b = bs.b;
+	bs.b = b;
+	bs.b = 0;
+
+	/* Access a struct member using the '->' operator. */
+	struct bool_struct *bsp = &bs;
+	b = bsp->b;
+	bsp->b = b;
+	bsp->b = 0;
+
+	/* Taking the address of a bool lvalue. */
+	bool *bp;
+	bp = &b;
+	*bp = b;
+	b = *bp;
+}
+
+/*
+ * Comparing a _Bool expression to 0 or 1 is redundant.  It may come from
+ * an earlier version of the code, before it got migrated to using _Bool.
+ * Usually, bool expressions are used directly as control expressions or
+ * as argument to the boolean operators such as '!', '&&', '||'.
+ *
+ * Since lint steps in after the C preprocessor, it has no chance of seeing
+ * the original source code, which may well have been "b == false" instead
+ * of "b == 0".
+ */
+bool
+compare_var_with_constant(bool b)
+{
+	bool t1 = b == 0;
+	bool t2 = t1 != 0;
+	bool t3 = t2 == 1;
+	bool t4 = t3 != 1;
+	return t4 ^ t3;
 }

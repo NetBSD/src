@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.56 2021/01/10 11:17:53 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.57 2021/01/12 20:42:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.56 2021/01/10 11:17:53 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.57 2021/01/12 20:42:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -549,6 +549,12 @@ check_controlling_expression(tnode_t *tn)
 		/* C99 6.8.5p2 for while, do and for loops */
 		/* controlling expressions must have scalar type */
 		error(204);
+		return NULL;
+	}
+
+	if (tn != NULL && Tflag && !is_strict_bool(tn)) {
+		/* controlling expression must be bool, not '%s' */
+		error(333, tspec_name(tn->tn_type->t_tspec));
 		return NULL;
 	}
 
