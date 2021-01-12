@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_msi.9,v 1.17 2018/11/27 20:13:43 jdolecek Exp $
+.\" $NetBSD: pci_msi.9,v 1.18 2021/01/12 05:08:50 knakahara Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 27, 2018
+.Dd January 12, 2021
 .Dt PCI_MSI 9
 .Os
 .Sh NAME
@@ -95,6 +95,14 @@ Each driver for a PCI device is passed a pointer to an object of type
 which contains, among other things, information about the location
 of the device in the PCI bus topology sufficient to allow interrupts
 from the device to be handled.
+.Pp
+.Fn pci_msi_count
+returns the max number of the device's MSI.
+If the device can not use MSI,
+.Fn pci_msi_count
+returns zero.
+.Fn pci_msix_count
+works in the same manner for MSI-X.
 .Pp
 If a driver wishes to establish an MSI handler for the device,
 it should pass the
