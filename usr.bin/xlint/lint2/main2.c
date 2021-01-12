@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.11 2021/01/12 20:42:01 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.12 2021/01/12 21:48:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.11 2021/01/12 20:42:01 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.12 2021/01/12 21:48:10 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -191,6 +191,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		      "usage: lint2 -hpstxuHF -Clib -l lib ... src1 ...\n");
+		      "usage: lint2 -hpstxuHFT -Clib -l lib ... src1 ...\n");
 	exit(1);
 }
