@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.33 2021/01/10 14:12:48 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.34 2021/01/12 20:42:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.33 2021/01/10 14:12:48 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.34 2021/01/12 20:42:01 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -100,6 +100,8 @@ int	rflag;
 
 /* Strict ANSI C mode. */
 int	sflag;
+
+bool	Tflag;
 
 /* Traditional C mode. */
 int	tflag;
@@ -176,7 +178,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	ERR_ZERO(&msgset);
-	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFPR:SX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFPR:STX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = 1;	break;
@@ -191,6 +193,7 @@ main(int argc, char *argv[])
 		case 'r':	rflag = 1;	break;
 		case 's':	sflag = 1;	break;
 		case 'S':	Sflag = 1;	break;
+		case 'T':	Tflag = true;	break;
 		case 't':	tflag = 1;	break;
 		case 'u':	uflag = 0;	break;
 		case 'w':	wflag = 1;	break;
