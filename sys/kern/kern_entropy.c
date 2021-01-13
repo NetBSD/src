@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.26 2021/01/11 02:18:40 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.27 2021/01/13 23:53:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.26 2021/01/11 02:18:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.27 2021/01/13 23:53:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -161,6 +161,7 @@ struct {
 	kcondvar_t	cv;		/* notifies state changes */
 	struct selinfo	selq;		/* notifies needed -> 0 */
 	struct lwp	*sourcelock;	/* lock on list of sources */
+	kcondvar_t	sourcelock_cv;	/* notifies sourcelock release */
 	LIST_HEAD(,krndsource) sources;	/* list of entropy sources */
 	enum entropy_stage {
 		ENTROPY_COLD = 0, /* single-threaded */
@@ -367,6 +368,7 @@ entropy_init(void)
 	mutex_init(&E->lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&E->cv, "entropy");
 	selinit(&E->selq);
+	cv_init(&E->sourcelock_cv, "entsrclock");
 
 	/* Make sure the seed source is attached.  */
 	attach_seed_rndsource();
@@ -1594,7 +1596,7 @@ rnd_detach_source(struct krndsource *rs)
 	/* Wait until the source list is not in use, and remove it.  */
 	mutex_enter(&E->lock);
 	while (E->sourcelock)
-		cv_wait(&E->cv, &E->lock);
+		cv_wait(&E->sourcelock_cv, &E->lock);
 	LIST_REMOVE(rs, list);
 	mutex_exit(&E->lock);
 
@@ -1618,7 +1620,7 @@ rnd_lock_sources(void)
 	KASSERT(mutex_owned(&E->lock));
 
 	while (E->sourcelock) {
-		error = cv_wait_sig(&E->cv, &E->lock);
+		error = cv_wait_sig(&E->sourcelock_cv, &E->lock);
 		if (error)
 			return error;
 	}
@@ -1663,7 +1665,7 @@ rnd_unlock_sources(void)
 	    curlwp, E->sourcelock);
 	E->sourcelock = NULL;
 	if (E->stage >= ENTROPY_WARM)
-		cv_broadcast(&E->cv);
+		cv_signal(&E->sourcelock_cv);
 }
 
 /*
