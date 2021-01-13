@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.8 2020/08/14 00:53:16 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.9 2021/01/13 23:54:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.8 2020/08/14 00:53:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.9 2021/01/13 23:54:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: random.c,v 1.8 2020/08/14 00:53:16 riastradh Exp $")
 #include <sys/rndsource.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>		/* IO_NDELAY */
 
 #include "ioconf.h"
 
@@ -222,8 +223,11 @@ random_read(dev_t dev, struct uio *uio, int flags)
 		return ENXIO;
 	}
 
-	/* Set GRND_NONBLOCK if the user requested FNONBLOCK.  */
-	if (flags & FNONBLOCK)
+	/*
+	 * Set GRND_NONBLOCK if the user requested IO_NDELAY (i.e., the
+	 * file was opened with O_NONBLOCK).
+	 */
+	if (flags & IO_NDELAY)
 		gflags |= GRND_NONBLOCK;
 
 	/* Defer to getrandom.  */
