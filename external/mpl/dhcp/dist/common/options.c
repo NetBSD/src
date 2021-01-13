@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.4 2021/01/13 15:51:49 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.5 2021/01/13 17:01:31 christos Exp $	*/
 
 /* options.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.4 2021/01/13 15:51:49 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.5 2021/01/13 17:01:31 christos Exp $");
 
 #define DHCP_OPTION_DATA
 #include "dhcpd.h"
@@ -130,8 +130,8 @@ int parse_option_buffer (options, buffer, length, universe)
 	unsigned len, offset;
 	unsigned code;
 	struct option_cache *op = NULL, *nop = NULL;
-	struct buffer *bp = (struct buffer *)0;
-	struct option *option = NULL;
+	struct buffer *bp = NULL;
+	struct option *option;
 	char *reason = "general failure";
 
 	if (!buffer_allocate (&bp, length, MDL)) {
@@ -143,6 +143,7 @@ int parse_option_buffer (options, buffer, length, universe)
 	for (offset = 0;
 	     (offset + universe->tag_size) <= length &&
 	     (code = universe->get_tag(buffer + offset)) != universe->end; ) {
+		option = NULL;
 		offset += universe->tag_size;
 
 		/* Pad options don't have a length - just skip them. */
