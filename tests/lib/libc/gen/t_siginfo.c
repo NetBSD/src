@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.44 2021/01/11 07:17:49 skrll Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.45 2021/01/13 06:44:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -483,7 +483,7 @@ ATF_TC_BODY(sigbus_adraln, tc)
 
 #if defined(__mips__)
 	/* no way of detecting if on GXemul, so disable everywhere for now */
-	atf_tc_expect_fail("GXemul fails to trap unaligned accesses with "
+	atf_tc_skip("GXemul fails to trap unaligned accesses with "
 	    "correct ENTRYHI");
 #endif
 
