@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.10 2019/12/10 18:00:17 ad Exp $	*/
+/*	$NetBSD: viomb.c,v 1.11 2021/01/13 19:46:49 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.10 2019/12/10 18:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.11 2021/01/13 19:46:49 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ inflate_done(struct viomb_softc *sc)
 	b = &sc->sc_req;
 	nvpages = b->bl_nentries;
 	bus_dmamap_sync(virtio_dmat(vsc), b->bl_dmamap,
-			offsetof(struct balloon_req, bl_pages),
+			0,
 			sizeof(uint32_t)*nvpages,
 			BUS_DMASYNC_POSTWRITE);
 	while (!TAILQ_EMPTY(&b->bl_pglist)) {
@@ -456,7 +456,7 @@ deflate_done(struct viomb_softc *sc)
 	b = &sc->sc_req;
 	nvpages = b->bl_nentries;
 	bus_dmamap_sync(virtio_dmat(vsc), b->bl_dmamap,
-			offsetof(struct balloon_req, bl_pages),
+			0,
 			sizeof(uint32_t)*nvpages,
 			BUS_DMASYNC_POSTWRITE);
 
