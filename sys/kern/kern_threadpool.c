@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.19 2020/09/07 01:08:27 riastradh Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.20 2021/01/13 02:19:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.19 2020/09/07 01:08:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.20 2021/01/13 02:19:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -644,10 +644,16 @@ threadpool_percpu_ref_remote(struct threadpool_percpu *pool_percpu,
 {
 	struct threadpool **poolp, *pool;
 
-	percpu_traverse_enter();
+	/*
+	 * As long as xcalls are blocked -- e.g., by kpreempt_disable
+	 * -- the percpu object will not be swapped and destroyed.  We
+	 * can't write to it, because the data may have already been
+	 * moved to a new buffer, but we can safely read from it.
+	 */
+	kpreempt_disable();
 	poolp = percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
 	pool = *poolp;
-	percpu_traverse_exit();
+	kpreempt_enable();
 
 	return pool;
 }
