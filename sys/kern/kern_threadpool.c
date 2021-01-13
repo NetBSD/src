@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.21 2021/01/13 02:20:15 riastradh Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.22 2021/01/13 07:34:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Thread pools.
  *
  * A thread pool is a collection of worker threads idle or running
- * jobs, together with an dispatcher thread that does not run jobs but
+ * jobs, together with a dispatcher thread that does not run jobs but
  * can be given jobs to assign to a worker thread.  Scheduling a job in
  * a thread pool does not allocate or even sleep at all, except perhaps
  * on an adaptive lock, unlike kthread_create.  Jobs reuse threads, so
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.21 2021/01/13 02:20:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.22 2021/01/13 07:34:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
