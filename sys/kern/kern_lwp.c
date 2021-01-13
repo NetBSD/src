@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.242 2020/06/22 16:21:29 maxv Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.243 2021/01/13 07:36:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -196,7 +196,7 @@
  *
  *		sleepq -> turnstile -> spc_lwplock -> spc_mutex
  *
- *	Each process has an scheduler state lock (proc::p_lock), and a
+ *	Each process has a scheduler state lock (proc::p_lock), and a
  *	number of counters on LWPs and their states: p_nzlwps, p_nrlwps, and
  *	so on.  When an LWP is to be entered into or removed from one of the
  *	following states, p_lock must be held and the process wide counters
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.242 2020/06/22 16:21:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.243 2021/01/13 07:36:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.29 2015/06/26 14:26:38 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.30 2021/01/13 07:36:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.29 2015/06/26 14:26:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.30 2021/01/13 07:36:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -164,7 +164,7 @@ digit2i(u_char c)
 
 /*
  * Convert the low 4 bits of an integer into
- * an hex digit.
+ * a hex digit.
  */
 static u_char
 i2digit(int n)
@@ -173,7 +173,7 @@ i2digit(int n)
 }
 
 /*
- * Convert a byte array into an hex string.
+ * Convert a byte array into a hex string.
  */
 static void
 mem2hex(void *vdst, void *vsrc, int len)
@@ -189,7 +189,7 @@ mem2hex(void *vdst, void *vsrc, int len)
 }
 
 /*
- * Convert an hex string into a byte array.
+ * Convert a hex string into a byte array.
  * This returns a pointer to the character following
  * the last valid hex digit. If the string ends in
  * the middle of a byte, NULL is returned.
@@ -213,7 +213,7 @@ hex2mem(void *vdst, u_char *src, int maxlen)
 }
 
 /*
- * Convert an hex string into an integer.
+ * Convert a hex string into an integer.
  * This returns a pointer to the character following
  * the last valid hex digit.
  */
