@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.4 2021/01/13 15:51:49 christos Exp $	*/
 
 /* options.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.4 2021/01/13 15:51:49 christos Exp $");
 
 #define DHCP_OPTION_DATA
 #include "dhcpd.h"
@@ -179,13 +179,16 @@ int parse_option_buffer (options, buffer, length, universe)
 
 		offset += universe->length_size;
 
-		option_code_hash_lookup(&option, universe->code_hash, &code,
-					0, MDL);
+		if (!option_code_hash_lookup(&option, universe->code_hash,
+		    &code, 0, MDL)) {
+			log_error("Can't find option with code %u", code);
+		}
 
 		/* If the length is outrageous, the options are bad. */
 		if (offset + len > length) {
 			/* Avoid reference count overflow */
-			option_dereference(&option, MDL);
+			if (option)
+				option_dereference(&option, MDL);
 			reason = "option length exceeds option buffer length";
 		      bogus:
 			log_error("parse_option_buffer: malformed option "
@@ -216,7 +219,8 @@ int parse_option_buffer (options, buffer, length, universe)
 			/* non-compliant clients can send it
 			 * we'll just drop it and go on */
 			log_debug ("Ignoring empty DHO_HOST_NAME option");
-			option_dereference(&option, MDL);
+			if (option)
+				option_dereference(&option, MDL);
 			offset += len;
 			continue;
 		}
@@ -282,7 +286,8 @@ int parse_option_buffer (options, buffer, length, universe)
 			option_cache_dereference(&nop, MDL);
 		}
 
-		option_dereference(&option, MDL);
+		if (option)
+			option_dereference(&option, MDL);
 		offset += len;
 	}
 	buffer_dereference (&bp, MDL);
