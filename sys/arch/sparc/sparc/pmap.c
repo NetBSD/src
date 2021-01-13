@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.370 2021/01/11 06:12:43 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.371 2021/01/13 16:42:17 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.370 2021/01/11 06:12:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.371 2021/01/13 16:42:17 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7868,8 +7868,7 @@ pmap_writetext(unsigned char *dst, int ch)
 	if (CPU_HAS_SRMMU) {
 		pte0 = getpte4m(va);
 		if ((pte0 & SRMMU_TETYPE) != SRMMU_TEPTE) {
-			splx(s);
-			return;
+			goto out;
 		}
 		pte = pte0 | PPROT_WRITE;
 		setpte4m(va, pte);
@@ -7882,8 +7881,7 @@ pmap_writetext(unsigned char *dst, int ch)
 	if (CPU_ISSUN4C || CPU_ISSUN4) {
 		pte0 = getpte4(va);
 		if ((pte0 & PG_V) == 0) {
-			splx(s);
-			return;
+			goto out;
 		}
 		pte = pte0 | PG_W;
 		setpte4(va, pte);
@@ -7892,6 +7890,8 @@ pmap_writetext(unsigned char *dst, int ch)
 	}
 #endif
 	cache_flush(dst, 1);
+
+out:
 	setcontext(ctx);
 	splx(s);
 }
