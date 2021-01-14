@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.73 2020/09/07 03:12:51 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.74 2021/01/14 02:43:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -41,6 +41,8 @@
 #include <netinet/in.h>
 #include <netinet/ip_mroute.h>
 #include <net80211/ieee80211_ioctl.h>
+
+#include <compat/netbsd32/netbsd32.h>
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
@@ -475,23 +477,19 @@ struct netbsd32_sioc_sg_req {
 /* from <sys/sockio.h> */
 #define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
 
-/*
- * The next two structures are marked "__packed" as they normally end up
- * being padded in 64-bit mode.
- */
 struct netbsd32_vnd_ioctl {
 	netbsd32_charp	vnd_file;	/* pathname of file to mount */
 	int		vnd_flags;	/* flags; see below */
 	struct vndgeom	vnd_geom;	/* geometry to emulate */
 	unsigned int	vnd_osize;	/* (returned) size of disk */
-	uint64_t	vnd_size;	/* (returned) size of disk */
-} __packed;
+	netbsd32_uint64	vnd_size;	/* (returned) size of disk */
+};
 
 struct netbsd32_vnd_user {
 	int		vnu_unit;	/* which vnd unit */
-	dev_t		vnu_dev;	/* file is on this device... */
-	ino_t		vnu_ino;	/* ...at this inode */
-} __packed;
+	netbsd32_dev_t	vnu_dev;	/* file is on this device... */
+	netbsd32_ino_t	vnu_ino;	/* ...at this inode */
+};
 
 /* from <dev/vndvar.h> */
 #define VNDIOCSET32	_IOWR('F', 0, struct netbsd32_vnd_ioctl)	/* enable disk */
