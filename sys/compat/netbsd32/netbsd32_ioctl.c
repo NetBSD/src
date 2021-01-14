@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.116 2021/01/14 08:22:51 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.117 2021/01/14 23:30:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.116 2021/01/14 08:22:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.117 2021/01/14 23:30:50 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1522,22 +1522,17 @@ netbsd32_ioctl(struct lwp *l,
 
 	case FSSIOCSET32:	/* XXX FSSIOCSET50 not yet handled */
 		IOCTL_STRUCT_CONV_TO(FSSIOCSET, fss_set);
-
 	case FSSIOCGET32:	/* XXX FSSIOCGET50 not yet handled */
 		IOCTL_STRUCT_CONV_TO(FSSIOCGET, fss_get);
 
 	case VNDIOCSET32:
 		IOCTL_STRUCT_CONV_TO(VNDIOCSET, vnd_ioctl);
-
 	case VNDIOCCLR32:
 		IOCTL_STRUCT_CONV_TO(VNDIOCCLR, vnd_ioctl);
-
 	case VNDIOCGET32:
 		IOCTL_STRUCT_CONV_TO(VNDIOCGET, vnd_user);
-
 	case VNDIOCSET5032:
 		IOCTL_STRUCT_CONV_TO(VNDIOCSET50, vnd_ioctl50);
-
 	case VNDIOCCLR5032:
 		IOCTL_STRUCT_CONV_TO(VNDIOCCLR50, vnd_ioctl50);
 
