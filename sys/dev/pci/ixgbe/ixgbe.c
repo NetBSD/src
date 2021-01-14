@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.277 2020/12/31 12:34:33 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.278 2021/01/14 05:47:35 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1902,7 +1902,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue No Descriptor Available");
+		    "TX Queue No Descriptor Available");
 		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Queue Packets Transmitted");
