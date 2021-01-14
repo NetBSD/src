@@ -1,4 +1,4 @@
-# $NetBSD: t_fss.sh,v 1.3 2017/03/15 10:53:15 martin Exp $
+# $NetBSD: t_fss.sh,v 1.4 2021/01/14 04:30:40 simonb Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,9 +74,9 @@ basic_body() {
 
 basic_cleanup() {
 # Unmount our temporary stuff
-	umount ${vnd}		|| true
-	fssconfig -u fss0	|| true
 	umount /dev/fss0	|| true
+	fssconfig -u fss0	|| true
+	umount ${vnd}		|| true
 	vndconfig -u ${vnddev}	|| true
 }
 
