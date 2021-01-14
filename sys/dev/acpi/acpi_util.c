@@ -1,7 +1,7 @@
-/*	$NetBSD: acpi_util.c,v 1.19 2020/10/23 10:59:37 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.20 2021/01/14 14:35:53 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.19 2020/10/23 10:59:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.20 2021/01/14 14:35:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -304,6 +304,59 @@ acpi_name(ACPI_HANDLE handle)
 
 	return name;
 }
+
+/*
+ * Pack _HID and _CID ID strings into an OpenFirmware-like
+ * string list.
+ */
+char *
+acpi_pack_compat_list(ACPI_DEVICE_INFO *ad, size_t *sizep)
+{
+	KASSERT(sizep != NULL);
+
+	char *strlist, *cp;
+	size_t len = 0;
+	uint32_t i;
+
+	/*
+	 * First calculate the total size required.
+	 * N.B. PNP Device ID length includes terminating NUL.
+	 */
+	if ((ad->Valid & ACPI_VALID_HID) != 0) {
+		len += ad->HardwareId.Length;
+	}
+
+	if ((ad->Valid & ACPI_VALID_CID) != 0) {
+		for (i = 0; i < ad->CompatibleIdList.Count; i++) {
+			len += ad->CompatibleIdList.Ids[i].Length;
+		}
+	}
+
+	*sizep = len;
+	if (len == 0) {
+		return NULL;
+	}
+
+	cp = strlist = kmem_alloc(len, KM_SLEEP);
+
+	if ((ad->Valid & ACPI_VALID_HID) != 0) {
+		memcpy(cp, ad->HardwareId.String, ad->HardwareId.Length);
+		cp += ad->HardwareId.Length;
+	}
+
+	if ((ad->Valid & ACPI_VALID_CID) != 0) {
+		for (i = 0; i < ad->CompatibleIdList.Count; i++) {
+			memcpy(cp, ad->CompatibleIdList.Ids[i].String,
+			    ad->CompatibleIdList.Ids[i].Length);
+			cp += ad->CompatibleIdList.Ids[i].Length;
+		}
+	}
+
+	KASSERT((size_t)(cp - strlist) == len);
+
+	return strlist;
+}
+
 
 /*
  * Match given IDs against _HID and _CIDs.
@@ -636,7 +689,7 @@ acpi_intr_string(void *c, char *buf, size_t size)
 }
 
 /*
- * USB Device-Specific Data (_DSD) support
+ * Device-Specific Data (_DSD) support
  */
 
 static UINT8 acpi_dsd_uuid[ACPI_UUID_LENGTH] = {
@@ -727,4 +780,87 @@ acpi_dsd_string(ACPI_HANDLE handle, const char *prop, char **val)
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 	return rv;
+}
+
+/*
+ * Device Specific Method (_DSM) support
+ */
+
+ACPI_STATUS
+acpi_dsm_typed(ACPI_HANDLE handle, uint8_t *uuid, ACPI_INTEGER rev,
+    ACPI_INTEGER func, const ACPI_OBJECT *arg3, ACPI_OBJECT_TYPE return_type,
+    ACPI_OBJECT **return_obj)
+{
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj[4];
+	ACPI_BUFFER buf;
+	ACPI_STATUS status;
+
+	arg.Count = 4;
+	arg.Pointer = obj;
+
+	obj[0].Type = ACPI_TYPE_BUFFER;
+	obj[0].Buffer.Length = ACPI_UUID_LENGTH;
+	obj[0].Buffer.Pointer = uuid;
+
+	obj[1].Type = ACPI_TYPE_INTEGER;
+	obj[1].Integer.Value = rev;
+
+	obj[2].Type = ACPI_TYPE_INTEGER;
+	obj[2].Integer.Value = func;
+
+	if (arg3 != NULL) {
+		obj[3] = *arg3;
+	} else {
+		obj[3].Type = ACPI_TYPE_PACKAGE;
+		obj[3].Package.Count = 0;
+		obj[3].Package.Elements = NULL;
+	}
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	if (return_obj == NULL && return_type == ACPI_TYPE_ANY) {
+		status = AcpiEvaluateObject(handle, "_DSM", &arg, NULL);
+	} else {
+		*return_obj = NULL;
+		status = AcpiEvaluateObjectTyped(handle, "_DSM", &arg, &buf,
+		    return_type);
+	}
+	if (ACPI_FAILURE(status)) {
+		return status;
+	}
+	if (return_obj != NULL) {
+		*return_obj = buf.Pointer;
+	} else if (buf.Pointer != NULL) {
+		ACPI_FREE(buf.Pointer);
+	}
+	return AE_OK;
+}
+
+ACPI_STATUS
+acpi_dsm_integer(ACPI_HANDLE handle, uint8_t *uuid, ACPI_INTEGER rev,
+    ACPI_INTEGER func, const ACPI_OBJECT *arg3, ACPI_INTEGER *ret)
+{
+	ACPI_OBJECT *obj;
+	ACPI_STATUS status;
+
+	status = acpi_dsm_typed(handle, uuid, rev, func, arg3,
+	    ACPI_TYPE_INTEGER, &obj);
+	if (ACPI_FAILURE(status)) {
+		return status;
+	}
+
+	*ret = obj->Integer.Value;
+	ACPI_FREE(obj);
+
+	return AE_OK;
+}
+
+ACPI_STATUS
+acpi_dsm(ACPI_HANDLE handle, uint8_t *uuid, ACPI_INTEGER rev,
+    ACPI_INTEGER func, const ACPI_OBJECT *arg3, ACPI_OBJECT **return_obj)
+{
+	return acpi_dsm_typed(handle, uuid, rev, func, arg3, ACPI_TYPE_ANY,
+	    return_obj);
 }
