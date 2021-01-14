@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.116 2021/01/10 00:05:46 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.117 2021/01/14 07:34:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.116 2021/01/10 00:05:46 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.117 2021/01/14 07:34:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -141,7 +141,7 @@ TL	([fFlL]?[i]?)
 "."				return operator(T_STROP, POINT);
 "+"				return operator(T_ADDOP, PLUS);
 "-"				return operator(T_ADDOP, MINUS);
-"*"				return operator(T_ASTERISK, NOTSPEC);
+"*"				return operator(T_ASTERISK, NOOP);
 "/"				return operator(T_DIVOP, DIV);
 "%"				return operator(T_DIVOP, MOD);
 "!"				return operator(T_UNOP, NOT);
