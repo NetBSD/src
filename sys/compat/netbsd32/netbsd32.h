@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.134 2020/11/01 18:51:02 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.135 2021/01/14 08:00:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -203,6 +203,7 @@ typedef netbsd32_pointer_t netbsd32_semidp_t;
 typedef netbsd32_uint64 netbsd32_dev_t;
 typedef netbsd32_int64 netbsd32_off_t;
 typedef netbsd32_uint64 netbsd32_ino_t;
+typedef netbsd32_int64 netbsd32_blkcnt_t;
 
 /* from <sys/spawn.h> */
 typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
