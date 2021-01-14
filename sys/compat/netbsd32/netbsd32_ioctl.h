@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.74 2021/01/14 02:43:04 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.75 2021/01/14 08:00:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -476,6 +476,26 @@ struct netbsd32_sioc_sg_req {
 };
 /* from <sys/sockio.h> */
 #define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
+
+/* from <dev/ffsvar.h> */
+struct netbsd32_fss_set {
+	netbsd32_charp	fss_mount;	/* Mount point of file system */
+	netbsd32_charp	fss_bstore;	/* Path of backing store */
+	blksize_t	fss_csize;	/* Preferred cluster size */
+	int		fss_flags;	/* Initial flags */
+};
+
+struct netbsd32_fss_get {
+	char		fsg_mount[MNAMELEN]; /* Mount point of file system */
+	struct netbsd32_timeval	fsg_time;	/* Time this snapshot was taken */
+	blksize_t	fsg_csize;	/* Current cluster size */
+	netbsd32_blkcnt_t	fsg_mount_size;	/* # clusters on file system */
+	netbsd32_blkcnt_t	fsg_bs_size;	/* # clusters on backing store */
+};
+
+/* XXX: FSSIOCSET50 and FSSIOCGET50 are not (yet) handled */
+#define FSSIOCSET32	_IOW('F', 5, struct netbsd32_fss_set)	/* Configure */
+#define FSSIOCGET32	_IOR('F', 1, struct netbsd32_fss_get)	/* Status */
 
 struct netbsd32_vnd_ioctl {
 	netbsd32_charp	vnd_file;	/* pathname of file to mount */
