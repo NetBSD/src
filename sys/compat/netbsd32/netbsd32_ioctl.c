@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.115 2021/01/14 08:00:45 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.116 2021/01/14 08:22:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.115 2021/01/14 08:00:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.116 2021/01/14 08:22:51 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -241,6 +241,16 @@ netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *s32p,
 	p->pktcnt = (u_long)s32p->pktcnt;
 	p->bytecnt = (u_long)s32p->bytecnt;
 	p->wrong_if = (u_long)s32p->wrong_if;
+}
+
+static inline void
+netbsd32_to_kfilter_mapping(struct netbsd32_kfilter_mapping *s32p,
+    struct kfilter_mapping *p, u_long cmd)
+{
+
+	p->name = (char *)NETBSD32PTR64(s32p->name);
+	p->len = s32p->len;
+	p->filter = s32p->filter;
 }
 
 static inline void
@@ -752,6 +762,16 @@ netbsd32_from_sioc_sg_req(struct sioc_sg_req *p,
 	s32p->pktcnt = (netbsd32_u_long)p->pktcnt;
 	s32p->bytecnt = (netbsd32_u_long)p->bytecnt;
 	s32p->wrong_if = (netbsd32_u_long)p->wrong_if;
+}
+
+static inline void
+netbsd32_from_kfilter_mapping(struct kfilter_mapping *p,
+    struct netbsd32_kfilter_mapping *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->name, p->name);
+	s32p->len = p->len;
+	s32p->filter = p->filter;
 }
 
 static inline void
@@ -1368,6 +1388,11 @@ netbsd32_ioctl(struct lwp *l,
 	case DIOCWFORMAT32:
 		IOCTL_STRUCT_CONV_TO(DIOCWFORMAT, format_op);
 #endif
+
+	case KFILTER_BYFILTER32:
+		IOCTL_STRUCT_CONV_TO(KFILTER_BYFILTER, kfilter_mapping);
+	case KFILTER_BYNAME32:
+		IOCTL_STRUCT_CONV_TO(KFILTER_BYNAME, kfilter_mapping);
 
 	case ATAIOCCOMMAND32:
 		IOCTL_STRUCT_CONV_TO(ATAIOCCOMMAND, atareq);
