@@ -1,0 +1,6 @@
+msg_335.c(15): operand of '+' must not be bool [335]
+msg_335.c(16): operand of '-' must not be bool [335]
+msg_335.c(18): operand of 'x++' must not be bool [335]
+msg_335.c(19): operand of '++x' must not be bool [335]
+msg_335.c(20): operand of 'x--' must not be bool [335]
+msg_335.c(21): operand of '--x' must not be bool [335]
