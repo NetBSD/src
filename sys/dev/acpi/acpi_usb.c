@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_usb.c,v 1.1 2018/10/26 23:33:38 jmcneill Exp $ */
+/* $NetBSD: acpi_usb.c,v 1.2 2021/01/14 14:38:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_usb.c,v 1.1 2018/10/26 23:33:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_usb.c,v 1.2 2021/01/14 14:38:22 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -53,9 +53,6 @@ static UINT8 ehci_acpi_dsm_uuid[ACPI_UUID_LENGTH] = {
 void
 acpi_usb_post_reset(ACPI_HANDLE handle)
 {
-	ACPI_OBJECT_LIST objs;
-	ACPI_OBJECT obj[4];
-	ACPI_HANDLE method;
 
 	/*
 	 * Invoke the _DSM control method for post-reset processing function
@@ -64,21 +61,5 @@ acpi_usb_post_reset(ACPI_HANDLE handle)
 	 * device into host mode.
 	 */
 
-	objs.Count = 4;
-	objs.Pointer = obj;
-	obj[0].Type = ACPI_TYPE_BUFFER;
-	obj[0].Buffer.Length = ACPI_UUID_LENGTH;
-	obj[0].Buffer.Pointer = ehci_acpi_dsm_uuid;
-	obj[1].Type = ACPI_TYPE_INTEGER;
-	obj[1].Integer.Value = 0;	/* Revision ID = 0 */
-	obj[2].Type = ACPI_TYPE_INTEGER;
-	obj[2].Integer.Value = 1;	/* Function index = 1 */
-	obj[3].Type = ACPI_TYPE_PACKAGE;
-	obj[3].Package.Count = 0;	/* Empty package (not used) */
-	obj[3].Package.Elements = NULL;
-
-	if (ACPI_FAILURE(AcpiGetHandle(handle, "_DSM", &method)))
-		return;
-
-	(void)AcpiEvaluateObject(method, NULL, &objs, NULL);
+	(void)acpi_dsm(handle, ehci_acpi_dsm_uuid, 0, 1, NULL, NULL);
 }
