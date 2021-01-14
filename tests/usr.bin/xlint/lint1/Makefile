@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2021/01/10 18:06:38 rillig Exp $
+# $NetBSD: Makefile,v 1.29 2021/01/14 22:18:14 rillig Exp $
 
 NOMAN=		# defined
 
@@ -89,7 +89,7 @@ FILES+=		d_type_question_colon.c
 FILES+=		d_typefun.c
 FILES+=		d_typename_as_var.c
 FILES+=		d_zero_sized_arrays.c
-FILES+=		${:U0 ${:U:range=329}:C,^.$,0&,:C,^..$,0&,:@msg@msg_${msg}.c msg_${msg}.exp@}
+FILES+=		${:U0 ${:U:range=337}:C,^.$,0&,:C,^..$,0&,:@msg@msg_${msg}.c msg_${msg}.exp@}
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.

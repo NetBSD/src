@@ -1,0 +1,2 @@
+msg_332.c(19): right operand of '&&' must be bool, not 'char' [332]
+msg_332.c(20): right operand of '&&' must be bool, not 'int' [332]
