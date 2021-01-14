@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.75 2021/01/14 08:00:45 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.76 2021/01/14 08:22:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -88,6 +88,19 @@ struct netbsd32_format_op {
 #define DIOCRFORMAT32	_IOWR('d', 105, struct netbsd32_format_op)
 #define DIOCWFORMAT32	_IOWR('d', 106, struct netbsd32_format_op)
 #endif
+
+/* from <sys/event.h> */
+
+struct netbsd32_kfilter_mapping {
+	netbsd32_charp	name;		/* name to lookup or return */
+	netbsd32_size_t	len;		/* length of name */
+	uint32_t	filter;		/* filter to lookup or return */
+};
+
+/* map filter to name (max size len) */
+#define KFILTER_BYFILTER32	_IOWR('k', 0, struct netbsd32_kfilter_mapping)
+/* map name to filter (len ignored) */
+#define KFILTER_BYNAME32	_IOWR('k', 1, struct netbsd32_kfilter_mapping)
 
 /* from <sys/ataio.h> */
 struct netbsd32_atareq {
