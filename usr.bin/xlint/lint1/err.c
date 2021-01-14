@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.66 2021/01/12 20:42:01 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.67 2021/01/14 07:42:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.66 2021/01/12 20:42:01 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.67 2021/01/14 07:42:31 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -215,7 +215,7 @@ const	char *msgs[] = {
 	"argument has incompatible pointer type, arg #%d (%s != %s)", /* 153 */
 	"illegal combination of %s (%s) and %s (%s), arg #%d",	      /* 154 */
 	"argument is incompatible with prototype, arg #%d",	      /* 155 */
-	"enum type mismatch, arg #%d",				      /* 156 */
+	"enum type mismatch, arg #%d (%s != %s)",		      /* 156 */
 	"ANSI C treats constant as unsigned",			      /* 157 */
 	"%s may be used before set",				      /* 158 */
 	"assignment in conditional context",			      /* 159 */
