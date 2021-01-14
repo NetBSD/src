@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.29 2020/05/08 14:42:38 jmcneill Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.30 2021/01/14 14:37:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.29 2020/05/08 14:42:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.30 2021/01/14 14:37:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -495,44 +495,50 @@ acpi_pcidev_find_dev(struct acpi_devnode *ad)
 ACPI_INTEGER
 acpi_pci_ignore_boot_config(ACPI_HANDLE handle)
 {
-	ACPI_OBJECT_LIST objs;
-	ACPI_OBJECT obj[4], *pobj;
-	ACPI_BUFFER buf;
+	ACPI_OBJECT *pobj = NULL;
 	ACPI_INTEGER ret;
 
-	objs.Count = 4;
-	objs.Pointer = obj;
-	obj[0].Type = ACPI_TYPE_BUFFER;
-	obj[0].Buffer.Length = ACPI_UUID_LENGTH;
-	obj[0].Buffer.Pointer = acpi_pci_dsm_uuid;
-	obj[1].Type = ACPI_TYPE_INTEGER;
-	obj[1].Integer.Value = 1;
-	obj[2].Type = ACPI_TYPE_INTEGER;
-	obj[2].Integer.Value = 5;
-	obj[3].Type = ACPI_TYPE_PACKAGE;
-	obj[3].Package.Count = 0;
-	obj[3].Package.Elements = NULL;
+	/*
+	 * This one is a little confusing, but the result of
+	 * evaluating _DSM #5 is:
+	 *
+	 * 0: The operating system may not ignore the boot configuration
+	 *    of PCI resources.
+	 *
+	 * 1: The operating system may ignore the boot configuration of
+	 *    PCI resources, and reconfigure or rebalance these resources
+	 *    in the hierarchy as required.
+	 */
 
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-
-	if (ACPI_FAILURE(AcpiEvaluateObject(handle, "_DSM", &objs, &buf)) || buf.Pointer == NULL)
+	if (ACPI_FAILURE(acpi_dsm(handle, acpi_pci_dsm_uuid,
+				  1, 5, NULL, &pobj))) {
+		/*
+		 * In the absence of _DSM #5, we may assume that the
+		 * boot config can be ignored.
+		 */
 		return 1;
-
-	ret = 1;
-
-	pobj = buf.Pointer;
-	switch (pobj->Type) {
-	case ACPI_TYPE_INTEGER:
-		ret = pobj->Integer.Value;
-		break;
-	case ACPI_TYPE_PACKAGE:
-		if (pobj->Package.Count == 1 && pobj->Package.Elements[0].Type == ACPI_TYPE_INTEGER)
-			ret = pobj->Package.Elements[0].Integer.Value;
-		break;
 	}
 
-	ACPI_FREE(buf.Pointer);
+	/*
+	 * ...and we default to "may ignore" in the event that the
+	 * method returns nonsense.
+	 */
+	ret = 1;
+
+	if (pobj != NULL) {
+		switch (pobj->Type) {
+		case ACPI_TYPE_INTEGER:
+			ret = pobj->Integer.Value;
+			break;
+
+		case ACPI_TYPE_PACKAGE:
+			if (pobj->Package.Count == 1 &&
+			    pobj->Package.Elements[0].Type == ACPI_TYPE_INTEGER)
+				ret = pobj->Package.Elements[0].Integer.Value;
+			break;
+		}
+		ACPI_FREE(pobj);
+	}
 
 	return ret;
 }
