@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.83 2020/11/10 21:47:49 kamil Exp $
+.\"	$NetBSD: mk.conf.5,v 1.84 2021/01/14 23:32:12 pgoyette Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -182,6 +182,37 @@ unless run in
 .Sq expert
 mode
 .
+.It Sy KERNEL_DIR (EXPERIMENTAL)
+.YorN
+Indicates if a top-level directory
+.Sy /netbsd/
+is created.
+If
+.Dq yes ,
+the directory will contain a kernel file
+.Pa /netbsd/kernel
+and a corresponding modules directory
+.Pa /netbsd/modules/ .
+System bootstrap procedures will be modified to search for the kernel
+and modules in the
+.Pa /netbsd/
+directory.
+This is intended to simplify system upgrade and rollback procedures by
+keeping the kernel and its associated modules together in one place.
+.Pp
+If
+.Dq no ,
+the kernel file will be stored in
+.Pa /netbsd
+and the modules will be stored within the
+.Pa /stand/${ARCH}/
+directory hierarchy.
+.Pp
+The
+.Sy KERNEL_DIR
+option is a work-in-progress, and is highly experimental.
+It is also subject to change without notice.
+.DFLTn
 .It Sy MAKEVERBOSE
 Level of verbosity of status messages.
 Supported values:
