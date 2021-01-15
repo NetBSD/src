@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.33 2020/12/16 19:49:04 christos Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.34 2021/01/15 00:38:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.33 2020/12/16 19:49:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.34 2021/01/15 00:38:22 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 
@@ -83,7 +83,7 @@ static void bcm2836mp_send_ipi(struct pic_softc *, const kcpuset_t *, u_long);
 
 static int bcm2835_icu_fdt_decode_irq(u_int *);
 static void *bcm2835_icu_fdt_establish(device_t, u_int *, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 static void bcm2835_icu_fdt_disestablish(device_t, void *);
 static bool bcm2835_icu_fdt_intrstr(device_t, u_int *, char *, size_t);
 
@@ -91,7 +91,7 @@ static int bcm2835_icu_intr(void *);
 
 static int bcm2836mp_icu_fdt_decode_irq(u_int *);
 static void *bcm2836mp_icu_fdt_establish(device_t, u_int *, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 static void bcm2836mp_icu_fdt_disestablish(device_t, void *);
 static bool bcm2836mp_icu_fdt_intrstr(device_t, u_int *, char *, size_t);
 
@@ -467,7 +467,7 @@ bcm2835_icu_fdt_decode_irq(u_int *specifier)
 
 static void *
 bcm2835_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct bcm2835icu_softc * const sc = device_private(dev);
 	struct bcm2835icu_irq *firq;
@@ -493,11 +493,11 @@ bcm2835_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		firq->intr_irq = irq;
 		TAILQ_INIT(&firq->intr_handlers);
 		if (arg == NULL) {
-			firq->intr_ih = intr_establish(irq, ipl,
-			    IST_LEVEL | iflags, func, NULL);
+			firq->intr_ih = intr_establish_xname(irq, ipl,
+			    IST_LEVEL | iflags, func, NULL, xname);
 		} else {
-			firq->intr_ih = intr_establish(irq, ipl,
-			    IST_LEVEL | iflags, bcm2835_icu_intr, firq);
+			firq->intr_ih = intr_establish_xname(irq, ipl,
+			    IST_LEVEL | iflags, bcm2835_icu_intr, firq, xname);
 		}
 		if (firq->intr_ih == NULL) {
 			kmem_free(firq, sizeof(*firq));
@@ -864,7 +864,7 @@ bcm2836mp_icu_fdt_decode_irq(u_int *specifier)
 
 static void *
 bcm2836mp_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
 	struct bcm2836mp_interrupt *bip;
@@ -896,8 +896,9 @@ bcm2836mp_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	 */
 	if (!cold) {
 		for (cpuid_t cpuid = 0; cpuid < BCM2836_NCPUS; cpuid++) {
-			ih = intr_establish(BCM2836_INT_BASECPUN(cpuid) + irq, ipl,
-			    IST_LEVEL | iflags, func, arg);
+			ih = intr_establish_xname(
+			    BCM2836_INT_BASECPUN(cpuid) + irq, ipl,
+			    IST_LEVEL | iflags, func, arg, xname);
 			if (!ih) {
 				kmem_free(bip, sizeof(*bip));
 				return NULL;
@@ -915,8 +916,8 @@ bcm2836mp_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	 * delay until bcm2836mp_intr_init is called for each AP, e.g.
 	 * gtmr
 	 */
-	ih = intr_establish(BCM2836_INT_BASECPUN(0) + irq, ipl,
-	    IST_LEVEL | iflags, func, arg);
+	ih = intr_establish_xname(BCM2836_INT_BASECPUN(0) + irq, ipl,
+	    IST_LEVEL | iflags, func, arg, xname);
 	if (!ih) {
 		kmem_free(bip, sizeof(*bip));
 		return NULL;

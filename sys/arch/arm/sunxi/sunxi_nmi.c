@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nmi.c,v 1.5 2020/02/16 20:29:36 thorpej Exp $ */
+/* $NetBSD: sunxi_nmi.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.5 2020/02/16 20:29:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -170,7 +170,7 @@ sunxi_nmi_intr(void *priv)
 
 static void *
 sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct sunxi_nmi_softc * const sc = device_private(dev);
 	u_int irq_type;

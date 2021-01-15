@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_intc.c,v 1.5 2020/01/07 10:20:07 skrll Exp $ */
+/* $NetBSD: sunxi_intc.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.5 2020/01/07 10:20:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,7 @@ static const struct pic_ops sunxi_intc_picops = {
 
 static void *
 sunxi_intc_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	/* 1st cell is the interrupt number */
 	const u_int irq = be32toh(specifier[0]);
@@ -146,7 +146,8 @@ sunxi_intc_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	const u_int mpsafe = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
-	return intr_establish(irq, ipl, IST_LEVEL | mpsafe, func, arg);
+	return intr_establish_xname(irq, ipl, IST_LEVEL | mpsafe, func, arg,
+	    xname);
 }
 
 static void

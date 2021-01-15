@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_omapintc.c,v 1.3 2020/09/26 10:06:26 skrll Exp $	*/
+/*	$NetBSD: ti_omapintc.c,v 1.4 2021/01/15 00:38:23 jmcneill Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -29,7 +29,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.3 2020/09/26 10:06:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.4 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -184,7 +184,7 @@ omap2icu_set_priority(struct pic_softc *pic, int ipl)
 
 static void *
 omapintc_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	const u_int irq = be32toh(specifier[0]);
 	if (irq >= INTC_MAX_SOURCES) {
@@ -193,7 +193,8 @@ omapintc_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	}
 
 	const u_int mpsafe = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
-	return intr_establish(irq, ipl, IST_LEVEL | mpsafe, func, arg);
+	return intr_establish_xname(irq, ipl, IST_LEVEL | mpsafe, func, arg,
+	    xname);
 }
 
 static void

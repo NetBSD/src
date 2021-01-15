@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_lic.c,v 1.6 2019/01/26 14:38:29 thorpej Exp $ */
+/* $NetBSD: tegra_lic.c,v 1.7 2021/01/15 00:38:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.6 2019/01/26 14:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.7 2021/01/15 00:38:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ static int	tegra_lic_match(device_t, cfdata_t, void *);
 static void	tegra_lic_attach(device_t, device_t, void *);
 
 static void *	tegra_lic_establish(device_t, u_int *, int, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 static void	tegra_lic_disestablish(device_t, void *);
 static bool	tegra_lic_intrstr(device_t, u_int *, char *, size_t);
 
@@ -130,7 +130,7 @@ tegra_lic_attach(device_t parent, device_t self, void *aux)
 
 static void *
 tegra_lic_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
@@ -145,7 +145,8 @@ tegra_lic_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int level = (trig & FDT_INTR_TYPE_DOUBLE_EDGE)
 	    ? IST_EDGE : IST_LEVEL;
 
-	return intr_establish(irq, ipl, level | iflags, func, arg);
+	return intr_establish_xname(irq, ipl, level | iflags, func, arg,
+	    xname);
 }
 
 static void

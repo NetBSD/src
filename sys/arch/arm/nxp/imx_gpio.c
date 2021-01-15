@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_gpio.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx_gpio.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_gpio.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_gpio.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $");
 
 #include "opt_fdt.h"
 #include "gpio.h"
@@ -58,7 +58,7 @@ static int imx6_gpio_fdt_read(device_t, void *, bool);
 static void imx6_gpio_fdt_write(device_t, void *, int, bool);
 
 static void *imxgpio_establish(device_t, u_int *, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 static void imxgpio_disestablish(device_t, void *);
 static bool imxgpio_intrstr(device_t, u_int *, char *, size_t);
 
@@ -220,7 +220,7 @@ imx6_gpio_fdt_write(device_t dev, void *priv, int val, bool raw)
 
 static void *
 imxgpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct imxgpio_softc * const sc = device_private(dev);
 
@@ -246,7 +246,8 @@ imxgpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	aprint_debug_dev(dev, "intr establish irq %d, level %d\n",
 	    sc->gpio_irqbase + intr, level);
-	return intr_establish(sc->gpio_irqbase + intr, ipl, level | mpsafe, func, arg);
+	return intr_establish_xname(sc->gpio_irqbase + intr, ipl,
+	    level | mpsafe, func, arg, xname);
 }
 
 static void

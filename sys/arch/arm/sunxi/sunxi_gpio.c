@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.28 2020/08/27 16:35:13 skrll Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.29 2021/01/15 00:38:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.28 2020/08/27 16:35:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.29 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -520,7 +520,7 @@ sunxi_intr_disable(struct sunxi_gpio_softc *sc, struct sunxi_gpio_eint *eint)
 
 static void *
 sunxi_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct sunxi_gpio_softc * const sc = device_private(dev);
 	bool mpsafe = (flags & FDT_INTR_MPSAFE) != 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.26 2020/03/08 08:25:36 skrll Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.27 2021/01/15 00:38:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.26 2020/03/08 08:25:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.27 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -235,7 +235,7 @@ fdtbus_intr_establish_raw(int ihandle, const u_int *specifier, int ipl,
 	 * and hope that the device won't actually interrupt until we return.
 	 */
 	ih = ic->ic_funcs->establish(ic->ic_dev, __UNCONST(specifier),
-	    ipl, flags, func, arg);
+	    ipl, flags, func, arg, NULL);
 	if (ih != NULL) {
 		atomic_store_release(&c->c_ih, ih);
 	} else {

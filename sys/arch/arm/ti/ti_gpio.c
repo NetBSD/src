@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.4 2020/06/03 16:00:00 jmcneill Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.5 2021/01/15 00:38:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.4 2020/06/03 16:00:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.5 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -283,7 +283,7 @@ ti_gpio_intr_disestablish(device_t dev, void *ih)
 
 static void *
 ti_gpio_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct ti_gpio_softc * const sc = device_private(dev);
 	uint32_t val;
