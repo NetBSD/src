@@ -1,4 +1,4 @@
-/* $NetBSD: smsh_fdt.c,v 1.2 2019/11/03 12:06:32 jmcneill Exp $ */
+/* $NetBSD: smsh_fdt.c,v 1.3 2021/01/15 18:42:41 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.2 2019/11/03 12:06:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.3 2021/01/15 18:42:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,8 @@ smsh_fdt_attach(device_t parent, device_t self, void *aux)
 	if (lan9118_attach(sc) != 0)
 		goto unmap;
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0, lan9118_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, 0, lan9118_intr, sc,
+	    device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		goto unmap;

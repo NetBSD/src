@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_fdt.c,v 1.3 2019/01/22 15:17:33 jmcneill Exp $ */
+/* $NetBSD: a9tmr_fdt.c,v 1.4 2021/01/15 18:42:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.3 2019/01/22 15:17:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.4 2021/01/15 18:42:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,8 +103,8 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	void *ih = fdtbus_intr_establish(phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, a9tmr_intr, NULL);
+	void *ih = fdtbus_intr_establish_xname(phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, a9tmr_intr, NULL, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

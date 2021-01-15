@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.3 2019/05/28 05:08:47 ryo Exp $ */
+/* $NetBSD: meson_uart.c,v 1.4 2021/01/15 18:42:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.3 2019/05/28 05:08:47 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.4 2021/01/15 18:42:40 ryo Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -187,8 +187,8 @@ meson_uart_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, meson_uart_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, meson_uart_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": failed to establish interrupt on %s\n",
 		    intrstr);

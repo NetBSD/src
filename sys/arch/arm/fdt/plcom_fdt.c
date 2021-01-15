@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_fdt.c,v 1.3 2018/10/23 09:15:35 jmcneill Exp $ */
+/* $NetBSD: plcom_fdt.c,v 1.4 2021/01/15 18:42:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.3 2018/10/23 09:15:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.4 2021/01/15 18:42:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,8 +110,8 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL, FDT_INTR_MPSAFE,
-	    plcomintr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SERIAL, FDT_INTR_MPSAFE,
+	    plcomintr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

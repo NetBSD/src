@@ -1,4 +1,4 @@
-/* $NetBSD: meson_sdhc.c,v 1.1 2019/01/20 00:44:01 jmcneill Exp $ */
+/* $NetBSD: meson_sdhc.c,v 1.2 2021/01/15 18:42:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_sdhc.c,v 1.1 2019/01/20 00:44:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_sdhc.c,v 1.2 2021/01/15 18:42:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -244,8 +244,8 @@ meson_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_non_removable = of_hasprop(sc->sc_slot_phandle, "non-removable");
 	sc->sc_broken_cd = of_hasprop(sc->sc_slot_phandle, "broken-cd");
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
-	    meson_sdhc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0,
+	    meson_sdhc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

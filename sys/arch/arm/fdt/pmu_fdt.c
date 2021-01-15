@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.6 2019/06/29 12:53:05 jmcneill Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.7 2021/01/15 18:42:41 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.6 2019/06/29 12:53:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.7 2021/01/15 18:42:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,8 +147,8 @@ pmu_fdt_init(device_t self)
 	ih = kmem_zalloc(sizeof(void *) * ncpu, KM_SLEEP);
 
 	for (n = 0; n < ncpu; n++) {
-		ih[n] = fdtbus_intr_establish(phandle, n, IPL_HIGH,
-		    FDT_INTR_MPSAFE, arm_pmu_intr, NULL);
+		ih[n] = fdtbus_intr_establish_xname(phandle, n, IPL_HIGH,
+		    FDT_INTR_MPSAFE, arm_pmu_intr, NULL, device_xname(self));
 		if (ih[n] == NULL)
 			break;
 		if (!fdtbus_intr_str(phandle, n, intrstr, sizeof(intrstr))) {

@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.8 2021/01/01 11:58:21 jmcneill Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.9 2021/01/15 18:42:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.8 2021/01/01 11:58:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.9 2021/01/15 18:42:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -375,8 +375,8 @@ mesongx_mmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, FDT_INTR_MPSAFE,
-	    mesongx_mmc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_BIO,
+	    FDT_INTR_MPSAFE, mesongx_mmc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

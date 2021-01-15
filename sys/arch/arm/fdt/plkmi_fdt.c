@@ -1,4 +1,4 @@
-/* $NetBSD: plkmi_fdt.c,v 1.1 2017/06/03 17:05:23 jmcneill Exp $ */
+/* $NetBSD: plkmi_fdt.c,v 1.2 2021/01/15 18:42:41 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plkmi_fdt.c,v 1.1 2017/06/03 17:05:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plkmi_fdt.c,v 1.2 2021/01/15 18:42:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,8 @@ plkmi_fdt_attach(device_t parent, device_t self, void *aux)
 
 	plkmi_attach(sc);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_TTY, 0, plkmi_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_TTY, 0, plkmi_intr, sc,
+	    device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

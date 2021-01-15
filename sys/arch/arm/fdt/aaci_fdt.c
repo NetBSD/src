@@ -1,4 +1,4 @@
-/* $NetBSD: aaci_fdt.c,v 1.1 2017/06/08 10:03:59 jmcneill Exp $ */
+/* $NetBSD: aaci_fdt.c,v 1.2 2021/01/15 18:42:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aaci_fdt.c,v 1.1 2017/06/08 10:03:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aaci_fdt.c,v 1.2 2021/01/15 18:42:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,8 +93,8 @@ aaci_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_AUDIO, FDT_INTR_MPSAFE,
-	    aaci_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_AUDIO, FDT_INTR_MPSAFE,
+	    aaci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

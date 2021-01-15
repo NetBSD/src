@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_spi.c,v 1.4 2020/04/01 20:37:32 tnn Exp $	*/
+/*	$NetBSD: rk_spi.c,v 1.5 2021/01/15 18:42:41 ryo Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.4 2020/04/01 20:37:32 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.5 2021/01/15 18:42:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -250,7 +250,8 @@ rk_spi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, rk_spi_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    rk_spi_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		return;
