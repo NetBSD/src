@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ts.c,v 1.3 2019/06/04 03:03:34 thorpej Exp $ */
+/* $NetBSD: sunxi_ts.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.3 2019/06/04 03:03:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -388,7 +388,8 @@ sunxi_ts_attach(device_t parent, device_t self, void *aux)
 
 	sunxi_ts_init(sc);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, sunxi_ts_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0, sunxi_ts_intr,
+	    sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
