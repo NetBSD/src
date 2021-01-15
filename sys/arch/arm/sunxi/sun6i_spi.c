@@ -1,4 +1,4 @@
-/*	$NetBSD: sun6i_spi.c,v 1.6 2021/01/15 23:02:07 jmcneill Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.7 2021/01/15 23:02:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.6 2021/01/15 23:02:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.7 2021/01/15 23:02:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,7 +158,7 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": SPI\n");
-	
+
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	gcr = SPI_GCR_SRST;
@@ -205,7 +205,7 @@ sun6ispi_configure(void *cookie, int slave, int mode, int speed)
 
 	if (slave >= sc->sc_spi.sct_nslaves)
 		return EINVAL;
-	
+
 	tcr = SPI_TCR_SS_LEVEL | SPI_TCR_SPOL;
 
 	switch (mode) {
