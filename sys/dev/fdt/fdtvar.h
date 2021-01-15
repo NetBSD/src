@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.64 2020/12/23 16:02:11 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.65 2021/01/15 00:38:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,7 +72,7 @@ struct fdt_attach_args {
 
 struct fdtbus_interrupt_controller_func {
 	void *	(*establish)(device_t, u_int *, int, int,
-			     int (*)(void *), void *);
+			     int (*)(void *), void *, const char *);
 	void	(*disestablish)(device_t, void *);
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 	void	(*mask)(device_t, void *);

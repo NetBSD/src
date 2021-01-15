@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.19 2020/11/25 20:59:20 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.20 2021/01/15 00:38:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.19 2020/11/25 20:59:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.20 2021/01/15 00:38:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,7 +66,7 @@ static void	gic_fdt_attach_v2m(struct gic_fdt_softc *, bus_space_tag_t, int);
 static int	gic_fdt_intr(void *);
 
 static void *	gic_fdt_establish(device_t, u_int *, int, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 static void	gic_fdt_disestablish(device_t, void *);
 static bool	gic_fdt_intrstr(device_t, u_int *, char *, size_t);
 
@@ -235,7 +235,7 @@ gic_fdt_attach_v2m(struct gic_fdt_softc *sc, bus_space_tag_t bst, int phandle)
 
 static void *
 gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct gic_fdt_softc * const sc = device_private(dev);
 	struct gic_fdt_irq *firq;
@@ -266,11 +266,11 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		TAILQ_INIT(&firq->intr_handlers);
 		firq->intr_irq = irq;
 		if (arg == NULL) {
-			firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
-			    func, NULL);
+			firq->intr_ih = intr_establish_xname(irq, ipl,
+			    level | mpsafe, func, NULL, xname);
 		} else {
-			firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
-			    gic_fdt_intr, firq);
+			firq->intr_ih = intr_establish_xname(irq, ipl,
+			    level | mpsafe, gic_fdt_intr, firq, xname);
 		}
 		if (firq->intr_ih == NULL) {
 			kmem_free(firq, sizeof(*firq));
