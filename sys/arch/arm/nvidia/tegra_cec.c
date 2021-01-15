@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cec.c,v 1.6 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_cec.c,v 1.7 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.6 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.7 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -166,8 +166,8 @@ tegra_cec_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_cec_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_cec_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

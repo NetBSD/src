@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_apbdma.c,v 1.7 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_apbdma.c,v 1.8 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.7 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.8 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -217,8 +217,8 @@ tegra_apbdma_acquire(device_t dev, const void *data, size_t len,
 		return NULL;
 	}
 
-	ch->ch_ih = fdtbus_intr_establish(sc->sc_phandle, n, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_apbdma_intr, ch);
+	ch->ch_ih = fdtbus_intr_establish_xname(sc->sc_phandle, n, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_apbdma_intr, ch, device_xname(dev));
 	if (ch->ch_ih == NULL) {
 		aprint_error_dev(dev, "failed to establish interrupt on %s\n",
 		    intrstr);
