@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.7 2019/06/14 21:48:43 tnn Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.7 2019/06/14 21:48:43 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -144,8 +144,8 @@ sunxi_timer_cpu_initclocks(void)
 	if (!fdtbus_intr_str(sc->sc_phandle, 0, intrstr, sizeof(intrstr)))
 		panic("%s: failed to decode interrupt", __func__);
 
-	ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, sunxi_timer_intr, NULL);
+	ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, sunxi_timer_intr, NULL, device_xname(sc->sc_dev));
 	if (ih == NULL)
 		panic("%s: failed to establish timer interrupt", __func__);
 

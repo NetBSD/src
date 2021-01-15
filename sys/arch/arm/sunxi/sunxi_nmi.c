@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nmi.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_nmi.c,v 1.7 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.7 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -230,8 +230,8 @@ sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	mutex_exit(&sc->sc_intr_lock);
 
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, ipl, flags,
-	    sunxi_nmi_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, ipl, flags,
+	    sunxi_nmi_intr, sc, device_xname(dev));
 
 	mutex_enter(&sc->sc_intr_lock);
 	sunxi_nmi_irq_set_type(sc, irq_type);

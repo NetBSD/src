@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_dma.c,v 1.3 2018/04/20 18:04:12 bouyer Exp $ */
+/* $NetBSD: sun4i_dma.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.3 2018/04/20 18:04:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -408,8 +408,8 @@ sun4idma_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SCHED,
-	    FDT_INTR_MPSAFE, sun4idma_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SCHED,
+	    FDT_INTR_MPSAFE, sun4idma_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish interrupt on %s\n", intrstr);

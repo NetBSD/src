@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.8 2020/01/01 22:57:16 thorpej Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.9 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.8 2020/01/01 22:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.9 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,8 +589,8 @@ sunxi_thermal_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Thermal sensor controller\n");
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    sunxi_thermal_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sunxi_thermal_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
