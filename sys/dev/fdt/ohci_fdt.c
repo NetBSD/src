@@ -1,4 +1,4 @@
-/* $NetBSD: ohci_fdt.c,v 1.3 2018/08/12 16:33:58 jmcneill Exp $ */
+/* $NetBSD: ohci_fdt.c,v 1.4 2021/01/15 20:50:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.3 2018/08/12 16:33:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.4 2021/01/15 20:50:49 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,8 +128,8 @@ ohci_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
-	    ohci_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
+	    ohci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
