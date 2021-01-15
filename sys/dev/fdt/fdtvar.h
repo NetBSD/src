@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.65 2021/01/15 00:38:23 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.66 2021/01/15 17:17:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,6 +77,8 @@ struct fdtbus_interrupt_controller_func {
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 	void	(*mask)(device_t, void *);
 	void	(*unmask)(device_t, void *);
+	void *	(*establish_xname)(device_t, u_int *, int, int,
+			     int (*)(void *), void *, const char *);
 };
 
 struct fdtbus_spi_controller_func {
@@ -317,10 +319,12 @@ i2c_tag_t	fdtbus_get_i2c_tag(int);
 i2c_tag_t	fdtbus_i2c_acquire(int, const char *);
 void *		fdtbus_intr_establish(int, u_int, int, int,
 		    int (*func)(void *), void *arg);
+void *		fdtbus_intr_establish_xname(int, u_int, int, int,
+		    int (*func)(void *), void *arg, const char *);
 void *		fdtbus_intr_establish_byname(int, const char *, int, int,
 		    int (*func)(void *), void *arg);
 void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
-		    int (*func)(void *), void *arg);
+		    int (*func)(void *), void *arg, const char *);
 void		fdtbus_intr_mask(int, void *);
 void		fdtbus_intr_unmask(int, void *);
 void		fdtbus_intr_disestablish(int, void *);

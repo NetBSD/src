@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.27 2021/01/15 00:38:23 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.28 2021/01/15 17:17:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.27 2021/01/15 00:38:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.28 2021/01/15 17:17:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -181,6 +181,14 @@ void *
 fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
+	return fdtbus_intr_establish_xname(phandle, index, ipl, flags,
+	    func, arg, NULL);
+}
+
+void *
+fdtbus_intr_establish_xname(int phandle, u_int index, int ipl, int flags,
+    int (*func)(void *), void *arg, const char *xname)
+{
 	const u_int *specifier;
 	int ihandle;
 
@@ -189,7 +197,7 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 		return NULL;
 
 	return fdtbus_intr_establish_raw(ihandle, specifier, ipl,
-	    flags, func, arg);
+	    flags, func, arg, xname);
 }
 
 void *
@@ -208,7 +216,7 @@ fdtbus_intr_establish_byname(int phandle, const char *name, int ipl,
 
 void *
 fdtbus_intr_establish_raw(int ihandle, const u_int *specifier, int ipl,
-    int flags, int (*func)(void *), void *arg)
+    int flags, int (*func)(void *), void *arg, const char *xname)
 {
 	struct fdtbus_interrupt_controller *ic;
 	struct fdtbus_interrupt_cookie *c;
@@ -235,7 +243,7 @@ fdtbus_intr_establish_raw(int ihandle, const u_int *specifier, int ipl,
 	 * and hope that the device won't actually interrupt until we return.
 	 */
 	ih = ic->ic_funcs->establish(ic->ic_dev, __UNCONST(specifier),
-	    ipl, flags, func, arg, NULL);
+	    ipl, flags, func, arg, xname);
 	if (ih != NULL) {
 		atomic_store_release(&c->c_ih, ih);
 	} else {
