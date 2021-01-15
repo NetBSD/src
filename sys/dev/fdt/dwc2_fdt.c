@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.5 2019/03/02 13:21:08 jmcneill Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.6 2021/01/15 22:35:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.5 2019/03/02 13:21:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.6 2021/01/15 22:35:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,9 +166,8 @@ dwc2_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": DesignWare USB2 OTG\n");
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    dwc2_intr, &sc->sc_dwc2);
-
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, dwc2_intr, &sc->sc_dwc2, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",
 		    intrstr);
