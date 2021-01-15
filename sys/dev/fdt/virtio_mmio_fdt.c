@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.3 2018/09/29 15:56:25 jmcneill Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.4 2021/01/15 22:35:39 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.3 2018/09/29 15:56:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.4 2021/01/15 22:35:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,8 +167,9 @@ virtio_mmio_fdt_setup_interrupts(struct virtio_mmio_softc *msc)
 	if (vsc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
 		flags |= FDT_INTR_MPSAFE;
 
-	msc->sc_ih = fdtbus_intr_establish(fsc->sc_phandle, 0, vsc->sc_ipl,
-	    flags, virtio_mmio_intr, msc);
+	msc->sc_ih = fdtbus_intr_establish_xname(fsc->sc_phandle, 0,
+	    vsc->sc_ipl, flags, virtio_mmio_intr, msc,
+	    device_xname(vsc->sc_dev));
 	if (msc->sc_ih == NULL) {
 		aprint_error_dev(vsc->sc_dev,
 		    "failed to establish interrupt on %s\n", intrstr);

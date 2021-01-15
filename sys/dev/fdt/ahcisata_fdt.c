@@ -1,4 +1,4 @@
-/* $NetBSD: ahcisata_fdt.c,v 1.1 2018/09/03 23:15:12 jmcneill Exp $ */
+/* $NetBSD: ahcisata_fdt.c,v 1.2 2021/01/15 22:35:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_fdt.c,v 1.1 2018/09/03 23:15:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_fdt.c,v 1.2 2021/01/15 22:35:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,8 +103,10 @@ ahcisata_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": AHCI SATA controller\n");
 
-	if (fdtbus_intr_establish(phandle, 0, IPL_BIO, 0, ahci_intr, sc) == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
+	if (fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0,
+	    ahci_intr, sc, device_xname(self)) == NULL) {
+		aprint_error_dev(self,
+		    "failed to establish interrupt on %s\n", intrstr);
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
