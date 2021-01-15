@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.188 2021/01/10 23:24:26 riastradh Exp $
+.\"	$NetBSD: rc.conf.5,v 1.189 2021/01/15 15:17:08 riastradh Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -468,6 +468,13 @@ Note that
 may cause the system to hang indefinitely at boot if it has neither a
 random seed nor any hardware random number generators \(em use with
 care.
+.Pp
+If unset, the system may come to multiuser without entropy, which is
+unsafe to use on the internet; it is the operator's responsibility to
+heed warnings from the kernel and the daily
+.Xr security.conf 5
+report to remedy the problem \(em see
+.Xr entropy 7 .
 .It Sy envsys
 Boolean value.
 Sets preferences for the environmental systems framework,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: entropy.7,v 1.2 2021/01/13 05:21:34 riastradh Exp $
+.\"	$NetBSD: entropy.7,v 1.3 2021/01/15 15:17:09 riastradh Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,19 +114,27 @@ and takes measures to alert the operator if there isn't definitely
 enough for security:
 .Bl -bullet
 .It
-Setting
+.Nx
+issues warnings on the console if there's not enough entropy when
+programs need it; see
+.Xr rnd 4 .
+.It
+The daily security report includes an alert if there's not enough
+entropy; see
+.Xr security.conf 5 .
+.It
+The operator can set
 .Sq Li entropy=check
 in
 .Xr rc.conf 5
-makes
+so that
 .Nx
-refuse to boot to multiuser unless there is enough entropy, or
+will refuse to boot to multiuser unless there is enough entropy, or set
 .Sq Li entropy=wait
-makes it wait for entropy before booting to multiuser (with the caveat
-that it may cause boot to hang forever).
-.It
-The daily security script sends an alert if there is not enough entropy
-.Pq see Xr security.conf 5 .
+so that
+.Nx
+will wait for entropy before booting to multiuser (with the caveat that
+it may cause boot to hang forever).
 .El
 .Pp
 Since it is difficult to confidently model the unpredictability of most
