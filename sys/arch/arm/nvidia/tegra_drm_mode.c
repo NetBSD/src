@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.19 2019/10/13 05:56:52 skrll Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.20 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.19 2019/10/13 05:56:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.20 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -320,8 +320,8 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	}
 	crtc->size = size;
 	crtc->intr = intr;
-	crtc->ih = intr_establish(intr, IPL_VM, IST_LEVEL | IST_MPSAFE,
-	    tegra_crtc_intr, crtc);
+	crtc->ih = intr_establish_xname(intr, IPL_VM, IST_LEVEL | IST_MPSAFE,
+	    tegra_crtc_intr, crtc, device_xname(self)); /* XXX */
 	if (crtc->ih == NULL) {
 		DRM_ERROR("failed to establish interrupt for crtc %d\n", index);
 	}
