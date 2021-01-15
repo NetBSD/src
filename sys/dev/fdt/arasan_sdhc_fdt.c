@@ -1,4 +1,4 @@
-/* $NetBSD: arasan_sdhc_fdt.c,v 1.3 2019/07/03 23:10:43 jmcneill Exp $ */
+/* $NetBSD: arasan_sdhc_fdt.c,v 1.4 2021/01/15 20:50:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.3 2019/07/03 23:10:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.4 2021/01/15 20:50:49 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -306,7 +306,8 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_register_clock_controller(self, phandle, &arasan_sdhc_fdt_clk_funcs);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, 0, sdhc_intr, &sc->sc_base);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SDMMC, 0,
+	    sdhc_intr, &sc->sc_base, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n", intrstr);
 		return;

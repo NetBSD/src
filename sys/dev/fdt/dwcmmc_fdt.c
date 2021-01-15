@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.11 2020/01/22 23:19:11 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.12 2021/01/15 20:50:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.11 2020/01/22 23:19:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.12 2021/01/15 20:50:49 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,8 +182,8 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	if (dwc_mmc_init(sc) != 0)
 		return;
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
-	    dwc_mmc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0,
+	    dwc_mmc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
