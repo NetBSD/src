@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.8 2020/10/02 14:59:56 rin Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.9 2021/01/15 20:50:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.8 2020/10/02 14:59:56 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.9 2021/01/15 20:50:49 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,8 +136,8 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ssc->ssc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, comintr, sc);
+	ssc->ssc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0,
+	    IPL_SERIAL, FDT_INTR_MPSAFE, comintr, sc, device_xname(self));
 	if (ssc->ssc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.11 2020/10/15 09:33:44 jmcneill Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.12 2021/01/15 20:50:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.11 2020/10/15 09:33:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.12 2021/01/15 20:50:49 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -306,8 +306,8 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(dwc3_phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
-	    xhci_intr, sc);
+	ih = fdtbus_intr_establish_xname(dwc3_phandle, 0, IPL_USB,
+	    FDT_INTR_MPSAFE, xhci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
