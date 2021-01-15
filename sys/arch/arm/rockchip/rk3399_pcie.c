@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.13 2021/01/15 00:38:23 jmcneill Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.14 2021/01/15 22:59:50 jmcneill Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.13 2021/01/15 00:38:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.14 2021/01/15 22:59:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ rkpcie_intx_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	    PCIM_INTx_ENAB(2) | PCIM_INTx_ENAB(3));
 
 	cookie = fdtbus_intr_establish_byname(sc->sc_phsc.sc_phandle,
-	    "legacy", ipl, flags, func, arg);
+	    "legacy", ipl, flags, func, arg, xname);
 
 	return cookie;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.28 2021/01/15 17:17:04 ryo Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.29 2021/01/15 22:59:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.28 2021/01/15 17:17:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.29 2021/01/15 22:59:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -202,7 +202,7 @@ fdtbus_intr_establish_xname(int phandle, u_int index, int ipl, int flags,
 
 void *
 fdtbus_intr_establish_byname(int phandle, const char *name, int ipl,
-    int flags, int (*func)(void *), void *arg)
+    int flags, int (*func)(void *), void *arg, const char *xname)
 {
 	u_int index;
 	int err;
@@ -211,7 +211,8 @@ fdtbus_intr_establish_byname(int phandle, const char *name, int ipl,
 	if (err != 0)
 		return NULL;
 
-	return fdtbus_intr_establish(phandle, index, ipl, flags, func, arg);
+	return fdtbus_intr_establish_xname(phandle, index, ipl, flags, func,
+	    arg, xname);
 }
 
 void *
