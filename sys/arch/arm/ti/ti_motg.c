@@ -1,4 +1,4 @@
-/* $NetBSD: ti_motg.c,v 1.2 2020/06/03 19:16:23 jmcneill Exp $ */
+/* $NetBSD: ti_motg.c,v 1.3 2021/01/15 23:19:33 jmcneill Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.2 2020/06/03 19:16:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.3 2021/01/15 23:19:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,8 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_ctrlih = fdtbus_intr_establish(phandle, 0, IPL_USB, 0,
-	    ti_motg_intr, sc);
+	sc->sc_ctrlih = fdtbus_intr_establish_xname(phandle, 0, IPL_USB, 0,
+	    ti_motg_intr, sc, device_xname(self));
 	sc->sc_motg.sc_bus.ub_dmatag = faa->faa_dmat;
 
 	val = TIOTG_USBC_READ4(sc, USBCTRL_REV);
