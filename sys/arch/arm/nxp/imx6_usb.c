@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -266,8 +266,8 @@ imx6_usb_intr_establish(struct imxehci_softc *sc)
 		aprint_error_dev(sc->sc_dev, "failed to decode interrupt\n");
 		return NULL;
 	}
-	ih = fdtbus_intr_establish(ifsc->sc_phandle, 0, IPL_USB,
-	    FDT_INTR_MPSAFE, ehci_intr, hsc);
+	ih = fdtbus_intr_establish_xname(ifsc->sc_phandle, 0, IPL_USB,
+	    FDT_INTR_MPSAFE, ehci_intr, hsc, device_xname(sc->sc_dev));
 	if (ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "failed to establish interrupt on %s\n",
 		    intrstr);

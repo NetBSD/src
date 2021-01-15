@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_spi.c,v 1.2 2020/12/23 16:52:06 skrll Exp $	*/
+/*	$NetBSD: imx6_spi.c,v 1.3 2021/01/15 23:58:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.2 2020/12/23 16:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.3 2021/01/15 23:58:18 jmcneill Exp $");
 
 #include "opt_imxspi.h"
 
@@ -161,8 +161,8 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    0, imxspi_intr, &ifsc->sc_imxspi);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    0, imxspi_intr, &ifsc->sc_imxspi, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
