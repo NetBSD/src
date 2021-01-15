@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.11 2019/10/18 06:13:38 skrll Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.12 2021/01/15 00:38:23 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.11 2019/10/18 06:13:38 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.12 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,7 +91,7 @@ static int exynos_combiner_match(device_t, cfdata_t, void *);
 static void exynos_combiner_attach(device_t, device_t, void *);
 
 static void *	exynos_combiner_establish(device_t, u_int *, int, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 static void	exynos_combiner_disestablish(device_t, void *);
 static bool	exynos_combiner_intrstr(device_t, u_int  *, char *,
 					size_t);
@@ -235,7 +235,7 @@ exynos_combiner_irq(void *cookie)
 static void *
 exynos_combiner_establish(device_t dev, u_int *specifier,
 			  int ipl, int flags,
-			  int (*func)(void *), void *arg)
+			  int (*func)(void *), void *arg, const char *xname)
 {
 	struct exynos_combiner_softc * const sc = device_private(dev);
 	struct exynos_combiner_irq_group *groupp;
@@ -250,12 +250,12 @@ exynos_combiner_establish(device_t dev, u_int *specifier,
 	if (!groupp) {
 		groupp = exynos_combiner_new_group(sc, group);
 		if (arg == NULL) {
-			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle, group,
-			    ipl /* XXX */, flags, func, NULL);
+			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle,
+			    group, ipl /* XXX */, flags, func, NULL);
 		} else {
-			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle, group,
-			    ipl /* XXX */, FDT_INTR_MPSAFE, exynos_combiner_irq,
-			    groupp);
+			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle,
+			    group, ipl /* XXX */, FDT_INTR_MPSAFE,
+			    exynos_combiner_irq, groupp);
 		}
 		KASSERT(groupp->irq_ih != NULL);
 		groupp->irq_ipl = ipl;

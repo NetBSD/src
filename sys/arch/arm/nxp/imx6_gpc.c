@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_gpc.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx6_gpc.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_gpc.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_gpc.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -51,7 +51,7 @@ static int imxgpc_match(device_t, struct cfdata *, void *);
 static void imxgpc_attach(device_t, device_t, void *);
 
 static void *imxgpc_establish(device_t, u_int *, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 static void imxgpc_disestablish(device_t, void *);
 static bool imxgpc_intrstr(device_t, u_int *, char *, size_t);
 
@@ -113,7 +113,7 @@ imxgpc_attach(device_t parent, device_t self, void *aux)
 
 static void *
 imxgpc_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	/* 1st cell is the interrupt type; 0 is SPI, 1 is PPI */
 	/* 2nd cell is the interrupt number */
@@ -128,7 +128,8 @@ imxgpc_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int mpsafe = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
 	aprint_debug_dev(dev, "intr establish irq %d, level %d\n", irq, level);
-	return intr_establish(irq, ipl, level | mpsafe, func, arg);
+	return intr_establish_xname(irq, ipl, level | mpsafe, func, arg,
+	  xname);
 }
 
 static void

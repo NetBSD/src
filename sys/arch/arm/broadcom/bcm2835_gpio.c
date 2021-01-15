@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.16 2019/10/12 09:46:18 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.17 2021/01/15 00:38:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.16 2019/10/12 09:46:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.17 2021/01/15 00:38:22 jmcneill Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -150,7 +150,7 @@ static struct fdtbus_gpio_controller_func bcmgpio_funcs = {
 };
 
 static void *	bcmgpio_fdt_intr_establish(device_t, u_int *, int, int,
-		    int (*func)(void *), void *);
+		    int (*func)(void *), void *, const char *);
 static void	bcmgpio_fdt_intr_disestablish(device_t, void *);
 static bool	bcmgpio_fdt_intrstr(device_t, u_int *, char *, size_t);
 
@@ -567,7 +567,7 @@ bcmgpio_intr_disable(struct bcmgpio_softc *sc, struct bcmgpio_eint *eint)
 
 static void *
 bcmgpio_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct bcmgpio_softc * const sc = device_private(dev);
 	int eint_flags = (flags & FDT_INTR_MPSAFE) ? BCMGPIO_INTR_MPSAFE : 0;
