@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.21 2020/10/15 09:33:17 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.22 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.21 2020/10/15 09:33:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.22 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -272,8 +272,8 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	psc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_USB,
-	    FDT_INTR_MPSAFE, xhci_intr, sc);
+	psc->sc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_USB,
+	    FDT_INTR_MPSAFE, xhci_intr, sc, device_xname(self));
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -286,8 +286,9 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	psc->sc_ih_mbox = fdtbus_intr_establish(faa->faa_phandle, 1, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_xusb_intr_mbox, psc);
+	psc->sc_ih_mbox = fdtbus_intr_establish_xname(faa->faa_phandle, 1,
+	    IPL_VM, FDT_INTR_MPSAFE, tegra_xusb_intr_mbox, psc,
+	    device_xname(self));
 	if (psc->sc_ih_mbox == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

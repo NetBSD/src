@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.31 2020/07/07 03:38:46 thorpej Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.32 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.31 2020/07/07 03:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.32 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -214,8 +214,8 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_pcie_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_pcie_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
