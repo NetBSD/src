@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.12 2020/10/11 15:33:18 tnn Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.13 2021/01/15 00:38:23 jmcneill Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.12 2020/10/11 15:33:18 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.13 2021/01/15 00:38:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,7 +614,7 @@ rkpcie_conf_hook(void *v, int b, int d, int f, pcireg_t id)
 /* INTx interrupt controller */
 static void *
 rkpcie_intx_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct rkpcie_softc *sc = device_private(dev);
 	void *cookie;
@@ -628,7 +628,8 @@ rkpcie_intx_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	    PCIM_INTx_ENAB(0) | PCIM_INTx_ENAB(1) |
 	    PCIM_INTx_ENAB(2) | PCIM_INTx_ENAB(3));
 
-	cookie = fdtbus_intr_establish_byname(sc->sc_phsc.sc_phandle, "legacy", ipl, flags, func, arg);
+	cookie = fdtbus_intr_establish_byname(sc->sc_phsc.sc_phandle,
+	    "legacy", ipl, flags, func, arg);
 
 	return cookie;
 }
