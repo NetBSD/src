@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.230 2020/10/10 00:00:54 rin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.231 2021/01/15 03:51:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.230 2020/10/10 00:00:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.231 2021/01/15 03:51:41 simonb Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -108,8 +108,6 @@ void netbsd32_syscall_intern(struct proc *);
 #else
 void syscall(void);
 #endif
-
-#define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
 
 #ifdef MODULAR
 #include <compat/netbsd32/netbsd32_syscalls_autoload.c>
