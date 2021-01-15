@@ -1,4 +1,4 @@
-/*	$NetBSD: sun6i_spi.c,v 1.5 2019/08/13 17:03:10 tnn Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.6 2021/01/15 23:02:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.5 2019/08/13 17:03:10 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.6 2021/01/15 23:02:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -149,8 +149,8 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-	    sun6ispi_intr, sc);
+	sc->sc_intrh = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    sun6ispi_intr, sc, device_xname(self));
 	if (sc->sc_intrh == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		return;
