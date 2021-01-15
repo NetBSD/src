@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.34 2021/01/09 19:31:08 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.35 2021/01/15 17:47:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1405,4 +1405,9 @@ sbin/fsck/partutil.c				1.17
 
 	Deal with disk devices not supporting DIOCGDISKINFO.
 	[tsutsui, ticket #1184]
+
+share/man/man9/pci_msi.9			1.18
+
+	PR 55920: add documentation for pci_msi_count() and pci_msix_count().
+	[knakahara, ticket #1185]
 
