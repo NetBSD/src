@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.7 2017/11/30 14:51:01 skrll Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.8 2021/01/15 18:42:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.7 2017/11/30 14:51:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.8 2021/01/15 18:42:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,8 +86,8 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	void *ih = fdtbus_intr_establish(phandle, GTMR_VTIMER, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, gtmr_intr, NULL);
+	void *ih = fdtbus_intr_establish_xname(phandle, GTMR_VTIMER, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, gtmr_intr, NULL, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

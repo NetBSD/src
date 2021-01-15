@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.7 2019/07/03 20:55:21 jmcneill Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.8 2021/01/15 18:42:41 ryo Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.7 2019/07/03 20:55:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.8 2021/01/15 18:42:41 ryo Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -501,8 +501,8 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    rk_tsadc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    rk_tsadc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

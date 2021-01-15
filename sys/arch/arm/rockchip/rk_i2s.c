@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.6 2021/01/01 11:44:41 jmcneill Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.7 2021/01/15 18:42:41 ryo Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.6 2021/01/01 11:44:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.7 2021/01/15 18:42:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -606,7 +606,8 @@ rk_i2s_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": I2S/PCM controller\n");
 
-	if (fdtbus_intr_establish(phandle, 0, IPL_AUDIO, FDT_INTR_MPSAFE, rk_i2s_intr, sc) == NULL) {
+	if (fdtbus_intr_establish_xname(phandle, 0, IPL_AUDIO, FDT_INTR_MPSAFE,
+	    rk_i2s_intr, sc, device_xname(self)) == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n", intrstr);
 		return;
 	}
