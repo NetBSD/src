@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.9 2020/12/23 16:02:12 thorpej Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.10 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.9 2020/12/23 16:02:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.10 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,8 +169,8 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_type == SUNXI_P2WI ? "P2WI" : "RSB");
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-	    sunxi_rsb_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    sunxi_rsb_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

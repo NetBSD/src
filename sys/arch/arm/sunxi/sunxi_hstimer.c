@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hstimer.c,v 1.2 2019/06/14 21:48:43 tnn Exp $ */
+/* $NetBSD: sunxi_hstimer.c,v 1.3 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Tobias Nygren <tnn@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.2 2019/06/14 21:48:43 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.3 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -186,8 +186,8 @@ sunxi_hstimer_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, sunxi_hstimer_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, sunxi_hstimer_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 				 intrstr);

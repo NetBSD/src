@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.18 2020/06/14 16:29:47 ad Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.19 2021/01/15 22:47:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.18 2020/06/14 16:29:47 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.19 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -416,8 +416,8 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_ISR, 0);
 
 	/* Establish an interrupt handler.  */
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    &sun8i_crypto_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, &sun8i_crypto_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

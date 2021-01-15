@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.12 2020/01/29 06:05:31 thorpej Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.13 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.12 2020/01/29 06:05:31 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.13 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -299,8 +299,8 @@ sun4i_emac_attach(device_t parent, device_t self, void *aux)
 	sun4i_emac_write(sc, EMAC_INT_STA_REG,
 	    sun4i_emac_read(sc, EMAC_INT_STA_REG));
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
-	    sun4i_emac_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, 0,
+	    sun4i_emac_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
