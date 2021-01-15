@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.4 2021/01/12 20:42:01 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.5 2021/01/15 22:04:27 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -520,4 +520,11 @@ compare_var_with_constant(bool b)
 	bool t3 = t2 == 1;
 	bool t4 = t3 != 1;
 	return t4 ^ t3;
+}
+
+bool
+SB003_operand_comma(bool b)
+{
+	b = (b, !b);		/* FIXME *//* expect: 336, 337 */
+	return b;
 }

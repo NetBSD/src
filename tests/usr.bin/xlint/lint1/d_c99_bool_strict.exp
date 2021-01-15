@@ -101,3 +101,5 @@ d_c99_bool_strict.c(453): warning: illegal combination of pointer (pointer to co
 d_c99_bool_strict.c(456): argument #1 expects '_Bool', gets passed 'pointer' [334]
 d_c99_bool_strict.c(456): warning: illegal combination of integer (int) and pointer (pointer to const char), arg #2 [154]
 d_c99_bool_strict.c(468): argument #1 expects '_Bool', gets passed 'int' [334]
+d_c99_bool_strict.c(528): left operand of ',' must not be bool [336]
+d_c99_bool_strict.c(528): right operand of ',' must not be bool [337]
