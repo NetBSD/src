@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.24 2020/12/23 16:02:11 thorpej Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.25 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.24 2020/12/23 16:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.25 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,8 +143,8 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_i2c_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_i2c_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

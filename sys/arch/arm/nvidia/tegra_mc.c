@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_mc.c,v 1.10 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_mc.c,v 1.11 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.10 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.11 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,8 +111,8 @@ tegra_mc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_mc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_mc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

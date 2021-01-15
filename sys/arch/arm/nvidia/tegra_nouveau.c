@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.12 2018/11/01 16:14:54 skrll Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.13 2021/01/15 23:11:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.12 2018/11/01 16:14:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.13 2021/01/15 23:11:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -291,8 +291,8 @@ nvkm_device_tegra_init(struct nvkm_device *nvdev)
 		return -EIO;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_nouveau_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_nouveau_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
