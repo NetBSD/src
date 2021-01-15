@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.6 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.6 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -381,8 +381,8 @@ sunxi_musb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
-	    sunxi_musb_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
+	    sunxi_musb_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.7 2019/06/06 23:19:07 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.7 2019/06/06 23:19:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -456,8 +456,8 @@ sun8i_codec_attach(device_t parent, device_t self, void *aux)
 	/* Schedule initial jack detect task */
 	workqueue_enqueue(sc->sc_workq, &sc->sc_work, NULL);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    sun8i_codec_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sun8i_codec_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

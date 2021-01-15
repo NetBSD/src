@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.7 2019/11/23 20:28:04 jmcneill Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.7 2019/11/23 20:28:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -530,8 +530,8 @@ sunxi_lcdc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_get_data = sunxi_lcdc_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_ENCODER);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    sunxi_lcdc_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sunxi_lcdc_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

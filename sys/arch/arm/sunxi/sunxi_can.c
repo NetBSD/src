@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.3 2020/01/29 06:05:31 thorpej Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.3 2020/01/29 06:05:31 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -202,8 +202,8 @@ sunxi_can_attach(device_t parent, device_t self, void *aux)
 	sunxi_can_write(sc, SUNXI_CAN_INT_REG,
 	    sunxi_can_read(sc, SUNXI_CAN_INT_REG));
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
-	    sunxi_can_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, 0,
+	    sunxi_can_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

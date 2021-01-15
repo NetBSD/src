@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lradc.c,v 1.1 2018/03/07 20:55:31 bouyer Exp $ */
+/* $NetBSD: sunxi_lradc.c,v 1.2 2021/01/15 22:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016, 2018 Manuel Bouyer
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lradc.c,v 1.1 2018/03/07 20:55:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lradc.c,v 1.2 2021/01/15 22:47:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -183,24 +183,24 @@ sunxi_lradc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_chans == 1 || sc->sc_chans == 2) {
 		sunxi_lradc_print_levels(sc, 1);
 	}
-		
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, sunxi_lradc_intr, sc);
+
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, sunxi_lradc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
 		return;
 	}
-	aprint_normal_dev(self, ": interrupting on %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 	if (sc->sc_chans == 0 || sc->sc_chans == 2) {
 		if (!sunxi_lradc_register_switches(sc, 0)) {
-			aprint_error_dev(self, ": can't register switches\n");
+			aprint_error_dev(self, "can't register switches\n");
 			return;
 		}
 	}
 	if (sc->sc_chans == 1 || sc->sc_chans == 2) {
 		if (!sunxi_lradc_register_switches(sc, 1)) {
-			aprint_error_dev(self, ": can't register switches\n");
+			aprint_error_dev(self, "can't register switches\n");
 			return;
 		}
 	}
@@ -211,7 +211,7 @@ sunxi_lradc_attach(device_t parent, device_t self, void *aux)
 	 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_LRADC_CTRL_REG,
 	    (2 << AWIN_LRADC_CTRL_FIRSTCONV_SHIFT) |
-	    (1 << AWIN_LRADC_CTRL_LV_A_B_CNT_SHIFT) | 
+	    (1 << AWIN_LRADC_CTRL_LV_A_B_CNT_SHIFT) |
 	    AWIN_LRADC_CTRL_HOLD_EN |
 	    AWIN_LRADC_CTRL_RATE_250 |
 	    (sc->sc_chans << AWIN_LRADC_CTRL_CHAN_SHIFT) |
