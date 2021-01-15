@@ -1,4 +1,4 @@
-/*	$NetBSD: imxwdog.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imxwdog.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
 
 #include "opt_imx.h"
 
@@ -175,8 +175,8 @@ imxwdog_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "failed to decode interrupt\n");
 		return NULL;
 	}
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    imxwdog_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    imxwdog_intr, sc, device_xname(sc->sc_dev));
 	if (ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "failed to establish interrupt on %s\n",
 		    intrstr);
