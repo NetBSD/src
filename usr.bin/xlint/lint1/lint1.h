@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.53 2021/01/04 22:26:50 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.54 2021/01/15 23:43:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -459,3 +459,20 @@ check_printf(const char *fmt, ...)
 #  define gnuism(id, args...) wrap_check_printf(gnuism, id, ##args)
 #  define c99ism(id, args...) wrap_check_printf(c99ism, id, ##args)
 #endif
+
+static inline bool
+is_nonzero_val(tspec_t t, const val_t *val)
+{
+	return is_floating(t) ? val->v_ldbl != 0.0 : val->v_quad != 0;
+}
+
+static inline bool
+is_nonzero(const tnode_t *tn)
+{
+	/*
+	 * XXX: It's strange that val_t doesn't know itself whether it
+	 * holds a floating-point or an integer value.
+	 */
+	lint_assert(tn->tn_op == CON);
+	return is_nonzero_val(tn->tn_type->t_tspec, tn->tn_val);
+}
