@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_fdt.c,v 1.2 2020/12/23 16:02:11 thorpej Exp $ */
+/* $NetBSD: dwiic_fdt.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.2 2020/12/23 16:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ dwiic_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	sc->sc_dwiic.sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-		dwiic_intr, &sc->sc_dwiic);
+	sc->sc_dwiic.sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+		dwiic_intr, &sc->sc_dwiic, device_xname(self));
 	if (sc->sc_dwiic.sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto out;
