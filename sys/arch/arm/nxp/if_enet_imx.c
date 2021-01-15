@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -183,6 +183,7 @@ static void *
 enet_intr_establish(struct enet_softc *sc, int phandle, u_int index)
 {
 	char intrstr[128];
+	char xname[16];
 	void *ih;
 
 	if (!fdtbus_intr_str(phandle, index, intrstr, sizeof(intrstr))) {
@@ -191,7 +192,10 @@ enet_intr_establish(struct enet_softc *sc, int phandle, u_int index)
 		return NULL;
 	}
 
-	ih = fdtbus_intr_establish(phandle, index, IPL_NET, 0, enet_intr, sc);
+	snprintf(xname, sizeof(xname), "%s #%u", device_xname(sc->sc_dev),
+	    index);
+	ih = fdtbus_intr_establish_xname(phandle, index, IPL_NET, 0,
+	    enet_intr, sc, xname);
 	if (ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "failed to establish interrupt on %s\n",
 		    intrstr);
