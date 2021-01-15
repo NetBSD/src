@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.152 2021/01/14 07:42:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.153 2021/01/15 23:43:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.152 2021/01/14 07:42:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.153 2021/01/15 23:43:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2234,9 +2234,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 
 	if (nt == BOOL) {	/* C99 6.3.1.2 */
 		nv->v_ansiu = 0;
-		nv->v_quad = ot == FLOAT || ot == DOUBLE || ot == LDOUBLE
-		    ? v->v_ldbl != 0.0
-		    : v->v_quad != 0;
+		nv->v_quad = is_nonzero_val(ot, v) ? 1 : 0;
 		return;
 	}
 
@@ -3142,26 +3140,15 @@ fold(tnode_t *tn)
 static tnode_t *
 fold_test(tnode_t *tn)
 {
-	int	l, r = 0;
+	bool	l, r;
 	val_t	*v;
 
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = tn->tn_type->t_tspec;
 	lint_assert(v->v_tspec == INT || (Tflag && v->v_tspec == BOOL));
 
-	if (is_floating(tn->tn_left->tn_type->t_tspec)) {
-		l = tn->tn_left->tn_val->v_ldbl != 0.0;
-	} else {
-		l = tn->tn_left->tn_val->v_quad != 0;
-	}
-
-	if (modtab[tn->tn_op].m_binary) {
-		if (is_floating(tn->tn_right->tn_type->t_tspec)) {
-			r = tn->tn_right->tn_val->v_ldbl != 0.0;
-		} else {
-			r = tn->tn_right->tn_val->v_quad != 0;
-		}
-	}
+	l = is_nonzero(tn->tn_left);
+	r = modtab[tn->tn_op].m_binary && is_nonzero(tn->tn_right);
 
 	switch (tn->tn_op) {
 	case NOT:

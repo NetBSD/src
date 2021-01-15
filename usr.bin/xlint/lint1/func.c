@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.57 2021/01/12 20:42:01 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.58 2021/01/15 23:43:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.57 2021/01/12 20:42:01 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.58 2021/01/15 23:43:51 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -725,13 +725,8 @@ while1(tnode_t *tn)
 
 	pushctrl(T_WHILE);
 	cstmt->c_loop = 1;
-	if (tn != NULL && tn->tn_op == CON) {
-		if (is_integer(tn->tn_type->t_tspec)) {
-			cstmt->c_infinite = tn->tn_val->v_quad != 0;
-		} else {
-			cstmt->c_infinite = tn->tn_val->v_ldbl != 0.0;
-		}
-	}
+	if (tn != NULL && tn->tn_op == CON)
+		cstmt->c_infinite = is_nonzero(tn);
 
 	expr(tn, 0, 1, 1);
 }
@@ -790,11 +785,7 @@ do2(tnode_t *tn)
 		tn = check_controlling_expression(tn);
 
 	if (tn != NULL && tn->tn_op == CON) {
-		if (is_integer(tn->tn_type->t_tspec)) {
-			cstmt->c_infinite = tn->tn_val->v_quad != 0;
-		} else {
-			cstmt->c_infinite = tn->tn_val->v_ldbl != 0.0;
-		}
+		cstmt->c_infinite = is_nonzero(tn);
 		if (!cstmt->c_infinite && cstmt->c_cont)
 			/* continue in 'do ... while (0)' loop */
 			error(323);
@@ -850,15 +841,8 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	if (tn2 != NULL)
 		expr(tn2, 0, 1, 1);
 
-	if (tn2 == NULL) {
-		cstmt->c_infinite = 1;
-	} else if (tn2->tn_op == CON) {
-		if (is_integer(tn2->tn_type->t_tspec)) {
-			cstmt->c_infinite = tn2->tn_val->v_quad != 0;
-		} else {
-			cstmt->c_infinite = tn2->tn_val->v_ldbl != 0.0;
-		}
-	}
+	cstmt->c_infinite =
+	    tn2 == NULL || (tn2->tn_op == CON && is_nonzero(tn2));
 
 	/* Checking the reinitialisation expression is done in for2() */
 
