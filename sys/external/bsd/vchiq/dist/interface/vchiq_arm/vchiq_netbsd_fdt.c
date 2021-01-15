@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_fdt.c,v 1.3 2020/12/01 04:19:04 rin Exp $ */
+/* $NetBSD: vchiq_netbsd_fdt.c,v 1.4 2021/01/15 22:58:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.3 2020/12/01 04:19:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.4 2021/01/15 22:58:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,8 @@ vchiq_fdt_defer(device_t self)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    vchiq_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, vchiq_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",
 		    intrstr);
