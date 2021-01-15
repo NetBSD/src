@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.1 2019/10/27 12:14:51 jmcneill Exp $ */
+/* $NetBSD: ti_edma.c,v 1.2 2021/01/15 22:59:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.1 2019/10/27 12:14:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.2 2021/01/15 22:59:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ edma_attach(device_t parent, device_t self, void *aux)
 	edma_init(sc);
 
 	sc->sc_ih = fdtbus_intr_establish_byname(phandle, "edma3_ccint",
-	    IPL_VM, FDT_INTR_MPSAFE, edma_intr, sc);
+	    IPL_VM, FDT_INTR_MPSAFE, edma_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt\n");
 		return;
