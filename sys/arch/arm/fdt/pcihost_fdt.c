@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.18 2020/10/10 09:58:16 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.19 2021/01/15 17:17:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.18 2020/10/10 09:58:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.19 2021/01/15 17:17:04 ryo Exp $");
 
 #include <sys/param.h>
 
@@ -612,7 +612,8 @@ pcihost_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 	if (specifier == NULL)
 		return NULL;
 
-	return fdtbus_intr_establish_raw(ihandle, specifier, ipl, flags, callback, arg);
+	return fdtbus_intr_establish_raw(ihandle, specifier, ipl, flags,
+	    callback, arg, xname);
 }
 
 static void
