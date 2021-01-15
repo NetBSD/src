@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.8 2020/12/23 16:02:12 thorpej Exp $ */
+/* $NetBSD: ti_iic.c,v 1.9 2021/01/15 23:19:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.8 2020/12/23 16:02:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.9 2021/01/15 23:19:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,8 +271,8 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 	}
 	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
-	    ti_iic_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, 0,
+	    ti_iic_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": couldn't establish interrupt\n");
 		return;
