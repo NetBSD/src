@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.6 2021/01/15 22:07:54 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.7 2021/01/15 23:15:28 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -528,4 +528,18 @@ SB003_operand_comma(bool b, int i)
 	b = (b, !b);
 	i = (i, i + 1);
 	return b;
+}
+
+void
+bit_field_as_operator_argument(void)
+{
+	struct s {
+		bool ordinary;
+		bool bit_field: 1;
+	};
+
+	struct s s = { 0 };
+
+	s.ordinary = s.ordinary | s.ordinary;
+	s.bit_field = s.bit_field | s.bit_field; /* FIXME *//* expect: 107 */
 }
