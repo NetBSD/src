@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.66 2021/01/15 17:17:04 ryo Exp $ */
+/* $NetBSD: fdtvar.h,v 1.67 2021/01/15 22:59:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -322,7 +322,7 @@ void *		fdtbus_intr_establish(int, u_int, int, int,
 void *		fdtbus_intr_establish_xname(int, u_int, int, int,
 		    int (*func)(void *), void *arg, const char *);
 void *		fdtbus_intr_establish_byname(int, const char *, int, int,
-		    int (*func)(void *), void *arg);
+		    int (*func)(void *), void *arg, const char *);
 void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
 		    int (*func)(void *), void *arg, const char *);
 void		fdtbus_intr_mask(int, void *);
