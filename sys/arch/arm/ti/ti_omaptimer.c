@@ -1,7 +1,7 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.4 2019/10/30 21:40:04 jmcneill Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.5 2021/01/15 23:19:33 jmcneill Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.4 2019/10/30 21:40:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.5 2021/01/15 23:19:33 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,11 +106,11 @@ omaptimer_cpu_initclocks(void)
 	KASSERT(sc != NULL);
 	if (!fdtbus_intr_str(sc->sc_phandle, 0, intrstr, sizeof(intrstr)))
 		panic("%s: failed to decode interrupt", __func__);
-	ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, omaptimer_intr, NULL);
+	ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, omaptimer_intr, NULL, device_xname(sc->sc_dev));
 	if (ih == NULL)
 		panic("%s: failed to establish timer interrupt", __func__);
-	
+
 	aprint_normal_dev(sc->sc_dev, "interrupting on %s\n", intrstr);
 
 	/* Enable interrupts */

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.9 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: ti_com.c,v 1.10 2021/01/15 23:19:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.9 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.10 2021/01/15 23:19:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,8 +118,8 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ssc->ssc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, comintr, sc);
+	ssc->ssc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, comintr, sc, device_xname(self));
 	if (ssc->ssc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
