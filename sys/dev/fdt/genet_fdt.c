@@ -1,4 +1,4 @@
-/* $NetBSD: genet_fdt.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $ */
+/* $NetBSD: genet_fdt.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,8 +125,8 @@ genet_fdt_attach(device_t parent, device_t self, void *aux)
 	if (genet_attach(sc) != 0)
 		return;
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_NET, FDT_INTR_FLAGS,
-	    genet_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, FDT_INTR_FLAGS,
+	    genet_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

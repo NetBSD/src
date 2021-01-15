@@ -1,4 +1,4 @@
-/* $NetBSD: ns8250_uart.c,v 1.2 2020/07/16 16:38:40 jmcneill Exp $ */
+/* $NetBSD: ns8250_uart.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.2 2020/07/16 16:38:40 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,8 +163,8 @@ ns8250_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, comintr, sc);
+	ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, comintr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
