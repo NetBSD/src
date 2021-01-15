@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.12 2020/02/04 05:15:45 thorpej Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.13 2021/01/15 23:19:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.12 2020/02/04 05:15:45 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.13 2021/01/15 23:19:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -398,6 +398,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int error, slave, len;
+	char xname[16];
 	u_int i;
 
 	KERNHIST_INIT(cpswhist, 4096);
@@ -462,10 +463,21 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 		memcpy(sc->sc_enaddr, macaddr, ETHER_ADDR_LEN);
 	}
 
-	sc->sc_rxthih = fdtbus_intr_establish(phandle, CPSW_INTROFF_RXTH, IPL_VM, FDT_INTR_FLAGS, cpsw_rxthintr, sc);
-	sc->sc_rxih = fdtbus_intr_establish(phandle, CPSW_INTROFF_RX, IPL_VM, FDT_INTR_FLAGS, cpsw_rxintr, sc);
-	sc->sc_txih = fdtbus_intr_establish(phandle, CPSW_INTROFF_TX, IPL_VM, FDT_INTR_FLAGS, cpsw_txintr, sc);
-	sc->sc_miscih = fdtbus_intr_establish(phandle, CPSW_INTROFF_MISC, IPL_VM, FDT_INTR_FLAGS, cpsw_miscintr, sc);
+	snprintf(xname, sizeof(xname), "%s rxth", device_xname(self));
+	sc->sc_rxthih = fdtbus_intr_establish_xname(phandle, CPSW_INTROFF_RXTH,
+	    IPL_VM, FDT_INTR_FLAGS, cpsw_rxthintr, sc, xname);
+
+	snprintf(xname, sizeof(xname), "%s rx", device_xname(self));
+	sc->sc_rxih = fdtbus_intr_establish_xname(phandle, CPSW_INTROFF_RX,
+	    IPL_VM, FDT_INTR_FLAGS, cpsw_rxintr, sc, xname);
+
+	snprintf(xname, sizeof(xname), "%s tx", device_xname(self));
+	sc->sc_txih = fdtbus_intr_establish_xname(phandle, CPSW_INTROFF_TX,
+	    IPL_VM, FDT_INTR_FLAGS, cpsw_txintr, sc, xname);
+
+	snprintf(xname, sizeof(xname), "%s misc", device_xname(self));
+	sc->sc_miscih = fdtbus_intr_establish_xname(phandle, CPSW_INTROFF_MISC,
+	    IPL_VM, FDT_INTR_FLAGS, cpsw_miscintr, sc, xname);
 
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_bss = size;
