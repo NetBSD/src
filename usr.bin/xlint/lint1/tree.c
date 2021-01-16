@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.158 2021/01/16 17:54:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.159 2021/01/16 18:46:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.158 2021/01/16 17:54:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.159 2021/01/16 18:46:59 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1095,27 +1095,16 @@ typeok_strict_bool_assign(op_t op, int arg,
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
 
-	if (lt == BOOL && before_conversion(rn)->tn_type->t_tspec == BOOL)
-		return true;
-
 	if (op == FARG) {
 		/* argument #%d expects '%s', gets passed '%s' */
-		error(334,
-		    arg,
-		    tspec_name(ln->tn_type->t_tspec),
-		    tspec_name(rn->tn_type->t_tspec));
+		error(334, arg, tspec_name(lt), tspec_name(rt));
 	} else if (op == RETURN) {
 		/* return value type mismatch (%s) and (%s) */
-		error(211,
-		    type_name(ln->tn_type),
-		    type_name(rn->tn_type));
+		error(211, type_name(ln->tn_type), type_name(rn->tn_type));
 		return false;
 	} else {
 		/* operands of '%s' have incompatible types (%s != %s) */
-		error(107,
-		    getopname(op),
-		    tspec_name(ln->tn_type->t_tspec),
-		    tspec_name(rn->tn_type->t_tspec));
+		error(107, getopname(op), tspec_name(lt), tspec_name(rt));
 	}
 
 	return false;
