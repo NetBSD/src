@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.13 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.14 2021/01/16 02:40:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msg.c,v 1.13 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.14 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -114,7 +114,8 @@ mkpos(pos_t *posp)
 	const	char *fn;
 	static	char	*buf;
 	static	size_t	blen = 0;
-	int	qm, src, line;
+	bool	qm;
+	int	src, line;
 
 	if (Hflag && posp->p_src != posp->p_isrc) {
 		src = posp->p_isrc;

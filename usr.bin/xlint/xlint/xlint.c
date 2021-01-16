@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.53 2021/01/12 20:42:01 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.54 2021/01/16 02:40:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.53 2021/01/12 20:42:01 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.54 2021/01/16 02:40:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ static	char	**libsrchpath;
 static  char	*libexec_path;
 
 /* flags */
-static	int	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag, Sflag;
+static	bool	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag, Sflag;
 
 /* print the commands executed to run the stages of compilation */
 static	int	Vflag;
@@ -115,7 +115,7 @@ static	int	Vflag;
 static	char	*outputfn;
 
 /* reset after first .c source has been processed */
-static	int	first = 1;
+static	bool	first = true;
 
 /*
  * name of a file which is currently written by a child and should
@@ -388,7 +388,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'F':
-			Fflag = 1;
+			Fflag = true;
 			/* FALLTHROUGH */
 		case 'u':
 		case 'h':
@@ -407,7 +407,7 @@ main(int argc, char *argv[])
 		case 'i':
 			if (Cflag)
 				usage();
-			iflag = 1;
+			iflag = true;
 			break;
 
 		case 'n':
@@ -441,14 +441,14 @@ main(int argc, char *argv[])
 			appcstrg(&lcflags, "-D__STRICT_ANSI__");
 			appcstrg(&l1flags, "-s");
 			appcstrg(&l2flags, "-s");
-			sflag = 1;
+			sflag = true;
 			break;
 
 		case 'S':
 			if (tflag)
 				usage();
 			appcstrg(&l1flags, "-S");
-			Sflag = 1;
+			Sflag = true;
 			break;
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -462,7 +462,7 @@ main(int argc, char *argv[])
 			appstrg(&lcflags, concat2("-D", MACHINE_ARCH));
 			appcstrg(&l1flags, "-t");
 			appcstrg(&l2flags, "-t");
-			tflag = 1;
+			tflag = true;
 			break;
 #endif
 
@@ -473,7 +473,7 @@ main(int argc, char *argv[])
 		case 'C':
 			if (Cflag || oflag || iflag)
 				usage();
-			Cflag = 1;
+			Cflag = true;
 			appstrg(&l2flags, concat2("-C", optarg));
 			p2out = xmalloc(sizeof ("llib-l.ln") + strlen(optarg));
 			(void)sprintf(p2out, "llib-l%s.ln", optarg);
@@ -483,7 +483,7 @@ main(int argc, char *argv[])
 		case 'd':
 			if (dflag)
 				usage();
-			dflag = 1;
+			dflag = true;
 			appcstrg(&cflags, "-nostdinc");
 			appcstrg(&cflags, "-isystem");
 			appcstrg(&cflags, optarg);
@@ -504,7 +504,7 @@ main(int argc, char *argv[])
 		case 'o':
 			if (Cflag || oflag)
 				usage();
-			oflag = 1;
+			oflag = true;
 			outputfn = xstrdup(optarg);
 			break;
 
@@ -517,12 +517,12 @@ main(int argc, char *argv[])
 			break;
 
 		case 'B':
-			Bflag = 1;
+			Bflag = true;
 			libexec_path = xstrdup(optarg);
 			break;
 
 		case 'V':
-			Vflag = 1;
+			Vflag = true;
 			break;
 
 		case 'Z':
@@ -576,7 +576,7 @@ main(int argc, char *argv[])
 		} else {
 			/* filename */
 			fname(arg);
-			first = 0;
+			first = false;
 		}
 		argc--;
 		argv++;
@@ -648,7 +648,7 @@ fname(const char *name)
 	if (oflag) {
 		ofn = outputfn;
 		outputfn = NULL;
-		oflag = 0;
+		oflag = false;
 	} else if (iflag) {
 		if (is_stdin) {
 			warnx("-i not supported without -o for standard input");

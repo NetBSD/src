@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.8 2002/01/18 21:01:39 thorpej Exp $ */
+/* $NetBSD: externs2.h,v 1.9 2021/01/16 02:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,22 +35,22 @@
 /*
  * main.c
  */
-extern	int	xflag;
-extern	int	uflag;
-extern	int	Cflag;
-extern	const	char *libname;
-extern	int	sflag;
-extern	int	tflag;
-extern	int	Hflag;
-extern	int	hflag;
-extern	int	Fflag;
+extern	bool	xflag;
+extern	bool	uflag;
+extern	bool	Cflag;
+extern	const char *libname;
+extern	bool	sflag;
+extern	bool	tflag;
+extern	bool	Hflag;
+extern	bool	hflag;
+extern	bool	Fflag;
 
 
 /*
  * hash.c
  */
 extern	void	_inithash(hte_t ***);
-extern	hte_t	*_hsearch(hte_t **, const char *, int);
+extern	hte_t	*_hsearch(hte_t **, const char *, bool);
 extern	void	_forall(hte_t **, void (*)(hte_t *));
 extern	void	_destroyhash(hte_t **);
 

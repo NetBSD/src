@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.36 2021/01/04 22:26:51 rillig Exp $ */
+/* $NetBSD: read.c,v 1.37 2021/01/16 02:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.36 2021/01/04 22:26:51 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.37 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -210,7 +210,7 @@ readfile(const char *name)
 
 	_destroyhash(renametab);
 
-	if (ferror(inp))
+	if (ferror(inp) != 0)
 		err(1, "read error on %s", name);
 
 	(void)fclose(inp);
@@ -277,7 +277,7 @@ funccall(pos_t *posp, const char *cp)
 {
 	arginf_t *ai, **lai;
 	char	c, *eptr;
-	int	rused, rdisc;
+	bool	rused, rdisc;
 	hte_t	*hte;
 	fcall_t	*fcall;
 	const char *name;
@@ -286,7 +286,7 @@ funccall(pos_t *posp, const char *cp)
 	fcall->f_pos = *posp;
 
 	/* read flags */
-	rused = rdisc = 0;
+	rused = rdisc = false;
 	lai = &fcall->f_args;
 	while ((c = *cp) == 'u' || c == 'i' || c == 'd' ||
 	       c == 'z' || c == 'p' || c == 'n' || c == 's') {
@@ -295,7 +295,7 @@ funccall(pos_t *posp, const char *cp)
 		case 'u':
 			if (rused || rdisc)
 				inperr("used or discovered: %c", c);
-			rused = 1;
+			rused = true;
 			break;
 		case 'i':
 			if (rused || rdisc)
@@ -304,7 +304,7 @@ funccall(pos_t *posp, const char *cp)
 		case 'd':
 			if (rused || rdisc)
 				inperr("used or discovered: %c", c);
-			rdisc = 1;
+			rdisc = true;
 			break;
 		case 'z':
 		case 'p':
@@ -316,13 +316,13 @@ funccall(pos_t *posp, const char *cp)
 				inperr("bad number: %s", cp);
 			cp = eptr;
 			if (c == 'z') {
-				ai->a_pcon = ai->a_zero = 1;
+				ai->a_pcon = ai->a_zero = true;
 			} else if (c == 'p') {
-				ai->a_pcon = 1;
+				ai->a_pcon = true;
 			} else if (c == 'n') {
-				ai->a_ncon = 1;
+				ai->a_ncon = true;
 			} else {
-				ai->a_fmt = 1;
+				ai->a_fmt = true;
 				ai->a_fstrg = inpqstrg(cp, &cp);
 			}
 			*lai = ai;
@@ -342,7 +342,7 @@ funccall(pos_t *posp, const char *cp)
 		hte = hte->h_hte;
 	else
 		hte = hsearch(name, 1);
-	hte->h_used = 1;
+	hte->h_used = true;
 
 	fcall->f_type = inptype(cp, &cp);
 
@@ -361,7 +361,7 @@ decldef(pos_t *posp, const char *cp)
 {
 	sym_t	*symp, sym;
 	char	c, *ep, *pos1, *tname;
-	int	used, renamed;
+	bool	used, renamed;
 	hte_t	*hte, *renamehte = NULL;
 	const char *name, *newname;
 
@@ -369,7 +369,7 @@ decldef(pos_t *posp, const char *cp)
 	sym.s_pos = *posp;
 	sym.s_def = NODECL;
 
-	used = 0;
+	used = false;
 
 	while (strchr("deiorstuvPS", (c = *cp)) != NULL) {
 		cp++;
@@ -387,22 +387,22 @@ decldef(pos_t *posp, const char *cp)
 		case 'i':
 			if (sym.s_inline != NODECL)
 				inperr("inline %c", c);
-			sym.s_inline = DECL;
+			sym.s_inline = true;
 			break;
 		case 'o':
 			if (sym.s_osdef)
 				inperr("osdef");
-			sym.s_osdef = 1;
+			sym.s_osdef = true;
 			break;
 		case 'r':
 			if (sym.s_rval)
 				inperr("rval");
-			sym.s_rval = 1;
+			sym.s_rval = true;
 			break;
 		case 's':
 			if (sym.s_static)
 				inperr("static");
-			sym.s_static = 1;
+			sym.s_static = true;
 			break;
 		case 't':
 			if (sym.s_def != NODECL)
@@ -412,12 +412,12 @@ decldef(pos_t *posp, const char *cp)
 		case 'u':
 			if (used)
 				inperr("used %c", c);
-			used = 1;
+			used = true;
 			break;
 		case 'v':
 			if (sym.s_va)
 				inperr("va");
-			sym.s_va = 1;
+			sym.s_va = true;
 			sym.s_nva = (short)strtol(cp, &ep, 10);
 			if (cp == ep)
 				inperr("bad number: %s", cp);
@@ -426,7 +426,7 @@ decldef(pos_t *posp, const char *cp)
 		case 'P':
 			if (sym.s_prfl)
 				inperr("prfl");
-			sym.s_prfl = 1;
+			sym.s_prfl = true;
 			sym.s_nprfl = (short)strtol(cp, &ep, 10);
 			if (cp == ep)
 				inperr("bad number: %s", cp);
@@ -435,7 +435,7 @@ decldef(pos_t *posp, const char *cp)
 		case 'S':
 			if (sym.s_scfl)
 				inperr("scfl");
-			sym.s_scfl = 1;
+			sym.s_scfl = true;
 			sym.s_nscfl = (short)strtol(cp, &ep, 10);
 			if (cp == ep)
 				inperr("bad number: %s", cp);
@@ -446,7 +446,7 @@ decldef(pos_t *posp, const char *cp)
 
 	/* read symbol name, doing renaming if necessary */
 	name = inpname(cp, &cp);
-	renamed = 0;
+	renamed = false;
 	if (*cp == 'r') {
 		cp++;
 		tname = xstrdup(name);
@@ -457,8 +457,9 @@ decldef(pos_t *posp, const char *cp)
 		if (renamehte->h_hte == NULL) {
 			hte = hsearch(newname, 1);
 			renamehte->h_hte = hte;
-			renamed = 1;
-		} else if (strcmp((hte = renamehte->h_hte)->h_name, newname)) {
+			renamed = true;
+		} else if (hte = renamehte->h_hte,
+		    strcmp(hte->h_name, newname) != 0) {
 			pos1 = xstrdup(mkpos(&renamehte->h_syms->s_pos));
 			/* %s renamed multiple times\t%s  ::  %s */
 			msg(18, tname, pos1, mkpos(&sym.s_pos));
@@ -475,7 +476,7 @@ decldef(pos_t *posp, const char *cp)
 	}
 	hte->h_used |= used;
 	if (sym.s_def == DEF || sym.s_def == TDEF)
-		hte->h_def = 1;
+		hte->h_def = true;
 
 	sym.s_type = inptype(cp, &cp);
 
@@ -541,7 +542,7 @@ usedsym(pos_t *posp, const char *cp)
 		hte = hte->h_hte;
 	else
 		hte = hsearch(name, 1);
-	hte->h_used = 1;
+	hte->h_used = true;
 
 	*hte->h_lusym = usym;
 	hte->h_lusym = &usym->u_next;
@@ -556,7 +557,8 @@ inptype(const char *cp, const char **epp)
 	char	c, s, *eptr;
 	const	char *ep;
 	type_t	*tp;
-	int	narg, i, osdef = 0;
+	int	narg, i;
+	bool	osdef = false;
 	size_t	tlen;
 	u_short	tidx, sidx;
 	int	h;
@@ -578,9 +580,9 @@ inptype(const char *cp, const char **epp)
 
 	while (c == 'c' || c == 'v') {
 		if (c == 'c') {
-			tp->t_const = 1;
+			tp->t_const = true;
 		} else {
-			tp->t_volatile = 1;
+			tp->t_volatile = true;
 		}
 		c = *cp++;
 	}
@@ -656,16 +658,16 @@ inptype(const char *cp, const char **epp)
 		break;
 	case FUNC:
 		c = *cp;
-		if (isdigit((u_char)c)) {
+		if (ch_isdigit(c)) {
 			if (!osdef)
-				tp->t_proto = 1;
+				tp->t_proto = true;
 			narg = (int)strtol(cp, &eptr, 10);
 			cp = eptr;
 			tp->t_args = xcalloc((size_t)(narg + 1),
 					     sizeof (type_t *));
 			for (i = 0; i < narg; i++) {
 				if (i == narg - 1 && *cp == 'E') {
-					tp->t_vararg = 1;
+					tp->t_vararg = true;
 					cp++;
 				} else {
 					sidx = inptype(cp, &cp);
@@ -678,21 +680,21 @@ inptype(const char *cp, const char **epp)
 		break;
 	case ENUM:
 		tp->t_tspec = INT;
-		tp->t_isenum = 1;
+		tp->t_isenum = true;
 		/* FALLTHROUGH */
 	case STRUCT:
 	case UNION:
 		switch (*cp++) {
 		case '1':
-			tp->t_istag = 1;
+			tp->t_istag = true;
 			tp->t_tag = hsearch(inpname(cp, &cp), 1);
 			break;
 		case '2':
-			tp->t_istynam = 1;
+			tp->t_istynam = true;
 			tp->t_tynam = hsearch(inpname(cp, &cp), 1);
 			break;
 		case '3':
-			tp->t_isuniqpos = 1;
+			tp->t_isuniqpos = true;
 			tp->t_uniqpos.p_line = strtol(cp, &eptr, 10);
 			cp = eptr;
 			cp++;
@@ -749,23 +751,24 @@ gettlen(const char *cp, const char **epp)
 	const	char *cp1;
 	char	c, s, *eptr;
 	tspec_t	t;
-	int	narg, i, cm, vm;
+	int	narg, i;
+	bool	cm, vm;
 
 	cp1 = cp;
 
 	c = *cp++;
 
-	cm = vm = 0;
+	cm = vm = false;
 
 	while (c == 'c' || c == 'v') {
 		if (c == 'c') {
 			if (cm)
 				inperr("cm: %c", c);
-			cm = 1;
+			cm = true;
 		} else {
 			if (vm)
 				inperr("vm: %c", c);
-			vm = 1;
+			vm = true;
 		}
 		c = *cp++;
 	}
@@ -892,7 +895,7 @@ gettlen(const char *cp, const char **epp)
 		break;
 	case FUNC:
 		c = *cp;
-		if (isdigit((u_char)c)) {
+		if (ch_isdigit(c)) {
 			narg = (int)strtol(cp, &eptr, 10);
 			cp = eptr;
 			for (i = 0; i < narg; i++) {
@@ -1144,7 +1147,7 @@ inpname(const char *cp, const char **epp)
 		buf = xrealloc(buf, blen = len + 1);
 	for (i = 0; i < len; i++) {
 		c = *cp++;
-		if (!isalnum((unsigned char)c) && c != '_')
+		if (!ch_isalnum(c) && c != '_')
 			inperr("not alnum or _: %c", c);
 		buf[i] = c;
 	}
@@ -1193,7 +1196,7 @@ mkstatic(hte_t *hte)
 	fcall_t	**callp, *call;
 	usym_t	**usymp, *usym;
 	hte_t	*nhte;
-	int	ofnd;
+	bool	ofnd;
 
 	/* Look for first static definition */
 	for (sym1 = hte->h_syms; sym1 != NULL; sym1 = sym1->s_next) {
@@ -1204,24 +1207,24 @@ mkstatic(hte_t *hte)
 		return;
 
 	/* Do nothing if this name is used only in one translation unit. */
-	ofnd = 0;
+	ofnd = false;
 	for (sym = hte->h_syms; sym != NULL && !ofnd; sym = sym->s_next) {
 		if (sym->s_pos.p_src != sym1->s_pos.p_src)
-			ofnd = 1;
+			ofnd = true;
 	}
 	for (call = hte->h_calls; call != NULL && !ofnd; call = call->f_next) {
 		if (call->f_pos.p_src != sym1->s_pos.p_src)
-			ofnd = 1;
+			ofnd = true;
 	}
 	for (usym = hte->h_usyms; usym != NULL && !ofnd; usym = usym->u_next) {
 		if (usym->u_pos.p_src != sym1->s_pos.p_src)
-			ofnd = 1;
+			ofnd = true;
 	}
 	if (!ofnd) {
-		hte->h_used = 1;
+		hte->h_used = true;
 		/* errors about undef. static symbols are printed in lint1 */
-		hte->h_def = 1;
-		hte->h_static = 1;
+		hte->h_def = true;
+		hte->h_static = true;
 		return;
 	}
 
@@ -1236,9 +1239,9 @@ mkstatic(hte_t *hte)
 	nhte->h_link = xmalloc(sizeof (hte_t));
 	nhte = nhte->h_link;
 	nhte->h_name = hte->h_name;
-	nhte->h_used = 1;
-	nhte->h_def = 1;	/* error in lint1 */
-	nhte->h_static = 1;
+	nhte->h_used = true;
+	nhte->h_def = true;	/* error in lint1 */
+	nhte->h_static = true;
 	nhte->h_syms = NULL;
 	nhte->h_lsym = &nhte->h_syms;
 	nhte->h_calls = NULL;
@@ -1254,7 +1257,7 @@ mkstatic(hte_t *hte)
 	 */
 	for (symp = &hte->h_syms; (sym = *symp) != NULL; ) {
 		if (sym->s_pos.p_src == sym1->s_pos.p_src) {
-			sym->s_static = 1;
+			sym->s_static = true;
 			(*symp) = sym->s_next;
 			if (hte->h_lsym == &sym->s_next)
 				hte->h_lsym = symp;
@@ -1291,10 +1294,10 @@ mkstatic(hte_t *hte)
 	}
 
 	/* h_def must be recalculated for old hte */
-	hte->h_def = nhte->h_def = 0;
+	hte->h_def = nhte->h_def = false;
 	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		if (sym->s_def == DEF || sym->s_def == TDEF) {
-			hte->h_def = 1;
+			hte->h_def = true;
 			break;
 		}
 	}

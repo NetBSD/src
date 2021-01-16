@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.9 2020/12/30 11:47:15 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.10 2021/01/16 02:40:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit.c,v 1.9 2020/12/30 11:47:15 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.10 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -139,7 +139,7 @@ void
 outqchar(int c)
 {
 
-	if (isprint(c) && c != '\\' && c != '"' && c != '\'') {
+	if (ch_isprint(c) && c != '\\' && c != '"' && c != '\'') {
 		outchar(c);
 	} else {
 		outchar('\\');

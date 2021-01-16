@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.3 2021/01/12 20:42:01 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.4 2021/01/16 02:40:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@ mod_t modtab[NOPS];
 
 static const struct {
 	mod_t	m;
-	unsigned char	ok;
+	bool	ok;
 } imods[] =
 #define begin_ops() {
 #define op(name, repr, \

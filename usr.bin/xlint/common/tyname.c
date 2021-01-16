@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.22 2021/01/04 22:26:50 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.23 2021/01/16 02:40:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.22 2021/01/04 22:26:50 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.23 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -192,13 +192,13 @@ tspec_name(tspec_t t)
 	}
 }
 
-int
+bool
 sametype(const type_t *t1, const type_t *t2)
 {
 	tspec_t	t;
 
 	if (t1->t_tspec != t2->t_tspec)
-		return 0;
+		return false;
 
 	/* Ignore const/void */
 
@@ -231,7 +231,7 @@ sametype(const type_t *t1, const type_t *t2)
 		return 1;
 	case ARRAY:
 		if (t1->t_dim != t2->t_dim)
-			return 0;
+			return false;
 		/*FALLTHROUGH*/
 	case PTR:
 		return sametype(t1->t_subt, t2->t_subt);
@@ -240,7 +240,7 @@ sametype(const type_t *t1, const type_t *t2)
 		return strcmp(t1->t_enum->etag->s_name,
 		    t2->t_enum->etag->s_name) == 0;
 #else
-		return 1;
+		return true;
 #endif
 	case STRUCT:
 	case UNION:
@@ -248,11 +248,11 @@ sametype(const type_t *t1, const type_t *t2)
 		return strcmp(t1->t_str->stag->s_name,
 		    t2->t_str->stag->s_name) == 0;
 #else
-		return 1;
+		return true;
 #endif
 	default:
 		LERROR("tyname(%d)", t);
-		return 0;
+		return false;
 	}
 }
 
