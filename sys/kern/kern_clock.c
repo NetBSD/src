@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.143 2020/12/05 18:17:01 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.144 2021/01/16 02:20:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.143 2020/12/05 18:17:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.144 2021/01/16 02:20:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.143 2020/12/05 18:17:01 thorpej Exp
 #include <sys/timetc.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
+#include <sys/rndsource.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -137,6 +138,61 @@ int	hardclock_ticks;
 static int hardscheddiv; /* hard => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
+
+struct clockrnd {
+	struct krndsource source;
+	unsigned needed;
+};
+
+static struct clockrnd hardclockrnd __aligned(COHERENCY_UNIT);
+static struct clockrnd statclockrnd __aligned(COHERENCY_UNIT);
+
+static void
+clockrnd_get(size_t needed, void *cookie)
+{
+	struct clockrnd *C = cookie;
+
+	/* Start sampling.  */
+	atomic_store_relaxed(&C->needed, 2*NBBY*needed);
+}
+
+static void
+clockrnd_sample(struct clockrnd *C)
+{
+	struct cpu_info *ci = curcpu();
+
+	/* If there's nothing needed right now, stop here.  */
+	if (__predict_true(C->needed == 0))
+		return;
+
+	/*
+	 * If we're not the primary core of a package, we're probably
+	 * driven by the same clock as the primary core, so don't
+	 * bother.
+	 */
+	if (ci != ci->ci_package1st)
+		return;
+
+	/* Take a sample and enter it into the pool.  */
+	rnd_add_uint32(&C->source, 0);
+
+	/*
+	 * On the primary CPU, count down.  Using an atomic decrement
+	 * here isn't really necessary -- on every platform we care
+	 * about, stores to unsigned int are atomic, and the only other
+	 * memory operation that could happen here is for another CPU
+	 * to store a higher value for needed.  But using an atomic
+	 * decrement avoids giving the impression of data races, and is
+	 * unlikely to hurt because only one CPU will ever be writing
+	 * to the location.
+	 */
+	if (CPU_IS_PRIMARY(curcpu())) {
+		unsigned needed __diagused;
+
+		needed = atomic_dec_uint_nv(&C->needed);
+		KASSERT(needed != UINT_MAX);
+	}
+}
 
 static u_int get_intr_timecount(struct timecounter *);
 
@@ -224,6 +280,16 @@ initclocks(void)
 		       SYSCTL_DESCR("Number of hardclock ticks"),
 		       NULL, 0, &hardclock_ticks, sizeof(hardclock_ticks),
 		       CTL_KERN, KERN_HARDCLOCK_TICKS, CTL_EOL);
+
+	rndsource_setcb(&hardclockrnd.source, clockrnd_get, &hardclockrnd);
+	rnd_attach_source(&hardclockrnd.source, "hardclock", RND_TYPE_SKEW,
+	    RND_FLAG_COLLECT_TIME|RND_FLAG_HASCB);
+	if (stathz) {
+		rndsource_setcb(&statclockrnd.source, clockrnd_get,
+		    &statclockrnd);
+		rnd_attach_source(&statclockrnd.source, "statclock",
+		    RND_TYPE_SKEW, RND_FLAG_COLLECT_TIME|RND_FLAG_HASCB);
+	}
 }
 
 /*
@@ -234,6 +300,8 @@ hardclock(struct clockframe *frame)
 {
 	struct lwp *l;
 	struct cpu_info *ci;
+
+	clockrnd_sample(&hardclockrnd);
 
 	ci = curcpu();
 	l = ci->ci_onproc;
@@ -337,6 +405,9 @@ statclock(struct clockframe *frame)
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p;
 	struct lwp *l;
+
+	if (stathz)
+		clockrnd_sample(&statclockrnd);
 
 	/*
 	 * Notice changes in divisor frequency, and adjust clock
