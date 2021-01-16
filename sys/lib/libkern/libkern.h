@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.140 2020/04/17 17:24:46 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.141 2021/01/16 23:51:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,6 @@
 #define _LIB_LIBKERN_LIBKERN_H_
 
 #ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
 #include "opt_kasan.h"
 #include "opt_kcsan.h"
 #include "opt_kmsan.h"
