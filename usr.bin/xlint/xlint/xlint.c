@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.55 2021/01/16 16:03:46 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.56 2021/01/16 16:53:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.55 2021/01/16 16:03:46 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.56 2021/01/16 16:53:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ static  char	*libexec_path;
 static	bool	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag, Sflag;
 
 /* print the commands executed to run the stages of compilation */
-static	int	Vflag;
+static	bool	Vflag;
 
 /* filename for oflag */
 static	char	*outputfn;
@@ -141,7 +141,7 @@ static	void	usage(void);
 static	void	fname(const char *);
 static	void	runchild(const char *, char *const *, const char *, int);
 static	void	findlibs(char *const *);
-static	int	rdok(const char *);
+static	bool	rdok(const char *);
 static	void	lint2(void);
 static	void	cat(char *const *, const char *);
 
@@ -572,7 +572,7 @@ main(int argc, char *argv[])
 				usage();
 				/* NOTREACHED */
 			}
-			if (arg[2])
+			if (arg[2] != '\0')
 				appcstrg(list, arg + 2);
 			else if (argc > 1) {
 				argc--;
@@ -626,10 +626,10 @@ fname(const char *name)
 	char	**args, *ofn, *pathname;
 	const char *CC;
 	size_t	len;
-	int is_stdin;
+	bool	is_stdin;
 	int	fd;
 
-	is_stdin = (strcmp(name, "-") == 0);
+	is_stdin = strcmp(name, "-") == 0;
 	bn = lbasename(name, '/');
 	suff = lbasename(bn, '.');
 
@@ -680,7 +680,7 @@ fname(const char *name)
 	if ((CC = getenv("CC")) == NULL)
 		CC = DEFAULT_CC;
 	if ((pathname = findcc(CC)) == NULL)
-		if (!setenv("PATH", DEFAULT_PATH, 1))
+		if (setenv("PATH", DEFAULT_PATH, 1) == 0)
 			pathname = findcc(CC);
 	if (pathname == NULL) {
 		(void)fprintf(stderr, "%s: %s: not found\n", getprogname(), CC);
@@ -825,18 +825,18 @@ findlibs(char *const *liblst)
 	free(lfn);
 }
 
-static int
+static bool
 rdok(const char *path)
 {
 	struct	stat sbuf;
 
 	if (stat(path, &sbuf) == -1)
-		return 0;
+		return false;
 	if (!S_ISREG(sbuf.st_mode))
-		return 0;
+		return false;
 	if (access(path, R_OK) == -1)
-		return 0;
-	return 1;
+		return false;
+	return true;
 }
 
 static void
