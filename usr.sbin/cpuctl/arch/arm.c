@@ -1,4 +1,4 @@
-/*	$NetBSD: arm.c,v 1.3 2019/02/03 10:48:47 mrg Exp $	*/
+/*	$NetBSD: arm.c,v 1.4 2021/01/16 15:35:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arm.c,v 1.3 2019/02/03 10:48:47 mrg Exp $");
+__RCSID("$NetBSD: arm.c,v 1.4 2021/01/16 15:35:28 jmcneill Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,32 +81,32 @@ static const char * const id_mmfr_fieldnames[][8] = {
 		"FCSE-Support",
 		"Innermost-Shareability"
 	}, {
-		"L1-Harvard-Cache-VA", 
-		"L1-Unified-Cache-VA", 
-		"L1-Harvard-Cache-Set/Way", 
-		"L1-Unified-Cache-Set/Way", 
-		"L1-Harvard-Cache", 
-		"L1-Unified-Cache", 
-		"L1-Cache-Test-and-Clean", 
-		"Branch-Predictor", 
+		"L1-Harvard-Cache-VA",
+		"L1-Unified-Cache-VA",
+		"L1-Harvard-Cache-Set/Way",
+		"L1-Unified-Cache-Set/Way",
+		"L1-Harvard-Cache",
+		"L1-Unified-Cache",
+		"L1-Cache-Test-and-Clean",
+		"Branch-Predictor",
 	}, {
-		"L1-Harvard-Foreground-Fetch", 
-		"L1-Unified-Background-Fetch", 
-		"L1-Harvard-Range", 
+		"L1-Harvard-Foreground-Fetch",
+		"L1-Unified-Background-Fetch",
+		"L1-Harvard-Range",
 		"Harvard-TLB",
-		"Unified-TLB", 
-		"Mem-Barrier", 
-		"WFI-Stall", 
-		"HW-Access", 
+		"Unified-TLB",
+		"Mem-Barrier",
+		"WFI-Stall",
+		"HW-Access",
 	}, {
-		"Cache-Maintenance-MVA", 
-		"Cache-Maintenance-Set/Way", 
-		"BP-Maintenance", 
+		"Cache-Maintenance-MVA",
+		"Cache-Maintenance-Set/Way",
+		"BP-Maintenance",
 		"Maintenance-Broadcast",
 		NULL,
-		"Coherent-Tablewalk", 
-		"Cached-Memory-Size", 
-		"Supersection-Support", 
+		"Coherent-Tablewalk",
+		"Cached-Memory-Size",
+		"Supersection-Support",
 	},
 };
 
@@ -194,7 +194,7 @@ print_features(const char *cpuname, const char *setname,
 				    "=%u", isar & 0x0f);
 			}
 			size_t tmplen = snprintf(tmpbuf, sizeof(tmpbuf),
-			     "%s%s%s", sep, name, value);   
+			     "%s%s%s", sep, name, value);
 			if (len + tmplen > 78) {
 				printf("%s\n", buf);
 				len = snprintf(buf, sizeof(buf),
