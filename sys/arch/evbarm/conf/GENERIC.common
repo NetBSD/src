@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.44 2021/01/16 20:30:37 jmcneill Exp $
+#	$NetBSD: GENERIC.common,v 1.45 2021/01/16 20:33:32 jmcneill Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -131,6 +131,7 @@ pseudo-device	swcrypto		# software crypto implementation
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss			# file system snapshot device
 pseudo-device	drvctl			# driver control
 pseudo-device	cgd			# cryptographic disk devices
