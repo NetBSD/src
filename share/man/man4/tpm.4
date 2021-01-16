@@ -1,4 +1,4 @@
-.\"	$NetBSD: tpm.4,v 1.5 2019/10/08 18:43:03 maxv Exp $
+.\"	$NetBSD: tpm.4,v 1.6 2021/01/16 01:47:23 thorpej Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 6, 2019
+.Dd January 15, 2021
 .Dt TPM 4
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ Supported modules:
 .It
 TPM 2.0 chips over ACPI
 .It
-TPM 1.2 chips over ISA
+TPM 1.2 chips over ACPI and ISA
 .El
 .Pp
 Note that the supported interface version is TIS1.2 in each case.
