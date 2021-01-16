@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.34 2021/01/16 02:40:02 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.35 2021/01/16 16:53:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.34 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.35 2021/01/16 16:53:24 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -78,7 +78,7 @@ mainused(void)
 {
 	hte_t	*hte;
 
-	if ((hte = hsearch("main", 0)) != NULL)
+	if ((hte = hsearch("main", false)) != NULL)
 		hte->h_used = true;
 }
 
@@ -316,9 +316,10 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 		dowarn = false;
 		if (tp1->t_tspec == FUNC && tp2->t_tspec == FUNC) {
 			eq = eqtype(xt1 = tp1->t_subt, xt2 = tp2->t_subt,
-			    1, 0, 0, &dowarn);
+			    true, false, false, &dowarn);
 		} else {
-			eq = eqtype(xt1 = tp1, xt2 = tp2, 0, 0, 0, &dowarn);
+			eq = eqtype(xt1 = tp1, xt2 = tp2,
+			    false, false, false, &dowarn);
 		}
 		if (!eq || (sflag && dowarn)) {
 			pos1 = xstrdup(mkpos(&def->s_pos));
@@ -1153,7 +1154,8 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 		while (*ap1 != NULL && *ap2 != NULL) {
 			type_t *xt1, *xt2;
 			dowarn = false;
-			eq = eqtype(xt1 = *ap1, xt2 = *ap2, 1, osdef, 0, &dowarn);
+			eq = eqtype(xt1 = *ap1, xt2 = *ap2,
+			    true, osdef, false, &dowarn);
 			if (!eq || dowarn) {
 				pos1 = xstrdup(mkpos(&sym1->s_pos));
 				pos2 = mkpos(&sym->s_pos);
@@ -1229,7 +1231,7 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 
 		if (asgn && to == PTR) {
 			if (indir == 1 && (t == VOID || tp2->t_tspec == VOID))
-				return 1;
+				return true;
 		}
 
 		if (t != tp2->t_tspec) {
@@ -1238,9 +1240,9 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 			 * signedness a chance if not sflag and not hflag.
 			 */
 			if (sflag || hflag || to != PTR)
-				return 0;
+				return false;
 			if (signed_type(t) != signed_type(tp2->t_tspec))
-				return 0;
+				return false;
 		}
 
 		if (tp1->t_isenum && tp2->t_isenum) {
@@ -1256,7 +1258,7 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 				    tp1->t_uniqpos.p_uniq ==
 				      tp2->t_uniqpos.p_uniq);
 			} else {
-				return 0;
+				return false;
 			}
 		}
 
@@ -1267,14 +1269,14 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 
 		if (asgn && indir == 1) {
 			if (!tp1->t_const && tp2->t_const)
-				return 0;
+				return false;
 			if (!tp1->t_volatile && tp2->t_volatile)
-				return 0;
+				return false;
 		} else if (!ignqual && !tflag) {
 			if (tp1->t_const != tp2->t_const)
-				return 0;
+				return false;
 			if (tp1->t_const != tp2->t_const)
-				return 0;
+				return false;
 		}
 
 		if (t == STRUCT || t == UNION) {
@@ -1290,25 +1292,25 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 				    tp1->t_uniqpos.p_uniq ==
 				      tp2->t_uniqpos.p_uniq);
 			} else {
-				return 0;
+				return false;
 			}
 		}
 
 		if (t == ARRAY && tp1->t_dim != tp2->t_dim) {
 			if (tp1->t_dim != 0 && tp2->t_dim != 0)
-				return 0;
+				return false;
 		}
 
 		if (t == FUNC) {
 			if (tp1->t_proto && tp2->t_proto) {
 				if (!eqargs(tp1, tp2, dowarn))
-					return 0;
+					return false;
 			} else if (tp1->t_proto) {
 				if (!mnoarg(tp1, dowarn))
-					return 0;
+					return false;
 			} else if (tp2->t_proto) {
 				if (!mnoarg(tp2, dowarn))
-					return 0;
+					return false;
 			}
 		}
 
@@ -1332,15 +1334,15 @@ eqargs(type_t *tp1, type_t *tp2, bool *dowarn)
 	type_t	**a1, **a2;
 
 	if (tp1->t_vararg != tp2->t_vararg)
-		return 0;
+		return false;
 
 	a1 = tp1->t_args;
 	a2 = tp2->t_args;
 
 	while (*a1 != NULL && *a2 != NULL) {
 
-		if (eqtype(*a1, *a2, 1, 0, 0, dowarn) == 0)
-			return 0;
+		if (eqtype(*a1, *a2, true, false, false, dowarn) == 0)
+			return false;
 
 		a1++;
 		a2++;

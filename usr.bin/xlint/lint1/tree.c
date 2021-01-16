@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.156 2021/01/16 16:03:46 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.157 2021/01/16 16:53:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.156 2021/01/16 16:03:46 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.157 2021/01/16 16:53:23 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2273,7 +2273,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		case LCOMPLEX:
 			max = LDBL_MAX;		min = -LDBL_MAX;	break;
 		default:
-			lint_assert(/*CONSTCOND*/0);
+			lint_assert(/*CONSTCOND*/false);
 		}
 		if (v->v_ldbl > max || v->v_ldbl < min) {
 			lint_assert(nt != LDOUBLE);
@@ -3114,7 +3114,7 @@ fold(tnode_t *tn)
 		q = utyp ? (int64_t)(ul | ur) : sl | sr;
 		break;
 	default:
-		lint_assert(/*CONSTCOND*/0);
+		lint_assert(/*CONSTCOND*/false);
 	}
 
 	/* XXX does not work for quads. */
@@ -3162,7 +3162,7 @@ fold_test(tnode_t *tn)
 		v->v_quad = l || r ? 1 : 0;
 		break;
 	default:
-		lint_assert(/*CONSTCOND*/0);
+		lint_assert(/*CONSTCOND*/false);
 	}
 
 	return new_constant_node(tn->tn_type, v);
@@ -3178,7 +3178,7 @@ fold_float(tnode_t *tn)
 	tspec_t	t;
 	ldbl_t	l, r = 0;
 
-	fpe = false;
+	fpe = 0;
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = t = tn->tn_type->t_tspec;
 
@@ -3241,7 +3241,7 @@ fold_float(tnode_t *tn)
 		v->v_quad = (l != r) ? 1 : 0;
 		break;
 	default:
-		lint_assert(/*CONSTCOND*/0);
+		lint_assert(/*CONSTCOND*/false);
 	}
 
 	lint_assert(fpe != 0 || isnan((double)v->v_ldbl) == false);
@@ -3259,7 +3259,7 @@ fold_float(tnode_t *tn)
 		} else {
 			v->v_ldbl = v->v_ldbl < 0 ? -LDBL_MAX: LDBL_MAX;
 		}
-	    fpe = false;
+	    fpe = 0;
 	}
 
 	return new_constant_node(tn->tn_type, v);
@@ -4263,7 +4263,7 @@ cat_strings(strg_t *strg1, strg_t *strg2)
 	strg1->F = xrealloc(strg1->F, len * sizeof(*strg1->F)); \
 	(void)memcpy(strg1->F + len1, strg2->F, len2 * sizeof(*strg1->F)); \
 	free(strg2->F); \
-    } while (/*CONSTCOND*/0)
+    } while (/*CONSTCOND*/false)
 
 	if (strg1->st_tspec == CHAR)
 		COPY(st_cp);
