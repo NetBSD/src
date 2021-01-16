@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.154 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.155 2021/01/16 15:02:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.154 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.155 2021/01/16 15:02:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -227,7 +227,20 @@ new_name_node(sym_t *sym, int ntok)
 			 */
 			sym->s_type = incref(sym->s_type, FUNC);
 		} else {
-			if (blklev == 0) {
+			if (Tflag && strcmp(sym->s_name, "__lint_false") == 0) {
+				sym->s_scl = ENUMCON; /* close enough */
+				sym->s_type = gettyp(BOOL);
+				sym->s_value.v_tspec = BOOL;
+				sym->s_value.v_ansiu = false;
+				sym->s_value.v_quad = 0;
+			} else if (Tflag &&
+				   strcmp(sym->s_name, "__lint_true") == 0) {
+				sym->s_scl = ENUMCON; /* close enough */
+				sym->s_type = gettyp(BOOL);
+				sym->s_value.v_tspec = BOOL;
+				sym->s_value.v_ansiu = false;
+				sym->s_value.v_quad = 1;
+			} else if (blklev == 0) {
 				/* %s undefined */
 				error(99, sym->s_name);
 			} else {

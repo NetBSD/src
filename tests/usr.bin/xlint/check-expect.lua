@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.1 2021/01/12 20:42:01 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.2 2021/01/16 15:02:11 rillig Exp $
 
 --[[
 
@@ -99,8 +99,8 @@ local function check_test(c_fname, errors)
     end
 
     if not found then
-      errors:add("error: %s:%d: message \"%s\" is not declared in %s:%d",
-        exp_fname, act.exp_lineno, act.msg, c_fname, act.c_lineno)
+      errors:add("error: %s:%d: must expect \"%s\"",
+        c_fname, act.c_lineno, act.msg)
     end
   end
 

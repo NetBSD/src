@@ -1,45 +1,106 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.7 2021/01/15 23:15:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.8 2021/01/16 15:02:11 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
  * The option -T treats _Bool as incompatible with all other scalar types.
- * This means:
+ * This is implemented by the following rules:
  *
- * SB001: Controlling expressions in 'if', 'while', 'for', '?:' must be of
- * type _Bool instead of scalar.
+ * strict-bool-typedef:
+ *	The type _Bool is compatible with any typedef of _Bool.
  *
- * SB002: The operators '!', '==', '!=', '<', '<=', '>=', '>', '&&', '||'
- * return _Bool instead of int.
+ *	Note: Since <stdbool.h> defines bool as textual alias of _Bool,
+ *	having another typedef for bool is unusual.
  *
- * SB003: The operators '!', '&&', '||' take _Bool instead of scalar.
+ * strict-bool-constant:
+ *	There are 2 bool constants named false and true.
+ *	No other constants are compatible with type _Bool.
  *
- * SB004: The only operators that take _Bool are '!', '==', '!=',
- * '&', '^', '|', '&&', '||', '?', ':', '=', '&=', '^=', '|='.
+ *	Note: Internally these constants are named __lint_false and
+ *	__lint_true.
  *
- * SB005: There is no implicit conversion from _Bool to any other type.
+ * strict-bool-bit-field:
+ *	A struct or union member that is a bit field with underlying type
+ *	bool is compatible with plain bool.
  *
- * SB006: An expression is compatible with type _Bool if its main operator
- * returns type _Bool, or if the expression is an integer constant expression
- * with value 0 or 1.
+ * strict-bool-conversion:
+ *	There is no implicit conversion between _Bool and any other type.
  *
- * SB007: Expressions like "flags & FLAG" are compatible with _Bool if
- * they appear in a context where they are immediately compared to zero.
- * Assigning to a _Bool variable does not count as such a context, to
- * allow programs to be compiled without silent changes on a compiler that
- * is lacking the special _Bool type.
+ * strict-bool-controlling-expression:
+ *	Controlling expressions in 'if', 'while', 'for', '?:' must be of
+ *	type bool.
  *
- * SB008: Bit fields in struct may be based on _Bool.  These bit fields
- * typically have type _Bool:1 and can be converted to _Bool and back.
+ * strict-bool-operand-unary:
+ *	Operator	bool?	scalar?
+ *	!		yes	no
+ *	The other binary operators do not accept bool operands.
+ *
+ * strict-bool-operand-binary:
+ *	Operator	left:	bool?	other?	right:	bool?	other?
+ *	.			-	yes		yes	yes
+ *	->			-	yes		yes	yes
+ *	<=, <, >=, >		yes	yes		yes	yes
+ *	==, !=			yes	yes		yes	yes
+ *	&			yes	yes		yes	yes
+ *	^			yes	yes		yes	yes
+ *	|			yes	yes		yes	yes
+ *	&&			yes	-		yes	-
+ *	||			yes	-		yes	-
+ *	?			yes	-		yes	yes
+ *	:			yes	yes		yes	yes
+ *	=			yes	yes		yes	yes
+ *	&=, ^=, |=		yes	yes		yes	yes
+ *	,			yes	yes		yes	yes
+ *	The other binary operators do not accept bool operands.
+ *
+ * strict-bool-operator-result:
+ *	The result type of the operators '!', '<', '<=', '>', '>=',
+ *	'==', '!=', '&&', '||' is _Bool instead of int.
+ *
+ * strict-bool-bitwise-and:
+ *	Expressions of the form "flags & FLAG" are compatible with _Bool if
+ *	the left operand has enum type, the right operand is an integer
+ *	constant and the resulting value is used in a context where it is
+ *	implicitly and immediately compared to zero.
+ *
+ *	Note: An efficient implementation technique for a collection of bool
+ *	flags is an enum.  The enum declaration groups the available
+ *	constants, and as of 2020, compilers such as GCC and Clang have basic
+ *	support for detecting type mismatches on enums.
+ *
+ *	Note: Examples for such contexts are controlling expressions or the
+ *	operands of the operators '!', '&&', '||'.
+ *
+ *	Note: Counterexamples for contexts are assignments to a bool variable.
+ *
+ *	Note: These rules ensure that conforming code can be compiled without
+ *	change in behavior using old compilers that implement bool as an
+ *	ordinary integer type, without the special rule C99 6.3.1.2.
+ *
+ *	Note: There is a crucial difference between a _Bool variable and an
+ *	ordinary integer variable.  C99 6.3.1.2 defines a conversion from an
+ *	arbitrary scalar value to _Bool as equivalent to (value != 0 ? 1 : 0).
+ *	This means that even if _Bool is implemented as an 8-bit unsigned
+ *	integer, assigning 256 to it would still result in the value 1 being
+ *	stored.  Storing 256 in an ordinary 8-bit unsigned integer would
+ *	result in the value 0 being stored.  See the test d_c99_bool.c for
+ *	more details.
+ */
+
+/*
+ * The header <stdbool.h> defines the macros bool = _Bool, false = 0 and
+ * true = 1.  Without further hacks, this would mean that constant expressions
+ * of integer type have to be regarded as possible boolean constants if their
+ * value is either 0 or 1.
+ *
+ * This would not help in migrating old code to use bool consistently.
+ * Therefore lint provides its own <stdbool.h> header that expands false to
+ * __lint_false and true to __lint_true, two predefined constant expressions.
  */
 
 /* lint1-extra-flags: -T */
 
 /*
- * The header <stdbool.h> defines the macros bool = _Bool, false = 0 and
- * true = 1.  Therefore, constant expressions of integer type have to be
- * regarded as possible boolean constants if their value is either 0 or 1.
- * At this point of the translation, the preprocessor has already removed
- * the words "false" and "true" from the source code.
+ * strict-bool-typedef
  */
 
 /*
@@ -48,49 +109,490 @@
  */
 typedef _Bool bool;
 
+extern void accept_bool(bool);
+extern void println(const char *);
+extern void take_arguments(bool, int, const char *, ...);
+extern void do_nothing(void);
+
+/*
+ * strict-bool-constant
+ */
+
 void
-SB001_controlling_expression(bool b, int i, double d, const void *p)
+strict_bool_constant(void)
 {
+	accept_bool(__lint_false);
+	accept_bool(__lint_true);
+	accept_bool(0);		/* TODO: expect: 334 */
+	accept_bool(1);		/* TODO: expect: 334 */
+	accept_bool(2);		/* expect: 334 */
+}
 
-	/* Fine due to SB006. */
-	if (/*CONSTCOND*/0)
-		return;
+enum strict_bool_constant_expressions {
+	/* Ok: __lint_false is a boolean constant expression. */
+	FALSE = __lint_false ? 100 : 101,
 
-	/* Fine due to SB006. */
-	if (/*CONSTCOND*/1)
-		return;
+	/* Ok: __lint_true is a boolean constant expression. */
+	TRUE = __lint_true ? 100 : 101,
 
-	/* Not allowed: 2 is not a boolean expression. */
-	if (/*CONSTCOND*/2)	/* expect: 333 */
-		return;
+	/* Not ok: an integer is not a boolean constant expression. */
+	INT0 = 0 ? 100 : 101,	/* TODO: expect: 331 */
 
-	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (i)			/* expect: 333 */
-		return;
-	if (i != 0)
-		return;
+	/* Not ok: an integer is not a boolean constant expression. */
+	INT1 = 1 ? 100 : 101,	/* TODO: expect: 331 */
 
-	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (d)			/* expect: 333 */
-		return;
-	if (d != 0.0)
-		return;
+	/* Not ok: 2 is not a boolean constant. */
+	INT2 = 2 ? 100 : 101,	/* expect: 331 */
 
-	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (p)			/* expect: 333 */
-		return;
-	if (p != (void *)0)
-		return;
+	/* Not ok: compound integer expressions are not bool. */
+	ARITH = (2 - 2) ? 100 : 101,	/* TODO: expect: 331 */
 
-	/* Using a bool expression is allowed. */
-	if (b)
-		return;
+	/*
+	 * Without strict bool mode, these two variants of an expression can
+	 * occur when a preprocessor macro is either defined to 1 or left
+	 * empty, as in lint1/ops.def.
+	 *
+	 * TODO: figure out an elegant way to achieve the same effect in
+	 *  strict bool mode.
+	 */
+	BINARY_PLUS = (1 + 0) ? 100 : 101, /* TODO: expect: 331 */
+	UNARY_PLUS = (+0) ? 100 : 101,	/* TODO: expect: 331 */
+
+	/* The main operator '>' has return type bool. */
+	Q1 = (13 > 12) ? 100 : 101,
+
+	/*
+	 * The parenthesized expression has type int and thus cannot be
+	 * used as the controlling expression in the '?:' operator.
+	 */
+	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,
+
+	BINAND_BOOL = __lint_false & __lint_true,
+	BINAND_INT = 0 & 1,
+
+	BINXOR_BOOL = __lint_false ^ __lint_true,
+	BINXOR_INT = 0 ^ 1,
+
+	BINOR_BOOL = __lint_false | __lint_true,
+	BINOR_INT = 0 | 1,
+
+	LOGOR_BOOL = __lint_false || __lint_true,
+	LOGOR_INT = 0 || 1,	/* TODO: expect: 331, 332 */
+
+	LOGAND_BOOL = __lint_false && __lint_true,
+	LOGAND_INT = 0 && 1,	/* TODO: expect: 331, 332 */
+};
+
+/*
+ * strict-bool-bit-fields
+ */
+
+void
+strict_bool_bit_fields(void)
+{
+	struct flags {
+		bool bool_flag: 1;
+		unsigned uint_flag: 1;
+	};
+
+	struct flags flags = { __lint_false, 0 };
+	struct flags *flags_ptr = &flags;
+	bool b;
+
+	b = flags.bool_flag;
+	b = flags.uint_flag;		/* expect: 107 */
+	flags.bool_flag = b;
+	flags.uint_flag = b;		/* expect: 107 */
+
+	b = flags_ptr->bool_flag;
+	b = flags_ptr->uint_flag;	/* expect: 107 */
+	flags_ptr->bool_flag = b;
+	flags_ptr->uint_flag = b;	/* expect: 107 */
 }
 
 void
-SB002_operator_result_type(bool b)
+strict_bool_bit_fields_operand_conversion(void)
 {
+	struct s {
+		bool ordinary;
+		bool bit_field: 1;
+	};
+
+	struct s s = { 0 };
+
+	s.ordinary = s.ordinary | s.ordinary;
+	s.bit_field = s.bit_field | s.bit_field; /* FIXME *//* expect: 107 */
+}
+
+/*
+ * strict-bool-conversion
+ */
+
+bool
+strict_bool_conversion_return_false(void)
+{
+	return __lint_false;
+}
+
+bool
+strict_bool_conversion_return_true(void)
+{
+	return __lint_true;
+}
+
+bool
+strict_bool_conversion_return_bool(bool b)
+{
+	return b;
+}
+
+bool
+strict_bool_conversion_return_0(void)
+{
+	return 0;		/* TODO: expect: 211 */
+}
+
+bool
+strict_bool_conversion_return_1(void)
+{
+	return 1;		/* TODO: expect: 211 */
+}
+
+bool
+strict_bool_conversion_return_2(void)
+{
+	return 2;		/* expect: 211 */
+}
+
+bool
+strict_bool_conversion_return_pointer(const void *p) /* expect: 231 */
+{
+	return p;		/* expect: 211 */
+}
+
+char
+strict_bool_conversion_return_false_as_char(void)
+{
+	return __lint_false;	/* expect: 211 */
+}
+
+char
+strict_bool_conversion_return_true_as_char(void)
+{
+	return __lint_true;	/* expect: 211 */
+}
+
+
+void
+strict_bool_conversion_function_argument(void)
+{
+	accept_bool(__lint_false);
+	accept_bool(__lint_true);
+}
+
+void
+strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
+{
+	/* No conversion necessary. */
+	take_arguments(b, i, p);
+
+	/* Implicitly converting bool to other scalar types. */
+	take_arguments(b, b, b);	/* expect: 334, 334 */
+
+	/* Implicitly converting int to bool (arg #1). */
+	take_arguments(i, i, i);	/* expect: 334, 154 */
+
+	/* Implicitly converting pointer to bool (arg #1). */
+	take_arguments(p, p, p);	/* expect: 334, 154 */
+
+	/* Passing bool as vararg. */
+	take_arguments(b, i, p, b, i, p); /* expect: arg#4 */ // TODO
+
+	/* Passing a bool constant. */
+	take_arguments(__lint_false, i, p);
+
+	/* Passing a bool constant. */
+	take_arguments(__lint_true, i, p);
+
+	/* Trying to pass integer constants. */
+	take_arguments(0, i, p);	/* TODO: expect: 334 */
+	take_arguments(1, i, p);	/* TODO: expect: 334 */
+	take_arguments(2, i, p);	/* expect: 334 */
+}
+
+void
+strict_bool_conversion_between_bool_and_int(void)
+{
+	bool b;
+	int i;
+
+	b = 0;
+	b = __lint_false;	/* TODO: expect: 107 */
+	b = 1;
+	b = __lint_true;
+
+	i = 0;
+	i = __lint_false;	/* expect: 107 */
+	i = 1;
+	i = __lint_true;	/* expect: 107 */
+
+	i = b;			/* expect: 107 */
+	b = i;			/* expect: 107 */
+}
+
+void
+strict_bool_conversion_from_bool_to_scalar(bool b) /* expect: 231 */
+{
+	int i;
+	unsigned u;
+	double d;
+	void *p;
+
+	i = b;			/* expect: 107 */
+	u = b;			/* expect: 107 */
+	d = b;			/* expect: 107 */
+	p = b;			/* expect: 107 */
+}
+
+/*
+ * strict-bool-controlling-expression:
+ *	Controlling expressions in 'if', 'while', 'for', '?:' must be of
+ *	type bool.
+ */
+
+void
+strict_bool_controlling_expression(bool b, int i, double d, const void *p)
+{
+	if (__lint_false)
+		do_nothing();
+
+	if (__lint_true)
+		do_nothing();
+
+	if (b)
+		do_nothing();
+
+	if (0)			/* TODO: expect: 333 */
+		do_nothing();
+
+	if (1)			/* TODO: expect: 333 */
+		do_nothing();
+
+	if (2)			/* expect: 333 */
+		do_nothing();
+
+	/* Not allowed: There is no implicit conversion from scalar to bool. */
+	if (i)			/* expect: 333 */
+		do_nothing();
+	if (i != 0)
+		do_nothing();
+
+	/* Not allowed: There is no implicit conversion from scalar to bool. */
+	if (d)			/* expect: 333 */
+		do_nothing();
+	if (d != 0.0)
+		do_nothing();
+
+	/* Not allowed: There is no implicit conversion from scalar to bool. */
+	if (p)			/* expect: 333 */
+		do_nothing();
+	if (p != (void *)0)
+		do_nothing();
+}
+
+/*
+ * strict-bool-operand-unary:
+ *	Operator	bool?	scalar?
+ *	!		yes	-
+ *	&		yes	yes
+ *	The other binary operators do not accept bool operands.
+ */
+
+void
+strict_bool_operand_unary_not(void)
+{
+	bool b = __lint_false;
+
+	b = !b;
+	b = !!!b;
+	b = !__lint_false;
+	b = !__lint_true;
+
+	int i = 0;
+
+	i = !i;			/* expect: 330 */
+	i = !!!i;		/* expect: 330 */
+	i = !0;			/* expect: 107 */
+	i = !1;			/* expect: 107 */
+}
+
+void
+strict_bool_operand_unary_address(void)
+{
+	bool b = __lint_false;
+
+	/* Taking the address of a bool lvalue. */
+	bool *bp;
+	bp = &b;
+	*bp = b;
+	b = *bp;
+}
+
+/*
+ * strict-bool-operand-binary:
+ *	Operator	left:	bool?	other?	right:	bool?	other?
+ *	.			-	yes		yes	yes
+ *	->			-	yes		yes	yes
+ *	<=, <, >=, >		yes	yes		yes	yes
+ *	==, !=			yes	yes		yes	yes
+ *	&			yes	yes		yes	yes
+ *	^			yes	yes		yes	yes
+ *	|			yes	yes		yes	yes
+ *	&&			yes	-		yes	-
+ *	||			yes	-		yes	-
+ *	?			yes	-		yes	yes
+ *	:			yes	yes		yes	yes
+ *	=			yes	yes		yes	yes
+ *	&=, ^=, |=		yes	yes		yes	yes
+ *	,			yes	yes		yes	yes
+ *	The other binary operators do not accept bool operands.
+ */
+
+/*
+ * Ensure that bool members can be accessed as usual.
+ */
+void
+strict_bool_operand_binary_dot_arrow(void)
+{
+	struct bool_struct {
+		bool b;
+	};
+
+	/* Initialize and assign using boolean constants. */
+	bool b = __lint_false;
+	b = __lint_true;
+
+	/* Access a struct member using the '.' operator. */
+	struct bool_struct bs = { __lint_true };
+	b = bs.b;
+	bs.b = b;
+	bs.b = 0;		/* TODO: expect: incompatible types */
+
+	/* Access a struct member using the '->' operator. */
+	struct bool_struct *bsp = &bs;
+	b = bsp->b;
+	bsp->b = b;
+	bsp->b = 0;
+}
+
+int
+strict_bool_operand_binary(bool b, int i)
+{
+
+	/* The right-hand sides of these assignments are ok. */
+	b = !b;
+	b = b && b;
+	b = b || b;
+
+	/*
+	 * The right-hand sides of these assignments implicitly convert from
+	 * scalar to bool.
+	 */
+	b = !i;			/* expect: 330 */
+	b = i && i;		/* expect: 331, 332 */
+	b = i || i;		/* expect: 331, 332 */
+
+	b = b && 0;
+	b = 0 && b;
+	b = b || 0;
+	b = 0 || b;
+
+	return i;
+}
+
+void
+strict_bool_operand_binary_all(bool b, unsigned u)
+{
+	b = !b;
+	b = ~b;			/* expect: 335 */
+	++b;			/* expect: 335 */
+	--b;			/* expect: 335 */
+	b++;			/* expect: 335 */
+	b--;			/* expect: 335 */
+	b = +b;			/* expect: 335 */
+	b = -b;			/* expect: 335 */
+
+	b = b * b;		/* expect: 336, 337 */
+	b = b / b;		/* expect: 336, 337 */
+	b = b % b;		/* expect: 336, 337 */
+	b = b + b;		/* expect: 336, 337 */
+	b = b - b;		/* expect: 336, 337 */
+	b = b << b;		/* expect: 336, 337 */
+	b = b >> b;		/* expect: 336, 337 */
+
+	b = b < b;		/* expect: 336, 337 */
+	b = b <= b;		/* expect: 336, 337 */
+	b = b > b;		/* expect: 336, 337 */
+	b = b >= b;		/* expect: 336, 337 */
+	b = b == b;
+	b = b != b;
+
+	b = b & b;
+	b = b ^ b;
+	b = b | b;
+	b = b && b;
+	b = b || b;
+	b = b ? b : b;
+
 	b = b;
+	b *= b;			/* expect: 336, 337 */
+	b /= b;			/* expect: 336, 337 */
+	b %= b;			/* expect: 336, 337 */
+	b += b;			/* expect: 336, 337 */
+	b -= b;			/* expect: 336, 337 */
+	b <<= b;		/* expect: 336, 337 */
+	b >>= b;		/* expect: 336, 337 */
+	b &= b;
+	b ^= b;
+	b |= b;
+
+	/* Operations with mixed types. */
+	u = b * u;		/* expect: 336 */
+	u = u * b;		/* expect: 337 */
+	u = b / u;		/* expect: 336 */
+	u = u / b;		/* expect: 337 */
+	u = b % u;		/* expect: 336 */
+	u = u % b;		/* expect: 337 */
+	u = b + u;		/* expect: 336 */
+	u = u + b;		/* expect: 337 */
+	u = b - u;		/* expect: 336 */
+	u = u - b;		/* expect: 337 */
+	u = b << u;		/* expect: 336 */
+	u = u << b;		/* expect: 337 */
+	u = b >> u;		/* expect: 336 */
+	u = u >> b;		/* expect: 337 */
+	u = b ? u : u;
+	u = b ? b : u;		/* expect: 107 */
+	u = b ? u : b;		/* expect: 107 */
+}
+
+bool
+strict_bool_operand_binary_comma(bool b, int i)
+{
+	b = (b, !b);
+	i = (i, i + 1);
+	return b;
+}
+
+/*
+ * strict-bool-operator-result:
+ *	The result type of the operators '!', '<', '<=', '>', '>=',
+ *	'==', '!=', '&&', '||' is _Bool instead of int.
+ */
+
+void
+strict_bool_operator_result(bool b)
+{
 	char c = b;		/* expect: 107 */
 	int i = b;		/* expect: 107 */
 	double d = b;		/* expect: 107 */
@@ -122,166 +624,22 @@ SB002_operator_result_type(bool b)
 	i = b || b;		/* expect: 107 */
 }
 
-int
-SB003_operands(bool b, int i)
-{
-
-	/* The right-hand sides of these assignments are ok. */
-	b = !b;
-	b = b && b;
-	b = b || b;
-
-	/*
-	 * The right-hand sides of these assignments implicitly convert from
-	 * scalar to bool.
-	 */
-	b = !i;			/* expect: 330 */
-	b = i && i;		/* expect: 331, 332 */
-	b = i || i;		/* expect: 331, 332 */
-
-	b = b && 0;
-	b = 0 && b;
-	b = b || 0;
-	b = 0 || b;
-
-	return i;
-}
-
-/*ARGSUSED*/
-void
-SB004_operators_and_bool_operands(bool b, unsigned u)
-{
-	b = !b;			/* ok */
-	b = ~b;			/* expect: 335 */
-	++b;			/* expect: 335 */
-	--b;			/* expect: 335 */
-	b++;			/* expect: 335 */
-	b--;			/* expect: 335 */
-	b = +b;			/* expect: 335 */
-	b = -b;			/* expect: 335 */
-
-	b = b * b;		/* expect: 336, 337 */
-	b = b / b;		/* expect: 336, 337 */
-	b = b % b;		/* expect: 336, 337 */
-	b = b + b;		/* expect: 336, 337 */
-	b = b - b;		/* expect: 336, 337 */
-	b = b << b;		/* expect: 336, 337 */
-	b = b >> b;		/* expect: 336, 337 */
-
-	b = b < b;		/* expect: 336, 337 */
-	b = b <= b;		/* expect: 336, 337 */
-	b = b > b;		/* expect: 336, 337 */
-	b = b >= b;		/* expect: 336, 337 */
-	b = b == b;		/* ok */
-	b = b != b;		/* ok */
-
-	b = b & b;		/* ok */
-	b = b ^ b;		/* ok */
-	b = b | b;		/* ok */
-	b = b && b;		/* ok */
-	b = b || b;		/* ok */
-	b = b ? b : b;		/* ok */
-
-	b = b;			/* ok */
-	b *= b;			/* expect: 336, 337 */
-	b /= b;			/* expect: 336, 337 */
-	b %= b;			/* expect: 336, 337 */
-	b += b;			/* expect: 336, 337 */
-	b -= b;			/* expect: 336, 337 */
-	b <<= b;		/* expect: 336, 337 */
-	b >>= b;		/* expect: 336, 337 */
-	b &= b;			/* ok */
-	b ^= b;			/* ok */
-	b |= b;			/* ok */
-
-	/* Operations with mixed types. */
-	u = b * u;		/* expect: 336 */
-	u = u * b;		/* expect: 337 */
-	u = b / u;		/* expect: 336 */
-	u = u / b;		/* expect: 337 */
-	u = b % u;		/* expect: 336 */
-	u = u % b;		/* expect: 337 */
-	u = b + u;		/* expect: 336 */
-	u = u + b;		/* expect: 337 */
-	u = b - u;		/* expect: 336 */
-	u = u - b;		/* expect: 337 */
-	u = b << u;		/* expect: 336 */
-	u = u << b;		/* expect: 337 */
-	u = b >> u;		/* expect: 336 */
-	u = u >> b;		/* expect: 337 */
-	u = b ? u : u;		/* ok */
-	u = b ? b : u;		/* expect: 107 */
-	u = b ? u : b;		/* expect: 107 */
-}
-
-/*ARGSUSED*/
-void
-SB005_convert_from_bool_to_scalar(bool b)
-{
-	int i;
-	unsigned u;
-	double d;
-	void *p;
-
-	i = b;			/* expect: 107 */
-	u = b;			/* expect: 107 */
-	d = b;			/* expect: 107 */
-	p = b;			/* expect: 107 */
-}
-
-enum SB006_bool_constant_expression {
-	/* Ok: 0 is a boolean constant expression. */
-	INT0 = 0 ? 100 : 101,
-
-	/* Ok: 1 is a boolean constant expression. */
-	INT1 = 1 ? 100 : 101,
-
-	/* Not ok: 2 is not a boolean constant (neither 0 nor 1). */
-	INT2 = 2 ? 100 : 101,	/* expect: 331 */
-
-	/*
-	 * The intermediate expression "2" has type int, which is not
-	 * compatible with _Bool.  The expression "2 - 2" is an integer
-	 * constant expression with value 0 and is thus a bool constant
-	 * expression.  This particular case probably does not occur in
-	 * practice.
-	 */
-	ARITH = (2 - 2) ? 100 : 101,
-
-	/*
-	 * These two variants of an expression can occur when a preprocessor
-	 * macro is either defined to 1 or left empty, as in lint1/ops.def.
-	 */
-	BINARY_PLUS = (1 + 0) ? 100 : 101,
-	UNARY_PLUS = (+0) ? 100 : 101,
-
-	/* The main operator '>' has return type bool. */
-	Q1 = (13 > 12) ? 100 : 101,
-
-	/*
-	 * The 7 is part of the integer constant expression, but it is
-	 * irrelevant for the final result.  The expression in parentheses
-	 * is an integer constant expression with value 1 and thus is a
-	 * bool constant expression.
-	 */
-	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,
-
-	BINAND = 0 & 1,		/* ok */
-
-	BINXOR = 0 ^ 1,		/* ok */
-
-	BINOR = 0 | 1,		/* ok */
-
-	LOGOR = 0 || 1,		/* ok */
-
-	LOGAND = 0 && 1,	/* ok */
-};
 
 /*
- * An efficient implementation technique for a collection of boolean flags
- * is an enum.  The enum declaration groups the available constants, and as
- * of 2020, compilers such as GCC and Clang have basic support for detecting
- * type mismatches on enums.
+ * strict-bool-bitwise-and:
+ *	Expressions of the form "flags & FLAG" are compatible with _Bool if
+ *	the left operand has enum type, the right operand is an integer
+ *	constant and the resulting value is used in a context where it is
+ *	implicitly and immediately compared to zero.
+ *
+ *	Note: Examples for such contexts are controlling expressions or the
+ *	operands of the operators '!', '&&', '||'.
+ *
+ *	Note: Counterexamples for contexts are assignments to a bool variable.
+ *
+ *	Note: These rules ensure that conforming code can be compiled without
+ *	change in behavior using old compilers that implement bool as an
+ *	ordinary integer type, without the special rule C99 6.3.1.2.
  */
 
 enum Flags {
@@ -290,63 +648,8 @@ enum Flags {
 	FLAG28 = 1 << 28
 };
 
-/*
- * The usual way to query one of the flags is demonstrated below.
- */
-
-extern void
-println(const char *);
-
 void
-query_flag_from_enum_bit_set(enum Flags flags)
-{
-
-	if (flags & FLAG0)
-		println("FLAG0 is set");
-
-	if ((flags & FLAG1) != 0)
-		println("FLAG1 is set");
-
-	if ((flags & (FLAG0 | FLAG1)) == (FLAG0 | FLAG1))
-		println("FLAG0 and FLAG1 are both set");
-
-	if (flags & FLAG0 && flags & FLAG1)
-		println("FLAG0 and FLAG1 are both set");
-
-	if ((flags & (FLAG0 | FLAG1)) != 0)
-		println("At least one of FLAG0 and FLAG1 is set");
-
-	if (flags & FLAG28)
-		println("FLAG28 is set");
-}
-
-/*
- * In all the above conditions (or controlling expressions, as the C standard
- * calls them), the result of the operator '&' is compared against 0.  This
- * makes this pattern work, no matter whether the bits are in the low-value
- * range or in the high-value range (such as FLAG28, which has the value
- * 1073741824, which is more than what would fit into an unsigned char).
- * Even if an enum could be extended to larger types than int, this pattern
- * would work.
- */
-
-/*
- * There is a crucial difference between a _Bool variable and an ordinary
- * integer variable.  C99 6.3.1.2 defines a conversion from an arbitrary
- * scalar value to _Bool as equivalent to (value != 0 ? 1 : 0).  This means
- * that even if _Bool is implemented as an 8-bit unsigned integer, assigning
- * 256 to it would still result in the value 1 being stored.  Storing 256 in
- * an ordinary 8-bit unsigned integer would result in the value 0 being
- * stored.  See the test d_c99_bool.c for more details.
- *
- * Because of this, expressions like (flags & FLAG28) are only allowed in
- * bool context if they are guaranteed not to be truncated, even if the
- * result were to be stored in a plain unsigned integer.
- */
-
-/*ARGSUSED*/
-void
-SB007_allow_flag_test_on_bit_set_enums(enum Flags flags)
+strict_bool_bitwise_and_enum(enum Flags flags) /* expect: 231 */
 {
 	bool b;
 
@@ -374,172 +677,34 @@ SB007_allow_flag_test_on_bit_set_enums(enum Flags flags)
 	b = flags & FLAG28;	/* expect: 107 */
 }
 
-/* A bool bit field is compatible with bool. Other bit fields are not. */
-
-struct flags {
-	bool bool_flag: 1;
-	unsigned uint_flag: 1;
-};
-
-/*ARGSUSED*/
-void
-SB008_bit_fields(const struct flags *flags)
-{
-	bool b;
-
-	b = flags->bool_flag;	/* ok */
-	b = flags->uint_flag;	/* expect: 107 */
-	flags->bool_flag = b;
-	flags->uint_flag = b;	/* expect: 107 */
-}
-
-/* Test implicit conversion when returning a value from a function. */
-
-/*ARGSUSED*/
-bool
-returning_bool(bool b, int i, const char *p)
-{
-	if (i > 0)
-		return b;	/* ok */
-	if (i < 0)
-		return i;	/* expect: 211 */
-	return p;		/* expect: 211 */
-}
-
-/*ARGSUSED*/
-char
-returning_char(bool b, int i, const char *p)
-{
-	if (i > 0)
-		return b;	/* expect: 211 */
-	if (i < 0)
-		return i;	/* XXX: narrowing conversion */
-	return p;		/* expect: 183 */
-}
-
-bool
-return_constant_false(void)
-{
-	return 0;
-}
-
-bool
-return_constant_true(void)
-{
-	return 1;
-}
-
-bool
-return_invalid_integer(void)
-{
-	return 2;		/* expect: 211 */
-}
-
-/* Test passing arguments to a function. */
-
-extern void
-taking_arguments(bool, int, const char *, ...);
-
-void
-passing_arguments(bool b, int i, const char *p)
-{
-	/* No conversion necessary. */
-	taking_arguments(b, i, p);
-
-	/* Implicitly converting bool to other scalar types. */
-	taking_arguments(b, b, b);	/* expect: 334, 334 */
-
-	/* Implicitly converting int to bool (arg #1). */
-	taking_arguments(i, i, i);	/* expect: 334, 154 */
-
-	/* Implicitly converting pointer to bool (arg #1). */
-	taking_arguments(p, p, p);	/* expect: 334, 154 */
-
-	/* Passing bool as vararg. */
-	taking_arguments(b, i, p, b, i, p); /* expect: arg#4 */ // TODO
-
-	/* Passing a bool constant. */
-	taking_arguments(0, i, p);
-
-	/* Passing a bool constant. */
-	taking_arguments(1, i, p);
-
-	/* Trying to pass an invalid integer. */
-	taking_arguments(2, i, p);	/* expect: 334 */
-}
-
 /*
- * This is just normal access to a bool member of a struct, to ensure that
- * these produce no errors.
- */
-void
-struct_access_operators(void)
-{
-	struct bool_struct {
-		bool b;
-	};
-
-	/* Initialize and assign using boolean constants. */
-	bool b = 0;
-	b = 1;
-
-	/* Access a struct member using the '.' operator. */
-	struct bool_struct bs = { 1 };
-	b = bs.b;
-	bs.b = b;
-	bs.b = 0;
-
-	/* Access a struct member using the '->' operator. */
-	struct bool_struct *bsp = &bs;
-	b = bsp->b;
-	bsp->b = b;
-	bsp->b = 0;
-
-	/* Taking the address of a bool lvalue. */
-	bool *bp;
-	bp = &b;
-	*bp = b;
-	b = *bp;
-}
-
-/*
- * Comparing a _Bool expression to 0 or 1 is redundant.  It may come from
- * an earlier version of the code, before it got migrated to using _Bool.
- * Usually, bool expressions are used directly as control expressions or
- * as argument to the boolean operators such as '!', '&&', '||'.
+ * Demonstrate idiomatic code to query flags from an enum bit set.
  *
- * Since lint steps in after the C preprocessor, it has no chance of seeing
- * the original source code, which may well have been "b == false" instead
- * of "b == 0".
+ * In all the controlling expressions in this function, the result of the
+ * operator '&' is compared against 0.  This makes this pattern work, no
+ * matter whether the bits are in the low-value range or in the high-value
+ * range (such as FLAG28, which has the value 1073741824, which is more than
+ * what would fit into an unsigned char).  Even if an enum could be extended
+ * to larger types than int, this pattern would work.
  */
-bool
-compare_var_with_constant(bool b)
-{
-	bool t1 = b == 0;
-	bool t2 = t1 != 0;
-	bool t3 = t2 == 1;
-	bool t4 = t3 != 1;
-	return t4 ^ t3;
-}
-
-bool
-SB003_operand_comma(bool b, int i)
-{
-	b = (b, !b);
-	i = (i, i + 1);
-	return b;
-}
-
 void
-bit_field_as_operator_argument(void)
+query_flag_from_enum_bit_set(enum Flags flags)
 {
-	struct s {
-		bool ordinary;
-		bool bit_field: 1;
-	};
+	if (flags & FLAG0)
+		println("FLAG0 is set");
 
-	struct s s = { 0 };
+	if ((flags & FLAG1) != 0)
+		println("FLAG1 is set");
 
-	s.ordinary = s.ordinary | s.ordinary;
-	s.bit_field = s.bit_field | s.bit_field; /* FIXME *//* expect: 107 */
+	if ((flags & (FLAG0 | FLAG1)) == (FLAG0 | FLAG1))
+		println("FLAG0 and FLAG1 are both set");
+
+	if (flags & FLAG0 && flags & FLAG1)
+		println("FLAG0 and FLAG1 are both set");
+
+	if ((flags & (FLAG0 | FLAG1)) != 0)
+		println("At least one of FLAG0 and FLAG1 is set");
+
+	if (flags & FLAG28)
+		println("FLAG28 is set");
 }
