@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.512 2021/01/10 23:59:53 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.513 2021/01/16 20:49:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.512 2021/01/10 23:59:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.513 2021/01/16 20:49:31 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2095,7 +2095,7 @@ shouldDieQuietly(GNode *gn, int bf)
 		else
 			quietly = (gn != NULL && (gn->type & OP_MAKE)) ? 1 : 0;
 	}
-	return quietly;
+	return quietly != 0;
 }
 
 static void
