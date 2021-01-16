@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.161 2021/01/16 18:58:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.162 2021/01/16 19:03:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.161 2021/01/16 18:58:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.162 2021/01/16 19:03:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1144,8 +1144,9 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 		rt = NOTSPEC;
 	}
 
-	if (needs_compatible_types(op))
-		return typeok_strict_bool_compatible(op, arg, lt, rt);
+	if (needs_compatible_types(op) &&
+	    !typeok_strict_bool_compatible(op, arg, lt, rt))
+		return false;
 
 	if (mp->m_takes_only_bool || op == QUEST) {
 		bool binary = mp->m_binary;
