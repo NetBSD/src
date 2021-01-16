@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.781 2021/01/10 23:59:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.782 2021/01/16 20:49:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.781 2021/01/10 23:59:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.782 2021/01/16 20:49:31 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3650,7 +3650,12 @@ ApplyModifiers(
 {
 	ApplyModifiersState st = {
 	    startc, endc, v, ctxt, eflags,
+#if defined(lint)
+	    /* lint cannot parse C99 struct initializers yet. */
+	    { var_Error, NULL },
+#else
 	    FStr_InitRefer(var_Error), /* .newVal */
+#endif
 	    ' ',		/* .sep */
 	    FALSE,		/* .oneBigWord */
 	    *exprFlags		/* .exprFlags */
