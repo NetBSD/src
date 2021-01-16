@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.155 2020/12/04 20:38:44 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.156 2021/01/16 23:51:51 chs Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,10 +35,6 @@
 
 #ifndef	_SYS_CDEFS_H_
 #define	_SYS_CDEFS_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 /*
  * Macro to test if we're using a GNU C compiler of a specific vintage
