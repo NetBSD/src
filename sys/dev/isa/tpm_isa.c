@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm_isa.c,v 1.7 2019/10/09 14:03:58 maxv Exp $	*/
+/*	$NetBSD: tpm_isa.c,v 1.8 2021/01/16 00:43:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.7 2019/10/09 14:03:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.8 2021/01/16 00:43:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,9 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 
 	base = (unsigned int)ia->ia_iomem[0].ir_addr;
 	size = TPM_SPACE_SIZE;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	sc->sc_dev = self;
 	sc->sc_ver = TPM_1_2;
