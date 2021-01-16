@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.37 2021/01/16 02:40:02 rillig Exp $ */
+/* $NetBSD: read.c,v 1.38 2021/01/16 16:53:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.37 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.38 2021/01/16 16:53:24 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -337,11 +337,11 @@ funccall(pos_t *posp, const char *cp)
 	name = inpname(cp, &cp);
 
 	/* first look it up in the renaming table, then in the normal table */
-	hte = _hsearch(renametab, name, 0);
+	hte = _hsearch(renametab, name, false);
 	if (hte != NULL)
 		hte = hte->h_hte;
 	else
-		hte = hsearch(name, 1);
+		hte = hsearch(name, true);
 	hte->h_used = true;
 
 	fcall->f_type = inptype(cp, &cp);
@@ -453,9 +453,9 @@ decldef(pos_t *posp, const char *cp)
 		newname = inpname(cp, &cp);
 
 		/* enter it and see if it's already been renamed */
-		renamehte = _hsearch(renametab, tname, 1);
+		renamehte = _hsearch(renametab, tname, true);
 		if (renamehte->h_hte == NULL) {
-			hte = hsearch(newname, 1);
+			hte = hsearch(newname, true);
 			renamehte->h_hte = hte;
 			renamed = true;
 		} else if (hte = renamehte->h_hte,
@@ -468,11 +468,11 @@ decldef(pos_t *posp, const char *cp)
 		free(tname);
 	} else {
 		/* it might be a previously-done rename */
-		hte = _hsearch(renametab, name, 0);
+		hte = _hsearch(renametab, name, false);
 		if (hte != NULL)
 			hte = hte->h_hte;
 		else
-			hte = hsearch(name, 1);
+			hte = hsearch(name, true);
 	}
 	hte->h_used |= used;
 	if (sym.s_def == DEF || sym.s_def == TDEF)
@@ -537,11 +537,11 @@ usedsym(pos_t *posp, const char *cp)
 		inperr("bad delim %c", cp[-1]);
 
 	name = inpname(cp, &cp);
-	hte = _hsearch(renametab, name, 0);
+	hte = _hsearch(renametab, name, false);
 	if (hte != NULL)
 		hte = hte->h_hte;
 	else
-		hte = hsearch(name, 1);
+		hte = hsearch(name, true);
 	hte->h_used = true;
 
 	*hte->h_lusym = usym;
@@ -687,11 +687,11 @@ inptype(const char *cp, const char **epp)
 		switch (*cp++) {
 		case '1':
 			tp->t_istag = true;
-			tp->t_tag = hsearch(inpname(cp, &cp), 1);
+			tp->t_tag = hsearch(inpname(cp, &cp), true);
 			break;
 		case '2':
 			tp->t_istynam = true;
-			tp->t_tynam = hsearch(inpname(cp, &cp), 1);
+			tp->t_tynam = hsearch(inpname(cp, &cp), true);
 			break;
 		case '3':
 			tp->t_isuniqpos = true;

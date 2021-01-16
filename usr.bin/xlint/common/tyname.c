@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.23 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.24 2021/01/16 16:53:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.23 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.24 2021/01/16 16:53:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: tyname.c,v 1.23 2021/01/16 02:40:02 rillig Exp $");
 	do { \
 		(void)warnx("%s, %d: " fmt, __FILE__, __LINE__, ##args); \
 		abort(); \
-	} while (/*CONSTCOND*/0)
+	} while (/*CONSTCOND*/false)
 #endif
 
 /* A tree of strings. */
@@ -228,7 +228,7 @@ sametype(const type_t *t1, const type_t *t2)
 	case FCOMPLEX:
 	case DCOMPLEX:
 	case LCOMPLEX:
-		return 1;
+		return true;
 	case ARRAY:
 		if (t1->t_dim != t2->t_dim)
 			return false;
