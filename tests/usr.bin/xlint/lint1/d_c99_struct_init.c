@@ -2,7 +2,7 @@
 struct {
 	int i;
 	char *s;
-} c[] = { 
+} c[] = {
 	{ .i =  2, },
 	{ .s =  "foo" },
 	{ .i =  1, .s = "bar" },

@@ -23,4 +23,3 @@ main(void)
 	b.top_left.x = 1;
 	return 0;
 }
-	
