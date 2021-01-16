@@ -2,7 +2,7 @@
 union {
 	int i;
 	char *s;
-} c[] = { 
+} c[] = {
 	{ i: 1 },
 	{ s: "foo" }
 };
