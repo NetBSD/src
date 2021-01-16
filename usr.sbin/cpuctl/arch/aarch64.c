@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.13 2021/01/04 05:35:14 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.14 2021/01/16 15:34:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.13 2021/01/04 05:35:14 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.14 2021/01/16 15:34:37 jmcneill Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -164,8 +164,9 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 	{
 		.bitpos = 24, .bitwidth = 4, .name = "GIC",
 		.info = (const char *[16]) { /* 16=4bit */
-			[0] = "No GIC",
-			[1] = "GICv3"
+			[0] = "GIC CPU interface sysregs not implemented",
+			[1] = "GIC CPU interface sysregs v3.0/4.0 supported",
+			[3] = "GIC CPU interface sysregs v4.1 supported"
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
