@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1277 2020/10/27 08:57:11 ryo Exp $
+#	$NetBSD: files,v 1.1278 2021/01/16 23:51:50 chs Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -27,7 +27,6 @@ defflag	opt_modular.h		MODULAR
 defflag	opt_modular.h		MODULAR_DEFAULT_AUTOLOAD
 defflag				KEYLOCK
 defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
-defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
 defflag				KASAN
 defflag opt_kasan.h		KASAN_PANIC
