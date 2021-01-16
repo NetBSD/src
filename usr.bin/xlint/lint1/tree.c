@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.162 2021/01/16 19:03:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.163 2021/01/16 19:11:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.162 2021/01/16 19:03:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.163 2021/01/16 19:11:36 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1082,14 +1082,33 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 }
 
 /*
- * For assignment operators in strict bool mode, the type check is stricter
- * than for operators that compare to 0.  Code that passes this strict check
- * can be compiled in a pre-C99 environment that doesn't implement the
- * special rule C99 6.3.1.2, without silent change in behavior.
+ * Whether the operator can handle (bool, bool) as well as (scalar, scalar),
+ * but not mixtures between the two type classes.
+ */
+static bool
+needs_compatible_types(op_t op)
+{
+	return op == EQ || op == NE ||
+	       op == AND || op == XOR || op == OR ||
+	       op == COLON ||
+	       op == ASSIGN || op == ANDASS || op == XORASS || op == ORASS ||
+	       op == RETURN ||
+	       op == FARG;
+}
+
+/*
+ * Some operators require that either both operands are bool or both are
+ * scalar.
+ *
+ * Code that passes this check can be compiled in a pre-C99 environment that
+ * doesn't implement the special rule C99 6.3.1.2, without silent change in
+ * behavior.
  */
 static bool
 typeok_strict_bool_compatible(op_t op, int arg, tspec_t lt, tspec_t rt)
 {
+	if (!needs_compatible_types(op))
+		return true;
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
 
@@ -1105,21 +1124,6 @@ typeok_strict_bool_compatible(op_t op, int arg, tspec_t lt, tspec_t rt)
 	}
 
 	return false;
-}
-
-/*
- * Whether the operator can handle (bool, bool) as well as (scalar, scalar),
- * but not mixtures between the two type classes.
- */
-static bool
-needs_compatible_types(op_t op)
-{
-	return op == EQ || op == NE ||
-	       op == AND || op == XOR || op == OR ||
-	       op == COLON ||
-	       op == ASSIGN || op == ANDASS || op == XORASS || op == ORASS ||
-	       op == RETURN ||
-	       op == FARG;
 }
 
 /*
@@ -1144,8 +1148,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 		rt = NOTSPEC;
 	}
 
-	if (needs_compatible_types(op) &&
-	    !typeok_strict_bool_compatible(op, arg, lt, rt))
+	if (!typeok_strict_bool_compatible(op, arg, lt, rt))
 		return false;
 
 	if (mp->m_takes_only_bool || op == QUEST) {
