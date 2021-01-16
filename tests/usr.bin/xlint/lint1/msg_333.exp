@@ -1,2 +1,3 @@
 msg_333.c(17): controlling expression must be bool, not 'int' [333]
 msg_333.c(19): controlling expression must be bool, not 'pointer' [333]
+msg_333.c(23): controlling expression must be bool, not 'int' [333]
