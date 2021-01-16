@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.11 2019/10/09 14:03:57 maxv Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.12 2021/01/16 01:23:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.11 2019/10/09 14:03:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.12 2021/01/16 01:23:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,14 @@ CFATTACH_DECL_NEW(tpm_acpi, sizeof(struct tpm_softc), tpm_acpi_match,
     tpm_acpi_attach, NULL, NULL);
 
 /*
+ * Supported TPM 1.2 devices.
+ */
+static const char * const tpm_1_2_acpi_ids[] = {
+	"PNP0C31",
+	NULL
+};
+
+/*
  * Supported TPM 2.0 devices.
  */
 static const char * const tpm2_acpi_ids[] = {
@@ -76,6 +84,11 @@ tpm_acpi_match(device_t parent, cfdata_t match, void *aux)
 	/* We support only one TPM. */
 	if (tpm_cd.cd_devs && tpm_cd.cd_devs[0])
 		return 0;
+
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, tpm_1_2_acpi_ids)) {
+		/* XXX assume TPM 1.2 devices are memory-mapped. */
+		return 1;
+	}
 
 	if (!acpi_match_hid(aa->aa_node->ad_devinfo, tpm2_acpi_ids))
 		return 0;
@@ -122,7 +135,11 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 	size = mem->ar_length;
 
 	sc->sc_dev = self;
-	sc->sc_ver = TPM_2_0;
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, tpm_1_2_acpi_ids)) {
+		sc->sc_ver = TPM_1_2;
+	} else {
+		sc->sc_ver = TPM_2_0;
+	}
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_busy = false;
 	sc->sc_intf = &tpm_intf_tis12;
