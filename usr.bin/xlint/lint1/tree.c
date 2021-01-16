@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.160 2021/01/16 18:48:52 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.161 2021/01/16 18:58:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.160 2021/01/16 18:48:52 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.161 2021/01/16 18:58:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1088,9 +1088,7 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
  * special rule C99 6.3.1.2, without silent change in behavior.
  */
 static bool
-typeok_strict_bool_assign(op_t op, int arg,
-			  const tnode_t *ln, tspec_t lt,
-			  const tnode_t *rn, tspec_t rt)
+typeok_strict_bool_compatible(op_t op, int arg, tspec_t lt, tspec_t rt)
 {
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
@@ -1100,8 +1098,7 @@ typeok_strict_bool_assign(op_t op, int arg,
 		error(334, arg, tspec_name(lt), tspec_name(rt));
 	} else if (op == RETURN) {
 		/* return value type mismatch (%s) and (%s) */
-		error(211, type_name(ln->tn_type), type_name(rn->tn_type));
-		return false;
+		error(211, tspec_name(lt), tspec_name(rt));
 	} else {
 		/* operands of '%s' have incompatible types (%s != %s) */
 		error(107, getopname(op), tspec_name(lt), tspec_name(rt));
@@ -1148,7 +1145,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 	}
 
 	if (needs_compatible_types(op))
-		return typeok_strict_bool_assign(op, arg, ln, lt, rn, rt);
+		return typeok_strict_bool_compatible(op, arg, lt, rt);
 
 	if (mp->m_takes_only_bool || op == QUEST) {
 		bool binary = mp->m_binary;
