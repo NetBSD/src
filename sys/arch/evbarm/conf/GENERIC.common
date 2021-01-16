@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.43 2021/01/16 20:29:16 jmcneill Exp $
+#	$NetBSD: GENERIC.common,v 1.44 2021/01/16 20:30:37 jmcneill Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -46,9 +46,9 @@ options 	IPSEC		# IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # JIT compiler for bpfilter
