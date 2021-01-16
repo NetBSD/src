@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.117 2021/01/14 07:34:48 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.118 2021/01/16 02:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.117 2021/01/14 07:34:48 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.118 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -61,7 +61,7 @@ pos_t	curr_pos = { 1, "", 0 };
 pos_t	csrc_pos = { 1, "", 0 };
 
 /* Are we parsing a gcc attribute? */
-int attron;
+bool attron;
 
 static	void	incline(void);
 static	void	badchar(int);
@@ -570,7 +570,7 @@ icon(int base)
 	const	char *cp;
 	char	c, *eptr;
 	tspec_t	typ;
-	int	ansiu;
+	bool	ansiu;
 #ifdef TARG_INT128_MAX
 	__uint128_t uq = 0;
 	static	tspec_t contypes[2][4] = {
@@ -632,7 +632,7 @@ icon(int base)
 	 * If the value is too big for the current type, we must choose
 	 * another type.
 	 */
-	ansiu = 0;
+	ansiu = false;
 	switch (typ) {
 	case INT:
 		if (uq <= TARG_INT_MAX) {
@@ -656,7 +656,7 @@ icon(int base)
 				 * Remember that the constant is unsigned
 				 * only in ANSI C
 				 */
-				ansiu = 1;
+				ansiu = true;
 			}
 		}
 		break;
@@ -673,7 +673,7 @@ icon(int base)
 		if (uq > TARG_LONG_MAX && !tflag) {
 			typ = ULONG;
 			if (!sflag)
-				ansiu = 1;
+				ansiu = true;
 			if (uq > TARG_ULONG_MAX) {
 				/* integer constant out of range */
 				warning(252);
@@ -690,7 +690,7 @@ icon(int base)
 		if (uq > TARG_QUAD_MAX && !tflag) {
 			typ = UQUAD;
 			if (!sflag)
-				ansiu = 1;
+				ansiu = true;
 		}
 		break;
 	case UQUAD:
@@ -705,7 +705,7 @@ icon(int base)
 		if (uq > TARG_INT128_MAX && !tflag) {
 			typ = UINT128;
 			if (!sflag)
-				ansiu = 1;
+				ansiu = true;
 		}
 #endif
 		break;
@@ -1127,15 +1127,14 @@ directive(void)
 	char	c, *eptr;
 	size_t	fnl;
 	long	ln;
-	static	int first = 1;
+	static	bool first = true;
 
 	/* Go to first non-whitespace after # */
 	for (cp = yytext + 1; (c = *cp) == ' ' || c == '\t'; cp++)
 		continue;
 
-	if (!isdigit((unsigned char)c)) {
-		if (strncmp(cp, "pragma", 6) == 0
-		    && isspace((unsigned char)cp[6]))
+	if (!ch_isdigit(c)) {
+		if (strncmp(cp, "pragma", 6) == 0 && ch_isspace(cp[6]))
 			return;
 	error:
 		/* undefined or invalid # directive */
@@ -1181,7 +1180,7 @@ directive(void)
 			csrc_pos.p_file = curr_pos.p_file;
 			outsrc(fnxform(curr_pos.p_file,
 			    strlen(curr_pos.p_file)));
-			first = 0;
+			first = false;
 		}
 	}
 	curr_pos.p_line = (int)ln - 1;
@@ -1239,9 +1238,9 @@ comment(void)
 	char	arg[32];
 	size_t	l, i;
 	int	a;
-	int	eoc;
+	bool	eoc;
 
-	eoc = 0;
+	eoc = false;
 
 	/* Skip white spaces after the start of the comment */
 	while ((c = inpc()) != EOF && isspace(c))
@@ -1291,7 +1290,7 @@ comment(void)
 		 * remember that we have already found the end of the
 		 * comment
 		 */
-		eoc = 1;
+		eoc = true;
 	}
 
 	if (keywtab[i].func != NULL)
@@ -1306,7 +1305,7 @@ comment(void)
 			break;
 		}
 		if (lc == '*' && c == '/')
-			eoc = 1;
+			eoc = true;
 	}
 }
 
@@ -1338,8 +1337,8 @@ clrwflgs(void)
 {
 
 	lwarn = LWARN_ALL;
-	quadflg = 0;
-	constcond_flag = 0;
+	quadflg = false;
+	constcond_flag = false;
 }
 
 /*
@@ -1535,8 +1534,8 @@ mktempsym(type_t *t)
 	sym->s_blklev = blklev;
 	sym->s_scl = AUTO;
 	sym->s_kind = FVFT;
-	sym->s_used = 1;
-	sym->s_set = 1;
+	sym->s_used = true;
+	sym->s_set = true;
 
 	if ((sym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &sym->s_link;

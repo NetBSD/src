@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.54 2021/01/15 23:43:51 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.55 2021/01/16 02:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -104,7 +104,7 @@ typedef enum {
  */
 typedef struct {
 	tspec_t	v_tspec;
-	int	v_ansiu;		/* set if an integer constant is
+	bool	v_ansiu;		/* set if an integer constant is
 					   unsigned in ANSI C */
 	union {
 		int64_t	_v_quad;	/* integers */
@@ -418,7 +418,7 @@ typedef	struct err_set {
 #define	ERR_CLR(n, p)	\
 	((p)->errs_bits[(n)/__NERRBITS] &= ~(1 << ((n) % __NERRBITS)))
 #define	ERR_ISSET(n, p)	\
-	((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS)))
+	(((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS))) != 0)
 #define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
 
 #define LERROR(fmt, args...)	lerror(__FILE__, __LINE__, fmt, ##args)

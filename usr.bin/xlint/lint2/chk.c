@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.33 2021/01/10 00:05:46 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.34 2021/01/16 02:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.33 2021/01/10 00:05:46 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.34 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -65,9 +65,9 @@ static	void	badfmt(hte_t *, fcall_t *);
 static	void	inconarg(hte_t *, fcall_t *, int);
 static	void	tofewarg(hte_t *, fcall_t *);
 static	void	tomanyarg(hte_t *, fcall_t *);
-static	int	eqtype(type_t *, type_t *, int, int, int, int *);
-static	int	eqargs(type_t *, type_t *, int *);
-static	int	mnoarg(type_t *, int *);
+static	bool	eqtype(type_t *, type_t *, bool, bool, bool, bool *);
+static	bool	eqargs(type_t *, type_t *, bool *);
+static	bool	mnoarg(type_t *, bool *);
 
 
 /*
@@ -79,7 +79,7 @@ mainused(void)
 	hte_t	*hte;
 
 	if ((hte = hsearch("main", 0)) != NULL)
-		hte->h_used = 1;
+		hte->h_used = true;
 }
 
 /*
@@ -239,7 +239,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 	fcall_t	*call;
 	char	*pos1;
 	type_t	*tp1, *tp2;
-	int	dowarn, eq;
+	bool	dowarn, eq;
 	tspec_t	t1;
 
 	if (hte->h_calls == NULL)
@@ -253,7 +253,8 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 	t1 = (tp1 = TP(def->s_type)->t_subt)->t_tspec;
 	for (call = hte->h_calls; call != NULL; call = call->f_next) {
 		tp2 = TP(call->f_type)->t_subt;
-		eq = eqtype(tp1, tp2, 1, 0, 0, (dowarn = 0, &dowarn));
+		eq = eqtype(tp1, tp2,
+		    true, false, false, (dowarn = false, &dowarn));
 		if (!call->f_rused) {
 			/* no return value used */
 			if ((t1 == STRUCT || t1 == UNION) && !eq) {
@@ -298,7 +299,7 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 {
 	sym_t	*sym;
 	type_t	*tp1, *tp2;
-	int	eq, dowarn;
+	bool	eq, dowarn;
 	char	*pos1;
 
 	if (def == NULL)
@@ -312,7 +313,7 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 		if (sym == def)
 			continue;
 		tp2 = TP(sym->s_type);
-		dowarn = 0;
+		dowarn = false;
 		if (tp1->t_tspec == FUNC && tp2->t_tspec == FUNC) {
 			eq = eqtype(xt1 = tp1->t_subt, xt2 = tp2->t_subt,
 			    1, 0, 0, &dowarn);
@@ -446,7 +447,7 @@ static void
 chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	fcall_t *call1, fcall_t *call, type_t *arg1, type_t *arg2)
 {
-	int	promote, asgn, dowarn;
+	bool	promote, asgn, dowarn;
 	tspec_t	t1, t2;
 	arginf_t *ai, *ai1;
 	char	*pos1;
@@ -470,8 +471,9 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	 */
 	asgn = def != NULL || (decl != NULL && TP(decl->s_type)->t_proto);
 
-	dowarn = 0;
-	if (eqtype(arg1, arg2, 1, promote, asgn, &dowarn) && (!sflag || !dowarn))
+	dowarn = false;
+	if (eqtype(arg1, arg2, true, promote, asgn, &dowarn) &&
+	    (!sflag || !dowarn))
 		return;
 
 	/*
@@ -601,7 +603,7 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
 	int	fc;
-	int	fwidth, prec, left, sign, space, alt, zero;
+	bool	fwidth, prec, left, sign, space, alt, zero;
 	tspec_t	sz, t1, t2 = NOTSPEC;
 	type_t	*tp;
 
@@ -619,7 +621,7 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			break;
 		}
 		fc = *fp++;
-		fwidth = prec = left = sign = space = alt = zero = 0;
+		fwidth = prec = left = sign = space = alt = zero = false;
 		sz = NOTSPEC;
 
 		/* Flags */
@@ -627,23 +629,23 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			if (fc == '-') {
 				if (left)
 					break;
-				left = 1;
+				left = true;
 			} else if (fc == '+') {
 				if (sign)
 					break;
-				sign = 1;
+				sign = true;
 			} else if (fc == ' ') {
 				if (space)
 					break;
-				space = 1;
+				space = true;
 			} else if (fc == '#') {
 				if (alt)
 					break;
-				alt = 1;
+				alt = true;
 			} else if (fc == '0') {
 				if (zero)
 					break;
-				zero = 1;
+				zero = true;
 			} else {
 				break;
 			}
@@ -651,11 +653,11 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		}
 
 		/* field width */
-		if (isdigit(fc)) {
-			fwidth = 1;
-			do { fc = *fp++; } while (isdigit(fc)) ;
+		if (ch_isdigit(fc)) {
+			fwidth = true;
+			do { fc = *fp++; } while (ch_isdigit(fc));
 		} else if (fc == '*') {
-			fwidth = 1;
+			fwidth = true;
 			fc = *fp++;
 			if ((tp = *ap++) == NULL) {
 				tofewarg(hte, call);
@@ -669,9 +671,9 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		/* precision */
 		if (fc == '.') {
 			fc = *fp++;
-			prec = 1;
-			if (isdigit(fc)) {
-				do { fc = *fp++; } while (isdigit(fc));
+			prec = true;
+			if (ch_isdigit(fc)) {
+				do { fc = *fp++; } while (ch_isdigit(fc));
 			} else if (fc == '*') {
 				fc = *fp++;
 				if ((tp = *ap++) == NULL) {
@@ -826,7 +828,7 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
 	int	fc;
-	int	noasgn, fwidth;
+	bool	noasgn, fwidth;
 	tspec_t	sz, t1 = NOTSPEC, t2 = NOTSPEC;
 	type_t	*tp = NULL;
 
@@ -845,17 +847,17 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		}
 		fc = *fp++;
 
-		noasgn = fwidth = 0;
+		noasgn = fwidth = false;
 		sz = NOTSPEC;
 
 		if (fc == '*') {
-			noasgn = 1;
+			noasgn = true;
 			fc = *fp++;
 		}
 
-		if (isdigit(fc)) {
-			fwidth = 1;
-			do { fc = *fp++; } while (isdigit(fc));
+		if (ch_isdigit(fc)) {
+			fwidth = true;
+			do { fc = *fp++; } while (ch_isdigit(fc));
 		}
 
 		if (fc == 'h') {
@@ -1066,7 +1068,7 @@ static void
 chkrvu(hte_t *hte, sym_t *def)
 {
 	fcall_t	*call;
-	int	used, ignored;
+	bool	used, ignored;
 
 	if (def == NULL)
 		/* don't know whether or not the functions returns a value */
@@ -1090,7 +1092,7 @@ chkrvu(hte_t *hte, sym_t *def)
 			return;
 
 		/* function has return value */
-		used = ignored = 0;
+		used = ignored = false;
 		for (call = hte->h_calls; call != NULL; call = call->f_next) {
 			used |= call->f_rused || call->f_rdisc;
 			ignored |= !call->f_rused && !call->f_rdisc;
@@ -1118,13 +1120,14 @@ chkrvu(hte_t *hte, sym_t *def)
 static void
 chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 {
-	int	osdef, eq, dowarn, n;
+	bool	osdef, eq, dowarn;
+	int	n;
 	sym_t	*sym1, *sym;
 	type_t	**ap1, **ap2, *tp1, *tp2;
 	char	*pos1;
 	const	char *pos2;
 
-	osdef = 0;
+	osdef = false;
 	if (def != NULL) {
 		osdef = def->s_osdef;
 		sym1 = def;
@@ -1149,7 +1152,7 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 		n = 0;
 		while (*ap1 != NULL && *ap2 != NULL) {
 			type_t *xt1, *xt2;
-			dowarn = 0;
+			dowarn = false;
 			eq = eqtype(xt1 = *ap1, xt2 = *ap2, 1, osdef, 0, &dowarn);
 			if (!eq || dowarn) {
 				pos1 = xstrdup(mkpos(&sym1->s_pos));
@@ -1196,8 +1199,9 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
  * *dowarn	set to 1 if an old style declaration was compared with
  *		an incompatible prototype declaration
  */
-static int
-eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *dowarn)
+static bool
+eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
+       bool *dowarn)
 {
 	tspec_t	t, to;
 	int	indir;
@@ -1310,7 +1314,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *dowarn)
 
 		tp1 = tp1->t_subt;
 		tp2 = tp2->t_subt;
-		ignqual = promot = 0;
+		ignqual = promot = false;
 		to = t;
 		indir++;
 
@@ -1322,8 +1326,8 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *dowarn)
 /*
  * Compares arguments of two prototypes
  */
-static int
-eqargs(type_t *tp1, type_t *tp2, int *dowarn)
+static bool
+eqargs(type_t *tp1, type_t *tp2, bool *dowarn)
 {
 	type_t	**a1, **a2;
 
@@ -1356,21 +1360,21 @@ eqargs(type_t *tp1, type_t *tp2, int *dowarn)
  *	3. no parameter is converted to another type if integer promotion
  *	   is applied on it
  */
-static int
-mnoarg(type_t *tp, int *dowarn)
+static bool
+mnoarg(type_t *tp, bool *dowarn)
 {
 	type_t	**arg;
 	tspec_t	t;
 
 	if (tp->t_vararg && dowarn != NULL)
-		*dowarn = 1;
+		*dowarn = true;
 	for (arg = tp->t_args; *arg != NULL; arg++) {
 		if ((t = (*arg)->t_tspec) == FLOAT)
-			return 0;
+			return false;
 		if (t == CHAR || t == SCHAR || t == UCHAR)
-			return 0;
+			return false;
 		if (t == SHORT || t == USHORT)
-			return 0;
+			return false;
 	}
-	return 1;
+	return true;
 }
