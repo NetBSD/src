@@ -1,1 +1,2 @@
 msg_336.c(18): left operand of '+' must not be bool [336]
+msg_336.c(18): argument #1 expects '_Bool', gets passed 'int' [334]

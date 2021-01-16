@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.8 2021/01/16 15:02:11 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.9 2021/01/16 16:03:47 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -123,8 +123,8 @@ strict_bool_constant(void)
 {
 	accept_bool(__lint_false);
 	accept_bool(__lint_true);
-	accept_bool(0);		/* TODO: expect: 334 */
-	accept_bool(1);		/* TODO: expect: 334 */
+	accept_bool(0);		/* expect: 334 */
+	accept_bool(1);		/* expect: 334 */
 	accept_bool(2);		/* expect: 334 */
 }
 
@@ -136,16 +136,16 @@ enum strict_bool_constant_expressions {
 	TRUE = __lint_true ? 100 : 101,
 
 	/* Not ok: an integer is not a boolean constant expression. */
-	INT0 = 0 ? 100 : 101,	/* TODO: expect: 331 */
+	INT0 = 0 ? 100 : 101,	/* expect: 331 */
 
 	/* Not ok: an integer is not a boolean constant expression. */
-	INT1 = 1 ? 100 : 101,	/* TODO: expect: 331 */
+	INT1 = 1 ? 100 : 101,	/* expect: 331 */
 
 	/* Not ok: 2 is not a boolean constant. */
 	INT2 = 2 ? 100 : 101,	/* expect: 331 */
 
 	/* Not ok: compound integer expressions are not bool. */
-	ARITH = (2 - 2) ? 100 : 101,	/* TODO: expect: 331 */
+	ARITH = (2 - 2) ? 100 : 101,	/* expect: 331 */
 
 	/*
 	 * Without strict bool mode, these two variants of an expression can
@@ -155,8 +155,8 @@ enum strict_bool_constant_expressions {
 	 * TODO: figure out an elegant way to achieve the same effect in
 	 *  strict bool mode.
 	 */
-	BINARY_PLUS = (1 + 0) ? 100 : 101, /* TODO: expect: 331 */
-	UNARY_PLUS = (+0) ? 100 : 101,	/* TODO: expect: 331 */
+	BINARY_PLUS = (1 + 0) ? 100 : 101, /* expect: 331 */
+	UNARY_PLUS = (+0) ? 100 : 101,	/* expect: 331 */
 
 	/* The main operator '>' has return type bool. */
 	Q1 = (13 > 12) ? 100 : 101,
@@ -165,7 +165,7 @@ enum strict_bool_constant_expressions {
 	 * The parenthesized expression has type int and thus cannot be
 	 * used as the controlling expression in the '?:' operator.
 	 */
-	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,
+	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,	/* expect: 331 */
 
 	BINAND_BOOL = __lint_false & __lint_true,
 	BINAND_INT = 0 & 1,
@@ -177,10 +177,10 @@ enum strict_bool_constant_expressions {
 	BINOR_INT = 0 | 1,
 
 	LOGOR_BOOL = __lint_false || __lint_true,
-	LOGOR_INT = 0 || 1,	/* TODO: expect: 331, 332 */
+	LOGOR_INT = 0 || 1,	/* expect: 331, 332 */
 
 	LOGAND_BOOL = __lint_false && __lint_true,
-	LOGAND_INT = 0 && 1,	/* TODO: expect: 331, 332 */
+	LOGAND_INT = 0 && 1,	/* expect: 331, 332 */
 };
 
 /*
@@ -249,13 +249,13 @@ strict_bool_conversion_return_bool(bool b)
 bool
 strict_bool_conversion_return_0(void)
 {
-	return 0;		/* TODO: expect: 211 */
+	return 0;		/* expect: 211 */
 }
 
 bool
 strict_bool_conversion_return_1(void)
 {
-	return 1;		/* TODO: expect: 211 */
+	return 1;		/* expect: 211 */
 }
 
 bool
@@ -315,8 +315,8 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(__lint_true, i, p);
 
 	/* Trying to pass integer constants. */
-	take_arguments(0, i, p);	/* TODO: expect: 334 */
-	take_arguments(1, i, p);	/* TODO: expect: 334 */
+	take_arguments(0, i, p);	/* expect: 334 */
+	take_arguments(1, i, p);	/* expect: 334 */
 	take_arguments(2, i, p);	/* expect: 334 */
 }
 
@@ -326,9 +326,9 @@ strict_bool_conversion_between_bool_and_int(void)
 	bool b;
 	int i;
 
-	b = 0;
-	b = __lint_false;	/* TODO: expect: 107 */
-	b = 1;
+	b = 0;			/* expect: 107 */
+	b = __lint_false;
+	b = 1;			/* expect: 107 */
 	b = __lint_true;
 
 	i = 0;
@@ -372,10 +372,10 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 	if (b)
 		do_nothing();
 
-	if (0)			/* TODO: expect: 333 */
+	if (0)			/* expect: 333 */
 		do_nothing();
 
-	if (1)			/* TODO: expect: 333 */
+	if (1)			/* expect: 333 */
 		do_nothing();
 
 	if (2)			/* expect: 333 */
@@ -422,8 +422,8 @@ strict_bool_operand_unary_not(void)
 
 	i = !i;			/* expect: 330 */
 	i = !!!i;		/* expect: 330 */
-	i = !0;			/* expect: 107 */
-	i = !1;			/* expect: 107 */
+	i = !0;			/* expect: 330 */
+	i = !1;			/* expect: 330 */
 }
 
 void
@@ -476,13 +476,13 @@ strict_bool_operand_binary_dot_arrow(void)
 	struct bool_struct bs = { __lint_true };
 	b = bs.b;
 	bs.b = b;
-	bs.b = 0;		/* TODO: expect: incompatible types */
+	bs.b = 0;		/* expect: 107 */
 
 	/* Access a struct member using the '->' operator. */
 	struct bool_struct *bsp = &bs;
 	b = bsp->b;
 	bsp->b = b;
-	bsp->b = 0;
+	bsp->b = 0;		/* expect: 107 */
 }
 
 int
@@ -502,10 +502,10 @@ strict_bool_operand_binary(bool b, int i)
 	b = i && i;		/* expect: 331, 332 */
 	b = i || i;		/* expect: 331, 332 */
 
-	b = b && 0;
-	b = 0 && b;
-	b = b || 0;
-	b = 0 || b;
+	b = b && 0;		/* expect: 332 */
+	b = 0 && b;		/* expect: 331 */
+	b = b || 0;		/* expect: 332 */
+	b = 0 || b;		/* expect: 331 */
 
 	return i;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_333.c,v 1.1 2021/01/14 22:18:14 rillig Exp $	*/
+/*	$NetBSD: msg_333.c,v 1.2 2021/01/16 16:03:47 rillig Exp $	*/
 # 3 "msg_333.c"
 
 // Test for message: controlling expression must be bool, not '%s' [333]
@@ -18,7 +18,9 @@ example(bool b, int i, const char *p)
 		return "int";
 	if (p)			/* expect: 333 */
 		return "pointer";
-	if (0)
-		return "constant int or bool";
+	if (__lint_false)
+		return "bool constant";
+	if (0)			/* expect: 333 */
+		return "integer constant";
 	return p + i;
 }

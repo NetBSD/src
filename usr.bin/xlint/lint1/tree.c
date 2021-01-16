@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.155 2021/01/16 15:02:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.156 2021/01/16 16:03:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.155 2021/01/16 15:02:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.156 2021/01/16 16:03:46 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -228,14 +228,14 @@ new_name_node(sym_t *sym, int ntok)
 			sym->s_type = incref(sym->s_type, FUNC);
 		} else {
 			if (Tflag && strcmp(sym->s_name, "__lint_false") == 0) {
-				sym->s_scl = ENUMCON; /* close enough */
+				sym->s_scl = CTCONST; /* close enough */
 				sym->s_type = gettyp(BOOL);
 				sym->s_value.v_tspec = BOOL;
 				sym->s_value.v_ansiu = false;
 				sym->s_value.v_quad = 0;
 			} else if (Tflag &&
 				   strcmp(sym->s_name, "__lint_true") == 0) {
-				sym->s_scl = ENUMCON; /* close enough */
+				sym->s_scl = CTCONST; /* close enough */
 				sym->s_type = gettyp(BOOL);
 				sym->s_value.v_tspec = BOOL;
 				sym->s_value.v_ansiu = false;
@@ -274,7 +274,7 @@ new_name_node(sym_t *sym, int ntok)
 
 	n = getnode();
 	n->tn_type = sym->s_type;
-	if (sym->s_scl != ENUMCON) {
+	if (sym->s_scl != CTCONST) {
 		n->tn_op = NAME;
 		n->tn_sym = sym;
 		if (sym->s_kind == FVFT && sym->s_type->t_tspec != FUNC)
@@ -716,21 +716,6 @@ before_conversion(const tnode_t *tn)
 	return tn;
 }
 
-static bool
-is_strict_bool_constant(const tnode_t *tn)
-{
-	tspec_t t;
-
-	tn = before_conversion(tn);
-	t = tn->tn_type->t_tspec;
-
-	if (t == BOOL)
-		return true;
-
-	return t == INT && tn->tn_op == CON &&
-	       (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1);
-}
-
 /* In strict bool mode, see if the node's type is compatible with bool. */
 bool
 is_strict_bool(const tnode_t *tn)
@@ -741,10 +726,6 @@ is_strict_bool(const tnode_t *tn)
 	t = tn->tn_type->t_tspec;
 
 	if (t == BOOL)
-		return true;
-
-	if (t == INT && tn->tn_op == CON &&
-	    (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1))
 		return true;
 
 	/* For enums that are used as bit sets, allow "flags & FLAG". */
@@ -1114,7 +1095,7 @@ typeok_strict_bool_assign(op_t op, int arg,
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
 
-	if (lt == BOOL && is_strict_bool_constant(rn))
+	if (lt == BOOL && before_conversion(rn)->tn_type->t_tspec == BOOL)
 		return true;
 
 	if (op == FARG) {
