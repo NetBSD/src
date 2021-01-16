@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.9 2021/01/16 16:03:47 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.10 2021/01/16 16:58:39 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -707,4 +707,11 @@ query_flag_from_enum_bit_set(enum Flags flags)
 
 	if (flags & FLAG28)
 		println("FLAG28 is set");
+}
+
+
+bool
+strict_bool_operator_eq_bool_int(void)
+{
+	return strict_bool_conversion_return_false() == 0; /* TODO: expect */
 }
