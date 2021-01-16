@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.24 2021/01/10 00:05:45 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.25 2021/01/16 02:40:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,6 +38,7 @@
 #endif
 
 #include <sys/types.h>
+#include <ctype.h>
 #include <err.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -137,3 +138,12 @@ typedef	struct	ob {
 typedef struct type type_t;
 
 #include "externs.h"
+
+static inline bool
+ch_isalnum(char ch) { return isalnum((unsigned char)ch) != 0; }
+static inline bool
+ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
+static inline bool
+ch_isprint(char ch) { return isprint((unsigned char)ch) != 0; }
+static inline bool
+ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }

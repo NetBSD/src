@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.139 2021/01/12 20:42:01 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.140 2021/01/16 02:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.139 2021/01/12 20:42:01 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.140 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -426,7 +426,7 @@ function_definition:		/* C99 6.9.1 */
 		blklev++;
 		pushdecl(ARG);
 		if (lwarn == LWARN_NONE)
-			$1->s_used = 1;
+			$1->s_used = true;
 	  } arg_declaration_list_opt {
 		popdecl();
 		blklev--;
@@ -598,9 +598,9 @@ type_attribute_spec_list:
 
 type_attribute:
 	  T_ATTRIBUTE T_LPAREN T_LPAREN {
-	    attron = 1;
+	    attron = true;
 	  } type_attribute_spec_list {
-	    attron = 0;
+	    attron = false;
 	  } T_RPAREN T_RPAREN
 	| T_PACKED {
 		addpacked();
@@ -1194,9 +1194,9 @@ type_qualifier:
 	  T_QUAL {
 		$$ = xcalloc(1, sizeof (pqinf_t));
 		if ($1 == CONST) {
-			$$->p_const = 1;
+			$$->p_const = true;
 		} else {
-			$$->p_volatile = 1;
+			$$->p_volatile = true;
 		}
 	  }
 	;
@@ -1234,7 +1234,7 @@ abs_decl_param_list:
 		$$ = NULL;
 	  }
 	| abs_decl_lparn vararg_parameter_type_list T_RPAREN {
-		dcs->d_proto = 1;
+		dcs->d_proto = true;
 		$$ = $2;
 	  }
 	| abs_decl_lparn error T_RPAREN {
@@ -1254,7 +1254,7 @@ vararg_parameter_type_list:
 		$$ = $1;
 	  }
 	| parameter_type_list T_COMMA T_ELLIPSE {
-		dcs->d_vararg = 1;
+		dcs->d_vararg = true;
 		$$ = $1;
 	  }
 	| T_ELLIPSE {
@@ -1265,7 +1265,7 @@ vararg_parameter_type_list:
 			/* ANSI C requires formal parameter before '...' */
 			warning(84);
 		}
-		dcs->d_vararg = 1;
+		dcs->d_vararg = true;
 		$$ = NULL;
 	  }
 	;
@@ -1480,7 +1480,7 @@ non_expr_statement:
 	| selection_statement
 	| iteration_statement
 	| jump_statement {
-		ftflg = 0;
+		ftflg = false;
 	  }
 	| asm_statement
 
@@ -1500,16 +1500,16 @@ label:
 	  }
 	| T_CASE constant T_COLON {
 		case_label($2);
-		ftflg = 1;
+		ftflg = true;
 	  }
 	| T_CASE constant T_ELLIPSE constant T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
-		ftflg = 1;
+		ftflg = true;
 	  }
 	| T_DEFAULT T_COLON {
 		default_label();
-		ftflg = 1;
+		ftflg = true;
 	  }
 	;
 
@@ -1544,7 +1544,7 @@ compound_statement_rbrace:
 		freeblk();
 		mblklev--;
 		blklev--;
-		ftflg = 0;
+		ftflg = false;
 	  }
 	;
 
@@ -1559,10 +1559,10 @@ statement_list:
 expr_statement:
 	  expr T_SEMI {
 		expr($1, 0, 0, 0);
-		ftflg = 0;
+		ftflg = false;
 	  }
 	| T_SEMI {
-		ftflg = 0;
+		ftflg = false;
 	  }
 	;
 
@@ -1575,10 +1575,10 @@ expr_statement_val:
 	  expr T_SEMI {
 		/* XXX: We should really do that only on the last name */
 		if ($1->tn_op == NAME)
-			$1->tn_sym->s_used = 1;
+			$1->tn_sym->s_used = true;
 		$$ = $1;
 		expr($1, 0, 0, 0);
-		ftflg = 0;
+		ftflg = false;
 	  }
 	| non_expr_statement {
 		$$ = getnode();
@@ -1672,7 +1672,7 @@ iteration_statement:		/* C99 6.8.5 */
 	  }
 	| do_statement do_while_expr {
 		do2($2);
-		ftflg = 0;
+		ftflg = false;
 	  }
 	| do error {
 		CLRWFLGS(__FILE__, __LINE__);
@@ -1867,7 +1867,7 @@ term:
 	  }
 	| T_LPAREN expr T_RPAREN {
 		if ($2 != NULL)
-			$2->tn_parenthesized = 1;
+			$2->tn_parenthesized = true;
 		$$ = $2;
 	  }
 	| T_LPAREN compound_statement_lbrace declaration_list
@@ -2142,7 +2142,7 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 {
 	char *s;
 
-	initerr = 0;
+	initerr = false;
 	initsym = decl;
 
 	switch (dcs->d_ctx) {

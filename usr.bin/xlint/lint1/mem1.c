@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.22 2021/01/04 22:29:00 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.23 2021/01/16 02:40:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.22 2021/01/04 22:29:00 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.23 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ fnxform(const char *name, size_t len)
 	static char buf[MAXPATHLEN];
 	struct repl *r;
 
-	for (r = replist; r; r = r->next)
+	for (r = replist; r != NULL; r = r->next)
 		if (r->len < len && memcmp(name, r->orig, r->len) == 0)
 			break;
 	if (r == NULL)
@@ -247,7 +247,7 @@ xgetblk(mbl_t **mbp, size_t s)
 #ifndef BLKDEBUG
 			(void)memset(mb->blk, 0, mb->size);
 #endif
-			if (t)
+			if (t > 0)
 				mblklen = t;
 		} else {
 			frmblks = mb->nxt;
