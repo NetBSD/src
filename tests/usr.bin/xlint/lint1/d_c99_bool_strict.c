@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.10 2021/01/16 16:58:39 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.11 2021/01/16 17:54:22 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -38,7 +38,7 @@
  *	Operator	left:	bool?	other?	right:	bool?	other?
  *	.			-	yes		yes	yes
  *	->			-	yes		yes	yes
- *	<=, <, >=, >		yes	yes		yes	yes
+ *	<=, <, >=, >		-	yes		-	yes
  *	==, !=			yes	yes		yes	yes
  *	&			yes	yes		yes	yes
  *	^			yes	yes		yes	yes
@@ -443,7 +443,7 @@ strict_bool_operand_unary_address(void)
  *	Operator	left:	bool?	other?	right:	bool?	other?
  *	.			-	yes		yes	yes
  *	->			-	yes		yes	yes
- *	<=, <, >=, >		yes	yes		yes	yes
+ *	<=, <, >=, >		-	yes		-	yes
  *	==, !=			yes	yes		yes	yes
  *	&			yes	yes		yes	yes
  *	^			yes	yes		yes	yes
