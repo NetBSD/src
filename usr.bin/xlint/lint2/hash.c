@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.12 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.13 2021/01/16 02:40:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.12 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.13 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 /*
@@ -91,7 +91,7 @@ hash(const char *s)
  * given name exists and mknew is set, create a new one.
  */
 hte_t *
-_hsearch(hte_t **table, const char *s, int mknew)
+_hsearch(hte_t **table, const char *s, bool mknew)
 {
 	int	h;
 	hte_t	*hte;
@@ -111,9 +111,9 @@ _hsearch(hte_t **table, const char *s, int mknew)
 	/* create a new hte */
 	hte = xmalloc(sizeof (hte_t));
 	hte->h_name = xstrdup(s);
-	hte->h_used = 0;
-	hte->h_def = 0;
-	hte->h_static = 0;
+	hte->h_used = false;
+	hte->h_def = false;
+	hte->h_static = false;
 	hte->h_syms = NULL;
 	hte->h_lsym = &hte->h_syms;
 	hte->h_calls = NULL;

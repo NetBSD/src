@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.36 2021/01/11 19:29:49 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.37 2021/01/16 02:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.36 2021/01/11 19:29:49 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.37 2021/01/16 02:40:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -285,7 +285,7 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	outname(sym->s_name);
 
 	/* renamed name of symbol, if necessary */
-	if (sym->s_rename) {
+	if (sym->s_rename != NULL) {
 		outchar('r');
 		outname(sym->s_rename);
 	}
@@ -301,7 +301,7 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
  * they are called with proper argument types
  */
 void
-outfdef(const sym_t *fsym, const pos_t *posp, int rval, int osdef,
+outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	const sym_t *args)
 {
 	int narg;
@@ -378,7 +378,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, int rval, int osdef,
 	outname(fsym->s_name);
 
 	/* renamed name of function, if necessary */
-	if (fsym->s_rename) {
+	if (fsym->s_rename != NULL) {
 		outchar('r');
 		outname(fsym->s_rename);
 	}
@@ -407,7 +407,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, int rval, int osdef,
  * (casted to void)
  */
 void
-outcall(const tnode_t *tn, int rvused, int rvdisc)
+outcall(const tnode_t *tn, bool rvused, bool rvdisc)
 {
 	tnode_t	*args, *arg;
 	int	narg, n, i;
@@ -496,7 +496,8 @@ outcall(const tnode_t *tn, int rvused, int rvdisc)
 static void
 outfstrg(strg_t *strg)
 {
-	int	c, oc, first;
+	int	c, oc;
+	bool	first;
 	u_char	*cp;
 
 	lint_assert(strg->st_tspec == CHAR);
@@ -525,7 +526,7 @@ outfstrg(strg_t *strg)
 		}
 
 		/* numeric field width */
-		while (c != '\0' && isdigit(c)) {
+		while (c != '\0' && ch_isdigit(c)) {
 			outqchar(c);
 			c = *cp++;
 		}
@@ -537,7 +538,7 @@ outfstrg(strg_t *strg)
 				outqchar(c);
 				c = *cp++;
 			} else {
-				while (c != '\0' && isdigit(c)) {
+				while (c != '\0' && ch_isdigit(c)) {
 					outqchar(c);
 					c = *cp++;
 				}
@@ -567,13 +568,13 @@ outfstrg(strg_t *strg)
 					c = *cp++;
 				if (c == ']')
 					c = *cp++;
-				first = 1;
+				first = true;
 				while (c != '\0' && c != ']') {
 					if (c == '-') {
 						if (!first && *cp != ']')
 							outqchar(c);
 					}
-					first = 0;
+					first = false;
 					c = *cp++;
 				}
 				if (c == ']') {
