@@ -20,7 +20,7 @@ d_c99_bool_strict.c(224): operands of '=' have incompatible types (_Bool != int)
 d_c99_bool_strict.c(252): return value type mismatch (_Bool) and (int) [211]
 d_c99_bool_strict.c(258): return value type mismatch (_Bool) and (int) [211]
 d_c99_bool_strict.c(264): return value type mismatch (_Bool) and (int) [211]
-d_c99_bool_strict.c(270): return value type mismatch (_Bool) and (pointer to const void) [211]
+d_c99_bool_strict.c(270): return value type mismatch (_Bool) and (pointer) [211]
 d_c99_bool_strict.c(268): warning: argument p unused in function strict_bool_conversion_return_pointer [231]
 d_c99_bool_strict.c(276): return value type mismatch (char) and (_Bool) [211]
 d_c99_bool_strict.c(282): return value type mismatch (char) and (_Bool) [211]
