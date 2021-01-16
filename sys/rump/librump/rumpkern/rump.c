@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.351 2020/12/06 09:03:29 skrll Exp $	*/
+/*	$NetBSD: rump.c,v 1.352 2021/01/16 23:50:49 chs Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.351 2020/12/06 09:03:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.352 2021/01/16 23:50:49 chs Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -605,7 +605,7 @@ rump_component_count(enum rump_component_type type)
 void
 rump_component_init(enum rump_component_type type)
 {
-	const struct rump_component *rc, *rc_safe;
+	struct rump_component *rc, *rc_safe;
 
 	KASSERT(curlwp == bootlwp);
 	KASSERT(!compinited[type]);
