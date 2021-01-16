@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.38 2020/12/22 10:46:51 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.39 2021/01/16 21:05:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.38 2020/12/22 10:46:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.39 2021/01/16 21:05:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.38 2020/12/22 10:46:51 jmcneill Exp $");
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/vmem.h>
+#include <sys/kmem.h>
 #include <sys/atomic.h>
 
 #include <machine/cpufunc.h>
@@ -838,7 +839,8 @@ gicv3_init(struct gicv3_softc *sc)
 
 	LIST_INIT(&sc->sc_lpi_callbacks);
 
-	for (n = 0; n < MAXCPUS; n++)
+	sc->sc_irouter = kmem_zalloc(sizeof(*sc->sc_irouter) * ncpu, KM_SLEEP);
+	for (n = 0; n < ncpu; n++)
 		sc->sc_irouter[n] = UINT64_MAX;
 
 	sc->sc_gicd_typer = gicd_read_4(sc, GICD_TYPER);
@@ -876,6 +878,9 @@ gicv3_init(struct gicv3_softc *sc)
 	pic_add(&sc->sc_pic, 0);
 
 	if ((sc->sc_gicd_typer & GICD_TYPER_LPIS) != 0) {
+		sc->sc_lpipend = kmem_zalloc(sizeof(*sc->sc_lpipend) * ncpu, KM_SLEEP);
+		sc->sc_processor_id = kmem_zalloc(sizeof(*sc->sc_processor_id) * ncpu, KM_SLEEP);
+
 		sc->sc_lpi.pic_ops = &gicv3_lpiops;
 		sc->sc_lpi.pic_maxsources = 8192;	/* Min. required by GICv3 spec */
 		snprintf(sc->sc_lpi.pic_name, sizeof(sc->sc_lpi.pic_name), "gicv3-lpi");
