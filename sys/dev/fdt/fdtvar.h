@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.67 2021/01/15 22:59:49 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.68 2021/01/16 09:09:37 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,8 +77,6 @@ struct fdtbus_interrupt_controller_func {
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 	void	(*mask)(device_t, void *);
 	void	(*unmask)(device_t, void *);
-	void *	(*establish_xname)(device_t, u_int *, int, int,
-			     int (*)(void *), void *, const char *);
 };
 
 struct fdtbus_spi_controller_func {
