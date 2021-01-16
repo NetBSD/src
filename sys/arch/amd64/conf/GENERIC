@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.580 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: GENERIC,v 1.581 2021/01/16 01:43:42 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.580 $"
+#ident		"GENERIC-$Revision: 1.581 $"
 
 maxusers	64		# estimated number of users
 
@@ -354,7 +354,7 @@ sony*		at acpi?		# Sony Notebook Controller
 spic*		at acpi?		# Sony Programmable I/O Controller
 wsmouse*	at spic?		# mouse
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
-#tpm*		at acpi?		# ACPI TPM (Experimental)
+tpm*		at acpi?		# ACPI TPM (Experimental)
 ug*		at acpi?		# Abit uGuru Hardware monitor
 valz*		at acpi?		# Toshiba Dynabook hotkeys
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
