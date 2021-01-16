@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.159 2021/01/16 18:46:59 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.160 2021/01/16 18:48:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.159 2021/01/16 18:46:59 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.160 2021/01/16 18:48:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1111,6 +1111,21 @@ typeok_strict_bool_assign(op_t op, int arg,
 }
 
 /*
+ * Whether the operator can handle (bool, bool) as well as (scalar, scalar),
+ * but not mixtures between the two type classes.
+ */
+static bool
+needs_compatible_types(op_t op)
+{
+	return op == EQ || op == NE ||
+	       op == AND || op == XOR || op == OR ||
+	       op == COLON ||
+	       op == ASSIGN || op == ANDASS || op == XORASS || op == ORASS ||
+	       op == RETURN ||
+	       op == FARG;
+}
+
+/*
  * In strict bool mode, check whether the types of the operands match the
  * operator.
  */
@@ -1132,7 +1147,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 		rt = NOTSPEC;
 	}
 
-	if (op == ASSIGN || op == FARG || op == RETURN || op == COLON)
+	if (needs_compatible_types(op))
 		return typeok_strict_bool_assign(op, arg, ln, lt, rn, rt);
 
 	if (mp->m_takes_only_bool || op == QUEST) {
