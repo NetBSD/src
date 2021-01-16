@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.157 2021/01/16 16:53:23 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.158 2021/01/16 17:54:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.157 2021/01/16 16:53:23 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.158 2021/01/16 17:54:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1171,7 +1171,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 	if (!mp->m_takes_bool) {
 		bool binary = mp->m_binary;
-		bool lbool = before_conversion(ln)->tn_type->t_tspec == BOOL;
+		bool lbool = ln->tn_type->t_tspec == BOOL;
 		bool ok = true;
 
 		if (!binary && lbool) {
@@ -1184,7 +1184,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 			error(336, getopname(op));
 			ok = false;
 		}
-		if (binary && before_conversion(rn)->tn_type->t_tspec == BOOL) {
+		if (binary && rn->tn_type->t_tspec == BOOL) {
 			/* right operand of '%s' must not be bool */
 			error(337, getopname(op));
 			ok = false;
