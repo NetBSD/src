@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.42 2021/01/16 20:27:29 jmcneill Exp $
+#	$NetBSD: GENERIC.common,v 1.43 2021/01/16 20:29:16 jmcneill Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -33,6 +33,8 @@ options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_ACL		# UFS Access Control Lists
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 
