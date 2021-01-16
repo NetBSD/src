@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.122 2021/01/16 02:40:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.123 2021/01/16 16:03:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.122 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.123 2021/01/16 16:03:46 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -614,11 +614,11 @@ popdecl(void)
 	switch (di->d_ctx) {
 	case MOS:
 	case MOU:
-	case ENUMCON:
+	case CTCONST:
 		/*
 		 * Symbols declared in (nested) structs or enums are
 		 * part of the next level (they are removed from the
-		 * symbol table if the symbols of the outher level are
+		 * symbol table if the symbols of the outer level are
 		 * removed).
 		 */
 		if ((*dcs->d_ldlsym = di->d_dlsyms) != NULL)
@@ -1851,7 +1851,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 		}
 		sym = pushdown(sym);
 	}
-	sym->s_scl = ENUMCON;
+	sym->s_scl = CTCONST;
 	sym->s_type = dcs->d_tagtyp;
 	sym->s_value.v_tspec = INT;
 	sym->s_value.v_quad = val;
@@ -2010,7 +2010,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 {
 	sym_t	*rsym;
 
-	if ((rsym = dcs->d_rdcsym)->s_scl == ENUMCON) {
+	if ((rsym = dcs->d_rdcsym)->s_scl == CTCONST) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
@@ -3175,7 +3175,7 @@ static void
 check_global_variable(const sym_t *sym)
 {
 
-	if (sym->s_scl == TYPEDEF || sym->s_scl == ENUMCON)
+	if (sym->s_scl == TYPEDEF || sym->s_scl == CTCONST)
 		return;
 
 	if (sym->s_scl == NOSCL)

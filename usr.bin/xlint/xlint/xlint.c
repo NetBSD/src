@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.54 2021/01/16 02:40:03 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.55 2021/01/16 16:03:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.54 2021/01/16 02:40:03 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.55 2021/01/16 16:03:46 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -392,7 +392,6 @@ main(int argc, char *argv[])
 			/* FALLTHROUGH */
 		case 'u':
 		case 'h':
-		case 'T':
 			(void)sprintf(flgbuf, "-%c", c);
 			appcstrg(&l1flags, flgbuf);
 			appcstrg(&l2flags, flgbuf);
@@ -449,6 +448,13 @@ main(int argc, char *argv[])
 				usage();
 			appcstrg(&l1flags, "-S");
 			Sflag = true;
+			break;
+
+		case 'T':
+			(void)sprintf(flgbuf, "-%c", c);
+			appcstrg(&cflags, "-I" PATH_STRICT_BOOL_INCLUDE);
+			appcstrg(&l1flags, flgbuf);
+			appcstrg(&l2flags, flgbuf);
 			break;
 
 #if ! HAVE_NBTOOL_CONFIG_H

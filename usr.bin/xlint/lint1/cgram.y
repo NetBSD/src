@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.140 2021/01/16 02:40:02 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.141 2021/01/16 16:03:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.140 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.141 2021/01/16 16:03:46 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -923,7 +923,7 @@ enum_spec:
 enum:
 	  T_ENUM {
 		symtyp = FTAG;
-		pushdecl(ENUMCON);
+		pushdecl(CTCONST);
 	  }
 	;
 

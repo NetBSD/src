@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 2001/08/14 10:18:29 tv Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2021/01/16 16:03:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -41,3 +41,6 @@
 
 /* default library search path */
 #define PATH_LINTLIB		"/usr/libdata/lint"
+
+/* overridden system headers */
+#define PATH_STRICT_BOOL_INCLUDE PATH_LINTLIB "/strict-bool"

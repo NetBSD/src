@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.55 2021/01/16 02:40:02 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.56 2021/01/16 16:03:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -205,7 +205,7 @@ typedef enum {
 	ENUMTAG,
 	MOS,		/* member of struct */
 	MOU,		/* member of union */
-	ENUMCON,	/* enumerator, enum constant */
+	CTCONST,	/* enumerator, enum constant or bool constant */
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
 	ARG,		/* argument */
 	PARG,		/* used in declaration stack during prototype
@@ -244,7 +244,7 @@ typedef	struct sym {
 	int	s_blklev;	/* level of declaration, -1 if not in symbol
 				   table */
 	type_t	*s_type;
-	val_t	s_value;	/* value (if enum constant) */
+	val_t	s_value;	/* value (if enum or bool constant) */
 	union {
 		str_t	*_s_st;	/* tag, if it is a struct/union member */
 		tenum_t	*_s_et;	/* tag, if it is an enumerator */
@@ -314,7 +314,7 @@ typedef	struct tnode {
  * one of
  *	EXTERN	global declarations
  *	MOS oder MOU declarations of struct or union members
- *	ENUMCON	declarations of enums
+ *	CTCONST	declarations of enums
  *	ARG	declaration of arguments in old style function definitions
  *	PARG	declaration of arguments in function prototypes
  *	AUTO	declaration of local symbols
