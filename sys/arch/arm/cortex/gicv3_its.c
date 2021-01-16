@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.31 2020/12/24 14:44:49 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.32 2021/01/16 21:05:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.31 2020/12/24 14:44:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.32 2021/01/16 21:05:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -712,7 +712,7 @@ gicv3_its_table_init(struct gicv3_softc *sc, struct gicv3_its *its)
 			/*
 			 * Allocate space for one interrupt collection per CPU.
 			 */
-			table_size = roundup(entry_size * MAXCPUS, page_size);
+			table_size = roundup(entry_size * ncpu, page_size);
 			table_type = "Collections";
 			break;
 		default:
@@ -866,6 +866,8 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
 	its->its_pa = kmem_zalloc(sizeof(struct pci_attach_args *) * its->its_pic->pic_maxsources, KM_SLEEP);
 	its->its_targets = kmem_zalloc(sizeof(struct cpu_info *) * its->its_pic->pic_maxsources, KM_SLEEP);
 	its->its_gic = sc;
+	its->its_rdbase = kmem_zalloc(sizeof(*its->its_rdbase) * ncpu, KM_SLEEP);
+	its->its_cpuonline = kmem_zalloc(sizeof(*its->its_cpuonline) * ncpu, KM_SLEEP);
 	its->its_cb.cpu_init = gicv3_its_cpu_init;
 	its->its_cb.get_affinity = gicv3_its_get_affinity;
 	its->its_cb.set_affinity = gicv3_its_set_affinity;
