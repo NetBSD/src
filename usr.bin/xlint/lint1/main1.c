@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.36 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.37 2021/01/16 16:53:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.36 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.37 2021/01/16 16:53:23 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,7 +166,7 @@ bltin(void)
 static void
 sigfpe(int s)
 {
-	fpe = true;
+	fpe = 1;
 }
 
 int

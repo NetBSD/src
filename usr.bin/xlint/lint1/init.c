@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.62 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.63 2021/01/16 16:53:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.62 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.63 2021/01/16 16:53:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -323,7 +323,7 @@ initstack_push(void)
 		istk->i_remaining = 1;
 		lint_assert(istk->i_type->t_tspec == ARRAY);
 		istk->i_type->t_dim++;
-		setcomplete(istk->i_type, 1);
+		setcomplete(istk->i_type, true);
 	}
 
 	lint_assert(istk->i_remaining > 0);
@@ -583,7 +583,7 @@ mkinit(tnode_t *tn)
 		ln->tn_type = tduptyp(ln->tn_type);
 		ln->tn_type->t_const = false;
 		tn = build(ASSIGN, ln, tn);
-		expr(tn, 0, 0, 0);
+		expr(tn, false, false, false);
 		return;
 	}
 
@@ -627,7 +627,7 @@ mkinit(tnode_t *tn)
 	 * expr() would free it.
 	 */
 	tmem = tsave();
-	expr(tn, 1, 0, 1);
+	expr(tn, true, false, true);
 	trestor(tmem);
 
 	if (is_integer(lt) && ln->tn_type->t_bitfield && !is_integer(rt)) {
@@ -668,7 +668,7 @@ initstack_string(tnode_t *tn)
 	strg_t	*strg;
 
 	if (tn->tn_op != STRING)
-		return 0;
+		return false;
 
 	istk = initstk;
 	strg = tn->tn_string;
@@ -683,7 +683,7 @@ initstack_string(tnode_t *tn)
 		if (!((strg->st_tspec == CHAR &&
 		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
 		      (strg->st_tspec == WCHAR && t == WCHAR))) {
-			return 0;
+			return false;
 		}
 		/* Put the array at top of stack */
 		initstack_push();
@@ -694,16 +694,16 @@ initstack_string(tnode_t *tn)
 		if (!((strg->st_tspec == CHAR &&
 		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
 		      (strg->st_tspec == WCHAR && t == WCHAR))) {
-			return 0;
+			return false;
 		}
 		/*
 		 * If the array is already partly initialized, we are
 		 * wrong here.
 		 */
 		if (istk->i_remaining != istk->i_type->t_dim)
-			return 0;
+			return false;
 	} else {
-		return 0;
+		return false;
 	}
 
 	/* Get length without trailing NUL character. */
@@ -712,7 +712,7 @@ initstack_string(tnode_t *tn)
 	if (istk->i_nolimit) {
 		istk->i_nolimit = false;
 		istk->i_type->t_dim = len + 1;
-		setcomplete(istk->i_type, 1);
+		setcomplete(istk->i_type, true);
 	} else {
 		if (istk->i_type->t_dim < len) {
 			/* non-null byte ignored in string initializer */
@@ -723,5 +723,5 @@ initstack_string(tnode_t *tn)
 	/* In every case the array is initialized completely. */
 	istk->i_remaining = 0;
 
-	return 1;
+	return true;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.56 2021/01/16 16:03:46 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.57 2021/01/16 16:53:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -71,7 +71,7 @@ typedef struct {
 		curr_pos.p_uniq++;					\
 		if (curr_pos.p_file == csrc_pos.p_file)			\
 			csrc_pos.p_uniq++;				\
-	} while (/*CONSTCOND*/0)
+	} while (/*CONSTCOND*/false)
 
 /*
  * Strings cannot be referenced to simply by a pointer to its first
@@ -427,7 +427,7 @@ typedef	struct err_set {
 	do {								\
 		if (!(cond))						\
 			assert_failed(__FILE__, __LINE__, __func__, #cond); \
-	} while (/*CONSTCOND*/0)
+	} while (/*CONSTCOND*/false)
 
 #ifdef BLKDEBUG
 #define ZERO	0xa5
@@ -451,7 +451,7 @@ check_printf(const char *fmt, ...)
 	do {								\
 		check_printf(__CONCAT(MSG_, id), ##args);		\
 		(func)(id, ##args);					\
-	} while (/*CONSTCOND*/0)
+	} while (/*CONSTCOND*/false)
 
 #  define error(id, args...) wrap_check_printf(error, id, ##args)
 #  define warning(id, args...) wrap_check_printf(warning, id, ##args)

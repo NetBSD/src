@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.59 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.60 2021/01/16 16:53:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.59 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.60 2021/01/16 16:53:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -464,7 +464,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	 * get the value of the expression and convert it
 	 * to the type of the switch expression
 	 */
-	v = constant(tn, 1);
+	v = constant(tn, true);
 	(void) memset(&nv, 0, sizeof nv);
 	convert_constant(CASE, 0, ci->c_swtype, &nv, v);
 	free(v);
@@ -542,7 +542,7 @@ check_controlling_expression(tnode_t *tn)
 	if (tn != NULL)
 		tn = cconv(tn);
 	if (tn != NULL)
-		tn = promote(NOOP, 0, tn);
+		tn = promote(NOOP, false, tn);
 
 	if (tn != NULL && !is_scalar(tn->tn_type->t_tspec)) {
 		/* C99 6.5.15p4 for the ?: operator; see typeok:QUEST */
@@ -572,7 +572,7 @@ if1(tnode_t *tn)
 	if (tn != NULL)
 		tn = check_controlling_expression(tn);
 	if (tn != NULL)
-		expr(tn, 0, 1, 0);
+		expr(tn, false, true, false);
 	pushctrl(T_IF);
 }
 
@@ -616,7 +616,7 @@ switch1(tnode_t *tn)
 	if (tn != NULL)
 		tn = cconv(tn);
 	if (tn != NULL)
-		tn = promote(NOOP, 0, tn);
+		tn = promote(NOOP, false, tn);
 	if (tn != NULL && !is_integer(tn->tn_type->t_tspec)) {
 		/* switch expression must have integral type */
 		error(205);
@@ -645,7 +645,7 @@ switch1(tnode_t *tn)
 		tp->t_tspec = INT;
 	}
 
-	expr(tn, 1, 0, 1);
+	expr(tn, true, false, true);
 
 	pushctrl(T_SWITCH);
 	cstmt->c_switch = true;
@@ -729,7 +729,7 @@ while1(tnode_t *tn)
 	if (tn != NULL && tn->tn_op == CON)
 		cstmt->c_infinite = is_nonzero(tn);
 
-	expr(tn, 0, 1, 1);
+	expr(tn, false, true, true);
 }
 
 /*
@@ -792,7 +792,7 @@ do2(tnode_t *tn)
 			error(323);
 	}
 
-	expr(tn, 0, 1, 1);
+	expr(tn, false, true, true);
 
 	/*
 	 * The end of the loop is only reached if it is no endless loop
@@ -835,12 +835,12 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	cstmt->c_cfpos = csrc_pos;
 
 	if (tn1 != NULL)
-		expr(tn1, 0, 0, 1);
+		expr(tn1, false, false, true);
 
 	if (tn2 != NULL)
 		tn2 = check_controlling_expression(tn2);
 	if (tn2 != NULL)
-		expr(tn2, 0, 1, 1);
+		expr(tn2, false, true, true);
 
 	cstmt->c_infinite =
 	    tn2 == NULL || (tn2->tn_op == CON && is_nonzero(tn2));
@@ -880,7 +880,7 @@ for2(void)
 	}
 
 	if (tn3 != NULL) {
-		expr(tn3, 0, 0, 1);
+		expr(tn3, false, false, true);
 	} else {
 		tfreeblk();
 	}
@@ -903,7 +903,7 @@ void
 dogoto(sym_t *lab)
 {
 
-	mark_as_used(lab, 0, 0);
+	mark_as_used(lab, false, false);
 
 	check_statement_reachable();
 
@@ -1017,7 +1017,7 @@ doreturn(tnode_t *tn)
 			}
 		}
 
-		expr(tn, 1, 0, 1);
+		expr(tn, true, false, true);
 
 	} else {
 
