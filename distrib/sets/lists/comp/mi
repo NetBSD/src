@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2369 2021/01/16 16:03:46 rillig Exp $
+#	$NetBSD: mi,v 1.2370 2021/01/16 22:18:14 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4011,8 +4011,6 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug	comp-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	comp-obsolete	openssl=11,obsolete
 ./usr/libdata/ldscripts/kmodule			comp-util-share		binutils,kmod
-./usr/libdata/lint/strict-bool			comp-c-bin		lint
-./usr/libdata/lint/strict-bool/stdbool.h	comp-c-bin		lint
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lasn1.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
