@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.174 2021/01/17 15:40:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.175 2021/01/17 16:01:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.174 2021/01/17 15:40:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.175 2021/01/17 16:01:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -959,7 +959,7 @@ typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 }
 
 static bool
-typeok_ordered_comparison(op_t op, const mod_t *mp,
+typeok_ordered_comparison(op_t op,
 			  const tnode_t *ln, const type_t *ltp, tspec_t lt,
 			  const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
@@ -971,7 +971,7 @@ typeok_ordered_comparison(op_t op, const mod_t *mp,
 			    "pointer" : "integer";
 			/* illegal combination of %s (%s) and ... */
 			warning(123, lx, type_name(ltp),
-			    rx, type_name(rtp), mp->m_name);
+			    rx, type_name(rtp), getopname(op));
 		} else {
 			warn_incompatible_types(op, lt, rt);
 			return false;
@@ -1320,8 +1320,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case GT:
 	case LE:
 	case GE:
-		if (!typeok_ordered_comparison(op, mp,
-		    ln, ltp, lt, rn, rtp, rt))
+		if (!typeok_ordered_comparison(op, ln, ltp, lt, rn, rtp, rt))
 			return false;
 		break;
 	case QUEST:
