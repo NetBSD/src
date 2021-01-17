@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.60 2021/01/16 16:53:23 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.61 2021/01/17 11:28:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.60 2021/01/16 16:53:23 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.61 2021/01/17 11:28:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -639,7 +639,7 @@ switch1(tnode_t *tn)
 	tp = xcalloc(1, sizeof (type_t));
 	if (tn != NULL) {
 		tp->t_tspec = tn->tn_type->t_tspec;
-		if ((tp->t_isenum = tn->tn_type->t_isenum) != 0)
+		if ((tp->t_isenum = tn->tn_type->t_isenum) != false)
 			tp->t_enum = tn->tn_type->t_enum;
 	} else {
 		tp->t_tspec = INT;
