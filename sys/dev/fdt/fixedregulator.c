@@ -1,4 +1,4 @@
-/* $NetBSD: fixedregulator.c,v 1.8 2019/05/23 21:36:26 jmcneill Exp $ */
+/* $NetBSD: fixedregulator.c,v 1.9 2021/01/17 19:54:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.8 2019/05/23 21:36:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.9 2021/01/17 19:54:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ fixedregulator_acquire(device_t dev)
 	return 0;
 }
 
-static void 
+static void
 fixedregulator_release(device_t dev)
 {
 }
