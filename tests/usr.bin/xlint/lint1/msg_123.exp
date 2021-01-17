@@ -1,1 +1,6 @@
-msg_123.c(6): syntax error ':' [249]
+msg_123.c(15): warning: illegal combination of integer (_Bool) and pointer (pointer to const char), op < [123]
+msg_123.c(19): warning: illegal combination of integer (int) and pointer (pointer to const char), op < [123]
+msg_123.c(23): operands of '<' have incompatible types (double != pointer) [107]
+msg_123.c(24): warning: illegal combination of pointer (pointer to const char) and integer (_Bool), op < [123]
+msg_123.c(25): warning: illegal combination of pointer (pointer to const char) and integer (int), op < [123]
+msg_123.c(26): operands of '<' have incompatible types (pointer != double) [107]
