@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.15 2019/11/26 02:41:58 hkenken Exp $ */
+/* $NetBSD: m25p.c,v 1.16 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.15 2019/11/26 02:41:58 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.16 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,9 @@ static const struct m25p_info {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "jedec,spi-nor",	0 },
-	{ NULL,			0 }
+	{ .compat = "jedec,spi-nor" },
+
+	{ 0 }
 };
 
 static int

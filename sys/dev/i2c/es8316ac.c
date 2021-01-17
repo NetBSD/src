@@ -1,4 +1,4 @@
-/* $NetBSD: es8316ac.c,v 1.2 2020/01/03 01:00:08 jmcneill Exp $ */
+/* $NetBSD: es8316ac.c,v 1.3 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.2 2020/01/03 01:00:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.3 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,8 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.2 2020/01/03 01:00:08 jmcneill Exp $"
 #define	 DACVOL_R_DACVOLUME		__BITS(7,0)
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "everest,es8316",		1 },
-	{ NULL }
+	{ .compat = "everest,es8316" },
+
+	{ 0 }
 };
 
 struct escodec_softc {
