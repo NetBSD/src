@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.352 2021/01/16 23:50:49 chs Exp $	*/
+/*	$NetBSD: rump.c,v 1.353 2021/01/17 22:32:25 chs Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.352 2021/01/16 23:50:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.353 2021/01/17 22:32:25 chs Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -605,14 +605,22 @@ rump_component_count(enum rump_component_type type)
 void
 rump_component_init(enum rump_component_type type)
 {
-	struct rump_component *rc, *rc_safe;
+	struct rump_component *rc, *rc_next, rc_marker;
 
 	KASSERT(curlwp == bootlwp);
 	KASSERT(!compinited[type]);
-	LIST_FOREACH_SAFE(rc, &rchead, rc_entries, rc_safe) {
+
+	rc_marker.rc_type = RUMP_COMPONENT_MAX;
+	rc_marker.rc_init = NULL;
+	for (rc = LIST_FIRST(&rchead); rc != NULL; rc = rc_next) {
 		if (rc->rc_type == type) {
+			LIST_INSERT_AFTER(rc, &rc_marker, rc_entries);
 			rc->rc_init();
 			LIST_REMOVE(rc, rc_entries);
+			rc_next = LIST_NEXT(&rc_marker, rc_entries);
+			LIST_REMOVE(&rc_marker, rc_entries);
+		} else {
+			rc_next = LIST_NEXT(rc, rc_entries);
 		}
 	}
 	compinited[type] = 1;
