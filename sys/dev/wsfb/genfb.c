@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.78 2020/10/19 01:08:06 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.79 2021/01/17 00:23:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.78 2020/10/19 01:08:06 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.79 2021/01/17 00:23:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.78 2020/10/19 01:08:06 rin Exp $");
 #include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/reboot.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -214,6 +216,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t dict;
 	struct rasops_info *ri;
+	paddr_t fb_phys;
 	uint16_t crow;
 	long defattr;
 	bool console;
@@ -231,9 +234,16 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	    == false)
 		sc->sc_want_clear = true;
 
+	fb_phys = (paddr_t)sc->sc_fboffset;
+	if (fb_phys == 0) {
+		KASSERT(sc->sc_fbaddr != NULL);
+		(void)pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_fbaddr,
+		    &fb_phys);
+	}
+
 	aprint_verbose_dev(sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
 	    "stride %d\n",
-	    sc->sc_fboffset ? (void *)(intptr_t)sc->sc_fboffset : sc->sc_fbaddr,
+	    fb_phys ? (void *)(intptr_t)fb_phys : sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
