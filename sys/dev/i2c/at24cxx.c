@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.36 2020/01/15 06:09:36 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.37 2021/01/17 21:56:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.36 2020/01/15 06:09:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.37 2021/01/17 21:56:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,21 +112,22 @@ const struct cdevsw seeprom_cdevsw = {
 static int seeprom_wait_idle(struct seeprom_softc *);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "i2c-at24c01",		128 },
-	{ "i2c-at24c02",		256 },
-	{ "i2c-at24c04",		512 },
-	{ "i2c-at24c08",		1024 },
-	{ "i2c-at24c16",		2048 },
-	{ "i2c-at24c32",		4096 },
-	{ "i2c-at24c64",		8192 },
-	{ "i2c-at24c128",		16384 },
-	{ "i2c-at24c256",		32768 },
-	{ "i2c-at24c512",		65536 },
-	{ "i2c-at34c02",		256 },
-	{ "atmel,24c02",		256 },
-	{ "atmel,24c16",		2048 },
-	{ "atmel,24c256",		32768 },
-	{ NULL,				0 }
+	{ .compat = "i2c-at24c01",		.value = 128 },
+	{ .compat = "i2c-at24c02",		.value = 256 },
+	{ .compat = "i2c-at24c04",		.value = 512 },
+	{ .compat = "i2c-at24c08",		.value = 1024 },
+	{ .compat = "i2c-at24c16",		.value = 2048 },
+	{ .compat = "i2c-at24c32",		.value = 4096 },
+	{ .compat = "i2c-at24c64",		.value = 8192 },
+	{ .compat = "i2c-at24c128",		.value = 16384 },
+	{ .compat = "i2c-at24c256",		.value = 32768 },
+	{ .compat = "i2c-at24c512",		.value = 65536 },
+	{ .compat = "i2c-at34c02",		.value = 256 },
+	{ .compat = "atmel,24c02",		.value = 256 },
+	{ .compat = "atmel,24c16",		.value = 2048 },
+	{ .compat = "atmel,24c256",		.value = 32768 },
+
+	{ 0 }
 };
 
 static int
@@ -182,7 +183,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_size <= 0 && ia->ia_ncompat > 0) {
 		if (iic_compatible_match(ia, compat_data, &dce))
-			sc->sc_size = dce->data;
+			sc->sc_size = dce->value;
 	}
 
 	switch (sc->sc_size) {

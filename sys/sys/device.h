@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.159 2020/11/24 16:17:04 christos Exp $ */
+/* $NetBSD: device.h,v 1.160 2021/01/17 21:56:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -125,7 +125,10 @@ typedef struct cfattach *cfattach_t;
 #if defined(_KERNEL) || defined(_KMEMUSER)
 struct device_compatible_entry {
 	const char	*compat;
-	uintptr_t	data;
+	union {
+		const void *data;
+		uintptr_t value;
+	};
 };
 
 struct device_lock {

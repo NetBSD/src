@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.27 2020/01/03 03:44:42 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.28 2021/01/17 21:56:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.27 2020/01/03 03:44:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.28 2021/01/17 21:56:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,11 @@ static const struct strtc_model m48t84_model = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "st,m41t80",		(uintptr_t)&m41t80_model },
-	{ "st,m41t81",		(uintptr_t)&m41t81_model },
-	{ "st,m41t84",		(uintptr_t)&m48t84_model },
-	{ NULL,			0 },
+	{ .compat = "st,m41t80",	.data = &m41t80_model },
+	{ .compat = "st,m41t81",	.data = &m41t81_model },
+	{ .compat = "st,m41t84",	.data = &m48t84_model },
+
+	{ 0 }
 };
 
 struct strtc_softc {

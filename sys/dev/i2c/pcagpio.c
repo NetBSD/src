@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.6 2020/10/31 14:38:54 jdc Exp $ */
+/* $NetBSD: pcagpio.c,v 1.7 2021/01/17 21:56:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.6 2020/10/31 14:38:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.7 2021/01/17 21:56:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,12 @@ CFATTACH_DECL_NEW(pcagpio, sizeof(struct pcagpio_softc),
     pcagpio_match, pcagpio_attach, pcagpio_detach, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "i2c-pca9555",	1 },
-	{ "pca9555",		1 },
-	{ "i2c-pca9556",	0 },
-	{ "pca9556",		0 },
-	{ NULL,			0 }
+	{ .compat = "i2c-pca9555",	.value = 1 },
+	{ .compat = "pca9555",		.value = 1 },
+	{ .compat = "i2c-pca9556",	.value = 0 },
+	{ .compat = "pca9556",		.value = 0 },
+
+	{ 0 }
 };
 
 static int
@@ -157,7 +158,7 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	sc->sc_is_16bit = 0;
 	if (iic_compatible_match(ia, compat_data, &dce))
-		sc->sc_is_16bit = dce->data;
+		sc->sc_is_16bit = dce->value;
 
 	aprint_normal(": %s\n", sc->sc_is_16bit ? "PCA9555" : "PCA9556");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.1 2020/12/29 01:47:51 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.2 2021/01/17 21:56:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.1 2020/12/29 01:47:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.2 2021/01/17 21:56:20 thorpej Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -100,53 +100,53 @@ static const struct pcaiicmux_type switch8_type = {
 static const struct device_compatible_entry compat_data[] = {
 	/* PCA9540 - 2 channel i2c mux */
 	{ .compat = "nxp,pca9540",
-	  .data = (uintptr_t)&mux2_type },
+	  .data = &mux2_type },
 
 	/* PCA9542 - 2 channel i2c mux with interrupts */
 	{ .compat = "nxp,pca9542",
-	  .data = (uintptr_t)&mux2_type },
+	  .data = &mux2_type },
 
 	/* PCA9543 - 2 channel i2c switch with interrupts */
 	{ .compat = "nxp,pca9543",
-	  .data = (uintptr_t)&switch2_type },
+	  .data = &switch2_type },
 
 	/* PCA9544 - 4 channel i2c mux with interrupts */
 	{ .compat = "nxp,pca9544",
-	  .data = (uintptr_t)&mux4_type },
+	  .data = &mux4_type },
 
 	/* PCA9545 - 4 channel i2c switch with interrupts */
 	{ .compat = "nxp,pca9545",
-	  .data = (uintptr_t)&switch4_type },
+	  .data = &switch4_type },
 
 	/* PCA9546 - 4 channel i2c switch */
 	{ .compat = "nxp,pca9546",
-	  .data = (uintptr_t)&switch4_type },
+	  .data = &switch4_type },
 
 	/* PCA9547 - 8 channel i2c mux */
 	{ .compat = "nxp,pca9547",
-	  .data = (uintptr_t)&mux8_type },
+	  .data = &mux8_type },
 
 	/* PCA9548 - 8 channel i2c switch */
 	{ .compat = "nxp,pca9548",
-	  .data = (uintptr_t)&switch8_type },
+	  .data = &switch8_type },
 
 	/* PCA9846 - 4 channel i2c switch */
 	{ .compat = "nxp,pca9846",
-	  .data = (uintptr_t)&switch4_type },
+	  .data = &switch4_type },
 
 	/* PCA9847 - 8 channel i2c mux */
 	{ .compat = "nxp,pca9847",
-	  .data = (uintptr_t)&mux8_type },
+	  .data = &mux8_type },
 
 	/* PCA9848 - 8 channel i2c switch */
 	{ .compat = "nxp,pca9848",
-	  .data = (uintptr_t)&switch8_type },
+	  .data = &switch8_type },
 
 	/* PCA9849 - 4 channel i2c mux */
 	{ .compat = "nxp,pca9849",
-	  .data = (uintptr_t)&mux4_type },
+	  .data = &mux4_type },
 
-	{ NULL }
+	{ 0 }
 };
 
 struct pcaiicmux_softc {
@@ -277,7 +277,7 @@ pcaiicmux_type_by_compat(const struct i2c_attach_args * const ia)
 	const struct device_compatible_entry *dce;
 
 	if (iic_compatible_match(ia, compat_data, &dce))
-		type = (void *)dce->data;
+		type = dce->data;
 
 	return type;
 }
