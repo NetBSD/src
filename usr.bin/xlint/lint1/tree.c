@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.177 2021/01/17 16:25:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.178 2021/01/17 16:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.177 2021/01/17 16:25:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.178 2021/01/17 16:32:36 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -962,22 +962,23 @@ typeok_ordered_comparison(op_t op,
 			  const tnode_t *ln, const type_t *ltp, tspec_t lt,
 			  const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
-	if ((lt == PTR || rt == PTR) && lt != rt) {
-		if (is_integer(lt) || is_integer(rt)) {
-			const char *lx = lt == PTR ?
-			    "pointer" : "integer";
-			const char *rx = rt == PTR ?
-			    "pointer" : "integer";
-			/* illegal combination of %s (%s) and ... */
-			warning(123, lx, type_name(ltp),
-			    rx, type_name(rtp), getopname(op));
-		} else {
-			warn_incompatible_types(op, lt, rt);
-			return false;
-		}
-	} else if (lt == PTR && rt == PTR) {
+	if (lt == PTR && rt == PTR) {
 		check_pointer_comparison(op, ln, rn);
+		return true;
 	}
+
+	if (lt != PTR && rt != PTR)
+		return true;
+
+	if (!is_integer(lt) && !is_integer(rt)) {
+		warn_incompatible_types(op, lt, rt);
+		return false;
+	}
+
+	const char *lx = lt == PTR ? "pointer" : "integer";
+	const char *rx = rt == PTR ? "pointer" : "integer";
+	/* illegal combination of %s (%s) and %s (%s), op %s */
+	warning(123, lx, type_name(ltp), rx, type_name(rtp), getopname(op));
 	return true;
 }
 
