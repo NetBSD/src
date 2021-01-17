@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.12 2020/01/02 16:48:05 thorpej Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.13 2021/01/17 21:42:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.12 2020/01/02 16:48:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.13 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.12 2020/01/02 16:48:05 thorpej Exp $")
 #endif
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "nxp,pcf8563",		0 },
-	{ "pcf8563rtc",			0 },
-	{ NULL,				0 }
+	{ .compat = "nxp,pcf8563" },
+	{ .compat = "pcf8563rtc" },
+
+	{ 0 }
 };
 
 struct pcf8563rtc_softc {

@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.8 2020/06/26 10:06:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.9 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,9 @@ CFATTACH_DECL_NEW(adm1026hm, sizeof(struct adm1026_softc),
 	adm1026_match, adm1026_attach, adm1026_detach, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "i2c-adm1026",		0 },
-	{ NULL,				0 }
+	{ .compat = "i2c-adm1026" },
+
+	{ 0 }
 };
 
 static int
