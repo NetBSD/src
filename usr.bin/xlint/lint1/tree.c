@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.170 2021/01/17 14:55:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.171 2021/01/17 15:06:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.170 2021/01/17 14:55:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.171 2021/01/17 15:06:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -737,7 +737,7 @@ is_strict_bool(const tnode_t *tn)
 		return true;
 
 	/* For enums that are used as bit sets, allow "flags & FLAG". */
-	if (tn->tn_op == AND &&
+	if (tn->tn_op == BITAND &&
 	    tn->tn_left->tn_op == CVT &&
 	    tn->tn_left->tn_type->t_tspec == INT && !tn->tn_left->tn_cast &&
 	    tn->tn_left->tn_left->tn_type->t_tspec == ENUM &&
@@ -1099,7 +1099,7 @@ static bool
 needs_compatible_types(op_t op)
 {
 	return op == EQ || op == NE ||
-	       op == AND || op == XOR || op == OR ||
+	       op == BITAND || op == BITXOR || op == BITOR ||
 	       op == COLON ||
 	       op == ASSIGN || op == ANDASS || op == XORASS || op == ORASS ||
 	       op == RETURN ||
@@ -1384,9 +1384,9 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case NAME:
 	case LOGOR:
 	case LOGAND:
-	case OR:
-	case XOR:
-	case AND:
+	case BITOR:
+	case BITXOR:
+	case BITAND:
 	case MOD:
 	case DIV:
 	case MULT:
@@ -2362,7 +2362,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		 * For bitwise operations we are not interested in the
 		 * value, but in the bits itself.
 		 */
-		if (op == ORASS || op == OR || op == XOR) {
+		if (op == ORASS || op == BITOR || op == BITXOR) {
 			/*
 			 * Print a warning if bits which were set are
 			 * lost due to the conversion.
@@ -2372,7 +2372,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				/* constant truncated by conv., op %s */
 				warning(306, modtab[op].m_name);
 			}
-		} else if (op == ANDASS || op == AND) {
+		} else if (op == ANDASS || op == BITAND) {
 			/*
 			 * Print a warning if additional bits are not all 1
 			 * and the most significant bit of the old value is 1,
@@ -3120,13 +3120,13 @@ fold(tnode_t *tn)
 	case NE:
 		q = (utyp ? ul != ur : sl != sr) ? 1 : 0;
 		break;
-	case AND:
+	case BITAND:
 		q = utyp ? (int64_t)(ul & ur) : sl & sr;
 		break;
-	case XOR:
+	case BITXOR:
 		q = utyp ? (int64_t)(ul ^ ur) : sl ^ sr;
 		break;
-	case OR:
+	case BITOR:
 		q = utyp ? (int64_t)(ul | ur) : sl | sr;
 		break;
 	default:
@@ -3976,8 +3976,8 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case STRING:
 		return;
 		/* LINTED206: (enumeration values not handled in switch) */
-	case OR:
-	case XOR:
+	case BITOR:
+	case BITXOR:
 	case NE:
 	case GE:
 	case GT:
@@ -4000,7 +4000,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case POINT:
 	case ARROW:
 	case NOOP:
-	case AND:
+	case BITAND:
 	case FARG:
 	case CASE:
 	case INIT:
@@ -4312,17 +4312,17 @@ is_confusing_precedence(op_t op, op_t lop, bool lparen, op_t rop, bool rparen)
 		return false;
 	}
 
-	lint_assert(op == AND || op == XOR || op == OR);
+	lint_assert(op == BITAND || op == BITXOR || op == BITOR);
 	if (!lparen && lop != op) {
 		if (lop == PLUS || lop == MINUS)
 			return true;
-		if (lop == AND || lop == XOR)
+		if (lop == BITAND || lop == BITXOR)
 			return true;
 	}
 	if (!rparen && rop != op) {
 		if (rop == PLUS || rop == MINUS)
 			return true;
-		if (rop == AND || rop == XOR)
+		if (rop == BITAND || rop == BITXOR)
 			return true;
 	}
 	return false;
