@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_fdt.c,v 1.1 2018/10/19 21:09:10 jakllsch Exp $ */
+/* $NetBSD: amdccp_fdt.c,v 1.2 2021/01/17 19:54:23 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: amdccp_fdt.c,v 1.1 2018/10/19 21:09:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_fdt.c,v 1.2 2021/01/17 19:54:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ amdccp_fdt_attach(device_t parent, device_t self, void *aux)
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
-		return;		
+		return;
 	}
 
 	sc->sc_bst = faa->faa_bst;

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.16 2020/10/10 15:34:05 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.17 2021/01/17 19:53:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.16 2020/10/10 15:34:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.17 2021/01/17 19:53:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,7 +105,7 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 	aa.aa_pciflags =
 	    /*PCI_FLAGS_IO_OKAY |*/ PCI_FLAGS_MEM_OKAY |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | 
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 	    PCI_FLAGS_MWI_OKAY;
 #ifdef __HAVE_PCI_MSI_MSIX
 	aa.aa_pciflags |= PCI_FLAGS_MSI_OKAY | PCI_FLAGS_MSIX_OKAY;

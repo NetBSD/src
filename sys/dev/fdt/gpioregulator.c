@@ -1,4 +1,4 @@
-/* $NetBSD: gpioregulator.c,v 1.2 2019/01/19 20:51:12 jmcneill Exp $ */
+/* $NetBSD: gpioregulator.c,v 1.3 2021/01/17 19:54:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioregulator.c,v 1.2 2019/01/19 20:51:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioregulator.c,v 1.3 2021/01/17 19:54:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ gpioregulator_acquire(device_t dev)
 	return 0;
 }
 
-static void 
+static void
 gpioregulator_release(device_t dev)
 {
 }
