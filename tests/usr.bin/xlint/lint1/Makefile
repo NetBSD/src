@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2021/01/14 22:18:14 rillig Exp $
+# $NetBSD: Makefile,v 1.30 2021/01/17 23:00:41 rillig Exp $
 
 NOMAN=		# defined
 
@@ -15,6 +15,8 @@ FILES+=		d_c99_bool.c
 FILES+=		d_c99_bool.exp
 FILES+=		d_c99_bool_strict.c
 FILES+=		d_c99_bool_strict.exp
+FILES+=		d_c99_bool_strict_syshdr.c
+FILES+=		d_c99_bool_strict_syshdr.exp
 FILES+=		d_c99_anon_struct.c
 FILES+=		d_c99_anon_union.c
 FILES+=		d_c99_complex_num.c
