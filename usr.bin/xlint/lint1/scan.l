@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.120 2021/01/17 15:09:56 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.121 2021/01/17 23:04:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.120 2021/01/17 15:09:56 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.121 2021/01/17 23:04:09 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -62,6 +62,8 @@ pos_t	csrc_pos = { 1, "", 0 };
 
 /* Are we parsing a gcc attribute? */
 bool attron;
+
+bool in_system_header = false;
 
 static	void	incline(void);
 static	void	badchar(int);
@@ -1115,6 +1117,29 @@ getescc(int d)
 	return c;
 }
 
+/* See https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html */
+static void
+parse_line_directive_flags(const char *p)
+{
+
+	in_system_header = false;
+
+	while (ch_isspace(*p))
+		p++;
+	while (ch_isdigit(*p)) {
+		if (*p == '3' && !ch_isdigit(p[1]))
+			in_system_header = true;
+		p++;
+		while (ch_isspace(*p))
+			p++;
+	}
+
+#if 0
+	if (c != '\0')
+		warning("extra character(s) after directive");
+#endif
+}
+
 /*
  * Called for preprocessor directives. Currently implemented are:
  *	# lineno
@@ -1158,12 +1183,7 @@ directive(void)
 			goto error;
 		if ((fnl = cp++ - fn) > PATH_MAX)
 			goto error;
-		while ((c = *cp++) == ' ' || c == '\t')
-			continue;
-#if 0
-		if (c != '\0')
-			warning("extra character(s) after directive");
-#endif
+		parse_line_directive_flags(cp);
 
 		/* empty string means stdin */
 		if (fnl == 0) {
