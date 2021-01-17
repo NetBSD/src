@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.4 2020/12/28 20:29:57 thorpej Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.5 2021/01/17 19:54:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.4 2020/12/28 20:29:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.5 2021/01/17 19:54:23 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -278,4 +278,4 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 }
 
 CFATTACH_DECL_NEW(iicmux_fdt, sizeof(struct iicmux_softc),
-    iicmux_fdt_match, iicmux_fdt_attach, NULL, NULL); 
+    iicmux_fdt_match, iicmux_fdt_attach, NULL, NULL);
