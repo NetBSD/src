@@ -1,7 +1,13 @@
-/*	$NetBSD: msg_163.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_163.c,v 1.2 2021/01/17 16:16:09 rillig Exp $	*/
 # 3 "msg_163.c"
 
 // Test for message: a cast does not yield an lvalue [163]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+void
+example(char *p, int i)
+{
+	p++;
+	((char *)p)++;		/* XXX: why is this ok? */
+	i++;
+	((int)i)++;		/* expect: 163, 114 */
+}
