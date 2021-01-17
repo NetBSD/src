@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.257 2020/12/05 08:04:51 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.258 2021/01/17 01:02:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.257 2020/12/05 08:04:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.258 2021/01/17 01:02:28 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -115,7 +115,6 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int	cpu_arch;			/* sparc architecture version */
-extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
 struct cpu_info *cpus[_MAXNCPU+1];	/* we only support 4 CPUs. */

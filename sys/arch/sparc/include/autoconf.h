@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.48 2012/10/27 17:18:11 chs Exp $ */
+/*	$NetBSD: autoconf.h,v 1.49 2021/01/17 01:02:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
  *
  *	@(#)autoconf.h	8.2 (Berkeley) 9/30/93
  */
+
+#ifndef	_MACHINE_AUTOCONF_H_
+#define	_MACHINE_AUTOCONF_H_
 
 /*
  * Autoconfiguration information.
@@ -173,3 +176,8 @@ void	mountroot_hook_establish(void (*)(device_t), device_t);
 
 void	bootstrap(void);
 int	romgetcursoraddr(int **, int **);
+
+/* Exported from autoconf.c for other consumers.  */
+extern char	machine_model[100];
+
+#endif /* !_MACHINE_AUTOCONF_H_ */
