@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.168 2021/01/17 14:45:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.169 2021/01/17 14:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.168 2021/01/17 14:45:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.169 2021/01/17 14:50:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -585,7 +585,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	case DECBEF:
 		ntn = build_prepost_incdec(op, ln);
 		break;
-	case AMPER:
+	case ADDR:
 		ntn = build_address(ln, 0);
 		break;
 	case STAR:
@@ -692,9 +692,9 @@ cconv(tnode_t *tn)
 		if (!tn->tn_lvalue) {
 			/* XXX print correct operator */
 			/* %soperand of '%s' must be lvalue */
-			gnuism(114, "", modtab[AMPER].m_name);
+			gnuism(114, "", modtab[ADDR].m_name);
 		}
-		tn = new_tnode(AMPER, tincref(tn->tn_type->t_subt, PTR),
+		tn = new_tnode(ADDR, tincref(tn->tn_type->t_subt, PTR),
 			     tn, NULL);
 	}
 
@@ -1283,7 +1283,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 		if (!typeok_incdec(mp, ln, ltp))
 			return false;
 		break;
-	case AMPER:
+	case ADDR:
 		if (!typeok_amper(mp, ln, ltp, lt))
 			return false;
 		break;
@@ -2719,7 +2719,7 @@ build_address(tnode_t *tn, bool noign)
 		return tn->tn_left;
 	}
 
-	ntn = new_tnode(AMPER, tincref(tn->tn_type, PTR), tn, NULL);
+	ntn = new_tnode(ADDR, tincref(tn->tn_type, PTR), tn, NULL);
 
 	return ntn;
 }
@@ -3898,7 +3898,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	mp = &modtab[op = tn->tn_op];
 
 	switch (op) {
-	case AMPER:
+	case ADDR:
 		if (ln->tn_op == NAME && (reached || rchflg)) {
 			if (!szof)
 				mark_as_set(ln->tn_sym);
@@ -3961,7 +3961,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 			check_array_index(ln->tn_left, 0);
 		break;
 	case CALL:
-		lint_assert(ln->tn_op == AMPER);
+		lint_assert(ln->tn_op == ADDR);
 		lint_assert(ln->tn_left->tn_op == NAME);
 		if (!szof)
 			outcall(tn, vctx || tctx, rvdisc);
@@ -4074,7 +4074,7 @@ check_array_index(tnode_t *tn, bool amper)
 		return;
 
 	/* Return if the left node does not stem from an array. */
-	if (ln->tn_op != AMPER)
+	if (ln->tn_op != ADDR)
 		return;
 	if (ln->tn_left->tn_op != STRING && ln->tn_left->tn_op != NAME)
 		return;
@@ -4179,7 +4179,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
  * the result is returned in *offsp. In the second case, the static
  * object is returned in *symp and the offset in *offsp.
  *
- * The expression can consist of PLUS, MINUS, AMPER, NAME, STRING and
+ * The expression can consist of PLUS, MINUS, ADDR, NAME, STRING and
  * CON. Type conversions are allowed if they do not change binary
  * representation (including width).
  */
@@ -4215,7 +4215,7 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		*symp = sym;
 		*offsp = offs1 + offs2;
 		break;
-	case AMPER:
+	case ADDR:
 		if (tn->tn_left->tn_op == NAME) {
 			*symp = tn->tn_left->tn_sym;
 			*offsp = 0;
