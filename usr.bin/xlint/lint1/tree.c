@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.166 2021/01/17 14:26:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.167 2021/01/17 14:37:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.166 2021/01/17 14:26:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.167 2021/01/17 14:37:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -204,6 +204,50 @@ new_integer_constant_node(tspec_t t, int64_t q)
 	return n;
 }
 
+static void
+fallback_symbol(sym_t *sym)
+{
+
+	if (Tflag && strcmp(sym->s_name, "__lint_false") == 0) {
+		sym->s_scl = CTCONST; /* close enough */
+		sym->s_type = gettyp(BOOL);
+		sym->s_value.v_tspec = BOOL;
+		sym->s_value.v_ansiu = false;
+		sym->s_value.v_quad = 0;
+		return;
+	}
+
+	if (Tflag && strcmp(sym->s_name, "__lint_true") == 0) {
+		sym->s_scl = CTCONST; /* close enough */
+		sym->s_type = gettyp(BOOL);
+		sym->s_value.v_tspec = BOOL;
+		sym->s_value.v_ansiu = false;
+		sym->s_value.v_quad = 1;
+		return;
+	}
+
+	if (blklev > 0 && (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
+			   strcmp(sym->s_name, "__PRETTY_FUNCTION__") == 0)) {
+		/* __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension */
+		gnuism(316);
+		sym->s_type = incref(gettyp(CHAR), PTR);
+		sym->s_type->t_const = true;
+		return;
+	}
+
+	if (blklev > 0 && strcmp(sym->s_name, "__func__") == 0) {
+		if (!Sflag)
+			/* __func__ is a C9X feature */
+			warning(317);
+		sym->s_type = incref(gettyp(CHAR), PTR);
+		sym->s_type->t_const = true;
+		return;
+	}
+
+	/* %s undefined */
+	error(99, sym->s_name);
+}
+
 /*
  * Create a node for a name (symbol table entry).
  * ntok is the token which follows the name.
@@ -227,45 +271,7 @@ new_name_node(sym_t *sym, int ntok)
 			 */
 			sym->s_type = incref(sym->s_type, FUNC);
 		} else {
-			if (Tflag && strcmp(sym->s_name, "__lint_false") == 0) {
-				sym->s_scl = CTCONST; /* close enough */
-				sym->s_type = gettyp(BOOL);
-				sym->s_value.v_tspec = BOOL;
-				sym->s_value.v_ansiu = false;
-				sym->s_value.v_quad = 0;
-			} else if (Tflag &&
-				   strcmp(sym->s_name, "__lint_true") == 0) {
-				sym->s_scl = CTCONST; /* close enough */
-				sym->s_type = gettyp(BOOL);
-				sym->s_value.v_tspec = BOOL;
-				sym->s_value.v_ansiu = false;
-				sym->s_value.v_quad = 1;
-			} else if (blklev == 0) {
-				/* %s undefined */
-				error(99, sym->s_name);
-			} else {
-				bool fixtype;
-				if (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
-				    strcmp(sym->s_name, "__PRETTY_FUNCTION__")
-				    == 0) {
-					/* __FUNCTION__/__PRETTY_FUNCTION... */
-					gnuism(316);
-					fixtype = true;
-				} else if (strcmp(sym->s_name, "__func__") == 0) {
-					if (!Sflag)
-						/* __func__ is a C9X feature */
-						warning(317);
-					fixtype = true;
-				} else {
-					/* %s undefined */
-					error(99, sym->s_name);
-					fixtype = false;
-				}
-				if (fixtype) {
-					sym->s_type = incref(gettyp(CHAR), PTR);
-					sym->s_type->t_const = true;
-				}
-			}
+			fallback_symbol(sym);
 		}
 	}
 
