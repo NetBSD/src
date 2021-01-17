@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.5 2021/01/17 14:28:25 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.6 2021/01/17 19:03:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.5 2021/01/17 14:28:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.6 2021/01/17 19:03:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -252,8 +252,8 @@ arm_simplefb_preattach(void)
 	arm_simplefb_accessops.mmap = arm_simplefb_mmap;
 	arm_simplefb_accessops.pollc = arm_simplefb_pollc;
 
-	vcons_init(&arm_simplefb_vcons_data, sc, &arm_simplefb_stdscreen,
-		&arm_simplefb_accessops);
+	vcons_earlyinit(&arm_simplefb_vcons_data, sc, &arm_simplefb_stdscreen,
+	    &arm_simplefb_accessops);
 	arm_simplefb_vcons_data.init_screen = arm_simplefb_init_screen;
 #ifdef VCONS_DRAW_INTR
 	arm_simplefb_vcons_data.use_intr = 0;
