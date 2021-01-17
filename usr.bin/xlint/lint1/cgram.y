@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.141 2021/01/16 16:03:46 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.142 2021/01/17 14:50:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.141 2021/01/16 16:03:46 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.142 2021/01/17 14:50:11 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1903,7 +1903,7 @@ term:
 		$$ = build(STAR, $2, NULL);
 	  }
 	| T_AND term {
-		$$ = build(AMPER, $2, NULL);
+		$$ = build(ADDR, $2, NULL);
 	  }
 	| T_UNOP term {
 		$$ = build($1, $2, NULL);

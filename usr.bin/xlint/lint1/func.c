@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.61 2021/01/17 11:28:01 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.62 2021/01/17 14:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.61 2021/01/17 11:28:01 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.62 2021/01/17 14:50:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1010,7 +1010,7 @@ doreturn(tnode_t *tn)
 			rn = tn->tn_right;
 			while ((op = rn->tn_op) == CVT || op == PLUS)
 				rn = rn->tn_left;
-			if (rn->tn_op == AMPER && rn->tn_left->tn_op == NAME &&
+			if (rn->tn_op == ADDR && rn->tn_left->tn_op == NAME &&
 			    rn->tn_left->tn_sym->s_scl == AUTO) {
 				/* %s returns pointer to automatic object */
 				warning(302, funcsym->s_name);
