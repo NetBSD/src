@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.117 2021/01/14 23:30:50 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.118 2021/01/17 10:50:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.117 2021/01/14 23:30:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.118 2021/01/17 10:50:01 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -85,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.117 2021/01/14 23:30:50 simonb 
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
+
+#include <netinet6/nd6.h>
+#include <netinet6/in6_var.h>
 
 #include <compat/sys/sockio.h>
 
@@ -174,6 +177,20 @@ netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *s32p,
 
 	memcpy(p, s32p, sizeof *s32p);
 	p->ifm_ulist = (int *)NETBSD32PTR64(s32p->ifm_ulist);
+}
+
+static inline void
+netbsd32_to_in6_nbrinfo(struct netbsd32_in6_nbrinfo *s32p, struct in6_nbrinfo *p,
+    u_long cmd)
+{
+
+	memcpy(p->ifname, s32p->ifname, sizeof p->ifname);
+	memcpy(&p->addr, &s32p->addr, sizeof p->addr);
+	p->asked = s32p->asked;
+	p->isrouter = s32p->isrouter;
+	p->state = s32p->state;
+	p->expire = s32p->expire;
+	
 }
 
 static inline void
@@ -695,6 +712,19 @@ netbsd32_from_ifmediareq(struct ifmediareq *p,
 #if 0
 	s32p->ifm_ulist = (netbsd32_intp_t)p->ifm_ulist;
 #endif
+}
+
+static inline void
+netbsd32_from_in6_nbrinfo(struct in6_nbrinfo *p, struct netbsd32_in6_nbrinfo *s32p,
+    u_long cmd)
+{
+
+	memcpy(s32p->ifname, p->ifname, sizeof s32p->ifname);
+	memcpy(&s32p->addr, &p->addr, sizeof s32p->addr);
+	s32p->asked = p->asked;
+	s32p->isrouter = p->isrouter;
+	s32p->state = p->state;
+	s32p->expire = p->expire;
 }
 
 static inline void
@@ -1494,6 +1524,9 @@ netbsd32_ioctl(struct lwp *l,
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA_80, ifmediareq);
 	case SIOCGIFMEDIA32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
+
+	case SIOCGNBRINFO_IN632:
+		IOCTL_STRUCT_CONV_TO(SIOCGNBRINFO_IN6, in6_nbrinfo);
 
 	case SIOCGIFGENERIC32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFGENERIC, ifreq);
