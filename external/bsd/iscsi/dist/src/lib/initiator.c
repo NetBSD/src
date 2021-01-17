@@ -92,7 +92,6 @@ static iscsi_worker_t g_enqueue_worker;
 static iscsi_queue_t g_enqueue_q;
 static iscsi_queue_t g_session_q;
 static int      g_initiator_state;
-static char           *gfilename;
 
 /* Testing of initiator_abort */
 
@@ -905,9 +904,6 @@ iscsi_initiator_start(iscsi_initiator_t *ini)
 		set_debug(dbg);
 	}
 	iscsi_trace(TRACE_ISCSI_DEBUG, "initializing initiator\n");
-	iscsi_trace(TRACE_ISCSI_DEBUG,
-		"target config filename to read from: %s\n", gfilename
-		? gfilename : "(null)");
 	port = atoi(iscsi_initiator_getvar(ini, "target port"));
 	if (get_target_config(iscsi_initiator_getvar(ini,
 				"target hostname"), port) != 0) {
@@ -3715,9 +3711,6 @@ ii_initiator_init(const char *hostname, int port, int address_family, const char
 
 	USE_ARG(address_family);
 	iscsi_trace(TRACE_ISCSI_DEBUG, "initializing initiator\n");
-	iscsi_trace(TRACE_ISCSI_DEBUG,
-	    "target config filename to read from: %s\n", gfilename ?
-	    gfilename : "(null)");
 	if (get_target_config(hostname, port) != 0) {
 		iscsi_err(__FILE__, __LINE__, "Error getting target configuration from config file\n");
 		return -1;
