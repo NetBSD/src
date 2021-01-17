@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.169 2021/01/17 14:50:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.170 2021/01/17 14:55:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.169 2021/01/17 14:50:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.170 2021/01/17 14:55:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -588,8 +588,8 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	case ADDR:
 		ntn = build_address(ln, 0);
 		break;
-	case STAR:
-		ntn = new_tnode(STAR, ln->tn_type->t_subt, ln, NULL);
+	case INDIR:
+		ntn = new_tnode(INDIR, ln->tn_type->t_subt, ln, NULL);
 		break;
 	case PLUS:
 	case MINUS:
@@ -1287,7 +1287,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 		if (!typeok_amper(mp, ln, ltp, lt))
 			return false;
 		break;
-	case STAR:
+	case INDIR:
 		if (!typeok_star(lt))
 			return false;
 		break;
@@ -1806,7 +1806,7 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 			ntn->tn_type->t_tspec = t;
 		break;
 #endif
-	case STAR:
+	case INDIR:
 	case FSEL:
 		lint_assert(ln->tn_type->t_tspec == PTR);
 		t = ln->tn_type->t_subt->t_tspec;
@@ -2636,7 +2636,7 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	if (rn->tn_type->t_bitfield) {
 		ntn = new_tnode(FSEL, ntn->tn_type->t_subt, ntn, NULL);
 	} else {
-		ntn = new_tnode(STAR, ntn->tn_type->t_subt, ntn, NULL);
+		ntn = new_tnode(INDIR, ntn->tn_type->t_subt, ntn, NULL);
 	}
 
 	if (nolval)
@@ -2713,7 +2713,7 @@ build_address(tnode_t *tn, bool noign)
 	}
 
 	/* eliminate &* */
-	if (tn->tn_op == STAR &&
+	if (tn->tn_op == INDIR &&
 	    tn->tn_left->tn_type->t_tspec == PTR &&
 	    tn->tn_left->tn_type->t_subt == tn->tn_type) {
 		return tn->tn_left;
@@ -3904,12 +3904,12 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 				mark_as_set(ln->tn_sym);
 			mark_as_used(ln->tn_sym, fcall, szof);
 		}
-		if (ln->tn_op == STAR && ln->tn_left->tn_op == PLUS)
+		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
 			check_array_index(ln->tn_left, 1);
 		break;
 	case LOAD:
-		if (ln->tn_op == STAR && ln->tn_left->tn_op == PLUS)
+		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
 			check_array_index(ln->tn_left, 0);
 		/* FALLTHROUGH */
@@ -3956,7 +3956,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 			if (ln->tn_sym->s_scl == EXTERN)
 				outusg(ln->tn_sym);
 		}
-		if (ln->tn_op == STAR && ln->tn_left->tn_op == PLUS)
+		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
 			check_array_index(ln->tn_left, 0);
 		break;
@@ -3990,7 +3990,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case MOD:
 	case DIV:
 	case MULT:
-	case STAR:
+	case INDIR:
 	case UMINUS:
 	case UPLUS:
 	case DEC:

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.142 2021/01/17 14:50:11 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.143 2021/01/17 14:55:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.142 2021/01/17 14:50:11 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.143 2021/01/17 14:55:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1900,7 +1900,7 @@ term:
 		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
 	  }
 	| T_ASTERISK term {
-		$$ = build(STAR, $2, NULL);
+		$$ = build(INDIR, $2, NULL);
 	  }
 	| T_AND term {
 		$$ = build(ADDR, $2, NULL);
@@ -1916,7 +1916,7 @@ term:
 		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
 	  }
 	| term T_LBRACK expr T_RBRACK {
-		$$ = build(STAR, build(PLUS, $1, $3), NULL);
+		$$ = build(INDIR, build(PLUS, $1, $3), NULL);
 	  }
 	| term T_LPAREN T_RPAREN {
 		$$ = new_function_call_node($1, NULL);
