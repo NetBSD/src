@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons_util.c,v 1.3 2019/01/30 11:24:48 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vcons_util.c,v 1.4 2021/01/17 00:35:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Michael Lorenz
@@ -46,7 +46,7 @@
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
-void	
+void
 vcons_replay_msgbuf(struct vcons_screen *scr)
 {
 	int status = scr->scr_status;
