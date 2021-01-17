@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.21 2020/12/10 17:02:51 jdc Exp $ */
+/*	$NetBSD: adm1021.c,v 1.22 2021/01/17 21:42:35 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.21 2020/12/10 17:02:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.22 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,10 +145,11 @@ CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
 
 /* XXX: add flags for compats to admtemp_setflags() */
 static const struct device_compatible_entry compat_data[] = {
-	{ "i2c-max1617",		0 },
-	{ "max6642",			0 },
-	{ "max6690",			0 },
-	{ NULL,				0 }
+	{ .compat = "i2c-max1617" },
+	{ .compat = "max6642" },
+	{ .compat = "max6690" },
+
+	{ 0 }
 };
 
 int

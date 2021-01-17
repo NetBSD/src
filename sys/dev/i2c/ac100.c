@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.4 2019/07/27 16:02:27 thorpej Exp $ */
+/* $NetBSD: ac100.c,v 1.5 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.4 2019/07/27 16:02:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.5 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.4 2019/07/27 16:02:27 thorpej Exp $");
 #define AC100_RTC_UPD_TRIG_WRITE	__BIT(15)
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "x-powers,ac100",		0 },
-	{ NULL,				0 }
+	{ .compat = "x-powers,ac100" },
+
+	{ 0 }
 };
 
 struct ac100_softc {

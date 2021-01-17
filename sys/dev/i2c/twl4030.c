@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.3 2019/11/03 09:34:09 jmcneill Exp $ */
+/* $NetBSD: twl4030.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.3 2019/11/03 09:34:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,9 @@ struct twl_pin {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "ti,twl4030",			0 },
-	{ NULL,				0 }
+	{ .compat = "ti,twl4030" },
+
+	{ 0 }
 };
 
 #ifdef FDT
