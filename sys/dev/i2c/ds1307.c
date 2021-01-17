@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.34 2020/01/02 16:24:51 thorpej Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.35 2021/01/17 21:56:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.34 2020/01/02 16:24:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.35 2021/01/17 21:56:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,28 +157,28 @@ static const struct dsrtc_model mcp7940_model = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "dallas,ds1307",		(uintptr_t)&ds1307_model },
-	{ "maxim,ds1307",		(uintptr_t)&ds1307_model },
-	{ "i2c-ds1307",			(uintptr_t)&ds1307_model },
+	{ .compat = "dallas,ds1307",		.data = &ds1307_model },
+	{ .compat = "maxim,ds1307",		.data = &ds1307_model },
+	{ .compat = "i2c-ds1307",		.data = &ds1307_model },
 
-	{ "dallas,ds1339",		(uintptr_t)&ds1339_model },
-	{ "maxim,ds1339",		(uintptr_t)&ds1339_model },
+	{ .compat = "dallas,ds1339",		.data = &ds1339_model },
+	{ .compat = "maxim,ds1339",		.data = &ds1339_model },
 
-	{ "dallas,ds1340",		(uintptr_t)&ds1340_model },
-	{ "maxim,ds1340",		(uintptr_t)&ds1340_model },
+	{ .compat = "dallas,ds1340",		.data = &ds1340_model },
+	{ .compat = "maxim,ds1340",		.data = &ds1340_model },
 
-	{ "dallas,ds1672",		(uintptr_t)&ds1672_model },
-	{ "maxim,ds1672",		(uintptr_t)&ds1672_model },
+	{ .compat = "dallas,ds1672",		.data = &ds1672_model },
+	{ .compat = "maxim,ds1672",		.data = &ds1672_model },
 
-	{ "dallas,ds3231",		(uintptr_t)&ds3231_model },
-	{ "maxim,ds3231",		(uintptr_t)&ds3231_model },
+	{ .compat = "dallas,ds3231",		.data = &ds3231_model },
+	{ .compat = "maxim,ds3231",		.data = &ds3231_model },
 
-	{ "dallas,ds3232",		(uintptr_t)&ds3232_model },
-	{ "maxim,ds3232",		(uintptr_t)&ds3232_model },
+	{ .compat = "dallas,ds3232",		.data = &ds3232_model },
+	{ .compat = "maxim,ds3232",		.data = &ds3232_model },
 
-	{ "microchip,mcp7940",		(uintptr_t)&mcp7940_model },
+	{ .compat = "microchip,mcp7940",	.data = &mcp7940_model },
 
-	{ NULL,				0 }
+	{ 0 }
 };
 
 struct dsrtc_softc {
@@ -242,7 +242,7 @@ dsrtc_model_by_number(u_int model)
 		return &ds1307_model;
 
 	for (dce = compat_data; dce->compat != NULL; dce++) {
-		dm = (void *)dce->data;
+		dm = dce->data;
 		if (dm->dm_model == model)
 			return dm;
 	}
@@ -256,7 +256,7 @@ dsrtc_model_by_compat(const struct i2c_attach_args *ia)
 	const struct device_compatible_entry *dce;
 
 	if (iic_compatible_match(ia, compat_data, &dce))
-		dm = (void *)dce->data;
+		dm = dce->data;
 
 	return dm;
 }

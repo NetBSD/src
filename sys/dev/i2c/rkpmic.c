@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.8 2020/01/03 01:17:29 jmcneill Exp $ */
+/* $NetBSD: rkpmic.c,v 1.9 2021/01/17 21:56:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.8 2020/01/03 01:17:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.9 2021/01/17 21:56:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ struct rkpmic_softc {
 	i2c_addr_t	sc_addr;
 	int		sc_phandle;
 	struct todr_chip_handle sc_todr;
-	struct rkpmic_config *sc_conf;
+	const struct rkpmic_config *sc_conf;
 	struct clk_domain sc_clkdom;
 	struct rkpmic_clk sc_clk[2];
 };
@@ -229,9 +229,10 @@ struct rkreg_attach_args {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "rockchip,rk805",	(uintptr_t)&rk805_config },
-	{ "rockchip,rk808",	(uintptr_t)&rk808_config },
-	{ NULL }
+	{ .compat = "rockchip,rk805",	.data = &rk805_config },
+	{ .compat = "rockchip,rk808",	.data = &rk808_config },
+
+	{ 0 }
 };
 
 static uint8_t
@@ -472,7 +473,7 @@ rkpmic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_phandle = ia->ia_cookie;
-	sc->sc_conf = (void *)entry->data;
+	sc->sc_conf = entry->data;
 
 	memset(&sc->sc_todr, 0, sizeof(sc->sc_todr));
 	sc->sc_todr.cookie = sc;

@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.29 2020/02/16 20:32:29 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.30 2021/01/17 21:56:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.29 2020/02/16 20:32:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.30 2021/01/17 21:56:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,12 +466,13 @@ static const struct axppmic_config axp813_config = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "x-powers,axp803",		(uintptr_t)&axp803_config },
-	{ "x-powers,axp805",		(uintptr_t)&axp805_config },
-	{ "x-powers,axp806",		(uintptr_t)&axp806_config },
-	{ "x-powers,axp809",		(uintptr_t)&axp809_config },
-	{ "x-powers,axp813",		(uintptr_t)&axp813_config },
-	{ NULL,				0 }
+	{ .compat = "x-powers,axp803",		.data = &axp803_config },
+	{ .compat = "x-powers,axp805",		.data = &axp805_config },
+	{ .compat = "x-powers,axp806",		.data = &axp806_config },
+	{ .compat = "x-powers,axp809",		.data = &axp809_config },
+	{ .compat = "x-powers,axp813",		.data = &axp813_config },
+
+	{ 0 }
 };
 
 static int
@@ -950,7 +951,7 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 
 	(void) iic_compatible_match(ia, compat_data, &dce);
 	KASSERT(dce != NULL);
-	c = (void *)dce->data;
+	c = dce->data;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
