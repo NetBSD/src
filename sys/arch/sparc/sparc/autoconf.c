@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.262 2021/01/17 01:02:28 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.263 2021/01/17 01:04:58 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.262 2021/01/17 01:02:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.263 2021/01/17 01:04:58 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -198,6 +198,8 @@ set_machine_model(bool late)
 /*
  * Get the number of CPUs in the system and the CPUs' SPARC architecture
  * version. We need this information early in the boot process.
+ *
+ * This also sets cpu_arch to 8 on sun4m and sun4d.
  */
 static int
 find_cpus(void)
