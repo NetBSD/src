@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.175 2021/01/17 16:01:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.176 2021/01/17 16:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.175 2021/01/17 16:01:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.176 2021/01/17 16:19:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -769,7 +769,7 @@ typeok_incdec(const mod_t *mp, const tnode_t *tn, const type_t *tp)
 		return false;
 	} else if (tp->t_const) {
 		if (!tflag)
-			/* %soperand of '%s' must be modifiable ... */
+			/* %soperand of '%s' must be modifiable lvalue */
 			warning(115, "", mp->m_name);
 	}
 	return true;
