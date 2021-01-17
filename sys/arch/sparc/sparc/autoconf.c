@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.262 2021/01/17 01:02:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.262 2021/01/17 01:02:28 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -169,6 +169,33 @@ matchbyname(device_t parent, cfdata_t cf, void *aux)
 }
 
 /*
+ * Set machine_model[] to something useful.  If late is set, then
+ * have now probed the sun4 class and can finish it.  Other systems
+ * are complete with the first call with late=false out of bootstrap.
+ */
+static void
+set_machine_model(bool late)
+{
+	char namebuf[32];
+
+	if (!CPU_ISSUN4) {
+		if (late) {
+			KASSERT(machine_model[0] != '\0');
+		} else {
+			snprintf(machine_model, sizeof machine_model, "%s",
+			    prom_getpropstringA(findroot(), "name", namebuf,
+			    sizeof(namebuf)));
+		}
+		return;
+	}
+	if (late)
+		snprintf(machine_model, sizeof machine_model, "SUN-4/%d series",
+		    cpuinfo.classlvl);
+	else
+		snprintf(machine_model, sizeof machine_model, "SUN-4 series");
+}
+
+/*
  * Get the number of CPUs in the system and the CPUs' SPARC architecture
  * version. We need this information early in the boot process.
  */
@@ -187,6 +214,9 @@ find_cpus(void)
 	 * other models, presumably).
 	 */
 	cpu_arch = 7;
+
+	/* Initialise machine_model, early phase. */
+	set_machine_model(false);
 
 	/* On sun4 and sun4c we support only one CPU */
 	if (!CPU_ISSUN4M && !CPU_ISSUN4D)
@@ -1181,14 +1211,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #define	openboot_special4d	((void *)0)
 #endif
 
-
-	if (CPU_ISSUN4)
-		snprintf(machine_model, sizeof machine_model, "SUN-4/%d series",
-		    cpuinfo.classlvl);
-	else
-		snprintf(machine_model, sizeof machine_model, "%s",
-		    prom_getpropstringA(findroot(), "name", namebuf,
-		    sizeof(namebuf)));
+	set_machine_model(true);
 
 	prom_getidprom();
 	printf(": %s: hostid %lx\n", machine_model, hostid);
