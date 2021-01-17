@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.179 2021/01/17 17:14:34 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.180 2021/01/17 17:16:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.179 2021/01/17 17:14:34 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.180 2021/01/17 17:16:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -775,8 +775,8 @@ typeok_incdec(const mod_t *mp, const tnode_t *tn, const type_t *tp)
 }
 
 static bool
-typeok_amper(const mod_t *mp,
-	     const tnode_t *tn, const type_t *tp, tspec_t t)
+typeok_address(const mod_t *mp,
+	    const tnode_t *tn, const type_t *tp, tspec_t t)
 {
 	if (t == ARRAY || t == FUNC) {
 		/* ok, a warning comes later (in build_address()) */
@@ -1284,7 +1284,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 			return false;
 		break;
 	case ADDR:
-		if (!typeok_amper(mp, ln, ltp, lt))
+		if (!typeok_address(mp, ln, ltp, lt))
 			return false;
 		break;
 	case INDIR:
