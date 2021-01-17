@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.13 2021/01/17 11:32:06 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.14 2021/01/17 13:15:03 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -716,6 +716,27 @@ strict_bool_operator_eq_bool_int(void)
 	(void)(strict_bool_conversion_return_false() == 0); /* expect: 107 */
 }
 
+/*
+ * When building the NE node, the following steps happen:
+ *
+ * ln is promoted from BOOL:1 to INT:1 since it is a bit field and C90 says
+ * that bit fields must always be promoted to int.
+ *
+ * rn is promoted from BOOL.  promote() does not handle BOOL explicitly,
+ * therefore it is kept as-is.  That may or may not have been an oversight
+ * in the initial implementation of supporting BOOL.
+ *
+ * After that, the two nodes are balanced.  At this point, their types are
+ * INT:1 and BOOL.  INT is considered the larger of the two types, even
+ * though it is a bit field in this case.  Therefore BOOL is converted to
+ * INT now, and since it is a constant, the converted node loses all
+ * information about its previous type.
+ *
+ * During these conversions and promotions, the code asks whether BOOL
+ * is an arithmetic type.  If that isn't the case, no conversion or
+ * promotion takes place.  Since strict bool mode explicitly treats BOOL
+ * as non-arithmetic, changing is_arithmetic sounds like the way to go.
+ */
 void
 strict_bool_assign_bit_field_then_compare(void)
 {
