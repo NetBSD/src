@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.163 2021/01/16 19:11:36 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.164 2021/01/17 12:23:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.163 2021/01/16 19:11:36 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.164 2021/01/17 12:23:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -505,7 +505,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * Apply class conversions to the left operand, but only if its
 	 * value is needed or it is compared with null.
 	 */
-	if (mp->m_vctx || mp->m_tctx)
+	if (mp->m_left_value_context || mp->m_left_test_context)
 		ln = cconv(ln);
 	/*
 	 * The right operand is almost always in a test or value context,
@@ -521,13 +521,13 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * short would be promoted to int. Also types are tested to be
 	 * CHAR, which would also become int.
 	 */
-	if (mp->m_comp)
+	if (mp->m_comparison)
 		check_integer_comparison(op, ln, rn);
 
 	/*
 	 * Promote the left operand if it is in a test or value context
 	 */
-	if (mp->m_vctx || mp->m_tctx)
+	if (mp->m_left_value_context || mp->m_left_test_context)
 		ln = promote(op, 0, ln);
 	/*
 	 * Promote the right operand, but only if it is no struct or
@@ -543,19 +543,21 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * unsigned operands and one of the operands is signed only in
 	 * ANSI C, print a warning.
 	 */
-	if (mp->m_tlansiu && ln->tn_op == CON && ln->tn_val->v_ansiu) {
+	if (mp->m_warn_if_left_unsigned_in_c90 &&
+	    ln->tn_op == CON && ln->tn_val->v_ansiu) {
 		/* ANSI C treats constant as unsigned, op %s */
 		warning(218, mp->m_name);
 		ln->tn_val->v_ansiu = false;
 	}
-	if (mp->m_transiu && rn->tn_op == CON && rn->tn_val->v_ansiu) {
+	if (mp->m_warn_if_right_unsigned_in_c90 &&
+	    rn->tn_op == CON && rn->tn_val->v_ansiu) {
 		/* ANSI C treats constant as unsigned, op %s */
 		warning(218, mp->m_name);
 		rn->tn_val->v_ansiu = false;
 	}
 
 	/* Make sure both operands are of the same type */
-	if (mp->m_balance || (tflag && (op == SHL || op == SHR)))
+	if (mp->m_balance_operands || (tflag && (op == SHL || op == SHR)))
 		balance(op, &ln, &rn);
 
 	/*
@@ -636,7 +638,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * Print a warning if one of the operands is in a context where
 	 * it is compared with null and if this operand is a constant.
 	 */
-	if (mp->m_tctx) {
+	if (mp->m_left_test_context) {
 		if (ln->tn_op == CON ||
 		    ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) {
 			if (hflag && !constcond_flag)
@@ -646,9 +648,9 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	/* Fold if the operator requires it */
-	if (mp->m_fold) {
+	if (mp->m_fold_constant_operands) {
 		if (ln->tn_op == CON && (!mp->m_binary || rn->tn_op == CON)) {
-			if (mp->m_tctx) {
+			if (mp->m_left_test_context) {
 				ntn = fold_test(ntn);
 			} else if (is_floating(ntn->tn_type->t_tspec)) {
 				ntn = fold_float(ntn);
@@ -1151,7 +1153,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 	if (!typeok_strict_bool_compatible(op, arg, lt, rt))
 		return false;
 
-	if (mp->m_takes_only_bool || op == QUEST) {
+	if (mp->m_requires_bool || op == QUEST) {
 		bool binary = mp->m_binary;
 		bool lbool = is_strict_bool(ln);
 		bool ok = true;
@@ -1356,7 +1358,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 			return false;
 		break;
 	case COMMA:
-		if (!modtab[ln->tn_op].m_sideeff)
+		if (!modtab[ln->tn_op].m_has_side_effect)
 			check_null_effect(ln);
 		break;
 		/* LINTED206: (enumeration values not handled in switch) */
@@ -1690,7 +1692,7 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 			warning(130, mp->m_name);
 			break;
 		}
-	} else if (Pflag && mp->m_comp && op != EQ && op != NE) {
+	} else if (Pflag && mp->m_comparison && op != EQ && op != NE) {
 		if (eflag)
 			/* dubious comparison of enums, op %s */
 			warning(243, mp->m_name);
@@ -2393,7 +2395,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			} else if (op == FARG) {
 				/* conversion of negative constant to ... */
 				warning(296, arg);
-			} else if (modtab[op].m_comp) {
+			} else if (modtab[op].m_comparison) {
 				/* handled by check_integer_comparison() */
 			} else {
 				/* conversion of negative constant to ... */
@@ -3748,7 +3750,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk)
 			/* constant in conditional context */
 			warning(161);
 	}
-	if (!modtab[tn->tn_op].m_sideeff) {
+	if (!modtab[tn->tn_op].m_has_side_effect) {
 		/*
 		 * for left operands of COMMA this warning is already
 		 * printed
@@ -3771,7 +3773,7 @@ check_null_effect(const tnode_t *tn)
 	if (!hflag)
 		return;
 
-	while (!modtab[tn->tn_op].m_sideeff) {
+	while (!modtab[tn->tn_op].m_has_side_effect) {
 		if (tn->tn_op == CVT && tn->tn_type->t_tspec == VOID) {
 			tn = tn->tn_left;
 		} else if (tn->tn_op == LOGAND || tn->tn_op == LOGOR) {
@@ -3791,9 +3793,9 @@ check_null_effect(const tnode_t *tn)
 			 * : has a side effect if at least one of its operands
 			 * has a side effect
 			 */
-			if (modtab[tn->tn_left->tn_op].m_sideeff) {
+			if (modtab[tn->tn_left->tn_op].m_has_side_effect) {
 				tn = tn->tn_left;
-			} else if (modtab[tn->tn_right->tn_op].m_sideeff) {
+			} else if (modtab[tn->tn_right->tn_op].m_has_side_effect) {
 				tn = tn->tn_right;
 			} else {
 				break;
@@ -3802,7 +3804,7 @@ check_null_effect(const tnode_t *tn)
 			break;
 		}
 	}
-	if (!modtab[tn->tn_op].m_sideeff)
+	if (!modtab[tn->tn_op].m_has_side_effect)
 		/* expression has null effect */
 		warning(129);
 }
@@ -4005,8 +4007,8 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		break;
 	}
 
-	cvctx = mp->m_vctx;
-	ctctx = mp->m_tctx;
+	cvctx = mp->m_left_value_context;
+	ctctx = mp->m_left_test_context;
 	/*
 	 * values of operands of ':' are not used if the type of at least
 	 * one of the operands (for gcc compatibility) is void
@@ -4016,26 +4018,26 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	if (op == COLON && tn->tn_type->t_tspec == VOID)
 		cvctx = ctctx = false;
 	nrvdisc = op == CVT && tn->tn_type->t_tspec == VOID;
-	check_expr_misc(ln, cvctx, ctctx, mp->m_eqwarn, op == CALL, nrvdisc, szof);
+	check_expr_misc(ln, cvctx, ctctx, mp->m_warn_if_operand_eq, op == CALL, nrvdisc, szof);
 
 	switch (op) {
 	case PUSH:
 		if (rn != NULL)
-			check_expr_misc(rn, 0, 0, mp->m_eqwarn, 0, 0, szof);
+			check_expr_misc(rn, 0, 0, mp->m_warn_if_operand_eq, 0, 0, szof);
 		break;
 	case LOGAND:
 	case LOGOR:
-		check_expr_misc(rn, 0, 1, mp->m_eqwarn, 0, 0, szof);
+		check_expr_misc(rn, 0, 1, mp->m_warn_if_operand_eq, 0, 0, szof);
 		break;
 	case COLON:
-		check_expr_misc(rn, cvctx, ctctx, mp->m_eqwarn, 0, 0, szof);
+		check_expr_misc(rn, cvctx, ctctx, mp->m_warn_if_operand_eq, 0, 0, szof);
 		break;
 	case COMMA:
-		check_expr_misc(rn, vctx, tctx, mp->m_eqwarn, 0, 0, szof);
+		check_expr_misc(rn, vctx, tctx, mp->m_warn_if_operand_eq, 0, 0, szof);
 		break;
 	default:
 		if (mp->m_binary)
-			check_expr_misc(rn, 1, 0, mp->m_eqwarn, 0, 0, szof);
+			check_expr_misc(rn, 1, 0, mp->m_warn_if_operand_eq, 0, 0, szof);
 		break;
 	}
 
