@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.45 2021/01/02 03:00:56 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.46 2021/01/17 16:51:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.45 2021/01/02 03:00:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.46 2021/01/17 16:51:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ static void vcons_unlock(struct vcons_screen *);
 #ifdef VCONS_DRAW_INTR
 static void vcons_intr(void *);
 static void vcons_softintr(void *);
-static void vcons_init_thread(void *);
+static int vcons_intr_enable(device_t);
 #endif
 
 int
@@ -180,11 +180,16 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	callout_setfunc(&vd->intr, vcons_intr, vd);
 	vd->intr_valid = 1;
 
-	if (kthread_create(PRI_NONE, 0, NULL, vcons_init_thread, vd, NULL,
-	    "vcons_init") != 0) {
-		printf("%s: unable to create thread.\n", __func__);
-		return -1;
-	}
+	/*
+	 * Defer intr drawing until after autoconfiguration has completed
+	 * to serialize device attachment messages w/ the initial screen
+	 * redraw as a workaround for the lack of MP-safeness in this
+	 * subsystem. To register with autoconf, we need to create a fake
+	 * device_t and pass that in as a handle to config_interrupts.
+	 */
+	snprintf(vd->fake_dev.dv_xname, sizeof(vd->fake_dev.dv_xname), "vcons");
+	vd->fake_dev.dv_private = vd;
+	config_finalize_register(&vd->fake_dev, vcons_intr_enable);
 #endif
 	return 0;
 }
@@ -1493,14 +1498,15 @@ vcons_softintr(void *cookie)
 	callout_schedule(&vd->intr, mstohz(33));
 }
 
-static void
-vcons_init_thread(void *cookie)
+static int
+vcons_intr_enable(device_t fake_dev)
 {
-	struct vcons_data *vd = (struct vcons_data *)cookie;
+	struct vcons_data *vd = device_private(fake_dev);
 
 	vd->use_intr = 2;
 	callout_schedule(&vd->intr, mstohz(33));
-	kthread_exit(0);
+
+	return 0;
 }
 #endif /* VCONS_DRAW_INTR */
 
