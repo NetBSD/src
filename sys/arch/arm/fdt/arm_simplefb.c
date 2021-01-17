@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.4 2020/10/21 11:06:13 rin Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.5 2021/01/17 14:28:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include "pci.h"
 #include "opt_pci.h"
+#include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.4 2020/10/21 11:06:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.5 2021/01/17 14:28:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,9 +255,11 @@ arm_simplefb_preattach(void)
 	vcons_init(&arm_simplefb_vcons_data, sc, &arm_simplefb_stdscreen,
 		&arm_simplefb_accessops);
 	arm_simplefb_vcons_data.init_screen = arm_simplefb_init_screen;
+#ifdef VCONS_DRAW_INTR
 	arm_simplefb_vcons_data.use_intr = 0;
+#endif
 	vcons_init_screen(&arm_simplefb_vcons_data, &arm_simplefb_screen, 1, &defattr);
-	arm_simplefb_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;    
+	arm_simplefb_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 	if (ri->ri_rows < 1 || ri->ri_cols < 1)
 		return;
