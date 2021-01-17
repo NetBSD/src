@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.68 2021/01/17 11:55:55 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.69 2021/01/17 17:14:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.68 2021/01/17 11:55:55 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.69 2021/01/17 17:14:34 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -185,7 +185,7 @@ const	char *msgs[] = {
 	"illegal combination of %s (%s) and %s (%s), op %s",	      /* 123 */
 	"illegal pointer combination (%s) and (%s), op %s",	      /* 124 */
 	"ANSI C forbids ordered comparisons of pointers to functions",/* 125 */
-	"incompatible types in conditional",			      /* 126 */
+	"incompatible types '%s' and '%s' in conditional",	      /* 126 */
 	"'&' before array or function: ignored",		      /* 127 */
 	"operands have incompatible pointer types, op %s (%s != %s)", /* 128 */
 	"expression has null effect",				      /* 129 */
