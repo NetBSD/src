@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.176 2021/01/17 16:19:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.177 2021/01/17 16:25:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.176 2021/01/17 16:19:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.177 2021/01/17 16:25:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -464,7 +464,6 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 				error(103);
 			}
 		} else {
-			/* left operand of "->" must be pointer to ... */
 			if (tflag && tn->tn_type->t_tspec == PTR) {
 				/* left operand of '->' must be pointer ... */
 				warning(104, type_name(tn->tn_type));
@@ -886,7 +885,7 @@ typeok_shr(const mod_t *mp,
 		 */
 		if (hflag &&
 		    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
-			/* semantics of '%s' change in ANSI C; ... */
+			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 		}
 	} else if (!tflag && !sflag && !is_uinteger(olt) && !is_uinteger(ort) &&
@@ -2953,7 +2952,7 @@ plength(type_t *tp)
 		error(110);
 		break;
 	case VOID:
-		/* cannot do pointer arithmetic on operand of ... */
+		/* cannot do pointer arithmetic on operand of unknown size */
 		gnuism(136);
 		break;
 	case STRUCT:
@@ -2979,7 +2978,7 @@ plength(type_t *tp)
 	}
 
 	if (elem == 0 && elsz != 0) {
-		/* cannot do pointer arithmetic on operand of ... */
+		/* cannot do pointer arithmetic on operand of unknown size */
 		error(136);
 	}
 
@@ -3493,7 +3492,7 @@ cast(tnode_t *tn, type_t *tp)
 	} else if (nt == PTR && ot == PTR) {
 		if (!tp->t_subt->t_const && tn->tn_type->t_subt->t_const) {
 			if (hflag)
-				/* cast discards 'const' from ... */
+				/* cast discards 'const' from pointer tar... */
 				warning(275);
 		}
 	} else {

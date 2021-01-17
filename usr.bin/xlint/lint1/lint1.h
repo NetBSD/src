@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.57 2021/01/16 16:53:23 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.58 2021/01/17 16:25:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -154,7 +154,7 @@ struct type {
 	bool	t_const : 1;	/* const modifier */
 	bool	t_volatile : 1;	/* volatile modifier */
 	bool	t_proto : 1;	/* function prototype (t_args valid) */
-	bool	t_vararg : 1;	/* prototype with ... */
+	bool	t_vararg : 1;	/* prototype with '...' */
 	bool	t_typedef : 1;	/* type defined with typedef */
 	bool	t_bitfield : 1;
 	bool	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */

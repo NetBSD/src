@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.126 2021/01/17 15:24:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.127 2021/01/17 16:25:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.126 2021/01/17 15:24:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.127 2021/01/17 16:25:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -406,7 +406,7 @@ tdeferr(type_t *td, tspec_t t)
 	case LONG:
 		if (t2 == INT || t2 == UINT || t2 == LONG || t2 == ULONG ||
 		    t2 == FLOAT || t2 == DOUBLE || t2 == DCOMPLEX) {
-			/* modifying typedef with ... */
+			/* modifying typedef with '%s'; only qualifiers ... */
 			warning(5, "long");
 			if (t2 == INT) {
 				td = gettyp(LONG);
@@ -826,7 +826,7 @@ deftyp(void)
 		}
 	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PARG) {
 		if (scl != NOSCL && scl != REG) {
-			/* only register valid ... */
+			/* only register valid as formal parameter storage... */
 			error(9);
 			scl = NOSCL;
 		}
