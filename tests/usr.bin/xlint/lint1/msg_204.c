@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_204.c,v 1.3 2021/01/08 02:11:45 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.4 2021/01/17 14:45:21 rillig Exp $	*/
 # 3 "msg_204.c"
 
 // Test for message: controlling expressions must have scalar type [204]
@@ -21,7 +21,7 @@ bug_between_2020_12_31_and_2021_01_08(void)
 
 	/*
 	 * FIXME: For some reason, the ampersand is discarded in
-	 *  build_ampersand.  This only has a visible effect if the
+	 *  build_address.  This only has a visible effect if the
 	 *  t_spec in check_controlling_expression is evaluated too early,
 	 *  as has been the case before func.c 1.52 from 2021-01-08.
 	 */

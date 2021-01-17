@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.167 2021/01/17 14:37:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.168 2021/01/17 14:45:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.167 2021/01/17 14:37:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.168 2021/01/17 14:45:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -78,7 +78,7 @@ static	void	check_pointer_conversion(op_t, tnode_t *, type_t *);
 static	tnode_t	*build_struct_access(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*build_prepost_incdec(op_t, tnode_t *);
 static	tnode_t	*build_real_imag(op_t, tnode_t *);
-static	tnode_t	*build_ampersand(tnode_t *, bool);
+static	tnode_t	*build_address(tnode_t *, bool);
 static	tnode_t	*build_plus_minus(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*build_bit_shift(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*build_colon(tnode_t *, tnode_t *);
@@ -586,7 +586,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		ntn = build_prepost_incdec(op, ln);
 		break;
 	case AMPER:
-		ntn = build_ampersand(ln, 0);
+		ntn = build_address(ln, 0);
 		break;
 	case STAR:
 		ntn = new_tnode(STAR, ln->tn_type->t_subt, ln, NULL);
@@ -704,7 +704,7 @@ cconv(tnode_t *tn)
 	 * of type T)
 	 */
 	if (tn->tn_type->t_tspec == FUNC)
-		tn = build_ampersand(tn, 1);
+		tn = build_address(tn, 1);
 
 	/* lvalue to rvalue */
 	if (tn->tn_lvalue) {
@@ -780,7 +780,7 @@ typeok_amper(const mod_t *mp,
 	     const tnode_t *tn, const type_t *tp, tspec_t t)
 {
 	if (t == ARRAY || t == FUNC) {
-		/* ok, a warning comes later (in build_ampersand()) */
+		/* ok, a warning comes later (in build_address()) */
 	} else if (!tn->tn_lvalue) {
 		if (tn->tn_op == CVT && tn->tn_cast &&
 		    tn->tn_left->tn_op == LOAD) {
@@ -2614,7 +2614,7 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	nolval = op == POINT && !ln->tn_lvalue;
 
 	if (op == POINT) {
-		ln = build_ampersand(ln, 1);
+		ln = build_address(ln, 1);
 	} else if (ln->tn_type->t_tspec != PTR) {
 		lint_assert(tflag);
 		lint_assert(is_integer(ln->tn_type->t_tspec));
@@ -2700,7 +2700,7 @@ build_real_imag(op_t op, tnode_t *ln)
  * Create a tree node for the & operator
  */
 static tnode_t *
-build_ampersand(tnode_t *tn, bool noign)
+build_address(tnode_t *tn, bool noign)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
