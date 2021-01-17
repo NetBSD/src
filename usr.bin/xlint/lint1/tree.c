@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.173 2021/01/17 15:31:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.174 2021/01/17 15:40:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.173 2021/01/17 15:31:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.174 2021/01/17 15:40:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4174,8 +4174,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 }
 
 /*
- * Takes an expression an returns 0 if this expression can be used
- * for static initialisation, otherwise -1.
+ * Return whether the expression can be used for static initialisation.
  *
  * Constant initialisation expressions must be constant or an address
  * of a static object with an optional offset. In the first case,
@@ -4186,8 +4185,8 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
  * CON. Type conversions are allowed if they do not change binary
  * representation (including width).
  */
-int
-conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
+bool
+constant_addr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 {
 	sym_t	*sym;
 	ptrdiff_t offs1, offs2;
@@ -4196,24 +4195,24 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 	switch (tn->tn_op) {
 	case MINUS:
 		if (tn->tn_right->tn_op == CVT)
-			return conaddr(tn->tn_right, symp, offsp);
+			return constant_addr(tn->tn_right, symp, offsp);
 		else if (tn->tn_right->tn_op != CON)
-			return -1;
+			return false;
 		/* FALLTHROUGH */
 	case PLUS:
 		offs1 = offs2 = 0;
 		if (tn->tn_left->tn_op == CON) {
 			offs1 = (ptrdiff_t)tn->tn_left->tn_val->v_quad;
-			if (conaddr(tn->tn_right, &sym, &offs2) == -1)
-				return -1;
+			if (!constant_addr(tn->tn_right, &sym, &offs2))
+				return false;
 		} else if (tn->tn_right->tn_op == CON) {
 			offs2 = (ptrdiff_t)tn->tn_right->tn_val->v_quad;
 			if (tn->tn_op == MINUS)
 				offs2 = -offs2;
-			if (conaddr(tn->tn_left, &sym, &offs1) == -1)
-				return -1;
+			if (!constant_addr(tn->tn_left, &sym, &offs1))
+				return false;
 		} else {
-			return -1;
+			return false;
 		}
 		*symp = sym;
 		*offsp = offs1 + offs2;
@@ -4235,7 +4234,7 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		ot = tn->tn_left->tn_type->t_tspec;
 		if ((!is_integer(t) && t != PTR) ||
 		    (!is_integer(ot) && ot != PTR)) {
-			return -1;
+			return false;
 		}
 #ifdef notdef
 		/*
@@ -4250,13 +4249,13 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		else if (psize(t) != psize(ot))
 			return -1;
 #endif
-		if (conaddr(tn->tn_left, symp, offsp) == -1)
-			return -1;
+		if (!constant_addr(tn->tn_left, symp, offsp))
+			return false;
 		break;
 	default:
-		return -1;
+		return false;
 	}
-	return 0;
+	return true;
 }
 
 /*

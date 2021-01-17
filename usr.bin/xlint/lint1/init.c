@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.63 2021/01/16 16:53:23 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.64 2021/01/17 15:40:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.63 2021/01/16 16:53:23 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.64 2021/01/17 15:40:27 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -646,7 +646,7 @@ mkinit(tnode_t *tn)
 	if (tn != NULL && tn->tn_op != CON) {
 		sym = NULL;
 		offs = 0;
-		if (conaddr(tn, &sym, &offs) == -1) {
+		if (!constant_addr(tn, &sym, &offs)) {
 			if (sc == AUTO || sc == REG) {
 				/* non-constant initializer */
 				c99ism(177);
