@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.57 2021/01/17 15:40:27 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.58 2021/01/17 23:04:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -71,6 +71,7 @@ extern	int	yyparse(void);
 extern  bool	attron;
 extern	pos_t	curr_pos;
 extern	pos_t	csrc_pos;
+extern	bool	in_system_header;
 extern	symt_t	symtyp;
 extern	FILE	*yyin;
 extern	uint64_t qbmasks[], qlmasks[], qumasks[];

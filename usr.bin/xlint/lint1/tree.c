@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.180 2021/01/17 17:16:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.181 2021/01/17 23:04:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.180 2021/01/17 17:16:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.181 2021/01/17 23:04:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -723,6 +723,15 @@ before_conversion(const tnode_t *tn)
 	return tn;
 }
 
+static bool
+is_bool_compatible(tspec_t t, const tnode_t *tn)
+{
+	if (t == BOOL)
+		return true;
+	return in_system_header && t == INT && tn->tn_op == CON &&
+	       (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1);
+}
+
 /* In strict bool mode, see if the node's type is compatible with bool. */
 bool
 is_strict_bool(const tnode_t *tn)
@@ -732,7 +741,7 @@ is_strict_bool(const tnode_t *tn)
 	tn = before_conversion(tn);
 	t = tn->tn_type->t_tspec;
 
-	if (t == BOOL)
+	if (is_bool_compatible(t, tn))
 		return true;
 
 	/* For enums that are used as bit sets, allow "flags & FLAG". */
@@ -1115,11 +1124,14 @@ needs_compatible_types(op_t op)
  * behavior.
  */
 static bool
-typeok_strict_bool_compatible(op_t op, int arg, tspec_t lt, tspec_t rt)
+typeok_strict_bool_compatible(op_t op, int arg,
+			      const tnode_t *ln, tspec_t lt,
+			      const tnode_t *rn, tspec_t rt)
 {
+
 	if (!needs_compatible_types(op))
 		return true;
-	if ((lt == BOOL) == (rt == BOOL))
+	if (is_bool_compatible(lt, ln) == is_bool_compatible(rt, rn))
 		return true;
 
 	if (op == FARG) {
@@ -1158,7 +1170,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 		rt = NOTSPEC;
 	}
 
-	if (!typeok_strict_bool_compatible(op, arg, lt, rt))
+	if (!typeok_strict_bool_compatible(op, arg, ln, lt, rn, rt))
 		return false;
 
 	if (mp->m_requires_bool || op == QUEST) {

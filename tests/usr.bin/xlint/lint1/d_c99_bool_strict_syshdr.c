@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.1 2021/01/17 23:00:41 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.2 2021/01/17 23:04:09 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -26,7 +26,7 @@ strict_bool_system_header_statement_macro(void)
 # 27 "d_c99_bool_strict_syshdr.c" 3 4
 	do {
 		println("nothing");
-	} while (/*CONSTCOND*/0);	/*FIXME*//* expect: 333 */
+	} while (/*CONSTCOND*/0);	/* ok */
 
 # 32 "d_c99_bool_strict_syshdr.c"
 	do {
