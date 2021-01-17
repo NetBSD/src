@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.76 2021/01/14 08:22:51 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.77 2021/01/17 10:50:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -479,6 +479,18 @@ struct netbsd32_sioc_vif_req {
 };
 /* from <sys/sockio.h> */
 #define	SIOCGETVIFCNT32	_IOWR('u', 51, struct netbsd32_sioc_vif_req)/* vif pkt cnt */
+
+/* from <netinet6/nd6.h> */
+struct netbsd32_in6_nbrinfo {
+	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
+	struct in6_addr addr;	/* IPv6 address of the neighbor */
+	netbsd32_long	asked;	/* number of queries already sent for this addr */
+	int	isrouter;	/* if it acts as a router */
+	int	state;		/* reachability state */
+	int	expire;		/* lifetime for NDP state transition */
+};
+/* from <netinet6/in6_var.h> */
+#define SIOCGNBRINFO_IN632	_IOWR('i', 78, struct netbsd32_in6_nbrinfo)
 
 struct netbsd32_sioc_sg_req {
 	struct	in_addr src;
