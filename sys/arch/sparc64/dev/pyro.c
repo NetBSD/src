@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.21 2021/01/04 14:48:51 thorpej Exp $	*/
+/*	$NetBSD: pyro.c,v 1.22 2021/01/17 00:18:28 mrg Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.21 2021/01/04 14:48:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.22 2021/01/17 00:18:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -283,13 +283,13 @@ pcireg_t
 pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct pyro_pbm *pp = pc->cookie;
-	struct cpu_info *ci = curcpu();
 	pcireg_t val = (pcireg_t)~0;
 	int s;
 
 	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
 	if (PCITAG_NODE(tag) != -1 && (unsigned int)reg < PCI_CONF_SIZE) {
 		s = splhigh();
+		struct cpu_info *ci = curcpu();
 		ci->ci_pci_probe = true;
 		membar_Sync();
 		val = bus_space_read_4(pp->pp_cfgt, pp->pp_cfgh,
