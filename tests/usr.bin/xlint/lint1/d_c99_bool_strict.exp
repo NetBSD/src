@@ -146,3 +146,6 @@ d_c99_bool_strict.c(670): operands of '=' have incompatible types (_Bool != int)
 d_c99_bool_strict.c(677): operands of '=' have incompatible types (_Bool != int) [107]
 d_c99_bool_strict.c(652): warning: argument flags unused in function strict_bool_bitwise_and_enum [231]
 d_c99_bool_strict.c(716): operands of '==' have incompatible types (_Bool != int) [107]
+d_c99_bool_strict.c(741): controlling expression must be bool, not 'int' [333]
+d_c99_bool_strict.c(746): controlling expression must be bool, not 'int' [333]
+d_c99_bool_strict.c(751): controlling expression must be bool, not 'int' [333]
