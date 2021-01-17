@@ -1,5 +1,4 @@
 d_c99_bool_strict_syshdr.c(24): controlling expression must be bool, not 'int' [333]
-d_c99_bool_strict_syshdr.c(29): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict_syshdr.c(34): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict_syshdr.c(71): operands of '=' have incompatible types (_Bool != int) [107]
 d_c99_bool_strict_syshdr.c(77): operands of '=' have incompatible types (int != _Bool) [107]
