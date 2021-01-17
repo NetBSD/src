@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.29 2021/01/17 15:13:15 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.30 2021/01/17 19:03:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -143,7 +143,9 @@ struct vcons_data {
 #endif
 };
 
-int	vcons_init(struct vcons_data *, void *cookie, struct wsscreen_descr *,
+int	vcons_init(struct vcons_data *, void *, struct wsscreen_descr *,
+    struct wsdisplay_accessops *);
+int	vcons_earlyinit(struct vcons_data *, void *, struct wsscreen_descr *,
     struct wsdisplay_accessops *);
 
 int	vcons_init_screen(struct vcons_data *, struct vcons_screen *, int,
