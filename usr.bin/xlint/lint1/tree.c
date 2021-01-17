@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.165 2021/01/17 13:50:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.166 2021/01/17 14:26:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.165 2021/01/17 13:50:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.166 2021/01/17 14:26:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2150,20 +2150,17 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 
 	if (tn->tn_op == CON)
 		return;
-
-	if (op != CVT) {
-		/* We got already an error. */
+	if (op != CVT)
+		return;		/* We got already an error. */
+	if (psize(nt) >= psize(PTR))
 		return;
-	}
 
-	if (psize(nt) < psize(PTR)) {
-		if (pflag && size(nt) >= size(PTR)) {
-			/* conversion of pointer to '%s' may lose bits */
-			warning(134, type_name(tp));
-		} else {
-			/* conversion of pointer to '%s' loses bits */
-			warning(133, type_name(tp));
-		}
+	if (pflag && size(nt) >= size(PTR)) {
+		/* conversion of pointer to '%s' may lose bits */
+		warning(134, type_name(tp));
+	} else {
+		/* conversion of pointer to '%s' loses bits */
+		warning(133, type_name(tp));
 	}
 }
 
@@ -2219,7 +2216,7 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 }
 
 /*
- * Converts a typed constant in a constant of another type.
+ * Converts a typed constant to a constant of another type.
  *
  * op		operator which requires conversion
  * arg		if op is FARG, # of argument
