@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.144 2021/01/17 15:06:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.145 2021/01/17 15:09:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.144 2021/01/17 15:06:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.145 2021/01/17 15:09:56 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -153,7 +153,7 @@ anonymize(sym_t *s)
 %token	<y_op>		T_SHFTOP
 %token	<y_op>		T_RELOP
 %token	<y_op>		T_EQOP
-%token	<y_op>		T_AND
+%token	<y_op>		T_AMPER
 %token	<y_op>		T_XOR
 %token	<y_op>		T_OR
 %token	<y_op>		T_LOGAND
@@ -254,7 +254,7 @@ anonymize(sym_t *s)
 %left	T_LOGAND
 %left	T_OR
 %left	T_XOR
-%left	T_AND
+%left	T_AMPER
 %left	T_EQOP
 %left	T_RELOP
 %left	T_SHFTOP
@@ -1817,7 +1817,7 @@ expr:
 	| expr T_EQOP expr {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_AND expr {
+	| expr T_AMPER expr {
 		$$ = build(BITAND, $1, $3);
 	  }
 	| expr T_XOR expr {
@@ -1902,7 +1902,7 @@ term:
 	| T_ASTERISK term {
 		$$ = build(INDIR, $2, NULL);
 	  }
-	| T_AND term {
+	| T_AMPER term {
 		$$ = build(ADDR, $2, NULL);
 	  }
 	| T_UNOP term {
