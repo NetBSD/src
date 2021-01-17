@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.178 2021/01/17 16:32:36 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.179 2021/01/17 17:14:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.178 2021/01/17 16:32:36 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.179 2021/01/17 17:14:34 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1040,8 +1040,8 @@ typeok_colon(const mod_t *mp,
 
 	if (lt == VOID || rt == VOID) {
 		if (lt != VOID || rt != VOID)
-			/* incompatible types in conditional */
-			warning(126);
+			/* incompatible types '%s' and '%s' in conditional */
+			warning(126, type_name(ltp), type_name(rtp));
 		return true;
 	}
 
@@ -1063,8 +1063,8 @@ typeok_colon(const mod_t *mp,
 		return true;
 	}
 
-	/* incompatible types in conditional */
-	error(126);
+	/* incompatible types '%s' and '%s' in conditional */
+	error(126, type_name(ltp), type_name(rtp));
 	return false;
 }
 
