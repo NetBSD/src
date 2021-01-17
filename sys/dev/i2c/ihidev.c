@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.12 2020/01/09 04:04:01 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.13 2021/01/17 21:47:50 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.12 2020/01/09 04:04:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.13 2021/01/17 21:47:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,9 @@ static int	ihidev_print(void *, const char *);
 static int	ihidev_submatch(device_t, cfdata_t, const int *, void *);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "hid-over-i2c",		0 },
-	{ NULL,				0 }
+	{ .compat = "hid-over-i2c" },
+
+	{ 0 }
 };
 
 static int

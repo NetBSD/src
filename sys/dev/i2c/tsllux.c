@@ -1,4 +1,4 @@
-/* $NetBSD: tsllux.c,v 1.1 2021/01/04 22:09:35 thorpej Exp $ */
+/* $NetBSD: tsllux.c,v 1.2 2021/01/17 21:47:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsllux.c,v 1.1 2021/01/04 22:09:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsllux.c,v 1.2 2021/01/17 21:47:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,10 @@ CFATTACH_DECL_NEW(tsllux, sizeof(struct tsllux_softc),
     tsllux_match, tsllux_attach, NULL, NULL);
 
 static const struct device_compatible_entry tsllux_compat_data[] = {
-	{ "amstaos,tsl2560",		0 },
-	{ "amstaos,tsl2561",		0 },
-	{ NULL,				0 }
+	{ .compat = "amstaos,tsl2560" },
+	{ .compat = "amstaos,tsl2561" },
+
+	{ 0 }
 };
 
 static int	tsllux_read1(struct tsllux_softc *, uint8_t, uint8_t *);

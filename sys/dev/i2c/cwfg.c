@@ -1,4 +1,4 @@
-/* $NetBSD: cwfg.c,v 1.1 2020/01/03 18:00:05 jmcneill Exp $ */
+/* $NetBSD: cwfg.c,v 1.2 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cwfg.c,v 1.1 2020/01/03 18:00:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cwfg.c,v 1.2 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,9 @@ struct cwfg_softc {
 #define	CWFG_ALERT_LEVEL_DEFAULT	0
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "cellwise,cw201x",		1 },
-	{ NULL,				0 }
+	{ .compat = "cellwise,cw201x" },
+
+	{ 0 }
 };
 
 static int

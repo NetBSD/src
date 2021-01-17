@@ -1,4 +1,4 @@
-/* $NetBSD: anxedp.c,v 1.3 2020/01/01 18:09:44 thorpej Exp $ */
+/* $NetBSD: anxedp.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.3 2020/01/01 18:09:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,8 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.3 2020/01/01 18:09:44 thorpej Exp $");
 #define	 ANX_RPLY_RECEIV	__BIT(1)
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "analogix,anx6345",		1 },
-	{ NULL }
+	{ .compat = "analogix,anx6345" },
+
+	{ 0 }
 };
 
 struct anxedp_softc;

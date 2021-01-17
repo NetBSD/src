@@ -1,4 +1,4 @@
-/* $NetBSD: pca9685.c,v 1.3 2019/07/25 04:24:44 thorpej Exp $ */
+/* $NetBSD: pca9685.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018, 2019 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.3 2019/07/25 04:24:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,9 @@ static int	pcapwm_pwm_set_config(struct pwm_controller *,
 		    const struct pwm_config *);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "nxp,pca9685-pwm",	0 },
-	{ NULL }
+	{ .compat = "nxp,pca9685-pwm" },
+
+	{ 0 }
 };
 
 static int

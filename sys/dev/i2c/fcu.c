@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.9 2019/06/15 02:00:21 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.10 2021/01/17 21:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.9 2019/06/15 02:00:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.10 2021/01/17 21:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,9 @@ CFATTACH_DECL_NEW(fcu, sizeof(struct fcu_softc),
     fcu_match, fcu_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "fcu",			0 },
-	{ NULL,				0 }
+	{ .compat = "fcu" },
+
+	{ 0 }
 };
 
 static int
