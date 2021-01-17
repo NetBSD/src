@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.131 2021/01/07 07:40:39 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.132 2021/01/17 00:18:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.131 2021/01/07 07:40:39 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.132 2021/01/17 00:18:28 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1382,7 +1382,6 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
-	struct cpu_info *ci = curcpu();
 	pcireg_t val = (pcireg_t)~0;
 	int s;
 
@@ -1397,6 +1396,7 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 			(int)PCITAG_OFFSET(tag) + reg));
 
 		s = splhigh();
+		struct cpu_info *ci = curcpu();
 		ci->ci_pci_probe = true;
 		membar_Sync();
 		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,
