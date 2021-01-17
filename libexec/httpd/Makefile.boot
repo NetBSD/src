@@ -6,18 +6,20 @@
 CC=	cc
 OPT=	-O
 LARGE_CFLAGS=	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-LOCAL_CFLAGS=	-DNO_LUA_SUPPORT -DNO_BLOCKLIST_SUPPORT -D_GNU_SOURCE
+LOCAL_CFLAGS=	-DNO_LUA_SUPPORT -DNO_BLOCKLIST_SUPPORT -D_GNU_SOURCE -D_DEFAULT_SOURCE
 CFLAGS=	$(OPT) $(LARGE_CFLAGS) $(LOCAL_CFLAGS)
 
 GROFF=	groff -Tascii
 CRYPTOLIBDIR=	# -L/usr/local/lib
 CRYPTOLIBS=	$(CRYPTOLIBDIR) -lcrypto -lssl
 
+LIBS=	$(CRYPTOLIBS) $(EXTRALIBS)
+
 FILES=	bozohttpd.c auth-bozo.c cgi-bozo.c content-bozo.c daemon-bozo.c \
 	dir-index-bozo.c lua-bozo.c ssl-bozo.c tilde-luzah-bozo.c main.c
 
 all:
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o bozohttpd $(FILES) $(CRYPTOLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o bozohttpd $(FILES) $(LIBS)
 
 man:
 	$(GROFF) -mandoc bozohttpd.8 > bozohttpd.cat8
