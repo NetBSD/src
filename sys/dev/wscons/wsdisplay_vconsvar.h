@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.28 2021/01/16 23:19:50 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.29 2021/01/17 15:13:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -33,6 +33,8 @@
 #include "opt_wsdisplay_compat.h"
 #include "opt_vcons.h"
 #endif
+
+#include <sys/atomic.h>
 
 struct vcons_data;
 
@@ -84,10 +86,10 @@ struct vcons_screen {
 };
 
 #define SCREEN_IS_VISIBLE(scr) (((scr)->scr_status & VCONS_IS_VISIBLE) != 0)
-#define SCREEN_IS_BUSY(scr) ((scr)->scr_busy != 0)
+#define SCREEN_IS_BUSY(scr) (membar_consumer(), (scr)->scr_busy != 0)
 #define SCREEN_CAN_DRAW(scr) (((scr)->scr_flags & VCONS_DONT_DRAW) == 0)
-#define SCREEN_BUSY(scr) ((scr)->scr_busy = 1)
-#define SCREEN_IDLE(scr) ((scr)->scr_busy = 0)
+#define SCREEN_BUSY(scr) ((scr)->scr_busy = 1, membar_producer())
+#define SCREEN_IDLE(scr) ((scr)->scr_busy = 0, membar_producer())
 #define SCREEN_VISIBLE(scr) ((scr)->scr_status |= VCONS_IS_VISIBLE)
 #define SCREEN_INVISIBLE(scr) ((scr)->scr_status &= ~VCONS_IS_VISIBLE)
 #define SCREEN_DISABLE_DRAWING(scr) ((scr)->scr_flags |= VCONS_DONT_DRAW)
