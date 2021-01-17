@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.171 2021/01/17 15:06:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.172 2021/01/17 15:24:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.171 2021/01/17 15:06:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.172 2021/01/17 15:24:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -534,14 +534,14 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * Promote the left operand if it is in a test or value context
 	 */
 	if (mp->m_left_value_context || mp->m_left_test_context)
-		ln = promote(op, 0, ln);
+		ln = promote(op, false, ln);
 	/*
 	 * Promote the right operand, but only if it is no struct or
 	 * union member, or if it is not to be assigned to the left operand
 	 */
 	if (mp->m_binary && op != ARROW && op != POINT &&
 	    op != ASSIGN && op != RETURN) {
-		rn = promote(op, 0, rn);
+		rn = promote(op, false, rn);
 	}
 
 	/*
@@ -586,7 +586,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		ntn = build_prepost_incdec(op, ln);
 		break;
 	case ADDR:
-		ntn = build_address(ln, 0);
+		ntn = build_address(ln, false);
 		break;
 	case INDIR:
 		ntn = new_tnode(INDIR, ln->tn_type->t_subt, ln, NULL);
@@ -704,7 +704,7 @@ cconv(tnode_t *tn)
 	 * of type T)
 	 */
 	if (tn->tn_type->t_tspec == FUNC)
-		tn = build_address(tn, 1);
+		tn = build_address(tn, true);
 
 	/* lvalue to rvalue */
 	if (tn->tn_lvalue) {
@@ -848,7 +848,7 @@ typeok_minus(op_t op,
 		return false;
 	}
 	if (lt == PTR && rt == PTR) {
-		if (!eqtype(ltp->t_subt, rtp->t_subt, 1, 0, NULL)) {
+		if (!eqtype(ltp->t_subt, rtp->t_subt, true, false, NULL)) {
 			/* illegal pointer subtraction */
 			error(116);
 		}
@@ -1056,9 +1056,9 @@ typeok_colon(const mod_t *mp,
 	}
 
 	if (rt == PTR && lt == PTR) {
-		if (eqptrtype(lstp, rstp, 1))
+		if (eqptrtype(lstp, rstp, true))
 			return true;
-		if (!eqtype(lstp, rstp, 1, 0, NULL))
+		if (!eqtype(lstp, rstp, true, false, NULL))
 			warn_incompatible_pointers(mp, ltp, rtp);
 		return true;
 	}
@@ -1475,7 +1475,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 		return;
 	}
 
-	if (!eqtype(ltp->t_subt, rtp->t_subt, 1, 0, NULL)) {
+	if (!eqtype(ltp->t_subt, rtp->t_subt, true, false, NULL)) {
 		warn_incompatible_pointers(&modtab[op], ltp, rtp);
 		return;
 	}
@@ -1548,7 +1548,7 @@ check_assign_types_compatible(op_t op, int arg,
 	}
 
 	if (lt == PTR && rt == PTR && (lst == VOID || rst == VOID ||
-				       eqtype(lstp, rstp, 1, 0, NULL))) {
+				       eqtype(lstp, rstp, true, false, NULL))) {
 		/* compatible pointer types (qualifiers ignored) */
 		if (!tflag &&
 		    ((!lstp->t_const && rstp->t_const) ||
@@ -2052,7 +2052,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		return;
 
 	/* get default promotion */
-	ptn = promote(NOOP, 1, tn);
+	ptn = promote(NOOP, true, tn);
 	ot = ptn->tn_type->t_tspec;
 
 	/* return if types are the same with and without prototype */
@@ -2614,7 +2614,7 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	nolval = op == POINT && !ln->tn_lvalue;
 
 	if (op == POINT) {
-		ln = build_address(ln, 1);
+		ln = build_address(ln, true);
 	} else if (ln->tn_type->t_tspec != PTR) {
 		lint_assert(tflag);
 		lint_assert(is_integer(ln->tn_type->t_tspec));
@@ -3260,8 +3260,8 @@ fold_float(tnode_t *tn)
 		lint_assert(/*CONSTCOND*/false);
 	}
 
-	lint_assert(fpe != 0 || isnan((double)v->v_ldbl) == false);
-	if (fpe != 0 || finite((double)v->v_ldbl) == false ||
+	lint_assert(fpe != 0 || isnan((double)v->v_ldbl) == 0);
+	if (fpe != 0 || finite((double)v->v_ldbl) == 0 ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
@@ -3634,7 +3634,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 			arg->tn_left = check_prototype_argument(
 			    n, asym->s_type, arg->tn_left);
 		} else {
-			arg->tn_left = promote(NOOP, 1, arg->tn_left);
+			arg->tn_left = promote(NOOP, true, arg->tn_left);
 		}
 		arg->tn_type = arg->tn_left->tn_type;
 
@@ -3686,7 +3686,7 @@ constant(tnode_t *tn, bool required)
 	if (tn != NULL)
 		tn = cconv(tn);
 	if (tn != NULL)
-		tn = promote(NOOP, 0, tn);
+		tn = promote(NOOP, false, tn);
 
 	v = xcalloc(1, sizeof (val_t));
 
@@ -3749,7 +3749,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk)
 	if (dcs->d_ctx != EXTERN)
 		check_statement_reachable();
 
-	check_expr_misc(tn, vctx, tctx, !tctx, 0, 0, 0);
+	check_expr_misc(tn, vctx, tctx, !tctx, false, false, false);
 	if (tn->tn_op == ASSIGN) {
 		if (hflag && tctx)
 			/* assignment in conditional context */
@@ -3906,12 +3906,12 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		}
 		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
-			check_array_index(ln->tn_left, 1);
+			check_array_index(ln->tn_left, true);
 		break;
 	case LOAD:
 		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
-			check_array_index(ln->tn_left, 0);
+			check_array_index(ln->tn_left, false);
 		/* FALLTHROUGH */
 	case PUSH:
 	case INCBEF:
@@ -3947,7 +3947,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 				warning(158, ln->tn_sym->s_name);
 				mark_as_set(ln->tn_sym);
 			}
-			mark_as_used(ln->tn_sym, 0, 0);
+			mark_as_used(ln->tn_sym, false, false);
 		}
 		break;
 	case ASSIGN:
@@ -3958,7 +3958,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		}
 		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
-			check_array_index(ln->tn_left, 0);
+			check_array_index(ln->tn_left, false);
 		break;
 	case CALL:
 		lint_assert(ln->tn_op == ADDR);
@@ -4032,21 +4032,21 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	switch (op) {
 	case PUSH:
 		if (rn != NULL)
-			check_expr_misc(rn, 0, 0, mp->m_warn_if_operand_eq, 0, 0, szof);
+			check_expr_misc(rn, false, false, mp->m_warn_if_operand_eq, false, false, szof);
 		break;
 	case LOGAND:
 	case LOGOR:
-		check_expr_misc(rn, 0, 1, mp->m_warn_if_operand_eq, 0, 0, szof);
+		check_expr_misc(rn, false, true, mp->m_warn_if_operand_eq, false, false, szof);
 		break;
 	case COLON:
-		check_expr_misc(rn, cvctx, ctctx, mp->m_warn_if_operand_eq, 0, 0, szof);
+		check_expr_misc(rn, cvctx, ctctx, mp->m_warn_if_operand_eq, false, false, szof);
 		break;
 	case COMMA:
-		check_expr_misc(rn, vctx, tctx, mp->m_warn_if_operand_eq, 0, 0, szof);
+		check_expr_misc(rn, vctx, tctx, mp->m_warn_if_operand_eq, false, false, szof);
 		break;
 	default:
 		if (mp->m_binary)
-			check_expr_misc(rn, 1, 0, mp->m_warn_if_operand_eq, 0, 0, szof);
+			check_expr_misc(rn, true, false, mp->m_warn_if_operand_eq, false, false, szof);
 		break;
 	}
 

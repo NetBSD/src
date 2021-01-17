@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.125 2021/01/17 11:28:01 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.126 2021/01/17 15:24:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.125 2021/01/17 11:28:01 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.126 2021/01/17 15:24:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1389,7 +1389,7 @@ add_function(sym_t *decl, sym_t *args)
 	*tpp = tp = getblk(sizeof (type_t));
 	tp->t_tspec = FUNC;
 	tp->t_subt = dcs->d_next->d_type;
-	if ((tp->t_proto = dcs->d_proto) != 0)
+	if ((tp->t_proto = dcs->d_proto) != false)
 		tp->t_args = args;
 	tp->t_vararg = dcs->d_vararg;
 
