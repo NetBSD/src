@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.164 2021/01/17 12:23:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.165 2021/01/17 13:50:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.164 2021/01/17 12:23:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.165 2021/01/17 13:50:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1000,6 +1000,8 @@ typeok_colon(const mod_t *mp,
 
 	if (is_arithmetic(lt) && is_arithmetic(rt))
 		return true;
+	if (lt == BOOL && rt == BOOL)
+		return true;
 
 	if (lt == STRUCT && rt == STRUCT && ltp->t_str == rtp->t_str)
 		return true;
@@ -1208,6 +1210,8 @@ typeok_scalar(op_t op, const mod_t *mp,
 	      const tnode_t *ln, tspec_t lt,
 	      const tnode_t *rn, tspec_t rt)
 {
+	if (mp->m_takes_bool && lt == BOOL && rt == BOOL)
+		return true;
 	if (mp->m_requires_integer) {
 		if (!is_integer(lt) || (mp->m_binary && !is_integer(rt))) {
 			warn_incompatible_types(op, lt, rt);
@@ -2807,6 +2811,8 @@ build_colon(tnode_t *ln, tnode_t *rn)
 	 * still need to be handled.
 	 */
 	if (is_arithmetic(lt) && is_arithmetic(rt)) {
+		rtp = ln->tn_type;
+	} else if (lt == BOOL && rt == BOOL) {
 		rtp = ln->tn_type;
 	} else if (lt == VOID || rt == VOID) {
 		rtp = gettyp(VOID);

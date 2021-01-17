@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.14 2021/01/17 13:15:03 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.15 2021/01/17 13:50:33 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -167,19 +167,19 @@ enum strict_bool_constant_expressions {
 	 */
 	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,	/* expect: 331 */
 
-	BINAND_BOOL = __lint_false & __lint_true,
+	BINAND_BOOL = __lint_false & __lint_true, /* expect: 55 */
 	BINAND_INT = 0 & 1,
 
-	BINXOR_BOOL = __lint_false ^ __lint_true,
+	BINXOR_BOOL = __lint_false ^ __lint_true, /* expect: 55 */
 	BINXOR_INT = 0 ^ 1,
 
-	BINOR_BOOL = __lint_false | __lint_true,
+	BINOR_BOOL = __lint_false | __lint_true, /* expect: 55 */
 	BINOR_INT = 0 | 1,
 
-	LOGOR_BOOL = __lint_false || __lint_true,
+	LOGOR_BOOL = __lint_false || __lint_true, /* expect: 55 */
 	LOGOR_INT = 0 || 1,	/* expect: 331, 332 */
 
-	LOGAND_BOOL = __lint_false && __lint_true,
+	LOGAND_BOOL = __lint_false && __lint_true, /* expect: 55 */
 	LOGAND_INT = 0 && 1,	/* expect: 331, 332 */
 };
 
@@ -221,7 +221,7 @@ strict_bool_bit_fields_operand_conversion(void)
 	struct s s = { 0 };
 
 	s.ordinary = s.ordinary | s.ordinary;
-	s.bit_field = s.bit_field | s.bit_field; /* FIXME *//* expect: 107 */
+	s.bit_field = s.bit_field | s.bit_field;
 }
 
 /*
@@ -716,27 +716,6 @@ strict_bool_operator_eq_bool_int(void)
 	(void)(strict_bool_conversion_return_false() == 0); /* expect: 107 */
 }
 
-/*
- * When building the NE node, the following steps happen:
- *
- * ln is promoted from BOOL:1 to INT:1 since it is a bit field and C90 says
- * that bit fields must always be promoted to int.
- *
- * rn is promoted from BOOL.  promote() does not handle BOOL explicitly,
- * therefore it is kept as-is.  That may or may not have been an oversight
- * in the initial implementation of supporting BOOL.
- *
- * After that, the two nodes are balanced.  At this point, their types are
- * INT:1 and BOOL.  INT is considered the larger of the two types, even
- * though it is a bit field in this case.  Therefore BOOL is converted to
- * INT now, and since it is a constant, the converted node loses all
- * information about its previous type.
- *
- * During these conversions and promotions, the code asks whether BOOL
- * is an arithmetic type.  If that isn't the case, no conversion or
- * promotion takes place.  Since strict bool mode explicitly treats BOOL
- * as non-arithmetic, changing is_arithmetic sounds like the way to go.
- */
 void
 strict_bool_assign_bit_field_then_compare(void)
 {
@@ -746,6 +725,5 @@ strict_bool_assign_bit_field_then_compare(void)
 
 	struct s s = { __lint_false };
 
-	/* FIXME: The __lint_false is converted irreversibly to an INT. */
-	(void)((s.flag = s.flag) != __lint_false); /* expect: 107 */
+	(void)((s.flag = s.flag) != __lint_false);
 }

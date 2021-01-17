@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.16 2021/01/09 14:10:15 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.17 2021/01/17 13:50:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.16 2021/01/09 14:10:15 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.17 2021/01/17 13:50:32 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -163,5 +163,10 @@ inittyp(void)
 	if (!pflag) {
 		for (i = 0; i < NTSPEC; i++)
 			ttab[i].tt_psz = ttab[i].tt_sz;
+	}
+	if (Tflag) {
+		ttab[BOOL].tt_is_integer = false;
+		ttab[BOOL].tt_is_uinteger = false;
+		ttab[BOOL].tt_is_arithmetic = false;
 	}
 }
