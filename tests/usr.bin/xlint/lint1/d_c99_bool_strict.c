@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.12 2021/01/16 18:48:52 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.13 2021/01/17 11:32:06 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -714,4 +714,17 @@ void
 strict_bool_operator_eq_bool_int(void)
 {
 	(void)(strict_bool_conversion_return_false() == 0); /* expect: 107 */
+}
+
+void
+strict_bool_assign_bit_field_then_compare(void)
+{
+	struct s {
+		bool flag: 1;
+	};
+
+	struct s s = { __lint_false };
+
+	/* FIXME: The __lint_false is converted irreversibly to an INT. */
+	(void)((s.flag = s.flag) != __lint_false); /* expect: 107 */
 }
