@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.124 2021/01/16 16:53:23 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.125 2021/01/17 11:28:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.124 2021/01/16 16:53:23 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.125 2021/01/17 11:28:01 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2187,7 +2187,7 @@ eqargs(const type_t *tp1, const type_t *tp2, bool *dowarn)
 
 	while (a1 != NULL && a2 != NULL) {
 
-		if (eqtype(a1->s_type, a2->s_type, true, false, dowarn) == 0)
+		if (!eqtype(a1->s_type, a2->s_type, true, false, dowarn))
 			return false;
 
 		a1 = a1->s_next;
