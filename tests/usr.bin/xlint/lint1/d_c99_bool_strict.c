@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.16 2021/01/17 21:19:06 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.17 2021/01/17 23:00:41 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -726,27 +726,4 @@ strict_bool_assign_bit_field_then_compare(void)
 	struct s s = { __lint_false };
 
 	(void)((s.flag = s.flag) != __lint_false);
-}
-
-/*
- * Macros from system headers that have return type bool may or may not
- * include the '!= 0' test, that is, their result can have any scalar type.
- */
-void
-strict_bool_system_header(void)
-{
-
-	do {
-		println("nothing");
-	} while (/*CONSTCOND*/0);	/* expect: 333 */
-
-# 744 "d_c99_bool_strict.c" 3 4
-	do {
-		println("nothing");
-	} while (/*CONSTCOND*/0);	/*TODO*//* expect: 333 */
-
-# 749 "d_c99_bool_strict.c"
-	do {
-		println("nothing");
-	} while (/*CONSTCOND*/0);	/* expect: 333 */
 }
