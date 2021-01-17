@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.172 2021/01/17 15:24:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.173 2021/01/17 15:31:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.172 2021/01/17 15:24:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.173 2021/01/17 15:31:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3885,7 +3885,6 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 {
 	tnode_t	*ln, *rn;
 	mod_t	*mp;
-	bool	nrvdisc, cvctx, ctctx;
 	op_t	op;
 	scl_t	sc;
 	dinfo_t	*di;
@@ -4016,8 +4015,10 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		break;
 	}
 
-	cvctx = mp->m_left_value_context;
-	ctctx = mp->m_left_test_context;
+	bool cvctx = mp->m_left_value_context;
+	bool ctctx = mp->m_left_test_context;
+	bool eq = mp->m_warn_if_operand_eq;
+
 	/*
 	 * values of operands of ':' are not used if the type of at least
 	 * one of the operands (for gcc compatibility) is void
@@ -4026,27 +4027,29 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	 */
 	if (op == COLON && tn->tn_type->t_tspec == VOID)
 		cvctx = ctctx = false;
-	nrvdisc = op == CVT && tn->tn_type->t_tspec == VOID;
-	check_expr_misc(ln, cvctx, ctctx, mp->m_warn_if_operand_eq, op == CALL, nrvdisc, szof);
+	bool discard = op == CVT && tn->tn_type->t_tspec == VOID;
+	check_expr_misc(ln, cvctx, ctctx, eq, op == CALL, discard, szof);
 
 	switch (op) {
 	case PUSH:
 		if (rn != NULL)
-			check_expr_misc(rn, false, false, mp->m_warn_if_operand_eq, false, false, szof);
+			check_expr_misc(rn, false, false, eq, false, false,
+			    szof);
 		break;
 	case LOGAND:
 	case LOGOR:
-		check_expr_misc(rn, false, true, mp->m_warn_if_operand_eq, false, false, szof);
+		check_expr_misc(rn, false, true, eq, false, false, szof);
 		break;
 	case COLON:
-		check_expr_misc(rn, cvctx, ctctx, mp->m_warn_if_operand_eq, false, false, szof);
+		check_expr_misc(rn, cvctx, ctctx, eq, false, false, szof);
 		break;
 	case COMMA:
-		check_expr_misc(rn, vctx, tctx, mp->m_warn_if_operand_eq, false, false, szof);
+		check_expr_misc(rn, vctx, tctx, eq, false, false, szof);
 		break;
 	default:
 		if (mp->m_binary)
-			check_expr_misc(rn, true, false, mp->m_warn_if_operand_eq, false, false, szof);
+			check_expr_misc(rn, true, false, eq, false, false,
+			    szof);
 		break;
 	}
 
