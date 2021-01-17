@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1273 2020/12/27 21:13:18 reinoud Exp $
+# $NetBSD: mi,v 1.1274 2021/01/17 19:32:52 rillig Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1560,6 +1560,7 @@
 ./usr/libdata/firmware/radeon/VERDE_smc.bin	base-obsolete	obsolete
 ./usr/libdata/ldscripts				base-c-usr
 ./usr/libdata/lint				base-c-usr
+./usr/libdata/lint/strict-bool			base-c-usr
 ./usr/libexec					base-sys-usr
 ./usr/libexec/atf-check				base-atf-bin		atf
 ./usr/libexec/atf-cleanup			base-obsolete		obsolete

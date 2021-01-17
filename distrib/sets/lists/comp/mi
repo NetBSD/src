@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2370 2021/01/16 22:18:14 rillig Exp $
+#	$NetBSD: mi,v 1.2371 2021/01/17 19:32:52 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4134,6 +4134,7 @@
 ./usr/libdata/lint/llib-lwrap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ly.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lz.ln			comp-c-lintlib		lint
+./usr/libdata/lint/strict-bool/stdbool.h	comp-c-bin
 ./usr/libexec/cc1				comp-c-bin		gcccmds
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds

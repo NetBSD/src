@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2021/01/16 22:18:14 rillig Exp $
+#	$NetBSD: Makefile,v 1.19 2021/01/17 19:32:53 rillig Exp $
 
 .PATH:		${.CURDIR}/../lint1
 .PATH:		${.CURDIR}/../../mkdep
@@ -16,8 +16,8 @@ DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
 .endif
 
-#FILES+=		strict-bool-stdbool.h
-#FILESDIR=	/usr/libdata/lint/strict-bool
-#FILESNAME_strict-bool-stdbool.h= stdbool.h
+FILES+=		strict-bool-stdbool.h
+FILESDIR=	/usr/libdata/lint/strict-bool
+FILESNAME_strict-bool-stdbool.h= stdbool.h
 
 .include <bsd.prog.mk>

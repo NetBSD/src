@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.232 2021/01/16 22:18:14 rillig Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.233 2021/01/17 19:32:53 rillig Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -297,6 +297,7 @@
 ./usr/libdata/firmware/bcm43xx
 ./usr/libdata/ldscripts
 ./usr/libdata/lint
+./usr/libdata/lint/strict-bool
 ./usr/libexec
 ./usr/libexec/ching
 ./usr/libexec/lpr
