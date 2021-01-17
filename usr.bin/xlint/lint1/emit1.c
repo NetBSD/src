@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.38 2021/01/16 16:53:23 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.39 2021/01/17 14:50:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.38 2021/01/16 16:53:23 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.39 2021/01/17 14:50:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -460,7 +460,7 @@ outcall(const tnode_t *tn, bool rvused, bool rvdisc)
 				}
 				outint(n);
 			}
-		} else if (arg->tn_op == AMPER &&
+		} else if (arg->tn_op == ADDR &&
 			   arg->tn_left->tn_op == STRING &&
 			   arg->tn_left->tn_string->st_tspec == CHAR) {
 			/* constant string, write all format specifiers */
