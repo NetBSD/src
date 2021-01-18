@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.25 2020/08/03 19:44:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.26 2021/01/18 08:29:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2514,7 +2514,7 @@ ena_update_hwassist(struct ena_adapter *adapter)
 
 	if ((cap & IFCAP_CSUM_TCPv6_Tx) != 0)
 		flags |= M_CSUM_TCPv6;
-	
+
 	if ((cap & IFCAP_CSUM_UDPv6_Tx) != 0)
 		flags |= M_CSUM_UDPv6;
 
