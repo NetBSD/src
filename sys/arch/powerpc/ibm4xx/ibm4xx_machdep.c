@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.33 2021/01/06 08:07:36 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.34 2021/01/18 02:43:27 rin Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.33 2021/01/06 08:07:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.34 2021/01/18 02:43:27 rin Exp $");
 
 #include "ksyms.h"
 
@@ -208,7 +208,7 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 	 * external interrupt handler install
 	 */
 	if (handler)
-	    ibm4xx_install_extint(handler);
+		ibm4xx_install_extint(handler);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
