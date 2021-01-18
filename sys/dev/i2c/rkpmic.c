@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.9 2021/01/17 21:56:20 thorpej Exp $ */
+/* $NetBSD: rkpmic.c,v 1.10 2021/01/18 15:28:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.9 2021/01/17 21:56:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.10 2021/01/18 15:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,7 +467,8 @@ rkpmic_attach(device_t parent, device_t self, void *aux)
 	int child, regulators;
 	u_int chipid, n;
 
-	iic_compatible_match(ia, compat_data, &entry);
+	entry = iic_compatible_lookup(ia, compat_data);
+	KASSERT(entry != NULL);
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;

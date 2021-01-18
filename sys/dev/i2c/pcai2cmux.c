@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.2 2021/01/17 21:56:20 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.3 2021/01/18 15:28:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.2 2021/01/17 21:56:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.3 2021/01/18 15:28:21 thorpej Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -276,7 +276,7 @@ pcaiicmux_type_by_compat(const struct i2c_attach_args * const ia)
 	const struct pcaiicmux_type *type = NULL;
 	const struct device_compatible_entry *dce;
 
-	if (iic_compatible_match(ia, compat_data, &dce))
+	if ((dce = iic_compatible_lookup(ia, compat_data)) != NULL)
 		type = dce->data;
 
 	return type;

@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.6 2021/01/17 21:56:20 thorpej Exp $ */
+/* $NetBSD: fan53555.c,v 1.7 2021/01/18 15:28:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.6 2021/01/17 21:56:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.7 2021/01/18 15:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ fan53555_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_phandle = ia->ia_cookie;
 
-	iic_compatible_match(ia, compat_data, &compat);
+	compat = iic_compatible_lookup(ia, compat_data);
 	KASSERT(compat != NULL);
 
 	if (fan53555_init(sc, compat->value) != 0)

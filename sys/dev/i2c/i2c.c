@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.75 2020/07/07 16:14:23 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.76 2021/01/18 15:28:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.75 2020/07/07 16:14:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.76 2021/01/18 15:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,13 +687,12 @@ iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
  */
 int
 iic_compatible_match(const struct i2c_attach_args *ia,
-		     const struct device_compatible_entry *compats,
-		     const struct device_compatible_entry **matching_entryp)
+		     const struct device_compatible_entry *compats)
 {
 	int match_result;
 
 	match_result = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
-					       compats, matching_entryp);
+					       compats);
 	if (match_result) {
 		match_result =
 		    MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_result - 1,
@@ -701,6 +700,19 @@ iic_compatible_match(const struct i2c_attach_args *ia,
 	}
 
 	return match_result;
+}
+
+/*
+ * iic_compatible_lookup --
+ *	Look the compatible entry that matches one of the driver's
+ *	"compatible" strings.  The first match is returned.
+ */
+const struct device_compatible_entry *
+iic_compatible_lookup(const struct i2c_attach_args *ia,
+		      const struct device_compatible_entry *compats)
+{
+	return device_compatible_lookup(ia->ia_compat, ia->ia_ncompat,
+					compats);
 }
 
 /*
@@ -724,7 +736,7 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		*match_resultp = iic_compatible_match(ia, compats, NULL);
+		*match_resultp = iic_compatible_match(ia, compats);
 		return true;
 	}
 

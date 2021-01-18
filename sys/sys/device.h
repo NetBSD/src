@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.160 2021/01/17 21:56:20 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.161 2021/01/18 15:28:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -544,8 +544,10 @@ device_t	device_find_by_xname(const char *);
 device_t	device_find_by_driver_unit(const char *, int);
 
 int		device_compatible_match(const char **, int,
-				const struct device_compatible_entry *,
-				const struct device_compatible_entry **);
+				const struct device_compatible_entry *);
+const struct device_compatible_entry *
+		device_compatible_lookup(const char **, int,
+				const struct device_compatible_entry *);
 
 bool		device_pmf_is_registered(device_t);
 

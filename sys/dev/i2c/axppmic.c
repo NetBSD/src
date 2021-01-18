@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.30 2021/01/17 21:56:20 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.31 2021/01/18 15:28:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.30 2021/01/17 21:56:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.31 2021/01/18 15:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -949,7 +949,7 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	uint8_t irq_mask, val;
 	int error;
 
-	(void) iic_compatible_match(ia, compat_data, &dce);
+	dce = iic_compatible_lookup(ia, compat_data);
 	KASSERT(dce != NULL);
 	c = dce->data;
 
