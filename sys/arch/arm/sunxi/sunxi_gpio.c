@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.32 2021/01/18 13:29:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.32 2021/01/18 13:29:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ static const struct device_compatible_entry compat_data[] = {
 #ifdef SOC_SUN5I_A13
 	{ .compat = "allwinner,sun5i-a13-pinctrl",
 	  .data = &sun5i_a13_padconf },
-	{ .compat = "nextthing,gr8-pinctrl",	
+	{ .compat = "nextthing,gr8-pinctrl",
 	  .data = &sun5i_a13_padconf },
 #endif
 #ifdef SOC_SUN6I_A31
@@ -469,7 +469,7 @@ sunxi_intr_enable(struct sunxi_gpio_softc *sc,
 {
 	uint32_t val;
 	struct sunxi_gpio_eint *eint;
-	
+
 	if (pin_def->functions[pin_def->eint_func] == NULL ||
 	    strcmp(pin_def->functions[pin_def->eint_func], "irq") != 0)
 		return NULL;
