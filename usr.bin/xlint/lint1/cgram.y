@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.147 2021/01/18 16:34:08 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.148 2021/01/18 16:41:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.147 2021/01/18 16:34:08 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.148 2021/01/18 16:41:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -47,8 +47,8 @@ __RCSID("$NetBSD: cgram.y,v 1.147 2021/01/18 16:34:08 rillig Exp $");
 extern char *yytext;
 
 /*
- * Contains the level of current declaration. 0 is extern.
- * Used for symbol table entries.
+ * Contains the level of current declaration, used for symbol table entries.
+ * 0 is the top-level, > 0 is inside a function body.
  */
 int	blklev;
 
@@ -68,22 +68,22 @@ static int olwarn = LWARN_BAD;
 
 static	int	toicon(tnode_t *, int);
 static	void	idecl(sym_t *, int, sbuf_t *);
-static	void	ignuptorp(void);
+static	void	ignore_up_to_rparen(void);
 static	sym_t	*symbolrename(sym_t *, sbuf_t *);
 
 
 #ifdef DEBUG
-static inline void CLRWFLGS(const char *file, size_t line);
-static inline void CLRWFLGS(const char *file, size_t line)
+static void
+CLEAR_WARN_FLAGS(const char *file, size_t line)
 {
 	printf("%s, %d: clear flags %s %zu\n", curr_pos.p_file,
 	    curr_pos.p_line, file, line);
-	clrwflgs();
+	clear_warn_flags();
 	olwarn = LWARN_BAD;
 }
 
-static inline void SAVE(const char *file, size_t line);
-static inline void SAVE(const char *file, size_t line)
+static void
+SAVE_WARN_FLAGS(const char *file, size_t line)
 {
 	if (olwarn != LWARN_BAD)
 		abort();
@@ -92,8 +92,8 @@ static inline void SAVE(const char *file, size_t line)
 	olwarn = lwarn;
 }
 
-static inline void RESTORE(const char *file, size_t line);
-static inline void RESTORE(const char *file, size_t line)
+static void
+RESTORE_WARN_FLAGS(const char *file, size_t line)
 {
 	if (olwarn != LWARN_BAD) {
 		lwarn = olwarn;
@@ -101,13 +101,14 @@ static inline void RESTORE(const char *file, size_t line)
 		    curr_pos.p_line, file, line, lwarn);
 		olwarn = LWARN_BAD;
 	} else
-		CLRWFLGS(file, line);
+		CLEAR_WARN_FLAGS(file, line);
 }
 #define cgram_debug(fmt, args...) printf("cgram_debug: " fmt "\n", ##args)
 #else
-#define CLRWFLGS(f, l) clrwflgs(), olwarn = LWARN_BAD
-#define SAVE(f, l)	olwarn = lwarn
-#define RESTORE(f, l) (void)(olwarn == LWARN_BAD ? (clrwflgs(), 0) : (lwarn = olwarn))
+#define CLEAR_WARN_FLAGS(f, l) clear_warn_flags(), olwarn = LWARN_BAD
+#define SAVE_WARN_FLAGS(f, l)	olwarn = lwarn
+#define RESTORE_WARN_FLAGS(f, l) \
+	(void)(olwarn == LWARN_BAD ? (clear_warn_flags(), 0) : (lwarn = olwarn))
 #define cgram_debug(fmt, args...) (void)0
 #endif
 
@@ -355,11 +356,11 @@ external_declaration:		/* C99 6.9 */
 	  asm_statement
 	| function_definition {
 		global_clean_up_decl(0);
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	| data_def {
 		global_clean_up_decl(0);
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -1551,7 +1552,7 @@ compound_statement_rbrace:
 statement_list:
 	  statement
 	| statement_list statement {
-		RESTORE(__FILE__, __LINE__);
+		RESTORE_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	| statement_list error T_SEMI
 	;
@@ -1595,27 +1596,27 @@ expr_statement_list:
 
 selection_statement:		/* C99 6.8.4 */
 	  if_without_else {
-		SAVE(__FILE__, __LINE__);
+		SAVE_WARN_FLAGS(__FILE__, __LINE__);
 		if2();
 		if3(0);
 	  }
 	| if_without_else T_ELSE {
-		SAVE(__FILE__, __LINE__);
+		SAVE_WARN_FLAGS(__FILE__, __LINE__);
 		if2();
 	  } statement {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		if3(1);
 	  }
 	| if_without_else T_ELSE error {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		if3(0);
 	  }
 	| switch_expr statement {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		switch2();
 	  }
 	| switch_expr error {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		switch2();
 	  }
 	;
@@ -1628,14 +1629,14 @@ if_without_else:
 if_expr:
 	  T_IF T_LPAREN expr T_RPAREN {
 		if1($3);
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
 
 switch_expr:
 	  T_SWITCH T_LPAREN expr T_RPAREN {
 		switch1($3);
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -1657,17 +1658,17 @@ generic_expr:
 
 do_statement:
 	  do statement {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
 
 iteration_statement:		/* C99 6.8.5 */
 	  while_expr statement {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		while2();
 	  }
 	| while_expr error {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		while2();
 	  }
 	| do_statement do_while_expr {
@@ -1675,17 +1676,17 @@ iteration_statement:		/* C99 6.8.5 */
 		ftflg = false;
 	  }
 	| do error {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		do2(NULL);
 	  }
 	| for_exprs statement {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		for2();
 		popdecl();
 		blklev--;
 	  }
 	| for_exprs error {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		for2();
 		popdecl();
 		blklev--;
@@ -1695,7 +1696,7 @@ iteration_statement:		/* C99 6.8.5 */
 while_expr:
 	  T_WHILE T_LPAREN expr T_RPAREN {
 		while1($3);
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -1723,11 +1724,11 @@ for_exprs:
 		/* variable declaration in for loop */
 		c99ism(325);
 		for1(NULL, $6, $8);
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	    }
 	  | for_start opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPAREN {
 		for1($2, $4, $6);
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -1779,16 +1780,16 @@ asm_statement:
 
 read_until_rparn:
 	  /* empty */ {
-		ignuptorp();
+		ignore_up_to_rparen();
 	  }
 	;
 
 declaration_list:
 	  declaration {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	| declaration_list declaration {
-		CLRWFLGS(__FILE__, __LINE__);
+		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -2188,7 +2189,7 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
  * unmatched right paren
  */
 static void
-ignuptorp(void)
+ignore_up_to_rparen(void)
 {
 	int	level;
 

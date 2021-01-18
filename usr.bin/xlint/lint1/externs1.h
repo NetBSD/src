@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.58 2021/01/17 23:04:09 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.59 2021/01/18 16:41:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -80,7 +80,7 @@ extern	void	initscan(void);
 extern	int	sign(int64_t, tspec_t, int);
 extern	int	msb(int64_t, tspec_t, int);
 extern	int64_t	xsign(int64_t, tspec_t, int);
-extern	void	clrwflgs(void);
+extern	void	clear_warn_flags(void);
 extern	sym_t	*getsym(sbuf_t *);
 extern	void	cleanup(void);
 extern	sym_t	*pushdown(sym_t *);

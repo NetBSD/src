@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.123 2021/01/18 16:34:08 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.124 2021/01/18 16:41:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.123 2021/01/18 16:34:08 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.124 2021/01/18 16:41:57 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1347,13 +1347,13 @@ slashslashcomment(void)
 
 /*
  * Clear flags for lint comments LINTED, LONGLONG and CONSTCOND.
- * clrwflgs() is called after function definitions and global and
+ * clear_warn_flags() is called after function definitions and global and
  * local declarations and definitions. It is also called between
  * the controlling expression and the body of control statements
  * (if, switch, for, while).
  */
 void
-clrwflgs(void)
+clear_warn_flags(void)
 {
 
 	lwarn = LWARN_ALL;
