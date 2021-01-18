@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.152 2021/01/18 17:54:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.153 2021/01/18 17:59:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.152 2021/01/18 17:54:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.153 2021/01/18 17:59:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -185,30 +185,28 @@ anonymize(sym_t *s)
 /* struct or union */
 %token	<y_tspec>	T_STRUCT_OR_UNION
 
-/* enum */
-%token			T_ENUM
-
 /* remaining keywords */
+%token			T_ASM
+%token			T_BREAK
 %token			T_CASE
+%token			T_CONTINUE
 %token			T_DEFAULT
-%token			T_IF
-%token			T_ELSE
-%token			T_SWITCH
 %token			T_DO
-%token			T_WHILE
+%token			T_ELSE
+%token			T_ENUM
 %token			T_FOR
 %token			T_GOTO
-%token			T_CONTINUE
-%token			T_BREAK
-%token			T_RETURN
-%token			T_ASM
-%token			T_SYMBOLRENAME
+%token			T_IF
 %token			T_PACKED
+%token			T_RETURN
+%token			T_SWITCH
+%token			T_SYMBOLRENAME
+%token			T_WHILE
 /* Type Attributes */
 %token <y_type>		T_ATTRIBUTE
 %token <y_type>		T_AT_ALIAS
-%token <y_type>		T_AT_ALLOC_SIZE
 %token <y_type>		T_AT_ALIGNED
+%token <y_type>		T_AT_ALLOC_SIZE
 %token <y_type>		T_AT_ALWAYS_INLINE
 %token <y_type>		T_AT_BOUNDED
 %token <y_type>		T_AT_BUFFER
