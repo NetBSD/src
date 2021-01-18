@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.7 2021/01/17 21:56:20 thorpej Exp $ */
+/* $NetBSD: pcagpio.c,v 1.8 2021/01/18 15:28:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.7 2021/01/17 21:56:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.8 2021/01/18 15:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	sc->sc_is_16bit = 0;
-	if (iic_compatible_match(ia, compat_data, &dce))
+	if ((dce = iic_compatible_lookup(ia, compat_data)) != NULL)
 		sc->sc_is_16bit = dce->value;
 
 	aprint_normal(": %s\n", sc->sc_is_16bit ? "PCA9555" : "PCA9556");
