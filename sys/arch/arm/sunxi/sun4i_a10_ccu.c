@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.12 2020/05/07 11:24:47 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.12 2020/05/07 11:24:47 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,10 +93,11 @@ enum sun4i_a10_ccu_type {
 	CCU_A20,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-ccu",	CCU_A10 },
-	{ "allwinner,sun7i-a20-ccu",	CCU_A20 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-ccu",	.value = CCU_A10 },
+	{ .compat = "allwinner,sun7i-a20-ccu",	.value = CCU_A20 },
+
+	{ 0 }
 };
 
 CFATTACH_DECL_NEW(sunxi_a10_ccu, sizeof(struct sunxi_ccu_softc),
@@ -875,7 +876,7 @@ sun4i_a10_ccu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
-	type = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	type = of_search_compatible(faa->faa_phandle, compat_data)->value;
 
 	switch (type) {
 	case CCU_A10:

@@ -1,4 +1,4 @@
-/* $NetBSD: rk_usb.c,v 1.7 2018/09/09 07:21:17 aymeric Exp $ */
+/* $NetBSD: rk_usb.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.7 2018/09/09 07:21:17 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,10 +68,11 @@ enum rk_usb_type {
 	USB_RK3399,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3328-usb2phy",		USB_RK3328 },
-	{ "rockchip,rk3399-usb2phy",		USB_RK3399 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3328-usb2phy",	.value = USB_RK3328 },
+	{ .compat = "rockchip,rk3399-usb2phy",	.value = USB_RK3399 },
+
+	{ 0 }
 };
 
 struct rk_usb_clk {
@@ -227,7 +228,7 @@ rk_usb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dev = self;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 	sc->sc_syscon = fdtbus_syscon_lookup(OF_parent(phandle));
 	if (sc->sc_syscon == NULL) {
 		aprint_error(": couldn't get grf syscon\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.17 2020/03/20 06:38:16 skrll Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.18 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
 * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.17 2020/03/20 06:38:16 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.18 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,10 +73,13 @@ CFATTACH_DECL_NEW(exynos_pinctrl, sizeof(struct exynos_pinctrl_softc),
 	exynos_pinctrl_match, exynos_pinctrl_attach, NULL, NULL);
 
 
-static const struct of_compat_data compat_data[] = {
-	{ "samsung,exynos5410-pinctrl",	(uintptr_t)&exynos5410_pinctrl_banks },
-	{ "samsung,exynos5420-pinctrl",	(uintptr_t)&exynos5420_pinctrl_banks },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos5410-pinctrl",
+	  .data = &exynos5410_pinctrl_banks },
+	{ .compat = "samsung,exynos5420-pinctrl",
+	  .data = &exynos5420_pinctrl_banks },
+
+	{ 0 }
 };
 
 static int
@@ -107,7 +110,7 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 	self->dv_private = sc;
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_epb = (struct exynos_pinctrl_banks *)of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_epb = of_search_compatible(faa->faa_phandle, compat_data)->data;
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
@@ -162,7 +165,7 @@ static int
 exynos_do_config(struct exynos_pinctrl_config *pc)
 {
 	struct exynos_gpio_pin_cfg *gc = &pc->pc_pincfg;
-	struct exynos_pinctrl_banks *epb = pc->pc_sc->sc_epb;
+	const struct exynos_pinctrl_banks *epb = pc->pc_sc->sc_epb;
 	struct exynos_gpio_bank *bank;
 	const char *pins;
 	int pin;

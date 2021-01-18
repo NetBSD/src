@@ -1,7 +1,7 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.5 2021/01/15 23:19:33 jmcneill Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.6 2021/01/18 02:35:49 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.5 2021/01/15 23:19:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.6 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,11 +61,12 @@ static uint8_t omaptimer_regmap[_DM_NTIMER][_TIMER_NREG] = {
 	},
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "ti,am335x-timer-1ms",	DM_TIMER_AM335X },
-	{ "ti,am335x-timer",		DM_TIMER_AM335X },
-	{ "ti,omap3430-timer",		DM_TIMER_OMAP3430 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am335x-timer-1ms",	.value = DM_TIMER_AM335X },
+	{ .compat = "ti,am335x-timer",		.value = DM_TIMER_AM335X },
+	{ .compat = "ti,omap3430-timer",	.value = DM_TIMER_OMAP3430 },
+
+	{ 0 }
 };
 
 struct omaptimer_softc {
@@ -164,7 +165,7 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		device_printf(self, "unable to map bus space");

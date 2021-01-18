@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pwm.c,v 1.1 2021/01/01 07:21:58 ryo Exp $ */
+/* $NetBSD: meson_pwm.c,v 1.2 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.1 2021/01/01 07:21:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.2 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,11 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.1 2021/01/01 07:21:58 ryo Exp $");
 #define PWM_WRITE_REG(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg) * 4, (val))
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson-g12a-ao-pwm-ab", 0 },
-	{ "amlogic,meson-g12a-ao-pwm-cd", 0 },
-	{ "amlogic,meson-g12a-ee-pwm", 0 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson-g12a-ao-pwm-ab" },
+	{ .compat = "amlogic,meson-g12a-ao-pwm-cd" },
+	{ .compat = "amlogic,meson-g12a-ee-pwm" },
+
+	{ 0 }
 };
 
 #define MESON_PWM_NCHAN	2
