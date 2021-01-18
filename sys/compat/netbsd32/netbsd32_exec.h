@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.34 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.35 2021/01/18 23:14:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -83,9 +83,9 @@ static __inline int
 netbsd32_copyargs(struct lwp *l, struct exec_package *pack,
 		struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	u_int32_t *cpp = (u_int32_t *)*stackp;
+	uint32_t *cpp = (uint32_t *)*stackp;
 	netbsd32_pointer_t dp;
-	u_int32_t nullp = 0;
+	uint32_t nullp = 0;
 	char *sp;
 	size_t len;
 	int argc = arginfo->ps_nargvstr;
