@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.42 2019/11/18 04:17:08 rin Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.43 2021/01/18 23:14:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -245,8 +245,8 @@ netbsd32_to_iovecin(const struct netbsd32_iovec *iov32p, struct iovec *iovp,
     int len)
 {
 	int i, error=0;
-	u_int32_t iov_base;
-	u_int32_t iov_len;
+	uint32_t iov_base;
+	uint32_t iov_len;
 	/*
 	 * We could allocate an iov32p, do a copyin, and translate
 	 * each field and then free it all up, or we could copyin
@@ -799,11 +799,11 @@ netbsd32_to_dirent12(char *buf, int nbytes)
 	 */
 	for (; ndp < endp; ndp = nndp) {
 		nndp = _DIRENT_NEXT(ndp);
-		odp->d_fileno = (u_int32_t)ndp->d_fileno;
+		odp->d_fileno = (uint32_t)ndp->d_fileno;
 		if (ndp->d_namlen >= sizeof(odp->d_name))
 			odp->d_namlen = sizeof(odp->d_name) - 1;
 		else
-			odp->d_namlen = (u_int8_t)ndp->d_namlen;
+			odp->d_namlen = (uint8_t)ndp->d_namlen;
 		odp->d_type = ndp->d_type;
 		(void)memcpy(odp->d_name, ndp->d_name, (size_t)odp->d_namlen);
 		odp->d_name[odp->d_namlen] = '\0';
