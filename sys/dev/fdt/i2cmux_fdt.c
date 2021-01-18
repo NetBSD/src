@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.5 2021/01/17 19:54:23 jmcneill Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.6 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.5 2021/01/17 19:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.6 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -236,12 +236,12 @@ static const struct iicmux_config iicmux_pinctrl_config = {
 
 /*****************************************************************************/
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "i2c-mux-gpio",
-	  .data = (uintptr_t)&iicmux_gpio_config },
+	  .data = &iicmux_gpio_config },
 
 	{ .compat = "i2c-mux-pinctrl",
-	  .data = (uintptr_t)&iicmux_pinctrl_config },
+	  .data = &iicmux_pinctrl_config },
 
 	{ NULL }
 };
@@ -262,8 +262,7 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_config = (const struct iicmux_config *)
-	    of_search_compatible(sc->sc_phandle, compat_data)->data;
+	sc->sc_config = of_search_compatible(sc->sc_phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": %s I2C mux\n", sc->sc_config->desc);

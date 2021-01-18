@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_pwm.c,v 1.3 2019/10/13 06:03:56 skrll Exp $ */
+/* $NetBSD: sunxi_pwm.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_pwm.c,v 1.3 2019/10/13 06:03:56 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_pwm.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,9 +58,10 @@ enum sunxi_pwm_type {
 	PWM_A64 = 1,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun50i-a64-pwm",	PWM_A64 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun50i-a64-pwm",	.value = PWM_A64 },
+
+	{ 0 }
 };
 
 struct sunxi_pwm_softc {

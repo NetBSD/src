@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.9 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.9 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,11 +106,12 @@ enum tcon_type {
 	TYPE_TCON1,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-h3-tcon-tv",		TYPE_TCON1 },
-	{ "allwinner,sun50i-a64-tcon-lcd",	TYPE_TCON0 },
-	{ "allwinner,sun50i-a64-tcon-tv",	TYPE_TCON1 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-tcon-tv",	.value = TYPE_TCON1 },
+	{ .compat = "allwinner,sun50i-a64-tcon-lcd",	.value = TYPE_TCON0 },
+	{ .compat = "allwinner,sun50i-a64-tcon-tv",	.value = TYPE_TCON1 },
+
+	{ 0 }
 };
 
 struct sunxi_lcdc_softc;
@@ -512,7 +513,7 @@ sunxi_lcdc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 	sc->sc_clk_ch[0] = fdtbus_clock_get(phandle, "tcon-ch0");
 	sc->sc_clk_ch[1] = fdtbus_clock_get(phandle, "tcon-ch1");
 

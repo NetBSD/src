@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.10 2019/12/23 18:20:02 thorpej Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.10 2019/12/23 18:20:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,10 +105,11 @@ struct sunxi_hdmi_softc {
 #define HDMI_1_3_P(sc)	((sc)->sc_ver == 0x00010003)
 #define HDMI_1_4_P(sc)	((sc)->sc_ver == 0x00010004)
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun4i-a10-hdmi", HDMI_A10},
-	{"allwinner,sun7i-a20-hdmi", HDMI_A10},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-hdmi", .value = HDMI_A10},
+	{ .compat = "allwinner,sun7i-a20-hdmi", .value = HDMI_A10},
+
+	{ 0 }
 };
 
 static int	sunxi_hdmi_match(device_t, cfdata_t, void *);
@@ -169,7 +170,8 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 
-	sc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_type =
+	    of_search_compatible(faa->faa_phandle, compat_data)->value;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

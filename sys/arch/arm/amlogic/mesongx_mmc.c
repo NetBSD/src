@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.9 2021/01/15 18:42:40 ryo Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.10 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.9 2021/01/15 18:42:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.10 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -267,11 +267,12 @@ enum {
 	MESONGX_MMC_V3 = 3,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson-gx-mmc",	MESONGX_MMC_V2 },
-	{ "amlogic,meson-gxbb-mmc",	MESONGX_MMC_V2 },
-	{ "amlogic,meson-axg-mmc",	MESONGX_MMC_V3 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson-gx-mmc",	.value = MESONGX_MMC_V2 },
+	{ .compat = "amlogic,meson-gxbb-mmc",	.value = MESONGX_MMC_V2 },
+	{ .compat = "amlogic,meson-axg-mmc",	.value = MESONGX_MMC_V3 },
+
+	{ 0 }
 };
 
 static int
@@ -292,7 +293,7 @@ mesongx_mmc_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 
-	sc->sc_hwtype = (int)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_hwtype = of_search_compatible(phandle, compat_data)->value;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

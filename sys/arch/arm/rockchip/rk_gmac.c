@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.16 2021/01/15 18:42:41 ryo Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.17 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.16 2021/01/15 18:42:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.17 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,10 +58,11 @@ enum rk_gmac_type {
 	GMAC_RK3399
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3328-gmac",	GMAC_RK3328 },
-	{ "rockchip,rk3399-gmac",	GMAC_RK3399 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3328-gmac",	.value = GMAC_RK3328 },
+	{ .compat = "rockchip,rk3399-gmac",	.value = GMAC_RK3399 },
+
+	{ 0 }
 };
 
 struct rk_gmac_softc {
@@ -363,7 +364,7 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	rk_sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	rk_sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 
 	rk_sc->sc_syscon = fdtbus_syscon_acquire(phandle, "rockchip,grf");
 	if (rk_sc->sc_syscon == NULL) {
