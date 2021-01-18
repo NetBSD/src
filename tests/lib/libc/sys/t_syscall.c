@@ -1,4 +1,4 @@
-/*	$NetBSD: t_syscall.c,v 1.3 2018/05/28 07:55:56 martin Exp $	*/
+/*	$NetBSD: t_syscall.c,v 1.4 2021/01/18 05:44:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_syscall.c,v 1.3 2018/05/28 07:55:56 martin Exp $");
+__RCSID("$NetBSD: t_syscall.c,v 1.4 2021/01/18 05:44:20 simonb Exp $");
 
 
 #include <atf-c.h>
@@ -75,7 +75,7 @@ ATF_TC_BODY(mmap_syscall, tc)
 
 	p = (const char *)syscall(SYS_mmap,
 		0, sizeof(secrect_data), PROT_READ, MAP_PRIVATE, fd, 0, 0, 0);
-	ATF_REQUIRE(p != NULL);
+	ATF_REQUIRE(p != MAP_FAILED);
 
  	ATF_REQUIRE(strcmp(p, secrect_data) == 0);
 }
@@ -101,7 +101,7 @@ ATF_TC_BODY(mmap___syscall, tc)
 	p = (const char *)__SYSCALL_TO_UINTPTR_T(__syscall(SYS_mmap,
 		0, sizeof(secrect_data), PROT_READ, MAP_PRIVATE, fd,
 		/* pad*/ 0, (off_t)0));
-	ATF_REQUIRE(p != NULL);
+	ATF_REQUIRE(p != MAP_FAILED);
 
 	ATF_REQUIRE(strcmp(p, secrect_data) == 0);
 }
