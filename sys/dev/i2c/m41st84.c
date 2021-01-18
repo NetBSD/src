@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.28 2021/01/17 21:56:20 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.29 2021/01/18 15:28:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.28 2021/01/17 21:56:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.29 2021/01/18 15:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ strtc_model_by_number(u_int model)
 		return &m41t80_model;
 	
 	for (dce = compat_data; dce->compat != NULL; dce++) {
-		sm = (void *)dce->data;
+		sm = dce->data;
 		if (sm->sm_model == model)
 			return sm;
 	}
@@ -153,8 +153,8 @@ strtc_model_by_compat(const struct i2c_attach_args *ia)
 	const struct device_compatible_entry *dce;
 	const struct strtc_model *sm = NULL;
 
-	if (iic_compatible_match(ia, compat_data, &dce))
-		sm = (void *)dce->data;
+	if ((dce = iic_compatible_lookup(ia, compat_data)) != NULL)
+		sm = dce->data;
 	
 	return sm;
 }
