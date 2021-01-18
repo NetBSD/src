@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.62 2021/01/17 14:50:11 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.63 2021/01/18 19:24:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.62 2021/01/17 14:50:11 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.63 2021/01/18 19:24:09 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ bool	reached = true;
 bool	rchflg;
 
 /*
- * In conjunction with reached, controls printing of "fallthrough on ..."
+ * In conjunction with 'reached', controls printing of "fallthrough on ..."
  * warnings.
  * Reset by each statement and set by FALLTHROUGH, switch (switch1())
  * and case (label()).
@@ -170,21 +170,20 @@ void
 popctrl(int env)
 {
 	cstk_t	*ci;
-	clst_t	*cl;
+	clst_t	*cl, *next;
 
 	lint_assert(cstmt != NULL);
 	lint_assert(cstmt->c_env == env);
 
-	cstmt = (ci = cstmt)->c_surrounding;
+	ci = cstmt;
+	cstmt = ci->c_surrounding;
 
-	while ((cl = ci->c_clst) != NULL) {
-		ci->c_clst = cl->cl_next;
+	for (cl = ci->c_clst; cl != NULL; cl = next) {
+		next = cl->cl_next;
 		free(cl);
 	}
 
-	if (ci->c_swtype != NULL)
-		free(ci->c_swtype);
-
+	free(ci->c_swtype);
 	free(ci);
 }
 
@@ -304,7 +303,6 @@ funcdef(sym_t *fsym)
 				print_previous_declaration(-1, rdsym);
 			}
 
-			/* copy usage information */
 			copy_usage_info(fsym, rdsym);
 
 			/*
@@ -315,10 +313,8 @@ funcdef(sym_t *fsym)
 			if (fsym->s_osdef && rdsym->s_type->t_proto)
 				fsym->s_def_pos = rdsym->s_def_pos;
 
-			/* complete the type */
 			complete_type(fsym, rdsym);
 
-			/* once a function is inline it remains inline */
 			if (rdsym->s_inline)
 				fsym->s_inline = true;
 
@@ -352,7 +348,7 @@ funcend(void)
 	int	n;
 
 	if (reached) {
-		cstmt->c_noretval = true;
+		cstmt->c_had_return_noval = true;
 		if (funcsym->s_type->t_subt->t_tspec != VOID &&
 		    !funcsym->s_rimpl) {
 			/* func. %s falls off bottom without returning value */
@@ -365,7 +361,8 @@ funcend(void)
 	 * declared to be int. Otherwise the wrong return statement
 	 * has already printed a warning.
 	 */
-	if (cstmt->c_noretval && cstmt->c_retval && funcsym->s_rimpl)
+	if (cstmt->c_had_return_noval && cstmt->c_had_return_value &&
+	    funcsym->s_rimpl)
 		/* function %s has return (e); and return; */
 		warning(216, funcsym->s_name);
 
@@ -388,7 +385,7 @@ funcend(void)
 	if (dcs->d_scl == EXTERN && funcsym->s_inline) {
 		outsym(funcsym, funcsym->s_scl, DECL);
 	} else {
-		outfdef(funcsym, &dcs->d_fdpos, cstmt->c_retval,
+		outfdef(funcsym, &dcs->d_fdpos, cstmt->c_had_return_value,
 			funcsym->s_osdef, dcs->d_fargs);
 	}
 
@@ -897,7 +894,6 @@ for2(void)
 
 /*
  * T_GOTO identifier T_SEMI
- * T_GOTO error T_SEMI
  */
 void
 dogoto(sym_t *lab)
@@ -974,9 +970,9 @@ doreturn(tnode_t *tn)
 		continue;
 
 	if (tn != NULL) {
-		ci->c_retval = true;
+		ci->c_had_return_value = true;
 	} else {
-		ci->c_noretval = true;
+		ci->c_had_return_noval = true;
 	}
 
 	if (tn != NULL && funcsym->s_type->t_subt->t_tspec == VOID) {

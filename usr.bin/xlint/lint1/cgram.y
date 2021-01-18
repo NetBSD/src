@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.156 2021/01/18 18:53:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.157 2021/01/18 19:24:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.156 2021/01/18 18:53:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.157 2021/01/18 19:24:09 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2085,7 +2085,8 @@ q_gt(int64_t a, int64_t b)
 /*
  * Gets a node for a constant and returns the value of this constant
  * as integer.
- * Is the node not constant or too large for int or of type float,
+ *
+ * If the node is not constant or too large for int or of type float,
  * a warning will be printed.
  *
  * toicon() should be used only inside declarations. If it is used in
