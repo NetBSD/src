@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.31 2021/01/17 00:23:59 mrg Exp $ */
+/* $NetBSD: db_machdep.c,v 1.32 2021/01/18 01:38:44 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.31 2021/01/17 00:23:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.32 2021/01/18 01:38:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -79,7 +79,9 @@ void db_md_watch_cmd(db_expr_t, bool, db_expr_t, const char *);
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)
 void db_md_switch_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
+#if defined(_KERNEL)
 static void db_md_meminfo_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif
 
 const struct db_command db_machine_command_table[] = {
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)
@@ -1083,6 +1085,7 @@ kdb_trap(int type, struct trapframe *tf)
 }
 #endif
 
+#if defined(_KERNEL)
 static void
 db_md_meminfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
@@ -1097,3 +1100,4 @@ db_md_meminfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		    bootconfig.dram[blk].pages);
 	}
 }
+#endif
