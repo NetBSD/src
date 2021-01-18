@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.53 2019/09/28 08:21:08 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.54 2021/01/18 23:14:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.53 2019/09/28 08:21:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.54 2021/01/18 23:14:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,7 +386,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 	struct mbuf *ctl_mbuf;
 	ssize_t resid = mp->msg_controllen;
 	size_t clen, cidx = 0, cspace;
-	u_int8_t *control;
+	uint8_t *control;
 	int error;
 
 	ctl_mbuf = m_get(M_WAIT, MT_CONTROL);
@@ -414,7 +414,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 
 		/* Check the buffer is big enough */
 		if (__predict_false(cidx + cspace > clen)) {
-			u_int8_t *nc;
+			uint8_t *nc;
 			size_t nclen;
 
 			nclen = cidx + cspace;
