@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.126 2021/01/18 17:11:14 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.127 2021/01/18 17:20:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.126 2021/01/18 17:11:14 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.127 2021/01/18 17:20:15 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -114,40 +114,40 @@ TL	([fFlL]?[i]?)
 0[xX]{HD}+{HX}{TL}	|
 \.{D}+{EX}?{TL}		return fcon();
 "="				return operator(T_ASSIGN, NOOP);
-"*="				return operator(T_OPASS, MULASS);
-"/="				return operator(T_OPASS, DIVASS);
-"%="				return operator(T_OPASS, MODASS);
-"+="				return operator(T_OPASS, ADDASS);
-"-="				return operator(T_OPASS, SUBASS);
-"<<="				return operator(T_OPASS, SHLASS);
-">>="				return operator(T_OPASS, SHRASS);
-"&="				return operator(T_OPASS, ANDASS);
-"^="				return operator(T_OPASS, XORASS);
-"|="				return operator(T_OPASS, ORASS);
+"*="				return operator(T_OPASSIGN, MULASS);
+"/="				return operator(T_OPASSIGN, DIVASS);
+"%="				return operator(T_OPASSIGN, MODASS);
+"+="				return operator(T_OPASSIGN, ADDASS);
+"-="				return operator(T_OPASSIGN, SUBASS);
+"<<="				return operator(T_OPASSIGN, SHLASS);
+">>="				return operator(T_OPASSIGN, SHRASS);
+"&="				return operator(T_OPASSIGN, ANDASS);
+"^="				return operator(T_OPASSIGN, XORASS);
+"|="				return operator(T_OPASSIGN, ORASS);
 "||"				return operator(T_LOGOR, NOOP);
 "&&"				return operator(T_LOGAND, NOOP);
-"|"				return operator(T_OR, NOOP);
+"|"				return operator(T_BITOR, NOOP);
 "&"				return operator(T_AMPER, NOOP);
 "^"				return operator(T_XOR, NOOP);
-"=="				return operator(T_EQOP, EQ);
-"!="				return operator(T_EQOP, NE);
-"<"				return operator(T_RELOP, LT);
-">"				return operator(T_RELOP, GT);
-"<="				return operator(T_RELOP, LE);
-">="				return operator(T_RELOP, GE);
-"<<"				return operator(T_SHFTOP, SHL);
-">>"				return operator(T_SHFTOP, SHR);
+"=="				return operator(T_EQUALITY, EQ);
+"!="				return operator(T_EQUALITY, NE);
+"<"				return operator(T_RELATIONAL, LT);
+">"				return operator(T_RELATIONAL, GT);
+"<="				return operator(T_RELATIONAL, LE);
+">="				return operator(T_RELATIONAL, GE);
+"<<"				return operator(T_SHIFT, SHL);
+">>"				return operator(T_SHIFT, SHR);
 "++"				return operator(T_INCDEC, INC);
 "--"				return operator(T_INCDEC, DEC);
 "->"				return operator(T_MEMBACC, ARROW);
 "."				return operator(T_MEMBACC, POINT);
-"+"				return operator(T_ADDOP, PLUS);
-"-"				return operator(T_ADDOP, MINUS);
+"+"				return operator(T_ADDITIVE, PLUS);
+"-"				return operator(T_ADDITIVE, MINUS);
 "*"				return operator(T_ASTERISK, NOOP);
-"/"				return operator(T_DIVOP, DIV);
-"%"				return operator(T_DIVOP, MOD);
-"!"				return operator(T_UNOP, NOT);
-"~"				return operator(T_UNOP, COMPL);
+"/"				return operator(T_MULTIPLICATIVE, DIV);
+"%"				return operator(T_MULTIPLICATIVE, MOD);
+"!"				return operator(T_UNARY, NOT);
+"~"				return operator(T_UNARY, COMPL);
 "\""				return string();
 "L\""				return wcstrg();
 ";"				return T_SEMI;
