@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.154 2021/01/18 18:14:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.155 2021/01/18 18:18:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.154 2021/01/18 18:14:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.155 2021/01/18 18:18:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -302,15 +302,15 @@ anonymize(sym_t *s)
 %type	<y_pqinf>	asterisk
 %type	<y_sym>		param_decl
 %type	<y_sym>		param_list
-%type	<y_sym>		abs_decl_param_list
+%type	<y_sym>		abstract_decl_param_list
 %type	<y_sym>		direct_param_decl
 %type	<y_sym>		notype_param_decl
 %type	<y_sym>		direct_notype_param_decl
 %type	<y_pqinf>	type_qualifier_list
 %type	<y_pqinf>	type_qualifier
 %type	<y_sym>		identifier_list
-%type	<y_sym>		abs_decl
-%type	<y_sym>		direct_abs_decl
+%type	<y_sym>		abstract_decl
+%type	<y_sym>		direct_abstract_decl
 %type	<y_sym>		vararg_parameter_type_list
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
@@ -1208,7 +1208,7 @@ param_list:
 	  id_list_lparn identifier_list T_RPAREN {
 		$$ = $2;
 	  }
-	| abs_decl_param_list {
+	| abstract_decl_param_list {
 		$$ = $1;
 	  }
 	;
@@ -1232,20 +1232,20 @@ identifier_list:
 	  }
 	;
 
-abs_decl_param_list:
-	  abs_decl_lparn T_RPAREN {
+abstract_decl_param_list:
+	  abstract_decl_lparn T_RPAREN {
 		$$ = NULL;
 	  }
-	| abs_decl_lparn vararg_parameter_type_list T_RPAREN {
+	| abstract_decl_lparn vararg_parameter_type_list T_RPAREN {
 		dcs->d_proto = true;
 		$$ = $2;
 	  }
-	| abs_decl_lparn error T_RPAREN {
+	| abstract_decl_lparn error T_RPAREN {
 		$$ = NULL;
 	  }
 	;
 
-abs_decl_lparn:
+abstract_decl_lparn:
 	  T_LPAREN {
 		blklev++;
 		pushdecl(PARG);
@@ -1302,10 +1302,10 @@ parameter_declaration:
 	| declspecs deftyp param_decl {
 		$$ = declare_argument($3, 0);
 	  }
-	| declmods deftyp abs_decl {
+	| declmods deftyp abstract_decl {
 		$$ = declare_argument($3, 0);
 	  }
-	| declspecs deftyp abs_decl {
+	| declspecs deftyp abstract_decl {
 		$$ = declare_argument($3, 0);
 	  }
 	;
@@ -1422,22 +1422,22 @@ abstract_declaration:
 	| noclass_declspecs deftyp {
 		$$ = declare_1_abstract(abstract_name());
 	  }
-	| noclass_declmods deftyp abs_decl {
+	| noclass_declmods deftyp abstract_decl {
 		$$ = declare_1_abstract($3);
 	  }
-	| noclass_declspecs deftyp abs_decl {
+	| noclass_declspecs deftyp abstract_decl {
 		$$ = declare_1_abstract($3);
 	  }
 	;
 
-abs_decl:
+abstract_decl:
 	  pointer {
 		$$ = add_pointer(abstract_name(), $1);
 	  }
-	| direct_abs_decl {
+	| direct_abstract_decl {
 		$$ = $1;
 	  }
-	| pointer direct_abs_decl {
+	| pointer direct_abstract_decl {
 		$$ = add_pointer($2, $1);
 	  }
 	| T_TYPEOF term {
@@ -1445,8 +1445,8 @@ abs_decl:
 	  }
 	;
 
-direct_abs_decl:
-	  T_LPAREN abs_decl T_RPAREN {
+direct_abstract_decl:
+	  T_LPAREN abstract_decl T_RPAREN {
 		$$ = $2;
 	  }
 	| T_LBRACK T_RBRACK {
@@ -1455,26 +1455,26 @@ direct_abs_decl:
 	| T_LBRACK constant T_RBRACK {
 		$$ = add_array(abstract_name(), 1, toicon($2, 0));
 	  }
-	| type_attribute direct_abs_decl {
+	| type_attribute direct_abstract_decl {
 		$$ = $2;
 	  }
-	| direct_abs_decl T_LBRACK T_RBRACK {
+	| direct_abstract_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
-	| direct_abs_decl T_LBRACK constant T_RBRACK {
+	| direct_abstract_decl T_LBRACK constant T_RBRACK {
 		$$ = add_array($1, 1, toicon($3, 0));
 	  }
-	| abs_decl_param_list opt_asm_or_symbolrename {
+	| abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
 		popdecl();
 		blklev--;
 	  }
-	| direct_abs_decl abs_decl_param_list opt_asm_or_symbolrename {
+	| direct_abstract_decl abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
-	| direct_abs_decl type_attribute_list
+	| direct_abstract_decl type_attribute_list
 	;
 
 non_expr_statement:
