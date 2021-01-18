@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.135 2021/01/14 08:00:45 simonb Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.136 2021/01/18 23:14:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1071,14 +1071,14 @@ typedef netbsd32_pointer_t netbsd32_nfsdp;
 struct netbsd32_nfsd_srvargs {
 	netbsd32_nfsdp	nsd_nfsd;
 	uid_t		nsd_uid;
-	u_int32_t	nsd_haddr;
+	uint32_t	nsd_haddr;
 	struct uucred	nsd_cr;
 	int		nsd_authlen;
 	netbsd32_u_charp nsd_authstr;
 	int		nsd_verflen;
 	netbsd32_u_charp nsd_verfstr;
 	struct netbsd32_timeval	nsd_timestamp;
-	u_int32_t	nsd_ttl;
+	uint32_t	nsd_ttl;
 	NFSKERBKEY_T	nsd_key;
 };
 
