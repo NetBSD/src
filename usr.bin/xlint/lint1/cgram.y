@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.145 2021/01/17 15:09:56 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.146 2021/01/18 16:29:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.145 2021/01/17 15:09:56 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.146 2021/01/18 16:29:59 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -139,7 +139,7 @@ anonymize(sym_t *s)
 };
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
-%token	<y_op>		T_STROP
+%token	<y_op>		T_MEMBACC
 %token	<y_op>		T_UNOP
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
@@ -261,7 +261,7 @@ anonymize(sym_t *s)
 %left	T_ADDOP
 %left	T_ASTERISK T_DIVOP
 %right	T_UNOP T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
-%left	T_LPAREN T_LBRACK T_STROP
+%left	T_LPAREN T_LBRACK T_MEMBACC
 
 %token	<y_sb>		T_NAME
 %token	<y_sb>		T_TYPENAME
@@ -2021,14 +2021,14 @@ func_arg_list:
 	;
 
 point_or_arrow:
-	  T_STROP {
+	  T_MEMBACC {
 		symtyp = FMEMBER;
 		$$ = $1;
 	  }
 	;
 
 point:
-	  T_STROP {
+	  T_MEMBACC {
 		if ($1 != POINT) {
 			/* syntax error '%s' */
 			error(249, yytext);
