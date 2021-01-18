@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.149 2021/01/18 16:47:46 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.150 2021/01/18 17:20:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.149 2021/01/18 16:47:46 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.150 2021/01/18 17:20:15 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -140,7 +140,7 @@ anonymize(sym_t *s)
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
 %token	<y_op>		T_MEMBACC
-%token	<y_op>		T_UNOP
+%token	<y_op>		T_UNARY
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
 %token			T_BUILTIN_OFFSETOF
@@ -148,20 +148,20 @@ anonymize(sym_t *s)
 %token			T_EXTENSION
 %token			T_ALIGNOF
 %token	<y_op>		T_ASTERISK
-%token	<y_op>		T_DIVOP
-%token	<y_op>		T_ADDOP
-%token	<y_op>		T_SHFTOP
-%token	<y_op>		T_RELOP
-%token	<y_op>		T_EQOP
+%token	<y_op>		T_MULTIPLICATIVE
+%token	<y_op>		T_ADDITIVE
+%token	<y_op>		T_SHIFT
+%token	<y_op>		T_RELATIONAL
+%token	<y_op>		T_EQUALITY
 %token	<y_op>		T_AMPER
 %token	<y_op>		T_XOR
-%token	<y_op>		T_OR
+%token	<y_op>		T_BITOR
 %token	<y_op>		T_LOGAND
 %token	<y_op>		T_LOGOR
 %token			T_QUEST
 %token			T_COLON
 %token	<y_op>		T_ASSIGN
-%token	<y_op>		T_OPASS
+%token	<y_op>		T_OPASSIGN
 %token			T_COMMA
 %token			T_SEMI
 %token			T_ELLIPSIS
@@ -248,19 +248,19 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_WEAK
 
 %left	T_COMMA
-%right	T_ASSIGN T_OPASS
+%right	T_ASSIGN T_OPASSIGN
 %right	T_QUEST T_COLON
 %left	T_LOGOR
 %left	T_LOGAND
-%left	T_OR
+%left	T_BITOR
 %left	T_XOR
 %left	T_AMPER
-%left	T_EQOP
-%left	T_RELOP
-%left	T_SHFTOP
-%left	T_ADDOP
-%left	T_ASTERISK T_DIVOP
-%right	T_UNOP T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
+%left	T_EQUALITY
+%left	T_RELATIONAL
+%left	T_SHIFT
+%left	T_ADDITIVE
+%left	T_ASTERISK T_MULTIPLICATIVE
+%right	T_UNARY T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
 %left	T_LPAREN T_LBRACK T_MEMBACC
 
 %token	<y_sb>		T_NAME
@@ -1802,19 +1802,19 @@ expr:
 	  expr T_ASTERISK expr {
 		$$ = build(MULT, $1, $3);
 	  }
-	| expr T_DIVOP expr {
+	| expr T_MULTIPLICATIVE expr {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_ADDOP expr {
+	| expr T_ADDITIVE expr {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_SHFTOP expr {
+	| expr T_SHIFT expr {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_RELOP expr {
+	| expr T_RELATIONAL expr {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_EQOP expr {
+	| expr T_EQUALITY expr {
 		$$ = build($2, $1, $3);
 	  }
 	| expr T_AMPER expr {
@@ -1823,7 +1823,7 @@ expr:
 	| expr T_XOR expr {
 		$$ = build(BITXOR, $1, $3);
 	  }
-	| expr T_OR expr {
+	| expr T_BITOR expr {
 		$$ = build(BITOR, $1, $3);
 	  }
 	| expr T_LOGAND expr {
@@ -1838,7 +1838,7 @@ expr:
 	| expr T_ASSIGN expr {
 		$$ = build(ASSIGN, $1, $3);
 	  }
-	| expr T_OPASS expr {
+	| expr T_OPASSIGN expr {
 		$$ = build($2, $1, $3);
 	  }
 	| expr T_COMMA expr {
@@ -1905,10 +1905,10 @@ term:
 	| T_AMPER term {
 		$$ = build(ADDR, $2, NULL);
 	  }
-	| T_UNOP term {
+	| T_UNARY term {
 		$$ = build($1, $2, NULL);
 	  }
-	| T_ADDOP term {
+	| T_ADDITIVE term {
 		if (tflag && $1 == PLUS) {
 			/* unary + is illegal in traditional C */
 			warning(100);
@@ -1975,10 +1975,10 @@ term:
 	| T_ALIGNOF T_LPAREN type_name T_RPAREN		%prec T_ALIGNOF {
 		$$ = build_alignof($3);
 	  }
-	| T_LPAREN type_name T_RPAREN term		%prec T_UNOP {
+	| T_LPAREN type_name T_RPAREN term		%prec T_UNARY {
 		$$ = cast($4, $2);
 	  }
-	| T_LPAREN type_name T_RPAREN			%prec T_UNOP {
+	| T_LPAREN type_name T_RPAREN			%prec T_UNARY {
 		sym_t *tmp = mktempsym($2);
 		idecl(tmp, 1, NULL);
 	  } init_lbrace init_expr_list init_rbrace {
