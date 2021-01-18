@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.4 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.5 2021/01/18 20:02:34 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -51,7 +51,8 @@ static const struct {
 #include "ops.def"
 
 const char *
-getopname(op_t op) {
+getopname(op_t op)
+{
 	return imods[op].m.m_name;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.63 2021/01/18 19:24:09 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.64 2021/01/18 20:02:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.63 2021/01/18 19:24:09 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.64 2021/01/18 20:02:34 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -462,7 +462,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	 * to the type of the switch expression
 	 */
 	v = constant(tn, true);
-	(void) memset(&nv, 0, sizeof nv);
+	(void)memset(&nv, 0, sizeof nv);
 	convert_constant(CASE, 0, ci->c_swtype, &nv, v);
 	free(v);
 

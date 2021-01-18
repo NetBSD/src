@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.35 2021/01/16 16:53:24 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.36 2021/01/18 20:02:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.35 2021/01/16 16:53:24 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.36 2021/01/18 20:02:34 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -611,7 +611,7 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 	fp = fmt;
 	fc = *fp++;
 
-	for ( ; ; ) {
+	for (;;) {
 		if (fc == '\0') {
 			if (*ap != NULL)
 				tomanyarg(hte, call);
@@ -626,7 +626,7 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		sz = NOTSPEC;
 
 		/* Flags */
-		for ( ; ; ) {
+		for (;;) {
 			if (fc == '-') {
 				if (left)
 					break;
@@ -836,7 +836,7 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 	fp = fmt;
 	fc = *fp++;
 
-	for ( ; ; ) {
+	for (;;) {
 		if (fc == '\0') {
 			if (*ap != NULL)
 				tomanyarg(hte, call);
