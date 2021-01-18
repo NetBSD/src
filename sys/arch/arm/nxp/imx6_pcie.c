@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -89,10 +89,11 @@ static void imx6_pcie_reset(void *);
 CFATTACH_DECL_NEW(imxpcie_fdt, sizeof(struct imxpcie_fdt_softc),
     imx6_pcie_match, imx6_pcie_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "fsl,imx6q-pcie",	false },
-	{ "fsl,imx6qp-pcie",	true },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-pcie",	.value = false },
+	{ .compat = "fsl,imx6qp-pcie",	.value = true },
+
+	{ 0 }
 };
 
 static int
@@ -126,7 +127,8 @@ imx6_pcie_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpr_read = imx6_pcie_gpr_read;
 	sc->sc_gpr_write = imx6_pcie_gpr_write;
 	sc->sc_reset = imx6_pcie_reset;
-	sc->sc_have_sw_reset = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_have_sw_reset =
+	    (bool)of_search_compatible(phandle, compat_data)->value;
 
 	if (fdtbus_get_reg_byname(phandle, "dbi", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

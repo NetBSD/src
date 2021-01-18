@@ -1,4 +1,4 @@
-/* $NetBSD: meson_usbphy.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_usbphy.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_usbphy.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_usbphy.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,10 +59,13 @@ enum meson_usbphy_type {
 	USBPHY_MESON8B,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson8b-usb2-phy",		USBPHY_MESON8B },
-	{ "amlogic,meson-gxbb-usb2-phy",	USBPHY_MESON8B },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-usb2-phy",
+	  .value = USBPHY_MESON8B },
+	{ .compat = "amlogic,meson-gxbb-usb2-phy",
+	  .value = USBPHY_MESON8B },
+
+	{ 0 }
 };
 
 struct meson_usbphy_softc {
@@ -202,7 +205,7 @@ meson_usbphy_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_phandle = phandle;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

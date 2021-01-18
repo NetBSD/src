@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.30 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.30 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,46 +78,65 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.30 2021/01/15 22:47:32 jmcneill Exp
 #define	SUNXI_GPIO_GRP_CONFIG(bank)	(0x300 + 0x4 * (bank))
 #define	 SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK	0xf
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 #ifdef SOC_SUN4I_A10
-	{ "allwinner,sun4i-a10-pinctrl",	(uintptr_t)&sun4i_a10_padconf },
+	{ .compat = "allwinner,sun4i-a10-pinctrl",
+	  .data = &sun4i_a10_padconf },
 #endif
 #ifdef SOC_SUN5I_A13
-	{ "allwinner,sun5i-a13-pinctrl",	(uintptr_t)&sun5i_a13_padconf },
-	{ "nextthing,gr8-pinctrl",		(uintptr_t)&sun5i_a13_padconf },
+	{ .compat = "allwinner,sun5i-a13-pinctrl",
+	  .data = &sun5i_a13_padconf },
+	{ .compat = "nextthing,gr8-pinctrl",	
+	  .data = &sun5i_a13_padconf },
 #endif
 #ifdef SOC_SUN6I_A31
-	{ "allwinner,sun6i-a31-pinctrl",	(uintptr_t)&sun6i_a31_padconf },
-	{ "allwinner,sun6i-a31-r-pinctrl",	(uintptr_t)&sun6i_a31_r_padconf },
+	{ .compat = "allwinner,sun6i-a31-pinctrl",
+	  .data = &sun6i_a31_padconf },
+	{ .compat = "allwinner,sun6i-a31-r-pinctrl",
+	  .data = &sun6i_a31_r_padconf },
 #endif
 #ifdef SOC_SUN7I_A20
-	{ "allwinner,sun7i-a20-pinctrl",	(uintptr_t)&sun7i_a20_padconf },
+	{ .compat = "allwinner,sun7i-a20-pinctrl",
+	  .data = &sun7i_a20_padconf },
 #endif
 #ifdef SOC_SUN8I_A83T
-	{ "allwinner,sun8i-a83t-pinctrl",	(uintptr_t)&sun8i_a83t_padconf },
-	{ "allwinner,sun8i-a83t-r-pinctrl",	(uintptr_t)&sun8i_a83t_r_padconf },
+	{ .compat = "allwinner,sun8i-a83t-pinctrl",
+	  .data = &sun8i_a83t_padconf },
+	{ .compat = "allwinner,sun8i-a83t-r-pinctrl",
+	  .data = &sun8i_a83t_r_padconf },
 #endif
 #ifdef SOC_SUN8I_H3
-	{ "allwinner,sun8i-h3-pinctrl",		(uintptr_t)&sun8i_h3_padconf },
-	{ "allwinner,sun8i-h3-r-pinctrl",	(uintptr_t)&sun8i_h3_r_padconf },
+	{ .compat = "allwinner,sun8i-h3-pinctrl",
+	  .data = &sun8i_h3_padconf },
+	{ .compat = "allwinner,sun8i-h3-r-pinctrl",
+	  .data = &sun8i_h3_r_padconf },
 #endif
 #ifdef SOC_SUN9I_A80
-	{ "allwinner,sun9i-a80-pinctrl",	(uintptr_t)&sun9i_a80_padconf },
-	{ "allwinner,sun9i-a80-r-pinctrl",	(uintptr_t)&sun9i_a80_r_padconf },
+	{ .compat = "allwinner,sun9i-a80-pinctrl",
+	  .data = &sun9i_a80_padconf },
+	{ .compat = "allwinner,sun9i-a80-r-pinctrl",
+	  .data = &sun9i_a80_r_padconf },
 #endif
 #ifdef SOC_SUN50I_A64
-	{ "allwinner,sun50i-a64-pinctrl",	(uintptr_t)&sun50i_a64_padconf },
-	{ "allwinner,sun50i-a64-r-pinctrl",	(uintptr_t)&sun50i_a64_r_padconf },
+	{ .compat = "allwinner,sun50i-a64-pinctrl",
+	  .data = &sun50i_a64_padconf },
+	{ .compat = "allwinner,sun50i-a64-r-pinctrl",
+	  .data = &sun50i_a64_r_padconf },
 #endif
 #ifdef SOC_SUN50I_H5
-	{ "allwinner,sun50i-h5-pinctrl",	(uintptr_t)&sun8i_h3_padconf },
-	{ "allwinner,sun50i-h5-r-pinctrl",	(uintptr_t)&sun8i_h3_r_padconf },
+	{ .compat = "allwinner,sun50i-h5-pinctrl",
+	  .data = &sun8i_h3_padconf },
+	{ .compat = "allwinner,sun50i-h5-r-pinctrl",
+	  .data = &sun8i_h3_r_padconf },
 #endif
 #ifdef SOC_SUN50I_H6
-	{ "allwinner,sun50i-h6-pinctrl",	(uintptr_t)&sun50i_h6_padconf },
-	{ "allwinner,sun50i-h6-r-pinctrl",	(uintptr_t)&sun50i_h6_r_padconf },
+	{ .compat = "allwinner,sun50i-h6-pinctrl",
+	  .data = &sun50i_h6_padconf },
+	{ .compat = "allwinner,sun50i-h6-r-pinctrl",
+	  .data = &sun50i_h6_r_padconf },
 #endif
-	{ NULL }
+
+	{ 0 }
 };
 
 struct sunxi_gpio_eint {
@@ -1003,7 +1022,7 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
-	sc->sc_padconf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_padconf = of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": PIO\n");

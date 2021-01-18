@@ -1,4 +1,4 @@
-/* $NetBSD: arasan_sdhc_fdt.c,v 1.4 2021/01/15 20:50:49 ryo Exp $ */
+/* $NetBSD: arasan_sdhc_fdt.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.4 2021/01/15 20:50:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,9 +72,11 @@ struct arasan_sdhc_softc {
 	struct clk		sc_clk_card;
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3399-sdhci-5.1",		AS_TYPE_RK3399 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-sdhci-5.1",
+	  .value = AS_TYPE_RK3399 },
+
+	{ 0 }
 };
 
 static struct clk *
@@ -262,7 +264,7 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_bsz = size;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 
 	const uint32_t caps = bus_space_read_4(sc->sc_bst, sc->sc_bsh, SDHC_CAPABILITIES);
 	if ((caps & (SDHC_ADMA2_SUPP|SDHC_64BIT_SYS_BUS)) == SDHC_ADMA2_SUPP) {

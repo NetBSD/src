@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.8 2020/02/29 05:51:10 isaki Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.9 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.8 2020/02/29 05:51:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.9 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,11 +88,12 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.8 2020/02/29 05:51:10 isaki Exp $"
 #define	AC_DAC_CNT(_sc)		((_sc)->sc_cfg->DAC_CNT)
 #define	AC_ADC_CNT(_sc)		((_sc)->sc_cfg->ADC_CNT)
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 	A10_CODEC_COMPATDATA,
 	A31_CODEC_COMPATDATA,
 	H3_CODEC_COMPATDATA,
-	{ NULL }
+
+	{ 0 }
 };
 
 #define	CODEC_READ(sc, reg)			\
@@ -604,7 +605,7 @@ sunxi_codec_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_dmat = faa->faa_dmat;
 	LIST_INIT(&sc->sc_dmalist);
-	sc->sc_cfg = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_cfg = of_search_compatible(phandle, compat_data)->data;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 

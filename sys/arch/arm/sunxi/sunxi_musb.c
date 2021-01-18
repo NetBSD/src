@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.6 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.6 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,12 +60,13 @@ struct sunxi_musb_softc {
 CFATTACH_DECL_NEW(sunxi_musb, sizeof(struct sunxi_musb_softc),
 	sunxi_musb_match, sunxi_musb_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-musb",		5 },
-	{ "allwinner,sun6i-a13-musb",		5 },
-	{ "allwinner,sun8i-h3-musb",		4 },
-	{ "allwinner,sun8i-a33-musb",		5 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-musb",		.value = 5 },
+	{ .compat = "allwinner,sun6i-a13-musb",		.value = 5 },
+	{ .compat = "allwinner,sun8i-h3-musb",		.value = 4 },
+	{ .compat = "allwinner,sun8i-a33-musb",		.value = 5 },
+
+	{ 0 }
 };
 
 #define	REMAPFLAG	0x8000
@@ -370,7 +371,7 @@ sunxi_musb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_poll = sunxi_musb_poll;
 	sc->sc_intr_poll_arg = sc;
 	sc->sc_mode = MOTG_MODE_HOST;
-	sc->sc_ep_max = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_ep_max = of_search_compatible(phandle, compat_data)->value;
 	sc->sc_ep_fifosize = 512;
 
 	aprint_naive("\n");

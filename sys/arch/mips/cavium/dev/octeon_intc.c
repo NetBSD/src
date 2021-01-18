@@ -1,4 +1,4 @@
-/* $NetBSD: octeon_intc.c,v 1.2 2021/01/15 00:38:23 jmcneill Exp $ */
+/* $NetBSD: octeon_intc.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.2 2021/01/15 00:38:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,9 +69,10 @@ struct octeon_intc_softc {
 CFATTACH_DECL_NEW(octintc, sizeof(struct octeon_intc_softc),
 	octeon_intc_match, octeon_intc_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "cavium,octeon-3860-ciu",		OCTEON_INTC_CIU },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cavium,octeon-3860-ciu",	.value = OCTEON_INTC_CIU },
+
+	{ 0 }
 };
 
 static int
@@ -92,7 +93,7 @@ octeon_intc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 
 	switch (sc->sc_type) {
 	case OCTEON_INTC_CIU:

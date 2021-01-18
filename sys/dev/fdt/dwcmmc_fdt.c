@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.12 2021/01/15 20:50:49 ryo Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.12 2021/01/15 20:50:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,9 +66,10 @@ static const struct dwcmmc_fdt_config dwcmmc_rk3288_config = {
 	.intr_cardmask = __BIT(24),
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3288-dw-mshc",	(uintptr_t)&dwcmmc_rk3288_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3288-dw-mshc",	.data = &dwcmmc_rk3288_config },
+
+	{ 0 }
 };
 
 struct dwcmmc_fdt_softc {
@@ -150,7 +151,7 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		    (uint64_t)addr, error);
 		return;
 	}
-	esc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	esc->sc_conf = of_search_compatible(phandle, compat_data)->data;
 
 	if (of_getprop_uint32(phandle, "max-frequency", &sc->sc_clock_freq) != 0)
 		sc->sc_clock_freq = UINT_MAX;

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.9 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.10 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.9 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.10 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,12 +305,13 @@ static const struct sunxi_thermal_config h5_config = {
 	.to_reg = h5_to_reg,
 };
 
-static struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-a83t-ts",	(uintptr_t)&a83t_config },
-	{ "allwinner,sun8i-h3-ts",	(uintptr_t)&h3_config },
-	{ "allwinner,sun50i-a64-ts",	(uintptr_t)&a64_config },
-	{ "allwinner,sun50i-h5-ts",	(uintptr_t)&h5_config },
-	{ NULL,				(uintptr_t)NULL }
+static struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-a83t-ts",	.data = &a83t_config },
+	{ .compat = "allwinner,sun8i-h3-ts",	.data = &h3_config },
+	{ .compat = "allwinner,sun50i-a64-ts",	.data = &a64_config },
+	{ .compat = "allwinner,sun50i-h5-ts",	.data = &h5_config },
+
+	{ 0 }
 };
 
 struct sunxi_thermal_softc {
@@ -318,7 +319,7 @@ struct sunxi_thermal_softc {
 	int				phandle;
 	bus_space_tag_t			bst;
 	bus_space_handle_t		bsh;
-	struct sunxi_thermal_config	*conf;
+	const struct sunxi_thermal_config *conf;
 
 	kmutex_t			lock;
 	callout_t			tick;
@@ -567,7 +568,7 @@ sunxi_thermal_attach(device_t parent, device_t self, void *aux)
 	sc->dev = self;
 	sc->phandle = phandle;
 	sc->bst = faa->faa_bst;
-	sc->conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->conf = of_search_compatible(phandle, compat_data)->data;
 	if (bus_space_map(sc->bst, addr, size, 0, &sc->bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
 		return;

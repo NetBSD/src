@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lradc.c,v 1.2 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_lradc.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016, 2018 Manuel Bouyer
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lradc.c,v 1.2 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lradc.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,9 +75,10 @@ static void	sunxi_lradc_get_levels(struct sunxi_lradc_softc *, int, int);
 static void	sunxi_lradc_print_levels(struct sunxi_lradc_softc *, int);
 static bool	sunxi_lradc_register_switches(struct sunxi_lradc_softc *, int);
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun4i-a10-lradc-keys", 0},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-lradc-keys" },
+
+	{ 0 }
 };
 
 

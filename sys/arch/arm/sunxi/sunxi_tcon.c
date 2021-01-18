@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.7 2018/06/01 17:18:44 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.7 2018/06/01 17:18:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,10 +93,11 @@ void sunxi_tcon_dump_regs(int);
 #define TCON_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun4i-a10-tcon", TCON_A10},
-	{"allwinner,sun7i-a20-tcon", TCON_A10},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-tcon", .value = TCON_A10},
+	{ .compat = "allwinner,sun7i-a20-tcon", .value = TCON_A10},
+
+	{ 0 }
 };
 
 static int	sunxi_tcon_match(device_t, cfdata_t, void *);
@@ -156,7 +157,8 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_lvds_rst = fdtbus_reset_get(phandle, "lvds");
 
-	sc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_type =
+	    of_search_compatible(faa->faa_phandle, compat_data)->value;
 
 	aprint_naive("\n");
 	aprint_normal(": LCD/TV timing controller (%s)\n", 
