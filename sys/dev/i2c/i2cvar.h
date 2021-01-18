@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.21 2020/12/29 00:26:51 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.22 2021/01/18 15:28:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -171,10 +171,12 @@ void	iic_tag_fini(i2c_tag_t);
  * API presented to i2c devices.
  */
 int	iic_compatible_match(const struct i2c_attach_args *,
-			     const struct device_compatible_entry *,
-			     const struct device_compatible_entry **);
+			     const struct device_compatible_entry *);
 bool	iic_use_direct_match(const struct i2c_attach_args *, const cfdata_t,
 			     const struct device_compatible_entry *, int *);
+const struct device_compatible_entry *
+	iic_compatible_lookup(const struct i2c_attach_args *,
+			      const struct device_compatible_entry *);
 
 /*
  * Constants to indicate the quality of a match made by a driver's

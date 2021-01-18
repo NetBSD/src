@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.274 2020/10/03 22:32:50 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.275 2021/01/18 15:28:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.274 2020/10/03 22:32:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.275 2021/01/18 15:28:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2332,10 +2332,11 @@ device_find_by_driver_unit(const char *name, int unit)
  *	a weighted match result, and optionally the matching
  *	entry.
  */
-int
-device_compatible_match(const char **device_compats, int ndevice_compats,
-			const struct device_compatible_entry *driver_compats,
-			const struct device_compatible_entry **matching_entryp)
+static int
+device_compatible_match_internal(const char **device_compats,
+    int ndevice_compats,
+    const struct device_compatible_entry *driver_compats,
+    const struct device_compatible_entry **matching_entryp)
 {
 	const struct device_compatible_entry *dce = NULL;
 	int i, match_weight;
@@ -2361,6 +2362,33 @@ device_compatible_match(const char **device_compats, int ndevice_compats,
 		}
 	}
 	return 0;
+}
+
+int
+device_compatible_match(const char **device_compats, int ndevice_compats,
+			const struct device_compatible_entry *driver_compats)
+{
+	return device_compatible_match_internal(device_compats, ndevice_compats,
+						driver_compats, NULL);
+}
+
+/*
+ * device_compatible_lookup:
+ *
+ *	Look up and return the device_compatible_entry, using the
+ *	same matching criteria used by device_compatible_match().
+ */
+const struct device_compatible_entry *
+device_compatible_lookup(const char **device_compats, int ndevice_compats,
+			 const struct device_compatible_entry *driver_compats)
+{
+	const struct device_compatible_entry *dce;
+
+	if (device_compatible_match_internal(device_compats, ndevice_compats,
+					     driver_compats, &dce)) {
+		return dce;
+	}
+	return NULL;
 }
 
 /*
