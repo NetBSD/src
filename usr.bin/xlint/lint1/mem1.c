@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.23 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.24 2021/01/18 20:02:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.23 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.24 2021/01/18 20:02:34 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -140,7 +140,7 @@ fnnalloc(const char *s, size_t len)
 
 	if ((fn = srchfn(s, len)) == NULL) {
 		fn = xmalloc(sizeof (fn_t));
-		/* Do not used strdup() because string is not NUL-terminated.*/
+		/* Do not use strdup() because string is not NUL-terminated.*/
 		fn->fn_name = xmalloc(len + 1);
 		(void)memcpy(fn->fn_name, s, len);
 		fn->fn_name[len] = '\0';

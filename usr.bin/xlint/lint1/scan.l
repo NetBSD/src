@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.128 2021/01/18 17:54:50 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.129 2021/01/18 20:02:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.128 2021/01/18 17:54:50 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.129 2021/01/18 20:02:34 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -108,11 +108,11 @@ TL	([fFlL]?[i]?)
 0{OD}*[lLuU]*			return icon(8);
 {NZD}{D}*[lLuU]*		return icon(10);
 0[xX]{HD}+[lLuU]*		return icon(16);
-{D}+\.{D}*{EX}?{TL}	|
-{D}+{EX}{TL}		|
-0[xX]{HD}+\.{HD}*{HX}{TL} |
-0[xX]{HD}+{HX}{TL}	|
-\.{D}+{EX}?{TL}		return fcon();
+{D}+\.{D}*{EX}?{TL}		|
+{D}+{EX}{TL}			|
+0[xX]{HD}+\.{HD}*{HX}{TL}	|
+0[xX]{HD}+{HX}{TL}		|
+\.{D}+{EX}?{TL}			return fcon();
 "="				return operator(T_ASSIGN, NOOP);
 "*="				return operator(T_OPASSIGN, MULASS);
 "/="				return operator(T_OPASSIGN, DIVASS);
@@ -328,7 +328,7 @@ uint64_t qumasks[64 + 1];
 /* free list for sbuf structures */
 static	sbuf_t	 *sbfrlst;
 
-/* Typ of next expected symbol */
+/* type of next expected symbol */
 symt_t	symtyp;
 
 
@@ -598,7 +598,7 @@ icon(int base)
 
 	/* read suffixes */
 	l_suffix = u_suffix = 0;
-	for ( ; ; ) {
+	for (;;) {
 		if ((c = cp[len - 1]) == 'l' || c == 'L') {
 			l_suffix++;
 		} else if (c == 'u' || c == 'U') {
@@ -1225,14 +1225,14 @@ directive(void)
  *	PROTOLIB
  *	SCANFLIKEn
  *	VARARGSn
- * If one of this comments is recognized, the arguments, if any, are
+ * If one of these comments is recognized, the argument, if any, is
  * parsed and a function which handles this comment is called.
  */
 static void
 comment(void)
 {
 	int	c, lc;
-	static struct {
+	static const struct {
 		const	char *keywd;
 		int	arg;
 		void	(*func)(int);
@@ -1262,7 +1262,7 @@ comment(void)
 
 	eoc = false;
 
-	/* Skip white spaces after the start of the comment */
+	/* Skip whitespace after the start of the comment */
 	while ((c = inpc()) != EOF && isspace(c))
 		continue;
 
@@ -1282,7 +1282,7 @@ comment(void)
 	if (i == sizeof (keywtab) / sizeof (keywtab[0]))
 		goto skip_rest;
 
-	/* skip white spaces after the keyword */
+	/* skip whitespace after the keyword */
 	while (c != EOF && isspace(c))
 		c = inpc();
 
@@ -1297,7 +1297,7 @@ comment(void)
 	arg[l] = '\0';
 	a = l != 0 ? atoi(arg) : -1;
 
-	/* skip white spaces after the argument */
+	/* skip whitespace after the argument */
 	while (c != EOF && isspace(c))
 		c = inpc();
 
@@ -1462,9 +1462,9 @@ wcstrg(void)
  *
  * getsym() is called as soon as it is probably ok to put the symbol to
  * the symbol table. This does not mean that it is not possible that
- * symbols are put to the symbol table which are than not completely
+ * symbols are put to the symbol table which are not completely
  * declared due to syntax errors. To avoid too many problems in this
- * case symbols get type int in getsym().
+ * case, symbols get type int in getsym().
  *
  * XXX calls to getsym() should be delayed until decl1*() is called
  */
@@ -1498,7 +1498,7 @@ getsym(sbuf_t *sb)
 
 	/* create a new symbol table entry */
 
-	/* labels must always be allocated at level 1 (outhermost block) */
+	/* labels must always be allocated at level 1 (outermost block) */
 	if (symtyp == FLABEL) {
 		sym = getlblk(1, sizeof (sym_t));
 		s = getlblk(1, sb->sb_len + 1);
