@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.129 2021/01/18 19:21:52 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.130 2021/01/18 19:24:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.129 2021/01/18 19:21:52 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.130 2021/01/18 19:24:09 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1287,7 +1287,7 @@ merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
  * The following 3 functions extend the type of a declarator with
  * pointer, function and array types.
  *
- * The current type is the Type built by deftyp() (dcs->d_type) and
+ * The current type is the type built by deftyp() (dcs->d_type) and
  * pointer, function and array types already added for this
  * declarator. The new type extension is inserted between both.
  */
@@ -1464,8 +1464,8 @@ old_style_function(sym_t *decl, sym_t *args)
 }
 
 /*
- * Lists of Identifiers in functions declarations are allowed only if
- * it's also a function definition. If this is not the case, print a
+ * Lists of identifiers in functions declarations are allowed only if
+ * it's also a function definition. If this is not the case, print an
  * error message.
  */
 void
@@ -1580,7 +1580,7 @@ declarator_name(sym_t *sym)
 }
 
 /*
- * Process a name in the list of formal params in an old style function
+ * Process a name in the list of formal parameters in an old style function
  * definition.
  */
 sym_t *
@@ -1614,7 +1614,7 @@ old_style_function_name(sym_t *sym)
 type_t *
 mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 {
-	scl_t	scl = NOSCL;
+	scl_t	scl;
 	type_t	*tp;
 
 	if (kind == STRUCT) {
@@ -2200,10 +2200,10 @@ eqargs(const type_t *tp1, const type_t *tp2, bool *dowarn)
 
 /*
  * mnoarg() (matches functions with no argument type information)
- * returns 1 if all parameters of a prototype are compatible with
+ * returns whether all parameters of a prototype are compatible with
  * an old style function declaration.
  * This is the case if the following conditions are met:
- *	1. the prototype must have a fixed number of parameters
+ *	1. the prototype has a fixed number of parameters
  *	2. no parameter is of type float
  *	3. no parameter is converted to another type if integer promotion
  *	   is applied on it

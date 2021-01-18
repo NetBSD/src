@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.58 2021/01/17 16:25:30 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.59 2021/01/18 19:24:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -387,8 +387,8 @@ typedef struct control_statement {
 	bool	c_infinite : 1;		/* break condition always false
 					   (for (;;), while (1)) */
 	bool	c_rchif : 1;		/* end of if-branch reached */
-	bool	c_noretval : 1;		/* had "return;" */
-	bool	c_retval : 1;		/* had "return (e);" */
+	bool	c_had_return_noval : 1;	/* had "return;" */
+	bool	c_had_return_value : 1;	/* had "return (e);" */
 	type_t	*c_swtype;		/* type of switch expression */
 	clst_t	*c_clst;		/* list of case values */
 	struct	mbl *c_fexprm;		/* saved memory for end of loop
