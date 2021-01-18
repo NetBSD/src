@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.148 2021/01/18 16:41:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.149 2021/01/18 16:47:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.148 2021/01/18 16:41:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.149 2021/01/18 16:47:46 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -85,8 +85,7 @@ CLEAR_WARN_FLAGS(const char *file, size_t line)
 static void
 SAVE_WARN_FLAGS(const char *file, size_t line)
 {
-	if (olwarn != LWARN_BAD)
-		abort();
+	lint_assert(olwarn == LWARN_BAD);
 	printf("%s, %d: save flags %s %zu = %d\n", curr_pos.p_file,
 	    curr_pos.p_line, file, line, lwarn);
 	olwarn = lwarn;
