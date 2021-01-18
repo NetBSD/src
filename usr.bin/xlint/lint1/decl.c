@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.128 2021/01/18 17:43:43 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.129 2021/01/18 19:21:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.128 2021/01/18 17:43:43 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.129 2021/01/18 19:21:52 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3194,23 +3194,24 @@ static void
 check_global_variable_size(const sym_t *sym)
 {
 
-	if (sym->s_def == TDEF) {
-		if (sym->s_type->t_tspec == FUNC)
-			/*
-			 * this can happen if an syntax error occurred
-			 * after a function declaration
-			 */
-			return;
-		curr_pos = sym->s_def_pos;
-		if (length(sym->s_type, sym->s_name) == 0 &&
-		    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
-			if (tflag || (sym->s_scl == EXTERN && !sflag)) {
-				/* empty array declaration: %s */
-				warning(190, sym->s_name);
-			} else {
-				/* empty array declaration: %s */
-				error(190, sym->s_name);
-			}
+	if (sym->s_def != TDEF)
+		return;
+	if (sym->s_type->t_tspec == FUNC)
+		/*
+		 * this can happen if a syntax error occurred after a
+		 * function declaration
+		 */
+		return;
+
+	curr_pos = sym->s_def_pos;
+	if (length(sym->s_type, sym->s_name) == 0 &&
+	    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
+		if (tflag || (sym->s_scl == EXTERN && !sflag)) {
+			/* empty array declaration: %s */
+			warning(190, sym->s_name);
+		} else {
+			/* empty array declaration: %s */
+			error(190, sym->s_name);
 		}
 	}
 }
