@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2020/07/06 10:31:23 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 2021/01/18 04:30:12 rin Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2020/07/06 10:31:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2021/01/18 04:30:12 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -155,11 +155,9 @@ decr_intr(struct clockframe *frame)
 
 		/*
 		 * Do standard timer interrupt stuff.
-		 * Do softclock stuff only on the last iteration.
 		 */
-		while (--nticks > 0)
+		while (nticks-- > 0)
 			hardclock(frame);
-		hardclock(frame);
 	}
 	splx(pcpl);
 }
