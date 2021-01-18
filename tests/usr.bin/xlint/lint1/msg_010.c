@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_010.c,v 1.3 2021/01/18 17:41:04 rillig Exp $	*/
+/*	$NetBSD: msg_010.c,v 1.4 2021/01/18 17:43:44 rillig Exp $	*/
 # 3 "msg_010.c"
 
 // Test for message: duplicate '%s' [10]
@@ -21,7 +21,7 @@ double_volatile(void)
 }
 
 int
-restrict_pointer(const int * /*restrict*/ p) // FIXME: assertion "== VOLATILE" failed
+restrict_pointer(const int *restrict p)
 {
 	return *p;
 }
