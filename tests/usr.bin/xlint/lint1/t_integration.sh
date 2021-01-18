@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.27 2021/01/17 23:00:41 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.28 2021/01/18 20:02:34 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -177,7 +177,8 @@ test_case long_double_int	"Checks for confusion of 'long double' with" \
 				"'long int'; PR bin/39639"
 
 test_case all_messages
-all_messages_body() {
+all_messages_body()
+{
 	local srcdir ok msg base flags
 
 	srcdir="$(atf_get_srcdir)"

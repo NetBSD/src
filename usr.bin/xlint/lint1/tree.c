@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.181 2021/01/17 23:04:09 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.182 2021/01/18 20:02:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.181 2021/01/17 23:04:09 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.182 2021/01/18 20:02:34 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -342,8 +342,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	tspec_t	t;
 
 	/*
-	 * Remove the member if it was unknown until now (Which means
-	 * that no defined struct or union has a member with the same name).
+	 * Remove the member if it was unknown until now, which means
+	 * that no defined struct or union has a member with the same name.
 	 */
 	if (msym->s_scl == NOSCL) {
 		/* undefined struct/union member: %s */
@@ -371,8 +371,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	}
 
 	/*
-	 * If this struct/union has a member with the name of msym, return
-	 * return this it.
+	 * If this struct/union has a member with the name of msym, return it.
 	 */
 	if (str != NULL) {
 		for (sym = msym; sym != NULL; sym = sym->s_link) {
@@ -912,11 +911,12 @@ typeok_shr(const mod_t *mp,
 }
 
 static void
-typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt) {
+typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
+{
 	/*
-	 * ANSI C does not perform balancing for shift operations,
+	 * C90 does not perform balancing for shift operations,
 	 * but traditional C does. If the width of the right operand
-	 * is greater than the width of the left operand, than in
+	 * is greater than the width of the left operand, then in
 	 * traditional C the left operand would be extended to the
 	 * width of the right operand. For SHL this may result in
 	 * different results.
@@ -1648,10 +1648,7 @@ check_assign_types_compatible(op_t op, int arg,
 	return false;
 }
 
-/*
- * Prints a warning if an operator, which should be senseless for an
- * enum type, is applied to an enum type.
- */
+/* Prints a warning if a strange operator is used on an enum type. */
 static void
 check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 {
@@ -1720,10 +1717,7 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	}
 }
 
-/*
- * Prints a warning if an operator has both enum and other integer
- * types.
- */
+/* Prints a warning if the operands mix between enum and integer. */
 static void
 check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
@@ -1734,9 +1728,8 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	switch (op) {
 	case INIT:
 		/*
-		 * Initializations with 0 should be allowed. Otherwise,
-		 * we should complain about all uninitialized enums,
-		 * consequently.
+		 * Initialization with 0 is allowed. Otherwise, all implicit
+		 * initializations would need to be warned upon as well.
 		 */
 		if (!rn->tn_type->t_isenum && rn->tn_op == CON &&
 		    is_integer(rn->tn_type->t_tspec) &&
@@ -1832,11 +1825,11 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 }
 
 /*
- * Performs usual conversion of operands to (unsigned) int.
+ * Performs the "integer promotions" (C99 6.3.1.1p2), which convert small
+ * integer types to either int or unsigned int.
  *
- * If tflag is set or the operand is a function argument with no
- * type information (no prototype or variable # of args), convert
- * float to double.
+ * If tflag is set or the operand is a function argument with no type
+ * information (no prototype or variable # of args), converts float to double.
  */
 tnode_t *
 promote(op_t op, bool farg, tnode_t *tn)
@@ -1909,8 +1902,10 @@ promote(op_t op, bool farg, tnode_t *tn)
 }
 
 /*
- * Insert conversions which are necessary to give both operands the same
- * type. This is done in different ways for traditional C and ANIS C.
+ * Apply the "usual arithmetic conversions" (C99 6.3.1.8).
+ *
+ * This gives both operands the same type.
+ * This is done in different ways for traditional C and C90.
  */
 static void
 balance(op_t op, tnode_t **lnp, tnode_t **rnp)
@@ -1919,7 +1914,7 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	int	i;
 	bool	u;
 	type_t	*ntp;
-	static	tspec_t	tl[] = {
+	static const tspec_t tl[] = {
 		LDOUBLE, DOUBLE, FLOAT, UQUAD, QUAD, ULONG, LONG, UINT, INT,
 	};
 
@@ -2042,7 +2037,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
  * different from what would happen to the same argument in the
  * absence of a prototype.
  *
- * Errors/Warnings about illegal type combinations are already printed
+ * Errors/warnings about illegal type combinations are already printed
  * in check_assign_types_compatible().
  */
 static void
@@ -2059,6 +2054,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	 * would be useless, because functions declared the old style
 	 * can't expect char/short arguments.
 	 */
+	/* XXX: what about SCHAR? */
 	if (nt == CHAR || nt == UCHAR || nt == SHORT || nt == USHORT)
 		return;
 
@@ -2688,6 +2684,7 @@ build_real_imag(op_t op, tnode_t *ln)
 
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
+		/* XXX: integer and LDOUBLE don't match. */
 		cn = new_integer_constant_node(LDOUBLE, (int64_t)1);
 		break;
 	case DCOMPLEX:
@@ -2708,12 +2705,11 @@ build_real_imag(op_t op, tnode_t *ln)
 	return ntn;
 }
 /*
- * Create a tree node for the & operator
+ * Create a tree node for the unary & operator
  */
 static tnode_t *
 build_address(tnode_t *tn, bool noign)
 {
-	tnode_t	*ntn;
 	tspec_t	t;
 
 	if (!noign && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
@@ -2730,9 +2726,7 @@ build_address(tnode_t *tn, bool noign)
 		return tn->tn_left;
 	}
 
-	ntn = new_tnode(ADDR, tincref(tn->tn_type, PTR), tn, NULL);
-
-	return ntn;
+	return new_tnode(ADDR, tincref(tn->tn_type, PTR), tn, NULL);
 }
 
 /*
@@ -3015,8 +3009,7 @@ plength(type_t *tp)
  */
 /*
  * Do only as much as necessary to compute constant expressions.
- * Called only if the operator allows folding and (both) operands
- * are constants.
+ * Called only if the operator allows folding and all operands are constants.
  */
 static tnode_t *
 fold(tnode_t *tn)
@@ -3160,7 +3153,8 @@ fold(tnode_t *tn)
 }
 
 /*
- * Same for operators whose operands are compared with 0 (test context).
+ * Fold constant nodes, as much as is needed for comparing the value with 0
+ * (test context, for controlling expressions).
  */
 static tnode_t *
 fold_test(tnode_t *tn)
@@ -3196,7 +3190,7 @@ fold_test(tnode_t *tn)
 }
 
 /*
- * Same for operands with floating point type.
+ * Fold constant nodes having operands with floating point type.
  */
 static tnode_t *
 fold_float(tnode_t *tn)
@@ -3391,8 +3385,6 @@ tsize(type_t *tp)
 	return (int64_t)(elem * elsz);
 }
 
-/*
- */
 tnode_t *
 build_alignof(type_t *tp)
 {
@@ -3459,7 +3451,7 @@ cast(tnode_t *tn, type_t *tp)
 	if (nt == VOID) {
 		/*
 		 * XXX ANSI C requires scalar types or void (Plauger & Brodie).
-		 * But this seams really questionable.
+		 * But this seems really questionable.
 		 */
 	} else if (nt == UNION) {
 		sym_t *m;
