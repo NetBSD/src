@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.125 2021/01/18 16:47:46 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.126 2021/01/18 17:11:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.125 2021/01/18 16:47:46 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.126 2021/01/18 17:11:14 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -113,7 +113,7 @@ TL	([fFlL]?[i]?)
 0[xX]{HD}+\.{HD}*{HX}{TL} |
 0[xX]{HD}+{HX}{TL}	|
 \.{D}+{EX}?{TL}		return fcon();
-"="				return operator(T_ASSIGN, ASSIGN);
+"="				return operator(T_ASSIGN, NOOP);
 "*="				return operator(T_OPASS, MULASS);
 "/="				return operator(T_OPASS, DIVASS);
 "%="				return operator(T_OPASS, MODASS);
@@ -124,11 +124,11 @@ TL	([fFlL]?[i]?)
 "&="				return operator(T_OPASS, ANDASS);
 "^="				return operator(T_OPASS, XORASS);
 "|="				return operator(T_OPASS, ORASS);
-"||"				return operator(T_LOGOR, LOGOR);
-"&&"				return operator(T_LOGAND, LOGAND);
-"|"				return operator(T_OR, BITOR);
-"&"				return operator(T_AMPER, BITAND);
-"^"				return operator(T_XOR, BITXOR);
+"||"				return operator(T_LOGOR, NOOP);
+"&&"				return operator(T_LOGAND, NOOP);
+"|"				return operator(T_OR, NOOP);
+"&"				return operator(T_AMPER, NOOP);
+"^"				return operator(T_XOR, NOOP);
 "=="				return operator(T_EQOP, EQ);
 "!="				return operator(T_EQOP, NE);
 "<"				return operator(T_RELOP, LT);
