@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.146 2021/01/18 16:29:59 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.147 2021/01/18 16:34:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.146 2021/01/18 16:29:59 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.147 2021/01/18 16:34:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -164,7 +164,7 @@ anonymize(sym_t *s)
 %token	<y_op>		T_OPASS
 %token			T_COMMA
 %token			T_SEMI
-%token			T_ELLIPSE
+%token			T_ELLIPSIS
 %token			T_REAL
 %token			T_IMAG
 %token			T_GENERIC
@@ -1253,11 +1253,11 @@ vararg_parameter_type_list:
 	  parameter_type_list {
 		$$ = $1;
 	  }
-	| parameter_type_list T_COMMA T_ELLIPSE {
+	| parameter_type_list T_COMMA T_ELLIPSIS {
 		dcs->d_vararg = true;
 		$$ = $1;
 	  }
-	| T_ELLIPSE {
+	| T_ELLIPSIS {
 		if (sflag) {
 			/* ANSI C requires formal parameter before '...' */
 			error(84);
@@ -1348,7 +1348,7 @@ init_expr_list:
 	;
 
 lorange:
-	  constant T_ELLIPSE {
+	  constant T_ELLIPSIS {
 		$$.lo = toicon($1, 1);
 	  }
 	;
@@ -1502,7 +1502,7 @@ label:
 		case_label($2);
 		ftflg = true;
 	  }
-	| T_CASE constant T_ELLIPSE constant T_COLON {
+	| T_CASE constant T_ELLIPSIS constant T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
 		ftflg = true;
