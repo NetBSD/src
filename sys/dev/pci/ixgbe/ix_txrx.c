@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.63 2020/04/17 02:21:25 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.64 2021/01/18 09:09:04 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -1818,6 +1818,7 @@ ixgbe_rxeof(struct ix_queue *que)
 
 	for (i = rxr->next_to_check; count != 0;) {
 		struct mbuf *sendmp, *mp;
+		struct mbuf *newmp;
 		u32         rsc, ptype;
 		u16         len;
 		u16         vtag = 0;
@@ -1855,6 +1856,15 @@ ixgbe_rxeof(struct ix_queue *que)
 			if (adapter->feat_en & IXGBE_FEATURE_VF)
 				if_inc_counter(ifp, IFCOUNTER_IERRORS, 1);
 #endif
+			rxr->rx_discarded.ev_count++;
+			ixgbe_rx_discard(rxr, i);
+			goto next_desc;
+		}
+
+		/* pre-alloc new mbuf */
+		newmp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT, MT_DATA, M_PKTHDR,
+		    rxr->mbuf_sz);
+		if (newmp == NULL) {
 			rxr->rx_discarded.ev_count++;
 			ixgbe_rx_discard(rxr, i);
 			goto next_desc;
@@ -1908,7 +1918,8 @@ ixgbe_rxeof(struct ix_queue *que)
 		 */
 		sendmp = rbuf->fmp;
 		if (sendmp != NULL) {  /* secondary frag */
-			rbuf->buf = rbuf->fmp = NULL;
+			rbuf->buf = newmp;
+			rbuf->fmp = NULL;
 			mp->m_flags &= ~M_PKTHDR;
 			sendmp->m_pkthdr.len += mp->m_len;
 		} else {
@@ -1927,10 +1938,13 @@ ixgbe_rxeof(struct ix_queue *que)
 					sendmp->m_len = len;
 					rxr->rx_copies.ev_count++;
 					rbuf->flags |= IXGBE_RX_COPY;
+
+					m_freem(newmp);
 				}
 			}
 			if (sendmp == NULL) {
-				rbuf->buf = rbuf->fmp = NULL;
+				rbuf->buf = newmp;
+				rbuf->fmp = NULL;
 				sendmp = mp;
 			}
 
