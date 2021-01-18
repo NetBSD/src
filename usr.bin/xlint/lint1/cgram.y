@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.150 2021/01/18 17:20:15 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.151 2021/01/18 17:47:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.150 2021/01/18 17:20:15 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.151 2021/01/18 17:47:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1195,8 +1195,10 @@ type_qualifier:
 		$$ = xcalloc(1, sizeof (pqinf_t));
 		if ($1 == CONST) {
 			$$->p_const = true;
-		} else {
+		} else if ($1 == VOLATILE) {
 			$$->p_volatile = true;
+		} else {
+			lint_assert($1 == RESTRICT || $1 == THREAD);
 		}
 	  }
 	;
