@@ -1,4 +1,4 @@
-/* $NetBSD: rk_pwm.c,v 1.3 2019/12/19 00:42:12 jakllsch Exp $ */
+/* $NetBSD: rk_pwm.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk_pwm.c,v 1.3 2019/12/19 00:42:12 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_pwm.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,9 +63,10 @@ enum rk_pwm_type {
 	PWM_RK3288 = 1,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3288-pwm",	PWM_RK3288 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3288-pwm",	.value = PWM_RK3288 },
+
+	{ 0 }
 };
 
 struct rk_pwm_softc {

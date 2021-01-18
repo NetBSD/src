@@ -1,4 +1,4 @@
-/* $NetBSD: mesongxbb_clkc.c,v 1.2 2019/04/19 19:07:56 jmcneill Exp $ */
+/* $NetBSD: mesongxbb_clkc.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.2 2019/04/19 19:07:56 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,10 +78,11 @@ static const struct mesongxbb_clkc_config gxl_config = {
 	.name = "Meson GXL",
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,gxbb-clkc",		(uintptr_t)&gxbb_config },
-	{ "amlogic,gxl-clkc",		(uintptr_t)&gxl_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,gxbb-clkc",	.data = &gxbb_config },
+	{ .compat = "amlogic,gxl-clkc",		.data = &gxl_config },
+
+	{ 0 }
 };
 
 CFATTACH_DECL_NEW(mesongxbb_clkc, sizeof(struct meson_clk_softc),
@@ -252,7 +253,7 @@ mesongxbb_clkc_attach(device_t parent, device_t self, void *aux)
 
 	meson_clk_attach(sc);
 
-	conf = (const void *)of_search_compatible(phandle, compat_data)->data;
+	conf = of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": %s clock controller\n", conf->name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -49,11 +49,12 @@ struct enet_fdt_softc {
 CFATTACH_DECL_NEW(enet_fdt, sizeof(struct enet_fdt_softc),
     enet_match, enet_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 	/* compatible			imxtype */
-	{ "fsl,imx6q-fec",		6 },
-	{ "fsl,imx6sx-fec",		7 },
-	{ NULL }
+	{ .compat = "fsl,imx6q-fec",	.value = 6 },
+	{ .compat = "fsl,imx6sx-fec",	.value = 7 },
+
+	{ 0 }
 };
 
 static int enet_init_clocks(struct enet_softc *);
@@ -127,7 +128,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = bsh;
 	sc->sc_dmat = faa->faa_dmat;
 
-	sc->sc_imxtype = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_imxtype = of_search_compatible(phandle, compat_data)->value;
 	sc->sc_unit = 0;
 	sc->sc_phyid = enet_phy_id(sc, phandle);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sid.c,v 1.3 2019/01/30 11:36:42 jmcneill Exp $ */
+/* $NetBSD: sunxi_sid.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sid.c,v 1.3 2019/01/30 11:36:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sid.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,13 +54,14 @@ static const struct sunxi_sid_config sun8i_h3_sid_config = {
 	.efuse_offset = 0x200,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-sid",	(uintptr_t)&sun4i_a10_sid_config },
-	{ "allwinner,sun7i-a20-sid",	(uintptr_t)&sun4i_a10_sid_config },
-	{ "allwinner,sun8i-h3-sid",	(uintptr_t)&sun8i_h3_sid_config },
-	{ "allwinner,sun8i-a83t-sid",	(uintptr_t)&sun8i_h3_sid_config },
-	{ "allwinner,sun50i-a64-sid",	(uintptr_t)&sun8i_h3_sid_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-sid",	.data = &sun4i_a10_sid_config },
+	{ .compat = "allwinner,sun7i-a20-sid",	.data = &sun4i_a10_sid_config },
+	{ .compat = "allwinner,sun8i-h3-sid",	.data = &sun8i_h3_sid_config },
+	{ .compat = "allwinner,sun8i-a83t-sid",	.data = &sun8i_h3_sid_config },
+	{ .compat = "allwinner,sun50i-a64-sid",	.data = &sun8i_h3_sid_config },
+
+	{ 0 }
 };
 
 struct sunxi_sid_softc {
@@ -105,7 +106,7 @@ sunxi_sid_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": Security ID EFUSE\n");

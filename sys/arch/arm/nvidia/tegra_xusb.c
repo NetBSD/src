@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.22 2021/01/15 23:11:59 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.23 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.22 2021/01/15 23:11:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.23 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,10 +145,11 @@ struct tegra_xhci_data tegra210_xhci_data = {
 	.txd_scale_ss_clock = false,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "nvidia,tegra124-xusb", (uintptr_t)&tegra124_xhci_data },
-	{ "nvidia,tegra210-xusb", (uintptr_t)&tegra210_xhci_data },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra124-xusb", .data = &tegra124_xhci_data },
+	{ .compat = "nvidia,tegra210-xusb", .data = &tegra210_xhci_data },
+
+	{ 0 }
 };
 
 struct fw_dma {
@@ -170,7 +171,7 @@ struct tegra_xusb_softc {
 	struct fw_dma		sc_fw_dma;
 	struct clk		*sc_clk_ss_src;
 
-	struct tegra_xhci_data	*sc_txd;
+	const struct tegra_xhci_data *sc_txd;
 };
 
 static uint32_t	csb_read_4(struct tegra_xusb_softc * const, bus_size_t);
@@ -230,8 +231,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_quirks = XHCI_DEFERRED_START;
 	psc->sc_phandle = faa->faa_phandle;
 
-	uintptr_t data = of_search_compatible(faa->faa_phandle, compat_data)->data;
-	psc->sc_txd = (struct tegra_xhci_data *)data;
+	psc->sc_txd = of_search_compatible(faa->faa_phandle, compat_data)->data;
 
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "hcd", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

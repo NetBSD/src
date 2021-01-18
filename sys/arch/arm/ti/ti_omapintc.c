@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_omapintc.c,v 1.4 2021/01/15 00:38:23 jmcneill Exp $	*/
+/*	$NetBSD: ti_omapintc.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -29,7 +29,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.4 2021/01/15 00:38:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -57,11 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.4 2021/01/15 00:38:23 jmcneill Exp
 
 #define INTC_MAX_SOURCES	128
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 	/* compatible			number of banks */
-	{ "ti,omap3-intc",		3 },
-	{ "ti,am33xx-intc",		4 },
-	{ NULL }
+	{ .compat = "ti,omap3-intc",	.value = 3 },
+	{ .compat = "ti,am33xx-intc",	.value = 4 },
+
+	{ 0 }
 };
 
 #define	INTC_READ(sc, g, o)		\
@@ -249,7 +250,7 @@ omap2icu_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_nbank = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_nbank = of_search_compatible(phandle, compat_data)->value;
 	sc->sc_enabled_irqs =
 	    kmem_zalloc(sizeof(*sc->sc_enabled_irqs) * sc->sc_nbank, KM_SLEEP);
 

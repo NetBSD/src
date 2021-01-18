@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.28 2020/03/20 06:38:16 skrll Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.29 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ extern void exyo_device_register_post_config(device_t self, void *aux);
 extern struct exynos_pinctrl_banks exynos5410_pinctrl_banks;
 extern struct exynos_pinctrl_banks exynos5420_pinctrl_banks;
 
-extern struct exynos_gpio_bank *exynos_gpio_bank_lookup(struct exynos_pinctrl_banks *, const char *name);
+extern struct exynos_gpio_bank *exynos_gpio_bank_lookup(const struct exynos_pinctrl_banks *, const char *name);
 extern bool exynos_gpio_pinset_available(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_acquire(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_release(const struct exynos_gpio_pinset *);

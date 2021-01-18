@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.h,v 1.3 2020/03/20 06:38:16 skrll Exp $	*/
+/*	$NetBSD: exynos_pinctrl.h,v 1.4 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
 * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
@@ -36,5 +36,5 @@ struct exynos_pinctrl_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 
-	struct exynos_pinctrl_banks *sc_epb;
+	const struct exynos_pinctrl_banks *sc_epb;
 };

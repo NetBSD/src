@@ -1,4 +1,4 @@
-/*	$NetBSD: panel_fdt.c,v 1.2 2019/06/24 06:24:33 skrll Exp $	*/
+/*	$NetBSD: panel_fdt.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: panel_fdt.c,v 1.2 2019/06/24 06:24:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: panel_fdt.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,10 +68,11 @@ struct fdt_panel_softc {
 CFATTACH_DECL_NEW(fdt_panel, sizeof(struct fdt_panel_softc),
     fdt_panel_match, fdt_panel_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{"panel-lvds", PANEL_LVDS},
-	{"panel-dual-lvds", PANEL_DUAL_LVDS},
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "panel-lvds",	.value = PANEL_LVDS},
+	{ .compat = "panel-dual-lvds",	.value = PANEL_DUAL_LVDS},
+
+	{ 0 }
 };
 
 static int
@@ -98,7 +99,7 @@ fdt_panel_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
 	sc->sc_panel.panel_type =
-	    of_search_compatible(phandle, compat_data)->data;
+	    of_search_compatible(phandle, compat_data)->value;
 
 	if (of_getprop_uint32(phandle, "width-mm", &sc->sc_panel.panel_width) ||
 	    of_getprop_uint32(phandle, "height-mm", &sc->sc_panel.panel_height)){

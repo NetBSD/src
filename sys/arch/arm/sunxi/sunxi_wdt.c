@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_wdt.c,v 1.2 2017/10/07 16:44:24 jmcneill Exp $ */
+/* $NetBSD: sunxi_wdt.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.2 2017/10/07 16:44:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,10 +80,11 @@ enum sunxi_wdt_type {
 	WDT_SUN6I,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-wdt",	WDT_SUN4I },
-	{ "allwinner,sun6i-a31-wdt",	WDT_SUN6I },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-wdt",	.value = WDT_SUN4I },
+	{ .compat = "allwinner,sun6i-a31-wdt",	.value = WDT_SUN6I },
+
+	{ 0 }
 };
 
 struct sunxi_wdt_softc {
@@ -235,7 +236,7 @@ sunxi_wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_period = SUNXI_WDT_PERIOD_DEFAULT;
 
-	type = of_search_compatible(phandle, compat_data)->data;
+	type = of_search_compatible(phandle, compat_data)->value;
 	switch (type) {
 	case WDT_SUN4I:
 		sc->sc_smw.smw_setmode = sun4i_wdt_setmode;

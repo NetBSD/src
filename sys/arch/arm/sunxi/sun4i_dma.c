@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_dma.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sun4i_dma.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,9 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $
 	   __SHIFTIN(2, DDMA_PARA_DST_WAIT_CLK_CYC) |	\
 	   __SHIFTIN(2, DDMA_PARA_SRC_WAIT_CLK_CYC))
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-dma",		1 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-dma" },
+
+	{ 0 }
 };
 
 struct sun4idma_channel {

@@ -1,4 +1,4 @@
-/*	$NetBSD: connector_fdt.c,v 1.1 2018/04/03 12:40:20 bouyer Exp $	*/
+/*	$NetBSD: connector_fdt.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: connector_fdt.c,v 1.1 2018/04/03 12:40:20 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: connector_fdt.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,13 @@ struct fdt_connector_softc {
 CFATTACH_DECL_NEW(fdt_connector, sizeof(struct fdt_connector_softc),
     fdt_connector_match, fdt_connector_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{"composite-video-connector", CON_TV},
-	{"dvi-connector", CON_DVI},
-	{"hdmi-connector", CON_HDMI},
-	{"vga-connector", CON_VGA},
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "composite-video-connector",	.value = CON_TV},
+	{ .compat = "dvi-connector",			.value = CON_DVI},
+	{ .compat = "hdmi-connector",			.value = CON_HDMI},
+	{ .compat = "vga-connector",			.value = CON_VGA},
+
+	{ 0 }
 };
 
 static int
@@ -94,7 +95,7 @@ fdt_connector_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 
 	SLIST_INSERT_HEAD(&fdt_connectors, sc, sc_list);
 

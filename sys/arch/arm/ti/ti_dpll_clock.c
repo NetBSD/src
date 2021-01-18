@@ -1,4 +1,4 @@
-/* $NetBSD: ti_dpll_clock.c,v 1.3 2020/06/03 18:26:06 jmcneill Exp $ */
+/* $NetBSD: ti_dpll_clock.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_dpll_clock.c,v 1.3 2020/06/03 18:26:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_dpll_clock.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,11 +102,15 @@ static const struct clk_funcs omap3_dpll_core_clock_clk_funcs = {
 	.get_parent = ti_dpll_clock_get_parent,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "ti,am3-dpll-clock",		(uintptr_t)&am3_dpll_clock_clk_funcs },
-	{ "ti,omap3-dpll-clock",	(uintptr_t)&omap3_dpll_clock_clk_funcs },
-	{ "ti,omap3-dpll-core-clock",	(uintptr_t)&omap3_dpll_core_clock_clk_funcs },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am3-dpll-clock",
+	  .data = &am3_dpll_clock_clk_funcs },
+	{ .compat = "ti,omap3-dpll-clock",
+	  .data = &omap3_dpll_clock_clk_funcs },
+	{ .compat = "ti,omap3-dpll-core-clock",
+	  .data = &omap3_dpll_core_clock_clk_funcs },
+
+	{ 0 }
 };
 
 enum {
@@ -175,7 +179,7 @@ ti_dpll_clock_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	clkfuncs = (const void *)of_search_compatible(phandle, compat_data)->data;
+	clkfuncs = of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = clkfuncs;

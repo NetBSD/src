@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.6 2021/01/15 23:19:33 jmcneill Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.6 2021/01/15 23:19:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,10 +99,11 @@ static const u_int ti_gpio_regmap[TI_NGPIO][GPIO_NREG] = {
 	},
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "ti,omap3-gpio",		TI_GPIO_OMAP3 },
-	{ "ti,omap4-gpio",		TI_GPIO_OMAP4 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,omap3-gpio",	.value = TI_GPIO_OMAP3 },
+	{ .compat = "ti,omap4-gpio",	.value = TI_GPIO_OMAP4 },
+
+	{ 0 }
 };
 
 struct ti_gpio_intr {
@@ -512,7 +513,7 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	sc->sc_modname = fdtbus_get_string(phandle, "ti,hwmods");

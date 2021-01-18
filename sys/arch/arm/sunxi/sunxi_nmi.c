@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nmi.c,v 1.7 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_nmi.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.7 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,11 +88,15 @@ static const struct sunxi_nmi_config sun9i_a80_nmi_config = {
 	.enable_reg = 0x08,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun7i-a20-sc-nmi",	(uintptr_t)&sun7i_a20_sc_nmi_config },
-	{ "allwinner,sun6i-a31-r-intc",	(uintptr_t)&sun6i_a31_r_intc_config },
-	{ "allwinner,sun9i-a80-nmi",	(uintptr_t)&sun9i_a80_nmi_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun7i-a20-sc-nmi",
+	  .data = &sun7i_a20_sc_nmi_config },
+	{ .compat = "allwinner,sun6i-a31-r-intc",
+	  .data = &sun6i_a31_r_intc_config },
+	{ .compat = "allwinner,sun9i-a80-nmi",
+	  .data = &sun9i_a80_nmi_config },
+
+	{ 0 }
 };
 
 struct sunxi_nmi_softc {
@@ -330,7 +334,7 @@ sunxi_nmi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
-	sc->sc_config = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_config = of_search_compatible(phandle, compat_data)->data;
 	sc->sc_bst = faa->faa_bst;
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");

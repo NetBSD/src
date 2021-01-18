@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_usbphy.c,v 1.2 2018/07/03 16:09:04 jmcneill Exp $ */
+/* $NetBSD: exynos_usbphy.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exynos_usbphy.c,v 1.2 2018/07/03 16:09:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_usbphy.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,9 +66,10 @@ enum {
 static int exynos_usbphy_match(device_t, cfdata_t, void *);
 static void exynos_usbphy_attach(device_t, device_t, void *);
 
-static const struct of_compat_data compat_data[] = {
-	{ "samsung,exynos5250-usb2-phy",	0 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos5250-usb2-phy" },
+
+	{ 0 }
 };
 
 struct exynos_usbphy_softc;

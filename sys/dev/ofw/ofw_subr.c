@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.41 2020/12/31 15:10:46 ryo Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.42 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.41 2020/12/31 15:10:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.42 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <dev/ofw/openfirm.h>
@@ -211,7 +212,8 @@ of_match_compatible(int phandle, const char * const *strings)
  *	None.
  */
 int
-of_match_compat_data(int phandle, const struct of_compat_data *compat_data)
+of_match_compat_data(int phandle,
+    const struct device_compatible_entry *compat_data)
 {
 	for (; compat_data->compat != NULL; compat_data++) {
 		const char *compat[] = { compat_data->compat, NULL };
@@ -243,8 +245,9 @@ of_match_compat_data(int phandle, const struct of_compat_data *compat_data)
  * Side Effects:
  *	None.
  */
-const struct of_compat_data *
-of_search_compatible(int phandle, const struct of_compat_data *compat_data)
+const struct device_compatible_entry *
+of_search_compatible(int phandle,
+    const struct device_compatible_entry *compat_data)
 {
 	for (; compat_data->compat != NULL; compat_data++) {
 		const char *compat[] = { compat_data->compat, NULL };

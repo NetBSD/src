@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.30 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.30 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,12 +131,13 @@ enum sunxi_emac_type {
 	EMAC_H6,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-a83t-emac",	EMAC_A83T },
-	{ "allwinner,sun8i-h3-emac",	EMAC_H3 },
-	{ "allwinner,sun50i-a64-emac",	EMAC_A64 },
-	{ "allwinner,sun50i-h6-emac",	EMAC_H6 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-a83t-emac",	.value = EMAC_A83T },
+	{ .compat = "allwinner,sun8i-h3-emac",		.value = EMAC_H3 },
+	{ .compat = "allwinner,sun50i-a64-emac",	.value = EMAC_A64 },
+	{ .compat = "allwinner,sun50i-h6-emac",		.value = EMAC_H6 },
+
+	{ 0 }
 };
 
 struct sunxi_emac_bufmap {
@@ -1373,7 +1374,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	sc->phandle = phandle;
 	sc->bst = faa->faa_bst;
 	sc->dmat = faa->faa_dmat;
-	sc->type = of_search_compatible(phandle, compat_data)->data;
+	sc->type = of_search_compatible(phandle, compat_data)->value;
 	sc->phy_id = sunxi_emac_get_phyid(sc);
 
 	aprint_naive("\n");

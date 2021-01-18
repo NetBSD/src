@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soctherm.c,v 1.9 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_soctherm.c,v 1.10 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.9 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.10 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,9 +159,11 @@ CFATTACH_DECL_NEW(tegra_soctherm, sizeof(struct tegra_soctherm_softc),
 #define SENSOR_SET_CLEAR(sc, s, reg, set, clr)	\
     tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (s)->s_base + (reg), (set), (clr))
 
-static const struct of_compat_data compat_data[] = {
-	{ "nvidia,tegra124-soctherm",	(uintptr_t)&tegra124_soctherm_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra124-soctherm",
+	  .data = &tegra124_soctherm_config },
+
+	{ 0 }
 };
 
 static int
@@ -213,7 +215,7 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SOC_THERM\n");
 
-	sc->sc_config = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_config = of_search_compatible(phandle, compat_data)->data;
 	if (sc->sc_config == NULL) {
 		aprint_error_dev(self, "unsupported SoC\n");
 		return;

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.13 2021/01/15 23:11:59 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.14 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.13 2021/01/15 23:11:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.14 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,10 +110,11 @@ static const struct nvkm_device_tegra_func gk20a_platform_data = {
 	.iommu_bit = 34,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "nvidia,gk20a", (uintptr_t)&gk20a_platform_data },
-	{ "nvidia,gm20b", (uintptr_t)&gk20a_platform_data },
-	{ NULL, 0 },
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,gk20a", .data = &gk20a_platform_data },
+	{ .compat = "nvidia,gm20b", .data = &gk20a_platform_data },
+
+	{ 0 }
 };
 
 static int
@@ -130,10 +131,9 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 	struct tegra_nouveau_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	prop_dictionary_t prop = device_properties(self);
-	const struct of_compat_data *data =
+	const struct device_compatible_entry *data =
 	    of_search_compatible(faa->faa_phandle, compat_data);
-	const struct nvkm_device_tegra_func *tegra_func __diagused =
-	    (const void *)data->data;
+	const struct nvkm_device_tegra_func *tegra_func __diagused = data->data;
 	int error;
 
 	KASSERT(tegra_func != NULL);

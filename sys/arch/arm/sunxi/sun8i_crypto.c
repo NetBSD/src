@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.19 2021/01/15 22:47:32 jmcneill Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.20 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.19 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.20 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -318,9 +318,10 @@ sun8i_crypto_write(struct sun8i_crypto_softc *sc, bus_size_t reg, uint32_t v)
 CFATTACH_DECL_NEW(sun8i_crypto, sizeof(struct sun8i_crypto_softc),
     sun8i_crypto_match, sun8i_crypto_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun50i-a64-crypto", 0},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun50i-a64-crypto" },
+
+	{ 0 }
 };
 
 static int

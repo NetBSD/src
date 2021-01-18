@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_spi.c,v 1.3 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: imx6_spi.c,v 1.4 2021/01/18 02:35:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.3 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.4 2021/01/18 02:35:48 thorpej Exp $");
 
 #include "opt_imxspi.h"
 
@@ -60,9 +60,10 @@ static const struct imx_spi_config imx6q_spi_config = {
 	.type = IMX51_ECSPI,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "fsl,imx6q-ecspi",		(uintptr_t)&imx6q_spi_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-ecspi",	.data = &imx6q_spi_config },
+
+	{ 0 }
 };
 
 CFATTACH_DECL_NEW(imxspi_fdt, sizeof(struct imxspi_fdt_softc),
@@ -138,7 +139,8 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = phandle;
 	sc->sc_iot = faa->faa_bst;
 
-	struct imx_spi_config *config = (void *)of_search_compatible(phandle, compat_data)->data;
+	const struct imx_spi_config *config =
+	    of_search_compatible(phandle, compat_data)->data;
 	sc->sc_enhanced = config->enhanced;
 	sc->sc_type = config->type;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.10 2020/10/19 01:13:41 rin Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.10 2020/10/19 01:13:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,10 +101,11 @@ struct sunxi_debe_softc {
 #define DEBE_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun4i-a10-display-backend", DEBE_A10},
-	{"allwinner,sun7i-a20-display-backend", DEBE_A10},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-display-backend", .value = DEBE_A10 },
+	{ .compat = "allwinner,sun7i-a20-display-backend", .value = DEBE_A10 },
+
+	{ 0 }
 };
 
 struct sunxifb_attach_args {
@@ -188,7 +189,8 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_type =
+	    of_search_compatible(faa->faa_phandle, compat_data)->value;
 
 	aprint_naive("\n");
 	aprint_normal(": Display Engine Backend (%s)\n",

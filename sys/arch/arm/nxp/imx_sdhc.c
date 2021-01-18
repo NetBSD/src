@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_sdhc.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: imx_sdhc.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -84,10 +84,11 @@ static const struct imx6_sdhc_config imx7d_config = {
 	.flags = 0
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "fsl,imx6q-usdhc",	(uintptr_t)&imx6q_config },
-	{ "fsl,imx7d-usdhc",	(uintptr_t)&imx7d_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-usdhc",	.data = &imx6q_config },
+	{ .compat = "fsl,imx7d-usdhc",	.data = &imx7d_config },
+
+	{ 0 }
 };
 
 static int
@@ -129,7 +130,7 @@ imx_sdhc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_vmmc_supply = fdtbus_regulator_acquire(phandle, "vmmc-supply");
 
-	conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	conf = of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_sdhc.sc_dev = self;
 	sc->sc_sdhc.sc_dmat = faa->faa_dmat;

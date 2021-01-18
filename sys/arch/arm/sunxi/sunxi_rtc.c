@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rtc.c,v 1.6 2020/03/27 01:42:10 thorpej Exp $ */
+/* $NetBSD: sunxi_rtc.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.6 2020/03/27 01:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -241,17 +241,27 @@ static const struct sunxi_rtc_config sun50i_h6_rtc_config = {
 	.flags = SUNXI_RTC_F_HAS_VAR_PRESCALER,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-rtc",		(uintptr_t)&sun4i_rtc_config },
-	{ "allwinner,sun6i-a31-rtc",		(uintptr_t)&sun6i_a31_rtc_config },
-	{ "allwinner,sun7i-a20-rtc",		(uintptr_t)&sun7i_rtc_config },
-	{ "allwinner,sun8i-a23-rtc",		(uintptr_t)&sun8i_a23_rtc_config },
-	{ "allwinner,sun8i-r40-rtc",		(uintptr_t)&sun8i_r40_rtc_config },
-	{ "allwinner,sun8i-v3-rtc",		(uintptr_t)&sun8i_v3_rtc_config },
-	{ "allwinner,sun8i-h3-rtc",		(uintptr_t)&sun8i_h3_rtc_config },
-	{ "allwinner,sun50i-h5-rtc",		(uintptr_t)&sun8i_h3_rtc_config },
-	{ "allwinner,sun50i-h6-rtc",		(uintptr_t)&sun50i_h6_rtc_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-rtc",
+	  .data = &sun4i_rtc_config },
+	{ .compat = "allwinner,sun6i-a31-rtc",
+	  .data = &sun6i_a31_rtc_config },
+	{ .compat = "allwinner,sun7i-a20-rtc",
+	  .data = &sun7i_rtc_config },
+	{ .compat = "allwinner,sun8i-a23-rtc",
+	  .data = &sun8i_a23_rtc_config },
+	{ .compat = "allwinner,sun8i-r40-rtc",
+	  .data = &sun8i_r40_rtc_config },
+	{ .compat = "allwinner,sun8i-v3-rtc",
+	  .data = &sun8i_v3_rtc_config },
+	{ .compat = "allwinner,sun8i-h3-rtc",
+	  .data = &sun8i_h3_rtc_config },
+	{ .compat = "allwinner,sun50i-h5-rtc",
+	  .data = &sun8i_h3_rtc_config },
+	{ .compat = "allwinner,sun50i-h6-rtc",
+	  .data = &sun50i_h6_rtc_config },
+
+	{ 0 }
 };
 
 #define	SUNXI_RTC_CLK_LOSC	0
@@ -376,7 +386,7 @@ sunxi_rtc_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": RTC\n");

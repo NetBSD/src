@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ts.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_ts.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.4 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,11 +131,12 @@ static const struct sunxi_ts_config sun6i_a31_ts_config = {
 	.tp_mode_en_mask = TP_CTRL1_TP_DUAL_EN,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-ts",	(uintptr_t)&sun4i_a10_ts_config },
-	{ "allwinner,sun5i-a13-ts",	(uintptr_t)&sun5i_a13_ts_config },
-	{ "allwinner,sun6i-a31-ts",	(uintptr_t)&sun6i_a31_ts_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-ts",	.data = &sun4i_a10_ts_config },
+	{ .compat = "allwinner,sun5i-a13-ts",	.data = &sun5i_a13_ts_config },
+	{ .compat = "allwinner,sun6i-a31-ts",	.data = &sun6i_a31_ts_config },
+
+	{ 0 }
 };
 
 static struct wsmouse_calibcoords sunxi_ts_default_calib = {
@@ -375,7 +376,7 @@ sunxi_ts_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_ts_attached = of_getprop_bool(phandle, "allwinner,ts-attached");
 	sc->sc_ts_inverted_x = of_getprop_bool(phandle,

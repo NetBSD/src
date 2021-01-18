@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.39 2020/12/01 04:15:04 rin Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.40 2021/01/18 02:35:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.39 2020/12/01 04:15:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.40 2021/01/18 02:35:48 thorpej Exp $");
 
 #include "bcmdmac.h"
 
@@ -96,9 +96,9 @@ enum bcmemmc_type {
 	BCM2711_EMMC2,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "brcm,bcm2835-sdhci",		BCM2835_SDHCI },
-	{ "brcm,bcm2711-emmc2",		BCM2711_EMMC2 },
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-sdhci",	.value = BCM2835_SDHCI },
+	{ .compat = "brcm,bcm2711-emmc2",	.value = BCM2711_EMMC2 },
 	{ NULL }
 };
 
@@ -183,7 +183,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 #if NBCMDMAC > 0
-	enum bcmemmc_type type = of_search_compatible(phandle, compat_data)->data;
+	enum bcmemmc_type type =
+	    of_search_compatible(phandle, compat_data)->value;
 
 	if (type != BCM2835_SDHCI)
 		goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.6 2021/01/15 22:35:39 jmcneill Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.6 2021/01/15 22:35:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,17 @@ static const struct dwc2_fdt_config dwc2_fdt_meson8b_config = {
 static const struct dwc2_fdt_config dwc2_fdt_generic_config = {
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson8b-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
-	{ "amlogic,meson-gxbb-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
-	{ "rockchip,rk3066-usb",	(uintptr_t)&dwc2_fdt_rk3066_config },
-	{ "snps,dwc2",			(uintptr_t)&dwc2_fdt_generic_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-usb",
+	  .data = &dwc2_fdt_meson8b_config },
+	{ .compat = "amlogic,meson-gxbb-usb",
+	  .data = &dwc2_fdt_meson8b_config },
+	{ .compat = "rockchip,rk3066-usb",
+	  .data = &dwc2_fdt_rk3066_config },
+	{ .compat = "snps,dwc2",
+	  .data = &dwc2_fdt_generic_config },
+
+	{ 0 }
 };
 
 CFATTACH_DECL_NEW(dwc2_fdt, sizeof(struct dwc2_fdt_softc),
@@ -110,7 +115,7 @@ dwc2_fdt_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	const struct dwc2_fdt_config *conf =
-	    (void *)of_search_compatible(phandle, compat_data)->data;
+	    of_search_compatible(phandle, compat_data)->data;
 	char intrstr[128];
 	struct fdtbus_phy *phy;
 	struct clk *clk;

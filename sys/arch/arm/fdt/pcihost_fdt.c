@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.19 2021/01/15 17:17:04 ryo Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.20 2021/01/18 02:35:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.19 2021/01/15 17:17:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.20 2021/01/18 02:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -95,10 +95,11 @@ static int	pcihost_bus_space_map(void *, bus_addr_t, bus_size_t,
 CFATTACH_DECL_NEW(pcihost_fdt, sizeof(struct pcihost_softc),
 	pcihost_match, pcihost_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "pci-host-cam-generic",	PCIHOST_CAM },
-	{ "pci-host-ecam-generic",	PCIHOST_ECAM },
-	{ NULL,				0 }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pci-host-cam-generic",	.value = PCIHOST_CAM },
+	{ .compat = "pci-host-ecam-generic",	.value = PCIHOST_ECAM },
+
+	{ 0 }
 };
 
 static int
@@ -133,7 +134,7 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers: %d\n", error);
 		return;
 	}
-	sc->sc_type = of_search_compatible(sc->sc_phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(sc->sc_phandle, compat_data)->value;
 
 #ifdef __HAVE_PCI_MSI_MSIX
 	if (sc->sc_type == PCIHOST_ECAM) {

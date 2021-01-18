@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.6 2020/01/05 12:14:35 mrg Exp $ */
+/* $NetBSD: rk_vop.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.6 2020/01/05 12:14:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,7 +140,7 @@ struct rk_vop_softc {
 
 	struct fdt_device_ports	sc_ports;
 
-	struct rk_vop_config	*sc_conf;
+	const struct rk_vop_config *sc_conf;
 };
 
 #define	to_rk_vop_crtc(x)	container_of(x, struct rk_vop_crtc, base)
@@ -218,10 +218,13 @@ static const struct rk_vop_config rk3399_vop_big_config = {
 	.set_polarity = rk3399_vop_set_polarity,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3399-vop-big",		(uintptr_t)&rk3399_vop_big_config },
-	{ "rockchip,rk3399-vop-lit",		(uintptr_t)&rk3399_vop_lit_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-vop-big",
+	  .data = &rk3399_vop_big_config },
+	{ .compat = "rockchip,rk3399-vop-lit",
+	  .data = &rk3399_vop_lit_config },
+
+	{ 0 }
 };
 
 static int
@@ -235,6 +238,7 @@ rk_vop_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	    to_rk_drm_framebuffer(crtc->primary->fb);
 
 	uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
+
 
 	paddr += y * sfb->base.pitches[0];
 	paddr += x * drm_format_plane_cpp(sfb->base.pixel_format, 0);
@@ -580,7 +584,7 @@ rk_vop_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_conf->descr);

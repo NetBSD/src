@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.29 2020/03/20 06:38:16 skrll Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.30 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
 * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.29 2020/03/20 06:38:16 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.30 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -418,7 +418,8 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
  * the '-', or the four character string if the dash is not present.
  */
 struct exynos_gpio_bank *
-exynos_gpio_bank_lookup(struct exynos_pinctrl_banks *epb,  const char *name)
+exynos_gpio_bank_lookup(const struct exynos_pinctrl_banks *epb,
+    const char *name)
 {
 	struct exynos_gpio_bank *bank;
 

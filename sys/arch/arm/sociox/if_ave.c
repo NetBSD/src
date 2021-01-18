@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.17 2020/09/23 23:38:24 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.18 2021/01/18 02:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.17 2020/09/23 23:38:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.18 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -321,13 +321,14 @@ struct desops ave32ops = {
 	oinit_rdes,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "socionext,unifier-ld20-ave4", 64 },
-	{ "socionext,unifier-pro4-ave4", 32 },
-	{ "socionext,unifier-pxs2-ave4", 32 },
-	{ "socionext,unifier-ld11-ave4", 32 },
-	{ "socionext,unifier-pxs3-ave4", 32 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "socionext,unifier-ld20-ave4", .value = 64 },
+	{ .compat = "socionext,unifier-pro4-ave4", .value = 32 },
+	{ .compat = "socionext,unifier-pxs2-ave4", .value = 32 },
+	{ .compat = "socionext,unifier-ld11-ave4", .value = 32 },
+	{ .compat = "socionext,unifier-pxs3-ave4", .value = 32 },
+
+	{ 0 }
 };
 
 static int
@@ -382,7 +383,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 
 	hwimp = CSR_READ(sc, AVEID);
 	hwver = CSR_READ(sc, AVEHWVER);
-	sc->sc_model = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_model = of_search_compatible(phandle, compat_data)->value;
 
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL)

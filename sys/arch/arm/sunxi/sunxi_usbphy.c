@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,16 +84,17 @@ enum sunxi_usbphy_type {
 	USBPHY_H6,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-usb-phy",	USBPHY_A10 },
-	{ "allwinner,sun5i-a13-usb-phy",	USBPHY_A13 },
-	{ "allwinner,sun6i-a31-usb-phy",	USBPHY_A31 },
-	{ "allwinner,sun7i-a20-usb-phy",	USBPHY_A20 },
-	{ "allwinner,sun8i-a83t-usb-phy",	USBPHY_A83T },
-	{ "allwinner,sun8i-h3-usb-phy",		USBPHY_H3 },
-	{ "allwinner,sun50i-a64-usb-phy",	USBPHY_A64 },
-	{ "allwinner,sun50i-h6-usb-phy",	USBPHY_H6 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-usb-phy",	.value = USBPHY_A10 },
+	{ .compat = "allwinner,sun5i-a13-usb-phy",	.value = USBPHY_A13 },
+	{ .compat = "allwinner,sun6i-a31-usb-phy",	.value = USBPHY_A31 },
+	{ .compat = "allwinner,sun7i-a20-usb-phy",	.value = USBPHY_A20 },
+	{ .compat = "allwinner,sun8i-a83t-usb-phy",	.value = USBPHY_A83T },
+	{ .compat = "allwinner,sun8i-h3-usb-phy",	.value = USBPHY_H3 },
+	{ .compat = "allwinner,sun50i-a64-usb-phy",	.value = USBPHY_A64 },
+	{ .compat = "allwinner,sun50i-h6-usb-phy",	.value = USBPHY_H6 },
+
+	{ 0 }
 };
 
 #define	SUNXI_MAXUSBPHY		4
@@ -353,7 +354,7 @@ sunxi_usbphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
 
 	if (fdtbus_get_reg_byname(phandle, "phy_ctrl", &addr, &size) != 0) {
 		aprint_error(": couldn't get phy ctrl registers\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmiphy.c,v 1.4 2019/11/23 18:54:26 jmcneill Exp $ */
+/* $NetBSD: sunxi_hdmiphy.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.4 2019/11/23 18:54:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,10 +115,13 @@ static const struct sunxi_hdmiphy_data sun8i_h3_hdmiphy_data = {
 	.config = sun8i_h3_hdmiphy_config,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-h3-hdmi-phy",	(uintptr_t)&sun8i_h3_hdmiphy_data },
-	{ "allwinner,sun50i-a64-hdmi-phy",	(uintptr_t)&sun8i_h3_hdmiphy_data },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-hdmi-phy",
+	  .data = &sun8i_h3_hdmiphy_data },
+	{ .compat = "allwinner,sun50i-a64-hdmi-phy",
+	  .data = &sun8i_h3_hdmiphy_data },
+
+	{ 0 }
 };
 
 struct sunxi_hdmiphy_softc {
@@ -428,7 +431,7 @@ sunxi_hdmiphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_data = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_data = of_search_compatible(phandle, compat_data)->data;
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
 		return;
