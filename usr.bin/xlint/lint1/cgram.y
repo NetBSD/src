@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.151 2021/01/18 17:47:44 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.152 2021/01/18 17:54:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.151 2021/01/18 17:47:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.152 2021/01/18 17:54:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -173,14 +173,17 @@ anonymize(sym_t *s)
 /* storage classes (extern, static, auto, register and typedef) */
 %token	<y_scl>		T_SCLASS
 
-/* types (char, int, short, long, unsigned, signed, float, double, void) */
+/*
+ * predefined type keywords (char, int, short, long, unsigned, signed,
+ * float, double, void); see T_TYPENAME
+ */
 %token	<y_tspec>	T_TYPE
 
-/* qualifiers (const, volatile) */
+/* qualifiers (const, volatile, restrict, _Thread_local) */
 %token	<y_tqual>	T_QUAL
 
 /* struct or union */
-%token	<y_tspec>	T_SOU
+%token	<y_tspec>	T_STRUCT_OR_UNION
 
 /* enum */
 %token			T_ENUM
@@ -724,7 +727,7 @@ struct_spec:
 
 struct:
 	  struct type_attribute
-	| T_SOU {
+	| T_STRUCT_OR_UNION {
 		symtyp = FTAG;
 		pushdecl($1 == STRUCT ? MOS : MOU);
 		dcs->d_offset = 0;

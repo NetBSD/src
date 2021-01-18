@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.127 2021/01/18 17:20:15 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.128 2021/01/18 17:54:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.127 2021/01/18 17:20:15 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.128 2021/01/18 17:54:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -202,7 +202,8 @@ static	struct	kwtab {
 	const	char *kw_name;	/* keyword */
 	int	kw_token;	/* token returned by yylex() */
 	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
-	tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
+	tspec_t	kw_tspec;	/* type spec. if kw_token
+				 * T_TYPE or T_STRUCT_OR_UNION */
 	tqual_t	kw_tqual;	/* type qual. fi kw_token T_QUAL */
 	bool	kw_c89 : 1;	/* C89 keyword */
 	bool	kw_c99 : 1;	/* C99 keyword */
@@ -291,7 +292,7 @@ static	struct	kwtab {
 	{ "strfmon",	T_AT_FORMAT_STRFMON,0,	0,	0,	  0,0,1,1,5 },
 	{ "strftime",	T_AT_FORMAT_STRFTIME,0,	0,	0,	  0,0,1,1,5 },
 	{ "string",	T_AT_STRING,	0,	0,	0,	  0,0,1,1,5 },
-	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0,0,0,0,1 },
+	{ "struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	  0,0,0,0,1 },
 	{ "switch",	T_SWITCH,	0,	0,	0,	  0,0,0,0,1 },
 	{ "symbolrename", T_SYMBOLRENAME,0,	0,	0,	  0,0,0,0,2 },
 	{ "syslog",	T_AT_FORMAT_SYSLOG,0,	0,	0,	  0,0,1,1,5 },
@@ -299,7 +300,7 @@ static	struct	kwtab {
 	{ "tls_model",	T_AT_TLS_MODEL,	0,	0,	0,	  0,0,1,1,5 },
 	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0,0,0,0,1 },
 	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0,0,1,0,7 },
-	{ "union",	T_SOU,		0,	UNION,	0,	  0,0,0,0,1 },
+	{ "union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	  0,0,0,0,1 },
 	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0,0,0,0,1 },
 	{ "unused",	T_AT_UNUSED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "used",	T_AT_USED,	0,	0,	0,	  0,0,1,1,5 },
@@ -364,7 +365,7 @@ add_keyword(struct kwtab *kw, int deco)
 	sym->s_name = name;
 	sym->s_keyword = kw;
 	sym->s_value.v_quad = kw->kw_token;
-	if (kw->kw_token == T_TYPE || kw->kw_token == T_SOU) {
+	if (kw->kw_token == T_TYPE || kw->kw_token == T_STRUCT_OR_UNION) {
 		sym->s_tspec = kw->kw_tspec;
 	} else if (kw->kw_token == T_SCLASS) {
 		sym->s_scl = kw->kw_scl;
@@ -551,7 +552,7 @@ keyw(sym_t *sym)
 
 	if ((t = (int)sym->s_value.v_quad) == T_SCLASS) {
 		yylval.y_scl = sym->s_scl;
-	} else if (t == T_TYPE || t == T_SOU) {
+	} else if (t == T_TYPE || t == T_STRUCT_OR_UNION) {
 		yylval.y_tspec = sym->s_tspec;
 	} else if (t == T_QUAL) {
 		yylval.y_tqual = sym->s_tqual;
