@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.124 2021/01/18 16:41:57 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.125 2021/01/18 16:47:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.124 2021/01/18 16:41:57 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.125 2021/01/18 16:47:46 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -350,12 +350,11 @@ add_keyword(struct kwtab *kw, int deco)
 		snprintf(buf, sizeof(buf), "__%s", kw->kw_name);
 		name = strdup(buf);
 		break;
-	case 4:
+	default:
+		lint_assert(deco == 4);
 		snprintf(buf, sizeof(buf), "__%s__", kw->kw_name);
 		name = strdup(buf);
 		break;
-	default:
-		abort();
 	}
 
 	if (name == NULL)
