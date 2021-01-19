@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.240 2021/01/19 18:20:30 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.241 2021/01/19 19:29:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.240 2021/01/19 18:20:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.241 2021/01/19 19:29:35 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -127,14 +127,15 @@ MAKE_RCSID("$NetBSD: cond.c,v 1.240 2021/01/19 18:20:30 rillig Exp $");
  * Other terminal symbols are evaluated using either the default function or
  * the function given in the terminal, they return either TOK_TRUE or
  * TOK_FALSE.
- *
- * All non-terminal functions (CondParser_Or, CondParser_And and
- * CondParser_Term) return either TOK_FALSE, TOK_TRUE, or TOK_ERROR on error.
  */
 typedef enum Token {
-	TOK_FALSE = 0, TOK_TRUE = 1, TOK_AND, TOK_OR, TOK_NOT,
+	TOK_FALSE, TOK_TRUE, TOK_AND, TOK_OR, TOK_NOT,
 	TOK_LPAREN, TOK_RPAREN, TOK_EOF, TOK_NONE, TOK_ERROR
 } Token;
+
+typedef enum CondResult {
+	CR_FALSE, CR_TRUE, CR_ERROR
+} CondResult;
 
 typedef struct CondParser {
 	const struct If *if_info; /* Info for current statement */
@@ -150,7 +151,7 @@ typedef struct CondParser {
 	Boolean printedError;
 } CondParser;
 
-static Token CondParser_Or(CondParser *par, Boolean);
+static CondResult CondParser_Or(CondParser *par, Boolean);
 
 static unsigned int cond_depth = 0;	/* current .if nesting level */
 static unsigned int cond_min_depth = 0;	/* depth at makefile open */
@@ -909,62 +910,60 @@ CondParser_Token(CondParser *par, Boolean doEval)
  * Term -> '!' Term
  * Term -> Leaf Operator Leaf
  * Term -> Leaf
- *
- * Results:
- *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
  */
-static Token
+static CondResult
 CondParser_Term(CondParser *par, Boolean doEval)
 {
+	CondResult res;
 	Token t;
 
 	t = CondParser_Token(par, doEval);
-	if (t == TOK_TRUE || t == TOK_FALSE)
-		return t;
+	if (t == TOK_TRUE)
+		return CR_TRUE;
+	if (t == TOK_FALSE)
+		return CR_FALSE;
 
 	if (t == TOK_LPAREN) {
-		t = CondParser_Or(par, doEval);
-		if (t == TOK_ERROR)
-			return TOK_ERROR;
+		res = CondParser_Or(par, doEval);
+		if (res == CR_ERROR)
+			return CR_ERROR;
 		if (CondParser_Token(par, doEval) != TOK_RPAREN)
-			return TOK_ERROR;
-		return t;
+			return CR_ERROR;
+		return res;
 	}
 
 	if (t == TOK_NOT) {
-		t = CondParser_Term(par, doEval);
-		if (t == TOK_TRUE)
-			t = TOK_FALSE;
-		else if (t == TOK_FALSE)
-			t = TOK_TRUE;
-		return t;
+		res = CondParser_Term(par, doEval);
+		if (res == CR_TRUE)
+			res = CR_FALSE;
+		else if (res == CR_FALSE)
+			res = CR_TRUE;
+		return res;
 	}
 
-	return TOK_ERROR;
+	return CR_ERROR;
 }
 
 /*
  * And -> Term '&&' And
  * And -> Term
- *
- * Results:
- *	TOK_TRUE, TOK_FALSE or TOK_ERROR
  */
-static Token
+static CondResult
 CondParser_And(CondParser *par, Boolean doEval)
 {
-	Token res, op;
+	CondResult res;
+	Token op;
 
 	res = CondParser_Term(par, doEval);
-	if (res == TOK_ERROR)
-		return TOK_ERROR;
+	if (res == CR_ERROR)
+		return CR_ERROR;
 
 	op = CondParser_Token(par, doEval);
 	if (op == TOK_AND) {
-		if (res == TOK_TRUE)
+		if (res == CR_TRUE)
 			return CondParser_And(par, doEval);
-		if (CondParser_And(par, FALSE) == TOK_ERROR)
-			return TOK_ERROR;
+		if (CondParser_And(par, FALSE) == CR_ERROR)
+			return CR_ERROR;
 		return res;
 	}
 
@@ -975,25 +974,23 @@ CondParser_And(CondParser *par, Boolean doEval)
 /*
  * Or -> And '||' Or
  * Or -> And
- *
- * Results:
- *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
  */
-static Token
+static CondResult
 CondParser_Or(CondParser *par, Boolean doEval)
 {
-	Token res, op;
+	CondResult res;
+	Token op;
 
 	res = CondParser_And(par, doEval);
-	if (res == TOK_ERROR)
-		return TOK_ERROR;
+	if (res == CR_ERROR)
+		return CR_ERROR;
 
 	op = CondParser_Token(par, doEval);
 	if (op == TOK_OR) {
-		if (res == TOK_FALSE)
+		if (res == CR_FALSE)
 			return CondParser_Or(par, doEval);
-		if (CondParser_Or(par, FALSE) == TOK_ERROR)
-			return TOK_ERROR;
+		if (CondParser_Or(par, FALSE) == CR_ERROR)
+			return CR_ERROR;
 		return res;
 	}
 
@@ -1004,18 +1001,18 @@ CondParser_Or(CondParser *par, Boolean doEval)
 static CondEvalResult
 CondParser_Eval(CondParser *par, Boolean *value)
 {
-	Token res;
+	CondResult res;
 
 	DEBUG1(COND, "CondParser_Eval: %s\n", par->p);
 
 	res = CondParser_Or(par, TRUE);
-	if (res != TOK_FALSE && res != TOK_TRUE)
+	if (res == CR_ERROR)
 		return COND_INVALID;
 
 	if (CondParser_Token(par, FALSE) != TOK_EOF)
 		return COND_INVALID;
 
-	*value = res == TOK_TRUE;
+	*value = res == CR_TRUE;
 	return COND_PARSE;
 }
 
