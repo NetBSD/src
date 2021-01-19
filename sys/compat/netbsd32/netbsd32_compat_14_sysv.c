@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14_sysv.c,v 1.3 2019/02/21 03:37:19 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_14_sysv.c,v 1.4 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14_sysv.c,v 1.3 2019/02/21 03:37:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14_sysv.c,v 1.4 2021/01/19 03:20:13 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -217,7 +217,7 @@ compat_14_netbsd32_msgctl(struct lwp *l, const struct compat_14_netbsd32_msgctl_
 		error = copyin(SCARG_P32(uap, buf),
 		    &omsqbuf, sizeof(omsqbuf));
 		if (error)
-			return (error);
+			return error;
 		netbsd32_msqid_ds14_to_native(&omsqbuf, &msqbuf);
 	}
 
@@ -230,7 +230,7 @@ compat_14_netbsd32_msgctl(struct lwp *l, const struct compat_14_netbsd32_msgctl_
 		    SCARG_P32(uap, buf), sizeof(omsqbuf));
 	}
 
-	return (error);
+	return error;
 }
 #endif
 
@@ -269,11 +269,11 @@ compat_14_netbsd32___semctl(struct lwp *l, const struct compat_14_netbsd32___sem
 		error = copyin(NETBSD32IPTR64(SCARG(uap, arg)), &arg,
 		    sizeof(arg));
 		if (error)
-			return (error);
+			return error;
 		if (cmd == IPC_SET) {
 			error = copyin(arg.buf, &osembuf, sizeof(osembuf));
 			if (error)
-				return (error);
+				return error;
 			netbsd32_semid_ds14_to_native(&osembuf, &sembuf);
 		}
 	}
@@ -286,7 +286,7 @@ compat_14_netbsd32___semctl(struct lwp *l, const struct compat_14_netbsd32___sem
 		error = copyout(&osembuf, arg.buf, sizeof(osembuf));
 	}
 
-	return (error);
+	return error;
 }
 #endif
 
@@ -308,7 +308,7 @@ compat_14_netbsd32_shmctl(struct lwp *l, const struct compat_14_netbsd32_shmctl_
 	if (cmd == IPC_SET) {
 		error = copyin(SCARG_P32(uap, buf), &oshmbuf, sizeof(oshmbuf));
 		if (error)
-			return (error);
+			return error;
 		netbsd32_shmid_ds14_to_native(&oshmbuf, &shmbuf);
 	}
 
@@ -320,7 +320,7 @@ compat_14_netbsd32_shmctl(struct lwp *l, const struct compat_14_netbsd32_shmctl_
 		error = copyout(&oshmbuf, SCARG_P32(uap, buf), sizeof(oshmbuf));
 	}
 
-	return (error);
+	return error;
 }
 #endif
 
