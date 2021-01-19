@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.11 2021/01/15 00:38:22 jmcneill Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.12 2021/01/19 00:40:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.11 2021/01/15 00:38:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.12 2021/01/19 00:40:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -107,29 +107,26 @@ struct gicv3_fdt_softc {
 	struct gicv3_fdt_irq	*sc_irq[GICV3_MAXIRQ];
 };
 
-struct gicv3_fdt_quirk {
-	const char		*compat;
-	u_int			quirks;
-};
-
-static const struct gicv3_fdt_quirk gicv3_fdt_quirks[] = {
-	{ "rockchip,rk3399",	GICV3_QUIRK_RK3399 },
+static const struct device_compatible_entry gicv3_fdt_quirks[] = {
+	{ .compat = "rockchip,rk3399",		.value = GICV3_QUIRK_RK3399 },
+	{ 0 }
 };
 
 CFATTACH_DECL_NEW(gicv3_fdt, sizeof(struct gicv3_fdt_softc),
 	gicv3_fdt_match, gicv3_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,gic-v3" },
+	{ 0 }
+};
+
 static int
 gicv3_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,gic-v3",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 
-	return of_match_compatible(phandle, compatible);
+	return of_match_compat_data(phandle, compat_data);
 }
 
 static void
@@ -138,7 +135,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	struct gicv3_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	int error, n;
+	int error;
 
 	error = fdtbus_register_interrupt_controller(self, phandle,
 	    &gicv3_fdt_funcs);
@@ -164,11 +161,10 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_debug_dev(self, "%d redistributors\n", sc->sc_gic.sc_bsh_r_count);
 
 	/* Apply quirks */
-	for (n = 0; n < __arraycount(gicv3_fdt_quirks); n++) {
-		const char *compat[] = { gicv3_fdt_quirks[n].compat, NULL };
-		if (of_match_compatible(OF_finddevice("/"), compat)) {
-			sc->sc_gic.sc_quirks |= gicv3_fdt_quirks[n].quirks;
-		}
+	const struct device_compatible_entry *dce =
+	    of_search_compatible(OF_finddevice("/"), gicv3_fdt_quirks);
+	if (dce != NULL) {
+		sc->sc_gic.sc_quirks |= dce->value;
 	}
 
 	error = gicv3_init(&sc->sc_gic);
@@ -183,11 +179,16 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 		gicv3_fdt_attach_mbi(sc);
 	} else {
 		/* Interrupt Translation Services */
-		for (int child = OF_child(phandle); child; child = OF_peer(child)) {
+		static const struct device_compatible_entry its_compat[] = {
+			{ .compat = "arm,gic-v3-its" },
+			{ 0 }
+		};
+
+		for (int child = OF_child(phandle); child;
+		     child = OF_peer(child)) {
 			if (!fdtbus_status_okay(child))
 				continue;
-			const char * const its_compat[] = { "arm,gic-v3-its", NULL };
-			if (of_match_compatible(child, its_compat))
+			if (of_match_compat_data(child, its_compat))
 				gicv3_fdt_attach_its(sc, faa->faa_bst, child);
 		}
 	}
