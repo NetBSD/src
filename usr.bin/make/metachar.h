@@ -1,6 +1,6 @@
-/*	$NetBSD: metachar.h,v 1.14 2021/01/16 20:49:31 rillig Exp $	*/
+/*	$NetBSD: metachar.h,v 1.15 2021/01/19 20:51:46 rillig Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *

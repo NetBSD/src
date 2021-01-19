@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.241 2021/01/19 19:29:35 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.242 2021/01/19 20:51:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.241 2021/01/19 19:29:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.242 2021/01/19 20:51:46 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -387,7 +387,7 @@ is_separator(char ch)
 	return ch == '\0' || ch_isspace(ch) || strchr("!=><)", ch) != NULL;
 }
 
-/*-
+/*
  * Parse a string from a variable reference or an optionally quoted
  * string.  This is called for the lhs and rhs of string comparisons.
  *

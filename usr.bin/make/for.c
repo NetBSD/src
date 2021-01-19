@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.134 2021/01/10 21:20:46 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.135 2021/01/19 20:51:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/*-
+/*
  * Handling of .for/.endfor loops in a makefile.
  *
  * For loops have the form:
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.134 2021/01/10 21:20:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.135 2021/01/19 20:51:46 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
