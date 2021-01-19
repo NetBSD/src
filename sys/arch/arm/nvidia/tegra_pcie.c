@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.32 2021/01/15 23:11:59 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.33 2021/01/19 00:36:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.32 2021/01/15 23:11:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.33 2021/01/19 00:36:09 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -65,6 +65,11 @@ static void	tegra_pcie_attach(device_t, device_t, void *);
 #define TEGRA_PCIE_NBUS 256
 #define TEGRA_PCIE_ECFB (1<<(12 - 8))	/* extended conf frags per bus */
 
+enum tegra_pcie_type {
+	TEGRA_PCIE_124		= 0,
+	TEGRA_PCIE_210		= 1,
+};
+
 struct tegra_pcie_ih {
 	int			(*ih_callback)(void *);
 	void			*ih_arg;
@@ -81,6 +86,7 @@ struct tegra_pcie_softc {
 	bus_space_handle_t	sc_bsh_pads;
 	bus_space_handle_t	sc_bsh_rpconf;
 	int			sc_phandle;
+	enum tegra_pcie_type	sc_type;
 
 	struct arm32_pci_chipset sc_pc;
 
@@ -130,17 +136,18 @@ static void	tegra_pcie_intr_disestablish(void *, void *);
 CFATTACH_DECL_NEW(tegra_pcie, sizeof(struct tegra_pcie_softc),
 	tegra_pcie_match, tegra_pcie_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-pcie",	.value = TEGRA_PCIE_210 },
+	{ .compat = "nvidia,tegra124-pcie",	.value = TEGRA_PCIE_124 },
+	{ 0 }
+};
+
 static int
 tegra_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-pcie",
-		"nvidia,tegra124-pcie",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -148,6 +155,7 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_pcie_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const struct device_compatible_entry *dce;
 	struct pciconf_resources *pcires;
 	struct pcibus_attach_args pba;
 	bus_addr_t afi_addr, cs_addr, pads_addr;
@@ -195,6 +203,10 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map cs registers: %d\n", error);
 		return;
 	}
+
+	dce = of_search_compatible(faa->faa_phandle, compat_data);
+	KASSERT(dce != NULL);
+	sc->sc_type = dce->value;
 
 	tegra_pcie_conf_map_buses(sc);
 
@@ -463,14 +475,14 @@ tegra_pcie_setup(struct tegra_pcie_softc * const sc)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_PCIE_CONFIG_REG, cfg);
 
 	/* Configure refclk pad */
-	const char * const tegra124_compat[] = { "nvidia,tegra124-pcie", NULL };
-	if (of_match_compatible(sc->sc_phandle, tegra124_compat))
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh_pads, PADS_REFCLK_CFG0_REG,
-		    0x44ac44ac);
-	const char * const tegra210_compat[] = { "nvidia,tegra210-pcie", NULL };
-	if (of_match_compatible(sc->sc_phandle, tegra210_compat))
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh_pads, PADS_REFCLK_CFG0_REG,
-		    0x90b890b8);
+	if (sc->sc_type == TEGRA_PCIE_124) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_pads,
+		    PADS_REFCLK_CFG0_REG, 0x44ac44ac);
+	}
+	if (sc->sc_type == TEGRA_PCIE_210) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_pads,
+		    PADS_REFCLK_CFG0_REG, 0x90b890b8);
+	}
 
 	/*
 	 * Map PCI address spaces into ARM address space via
