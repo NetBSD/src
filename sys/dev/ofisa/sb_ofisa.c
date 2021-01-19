@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.19 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.20 2021/01/19 14:39:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.19 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.20 2021/01/19 14:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,28 +58,24 @@ void	sb_ofisa_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(sb_ofisa, sizeof(struct sbdsp_softc),
     sb_ofisa_match, sb_ofisa_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pnpPNP,b000" },	/* generic SB 1.5 */
+	{ .compat = "pnpPNP,b001" },	/* generic SB 2.0 */
+	{ .compat = "pnpPNP,b002" },	/* generic SB Pro */
+	{ .compat = "pnpPNP,b003" },	/* generic SB 16 */
+	{ 0 }
+};
+
 int
 sb_ofisa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
-	static const char *const compatible_strings[] = {
-		"pnpPNP,b000",			/* generic SB 1.5 */
-		"pnpPNP,b001",			/* generic SB 2.0 */
-		"pnpPNP,b002",			/* generic SB Pro */
-		"pnpPNP,b003",			/* generic SB 16 */
-		NULL,
-	};
-	int rv = 0;
 
-	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1) {
-		/*
-		 * Use a low match priority so that a more specific driver
-		 * can match, e.g. a native ESS driver.
-		 */
-		rv = 1;
-	}
-
-	return (rv);
+	/*
+	 * Use a low match priority so that a more specific driver
+	 * can match, e.g. a native ESS driver.
+	 */
+	return of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 1 : 0;
 }
 
 void

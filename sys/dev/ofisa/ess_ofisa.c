@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.28 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.29 2021/01/19 14:39:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.28 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.29 2021/01/19 14:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,24 +56,20 @@ void	ess_ofisa_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ess_ofisa, sizeof(struct ess_softc),
     ess_ofisa_match, ess_ofisa_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ESST,es1887-codec" },	/* ESS 1887 */
+	{ .compat = "ESST,es1888-codec" },	/* ESS 1888 */
+	{ .compat = "ESST,es888-codec" },	/* ESS 888 */
+	{ 0 }
+};
+
 int
 ess_ofisa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
-	static const char *const compatible_strings[] = {
-		"ESST,es1887-codec",		/* ESS 1887 */
-		"ESST,es1888-codec",		/* ESS 1888 */
-		"ESST,es888-codec",		/* ESS 888 */
-		NULL,
-	};
-	int rv = 0;
 
-	/* XXX table */
-	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1) {
-		rv = 10;
-	}
-
-	return (rv);
+							/* beat generic SB */
+	return of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 10 : 0;
 }
 
 void
