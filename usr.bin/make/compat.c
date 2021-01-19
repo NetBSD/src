@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.219 2021/01/10 21:20:46 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.220 2021/01/19 20:51:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,7 +69,7 @@
  * SUCH DAMAGE.
  */
 
-/*-
+/*
  * compat.c --
  *	The routines in this file implement the full-compatibility
  *	mode of PMake. Most of the special functionality of PMake
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.219 2021/01/10 21:20:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.220 2021/01/19 20:51:46 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;

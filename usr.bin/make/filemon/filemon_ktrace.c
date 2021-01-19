@@ -1,6 +1,6 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.12 2021/01/10 23:59:53 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.13 2021/01/19 20:51:46 rillig Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *

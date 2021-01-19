@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.397 2021/01/10 23:59:53 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.398 2021/01/19 20:51:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,7 +69,7 @@
  * SUCH DAMAGE.
  */
 
-/*-
+/*
  * job.c --
  *	handle the creation etc. of our child processes.
  *
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.397 2021/01/10 23:59:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.398 2021/01/19 20:51:46 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are

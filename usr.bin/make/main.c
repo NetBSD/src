@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.513 2021/01/16 20:49:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.514 2021/01/19 20:51:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.513 2021/01/16 20:49:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.514 2021/01/19 20:51:46 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1744,7 +1744,7 @@ found:
 	return 0;
 }
 
-/*-
+/*
  * Cmd_Exec --
  *	Execute the command in cmd, and return the output of that command
  *	in a string.  In the output, newlines are replaced with spaces.
