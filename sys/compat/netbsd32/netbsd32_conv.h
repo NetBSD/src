@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.44 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.45 2021/01/19 03:41:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -246,13 +246,15 @@ netbsd32_to_iovecin(const struct netbsd32_iovec *iov32p, struct iovec *iovp,
 {
 	int i, error=0;
 	uint32_t iov_base;
-	uint32_t iov_len;
+	uint32_t iov_len, total_iov_len;
+
 	/*
 	 * We could allocate an iov32p, do a copyin, and translate
 	 * each field and then free it all up, or we could copyin
 	 * each field separately.  I'm doing the latter to reduce
 	 * the number of MALLOC()s.
 	 */
+	total_iov_len = 0;
 	for (i = 0; i < len; i++, iovp++, iov32p++) {
 		if ((error = copyin(&iov32p->iov_base, &iov_base, sizeof(iov_base))))
 		    return error;
@@ -260,6 +262,19 @@ netbsd32_to_iovecin(const struct netbsd32_iovec *iov32p, struct iovec *iovp,
 		    return error;
 		iovp->iov_base = (void *)(u_long)iov_base;
 		iovp->iov_len = (size_t)iov_len;
+
+		/*
+		 * System calls return ssize_t because -1 is returned
+		 * on error.  Therefore we must restrict the length to
+		 * SSIZE_MAX (NETBSD32_SSIZE_MAX with compat32) to
+		 * avoid garbage return values.
+		 */
+		total_iov_len += iov_len;
+		if (iov_len > NETBSD32_SSIZE_MAX ||
+		    total_iov_len > NETBSD32_SSIZE_MAX) {
+			return EINVAL;
+			break;
+		}
 	}
 	return error;
 }
