@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.243 2021/01/16 20:49:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.244 2021/01/19 20:51:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -72,7 +72,7 @@
  *	from: @(#)make.h	8.3 (Berkeley) 6/13/95
  */
 
-/*-
+/*
  * make.h --
  *	The global definitions for pmake
  */

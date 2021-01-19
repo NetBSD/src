@@ -1,6 +1,6 @@
-/*	$NetBSD: str.c,v 1.78 2021/01/10 23:59:53 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.79 2021/01/19 20:51:46 rillig Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1988, 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.78 2021/01/10 23:59:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.79 2021/01/19 20:51:46 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *

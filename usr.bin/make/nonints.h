@@ -1,6 +1,6 @@
-/*	$NetBSD: nonints.h,v 1.186 2020/12/28 00:46:24 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.187 2021/01/19 20:51:46 rillig Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1988, 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  *	from: @(#)nonints.h	8.3 (Berkeley) 3/19/94
  */
 
-/*-
+/*
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
