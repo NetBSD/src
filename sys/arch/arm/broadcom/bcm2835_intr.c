@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.34 2021/01/15 00:38:22 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.35 2021/01/19 00:38:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.34 2021/01/15 00:38:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.35 2021/01/19 00:38:52 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -254,20 +254,21 @@ static const char * const bcm2836mp_sources[BCM2836_NIRQPERCPU] = {
 CFATTACH_DECL_NEW(bcmicu, sizeof(struct bcm2835icu_softc),
     bcm2835_icu_match, bcm2835_icu_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2708-armctrl-ic",	.value = 0 },
+	{ .compat = "brcm,bcm2709-armctrl-ic",	.value = 0 },
+	{ .compat = "brcm,bcm2835-armctrl-ic",	.value = 0 },
+	{ .compat = "brcm,bcm2836-armctrl-ic",	.value = 0 },
+	{ .compat = "brcm,bcm2836-l1-intc",	.value = 1 },
+	{ 0 }
+};
+
 static int
 bcm2835_icu_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-	    "brcm,bcm2708-armctrl-ic",
-	    "brcm,bcm2709-armctrl-ic",
-	    "brcm,bcm2835-armctrl-ic",
-	    "brcm,bcm2836-armctrl-ic",
-	    "brcm,bcm2836-l1-intc",
-	    NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -276,6 +277,7 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 	struct bcm2835icu_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	struct fdtbus_interrupt_controller_func *ifuncs;
+	const struct device_compatible_entry *dce;
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -298,8 +300,10 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_phandle = phandle;
 
-	const char * const local_intc[] = { "brcm,bcm2836-l1-intc", NULL };
-	if (of_match_compatible(faa->faa_phandle, local_intc)) {
+	dce = of_search_compatible(faa->faa_phandle, compat_data);
+	KASSERT(dce != NULL);
+
+	if (dce->value != 0) {
 #if defined(MULTIPROCESSOR)
 		aprint_normal(": Multiprocessor");
 #endif
