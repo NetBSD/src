@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sramc.c,v 1.5 2019/07/11 18:22:14 macallan Exp $ */
+/* $NetBSD: sunxi_sramc.c,v 1.6 2021/01/19 00:35:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.5 2019/07/11 18:22:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.6 2021/01/19 00:35:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,33 +42,57 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.5 2019/07/11 18:22:14 macallan Exp
 
 #include <arm/sunxi/sunxi_sramc.h>
 
-static const char * compatible[] = {
-	"allwinner,sun4i-a10-sram-controller",	/* old compat string */
-	"allwinner,sun4i-a10-system-control",
-	"allwinner,sun8i-h3-system-control",
-	"allwinner,sun50i-a64-system-control",
-	"allwinner,sun50i-h5-system-control",
-	"allwinner,sun50i-h6-system-control",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+		/* old compat string */
+	{ .compat = "allwinner,sun4i-a10-sram-controller" },
+	{ .compat = "allwinner,sun4i-a10-system-control" },
+	{ .compat = "allwinner,sun8i-h3-system-control" },
+	{ .compat = "allwinner,sun50i-a64-system-control" },
+	{ .compat = "allwinner,sun50i-h5-system-control" },
+	{ .compat = "allwinner,sun50i-h6-system-control" },
+	{ 0 }
 };
 
-static const struct sunxi_sramc_area {
-	const char			*compatible;
+struct sunxi_sramc_area {
 	const char			*desc;
 	bus_size_t			reg;
 	uint32_t			mask;
 	u_int				flags;
 #define	SUNXI_SRAMC_F_SWAP		__BIT(0)
-} sunxi_sramc_areas[] = {
-	{ "allwinner,sun4i-a10-sram-a3-a4",
-	  "SRAM A3/A4",
-	  0x04, __BITS(5,4), 0 },
-	{ "allwinner,sun4i-a10-sram-d",
-	  "SRAM D",
-	  0x04, __BIT(0), 0 },
-	{ "allwinner,sun50i-a64-sram-c",
-	  "SRAM C",
-	  0x04, __BIT(24), SUNXI_SRAMC_F_SWAP },
+};
+
+static const struct sunxi_sramc_area sunxi_sramc_area_a3_a4 = {
+	.desc = "SRAM A3/A4",
+	.reg = 0x04,
+	.mask = __BITS(5,4),
+	.flags = 0,
+};
+
+static const struct sunxi_sramc_area sunxi_sramc_area_d = {
+	.desc = "SRAM D",
+	.reg = 0x04,
+	.mask = __BIT(0),
+	.flags = 0,
+};
+
+static const struct sunxi_sramc_area sunxi_sramc_area_c = {
+	.desc = "SRAM C",
+	.reg = 0x04,
+	.mask = __BIT(24),
+	.flags = SUNXI_SRAMC_F_SWAP,
+};
+
+static const struct device_compatible_entry sunxi_sramc_areas[] = {
+	{ .compat = "allwinner,sun4i-a10-sram-a3-a4",
+	  .data = &sunxi_sramc_area_a3_a4 },
+
+	{ .compat = "allwinner,sun4i-a10-sram-d",
+	  .data = &sunxi_sramc_area_d },
+
+	{ .compat = "allwinner,sun50i-a64-sram-c",
+	  .data = &sunxi_sramc_area_c },
+
+	{ 0 }
 };
 
 struct sunxi_sramc_node {
@@ -97,31 +121,34 @@ static struct sunxi_sramc_softc *sramc_softc = NULL;
 static void
 sunxi_sramc_init_mmio(struct sunxi_sramc_softc *sc, int phandle)
 {
+	const struct device_compatible_entry *dce;
 	struct sunxi_sramc_node *node;
-	int child, i;
+	int child;
 
-	for (child = OF_child(phandle); child; child = OF_peer(child))
-		for (i = 0; i < __arraycount(sunxi_sramc_areas); i++) {
-			const char * area_compatible[] = { sunxi_sramc_areas[i].compatible, NULL };
-			if (of_match_compatible(child, area_compatible)) {
-				node = kmem_alloc(sizeof(*node), KM_SLEEP);
-				node->phandle = child;
-				node->area = &sunxi_sramc_areas[i];
-				TAILQ_INSERT_TAIL(&sc->sc_nodes, node, nodes);
-				aprint_verbose_dev(sc->sc_dev, "area: %s\n", node->area->desc);
-				break;
-			}
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		dce = of_search_compatible(child, sunxi_sramc_areas);
+		if (dce != NULL) {
+			node = kmem_alloc(sizeof(*node), KM_SLEEP);
+			node->phandle = child;
+			node->area = dce->data;
+			TAILQ_INSERT_TAIL(&sc->sc_nodes, node, nodes);
+			aprint_verbose_dev(sc->sc_dev, "area: %s\n",
+			    node->area->desc);
 		}
+	}
 }
 
 static void
 sunxi_sramc_init(struct sunxi_sramc_softc *sc)
 {
-	const char * mmio_compatible[] = { "mmio-sram", NULL };
+	const struct device_compatible_entry mmio_compat_data[] = {
+		{ .compat = "mmio-sram" },
+		{ 0 }
+	};
 	int child;
 
 	for (child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
-		if (!of_match_compatible(child, mmio_compatible))
+		if (!of_match_compat_data(child, mmio_compat_data))
 			continue;
 		sunxi_sramc_init_mmio(sc, child);
 	}
@@ -168,7 +195,7 @@ sunxi_sramc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
