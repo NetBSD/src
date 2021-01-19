@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.235 2021/01/10 21:20:46 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.236 2021/01/19 17:49:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.235 2021/01/10 21:20:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.236 2021/01/19 17:49:13 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -949,6 +949,12 @@ CondParser_Term(CondParser *par, Boolean doEval)
 			t = TOK_TRUE;
 		}
 	}
+
+	/*
+	 * FIXME: Can at least return TOK_AND, TOK_OR, TOK_RPAREN, maybe
+	 *  others as well.
+	 */
+	/* TODO: assert(t == TOK_ERROR); */
 	return t;
 }
 
