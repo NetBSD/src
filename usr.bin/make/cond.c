@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.243 2021/01/19 21:55:20 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.244 2021/01/19 22:12:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.243 2021/01/19 21:55:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.244 2021/01/19 22:12:44 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1061,6 +1061,43 @@ IsEndif(const char *p)
 	       p[3] == 'i' && p[4] == 'f' && !ch_isalpha(p[5]);
 }
 
+static Boolean
+DetermineKindOfConditional(const char **pp, Boolean *out_plain,
+			   Boolean (**out_evalBare)(size_t, const char *),
+			   Boolean *out_negate)
+{
+	const char *p = *pp;
+
+	p += 2;
+	*out_plain = FALSE;
+	*out_evalBare = FuncDefined;
+	*out_negate = FALSE;
+	if (*p == 'n') {
+		p++;
+		*out_negate = TRUE;
+	}
+	if (is_token(p, "def", 3)) {		/* .ifdef and .ifndef */
+		p += 3;
+	} else if (is_token(p, "make", 4)) {	/* .ifmake and .ifnmake */
+		p += 4;
+		*out_evalBare = FuncMake;
+	} else if (is_token(p, "", 0) && !*out_negate) { /* plain .if */
+		*out_plain = TRUE;
+	} else {
+		/*
+		 * TODO: Add error message about unknown directive,
+		 * since there is no other known directive that starts
+		 * with 'el' or 'if'.
+		 *
+		 * Example: .elifx 123
+		 */
+		return FALSE;
+	}
+
+	*pp = p;
+	return TRUE;
+}
+
 /*
  * Evaluate the conditional directive in the line, which is one of:
  *
@@ -1199,36 +1236,8 @@ Cond_EvalLine(const char *line)
 		return COND_INVALID;	/* Not an ifxxx or elifxxx line */
 	}
 
-	/*
-	 * Figure out what sort of conditional it is.
-	 */
-	p += 2;
-	plain = FALSE;
-	evalBare = FuncDefined;
-	negate = FALSE;
-	if (*p == 'n') {
-		p++;
-		negate = TRUE;
-	}
-	if (is_token(p, "def", 3)) {		/* .ifdef and .ifndef */
-		p += 3;
-	} else if (is_token(p, "make", 4)) {	/* .ifmake and .ifnmake */
-		p += 4;
-		evalBare = FuncMake;
-	} else if (is_token(p, "", 0) && !negate) {	/* plain .if */
-		plain = TRUE;
-	} else {
-		/*
-		 * TODO: Add error message about unknown directive,
-		 * since there is no other known directive that starts
-		 * with 'el' or 'if'.
-		 *
-		 * Example: .elifx 123
-		 */
+	if (!DetermineKindOfConditional(&p, &plain, &evalBare, &negate))
 		return COND_INVALID;
-	}
-
-	/* Now we know what sort of 'if' it is... */
 
 	if (isElif) {
 		if (cond_depth == cond_min_depth) {
