@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10_sysv.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_10_sysv.c,v 1.3 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10_sysv.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10_sysv.c,v 1.3 2021/01/19 03:20:13 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -100,20 +100,20 @@ compat_10_netbsd32_semsys(struct lwp *l, const struct compat_10_netbsd32_semsys_
 		SCARG(&semget_args, key) = SCARG(uap, a2);
 		SCARG(&semget_args, nsems) = SCARG(uap, a3);
 		SCARG(&semget_args, semflg) = SCARG(uap, a4);
-		return (sys_semget(l, &semget_args, retval));
+		return sys_semget(l, &semget_args, retval);
 
 	case 2:						/* semop() */
 		SCARG(&semop_args, semid) = SCARG(uap, a2);
 		SCARG(&semop_args, sops) = NETBSD32IPTR64(SCARG(uap, a3));
 		SCARG(&semop_args, nsops) = SCARG(uap, a4);
-		return (sys_semop(l, &semop_args, retval));
+		return sys_semop(l, &semop_args, retval);
 
 	case 3:						/* semconfig() */
 		SCARG(&semconfig_args, flag) = SCARG(uap, a2);
-		return (sys_semconfig(l, &semconfig_args, retval));
+		return sys_semconfig(l, &semconfig_args, retval);
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 }
 #endif
@@ -152,26 +152,26 @@ compat_10_netbsd32_shmsys(struct lwp *l, const struct compat_10_netbsd32_shmsys_
 		SCARG(&shmat_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmat_args, shmaddr) = NETBSD32IPTR64(SCARG(uap, a3));
 		SCARG(&shmat_args, shmflg) = SCARG(uap, a4);
-		return (sys_shmat(l, &shmat_args, retval));
+		return sys_shmat(l, &shmat_args, retval);
 
 	case 1:						/* shmctl() */
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&shmctl_args, buf) = NETBSD32IPTR64(SCARG(uap, a4));
-		return (compat_14_sys_shmctl(l, &shmctl_args, retval));
+		return compat_14_sys_shmctl(l, &shmctl_args, retval);
 
 	case 2:						/* shmdt() */
 		SCARG(&shmdt_args, shmaddr) = NETBSD32IPTR64(SCARG(uap, a2));
-		return (sys_shmdt(l, &shmdt_args, retval));
+		return sys_shmdt(l, &shmdt_args, retval);
 
 	case 3:						/* shmget() */
 		SCARG(&shmget_args, key) = SCARG(uap, a2);
 		SCARG(&shmget_args, size) = SCARG(uap, a3);
 		SCARG(&shmget_args, shmflg) = SCARG(uap, a4);
-		return (sys_shmget(l, &shmget_args, retval));
+		return sys_shmget(l, &shmget_args, retval);
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 }
 #endif
@@ -216,19 +216,19 @@ compat_10_netbsd32_msgsys(struct lwp *l, const struct compat_10_netbsd32_msgsys_
 		SCARG(&msgctl_args, msqid) = SCARG(uap, a2);
 		SCARG(&msgctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&msgctl_args, buf) = NETBSD32IPTR64(SCARG(uap, a4));
-		return (compat_14_sys_msgctl(l, &msgctl_args, retval));
+		return compat_14_sys_msgctl(l, &msgctl_args, retval);
 
 	case 1:					/* msgget() */
 		SCARG(&msgget_args, key) = SCARG(uap, a2);
 		SCARG(&msgget_args, msgflg) = SCARG(uap, a3);
-		return (sys_msgget(l, &msgget_args, retval));
+		return sys_msgget(l, &msgget_args, retval);
 
 	case 2:					/* msgsnd() */
 		SCARG(&msgsnd_args, msqid) = SCARG(uap, a2);
 		SCARG(&msgsnd_args, msgp) = NETBSD32IPTR64(SCARG(uap, a3));
 		SCARG(&msgsnd_args, msgsz) = SCARG(uap, a4);
 		SCARG(&msgsnd_args, msgflg) = SCARG(uap, a5);
-		return (sys_msgsnd(l, &msgsnd_args, retval));
+		return sys_msgsnd(l, &msgsnd_args, retval);
 
 	case 3:					/* msgrcv() */
 		SCARG(&msgrcv_args, msqid) = SCARG(uap, a2);
@@ -236,10 +236,10 @@ compat_10_netbsd32_msgsys(struct lwp *l, const struct compat_10_netbsd32_msgsys_
 		SCARG(&msgrcv_args, msgsz) = SCARG(uap, a4);
 		SCARG(&msgrcv_args, msgtyp) = SCARG(uap, a5);
 		SCARG(&msgrcv_args, msgflg) = SCARG(uap, a6);
-		return (sys_msgrcv(l, &msgrcv_args, retval));
+		return sys_msgrcv(l, &msgrcv_args, retval);
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 }
 #endif

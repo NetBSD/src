@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.34 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.35 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.34 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.35 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -94,7 +94,7 @@ compat_12_netbsd32_reboot(struct lwp *l, const struct compat_12_netbsd32_reboot_
 	struct compat_12_sys_reboot_args ua;
 
 	NETBSD32TO64_UAP(opt);
-	return (compat_12_sys_reboot(l, &ua, retval));
+	return compat_12_sys_reboot(l, &ua, retval);
 }
 
 int
@@ -109,7 +109,7 @@ compat_12_netbsd32_msync(struct lwp *l, const struct compat_12_netbsd32_msync_ar
 	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
-	return (sys___msync13(l, &ua, retval));
+	return sys___msync13(l, &ua, retval);
 }
 
 int
@@ -123,7 +123,7 @@ compat_12_netbsd32_oswapon(struct lwp *l, const struct compat_12_netbsd32_oswapo
 	SCARG(&ua, cmd) = SWAP_ON;
 	SCARG(&ua, arg) = SCARG_P32(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
-	return (sys_swapctl(l, &ua, retval));
+	return sys_swapctl(l, &ua, retval);
 }
 
 int
@@ -140,12 +140,12 @@ compat_12_netbsd32_stat12(struct lwp *l, const struct compat_12_netbsd32_stat12_
 
 	error = do_sys_stat(SCARG_P32(uap, path), FOLLOW, &sb);
 	if (error)
-		return (error);
+		return error;
 
 	compat_12_stat_conv(&sb, &sb12);
 	netbsd32_stat12_to_netbsd32(&sb12, &sb32);
 
-	return (copyout(&sb32, SCARG_P32(uap, ub), sizeof sb32));
+	return copyout(&sb32, SCARG_P32(uap, ub), sizeof sb32);
 }
 
 int
@@ -162,12 +162,12 @@ compat_12_netbsd32_fstat12(struct lwp *l, const struct compat_12_netbsd32_fstat1
 
 	error = do_sys_fstat(SCARG(uap, fd), &sb);
 	if (error)
-		return (error);
+		return error;
 
 	compat_12_stat_conv(&sb, &sb12);
 	netbsd32_stat12_to_netbsd32(&sb12, &sb32);
 
-	return (copyout(&sb32, SCARG_P32(uap, sb), sizeof sb32));
+	return copyout(&sb32, SCARG_P32(uap, sb), sizeof sb32);
 }
 
 int
@@ -184,12 +184,12 @@ compat_12_netbsd32_lstat12(struct lwp *l, const struct compat_12_netbsd32_lstat1
 
 	error = do_sys_stat(SCARG_P32(uap, path), NOFOLLOW, &sb);
 	if (error)
-		return (error);
+		return error;
 
 	compat_12_stat_conv(&sb, &sb12);
 	netbsd32_stat12_to_netbsd32(&sb12, &sb32);
 
-	return (copyout(&sb32, SCARG_P32(uap, ub), sizeof sb32));
+	return copyout(&sb32, SCARG_P32(uap, ub), sizeof sb32);
 }
 
 int
@@ -208,7 +208,7 @@ compat_12_netbsd32_getdirentries(struct lwp *l, const struct compat_12_netbsd32_
 	NETBSD32TO64_UAP(count);
 	NETBSD32TOP_UAP(basep, long);
 
-	return (compat_12_sys_getdirentries(l, &ua, retval));
+	return compat_12_sys_getdirentries(l, &ua, retval);
 }
 
 static struct syscall_package compat_netbsd32_12_syscalls[] = {

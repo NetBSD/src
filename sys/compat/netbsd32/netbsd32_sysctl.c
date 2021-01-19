@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.44 2020/03/21 16:17:08 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.45 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.44 2020/03/21 16:17:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.45 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -85,7 +85,7 @@ netbsd32_sysctl_kern_boottime(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = &bt32;
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
 /*
@@ -101,7 +101,7 @@ netbsd32_sysctl_vm_loadavg(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = &av32;
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
 static int
@@ -217,7 +217,7 @@ netbsd32___sysctl(struct lwp *l, const struct netbsd32___sysctl_args *uap, regis
 		error = copyin(oldlenp, &netbsd32_oldlen,
 			       sizeof(netbsd32_oldlen));
 		if (error)
-			return (error);
+			return error;
 		oldlen = netbsd32_oldlen;
 	}
 	savelen = oldlen;
@@ -229,10 +229,10 @@ netbsd32___sysctl(struct lwp *l, const struct netbsd32___sysctl_args *uap, regis
 	 * default main tree.
 	 */
 	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 1)
-		return (EINVAL);
+		return EINVAL;
 	error = copyin(namep, &name[0], SCARG(uap, namelen) * sizeof(int));
         if (error)
-                return (error);
+                return error;
 
 	ktrmib(name, SCARG(uap, namelen));
 
@@ -264,5 +264,5 @@ netbsd32___sysctl(struct lwp *l, const struct netbsd32___sysctl_args *uap, regis
 	if (error == 0 && oldp != NULL && savelen < oldlen)
 		error = ENOMEM;
 
-	return (error);
+	return error;
 }

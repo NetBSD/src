@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_rlimit.c,v 1.1 2018/12/24 20:44:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32_rlimit.c,v 1.2 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -31,7 +31,7 @@
 /* rlimit netbsd32 related code */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_rlimit.c,v 1.1 2018/12/24 20:44:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_rlimit.c,v 1.2 2021/01/19 03:20:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap,
 
 	error = copyin(SCARG_P32(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
-		return (error);
+		return error;
 
 	fixlimit(which, &alim);
 

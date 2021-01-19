@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50_sysv.c,v 1.3 2019/12/15 16:48:26 tsutsui Exp $	*/
+/*	$NetBSD: netbsd32_compat_50_sysv.c,v 1.4 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50_sysv.c,v 1.3 2019/12/15 16:48:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50_sysv.c,v 1.4 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -118,7 +118,7 @@ do_netbsd32___semctl14(struct lwp *l, const struct compat_50_netbsd32___semctl14
 			error = copyin(NETBSD32PTR64(karg32.buf), &sembuf32,
 			    sizeof(sembuf32));
 			if (error)
-				return (error);
+				return error;
 			netbsd32_to_semid_ds50(&sembuf32, &sembuf);
 		}
 	}
@@ -132,7 +132,7 @@ do_netbsd32___semctl14(struct lwp *l, const struct compat_50_netbsd32___semctl14
 		    sizeof(sembuf32));
 	}
 
-	return (error);
+	return error;
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.54 2021/01/18 23:14:22 simonb Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.55 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.54 2021/01/18 23:14:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.55 2021/01/19 03:20:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,12 +105,12 @@ copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, u_int *len,
 		ktrkuser(mbuftypes[MT_CONTROL], cmsg, cmsg->cmsg_len);
 		error = copyout(&cmsg32, *q, MIN(i, sizeof(cmsg32)));
 		if (error)
-			return (error);
+			return error;
 		if (i > CMSG32_LEN(0)) {
 			error = copyout(CMSG_DATA(cmsg), *q + CMSG32_LEN(0),
 			    i - CMSG32_LEN(0));
 			if (error)
-				return (error);
+				return error;
 		}
 		j = CMSG32_SPACE(cmsg->cmsg_len - CMSG_LEN(0));
 		if (*len >= j) {
@@ -233,7 +233,7 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap,
 
 	error = copyin(SCARG_P32(uap, msg), &msg32, sizeof(msg32));
 	if (error)
-		return (error);
+		return error;
 
 	if ((error = msg_recv_copyin(l, &msg32, &msg, aiov)) != 0)
 		return error;

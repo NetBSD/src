@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.39 2020/01/01 14:52:38 maxv Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.40 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.39 2020/01/01 14:52:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.40 2021/01/19 03:20:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ compat_20_netbsd32_statfs(struct lwp *l, const struct compat_20_netbsd32_statfs_
 	error = namei_simple_user(SCARG_P32(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
 	if (error != 0)
-		return (error);
+		return error;
 	mp = vp->v_mount;
 	vrele(vp);
 	sb = STATVFSBUF_GET();
@@ -191,7 +191,7 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
-		return (error);
+		return error;
 	mp = fp->f_vnode->v_mount;
 	sb = STATVFSBUF_GET();
 	if ((error = dostatvfs(mp, sb, l, 0, 0)) != 0)
@@ -201,7 +201,7 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
  out:
 	STATVFSBUF_PUT(sb);
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return error)
 }
 
 int
@@ -218,7 +218,7 @@ compat_20_netbsd32_fhstatfs(struct lwp *l, const struct compat_20_netbsd32_fhsta
 #ifdef notyet
 	NETBSD32TOP_UAP(flags, int);
 #endif
-	return (compat_30_sys_fhstatvfs1(l, &ua, retval));
+	return compat_30_sys_fhstatvfs1(l, &ua, retval);
 }
 
 static struct syscall_package compat_netbsd32_20_syscalls[] = {

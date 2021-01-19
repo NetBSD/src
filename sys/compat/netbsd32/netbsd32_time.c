@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.53 2019/10/05 14:19:53 kamil Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.54 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.53 2019/10/05 14:19:53 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.54 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -83,7 +83,7 @@ netbsd32___ntp_gettime50(struct lwp *l,
 		*retval = (*vec_ntp_timestatus)();
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -101,7 +101,7 @@ netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap,
 		return EINVAL;
 
 	if ((error = copyin(SCARG_P32(uap, tp), &ntv32, sizeof(ntv32))))
-		return (error);
+		return error;
 
 	netbsd32_to_timex(&ntv32, &ntv);
 
@@ -114,7 +114,7 @@ netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap,
 	if (modes != 0 && (error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_NTPADJTIME, NULL, NULL,
 	    NULL)))
-		return (error);
+		return error;
 
 	(*vec_ntp_adjtime1)(&ntv);
 
@@ -143,18 +143,18 @@ netbsd32___setitimer50(struct lwp *l, const struct netbsd32___setitimer50_args *
 	int error;
 
 	if ((u_int)which > ITIMER_PROF)
-		return (EINVAL);
+		return EINVAL;
 	itv32 = SCARG_P32(uap, itv);
 	if (itv32) {
 		if ((error = copyin(itv32, &s32it, sizeof(s32it))))
-			return (error);
+			return error;
 		netbsd32_to_itimerval(&s32it, &aitv);
 	}
 	if (SCARG_P32(uap, oitv) != 0) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = netbsd32___getitimer50(l, &getargs, retval)) != 0)
-			return (error);
+			return error;
 	}
 	if (itv32 == 0)
 		return 0;
@@ -199,7 +199,7 @@ netbsd32___gettimeofday50(struct lwp *l, const struct netbsd32___gettimeofday50_
 		netbsd32_from_timeval(&atv, &tv32);
 		error = copyout(&tv32, SCARG_P32(uap, tp), sizeof(tv32));
 		if (error)
-			return (error);
+			return error;
 	}
 	if (SCARG_P32(uap, tzp)) {
 		/*
@@ -210,7 +210,7 @@ netbsd32___gettimeofday50(struct lwp *l, const struct netbsd32___gettimeofday50_
 		tzfake.tz_dsttime = 0;
 		error = copyout(&tzfake, SCARG_P32(uap, tzp), sizeof(tzfake));
 	}
-	return (error);
+	return error;
 }
 
 int
@@ -267,7 +267,7 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL,
 	    NULL)) != 0)
-		return (error);
+		return error;
 
 	if (SCARG_P32(uap, olddelta)) {
 		atv.tv_sec = time_adjtime / 1000000;
@@ -278,13 +278,13 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 		}
 		error = copyout(&atv, SCARG_P32(uap, olddelta), sizeof(atv));
 		if (error)
-			return (error);
+			return error;
 	}
 
 	if (SCARG_P32(uap, delta)) {
 		error = copyin(SCARG_P32(uap, delta), &atv, sizeof(atv));
 		if (error)
-			return (error);
+			return error;
 
 		time_adjtime = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
 
@@ -293,7 +293,7 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 			time_adjusted |= 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -327,7 +327,7 @@ netbsd32___clock_settime50(struct lwp *l, const struct netbsd32___clock_settime5
 	int error;
 
 	if ((error = copyin(SCARG_P32(uap, tp), &ts32, sizeof(ts32))) != 0)
-		return (error);
+		return error;
 
 	netbsd32_to_timespec(&ts32, &ats);
 	return clock_settime1(l->l_proc, SCARG(uap, clock_id), &ats, true);
@@ -369,7 +369,7 @@ netbsd32___nanosleep50(struct lwp *l, const struct netbsd32___nanosleep50_args *
 
 	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
 	if (error)
-		return (error);
+		return error;
 	netbsd32_to_timespec(&ts32, &rqt);
 
 	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt,
@@ -469,7 +469,7 @@ netbsd32___timer_settime50(struct lwp *l, const struct netbsd32___timer_settime5
 	struct netbsd32_itimerspec its32;
 
 	if ((error = copyin(SCARG_P32(uap, value), &its32, sizeof(its32))) != 0)
-		return (error);
+		return error;
 	netbsd32_to_timespec(&its32.it_interval, &value.it_interval);
 	netbsd32_to_timespec(&its32.it_value, &value.it_value);
 

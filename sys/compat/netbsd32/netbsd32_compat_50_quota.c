@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50_quota.c,v 1.1 2020/03/12 15:02:29 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50_quota.c,v 1.2 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50_quota.c,v 1.1 2020/03/12 15:02:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50_quota.c,v 1.2 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,7 +65,7 @@ compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quota
 	NETBSD32TO64_UAP(cmd);
 	NETBSD32TO64_UAP(uid);
 	NETBSD32TOP_UAP(arg, void *);
-	return (compat_50_sys_quotactl(l, &ua, retval));
+	return compat_50_sys_quotactl(l, &ua, retval);
 }
 
 static struct syscall_package compat_netbsd32_quota_50_syscalls[] = {

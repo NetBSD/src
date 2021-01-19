@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.49 2020/04/30 03:30:10 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.50 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.49 2020/04/30 03:30:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.50 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -252,7 +252,7 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL,
 	    NULL)) != 0)
-		return (error);
+		return error;
 
 	if (SCARG_P32(uap, olddelta)) {
 		mutex_spin_enter(&timecounter_lock);
@@ -266,13 +266,13 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 
 		error = copyout(&atv, SCARG_P32(uap, olddelta), sizeof(atv));
 		if (error)
-			return (error);
+			return error;
 	}
 	
 	if (SCARG_P32(uap, delta)) {
 		error = copyin(SCARG_P32(uap, delta), &atv, sizeof(atv));
 		if (error)
-			return (error);
+			return error;
 
 		mutex_spin_enter(&timecounter_lock);
 		time_adjtime = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
@@ -344,7 +344,7 @@ compat_50_netbsd32_clock_settime(struct lwp *l,
 	int error;
 
 	if ((error = copyin(SCARG_P32(uap, tp), &ts32, sizeof(ts32))) != 0)
-		return (error);
+		return error;
 
 	netbsd32_to_timespec50(&ts32, &ats);
 	return clock_settime1(l->l_proc, SCARG(uap, clock_id), &ats, true);
@@ -389,7 +389,7 @@ compat_50_netbsd32_timer_settime(struct lwp *l,
 	struct netbsd32_itimerspec50 its32;
 
 	if ((error = copyin(SCARG_P32(uap, value), &its32, sizeof(its32))) != 0)
-		return (error);
+		return error;
 	netbsd32_to_timespec50(&its32.it_interval, &value.it_interval);
 	netbsd32_to_timespec50(&its32.it_value, &value.it_value);
 
@@ -443,7 +443,7 @@ compat_50_netbsd32_nanosleep(struct lwp *l,
 
 	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
 	if (error)
-		return (error);
+		return error;
 	netbsd32_to_timespec50(&ts32, &rqt);
 
 	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt,
@@ -876,18 +876,18 @@ compat_50_netbsd32_setitimer(struct lwp *l,
 	int error;
 
 	if ((u_int)which > ITIMER_PROF)
-		return (EINVAL);
+		return EINVAL;
 	itv32 = SCARG_P32(uap, itv);
 	if (itv32) {
 		if ((error = copyin(itv32, &s32it, sizeof(s32it))))
-			return (error);
+			return error;
 		netbsd32_to_itimerval50(&s32it, &aitv);
 	}
 	if (SCARG_P32(uap, oitv) != 0) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = compat_50_netbsd32_getitimer(l, &getargs, retval)) != 0)
-			return (error);
+			return error;
 	}
 	if (itv32 == 0)
 		return 0;
@@ -946,7 +946,7 @@ compat_50_netbsd32_ntp_gettime(struct lwp *l,
 		*retval = (*vec_ntp_timestatus)();
 	}
 
-	return (error);
+	return error;
 }
 #endif
 
