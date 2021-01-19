@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.10 2008/04/28 20:23:54 martin Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.11 2021/01/19 14:39:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.10 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.11 2021/01/19 14:39:20 thorpej Exp $");
 
 #include "opt_atppc.h"
 
@@ -73,6 +73,12 @@ static int atppc_ofisa_dma_malloc(device_t, void **, bus_addr_t *,
 	bus_size_t);
 static void atppc_ofisa_dma_free(device_t, void **, bus_addr_t *,
 	bus_size_t);
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pnpPNP,401" },
+	{ 0 }
+};
+
 /*
  * atppc_ofisa_match: autoconf(9) match routine
  */
@@ -80,11 +86,9 @@ static int
 atppc_ofisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
-	static const char *const compatible_strings[] = { "pnpPNP,401", NULL };
-	int rv = 0;
+	int rv;
 
-	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
-		rv = 5;
+	rv = of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 5 : 0;
 #ifdef _LPT_OFISA_MD_MATCH
 	if (!rv)
 		rv = lpt_ofisa_md_match(parent, match, aux);

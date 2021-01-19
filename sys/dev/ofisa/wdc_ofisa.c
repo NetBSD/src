@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.36 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.37 2021/01/19 14:39:20 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.36 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.37 2021/01/19 14:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,15 +71,18 @@ static void wdc_ofisa_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(wdc_ofisa, sizeof(struct wdc_ofisa_softc),
     wdc_ofisa_probe, wdc_ofisa_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pnpPNP,600" },
+	{ 0 }
+};
+
 static int
 wdc_ofisa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
-	static const char *const compatible_strings[] = { "pnpPNP,600", NULL };
-	int rv = 0;
+	int rv;
 
-	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
-		rv = 5;
+	rv = of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 5 : 0;
 #ifdef _WDC_OFISA_MD_MATCH
 	if (!rv)
 		rv = wdc_ofisa_md_match(parent, cf, aux);
