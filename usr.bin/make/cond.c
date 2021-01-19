@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.242 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.243 2021/01/19 21:55:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.242 2021/01/19 20:51:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.243 2021/01/19 21:55:20 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -138,7 +138,18 @@ typedef enum CondResult {
 } CondResult;
 
 typedef struct CondParser {
-	const struct If *if_info; /* Info for current statement */
+
+	/*
+	 * The plain '.if ${VAR}' evaluates to true if the value of the
+	 * expression has length > 0.  The other '.if' variants delegate
+	 * to evalBare instead.
+	 */
+	Boolean plain;
+
+	/* The function to apply on unquoted bare words. */
+	Boolean (*evalBare)(size_t, const char *);
+	Boolean negateEvalBare;
+
 	const char *p;		/* The remaining condition to parse */
 	Token curr;		/* Single push-back token used in parsing */
 
@@ -511,32 +522,11 @@ cleanup:
 	*out_str = str;
 }
 
-struct If {
-	const char *form;	/* Form of if */
-	size_t formlen;		/* Length of form */
-	Boolean doNot;		/* TRUE if default function should be negated */
-	/* The default function to apply on unquoted bare words. */
-	Boolean (*defProc)(size_t, const char *);
-};
-
-/* The different forms of .if directives. */
-static const struct If ifs[] = {
-    { "def",   3, FALSE, FuncDefined },
-    { "ndef",  4, TRUE,  FuncDefined },
-    { "make",  4, FALSE, FuncMake },
-    { "nmake", 5, TRUE,  FuncMake },
-    { "",      0, FALSE, FuncDefined },
-    { NULL,    0, FALSE, NULL }
-};
-enum {
-	PLAIN_IF_INDEX = 4
-};
-
 static Boolean
-If_Eval(const struct If *if_info, const char *arg, size_t arglen)
+If_Eval(const CondParser *par, const char *arg, size_t arglen)
 {
-	Boolean res = if_info->defProc(arglen, arg);
-	return if_info->doNot ? !res : res;
+	Boolean res = par->evalBare(arglen, arg);
+	return par->negateEvalBare ? !res : res;
 }
 
 /*
@@ -560,11 +550,10 @@ EvalNotEmpty(CondParser *par, const char *value, Boolean quoted)
 	 * the evaluation function from that .if variant, which would test
 	 * whether a variable of the given name were defined. */
 	/* XXX: Whitespace should count as empty, just as in ParseEmptyArg. */
-	if (par->if_info->form[0] == '\0')
+	if (par->plain)
 		return value[0] != '\0';
 
-	/* For the other variants of .ifxxx ${...}, use its default function. */
-	return If_Eval(par->if_info, value, strlen(value));
+	return If_Eval(par, value, strlen(value));
 }
 
 /* Evaluate a numerical comparison, such as in ".if ${VAR} >= 9". */
@@ -835,7 +824,7 @@ CondParser_LeafToken(CondParser *par, Boolean doEval)
 	 * after .if must have been taken literally, so the argument cannot
 	 * be empty - even if it contained a variable expansion.
 	 */
-	t = ToToken(!doEval || If_Eval(par->if_info, arg, arglen));
+	t = ToToken(!doEval || If_Eval(par, arg, arglen));
 	free(arg);
 	return t;
 }
@@ -999,7 +988,7 @@ CondParser_Or(CondParser *par, Boolean doEval)
 }
 
 static CondEvalResult
-CondParser_Eval(CondParser *par, Boolean *value)
+CondParser_Eval(CondParser *par, Boolean *out_value)
 {
 	CondResult res;
 
@@ -1012,7 +1001,7 @@ CondParser_Eval(CondParser *par, Boolean *value)
 	if (CondParser_Token(par, FALSE) != TOK_EOF)
 		return COND_INVALID;
 
-	*value = res == CR_TRUE;
+	*out_value = res == CR_TRUE;
 	return COND_PARSE;
 }
 
@@ -1028,7 +1017,8 @@ CondParser_Eval(CondParser *par, Boolean *value)
  *	(*value) is set to the boolean value of the condition
  */
 static CondEvalResult
-CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
+CondEvalExpression(const char *cond, Boolean *out_value, Boolean plain,
+		   Boolean (*evalBare)(size_t, const char *), Boolean negate,
 		   Boolean eprint, Boolean strictLHS)
 {
 	CondParser par;
@@ -1038,12 +1028,14 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 
 	cpp_skip_hspace(&cond);
 
-	par.if_info = info != NULL ? info : ifs + PLAIN_IF_INDEX;
+	par.plain = plain;
+	par.evalBare = evalBare;
+	par.negateEvalBare = negate;
 	par.p = cond;
 	par.curr = TOK_NONE;
 	par.printedError = FALSE;
 
-	rval = CondParser_Eval(&par, value);
+	rval = CondParser_Eval(&par, out_value);
 
 	if (rval == COND_INVALID && eprint && !par.printedError)
 		Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", cond);
@@ -1058,7 +1050,8 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 CondEvalResult
 Cond_EvalCondition(const char *cond, Boolean *out_value)
 {
-	return CondEvalExpression(NULL, cond, out_value, FALSE, FALSE);
+	return CondEvalExpression(cond, out_value, TRUE,
+	    FuncDefined, FALSE, FALSE, FALSE);
 }
 
 static Boolean
@@ -1121,7 +1114,9 @@ Cond_EvalLine(const char *line)
 	static enum IfState *cond_states = NULL;
 	static unsigned int cond_states_cap = 128;
 
-	const struct If *ifp;
+	Boolean plain;
+	Boolean (*evalBare)(size_t, const char *);
+	Boolean negate;
 	Boolean isElif;
 	Boolean value;
 	IfState state;
@@ -1205,25 +1200,32 @@ Cond_EvalLine(const char *line)
 	}
 
 	/*
-	 * Figure out what sort of conditional it is -- what its default
-	 * function is, etc. -- by looking in the table of valid "ifs"
+	 * Figure out what sort of conditional it is.
 	 */
 	p += 2;
-	for (ifp = ifs;; ifp++) {
-		if (ifp->form == NULL) {
-			/*
-			 * TODO: Add error message about unknown directive,
-			 * since there is no other known directive that starts
-			 * with 'el' or 'if'.
-			 *
-			 * Example: .elifx 123
-			 */
-			return COND_INVALID;
-		}
-		if (is_token(p, ifp->form, ifp->formlen)) {
-			p += ifp->formlen;
-			break;
-		}
+	plain = FALSE;
+	evalBare = FuncDefined;
+	negate = FALSE;
+	if (*p == 'n') {
+		p++;
+		negate = TRUE;
+	}
+	if (is_token(p, "def", 3)) {		/* .ifdef and .ifndef */
+		p += 3;
+	} else if (is_token(p, "make", 4)) {	/* .ifmake and .ifnmake */
+		p += 4;
+		evalBare = FuncMake;
+	} else if (is_token(p, "", 0) && !negate) {	/* plain .if */
+		plain = TRUE;
+	} else {
+		/*
+		 * TODO: Add error message about unknown directive,
+		 * since there is no other known directive that starts
+		 * with 'el' or 'if'.
+		 *
+		 * Example: .elifx 123
+		 */
+		return COND_INVALID;
 	}
 
 	/* Now we know what sort of 'if' it is... */
@@ -1270,7 +1272,8 @@ Cond_EvalLine(const char *line)
 	}
 
 	/* And evaluate the conditional expression */
-	if (CondEvalExpression(ifp, p, &value, TRUE, TRUE) == COND_INVALID) {
+	if (CondEvalExpression(p, &value, plain, evalBare, negate,
+	    TRUE, TRUE) == COND_INVALID) {
 		/* Syntax error in conditional, error message already output. */
 		/* Skip everything to matching .endif */
 		/* XXX: An extra '.else' is not detected in this case. */
