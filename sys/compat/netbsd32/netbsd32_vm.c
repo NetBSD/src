@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_vm.c,v 1.2 2020/01/07 07:26:21 mrg Exp $	*/
+/*	$NetBSD: netbsd32_vm.c,v 1.3 2021/01/19 01:47:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_vm.c,v 1.2 2020/01/07 07:26:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_vm.c,v 1.3 2021/01/19 01:47:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,9 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 #endif
 
 	error = sys_mmap(l, &ua, retval);
+#ifdef DEBUG_MMAP
+	printf("mmap error = %d  *retval = %#"PRIxREGISTER"\n", error, *retval);
+#endif
 	if (error == 0 && (u_long)*retval > (u_long)UINT_MAX) {
 		const char *name = curlwp->l_name;
 
