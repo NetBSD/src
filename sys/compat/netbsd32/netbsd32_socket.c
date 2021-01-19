@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.55 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.56 2021/01/19 03:41:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.55 2021/01/19 03:20:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.56 2021/01/19 03:41:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,6 +637,9 @@ netbsd32_recvfrom(struct lwp *l, const struct netbsd32_recvfrom_args *uap,
 	int		error;
 	struct mbuf	*from;
 
+	if (SCARG(uap, len) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
+
 	msg.msg_name = NULL;
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
@@ -670,6 +673,9 @@ netbsd32_sendto(struct lwp *l, const struct netbsd32_sendto_args *uap,
 	} */
 	struct msghdr msg;
 	struct iovec aiov;
+
+	if (SCARG(uap, len) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
 
 	msg.msg_name = SCARG_P32(uap, to); /* XXX kills const */
 	msg.msg_namelen = SCARG(uap, tolen);
