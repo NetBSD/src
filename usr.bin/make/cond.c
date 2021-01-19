@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.236 2021/01/19 17:49:13 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.237 2021/01/19 17:57:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.236 2021/01/19 17:49:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.237 2021/01/19 17:57:07 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -924,14 +924,10 @@ CondParser_Term(CondParser *par, Boolean doEval)
 	Token t;
 
 	t = CondParser_Token(par, doEval);
+	if (t == TOK_TRUE || t == TOK_FALSE)
+		return t;
 
-	if (t == TOK_EOF) {
-		/*
-		 * If we reached the end of the expression, the expression
-		 * is malformed...
-		 */
-		t = TOK_ERROR;
-	} else if (t == TOK_LPAREN) {
+	if (t == TOK_LPAREN) {
 		/*
 		 * T -> ( E )
 		 */
@@ -948,13 +944,10 @@ CondParser_Term(CondParser *par, Boolean doEval)
 		} else if (t == TOK_FALSE) {
 			t = TOK_TRUE;
 		}
-	}
+	} else
+		return TOK_ERROR;
 
-	/*
-	 * FIXME: Can at least return TOK_AND, TOK_OR, TOK_RPAREN, maybe
-	 *  others as well.
-	 */
-	/* TODO: assert(t == TOK_ERROR); */
+	assert(t == TOK_TRUE || t == TOK_FALSE || t == TOK_ERROR);
 	return t;
 }
 
