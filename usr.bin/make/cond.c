@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.239 2021/01/19 18:18:43 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.240 2021/01/19 18:20:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.239 2021/01/19 18:18:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.240 2021/01/19 18:20:30 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -128,7 +128,7 @@ MAKE_RCSID("$NetBSD: cond.c,v 1.239 2021/01/19 18:18:43 rillig Exp $");
  * the function given in the terminal, they return either TOK_TRUE or
  * TOK_FALSE.
  *
- * All non-terminal functions (CondParser_Expr, CondParser_Factor and
+ * All non-terminal functions (CondParser_Or, CondParser_And and
  * CondParser_Term) return either TOK_FALSE, TOK_TRUE, or TOK_ERROR on error.
  */
 typedef enum Token {
