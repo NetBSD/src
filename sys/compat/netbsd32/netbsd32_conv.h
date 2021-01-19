@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.43 2021/01/18 23:14:22 simonb Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.44 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -255,9 +255,9 @@ netbsd32_to_iovecin(const struct netbsd32_iovec *iov32p, struct iovec *iovp,
 	 */
 	for (i = 0; i < len; i++, iovp++, iov32p++) {
 		if ((error = copyin(&iov32p->iov_base, &iov_base, sizeof(iov_base))))
-		    return (error);
+		    return error;
 		if ((error = copyin(&iov32p->iov_len, &iov_len, sizeof(iov_len))))
-		    return (error);
+		    return error;
 		iovp->iov_base = (void *)(u_long)iov_base;
 		iovp->iov_len = (size_t)iov_len;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.35 2020/01/31 09:01:23 maxv Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.36 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.35 2020/01/31 09:01:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.36 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <opt_ntp.h>
@@ -81,7 +81,7 @@ compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getde
 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
-		return (error);
+		return error;
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
 		goto out;
@@ -98,7 +98,7 @@ compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getde
 	kmem_free(buf, count);
  out:
  	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return error;
 }
 
 int
@@ -117,10 +117,10 @@ compat_30_netbsd32___stat13(struct lwp *l, const struct compat_30_netbsd32___sta
 
 	error = do_sys_stat(path, FOLLOW, &sb);
 	if (error)
-		return (error);
+		return error;
 	netbsd32_from___stat13(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
-	return (error);
+	return error;
 }
 
 int
@@ -139,7 +139,7 @@ compat_30_netbsd32___fstat13(struct lwp *l, const struct compat_30_netbsd32___fs
 		netbsd32_from___stat13(&ub, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	}
-	return (error);
+	return error;
 }
 
 int
@@ -158,10 +158,10 @@ compat_30_netbsd32___lstat13(struct lwp *l, const struct compat_30_netbsd32___ls
 
 	error = do_sys_stat(path, NOFOLLOW, &sb);
 	if (error)
-		return (error);
+		return error;
 	netbsd32_from___stat13(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
-	return (error);
+	return error;
 }
 
 int
@@ -183,24 +183,24 @@ compat_30_netbsd32_fhstat(struct lwp *l, const struct compat_30_netbsd32_fhstat_
 	 */
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)))
-		return (error);
+		return error;
 
 	if ((error = copyin(SCARG_P32(uap, fhp), &fh, sizeof(fh))) != 0)
-		return (error);
+		return error;
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
-		return (ESTALE);
+		return ESTALE;
 	if (mp->mnt_op->vfs_fhtovp == NULL)
 		return EOPNOTSUPP;
 	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, LK_EXCLUSIVE, &vp)))
-		return (error);
+		return error;
 	error = vn_stat(vp, &sb);
 	vput(vp);
 	if (error)
-		return (error);
+		return error;
 	netbsd32_from___stat13(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
-	return (error);
+	return error;
 }
 
 int
@@ -227,7 +227,7 @@ compat_30_netbsd32_fhstatvfs1(struct lwp *l, const struct compat_30_netbsd32_fhs
 	}
 	STATVFSBUF_PUT(sbuf);
 
-	return (error);
+	return error;
 }
 
 int
@@ -243,7 +243,7 @@ compat_30_netbsd32_socket(struct lwp *l, const struct compat_30_netbsd32_socket_
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	return (compat_30_sys_socket(l, &ua, retval));
+	return compat_30_sys_socket(l, &ua, retval);
 }
 
 int
@@ -258,7 +258,7 @@ compat_30_netbsd32_getfh(struct lwp *l, const struct compat_30_netbsd32_getfh_ar
 	NETBSD32TOP_UAP(fname, const char);
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
 	/* Lucky for us a fhandle_t doesn't change sizes */
-	return (compat_30_sys_getfh(l, &ua, retval));
+	return compat_30_sys_getfh(l, &ua, retval);
 }
 
 
@@ -299,7 +299,7 @@ compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_
 
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
 	NETBSD32TO64_UAP(flags);
-	return (compat_30_sys_fhopen(l, &ua, retval));
+	return compat_30_sys_fhopen(l, &ua, retval);
 }
 
 #ifdef NTP
@@ -330,7 +330,7 @@ compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_nt
 		*retval = (*vec_ntp_timestatus)();
 	}
 
-	return (error);
+	return error;
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.30 2016/08/06 15:13:13 maxv Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.31 2021/01/19 03:20:13 simonb Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.30 2016/08/06 15:13:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.31 2021/01/19 03:20:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ netbsd32_exec_aout_prep_zmagic(struct lwp *l, struct exec_package *epp)
 
 	error = vn_marktext(epp->ep_vp);
 	if (error)
-		return (error);
+		return error;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
@@ -299,7 +299,7 @@ netbsd32_exec_aout_prep_oldzmagic(struct lwp *l, struct exec_package *epp)
 
 	error = vn_marktext(epp->ep_vp);
 	if (error)
-		return (error);
+		return error;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
