@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.260 2020/12/31 03:05:12 rillig Exp $
+# $NetBSD: Makefile,v 1.261 2021/01/19 05:49:33 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -504,10 +504,9 @@ SED_CMDS.sh-flags=		${STD_SED_CMDS.hide-from-output}
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
 SED_CMDS.suff-main-several+=	${STD_SED_CMDS.dg1}
 SED_CMDS.suff-transform-debug+=	${STD_SED_CMDS.dg1}
-SED_CMDS.var-op-shell+=	\
-	-e 's,^${.SHELL:T}: [ 0-9:]*,,' \
-	-e '/command/s,No such.*,not found,'
-SED_CMDS.vardebug+=	-e 's,${.SHELL},</path/to/shell>,'
+SED_CMDS.var-op-shell+=		${STD_SED_CMDS.shell}
+SED_CMDS.var-op-shell+=		-e '/command/s,No such.*,not found,'
+SED_CMDS.vardebug+=		-e 's,${.SHELL},</path/to/shell>,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 SED_CMDS.varname-dot-parsedir=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
@@ -552,6 +551,25 @@ STD_SED_CMDS.hide-from-output= \
 	-e '/^echo hide-from-output/d' \
 	-e 's,hide-from-output ,,' \
 	-e 's,hide-from-output,,'
+
+# Normalize the output for error messages from the shell.
+#
+# $shell -c '...'
+#	NetBSD sh	...: not found
+#	NetBSD ksh	ksh: ...: not found
+#	bash 5		bash: line 1: ...: command not found
+#	dash		dash: 1: ...: not found
+#
+# $shell -c '< /nonexistent'
+#	NetBSD sh	sh: cannot open /nonexistent: no such file
+#	NetBSD ksh	ksh: cannot open /nonexistent: No such file or directory
+#	bash 5		bash: line 1: /nonexistent: No such file or directory
+#	dash		dash: 1: cannot open /nonexistent: No such file
+#
+#
+STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: line [0-9][0-9]*:,,'
+STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: [0-9][0-9]*:,,'
+STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: ,,'
 
 # End of the configuration helpers section.
 
