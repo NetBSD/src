@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_clkmgr.c,v 1.4 2019/10/18 06:50:08 skrll Exp $ */
+/* $NetBSD: cycv_clkmgr.c,v 1.5 2021/01/19 03:25:50 thorpej Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.4 2019/10/18 06:50:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.5 2021/01/19 03:25:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,6 +64,7 @@ struct cycv_clk {
 	int parent_id;
 
 	int type;
+#define	CYCV_CLK_TYPE_PERIP	0xffff	/* pseudo-type */
 #define CYCV_CLK_TYPE_PLL	0x0001
 #define CYCV_CLK_TYPE_FIXED	0x0002
 #define CYCV_CLK_TYPE_FIXED_DIV	0x0003
@@ -110,13 +111,17 @@ static void cycv_clkmgr_clock_print(struct cycv_clkmgr_softc *,
 CFATTACH_DECL_NEW(cycvclkmgr, sizeof (struct cycv_clkmgr_softc),
 	cycv_clkmgr_match, cycv_clkmgr_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "altr,clk-mgr" },
+	{ 0 }
+};
+
 static int
 cycv_clkmgr_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char *compatible[] = { "altr,clk-mgr", NULL };
 	struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -208,13 +213,12 @@ static struct cycv_clk_mux_info {
 	{ "nand_clk", { "nand_x_clk" }, 1, 0, 0 },
 };
 
-static const char * const cycv_clkmgr_compat_fixed[] = { "fixed-clock", NULL };
-static const char * const cycv_clkmgr_compat_pll[] = { "altr,socfpga-pll-clock",
-	NULL };
-static const char * const cycv_clkmgr_compat_perip[] = {
-	"altr,socfpga-perip-clk",
-	"altr,socfpga-gate-clk",
-	NULL
+static const struct device_compatible_entry clock_types[] = {
+	{ .compat = "fixed-clock",		.value = CYCV_CLK_TYPE_FIXED },
+	{ .compat = "altr,socfpga-pll-clock",	.value = CYCV_CLK_TYPE_PLL },
+	{ .compat = "altr,socfpga-perip-clk",	.value = CYCV_CLK_TYPE_PERIP },
+	{ .compat = "altr,socfpga-gate-clk",	.value = CYCV_CLK_TYPE_PERIP },
+	{ 0 }
 };
 
 static void
@@ -234,18 +238,22 @@ cycv_clkmgr_clock_parse(struct cycv_clkmgr_softc *sc, int handle, u_int clkno)
 	clk->parent_id = 0;
 	clk->refcnt = 0;
 
-	if (of_compatible(handle, cycv_clkmgr_compat_fixed) != -1) {
-		clk->type = CYCV_CLK_TYPE_FIXED;
+	const struct device_compatible_entry * const dce =
+	    of_search_compatible(handle, clock_types);
+	if (dce == NULL)
+		goto err;
+	clk->type = dce->value;
+
+	if (clk->type == CYCV_CLK_TYPE_FIXED) {
 		if (of_getprop_uint32(handle, "clock-frequency",
 				      &clk->u.fixed_freq) == 0) {
 			flags |= CYCV_CLK_FLAG_IS_AVAIL;
 		}
-	} else if (of_compatible(handle, cycv_clkmgr_compat_pll) != -1) {
+	} else if (clk->type == CYCV_CLK_TYPE_PLL) {
 		if (fdtbus_get_reg(handle, 0, &clk->u.pll_addr, NULL) != 0)
 			goto err;
-		clk->type = CYCV_CLK_TYPE_PLL;
 		flags |= CYCV_CLK_FLAG_IS_AVAIL;
-	} else if (of_compatible(handle, cycv_clkmgr_compat_perip) != -1) {
+	} else if (clk->type == CYCV_CLK_TYPE_PERIP) {
 		if (of_getprop_uint32(handle, "fixed-divider",
 				      &clk->u.fixed_div) == 0) {
 			clk->type = CYCV_CLK_TYPE_FIXED_DIV;
