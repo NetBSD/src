@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.15 2008/03/15 13:23:25 cube Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.16 2021/01/19 14:35:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.15 2008/03/15 13:23:25 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.16 2021/01/19 14:35:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,20 +64,23 @@ CFATTACH_DECL_NEW(pckbc_ofisa, sizeof(struct pckbc_ofisa_softc),
 
 static void pckbc_ofisa_intr_establish (struct pckbc_softc *, pckbc_slot_t);
 
-static const char *const kb_compatible_strings[] = { "pnpPNP,303", NULL };
-static const char *const ms_compatible_strings[] = { "pnpPNP,f03", NULL };
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "INTC,80c42" },
+	{ 0 }
+};
+
+static const struct device_compatible_entry port_compat_data[] = {
+	{ .compat = "pnpPNP,303",	.value = PCKBC_KBD_SLOT },
+	{ .compat = "pnpPNP,f03",	.value = PCKBC_AUX_SLOT },
+	{ 0 }
+};
 
 static int
 pckbc_ofisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
-	static const char *const compatible_strings[] = { "INTC,80c42", NULL };
-	int rv = 0;
 
-	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
-		rv = 5;
-
-	return (rv);
+	return of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 5 : 0;
 }
 
 static void
@@ -86,6 +89,7 @@ pckbc_ofisa_attach(device_t parent, device_t self, void *aux)
 	struct pckbc_ofisa_softc *osc = device_private(self);
 	struct pckbc_softc *sc = &osc->sc_pckbc;
 	struct ofisa_attach_args *aa = aux;
+	const struct device_compatible_entry *dce;
 	struct pckbc_internal *t;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_d, ioh_c;
@@ -99,10 +103,9 @@ pckbc_ofisa_attach(device_t parent, device_t self, void *aux)
 
 	phandle = OF_child(aa->oba.oba_phandle);
 	while (phandle != 0) {
-		if (of_compatible(phandle, kb_compatible_strings) != -1) {
-			ofisa_intr_get(phandle, &osc->sc_intr[PCKBC_KBD_SLOT], 1);
-		} else if (of_compatible(phandle, ms_compatible_strings) != -1) {
-			ofisa_intr_get(phandle, &osc->sc_intr[PCKBC_AUX_SLOT], 1);
+		dce = of_search_compatible(phandle, port_compat_data);
+		if (dce != NULL) {
+			ofisa_intr_get(phandle, &osc->sc_intr[dce->value], 1);
 		}
 		phandle = OF_peer(phandle);
 	}
