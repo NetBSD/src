@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.11 2021/01/19 18:09:12 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.12 2021/01/19 18:13:37 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -107,16 +107,16 @@
 .  error
 .endif
 
-# FIXME: Don't accept this condition as syntactically valid.
-# FIXME: CondParser_Factor, (void).
+# This obviously malformed condition was not detected as such before cond.c
+# 1.238 from 2021-01-19.
 .if 0 &&
 .  error
 .else
 .  error
 .endif
 
-# FIXME: Don't accept this condition as syntactically valid.
-# FIXME: CondParser_Expr, (void).
+# This obviously malformed condition was not detected as such before cond.c
+# 1.238 from 2021-01-19.
 .if 1 ||
 .  error
 .else
