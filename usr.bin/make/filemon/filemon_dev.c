@@ -1,6 +1,6 @@
-/*	$NetBSD: filemon_dev.c,v 1.6 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: filemon_dev.c,v 1.7 2021/01/19 20:51:46 rillig Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
