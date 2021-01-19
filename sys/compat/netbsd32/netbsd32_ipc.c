@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.19 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.20 2021/01/19 03:20:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.19 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.20 2021/01/19 03:20:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -162,7 +162,7 @@ netbsd32_____semctl50(struct lwp *l, const struct netbsd32_____semctl50_args *ua
 			error = copyin(NETBSD32PTR64(karg32.buf), &sembuf32,
 			    sizeof(sembuf32));
 			if (error)
-				return (error);
+				return error;
 			netbsd32_to_semid_ds(&sembuf32, &sembuf);
 		}
 	}
@@ -176,7 +176,7 @@ netbsd32_____semctl50(struct lwp *l, const struct netbsd32_____semctl50_args *ua
 		    sizeof(sembuf32));
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -192,7 +192,7 @@ netbsd32_semget(struct lwp *l, const struct netbsd32_semget_args *uap, register_
 	NETBSD32TOX_UAP(key, key_t);
 	NETBSD32TO64_UAP(nsems);
 	NETBSD32TO64_UAP(semflg);
-	return (sys_semget(l, &ua, retval));
+	return sys_semget(l, &ua, retval);
 }
 
 int
@@ -208,7 +208,7 @@ netbsd32_semop(struct lwp *l, const struct netbsd32_semop_args *uap, register_t 
 	NETBSD32TO64_UAP(semid);
 	NETBSD32TOP_UAP(sops, struct sembuf);
 	NETBSD32TOX_UAP(nsops, size_t);
-	return (sys_semop(l, &ua, retval));
+	return sys_semop(l, &ua, retval);
 }
 
 int
@@ -220,7 +220,7 @@ netbsd32_semconfig(struct lwp *l, const struct netbsd32_semconfig_args *uap, reg
 	struct sys_semconfig_args ua;
 
 	NETBSD32TO64_UAP(flag);
-	return (sys_semconfig(l, &ua, retval));
+	return sys_semconfig(l, &ua, retval);
 }
 #endif /* SYSVSEM */
 
@@ -392,7 +392,7 @@ netbsd32_shmdt(struct lwp *l, const struct netbsd32_shmdt_args *uap, register_t 
 	struct sys_shmdt_args ua;
 
 	NETBSD32TOP_UAP(shmaddr, const char);
-	return (sys_shmdt(l, &ua, retval));
+	return sys_shmdt(l, &ua, retval);
 }
 
 int
@@ -408,6 +408,6 @@ netbsd32_shmget(struct lwp *l, const struct netbsd32_shmget_args *uap, register_
 	NETBSD32TOX_UAP(key, key_t);
 	NETBSD32TOX_UAP(size, size_t);
 	NETBSD32TO64_UAP(shmflg);
-	return (sys_shmget(l, &ua, retval));
+	return sys_shmget(l, &ua, retval);
 }
 #endif /* SYSVSHM */
