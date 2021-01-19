@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.12 2021/01/19 18:13:37 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.13 2021/01/19 18:20:30 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -61,8 +61,8 @@
 # As soon as the parser sees the '$', it knows that the condition will
 # be malformed.  Therefore there is no point in evaluating it.
 #
-# As of 2020-09-11, that part of the condition is evaluated nevertheless,
-# since CondParser_Expr just requests the next token, without restricting
+# As of 2021-01-20, that part of the condition is evaluated nevertheless,
+# since CondParser_Or just requests the next token, without restricting
 # the token to the expected tokens.  If the parser were to restrict the
 # valid follow tokens for the token "0" to those that can actually produce
 # a correct condition (which in this case would be comparison operators,
