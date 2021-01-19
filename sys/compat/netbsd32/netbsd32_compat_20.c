@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.40 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.41 2021/01/19 08:10:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.40 2021/01/19 03:20:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.41 2021/01/19 08:10:17 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
  out:
 	STATVFSBUF_PUT(sb);
 	fd_putfile(SCARG(uap, fd));
-	return error)
+	return error;
 }
 
 int
