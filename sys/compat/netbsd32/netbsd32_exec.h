@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.35 2021/01/18 23:14:22 simonb Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.36 2021/01/19 02:40:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -70,9 +70,9 @@ int netbsd32_elf32_copyargs(struct lwp *, struct exec_package *,
 static __inline int netbsd32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
-void netbsd32_setregs (struct lwp *, struct exec_package *, vaddr_t stack);
-int netbsd32_sigreturn (struct proc *, void *, register_t *);
-void netbsd32_sendsig (const ksiginfo_t *, const sigset_t *);
+void netbsd32_setregs(struct lwp *, struct exec_package *, vaddr_t stack);
+int netbsd32_sigreturn(struct proc *, void *, register_t *);
+void netbsd32_sendsig(const ksiginfo_t *, const sigset_t *);
 
 extern char netbsd32_esigcode[], netbsd32_sigcode[];
 
