@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.19 2020/09/27 13:48:50 roy Exp $
+# $NetBSD: CUBOX,v 1.20 2021/01/20 01:20:26 nia Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -76,8 +76,6 @@ makeoptions	COPY_SYMTAB=1
 
 include 	"conf/compat_netbsd60.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
