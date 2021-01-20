@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.42 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.43 2021/01/20 01:20:26 nia Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -89,8 +89,6 @@ options 	NFS_BOOT_DHCP
 
 include 	"conf/compat_netbsd50.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Shared memory options
 

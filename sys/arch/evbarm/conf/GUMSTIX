@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.107 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: GUMSTIX,v 1.108 2021/01/20 01:20:26 nia Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -95,8 +95,6 @@ options 	NFS_BOOT_DHCP
 
 include 	"conf/compat_netbsd16.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Shared memory options
 

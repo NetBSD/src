@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.65 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: ARMADILLO9,v 1.66 2021/01/20 01:20:26 nia Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -71,8 +71,6 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 include 	"conf/compat_netbsd20.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Shared memory options
 options 	SYSVMSG		# System V-like message queues
