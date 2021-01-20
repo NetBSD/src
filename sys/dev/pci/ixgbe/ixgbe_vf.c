@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.25 2020/11/30 05:30:56 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.26 2021/01/20 06:53:17 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -121,7 +121,8 @@ static void ixgbe_virt_clr_reg(struct ixgbe_hw *hw)
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFPSRTYPE, 0);
 
-	for (i = 0; i < 7; i++) {
+	KASSERT(IXGBE_VF_MAX_TX_QUEUES == IXGBE_VF_MAX_RX_QUEUES);
+	for (i = 0; i < IXGBE_VF_MAX_TX_QUEUES; i++) {
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDH(i), 0);
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDT(i), 0);
 		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), 0);
