@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.185 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: XEN3_DOM0,v 1.186 2021/01/20 13:22:08 nia Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +12,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.185 $"
+#ident		"XEN3_DOM0-$Revision: 1.186 $"
 
 maxusers	32		# estimated number of users
 
@@ -69,7 +69,6 @@ options DDB_COMMANDONENTER="show registers"
 include 	"conf/compat_netbsd15.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
 

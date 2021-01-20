@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2020/09/27 13:48:52 roy Exp $
+# $NetBSD: GENERIC,v 1.70 2021/01/20 13:22:08 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.69 $"
+#ident          "GENERIC-$Revision: 1.70 $"
 
 maxusers	16		# estimated number of users
 
@@ -80,7 +80,6 @@ options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 
 # Compatibility options
 include 	"conf/compat_netbsd16.config"
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables
