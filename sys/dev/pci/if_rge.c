@@ -1,5 +1,5 @@
-/*	$NetBSD: if_rge.c,v 1.14 2020/05/30 22:39:40 sevan Exp $	*/
-/*	$OpenBSD: if_rge.c,v 1.3 2020/03/27 15:15:24 krw Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.15 2021/01/20 18:26:11 jakllsch Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.4 2020/07/10 13:26:38 patrick Exp $	*/
 
 /*
  * Copyright (c) 2019 Kevin Lo <kevlo@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.14 2020/05/30 22:39:40 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.15 2021/01/20 18:26:11 jakllsch Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -306,7 +306,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = rge_ioctl;
 	ifp->if_start = rge_start;
 	ifp->if_watchdog = rge_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, RGE_TX_LIST_CNT);
+	ifq_set_maxlen(&ifp->if_snd, RGE_TX_LIST_CNT);
 	ifp->if_mtu = RGE_JUMBO_MTU;
 
 	ifp->if_capabilities = ETHERCAP_VLAN_MTU | IFCAP_CSUM_IPv4_Rx |
