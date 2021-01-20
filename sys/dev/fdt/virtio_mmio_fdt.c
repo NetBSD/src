@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.5 2021/01/20 19:46:48 reinoud Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.6 2021/01/20 21:59:48 reinoud Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.5 2021/01/20 19:46:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.6 2021/01/20 21:59:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,12 +127,6 @@ virtio_mmio_fdt_rescan(device_t self, const char *attr, const int *scan_flags)
 
 	if (virtio_attach_failed(vsc))
 		return 0;
-
-	/*
-	 * Make sure child drivers initialize interrupts via call
-	 * to virtio_child_attach_finish().
-	 */
-	KASSERT(msc->sc_ih != NULL);
 
 	return 0;
 }

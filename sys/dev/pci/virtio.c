@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.43 2021/01/20 19:46:48 reinoud Exp $	*/
+/*	$NetBSD: virtio.c,v 1.44 2021/01/20 21:59:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.43 2021/01/20 19:46:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.44 2021/01/20 21:59:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1084,6 +1084,7 @@ virtio_child_attach_finish(struct virtio_softc *sc)
 {
 	int r;
 
+	sc->sc_finished_called = true;
 	r = sc->sc_ops->setup_interrupts(sc);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to setup interrupts\n");
@@ -1187,6 +1188,14 @@ virtio_attach_failed(struct virtio_softc *sc)
 		aprint_error_dev(self, "virtio configuration failed\n");
 		return 1;
 	}
+
+	/* sanity check */
+	if (!sc->sc_finished_called) {
+		aprint_error_dev(self, "virtio internal error, child driver "
+			"signaled OK but didn't initialize interrupts\n");
+		return 1;
+	}
+
 	return 0;
 }
 
