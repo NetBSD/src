@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.17 2021/01/20 19:46:48 reinoud Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.18 2021/01/20 21:59:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -171,6 +171,7 @@ struct virtio_softc {
 	uint64_t		sc_active_features;
 	bool			sc_indirect;
 	bool			sc_version_1;
+	bool			sc_finished_called;
 
 	int			sc_nvqs; /* set by child */
 	struct virtqueue	*sc_vqs; /* set by child */

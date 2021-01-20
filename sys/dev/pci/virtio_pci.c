@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.15 2021/01/20 19:46:48 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.16 2021/01/20 21:59:48 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.15 2021/01/20 19:46:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.16 2021/01/20 21:59:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,12 +350,6 @@ virtio_pci_rescan(device_t self, const char *attr, const int *scan_flags)
 
 	if (virtio_attach_failed(sc))
 		return 0;
-
-	/*
-	 * Make sure child drivers initialize interrupts via call
-	 * to virtio_child_attach_finish().
-	 */
-	KASSERT(psc->sc_ihs_num != 0);
 
 	return 0;
 }
