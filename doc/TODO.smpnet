@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.39 2020/08/01 08:20:47 maxv Exp $
+$NetBSD: TODO.smpnet,v 1.40 2021/01/20 10:26:43 nia Exp $
 
 MP-safe components
 ==================
@@ -27,6 +27,7 @@ kernel option.  Some components scale up and some don't.
    - l2tp(4)
    - pppoe(4)
      - if_spppsubr.c
+   - tap(4)
    - tun(4)
    - vlan(4)
  - Packet filters
@@ -78,7 +79,6 @@ Unprotected ones
    - sl(4)
    - stf(4)
    - if_srt
-   - tap(4)
  - Packet filters
    - ipf(4)
    - pf(4)
