@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.82 2020/01/02 08:08:30 maxv Exp $	*/
+/*	$NetBSD: umidi.c,v 1.83 2021/01/20 22:46:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.82 2020/01/02 08:08:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.83 2021/01/20 22:46:33 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -756,10 +756,14 @@ free_all_endpoints(struct umidi_softc *sc)
 {
 	int i;
 
+	if (sc->sc_endpoints == NULL) {
+		/* nothing to free */
+		return;
+	}
+
 	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
 		free_pipe(&sc->sc_endpoints[i]);
-	if (sc->sc_endpoints != NULL)
-		kmem_free(sc->sc_endpoints, sc->sc_endpoints_len);
+	kmem_free(sc->sc_endpoints, sc->sc_endpoints_len);
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 }
 
