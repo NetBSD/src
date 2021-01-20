@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.6 2015/10/29 01:56:12 christos Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.7 2021/01/20 19:46:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -67,43 +67,38 @@
 
 #include <sys/types.h>
 
-/* Virtio product id (subsystem) */
-#define PCI_PRODUCT_VIRTIO_NETWORK	1
-#define PCI_PRODUCT_VIRTIO_BLOCK	2
-#define PCI_PRODUCT_VIRTIO_CONSOLE	3
-#define PCI_PRODUCT_VIRTIO_ENTROPY	4
-#define PCI_PRODUCT_VIRTIO_BALLOON	5
-#define	PCI_PRODUCT_VIRTIO_IOMEM	6
-#define PCI_PRODUCT_VIRTIO_RPMSG	7
-#define PCI_PRODUCT_VIRTIO_SCSI		8
-#define PCI_PRODUCT_VIRTIO_9P		9
-#define PCI_PRODUCT_VIRTIO_MAC80211	10
+/* Virtio product id (all subsystems) */
+#define VIRTIO_DEVICE_ID_NETWORK	 1
+#define VIRTIO_DEVICE_ID_BLOCK		 2
+#define VIRTIO_DEVICE_ID_CONSOLE	 3
+#define VIRTIO_DEVICE_ID_ENTROPY	 4
+#define VIRTIO_DEVICE_ID_BALLOON	 5
+#define VIRTIO_DEVICE_ID_IOMEM		 6
+#define VIRTIO_DEVICE_ID_RPMSG		 7
+#define VIRTIO_DEVICE_ID_SCSI		 8
+#define VIRTIO_DEVICE_ID_9P		 9
 
-/* Virtio header */
-#define VIRTIO_CONFIG_DEVICE_FEATURES	0 /* 32bit */
-#define VIRTIO_CONFIG_GUEST_FEATURES	4 /* 32bit */
+/* common device/guest features */
 #define  VIRTIO_F_NOTIFY_ON_EMPTY		(1<<24)
 #define  VIRTIO_F_RING_INDIRECT_DESC		(1<<28)
+#define  VIRTIO_F_RING_EVENT_IDX		(1<<29)
 #define  VIRTIO_F_BAD_FEATURE			(1<<30)
-#define VIRTIO_CONFIG_QUEUE_ADDRESS	8 /* 32bit */
-#define VIRTIO_CONFIG_QUEUE_SIZE	12 /* 16bit */
-#define VIRTIO_CONFIG_QUEUE_SELECT	14 /* 16bit */
-#define VIRTIO_CONFIG_QUEUE_NOTIFY	16 /* 16bit */
-#define VIRTIO_CONFIG_DEVICE_STATUS	18 /* 8bit */
-#define  VIRTIO_CONFIG_DEVICE_STATUS_RESET	0
-#define  VIRTIO_CONFIG_DEVICE_STATUS_ACK	1
-#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER	2
-#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK	4
-#define  VIRTIO_CONFIG_DEVICE_STATUS_FAILED	128
-#define VIRTIO_CONFIG_ISR_STATUS	19 /* 8bit */
-#define  VIRTIO_CONFIG_ISR_CONFIG_CHANGE	2
-#define VIRTIO_CONFIG_CONFIG_VECTOR	20 /* 16bit, optional */
-#define VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI	20
-#define VIRTIO_CONFIG_DEVICE_CONFIG_MSI		24
-/* MSI/MSI-X */
-#define VIRTIO_CONFIG_MSI_CONFIG_VECTOR		20
-#define VIRTIO_CONFIG_MSI_QUEUE_VECTOR		22
+#define  VIRTIO_F_VERSION_1			(1ULL<<32)
 
+/* common device status flags */
+#define  VIRTIO_CONFIG_DEVICE_STATUS_RESET		  0
+#define  VIRTIO_CONFIG_DEVICE_STATUS_ACK		  1
+#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER		  2
+#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK		  4
+#define  VIRTIO_CONFIG_DEVICE_STATUS_FEATURES_OK	  8
+#define  VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET	 64
+#define  VIRTIO_CONFIG_DEVICE_STATUS_FAILED		128
+
+/* common ISR status flags */
+#define  VIRTIO_CONFIG_ISR_QUEUE_INTERRUPT	1
+#define  VIRTIO_CONFIG_ISR_CONFIG_CHANGE	2
+
+/* common device/guest features */
 #define VIRTIO_COMMON_FLAG_BITS \
         "\20" \
 	"\x1f""BAD_FEATURE" \
@@ -111,22 +106,35 @@
 	"\x1d""INDIRECT_DESC" \
 	"\x19""NOTIFY_ON_EMPTY"
 
-/* Virtqueue */
-/* This marks a buffer as continuing via the next field. */
+
+/*
+ * Virtqueue
+ */
+
+/* marks a buffer as continuing via the next field. */
 #define VRING_DESC_F_NEXT       1
-/* This marks a buffer as write-only (otherwise read-only). */
+
+/* marks a buffer as write-only (otherwise read-only). */
 #define VRING_DESC_F_WRITE      2
-/* This means the buffer contains a list of buffer descriptors. */
+
+/* the buffer contains a list of buffer descriptors. */
 #define VRING_DESC_F_INDIRECT	4
 
-/* The Host uses this in used->flags to advise the Guest: don't kick me
- * when you add a buffer.  It's unreliable, so it's simply an
- * optimization.  Guest will still kick if it's out of buffers. */
+
+/*
+ * The Host uses this in used->flags to advise the Guest: don't kick me when
+ * you add a buffer.  It's unreliable, so it's simply an optimization.  Guest
+ * will still kick if it's out of buffers.
+ */
 #define VRING_USED_F_NO_NOTIFY  1
-/* The Guest uses this in avail->flags to advise the Host: don't
- * interrupt me when you consume a buffer.  It's unreliable, so it's
- * simply an optimization.  */
+
+/*
+ * The Guest uses this in avail->flags to advise the Host: don't interrupt me
+ * when you consume a buffer.  It's unreliable, so it's simply an
+ * optimization.
+ */
 #define VRING_AVAIL_F_NO_INTERRUPT      1
+
 
 /* Virtio ring descriptors: 16 bytes.
  * These can chain together via "next". */
@@ -145,6 +153,7 @@ struct vring_avail {
         uint16_t flags;
         uint16_t idx;
         uint16_t ring[0];
+	/* trailed by uint16_t used_event when VIRTIO_F_RING_EVENT_IDX */
 } __packed;
 
 /* u32 is used here for ids for padding reasons. */
@@ -159,6 +168,7 @@ struct vring_used {
         uint16_t flags;
         uint16_t idx;
         struct vring_used_elem ring[0];
+	/* trailed by uint16_t avail_event when VIRTIO_F_RING_EVENT_IDX */
 } __packed;
 
 /* The standard layout for the ring is a continuous chunk of memory which

@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.4 2021/01/15 22:35:39 jmcneill Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.5 2021/01/20 19:46:48 reinoud Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.4 2021/01/15 22:35:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.5 2021/01/20 19:46:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,19 +119,14 @@ virtio_mmio_fdt_rescan(device_t self, const char *attr, const int *scan_flags)
 
 	if (vsc->sc_child)	/* Child already attached? */
 		return 0;
+
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found_ia(self, attr, &va, virtiobusprint);
+	config_found_ia(self, attr, &va, NULL);
 
-	if (vsc->sc_child == NULL) {
+	if (virtio_attach_failed(vsc))
 		return 0;
-	}
-
-	if (vsc->sc_child == VIRTIO_CHILD_FAILED) {
-		aprint_error_dev(self, "virtio configuration failed\n");
-		return 0;
-	}
 
 	/*
 	 * Make sure child drivers initialize interrupts via call
@@ -164,7 +159,7 @@ virtio_mmio_fdt_setup_interrupts(struct virtio_mmio_softc *msc)
 		return -1;
 	}
 
-	if (vsc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
+	if (vsc->sc_flags & VIRTIO_F_INTR_MPSAFE)
 		flags |= FDT_INTR_MPSAFE;
 
 	msc->sc_ih = fdtbus_intr_establish_xname(fsc->sc_phandle, 0,

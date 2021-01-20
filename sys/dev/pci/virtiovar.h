@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.16 2020/05/25 07:52:16 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.17 2021/01/20 19:46:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -70,6 +70,7 @@
 #include <sys/bus.h>
 #include <dev/pci/virtioreg.h>
 
+
 struct vq_entry {
 	SIMPLEQ_ENTRY(vq_entry)	qe_list; /* free list */
 	uint16_t		qe_index; /* index in vq_desc array */
@@ -89,6 +90,8 @@ struct virtqueue {
         struct vring_avail	*vq_avail;
         struct vring_used	*vq_used;
 	void			*vq_indirect;
+	uint16_t		*vq_used_event;		/* trails avail */
+	uint16_t		*vq_avail_event;	/* trails used  */
 
 	/* virtqueue allocation info */
 	void			*vq_vaddr;
@@ -118,6 +121,9 @@ struct virtqueue {
 	int			(*vq_done)(struct virtqueue*);
 	int			(*vq_intrhand)(void *);
 	void			*vq_intrhand_arg;
+
+	/* for 1.0 */
+	uint32_t		vq_notify_off;
 };
 
 struct virtio_attach_args {
@@ -129,6 +135,7 @@ typedef int (*virtio_callback)(struct virtio_softc*);
 #ifdef VIRTIO_PRIVATE
 struct virtio_ops {
 	void		(*kick)(struct virtio_softc *, uint16_t);
+
 	uint8_t		(*read_dev_cfg_1)(struct virtio_softc *, int);
 	uint16_t	(*read_dev_cfg_2)(struct virtio_softc *, int);
 	uint32_t	(*read_dev_cfg_4)(struct virtio_softc *, int);
@@ -137,10 +144,11 @@ struct virtio_ops {
 	void		(*write_dev_cfg_2)(struct virtio_softc *, int, uint16_t);
 	void		(*write_dev_cfg_4)(struct virtio_softc *, int, uint32_t);
 	void		(*write_dev_cfg_8)(struct virtio_softc *, int, uint64_t);
+
 	uint16_t	(*read_queue_size)(struct virtio_softc *, uint16_t);
-	void		(*setup_queue)(struct virtio_softc *, uint16_t, uint32_t);
+	void		(*setup_queue)(struct virtio_softc *, uint16_t, uint64_t);
 	void		(*set_status)(struct virtio_softc *, int);
-	uint32_t	(*neg_features)(struct virtio_softc *, uint32_t);
+	void		(*neg_features)(struct virtio_softc *, uint64_t);
 	int		(*setup_interrupts)(struct virtio_softc *);
 	void		(*free_interrupts)(struct virtio_softc *);
 };
@@ -150,13 +158,19 @@ struct virtio_softc {
 	const struct virtio_ops *sc_ops;
 	bus_dma_tag_t		sc_dmat;
 
+	bool			sc_devcfg_swap;
+	bus_space_tag_t		sc_devcfg_iot;
+	bus_space_handle_t	sc_devcfg_ioh;
+	bus_size_t		sc_devcfg_iosize;
+
 	int			sc_ipl; /* set by child */
 	void			*sc_soft_ih;
 
 	int			sc_flags; /* set by child */
 
-	uint32_t		sc_features;
+	uint64_t		sc_active_features;
 	bool			sc_indirect;
+	bool			sc_version_1;
 
 	int			sc_nvqs; /* set by child */
 	struct virtqueue	*sc_vqs; /* set by child */
@@ -171,23 +185,30 @@ struct virtio_softc {
 struct virtio_softc;
 #endif
 
-#define VIRTIO_F_PCI_INTR_MPSAFE	(1 << 0)
-#define VIRTIO_F_PCI_INTR_SOFTINT	(1 << 1)
-#define VIRTIO_F_PCI_INTR_MSIX		(1 << 2)
+
+/* interupt types, stored in virtio_softc->sc_flags */
+#define VIRTIO_F_INTR_MPSAFE	(1 << 0)
+#define VIRTIO_F_INTR_SOFTINT	(1 << 1)
+#define VIRTIO_F_INTR_MSIX	(1 << 2)
+
 
 #define	VIRTIO_CHILD_FAILED		((void *)1)
 
 /* public interface */
-uint32_t virtio_negotiate_features(struct virtio_softc*, uint32_t);
+void virtio_negotiate_features(struct virtio_softc*, uint64_t);
 
 uint8_t virtio_read_device_config_1(struct virtio_softc *, int);
 uint16_t virtio_read_device_config_2(struct virtio_softc *, int);
 uint32_t virtio_read_device_config_4(struct virtio_softc *, int);
 uint64_t virtio_read_device_config_8(struct virtio_softc *, int);
+uint16_t virtio_read_device_config_le_2(struct virtio_softc *, int);
+uint32_t virtio_read_device_config_le_4(struct virtio_softc *, int);
 void virtio_write_device_config_1(struct virtio_softc *, int, uint8_t);
 void virtio_write_device_config_2(struct virtio_softc *, int, uint16_t);
 void virtio_write_device_config_4(struct virtio_softc *, int, uint32_t);
 void virtio_write_device_config_8(struct virtio_softc *, int, uint64_t);
+void virtio_write_device_config_le_2(struct virtio_softc *, int, uint16_t);
+void virtio_write_device_config_le_4(struct virtio_softc *, int, uint32_t);
 
 int virtio_alloc_vq(struct virtio_softc*, struct virtqueue*, int, int, int,
 		    const char*);
@@ -220,19 +241,34 @@ int virtio_dequeue_commit(struct virtio_softc*, struct virtqueue*, int);
 bool virtio_vq_is_enqueued(struct virtio_softc *, struct virtqueue *);
 int virtio_vq_intr(struct virtio_softc *);
 int virtio_vq_intrhand(struct virtio_softc *);
+int virtio_postpone_intr(struct virtio_softc *sc, struct virtqueue *vq,
+		uint16_t nslots);
+int virtio_postpone_intr_smart(struct virtio_softc *sc, struct virtqueue *vq);
+int virtio_postpone_intr_far(struct virtio_softc *sc, struct virtqueue *vq);
 void virtio_stop_vq_intr(struct virtio_softc *, struct virtqueue *);
-void virtio_start_vq_intr(struct virtio_softc *, struct virtqueue *);
+int virtio_start_vq_intr(struct virtio_softc *, struct virtqueue *);
 
 /* encapsulation */
 bus_dma_tag_t	virtio_dmat(struct virtio_softc *);
 device_t	virtio_child(struct virtio_softc *);
 int		virtio_intrhand(struct virtio_softc *);
-uint32_t	virtio_features(struct virtio_softc *);
+uint64_t	virtio_features(struct virtio_softc *);
 
 /* autoconf(9) common */
 void virtio_set_status(struct virtio_softc *, int);
-int virtiobusprint(void *aux, const char *);
+void virtio_print_device_type(device_t, int, int);
+int virtio_attach_failed(struct virtio_softc *);
 
 #define virtio_device_reset(sc)	virtio_set_status((sc), 0)
+
+/* endian conversion */
+
+/*
+ * Virtio structures are read/written in host endian for 0.9 but little endian
+ * for 1.0. One notable exception is AArch BE that always uses little endian.
+ */
+uint16_t virtio_rw16(struct virtio_softc *sc, uint16_t val);
+uint32_t virtio_rw32(struct virtio_softc *sc, uint32_t val);
+uint64_t virtio_rw64(struct virtio_softc *sc, uint64_t val);
 
 #endif /* _DEV_PCI_VIRTIOVAR_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.5 2021/01/20 19:46:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.5 2021/01/20 19:46:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,7 +163,16 @@ virtio_acpi_rescan(device_t self, const char *ifattr, const int *locs)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found_ia(self, ifattr, &va, virtiobusprint);
+	config_found_ia(self, ifattr, &va, NULL);
+
+	if (virtio_attach_failed(vsc))
+		return 0;
+
+	/*
+	 * Make sure child drivers initialize interrupts via call
+	 * to virtio_child_attach_finish().
+	 */
+	KASSERT(msc->sc_ih != NULL);
 
 	return 0;
 }

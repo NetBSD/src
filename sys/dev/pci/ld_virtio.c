@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.28 2020/10/24 09:00:35 skrll Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.29 2021/01/20 19:46:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.28 2020/10/24 09:00:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.29 2021/01/20 19:46:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ld_virtio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct virtio_attach_args *va = aux;
 
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BLOCK)
+	if (va->sc_childdevid == VIRTIO_DEVICE_ID_BLOCK)
 		return 1;
 
 	return 0;
@@ -263,7 +263,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	struct ld_virtio_softc *sc = device_private(self);
 	struct ld_softc *ld = &sc->sc_ld;
 	struct virtio_softc *vsc = device_private(parent);
-	uint32_t features;
+	uint64_t features;
 	int qsize, maxxfersize, maxnsegs;
 
 	if (virtio_child(vsc) != NULL) {
@@ -276,13 +276,15 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_virtio = vsc;
 
 	virtio_child_attach_start(vsc, self, IPL_BIO, &sc->sc_vq,
-	    NULL, virtio_vq_intr, VIRTIO_F_PCI_INTR_MSIX,
+	    NULL, virtio_vq_intr, VIRTIO_F_INTR_MSIX,
 	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
 	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE |
 	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE),
 	    VIRTIO_BLK_FLAG_BITS);
 
 	features = virtio_features(vsc);
+	if (features == 0)
+		goto err;
 
 	if (features & VIRTIO_BLK_F_RO)
 		sc->sc_readonly = 1;
@@ -417,10 +419,12 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	}
 
 	vr->vr_bp = bp;
-	vr->vr_hdr.type = isread?VIRTIO_BLK_T_IN:VIRTIO_BLK_T_OUT;
-	vr->vr_hdr.ioprio = 0;
-	vr->vr_hdr.sector = bp->b_rawblkno * sc->sc_ld.sc_secsize /
-	    VIRTIO_BLK_BSIZE;
+	vr->vr_hdr.type   = virtio_rw32(vsc, 
+			isread ? VIRTIO_BLK_T_IN : VIRTIO_BLK_T_OUT);
+	vr->vr_hdr.ioprio = virtio_rw32(vsc, 0);
+	vr->vr_hdr.sector = virtio_rw64(vsc,
+			bp->b_rawblkno * sc->sc_ld.sc_secsize /
+			VIRTIO_BLK_BSIZE);
 
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
@@ -544,10 +548,11 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	}
 
 	vr->vr_bp = (void*)0xdeadbeef;
-	vr->vr_hdr.type = VIRTIO_BLK_T_OUT;
-	vr->vr_hdr.ioprio = 0;
-	vr->vr_hdr.sector = (daddr_t) blkno * ld->sc_secsize /
-	    VIRTIO_BLK_BSIZE;
+	vr->vr_hdr.type   = virtio_rw32(vsc, VIRTIO_BLK_T_OUT);
+	vr->vr_hdr.ioprio = virtio_rw32(vsc, 0);
+	vr->vr_hdr.sector = virtio_rw64(vsc,
+			(daddr_t) blkno * ld->sc_secsize /
+			VIRTIO_BLK_BSIZE);
 
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
@@ -642,7 +647,7 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 {
 	struct ld_virtio_softc * const sc = device_private(ld->sc_dv);
 	struct virtio_softc * const vsc = sc->sc_virtio;
-	const uint32_t features = virtio_features(vsc);
+	const uint64_t features = virtio_features(vsc);
 	struct virtqueue *vq = &sc->sc_vq;
 	struct virtio_blk_req *vr;
 	int slot;
@@ -678,9 +683,9 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	}
 
 	vr->vr_bp = DUMMY_VR_BP;
-	vr->vr_hdr.type = VIRTIO_BLK_T_FLUSH;
-	vr->vr_hdr.ioprio = 0;
-	vr->vr_hdr.sector = 0;
+	vr->vr_hdr.type   = virtio_rw32(vsc, VIRTIO_BLK_T_FLUSH);
+	vr->vr_hdr.ioprio = virtio_rw32(vsc, 0);
+	vr->vr_hdr.sector = virtio_rw64(vsc, 0);
 
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
@@ -727,7 +732,7 @@ ld_virtio_getcache(struct ld_softc *ld, int *bitsp)
 {
 	struct ld_virtio_softc * const sc = device_private(ld->sc_dv);
 	struct virtio_softc * const vsc = sc->sc_virtio;
-	const uint32_t features = virtio_features(vsc);
+	const uint64_t features = virtio_features(vsc);
 
 	*bitsp = DKCACHE_READ;
 	if ((features & VIRTIO_BLK_F_CONFIG_WCE) != 0)

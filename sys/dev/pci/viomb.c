@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.11 2021/01/13 19:46:49 reinoud Exp $	*/
+/*	$NetBSD: viomb.c,v 1.12 2021/01/20 19:46:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.11 2021/01/13 19:46:49 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.12 2021/01/20 19:46:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.11 2021/01/13 19:46:49 reinoud Exp $");
 	"\x01""MUST_TELL_HOST"
 
 #define PGS_PER_REQ		(256) /* 1MB, 4KB/page */
+#define VQ_INFLATE	0
+#define VQ_DEFLATE	1
+
 
 CTASSERT((PAGE_SIZE) == (VIRTIO_PAGE_SIZE)); /* XXX */
 
@@ -110,7 +113,7 @@ viomb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct virtio_attach_args *va = aux;
 
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BALLOON)
+	if (va->sc_childdevid == VIRTIO_DEVICE_ID_BALLOON)
 		return 1;
 
 	return 0;
@@ -122,6 +125,7 @@ viomb_attach(device_t parent, device_t self, void *aux)
 	struct viomb_softc *sc = device_private(self);
 	struct virtio_softc *vsc = device_private(parent);
 	const struct sysctlnode *node;
+	uint64_t features;
 
 	if (virtio_child(vsc) != NULL) {
 		aprint_normal(": child already attached for %s; "
@@ -131,26 +135,46 @@ viomb_attach(device_t parent, device_t self, void *aux)
 
 	if (balloon_initialized++) {
 		aprint_normal(": balloon already exists; something wrong...\n");
-		goto err_none;
+		return;
+	}
+
+	/* fail on non-4K page size archs */
+	if (VIRTIO_PAGE_SIZE != PAGE_SIZE){
+		aprint_normal("non-4K page size arch found, needs %d, got %d\n",
+		    VIRTIO_PAGE_SIZE, PAGE_SIZE);
+		return;
 	}
 
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
 
-	if ((virtio_alloc_vq(vsc, &sc->sc_vq[0], 0,
-			     sizeof(uint32_t)*PGS_PER_REQ, 1,
-			     "inflate") != 0) ||
-	    (virtio_alloc_vq(vsc, &sc->sc_vq[1], 1,
-			     sizeof(uint32_t)*PGS_PER_REQ, 1,
-			     "deflate") != 0)) {
+	virtio_child_attach_start(vsc, self, IPL_VM, sc->sc_vq,
+	    viomb_config_change, virtio_vq_intr, 0,
+	    VIRTIO_BALLOON_F_MUST_TELL_HOST, VIRTIO_BALLOON_FLAG_BITS);
+
+	features = virtio_features(vsc);
+	if (features == 0)
 		goto err_none;
-	}
-	sc->sc_vq[0].vq_done = inflateq_done;
-	sc->sc_vq[1].vq_done = deflateq_done;
 
 	viomb_read_config(sc);
 	sc->sc_inflight = 0;
 	TAILQ_INIT(&sc->sc_balloon_pages);
+
+	sc->sc_inflate_done = sc->sc_deflate_done = 0;
+	mutex_init(&sc->sc_waitlock, MUTEX_DEFAULT, IPL_VM); /* spin */
+	cv_init(&sc->sc_wait, "balloon");
+
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE], 0,
+			     sizeof(uint32_t)*PGS_PER_REQ, 1,
+			     "inflate") != 0)
+		goto err_mutex;
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQ_DEFLATE], 1,
+			     sizeof(uint32_t)*PGS_PER_REQ, 1,
+			     "deflate") != 0)
+		goto err_vq0;
+
+	sc->sc_vq[VQ_INFLATE].vq_done = inflateq_done;
+	sc->sc_vq[VQ_DEFLATE].vq_done = deflateq_done;
 
 	if (bus_dmamap_create(virtio_dmat(vsc), sizeof(uint32_t)*PGS_PER_REQ,
 			      1, sizeof(uint32_t)*PGS_PER_REQ, 0,
@@ -166,21 +190,13 @@ viomb_attach(device_t parent, device_t self, void *aux)
 		goto err_dmamap;
 	}
 
-	sc->sc_inflate_done = sc->sc_deflate_done = 0;
-	mutex_init(&sc->sc_waitlock, MUTEX_DEFAULT, IPL_VM); /* spin */
-	cv_init(&sc->sc_wait, "balloon");
-
-	virtio_child_attach_start(vsc, self, IPL_VM, sc->sc_vq,
-	    viomb_config_change, virtio_vq_intr, 0,
-	    0, VIRTIO_BALLOON_FLAG_BITS);
-
 	if (virtio_child_attach_finish(vsc) != 0)
-		goto err_mutex;
+		goto err_out;
 
 	if (kthread_create(PRI_IDLE, KTHREAD_MPSAFE, NULL,
 			   viomb_thread, sc, NULL, "viomb")) {
 		aprint_error_dev(sc->sc_dev, "cannot create kthread.\n");
-		goto err_mutex;
+		goto err_out;
 	}
 
 	sysctl_createv(NULL, 0, NULL, &node, 0, CTLTYPE_NODE,
@@ -197,14 +213,16 @@ viomb_attach(device_t parent, device_t self, void *aux)
 		       CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
 	return;
 
-err_mutex:
-	cv_destroy(&sc->sc_wait);
-	mutex_destroy(&sc->sc_waitlock);
+err_out:
 err_dmamap:
 	bus_dmamap_destroy(virtio_dmat(vsc), sc->sc_req.bl_dmamap);
 err_vq:
-	virtio_free_vq(vsc, &sc->sc_vq[1]);
-	virtio_free_vq(vsc, &sc->sc_vq[0]);
+	virtio_free_vq(vsc, &sc->sc_vq[VQ_DEFLATE]);
+err_vq0:
+	virtio_free_vq(vsc, &sc->sc_vq[VQ_INFLATE]);
+err_mutex:
+	cv_destroy(&sc->sc_wait);
+	mutex_destroy(&sc->sc_waitlock);
 err_none:
 	virtio_child_attach_failed(vsc);
 	return;
@@ -213,16 +231,12 @@ err_none:
 static void
 viomb_read_config(struct viomb_softc *sc)
 {
-	unsigned int reg;
-
 	/* these values are explicitly specified as little-endian */
-	reg = virtio_read_device_config_4(sc->sc_virtio,
-					  VIRTIO_BALLOON_CONFIG_NUM_PAGES);
-	sc->sc_npages = le32toh(reg);
-	
-	reg = virtio_read_device_config_4(sc->sc_virtio,
-					  VIRTIO_BALLOON_CONFIG_ACTUAL);
-	sc->sc_actual = le32toh(reg);
+	sc->sc_npages = virtio_read_device_config_le_4(sc->sc_virtio,
+		  VIRTIO_BALLOON_CONFIG_NUM_PAGES);
+
+	sc->sc_actual = virtio_read_device_config_le_4(sc->sc_virtio,
+		  VIRTIO_BALLOON_CONFIG_ACTUAL);
 }
 
 /*
@@ -260,7 +274,7 @@ inflate(struct viomb_softc *sc)
 	uint64_t nvpages, nhpages;
 	struct balloon_req *b;
 	struct vm_page *p;
-	struct virtqueue *vq = &sc->sc_vq[0];
+	struct virtqueue *vq = &sc->sc_vq[VQ_INFLATE];
 
 	if (sc->sc_inflight)
 		return 0;
@@ -281,7 +295,8 @@ inflate(struct viomb_softc *sc)
 	b->bl_nentries = nvpages;
 	i = 0;
 	TAILQ_FOREACH(p, &b->bl_pglist, pageq.queue) {
-		b->bl_pages[i++] = VM_PAGE_TO_PHYS(p) / VIRTIO_PAGE_SIZE;
+		b->bl_pages[i++] =
+			htole32(VM_PAGE_TO_PHYS(p) / VIRTIO_PAGE_SIZE);
 	}
 	KASSERT(i == nvpages);
 
@@ -324,7 +339,7 @@ static int
 inflate_done(struct viomb_softc *sc)
 {
 	struct virtio_softc *vsc = sc->sc_virtio;
-	struct virtqueue *vq = &sc->sc_vq[0];
+	struct virtqueue *vq = &sc->sc_vq[VQ_INFLATE];
 	struct balloon_req *b;
 	int r, slot;
 	uint64_t nvpages;
@@ -351,9 +366,9 @@ inflate_done(struct viomb_softc *sc)
 	}
 
 	sc->sc_inflight -= nvpages;
-	virtio_write_device_config_4(vsc,
-				     VIRTIO_BALLOON_CONFIG_ACTUAL,
-				     sc->sc_actual + nvpages);
+	virtio_write_device_config_le_4(vsc,
+		     VIRTIO_BALLOON_CONFIG_ACTUAL,
+		     sc->sc_actual + nvpages);
 	viomb_read_config(sc);
 
 	return 1;
@@ -370,7 +385,7 @@ deflate(struct viomb_softc *sc)
 	uint64_t nvpages, nhpages;
 	struct balloon_req *b;
 	struct vm_page *p;
-	struct virtqueue *vq = &sc->sc_vq[1];
+	struct virtqueue *vq = &sc->sc_vq[VQ_DEFLATE];
 
 	nvpages = (sc->sc_actual + sc->sc_inflight) - sc->sc_npages;
 	if (nvpages > PGS_PER_REQ)
@@ -387,7 +402,8 @@ deflate(struct viomb_softc *sc)
 			break;
 		TAILQ_REMOVE(&sc->sc_balloon_pages, p, pageq.queue);
 		TAILQ_INSERT_TAIL(&b->bl_pglist, p, pageq.queue);
-		b->bl_pages[i] = VM_PAGE_TO_PHYS(p) / VIRTIO_PAGE_SIZE;
+		b->bl_pages[i] =
+			htole32(VM_PAGE_TO_PHYS(p) / VIRTIO_PAGE_SIZE);
 	}
 
 	if (virtio_enqueue_prep(vsc, vq, &slot) != 0) {
@@ -440,7 +456,7 @@ static int
 deflate_done(struct viomb_softc *sc)
 {
 	struct virtio_softc *vsc = sc->sc_virtio;
-	struct virtqueue *vq = &sc->sc_vq[1];
+	struct virtqueue *vq = &sc->sc_vq[VQ_DEFLATE];
 	struct balloon_req *b;
 	int r, slot;
 	uint64_t nvpages;
@@ -464,9 +480,9 @@ deflate_done(struct viomb_softc *sc)
 		uvm_pglistfree(&b->bl_pglist);
 
 	sc->sc_inflight += nvpages;
-	virtio_write_device_config_4(vsc,
-				     VIRTIO_BALLOON_CONFIG_ACTUAL,
-				     sc->sc_actual - nvpages);
+	virtio_write_device_config_le_4(vsc,
+		     VIRTIO_BALLOON_CONFIG_ACTUAL,
+		     sc->sc_actual - nvpages);
 	viomb_read_config(sc);
 
 	return 1;

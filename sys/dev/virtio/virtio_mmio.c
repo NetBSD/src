@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.3 2020/10/03 13:51:34 jmcneill Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.4 2021/01/20 19:46:48 reinoud Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.3 2020/10/03 13:51:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.4 2021/01/20 19:46:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,16 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.3 2020/10/03 13:51:34 jmcneill Exp
 #define VIRTIO_MMIO_INT_CONFIG		(1 << 1)
 
 /*
- * MMIO configuration space is in guest byte order. AArch64 BE is special,
- * as the guest starts in LE and we switch to BE after the kernel starts.
- * For this case, we need to byte swap all config space accesses.
+ * MMIO configuration space for virtio-mmio v1 is in guest byte order.
+ *
+ * AArch64 BE is special in that its bus space functions always read little
+ * endian like on the PCI bus and thus need swapping to read host endian
+ * registers.
+ *
+ * XXX this might also be true for other big endian machines.
+ * XXX: TODO test virtio MMIO on non AArch64 big endian machines.
  */
+
 #if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
 #define	VIO16TOH(x)	le16toh(x)
 #define	VIO32TOH(x)	le32toh(x)
@@ -77,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.3 2020/10/03 13:51:34 jmcneill Exp
 #define	HTOVIO16(x)	htole16(x)
 #define	HTOVIO32(x)	htole32(x)
 #define	HTOVIO64(x)	htole64(x)
+#define VIODEVRW_SWAP false	/* can only be native endian now */
 #else
 #define	VIO16TOH(x)	(x)
 #define	VIO32TOH(x)	(x)
@@ -84,13 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.3 2020/10/03 13:51:34 jmcneill Exp
 #define	HTOVIO16(x)	(x)
 #define	HTOVIO32(x)	(x)
 #define	HTOVIO64(x)	(x)
+#define VIODEVRW_SWAP false	/* will only be native endian now */
 #endif
 
-/*
- * XXX: Before being used on big endian arches, the access to config registers
- * XXX: needs to be reviewed/fixed. The non-device specific registers are
- * XXX: PCI-endian while the device specific registers are native endian.
- */
 
 static void	virtio_mmio_kick(struct virtio_softc *, uint16_t);
 static uint8_t	virtio_mmio_read_device_config_1(struct virtio_softc *, int);
@@ -101,15 +104,17 @@ static void	virtio_mmio_write_device_config_1(struct virtio_softc *, int, uint8_
 static void	virtio_mmio_write_device_config_2(struct virtio_softc *, int, uint16_t);
 static void	virtio_mmio_write_device_config_4(struct virtio_softc *, int, uint32_t);
 static void	virtio_mmio_write_device_config_8(struct virtio_softc *, int, uint64_t);
+
 static uint16_t	virtio_mmio_read_queue_size(struct virtio_softc *, uint16_t);
-static void	virtio_mmio_setup_queue(struct virtio_softc *, uint16_t, uint32_t);
+static void	virtio_mmio_setup_queue(struct virtio_softc *, uint16_t, uint64_t);
 static void	virtio_mmio_set_status(struct virtio_softc *, int);
-static uint32_t	virtio_mmio_negotiate_features(struct virtio_softc *, uint32_t);
+static void	virtio_mmio_negotiate_features(struct virtio_softc *, uint64_t);
 static int	virtio_mmio_setup_interrupts(struct virtio_softc *);
 static void	virtio_mmio_free_interrupts(struct virtio_softc *);
 
 static const struct virtio_ops virtio_mmio_ops = {
 	.kick = virtio_mmio_kick,
+
 	.read_dev_cfg_1 = virtio_mmio_read_device_config_1,
 	.read_dev_cfg_2 = virtio_mmio_read_device_config_2,
 	.read_dev_cfg_4 = virtio_mmio_read_device_config_4,
@@ -118,6 +123,7 @@ static const struct virtio_ops virtio_mmio_ops = {
 	.write_dev_cfg_2 = virtio_mmio_write_device_config_2,
 	.write_dev_cfg_4 = virtio_mmio_write_device_config_4,
 	.write_dev_cfg_8 = virtio_mmio_write_device_config_8,
+
 	.read_queue_size = virtio_mmio_read_queue_size,
 	.setup_queue = virtio_mmio_setup_queue,
 	.set_status = virtio_mmio_set_status,
@@ -136,7 +142,7 @@ virtio_mmio_read_queue_size(struct virtio_softc *vsc, uint16_t idx)
 }
 
 static void
-virtio_mmio_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
+virtio_mmio_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint64_t addr)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 
@@ -145,7 +151,8 @@ virtio_mmio_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_NUM_MAX));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_ALIGN,
 	    VIRTIO_PAGE_SIZE);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_PFN, addr);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_PFN,
+	    addr / VIRTIO_PAGE_SIZE);
 }
 
 static void
@@ -165,6 +172,7 @@ void
 virtio_mmio_common_attach(struct virtio_mmio_softc *sc)
 {
 	struct virtio_softc *vsc = &sc->sc_sc;
+	device_t self = vsc->sc_dev;
 	uint32_t id, magic, ver;
 
 	magic = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
@@ -188,11 +196,23 @@ virtio_mmio_common_attach(struct virtio_mmio_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_GUEST_PAGE_SIZE,
 	    VIRTIO_PAGE_SIZE);
 
-	/* No device connected. */
+	/* no device connected. */
 	if (id == 0)
 		return;
 
+	virtio_print_device_type(self, id, ver);
 	vsc->sc_ops = &virtio_mmio_ops;
+	vsc->sc_devcfg_swap = VIODEVRW_SWAP;
+
+	/* set up our device config tag */
+	vsc->sc_devcfg_iosize = sc->sc_iosize - VIRTIO_MMIO_CONFIG;
+	vsc->sc_devcfg_iot = sc->sc_iot;
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+			VIRTIO_MMIO_CONFIG, vsc->sc_devcfg_iosize,
+			&vsc->sc_devcfg_ioh)) {
+		aprint_error_dev(self, "can't map config i/o space\n");
+		return;
+	}
 
 	virtio_device_reset(vsc);
 	virtio_mmio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
@@ -229,8 +249,8 @@ virtio_mmio_common_detach(struct virtio_mmio_softc *sc, int flags)
 /*
  * Feature negotiation.
  */
-static uint32_t
-virtio_mmio_negotiate_features(struct virtio_softc *vsc, uint32_t
+static void
+virtio_mmio_negotiate_features(struct virtio_softc *vsc, uint64_t
     guest_features)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
@@ -245,47 +265,56 @@ virtio_mmio_negotiate_features(struct virtio_softc *vsc, uint32_t
 	    VIRTIO_MMIO_GUEST_FEATURES_SEL, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_MMIO_GUEST_FEATURES, r);
-	return r;
+
+	vsc->sc_active_features = r;
 }
 
+#
 /*
  * Device configuration registers.
  */
+
+/* ----------------------------------------------------
+ * Read/write device config code
+ * ----------------------------------------------------*/
+
 static uint8_t
 virtio_mmio_read_device_config_1(struct virtio_softc *vsc, int index)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-				VIRTIO_MMIO_CONFIG + index);
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
+
+	return bus_space_read_1(iot, ioh, index);
 }
 
 static uint16_t
 virtio_mmio_read_device_config_2(struct virtio_softc *vsc, int index)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	return VIO16TOH(bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-					VIRTIO_MMIO_CONFIG + index));
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
+
+	return VIO16TOH(bus_space_read_2(iot, ioh, index));
 }
 
 static uint32_t
 virtio_mmio_read_device_config_4(struct virtio_softc *vsc, int index)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	return VIO32TOH(bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-					VIRTIO_MMIO_CONFIG + index));
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
+
+	return VIO32TOH(bus_space_read_4(iot, ioh, index));
 }
 
 static uint64_t
 virtio_mmio_read_device_config_8(struct virtio_softc *vsc, int index)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
 	uint64_t r;
 
-	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			     VIRTIO_MMIO_CONFIG + index + sizeof(uint32_t));
+	r = bus_space_read_4(iot, ioh, index + sizeof(uint32_t));
 	r <<= 32;
-	r += bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			      VIRTIO_MMIO_CONFIG + index);
+	r += bus_space_read_4(iot, ioh, index);
 	return VIO64TOH(r);
 }
 
@@ -293,41 +322,46 @@ static void
 virtio_mmio_write_device_config_1(struct virtio_softc *vsc,
 			     int index, uint8_t value)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			  VIRTIO_MMIO_CONFIG + index, value);
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
+
+	bus_space_write_1(iot, ioh, index, value);
 }
 
 static void
 virtio_mmio_write_device_config_2(struct virtio_softc *vsc,
 			     int index, uint16_t value)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			  VIRTIO_MMIO_CONFIG + index, HTOVIO16(value));
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
+
+	value = HTOVIO16(value);
+	bus_space_write_2(iot, ioh, index, value);
 }
 
 static void
 virtio_mmio_write_device_config_4(struct virtio_softc *vsc,
 			     int index, uint32_t value)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  VIRTIO_MMIO_CONFIG + index, HTOVIO32(value));
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
+
+	value = HTOVIO32(value);
+	bus_space_write_4(iot, ioh, index, value);
 }
 
 static void
 virtio_mmio_write_device_config_8(struct virtio_softc *vsc,
 			     int index, uint64_t value)
 {
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  VIRTIO_MMIO_CONFIG + index,
-			  HTOVIO64(value) & 0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  VIRTIO_MMIO_CONFIG + index + sizeof(uint32_t),
-			  HTOVIO64(value) >> 32);
+	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
+	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
+
+	value = HTOVIO64(value);
+	bus_space_write_4(iot, ioh, index, value & 0xffffffff);
+	bus_space_write_4(iot, ioh, index + sizeof(uint32_t), value >> 32);
 }
+
 
 /*
  * Interrupt handler.

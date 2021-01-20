@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.2 2020/12/18 02:55:32 thorpej Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.3 2021/01/20 19:46:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.2 2020/12/18 02:55:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.3 2021/01/20 19:46:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ vio9p_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct virtio_attach_args *va = aux;
 
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_9P)
+	if (va->sc_childdevid == VIRTIO_DEVICE_ID_9P)
 		return 1;
 
 	return 0;
@@ -477,6 +477,7 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 {
 	struct vio9p_softc *sc = device_private(self);
 	struct virtio_softc *vsc = device_private(parent);
+	uint64_t features;
 	int error;
 
 	if (virtio_child(vsc) != NULL) {
@@ -490,8 +491,12 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 
 	virtio_child_attach_start(vsc, self, IPL_VM, NULL,
 	    NULL, virtio_vq_intr,
-	    VIRTIO_F_PCI_INTR_MPSAFE | VIRTIO_F_PCI_INTR_SOFTINT, 0,
+	    VIRTIO_F_INTR_MPSAFE | VIRTIO_F_INTR_SOFTINT, 0,
 	    VIO9P_FLAG_BITS);
+
+	features = virtio_features(vsc);
+	if (features == 0)
+		goto err_none;
 
 	error = virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, VIO9P_MAX_REQLEN,
 	    VIO9P_N_SEGMENTS * 2, "vio9p");
@@ -569,8 +574,8 @@ vio9p_read_config(struct vio9p_softc *sc)
 	int i;
 
 	/* these values are explicitly specified as little-endian */
-	reg = virtio_read_device_config_2(sc->sc_virtio, VIO9P_CONFIG_TAG_LEN);
-	sc->sc_taglen = le16toh(reg);
+	sc->sc_taglen = virtio_read_device_config_le_2(sc->sc_virtio,
+		VIO9P_CONFIG_TAG_LEN);
 
 	if (sc->sc_taglen > P9_MAX_TAG_LEN) {
 		aprint_error_dev(dev, "warning: tag is trimmed from %u to %u\n",
