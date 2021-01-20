@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.49 2020/12/14 10:18:28 jmcneill Exp $ */
+/* $NetBSD: acpi.c,v 1.50 2021/01/20 15:27:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.49 2020/12/14 10:18:28 jmcneill Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.50 2021/01/20 15:27:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -4625,11 +4625,11 @@ write_dsdt(int fd, ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdt)
 
 	/* Write out any SSDTs (if present.) */
 	if (rsdt != NULL) {
-		ssdt = sdt_from_rsdt(rsdt, "SSDT", NULL);
+		ssdt = sdt_from_rsdt(rsdt, ACPI_SIG_SSDT, NULL);
 		while (ssdt != NULL) {
 			write(fd, ssdt + 1, ssdt->Length -
 			    sizeof(ACPI_TABLE_HEADER));
-			ssdt = sdt_from_rsdt(rsdt, "SSDT", ssdt);
+			ssdt = sdt_from_rsdt(rsdt, ACPI_SIG_SSDT, ssdt);
 		}
 	}
 	return (0);
