@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PEPPER,v 1.20 2020/09/29 19:58:50 jmcneill Exp $
+#	$NetBSD: PEPPER,v 1.21 2021/01/20 01:20:26 nia Exp $
 #
 #	PEPPER -- Gumstix. Inc. Pepper Single Board Computer platforms kernel
 #
@@ -97,8 +97,6 @@ options 	NFS_BOOT_DHCP
 
 include 	"conf/compat_netbsd30.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Shared memory options
 
