@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.42 2021/01/18 02:35:49 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.43 2021/01/20 00:41:15 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.42 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.43 2021/01/20 00:41:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -225,7 +225,8 @@ of_match_compat_data(int phandle,
 }
 
 /*
- * const struct of_compat_data *of_search_compatible(phandle, compat_data)
+ * const struct device_compatible_entry *of_search_compatible(phandle,
+ *							      compat_data)
  *
  * This routine searches an array of compat_data structures for a
  * matching "compatible" entry matching the supplied OFW node.
