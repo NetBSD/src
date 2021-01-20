@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1233 2020/09/27 13:48:51 roy Exp $
+# $NetBSD: GENERIC,v 1.1234 2021/01/20 13:22:08 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1233 $"
+#ident		"GENERIC-$Revision: 1.1234 $"
 
 maxusers	64		# estimated number of users
 
@@ -143,8 +143,6 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # Compatibility options
 include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

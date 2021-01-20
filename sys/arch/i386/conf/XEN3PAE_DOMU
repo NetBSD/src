@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.16 2020/09/27 13:48:51 roy Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.17 2021/01/20 13:22:08 nia Exp $
 
 include 	"arch/i386/conf/std.xen"
 
@@ -65,8 +65,6 @@ options DDB_COMMANDONENTER="trace;show registers"
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

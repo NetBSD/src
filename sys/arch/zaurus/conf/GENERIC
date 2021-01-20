@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.90 2020/03/25 17:06:19 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.91 2021/01/20 13:22:07 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -90,7 +90,6 @@ options 	INET6		# IPv6
 # Compatibility options
 include 	"conf/compat_netbsd13.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

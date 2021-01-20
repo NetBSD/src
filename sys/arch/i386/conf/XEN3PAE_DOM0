@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.33 2020/09/27 13:48:51 roy Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.34 2021/01/20 13:22:08 nia Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -81,8 +81,6 @@ options DDB_COMMANDONENTER="show registers"
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
