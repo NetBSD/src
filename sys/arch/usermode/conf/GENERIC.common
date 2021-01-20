@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.28 2018/06/05 20:02:42 reinoud Exp $
+# $NetBSD: GENERIC.common,v 1.29 2021/01/20 13:22:08 nia Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -29,7 +29,6 @@ options		CPU_DEBUG
 #options	UVMHIST_PRINT
 
 include 	"conf/compat_netbsd50.config"
-options 	COMPAT_OSSAUDIO
 
 file-system	FFS
 file-system	MFS

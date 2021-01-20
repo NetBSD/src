@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.581 2021/01/16 01:43:42 thorpej Exp $
+# $NetBSD: GENERIC,v 1.582 2021/01/20 13:22:08 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.581 $"
+#ident		"GENERIC-$Revision: 1.582 $"
 
 maxusers	64		# estimated number of users
 
@@ -178,7 +178,6 @@ include 	"conf/compat_netbsd15.config"
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
 
