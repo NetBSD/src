@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sramc.c,v 1.6 2021/01/19 00:35:10 thorpej Exp $ */
+/* $NetBSD: sunxi_sramc.c,v 1.7 2021/01/20 00:48:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.6 2021/01/19 00:35:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.7 2021/01/20 00:48:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -127,7 +127,7 @@ sunxi_sramc_init_mmio(struct sunxi_sramc_softc *sc, int phandle)
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
 		dce = of_search_compatible(child, sunxi_sramc_areas);
-		if (dce != NULL) {
+		if (dce->data != NULL) {
 			node = kmem_alloc(sizeof(*node), KM_SLEEP);
 			node->phandle = child;
 			node->area = dce->data;
