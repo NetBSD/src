@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.317 2021/01/21 17:53:05 kamil Exp $
+$NetBSD: acronyms.comp,v 1.318 2021/01/21 17:58:56 kamil Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1385,6 +1385,7 @@ RTL	register transfer language
 RTL	resistor-transistor logic
 RTL	right to left
 RTOS	real time operating system
+RTP	Real-time Transport Protocol
 RTS	request to send
 RTT	round trip time
 RUP	rational unified process
