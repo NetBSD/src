@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.16 2021/01/20 21:59:48 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.17 2021/01/21 08:17:13 martin Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.16 2021/01/20 21:59:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.17 2021/01/21 08:17:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,8 +489,9 @@ virtio_pci_attach_10(device_t self, void *aux)
 			ret = EIO;
 			goto err;
 		}
-		aprint_debug_dev(self, "bar[%d]: iot %p, size 0x%lx\n",
-			j, psc->sc_bars_iot[j], psc->sc_bars_iosize[j]);
+		aprint_debug_dev(self,
+		    "bar[%d]: iot %p, size 0x%" PRIxBUSSIZE "\n",
+		    j, psc->sc_bars_iot[j], psc->sc_bars_iosize[j]);
 		bars_idx[i] = j;
 		j++;
 	}
