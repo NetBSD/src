@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.119 2020/05/19 09:26:44 rin Exp $
+#	$NetBSD: INSTALL,v 1.120 2021/01/21 06:51:56 nia Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.119 $"
+#ident 		"INSTALL-$Revision: 1.120 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -134,6 +134,7 @@ include 	"conf/compat_netbsd30.config"
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux/m68k binary compatibility
 
 ## File systems.
 file-system	FFS		# Berkeley Fast Filesystem

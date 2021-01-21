@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.164 2020/09/27 13:48:50 roy Exp $
+# $NetBSD: GENERIC,v 1.165 2021/01/21 06:51:54 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.164 $"
+#ident 		"GENERIC-$Revision: 1.165 $"
 
 maxusers	32
 
@@ -58,6 +58,7 @@ include 	"conf/compat_netbsd09.config"
 
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux binary compatibility
 
 # File systems
 file-system	FFS		# UFS

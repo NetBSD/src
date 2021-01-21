@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.15 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: LINKITSMART7688,v 1.16 2021/01/21 06:51:54 nia Exp $
 #
 # MediaTek MT7688
 #
@@ -65,6 +65,7 @@ include         "conf/compat_netbsd50.config"
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 
 # File systems
 file-system	FFS		# UFS
