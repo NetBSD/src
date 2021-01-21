@@ -26,4 +26,16 @@ CondParser_Eval: ${:Uvar}&&name != "var&&name"
 lhs = "var&&name", rhs = "var&&name", op = !=
 CondParser_Eval: ${:Uvar}||name != "var||name"
 lhs = "var||name", rhs = "var||name", op = !=
+CondParser_Eval: bare
+make: "cond-token-plain.mk" line 102: A bare word is treated like defined(...), and the variable 'bare' is not defined.
+CondParser_Eval: VAR
+make: "cond-token-plain.mk" line 107: A bare word is treated like defined(...).
+CondParser_Eval: V${:UA}R
+make: "cond-token-plain.mk" line 114: ok
+CondParser_Eval: V${UNDEF}AR
+make: "cond-token-plain.mk" line 122: Undefined variables in bare words expand to an empty string.
+CondParser_Eval: 0${:Ux00}
+make: "cond-token-plain.mk" line 130: Numbers can be composed from literals and variable expressions.
+CondParser_Eval: 0${:Ux01}
+make: "cond-token-plain.mk" line 134: Numbers can be composed from literals and variable expressions.
 exit status 0
