@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.526 2021/01/10 21:20:46 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.527 2021/01/21 14:30:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.526 2021/01/10 21:20:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.527 2021/01/21 14:30:01 rillig Exp $");
 
 /* types and constants */
 
@@ -3259,11 +3259,9 @@ Parse_MainName(GNodeList *mainList)
 	if (mainNode == NULL)
 		Punt("no target to make.");
 
-	if (mainNode->type & OP_DOUBLEDEP) {
-		Lst_Append(mainList, mainNode);
+	Lst_Append(mainList, mainNode);
+	if (mainNode->type & OP_DOUBLEDEP)
 		Lst_AppendAll(mainList, &mainNode->cohorts);
-	} else
-		Lst_Append(mainList, mainNode);
 
 	Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
 }
