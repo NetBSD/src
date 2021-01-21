@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlist.9,v 1.1 2021/01/21 15:53:16 thorpej Exp $
+.\"	$NetBSD: strlist.9,v 1.2 2021/01/21 16:57:52 wiz Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -186,7 +186,7 @@ is_pc_printer_port(const char *pnp_id_list, size_t list_size)
 }
 .Ed
 .Pp
-The folowing example converts an array of strings to a string list using
+The following example converts an array of strings to a string list using
 .Fn strlist_append :
 .Bd -literal
 char *
@@ -213,6 +213,6 @@ string_array_to_string_list(const char **array, int count,
 .Xr pmatch 9
 .Sh HISTORY
 The
-.Xr strlist 9
+.Nm
 functions first appeared in
 .Nx 10.0 .
