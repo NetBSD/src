@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.30 2021/01/17 19:03:32 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.31 2021/01/21 21:45:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -65,9 +65,11 @@ struct vcons_screen {
  */
 #define VCONS_NO_COPYCOLS	0x10	/* use putchar() based copycols() */
 #define VCONS_NO_COPYROWS	0x20	/* use putchar() based copyrows() */
-#define VCONS_DONT_READ		(VCONS_NO_COPYCOLS|VCONS_NO_COPYROWS)
+#define VCONS_DONT_READ		(VCONS_NO_COPYCOLS|VCONS_NO_COPYROWS|VCONS_NO_CURSOR)
 					/* avoid framebuffer reads */
 #define VCONS_LOADFONT		0x40	/* driver can load_font() */
+#define VCONS_NO_CURSOR		0x80	/* use putchar() based cursor(), to
+					 * avoid fb reads */
 	/* status flags used by vcons */
 	uint32_t scr_status;
 #define VCONS_IS_VISIBLE	1	/* this screen is currently visible */

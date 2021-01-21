@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.47 2021/01/17 19:03:32 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.48 2021/01/21 21:45:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.47 2021/01/17 19:03:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.48 2021/01/21 21:45:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ static void vcons_eraserows_cached(void *, int, int, long);
 static void vcons_putchar_cached(void *, int, int, u_int, long);
 #endif
 static void vcons_cursor(void *, int, int, int);
+static void vcons_cursor_noread(void *, int, int, int);
 
 /*
  * methods that avoid framebuffer reads
@@ -352,7 +353,12 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = vcons_eraserows;	
 	ri->ri_ops.erasecols = vcons_erasecols;	
 	ri->ri_ops.putchar   = vcons_putchar;
-	ri->ri_ops.cursor    = vcons_cursor;
+	if (scr->scr_flags & VCONS_NO_CURSOR) {
+		ri->ri_ops.cursor    = vcons_cursor_noread;
+	} else {
+		ri->ri_ops.cursor    = vcons_cursor;
+	}
+
 	ri->ri_ops.copycols  = vcons_copycols;
 	ri->ri_ops.copyrows  = vcons_copyrows;
 
@@ -469,7 +475,10 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	ri->ri_ops.eraserows = vcons_eraserows;	
 	ri->ri_ops.erasecols = vcons_erasecols;	
 	ri->ri_ops.putchar   = vcons_putchar;
-	ri->ri_ops.cursor    = vcons_cursor;
+	if (scr->scr_flags & VCONS_NO_CURSOR) {
+		ri->ri_ops.cursor    = vcons_cursor_noread;
+	} else
+		ri->ri_ops.cursor    = vcons_cursor;
 	ri->ri_ops.copycols  = vcons_copycols;
 	ri->ri_ops.copyrows  = vcons_copyrows;
 	vcons_unlock(vd->active);
@@ -609,8 +618,8 @@ vcons_redraw_screen(struct vcons_screen *scr)
 				if (c == ' ') {
 					/*
 					 * if we already erased the background
-					 * and this blank uses the same colour
-					 * and flags we don't need to do
+					 * and if this blank uses the same 
+					 * colour and flags we don't need to do
 					 * anything here
 					 */
 					if (acmp == cmp && start == -1)
@@ -1294,6 +1303,60 @@ vcons_cursor(void *cookie, int on, int row, int col)
 
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->cursor(cookie, on, row, col);
+	} else {
+		scr->scr_ri.ri_crow = row;
+		scr->scr_ri.ri_ccol = col;
+	}
+	vcons_unlock(scr);
+}
+
+static void
+vcons_cursor_noread(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int offset = 0;	
+
+#if defined(VCONS_DRAW_INTR)
+	if (scr->scr_vd->use_intr) {
+		vcons_lock(scr);
+		if (scr->scr_ri.ri_crow != row || scr->scr_ri.ri_ccol != col) {
+			scr->scr_ri.ri_crow = row;
+			scr->scr_ri.ri_ccol = col;
+			atomic_inc_uint(&scr->scr_dirty);
+		}
+		vcons_unlock(scr);
+		return;
+	}
+#endif
+
+	vcons_lock(scr);
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	offset = scr->scr_current_offset;
+#endif
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
+		int ofs = offset + ri->ri_crow * ri->ri_cols + ri->ri_ccol;
+		if (ri->ri_flg & RI_CURSOR) {
+			scr->putchar(cookie, ri->ri_crow, ri->ri_ccol,
+			    scr->scr_chars[ofs], scr->scr_attrs[ofs]);
+			ri->ri_flg &= ~RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		ofs = offset + ri->ri_crow * ri->ri_cols + ri->ri_ccol;
+		if (on) {
+			scr->putchar(cookie, row, col, scr->scr_chars[ofs],
+#ifdef VCONS_DEBUG_CURSOR_NOREAD
+			/* draw a red cursor so we can tell which cursor() 
+			 * implementation is being used */
+			    ((scr->scr_attrs[ofs] & 0xff00ffff) ^ 0x0f000000) |
+			      0x00010000);
+#else
+			    scr->scr_attrs[ofs] ^ 0x0f0f0000);
+#endif
+			ri->ri_flg |= RI_CURSOR;
+		}
 	} else {
 		scr->scr_ri.ri_crow = row;
 		scr->scr_ri.ri_ccol = col;
