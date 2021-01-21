@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.318 2021/01/21 17:58:56 kamil Exp $
+$NetBSD: acronyms.comp,v 1.319 2021/01/21 18:09:10 kamil Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1548,6 +1548,7 @@ SRAM	static random access memory
 SRC	sample rate conversion
 SRP	SCSI RDMA protocol
 SRR	shaped round robin
+SRTP	Secure Real-time Transport Protocol
 SS	self-snoop
 SS	stack segment
 SSA	static single assignment
