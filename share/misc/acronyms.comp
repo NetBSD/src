@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.316 2020/11/17 19:56:42 maya Exp $
+$NetBSD: acronyms.comp,v 1.317 2021/01/21 17:53:05 kamil Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1156,6 +1156,7 @@ PAX	portable archive exchange
 PBE	pending break encoding
 PBE	programming by example
 PBR	partition boot record
+PBX	private branch exchange
 PC	personal computer
 PC	program counter
 PCB	printed circuit board
