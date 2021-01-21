@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.9 2021/01/21 13:52:32 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.10 2021/01/21 14:08:09 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.
@@ -174,6 +174,14 @@ ${:U\\\\}=	backslash
 # Strangely, a bare word may contain double quotes inside.  Nobody should ever
 # depend on this since it may well be unintended.  See CondParser_String.
 .if "unquoted\"quoted" != unquoted"quoted
+.  error
+.endif
+
+# FIXME: In CondParser_String, Var_Parse returns var_Error without a
+# corresponding error message.
+.if $$$$$$$$ != ""
+.  error
+.else
 .  error
 .endif
 
