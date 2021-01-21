@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.248 2021/01/21 14:24:25 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.249 2021/01/21 22:54:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.248 2021/01/21 14:24:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.249 2021/01/21 22:54:13 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -415,10 +415,9 @@ CondParser_StringExpr(CondParser *par, const char *start,
 	VarParseResult parseResult;
 
 	/* if we are in quotes, an undefined variable is ok */
-	eflags =
-	    doEval && !quoted ? VARE_WANTRES | VARE_UNDEFERR :
-		doEval ? VARE_WANTRES :
-		    VARE_NONE;
+	eflags = doEval && !quoted ? VARE_WANTRES | VARE_UNDEFERR
+	    : doEval ? VARE_WANTRES
+	    : VARE_NONE;
 
 	nested_p = par->p;
 	atStart = nested_p == start;
@@ -427,23 +426,21 @@ CondParser_StringExpr(CondParser *par, const char *start,
 	if (inout_str->str == var_Error) {
 		if (parseResult == VPR_ERR) {
 			/*
-			 * FIXME: Even if an error occurs,
-			 * there is no guarantee that it is
-			 * reported.
+			 * FIXME: Even if an error occurs, there is no
+			 *  guarantee that it is reported.
 			 *
 			 * See cond-token-plain.mk $$$$$$$$.
 			 */
 			par->printedError = TRUE;
 		}
 		/*
-		 * XXX: Can there be any situation in which
-		 * a returned var_Error requires freeIt?
+		 * XXX: Can there be any situation in which a returned
+		 * var_Error requires freeIt?
 		 */
 		FStr_Done(inout_str);
 		/*
-		 * Even if !doEval, we still report syntax
-		 * errors, which is what getting var_Error
-		 * back with !doEval means.
+		 * Even if !doEval, we still report syntax errors, which is
+		 * what getting var_Error back with !doEval means.
 		 */
 		*inout_str = FStr_InitRefer(NULL);
 		return FALSE;
@@ -451,10 +448,9 @@ CondParser_StringExpr(CondParser *par, const char *start,
 	par->p = nested_p;
 
 	/*
-	 * If the '$' started the string literal (which means
-	 * no quotes), and the variable expression is followed
-	 * by a space, looks like a comparison operator or is
-	 * the end of the expression, we are done.
+	 * If the '$' started the string literal (which means no quotes), and
+	 * the variable expression is followed by a space, looks like a
+	 * comparison operator or is the end of the expression, we are done.
 	 */
 	if (atStart && is_separator(par->p[0]))
 		return FALSE;
