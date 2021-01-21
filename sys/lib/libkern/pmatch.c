@@ -1,4 +1,4 @@
-/*	$NetBSD: pmatch.c,v 1.6 2009/03/14 21:04:24 dsl Exp $	*/
+/*	$NetBSD: pmatch.c,v 1.7 2021/01/21 15:44:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991 The Regents of the University of California.
@@ -30,7 +30,14 @@
  */
 
 #include <sys/param.h>
+
+/* So we can build this in userland for the tests in strlist.c */
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <lib/libkern/libkern.h>
+#else
+int pmatch(const char *, const char *, const char **);
+#endif
+
 /*
  * pmatch():
  *	Return 2 on exact match.
