@@ -2,7 +2,6 @@
 
 include "arch/evbarm/conf/SHEEVAPLUG"
 
-no options	COMPAT_OSSAUDIO
 no options	DIAGNOSTIC
 no options	DEBUG
 no uaudio*

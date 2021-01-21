@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.40 2019/11/13 17:59:56 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.41 2021/01/21 06:18:22 nia Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -39,8 +39,6 @@ no options 		COMPAT_NETBSD32
 no options 		COMPAT_13
 no options 		COMPAT_43
 no options 		COMPAT_44
-
-no options 		COMPAT_OSSAUDIO
 
 no options		DKWEDGE_AUTODISCOVER
 
