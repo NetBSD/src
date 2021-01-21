@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.162 2020/01/25 18:38:36 thorpej Exp $
+#	$NetBSD: INSTALL_TINY,v 1.163 2021/01/21 06:51:55 nia Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -70,7 +70,7 @@ no options 	EXEC_AOUT	# we don't a.out support
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems

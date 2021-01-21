@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC64_IP3x,v 1.6 2017/09/14 07:58:43 mrg Exp $
+#	$NetBSD: GENERIC64_IP3x,v 1.7 2021/01/21 06:51:56 nia Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,10 +28,11 @@ include 	"arch/sgimips/conf/std.sgimips64"
 no makeoptions	TEXTADDR
 makeoptions	TEXTADDR="0xffffffff80069000"	# entry point
 
-#ident		"GENERIC64_IP3x-$Revision: 1.6 $"
+#ident		"GENERIC64_IP3x-$Revision: 1.7 $"
 
 # Compatibility options
 #include 	"conf/compat_netbsd15.config"
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 

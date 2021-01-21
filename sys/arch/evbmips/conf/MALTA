@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.102 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: MALTA,v 1.103 2021/01/21 06:51:54 nia Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.102 $"
+#ident 		"MALTA-$Revision: 1.103 $"
 
 maxusers	32
 
@@ -46,6 +46,7 @@ include         "conf/compat_netbsd16.config"
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem

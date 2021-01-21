@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.55 2020/05/16 13:46:11 maya Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.56 2021/01/21 06:51:55 nia Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -83,7 +83,7 @@ pseudo-device	ksyms
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
