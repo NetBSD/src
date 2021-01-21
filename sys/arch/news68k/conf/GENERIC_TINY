@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.91 2020/09/27 13:48:53 roy Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.92 2021/01/21 06:51:55 nia Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.91 $"
+#ident 		"GENERIC_TINY-$Revision: 1.92 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -48,6 +48,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SUNOS		# binary compatibility with SunOS
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
+#options 	COMPAT_OSSAUDIO		# binary compatibllity with Linux/m68k
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

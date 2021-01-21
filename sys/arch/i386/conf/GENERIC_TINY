@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.169 2020/09/27 13:48:51 roy Exp $
+#	$NetBSD: GENERIC_TINY,v 1.170 2021/01/21 06:51:55 nia Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -60,7 +60,7 @@ include 	"conf/compat_netbsd60.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 
 # File systems
 file-system	FFS		# UFS

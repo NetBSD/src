@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.62 2020/06/19 10:35:11 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.63 2021/01/21 06:51:56 nia Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -48,6 +48,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 # Compatibility options
 include 	"conf/compat_netbsd13.config"
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
+#options 	COMPAT_OSSAUDIO	# can run Linux/m68k executables
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem

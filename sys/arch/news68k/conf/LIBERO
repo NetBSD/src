@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.69 2020/01/19 01:25:06 thorpej Exp $
+# 	$NetBSD: LIBERO,v 1.70 2021/01/21 06:51:55 nia Exp $
 
 #	NEWS1750 config file;
 #
@@ -43,6 +43,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 options 	COMPAT_SUNOS		# binary compatibility with SunOS
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
+#options 	COMPAT_OSSAUDIO		# binary compatibllity with Linux/m68k
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

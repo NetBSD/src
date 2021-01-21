@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.147 2020/10/26 06:21:49 rin Exp $
+# $NetBSD: GENERIC.in,v 1.148 2021/01/21 06:51:54 nia Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.148 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os -fno-omit-frame-pointer"
@@ -182,6 +182,7 @@ include 	"conf/compat_netbsd09.config"
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
+#options 	COMPAT_OSSAUDIO	# Support to run Linux/m68k executables
 ')m4_dnl
 
 options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)

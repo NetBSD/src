@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.59 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: NULL,v 1.60 2021/01/21 06:51:54 nia Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.59 $"
+#ident          "GENERIC-$Revision: 1.60 $"
 
 maxusers	8
 
@@ -65,6 +65,7 @@ no options 	COMPAT_43	# and 4.3BSD
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux binary compatibility
 
 #
 # File systems

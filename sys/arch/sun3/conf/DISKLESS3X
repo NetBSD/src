@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.61 2020/06/19 10:35:11 tsutsui Exp $
+# $NetBSD: DISKLESS3X,v 1.62 2021/01/21 06:51:56 nia Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -45,6 +45,7 @@ options 	USERCONF	# userconf(4) support
 include 	"conf/compat_netbsd10.config"
 
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
+#options 	COMPAT_OSSAUDIO	# can run Linux/m68k executables
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 
 # Filesystem options

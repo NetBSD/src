@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.39 2020/09/27 13:48:54 roy Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.40 2021/01/21 06:51:56 nia Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.39 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.40 $"
 
 maxusers	32
 
@@ -78,6 +78,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 include 	"conf/compat_netbsd15.config"
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
 
 # File systems

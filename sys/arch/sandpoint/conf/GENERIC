@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 2020/09/27 13:48:54 roy Exp $
+# $NetBSD: GENERIC,v 1.107 2021/01/21 06:51:56 nia Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.107 $"
 
 maxusers	32
 
@@ -67,6 +67,7 @@ include 	"conf/compat_netbsd09.config"
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

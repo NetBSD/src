@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.104 2020/09/27 13:48:51 roy Exp $
+# $NetBSD: NET4501,v 1.105 2021/01/21 06:51:55 nia Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.104 $"
+#ident 		"NET4501-$Revision: 1.105 $"
 
 maxusers	32		# estimated number of users
 
@@ -80,7 +80,7 @@ options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options 	COMPAT_OSSAUDIO	# binary compatibility with Linux
 
 # File systems
 file-system	FFS		# UFS

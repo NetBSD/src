@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44 2020/09/27 13:48:54 roy Exp $
+# $NetBSD: GENERIC,v 1.45 2021/01/21 06:51:56 nia Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.44 $"
+#ident		"GENERIC-$Revision: 1.45 $"
 
 maxusers	32
 
@@ -67,6 +67,7 @@ options 	DDB		# in-kernel debugger
 # Compatibility options
 include 	"conf/compat_netbsd50.config"
 #options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux binary compatibility
 
 # File systems
 file-system 	FFS		# UFS

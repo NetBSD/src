@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.331 2020/10/26 06:22:28 rin Exp $
+# $NetBSD: GENERIC,v 1.332 2021/01/21 06:51:54 nia Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.331 $"
+#ident 		"GENERIC-$Revision: 1.332 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -140,6 +140,7 @@ include 	"conf/compat_netbsd09.config"
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
+#options 	COMPAT_OSSAUDIO	# Support to run Linux/m68k executables
 
 options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 options 	COMPAT_AOUT_M68K # actually make some system calls work.

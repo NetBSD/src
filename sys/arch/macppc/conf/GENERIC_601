@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.28 2020/09/27 13:48:52 roy Exp $
+# $NetBSD: GENERIC_601,v 1.29 2021/01/21 06:51:55 nia Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.28 $"
+ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -72,6 +72,7 @@ include 	"conf/compat_netbsd50.config"
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux binary compatibility
 
 # Wedge support
 options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances

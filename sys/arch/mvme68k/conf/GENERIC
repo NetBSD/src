@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102 2020/09/27 13:48:52 roy Exp $
+# $NetBSD: GENERIC,v 1.103 2021/01/21 06:51:55 nia Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -101,6 +101,7 @@ include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
+#options 	COMPAT_OSSAUDIO	# compatibility with Linux/m68k binaries
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
