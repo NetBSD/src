@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.8 2021/01/21 13:32:17 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.9 2021/01/21 13:52:32 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.
@@ -167,6 +167,13 @@ ${:U\\\\}=	backslash
 .if \\
 .  info Now the variable '\\' is defined.
 .else
+.  error
+.endif
+
+# Anything that doesn't start with a double quote is considered a "bare word".
+# Strangely, a bare word may contain double quotes inside.  Nobody should ever
+# depend on this since it may well be unintended.  See CondParser_String.
+.if "unquoted\"quoted" != unquoted"quoted
 .  error
 .endif
 
