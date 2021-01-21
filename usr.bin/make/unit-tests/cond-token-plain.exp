@@ -18,9 +18,9 @@ lhs = "yes", rhs = "yes", op = !=
 CondParser_Eval: ${UNDEF:Uundefined}!=undefined
 lhs = "undefined", rhs = "undefined", op = !=
 CondParser_Eval: ${UNDEF:U12345}>12345
-lhs = 12345.000000, rhs = 12345.000000, op = >1
+lhs = 12345.000000, rhs = 12345.000000, op = >
 CondParser_Eval: ${UNDEF:U12345}<12345
-lhs = 12345.000000, rhs = 12345.000000, op = <1
+lhs = 12345.000000, rhs = 12345.000000, op = <
 CondParser_Eval: (${UNDEF:U0})||0
 CondParser_Eval: ${:Uvar}&&name != "var&&name"
 lhs = "var&&name", rhs = "var&&name", op = !=
