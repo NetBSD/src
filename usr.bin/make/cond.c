@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.249 2021/01/21 22:54:13 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.250 2021/01/21 23:06:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.249 2021/01/21 22:54:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.250 2021/01/21 23:06:06 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -578,6 +578,7 @@ EvalNotEmpty(CondParser *par, const char *value, Boolean quoted)
 static Token
 EvalCompareNum(double lhs, const char *op, double rhs)
 {
+	/* FIXME: %2.s is cheated and produces wrong output. */
 	DEBUG3(COND, "lhs = %f, rhs = %f, op = %.2s\n", lhs, rhs, op);
 
 	switch (op[0]) {
@@ -614,6 +615,7 @@ EvalCompareStr(const char *lhs, const char *op, const char *rhs)
 		return TOK_ERROR;
 	}
 
+	/* FIXME: %2.s is cheated and produces wrong output. */
 	DEBUG3(COND, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n", lhs, rhs, op);
 	return ToToken((*op == '=') == (strcmp(lhs, rhs) == 0));
 }
