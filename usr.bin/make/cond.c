@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.246 2021/01/21 13:51:24 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.247 2021/01/21 14:08:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.246 2021/01/21 13:51:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.247 2021/01/21 14:08:09 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -467,8 +467,16 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 			    &str);
 			/* TODO: handle errors */
 			if (str.str == var_Error) {
-				if (parseResult == VPR_ERR)
+				if (parseResult == VPR_ERR) {
+					/*
+					 * FIXME: Even if an error occurs,
+					 * there is no guarantee that it is
+					 * reported.
+					 *
+					 * See cond-token-plain.mk $$$$$$$$.
+					 */
 					par->printedError = TRUE;
+				}
 				/*
 				 * XXX: Can there be any situation in which
 				 * a returned var_Error requires freeIt?
