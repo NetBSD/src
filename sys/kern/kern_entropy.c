@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.28 2021/01/16 02:21:26 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.29 2021/01/21 17:33:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.28 2021/01/16 02:21:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.29 2021/01/21 17:33:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -378,7 +378,7 @@ entropy_init(void)
 
 	/* Note if the bootloader didn't provide a seed.  */
 	if (!E->seeded)
-		printf("entropy: no seed from bootloader\n");
+		aprint_debug("entropy: no seed from bootloader\n");
 
 	/* Allocate the per-CPU records for all early entropy sources.  */
 	LIST_FOREACH(rs, &E->sources, list)
