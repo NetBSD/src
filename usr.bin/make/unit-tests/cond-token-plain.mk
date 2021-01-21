@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.7 2021/01/21 00:38:28 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.8 2021/01/21 13:32:17 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.
@@ -132,6 +132,40 @@ VAR=	defined
 
 .if 0${:Ux01}
 .  info Numbers can be composed from literals and variable expressions.
+.else
+.  error
+.endif
+
+# If the right-hand side is missing, it's a parse error.
+.if "" ==
+.  error
+.else
+.  error
+.endif
+
+# If the left-hand side is missing, it's a parse error as well, but without
+# a specific error message.
+.if == ""
+.  error
+.else
+.  error
+.endif
+
+# The '\\' is not a line continuation.  Neither is it an unquoted string
+# literal.  Instead, it is parsed as a function argument (ParseFuncArg),
+# and in that context, the backslash is just an ordinary character. The
+# function argument thus stays '\\' (2 backslashes).  This string is passed
+# to FuncDefined, and since there is no variable named '\\', the condition
+# evaluates to false.
+.if \\
+.  error
+.else
+.  info The variable '\\' is not defined.
+.endif
+
+${:U\\\\}=	backslash
+.if \\
+.  info Now the variable '\\' is defined.
 .else
 .  error
 .endif
