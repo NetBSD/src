@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.174 2020/11/29 12:38:44 phx Exp $
+# $NetBSD: GENERIC,v 1.175 2021/01/21 06:51:55 nia Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.174 $"
+#ident 		"GENERIC-$Revision: 1.175 $"
 
 maxusers	32
 
@@ -68,6 +68,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux binary compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

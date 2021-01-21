@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.206 2020/09/27 13:48:51 roy Exp $
+# $NetBSD: GENERIC,v 1.207 2021/01/21 06:51:54 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.206 $"
+#ident 		"GENERIC-$Revision: 1.207 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -85,6 +85,7 @@ options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
 options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
 options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux/m68k binary compatibility
 
 # Filesystems
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
