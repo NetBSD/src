@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.141 2021/01/16 23:51:51 chs Exp $	*/
+/*	$NetBSD: libkern.h,v 1.142 2021/01/21 15:43:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
 #include <sys/types.h>
 #include <sys/inttypes.h>
 #include <sys/null.h>
+
+#include <lib/libkern/strlist.h>
 
 #ifndef LIBKERN_INLINE
 #define LIBKERN_INLINE	static __inline
