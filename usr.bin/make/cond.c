@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.245 2021/01/21 13:31:38 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.246 2021/01/21 13:51:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.245 2021/01/21 13:31:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.246 2021/01/21 13:51:24 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -437,12 +437,10 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 			}
 			continue;
 		case '"':
-			if (quoted) {
-				par->p++;	/* skip the closing quote */
-				goto got_str;
-			}
-			Buf_AddByte(&buf, par->p[0]); /* likely? */
 			par->p++;
+			if (quoted)
+				goto got_str;	/* skip the closing quote */
+			Buf_AddByte(&buf, '"');
 			continue;
 		case ')':	/* see is_separator */
 		case '!':
