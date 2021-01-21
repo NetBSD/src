@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.251 2021/01/21 23:25:08 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.252 2021/01/21 23:32:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.251 2021/01/21 23:25:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.252 2021/01/21 23:32:28 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -603,12 +603,13 @@ EvalCompareNum(double lhs, ComparisonOp op, double rhs)
 }
 
 static Token
-EvalCompareStr(const char *lhs, ComparisonOp op, const char *rhs)
+EvalCompareStr(CondParser *par, const char *lhs,
+	       ComparisonOp op, const char *rhs)
 {
 	if (op != EQ && op != NE) {
-		Parse_Error(PARSE_WARNING,
+		Parse_Error(PARSE_FATAL,
 		    "String comparison operator must be either == or !=");
-		/* The PARSE_FATAL follows in CondEvalExpression. */
+		par->printedError = TRUE;
 		return TOK_ERROR;
 	}
 
@@ -619,8 +620,8 @@ EvalCompareStr(const char *lhs, ComparisonOp op, const char *rhs)
 
 /* Evaluate a comparison, such as "${VAR} == 12345". */
 static Token
-EvalCompare(const char *lhs, Boolean lhsQuoted, ComparisonOp op,
-	    const char *rhs, Boolean rhsQuoted)
+EvalCompare(CondParser *par, const char *lhs, Boolean lhsQuoted,
+	    ComparisonOp op, const char *rhs, Boolean rhsQuoted)
 {
 	double left, right;
 
@@ -628,7 +629,7 @@ EvalCompare(const char *lhs, Boolean lhsQuoted, ComparisonOp op,
 		if (TryParseNumber(lhs, &left) && TryParseNumber(rhs, &right))
 			return ToToken(EvalCompareNum(left, op, right));
 
-	return EvalCompareStr(lhs, op, rhs);
+	return EvalCompareStr(par, lhs, op, rhs);
 }
 
 static Boolean
@@ -700,9 +701,9 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 	CondParser_SkipWhitespace(par);
 
 	if (par->p[0] == '\0') {
-		Parse_Error(PARSE_WARNING,
-			    "Missing right-hand-side of operator");
-		/* The PARSE_FATAL follows in CondEvalExpression. */
+		Parse_Error(PARSE_FATAL,
+		    "Missing right-hand-side of operator '%s'", opname[op]);
+		par->printedError = TRUE;
 		goto done_lhs;
 	}
 
@@ -715,7 +716,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 		goto done_rhs;
 	}
 
-	t = EvalCompare(lhs.str, lhsQuoted, op, rhs.str, rhsQuoted);
+	t = EvalCompare(par, lhs.str, lhsQuoted, op, rhs.str, rhsQuoted);
 
 done_rhs:
 	FStr_Done(&rhs);
