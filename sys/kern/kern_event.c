@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.112 2021/01/21 18:09:23 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.113 2021/01/21 19:37:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.112 2021/01/21 18:09:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.113 2021/01/21 19:37:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1322,7 +1322,6 @@ doneunlock:
 	return (error);
 }
 
-#define DEBUG
 #if defined(DEBUG)
 #define KN_FMT(buf, kn) \
     (snprintb((buf), sizeof(buf), __KN_FLAG_BITS, (kn)->kn_status), buf)
