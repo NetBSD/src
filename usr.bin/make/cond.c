@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.247 2021/01/21 14:08:09 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.248 2021/01/21 14:24:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.247 2021/01/21 14:08:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.248 2021/01/21 14:24:25 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -399,6 +399,73 @@ is_separator(char ch)
 }
 
 /*
+ * In a quoted or unquoted string literal or a number, parse a variable
+ * expression.
+ *
+ * Example: .if x${CENTER}y == "${PREFIX}${SUFFIX}" || 0x${HEX}
+ */
+static Boolean
+CondParser_StringExpr(CondParser *par, const char *start,
+		      Boolean const doEval, Boolean const quoted,
+		      Buffer *buf, FStr *const inout_str)
+{
+	VarEvalFlags eflags;
+	const char *nested_p;
+	Boolean atStart;
+	VarParseResult parseResult;
+
+	/* if we are in quotes, an undefined variable is ok */
+	eflags =
+	    doEval && !quoted ? VARE_WANTRES | VARE_UNDEFERR :
+		doEval ? VARE_WANTRES :
+		    VARE_NONE;
+
+	nested_p = par->p;
+	atStart = nested_p == start;
+	parseResult = Var_Parse(&nested_p, VAR_CMDLINE, eflags, inout_str);
+	/* TODO: handle errors */
+	if (inout_str->str == var_Error) {
+		if (parseResult == VPR_ERR) {
+			/*
+			 * FIXME: Even if an error occurs,
+			 * there is no guarantee that it is
+			 * reported.
+			 *
+			 * See cond-token-plain.mk $$$$$$$$.
+			 */
+			par->printedError = TRUE;
+		}
+		/*
+		 * XXX: Can there be any situation in which
+		 * a returned var_Error requires freeIt?
+		 */
+		FStr_Done(inout_str);
+		/*
+		 * Even if !doEval, we still report syntax
+		 * errors, which is what getting var_Error
+		 * back with !doEval means.
+		 */
+		*inout_str = FStr_InitRefer(NULL);
+		return FALSE;
+	}
+	par->p = nested_p;
+
+	/*
+	 * If the '$' started the string literal (which means
+	 * no quotes), and the variable expression is followed
+	 * by a space, looks like a comparison operator or is
+	 * the end of the expression, we are done.
+	 */
+	if (atStart && is_separator(par->p[0]))
+		return FALSE;
+
+	Buf_AddStr(buf, inout_str->str);
+	FStr_Done(inout_str);
+	*inout_str = FStr_InitRefer(NULL); /* not finished yet */
+	return TRUE;
+}
+
+/*
  * Parse a string from a variable reference or an optionally quoted
  * string.  This is called for the lhs and rhs of string comparisons.
  *
@@ -413,12 +480,8 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 {
 	Buffer buf;
 	FStr str;
-	Boolean atStart;
-	const char *nested_p;
 	Boolean quoted;
 	const char *start;
-	VarEvalFlags eflags;
-	VarParseResult parseResult;
 
 	Buf_Init(&buf);
 	str = FStr_InitRefer(NULL);
@@ -455,55 +518,9 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 			par->p++;
 			continue;
 		case '$':
-			/* if we are in quotes, an undefined variable is ok */
-			eflags =
-			    doEval && !quoted ? VARE_WANTRES | VARE_UNDEFERR :
-			    doEval ? VARE_WANTRES :
-			    VARE_NONE;
-
-			nested_p = par->p;
-			atStart = nested_p == start;
-			parseResult = Var_Parse(&nested_p, VAR_CMDLINE, eflags,
-			    &str);
-			/* TODO: handle errors */
-			if (str.str == var_Error) {
-				if (parseResult == VPR_ERR) {
-					/*
-					 * FIXME: Even if an error occurs,
-					 * there is no guarantee that it is
-					 * reported.
-					 *
-					 * See cond-token-plain.mk $$$$$$$$.
-					 */
-					par->printedError = TRUE;
-				}
-				/*
-				 * XXX: Can there be any situation in which
-				 * a returned var_Error requires freeIt?
-				 */
-				FStr_Done(&str);
-				/*
-				 * Even if !doEval, we still report syntax
-				 * errors, which is what getting var_Error
-				 * back with !doEval means.
-				 */
-				str = FStr_InitRefer(NULL);
+			if (!CondParser_StringExpr(par,
+			    start, doEval, quoted, &buf, &str))
 				goto cleanup;
-			}
-			par->p = nested_p;
-
-			/*
-			 * If the '$' started the string literal (which means
-			 * no quotes), and the variable expression is followed
-			 * by a space, looks like a comparison operator or is
-			 * the end of the expression, we are done.
-			 */
-			if (atStart && is_separator(par->p[0]))
-				goto cleanup;
-
-			Buf_AddStr(&buf, str.str);
-			FStr_Done(&str);
-			str = FStr_InitRefer(NULL); /* not finished yet */
 			continue;
 		default:
 			if (strictLHS && !quoted && *start != '$' &&
