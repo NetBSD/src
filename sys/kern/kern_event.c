@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.111 2021/01/20 21:39:09 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.112 2021/01/21 18:09:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.111 2021/01/20 21:39:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.112 2021/01/21 18:09:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1322,6 +1322,7 @@ doneunlock:
 	return (error);
 }
 
+#define DEBUG
 #if defined(DEBUG)
 #define KN_FMT(buf, kn) \
     (snprintb((buf), sizeof(buf), __KN_FLAG_BITS, (kn)->kn_status), buf)
@@ -1356,7 +1357,10 @@ kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 			}
 			count++;
 			if (count > kq->kq_count) {
-				goto bad;
+				panic("%s,%zu: kq=%p kq->kq_count(%d) != "
+				    "count(%d), nmarker=%d",
+		    		    func, line, kq, kq->kq_count, count,
+				    nmarker);
 			}
 		} else {
 			nmarker++;
@@ -1369,11 +1373,6 @@ kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 			}
 #endif
 		}
-	}
-	if (kq->kq_count != count) {
-bad:
-		panic("%s,%zu: kq=%p kq->kq_count(%d) != count(%d), nmarker=%d",
-		    func, line, kq, kq->kq_count, count, nmarker);
 	}
 }
 #define kq_check(a) kqueue_check(__func__, __LINE__, (a))
