@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.17 2021/01/21 08:17:13 martin Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.18 2021/01/21 20:48:33 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.17 2021/01/21 08:17:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.18 2021/01/21 20:48:33 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -727,6 +727,14 @@ virtio_pci_read_queue_size_10(struct virtio_softc *sc, uint16_t idx)
 	return bus_space_read_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_SIZE);
 }
 
+/*
+ * By definition little endian only in v1.0 and 8 byters are allowed to be
+ * written as two 4 byters
+ */
+#define bus_space_write_le_8(iot, ioh, reg, val) \
+	bus_space_write_4(iot, ioh, reg, ((uint64_t) (val)) & 0xffffffff); \
+	bus_space_write_4(iot, ioh, reg + 4, ((uint64_t) (val)) >> 32);
+
 static void
 virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 {
@@ -739,15 +747,15 @@ virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 	bus_space_write_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_SELECT, vq->vq_index);
 	if (addr == 0) {
 		bus_space_write_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_ENABLE, 0);
-		bus_space_write_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_DESC,   0);
-		bus_space_write_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_AVAIL,  0);
-		bus_space_write_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_USED,   0);
+		bus_space_write_le_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_DESC,   0);
+		bus_space_write_le_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_AVAIL,  0);
+		bus_space_write_le_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_USED,   0);
 	} else {
-		bus_space_write_8(iot, ioh,
+		bus_space_write_le_8(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_DESC, addr);
-		bus_space_write_8(iot, ioh,
+		bus_space_write_le_8(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_AVAIL, addr + vq->vq_availoffset);
-		bus_space_write_8(iot, ioh,
+		bus_space_write_le_8(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_USED, addr + vq->vq_usedoffset);
 		bus_space_write_2(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_ENABLE, 1);
@@ -763,6 +771,7 @@ virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 			VIRTIO_CONFIG1_QUEUE_MSIX_VECTOR, vec);
 	}
 }
+#undef bus_space_write_le_8
 
 static void
 virtio_pci_set_status_10(struct virtio_softc *sc, int status)
