@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.250 2021/01/21 23:06:06 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.251 2021/01/21 23:25:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.250 2021/01/21 23:06:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.251 2021/01/21 23:25:08 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -137,6 +137,10 @@ typedef enum CondResult {
 	CR_FALSE, CR_TRUE, CR_ERROR
 } CondResult;
 
+typedef enum ComparisonOp {
+	LT, LE, GT, GE, EQ, NE
+} ComparisonOp;
+
 typedef struct CondParser {
 
 	/*
@@ -166,6 +170,8 @@ static CondResult CondParser_Or(CondParser *par, Boolean);
 
 static unsigned int cond_depth = 0;	/* current .if nesting level */
 static unsigned int cond_min_depth = 0;	/* depth at makefile open */
+
+static const char *opname[] = { "<", "<=", ">", ">=", "==", "!=" };
 
 /*
  * Indicate when we should be strict about lhs of comparisons.
@@ -575,63 +581,88 @@ EvalNotEmpty(CondParser *par, const char *value, Boolean quoted)
 }
 
 /* Evaluate a numerical comparison, such as in ".if ${VAR} >= 9". */
-static Token
-EvalCompareNum(double lhs, const char *op, double rhs)
+static Boolean
+EvalCompareNum(double lhs, ComparisonOp op, double rhs)
 {
-	/* FIXME: %2.s is cheated and produces wrong output. */
-	DEBUG3(COND, "lhs = %f, rhs = %f, op = %.2s\n", lhs, rhs, op);
+	DEBUG3(COND, "lhs = %f, rhs = %f, op = %.2s\n", lhs, rhs, opname[op]);
 
-	switch (op[0]) {
-	case '!':
-		if (op[1] != '=') {
-			Parse_Error(PARSE_WARNING, "Unknown operator");
-			/* The PARSE_FATAL follows in CondEvalExpression. */
-			return TOK_ERROR;
-		}
-		return ToToken(lhs != rhs);
-	case '=':
-		if (op[1] != '=') {
-			Parse_Error(PARSE_WARNING, "Unknown operator");
-			/* The PARSE_FATAL follows in CondEvalExpression. */
-			return TOK_ERROR;
-		}
-		return ToToken(lhs == rhs);
-	case '<':
-		return ToToken(op[1] == '=' ? lhs <= rhs : lhs < rhs);
-	case '>':
-		return ToToken(op[1] == '=' ? lhs >= rhs : lhs > rhs);
+	switch (op) {
+	case LT:
+		return lhs < rhs;
+	case LE:
+		return lhs <= rhs;
+	case GT:
+		return lhs > rhs;
+	case GE:
+		return lhs >= rhs;
+	case NE:
+		return lhs != rhs;
+	default:
+		return lhs == rhs;
 	}
-	return TOK_ERROR;
 }
 
 static Token
-EvalCompareStr(const char *lhs, const char *op, const char *rhs)
+EvalCompareStr(const char *lhs, ComparisonOp op, const char *rhs)
 {
-	if (!((op[0] == '!' || op[0] == '=') && op[1] == '=')) {
+	if (op != EQ && op != NE) {
 		Parse_Error(PARSE_WARNING,
-			    "String comparison operator "
-			    "must be either == or !=");
+		    "String comparison operator must be either == or !=");
 		/* The PARSE_FATAL follows in CondEvalExpression. */
 		return TOK_ERROR;
 	}
 
-	/* FIXME: %2.s is cheated and produces wrong output. */
-	DEBUG3(COND, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n", lhs, rhs, op);
-	return ToToken((*op == '=') == (strcmp(lhs, rhs) == 0));
+	DEBUG3(COND, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
+	    lhs, rhs, opname[op]);
+	return ToToken((op == EQ) == (strcmp(lhs, rhs) == 0));
 }
 
 /* Evaluate a comparison, such as "${VAR} == 12345". */
 static Token
-EvalCompare(const char *lhs, Boolean lhsQuoted, const char *op,
+EvalCompare(const char *lhs, Boolean lhsQuoted, ComparisonOp op,
 	    const char *rhs, Boolean rhsQuoted)
 {
 	double left, right;
 
 	if (!rhsQuoted && !lhsQuoted)
 		if (TryParseNumber(lhs, &left) && TryParseNumber(rhs, &right))
-			return EvalCompareNum(left, op, right);
+			return ToToken(EvalCompareNum(left, op, right));
 
 	return EvalCompareStr(lhs, op, rhs);
+}
+
+static Boolean
+CondParser_ComparisonOp(CondParser *par, ComparisonOp *out_op)
+{
+	const char *p = par->p;
+
+	if (p[0] == '<' && p[1] == '=') {
+		*out_op = LE;
+		goto length_2;
+	} else if (p[0] == '<') {
+		*out_op = LT;
+		goto length_1;
+	} else if (p[0] == '>' && p[1] == '=') {
+		*out_op = GE;
+		goto length_2;
+	} else if (p[0] == '>') {
+		*out_op = GT;
+		goto length_1;
+	} else if (p[0] == '=' && p[1] == '=') {
+		*out_op = EQ;
+		goto length_2;
+	} else if (p[0] == '!' && p[1] == '=') {
+		*out_op = NE;
+		goto length_2;
+	}
+	return FALSE;
+
+length_2:
+	par->p = p + 2;
+	return TRUE;
+length_1:
+	par->p = p + 1;
+	return TRUE;
 }
 
 /*
@@ -647,7 +678,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 {
 	Token t = TOK_ERROR;
 	FStr lhs, rhs;
-	const char *op;
+	ComparisonOp op;
 	Boolean lhsQuoted, rhsQuoted;
 
 	/*
@@ -660,18 +691,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 
 	CondParser_SkipWhitespace(par);
 
-	op = par->p;
-	switch (par->p[0]) {
-	case '!':
-	case '=':
-	case '<':
-	case '>':
-		if (par->p[1] == '=')
-			par->p += 2;
-		else
-			par->p++;
-		break;
-	default:
+	if (!CondParser_ComparisonOp(par, &op)) {
 		/* Unknown operator, compare against an empty string or 0. */
 		t = ToToken(doEval && EvalNotEmpty(par, lhs.str, lhsQuoted));
 		goto done_lhs;
