@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.244 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.245 2021/01/21 14:30:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -413,7 +413,10 @@ typedef struct GNode {
 	 * this node, in the normal sense. */
 	GNodeList order_succ;
 
-	/* Other nodes of the same name, for the '::' dependency operator. */
+	/*
+	 * Other nodes of the same name, for targets that were defined using
+	 * the '::' dependency operator (OP_DOUBLEDEP).
+	 */
 	GNodeList cohorts;
 	/* The "#n" suffix for this cohort, or "" for other nodes */
 	char cohort_num[8];
