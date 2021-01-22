@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.252 2021/01/21 23:32:28 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.253 2021/01/22 00:12:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.252 2021/01/21 23:32:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.253 2021/01/22 00:12:01 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -228,7 +228,7 @@ CondParser_SkipWhitespace(CondParser *par)
  * Return the length of the argument, or 0 on error.
  */
 static size_t
-ParseFuncArg(const char **pp, Boolean doEval, const char *func,
+ParseFuncArg(CondParser *par, const char **pp, Boolean doEval, const char *func,
 	     char **out_arg)
 {
 	const char *p = *pp;
@@ -288,10 +288,9 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 	cpp_skip_hspace(&p);
 
 	if (func != NULL && *p++ != ')') {
-		Parse_Error(PARSE_WARNING,
-			    "Missing closing parenthesis for %s()",
-			    func);
-		/* The PARSE_FATAL follows in CondEvalExpression. */
+		Parse_Error(PARSE_FATAL,
+		    "Missing closing parenthesis for %s()", func);
+		par->printedError = TRUE;
 		return 0;
 	}
 
@@ -731,8 +730,9 @@ done_lhs:
  */
 /*ARGSUSED*/
 static size_t
-ParseEmptyArg(const char **pp, Boolean doEval,
-	      const char *func MAKE_ATTR_UNUSED, char **out_arg)
+ParseEmptyArg(CondParser *par MAKE_ATTR_UNUSED, const char **pp,
+	      Boolean doEval, const char *func MAKE_ATTR_UNUSED,
+	      char **out_arg)
 {
 	FStr val;
 	size_t magic_res;
@@ -780,8 +780,8 @@ CondParser_Func(CondParser *par, Boolean doEval, Token *out_token)
 	static const struct fn_def {
 		const char *fn_name;
 		size_t fn_name_len;
-		size_t (*fn_parse)(const char **, Boolean, const char *,
-				   char **);
+		size_t (*fn_parse)(CondParser *, const char **, Boolean,
+				   const char *, char **);
 		Boolean (*fn_eval)(size_t, const char *);
 	} fns[] = {
 		{ "defined",  7, ParseFuncArg,  FuncDefined },
@@ -806,7 +806,7 @@ CondParser_Func(CondParser *par, Boolean doEval, Token *out_token)
 		if (*cp != '(')
 			break;
 
-		arglen = fn->fn_parse(&cp, doEval, fn->fn_name, &arg);
+		arglen = fn->fn_parse(par, &cp, doEval, fn->fn_name, &arg);
 		if (arglen == 0 || arglen == (size_t)-1) {
 			par->p = cp;
 			*out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
@@ -852,7 +852,7 @@ CondParser_LeafToken(CondParser *par, Boolean doEval)
 	 * syntax would be invalid if we did "defined(a)" - so instead treat
 	 * as an expression.
 	 */
-	arglen = ParseFuncArg(&cp, doEval, NULL, &arg);
+	arglen = ParseFuncArg(par, &cp, doEval, NULL, &arg);
 	cp1 = cp;
 	cpp_skip_whitespace(&cp1);
 	if (*cp1 == '=' || *cp1 == '!')
