@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.336 2021/01/23 10:48:49 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.337 2021/01/23 11:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.336 2021/01/23 10:48:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.337 2021/01/23 11:34:41 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -902,11 +902,11 @@ Suff_DoPaths(void)
 		}
 	}
 
-	flags = SearchPath_ToFlags("-I", includesPath);
+	flags = SearchPath_ToFlags(includesPath, "-I");
 	Var_Set(".INCLUDES", flags, VAR_GLOBAL);
 	free(flags);
 
-	flags = SearchPath_ToFlags("-L", libsPath);
+	flags = SearchPath_ToFlags(libsPath, "-L");
 	Var_Set(".LIBS", flags, VAR_GLOBAL);
 	free(flags);
 

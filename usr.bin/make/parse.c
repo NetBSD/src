@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.528 2021/01/23 10:48:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.529 2021/01/23 11:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.528 2021/01/23 10:48:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.529 2021/01/23 11:34:41 rillig Exp $");
 
 /* types and constants */
 
@@ -1322,7 +1322,7 @@ AddToPaths(const char *dir, SearchPathList *paths)
 	if (paths != NULL) {
 		SearchPathListNode *ln;
 		for (ln = paths->first; ln != NULL; ln = ln->next)
-			(void)Dir_AddDir(ln->datum, dir);
+			(void)SearchPath_Add(ln->datum, dir);
 	}
 }
 
@@ -2071,7 +2071,7 @@ ParseAddCmd(GNode *gn, char *cmd)
 void
 Parse_AddIncludeDir(const char *dir)
 {
-	(void)Dir_AddDir(parseIncPath, dir);
+	(void)SearchPath_Add(parseIncPath, dir);
 }
 
 /*
