@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.16 2020/04/02 15:30:26 msaitoh Exp $ */
+/*	$NetBSD: bus_space.h,v 1.17 2021/01/23 19:38:08 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -174,11 +174,6 @@ struct mvme68k_bus_space_tag {
 #define	bus_space_peek_4(t, h, o, vp)					\
     (*((t)->bs_peek_4))((t)->bs_cookie, (h), (o), (vp))
 
-#if 0	/* Cause a link error for bus_space_peek_8 */
-#define	bus_space_peek_8(t, h, o, vp)					\
-    (*((t)->bs_peek_8))((t)->bs_cookie, (h), (o), (vp))
-#endif
-
 /*
  *	int bus_space_poke_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t value);
@@ -196,11 +191,6 @@ struct mvme68k_bus_space_tag {
 
 #define	bus_space_poke_4(t, h, o, v)					\
     (*((t)->bs_poke_4))((t)->bs_cookie, (h), (o), (v))
-
-#if 0	/* Cause a link error for bus_space_poke_8 */
-#define	bus_space_poke_8(t, h, o, v)					\
-    (*((t)->bs_poke_8))((t)->bs_cookie, (h), (o), (v))
-#endif
 
 /*
  *	uintN_t bus_space_read_N(bus_space_tag_t tag,
@@ -267,10 +257,6 @@ struct mvme68k_bus_space_tag {
 		    "a0","a1","d0");					\
 } while (0);
 
-#if 0	/* Cause a link error for bus_space_read_multi_8 */
-#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -322,10 +308,6 @@ struct mvme68k_bus_space_tag {
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
 } while (0);
-
-#if 0	/* Cause a link error for bus_space_read_region_8 */
-#define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
-#endif
 
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
@@ -399,11 +381,6 @@ struct mvme68k_bus_space_tag {
 		    "a0","a1","d0");					\
 } while (0);
 
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -454,11 +431,6 @@ struct mvme68k_bus_space_tag {
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
 } while (0);
-
-#if 0	/* Cause a link error for bus_space_write_region_8 */
-#define	bus_space_write_region_8					\
-			!!! bus_space_write_region_8 unimplemented !!!
-#endif
 
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
@@ -511,11 +483,6 @@ struct mvme68k_bus_space_tag {
 		    "a0","d0","d1");					\
 } while (0);
 
-#if 0	/* Cause a link error for bus_space_set_multi_8 */
-#define	bus_space_set_multi_8						\
-			!!! bus_space_set_multi_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
@@ -567,11 +534,6 @@ struct mvme68k_bus_space_tag {
 		    "a0","d0","d1");					\
 } while (0);
 
-#if 0	/* Cause a link error for bus_space_set_region_8 */
-#define	bus_space_set_region_8						\
-			!!! bus_space_set_region_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_copy_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
@@ -615,10 +577,6 @@ __CONCAT(bus_space_copy_region_,BYTES)(					\
 __MVME68K_copy_region_N(1)
 __MVME68K_copy_region_N(2)
 __MVME68K_copy_region_N(4)
-#if 0	/* Cause a link error for bus_space_copy_8 */
-#define	bus_space_copy_8						\
-			!!! bus_space_copy_8 unimplemented !!!
-#endif
 
 #undef __MVME68K_copy_region_N
 

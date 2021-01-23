@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.29 2020/04/02 15:30:26 msaitoh Exp $	*/
+/*	$NetBSD: bus.h,v 1.30 2021/01/23 19:38:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -266,12 +266,6 @@ u_int32_t mac68k_bsrs4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t);
 #define	bus_space_read_stream_2(t,h,o)	(h).bsrs2((t), &(h), (o))
 #define	bus_space_read_stream_4(t,h,o)	(h).bsrs4((t), &(h), (o))
 
-#if 0	/* Cause a link error for bus_space_read_8 */
-#define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
-#define	bus_space_read_stream_8(t, h, o) \
-				!!! bus_space_read_stream_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t *addr,
@@ -342,12 +336,6 @@ void mac68k_bsrms4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 	do { if (c) (h).bsrms2(t, &(h), o, a, c); } while (0)
 #define	bus_space_read_multi_stream_4(t, h, o, a, c) \
 	do { if (c) (h).bsrms4(t, &(h), o, a, c); } while (0)
-#endif
-
-#if 0	/* Cause a link error for bus_space_read_multi_8 */
-#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
-#define	bus_space_read_multi_stream_8	\
-			!!! bus_space_read_multi_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -421,12 +409,6 @@ void mac68k_bsrrs4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 	do { if (c) (h).bsrrs4(t,&(h),o,a,c); } while (0)
 #endif
 
-#if 0	/* Cause a link error for bus_space_read_region_8 */
-#define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
-#define	bus_space_read_region_stream_8	\
-			!!! bus_space_read_region_stream_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t value);
@@ -459,12 +441,6 @@ void mac68k_bsws4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 #define	bus_space_write_stream_1(t, h, o, v) (h).bsws1(t, &(h), o, v)
 #define	bus_space_write_stream_2(t, h, o, v) (h).bsws2(t, &(h), o, v)
 #define	bus_space_write_stream_4(t, h, o, v) (h).bsws4(t, &(h), o, v)
-
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
-#define	bus_space_write_stream_8 \
-			!!! bus_space_write_stream_8 not implemented !!!
-#endif
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
@@ -534,13 +510,6 @@ void mac68k_bswms4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 	do { if (c) (h).bswms2(t, &(h), o, a, c); } while (0)
 #define	bus_space_write_multi_stream_4(t, h, o, a, c) \
 	do { if (c) (h).bswms4(t, &(h), o, a, c); } while (0)
-#endif
-
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplemented !!!
-#define	bus_space_write_multi_stream_8(t, h, o, a, c)			\
-			!!! bus_space_write_multi_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -613,13 +582,6 @@ void mac68k_bswrs4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 	do { if (c) (h).bswrs4(t,&(h),o,a,c); } while (0)
 #endif
 
-#if 0	/* Cause a link error for bus_space_write_region_8 */
-#define	bus_space_write_region_8					\
-			!!! bus_space_write_region_8 unimplemented !!!
-#define	bus_space_write_region_stream_8				\
-			!!! bus_space_write_region_stream_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
@@ -666,11 +628,6 @@ void mac68k_bssm4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 	do { if (c) (h).bssm2(t,&(h),o,val,c); } while (0)
 #define	bus_space_set_multi_4(t, h, o, val, c) \
 	do { if (c) (h).bssm4(t,&(h),o,val,c); } while (0)
-#endif
-
-#if 0	/* Cause a link error for bus_space_set_multi_8 */
-#define	bus_space_set_multi_8						\
-			!!! bus_space_set_multi_8 unimplemented !!!
 #endif
 
 /*
@@ -721,11 +678,6 @@ void mac68k_bssr4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 	do { if (c) (h).bssr4(t,&(h),o,val,c); } while (0)
 #endif
 
-#if 0	/* Cause a link error for bus_space_set_region_8 */
-#define	bus_space_set_region_8						\
-			!!! bus_space_set_region_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_copy_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
@@ -768,10 +720,6 @@ __CONCAT(bus_space_copy_region_,BYTES)(					\
 __MAC68K_copy_region_N(1)
 __MAC68K_copy_region_N(2)
 __MAC68K_copy_region_N(4)
-#if 0	/* Cause a link error for bus_space_copy_8 */
-#define	bus_space_copy_8						\
-			!!! bus_space_copy_8 unimplemented !!!
-#endif
 
 #undef __MAC68K_copy_region_N
 

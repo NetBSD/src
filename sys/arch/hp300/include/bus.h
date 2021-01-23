@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2020/04/02 15:30:26 msaitoh Exp $	*/
+/*	$NetBSD: bus.h,v 1.21 2021/01/23 19:38:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -243,10 +243,6 @@ int	hp300_bus_space_probe(bus_space_tag_t t,
     (((t)->bsr4 != NULL) ? ((t)->bsr4)(t, h, o) :			\
     (*(volatile uint32_t *)((h) + (o))))
 
-#if 0	/* Cause a link error for bus_space_read_8 */
-#define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -308,10 +304,6 @@ do {									\
 			    "%a0","%a1","%d0");				\
 	}								\
 } while (/* CONSTCOND */ 0)
-
-#if 0	/* Cause a link error for bus_space_read_multi_8 */
-#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
-#endif
 
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
@@ -377,10 +369,6 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#if 0	/* Cause a link error for bus_space_read_region_8 */
-#define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -413,10 +401,6 @@ do {									\
 	else								\
 		((void)(*(volatile uint32_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
-
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
-#endif
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
@@ -482,11 +466,6 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -550,11 +529,6 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#if 0	/* Cause a link error for bus_space_write_region_8 */
-#define	bus_space_write_region_8					\
-			!!! bus_space_write_region_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
@@ -617,11 +591,6 @@ do {									\
 			    "%a0","%d0","%d1");				\
 	}								\
 } while (/* CONSTCOND */ 0)
-
-#if 0	/* Cause a link error for bus_space_set_multi_8 */
-#define	bus_space_set_multi_8						\
-			!!! bus_space_set_multi_8 unimplemented !!!
-#endif
 
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
@@ -687,11 +656,6 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#if 0	/* Cause a link error for bus_space_set_region_8 */
-#define	bus_space_set_region_8						\
-			!!! bus_space_set_region_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_copy_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
@@ -725,10 +689,6 @@ __CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t t,		\
 __HP300_copy_region_N(1)
 __HP300_copy_region_N(2)
 __HP300_copy_region_N(4)
-#if 0	/* Cause a link error for bus_space_copy_region_8 */
-#define	bus_space_copy_region_8						\
-			!!! bus_space_copy_region_8 unimplemented !!!
-#endif
 
 #undef __HP300_copy_region_N
 

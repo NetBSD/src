@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2020/04/02 15:30:27 msaitoh Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2021/01/23 19:38:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -173,10 +173,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 #define	bus_space_read_4(t, h, o)					\
     ((void) t, (*(volatile uint32_t *)((h) + (o))))
 
-#if 0	/* Cause a link error for bus_space_read_8 */
-#define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -227,10 +223,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "%a0","%a1","%d0");					\
 } while (0)
-
-#if 0	/* Cause a link error for bus_space_read_multi_8 */
-#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
-#endif
 
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
@@ -284,10 +276,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		    "%a0","%a1","%d0");					\
 } while (0)
 
-#if 0	/* Cause a link error for bus_space_read_region_8 */
-#define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -305,10 +293,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 
 #define	bus_space_write_4(t, h, o, v)					\
     ((void) t, ((void)(*(volatile uint32_t *)((h) + (o)) = (v))))
-
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
-#endif
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
@@ -361,11 +345,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		    "%a0","%a1","%d0");					\
 } while (0)
 
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -416,11 +395,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "%a0","%a1","%d0");					\
 } while (0)
-
-#if 0	/* Cause a link error for bus_space_write_region_8 */
-#define	bus_space_write_region_8					\
-			!!! bus_space_write_region_8 unimplemented !!!
-#endif
 
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
@@ -473,11 +447,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		    "%a0","%d0","%d1");					\
 } while (0)
 
-#if 0	/* Cause a link error for bus_space_set_multi_8 */
-#define	bus_space_set_multi_8						\
-			!!! bus_space_set_multi_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
@@ -529,11 +498,6 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		    "%a0","%d0","%d1");					\
 } while (0)
 
-#if 0	/* Cause a link error for bus_space_set_region_8 */
-#define	bus_space_set_region_8						\
-			!!! bus_space_set_region_8 unimplemented !!!
-#endif
-
 /*
  *	void bus_space_copy_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
@@ -573,10 +537,6 @@ __CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t t,		\
 __NEWS68K_copy_region_N(1)
 __NEWS68K_copy_region_N(2)
 __NEWS68K_copy_region_N(4)
-#if 0	/* Cause a link error for bus_space_copy_region_8 */
-#define	bus_space_copy_region_8						\
-			!!! bus_space_copy_region_8 unimplemented !!!
-#endif
 
 #undef __NEWS68K_copy_region_N
 
