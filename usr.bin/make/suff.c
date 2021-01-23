@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.337 2021/01/23 11:34:41 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.338 2021/01/23 12:25:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.337 2021/01/23 11:34:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.338 2021/01/23 12:25:35 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1176,7 +1176,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 	GNode *tgn;		/* Target GNode */
 	GNode *sgn;		/* Source GNode */
 	size_t prefLen;		/* The length of the defined prefix */
-	Suffix *suff;		/* Suffix on matching beastie */
+	Suffix *suff;		/* Suffix of the matching candidate */
 	Candidate *ret;		/* Return value */
 
 	tgn = targ->node;
