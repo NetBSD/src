@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.257 2021/01/23 10:52:03 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.258 2021/01/23 11:06:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.257 2021/01/23 10:52:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.258 2021/01/23 11:06:04 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -846,23 +846,23 @@ PrintExpansions(StringList *expansions)
 void
 SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 {
-	const char *cp;
+	const char *brace, *slash, *wildcard, *wildcardComponent;
 
 	assert(path != NULL);
 	assert(expansions != NULL);
 
 	DEBUG1(DIR, "Expanding \"%s\"... ", pattern);
 
-	cp = strchr(pattern, '{');
-	if (cp != NULL) {
-		DirExpandCurly(pattern, cp, path, expansions);
+	brace = strchr(pattern, '{');
+	if (brace != NULL) {
+		DirExpandCurly(pattern, brace, path, expansions);
 		goto done;
 	}
 
 	/* At this point, the pattern does not contain '{'. */
 
-	cp = strchr(pattern, '/');
-	if (cp == NULL) {
+	slash = strchr(pattern, '/');
+	if (slash == NULL) {
 		/* The pattern has no directory component. */
 
 		/* First the files in dot. */
@@ -875,11 +875,11 @@ SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 	/* At this point, the pattern has a directory component. */
 
 	/* Find the first wildcard in the pattern. */
-	for (cp = pattern; *cp != '\0'; cp++)
-		if (*cp == '?' || *cp == '[' || *cp == '*')
+	for (wildcard = pattern; *wildcard != '\0'; wildcard++)
+		if (*wildcard == '?' || *wildcard == '[' || *wildcard == '*')
 			break;
 
-	if (*cp == '\0') {
+	if (*wildcard == '\0') {
 		/*
 		 * No directory component and no wildcard at all -- this
 		 * should never happen as in such a simple case there is no
@@ -891,10 +891,11 @@ SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 
 	/* Back up to the start of the component containing the wildcard. */
 	/* XXX: This handles '///' and '/' differently. */
-	while (cp > pattern && *cp != '/')
-		cp--;
+	wildcardComponent = wildcard;
+	while (wildcardComponent > pattern && *wildcardComponent != '/')
+		wildcardComponent--;
 
-	if (cp == pattern) {
+	if (wildcardComponent == pattern) {
 		/* The first component contains the wildcard. */
 		/* Start the search from the local directory */
 		DirExpandPath(pattern, path, expansions);
@@ -902,7 +903,7 @@ SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 	}
 
 	{
-		char *prefix = bmake_strsedup(pattern, cp + 1);
+		char *prefix = bmake_strsedup(pattern, wildcardComponent + 1);
 		/*
 		 * The wildcard isn't in the first component.
 		 * Find all the components up to the one with the wildcard.
@@ -938,7 +939,7 @@ SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 
 			partPath = SearchPath_New();
 			(void)Dir_AddDir(partPath, dirpath);
-			DirExpandPath(cp + 1, partPath, expansions);
+			DirExpandPath(wildcardComponent + 1, partPath, expansions);
 			SearchPath_Free(partPath);
 		}
 	}
