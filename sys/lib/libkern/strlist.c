@@ -1,4 +1,4 @@
-/*	$NetBSD: strlist.c,v 1.1 2021/01/21 15:43:37 thorpej Exp $	*/
+/*	$NetBSD: strlist.c,v 1.2 2021/01/23 19:41:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -65,12 +65,13 @@ strlist_free(void * const v, size_t const size)
 	kmem_free(v, size);
 }
 #elif defined(_STANDALONE)
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 
 static void *
 strlist_alloc(size_t const size)
 {
-	cp = alloc(size);
+	char *cp = alloc(size);
 	if (cp != NULL) {
 		memset(cp, 0, size);
 	}
