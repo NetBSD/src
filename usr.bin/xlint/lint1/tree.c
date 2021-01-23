@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.183 2021/01/23 22:20:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.184 2021/01/23 22:34:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.183 2021/01/23 22:20:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.184 2021/01/23 22:34:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1120,12 +1120,9 @@ is_symmetric_bool_or_other(op_t op)
 }
 
 static bool
-is_bool_int_constant(const tnode_t *tn, tspec_t t)
+is_int_constant_zero(const tnode_t *tn, tspec_t t)
 {
-	return t == INT &&
-	       tn->tn_from_system_header &&
-	       tn->tn_op == CON &&
-	       (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1);
+	return t == INT && tn->tn_op == CON && tn->tn_val->v_quad == 0;
 }
 
 static bool
@@ -1139,7 +1136,8 @@ is_typeok_strict_bool(op_t op,
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
 
-	if (is_bool_int_constant(ln, lt) || is_bool_int_constant(rn, rt))
+	if ((ln->tn_from_system_header || rn->tn_from_system_header) &&
+	    (is_int_constant_zero(ln, lt) || is_int_constant_zero(rn, rt)))
 		return true;
 
 	if (is_assignment_bool_or_other(op)) {
