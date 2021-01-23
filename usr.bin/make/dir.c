@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.262 2021/01/23 12:25:35 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.263 2021/01/23 12:36:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.262 2021/01/23 12:25:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.263 2021/01/23 12:36:02 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -1064,6 +1064,115 @@ DirFindDot(const char *name, const char *base)
 	return NULL;
 }
 
+static Boolean
+FindFileRelative(SearchPath *path, Boolean seenDotLast,
+		 const char *name, char **out_file)
+{
+	SearchPathNode *ln;
+	Boolean checkedDot = FALSE;
+	char *file;
+
+	DEBUG0(DIR, "   Trying subdirectories...\n");
+
+	if (!seenDotLast) {
+		if (dot != NULL) {
+			checkedDot = TRUE;
+			if ((file = DirLookupSubdir(dot, name)) != NULL)
+				goto found;
+		}
+		if (cur != NULL &&
+		    (file = DirLookupSubdir(cur, name)) != NULL)
+			goto found;
+	}
+
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+		CachedDir *dir = ln->datum;
+		if (dir == dotLast)
+			continue;
+		if (dir == dot) {
+			if (checkedDot)
+				continue;
+			checkedDot = TRUE;
+		}
+		if ((file = DirLookupSubdir(dir, name)) != NULL)
+			goto found;
+	}
+
+	if (seenDotLast) {
+		if (dot != NULL && !checkedDot) {
+			checkedDot = TRUE;
+			if ((file = DirLookupSubdir(dot, name)) != NULL)
+				goto found;
+		}
+		if (cur != NULL &&
+		    (file = DirLookupSubdir(cur, name)) != NULL)
+			goto found;
+	}
+
+	if (checkedDot) {
+		/*
+		 * Already checked by the given name, since . was in
+		 * the path, so no point in proceeding.
+		 */
+		DEBUG0(DIR, "   Checked . already, returning NULL\n");
+		file = NULL;
+		goto found;
+	}
+
+	return FALSE;
+
+found:
+	*out_file = file;
+	return TRUE;
+}
+
+static Boolean
+FindFileAbsolute(SearchPath *path, Boolean const seenDotLast,
+		 const char *const name, const char *const base,
+		 char **out_file)
+{
+	char *file;
+	SearchPathNode *ln;
+
+	/*
+	 * For absolute names, compare directory path prefix against
+	 * the the directory path of each member on the search path
+	 * for an exact match. If we have an exact match on any member
+	 * of the search path, use the cached contents of that member
+	 * to lookup the final file component. If that lookup fails we
+	 * can safely assume that the file does not exist at all.
+	 * This is signified by DirLookupAbs() returning an empty
+	 * string.
+	 */
+	DEBUG0(DIR, "   Trying exact path matches...\n");
+
+	if (!seenDotLast && cur != NULL &&
+	    ((file = DirLookupAbs(cur, name, base)) != NULL))
+		goto found;
+
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+		CachedDir *dir = ln->datum;
+		if (dir == dotLast)
+			continue;
+		if ((file = DirLookupAbs(dir, name, base)) != NULL)
+			goto found;
+	}
+
+	if (seenDotLast && cur != NULL &&
+	    ((file = DirLookupAbs(cur, name, base)) != NULL))
+		goto found;
+
+	return FALSE;
+
+found:
+	if (file[0] == '\0') {
+		free(file);
+		file = NULL;
+	}
+	*out_file = file;
+	return TRUE;
+}
+
 /*
  * Find the file with the given name along the given search path.
  *
@@ -1170,100 +1279,11 @@ Dir_FindFile(const char *name, SearchPath *path)
 	}
 
 	if (name[0] != '/') {
-		SearchPathNode *ln;
-		Boolean checkedDot = FALSE;
-
-		DEBUG0(DIR, "   Trying subdirectories...\n");
-
-		if (!seenDotLast) {
-			if (dot != NULL) {
-				checkedDot = TRUE;
-				if ((file = DirLookupSubdir(dot, name)) != NULL)
-					return file;
-			}
-			if (cur != NULL &&
-			    (file = DirLookupSubdir(cur, name)) != NULL)
-				return file;
-		}
-
-		for (ln = path->first; ln != NULL; ln = ln->next) {
-			CachedDir *dir = ln->datum;
-			if (dir == dotLast)
-				continue;
-			if (dir == dot) {
-				if (checkedDot)
-					continue;
-				checkedDot = TRUE;
-			}
-			if ((file = DirLookupSubdir(dir, name)) != NULL)
-				return file;
-		}
-
-		if (seenDotLast) {
-			if (dot != NULL && !checkedDot) {
-				checkedDot = TRUE;
-				if ((file = DirLookupSubdir(dot, name)) != NULL)
-					return file;
-			}
-			if (cur != NULL &&
-			    (file = DirLookupSubdir(cur, name)) != NULL)
-				return file;
-		}
-
-		if (checkedDot) {
-			/*
-			 * Already checked by the given name, since . was in
-			 * the path, so no point in proceeding.
-			 */
-			DEBUG0(DIR, "   Checked . already, returning NULL\n");
-			return NULL;
-		}
-
-	} else { /* name[0] == '/' */
-		SearchPathNode *ln;
-
-		/*
-		 * For absolute names, compare directory path prefix against
-		 * the the directory path of each member on the search path
-		 * for an exact match. If we have an exact match on any member
-		 * of the search path, use the cached contents of that member
-		 * to lookup the final file component. If that lookup fails we
-		 * can safely assume that the file does not exist at all.
-		 * This is signified by DirLookupAbs() returning an empty
-		 * string.
-		 */
-		DEBUG0(DIR, "   Trying exact path matches...\n");
-
-		if (!seenDotLast && cur != NULL &&
-		    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
-			if (file[0] == '\0') {
-				free(file);
-				return NULL;
-			}
+		if (FindFileRelative(path, seenDotLast, name, &file))
 			return file;
-		}
-
-		for (ln = path->first; ln != NULL; ln = ln->next) {
-			CachedDir *dir = ln->datum;
-			if (dir == dotLast)
-				continue;
-			if ((file = DirLookupAbs(dir, name, base)) != NULL) {
-				if (file[0] == '\0') {
-					free(file);
-					return NULL;
-				}
-				return file;
-			}
-		}
-
-		if (seenDotLast && cur != NULL &&
-		    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
-			if (file[0] == '\0') {
-				free(file);
-				return NULL;
-			}
+	} else {
+		if (FindFileAbsolute(path, seenDotLast, name, base, &file))
 			return file;
-		}
 	}
 
 	/*
