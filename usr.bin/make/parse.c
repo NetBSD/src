@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.529 2021/01/23 11:34:41 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.530 2021/01/23 12:03:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.529 2021/01/23 11:34:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.530 2021/01/23 12:03:25 rillig Exp $");
 
 /* types and constants */
 
@@ -1040,7 +1040,7 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
 /* Handle special targets like .PATH, .DEFAULT, .BEGIN, .ORDER. */
 static void
 ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
-			       const char *line, /* XXX: bad name */
+			       const char *targetName,
 			       SearchPathList **inout_paths)
 {
 	switch (*inout_specType) {
@@ -1062,7 +1062,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	case SP_STALE:
 	case SP_ERROR:
 	case SP_INTERRUPT: {
-		GNode *gn = Targ_GetNode(line);
+		GNode *gn = Targ_GetNode(targetName);
 		if (doing_depend)
 			ParseMark(gn);
 		gn->type |= OP_NOTMAIN | OP_SPECIAL;
@@ -1105,15 +1105,15 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
  * Call on the suffix module to give us a path to modify.
  */
 static Boolean
-ParseDoDependencyTargetPath(const char *line, /* XXX: bad name */
+ParseDoDependencyTargetPath(const char *suffixName,
 			    SearchPathList **inout_paths)
 {
 	SearchPath *path;
 
-	path = Suff_GetPath(&line[5]);
+	path = Suff_GetPath(suffixName);
 	if (path == NULL) {
 		Parse_Error(PARSE_FATAL,
-		    "Suffix '%s' not defined (yet)", &line[5]);
+		    "Suffix '%s' not defined (yet)", suffixName);
 		return FALSE;
 	}
 
@@ -1128,20 +1128,20 @@ ParseDoDependencyTargetPath(const char *line, /* XXX: bad name */
  * See if it's a special target and if so set specType to match it.
  */
 static Boolean
-ParseDoDependencyTarget(const char *line, /* XXX: bad name */
+ParseDoDependencyTarget(const char *targetName,
 			ParseSpecial *inout_specType,
 			GNodeType *out_tOp, SearchPathList **inout_paths)
 {
 	int keywd;
 
-	if (!(line[0] == '.' && ch_isupper(line[1])))
+	if (!(targetName[0] == '.' && ch_isupper(targetName[1])))
 		return TRUE;
 
 	/*
 	 * See if the target is a special target that must have it
 	 * or its sources handled specially.
 	 */
-	keywd = ParseFindKeyword(line);
+	keywd = ParseFindKeyword(targetName);
 	if (keywd != -1) {
 		if (*inout_specType == SP_PATH &&
 		    parseKeywords[keywd].spec != SP_PATH) {
@@ -1152,22 +1152,21 @@ ParseDoDependencyTarget(const char *line, /* XXX: bad name */
 		*inout_specType = parseKeywords[keywd].spec;
 		*out_tOp = parseKeywords[keywd].op;
 
-		ParseDoDependencyTargetSpecial(inout_specType, line,
+		ParseDoDependencyTargetSpecial(inout_specType, targetName,
 		    inout_paths);
 
-	} else if (strncmp(line, ".PATH", 5) == 0) {
+	} else if (strncmp(targetName, ".PATH", 5) == 0) {
 		*inout_specType = SP_PATH;
-		if (!ParseDoDependencyTargetPath(line, inout_paths))
+		if (!ParseDoDependencyTargetPath(targetName + 5, inout_paths))
 			return FALSE;
 	}
 	return TRUE;
 }
 
 static void
-ParseDoDependencyTargetMundane(char *line, /* XXX: bad name */
-			       StringList *curTargs)
+ParseDoDependencyTargetMundane(char *targetName, StringList *curTargs)
 {
-	if (Dir_HasWildcards(line)) {
+	if (Dir_HasWildcards(targetName)) {
 		/*
 		 * Targets are to be sought only in the current directory,
 		 * so create an empty path for the thing. Note we need to
@@ -1176,7 +1175,7 @@ ParseDoDependencyTargetMundane(char *line, /* XXX: bad name */
 		 */
 		SearchPath *emptyPath = SearchPath_New();
 
-		SearchPath_Expand(emptyPath, line, curTargs);
+		SearchPath_Expand(emptyPath, targetName, curTargs);
 
 		SearchPath_Free(emptyPath);
 	} else {
@@ -1184,7 +1183,7 @@ ParseDoDependencyTargetMundane(char *line, /* XXX: bad name */
 		 * No wildcards, but we want to avoid code duplication,
 		 * so create a list with the word on it.
 		 */
-		Lst_Append(curTargs, line);
+		Lst_Append(curTargs, targetName);
 	}
 
 	/* Apply the targets. */
@@ -2191,12 +2190,12 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 }
 
 static void
-ParseDoInclude(char *line /* XXX: bad name */)
+ParseDoInclude(char *directive)
 {
 	char endc;		/* the character which ends the file spec */
 	char *cp;		/* current position in file spec */
-	Boolean silent = line[0] != 'i';
-	char *file = line + (silent ? 8 : 7);
+	Boolean silent = directive[0] != 'i';
+	char *file = directive + (silent ? 8 : 7);
 
 	/* Skip to delimiter character so we know where to look */
 	pp_skip_hspace(&file);
@@ -2236,7 +2235,7 @@ ParseDoInclude(char *line /* XXX: bad name */)
 	(void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &file);
 	/* TODO: handle errors */
 
-	Parse_include_file(file, endc == '>', line[0] == 'd', silent);
+	Parse_include_file(file, endc == '>', directive[0] == 'd', silent);
 	free(file);
 }
 
