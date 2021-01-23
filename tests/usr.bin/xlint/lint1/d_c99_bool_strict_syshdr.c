@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.4 2021/01/23 22:20:18 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.5 2021/01/23 22:34:01 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -112,11 +112,11 @@ ch_isspace_sys_int(char c)
  * does the comparison itself.
  */
 static inline _Bool
-ch_isspace_sys_bool(char c)	/*FIXME*//* expect: 231 */
+ch_isspace_sys_bool(char c)
 {
 	return
 # 119 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[(unsigned char)c] & 0x0040) != 0
 # 121 "d_c99_bool_strict_syshdr.c"
-	    != 0;		/*FIXME*//* expect: 107, 214 */
+	    != 0;
 }
