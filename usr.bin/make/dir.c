@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.256 2021/01/23 10:48:49 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.257 2021/01/23 10:52:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.256 2021/01/23 10:48:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.257 2021/01/23 10:52:03 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -835,47 +835,47 @@ PrintExpansions(StringList *expansions)
 }
 
 /*
- * Expand the given word into a list of words by globbing it, looking in the
- * directories on the given search path.
+ * Expand the given pattern into a list of existing filenames by globbing it,
+ * looking in each directory from the search path.
  *
  * Input:
- *	word		the word to expand
  *	path		the directories in which to find the files
+ *	pattern		the pattern to expand
  *	expansions	the list on which to place the results
  */
 void
-SearchPath_Expand(SearchPath *path, const char *word, StringList *expansions)
+SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 {
 	const char *cp;
 
 	assert(path != NULL);
 	assert(expansions != NULL);
 
-	DEBUG1(DIR, "Expanding \"%s\"... ", word);
+	DEBUG1(DIR, "Expanding \"%s\"... ", pattern);
 
-	cp = strchr(word, '{');
+	cp = strchr(pattern, '{');
 	if (cp != NULL) {
-		DirExpandCurly(word, cp, path, expansions);
+		DirExpandCurly(pattern, cp, path, expansions);
 		goto done;
 	}
 
-	/* At this point, the word does not contain '{'. */
+	/* At this point, the pattern does not contain '{'. */
 
-	cp = strchr(word, '/');
+	cp = strchr(pattern, '/');
 	if (cp == NULL) {
-		/* The word has no directory component. */
-		/* First the files in dot. */
-		DirMatchFiles(word, dot, expansions);
+		/* The pattern has no directory component. */
 
+		/* First the files in dot. */
+		DirMatchFiles(pattern, dot, expansions);
 		/* Then the files in every other directory on the path. */
-		DirExpandPath(word, path, expansions);
+		DirExpandPath(pattern, path, expansions);
 		goto done;
 	}
 
-	/* At this point, the word has a directory component. */
+	/* At this point, the pattern has a directory component. */
 
-	/* Find the first wildcard in the word. */
-	for (cp = word; *cp != '\0'; cp++)
+	/* Find the first wildcard in the pattern. */
+	for (cp = pattern; *cp != '\0'; cp++)
 		if (*cp == '?' || *cp == '[' || *cp == '*')
 			break;
 
@@ -885,24 +885,24 @@ SearchPath_Expand(SearchPath *path, const char *word, StringList *expansions)
 		 * should never happen as in such a simple case there is no
 		 * need to expand anything.
 		 */
-		DirExpandPath(word, path, expansions);
+		DirExpandPath(pattern, path, expansions);
 		goto done;
 	}
 
 	/* Back up to the start of the component containing the wildcard. */
 	/* XXX: This handles '///' and '/' differently. */
-	while (cp > word && *cp != '/')
+	while (cp > pattern && *cp != '/')
 		cp--;
 
-	if (cp == word) {
+	if (cp == pattern) {
 		/* The first component contains the wildcard. */
 		/* Start the search from the local directory */
-		DirExpandPath(word, path, expansions);
+		DirExpandPath(pattern, path, expansions);
 		goto done;
 	}
 
 	{
-		char *prefix = bmake_strsedup(word, cp + 1);
+		char *prefix = bmake_strsedup(pattern, cp + 1);
 		/*
 		 * The wildcard isn't in the first component.
 		 * Find all the components up to the one with the wildcard.
