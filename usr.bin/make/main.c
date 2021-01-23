@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.515 2021/01/23 10:48:49 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.516 2021/01/23 11:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.515 2021/01/23 10:48:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.516 2021/01/23 11:34:41 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -442,10 +442,10 @@ MainParseArgSysInc(const char *argvalue)
 		char *found_path = Dir_FindHereOrAbove(curdir, argvalue + 4);
 		if (found_path == NULL)
 			return;
-		(void)Dir_AddDir(sysIncPath, found_path);
+		(void)SearchPath_Add(sysIncPath, found_path);
 		free(found_path);
 	} else {
-		(void)Dir_AddDir(sysIncPath, argvalue);
+		(void)SearchPath_Add(sysIncPath, argvalue);
 	}
 	Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 	Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
@@ -1196,11 +1196,11 @@ InitDefSysIncPath(char *syspath)
 		if (strncmp(start, ".../", 4) == 0) {
 			char *dir = Dir_FindHereOrAbove(curdir, start + 4);
 			if (dir != NULL) {
-				(void)Dir_AddDir(defSysIncPath, dir);
+				(void)SearchPath_Add(defSysIncPath, dir);
 				free(dir);
 			}
 		} else {
-			(void)Dir_AddDir(defSysIncPath, start);
+			(void)SearchPath_Add(defSysIncPath, start);
 		}
 	}
 
@@ -1291,7 +1291,7 @@ InitVpath(void)
 		savec = *cp;
 		*cp = '\0';
 		/* Add directory to search path */
-		(void)Dir_AddDir(&dirSearchPath, path);
+		(void)SearchPath_Add(&dirSearchPath, path);
 		*cp = savec;
 		path = cp + 1;
 	} while (savec == ':');
