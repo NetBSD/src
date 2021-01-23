@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.2 2021/01/17 23:04:09 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.3 2021/01/23 19:03:55 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -10,10 +10,18 @@
 
 /* lint1-extra-flags: -T */
 
+extern const unsigned short *ctype_table;
+
+extern void println(const char *);
+
 /*
  * On NetBSD 8, <sys/select.h> defines FD_ISSET by enclosing the statements
- * in the well-known 'do { ... } while (constcond 0)' loop.  The 0 in the
- * controlling expression has type INT but should be allowed nevertheless.
+ * in the well-known 'do { ... } while (CONSTCOND 0)' loop.  The 0 in the
+ * controlling expression has type INT but should be allowed nevertheless
+ * since that header does not have a way to distinguish between bool and int.
+ * It just follows the C99 standard, unlike the lint-provided stdbool.h, which
+ * redefines 'false' to '__lint_false'.  Plus, <sys/select.h> must not include
+ * <stdbool.h> itself.
  */
 void
 strict_bool_system_header_statement_macro(void)
@@ -23,12 +31,12 @@ strict_bool_system_header_statement_macro(void)
 		println("nothing");
 	} while (/*CONSTCOND*/0);	/* expect: 333 */
 
-# 27 "d_c99_bool_strict_syshdr.c" 3 4
+# 35 "d_c99_bool_strict_syshdr.c" 3 4
 	do {
 		println("nothing");
 	} while (/*CONSTCOND*/0);	/* ok */
 
-# 32 "d_c99_bool_strict_syshdr.c"
+# 40 "d_c99_bool_strict_syshdr.c"
 	do {
 		println("nothing");
 	} while (/*CONSTCOND*/0);	/* expect: 333 */
@@ -41,52 +49,74 @@ strict_bool_system_header_statement_macro(void)
  * return type can be INT or BOOL, depending on whether the macros do the
  * comparison against 0 themselves.
  *
- * Since that is more code to write and in exceptional situations more code
- * to execute, they will probably leave out the extra comparison, but both
- * ways are possible.
+ * Since that comparison is more code to write and in exceptional situations
+ * more code to execute, they will probably leave out the extra comparison,
+ * but both ways are possible.
  *
- * In strict mode, there must be a way to call these function-like macros
+ * In strict bool mode, there must be a way to call these function-like macros
  * portably, without triggering type errors, no matter whether they return
  * BOOL or INT.
  *
  * The expressions from this example cross the boundary between system header
  * and application code.  They need to carry the information that they are
- * half-BOOL, half-INT across the enclosing expressions.
+ * half-BOOL, half-INT across to the enclosing expressions.
  */
 void
 strict_bool_system_header_ctype(int c)
 {
-	static const unsigned short *ctype_table;
-
-
 	/*
 	 * The macro returns INT, which may be outside the range of a
 	 * uint8_t variable, therefore it must not be assigned directly.
 	 * All other combinations of type are safe from truncation.
 	 */
 	_Bool system_int_assigned_to_bool =
-# 69 "d_c99_bool_strict_syshdr.c" 3 4
+# 74 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
-# 71 "d_c99_bool_strict_syshdr.c"
-	    ;			/* expect: 107 */
+# 76 "d_c99_bool_strict_syshdr.c"
+	;			/* expect: 107 */
 
 	int system_bool_assigned_to_int =
-# 75 "d_c99_bool_strict_syshdr.c" 3 4
+# 80 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040) != 0	/* BOOL */
-# 77 "d_c99_bool_strict_syshdr.c"
-	    ;			/* expect: 107 */
+# 82 "d_c99_bool_strict_syshdr.c"
+	;			/* expect: 107 */
 
 	if (
-# 81 "d_c99_bool_strict_syshdr.c" 3 4
+# 86 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
-# 83 "d_c99_bool_strict_syshdr.c"
+# 88 "d_c99_bool_strict_syshdr.c"
 	)			/*FIXME*//* expect: 333 */
-	println("system macro returning INT");
+		println("system macro returning INT");
 
 	if (
-# 88 "d_c99_bool_strict_syshdr.c" 3 4
+# 93 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[c] & 0x0040) != 0	/* BOOL */
-# 90 "d_c99_bool_strict_syshdr.c"
+# 95 "d_c99_bool_strict_syshdr.c"
 	)
-	println("system macro returning BOOL");
+		println("system macro returning BOOL");
+}
+
+static inline _Bool
+ch_isspace_sys_int(char c)
+{
+	return
+# 104 "d_c99_bool_strict_syshdr.c" 3 4
+	    ((ctype_table + 1)[c] & 0x0040)
+# 106 "d_c99_bool_strict_syshdr.c"
+	    != 0;
+}
+
+/*
+ * isspace is defined to return an int.  Comparing this int with 0 is the
+ * safe way to convert it to _Bool.  This must be allowed even if isspace
+ * does the comparison itself.
+ */
+static inline _Bool
+ch_isspace_sys_bool(char c)	/*FIXME*//* expect: 231 */
+{
+	return
+# 119 "d_c99_bool_strict_syshdr.c" 3 4
+	    ((ctype_table + 1)[(unsigned char)c] & 0x0040) != 0
+# 121 "d_c99_bool_strict_syshdr.c"
+	    != 0;		/*FIXME*//* expect: 107, 214 */
 }
