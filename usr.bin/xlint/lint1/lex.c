@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.1 2021/01/23 17:58:03 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.2 2021/01/23 18:30:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.1 2021/01/23 17:58:03 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.2 2021/01/23 18:30:29 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -885,14 +885,14 @@ lex_wccon(void)
  * Read a character which is part of a character constant or of a string
  * and handle escapes.
  *
- * The Argument is the character which delimits the character constant or
+ * The argument is the character which delimits the character constant or
  * string.
  *
  * Returns -1 if the end of the character constant or string is reached,
  * -2 if the EOF is reached, and the character otherwise.
  */
 static int
-getescc(int d)
+getescc(int delim)
 {
 	static	int pbc = -1;
 	int	n, c, v;
@@ -903,7 +903,7 @@ getescc(int d)
 		c = pbc;
 		pbc = -1;
 	}
-	if (c == d)
+	if (c == delim)
 		return -1;
 	switch (c) {
 	case '\n':
@@ -918,7 +918,7 @@ getescc(int d)
 	case '\\':
 		switch (c = inpc()) {
 		case '"':
-			if (tflag && d == '\'')
+			if (tflag && delim == '\'')
 				/* \" inside character constants undef... */
 				warning(262);
 			return '"';
@@ -1002,7 +1002,7 @@ getescc(int d)
 			}
 			return v;
 		case '\n':
-			return getescc(d);
+			return getescc(delim);
 		case EOF:
 			return -2;
 		default:
@@ -1045,6 +1045,7 @@ parse_line_directive_flags(const char *p)
  * Called for preprocessor directives. Currently implemented are:
  *	# lineno
  *	# lineno "filename"
+ *	# lineno "filename" GCC-flag...
  */
 void
 lex_directive(const char *yytext)
@@ -1113,19 +1114,8 @@ lex_directive(const char *yytext)
 }
 
 /*
- * Handle lint comments. Following comments are currently understood:
- *	ARGSUSEDn
- *	BITFIELDTYPE
- *	CONSTCOND CONSTANTCOND CONSTANTCONDITION
- *	FALLTHRU FALLTHROUGH
- *	LINTLIBRARY
- *	LINTEDn NOSTRICTn
- *	LONGLONG
- *	NOTREACHED
- *	PRINTFLIKEn
- *	PROTOLIB
- *	SCANFLIKEn
- *	VARARGSn
+ * Handle lint comments such as ARGSUSED.
+ *
  * If one of these comments is recognized, the argument, if any, is
  * parsed and a function which handles this comment is called.
  */
@@ -1367,7 +1357,7 @@ lex_wcstrg(void)
  * declared due to syntax errors. To avoid too many problems in this
  * case, symbols get type int in getsym().
  *
- * XXX calls to getsym() should be delayed until decl1*() is called
+ * XXX calls to getsym() should be delayed until decl1*() is called.
  */
 sym_t *
 getsym(sbuf_t *sb)
@@ -1504,7 +1494,7 @@ rmsyms(sym_t *syms)
 }
 
 /*
- * Put a symbol into the symbol table
+ * Put a symbol into the symbol table.
  */
 void
 inssym(int bl, sym_t *sym)
@@ -1522,7 +1512,8 @@ inssym(int bl, sym_t *sym)
 }
 
 /*
- * Called at level 0 after syntax errors
+ * Called at level 0 after syntax errors.
+ *
  * Removes all symbols which are not declared at level 0 from the
  * symbol table. Also frees all memory which is not associated with
  * level 0.
