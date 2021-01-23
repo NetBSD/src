@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.261 2021/01/23 11:44:10 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.262 2021/01/23 12:25:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.261 2021/01/23 11:44:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.262 2021/01/23 12:25:35 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -1118,7 +1118,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		/*
 		 * We look through all the directories on the path seeking one
 		 * which contains the final component of the given name.  If
-		 * such a beast is found, we concatenate the directory name
+		 * such a file is found, we concatenate the directory name
 		 * and the final component and return the resulting string.
 		 * If we don't find any such thing, we go on to phase two.
 		 *
@@ -1152,7 +1152,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * path. (eg. /usr/include and sys/types.h. The above search would
 	 * fail to turn up types.h in /usr/include, but it *is* in
 	 * /usr/include/sys/types.h).
-	 * [ This no longer applies: If we find such a beast, we assume there
+	 * [ This no longer applies: If we find such a file, we assume there
 	 * will be more (what else can we assume?) and add all but the last
 	 * component of the resulting name onto the search path (at the
 	 * end).]
