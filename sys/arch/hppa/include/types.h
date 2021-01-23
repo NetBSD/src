@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.29 2020/12/05 22:49:50 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.30 2021/01/23 19:38:52 christos Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -101,6 +101,7 @@ extern const char __CONCAT(name,_ras_start[]), __CONCAT(name,_ras_end[])
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_TLS_VARIANT_I
 #define	__HAVE_NEW_STYLE_BUS_H
+#define	__HAVE_BUS_SPACE_8
 
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
