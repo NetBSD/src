@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.258 2021/01/23 11:06:04 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.259 2021/01/23 11:14:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.258 2021/01/23 11:06:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.259 2021/01/23 11:14:59 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -835,6 +835,54 @@ PrintExpansions(StringList *expansions)
 }
 
 /*
+ * The wildcard isn't in the first component.
+ * Find all the components up to the one with the wildcard.
+ */
+static void
+SearchPath_ExpandMiddle(SearchPath *path, const char *pattern,
+			const char *wildcardComponent, StringList *expansions)
+{
+	char *prefix, *dirpath, *end;
+	SearchPath *partPath;
+
+	prefix = bmake_strsedup(pattern, wildcardComponent + 1);
+	/*
+	 * XXX: Check the "the directory is added to the path" part.
+	 * It is probably surprising that the directory before a
+	 * wildcard gets added to the path.
+	 */
+	/*
+	 * XXX: Only the first match of the prefix in the path is
+	 * taken, any others are ignored.  The expectation may be
+	 * that the pattern is expanded in the whole path.
+	 */
+	dirpath = Dir_FindFile(prefix, path);
+	free(prefix);
+
+	/*
+	 * dirpath is null if can't find the leading component
+	 *
+	 * XXX: Dir_FindFile won't find internal components.  i.e. if the
+	 * path contains ../Etc/Object and we're looking for Etc, it won't
+	 * be found.  Ah well.  Probably not important.
+	 *
+	 * XXX: Check whether the above comment is still true.
+	 */
+	if (dirpath == NULL)
+		return;
+
+	end = &dirpath[strlen(dirpath) - 1];
+	/* XXX: What about multiple trailing slashes? */
+	if (*end == '/')
+		*end = '\0';
+
+	partPath = SearchPath_New();
+	(void)Dir_AddDir(partPath, dirpath);
+	DirExpandPath(wildcardComponent + 1, partPath, expansions);
+	SearchPath_Free(partPath);
+}
+
+/*
  * Expand the given pattern into a list of existing filenames by globbing it,
  * looking in each directory from the search path.
  *
@@ -899,49 +947,9 @@ SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 		/* The first component contains the wildcard. */
 		/* Start the search from the local directory */
 		DirExpandPath(pattern, path, expansions);
-		goto done;
-	}
-
-	{
-		char *prefix = bmake_strsedup(pattern, wildcardComponent + 1);
-		/*
-		 * The wildcard isn't in the first component.
-		 * Find all the components up to the one with the wildcard.
-		 */
-		/*
-		 * XXX: Check the "the directory is added to the path" part.
-		 * It is probably surprising that the directory before a
-		 * wildcard gets added to the path.
-		 */
-		/*
-		 * XXX: Only the first match of the prefix in the path is
-		 * taken, any others are ignored.  The expectation may be
-		 * that the pattern is expanded in the whole path.
-		 */
-		char *dirpath = Dir_FindFile(prefix, path);
-		free(prefix);
-
-		/*
-		 * dirpath is null if can't find the leading component
-		 * XXX: Dir_FindFile won't find internal components.
-		 * i.e. if the path contains ../Etc/Object and we're
-		 * looking for Etc, it won't be found. Ah well.
-		 * Probably not important.
-		 * XXX: Check whether the above comment is still true.
-		 */
-		if (dirpath != NULL) {
-			SearchPath *partPath;
-
-			char *end = &dirpath[strlen(dirpath) - 1];
-			/* XXX: What about multiple trailing slashes? */
-			if (*end == '/')
-				*end = '\0';
-
-			partPath = SearchPath_New();
-			(void)Dir_AddDir(partPath, dirpath);
-			DirExpandPath(wildcardComponent + 1, partPath, expansions);
-			SearchPath_Free(partPath);
-		}
+	} else {
+		SearchPath_ExpandMiddle(path, pattern, wildcardComponent,
+		    expansions);
 	}
 
 done:
