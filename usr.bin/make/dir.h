@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.41 2021/01/23 10:48:49 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.42 2021/01/23 11:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -87,8 +87,8 @@ void SearchPath_Expand(SearchPath *, const char *, StringList *);
 char *Dir_FindFile(const char *, SearchPath *);
 char *Dir_FindHereOrAbove(const char *, const char *);
 void Dir_UpdateMTime(GNode *, Boolean);
-CachedDir *Dir_AddDir(SearchPath *, const char *);
-char *SearchPath_ToFlags(const char *, SearchPath *);
+CachedDir *SearchPath_Add(SearchPath *, const char *);
+char *SearchPath_ToFlags(SearchPath *, const char *);
 void SearchPath_Clear(SearchPath *);
 void SearchPath_AddAll(SearchPath *, SearchPath *);
 void Dir_PrintDirectories(void);

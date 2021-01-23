@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.259 2021/01/23 11:14:59 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.260 2021/01/23 11:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -106,7 +106,7 @@
  *			Update the modification time and path of a node with
  *			data from the file corresponding to the node.
  *
- *	Dir_AddDir	Add a directory to a search path.
+ *	SearchPath_Add	Add a directory to a search path.
  *
  *	SearchPath_ToFlags
  *			Given a search path and a command flag, create
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.259 2021/01/23 11:14:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.260 2021/01/23 11:34:41 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -485,18 +485,18 @@ Dir_Init(void)
  * Called by Dir_InitDir and whenever .CURDIR is assigned to.
  */
 void
-Dir_InitCur(const char *cdname)
+Dir_InitCur(const char *newCurdir)
 {
 	CachedDir *dir;
 
-	if (cdname == NULL)
+	if (newCurdir == NULL)
 		return;
 
 	/*
 	 * Our build directory is not the same as our source directory.
 	 * Keep this one around too.
 	 */
-	dir = Dir_AddDir(NULL, cdname);
+	dir = SearchPath_Add(NULL, newCurdir);
 	if (dir == NULL)
 		return;
 
@@ -512,7 +512,7 @@ Dir_InitDot(void)
 {
 	CachedDir *dir;
 
-	dir = Dir_AddDir(NULL, ".");
+	dir = SearchPath_Add(NULL, ".");
 	if (dir == NULL) {
 		Error("Cannot open `.' (%s)", strerror(errno));
 		exit(2);	/* Not 1 so -q can distinguish error */
@@ -877,7 +877,7 @@ SearchPath_ExpandMiddle(SearchPath *path, const char *pattern,
 		*end = '\0';
 
 	partPath = SearchPath_New();
-	(void)Dir_AddDir(partPath, dirpath);
+	(void)SearchPath_Add(partPath, dirpath);
 	DirExpandPath(wildcardComponent + 1, partPath, expansions);
 	SearchPath_Free(partPath);
 }
@@ -1291,7 +1291,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 			base++;
 		}
 		prefix = bmake_strsedup(name, base - 1);
-		(void)Dir_AddDir(path, prefix);
+		(void)SearchPath_Add(path, prefix);
 		free(prefix);
 
 		bigmisses++;
@@ -1546,7 +1546,7 @@ CacheNewDir(const char *name, SearchPath *path)
  *			Lst_Append and CachedDir_Ref.
  */
 CachedDir *
-Dir_AddDir(SearchPath *path, const char *name)
+SearchPath_Add(SearchPath *path, const char *name)
 {
 
 	if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
@@ -1606,7 +1606,7 @@ Dir_CopyDirSearchPath(void)
  *	don't go well.
  */
 char *
-SearchPath_ToFlags(const char *flag, SearchPath *path)
+SearchPath_ToFlags(SearchPath *path, const char *flag)
 {
 	Buffer buf;
 	SearchPathNode *ln;
