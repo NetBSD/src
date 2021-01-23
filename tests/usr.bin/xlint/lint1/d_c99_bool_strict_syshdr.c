@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.5 2021/01/23 22:34:01 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.6 2021/01/23 23:11:40 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -119,4 +119,20 @@ ch_isspace_sys_bool(char c)
 	    ((ctype_table + 1)[(unsigned char)c] & 0x0040) != 0
 # 121 "d_c99_bool_strict_syshdr.c"
 	    != 0;
+}
+
+/*
+ * If a function from a system header has return type int, which has
+ * traditionally been used for the missing type bool, it may be used
+ * in controlling expressions.
+ */
+
+# 1 "math.h" 3 4
+extern int finite(double);
+# 133 "d_c99_bool_strict_syshdr.c"
+
+_Bool
+call_finite(double d)		/*FIXME*//* expect: 231 */
+{
+	return finite(d);	/*FIXME*//* expect: 211 */
 }

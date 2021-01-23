@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.2 2021/01/23 18:30:29 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.3 2021/01/23 23:11:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.2 2021/01/23 18:30:29 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.3 2021/01/23 23:11:40 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -403,7 +403,7 @@ lex_name(const char *yytext, size_t yyleng)
 	sb->sb_name = yytext;
 	sb->sb_len = yyleng;
 	sb->sb_hash = hash(yytext);
-	if ((sym = search(sb)) != NULL && sym->s_keyword) {
+	if ((sym = search(sb)) != NULL && sym->s_keyword != NULL) {
 		freesb(sb);
 		return keyw(sym);
 	}
@@ -434,7 +434,7 @@ search(sbuf_t *sb)
 
 	for (sym = symtab[sb->sb_hash]; sym != NULL; sym = sym->s_link) {
 		if (strcmp(sym->s_name, sb->sb_name) == 0) {
-			if (sym->s_keyword) {
+			if (sym->s_keyword != NULL) {
 				struct kwtab *kw = sym->s_keyword;
 				if (!kw->kw_attr || attron)
 					return sym;
@@ -658,18 +658,18 @@ lex_icon(const char *yytext, size_t yyleng, int base)
 }
 
 /*
- * Returns 1 if t is a signed type and the value is negative.
+ * Returns whether t is a signed type and the value is negative.
  *
  * len is the number of significant bits. If len is -1, len is set
  * to the width of type t.
  */
-int
+static bool
 sign(int64_t q, tspec_t t, int len)
 {
 
 	if (t == PTR || is_uinteger(t))
-		return 0;
-	return msb(q, t, len);
+		return false;
+	return msb(q, t, len) != 0;
 }
 
 int
@@ -678,7 +678,7 @@ msb(int64_t q, tspec_t t, int len)
 
 	if (len <= 0)
 		len = size(t);
-	return (q & qbmasks[len - 1]) != 0;
+	return (q & qbmasks[len - 1]) != 0 ? 1 : 0;
 }
 
 /*
@@ -962,7 +962,7 @@ getescc(int delim)
 			do {
 				v = (v << 3) + (c - '0');
 				c = inpc();
-			} while (--n && isdigit(c) && (tflag || c <= '7'));
+			} while (--n > 0 && isdigit(c) && (tflag || c <= '7'));
 			if (tflag && n > 0 && isdigit(c))
 				/* bad octal digit %c */
 				warning(77, c);
@@ -1125,25 +1125,25 @@ lex_comment(void)
 	int	c, lc;
 	static const struct {
 		const	char *keywd;
-		int	arg;
+		bool	arg;
 		void	(*func)(int);
 	} keywtab[] = {
-		{ "ARGSUSED",		1,	argsused	},
-		{ "BITFIELDTYPE",	0,	bitfieldtype	},
-		{ "CONSTCOND",		0,	constcond	},
-		{ "CONSTANTCOND",	0,	constcond	},
-		{ "CONSTANTCONDITION",	0,	constcond	},
-		{ "FALLTHRU",		0,	fallthru	},
-		{ "FALLTHROUGH",	0,	fallthru	},
-		{ "LINTLIBRARY",	0,	lintlib		},
-		{ "LINTED",		1,	linted		},
-		{ "LONGLONG",		0,	longlong	},
-		{ "NOSTRICT",		1,	linted		},
-		{ "NOTREACHED",		0,	notreach	},
-		{ "PRINTFLIKE",		1,	printflike	},
-		{ "PROTOLIB",		1,	protolib	},
-		{ "SCANFLIKE",		1,	scanflike	},
-		{ "VARARGS",		1,	varargs		},
+		{ "ARGSUSED",		true,	argsused	},
+		{ "BITFIELDTYPE",	false,	bitfieldtype	},
+		{ "CONSTCOND",		false,	constcond	},
+		{ "CONSTANTCOND",	false,	constcond	},
+		{ "CONSTANTCONDITION",	false,	constcond	},
+		{ "FALLTHRU",		false,	fallthru	},
+		{ "FALLTHROUGH",	false,	fallthru	},
+		{ "LINTLIBRARY",	false,	lintlib		},
+		{ "LINTED",		true,	linted		},
+		{ "LONGLONG",		false,	longlong	},
+		{ "NOSTRICT",		true,	linted		},
+		{ "NOTREACHED",		false,	notreach	},
+		{ "PRINTFLIKE",		true,	printflike	},
+		{ "PROTOLIB",		true,	protolib	},
+		{ "SCANFLIKE",		true,	scanflike	},
+		{ "VARARGS",		true,	varargs		},
 	};
 	char	keywd[32];
 	char	arg[32];
