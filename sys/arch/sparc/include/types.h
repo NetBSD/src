@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.70 2020/12/06 03:19:14 christos Exp $ */
+/*	$NetBSD: types.h,v 1.71 2021/01/23 19:38:53 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,6 +125,7 @@ typedef unsigned long int	__register_t;
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
 #define	__HAVE_CPU_VMSPACE_EXEC
 #define	__HAVE_RAS
+#define	__HAVE_BUS_SPACE_8
 
 #ifdef __sparc_v9__
 #define	__HAVE_CPU_DATA_FIRST

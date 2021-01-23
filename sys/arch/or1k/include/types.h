@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.5 2018/07/12 10:46:46 maxv Exp $ */
+/* $NetBSD: types.h,v 1.6 2021/01/23 19:38:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ typedef	unsigned long int	__register_t;
 #define __HAVE___LWP_GETPRIVATE_FAST
 #define __HAVE_COMMON___TLS_GET_ADDR
 #define __HAVE_TLS_VARIANT_I
+#define	__HAVE_BUS_SPACE_8
 
 #if defined(_KERNEL)
 #define __HAVE_RAS
