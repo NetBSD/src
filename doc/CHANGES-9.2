@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.35 2021/01/15 17:47:48 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.36 2021/01/23 13:01:59 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1410,4 +1410,9 @@ share/man/man9/pci_msi.9			1.18
 
 	PR 55920: add documentation for pci_msi_count() and pci_msix_count().
 	[knakahara, ticket #1185]
+
+sys/dev/pci/if_ena.c				1.27
+
+	PR 55942: destroyed ena(4) evcnts cause panic.
+	[jmcneill, ticket #1186]
 
