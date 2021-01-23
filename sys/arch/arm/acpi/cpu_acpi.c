@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.9 2020/12/03 07:45:51 skrll Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.10 2021/01/23 12:34:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.9 2020/12/03 07:45:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.10 2021/01/23 12:34:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,7 +104,8 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 		int error;
 
 		cpu_mpidr[cpuindex] = mpidr;
-		cpu_dcache_wb_range((vaddr_t)&cpu_mpidr[cpuindex], sizeof(cpu_mpidr[cpuindex]));
+		cpu_dcache_wb_range((vaddr_t)&cpu_mpidr[cpuindex],
+		    sizeof(cpu_mpidr[cpuindex]));
 
 		/* XXX support spin table */
 		error = psci_cpu_on(mpidr, cpu_acpi_mpstart_pa(), 0);
@@ -169,14 +170,16 @@ cpu_acpi_tprof_intr_establish(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 
 	const bool cpu_primary_p = cpu_mpidr_aff_read() == gicc->ArmMpidr;
 	const bool intr_ppi_p = gicc->PerformanceInterrupt < 32;
-	const int type = (gicc->Flags & ACPI_MADT_PERFORMANCE_IRQ_MODE) ? IST_EDGE : IST_LEVEL;
+	const int type = (gicc->Flags & ACPI_MADT_PERFORMANCE_IRQ_MODE) ?
+	    IST_EDGE : IST_LEVEL;
 
 	if (intr_ppi_p && !cpu_primary_p)
 		return AE_OK;
 
 	ci = cpu_acpi_find_processor(gicc->Uid);
 	if (ci == NULL) {
-		aprint_error_dev(dev, "couldn't find processor %#x\n", gicc->Uid);
+		aprint_error_dev(dev, "couldn't find processor %#x\n",
+		    gicc->Uid);
 		return AE_OK;
 	}
 
@@ -186,10 +189,11 @@ cpu_acpi_tprof_intr_establish(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		snprintf(xname, sizeof(xname), "pmu %s", cpu_name(ci));
 	}
 
-	ih = intr_establish_xname(gicc->PerformanceInterrupt, IPL_HIGH, type | IST_MPSAFE,
-	    armv8_pmu_intr, NULL, xname);
+	ih = intr_establish_xname(gicc->PerformanceInterrupt, IPL_HIGH,
+	    type | IST_MPSAFE, armv8_pmu_intr, NULL, xname);
 	if (ih == NULL) {
-		aprint_error_dev(dev, "couldn't establish %s interrupt\n", xname);
+		aprint_error_dev(dev, "couldn't establish %s interrupt\n",
+		    xname);
 		return AE_OK;
 	}
 
@@ -200,13 +204,15 @@ cpu_acpi_tprof_intr_establish(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		kcpuset_destroy(set);
 
 		if (error) {
-			aprint_error_dev(dev, "failed to distribute %s interrupt: %d\n",
+			aprint_error_dev(dev,
+			    "failed to distribute %s interrupt: %d\n",
 			    xname, error);
 			return AE_OK;
 		}
 	}
 
-	aprint_normal("%s: PMU interrupting on irq %d\n", cpu_name(ci), gicc->PerformanceInterrupt);
+	aprint_normal("%s: PMU interrupting on irq %d\n", cpu_name(ci),
+	    gicc->PerformanceInterrupt);
 
 	return AE_OK;
 }
@@ -217,7 +223,8 @@ cpu_acpi_tprof_init(device_t self)
 	armv8_pmu_init();
 
 	if (acpi_madt_map() != AE_OK) {
-		aprint_error_dev(self, "failed to map MADT, performance counters not available\n");
+		aprint_error_dev(self,
+		    "failed to map MADT, performance counters not available\n");
 		return;
 	}
 	acpi_madt_walk(cpu_acpi_tprof_intr_establish, self);
