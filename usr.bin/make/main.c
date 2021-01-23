@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.514 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.515 2021/01/23 10:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.514 2021/01/19 20:51:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.515 2021/01/23 10:48:49 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1214,8 +1214,9 @@ ReadBuiltinRules(void)
 	StringListNode *ln;
 	StringList sysMkPath = LST_INIT;
 
-	Dir_Expand(_PATH_DEFSYSMK,
+	SearchPath_Expand(
 	    Lst_IsEmpty(sysIncPath) ? defSysIncPath : sysIncPath,
+	    _PATH_DEFSYSMK,
 	    &sysMkPath);
 	if (Lst_IsEmpty(&sysMkPath))
 		Fatal("%s: no system rules (%s).", progname, _PATH_DEFSYSMK);

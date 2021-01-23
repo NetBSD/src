@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.527 2021/01/21 14:30:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.528 2021/01/23 10:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.527 2021/01/21 14:30:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.528 2021/01/23 10:48:49 rillig Exp $");
 
 /* types and constants */
 
@@ -1176,7 +1176,7 @@ ParseDoDependencyTargetMundane(char *line, /* XXX: bad name */
 		 */
 		SearchPath *emptyPath = SearchPath_New();
 
-		Dir_Expand(line, emptyPath, curTargs);
+		SearchPath_Expand(emptyPath, line, curTargs);
 
 		SearchPath_Free(emptyPath);
 	} else {

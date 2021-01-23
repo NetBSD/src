@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.335 2021/01/10 21:20:46 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.336 2021/01/23 10:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.335 2021/01/10 21:20:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.336 2021/01/23 10:48:49 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1246,7 +1246,7 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 	 * Expand the word along the chosen path
 	 */
 	Lst_Init(&expansions);
-	Dir_Expand(cgn->name, Suff_FindPath(cgn), &expansions);
+	SearchPath_Expand(Suff_FindPath(cgn), cgn->name, &expansions);
 
 	while (!Lst_IsEmpty(&expansions)) {
 		GNode *gn;
