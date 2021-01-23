@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.15 2020/01/22 21:21:24 mlelstv Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.16 2021/01/23 12:53:46 nia Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.15 2020/01/22 21:21:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.16 2021/01/23 12:53:46 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -159,7 +159,6 @@ static int	vcaudio_set_format(void *, int,
     const audio_params_t *, const audio_params_t *,
     audio_filter_reg_t *, audio_filter_reg_t *);
 static int	vcaudio_halt_output(void *);
-static int	vcaudio_halt_input(void *);
 static int	vcaudio_set_port(void *, mixer_ctrl_t *);
 static int	vcaudio_get_port(void *, mixer_ctrl_t *);
 static int	vcaudio_query_devinfo(void *, mixer_devinfo_t *);
@@ -171,8 +170,6 @@ static int	vcaudio_round_blocksize(void *, int, int,
 
 static int	vcaudio_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
-static int	vcaudio_trigger_input(void *, void *, void *, int,
-    void (*)(void *), void *, const audio_params_t *);
 
 static void	vcaudio_get_locks(void *, kmutex_t **, kmutex_t **);
 
@@ -182,7 +179,6 @@ static const struct audio_hw_if vcaudio_hw_if = {
 	.query_format = vcaudio_query_format,
 	.set_format = vcaudio_set_format,
 	.halt_output = vcaudio_halt_output,
-	.halt_input = vcaudio_halt_input,
 	.getdev = vcaudio_getdev,
 	.set_port = vcaudio_set_port,
 	.get_port = vcaudio_get_port,
@@ -190,7 +186,6 @@ static const struct audio_hw_if vcaudio_hw_if = {
 	.get_props = vcaudio_get_props,
 	.round_blocksize = vcaudio_round_blocksize,
 	.trigger_output = vcaudio_trigger_output,
-	.trigger_input = vcaudio_trigger_input,
 	.get_locks = vcaudio_get_locks,
 };
 
@@ -612,12 +607,6 @@ vcaudio_halt_output(void *priv)
 }
 
 static int
-vcaudio_halt_input(void *priv)
-{
-	return EINVAL;
-}
-
-static int
 vcaudio_set_volume(struct vcaudio_softc *sc, enum vcaudio_dest dest,
     int hwvol)
 {
@@ -802,7 +791,7 @@ vcaudio_getdev(void *priv, struct audio_device *audiodev)
 static int
 vcaudio_get_props(void *priv)
 {
-	return AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE|AUDIO_PROP_INDEPENDENT;
+	return AUDIO_PROP_PLAYBACK;
 }
 
 static int
@@ -835,13 +824,6 @@ vcaudio_trigger_output(void *priv, void *start, void *end, int blksize,
 	cv_signal(&sc->sc_datacv);
 
 	return 0;
-}
-
-static int
-vcaudio_trigger_input(void *priv, void *start, void *end, int blksize,
-    void (*intr)(void *), void *intrarg, const audio_params_t *params)
-{
-	return EINVAL;
 }
 
 static void
