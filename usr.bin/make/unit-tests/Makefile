@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.261 2021/01/19 05:49:33 rillig Exp $
+# $NetBSD: Makefile,v 1.262 2021/01/23 07:34:00 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -557,18 +557,26 @@ STD_SED_CMDS.hide-from-output= \
 # $shell -c '...'
 #	NetBSD sh	...: not found
 #	NetBSD ksh	ksh: ...: not found
-#	bash 5		bash: line 1: ...: command not found
+#	bash 5.0.18	bash: ...: command not found
+#	bash 5.1.0	bash: line 1: ...: command not found
 #	dash		dash: 1: ...: not found
 #
 # $shell -c '< /nonexistent'
 #	NetBSD sh	sh: cannot open /nonexistent: no such file
 #	NetBSD ksh	ksh: cannot open /nonexistent: No such file or directory
-#	bash 5		bash: line 1: /nonexistent: No such file or directory
+#	bash 5.0.18	bash: /nonexistent: No such file or directory
+#	bash 5.1.0	bash: line 1: /nonexistent: No such file or directory
 #	dash		dash: 1: cannot open /nonexistent: No such file
 #
+# echo '< /nonexistent' | $shell
+#	NetBSD sh	sh: cannot open /nonexistent: no such file
+#	NetBSD ksh	ksh: <stdin>[1]: cannot open /nonexistent: No such file or directory
+#	bash 5.0.18	bash: line 1: /nonexistent: No such file or directory
+#	bash 5.1.0	bash: line 1: /nonexistent: No such file or directory
+#	dash		dash: 1: cannot open /nonexistent: No such file
 #
-STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: line [0-9][0-9]*:,,'
-STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: [0-9][0-9]*:,,'
+STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: line [0-9][0-9]*: ,,'
+STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: [0-9][0-9]*: ,,'
 STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: ,,'
 
 # End of the configuration helpers section.
