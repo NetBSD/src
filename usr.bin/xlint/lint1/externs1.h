@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.60 2021/01/23 17:58:03 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.61 2021/01/23 22:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -205,7 +205,7 @@ extern	tnode_t	*new_string_node(strg_t *);
 extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
 extern	tnode_t	*build(op_t, tnode_t *, tnode_t *);
 extern	tnode_t	*cconv(tnode_t *);
-extern	bool	is_strict_bool(const tnode_t *);
+extern	bool	is_typeok_bool_operand(const tnode_t *);
 extern	bool	typeok(op_t, int, const tnode_t *, const tnode_t *);
 extern	tnode_t	*promote(op_t, bool, tnode_t *);
 extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);

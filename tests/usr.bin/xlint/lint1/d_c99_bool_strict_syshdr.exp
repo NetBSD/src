@@ -1,8 +1,6 @@
 d_c99_bool_strict_syshdr.c(32): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict_syshdr.c(42): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict_syshdr.c(76): operands of '=' have incompatible types (_Bool != int) [107]
-d_c99_bool_strict_syshdr.c(82): operands of '=' have incompatible types (int != _Bool) [107]
-d_c99_bool_strict_syshdr.c(88): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict_syshdr.c(121): operands of '!=' have incompatible types (_Bool != int) [107]
 d_c99_bool_strict_syshdr.c(121): warning: function ch_isspace_sys_bool expects to return value [214]
 d_c99_bool_strict_syshdr.c(115): warning: argument c unused in function ch_isspace_sys_bool [231]
