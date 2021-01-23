@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.255 2021/01/10 21:20:46 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.256 2021/01/23 10:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -89,8 +89,9 @@
  *			Returns TRUE if the name given it needs to
  *			be wildcard-expanded.
  *
- *	Dir_Expand	Given a pattern and a path, return a Lst of names
- *			which match the pattern on the search path.
+ *	SearchPath_Expand
+ *			Expand a filename pattern to find all matching files
+ *			from the search path.
  *
  *	Dir_FindFile	Searches for a file on a given search path.
  *			If it exists, the entire path is returned.
@@ -137,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.255 2021/01/10 21:20:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.256 2021/01/23 10:48:49 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -797,7 +798,7 @@ DirExpandCurly(const char *word, const char *brace, SearchPath *path,
 				     suffix, suffix_len);
 
 		if (contains_wildcard(file)) {
-			Dir_Expand(file, path, expansions);
+			SearchPath_Expand(path, file, expansions);
 			free(file);
 		} else {
 			Lst_Append(expansions, file);
@@ -843,7 +844,7 @@ PrintExpansions(StringList *expansions)
  *	expansions	the list on which to place the results
  */
 void
-Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
+SearchPath_Expand(SearchPath *path, const char *word, StringList *expansions)
 {
 	const char *cp;
 
