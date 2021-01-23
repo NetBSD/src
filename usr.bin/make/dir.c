@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.260 2021/01/23 11:34:41 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.261 2021/01/23 11:44:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.260 2021/01/23 11:34:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.261 2021/01/23 11:44:10 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -634,7 +634,9 @@ Dir_HasWildcards(const char *name)
  * This is incomplete -- wildcards are only expanded in the final path
  * component, but not in directories like src/lib*c/file*.c, but it
  * will do for now (now being 1993 until at least 2020). To expand these,
- * use the ':sh' variable modifier such as in ${:!echo src/lib*c/file*.c!}.
+ * delegate the work to the shell, using the '!=' variable assignment
+ * operator, the ':sh' variable modifier or the ':!...!' variable modifier,
+ * such as in ${:!echo src/lib*c/file*.c!}.
  *
  * Input:
  *	pattern		Pattern to look for
@@ -668,7 +670,8 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 		 * directory cache.
 		 *
 		 * This means that the pattern '[a-z.]*' does not find
-		 * '.file', which is consistent with bash, NetBSD sh and csh.
+		 * '.file', which is consistent with NetBSD sh, NetBSD ksh,
+		 * bash, dash, csh and probably many other shells as well.
 		 */
 		if (base[0] == '.' && pattern[0] != '.')
 			continue;
