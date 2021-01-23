@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.3 2021/01/23 19:03:55 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.4 2021/01/23 22:20:18 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -79,13 +79,13 @@ strict_bool_system_header_ctype(int c)
 # 80 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040) != 0	/* BOOL */
 # 82 "d_c99_bool_strict_syshdr.c"
-	;			/* expect: 107 */
+	;
 
 	if (
 # 86 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
 # 88 "d_c99_bool_strict_syshdr.c"
-	)			/*FIXME*//* expect: 333 */
+	)
 		println("system macro returning INT");
 
 	if (
