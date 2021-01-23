@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.24 2021/01/18 20:02:34 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.25 2021/01/23 22:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.24 2021/01/18 20:02:34 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.25 2021/01/23 22:20:17 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -348,13 +348,14 @@ tgetblk(size_t s)
 }
 
 /*
- * Get memory for a new tree node.
+ * Return a freshly allocated tree node.
  */
 tnode_t *
 getnode(void)
 {
-
-	return tgetblk(sizeof (tnode_t));
+	tnode_t *tn = tgetblk(sizeof *tn);
+	tn->tn_from_system_header = in_system_header;
+	return tn;
 }
 
 /*

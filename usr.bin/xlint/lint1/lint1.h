@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.59 2021/01/18 19:24:09 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.60 2021/01/23 22:20:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -288,6 +288,7 @@ typedef	struct tnode {
 	bool	tn_lvalue : 1;	/* node is lvalue */
 	bool	tn_cast : 1;	/* if tn_op == CVT, it's an explicit cast */
 	bool	tn_parenthesized : 1;
+	bool	tn_from_system_header : 1;
 	union {
 		struct {
 			struct	tnode *_tn_left;	/* (left) operand */
