@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.338 2021/01/23 12:25:35 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.339 2021/01/23 12:35:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.338 2021/01/23 12:25:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.339 2021/01/23 12:35:22 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1183,7 +1183,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 	prefLen = strlen(targ->prefix);
 
 	for (gln = tgn->children.first; gln != NULL; gln = gln->next) {
-		const char *cp;
+		const char *base;
 
 		sgn = gln->datum;
 
@@ -1198,11 +1198,11 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 			continue;
 		}
 
-		cp = str_basename(sgn->name);
-		if (strncmp(cp, targ->prefix, prefLen) != 0)
+		base = str_basename(sgn->name);
+		if (strncmp(base, targ->prefix, prefLen) != 0)
 			continue;
 		/* The node matches the prefix, see if it has a known suffix. */
-		suff = FindSuffixByName(cp + prefLen);
+		suff = FindSuffixByName(base + prefLen);
 		if (suff == NULL)
 			continue;
 
