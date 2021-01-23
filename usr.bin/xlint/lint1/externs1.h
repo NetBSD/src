@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.59 2021/01/18 16:41:57 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.60 2021/01/23 17:58:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -306,6 +306,24 @@ extern	void	outfdef(const sym_t *, const pos_t *, bool, bool,
 		    const sym_t *);
 extern	void	outcall(const tnode_t *, bool, bool);
 extern	void	outusg(const sym_t *);
+
+/*
+ * lex.c
+ */
+extern	int	lex_name(const char *, size_t);
+extern	int	lex_icon(const char *, size_t, int);
+extern	int	lex_fcon(const char *, size_t);
+extern	int	lex_operator(int, op_t);
+extern	int	lex_string(void);
+extern	int	lex_wcstrg(void);
+extern	int	lex_ccon(void);
+extern	int	lex_wccon(void);
+extern	void	lex_directive(const char *);
+extern	void	lex_incline(void);
+extern	void	lex_comment(void);
+extern	void	lex_slashslashcomment(void);
+extern	void	lex_badchar(int);
+extern	int	lex_input(void);
 
 /*
  * print.c
