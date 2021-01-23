@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.182 2021/01/18 20:02:34 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.183 2021/01/23 22:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.182 2021/01/18 20:02:34 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.183 2021/01/23 22:20:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -722,25 +722,24 @@ before_conversion(const tnode_t *tn)
 	return tn;
 }
 
-static bool
-is_bool_compatible(tspec_t t, const tnode_t *tn)
-{
-	if (t == BOOL)
-		return true;
-	return in_system_header && t == INT && tn->tn_op == CON &&
-	       (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1);
-}
-
-/* In strict bool mode, see if the node's type is compatible with bool. */
+/*
+ * See if the node is valid as operand of an operator that compares its
+ * argument with 0.
+ */
 bool
-is_strict_bool(const tnode_t *tn)
+is_typeok_bool_operand(const tnode_t *tn)
 {
 	tspec_t t;
+
+	lint_assert(Tflag);
 
 	tn = before_conversion(tn);
 	t = tn->tn_type->t_tspec;
 
-	if (is_bool_compatible(t, tn))
+	if (t == BOOL)
+		return true;
+
+	if (tn->tn_from_system_header && is_scalar(t))
 		return true;
 
 	/* For enums that are used as bit sets, allow "flags & FLAG". */
@@ -1101,18 +1100,54 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 }
 
 /*
- * Whether the operator can handle (bool, bool) as well as (scalar, scalar),
- * but not mixtures between the two type classes.
+ * See if in strict bool mode, the operator takes either two bool operands
+ * or two arbitrary other operands.
  */
 static bool
-needs_compatible_types(op_t op)
+is_assignment_bool_or_other(op_t op)
+{
+	return op == ASSIGN ||
+	       op == ANDASS || op == XORASS || op == ORASS ||
+	       op == RETURN || op == FARG;
+}
+
+static bool
+is_symmetric_bool_or_other(op_t op)
 {
 	return op == EQ || op == NE ||
 	       op == BITAND || op == BITXOR || op == BITOR ||
-	       op == COLON ||
-	       op == ASSIGN || op == ANDASS || op == XORASS || op == ORASS ||
-	       op == RETURN ||
-	       op == FARG;
+	       op == COLON;
+}
+
+static bool
+is_bool_int_constant(const tnode_t *tn, tspec_t t)
+{
+	return t == INT &&
+	       tn->tn_from_system_header &&
+	       tn->tn_op == CON &&
+	       (tn->tn_val->v_quad == 0 || tn->tn_val->v_quad == 1);
+}
+
+static bool
+is_typeok_strict_bool(op_t op,
+		      const tnode_t *ln, tspec_t lt,
+		      const tnode_t *rn, tspec_t rt)
+{
+	if (rn == NULL)
+		return true;	/* TODO: check unary operators as well. */
+
+	if ((lt == BOOL) == (rt == BOOL))
+		return true;
+
+	if (is_bool_int_constant(ln, lt) || is_bool_int_constant(rn, rt))
+		return true;
+
+	if (is_assignment_bool_or_other(op)) {
+		return lt != BOOL &&
+		       (ln->tn_from_system_header || rn->tn_from_system_header);
+	}
+
+	return !is_symmetric_bool_or_other(op);
 }
 
 /*
@@ -1129,9 +1164,7 @@ typeok_strict_bool_compatible(op_t op, int arg,
 			      const tnode_t *rn, tspec_t rt)
 {
 
-	if (!needs_compatible_types(op))
-		return true;
-	if (is_bool_compatible(lt, ln) == is_bool_compatible(rt, rn))
+	if (is_typeok_strict_bool(op, ln, lt, rn, rt))
 		return true;
 
 	if (op == FARG) {
@@ -1175,7 +1208,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 	if (mp->m_requires_bool || op == QUEST) {
 		bool binary = mp->m_binary;
-		bool lbool = is_strict_bool(ln);
+		bool lbool = is_typeok_bool_operand(ln);
 		bool ok = true;
 
 		if (!binary && !lbool) {
@@ -1188,7 +1221,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 			error(331, getopname(op), tspec_name(lt));
 			ok = false;
 		}
-		if (binary && op != QUEST && !is_strict_bool(rn)) {
+		if (binary && op != QUEST && !is_typeok_bool_operand(rn)) {
 			/* right operand of '%s' must be bool, not '%s' */
 			error(332, getopname(op), tspec_name(rt));
 			ok = false;
@@ -1521,7 +1554,7 @@ check_assign_types_compatible(op_t op, int arg,
 	if (lt == BOOL && is_scalar(rt))	/* C99 6.3.1.2 */
 		return true;
 
-	if (is_arithmetic(lt) && is_arithmetic(rt))
+	if (is_arithmetic(lt) && (is_arithmetic(rt) || rt == BOOL))
 		return true;
 
 	if ((lt == STRUCT || lt == UNION) && (rt == STRUCT || rt == UNION))
@@ -1773,6 +1806,10 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 
 	ntn->tn_op = op;
 	ntn->tn_type = type;
+	if (ln->tn_from_system_header)
+		ntn->tn_from_system_header = true;
+	if (rn != NULL && rn->tn_from_system_header)
+		ntn->tn_from_system_header = true;
 	ntn->tn_left = ln;
 	ntn->tn_right = rn;
 
@@ -2019,6 +2056,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	ntn->tn_op = CVT;
 	ntn->tn_type = tp;
 	ntn->tn_cast = op == CVT;
+	ntn->tn_from_system_header |= tn->tn_from_system_header;
 	ntn->tn_right = NULL;
 	if (tn->tn_op != CON || nt == VOID) {
 		ntn->tn_left = tn;
