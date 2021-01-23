@@ -1,3 +1,5 @@
 d_c99_bool_strict_syshdr.c(32): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict_syshdr.c(42): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict_syshdr.c(76): operands of '=' have incompatible types (_Bool != int) [107]
+d_c99_bool_strict_syshdr.c(137): return value type mismatch (_Bool) and (int) [211]
+d_c99_bool_strict_syshdr.c(135): warning: argument d unused in function call_finite [231]

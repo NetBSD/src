@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.61 2021/01/23 22:20:17 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.62 2021/01/23 23:11:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -77,7 +77,6 @@ extern	FILE	*yyin;
 extern	uint64_t qbmasks[], qlmasks[], qumasks[];
 
 extern	void	initscan(void);
-extern	int	sign(int64_t, tspec_t, int);
 extern	int	msb(int64_t, tspec_t, int);
 extern	int64_t	xsign(int64_t, tspec_t, int);
 extern	void	clear_warn_flags(void);
