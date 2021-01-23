@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.26 2021/01/18 08:29:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.27 2021/01/23 11:50:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,18 +470,20 @@ ena_alloc_counters_hwstats(struct ena_hw_stats *st, int queue)
 	    + sizeof(st->rx_drops) == sizeof(*st));
 }
 static inline void
-ena_free_counters(struct evcnt *begin, int size)
+ena_free_counters(struct evcnt *begin, int size, int offset)
 {
 	struct evcnt *end = (struct evcnt *)((char *)begin + size);
+	begin = (struct evcnt *)((char *)begin + offset);
 
 	for (; begin < end; ++begin)
 		counter_u64_free(*begin);
 }
 
 static inline void
-ena_reset_counters(struct evcnt *begin, int size)
+ena_reset_counters(struct evcnt *begin, int size, int offset)
 {
 	struct evcnt *end = (struct evcnt *)((char *)begin + size);
+	begin = (struct evcnt *)((char *)begin + offset);
 
 	for (; begin < end; ++begin)
 		counter_u64_zero(*begin);
@@ -566,9 +568,9 @@ ena_free_io_ring_resources(struct ena_adapter *adapter, unsigned int qid)
 	struct ena_ring *rxr = &adapter->rx_ring[qid];
 
 	ena_free_counters((struct evcnt *)&txr->tx_stats,
-	    sizeof(txr->tx_stats));
+	    sizeof(txr->tx_stats), offsetof(struct ena_stats_tx, cnt));
 	ena_free_counters((struct evcnt *)&rxr->rx_stats,
-	    sizeof(rxr->rx_stats));
+	    sizeof(rxr->rx_stats), offsetof(struct ena_stats_rx, cnt));
 
 	ENA_RING_MTX_LOCK(txr);
 	drbr_free(txr->br, M_DEVBUF);
@@ -665,7 +667,8 @@ ena_setup_tx_resources(struct ena_adapter *adapter, int qid)
 
 	/* Reset TX statistics. */
 	ena_reset_counters((struct evcnt *)&tx_ring->tx_stats,
-	    sizeof(tx_ring->tx_stats));
+	    sizeof(tx_ring->tx_stats),
+	    offsetof(struct ena_stats_tx, cnt));
 
 	tx_ring->next_to_use = 0;
 	tx_ring->next_to_clean = 0;
@@ -861,7 +864,8 @@ ena_setup_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 
 	/* Reset RX statistics. */
 	ena_reset_counters((struct evcnt *)&rx_ring->rx_stats,
-	    sizeof(rx_ring->rx_stats));
+	    sizeof(rx_ring->rx_stats),
+	    offsetof(struct ena_stats_rx, cnt));
 
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
@@ -2204,7 +2208,8 @@ ena_up_complete(struct ena_adapter *adapter)
 
 	ena_refill_all_rx_bufs(adapter);
 	ena_reset_counters((struct evcnt *)&adapter->hw_stats,
-	    sizeof(adapter->hw_stats));
+	    sizeof(adapter->hw_stats),
+	    offsetof(struct ena_hw_stats, rx_packets));
 
 	return (0);
 }
@@ -3895,9 +3900,11 @@ ena_detach(device_t pdev, int flags)
 	ena_free_all_io_rings_resources(adapter);
 
 	ena_free_counters((struct evcnt *)&adapter->hw_stats,
-	    sizeof(struct ena_hw_stats));
+	    sizeof(struct ena_hw_stats),
+	    offsetof(struct ena_hw_stats, rx_packets));
 	ena_free_counters((struct evcnt *)&adapter->dev_stats,
-	    sizeof(struct ena_stats_dev));
+	    sizeof(struct ena_stats_dev),
+            offsetof(struct ena_stats_dev, wd_expired));
 
 	if (likely(adapter->rss_support))
 		ena_com_rss_destroy(ena_dev);
