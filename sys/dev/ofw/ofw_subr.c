@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.47 2021/01/24 19:38:37 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.48 2021/01/24 21:48:38 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,13 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.47 2021/01/24 19:38:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.48 2021/01/24 21:48:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <dev/ofw/openfirm.h>
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
@@ -293,7 +292,7 @@ of_packagename(int phandle, char *buf, int bufsize)
 	const char *lastslash;
 	int l, rv;
 
-	pbuf = malloc(OFW_PATH_BUF_SIZE, M_TEMP, M_WAITOK);
+	pbuf = kmem_alloc(OFW_PATH_BUF_SIZE, KM_SLEEP);
 	l = OF_package_to_path(phandle, pbuf, OFW_PATH_BUF_SIZE);
 
 	/* check that we could get the name, and that it's not too long. */
@@ -315,7 +314,7 @@ of_packagename(int phandle, char *buf, int bufsize)
 		rv = 0;
 	}
 
-	free(pbuf, M_TEMP);
+	kmem_free(pbuf, OFW_PATH_BUF_SIZE);
 	return (rv);
 }
 
