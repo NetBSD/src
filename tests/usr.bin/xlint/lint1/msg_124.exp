@@ -5,3 +5,4 @@ msg_124.c(32): warning: ANSI C forbids comparison of 'void *' with function poin
 msg_124.c(33): warning: illegal pointer combination (pointer to const char) and (pointer to const int), op == [124]
 msg_124.c(34): warning: illegal pointer combination (pointer to const char) and (pointer to function(int) returning void), op == [124]
 msg_124.c(38): warning: ANSI C forbids comparison of function pointer with 'void *' [274]
+msg_124.c(42): warning: ANSI C forbids comparison of 'void *' with function pointer [274]
