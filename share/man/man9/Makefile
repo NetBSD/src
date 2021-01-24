@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.454 2021/01/21 15:53:16 thorpej Exp $
+#       $NetBSD: Makefile,v 1.455 2021/01/24 17:29:11 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -456,7 +456,9 @@ MLINKS+=kmem.9 kmem_alloc.9 \
 	kmem.9 kmem_intr_zalloc.9 \
 	kmem.9 kmem_asprintf.9 \
 	kmem.9 kmem_strdupsize.9 \
-	kmem.9 kmem_strfree.9
+	kmem.9 kmem_strfree.9 \
+	kmem.9 kmem_tmpbuf_alloc.9 \
+	kmem.9 kmem_tmpbuf_free.9
 MAN+=	kpreempt.9
 MLINKS+=kpreempt.9 kpreempt_disable.9 \
 	kpreempt.9 kpreempt_disabled.9 \

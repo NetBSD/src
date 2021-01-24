@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.26 2020/06/19 07:25:20 wiz Exp $
+.\"	$NetBSD: kmem.9,v 1.27 2021/01/24 17:29:11 thorpej Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd June 19, 2020
+.Dd January 24, 2021
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -72,6 +72,13 @@
 .Ft void
 .Fn kmem_strfree \
 "char *str"
+.\" ------------------------------------------------------------
+.Ft void *
+.Fn kmem_tmpbuf_alloc \
+"size_t size" "void *stackbuf" "size_t stackbufsize" "km_flag_t kmflags"
+.Ft void
+.Fn kmem_tmpbuf_free \
+"void *p" "size_t size" "void *stsackbuf"
 .\" ------------------------------------------------------------
 .Pp
 .Cd "options KMEM_SIZE"
@@ -215,6 +222,23 @@ and adding one for the
 .Dv NUL
 and then using
 .Fn kmem_free .
+.Pp
+The
+.Fn kmem_tmpbuf_alloc
+function is a utility function for allocating memory for temporary
+use, where allocation on the stack is desirable, but only up to a
+certain size.
+If the requested size fits within the specified stack buffer, the
+stack buffer is returned.
+Otherwise, memory is allocated with
+.Fn kmem_alloc .
+The
+.Fn kmem_tmpbuf_free
+function compares the result of a previous call to
+.Fn kmem_tmpbuf_alloc
+and frees the memory using
+.Fn kmem_free
+if it is not the specified stack buffer.
 .\" ------------------------------------------------------------
 .Sh NOTES
 Making
