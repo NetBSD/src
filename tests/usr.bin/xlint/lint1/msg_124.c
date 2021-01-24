@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_124.c,v 1.3 2021/01/24 10:50:42 rillig Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.4 2021/01/24 11:13:22 rillig Exp $	*/
 # 3 "msg_124.c"
 
 // Test for message: illegal pointer combination, op %s [124]
+
+/* lint1-extra-flags: -s */
 
 typedef void(*signal_handler)(int);
 
@@ -27,13 +29,13 @@ compare_pointers(const void *vp, const char *cp, const int *ip,
 {
 	ok(vp == cp);
 	ok(vp == ip);
-	ok(vp == fp);
+	ok(vp == fp);		/* expect: 274 */
 	not_ok(cp == ip);	/* expect: 124 */
 	not_ok(cp == fp);	/* expect: 124 */
 	ok(vp == (void *)0);
 	ok(cp == (void *)0);
 	ok(ip == (void *)0);
-	ok(fp == (void *)0);
+	ok(fp == (void *)0);	/*FIXME*//* expect: 274 */
 	ok(vp == 0);
 	ok(cp == 0);
 	ok(ip == 0);
