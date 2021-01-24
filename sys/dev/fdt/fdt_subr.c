@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.38 2020/07/16 16:39:18 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.38 2020/07/16 16:39:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -502,42 +502,31 @@ fdtbus_get_string(int phandle, const char *prop)
 const char *
 fdtbus_get_string_index(int phandle, const char *prop, u_int index)
 {
-	const char *names, *name;
-	int len, cur;
+	const char *names;
+	int len;
 
 	if ((len = OF_getproplen(phandle, prop)) < 0)
 		return NULL;
 
 	names = fdtbus_get_string(phandle, prop);
 
-	for (name = names, cur = 0; len > 0;
-	     len -= strlen(name) + 1, name += strlen(name) + 1, cur++) {
-		if (index == cur)
-			return name;
-	}
-
-	return NULL;
+	return strlist_string(names, len, index);
 }
 
 int
 fdtbus_get_index(int phandle, const char *prop, const char *name, u_int *idx)
 {
 	const char *p;
-	size_t pl;
-	u_int index;
-	int len;
+	int len, index;
 
 	p = fdtbus_get_prop(phandle, prop, &len);
 	if (p == NULL || len <= 0)
 		return -1;
 
-	for (index = 0; len > 0;
-	    pl = strlen(p) + 1, len -= pl, p += pl, index++) {
-		if (strcmp(p, name) == 0) {
-			*idx = index;
-			return 0;
-		}
-	}
+	index = strlist_index(p, len, name);
+	if (index == -1)
+		return -1;
 
-	return -1;
+	*idx = index;
+	return 0;
 }
