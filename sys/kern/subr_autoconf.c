@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.275 2021/01/18 15:28:21 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.276 2021/01/24 17:42:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.275 2021/01/18 15:28:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.276 2021/01/24 17:42:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2324,52 +2324,179 @@ device_find_by_driver_unit(const char *name, int unit)
 	return device_lookup(cd, unit);
 }
 
-/*
- * device_compatible_match:
- *
- *	Match a driver's "compatible" data against a device's
- *	"compatible" strings.  If a match is found, we return
- *	a weighted match result, and optionally the matching
- *	entry.
- */
+static bool
+match_strcmp(const char * const s1, const char * const s2)
+{
+	return strcmp(s1, s2) == 0;
+}
+
+static bool
+match_pmatch(const char * const s1, const char * const s2)
+{
+	return pmatch(s1, s2, NULL) == 2;
+}
+
+static bool
+strarray_match_internal(const char ** const strings,
+    unsigned int const nstrings, const char * const str,
+    unsigned int * const indexp,
+    bool (*match_fn)(const char *, const char *))
+{
+	unsigned int i;
+
+	if (strings == NULL || nstrings == 0) {
+		return 0;
+	}
+
+	for (i = 0; i < nstrings; i++) {
+		if ((*match_fn)(strings[i], str)) {
+			*indexp = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static int
-device_compatible_match_internal(const char **device_compats,
-    int ndevice_compats,
+strarray_match(const char ** const strings, unsigned int const nstrings,
+    const char * const str)
+{
+	unsigned int idx;
+
+	if (strarray_match_internal(strings, nstrings, str, &idx,
+				    match_strcmp)) {
+		return (int)(nstrings - idx);
+	}
+	return 0;
+}
+
+static int
+strarray_pmatch(const char ** const strings, unsigned int const nstrings,
+    const char * const pattern)
+{
+	unsigned int idx;
+
+	if (strarray_match_internal(strings, nstrings, pattern, &idx,
+				    match_pmatch)) {
+		return (int)(nstrings - idx);
+	}
+	return 0;
+}
+
+static int
+device_compatible_match_strarray_internal(
+    const char **device_compats, int ndevice_compats,
     const struct device_compatible_entry *driver_compats,
-    const struct device_compatible_entry **matching_entryp)
+    const struct device_compatible_entry **matching_entryp,
+    int (*match_fn)(const char **, unsigned int, const char *))
 {
 	const struct device_compatible_entry *dce = NULL;
-	int i, match_weight;
+	int rv;
 
 	if (ndevice_compats == 0 || device_compats == NULL ||
 	    driver_compats == NULL)
 		return 0;
-	
-	/*
-	 * We take the first match because we start with the most-specific
-	 * device compatible string.
-	 */
-	for (i = 0, match_weight = ndevice_compats - 1;
-	     i < ndevice_compats;
-	     i++, match_weight--) {
-		for (dce = driver_compats; dce->compat != NULL; dce++) {
-			if (strcmp(dce->compat, device_compats[i]) == 0) {
-				KASSERT(match_weight >= 0);
-				if (matching_entryp)
-					*matching_entryp = dce;
-				return 1 + match_weight;
+
+	for (dce = driver_compats; dce->compat != NULL; dce++) {
+		rv = (*match_fn)(device_compats, ndevice_compats, dce->compat);
+		if (rv != 0) {
+			if (matching_entryp != NULL) {
+				*matching_entryp = dce;
 			}
+			return rv;
 		}
 	}
 	return 0;
 }
 
+/*
+ * device_compatible_match:
+ *
+ *	Match a driver's "compatible" data against a device's
+ *	"compatible" strings.  Returns resulted weighted by
+ *	which device "compatible" string was matched.
+ */
 int
 device_compatible_match(const char **device_compats, int ndevice_compats,
-			const struct device_compatible_entry *driver_compats)
+    const struct device_compatible_entry *driver_compats)
 {
-	return device_compatible_match_internal(device_compats, ndevice_compats,
-						driver_compats, NULL);
+	return device_compatible_match_strarray_internal(device_compats,
+	    ndevice_compats, driver_compats, NULL, strarray_match);
+}
+
+/*
+ * device_compatible_pmatch:
+ *
+ *	Like device_compatible_match(), but uses pmatch(9) to compare
+ *	the device "compatible" strings against patterns in the
+ *	driver's "compatible" data.
+ */
+int
+device_compatible_pmatch(const char **device_compats, int ndevice_compats,
+    const struct device_compatible_entry *driver_compats)
+{
+	return device_compatible_match_strarray_internal(device_compats,
+	    ndevice_compats, driver_compats, NULL, strarray_pmatch);
+}
+
+static int
+device_compatible_match_strlist_internal(
+    const char * const device_compats, size_t const device_compatsize,
+    const struct device_compatible_entry *driver_compats,
+    const struct device_compatible_entry **matching_entryp,
+    int (*match_fn)(const char *, size_t, const char *))
+{
+	const struct device_compatible_entry *dce = NULL;
+	int rv;
+
+	if (device_compats == NULL || device_compatsize == 0 ||
+	    driver_compats == NULL)
+		return 0;
+
+	for (dce = driver_compats; dce->compat != NULL; dce++) {
+		rv = (*match_fn)(device_compats, device_compatsize,
+		    dce->compat);
+		if (rv != 0) {
+			if (matching_entryp != NULL) {
+				*matching_entryp = dce;
+			}
+			return rv;
+		}
+	}
+	return 0;
+}
+
+/*
+ * device_compatible_match_strlist:
+ *
+ *	Like device_compatible_match(), but take the device
+ *	"compatible" strings as an OpenFirmware-style string
+ *	list.
+ */
+int
+device_compatible_match_strlist(
+    const char * const device_compats, size_t const device_compatsize,
+    const struct device_compatible_entry *driver_compats)
+{
+	return device_compatible_match_strlist_internal(device_compats,
+	    device_compatsize, driver_compats, NULL, strlist_match);
+}
+
+/*
+ * device_compatible_pmatch_strlist:
+ *
+ *	Like device_compatible_pmatch(), but take the device
+ *	"compatible" strings as an OpenFirmware-style string
+ *	list.
+ */
+int
+device_compatible_pmatch_strlist(
+    const char * const device_compats, size_t const device_compatsize,
+    const struct device_compatible_entry *driver_compats)
+{
+	return device_compatible_match_strlist_internal(device_compats,
+	    device_compatsize, driver_compats, NULL, strlist_pmatch);
 }
 
 /*
@@ -2384,8 +2511,69 @@ device_compatible_lookup(const char **device_compats, int ndevice_compats,
 {
 	const struct device_compatible_entry *dce;
 
-	if (device_compatible_match_internal(device_compats, ndevice_compats,
-					     driver_compats, &dce)) {
+	if (device_compatible_match_strarray_internal(device_compats,
+	    ndevice_compats, driver_compats, &dce, strarray_match)) {
+		return dce;
+	}
+	return NULL;
+}
+
+/*
+ * device_compatible_plookup:
+ *
+ *	Look up and return the device_compatible_entry, using the
+ *	same matching criteria used by device_compatible_pmatch().
+ */
+const struct device_compatible_entry *
+device_compatible_plookup(const char **device_compats, int ndevice_compats,
+			  const struct device_compatible_entry *driver_compats)
+{
+	const struct device_compatible_entry *dce;
+
+	if (device_compatible_match_strarray_internal(device_compats,
+	    ndevice_compats, driver_compats, &dce, strarray_pmatch)) {
+		return dce;
+	}
+	return NULL;
+}
+
+/*
+ * device_compatible_lookup_strlist:
+ *
+ *	Like device_compatible_lookup(), but take the device
+ *	"compatible" strings as an OpenFirmware-style string
+ *	list.
+ */
+const struct device_compatible_entry *
+device_compatible_lookup_strlist(
+    const char * const device_compats, size_t const device_compatsize,
+    const struct device_compatible_entry *driver_compats)
+{
+	const struct device_compatible_entry *dce;
+
+	if (device_compatible_match_strlist_internal(device_compats,
+	    device_compatsize, driver_compats, &dce, strlist_match)) {
+		return dce;
+	}
+	return NULL;
+}
+
+/*
+ * device_compatible_plookup_strlist:
+ *
+ *	Like device_compatible_plookup(), but take the device
+ *	"compatible" strings as an OpenFirmware-style string
+ *	list.
+ */
+const struct device_compatible_entry *
+device_compatible_plookup_strlist(
+    const char * const device_compats, size_t const device_compatsize,
+    const struct device_compatible_entry *driver_compats)
+{
+	const struct device_compatible_entry *dce;
+
+	if (device_compatible_match_strlist_internal(device_compats,
+	    device_compatsize, driver_compats, &dce, strlist_pmatch)) {
 		return dce;
 	}
 	return NULL;
