@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.422 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.423 2021/01/24 14:51:01 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.422 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.423 2021/01/24 14:51:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3153,6 +3153,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		KASSERT((pg != NULL) != (pp != NULL));
 		struct vm_page_md *md = (pg != NULL) ? VM_PAGE_TO_MD(pg) :
 		    PMAP_PAGE_TO_MD(pp);
+
+		UVMHIST_LOG(maphist, "  pg %#jx pp %#jx pvh_attrs %#jx "
+		    "nflags %#jx", (uintptr_t)pg, (uintptr_t)pp,
+		    md->pvh_attrs, nflags);
 
 		/*
 		 * This is to be a managed mapping.
