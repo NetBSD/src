@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.21 2021/01/24 14:12:36 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.22 2021/01/24 14:33:49 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.21 2021/01/24 14:12:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.22 2021/01/24 14:33:49 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ static void	virtio_pci_attach(device_t, device_t, void *);
 static int	virtio_pci_rescan(device_t, const char *, const int *);
 static int	virtio_pci_detach(device_t, int);
 
+
+#define NMAPREG		((PCI_MAPREG_END - PCI_MAPREG_START) / \
+				sizeof(pcireg_t))
 struct virtio_pci_softc {
 	struct virtio_softc	sc_sc;
 
@@ -426,8 +429,6 @@ virtio_pci_attach_09(device_t self, void *aux)
 }
 
 
-#define NMAPREG		((PCI_MAPREG_END - PCI_MAPREG_START) / \
-				sizeof(pcireg_t))
 static int
 virtio_pci_attach_10(device_t self, void *aux)
 {
