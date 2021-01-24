@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.43 2021/01/20 00:41:15 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.44 2021/01/24 16:23:05 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.43 2021/01/20 00:41:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.44 2021/01/24 16:23:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,9 +253,9 @@ of_search_compatible(int phandle,
 	for (; compat_data->compat != NULL; compat_data++) {
 		const char *compat[] = { compat_data->compat, NULL };
 		if (of_match_compatible(phandle, compat))
-			break;
+			return compat_data;
 	}
-	return compat_data;
+	return NULL;
 }
 
 /*
