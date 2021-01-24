@@ -1,7 +1,7 @@
-/*	$NetBSD: ofw_network_subr.c,v 1.8 2019/05/29 06:21:57 msaitoh Exp $	*/
+/*	$NetBSD: ofw_network_subr.c,v 1.9 2021/01/24 20:09:03 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,27 +31,40 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.8 2019/05/29 06:21:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.9 2021/01/24 20:09:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 
 #include <dev/ofw/openfirm.h>
 
-#define	OFW_MAX_STACK_BUF_SIZE	256
-#define	OFW_PATH_BUF_SIZE	512
+static const struct device_compatible_entry media_compat[] = {
+	{ .compat = "ethernet,10,rj45,half",
+	  .value = IFM_ETHER | IFM_10_T },
 
-struct table_entry {
-	const char *t_string;
-	int t_value;
+	{ .compat = "ethernet,10,rj45,full",
+	  .value = IFM_ETHER | IFM_10_T | IFM_FDX },
+
+	{ .compat = "ethernet,10,aui,half",
+	  .value = IFM_ETHER | IFM_10_5 },
+
+	{ .compat = "ethernet,10,bnc,half",
+	  .value = IFM_ETHER | IFM_10_2 },
+
+	{ .compat = "ethernet,100,rj45,half",
+	  .value = IFM_ETHER | IFM_100_TX },
+
+	{ .compat = "ethernet,100,rj45,full",
+	  .value = IFM_ETHER | IFM_100_TX | IFM_FDX },
+
+	{ 0 }
 };
-
-int	of_network_parse_network_type(const char *);
 
 /*
  * int of_network_decode_media(phandle, nmediap, defmediap)
@@ -80,73 +93,52 @@ int	of_network_parse_network_type(const char *);
 int *
 of_network_decode_media(int phandle, int *nmediap, int *defmediap)
 {
-	int i, len, count, med, *rv = NULL;
-	char *buf = NULL, *cp, *ncp;
+	const struct device_compatible_entry *dce;
+	int nmedia, len, *rv = NULL;
+	char *sl = NULL;
+	const char *cp;
+	size_t cursor;
+	unsigned int count;
 
 	len = OF_getproplen(phandle, "supported-network-types");
 	if (len <= 0)
 		return (NULL);
 
-	buf = malloc(len, M_TEMP, M_WAITOK);
+	sl = malloc(len, M_TEMP, M_WAITOK);
 
 	/* `supported-network-types' should not change. */
-	if (OF_getprop(phandle, "supported-network-types", buf, len) != len)
+	if (OF_getprop(phandle, "supported-network-types", sl, len) != len)
 		goto bad;
 
-	/*
-	 * Count the number of entries in the array.  This is kind of tricky,
-	 * because they're variable-length strings, yuck.
-	 */
-	for (count = 0, cp = buf; cp <= (buf + len); cp++) {
-		/*
-		 * If we encounter nul, that marks the end of a string,
-		 * and thus one complete media description.
-		 */
-		if (*cp == '\0')
-			count++;
-	}
+	count = strlist_count(sl, len);
 
-	/* Sanity. */
 	if (count == 0)
 		goto bad;
 
 	/* Allocate the return value array. */
 	rv = malloc(count * sizeof(int), M_DEVBUF, M_WAITOK);
 
-	/*
-	 * Parse each media string.  If we get -1 back from the parser,
-	 * back off the count by one, to skip the bad entry.
-	 */
-	for (i = 0, cp = buf; cp <= (buf + len) && i < count; ) {
-		/*
-		 * Find the next string now, as we may chop
-		 * the current one up in the parser.
-		 */
-		for (ncp = cp; *ncp != '\0'; ncp++)
-			/* ...skip to the nul... */ ;
-		ncp++;	/* ...and now past it. */
-
-		med = of_network_parse_network_type(cp);
-		if (med == -1)
-			count--;
-		else {
-			rv[i] = med;
-			i++;
+	/* Parse each media string. */
+	for (nmedia = 0, cursor = 0;
+	     (cp = strlist_next(sl, len, &cursor)) != NULL; ) {
+		dce = device_compatible_lookup(&cp, 1, media_compat);
+		if (dce != NULL) {
+			rv[nmedia++] = (int)dce->value;
 		}
-		cp = ncp;
 	}
-
 	/* Sanity... */
-	if (count == 0)
+	if (nmedia == 0)
 		goto bad;
+
+	free(sl, M_TEMP);
+	sl = NULL;
 
 	/*
 	 * We now have the `supported-media-types' property decoded.
 	 * Next step is to decode the `chosen-media-type' property,
 	 * if it exists.
 	 */
-	free(buf, M_TEMP);
-	buf = NULL;
+	*defmediap = -1;
 	len = OF_getproplen(phandle, "chosen-network-type");
 	if (len <= 0) {
 		/* Property does not exist. */
@@ -154,63 +146,28 @@ of_network_decode_media(int phandle, int *nmediap, int *defmediap)
 		goto done;
 	}
 
-	buf = malloc(len, M_TEMP, M_WAITOK);
-	if (OF_getprop(phandle, "chosen-network-type", buf, len) != len) {
+	sl = malloc(len, M_TEMP, M_WAITOK);
+	if (OF_getprop(phandle, "chosen-network-type", sl, len) != len) {
 		/* Something went wrong... */
-		*defmediap = -1;
 		goto done;
 	}
 
-	*defmediap = of_network_parse_network_type(buf);
+	cp = sl;
+	dce = device_compatible_lookup(&cp, 1, media_compat);
+	if (dce != NULL) {
+		*defmediap = (int)dce->value;
+	}
 
  done:
-	if (buf != NULL)
-		free(buf, M_TEMP);
-	*nmediap = count;
+	if (sl != NULL)
+		free(sl, M_TEMP);
+	*nmediap = nmedia;
 	return (rv);
 
  bad:
 	if (rv != NULL)
 		free(rv, M_DEVBUF);
-	if (buf != NULL)
-		free(buf, M_TEMP);
+	if (sl != NULL)
+		free(sl, M_TEMP);
 	return (NULL);
-}
-
-int
-of_network_parse_network_type(const char *cp)
-{
-	/*
-	 * We could tokenize this, but that would be a pain in
-	 * the neck given how the media are described.  If this
-	 * table grows any larger, we may want to consider doing
-	 * that.
-	 *
-	 * Oh yes, we also only support combinations that actually
-	 * make sense.
-	 */
-	static const struct table_entry mediatab[] = {
-		{ "ethernet,10,rj45,half",
-		  IFM_ETHER | IFM_10_T },
-		{ "ethernet,10,rj45,full",
-		  IFM_ETHER | IFM_10_T | IFM_FDX },
-		{ "ethernet,10,aui,half",
-		  IFM_ETHER | IFM_10_5, },
-		{ "ethernet,10,bnc,half",
-		  IFM_ETHER | IFM_10_2, },
-		{ "ethernet,100,rj45,half",
-		  IFM_ETHER | IFM_100_TX },
-		{ "ethernet,100,rj45,full",
-		  IFM_ETHER | IFM_100_TX | IFM_FDX },
-		{ NULL, -1 },
-	};
-	int i;
-
-	for (i = 0; mediatab[i].t_string != NULL; i++) {
-		if (strcmp(cp, mediatab[i].t_string) == 0)
-			return (mediatab[i].t_value);
-	}
-
-	/* Not found. */
-	return (-1);
 }
