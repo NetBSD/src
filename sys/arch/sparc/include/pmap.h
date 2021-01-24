@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.95 2020/12/18 00:45:52 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.96 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -54,6 +54,8 @@ struct vm_page;
 
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_pmap.h>
+
+#include <machine/promlib.h>
 
 #include <sparc/pte.h>
 
@@ -186,6 +188,12 @@ struct segmap {
 #ifdef _KERNEL
 
 #define PMAP_NULL	((pmap_t)0)
+
+/* Mostly private data exported for a few key consumers. */
+extern struct memarr *pmemarr;
+extern int npmemarr;
+extern vaddr_t prom_vstart;
+extern vaddr_t prom_vend;
 
 /*
  * Bounds on managed physical addresses. Used by (MD) users
@@ -384,6 +392,8 @@ extern void	(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 
 #define tlb_flush_context_real()	sta(ASI_SRMMUFP_L0, ASI_SRMMUFP, 0)
 #define tlb_flush_all_real()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
+
+void setpte4m(vaddr_t va, int pte);
 
 #endif /* SUN4M || SUN4D */
 

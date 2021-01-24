@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.19 2011/07/01 18:51:51 dyoung Exp $ */
+/*	$NetBSD: mkclock.c,v 1.20 2021/01/24 07:36:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.19 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.20 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.19 2011/07/01 18:51:51 dyoung Exp $");
 #include <machine/cpu.h>
 
 #include <sparc/dev/bootbusvar.h>
+#include <sparc/sparc/timervar.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
@@ -81,9 +82,6 @@ CFATTACH_DECL_NEW(clock_obio, sizeof(struct mk48txx_softc),
 
 CFATTACH_DECL_NEW(clock_bootbus, sizeof(struct mk48txx_softc),
     clockmatch_bootbus, clockattach_bootbus, NULL, NULL);
-
-/* Imported from clock.c: */
-extern int (*eeprom_nvram_wenable)(int);
 
 
 /*

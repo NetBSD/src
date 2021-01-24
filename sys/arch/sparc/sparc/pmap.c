@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.372 2021/01/17 01:54:37 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.373 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.372 2021/01/17 01:54:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.373 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.372 2021/01/17 01:54:37 mrg Exp $");
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/kcore.h>
+#include <machine/locore.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -694,9 +695,6 @@ static inline void	smp_tlb_flush_region (int va, int ctx, u_int cpuset);
 static inline void	smp_tlb_flush_context (int ctx, u_int cpuset);
 static inline void	smp_tlb_flush_all (void);
 
-/* From locore: */
-extern void ft_tlb_flush(int va, int ctx, int lvl);
-
 static inline void
 smp_tlb_flush_page(int va, int ctx, u_int cpuset)
 {
@@ -1128,36 +1126,36 @@ static void
 pmap_page_upload(void)
 {
 	int	n;
-	paddr_t	start, end;
+	paddr_t	pstart, pend;
 
 	/* First, the `etext gap' */
-	start = PMAP_BOOTSTRAP_VA2PA(etext_gap_start);
-	end = PMAP_BOOTSTRAP_VA2PA(etext_gap_end);
+	pstart = PMAP_BOOTSTRAP_VA2PA(etext_gap_start);
+	pend = PMAP_BOOTSTRAP_VA2PA(etext_gap_end);
 
 #ifdef DIAGNOSTIC
-	if (avail_start <= start)
+	if (avail_start <= pstart)
 		panic("pmap_page_upload: etext gap overlap: %lx < %lx",
-			(u_long)avail_start, (u_long)start);
+			(u_long)avail_start, (u_long)pstart);
 #endif
 	if (etext_gap_start < etext_gap_end) {
-		vm_first_phys = start;
+		vm_first_phys = pstart;
 		uvm_page_physload(
-			atop(start),
-			atop(end),
-			atop(start),
-			atop(end), VM_FREELIST_DEFAULT);
+			atop(pstart),
+			atop(pend),
+			atop(pstart),
+			atop(pend), VM_FREELIST_DEFAULT);
 	}
 
 	for (n = 0; n < npmemarr; n++) {
 
-		start = pmemarr[n].addr;
-		end = start + pmemarr[n].len;
+		pstart = pmemarr[n].addr;
+		pend = pstart + pmemarr[n].len;
 
 		/* Update vm_{first_last}_phys */
-		if (vm_first_phys > start)
-			vm_first_phys = start;
-		if (vm_last_phys < end)
-			vm_last_phys = end;
+		if (vm_first_phys > pstart)
+			vm_first_phys = pstart;
+		if (vm_last_phys < pend)
+			vm_last_phys = pend;
 
 		/*
 		 * Exclude any memory allocated for the kernel as computed
@@ -1166,23 +1164,23 @@ pmap_page_upload(void)
 		 * Note that this will also exclude the `etext gap' range
 		 * already uploaded above.
 		 */
-		if (start < PMAP_BOOTSTRAP_VA2PA(KERNBASE)) {
+		if (pstart < PMAP_BOOTSTRAP_VA2PA(KERNBASE)) {
 			/*
 			 * This segment starts below the kernel load address.
-			 * Chop it off at the start of the kernel.
+			 * Chop it off at the pstart of the kernel.
 			 */
 			paddr_t	chop = PMAP_BOOTSTRAP_VA2PA(KERNBASE);
 
-			if (end < chop)
-				chop = end;
+			if (pend < chop)
+				chop = pend;
 #ifdef DEBUG
-			prom_printf("bootstrap gap: start %lx, chop %lx, end %lx\n",
-				start, chop, end);
+			prom_printf("bootstrap gap: pstart %lx, chop %lx, pend %lx\n",
+				pstart, chop, pend);
 #endif
 			uvm_page_physload(
-				atop(start),
+				atop(pstart),
 				atop(chop),
-				atop(start),
+				atop(pstart),
 				atop(chop),
 				VM_FREELIST_DEFAULT);
 
@@ -1190,22 +1188,22 @@ pmap_page_upload(void)
 			 * Adjust the start address to reflect the
 			 * uploaded portion of this segment.
 			 */
-			start = chop;
+			pstart = chop;
 		}
 
 		/* Skip the current kernel address range */
-		if (start <= avail_start && avail_start < end)
-			start = avail_start;
+		if (pstart <= avail_start && avail_start < pend)
+			pstart = avail_start;
 
-		if (start == end)
+		if (pstart == pend)
 			continue;
 
 		/* Upload (the rest of) this segment */
 		uvm_page_physload(
-			atop(start),
-			atop(end),
-			atop(start),
-			atop(end), VM_FREELIST_DEFAULT);
+			atop(pstart),
+			atop(pend),
+			atop(pstart),
+			atop(pend), VM_FREELIST_DEFAULT);
 	}
 
 #if defined(MULTIPROCESSOR)
@@ -3029,8 +3027,6 @@ void
 pmap_bootstrap(int nctx, int nregion, int nsegment)
 {
 	void *p;
-	extern char etext[], kernel_data_start[];
-	extern char *kernel_top;
 
 	uvmexp.pagesize = NBPG;
 	uvm_md_init();
@@ -3095,7 +3091,6 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	int lastpage;
 	vaddr_t va;
 	vaddr_t p;
-	extern char kernel_text[];
 
 	/*
 	 * Compute `va2pa_offset'.
@@ -3487,36 +3482,33 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	 * set red zone at kernel base;
 	 * enable cache on message buffer and cpuinfo.
 	 */
-	{
-		extern char etext[];
 
-		/* Enable cache on message buffer and cpuinfo */
-		for (p = KERNBASE; p < (vaddr_t)trapbase; p += NBPG)
-			setpte4(p, getpte4(p) & ~PG_NC);
+	/* Enable cache on message buffer and cpuinfo */
+	for (p = KERNBASE; p < (vaddr_t)trapbase; p += NBPG)
+		setpte4(p, getpte4(p) & ~PG_NC);
 
-		/* Enable cache and write protext kernel text */
-		for (p = (vaddr_t)trapbase; p < (vaddr_t)etext; p += NBPG)
-			setpte4(p, getpte4(p) & ~(PG_NC|PG_W));
+	/* Enable cache and write protext kernel text */
+	for (p = (vaddr_t)trapbase; p < (vaddr_t)etext; p += NBPG)
+		setpte4(p, getpte4(p) & ~(PG_NC|PG_W));
 
-		/*
-		 * Unmap the `etext gap'; it'll be made available
-		 * to the VM manager.
-		 */
-		for (p = etext_gap_start; p < etext_gap_end; p += NBPG) {
-			rp = &pmap_kernel()->pm_regmap[VA_VREG(p)];
-			sp = &rp->rg_segmap[VA_VSEG(p)];
-			sp->sg_nwired--;
-			sp->sg_npte--;
-			pmap_kernel()->pm_stats.resident_count--;
-			sp->sg_pte[VA_VPG(p)] = 0;
-			setpte4(p, 0);
-		}
-
-		/* Enable cache on data & bss */
-		for (p = etext_gap_end; p < virtual_avail; p += NBPG)
-			setpte4(p, getpte4(p) & ~PG_NC);
-
+	/*
+	 * Unmap the `etext gap'; it'll be made available
+	 * to the VM manager.
+	 */
+	for (p = etext_gap_start; p < etext_gap_end; p += NBPG) {
+		rp = &pmap_kernel()->pm_regmap[VA_VREG(p)];
+		sp = &rp->rg_segmap[VA_VSEG(p)];
+		sp->sg_nwired--;
+		sp->sg_npte--;
+		pmap_kernel()->pm_stats.resident_count--;
+		sp->sg_pte[VA_VPG(p)] = 0;
+		setpte4(p, 0);
 	}
+
+	/* Enable cache on data & bss */
+	for (p = etext_gap_end; p < virtual_avail; p += NBPG)
+		setpte4(p, getpte4(p) & ~PG_NC);
+
 	cpus[0] = (struct cpu_info *)CPUINFO_VA;
 }
 #endif
@@ -3537,8 +3529,6 @@ pmap_bootstrap4m(void *top)
 	unsigned int ctxtblsize;
 	vaddr_t pagetables_start, pagetables_end;
 	paddr_t pagetables_start_pa;
-	extern char etext[];
-	extern char kernel_text[];
 	vaddr_t va;
 #if defined(MULTIPROCESSOR)
 	vsize_t off;

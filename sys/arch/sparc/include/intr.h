@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2019/08/21 04:17:41 msaitoh Exp $ */
+/*	$NetBSD: intr.h,v 1.14 2021/01/24 07:36:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ sparc_softintr_disestablish(void *cookie);
  * structure, which is otherwise internal to intr.c.
  */
 #if defined(SUN4M) || defined(SUN4D)
+extern int (*moduleerr_handler)(void);
+extern int (*memerr_handler)(void);
 extern void	raise(int, int);
 #if !(defined(SUN4) || defined(SUN4C))
 #define sparc_softintr_schedule(cookie)	raise(0, *((int *) (cookie)))
