@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.1 2020/12/28 20:29:57 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.2 2021/01/24 19:35:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -26,44 +26,44 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE. 
- */     
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.1 2020/12/28 20:29:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.2 2021/01/24 19:35:21 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h> 
+#include <sys/kmem.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2cmuxvar.h>
 
-/* 
- * i2c mux 
- * 
+/*
+ * i2c mux
+ *
  * This works by interposing a set of virtual controllers behind the real
  * i2c controller.  We provide our own acquire and release functions that
  * perform the following tasks:
- *    
+ *
  *	acquire -> acquire parent controller, program mux
- * 
+ *
  *	release -> idle mux, release parent controller
- * 
+ *
  * All of the actual I/O operations are transparently passed through.
- * 
- * N.B. the locking order; the generic I2C layer has already acquired  
+ *
+ * N.B. the locking order; the generic I2C layer has already acquired
  * our virtual controller's mutex before calling our acquire function,
- * and we will then acquire the real controller's mutex when we acquire 
+ * and we will then acquire the real controller's mutex when we acquire
  * the bus, so the order is:
- * 
+ *
  *	mux virtual controller -> parent controller
  *
  * These are common routines used by various i2c mux controller
  * implementations (gpio, pin mux, i2c device, etc.).
- */     
+ */
 
 /*****************************************************************************/
 
@@ -141,7 +141,7 @@ iicmux_count_children(struct iicmux_softc * const sc)
 /* XXX iicbus_print() should be able to do this. */
 static int
 iicmux_print(void * const aux, const char * const pnp)
-{         
+{
 	i2c_tag_t const tag = aux;
 	struct iicmux_bus * const bus = tag->ic_cookie;
 	int rv;
@@ -152,7 +152,7 @@ iicmux_print(void * const aux, const char * const pnp)
 	return rv;
 }
 
-static void 
+static void
 iicmux_attach_bus(struct iicmux_softc * const sc,
     int const phandle, int const busidx)
 {
