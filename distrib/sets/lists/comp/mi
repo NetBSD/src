@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2372 2021/01/21 15:53:15 thorpej Exp $
+#	$NetBSD: mi,v 1.2373 2021/01/24 17:29:11 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11650,6 +11650,8 @@
 ./usr/share/man/cat9/kmem_intr_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_strdupsize.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_strfree.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_tmpbuf_alloc.0	comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_tmpbuf_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
@@ -19815,6 +19817,8 @@
 ./usr/share/man/html9/kmem_intr_zalloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_strdupsize.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_strfree.html		comp-sys-htmlman	html
+./usr/share/man/html9/kmem_tmpbuf_alloc.html	comp-sys-htmlman	html
+./usr/share/man/html9/kmem_tmpbuf_free.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_zalloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/knote.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpause.html		comp-sys-htmlman	html
@@ -28132,6 +28136,8 @@
 ./usr/share/man/man9/kmem_intr_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_strdupsize.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_strfree.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_tmpbuf_alloc.9	comp-sys-man		.man
+./usr/share/man/man9/kmem_tmpbuf_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
 ./usr/share/man/man9/kpause.9			comp-sys-man		.man
