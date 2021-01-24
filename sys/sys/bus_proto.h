@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.12 2020/11/18 07:42:46 skrll Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.13 2021/01/24 13:33:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -129,10 +129,12 @@ uint32_t bus_space_read_4(bus_space_tag_t, bus_space_handle_t,
 uint32_t bus_space_read_stream_4(bus_space_tag_t, bus_space_handle_t,
 				 bus_size_t);
 
+#ifdef __HAVE_BUS_SPACE_8
 uint64_t bus_space_read_8(bus_space_tag_t, bus_space_handle_t,
 			  bus_size_t);
 uint64_t bus_space_read_stream_8(bus_space_tag_t, bus_space_handle_t,
 				 bus_size_t);
+#endif
 
 #if defined(KASAN) && defined(__HAVE_KASAN_INSTR_BUS)
 #define BUS_SPACE_READ_MEM_PROTOS(bytes, bits)					\
@@ -244,10 +246,12 @@ void	bus_space_write_4(bus_space_tag_t, bus_space_handle_t,
 void	bus_space_write_stream_4(bus_space_tag_t, bus_space_handle_t,
 		  		 bus_size_t, uint32_t);
 
+#ifdef __HAVE_BUS_SPACE_8
 void	bus_space_write_8(bus_space_tag_t, bus_space_handle_t,
 			  bus_size_t, uint64_t);
 void	bus_space_write_stream_8(bus_space_tag_t, bus_space_handle_t,
 		  		 bus_size_t, uint64_t);
+#endif
 
 #if defined(KASAN) && defined(__HAVE_KASAN_INSTR_BUS)
 #define BUS_SPACE_WRITE_MEM_PROTOS(bytes, bits)					\
@@ -350,8 +354,10 @@ void	bus_space_set_multi_2(bus_space_tag_t, bus_space_handle_t,
 			      bus_size_t, u_int16_t, bus_size_t);
 void	bus_space_set_multi_4(bus_space_tag_t, bus_space_handle_t,
 			      bus_size_t, u_int32_t, bus_size_t);
+#ifdef __HAVE_BUS_SPACE_8
 void	bus_space_set_multi_8(bus_space_tag_t, bus_space_handle_t,
 			      bus_size_t, u_int64_t, bus_size_t);
+#endif
 
 void	bus_space_set_multi_stream_1(bus_space_tag_t, bus_space_handle_t,
 			      bus_size_t, u_int8_t, bus_size_t);
@@ -359,8 +365,10 @@ void	bus_space_set_multi_stream_2(bus_space_tag_t, bus_space_handle_t,
 			      bus_size_t, u_int16_t, bus_size_t);
 void	bus_space_set_multi_stream_4(bus_space_tag_t, bus_space_handle_t,
 			      bus_size_t, u_int32_t, bus_size_t);
+#ifdef __HAVE_BUS_SPACE_8
 void	bus_space_set_multi_stream_8(bus_space_tag_t, bus_space_handle_t,
 			      bus_size_t, u_int64_t, bus_size_t);
+#endif
 
 void	bus_space_set_region_1(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int8_t, bus_size_t);
@@ -368,8 +376,10 @@ void	bus_space_set_region_2(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int16_t, bus_size_t);
 void	bus_space_set_region_4(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int32_t, bus_size_t);
+#ifdef __HAVE_BUS_SPACE_8
 void	bus_space_set_region_8(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int64_t, bus_size_t);
+#endif
 
 void	bus_space_set_region_stream_1(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int8_t, bus_size_t);
@@ -377,8 +387,10 @@ void	bus_space_set_region_stream_2(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int16_t, bus_size_t);
 void	bus_space_set_region_stream_4(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int32_t, bus_size_t);
+#ifdef __HAVE_BUS_SPACE_8
 void	bus_space_set_region_stream_8(bus_space_tag_t, bus_space_handle_t,
 			       bus_size_t, u_int64_t, bus_size_t);
+#endif
 
 void	bus_space_copy_region_1(bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_space_handle_t,
@@ -389,9 +401,11 @@ void	bus_space_copy_region_2(bus_space_tag_t, bus_space_handle_t,
 void	bus_space_copy_region_4(bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_space_handle_t,
 				bus_size_t, bus_size_t);
+#ifdef __HAVE_BUS_SPACE_8
 void	bus_space_copy_region_8(bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_space_handle_t,
 				bus_size_t, bus_size_t);
+#endif
 
 void	bus_space_copy_region_stream_1(bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_space_handle_t,
@@ -402,9 +416,11 @@ void	bus_space_copy_region_stream_2(bus_space_tag_t, bus_space_handle_t,
 void	bus_space_copy_region_stream_4(bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_space_handle_t,
 				bus_size_t, bus_size_t);
+#ifdef __HAVE_BUS_SPACE_8
 void	bus_space_copy_region_stream_8(bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_space_handle_t,
 				bus_size_t, bus_size_t);
+#endif
 
 bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 bool	bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
