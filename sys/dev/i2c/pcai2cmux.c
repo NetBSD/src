@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.4 2021/01/24 19:37:45 jmcneill Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.5 2021/01/24 19:38:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.4 2021/01/24 19:37:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.5 2021/01/24 19:38:49 jmcneill Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -124,10 +124,6 @@ static const struct device_compatible_entry compat_data[] = {
 
 	/* PCA9547 - 8 channel i2c mux */
 	{ .compat = "nxp,pca9547",
-	  .data = &mux8_type },
-
-	/* PCA9547 - 8 channel i2c mux (NXP Layerscape ACPI) */
-	{ .compat = "NXP0002",
 	  .data = &mux8_type },
 
 	/* PCA9548 - 8 channel i2c switch */
