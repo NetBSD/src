@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.3 2021/01/23 23:11:40 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.4 2021/01/24 00:02:38 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,9 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.3 2021/01/23 23:11:40 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.4 2021/01/24 00:02:38 christos Exp $");
 #endif
 
 #include <ctype.h>
