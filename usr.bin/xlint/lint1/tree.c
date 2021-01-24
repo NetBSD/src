@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.184 2021/01/23 22:34:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.185 2021/01/24 00:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.184 2021/01/23 22:34:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.185 2021/01/24 00:15:20 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -386,8 +386,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	}
 
 	/*
-	 * Set eq to 0 if there are struct/union members with the same name
-	 * and different types and/or offsets.
+	 * Set eq to false if there are struct/union members with the same
+	 * name and different types and/or offsets.
 	 */
 	eq = true;
 	for (csym = msym; csym != NULL; csym = csym->s_link) {
@@ -2614,7 +2614,7 @@ merge_qualifiers(type_t **tpp, type_t *tp1, type_t *tp2)
 }
 
 /*
- * Returns 1 if the given structure or union has a constant member
+ * Returns true if the given structure or union has a constant member
  * (maybe recursively).
  */
 static bool
