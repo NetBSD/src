@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.44 2021/01/24 16:23:05 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.45 2021/01/24 16:45:41 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.44 2021/01/24 16:23:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.45 2021/01/24 16:45:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -241,7 +241,7 @@ of_match_compat_data(int phandle,
  *
  * Return Value:
  *	The first matching compat_data entry in the array. If no matches
- *	are found, the terminating ("compat" of NULL) record is returned.
+ *	are found, the NULL is returned.
  *
  * Side Effects:
  *	None.
