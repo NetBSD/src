@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.186 2021/01/24 10:50:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.187 2021/01/24 10:55:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.186 2021/01/24 10:50:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.187 2021/01/24 10:55:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -950,7 +950,7 @@ typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 }
 
 static bool
-typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
+is_typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
 	/* FIXME: missing tn_subt */
 	if (lt == PTR && ((rt == PTR && rn->tn_type->t_tspec == VOID) ||
@@ -1358,7 +1358,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 		 * Accept some things which are allowed with EQ and NE,
 		 * but not with ordered comparisons.
 		 */
-		if (typeok_eq(ln, lt, rn, rt))
+		if (is_typeok_eq(ln, lt, rn, rt))
 			break;
 		/* FALLTHROUGH */
 	case LT:
@@ -1502,17 +1502,17 @@ static void
 check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 {
 	type_t	*ltp, *rtp;
-	tspec_t	lt, rt;
+	tspec_t	lst, rst;
 	const	char *lts, *rts;
 
-	lt = (ltp = ln->tn_type)->t_subt->t_tspec;
-	rt = (rtp = rn->tn_type)->t_subt->t_tspec;
+	lst = (ltp = ln->tn_type)->t_subt->t_tspec;
+	rst = (rtp = rn->tn_type)->t_subt->t_tspec;
 
-	if (lt == VOID || rt == VOID) {
-		if (sflag && (lt == FUNC || rt == FUNC)) {
+	if (lst == VOID || rst == VOID) {
+		if (sflag && (lst == FUNC || rst == FUNC)) {
 			/* (void *)0 already handled in typeok() */
-			*(lt == FUNC ? &lts : &rts) = "function pointer";
-			*(lt == VOID ? &lts : &rts) = "'void *'";
+			*(lst == FUNC ? &lts : &rts) = "function pointer";
+			*(lst == VOID ? &lts : &rts) = "'void *'";
 			/* ANSI C forbids comparison of %s with %s */
 			warning(274, lts, rts);
 		}
@@ -1524,7 +1524,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 		return;
 	}
 
-	if (lt == FUNC && rt == FUNC) {
+	if (lst == FUNC && rst == FUNC) {
 		if (sflag && op != EQ && op != NE)
 			/* ANSI C forbids ordered comparisons of ... */
 			warning(125);
