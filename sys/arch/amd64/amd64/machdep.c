@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.357 2020/09/07 00:47:27 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.358 2021/01/24 14:17:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.357 2020/09/07 00:47:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.358 2021/01/24 14:17:10 simonb Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -344,7 +344,7 @@ cpu_startup(void)
 	consinit();
 
 	/*
-	 * Initialize error message buffer (et end of core).
+	 * Initialize error message buffer (at end of core).
 	 */
 	if (msgbuf_p_cnt == 0)
 		panic("msgbuf paddr map has not been set up");
