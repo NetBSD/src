@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.126 2020/11/22 03:55:33 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.127 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.126 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.127 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.126 2020/11/22 03:55:33 thorpej Exp $");
 #include <machine/instr.h>
 #include <machine/trap.h>
 #include <machine/promlib.h>
+#include <machine/locore.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
@@ -81,8 +82,6 @@ static int intr_biglock_wrapper(void *);
 
 void *xcall_cookie;
 #endif
-
-extern kmutex_t xpmsg_mutex;
 
 void	strayintr(struct clockframe *);
 #ifdef DIAGNOSTIC
@@ -565,8 +564,6 @@ ih_remove(struct intrhand **head, struct intrhand *ih)
 }
 
 static int fastvec;		/* marks fast vectors (see below) */
-extern int sparc_interrupt4m[];
-extern int sparc_interrupt44c[];
 
 #ifdef DIAGNOSTIC
 static void
@@ -853,7 +850,6 @@ sparc_softintr_schedule(void *cookie)
 	struct softintr_cookie *sic = cookie;
 	if (CPU_ISSUN4M || CPU_ISSUN4D) {
 #if defined(SUN4M) || defined(SUN4D)
-		extern void raise(int,int);
 		raise(0, sic->sic_pilreq);
 #endif
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.101 2018/09/03 16:29:27 riastradh Exp $ */
+/*	$NetBSD: cache.c,v 1.102 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.101 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.102 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.101 2018/09/03 16:29:27 riastradh Exp $"
 
 #include <machine/ctlreg.h>
 #include <machine/pte.h>
+#include <machine/locore.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -912,8 +913,6 @@ hypersparc_cache_flush_all(void)
 void
 cypress_cache_flush_all(void)
 {
-	extern char kernel_text[];
-
 	char *p;
 	int i, ls;
 
@@ -1002,8 +1001,6 @@ viking_pcache_flush_page(paddr_t pa, int invalidate_only)
 		}
 
 	} else {
-		extern char kernel_text[];
-
 		/*
 		 * Force the cache to validate its backing memory
 		 * by displacing all cache lines with known read-only

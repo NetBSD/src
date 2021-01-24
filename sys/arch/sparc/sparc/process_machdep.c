@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20 2020/05/11 18:38:26 kamil Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.21 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2020/05/11 18:38:26 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2021/01/24 07:36:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,12 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2020/05/11 18:38:26 kamil E
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/ptrace.h>
+
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
-#include <sys/ptrace.h>
+#include <machine/trap.h>
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
@@ -150,8 +152,6 @@ process_set_pc(struct lwp *l, void *addr)
 	l->l_md.md_tf->tf_npc = (u_int)addr + 4;
 	return 0;
 }
-
-extern struct fpstate	initfpstate;
 
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)

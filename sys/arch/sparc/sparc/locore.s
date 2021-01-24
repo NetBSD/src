@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.278 2020/06/30 16:20:02 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.279 2021/01/24 07:36:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5098,8 +5098,8 @@ Lufetchstore_fault:
 
 /* probeget and probeset are meant to be used during autoconfiguration */
 
-	.globl	_C_LABEL(Lfsbail)
-_C_LABEL(Lfsbail):
+	.globl	_C_LABEL(sparc_fsbail)
+_C_LABEL(sparc_fsbail):
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	retl				! and return error indicator
 	 mov	-1, %o0
@@ -5116,8 +5116,8 @@ _C_LABEL(Lfsbail):
 ENTRY(probeget)
 	! %o0 = addr, %o1 = (1,2,4)
 	sethi	%hi(cpcb), %o2
-	ld	[%o2 + %lo(cpcb)], %o2	! cpcb->pcb_onfault = Lfsbail;
-	set	Lfsbail, %o5
+	ld	[%o2 + %lo(cpcb)], %o2	! cpcb->pcb_onfault = sparc_fsbail;
+	set	sparc_fsbail, %o5
 	st	%o5, [%o2 + PCB_ONFAULT]
 	btst	1, %o1
 	bnz,a	0f			! if (len & 1)
@@ -5139,8 +5139,8 @@ ENTRY(probeget)
 ENTRY(probeset)
 	! %o0 = addr, %o1 = (1,2,4), %o2 = val
 	sethi	%hi(cpcb), %o3
-	ld	[%o3 + %lo(cpcb)], %o3	! cpcb->pcb_onfault = Lfsbail;
-	set	Lfsbail, %o5
+	ld	[%o3 + %lo(cpcb)], %o3	! cpcb->pcb_onfault = sparc_fsbail;
+	set	sparc_fsbail, %o5
 	st	%o5, [%o3 + PCB_ONFAULT]
 	btst	1, %o1
 	bnz,a	0f			! if (len & 1)
@@ -5163,9 +5163,9 @@ ENTRY(probeset)
  */
 ENTRY(xldcontrolb)
 	!sethi	%hi(cpcb), %o2
-	!ld	[%o2 + %lo(cpcb)], %o2	! cpcb->pcb_onfault = Lfsbail;
+	!ld	[%o2 + %lo(cpcb)], %o2	! cpcb->pcb_onfault = sparc_fsbail;
 	or	%o1, %g0, %o2		! %o2 = %o1
-	set	_C_LABEL(Lfsbail), %o5
+	set	_C_LABEL(sparc_fsbail), %o5
 	st	%o5, [%o2 + PCB_ONFAULT]
 	lduba	[%o0] ASI_CONTROL, %o0	! read
 0:	retl
@@ -5181,7 +5181,7 @@ ENTRY(xldcontrolb)
  */
 ENTRY(fkbyte)
 	or	%o1, %g0, %o2		! %o2 = %o1
-	set	_C_LABEL(Lfsbail), %o5
+	set	_C_LABEL(sparc_fsbail), %o5
 	st	%o5, [%o2 + PCB_ONFAULT]
 	ldub	[%o0], %o0		! fetch the byte
 	retl				! made it

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.49 2021/01/17 01:02:28 mrg Exp $ */
+/*	$NetBSD: autoconf.h,v 1.50 2021/01/24 07:36:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -179,5 +179,7 @@ int	romgetcursoraddr(int **, int **);
 
 /* Exported from autoconf.c for other consumers.  */
 extern char	machine_model[100];
+extern struct sparc_bus_dma_tag mainbus_dma_tag;
+extern struct sparc_bus_space_tag mainbus_space_tag;
 
 #endif /* !_MACHINE_AUTOCONF_H_ */

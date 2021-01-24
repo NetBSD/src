@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.258 2021/01/17 01:02:28 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.259 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.258 2021/01/17 01:02:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.259 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.258 2021/01/17 01:02:28 mrg Exp $");
 #include <machine/trap.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
+#include <machine/locore.h>
 
 #if defined(MULTIPROCESSOR) && defined(DDB)
 #include <ddb/db_output.h>
@@ -662,7 +663,6 @@ cpu_init_system(void)
 void
 cpu_spinup(struct cpu_info *cpi)
 {
-	extern void cpu_hatch(void); /* in locore.s */
 	struct openprom_addr oa;
 	void *pc;
 	int n;
@@ -1105,7 +1105,6 @@ int hypersparc_getmid(void);
 int viking_getmid(void);
 
 #if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
-extern int (*moduleerr_handler)(void);
 int viking_module_error(void);
 #endif
 
