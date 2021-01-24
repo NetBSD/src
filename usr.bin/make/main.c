@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.516 2021/01/23 11:34:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.517 2021/01/24 20:11:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.516 2021/01/23 11:34:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.517 2021/01/24 20:11:55 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1215,7 +1215,7 @@ ReadBuiltinRules(void)
 	StringList sysMkPath = LST_INIT;
 
 	SearchPath_Expand(
-	    Lst_IsEmpty(sysIncPath) ? defSysIncPath : sysIncPath,
+	    Lst_IsEmpty(&sysIncPath->dirs) ? defSysIncPath : sysIncPath,
 	    _PATH_DEFSYSMK,
 	    &sysMkPath);
 	if (Lst_IsEmpty(&sysMkPath))
@@ -1721,7 +1721,7 @@ ReadMakefile(const char *fname)
 		/* look in -I and system include directories. */
 		name = Dir_FindFile(fname, parseIncPath);
 		if (name == NULL) {
-			SearchPath *sysInc = Lst_IsEmpty(sysIncPath)
+			SearchPath *sysInc = Lst_IsEmpty(&sysIncPath->dirs)
 					     ? defSysIncPath : sysIncPath;
 			name = Dir_FindFile(fname, sysInc);
 		}
