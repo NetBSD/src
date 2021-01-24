@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.10 2020/09/05 16:04:31 jakllsch Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.11 2021/01/24 13:33:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -150,12 +150,16 @@
 #define	bus_space_read_1(t, h, o)	__bs_rs(1,(t),(h),(o))
 #define	bus_space_read_2(t, h, o)	__bs_rs(2,(t),(h),(o))
 #define	bus_space_read_4(t, h, o)	__bs_rs(4,(t),(h),(o))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_read_8(t, h, o)	__bs_rs(8,(t),(h),(o))
+#endif
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_read_stream_1(t, h, o)	__bs_rs_s(1,(t),(h),(o))
 #define	bus_space_read_stream_2(t, h, o)	__bs_rs_s(2,(t),(h),(o))
 #define	bus_space_read_stream_4(t, h, o)	__bs_rs_s(4,(t),(h),(o))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_read_stream_8(t, h, o)	__bs_rs_s(8,(t),(h),(o))
+#endif
 #endif
 
 
@@ -168,8 +172,10 @@
 	__bs_nonsingle(rm,2,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_4(t, h, o, a, c)				\
 	__bs_nonsingle(rm,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_read_multi_8(t, h, o, a, c)				\
 	__bs_nonsingle(rm,8,(t),(h),(o),(a),(c))
+#endif
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_read_multi_stream_1(t, h, o, a, c)			\
 	__bs_nonsingle_s(rm,1,(t),(h),(o),(a),(c))
@@ -177,8 +183,10 @@
 	__bs_nonsingle_s(rm,2,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_stream_4(t, h, o, a, c)			\
 	__bs_nonsingle_s(rm,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_read_multi_stream_8(t, h, o, a, c)			\
 	__bs_nonsingle_s(rm,8,(t),(h),(o),(a),(c))
+#endif
 #endif
 
 
@@ -191,8 +199,10 @@
 	__bs_nonsingle(rr,2,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_4(t, h, o, a, c)				\
 	__bs_nonsingle(rr,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_read_region_8(t, h, o, a, c)				\
 	__bs_nonsingle(rr,8,(t),(h),(o),(a),(c))
+#endif
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_read_region_stream_1(t, h, o, a, c)			\
 	__bs_nonsingle_s(rr,1,(t),(h),(o),(a),(c))
@@ -200,8 +210,10 @@
 	__bs_nonsingle_s(rr,2,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_stream_4(t, h, o, a, c)			\
 	__bs_nonsingle_s(rr,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_read_region_stream_8(t, h, o, a, c)			\
 	__bs_nonsingle_s(rr,8,(t),(h),(o),(a),(c))
+#endif
 #endif
 
 
@@ -211,12 +223,16 @@
 #define	bus_space_write_1(t, h, o, v)	__bs_ws(1,(t),(h),(o),(v))
 #define	bus_space_write_2(t, h, o, v)	__bs_ws(2,(t),(h),(o),(v))
 #define	bus_space_write_4(t, h, o, v)	__bs_ws(4,(t),(h),(o),(v))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_write_8(t, h, o, v)	__bs_ws(8,(t),(h),(o),(v))
+#endif
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_write_stream_1(t, h, o, v)	__bs_ws_s(1,(t),(h),(o),(v))
 #define	bus_space_write_stream_2(t, h, o, v)	__bs_ws_s(2,(t),(h),(o),(v))
 #define	bus_space_write_stream_4(t, h, o, v)	__bs_ws_s(4,(t),(h),(o),(v))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_write_stream_8(t, h, o, v)	__bs_ws_s(8,(t),(h),(o),(v))
+#endif
 #endif
 
 
@@ -229,8 +245,10 @@
 	__bs_nonsingle(wm,2,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_4(t, h, o, a, c)				\
 	__bs_nonsingle(wm,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
 	__bs_nonsingle(wm,8,(t),(h),(o),(a),(c))
+#endif
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_write_multi_stream_1(t, h, o, a, c)			\
 	__bs_nonsingle_s(wm,1,(t),(h),(o),(a),(c))
@@ -238,8 +256,10 @@
 	__bs_nonsingle_s(wm,2,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_stream_4(t, h, o, a, c)			\
 	__bs_nonsingle_s(wm,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_write_multi_stream_8(t, h, o, a, c)			\
 	__bs_nonsingle_s(wm,8,(t),(h),(o),(a),(c))
+#endif
 #endif
 
 
@@ -252,8 +272,10 @@
 	__bs_nonsingle(wr,2,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_4(t, h, o, a, c)				\
 	__bs_nonsingle(wr,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_write_region_8(t, h, o, a, c)				\
 	__bs_nonsingle(wr,8,(t),(h),(o),(a),(c))
+#endif
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_write_region_stream_1(t, h, o, a, c)			\
 	__bs_nonsingle_s(wr,1,(t),(h),(o),(a),(c))
@@ -261,8 +283,10 @@
 	__bs_nonsingle_s(wr,2,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_stream_4(t, h, o, a, c)			\
 	__bs_nonsingle_s(wr,4,(t),(h),(o),(a),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_write_region_stream_8(t, h, o, a, c)			\
 	__bs_nonsingle_s(wr,8,(t),(h),(o),(a),(c))
+#endif
 #endif
 
 
@@ -275,8 +299,10 @@
 	__bs_set(sm,2,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_4(t, h, o, v, c)				\
 	__bs_set(sm,4,(t),(h),(o),(v),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_set_multi_8(t, h, o, v, c)				\
 	__bs_set(sm,8,(t),(h),(o),(v),(c))
+#endif
 
 /*
  * Set region operations.
@@ -287,8 +313,10 @@
 	__bs_set(sr,2,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_4(t, h, o, v, c)				\
 	__bs_set(sr,4,(t),(h),(o),(v),(c))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_set_region_8(t, h, o, v, c)				\
 	__bs_set(sr,8,(t),(h),(o),(v),(c))
+#endif
 
 /*
  * Copy operations.
@@ -299,8 +327,10 @@
 	__bs_copy(2, t, h1, o1, h2, o2, c)
 #define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)				\
 	__bs_copy(4, t, h1, o1, h2, o2, c)
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)				\
 	__bs_copy(8, t, h1, o1, h2, o2, c)
+#endif
 
 /*
  * Probing operations.
@@ -309,12 +339,16 @@
 #define	bus_space_peek_1(t, h, o, p)	__bs_pe(1,(t),(h),(o),(p))
 #define	bus_space_peek_2(t, h, o, p)	__bs_pe(2,(t),(h),(o),(p))
 #define	bus_space_peek_4(t, h, o, p)	__bs_pe(4,(t),(h),(o),(p))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_peek_8(t, h, o, p)	__bs_pe(8,(t),(h),(o),(p))
+#endif
 
 #define	bus_space_poke_1(t, h, o, v)	__bs_po(1,(t),(h),(o),(v))
 #define	bus_space_poke_2(t, h, o, v)	__bs_po(2,(t),(h),(o),(v))
 #define	bus_space_poke_4(t, h, o, v)	__bs_po(4,(t),(h),(o),(v))
+#ifdef __HAVE_BUS_SPACE_8
 #define	bus_space_poke_8(t, h, o, v)	__bs_po(8,(t),(h),(o),(v))
+#endif
 #endif
 
 /*
