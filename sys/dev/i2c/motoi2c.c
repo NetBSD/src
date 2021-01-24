@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.8 2020/12/23 16:02:11 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.9 2021/01/24 18:01:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.8 2020/12/23 16:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.9 2021/01/24 18:01:13 jmcneill Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -107,6 +107,7 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 		sc->sc_iowr = motoi2c_iowr1;
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
+	iba.iba_child_devices = sc->sc_child_devices;
 
 	I2C_WRITE(I2CCR, 0);		/* reset before changing anything */
 	I2C_WRITE(I2CDFSRR, i2c->i2c_dfsrr);	/* sampling units */
@@ -115,13 +116,13 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 	I2C_WRITE(I2CSR, 0);		/* clear status flags */
 
 #ifdef FDT
-	KASSERT(sc->sc_phandle != 0);
-	fdtbus_register_i2c_controller(&sc->sc_i2c, sc->sc_phandle);
-
-	fdtbus_attach_i2cbus(self, sc->sc_phandle, &sc->sc_i2c, iicbus_print);
-#else
-	config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	if (sc->sc_phandle != 0) {
+		fdtbus_register_i2c_controller(&sc->sc_i2c, sc->sc_phandle);
+		fdtbus_attach_i2cbus(self, sc->sc_phandle, &sc->sc_i2c,
+		    iicbus_print);
+	} else
 #endif
+	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
 static int
