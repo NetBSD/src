@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.3 2019/03/02 14:21:19 christos Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.4 2021/01/24 07:36:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 static void mspcic_pci_fixup(int, pcitag_t, int *, uint32_t *, uint32_t *,
 	uint32_t, uint32_t memtop);
 
-extern struct mspcic_pci_map mspcic_pci_iomap[];
-extern struct mspcic_pci_map mspcic_pci_memmap[];
 
 /* ======================================================================
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.335 2020/11/22 03:55:33 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.336 2021/01/24 07:36:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -138,8 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2020/11/22 03:55:33 thorpej Exp $"
 #if NPOWER > 0
 #include <sparc/dev/power.h>
 #endif
-
-extern paddr_t avail_end;
 
 kmutex_t fpu_mtx;
 
@@ -819,7 +817,6 @@ cpu_reboot(int howto, char *user_boot_string)
 #endif
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct lwp lwp0;
 
 		/* XXX protect against curlwp->p_stats.foo refs in sync() */
 		if (curlwp == NULL)
@@ -966,8 +963,6 @@ dumpsys(void)
 	int error = 0;
 	struct memarr *mp;
 	int nmem;
-	extern struct memarr pmemarr[];
-	extern int npmemarr;
 
 	/* copy registers to memory */
 	snapshot(cpuinfo.curpcb);
@@ -3123,8 +3118,6 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
-	extern vaddr_t prom_vstart;
-	extern vaddr_t prom_vend;
 	const vaddr_t v = (vaddr_t)ptr;
 
 	*handled = (v >= MSGBUF_VA && v < MSGBUF_VA + PAGE_SIZE) ||

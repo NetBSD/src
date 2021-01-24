@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.199 2020/08/14 13:45:44 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.200 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2020/08/14 13:45:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_sunos.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2020/08/14 13:45:44 martin Exp $");
 #include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/userret.h>
+#include <machine/locore.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -85,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2020/08/14 13:45:44 martin Exp $");
 #include <machine/frame.h>
 #endif
 #ifdef COMPAT_SUNOS
-extern struct emul emul_sunos;
+#include <compat/sunos/sunos_exec.h>
 #define SUNOS_MAXSADDR_SLOP (32 * 1024)
 #endif
 
@@ -248,7 +249,6 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 #if defined(MULTIPROCESSOR)
 		if (type == T_DBPAUSE) {
 			/* XXX - deal with kgdb too */
-			extern void ddb_suspend(struct trapframe *);
 			write_all_windows();
 			ddb_suspend(tf);
 			ADVANCE;
@@ -737,7 +737,7 @@ rwindow_save(struct lwp *l)
  * the registers into the new process after the exec.
  */
 void
-cpu_vmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
+cpu_vmspace_exec(struct lwp *l, vaddr_t vstart, vaddr_t vend)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
@@ -826,8 +826,6 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	}
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
-		extern char Lfsbail[];
-
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
 		        snprintb(bits, sizeof(bits), SER_BITS, ser);
@@ -840,7 +838,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (onfault == (vaddr_t)Lfsbail) {
+		if (onfault == (vaddr_t)sparc_fsbail) {
 			rv = EFAULT;
 			goto kfault;
 		}
@@ -1156,7 +1154,6 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	}
 
 	if (psr & PSR_PS) {
-		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
 			snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
@@ -1169,7 +1166,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (onfault == (vaddr_t)Lfsbail) {
+		if (onfault == (vaddr_t)sparc_fsbail) {
 			rv = EFAULT;
 			goto kfault;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.46 2017/09/11 19:25:07 palle Exp $ */
+/*	$NetBSD: promlib.c,v 1.47 2021/01/24 07:36:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.46 2017/09/11 19:25:07 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.47 2021/01/24 07:36:54 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -55,7 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.46 2017/09/11 19:25:07 palle Exp $");
 #include <machine/oldmon.h>
 #include <machine/promlib.h>
 #include <machine/ctlreg.h>
+
 #include <sparc/sparc/asm.h>
+#include <sparc/sparc/cache.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -1105,7 +1107,6 @@ static inline void
 prom_init_oldmon(void)
 {
 	struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
-	extern void sparc_noop(void);
 
 	promops.po_version = PROM_OLDMON;
 	promops.po_revision = oldpvec->monId[0];	/*XXX*/
@@ -1133,7 +1134,6 @@ prom_init_oldmon(void)
 #ifdef SUN4
 #ifndef _STANDALONE
 	if (oldpvec->romvecVersion >= 2) {
-		extern void oldmon_w_cmd(u_long, char *);
 		*oldpvec->vector_cmd = oldmon_w_cmd;
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.9 2011/07/17 23:32:37 mrg Exp $ */
+/*	$NetBSD: eeprom.c,v 1.10 2021/01/24 07:36:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.9 2011/07/17 23:32:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.10 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -54,9 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.9 2011/07/17 23:32:37 mrg Exp $");
 #include <machine/eeprom.h>
 
 #include <dev/clock_subr.h>
-
-/* Imported from clock.c: */
-extern char	*eeprom_va;
 
 static int	eeprom_match(device_t, cfdata_t, void *);
 static void	eeprom_attach(device_t, device_t, void *);

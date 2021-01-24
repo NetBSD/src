@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.94 2017/07/21 20:56:10 nakayama Exp $ */
+/*	$NetBSD: db_interface.c,v 1.95 2021/01/24 07:36:54 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.94 2017/07/21 20:56:10 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.95 2021/01/24 07:36:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.94 2017/07/21 20:56:10 nakayama E
 #include <uvm/uvm.h>
 
 #include <machine/db_machdep.h>
+#include <machine/locore.h>
 
 #include <ddb/db_access.h>
 #include <ddb/ddbvar.h>
@@ -98,7 +99,6 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-	extern char	etext[];
 	char	*dst;
 
 	dst = (char *)addr;
@@ -131,8 +131,6 @@ cpu_Debugger(void)
 #if defined(DDB) || defined(_KMEMUSER)
 
 int	db_active = 0;
-
-extern char *trap_type[];
 
 #ifdef _KERNEL
 void kdb_kbd_trap(struct trapframe *);
