@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.245 2021/01/21 14:30:01 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.246 2021/01/24 20:11:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -361,7 +361,9 @@ typedef struct ListNode StringListNode;
 typedef struct List GNodeList;
 typedef struct ListNode GNodeListNode;
 
-typedef struct List /* of CachedDir */ SearchPath;
+typedef struct SearchPath {
+	List /* of CachedDir */ dirs;
+} SearchPath;
 
 /*
  * A graph node represents a target that can possibly be made, including its

@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.187 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.188 2021/01/24 20:11:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,11 @@ str_basename(const char *pathname)
 
 MAKE_INLINE SearchPath *
 SearchPath_New(void)
-{ return Lst_New(); }
+{
+	SearchPath *path = bmake_malloc(sizeof *path);
+	Lst_Init(&path->dirs);
+	return path;
+}
 
 void SearchPath_Free(SearchPath *);
 
