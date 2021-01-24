@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.51 2021/01/24 05:14:55 rin Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.52 2021/01/24 05:16:56 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.51 2021/01/24 05:14:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.52 2021/01/24 05:16:56 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.51 2021/01/24 05:14:55 rin Exp $");
 #include <sys/atomic.h>
 #include <sys/callout.h>
 #include <sys/sysctl.h>
+
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -237,6 +239,8 @@ struct pq3etsec_softc {
 	int sc_ic_rx_count;
 	int sc_ic_tx_time;
 	int sc_ic_tx_count;
+
+	krndsource_t rnd_source;
 };
 
 #define	ETSEC_IC_RX_ENABLED(sc)						\
@@ -807,6 +811,9 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
+
+	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET,
+	    RND_FLAG_DEFAULT);
 
 	pq3etsec_ifstop(ifp, true);
 
@@ -1714,6 +1721,9 @@ pq3etsec_rxq_consume(
 		KASSERT(rxq->rxq_mbufs[consumer - rxq->rxq_first] == rxq->rxq_mconsumer);
 #endif
 	}
+
+	if (rxconsumed != 0)
+		rnd_add_uint32(&sc->rnd_source, rxconsumed);
 }
 
 static void
@@ -2261,6 +2271,9 @@ pq3etsec_txq_consume(
 			KASSERT(consumer < txq->txq_last);
 		}
 	}
+
+	if (txfree != 0)
+		rnd_add_uint32(&sc->rnd_source, txfree);
 }
 
 static void
