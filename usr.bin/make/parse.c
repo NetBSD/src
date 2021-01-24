@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.530 2021/01/23 12:03:25 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.531 2021/01/24 20:11:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.530 2021/01/23 12:03:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.531 2021/01/24 20:11:55 rillig Exp $");
 
 /* types and constants */
 
@@ -2159,8 +2159,8 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 		/*
 		 * Look for it on the system path
 		 */
-		SearchPath *path = Lst_IsEmpty(sysIncPath) ? defSysIncPath
-		    : sysIncPath;
+		SearchPath *path = Lst_IsEmpty(&sysIncPath->dirs)
+		    ? defSysIncPath : sysIncPath;
 		fullname = Dir_FindFile(file, path);
 	}
 
