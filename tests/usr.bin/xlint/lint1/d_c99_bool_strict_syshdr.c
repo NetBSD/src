@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.6 2021/01/23 23:11:40 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.7 2021/01/24 07:58:48 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -122,17 +122,50 @@ ch_isspace_sys_bool(char c)
 }
 
 /*
- * If a function from a system header has return type int, which has
- * traditionally been used for the missing type bool, it may be used
- * in controlling expressions.
+ * There are several functions from system headers that have return type
+ * int.  For this return type there are many API conventions:
+ *
+ *	* isspace: 0 means no, non-zero means yes
+ *	* open: 0 means success, -1 means failure
+ *	* main: 0 means success, non-zero means failure
+ *	* strcmp: 0 means equal, < 0 means less than, > 0 means greater than
+ *
+ * Without a detailed list of individual functions, it's not possible to
+ * guess what the return value means.  Therefore in strict bool mode, the
+ * return value of these functions cannot be implicitly converted to bool,
+ * not even in a context where the result is compared to 0.  Allowing that
+ * would allow expressions like !strcmp(s1, s2), which is not correct since
+ * strcmp returns an "ordered comparison result", not a bool.
  */
 
 # 1 "math.h" 3 4
 extern int finite(double);
-# 133 "d_c99_bool_strict_syshdr.c"
+# 1 "string.h" 3 4
+extern int strcmp(const char *, const char *);
+# 146 "d_c99_bool_strict_syshdr.c"
+
+/*ARGSUSED*/
+_Bool
+call_finite_bad(double d)
+{
+	return finite(d);	/* expect: 211 */
+}
 
 _Bool
-call_finite(double d)		/*FIXME*//* expect: 231 */
+call_finite_good(double d)
 {
-	return finite(d);	/*FIXME*//* expect: 211 */
+	return finite(d) != 0;
+}
+
+/*ARGSUSED*/
+_Bool
+str_equal_bad(const char *s1, const char *s2)
+{
+	return !strcmp(s1, s2);	/* expect: 330, 214 */
+}
+
+_Bool
+str_equal_good(const char *s1, const char *s2)
+{
+	return strcmp(s1, s2) == 0;
 }
