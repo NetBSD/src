@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.5 2021/01/24 07:58:48 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.6 2021/01/24 09:25:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.5 2021/01/24 07:58:48 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.6 2021/01/24 09:25:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -75,10 +75,10 @@ static	int	inpc(void);
 static	int	hash(const char *);
 static	sym_t *	search(sbuf_t *);
 static	int	keyw(sym_t *);
-static	int	getescc(int);
+static	int	get_escaped_char(int);
 
 void
-lex_incline(void)
+lex_next_line(void)
 {
 	curr_pos.p_line++;
 	curr_pos.p_uniq = 0;
@@ -92,7 +92,7 @@ lex_incline(void)
 }
 
 void
-lex_badchar(int c)
+lex_unknown_character(int c)
 {
 
 	/* unknown character \%o */
@@ -362,7 +362,7 @@ inpc(void)
 	int	c;
 
 	if ((c = lex_input()) != EOF && (c &= CHAR_MASK) == '\n')
-		lex_incline();
+		lex_next_line();
 	return c;
 }
 
@@ -470,7 +470,7 @@ keyw(sym_t *sym)
  * The value is returned in yylval. icon() (and yylex()) returns T_CON.
  */
 int
-lex_icon(const char *yytext, size_t yyleng, int base)
+lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
 	int	l_suffix, u_suffix;
 	int	len;
@@ -711,7 +711,7 @@ xsign(int64_t q, tspec_t t, int len)
  * long double which are greater than DBL_MAX.
  */
 int
-lex_fcon(const char *yytext, size_t yyleng)
+lex_floating_constant(const char *yytext, size_t yyleng)
 {
 	const	char *cp;
 	int	len;
@@ -799,7 +799,7 @@ lex_operator(int t, op_t o)
  * Called if lex found a leading \'.
  */
 int
-lex_ccon(void)
+lex_character_constant(void)
 {
 	size_t	n;
 	int val, c;
@@ -807,7 +807,7 @@ lex_ccon(void)
 
 	n = 0;
 	val = 0;
-	while ((c = getescc('\'')) >= 0) {
+	while ((c = get_escaped_char('\'')) >= 0) {
 		val = (val << CHAR_SIZE) + c;
 		n++;
 	}
@@ -842,7 +842,7 @@ lex_ccon(void)
  * Called if lex found a leading L\'
  */
 int
-lex_wccon(void)
+lex_wide_character_constant(void)
 {
 	static	char buf[MB_LEN_MAX + 1];
 	size_t	i;
@@ -850,7 +850,7 @@ lex_wccon(void)
 	wchar_t	wc;
 
 	i = 0;
-	while ((c = getescc('\'')) >= 0) {
+	while ((c = get_escaped_char('\'')) >= 0) {
 		if (i < MB_CUR_MAX)
 			buf[i] = (char)c;
 		i++;
@@ -896,7 +896,7 @@ lex_wccon(void)
  * -2 if the EOF is reached, and the character otherwise.
  */
 static int
-getescc(int delim)
+get_escaped_char(int delim)
 {
 	static	int pbc = -1;
 	int	n, c, v;
@@ -1006,7 +1006,7 @@ getescc(int delim)
 			}
 			return v;
 		case '\n':
-			return getescc(delim);
+			return get_escaped_char(delim);
 		case EOF:
 			return -2;
 		default:
@@ -1228,7 +1228,7 @@ skip_rest:
  * Handle // style comments
  */
 void
-lex_slashslashcomment(void)
+lex_slash_slash_comment(void)
 {
 	int c;
 
@@ -1272,7 +1272,7 @@ lex_string(void)
 	s = xmalloc(max = 64);
 
 	len = 0;
-	while ((c = getescc('"')) >= 0) {
+	while ((c = get_escaped_char('"')) >= 0) {
 		/* +1 to reserve space for a trailing NUL character */
 		if (len + 1 == max)
 			s = xrealloc(s, max *= 2);
@@ -1293,7 +1293,7 @@ lex_string(void)
 }
 
 int
-lex_wcstrg(void)
+lex_wide_string(void)
 {
 	char	*s;
 	int	c, n;
@@ -1304,7 +1304,7 @@ lex_wcstrg(void)
 
 	s = xmalloc(max = 64);
 	len = 0;
-	while ((c = getescc('"')) >= 0) {
+	while ((c = get_escaped_char('"')) >= 0) {
 		/* +1 to save space for a trailing NUL character */
 		if (len + 1 >= max)
 			s = xrealloc(s, max *= 2);

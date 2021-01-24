@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.62 2021/01/23 23:11:40 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.63 2021/01/24 09:25:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -310,18 +310,18 @@ extern	void	outusg(const sym_t *);
  * lex.c
  */
 extern	int	lex_name(const char *, size_t);
-extern	int	lex_icon(const char *, size_t, int);
-extern	int	lex_fcon(const char *, size_t);
+extern	int	lex_integer_constant(const char *, size_t, int);
+extern	int	lex_floating_constant(const char *, size_t);
 extern	int	lex_operator(int, op_t);
 extern	int	lex_string(void);
-extern	int	lex_wcstrg(void);
-extern	int	lex_ccon(void);
-extern	int	lex_wccon(void);
+extern	int	lex_wide_string(void);
+extern	int	lex_character_constant(void);
+extern	int	lex_wide_character_constant(void);
 extern	void	lex_directive(const char *);
-extern	void	lex_incline(void);
+extern	void	lex_next_line(void);
 extern	void	lex_comment(void);
-extern	void	lex_slashslashcomment(void);
-extern	void	lex_badchar(int);
+extern	void	lex_slash_slash_comment(void);
+extern	void	lex_unknown_character(int);
 extern	int	lex_input(void);
 
 /*
