@@ -1,1 +1,1 @@
-msg_329.c(6): syntax error ':' [249]
+msg_329.c(39): type 'pointer to char' is not a member of 'union u' [329]
