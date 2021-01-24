@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.23 2021/01/24 15:33:02 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.24 2021/01/24 15:34:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.23 2021/01/24 15:33:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.24 2021/01/24 15:34:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -738,19 +738,19 @@ virtio_pci_read_queue_size_10(struct virtio_softc *sc, uint16_t idx)
 /*
  * By definition little endian only in v1.0 and 8 byters are allowed to be
  * written as two 4 byters
- */
-#ifndef __HAVE_BUS_SPACE_8
-/*
+ *
  * This is not a general purpose function that can be used in any
  * driver. Virtio specifically allows the 8 byte bus transaction
  * to be split into two 4 byte transactions. Do not copy/use it
  * in other device drivers unless you know that the device accepts it.
  */
 static __inline void
-bus_space_write_8(bus_space_tag_t iot, bus_space_handle_t ioh,
+virtio_pci_bus_space_write_8(bus_space_tag_t iot, bus_space_handle_t ioh,
      bus_size_t offset, uint64_t value)
 {
-#if _QUAD_HIGHWORD
+#if defined(__HAVE_BUS_SPACE_8)
+	bus_space_write_8(iot, ioh, offset, value);
+#elif _QUAD_HIGHWORD
 	bus_space_write_4(iot, ioh, offset, BUS_ADDR_LO32(value));
 	bus_space_write_4(iot, ioh, offset + 4, BUS_ADDR_HI32(value));
 #else
@@ -758,7 +758,6 @@ bus_space_write_8(bus_space_tag_t iot, bus_space_handle_t ioh,
 	bus_space_write_4(iot, ioh, offset + 4, BUS_ADDR_LO32(value));
 #endif
 }
-#endif
 
 static void
 virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
@@ -772,15 +771,18 @@ virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 	bus_space_write_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_SELECT, vq->vq_index);
 	if (addr == 0) {
 		bus_space_write_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_ENABLE, 0);
-		bus_space_write_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_DESC,   0);
-		bus_space_write_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_AVAIL,  0);
-		bus_space_write_8(iot, ioh, VIRTIO_CONFIG1_QUEUE_USED,   0);
+		virtio_pci_bus_space_write_8(iot, ioh,
+		    VIRTIO_CONFIG1_QUEUE_DESC,   0);
+		virtio_pci_bus_space_write_8(iot, ioh,
+		    VIRTIO_CONFIG1_QUEUE_AVAIL,  0);
+		virtio_pci_bus_space_write_8(iot, ioh,
+		    VIRTIO_CONFIG1_QUEUE_USED,   0);
 	} else {
-		bus_space_write_8(iot, ioh,
+		virtio_pci_bus_space_write_8(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_DESC, addr);
-		bus_space_write_8(iot, ioh,
+		virtio_pci_bus_space_write_8(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_AVAIL, addr + vq->vq_availoffset);
-		bus_space_write_8(iot, ioh,
+		virtio_pci_bus_space_write_8(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_USED, addr + vq->vq_usedoffset);
 		bus_space_write_2(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_ENABLE, 1);
