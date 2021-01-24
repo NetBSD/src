@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_124.c,v 1.5 2021/01/24 11:17:44 rillig Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.6 2021/01/24 11:21:58 rillig Exp $	*/
 # 3 "msg_124.c"
 
 // Test for message: illegal pointer combination, op %s [124]
@@ -35,11 +35,11 @@ compare_pointers(const void *vp, const char *cp, const int *ip,
 	ok(vp == (void *)0);
 	ok(cp == (void *)0);
 	ok(ip == (void *)0);
-	ok(fp == (void *)0);	/*FIXME*//* expect: 274 */
+	ok(fp == (void *)0);	/* wrong 124 before 2021-01-25 */
 	ok((void *)0 == vp);
 	ok((void *)0 == cp);
 	ok((void *)0 == ip);
-	ok((void *)0 == fp);	/*FIXME*//* expect: 274 */
+	ok((void *)0 == fp);	/* wrong 124 before 2021-01-25 */
 	ok(vp == 0);
 	ok(cp == 0);
 	ok(ip == 0);
