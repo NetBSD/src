@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.56 2020/10/20 18:17:58 roy Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.57 2021/01/24 05:20:23 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.56 2020/10/20 18:17:58 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.57 2021/01/24 05:20:23 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.56 2020/10/20 18:17:58 roy Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <sys/rndsource.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -157,6 +159,9 @@ mcsetup(struct mc_softc	*sc, uint8_t *lladdr)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, lladdr);
+
+	rnd_attach_source(&sc->rnd_source, ifp->if_xname, RND_TYPE_NET,
+	    RND_FLAG_DEFAULT);
 
 	return 0;
 }
@@ -516,6 +521,8 @@ mc_tint(struct mc_softc *sc)
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	sc->sc_if.if_timer = 0;
 	if_schedule_deferred_start(&sc->sc_if);
+
+	rnd_add_uint32(&sc->rnd_source, xmtfs);
 }
 
 void
@@ -559,6 +566,8 @@ mc_rint(struct mc_softc *sc)
 	}
 
 	mace_read(sc, rxf.rx_frame, len);
+
+	rnd_add_uint32(&sc->rnd_source, rxf.rx_rcvsts);
 #undef	rxf
 }
 
