@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.46 2021/01/24 17:44:16 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.47 2021/01/24 19:38:37 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.46 2021/01/24 17:44:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.47 2021/01/24 19:38:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,60 +101,31 @@ of_decode_int(const unsigned char *p)
 int
 of_compatible(int phandle, const char * const *strings)
 {
+	char *prop, propbuf[OFW_MAX_STACK_BUF_SIZE];
+	const char *cp;
+	int proplen, match, rv = -1;
 
-	int len, olen, allocated, nstr, cstr, rv;
-	char *buf, sbuf[OFW_MAX_STACK_BUF_SIZE];
-	const char *sp, *nsp;
-
-	len = OF_getproplen(phandle, "compatible");
-	if (len <= 0)
-		return (-1);
-
-	if (len > sizeof(sbuf)) {
-		buf = malloc(len, M_TEMP, M_WAITOK);
-		allocated = 1;
-	} else {
-		buf = sbuf;
-		allocated = 0;
+	proplen = OF_getproplen(phandle, "compatible");
+	if (proplen <= 0) {
+		return -1;
 	}
 
-	/* 'compatible' size should not change. */
-	if (OF_getprop(phandle, "compatible", buf, len) != len) {
-		rv = -1;
+	prop = kmem_tmpbuf_alloc(proplen, propbuf, sizeof(propbuf), KM_SLEEP);
+
+	if (OF_getprop(phandle, "compatible", prop, proplen) != proplen) {
 		goto out;
 	}
 
-	/* count 'compatible' strings */
-	sp = buf;
-	nstr = 0;
-	olen = len;
-	while (len && (nsp = memchr(sp, 0, len)) != NULL) {
-		nsp++;			/* skip over NUL char */
-		len -= (nsp - sp);
-		sp = nsp;
-		nstr++;
+	for (; (cp = *strings) != NULL; strings++) {
+		if ((match = strlist_match(prop, proplen, cp)) != 0) {
+			rv = match - 1;
+			break;
+		}
 	}
-	len = olen;
 
-	sp = buf;
-	rv = nstr;
-	while (len && (nsp = memchr(sp, 0, len)) != NULL) {
-		rv--;
-		/* look for a match among the strings provided */
-		for (cstr = 0; strings[cstr] != NULL; cstr++)
-			if (strcmp(sp, strings[cstr]) == 0)
-				goto out;
-
-		nsp++;			/* skip over NUL char */
-		len -= (nsp - sp);
-		sp = nsp;
-	}
-	rv = -1;
-
-out:
-	if (allocated)
-		free(buf, M_TEMP);
-	return (rv);
+ out:
+	kmem_tmpbuf_free(prop, proplen, propbuf);
+	return rv;
 }
 
 /*
