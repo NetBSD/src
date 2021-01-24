@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.189 2021/01/24 11:21:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.190 2021/01/24 11:34:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.189 2021/01/24 11:21:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.190 2021/01/24 11:34:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -722,6 +722,16 @@ before_conversion(const tnode_t *tn)
 	return tn;
 }
 
+static bool
+is_null_pointer(const tnode_t *tn)
+{
+	tspec_t t = tn->tn_type->t_tspec;
+
+	return ((t == PTR && tn->tn_type->t_subt->t_tspec == VOID) ||
+		is_integer(t))
+	       && (tn->tn_op == CON && tn->tn_val->v_quad == 0);
+}
+
 /*
  * See if the node is valid as operand of an operator that compares its
  * argument with 0.
@@ -952,16 +962,10 @@ typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 static bool
 is_typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
-	if (lt == PTR && ((rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) ||
-			  is_integer(rt))) {
-		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
-			return true;
-	}
-	if (rt == PTR && ((lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) ||
-			  is_integer(lt))) {
-		if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
-			return true;
-	}
+	if (lt == PTR && is_null_pointer(rn))
+		return true;
+	if (rt == PTR && is_null_pointer(ln))
+		return true;
 	return false;
 }
 
@@ -1027,15 +1031,11 @@ typeok_colon(const mod_t *mp,
 	lst = lstp != NULL ? lstp->t_tspec : NOTSPEC;
 	rst = rstp != NULL ? rstp->t_tspec : NOTSPEC;
 
-	/* combination of any pointer and 0, 0L or (void *)0 is ok */
-	if (lt == PTR && ((rt == PTR && rst == VOID) || is_integer(rt))) {
-		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
-			return true;
-	}
-	if (rt == PTR && ((lt == PTR && lst == VOID) || is_integer(lt))) {
-		if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
-			return true;
-	}
+	/* combination of any pointer and null pointer is ok */
+	if (lt == PTR && is_null_pointer(rn))
+		return true;
+	if (rt == PTR && is_null_pointer(ln))
+		return true;
 
 	if ((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)) {
 		const char *lx = lt == PTR ?  "pointer" : "integer";
@@ -1559,11 +1559,9 @@ check_assign_types_compatible(op_t op, int arg,
 		/* both are struct or union */
 		return ltp->t_str == rtp->t_str;
 
-	/* 0, 0L and (void *)0 may be assigned to any pointer */
-	if (lt == PTR && ((rt == PTR && rst == VOID) || is_integer(rt))) {
-		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
-			return true;
-	}
+	/* a null pointer may be assigned to any pointer */
+	if (lt == PTR && is_null_pointer(rn))
+		return true;
 
 	if (lt == PTR && rt == PTR && (lst == VOID || rst == VOID)) {
 		/* two pointers, at least one pointer to void */
@@ -2030,20 +2028,17 @@ tnode_t *
 convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 {
 	tnode_t	*ntn;
-	tspec_t	nt, ot, ost = NOTSPEC;
+	tspec_t	nt, ot;
 
 	nt = tp->t_tspec;
-	if ((ot = tn->tn_type->t_tspec) == PTR)
-		ost = tn->tn_type->t_subt->t_tspec;
+	ot = tn->tn_type->t_tspec;
 
 	if (!tflag && !sflag && op == FARG)
 		check_prototype_conversion(arg, nt, ot, tp, tn);
 	if (is_integer(nt) && is_integer(ot)) {
 		check_integer_conversion(op, arg, nt, ot, tp, tn);
-	} else if (nt == PTR && ((ot == PTR && ost == VOID) ||
-				 is_integer(ot)) && tn->tn_op == CON &&
-		   tn->tn_val->v_quad == 0) {
-		/* 0, 0L and (void *)0 may be assigned to any pointer. */
+	} else if (nt == PTR && is_null_pointer(tn)) {
+		/* a null pointer may be assigned to any pointer. */
 	} else if (is_integer(nt) && nt != BOOL && ot == PTR) {
 		check_pointer_integer_conversion(op, nt, tp, tn);
 	} else if (nt == PTR && ot == PTR) {
