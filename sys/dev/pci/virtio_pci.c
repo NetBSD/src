@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.24 2021/01/24 15:34:07 thorpej Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.25 2021/01/24 15:59:35 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.24 2021/01/24 15:34:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.25 2021/01/24 15:59:35 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,12 +460,6 @@ virtio_pci_attach_10(device_t self, void *aux)
 		memset(&device, 0, sizeof(device));
 	else
 		have_device_cfg = 1;
-
-	/*
-	 * XXX Maybe there are devices that offer the pci caps but not the
-	 * XXX VERSION_1 feature bit? Then we should check the feature bit
-	 * XXX here and fall back to 0.9 out if not present.
-	 */
 
 	/* Figure out which bars we need to map */
 	for (i = 0; i < __arraycount(caps); i++) {
