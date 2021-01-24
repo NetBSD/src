@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.22 2021/01/17 21:42:35 thorpej Exp $ */
+/*	$NetBSD: adm1021.c,v 1.23 2021/01/24 05:30:05 rin Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.22 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.23 2021/01/24 05:30:05 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,8 +377,10 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor[ADMTEMP_INT].units = ENVSYS_STEMP;
 	sc->sc_sensor[ADMTEMP_EXT].state = ENVSYS_SINVALID;
 	sc->sc_sensor[ADMTEMP_EXT].units = ENVSYS_STEMP;
-	sc->sc_sensor[ADMTEMP_INT].flags = ENVSYS_FMONLIMITS;
-	sc->sc_sensor[ADMTEMP_EXT].flags = ENVSYS_FMONLIMITS;
+	sc->sc_sensor[ADMTEMP_INT].flags =
+	    ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
+	sc->sc_sensor[ADMTEMP_EXT].flags =
+	    ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 
 	if (prop_dictionary_get_cstring_nocopy(sc->sc_prop, "s00", &desc)) {
 		strncpy(iname, desc, 64);
