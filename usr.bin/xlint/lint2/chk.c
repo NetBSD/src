@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.36 2021/01/18 20:02:34 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.37 2021/01/24 00:15:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.36 2021/01/18 20:02:34 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.37 2021/01/24 00:15:20 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1187,10 +1187,9 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 
 
 /*
- * Check compatibility of two types. Returns 1 if types are compatible,
- * otherwise 0.
+ * Check compatibility of two types. Returns whether types are compatible.
  *
- * ignqual	if set, ignore qualifiers of outhermost type; used for
+ * ignqual	if set, ignore qualifiers of outermost type; used for
  *		function arguments
  * promote	if set, promote left type before comparison; used for
  *		comparisons of arguments with parameters of old style
@@ -1198,7 +1197,7 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
  * asgn		left indirected type must have at least the same qualifiers
  *		like right indirected type (for assignments and function
  *		arguments)
- * *dowarn	set to 1 if an old style declaration was compared with
+ * *dowarn	set to true if an old style declaration was compared with
  *		an incompatible prototype declaration
  */
 static bool
@@ -1354,7 +1353,7 @@ eqargs(type_t *tp1, type_t *tp2, bool *dowarn)
 
 /*
  * mnoarg() (matches functions with no argument type information)
- * returns 1 if all parameters of a prototype are compatible with
+ * returns true if all parameters of a prototype are compatible with
  * and old style function declaration.
  * This is the case if following conditions are met:
  *	1. the prototype must have a fixed number of parameters

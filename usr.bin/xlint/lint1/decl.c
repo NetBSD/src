@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.130 2021/01/18 19:24:09 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.131 2021/01/24 00:15:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.130 2021/01/18 19:24:09 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.131 2021/01/24 00:15:20 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ tduptyp(const type_t *tp)
 }
 
 /*
- * Returns 1 if the argument is void or an incomplete array,
+ * Returns whether the argument is void or an incomplete array,
  * struct, union or enum type.
  */
 bool
@@ -2001,8 +2001,8 @@ copy_usage_info(sym_t *sym, sym_t *rdsym)
 }
 
 /*
- * Prints an error and returns 1 if a symbol is redeclared/redefined.
- * Otherwise returns 0 and, in some cases of minor problems, prints
+ * Prints an error and returns true if a symbol is redeclared/redefined.
+ * Otherwise returns false and, in some cases of minor problems, prints
  * a warning.
  */
 bool
@@ -2102,12 +2102,12 @@ eqptrtype(const type_t *tp1, const type_t *tp2, bool ignqual)
 
 
 /*
- * Checks if two types are compatible. Returns 0 if not, otherwise 1.
+ * Checks if two types are compatible.
  *
  * ignqual	ignore qualifiers of type; used for function params
  * promot	promote left type; used for comparison of params of
  *		old style function definitions with params of prototypes.
- * *dowarn	set to 1 if an old style function declaration is not
+ * *dowarn	set to true if an old style function declaration is not
  *		compatible with a prototype
  */
 bool
@@ -2757,7 +2757,7 @@ declare_external_in_block(sym_t *dsym)
 
 /*
  * Print an error or a warning if the symbol cannot be initialized due
- * to type/storage class. Return 1 if an error has been detected.
+ * to type/storage class. Return whether an error has been detected.
  */
 static bool
 check_init(sym_t *sym)
