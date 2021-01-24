@@ -1,4 +1,4 @@
-/*	$NetBSD: exfat.c,v 1.3 2020/02/08 12:56:56 fox Exp $	*/
+/*	$NetBSD: exfat.c,v 1.4 2021/01/24 14:37:32 tkusumi Exp $	*/
 
 /*
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: exfat.c,v 1.3 2020/02/08 12:56:56 fox Exp $");
+__RCSID("$NetBSD: exfat.c,v 1.4 2021/01/24 14:37:32 tkusumi Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -327,15 +327,15 @@ fstyp_exfat(FILE *fp, char *label, size_t size)
 	uint32_t chksum;
 	int error;
 
+	error = 1;
 	cksect = NULL;
-
 	ev = (struct exfat_vbr *)read_buf(fp, 0, 512);
 	if (ev == NULL || strncmp(ev->ev_fsname, "EXFAT   ", 8) != 0)
-		goto fail;
+		goto out;
 
 	if (ev->ev_log_bytes_per_sect < 9 || ev->ev_log_bytes_per_sect > 12) {
 		warnx("exfat: Invalid BytesPerSectorShift");
-		goto done;
+		goto out;
 	}
 
 	bytespersec = (1u << ev->ev_log_bytes_per_sect);
@@ -343,7 +343,7 @@ fstyp_exfat(FILE *fp, char *label, size_t size)
 	error = exfat_compute_boot_chksum(fp, MAIN_BOOT_REGION_SECT,
 	    bytespersec, &chksum);
 	if (error != 0)
-		goto done;
+		goto out;
 
 	cksect = read_sect(fp, MAIN_BOOT_REGION_SECT + SUBREGION_CHKSUM_SECT,
 	    bytespersec);
@@ -355,18 +355,15 @@ fstyp_exfat(FILE *fp, char *label, size_t size)
 	if (chksum != le32toh(cksect[0])) {
 		warnx("exfat: Found checksum 0x%08x != computed 0x%08x",
 		    le32toh(cksect[0]), chksum);
-		goto done;
+		error = 1;
+		goto out;
 	}
 
 	if (show_label)
 		exfat_find_label(fp, ev, bytespersec, label, size);
 
-done:
+out:
 	free(cksect);
 	free(ev);
-	return (0);
-
-fail:
-	free(ev);
-	return (1);
+	return (error != 0);
 }
