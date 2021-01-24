@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_175.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_175.c,v 1.2 2021/01/24 16:12:45 rillig Exp $	*/
 # 3 "msg_175.c"
 
 // Test for message: initialisation of an incomplete type [175]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+struct incomplete;			/* expect: 233 */
+
+struct incomplete incomplete = {	/* expect: 175 */
+	"invalid"
+};					/* expect: 31 */

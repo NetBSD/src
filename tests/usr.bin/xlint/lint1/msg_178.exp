@@ -1,1 +1,1 @@
-msg_178.c(6): syntax error ':' [249]
+msg_178.c(8): warning: initializer does not fit [178]

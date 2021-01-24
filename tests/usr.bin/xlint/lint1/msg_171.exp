@@ -1,1 +1,4 @@
-msg_171.c(6): syntax error ':' [249]
+msg_171.c(14): assignment type mismatch (int != struct) [171]
+msg_171.c(15): assignment type mismatch (struct != int) [171]
+msg_171.c(17): assignment type mismatch (pointer != struct) [171]
+msg_171.c(18): assignment type mismatch (struct != pointer) [171]
