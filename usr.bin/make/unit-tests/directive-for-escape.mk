@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.4 2021/01/24 19:30:18 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.5 2021/01/24 19:48:11 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -41,13 +41,27 @@ VALUES=		$$ $${V} $${V:=-with-modifier} $$(V) $$(V:=-with-modifier)
 .  info $i
 .endfor
 
-# Cover the code for nested '{}' in for_var_len.
+# Try to cover the code for nested '{}' in for_var_len, without success.
 #
-# The value of VALUES is not a variable expression.  Instead, it is meant to
-# represent dollar, lbrace, "UNDEF:U", backslash, dollar, backslash, dollar,
-# space, nested braces, space, "end}".
+# The value of VALUES is not meant to be a variable expression.  Instead, it
+# is meant to represent dollar, lbrace, "UNDEF:U", backslash, dollar,
+# backslash, dollar, space, nested braces, space, "end}".
+#
+# The .for loop splits ${VALUES} into 3 words, at the space characters, since
+# these are not escaped.
 VALUES=		$${UNDEF:U\$$\$$ {{}} end}
 # XXX: Where does the '\$$\$$' get converted into a single '\$'?
+.for i in ${VALUES}
+.  info $i
+.endfor
+
+# Second try to cover the code for nested '{}' in for_var_len.
+#
+# XXX: It is wrong that for_var_len requires the braces to be balanced.
+# Each variable modifier has its own inconsistent way of parsing nested
+# variable expressions, braces and parentheses.  The only sensible thing
+# to do is therefore to let Var_Parse do all the parsing work.
+VALUES=		begin<$${UNDEF:Ufallback:N{{{}}}}>end
 .for i in ${VALUES}
 .  info $i
 .endfor
