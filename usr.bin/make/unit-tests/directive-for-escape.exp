@@ -68,7 +68,4 @@ make: "directive-for-escape.mk" line 92: .    ${i\}}: inner}
 make: "directive-for-escape.mk" line 93: .     ${i2}: two
 make: "directive-for-escape.mk" line 94: .     ${i,}: comma
 make: "directive-for-escape.mk" line 95: .  adjacent: innerinnerinnerinner
-make: no target to make.
-
-make: stopped in unit-tests
-exit status 2
+exit status 0

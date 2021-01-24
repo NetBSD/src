@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.3 2020/12/31 14:26:37 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.4 2021/01/24 19:30:18 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -94,3 +94,5 @@ i,=		comma
 .  info .     $${i,}: ${i,}
 .  info .  adjacent: $i${i}${i:M*}$i
 .endfor
+
+all:
