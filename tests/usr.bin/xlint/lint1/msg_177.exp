@@ -1,1 +1,2 @@
-msg_177.c(6): syntax error ':' [249]
+msg_177.c(10): non-constant initializer [177]
+msg_177.c(12): non-constant initializer [177]
