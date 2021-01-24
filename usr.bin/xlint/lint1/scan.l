@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.130 2021/01/23 17:58:03 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.131 2021/01/24 09:25:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.130 2021/01/23 17:58:03 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.131 2021/01/24 09:25:16 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -59,15 +59,15 @@ TL	([fFlL]?[i]?)
 %%
 
 {L}({L}|{D})*			return lex_name(yytext, yyleng);
-0[bB]{BD}+[lLuU]*		return lex_icon(yytext, yyleng, 2);
-0{OD}*[lLuU]*			return lex_icon(yytext, yyleng, 8);
-{NZD}{D}*[lLuU]*		return lex_icon(yytext, yyleng, 10);
-0[xX]{HD}+[lLuU]*		return lex_icon(yytext, yyleng, 16);
+0[bB]{BD}+[lLuU]*		return lex_integer_constant(yytext, yyleng, 2);
+0{OD}*[lLuU]*			return lex_integer_constant(yytext, yyleng, 8);
+{NZD}{D}*[lLuU]*		return lex_integer_constant(yytext, yyleng, 10);
+0[xX]{HD}+[lLuU]*		return lex_integer_constant(yytext, yyleng, 16);
 {D}+\.{D}*{EX}?{TL}		|
 {D}+{EX}{TL}			|
 0[xX]{HD}+\.{HD}*{HX}{TL}	|
 0[xX]{HD}+{HX}{TL}		|
-\.{D}+{EX}?{TL}			return lex_fcon(yytext, yyleng);
+\.{D}+{EX}?{TL}			return lex_floating_constant(yytext, yyleng);
 "="				return lex_operator(T_ASSIGN, NOOP);
 "*="				return lex_operator(T_OPASSIGN, MULASS);
 "/="				return lex_operator(T_OPASSIGN, DIVASS);
@@ -104,7 +104,7 @@ TL	([fFlL]?[i]?)
 "!"				return lex_operator(T_UNARY, NOT);
 "~"				return lex_operator(T_UNARY, COMPL);
 "\""				return lex_string();
-"L\""				return lex_wcstrg();
+"L\""				return lex_wide_string();
 ";"				return T_SEMI;
 "{"				return T_LBRACE;
 "}"				return T_RBRACE;
@@ -116,14 +116,14 @@ TL	([fFlL]?[i]?)
 "("				return T_LPAREN;
 ")"				return T_RPAREN;
 "..."				return T_ELLIPSIS;
-"'"				return lex_ccon();
-"L'"				return lex_wccon();
+"'"				return lex_character_constant();
+"L'"				return lex_wide_character_constant();
 ^#.*$				lex_directive(yytext);
-\n				lex_incline();
+\n				lex_next_line();
 \t|" "|\f|\v			;
 "/*"				lex_comment();
-"//"				lex_slashslashcomment();
-.				lex_badchar(yytext[0]);
+"//"				lex_slash_slash_comment();
+.				lex_unknown_character(yytext[0]);
 
 %%
 
