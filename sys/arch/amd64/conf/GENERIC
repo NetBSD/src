@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.582 2021/01/20 13:22:08 nia Exp $
+# $NetBSD: GENERIC,v 1.583 2021/01/24 16:33:48 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.582 $"
+#ident		"GENERIC-$Revision: 1.583 $"
 
 maxusers	64		# estimated number of users
 
@@ -545,8 +545,9 @@ iic*	at ichsmb?
 ismt* at pci? dev ? function ?
 iic*	at ismt?
 
-# I2C controller as found in some Intel PCH devices.
-dwiic*		at pci?			# I2C controller
+# DesignWare I2C controller as found in some Intel PCH and AMD FCH devices.
+dwiic*		at acpi?		# DesignWare I2C controller
+dwiic*		at pci?			# DesignWare I2C controller
 iic*		at dwiic?
 
 # Thermal monitor and fan controller
