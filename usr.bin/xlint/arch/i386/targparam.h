@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.6 2021/01/09 14:10:13 rillig Exp $	*/
+/*	$NetBSD: targparam.h,v 1.7 2021/01/24 14:47:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -43,9 +43,9 @@
  * kept in sync with the compiler!
  */
 
-#define	PTRDIFF_IS_LONG		0
-#define	SIZEOF_IS_ULONG		0
-#define	INTPTR_IS_LONG		0
+#define	PTRDIFF_TSPEC		INT
+#define	SIZEOF_TSPEC		UINT
+#define	INTPTR_TSPEC		INT
 
 #define	FLOAT_SIZE		32
 #define	DOUBLE_SIZE		64

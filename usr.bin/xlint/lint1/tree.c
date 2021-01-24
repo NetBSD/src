@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.190 2021/01/24 11:34:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.191 2021/01/24 14:47:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.190 2021/01/24 11:34:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.191 2021/01/24 14:47:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2659,13 +2659,8 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 		ln = convert(NOOP, 0, tincref(gettyp(VOID), PTR), ln);
 	}
 
-#if PTRDIFF_IS_LONG
-	ctn = new_integer_constant_node(LONG,
+	ctn = new_integer_constant_node(PTRDIFF_TSPEC,
 	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
-#else
-	ctn = new_integer_constant_node(INT,
-	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
-#endif
 
 	ntn = new_tnode(PLUS, tincref(rn->tn_type, PTR), ln, ctn);
 	if (ln->tn_op == CON)
@@ -2792,11 +2787,7 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 
 		lint_assert(ln->tn_type->t_tspec == PTR);
 		lint_assert(op == MINUS);
-#if PTRDIFF_IS_LONG
-		tp = gettyp(LONG);
-#else
-		tp = gettyp(INT);
-#endif
+		tp = gettyp(PTRDIFF_TSPEC);
 		ntn = new_tnode(op, tp, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
 			ntn = fold(ntn);
@@ -2839,11 +2830,7 @@ build_colon(tnode_t *ln, tnode_t *rn)
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
-#if PTRDIFF_IS_LONG
-	pdt = LONG;
-#else
-	pdt = INT;
-#endif
+	pdt = PTRDIFF_TSPEC;
 
 	/*
 	 * Arithmetic types are balanced, all other type combinations
@@ -2971,7 +2958,6 @@ static tnode_t *
 plength(type_t *tp)
 {
 	int	elem, elsz;
-	tspec_t	st;
 
 	lint_assert(tp->t_tspec == PTR);
 	tp = tp->t_subt;
@@ -3023,13 +3009,8 @@ plength(type_t *tp)
 	if (elsz == 0)
 		elsz = CHAR_SIZE;
 
-#if PTRDIFF_IS_LONG
-	st = LONG;
-#else
-	st = INT;
-#endif
-
-	return new_integer_constant_node(st, (int64_t)(elem * elsz / CHAR_SIZE));
+	return new_integer_constant_node(PTRDIFF_TSPEC,
+	    (int64_t)(elem * elsz / CHAR_SIZE));
 }
 
 /*
@@ -3324,13 +3305,7 @@ fold_float(tnode_t *tn)
 tnode_t *
 build_sizeof(type_t *tp)
 {
-	tspec_t	st;
-#if SIZEOF_IS_ULONG
-	st = ULONG;
-#else
-	st = UINT;
-#endif
-	return new_integer_constant_node(st, tsize(tp) / CHAR_SIZE);
+	return new_integer_constant_node(SIZEOF_TSPEC, tsize(tp) / CHAR_SIZE);
 }
 
 /*
@@ -3339,19 +3314,13 @@ build_sizeof(type_t *tp)
 tnode_t *
 build_offsetof(type_t *tp, sym_t *sym)
 {
-	tspec_t	st;
-#if SIZEOF_IS_ULONG
-	st = ULONG;
-#else
-	st = UINT;
-#endif
 	tspec_t t = tp->t_tspec;
 	if (t != STRUCT && t != UNION)
 		/* unacceptable operand of '%s' */
 		error(111, "offsetof");
 
 	// XXX: wrong size, no checking for sym fixme
-	return new_integer_constant_node(st, tsize(tp) / CHAR_SIZE);
+	return new_integer_constant_node(SIZEOF_TSPEC, tsize(tp) / CHAR_SIZE);
 }
 
 int64_t
@@ -3419,8 +3388,6 @@ tsize(type_t *tp)
 tnode_t *
 build_alignof(type_t *tp)
 {
-	tspec_t	st;
-
 	switch (tp->t_tspec) {
 	case ARRAY:
 		break;
@@ -3454,13 +3421,8 @@ build_alignof(type_t *tp)
 		break;
 	}
 
-#if SIZEOF_IS_ULONG
-	st = ULONG;
-#else
-	st = UINT;
-#endif
-
-	return new_integer_constant_node(st, (int64_t)getbound(tp) / CHAR_SIZE);
+	return new_integer_constant_node(SIZEOF_TSPEC,
+	    (int64_t)getbound(tp) / CHAR_SIZE);
 }
 
 /*
