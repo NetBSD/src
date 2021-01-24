@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.20 2011/07/01 18:51:51 dyoung Exp $ */
+/*	$NetBSD: oclock.c,v 1.21 2021/01/24 07:36:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.20 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.21 2021/01/24 07:36:54 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -45,20 +45,16 @@ __KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.20 2011/07/01 18:51:51 dyoung Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-
 #include <sys/bus.h>
+
 #include <machine/promlib.h>
 #include <machine/autoconf.h>
+
+#include <sparc/sparc/timervar.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170reg.h>
 #include <dev/ic/intersil7170var.h>
-
-/* Imported from clock.c: */
-extern int oldclk;
-extern int timerblurb;
-extern void (*timer_init)(void);
-
 
 static int oclockmatch(device_t, cfdata_t, void *);
 static void oclockattach(device_t, device_t, void *);
