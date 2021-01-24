@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.188 2021/01/24 10:57:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.189 2021/01/24 11:21:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.188 2021/01/24 10:57:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.189 2021/01/24 11:21:58 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -952,14 +952,12 @@ typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 static bool
 is_typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
-	/* FIXME: missing tn_subt */
-	if (lt == PTR && ((rt == PTR && rn->tn_type->t_tspec == VOID) ||
+	if (lt == PTR && ((rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) ||
 			  is_integer(rt))) {
 		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
 			return true;
 	}
-	/* FIXME: missing tn_subt */
-	if (rt == PTR && ((lt == PTR && ln->tn_type->t_tspec == VOID) ||
+	if (rt == PTR && ((lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) ||
 			  is_integer(lt))) {
 		if (ln->tn_op == CON && ln->tn_val->v_quad == 0)
 			return true;
