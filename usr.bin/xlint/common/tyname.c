@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.24 2021/01/16 16:53:23 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.25 2021/01/24 11:55:57 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.24 2021/01/16 16:53:23 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.25 2021/01/24 11:55:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -82,10 +82,10 @@ new_name_tree_node(const char *name)
 }
 
 /* Return the canonical instance of the string, with unlimited life time. */
-static const char *
+static const char * __noinline
 intern(const char *name)
 {
-	name_tree_node *n = type_names;
+	name_tree_node *n = type_names, **next;
 	int cmp;
 
 	if (n == NULL) {
@@ -95,19 +95,12 @@ intern(const char *name)
 	}
 
 	while ((cmp = strcmp(name, n->ntn_name)) != 0) {
-		if (cmp < 0) {
-			if (n->ntn_less == NULL) {
-				n->ntn_less = new_name_tree_node(name);
-				return n->ntn_less->ntn_name;
-			}
-			n = n->ntn_less;
-		} else {
-			if (n->ntn_greater == NULL) {
-				n->ntn_greater = new_name_tree_node(name);
-				return n->ntn_greater->ntn_name;
-			}
-			n = n->ntn_greater;
+		next = cmp < 0 ? &n->ntn_less : &n->ntn_greater;
+		if (*next == NULL) {
+			*next = new_name_tree_node(name);
+			return (*next)->ntn_name;
 		}
+		n = *next;
 	}
 	return n->ntn_name;
 }
