@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.119 2020/12/13 20:39:20 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.120 2021/01/24 18:02:51 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -263,6 +263,11 @@ file	dev/acpi/plgpio_acpi.c		plgpio_acpi
 # DesignWare I2C controller
 attach	dwiic at acpinodebus with dwiic_acpi
 file	dev/acpi/dwiic_acpi.c		dwiic_acpi
+
+# NXP Layerscape I2C controller
+device	nxpiic: motoi2c, i2cbus, i2cexec
+attach	nxpiic at acpinodebus with nxpiic_acpi
+file	dev/acpi/nxpiic_acpi.c		nxpiic_acpi
 
 # AMD Cryptographic Coprocessor
 attach	amdccp at acpinodebus with amdccp_acpi

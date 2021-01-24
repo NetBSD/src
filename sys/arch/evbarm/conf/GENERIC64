@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.174 2021/01/21 17:46:28 nia Exp $
+#	$NetBSD: GENERIC64,v 1.175 2021/01/24 18:02:51 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -301,6 +301,7 @@ bsciic*		at acpi?
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 imxi2c*		at fdt? pass 4		# IMX I2C
+nxpiic*		at acpi?		# NXP Layerscape I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
