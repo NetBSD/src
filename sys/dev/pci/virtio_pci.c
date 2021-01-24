@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.20 2021/01/24 01:44:11 christos Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.21 2021/01/24 14:12:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.20 2021/01/24 01:44:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.21 2021/01/24 14:12:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,9 @@ struct virtio_pci_softc {
 	bus_size_t		sc_mapped_iosize;
 
 	/* BARs */
-	bus_space_tag_t		sc_bars_iot[4];
-	bus_space_handle_t	sc_bars_ioh[4];
-	bus_size_t		sc_bars_iosize[4];
+	bus_space_tag_t		sc_bars_iot[NMAPREG];
+	bus_space_handle_t	sc_bars_ioh[NMAPREG];
+	bus_size_t		sc_bars_iosize[NMAPREG];
 
 	/* notify space */
 	bus_space_tag_t		sc_notify_iot;
