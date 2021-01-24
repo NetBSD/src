@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.19 2021/01/23 20:00:19 christos Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.20 2021/01/24 01:44:11 christos Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.19 2021/01/23 20:00:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.20 2021/01/24 01:44:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,6 +733,12 @@ virtio_pci_read_queue_size_10(struct virtio_softc *sc, uint16_t idx)
  * written as two 4 byters
  */
 #ifndef __HAVE_BUS_SPACE_8
+/*
+ * This is not a general purpose function that can be used in any
+ * driver. Virtio specifically allows the 8 byte bus transaction
+ * to be split into two 4 byte transactions. Do not copy/use it
+ * in other device drivers unless you know that the device accepts it.
+ */
 static __inline void
 bus_space_write_8(bus_space_tag_t iot, bus_space_handle_t ioh,
      bus_size_t offset, uint64_t value)
