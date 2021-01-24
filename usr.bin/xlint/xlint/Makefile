@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2021/01/17 19:32:53 rillig Exp $
+#	$NetBSD: Makefile,v 1.20 2021/01/24 00:11:07 christos Exp $
 
 .PATH:		${.CURDIR}/../lint1
 .PATH:		${.CURDIR}/../../mkdep
@@ -14,10 +14,10 @@ CPPFLAGS+=	-I${.CURDIR}/../../mkdep
 .if (${HOSTPROG:U} == "")
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
-.endif
 
 FILES+=		strict-bool-stdbool.h
 FILESDIR=	/usr/libdata/lint/strict-bool
 FILESNAME_strict-bool-stdbool.h= stdbool.h
+.endif
 
 .include <bsd.prog.mk>
