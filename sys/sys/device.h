@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.161 2021/01/18 15:28:21 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.162 2021/01/24 17:42:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -545,10 +545,27 @@ device_t	device_find_by_driver_unit(const char *, int);
 
 int		device_compatible_match(const char **, int,
 				const struct device_compatible_entry *);
+int		device_compatible_pmatch(const char **, int,
+				const struct device_compatible_entry *);
 const struct device_compatible_entry *
 		device_compatible_lookup(const char **, int,
 				const struct device_compatible_entry *);
+const struct device_compatible_entry *
+		device_compatible_plookup(const char **, int,
+				const struct device_compatible_entry *);
 
+int		device_compatible_match_strlist(const char *, size_t,
+				const struct device_compatible_entry *);
+int		device_compatible_pmatch_strlist(const char *, size_t,
+				const struct device_compatible_entry *);
+const struct device_compatible_entry *
+		device_compatible_lookup_strlist(const char *, size_t,
+				const struct device_compatible_entry *);
+const struct device_compatible_entry *
+		device_compatible_plookup_strlist(const char *, size_t,
+				const struct device_compatible_entry *);
+
+bool		device_pmf_is_registered(device_t);
 bool		device_pmf_is_registered(device_t);
 
 bool		device_pmf_driver_suspend(device_t, const pmf_qual_t *);
