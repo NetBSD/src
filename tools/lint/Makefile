@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2021/01/24 16:22:55 rillig Exp $
+#	$NetBSD: Makefile,v 1.7 2021/01/24 16:55:09 rillig Exp $
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-lint
 HOST_SRCDIR=	usr.bin/xlint/xlint
 HOST_CPPFLAGS=	-DPATH_LIBEXEC=\"${TOOLDIR}/libexec\" \
-		-DPATH_LIBLINT=\"${TOOLDIR}/libdata/lint\" \
+		-DPATH_LINTLIB=\"${TOOLDIR}/libdata/lint\" \
 		-DTARGET_PREFIX=\"${MACHINE_GNU_PLATFORM}-\"
 
 
