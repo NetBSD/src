@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.50 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.51 2021/01/24 05:14:55 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.50 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.51 2021/01/24 05:14:55 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -804,8 +804,9 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 		goto fail_10;
 	}
 	pq3etsec_sysctl_setup(NULL, sc);
+	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
-	if_register(ifp);
 
 	pq3etsec_ifstop(ifp, true);
 
@@ -1613,9 +1614,7 @@ pq3etsec_rx_input(
 	/*
 	 * Let's give it to the network subsystm to deal with.
 	 */
-	int s = splnet();
-	if_input(ifp, m);
-	splx(s);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 static void
