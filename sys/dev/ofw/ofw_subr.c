@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.45 2021/01/24 16:45:41 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.46 2021/01/24 17:44:16 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.45 2021/01/24 16:45:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.46 2021/01/24 17:44:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <dev/ofw/openfirm.h>
@@ -215,13 +216,25 @@ int
 of_match_compat_data(int phandle,
     const struct device_compatible_entry *compat_data)
 {
-	for (; compat_data->compat != NULL; compat_data++) {
-		const char *compat[] = { compat_data->compat, NULL };
-		const int match = of_match_compatible(phandle, compat);
-		if (match)
-			return match;
+	char *prop, propbuf[OFW_MAX_STACK_BUF_SIZE];
+	int proplen, match = 0;
+
+	proplen = OF_getproplen(phandle, "compatible");
+	if (proplen <= 0) {
+		return 0;
 	}
-	return 0;
+
+	prop = kmem_tmpbuf_alloc(proplen, propbuf, sizeof(propbuf), KM_SLEEP);
+
+	if (OF_getprop(phandle, "compatible", prop, proplen) != proplen) {
+		goto out;
+	}
+
+	match = device_compatible_match_strlist(prop, proplen, compat_data);
+
+ out:
+	kmem_tmpbuf_free(prop, proplen, propbuf);
+	return match;
 }
 
 /*
@@ -241,7 +254,7 @@ of_match_compat_data(int phandle,
  *
  * Return Value:
  *	The first matching compat_data entry in the array. If no matches
- *	are found, the NULL is returned.
+ *	are found, NULL is returned.
  *
  * Side Effects:
  *	None.
@@ -250,12 +263,26 @@ const struct device_compatible_entry *
 of_search_compatible(int phandle,
     const struct device_compatible_entry *compat_data)
 {
-	for (; compat_data->compat != NULL; compat_data++) {
-		const char *compat[] = { compat_data->compat, NULL };
-		if (of_match_compatible(phandle, compat))
-			return compat_data;
+	char *prop, propbuf[OFW_MAX_STACK_BUF_SIZE];
+	const struct device_compatible_entry *match = NULL;
+	int proplen;
+
+	proplen = OF_getproplen(phandle, "compatible");
+	if (proplen <= 0) {
+		return 0;
 	}
-	return NULL;
+
+	prop = kmem_tmpbuf_alloc(proplen, propbuf, sizeof(propbuf), KM_SLEEP);
+
+	if (OF_getprop(phandle, "compatible", prop, proplen) != proplen) {
+		goto out;
+	}
+
+	match = device_compatible_lookup_strlist(prop, proplen, compat_data);
+
+ out:
+	kmem_tmpbuf_free(prop, proplen, propbuf);
+	return match;
 }
 
 /*
