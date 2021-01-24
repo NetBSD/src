@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.187 2021/01/24 10:55:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.188 2021/01/24 10:57:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.187 2021/01/24 10:55:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.188 2021/01/24 10:57:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1503,7 +1503,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 {
 	type_t	*ltp, *rtp;
 	tspec_t	lst, rst;
-	const	char *lts, *rts;
+	const	char *lsts, *rsts;
 
 	lst = (ltp = ln->tn_type)->t_subt->t_tspec;
 	rst = (rtp = rn->tn_type)->t_subt->t_tspec;
@@ -1511,10 +1511,10 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 	if (lst == VOID || rst == VOID) {
 		if (sflag && (lst == FUNC || rst == FUNC)) {
 			/* (void *)0 already handled in typeok() */
-			*(lst == FUNC ? &lts : &rts) = "function pointer";
-			*(lst == VOID ? &lts : &rts) = "'void *'";
+			*(lst == FUNC ? &lsts : &rsts) = "function pointer";
+			*(lst == VOID ? &lsts : &rsts) = "'void *'";
 			/* ANSI C forbids comparison of %s with %s */
-			warning(274, lts, rts);
+			warning(274, lsts, rsts);
 		}
 		return;
 	}
