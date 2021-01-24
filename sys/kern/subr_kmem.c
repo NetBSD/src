@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.80 2020/05/14 17:01:34 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.81 2021/01/24 17:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.80 2020/05/14 17:01:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.81 2021/01/24 17:29:11 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -474,6 +474,29 @@ kmem_strfree(char *str)
 		return;
 
 	kmem_free(str, strlen(str) + 1);
+}
+
+/*
+ * Utility routine to maybe-allocate a temporary buffer if the size
+ * is larger than we're willing to put on the stack.
+ */
+void *
+kmem_tmpbuf_alloc(size_t size, void *stackbuf, size_t stackbufsize,
+    km_flag_t flags)
+{
+	if (size <= stackbufsize) {
+		return stackbuf;
+	}
+
+	return kmem_alloc(size, flags);
+}
+
+void
+kmem_tmpbuf_free(void *buf, size_t size, void *stackbuf)
+{
+	if (buf != stackbuf) {
+		kmem_free(buf, size);
+	}
 }
 
 /* --------------------------- DEBUG / DIAGNOSTIC --------------------------- */
