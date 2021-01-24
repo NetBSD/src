@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.263 2021/01/23 12:36:02 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.264 2021/01/24 20:11:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.263 2021/01/23 12:36:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.264 2021/01/24 20:11:55 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -253,7 +253,7 @@ typedef enum CachedStatsFlags {
 } CachedStatsFlags;
 
 
-SearchPath dirSearchPath = LST_INIT;	/* main search path */
+SearchPath dirSearchPath = { LST_INIT }; /* main search path */
 
 static OpenDirs openDirs;	/* all cached directories */
 
@@ -551,7 +551,7 @@ Dir_SetPATH(void)
 
 	Var_Delete(".PATH", VAR_GLOBAL);
 
-	if ((ln = dirSearchPath.first) != NULL) {
+	if ((ln = dirSearchPath.dirs.first) != NULL) {
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast) {
 			seenDotLast = TRUE;
@@ -566,7 +566,7 @@ Dir_SetPATH(void)
 			Var_Append(".PATH", cur->name, VAR_GLOBAL);
 	}
 
-	for (ln = dirSearchPath.first; ln != NULL; ln = ln->next) {
+	for (ln = dirSearchPath.dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast)
 			continue;
@@ -818,7 +818,7 @@ static void
 DirExpandPath(const char *word, SearchPath *path, StringList *expansions)
 {
 	SearchPathNode *ln;
-	for (ln = path->first; ln != NULL; ln = ln->next) {
+	for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		DirMatchFiles(word, dir, expansions);
 	}
@@ -1085,7 +1085,7 @@ FindFileRelative(SearchPath *path, Boolean seenDotLast,
 			goto found;
 	}
 
-	for (ln = path->first; ln != NULL; ln = ln->next) {
+	for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast)
 			continue;
@@ -1150,7 +1150,7 @@ FindFileAbsolute(SearchPath *path, Boolean const seenDotLast,
 	    ((file = DirLookupAbs(cur, name, base)) != NULL))
 		goto found;
 
-	for (ln = path->first; ln != NULL; ln = ln->next) {
+	for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast)
 			continue;
@@ -1207,8 +1207,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 		return NULL;
 	}
 
-	if (path->first != NULL) {
-		CachedDir *dir = path->first->datum;
+	if (path->dirs.first != NULL) {
+		CachedDir *dir = path->dirs.first->datum;
 		if (dir == dotLast) {
 			seenDotLast = TRUE;
 			DEBUG0(DIR, "[dot last]...");
@@ -1241,7 +1241,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		if (!seenDotLast && (file = DirFindDot(name, base)) != NULL)
 			return file;
 
-		for (ln = path->first; ln != NULL; ln = ln->next) {
+		for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 			CachedDir *dir = ln->datum;
 			if (dir == dotLast)
 				continue;
@@ -1544,7 +1544,7 @@ CacheNewDir(const char *name, SearchPath *path)
 
 	OpenDirs_Add(&openDirs, dir);
 	if (path != NULL)
-		Lst_Append(path, CachedDir_Ref(dir));
+		Lst_Append(&path->dirs, CachedDir_Ref(dir));
 
 	DEBUG1(DIR, "Caching %s done\n", name);
 	return dir;
@@ -1576,21 +1576,21 @@ SearchPath_Add(SearchPath *path, const char *name)
 		SearchPathNode *ln;
 
 		/* XXX: Linear search gets slow with thousands of entries. */
-		for (ln = path->first; ln != NULL; ln = ln->next) {
+		for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 			CachedDir *pathDir = ln->datum;
 			if (strcmp(pathDir->name, name) == 0)
 				return pathDir;
 		}
 
-		Lst_Prepend(path, CachedDir_Ref(dotLast));
+		Lst_Prepend(&path->dirs, CachedDir_Ref(dotLast));
 	}
 
 	if (path != NULL) {
 		/* XXX: Why is OpenDirs only checked if path != NULL? */
 		CachedDir *dir = OpenDirs_Find(&openDirs, name);
 		if (dir != NULL) {
-			if (Lst_FindDatum(path, dir) == NULL)
-				Lst_Append(path, CachedDir_Ref(dir));
+			if (Lst_FindDatum(&path->dirs, dir) == NULL)
+				Lst_Append(&path->dirs, CachedDir_Ref(dir));
 			return dir;
 		}
 	}
@@ -1607,9 +1607,9 @@ Dir_CopyDirSearchPath(void)
 {
 	SearchPath *path = SearchPath_New();
 	SearchPathNode *ln;
-	for (ln = dirSearchPath.first; ln != NULL; ln = ln->next) {
+	for (ln = dirSearchPath.dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
-		Lst_Append(path, CachedDir_Ref(dir));
+		Lst_Append(&path->dirs, CachedDir_Ref(dir));
 	}
 	return path;
 }
@@ -1637,7 +1637,7 @@ SearchPath_ToFlags(SearchPath *path, const char *flag)
 	Buf_Init(&buf);
 
 	if (path != NULL) {
-		for (ln = path->first; ln != NULL; ln = ln->next) {
+		for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 			CachedDir *dir = ln->datum;
 			Buf_AddStr(&buf, " ");
 			Buf_AddStr(&buf, flag);
@@ -1654,11 +1654,12 @@ SearchPath_Free(SearchPath *path)
 {
 	SearchPathNode *ln;
 
-	for (ln = path->first; ln != NULL; ln = ln->next) {
+	for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		CachedDir_Unref(dir);
 	}
-	Lst_Free(path);
+	Lst_Done(&path->dirs);
+	free(path);
 }
 
 /*
@@ -1668,8 +1669,8 @@ SearchPath_Free(SearchPath *path)
 void
 SearchPath_Clear(SearchPath *path)
 {
-	while (!Lst_IsEmpty(path)) {
-		CachedDir *dir = Lst_Dequeue(path);
+	while (!Lst_IsEmpty(&path->dirs)) {
+		CachedDir *dir = Lst_Dequeue(&path->dirs);
 		CachedDir_Unref(dir);
 	}
 }
@@ -1684,10 +1685,10 @@ SearchPath_AddAll(SearchPath *dst, SearchPath *src)
 {
 	SearchPathNode *ln;
 
-	for (ln = src->first; ln != NULL; ln = ln->next) {
+	for (ln = src->dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
-		if (Lst_FindDatum(dst, dir) == NULL)
-			Lst_Append(dst, CachedDir_Ref(dir));
+		if (Lst_FindDatum(&dst->dirs, dir) == NULL)
+			Lst_Append(&dst->dirs, CachedDir_Ref(dir));
 	}
 }
 
@@ -1722,7 +1723,7 @@ SearchPath_Print(SearchPath *path)
 {
 	SearchPathNode *ln;
 
-	for (ln = path->first; ln != NULL; ln = ln->next) {
+	for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 		const CachedDir *dir = ln->datum;
 		debug_printf("%s ", dir->name);
 	}
