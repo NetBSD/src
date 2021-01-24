@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_177.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_177.c,v 1.2 2021/01/24 16:12:45 rillig Exp $	*/
 # 3 "msg_177.c"
 
 // Test for message: non-constant initializer [177]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+extern int function(void);
+
+static const int not_a_constant = 13;
+
+const int var = not_a_constant;			/* expect: 177 */
+
+const int calling_function = function();	/* expect: 177 */
