@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2021/01/24 15:43:09 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2021/01/24 16:22:55 rillig Exp $
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-lint
 HOST_SRCDIR=	usr.bin/xlint/xlint
@@ -11,9 +11,9 @@ HOST_CPPFLAGS=	-DPATH_LIBEXEC=\"${TOOLDIR}/libexec\" \
 
 STDBOOL_H=${NETBSDSRCDIR}/${HOST_SRCDIR}/strict-bool-stdbool.h
 
-install: ${TOOLDIR}/libdata/lint/stdbool.h
+install: ${TOOLDIR}/libdata/lint/strict-bool/stdbool.h
 
-${TOOLDIR}/libdata/lint/stdbool.h:: ${STDBOOL_H}
+${TOOLDIR}/libdata/lint/strict-bool/stdbool.h:: ${STDBOOL_H}
 	${_MKTARGET_INSTALL}
-	mkdir -p ${TOOLDIR}/libdata/lint
+	mkdir -p ${.TARGET:H}
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${STDBOOL_H} ${.TARGET}
