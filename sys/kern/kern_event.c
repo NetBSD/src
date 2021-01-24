@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.113 2021/01/21 19:37:23 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.114 2021/01/24 11:31:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.113 2021/01/21 19:37:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.114 2021/01/24 11:31:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1470,7 +1470,7 @@ relock:
 				KQ_FLUX_WAKEUP(kq);
 			}
 			mutex_exit(&fdp->fd_lock);
-			(void)cv_wait_sig(&kq->kq_cv, &kq->kq_lock);
+			(void)cv_wait(&kq->kq_cv, &kq->kq_lock);
 			goto relock;
 		}
 
