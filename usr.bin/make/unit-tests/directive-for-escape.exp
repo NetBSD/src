@@ -58,7 +58,7 @@ For: loop body:
 .  info .      $$(i): $(:Uinner)
 .  info .   $$(i:M*): $(:Uinner:M*)
 .  info . $${i$${:U}}: ${i${:U}}
-.  info .    $${i\}}: ${:Uinner\}}	# XXX: unclear why SubstVarLong needs this
+.  info .    $${i\}}: ${:Uinner\}}	# XXX: unclear why ForLoop_SubstVarLong needs this
 .  info .     $${i2}: ${i2}
 .  info .     $${i,}: ${i,}
 .  info .  adjacent: ${:Uinner}${:Uinner}${:Uinner:M*}${:Uinner}

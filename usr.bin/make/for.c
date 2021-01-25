@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.135 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.136 2021/01/25 19:05:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.135 2021/01/19 20:51:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.136 2021/01/25 19:05:39 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -68,10 +68,7 @@ typedef struct ForVar {
 	size_t nameLen;
 } ForVar;
 
-/*
- * State of a for loop.
- */
-typedef struct For {
+typedef struct ForLoop {
 	Buffer body;		/* Unexpanded body of the loop */
 	Vector /* of ForVar */ vars; /* Iteration variables */
 	Words items;		/* Substitution items */
@@ -81,12 +78,12 @@ typedef struct For {
 	 * only ${V} and $(V). */
 	Boolean short_var;
 	unsigned int sub_next;	/* Where to continue iterating */
-} For;
+} ForLoop;
 
-static For *accumFor;		/* Loop being accumulated */
+static ForLoop *accumFor;		/* Loop being accumulated */
 
 static void
-ForAddVar(For *f, const char *name, size_t len)
+ForLoop_AddVar(ForLoop *f, const char *name, size_t len)
 {
 	ForVar *var = Vector_Push(&f->vars);
 	var->name = bmake_strldup(name, len);
@@ -94,7 +91,7 @@ ForAddVar(For *f, const char *name, size_t len)
 }
 
 static void
-For_Free(For *f)
+ForLoop_Free(ForLoop *f)
 {
 	Buf_Destroy(&f->body, TRUE);
 
@@ -138,7 +135,7 @@ IsEndfor(const char *p)
 int
 For_Eval(const char *line)
 {
-	For *f;
+	ForLoop *f;
 	const char *p;
 
 	p = line + 1;		/* skip the '.' */
@@ -173,7 +170,7 @@ For_Eval(const char *line)
 		cpp_skip_whitespace(&p);
 		if (*p == '\0') {
 			Parse_Error(PARSE_FATAL, "missing `in' in for");
-			For_Free(f);
+			ForLoop_Free(f);
 			return -1;
 		}
 
@@ -191,13 +188,13 @@ For_Eval(const char *line)
 		if (len == 1)
 			f->short_var = TRUE;
 
-		ForAddVar(f, p, len);
+		ForLoop_AddVar(f, p, len);
 		p += len;
 	}
 
 	if (f->vars.len == 0) {
 		Parse_Error(PARSE_FATAL, "no iteration variables in for");
-		For_Free(f);
+		ForLoop_Free(f);
 		return -1;
 	}
 
@@ -243,7 +240,7 @@ done:
 }
 
 /*
- * Add another line to a .for loop.
+ * Add another line to the .for loop that is being built up.
  * Returns FALSE when the matching .endfor is reached.
  */
 Boolean
@@ -356,8 +353,8 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
  * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
-SubstVarLong(For *f, const char **pp, const char *bodyEnd, char endc,
-	     const char **inout_mark)
+ForLoop_SubstVarLong(ForLoop *f, const char **pp, const char *bodyEnd,
+		     char endc, const char **inout_mark)
 {
 	size_t i;
 	const char *p = *pp;
@@ -397,7 +394,7 @@ SubstVarLong(For *f, const char **pp, const char *bodyEnd, char endc,
  * variable expressions like $i with their ${:U...} expansion.
  */
 static void
-SubstVarShort(For *f, const char *p, const char **inout_mark)
+ForLoop_SubstVarShort(ForLoop *f, const char *p, const char **inout_mark)
 {
 	const char ch = *p;
 	ForVar *vars;
@@ -437,7 +434,7 @@ found:
  * to contrive a makefile where an unwanted substitution happens.
  */
 static void
-ForSubstBody(For *f)
+ForLoop_SubstBody(ForLoop *f)
 {
 	const char *p, *bodyEnd;
 	const char *mark;	/* where the last replacement left off */
@@ -449,10 +446,10 @@ ForSubstBody(For *f)
 	for (p = mark; (p = strchr(p, '$')) != NULL;) {
 		if (p[1] == '{' || p[1] == '(') {
 			p += 2;
-			SubstVarLong(f, &p, bodyEnd, p[-1] == '{' ? '}' : ')',
-			    &mark);
+			ForLoop_SubstVarLong(f, &p, bodyEnd,
+			    p[-1] == '{' ? '}' : ')', &mark);
 		} else if (p[1] != '\0') {
-			SubstVarShort(f, p + 1, &mark);
+			ForLoop_SubstVarShort(f, p + 1, &mark);
 			p += 2;
 		} else
 			break;
@@ -468,15 +465,15 @@ ForSubstBody(For *f)
 static char *
 ForReadMore(void *v_arg, size_t *out_len)
 {
-	For *f = v_arg;
+	ForLoop *f = v_arg;
 
 	if (f->sub_next == f->items.len) {
 		/* No more iterations */
-		For_Free(f);
+		ForLoop_Free(f);
 		return NULL;
 	}
 
-	ForSubstBody(f);
+	ForLoop_SubstBody(f);
 	DEBUG1(FOR, "For: loop body:\n%s", f->curBody.data);
 	f->sub_next += (unsigned int)f->vars.len;
 
@@ -488,7 +485,7 @@ ForReadMore(void *v_arg, size_t *out_len)
 void
 For_Run(int lineno)
 {
-	For *f = accumFor;
+	ForLoop *f = accumFor;
 	accumFor = NULL;
 
 	if (f->items.len == 0) {
@@ -496,7 +493,7 @@ For_Run(int lineno)
 		 * Nothing to expand - possibly due to an earlier syntax
 		 * error.
 		 */
-		For_Free(f);
+		ForLoop_Free(f);
 		return;
 	}
 
