@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.36 2021/01/23 13:01:59 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.37 2021/01/25 14:16:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1415,4 +1415,14 @@ sys/dev/pci/if_ena.c				1.27
 
 	PR 55942: destroyed ena(4) evcnts cause panic.
 	[jmcneill, ticket #1186]
+
+sys/kern/kern_threadpool.c			1.23
+
+	PR 55948: fix a race in threadpool(9).
+	[riastradh, ticket #1187]
+
+sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.16
+
+	vcaudio: make vcaudio accurately report lack of CAPTURE.
+	[nia, ticket #1188]
 
