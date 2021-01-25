@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.48 2021/01/21 21:45:42 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.49 2021/01/25 02:11:41 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.48 2021/01/21 21:45:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.49 2021/01/25 02:11:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1273,6 +1273,9 @@ vcons_putchar(void *cookie, int row, int col, u_int c, long attr)
 #ifdef VCONS_DRAW_INTR
 		vcons_putchar_cached(cookie, row, col, c, attr);
 #else
+		if (row == ri->ri_crow && col == ri->ri_ccol) {
+			ri->ri_flg &= ~RI_CURSOR;
+		}
 		scr->putchar(cookie, row, col, c, attr);
 #endif
 	}
@@ -1337,7 +1340,7 @@ vcons_cursor_noread(void *cookie, int on, int row, int col)
 #endif
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		int ofs = offset + ri->ri_crow * ri->ri_cols + ri->ri_ccol;
-		if (ri->ri_flg & RI_CURSOR) {
+		if (on && (ri->ri_flg & RI_CURSOR)) {
 			scr->putchar(cookie, ri->ri_crow, ri->ri_ccol,
 			    scr->scr_chars[ofs], scr->scr_attrs[ofs]);
 			ri->ri_flg &= ~RI_CURSOR;
