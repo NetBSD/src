@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 2018/12/19 13:57:51 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.67 2021/01/25 13:08:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -469,9 +469,6 @@ GLOBAL(_isr_vectored)
 	jbsr	_C_LABEL(isr_vectored)
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
-
-#undef	INTERRUPT_SAVEREG
-#undef	INTERRUPT_RESTOREREG
 
 /* interrupt counters (needed by vmstat) */
 GLOBAL(intrnames)
