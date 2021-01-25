@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.15 2019/01/17 10:18:52 hannken Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.15.6.1 2021/01/25 14:12:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.15 2019/01/17 10:18:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.15.6.1 2021/01/25 14:12:50 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -947,7 +947,7 @@ threadpool_overseer_thread(void *arg)
 
 		/* There are idle threads, so try giving one a job.  */
 		struct threadpool_job *const job = TAILQ_FIRST(&pool->tp_jobs);
-		TAILQ_REMOVE(&pool->tp_jobs, job, job_entry);
+
 		/*
 		 * Take an extra reference on the job temporarily so that
 		 * it won't disappear on us while we have both locks dropped.
@@ -959,6 +959,7 @@ threadpool_overseer_thread(void *arg)
 		/* If the job was cancelled, we'll no longer be its thread.  */
 		if (__predict_true(job->job_thread == overseer)) {
 			mutex_spin_enter(&pool->tp_lock);
+			TAILQ_REMOVE(&pool->tp_jobs, job, job_entry);
 			if (__predict_false(
 				    TAILQ_EMPTY(&pool->tp_idle_threads))) {
 				/*
