@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.35 2021/01/19 00:38:52 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.36 2021/01/25 14:20:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.35 2021/01/19 00:38:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.36 2021/01/25 14:20:38 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -260,7 +260,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "brcm,bcm2835-armctrl-ic",	.value = 0 },
 	{ .compat = "brcm,bcm2836-armctrl-ic",	.value = 0 },
 	{ .compat = "brcm,bcm2836-l1-intc",	.value = 1 },
-	{ 0 }
+	{ }
 };
 
 static int

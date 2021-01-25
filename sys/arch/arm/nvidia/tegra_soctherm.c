@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soctherm.c,v 1.10 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: tegra_soctherm.c,v 1.11 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.10 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.11 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,7 +163,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "nvidia,tegra124-soctherm",
 	  .data = &tegra124_soctherm_config },
 
-	{ 0 }
+	{ }
 };
 
 static int

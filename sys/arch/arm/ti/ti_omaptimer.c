@@ -1,7 +1,7 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.6 2021/01/18 02:35:49 thorpej Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.7 2021/01/25 14:20:39 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.6 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.7 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,8 +65,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,am335x-timer-1ms",	.value = DM_TIMER_AM335X },
 	{ .compat = "ti,am335x-timer",		.value = DM_TIMER_AM335X },
 	{ .compat = "ti,omap3430-timer",	.value = DM_TIMER_OMAP3430 },
-
-	{ 0 }
+	{ }
 };
 
 struct omaptimer_softc {

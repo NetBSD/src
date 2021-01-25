@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.12 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.12 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,8 +52,7 @@ enum sunxi_rsb_type {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun6i-a31-p2wi",	.value = SUNXI_P2WI },
 	{ .compat = "allwinner,sun8i-a23-rsb",	.value = SUNXI_RSB },
-
-	{ 0 }
+	{ }
 };
 
 #define RSB_ADDR_PMIC_PRIMARY	0x3a3

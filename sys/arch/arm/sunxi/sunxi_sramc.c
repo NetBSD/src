@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sramc.c,v 1.8 2021/01/24 16:23:06 thorpej Exp $ */
+/* $NetBSD: sunxi_sramc.c,v 1.9 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.8 2021/01/24 16:23:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.9 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,7 +50,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun50i-a64-system-control" },
 	{ .compat = "allwinner,sun50i-h5-system-control" },
 	{ .compat = "allwinner,sun50i-h6-system-control" },
-	{ 0 }
+	{ }
 };
 
 struct sunxi_sramc_area {
@@ -92,7 +92,7 @@ static const struct device_compatible_entry sunxi_sramc_areas[] = {
 	{ .compat = "allwinner,sun50i-a64-sram-c",
 	  .data = &sunxi_sramc_area_c },
 
-	{ 0 }
+	{ }
 };
 
 struct sunxi_sramc_node {
@@ -143,7 +143,7 @@ sunxi_sramc_init(struct sunxi_sramc_softc *sc)
 {
 	const struct device_compatible_entry mmio_compat_data[] = {
 		{ .compat = "mmio-sram" },
-		{ 0 }
+		{ }
 	};
 	int child;
 

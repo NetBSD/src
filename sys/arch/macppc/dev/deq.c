@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.18 2021/01/17 21:02:33 thorpej Exp $	*/
+/*	$NetBSD: deq.c,v 1.19 2021/01/25 14:20:39 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.18 2021/01/17 21:02:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.19 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pcm3052" },
 	{ .compat = "cs8416" },
 	{ .compat = "codec" },
-
-	{ 0 }
+	{ }
 };
 
 int

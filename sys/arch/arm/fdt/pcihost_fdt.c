@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.20 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.21 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.20 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.21 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -98,8 +98,7 @@ CFATTACH_DECL_NEW(pcihost_fdt, sizeof(struct pcihost_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pci-host-cam-generic",	.value = PCIHOST_CAM },
 	{ .compat = "pci-host-ecam-generic",	.value = PCIHOST_ECAM },
-
-	{ 0 }
+	{ }
 };
 
 static int
