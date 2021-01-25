@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.37 2020/06/25 14:22:19 jdolecek Exp $ */
+/* $NetBSD: pipe.h,v 1.38 2021/01/25 19:21:11 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -80,8 +80,7 @@ struct pipebuf {
 #define PIPE_SIGNALR	0x020	/* Do selwakeup() on read(2) */
 #define	PIPE_LOCKFL	0x100	/* Process has exclusive access to
 				   pointers/data. */
-#define	PIPE_LWANT	0x200	/* Process wants exclusive access to
-				   pointers/data. */
+/*	unused  	0x200	*/
 #define	PIPE_RESTART	0x400	/* Return ERESTART to blocked syscalls */
 
 /*
@@ -100,6 +99,7 @@ struct pipe {
 	struct	timespec pipe_mtime;	/* time of last modify */
 	struct	timespec pipe_btime;	/* time of creation */
 	pid_t	pipe_pgid;		/* process group for sigio */
+	u_int	pipe_waiters;		/* number of waiters pending */
 	struct	pipe *pipe_peer;	/* link with other direction */
 	u_int	pipe_state;		/* pipe status info */
 	int	pipe_busy;		/* busy flag, to handle rundown */
