@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.5 2021/01/24 19:48:11 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.6 2021/01/25 19:05:39 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -103,7 +103,7 @@ i,=		comma
 .  info .      $$(i): $(i)
 .  info .   $$(i:M*): $(i:M*)
 .  info . $${i$${:U}}: ${i${:U}}
-.  info .    $${i\}}: ${i\}}	# XXX: unclear why SubstVarLong needs this
+.  info .    $${i\}}: ${i\}}	# XXX: unclear why ForLoop_SubstVarLong needs this
 .  info .     $${i2}: ${i2}
 .  info .     $${i,}: ${i,}
 .  info .  adjacent: $i${i}${i:M*}$i
