@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.136 2021/01/25 19:05:39 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.137 2021/01/25 19:10:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,9 +58,8 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.136 2021/01/25 19:05:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.137 2021/01/25 19:10:57 rillig Exp $");
 
-static int forLevel = 0;	/* Nesting level */
 
 /* One of the variables to the left of the "in" in a .for loop. */
 typedef struct ForVar {
@@ -80,14 +79,25 @@ typedef struct ForLoop {
 	unsigned int sub_next;	/* Where to continue iterating */
 } ForLoop;
 
-static ForLoop *accumFor;		/* Loop being accumulated */
 
-static void
-ForLoop_AddVar(ForLoop *f, const char *name, size_t len)
+static ForLoop *accumFor;		/* Loop being accumulated */
+static int forLevel = 0;	/* Nesting level */
+
+
+static ForLoop *
+ForLoop_New(void)
 {
-	ForVar *var = Vector_Push(&f->vars);
-	var->name = bmake_strldup(name, len);
-	var->nameLen = len;
+	ForLoop *f = bmake_malloc(sizeof *f);
+
+	Buf_Init(&f->body);
+	Vector_Init(&f->vars, sizeof(ForVar));
+	f->items.words = NULL;
+	f->items.freeIt = NULL;
+	Buf_Init(&f->curBody);
+	f->short_var = FALSE;
+	f->sub_next = 0;
+
+	return f;
 }
 
 static void
@@ -105,6 +115,14 @@ ForLoop_Free(ForLoop *f)
 	Buf_Destroy(&f->curBody, TRUE);
 
 	free(f);
+}
+
+static void
+ForLoop_AddVar(ForLoop *f, const char *name, size_t len)
+{
+	ForVar *var = Vector_Push(&f->vars);
+	var->name = bmake_strldup(name, len);
+	var->nameLen = len;
 }
 
 static Boolean
@@ -154,14 +172,7 @@ For_Eval(const char *line)
 	 * we found a for loop, and now we are going to parse it.
 	 */
 
-	f = bmake_malloc(sizeof *f);
-	Buf_Init(&f->body);
-	Vector_Init(&f->vars, sizeof(ForVar));
-	f->items.words = NULL;
-	f->items.freeIt = NULL;
-	Buf_Init(&f->curBody);
-	f->short_var = FALSE;
-	f->sub_next = 0;
+	f = ForLoop_New();
 
 	/* Grab the variables. Terminate on "in". */
 	for (;;) {
