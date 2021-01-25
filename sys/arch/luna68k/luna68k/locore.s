@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.64 2019/06/30 05:04:49 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.65 2021/01/25 13:08:04 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -661,9 +661,6 @@ ENTRY_NOPROFILE(lev5intr)
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| all done
 #endif
-
-#undef INTERRUPT_SAVEREG
-#undef INTERRUPT_RESTOREREG
 
 /*
  * Emulation of VAX REI instruction.

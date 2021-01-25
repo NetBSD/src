@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 2018/12/19 13:57:48 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 2021/01/25 13:08:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -973,9 +973,6 @@ Lintrhand_exit:
 	subql	#1,_C_LABEL(interrupt_depth)
 
 	/* FALLTHROUGH to rei */
-
-#undef INTERRUPT_SAVEREG
-#undef INTERRUPT_RESTOREREG
 
 /*
  * Emulation of VAX REI instruction.
