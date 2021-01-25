@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.37 2021/01/19 14:39:20 thorpej Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.38 2021/01/25 16:21:41 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.37 2021/01/19 14:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.38 2021/01/25 16:21:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,7 +73,7 @@ CFATTACH_DECL_NEW(wdc_ofisa, sizeof(struct wdc_ofisa_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pnpPNP,600" },
-	{ 0 }
+	{ }
 };
 
 static int
