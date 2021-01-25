@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.23 2021/01/24 05:30:05 rin Exp $ */
+/*	$NetBSD: adm1021.c,v 1.24 2021/01/25 13:30:20 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.23 2021/01/24 05:30:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.24 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "i2c-max1617" },
 	{ .compat = "max6642" },
 	{ .compat = "max6690" },
-
-	{ 0 }
+	{ }
 };
 
 int
