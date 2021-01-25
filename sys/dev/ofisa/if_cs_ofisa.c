@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.28 2021/01/19 14:39:20 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.29 2021/01/25 16:21:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.28 2021/01/19 14:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.29 2021/01/25 16:21:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "CRUS,CS8900" },
 	/* XXX CS8920, CS8920M? */
 	/* XXX PNP names? */
-	{ 0 }
+	{ }
 };
 
 int
