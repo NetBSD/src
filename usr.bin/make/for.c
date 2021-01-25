@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.137 2021/01/25 19:10:57 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.138 2021/01/25 19:39:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.137 2021/01/25 19:10:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.138 2021/01/25 19:39:34 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -126,6 +126,76 @@ ForLoop_AddVar(ForLoop *f, const char *name, size_t len)
 }
 
 static Boolean
+ForLoop_ParseVarnames(ForLoop *f, const char **pp)
+{
+	const char *p = *pp;
+
+	for (;;) {
+		size_t len;
+
+		cpp_skip_whitespace(&p);
+		if (*p == '\0') {
+			Parse_Error(PARSE_FATAL, "missing `in' in for");
+			return FALSE;
+		}
+
+		/*
+		 * XXX: This allows arbitrary variable names;
+		 * see directive-for.mk.
+		 */
+		for (len = 1; p[len] != '\0' && !ch_isspace(p[len]); len++)
+			continue;
+
+		if (len == 2 && p[0] == 'i' && p[1] == 'n') {
+			p += 2;
+			break;
+		}
+		if (len == 1)
+			f->short_var = TRUE;
+
+		ForLoop_AddVar(f, p, len);
+		p += len;
+	}
+
+	if (f->vars.len == 0) {
+		Parse_Error(PARSE_FATAL, "no iteration variables in for");
+		return FALSE;
+	}
+
+	*pp = p;
+	return TRUE;
+}
+
+static Boolean
+ForLoop_ParseItems(ForLoop *f, const char *p)
+{
+	char *items;
+
+	cpp_skip_whitespace(&p);
+
+	if (Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items) != VPR_OK) {
+		Parse_Error(PARSE_FATAL, "Error in .for loop items");
+		return FALSE;
+	}
+
+	f->items = Str_Words(items, FALSE);
+	free(items);
+
+	if (f->items.len == 1 && f->items.words[0][0] == '\0')
+		f->items.len = 0; /* .for var in ${:U} */
+
+	if (f->items.len != 0 && f->items.len % f->vars.len != 0) {
+		Parse_Error(PARSE_FATAL,
+		    "Wrong number of words (%u) in .for "
+		    "substitution list with %u variables",
+		    (unsigned)f->items.len, (unsigned)f->vars.len);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static Boolean
 IsFor(const char *p)
 {
 	return p[0] == 'f' && p[1] == 'o' && p[2] == 'r' && ch_isspace(p[3]);
@@ -168,83 +238,18 @@ For_Eval(const char *line)
 	}
 	p += 3;
 
-	/*
-	 * we found a for loop, and now we are going to parse it.
-	 */
-
 	f = ForLoop_New();
 
-	/* Grab the variables. Terminate on "in". */
-	for (;;) {
-		size_t len;
-
-		cpp_skip_whitespace(&p);
-		if (*p == '\0') {
-			Parse_Error(PARSE_FATAL, "missing `in' in for");
-			ForLoop_Free(f);
-			return -1;
-		}
-
-		/*
-		 * XXX: This allows arbitrary variable names;
-		 * see directive-for.mk.
-		 */
-		for (len = 1; p[len] != '\0' && !ch_isspace(p[len]); len++)
-			continue;
-
-		if (len == 2 && p[0] == 'i' && p[1] == 'n') {
-			p += 2;
-			break;
-		}
-		if (len == 1)
-			f->short_var = TRUE;
-
-		ForLoop_AddVar(f, p, len);
-		p += len;
-	}
-
-	if (f->vars.len == 0) {
-		Parse_Error(PARSE_FATAL, "no iteration variables in for");
+	if (!ForLoop_ParseVarnames(f, &p)) {
 		ForLoop_Free(f);
 		return -1;
 	}
 
-	cpp_skip_whitespace(&p);
-
-	{
-		char *items;
-		if (Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items) != VPR_OK) {
-			Parse_Error(PARSE_FATAL, "Error in .for loop items");
-			f->items.len = 0;
-			goto done;
-		}
-
-		f->items = Str_Words(items, FALSE);
-		free(items);
-
-		if (f->items.len == 1 && f->items.words[0][0] == '\0')
-			f->items.len = 0; /* .for var in ${:U} */
+	if (!ForLoop_ParseItems(f, p)) {
+		/* Continue parsing the .for loop, but don't iterate. */
+		f->items.len = 0;
 	}
 
-	{
-		size_t nitems, nvars;
-
-		if ((nitems = f->items.len) > 0 &&
-		    nitems % (nvars = f->vars.len) != 0) {
-			Parse_Error(PARSE_FATAL,
-			    "Wrong number of words (%u) in .for "
-			    "substitution list with %u variables",
-			    (unsigned)nitems, (unsigned)nvars);
-			/*
-			 * Return 'success' so that the body of the .for loop
-			 * is accumulated.
-			 * Remove all items so that the loop doesn't iterate.
-			 */
-			f->items.len = 0;
-		}
-	}
-
-done:
 	accumFor = f;
 	forLevel = 1;
 	return 1;
