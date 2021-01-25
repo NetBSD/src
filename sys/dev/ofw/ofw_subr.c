@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.48 2021/01/24 21:48:38 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.49 2021/01/25 12:15:33 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.48 2021/01/24 21:48:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.49 2021/01/25 12:15:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/i2c/i2cvar.h>
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
 #define	OFW_PATH_BUF_SIZE	512
@@ -508,6 +509,7 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 		prop_dictionary_set_string(dev, "name", name);
 		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", node);
+		prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_OF);
 		of_to_dataprop(dev, node, "compatible", "compatible");
 		prop_array_add(array, dev);
 		prop_object_release(dev);
