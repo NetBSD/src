@@ -1,4 +1,4 @@
-/* $NetBSD: max77620.c,v 1.9 2021/01/17 21:42:35 thorpej Exp $ */
+/* $NetBSD: max77620.c,v 1.10 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.9 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.10 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,7 @@ struct max77620_pin {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "maxim,max77620" },
-
-	{ 0 }
+	{ }
 };
 
 static uint8_t
