@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.43 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.44 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.43 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.44 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -299,7 +299,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun50i-h6-emmc",
 	  .data = &sun50i_h6_emmc_config },
 
-	{ NULL }
+	{ }
 };
 
 static int

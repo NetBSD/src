@@ -1,4 +1,4 @@
-/* $NetBSD: meson_thermal.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: meson_thermal.c,v 1.4 2021/01/25 14:20:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_thermal.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_thermal.c,v 1.4 2021/01/25 14:20:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,8 +90,7 @@ static struct meson_thermal_config thermal_ddr_conf = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,g12a-cpu-thermal", .data = &thermal_cpu_conf },
 	{ .compat = "amlogic,g12a-ddr-thermal", .data = &thermal_ddr_conf },
-
-	{ 0 }
+	{ }
 };
 
 struct meson_thermal_softc {

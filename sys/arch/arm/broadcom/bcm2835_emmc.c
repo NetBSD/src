@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.40 2021/01/18 02:35:48 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.41 2021/01/25 14:20:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.40 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.41 2021/01/25 14:20:38 thorpej Exp $");
 
 #include "bcmdmac.h"
 
@@ -99,7 +99,7 @@ enum bcmemmc_type {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "brcm,bcm2835-sdhci",	.value = BCM2835_SDHCI },
 	{ .compat = "brcm,bcm2711-emmc2",	.value = BCM2711_EMMC2 },
-	{ NULL }
+	{ }
 };
 
 /* ARGSUSED */

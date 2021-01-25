@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.9 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.8 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.9 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,8 +122,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3188-i2s", },
 	{ .compat = "rockchip,rk3288-i2s", },
 	{ .compat = "rockchip,rk3399-i2s",	.data = &rk3399_i2s_config },
-
-	{ 0 }
+	{ }
 };
 
 struct rk_i2s_softc;

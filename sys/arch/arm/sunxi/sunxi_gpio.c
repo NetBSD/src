@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.32 2021/01/18 13:29:37 skrll Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.33 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.32 2021/01/18 13:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.33 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -135,8 +135,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun50i-h6-r-pinctrl",
 	  .data = &sun50i_h6_r_padconf },
 #endif
-
-	{ 0 }
+	{ }
 };
 
 struct sunxi_gpio_eint {

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usb3phy.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sunxi_usb3phy.c,v 1.3 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usb3phy.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usb3phy.c,v 1.3 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,8 +69,7 @@ enum sunxi_usb3phy_type {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun50i-h6-usb3-phy",	.value = USB3PHY_H6 },
-
-	{ 0 }
+	{ }
 };
 
 struct sunxi_usb3phy {

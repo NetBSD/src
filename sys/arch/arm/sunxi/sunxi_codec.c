@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.9 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.10 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.9 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.10 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,7 +93,7 @@ static const struct device_compatible_entry compat_data[] = {
 	A31_CODEC_COMPATDATA,
 	H3_CODEC_COMPATDATA,
 
-	{ 0 }
+	{ }
 };
 
 #define	CODEC_READ(sc, reg)			\

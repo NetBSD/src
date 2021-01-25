@@ -1,4 +1,4 @@
-/* $NetBSD: ns8250_uart.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: ns8250_uart.c,v 1.5 2021/01/25 14:25:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017-2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.5 2021/01/25 14:25:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,8 +84,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ns16550a",			.data = &ns8250_config },
 	{ .compat = "ns16550",			.data = &ns8250_config },
 	{ .compat = "ns16750",			.data = &ns16750_config },
-
-	{ 0 }
+	{ }
 };
 
 CFATTACH_DECL_NEW(ns8250_uart, sizeof(struct com_softc),

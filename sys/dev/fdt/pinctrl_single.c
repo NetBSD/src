@@ -1,4 +1,4 @@
-/* $NetBSD: pinctrl_single.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: pinctrl_single.c,v 1.3 2021/01/25 14:25:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.3 2021/01/25 14:25:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,8 +53,7 @@ static const struct pinctrl_single_config pinconf_config = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pinctrl-single",	.data = &pinctrl_config },
 	{ .compat = "pinconf-single",	.data = &pinconf_config },
-
-	{ 0 }
+	{ }
 };
 
 struct pinctrl_single_softc {

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.8 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.7 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.8 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,8 +102,7 @@ static const u_int ti_gpio_regmap[TI_NGPIO][GPIO_NREG] = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,omap3-gpio",	.value = TI_GPIO_OMAP3 },
 	{ .compat = "ti,omap4-gpio",	.value = TI_GPIO_OMAP4 },
-
-	{ 0 }
+	{ }
 };
 
 struct ti_gpio_intr {

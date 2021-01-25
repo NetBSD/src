@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.17 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.18 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.17 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.18 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,8 +61,7 @@ enum rk_gmac_type {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3328-gmac",	.value = GMAC_RK3328 },
 	{ .compat = "rockchip,rk3399-gmac",	.value = GMAC_RK3399 },
-
-	{ 0 }
+	{ }
 };
 
 struct rk_gmac_softc {

@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.8 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.9 2021/01/25 14:20:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.8 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.9 2021/01/25 14:20:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,meson-g12a-periphs-pinctrl",
 	  .data = &mesong12a_periphs_pinctrl_config },
 #endif
-	{ 0 }
+	{ }
 };
 
 #define	MUX_READ(sc, reg)				\

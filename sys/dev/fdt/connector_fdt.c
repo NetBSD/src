@@ -1,4 +1,4 @@
-/*	$NetBSD: connector_fdt.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $	*/
+/*	$NetBSD: connector_fdt.c,v 1.3 2021/01/25 14:25:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: connector_fdt.c,v 1.2 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: connector_fdt.c,v 1.3 2021/01/25 14:25:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "dvi-connector",			.value = CON_DVI},
 	{ .compat = "hdmi-connector",			.value = CON_HDMI},
 	{ .compat = "vga-connector",			.value = CON_VGA},
-
-	{ 0 }
+	{ }
 };
 
 static int

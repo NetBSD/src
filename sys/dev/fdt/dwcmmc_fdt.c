@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.14 2021/01/25 14:25:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.14 2021/01/25 14:25:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,8 +68,7 @@ static const struct dwcmmc_fdt_config dwcmmc_rk3288_config = {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3288-dw-mshc",	.data = &dwcmmc_rk3288_config },
-
-	{ 0 }
+	{ }
 };
 
 struct dwcmmc_fdt_softc {

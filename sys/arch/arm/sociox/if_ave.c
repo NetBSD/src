@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.18 2021/01/18 02:35:49 thorpej Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.19 2021/01/25 14:20:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.18 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.19 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -327,8 +327,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "socionext,unifier-pxs2-ave4", .value = 32 },
 	{ .compat = "socionext,unifier-ld11-ave4", .value = 32 },
 	{ .compat = "socionext,unifier-pxs3-ave4", .value = 32 },
-
-	{ 0 }
+	{ }
 };
 
 static int

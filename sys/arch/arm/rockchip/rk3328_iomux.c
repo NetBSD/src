@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_iomux.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: rk3328_iomux.c,v 1.5 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3328_iomux.c,v 1.4 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3328_iomux.c,v 1.5 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,8 +116,7 @@ static const struct rk3328_iomux_conf rk3328_iomux_conf = {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3328-pinctrl",	.data = &rk3328_iomux_conf },
-
-	{ 0 }
+	{ }
 };
 
 struct rk3328_iomux_softc {

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.14 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.15 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.14 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.15 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,8 +113,7 @@ static const struct nvkm_device_tegra_func gk20a_platform_data = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "nvidia,gk20a", .data = &gk20a_platform_data },
 	{ .compat = "nvidia,gm20b", .data = &gk20a_platform_data },
-
-	{ 0 }
+	{ }
 };
 
 static int

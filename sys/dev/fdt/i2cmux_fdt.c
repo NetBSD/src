@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.7 2021/01/25 12:18:18 jmcneill Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.8 2021/01/25 14:25:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.7 2021/01/25 12:18:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.8 2021/01/25 14:25:09 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -243,7 +243,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "i2c-mux-pinctrl",
 	  .data = &iicmux_pinctrl_config },
 
-	{ NULL }
+	{ }
 };
 
 static int

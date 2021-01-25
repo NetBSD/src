@@ -1,4 +1,4 @@
-/* $NetBSD: mesongxbb_clkc.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: mesongxbb_clkc.c,v 1.4 2021/01/25 14:20:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.4 2021/01/25 14:20:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,8 +81,7 @@ static const struct mesongxbb_clkc_config gxl_config = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,gxbb-clkc",	.data = &gxbb_config },
 	{ .compat = "amlogic,gxl-clkc",		.data = &gxl_config },
-
-	{ 0 }
+	{ }
 };
 
 CFATTACH_DECL_NEW(mesongxbb_clkc, sizeof(struct meson_clk_softc),

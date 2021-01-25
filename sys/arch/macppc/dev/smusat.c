@@ -108,8 +108,7 @@ CFATTACH_DECL_NEW(smusat, sizeof(struct smusat_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "sat" },
 	{ .compat = "smu-sat" },
-
-	{ 0 }
+	{ }
 };
 
 static int

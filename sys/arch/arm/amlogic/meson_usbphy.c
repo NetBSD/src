@@ -1,4 +1,4 @@
-/* $NetBSD: meson_usbphy.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: meson_usbphy.c,v 1.4 2021/01/25 14:20:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_usbphy.c,v 1.3 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_usbphy.c,v 1.4 2021/01/25 14:20:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,7 +65,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,meson-gxbb-usb2-phy",
 	  .value = USBPHY_MESON8B },
 
-	{ 0 }
+	{ }
 };
 
 struct meson_usbphy_softc {
