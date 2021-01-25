@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.8 2021/01/18 15:28:21 thorpej Exp $ */
+/* $NetBSD: pcagpio.c,v 1.9 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.8 2021/01/18 15:28:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.9 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pca9555",		.value = 1 },
 	{ .compat = "i2c-pca9556",	.value = 0 },
 	{ .compat = "pca9556",		.value = 0 },
-
-	{ 0 }
+	{ }
 };
 
 static int

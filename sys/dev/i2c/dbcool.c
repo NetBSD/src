@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.57 2021/01/17 21:42:35 thorpej Exp $ */
+/*	$NetBSD: dbcool.c,v 1.58 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.57 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.58 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -736,8 +736,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "adt7467" },
 	{ .compat = "adt7460" },
 	{ .compat = "adm1030" },
-
-	{ 0 }
+	{ }
 };
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: titemp.c,v 1.9 2021/01/17 21:42:35 thorpej Exp $ */
+/* $NetBSD: titemp.c,v 1.10 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.9 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.10 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,7 @@ CFATTACH_DECL_NEW(titemp, sizeof(struct titemp_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,tmp451" },
-
-	{ 0 }
+	{ }
 };
 
 static int

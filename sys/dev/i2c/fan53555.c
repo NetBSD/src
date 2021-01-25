@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.7 2021/01/18 15:28:21 thorpej Exp $ */
+/* $NetBSD: fan53555.c,v 1.8 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.7 2021/01/18 15:28:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.8 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,7 @@ static const int fan53555_slew_rates[] = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "silergy,syr827",	.value = FAN_VENDOR_SILERGY },
 	{ .compat = "silergy,syr828",	.value = FAN_VENDOR_SILERGY },
-
-	{ 0 }
+	{ }
 };
 
 static uint8_t

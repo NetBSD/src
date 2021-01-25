@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.20 2021/01/17 21:42:35 thorpej Exp $ */
+/* $NetBSD: as3722.c,v 1.21 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.20 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.21 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,8 +224,7 @@ CFATTACH_DECL_NEW(as3722reg, sizeof(struct as3722reg_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ams,as3722" },
-
-	{ 0 }
+	{ }
 };
 
 static int

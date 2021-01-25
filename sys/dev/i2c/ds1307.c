@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.36 2021/01/18 15:28:21 thorpej Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.37 2021/01/25 13:30:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.36 2021/01/18 15:28:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.37 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ static const struct device_compatible_entry compat_data[] = {
 
 	{ .compat = "microchip,mcp7940",	.data = &mcp7940_model },
 
-	{ 0 }
+	{ }
 };
 
 struct dsrtc_softc {

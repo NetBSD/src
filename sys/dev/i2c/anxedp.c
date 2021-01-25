@@ -1,4 +1,4 @@
-/* $NetBSD: anxedp.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $ */
+/* $NetBSD: anxedp.c,v 1.5 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.5 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,8 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $");
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "analogix,anx6345" },
-
-	{ 0 }
+	{ }
 };
 
 struct anxedp_softc;

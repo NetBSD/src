@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_i2c.c,v 1.6 2021/01/17 21:42:35 thorpej Exp $ */
+/* $NetBSD: ssdfb_i2c.c,v 1.7 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.6 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.7 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,8 +69,7 @@ CFATTACH_DECL_NEW(ssdfb_iic, sizeof(struct ssdfb_i2c_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "solomon,ssd1306fb-i2c" },
 	{ .compat = "sino,sh1106fb-i2c" },
-
-	{ 0 }
+	{ }
 };
 
 static int

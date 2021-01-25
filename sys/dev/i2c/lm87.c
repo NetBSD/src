@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.12 2021/01/17 21:42:35 thorpej Exp $	*/
+/*	$NetBSD: lm87.c,v 1.13 2021/01/25 13:30:20 thorpej Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.12 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.13 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,8 +141,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "adm9240" },
 	{ .compat = "lm81" },
 	{ .compat = "ds1780" },
-
-	{ 0 }
+	{ }
 };
 
 int
