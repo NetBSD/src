@@ -1,4 +1,4 @@
-.\"	$NetBSD: lam.1,v 1.14 2020/10/26 04:09:32 dholland Exp $
+.\"	$NetBSD: lam.1,v 1.15 2021/01/25 20:07:55 dholland Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)lam.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 25, 2020
+.Dd October 26, 2020
 .Dt LAM 1
 .Os
 .Sh NAME
@@ -109,12 +109,10 @@ lam file1 file2 file3 file4
 joins 4 files together along each line.
 To merge the lines from four different files use
 .Bd -literal -offset indent
-lam file1 \-S "
-" file2 file3 file4
+lam file1 \-S $'\en' file2 file3 file4
 .Ed
 .Pp
-(with a literal newline; the means for inserting one may depend on
-your shell.)
+(The means for inserting a newline may depend on your shell.)
 .Pp
 Every 2 lines of a file may be joined on one line with
 .Bd -literal -offset indent
