@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.8 2020/08/24 05:37:41 msaitoh Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.9 2021/01/25 12:15:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.8 2020/08/24 05:37:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.9 2021/01/25 12:15:32 jmcneill Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_i2c.h>
+#include <dev/i2c/i2cvar.h>
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi_i2c")
@@ -110,6 +111,12 @@ static const struct acpi_i2c_id acpi_i2c_ids[] = {
 		.compat = "hid-over-i2c",
 		.compatlen = 13,
 		.parse = acpi_enter_i2c_hid
+	},
+	{
+		.id = "NXP0002",
+		.compat = "nxp,pca9547",
+		.compatlen = 12,
+		.parse = NULL
 	},
 	{
 		.id = NULL,
@@ -192,6 +199,7 @@ acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
 	prop_dictionary_set_string(dev, "name", name);
 	prop_dictionary_set_uint32(dev, "addr", i2cc.i2c_addr);
 	prop_dictionary_set_uint64(dev, "cookie", (uintptr_t)ad->ad_handle);
+	prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_ACPI);
 	/* first search by name, then by CID */
 	i2c_id = acpi_i2c_search(name);
 	idlist = &ad->ad_devinfo->CompatibleIdList;

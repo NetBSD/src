@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.22 2021/01/18 15:28:21 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.23 2021/01/25 12:15:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -134,6 +134,13 @@ struct i2cbus_attach_args {
 	prop_array_t iba_child_devices;	/* child devices (direct config) */
 };
 
+/* Type of value stored in "ia_cookie" */
+enum i2c_cookie_type {
+	I2C_COOKIE_NONE,		/* Cookie is not valid */
+	I2C_COOKIE_OF,			/* Cookie is an OF node phandle */
+	I2C_COOKIE_ACPI,		/* Cookie is an ACPI handle */
+};
+
 /* Used to attach devices on the i2c bus. */
 struct i2c_attach_args {
 	i2c_tag_t	ia_tag;		/* our controller */
@@ -154,10 +161,11 @@ struct i2c_attach_args {
 	 * may be present. Example: on OpenFirmware machines the device
 	 * tree OF node - if available. This info is hard to transport
 	 * down to MD drivers through the MI i2c bus otherwise.
-	 * 
+	 *
 	 * On ACPI platforms this is the ACPI_HANDLE of the device.
 	 */
 	uintptr_t	ia_cookie;	/* OF node in openfirmware machines */
+	enum i2c_cookie_type ia_cookietype; /* Value type of cookie */
 };
 
 /*
