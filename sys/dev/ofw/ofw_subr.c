@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.49 2021/01/25 12:15:33 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.50 2021/01/25 19:59:49 mrg Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.49 2021/01/25 12:15:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.50 2021/01/25 19:59:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -395,7 +395,7 @@ of_getnode_byname(int start, const char *target)
  * Create a uint32_t integer property from an OFW node property.
  */
 
-boolean_t
+bool
 of_to_uint32_prop(prop_dictionary_t dict, int node, const char *ofname,
     const char *propname)
 {
@@ -411,7 +411,7 @@ of_to_uint32_prop(prop_dictionary_t dict, int node, const char *ofname,
  * Create a data property from an OFW node property.  Max size of 256bytes.
  */
 
-boolean_t
+bool
 of_to_dataprop(prop_dictionary_t dict, int node, const char *ofname,
     const char *propname)
 {

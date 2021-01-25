@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.41 2021/01/18 02:35:49 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.42 2021/01/25 19:59:49 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -115,10 +115,8 @@ int	of_packagename(int, char *, int);
 int	of_find_firstchild_byname(int, const char *);
 int	of_find_bycompat(int, const char *);
 int	of_getnode_byname(int, const char *);
-boolean_t	of_to_uint32_prop(prop_dictionary_t, int, const char *,
-    const char *);
-boolean_t	of_to_dataprop(prop_dictionary_t, int, const char *,
-    const char *);
+bool	of_to_uint32_prop(prop_dictionary_t, int, const char *, const char *);
+bool	of_to_dataprop(prop_dictionary_t, int, const char *, const char *);
 
 int	*of_network_decode_media(int, int *, int *);
 char	*of_get_mode_string(char *, int);
