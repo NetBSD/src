@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 2018/12/19 13:57:49 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.67 2021/01/25 13:08:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -805,9 +805,6 @@ Lintrhand_exit:
 
 	/* FALLTHROUGH to rei */
 	jra	_ASM_LABEL(rei)		| all done
-
-#undef INTERRUPT_SAVEREG
-#undef INTERRUPT_RESTOREREG
 
 /*
  * Emulation of VAX REI instruction.
