@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.20 2021/01/19 14:39:20 thorpej Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.21 2021/01/25 16:21:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.20 2021/01/19 14:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.21 2021/01/25 16:21:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pnpPNP,b001" },	/* generic SB 2.0 */
 	{ .compat = "pnpPNP,b002" },	/* generic SB Pro */
 	{ .compat = "pnpPNP,b003" },	/* generic SB 16 */
-	{ 0 }
+	{ }
 };
 
 int
