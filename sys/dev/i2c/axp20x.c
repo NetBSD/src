@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.17 2021/01/17 21:42:35 thorpej Exp $ */
+/* $NetBSD: axp20x.c,v 1.18 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.17 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.18 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,8 +212,7 @@ CFATTACH_DECL_NEW(axp20x, sizeof(struct axp20x_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "x-powers,axp209" },
-
-	{ 0 }
+	{ }
 };
 
 static int

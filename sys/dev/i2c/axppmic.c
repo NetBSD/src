@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.31 2021/01/18 15:28:21 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.32 2021/01/25 13:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.31 2021/01/18 15:28:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.32 2021/01/25 13:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,8 +471,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "x-powers,axp806",		.data = &axp806_config },
 	{ .compat = "x-powers,axp809",		.data = &axp809_config },
 	{ .compat = "x-powers,axp813",		.data = &axp813_config },
-
-	{ 0 }
+	{ }
 };
 
 static int
