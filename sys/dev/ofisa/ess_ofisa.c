@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.29 2021/01/19 14:39:20 thorpej Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.30 2021/01/25 16:21:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.29 2021/01/19 14:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.30 2021/01/25 16:21:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ESST,es1887-codec" },	/* ESS 1887 */
 	{ .compat = "ESST,es1888-codec" },	/* ESS 1888 */
 	{ .compat = "ESST,es888-codec" },	/* ESS 888 */
-	{ 0 }
+	{ }
 };
 
 int

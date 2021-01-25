@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.27 2021/01/19 14:39:20 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.28 2021/01/25 16:21:41 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.27 2021/01/19 14:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.28 2021/01/25 16:21:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ ofisaprint(void *aux, const char *pnp)
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pnpPNP,a00" },
-	{ 0 }
+	{ }
 };
 
 int
