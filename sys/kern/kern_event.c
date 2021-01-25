@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.114 2021/01/24 11:31:47 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.115 2021/01/25 19:57:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.114 2021/01/24 11:31:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.115 2021/01/25 19:57:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1487,11 +1487,12 @@ relock:
 		KASSERT((kn->kn_status & KN_BUSY) == 0);
 
 		kq_check(kq);
+		kn->kn_status &= ~KN_QUEUED;
 		kn->kn_status |= KN_BUSY;
 		kq_check(kq);
 		if (kn->kn_status & KN_DISABLED) {
+			kn->kn_status &= ~KN_BUSY;
 			kq->kq_count--;
-			kn->kn_status &= ~(KN_QUEUED|KN_BUSY);
 			/* don't want disabled events */
 			continue;
 		}
@@ -1504,12 +1505,20 @@ relock:
 			rv = (*kn->kn_fop->f_event)(kn, 0);
 			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			mutex_spin_enter(&kq->kq_lock);
+			/* Re-poll if note was re-enqueued. */
+			if ((kn->kn_status & KN_QUEUED) != 0) {
+				kn->kn_status &= ~KN_BUSY;
+				/* Re-enqueue raised kq_count, lower it again */
+				kq->kq_count--;
+				influx = 1;
+				continue;
+			}
 			if (rv == 0) {
 				/*
 				 * non-ONESHOT event that hasn't
 				 * triggered again, so de-queue.
 				 */
-				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
+				kn->kn_status &= ~(KN_ACTIVE|KN_BUSY);
 				kq->kq_count--;
 				influx = 1;
 				continue;
@@ -1533,7 +1542,7 @@ relock:
 		influx = 1;
 		if (kn->kn_flags & EV_ONESHOT) {
 			/* delete ONESHOT events after retrieval */
-			kn->kn_status &= ~(KN_QUEUED|KN_BUSY);
+			kn->kn_status &= ~KN_BUSY;
 			kq->kq_count--;
 			mutex_spin_exit(&kq->kq_lock);
 			knote_detach(kn, fdp, true);
@@ -1551,15 +1560,16 @@ relock:
 				kn->kn_data = 0;
 				kn->kn_fflags = 0;
 			}
-			kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
+			kn->kn_status &= ~(KN_ACTIVE|KN_BUSY);
 			kq->kq_count--;
 		} else if (kn->kn_flags & EV_DISPATCH) {
 			kn->kn_status |= KN_DISABLED;
-			kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
+			kn->kn_status &= ~(KN_ACTIVE|KN_BUSY);
 			kq->kq_count--;
 		} else {
 			/* add event back on list */
 			kq_check(kq);
+			kn->kn_status |= KN_QUEUED;
 			kn->kn_status &= ~KN_BUSY;
 			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 			kq_check(kq);
