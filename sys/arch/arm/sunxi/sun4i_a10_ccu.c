@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.14 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.13 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.14 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,8 +96,7 @@ enum sun4i_a10_ccu_type {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-ccu",	.value = CCU_A10 },
 	{ .compat = "allwinner,sun7i-a20-ccu",	.value = CCU_A20 },
-
-	{ 0 }
+	{ }
 };
 
 CFATTACH_DECL_NEW(sunxi_a10_ccu, sizeof(struct sunxi_ccu_softc),

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.23 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.24 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.23 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.24 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,8 +148,7 @@ struct tegra_xhci_data tegra210_xhci_data = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "nvidia,tegra124-xusb", .data = &tegra124_xhci_data },
 	{ .compat = "nvidia,tegra210-xusb", .data = &tegra210_xhci_data },
-
-	{ 0 }
+	{ }
 };
 
 struct fw_dma {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.6 2021/01/25 14:20:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.6 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,8 +87,7 @@ struct sunxi_can_softc {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-can" },
-
-	{ 0 }
+	{ }
 };
 
 static int sunxi_can_match(device_t, cfdata_t, void *);
