@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.19 2020/08/18 07:53:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.20 2021/01/25 17:17:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -321,8 +321,16 @@ npf_dev_read(dev_t dev, struct uio *uio, int flag)
 bool
 npf_autounload_p(void)
 {
+	if (npf_active_p())
+		return false;
+
 	npf_t *npf = npf_getkernctx();
-	return !npf_active_p() && npf_default_pass(npf);
+
+	npf_config_enter(npf);
+	bool pass = npf_default_pass(npf);
+	npf_config_exit(npf);
+
+	return pass;
 }
 
 /*
