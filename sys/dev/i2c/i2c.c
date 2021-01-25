@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.76 2021/01/18 15:28:21 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.77 2021/01/25 12:18:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.76 2021/01/18 15:28:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77 2021/01/25 12:18:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,6 +439,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		prop_data_t cdata;
 		uint32_t addr;
 		uint64_t cookie;
+		uint32_t cookietype;
 		const char *name;
 		struct i2c_attach_args ia;
 		int loc[IICCF_NLOCS];
@@ -457,6 +458,9 @@ iic_attach(device_t parent, device_t self, void *aux)
 				continue;
 			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
 				cookie = 0;
+			if (!prop_dictionary_get_uint32(dev, "cookietype",
+			    &cookietype))
+				cookietype = I2C_COOKIE_NONE;
 			loc[IICCF_ADDR] = addr;
 
 			memset(&ia, 0, sizeof ia);
@@ -464,6 +468,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
+			ia.ia_cookietype = cookietype;
 			ia.ia_prop = dev;
 
 			buf = NULL;
