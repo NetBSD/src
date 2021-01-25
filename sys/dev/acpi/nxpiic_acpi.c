@@ -1,4 +1,4 @@
-/* $NetBSD: nxpiic_acpi.c,v 1.1 2021/01/24 18:02:51 jmcneill Exp $ */
+/* $NetBSD: nxpiic_acpi.c,v 1.2 2021/01/25 12:09:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.1 2021/01/24 18:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.2 2021/01/25 12:09:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,29 @@ __KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.1 2021/01/24 18:02:51 jmcneill Exp
 
 #include <dev/i2c/motoi2cvar.h>
 #include <dev/i2c/motoi2creg.h>
+
+#define	NXPIIC_SPEED_STD	100000
+
+static const struct clk_div {
+	int scl_div;
+	uint8_t ibc;
+} nxpiic_clk_div[] = {
+	{ 20, 0x00 },	{ 22, 0x01 },	{ 24, 0x02 },	{ 26, 0x03 },
+	{ 28, 0x04 },	{ 30, 0x05 },	{ 32, 0x09 },	{ 34, 0x06 },
+	{ 36, 0x0a },	{ 40, 0x07 },	{ 44, 0x0c },	{ 48, 0x0d },
+	{ 52, 0x43 },	{ 56, 0x0e },	{ 60, 0x45 },	{ 64, 0x12 },
+	{ 68, 0x0f },	{ 72, 0x13 },	{ 80, 0x14 },	{ 88, 0x15 },
+	{ 96, 0x19 },	{ 104, 0x16 },	{ 112, 0x1a },	{ 128, 0x17 },
+	{ 136, 0x4f },	{ 144, 0x1c },	{ 160, 0x1d },	{ 176, 0x55 },
+	{ 192, 0x1e },	{ 208, 0x56 },	{ 224, 0x22 },	{ 228, 0x24 },
+	{ 240, 0x1f },	{ 256, 0x23 },	{ 288, 0x5c },	{ 320, 0x25 },
+	{ 384, 0x26 },	{ 448, 0x2a },	{ 480, 0x27 },	{ 512, 0x2b },
+	{ 576, 0x2c },	{ 640, 0x2d },	{ 768, 0x31 },	{ 896, 0x32 },
+	{ 960, 0x2f },	{ 1024, 0x33 },	{ 1152, 0x34 },	{ 1280, 0x35 },
+	{ 1536, 0x36 },	{ 1792, 0x3a },	{ 1920, 0x37 },	{ 2048, 0x3b },
+	{ 2304, 0x3c },	{ 2560, 0x3d },	{ 3072, 0x3e },	{ 3584, 0x7a },
+	{ 3840, 0x3f },	{ 4096, 0x7B },	{ 5120, 0x7d },	{ 6144, 0x7e },
+};
 
 struct nxpiic_softc {
 	device_t		sc_dev;
@@ -80,12 +103,13 @@ nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct nxpiic_softc * const sc = device_private(self);
 	struct motoi2c_softc * const msc = &sc->sc_motoi2c;
+	struct motoi2c_settings settings;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	ACPI_INTEGER clock_freq;
 	ACPI_STATUS rv;
-	int error;
+	int error, n;
 
 	sc->sc_dev = self;
 	msc->sc_iot = aa->aa_memt;
@@ -107,6 +131,7 @@ nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't get clock frequency\n");
 		goto done;
 	}
+	aprint_debug_dev(self, "bus clock %u Hz\n", (u_int)clock_freq);
 
 	error = bus_space_map(msc->sc_iot, mem->ar_base, mem->ar_length, 0,
 	    &msc->sc_ioh);
@@ -115,11 +140,20 @@ nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	settings.i2c_adr = MOTOI2C_ADR_DEFAULT;
+	settings.i2c_dfsrr = MOTOI2C_DFSRR_DEFAULT;
+	for (n = 0; n < __arraycount(nxpiic_clk_div) - 1; n++) {
+		if (clock_freq / nxpiic_clk_div[n].scl_div < NXPIIC_SPEED_STD)
+			break;
+	}
+	settings.i2c_fdr = nxpiic_clk_div[n].ibc;
+
+	msc->sc_flags |= MOTOI2C_F_ENABLE_INV | MOTOI2C_F_STATUS_W1C;
 	msc->sc_iord = nxpiic_acpi_iord;
 	msc->sc_iowr = nxpiic_acpi_iowr;
 	msc->sc_child_devices = acpi_enter_i2c_devs(aa->aa_node);
 
-	motoi2c_attach_common(self, msc, NULL);
+	motoi2c_attach_common(self, msc, &settings);
 
 done:
 	acpi_resource_cleanup(&res);
