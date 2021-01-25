@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.12 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.11 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.12 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,8 +108,7 @@ struct sunxi_hdmi_softc {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-hdmi", .value = HDMI_A10},
 	{ .compat = "allwinner,sun7i-a20-hdmi", .value = HDMI_A10},
-
-	{ 0 }
+	{ }
 };
 
 static int	sunxi_hdmi_match(device_t, cfdata_t, void *);

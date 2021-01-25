@@ -1,4 +1,4 @@
-/*	$NetBSD: panel_fdt.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $	*/
+/*	$NetBSD: panel_fdt.c,v 1.4 2021/01/25 14:25:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: panel_fdt.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: panel_fdt.c,v 1.4 2021/01/25 14:25:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,7 @@ CFATTACH_DECL_NEW(fdt_panel, sizeof(struct fdt_panel_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "panel-lvds",	.value = PANEL_LVDS},
 	{ .compat = "panel-dual-lvds",	.value = PANEL_DUAL_LVDS},
-
-	{ 0 }
+	{ }
 };
 
 static int

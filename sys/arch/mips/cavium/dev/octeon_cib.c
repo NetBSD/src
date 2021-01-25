@@ -1,4 +1,4 @@
-/* $NetBSD: octeon_cib.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: octeon_cib.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_cib.c,v 1.3 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cib.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,8 +92,7 @@ CFATTACH_DECL_NEW(octcib, sizeof(struct octeon_cib_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "cavium,octeon-7130-cib" },
-
-	{ 0 }
+	{ }
 };
 
 static int

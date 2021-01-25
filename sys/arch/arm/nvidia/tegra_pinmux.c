@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pinmux.c,v 1.7 2021/01/18 02:35:48 thorpej Exp $ */
+/* $NetBSD: tegra_pinmux.c,v 1.8 2021/01/25 14:20:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.7 2021/01/18 02:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.8 2021/01/25 14:20:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,7 +79,7 @@ static const struct device_compatible_entry compat_data[] = {
 #ifdef SOC_TEGRA210
 	{ .compat = "nvidia,tegra210-pinmux",	.data = &tegra210_pinmux_conf },
 #endif
-	{ 0 }
+	{ }
 };
 
 static const struct tegra_pinmux_pins *
