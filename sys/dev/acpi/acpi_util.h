@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.h,v 1.9 2021/01/14 14:35:53 thorpej Exp $ */
+/*	$NetBSD: acpi_util.h,v 1.10 2021/01/26 00:19:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -101,5 +101,7 @@ ACPI_STATUS	 acpi_dsm_typed(ACPI_HANDLE, uint8_t *, ACPI_INTEGER,
 ACPI_STATUS	 acpi_dsm_integer(ACPI_HANDLE, uint8_t *, ACPI_INTEGER,
 			ACPI_INTEGER, const ACPI_OBJECT *,
 			ACPI_INTEGER *);
+
+ACPI_STATUS	 acpi_claim_childdevs(device_t, struct acpi_devnode *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_UTIL_H */

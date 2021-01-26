@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.2 2018/09/26 19:06:33 jakllsch Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.3 2021/01/26 00:19:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.2 2018/09/26 19:06:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.3 2021/01/26 00:19:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ pci_dwiic_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_acpinode) {
 		sc->sc_dwiic.sc_iba.iba_child_devices = 
-		    acpi_enter_i2c_devs(sc->sc_acpinode);
+		    acpi_enter_i2c_devs(NULL, sc->sc_acpinode);
 	} else {
 		aprint_verbose_dev(self, "no matching ACPI node\n");
 	}
