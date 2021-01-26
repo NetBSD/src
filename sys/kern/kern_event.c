@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.115 2021/01/25 19:57:05 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.116 2021/01/26 19:09:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.115 2021/01/25 19:57:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.116 2021/01/26 19:09:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,7 +838,8 @@ filt_usertouch(struct knote *kn, struct kevent *kev, long type)
 	struct kqueue *kq = kn->kn_kq;
 	int ffctrl;
 
-	mutex_spin_enter(&kq->kq_lock);
+	KASSERT(mutex_owned(&kq->kq_lock));
+
 	switch (type) {
 	case EVENT_REGISTER:
 		if (kev->fflags & NOTE_TRIGGER)
@@ -889,7 +890,6 @@ filt_usertouch(struct knote *kn, struct kevent *kev, long type)
 		panic("filt_usertouch() - invalid type (%ld)", type);
 		break;
 	}
-	mutex_spin_exit(&kq->kq_lock);
 }
 
 /*
@@ -925,7 +925,6 @@ const struct filterops seltrue_filtops = {
 	.f_attach = NULL,
 	.f_detach = filt_seltruedetach,
 	.f_event = filt_seltrue,
-	.f_touch = NULL,
 };
 
 int
@@ -1276,9 +1275,9 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	kn->kn_kevent.udata = kev->udata;
 	KASSERT(kn->kn_fop != NULL);
 	if (!kn->kn_fop->f_isfd && kn->kn_fop->f_touch != NULL) {
-		KERNEL_LOCK(1, NULL);			/* XXXSMP */
+		mutex_spin_enter(&kq->kq_lock);
 		(*kn->kn_fop->f_touch)(kn, kev, EVENT_REGISTER);
-		KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
+		mutex_spin_exit(&kq->kq_lock);
 	} else {
 		kn->kn_sfflags = kev->fflags;
 		kn->kn_sdata = kev->data;
@@ -1529,11 +1528,7 @@ relock:
 				kn->kn_fop->f_touch != NULL);
 		/* XXXAD should be got from f_event if !oneshot. */
 		if (touch) {
-			mutex_spin_exit(&kq->kq_lock);
-			KERNEL_LOCK(1, NULL);		/* XXXSMP */
 			(*kn->kn_fop->f_touch)(kn, kevp, EVENT_PROCESS);
-			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
-			mutex_spin_enter(&kq->kq_lock);
 		} else {
 			*kevp = kn->kn_kevent;
 		}
