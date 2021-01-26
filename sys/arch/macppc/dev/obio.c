@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.47 2020/10/25 16:39:00 nia Exp $	*/
+/*	$NetBSD: obio.c,v 1.48 2021/01/26 14:49:41 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.47 2020/10/25 16:39:00 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.48 2021/01/26 14:49:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +368,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	char name[32];
 	int child, use_dfs, cpunode, hiclock;
 
-	if (of_compatible(sc->sc_node, keylargo) == -1)
+	if (! of_compatible(sc->sc_node, keylargo))
 		return;
 
 	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 4)

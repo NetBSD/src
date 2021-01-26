@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.42 2019/03/01 09:25:59 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.43 2021/01/26 14:49:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42 2019/03/01 09:25:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2021/01/26 14:49:41 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -339,7 +339,7 @@ fix_cardbus_bridge(int node, pci_chipset_tag_t pc, pcitag_t tag)
 	int root_node;
 
 	root_node = OF_finddevice("/");
-	if (of_compatible(root_node, pb3400_compat) != -1) {
+	if (of_compatible(root_node, pb3400_compat)) {
 
 		bus_number = cardbus_number;
 		cardbus_number++;

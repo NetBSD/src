@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.34 2020/07/14 08:58:03 martin Exp $ */
+/*	$NetBSD: pmu.c,v 1.35 2021/01/26 14:49:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.34 2020/07/14 08:58:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.35 2021/01/26 14:49:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,10 +428,10 @@ next:
 	}
 
 	/* attach batteries */
-	if (of_compatible(root_node, has_legacy_battery) != -1) {
+	if (of_compatible(root_node, has_legacy_battery)) {
 
 		pmu_attach_legacy_battery(sc);
-	} else if (of_compatible(root_node, has_two_smart_batteries) != -1) {
+	} else if (of_compatible(root_node, has_two_smart_batteries)) {
 
 		pmu_attach_smart_battery(sc, 0);
 		pmu_attach_smart_battery(sc, 1);
