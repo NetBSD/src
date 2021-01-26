@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.79 2021/01/17 00:23:38 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.80 2021/01/26 18:08:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.79 2021/01/17 00:23:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.80 2021/01/26 18:08:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,7 +631,6 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
-	/* TODO: actually center output */
 	ri->ri_hw = scr;
 
 #ifdef GENFB_DISABLE_TEXT
