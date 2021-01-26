@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.61 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.62 2021/01/26 14:49:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.61 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.62 2021/01/26 14:49:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 	    strcmp(ca->ca_name, "ide") == 0)
 		return 1;
 
-	if (of_compatible(ca->ca_node, ata_names) >= 0)
+	if (of_compatible(ca->ca_node, ata_names))
 		return 1;
 
 	return 0;

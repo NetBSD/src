@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.11 2017/06/16 18:48:22 macallan Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.12 2021/01/26 14:49:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.11 2017/06/16 18:48:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.12 2021/01/26 14:49:41 thorpej Exp $");
 
 #include "opt_interrupt.h"
 
@@ -88,7 +88,7 @@ int init_heathrow(void)
 	if (heathrow == -1)
 		return FALSE;
 
-	if (of_compatible(heathrow, compat) == -1)
+	if (! of_compatible(heathrow, compat))
 		return FALSE;
 
 	if (OF_getprop(heathrow, "assigned-addresses", reg, sizeof(reg)) != 20) 
