@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.3 2021/01/25 12:18:18 jmcneill Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.4 2021/01/26 00:19:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.3 2021/01/25 12:18:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.4 2021/01/26 00:19:53 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ iicmux_attach_bus(struct iicmux_softc * const sc,
 		KASSERT(ad != NULL);
 		struct i2cbus_attach_args iba = {
 			.iba_tag = &bus->controller,
-			.iba_child_devices = acpi_enter_i2c_devs(ad)
+			.iba_child_devices = acpi_enter_i2c_devs(NULL, ad)
 		};
 		config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 	}	break;
