@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.24 2020/08/10 06:34:25 rin Exp $
+# $NetBSD: SMALL030,v 1.25 2021/01/26 10:51:27 rin Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.119 2020/08/10 06:32:58 rin Exp $
+#		NetBSD: GENERIC.in,v 1.121 2021/01/21 06:51:54 nia Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os" # optimize for space
 maxusers 16
