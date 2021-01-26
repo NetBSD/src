@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.25 2021/01/24 15:59:35 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.26 2021/01/26 16:40:16 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.25 2021/01/24 15:59:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.26 2021/01/26 16:40:16 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ virtio_pci_attach_10(device_t self, void *aux)
 	bus_size_t bars[NMAPREG] = { 0 };
 	int bars_idx[NMAPREG] = { 0 };
 	struct virtio_pci_cap *caps[] = { &common, &isr, &device, &notify.cap };
-	int i, j = 0, ret = 0;
+	int i, j, ret = 0;
 
 	if (virtio_pci_find_cap(psc, VIRTIO_PCI_CAP_COMMON_CFG,
 			&common, sizeof(common)))
@@ -471,7 +471,7 @@ virtio_pci_attach_10(device_t self, void *aux)
 			bars[bar] = len;
 	}
 
-	for (i = 0; i < __arraycount(bars); i++) {
+	for (i = j = 0; i < __arraycount(bars); i++) {
 		int reg;
 		pcireg_t type;
 		if (bars[i] == 0)
@@ -551,10 +551,10 @@ virtio_pci_attach_10(device_t self, void *aux)
 err:
 	/* undo our pci_mapreg_map()s */ 
 	for (i = 0; i < __arraycount(bars); i++) {
-		if (bars[i] == 0)
+		if (psc->sc_bars_iosize[i] == 0)
 			continue;
-		bus_space_unmap(psc->sc_bars_iot[j], psc->sc_bars_ioh[j],
-				psc->sc_bars_iosize[j]);
+		bus_space_unmap(psc->sc_bars_iot[i], psc->sc_bars_ioh[i],
+				psc->sc_bars_iosize[i]);
 	}
 	return ret;
 }
