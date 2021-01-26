@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_acpi.c,v 1.5 2021/01/24 16:33:48 jmcneill Exp $ */
+/* $NetBSD: dwiic_acpi.c,v 1.6 2021/01/26 00:19:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.5 2021/01/24 16:33:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.6 2021/01/26 00:19:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,7 +128,7 @@ dwiic_acpi_attach(device_t parent, device_t self, void *aux)
 
 	dwiic_acpi_configure(sc, aa->aa_node->ad_handle);
 
-	sc->sc_iba.iba_child_devices = acpi_enter_i2c_devs(aa->aa_node);
+	sc->sc_iba.iba_child_devices = acpi_enter_i2c_devs(self, aa->aa_node);
 
 	dwiic_attach(sc);
 
