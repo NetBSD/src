@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.25 2021/01/24 11:55:57 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.26 2021/01/26 18:38:57 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.25 2021/01/24 11:55:57 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.26 2021/01/26 18:38:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -82,7 +82,7 @@ new_name_tree_node(const char *name)
 }
 
 /* Return the canonical instance of the string, with unlimited life time. */
-static const char * __noinline
+static const char *
 intern(const char *name)
 {
 	name_tree_node *n = type_names, **next;
