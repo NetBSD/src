@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.21 2020/12/06 12:47:12 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.22 2021/01/26 15:29:41 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.21 2020/12/06 12:47:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.22 2021/01/26 15:29:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -364,7 +364,7 @@ acpimcfg_init(bus_space_tag_t memt, const struct acpimcfg_ops *ops)
 		if (mcfg_ops->ao_validate != NULL &&
 		    !mcfg_ops->ao_validate(ama->Address, ama->StartBusNumber,
 		      &bus_end)) {
-			if (!acpimcfg_find_system_resource( ama->Address,
+			if (!acpimcfg_find_system_resource(ama->Address,
 			    ama->StartBusNumber, &bus_end)) {
 				aprint_debug_dev(acpi_sc->sc_dev,
 				    "MCFG: segment %d, bus %d-%d, "
