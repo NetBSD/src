@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.531 2021/01/24 20:11:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.532 2021/01/26 23:44:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.531 2021/01/24 20:11:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.532 2021/01/26 23:44:56 rillig Exp $");
 
 /* types and constants */
 
@@ -225,44 +225,11 @@ static int fatals = 0;
  */
 
 /*
- * The include chain of makefiles.  At the bottom is the top-level makefile
- * from the command line, and on top of that, there are the included files or
- * .for loops, up to and including the current file.
+ * The include chain of makefiles.  At index 0 is the top-level makefile from
+ * the command line, followed by the included files or .for loops, up to and
+ * including the current file.
  *
- * This data could be used to print stack traces on parse errors.  As of
- * 2020-09-14, this is not done though.  It seems quite simple to print the
- * tuples (fname:lineno:fromForLoop), from top to bottom.  This simple idea is
- * made complicated by the fact that the .for loops also use this stack for
- * storing information.
- *
- * The lineno fields of the IFiles with fromForLoop == TRUE look confusing,
- * which is demonstrated by the test 'include-main.mk'.  They seem sorted
- * backwards since they tell the number of completely parsed lines, which for
- * a .for loop is right after the terminating .endfor.  To compensate for this
- * confusion, there is another field first_lineno pointing at the start of the
- * .for loop, 1-based for human consumption.
- *
- * To make the stack trace intuitive, the entry below the first .for loop must
- * be ignored completely since neither its lineno nor its first_lineno is
- * useful.  Instead, the topmost of each chain of .for loop needs to be
- * printed twice, once with its first_lineno and once with its lineno.
- *
- * As of 2020-10-28, using the above rules, the stack trace for the .info line
- * in include-subsub.mk would be:
- *
- *	includes[5]:	include-subsub.mk:4
- *			(lineno, from an .include)
- *	includes[4]:	include-sub.mk:32
- *			(lineno, from a .for loop below an .include)
- *	includes[4]:	include-sub.mk:31
- *			(first_lineno, from a .for loop, lineno == 32)
- *	includes[3]:	include-sub.mk:30
- *			(first_lineno, from a .for loop, lineno == 33)
- *	includes[2]:	include-sub.mk:29
- *			(first_lineno, from a .for loop, lineno == 34)
- *	includes[1]:	include-sub.mk:35
- *			(not printed since it is below a .for loop)
- *	includes[0]:	include-main.mk:27
+ * See PrintStackTrace for how to interpret the data.
  */
 static Vector /* of IFile */ includes;
 
@@ -493,7 +460,56 @@ loadfile(const char *path, int fd)
 	}
 }
 
-/* old code */
+static void
+PrintStackTrace(void)
+{
+	const IFile *entries;
+	size_t i, n;
+
+	if (!(DEBUG(PARSE)))
+		return;
+
+	entries = GetInclude(0);
+	n = includes.len;
+	if (n == 0)
+		return;
+	n--;			/* This entry is already in the diagnostic. */
+
+	/*
+	 * For the IFiles with fromForLoop, lineno seems to be sorted
+	 * backwards.  This is because lineno is the number of completely
+	 * parsed lines, which for a .for loop is right after the
+	 * corresponding .endfor.  The intuitive line number comes from
+	 * first_lineno instead, which points at the start of the .for loop.
+	 *
+	 * To make the stack trace intuitive, the entry below each chain of
+	 * .for loop entries must be ignored completely since neither its
+	 * lineno nor its first_lineno is useful.  Instead, the topmost of
+	 * each chain of .for loop entries needs to be printed twice, once
+	 * with its first_lineno and once with its lineno.
+	 */
+
+	for (i = n; i-- > 0;) {
+		const IFile *entry = entries + i;
+		const char *fname = entry->fname;
+		Boolean printLineno;
+		char dirbuf[MAXPATHLEN + 1];
+
+		if (fname[0] != '/' && strcmp(fname, "(stdin)") != 0)
+			fname = realpath(fname, dirbuf);
+
+		printLineno = !entry->fromForLoop;
+		if (i + 1 < n && entries[i + 1].fromForLoop == printLineno)
+			printLineno = entry->fromForLoop;
+
+		if (printLineno)
+			debug_printf("\tin .include from %s:%d\n",
+			    fname, entry->lineno);
+		if (entry->fromForLoop)
+			debug_printf("\tin .for loop from %s:%d\n",
+			    fname, entry->first_lineno);
+	}
+}
 
 /* Check if the current character is escaped on the current line. */
 static Boolean
@@ -594,13 +610,20 @@ ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 	(void)fflush(f);
 
 	if (type == PARSE_INFO)
-		return;
+		goto print_stack_trace;
 	if (type == PARSE_FATAL || opts.parseWarnFatal)
 		fatals++;
 	if (opts.parseWarnFatal && !fatal_warning_error_printed) {
+		/*
+		 * FIXME: Also gets printed on .error, even though it
+		 *  doesn't apply to it.
+		 */
 		Error("parsing warnings being treated as errors");
 		fatal_warning_error_printed = TRUE;
 	}
+
+print_stack_trace:
+	PrintStackTrace();
 }
 
 static void
