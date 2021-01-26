@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 2020/07/14 08:55:07 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172 2021/01/26 14:49:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2020/07/14 08:55:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2021/01/26 14:49:41 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -411,27 +411,27 @@ add_model_specifics(prop_dictionary_t dict)
 
 	node = OF_finddevice("/");
 
-	if (of_compatible(node, bl_rev_models) != -1) {
+	if (of_compatible(node, bl_rev_models)) {
 		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
 	}
-	if (of_compatible(node, clamshell) != -1) {
+	if (of_compatible(node, clamshell)) {
 		prop_data_t edid;
 
 		edid = prop_data_create_nocopy(edid_clamshell, sizeof(edid_clamshell));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
 	}
-	if (of_compatible(node, pismo) != -1) {
+	if (of_compatible(node, pismo)) {
 		prop_data_t edid;
 
 		edid = prop_data_create_nocopy(edid_pismo, sizeof(edid_pismo));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
 	}
-	if (of_compatible(node, mini1) != -1) {
+	if (of_compatible(node, mini1)) {
 		prop_dictionary_set_bool(dict, "dvi-internal", 1);
 	}
-	if (of_compatible(node, mini2) != -1) {
+	if (of_compatible(node, mini2)) {
 		prop_dictionary_set_bool(dict, "dvi-external", 1);
 	}
 }
