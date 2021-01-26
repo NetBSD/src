@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.50 2021/01/25 19:59:49 mrg Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.51 2021/01/26 14:09:11 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.50 2021/01/25 19:59:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.51 2021/01/26 14:09:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,8 +161,11 @@ of_match_compatible(int phandle, const char * const *strings)
 /*
  * int of_match_compat_data(phandle, compat_data)
  *
- * This routine searches an array of compat_data structures for a
- * matching "compatible" entry matching the supplied OFW node.
+ * This routine searches an array of device_compatible_entry structures
+ * for a matching "compatible" entry matching the supplied OFW node,
+ * and returns a weighted match value corresponding to which string
+ * from the "compatible" property was matched, which more weight given
+ * to the first string than the last.
  *
  * It should be used when determining whether a driver can drive
  * a particular device.
@@ -212,8 +215,8 @@ of_match_compat_data(int phandle,
  * const struct device_compatible_entry *of_search_compatible(phandle,
  *							      compat_data)
  *
- * This routine searches an array of compat_data structures for a
- * matching "compatible" entry matching the supplied OFW node.
+ * This routine searches an array of device_compatible_entry structures
+ * for a "compatible" entry matching the supplied OFW node.
  *
  * Arguments:
  *	phandle		OFW phandle of device to be checked for
