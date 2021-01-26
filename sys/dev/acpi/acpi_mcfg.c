@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.22 2021/01/26 15:29:41 skrll Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.23 2021/01/26 15:30:05 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.22 2021/01/26 15:29:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.23 2021/01/26 15:30:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -507,7 +507,7 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 		force_hasextcnf = true;
 	if (qd != NULL && (qd->quirks & PCI_QUIRK_NOEXTCNF) != 0)
 		force_noextcnf = true;
-	
+
 	/* Probe extended configuration space. */
 	if ((!force_hasextcnf) && ((force_noextcnf) ||
 		((reg = pci_conf_read(pc, tag, PCI_CONF_SIZE)) == (pcireg_t)-1)
