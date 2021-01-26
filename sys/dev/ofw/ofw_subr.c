@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.52 2021/01/26 14:49:41 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.53 2021/01/26 14:55:57 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.52 2021/01/26 14:49:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.53 2021/01/26 14:55:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -334,7 +334,7 @@ of_find_bycompat(int node, const char *str)
 	int child, ret;
 
 	for (child = OF_child(node); child; child = OF_peer(child)) {
-		if (of_match_compatible(child, compatible) != 0)
+		if (of_compatible(child, compatible))
 			return child;
 		ret = of_find_bycompat(child, str);
 		if (ret != -1)
