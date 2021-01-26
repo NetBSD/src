@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.116 2020/08/10 06:34:25 rin Exp $
+# $NetBSD: HADES,v 1.117 2021/01/26 10:51:27 rin Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.16 2018/03/31 04:19:41 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.119 2020/08/10 06:32:58 rin Exp $
+#		NetBSD: GENERIC.in,v 1.121 2021/01/21 06:51:54 nia Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer" # See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces in DDB.
