@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.7 2018/05/11 22:48:38 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.8 2021/01/26 14:49:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.7 2018/05/11 22:48:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.8 2021/01/26 14:49:41 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -81,7 +81,7 @@ init_openpic(int pass_through)
 	aprint_debug("macio: %08x\n", macio);
 
 	pic = OF_child(macio);
-	while ((pic != 0) && (of_compatible(pic, compat) == -1))
+	while ((pic != 0) && !of_compatible(pic, compat))
 		pic = OF_peer(pic);
 
 	aprint_debug("pic: %08x\n", pic);

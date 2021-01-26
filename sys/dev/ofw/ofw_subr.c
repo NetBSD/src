@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.51 2021/01/26 14:09:11 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.52 2021/01/26 14:49:41 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.51 2021/01/26 14:09:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.52 2021/01/26 14:49:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,62 +80,10 @@ of_decode_int(const unsigned char *p)
  * This routine checks an OFW node's "compatible" entry to see if
  * it matches any of the provided strings.
  *
- * It should be used when determining whether a driver can drive
- * a particular device.
- *
- * Arguments:
- *	phandle		OFW phandle of device to be checked for
- *			compatibility.
- *	strings		Array of containing expected "compatibility"
- *			property values, presence of any of which
- *			indicates compatibility.
- *
- * Return Value:
- *	-1 if none of the strings are found in phandle's "compatibility"
- *	property, or the reverse index of the matching string in the
- *	phandle's "compatibility" property.
- *
- * Side Effects:
- *	None.
- */
-int
-of_compatible(int phandle, const char * const *strings)
-{
-	char *prop, propbuf[OFW_MAX_STACK_BUF_SIZE];
-	const char *cp;
-	int proplen, match, rv = -1;
-
-	proplen = OF_getproplen(phandle, "compatible");
-	if (proplen <= 0) {
-		return -1;
-	}
-
-	prop = kmem_tmpbuf_alloc(proplen, propbuf, sizeof(propbuf), KM_SLEEP);
-
-	if (OF_getprop(phandle, "compatible", prop, proplen) != proplen) {
-		goto out;
-	}
-
-	for (; (cp = *strings) != NULL; strings++) {
-		if ((match = strlist_match(prop, proplen, cp)) != 0) {
-			rv = match - 1;
-			break;
-		}
-	}
-
- out:
-	kmem_tmpbuf_free(prop, proplen, propbuf);
-	return rv;
-}
-
-/*
- * int of_match_compatible(phandle, strings)
- *
- * This routine checks an OFW node's "compatible" entry to see if
- * it matches any of the provided strings.
- *
- * It should be used when determining whether a driver can drive
- * a particular device.
+ * of_match_compat_data() is the preferred way to perform driver
+ * compatibility match.  However, this routine that deals with
+ * only strings is useful in some situations and is provided for
+ * convenience.
  *
  * Arguments:
  *	phandle		OFW phandle of device to be checked for
@@ -146,16 +94,51 @@ of_compatible(int phandle, const char * const *strings)
  *
  * Return Value:
  *	0 if none of the strings are found in phandle's "compatibility"
- *	property, or a positive number based on the reverse index of the
- *	matching string in the phandle's "compatibility" property, plus 1.
+ *	property, or the reverse index of the matching string in the
+ *	phandle's "compatibility" property plus 1.
  *
  * Side Effects:
  *	None.
  */
 int
+of_compatible(int phandle, const char * const *strings)
+{
+	char *prop, propbuf[OFW_MAX_STACK_BUF_SIZE];
+	const char *cp;
+	int proplen, match = 0;
+
+	proplen = OF_getproplen(phandle, "compatible");
+	if (proplen <= 0) {
+		return 0;
+	}
+
+	prop = kmem_tmpbuf_alloc(proplen, propbuf, sizeof(propbuf), KM_SLEEP);
+
+	if (OF_getprop(phandle, "compatible", prop, proplen) != proplen) {
+		goto out;
+	}
+
+	for (; (cp = *strings) != NULL; strings++) {
+		if ((match = strlist_match(prop, proplen, cp)) != 0) {
+			break;
+		}
+	}
+
+ out:
+	kmem_tmpbuf_free(prop, proplen, propbuf);
+	return match;
+}
+
+/*
+ * int of_match_compatible(phandle, strings)
+ *
+ * This function is equivalent to of_compatible(), and its use
+ * is deprecated.
+ */
+int
 of_match_compatible(int phandle, const char * const *strings)
 {
-	return of_compatible(phandle, strings) + 1;
+	return of_compatible(phandle, strings);
 }
 
 /*
