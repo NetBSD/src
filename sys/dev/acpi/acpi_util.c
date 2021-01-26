@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.21 2021/01/26 00:19:53 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.22 2021/01/26 00:23:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.21 2021/01/26 00:19:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.22 2021/01/26 00:23:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -873,7 +873,8 @@ acpi_claim_childdevs(device_t dev, struct acpi_devnode *devnode)
 	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
 		if (ad->ad_device != NULL)
 			continue;
-		aprint_debug(dev, "claiming %s\n", acpi_name(ad->ad_handle));
+		aprint_debug_dev(dev, "claiming %s\n",
+		    acpi_name(ad->ad_handle));
 		ad->ad_device = dev;
 		acpi_claim_childdevs(dev, ad);
 	}
