@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.35 2020/09/20 11:25:36 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.36 2021/01/26 14:55:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.35 2020/09/20 11:25:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.36 2021/01/26 14:55:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,10 @@ static u_int	fdt_get_order(int);
 static void	fdt_pre_attach(struct fdt_node *);
 static void	fdt_post_attach(struct fdt_node *);
 
-static const char * const fdtbus_compatible[] =
-    { "simple-bus", NULL };
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "simple-bus" },
+	{ }
+};
 
 CFATTACH_DECL2_NEW(simplebus, sizeof(struct fdt_softc),
     fdt_match, fdt_attach, NULL, NULL, fdt_rescan, fdt_childdet);
@@ -101,7 +103,7 @@ fdt_match(device_t parent, cfdata_t cf, void *aux)
 	int match;
 
 	/* Check compatible string */
-	match = of_match_compatible(phandle, fdtbus_compatible);
+	match = of_match_compat_data(phandle, compat_data);
 	if (match)
 		return match;
 
@@ -474,7 +476,7 @@ fdt_remove_bycompat(const char *compatible[])
 	struct fdt_node *node, *next;
 
 	TAILQ_FOREACH_SAFE(node, &fdt_nodes, n_nodes, next) {
-		if (of_match_compatible(node->n_phandle, compatible)) {
+		if (of_compatible(node->n_phandle, compatible)) {
 			TAILQ_REMOVE(&fdt_nodes, node, n_nodes);
 		}
 	}
