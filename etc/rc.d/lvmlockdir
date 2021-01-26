@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: llvmlockdir,v 1.2 2020/09/08 12:52:18 martin Exp $
+# $NetBSD: lvmlockdir,v 1.1 2021/01/26 13:31:19 martin Exp $
 #
 
 # REQUIRE: mountcritlocal
@@ -8,11 +8,11 @@
 
 $_rc_subr_loaded . /etc/rc.subr
 
-name="llvmlockdir"
-start_cmd="llvmlockdir_start"
+name="lvmlockdir"
+start_cmd="lvmlockdir_start"
 stop_cmd=":"
 
-llvmlockdir_start()
+lvmlockdir_start()
 {
 	#       create LVM locking directory, it needs to be owned by operator
 	#	group and has parmissions to allow lock file creation.
