@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.11 2021/01/26 21:25:55 joerg Exp $	*/
 /*-
  * Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.11 2021/01/26 21:25:55 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -285,7 +285,7 @@ bpz_compute(struct nbperf *nbperf)
 	if (v < 10)
 		v = 10;
 	if (nbperf->allow_hash_fudging)
-		v |= 3;
+		v = (v + 3) & ~3;
 
 	graph3_setup(&state.graph, v, e);
 
