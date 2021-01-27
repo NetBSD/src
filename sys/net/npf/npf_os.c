@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.20 2021/01/25 17:17:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.21 2021/01/27 17:39:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -298,8 +298,11 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 #endif
 	}
 	resp = nvlist_create(0);
-	npfctl_run_op(npf, cmd, req, resp);
-	error = nvlist_copyout(data, resp);
+
+	if ((error = npfctl_run_op(npf, cmd, req, resp)) == 0) {
+		error = nvlist_copyout(data, resp);
+	}
+
 	nvlist_destroy(resp);
 	nvlist_destroy(req);
 
