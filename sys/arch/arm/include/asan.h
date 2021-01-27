@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.6 2020/09/10 14:10:47 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.7 2021/01/27 08:40:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -222,9 +222,7 @@ kasan_md_init(void)
 	kasan_shadow_map((void *)kasan_kernelstart, kasan_kernelsize);
 
 	/* The VAs we've created until now. */
-	vaddr_t eva;
-
-	eva = pmap_growkernel(VM_KERNEL_VM_BASE);
+	vaddr_t eva = pmap_growkernel(VM_KERNEL_VM_BASE);
 	kasan_shadow_map((void *)VM_KERNEL_VM_BASE, eva - VM_KERNEL_VM_BASE);
 }
 
