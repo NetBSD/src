@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.41 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.42 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.41 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.42 2021/01/27 04:35:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,12 @@ static void	ahc_eisa_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ahc_eisa, sizeof(struct ahc_softc),
     ahc_eisa_match, ahc_eisa_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ADP7770",	.data = EISA_PRODUCT_ADP7770 },
+	{ .compat = "ADP7771",	.data = EISA_PRODUCT_ADP7771 },
+	DEVICE_COMPAT_EOL
+};
+
 /*
  * Check the slots looking for a board we recognise
  * If we find one, note its address (slot) and call
@@ -76,9 +82,7 @@ ahc_eisa_match(device_t parent, cfdata_t match, void *aux)
 	bus_space_handle_t ioh;
 	int irq;
 
-	/* must match one of our known ID strings */
-	if (strcmp(ea->ea_idstring, "ADP7770") &&
-	    strcmp(ea->ea_idstring, "ADP7771"))
+	if (!eisa_compatible_match(ea, compat_data))
 		return (0);
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
@@ -97,6 +101,7 @@ ahc_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ahc_softc *ahc = device_private(self);
 	struct eisa_attach_args *ea = aux;
+	const struct device_compatible_entry *dce;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -114,6 +119,9 @@ ahc_eisa_attach(device_t parent, device_t self, void *aux)
 
 	ahc->sc_dev = self;
 
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh)) {
 		aprint_error_dev(ahc->sc_dev, "could not map I/O addresses");
@@ -124,14 +132,7 @@ ahc_eisa_attach(device_t parent, device_t self, void *aux)
 		goto free_io;
 	}
 
-	if (strcmp(ea->ea_idstring, "ADP7770") == 0) {
-		printf(": %s\n", EISA_PRODUCT_ADP7770);
-	} else if (strcmp(ea->ea_idstring, "ADP7771") == 0) {
-		printf(": %s\n", EISA_PRODUCT_ADP7771);
-	} else {
-		printf(": Unknown device type %s", ea->ea_idstring);
-		goto free_io;
-	}
+	printf(": %s\n", (const char *)dce->data);
 
 	ahc_set_name(ahc, device_xname(ahc->sc_dev));
 	ahc->parent_dmat = ea->ea_dmat;

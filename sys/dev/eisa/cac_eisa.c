@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.25 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.26 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.25 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.26 2021/01/27 04:35:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,47 +102,68 @@ static const struct cac_linkage cac_eisa_l0 = {
 	cac_eisa_l0_submit
 };
 
-static struct cac_eisa_type {
-	const char	*ct_prodstr;
+struct cac_eisa_type {
 	const char	*ct_typestr;
 	const struct	cac_linkage *ct_linkage;
-} cac_eisa_type[] = {
-	{ "CPQ4001",	"IDA",		&cac_eisa_l0 },
-	{ "CPQ4002",	"IDA-2",	&cac_eisa_l0 },
-	{ "CPQ4010",	"IEAS",		&cac_eisa_l0 },
-	{ "CPQ4020",	"SMART",	&cac_eisa_l0 },
-	{ "CPQ4030",	"SMART-2/E",	&cac_l0 },
+};
+
+static const struct cac_eisa_type cpq4001 = {
+	.ct_typestr = "IDA",
+	.ct_linkage = &cac_eisa_l0
+};
+
+static const struct cac_eisa_type cpq4002 = {
+	.ct_typestr = "IDA-2",
+	.ct_linkage = &cac_eisa_l0
+};
+
+static const struct cac_eisa_type cpq4010 = {
+	.ct_typestr = "IEAS",
+	.ct_linkage = &cac_eisa_l0
+};
+
+static const struct cac_eisa_type cpq4020 = {
+	.ct_typestr = "SMART",
+	.ct_linkage = &cac_eisa_l0
+};
+
+static const struct cac_eisa_type cpq4030 = {
+	.ct_typestr = "SMART-2/E",
+	.ct_linkage = &cac_l0
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "CPQ4001",	.data = &cpq4001 },
+	{ .compat = "CPQ4002",	.data = &cpq4002 },
+	{ .compat = "CPQ4010",	.data = &cpq4010 },
+	{ .compat = "CPQ4020",	.data = &cpq4020 },
+	{ .compat = "CPQ4030",	.data = &cpq4030 },
+	DEVICE_COMPAT_EOL
 };
 
 static int
 cac_eisa_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct eisa_attach_args *ea;
-	int i;
+	struct eisa_attach_args *ea = aux;
 
-	ea = aux;
-
-	for (i = 0; i < sizeof(cac_eisa_type) / sizeof(cac_eisa_type[0]); i++)
-		if (strcmp(ea->ea_idstring, cac_eisa_type[i].ct_prodstr) == 0)
-			return (1);
-
-	return (0);
+	return (eisa_compatible_match(ea, compat_data));
 }
 
 static void
 cac_eisa_attach(device_t parent, device_t self, void *aux)
 {
-	struct eisa_attach_args *ea;
+	struct eisa_attach_args *ea = aux;
+	const struct device_compatible_entry *dce;
+	const struct cac_eisa_type *ct;
 	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec;
 	eisa_intr_handle_t ih;
 	struct cac_softc *sc;
 	bus_space_tag_t iot;
 	const char *intrstr;
-	int irq, i;
+	int irq;
 	char intrbuf[EISA_INTRSTR_LEN];
 
-	ea = aux;
 	sc = device_private(self);
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
@@ -152,6 +173,10 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
+
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+	ct = dce->data;
 
 	sc->sc_dev = self;
 	sc->sc_iot = iot;
@@ -197,12 +222,8 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Print board type and attach to the bus-independent code.
 	 */
-	for (i = 0; i < sizeof(cac_eisa_type) / sizeof(cac_eisa_type[0]); i++)
-		if (strcmp(ea->ea_idstring, cac_eisa_type[i].ct_prodstr) == 0)
-			break;
-
-	aprint_normal(": Compaq %s\n", cac_eisa_type[i].ct_typestr);
-	memcpy(&sc->sc_cl, cac_eisa_type[i].ct_linkage, sizeof(sc->sc_cl));
+	aprint_normal(": Compaq %s\n", ct->ct_typestr);
+	memcpy(&sc->sc_cl, ct->ct_linkage, sizeof(sc->sc_cl));
 	cac_init(sc, intrstr, 0);
 }
 
