@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pwm.c,v 1.3 2021/01/25 14:20:37 thorpej Exp $ */
+/* $NetBSD: meson_pwm.c,v 1.4 2021/01/27 01:49:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.3 2021/01/25 14:20:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.4 2021/01/27 01:49:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,7 +69,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,meson-g12a-ao-pwm-ab" },
 	{ .compat = "amlogic,meson-g12a-ao-pwm-cd" },
 	{ .compat = "amlogic,meson-g12a-ee-pwm" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 #define MESON_PWM_NCHAN	2
