@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.175 2021/01/24 18:02:51 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.176 2021/01/27 15:52:46 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -34,6 +34,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 options 	INCLUDE_CONFIG_FILE
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
@@ -69,6 +70,15 @@ options 	ARMV81_PAN
 #options 	KASAN		# mandatory
 #options 	POOL_QUARANTINE	# optional
 #options 	KASAN_PANIC	# optional
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	ACPIVERBOSE	# verbose ACPI configuration messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
