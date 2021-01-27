@@ -1,4 +1,4 @@
-# $NetBSD: files.wsfb,v 1.11 2019/07/26 10:48:45 rin Exp $
+# $NetBSD: files.wsfb,v 1.12 2021/01/27 22:42:53 macallan Exp $
 
 #
 # wsdisplay framebuffer drivers
@@ -13,3 +13,4 @@ define genfb: rasops1, rasops2, rasops4, rasops8, rasops15, rasops16, rasops24, 
 device genfb: genfb, wsemuldisplaydev, drm, splash
 file	dev/wsfb/genfb.c	genfb	needs-flag
 defflag opt_genfb.h GENFB_DEBUG GENFB_SHADOWFB
+defparam opt_genfb.h GENFB_GLYPHCACHE=0	# glyphcache size in MB

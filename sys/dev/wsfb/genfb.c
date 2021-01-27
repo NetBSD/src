@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.80 2021/01/26 18:08:33 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.81 2021/01/27 22:42:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.80 2021/01/26 18:08:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.81 2021/01/27 22:42:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,11 @@ static void	genfb_init_palette(struct genfb_softc *);
 
 static void	genfb_brightness_up(device_t);
 static void	genfb_brightness_down(device_t);
+
+#if GENFB_GLYPHCACHE > 0
+static int	genfb_setup_glyphcache(struct genfb_softc *, long);
+static void	genfb_putchar(void *, int, int, u_int, long);
+#endif
 
 extern const u_char rasops_cmap[768];
 
@@ -287,6 +292,10 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 	    &defattr);
 	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+
+#if GENFB_GLYPHCACHE > 0
+	genfb_setup_glyphcache(sc, defattr);
+#endif
 
 #ifdef SPLASHSCREEN
 /*
@@ -632,7 +641,10 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
-
+#if GENFB_GLYPHCACHE > 0
+	sc->sc_putchar = ri->ri_ops.putchar;
+	ri->ri_ops.putchar = genfb_putchar;
+#endif
 #ifdef GENFB_DISABLE_TEXT
 	if (scr == &sc->sc_console_screen && !DISABLESPLASH)
 		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
@@ -890,3 +902,171 @@ genfb_disable_polling(device_t dev)
 		vcons_disable_polling(&sc->vd);
 	}
 }
+
+#if GENFB_GLYPHCACHE > 0
+#define GLYPHCACHESIZE ((GENFB_GLYPHCACHE) * 1024 * 1024)
+
+static inline int
+attr2idx(long attr)
+{
+	if ((attr & 0xf0f00ff8) != 0)
+		return -1;
+	
+	return (((attr >> 16) & 0x0f) | ((attr >> 20) & 0xf0));
+}
+
+static int
+genfb_setup_glyphcache(struct genfb_softc *sc, long defattr)
+{
+	struct rasops_info *ri = &sc->sc_console_screen.scr_ri,
+			  *cri = &sc->sc_cache_ri;
+	gc_bucket *b;
+	int i, usedcells = 0, idx, j;
+
+	sc->sc_cache = kmem_alloc(GLYPHCACHESIZE, KM_SLEEP);
+
+	/*
+	 * now we build a mutant rasops_info for the cache - same pixel type
+	 * and such as the real fb, but only one character per line for 
+	 * simplicity and locality
+	 */
+	memcpy(cri, ri, sizeof(struct rasops_info));
+	cri->ri_ops.putchar = sc->sc_putchar;
+	cri->ri_width = ri->ri_font->fontwidth;
+	cri->ri_stride = ri->ri_xscale;
+	cri->ri_bits = sc->sc_cache;
+	cri->ri_hwbits = NULL;
+	cri->ri_origbits = sc->sc_cache;
+	cri->ri_cols = 1;
+	cri->ri_rows = GLYPHCACHESIZE / 
+	    (cri->ri_stride * cri->ri_font->fontheight);
+	cri->ri_xorigin = 0;
+	cri->ri_yorigin = 0;
+	cri->ri_xscale = ri->ri_xscale;
+	cri->ri_yscale = ri->ri_font->fontheight * ri->ri_xscale;
+	
+	printf("size %d %d %d\n", GLYPHCACHESIZE, ri->ri_width, ri->ri_stride);
+	printf("cells: %d\n", cri->ri_rows);
+	sc->sc_nbuckets = uimin(256, cri->ri_rows / 223);
+	sc->sc_buckets = kmem_alloc(sizeof(gc_bucket) * sc->sc_nbuckets, KM_SLEEP);
+	printf("buckets: %d\n", sc->sc_nbuckets);
+	for (i = 0; i < sc->sc_nbuckets; i++) {
+		b = &sc->sc_buckets[i];
+		b->gb_firstcell = usedcells;
+		b->gb_numcells = uimin(223, cri->ri_rows - usedcells);
+		usedcells += 223;
+		b->gb_usedcells = 0;
+		b->gb_index = -1;
+		for (j = 0; j < 223; j++) b->gb_map[j] = -1;
+	}
+
+	/* initialize the attribute map... */
+	for (i = 0; i < 256; i++) {
+		sc->sc_attrmap[i] = -1;
+	}
+
+	/* first bucket goes to default attr */
+	idx = attr2idx(defattr);
+	printf("defattr %08lx idx %x\n", defattr, idx);
+	
+	if (idx >= 0) {
+		sc->sc_attrmap[idx] = 0;
+		sc->sc_buckets[0].gb_index = idx;
+	}
+	
+	return 0;
+}
+
+static void
+genfb_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct genfb_softc *sc = scr->scr_cookie;
+	uint8_t *src, *dst;
+	gc_bucket *b;
+	int i, idx, bi, cell;
+
+	attr &= ~WSATTR_USERMASK;
+
+	idx = attr2idx(attr);
+	if (c < 33 || c > 255 || idx < 0) goto nope;
+
+	/* look for a bucket with the right attribute */
+	bi = sc->sc_attrmap[idx];
+	if (bi == -1) {
+		/* nope, see if there's an empty one left */
+		bi = 1;
+		while ((bi < sc->sc_nbuckets) && 
+		       (sc->sc_buckets[bi].gb_index != -1)) {
+			bi++;
+		}
+		if (bi < sc->sc_nbuckets) {
+			/* found one -> grab it */
+			sc->sc_attrmap[idx] = bi;
+			b = &sc->sc_buckets[bi];
+			b->gb_index = idx;
+			b->gb_usedcells = 0;
+			/* make sure this doesn't get evicted right away */
+			b->gb_lastread = time_uptime;
+		} else {
+			/*
+			 * still nothing
+			 * steal the least recently read bucket
+			 */
+			time_t moo = time_uptime;
+			int oldest = 1;
+
+			for (i = 1; i < sc->sc_nbuckets; i++) {
+				if (sc->sc_buckets[i].gb_lastread < moo) {
+					oldest = i;
+					moo = sc->sc_buckets[i].gb_lastread;
+				}
+			}
+
+			/* if we end up here all buckets must be in use */
+			b = &sc->sc_buckets[oldest];
+			sc->sc_attrmap[b->gb_index] = -1;
+			b->gb_index = idx;
+			b->gb_usedcells = 0;
+			sc->sc_attrmap[idx] = oldest;
+			/* now scrub it */
+			for (i = 0; i < 223; i++)
+				b->gb_map[i] = -1;
+			/* and set the time stamp */
+			b->gb_lastread = time_uptime;
+		}
+	} else {
+		/* found one */
+		b = &sc->sc_buckets[bi];
+	}
+
+	/* see if there's room in the bucket */
+	if (b->gb_usedcells >= b->gb_numcells) goto nope;
+
+	cell = b->gb_map[c - 33];
+	if (cell == -1) {
+		if (b->gb_usedcells >= b->gb_numcells)
+			goto nope;
+		cell = atomic_add_int_nv(&b->gb_usedcells, 1) - 1;
+		b->gb_map[c - 33] = cell;
+		cell += b->gb_firstcell;
+		sc->sc_putchar(&sc->sc_cache_ri, cell, 0, c, attr);
+		
+	} else
+		cell += b->gb_firstcell;
+
+	src = sc->sc_cache + cell * sc->sc_cache_ri.ri_yscale;
+	dst = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
+	for (i = 0; i < ri->ri_font->fontheight; i++) {
+		memcpy(dst, src, ri->ri_xscale);
+		src += ri->ri_xscale;
+		dst += ri->ri_stride;
+	}
+	b->gb_lastread = time_uptime;
+	return;
+nope:
+	sc->sc_putchar(cookie, row, col, c, attr);
+}
+
+#endif
