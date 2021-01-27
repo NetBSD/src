@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.532 2021/01/26 23:44:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.533 2021/01/27 00:02:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.532 2021/01/26 23:44:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.533 2021/01/27 00:02:38 rillig Exp $");
 
 /* types and constants */
 
@@ -611,13 +611,10 @@ ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 
 	if (type == PARSE_INFO)
 		goto print_stack_trace;
-	if (type == PARSE_FATAL || opts.parseWarnFatal)
-		fatals++;
-	if (opts.parseWarnFatal && !fatal_warning_error_printed) {
-		/*
-		 * FIXME: Also gets printed on .error, even though it
-		 *  doesn't apply to it.
-		 */
+	if (type == PARSE_WARNING && !opts.parseWarnFatal)
+		goto print_stack_trace;
+	fatals++;
+	if (type == PARSE_WARNING && !fatal_warning_error_printed) {
 		Error("parsing warnings being treated as errors");
 		fatal_warning_error_printed = TRUE;
 	}
