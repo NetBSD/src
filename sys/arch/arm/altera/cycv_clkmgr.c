@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_clkmgr.c,v 1.6 2021/01/25 14:20:37 thorpej Exp $ */
+/* $NetBSD: cycv_clkmgr.c,v 1.7 2021/01/27 01:47:40 thorpej Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.6 2021/01/25 14:20:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.7 2021/01/27 01:47:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,7 +113,7 @@ CFATTACH_DECL_NEW(cycvclkmgr, sizeof (struct cycv_clkmgr_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "altr,clk-mgr" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -218,7 +218,7 @@ static const struct device_compatible_entry clock_types[] = {
 	{ .compat = "altr,socfpga-pll-clock",	.value = CYCV_CLK_TYPE_PLL },
 	{ .compat = "altr,socfpga-perip-clk",	.value = CYCV_CLK_TYPE_PERIP },
 	{ .compat = "altr,socfpga-gate-clk",	.value = CYCV_CLK_TYPE_PERIP },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static void

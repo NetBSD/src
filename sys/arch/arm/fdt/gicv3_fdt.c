@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.13 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.14 2021/01/27 01:54:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.13 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.14 2021/01/27 01:54:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,7 +109,7 @@ struct gicv3_fdt_softc {
 
 static const struct device_compatible_entry gicv3_fdt_quirks[] = {
 	{ .compat = "rockchip,rk3399",		.value = GICV3_QUIRK_RK3399 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(gicv3_fdt, sizeof(struct gicv3_fdt_softc),
@@ -117,7 +117,7 @@ CFATTACH_DECL_NEW(gicv3_fdt, sizeof(struct gicv3_fdt_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "arm,gic-v3" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -181,7 +181,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 		/* Interrupt Translation Services */
 		static const struct device_compatible_entry its_compat[] = {
 			{ .compat = "arm,gic-v3-its" },
-			{ }
+			DEVICE_COMPAT_EOL
 		};
 
 		for (int child = OF_child(phandle); child;
