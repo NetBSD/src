@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.276 2021/01/24 17:42:36 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277 2021/01/27 04:54:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.276 2021/01/24 17:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277 2021/01/27 04:54:08 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2345,7 +2345,7 @@ strarray_match_internal(const char ** const strings,
 	unsigned int i;
 
 	if (strings == NULL || nstrings == 0) {
-		return 0;
+		return false;
 	}
 
 	for (i = 0; i < nstrings; i++) {
@@ -2499,6 +2499,43 @@ device_compatible_pmatch_strlist(
 	    device_compatsize, driver_compats, NULL, strlist_pmatch);
 }
 
+static int
+device_compatible_match_id_internal(
+    uintptr_t const id, uintptr_t const mask, uintptr_t const sentinel_id,
+    const struct device_compatible_entry *driver_compats,
+    const struct device_compatible_entry **matching_entryp)
+{
+	const struct device_compatible_entry *dce = NULL;
+
+	if (mask == 0)
+		return 0;
+
+	for (dce = driver_compats; dce->id != sentinel_id; dce++) {
+		if ((id & mask) == dce->id) {
+			if (matching_entryp != NULL) {
+				*matching_entryp = dce;
+			}
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * device_compatible_match_id:
+ *
+ *	Like device_compatible_match(), but takes a single
+ *	unsigned integer device ID.
+ */
+int
+device_compatible_match_id(
+    uintptr_t const id, uintptr_t const sentinel_id,
+    const struct device_compatible_entry *driver_compats)
+{
+	return device_compatible_match_id_internal(id, (uintptr_t)-1,
+	    sentinel_id, driver_compats, NULL);
+}
+
 /*
  * device_compatible_lookup:
  *
@@ -2574,6 +2611,26 @@ device_compatible_plookup_strlist(
 
 	if (device_compatible_match_strlist_internal(device_compats,
 	    device_compatsize, driver_compats, &dce, strlist_pmatch)) {
+		return dce;
+	}
+	return NULL;
+}
+
+/*
+ * device_compatible_lookup_id:
+ *
+ *	Like device_compatible_lookup(), but takes a single
+ *	unsigned integer device ID.
+ */
+const struct device_compatible_entry *
+device_compatible_lookup_id(
+    uintptr_t const id, uintptr_t const sentinel_id,
+    const struct device_compatible_entry *driver_compats)
+{
+	const struct device_compatible_entry *dce;
+
+	if (device_compatible_match_id_internal(id, (uintptr_t)-1,
+	    sentinel_id, driver_compats, &dce)) {
 		return dce;
 	}
 	return NULL;
