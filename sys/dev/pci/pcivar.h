@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.113 2018/12/01 01:23:24 msaitoh Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.114 2021/01/27 05:00:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -298,7 +298,6 @@ int	pci_mapreg_submap(const struct pci_attach_args *, int, pcireg_t, int,
 	    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *, 
 	    bus_addr_t *, bus_size_t *);
 
-
 int pci_find_rom(const struct pci_attach_args *, bus_space_tag_t,
 	    bus_space_handle_t, bus_size_t,
 	    int, bus_space_handle_t *, bus_size_t *);
@@ -315,6 +314,23 @@ int	pci_msix_count(pci_chipset_tag_t, pcitag_t);
 /*
  * Helper functions for autoconfiguration.
  */
+
+#define	PCI_COMPAT_EOL_VALUE	(0xffffffffU)
+#define	PCI_COMPAT_EOL		{ .id = PCI_COMPAT_EOL_VALUE }
+
+const struct device_compatible_entry *
+	pci_compatible_lookup_id(pcireg_t,
+	    const struct device_compatible_entry *);
+const struct device_compatible_entry *
+	pci_compatible_lookup(const struct pci_attach_args *,
+	    const struct device_compatible_entry *);
+int	pci_compatible_match(const struct pci_attach_args *,
+	    const struct device_compatible_entry *);
+const struct device_compatible_entry *
+	pci_compatible_lookup_subsys(const struct pci_attach_args *,
+	    const struct device_compatible_entry *);
+int	pci_compatible_match_subsys(const struct pci_attach_args *,
+	    const struct device_compatible_entry *);
 #ifndef PCI_MACHDEP_ENUMERATE_BUS
 int	pci_enumerate_bus(struct pci_softc *, const int *,
 	    int (*)(const struct pci_attach_args *), struct pci_attach_args *);
