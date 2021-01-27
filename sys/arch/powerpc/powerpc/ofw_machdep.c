@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.26 2021/01/27 03:17:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.26 2021/01/27 03:17:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -151,7 +151,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 	 * according to comments in FreeBSD all Apple OF has 32bit values in
 	 * "available", no matter what the cell sizes are
 	 */
-	if (of_compatible(hroot, macrisc) != -1) {
+	if (of_compatible(hroot, macrisc)) {
 		DPRINTF("this appears to be a mac...\n");
 		acells = 1;
 		scells = 1;
