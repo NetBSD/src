@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.83 2020/12/06 11:38:28 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.84 2021/01/27 05:11:54 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -195,6 +195,12 @@ struct acpi_attach_args {
 	bus_dma_tag_t aa_dmat64;	/* PCI 64bit DMA tag */
 };
 
+/* ACPI driver matching scores. */
+#define	ACPI_MATCHSCORE_HID		100	/* matched _HID */
+#define	ACPI_MATCHSCORE_CID_MAX		49
+#define	ACPI_MATCHSCORE_CID		10	/* matched _CID */
+#define	ACPI_MATCHSCORE_CLS		1	/* matched _CLS */
+
 /*
  * ACPI resources:
  *
@@ -305,6 +311,12 @@ extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_quiet;
 int		acpi_probe(void);
 void		acpi_disable(void);
 int		acpi_check(device_t, const char *);
+
+int		acpi_compatible_match(const struct acpi_attach_args *,
+		    const struct device_compatible_entry *);
+const struct device_compatible_entry *
+		acpi_compatible_lookup(const struct acpi_attach_args *,
+		    const struct device_compatible_entry *);
 
 bool    	acpi_device_present(ACPI_HANDLE);
 
