@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.34 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.35 2021/01/27 01:58:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.34 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.35 2021/01/27 01:58:15 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -139,7 +139,7 @@ CFATTACH_DECL_NEW(tegra_pcie, sizeof(struct tegra_pcie_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "nvidia,tegra210-pcie",	.value = TEGRA_PCIE_210 },
 	{ .compat = "nvidia,tegra124-pcie",	.value = TEGRA_PCIE_124 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

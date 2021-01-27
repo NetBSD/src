@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.32 2021/01/27 02:09:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.31 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.32 2021/01/27 02:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,8 +136,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-emac",		.value = EMAC_H3 },
 	{ .compat = "allwinner,sun50i-a64-emac",	.value = EMAC_A64 },
 	{ .compat = "allwinner,sun50i-h6-emac",		.value = EMAC_H6 },
-
-	{ 0 }
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_emac_bufmap {
@@ -954,9 +953,9 @@ sunxi_emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static bool
 sunxi_emac_has_internal_phy(struct sunxi_emac_softc *sc)
 {
-	const char * mdio_internal_compat[] = {
-		"allwinner,sun8i-h3-mdio-internal",
-		NULL
+	static const struct device_compatible_entry mdio_internal_compat[] = {
+		{ .compat = "allwinner,sun8i-h3-mdio-internal" },
+		DEVICE_COMPAT_EOL
 	};
 	int phy;
 
@@ -969,7 +968,7 @@ sunxi_emac_has_internal_phy(struct sunxi_emac_softc *sc)
 		return false;
 
 	/* For internal PHY, check compatible string of parent node */
-	return of_compatible(OF_parent(phy), mdio_internal_compat) >= 0;
+	return of_match_compat_data(OF_parent(phy), mdio_internal_compat);
 }
 
 static int

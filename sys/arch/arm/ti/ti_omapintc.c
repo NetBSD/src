@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_omapintc.c,v 1.6 2021/01/25 14:20:39 thorpej Exp $	*/
+/*	$NetBSD: ti_omapintc.c,v 1.7 2021/01/27 02:12:16 thorpej Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -29,7 +29,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.6 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.7 2021/01/27 02:12:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -61,7 +61,7 @@ static const struct device_compatible_entry compat_data[] = {
 	/* compatible			number of banks */
 	{ .compat = "ti,omap3-intc",	.value = 3 },
 	{ .compat = "ti,am33xx-intc",	.value = 4 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 #define	INTC_READ(sc, g, o)		\

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.11 2021/01/25 14:20:39 thorpej Exp $ */
+/* $NetBSD: ti_iic.c,v 1.12 2021/01/27 02:12:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.11 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.12 2021/01/27 02:12:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ static const struct device_compatible_entry compat_data[] = {
 	/* compatible			type */
 	{ .compat = "ti,omap3-i2c",	.value = TI_IIC_OMAP3 },
 	{ .compat = "ti,omap4-i2c",	.value = TI_IIC_OMAP4 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 /* operation in progress */
