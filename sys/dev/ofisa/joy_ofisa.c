@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_ofisa.c,v 1.18 2021/01/25 16:21:41 thorpej Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.19 2021/01/27 02:31:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.18 2021/01/25 16:21:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.19 2021/01/27 02:31:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ CFATTACH_DECL_NEW(joy_ofisa, sizeof(struct joy_ofisa_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pnpPNP,b02f" },	/* generic joystick */
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int
