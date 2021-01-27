@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.26 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.27 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.26 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.27 2021/01/27 04:35:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,50 +80,42 @@ static int	mlx_v1_reset(struct mlx_softc *);
 CFATTACH_DECL3_NEW(mlx_eisa, sizeof(struct mlx_softc),
     mlx_eisa_match, mlx_eisa_attach, NULL, NULL, mlx_eisa_rescan, NULL, 0);
 
-static struct mlx_eisa_prod {
-	const char	*mp_idstr;
-	int		mp_nchan;
-} const mlx_eisa_prod[] = {
-	{ "MLX0070", 1 },
-	{ "MLX0071", 3 },
-	{ "MLX0072", 3 },
-	{ "MLX0073", 2 },
-	{ "MLX0074", 1 },
-	{ "MLX0075", 3 },
-	{ "MLX0076", 2 },
-	{ "MLX0077", 1 },
+static const struct device_compatible_entry compat_data[] = {
+				/* nchan */
+	{ .compat = "MLX0070",	.value = 1 },
+	{ .compat = "MLX0071",	.value = 3 },
+	{ .compat = "MLX0072",	.value = 3 },
+	{ .compat = "MLX0073",	.value = 2 },
+	{ .compat = "MLX0074",	.value = 1 },
+	{ .compat = "MLX0075",	.value = 3 },
+	{ .compat = "MLX0076",	.value = 2 },
+	{ .compat = "MLX0077",	.value = 1 },
+	DEVICE_COMPAT_EOL
 };
 
 static int
 mlx_eisa_match(device_t parent, cfdata_t match,
     void *aux)
 {
-	struct eisa_attach_args *ea;
-	int i;
+	struct eisa_attach_args *ea = aux;
 
-	ea = aux;
-
-	for (i = 0; i < sizeof(mlx_eisa_prod) / sizeof(mlx_eisa_prod[0]); i++)
-		if (strcmp(ea->ea_idstring, mlx_eisa_prod[i].mp_idstr) == 0)
-			return (1);
-
-	return (0);
+	return (eisa_compatible_match(ea, compat_data));
 }
 
 static void
 mlx_eisa_attach(device_t parent, device_t self, void *aux)
 {
-	struct eisa_attach_args *ea;
+	struct eisa_attach_args *ea = aux;
+	const struct device_compatible_entry *dce;
 	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec;
 	eisa_intr_handle_t ih;
 	struct mlx_softc *mlx;
 	bus_space_tag_t iot;
 	const char *intrstr;
-	int irq, i, icfg;
+	int irq, icfg;
 	char intrbuf[EISA_INTRSTR_LEN];
 
-	ea = aux;
 	mlx = device_private(self);
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
@@ -179,11 +171,10 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	for (i = 0; i < sizeof(mlx_eisa_prod) / sizeof(mlx_eisa_prod[0]); i++)
-		if (strcmp(ea->ea_idstring, mlx_eisa_prod[i].mp_idstr) == 0) {
-			mlx->mlx_ci.ci_nchan = mlx_eisa_prod[i].mp_nchan;
-			break;
-		}
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+
+	mlx->mlx_ci.ci_nchan = (int)dce->value;
 	mlx->mlx_ci.ci_iftype = 1;
 
 	mlx->mlx_submit = mlx_v1_submit;
