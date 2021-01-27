@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.6 2021/01/27 02:00:02 thorpej Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.6 2021/01/27 02:00:02 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -108,7 +108,7 @@ rk_v1crypto_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

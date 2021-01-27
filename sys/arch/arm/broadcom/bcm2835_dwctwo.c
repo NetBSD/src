@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_dwctwo.c,v 1.8 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_dwctwo.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.8 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,18 +97,19 @@ static void bcmdwc2_deferred(device_t);
 CFATTACH_DECL_NEW(bcmdwctwo, sizeof(struct bcmdwc2_softc),
     bcmdwc2_match, bcmdwc2_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2708-usb" },
+	{ .compat = "brcm,bcm2835-usb" },
+	DEVICE_COMPAT_EOL
+};
+
 /* ARGSUSED */
 static int
 bcmdwc2_match(device_t parent, struct cfdata *match, void *aux)
 {
-	const char * const compatible[] = {
-	    "brcm,bcm2708-usb",
-	    "brcm,bcm2835-usb",
-	    NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 /* ARGSUSED */

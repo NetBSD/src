@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.15 2021/01/27 02:09:39 thorpej Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.16 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.15 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.16 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -334,7 +334,7 @@ sunxi_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -353,7 +353,7 @@ sunxi_usbphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 
 	if (fdtbus_get_reg_byname(phandle, "phy_ctrl", &addr, &size) != 0) {
 		aprint_error(": couldn't get phy ctrl registers\n");

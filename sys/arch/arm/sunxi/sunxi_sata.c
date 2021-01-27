@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sata.c,v 1.3 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_sata.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.3 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.3 2021/01/15 22:47:32 jmcneill Exp 
 
 #include <dev/fdt/fdtvar.h>
 
-static const char * compatible[] = {
-	"allwinner,sun4i-a10-ahci",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-ahci" },
+	DEVICE_COMPAT_EOL
 };
 
 #define	SUNXI_SATA_DMACR(port)	(0x170 + AHCI_P_OFFSET(port))
@@ -65,7 +65,7 @@ sunxi_sata_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

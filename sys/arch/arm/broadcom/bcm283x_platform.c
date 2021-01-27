@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.45 2020/12/01 04:16:18 rin Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.46 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.45 2020/12/01 04:16:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.46 2021/01/27 03:10:19 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1485,12 +1485,12 @@ bcm283x_platform_uart_freq(void)
 	 */
 	const int phandle = fdtbus_get_stdout_phandle();
 
-	static const char * const aux_compatible[] = {
-		"brcm,bcm2835-aux-uart",
-		NULL
+	static const struct device_compatible_entry aux_compat_data[] = {
+		{ .compat = "brcm,bcm2835-aux-uart" },
+		DEVICE_COMPAT_EOL
 	};
 
-	if (of_match_compatible(phandle, aux_compatible))
+	if (of_compatible_match(phandle, aux_compat_data))
 		return core_clk * 2;
 
 	return uart_clk;

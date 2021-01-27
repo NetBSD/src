@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.20 2021/01/15 00:38:22 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.20 2021/01/15 00:38:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,19 +109,25 @@ struct gic_fdt_softc {
 CFATTACH_DECL_NEW(gic_fdt, sizeof(struct gic_fdt_softc),
 	gic_fdt_match, gic_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,gic-400" },
+	{ .compat = "arm,cortex-a15-gic" },
+	{ .compat = "arm,cortex-a9-gic" },
+	{ .compat = "arm,cortex-a7-gic" },
+	DEVICE_COMPAT_EOL
+};
+
+static const struct device_compatible_entry v2m_compat_data[] = {
+	{ .compat = "arm,gic-v2m-frame" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 gic_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,gic-400",
-		"arm,cortex-a15-gic",
-		"arm,cortex-a9-gic",
-		"arm,cortex-a7-gic",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -183,8 +189,7 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
-		const char * const v2m_compat[] = { "arm,gic-v2m-frame", NULL };
-		if (of_match_compatible(child, v2m_compat))
+		if (of_compatible_match(child, v2m_compat_data))
 			gic_fdt_attach_v2m(sc, faa->faa_bst, child);
 	}
 #endif

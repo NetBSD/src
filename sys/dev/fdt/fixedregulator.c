@@ -1,4 +1,4 @@
-/* $NetBSD: fixedregulator.c,v 1.9 2021/01/17 19:54:23 jmcneill Exp $ */
+/* $NetBSD: fixedregulator.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.9 2021/01/17 19:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,13 +74,17 @@ struct fixedregulator_softc {
 CFATTACH_DECL_NEW(fregulator, sizeof(struct fixedregulator_softc),
     fixedregulator_match, fixedregulator_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "regulator-fixed" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 fixedregulator_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "regulator-fixed", NULL };
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

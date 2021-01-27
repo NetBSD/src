@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_pmwdog.c,v 1.1 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_pmwdog.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_pmwdog.c,v 1.1 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_pmwdog.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -85,14 +85,18 @@ static int bcmpmwdog_tickle(struct sysmon_wdog *);
 CFATTACH_DECL_NEW(bcmpmwdog_fdt, sizeof(struct bcm2835pmwdog_softc),
     bcmpmwdog_match, bcmpmwdog_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-pm-wdt" },
+	DEVICE_COMPAT_EOL
+};
+
 /* ARGSUSED */
 static int
 bcmpmwdog_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-pm-wdt", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

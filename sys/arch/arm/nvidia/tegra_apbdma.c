@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_apbdma.c,v 1.8 2021/01/15 23:11:59 jmcneill Exp $ */
+/* $NetBSD: tegra_apbdma.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.8 2021/01/15 23:11:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,17 +91,18 @@ CFATTACH_DECL_NEW(tegra_apbdma, sizeof(struct tegra_apbdma_softc),
 #define	APBDMA_WRITE(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-apbdma" },
+	{ .compat = "nvidia,tegra124-apbdma" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_apbdma_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-apbdma",
-		"nvidia,tegra124-apbdma",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

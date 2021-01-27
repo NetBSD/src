@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.11 2021/01/27 02:00:02 thorpej Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.11 2021/01/27 02:00:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -395,7 +395,7 @@ rk_tsadc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -425,7 +425,7 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 
 	pmf_device_register(self, NULL, NULL);
 
-	sc->sc_rd = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_rd = of_compatible_lookup(faa->faa_phandle, compat_data)->data;
 
 	/* Default to tshut via gpio and tshut low is active */
 	if (of_getprop_uint32(phandle, "rockchip,hw-tshut-mode",

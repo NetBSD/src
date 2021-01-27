@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_sdhc.c,v 1.5 2021/01/27 02:14:49 thorpej Exp $	*/
+/*	$NetBSD: imx_sdhc.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.5 2021/01/27 02:14:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -95,7 +95,7 @@ imx_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -129,7 +129,7 @@ imx_sdhc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_vmmc_supply = fdtbus_regulator_acquire(phandle, "vmmc-supply");
 
-	conf = of_search_compatible(phandle, compat_data)->data;
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	sc->sc_sdhc.sc_dev = self;
 	sc->sc_sdhc.sc_dmat = faa->faa_dmat;

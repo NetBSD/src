@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.6 2020/03/17 21:24:30 skrll Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.6 2020/03/17 21:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -423,13 +423,17 @@ CFATTACH_DECL_NEW(exynos5410_clock, sizeof(struct exynos5410_clock_softc),
 #define CLOCK_WRITE(sc, reg, val)	\
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos5410-clock" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 exynos5410_clock_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,exynos5410-clock", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

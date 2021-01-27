@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb_ofbus.c,v 1.4 2014/01/02 19:00:39 joerg Exp $ */
+/*	$NetBSD: chipsfb_ofbus.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.4 2014/01/02 19:00:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,11 @@ int chipsfb_ofbus_cnattach(bus_space_tag_t, bus_space_tag_t);
 
 CFATTACH_DECL_NEW(chipsfb_ofbus, sizeof(struct chipsfb_softc),
     chipsfb_ofbus_match, chipsfb_ofbus_attach, NULL, NULL);
-    
-static const char * const compat_strings[] = { "CHPS,ct65550", NULL };
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "CHPS,ct65550" },
+	DEVICE_COMPAT_EOL
+};
 
 vaddr_t chipsfb_mem_vaddr = 0, chipsfb_mmio_vaddr = 0;
 paddr_t chipsfb_mem_paddr;
@@ -97,7 +100,7 @@ chipsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	ct_node = OF_finddevice("/vlbus/display");
 	if (ct_node == -1)
 		return ENXIO;
-	if (of_compatible(ct_node, compat_strings) < 0) 
+	if (!of_compatible_match(ct_node, compat_data))
 		return ENXIO;
 
 	/*
@@ -156,10 +159,8 @@ chipsfb_ofbus_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 
-	if (of_compatible(oba->oba_phandle, compat_strings) < 0)
-		return 0;
-
-	return 10;	/* beat vga etc. */
+							/* beat vga etc. */
+	return of_compatible_match(oba->oba_phandle, compat_data) * 10;
 }
 
 static void

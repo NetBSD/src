@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.12 2021/01/15 00:38:23 jmcneill Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.13 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.12 2021/01/15 00:38:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.13 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,13 +105,17 @@ struct fdtbus_interrupt_controller_func exynos_combiner_funcs = {
 CFATTACH_DECL_NEW(exynos_intr, sizeof(struct exynos_combiner_softc),
 	exynos_combiner_match, exynos_combiner_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos4210-combiner" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 exynos_combiner_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,exynos4210-combiner",
-					    NULL };
 	struct fdt_attach_args * const faa = aux;
-	return of_match_compatible(faa->faa_phandle, compatible);
+
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

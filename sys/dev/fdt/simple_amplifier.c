@@ -1,4 +1,4 @@
-/* $NetBSD: simple_amplifier.c,v 1.1 2020/01/02 00:57:09 jmcneill Exp $ */
+/* $NetBSD: simple_amplifier.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simple_amplifier.c,v 1.1 2020/01/02 00:57:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simple_amplifier.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,9 +50,9 @@ struct simple_amplifier_softc {
 static int	simple_amplifier_match(device_t, cfdata_t, void *);
 static void	simple_amplifier_attach(device_t, device_t, void *);
 
-static const char *compatible[] = {
-	"simple-audio-amplifier",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "simple-audio-amplifier" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(simpleamp, sizeof(struct simple_amplifier_softc),
@@ -113,7 +113,7 @@ simple_amplifier_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smi.c,v 1.6 2020/07/16 11:49:37 jmcneill Exp $	*/
+/*	$NetBSD: octeon_smi.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.6 2020/07/16 11:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,9 @@ CFATTACH_DECL_NEW(octsmi_iobus, sizeof(struct octsmi_softc),
 CFATTACH_DECL_NEW(octsmi_fdt, sizeof(struct octsmi_softc),
     octsmi_fdt_match, octsmi_fdt_attach, NULL, NULL);
 
-static const char * compatible[] = {
-	"cavium,octeon-3860-mdio",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cavium,octeon-3860-mdio" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -144,7 +144,7 @@ octsmi_fdt_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

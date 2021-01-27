@@ -1,4 +1,4 @@
-/* $NetBSD: plfb_fdt.c,v 1.4 2019/07/23 12:34:05 jmcneill Exp $ */
+/* $NetBSD: plfb_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.4 2019/07/23 12:34:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -95,9 +95,9 @@ static bool	plfb_shutdown(device_t, int);
 
 static void	plfb_init(struct plfb_softc *);
 
-static const char * const compatible[] = {
-	"arm,pl111",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,pl111" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(plfb_fdt, sizeof(struct plfb_softc),
@@ -113,7 +113,7 @@ plfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -318,7 +318,7 @@ plfb_init(struct plfb_softc *sc)
 static int
 plfb_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

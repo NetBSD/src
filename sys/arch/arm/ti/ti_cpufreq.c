@@ -1,4 +1,4 @@
-/* $NetBSD: ti_cpufreq.c,v 1.3 2020/06/03 18:02:03 jmcneill Exp $ */
+/* $NetBSD: ti_cpufreq.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.3 2020/06/03 18:02:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,10 @@ static struct syscon	*ti_opp_syscon;
 #define	AM33XX_EFUSE_MASK	0x00001fff
 #define	AM33XX_EFUSE_DEFAULT	0x1e2f
 
-static const char * const am33xx_compatible[] = { "ti,am33xx", NULL };
+static const struct device_compatible_entry am33xx_compat_data[] = {
+	{ .compat = "ti,am33xx" },
+	DEVICE_COMPAT_EOL
+};
 
 static bool
 am33xx_opp_supported(const int opp_table, const int opp_node)
@@ -94,7 +97,8 @@ ti_opp_probe(const int opp_table)
 	ti_opp_syscon = fdtbus_syscon_acquire(opp_table, "syscon");
 
 #ifdef SOC_AM33XX
-	if (ti_opp_syscon && of_match_compatible(OF_finddevice("/"), am33xx_compatible))
+	if (ti_opp_syscon &&
+	    of_compatible_match(OF_finddevice("/"), am33xx_compat_data))
 		ti_opp_supportedfn = am33xx_opp_supported;
 #endif
 }

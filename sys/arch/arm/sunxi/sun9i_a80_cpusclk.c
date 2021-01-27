@@ -1,4 +1,4 @@
-/* $NetBSD: sun9i_a80_cpusclk.c,v 1.1 2019/05/27 21:12:54 jmcneill Exp $ */
+/* $NetBSD: sun9i_a80_cpusclk.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun9i_a80_cpusclk.c,v 1.1 2019/05/27 21:12:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun9i_a80_cpusclk.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,13 +85,17 @@ struct sun9i_a80_cpusclk_softc {
 CFATTACH_DECL_NEW(sunxi_a80_cpusclk, sizeof(struct sun9i_a80_cpusclk_softc),
     sun9i_a80_cpusclk_match, sun9i_a80_cpusclk_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun9i-a80-cpus-clk" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sun9i_a80_cpusclk_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "allwinner,sun9i-a80-cpus-clk", NULL };
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

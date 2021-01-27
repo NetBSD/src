@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.10 2021/01/15 18:42:40 ryo Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.11 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.10 2021/01/15 18:42:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.11 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,12 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.10 2021/01/15 18:42:40 ryo Exp $")
 #define	 TX_CLK_DELAY			__BITS(6,5)
 #define	 PHY_INTERFACE_SEL		__BIT(0)
 
-static const char * compatible[] = {
-	"amlogic,meson8b-dwmac",
-	"amlogic,meson-gx-dwmac",
-	"amlogic,meson-gxbb-dwmac",
-	"amlogic,meson-axg-dwmac",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-dwmac" },
+	{ .compat = "amlogic,meson-gx-dwmac" },
+	{ .compat = "amlogic,meson-gxbb-dwmac" },
+	{ .compat = "amlogic,meson-axg-dwmac" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -146,7 +146,7 @@ meson_dwmac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

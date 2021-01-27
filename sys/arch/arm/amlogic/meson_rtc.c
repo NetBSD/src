@@ -1,4 +1,4 @@
-/* $NetBSD: meson_rtc.c,v 1.2 2019/01/20 20:22:13 jmcneill Exp $ */
+/* $NetBSD: meson_rtc.c,v 1.3 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_rtc.c,v 1.2 2019/01/20 20:22:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_rtc.c,v 1.3 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -55,9 +55,9 @@ struct meson_rtc_softc {
 	unsigned int		sc_busy;
 };
 
-static const char * const compatible[] = {
-	"amlogic,meson8b-rtc",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-rtc" },
+	DEVICE_COMPAT_EOL
 };
 
 static int meson_rtc_match(device_t, cfdata_t, void *);
@@ -112,7 +112,7 @@ meson_rtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: dwcwdt_fdt.c,v 1.4 2019/10/19 13:08:52 tnn Exp $ */
+/* $NetBSD: dwcwdt_fdt.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.4 2019/10/19 13:08:52 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,9 +82,9 @@ static const uint32_t wdt_torr[] = {
 
 #define	DWCWDT_PERIOD_DEFAULT		15
 
-static const char * const compatible[] = {
-	"snps,dw-wdt",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "snps,dw-wdt" },
+	DEVICE_COMPAT_EOL
 };
 
 struct dwcwdt_softc {
@@ -168,7 +168,7 @@ dwcwdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

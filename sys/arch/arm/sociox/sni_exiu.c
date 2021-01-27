@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_exiu.c,v 1.4 2020/05/31 23:55:18 thorpej Exp $	*/
+/*	$NetBSD: sni_exiu.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_exiu.c,v 1.4 2020/05/31 23:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_exiu.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,16 +74,17 @@ CFATTACH_DECL_NEW(sniexiu_acpi, sizeof(struct sniexiu_softc),
 static void sniexiu_attach_i(struct sniexiu_softc *);
 static int sniexiu_intr(void *);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "socionext,synquacer-exiu" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sniexiu_fdt_match(device_t parent, struct cfdata *match, void *aux)
 {
-	static const char * compatible[] = {
-		"socionext,synquacer-exiu",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

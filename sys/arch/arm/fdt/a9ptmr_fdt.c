@@ -1,4 +1,4 @@
-/* $NetBSD: a9ptmr_fdt.c,v 1.2 2021/01/15 18:42:40 ryo Exp $ */
+/* $NetBSD: a9ptmr_fdt.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9ptmr_fdt.c,v 1.2 2021/01/15 18:42:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9ptmr_fdt.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,17 +57,18 @@ struct a9ptmr_fdt_softc {
 CFATTACH_DECL_NEW(a9ptmr_fdt, sizeof(struct a9ptmr_fdt_softc),
     a9ptmr_fdt_match, a9ptmr_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,cortex-a9-twd-timer" },
+	{ .compat = "arm,cortex-a5-twd-timer" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 a9ptmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,cortex-a9-twd-timer",
-		"arm,cortex-a5-twd-timer",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

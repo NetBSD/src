@@ -1,4 +1,4 @@
-/* $NetBSD: mesongxbb_clkc.c,v 1.5 2021/01/27 01:49:36 thorpej Exp $ */
+/* $NetBSD: mesongxbb_clkc.c,v 1.6 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.5 2021/01/27 01:49:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.6 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -228,7 +228,7 @@ mesongxbb_clkc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -252,7 +252,7 @@ mesongxbb_clkc_attach(device_t parent, device_t self, void *aux)
 
 	meson_clk_attach(sc);
 
-	conf = of_search_compatible(phandle, compat_data)->data;
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": %s clock controller\n", conf->name);

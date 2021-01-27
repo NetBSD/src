@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_dwcmmc.c,v 1.5 2020/03/20 06:23:51 skrll Exp $ */
+/* $NetBSD: cycv_dwcmmc.c,v 1.6 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.5 2020/03/20 06:23:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.6 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,9 +63,9 @@ struct cycv_dwcmmc_softc {
 CFATTACH_DECL_NEW(cycv_dwcmmc, sizeof(struct dwc_mmc_softc),
 	cycv_dwcmmc_match, cycv_dwcmmc_attach, NULL, NULL);
 
-static const char * const cycv_dwcmmc_compat[] = {
-	"altr,socfpga-dw-mshc",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "altr,socfpga-dw-mshc" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -73,7 +73,7 @@ cycv_dwcmmc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, cycv_dwcmmc_compat);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

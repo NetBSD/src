@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.9 2019/05/08 13:40:14 isaki Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.9 2019/05/08 13:40:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -606,9 +606,9 @@ a64_acodec_dai_jack_detect(audio_dai_tag_t dai, u_int jack, int present)
 	return 0;
 }
 
-static const char * compatible[] = {
-	"allwinner,sun50i-a64-codec-analog",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun50i-a64-codec-analog" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -616,7 +616,7 @@ a64_acodec_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

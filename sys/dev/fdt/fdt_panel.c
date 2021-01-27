@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_panel.c,v 1.2 2019/12/19 16:00:52 jakllsch Exp $ */
+/* $NetBSD: fdt_panel.c,v 1.3 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.2 2019/12/19 16:00:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.3 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,9 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.2 2019/12/19 16:00:52 jakllsch Exp $
 #include <drm/drm_panel.h>
 #include <drm/drm_edid.h>
 
-static const char * const compatible[] = {
-	"simple-panel",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "simple-panel" },
+	DEVICE_COMPAT_EOL
 };
 
 struct panel_fdt_softc {
@@ -127,7 +127,7 @@ panel_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.11 2020/10/21 11:02:31 rin Exp $ */
+/* $NetBSD: simplefb.c,v 1.12 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.11 2020/10/21 11:02:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.12 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,9 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.11 2020/10/21 11:02:31 rin Exp $");
 
 #include <dev/wsfb/genfbvar.h>
 
-static const char * const compatible[] = {
-	"simple-framebuffer",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "simple-framebuffer" },
+	DEVICE_COMPAT_EOL
 };
 
 struct simplefb_softc {
@@ -231,7 +231,7 @@ simplefb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -255,7 +255,7 @@ CFATTACH_DECL_NEW(simplefb, sizeof(struct simplefb_softc),
 static int
 simplefb_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: pwmregulator.c,v 1.2 2021/01/01 03:07:51 ryo Exp $ */
+/* $NetBSD: pwmregulator.c,v 1.3 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmregulator.c,v 1.2 2021/01/01 03:07:51 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmregulator.c,v 1.3 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,9 @@ struct pwmregulator_softc {
 CFATTACH_DECL_NEW(pregulator, sizeof(struct pwmregulator_softc),
     pwmregulator_match, pwmregulator_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"pwm-regulator",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pwm-regulator" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -88,7 +88,7 @@ pwmregulator_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

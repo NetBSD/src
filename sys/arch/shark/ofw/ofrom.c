@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.28 2018/09/03 16:29:27 riastradh Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.29 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.28 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.29 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,14 +84,17 @@ const struct cdevsw ofrom_cdevsw = {
 	.d_flag = 0
 };
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rom" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 ofromprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
-	static const char *const compatible_strings[] = { "rom", NULL };
 
-	return (of_compatible(oba->oba_phandle, compatible_strings) == -1) ?
-	    0 : 5;
+	return of_compatible_match(oba->oba_phandle, compat_data) * 5;
 }
 
 

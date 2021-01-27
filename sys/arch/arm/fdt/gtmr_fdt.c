@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.8 2021/01/15 18:42:40 ryo Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.8 2021/01/15 18:42:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,17 +54,18 @@ CFATTACH_DECL_NEW(gtmr_fdt, 0, gtmr_fdt_match, gtmr_fdt_attach, NULL, NULL);
 /* The virtual timer list entry */
 #define GTMR_VTIMER 2
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,armv7-timer" },
+	{ .compat = "arm,armv8-timer" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 gtmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,armv7-timer",
-		"arm,armv8-timer",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

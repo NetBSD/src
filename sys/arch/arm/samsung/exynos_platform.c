@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.35 2021/01/27 02:01:53 thorpej Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.36 2021/01/27 03:16:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.35 2021/01/27 02:01:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.36 2021/01/27 03:16:37 thorpej Exp $");
 
 
 /*
@@ -208,7 +208,7 @@ exynos_platform_mpstart(void)
 	int (*mp_start)(void) = NULL;
 
 	const struct device_compatible_entry *cd =
-	    of_search_compatible(OF_finddevice("/"), mp_compat_data);
+	    of_compatible_lookup(OF_finddevice("/"), mp_compat_data);
 	if (cd)
 		mp_start = cd->data;
 
@@ -339,7 +339,7 @@ exynos5_platform_bootstrap(void)
 
 #if defined(MULTIPROCESSOR) && defined(EXYNOS5422_DISABLE_CA7_CLUSTER)
 	const struct device_compatible_entry *cd =
-	    of_search_compatible(OF_finddevice("/"), mp_compat_data);
+	    of_compatible_lookup(OF_finddevice("/"), mp_compat_data);
 	if (cd && cd->data == exynos5800_mpstart) {
 		void *fdt_data = __UNCONST(fdtbus_get_data());
 		int cpu_off, cpus_off, len;

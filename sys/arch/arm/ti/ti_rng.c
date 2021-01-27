@@ -1,4 +1,4 @@
-/* $NetBSD: ti_rng.c,v 1.4 2020/06/03 15:59:22 jmcneill Exp $ */
+/* $NetBSD: ti_rng.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.4 2020/06/03 15:59:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.4 2020/06/03 15:59:22 jmcneill Exp $");
 #include <arm/ti/ti_prcm.h>
 #include <arm/ti/ti_rngreg.h>
 
-static const char * const compatible[] = {
-	"ti,omap4-rng",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,omap4-rng" },
+	DEVICE_COMPAT_EOL
 };
 
 struct ti_rng_softc {
@@ -72,7 +72,7 @@ ti_rng_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

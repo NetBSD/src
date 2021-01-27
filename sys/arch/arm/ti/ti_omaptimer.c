@@ -1,7 +1,7 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.8 2021/01/27 02:12:16 thorpej Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.8 2021/01/27 02:12:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ omaptimer_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -164,7 +164,7 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		device_printf(self, "unable to map bus space");

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nand.c,v 1.9 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_nand.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.9 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,9 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.9 2021/01/15 22:47:32 jmcneill Exp 
 
 #define	NDFC_RAM_SIZE		1024
 
-static const char * compatible[] = {
-	"allwinner,sun4i-a10-nand",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-nand" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_nand_softc;
@@ -631,7 +631,7 @@ sunxi_nand_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

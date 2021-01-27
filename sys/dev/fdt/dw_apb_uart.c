@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.9 2021/01/15 20:50:49 ryo Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.9 2021/01/15 20:50:49 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,9 +45,9 @@ __KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.9 2021/01/15 20:50:49 ryo Exp $");
 static int dw_apb_uart_match(device_t, cfdata_t, void *);
 static void dw_apb_uart_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"snps,dw-apb-uart",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "snps,dw-apb-uart" },
+	DEVICE_COMPAT_EOL
 };
 
 struct dw_apb_uart_softc {
@@ -67,7 +67,7 @@ dw_apb_uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -152,7 +152,7 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 static int
 dw_apb_uart_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

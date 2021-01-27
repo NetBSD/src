@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.7 2021/01/17 19:51:43 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.7 2021/01/17 19:51:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,12 +90,14 @@ static bus_addr_t arm_simplefb_addr;
 static bus_size_t arm_simplefb_size;
 static bus_space_handle_t arm_simplefb_bsh;
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "simple-framebuffer" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 arm_simplefb_find_node(void)
 {
-	static const char * simplefb_compatible[] = {
-		"simple-framebuffer", NULL
-	};
 	int chosen_phandle, child;
 
 	chosen_phandle = OF_finddevice("/chosen");
@@ -105,7 +107,7 @@ arm_simplefb_find_node(void)
 	for (child = OF_child(chosen_phandle); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
-		if (!of_match_compatible(child, simplefb_compatible))
+		if (!of_compatible_match(child, compat_data))
 			continue;
 
 		return child;

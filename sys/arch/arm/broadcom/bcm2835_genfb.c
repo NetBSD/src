@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.11 2020/12/01 04:17:10 rin Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.11 2020/12/01 04:17:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,13 +71,17 @@ int (*bcmgenfb_ioctl_handler)(void *, void *, u_long, void *, int, struct lwp *)
 CFATTACH_DECL_NEW(bcmgenfb, sizeof(struct bcmgenfb_softc),
     bcmgenfb_match, bcmgenfb_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-fb" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 bcmgenfb_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-fb", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

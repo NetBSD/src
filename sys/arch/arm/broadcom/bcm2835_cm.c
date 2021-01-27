@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_cm.c,v 1.2 2017/12/10 21:38:26 skrll Exp $ */
+/*	$NetBSD: bcm2835_cm.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_cm.c,v 1.2 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_cm.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,17 +68,18 @@ static int bcmcm_wait(struct bcm2835cm_softc *, int, int);
 CFATTACH_DECL_NEW(bcmcm_fdt, sizeof(struct bcm2835cm_softc),
     bcmcm_match, bcmcm_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-cprman" },
+	DEVICE_COMPAT_EOL
+};
+
 /* ARGSUSED */
 static int
 bcmcm_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = {
-	    "brcm,bcm2835-cprman",
-	    NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

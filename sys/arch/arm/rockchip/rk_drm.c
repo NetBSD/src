@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
+/* $NetBSD: rk_drm.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,9 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $");
 static TAILQ_HEAD(, rk_drm_ports) rk_drm_ports =
     TAILQ_HEAD_INITIALIZER(rk_drm_ports);
 
-static const char * const compatible[] = {
-	"rockchip,display-subsystem",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,display-subsystem" },
+	DEVICE_COMPAT_EOL
 };
 
 static const char * fb_compatible[] = {
@@ -117,7 +117,7 @@ rk_drm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

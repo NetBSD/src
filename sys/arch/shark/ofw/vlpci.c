@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.9 2019/01/03 18:28:21 macallan Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.9 2019/01/03 18:28:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -97,7 +97,10 @@ struct vlpci_softc {
 CFATTACH_DECL_NEW(vlpci, sizeof(struct vlpci_softc),
     vlpci_match, vlpci_attach, NULL, NULL);
 
-static const char * const compat_strings[] = { "via,vt82c505", NULL };
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "via,vt82c505" },
+	DEVICE_COMPAT_EOL
+};
 
 vaddr_t vlpci_mem_vaddr = 0;
 paddr_t vlpci_mem_paddr;
@@ -192,10 +195,8 @@ vlpci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct ofbus_attach_args * const oba = aux;
 
-	if (of_compatible(oba->oba_phandle, compat_strings) < 0)
-		return 0;
-
-	return 2;	/* beat generic ofbus */
+						/* beat generic ofbus */
+	return of_compatible_match(oba->oba_phandle, compat_data) * 2;
 }
 
 static void

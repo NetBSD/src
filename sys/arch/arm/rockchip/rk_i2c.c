@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.9 2020/12/23 16:02:11 thorpej Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.9 2020/12/23 16:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,9 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.9 2020/12/23 16:02:11 thorpej Exp $");
 #define	RKI2C_TXDATA(n)		(0x100 + (n) * 4)
 #define	RKI2C_RXDATA(n)		(0x200 + (n) * 4)
 
-static const char * const compatible[] = {
-	"rockchip,rk3399-i2c",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-i2c" },
+	DEVICE_COMPAT_EOL
 };
 
 struct rk_i2c_softc {
@@ -366,7 +366,7 @@ rk_i2c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: mesongxl_usb3phy.c,v 1.1 2019/04/19 19:07:56 jmcneill Exp $ */
+/* $NetBSD: mesongxl_usb3phy.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mesongxl_usb3phy.c,v 1.1 2019/04/19 19:07:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongxl_usb3phy.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,9 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: mesongxl_usb3phy.c,v 1.1 2019/04/19 19:07:56 jmcneil
 static int mesongxl_usb3phy_match(device_t, cfdata_t, void *);
 static void mesongxl_usb3phy_attach(device_t, device_t, void *);
 
-static const char *compatible[] = {
-	"amlogic,meson-gxl-usb3-phy",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson-gxl-usb3-phy" },
+	DEVICE_COMPAT_EOL
 };
 
 struct mesongxl_usb3phy_softc {
@@ -148,7 +148,7 @@ mesongxl_usb3phy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

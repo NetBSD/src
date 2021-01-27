@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.6 2021/01/20 21:59:48 reinoud Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.6 2021/01/20 21:59:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,9 @@ CFATTACH_DECL3_NEW(virtio_mmio_fdt, sizeof(struct virtio_mmio_fdt_softc),
     virtio_mmio_fdt_match, virtio_mmio_fdt_attach, virtio_mmio_fdt_detach, NULL,
     virtio_mmio_fdt_rescan, (void *)voidop, DVF_DETACH_SHUTDOWN);
 
-static const char * const compatible[] = {
-	"virtio,mmio",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "virtio,mmio" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -66,7 +66,7 @@ virtio_mmio_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

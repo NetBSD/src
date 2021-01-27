@@ -1,4 +1,4 @@
-/* $NetBSD: usbnopphy.c,v 1.1 2019/10/30 21:37:56 jmcneill Exp $ */
+/* $NetBSD: usbnopphy.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: usbnopphy.c,v 1.1 2019/10/30 21:37:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnopphy.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,9 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: usbnopphy.c,v 1.1 2019/10/30 21:37:56 jmcneill Exp $
 static int usbnopphy_match(device_t, cfdata_t, void *);
 static void usbnopphy_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"usb-nop-xceiv",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "usb-nop-xceiv" },
+	DEVICE_COMPAT_EOL
 };
 
 struct usbnopphy_softc {
@@ -117,7 +117,7 @@ usbnopphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

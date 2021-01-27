@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp 
 #define	GMAC_TX_RATE_MII		25000000
 #define	GMAC_TX_RATE_RGMII		125000000
 
-static const char * compatible[] = {
-	"allwinner,sun7i-a20-gmac",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun7i-a20-gmac" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -116,7 +116,7 @@ sunxi_gmac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

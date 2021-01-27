@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_a83t_ccu.c,v 1.6 2019/01/02 17:29:58 jmcneill Exp $ */
+/* $NetBSD: sun8i_a83t_ccu.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.6 2019/01/02 17:29:58 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,9 +69,9 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.6 2019/01/02 17:29:58 jmcneill 
 static int sun8i_a83t_ccu_match(device_t, cfdata_t, void *);
 static void sun8i_a83t_ccu_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"allwinner,sun8i-a83t-ccu",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-a83t-ccu" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(sunxi_a83t_ccu, sizeof(struct sunxi_ccu_softc),
@@ -369,7 +369,7 @@ sun8i_a83t_ccu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

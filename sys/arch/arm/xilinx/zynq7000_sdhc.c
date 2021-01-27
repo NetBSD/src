@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_sdhc.c,v 1.1 2019/06/11 13:01:48 skrll Exp $	*/
+/*	$NetBSD: zynq7000_sdhc.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq7000_sdhc.c,v 1.1 2019/06/11 13:01:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq7000_sdhc.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,9 +60,9 @@ CFATTACH_DECL_NEW(sdhc_fdt, sizeof(struct sdhc_fdt_softc),
     sdhc_match, sdhc_attach, NULL, NULL);
 
 
-static const char * compatible[] = {
-	"arasan,sdhci-8.9a",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arasan,sdhci-8.9a" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -71,7 +71,7 @@ sdhc_match(device_t parent, cfdata_t cf, void *aux)
 
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

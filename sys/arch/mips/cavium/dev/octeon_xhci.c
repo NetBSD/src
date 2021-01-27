@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_xhci.c,v 1.3 2020/10/15 09:32:40 jmcneill Exp $ */
+/*	$NetBSD: octeon_xhci.c,v 1.4 2021/01/27 03:10:21 thorpej Exp $ */
 /*	$OpenBSD: octxhci.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
 
 /*
@@ -66,9 +66,9 @@ static struct mips_bus_space octxhci_bus_tag;
 CFATTACH_DECL_NEW(octxhci, sizeof(struct octxhci_softc),
     octxhci_match, octxhci_attach, NULL, NULL);
 
-static const char * compatible[] = {
-	"cavium,octeon-7130-usb-uctl",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cavium,octeon-7130-usb-uctl" },
+	DEVICE_COMPAT_EOL
 };
 
 int
@@ -76,7 +76,7 @@ octxhci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void

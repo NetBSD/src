@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.32 2021/01/27 02:09:39 thorpej Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.33 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.32 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.33 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -968,7 +968,7 @@ sunxi_emac_has_internal_phy(struct sunxi_emac_softc *sc)
 		return false;
 
 	/* For internal PHY, check compatible string of parent node */
-	return of_match_compat_data(OF_parent(phy), mdio_internal_compat);
+	return of_compatible_match(OF_parent(phy), mdio_internal_compat);
 }
 
 static int
@@ -1355,7 +1355,7 @@ sunxi_emac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -1373,7 +1373,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	sc->phandle = phandle;
 	sc->bst = faa->faa_bst;
 	sc->dmat = faa->faa_dmat;
-	sc->type = of_search_compatible(phandle, compat_data)->value;
+	sc->type = of_compatible_lookup(phandle, compat_data)->value;
 	sc->phy_id = sunxi_emac_get_phyid(sc);
 
 	aprint_naive("\n");

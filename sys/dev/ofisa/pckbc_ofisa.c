@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.18 2021/01/27 02:31:03 thorpej Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.19 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.18 2021/01/27 02:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.19 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ pckbc_ofisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 
-	return of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 5 : 0;
+	return of_compatible_match(aa->oba.oba_phandle, compat_data) ? 5 : 0;
 }
 
 static void
@@ -103,7 +103,7 @@ pckbc_ofisa_attach(device_t parent, device_t self, void *aux)
 
 	phandle = OF_child(aa->oba.oba_phandle);
 	while (phandle != 0) {
-		dce = of_search_compatible(phandle, port_compat_data);
+		dce = of_compatible_lookup(phandle, port_compat_data);
 		if (dce != NULL) {
 			ofisa_intr_get(phandle, &osc->sc_intr[dce->value], 1);
 		}

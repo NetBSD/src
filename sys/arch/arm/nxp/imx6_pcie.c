@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.5 2021/01/27 02:14:49 thorpej Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.5 2021/01/27 02:14:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -100,7 +100,7 @@ imx6_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -127,7 +127,7 @@ imx6_pcie_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpr_write = imx6_pcie_gpr_write;
 	sc->sc_reset = imx6_pcie_reset;
 	sc->sc_have_sw_reset =
-	    (bool)of_search_compatible(phandle, compat_data)->value;
+	    (bool)of_compatible_lookup(phandle, compat_data)->value;
 
 	if (fdtbus_get_reg_byname(phandle, "dbi", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

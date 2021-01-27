@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_ahcisata.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: imx_ahcisata.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ahcisata.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ahcisata.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,13 +79,17 @@ static int imx_ahcisata_init_clocks(struct imx_ahcisata_softc *);
 CFATTACH_DECL_NEW(imx_ahcisata, sizeof(struct imx_ahcisata_softc),
 	imx_ahcisata_match, imx_ahcisata_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-ahci" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imx_ahcisata_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx6q-ahci", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

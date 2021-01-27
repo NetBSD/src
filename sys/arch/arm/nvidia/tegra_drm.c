@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.10 2018/08/27 15:31:51 riastradh Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.11 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.10 2018/08/27 15:31:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.11 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,14 +87,28 @@ static struct drm_driver tegra_drm_driver = {
 CFATTACH_DECL_NEW(tegra_drm, sizeof(struct tegra_drm_softc),
 	tegra_drm_match, tegra_drm_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra124-host1x" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_drm_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * compatible[] = { "nvidia,tegra124-host1x", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
+
+static const struct device_compatible_entry hdmi_compat[] = {
+	{ .compat = "nvidia,tegra124-hdmi" },
+	DEVICE_COMPAT_EOL
+};
+
+static const struct device_compatible_entry dc_compat[] = {
+	{ .compat = "nvidia,tegra124-dc" },
+	DEVICE_COMPAT_EOL
+};
 
 static void
 tegra_drm_attach(device_t parent, device_t self, void *aux)
@@ -104,9 +118,7 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	struct drm_driver * const driver = &tegra_drm_driver;
 	prop_dictionary_t prop = device_properties(self);
 	int error, node, hdmi_phandle, ddc_phandle;
-	const char * const hdmi_compat[] = { "nvidia,tegra124-hdmi", NULL };
-	const char * const dc_compat[] = { "nvidia,tegra124-dc", NULL };
-	const char * const hdmi_supplies[] = {
+	static const char * const hdmi_supplies[] = {
 		"hdmi-supply", "pll-supply", "vdd-supply"
 	};
 	struct fdtbus_regulator *reg;
@@ -134,13 +146,13 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	ndc = 0;
 	hdmi_phandle = -1;
 	for (node = OF_child(faa->faa_phandle); node; node = OF_peer(node)) {
-		if (of_match_compatible(node, hdmi_compat)) {
+		if (of_compatible_match(node, hdmi_compat)) {
 			sc->sc_clk_hdmi = fdtbus_clock_get(node, "hdmi");
 			sc->sc_clk_hdmi_parent = fdtbus_clock_get(node,
 			    "parent");
 			sc->sc_rst_hdmi = fdtbus_reset_get(node, "hdmi");
 			hdmi_phandle = node;
-		} else if (of_match_compatible(node, dc_compat) &&
+		} else if (of_compatible_match(node, dc_compat) &&
 			   ndc < __arraycount(sc->sc_clk_dc)) {
 			sc->sc_clk_dc[ndc] = fdtbus_clock_get(node, "dc");
 			sc->sc_clk_dc_parent[ndc] = fdtbus_clock_get(node,

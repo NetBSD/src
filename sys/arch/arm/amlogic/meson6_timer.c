@@ -1,4 +1,4 @@
-/*	$NetBSD: meson6_timer.c,v 1.1 2019/08/14 15:08:53 skrll Exp $	*/
+/*	$NetBSD: meson6_timer.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson6_timer.c,v 1.1 2019/08/14 15:08:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson6_timer.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,17 +97,17 @@ meson6_timer_get_timecount(struct timecounter *tc)
 	return TIMER_READ(sc, MESON_TIMERE);
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson6-timer" },
+	DEVICE_COMPAT_EOL
+};
 
 static int
 meson6_timer_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-	    "amlogic,meson6-timer",
-	    NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

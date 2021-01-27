@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.10 2019/06/07 13:43:44 skrll Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.11 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.10 2019/06/07 13:43:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.11 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,16 +100,18 @@ static struct timecounter bcm2835tmr_timecounter = {
 CFATTACH_DECL_NEW(bcmtmr_fdt, sizeof(struct bcm2835tmr_softc),
     bcmtmr_match, bcmtmr_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-system-timer" },
+	DEVICE_COMPAT_EOL
+};
+
 /* ARGSUSED */
 static int
 bcmtmr_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = {
-	    "brcm,bcm2835-system-timer",
-	    NULL
-	};
 	struct fdt_attach_args * const faa = aux;
-	return of_match_compatible(faa->faa_phandle, compatible);
+
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

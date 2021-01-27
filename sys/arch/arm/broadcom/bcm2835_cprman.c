@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_cprman.c,v 1.4 2019/12/30 15:36:37 skrll Exp $ */
+/* $NetBSD: bcm2835_cprman.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.4 2019/12/30 15:36:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,16 +155,18 @@ cprman_add_clock(struct cprman_softc *sc, u_int id, const char *name)
 	sc->sc_clk[id].id = id;
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-cprman" },
+	{ .compat = "brcm,bcm2711-cprman" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 cprman_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-	    "brcm,bcm2835-cprman",
-	    "brcm,bcm2711-cprman",
-	    NULL };
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

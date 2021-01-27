@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.28 2021/01/15 23:11:59 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.29 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.28 2021/01/15 23:11:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.29 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,17 +78,18 @@ struct tegra_sdhc_softc {
 CFATTACH_DECL_NEW(tegra_sdhc, sizeof(struct tegra_sdhc_softc),
 	tegra_sdhc_match, tegra_sdhc_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-sdhci" },
+	{ .compat = "nvidia,tegra124-sdhci" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-sdhci",
-		"nvidia,tegra124-sdhci",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

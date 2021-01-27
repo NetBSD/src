@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.7 2020/08/04 13:20:45 kardel Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.7 2020/08/04 13:20:45 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,16 +77,17 @@ static void bcmspi_recv(struct bcmspi_softc * const);
 CFATTACH_DECL_NEW(bcmspi, sizeof(struct bcmspi_softc),
     bcmspi_match, bcmspi_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-spi" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 bcmspi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"brcm,bcm2835-spi",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_otg.c,v 1.1 2019/10/27 16:31:26 jmcneill Exp $ */
+/* $NetBSD: ti_otg.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_otg.c,v 1.1 2019/10/27 16:31:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_otg.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: ti_otg.c,v 1.1 2019/10/27 16:31:26 jmcneill Exp $");
 
 #include <dev/fdt/fdtvar.h>
 
-static const char * compatible [] = {
-	"ti,am33xx-usb",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am33xx-usb" },
+	DEVICE_COMPAT_EOL
 };
 
 struct tiotg_softc {
@@ -65,7 +65,7 @@ tiotg_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

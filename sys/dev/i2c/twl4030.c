@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.5 2021/01/27 02:28:37 thorpej Exp $ */
+/* $NetBSD: twl4030.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.5 2021/01/27 02:28:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,10 +390,10 @@ twl_attach(device_t parent, device_t self, void *aux)
 
 #ifdef FDT
 	for (int child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
-		if (of_match_compat_data(child, gpio_compat_data)) {
+		if (of_compatible_match(child, gpio_compat_data)) {
 			aprint_normal(", GPIO");
 			twl_gpio_attach(sc, child);
-		} else if (of_match_compat_data(child, rtc_compat_data)) {
+		} else if (of_compatible_match(child, rtc_compat_data)) {
 			aprint_normal(", RTC");
 			twl_rtc_attach(sc, child);
 		}

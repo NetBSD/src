@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.24 2020/11/03 09:26:41 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.25 2021/01/27 03:10:21 thorpej Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -304,9 +304,9 @@ static const struct bwfm_sdio_product {
 	},
 };
 
-static const char * const compatible[] = {
-	"brcm,bcm4329-fmac",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm4329-fmac" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -583,7 +583,7 @@ bwfm_fdt_find_phandle(device_t self, device_t parent)
 		phandle = OF_child(OF_finddevice(str));
 	}
 
-	if (!of_match_compatible(phandle, compatible))
+	if (!of_compatible_match(phandle, compat_data))
 		return -1;
 
 	return phandle;

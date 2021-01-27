@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.15 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.16 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.15 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.16 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,17 +56,18 @@ static struct tegra_pmc_softc *pmc_softc = NULL;
 CFATTACH_DECL_NEW(tegra_pmc, sizeof(struct tegra_pmc_softc),
 	tegra_pmc_match, tegra_pmc_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-pmc" },
+	{ .compat = "nvidia,tegra124-pmc" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_pmc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-pmc",
-		"nvidia,tegra124-pmc",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_intc.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_intc.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.6 2021/01/15 00:38:23 jmcneill Exp 
 #define	INTC_FORCE_REG(n)	(0x70 + ((n) * 4))
 #define	INTC_SRC_PRIO_REG(n)	(0x80 + ((n) * 4))
 
-static const char * const compatible[] = {
-	"allwinner,sun4i-a10-ic",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-ic" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_intc_softc {
@@ -218,7 +218,7 @@ sunxi_intc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

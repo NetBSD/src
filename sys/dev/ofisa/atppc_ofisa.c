@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.13 2021/01/27 02:31:03 thorpej Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.14 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.13 2021/01/27 02:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.14 2021/01/27 03:10:21 thorpej Exp $");
 
 #include "opt_atppc.h"
 
@@ -88,7 +88,7 @@ atppc_ofisa_match(device_t parent, cfdata_t match, void *aux)
 	struct ofisa_attach_args *aa = aux;
 	int rv;
 
-	rv = of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 5 : 0;
+	rv = of_compatible_match(aa->oba.oba_phandle, compat_data) ? 5 : 0;
 #ifdef _LPT_OFISA_MD_MATCH
 	if (!rv)
 		rv = lpt_ofisa_md_match(parent, match, aux);

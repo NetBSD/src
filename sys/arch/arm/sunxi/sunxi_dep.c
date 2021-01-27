@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_dep.c,v 1.6 2021/01/27 02:09:39 thorpej Exp $	*/
+/*	$NetBSD: sunxi_dep.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.6 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,7 +74,7 @@ sunxi_dep_match(device_t parent, cfdata_t cf, void *aux)
 #if NSUNXI_DEBE > 0
 	struct fdt_attach_args * const faa = aux;
 
-	return  of_match_compat_data(faa->faa_phandle, compat_data);
+	return  of_compatible_match(faa->faa_phandle, compat_data);
 #else
 	return 0;
 #endif

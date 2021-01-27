@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pinmux.c,v 1.8 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: tegra_pinmux.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.8 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,7 +79,7 @@ static const struct device_compatible_entry compat_data[] = {
 #ifdef SOC_TEGRA210
 	{ .compat = "nvidia,tegra210-pinmux",	.data = &tegra210_pinmux_conf },
 #endif
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static const struct tegra_pinmux_pins *
@@ -249,7 +249,7 @@ tegra_pinmux_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -277,7 +277,7 @@ tegra_pinmux_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
-	sc->sc_conf = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": Pinmux\n");

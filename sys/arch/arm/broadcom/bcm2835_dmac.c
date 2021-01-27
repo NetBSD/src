@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.17 2020/09/30 23:58:13 jmcneill Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.17 2020/09/30 23:58:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,16 +96,17 @@ void		bcm_dmac_dump_regs(void);
 CFATTACH_DECL_NEW(bcmdmac_fdt, sizeof(struct bcm_dmac_softc),
 	bcm_dmac_match, bcm_dmac_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-dma" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 bcm_dmac_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"brcm,bcm2835-dma",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

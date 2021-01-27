@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_clk.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx6_clk.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -91,13 +91,17 @@ static void imx6ccm_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(imx6ccm, sizeof(struct imx6ccm_softc),
     imx6ccm_match, imx6ccm_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-ccm" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imx6ccm_match(device_t parent, cfdata_t cfdata, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx6q-ccm", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

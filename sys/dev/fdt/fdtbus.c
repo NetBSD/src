@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.37 2021/01/27 02:24:10 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.38 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.37 2021/01/27 02:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.38 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ fdt_match(device_t parent, cfdata_t cf, void *aux)
 	int match;
 
 	/* Check compatible string */
-	match = of_match_compat_data(phandle, compat_data);
+	match = of_compatible_match(phandle, compat_data);
 	if (match)
 		return match;
 

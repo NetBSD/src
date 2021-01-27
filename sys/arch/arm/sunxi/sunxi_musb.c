@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.9 2021/01/27 02:09:39 thorpej Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.9 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -294,7 +294,7 @@ sunxi_musb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -370,7 +370,7 @@ sunxi_musb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_poll = sunxi_musb_poll;
 	sc->sc_intr_poll_arg = sc;
 	sc->sc_mode = MOTG_MODE_HOST;
-	sc->sc_ep_max = of_search_compatible(phandle, compat_data)->value;
+	sc->sc_ep_max = of_compatible_lookup(phandle, compat_data)->value;
 	sc->sc_ep_fifosize = 512;
 
 	aprint_naive("\n");

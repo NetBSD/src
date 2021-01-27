@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_fdt.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $ */
+/* $NetBSD: dwiic_fdt.c,v 1.4 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.4 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.3 2021/01/15 22:35:39 jmcneill Exp $
 #include <dev/fdt/fdtvar.h>
 #include <dev/ic/dwiic_var.h>
 
-static const char * const compatible[] = {
-	"snps,designware-i2c",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "snps,designware-i2c" },
+	DEVICE_COMPAT_EOL
 };
 
 struct dwiic_fdt_softc {
@@ -61,7 +61,7 @@ dwiic_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void

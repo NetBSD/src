@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.2 2021/01/15 22:59:50 jmcneill Exp $ */
+/* $NetBSD: ti_edma.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.2 2021/01/15 22:59:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,9 @@ CFATTACH_DECL_NEW(ti_edma, sizeof(struct edma_softc),
 #define EDMA_WRITE(sc, reg, val) \
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 
-static const char * compatible[] = {
-	"ti,edma3-tpcc",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,edma3-tpcc" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -106,7 +106,7 @@ edma_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

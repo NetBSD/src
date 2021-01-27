@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_gpc.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $	*/
+/*	$NetBSD: imx7_gpc.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_gpc.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_gpc.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -91,17 +91,18 @@ struct fdtbus_interrupt_controller_func imx7gpc_funcs = {
 CFATTACH_DECL_NEW(imx7gpc, sizeof(struct imx7gpc_softc),
     imx7gpc_match, imx7gpc_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx7d-gpc" },
+	{ .compat = "fsl,imx8mq-gpc" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imx7gpc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"fsl,imx7d-gpc",
-		"fsl,imx8mq-gpc",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

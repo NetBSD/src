@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.4 2021/01/15 18:42:40 ryo Exp $ */
+/* $NetBSD: meson_uart.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.4 2021/01/15 18:42:40 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -75,12 +75,12 @@ static int	meson_uart_param(struct tty *, struct termios *);
 
 extern struct cfdriver mesonuart_cd;
 
-static const char * const compatible[] = {
-	"amlogic,meson6-uart",
-	"amlogic,meson8-uart",
-	"amlogic,meson8b-uart",
-	"amlogic,meson-gx-uart",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson6-uart" },
+	{ .compat = "amlogic,meson8-uart" },
+	{ .compat = "amlogic,meson8b-uart" },
+	{ .compat = "amlogic,meson-gx-uart" },
+	DEVICE_COMPAT_EOL
 };
 
 struct meson_uart_softc {
@@ -151,7 +151,7 @@ meson_uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -513,7 +513,7 @@ meson_uart_rxsoft(void *priv)
 static int
 meson_uart_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

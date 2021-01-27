@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_cpu.c,v 1.5 2020/08/25 13:33:43 skrll Exp $ */
+/* $NetBSD: tegra124_cpu.c,v 1.6 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.5 2020/08/25 13:33:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.6 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -119,16 +119,20 @@ static struct tegra124_speedo {
 static struct clk *tegra124_clk_pllx = NULL;
 static struct fdtbus_regulator *tegra124_reg_vddcpu = NULL;
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra124" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra124_cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124", NULL };
 	struct fdt_attach_args *faa = aux;
 
 	if (OF_finddevice("/cpus/cpu@0") != faa->faa_phandle)
 		return 0;
 
-	return of_match_compatible(OF_finddevice("/"), compatible);
+	return of_compatible_match(OF_finddevice("/"), compat_data);
 }
 
 static void

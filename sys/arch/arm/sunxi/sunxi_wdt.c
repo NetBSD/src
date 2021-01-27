@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_wdt.c,v 1.5 2021/01/27 02:09:39 thorpej Exp $ */
+/* $NetBSD: sunxi_wdt.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.5 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -202,7 +202,7 @@ sunxi_wdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -235,7 +235,7 @@ sunxi_wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_period = SUNXI_WDT_PERIOD_DEFAULT;
 
-	type = of_search_compatible(phandle, compat_data)->value;
+	type = of_compatible_lookup(phandle, compat_data)->value;
 	switch (type) {
 	case WDT_SUN4I:
 		sc->sc_smw.smw_setmode = sun4i_wdt_setmode;

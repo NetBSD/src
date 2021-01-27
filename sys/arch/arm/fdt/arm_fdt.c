@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.13 2020/12/17 08:47:18 skrll Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.14 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.13 2020/12/17 08:47:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.14 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,12 @@ arm_fdt_platform(void)
 		int match, best_match = 0;
 
 		__link_set_foreach(info, arm_platforms) {
-			const char * const compat[] = { (*info)->api_compat, NULL };
-			match = of_match_compatible(phandle, compat);
+			const struct device_compatible_entry compat_data[] = {
+				{ .compat = (*info)->api_compat },
+				DEVICE_COMPAT_EOL
+			};
+
+			match = of_compatible_match(phandle, compat_data);
 			if (match > best_match) {
 				best_match = match;
 				best_info = *info;

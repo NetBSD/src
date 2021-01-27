@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.19 2018/10/17 05:30:24 skrll Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.20 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.19 2018/10/17 05:30:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.20 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -48,11 +48,11 @@ static void	psci_fdt_attach(device_t, device_t, void *);
 
 static int	psci_fdt_init(const int);
 
-static const char * const compatible[] = {
-	"arm,psci",
-	"arm,psci-0.2",
-	"arm,psci-1.0",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,psci" },
+	{ .compat = "arm,psci-0.2" },
+	{ .compat = "arm,psci-1.0" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(psci_fdt, 0, psci_fdt_match, psci_fdt_attach, NULL, NULL);
@@ -81,7 +81,7 @@ psci_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

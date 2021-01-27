@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.26 2020/04/30 03:40:52 riastradh Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.27 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.26 2020/04/30 03:40:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.27 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -737,19 +737,20 @@ static void	tegra210_car_parent_init(struct tegra210_car_softc *);
 CFATTACH_DECL_NEW(tegra210_car, sizeof(struct tegra210_car_softc),
 	tegra210_car_match, tegra210_car_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-car" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra210_car_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra210-car", NULL };
 	struct fdt_attach_args * const faa = aux;
 
 #if 0
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 #else
-	if (of_match_compatible(faa->faa_phandle, compatible) == 0)
-		return 0;
-
-	return 999;
+	return of_compatible_match(faa->faa_phandle, compat_data) ? 999 : 0;
 #endif
 }
 

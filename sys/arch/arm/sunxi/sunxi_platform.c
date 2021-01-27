@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.40 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.41 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.40 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.41 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -204,25 +204,25 @@ sunxi_platform_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "rgephy")) {
 		/* Pine64+ and NanoPi NEO Plus2 gigabit ethernet workaround */
-		const char * compat[] = {
-			"pine64,pine64-plus",
-			"friendlyarm,nanopi-neo-plus2",
-			NULL
+		static const struct device_compatible_entry compat_data[] = {
+			{ .compat = "pine64,pine64-plus" },
+			{ .compat = "friendlyarm,nanopi-neo-plus2" },
+			DEVICE_COMPAT_EOL
 		};
-		if (of_match_compatible(OF_finddevice("/"), compat)) {
+		if (of_compatible_match(OF_finddevice("/"), compat_data)) {
 			prop_dictionary_set_bool(prop, "no-rx-delay", true);
 		}
 	}
 
 	if (device_is_a(self, "armgtmr")) {
 		/* Allwinner A64 has an unstable architectural timer */
-		const char * compat[] = {
-			"allwinner,sun50i-a64",
+		static const struct device_compatible_entry compat_data[] = {
+			{ .compat = "allwinner,sun50i-a64" },
 			/* Cubietruck Plus triggers this problem as well. */
-			"allwinner,sun8i-a83t",
-			NULL
+			{ .compat = "allwinner,sun8i-a83t" },
+			DEVICE_COMPAT_EOL
 		};
-		if (of_match_compatible(OF_finddevice("/"), compat)) {
+		if (of_compatible_match(OF_finddevice("/"), compat_data)) {
 			prop_dictionary_set_bool(prop, "sun50i-a64-unstable-timer", true);
 		}
 	}

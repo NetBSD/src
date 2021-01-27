@@ -1,4 +1,4 @@
-/* $NetBSD: fixedclock.c,v 1.5 2018/09/09 07:21:18 aymeric Exp $ */
+/* $NetBSD: fixedclock.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedclock.c,v 1.5 2018/09/09 07:21:18 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedclock.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,13 +74,17 @@ struct fixedclock_softc {
 CFATTACH_DECL_NEW(fclock, sizeof(struct fixedclock_softc),
     fixedclock_match, fixedclock_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fixed-clock" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 fixedclock_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fixed-clock", NULL };
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

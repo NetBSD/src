@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_fdt.c,v 1.5 2021/01/15 20:50:49 ryo Exp $ */
+/* $NetBSD: ehci_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_fdt.c,v 1.5 2021/01/15 20:50:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,16 +52,17 @@ CFATTACH_DECL2_NEW(ehci_fdt, sizeof(struct ehci_softc),
 	ehci_fdt_match, ehci_fdt_attach, NULL,
 	ehci_activate, NULL, ehci_childdet);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "generic-ehci" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 ehci_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"generic-ehci",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

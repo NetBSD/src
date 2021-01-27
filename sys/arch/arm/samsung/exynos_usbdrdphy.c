@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_usbdrdphy.c,v 1.5 2021/01/27 02:01:53 thorpej Exp $ */
+/* $NetBSD: exynos_usbdrdphy.c,v 1.6 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exynos_usbdrdphy.c,v 1.5 2021/01/27 02:01:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_usbdrdphy.c,v 1.6 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -227,7 +227,7 @@ exynos_usbdrdphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

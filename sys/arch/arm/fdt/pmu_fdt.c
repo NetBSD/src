@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.7 2021/01/15 18:42:41 ryo Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.7 2021/01/15 18:42:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,22 +62,22 @@ static void	pmu_fdt_attach(device_t, device_t, void *);
 static void	pmu_fdt_init(device_t);
 static int	pmu_fdt_intr_distribute(const int, int, void *);
 
-static const char * const compatible[] = {
-	"arm,armv8-pmuv3",
-	"arm,cortex-a73-pmu",
-	"arm,cortex-a72-pmu",
-	"arm,cortex-a57-pmu",
-	"arm,cortex-a53-pmu",
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,armv8-pmuv3" },
+	{ .compat = "arm,cortex-a73-pmu" },
+	{ .compat = "arm,cortex-a72-pmu" },
+	{ .compat = "arm,cortex-a57-pmu" },
+	{ .compat = "arm,cortex-a53-pmu" },
 
-	"arm,cortex-a35-pmu",
-	"arm,cortex-a17-pmu",
-	"arm,cortex-a12-pmu",
-	"arm,cortex-a9-pmu",
-	"arm,cortex-a8-pmu",
-	"arm,cortex-a7-pmu",
-	"arm,cortex-a5-pmu",
+	{ .compat = "arm,cortex-a35-pmu" },
+	{ .compat = "arm,cortex-a17-pmu" },
+	{ .compat = "arm,cortex-a12-pmu" },
+	{ .compat = "arm,cortex-a9-pmu" },
+	{ .compat = "arm,cortex-a8-pmu" },
+	{ .compat = "arm,cortex-a7-pmu" },
+	{ .compat = "arm,cortex-a5-pmu" },
 
-	NULL
+	DEVICE_COMPAT_EOL
 };
 
 struct pmu_fdt_softc {
@@ -93,7 +93,7 @@ pmu_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

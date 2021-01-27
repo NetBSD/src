@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_snvs.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx_snvs.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_snvs.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_snvs.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -41,16 +41,17 @@ __KERNEL_RCSID(0, "$NetBSD: imx_snvs.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
 
 #include <arm/imx/imxsnvsvar.h>
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,sec-v4.0-mon" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 imxsnvs_match(device_t parent, struct cfdata *match, void *aux)
 {
-	const char * const compatible[] = {
-	    "fsl,sec-v4.0-mon",
-	     NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_h6_ccu.c,v 1.3 2019/02/13 18:31:11 jakllsch Exp $ */
+/* $NetBSD: sun50i_h6_ccu.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.3 2019/02/13 18:31:11 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,9 +96,9 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.3 2019/02/13 18:31:11 jakllsch E
 static int sun50i_h6_ccu_match(device_t, cfdata_t, void *);
 static void sun50i_h6_ccu_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"allwinner,sun50i-h6-ccu",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun50i-h6-ccu" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(sunxi_h6_ccu, sizeof(struct sunxi_ccu_softc),
@@ -375,7 +375,7 @@ sun50i_h6_ccu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

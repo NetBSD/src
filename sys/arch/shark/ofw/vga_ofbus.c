@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.16 2012/03/13 18:40:28 elad Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.17 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.16 2012/03/13 18:40:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.17 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,10 @@ void	vga_ofbus_attach (device_t, device_t, void *);
 CFATTACH_DECL_NEW(vga_ofbus, sizeof(struct vga_ofbus_softc),
     vga_ofbus_match, vga_ofbus_attach, NULL, NULL);
 
-static const char *compat_strings[] = { "pnpPNP,900", 0 };
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pnpPNP,900" },
+	DEVICE_COMPAT_EOL
+};
 
 static	int vga_ofbus_ioctl(void *, u_long, void *, int, struct lwp *);
 static	paddr_t vga_ofbus_mmap(void *, off_t, int);
@@ -85,7 +88,7 @@ vga_ofbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 
-	if (of_compatible(oba->oba_phandle, compat_strings) == -1)
+	if (!of_compatible_match(oba->oba_phandle, compat_data))
 		return (0);
 
 	if (!vga_is_console(&isa_io_bs_tag, WSDISPLAY_TYPE_ISAVGA) &&

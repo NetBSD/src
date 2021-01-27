@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.35 2021/01/27 01:58:15 thorpej Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.36 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.35 2021/01/27 01:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.36 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -147,7 +147,7 @@ tegra_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -204,7 +204,7 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	dce = of_search_compatible(faa->faa_phandle, compat_data);
+	dce = of_compatible_lookup(faa->faa_phandle, compat_data);
 	KASSERT(dce != NULL);
 	sc->sc_type = dce->value;
 
