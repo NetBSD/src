@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.17 2021/01/26 02:33:54 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.18 2021/01/27 02:29:48 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.17 2021/01/26 02:33:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.18 2021/01/27 02:29:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "PNP0C50" },
 	{ .compat = "ACPI0C50" },
 	{ .compat = "hid-over-i2c" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

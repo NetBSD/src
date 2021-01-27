@@ -1,4 +1,4 @@
-/* $NetBSD: asms.c,v 1.3 2021/01/25 13:30:20 thorpej Exp $ */
+/* $NetBSD: asms.c,v 1.4 2021/01/27 02:29:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asms.c,v 1.3 2021/01/25 13:30:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asms.c,v 1.4 2021/01/27 02:29:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ CFATTACH_DECL_NEW(asms, sizeof(struct asms_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "accelerometer" },
 	{ .compat = "AAPL,accelerometer_1" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 /* ASMS Registers, from OpenBSD */

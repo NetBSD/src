@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.17 2021/01/25 16:21:41 thorpej Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.18 2021/01/27 02:31:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.17 2021/01/25 16:21:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.18 2021/01/27 02:31:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +66,13 @@ static void pckbc_ofisa_intr_establish (struct pckbc_softc *, pckbc_slot_t);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "INTC,80c42" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static const struct device_compatible_entry port_compat_data[] = {
 	{ .compat = "pnpPNP,303",	.value = PCKBC_KBD_SLOT },
 	{ .compat = "pnpPNP,f03",	.value = PCKBC_AUX_SLOT },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

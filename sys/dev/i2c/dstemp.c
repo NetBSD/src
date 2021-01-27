@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.8 2021/01/25 13:30:20 thorpej Exp $ */
+/* $NetBSD: dstemp.c,v 1.9 2021/01/27 02:29:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.8 2021/01/25 13:30:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.9 2021/01/27 02:29:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ CFATTACH_DECL_NEW(dstemp, sizeof(struct dstemp_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ds1631" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

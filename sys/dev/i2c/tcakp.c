@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.14 2021/01/25 13:30:20 thorpej Exp $ */
+/* $NetBSD: tcakp.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.14 2021/01/25 13:30:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ CFATTACH_DECL_NEW(tcakp, sizeof(struct tcakp_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,tca8418" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static u_int

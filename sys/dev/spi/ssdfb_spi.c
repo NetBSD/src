@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.5 2021/01/27 02:32:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.4 2021/01/17 21:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5 2021/01/27 02:32:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,8 +75,7 @@ CFATTACH_DECL_NEW(ssdfb_spi, sizeof(struct ssdfb_spi_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "solomon,ssd1322" },
-
-	{ 0 }
+	DEVICE_COMPAT_EOL
 };
 
 static int

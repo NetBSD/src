@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_network_subr.c,v 1.9 2021/01/24 20:09:03 thorpej Exp $	*/
+/*	$NetBSD: ofw_network_subr.c,v 1.10 2021/01/27 02:31:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.9 2021/01/24 20:09:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.10 2021/01/27 02:31:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static const struct device_compatible_entry media_compat[] = {
 	{ .compat = "ethernet,100,rj45,full",
 	  .value = IFM_ETHER | IFM_100_TX | IFM_FDX },
 
-	{ 0 }
+	DEVICE_COMPAT_EOL
 };
 
 /*
