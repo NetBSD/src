@@ -1,0 +1,15 @@
+# $NetBSD: std.mipssim,v 1.1 2021/01/27 05:24:16 simonb Exp $
+
+machine	evbmips mips
+include	"conf/std"	# MI standard options
+
+options MIPS3_ENABLE_CLOCK_INTR
+options	EVBMIPS_CLOCKSUBR
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x80010000"
+makeoptions	BOARDTYPE="mipssim"
+
+include 	"arch/evbmips/conf/files.mipssim"
