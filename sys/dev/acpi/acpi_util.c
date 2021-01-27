@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.22 2021/01/26 00:23:16 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.23 2021/01/27 05:11:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.22 2021/01/26 00:23:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.23 2021/01/27 05:11:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -306,7 +306,7 @@ acpi_name(ACPI_HANDLE handle)
 }
 
 /*
- * Pack _HID and _CID ID strings into an OpenFirmware-like
+ * Pack _HID and _CID ID strings into an OpenFirmware-style
  * string list.
  */
 char *
@@ -314,49 +314,143 @@ acpi_pack_compat_list(ACPI_DEVICE_INFO *ad, size_t *sizep)
 {
 	KASSERT(sizep != NULL);
 
-	char *strlist, *cp;
-	size_t len = 0;
+	char *sl = NULL;
+	size_t slsize = 0;
 	uint32_t i;
 
-	/*
-	 * First calculate the total size required.
-	 * N.B. PNP Device ID length includes terminating NUL.
-	 */
 	if ((ad->Valid & ACPI_VALID_HID) != 0) {
-		len += ad->HardwareId.Length;
+		strlist_append(&sl, &slsize, ad->HardwareId.String);
 	}
 
 	if ((ad->Valid & ACPI_VALID_CID) != 0) {
 		for (i = 0; i < ad->CompatibleIdList.Count; i++) {
-			len += ad->CompatibleIdList.Ids[i].Length;
+			strlist_append(&sl, &slsize,
+			    ad->CompatibleIdList.Ids[i].String);
 		}
 	}
 
-	*sizep = len;
-	if (len == 0) {
+	*sizep = slsize;
+	return sl;
+}
+
+/*
+ * The ACPI_PNP_DEVICE_ID type is somewhat inconvenient for us to
+ * use.  We'll need some temporary space to pack it into an array
+ * of C strings.  Room for 8 should be plenty, but we can allocate
+ * more if necessary.
+ */
+#define	ACPI_COMPATSTR_MAX	8
+
+static const char **
+acpi_compatible_alloc_strarray(ACPI_PNP_DEVICE_ID *ids,
+    unsigned int count, const char **buf)
+{
+	unsigned int i;
+
+	buf = kmem_tmpbuf_alloc(count * sizeof(const char *),
+	    buf, ACPI_COMPATSTR_MAX * sizeof(const char *), KM_SLEEP);
+	for (i = 0; i < count; i++) {
+		buf[i] = ids[i].String;
+	}
+	return buf;
+}
+
+static void
+acpi_compatible_free_strarray(const char **cpp, unsigned int count,
+    const char **buf)
+{
+	kmem_tmpbuf_free(cpp, count * sizeof(const char *), buf);
+}
+
+/*
+ * acpi_compatible_match --
+ *
+ *	Returns a weighted match value, comparing the _HID and _CID
+ *	IDs against a driver's compatbility data.
+ */
+int
+acpi_compatible_match(const struct acpi_attach_args * const aa,
+    const struct device_compatible_entry * const dce)
+{
+	const char *strings[ACPI_COMPATSTR_MAX * sizeof(const char *)];
+	const char **cpp;
+
+	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE) {
+		return 0;
+	}
+
+	ACPI_DEVICE_INFO *ad = aa->aa_node->ad_devinfo;
+
+	if ((ad->Valid & ACPI_VALID_HID) != 0) {
+		strings[0] = ad->HardwareId.String;
+
+		/* Matching _HID wins big. */
+		if (device_compatible_pmatch(strings, 1, dce) != 0) {
+			return ACPI_MATCHSCORE_HID;
+		}
+	}
+
+	if ((ad->Valid & ACPI_VALID_CID) != 0) {
+		cpp = acpi_compatible_alloc_strarray(ad->CompatibleIdList.Ids,
+		    ad->CompatibleIdList.Count, strings);
+		int rv;
+
+		rv = device_compatible_pmatch(cpp,
+		    ad->CompatibleIdList.Count, dce);
+		acpi_compatible_free_strarray(cpp, ad->CompatibleIdList.Count,
+		    strings);
+		if (rv) {
+			rv = (rv - 1) + ACPI_MATCHSCORE_CID;
+			if (rv > ACPI_MATCHSCORE_CID_MAX) {
+				rv = ACPI_MATCHSCORE_CID_MAX;
+			}
+			return rv;
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * acpi_compatible_lookup --
+ *
+ *	Returns the device_compatible_entry that matches the _HID
+ *	or _CID ID.
+ */
+const struct device_compatible_entry *
+acpi_compatible_lookup(const struct acpi_attach_args * const aa,
+    const struct device_compatible_entry * const dce)
+{
+	const struct device_compatible_entry *rv = NULL;
+	const char *strings[ACPI_COMPATSTR_MAX];
+	const char **cpp;
+
+	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE) {
 		return NULL;
 	}
 
-	cp = strlist = kmem_alloc(len, KM_SLEEP);
+	ACPI_DEVICE_INFO *ad = aa->aa_node->ad_devinfo;
 
 	if ((ad->Valid & ACPI_VALID_HID) != 0) {
-		memcpy(cp, ad->HardwareId.String, ad->HardwareId.Length);
-		cp += ad->HardwareId.Length;
+		strings[0] = ad->HardwareId.String;
+
+		rv = device_compatible_plookup(strings, 1, dce);
+		if (rv != NULL)
+			return rv;
 	}
 
 	if ((ad->Valid & ACPI_VALID_CID) != 0) {
-		for (i = 0; i < ad->CompatibleIdList.Count; i++) {
-			memcpy(cp, ad->CompatibleIdList.Ids[i].String,
-			    ad->CompatibleIdList.Ids[i].Length);
-			cp += ad->CompatibleIdList.Ids[i].Length;
-		}
+		cpp = acpi_compatible_alloc_strarray(ad->CompatibleIdList.Ids,
+		    ad->CompatibleIdList.Count, strings);
+
+		rv = device_compatible_plookup(cpp,
+		    ad->CompatibleIdList.Count, dce);
+		acpi_compatible_free_strarray(cpp, ad->CompatibleIdList.Count,
+		    strings);
 	}
 
-	KASSERT((size_t)(cp - strlist) == len);
-
-	return strlist;
+	return rv;
 }
-
 
 /*
  * Match given IDs against _HID and _CIDs.
@@ -428,7 +522,7 @@ acpi_match_class(ACPI_HANDLE handle, uint8_t pci_class, uint8_t pci_subclass,
 done:
 	if (buf.Pointer)
 		ACPI_FREE(buf.Pointer);
-	return match;
+	return match ? ACPI_MATCHSCORE_CLS : 0;
 }
 
 /*
