@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_gpc.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $	*/
+/*	$NetBSD: imx6_gpc.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_gpc.c,v 1.2 2021/01/15 00:38:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_gpc.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -64,13 +64,17 @@ struct fdtbus_interrupt_controller_func imxgpc_funcs = {
 CFATTACH_DECL_NEW(imxgpc, sizeof(struct imxgpc_softc),
     imxgpc_match, imxgpc_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-gpc" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imxgpc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx6q-gpc", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

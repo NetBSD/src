@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.9 2020/12/23 16:02:11 thorpej Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.9 2020/12/23 16:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,16 +95,17 @@ static void sni_i2c_flush(struct sniiic_softc *);
 #define I2C_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_ioh,(sc)->sc_ioh,(reg),(val))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "socionext,synquacer-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sniiic_fdt_match(device_t parent, struct cfdata *match, void *aux)
 {
-	static const char * compatible[] = {
-		"socionext,synquacer-i2c",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

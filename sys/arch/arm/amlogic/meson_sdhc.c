@@ -1,4 +1,4 @@
-/* $NetBSD: meson_sdhc.c,v 1.2 2021/01/15 18:42:40 ryo Exp $ */
+/* $NetBSD: meson_sdhc.c,v 1.3 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_sdhc.c,v 1.2 2021/01/15 18:42:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_sdhc.c,v 1.3 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,14 +150,14 @@ meson_sdhc_set_clear(struct meson_sdhc_softc *sc, bus_addr_t reg, uint32_t set, 
 		SDHC_WRITE(sc, reg, new);
 }
 
-static const char * const compatible[] = {
-	"amlogic,meson8b-sdhc",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-sdhc" },
+	DEVICE_COMPAT_EOL
 };
 
-static const char * const slot_compatible[] = {
-	"mmc-slot",
-	NULL
+static const struct device_compatible_entry slot_compat_data[] = {
+	{ .compat = "mmc-slot" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -165,7 +165,7 @@ meson_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -215,7 +215,7 @@ meson_sdhc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_port = -1;
 	for (child = OF_child(phandle); child; child = OF_peer(child))
-		if (of_match_compatible(child, slot_compatible) > 0) {
+		if (of_compatible_match(child, slot_compat_data)) {
 			if (fdtbus_get_reg(child, 0, &port, NULL) == 0) {
 				sc->sc_slot_phandle = child;
 				sc->sc_port = port;

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_i2c.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx_i2c.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_i2c.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_i2c.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/bus.h>
 
@@ -35,13 +35,17 @@ __KERNEL_RCSID(0, "$NetBSD: imx_i2c.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
 
 #include <dev/fdt/fdtvar.h>
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx21-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 imxi2c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx21-i2c", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: imx8mq_usbphy.c,v 1.4 2021/01/27 02:14:49 thorpej Exp $ */
+/* $NetBSD: imx8mq_usbphy.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: imx8mq_usbphy.c,v 1.4 2021/01/27 02:14:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx8mq_usbphy.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,7 +145,7 @@ imx8mq_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

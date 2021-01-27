@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_codec.c,v 1.4 2019/05/08 13:40:14 isaki Exp $ */
+/* $NetBSD: sun8i_h3_codec.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_codec.c,v 1.4 2019/05/08 13:40:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_codec.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -432,9 +432,9 @@ const struct sunxi_codec_conf sun8i_h3_codecconf = {
  * Device glue, only here to claim resources on behalf of the sunxi_codec driver.
  */
 
-static const char * compatible[] = {
-	"allwinner,sun8i-h3-codec-analog",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-codec-analog" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -442,7 +442,7 @@ h3_codec_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

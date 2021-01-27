@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.30 2021/01/27 02:31:03 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.31 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.30 2021/01/27 02:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.31 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ cs_ofisa_match(device_t parent, cfdata_t cf, void *aux)
 	struct ofisa_attach_args *aa = aux;
 	int rv;
 
-	rv = of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 5 : 0;
+	rv = of_compatible_match(aa->oba.oba_phandle, compat_data) ? 5 : 0;
 #ifdef _CS_OFISA_MD_MATCH
 	if (rv == 0)
 		rv = cs_ofisa_md_match(parent, cf, aux);

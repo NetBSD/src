@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.25 2021/01/27 01:58:15 thorpej Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.26 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.25 2021/01/27 01:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.26 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -193,7 +193,7 @@ tegra_xusb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 #define tegra_xusb_attach_check(sc, cond, fmt, ...)			\
@@ -230,7 +230,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_quirks = XHCI_DEFERRED_START;
 	psc->sc_phandle = faa->faa_phandle;
 
-	psc->sc_txd = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	psc->sc_txd = of_compatible_lookup(faa->faa_phandle, compat_data)->data;
 
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "hcd", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

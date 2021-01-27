@@ -1,4 +1,4 @@
-/* $NetBSD: ti_usb.c,v 1.1 2019/10/30 21:41:40 jmcneill Exp $ */
+/* $NetBSD: ti_usb.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_usb.c,v 1.1 2019/10/30 21:41:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_usb.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: ti_usb.c,v 1.1 2019/10/30 21:41:40 jmcneill Exp $");
 
 extern void tl_usbtll_enable_port(u_int);
 
-static const char * const compatible[] = {
-	"ti,usbhs-host",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,usbhs-host" },
+	DEVICE_COMPAT_EOL
 };
 
 #define	TI_USB_NPORTS	3
@@ -164,7 +164,7 @@ ti_usb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

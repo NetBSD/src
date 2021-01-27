@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_xusbpad.c,v 1.4 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra124_xusbpad.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_xusbpad.c,v 1.4 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_xusbpad.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,14 +70,17 @@ static void	padregdump(void);
 CFATTACH_DECL_NEW(tegra124_xusbpad, sizeof(struct tegra124_xusbpad_softc),
 	tegra124_xusbpad_match, tegra124_xusbpad_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra124-xusb-padctl" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra124_xusbpad_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] =
-	    { "nvidia,tegra124-xusb-padctl", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pwm.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: imx6_pwm.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pwm.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pwm.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,13 +75,17 @@ static struct fdtbus_pwm_controller_func imxpwm_funcs = {
 	.get_tag = imxpwm_get_tag
 };
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-pwm" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imx6_pwm_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx6q-pwm", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void

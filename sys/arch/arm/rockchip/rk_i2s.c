@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.9 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.9 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,7 +122,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3188-i2s", },
 	{ .compat = "rockchip,rk3288-i2s", },
 	{ .compat = "rockchip,rk3399-i2s",	.data = &rk3399_i2s_config },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 struct rk_i2s_softc;
@@ -553,7 +553,7 @@ rk_i2s_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -586,7 +586,7 @@ rk_i2s_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
-	sc->sc_conf = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 	if (sc->sc_conf != NULL && sc->sc_conf->oe_mask != 0) {
 		sc->sc_grf = fdtbus_syscon_acquire(phandle, "rockchip,grf");
 		if (sc->sc_grf == NULL) {

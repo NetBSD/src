@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_sdhost.c,v 1.6 2020/12/01 04:15:04 rin Exp $ */
+/* $NetBSD: bcm2835_sdhost.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.6 2020/12/01 04:15:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $");
 
 #include "bcmdmac.h"
 
@@ -174,16 +174,17 @@ CFATTACH_DECL_NEW(bcmsdhost, sizeof(struct sdhost_softc),
 #define SDHOST_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-sdhost" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sdhost_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-	    "brcm,bcm2835-sdhost",
-	    NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

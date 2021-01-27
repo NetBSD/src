@@ -1,4 +1,4 @@
-/* $NetBSD: arasan_sdhc_fdt.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $ */
+/* $NetBSD: arasan_sdhc_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.5 2021/01/18 02:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,7 +76,12 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3399-sdhci-5.1",
 	  .value = AS_TYPE_RK3399 },
 
-	{ 0 }
+	DEVICE_COMPAT_EOL
+};
+
+static const struct device_compatible_entry sdhci_5_1_compat[] = {
+	{ .compat = "arasan,sdhci-5.1" },
+	DEVICE_COMPAT_EOL
 };
 
 static struct clk *
@@ -185,13 +190,12 @@ static void
 arasan_sdhc_init(device_t dev)
 {
 	struct arasan_sdhc_softc * const sc = device_private(dev);
-	const char * sdhci_5_1_compat[] = { "arasan,sdhci-5.1", NULL };
 	int error;
 
 	if (sc->sc_type == AS_TYPE_RK3399)
 		arasan_sdhc_init_rk3399(sc);
 
-	if (of_match_compatible(sc->sc_phandle, sdhci_5_1_compat)) {
+	if (of_compatible_match(sc->sc_phandle, sdhci_5_1_compat)) {
 		sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "phy_arasan");
 		if (sc->sc_phy == NULL) {
 			aprint_error_dev(dev, "couldn't get PHY\n");
@@ -212,7 +216,7 @@ arasan_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -264,7 +268,7 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_bsz = size;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->value;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 
 	const uint32_t caps = bus_space_read_4(sc->sc_bst, sc->sc_bsh, SDHC_CAPABILITIES);
 	if ((caps & (SDHC_ADMA2_SUPP|SDHC_64BIT_SYS_BUS)) == SDHC_ADMA2_SUPP) {

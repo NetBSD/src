@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_spi.c,v 1.5 2021/01/15 18:42:41 ryo Exp $	*/
+/*	$NetBSD: rk_spi.c,v 1.6 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.5 2021/01/15 18:42:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.6 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -143,13 +143,13 @@ __KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.5 2021/01/15 18:42:41 ryo Exp $");
 
 #define SPI_FIFOLEN		32
 
-static const char * const compatible[] = {
+static const struct device_compatible_entry compat_data[] = {
 #if 0 /* should work on RK3328 but untested */
-	"rockchip,rk3066-spi",
-	"rockchip,rk3328-spi",
+	{ .compat = "rockchip,rk3066-spi" },
+	{ .compat = "rockchip,rk3328-spi" },
 #endif		
-	"rockchip,rk3399-spi",
-	NULL
+	{ .compat = "rockchip,rk3399-spi" },
+	DEVICE_COMPAT_EOL
 };
 
 struct rk_spi_softc {
@@ -204,7 +204,7 @@ rk_spi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.23 2020/10/10 03:29:48 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.24 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.23 2020/10/10 03:29:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.24 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -521,16 +521,17 @@ mac_write(struct scx_softc *sc, int reg, int val)
 	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY, 0);
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "socionext,synquacer-netsec" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 scx_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	static const char * compatible[] = {
-		"socionext,synquacer-netsec",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_pwm.c,v 1.3 2017/12/10 21:38:26 skrll Exp $ */
+/*	$NetBSD: bcm2835_pwm.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_pwm.c,v 1.3 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_pwm.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
 
 #include "bcmdmac.h"
 
@@ -88,14 +88,18 @@ static int bcmpwm_wait(struct bcm2835pwm_softc *);
 CFATTACH_DECL_NEW(bcmpwm, sizeof(struct bcm2835pwm_softc),
     bcmpwm_match, bcmpwm_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-pwm" },
+	DEVICE_COMPAT_EOL
+};
+
 /* ARGSUSED */
 static int
 bcmpwm_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-pwm", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

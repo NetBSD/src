@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.14 2021/01/15 22:59:50 jmcneill Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.14 2021/01/15 22:59:50 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,16 +143,17 @@ static void rkpcie_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(rkpcie, sizeof(struct rkpcie_softc),
         rkpcie_match, rkpcie_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-pcie" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 rkpcie_match(device_t parent, cfdata_t cf, void *aux)
 {
-        const char * const compatible[] = {
-		"rockchip,rk3399-pcie",
-		NULL
-	};
 	struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void	rkpcie_atr_init(struct rkpcie_softc *);

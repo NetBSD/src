@@ -1,4 +1,4 @@
-/* $NetBSD: mesong12_usb3pciephy.c,v 1.1 2021/01/01 07:21:58 ryo Exp $ */
+/* $NetBSD: mesong12_usb3pciephy.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesong12_usb3pciephy.c,v 1.1 2021/01/01 07:21:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesong12_usb3pciephy.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -283,9 +283,9 @@ mesong12_usb3pciephy_enable(device_t dev, void *priv, bool enable)
 	return 0;
 }
 
-static const char *compatible[] = {
-	"amlogic,g12a-usb3-pcie-phy",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,g12a-usb3-pcie-phy" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -293,7 +293,7 @@ mesong12_usb3pciephy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static const struct fdtbus_phy_controller_func mesong12_usb3pciephy_funcs = {

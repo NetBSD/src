@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.17 2021/01/15 00:38:22 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.17 2021/01/15 00:38:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -238,18 +238,19 @@ bcm283x_pinctrl_set_config(device_t dev, const void *data, size_t len)
 	return 0;
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-gpio" },
+	{ .compat = "brcm,bcm2838-gpio" },
+	{ .compat = "brcm,bcm2711-gpio" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 bcmgpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"brcm,bcm2835-gpio",
-		"brcm,bcm2838-gpio",
-		"brcm,bcm2711-gpio",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: meson_genfb.c,v 1.1 2019/01/19 21:43:43 jmcneill Exp $ */
+/* $NetBSD: meson_genfb.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_genfb.c,v 1.1 2019/01/19 21:43:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_genfb.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: meson_genfb.c,v 1.1 2019/01/19 21:43:43 jmcneill Exp
 
 #include <dev/wsfb/genfbvar.h>
 
-static const char * const compatible[] = {
-	"amlogic,meson8b-fb",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-fb" },
+	DEVICE_COMPAT_EOL
 };
 
 #define AMLOGIC_GENFB_DEFAULT_DEPTH	16
@@ -172,7 +172,7 @@ meson_genfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -710,7 +710,7 @@ meson_genfb_ddb_trap_callback(int where)
 static int
 meson_genfb_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

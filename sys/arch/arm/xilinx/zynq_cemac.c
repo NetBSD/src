@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.1 2019/06/11 13:01:48 skrll Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.1 2019/06/11 13:01:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_soc.h"
 
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.1 2019/06/11 13:01:48 skrll Exp $")
 
 #include <dev/fdt/fdtvar.h>
 
-static const char * compatible[] = {
-	"cdns,zynq-gem",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cdns,zynq-gem" },
+	DEVICE_COMPAT_EOL
 };
 
 int
@@ -53,7 +53,7 @@ cemac_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void

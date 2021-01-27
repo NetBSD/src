@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_rtc.c,v 1.3 2019/10/18 06:13:38 skrll Exp $ */
+/*	$NetBSD: exynos_rtc.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_rtc.c,v 1.3 2019/10/18 06:13:38 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_rtc.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,13 +73,17 @@ CFATTACH_DECL_NEW(exynos_rtc, sizeof(struct exynos_rtc_softc),
 #define RTC_WRITE(sc, reg, val)	\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,s3c6410-rtc" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 exynos_rtc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,s3c6410-rtc",
-					    NULL };
 	struct fdt_attach_args * const faa = aux;
-	return of_match_compatible(faa->faa_phandle, compatible);
+
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

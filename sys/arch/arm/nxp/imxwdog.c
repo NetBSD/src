@@ -1,4 +1,4 @@
-/*	$NetBSD: imxwdog.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: imxwdog.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.2 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_imx.h"
 
@@ -65,17 +65,18 @@ void imxwdog_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(imxwdog, sizeof(struct imxwdog_softc),
     imxwdog_match, imxwdog_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx21-wdt" },
+	{ .compat = "fsl,imx6q-wdt" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 imxwdog_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-	    "fsl,imx21-wdt",
-	    "fsl,imx6q-wdt",
-	     NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 

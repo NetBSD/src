@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.20 2021/01/27 02:03:10 thorpej Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.20 2021/01/27 02:03:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -335,7 +335,7 @@ ave_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -382,7 +382,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 
 	hwimp = CSR_READ(sc, AVEID);
 	hwver = CSR_READ(sc, AVEHWVER);
-	sc->sc_model = of_search_compatible(phandle, compat_data)->value;
+	sc->sc_model = of_compatible_lookup(phandle, compat_data)->value;
 
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL)

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.17 2021/01/27 01:58:15 thorpej Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.17 2021/01/27 01:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,7 +120,7 @@ tegra_ahcisata_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -169,7 +169,7 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_tad = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_tad = of_compatible_lookup(faa->faa_phandle, compat_data)->data;
 	if (sc->sc_tad->tad_type == TEGRA124) {
 		sc->sc_clk_cml1 = fdtbus_clock_get(phandle, "cml1");
 		if (sc->sc_clk_cml1 == NULL) {

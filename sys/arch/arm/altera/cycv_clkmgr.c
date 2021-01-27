@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_clkmgr.c,v 1.7 2021/01/27 01:47:40 thorpej Exp $ */
+/* $NetBSD: cycv_clkmgr.c,v 1.8 2021/01/27 03:10:18 thorpej Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.7 2021/01/27 01:47:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.8 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,7 @@ cycv_clkmgr_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -239,7 +239,7 @@ cycv_clkmgr_clock_parse(struct cycv_clkmgr_softc *sc, int handle, u_int clkno)
 	clk->refcnt = 0;
 
 	const struct device_compatible_entry * const dce =
-	    of_search_compatible(handle, clock_types);
+	    of_compatible_lookup(handle, clock_types);
 	if (dce == NULL)
 		goto err;
 	clk->type = dce->value;

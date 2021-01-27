@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pwm.c,v 1.4 2021/01/27 01:49:36 thorpej Exp $ */
+/* $NetBSD: meson_pwm.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.4 2021/01/27 01:49:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -327,7 +327,7 @@ meson_pwm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

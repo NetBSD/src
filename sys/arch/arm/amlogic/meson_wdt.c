@@ -1,4 +1,4 @@
-/* $NetBSD: meson_wdt.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_wdt.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_wdt.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_wdt.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: meson_wdt.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $
 #define	WATCHDOG_PERIOD_MAX		8
 #define	WATCHDOG_TICKS_PER_SEC		7812
 
-static const char * compatible[] = {
-	"amlogic,meson8b-wdt",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-wdt" },
+	DEVICE_COMPAT_EOL
 };
 
 struct meson_wdt_softc {
@@ -117,7 +117,7 @@ meson_wdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

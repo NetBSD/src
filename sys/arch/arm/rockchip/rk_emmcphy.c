@@ -1,4 +1,4 @@
-/* $NetBSD: rk_emmcphy.c,v 1.3 2019/03/13 10:28:37 jmcneill Exp $ */
+/* $NetBSD: rk_emmcphy.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.3 2019/03/13 10:28:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,9 +87,9 @@ __KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.3 2019/03/13 10:28:37 jmcneill Exp 
 #define	 PHYCTRL_RTRIM			__BITS(4,1)
 #define	 PHYCTRL_EXR_NINST		__BIT(0)
 
-static const char * const compatible[] = {
-	"rockchip,rk3399-emmc-phy",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-emmc-phy" },
+	DEVICE_COMPAT_EOL
 };
 
 struct rk_emmcphy_softc {
@@ -229,7 +229,7 @@ rk_emmcphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

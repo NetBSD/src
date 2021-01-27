@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.8 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -332,9 +332,9 @@ sun8i_codec_thread(struct work *wk, void *priv)
 	sun8i_codec_set_jackdet(sc, true);
 }
 
-static const char * compatible[] = {
-	"allwinner,sun8i-a33-codec",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-a33-codec" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -342,7 +342,7 @@ sun8i_codec_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
