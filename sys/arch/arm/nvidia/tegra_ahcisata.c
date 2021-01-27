@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.16 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.17 2021/01/27 01:58:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.16 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.17 2021/01/27 01:58:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,7 +105,7 @@ struct tegra_ahcisata_data tegra210_ahcisata_data = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "nvidia,tegra124-ahci", .data = &tegra124_ahcisata_data },
 	{ .compat = "nvidia,tegra210-ahci", .data = &tegra210_ahcisata_data },
-	{ },
+	DEVICE_COMPAT_EOL,
 };
 
 

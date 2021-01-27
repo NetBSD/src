@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.10 2021/01/25 14:20:39 thorpej Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.11 2021/01/27 02:09:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.10 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.11 2021/01/27 02:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,7 +110,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-tcon-tv",	.value = TYPE_TCON1 },
 	{ .compat = "allwinner,sun50i-a64-tcon-lcd",	.value = TYPE_TCON0 },
 	{ .compat = "allwinner,sun50i-a64-tcon-tv",	.value = TYPE_TCON1 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_lcdc_softc;

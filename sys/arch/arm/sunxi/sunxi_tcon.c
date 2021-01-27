@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.9 2021/01/25 14:20:39 thorpej Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.10 2021/01/27 02:09:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.9 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.10 2021/01/27 02:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,7 @@ void sunxi_tcon_dump_regs(int);
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-tcon", .value = TCON_A10},
 	{ .compat = "allwinner,sun7i-a20-tcon", .value = TCON_A10},
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int	sunxi_tcon_match(device_t, cfdata_t, void *);

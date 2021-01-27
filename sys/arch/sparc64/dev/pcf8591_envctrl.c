@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.18 2021/01/25 14:20:39 thorpej Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.19 2021/01/27 02:20:03 thorpej Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.18 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.19 2021/01/27 02:20:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ CFATTACH_DECL3_NEW(ecadc, sizeof(struct ecadc_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ecadc" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

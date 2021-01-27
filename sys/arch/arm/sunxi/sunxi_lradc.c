@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lradc.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $ */
+/* $NetBSD: sunxi_lradc.c,v 1.5 2021/01/27 02:09:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016, 2018 Manuel Bouyer
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lradc.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lradc.c,v 1.5 2021/01/27 02:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,7 +77,7 @@ static bool	sunxi_lradc_register_switches(struct sunxi_lradc_softc *, int);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-lradc-keys" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.8 2021/01/25 14:25:09 thorpej Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.9 2021/01/27 02:24:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.8 2021/01/25 14:25:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.9 2021/01/27 02:24:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "snps,dwc2",
 	  .data = &dwc2_fdt_generic_config },
 
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(dwc2_fdt, sizeof(struct dwc2_fdt_softc),

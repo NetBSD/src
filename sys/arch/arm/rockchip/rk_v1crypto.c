@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.5 2021/01/25 14:20:38 thorpej Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.6 2021/01/27 02:00:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.5 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.6 2021/01/27 02:00:02 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -100,7 +100,7 @@ CFATTACH_DECL_NEW(rk_v1crypto, sizeof(struct rk_v1crypto_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3288-crypto" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

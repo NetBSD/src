@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.8 2021/01/25 14:20:39 thorpej Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.9 2021/01/27 02:12:16 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.8 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.9 2021/01/27 02:12:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,omap4-hsmmc",
 	  .data = &omap4_hsmmc_config },
 
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 enum {

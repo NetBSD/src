@@ -1,4 +1,4 @@
- /* $NetBSD: psoc.c,v 1.5 2021/01/25 14:20:39 thorpej Exp $ */
+ /* $NetBSD: psoc.c,v 1.6 2021/01/27 02:17:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.5 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.6 2021/01/27 02:17:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ CFATTACH_DECL_NEW(psoc, sizeof(struct psoc_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "Psoc" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

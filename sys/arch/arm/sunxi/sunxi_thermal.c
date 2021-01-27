@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.11 2021/01/25 14:20:39 thorpej Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.12 2021/01/27 02:09:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.11 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.12 2021/01/27 02:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ static struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-ts",	.data = &h3_config },
 	{ .compat = "allwinner,sun50i-a64-ts",	.data = &a64_config },
 	{ .compat = "allwinner,sun50i-h5-ts",	.data = &h5_config },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_thermal_softc {

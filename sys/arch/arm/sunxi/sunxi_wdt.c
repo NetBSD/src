@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_wdt.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $ */
+/* $NetBSD: sunxi_wdt.c,v 1.5 2021/01/27 02:09:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.5 2021/01/27 02:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,7 +83,7 @@ enum sunxi_wdt_type {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-wdt",	.value = WDT_SUN4I },
 	{ .compat = "allwinner,sun6i-a31-wdt",	.value = WDT_SUN6I },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_wdt_softc {

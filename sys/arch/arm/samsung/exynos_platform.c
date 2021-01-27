@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.34 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.35 2021/01/27 02:01:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.34 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.35 2021/01/27 02:01:53 thorpej Exp $");
 
 
 /*
@@ -198,7 +198,7 @@ exynos5800_mpstart(void)
 
 static struct device_compatible_entry mp_compat_data[] = {
 	{ .compat = "samsung,exynos5800",	.data = exynos5800_mpstart },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int
