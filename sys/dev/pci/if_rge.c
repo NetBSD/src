@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.15 2021/01/20 18:26:11 jakllsch Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.16 2021/01/27 14:25:22 jakllsch Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.4 2020/07/10 13:26:38 patrick Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.15 2021/01/20 18:26:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.16 2021/01/27 14:25:22 jakllsch Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -623,7 +623,7 @@ rge_watchdog(struct ifnet *ifp)
 {
 	struct rge_softc *sc = ifp->if_softc;
 
-	aprint_error_dev(sc->sc_dev, "watchdog timeout\n");
+	device_printf(sc->sc_dev, "watchdog timeout\n");
 	if_statinc(ifp, if_oerrors);
 
 	rge_init(ifp);
@@ -658,7 +658,7 @@ rge_init(struct ifnet *ifp)
 
 	/* Initialize RX descriptors list. */
 	if (rge_rx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "init failed: no memory for RX buffers\n");
 		rge_stop(ifp);
 		return (ENOBUFS);
@@ -904,7 +904,7 @@ rge_ifmedia_upd(struct ifnet *ifp)
 		ifp->if_baudrate = IF_Mbps(10);
 		break;
 	default:
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "unsupported media type\n");
 		return (EINVAL);
 	}
@@ -1089,7 +1089,7 @@ rge_newbuf(struct rge_softc *sc, int idx)
 	r = &sc->rge_ldata.rge_rx_list[idx];
 
 	if (RGE_OWN(r)) {
-		aprint_error_dev(sc->sc_dev, "tried to map busy RX descriptor\n");
+		device_printf(sc->sc_dev, "tried to map busy RX descriptor\n");
 		goto out;
 	}
 
@@ -1384,7 +1384,7 @@ rge_reset(struct rge_softc *sc)
 			break;
 	}
 	if (i == RGE_TIMEOUT)
-		aprint_error_dev(sc->sc_dev, "reset never completed!\n");
+		device_printf(sc->sc_dev, "reset never completed!\n");
 }
 
 void
