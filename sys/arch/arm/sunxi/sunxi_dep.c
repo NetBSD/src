@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_dep.c,v 1.5 2021/01/25 14:20:39 thorpej Exp $	*/
+/*	$NetBSD: sunxi_dep.c,v 1.6 2021/01/27 02:09:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.5 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.6 2021/01/27 02:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,7 +54,7 @@ struct sunxi_dep_softc {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-display-engine" },
 	{ .compat = "allwinner,sun7i-a20-display-engine" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static const char *fb_compat[] = {

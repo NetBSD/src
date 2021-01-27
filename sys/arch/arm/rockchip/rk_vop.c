@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.8 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: rk_vop.c,v 1.9 2021/01/27 02:00:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.8 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.9 2021/01/27 02:00:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -224,7 +224,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3399-vop-lit",
 	  .data = &rk3399_vop_lit_config },
 
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

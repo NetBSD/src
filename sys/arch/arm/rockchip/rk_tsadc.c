@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.10 2021/01/25 14:20:38 thorpej Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.11 2021/01/27 02:00:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.10 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.11 2021/01/27 02:00:02 thorpej Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -377,7 +377,7 @@ static const rk_data rk3399_data_table = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3328-tsadc",	.data = &rk3328_data_table },
 	{ .compat = "rockchip,rk3399-tsadc",	.data = &rk3399_data_table },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 #define	TSADC_READ(sc, reg)		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmt_fdt.c,v 1.3 2021/01/25 14:25:09 thorpej Exp $ */
+/*	$NetBSD: vmt_fdt.c,v 1.4 2021/01/27 02:24:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmt_fdt.c,v 1.3 2021/01/25 14:25:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmt_fdt.c,v 1.4 2021/01/27 02:24:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ CFATTACH_DECL_NEW(vmt_fdt, sizeof(struct vmt_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "vmware" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

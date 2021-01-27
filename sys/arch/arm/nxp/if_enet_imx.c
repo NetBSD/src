@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.4 2021/01/25 14:20:38 thorpej Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.5 2021/01/27 02:14:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.4 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.5 2021/01/27 02:14:49 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -53,7 +53,7 @@ static const struct device_compatible_entry compat_data[] = {
 	/* compatible			imxtype */
 	{ .compat = "fsl,imx6q-fec",	.value = 6 },
 	{ .compat = "fsl,imx6sx-fec",	.value = 7 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int enet_init_clocks(struct enet_softc *);
