@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hstimer.c,v 1.3 2021/01/15 22:47:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_hstimer.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Tobias Nygren <tnn@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.3 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -77,11 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.3 2021/01/15 22:47:32 jmcneill E
 #define	HS_TMR3_CURNT_LO_REG	0x7c
 #define	HS_TMR3_CURNT_HI_REG	0x80
 
-static const char * const compatible[] = {
-	"allwinner,sun5i-a13-hstimer",
-	"allwinner,sun6i-a31-hstimer",
-	"allwinner,sun7i-a20-hstimer",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun5i-a13-hstimer" },
+	{ .compat = "allwinner,sun6i-a31-hstimer" },
+	{ .compat = "allwinner,sun7i-a20-hstimer" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_hstimer_softc {
@@ -129,7 +129,7 @@ sunxi_hstimer_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

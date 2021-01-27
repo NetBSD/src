@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.8 2020/05/31 23:55:18 thorpej Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.8 2020/05/31 23:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.9 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,17 +101,18 @@ CFATTACH_DECL_NEW(snigpio_acpi, sizeof(struct snigpio_softc),
 static void snigpio_attach_i(struct snigpio_softc *);
 static int snigpio_intr(void *);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "socionext,synquacer-gpio" },
+	{ .compat = "fujitsu,mb86s70-gpio" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 snigpio_fdt_match(device_t parent, struct cfdata *match, void *aux)
 {
-	static const char * compatible[] = {
-		"socionext,synquacer-gpio",
-		"fujitsu,mb86s70-gpio",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

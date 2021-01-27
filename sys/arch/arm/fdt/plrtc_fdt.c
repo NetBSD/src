@@ -1,4 +1,4 @@
-/* $NetBSD: plrtc_fdt.c,v 1.1 2017/06/08 21:01:06 jmcneill Exp $ */
+/* $NetBSD: plrtc_fdt.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plrtc_fdt.c,v 1.1 2017/06/08 21:01:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plrtc_fdt.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,9 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: plrtc_fdt.c,v 1.1 2017/06/08 21:01:06 jmcneill Exp $
 static int	plrtc_fdt_match(device_t, cfdata_t, void *);
 static void	plrtc_fdt_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"arm,pl031",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,pl031" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(plrtc_fdt, sizeof(struct plrtc_softc),
@@ -55,7 +55,7 @@ plrtc_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

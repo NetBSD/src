@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.9 2021/01/27 02:24:10 thorpej Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.9 2021/01/27 02:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ dwc2_fdt_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 /* ARGSUSED */
@@ -115,7 +115,7 @@ dwc2_fdt_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	const struct dwc2_fdt_config *conf =
-	    of_search_compatible(phandle, compat_data)->data;
+	    of_compatible_lookup(phandle, compat_data)->data;
 	char intrstr[128];
 	struct fdtbus_phy *phy;
 	struct clk *clk;

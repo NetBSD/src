@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.22 2021/01/27 02:09:39 thorpej Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.23 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.22 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.23 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -328,7 +328,7 @@ sun8i_crypto_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

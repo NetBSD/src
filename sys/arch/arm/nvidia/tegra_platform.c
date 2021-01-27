@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.24 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.25 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.24 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.25 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,11 +182,12 @@ tegra_platform_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "tegrapcie")) {
-		const char * const jetsontk1_compat[] = {
-		    "nvidia,jetson-tk1", NULL
+		static const struct device_compatible_entry jetsontk1[] = {
+			{ .compat = "nvidia,jetson-tk1" },
+			DEVICE_COMPAT_EOL
 		};
 		const int phandle = OF_peer(0);
-		if (of_match_compatible(phandle, jetsontk1_compat)) {
+		if (of_compatible_match(phandle, jetsontk1)) {
 			/* rfkill GPIO at GPIO X7 */
 			struct tegra_gpio_pin *pin =
 			    tegra_gpio_acquire("X7", GPIO_PIN_OUTPUT);

@@ -1,4 +1,4 @@
-/* $NetBSD: qemufwcfg_fdt.c,v 1.1 2018/06/15 15:07:56 jakllsch Exp $ */
+/* $NetBSD: qemufwcfg_fdt.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qemufwcfg_fdt.c,v 1.1 2018/06/15 15:07:56 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qemufwcfg_fdt.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,9 +49,9 @@ CFATTACH_DECL_NEW(qemufwcfg_fdt, sizeof(struct fwcfg_softc),
     NULL
 );
 
-static const char * const compatible[] = {
-	"qemu,fw-cfg-mmio",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "qemu,fw-cfg-mmio" },
+	DEVICE_COMPAT_EOL
 };
 
 
@@ -60,7 +60,7 @@ fwcfg_fdt_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct fdt_attach_args * const faa = opaque;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

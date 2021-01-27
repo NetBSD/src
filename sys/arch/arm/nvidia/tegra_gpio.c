@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.11 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.11 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,18 +145,19 @@ CFATTACH_DECL_NEW(tegra_gpio, sizeof(struct tegra_gpio_softc),
 	    (bank)->bank_sc->sc_bsh, \
 	    (bank)->bank_pb->base + (reg))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-gpio" },
+	{ .compat = "nvidia,tegra124-gpio" },
+	{ .compat = "nvidia,tegra30-gpio" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-gpio",
-		"nvidia,tegra124-gpio",
-		"nvidia,tegra30-gpio",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

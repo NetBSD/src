@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.22 2021/01/27 01:54:06 thorpej Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.23 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.22 2021/01/27 01:54:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.23 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -106,7 +106,7 @@ pcihost_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -133,7 +133,7 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers: %d\n", error);
 		return;
 	}
-	sc->sc_type = of_search_compatible(sc->sc_phandle, compat_data)->value;
+	sc->sc_type = of_compatible_lookup(sc->sc_phandle, compat_data)->value;
 
 #ifdef __HAVE_PCI_MSI_MSIX
 	if (sc->sc_type == PCIHOST_ECAM) {

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmacclk.c,v 1.2 2018/09/09 07:21:18 aymeric Exp $ */
+/* $NetBSD: sunxi_gmacclk.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmacclk.c,v 1.2 2018/09/09 07:21:18 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmacclk.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,13 +89,17 @@ struct sunxi_gmacclk_softc {
 CFATTACH_DECL_NEW(sunxi_gmacclk, sizeof(struct sunxi_gmacclk_softc),
     sunxi_gmacclk_match, sunxi_gmacclk_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun7i-a20-gmac-clk" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sunxi_gmacclk_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "allwinner,sun7i-a20-gmac-clk", NULL };
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

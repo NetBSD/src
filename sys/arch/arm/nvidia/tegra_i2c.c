@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.25 2021/01/15 23:11:59 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.26 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.25 2021/01/15 23:11:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.26 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,18 +83,19 @@ CFATTACH_DECL_NEW(tegra_i2c, sizeof(struct tegra_i2c_softc),
 #define I2C_SET_CLEAR(sc, reg, setval, clrval) \
     tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (reg), (setval), (clrval))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-i2c" },
+	{ .compat = "nvidia,tegra124-i2c" },
+	{ .compat = "nvidia,tegra114-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_i2c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-i2c",
-		"nvidia,tegra124-i2c",
-		"nvidia,tegra114-i2c",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

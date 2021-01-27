@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.13 2021/01/27 02:09:39 thorpej Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.13 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -152,7 +152,7 @@ sunxi_hdmi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -170,7 +170,7 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 
 	sc->sc_type =
-	    of_search_compatible(faa->faa_phandle, compat_data)->value;
+	    of_compatible_lookup(faa->faa_phandle, compat_data)->value;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

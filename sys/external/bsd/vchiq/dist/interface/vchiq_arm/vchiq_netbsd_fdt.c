@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_fdt.c,v 1.4 2021/01/15 22:58:49 jmcneill Exp $ */
+/* $NetBSD: vchiq_netbsd_fdt.c,v 1.5 2021/01/27 03:10:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.4 2021/01/15 22:58:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.5 2021/01/27 03:10:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,13 +65,17 @@ int vchiq_init(void);
 CFATTACH_DECL_NEW(vchiq_fdt, sizeof(struct vchiq_fdt_softc),
     vchiq_fdt_match, vchiq_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-vchiq" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 vchiq_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-vchiq", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

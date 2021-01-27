@@ -1,4 +1,4 @@
-/* $NetBSD: pl061gpio_fdt.c,v 1.4 2018/10/15 23:53:47 jmcneill Exp $ */
+/* $NetBSD: pl061gpio_fdt.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl061gpio_fdt.c,v 1.4 2018/10/15 23:53:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl061gpio_fdt.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,16 +71,17 @@ struct plgpio_fdt_pin {
 CFATTACH_DECL_NEW(plgpio_fdt, sizeof(struct plgpio_softc),
 	plgpio_fdt_match, plgpio_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,pl061" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 plgpio_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,pl061",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

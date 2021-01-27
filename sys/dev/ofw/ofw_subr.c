@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.53 2021/01/26 14:55:57 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.54 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.53 2021/01/26 14:55:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.54 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,7 @@ of_decode_int(const unsigned char *p)
  * This routine checks an OFW node's "compatible" entry to see if
  * it matches any of the provided strings.
  *
- * of_match_compat_data() is the preferred way to perform driver
+ * of_compatible_match() is the preferred way to perform driver
  * compatibility match.  However, this routine that deals with
  * only strings is useful in some situations and is provided for
  * convenience.
@@ -142,7 +142,7 @@ of_match_compatible(int phandle, const char * const *strings)
 }
 
 /*
- * int of_match_compat_data(phandle, compat_data)
+ * int of_compatible_match(phandle, compat_data)
  *
  * This routine searches an array of device_compatible_entry structures
  * for a matching "compatible" entry matching the supplied OFW node,
@@ -170,7 +170,7 @@ of_match_compatible(int phandle, const char * const *strings)
  *	None.
  */
 int
-of_match_compat_data(int phandle,
+of_compatible_match(int phandle,
     const struct device_compatible_entry *compat_data)
 {
 	char *prop, propbuf[OFW_MAX_STACK_BUF_SIZE];
@@ -195,7 +195,7 @@ of_match_compat_data(int phandle,
 }
 
 /*
- * const struct device_compatible_entry *of_search_compatible(phandle,
+ * const struct device_compatible_entry *of_compatible_lookup(phandle,
  *							      compat_data)
  *
  * This routine searches an array of device_compatible_entry structures
@@ -217,7 +217,7 @@ of_match_compat_data(int phandle,
  *	None.
  */
 const struct device_compatible_entry *
-of_search_compatible(int phandle,
+of_compatible_lookup(int phandle,
     const struct device_compatible_entry *compat_data)
 {
 	char *prop, propbuf[OFW_MAX_STACK_BUF_SIZE];

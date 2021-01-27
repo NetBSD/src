@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_pwm.c,v 1.2 2019/10/18 06:13:38 skrll Exp $ */
+/* $NetBSD: exynos_pwm.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_pwm.c,v 1.2 2019/10/18 06:13:38 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pwm.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_pwm.c,v 1.2 2019/10/18 06:13:38 skrll Exp $")
 
 #define	PWM_NTIMERS		5
 
-static const char * const compatible[] = {
-	"samsung,exynos4210-pwm",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos4210-pwm" },
+	DEVICE_COMPAT_EOL
 };
 
 struct exynos_pwm_softc;
@@ -200,7 +200,7 @@ exynos_pwm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_usbtll.c,v 1.1 2019/10/30 21:41:40 jmcneill Exp $ */
+/* $NetBSD: ti_usbtll.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_usbtll.c,v 1.1 2019/10/30 21:41:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_usbtll.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: ti_usbtll.c,v 1.1 2019/10/30 21:41:40 jmcneill Exp $
 #define	 USBTLL_CHANNEL_CONF_CHANMODE		0x00000006
 #define	 USBTLL_CHANNEL_CONF_CHANEN		0x00000001
 
-static const char * const compatible[] = {
-	"ti,usbhs-tll",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,usbhs-tll" },
+	DEVICE_COMPAT_EOL
 };
 
 struct ti_usbtll_softc {
@@ -164,7 +164,7 @@ ti_usbtll_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

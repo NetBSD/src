@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_uart.c,v 1.3 2020/03/17 21:24:30 skrll Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013-2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.3 2020/03/17 21:24:30 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -135,9 +135,9 @@ const struct cdevsw exuart_cdevsw = {
 
 static int exynos_uart_cmajor = -1;
 
-static const char * const compatible[] = {
-	"samsung,exynos4210-uart",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos4210-uart" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(exynos_uart, sizeof(struct exynos_uart_softc),
@@ -148,7 +148,7 @@ exynos_uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -576,7 +576,7 @@ exynos_uart_intr(void *priv)
 static int
 exynos_uart_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

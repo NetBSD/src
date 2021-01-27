@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_ohci.c,v 1.3 2018/07/03 16:09:04 jmcneill Exp $ */
+/* $NetBSD: exynos_ohci.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_ohci.c,v 1.3 2018/07/03 16:09:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_ohci.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,16 +52,17 @@ CFATTACH_DECL2_NEW(exynos_ohci, sizeof(struct ohci_softc),
 	exynos_ohci_match, exynos_ohci_attach, NULL,
 	ohci_activate, NULL, ohci_childdet);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos4210-ohci" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 exynos_ohci_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"samsung,exynos4210-ohci",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_rng.c,v 1.1 2019/09/01 17:27:22 mlelstv Exp $ */
+/*	$NetBSD: bcm2838_rng.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_rng.c,v 1.1 2019/09/01 17:27:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_rng.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,14 +49,18 @@ static void bcm2838rng_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(bcm2838rng_fdt, sizeof(struct bcm2838rng_softc),
     bcm2838rng_match, bcm2838rng_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2838-rng200" },
+	DEVICE_COMPAT_EOL
+};
+
 /* ARGSUSED */
 static int
 bcm2838rng_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2838-rng200", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

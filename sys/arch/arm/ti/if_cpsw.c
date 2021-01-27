@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.13 2021/01/15 23:19:33 jmcneill Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.13 2021/01/15 23:19:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -309,19 +309,18 @@ cpsw_rxdesc_paddr(struct cpsw_softc * const sc, u_int x)
 	return sc->sc_rxdescs_pa + sizeof(struct cpsw_cpdma_bd) * x;
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am335x-cpsw" },
+	{ .compat = "ti,cpsw" },
+	DEVICE_COMPAT_EOL
+};
 
 static int
 cpsw_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	static const char * const compatible[] = {
-		"ti,am335x-cpsw",
-		"ti,cpsw",
-		NULL
-	};
-
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static bool

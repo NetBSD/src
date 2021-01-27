@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.9 2021/01/27 02:24:10 thorpej Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.9 2021/01/27 02:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -251,7 +251,7 @@ iicmux_fdt_match(device_t const parent, cfdata_t const match, void * const aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -262,7 +262,7 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 
 	sc->sc_dev = self;
 	sc->sc_handle = faa->faa_phandle;
-	sc->sc_config = of_search_compatible(sc->sc_handle, compat_data)->data;
+	sc->sc_config = of_compatible_lookup(sc->sc_handle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": %s I2C mux\n", sc->sc_config->desc);

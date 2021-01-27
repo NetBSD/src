@@ -1,4 +1,4 @@
-/*	$NetBSD: sun6i_spi.c,v 1.7 2021/01/15 23:02:38 jmcneill Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.8 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.7 2021/01/15 23:02:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.8 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,16 +84,17 @@ static void sun6ispi_recv(struct sun6ispi_softc * const);
 CFATTACH_DECL_NEW(sun6i_spi, sizeof(struct sun6ispi_softc),
     sun6ispi_match, sun6ispi_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-spi" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sun6ispi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"allwinner,sun8i-h3-spi",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

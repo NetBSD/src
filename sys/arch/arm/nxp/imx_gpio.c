@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_gpio.c,v 1.3 2021/01/15 23:58:18 jmcneill Exp $	*/
+/*	$NetBSD: imx_gpio.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_gpio.c,v 1.3 2021/01/15 23:58:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_gpio.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_fdt.h"
 #include "gpio.h"
@@ -77,16 +77,17 @@ static struct fdtbus_gpio_controller_func imx6_gpio_funcs = {
 
 const int imxgpio_ngroups = GPIO_NGROUPS;
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx35-gpio" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 imxgpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"fsl,imx35-gpio",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void

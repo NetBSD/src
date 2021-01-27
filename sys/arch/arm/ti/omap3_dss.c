@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_dss.c,v 1.2 2020/06/28 12:43:00 skrll Exp $	*/
+/*	$NetBSD: omap3_dss.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.2 2020/06/28 12:43:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,9 +164,9 @@ uint32_t venc_mode_ntsc[] = {
 
 extern const u_char rasops_cmap[768];
 
-static const char * const compatible[] = {
-	"ti,omap3-dss",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,omap3-dss" },
+	DEVICE_COMPAT_EOL
 };
 
 static int omapfb_console_phandle = -1;
@@ -176,7 +176,7 @@ omapfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -1242,7 +1242,7 @@ omapfb_do_cursor(struct omapfb_softc * sc,
 static int
 omapfb_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

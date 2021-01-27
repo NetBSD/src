@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_aux.c,v 1.2 2018/09/09 07:21:17 aymeric Exp $ */
+/* $NetBSD: bcm2835_aux.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_aux.c,v 1.2 2018/09/09 07:21:17 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_aux.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,13 +97,17 @@ struct bcmaux_softc {
 CFATTACH_DECL_NEW(bcmaux_fdt, sizeof(struct bcmaux_softc),
     bcmaux_match, bcmaux_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-aux" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 bcmaux_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-aux", NULL };
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

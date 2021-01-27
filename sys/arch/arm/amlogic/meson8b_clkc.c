@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b_clkc.c,v 1.5 2019/08/16 10:36:06 jmcneill Exp $ */
+/* $NetBSD: meson8b_clkc.c,v 1.6 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.5 2019/08/16 10:36:06 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.6 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,10 +73,10 @@ __KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.5 2019/08/16 10:36:06 jmcneill Ex
 static int meson8b_clkc_match(device_t, cfdata_t, void *);
 static void meson8b_clkc_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"amlogic,meson8-clkc",
-	"amlogic,meson8b-clkc",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8-clkc" },
+	{ .compat = "amlogic,meson8b-clkc" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(meson8b_clkc, sizeof(struct meson_clk_softc),
@@ -326,7 +326,7 @@ meson8b_clkc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
