@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.54 2021/01/27 03:10:21 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.55 2021/01/27 04:55:42 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.54 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.55 2021/01/27 04:55:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,18 +127,6 @@ of_compatible(int phandle, const char * const *strings)
  out:
 	kmem_tmpbuf_free(prop, proplen, propbuf);
 	return match;
-}
-
-/*
- * int of_match_compatible(phandle, strings)
- *
- * This function is equivalent to of_compatible(), and its use
- * is deprecated.
- */
-int
-of_match_compatible(int phandle, const char * const *strings)
-{
-	return of_compatible(phandle, strings);
 }
 
 /*
