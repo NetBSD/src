@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.43 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.44 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.43 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.44 2021/01/27 04:35:15 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -128,67 +128,104 @@ CFATTACH_DECL_NEW(ep_eisa, sizeof(struct ep_softc),
 #define EISA_ERROR	0x02
 #define EISA_ENABLE	0x01
 
-static const struct ep_eisa_product {
-	const char	*eep_eisaid;	/* EISA ID */
-	u_short		eep_chipset;	/* 3Com chipset used */
-	int		eep_flags;	/* initial softc flags */
-	const char	*eep_name;	/* device name */
-} ep_eisa_products[] = {
-	{ "TCM5090",			ELINK_CHIPSET_3C509,
-	  0,				EISA_PRODUCT_TCM5090 },
-	{ "TCM5091",			ELINK_CHIPSET_3C509,
-	  0,				EISA_PRODUCT_TCM5091 },
-	{ "TCM5092",			ELINK_CHIPSET_3C509,
-	  0,				EISA_PRODUCT_TCM5092 },
-	{ "TCM5093",			ELINK_CHIPSET_3C509,
-	  0,				EISA_PRODUCT_TCM5093 },
-	{ "TCM5094",			ELINK_CHIPSET_3C509,
-	  0,				EISA_PRODUCT_TCM5094 },
-	{ "TCM5095",			ELINK_CHIPSET_3C509,
-	  0,				EISA_PRODUCT_TCM5095 },
-	{ "TCM5098",			ELINK_CHIPSET_3C509,
-	  0,				EISA_PRODUCT_TCM5098 },
-
-	/*
-	 * Note: The 3c597 Fast Etherlink MII (TCM5972) is an
-	 * MII connector for an external PHY.  We treat it as
-	 * `manual' in the core driver.
-	 */
-	{ "TCM5920",			ELINK_CHIPSET_VORTEX,
-	  0,				EISA_PRODUCT_TCM5920 },
-	{ "TCM5970",			ELINK_CHIPSET_VORTEX,
-	  0,				EISA_PRODUCT_TCM5970 },
-	{ "TCM5971",			ELINK_CHIPSET_VORTEX,
-	  0,				EISA_PRODUCT_TCM5971 },
-	{ "TCM5972",			ELINK_CHIPSET_VORTEX,
-	  0,				EISA_PRODUCT_TCM5972 },
-
-	{ NULL,				0,
-	  0,				NULL },
+struct ep_eisa_product {
+	u_short		chipset;	/* 3Com chipset used */
+	int		flags;		/* initial softc flags */
+	const char	*name;		/* device name */
 };
 
-static const struct ep_eisa_product *
-ep_eisa_lookup(const struct eisa_attach_args *ea)
-{
-	const struct ep_eisa_product *eep;
+static const struct ep_eisa_product tcm5090 = {
+	.chipset = ELINK_CHIPSET_3C509,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5090
+};
 
-	for (eep = ep_eisa_products; eep->eep_name != NULL; eep++)
-		if (strcmp(ea->ea_idstring, eep->eep_eisaid) == 0)
-			return (eep);
+static const struct ep_eisa_product tcm5091 = {
+	.chipset = ELINK_CHIPSET_3C509,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5091
+};
 
-	return (NULL);
-}
+static const struct ep_eisa_product tcm5092 = {
+	.chipset = ELINK_CHIPSET_3C509,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5092
+};
+
+static const struct ep_eisa_product tcm5093 = {
+	.chipset = ELINK_CHIPSET_3C509,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5093
+};
+
+static const struct ep_eisa_product tcm5094 = {
+	.chipset = ELINK_CHIPSET_3C509,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5094
+};
+
+static const struct ep_eisa_product tcm5095 = {
+	.chipset = ELINK_CHIPSET_3C509,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5095
+};
+
+static const struct ep_eisa_product tcm5098 = {
+	.chipset = ELINK_CHIPSET_3C509,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5098
+};
+
+static const struct ep_eisa_product tcm5920 = {
+	.chipset = ELINK_CHIPSET_VORTEX,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5920
+};
+
+static const struct ep_eisa_product tcm5970 = {
+	.chipset = ELINK_CHIPSET_VORTEX,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5970
+};
+
+static const struct ep_eisa_product tcm5971 = {
+	.chipset = ELINK_CHIPSET_VORTEX,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5971
+};
+
+/*
+ * Note: The 3c597 Fast Etherlink MII (TCM5972) is an
+ * MII connector for an external PHY.  We treat it as
+ * `manual' in the core driver.
+ */
+static const struct ep_eisa_product tcm5972 = {
+	.chipset = ELINK_CHIPSET_VORTEX,
+	.flags = 0,
+	.name = EISA_PRODUCT_TCM5972
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "TCM5090",	.data = &tcm5090 },
+	{ .compat = "TCM5091",	.data = &tcm5091 },
+	{ .compat = "TCM5092",	.data = &tcm5092 },
+	{ .compat = "TCM5093",	.data = &tcm5093 },
+	{ .compat = "TCM5094",	.data = &tcm5094 },
+	{ .compat = "TCM5095",	.data = &tcm5095 },
+	{ .compat = "TCM5098",	.data = &tcm5098 },
+	{ .compat = "TCM5920",	.data = &tcm5920 },
+	{ .compat = "TCM5970",	.data = &tcm5970 },
+	{ .compat = "TCM5971",	.data = &tcm5971 },
+	{ .compat = "TCM5972",	.data = &tcm5972 },
+	DEVICE_COMPAT_EOL
+};
 
 static int
 ep_eisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 
-	/* must match one of our known ID strings */
-	if (ep_eisa_lookup(ea) != NULL)
-		return (1);
-
-	return (0);
+	return (eisa_compatible_match(ea, compat_data));
 }
 
 static void
@@ -196,6 +233,7 @@ ep_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ep_softc *sc = device_private(self);
 	struct eisa_attach_args *ea = aux;
+	const struct device_compatible_entry *dce;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh, ioh_cfg;
 	eisa_chipset_tag_t ec = ea->ea_ec;
@@ -227,11 +265,9 @@ ep_eisa_attach(device_t parent, device_t self, void *aux)
 	/* Read the IRQ from the card. */
 	irq = bus_space_read_2(iot, ioh_cfg, EP_EISA_CFG_RESOURCE) >> 12;
 
-	eep = ep_eisa_lookup(ea);
-	if (eep == NULL) {
-		printf("\n");
-		panic("ep_eisa_attach: impossible");
-	}
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+	eep = dce->data;
 
 	/* we don't need access to the config registers any more, but
 	   noone else should be able to map this space, so keep it
@@ -240,14 +276,14 @@ ep_eisa_attach(device_t parent, device_t self, void *aux)
 	bus_space_unmap(iot, ioh_cfg, EP_EISA_CFG_SIZE);
 #endif
 
-	printf(": %s\n", eep->eep_name);
+	printf(": %s\n", eep->name);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
 	sc->enabled = 1;
 
 	sc->bustype = ELINK_BUS_EISA;
-	sc->ep_flags = eep->eep_flags;
+	sc->ep_flags = eep->flags;
 
 	if (eisa_intr_map(ec, irq, &ih)) {
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt (%u)\n",
@@ -267,5 +303,5 @@ ep_eisa_attach(device_t parent, device_t self, void *aux)
 	if (intrstr != NULL)
 		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
-	epconfig(sc, eep->eep_chipset, NULL);
+	epconfig(sc, eep->chipset, NULL);
 }

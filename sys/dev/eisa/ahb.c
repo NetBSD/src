@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.64 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: ahb.c,v 1.65 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.64 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.65 2021/01/27 04:35:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -142,6 +142,14 @@ CFATTACH_DECL_NEW(ahb, sizeof(struct ahb_softc),
 
 #define	AHB_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ADP0000",	.data = EISA_PRODUCT_ADP0000 },
+	{ .compat = "ADP0001",	.data = EISA_PRODUCT_ADP0001 },
+	{ .compat = "ADP0002",	.data = EISA_PRODUCT_ADP0002 },
+	{ .compat = "ADP0400",	.data = EISA_PRODUCT_ADP0400 },
+	DEVICE_COMPAT_EOL
+};
+
 /*
  * Check the slots looking for a board we recognise
  * If we find one, note its address (slot) and call
@@ -155,11 +163,7 @@ ahbmatch(device_t parent, cfdata_t match, void *aux)
 	bus_space_handle_t ioh;
 	int rv;
 
-	/* must match one of our known ID strings */
-	if (strcmp(ea->ea_idstring, "ADP0000") &&
-	    strcmp(ea->ea_idstring, "ADP0001") &&
-	    strcmp(ea->ea_idstring, "ADP0002") &&
-	    strcmp(ea->ea_idstring, "ADP0400"))
+	if (!eisa_compatible_match(ea, compat_data))
 		return (0);
 
 	if (bus_space_map(iot,
@@ -182,11 +186,12 @@ ahbattach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct ahb_softc *sc = device_private(self);
+	const struct device_compatible_entry *dce;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
-	const char *model, *intrstr;
+	const char *intrstr;
 	struct ahb_probe_data apd;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
@@ -194,18 +199,11 @@ ahbattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	if (!strcmp(ea->ea_idstring, "ADP0000"))
-		model = EISA_PRODUCT_ADP0000;
-	else if (!strcmp(ea->ea_idstring, "ADP0001"))
-		model = EISA_PRODUCT_ADP0001;
-	else if (!strcmp(ea->ea_idstring, "ADP0002"))
-		model = EISA_PRODUCT_ADP0002;
-	else if (!strcmp(ea->ea_idstring, "ADP0400"))
-		model = EISA_PRODUCT_ADP0400;
-	else
-		model = "unknown model!";
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+
 	aprint_naive("\n");
-	aprint_normal(": %s\n", model);
+	aprint_normal(": %s\n", (const char *)dce->data);
 
 	if (bus_space_map(iot,
 	    EISA_SLOT_ADDR(ea->ea_slot) + AHB_EISA_SLOT_OFFSET,

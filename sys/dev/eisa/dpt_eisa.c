@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.23 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.24 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.23 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.24 2021/01/27 04:35:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,21 +64,21 @@ static int	dpt_eisa_match(device_t, cfdata_t, void *);
 CFATTACH_DECL_NEW(dpt_eisa, sizeof(struct dpt_softc),
     dpt_eisa_match, dpt_eisa_attach, NULL, NULL);
 
-static const char * const dpt_eisa_boards[] = {
-	"DPT2402",
-	"DPTA401",
-	"DPTA402",
-	"DPTA410",
-	"DPTA411",
-	"DPTA412",
-	"DPTA420",
-	"DPTA501",
-	"DPTA502",
-	"DPTA701",
-	"DPTBC01",
-	"NEC8200",	/* OEM */
-	"ATT2408",	/* OEM */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "DPT2402" },
+	{ .compat = "DPTA401" },
+	{ .compat = "DPTA402" },
+	{ .compat = "DPTA410" },
+	{ .compat = "DPTA411" },
+	{ .compat = "DPTA412" },
+	{ .compat = "DPTA420" },
+	{ .compat = "DPTA501" },
+	{ .compat = "DPTA502" },
+	{ .compat = "DPTA701" },
+	{ .compat = "DPTBC01" },
+	{ .compat = "NEC8200" },	/* OEM */
+	{ .compat = "ATT2408" },	/* OEM */
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -105,16 +105,9 @@ dpt_eisa_irq(bus_space_tag_t iot, bus_space_handle_t ioh, int *irq)
 static int
 dpt_eisa_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct eisa_attach_args *ea;
-	int i;
+	struct eisa_attach_args *ea = aux;
 
-	ea = aux;
-
-	for (i = 0; dpt_eisa_boards[i] != NULL; i++)
-		if (strcmp(ea->ea_idstring, dpt_eisa_boards[i]) == 0)
-			break;
-
-	return (dpt_eisa_boards[i] != NULL);
+	return eisa_compatible_match(ea, compat_data);
 }
 
 static void
