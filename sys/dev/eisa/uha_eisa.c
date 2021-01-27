@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.38 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.39 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.38 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.39 2021/01/27 04:35:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,6 +73,11 @@ static int	u24_poll(struct uha_softc *, struct scsipi_xfer *, int);
 static int	u24_intr(void *);
 static void	u24_init(struct uha_softc *);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "USC024?",	.data = EISA_PRODUCT_USC0240 },
+	DEVICE_COMPAT_EOL
+};
+
 /*
  * Check the slots looking for a board we recognise
  * If we find one, note its address (slot) and call
@@ -87,8 +92,7 @@ uha_eisa_match(device_t parent, cfdata_t match,
 	bus_space_handle_t ioh;
 	int rv;
 
-	/* must match one of our known ID strings */
-	if (strncmp(ea->ea_idstring, "USC024", 6))
+	if (!eisa_compatible_match(ea, compat_data))
 		return (0);
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
@@ -110,20 +114,20 @@ uha_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct uha_softc *sc = device_private(self);
+	const struct device_compatible_entry *dce;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_dma_tag_t dmat = ea->ea_dmat;
 	bus_space_handle_t ioh;
 	struct uha_probe_data upd;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
-	const char *model, *intrstr;
+	const char *intrstr;
 	char intrbuf[EISA_INTRSTR_LEN];
 
-	if (!strncmp(ea->ea_idstring, "USC024", 6))
-		model = EISA_PRODUCT_USC0240;
-	else
-		model = "unknown model!";
-	printf(": %s\n", model);
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+
+	printf(": %s\n", (const char *)dce->data);
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    UHA_EISA_SLOT_OFFSET, UHA_EISA_IOSIZE, 0, &ioh))

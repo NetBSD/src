@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.37 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.38 2021/01/27 04:35:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.37 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.38 2021/01/27 04:35:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,12 @@ bha_eisa_address(bus_space_tag_t iot, bus_space_handle_t ioh, int *portp)
 	return (0);
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "BUS4201",	.data = EISA_PRODUCT_BUS4201 },
+	{ .compat = "BUS4202",	.data = EISA_PRODUCT_BUS4202 },
+	DEVICE_COMPAT_EOL
+};
+
 /*
  * Check the slots looking for a board we recognise
  * If we find one, note its address (slot) and call
@@ -107,9 +113,7 @@ bha_eisa_match(device_t parent, cfdata_t match, void *aux)
 	int port;
 	int rv;
 
-	/* must match one of our known ID strings */
-	if (strcmp(ea->ea_idstring, "BUS4201") &&
-	    strcmp(ea->ea_idstring, "BUS4202"))
+	if (!eisa_compatible_match(ea, compat_data))
 		return (0);
 
 	if (bus_space_map(iot,
@@ -139,24 +143,22 @@ bha_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct bha_softc *sc = device_private(self);
+	const struct device_compatible_entry *dce;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh, ioh2;
 	int port;
 	struct bha_probe_data bpd;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
-	const char *model, *intrstr;
+	const char *intrstr;
 	char intrbuf[EISA_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
-	if (!strcmp(ea->ea_idstring, "BUS4201"))
-		model = EISA_PRODUCT_BUS4201;
-	else if (!strcmp(ea->ea_idstring, "BUS4202"))
-		model = EISA_PRODUCT_BUS4202;
-	else
-		model = "unknown model!";
-	printf(": %s\n", model);
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+
+	printf(": %s\n", (const char *)dce->data);
 
 	if (bus_space_map(iot,
 	    EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE,
