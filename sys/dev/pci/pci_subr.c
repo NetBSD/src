@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.224 2020/05/30 10:43:46 jdolecek Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.225 2021/01/27 05:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.224 2020/05/30 10:43:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.225 2021/01/27 05:00:15 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -83,6 +83,50 @@ static int pci_conf_find_cap(const pcireg_t *, unsigned int, int *);
 static int pci_conf_find_extcap(const pcireg_t *, unsigned int, int *);
 static void pci_conf_print_pcie_power(uint8_t, unsigned int);
 #define PCIREG_SHIFTOUT(a, b) ((pcireg_t)__SHIFTOUT((a), (b)))
+
+#ifdef _KERNEL
+/*
+ * Common routines used to match a compatible device by its PCI ID code.
+ */
+
+const struct device_compatible_entry *
+pci_compatible_lookup_id(pcireg_t const id,
+    const struct device_compatible_entry *dce)
+{
+	return device_compatible_lookup_id(id, PCI_COMPAT_EOL_VALUE, dce);
+}
+
+const struct device_compatible_entry *
+pci_compatible_lookup(const struct pci_attach_args * const pa,
+    const struct device_compatible_entry * const dce)
+{
+	return pci_compatible_lookup_id(pa->pa_id, dce);
+}
+
+const struct device_compatible_entry *
+pci_compatible_lookup_subsys(const struct pci_attach_args * const pa,
+    const struct device_compatible_entry * const dce)
+{
+	const pcireg_t subsysid =
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	return pci_compatible_lookup_id(subsysid, dce);
+}
+
+int
+pci_compatible_match(const struct pci_attach_args * const pa,
+    const struct device_compatible_entry * const dce)
+{
+	return pci_compatible_lookup(pa, dce) != NULL;
+}
+
+int
+pci_compatible_match_subsys(const struct pci_attach_args * const pa,
+    const struct device_compatible_entry * const dce)
+{
+	return pci_compatible_lookup_subsys(pa, dce) != NULL;
+}
+#endif /* _KERNEL */
 
 /*
  * Descriptions of known PCI classes and subclasses.
