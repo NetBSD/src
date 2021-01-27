@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.116 2021/01/26 19:09:18 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.117 2021/01/27 06:59:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.116 2021/01/26 19:09:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.117 2021/01/27 06:59:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -835,10 +835,9 @@ filt_user(struct knote *kn, long hint)
 static void
 filt_usertouch(struct knote *kn, struct kevent *kev, long type)
 {
-	struct kqueue *kq = kn->kn_kq;
 	int ffctrl;
 
-	KASSERT(mutex_owned(&kq->kq_lock));
+	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
 
 	switch (type) {
 	case EVENT_REGISTER:
