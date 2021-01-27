@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.162 2021/01/24 17:42:37 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.163 2021/01/27 01:00:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -130,6 +130,8 @@ struct device_compatible_entry {
 		uintptr_t value;
 	};
 };
+
+#define	DEVICE_COMPAT_EOL	{ .compat = NULL }
 
 struct device_lock {
 	int		dvl_nwait;
