@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.11 2021/01/25 14:20:37 thorpej Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.12 2021/01/27 01:49:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.11 2021/01/25 14:20:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.12 2021/01/27 01:49:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -271,7 +271,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,meson-gx-mmc",	.value = MESONGX_MMC_V2 },
 	{ .compat = "amlogic,meson-gxbb-mmc",	.value = MESONGX_MMC_V2 },
 	{ .compat = "amlogic,meson-axg-mmc",	.value = MESONGX_MMC_V3 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int
