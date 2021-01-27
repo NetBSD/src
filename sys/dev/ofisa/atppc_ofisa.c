@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.12 2021/01/25 16:21:41 thorpej Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.13 2021/01/27 02:31:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.12 2021/01/25 16:21:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.13 2021/01/27 02:31:03 thorpej Exp $");
 
 #include "opt_atppc.h"
 
@@ -76,7 +76,7 @@ static void atppc_ofisa_dma_free(device_t, void **, bus_addr_t *,
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "pnpPNP,401" },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 /*
