@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sid.c,v 1.6 2021/01/27 02:09:39 thorpej Exp $ */
+/* $NetBSD: sunxi_sid.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sid.c,v 1.6 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sid.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,7 +82,7 @@ sunxi_sid_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -105,7 +105,7 @@ sunxi_sid_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_conf = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": Security ID EFUSE\n");

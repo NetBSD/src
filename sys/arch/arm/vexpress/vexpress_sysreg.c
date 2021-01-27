@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_sysreg.c,v 1.3 2017/06/30 09:19:19 jmcneill Exp $ */
+/* $NetBSD: vexpress_sysreg.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_sysreg.c,v 1.3 2017/06/30 09:19:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_sysreg.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: vexpress_sysreg.c,v 1.3 2017/06/30 09:19:19 jmcneill
 static int	vexpress_sysreg_match(device_t, cfdata_t, void *);
 static void	vexpress_sysreg_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = { "arm,vexpress-sysreg", NULL };
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,vexpress-sysreg" },
+	DEVICE_COMPAT_EOL
+};
 
 struct vexpress_sysreg_softc {
 	device_t		sc_dev;
@@ -100,7 +103,7 @@ vexpress_sysreg_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

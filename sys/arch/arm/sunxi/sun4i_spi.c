@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i_spi.c,v 1.6 2021/01/15 22:47:32 jmcneill Exp $	*/
+/*	$NetBSD: sun4i_spi.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.6 2021/01/15 22:47:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.6 2021/01/15 22:47:32 jmcneill Exp $
 #include <arm/sunxi/sun4i_spireg.h>
 #include <dev/fdt/fdtvar.h>
 
-static const char * const compatible[] = {
-	"allwinner,sun4i-a10-spi",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-spi" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sun4ispi_softc {
@@ -99,7 +99,7 @@ sun4ispi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

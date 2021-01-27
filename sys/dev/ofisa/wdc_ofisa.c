@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.39 2021/01/27 02:31:03 thorpej Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.40 2021/01/27 03:10:21 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.39 2021/01/27 02:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.40 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,7 +82,7 @@ wdc_ofisa_probe(device_t parent, cfdata_t cf, void *aux)
 	struct ofisa_attach_args *aa = aux;
 	int rv;
 
-	rv = of_match_compat_data(aa->oba.oba_phandle, compat_data) ? 5 : 0;
+	rv = of_compatible_match(aa->oba.oba_phandle, compat_data) ? 5 : 0;
 #ifdef _WDC_OFISA_MD_MATCH
 	if (!rv)
 		rv = wdc_ofisa_md_match(parent, cf, aux);

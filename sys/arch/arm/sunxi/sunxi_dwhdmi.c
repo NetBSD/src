@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.8 2019/11/24 10:27:37 jmcneill Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.8 2019/11/24 10:27:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,10 +51,10 @@ enum {
 	DWHDMI_PORT_OUTPUT = 1,
 };
 
-static const char * const compatible[] = {
-	"allwinner,sun8i-h3-dw-hdmi",
-	"allwinner,sun50i-a64-dw-hdmi",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-dw-hdmi" },
+	{ .compat = "allwinner,sun50i-a64-dw-hdmi" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_dwhdmi_softc {
@@ -220,7 +220,7 @@ sunxi_dwhdmi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

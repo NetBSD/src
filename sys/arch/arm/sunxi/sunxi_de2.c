@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_de2.c,v 1.1 2019/01/22 20:17:36 jmcneill Exp $ */
+/* $NetBSD: sunxi_de2.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_de2.c,v 1.1 2019/01/22 20:17:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_de2.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_de2.c,v 1.1 2019/01/22 20:17:36 jmcneill Exp $
 
 #include <arm/sunxi/sunxi_sramc.h>
 
-static const char * compatible[] = {
-	"allwinner,sun50i-a64-de2",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun50i-a64-de2" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -49,7 +49,7 @@ sunxi_de2_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

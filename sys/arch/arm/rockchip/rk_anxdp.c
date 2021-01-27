@@ -1,4 +1,4 @@
-/* $NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
+/* $NetBSD: rk_anxdp.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,9 +54,9 @@ enum {
 	ANXDP_PORT_OUTPUT = 1,
 };
 
-static const char * const compatible[] = {
-	"rockchip,rk3399-edp",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-edp" },
+	DEVICE_COMPAT_EOL
 };
 
 struct rk_anxdp_softc {
@@ -232,7 +232,7 @@ rk_anxdp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

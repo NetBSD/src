@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_uart.c,v 1.1 2019/06/11 13:01:48 skrll Exp $	*/
+/*	$NetBSD: zynq7000_uart.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.1 2019/06/11 13:01:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -41,10 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.1 2019/06/11 13:01:48 skrll Exp 
 
 #include <dev/fdt/fdtvar.h>
 
-static const char * compatible[] = {
-	"xlnx,xuartps",
-	"cdns,uart-r1p8",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "xlnx,xuartps" },
+	{ .compat = "cdns,uart-r1p8" },
+	DEVICE_COMPAT_EOL
 };
 
 int
@@ -52,7 +52,7 @@ zynquart_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void
@@ -91,7 +91,7 @@ zynquart_attach(device_t parent, device_t self, void *aux)
 static int
 zynq_uart_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

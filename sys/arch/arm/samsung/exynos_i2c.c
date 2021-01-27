@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.20 2020/12/23 16:02:11 thorpej Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.20 2020/12/23 16:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,13 +112,17 @@ CFATTACH_DECL_NEW(exynos_i2c, sizeof(struct exynos_i2c_softc),
 
 #define READBIT     (1<<7)
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,s3c2440-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 exynos_i2c_match(device_t self, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,s3c2440-i2c", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

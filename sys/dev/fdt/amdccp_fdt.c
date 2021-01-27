@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_fdt.c,v 1.5 2021/01/27 02:24:10 thorpej Exp $ */
+/* $NetBSD: amdccp_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: amdccp_fdt.c,v 1.5 2021/01/27 02:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ amdccp_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

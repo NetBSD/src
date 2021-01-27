@@ -1,4 +1,4 @@
-/* $NetBSD: am3_prcm.c,v 1.13 2020/06/03 14:56:09 jmcneill Exp $ */
+/* $NetBSD: am3_prcm.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.13 2020/06/03 14:56:09 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,19 +133,19 @@ am3_prcm_hwmod_enable_display(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, 
 #define	AM3_PRCM_HWMOD_WKUP(_name, _reg, _parent)	\
 	TI_PRCM_HWMOD((_name), AM3_PRCM_CM_WKUP + (_reg), (_parent), am3_prcm_hwmod_enable)
 
-static const char * const compatible[] = {
-	"ti,am3-prcm",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am3-prcm" },
+	DEVICE_COMPAT_EOL
 };
 
-static const char * const cm_compatible[] = {
-	"ti,omap4-cm",
-	NULL
+static const struct device_compatible_entry cm_compat_data[] = {
+	{ .compat = "ti,omap4-cm" },
+	DEVICE_COMPAT_EOL
 };
 
-static const char * const clkctrl_compatible[] = {
-	"ti,clkctrl",
-	NULL
+static const struct device_compatible_entry clkctrl_compat_data[] = {
+	{ .compat = "ti,clkctrl" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(am3_prcm, sizeof(struct am3_prcm_softc),
@@ -255,7 +255,7 @@ am3_prcm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -284,11 +284,13 @@ am3_prcm_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": AM3xxx PRCM\n");
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (of_match_compatible(child, cm_compatible) == 0)
+		if (of_compatible_match(child, cm_compat_data) == 0)
 			continue;
 
-		for (cm_child =	OF_child(child); cm_child; cm_child = OF_peer(cm_child)) {
-			if (of_match_compatible(cm_child, clkctrl_compatible) == 0)
+		for (cm_child =	OF_child(child); cm_child;
+		     cm_child = OF_peer(cm_child)) {
+			if (of_compatible_match(cm_child,
+						 clkctrl_compat_data) == 0)
 				continue;
 
 			aprint_debug_dev(self, "clkctrl: %s\n", fdtbus_get_string(cm_child, "name"));

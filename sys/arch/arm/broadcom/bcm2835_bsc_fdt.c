@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.4 2020/12/23 16:02:11 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.4 2020/12/23 16:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,13 +52,17 @@ static void bsciic_fdt_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(bsciic_fdt, sizeof(struct bsciic_softc),
     bsciic_fdt_match, bsciic_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 bsciic_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-i2c", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

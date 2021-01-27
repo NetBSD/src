@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.15 2021/01/27 02:24:10 thorpej Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.16 2021/01/27 03:10:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.15 2021/01/27 02:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.16 2021/01/27 03:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,7 +90,7 @@ dwcmmc_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -150,7 +150,7 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		    (uint64_t)addr, error);
 		return;
 	}
-	esc->sc_conf = of_search_compatible(phandle, compat_data)->data;
+	esc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	if (of_getprop_uint32(phandle, "max-frequency", &sc->sc_clock_freq) != 0)
 		sc->sc_clock_freq = UINT_MAX;

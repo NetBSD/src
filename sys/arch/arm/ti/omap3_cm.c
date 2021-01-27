@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_cm.c,v 1.4 2019/11/01 11:53:35 jmcneill Exp $ */
+/* $NetBSD: omap3_cm.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.4 2019/11/01 11:53:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,9 +101,9 @@ omap3_cm_hwmod_enable(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, int enab
 #define	OMAP3_CM_HWMOD_NOP(_name, _parent)			\
 	TI_PRCM_HWMOD_MASK((_name), 0, 0, (_parent), omap3_cm_hwmod_nopenable, 0)
 
-static const char * const compatible[] = {
-	"ti,omap3-cm",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,omap3-cm" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(omap3_cm, sizeof(struct ti_prcm_softc),
@@ -183,7 +183,7 @@ omap3_cm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

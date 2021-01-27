@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.10 2021/01/27 02:09:39 thorpej Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.11 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.10 2021/01/27 02:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.11 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,7 +110,7 @@ sunxi_tcon_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -157,7 +157,7 @@ sunxi_tcon_attach(device_t parent, device_t self, void *aux)
 	sc->sc_lvds_rst = fdtbus_reset_get(phandle, "lvds");
 
 	sc->sc_type =
-	    of_search_compatible(faa->faa_phandle, compat_data)->value;
+	    of_compatible_lookup(faa->faa_phandle, compat_data)->value;
 
 	aprint_naive("\n");
 	aprint_normal(": LCD/TV timing controller (%s)\n", 

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_usbphy.c,v 1.10 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_usbphy.c,v 1.11 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.10 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.11 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,18 +76,19 @@ static void	tegra_usbphy_utmip_init(struct tegra_usbphy_softc *);
 CFATTACH_DECL_NEW(tegra_usbphy, sizeof(struct tegra_usbphy_softc),
 	tegra_usbphy_match, tegra_usbphy_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-usb-phy" },
+	{ .compat = "nvidia,tegra124-usb-phy" },
+	{ .compat = "nvidia,tegra30-usb-phy" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-usb-phy",
-		"nvidia,tegra124-usb-phy",
-		"nvidia,tegra30-usb-phy",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

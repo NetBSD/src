@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.11 2019/12/16 12:40:17 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.12 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.11 2019/12/16 12:40:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.12 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,10 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.11 2019/12/16 12:40:17 jmcneill Exp 
 static TAILQ_HEAD(, sunxi_drm_endpoint) sunxi_drm_endpoints =
     TAILQ_HEAD_INITIALIZER(sunxi_drm_endpoints);
 
-static const char * const compatible[] = {
-	"allwinner,sun8i-h3-display-engine",
-	"allwinner,sun50i-a64-display-engine",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-display-engine" },
+	{ .compat = "allwinner,sun50i-a64-display-engine " },
+	DEVICE_COMPAT_EOL
 };
 
 static const char * fb_compatible[] = {
@@ -126,7 +126,7 @@ sunxi_drm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -306,7 +306,10 @@ static struct drm_mode_config_funcs sunxi_drm_mode_config_funcs = {
 static int
 sunxi_drm_simplefb_lookup(bus_addr_t *paddr, bus_size_t *psize)
 {
-	static const char * compat[] = { "simple-framebuffer", NULL };
+	static const struct device_compatible_entry simplefb_compat[] = {
+		{ .compat = "simple-framebuffer" },
+		DEVICE_COMPAT_EOL
+	};
 	int chosen, child, error;
 	bus_addr_t addr_end;
 
@@ -317,7 +320,7 @@ sunxi_drm_simplefb_lookup(bus_addr_t *paddr, bus_size_t *psize)
 	for (child = OF_child(chosen); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
-		if (!of_match_compatible(child, compat))
+		if (!of_compatible_match(child, simplefb_compat))
 			continue;
 		error = fdtbus_get_reg(child, 0, paddr, psize);
 		if (error != 0)

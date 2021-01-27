@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.17 2021/01/17 19:53:05 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.17 2021/01/17 19:53:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,9 +67,9 @@ extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
 
 static uint64_t smbios_table = 0;
 
-static const char * const compatible[] = {
-	"netbsd,acpi",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "netbsd,acpi" },
+	DEVICE_COMPAT_EOL
 };
 
 static const struct fdtbus_power_controller_func acpi_fdt_power_funcs = {
@@ -83,7 +83,7 @@ acpi_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

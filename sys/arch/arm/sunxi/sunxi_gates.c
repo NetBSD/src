@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gates.c,v 1.3 2019/05/26 14:14:27 jmcneill Exp $ */
+/* $NetBSD: sunxi_gates.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.3 2019/05/26 14:14:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,10 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.3 2019/05/26 14:14:27 jmcneill Exp
 #define	GATE_REG(index)		(((index) / 32) * 4)
 #define	GATE_MASK(index)	__BIT((index) % 32)
 
-static const char * compatible[] = {
-	"allwinner,sun4i-a10-gates-clk",
-	"allwinner,sun9i-a80-apbs-gates-clk",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-gates-clk" },
+	{ .compat = "allwinner,sun9i-a80-apbs-gates-clk" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_gate {
@@ -207,7 +207,7 @@ sunxi_gates_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

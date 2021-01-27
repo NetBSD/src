@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.12 2021/01/27 01:49:36 thorpej Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.13 2021/01/27 03:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.12 2021/01/27 01:49:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.13 2021/01/27 03:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -279,7 +279,7 @@ mesongx_mmc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -292,7 +292,7 @@ mesongx_mmc_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 
-	sc->sc_hwtype = of_search_compatible(phandle, compat_data)->value;
+	sc->sc_hwtype = of_compatible_lookup(phandle, compat_data)->value;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

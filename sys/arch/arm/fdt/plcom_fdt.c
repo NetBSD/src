@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_fdt.c,v 1.4 2021/01/15 18:42:40 ryo Exp $ */
+/* $NetBSD: plcom_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.4 2021/01/15 18:42:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.4 2021/01/15 18:42:40 ryo Exp $");
 static int	plcom_fdt_match(device_t, cfdata_t, void *);
 static void	plcom_fdt_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = { "arm,pl011", NULL };
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,pl011" },
+	DEVICE_COMPAT_EOL
+};
 
 CFATTACH_DECL_NEW(plcom_fdt, sizeof(struct plcom_softc),
 	plcom_fdt_match, plcom_fdt_attach, NULL, NULL);
@@ -53,7 +56,7 @@ plcom_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -121,7 +124,7 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 static int
 plcom_fdt_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

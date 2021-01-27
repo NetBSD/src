@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ocotp.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx6_ocotp.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ocotp.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ocotp.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -62,24 +62,25 @@ static void imxocotp_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(imxocotp, sizeof(struct imxocotp_softc),
     imxocotp_match, imxocotp_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-ocotp" },
+	{ .compat = "fsl,imx6sl-ocotp" },
+	{ .compat = "fsl,imx6sll-ocotp" },
+	{ .compat = "fsl,imx6sx-ocotp" },
+	{ .compat = "fsl,imx6ul-ocotp" },
+	{ .compat = "fsl,imx6ull-ocotp" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 imxocotp_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-	    "fsl,imx6q-ocotp",
-	    "fsl,imx6sl-ocotp",
-	    "fsl,imx6sll-ocotp",
-	    "fsl,imx6sx-ocotp",
-	    "fsl,imx6ul-ocotp",
-	    "fsl,imx6ull-ocotp",
-	     NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
 	if (ocotp_softc != NULL)
 		return 0;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 /* ARGSUSED */

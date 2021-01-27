@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.36 2021/01/25 14:20:38 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.37 2021/01/27 03:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.36 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.37 2021/01/27 03:10:19 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -260,7 +260,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "brcm,bcm2835-armctrl-ic",	.value = 0 },
 	{ .compat = "brcm,bcm2836-armctrl-ic",	.value = 0 },
 	{ .compat = "brcm,bcm2836-l1-intc",	.value = 1 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -268,7 +268,7 @@ bcm2835_icu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -300,7 +300,7 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_phandle = phandle;
 
-	dce = of_search_compatible(faa->faa_phandle, compat_data);
+	dce = of_compatible_lookup(faa->faa_phandle, compat_data);
 	KASSERT(dce != NULL);
 
 	if (dce->value != 0) {
