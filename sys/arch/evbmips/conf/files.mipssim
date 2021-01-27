@@ -1,0 +1,31 @@
+# $NetBSD: files.mipssim,v 1.1 2021/01/27 05:24:16 simonb Exp $
+
+file	arch/evbmips/mipssim/autoconf.c
+file	arch/evbmips/mipssim/machdep.c
+file	arch/evbmips/mipssim/mipssim_intr.c
+file	arch/evbmips/mipssim/mipssim_bus_io.c
+
+file	arch/evbmips/evbmips/interrupt.c
+
+file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
+
+# System bus
+device	mainbus {}
+attach	mainbus at root
+file	arch/evbmips/mipssim/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/evbmips/cpu.c		cpu
+
+attach	com at mainbus with com_mainbus
+file	arch/evbmips/mipssim/com_mainbus.c	com_mainbus
+
+device	mipsnet: ether, ifnet, arp, mii
+attach	mipsnet at mainbus
+file	arch/evbmips/mipssim/if_mipsnet.c	mipsnet
+defparam opt_mipsnet.h				MIPSSIM_ETH_MACADDR
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks
