@@ -1,4 +1,4 @@
-/* $NetBSD: octeon_intc.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $ */
+/* $NetBSD: octeon_intc.c,v 1.5 2021/01/27 02:20:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.4 2021/01/25 14:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.5 2021/01/27 02:20:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,7 +71,7 @@ CFATTACH_DECL_NEW(octintc, sizeof(struct octeon_intc_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "cavium,octeon-3860-ciu",	.value = OCTEON_INTC_CIU },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int

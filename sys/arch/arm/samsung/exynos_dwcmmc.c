@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.12 2021/01/25 14:20:38 thorpej Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.13 2021/01/27 02:01:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.12 2021/01/25 14:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.13 2021/01/27 02:01:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,7 +74,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "samsung,exynos5250-dw-mshc",	.value = 0 },
 	{ .compat = "samsung,exynos5420-dw-mshc-smu",	.value = 1 },
 	{ .compat = "samsung,exynos5420-dw-mshc",	.value = 0 },
-	{ }
+	DEVICE_COMPAT_EOL
 };
 
 static int
