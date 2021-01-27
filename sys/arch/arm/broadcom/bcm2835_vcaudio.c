@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.16 2021/01/23 12:53:46 nia Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.17 2021/01/27 12:06:10 nia Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.16 2021/01/23 12:53:46 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.17 2021/01/27 12:06:10 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -270,7 +270,7 @@ vcaudio_init(struct vcaudio_softc *sc)
 	sc->sc_hwvol[VCAUDIO_DEST_HDMI] = 255;
 	sc->sc_dest = VCAUDIO_DEST_AUTO;
 
-	sc->sc_format.mode = AUMODE_PLAY|AUMODE_RECORD;
+	sc->sc_format.mode = AUMODE_PLAY;
 	sc->sc_format.encoding = AUDIO_ENCODING_SLINEAR_LE;
 	sc->sc_format.validbits = 16;
 	sc->sc_format.precision = 16;
