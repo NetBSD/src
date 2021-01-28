@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.25 2021/01/27 02:29:48 thorpej Exp $ */
+/*	$NetBSD: adm1021.c,v 1.26 2021/01/28 14:35:11 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.25 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.26 2021/01/28 14:35:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,11 +143,42 @@ void	admtemp_setlim_1032(struct sysmon_envsys *, envsys_data_t *,
 CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
 	admtemp_match, admtemp_attach, NULL, NULL);
 
-/* XXX: add flags for compats to admtemp_setflags() */
+struct admtemp_params {
+	const char *name;
+	int	noneg;
+	int	nolow;
+	int	ext11;
+	int	therm;
+};
+
+static const struct admtemp_params admtemp_params_max1617 = {
+	.name = "MAX1617A",
+	.noneg = 0,
+	.nolow = 0,
+	.ext11 = 0,
+	.therm = 0,
+};
+
+static const struct admtemp_params admtemp_params_max6642 = {
+	.name = "MAX6642",
+	.noneg = 0,
+	.nolow = 1,
+	.ext11 = 0,
+	.therm = 0,
+};
+
+static const struct admtemp_params admtemp_params_max6690 = {
+	.name = "MAX6690",
+	.noneg = 0,
+	.nolow = 0,
+	.ext11 = 1,
+	.therm = 0,
+};
+
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "i2c-max1617" },
-	{ .compat = "max6642" },
-	{ .compat = "max6690" },
+	{ .compat = "i2c-max1617",	.data = &admtemp_params_max1617 },
+	{ .compat = "max6642",		.data = &admtemp_params_max6642 },
+	{ .compat = "max6690",		.data = &admtemp_params_max6690 },
 	DEVICE_COMPAT_EOL
 };
 
@@ -203,7 +234,6 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
     uint8_t* comp, uint8_t *rev, char* name)
 {
 	uint8_t cmd, data, tmp;
-	int i;
 
 	*comp = 0;
 	*rev = 0;
@@ -220,24 +250,17 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 	sc->sc_therm = 0;
 
 	/* Direct config */
-	for (i = 0; i < ia->ia_ncompat; i++) {
-		if (strcmp("i2c-max1617", ia->ia_compat[i]) == 0) {
-			sc->sc_noneg = 0;
-			strlcpy(name, "MAX1617A", ADMTEMP_NAMELEN);
-			return;
-		}
-		if (strcmp("max6642", ia->ia_compat[i]) == 0) {
-			sc->sc_noneg = 0;
-			sc->sc_nolow = 1;
-			strlcpy(name, "MAX6642", ADMTEMP_NAMELEN);
-			return;
-		}
-		if (strcmp("max6690", ia->ia_compat[i]) == 0) {
-			sc->sc_noneg = 0;
-			sc->sc_ext11 = 1;
-			strlcpy(name, "MAX6690", ADMTEMP_NAMELEN);
-			return;
-		}
+	const struct device_compatible_entry *dce =
+	    iic_compatible_lookup(ia, compat_data);
+	if (dce != NULL) {
+		const struct admtemp_params *params = dce->data;
+
+		sc->sc_noneg = params->noneg;
+		sc->sc_nolow = params->nolow;
+		sc->sc_ext11 = params->ext11;
+		sc->sc_therm = params->therm;
+		strlcpy(name, params->name, ADMTEMP_NAMELEN);
+		return;
 	}
 
 	/* Indirect config */
