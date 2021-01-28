@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.87 2020/05/04 15:55:56 jdolecek Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.88 2021/01/28 01:57:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.87 2020/05/04 15:55:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.88 2021/01/28 01:57:31 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1018,8 +1018,6 @@ x86_genfb_setmode(struct genfb_softc *sc, int newmode)
 
 	switch (newmode) {
 	case WSDISPLAYIO_MODE_EMUL:
-		x86_genfb_mtrr_init(sc->sc_fboffset,
-		    sc->sc_height * sc->sc_stride);
 # if NACPICA > 0 && defined(VGA_POST)
 		if (curmode != newmode) {
 			if (vga_posth != NULL && acpi_md_vesa_modenum != 0) {
