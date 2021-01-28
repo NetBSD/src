@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.18 2021/01/20 21:59:48 reinoud Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.19 2021/01/28 15:43:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -135,16 +135,6 @@ typedef int (*virtio_callback)(struct virtio_softc*);
 #ifdef VIRTIO_PRIVATE
 struct virtio_ops {
 	void		(*kick)(struct virtio_softc *, uint16_t);
-
-	uint8_t		(*read_dev_cfg_1)(struct virtio_softc *, int);
-	uint16_t	(*read_dev_cfg_2)(struct virtio_softc *, int);
-	uint32_t	(*read_dev_cfg_4)(struct virtio_softc *, int);
-	uint64_t	(*read_dev_cfg_8)(struct virtio_softc *, int);
-	void		(*write_dev_cfg_1)(struct virtio_softc *, int, uint8_t);
-	void		(*write_dev_cfg_2)(struct virtio_softc *, int, uint16_t);
-	void		(*write_dev_cfg_4)(struct virtio_softc *, int, uint32_t);
-	void		(*write_dev_cfg_8)(struct virtio_softc *, int, uint64_t);
-
 	uint16_t	(*read_queue_size)(struct virtio_softc *, uint16_t);
 	void		(*setup_queue)(struct virtio_softc *, uint16_t, uint64_t);
 	void		(*set_status)(struct virtio_softc *, int);
@@ -158,7 +148,12 @@ struct virtio_softc {
 	const struct virtio_ops *sc_ops;
 	bus_dma_tag_t		sc_dmat;
 
-	bool			sc_devcfg_swap;
+#define AARCH64EB_PROBLEM	/* see comment in virtio_pci.c */
+	bool			sc_aarch64eb_bus_problem;
+
+	int			sc_bus_endian;
+	int			sc_struct_endian;
+
 	bus_space_tag_t		sc_devcfg_iot;
 	bus_space_handle_t	sc_devcfg_ioh;
 	bus_size_t		sc_devcfg_iosize;

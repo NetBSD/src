@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.44 2021/01/20 21:59:48 reinoud Exp $	*/
+/*	$NetBSD: virtio.c,v 1.45 2021/01/28 15:43:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.44 2021/01/20 21:59:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.45 2021/01/28 15:43:12 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,115 +146,225 @@ virtio_negotiate_features(struct virtio_softc *sc, uint64_t guest_features)
 	for (int i = 0; i < num; i++) \
 		printf("%02x ", bus_space_read_1(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index+i)); \
 	printf(") -> "); printf(fmt, val); printf("\n");
+#define DPRINTFR2(n, fmt, val_s, val_n) \
+	printf("%s ", n); \
+	printf("\n        stream "); printf(fmt, val_s); printf(" norm "); printf(fmt, val_n); printf("\n");
 #else
 #define DPRINTFR(n, fmt, val, index, num)
+#define DPRINTFR2(n, fmt, val_s, val_n)
 #endif
+
 
 uint8_t
 virtio_read_device_config_1(struct virtio_softc *sc, int index) {
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint8_t val;
-	val = sc->sc_ops->read_dev_cfg_1(sc, index);
+
+	val = bus_space_read_1(iot, ioh, index);
+
 	DPRINTFR("read_1", "%02x", val, index, 1);
 	return val;
 }
 
 uint16_t
 virtio_read_device_config_2(struct virtio_softc *sc, int index) {
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint16_t val;
-	val = sc->sc_ops->read_dev_cfg_2(sc, index);
+
+	val = bus_space_read_2(iot, ioh, index);
+	if (BYTE_ORDER != sc->sc_bus_endian)
+		val = bswap16(val);
+
 	DPRINTFR("read_2", "%04x", val, index, 2);
+	DPRINTFR2("read_2", "%04x",
+		bus_space_read_stream_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index),
+		bus_space_read_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
 	return val;
 }
 
 uint32_t
 virtio_read_device_config_4(struct virtio_softc *sc, int index) {
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint32_t val;
-	val = sc->sc_ops->read_dev_cfg_4(sc, index);
+
+	val = bus_space_read_4(iot, ioh, index);
+	if (BYTE_ORDER != sc->sc_bus_endian)
+		val = bswap32(val);
+
 	DPRINTFR("read_4", "%08x", val, index, 4);
+	DPRINTFR2("read_4", "%08x",
+		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index),
+		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
 	return val;
 }
 
 uint64_t
 virtio_read_device_config_8(struct virtio_softc *sc, int index) {
-	uint64_t val;
-	val = sc->sc_ops->read_dev_cfg_8(sc, index);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
+	uint64_t val, val_0, val_1, val_l, val_h;
+
+	val_0 = bus_space_read_4(iot, ioh, index);
+	val_1 = bus_space_read_4(iot, ioh, index + 4);
+	if (BYTE_ORDER != sc->sc_bus_endian) {
+		val_l = bswap32(val_1);
+		val_h = bswap32(val_0);
+	} else {
+		val_l = val_0;
+		val_h = val_1;
+	}
+
+#ifdef AARCH64EB_PROBLEM
+	/* XXX see comment at virtio_pci.c */
+	if (sc->sc_aarch64eb_bus_problem) {
+		val_l = val_1;
+		val_h = val_0;
+	}
+#endif
+
+	val = val_h << 32;
+	val |= val_l;
+
 	DPRINTFR("read_8", "%08lx", val, index, 8);
+	DPRINTFR2("read_8 low ", "%08x",
+		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index),
+		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
+	DPRINTFR2("read_8 high ", "%08x",
+		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index + 4),
+		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index + 4));
 	return val;
 }
 
 /*
  * In the older virtio spec, device config registers are host endian. On newer
- * they are little endian. The normal logic will cater for this. However some
- * devices however explicitly state that its fields are always little endian
- * and will still need to be swapped.
+ * they are little endian. Some newer devices however explicitly specify their
+ * register to always be little endian. These fuctions cater for these.
  */
 uint16_t
 virtio_read_device_config_le_2(struct virtio_softc *sc, int index) {
-	bool virtio_v1 = (sc->sc_active_features & VIRTIO_F_VERSION_1);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint16_t val;
 
-	val = sc->sc_ops->read_dev_cfg_2(sc, index);
-	val = virtio_v1 ? val : le16toh(val);
-	DPRINTFR("read_le_2", "%08x", val, index, 2);
+	val = bus_space_read_2(iot, ioh, index);
+	if (sc->sc_bus_endian != LITTLE_ENDIAN)
+		val = bswap16(val);
+
+	DPRINTFR("read_le_2", "%04x", val, index, 2);
+	DPRINTFR2("read_le_2", "%04x",
+		bus_space_read_stream_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0),
+		bus_space_read_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0));
 	return val;
 }
 
 uint32_t
 virtio_read_device_config_le_4(struct virtio_softc *sc, int index) {
-	bool virtio_v1 = (sc->sc_active_features & VIRTIO_F_VERSION_1);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint32_t val;
 
-	val = sc->sc_ops->read_dev_cfg_4(sc, index);
-	val = virtio_v1 ? val : le32toh(val);
+	val = bus_space_read_4(iot, ioh, index);
+	if (sc->sc_bus_endian != LITTLE_ENDIAN)
+		val = bswap32(val);
+
 	DPRINTFR("read_le_4", "%08x", val, index, 4);
+	DPRINTFR2("read_le_4", "%08x",
+		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0),
+		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0));
 	return val;
 }
 
 void
 virtio_write_device_config_1(struct virtio_softc *sc, int index, uint8_t value)
 {
-	sc->sc_ops->write_dev_cfg_1(sc, index, value);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
+
+	bus_space_write_1(iot, ioh, index, value);
 }
 
 void
 virtio_write_device_config_2(struct virtio_softc *sc, int index, uint16_t value)
 {
-	sc->sc_ops->write_dev_cfg_2(sc, index, value);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
+
+	if (BYTE_ORDER != sc->sc_bus_endian)
+		value = bswap16(value);
+	bus_space_write_2(iot, ioh, index, value);
 }
 
 void
 virtio_write_device_config_4(struct virtio_softc *sc, int index, uint32_t value)
 {
-	sc->sc_ops->write_dev_cfg_4(sc, index, value);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
+
+	if (BYTE_ORDER != sc->sc_bus_endian)
+		value = bswap32(value);
+	bus_space_write_4(iot, ioh, index, value);
 }
 
 void
 virtio_write_device_config_8(struct virtio_softc *sc, int index, uint64_t value)
 {
-	sc->sc_ops->write_dev_cfg_8(sc, index, value);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
+	uint64_t val_0, val_1, val_l, val_h;
+
+	val_l = BUS_ADDR_LO32(value);
+	val_h = BUS_ADDR_HI32(value);
+
+	if (BYTE_ORDER != sc->sc_bus_endian) {
+		val_0 = bswap32(val_h);
+		val_1 = bswap32(val_l);
+	} else {
+		val_0 = val_l;
+		val_1 = val_h;
+	}
+
+#ifdef AARCH64EB_PROBLEM
+	/* XXX see comment at virtio_pci.c */
+	if (sc->sc_aarch64eb_bus_problem) {
+		val_0 = val_h;
+		val_1 = val_l;
+	}
+#endif
+
+	bus_space_write_4(iot, ioh, index, val_0);
+	bus_space_write_4(iot, ioh, index + 4, val_1);
 }
 
 /*
  * In the older virtio spec, device config registers are host endian. On newer
- * they are little endian. The normal logic will cater for this. However some
- * devices however explicitly state that its fields are always little endian
- * and will still need to be swapped.
+ * they are little endian. Some newer devices however explicitly specify their
+ * register to always be little endian. These fuctions cater for these.
  */
 void
 virtio_write_device_config_le_2(struct virtio_softc *sc, int index, uint16_t value)
 {
-	bool virtio_v1 = (sc->sc_active_features & VIRTIO_F_VERSION_1);
-	value = virtio_v1 ? value : htole16(value);
-	sc->sc_ops->write_dev_cfg_2(sc, index, value);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
+
+	if (sc->sc_bus_endian != LITTLE_ENDIAN)
+		value = bswap16(value);
+	bus_space_write_2(iot, ioh, index, value);
 }
 
 void
 virtio_write_device_config_le_4(struct virtio_softc *sc, int index, uint32_t value)
 {
-	bool virtio_v1 = (sc->sc_active_features & VIRTIO_F_VERSION_1);
-	value = virtio_v1 ? value : htole32(value);
-	sc->sc_ops->write_dev_cfg_4(sc, index, value);
+	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
+	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
+
+	if (sc->sc_bus_endian != LITTLE_ENDIAN)
+		value = bswap32(value);
+	bus_space_write_4(iot, ioh, index, value);
 }
+
 
 /*
  * data structures endian helpers
@@ -262,19 +372,19 @@ virtio_write_device_config_le_4(struct virtio_softc *sc, int index, uint32_t val
 uint16_t virtio_rw16(struct virtio_softc *sc, uint16_t val)
 {
 	KASSERT(sc);
-	return (sc->sc_devcfg_swap) ? bswap16(val) : val;
+	return BYTE_ORDER != sc->sc_struct_endian ? bswap16(val) : val;
 }
 
 uint32_t virtio_rw32(struct virtio_softc *sc, uint32_t val)
 {
 	KASSERT(sc);
-	return (sc->sc_devcfg_swap) ? bswap32(val) : val;
+	return BYTE_ORDER != sc->sc_struct_endian ? bswap32(val) : val;
 }
 
 uint64_t virtio_rw64(struct virtio_softc *sc, uint64_t val)
 {
 	KASSERT(sc);
-	return (sc->sc_devcfg_swap) ? bswap64(val) : val;
+	return BYTE_ORDER != sc->sc_struct_endian ? bswap64(val) : val;
 }
 
 

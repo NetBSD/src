@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.26 2021/01/26 16:40:16 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.27 2021/01/28 15:43:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.26 2021/01/26 16:40:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.27 2021/01/28 15:43:12 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,15 +106,6 @@ static void	virtio_pci_set_status_10(struct virtio_softc *, int);
 static void	virtio_pci_negotiate_features_10(struct virtio_softc *, uint64_t);
 static int	virtio_pci_find_cap(struct virtio_pci_softc *psc, int cfg_type, void *buf, int buflen);
 
-static uint8_t	virtio_pci_read_device_config_1(struct virtio_softc *, int);
-static uint16_t	virtio_pci_read_device_config_2(struct virtio_softc *, int);
-static uint32_t	virtio_pci_read_device_config_4(struct virtio_softc *, int);
-static uint64_t	virtio_pci_read_device_config_8(struct virtio_softc *, int);
-static void 	virtio_pci_write_device_config_1(struct virtio_softc *, int, uint8_t);
-static void	virtio_pci_write_device_config_2(struct virtio_softc *, int, uint16_t);
-static void	virtio_pci_write_device_config_4(struct virtio_softc *, int, uint32_t);
-static void	virtio_pci_write_device_config_8(struct virtio_softc *, int, uint64_t);
-
 static int	virtio_pci_setup_interrupts(struct virtio_softc *);
 static void	virtio_pci_free_interrupts(struct virtio_softc *);
 static int	virtio_pci_adjust_config_region(struct virtio_pci_softc *psc);
@@ -131,61 +122,33 @@ static int	virtio_pci_setup_intx_interrupt(struct virtio_softc *,
 #define VIRTIO_MSIX_CONFIG_VECTOR_INDEX	0
 #define VIRTIO_MSIX_QUEUE_VECTOR_INDEX	1
 
-#if 0
-/* we use the legacy virtio spec, so the PCI registers are host native
- * byte order, not PCI (i.e. LE) byte order */
-#if BYTE_ORDER == BIG_ENDIAN
-#define REG_HI_OFF      0
-#define REG_LO_OFF      4
-#ifndef __BUS_SPACE_HAS_STREAM_METHODS
-#define bus_space_read_stream_1 bus_space_read_1
-#define bus_space_write_stream_1 bus_space_write_1
-static inline uint16_t
-bus_space_read_stream_2(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o)
-{
-	return le16toh(bus_space_read_2(t, h, o));
-}
-static inline void
-bus_space_write_stream_2(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, uint16_t v)
-{
-	bus_space_write_2(t, h, o, htole16(v));
-}
-static inline uint32_t
-bus_space_read_stream_4(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o)
-{
-	return le32toh(bus_space_read_4(t, h, o));
-}
-static inline void
-bus_space_write_stream_4(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, uint32_t v)
-{
-	bus_space_write_4(t, h, o, htole32(v));
-}
-#endif
-#else
-#define REG_HI_OFF	4
-#define REG_LO_OFF	0
-#ifndef __BUS_SPACE_HAS_STREAM_METHODS
-#define bus_space_read_stream_1 bus_space_read_1
-#define bus_space_read_stream_2 bus_space_read_2
-#define bus_space_read_stream_4 bus_space_read_4
-#define bus_space_write_stream_1 bus_space_write_1
-#define bus_space_write_stream_2 bus_space_write_2
-#define bus_space_write_stream_4 bus_space_write_4
-#endif
-#endif
-#endif
+/*
+ * When using PCI attached virtio on aarch64-eb under Qemu, the IO space
+ * suddenly read BIG_ENDIAN where it should stay LITTLE_ENDIAN. The data read
+ * 1 byte at a time seem OK but reading bigger lengths result in swapped
+ * endian. This is most notable on reading 8 byters since we can't use
+ * bus_space_{read,write}_8() and it has to be patched there explicitly. We
+ * define the AARCH64EB_PROBLEM to signal we're vulnerable to this and set the
+ * accompanied sc->sc_aarch64_eb_bus_problem variable when attaching using the
+ * IO space.
+ */
 
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#	define VIODEVRW_SWAP_09 false 
-#	define VIODEVRW_SWAP_10 false
-#else /* big endian */
-#	define VIODEVRW_SWAP_09 false
-#	define VIODEVRW_SWAP_10 true
+#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
+	/* source of AARCH64EB_PROBLEM */
+#	define READ_ENDIAN_09	BIG_ENDIAN	/* XXX bug, should be LITTLE_ENDIAN */
+#	define READ_ENDIAN_10	BIG_ENDIAN
+#	define STRUCT_ENDIAN_09	BIG_ENDIAN
+#	define STRUCT_ENDIAN_10	LITTLE_ENDIAN
+#elif BYTE_ORDER == BIG_ENDIAN
+#	define READ_ENDIAN_09	LITTLE_ENDIAN
+#	define READ_ENDIAN_10	BIG_ENDIAN
+#	define STRUCT_ENDIAN_09	BIG_ENDIAN
+#	define STRUCT_ENDIAN_10	LITTLE_ENDIAN
+#else /* little endian */
+#	define READ_ENDIAN_09	LITTLE_ENDIAN
+#	define READ_ENDIAN_10	LITTLE_ENDIAN
+#	define STRUCT_ENDIAN_09	LITTLE_ENDIAN
+#	define STRUCT_ENDIAN_10	LITTLE_ENDIAN
 #endif
 
 
@@ -195,16 +158,6 @@ CFATTACH_DECL3_NEW(virtio_pci, sizeof(struct virtio_pci_softc),
 
 static const struct virtio_ops virtio_pci_ops_09 = {
 	.kick = virtio_pci_kick_09,
-
-	.read_dev_cfg_1 = virtio_pci_read_device_config_1,
-	.read_dev_cfg_2 = virtio_pci_read_device_config_2,
-	.read_dev_cfg_4 = virtio_pci_read_device_config_4,
-	.read_dev_cfg_8 = virtio_pci_read_device_config_8,
-	.write_dev_cfg_1 = virtio_pci_write_device_config_1,
-	.write_dev_cfg_2 = virtio_pci_write_device_config_2,
-	.write_dev_cfg_4 = virtio_pci_write_device_config_4,
-	.write_dev_cfg_8 = virtio_pci_write_device_config_8,
-
 	.read_queue_size = virtio_pci_read_queue_size_09,
 	.setup_queue = virtio_pci_setup_queue_09,
 	.set_status = virtio_pci_set_status_09,
@@ -215,16 +168,6 @@ static const struct virtio_ops virtio_pci_ops_09 = {
 
 static const struct virtio_ops virtio_pci_ops_10 = {
 	.kick = virtio_pci_kick_10,
-
-	.read_dev_cfg_1 = virtio_pci_read_device_config_1,
-	.read_dev_cfg_2 = virtio_pci_read_device_config_2,
-	.read_dev_cfg_4 = virtio_pci_read_device_config_4,
-	.read_dev_cfg_8 = virtio_pci_read_device_config_8,
-	.write_dev_cfg_1 = virtio_pci_write_device_config_1,
-	.write_dev_cfg_2 = virtio_pci_write_device_config_2,
-	.write_dev_cfg_4 = virtio_pci_write_device_config_4,
-	.write_dev_cfg_8 = virtio_pci_write_device_config_8,
-
 	.read_queue_size = virtio_pci_read_queue_size_10,
 	.setup_queue = virtio_pci_setup_queue_10,
 	.set_status = virtio_pci_set_status_10,
@@ -424,7 +367,11 @@ virtio_pci_attach_09(device_t self, void *aux)
 
 	/* set our version 0.9 ops */
 	sc->sc_ops = &virtio_pci_ops_09;
-	sc->sc_devcfg_swap = VIODEVRW_SWAP_09;
+	sc->sc_bus_endian    = READ_ENDIAN_09;
+	sc->sc_struct_endian = STRUCT_ENDIAN_09;
+#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
+	sc->sc_aarch64eb_bus_problem = true;
+#endif
 	return 0;
 }
 
@@ -545,7 +492,8 @@ virtio_pci_attach_10(device_t self, void *aux)
 
 	/* set our version 1.0 ops */
 	sc->sc_ops = &virtio_pci_ops_10;
-	sc->sc_devcfg_swap = VIODEVRW_SWAP_10;
+	sc->sc_bus_endian    = READ_ENDIAN_10;
+	sc->sc_struct_endian = STRUCT_ENDIAN_10;
 	return 0;
 
 err:
@@ -855,166 +803,6 @@ virtio_pci_negotiate_features_10(struct virtio_softc *sc, uint64_t guest_feature
 	return;
 }
 
-/* -------------------------------------
- * Read/write device config code
- * -------------------------------------*/
-
-static uint8_t
-virtio_pci_read_device_config_1(struct virtio_softc *vsc, int index)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-
-	return bus_space_read_1(iot, ioh, index);
-}
-
-static uint16_t
-virtio_pci_read_device_config_2(struct virtio_softc *vsc, int index)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-	uint16_t val;
-
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	val = bus_space_read_2(iot, ioh, index);
-	return val;
-#else
-	val = bus_space_read_stream_2(iot, ioh, index);
-	if (vsc->sc_devcfg_swap)
-		return bswap16(val);
-	return val;
-#endif
-}
-
-static uint32_t
-virtio_pci_read_device_config_4(struct virtio_softc *vsc, int index)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-	uint32_t val;
-
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	val = bus_space_read_4(iot, ioh, index);
-	return val;
-#else
-	val = bus_space_read_stream_4(iot, ioh, index);
-	if (vsc->sc_devcfg_swap)
-		return bswap32(val);
-	return val;
-#endif
-}
-
-static uint64_t
-virtio_pci_read_device_config_8(struct virtio_softc *vsc, int index)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-	uint64_t val, val_h, val_l;
-
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	if (vsc->sc_devcfg_swap) {
-		val_l = bus_space_read_4(iot, ioh, index);
-		val_h = bus_space_read_4(iot, ioh, index + 4);
-	} else {
-		val_h = bus_space_read_4(iot, ioh, index);
-		val_l = bus_space_read_4(iot, ioh, index + 4);
-	}
-	val = val_h << 32;
-	val |= val_l;
-	return val;
-#elif BYTE_ORDER == BIG_ENDIAN
-	val_h = bus_space_read_stream_4(iot, ioh, index);
-	val_l = bus_space_read_stream_4(iot, ioh, index + 4);
-	val = val_h << 32;
-	val |= val_l;
-	if (vsc->sc_devcfg_swap)
-		return bswap64(val);
-	return val;
-#else
-	val_l = bus_space_read_4(iot, ioh, index);
-	val_h = bus_space_read_4(iot, ioh, index + 4);
-	val = val_h << 32;
-	val |= val_l;
-
-	return val;
-#endif
-}
-
-static void
-virtio_pci_write_device_config_1(struct virtio_softc *vsc,
-			     int index, uint8_t value)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-
-	bus_space_write_1(iot, ioh, index, value);
-}
-
-static void
-virtio_pci_write_device_config_2(struct virtio_softc *vsc,
-			     int index, uint16_t value)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	bus_space_write_2(iot, ioh, index, value);
-#else
-	if (vsc->sc_devcfg_swap)
-		value = bswap16(value);
-	bus_space_write_stream_2(iot, ioh, index, value);
-#endif
-}
-
-static void
-virtio_pci_write_device_config_4(struct virtio_softc *vsc,
-			     int index, uint32_t value)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	bus_space_write_4(iot, ioh, index, value);
-#else
-	if (vsc->sc_devcfg_swap)
-		value = bswap32(value);
-	bus_space_write_stream_4(iot, ioh, index, value);
-#endif
-}
-
-static void
-virtio_pci_write_device_config_8(struct virtio_softc *vsc,
-			     int index, uint64_t value)
-{
-	bus_space_tag_t	   iot = vsc->sc_devcfg_iot;
-	bus_space_handle_t ioh = vsc->sc_devcfg_ioh;
-	uint64_t val_h, val_l;
-
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	val_l = value & 0xffffffff;
-	val_h = value >> 32;
-	if (vsc->sc_devcfg_swap) {
-		bus_space_write_4(iot, ioh, index, val_l);
-		bus_space_write_4(iot, ioh, index + 4, val_h);
-	} else {
-		bus_space_write_4(iot, ioh, index, val_h);
-		bus_space_write_4(iot, ioh, index + 4, val_l);
-	}
-#elif BYTE_ORDER == BIG_ENDIAN
-	if (vsc->sc_devcfg_swap)
-		value = bswap64(value);
-	val_l = value & 0xffffffff;
-	val_h = value >> 32;
-
-	bus_space_write_stream_4(iot, ioh, index, val_h);
-	bus_space_write_stream_4(iot, ioh, index + 4, val_l);
-#else
-	val_l = value & 0xffffffff;
-	val_h = value >> 32;
-	bus_space_write_stream_4(iot, ioh, index, val_l);
-	bus_space_write_stream_4(iot, ioh, index + 4, val_h);
-#endif
-}
 
 /* -------------------------------------
  * Generic PCI interrupt code
