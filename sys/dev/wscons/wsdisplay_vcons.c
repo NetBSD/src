@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.50 2021/01/26 16:24:17 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.51 2021/01/28 17:40:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.50 2021/01/26 16:24:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.51 2021/01/28 17:40:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1334,7 +1334,7 @@ vcons_cursor_noread(void *cookie, int on, int row, int col)
 #endif
 	ofs = offset + ri->ri_crow * ri->ri_cols + ri->ri_ccol;
 	if ((ri->ri_flg & RI_CURSOR) && 
-	   ((scr->scr_flags & VCONS_DONT_READ) != VCONS_DONT_READ)) {
+	   (((scr->scr_flags & VCONS_DONT_READ) != VCONS_DONT_READ) || on)) {
 		scr->putchar(cookie, ri->ri_crow, ri->ri_ccol,
 		    scr->scr_chars[ofs], scr->scr_attrs[ofs]);
 		ri->ri_flg &= ~RI_CURSOR;
