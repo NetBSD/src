@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.12 2020/10/12 12:11:03 ryoon Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.13 2021/01/28 01:57:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.12 2020/10/12 12:11:03 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.13 2021/01/28 01:57:31 jmcneill Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -1056,14 +1056,6 @@ static struct genfb_mode_callback mode_cb;
 static bool
 x86_genfb_setmode(struct genfb_softc *sc, int newmode)
 {
-#if NGENFB > 0
-	switch (newmode) {
-	case WSDISPLAYIO_MODE_EMUL:
-		x86_genfb_mtrr_init(sc->sc_fboffset,
-		    sc->sc_height * sc->sc_stride);
-		break;
-	}
-#endif
 	return true;
 }
 
