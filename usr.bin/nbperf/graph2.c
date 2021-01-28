@@ -1,4 +1,4 @@
-/*	$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $	*/
+/*	$NetBSD: graph2.c,v 1.6 2021/01/28 18:52:43 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $");
+__RCSID("$NetBSD: graph2.c,v 1.6 2021/01/28 18:52:43 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -180,11 +180,11 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 	size_t i, j;
 
 #if GRAPH_SIZE == 2
-	if (nbperf->allow_hash_fudging && (graph->v & 1) != 1)
-		errx(1, "vertex count must have lowest bit set");
+	if (nbperf->allow_hash_fudging && (graph->v & 1) != 0)
+		errx(1, "vertex count must have lowest bit clear");
 #else
-	if (nbperf->allow_hash_fudging && (graph->v & 3) != 3)
-		errx(1, "vertex count must have lowest 2 bits set");
+	if (nbperf->allow_hash_fudging && (graph->v & 3) != 0)
+		errx(1, "vertex count must have lowest 2 bits clear");
 #endif
 
 
