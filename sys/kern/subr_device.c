@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.3 2015/03/09 15:35:11 pooka Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.4 2021/01/28 15:53:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.3 2015/03/09 15:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.4 2021/01/28 15:53:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -176,6 +176,9 @@ device_properties(device_t dev)
 bool
 device_is_a(device_t dev, const char *dname)
 {
+	if (dev == NULL || dev->dv_cfdriver == NULL) {
+		return false;
+	}
 
 	return strcmp(dev->dv_cfdriver->cd_name, dname) == 0;
 }
