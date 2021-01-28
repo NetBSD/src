@@ -798,7 +798,9 @@ copy_file_data_block(struct bsdtar *bsdtar, struct archive *a,
 		progress += bytes_written;
 	}
 	if (r < ARCHIVE_WARN) {
-		lafe_warnc(archive_errno(a), "%s", archive_error_string(a));
+		const char *s = archive_error_string(a);
+		if (s)
+			lafe_warnc(archive_errno(a), "%s", s);
 		return (-1);
 	}
 	return (0);
