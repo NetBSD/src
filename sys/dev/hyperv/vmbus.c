@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.11 2020/05/26 16:08:55 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.12 2021/01/29 04:38:34 nonaka Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.11 2020/05/26 16:08:55 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.12 2021/01/29 04:38:34 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,8 @@ vmbus_start(struct vmbus_softc *sc, struct vmbus_msg *msg, paddr_t msg_pa)
 			hyperv_intr();
 			splx(s);
 		} else
-			tsleep(wchan, PRIBIO, wchan, mstohz(delays[i]));
+			tsleep(wchan, PRIBIO, wchan,
+			    uimax(1, mstohz(delays[i] / 1000)));
 	}
 	if (status != HYPERCALL_STATUS_SUCCESS) {
 		device_printf(sc->sc_dev,
