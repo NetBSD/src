@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.19 2020/12/11 08:13:08 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.20 2021/01/29 04:38:49 nonaka Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.19 2020/12/11 08:13:08 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.20 2021/01/29 04:38:49 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1070,7 +1070,8 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 			if (cold)
 				delay(1000);
 			else
-				tsleep(cmd, PRIBIO, "nvsout", mstohz(1));
+				tsleep(cmd, PRIBIO, "nvsout",
+				    uimax(1, mstohz(1)));
 		} else if (rv) {
 			DPRINTF("%s: NVSP operation %u send error %d\n",
 			    device_xname(sc->sc_dev), hdr->nvs_type, rv);
@@ -1095,7 +1096,7 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 			splx(s);
 		} else
 			tsleep(sc->sc_nvsrsp, PRIBIO | PCATCH, "nvscmd",
-			    mstohz(1));
+			    uimax(1, mstohz(1)));
 	} while (--timo > 0 && sc->sc_nvsdone != 1);
 
 	if (timo == 0 && sc->sc_nvsdone != 1) {
@@ -1393,7 +1394,8 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 			if (cold)
 				delay(1000);
 			else
-				tsleep(rc, PRIBIO, "rndisout", mstohz(1));
+				tsleep(rc, PRIBIO, "rndisout",
+				    uimax(1, mstohz(1)));
 		} else if (rv) {
 			DPRINTF("%s: RNDIS operation %u send error %d\n",
 			    device_xname(sc->sc_dev), hdr->rm_type, rv);
@@ -1422,7 +1424,8 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 			hvn_nvs_intr(sc);
 			splx(s);
 		} else
-			tsleep(rc, PRIBIO | PCATCH, "rndiscmd", mstohz(1));
+			tsleep(rc, PRIBIO | PCATCH, "rndiscmd",
+			    uimax(1, mstohz(1)));
 	} while (--timo > 0 && rc->rc_done != 1);
 
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
