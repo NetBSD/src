@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.3 2021/01/29 13:10:07 rin Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.3 2021/01/29 13:10:07 rin Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -191,6 +191,8 @@ imx_platform_mpstart(void)
 	bus_space_unmap(bst, bsh, AIPS1_SRC_SIZE);
 
 	return arm_fdt_cpu_mpstart();
+#else
+	return 0;
 #endif
 }
 
