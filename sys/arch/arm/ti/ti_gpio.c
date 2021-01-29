@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.11 2021/01/29 13:07:32 rin Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.12 2021/01/29 13:10:07 rin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.11 2021/01/29 13:07:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.12 2021/01/29 13:10:07 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.11 2021/01/29 13:07:32 rin Exp $");
 #include <sys/gpio.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
+#include <sys/lwp.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
 
