@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.113 2020/06/20 15:45:22 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.114 2021/01/29 06:22:05 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.113 2020/06/20 15:45:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.114 2021/01/29 06:22:05 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -799,7 +799,7 @@ prefetch_abort_fixup(trapframe_t *tf)
  * If the address is invalid and we were in SVC mode then panic as
  * the kernel should never prefetch abort.
  * If the address is invalid and the page is mapped then the user process
- * does no have read permission so send it a signal.
+ * does not have read permission so send it a signal.
  * Otherwise fault the page in and try again.
  */
 void
