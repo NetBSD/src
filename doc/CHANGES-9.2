@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.37 2021/01/25 14:16:00 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.38 2021/01/29 21:01:53 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1425,4 +1425,18 @@ sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.16
 
 	vcaudio: make vcaudio accurately report lack of CAPTURE.
 	[nia, ticket #1188]
+
+usr.bin/progress/progress.c			1.23
+
+	PR 55914: progress(1): handle EINTR in writes.
+	[lukem, ticket #1189]
+
+usr.bin/ftp/ftp.c				1.171
+usr.bin/ftp/progressbar.c			1.24
+usr.bin/ftp/progressbar.h			1.9
+usr.bin/ftp/ssl.c				1.9
+usr.bin/ftp/version.h				1.92
+
+	PR 55857: ftp(1): don't use restartable signals.
+	[lukem, ticket #1190]
 
