@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.42 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.43 2021/01/29 14:11:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.42 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.43 2021/01/29 14:11:14 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -172,8 +172,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, 0,
-	    sdhc_intr, &sc->sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SDMMC, 0,
+	    sdhc_intr, &sc->sc, device_xname(self));
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",

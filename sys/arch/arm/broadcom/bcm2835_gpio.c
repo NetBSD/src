@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.19 2021/01/29 14:11:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.19 2021/01/29 14:11:14 skrll Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -337,12 +337,14 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			continue;
 		}
 
+		char xname[16];
+		snprintf(xname, sizeof(xname), "%s #%u", device_xname(self),
+		    bank);
 		sc->sc_banks[bank].sc_bankno = bank;
 		sc->sc_banks[bank].sc_bcm = sc;
-		sc->sc_banks[bank].sc_ih =
-		    fdtbus_intr_establish(phandle, bank, IPL_VM,
-		    			  FDT_INTR_MPSAFE,
-					  bcmgpio_intr, &sc->sc_banks[bank]);
+		sc->sc_banks[bank].sc_ih = fdtbus_intr_establish_xname(phandle,
+		    bank, IPL_VM, FDT_INTR_MPSAFE, bcmgpio_intr,
+		    &sc->sc_banks[bank], xname);
 		if (sc->sc_banks[bank].sc_ih) {
 			aprint_normal_dev(self,
 			    "pins %d..%d interrupting on %s\n",
