@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.12 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.13 2021/01/29 06:24:18 rin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.12 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.13 2021/01/29 06:24:18 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,7 +66,7 @@ static TAILQ_HEAD(, sunxi_drm_endpoint) sunxi_drm_endpoints =
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-display-engine" },
-	{ .compat = "allwinner,sun50i-a64-display-engine " },
+	{ .compat = "allwinner,sun50i-a64-display-engine" },
 	DEVICE_COMPAT_EOL
 };
 
