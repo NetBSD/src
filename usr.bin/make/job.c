@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.401 2021/01/29 23:33:24 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.402 2021/01/29 23:45:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.401 2021/01/29 23:33:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.402 2021/01/29 23:45:35 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1672,9 +1672,11 @@ JobStart(GNode *gn, Boolean special)
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touchFlag)) {
 		/*
-		 * XXX: The above conditions seem needlessly repeated but
-		 * are subtly different.
+		 * The above conditions look very similar to
+		 * GNode_ShouldExecute but are subtly different.
+		 * They prevent that .MAKE targets are touched.
 		 */
+
 		JobWriteShellCommands(job, gn, cmdsOK, &run);
 		(void)fflush(job->cmdFILE);
 	} else if (!GNode_ShouldExecute(gn)) {
