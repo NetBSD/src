@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.168 2019/02/04 04:09:13 mrg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.168.2.1 2021/01/29 20:58:19 martin Exp $	*/
 
 /*-
- * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.168 2019/02/04 04:09:13 mrg Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.168.2.1 2021/01/29 20:58:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -578,7 +578,7 @@ abortxfer(int notused)
 
 /*
  * Read data from infd & write to outfd, using buf/bufsize as the temporary
- * buffer, dealing with short writes.
+ * buffer, dealing with short reads or writes.
  * If rate_limit != 0, rate-limit the transfer.
  * If hash_interval != 0, fputc('c', ttyout) every hash_interval bytes.
  * Updates global variables: bytes.
@@ -612,15 +612,25 @@ copy_bytes(int infd, int outfd, char *buf, size_t bufsize,
 		bufrem = bufchunk;
 		while (bufrem > 0) {
 			inc = read(infd, buf, MIN((off_t)bufsize, bufrem));
-			if (inc <= 0)
+			if (inc < 0) {
+				if (errno == EINTR || errno == EAGAIN) {
+					continue;
+				}
 				goto copy_done;
+			} else if (inc == 0) {
+				goto copy_done;
+			}
 			bytes += inc;
 			bufrem -= inc;
 			bufp = buf;
 			while (inc > 0) {
 				outc = write(outfd, bufp, inc);
-				if (outc < 0)
+				if (outc < 0) {
+					if (errno == EINTR || errno == EAGAIN) {
+						continue;
+					}
 					goto copy_done;
+				}
 				inc -= outc;
 				bufp += outc;
 			}
