@@ -1,4 +1,4 @@
-/* $NetBSD: joy_acpi.c,v 1.11 2011/11/23 23:07:31 jmcneill Exp $ */
+/* $NetBSD: joy_acpi.c,v 1.12 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.11 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.12 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,9 +55,9 @@ CFATTACH_DECL_NEW(joy_acpi, sizeof(struct joy_acpi_softc), joy_acpi_match,
  * Supported device IDs
  */
 
-static const char * const joy_acpi_ids[] = {
-	"PNPB02F",	/* Joystick/Game port */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNPB02F" },	/* Joystick/Game port */
+	DEVICE_COMPAT_EOL
 };
 
 /*
@@ -68,10 +68,7 @@ joy_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, joy_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*

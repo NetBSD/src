@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.22 2020/12/07 10:02:51 jmcneill Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.23 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.22 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.23 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,9 +54,9 @@ CFATTACH_DECL_NEW(lpt_acpi, sizeof(struct lpt_acpi_softc), lpt_acpi_match,
  * Supported device IDs
  */
 
-static const char * const lpt_acpi_ids[] = {
-	"PNP04??",	/* Standard LPT printer port */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP04??" },	/* Standard LPT printer port */
+	DEVICE_COMPAT_EOL
 };
 
 /*
@@ -67,10 +67,7 @@ lpt_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, lpt_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*

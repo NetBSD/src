@@ -1,4 +1,4 @@
-/* $NetBSD: qemufwcfg_acpi.c,v 1.1 2017/11/25 16:31:03 jmcneill Exp $ */
+/* $NetBSD: qemufwcfg_acpi.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qemufwcfg_acpi.c,v 1.1 2017/11/25 16:31:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qemufwcfg_acpi.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,9 +53,9 @@ CFATTACH_DECL_NEW(qemufwcfg_acpi, sizeof(struct fwcfg_softc),
     NULL
 );
 
-static const char * const fwcfg_acpi_ids[] = {
-	"QEMU0002",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "QEMU0002" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -63,10 +63,7 @@ fwcfg_acpi_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct acpi_attach_args *aa = opaque;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, fwcfg_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

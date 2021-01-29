@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.26 2015/04/23 23:23:00 pgoyette Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.27 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.26 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.27 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,9 +105,9 @@ static bool	asus_get_fan_speed(struct asus_softc *, uint32_t *);
 CFATTACH_DECL_NEW(asus, sizeof(struct asus_softc),
     asus_match, asus_attach, asus_detach, NULL);
 
-static const char * const asus_ids[] = {
-	"ASUS010",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ASUS010" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -115,10 +115,7 @@ asus_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct acpi_attach_args *aa = opaque;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, asus_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

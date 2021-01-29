@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $ */
+/* $NetBSD: amdccp_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,9 +46,9 @@ static void	amdccp_acpi_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(amdccp_acpi, sizeof(struct amdccp_softc),
     amdccp_acpi_match, amdccp_acpi_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"AMDI0C00",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "AMDI0C00" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -56,10 +56,7 @@ amdccp_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

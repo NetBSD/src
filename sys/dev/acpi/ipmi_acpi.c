@@ -1,4 +1,4 @@
-/* $NetBSD: ipmi_acpi.c,v 1.3 2019/01/30 20:20:36 christos Exp $ */
+/* $NetBSD: ipmi_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi_acpi.c,v 1.3 2019/01/30 20:20:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,9 +58,9 @@ CFATTACH_DECL3_NEW(ipmi_acpi, sizeof(ipmi_acpi_softc_t),
     ipmi_acpi_match, ipmi_acpi_attach, ipmi_acpi_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
-static const char * const ipmi_ids[] = {
-	"IPI0001",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "IPI0001" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -68,13 +68,7 @@ ipmi_acpi_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	if (!acpi_match_hid(aa->aa_node->ad_devinfo, ipmi_ids))
-		return 0;
-
-	return 1;
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
