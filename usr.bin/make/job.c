@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.400 2021/01/29 23:06:41 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.401 2021/01/29 23:33:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.400 2021/01/29 23:06:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.401 2021/01/29 23:33:24 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1667,13 +1667,16 @@ JobStart(GNode *gn, Boolean special)
 	 * flag *was* given, we just set the file to be stdout. Cute, huh?
 	 */
 	if (Lst_IsEmpty(&gn->commands)) {
-		/* XXX: No need to flush stdout here */
 		job->cmdFILE = stdout;
 		run = FALSE;
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touchFlag)) {
-		/* XXX: The above conditions are needlessly repeated */
+		/*
+		 * XXX: The above conditions seem needlessly repeated but
+		 * are subtly different.
+		 */
 		JobWriteShellCommands(job, gn, cmdsOK, &run);
+		(void)fflush(job->cmdFILE);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
 		 * Not executing anything -- just print all the commands to
@@ -1692,6 +1695,7 @@ JobStart(GNode *gn, Boolean special)
 			JobPrintCommands(job);
 		/* Don't execute the shell, thank you. */
 		run = FALSE;
+		(void)fflush(job->cmdFILE);
 	} else {
 		/*
 		 * Just touch the target and note that no shell should be
@@ -1701,8 +1705,6 @@ JobStart(GNode *gn, Boolean special)
 		Job_Touch(gn, job->echo);
 		run = FALSE;
 	}
-	/* Just in case it isn't already... */
-	(void)fflush(job->cmdFILE);
 
 	/* If we're not supposed to execute a shell, don't. */
 	if (!run) {
