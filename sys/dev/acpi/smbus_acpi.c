@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.14 2019/12/22 23:23:32 thorpej Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.15 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.14 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.15 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,9 +112,9 @@ struct SMB_INFO {
 	struct SMB_DEVICE device[1];
 };
 
-static const char * const smbus_acpi_ids[] = {
-	"SMBUS01",	/* SMBus CMI v1.0 */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "SMBUS01" },	/* SMBus CMI v1.0 */
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(acpismbus, sizeof(struct acpi_smbus_softc),
@@ -124,14 +124,13 @@ static int
 acpi_smbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
+	int ret;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
+	ret = acpi_compatible_match(aa, compat_data);
+	if (ret == 0)
 		return 0;
 
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, smbus_acpi_ids) == 0)
-		return 0;
-
-	return acpi_smbus_poll_alert(aa->aa_node->ad_handle, NULL);
+	return acpi_smbus_poll_alert(aa->aa_node->ad_handle, NULL) ? ret : 0;
 }
 
 static void

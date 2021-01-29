@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_fan.c,v 1.8 2015/04/23 23:23:00 pgoyette Exp $ */
+/*	$NetBSD: acpi_fan.c,v 1.9 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.8 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.9 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -48,9 +48,9 @@ struct acpifan_softc {
 	envsys_data_t		 sc_sensor;
 };
 
-const char * const acpi_fan_ids[] = {
-	"PNP0C0B",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP0C0B" },
+	DEVICE_COMPAT_EOL
 };
 
 static int	acpifan_match(device_t, cfdata_t, void *);
@@ -71,10 +71,7 @@ acpifan_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, acpi_fan_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

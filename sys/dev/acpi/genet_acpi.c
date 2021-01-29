@@ -1,4 +1,4 @@
-/* $NetBSD: genet_acpi.c,v 1.3 2020/12/07 10:02:51 jmcneill Exp $ */
+/* $NetBSD: genet_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.3 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.3 2020/12/07 10:02:51 jmcneill Exp 
 #define	GENET_INTR_MPSAFE	false
 #endif
 
-static const char * const compatible[] = {
-	"BCM6E4E",	/* Broadcom GENET v5 */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "BCM6E4E" },	/* Broadcom GENET v5 */
+	DEVICE_COMPAT_EOL
 };
 
 static int	genet_acpi_match(device_t, cfdata_t, void *);
@@ -71,10 +71,7 @@ genet_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

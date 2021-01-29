@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.18 2015/04/23 23:23:00 pgoyette Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.19 2021/01/29 15:49:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.18 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.19 2021/01/29 15:49:55 thorpej Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -71,9 +71,9 @@ static void	acpi_dalb_get_runtime_hotkeys(void *opaque);
 CFATTACH_DECL_NEW(acpidalb, sizeof(struct acpi_dalb_softc),
     acpi_dalb_match, acpi_dalb_attach, acpi_dalb_detach, NULL);
 
-static const char * const acpi_dalb_ids[] = {
-        "PNP0C32", /* Direct Application Launch Button */
-        NULL
+static const struct device_compatible_entry compat_data[] = {
+        { .compat = "PNP0C32" }, /* Direct Application Launch Button */
+	DEVICE_COMPAT_EOL
 };
 
 #define DALB_SYSTEM_WAKEUP	0x02
@@ -84,10 +84,7 @@ acpi_dalb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, acpi_dalb_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

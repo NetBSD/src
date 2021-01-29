@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pcd.c,v 1.1 2020/12/07 10:57:41 jmcneill Exp $ */
+/* $NetBSD: acpi_pcd.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pcd.c,v 1.1 2020/12/07 10:57:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pcd.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pcd.c,v 1.1 2020/12/07 10:57:41 jmcneill Exp $"
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-static const char * const compatible[] = {
-	"ACPI0010",	/* Processor Container Device */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ACPI0010" },	/* Processor Container Device */
+	DEVICE_COMPAT_EOL
 };
 
 static int	acpi_pcd_match(device_t, cfdata_t, void *);
@@ -58,10 +58,7 @@ acpi_pcd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
