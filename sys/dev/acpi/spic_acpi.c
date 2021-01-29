@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.8 2020/12/07 10:02:51 jmcneill Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.9 2021/01/29 15:49:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.8 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.9 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,9 +53,9 @@ struct spic_acpi_softc {
 	void *sc_ih;
 };
 
-static const char * const spic_acpi_ids[] = {
-	"SNY6001",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "SNY6001" },
+	DEVICE_COMPAT_EOL
 };
 
 static int	spic_acpi_match(device_t, cfdata_t, void *);
@@ -70,10 +70,7 @@ spic_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
-
-	return (acpi_match_hid(aa->aa_node->ad_devinfo, spic_acpi_ids));
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

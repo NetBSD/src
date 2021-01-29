@@ -1,4 +1,4 @@
-/*	$NetBSD: fujbp_acpi.c,v 1.4 2014/02/25 18:30:09 pooka Exp $ */
+/*	$NetBSD: fujbp_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.4 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -126,9 +126,9 @@ struct fujitsu_bp_softc {
 	uint8_t			 sc_brightness_nlevels;
 };
 
-static const char * const fujitsu_bp_hid[] = {
-	"FUJ02B1",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "FUJ02B1" },
+	DEVICE_COMPAT_EOL
 };
 
 static int	fujitsu_bp_match(device_t, cfdata_t, void *);
@@ -160,10 +160,7 @@ fujitsu_bp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, fujitsu_bp_hid);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.11 2011/06/15 09:02:38 jruoho Exp $ */
+/* $NetBSD: hpet_acpi.c,v 1.12 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2011 Jukka Ruohonen
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.11 2011/06/15 09:02:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.12 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,9 +52,9 @@ static void		hpet_acpi_dev_attach(device_t, device_t, void *);
 static bus_addr_t	hpet_acpi_dev_addr(device_t, void *, bus_size_t *);
 static int		hpet_acpi_detach(device_t, int);
 
-static const char * const hpet_acpi_ids[] = {
-	"PNP0103",
-        NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP0103" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(hpet_acpi_tab, sizeof(struct hpet_softc),
@@ -148,11 +148,10 @@ hpet_acpi_dev_match(device_t parent, cfdata_t match, void *aux)
 	bus_space_tag_t bt;
 	bus_size_t len = 0;
 	bus_addr_t addr;
+	int ret;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, hpet_acpi_ids) == 0)
+	ret = acpi_compatible_match(aa, compat_data);
+	if (ret == 0)
 		return 0;
 
 	addr = hpet_acpi_dev_addr(parent, aa, &len);
@@ -164,7 +163,7 @@ hpet_acpi_dev_match(device_t parent, cfdata_t match, void *aux)
 
 	if (bus_space_map(bt, addr, len, 0, &bh) == 0) {
 		bus_space_unmap(bt, bh, len);
-		return 1;
+		return ret;
 	}
 
 	return 0;

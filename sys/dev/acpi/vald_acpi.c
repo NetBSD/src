@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.5 2016/07/14 04:19:26 msaitoh Exp $ */
+/*	$NetBSD: vald_acpi.c,v 1.6 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.5 2016/07/14 04:19:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.6 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,9 +120,9 @@ struct vald_acpi_softc {
 	ACPI_INTEGER sc_ac_status;	/* AC adaptor status when attach */
 };
 
-static const char * const vald_acpi_hids[] = {
-	"TOS6200",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "TOS6200" },
+	DEVICE_COMPAT_EOL
 };
 
 #define LIBRIGHT_HOLD	0x00
@@ -167,10 +167,7 @@ vald_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
-
-	return (acpi_match_hid(aa->aa_node->ad_devinfo, vald_acpi_hids));
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*

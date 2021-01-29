@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.16 2017/12/03 17:34:50 bouyer Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.17 2021/01/29 15:49:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.16 2017/12/03 17:34:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.17 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,10 +77,10 @@ static ACPI_STATUS	acpi_wmi_enable_event(ACPI_HANDLE, uint8_t, bool);
 static ACPI_STATUS	acpi_wmi_enable_collection(ACPI_HANDLE, const char *, bool);
 static bool		acpi_wmi_input(struct wmi_t *, uint8_t, uint8_t);
 
-const char * const acpi_wmi_ids[] = {
-	"PNP0C14",
-	"pnp0c14",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP0C14" },
+	{ .compat = "pnp0c14" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL2_NEW(acpiwmi, sizeof(struct acpi_wmi_softc),
@@ -92,10 +92,7 @@ acpi_wmi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, acpi_wmi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
