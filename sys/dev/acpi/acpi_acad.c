@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.51 2015/04/23 23:23:00 pgoyette Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.52 2021/01/29 15:20:13 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.51 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.52 2021/01/29 15:20:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,9 +64,9 @@ struct acpiacad_softc {
 	int			 sc_status;
 };
 
-static const char * const acad_hid[] = {
-	"ACPI0003",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ACPI0003" },
+	DEVICE_COMPAT_EOL
 };
 
 static int	acpiacad_match(device_t, cfdata_t, void *);
@@ -90,10 +90,7 @@ acpiacad_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, acad_hid);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*
