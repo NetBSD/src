@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.84 2020/06/15 15:29:46 jdolecek Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.85 2021/01/29 15:49:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.84 2020/06/15 15:29:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.85 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -101,9 +101,9 @@ ACPI_MODULE_NAME            ("acpi_ec")
 #define	EC_STATUS_SCI		0x20
 #define	EC_STATUS_SMI		0x40
 
-static const char * const ec_hid[] = {
-	"PNP0C09",
-	NULL,
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP0C09" },
+	DEVICE_COMPAT_EOL
 };
 
 enum ec_state_t {
@@ -246,10 +246,7 @@ acpiec_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, ec_hid);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

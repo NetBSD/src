@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_acpi.c,v 1.4 2017/05/22 14:07:00 riastradh Exp $	*/
+/*	$NetBSD: apple_smc_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $	*/
 
 /*
  * Apple System Management Controller: ACPI Attachment
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_acpi.c,v 1.4 2017/05/22 14:07:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,9 +68,9 @@ CFATTACH_DECL2_NEW(apple_smc_acpi, sizeof(struct apple_smc_acpi_softc),
     apple_smc_acpi_rescan,
     apple_smc_acpi_child_detached);
 
-static const char *const apple_smc_ids[] = {
-	"APP0001",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "APP0001" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -78,13 +78,7 @@ apple_smc_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	if (!acpi_match_hid(aa->aa_node->ad_devinfo, apple_smc_ids))
-		return 0;
-
-	return 1;
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

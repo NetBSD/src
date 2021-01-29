@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus_acpi.c,v 1.3 2020/10/24 08:57:06 skrll Exp $	*/
+/*	$NetBSD: vmbus_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus_acpi.c,v 1.3 2020/10/24 08:57:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,27 +52,24 @@ struct vmbus_acpi_softc {
 CFATTACH_DECL_NEW(vmbus_acpi, sizeof(struct vmbus_acpi_softc),
     vmbus_acpi_match, vmbus_acpi_attach, vmbus_acpi_detach, NULL);
 
-static const char * const vmbus_acpi_ids[] = {
-	"VMBUS",
-	"VMBus",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "VMBUS" },
+	{ .compat = "VMBus" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
 vmbus_acpi_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct acpi_attach_args *aa = opaque;
+	int ret;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	if (!acpi_match_hid(aa->aa_node->ad_devinfo, vmbus_acpi_ids))
-		return 0;
+	ret = acpi_compatible_match(aa, compat_data);
 
 	if (!vmbus_match(parent, match, opaque))
 		return 0;
 
-	return 1;
+	return ret;
 }
 
 static void

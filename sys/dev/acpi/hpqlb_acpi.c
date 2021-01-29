@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.10 2015/04/23 23:23:00 pgoyette Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.11 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.10 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.11 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,10 +95,10 @@ static bool hpqlb_resume(device_t, const pmf_qual_t *);
 CFATTACH_DECL_NEW(hpqlb, sizeof(struct hpqlb_softc),
     hpqlb_match, hpqlb_attach, hpqlb_detach, NULL);
 
-static const char * const hpqlb_ids[] = {
-	"HPQ0006",
-	"HPQ0007",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "HPQ0006" },
+	{ .compat = "HPQ0007" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -106,10 +106,7 @@ hpqlb_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct acpi_attach_args *aa = opaque;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, hpqlb_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

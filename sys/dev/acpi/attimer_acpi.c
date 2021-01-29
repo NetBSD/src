@@ -1,4 +1,4 @@
-/* $NetBSD: attimer_acpi.c,v 1.14 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.15 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.14 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.15 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,9 +80,9 @@ CFATTACH_DECL3_NEW(attimer_acpi, sizeof(struct attimer_softc),
  * Supported device IDs
  */
 
-static const char * const attimer_acpi_ids[] = {
-	"PNP0100",	/* AT Timer */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP0100" },	/* AT Timer */
+	DEVICE_COMPAT_EOL
 };
 
 /*
@@ -93,10 +93,7 @@ attimer_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, attimer_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*

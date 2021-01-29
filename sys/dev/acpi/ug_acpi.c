@@ -1,4 +1,4 @@
-/* $NetBSD: ug_acpi.c,v 1.6 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: ug_acpi.c,v 1.7 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_acpi.c,v 1.6 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_acpi.c,v 1.7 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,9 +49,9 @@ CFATTACH_DECL_NEW(ug_acpi, sizeof(struct ug_softc), ug_acpi_match,
  * XXX: only uGuru 2005 for now
  */
 
-static const char* const ug_acpi_ids[] = {
-	"ABT2005",	/* uGuru 2005 */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ABT2005" },	/* uGuru 2005 */
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -59,10 +59,7 @@ ug_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, ug_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cppc.c,v 1.1 2020/12/13 20:39:20 jmcneill Exp $ */
+/* $NetBSD: acpi_cppc.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cppc.c,v 1.1 2020/12/13 20:39:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cppc.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,9 +104,9 @@ static ACPI_STATUS	cppc_write(struct cppc_softc *, CPCPackageElement,
 CFATTACH_DECL_NEW(acpicppc, sizeof(struct cppc_softc),
     cppc_match, cppc_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"ACPI0007",	/* ACPI Processor Device */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ACPI0007" },	/* ACPI Processor Device */
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -116,13 +116,8 @@ cppc_match(device_t parent, cfdata_t cf, void *aux)
 	ACPI_HANDLE handle;
 	ACPI_STATUS rv;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE) {
+	if (acpi_compatible_match(aa, compat_data) == 0)
 		return 0;
-	}
-
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, compatible) == 0) {
-		return 0;
-	}
 
 	rv = AcpiGetHandle(aa->aa_node->ad_handle, "_CPC", &handle);
 	if (ACPI_FAILURE(rv)) {
@@ -134,7 +129,7 @@ cppc_match(device_t parent, cfdata_t cf, void *aux)
 	}
 
 	/* When CPPC and P-states/T-states are both available, prefer CPPC */
-	return 20;
+	return ACPI_MATCHSCORE_CID_MAX + 1;
 }
 
 static void

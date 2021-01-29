@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $ */
+/* $NetBSD: ehci_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,10 +49,14 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $
 #include <dev/acpi/acpi_intr.h>
 #include <dev/acpi/acpi_usb.h>
 
-static const char * const compatible[] = {
-	"PNP0D20",	/* EHCI-compliant USB controller without standard debug */
-	"PNP0D25",	/* EHCI-compliant USB controller with standard debug */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	/* EHCI-compliant USB controller without standard debug */
+	{ .compat = "PNP0D20" },
+
+	/* EHCI-compliant USB controller with standard debug */
+	{ .compat = "PNP0D25" },
+
+	DEVICE_COMPAT_EOL
 };
 
 struct ehci_acpi_softc {
@@ -74,10 +78,7 @@ ehci_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

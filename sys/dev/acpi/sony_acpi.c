@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.23 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.24 2021/01/29 15:49:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.23 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.24 2021/01/29 15:49:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -74,9 +74,9 @@ struct sony_acpi_softc {
 	} sc_pmstate;
 };
 
-static const char * const sony_acpi_ids[] = {
-	"SNY5001",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "SNY5001" },
+	DEVICE_COMPAT_EOL
 };
 
 static int	sony_acpi_match(device_t, cfdata_t, void *);
@@ -99,10 +99,7 @@ sony_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, sony_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static int
