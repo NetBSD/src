@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.66 2021/01/08 13:03:54 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.67 2021/01/29 18:19:21 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1524,4 +1524,11 @@ external/bsd/ipf/Makefile.inc			1.6
 	ipf(4): build tools as 64bit binaries on mips64 (where most
 	userland is 32bit). Works around missing COMPAT_NETBSD32 for ipf.
 	[simonb, ticket #1646]
+
+sys/dev/hyperv/hvkbd.c				1.7 (patch)
+sys/dev/hyperv/if_hvn.c				1.20 (patch)
+sys/dev/hyperv/vmbus.c				1.12 (patch)
+
+	hvkbd(4), vmbus(4), hvn(4): don't wait forever.
+	[nonaka, ticket #1647]
 
