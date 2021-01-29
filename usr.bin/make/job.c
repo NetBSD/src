@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.399 2021/01/29 22:52:29 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.400 2021/01/29 23:06:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.399 2021/01/29 22:52:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.400 2021/01/29 23:06:41 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1557,7 +1557,7 @@ JobMakeArgv(Job *job, char **argv)
 }
 
 static void
-JobOpenTmpFile(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
+JobWriteShellCommands(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 {
 	/*
 	 * tfile is the name of a file into which all shell commands
@@ -1673,7 +1673,7 @@ JobStart(GNode *gn, Boolean special)
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touchFlag)) {
 		/* XXX: The above conditions are needlessly repeated */
-		JobOpenTmpFile(job, gn, cmdsOK, &run);
+		JobWriteShellCommands(job, gn, cmdsOK, &run);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
 		 * Not executing anything -- just print all the commands to
@@ -1696,8 +1696,6 @@ JobStart(GNode *gn, Boolean special)
 		/*
 		 * Just touch the target and note that no shell should be
 		 * executed. Set cmdFILE to stdout to make life easier.
-		 * Check the commands, too, but don't die if they're no
-		 * good -- it does no harm to keep working up the graph.
 		 */
 		job->cmdFILE = stdout;
 		Job_Touch(gn, job->echo);
