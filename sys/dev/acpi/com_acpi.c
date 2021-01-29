@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.40 2019/03/01 09:21:06 mlelstv Exp $ */
+/* $NetBSD: com_acpi.c,v 1.41 2021/01/29 15:24:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.40 2019/03/01 09:21:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.41 2021/01/29 15:24:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,27 +53,38 @@ CFATTACH_DECL_NEW(com_acpi, sizeof(struct com_acpi_softc), com_acpi_match,
  * Supported device IDs
  */
 
-static const char * const com_acpi_ids[] = {
-	"PNP0500",	/* Standard PC COM port */
-	"PNP0501",	/* 16550A-compatible COM port */
-	"PNP0510",	/* Generic IRDA-compatible device */
-	"PNP0511",	/* Generic IRDA-compatible device */
-	"IBM0071",	/* IBM ThinkPad IRDA device */
-	"SMCF010",	/* SMC SuperIO IRDA device */
-	"NSC6001",	/* NSC IRDA device */
-	"FUJ02E6",	/* Fujitsu Serial Pen Tablet */
-	"HISI0031",	/* Hisilicon UART */
-	"8250dw",	/* Designware APB UART */
-	NULL
-};
+static const struct device_compatible_entry compat_data[] = {
+	/* Standard PC COM port */
+	{ .compat = "PNP0500",		.value = COM_TYPE_NORMAL },
 
-/*
- * Subset of supported device IDs of type COM_TYPE_DW_APB
- */
-static const char * const com_acpi_dw_ids[] = {
-	"HISI0031",	/* Hisilicon UART */
-	"8250dw",	/* Designware APB UART */
-	NULL
+	/* 16550A-compatible COM port */
+	{ .compat = "PNP0501",		.value = COM_TYPE_NORMAL },
+
+	/* Generic IRDA-compatible device */
+	{ .compat = "PNP0510",		.value = COM_TYPE_NORMAL },
+
+	/* Generic IRDA-compatible device */
+	{ .compat = "PNP0511",		.value = COM_TYPE_NORMAL },
+
+	/* IBM ThinkPad IRDA device */
+	{ .compat = "IBM0071",		.value = COM_TYPE_NORMAL },
+
+	/* SMC SuperIO IRDA device */
+	{ .compat = "SMCF010",		.value = COM_TYPE_NORMAL },
+
+	/* NSC IRDA device */
+	{ .compat = "NSC6001",		.value = COM_TYPE_NORMAL },
+
+	/* Fujitsu Serial Pen Tablet */
+	{ .compat = "FUJ02E6",		.value = COM_TYPE_NORMAL },
+
+	/* Hisilicon UART */
+	{ .compat = "HISI0031",		.value = COM_TYPE_DW_APB },
+
+	/* Designware APB UART */
+	{ .compat = "8250dw",		.value = COM_TYPE_DW_APB },
+
+	DEVICE_COMPAT_EOL
 };
 
 /*
@@ -84,10 +95,7 @@ com_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, com_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*
@@ -99,6 +107,7 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 	struct com_acpi_softc *asc = device_private(self);
 	struct com_softc *sc = &asc->sc_com;
 	struct acpi_attach_args *aa = aux;
+	const struct device_compatible_entry *dce;
 	struct acpi_resources res;
 	struct acpi_io *io;
 	struct acpi_mem *mem;
@@ -153,8 +162,12 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("%s", device_xname(self));
 
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, com_acpi_dw_ids) != 0) {
-		sc->sc_type = COM_TYPE_DW_APB;
+	dce = acpi_compatible_lookup(aa, compat_data);
+	KASSERT(dce != NULL);
+
+	sc->sc_type = dce->value;
+
+	if (sc->sc_type == COM_TYPE_DW_APB) {
 		SET(sc->sc_hwflags, COM_HW_POLL);	/* XXX */
 	} else {
 		if (com_probe_subr(&sc->sc_regs) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.42 2015/04/23 23:23:00 pgoyette Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.43 2021/01/29 15:24:00 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.42 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.43 2021/01/29 15:24:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,14 +61,25 @@ struct acpibut_softc {
 	struct sysmon_pswitch	 sc_smpsw;
 };
 
-static const char * const power_button_hid[] = {
-	"PNP0C0C",
-	NULL
+struct button_type {
+	const char *desc;
+	int type;
 };
 
-static const char * const sleep_button_hid[] = {
-	"PNP0C0E",
-	NULL
+static const struct button_type power_button_type = {
+	.desc = "Power",
+	.type = PSWITCH_TYPE_POWER
+};
+
+static const struct button_type sleep_button_type = {
+	.desc = "Sleep",
+	.type = PSWITCH_TYPE_SLEEP
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP0C0C",	.data = &power_button_type },
+	{ .compat = "PNP0C0E",	.data = &sleep_button_type },
+	DEVICE_COMPAT_EOL
 };
 
 static int	acpibut_match(device_t, cfdata_t, void *);
@@ -90,16 +101,7 @@ acpibut_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, power_button_hid))
-		return 1;
-
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, sleep_button_hid))
-		return 1;
-
-	return 0;
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*
@@ -112,22 +114,20 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpibut_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	const struct device_compatible_entry *dce;
+	const struct button_type *type;
 	struct acpi_wakedev *aw;
-	const char *desc;
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, power_button_hid)) {
-		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
-		desc = "Power";
-	} else if (acpi_match_hid(aa->aa_node->ad_devinfo, sleep_button_hid)) {
-		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
-		desc = "Sleep";
-	} else
-		panic("%s: impossible", __func__);
+	dce = acpi_compatible_lookup(aa, compat_data);
+	KASSERT(dce != NULL);
+	type = dce->data;
 
-	aprint_naive(": ACPI %s Button\n", desc);
-	aprint_normal(": ACPI %s Button\n", desc);
+	sc->sc_smpsw.smpsw_type = type->type;
+
+	aprint_naive(": ACPI %s Button\n", type->desc);
+	aprint_normal(": ACPI %s Button\n", type->desc);
 
 	sc->sc_node = aa->aa_node;
 	aw = sc->sc_node->ad_wakedev;
