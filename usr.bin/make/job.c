@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.398 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.399 2021/01/29 22:52:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.398 2021/01/19 20:51:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.399 2021/01/29 22:52:29 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1666,8 +1666,13 @@ JobStart(GNode *gn, Boolean special)
 	 * we don't need to reopen it to feed it to the shell. If the -n
 	 * flag *was* given, we just set the file to be stdout. Cute, huh?
 	 */
-	if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
+	if (Lst_IsEmpty(&gn->commands)) {
+		/* XXX: No need to flush stdout here */
+		job->cmdFILE = stdout;
+		run = FALSE;
+	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touchFlag)) {
+		/* XXX: The above conditions are needlessly repeated */
 		JobOpenTmpFile(job, gn, cmdsOK, &run);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
