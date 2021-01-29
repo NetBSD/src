@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.19 2021/01/29 14:11:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.19 2021/01/29 14:11:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -235,8 +235,11 @@ bcm_dmac_alloc(enum bcm_dmac_type type, int ipl,
 		return NULL;
 	}
 
-	ch->ch_ih = fdtbus_intr_establish(phandle, ch->ch_index, ipl, 0,
-	    bcm_dmac_intr, ch);
+	char xname[16];
+	snprintf(xname, sizeof(xname), "%s #%u", device_xname(sc->sc_dev),
+	    ch->ch_index);
+	ch->ch_ih = fdtbus_intr_establish_xname(phandle, ch->ch_index, ipl, 0,
+	    bcm_dmac_intr, ch, xname);
 	if (ch->ch_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to establish interrupt for DMA%d and %s\n", ch->ch_index,

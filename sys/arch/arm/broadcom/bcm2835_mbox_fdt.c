@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox_fdt.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_mbox_fdt.c,v 1.3 2021/01/29 14:11:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_fdt.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_fdt.c,v 1.3 2021/01/29 14:11:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,8 @@ bcmmbox_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": VC mailbox\n");
 
-	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-	    bcmmbox_intr, sc);
+	sc->sc_intrh = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    bcmmbox_intr, sc, device_xname(self));
 	if (sc->sc_intrh == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",
 		    intrstr);

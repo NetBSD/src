@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.9 2021/01/29 14:11:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.9 2021/01/29 14:11:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,8 +124,8 @@ bcmspi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-	    bcmspi_intr, sc);
+	sc->sc_intrh = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    bcmspi_intr, sc, device_xname(self));
 	if (sc->sc_intrh == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		return;
