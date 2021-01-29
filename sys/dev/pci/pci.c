@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.157 2020/02/02 16:30:31 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.158 2021/01/29 06:00:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.157 2020/02/02 16:30:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.158 2021/01/29 06:00:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -935,7 +935,7 @@ pci_conf_capture(pci_chipset_tag_t pc, pcitag_t tag,
 	/* For MSI */
 	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL) != 0) {
 		bool bit64, pvmask;
-		
+
 		pcs->msi_ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
 
 		bit64 = pcs->msi_ctl & PCI_MSI_CTL_64BIT_ADDR;
