@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.114 2021/01/29 06:22:05 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.115 2021/01/29 07:58:57 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -79,9 +79,10 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.114 2021/01/29 06:22:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.115 2021/01/29 07:58:57 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -114,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.114 2021/01/29 06:22:05 skrll Exp $");
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
 #endif
 
@@ -451,7 +452,7 @@ data_abort_handler(trapframe_t *tf)
 	 * See if the fault is as a result of ref/mod emulation,
 	 * or domain mismatch.
 	 */
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	last_fault_code = fsr;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
@@ -886,7 +887,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	/*
 	 * See if the pmap can handle this fault on its own...
 	 */
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	last_fault_code = -1;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ|VM_PROT_EXECUTE, 1)) {
