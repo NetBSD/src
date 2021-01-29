@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.38 2020/12/06 12:23:13 jmcneill Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.39 2021/01/29 15:24:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.38 2020/12/06 12:23:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.39 2021/01/29 15:24:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -83,21 +83,21 @@ static void	pckbc_acpi_finish_attach(device_t);
  * Supported Device IDs
  */
 
-static const char * const pckbc_acpi_ids_kbd[] = {
-	"PNP03??",	/* Standard PC KBD port */
-	NULL
-};
+static const struct device_compatible_entry compat_data[] = {
+	/* Standard PC KBD port */
+	{ .compat = "PNP03??",		.value = PCKBC_KBD_SLOT },
 
-static const char * const pckbc_acpi_ids_ms[] = {
-	"PNP0F03",
-	"PNP0F0E",
-	"PNP0F12",
-	"PNP0F13",
-	"PNP0F19",
-	"PNP0F1B",
-	"PNP0F1C",
-	"SYN0302",
-	NULL
+	/* (Nobody else here but us mouses...) */
+	{ .compat = "PNP0F03",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "PNP0F0E",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "PNP0F12",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "PNP0F13",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "PNP0F19",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "PNP0F1B",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "PNP0F1C",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "SYN0302",		.value = PCKBC_AUX_SLOT },
+
+	DEVICE_COMPAT_EOL
 };
 
 /*
@@ -107,18 +107,8 @@ static int
 pckbc_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
-	int rv;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	rv = acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_kbd);
-	if (rv)
-		return rv;
-	rv = acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_ms);
-	if (rv)
-		return rv;
-	return 0;
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
@@ -128,6 +118,7 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 	struct pckbc_softc *sc = &psc->sc_pckbc;
 	struct pckbc_internal *t;
 	struct acpi_attach_args *aa = aux;
+	const struct device_compatible_entry *dce;
 	bus_space_handle_t ioh_d, ioh_c;
 	struct acpi_resources res;
 	struct acpi_io *io0, *io1, *ioswap;
@@ -136,14 +127,10 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dv = self;
 
-	if (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_kbd)) {
-		psc->sc_slot = PCKBC_KBD_SLOT;
-	} else if (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_ms)) {
-		psc->sc_slot = PCKBC_AUX_SLOT;
-	} else {
-		aprint_error(": unknown port!\n");
-		panic("pckbc_acpi_attach: impossible");
-	}
+	dce = acpi_compatible_lookup(aa, compat_data);
+	KASSERT(dce != NULL);
+
+	psc->sc_slot = dce->value;
 
 	aprint_normal(" (%s port)", pckbc_slot_names[psc->sc_slot]);
 
