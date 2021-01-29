@@ -1,4 +1,4 @@
-/* $NetBSD: nxpiic_acpi.c,v 1.3 2021/01/26 00:19:53 jmcneill Exp $ */
+/* $NetBSD: nxpiic_acpi.c,v 1.4 2021/01/29 02:26:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.3 2021/01/26 00:19:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.4 2021/01/29 02:26:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,9 +82,9 @@ static void	nxpiic_acpi_iowr(struct motoi2c_softc *, bus_size_t, uint8_t);
 CFATTACH_DECL_NEW(nxpiic_acpi, sizeof(struct nxpiic_softc),
     nxpiic_acpi_match, nxpiic_acpi_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"NXP0001",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "NXP0001" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -92,10 +92,7 @@ nxpiic_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
