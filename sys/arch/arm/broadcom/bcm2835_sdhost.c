@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_sdhost.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: bcm2835_sdhost.c,v 1.8 2021/01/29 14:11:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.8 2021/01/29 14:11:14 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -243,8 +243,8 @@ sdhost_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC,
-	    FDT_INTR_MPSAFE, sdhost_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SDMMC,
+	    FDT_INTR_MPSAFE, sdhost_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",
 		    intrstr);

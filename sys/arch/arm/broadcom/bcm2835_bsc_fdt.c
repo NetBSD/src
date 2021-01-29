@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.6 2021/01/29 14:11:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.6 2021/01/29 14:11:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,8 +118,8 @@ bsciic_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "failed to decode interrupt\n");
 		return;
 	}
-	sc->sc_inth = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, bsciic_intr, sc);
+	sc->sc_inth = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, bsciic_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_inth == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to establish interrupt %s\n", intrstr);
