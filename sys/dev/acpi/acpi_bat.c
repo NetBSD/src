@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.116 2018/08/10 17:11:56 riastradh Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.117 2021/01/29 15:20:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.116 2018/08/10 17:11:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.117 2021/01/29 15:20:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -159,9 +159,9 @@ struct acpibat_softc {
 	int                      sc_present;
 };
 
-static const char * const bat_hid[] = {
-	"PNP0C0A",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP0C0A" },
+	DEVICE_COMPAT_EOL
 };
 
 #define ACPIBAT_PWRUNIT_MA	0x00000001  /* mA not mW */
@@ -207,10 +207,7 @@ acpibat_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, bat_hid);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 /*
