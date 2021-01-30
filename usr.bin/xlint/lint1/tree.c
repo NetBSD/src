@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.191 2021/01/24 14:47:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.192 2021/01/30 18:12:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.191 2021/01/24 14:47:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.192 2021/01/30 18:12:07 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3256,22 +3256,22 @@ fold_float(tnode_t *tn)
 		v->v_ldbl = l - r;
 		break;
 	case LT:
-		v->v_quad = (l < r) ? 1 : 0;
+		v->v_quad = l < r ? 1 : 0;
 		break;
 	case LE:
-		v->v_quad = (l <= r) ? 1 : 0;
+		v->v_quad = l <= r ? 1 : 0;
 		break;
 	case GE:
-		v->v_quad = (l >= r) ? 1 : 0;
+		v->v_quad = l >= r ? 1 : 0;
 		break;
 	case GT:
-		v->v_quad = (l > r) ? 1 : 0;
+		v->v_quad = l > r ? 1 : 0;
 		break;
 	case EQ:
-		v->v_quad = (l == r) ? 1 : 0;
+		v->v_quad = l == r ? 1 : 0;
 		break;
 	case NE:
-		v->v_quad = (l != r) ? 1 : 0;
+		v->v_quad = l != r ? 1 : 0;
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
