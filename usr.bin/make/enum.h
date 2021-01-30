@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.14 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.15 2021/01/30 15:48:42 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -102,12 +102,21 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 
 /* Declare the necessary data structures for calling Enum_ValueToString. */
 #define ENUM__VALUE_RTTI(typnam, specs) \
-	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs
+	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
+	MAKE_INLINE const char *typnam ## _ToString(typnam value) \
+	{ return Enum_ValueToString(value, typnam ## _ ## ToStringSpecs); }; \
+	extern void enum_value_rtti_dummy(void)
+
 
 /* Declare the necessary data structures for calling Enum_FlagsToString. */
 #define ENUM__FLAGS_RTTI(typnam, specs, joined) \
 	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
-	enum { typnam ## _ ## ToStringSize = sizeof joined }
+	enum { typnam ## _ ## ToStringSize = sizeof (joined) }; \
+	MAKE_INLINE const char *typnam ## _ToString(char *buf, typnam value) \
+	{ return Enum_FlagsToString(buf, typnam ## _ ## ToStringSize, \
+	    value, typnam ## _ ## ToStringSpecs); \
+	}; \
+	extern void enum_flags_rtti_dummy(void)
 
 /*
  * Declare the necessary data structures for calling Enum_FlagsToString

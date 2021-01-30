@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.340 2021/01/24 20:11:55 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.341 2021/01/30 15:48:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.340 2021/01/24 20:11:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.341 2021/01/30 15:48:42 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -2137,9 +2137,7 @@ Suffix_Print(Suffix *suff)
 		char flags_buf[SuffixFlags_ToStringSize];
 
 		debug_printf(" (%s)",
-		    Enum_FlagsToString(flags_buf, sizeof flags_buf,
-			suff->flags,
-			SuffixFlags_ToStringSpecs));
+		    SuffixFlags_ToString(flags_buf, suff->flags));
 	}
 	debug_printf("\n");
 

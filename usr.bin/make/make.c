@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.235 2021/01/16 20:49:31 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.236 2021/01/30 15:48:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.235 2021/01/16 20:49:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.236 2021/01/30 15:48:42 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -166,11 +166,9 @@ GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
 
 	fprintf(f, "%smade %s, type %s, flags %s%s",
 	    prefix,
-	    Enum_ValueToString(gn->made, GNodeMade_ToStringSpecs),
-	    Enum_FlagsToString(type_buf, sizeof type_buf,
-		gn->type, GNodeType_ToStringSpecs),
-	    Enum_FlagsToString(flags_buf, sizeof flags_buf,
-		gn->flags, GNodeFlags_ToStringSpecs),
+	    GNodeMade_ToString(gn->made),
+	    GNodeType_ToString(type_buf, gn->type),
+	    GNodeFlags_ToString(flags_buf, gn->flags),
 	    suffix);
 }
 
