@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.533 2021/01/27 00:02:38 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.534 2021/01/30 20:53:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.533 2021/01/27 00:02:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.534 2021/01/30 20:53:29 rillig Exp $");
 
 /* types and constants */
 
@@ -455,7 +455,7 @@ loadfile(const char *path, int fd)
 	{
 		struct loadedfile *lf = loadedfile_create(path,
 		    buf.data, buf.len);
-		Buf_Destroy(&buf, FALSE);
+		Buf_DoneData(&buf);
 		return lf;
 	}
 }

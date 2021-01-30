@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.264 2021/01/24 20:11:55 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.265 2021/01/30 20:53:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.264 2021/01/24 20:11:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.265 2021/01/30 20:53:29 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -1645,7 +1645,7 @@ SearchPath_ToFlags(SearchPath *path, const char *flag)
 		}
 	}
 
-	return Buf_Destroy(&buf, FALSE);
+	return Buf_DoneData(&buf);
 }
 
 /* Free the search path and all directories mentioned in it. */
