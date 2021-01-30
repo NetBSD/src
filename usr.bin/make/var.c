@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.785 2021/01/30 21:03:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.786 2021/01/30 21:25:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.785 2021/01/30 21:03:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.786 2021/01/30 21:25:10 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1745,7 +1745,7 @@ ModifyWords(const char *str,
 
 	for (i = 0; i < words.len; i++) {
 		modifyWord(words.words[i], &result, modifyWord_args);
-		if (Buf_Len(&result.buf) > 0)
+		if (result.buf.len > 0)
 			SepBuf_Sep(&result);
 	}
 
@@ -2164,7 +2164,7 @@ ParseModifierPartSubst(
 
 	*pp = ++p;
 	if (out_length != NULL)
-		*out_length = Buf_Len(&buf);
+		*out_length = buf.len;
 
 	*out_part = Buf_DoneData(&buf);
 	DEBUG1(VAR, "Modifier part: \"%s\"\n", *out_part);
@@ -3804,7 +3804,7 @@ ParseVarname(const char **pp, char startc, char endc,
 		}
 	}
 	*pp = p;
-	*out_varname_len = Buf_Len(&buf);
+	*out_varname_len = buf.len;
 	return Buf_DoneData(&buf);
 }
 
