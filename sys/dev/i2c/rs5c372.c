@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.16 2020/01/02 17:17:36 thorpej Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.17 2021/01/30 17:38:27 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.16 2020/01/02 17:17:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.17 2021/01/30 17:38:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,13 +61,19 @@ static int rs5c372rtc_clock_write(struct rs5c372rtc_softc *, struct clock_ymdhms
 static int rs5c372rtc_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 static int rs5c372rtc_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ricoh,rs5c372a" },
+	{ .compat = "ricoh,rs5c372b" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 rs5c372rtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, NULL, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	/* indirect config - check typical address */
