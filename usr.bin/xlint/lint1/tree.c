@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.196 2021/01/30 21:58:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.197 2021/01/30 22:48:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.196 2021/01/30 21:58:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.197 2021/01/30 22:48:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3770,13 +3770,9 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk)
 		tfreeblk();
 }
 
-static void
-check_null_effect(const tnode_t *tn)
+static bool
+has_side_effect(const tnode_t *tn)
 {
-
-	if (!hflag)
-		return;
-
 	while (!modtab[tn->tn_op].m_has_side_effect) {
 		if (tn->tn_op == CVT && tn->tn_type->t_tspec == VOID) {
 			tn = tn->tn_left;
@@ -3808,9 +3804,18 @@ check_null_effect(const tnode_t *tn)
 			break;
 		}
 	}
-	if (!modtab[tn->tn_op].m_has_side_effect)
+
+	return modtab[tn->tn_op].m_has_side_effect;
+}
+
+static void
+check_null_effect(const tnode_t *tn)
+{
+
+	if (hflag && !has_side_effect(tn)) {
 		/* expression has null effect */
 		warning(129);
+	}
 }
 
 /*
