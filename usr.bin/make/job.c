@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.402 2021/01/29 23:45:35 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.403 2021/01/30 13:02:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.402 2021/01/29 23:45:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.403 2021/01/30 13:02:54 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1016,7 +1016,10 @@ JobPrintCommands(Job *job)
 	return seen;
 }
 
-/* Save the delayed commands, to be executed when everything else is done. */
+/*
+ * Save the delayed commands (those after '...'), to be executed later in
+ * the '.END' node, when everything else is done.
+ */
 static void
 JobSaveCommands(Job *job)
 {
@@ -1025,9 +1028,11 @@ JobSaveCommands(Job *job)
 	for (ln = job->tailCmds; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
 		char *expanded_cmd;
-		/* XXX: This Var_Subst is only intended to expand the dynamic
+		/*
+		 * XXX: This Var_Subst is only intended to expand the dynamic
 		 * variables such as .TARGET, .IMPSRC.  It is not intended to
-		 * expand the other variables as well; see deptgt-end.mk. */
+		 * expand the other variables as well; see deptgt-end.mk.
+		 */
 		(void)Var_Subst(cmd, job->node, VARE_WANTRES, &expanded_cmd);
 		/* TODO: handle errors */
 		Lst_Append(&Targ_GetEndNode()->commands, expanded_cmd);
@@ -1660,21 +1665,16 @@ JobStart(GNode *gn, Boolean special)
 	cmdsOK = Job_CheckCommands(gn, Error);
 
 	job->inPollfd = NULL;
-	/*
-	 * If the -n flag wasn't given, we open up OUR (not the child's)
-	 * temporary file to stuff commands in it. The thing is rd/wr so
-	 * we don't need to reopen it to feed it to the shell. If the -n
-	 * flag *was* given, we just set the file to be stdout. Cute, huh?
-	 */
+
 	if (Lst_IsEmpty(&gn->commands)) {
 		job->cmdFILE = stdout;
 		run = FALSE;
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touchFlag)) {
 		/*
-		 * The above conditions look very similar to
-		 * GNode_ShouldExecute but are subtly different.
-		 * They prevent that .MAKE targets are touched.
+		 * The above condition looks very similar to
+		 * GNode_ShouldExecute but is subtly different.
+		 * It prevents that .MAKE targets are touched.
 		 */
 
 		JobWriteShellCommands(job, gn, cmdsOK, &run);
@@ -1687,12 +1687,6 @@ JobStart(GNode *gn, Boolean special)
 		 */
 		SwitchOutputTo(gn);
 		job->cmdFILE = stdout;
-		/*
-		 * Only print the commands if they're ok, but don't die if
-		 * they're not -- just let the user know they're bad and
-		 * keep going. It doesn't do any harm in this case and may
-		 * do some good.
-		 */
 		if (cmdsOK)
 			JobPrintCommands(job);
 		/* Don't execute the shell, thank you. */
