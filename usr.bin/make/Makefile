@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2020/12/12 16:54:20 rillig Exp $
+#	$NetBSD: Makefile,v 1.112 2021/01/30 16:05:45 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -126,6 +126,8 @@ SUBDIR.roff+=	PSD.doc
 .if make(obj) || make(clean)
 SUBDIR+=	unit-tests
 .endif
+
+LINTFLAGS+=	-T	# strict bool mode, available since 2021-01-11
 
 ${SRCS:M*.c:.c=.o}: ${HDRS}
 CLEANFILES+=	*.o
