@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1013 2021/01/29 22:38:17 rillig Exp $
+# $NetBSD: mi,v 1.1014 2021/01/30 12:46:38 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5258,6 +5258,8 @@
 ./usr/tests/usr.bin/make/unit-tests/opt-no-action-at-all.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-no-action-runflags.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-no-action-runflags.mk			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-no-action-touch.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-no-action-touch.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-no-action.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-no-action.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-query.exp				tests-usr.bin-tests	compattestfile,atf
