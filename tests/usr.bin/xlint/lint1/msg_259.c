@@ -1,7 +1,24 @@
-/*	$NetBSD: msg_259.c,v 1.1 2021/01/02 10:22:44 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.2 2021/01/30 22:07:31 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: conversion to '%s' due to prototype, arg #%d [259]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -h */
+
+void farg_char(char);
+void farg_int(int);
+void farg_long(long);
+
+void
+example(char c, int i, long l)
+{
+	farg_char(c);
+	farg_int(c);
+	farg_long(c);
+	farg_char(i);		/* XXX: why no warning? */
+	farg_int(i);
+	farg_long(i);
+	farg_char(l);		/* XXX: why no warning? */
+	farg_int(l);		/* expect: 259 */
+	farg_long(l);
+}
