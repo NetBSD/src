@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.783 2021/01/30 15:48:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.784 2021/01/30 20:53:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.783 2021/01/30 15:48:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.784 2021/01/30 20:53:29 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -456,7 +456,10 @@ VarFreeEnv(Var *v, Boolean freeValue)
 		return FALSE;
 
 	FStr_Done(&v->name);
-	Buf_Destroy(&v->val, freeValue);
+	if (freeValue)
+		Buf_Done(&v->val);
+	else
+		Buf_DoneData(&v->val);
 	free(v);
 	return TRUE;
 }
@@ -499,7 +502,7 @@ Var_DeleteVar(const char *varname, GNode *ctxt)
 		var_exportedVars = VAR_EXPORTED_NONE;
 	assert(v->name.freeIt == NULL);
 	HashTable_DeleteEntry(&ctxt->vars, he);
-	Buf_Destroy(&v->val, TRUE);
+	Buf_Done(&v->val);
 	free(v);
 }
 
@@ -1214,9 +1217,9 @@ SepBuf_AddStr(SepBuf *buf, const char *str)
 }
 
 static char *
-SepBuf_Destroy(SepBuf *buf, Boolean free_buf)
+SepBuf_DoneData(SepBuf *buf)
 {
-	return Buf_Destroy(&buf->buf, free_buf);
+	return Buf_DoneData(&buf->buf);
 }
 
 
@@ -1686,7 +1689,7 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 
 	Words_Free(words);
 
-	return SepBuf_Destroy(&buf, FALSE);
+	return SepBuf_DoneData(&buf);
 }
 
 
@@ -1731,7 +1734,7 @@ ModifyWords(const char *str,
 	if (oneBigWord) {
 		SepBuf_Init(&result, sep);
 		modifyWord(str, &result, modifyWord_args);
-		return SepBuf_Destroy(&result, FALSE);
+		return SepBuf_DoneData(&result);
 	}
 
 	SepBuf_Init(&result, sep);
@@ -1749,7 +1752,7 @@ ModifyWords(const char *str,
 
 	Words_Free(words);
 
-	return SepBuf_Destroy(&result, FALSE);
+	return SepBuf_DoneData(&result);
 }
 
 
@@ -1771,7 +1774,7 @@ Words_JoinFree(Words words)
 
 	Words_Free(words);
 
-	return Buf_Destroy(&buf, FALSE);
+	return Buf_DoneData(&buf);
 }
 
 /* Remove adjacent duplicate words. */
@@ -1818,7 +1821,7 @@ VarQuote(const char *str, Boolean quoteDollar)
 			Buf_AddStr(&buf, "\\$");
 	}
 
-	return Buf_Destroy(&buf, FALSE);
+	return Buf_DoneData(&buf);
 }
 
 /*
@@ -2164,7 +2167,7 @@ ParseModifierPartSubst(
 	if (out_length != NULL)
 		*out_length = Buf_Len(&buf);
 
-	*out_part = Buf_Destroy(&buf, FALSE);
+	*out_part = Buf_DoneData(&buf);
 	DEBUG1(VAR, "Modifier part: \"%s\"\n", *out_part);
 	return VPR_OK;
 }
@@ -2365,10 +2368,10 @@ ApplyModifier_Defined(const char **pp, const char *val, ApplyModifiersState *st)
 	ApplyModifiersState_Define(st);
 
 	if (eflags & VARE_WANTRES) {
-		st->newVal = FStr_InitOwn(Buf_Destroy(&buf, FALSE));
+		st->newVal = FStr_InitOwn(Buf_DoneData(&buf));
 	} else {
 		st->newVal = FStr_InitRefer(val);
-		Buf_Destroy(&buf, TRUE);
+		Buf_Done(&buf);
 	}
 	return AMR_OK;
 }
@@ -2563,7 +2566,7 @@ ApplyModifier_Range(const char **pp, const char *val, ApplyModifiersState *st)
 		Buf_AddInt(&buf, 1 + (int)i);
 	}
 
-	st->newVal = FStr_InitOwn(Buf_Destroy(&buf, FALSE));
+	st->newVal = FStr_InitOwn(Buf_DoneData(&buf));
 	return AMR_OK;
 }
 
@@ -2988,7 +2991,7 @@ ApplyModifier_Words(const char **pp, const char *val, ApplyModifiersState *st)
 			/* 3 digits + '\0' is usually enough */
 			Buf_InitSize(&buf, 4);
 			Buf_AddInt(&buf, (int)ac);
-			st->newVal = FStr_InitOwn(Buf_Destroy(&buf, FALSE));
+			st->newVal = FStr_InitOwn(Buf_DoneData(&buf));
 		}
 		goto ok;
 	}
@@ -3803,7 +3806,7 @@ ParseVarname(const char **pp, char startc, char endc,
 	}
 	*pp = p;
 	*out_varname_len = Buf_Len(&buf);
-	return Buf_Destroy(&buf, FALSE);
+	return Buf_DoneData(&buf);
 }
 
 static VarParseResult
@@ -4070,7 +4073,7 @@ ParseVarnameLong(
 static void
 FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
 {
-	char *varValue = Buf_Destroy(&v->val, FALSE);
+	char *varValue = Buf_DoneData(&v->val);
 	if (value == varValue)
 		*out_val_freeIt = varValue;
 	else
@@ -4241,7 +4244,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 			}
 		}
 		if (value.str != Buf_GetAll(&v->val, NULL))
-			Buf_Destroy(&v->val, TRUE);
+			Buf_Done(&v->val);
 		FStr_Done(&v->name);
 		free(v);
 	}
@@ -4365,7 +4368,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 			VarSubstPlain(&p, &res);
 	}
 
-	*out_res = Buf_DestroyCompact(&res);
+	*out_res = Buf_DoneDataCompact(&res);
 	return VPR_OK;
 }
 

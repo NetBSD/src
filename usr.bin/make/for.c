@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.138 2021/01/25 19:39:34 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.139 2021/01/30 20:53:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.138 2021/01/25 19:39:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.139 2021/01/30 20:53:29 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -103,7 +103,7 @@ ForLoop_New(void)
 static void
 ForLoop_Free(ForLoop *f)
 {
-	Buf_Destroy(&f->body, TRUE);
+	Buf_Done(&f->body);
 
 	while (f->vars.len > 0) {
 		ForVar *var = Vector_Pop(&f->vars);
@@ -112,7 +112,7 @@ ForLoop_Free(ForLoop *f)
 	Vector_Done(&f->vars);
 
 	Words_Free(f->items);
-	Buf_Destroy(&f->curBody, TRUE);
+	Buf_Done(&f->curBody);
 
 	free(f);
 }
