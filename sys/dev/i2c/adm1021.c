@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.26 2021/01/28 14:35:11 thorpej Exp $ */
+/*	$NetBSD: adm1021.c,v 1.27 2021/01/30 01:22:06 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.26 2021/01/28 14:35:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.27 2021/01/30 01:22:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,6 +342,7 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_prop = ia->ia_prop;
+	prop_object_retain(sc->sc_prop);
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1021_CONFIG_READ;
