@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.40 2021/01/30 21:03:32 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.41 2021/01/30 21:18:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -86,11 +86,6 @@ typedef struct Buffer {
 	char *data;	/* The buffer itself (always null-terminated) */
 } Buffer;
 
-/* If we aren't on NetBSD, __predict_false() might not be defined. */
-#ifndef __predict_false
-#define __predict_false(x) (x)
-#endif
-
 void Buf_Expand(Buffer *);
 
 /* Buf_AddByte adds a single byte to a buffer. */
@@ -99,7 +94,7 @@ Buf_AddByte(Buffer *buf, char byte)
 {
 	size_t old_len = buf->len++;
 	char *end;
-	if (__predict_false(old_len + 1 >= buf->cap))
+	if (old_len + 1 >= buf->cap)
 		Buf_Expand(buf);
 	end = buf->data + old_len;
 	end[0] = byte;
