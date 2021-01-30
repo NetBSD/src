@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.64 2021/01/17 15:40:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.65 2021/01/30 18:16:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.64 2021/01/17 15:40:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.65 2021/01/30 18:16:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -196,7 +196,7 @@ initstack_init(void)
 	 * If the type which is to be initialized is an incomplete type,
 	 * it must be duplicated.
 	 */
-	if (initsym->s_type->t_tspec == ARRAY && incompl(initsym->s_type))
+	if (initsym->s_type->t_tspec == ARRAY && is_incomplete(initsym->s_type))
 		initsym->s_type = duptyp(initsym->s_type);
 
 	istk = initstk = xcalloc(1, sizeof (istk_t));
@@ -350,14 +350,15 @@ again:
 			    istk->i_brace, istk->i_next->i_namedmem));
 		}
 
-		if (incompl(istk->i_type) && istk->i_next->i_next != NULL) {
+		if (is_incomplete(istk->i_type) &&
+		    istk->i_next->i_next != NULL) {
 			/* initialisation of an incomplete type */
 			error(175);
 			initerr = true;
 			return;
 		}
 		istk->i_subt = istk->i_type->t_subt;
-		istk->i_nolimit = incompl(istk->i_type);
+		istk->i_nolimit = is_incomplete(istk->i_type);
 		istk->i_remaining = istk->i_type->t_dim;
 		DPRINTF(("%s: elements array %s[%d] %s\n", __func__,
 		    type_name(istk->i_subt), istk->i_remaining,
@@ -369,7 +370,7 @@ again:
 			warning(238);
 		/* FALLTHROUGH */
 	case STRUCT:
-		if (incompl(istk->i_type)) {
+		if (is_incomplete(istk->i_type)) {
 			/* initialisation of an incomplete type */
 			error(175);
 			initerr = true;

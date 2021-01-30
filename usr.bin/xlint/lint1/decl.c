@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.131 2021/01/24 00:15:20 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.132 2021/01/30 18:16:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.131 2021/01/24 00:15:20 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.132 2021/01/30 18:16:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -172,7 +172,7 @@ tduptyp(const type_t *tp)
  * struct, union or enum type.
  */
 bool
-incompl(const type_t *tp)
+is_incomplete(const type_t *tp)
 {
 	tspec_t	t;
 
@@ -903,14 +903,14 @@ length(const type_t *tp, const char *name)
 		/* NOTREACHED */
 	case STRUCT:
 	case UNION:
-		if (incompl(tp) && name != NULL) {
+		if (is_incomplete(tp) && name != NULL) {
 			/* incomplete structure or union %s: %s */
 			error(31, tp->t_str->stag->s_name, name);
 		}
 		elsz = tp->t_str->size;
 		break;
 	case ENUM:
-		if (incompl(tp) && name != NULL) {
+		if (is_incomplete(tp) && name != NULL) {
 			/* incomplete enum type: %s */
 			warning(13, name);
 		}
@@ -1034,7 +1034,7 @@ check_type(sym_t *sym)
 				error(18);
 				*tpp = gettyp(INT);
 #if 0	/* errors are produced by length() */
-			} else if (incompl(tp)) {
+			} else if (is_incomplete(tp)) {
 				/* array of incomplete type */
 				if (sflag) {
 					/* array of incomplete type */
@@ -1724,7 +1724,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
 			dcs->d_next->d_nedecl = true;
-		} else if (decl && !incompl(tag->s_type)) {
+		} else if (decl && !is_incomplete(tag->s_type)) {
 			/* (%s) tag redeclared */
 			error(46, storage_class_name(tag->s_scl));
 			print_previous_declaration(-1, tag);
@@ -3071,7 +3071,7 @@ static void
 check_tag_usage(sym_t *sym)
 {
 
-	if (!incompl(sym->s_type))
+	if (!is_incomplete(sym->s_type))
 		return;
 
 	/* always complain about incomplete tags declared inside blocks */
