@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.432 2020/10/14 10:19:11 ryo Exp $
+#	$NetBSD: files.pci,v 1.433 2021/01/30 21:26:32 jmcneill Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -681,7 +681,7 @@ defparam opt_if_wm.h	WM_RX_PROCESS_LIMIT_DEFAULT
 			WM_DISABLE_MSIX
 
 # Mellanox 5th generation Ethernet devices
-device	mcx: ether, ifnet, arp
+device	mcx: ether, ifnet, arp, toeplitz
 attach	mcx at pci
 file	dev/pci/if_mcx.c		mcx
 
