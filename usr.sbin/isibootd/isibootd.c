@@ -1,4 +1,4 @@
-/*	$NetBSD: isibootd.c,v 1.3 2012/04/02 09:01:30 nisimura Exp $	*/
+/*	$NetBSD: isibootd.c,v 1.4 2021/01/30 11:34:28 tsutsui Exp $	*/
 /*	Id: isiboot.c,v 1.2 1999/12/26 14:33:33 nisimura Exp 	*/
 
 /*-
@@ -364,7 +364,7 @@ createbpfport(char *ifname, uint8_t **iobufp, size_t *iolenp,
 	struct ifreq ifr;
 	int fd;
 	u_int type;
-	size_t buflen;
+	u_int buflen;
 	uint8_t dladdr[ETHER_ADDR_LEN], *buf;
 #ifdef BIOCIMMEDIATE
 	u_int flag;
