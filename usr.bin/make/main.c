@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.519 2021/01/30 21:03:32 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.520 2021/01/30 21:25:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.519 2021/01/30 21:03:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.520 2021/01/30 21:25:10 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1840,7 +1840,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 		while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
 			JobReapChild(pid, status, FALSE);
 
-		res_len = Buf_Len(&buf);
+		res_len = buf.len;
 		res = Buf_DoneData(&buf);
 
 		if (savederr != 0)
@@ -2025,7 +2025,7 @@ execDie(const char *af, const char *av)
 	Buf_AddStr(&buf, strerror(errno));
 	Buf_AddStr(&buf, ")\n");
 
-	write_all(STDERR_FILENO, buf.data, Buf_Len(&buf));
+	write_all(STDERR_FILENO, buf.data, buf.len);
 
 	Buf_Done(&buf);
 	_exit(1);
