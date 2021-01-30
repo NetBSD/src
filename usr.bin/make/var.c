@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.782 2021/01/16 20:49:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.783 2021/01/30 15:48:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.782 2021/01/16 20:49:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.783 2021/01/30 15:48:42 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3402,13 +3402,9 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc,
 	 * be used since the end of the modifier is not yet known. */
 	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
 	    st->var->name.str, mod[0], is_single_char ? "" : "...", val,
-	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
-		st->eflags, VarEvalFlags_ToStringSpecs),
-	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
-		st->var->flags, VarFlags_ToStringSpecs),
-	    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-		st->exprFlags,
-		VarExprFlags_ToStringSpecs));
+	    VarEvalFlags_ToString(eflags_str, st->eflags),
+	    VarFlags_ToString(vflags_str, st->var->flags),
+	    VarExprFlags_ToString(exprflags_str, st->exprFlags));
 }
 
 static void
@@ -3423,13 +3419,9 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 
 	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
 	    st->var->name.str, (int)(p - mod), mod, quot, newVal, quot,
-	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
-		st->eflags, VarEvalFlags_ToStringSpecs),
-	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
-		st->var->flags, VarFlags_ToStringSpecs),
-	    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-		st->exprFlags,
-		VarExprFlags_ToStringSpecs));
+	    VarEvalFlags_ToString(eflags_str, st->eflags),
+	    VarFlags_ToString(vflags_str, st->var->flags),
+	    VarExprFlags_ToString(exprflags_str, st->exprFlags));
 }
 
 static ApplyModifierResult
@@ -4151,8 +4143,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	VarExprFlags exprFlags = VEF_NONE;
 
 	DEBUG2(VAR, "Var_Parse: %s with %s\n", start,
-	    Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
-		VarEvalFlags_ToStringSpecs));
+	    VarEvalFlags_ToString(eflags_str, eflags));
 
 	*out_val = FStr_InitRefer(NULL);
 	extramodifiers = NULL;	/* extra modifiers to apply first */
