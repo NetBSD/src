@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.192 2021/01/30 18:12:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.193 2021/01/30 18:14:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.192 2021/01/30 18:12:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.193 2021/01/30 18:14:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3381,8 +3381,7 @@ tsize(type_t *tp)
 		break;
 	}
 
-	/* XXX: type conversion is too late */
-	return (int64_t)(elem * elsz);
+	return (int64_t)elem * elsz;
 }
 
 tnode_t *
