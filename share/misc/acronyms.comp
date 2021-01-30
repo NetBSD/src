@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.319 2021/01/21 18:09:10 kamil Exp $
+$NetBSD: acronyms.comp,v 1.320 2021/01/30 19:20:44 jakllsch Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -651,7 +651,9 @@ GPT	GUID partition table
 GPU	graphics processing unit
 GR	golden ratio
 GRE	generic routing encapsulation
+GRO	generic receive offload
 GSI	global system interrupt
+GSO	generic send offload
 GUI	graphical user interface
 GUID	globally unique identifier
 GVFS    git virtual file system
@@ -1375,6 +1377,7 @@ RSA	Rivest, Shamir, [and] Adleman
 RSIP	Realm Specific IP
 RSN	Robust Secure Network
 RSS	really simple syndication
+RSS	Receive Side Scaling
 RSS	residual sum of squares
 RSTP	Rapid Spanning Tree Protocol
 RT	real time
@@ -1630,6 +1633,7 @@ TMG	transmogrifier
 TMDS	transition minimized differential signaling
 TMO	timeout
 TOD	time of day
+TOE	TCP offload engine
 TOFU	trust on first use
 TOS	terms of service
 TOS	trusted operating system
@@ -1655,6 +1659,7 @@ TSD	time stamp disable
 TSDB	time series database
 TSL	test, set, lock
 TSO	time sharing option
+TSO	TCP segmentation offload
 TSO	Total Store Ordering
 TSP	Time-Stamp Protocol
 TSP	Tunnel Setup Protocol
@@ -1685,6 +1690,7 @@ UDMA	ultra DMA
 UDO	ultra density optical
 UDP	User Datagram Protocol
 UEFI	unified extensible firmware interface
+UFO	UDP fragmentation offload
 UFS	Unix File System
 UGA	universal graphics adapter
 UI	unit interval
