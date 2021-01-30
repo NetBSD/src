@@ -1,1 +1,1 @@
-msg_216.c(6): syntax error ':' [249]
+msg_216.c(13): warning: function random has return (e); and return; [216]
