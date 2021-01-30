@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.132 2020/09/15 08:33:40 mrg Exp $ */
+/*	$NetBSD: gem.c,v 1.133 2021/01/30 07:53:01 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.132 2020/09/15 08:33:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.133 2021/01/30 07:53:01 jdc Exp $");
 
 #include "opt_inet.h"
 
@@ -169,6 +169,7 @@ gem_detach(struct gem_softc *sc, int flags)
 		evcnt_detach(&sc->sc_ev_rxfull);
 		evcnt_detach(&sc->sc_ev_rxint);
 		evcnt_detach(&sc->sc_ev_txint);
+		evcnt_detach(&sc->sc_ev_rxoverflow);
 #endif
 		evcnt_detach(&sc->sc_ev_intr);
 
@@ -596,6 +597,8 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	    &sc->sc_ev_rxint, device_xname(sc->sc_dev), "rx ring full");
 	evcnt_attach_dynamic(&sc->sc_ev_rxnobuf, EVCNT_TYPE_INTR,
 	    &sc->sc_ev_rxint, device_xname(sc->sc_dev), "rx malloc failure");
+	evcnt_attach_dynamic(&sc->sc_ev_rxoverflow, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, device_xname(sc->sc_dev), "rx overflow");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[0], EVCNT_TYPE_INTR,
 	    &sc->sc_ev_rxint, device_xname(sc->sc_dev), "rx 0desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[1], EVCNT_TYPE_INTR,
@@ -1803,8 +1806,8 @@ gem_rint(struct gem_softc *sc)
 
 		if (rxstat & GEM_RD_BAD_CRC) {
 			if_statinc(ifp, if_ierrors);
-			aprint_error_dev(sc->sc_dev,
-			    "receive error: CRC error\n");
+			DPRINTF(sc, ("%s: receive error: CRC error\n",
+			    device_xname(sc->sc_dev)));
 			GEM_INIT_RXDESC(sc, i);
 			continue;
 		}
@@ -2215,8 +2218,11 @@ gem_intr(void *v)
 		 */
 		if (rxstat & GEM_MAC_RX_OVERFLOW) {
 			if_statinc(ifp, if_ierrors);
+			GEM_COUNTER_INCR(sc, sc_ev_rxoverflow);
+#ifdef GEM_DEBUG
 			aprint_error_dev(sc->sc_dev,
 			    "receive error: RX overflow sc->rxptr %d, complete %d\n", sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION));
+#endif
 			sc->sc_rx_fifo_wr_ptr =
 				bus_space_read_4(t, h, GEM_RX_FIFO_WR_PTR);
 			sc->sc_rx_fifo_rd_ptr =
@@ -2282,25 +2288,33 @@ gem_rx_watchdog(void *arg)
 		    "receiver stuck in overflow, resetting\n");
 		gem_init(ifp);
 	} else {
+		int needreset = 1;
 		if ((state & GEM_MAC_STATE_OVERFLOW) != GEM_MAC_STATE_OVERFLOW) {
-			aprint_error_dev(sc->sc_dev,
-				"rx_watchdog: not in overflow state: 0x%x\n",
-				state);
+			DPRINTF(sc,
+			    ("%s: rx_watchdog: not in overflow state: 0x%x\n",
+			    device_xname(sc->sc_dev), state));
 		}
 		if (rx_fifo_wr_ptr != rx_fifo_rd_ptr) {
-			aprint_error_dev(sc->sc_dev,
-				"rx_watchdog: wr & rd ptr different\n");
+			DPRINTF(sc,
+			    ("%s: rx_watchdog: wr & rd ptr different\n",
+			    device_xname(sc->sc_dev), state));
+			needreset = 0;
 		}
 		if (sc->sc_rx_fifo_wr_ptr != rx_fifo_wr_ptr) {
-			aprint_error_dev(sc->sc_dev,
-				"rx_watchdog: wr pointer != saved\n");
+			DPRINTF(sc, ("%s: rx_watchdog: wr pointer != saved\n",
+			    device_xname(sc->sc_dev), state));
+			needreset = 0;
 		}
 		if (sc->sc_rx_fifo_rd_ptr != rx_fifo_rd_ptr) {
-			aprint_error_dev(sc->sc_dev,
-				"rx_watchdog: rd pointer != saved\n");
+			DPRINTF(sc, ("%s: rx_watchdog: rd pointer != saved\n",
+			    device_xname(sc->sc_dev), state));
+			needreset = 0;
 		}
-		aprint_error_dev(sc->sc_dev, "resetting anyway\n");
-		gem_init(ifp);
+		if (needreset) {
+			aprint_error_dev(sc->sc_dev,
+			    "rx_watchdog: resetting anyway\n");
+			gem_init(ifp);
+		}
 	}
 }
 
