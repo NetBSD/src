@@ -1,1 +1,1 @@
-msg_223.c(6): syntax error ':' [249]
+msg_223.c(9): warning: end-of-loop code not reached [223]

@@ -1,1 +1,2 @@
-msg_220.c(6): syntax error ':' [249]
+msg_220.c(19): warning: fallthrough on case statement [220]
+msg_220.c(22): warning: fallthrough on default statement [284]
