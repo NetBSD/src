@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.263 2021/01/29 22:38:17 rillig Exp $
+# $NetBSD: Makefile,v 1.264 2021/01/30 12:46:38 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -258,6 +258,7 @@ TESTS+=		opt-m-include-dir
 TESTS+=		opt-no-action
 TESTS+=		opt-no-action-at-all
 TESTS+=		opt-no-action-runflags
+TESTS+=		opt-no-action-touch
 TESTS+=		opt-query
 TESTS+=		opt-raw
 TESTS+=		opt-silent
