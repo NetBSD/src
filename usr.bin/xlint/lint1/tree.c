@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.193 2021/01/30 18:14:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.194 2021/01/30 18:16:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.193 2021/01/30 18:14:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.194 2021/01/30 18:16:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2846,7 +2846,7 @@ build_colon(tnode_t *ln, tnode_t *rn)
 		/* Both types must be identical. */
 		lint_assert(rt == STRUCT || rt == UNION);
 		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
-		if (incompl(ln->tn_type)) {
+		if (is_incomplete(ln->tn_type)) {
 			/* unknown operand size, op %s */
 			error(138, modtab[COLON].m_name);
 			return NULL;
@@ -2918,7 +2918,7 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 	if ((op == ASSIGN || op == RETURN) && (lt == STRUCT || rt == STRUCT)) {
 		lint_assert(lt == rt);
 		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
-		if (incompl(ln->tn_type)) {
+		if (is_incomplete(ln->tn_type)) {
 			if (op == RETURN) {
 				/* cannot return incomplete type */
 				error(212);
@@ -2986,7 +2986,7 @@ plength(type_t *tp)
 			error(136);
 		break;
 	case ENUM:
-		if (incompl(tp)) {
+		if (is_incomplete(tp)) {
 			/* cannot do pointer arithmetic on operand of ... */
 			warning(136);
 		}
@@ -3351,7 +3351,7 @@ tsize(type_t *tp)
 		break;
 	case STRUCT:
 	case UNION:
-		if (incompl(tp)) {
+		if (is_incomplete(tp)) {
 			/* cannot take size/alignment of incomplete type */
 			error(143);
 			elsz = 1;
@@ -3360,7 +3360,7 @@ tsize(type_t *tp)
 		}
 		break;
 	case ENUM:
-		if (incompl(tp)) {
+		if (is_incomplete(tp)) {
 			/* cannot take size/alignment of incomplete type */
 			warning(143);
 		}
@@ -3398,7 +3398,7 @@ build_alignof(type_t *tp)
 
 	case STRUCT:
 	case UNION:
-		if (incompl(tp)) {
+		if (is_incomplete(tp)) {
 			/* cannot take size/alignment of incomplete type */
 			error(143);
 			return 0;
@@ -3611,13 +3611,13 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 			error(151, n);
 			return NULL;
 		} else if ((at == STRUCT || at == UNION) &&
-			   incompl(arg->tn_left->tn_type)) {
+			   is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			error(152, n);
 			return NULL;
 		} else if (is_integer(at) &&
 			   arg->tn_left->tn_type->t_isenum &&
-			   incompl(arg->tn_left->tn_type)) {
+			   is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			warning(152, n);
 		}
@@ -4083,7 +4083,7 @@ check_array_index(tnode_t *tn, bool amper)
 	 * For incomplete array types, we can print a warning only if
 	 * the index is negative.
 	 */
-	if (incompl(ln->tn_left->tn_type) && rn->tn_val->v_quad >= 0)
+	if (is_incomplete(ln->tn_left->tn_type) && rn->tn_val->v_quad >= 0)
 		return;
 
 	/* Get the size of one array element */
