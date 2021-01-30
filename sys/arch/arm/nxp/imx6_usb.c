@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.4 2021/01/30 09:48:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.4 2021/01/30 09:48:59 skrll Exp $");
 
 #include "opt_fdt.h"
 
@@ -176,7 +176,7 @@ imxusbc_print(void *aux, const char *name __unused)
 
 	iaa = (struct imxusbc_attach_args *)aux;
 
-	aprint_normal(" unit %d intr %d", iaa->aa_unit, iaa->aa_irq);
+	aprint_normal(" unit %d", iaa->aa_unit);
 	return UNCONF;
 }
 
