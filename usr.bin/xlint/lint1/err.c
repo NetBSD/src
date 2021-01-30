@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.70 2021/01/30 17:56:29 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.71 2021/01/30 21:49:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.70 2021/01/30 17:56:29 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.71 2021/01/30 21:49:08 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -306,7 +306,7 @@ const	char *msgs[] = {
 	"illegal structure pointer combination",		      /* 244 */
 	"illegal structure pointer combination, op %s",		      /* 245 */
 	"dubious conversion of enum to '%s'",			      /* 246 */
-	"pointer casts may be troublesome",			      /* 247 */
+	"pointer cast from '%s' to '%s' may be troublesome",	      /* 247 */
 	"floating-point constant out of range",			      /* 248 */
 	"syntax error '%s'",					      /* 249 */
 	"unknown character \\%o",				      /* 250 */

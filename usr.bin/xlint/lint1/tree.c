@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.194 2021/01/30 18:16:45 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.195 2021/01/30 21:49:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.194 2021/01/30 18:16:45 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.195 2021/01/30 21:49:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2253,8 +2253,8 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 	     tp->t_subt->t_str != tn->tn_type->t_subt->t_str) ||
 	    psize(nt) != psize(ot)) {
 		if (cflag) {
-			/* pointer casts may be troublesome */
-			warning(247);
+			/* pointer cast from '%s' to '%s' may be troublesome */
+			warning(247, type_name(tn->tn_type), type_name(tp));
 		}
 	}
 }
