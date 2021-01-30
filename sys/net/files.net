@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.29 2020/09/27 13:31:04 roy Exp $
+#	$NetBSD: files.net,v 1.30 2021/01/30 21:23:08 jmcneill Exp $
 
 # XXX CLEANUP
 define	net
@@ -49,6 +49,7 @@ file	net/rss_config.c		net
 file	net/rtbl.c			net
 file	net/rtsock.c			net
 file	net/slcompress.c		sl | ppp | (irip & irip_vj)
+file	net/toeplitz.c			toeplitz
 file	net/zlib.c			(ppp & ppp_deflate) | swcrypto | vnd_compression
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
