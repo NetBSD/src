@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_clk.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx6_clk.c,v 1.3 2021/01/30 09:36:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.3 2021/01/30 09:36:46 skrll Exp $");
 
 #include "opt_fdt.h"
 
@@ -133,10 +133,10 @@ imx6ccm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	imx6ccm_attach_common(self);
-
 	aprint_naive("\n");
 	aprint_normal(": Clock Control Module\n");
+
+	imx6ccm_attach_common(self);
 
 	imx6_clk_fixed_from_fdt("ckil");
 	imx6_clk_fixed_from_fdt("ckih");
