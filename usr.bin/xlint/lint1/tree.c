@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.195 2021/01/30 21:49:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.196 2021/01/30 21:58:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.195 2021/01/30 21:49:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.196 2021/01/30 21:58:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3489,8 +3489,8 @@ cast(tnode_t *tn, type_t *tp)
 	} else if (nt == PTR && ot == PTR) {
 		if (!tp->t_subt->t_const && tn->tn_type->t_subt->t_const) {
 			if (hflag)
-				/* cast discards 'const' from pointer tar... */
-				warning(275);
+				/* cast discards 'const' from type '%s' */
+				warning(275, type_name(tn->tn_type));
 		}
 	} else {
 		/* invalid cast expression */

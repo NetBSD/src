@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.71 2021/01/30 21:49:08 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.72 2021/01/30 21:58:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.71 2021/01/30 21:49:08 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.72 2021/01/30 21:58:04 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -334,7 +334,7 @@ const	char *msgs[] = {
 	"empty translation unit",				      /* 272 */
 	"bit-field type '%s' invalid in ANSI C",		      /* 273 */
 	"ANSI C forbids comparison of %s with %s",		      /* 274 */
-	"cast discards 'const' from pointer target type",	      /* 275 */
+	"cast discards 'const' from type '%s'",			      /* 275 */
 	"__%s__ is illegal for type %s",			      /* 276 */
 	"initialisation of '%s' with '%s'",			      /* 277 */
 	"combination of '%s' and '%s', arg #%d",		      /* 278 */
