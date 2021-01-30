@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.48 2021/01/30 20:53:29 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.49 2021/01/30 20:59:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
 #include "make.h"
 
 /*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: buf.c,v 1.48 2021/01/30 20:53:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: buf.c,v 1.49 2021/01/30 20:59:29 rillig Exp $");
 
 /* Make space in the buffer for adding at least 16 more bytes. */
 void
@@ -176,30 +176,34 @@ Buf_Init(Buffer *buf)
 
 /*
  * Free the data from the buffer.
- * The buffer is left in an indeterminate state.
+ * Leave the buffer itself in an indeterminate state.
  */
 void
 Buf_Done(Buffer *buf)
 {
 	free(buf->data);
 
+#ifdef CLEANUP
 	buf->cap = 0;
 	buf->len = 0;
 	buf->data = NULL;
+#endif
 }
 
 /*
  * Return the data from the buffer.
- * The buffer is left in an indeterminate state.
+ * Leave the buffer itself in an indeterminate state.
  */
 char *
 Buf_DoneData(Buffer *buf)
 {
 	char *data = buf->data;
 
+#ifdef CLEANUP
 	buf->cap = 0;
 	buf->len = 0;
 	buf->data = NULL;
+#endif
 
 	return data;
 }
@@ -209,7 +213,8 @@ Buf_DoneData(Buffer *buf)
 #endif
 
 /*
- * Reset the buffer and return its data.
+ * Return the data from the buffer.
+ * Leave the buffer itself in an indeterminate state.
  *
  * If the buffer size is much greater than its content,
  * a new buffer will be allocated and the old one freed.
