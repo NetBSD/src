@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.69 2021/01/17 17:14:34 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.70 2021/01/30 17:56:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.69 2021/01/17 17:14:34 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.70 2021/01/30 17:56:29 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -248,7 +248,7 @@ const	char *msgs[] = {
 	"bit-field initialisation is illegal in traditional C",	      /* 186 */
 	"non-null byte ignored in string initializer",		      /* 187 */
 	"no automatic aggregate initialization in traditional C",     /* 188 */
-	"assignment of struct/union illegal in traditional C",	      /* 189 */
+	"",			/* no longer used */		      /* 189 */
 	"empty array declaration: %s",				      /* 190 */
 	"%s set but not used in function %s",			      /* 191 */
 	"%s unused in function %s",				      /* 192 */

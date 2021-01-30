@@ -1,1 +1,7 @@
-msg_189.c(6): syntax error ':' [249]
+(1): warning: 'long double' is illegal in traditional C [266]
+(1): warning: function prototypes are illegal in traditional C [270]
+(2): warning: 'long double' is illegal in traditional C [266]
+(2): warning: function prototypes are illegal in traditional C [270]
+(3): warning: 'long double' is illegal in traditional C [266]
+(3): warning: 'long double' is illegal in traditional C [266]
+(3): warning: function prototypes are illegal in traditional C [270]
