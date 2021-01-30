@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.3 2018/07/14 07:54:04 maxv Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.4 2021/01/30 11:46:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.3 2018/07/14 07:54:04 maxv Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.4 2021/01/30 11:46:25 jmcneill Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -112,7 +112,7 @@ ksymload(void)
 
 	fd = open(_PATH_KSYMS, O_RDONLY);
 	if (fd == -1) {
-		err(EXIT_FAILURE, "open");
+		err(EXIT_FAILURE, "open " _PATH_KSYMS);
 	}
 	if (elf_version(EV_CURRENT) == EV_NONE) {
 		goto elffail;
