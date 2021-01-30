@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.41 2021/01/30 21:18:14 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.42 2021/01/30 21:25:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -81,8 +81,8 @@
 
 /* An automatically growing null-terminated buffer of characters. */
 typedef struct Buffer {
-	size_t cap;	/* Allocated size of the buffer, including the null */
-	size_t len;	/* Number of bytes in buffer, excluding the null */
+	size_t cap;	/* Allocated size of the buffer, including the '\0' */
+	size_t len;	/* Number of bytes in buffer, excluding the '\0' */
 	char *data;	/* The buffer itself (always null-terminated) */
 } Buffer;
 
@@ -99,12 +99,6 @@ Buf_AddByte(Buffer *buf, char byte)
 	end = buf->data + old_len;
 	end[0] = byte;
 	end[1] = '\0';
-}
-
-MAKE_INLINE size_t
-Buf_Len(const Buffer *buf)
-{
-	return buf->len;
 }
 
 MAKE_INLINE Boolean
