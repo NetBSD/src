@@ -1,1 +1,1 @@
-msg_129.c(6): syntax error ':' [249]
+msg_129.c(25): warning: expression has null effect [129]
