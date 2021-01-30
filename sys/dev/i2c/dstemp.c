@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.9 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: dstemp.c,v 1.10 2021/01/30 01:22:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.9 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.10 2021/01/30 01:22:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_prop = ia->ia_prop;
+	prop_object_retain(sc->sc_prop);
 
 	aprint_naive("\n");
 	aprint_normal(": DS1361\n");
