@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_193.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.2 2021/01/30 17:56:29 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+void example(void)
+{
+	return;
+	return;			/* expect: 193 */
+}
