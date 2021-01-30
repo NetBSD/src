@@ -1,4 +1,4 @@
-/*	$NetBSD: s390.c,v 1.6 2020/01/02 19:00:34 thorpej Exp $	*/
+/*	$NetBSD: s390.c,v 1.7 2021/01/30 17:38:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.6 2020/01/02 19:00:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.7 2021/01/30 17:38:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,13 +62,18 @@ static int s390rtc_read(struct s390rtc_softc *, int, uint8_t *, size_t);
 static int s390rtc_write(struct s390rtc_softc *, int, uint8_t *, size_t);
 static uint8_t bitreverse(uint8_t);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "sii,s35390a" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 s390rtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, NULL, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 	
 	/* indirect config - check typical address */
