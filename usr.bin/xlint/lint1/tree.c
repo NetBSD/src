@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.198 2021/01/30 23:05:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.199 2021/01/30 23:15:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.198 2021/01/30 23:05:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.199 2021/01/30 23:15:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3771,32 +3771,30 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk)
 }
 
 static bool
-has_side_effect(const tnode_t *tn)
+has_side_effect(const tnode_t *tn) // NOLINT(misc-no-recursion)
 {
-	while (!modtab[tn->tn_op].m_has_side_effect) {
-		if (tn->tn_op == CVT && tn->tn_type->t_tspec == VOID) {
-			tn = tn->tn_left;
-		} else if (tn->tn_op == LOGAND || tn->tn_op == LOGOR) {
-			/*
-			 * && and || have a side effect if the right operand
-			 * has a side effect.
-			 */
-			tn = tn->tn_right;
-		} else if (tn->tn_op == QUEST) {
-			/*
-			 * ? has a side effect if at least one of its right
-			 * operands has a side effect
-			 */
-			tn = tn->tn_right;
-		} else if (tn->tn_op == COLON || tn->tn_op == COMMA) {
-			return has_side_effect(tn->tn_left) ||
-			       has_side_effect(tn->tn_right);
-		} else {
-			return false;
-		}
+	op_t op = tn->tn_op;
+
+	if (modtab[op].m_has_side_effect)
+		return true;
+
+	if (op == CVT && tn->tn_type->t_tspec == VOID)
+		return has_side_effect(tn->tn_left);
+
+	/* XXX: Why not has_side_effect(tn->tn_left) as well? */
+	if (op == LOGAND || op == LOGOR)
+		return has_side_effect(tn->tn_right);
+
+	/* XXX: Why not has_side_effect(tn->tn_left) as well? */
+	if (op == QUEST)
+		return has_side_effect(tn->tn_right);
+
+	if (op == COLON || op == COMMA) {
+		return has_side_effect(tn->tn_left) ||
+		       has_side_effect(tn->tn_right);
 	}
 
-	return modtab[tn->tn_op].m_has_side_effect;
+	return false;
 }
 
 static void
