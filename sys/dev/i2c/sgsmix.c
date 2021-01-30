@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmix.c,v 1.9 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: sgsmix.c,v 1.10 2021/01/30 01:23:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.9 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.10 2021/01/30 01:23:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,11 @@ static void sgsmix_writereg(struct sgsmix_softc *, int, uint8_t);
 CFATTACH_DECL_NEW(sgsmix, sizeof(struct sgsmix_softc),
     sgsmix_match, sgsmix_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "st,tda7433" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sgsmix_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -83,7 +88,7 @@ sgsmix_match(device_t parent, cfdata_t cf, void *aux)
 	uint8_t out[2] = {1, 0x20};
 	int match_result;
 
-	if (iic_use_direct_match(args, cf, NULL, &match_result))
+	if (iic_use_direct_match(args, cf, compat_data, &match_result))
 		return match_result;
 
 	/* see if we can talk to something at address 0x8a */
