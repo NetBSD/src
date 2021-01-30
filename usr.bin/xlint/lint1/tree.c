@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.197 2021/01/30 22:48:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.198 2021/01/30 23:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.197 2021/01/30 22:48:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.198 2021/01/30 23:05:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3789,19 +3789,10 @@ has_side_effect(const tnode_t *tn)
 			 */
 			tn = tn->tn_right;
 		} else if (tn->tn_op == COLON || tn->tn_op == COMMA) {
-			/*
-			 * : has a side effect if at least one of its operands
-			 * has a side effect
-			 */
-			if (modtab[tn->tn_left->tn_op].m_has_side_effect) {
-				tn = tn->tn_left;
-			} else if (modtab[tn->tn_right->tn_op].m_has_side_effect) {
-				tn = tn->tn_right;
-			} else {
-				break;
-			}
+			return has_side_effect(tn->tn_left) ||
+			       has_side_effect(tn->tn_right);
 		} else {
-			break;
+			return false;
 		}
 	}
 
