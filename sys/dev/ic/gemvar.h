@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.27 2020/03/01 05:50:56 thorpej Exp $ */
+/*	$NetBSD: gemvar.h,v 1.28 2021/01/30 07:53:01 jdc Exp $ */
 
 /*
  *
@@ -219,6 +219,7 @@ struct gem_softc {
 #ifdef GEM_COUNTERS
 	struct evcnt sc_ev_txint;
 	struct evcnt sc_ev_rxint;
+	struct evcnt sc_ev_rxoverflow;
 	struct evcnt sc_ev_rxnobuf;
 	struct evcnt sc_ev_rxfull;
 	struct evcnt sc_ev_rxhist[9];
