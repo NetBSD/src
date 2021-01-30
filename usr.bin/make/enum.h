@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.15 2021/01/30 15:48:42 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.16 2021/01/30 15:53:55 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -104,7 +104,7 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 #define ENUM__VALUE_RTTI(typnam, specs) \
 	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
 	MAKE_INLINE const char *typnam ## _ToString(typnam value) \
-	{ return Enum_ValueToString(value, typnam ## _ ## ToStringSpecs); }; \
+	{ return Enum_ValueToString(value, typnam ## _ ## ToStringSpecs); } \
 	extern void enum_value_rtti_dummy(void)
 
 
@@ -115,7 +115,7 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 	MAKE_INLINE const char *typnam ## _ToString(char *buf, typnam value) \
 	{ return Enum_FlagsToString(buf, typnam ## _ ## ToStringSize, \
 	    value, typnam ## _ ## ToStringSpecs); \
-	}; \
+	} \
 	extern void enum_flags_rtti_dummy(void)
 
 /*
