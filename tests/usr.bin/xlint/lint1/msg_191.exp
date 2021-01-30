@@ -1,1 +1,1 @@
-msg_191.c(6): syntax error ':' [249]
+msg_191.c(11): warning: local set but not used in function example [191]
