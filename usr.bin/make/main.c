@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.518 2021/01/30 20:53:29 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.519 2021/01/30 21:03:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.518 2021/01/30 20:53:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.519 2021/01/30 21:03:32 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2025,7 +2025,7 @@ execDie(const char *af, const char *av)
 	Buf_AddStr(&buf, strerror(errno));
 	Buf_AddStr(&buf, ")\n");
 
-	write_all(STDERR_FILENO, Buf_GetAll(&buf, NULL), Buf_Len(&buf));
+	write_all(STDERR_FILENO, buf.data, Buf_Len(&buf));
 
 	Buf_Done(&buf);
 	_exit(1);

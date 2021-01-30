@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.784 2021/01/30 20:53:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.785 2021/01/30 21:03:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.784 2021/01/30 20:53:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.785 2021/01/30 21:03:32 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1086,8 +1086,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 		Buf_AddByte(&v->val, ' ');
 		Buf_AddStr(&v->val, val);
 
-		DEBUG3(VAR, "%s:%s = %s\n",
-		    ctxt->name, name, Buf_GetAll(&v->val, NULL));
+		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, v->val.data);
 
 		if (v->flags & VAR_FROM_ENV) {
 			/*
@@ -1160,7 +1159,7 @@ Var_Value(const char *name, GNode *ctxt)
 	if (v == NULL)
 		return FStr_InitRefer(NULL);
 
-	value = Buf_GetAll(&v->val, NULL);
+	value = v->val.data;
 	return VarFreeEnv(v, FALSE)
 	    ? FStr_InitOwn(value)
 	    : FStr_InitRefer(value);
@@ -1174,7 +1173,7 @@ const char *
 Var_ValueDirect(const char *name, GNode *ctxt)
 {
 	Var *v = VarFind(name, ctxt, FALSE);
-	return v != NULL ? Buf_GetAll(&v->val, NULL) : NULL;
+	return v != NULL ? v->val.data : NULL;
 }
 
 
@@ -4187,7 +4186,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	 * the then-current value of the variable.  This might also invoke
 	 * undefined behavior.
 	 */
-	value = FStr_InitRefer(Buf_GetAll(&v->val, NULL));
+	value = FStr_InitRefer(v->val.data);
 
 	/*
 	 * Before applying any modifiers, expand any nested expressions from
@@ -4243,7 +4242,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 				    ? var_Error : varUndefined);
 			}
 		}
-		if (value.str != Buf_GetAll(&v->val, NULL))
+		if (value.str != v->val.data)
 			Buf_Done(&v->val);
 		FStr_Done(&v->name);
 		free(v);
@@ -4415,8 +4414,7 @@ Var_Dump(GNode *ctxt)
 	for (i = 0; i < vec.len; i++) {
 		const char *varname = varnames[i];
 		Var *var = HashTable_FindValue(&ctxt->vars, varname);
-		debug_printf("%-16s = %s\n",
-		    varname, Buf_GetAll(&var->val, NULL));
+		debug_printf("%-16s = %s\n", varname, var->val.data);
 	}
 
 	Vector_Done(&vec);

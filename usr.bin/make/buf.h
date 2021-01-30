@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.39 2021/01/30 20:53:29 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.40 2021/01/30 21:03:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -122,7 +122,6 @@ void Buf_AddBytes(Buffer *, const char *, size_t);
 void Buf_AddBytesBetween(Buffer *, const char *, const char *);
 void Buf_AddStr(Buffer *, const char *);
 void Buf_AddInt(Buffer *, int);
-char *Buf_GetAll(Buffer *, size_t *);
 void Buf_Empty(Buffer *);
 void Buf_Init(Buffer *);
 void Buf_InitSize(Buffer *, size_t);
