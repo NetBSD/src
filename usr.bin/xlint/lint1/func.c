@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.65 2021/01/23 22:20:17 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.66 2021/01/30 18:16:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.65 2021/01/23 22:20:17 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.66 2021/01/30 18:16:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -245,7 +245,7 @@ funcdef(sym_t *fsym)
 	 * incomplete return values (these are allowed in declarations)
 	 */
 	if (fsym->s_type->t_subt->t_tspec != VOID &&
-	    incompl(fsym->s_type->t_subt)) {
+	    is_incomplete(fsym->s_type->t_subt)) {
 		/* cannot return incomplete type */
 		error(67);
 	}
