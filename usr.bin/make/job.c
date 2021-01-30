@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.403 2021/01/30 13:02:54 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.404 2021/01/30 13:12:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.403 2021/01/30 13:02:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.404 2021/01/30 13:12:00 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1593,11 +1593,6 @@ JobWriteShellCommands(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 		Punt("Could not fdopen %s", tfile);
 
 	(void)fcntl(fileno(job->cmdFILE), F_SETFD, FD_CLOEXEC);
-	/*
-	 * Send the commands to the command file, flush all its
-	 * buffers then rewind and remove the thing.
-	 */
-	*out_run = TRUE;
 
 #ifdef USE_META
 	if (useMeta) {
@@ -1607,9 +1602,7 @@ JobWriteShellCommands(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 	}
 #endif
 
-	/* We can do all the commands at once. hooray for sanity */
-	if (!JobPrintCommands(job))
-		*out_run = FALSE;
+	*out_run = JobPrintCommands(job);
 
 	free(tfile);
 }
