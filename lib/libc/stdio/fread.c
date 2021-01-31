@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.23 2020/02/22 22:02:46 kamil Exp $	*/
+/*	$NetBSD: fread.c,v 1.24 2021/01/31 16:18:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.23 2020/02/22 22:02:46 kamil Exp $");
+__RCSID("$NetBSD: fread.c,v 1.24 2021/01/31 16:18:22 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,12 +68,38 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	_DIAGASSERT(buf != NULL);
 
 	FLOCKFILE(fp);
+	if (fp->_r < 0)
+		fp->_r = 0;
 	total = resid;
 	p = buf;
 
-	if (fp->_r <= 0) {
-		/* Nothing to read on enter, refill the buffers. */
-		goto refill;
+	/*
+	 * If we're unbuffered we know that the buffer in fp is empty so
+	 * we can read directly into buf.  This is much faster than a
+	 * series of one byte reads into fp->_nbuf.
+	 */
+	if ((fp->_flags & __SNBF) != 0) {
+		while (resid > 0) {
+			/* set up the buffer */
+			fp->_bf._base = fp->_p = (unsigned char *)p;
+			fp->_bf._size = resid;
+
+			if (__srefill(fp)) {
+				/* no more input: return partial result */
+				count = (total - resid) / size;
+				break;
+			}
+			p += fp->_r;
+			resid -= fp->_r;
+		}
+
+		/* restore the old buffer (see __smakebuf) */
+		fp->_bf._base = fp->_p = fp->_nbuf;
+		fp->_bf._size = 1;
+		fp->_r = 0;
+
+		FUNLOCKFILE(fp);
+		return (count);
 	}
 
 	while (resid > (size_t)(r = fp->_r)) {
@@ -82,7 +108,6 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 		/* fp->_r = 0 ... done in __srefill */
 		p += r;
 		resid -= r;
-refill:
 		if (__srefill(fp)) {
 			/* no more input: return partial result */
 			FUNLOCKFILE(fp);
