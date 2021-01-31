@@ -1,2 +1,2 @@
-(7): warning: conversion to 'long double' due to prototype, arg #1 [259]
-(7): warning: conversion to 'long double' due to prototype, arg #1 [259]
+(7): warning: conversion from 'double' to 'long double' due to prototype, arg #1 [259]
+(7): warning: conversion from 'double' to 'long double' due to prototype, arg #1 [259]
