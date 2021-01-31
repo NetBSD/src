@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.43 2020/09/19 13:33:08 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.44 2021/01/31 04:51:29 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct pmap {
 	paddr_t pm_l0table_pa;
 
 	LIST_HEAD(, vm_page) pm_vmlist;		/* for L[0123] tables */
+	LIST_HEAD(, pv_entry) pm_pvlist;	/* all pv of this process */
 
 	struct pmap_statistics pm_stats;
 	unsigned int pm_refcnt;
@@ -84,12 +85,16 @@ struct pmap {
 	bool pm_activated;
 };
 
-/* sized to reduce memory consumption & cache misses (32 bytes) */
+/*
+ * should be kept <=32 bytes sized to reduce memory consumption & cache misses,
+ * but it doesn't...
+ */
 struct pv_entry {
 	struct pv_entry *pv_next;
 	struct pmap *pv_pmap;
 	vaddr_t pv_va;	/* for embedded entry (pp_pv) also includes flags */
 	void *pv_ptep;	/* pointer for fast pte lookup */
+	LIST_ENTRY(pv_entry) pv_proc;	/* belonging to the process */
 };
 
 struct pmap_page {

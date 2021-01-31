@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2020/12/20 08:26:32 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2021/01/31 04:51:29 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2020/12/20 08:26:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2021/01/31 04:51:29 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -485,6 +485,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	kpm->pm_l0table_pa = l0pa;
 	kpm->pm_activated = true;
 	LIST_INIT(&kpm->pm_vmlist);
+	LIST_INIT(&kpm->pm_pvlist);	/* not used for kernel pmap */
 	mutex_init(&kpm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	CTASSERT(sizeof(kpm->pm_stats.wired_count) == sizeof(long));
@@ -719,11 +720,14 @@ _pmap_sweep_pdp(struct pmap *pm)
 }
 
 static void
-_pmap_free_pdp_all(struct pmap *pm)
+_pmap_free_pdp_all(struct pmap *pm, bool free_l0)
 {
-	struct vm_page *pg;
+	struct vm_page *pg, *pgtmp, *pg_reserve;
 
-	while ((pg = LIST_FIRST(&pm->pm_vmlist)) != NULL) {
+	pg_reserve = free_l0 ? NULL : PHYS_TO_VM_PAGE(pm->pm_l0table_pa);
+	LIST_FOREACH_SAFE(pg, &pm->pm_vmlist, pageq.list, pgtmp) {
+		if (pg == pg_reserve)
+			continue;
 		pmap_free_pdp(pm, pg);
 	}
 }
@@ -1101,6 +1105,7 @@ _pmap_remove_pv(struct pmap_page *pp, struct pmap *pm, vaddr_t va,
 	UVMHIST_LOG(pmaphist, "pp=%p, pm=%p, va=%llx, pte=%llx",
 	    pp, pm, va, pte);
 
+	KASSERT(mutex_owned(&pm->pm_lock));	/* for pv_proc */
 	KASSERT(mutex_owned(&pp->pp_pvlock));
 
 	for (ppv = NULL, pv = &pp->pp_pv; pv != NULL; pv = pv->pv_next) {
@@ -1109,6 +1114,10 @@ _pmap_remove_pv(struct pmap_page *pp, struct pmap *pm, vaddr_t va,
 		}
 		ppv = pv;
 	}
+
+	if (pm != pmap_kernel() && pv != NULL)
+		LIST_REMOVE(pv, pv_proc);
+
 	if (ppv == NULL) {
 		/* embedded in pmap_page */
 		pv->pv_pmap = NULL;
@@ -1233,6 +1242,9 @@ _pmap_enter_pv(struct pmap_page *pp, struct pmap *pm, struct pv_entry **pvp,
 	pv->pv_pmap = pm;
 	pv->pv_ptep = ptep;
 	PMAP_COUNT(pv_enter);
+
+	if (pm != pmap_kernel())
+		LIST_INSERT_HEAD(&pm->pm_pvlist, pv, pv_proc);
 
 #ifdef PMAP_PV_DEBUG
 	printf("pv %p alias added va=%016lx -> pa=%016lx\n", pv, va, pa);
@@ -1499,6 +1511,7 @@ pmap_create(void)
 	pm->pm_idlepdp = 0;
 	pm->pm_asid = -1;
 	LIST_INIT(&pm->pm_vmlist);
+	LIST_INIT(&pm->pm_pvlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	pm->pm_l0table_pa = pmap_alloc_pdp(pm, NULL, 0, true);
@@ -1535,9 +1548,13 @@ pmap_destroy(struct pmap *pm)
 	if (refcnt > 0)
 		return;
 
-	aarch64_tlbi_by_asid(pm->pm_asid);
+	KASSERT(LIST_EMPTY(&pm->pm_pvlist));
 
-	_pmap_free_pdp_all(pm);
+	/*
+	 * no need to call aarch64_tlbi_by_asid(pm->pm_asid).
+	 * TLB should already be invalidated in pmap_remove_all()
+	 */
+	_pmap_free_pdp_all(pm, true);
 	mutex_destroy(&pm->pm_lock);
 
 	pool_cache_put(&_pmap_cache, pm);
@@ -2034,8 +2051,64 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 bool
 pmap_remove_all(struct pmap *pm)
 {
-	/* nothing to do */
-	return false;
+	struct pmap_page *pp;
+	struct pv_entry *pv, *pvtmp, *opv, *pvtofree = NULL;
+	pt_entry_t pte, *ptep;
+	paddr_t pa;
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLED(pmaphist);
+
+	UVMHIST_LOG(pmaphist, "pm=%p", pm, 0, 0, 0);
+
+	if (pm == pmap_kernel())
+		return false;
+
+	pm_lock(pm);
+
+	LIST_FOREACH_SAFE(pv, &pm->pm_pvlist, pv_proc, pvtmp) {
+		ptep = pv->pv_ptep;
+		pte = *ptep;
+
+		KASSERTMSG(lxpde_valid(pte),
+		    "pte is not valid: pmap=%p, asid=%d, va=%016lx\n",
+		    pm, pm->pm_asid, pv->pv_va);
+
+		pa = lxpde_pa(pte);
+		pp = phys_to_pp(pa);
+
+		KASSERTMSG(pp != NULL,
+		    "no pmap_page of physical address:%016lx, "
+		    "pmap=%p, asid=%d, va=%016lx\n",
+		    pa, pm, pm->pm_asid, pv->pv_va);
+
+		pmap_pv_lock(pp);
+		opv = _pmap_remove_pv(pp, pm, trunc_page(pv->pv_va), pte);
+		pmap_pv_unlock(pp);
+		if (opv != NULL) {
+			opv->pv_next = pvtofree;
+			pvtofree = opv;
+		}
+	}
+	/* all PTE should now be cleared */
+	pm->pm_stats.wired_count = 0;
+	pm->pm_stats.resident_count = 0;
+
+	/* clear L0 page table page */
+	pmap_zero_page(pm->pm_l0table_pa);
+	aarch64_tlbi_by_asid(pm->pm_asid);
+
+	/* free L1-L3 page table pages, but not L0 */
+	_pmap_free_pdp_all(pm, false);
+
+	pm_unlock(pm);
+
+	for (pv = pvtofree; pv != NULL; pv = pvtmp) {
+		pvtmp = pv->pv_next;
+		pool_cache_put(&_pmap_pv_pool, pv);
+	}
+
+	return true;
 }
 
 static void
