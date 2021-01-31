@@ -1,1 +1,3 @@
-msg_003.c(6): syntax error ':' [249]
+msg_003.c(9): warning: struct declared in argument declaration list [3]
+msg_003.c(10): warning: union declared in argument declaration list [3]
+msg_003.c(11): warning: enum declared in argument declaration list [3]
