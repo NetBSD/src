@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.73 2021/01/31 09:26:27 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.74 2021/01/31 11:23:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.73 2021/01/31 09:26:27 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.74 2021/01/31 11:23:01 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ static	void	vwarning(int, va_list);
 
 const	char *msgs[] = {
 	"empty declaration",					      /* 0 */
-	"old style declaration; add int",			      /* 1 */
+	"old style declaration; add 'int'",			      /* 1 */
 	"empty declaration",					      /* 2 */
 	"'%s' declared in argument declaration list",		      /* 3 */
 	"illegal type combination",				      /* 4 */
@@ -78,7 +78,7 @@ const	char *msgs[] = {
 	"array of function is illegal",				      /* 16 */
 	"null dimension",					      /* 17 */
 	"illegal use of 'void'",				      /* 18 */
-	"void type for %s",					      /* 19 */
+	"void type for '%s'",					      /* 19 */
 	"negative array dimension (%d)",			      /* 20 */
 	"redeclaration of formal parameter %s",			      /* 21 */
 	"incomplete or misplaced function definition",		      /* 22 */

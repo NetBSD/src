@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.158 2021/01/31 09:26:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.159 2021/01/31 11:23:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.158 2021/01/31 09:26:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.159 2021/01/31 11:23:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -376,10 +376,10 @@ data_def:
 	  }
 	| clrtyp deftyp notype_init_decls T_SEMI {
 		if (sflag) {
-			/* old style declaration; add int */
+			/* old style declaration; add 'int' */
 			error(1);
 		} else if (!tflag) {
-			/* old style declaration; add int */
+			/* old style declaration; add 'int' */
 			warning(1);
 		}
 	  }

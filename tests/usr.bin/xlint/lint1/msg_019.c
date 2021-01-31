@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_019.c,v 1.2 2021/01/31 09:48:47 rillig Exp $	*/
+/*	$NetBSD: msg_019.c,v 1.3 2021/01/31 11:23:01 rillig Exp $	*/
 # 3 "msg_019.c"
 
-// Test for message: void type for %s [19]
+// Test for message: void type for '%s' [19]
 
 void global_variable;		/* expect: 19 */
 

@@ -1,1 +1,1 @@
-msg_001.c(6): warning: old style declaration; add int [1]
+msg_001.c(6): warning: old style declaration; add 'int' [1]
