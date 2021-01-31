@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.29 2021/01/03 15:33:05 roy Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.30 2021/01/31 08:26:47 roy Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -4730,8 +4730,9 @@ process_routing_msgs(struct asyncio_reader *reader)
 
 	if (cnt < 0) {
 		if (errno == ENOBUFS) {
-			msyslog(LOG_ERR,
-				"routing socket reports: %m");
+			msyslog(LOG_DEBUG,
+				"routing socket overflowed"
+				" - will update interfaces");
 			/*
 			 * drain the routing socket as we need to update
 			 * the interfaces anyway
@@ -4792,14 +4793,8 @@ process_routing_msgs(struct asyncio_reader *reader)
 #ifdef RTM_CHANGE
 		case RTM_CHANGE:
 #endif
-#ifdef RTM_LOSING
-		case RTM_LOSING:
-#endif
 #ifdef RTM_IFINFO
 		case RTM_IFINFO:
-#endif
-#ifdef RTM_IFANNOUNCE
-		case RTM_IFANNOUNCE:
 #endif
 #ifdef RTM_NEWLINK
 		case RTM_NEWLINK:
@@ -4874,14 +4869,8 @@ init_async_notifications()
 #ifdef RTM_CHANGE
 		RTM_CHANGE,
 #endif
-#ifdef RTM_LOSING
-		RTM_LOSING,
-#endif
 #ifdef RTM_IFINFO
 		RTM_IFINFO,
-#endif
-#ifdef RTM_IFANNOUNCE
-		RTM_IFANNOUNCE,
 #endif
 #ifdef RTM_NEWLINK
 		RTM_NEWLINK,
