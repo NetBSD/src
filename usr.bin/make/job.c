@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.404 2021/01/30 13:12:00 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.405 2021/01/31 07:07:53 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.404 2021/01/30 13:12:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.405 2021/01/31 07:07:53 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -439,6 +439,7 @@ enum {
 };
 
 static sigset_t caught_signals;	/* Set of signals we handle */
+static volatile int caught_sigchld;
 
 static void JobDoOutput(Job *, Boolean);
 static void JobInterrupt(Boolean, int) MAKE_ATTR_DEAD;
@@ -603,6 +604,7 @@ JobCondPassSig(int signo)
 static void
 JobChildSig(int signo MAKE_ATTR_UNUSED)
 {
+	caught_sigchld = 1;
 	while (write(childExitJob.outPipe, CHILD_EXIT, 1) == -1 &&
 	       errno == EAGAIN)
 		continue;
@@ -1972,6 +1974,11 @@ Job_CatchChildren(void)
 	if (jobTokensRunning == 0)
 		return;
 
+	/* Have we received SIGCHLD since last call? */
+	if (caught_sigchld == 0)
+		return;
+	caught_sigchld = 0;
+
 	while ((pid = waitpid((pid_t)-1, &status, WNOHANG | WUNTRACED)) > 0) {
 		DEBUG2(JOB, "Process %d exited/stopped status %x.\n",
 		    pid, status);
@@ -2206,6 +2213,7 @@ Job_Init(void)
 	memset(job_table, 0, (size_t)opts.maxJobs * sizeof *job_table);
 	job_table_end = job_table + opts.maxJobs;
 	wantToken = 0;
+	caught_sigchld = 0;
 
 	aborting = ABORT_NONE;
 	job_errors = 0;
