@@ -1,2 +1,2 @@
-(12): warning: conversion from 'long long' to 'unsigned int' due to prototype, arg #1 [259]
+(12): warning: argument #1 is converted from 'long long' to 'unsigned int' [259]
 (12): warning: conversion of 'long long' to 'unsigned int' is out of range, arg #1 [295]
