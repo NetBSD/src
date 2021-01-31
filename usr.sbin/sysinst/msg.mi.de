@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.31 2021/01/31 21:00:43 rillig Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.32 2021/01/31 21:28:16 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -33,6 +33,8 @@
  */
 
 /* MI Message catalog -- German, machine independent */
+
+/* NB: Lines ending in spaces force line breaks */
 
 /*
  * Use only ASCII characters in this message - it is displayed before the
@@ -601,7 +603,7 @@ Zurück zum vorigen Menü.
 }
 
 message netup
-{Die folgenden Netzwerkadapter sind verfügbar: %s
+{Die folgenden Netzwerkadapter sind verfügbar: %s 
 Hat einer davon Zugriff auf die benötigten Server?}
 
 message asknetdev
@@ -642,28 +644,28 @@ message net_media
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
 
-DNS-Domain:		%s
-Hostname:		%s
-Nameserver:		%s
-Netzwerkadapter:	%s
-Verbindungstyp:		%s
-IP-Adresse:		%s
-Netzmaske:		%s
-IPv4-Gateway:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Nameserver:		%s 
+Netzwerkadapter:	%s 
+Verbindungstyp:		%s 
+IP-Adresse:		%s 
+Netzmaske:		%s 
+IPv4-Gateway:		%s 
 }
 
 message netok_slip
 {Sie haben die folgenden Daten gewählt. Sind diese Daten OK?
 
-DNS-Domain:		%s
-Hostname:		%s
-Nameserver:		%s
-Netzwerkadapter:	%s
-Verbindungstyp:		%s
-IP-Adresse:		%s
-IP-Adresse des Servers:	%s
-Netzmaske:		%s
-IPv4-Gateway:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Nameserver:		%s 
+Netzwerkadapter:	%s 
+Verbindungstyp:		%s 
+IP-Adresse:		%s 
+IP-Adresse des Servers:	%s 
+Netzmaske:		%s 
+IPv4-Gateway:		%s 
 }
 
 message netokv6
@@ -998,8 +1000,8 @@ message choose_timezone
 Drücken Sie die Eingabetaste, um einen Eintrag anzuwählen. Betätigen Sie danach
 die Taste 'x' gefolgt von der Eingabetaste, um das Menü zu verlassen.
 
- Vorgabe:	%s
- Ausgewählt:	%s
+ Vorgabe:	%s 
+ Ausgewählt:	%s 
  Lokale Zeit:	%s %s
 }
 
