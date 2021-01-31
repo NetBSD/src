@@ -1,3 +1,6 @@
+/*	$NetBSD: d_c99_recursive_init.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_c99_recursive_init.c"
+
 /* C99 recursive struct/union initialization */
 struct top {
 	int i;
