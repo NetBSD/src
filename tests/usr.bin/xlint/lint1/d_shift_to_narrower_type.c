@@ -1,10 +1,11 @@
-/*	$NetBSD: d_shift_to_narrower_type.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_shift_to_narrower_type.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
 # 3 "d_shift_to_narrower_type.c"
 
 // Test that type shifts that result to narrower types don't produce warnings.
 
 void
-foo(void) {
+foo(void)
+{
 	unsigned long l = 100;
 	unsigned long long ll = 100;
 	unsigned int i = 100;
