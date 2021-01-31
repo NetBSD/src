@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.30 2021/01/31 18:31:59 rillig Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.31 2021/01/31 21:00:43 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -35,8 +35,8 @@
 /* MI Message catalog -- German, machine independent */
 
 /*
- * We can not use non ascii characters in this message - it is displayed
- * before the locale is set up!
+ * Use only ASCII characters in this message - it is displayed before the
+ * locale is set up!
  */
 message sysinst_message_language
 {Installation auf Deutsch}
@@ -68,13 +68,13 @@ message upgrade
 
 message hello
 {Willkommen bei Sysinst, dem Installationsprogramm von NetBSD-@@VERSION@@.
-Dieses Programm wird Ihnen helfen, NetBSD auf eine Festplatte zu installieren
+Dieses Programm hilft Ihnen, NetBSD auf eine Festplatte zu installieren
 oder aber eine bereits bestehende Installation von NetBSD zu aktualisieren.
 In den folgenden Menüs können Sie mit den Buchstaben (a, b, c, ...)
 die verschiedenen Menüeinträge wählen oder durch Drücken von Strg-N/Strg-P
 die Markierung auf- oder abbewegen. Die Cursor- und Bildlauftasten
 (Seite vor/zurück) sollten ebenfalls funktionieren.
-Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
+Mit der Eingabetaste bestätigen Sie die gegenwärtige Auswahl.
 }
 
 message thanks
@@ -107,8 +107,8 @@ Datensicherung durchgeführt haben! Wollen Sie NetBSD wirklich aktualisieren?
 
 message reinstallusure
 {Im folgenden werden die NetBSD Distributionssets (Kernel + Basissystem)
-auf eine vorbereitete Festplatte ausgepackt. Diese Prozedur lädt und entpackt
-die Sets auf eine im Vorfeld partitionierte und bootfähige Festplatte aus.
+auf eine vorbereitete Festplatte ausgepackt. Dieser Vorgang lädt und entpackt
+die Sets auf eine im Vorfeld partitionierte und bootfähige Festplatte.
 Es werden weder Festplatten gelabelt, Bootblöcke aktualisiert noch bestehende
 Konfigurationen gesichert.
 
@@ -116,7 +116,7 @@ Beenden Sie jetzt und wählen Sie dann 'Installation' oder 'Aktualisierung',
 falls Ihre Festplatte nicht entsprechend vorbereitet ist oder Sie das System
 neu installieren oder aber ein bestehendes aktualisieren möchten!
 
-Wollen Sie die NetBSD Distributionssets wirklich erneut installieren?
+Wollen Sie die NetBSD-Distributionssets wirklich erneut installieren?
 (Dies ist die letzte Warnung, bevor die Inhalte Ihres Dateisystems
 überschrieben werden!)
 }
@@ -126,13 +126,13 @@ message mount_failed
 }
 
 message nodisk
-{Ich kann keine für NetBSD nutzbaren Festplatten finden.
+{Keine für NetBSD nutzbaren Festplatten gefunden.
 Zurück zum Hauptmenü...
 }
 
 message onedisk
-{Ich habe nur eine Festplatte, %s, gefunden. Ich gehe somit davon aus, dass
-Sie NetBSD darauf %s möchten.
+{Es wurde nur eine Festplatte, %s, gefunden. Wahrscheinlich möchten Sie
+NetBSD daher darauf %s.
 }
 
 message ask_disk
@@ -183,7 +183,7 @@ aber die Standard-Partitionen verwenden.}
  *  $5 = install with X min.		427M
  */
 message layout_prologue_existing
-{Falls Sie nicht die existierende Partitionen weiterverwenden möchten,
+{Falls Sie die bestehenden Partitionen nicht mehr weiterverwenden möchten,
 können Sie die Größe der NetBSD-Partitionen neu definieren oder aber
 alle verwerfen und die Standard-Partitionsgrößen verwenden.}
 
@@ -209,7 +209,7 @@ $5 Megabyte bei Installation der X-Windows Komponenten.}
 message Choose_your_size_specifier
 {Wenn Sie Mega- oder Gigabytes wählen, werden effektive
 Partitionsgrößen festgesetzt, die nahe Ihrer Größenangabe liegen.
-Bei modernen Festplatten spielen Zylindergrößen keine Roole.
+Bei modernen Festplatten spielen Zylindergrößen keine Rolle.
 Bei älteren Festplatten dagegen ist es am effizientesten, sich
 Partitionsgrößen auszusuchen, die exakt ein Vielfaches der
 aktuellen Zylindergröße ausmachen.
@@ -221,7 +221,7 @@ Wählen Sie die Einheit}
 message ptnsizes
 {Sie können jetzt die Größen der Systempartitionen verändern. Standardmäßig
 wird der gesamte Speicherplatz der Rootpartition zugeordnet. Wenn Sie
-wollen, können Sie separate Partitionen definieren, z.B. /usr (zusätzliche
+möchten, können Sie separate Partitionen definieren, z.B. /usr (zusätzliche
 Systemdateien), /var (Log- bzw. Protokolldateien und anderes) oder /home
 (Verzeichnis für die persönlichen Dateien der Anwender).
 
@@ -229,10 +229,10 @@ Verbleibender freier Speicherplatz wird der mit '+' markierten Partition
 hinzugefügt.}
 
 /* Called with: 			Example
- *  $0 = list of marker explanations	'=' existining, '@' external
+ *  $0 = list of marker explanations	'=' existing, '@' external
  */
 message ptnsizes_markers		{Andere Markierungen: $0 Partition.}
-message ptnsizes_mark_existing		{'=' existierende}
+message ptnsizes_mark_existing		{'=' bestehende}
 message ptnsizes_mark_external		{'@' externe}
 
 message ptnheaders_size		{Größe}
@@ -312,7 +312,7 @@ message cvtscheme_abort		{abbrechen}
  *  $6 = free size			244MB
  */
 message fspart
-{Nachfolgend sehen Sie Ihre $2 Partitionen für $0.
+{Nachfolgend sehen Sie Ihre $2-Partitionen für $0.
 Dies ist die letzte Chance, diese zu ändern.
 
 Flags: $3(F)ormatieren$4.   Gesamtgröße: $5, frei: $6}
@@ -412,7 +412,7 @@ message packname
 
 message lastchance
 {NetBSD wird nun auf die Festplatte (%s) installiert. Noch wurde nichts
-geschrieben. Dies ist Ihre letzte Chance, diesen Prozess abzubrechen.
+geschrieben. Dies ist Ihre letzte Chance, diesen Vorgang abzubrechen.
 
 Möchten Sie fortfahren?
 
@@ -426,13 +426,13 @@ und geprüft.
 }
 
 message disksetupdoneupdate
-{Der erste Teil der Prozedur ist nun abgeschlossen.
+{Der erste Teil des Ablaufs ist nun abgeschlossen.
 Sysinst hat das von Ihnen gewählte Ziellaufwerk partitioniert und
 und alle gewählten Dateisysteme auf Fehler überprüft.
 }
 
 message openfail
-{Konnte %s nicht öffnen, die Fehlermeldung lautet: %s.
+{%s konnte nicht geöffnet werden, die Fehlermeldung lautet: %s.
 }
 
 /* Called with:				Example
@@ -440,18 +440,18 @@ message openfail
  *  $1 = mount path			/usr
  */
 message mountfail
-{Das Mounten des Gerätes $0 auf $1 ist fehlgeschlagen.
+{Das Gerät $0 konnte nicht auf $1 gemountet werden.
 }
 
 message extractcomplete
 {Das Extrahieren der ausgewählten Sets für NetBSD-@@VERSION@@ ist abgeschlossen.
-Das System ist somit fähig, von der ausgewählten Partition zu starten. Um die
-Installation zu vervollständigen, gibt Ihnen sysinst die Möglichkeit, eine
+Das System ist damit bereit, von der ausgewählten Partition zu starten. Um die
+Installation zu vervollständigen, gibt Ihnen Sysinst die Möglichkeit, eine
 grundlegende Konfiguration vorzunehmen.
 }
 
 message instcomplete
-{Die Installation von NetBSD-@@VERSION@@ ist jetzt fertiggestellt. Das System
+{Die Installation von NetBSD-@@VERSION@@ ist jetzt abgeschlossen. Das System
 sollte von der Festplatte starten können. Beachten Sie die INSTALL-Anleitung,
 um sich über die weitere Konfiguration zu informieren.
 Auch die afterboot(8) Manpage ist weiterzuempfehlen; Sie enthält eine Liste
@@ -463,7 +463,7 @@ die Vorgaben für diese Datei finden.
 }
 
 message upgrcomplete
-{Die Installation von NetBSD-@@VERSION@@ ist jetzt fertiggestellt. Sie müssen
+{Die Installation von NetBSD-@@VERSION@@ ist jetzt abgeschlossen. Sie müssen
 nun die Anweisungen im INSTALL-Dokument beachten, damit Ihr System -
 entsprechend Ihrer Situation - neu konfiguriert werden kann.
 Lesen Sie (erneut) die afterboot(8) Manpage, da diese seit Ihrer letzten
@@ -478,7 +478,7 @@ Modus (Einbenutzermodus) startet.
 message unpackcomplete
 {Das Entpacken der zusätzlichen Releasesets von NetBSD-@@VERSION@@ ist nun
 beendet.
-Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
+Sie sollten nun die Anweisungen im INSTALL-Dokument beachten, um
 Ihr System Ihrer Konfiguration entsprechend einzurichten. Die afterboot(8)
 Manpage kann ebenfalls nützlich sein.
 
@@ -499,7 +499,7 @@ Insgesamt %d Pakete ausgewählt, %d installiert. Nächstes Set: %s.
 }
 
 message distset
-{Die NetBSD Distribution ist in verschiedene Pakete (Sets) aufgeteilt.
+{Die NetBSD-Distribution ist in verschiedene Pakete (Sets) aufgeteilt.
 Es gibt einige grundlegende Pakete, die auf jeden Fall benötigt werden,
 sowie optionale.
 Es bleibt Ihnen überlassen, ein Basissystem (Minimale Installation) oder
@@ -529,13 +529,13 @@ message dev
 message nfssource
 {Geben Sie den NFS-Server samt Verzeichnis an, auf dem die Distribution zu
 finden ist.
-(Das Verzeichnis muss $0 Dateien enthalten und über NFS mountbar sein.)
+(Das Verzeichnis muss $0-Dateien enthalten und über NFS mountbar sein.)
 
 }
 
 message floppysource
 {Geben Sie das Diskettenlaufwerk und das Transfer-Verzeichnis auf dem
-Zieldateisystem an. Das Installationspaket muß direkt im obersten
+Zieldateisystem an. Das Installationspaket muss direkt im obersten
 Verzeichnis der Diskette liegen.
 
 }
@@ -546,13 +546,13 @@ Verzeichnis der Diskette liegen.
 message cdromsource
 {Geben Sie das CD-Laufwerk und das entsprechende Verzeichnis an, in dem
 die Distribution zu finden ist.
-(Das Verzeichnis muss $0 Dateien enthalten.)
+(Das Verzeichnis muss $0-Dateien enthalten.)
 
 }
 
 message No_cd_found
 {Kein CD Laufwerk enthält eine CD mit den Distributions-Dateien!
-Geben Sie die korrekten Daten manuel ein, oder legen Sie eine CD
+Geben Sie die korrekten Daten manuell ein, oder legen Sie eine CD
 ein und versuchen Sie es erneut.
 }
 
@@ -566,7 +566,7 @@ message Available_cds
 {Verfügbare CDs}
 
 message ask_cd
-{Es wurden mehrere CDs gefunden. Bitte wählen Sie die Installations CD aus.}
+{Es wurden mehrere CDs gefunden. Bitte wählen Sie die Installations-CD aus.}
 
 message cd_path_not_found
 {Die Installationsdateien wurden auf der ausgewählten CD nicht gefunden. Bitte
@@ -578,7 +578,7 @@ prüfen Sie den Gerätenamen und Pfad der Installationsdateien.}
 message localfssource
 {Geben Sie das noch nicht gemountete lokale Gerät und dessen entsprechendes
 Verzeichnis an, in dem die Distribution zu finden ist.
-(Das Verzeichnis muss $0 Dateien enthalten.)
+(Das Verzeichnis muss $0-Dateien enthalten.)
 
 }
 
@@ -588,7 +588,7 @@ Verzeichnis an, in dem die Distribution zu finden ist.
 message localdir
 {Geben Sie das Verzeichnis des bereits gemounteten lokalen Geräts an, in dem
 die Distribution zu finden ist.
-(Das Verzeichnis muss $0 Dateien enthalten.)
+(Das Verzeichnis muss $0-Dateien enthalten.)
 
 }
 
@@ -608,10 +608,10 @@ message asknetdev
 {Welchen Netzwerkadapter möchten Sie benutzen?}
 
 message netdevs
-{Verfügbare schnittstellen}
+{Verfügbare Schnittstellen}
 
 message netinfo
-{Um das Netzwerk nutzen zu können, benötigen wir folgende Angaben:
+{Um das Netzwerk nutzen zu können, werden folgende Angaben benötigt:
 
 }
 
@@ -684,7 +684,7 @@ Bitte warten Sie, während die Netzwerkgeräte initialisiert werden.
 }
 
 message resolv
-{Konnte /etc/resolv.conf nicht erstellen. Installation abgebrochen.
+{/etc/resolv.conf konnte nicht erstellt werden. Installation abgebrochen.
 }
 
 /* Called with: 			Example
@@ -692,7 +692,7 @@ message resolv
  *  $1 = error message			No such file or directory
  */
 message realdir
-{Konnte nicht in das Verzeichnis $0 wechseln: $1
+{Fehler beim Wechseln in das Verzeichnis $0: $1
 Installation abgebrochen.}
 
 message delete_xfer_file
@@ -755,7 +755,7 @@ Aktualisierung wird abgebrochen.
 }
 
 message X_oldexists
-{Der alte X Server %s/bin/X kann nicht als %s/bin/X.old
+{Der alte X-Server %s/bin/X kann nicht als %s/bin/X.old
 gesichert werden, da eine Datei mit diesem Namen bereits existiert.
 Bitte korrigieren Sie dies, bevor Sie fortfahren.
 
@@ -772,14 +772,14 @@ Aktualisierung wird abgebrochen.}
 
 message netnotup
 {Beim Testen des Netzwerks ist ein Problem aufgetreten. Entweder Ihr
-Gateway oder Ihr Nameserver hat nicht auf "ping" reagiert. Wollen Sie Ihre
+Gateway oder Ihr Nameserver hat nicht auf "ping" reagiert. Möchten Sie Ihre
 Netzwerkkonfiguration überarbeiten?
 
 ("Nein" ermöglicht Ihnen die Fortsetzung oder den Abbruch der Installation.)
 }
 
 message netnotup_continueanyway
-{Wollen Sie die Installation dennoch fortsetzen? Sie können sich auch
+{Möchten Sie die Installation dennoch fortsetzen? Sie können sich auch
 später um das Netzwerk kümmern. ("Nein" bricht die Installation ab.)
 }
 
@@ -804,7 +804,7 @@ message rootmissing
 }
 
 message badroot
-{Das neu installierte root Dateisystem scheint unvollständig zu sein.
+{Das neu installierte root-Dateisystem scheint unvollständig zu sein.
 Sind Sie sicher, dass Sie alle benötigten Sets installiert haben?
 }
 
@@ -812,7 +812,7 @@ message fd_type
 {Floppy Dateisystem-Typ}
 
 message fdnotfound
-{Ich konnte die Datei nicht finden.
+{Datei konnte nicht gefunden werden.
 }
 
 message fdremount
@@ -823,8 +823,8 @@ message fdmount
 {Bitte legen Sie die Diskette mit der Datei "%s.%s" ein.
 
 Falls das Paket keine weiteren Disketten enthält, wählen Sie
-"Paket fertig" um das Paket zu installieren. Wählen Sie
-"Holen abbrechen" um zur Auswahl des Installationsmediums
+"Paket fertig", um das Paket zu installieren. Wählen Sie
+"Holen abbrechen", um zur Auswahl des Installationsmediums
 zurückzukehren.
 }
 
@@ -833,7 +833,7 @@ message fdmount
 {Bitte legen Sie die Diskette ein, auf der sich die Datei "%s.%s" befindet. }
 
 message fdnotfound
-{Ich konnte die Datei "%s.%s" nicht finden. Bitte legen Sie die entsprechende
+{Die Datei "%s.%s" wurde nicht gefunden. Bitte legen Sie die entsprechende
 Diskette ein.
 Wenn dies die letzte Diskette des Paketes war, wählen Sie "Paket fertig",
 um zum nächsten Paket überzugehen - falls ein weiteres Paket folgt.}
@@ -877,7 +877,7 @@ message set_compiler
 {Compiler}
 
 message set_dtb
-{Devicetree hardware descriptions}
+{Gerätebaum-Hardwarebeschreibungen}
 
 message set_games
 {Spiele}
@@ -889,19 +889,19 @@ message set_misc
 {Verschiedenes}
 
 message set_modules
-{Kernel Modules}
+{Kernel-Module}
 
 message set_rescue
-{Recovery tools}
+{Wiederherstellungs-Werkzeuge}
 
 message set_tests
 {Testprogramme}
 
 message set_text_tools
-{Textbearbeitung}
+{Textverarbeitung}
 
 message set_X11
-{X11 Sets}
+{X11-Sets}
 
 message set_X11_base
 {X11 Basis und Clients}
@@ -922,19 +922,19 @@ message set_source
 {Quelltexte und Debug-Info}
 
 message set_syssrc
-{Kernel Quelltexte}
+{Kernel-Quelltexte}
 
 message set_src
-{Basissystem Quelltexte}
+{Basissystem-Quelltexte}
 
 message set_sharesrc
-{Share Quelltexte}
+{Share-Quelltexte}
 
 message set_gnusrc
-{GNU Quelltexte}
+{GNU-Quelltexte}
 
 message set_xsrc
-{X11 Quelltexte}
+{X11-Quelltexte}
 
 message set_debug
 {Debug-Information}
@@ -949,7 +949,7 @@ message select_none
 {Kein Paket wählen}
 
 message install_selected_sets
-{Installieren der ausgewählten Pakete}
+{Ausgewählte Pakete installieren}
 
 message tarerror
 {Beim Extrahieren der Datei %s ist ein Fehler aufgetreten. Das bedeutet, dass
@@ -1073,7 +1073,7 @@ message Choose_your_installation {Wählen Sie Ihre Installation}
  *  $1 = short version of $0		MBR
  */
 message Keep_existing_partitions
-{Aktuelle $1 Partitionen verwenden}
+{Aktuelle $1-Partitionen verwenden}
 
 /* Called with: 			Example
  *  $0 = partitioning name		Master Boot Record (MBR)
@@ -1104,7 +1104,7 @@ message ftp {FTP}
 message http {HTTP}
 message nfs {NFS}
 .if HAVE_INSTALL_IMAGE
-message cdrom {CD-ROM / DVD / install image media}	/* XXX translation */
+message cdrom {CD-ROM / DVD / Medium mit Abbilddatei}
 .else
 message cdrom {CD-ROM / DVD}
 .endif
@@ -1167,7 +1167,7 @@ Verzeichnis abgleichen.
 
 message oldsendmail
 {Sendmail ist nicht länger integrierter Bestandteil von NetBSD.
-Der Standard MTA ist nun Postfix. Ihr System benutzt derzeit
+Der Standard-MTA ist nun Postfix. Ihr System benutzt derzeit
 eine Konfiguration in /etc/mailer.conf, die auf das nicht mehr
 vorhandene Sendmail-Programm verweist.
 Möchten Sie /etc/mailer.conf automatisch auf eine Version für
@@ -1176,7 +1176,7 @@ manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
 zu gewährleisten.}
 
 message license
-{Um den Netzwerkadapter %s zu benutzen müssen Sie der Lizenz in
+{Um den Netzwerkadapter %s zu benutzen, müssen Sie der Lizenz in
 der Datei %s zustimmen.
 Um den Lizenztext zu lesen, geben Sie ^Z ein, schauen den Inhalt
 der Datei an und kehren mit dem Befehl "fg" zu sysinst zurück.}
@@ -1184,8 +1184,8 @@ der Datei an und kehren mit dem Befehl "fg" zu sysinst zurück.}
 message binpkg
 {Um Binärpakete zu installieren, muss erst eine Netzwerkverbindung konfiguriert
 werden, über die die Pakete heruntergeladen werden. Nach einem ersten Start in
-das installierte System können mit dem Kommando 'pkgin' zusätzliche Pakete
-installiert oder entfernt werden.}
+das installierte System können Sie mit dem Befehl 'pkgin' zusätzliche Pakete
+installieren oder entfernen.}
 
 message pkgpath
 {Zur Konfiguration von pkgin muss zuerst das Repository konfiguriert werden.
@@ -1199,7 +1199,7 @@ message rcconf_backup_succeeded {rc.conf-Backup nach %s gespeichert.}
 message rcconf_restore_failed {rc.conf-Restore ist fehlgeschlagen.}
 message rcconf_delete_failed {Löschen des alten %s-Eintrages ist fehlgeschlagen.}
 message Pkg_dir {Paketverzeichnis}
-message configure_prior {Existierende Installation konfigurieren}
+message configure_prior {Bestehende Installation konfigurieren}
 message configure {Konfigurieren}
 message change {Ändern}
 message password_set {Passwort gesetzt}
@@ -1242,7 +1242,7 @@ message get_pkgsrc {pkgsrc herunterladen und extrahieren}
 message retry_pkgsrc_network
 {Netzwerkkonfiguration fehlgeschlagen. Noch einmal versuchen?}
 message quit_pkgsrc {Ohne Installation von pkgsrc beenden.}
-message quit_pkgs_install {Installation von binär-Paketen beenden.}
+message quit_pkgs_install {Installation von Binärpaketen beenden.}
 message pkgin_failed
 {Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete
 vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
@@ -1259,10 +1259,10 @@ message auto {auto}
 message removepartswarn {Sie löschen alle existierenden Partitionen auf der Festplatte!}
 message saveprompt {Speichern Sie die Änderungen vor dem Abschluss?}
 message cantsave {Änderungen können nicht gespeichert werden.}
-message noroot {Kein Root-Partition definiert ist, kann nicht fortgesetzt werden \n}
+message noroot {Fortsetzen unmöglich, da keine Root-Partition definiert ist\n}
 
-message addusername {8 character username to add}
-message addusertowheel {Do you wish to add this user to group wheel?}
+message addusername {Benutzername (maximal 8 Zeichen)}
+message addusertowheel {Diesen Benutzer der Gruppe 'wheel' hinzufügen?}
 
 message Delete_partition
 {Partition löschen}
@@ -1298,7 +1298,7 @@ message select_other_partscheme
 {Bitte wählen Sie ein anderes Partitionierungsverfahren.}
 
 message select_part_limit
-{Einige Verfahren können nur den Anfang einer große Festplatte verwalten,
+{Einige Verfahren können nur den Anfang einer großen Festplatte verwalten,
 die Größenbegrenzung ist unten angegeben.}
 
 /* Called with: 			Example
@@ -1322,9 +1322,9 @@ message	invalid_guid	{Ungültige GUID}
 message	reedit_partitions	{Erneut bearbeiten}
 message abort_installation	{Installation abbrechen}
 
-message dl_get_custom_fstype {Dateisystem code (bis 255)}
+message dl_get_custom_fstype {Dateisystem-Typcode (bis 255)}
 
-message dl_type_invalid	{Ungültiger Dateisystem Typcode (0 .. 255)}
+message dl_type_invalid	{Ungültiger Dateisystem-Typcode (0 bis 255)}
 
 message err_too_many_partitions	{Zu viele Partitionen}
 
@@ -1334,9 +1334,9 @@ message err_too_many_partitions	{Zu viele Partitionen}
 message	mp_already_exists	{$0 ist bereits vorhanden!}
 
 message ptnsize_replace_existing
-{Dies ist ein bereits existierende Partition.
-Um die Größe zu ändern, muss die Partition gelöscht und später neu
-erstellt werden. Alle vorhandenen Daten gehen dabei verloren!
+{Diese Partition besteht bereits.
+Um die Größe zu ändern, müssen Sie die Partition löschen und später neu
+erstellen. Alle vorhandenen Daten gehen dabei verloren!
 
 Möchten Sie die Partition löschen?}
 
@@ -1380,7 +1380,7 @@ message free_space_line {Speicherplatz bei $0..$1 $3 (Größe $2 $3)\n}
 
 message	fs_type_ffsv2	{FFSv2}
 message	fs_type_ffs	{FFS}
-message fs_type_ext2old	{Linux Ext2 (old)}
+message fs_type_ext2old	{Linux Ext2 (alt)}
 message	other_fs_type	{Anderer Typ}
 
 message	editpack	{Namen der Festplatte festlegen}
@@ -1397,7 +1397,7 @@ Geben Sie den Namen ein}
  *  $1 = short version of $0		MBR
  */
 message reeditpart
-{Wollen Sie die $1 Partitionen erneut editieren?}
+{Wollen Sie die $1-Partitionen erneut bearbeiten?}
 
 
 /* Called with:				Example
@@ -1418,11 +1418,11 @@ NetBSD kann auch auf Dateisysteme in anderen $3-Partitionen zugreifen.
 
 'Die ganze Festplatte nutzen' löscht alle vorhandenen $3-Partitionen.
 Um auch andere Betriebssysteme zu nutzen, erstellen Sie eine
-$3 Partition.
+$3-Partition.
 
 Etwa $5 reichen für eine Basisinstallation, aber Sie sollten
 zusätzlichen Platz für Erweiterungen und Benutzerdateien einrechnen.
-Reservieren Sie mindestens $6 wenn Sie NetBSD selbst compilieren möchten.}
+Reservieren Sie mindestens $6, wenn Sie NetBSD selbst compilieren möchten.}
 
 message Select_your_choice
 {Wie möchten Sie verfahren?}
@@ -1432,7 +1432,7 @@ message Select_your_choice
  *  $1 = short version of $0		MBR
  */
 message Use_only_part_of_the_disk
-{Bearbeiten der $1-Partitionstabelle}
+{$1-Partitionstabelle bearbeiten}
 
 message Use_the_entire_disk
 {Die ganze Festplatte nutzen}
@@ -1472,8 +1472,8 @@ Sie sollten das Flag 'hier installieren' auf die Partition setzen, die Sie nutze
 wollen.}
 
 message ovrwrite
-{Ihre Festplatte verfügt gegenwärtig über eine Nicht-NetBSD Partition.
-Wollen Sie diese Partition wirklich mit NetBSD überschreiben?
+{Ihre Festplatte verfügt gegenwärtig über eine Nicht-NetBSD-Partition.
+Möchten Sie diese Partition wirklich mit NetBSD überschreiben?
 }
 
 message Partition_OK
@@ -1486,7 +1486,7 @@ message Partition_OK
  *  $3 = other flag options		d = bootselect default, a = active
  */
 message editparttable
-{Hier sehen Sie die aktuellen $2 Partitionen auf $0.
+{Hier sehen Sie die aktuellen $2-Partitionen auf $0.
 Flag: hier (I)nstallieren$3.
 Wählen Sie die Partition, die Sie verändern möchten:
 
@@ -1496,14 +1496,14 @@ message ptn_install {Installation}
 message	ptn_instflag_desc	{(I)nstalllieren, }
 
 message clone_flag	{C}
-message clone_flag_desc	{, (C)lone}
+message clone_flag_desc	{, (C) für Klonen}
 
 message parttype_gpt {Guid Partition Table (GPT)}
 message parttype_gpt_short {GPT}
 
 message	ptn_label	{Label}
 message ptn_uuid	{UUID}
-message	ptn_gpt_type	{GPT Typ}
+message	ptn_gpt_type	{GPT-Typ}
 message	ptn_boot	{Start}
 
 /* Called with:				Example
@@ -1534,4 +1534,4 @@ message clone_target_hdr
 {Einfügen der duplizierten Partitionen vor:}
 message clone_target_disp		{duplizierte Partition(en)}
 message clone_src_done
-{Quellselektion OK, weiter mit der Zielauswahl}
+{Quellauswahl OK, weiter mit der Zielauswahl}
