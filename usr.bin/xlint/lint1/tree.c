@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.201 2021/01/31 12:20:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.202 2021/01/31 12:44:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.201 2021/01/31 12:20:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.202 2021/01/31 12:44:34 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3730,7 +3730,7 @@ constant(tnode_t *tn, bool required)
  * for the expression.
  */
 void
-expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk)
+expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_zero_ok)
 {
 
 	lint_assert(tn != NULL || nerr != 0);
@@ -3750,7 +3750,9 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk)
 			/* assignment in conditional context */
 			warning(159);
 	} else if (tn->tn_op == CON) {
-		if (hflag && tctx && !constcond_flag)
+		if (hflag && tctx && !constcond_flag &&
+		    !(constcond_zero_ok &&
+		      is_int_constant_zero(tn, tn->tn_type->t_tspec)))
 			/* constant in conditional context */
 			warning(161);
 	}

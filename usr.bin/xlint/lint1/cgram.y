@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.159 2021/01/31 11:23:01 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.160 2021/01/31 12:44:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.159 2021/01/31 11:23:01 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.160 2021/01/31 12:44:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1557,7 +1557,7 @@ statement_list:
 
 expr_statement:
 	  expr T_SEMI {
-		expr($1, 0, 0, 0);
+		expr($1, false, false, false, false);
 		ftflg = false;
 	  }
 	| T_SEMI {
@@ -1576,7 +1576,7 @@ expr_statement_val:
 		if ($1->tn_op == NAME)
 			$1->tn_sym->s_used = true;
 		$$ = $1;
-		expr($1, 0, 0, 0);
+		expr($1, false, false, false, false);
 		ftflg = false;
 	  }
 	| non_expr_statement {

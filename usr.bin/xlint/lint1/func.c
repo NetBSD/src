@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.66 2021/01/30 18:16:45 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.67 2021/01/31 12:44:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.66 2021/01/30 18:16:45 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.67 2021/01/31 12:44:34 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -569,7 +569,7 @@ if1(tnode_t *tn)
 	if (tn != NULL)
 		tn = check_controlling_expression(tn);
 	if (tn != NULL)
-		expr(tn, false, true, false);
+		expr(tn, false, true, false, false);
 	pushctrl(T_IF);
 }
 
@@ -642,7 +642,7 @@ switch1(tnode_t *tn)
 		tp->t_tspec = INT;
 	}
 
-	expr(tn, true, false, true);
+	expr(tn, true, false, true, false);
 
 	pushctrl(T_SWITCH);
 	cstmt->c_switch = true;
@@ -726,7 +726,7 @@ while1(tnode_t *tn)
 	if (tn != NULL && tn->tn_op == CON)
 		cstmt->c_infinite = is_nonzero(tn);
 
-	expr(tn, false, true, true);
+	expr(tn, false, true, true, false);
 }
 
 /*
@@ -789,7 +789,7 @@ do2(tnode_t *tn)
 			error(323);
 	}
 
-	expr(tn, false, true, true);
+	expr(tn, false, true, true, true);
 
 	/*
 	 * The end of the loop is only reached if it is no endless loop
@@ -832,12 +832,12 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	cstmt->c_cfpos = csrc_pos;
 
 	if (tn1 != NULL)
-		expr(tn1, false, false, true);
+		expr(tn1, false, false, true, false);
 
 	if (tn2 != NULL)
 		tn2 = check_controlling_expression(tn2);
 	if (tn2 != NULL)
-		expr(tn2, false, true, true);
+		expr(tn2, false, true, true, false);
 
 	cstmt->c_infinite =
 	    tn2 == NULL || (tn2->tn_op == CON && is_nonzero(tn2));
@@ -877,7 +877,7 @@ for2(void)
 	}
 
 	if (tn3 != NULL) {
-		expr(tn3, false, false, true);
+		expr(tn3, false, false, true, false);
 	} else {
 		tfreeblk();
 	}
@@ -1013,7 +1013,7 @@ doreturn(tnode_t *tn)
 			}
 		}
 
-		expr(tn, true, false, true);
+		expr(tn, true, false, true, false);
 
 	} else {
 
