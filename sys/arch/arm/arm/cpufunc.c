@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.179 2020/12/01 02:46:19 rin Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.180 2021/01/31 05:59:55 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.179 2020/12/01 02:46:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.180 2021/01/31 05:59:55 skrll Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.179 2020/12/01 02:46:19 rin Exp $");
 #endif
 
 #if defined(CPU_PJ4B)
-#include "opt_cputypes.h"
 #include "opt_mvsoc.h"
 #include <machine/bus_defs.h>
 #if defined(ARMADAXP)
