@@ -1,3 +1,6 @@
+/*	$NetBSD: d_typefun.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_typefun.c"
+
 /* typedef of function parameter */
 
 typedef void (*free_func)(void *opaque, void *address);

@@ -1,3 +1,6 @@
+/*	$NetBSD: d_cvt_in_ternary.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_cvt_in_ternary.c"
+
 /* CVT node handling in ?: operator */
 typedef unsigned long int size_t;
 struct filecore_direntry {

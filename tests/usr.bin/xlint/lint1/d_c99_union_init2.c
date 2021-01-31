@@ -1,3 +1,6 @@
+/*	$NetBSD: d_c99_union_init2.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_c99_union_init2.c"
+
 /* C99 union initialization */
 union {
 	int i[10];

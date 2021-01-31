@@ -1,4 +1,5 @@
-# 2 "d_struct_init_nested.c"
+/*	$NetBSD: d_struct_init_nested.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_struct_init_nested.c"
 
 /*
  * Initialization of a nested struct, in which some parts are initialized

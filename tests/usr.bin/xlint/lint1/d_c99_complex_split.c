@@ -1,3 +1,6 @@
+/*	$NetBSD: d_c99_complex_split.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_c99_complex_split.c"
+
 int b(double a) {
 	return a == 0;
 }

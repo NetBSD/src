@@ -1,3 +1,6 @@
+/*	$NetBSD: d_c99_for_loops.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_c99_for_loops.c"
+
 /* c99 for loops */
 extern void foo(int);
 
