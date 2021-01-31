@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.92 2021/01/31 06:24:40 skrll Exp $
+#	$NetBSD: GENERIC,v 1.93 2021/01/31 08:47:07 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -47,16 +47,6 @@ options 	MSGBUFSIZE=32768
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 
 #options 	EARLYCONS=am33xx, CONSADDR=0x44e09000
-#options 	EARLYCONS=omap3, CONSADDR=0x49020000
-
-# ODROID-C1
-#options 	EARLYCONS=meson, CONSADDR=0xc81004c0
-
-# ODROID-U3
-#options 	EARLYCONS=exynos, CONSADDR=0x13810000
-
-# ODROID-XU lite
-#options 	EARLYCONS=exynos, CONSADDR=0x12c20000
 
 # RaspberryPIs
 #options 	EARLYCONS=bcm2835, CONSADDR=0x20201000
@@ -64,7 +54,19 @@ options 	MSGBUFSIZE=32768
 #options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
 
 #options 	EARLYCONS=cycv, CONSADDR=0xffc02000
+
+# ODROID-U3
+#options 	EARLYCONS=exynos, CONSADDR=0x13810000
+
+# ODROID-XU lite
+#options 	EARLYCONS=exynos, CONSADDR=0x12c20000
+
 #options 	EARLYCONS=imx, CONSADDR=0x02020000
+
+# ODROID-C1
+#options 	EARLYCONS=meson, CONSADDR=0xc81004c0
+
+#options 	EARLYCONS=omap3, CONSADDR=0x49020000
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 
@@ -73,7 +75,6 @@ options 	MSGBUFSIZE=32768
 
 #options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
 #options 	EARLYCONS=virt, CONSADDR=0x09000000
-
 #options 	EARLYCONS=zynq, CONSADDR=0xe0001000
 
 # Kernel Undefined Behavior Sanitizer (kUBSan). Use UBSAN_ALWAYS_FATAL
