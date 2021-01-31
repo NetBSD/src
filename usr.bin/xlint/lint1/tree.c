@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.199 2021/01/30 23:15:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.200 2021/01/31 11:44:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.199 2021/01/30 23:15:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.200 2021/01/31 11:44:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -889,11 +889,11 @@ typeok_shr(const mod_t *mp,
 		 * the operation is (possibly) nonportable.
 		 */
 		if (ln->tn_op != CON) {
-			/* bitop. on signed value possibly nonportable */
-			warning(117);
+			/* bitwise '%s' on signed value possibly nonportable */
+			warning(117, mp->m_name);
 		} else if (ln->tn_val->v_quad < 0) {
-			/* bitop. on signed value nonportable */
-			warning(120);
+			/* bitwise '%s' on signed value nonportable */
+			warning(120, mp->m_name);
 		}
 	} else if (!tflag && !sflag && !is_uinteger(olt) && is_uinteger(ort)) {
 		/*
@@ -1397,8 +1397,8 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 		goto assign;
 	case SHRASS:
 		if (pflag && !is_uinteger(lt) && !(tflag && is_uinteger(rt))) {
-			/* bitop. on signed value possibly nonportable */
-			warning(117);
+			/* bitwise '%s' on signed value possibly nonportable */
+			warning(117, mp->m_name);
 		}
 		goto assign;
 	case ANDASS:

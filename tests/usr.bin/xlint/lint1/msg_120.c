@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_120.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_120.c,v 1.4 2021/01/31 11:44:48 rillig Exp $	*/
 # 3 "msg_120.c"
 
-// Test for message: bitwise operation on signed value nonportable [120]
+// Test for message: bitwise '%s' on signed value nonportable [120]
 
 /* lint1-extra-flags: -p */
 
