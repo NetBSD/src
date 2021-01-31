@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.32 2021/01/31 21:28:16 rillig Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.33 2021/01/31 22:19:24 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1227,11 +1227,11 @@ message doneconfig {Konfiguration abgeschlossen.}
 message Install_pkgin {pkgin installieren und Datenbank initialisieren}
 message binpkg_installed
 {Das System kann nun Binärpakete mittels pkgin installieren. Um ein Paket zu
-installieren, führen Sie den folenden Befehl in einer root-Shell aus:
+installieren, führen Sie den folgenden Befehl in einer root-Shell aus:
 
 pkgin install <Paketname>
 
-Weitere Informationen finden sich in der pkgin(1)-Manpage.}
+Weitere Informationen finden Sie in der pkgin(1)-Manpage.}
 message Install_pkgsrc {pkgsrc herunterladen und entpacken}
 message pkgsrc
 {Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort
