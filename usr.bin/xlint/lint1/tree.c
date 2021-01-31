@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.203 2021/01/31 13:56:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.204 2021/01/31 14:05:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.203 2021/01/31 13:56:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.204 2021/01/31 14:05:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2101,9 +2101,9 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	    psize(nt) != psize(ot)) {
 		/* representation and/or width change */
 		if (!is_integer(ot) || psize(ot) > psize(INT)) {
-			/* conv. from '%s' to '%s' due to prototype, arg #%d */
+			/* argument #%d is converted from '%s' to '%s' */
 			warning(259,
-			    type_name(tn->tn_type), type_name(tp), arg);
+			    arg, type_name(tn->tn_type), type_name(tp));
 		}
 	} else if (hflag) {
 		/*
@@ -2118,9 +2118,9 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else {
-			/* conv. from '%s' to '%s' due to prototype, arg #%d */
+			/* argument #%d is converted from '%s' to '%s' */
 			warning(259,
-			    type_name(tn->tn_type), type_name(tp), arg);
+			    arg, type_name(tn->tn_type), type_name(tp));
 		}
 	}
 }
