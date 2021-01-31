@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.28 2020/11/05 11:10:11 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.29 2021/01/31 18:22:11 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@ oder aber eine bereits bestehende Installation von NetBSD zu aktualisieren.
 In den folgenden Menüs können Sie mit den Buchstaben (a, b, c, ...)
 die verschiedenen Menüeinträge wählen oder durch Drücken von Strg-N/Strg-P
 die Markierung auf- oder abbewegen. Die Cursor- und Bildlauftasten
-(Seite vor/zurück) sollten ebenfalls funktionieren. 
+(Seite vor/zurück) sollten ebenfalls funktionieren.
 Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
 }
 
@@ -100,7 +100,7 @@ Wollen Sie fortfahren?
 
 message upgradeusure
 {Sie möchten das auf der Festplatte befindliche NetBSD-System aktualisieren.
-Zu diesem Zeitpunkt sollten Sie bereits eine vollständige 
+Zu diesem Zeitpunkt sollten Sie bereits eine vollständige
 Datensicherung durchgeführt haben! Wollen Sie NetBSD wirklich aktualisieren?
 (Dies ist die letzte Warnung, bevor Ihre Festplatte(n) modifiziert werden.)
 }
@@ -132,7 +132,7 @@ Zurück zum Hauptmenü...
 
 message onedisk
 {Ich habe nur eine Festplatte, %s, gefunden. Ich gehe somit davon aus, dass
-Sie NetBSD darauf %s möchten. 
+Sie NetBSD darauf %s möchten.
 }
 
 message ask_disk
@@ -220,7 +220,7 @@ Wählen Sie die Einheit}
 
 message ptnsizes
 {Sie können jetzt die Größen der Systempartitionen verändern. Standardmäßig
-wird der gesamte Speicherplatz der Rootpartition zugeordnet. Wenn Sie 
+wird der gesamte Speicherplatz der Rootpartition zugeordnet. Wenn Sie
 wollen, können Sie separate Partitionen definieren, z.B. /usr (zusätzliche
 Systemdateien), /var (Log- bzw. Protokolldateien und anderes) oder /home
 (Verzeichnis für die persönlichen Dateien der Anwender).
@@ -275,12 +275,12 @@ message fssizesbad
 
 message startoutsidedisk
 {Der Startwert, den Sie angegeben haben, liegt jenseits des Endes der
-Festplatte. 
+Festplatte.
 }
 
 message endoutsidedisk
 {Mit diesem Wert liegt das Ende der Partition jenseits des Endes der
-Festplatte. 
+Festplatte.
 Die Größe Ihrer Partition wurde verringert.}
 
 /* Called with:				Example
@@ -419,14 +419,14 @@ Möchten Sie fortfahren?
 }
 
 message disksetupdone
-{Der erste Teil der Installation ist nun abgeschlossen. 
+{Der erste Teil der Installation ist nun abgeschlossen.
 Sysinst hat das von Ihnen gewählte Ziellaufwerk partitioniert und
 auf allen von Ihnen gewählten Partitionen ein Dateisystem initialisiert
 und geprüft.
 }
 
 message disksetupdoneupdate
-{Der erste Teil der Prozedur ist nun abgeschlossen. 
+{Der erste Teil der Prozedur ist nun abgeschlossen.
 Sysinst hat das von Ihnen gewählte Ziellaufwerk partitioniert und
 und alle gewählten Dateisysteme auf Fehler überprüft.
 }
@@ -481,15 +481,15 @@ beendet.
 Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
 Ihr System Ihrer Konfiguration entsprechend einzurichten. Die afterboot(8)
 Manpage kann ebenfalls nützlich sein.
- 
+
 Zumindest müssen Sie die Datei rc.conf editieren, so daß die gewünschten
 Dienste gestartet werden. Vergessen Sie nicht, rc_configured=NO auf
-rc_configured=YES umzustellen. 
+rc_configured=YES umzustellen.
 }
 
 message distmedium
 {Ihre Festplatte ist nun bereit für die Installation der Kernel- und
-Distributionspakete. Wie im INSTALL-Dokument beschrieben, haben Sie nun 
+Distributionspakete. Wie im INSTALL-Dokument beschrieben, haben Sie nun
 mehrere Optionen.
 Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein und
 Zugriff auf die entsprechenden Server haben.
@@ -551,9 +551,9 @@ die Distribution zu finden ist.
 }
 
 message No_cd_found
-{Kein CD Laufwerk enthält eine CD mit den Distributions-Dateien!  
+{Kein CD Laufwerk enthält eine CD mit den Distributions-Dateien!
 Geben Sie die korrekten Daten manuel ein, oder legen Sie eine CD
-ein und versuchen Sie es erneut. 
+ein und versuchen Sie es erneut.
 }
 
 message abort_install
@@ -601,7 +601,7 @@ Zurück zum vorigen Menü.
 }
 
 message netup
-{Die folgenden Netzwerkadapter sind verfügbar: %s 
+{Die folgenden Netzwerkadapter sind verfügbar: %s
 Hat einer davon Zugriff auf die benötigten Server?}
 
 message asknetdev
@@ -642,33 +642,33 @@ message net_media
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
 
-DNS-Domain:		%s 
-Hostname:		%s 
-Nameserver:		%s 
-Netzwerkadapter:	%s 
-Verbindungstyp:		%s 
-IP-Adresse:		%s 
-Netzmaske:		%s 
-IPv4-Gateway:		%s 
+DNS-Domain:		%s
+Hostname:		%s
+Nameserver:		%s
+Netzwerkadapter:	%s
+Verbindungstyp:		%s
+IP-Adresse:		%s
+Netzmaske:		%s
+IPv4-Gateway:		%s
 }
 
 message netok_slip
 {Sie haben die folgenden Daten gewählt. Sind diese Daten OK?
 
-DNS-Domain:		%s 
-Hostname:		%s 
-Nameserver:		%s 
-Netzwerkadapter:	%s 
-Verbindungstyp:		%s 
-IP-Adresse:		%s 
-IP-Adresse des Servers:	%s 
-Netzmaske:		%s 
-IPv4-Gateway:		%s 
+DNS-Domain:		%s
+Hostname:		%s
+Nameserver:		%s
+Netzwerkadapter:	%s
+Verbindungstyp:		%s
+IP-Adresse:		%s
+IP-Adresse des Servers:	%s
+Netzmaske:		%s
+IPv4-Gateway:		%s
 }
 
 message netokv6
 {
-IPv6-Autokonfiguration:	%s 
+IPv6-Autokonfiguration:	%s
 }
 
 message netok_ok
@@ -805,7 +805,7 @@ message rootmissing
 
 message badroot
 {Das neu installierte root Dateisystem scheint unvollständig zu sein.
-Sind Sie sicher, dass Sie alle benötigten Sets installiert haben? 
+Sind Sie sicher, dass Sie alle benötigten Sets installiert haben?
 }
 
 message fd_type
@@ -833,7 +833,7 @@ message fdmount
 {Bitte legen Sie die Diskette ein, auf der sich die Datei "%s.%s" befindet. }
 
 message fdnotfound
-{Ich konnte die Datei "%s.%s" nicht finden. Bitte legen Sie die entsprechende 
+{Ich konnte die Datei "%s.%s" nicht finden. Bitte legen Sie die entsprechende
 Diskette ein.
 Wenn dies die letzte Diskette des Paketes war, wählen Sie "Paket fertig",
 um zum nächsten Paket überzugehen - falls ein weiteres Paket folgt.}
@@ -841,7 +841,7 @@ um zum nächsten Paket überzugehen - falls ein weiteres Paket folgt.}
 message fdremount
 {Die Diskette konnte nicht gemountet werden.
 
-Sie sollten: 
+Sie sollten:
 
 Erneut probieren, die Diskette mit der Datei "%s.%s" einzulegen.
 
@@ -998,8 +998,8 @@ message choose_timezone
 Drücken Sie die Eingabetaste, um einen Eintrag anzuwählen. Betätigen Sie danach
 die Taste 'x' gefolgt von der Eingabetaste, um das Menü zu verlassen.
 
- Vorgabe:	%s 
- Ausgewählt:	%s 
+ Vorgabe:	%s
+ Ausgewählt:	%s
  Lokale Zeit:	%s %s
 }
 
@@ -1169,7 +1169,7 @@ message oldsendmail
 {Sendmail ist nicht länger integrierter Bestandteil von NetBSD.
 Der Standard MTA ist nun Postfix. Ihr System benutzt derzeit
 eine Konfiguration in /etc/mailer.conf, die auf das nicht mehr
-vorhandene Sendmail-Programm verweist. 
+vorhandene Sendmail-Programm verweist.
 Möchten Sie /etc/mailer.conf automatisch auf eine Version für
 Postfix umstellen? Falls Sie "Nein" wählen, müssen Sie anschließend
 manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
@@ -1182,16 +1182,16 @@ Um den Lizenztext zu lesen, geben Sie ^Z ein, schauen den Inhalt
 der Datei an und kehren mit dem Befehl "fg" zu sysinst zurück.}
 
 message binpkg
-{Um Binärpakete zu installieren, muss erst eine Netzwerkverbindung konfiguriert 
+{Um Binärpakete zu installieren, muss erst eine Netzwerkverbindung konfiguriert
 werden, über die die Pakete heruntergeladen werden. Nach einem ersten Start in
-das installierte System können mit dem Kommando 'pkgin' zusätzliche Pakete 
+das installierte System können mit dem Kommando 'pkgin' zusätzliche Pakete
 installiert oder entfernt werden.}
 
 message pkgpath
-{Zur Konfiguration von pkgin muss zuerst das Repository konfiguriert werden. 
-Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort 
-sollen zum Herunterladen verwendet werden? Wenn der User auf "ftp" gesetzt wird, 
-dann wird kein Passwort benötigt. 
+{Zur Konfiguration von pkgin muss zuerst das Repository konfiguriert werden.
+Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort
+sollen zum Herunterladen verwendet werden? Wenn der User auf "ftp" gesetzt wird,
+dann wird kein Passwort benötigt.
 
 }
 message rcconf_backup_failed {rc.conf-Backup fehlgeschlagen. Trotzdem fortfahren?}
@@ -1223,8 +1223,8 @@ message add_a_user {Add a user}
 message configmenu {Zusätzliche Einstellungen konfigurieren.}
 message doneconfig {Konfiguration abgeschlossen.}
 message Install_pkgin {pkgin installieren und Datenbank initialisieren}
-message binpkg_installed 
-{Das System kann nun Binärpakete mittels pkgin installieren. Um ein Paket zu 
+message binpkg_installed
+{Das System kann nun Binärpakete mittels pkgin installieren. Um ein Paket zu
 installieren, muss man folenden Befehl von einer root-Shell ausführen:
 
 pkgin install <packagename>
@@ -1239,12 +1239,12 @@ gesetzt wird, dann wird kein Passwort benötigt.
 }
 message Pkgsrc_dir {pkgsrc-Verzeichnis}
 message get_pkgsrc {pkgsrc herunterladen und extrahieren}
-message retry_pkgsrc_network {Netzwerkkonfiguration fehlgeschlagen. Noch einmal 
+message retry_pkgsrc_network {Netzwerkkonfiguration fehlgeschlagen. Noch einmal
 versuchen?}
 message quit_pkgsrc {Ohne Installation von pkgsrc beenden.}
 message quit_pkgs_install {Installation von binär-Paketen beenden.}
-message pkgin_failed 
-{Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete 
+message pkgin_failed
+{Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete
 vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
 message failed {Fehlgeschlagen}
 message askfsmountadv {Mountpoint oder 'raid' oder 'cgd' oder 'lvm'?}
@@ -1268,7 +1268,7 @@ message Delete_partition
 {Partition löschen}
 
 message No_filesystem_newfs
-{Die ausgewählte Zielpartition scheint kein gültiges Dateisystem zu enthalten. 
+{Die ausgewählte Zielpartition scheint kein gültiges Dateisystem zu enthalten.
 Möchten Sie ein neues erstellen (die Partition formatieren)?}
 
 message swap_display	{Auslagerungspartition}
@@ -1278,8 +1278,8 @@ message swap_display	{Auslagerungspartition}
  *  $1 = swap partition name		my_swap
  */
 message Auto_add_swap_part
-{Eine Auslagerungspartition (mit Namen $1) 
-scheint bereits auf der Festplatte $0 zu existieren. 
+{Eine Auslagerungspartition (mit Namen $1)
+scheint bereits auf der Festplatte $0 zu existieren.
 Möchten Sie diese benutzen?}
 
 message parttype_disklabel {BSD disklabel}
@@ -1291,7 +1291,7 @@ message parttype_disklabel_short {disklabel}
 message parttype_only_disklabel {disklabel (nur NetBSD)}
 
 message select_part_scheme
-{Dieses Gerät wurde anscheinend noch nicht partitioniert. 
+{Dieses Gerät wurde anscheinend noch nicht partitioniert.
 Bitte wählen Sie ein Partitionierungsverfahren. }
 
 message select_other_partscheme
@@ -1334,7 +1334,7 @@ message err_too_many_partitions	{Zu viele Partitionen}
 message	mp_already_exists	{$0 ist bereits vorhanden!}
 
 message ptnsize_replace_existing
-{Dies ist ein bereits existierende Partition. 
+{Dies ist ein bereits existierende Partition.
 Um die Größe zu ändern, muss die Partition gelöscht und später neu
 erstellt werden. Alle vorhandenen Daten gehen dabei verloren!
 
@@ -1385,10 +1385,10 @@ message	other_fs_type	{Anderer Typ}
 
 message	editpack	{Namen der Festplatte festlegen}
 message	edit_disk_pack_hdr
-{Der Name der Festplatte kann frei definiert werden. 
-Er dient der Unterscheidung verschiedener Festplatten durch den Anwender. 
+{Der Name der Festplatte kann frei definiert werden.
+Er dient der Unterscheidung verschiedener Festplatten durch den Anwender.
 Er wird aber auch benutzt, wenn automatisch dk(4) "wedges" für
-Partitionen dieser Platte erzeugt werden. 
+Partitionen dieser Platte erzeugt werden.
 
 Geben Sie den Namen ein}
 
@@ -1421,7 +1421,7 @@ Um auch andere Betriebssysteme zu nutzen, erstellen Sie eine
 $3 Partition.
 
 Etwa $5 reichen für eine Basisinstallation, aber Sie sollten
-zusätzlichen Platz für Erweiterungen und Benutzerdateien einrechnen. 
+zusätzlichen Platz für Erweiterungen und Benutzerdateien einrechnen.
 Reservieren Sie mindestens $6 wenn Sie NetBSD selbst compilieren möchten.}
 
 message Select_your_choice
@@ -1486,7 +1486,7 @@ message Partition_OK
  *  $3 = other flag options		d = bootselect default, a = active
  */
 message editparttable
-{Hier sehen Sie die aktuellen $2 Partitionen auf $0. 
+{Hier sehen Sie die aktuellen $2 Partitionen auf $0.
 Flag: hier (I)nstallieren$3.
 Wählen Sie die Partition, die Sie verändern möchten:
 
