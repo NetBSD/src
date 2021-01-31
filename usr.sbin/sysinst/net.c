@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.35 2020/01/27 21:30:17 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.36 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -977,7 +977,7 @@ get_pkgsrc(void)
 	int rv = -1;
 
 	process_menu(MENU_pkgsrc, &rv);
-	
+
 	if (rv == SET_SKIP)
 		return SET_SKIP;
 
@@ -996,7 +996,7 @@ get_via_ftp(unsigned int xfer)
 	arg.rv = -1;
 	arg.arg = (void*)(uintptr_t)(xfer);
 	process_menu(MENU_ftpsource, &arg);
-	
+
 	if (arg.rv == SET_RETRY)
 		return SET_RETRY;
 
@@ -1028,7 +1028,7 @@ get_via_nfs(void)
 	/* Get server and filepath */
 	rv = -1;
 	process_menu(MENU_nfssource, &rv);
-	
+
 	if (rv == SET_RETRY)
 		return SET_RETRY;
 
@@ -1083,7 +1083,7 @@ mnt_net_config(void)
 		return;
 
 	/* Write hostname to /etc/rc.conf */
-	if ((net_dhcpconf & DHCPCONF_HOST) == 0) 
+	if ((net_dhcpconf & DHCPCONF_HOST) == 0)
 		if (del_rc_conf("hostname") == 0)
 			add_rc_conf("hostname=%s\n", recombine_host_domain());
 

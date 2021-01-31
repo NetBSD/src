@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.42 2020/10/13 17:26:28 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.43 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -431,7 +431,7 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 			    (uint32_t)(lp[i].p_fsize *
 			    lp[i].p_frag),
 			    'a'+i, (uint32_t)lp[i].p_fsize);
-	
+
 		if (i < parts->l.d_npartitions - 1)
 			scripting_fprintf(f, "\\\n");
 		else

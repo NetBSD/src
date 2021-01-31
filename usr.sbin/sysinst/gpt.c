@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.22 2020/10/14 04:17:43 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.23 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct {
 	const char *name;
 	uint fstype;
 	enum part_type ptype;
-	uint fsflags;	
+	uint fsflags;
 } gpt_fs_types[] = {
 	{ .name = "ffs",	.fstype = FS_BSDFFS,	.ptype = PT_root,
 	  .fsflags = GLM_LIKELY_FFS },
@@ -133,7 +133,7 @@ struct gpt_part_entry {
 	const char *last_mounted;	/* last mounted if known */
 	uint fs_type, fs_sub_type,	/* FS_* and maybe sub type */
 	    fs_opt1, fs_opt2, fs_opt3;	/* transient file system options */
-	uint gp_flags;	
+	uint gp_flags;
 #define	GPEF_ON_DISK	1		/* This entry exists on-disk */
 #define	GPEF_MODIFIED	2		/* this entry has been changed */
 #define	GPEF_WEDGE	4		/* wedge for this exists */
@@ -299,7 +299,7 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 	(void)strtok(textbuf, "\n"); /* ignore first line */
 	while ((t = strtok(NULL, "\n")) != NULL) {
 		i = 0; p_start = 0; p_size = 0; p_index = 0;
-		p_type[0] = 0; 
+		p_type[0] = 0;
 		while ((tt = strsep(&t, " \t")) != NULL) {
 			if (strlen(tt) == 0)
 				continue;
@@ -1062,7 +1062,7 @@ gpt_info_to_part(struct gpt_part_entry *p, const struct disk_part_info *info,
 	p->fs_opt1 = info->fs_opt1;
 	p->fs_opt2 = info->fs_opt2;
 	p->fs_opt3 = info->fs_opt3;
-	
+
 	return true;
 }
 

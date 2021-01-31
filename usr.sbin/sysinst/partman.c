@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.50 2020/02/06 11:55:18 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.51 2021/01/31 22:45:46 rillig Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -224,7 +224,7 @@ enum { /* CGD menu enum */
 
 enum { /* LVM menu enum */
 	PML_MENU_PV, PML_MENU_NAME, PML_MENU_MAXLOGICALVOLUMES,
-	PML_MENU_MAXPHYSICALVOLUMES, PML_MENU_PHYSICALEXTENTSIZE, 
+	PML_MENU_MAXPHYSICALVOLUMES, PML_MENU_PHYSICALEXTENTSIZE,
 	PML_MENU_REMOVE, PML_MENU_END
 };
 
@@ -232,7 +232,7 @@ enum { /* LVM submenu (logical volumes) enum */
 	PMLV_MENU_NAME, PMLV_MENU_SIZE, PMLV_MENU_READONLY, PMLV_MENU_CONTIGUOUS,
 	PMLV_MENU_EXTENTS, PMLV_MENU_MINOR, PMLV_MENU_PERSISTENT,
 	PMLV_MENU_MIRRORS, PMLV_MENU_REGIONSIZE, PMLV_MENU_READAHEAD,
-	PMLV_MENU_STRIPES, PMLV_MENU_STRIPESIZE, PMLV_MENU_ZERO, 
+	PMLV_MENU_STRIPES, PMLV_MENU_STRIPESIZE, PMLV_MENU_ZERO,
 	PMLV_MENU_REMOVE, PMLV_MENU_END
 };
 
@@ -329,7 +329,7 @@ pm_edit(int menu_entries_count, void (*menu_fmt)(menudesc *, int, void *),
 	menu_no = new_menu(NULL, menu_entries, menu_entries_count,
 		-1, -1, 0, 40, MC_NOCLEAR | MC_SCROLL,
 		NULL, menu_fmt, NULL, NULL, MSG_DONE);
-	
+
 	process_menu(menu_no, dev_ptr);
 	free_menu(menu_no);
 	free(menu_entries);
@@ -390,7 +390,7 @@ pm_dev_list(int type)
 			    NULL, plain_name, false, true);
 
 			menu_entries[num_devs] = (struct menu_ent) {
-				.opt_name = disk_entries[num_devs].fullname,					
+				.opt_name = disk_entries[num_devs].fullname,
 				.opt_action = set_menu_select,
 				.opt_flags = OPT_EXIT,
 			};
@@ -604,12 +604,12 @@ pm_raid_set_value(menudesc *m, void *arg)
 	};
 	static int menu_disk_adddel = -1;
 	if (menu_disk_adddel == -1) {
-		menu_disk_adddel = new_menu(NULL, menuent_disk_adddel, 
+		menu_disk_adddel = new_menu(NULL, menuent_disk_adddel,
 			__arraycount(menuent_disk_adddel),
 			-1, -1, 0, 10, MC_NOCLEAR, NULL, NULL, NULL, NULL,
 			MSG_cancel);
 	}
-	
+
 	switch (m->cursel) {
 		case PMR_MENU_DEVS:
 			pm_raid_curspare = 0;
@@ -1035,7 +1035,7 @@ pm_vnd_set_value(menudesc *m, void *arg)
 	char buf[STRSIZE];
 	const char *msg_to_show = NULL;
 	int *out_var = NULL;
-	
+
 	switch (m->cursel) {
 		case PMV_MENU_FILEPATH:
 			msg_prompt_win(MSG_vnd_path_ask, -1, 18, 0, 0,
@@ -1189,10 +1189,10 @@ pm_vnd_commit(void)
 				}
 			}
 		}
-		if (part_suit == NO_PART || pm_suit == NULL || 
+		if (part_suit == NO_PART || pm_suit == NULL ||
 		   mp_suit == NULL)
 			continue;
-		
+
 		/* Mounting assigned partition and try to get real file path*/
 		if (pm_mount(pm_suit, part_suit) != 0)
 			continue;
@@ -1426,7 +1426,7 @@ pm_cgd_edit_new(struct pm_devs *mypm, part_id id)
 {
 	struct part_entry pe = { .id = id, .parts = mypm->parts,
 	    .dev_ptr = mypm, .type = PM_CGD };
-	
+
 	return pm_edit(PMC_MENU_END, pm_cgd_edit_menufmt,
 		pm_cgd_set_value, pm_cgd_check, pm_cgd_init,
 		&pe, NULL, 0, &cgds_t_info);
@@ -1707,7 +1707,7 @@ pm_lvm_set_value(menudesc *m, void *arg)
 			return 0;
 		case PML_MENU_MAXLOGICALVOLUMES:
 			msg_to_show = MSG_lvm_maxlv_ask;
-			out_var = &(dev_ptr->maxlogicalvolumes);			
+			out_var = &(dev_ptr->maxlogicalvolumes);
 			break;
 		case PML_MENU_MAXPHYSICALVOLUMES:
 			msg_to_show = MSG_lvm_maxpv_ask;
@@ -1920,7 +1920,7 @@ pm_lvmlv_set_value(menudesc *m, void *arg)
 			break;
 		case PMLV_MENU_STRIPESIZE:
 			if (dev_ptr->stripesize << 1 > 512)
-				dev_ptr->stripesize = 4;	
+				dev_ptr->stripesize = 4;
 			else
 				dev_ptr->stripesize <<= 1;
 			return 0;
@@ -1987,7 +1987,7 @@ pm_lvm_commit(void)
 		/* Stage 1: creating Physical Volumes (PV's) */
 		for (ii = 0; ii < MAX_LVM_PV && ! error; ii++)
 			if (lvms[i].pv[ii].pm != NULL) {
-				run_program(RUN_SILENT | RUN_ERROR_OK, 
+				run_program(RUN_SILENT | RUN_ERROR_OK,
 				    "lvm pvremove -ffy /dev/r%s",
 				    (char*)lvms[i].pv[ii].pm_name);
 				error += run_program(RUN_DISPLAY | RUN_PROGRESS,
@@ -2101,7 +2101,7 @@ pm_lvm_commit(void)
 }
 
 /***
- Partman generic functions 
+ Partman generic functions
  ***/
 
 int
@@ -2463,7 +2463,7 @@ pm_mountall(void)
 	int i, ii, error, ok;
 	char dev[SSTRSIZE]; dev[0] = '\0';
 	struct pm_devs *pm_i;
-	
+
 	localfs_dev[0] = '\0';
 	if (mnts == NULL)
 		mnts = calloc(MAX_MNTS, sizeof(*mnts));
@@ -2471,7 +2471,7 @@ pm_mountall(void)
 	SLIST_FOREACH(pm_i, &pm_head, l) {
 		ok = 0;
 		for (i = 0; i < MAXPARTITIONS; i++) {
-			if (!(pm_i->bsdlabel[i].pi_flags & PIF_MOUNT && 
+			if (!(pm_i->bsdlabel[i].pi_flags & PIF_MOUNT &&
 					pm_i->bsdlabel[i].mnt_opts != NULL))
 				continue;
 			mnts[num_devs].mnt_opts = pm_i->bsdlabel[i].mnt_opts;
@@ -2485,7 +2485,7 @@ pm_mountall(void)
 			}
 			mnts[num_devs].on = pm_i->bsdlabel[i].pi_mount;
 			if (strcmp(pm_i->bsdlabel[i].pi_mount, "/") == 0) {
-				/* Use disk with / as a default if the user has 
+				/* Use disk with / as a default if the user has
 				the sets on a local disk */
 				strlcpy(localfs_dev, pm_i->diskdev, SSTRSIZE);
 			}
@@ -2675,7 +2675,7 @@ pm_commit(menudesc *m, void *arg)
 				if (!secondary->pscheme->write_to_disk(
 				    secondary)) {
 					if (logfp)
-						fprintf(logfp, 
+						fprintf(logfp,
 						    "partitining error %s\n",
 						    pm_i->diskdev);
 					return -1;
@@ -2771,7 +2771,7 @@ pm_submenu(menudesc *m, void *arg)
 		case PM_SPEC:
 			if (cur_pe->dev_ptr != NULL) {
 				pm_cur = cur_pe->dev_ptr;
-				if (pm_cur == NULL) 
+				if (pm_cur == NULL)
 					return -1;
 				if (pm_cur->blocked) {
 					clear();
@@ -3117,7 +3117,7 @@ partman(void)
 			remove_raid_options();
 		else if (!(raids = calloc(MAX_RAID, sizeof(*raids))))
 			have_raid = 0;
-			
+
 #define remove_vnd_options() (void)0
 		if (!have_vnd)
 			remove_vnd_options();
@@ -3168,7 +3168,7 @@ partman(void)
 		};
 		lv_t_info = (structinfo_t) {
 			.max = MAX_LVM_LV,
-			.entry_size = sizeof lvms[0].lv[0], 
+			.entry_size = sizeof lvms[0].lv[0],
 			.entry_first = &lvms[0].lv[0],
 			.entry_enabled = &(lvms[0].lv[0].size),
 			.entry_blocked = &(lvms[0].lv[0].blocked),
@@ -3201,7 +3201,7 @@ partman(void)
 				pm_commit(NULL, NULL);
 
 	} while (pm_retvalue > 0);
-	
+
 	/* retvalue <0 - error, retvalue ==0 - user quits, retvalue >0 - all ok */
 	return (pm_retvalue >= 0)?0:-1;
 }
@@ -3299,7 +3299,7 @@ pm_whole_disk(struct part_entry *pe, int t)
 
 	if (!pm_force_parts(my_pm))
 		return NO_PART;
- 
+
 	parts = my_pm->parts;
 	parts->pscheme->delete_all_partitions(parts);
 	if (parts->pscheme->secondary_scheme != NULL) {
@@ -3328,7 +3328,7 @@ pm_whole_disk(struct part_entry *pe, int t)
 		fst = FS_CGD;
 		break;
 	default:
-		assert(false); 
+		assert(false);
 		return NO_PART;
 	}
 	info.nat_type = parts->pscheme->get_fs_part_type(PT_root, fst, 0);
