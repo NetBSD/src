@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.200 2021/01/31 11:44:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.201 2021/01/31 12:20:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.200 2021/01/31 11:44:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.201 2021/01/31 12:20:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4006,7 +4006,9 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 
 	bool cvctx = mp->m_left_value_context;
 	bool ctctx = mp->m_left_test_context;
-	bool eq = mp->m_warn_if_operand_eq;
+	bool eq = mp->m_warn_if_operand_eq &&
+		  !ln->tn_parenthesized &&
+		  rn != NULL && !rn->tn_parenthesized;
 
 	/*
 	 * values of operands of ':' are not used if the type of at least
