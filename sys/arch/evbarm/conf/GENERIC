@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.91 2021/01/27 15:52:46 skrll Exp $
+#	$NetBSD: GENERIC,v 1.92 2021/01/31 06:24:40 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -47,7 +47,6 @@ options 	MSGBUFSIZE=32768
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 
 #options 	EARLYCONS=am33xx, CONSADDR=0x44e09000
-#options 	EARLYCONS=imx, CONSADDR=0x02020000
 #options 	EARLYCONS=omap3, CONSADDR=0x49020000
 
 # ODROID-C1
