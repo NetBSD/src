@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.143 2021/01/06 09:15:59 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.144 2021/01/31 08:59:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd January 6, 2021
+.Dd January 31, 2021
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -2362,6 +2362,16 @@ may be incompatible with other programs that use it
 .Em NOTE :
 this is not used for interactive sessions, only for command-line
 fetches.
+.It Ev https_proxy
+URL of
+.Tn HTTPS
+proxy to use when making
+.Tn HTTPS
+URL requests.
+.Pp
+See
+.Ev http_proxy
+for further notes about proxy use.
 .It Ev no_proxy
 A space or comma separated list of hosts (or domains) for which
 proxying is not to be used.
