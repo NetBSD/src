@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.132 2021/01/30 18:16:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.133 2021/01/31 11:23:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.132 2021/01/30 18:16:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.133 2021/01/31 11:23:01 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1056,7 +1056,7 @@ check_type(sym_t *sym)
 			} else if (dcs->d_ctx == ABSTRACT) {
 				/* ok */
 			} else if (sym->s_scl != TYPEDEF) {
-				/* void type for %s */
+				/* void type for '%s' */
 				error(19, sym->s_name);
 				*tpp = gettyp(INT);
 			}
