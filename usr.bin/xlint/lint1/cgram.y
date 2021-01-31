@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.157 2021/01/18 19:24:09 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.158 2021/01/31 09:26:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.157 2021/01/18 19:24:09 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.158 2021/01/31 09:26:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -480,18 +480,14 @@ arg_declaration:
 			/* empty declaration */
 			warning(2);
 		} else {
-			tspec_t	ts = dcs->d_type->t_tspec;
-			/* %s declared in argument declaration list */
-			warning(3, ts == STRUCT ? "struct" :
-				(ts == UNION ? "union" : "enum"));
+			/* '%s' declared in argument declaration list */
+			warning(3, type_name(dcs->d_type));
 		}
 	  }
 	| declspecs deftyp type_init_decls T_SEMI {
 		if (dcs->d_nedecl) {
-			tspec_t	ts = dcs->d_type->t_tspec;
-			/* %s declared in argument declaration list */
-			warning(3, ts == STRUCT ? "struct" :
-				(ts == UNION ? "union" : "enum"));
+			/* '%s' declared in argument declaration list */
+			warning(3, type_name(dcs->d_type));
 		}
 	  }
 	| declmods error

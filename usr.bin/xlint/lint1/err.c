@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.72 2021/01/30 21:58:04 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.73 2021/01/31 09:26:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.72 2021/01/30 21:58:04 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.73 2021/01/31 09:26:27 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ const	char *msgs[] = {
 	"empty declaration",					      /* 0 */
 	"old style declaration; add int",			      /* 1 */
 	"empty declaration",					      /* 2 */
-	"%s declared in argument declaration list",		      /* 3 */
+	"'%s' declared in argument declaration list",		      /* 3 */
 	"illegal type combination",				      /* 4 */
 	"modifying typedef with '%s'; only qualifiers allowed",	      /* 5 */
 	"use 'double' instead of 'long float'",			      /* 6 */
