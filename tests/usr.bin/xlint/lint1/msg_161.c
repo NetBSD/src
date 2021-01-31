@@ -1,7 +1,42 @@
-/*	$NetBSD: msg_161.c,v 1.1 2021/01/02 10:22:43 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.2 2021/01/31 12:29:16 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
 
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -h */
+
+void
+while_1(void)
+{
+	while (1)
+		continue;
+}
+
+void
+while_0(void)
+{
+	while (0)
+		continue;
+}
+
+/*
+ * The pattern 'do { } while (0)' is a common technique to define a
+ * preprocessor macro that behaves like a single statement.  There is
+ * nothing unusual or surprising about the constant condition.
+ * Still, lint warns about it. FIXME don't.
+ */
+void
+do_while_0(void)
+{
+	do {
+
+	} while (0);
+}
+
+void
+do_while_1(void)
+{
+	do {
+
+	} while (1);
+}
