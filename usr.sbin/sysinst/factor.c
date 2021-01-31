@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.1 2014/07/26 19:30:44 dholland Exp $ */
+/*	$NetBSD: factor.c,v 1.2 2021/01/31 20:51:04 rillig Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -32,10 +32,7 @@
  *
  */
 
-/* Prototypes for strict prototyping. */
-
 #include <sys/cdefs.h>
-
 #include <stdio.h>
 
 
@@ -55,8 +52,7 @@ static void build_primes (long max);
 void factor (long val, long *fact_list, int fact_size, int *num_fact);
 
 static void
-build_primes(max)
-	long max;
+build_primes(long max)
 {
 	long pc;
 	int j;
@@ -83,15 +79,11 @@ build_primes(max)
 }
 
 /* factor:  prepare a list of prime factors of val.
-   The last number may not be a prime factor is the list is not
+   The last number may not be a prime factor if the list is not
    long enough. */
 
 void
-factor(val, fact_list, fact_size, num_fact)
-	long val;
-	long *fact_list;
-	int fact_size;
-	int *num_fact;
+factor(long val, long *fact_list, int fact_size, int *num_fact)
 {
 	int i;
 
