@@ -1,1 +1,1 @@
-msg_259.c(22): warning: conversion to 'int' due to prototype, arg #1 [259]
+msg_259.c(22): warning: conversion from 'long' to 'int' due to prototype, arg #1 [259]

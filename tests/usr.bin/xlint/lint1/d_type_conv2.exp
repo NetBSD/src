@@ -1,1 +1,1 @@
-(13): warning: conversion to 'float' due to prototype, arg #1 [259]
+(13): warning: conversion from 'double' to 'float' due to prototype, arg #1 [259]
