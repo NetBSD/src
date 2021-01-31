@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.30 2021/01/31 08:26:47 roy Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.31 2021/01/31 08:27:49 roy Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -4741,7 +4741,7 @@ process_routing_msgs(struct asyncio_reader *reader)
 				cnt = read(reader->fd, buffer, sizeof(buffer));
 			} while (cnt != -1 || errno == ENOBUFS);
 			timer_interfacetimeout(current_time + UPDATE_GRACE);
-		} else {
+		} else if (errno != EINTR) {
 			msyslog(LOG_ERR,
 				"routing socket reports: %m - disabling");
 			remove_asyncio_reader(reader);
