@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.29 2021/01/31 18:22:11 rillig Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.30 2021/01/31 18:31:59 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1140,7 +1140,7 @@ message Device {Gerät}
 message File_system {Dateisystem}
 message Select_DNS_server {  Auswählen eines DNS Servers}
 message other {andere }
-message Perform_autoconfiguration {Führen Sie die automatische Konfiguration?}
+message Perform_autoconfiguration {Automatische Konfiguration durchführen?}
 message Root_shell {Root-Shell}
 message User_shell {User-Shell}
 message Color_scheme {Farbschema}
@@ -1219,15 +1219,15 @@ message enable_xdm {xdm aktivieren}
 message enable_cgd {cgd aktivieren}
 message enable_lvm {lvm aktivieren}
 message enable_raid {raidframe aktivieren}
-message add_a_user {Add a user}
+message add_a_user {Benutzer hinzufügen}
 message configmenu {Zusätzliche Einstellungen konfigurieren.}
 message doneconfig {Konfiguration abgeschlossen.}
 message Install_pkgin {pkgin installieren und Datenbank initialisieren}
 message binpkg_installed
 {Das System kann nun Binärpakete mittels pkgin installieren. Um ein Paket zu
-installieren, muss man folenden Befehl von einer root-Shell ausführen:
+installieren, führen Sie den folenden Befehl in einer root-Shell aus:
 
-pkgin install <packagename>
+pkgin install <Paketname>
 
 Weitere Informationen finden sich in der pkgin(1)-Manpage.}
 message Install_pkgsrc {pkgsrc herunterladen und entpacken}
@@ -1239,8 +1239,8 @@ gesetzt wird, dann wird kein Passwort benötigt.
 }
 message Pkgsrc_dir {pkgsrc-Verzeichnis}
 message get_pkgsrc {pkgsrc herunterladen und extrahieren}
-message retry_pkgsrc_network {Netzwerkkonfiguration fehlgeschlagen. Noch einmal
-versuchen?}
+message retry_pkgsrc_network
+{Netzwerkkonfiguration fehlgeschlagen. Noch einmal versuchen?}
 message quit_pkgsrc {Ohne Installation von pkgsrc beenden.}
 message quit_pkgs_install {Installation von binär-Paketen beenden.}
 message pkgin_failed
@@ -1292,10 +1292,10 @@ message parttype_only_disklabel {disklabel (nur NetBSD)}
 
 message select_part_scheme
 {Dieses Gerät wurde anscheinend noch nicht partitioniert.
-Bitte wählen Sie ein Partitionierungsverfahren. }
+Bitte wählen Sie ein Partitionierungsverfahren.}
 
 message select_other_partscheme
-{Bitte wählen Sie ein anderes Partitionierungsverfahren. }
+{Bitte wählen Sie ein anderes Partitionierungsverfahren.}
 
 message select_part_limit
 {Einige Verfahren können nur den Anfang einer große Festplatte verwalten,
