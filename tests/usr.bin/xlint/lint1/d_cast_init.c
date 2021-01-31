@@ -1,3 +1,6 @@
+/*	$NetBSD: d_cast_init.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_cast_init.c"
+
 /* cast initialization */
 
 typedef unsigned char u_char;

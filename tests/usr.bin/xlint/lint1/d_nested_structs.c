@@ -1,3 +1,6 @@
+/*	$NetBSD: d_nested_structs.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_nested_structs.c"
+
 /* Nested struct */
 typedef void *EditLine;
 typedef void *History;
