@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.129 2019/10/29 16:18:23 joerg Exp $	*/
+/*	$NetBSD: armreg.h,v 1.130 2021/01/31 06:18:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -529,7 +529,7 @@
 #define NMRR_WBWA	1		// write-back write-allocate
 #define NMRR_WT		2		// write-through
 #define NMRR_WB		3		// write-back
-#define PRRR_NOSn(n)	__BITS(24+2*(n))// Memory region is Inner Shareable
+#define PRRR_NOSn(n)	__BITS(24+(n))	// Memory region is Inner Shareable only
 #define PRRR_NS1	__BIT(19)	// Normal Shareable S=1 is Shareable
 #define PRRR_NS0	__BIT(18)	// Normal Shareable S=0 is Shareable
 #define PRRR_DS1	__BIT(17)	// Device Shareable S=1 is Shareable
