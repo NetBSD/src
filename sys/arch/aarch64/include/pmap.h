@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.44 2021/01/31 04:51:29 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.45 2021/01/31 08:14:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	u_int nflag, pflag;
 
 	/*
-	 * aarch64 arch has 5 memory attribute:
+	 * aarch64 arch has 5 memory attributes defined:
 	 *
 	 *  WriteBack      - write back cache
 	 *  WriteThru      - write through cache
