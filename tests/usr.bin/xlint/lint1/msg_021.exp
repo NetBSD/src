@@ -1,1 +1,6 @@
-msg_021.c(6): syntax error ':' [249]
+msg_021.c(8): redeclaration of formal parameter parameter [21]
+msg_021.c(10): warning: argument type defaults to 'int': parameter [32]
+msg_021.c(16): redeclaration of formal parameter parameter [237]
+msg_021.c(23): redeclaration of parameter [27]
+msg_021.c(28): redeclaration of formal parameter param [237]
+msg_021.c(36): redeclaration of parameter [27]
