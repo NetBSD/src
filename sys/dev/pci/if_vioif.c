@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.66 2021/01/20 19:46:48 reinoud Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.67 2021/01/31 14:17:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.66 2021/01/20 19:46:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.67 2021/01/31 14:17:48 reinoud Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -611,9 +611,9 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		txq = &sc->sc_txq[qid];
 
 		rxq->rxq_hdrs = vioif_assign_mem(&p,
-		    sc->sc_hdr_size * rxq->rxq_vq->vq_num);
+		    sizeof(struct virtio_net_hdr) * rxq->rxq_vq->vq_num);
 		txq->txq_hdrs = vioif_assign_mem(&p,
-		    sc->sc_hdr_size * txq->txq_vq->vq_num);
+		    sizeof(struct virtio_net_hdr) * txq->txq_vq->vq_num);
 	}
 	if (sc->sc_has_ctrl) {
 		ctrlq->ctrlq_cmd = vioif_assign_mem(&p,
