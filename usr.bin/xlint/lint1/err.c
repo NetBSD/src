@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.76 2021/01/31 13:56:14 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.77 2021/01/31 14:05:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.76 2021/01/31 13:56:14 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.77 2021/01/31 14:05:00 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -318,7 +318,7 @@ const	char *msgs[] = {
 	"unterminated comment",					      /* 256 */
 	"extra characters in lint comment",			      /* 257 */
 	"unterminated string constant",				      /* 258 */
-	"conversion from '%s' to '%s' due to prototype, arg #%d",     /* 259 */
+	"argument #%d is converted from '%s' to '%s'",		      /* 259 */
 	"previous declaration of %s",				      /* 260 */
 	"previous definition of %s",				      /* 261 */
 	"\\\" inside character constants undefined in traditional C", /* 262 */
