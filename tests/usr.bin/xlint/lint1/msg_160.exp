@@ -1,2 +1,7 @@
 msg_160.c(12): warning: operator '==' found where '=' was expected [160]
 msg_160.c(12): warning: operator '==' found where '=' was expected [160]
+msg_160.c(26): warning: operator '==' found where '=' was expected [160]
+msg_160.c(28): warning: operator '==' found where '=' was expected [160]
+msg_160.c(34): warning: operator '==' found where '=' was expected [160]
+msg_160.c(37): warning: operator '==' found where '=' was expected [160]
+msg_160.c(38): warning: operator '==' found where '=' was expected [160]
