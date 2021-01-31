@@ -1,4 +1,4 @@
-/* $NetBSD: checkrc.c,v 1.2 2019/08/18 11:11:48 martin Exp $ */
+/* $NetBSD: checkrc.c,v 1.3 2021/01/31 22:45:46 rillig Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ static int
 create_script(const char *varname, int filetocheck)
 {
 	FILE	*fp;
-	
+
 	if ((fp = fopen(target_expand(RC_CHECK_SCRIPT), "w")) == NULL) {
 		if (logfp)
 			fprintf(logfp,"Could not open %s for writing",

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.71 2020/10/13 17:26:28 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.72 2021/01/31 22:45:46 rillig Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -690,7 +690,7 @@ dump_parts(const struct disk_partitions *parts)
 			    "for partition #%zu\n", p);
 		}
 	}
-	fprintf(stderr, "%" PRIu64 " sectors free, disk size %" PRIu64 
+	fprintf(stderr, "%" PRIu64 " sectors free, disk size %" PRIu64
 	    " sectors, %zu partitions used\n", parts->free_space,
 	    parts->disk_size, parts->num_part);
 }
@@ -710,7 +710,7 @@ delete_scheme(struct pm_devs *p)
 
 
 static void
-convert_copy(struct disk_partitions *old_parts, 
+convert_copy(struct disk_partitions *old_parts,
     struct disk_partitions *new_parts)
 {
 	struct disk_part_info oinfo, ninfo;
@@ -1130,7 +1130,7 @@ make_filesystems(struct install_partition_desc *install)
 		fsname = NULL;
 
 		if (ptn->size == 0 || parts == NULL|| ptn->type == PT_swap)
-			continue;			
+			continue;
 
 		if (parts->pscheme->get_part_device(parts, ptn->cur_part_id,
 		    devdev, sizeof devdev, &partno, parent_device_only, false,
@@ -1229,7 +1229,7 @@ make_filesystems(struct install_partition_desc *install)
 			error = target_mount_do(mnt_opts, devdev,
 			    ptn->mount);
 			if (error) {
-				msg_display_subst(MSG_mountfail, 2, devdev, 
+				msg_display_subst(MSG_mountfail, 2, devdev,
 				    ptn->mount);
 				hit_enter_to_continue(NULL, NULL);
 				return error;
@@ -2329,7 +2329,7 @@ add_another(struct menudesc *m, void *arg)
 
 static int
 cancel_clone(struct menudesc *m, void *arg)
-{	
+{
 	struct part_selection_and_all_parts *sel = arg;
 
 	sel->cancelled = true;
@@ -2570,7 +2570,7 @@ clone_partition_data(struct disk_partitions *dest_parts, part_id did,
 	    raw_dev_name, true, true))
 		return false;
 
-	return run_program(RUN_DISPLAY | RUN_PROGRESS, 
+	return run_program(RUN_DISPLAY | RUN_PROGRESS,
 	    "progress -f %s -b 1m dd bs=1m of=%s",
 	    src_dev, target_dev) == 0;
 }

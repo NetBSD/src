@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.37 2020/10/23 19:02:58 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.38 2021/01/31 22:45:46 rillig Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -972,7 +972,6 @@ mbr_calc_free_space(struct mbr_disk_partitions *parts)
 				parts->dp.free_space = 0;
 			else
 				parts->dp.free_space -= psize;
-			    
 		}
 	} while ((m = m->extended));
 }
@@ -1433,7 +1432,7 @@ mbr_do_get_part_info(const struct disk_partitions *arg, part_id id,
 
 static bool
 get_wedge_devname(const struct disk_partitions *arg, part_id id,
-    const mbr_info_t *mb, int i, bool primary,   
+    const mbr_info_t *mb, int i, bool primary,
     const struct mbr_partition *mp, void *cookie)
 {
 	char **res = cookie;
@@ -1849,7 +1848,7 @@ mbr_read_disklabel(struct disk_partitions *arg, daddr_t start, bool force_empty)
 	struct disk_part_info part;
 	struct disk_part_free_space space;
 
-	if (force_empty && myparts->dlabel) 
+	if (force_empty && myparts->dlabel)
 		myparts->dlabel->pscheme->delete_all_partitions(
 		    myparts->dlabel);
 
@@ -1885,7 +1884,7 @@ mbr_read_disklabel(struct disk_partitions *arg, daddr_t start, bool force_empty)
 
 		if (myparts->dlabel == NULL && part.size > 0) {
 			/* we just created the outer partitions? */
-			myparts->dlabel = 
+			myparts->dlabel =
 			    disklabel_parts.create_new_for_disk(
 			    myparts->dp.disk, part.start, part.size,
 			    false, &myparts->dp);

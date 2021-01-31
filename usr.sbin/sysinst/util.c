@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.56 2020/11/10 09:14:01 gson Exp $	*/
+/*	$NetBSD: util.c,v 1.57 2021/01/31 22:45:47 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1370,7 +1370,7 @@ do_check_entropy(void)
 		}
 	}
 }
-#endif  
+#endif
 
 
 
@@ -1951,7 +1951,7 @@ del_rc_conf(const char *value)
 	int fd;
 	int retval = 0;
 
-	/* The paths might seem strange, but using /tmp would require copy instead 
+	/* The paths might seem strange, but using /tmp would require copy instead
 	 * of rename operations. */
 	if (asprintf(&rcconf, "%s", target_expand("/etc/rc.conf")) < 0
 			|| asprintf(&tempname, "%s", target_expand("/etc/rc.conf.tmp.XXXXXX")) < 0
@@ -2004,7 +2004,7 @@ del_rc_conf(const char *value)
 	}
 	fclose(fp);
 	fclose(nfp);
-	
+
 	if (done) {
 		if (rename(rcconf, bakname)) {
 			msg_display(MSG_rcconf_backup_failed);
@@ -2128,7 +2128,7 @@ static int
 binary_available(const char *prog)
 {
         char *p, tmp[MAXPATHLEN], *path = getenv("PATH"), *opath;
- 
+
         if (path == NULL)
                 return access(prog, X_OK) == 0;
         path = strdup(path);
@@ -2211,7 +2211,7 @@ bool
 use_tgz_for_set(const char *set_name)
 {
 	const struct distinfo *dist;
-	
+
 	for (dist = dist_list; dist->set != SET_LAST; dist++) {
 		if (dist->name == NULL)
 			continue;
@@ -2528,7 +2528,7 @@ free_install_desc(struct install_partition_desc *install)
 		free_selected_partitions(src);
 		for (j = i+1; j < install->num; j++)
 			if (install->infos[j].clone_src == src)
-				install->infos[j].clone_src = NULL; 
+				install->infos[j].clone_src = NULL;
 	}
 #endif
 	free(install->write_back);
