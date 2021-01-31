@@ -1,1 +1,3 @@
 msg_217.c(11): warning: function random falls off bottom without returning value [217]
+msg_217.c(31): warning: statement not reached [193]
+msg_217.c(32): warning: function do_while_return falls off bottom without returning value [217]
