@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_161.c,v 1.2 2021/01/31 12:29:16 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.3 2021/01/31 12:30:53 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
@@ -8,14 +8,14 @@
 void
 while_1(void)
 {
-	while (1)
+	while (1)		/* expect: 161 */
 		continue;
 }
 
 void
 while_0(void)
 {
-	while (0)
+	while (0)		/* expect: 161 */
 		continue;
 }
 
@@ -30,7 +30,7 @@ do_while_0(void)
 {
 	do {
 
-	} while (0);
+	} while (0);		/* expect: 161 */
 }
 
 void
@@ -38,5 +38,5 @@ do_while_1(void)
 {
 	do {
 
-	} while (1);
+	} while (1);		/* expect: 161 */
 }
