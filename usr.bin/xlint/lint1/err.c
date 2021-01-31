@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.74 2021/01/31 11:23:01 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.75 2021/01/31 11:44:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.74 2021/01/31 11:23:01 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.75 2021/01/31 11:44:48 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -176,10 +176,10 @@ const	char *msgs[] = {
 	"%soperand of '%s' must be lvalue",			      /* 114 */
 	"%soperand of '%s' must be modifiable lvalue",		      /* 115 */
 	"illegal pointer subtraction",				      /* 116 */
-	"bitwise operation on signed value possibly nonportable",     /* 117 */
+	"bitwise '%s' on signed value possibly nonportable",	      /* 117 */
 	"semantics of '%s' change in ANSI C; use explicit cast",      /* 118 */
 	"conversion of '%s' to '%s' is out of range",		      /* 119 */
-	"bitwise operation on signed value nonportable",	      /* 120 */
+	"bitwise '%s' on signed value nonportable",		      /* 120 */
 	"negative shift",					      /* 121 */
 	"shift greater than size of object",			      /* 122 */
 	"illegal combination of %s (%s) and %s (%s), op %s",	      /* 123 */

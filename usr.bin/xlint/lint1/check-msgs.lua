@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.5 2021/01/02 01:12:38 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.6 2021/01/31 11:44:48 rillig Exp $
 
 --[[
 
@@ -41,7 +41,6 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
   msg = string.gsub(msg, "\\(.)", "%1")
 
   comment = string.gsub(comment, "arg%.", "argument")
-  comment = string.gsub(comment, "bitop%.", "bitwise operation")
   comment = string.gsub(comment, "comb%.", "combination")
   comment = string.gsub(comment, "conv%.", "conversion")
   comment = string.gsub(comment, "decl%.", "declaration")
