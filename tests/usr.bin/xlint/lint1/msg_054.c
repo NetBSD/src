@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_054.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
+/*	$NetBSD: msg_054.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_054.c"
 
 /* Test for message: trailing ',' prohibited in enum declaration [54] */
@@ -9,4 +9,4 @@ enum color {
 	RED,
 	GREEN,
 	BLUE,
-};
+};				/* expect: 54 */

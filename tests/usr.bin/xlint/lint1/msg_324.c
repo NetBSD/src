@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_324.c,v 1.4 2021/01/06 09:23:04 rillig Exp $	*/
+/*	$NetBSD: msg_324.c,v 1.5 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_324.c"
 
 // Test for message: suggest cast from '%s' to '%s' on op %s to avoid overflow [324]
@@ -22,13 +22,13 @@ example(char c, int i, unsigned u)
 	long long ll;
 	unsigned long long ull;
 
-	ll = c + i;
-	ll = i - c;
-	ull = c * u;
-	ull = u + c;
-	ull = i - u;
-	ull = u * i;
-	ll = i << c;
+	ll = c + i;		/* expect: 324 */
+	ll = i - c;		/* expect: 324 */
+	ull = c * u;		/* expect: 324 */
+	ull = u + c;		/* expect: 324 */
+	ull = i - u;		/* expect: 324 */
+	ull = u * i;		/* expect: 324 */
+	ll = i << c;		/* expect: 324 */
 
 	/*
 	 * The operators SHR, DIV and MOD cannot produce an overflow,

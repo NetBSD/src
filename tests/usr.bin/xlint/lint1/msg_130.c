@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch, op %s [130]
@@ -14,5 +14,5 @@ enum daytime {
 int
 example(_Bool cond)
 {
-	return cond ? GREEN : MORNING;
+	return cond ? GREEN : MORNING;	/* expect: 130 */
 }
