@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_156.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
+/*	$NetBSD: msg_156.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_156.c"
 
 // Test for message: enum type mismatch, arg #%d [156]
@@ -21,5 +21,5 @@ print_color(enum color);
 void
 example(void)
 {
-	print_color(MEDIUM);
+	print_color(MEDIUM);		/* expect: 156 */
 }
