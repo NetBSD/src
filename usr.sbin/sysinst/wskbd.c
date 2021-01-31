@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.4 2019/12/13 12:05:11 martin Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.5 2021/01/31 22:45:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.4 2019/12/13 12:05:11 martin Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.5 2021/01/31 22:45:47 rillig Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -138,7 +138,7 @@ save_kb_encoding(void)
 		return;
 	/*
 	 * Put the keyboard encoding into the wscons.conf file. Either:
-	 * 1) replace an exiting line
+	 * 1) replace an existing line
 	 * 2) replace a commented out line
 	 * or
 	 * 3) add a line to the end of the file

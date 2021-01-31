@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.31 2020/12/02 14:20:20 wiz Exp $	*/
+/*	$NetBSD: label.c,v 1.32 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -23,20 +23,20 @@
  * THIS SOFTWARE IS PROVIDED BY JONATHAN STONE ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.31 2020/12/02 14:20:20 wiz Exp $");
+__RCSID("$NetBSD: label.c,v 1.32 2021/01/31 22:45:46 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -206,7 +206,7 @@ verify_parts(struct partition_usage_set *pset, bool install)
 		if (strcmp(wanted->mount, "/") != 0)
 			continue;
 		num_root++;
- 
+
 		if (first_bsdstart <= 0) {
 			first_bsdstart = wanted->cur_start;
 		}
@@ -477,7 +477,7 @@ edit_delete_ptn(menudesc *m, void *arg)
 	edit->rv = -2;
 	return 1;
 }
- 
+
 /*
  * We have added/removed partitions, all cur_part_id values are
  * out of sync. Re-fetch and reorder partitions accordingly.
@@ -524,7 +524,7 @@ renumber_partitions(struct partition_usage_set *pset)
 /*
  * Most often used file system types, we offer them in a first level menu.
  */
-static const uint edit_fs_common_types[] = 
+static const uint edit_fs_common_types[] =
     { FS_BSDFFS, FS_SWAP, FS_MSDOS, FS_BSDLFS, FS_EX2FS };
 
 /*
@@ -1540,7 +1540,7 @@ part_ext_clone(menudesc *m, void *arg)
 	clone_src = malloc(sizeof(selected));
 	if (clone_src == NULL)
 		goto err;
-	*clone_src = selected; 
+	*clone_src = selected;
 
 	/* find selected offset from data.res and insert clones there */
 	align = pset->parts->pscheme->get_part_alignment(pset->parts);
@@ -1802,7 +1802,7 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset,
 		op->opt_action = edit_fspart_add;
 		op++;
 	}
-		        
+
 	/* and unit changer */
 	op->opt_name = MSG_askunits;
 	op->opt_menu = MENU_sizechoice;
@@ -1823,7 +1823,7 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset,
 	op->opt_action = part_ext_clone;
 	op++;
 #endif
-	        
+
 	/* and abort option */
 	op->opt_name = MSG_cancel;
 	op->opt_flags = OPT_EXIT;
@@ -2022,7 +2022,7 @@ getpartoff(struct disk_partitions *parts, daddr_t defpartstart)
 	freespace = calloc(num_freespace, sizeof(*freespace));
 	if (freespace == NULL)
 		return -1;
-	        
+
 	ptn_alignment = parts->pscheme->get_part_alignment(parts);
 	spaces = parts->pscheme->get_free_spaces(parts, freespace,
 	    num_freespace, max(sizemult, ptn_alignment), ptn_alignment, -1,
@@ -2188,7 +2188,7 @@ getpartsize(struct disk_partitions *parts, daddr_t orig_start,
 		max_r = dflt_r;
 	else
 		max_r = max / sizemult;
-	/* the partition may have been moved and now not fit any longer */  
+	/* the partition may have been moved and now not fit any longer */
 	if (dflt > max)
 		dflt = max;
 	if (dflt_r > max_r)
@@ -2243,7 +2243,7 @@ getpartsize(struct disk_partitions *parts, daddr_t orig_start,
 		    isize[0] <= maxpartc) {
 			partn = isize[0] - 'a';
 			if (parts->pscheme->get_part_info(parts, partn,
-			    &info)) {	
+			    &info)) {
 				i = info.start - partstart -1;
 				localsizemult = 1;
 				max_r = max;

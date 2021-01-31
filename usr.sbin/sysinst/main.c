@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2020/08/19 02:19:07 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,7 +171,7 @@ static void
 init(void)
 {
 	const struct f_arg *arg;
-	
+
 	sizemult = 1;
 	clean_xfer_dir = 0;
 	mnt2_mounted = 0;
@@ -191,14 +191,14 @@ init(void)
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
 	pkg.xfer = pkgsrc.xfer = XFER_HTTP;
-	
+
 	clr_arg.bg=COLOR_BLUE;
 	clr_arg.fg=COLOR_WHITE;
 }
 
 static void
 init_lang(void)
-{	
+{
 	sizemult = 1;
 	err_outofmem = msg_string(MSG_out_of_memory);
 	multname = msg_string(MSG_secname);
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 	refresh();
 
 	/* Ensure we have mountpoint for target filesystems */
-	mkdir(targetroot_mnt, S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
+	mkdir(targetroot_mnt, S_IRWXU | S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
 
 	select_language();
 	get_kb_encoding();

@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.4 2020/02/06 19:53:10 martin Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.5 2021/01/31 22:45:47 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -242,7 +242,7 @@ finddata(const struct lookfor *item, char *line, struct data *found, size_t *num
 				while (line[len]
 				    && !isspace((unsigned char)line[len])
 				    && line[len] != fmt[1]) {
-					if (line[len] == '\\' 
+					if (line[len] == '\\'
 					    && line[len+1] != 0)
 						len++;
 					len++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.69 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.70 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,7 +157,7 @@ enum {
     SET_MD_2,		/* Machine dependent set */
     SET_MD_3,		/* Machine dependent set */
     SET_MD_4,		/* Machine dependent set */
-    
+
     /* Source sets */
     SET_SYSSRC,
     SET_SRC,
@@ -382,7 +382,7 @@ struct single_part_fs_edit {
 struct install_partition_desc {
 	size_t num;				/* how many entries in infos */
 	struct part_usage_info *infos;		/* individual partitions */
-	struct disk_partitions **write_back;	/* partition tables from 
+	struct disk_partitions **write_back;	/* partition tables from
 						 * which we did delete some
 						 * partitions and that need
 						 * updating, even if no

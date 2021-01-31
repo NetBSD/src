@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.21 2020/12/02 14:20:20 wiz Exp $	*/
+/*	$NetBSD: partitions.h,v 1.22 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -377,7 +377,7 @@ struct disk_partitioning_scheme {
 	 * be considered "free", this is used e.g. when moving an existing
 	 * partition around.
 	 */
-	size_t (*get_free_spaces)(const struct disk_partitions*, 
+	size_t (*get_free_spaces)(const struct disk_partitions*,
 	    struct disk_part_free_space *result, size_t max_num_result,
 	    daddr_t min_space_size, daddr_t align, daddr_t start,
 	    daddr_t ignore /* -1 */);

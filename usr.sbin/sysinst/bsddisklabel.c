@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.56 2020/10/13 17:26:28 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.57 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -386,7 +386,7 @@ inst_ext_clone(menudesc *menu, void *arg)
 	struct part_usage_info *p;
 	menu_ent *men;
 	int num_men, i;
- 
+
 	if (!select_partitions(&selected, pm->parts))
 		return 0;
 
@@ -625,7 +625,7 @@ set_ptn_size(menudesc *m, void *arg)
 
 		if (is_ram_size) {
 			new_size_val = parse_ram_size(answer, &is_percent);
-			if (is_percent && 
+			if (is_percent &&
 			    (new_size_val < 0 || new_size_val > 100))
 				continue;
 			if (!is_percent && new_size_val < 0)
@@ -1507,7 +1507,7 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 			want->cur_part_id = new_part_id;
 
 			want->flags |= PUIFLG_ADD_INNER|PUIFLG_IS_OUTER;
-			from = roundup(infos[i].start + 
+			from = roundup(infos[i].start +
 			    infos[i].size, outer_align);
 		}
 	}
@@ -1656,7 +1656,7 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 				new_part_id = wanted->parts->pscheme->
 				    add_partition(
 				    wanted->parts, &infos[i], NULL);
-		
+
 			if (new_part_id == NO_PART)
 				continue;	/* failed to add, skip */
 		}
@@ -1818,7 +1818,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 		/* calc available disk area for the NetBSD partitions */
 		p_start = pm->ptstart;
 		p_size = pm->ptsize;
-		if (parts->parent != NULL && 
+		if (parts->parent != NULL &&
 		    parts->parent->pscheme->guess_install_target != NULL)
 			parts->parent->pscheme->guess_install_target(
 			    parts->parent, &p_start, &p_size);
@@ -1826,7 +1826,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 	if (layoutkind == LY_OTHERSCHEME) {
 		parts->pscheme->destroy_part_scheme(parts);
 		return -1;
-	} else if (layoutkind == LY_USEDEFAULT) { 
+	} else if (layoutkind == LY_USEDEFAULT) {
 		replace_by_default(parts, p_start, p_size,
 		    &wanted);
 	} else if (layoutkind == LY_SETSIZES) {
@@ -1861,7 +1861,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 			struct disk_part_info info;
 
 			if (wanted.infos[i].type != PT_root ||
-			    strcmp(wanted.infos[i].mount, "/") != 0) 
+			    strcmp(wanted.infos[i].mount, "/") != 0)
 				continue;
 			wanted.infos[i].cur_flags |= PTI_INSTALL_TARGET;
 
@@ -1900,7 +1900,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 			daddr_t ps = wanted.infos[i].cur_start;
 			daddr_t pe = ps + wanted.infos[i].size;
 			if (target_start >= 0 &&
-			   (ps >= target_start || pe >= target_start)) 
+			   (ps >= target_start || pe >= target_start))
 				continue;
 			boot_part = i;
 			break;

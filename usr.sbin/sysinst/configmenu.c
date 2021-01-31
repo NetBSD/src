@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.11 2019/11/16 20:26:59 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.12 2021/01/31 22:45:46 rillig Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ static int
 set_root_shell(struct menudesc *menu, void *arg)
 {
 	configinfo **confp = arg;
-	
+
 	process_menu(MENU_rootsh, &confp[menu->cursel]->setting);
 	if (run_program(RUN_PROGRESS | RUN_CHROOT,
 		"chpass -s %s root", confp[menu->cursel]->setting) != 0)
@@ -303,7 +303,7 @@ set_binpkg(struct menudesc *menu, void *arg)
 			confp[menu->cursel]->setting = MSG_abandoned;
 			return 0;
 		}
-		
+
 		make_url(pkgpath, &pkg, pkg_dir);
 		if (run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 			"pkg_add %s/pkgin", pkgpath) == 0) {

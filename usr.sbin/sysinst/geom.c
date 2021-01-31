@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.3 2019/06/21 21:54:39 christos Exp $	*/
+/*	$NetBSD: geom.c,v 1.4 2021/01/31 22:45:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -54,7 +54,7 @@ disk_ioctl(const char *disk, unsigned long cmd, void *d)
 
 	/* Open the disk. */
 	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	if (fd == -1) 
+	if (fd == -1)
 		return false;
 
 	if (ioctl(fd, cmd, d) == -1) {
@@ -101,10 +101,10 @@ get_disk_geom(const char *disk, struct disk_geom *d)
 {
 	char buf[MAXPATHLEN];
 	int fd, error;
-	    
+
 	if ((fd = opendisk(disk, O_RDONLY, buf, sizeof(buf), 0)) == -1)
 		return false;
-  
+
 	error = getdiskinfo(disk, fd, NULL, d, NULL);
 	close(fd);
 	if (error < 0) {

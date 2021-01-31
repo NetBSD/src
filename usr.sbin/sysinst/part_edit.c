@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.24 2020/10/12 16:27:23 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.25 2021/01/31 22:45:46 rillig Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -737,7 +737,7 @@ draw_outer_ptn_header(menudesc *m, void *arg)
 	if (marg->cur_id == NO_PART)
 		return;
 
-	for (attr_no = 0; attr_no < 
+	for (attr_no = 0; attr_no <
 	    marg->parts->pscheme->custom_attribute_count; attr_no++) {
 		bool writable =
 		    marg->parts->pscheme->custom_attribute_writable(
@@ -968,7 +968,7 @@ parts_use_wholedisk(struct disk_partitions *parts,
 	struct disk_part_free_space space;
 	daddr_t align, start;
 	size_t i;
- 
+
 	parts->pscheme->delete_all_partitions(parts);
 	align = parts->pscheme->get_part_alignment(parts);
 	start = pm->ptstart > 0 ? pm->ptstart : -1;
