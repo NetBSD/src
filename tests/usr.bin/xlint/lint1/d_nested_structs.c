@@ -1,4 +1,4 @@
-/*	$NetBSD: d_nested_structs.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_nested_structs.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
 # 3 "d_nested_structs.c"
 
 /* Nested struct */
@@ -6,8 +6,8 @@ typedef void *EditLine;
 typedef void *History;
 
 typedef struct {
-	EditLine	*el;
-	History		*hist;
+	EditLine *el;
+	History *hist;
 } el_mode_t;
 
 struct el_modes_s {

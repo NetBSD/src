@@ -1,4 +1,4 @@
-/*	$NetBSD: d_packed_structs.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_packed_structs.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
 # 3 "d_packed_structs.c"
 
 /* packed tests */
@@ -6,19 +6,20 @@
 struct in_addr {
 	int x;
 };
-struct	ip_timestamp {
+struct ip_timestamp {
 	char ipt_code;
 	char ipt_len;
 	char ipt_ptr;
-	unsigned int ipt_flg:4,
-		     ipt_oflw:4;
+	unsigned int
+	    ipt_flg: 4,
+	    ipt_oflw: 4;
 	union ipt_timestamp {
-		 int	ipt_time[1];
-		 struct	ipt_ta {
+		int ipt_time[1];
+		struct ipt_ta {
 			struct in_addr ipt_addr;
 			int ipt_time;
-		 } ipt_ta[1] __packed;
-	} ipt_timestamp __packed;
+		} ipt_ta[1]__packed;
+	} ipt_timestamp__packed;
 } __packed;
 
 typedef struct __packed {

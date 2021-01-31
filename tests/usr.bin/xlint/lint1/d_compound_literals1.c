@@ -1,4 +1,4 @@
-/*	$NetBSD: d_compound_literals1.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_compound_literals1.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
 # 3 "d_compound_literals1.c"
 
 /* compound literals */
@@ -9,6 +9,6 @@ struct p {
 
 foo()
 {
-	struct p me = (struct p) {1, 2, 3, 4};
+	struct p me = (struct p){ 1, 2, 3, 4 };
 	me.a = me.b;
 }
