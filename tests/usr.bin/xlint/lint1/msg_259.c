@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_259.c,v 1.2 2021/01/30 22:07:31 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.3 2021/01/31 13:56:14 rillig Exp $	*/
 # 3 "msg_259.c"
 
-// Test for message: conversion to '%s' due to prototype, arg #%d [259]
+// Test for message: conversion from '%s' to '%s' due to prototype, arg #%d [259]
 
 /* lint1-extra-flags: -h */
 

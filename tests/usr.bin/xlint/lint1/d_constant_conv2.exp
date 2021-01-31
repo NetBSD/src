@@ -1,1 +1,1 @@
-(11): warning: conversion to 'unsigned int' due to prototype, arg #1 [259]
+(11): warning: conversion from 'double' to 'unsigned int' due to prototype, arg #1 [259]
