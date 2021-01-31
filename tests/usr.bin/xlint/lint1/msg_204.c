@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_204.c,v 1.4 2021/01/17 14:45:21 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.5 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_204.c"
 
 // Test for message: controlling expressions must have scalar type [204]
@@ -84,18 +84,18 @@ void if_enum(enum e e)			{ if (e) return; }
 
 /* C99 6.2.5p20 */
 void if_array(struct arr arr)		{ if (arr.arr) return; }
-void if_struct(struct s s)		{ if (s) return; }
-void if_union(union u u)		{ if (u) return; }
+void if_struct(struct s s)		{ if (s) return; }	/* expect: 204, 231 */
+void if_union(union u u)		{ if (u) return; }	/* expect: 204, 231 */
 void if_function(void)			{ if (if_function) return; }
 void if_pointer(void *p)		{ if (p) return; }
 
 /* C99 6.8.5 */
-void while_struct(struct s s)		{ while (s) return; }
-void for_struct(struct s s)		{ for (;s;) return; }
-void do_while_struct(struct s s)	{ do { return; } while (s); }
+void while_struct(struct s s)		{ while (s) return; }	/* expect: 204, 231 */
+void for_struct(struct s s)		{ for (;s;) return; }	/* expect: 204, 223, 231 */
+void do_while_struct(struct s s)	{ do { return; } while (s); }	/* expect: 204, 231 */
 
 /*
  * C99 6.5.15 for the '?:' operator does not explicitly mention that the
  * controlling expression must have a scalar type, curiously.
  */
-int conditional_struct(struct s s)	{ return s ? 1 : 2; }
+int conditional_struct(struct s s)	{ return s ? 1 : 2; }	/* expect: 170, 214, 231 */

@@ -1,2 +1,1 @@
 msg_146.c(9): cannot take size/alignment of void [146]
-msg_146.c(9): void function example cannot return value [213]

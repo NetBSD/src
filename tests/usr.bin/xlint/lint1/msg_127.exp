@@ -5,5 +5,4 @@
 (3): warning: 'long double' is illegal in traditional C [266]
 (3): warning: 'long double' is illegal in traditional C [266]
 (3): warning: function prototypes are illegal in traditional C [270]
-msg_127.c(10): warning: function prototypes are illegal in traditional C [270]
 msg_127.c(11): warning: '&' before array or function: ignored [127]

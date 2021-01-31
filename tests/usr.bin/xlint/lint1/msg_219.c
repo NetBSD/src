@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_219.c,v 1.2 2021/01/02 11:12:34 rillig Exp $	*/
+/*	$NetBSD: msg_219.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_219.c"
 
 
@@ -7,6 +7,6 @@
 /* lint1-flags: -t -w */
 
 char concat1[] = "one";
-char concat2[] = "one" "two";
-char concat3[] = "one" "two" "three";
-char concat4[] = "one" "two" "three" "four";
+char concat2[] = "one" "two";			/* expect: 219 */
+char concat3[] = "one" "two" "three";		/* expect: 219 */
+char concat4[] = "one" "two" "three" "four";	/* expect: 219 */
