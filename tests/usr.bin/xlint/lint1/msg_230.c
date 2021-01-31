@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230.c,v 1.2 2021/01/03 15:35:01 rillig Exp $	*/
+/*	$NetBSD: msg_230.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_230.c"
 
 // Test for message: nonportable character comparison, op %s [230]
@@ -8,7 +8,7 @@
 void example(char c, unsigned char uc, signed char sc)
 {
 	if (c < 0)
-		if (uc < 0)
+		if (uc < 0)			/* expect: 162 */
 			if (sc < 0)
 				return;
 
@@ -19,8 +19,8 @@ void example(char c, unsigned char uc, signed char sc)
 	 * The comparisons may actually differ subtly because of the usual
 	 * arithmetic promotions.
 	 * */
-	if (c <= -1)
-		if (uc <= -1)
+	if (c <= -1)				/* expect: 230 */
+		if (uc <= -1)			/* expect: 162 */
 			if (sc <= -1)
 				return;
 }

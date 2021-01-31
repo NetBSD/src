@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_169.c,v 1.4 2021/01/04 23:47:27 rillig Exp $	*/
+/*	$NetBSD: msg_169.c,v 1.5 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_169.c"
 
 // Test for message: precedence confusion possible: parenthesize! [169]
@@ -12,31 +12,31 @@ confusing_shift_arith(unsigned a, unsigned b, unsigned c, unsigned char ch)
 {
 	unsigned con, okl, okr;
 
-	con = a + b << c;
+	con = a + b << c;	/* expect: 169 */
 	okl = (a + b) << c;
 	okr = a + (b << c);
 
-	con = a << b + c;
+	con = a << b + c;	/* expect: 169 */
 	okl = (a << b) + c;
 	okr = a << (b + c);
 
-	con = a - b >> c;
+	con = a - b >> c;	/* expect: 169 */
 	okl = (a - b) >> c;
 	okr = a - (b >> c);
 
-	con = a >> b - c;
+	con = a >> b - c;	/* expect: 169 */
 	okl = (a >> b) - c;
 	okr = a >> (b - c);
 
 	// Parenthesizing the inner operands has no effect on the warning.
-	con = (a) + b << c;
-	con = a + (b) << c;
-	con = a + b << (c);
+	con = (a) + b << c;	/* expect: 169 */
+	con = a + (b) << c;	/* expect: 169 */
+	con = a + b << (c);	/* expect: 169 */
 
 	// The usual arithmetic promotions have no effect on the warning.
-	con = ch + b << c;
-	con = a + ch << c;
-	con = a + b << ch;
+	con = ch + b << c;	/* expect: 169 */
+	con = a + ch << c;	/* expect: 169 */
+	con = a + b << ch;	/* expect: 169 */
 }
 
 void
@@ -47,11 +47,11 @@ confusing_logical(bool a, bool b, bool c)
 	eql = a && b && c;
 	eql = a || b || c;
 
-	con = a && b || c;
+	con = a && b || c;	/* expect: 169 */
 	okl = (a && b) || c;
 	okr = a && (b || c);
 
-	con = a || b && c;
+	con = a || b && c;	/* expect: 169 */
 	okl = (a || b) && c;
 	okr = a || (b && c);
 }
@@ -65,40 +65,40 @@ confusing_bitwise(unsigned a, unsigned b, unsigned c)
 	eql = a | b | c;
 	eql = a ^ b ^ c;
 
-	con = a | b ^ c;
+	con = a | b ^ c;	/* expect: 169 */
 	okl = (a | b) ^ c;
 	okr = a | (b ^ c);
 
-	con = a | b & c;
+	con = a | b & c;	/* expect: 169 */
 	okl = (a | b) & c;
 	okr = a | (b & c);
 
-	con = a ^ b | c;
+	con = a ^ b | c;	/* expect: 169 */
 	okl = (a ^ b) | c;
 	okr = a ^ (b | c);
 
-	con = a ^ b & c;
+	con = a ^ b & c;	/* expect: 169 */
 	okl = (a ^ b) & c;
 	okr = a ^ (b & c);
 
-	con = a & b | c;
+	con = a & b | c;	/* expect: 169 */
 	okl = (a & b) ^ c;
 	okr = a & (b ^ c);
 
-	con = a & b ^ c;
+	con = a & b ^ c;	/* expect: 169 */
 	okl = (a & b) ^ c;
 	okr = a & (b ^ c);
 
-	con = a & b + c;
+	con = a & b + c;	/* expect: 169 */
 	okl = (a & b) + c;
 	okr = a & (b + c);
 
-	con = a - b | c;
+	con = a - b | c;	/* expect: 169 */
 	okl = (a - b) | c;
 	okr = a - (b | c);
 
 	// This looks like a binomial formula but isn't.
-	con = a ^ 2 - 2 * a * b + b ^ 2;
+	con = a ^ 2 - 2 * a * b + b ^ 2;	/* expect: 169 */
 
 	// This isn't a binomial formula either since '^' means xor.
 	con = (a ^ 2) - 2 * a * b + (b ^ 2);
@@ -123,12 +123,12 @@ cast_expressions(char a, char b, char c)
 
 	// Adding casts to the leaf nodes doesn't change anything about the
 	// confusing precedence.
-	con = (unsigned)a | (unsigned)b & (unsigned)c;
-	con = (unsigned)a & (unsigned)b | (unsigned)c;
+	con = (unsigned)a | (unsigned)b & (unsigned)c;	/* expect: 169 */
+	con = (unsigned)a & (unsigned)b | (unsigned)c;	/* expect: 169 */
 
 	// Adding a cast around the whole calculation doesn't change the
 	// precedence as well.
-	con = (unsigned)(a | b & c);
+	con = (unsigned)(a | b & c);			/* expect: 169 */
 
 	// Adding a cast around an intermediate result groups the operands
 	// of the main node, which prevents any confusion about precedence.
@@ -146,20 +146,21 @@ expected_precedence(int a, int b, int c)
 	ok = a + b * c;
 }
 
-/*
- * Before tree.c 1.132 from 2021-01-04, there was a typo in
- * check_precedence_confusion that prevented the right-hand operand from
- * being flagged as possibly confusing if there was an implicit conversion
- * or an explicit cast between the main operator ('|') and the nested
- * operator ('&').
- */
 void
 implicit_conversion_to_long(long la, int a)
 {
 	int ok;
 
-	ok = a & a | la;	/* always marked as confusing */
-	ok = la | a & a;	/* marked as confusing since tree.c 1.132 */
+	ok = a & a | la;	/* expect: 169 */
+
+	/*
+	 * Before tree.c 1.132 from 2021-01-04, there was a typo in
+	 * check_precedence_confusion that prevented the right-hand operand
+	 * from being flagged as possibly confusing if there was an implicit
+	 * conversion or an explicit cast between the main operator ('|') and
+	 * the nested operator ('&').
+	 */
+	ok = la | a & a;	/* expect: 169 */
 
 	ok = (a & a) | la;	/* always ok */
 	ok = la | (a & a);	/* always ok */

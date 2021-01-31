@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_108.c,v 1.3 2021/01/09 17:21:33 rillig Exp $	*/
+/*	$NetBSD: msg_108.c,v 1.4 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_108.c"
 
 // Test for message: operand of '%s' has incompatible type (%s != %s) [108]
@@ -21,5 +21,5 @@ complement_of_a_struct(void)
 	    0
 	};
 
-	s = ~s;
+	s = ~s;			/* expect: 108 */
 }

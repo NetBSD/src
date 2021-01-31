@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_165.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
+/*	$NetBSD: msg_165.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_165.c"
 
 // Test for message: constant truncated by assignment [165]
@@ -8,5 +8,5 @@ example(void)
 {
 	unsigned char ch;
 
-	ch = 0x1234;
+	ch = 0x1234;		/* expect: 165 */
 }

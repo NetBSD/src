@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_101.c,v 1.2 2021/01/08 21:25:03 rillig Exp $	*/
+/*	$NetBSD: msg_101.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_101.c"
 
 // Test for message: undefined struct/union member: %s [101]
@@ -10,5 +10,5 @@ struct point {
 int
 get_z(const struct point *p)
 {
-	return p.z;
+	return p.z;		/* expect: 101 */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_095.c,v 1.2 2021/01/07 00:38:46 rillig Exp $	*/
+/*	$NetBSD: msg_095.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_095.c"
 
 // Test for message: declaration hides earlier one: %s [95]
@@ -12,7 +12,7 @@ example(int identifier)
 {
 
 	{
-		int identifier = 3;
+		int identifier = 3;	/* expect: 95 */
 	}
 
 	return identifier;

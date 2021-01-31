@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_035.c,v 1.5 2021/01/02 17:17:00 rillig Exp $	*/
+/*	$NetBSD: msg_035.c,v 1.6 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_035.c"
 
 // Test for message: illegal bit-field type [35]
@@ -38,24 +38,24 @@ struct example {
 	unsigned short unsigned_short_flag: 1;
 	int int_flag: 1;
 	unsigned int unsigned_int_flag: 1;
-	long long_flag: 1;
-	unsigned long unsigned_long_flag: 1;
-	long long long_long_flag: 1;
-	unsigned long long unsigned_long_long_flag: 1;
+	long long_flag: 1;				/* expect: 35 */
+	unsigned long unsigned_long_flag: 1;		/* expect: 35 */
+	long long long_long_flag: 1;			/* expect: 35 */
+	unsigned long long unsigned_long_long_flag: 1;	/* expect: 35 */
 	/* __int128_t omitted since it is not always defined */
 	/* __uint128_t omitted since it is not always defined */
-	float float_flag: 1;
-	double double_flag: 1;
-	long double long_double_flag: 1;
-	void void_flag: 1;
-	example_struct struct_flag: 1;
-	example_union union_flag: 1;
+	float float_flag: 1;				/* expect: 35 */
+	double double_flag: 1;				/* expect: 35 */
+	long double long_double_flag: 1;		/* expect: 35 */
+	void void_flag: 1;				/* expect: 19, 37 */
+	example_struct struct_flag: 1;			/* expect: 35 */
+	example_union union_flag: 1;			/* expect: 35 */
 	example_enum enum_flag: 1;
-	void *pointer_flag: 1;
-	unsigned int array_flag[4]: 1;
-	example_function function_flag: 1;
-	_Complex complex_flag: 1;
-	float _Complex float_complex_flag: 1;
-	double _Complex double_complex_flag: 1;
-	long double _Complex long_double_complex_flag: 1;
+	void *pointer_flag: 1;				/* expect: 35 */
+	unsigned int array_flag[4]: 1;			/* expect: 35 */
+	example_function function_flag: 1;		/* expect: 35 */
+	_Complex complex_flag: 1;			/* expect: 35, 308 */
+	float _Complex float_complex_flag: 1;		/* expect: 35 */
+	double _Complex double_complex_flag: 1;		/* expect: 35 */
+	long double _Complex long_double_complex_flag: 1; /* expect: 35 */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_117.c,v 1.2 2021/01/09 14:37:16 rillig Exp $	*/
+/*	$NetBSD: msg_117.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
 # 3 "msg_117.c"
 
 // Test for message: bitwise operation on signed value possibly nonportable [117]
@@ -8,7 +8,7 @@
 int
 shr(int a, int b)
 {
-	return a >> b;
+	return a >> b;			/* expect: 117 */
 }
 
 int
@@ -20,17 +20,17 @@ shr_lhs_constant_positive(int a)
 int
 shr_lhs_constant_negative(int a)
 {
-	return -0x1234 >> a;
+	return -0x1234 >> a;		/* expect: 120 */
 }
 
 int
 shr_rhs_constant_positive(int a)
 {
-	return a >> 0x1234;
+	return a >> 0x1234;		/* expect: 117, 122 */
 }
 
 int
 shr_rhs_constant_negative(int a)
 {
-	return a >> -0x1234;
+	return a >> -0x1234;		/* expect: 117, 121 */
 }
