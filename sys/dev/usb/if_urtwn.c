@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.88 2020/06/27 14:34:45 jdolecek Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.89 2021/01/31 18:05:38 nia Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.88 2020/06/27 14:34:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.89 2021/01/31 18:05:38 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -218,6 +218,7 @@ static const struct urtwn_dev {
 	URTWN_RTL8192EU_DEV(DLINK,	DWA131E),
 	URTWN_RTL8192EU_DEV(REALTEK,	RTL8192EU),
 	URTWN_RTL8192EU_DEV(TPLINK,	RTL8192EU),
+	URTWN_RTL8192EU_DEV(TPLINK,	WN821N),
 };
 #undef URTWN_DEV
 #undef URTWN_RTL8188E_DEV
