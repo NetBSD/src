@@ -1,4 +1,5 @@
-# 2
+/*	$NetBSD: d_init_pop_member.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_init_pop_member.c"
 
 /*
  * Since init.c 1.27 from 2015-07-28,

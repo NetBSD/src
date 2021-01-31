@@ -1,3 +1,6 @@
+/*	$NetBSD: d_c99_nested_struct.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_c99_nested_struct.c"
+
 /* C99 nested struct init with named and non-named initializers */
 typedef struct pthread_mutex_t {
  unsigned int ptm_magic;

@@ -1,3 +1,6 @@
+/*	$NetBSD: d_packed_structs.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+# 3 "d_packed_structs.c"
+
 /* packed tests */
 
 struct in_addr {
