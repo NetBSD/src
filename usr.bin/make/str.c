@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.80 2021/02/01 19:46:58 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.81 2021/02/01 22:36:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.80 2021/02/01 19:46:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.81 2021/02/01 22:36:28 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -324,9 +324,15 @@ Str_Match(const char *str, const char *pat)
 						break;
 					return FALSE;
 				}
-				/* XXX: This naive comparison makes the parser
-				 * for the pattern dependent on the actual of
-				 * the string.  This is unpredictable. */
+				/*
+				 * XXX: This naive comparison makes the
+				 * control flow of the pattern parser
+				 * dependent on the actual value of the
+				 * string.  This is unpredictable.  It may be
+				 * though that the code only looks wrong but
+				 * actually all code paths result in the same
+				 * behavior.  This needs further tests.
+				 */
 				if (*pat == *str)
 					break;
 				if (pat[1] == '-') {
