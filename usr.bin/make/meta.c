@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.169 2021/01/16 20:49:31 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.170 2021/02/01 21:32:54 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1194,7 +1194,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /*
 		     * We need to track pathnames per-process.
 		     *
-		     * Each process run by make, starts off in the 'CWD'
+		     * Each process run by make starts off in the 'CWD'
 		     * recorded in the .meta file, if it chdirs ('C')
 		     * elsewhere we need to track that - but only for
 		     * that process.  If it forks ('F'), we initialize

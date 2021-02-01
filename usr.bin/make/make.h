@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.249 2021/02/01 21:09:25 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.250 2021/02/01 21:32:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -654,11 +654,13 @@ typedef struct CmdOpts {
 	/* -n: execute almost no commands from the targets */
 	Boolean noExecute;
 
-	/* -q: if true, we aren't supposed to really make anything, just see
-	 * if the targets are out-of-date */
+	/*
+	 * -q: if true, do not really make anything, just see if the targets
+	 * are out-of-date
+	 */
 	Boolean queryFlag;
 
-	/* -r: raw mode, without loading the builtin rules. */
+	/* -r: raw mode, do not load the builtin rules. */
 	Boolean noBuiltins;
 
 	/* -s: don't echo the shell commands before executing them */
@@ -676,7 +678,7 @@ typedef struct CmdOpts {
 	/* -W: if true, makefile parsing warnings are treated as errors */
 	Boolean parseWarnFatal;
 
-	/* -w: print Entering and Leaving for submakes */
+	/* -w: print 'Entering' and 'Leaving' for submakes */
 	Boolean enterFlag;
 
 	/* -X: if true, do not export variables set on the command line to the
