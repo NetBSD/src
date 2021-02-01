@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.424 2021/01/29 07:00:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.425 2021/02/01 19:02:28 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.424 2021/01/29 07:00:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.425 2021/02/01 19:02:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2358,7 +2358,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 	}
 
 	/*
-	 * Loop over all current mappings setting/clearing as appropos
+	 * Loop over all current mappings setting/clearing as appropriate
 	 */
 	for (pv = SLIST_FIRST(&md->pvh_list); pv != NULL;) {
 		pmap_t pm = pv->pv_pmap;
