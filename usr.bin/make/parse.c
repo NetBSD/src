@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.536 2021/02/01 22:06:05 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.537 2021/02/01 22:16:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -84,7 +84,7 @@
  *	Parse_End	Clean up the module
  *
  *	Parse_File	Parse a top-level makefile.  Included files are
- *			handled by Parse_include_file though.
+ *			handled by IncludeFile instead.
  *
  *	Parse_IsVar	Return TRUE if the given line is a variable
  *			assignment. Used by MainParseArgs to determine if
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.536 2021/02/01 22:06:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.537 2021/02/01 22:16:57 rillig Exp $");
 
 /* types and constants */
 
@@ -2102,7 +2102,7 @@ Parse_AddIncludeDir(const char *dir)
  * line options.
  */
 static void
-Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
+IncludeFile(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 {
 	struct loadedfile *lf;
 	char *fullname;		/* full pathname of file */
@@ -2253,7 +2253,7 @@ ParseDoInclude(char *directive)
 	(void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &file);
 	/* TODO: handle errors */
 
-	Parse_include_file(file, endc == '>', directive[0] == 'd', silent);
+	IncludeFile(file, endc == '>', directive[0] == 'd', silent);
 	free(file);
 }
 
@@ -2506,7 +2506,7 @@ ParseTraditionalInclude(char *line)
 		else
 			done = TRUE;
 
-		Parse_include_file(file, FALSE, FALSE, silent);
+		IncludeFile(file, FALSE, FALSE, silent);
 	}
 out:
 	free(all_files);
