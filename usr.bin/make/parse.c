@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.534 2021/01/30 20:53:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.535 2021/02/01 21:56:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.534 2021/01/30 20:53:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.535 2021/02/01 21:56:03 rillig Exp $");
 
 /* types and constants */
 
@@ -1018,7 +1018,7 @@ ParseErrorNoDependency(const char *lstart)
 		Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
 		    (int)(dirend - dirstart), dirstart);
 	} else
-		Parse_Error(PARSE_FATAL, "Need an operator");
+		Parse_Error(PARSE_FATAL, "Invalid line type");
 }
 
 static void
