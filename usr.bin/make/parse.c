@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.537 2021/02/01 22:16:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.538 2021/02/01 22:21:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.537 2021/02/01 22:16:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.538 2021/02/01 22:21:33 rillig Exp $");
 
 /* types and constants */
 
@@ -1892,7 +1892,10 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 
 	/*
 	 * make sure that we set the variable the first time to nothing
-	 * so that it gets substituted!
+	 * so that it gets substituted.
+	 *
+	 * TODO: Add a test that demonstrates why this code is needed,
+	 *  apart from making the debug log longer.
 	 */
 	if (!Var_Exists(name, ctxt))
 		Var_Set(name, "", ctxt);
@@ -1936,12 +1939,13 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 /*
  * Perform a variable assignment.
  *
- * The actual value of the variable is returned in *out_avalue and
- * *out_avalue_freeIt.  Especially for VAR_SUBST and VAR_SHELL this can differ
- * from the literal value.
+ * The actual value of the variable is returned in *out_TRUE_avalue.
+ * Especially for VAR_SUBST and VAR_SHELL this can differ from the literal
+ * value.
  *
- * Return whether the assignment was actually done.  The assignment is only
- * skipped if the operator is '?=' and the variable already exists.
+ * Return whether the assignment was actually performed, which is usually
+ * the case.  It is only skipped if the operator is '?=' and the variable
+ * already exists.
  */
 static Boolean
 VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
@@ -2583,7 +2587,7 @@ ParseEOF(void)
 	}
 
 	/* Dispose of curFile info */
-	/* Leak curFile->fname because all the gnodes have pointers to it. */
+	/* Leak curFile->fname because all the GNodes have pointers to it. */
 	free(curFile->buf_freeIt);
 	Vector_Pop(&includes);
 
@@ -2783,7 +2787,6 @@ ParseGetLine(GetLineMode mode)
 	char *firstBackslash;
 	char *firstComment;
 
-	/* Loop through blank lines and comment lines */
 	for (;;) {
 		ParseRawLineResult res = ParseRawLine(curFile,
 		    &line, &line_end, &firstBackslash, &firstComment);
