@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1014 2021/01/30 12:46:38 rillig Exp $
+# $NetBSD: mi,v 1.1015 2021/02/01 20:31:41 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4826,6 +4826,8 @@
 ./usr/tests/usr.bin/make/unit-tests/cmd-errors.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cmd-interrupt.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cmd-interrupt.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cmdline-redirect-stdin.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cmdline-redirect-stdin.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cmdline-undefined.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cmdline-undefined.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cmdline.exp					tests-usr.bin-tests	compattestfile,atf

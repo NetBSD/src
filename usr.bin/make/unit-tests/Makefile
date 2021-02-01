@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.264 2021/01/30 12:46:38 rillig Exp $
+# $NetBSD: Makefile,v 1.265 2021/02/01 20:31:41 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -46,6 +46,7 @@ TESTS+=		cmd-errors-jobs
 TESTS+=		cmd-errors-lint
 TESTS+=		cmd-interrupt
 TESTS+=		cmdline
+TESTS+=		cmdline-redirect-stdin
 TESTS+=		cmdline-undefined
 TESTS+=		comment
 TESTS+=		compat-error
