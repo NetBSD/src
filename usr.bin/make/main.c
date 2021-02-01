@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.521 2021/02/01 19:39:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.522 2021/02/01 19:43:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.521 2021/02/01 19:39:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.522 2021/02/01 19:43:07 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -197,7 +197,7 @@ usage(void)
 }
 
 static void
-parse_debug_option_F(const char *modules)
+MainParseArgDebugFile(const char *arg)
 {
 	const char *mode;
 	size_t len;
@@ -206,24 +206,24 @@ parse_debug_option_F(const char *modules)
 	if (opts.debug_file != stdout && opts.debug_file != stderr)
 		fclose(opts.debug_file);
 
-	if (*modules == '+') {
-		modules++;
+	if (*arg == '+') {
+		arg++;
 		mode = "a";
 	} else
 		mode = "w";
 
-	if (strcmp(modules, "stdout") == 0) {
+	if (strcmp(arg, "stdout") == 0) {
 		opts.debug_file = stdout;
 		return;
 	}
-	if (strcmp(modules, "stderr") == 0) {
+	if (strcmp(arg, "stderr") == 0) {
 		opts.debug_file = stderr;
 		return;
 	}
 
-	len = strlen(modules);
+	len = strlen(arg);
 	fname = bmake_malloc(len + 20);
-	memcpy(fname, modules, len + 1);
+	memcpy(fname, arg, len + 1);
 
 	/* Let the filename be modified by the pid */
 	if (strcmp(fname + len - 3, ".%d") == 0)
@@ -239,7 +239,7 @@ parse_debug_option_F(const char *modules)
 }
 
 static void
-parse_debug_options(const char *argvalue)
+MainParseArgDebug(const char *argvalue)
 {
 	const char *modules;
 	DebugFlags debug = opts.debug;
@@ -322,7 +322,7 @@ parse_debug_options(const char *argvalue)
 			debug |= DEBUG_SHELL;
 			break;
 		case 'F':
-			parse_debug_option_F(modules + 1);
+			MainParseArgDebugFile(modules + 1);
 			goto debug_setbuf;
 		default:
 			(void)fprintf(stderr,
@@ -347,7 +347,7 @@ debug_setbuf:
 
 /* Is path relative, or does it contain any relative component "." or ".."? */
 static Boolean
-is_relpath(const char *path)
+IsRelativePath(const char *path)
 {
 	const char *cp;
 
@@ -378,7 +378,7 @@ MainParseArgChdir(const char *argvalue)
 		(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 		exit(2);
 	}
-	if (!is_relpath(argvalue) &&
+	if (!IsRelativePath(argvalue) &&
 	    stat(argvalue, &sa) != -1 &&
 	    stat(curdir, &sb) != -1 &&
 	    sa.st_ino == sb.st_ino &&
@@ -516,7 +516,7 @@ MainParseArg(char c, const char *argvalue)
 			Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 		}
-		parse_debug_options(argvalue);
+		MainParseArgDebug(argvalue);
 		break;
 	case 'e':
 		opts.checkEnvFirst = TRUE;
