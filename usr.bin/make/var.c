@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.786 2021/01/30 21:25:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.787 2021/02/01 19:46:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.786 2021/01/30 21:25:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.787 2021/02/01 19:46:58 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2162,7 +2162,7 @@ ParseModifierPartSubst(
 		return VPR_ERR;
 	}
 
-	*pp = ++p;
+	*pp = p + 1;
 	if (out_length != NULL)
 		*out_length = buf.len;
 
