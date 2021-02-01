@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.90 2021/02/01 04:46:33 nia Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.91 2021/02/01 06:59:37 riastradh Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.90 2021/02/01 04:46:33 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.91 2021/02/01 06:59:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -854,6 +854,10 @@ urtwn_tx_beacon(struct urtwn_softc *sc, struct mbuf *m,
 {
 	struct urtwn_tx_data *data =
 	    urtwn_get_tx_data(sc, sc->ac2idx[WME_AC_VO]);
+
+	if (data == NULL)
+		return ENOBUFS;
+
 	return urtwn_tx(sc, m, ni, data);
 }
 
