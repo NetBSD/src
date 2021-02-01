@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.34 2020/10/19 17:47:37 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.35 2021/02/01 19:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -135,7 +135,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34 2020/10/19 17:47:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35 2021/02/01 19:31:34 skrll Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -160,7 +160,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	regs->r_pc = tf->tf_pc;
 	regs->r_cpsr = tf->tf_spsr;
 
-	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(VALID_PSR(tf->tf_spsr));
 
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit)
@@ -202,7 +202,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	if ((regs->r_pc & 1) || (regs->r_cpsr & PSR_T_bit))
 		tf->tf_spsr |= PSR_T_bit;
 #endif
-	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(VALID_PSR(tf->tf_spsr));
 
 	return 0;
 }

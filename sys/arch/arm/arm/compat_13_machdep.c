@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.18 2013/08/18 06:50:31 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.19 2021/02/01 19:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.18 2013/08/18 06:50:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.19 2021/02/01 19:31:34 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -76,7 +76,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	 * Make sure the processor mode has not been tampered with and
 	 * interrupts have not been disabled.
 	 */
-	if (!VALID_R15_PSR(context.sc_pc, context.sc_spsr))
+	if (!VALID_PSR(context.sc_spsr))
 		return EINVAL;
 
 	/* Restore register context. */
