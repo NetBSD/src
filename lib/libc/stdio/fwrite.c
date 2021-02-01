@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.18 2018/02/04 01:13:45 mrg Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.19 2021/02/01 17:50:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.18 2018/02/04 01:13:45 mrg Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.19 2021/02/01 17:50:53 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: fwrite.c,v 1.18 2018/02/04 01:13:45 mrg Exp $");
 #include "reentrant.h"
 #include "local.h"
 #include "fvwrite.h"
+
+#define MUL_NO_OVERFLOW	(1UL << (sizeof(size_t) * 4))
 
 /*
  * Write `count' objects (each size `size') from memory to the given file.
@@ -58,6 +60,16 @@ fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 	size_t n;
 	struct __suio uio;
 	struct __siov iov;
+
+	/*
+	 * Extension:  Catch integer overflow
+	 */
+	if ((size >= MUL_NO_OVERFLOW || count >= MUL_NO_OVERFLOW) &&
+	    size > 0 && count > SIZE_MAX / size) {
+		errno = EOVERFLOW;
+		fp->_flags |= __SERR;
+		return (0);
+	}
 
 	/*
 	 * SUSv2 requires a return value of 0 for a count or a size of 0.
