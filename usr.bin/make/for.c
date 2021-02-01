@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.139 2021/01/30 20:53:29 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.140 2021/02/01 17:26:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.139 2021/01/30 20:53:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.140 2021/02/01 17:26:03 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -262,17 +262,17 @@ For_Eval(const char *line)
 Boolean
 For_Accum(const char *line)
 {
-	const char *ptr = line;
+	const char *p = line;
 
-	if (*ptr == '.') {
-		ptr++;
-		cpp_skip_whitespace(&ptr);
+	if (*p == '.') {
+		p++;
+		cpp_skip_whitespace(&p);
 
-		if (IsEndfor(ptr)) {
+		if (IsEndfor(p)) {
 			DEBUG1(FOR, "For: end for %d\n", forLevel);
 			if (--forLevel <= 0)
 				return FALSE;
-		} else if (IsFor(ptr)) {
+		} else if (IsFor(p)) {
 			forLevel++;
 			DEBUG1(FOR, "For: new loop %d\n", forLevel);
 		}
@@ -320,11 +320,11 @@ for_var_len(const char *var)
  * that characters that break this syntax must be backslash-escaped.
  */
 static Boolean
-NeedsEscapes(const char *word, char endc)
+NeedsEscapes(const char *value, char endc)
 {
 	const char *p;
 
-	for (p = word; *p != '\0'; p++) {
+	for (p = value; *p != '\0'; p++) {
 		if (*p == ':' || *p == '$' || *p == '\\' || *p == endc)
 			return TRUE;
 	}
@@ -445,8 +445,8 @@ found:
  * This code assumes that the variable with the empty name will never be
  * defined, see unit-tests/varname-empty.mk for more details.
  *
- * The detection of substitutions of the loop control variable is naive.
- * Many of the modifiers use \ to escape $ (not $) so it is possible
+ * The detection of substitutions of the loop control variables is naive.
+ * Many of the modifiers use '\' to escape '$' (not '$'), so it is possible
  * to contrive a makefile where an unwanted substitution happens.
  */
 static void
