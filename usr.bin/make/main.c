@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.524 2021/02/01 19:53:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.525 2021/02/01 20:01:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.524 2021/02/01 19:53:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.525 2021/02/01 20:01:26 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -942,7 +942,7 @@ runTargets(void)
 		Compat_Run(&targs);
 		outOfDate = FALSE;
 	}
-	Lst_Done(&targs);	/* Don't free the nodes. */
+	Lst_Done(&targs);	/* Don't free the targets themselves. */
 	return outOfDate;
 }
 
@@ -962,7 +962,7 @@ InitVarTargets(void)
 	}
 
 	for (ln = opts.create.first; ln != NULL; ln = ln->next) {
-		char *name = ln->datum;
+		const char *name = ln->datum;
 		Var_Append(".TARGETS", name, VAR_GLOBAL);
 	}
 }
@@ -977,7 +977,7 @@ InitRandom(void)
 }
 
 static const char *
-InitVarMachine(const struct utsname *utsname)
+InitVarMachine(const struct utsname *utsname MAKE_ATTR_UNUSED)
 {
 	const char *machine = getenv("MACHINE");
 	if (machine != NULL)
@@ -1028,6 +1028,9 @@ InitVarMachineArch(void)
 /*
  * All this code is so that we know where we are when we start up
  * on a different machine with pmake.
+ *
+ * XXX: Make no longer has "local" and "remote" mode.  Is this code still
+ * necessary?
  *
  * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
  * since the value of curdir can vary depending on how we got
@@ -1113,7 +1116,7 @@ CmdOpts_Init(void)
 {
 	opts.compatMake = FALSE;
 	opts.debug = DEBUG_NONE;
-	/* opts.debug_file has been initialized earlier */
+	/* opts.debug_file has already been initialized earlier */
 	opts.strict = FALSE;
 	opts.debugVflag = FALSE;
 	opts.checkEnvFirst = FALSE;
@@ -1206,26 +1209,26 @@ static void
 ReadBuiltinRules(void)
 {
 	StringListNode *ln;
-	StringList sysMkPath = LST_INIT;
+	StringList sysMkFiles = LST_INIT;
 
 	SearchPath_Expand(
 	    Lst_IsEmpty(&sysIncPath->dirs) ? defSysIncPath : sysIncPath,
 	    _PATH_DEFSYSMK,
-	    &sysMkPath);
-	if (Lst_IsEmpty(&sysMkPath))
+	    &sysMkFiles);
+	if (Lst_IsEmpty(&sysMkFiles))
 		Fatal("%s: no system rules (%s).", progname, _PATH_DEFSYSMK);
 
-	for (ln = sysMkPath.first; ln != NULL; ln = ln->next)
+	for (ln = sysMkFiles.first; ln != NULL; ln = ln->next)
 		if (ReadMakefile(ln->datum) == 0)
 			break;
 
 	if (ln == NULL)
 		Fatal("%s: cannot open %s.",
-		    progname, (const char *)sysMkPath.first->datum);
+		    progname, (const char *)sysMkFiles.first->datum);
 
-	/* Free the list but not the actual filenames since these may still
-	 * be used in GNodes. */
-	Lst_Done(&sysMkPath);
+	/* Free the list nodes but not the actual filenames since these may
+	 * still be used in GNodes. */
+	Lst_Done(&sysMkFiles);
 }
 
 static void
