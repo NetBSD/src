@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.520 2021/01/30 21:25:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.521 2021/02/01 19:39:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -73,18 +73,19 @@
  *
  * Utility functions defined in this file:
  *
- *	Main_ParseArgLine	Parse and process command line arguments from
- *				a single string.  Used to implement the
- *				special targets .MFLAGS and .MAKEFLAGS.
+ *	Main_ParseArgLine
+ *			Parse and process command line arguments from a
+ *			single string.  Used to implement the special targets
+ *			.MFLAGS and .MAKEFLAGS.
  *
- *	Error			Print a tagged error message.
+ *	Error		Print a tagged error message.
  *
- *	Fatal			Print an error message and exit.
+ *	Fatal		Print an error message and exit.
  *
- *	Punt			Abort all jobs and exit with a message.
+ *	Punt		Abort all jobs and exit with a message.
  *
- *	Finish			Finish things up by printing the number of
- *				errors which occurred, and exit.
+ *	Finish		Finish things up by printing the number of errors
+ *			that occurred, and exit.
  */
 
 #include <sys/types.h>
@@ -110,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.520 2021/01/30 21:25:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.521 2021/02/01 19:39:31 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -344,9 +345,7 @@ debug_setbuf:
 	}
 }
 
-/*
- * does path contain any relative components
- */
+/* Is path relative, or does it contain any relative component "." or ".."? */
 static Boolean
 is_relpath(const char *path)
 {
