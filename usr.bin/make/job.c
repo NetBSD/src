@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.405 2021/01/31 07:07:53 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.406 2021/02/01 17:10:23 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.405 2021/01/31 07:07:53 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.406 2021/02/01 17:10:23 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -439,7 +439,7 @@ enum {
 };
 
 static sigset_t caught_signals;	/* Set of signals we handle */
-static volatile int caught_sigchld;
+static volatile sig_atomic_t caught_sigchld;
 
 static void JobDoOutput(Job *, Boolean);
 static void JobInterrupt(Boolean, int) MAKE_ATTR_DEAD;
