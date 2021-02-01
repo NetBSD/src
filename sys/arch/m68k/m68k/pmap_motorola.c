@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.72 2020/02/23 15:46:39 ad Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.73 2021/02/01 19:02:27 skrll Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.72 2020/02/23 15:46:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.73 2021/02/01 19:02:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2364,7 +2364,7 @@ pmap_changebit(paddr_t pa, int set, int mask)
 	pvh->pvh_attrs &= mask;
 
 	/*
-	 * Loop over all current mappings setting/clearing as appropos
+	 * Loop over all current mappings setting/clearing as appropriate
 	 * If setting RO do we need to clear the VAC?
 	 */
 
