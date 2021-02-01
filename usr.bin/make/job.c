@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.407 2021/02/01 17:49:29 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.408 2021/02/01 18:25:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.407 2021/02/01 17:49:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.408 2021/02/01 18:25:57 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -421,8 +421,8 @@ static Boolean make_suspended = FALSE; /* Whether we've seen a SIGTSTP (etc) */
  * the output channels of children
  */
 static struct pollfd *fds = NULL;
-static Job **allJobs = NULL;
-static nfds_t nJobs = 0;
+static Job **jobByFdIndex = NULL;
+static nfds_t fdsLen = 0;
 static void watchfd(Job *);
 static void clearfd(Job *);
 static Boolean readyfd(Job *);
@@ -2054,7 +2054,7 @@ Job_CatchOutput(void)
 
 	/* The first fd in the list is the job token pipe */
 	do {
-		nready = poll(fds + 1 - wantToken, nJobs - 1 + wantToken,
+		nready = poll(fds + 1 - wantToken, fdsLen - 1 + wantToken,
 		    POLL_MSEC);
 	} while (nready < 0 && errno == EINTR);
 
@@ -2090,10 +2090,10 @@ Job_CatchOutput(void)
 	if (nready == 0)
 		return;
 
-	for (i = npseudojobs * nfds_per_job(); i < nJobs; i++) {
+	for (i = npseudojobs * nfds_per_job(); i < fdsLen; i++) {
 		if (fds[i].revents == 0)
 			continue;
-		job = allJobs[i];
+		job = jobByFdIndex[i];
 		if (job->status == JOB_ST_RUNNING)
 			JobDoOutput(job, FALSE);
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
@@ -2239,13 +2239,13 @@ Job_Init(void)
 
 	JobCreatePipe(&childExitJob, 3);
 
-	/* Preallocate enough for the maximum number of jobs.  */
-	fds = bmake_malloc(sizeof *fds *
-			   (npseudojobs + (size_t)opts.maxJobs) *
-			   nfds_per_job());
-	allJobs = bmake_malloc(sizeof *allJobs *
-			       (npseudojobs + (size_t)opts.maxJobs) *
-			       nfds_per_job());
+	{
+		/* Preallocate enough for the maximum number of jobs. */
+		size_t nfds = (npseudojobs + (size_t)opts.maxJobs) *
+			      nfds_per_job();
+		fds = bmake_malloc(sizeof *fds * nfds);
+		jobByFdIndex = bmake_malloc(sizeof *jobByFdIndex * nfds);
+	}
 
 	/* These are permanent entries and take slots 0 and 1 */
 	watchfd(&tokenWaitJob);
@@ -2700,17 +2700,17 @@ watchfd(Job *job)
 	if (job->inPollfd != NULL)
 		Punt("Watching watched job");
 
-	fds[nJobs].fd = job->inPipe;
-	fds[nJobs].events = POLLIN;
-	allJobs[nJobs] = job;
-	job->inPollfd = &fds[nJobs];
-	nJobs++;
+	fds[fdsLen].fd = job->inPipe;
+	fds[fdsLen].events = POLLIN;
+	jobByFdIndex[fdsLen] = job;
+	job->inPollfd = &fds[fdsLen];
+	fdsLen++;
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
 	if (useMeta) {
-		fds[nJobs].fd = meta_job_fd(job);
-		fds[nJobs].events = fds[nJobs].fd == -1 ? 0 : POLLIN;
-		allJobs[nJobs] = job;
-		nJobs++;
+		fds[fdsLen].fd = meta_job_fd(job);
+		fds[fdsLen].events = fds[fdsLen].fd == -1 ? 0 : POLLIN;
+		jobByFdIndex[fdsLen] = job;
+		fdsLen++;
 	}
 #endif
 }
@@ -2722,7 +2722,7 @@ clearfd(Job *job)
 	if (job->inPollfd == NULL)
 		Punt("Unwatching unwatched job");
 	i = (size_t)(job->inPollfd - fds);
-	nJobs--;
+	fdsLen--;
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
 	if (useMeta) {
 		/*
@@ -2732,20 +2732,20 @@ clearfd(Job *job)
 		assert(nfds_per_job() == 2);
 		if (i % 2 != 0)
 			Punt("odd-numbered fd with meta");
-		nJobs--;
+		fdsLen--;
 	}
 #endif
 	/*
 	 * Move last job in table into hole made by dead job.
 	 */
-	if (nJobs != i) {
-		fds[i] = fds[nJobs];
-		allJobs[i] = allJobs[nJobs];
-		allJobs[i]->inPollfd = &fds[i];
+	if (fdsLen != i) {
+		fds[i] = fds[fdsLen];
+		jobByFdIndex[i] = jobByFdIndex[fdsLen];
+		jobByFdIndex[i]->inPollfd = &fds[i];
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
 		if (useMeta) {
-			fds[i + 1] = fds[nJobs + 1];
-			allJobs[i + 1] = allJobs[nJobs + 1];
+			fds[i + 1] = fds[fdsLen + 1];
+			jobByFdIndex[i + 1] = jobByFdIndex[fdsLen + 1];
 		}
 #endif
 	}
