@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.67 2019/04/06 11:54:20 kamil Exp $	*/
+/*	$NetBSD: syscall.c,v 1.68 2021/02/01 19:31:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.67 2019/04/06 11:54:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.68 2021/02/01 19:31:34 skrll Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -101,7 +101,7 @@ swi_handler(trapframe_t *tf)
 	 * Since all syscalls *should* come from user mode it will always
 	 * be safe to enable them, but check anyway.
 	 */
-	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(VALID_PSR(tf->tf_spsr));
 	restore_interrupts(tf->tf_spsr & IF32_bits);
 
 #ifndef THUMB_CODE
