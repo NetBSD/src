@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.523 2021/02/01 19:46:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.524 2021/02/01 19:53:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.523 2021/02/01 19:46:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.524 2021/02/01 19:53:31 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -816,28 +816,23 @@ siginfo(int signo MAKE_ATTR_UNUSED)
 static void
 MakeMode(void)
 {
-	FStr mode = FStr_InitRefer(NULL);
+	char *mode;
 
-	if (mode.str == NULL) {
-		char *expanded;
-		(void)Var_Subst("${" MAKE_MODE ":tl}",
-		    VAR_GLOBAL, VARE_WANTRES, &expanded);
-		/* TODO: handle errors */
-		mode = FStr_InitOwn(expanded);
-	}
+	(void)Var_Subst("${" MAKE_MODE ":tl}", VAR_GLOBAL, VARE_WANTRES, &mode);
+	/* TODO: handle errors */
 
-	if (mode.str[0] != '\0') {
-		if (strstr(mode.str, "compat") != NULL) {
+	if (mode[0] != '\0') {
+		if (strstr(mode, "compat") != NULL) {
 			opts.compatMake = TRUE;
 			forceJobs = FALSE;
 		}
 #if USE_META
-		if (strstr(mode.str, "meta") != NULL)
-			meta_mode_init(mode.str);
+		if (strstr(mode, "meta") != NULL)
+			meta_mode_init(mode);
 #endif
 	}
 
-	FStr_Done(&mode);
+	free(mode);
 }
 
 static void
