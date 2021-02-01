@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.246 2021/01/24 20:11:55 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.247 2021/02/01 20:51:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -334,25 +334,25 @@ typedef enum GNodeType {
 typedef enum GNodeFlags {
 	GNF_NONE	= 0,
 	/* this target needs to be (re)made */
-	REMAKE		= 0x0001,
+	REMAKE		= 1 << 0,
 	/* children of this target were made */
-	CHILDMADE	= 0x0002,
+	CHILDMADE	= 1 << 1,
 	/* children don't exist, and we pretend made */
-	FORCE		= 0x0004,
+	FORCE		= 1 << 2,
 	/* Set by Make_ProcessWait() */
-	DONE_WAIT	= 0x0008,
+	DONE_WAIT	= 1 << 3,
 	/* Build requested by .ORDER processing */
-	DONE_ORDER	= 0x0010,
+	DONE_ORDER	= 1 << 4,
 	/* Node created from .depend */
-	FROM_DEPEND	= 0x0020,
+	FROM_DEPEND	= 1 << 5,
 	/* We do it once only */
-	DONE_ALLSRC	= 0x0040,
+	DONE_ALLSRC	= 1 << 6,
 	/* Used by MakePrintStatus */
-	CYCLE		= 0x1000,
+	CYCLE		= 1 << 12,
 	/* Used by MakePrintStatus */
-	DONECYCLE	= 0x2000,
+	DONECYCLE	= 1 << 13,
 	/* Internal use only */
-	INTERNAL	= 0x4000
+	INTERNAL	= 1 << 14
 } GNodeFlags;
 
 typedef struct List StringList;
