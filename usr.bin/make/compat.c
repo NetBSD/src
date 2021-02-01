@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.220 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.221 2021/02/01 21:04:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.220 2021/01/19 20:51:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.221 2021/02/01 21:04:10 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -357,7 +357,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	/*
 	 * Fork and execute the single command. If the fork fails, we abort.
 	 */
-	compatChild = cpid = vFork();
+	compatChild = cpid = vfork();
 	if (cpid < 0) {
 		Fatal("Could not fork");
 	}
