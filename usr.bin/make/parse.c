@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.535 2021/02/01 21:56:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.536 2021/02/01 22:06:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.535 2021/02/01 21:56:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.536 2021/02/01 22:06:05 rillig Exp $");
 
 /* types and constants */
 
@@ -1888,7 +1888,6 @@ static void
 VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 		    FStr *out_avalue)
 {
-	const char *avalue;
 	char *evalue;
 
 	/*
@@ -1902,10 +1901,9 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 	    VARE_WANTRES | VARE_KEEP_DOLLAR | VARE_KEEP_UNDEF, &evalue);
 	/* TODO: handle errors */
 
-	avalue = evalue;
-	Var_Set(name, avalue, ctxt);
+	Var_Set(name, evalue, ctxt);
 
-	*out_avalue = (FStr){ avalue, evalue };
+	*out_avalue = FStr_InitOwn(evalue);
 }
 
 static void
