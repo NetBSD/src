@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.247 2021/02/01 20:51:17 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.248 2021/02/01 21:04:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -532,18 +532,12 @@ extern SearchPath *defSysIncPath;
 extern char curdir[];
 /* The basename of the program name, suffixed with [n] for sub-makes.  */
 extern const char *progname;
+extern int makelevel;
 /* Name of the .depend makefile */
 extern char *makeDependfile;
 /* If we replaced environ, this will be non-NULL. */
 extern char **savedEnv;
 
-extern int makelevel;
-
-/*
- * We cannot vfork() in a child of vfork().
- * Most systems do not enforce this but some do.
- */
-#define vFork() ((getpid() == myPid) ? vfork() : fork())
 extern pid_t myPid;
 
 #define MAKEFLAGS	".MAKEFLAGS"
