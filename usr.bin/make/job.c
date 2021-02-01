@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.409 2021/02/01 18:46:38 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.410 2021/02/01 18:55:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.409 2021/02/01 18:46:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.410 2021/02/01 18:55:15 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1934,11 +1934,11 @@ JobRun(GNode *targ)
 	 * Running these jobs in compat mode also guarantees that these
 	 * jobs do not overlap with other unrelated jobs.
 	 */
-	List *lst = Lst_New();
-	Lst_Append(lst, targ);
-	(void)Make_Run(lst);
-	Lst_Destroy(lst, NULL);
-	JobStart(targ, JOB_SPECIAL);
+	GNodeList lst = LST_INIT;
+	Lst_Append(&lst, targ);
+	(void)Make_Run(&lst);
+	Lst_Done(&lst);
+	JobStart(targ, TRUE);
 	while (jobTokensRunning != 0) {
 		Job_CatchOutput();
 	}
