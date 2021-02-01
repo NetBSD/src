@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.51 2018/11/27 14:09:53 maxv Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.52 2021/02/01 19:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.51 2018/11/27 14:09:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.52 2021/02/01 19:31:34 skrll Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/cpu.h>
@@ -182,8 +182,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_PC]   = tf->tf_pc;
 	gr[_REG_CPSR] = tf->tf_spsr;
 
-	KASSERTMSG(VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]), "%#x %#x",
-	    gr[_REG_PC], gr[_REG_CPSR]);
+	KASSERTMSG(VALID_PSR(gr[_REG_CPSR]), "%#x", gr[_REG_CPSR]);
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
 	    (void *) gr[_REG_PC])) != -1)
@@ -208,7 +207,7 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 	const __greg_t * const gr = mcp->__gregs;
 
 	/* Make sure the processor mode has not been tampered with. */
-	if (!VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]))
+	if (!VALID_PSR(gr[_REG_CPSR]))
 		return EINVAL;
 	return 0;
 }

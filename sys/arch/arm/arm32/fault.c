@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.115 2021/01/29 07:58:57 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.116 2021/02/01 19:31:34 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.115 2021/01/29 07:58:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.116 2021/02/01 19:31:34 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -250,7 +250,7 @@ data_abort_handler(trapframe_t *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	/* Re-enable interrupts if they were enabled previously */
-	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 #ifdef __NO_FIQ
 	if (__predict_true((tf->tf_spsr & I32_bit) != I32_bit))
 		restore_interrupts(tf->tf_spsr & IF32_bits);
@@ -830,7 +830,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 #ifdef __NO_FIQ
 	if (__predict_true((tf->tf_spsr & I32_bit) != I32_bit))
 		restore_interrupts(tf->tf_spsr & IF32_bits);
@@ -842,7 +842,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* See if the CPU state needs to be fixed up */
 	switch (prefetch_abort_fixup(tf)) {
 	case ABORT_FIXUP_RETURN:
-		KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+		KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 		return;
 	case ABORT_FIXUP_FAILED:
 		/* Deliver a SIGILL to the process */
@@ -941,7 +941,7 @@ out:
 	}
 #endif /* THUMB_CODE */
 
-	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 	userret(l);
 }
 
