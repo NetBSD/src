@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.406 2021/02/01 17:10:23 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.407 2021/02/01 17:49:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,8 +75,8 @@
  *
  * Interface:
  *	Job_Init	Called to initialize this module. In addition,
- *			any commands attached to the .BEGIN target
- *			are executed before this function returns.
+ *			the .BEGIN target is made including all of its
+ *			dependencies before this function returns.
  *			Hence, the makefiles must have been parsed
  *			before this function is called.
  *
@@ -99,9 +99,9 @@
  *			a time given by the SEL_* constants, below,
  *			or until output is ready.
  *
- *	Job_ParseShell	Given the line following a .SHELL target, parse
- *			the line as a shell specification. Returns
- *			FALSE if the spec was incorrect.
+ *	Job_ParseShell	Given a special dependency line with target '.SHELL',
+ *			define the shell that is used for the creation
+ *			commands in jobs mode.
  *
  *	Job_Finish	Perform any final processing which needs doing.
  *			This includes the execution of any commands
@@ -109,10 +109,9 @@
  *			target. It should only be called when the
  *			job table is empty.
  *
- *	Job_AbortAll	Abort all currently running jobs. It doesn't
- *			handle output or do anything for the jobs,
- *			just kills them. It should only be called in
- *			an emergency.
+ *	Job_AbortAll	Abort all currently running jobs. Do not handle
+ *			output or do anything for the jobs, just kill them.
+ *			Should only be called in an emergency.
  *
  *	Job_CheckCommands
  *			Verify that the commands for a target are
@@ -143,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.406 2021/02/01 17:10:23 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.407 2021/02/01 17:49:29 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -164,15 +163,15 @@ MAKE_RCSID("$NetBSD: job.c,v 1.406 2021/02/01 17:10:23 sjg Exp $");
  * The error checking for individual commands is controlled using hasErrCtl,
  * errOn, errOff and runChkTmpl.
  *
- * If a shell doesn't have error control, echoTmpl becomes a printf template
- * for echoing the command, should echoing be on; runIgnTmpl becomes
- * another printf template for executing the command while ignoring the return
+ * In case a shell doesn't have error control, echoTmpl is a printf template
+ * for echoing the command, should echoing be on; runIgnTmpl is another
+ * printf template for executing the command while ignoring the return
  * status. Finally runChkTmpl is a printf template for running the command and
  * causing the shell to exit on error. If any of these strings are empty when
  * hasErrCtl is FALSE, the command will be executed anyway as is, and if it
  * causes an error, so be it. Any templates set up to echo the command will
- * escape any '$ ` \ "' characters in the command string to avoid common
- * problems with echo "%s\n" as a template.
+ * escape any '$ ` \ "' characters in the command string to avoid unwanted
+ * shell code injection, the escaped command is safe to use in double quotes.
  *
  * The command-line flags "echo" and "exit" also control the behavior.  The
  * "echo" flag causes the shell to start echoing commands right away.  The
@@ -217,7 +216,7 @@ typedef struct Shell {
 } Shell;
 
 typedef struct CommandFlags {
-	/* Whether to echo the command before running it. */
+	/* Whether to echo the command before or instead of running it. */
 	Boolean echo;
 
 	/* Run the command even in -n or -N mode. */
@@ -253,6 +252,7 @@ typedef enum AbortReason {	/* why is the make aborting? */
 	ABORT_ERROR,		/* Because of an error */
 	ABORT_INTERRUPT,	/* Because it was interrupted */
 	ABORT_WAIT		/* Waiting for jobs to finish */
+	/* XXX: "WAIT" is not a _reason_ for aborting, it's rather a status. */
 } AbortReason;
 static AbortReason aborting = ABORT_NONE;
 #define JOB_TOKENS "+EI+"	/* Token to requeue for each abort state */
@@ -407,7 +407,7 @@ static Shell *shell = &shells[DEFSHELL_INDEX];
 const char *shellPath = NULL;	/* full pathname of executable image */
 const char *shellName = NULL;	/* last component of shellPath */
 char *shellErrFlag = NULL;
-static char *shellArgv = NULL;	/* Custom shell args */
+static char *shell_freeIt = NULL; /* Allocated memory for custom .SHELL */
 
 
 static Job *job_table;		/* The structures that describe them */
@@ -2379,7 +2379,7 @@ Job_ParseShell(char *line)
 	/* XXX: don't use line as an iterator variable */
 	pp_skip_whitespace(&line);
 
-	free(shellArgv);
+	free(shell_freeIt);
 
 	memset(&newShell, 0, sizeof newShell);
 
@@ -2394,7 +2394,7 @@ Job_ParseShell(char *line)
 		Error("Unterminated quoted string [%s]", line);
 		return FALSE;
 	}
-	shellArgv = path;
+	shell_freeIt = path;
 
 	for (path = NULL, argv = words; argc != 0; argc--, argv++) {
 		char *arg = *argv;
@@ -2605,7 +2605,7 @@ void
 Job_End(void)
 {
 #ifdef CLEANUP
-	free(shellArgv);
+	free(shell_freeIt);
 #endif
 }
 
