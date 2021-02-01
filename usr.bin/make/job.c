@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.408 2021/02/01 18:25:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.409 2021/02/01 18:46:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.408 2021/02/01 18:25:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.409 2021/02/01 18:46:38 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -991,7 +991,7 @@ JobPrintCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
  * Print all commands to the shell file that is later executed.
  *
  * The special command "..." stops printing and saves the remaining commands
- * to be executed later.
+ * to be executed later, when the target '.END' is made.
  *
  * Return whether at least one command was written to the shell file.
  */
@@ -1507,9 +1507,7 @@ JobExec(Job *job, char **argv)
 		job->cmdFILE = NULL;
 	}
 
-	/*
-	 * Now the job is actually running, add it to the table.
-	 */
+	/* Now that the job is actually running, add it to the table. */
 	if (DEBUG(JOB)) {
 		debug_printf("JobExec(%s): pid %d added to jobs table\n",
 		    job->node->name, job->pid);
@@ -2065,24 +2063,17 @@ Job_CatchOutput(void)
 		char token = 0;
 		ssize_t count;
 		count = read(childExitJob.inPipe, &token, 1);
-		switch (count) {
-		case 0:
-			Punt("unexpected eof on token pipe");
-			/*NOTREACHED*/
-		case -1:
-			Punt("token pipe read: %s", strerror(errno));
-			/*NOTREACHED*/
-		case 1:
+		if (count == 1) {
 			if (token == DO_JOB_RESUME[0])
 				/*
 				 * Complete relay requested from our SIGCONT
 				 * handler
 				 */
 				JobRestartJobs();
-			break;
-		default:
-			abort();
-		}
+		} else if (count == 0)
+			Punt("unexpected eof on token pipe");
+		else
+			Punt("token pipe read: %s", strerror(errno));
 		nready--;
 	}
 
