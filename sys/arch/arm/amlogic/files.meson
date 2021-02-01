@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.11 2021/01/01 07:21:58 ryo Exp $
+#	$NetBSD: files.meson,v 1.12 2021/02/01 01:52:04 jmcneill Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -158,6 +158,7 @@ file	arch/arm/amlogic/meson_thermal.c	meson_thermal
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON
 defflag	opt_soc.h			SOC_MESON8B: SOC_MESON
+defflag	opt_soc.h			SOC_MESONG12: SOC_MESON
 defflag	opt_soc.h			SOC_MESONGX: SOC_MESON
 defflag	opt_soc.h			SOC_MESONGXBB: SOC_MESONGX
 defflag	opt_soc.h			SOC_MESONGXL: SOC_MESONGX
