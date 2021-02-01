@@ -1,4 +1,4 @@
-.\"	$NetBSD: fread.3,v 1.15 2011/09/11 04:55:48 jruoho Exp $
+.\"	$NetBSD: fread.3,v 1.16 2021/02/01 17:50:53 jdolecek Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fread.3	8.2 (Berkeley) 3/8/94
 .\"
-.Dd September 11, 2011
+.Dd February 1, 2020
 .Dt FREAD 3
 .Os
 .Sh NAME
@@ -96,6 +96,15 @@ or
 is 0, the functions return 0 and the state of
 .Fa stream
 remains unchanged.
+.Pp
+If the product of
+.Fa size
+and
+.Fa nmemb
+results in size_t overflow, 0 is returned and errno
+is set to
+.Er EOVERFLOW .
+
 If an error occurs, or the end-of-file is reached,
 the return value is a short object count (or zero).
 .Pp
