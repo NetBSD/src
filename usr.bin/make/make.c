@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.236 2021/01/30 15:48:42 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.237 2021/02/01 20:40:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.236 2021/01/30 15:48:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.237 2021/02/01 20:40:02 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -808,50 +808,53 @@ UnmarkChildren(GNode *gn)
 static void
 MakeAddAllSrc(GNode *cgn, GNode *pgn)
 {
+	const char *child, *allsrc;
+
 	if (cgn->type & OP_MARK)
 		return;
 	cgn->type |= OP_MARK;
 
-	if (!(cgn->type & (OP_EXEC | OP_USE | OP_USEBEFORE | OP_INVISIBLE))) {
-		const char *child, *allsrc;
+	if (cgn->type & (OP_EXEC | OP_USE | OP_USEBEFORE | OP_INVISIBLE))
+		return;
 
-		if (cgn->type & OP_ARCHV)
-			child = GNode_VarMember(cgn);
-		else
-			child = GNode_Path(cgn);
-		if (cgn->type & OP_JOIN) {
-			allsrc = GNode_VarAllsrc(cgn);
-		} else {
-			allsrc = child;
-		}
-		if (allsrc != NULL)
-			Var_Append(ALLSRC, allsrc, pgn);
-		if (pgn->type & OP_JOIN) {
-			if (cgn->made == MADE) {
-				Var_Append(OODATE, child, pgn);
-			}
-		} else if ((pgn->mtime < cgn->mtime) ||
-			   (cgn->mtime >= now && cgn->made == MADE)) {
-			/*
-			 * It goes in the OODATE variable if the parent is
-			 * younger than the child or if the child has been
-			 * modified more recently than the start of the make.
-			 * This is to keep pmake from getting confused if
-			 * something else updates the parent after the make
-			 * starts (shouldn't happen, I know, but sometimes it
-			 * does). In such a case, if we've updated the child,
-			 * the parent is likely to have a modification time
-			 * later than that of the child and anything that
-			 * relies on the OODATE variable will be hosed.
-			 *
-			 * XXX: This will cause all made children to go in
-			 * the OODATE variable, even if they're not touched,
-			 * if RECHECK isn't defined, since cgn->mtime is set
-			 * to now in Make_Update. According to some people,
-			 * this is good...
-			 */
+	if (cgn->type & OP_ARCHV)
+		child = GNode_VarMember(cgn);
+	else
+		child = GNode_Path(cgn);
+
+	if (cgn->type & OP_JOIN)
+		allsrc = GNode_VarAllsrc(cgn);
+	else
+		allsrc = child;
+
+	if (allsrc != NULL)
+		Var_Append(ALLSRC, allsrc, pgn);
+
+	if (pgn->type & OP_JOIN) {
+		if (cgn->made == MADE)
 			Var_Append(OODATE, child, pgn);
-		}
+
+	} else if ((pgn->mtime < cgn->mtime) ||
+		   (cgn->mtime >= now && cgn->made == MADE)) {
+		/*
+		 * It goes in the OODATE variable if the parent is
+		 * younger than the child or if the child has been
+		 * modified more recently than the start of the make.
+		 * This is to keep pmake from getting confused if
+		 * something else updates the parent after the make
+		 * starts (shouldn't happen, I know, but sometimes it
+		 * does). In such a case, if we've updated the child,
+		 * the parent is likely to have a modification time
+		 * later than that of the child and anything that
+		 * relies on the OODATE variable will be hosed.
+		 *
+		 * XXX: This will cause all made children to go in
+		 * the OODATE variable, even if they're not touched,
+		 * if RECHECK isn't defined, since cgn->mtime is set
+		 * to now in Make_Update. According to some people,
+		 * this is good...
+		 */
+		Var_Append(OODATE, child, pgn);
 	}
 }
 
