@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.24 2021/01/31 16:18:22 jdolecek Exp $	*/
+/*	$NetBSD: fread.c,v 1.25 2021/02/01 17:50:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.24 2021/01/31 16:18:22 jdolecek Exp $");
+__RCSID("$NetBSD: fread.c,v 1.25 2021/02/01 17:50:53 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: fread.c,v 1.24 2021/01/31 16:18:22 jdolecek Exp $");
 #include "reentrant.h"
 #include "local.h"
 
+#define MUL_NO_OVERFLOW	(1UL << (sizeof(size_t) * 4))
+
 size_t
 fread(void *buf, size_t size, size_t count, FILE *fp)
 {
@@ -57,6 +59,17 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	size_t total;
 
 	_DIAGASSERT(fp != NULL);
+
+	/*
+	 * Extension:  Catch integer overflow
+	 */
+	if ((size >= MUL_NO_OVERFLOW || count >= MUL_NO_OVERFLOW) &&
+	    size > 0 && count > SIZE_MAX / size) {
+		errno = EOVERFLOW;
+		fp->_flags |= __SERR;
+		return (0);
+	}
+
 	/*
 	 * The ANSI standard requires a return value of 0 for a count
 	 * or a size of 0.  Whilst ANSI imposes no such requirements on
