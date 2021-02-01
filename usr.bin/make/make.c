@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.237 2021/02/01 20:40:02 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.238 2021/02/01 20:42:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.237 2021/02/01 20:40:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.238 2021/02/01 20:42:13 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -599,7 +599,7 @@ IsWaitingForOrder(GNode *gn)
 	return FALSE;
 }
 
-static int MakeBuildParent(GNode *, GNodeListNode *);
+static void MakeBuildParent(GNode *, GNodeListNode *);
 
 static void
 ScheduleOrderSuccessors(GNode *gn)
@@ -608,8 +608,7 @@ ScheduleOrderSuccessors(GNode *gn)
 	GNodeListNode *ln;
 
 	for (ln = gn->order_succ.first; ln != NULL; ln = ln->next)
-		if (MakeBuildParent(ln->datum, toBeMadeNext) != 0)
-			break;
+		MakeBuildParent(ln->datum, toBeMadeNext);
 }
 
 /*
@@ -938,18 +937,16 @@ MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 }
 
 /* When a .ORDER LHS node completes, we do this on each RHS. */
-static int
+static void
 MakeBuildParent(GNode *pn, GNodeListNode *toBeMadeNext)
 {
 	if (pn->made != DEFERRED)
-		return 0;
+		return;
 
 	if (!MakeBuildChild(pn, toBeMadeNext)) {
 		/* When this node is built, reschedule its parents. */
 		pn->flags |= DONE_ORDER;
 	}
-
-	return 0;
 }
 
 static void
