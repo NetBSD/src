@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.411 2021/02/01 21:04:10 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.412 2021/02/01 21:09:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.411 2021/02/01 21:04:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.412 2021/02/01 21:09:25 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1471,12 +1471,12 @@ JobExec(Job *job, char **argv)
 		 * commit suicide.
 		 */
 #if defined(MAKE_NATIVE) || defined(HAVE_SETPGID)
-#  if defined(SYSV)
+# if defined(SYSV)
 		/* XXX: dsl - I'm sure this should be setpgrp()... */
 		(void)setsid();
-#  else
+# else
 		(void)setpgid(0, getpid());
-#  endif
+# endif
 #endif
 
 		(void)execv(shellPath, argv);

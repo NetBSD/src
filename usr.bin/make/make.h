@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.248 2021/02/01 21:04:10 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.249 2021/02/01 21:09:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -521,8 +521,8 @@ extern SearchPath dirSearchPath;
 /* Used for .include "...". */
 extern SearchPath *parseIncPath;
 /*
- * Used for .include <...>, for the built-in sys.mk and makefiles from the
- * command line arguments.
+ * Used for .include <...>, for the built-in sys.mk and for makefiles from
+ * the command line arguments.
  */
 extern SearchPath *sysIncPath;
 /* The default for sysIncPath. */
@@ -832,18 +832,18 @@ pp_skip_hspace(char **pp)
 }
 
 #if defined(lint)
-#  define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
+# define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
 #elif defined(MAKE_NATIVE)
-#  include <sys/cdefs.h>
-#  define MAKE_RCSID(id) __RCSID(id)
+# include <sys/cdefs.h>
+# define MAKE_RCSID(id) __RCSID(id)
 #elif defined(MAKE_ALL_IN_ONE) && defined(__COUNTER__)
-#  define MAKE_RCSID_CONCAT(x, y) CONCAT(x, y)
-#  define MAKE_RCSID(id) static volatile char \
+# define MAKE_RCSID_CONCAT(x, y) CONCAT(x, y)
+# define MAKE_RCSID(id) static volatile char \
 	MAKE_RCSID_CONCAT(rcsid_, __COUNTER__)[] = id
 #elif defined(MAKE_ALL_IN_ONE)
-#  define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
+# define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
 #else
-#  define MAKE_RCSID(id) static volatile char rcsid[] = id
+# define MAKE_RCSID(id) static volatile char rcsid[] = id
 #endif
 
 #endif /* MAKE_MAKE_H */

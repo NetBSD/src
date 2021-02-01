@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_dev.c,v 1.7 2021/01/19 20:51:46 rillig Exp $	*/
+/*	$NetBSD: filemon_dev.c,v 1.8 2021/02/01 21:09:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <unistd.h>
 
 #ifdef HAVE_FILEMON_H
-#  include <filemon.h>
+# include <filemon.h>
 #endif
 
 #ifndef _PATH_FILEMON
