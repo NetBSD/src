@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.250 2021/02/01 21:32:54 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.251 2021/02/02 21:26:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -350,9 +350,7 @@ typedef enum GNodeFlags {
 	/* Used by MakePrintStatus */
 	CYCLE		= 1 << 12,
 	/* Used by MakePrintStatus */
-	DONECYCLE	= 1 << 13,
-	/* Internal use only */
-	INTERNAL	= 1 << 14
+	DONECYCLE	= 1 << 13
 } GNodeFlags;
 
 typedef struct List StringList;

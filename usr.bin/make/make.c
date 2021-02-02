@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.239 2021/02/02 17:56:31 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.240 2021/02/02 21:26:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.239 2021/02/02 17:56:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.240 2021/02/02 21:26:51 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -148,10 +148,10 @@ ENUM_FLAGS_RTTI_31(GNodeType,
     OP_TRANSFORM, OP_MEMBER, OP_LIB, OP_ARCHV,
     OP_HAS_COMMANDS, OP_SAVE_CMDS, OP_DEPS_FOUND, OP_MARK);
 
-ENUM_FLAGS_RTTI_10(GNodeFlags,
+ENUM_FLAGS_RTTI_9(GNodeFlags,
     REMAKE, CHILDMADE, FORCE, DONE_WAIT,
     DONE_ORDER, FROM_DEPEND, DONE_ALLSRC, CYCLE,
-    DONECYCLE, INTERNAL);
+    DONECYCLE);
 
 void
 GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
