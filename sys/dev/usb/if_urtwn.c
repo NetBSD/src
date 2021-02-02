@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.92 2021/02/02 00:27:38 yamt Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.93 2021/02/02 10:46:17 yamt Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.92 2021/02/02 00:27:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.93 2021/02/02 10:46:17 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2587,6 +2587,17 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 }
 
 static void
+urtwn_put_tx_data(struct urtwn_softc *sc, struct urtwn_tx_data *data)
+{
+	size_t pidx = data->pidx;
+
+	mutex_enter(&sc->sc_tx_mtx);
+	/* Put this Tx buffer back to our free list. */
+	TAILQ_INSERT_TAIL(&sc->tx_free_list[pidx], data, next);
+	mutex_exit(&sc->sc_tx_mtx);
+}
+
+static void
 urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct urtwn_tx_data *data = priv;
@@ -2598,10 +2609,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
 	DPRINTFN(DBG_TX, "status=%jd", status, 0, 0, 0);
 
-	mutex_enter(&sc->sc_tx_mtx);
-	/* Put this Tx buffer back to our free list. */
-	TAILQ_INSERT_TAIL(&sc->tx_free_list[pidx], data, next);
-	mutex_exit(&sc->sc_tx_mtx);
+	urtwn_put_tx_data(sc, data);
 
 	s = splnet();
 	sc->tx_timer = 0;
@@ -2650,8 +2658,10 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		k = ieee80211_crypto_encap(ic, ni, m);
-		if (k == NULL)
+		if (k == NULL) {
+			urtwn_put_tx_data(sc, data);
 			return ENOBUFS;
+		}
 
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m, struct ieee80211_frame *);
@@ -2908,6 +2918,7 @@ urtwn_start(struct ifnet *ifp)
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
 			printf("ERROR6\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
 			continue;
 		}
 		eh = mtod(m, struct ether_header *);
@@ -2916,6 +2927,7 @@ urtwn_start(struct ifnet *ifp)
 			m_freem(m);
 			printf("ERROR5\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
 			continue;
 		}
 
@@ -2925,6 +2937,7 @@ urtwn_start(struct ifnet *ifp)
 			ieee80211_free_node(ni);
 			printf("ERROR4\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
 			continue;
 		}
  sendit:
