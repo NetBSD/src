@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.192 2019/11/21 19:24:01 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.193 2021/02/02 08:18:42 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.192 2019/11/21 19:24:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.193 2021/02/02 08:18:42 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1091,6 +1091,25 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
+
+#ifdef _LP64
+	/* deal with invalid VAs early */
+	if (__predict_false(addr >= (1UL<<HOLESHIFT) && addr < (1UL<<63))) {
+
+		if (tstate & TSTATE_PRIV)
+			panic("fault type %u for invalid va %lx", type, addr);
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)pc;
+		trapsignal(l, &ksi);
+		userret(l, pc, sticks);
+		share_fpu(l, tf);
+		return;
+	}
+#endif
 
 	/* Find the faulting va to give to uvm_fault */
 	va = trunc_page(addr);
