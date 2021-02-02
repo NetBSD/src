@@ -1,9 +1,9 @@
-# $NetBSD: opt-debug-graph3.mk,v 1.2 2021/02/02 17:27:35 rillig Exp $
+# $NetBSD: opt-debug-graph3.mk,v 1.3 2021/02/02 17:47:56 rillig Exp $
 #
 # Tests for the -dg3 command line option, which prints the input
 # graph before exiting on error.
 #
-# FIXME: The documentation is wrong.  There is no debug output despite
+# Before compat.c 1.222 from 2021-02-02, there was no debug output despite
 # the error.
 
 .MAKEFLAGS: -dg3
