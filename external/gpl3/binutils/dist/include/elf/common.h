@@ -868,7 +868,7 @@
 #define NT_NETBSD_PAX_MPROTECT		0x01	/* Force enable Mprotect */
 #define NT_NETBSD_PAX_NOMPROTECT	0x02	/* Force disable Mprotect */
 #define NT_NETBSD_PAX_GUARD		0x04	/* Force enable Segvguard */
-#define NT_NETBSD_PAX_NOGUARD		0x08    /* Force disable Servguard */
+#define NT_NETBSD_PAX_NOGUARD		0x08    /* Force disable Segvguard */
 #define NT_NETBSD_PAX_ASLR		0x10	/* Force enable ASLR */
 #define NT_NETBSD_PAX_NOASLR		0x20	/* Force disable ASLR */
 
