@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.160 2021/01/10 23:59:53 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.161 2021/02/02 17:56:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.160 2021/01/10 23:59:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.161 2021/02/02 17:56:31 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -450,8 +450,8 @@ Targ_PrintType(int type)
 	}
 }
 
-static const char *
-made_name(GNodeMade made)
+const char *
+GNodeMade_Name(GNodeMade made)
 {
 	switch (made) {
 	case UNMADE:    return "unmade";
@@ -505,10 +505,10 @@ Targ_PrintNode(GNode *gn, int pass)
 			if (gn->mtime != 0) {
 				debug_printf("# last modified %s: %s\n",
 				    Targ_FmtTime(gn->mtime),
-				    made_name(gn->made));
+				    GNodeMade_Name(gn->made));
 			} else if (gn->made != UNMADE) {
 				debug_printf("# nonexistent (maybe): %s\n",
-				    made_name(gn->made));
+				    GNodeMade_Name(gn->made));
 			} else
 				debug_printf("# unmade\n");
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.238 2021/02/01 20:42:13 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.239 2021/02/02 17:56:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.238 2021/02/01 20:42:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.239 2021/02/02 17:56:31 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -137,10 +137,6 @@ make_abort(GNode *gn, int lineno)
 	abort();
 }
 
-ENUM_VALUE_RTTI_8(GNodeMade,
-    UNMADE, DEFERRED, REQUESTED, BEINGMADE,
-    MADE, UPTODATE, ERROR, ABORTED);
-
 ENUM_FLAGS_RTTI_31(GNodeType,
     OP_DEPENDS, OP_FORCE, OP_DOUBLEDEP,
 /* OP_OPMASK is omitted since it combines other flags */
@@ -164,9 +160,9 @@ GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
 	char type_buf[GNodeType_ToStringSize];
 	char flags_buf[GNodeFlags_ToStringSize];
 
-	fprintf(f, "%smade %s, type %s, flags %s%s",
+	fprintf(f, "%s%s, type %s, flags %s%s",
 	    prefix,
-	    GNodeMade_ToString(gn->made),
+	    GNodeMade_Name(gn->made),
 	    GNodeType_ToString(type_buf, gn->type),
 	    GNodeFlags_ToString(flags_buf, gn->flags),
 	    suffix);
