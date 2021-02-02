@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.787 2021/02/01 19:46:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.788 2021/02/02 15:41:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.787 2021/02/01 19:46:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.788 2021/02/02 15:41:14 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -223,16 +223,16 @@ typedef enum UnexportWhat {
 } UnexportWhat;
 
 /* Flags for pattern matching in the :S and :C modifiers */
-typedef enum VarPatternFlags {
-	VARP_NONE		= 0,
+typedef struct VarPatternFlags {
+
 	/* Replace as often as possible ('g') */
-	VARP_SUB_GLOBAL		= 1 << 0,
+	Boolean subGlobal: 1;
 	/* Replace only once ('1') */
-	VARP_SUB_ONE		= 1 << 1,
+	Boolean subOnce: 1;
 	/* Match at start of word ('^') */
-	VARP_ANCHOR_START	= 1 << 2,
+	Boolean anchorStart: 1;
 	/* Match at end of word ('$') */
-	VARP_ANCHOR_END		= 1 << 3
+	Boolean anchorEnd: 1;
 } VarPatternFlags;
 
 /* SepBuf is a string being built from words, interleaved with separators. */
@@ -1440,15 +1440,15 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 	struct ModifyWord_SubstArgs *args = data;
 	const char *match;
 
-	if ((args->pflags & VARP_SUB_ONE) && args->matched)
+	if (args->pflags.subOnce && args->matched)
 		goto nosub;
 
-	if (args->pflags & VARP_ANCHOR_START) {
+	if (args->pflags.anchorStart) {
 		if (wordLen < args->lhsLen ||
 		    memcmp(word, args->lhs, args->lhsLen) != 0)
 			goto nosub;
 
-		if ((args->pflags & VARP_ANCHOR_END) && wordLen != args->lhsLen)
+		if ((args->pflags.anchorEnd) && wordLen != args->lhsLen)
 			goto nosub;
 
 		/* :S,^prefix,replacement, or :S,^whole$,replacement, */
@@ -1459,7 +1459,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 		return;
 	}
 
-	if (args->pflags & VARP_ANCHOR_END) {
+	if (args->pflags.anchorEnd) {
 		const char *start;
 
 		if (wordLen < args->lhsLen)
@@ -1486,7 +1486,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 		args->matched = TRUE;
 		wordLen -= (size_t)(match - word) + args->lhsLen;
 		word += (size_t)(match - word) + args->lhsLen;
-		if (wordLen == 0 || !(args->pflags & VARP_SUB_GLOBAL))
+		if (wordLen == 0 || !args->pflags.subGlobal)
 			break;
 	}
 nosub:
@@ -1527,7 +1527,7 @@ ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 	int flags = 0;
 	regmatch_t m[10];
 
-	if ((args->pflags & VARP_SUB_ONE) && args->matched)
+	if (args->pflags.subOnce && args->matched)
 		goto nosub;
 
 tryagain:
@@ -1575,7 +1575,7 @@ tryagain:
 		}
 
 		wp += m[0].rm_eo;
-		if (args->pflags & VARP_SUB_GLOBAL) {
+		if (args->pflags.subGlobal) {
 			flags |= REG_NOTBOL;
 			if (m[0].rm_so == 0 && m[0].rm_eo == 0) {
 				SepBuf_AddBytes(buf, wp, 1);
@@ -2093,7 +2093,7 @@ ParseModifierPartSubst(
 
 		if (p[1] == delim) {	/* Unescaped $ at end of pattern */
 			if (out_pflags != NULL)
-				*out_pflags |= VARP_ANCHOR_END;
+				out_pflags->anchorEnd = TRUE;
 			else
 				Buf_AddByte(&buf, *p);
 			p++;
@@ -2666,7 +2666,7 @@ ApplyModifier_Subst(const char **pp, const char *val, ApplyModifiersState *st)
 
 	*pp += 2;
 
-	args.pflags = VARP_NONE;
+	args.pflags = (VarPatternFlags){ FALSE, FALSE, FALSE, FALSE };
 	args.matched = FALSE;
 
 	/*
@@ -2674,7 +2674,7 @@ ApplyModifier_Subst(const char **pp, const char *val, ApplyModifiersState *st)
 	 * start of the word -- skip over it and flag pattern.
 	 */
 	if (**pp == '^') {
-		args.pflags |= VARP_ANCHOR_START;
+		args.pflags.anchorStart = TRUE;
 		(*pp)++;
 	}
 
@@ -2694,10 +2694,10 @@ ApplyModifier_Subst(const char **pp, const char *val, ApplyModifiersState *st)
 	for (;; (*pp)++) {
 		switch (**pp) {
 		case 'g':
-			args.pflags |= VARP_SUB_GLOBAL;
+			args.pflags.subGlobal = TRUE;
 			continue;
 		case '1':
-			args.pflags |= VARP_SUB_ONE;
+			args.pflags.subOnce = TRUE;
 			continue;
 		case 'W':
 			oneBigWord = TRUE;
@@ -2745,16 +2745,16 @@ ApplyModifier_Regex(const char **pp, const char *val, ApplyModifiersState *st)
 		return AMR_CLEANUP;
 	}
 
-	args.pflags = VARP_NONE;
+	args.pflags = (VarPatternFlags){ FALSE, FALSE, FALSE, FALSE };
 	args.matched = FALSE;
 	oneBigWord = st->oneBigWord;
 	for (;; (*pp)++) {
 		switch (**pp) {
 		case 'g':
-			args.pflags |= VARP_SUB_GLOBAL;
+			args.pflags.subGlobal = TRUE;
 			continue;
 		case '1':
-			args.pflags |= VARP_SUB_ONE;
+			args.pflags.subOnce = TRUE;
 			continue;
 		case 'W':
 			oneBigWord = TRUE;
