@@ -5,7 +5,7 @@ false
 *** Error code 1 (continuing)
 `all' not remade because of errors.
 #*** Input graph:
-# made-target, made MADE, type OP_DEPENDS|OP_PHONY|OP_HAS_COMMANDS|OP_DEPS_FOUND|OP_MARK, flags REMAKE|DONE_ALLSRC
+# made-target, made, type OP_DEPENDS|OP_PHONY|OP_HAS_COMMANDS|OP_DEPS_FOUND|OP_MARK, flags REMAKE|DONE_ALLSRC
 #
 # *** MAIN TARGET ***
 # No unmade children
@@ -15,7 +15,7 @@ made-target     :
 	(null)
 
 
-# error-target, made ERROR, type OP_DEPENDS|OP_PHONY|OP_HAS_COMMANDS|OP_DEPS_FOUND|OP_MARK, flags REMAKE|DONE_ALLSRC
+# error-target, error when made, type OP_DEPENDS|OP_PHONY|OP_HAS_COMMANDS|OP_DEPS_FOUND|OP_MARK, flags REMAKE|DONE_ALLSRC
 #
 # No unmade children
 # nonexistent (maybe): error when made
@@ -24,8 +24,8 @@ error-target    :
 	(null)
 
 
-# aborted-target, made ABORTED, type OP_DEPENDS|OP_PHONY|OP_DEPS_FOUND|OP_MARK, flags none
-# aborted-target-dependency, made ERROR, type OP_DEPENDS|OP_PHONY|OP_HAS_COMMANDS|OP_DEPS_FOUND|OP_MARK, flags REMAKE|DONE_ALLSRC
+# aborted-target, aborted, type OP_DEPENDS|OP_PHONY|OP_DEPS_FOUND|OP_MARK, flags none
+# aborted-target-dependency, error when made, type OP_DEPENDS|OP_PHONY|OP_HAS_COMMANDS|OP_DEPS_FOUND|OP_MARK, flags REMAKE|DONE_ALLSRC
 #
 # No unmade children
 # nonexistent (maybe): error when made
@@ -34,14 +34,14 @@ aborted-target-dependency:
 	(null)
 
 
-# all, made ABORTED, type OP_DEPENDS|OP_DEPS_FOUND, flags CHILDMADE|FORCE
+# all, aborted, type OP_DEPENDS|OP_DEPS_FOUND, flags CHILDMADE|FORCE
 #
 # 3 unmade children
 # nonexistent (maybe): aborted
 all             : made-target error-target aborted-target
 
 
-# .END, made UNMADE, type OP_SPECIAL, flags none
+# .END, unmade, type OP_SPECIAL, flags none
 
 
 #
