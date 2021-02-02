@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.788 2021/02/02 15:41:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.789 2021/02/02 16:18:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.788 2021/02/02 15:41:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.789 2021/02/02 16:18:16 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1971,21 +1971,24 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * Some modifiers need to free some memory.
  */
 
-typedef enum VarExprFlags {
-	VEF_NONE	= 0,
+typedef enum VarExprStatus {
+	/* The variable expression is based in a regular, defined variable. */
+	VES_NONE,
 	/* The variable expression is based on an undefined variable. */
-	VEF_UNDEF = 0x01,
+	VES_UNDEF,
 	/*
 	 * The variable expression started as an undefined expression, but one
 	 * of the modifiers (such as :D or :U) has turned the expression from
 	 * undefined to defined.
 	 */
-	VEF_DEF = 0x02
-} VarExprFlags;
+	VES_DEF
+} VarExprStatus;
 
-ENUM_FLAGS_RTTI_2(VarExprFlags,
-		  VEF_UNDEF, VEF_DEF);
-
+static const char * const VarExprStatus_Name[] = {
+	    "none",
+	    "VES_UNDEF",
+	    "VES_DEF"
+};
 
 typedef struct ApplyModifiersState {
 	/* '\0' or '{' or '(' */
@@ -2008,14 +2011,14 @@ typedef struct ApplyModifiersState {
 	 * big word, possibly containing spaces.
 	 */
 	Boolean oneBigWord;
-	VarExprFlags exprFlags;
+	VarExprStatus exprStatus;
 } ApplyModifiersState;
 
 static void
 ApplyModifiersState_Define(ApplyModifiersState *st)
 {
-	if (st->exprFlags & VEF_UNDEF)
-		st->exprFlags |= VEF_DEF;
+	if (st->exprStatus == VES_UNDEF)
+		st->exprStatus = VES_DEF;
 }
 
 typedef enum ApplyModifierResult {
@@ -2325,7 +2328,7 @@ ApplyModifier_Defined(const char **pp, const char *val, ApplyModifiersState *st)
 
 	VarEvalFlags eflags = VARE_NONE;
 	if (st->eflags & VARE_WANTRES)
-		if ((**pp == 'D') == !(st->exprFlags & VEF_UNDEF))
+		if ((**pp == 'D') == (st->exprStatus == VES_NONE))
 			eflags = st->eflags;
 
 	Buf_Init(&buf);
@@ -3203,7 +3206,7 @@ ok:
 	}
 
 	ctxt = st->ctxt;	/* context where v belongs */
-	if (!(st->exprFlags & VEF_UNDEF) && st->ctxt != VAR_GLOBAL) {
+	if (st->exprStatus == VES_NONE && st->ctxt != VAR_GLOBAL) {
 		Var *gv = VarFind(st->var->name.str, st->ctxt, FALSE);
 		if (gv == NULL)
 			ctxt = VAR_GLOBAL;
@@ -3245,7 +3248,7 @@ ok:
 			break;
 		}
 		case '?':
-			if (!(st->exprFlags & VEF_UNDEF))
+			if (st->exprStatus == VES_NONE)
 				break;
 			/* FALLTHROUGH */
 		default:
@@ -3396,7 +3399,6 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc,
 {
 	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
-	char exprflags_str[VarExprFlags_ToStringSize];
 	Boolean is_single_char = mod[0] != '\0' &&
 				 (mod[1] == endc || mod[1] == ':');
 
@@ -3406,7 +3408,7 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc,
 	    st->var->name.str, mod[0], is_single_char ? "" : "...", val,
 	    VarEvalFlags_ToString(eflags_str, st->eflags),
 	    VarFlags_ToString(vflags_str, st->var->flags),
-	    VarExprFlags_ToString(exprflags_str, st->exprFlags));
+	    VarExprStatus_Name[st->exprStatus]);
 }
 
 static void
@@ -3414,7 +3416,6 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 {
 	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
-	char exprflags_str[VarExprFlags_ToStringSize];
 	const char *quot = st->newVal.str == var_Error ? "" : "\"";
 	const char *newVal =
 	    st->newVal.str == var_Error ? "error" : st->newVal.str;
@@ -3423,7 +3424,7 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 	    st->var->name.str, (int)(p - mod), mod, quot, newVal, quot,
 	    VarEvalFlags_ToString(eflags_str, st->eflags),
 	    VarFlags_ToString(vflags_str, st->var->flags),
-	    VarExprFlags_ToString(exprflags_str, st->exprFlags));
+	    VarExprStatus_Name[st->exprStatus]);
 }
 
 static ApplyModifierResult
@@ -3493,7 +3494,7 @@ ApplyModifier(const char **pp, const char *val, ApplyModifiersState *st)
 }
 
 static FStr ApplyModifiers(const char **, FStr, char, char, Var *,
-			    VarExprFlags *, GNode *, VarEvalFlags);
+			    VarExprStatus *, GNode *, VarEvalFlags);
 
 typedef enum ApplyModifiersIndirectResult {
 	/* The indirect modifiers have been applied successfully. */
@@ -3541,7 +3542,7 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	if (mods.str[0] != '\0') {
 		const char *modsp = mods.str;
 		FStr newVal = ApplyModifiers(&modsp, *inout_value, '\0', '\0',
-		    st->var, &st->exprFlags, st->ctxt, st->eflags);
+		    st->var, &st->exprStatus, st->ctxt, st->eflags);
 		*inout_value = newVal;
 		if (newVal.str == var_Error || *modsp != '\0') {
 			FStr_Done(&mods);
@@ -3637,7 +3638,7 @@ ApplyModifiers(
     char startc,		/* '(' or '{', or '\0' for indirect modifiers */
     char endc,			/* ')' or '}', or '\0' for indirect modifiers */
     Var *v,
-    VarExprFlags *exprFlags,
+    VarExprStatus *exprStatus,
     GNode *ctxt,		/* for looking up and modifying variables */
     VarEvalFlags eflags
 )
@@ -3652,7 +3653,7 @@ ApplyModifiers(
 #endif
 	    ' ',		/* .sep */
 	    FALSE,		/* .oneBigWord */
-	    *exprFlags		/* .exprFlags */
+	    *exprStatus		/* .exprStatus */
 	};
 	const char *p;
 	const char *mod;
@@ -3695,7 +3696,7 @@ ApplyModifiers(
 
 	*pp = p;
 	assert(value.str != NULL); /* Use var_Error or varUndefined instead. */
-	*exprFlags = st.exprFlags;
+	*exprStatus = st.exprStatus;
 	return value;
 
 bad_modifier:
@@ -3706,7 +3707,7 @@ bad_modifier:
 cleanup:
 	*pp = p;
 	FStr_Done(&value);
-	*exprFlags = st.exprFlags;
+	*exprStatus = st.exprStatus;
 	return FStr_InitRefer(var_Error);
 }
 
@@ -3987,7 +3988,7 @@ ParseVarnameLong(
 	Boolean *out_TRUE_haveModifier,
 	const char **out_TRUE_extraModifiers,
 	Boolean *out_TRUE_dynamic,
-	VarExprFlags *out_TRUE_exprFlags
+	VarExprStatus *out_TRUE_exprStatus
 )
 {
 	size_t namelen;
@@ -4056,7 +4057,7 @@ ParseVarnameLong(
 		 * instead of the actually computed value.
 		 */
 		v = VarNew(FStr_InitOwn(varname), "", VAR_NONE);
-		*out_TRUE_exprFlags = VEF_UNDEF;
+		*out_TRUE_exprStatus = VES_UNDEF;
 	} else
 		free(varname);
 
@@ -4142,7 +4143,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	Var *v;
 	FStr value;
 	char eflags_str[VarEvalFlags_ToStringSize];
-	VarExprFlags exprFlags = VEF_NONE;
+	VarExprStatus exprStatus = VES_NONE;
 
 	DEBUG2(VAR, "Var_Parse: %s with %s\n", start,
 	    VarEvalFlags_ToString(eflags_str, eflags));
@@ -4170,7 +4171,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 		if (!ParseVarnameLong(p, startc, ctxt, eflags,
 		    pp, &res, out_val,
 		    &endc, &p, &v, &haveModifier, &extramodifiers,
-		    &dynamic, &exprFlags))
+		    &dynamic, &exprStatus))
 			return res;
 	}
 
@@ -4208,14 +4209,14 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 		if (extramodifiers != NULL) {
 			const char *em = extramodifiers;
 			value = ApplyModifiers(&em, value, '\0', '\0',
-			    v, &exprFlags, ctxt, eflags);
+			    v, &exprStatus, ctxt, eflags);
 		}
 
 		if (haveModifier) {
 			p++;	/* Skip initial colon. */
 
 			value = ApplyModifiers(&p, value, startc, endc,
-			    v, &exprFlags, ctxt, eflags);
+			    v, &exprStatus, ctxt, eflags);
 		}
 	}
 
@@ -4227,8 +4228,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	if (v->flags & VAR_FROM_ENV) {
 		FreeEnvVar(&value.freeIt, v, value.str);
 
-	} else if (exprFlags & VEF_UNDEF) {
-		if (!(exprFlags & VEF_DEF)) {
+	} else if (exprStatus != VES_NONE) {
+		if (exprStatus != VES_DEF) {
 			FStr_Done(&value);
 			if (dynamic) {
 				value = FStr_InitOwn(bmake_strsedup(start, p));
