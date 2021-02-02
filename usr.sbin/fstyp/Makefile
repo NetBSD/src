@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2020/09/06 07:20:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2021/02/02 21:31:11 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/lib/libnvpair
 LDADD+=	-lnvpair -lzfs
 .endif
 
-CWARNFLAGS.clang+=	-Wno-unknown-pragmas
+CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-error=address-of-packed-member
 CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
