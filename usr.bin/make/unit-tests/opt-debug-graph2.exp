@@ -1,1 +1,10 @@
-exit status 0
+: 'Making made-target.'
+false
+*** Error code 1 (continuing)
+false
+*** Error code 1 (continuing)
+`all' not remade because of errors.
+
+Stop.
+make: stopped in unit-tests
+exit status 1
