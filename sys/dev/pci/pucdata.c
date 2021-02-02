@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.108 2020/06/13 12:42:58 ryo Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.109 2021/02/02 16:11:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.108 2020/06/13 12:42:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.109 2021/02/02 16:11:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1319,6 +1319,19 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ},
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ},
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ},
+	    },
+	},
+
+	/* Oxford Semiconductor Exsys EX-41098 PCI UARTs */
+	{   "Oxford Semiconductor Exsys EX-41098 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_EXSYS_EX41098,
+		PCI_VENDOR_OXFORDSEMI,	0 },
+	    {	0xffff,	0xffff,	0xffff,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ * 8},
 	    },
 	},
 
