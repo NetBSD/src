@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.789 2021/02/02 16:18:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.790 2021/02/02 21:26:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.789 2021/02/02 16:18:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.790 2021/02/02 21:26:51 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -475,8 +475,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), val,
 	    flags & VAR_SET_READONLY ? VAR_READONLY : VAR_NONE);
 	HashEntry_Set(he, v);
-	if (!(ctxt->flags & INTERNAL))
-		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
+	DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
 }
 
 /*
