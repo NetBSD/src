@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.16 2021/01/30 15:53:55 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.17 2021/02/02 17:56:31 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -39,8 +39,9 @@ typedef struct EnumToStringSpec {
 	const char *es_name;
 } EnumToStringSpec;
 
+
 const char *Enum_FlagsToString(char *, size_t, int, const EnumToStringSpec *);
-const char *Enum_ValueToString(int, const EnumToStringSpec *);
+
 
 /* For Enum_FlagsToString, the separator between flags. */
 #define ENUM__SEP "|"
@@ -99,13 +100,6 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 	{ part1, part2, part3, part4, { 0, "" } }
 #define ENUM__SPECS_5(part1, part2, part3, part4, part5) \
 	{ part1, part2, part3, part4, part5, { 0, "" } }
-
-/* Declare the necessary data structures for calling Enum_ValueToString. */
-#define ENUM__VALUE_RTTI(typnam, specs) \
-	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
-	MAKE_INLINE const char *typnam ## _ToString(typnam value) \
-	{ return Enum_ValueToString(value, typnam ## _ ## ToStringSpecs); } \
-	extern void enum_value_rtti_dummy(void)
 
 
 /* Declare the necessary data structures for calling Enum_FlagsToString. */
@@ -182,16 +176,6 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 	    ENUM__JOIN_2( \
 		ENUM__JOIN_STR_4(v1, v2, v3, v4), \
 		ENUM__JOIN_STR_4(v5, v6, v7, v8)))
-
-/*
- * Declare the necessary data structures for calling Enum_ValueToString
- * for an enum with 8 constants.
- */
-#define ENUM_VALUE_RTTI_8(typnam, v1, v2, v3, v4, v5, v6, v7, v8) \
-	ENUM__VALUE_RTTI(typnam, \
-	    ENUM__SPECS_2( \
-		ENUM__SPEC_4(v1, v2, v3, v4), \
-		ENUM__SPEC_4(v5, v6, v7, v8)))
 
 /*
  * Declare the necessary data structures for calling Enum_FlagsToString
