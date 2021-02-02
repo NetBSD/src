@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.297 2020/09/15 10:05:36 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.298 2021/02/02 10:48:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.297 2020/09/15 10:05:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.298 2021/02/02 10:48:33 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1389,7 +1389,7 @@ arp_llinfo_missed(struct ifnet *ifp, const union l3addr *taddr,
 			mdaddr = ip->ip_src;
 
 		/* ip_input() will send ICMP_UNREACH_HOST, not us. */
-		m_free(m);
+		m_freem(m);
 	}
 
 	if (mdaddr.s_addr != INADDR_ANY) {
