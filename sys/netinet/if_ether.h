@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.36 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.37 2021/02/03 17:10:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -76,7 +76,9 @@ struct	ether_arp {
 	u_int8_t arp_tha[ETHER_ADDR_LEN];	/* target hardware address */
 	u_int8_t arp_tpa[4];			/* target protocol address */
 };
+#ifdef CTASSERT
 CTASSERT(sizeof(struct ether_arp) == 28);
+#endif
 #define	arp_hrd	ea_hdr.ar_hrd
 #define	arp_pro	ea_hdr.ar_pro
 #define	arp_hln	ea_hdr.ar_hln
