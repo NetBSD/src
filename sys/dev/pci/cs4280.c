@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.72 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.73 2021/02/03 14:44:32 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.72 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.73 2021/02/03 14:44:32 isaki Exp $");
 
 #include "midi.h"
 
@@ -346,8 +346,6 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->type = TYPE_CS4280;
-	sc->halt_input  = cs4280_halt_input;
-	sc->halt_output = cs4280_halt_output;
 
 	/* setup buffer related parameters */
 	sc->dma_size     = CS4280_DCHUNK;
