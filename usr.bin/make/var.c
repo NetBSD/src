@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.793 2021/02/03 08:40:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.794 2021/02/03 13:44:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -83,7 +83,9 @@
  *	Var_Set		Set the value of the variable, creating it if
  *			necessary.
  *
- *	Var_Append	Append more characters to the variable, creating it if
+ *	Var_Append
+ *	Var_AppendExpand
+ *			Append more characters to the variable, creating it if
  *			necessary. A space is placed between the old value and
  *			the new one.
  *
@@ -131,7 +133,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.793 2021/02/03 08:40:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.794 2021/02/03 13:44:39 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1050,46 +1052,15 @@ Global_SetExpand(const char *name, const char *value)
 }
 
 /*
- * The variable of the given name has the given value appended to it in the
- * given context.
+ * Append the value to the named variable.
  *
- * If the variable doesn't exist, it is created. Otherwise the strings are
- * concatenated, with a space in between.
- *
- * Input:
- *	name		name of the variable to modify, is expanded once
- *	val		string to append to it
- *	ctxt		context in which this should occur
- *
- * Notes:
- *	Only if the variable is being sought in the global context is the
- *	environment searched.
- *	XXX: Knows its calling circumstances in that if called with ctxt
- *	an actual target, it will only search that context since only
- *	a local variable could be being appended to. This is actually
- *	a big win and must be tolerated.
+ * If the variable doesn't exist, it is created.  Otherwise a single space
+ * and the given value are appended.
  */
 void
 Var_Append(const char *name, const char *val, GNode *ctxt)
 {
-	char *name_freeIt = NULL;
 	Var *v;
-
-	assert(val != NULL);
-
-	if (strchr(name, '$') != NULL) {
-		const char *unexpanded_name = name;
-		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
-		/* TODO: handle errors */
-		name = name_freeIt;
-		if (name[0] == '\0') {
-			DEBUG2(VAR, "Var_Append(\"%s\", \"%s\", ...) "
-				    "name expands to empty string - ignored\n",
-			    unexpanded_name, val);
-			free(name_freeIt);
-			return;
-		}
-	}
 
 	v = VarFind(name, ctxt, ctxt == VAR_GLOBAL);
 
@@ -1120,13 +1091,59 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 			HashTable_Set(&ctxt->vars, name, v);
 		}
 	}
+}
+
+/*
+ * The variable of the given name has the given value appended to it in the
+ * given context.
+ *
+ * If the variable doesn't exist, it is created. Otherwise the strings are
+ * concatenated, with a space in between.
+ *
+ * Input:
+ *	name		name of the variable to modify, is expanded once
+ *	val		string to append to it
+ *	ctxt		context in which this should occur
+ *
+ * Notes:
+ *	Only if the variable is being sought in the global context is the
+ *	environment searched.
+ *	XXX: Knows its calling circumstances in that if called with ctxt
+ *	an actual target, it will only search that context since only
+ *	a local variable could be being appended to. This is actually
+ *	a big win and must be tolerated.
+ */
+void
+Var_AppendExpand(const char *name, const char *val, GNode *ctxt)
+{
+	char *name_freeIt = NULL;
+
+	assert(val != NULL);
+
+	if (strchr(name, '$') != NULL) {
+		const char *unexpanded_name = name;
+		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+		/* TODO: handle errors */
+		name = name_freeIt;
+		if (name[0] == '\0') {
+			/* TODO: update function name in the debug message */
+			DEBUG2(VAR, "Var_Append(\"%s\", \"%s\", ...) "
+				    "name expands to empty string - ignored\n",
+			    unexpanded_name, val);
+			free(name_freeIt);
+			return;
+		}
+	}
+
+	Var_Append(name, val, ctxt);
+
 	free(name_freeIt);
 }
 
 void
 Global_AppendExpand(const char *name, const char *value)
 {
-	Var_Append(name, value, VAR_GLOBAL);
+	Var_AppendExpand(name, value, VAR_GLOBAL);
 }
 
 /*
@@ -3257,7 +3274,7 @@ ok:
 	if (st->eflags & VARE_WANTRES) {
 		switch (op[0]) {
 		case '+':
-			Var_Append(st->var->name.str, val, ctxt);
+			Var_AppendExpand(st->var->name.str, val, ctxt);
 			break;
 		case '!': {
 			const char *errfmt;
