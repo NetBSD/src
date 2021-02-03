@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.22 2021/02/03 12:11:34 roy Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.23 2021/02/03 18:13:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -92,9 +92,9 @@ struct frmrinfo {
 	uint8_t frmr_cause;
 };
 
-#ifdef CTASSERT
-CTASSERT(sizeof(struct llc) == 8);
-CTASSERT(sizeof(struct frmrinfo) == 5);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct llc) == 8);
+__CTASSERT(sizeof(struct frmrinfo) == 5);
 #endif
 
 #define	llc_control		llc_un.type_u.control

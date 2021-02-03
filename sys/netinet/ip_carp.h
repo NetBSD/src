@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.h,v 1.13 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: ip_carp.h,v 1.14 2021/02/03 18:13:13 roy Exp $	*/
 /*	$OpenBSD: ip_carp.h,v 1.18 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ struct carp_header {
 	unsigned char	carp_md[20];	/* SHA1 HMAC */
 };
 
-#ifdef CTASSERT
-CTASSERT(sizeof(struct carp_header) == 36);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct carp_header) == 36);
 #endif
 
 #define	CARP_DFLTTL		255
