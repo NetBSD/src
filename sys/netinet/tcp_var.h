@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.192 2020/03/05 15:18:55 riastradh Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.193 2021/02/03 05:51:40 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -168,7 +168,7 @@
 struct tcpiphdr {
 	struct ipovly ti_i;		/* overlaid ip structure */
 	struct tcphdr ti_t;		/* tcp header */
-} __packed;
+};
 #define	ti_x1		ti_i.ih_x1
 #define	ti_pr		ti_i.ih_pr
 #define	ti_len		ti_i.ih_len
