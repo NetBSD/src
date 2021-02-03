@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.796 2021/02/03 14:33:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.797 2021/02/03 15:08:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -100,7 +100,9 @@
  *
  *	Var_Parse	Parse a variable expression such as ${VAR:Mpattern}.
  *
- *	Var_Delete	Delete a variable.
+ *	Var_Delete
+ *	Var_DeleteExpand
+ *			Delete a variable.
  *
  *	Var_ReexportVars
  *			Export some or even all variables to the environment
@@ -135,7 +137,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.796 2021/02/03 14:33:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.797 2021/02/03 15:08:17 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -487,7 +489,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
  * The variable name is kept as-is, it is not expanded.
  */
 void
-Var_DeleteVar(const char *varname, GNode *ctxt)
+Var_Delete(const char *varname, GNode *ctxt)
 {
 	HashEntry *he = HashTable_FindEntry(&ctxt->vars, varname);
 	Var *v;
@@ -514,7 +516,7 @@ Var_DeleteVar(const char *varname, GNode *ctxt)
  * The variable name is expanded once.
  */
 void
-Var_Delete(const char *name, GNode *ctxt)
+Var_DeleteExpand(const char *name, GNode *ctxt)
 {
 	FStr varname = FStr_InitRefer(name);
 
@@ -526,7 +528,7 @@ Var_Delete(const char *name, GNode *ctxt)
 		varname = FStr_InitOwn(expanded);
 	}
 
-	Var_DeleteVar(varname.str, ctxt);
+	Var_Delete(varname.str, ctxt);
 	FStr_Done(&varname);
 }
 
@@ -561,7 +563,7 @@ Var_Undef(const char *arg)
 
 	for (i = 0; i < varnames.len; i++) {
 		const char *varname = varnames.words[i];
-		Var_DeleteVar(varname, VAR_GLOBAL);
+		Var_Delete(varname, VAR_GLOBAL);
 	}
 
 	Words_Free(varnames);
@@ -952,7 +954,7 @@ SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 			 * needed. Otherwise -V name may show the wrong value.
 			 */
 			/* XXX: name is expanded for the second time */
-			Var_Delete(name, VAR_GLOBAL);
+			Var_DeleteExpand(name, VAR_GLOBAL);
 		}
 		VarAdd(name, val, ctxt, flags);
 	} else {
@@ -2361,7 +2363,7 @@ ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 	    ModifyWords(val, ModifyWord_Loop, &args, st->oneBigWord, st->sep));
 	st->sep = prev_sep;
 	/* XXX: Consider restoring the previous variable instead of deleting. */
-	Var_Delete(args.tvar, st->ctxt);
+	Var_DeleteExpand(args.tvar, st->ctxt);
 	free(args.tvar);
 	free(args.str);
 	return AMR_OK;
