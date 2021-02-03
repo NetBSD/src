@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.266 2021/02/02 17:27:35 rillig Exp $
+# $NetBSD: Makefile,v 1.267 2021/02/03 08:34:15 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -519,11 +519,12 @@ SED_CMDS.varname-dot-parsefile=	-e '/in some cases/ s,^make: "[^"]*,make: "<norm
 SED_CMDS.varname-dot-shell=	-e 's, = /[^ ]*, = (details omitted),g'
 SED_CMDS.varname-dot-shell+=	-e 's,"/[^" ]*","(details omitted)",g'
 SED_CMDS.varname-dot-shell+=	-e 's,\[/[^] ]*\],[(details omitted)],g'
+SED_CMDS.varname-empty=		-e 's,${.CURDIR},<curdir>,g'
+SED_CMDS.varname-empty+=	-e '/\.SHELL/d'
 
 # Some tests need an additional round of postprocessing.
 POSTPROC.deptgt-suffixes=	awk '/^\#\*\*\* Suffixes/,/^never-stop/'
 POSTPROC.gnode-submake=		awk '/Input graph/, /^$$/'
-POSTPROC.varname-empty=		${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.
 export-all.rawout: export.mk
