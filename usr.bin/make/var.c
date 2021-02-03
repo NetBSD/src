@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.790 2021/02/02 21:26:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.791 2021/02/03 08:00:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.790 2021/02/02 21:26:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.791 2021/02/03 08:00:36 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -748,7 +748,7 @@ ExportVars(const char *varnames, Boolean isExport, VarExportMode mode)
 			var_exportedVars = VAR_EXPORTED_SOME;
 
 		if (isExport && mode == VEM_PLAIN)
-			Var_Append(MAKE_EXPORTED, varname, VAR_GLOBAL);
+			Global_AppendExpand(MAKE_EXPORTED, varname);
 	}
 	Words_Free(words);
 }
@@ -868,7 +868,7 @@ UnexportVar(const char *varname, UnexportWhat what)
 		char *cp;
 		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
 		/* TODO: handle errors */
-		Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
+		Global_SetExpand(MAKE_EXPORTED, cp);
 		free(cp);
 		free(expr);
 	}
@@ -978,7 +978,7 @@ SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 		if (!opts.varNoExportEnv)
 			setenv(name, val, 1);
 
-		Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
+		Global_AppendExpand(MAKEOVERRIDES, name);
 	}
 	if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
 		save_dollars = ParseBoolean(val, save_dollars);
@@ -1029,6 +1029,12 @@ void
 Var_Set(const char *name, const char *val, GNode *ctxt)
 {
 	Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
+}
+
+void
+Global_SetExpand(const char *name, const char *value)
+{
+	Var_Set(name, value, VAR_GLOBAL);
 }
 
 /*
@@ -1104,6 +1110,12 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 		}
 	}
 	free(name_freeIt);
+}
+
+void
+Global_AppendExpand(const char *name, const char *value)
+{
+	Var_Append(name, value, VAR_GLOBAL);
 }
 
 /*

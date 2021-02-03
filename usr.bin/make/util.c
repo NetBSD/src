@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.75 2021/02/03 06:58:22 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.76 2021/02/03 08:00:36 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.75 2021/02/03 06:58:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.76 2021/02/03 08:00:36 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -45,7 +45,7 @@ findenv(const char *name, int *offset)
 	len = strlen(name);
 	for (i = 0; (q = environ[i]); i++) {
 		p = strchr(q, '=');
-		if (p == NULL || (size_t)(p - q) != len)
+		if (p == NULL || p - q != len)
 			continue;
 		if (strncmp(name, q, len) == 0) {
 			*offset = i;

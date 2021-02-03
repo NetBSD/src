@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.412 2021/02/01 21:09:25 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.413 2021/02/03 08:00:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.412 2021/02/01 21:09:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.413 2021/02/03 08:00:36 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2177,7 +2177,7 @@ Job_SetPrefix(void)
 	if (targPrefix != NULL) {
 		free(targPrefix);
 	} else if (!Var_Exists(MAKE_JOB_PREFIX, VAR_GLOBAL)) {
-		Var_Set(MAKE_JOB_PREFIX, "---", VAR_GLOBAL);
+		Global_SetExpand(MAKE_JOB_PREFIX, "---");
 	}
 
 	(void)Var_Subst("${" MAKE_JOB_PREFIX "}",
@@ -2791,8 +2791,8 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 	snprintf(jobarg, sizeof jobarg, "%d,%d",
 	    tokenWaitJob.inPipe, tokenWaitJob.outPipe);
 
-	Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
-	Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);
+	Global_AppendExpand(MAKEFLAGS, "-J");
+	Global_AppendExpand(MAKEFLAGS, jobarg);
 
 	/*
 	 * Preload the job pipe with one token per job, save the one
