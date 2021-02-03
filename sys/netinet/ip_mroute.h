@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.34 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.35 2021/02/03 18:13:13 roy Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -284,8 +284,8 @@ struct igmpmsg {
 	u_int8_t  unused3;
 	struct	  in_addr im_src, im_dst;
 };
-#ifdef CTASSERT
-CTASSERT(sizeof(struct igmpmsg) == 20);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct igmpmsg) == 20);
 #endif
 
 /*
