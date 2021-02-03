@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.795 2021/02/03 13:53:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.796 2021/02/03 14:33:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -89,7 +89,9 @@
  *			necessary. A space is placed between the old value and
  *			the new one.
  *
- *	Var_Exists	See if a variable exists.
+ *	Var_Exists
+ *	Var_ExistsExpand
+ *			See if a variable exists.
  *
  *	Var_Value	Return the unexpanded value of a variable, or NULL if
  *			the variable is undefined.
@@ -133,7 +135,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.795 2021/02/03 13:53:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.796 2021/02/03 14:33:09 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1146,6 +1148,17 @@ Global_Append(const char *name, const char *value)
 	Var_Append(name, value, VAR_GLOBAL);
 }
 
+Boolean
+Var_Exists(const char *name, GNode *ctxt)
+{
+	Var *v = VarFind(name, ctxt, TRUE);
+	if (v == NULL)
+		return FALSE;
+
+	(void)VarFreeEnv(v, TRUE);
+	return TRUE;
+}
+
 /*
  * See if the given variable exists, in the given context or in other
  * fallback contexts.
@@ -1155,10 +1168,10 @@ Global_Append(const char *name, const char *value)
  *	ctxt		Context in which to start search
  */
 Boolean
-Var_Exists(const char *name, GNode *ctxt)
+Var_ExistsExpand(const char *name, GNode *ctxt)
 {
 	FStr varname = FStr_InitRefer(name);
-	Var *v;
+	Boolean exists;
 
 	if (strchr(varname.str, '$') != NULL) {
 		char *expanded;
@@ -1167,13 +1180,9 @@ Var_Exists(const char *name, GNode *ctxt)
 		varname = FStr_InitOwn(expanded);
 	}
 
-	v = VarFind(varname.str, ctxt, TRUE);
+	exists = Var_Exists(varname.str, ctxt);
 	FStr_Done(&varname);
-	if (v == NULL)
-		return FALSE;
-
-	(void)VarFreeEnv(v, TRUE);
-	return TRUE;
+	return exists;
 }
 
 /*
