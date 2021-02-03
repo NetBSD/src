@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.538 2021/02/01 22:21:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.539 2021/02/03 08:00:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.538 2021/02/01 22:21:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.539 2021/02/03 08:00:36 rillig Exp $");
 
 /* types and constants */
 
@@ -886,7 +886,7 @@ ParseDependencySourceMain(const char *src)
 	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
 	 */
-	Var_Append(".TARGETS", src, VAR_GLOBAL);
+	Global_AppendExpand(".TARGETS", src);
 }
 
 static void
@@ -1327,7 +1327,7 @@ ParseDoDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
 		break;
 #ifdef POSIX
 	case SP_POSIX:
-		Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
+		Global_SetExpand("%POSIX", "1003.2");
 		break;
 #endif
 	default:
@@ -2281,8 +2281,8 @@ SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
 		basename = slash + 1;
 	}
 
-	Var_Set(dirvar, dirname, VAR_GLOBAL);
-	Var_Set(filevar, basename, VAR_GLOBAL);
+	Global_SetExpand(dirvar, dirname);
+	Global_SetExpand(filevar, basename);
 
 	DEBUG5(PARSE, "%s: ${%s} = `%s' ${%s} = `%s'\n",
 	    __func__, dirvar, dirname, filevar, basename);
@@ -2375,7 +2375,7 @@ static void
 ParseTrackInput(const char *name)
 {
 	if (!VarContainsWord(MAKE_MAKEFILES, name))
-		Var_Append(MAKE_MAKEFILES, name, VAR_GLOBAL);
+		Global_AppendExpand(MAKE_MAKEFILES, name);
 }
 
 
@@ -3283,7 +3283,7 @@ Parse_MainName(GNodeList *mainList)
 	if (mainNode->type & OP_DOUBLEDEP)
 		Lst_AppendAll(mainList, &mainNode->cohorts);
 
-	Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
+	Global_AppendExpand(".TARGETS", mainNode->name);
 }
 
 int
