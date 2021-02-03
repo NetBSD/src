@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.792 2021/02/03 08:08:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.793 2021/02/03 08:40:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.792 2021/02/03 08:08:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.793 2021/02/03 08:40:47 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -916,6 +916,12 @@ SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 {
 	Var *v;
 
+	assert(val != NULL);
+	if (name[0] == '\0') {
+		DEBUG0(VAR, "SetVar: variable name is empty - ignored\n");
+		return;
+	}
+
 	if (ctxt == VAR_GLOBAL) {
 		v = VarFind(name, VAR_CMDLINE, FALSE);
 		if (v != NULL) {
@@ -1034,12 +1040,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
 void
 Global_Set(const char *name, const char *value)
 {
-	assert(value != NULL);
-
-	if (name[0] == '\0')
-		DEBUG0(VAR, "Variable name empty - ignored\n");
-	else
-		SetVar(name, value, VAR_GLOBAL, VAR_SET_NONE);
+	SetVar(name, value, VAR_GLOBAL, VAR_SET_NONE);
 }
 
 void
@@ -1093,8 +1094,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	v = VarFind(name, ctxt, ctxt == VAR_GLOBAL);
 
 	if (v == NULL) {
-		/* XXX: name is expanded for the second time */
-		Var_Set(name, val, ctxt);
+		SetVar(name, val, ctxt, VAR_SET_NONE);
 	} else if (v->flags & VAR_READONLY) {
 		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
 		    name);
