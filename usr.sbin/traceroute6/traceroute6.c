@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.51 2018/04/23 18:59:03 maxv Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.52 2021/02/03 06:42:50 roy Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.51 2018/04/23 18:59:03 maxv Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.52 2021/02/03 06:42:50 roy Exp $");
 #endif
 #endif
 
@@ -306,7 +306,7 @@ struct opacket {
 	u_char hops;		/* hop limit of the packet */
 	u_char pad[2];
 	struct tv32 tv;		/* time packet left */
-} __packed;
+};
 
 static u_char	packet[512];		/* last inbound (icmp) packet */
 static struct opacket	*outpacket;	/* last output (udp) packet */
