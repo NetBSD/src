@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.170 2021/02/01 21:32:54 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.171 2021/02/03 08:00:36 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -534,8 +534,8 @@ meta_create(BuildMon *pbm, GNode *gn)
     fprintf(fp, "-- command output --\n");
     fflush(fp);
 
-    Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
-    Var_Append(".MAKE.META.CREATED", fname, VAR_GLOBAL);
+    Global_AppendExpand(".MAKE.META.FILES", fname);
+    Global_AppendExpand(".MAKE.META.CREATED", fname);
 
     gn->type |= OP_META;		/* in case anyone wants to know */
     if (metaSilent) {
@@ -569,7 +569,7 @@ meta_init(void)
 {
 #ifdef USE_FILEMON
 	/* this allows makefiles to test if we have filemon support */
-	Var_Set(".MAKE.PATH_FILEMON", filemon_path(), VAR_GLOBAL);
+	Global_SetExpand(".MAKE.PATH_FILEMON", filemon_path());
 #endif
 }
 
@@ -616,7 +616,8 @@ meta_mode_init(const char *make_mode)
 	 * This works be cause :H will generate '.' if there is no /
 	 * and :tA will resolve that to cwd.
 	 */
-	Var_Set(MAKE_META_PREFIX, "Building ${.TARGET:H:tA}/${.TARGET:T}", VAR_GLOBAL);
+	Global_SetExpand(MAKE_META_PREFIX,
+	    "Building ${.TARGET:H:tA}/${.TARGET:T}");
     }
     if (once)
 	return;
@@ -632,8 +633,8 @@ meta_mode_init(const char *make_mode)
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
-    Var_Append(MAKE_META_IGNORE_PATHS,
-	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
+    Global_AppendExpand(MAKE_META_IGNORE_PATHS,
+	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}");
     (void)Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
 		    VAR_GLOBAL, VARE_WANTRES, &metaIgnorePathsStr);
     /* TODO: handle errors */
@@ -782,13 +783,12 @@ meta_job_error(Job *job, GNode *gn, Boolean ignerr, int status)
 	fprintf(pbm->mfp, "\n*** Error code %d%s\n",
 		status, ignerr ? "(ignored)" : "");
     }
-    if (gn != NULL) {
-	Var_Set(".ERROR_TARGET", GNode_Path(gn), VAR_GLOBAL);
-    }
+    if (gn != NULL)
+	Global_SetExpand(".ERROR_TARGET", GNode_Path(gn));
     getcwd(cwd, sizeof cwd);
-    Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL);
+    Global_SetExpand(".ERROR_CWD", cwd);
     if (pbm->meta_fname[0] != '\0') {
-	Var_Set(".ERROR_META_FILE", pbm->meta_fname, VAR_GLOBAL);
+	Global_SetExpand(".ERROR_META_FILE", pbm->meta_fname);
     }
     meta_job_finish(job);
 }
@@ -1142,7 +1142,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
 
 	/* we want to track all the .meta we read */
-	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
+	Global_AppendExpand(".MAKE.META.FILES", fname);
 
 	cmdNode = gn->commands.first;
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
@@ -1217,8 +1217,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 			if (lastpid > 0) {
 			    /* We need to remember these. */
-			    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL);
-			    Var_Set(ldir_vname, latestdir, VAR_GLOBAL);
+			    Global_SetExpand(lcwd_vname, lcwd);
+			    Global_SetExpand(ldir_vname, latestdir);
 			}
 			snprintf(lcwd_vname, sizeof lcwd_vname, LCWD_VNAME_FMT, pid);
 			snprintf(ldir_vname, sizeof ldir_vname, LDIR_VNAME_FMT, pid);
@@ -1264,9 +1264,9 @@ meta_oodate(GNode *gn, Boolean oodate)
 			child = atoi(p);
 			if (child > 0) {
 			    snprintf(cldir, sizeof cldir, LCWD_VNAME_FMT, child);
-			    Var_Set(cldir, lcwd, VAR_GLOBAL);
+			    Global_SetExpand(cldir, lcwd);
 			    snprintf(cldir, sizeof cldir, LDIR_VNAME_FMT, child);
-			    Var_Set(cldir, latestdir, VAR_GLOBAL);
+			    Global_SetExpand(cldir, latestdir);
 #ifdef DEBUG_META_MODE
 			    if (DEBUG(META))
 				debug_printf(
@@ -1282,8 +1282,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /* Update lcwd and latest directory. */
 		    strlcpy(latestdir, p, sizeof latestdir);
 		    strlcpy(lcwd, p, sizeof lcwd);
-		    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL);
-		    Var_Set(ldir_vname, lcwd, VAR_GLOBAL);
+		    Global_SetExpand(lcwd_vname, lcwd);
+		    Global_SetExpand(ldir_vname, lcwd);
 #ifdef DEBUG_META_MODE
 		    DEBUG4(META, "%s: %d: cwd=%s ldir=%s\n",
 			   fname, lineno, cwd, lcwd);
