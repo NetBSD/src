@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.26 2020/07/27 14:06:58 roy Exp $	*/
+/*	$NetBSD: ip6.h,v 1.27 2021/02/03 05:51:40 roy Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ struct ip6_hdr_pseudo {
 	u_int32_t	ip6ph_len;
 	u_int8_t	ip6ph_zero[3];
 	u_int8_t	ip6ph_nxt;
-} __packed;
+};
 #endif
 
 /*
