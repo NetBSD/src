@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.35 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: tcp.h,v 1.36 2021/02/03 11:53:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,6 +73,9 @@ struct tcphdr {
 	uint16_t th_sum;			/* checksum */
 	uint16_t th_urp;			/* urgent pointer */
 };
+#ifdef CTASSERT
+CTASSERT(sizeof(struct tcphdr) == 20);
+#endif
 
 #define	TCPOPT_EOL		0
 #define	   TCPOLEN_EOL			1
