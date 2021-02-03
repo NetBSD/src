@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.36 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: ip.h,v 1.37 2021/02/03 11:53:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -247,5 +247,11 @@ struct ippseudo {
 	u_int8_t	ippseudo_p;	/* protocol */
 	u_int16_t	ippseudo_len;	/* protocol length */
 };
+
+#ifdef CTASSERT
+CTASSERT(sizeof(struct ip) == 20);
+CTASSERT(sizeof(struct ip_timestamp) == 12);
+CTASSERT(sizeof(struct ippseudo) == 12);
+#endif
 
 #endif	/* !_NETINET_IP_H_ */
