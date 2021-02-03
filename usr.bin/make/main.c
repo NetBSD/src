@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.526 2021/02/01 21:04:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.527 2021/02/03 08:00:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.526 2021/02/01 21:04:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.527 2021/02/03 08:00:36 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -409,8 +409,8 @@ MainParseArgJobsInternal(const char *argvalue)
 		jp_1 = -1;
 		opts.compatMake = TRUE;
 	} else {
-		Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-J");
+		Global_AppendExpand(MAKEFLAGS, argvalue);
 	}
 }
 
@@ -427,9 +427,9 @@ MainParseArgJobs(const char *argvalue)
 		    progname);
 		exit(2);	/* Not 1 so -q can distinguish error */
 	}
-	Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
-	Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-	Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL);
+	Global_AppendExpand(MAKEFLAGS, "-j");
+	Global_AppendExpand(MAKEFLAGS, argvalue);
+	Global_SetExpand(".MAKE.JOBS", argvalue);
 	maxJobTokens = opts.maxJobs;
 }
 
@@ -446,8 +446,8 @@ MainParseArgSysInc(const char *argvalue)
 	} else {
 		(void)SearchPath_Add(sysIncPath, argvalue);
 	}
-	Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
-	Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+	Global_AppendExpand(MAKEFLAGS, "-m");
+	Global_AppendExpand(MAKEFLAGS, argvalue);
 }
 
 static Boolean
@@ -458,22 +458,22 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'B':
 		opts.compatMake = TRUE;
-		Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
-		Var_Set(MAKE_MODE, "compat", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-B");
+		Global_SetExpand(MAKE_MODE, "compat");
 		break;
 	case 'C':
 		MainParseArgChdir(argvalue);
 		break;
 	case 'D':
 		if (argvalue[0] == '\0') return FALSE;
-		Var_Set(argvalue, "1", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		Global_SetExpand(argvalue, "1");
+		Global_AppendExpand(MAKEFLAGS, "-D");
+		Global_AppendExpand(MAKEFLAGS, argvalue);
 		break;
 	case 'I':
 		Parse_AddIncludeDir(argvalue);
-		Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-I");
+		Global_AppendExpand(MAKEFLAGS, argvalue);
 		break;
 	case 'J':
 		MainParseArgJobsInternal(argvalue);
@@ -481,24 +481,24 @@ MainParseArg(char c, const char *argvalue)
 	case 'N':
 		opts.noExecute = TRUE;
 		opts.noRecursiveExecute = TRUE;
-		Var_Append(MAKEFLAGS, "-N", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-N");
 		break;
 	case 'S':
 		opts.keepgoing = FALSE;
-		Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-S");
 		break;
 	case 'T':
 		tracefile = bmake_strdup(argvalue);
-		Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-T");
+		Global_AppendExpand(MAKEFLAGS, argvalue);
 		break;
 	case 'V':
 	case 'v':
 		opts.printVars = c == 'v' ? PVM_EXPANDED : PVM_UNEXPANDED;
 		Lst_Append(&opts.variables, bmake_strdup(argvalue));
 		/* XXX: Why always -V? */
-		Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-V");
+		Global_AppendExpand(MAKEFLAGS, argvalue);
 		break;
 	case 'W':
 		opts.parseWarnFatal = TRUE;
@@ -506,35 +506,35 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'X':
 		opts.varNoExportEnv = TRUE;
-		Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-X");
 		break;
 	case 'd':
 		/* If '-d-opts' don't pass to children */
 		if (argvalue[0] == '-')
 			argvalue++;
 		else {
-			Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+			Global_AppendExpand(MAKEFLAGS, "-d");
+			Global_AppendExpand(MAKEFLAGS, argvalue);
 		}
 		MainParseArgDebug(argvalue);
 		break;
 	case 'e':
 		opts.checkEnvFirst = TRUE;
-		Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-e");
 		break;
 	case 'f':
 		Lst_Append(&opts.makefiles, bmake_strdup(argvalue));
 		break;
 	case 'i':
 		opts.ignoreErrors = TRUE;
-		Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-i");
 		break;
 	case 'j':
 		MainParseArgJobs(argvalue);
 		break;
 	case 'k':
 		opts.keepgoing = TRUE;
-		Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-k");
 		break;
 	case 'm':
 		MainParseArgSysInc(argvalue);
@@ -542,28 +542,28 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'n':
 		opts.noExecute = TRUE;
-		Var_Append(MAKEFLAGS, "-n", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-n");
 		break;
 	case 'q':
 		opts.queryFlag = TRUE;
 		/* Kind of nonsensical, wot? */
-		Var_Append(MAKEFLAGS, "-q", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-q");
 		break;
 	case 'r':
 		opts.noBuiltins = TRUE;
-		Var_Append(MAKEFLAGS, "-r", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-r");
 		break;
 	case 's':
 		opts.beSilent = TRUE;
-		Var_Append(MAKEFLAGS, "-s", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-s");
 		break;
 	case 't':
 		opts.touchFlag = TRUE;
-		Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-t");
 		break;
 	case 'w':
 		opts.enterFlag = TRUE;
-		Var_Append(MAKEFLAGS, "-w", VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-w");
 		break;
 	default:
 	case '?':
@@ -737,7 +737,7 @@ Main_SetObjdir(Boolean writable, const char *fmt, ...)
 			    progname, path, strerror(errno));
 		} else {
 			snprintf(objdir, sizeof objdir, "%s", path);
-			Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
+			Global_SetExpand(".OBJDIR", objdir);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
 			purge_relative_cached_realpaths();
@@ -957,13 +957,13 @@ InitVarTargets(void)
 	StringListNode *ln;
 
 	if (Lst_IsEmpty(&opts.create)) {
-		Var_Set(".TARGETS", "", VAR_GLOBAL);
+		Global_SetExpand(".TARGETS", "");
 		return;
 	}
 
 	for (ln = opts.create.first; ln != NULL; ln = ln->next) {
 		const char *name = ln->datum;
-		Var_Append(".TARGETS", name, VAR_GLOBAL);
+		Global_AppendExpand(".TARGETS", name);
 	}
 }
 
@@ -1159,8 +1159,8 @@ InitVarMake(const char *argv0)
 			make = abspath;
 	}
 
-	Var_Set("MAKE", make, VAR_GLOBAL);
-	Var_Set(".MAKE", make, VAR_GLOBAL);
+	Global_SetExpand("MAKE", make);
+	Global_SetExpand(".MAKE", make);
 }
 
 /*
@@ -1253,8 +1253,8 @@ InitMaxJobs(void)
 	}
 
 	if (n != opts.maxJobs) {
-		Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, value, VAR_GLOBAL);
+		Global_AppendExpand(MAKEFLAGS, "-j");
+		Global_AppendExpand(MAKEFLAGS, value);
 	}
 
 	opts.maxJobs = n;
@@ -1383,21 +1383,21 @@ main_Init(int argc, char **argv)
 	 */
 	Targ_Init();
 	Var_Init();
-	Var_Set(".MAKE.OS", utsname.sysname, VAR_GLOBAL);
-	Var_Set("MACHINE", machine, VAR_GLOBAL);
-	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
+	Global_SetExpand(".MAKE.OS", utsname.sysname);
+	Global_SetExpand("MACHINE", machine);
+	Global_SetExpand("MACHINE_ARCH", machine_arch);
 #ifdef MAKE_VERSION
-	Var_Set("MAKE_VERSION", MAKE_VERSION, VAR_GLOBAL);
+	Global_SetExpand("MAKE_VERSION", MAKE_VERSION);
 #endif
-	Var_Set(".newline", "\n", VAR_GLOBAL); /* handy for :@ loops */
+	Global_SetExpand(".newline", "\n"); /* handy for :@ loops */
 	/*
 	 * This is the traditional preference for makefiles.
 	 */
 #ifndef MAKEFILE_PREFERENCE_LIST
 # define MAKEFILE_PREFERENCE_LIST "makefile Makefile"
 #endif
-	Var_Set(MAKE_MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST, VAR_GLOBAL);
-	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
+	Global_SetExpand(MAKE_MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST);
+	Global_SetExpand(MAKE_DEPENDFILE, ".depend");
 
 	CmdOpts_Init();
 	allPrecious = FALSE;	/* Remove targets when interrupted */
@@ -1421,10 +1421,10 @@ main_Init(int argc, char **argv)
 	 */
 	Parse_Init();
 	InitVarMake(argv[0]);
-	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
-	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL);
-	Var_Set("MFLAGS", "", VAR_GLOBAL);
-	Var_Set(".ALLTARGETS", "", VAR_GLOBAL);
+	Global_SetExpand(MAKEFLAGS, "");
+	Global_SetExpand(MAKEOVERRIDES, "");
+	Global_SetExpand("MFLAGS", "");
+	Global_SetExpand(".ALLTARGETS", "");
 	/* some makefiles need to know this */
 	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMDLINE);
 
@@ -1436,15 +1436,15 @@ main_Init(int argc, char **argv)
 		if (makelevel < 0)
 			makelevel = 0;
 		snprintf(tmp, sizeof tmp, "%d", makelevel);
-		Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL);
+		Global_SetExpand(MAKE_LEVEL, tmp);
 		snprintf(tmp, sizeof tmp, "%u", myPid);
-		Var_Set(".MAKE.PID", tmp, VAR_GLOBAL);
+		Global_SetExpand(".MAKE.PID", tmp);
 		snprintf(tmp, sizeof tmp, "%u", getppid());
-		Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL);
+		Global_SetExpand(".MAKE.PPID", tmp);
 		snprintf(tmp, sizeof tmp, "%u", getuid());
-		Var_Set(".MAKE.UID", tmp, VAR_GLOBAL);
+		Global_SetExpand(".MAKE.UID", tmp);
 		snprintf(tmp, sizeof tmp, "%u", getgid());
-		Var_Set(".MAKE.GID", tmp, VAR_GLOBAL);
+		Global_SetExpand(".MAKE.GID", tmp);
 	}
 	if (makelevel > 0) {
 		char pn[1024];
@@ -1499,7 +1499,7 @@ main_Init(int argc, char **argv)
 #ifndef NO_PWD_OVERRIDE
 	HandlePWD(&sa);
 #endif
-	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
+	Global_SetExpand(".CURDIR", curdir);
 
 	InitObjdir(machine, machine_arch);
 
@@ -1561,7 +1561,7 @@ main_PrepareMaking(void)
 
 	{
 		FStr makeflags = Var_Value(MAKEFLAGS, VAR_GLOBAL);
-		Var_Append("MFLAGS", makeflags.str, VAR_GLOBAL);
+		Global_AppendExpand("MFLAGS", makeflags.str);
 		FStr_Done(&makeflags);
 	}
 
@@ -2104,7 +2104,7 @@ SetErrorVars(GNode *gn)
 	/*
 	 * We can print this even if there is no .ERROR target.
 	 */
-	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
+	Global_SetExpand(".ERROR_TARGET", gn->name);
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
 
 	for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
@@ -2112,7 +2112,7 @@ SetErrorVars(GNode *gn)
 
 		if (cmd == NULL)
 			break;
-		Var_Append(".ERROR_CMD", cmd, VAR_GLOBAL);
+		Global_AppendExpand(".ERROR_CMD", cmd);
 	}
 }
 
