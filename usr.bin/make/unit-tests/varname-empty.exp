@@ -20,7 +20,7 @@ Global:delete .INCLUDEDFROMDIR (not found)
 Global:delete .INCLUDEDFROMFILE (not found)
 Var_Set("", "default", ...) name expands to empty string - ignored
 Var_Set("", "assigned", ...) name expands to empty string - ignored
-Var_Set("", "appended", ...) name expands to empty string - ignored
+SetVar: variable name is empty - ignored
 Var_Set("", "", ...) name expands to empty string - ignored
 Var_Set("", "subst", ...) name expands to empty string - ignored
 Var_Set("", "shell-output", ...) name expands to empty string - ignored
