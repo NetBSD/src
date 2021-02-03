@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.19 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.20 2021/02/03 11:52:23 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -58,7 +58,7 @@ struct	tcp_debug {
 	} td_ti6;
 	short	td_req;
 	struct	tcpcb td_cb;
-};
+} __packed;
 
 #define	TA_INPUT	0
 #define	TA_OUTPUT	1
