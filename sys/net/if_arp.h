@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.33 2018/06/30 15:08:04 christos Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.34 2021/02/03 05:51:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -71,7 +71,7 @@ struct	arphdr {
 	uint8_t  ar_tha[];	/* target hardware address (!IEEE1394) */
 	uint8_t  ar_tpa[];	/* target protocol address */
 #endif
-} __packed;
+};
 
 static __inline uint8_t *
 ar_data(struct arphdr *ap)

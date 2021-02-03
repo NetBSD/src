@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.40 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.41 2021/02/03 05:51:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,7 +45,7 @@
 struct icmp_ra_addr {
 	uint32_t ira_addr;
 	uint32_t ira_preference;
-} __packed;
+};
 
 /*
  * Structure of an icmp header.
@@ -63,7 +63,7 @@ struct icmp {
 			uint8_t iex_void1;
 			uint8_t iex_length;
 			uint16_t iex_void2;
-		} ih_exthdr __packed;
+		} ih_exthdr;
 
 		/* ICMP_PARAMPROB */
 		uint8_t ih_pptr;
@@ -75,21 +75,21 @@ struct icmp {
 		struct ih_idseq {
 			uint16_t icd_id;
 			uint16_t icd_seq;
-		} ih_idseq __packed;
+		} ih_idseq;
 
 		/* ICMP_UNREACH_NEEDFRAG (Path MTU Discovery, RFC1191) */
 		struct ih_pmtu {
 			uint16_t ipm_void;
 			uint16_t ipm_nextmtu;
-		} ih_pmtu __packed;
+		} ih_pmtu;
 
 		/* ICMP_ROUTERADVERT */
 		struct ih_rtradv {
 			uint8_t irt_num_addrs;
 			uint8_t irt_wpa;
 			uint16_t irt_lifetime;
-		} ih_rtradv __packed;
-	} icmp_hun /* XXX __packed ??? */;
+		} ih_rtradv;
+	} icmp_hun;
 
 #define icmp_pptr	icmp_hun.ih_pptr
 #define icmp_gwaddr	icmp_hun.ih_gwaddr
@@ -108,12 +108,12 @@ struct icmp {
 			uint32_t its_otime;
 			uint32_t its_rtime;
 			uint32_t its_ttime;
-		} id_ts __packed;
+		} id_ts;
 
 		struct id_ip {
 			struct ip idi_ip;
 			/* options and then 64 bits of data */
-		} id_ip /* XXX: __packed ??? */;
+		} id_ip;
 
 		/* ICMP_ROUTERADVERT */
 		struct icmp_ra_addr id_radv;
@@ -122,7 +122,7 @@ struct icmp {
 		uint32_t id_mask;
 
 		int8_t id_data[1];
-	} icmp_dun /* XXX __packed ??? */;
+	} icmp_dun;
 
 #define icmp_otime	icmp_dun.id_ts.its_otime
 #define icmp_rtime	icmp_dun.id_ts.its_rtime
@@ -149,7 +149,7 @@ struct icmp_ext_hdr {
 #endif
 	uint8_t rsvd2;
 	uint16_t checksum;
-} __packed;
+};
 
 /*
  * ICMP Extension Object Header (RFC4884).
@@ -158,7 +158,7 @@ struct icmp_ext_obj_hdr {
 	uint16_t length;
 	uint8_t class_num;
 	uint8_t c_type;
-} __packed;
+};
 
 /*
  * Lower bounds on packet lengths for various types.
