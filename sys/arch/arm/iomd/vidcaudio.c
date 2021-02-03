@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.60 2020/02/23 04:02:45 isaki Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.61 2021/02/03 14:22:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.60 2020/02/23 04:02:45 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.61 2021/02/03 14:22:21 isaki Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -293,11 +293,6 @@ vidcaudio_close(void *addr)
 
 	DPRINTF(("DEBUG: vidcaudio_close called\n"));
 	sc = addr;
-	/*
-	 * We do this here rather than in vidcaudio_halt_output()
-	 * because the latter can be called from interrupt context
-	 * (audio_pint()->audio_clear()->vidcaudio_halt_output()).
-	 */
 	if (sc->sc_ppages != NULL) {
 		free(sc->sc_ppages, M_DEVBUF);
 		sc->sc_ppages = NULL;
