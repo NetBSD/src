@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.33 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.34 2021/02/03 11:53:43 roy Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -284,6 +284,9 @@ struct igmpmsg {
 	u_int8_t  unused3;
 	struct	  in_addr im_src, im_dst;
 };
+#ifdef CTASSERT
+CTASSERT(sizeof(struct igmpmsg) == 20);
+#endif
 
 /*
  * Argument structure used for pkt info. while upcall is made.

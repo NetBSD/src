@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.17 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: udp.h,v 1.18 2021/02/03 11:53:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,6 +45,9 @@ struct udphdr {
 	uint16_t uh_ulen;		/* udp length */
 	uint16_t uh_sum;		/* udp checksum */
 };
+#ifdef CTASSERT
+CTASSERT(sizeof(struct udphdr) == 8);
+#endif
 
 /* socket options for UDP */
 #define	UDP_ENCAP	100

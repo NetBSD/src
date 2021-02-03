@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.41 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.42 2021/02/03 11:53:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -159,6 +159,13 @@ struct icmp_ext_obj_hdr {
 	uint8_t class_num;
 	uint8_t c_type;
 };
+
+#ifdef CTASSERT
+CTASSERT(sizeof(struct icmp_ra_addr) == 8);
+CTASSERT(sizeof(struct icmp) == 28);
+CTASSERT(sizeof(struct icmp_ext_hdr) == 4);
+CTASSERT(sizeof(struct icmp_ext_obj_hdr) == 4);
+#endif
 
 /*
  * Lower bounds on packet lengths for various types.

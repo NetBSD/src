@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.131 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.132 2021/02/03 11:53:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,6 +47,9 @@ struct ipovly {
 	struct	  in_addr ih_src;	/* source internet address */
 	struct	  in_addr ih_dst;	/* destination internet address */
 };
+#ifdef CTASSERT
+CTASSERT(sizeof(struct ipovly) == 20);
+#endif
 
 /*
  * IP Flow structure
