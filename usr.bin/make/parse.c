@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.542 2021/02/03 13:53:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.543 2021/02/03 14:33:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.542 2021/02/03 13:53:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.543 2021/02/03 14:33:09 rillig Exp $");
 
 /* types and constants */
 
@@ -1897,7 +1897,7 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 	 * TODO: Add a test that demonstrates why this code is needed,
 	 *  apart from making the debug log longer.
 	 */
-	if (!Var_Exists(name, ctxt))
+	if (!Var_ExistsExpand(name, ctxt))
 		Var_Set(name, "", ctxt);
 
 	(void)Var_Subst(uvalue, ctxt,
@@ -1960,7 +1960,7 @@ VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
 	else if (op == VAR_SHELL)
 		VarAssign_EvalShell(name, uvalue, ctxt, &avalue);
 	else {
-		if (op == VAR_DEFAULT && Var_Exists(name, ctxt))
+		if (op == VAR_DEFAULT && Var_ExistsExpand(name, ctxt))
 			return FALSE;
 
 		/* Normal assignment -- just do it. */
