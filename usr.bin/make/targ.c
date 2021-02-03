@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.162 2021/02/03 08:00:36 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.163 2021/02/03 13:53:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.162 2021/02/03 08:00:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.163 2021/02/03 13:53:12 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -305,7 +305,7 @@ GNode *
 Targ_NewInternalNode(const char *name)
 {
 	GNode *gn = GNode_New(name);
-	Global_AppendExpand(".ALLTARGETS", name);
+	Global_Append(".ALLTARGETS", name);
 	Lst_Append(&allTargets, gn);
 	DEBUG1(TARG, "Adding \"%s\" to all targets.\n", gn->name);
 	if (doing_depend)

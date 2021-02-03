@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.266 2021/02/03 08:00:36 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.267 2021/02/03 13:53:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.266 2021/02/03 08:00:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.267 2021/02/03 13:53:12 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -555,15 +555,15 @@ Dir_SetPATH(void)
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast) {
 			seenDotLast = TRUE;
-			Global_AppendExpand(".PATH", dotLast->name);
+			Global_Append(".PATH", dotLast->name);
 		}
 	}
 
 	if (!seenDotLast) {
 		if (dot != NULL)
-			Global_AppendExpand(".PATH", dot->name);
+			Global_Append(".PATH", dot->name);
 		if (cur != NULL)
-			Global_AppendExpand(".PATH", cur->name);
+			Global_Append(".PATH", cur->name);
 	}
 
 	for (ln = dirSearchPath.dirs.first; ln != NULL; ln = ln->next) {
@@ -572,14 +572,14 @@ Dir_SetPATH(void)
 			continue;
 		if (dir == dot && seenDotLast)
 			continue;
-		Global_AppendExpand(".PATH", dir->name);
+		Global_Append(".PATH", dir->name);
 	}
 
 	if (seenDotLast) {
 		if (dot != NULL)
-			Global_AppendExpand(".PATH", dot->name);
+			Global_Append(".PATH", dot->name);
 		if (cur != NULL)
-			Global_AppendExpand(".PATH", cur->name);
+			Global_Append(".PATH", cur->name);
 	}
 }
 
