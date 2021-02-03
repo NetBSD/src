@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.171 2021/02/03 08:00:36 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.172 2021/02/03 08:08:18 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -569,7 +569,7 @@ meta_init(void)
 {
 #ifdef USE_FILEMON
 	/* this allows makefiles to test if we have filemon support */
-	Global_SetExpand(".MAKE.PATH_FILEMON", filemon_path());
+	Global_Set(".MAKE.PATH_FILEMON", filemon_path());
 #endif
 }
 
@@ -616,7 +616,7 @@ meta_mode_init(const char *make_mode)
 	 * This works be cause :H will generate '.' if there is no /
 	 * and :tA will resolve that to cwd.
 	 */
-	Global_SetExpand(MAKE_META_PREFIX,
+	Global_Set(MAKE_META_PREFIX,
 	    "Building ${.TARGET:H:tA}/${.TARGET:T}");
     }
     if (once)
@@ -784,11 +784,11 @@ meta_job_error(Job *job, GNode *gn, Boolean ignerr, int status)
 		status, ignerr ? "(ignored)" : "");
     }
     if (gn != NULL)
-	Global_SetExpand(".ERROR_TARGET", GNode_Path(gn));
+	Global_Set(".ERROR_TARGET", GNode_Path(gn));
     getcwd(cwd, sizeof cwd);
-    Global_SetExpand(".ERROR_CWD", cwd);
+    Global_Set(".ERROR_CWD", cwd);
     if (pbm->meta_fname[0] != '\0') {
-	Global_SetExpand(".ERROR_META_FILE", pbm->meta_fname);
+	Global_Set(".ERROR_META_FILE", pbm->meta_fname);
     }
     meta_job_finish(job);
 }

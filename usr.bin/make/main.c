@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.527 2021/02/03 08:00:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.528 2021/02/03 08:08:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.527 2021/02/03 08:00:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.528 2021/02/03 08:08:18 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -429,7 +429,7 @@ MainParseArgJobs(const char *argvalue)
 	}
 	Global_AppendExpand(MAKEFLAGS, "-j");
 	Global_AppendExpand(MAKEFLAGS, argvalue);
-	Global_SetExpand(".MAKE.JOBS", argvalue);
+	Global_Set(".MAKE.JOBS", argvalue);
 	maxJobTokens = opts.maxJobs;
 }
 
@@ -459,7 +459,7 @@ MainParseArg(char c, const char *argvalue)
 	case 'B':
 		opts.compatMake = TRUE;
 		Global_AppendExpand(MAKEFLAGS, "-B");
-		Global_SetExpand(MAKE_MODE, "compat");
+		Global_Set(MAKE_MODE, "compat");
 		break;
 	case 'C':
 		MainParseArgChdir(argvalue);
@@ -737,7 +737,7 @@ Main_SetObjdir(Boolean writable, const char *fmt, ...)
 			    progname, path, strerror(errno));
 		} else {
 			snprintf(objdir, sizeof objdir, "%s", path);
-			Global_SetExpand(".OBJDIR", objdir);
+			Global_Set(".OBJDIR", objdir);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
 			purge_relative_cached_realpaths();
@@ -957,7 +957,7 @@ InitVarTargets(void)
 	StringListNode *ln;
 
 	if (Lst_IsEmpty(&opts.create)) {
-		Global_SetExpand(".TARGETS", "");
+		Global_Set(".TARGETS", "");
 		return;
 	}
 
@@ -1159,8 +1159,8 @@ InitVarMake(const char *argv0)
 			make = abspath;
 	}
 
-	Global_SetExpand("MAKE", make);
-	Global_SetExpand(".MAKE", make);
+	Global_Set("MAKE", make);
+	Global_Set(".MAKE", make);
 }
 
 /*
@@ -1383,21 +1383,21 @@ main_Init(int argc, char **argv)
 	 */
 	Targ_Init();
 	Var_Init();
-	Global_SetExpand(".MAKE.OS", utsname.sysname);
-	Global_SetExpand("MACHINE", machine);
-	Global_SetExpand("MACHINE_ARCH", machine_arch);
+	Global_Set(".MAKE.OS", utsname.sysname);
+	Global_Set("MACHINE", machine);
+	Global_Set("MACHINE_ARCH", machine_arch);
 #ifdef MAKE_VERSION
-	Global_SetExpand("MAKE_VERSION", MAKE_VERSION);
+	Global_Set("MAKE_VERSION", MAKE_VERSION);
 #endif
-	Global_SetExpand(".newline", "\n"); /* handy for :@ loops */
+	Global_Set(".newline", "\n"); /* handy for :@ loops */
 	/*
 	 * This is the traditional preference for makefiles.
 	 */
 #ifndef MAKEFILE_PREFERENCE_LIST
 # define MAKEFILE_PREFERENCE_LIST "makefile Makefile"
 #endif
-	Global_SetExpand(MAKE_MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST);
-	Global_SetExpand(MAKE_DEPENDFILE, ".depend");
+	Global_Set(MAKE_MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST);
+	Global_Set(MAKE_DEPENDFILE, ".depend");
 
 	CmdOpts_Init();
 	allPrecious = FALSE;	/* Remove targets when interrupted */
@@ -1421,10 +1421,10 @@ main_Init(int argc, char **argv)
 	 */
 	Parse_Init();
 	InitVarMake(argv[0]);
-	Global_SetExpand(MAKEFLAGS, "");
-	Global_SetExpand(MAKEOVERRIDES, "");
-	Global_SetExpand("MFLAGS", "");
-	Global_SetExpand(".ALLTARGETS", "");
+	Global_Set(MAKEFLAGS, "");
+	Global_Set(MAKEOVERRIDES, "");
+	Global_Set("MFLAGS", "");
+	Global_Set(".ALLTARGETS", "");
 	/* some makefiles need to know this */
 	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMDLINE);
 
@@ -1436,15 +1436,15 @@ main_Init(int argc, char **argv)
 		if (makelevel < 0)
 			makelevel = 0;
 		snprintf(tmp, sizeof tmp, "%d", makelevel);
-		Global_SetExpand(MAKE_LEVEL, tmp);
+		Global_Set(MAKE_LEVEL, tmp);
 		snprintf(tmp, sizeof tmp, "%u", myPid);
-		Global_SetExpand(".MAKE.PID", tmp);
+		Global_Set(".MAKE.PID", tmp);
 		snprintf(tmp, sizeof tmp, "%u", getppid());
-		Global_SetExpand(".MAKE.PPID", tmp);
+		Global_Set(".MAKE.PPID", tmp);
 		snprintf(tmp, sizeof tmp, "%u", getuid());
-		Global_SetExpand(".MAKE.UID", tmp);
+		Global_Set(".MAKE.UID", tmp);
 		snprintf(tmp, sizeof tmp, "%u", getgid());
-		Global_SetExpand(".MAKE.GID", tmp);
+		Global_Set(".MAKE.GID", tmp);
 	}
 	if (makelevel > 0) {
 		char pn[1024];
@@ -1499,7 +1499,7 @@ main_Init(int argc, char **argv)
 #ifndef NO_PWD_OVERRIDE
 	HandlePWD(&sa);
 #endif
-	Global_SetExpand(".CURDIR", curdir);
+	Global_Set(".CURDIR", curdir);
 
 	InitObjdir(machine, machine_arch);
 
@@ -2104,7 +2104,7 @@ SetErrorVars(GNode *gn)
 	/*
 	 * We can print this even if there is no .ERROR target.
 	 */
-	Global_SetExpand(".ERROR_TARGET", gn->name);
+	Global_Set(".ERROR_TARGET", gn->name);
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
 
 	for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
