@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.99 2020/10/10 21:47:42 jmcneill Exp $	*/
+/*	$NetBSD: ums.c,v 1.100 2021/02/03 23:26:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.99 2020/10/10 21:47:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.100 2021/02/03 23:26:08 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -206,6 +206,16 @@ ums_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * The HAILUCK USB Keyboard has a built-in touchpad, which
 		 * needs to be active for the keyboard to function properly.
+		 */
+		sc->sc_alwayson = true;
+	}
+
+	if (uha->uiaa->uiaa_vendor == USB_VENDOR_CHICONY &&
+	    uha->uiaa->uiaa_product == USB_PRODUCT_CHICONY_OPTMOUSE0939) {
+		/*
+		 * This cheap mouse will disconnect after 60 seconds,
+		 * reconnect, and then disconnect again (ad nauseum)
+		 * unless it's kept open.
 		 */
 		sc->sc_alwayson = true;
 	}
