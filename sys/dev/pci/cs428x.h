@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.17 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.18 2021/02/03 14:44:32 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -106,7 +106,6 @@ struct cs428x_softc {
 	int	sc_pi;
 	struct	cs428x_dma *sc_pdma;
 	char	*sc_pbuf;
-	int	(*halt_output)(void *);
 	char	sc_prun;		/* playback status */
 	int	sc_prate;		/* playback sample rate */
 
@@ -118,7 +117,6 @@ struct cs428x_softc {
 	int	sc_ri;
 	struct	cs428x_dma *sc_rdma;
 	char	*sc_rbuf;
-	int	(*halt_input)(void *);
 	char	sc_rrun;		/* recording status */
 	int	sc_rrate;		/* recording sample rate */
 
