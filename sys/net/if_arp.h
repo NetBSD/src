@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.36 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.37 2021/02/03 18:13:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -72,8 +72,8 @@ struct	arphdr {
 	uint8_t  ar_tpa[];	/* target protocol address */
 #endif
 };
-#ifdef CTASSERT
-CTASSERT(sizeof(struct arphdr) == 8);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct arphdr) == 8);
 #endif
 
 static __inline uint8_t *

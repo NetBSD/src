@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.113 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: in.h,v 1.114 2021/02/03 18:13:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -158,8 +158,8 @@ typedef __sa_family_t	sa_family_t;
 struct in_addr {
 	in_addr_t s_addr;
 };
-#ifdef CTASSERT
-CTASSERT(sizeof(struct in_addr) == 4);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct in_addr) == 4);
 #endif
 
 /*
