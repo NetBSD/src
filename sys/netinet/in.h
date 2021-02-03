@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.112 2021/02/03 05:51:40 roy Exp $	*/
+/*	$NetBSD: in.h,v 1.113 2021/02/03 11:53:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -158,6 +158,9 @@ typedef __sa_family_t	sa_family_t;
 struct in_addr {
 	in_addr_t s_addr;
 };
+#ifdef CTASSERT
+CTASSERT(sizeof(struct in_addr) == 4);
+#endif
 
 /*
  * Definitions of bits in internet address integers.
