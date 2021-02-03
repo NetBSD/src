@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.791 2021/02/03 08:00:36 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.792 2021/02/03 08:08:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.791 2021/02/03 08:00:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.792 2021/02/03 08:08:18 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -868,7 +868,7 @@ UnexportVar(const char *varname, UnexportWhat what)
 		char *cp;
 		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
 		/* TODO: handle errors */
-		Global_SetExpand(MAKE_EXPORTED, cp);
+		Global_Set(MAKE_EXPORTED, cp);
 		free(cp);
 		free(expr);
 	}
@@ -1029,6 +1029,17 @@ void
 Var_Set(const char *name, const char *val, GNode *ctxt)
 {
 	Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
+}
+
+void
+Global_Set(const char *name, const char *value)
+{
+	assert(value != NULL);
+
+	if (name[0] == '\0')
+		DEBUG0(VAR, "Variable name empty - ignored\n");
+	else
+		SetVar(name, value, VAR_GLOBAL, VAR_SET_NONE);
 }
 
 void
