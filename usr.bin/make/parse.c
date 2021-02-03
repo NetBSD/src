@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.541 2021/02/03 13:44:39 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.542 2021/02/03 13:53:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.541 2021/02/03 13:44:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.542 2021/02/03 13:53:12 rillig Exp $");
 
 /* types and constants */
 
@@ -886,7 +886,7 @@ ParseDependencySourceMain(const char *src)
 	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
 	 */
-	Global_AppendExpand(".TARGETS", src);
+	Global_Append(".TARGETS", src);
 }
 
 static void
@@ -2375,7 +2375,7 @@ static void
 ParseTrackInput(const char *name)
 {
 	if (!VarContainsWord(MAKE_MAKEFILES, name))
-		Global_AppendExpand(MAKE_MAKEFILES, name);
+		Global_Append(MAKE_MAKEFILES, name);
 }
 
 
@@ -3283,7 +3283,7 @@ Parse_MainName(GNodeList *mainList)
 	if (mainNode->type & OP_DOUBLEDEP)
 		Lst_AppendAll(mainList, &mainNode->cohorts);
 
-	Global_AppendExpand(".TARGETS", mainNode->name);
+	Global_Append(".TARGETS", mainNode->name);
 }
 
 int

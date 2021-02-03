@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.172 2021/02/03 08:08:18 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.173 2021/02/03 13:53:12 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -534,8 +534,8 @@ meta_create(BuildMon *pbm, GNode *gn)
     fprintf(fp, "-- command output --\n");
     fflush(fp);
 
-    Global_AppendExpand(".MAKE.META.FILES", fname);
-    Global_AppendExpand(".MAKE.META.CREATED", fname);
+    Global_Append(".MAKE.META.FILES", fname);
+    Global_Append(".MAKE.META.CREATED", fname);
 
     gn->type |= OP_META;		/* in case anyone wants to know */
     if (metaSilent) {
@@ -633,7 +633,7 @@ meta_mode_init(const char *make_mode)
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
-    Global_AppendExpand(MAKE_META_IGNORE_PATHS,
+    Global_Append(MAKE_META_IGNORE_PATHS,
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}");
     (void)Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
 		    VAR_GLOBAL, VARE_WANTRES, &metaIgnorePathsStr);
@@ -1142,7 +1142,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
 
 	/* we want to track all the .meta we read */
-	Global_AppendExpand(".MAKE.META.FILES", fname);
+	Global_Append(".MAKE.META.FILES", fname);
 
 	cmdNode = gn->commands.first;
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
