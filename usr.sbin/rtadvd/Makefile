@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2020/09/06 07:20:32 mrg Exp $
+# $NetBSD: Makefile,v 1.26 2021/02/03 06:50:07 roy Exp $
 
 WARNS?=	4
 
@@ -30,9 +30,6 @@ CPPFLAGS+=	-DRUMP_ACTION
 LDADD.rump+=	-lrumpres
 DPADD.rump+=	${LIBRUMPRES}
 .endif
-
-CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 COPTS.if.c+=		${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.config.c+=	${GCC_NO_STRINGOP_TRUNCATION}
