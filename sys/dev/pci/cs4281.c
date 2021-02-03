@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.56 2020/05/08 13:52:40 simonb Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.57 2021/02/03 14:44:32 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.56 2020/05/08 13:52:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.57 2021/02/03 14:44:32 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,6 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->type = TYPE_CS4281;
-	sc->halt_input  = cs4281_halt_input;
-	sc->halt_output = cs4281_halt_output;
 
 	sc->dma_size     = CS4281_BUFFER_SIZE / MAX_CHANNELS;
 	sc->dma_align    = 0x10;
