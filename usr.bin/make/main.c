@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.528 2021/02/03 08:08:18 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.529 2021/02/03 13:53:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.528 2021/02/03 08:08:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.529 2021/02/03 13:53:12 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -409,8 +409,8 @@ MainParseArgJobsInternal(const char *argvalue)
 		jp_1 = -1;
 		opts.compatMake = TRUE;
 	} else {
-		Global_AppendExpand(MAKEFLAGS, "-J");
-		Global_AppendExpand(MAKEFLAGS, argvalue);
+		Global_Append(MAKEFLAGS, "-J");
+		Global_Append(MAKEFLAGS, argvalue);
 	}
 }
 
@@ -427,8 +427,8 @@ MainParseArgJobs(const char *argvalue)
 		    progname);
 		exit(2);	/* Not 1 so -q can distinguish error */
 	}
-	Global_AppendExpand(MAKEFLAGS, "-j");
-	Global_AppendExpand(MAKEFLAGS, argvalue);
+	Global_Append(MAKEFLAGS, "-j");
+	Global_Append(MAKEFLAGS, argvalue);
 	Global_Set(".MAKE.JOBS", argvalue);
 	maxJobTokens = opts.maxJobs;
 }
@@ -446,8 +446,8 @@ MainParseArgSysInc(const char *argvalue)
 	} else {
 		(void)SearchPath_Add(sysIncPath, argvalue);
 	}
-	Global_AppendExpand(MAKEFLAGS, "-m");
-	Global_AppendExpand(MAKEFLAGS, argvalue);
+	Global_Append(MAKEFLAGS, "-m");
+	Global_Append(MAKEFLAGS, argvalue);
 }
 
 static Boolean
@@ -458,7 +458,7 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'B':
 		opts.compatMake = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-B");
+		Global_Append(MAKEFLAGS, "-B");
 		Global_Set(MAKE_MODE, "compat");
 		break;
 	case 'C':
@@ -467,13 +467,13 @@ MainParseArg(char c, const char *argvalue)
 	case 'D':
 		if (argvalue[0] == '\0') return FALSE;
 		Global_SetExpand(argvalue, "1");
-		Global_AppendExpand(MAKEFLAGS, "-D");
-		Global_AppendExpand(MAKEFLAGS, argvalue);
+		Global_Append(MAKEFLAGS, "-D");
+		Global_Append(MAKEFLAGS, argvalue);
 		break;
 	case 'I':
 		Parse_AddIncludeDir(argvalue);
-		Global_AppendExpand(MAKEFLAGS, "-I");
-		Global_AppendExpand(MAKEFLAGS, argvalue);
+		Global_Append(MAKEFLAGS, "-I");
+		Global_Append(MAKEFLAGS, argvalue);
 		break;
 	case 'J':
 		MainParseArgJobsInternal(argvalue);
@@ -481,24 +481,24 @@ MainParseArg(char c, const char *argvalue)
 	case 'N':
 		opts.noExecute = TRUE;
 		opts.noRecursiveExecute = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-N");
+		Global_Append(MAKEFLAGS, "-N");
 		break;
 	case 'S':
 		opts.keepgoing = FALSE;
-		Global_AppendExpand(MAKEFLAGS, "-S");
+		Global_Append(MAKEFLAGS, "-S");
 		break;
 	case 'T':
 		tracefile = bmake_strdup(argvalue);
-		Global_AppendExpand(MAKEFLAGS, "-T");
-		Global_AppendExpand(MAKEFLAGS, argvalue);
+		Global_Append(MAKEFLAGS, "-T");
+		Global_Append(MAKEFLAGS, argvalue);
 		break;
 	case 'V':
 	case 'v':
 		opts.printVars = c == 'v' ? PVM_EXPANDED : PVM_UNEXPANDED;
 		Lst_Append(&opts.variables, bmake_strdup(argvalue));
 		/* XXX: Why always -V? */
-		Global_AppendExpand(MAKEFLAGS, "-V");
-		Global_AppendExpand(MAKEFLAGS, argvalue);
+		Global_Append(MAKEFLAGS, "-V");
+		Global_Append(MAKEFLAGS, argvalue);
 		break;
 	case 'W':
 		opts.parseWarnFatal = TRUE;
@@ -506,35 +506,35 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'X':
 		opts.varNoExportEnv = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-X");
+		Global_Append(MAKEFLAGS, "-X");
 		break;
 	case 'd':
 		/* If '-d-opts' don't pass to children */
 		if (argvalue[0] == '-')
 			argvalue++;
 		else {
-			Global_AppendExpand(MAKEFLAGS, "-d");
-			Global_AppendExpand(MAKEFLAGS, argvalue);
+			Global_Append(MAKEFLAGS, "-d");
+			Global_Append(MAKEFLAGS, argvalue);
 		}
 		MainParseArgDebug(argvalue);
 		break;
 	case 'e':
 		opts.checkEnvFirst = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-e");
+		Global_Append(MAKEFLAGS, "-e");
 		break;
 	case 'f':
 		Lst_Append(&opts.makefiles, bmake_strdup(argvalue));
 		break;
 	case 'i':
 		opts.ignoreErrors = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-i");
+		Global_Append(MAKEFLAGS, "-i");
 		break;
 	case 'j':
 		MainParseArgJobs(argvalue);
 		break;
 	case 'k':
 		opts.keepgoing = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-k");
+		Global_Append(MAKEFLAGS, "-k");
 		break;
 	case 'm':
 		MainParseArgSysInc(argvalue);
@@ -542,28 +542,28 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'n':
 		opts.noExecute = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-n");
+		Global_Append(MAKEFLAGS, "-n");
 		break;
 	case 'q':
 		opts.queryFlag = TRUE;
 		/* Kind of nonsensical, wot? */
-		Global_AppendExpand(MAKEFLAGS, "-q");
+		Global_Append(MAKEFLAGS, "-q");
 		break;
 	case 'r':
 		opts.noBuiltins = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-r");
+		Global_Append(MAKEFLAGS, "-r");
 		break;
 	case 's':
 		opts.beSilent = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-s");
+		Global_Append(MAKEFLAGS, "-s");
 		break;
 	case 't':
 		opts.touchFlag = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-t");
+		Global_Append(MAKEFLAGS, "-t");
 		break;
 	case 'w':
 		opts.enterFlag = TRUE;
-		Global_AppendExpand(MAKEFLAGS, "-w");
+		Global_Append(MAKEFLAGS, "-w");
 		break;
 	default:
 	case '?':
@@ -963,7 +963,7 @@ InitVarTargets(void)
 
 	for (ln = opts.create.first; ln != NULL; ln = ln->next) {
 		const char *name = ln->datum;
-		Global_AppendExpand(".TARGETS", name);
+		Global_Append(".TARGETS", name);
 	}
 }
 
@@ -1253,8 +1253,8 @@ InitMaxJobs(void)
 	}
 
 	if (n != opts.maxJobs) {
-		Global_AppendExpand(MAKEFLAGS, "-j");
-		Global_AppendExpand(MAKEFLAGS, value);
+		Global_Append(MAKEFLAGS, "-j");
+		Global_Append(MAKEFLAGS, value);
 	}
 
 	opts.maxJobs = n;
@@ -1561,7 +1561,7 @@ main_PrepareMaking(void)
 
 	{
 		FStr makeflags = Var_Value(MAKEFLAGS, VAR_GLOBAL);
-		Global_AppendExpand("MFLAGS", makeflags.str);
+		Global_Append("MFLAGS", makeflags.str);
 		FStr_Done(&makeflags);
 	}
 
@@ -2112,7 +2112,7 @@ SetErrorVars(GNode *gn)
 
 		if (cmd == NULL)
 			break;
-		Global_AppendExpand(".ERROR_CMD", cmd);
+		Global_Append(".ERROR_CMD", cmd);
 	}
 }
 
