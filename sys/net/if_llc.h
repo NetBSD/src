@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.21 2014/09/05 05:32:07 matt Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.22 2021/02/03 12:11:34 roy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -82,7 +82,7 @@ struct llc {
 		uint8_t control_ext;
 	    } type_raw /* XXX __packed ??? */;
 	} llc_un /* XXX __packed ??? */;
-} __packed;
+};
 
 struct frmrinfo {
 	uint8_t frmr_rej_pdu0;
@@ -90,7 +90,12 @@ struct frmrinfo {
 	uint8_t frmr_control;
 	uint8_t frmr_control_ext;
 	uint8_t frmr_cause;
-} __packed;
+};
+
+#ifdef CTASSERT
+CTASSERT(sizeof(struct llc) == 8);
+CTASSERT(sizeof(struct frmrinfo) == 5);
+#endif
 
 #define	llc_control		llc_un.type_u.control
 #define	llc_control_ext		llc_un.type_raw.control_ext
