@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2020/09/06 07:20:33 mrg Exp $	
+#	$NetBSD: Makefile,v 1.22 2021/02/03 06:49:18 roy Exp $	
 
 USE_FORT?= yes	# network client
 
@@ -29,7 +29,5 @@ SANITIZER_RENAME_FILES.rump+=	${PROG}_rumpops.c ${RUMPSRCS}
 SANITIZER_RENAME_SYMBOL.rump+=	getifaddrs
 
 AWKS=	median.awk mean.awk 
-
-CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
