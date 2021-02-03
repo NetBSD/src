@@ -151,23 +151,23 @@ at runtime.")
 ;;; during runtime instead of having them here in the code.
 ;;;
 (defconst send-pr::fields
-  (` (("Category" send-pr::set-categories
-       (, (or (gnats::get-config "DEFAULT_CATEGORY") nil)) enum)
+    `(("Category" send-pr::set-categories
+       ,(or (gnats::get-config "DEFAULT_CATEGORY") nil) enum)
       ("Class" (("sw-bug") ("doc-bug") ("change-request") ("support"))
-       (, (or (gnats::get-config "DEFAULT_CLASS") 0)) enum)
+       ,(or (gnats::get-config "DEFAULT_CLASS") 0) enum)
       ("Confidential" (("yes") ("no"))
-       (, (or (gnats::get-config "DEFAULT_CONFIDENTIAL") 1)) enum)
+       ,(or (gnats::get-config "DEFAULT_CONFIDENTIAL") 1) enum)
       ("Severity" (("non-critical") ("serious") ("critical"))
-       (, (or (gnats::get-config "DEFAULT_SEVERITY") 1)) enum)
+       ,(or (gnats::get-config "DEFAULT_SEVERITY") 1) enum)
       ("Priority" (("low") ("medium") ("high"))
-       (, (or (gnats::get-config "DEFAULT_PRIORITY") 1)) enum)
+       ,(or (gnats::get-config "DEFAULT_PRIORITY") 1) enum)
       ("Release" nil
-       (, (or (gnats::get-config "DEFAULT_RELEASE") "xDEFAULT_RELEASEx"))
+       ,(or (gnats::get-config "DEFAULT_RELEASE") "`uname -s` `uname -r`")
        text)
       ("Submitter-Id" nil
-       (, (or (gnats::get-config "SUBMITTER") "xSUBMITTERx")) text)
+       ,(or (gnats::get-config "SUBMITTER") "net") text)
       ("Synopsis" nil nil text
-       (lambda (a b c) (gnats::set-mail-field "Subject" c)))))
+       (lambda (a b c) (gnats::set-mail-field "Subject" c))))
   "AList, keyed on the name of the field, of:
 1) The field name.
 2) The list of completions.  This can be a list, a function to call, or nil.
@@ -178,7 +178,7 @@ at runtime.")
 (defvar gnats::fields nil)
 
 (defmacro gnats::push (i l)
-  (` (setq (, l) (cons (,@ (list i l))))))
+  `(setq ,l (cons ,@ (list i l))))
 
 (defun send-pr::set-categories (&optional arg)
   "Get the list of categories for the current site out of
