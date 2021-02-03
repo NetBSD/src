@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.173 2021/02/03 13:53:12 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.174 2021/02/03 15:08:17 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1251,8 +1251,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		/* Process according to record type. */
 		switch (buf[0]) {
 		case 'X':		/* eXit */
-		    Var_Delete(lcwd_vname, VAR_GLOBAL);
-		    Var_Delete(ldir_vname, VAR_GLOBAL);
+		    Var_DeleteExpand(lcwd_vname, VAR_GLOBAL);
+		    Var_DeleteExpand(ldir_vname, VAR_GLOBAL);
 		    lastpid = 0;	/* no need to save ldir_vname */
 		    break;
 
