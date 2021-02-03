@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.14 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: igmp.h,v 1.15 2021/02/03 18:13:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,8 +89,8 @@ struct igmp {
 	uint16_t	igmp_cksum;	/* IP-style checksum               */
 	struct in_addr	igmp_group;	/* group address being reported    */
 };			/*  (zero for queries)             */
-#ifdef CTASSERT
-CTASSERT(sizeof(struct igmp) == 8);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct igmp) == 8);
 #endif
 
 #define	IGMP_MINLEN			8

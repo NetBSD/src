@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.83 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.84 2021/02/03 18:13:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -90,9 +90,9 @@ struct ether_header {
 	uint16_t ether_type;
 };
 
-#ifdef CTASSERT
-CTASSERT(sizeof(struct ether_addr) == 6);
-CTASSERT(sizeof(struct ether_header) == 14);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct ether_addr) == 6);
+__CTASSERT(sizeof(struct ether_header) == 14);
 #endif
 
 #include <net/ethertypes.h>

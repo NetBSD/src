@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.42 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.43 2021/02/03 18:13:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -160,11 +160,11 @@ struct icmp_ext_obj_hdr {
 	uint8_t c_type;
 };
 
-#ifdef CTASSERT
-CTASSERT(sizeof(struct icmp_ra_addr) == 8);
-CTASSERT(sizeof(struct icmp) == 28);
-CTASSERT(sizeof(struct icmp_ext_hdr) == 4);
-CTASSERT(sizeof(struct icmp_ext_obj_hdr) == 4);
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct icmp_ra_addr) == 8);
+__CTASSERT(sizeof(struct icmp) == 28);
+__CTASSERT(sizeof(struct icmp_ext_hdr) == 4);
+__CTASSERT(sizeof(struct icmp_ext_obj_hdr) == 4);
 #endif
 
 /*

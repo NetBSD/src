@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.28 2021/02/03 11:53:43 roy Exp $	*/
+/*	$NetBSD: ip6.h,v 1.29 2021/02/03 18:13:13 roy Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -120,8 +120,8 @@ struct ip6_hdr_pseudo {
 	u_int8_t	ip6ph_zero[3];
 	u_int8_t	ip6ph_nxt;
 };
-CTASSERT(sizeof(struct ip6_hdr) == 40);
-CTASSERT(sizeof(struct ip6_hdr_pseudo) == 40);
+__CTASSERT(sizeof(struct ip6_hdr) == 40);
+__CTASSERT(sizeof(struct ip6_hdr_pseudo) == 40);
 #endif
 
 /*
