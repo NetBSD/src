@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.539 2021/02/03 08:00:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.540 2021/02/03 08:08:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.539 2021/02/03 08:00:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.540 2021/02/03 08:08:18 rillig Exp $");
 
 /* types and constants */
 
@@ -1327,7 +1327,7 @@ ParseDoDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
 		break;
 #ifdef POSIX
 	case SP_POSIX:
-		Global_SetExpand("%POSIX", "1003.2");
+		Global_Set("%POSIX", "1003.2");
 		break;
 #endif
 	default:
