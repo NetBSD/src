@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.789 2021/02/01 04:46:33 nia Exp $
+$NetBSD: usbdevs,v 1.790 2021/02/03 23:23:42 thorpej Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1173,6 +1173,7 @@ product CHIC CYPRESS		0x0003	Cypress USB Mouse
 
 /* Chicony products */
 product CHICONY KB8933		0x0001	KB-8933 keyboard
+product CHICONY OPTMOUSE0939	0x0939	USB Optical Mouse
 product CHICONY RTL8188CUS_1	0xaff7	RTL8188CUS
 product CHICONY RTL8188CUS_2	0xaff8	RTL8188CUS
 product CHICONY RTL8188CUS_3	0xaff9	RTL8188CUS
