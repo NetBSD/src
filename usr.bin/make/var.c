@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.794 2021/02/03 13:44:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.795 2021/02/03 13:53:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.794 2021/02/03 13:44:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.795 2021/02/03 13:53:12 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -750,7 +750,7 @@ ExportVars(const char *varnames, Boolean isExport, VarExportMode mode)
 			var_exportedVars = VAR_EXPORTED_SOME;
 
 		if (isExport && mode == VEM_PLAIN)
-			Global_AppendExpand(MAKE_EXPORTED, varname);
+			Global_Append(MAKE_EXPORTED, varname);
 	}
 	Words_Free(words);
 }
@@ -986,7 +986,7 @@ SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 		if (!opts.varNoExportEnv)
 			setenv(name, val, 1);
 
-		Global_AppendExpand(MAKEOVERRIDES, name);
+		Global_Append(MAKEOVERRIDES, name);
 	}
 	if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
 		save_dollars = ParseBoolean(val, save_dollars);
@@ -1141,9 +1141,9 @@ Var_AppendExpand(const char *name, const char *val, GNode *ctxt)
 }
 
 void
-Global_AppendExpand(const char *name, const char *value)
+Global_Append(const char *name, const char *value)
 {
-	Var_AppendExpand(name, value, VAR_GLOBAL);
+	Var_Append(name, value, VAR_GLOBAL);
 }
 
 /*
