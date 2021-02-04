@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.163 2021/02/03 13:53:12 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.164 2021/02/04 21:33:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.163 2021/02/03 13:53:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.164 2021/02/04 21:33:14 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -243,14 +243,14 @@ GNode_Free(void *gnp)
 	 * by this node.
 	 *
 	 * XXX: For the nodes that represent targets or sources (and not
-	 * VAR_GLOBAL), it should be safe to free the variables as well,
+	 * SCOPE_GLOBAL), it should be safe to free the variables as well,
 	 * since each node manages the memory for all its variables itself.
 	 *
 	 * XXX: The GNodes that are only used as variable contexts (VAR_CMD,
-	 * VAR_GLOBAL, VAR_INTERNAL) are not freed at all (see Var_End, where
-	 * they are not mentioned).  These might be freed at all, if their
-	 * variable values are indeed not used anywhere else (see Trace_Init
-	 * for the only suspicious use).
+	 * SCOPE_GLOBAL, SCOPE_INTERNAL) are not freed at all (see Var_End,
+	 * where they are not mentioned).  These might be freed at all, if
+	 * their variable values are indeed not used anywhere else (see
+	 * Trace_Init for the only suspicious use).
 	 */
 	HashTable_Done(&gn->vars);
 
@@ -577,10 +577,10 @@ Targ_PrintGraph(int pass)
 	PrintOnlySources();
 
 	debug_printf("#*** Global Variables:\n");
-	Var_Dump(VAR_GLOBAL);
+	Var_Dump(SCOPE_GLOBAL);
 
 	debug_printf("#*** Command-line Variables:\n");
-	Var_Dump(VAR_CMDLINE);
+	Var_Dump(SCOPE_CMDLINE);
 
 	debug_printf("\n");
 	Dir_PrintDirectories();

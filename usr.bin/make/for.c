@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.140 2021/02/01 17:26:03 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.141 2021/02/04 21:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.140 2021/02/01 17:26:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.141 2021/02/04 21:33:13 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -173,7 +173,7 @@ ForLoop_ParseItems(ForLoop *f, const char *p)
 
 	cpp_skip_whitespace(&p);
 
-	if (Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items) != VPR_OK) {
+	if (Var_Subst(p, SCOPE_GLOBAL, VARE_WANTRES, &items) != VPR_OK) {
 		Parse_Error(PARSE_FATAL, "Error in .for loop items");
 		return FALSE;
 	}

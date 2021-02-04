@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.529 2021/02/03 13:53:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.530 2021/02/04 21:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.529 2021/02/03 13:53:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.530 2021/02/04 21:33:13 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -655,7 +655,7 @@ rearg:
 	for (; argc > 1; argv++, argc--) {
 		VarAssign var;
 		if (Parse_IsVar(argv[1], &var)) {
-			Parse_DoVar(&var, VAR_CMDLINE);
+			Parse_DoVar(&var, SCOPE_CMDLINE);
 		} else {
 			if (argv[1][0] == '\0')
 				Punt("illegal (null) argument.");
@@ -693,7 +693,7 @@ Main_ParseArgLine(const char *line)
 		return;
 
 	{
-		FStr argv0 = Var_Value(".MAKE", VAR_GLOBAL);
+		FStr argv0 = Var_Value(".MAKE", SCOPE_GLOBAL);
 		buf = str_concat3(argv0.str, " ", line);
 		FStr_Done(&argv0);
 	}
@@ -753,7 +753,7 @@ Main_SetObjdir(Boolean writable, const char *fmt, ...)
 static Boolean
 SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 {
-	FStr path = Var_Value(var, VAR_CMDLINE);
+	FStr path = Var_Value(var, SCOPE_CMDLINE);
 	FStr xpath;
 
 	if (path.str == NULL || path.str[0] == '\0') {
@@ -765,7 +765,7 @@ SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 	xpath = FStr_InitRefer(path.str);
 	if (strchr(path.str, '$') != 0) {
 		char *expanded;
-		(void)Var_Subst(path.str, VAR_GLOBAL, VARE_WANTRES, &expanded);
+		(void)Var_Subst(path.str, SCOPE_GLOBAL, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
 		xpath = FStr_InitOwn(expanded);
 	}
@@ -818,7 +818,7 @@ MakeMode(void)
 {
 	char *mode;
 
-	(void)Var_Subst("${" MAKE_MODE ":tl}", VAR_GLOBAL, VARE_WANTRES, &mode);
+	(void)Var_Subst("${" MAKE_MODE ":tl}", SCOPE_GLOBAL, VARE_WANTRES, &mode);
 	/* TODO: handle errors */
 
 	if (mode[0] != '\0') {
@@ -840,7 +840,7 @@ PrintVar(const char *varname, Boolean expandVars)
 {
 	if (strchr(varname, '$') != NULL) {
 		char *evalue;
-		(void)Var_Subst(varname, VAR_GLOBAL, VARE_WANTRES, &evalue);
+		(void)Var_Subst(varname, SCOPE_GLOBAL, VARE_WANTRES, &evalue);
 		/* TODO: handle errors */
 		printf("%s\n", evalue);
 		bmake_free(evalue);
@@ -848,14 +848,14 @@ PrintVar(const char *varname, Boolean expandVars)
 	} else if (expandVars) {
 		char *expr = str_concat3("${", varname, "}");
 		char *evalue;
-		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &evalue);
+		(void)Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES, &evalue);
 		/* TODO: handle errors */
 		free(expr);
 		printf("%s\n", evalue);
 		bmake_free(evalue);
 
 	} else {
-		FStr value = Var_Value(varname, VAR_GLOBAL);
+		FStr value = Var_Value(varname, SCOPE_GLOBAL);
 		printf("%s\n", value.str != NULL ? value.str : "");
 		FStr_Done(&value);
 	}
@@ -875,7 +875,7 @@ GetBooleanVar(const char *varname, Boolean fallback)
 	char *value;
 	Boolean res;
 
-	(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &value);
+	(void)Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES, &value);
 	/* TODO: handle errors */
 	res = ParseBoolean(value, fallback);
 	free(value);
@@ -1051,13 +1051,13 @@ HandlePWD(const struct stat *curdir_st)
 	if (ignorePWD || (pwd = getenv("PWD")) == NULL)
 		return;
 
-	prefix = Var_Value("MAKEOBJDIRPREFIX", VAR_CMDLINE);
+	prefix = Var_Value("MAKEOBJDIRPREFIX", SCOPE_CMDLINE);
 	if (prefix.str != NULL) {
 		FStr_Done(&prefix);
 		return;
 	}
 
-	makeobjdir = Var_Value("MAKEOBJDIR", VAR_CMDLINE);
+	makeobjdir = Var_Value("MAKEOBJDIR", SCOPE_CMDLINE);
 	if (makeobjdir.str != NULL && strchr(makeobjdir.str, '$') != NULL)
 		goto ignore_pwd;
 
@@ -1238,10 +1238,10 @@ InitMaxJobs(void)
 	int n;
 
 	if (forceJobs || opts.compatMake ||
-	    !Var_Exists(".MAKE.JOBS", VAR_GLOBAL))
+	    !Var_Exists(".MAKE.JOBS", SCOPE_GLOBAL))
 		return;
 
-	(void)Var_Subst("${.MAKE.JOBS}", VAR_GLOBAL, VARE_WANTRES, &value);
+	(void)Var_Subst("${.MAKE.JOBS}", SCOPE_GLOBAL, VARE_WANTRES, &value);
 	/* TODO: handle errors */
 	n = (int)strtol(value, NULL, 0);
 	if (n < 1) {
@@ -1273,10 +1273,10 @@ static void
 InitVpath(void)
 {
 	char *vpath, savec, *path;
-	if (!Var_Exists("VPATH", VAR_CMDLINE))
+	if (!Var_Exists("VPATH", SCOPE_CMDLINE))
 		return;
 
-	(void)Var_Subst("${VPATH}", VAR_CMDLINE, VARE_WANTRES, &vpath);
+	(void)Var_Subst("${VPATH}", SCOPE_CMDLINE, VARE_WANTRES, &vpath);
 	/* TODO: handle errors */
 	path = vpath;
 	do {
@@ -1314,7 +1314,7 @@ ReadFirstDefaultMakefile(void)
 	char *prefs;
 
 	(void)Var_Subst("${" MAKE_MAKEFILE_PREFERENCE "}",
-	    VAR_CMDLINE, VARE_WANTRES, &prefs);
+	    SCOPE_CMDLINE, VARE_WANTRES, &prefs);
 	/* TODO: handle errors */
 
 	/* XXX: This should use a local list instead of opts.makefiles
@@ -1426,7 +1426,7 @@ main_Init(int argc, char **argv)
 	Global_Set("MFLAGS", "");
 	Global_Set(".ALLTARGETS", "");
 	/* some makefiles need to know this */
-	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMDLINE);
+	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, SCOPE_CMDLINE);
 
 	/* Set some other useful variables. */
 	{
@@ -1545,7 +1545,7 @@ main_PrepareMaking(void)
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!opts.noBuiltins || opts.printVars == PVM_NONE) {
 		(void)Var_Subst("${.MAKE.DEPENDFILE}",
-		    VAR_CMDLINE, VARE_WANTRES, &makeDependfile);
+		    SCOPE_CMDLINE, VARE_WANTRES, &makeDependfile);
 		if (makeDependfile[0] != '\0') {
 			/* TODO: handle errors */
 			doing_depend = TRUE;
@@ -1560,7 +1560,7 @@ main_PrepareMaking(void)
 	MakeMode();
 
 	{
-		FStr makeflags = Var_Value(MAKEFLAGS, VAR_GLOBAL);
+		FStr makeflags = Var_Value(MAKEFLAGS, SCOPE_GLOBAL);
 		Global_Append("MFLAGS", makeflags.str);
 		FStr_Done(&makeflags);
 	}
@@ -1691,7 +1691,7 @@ ReadMakefile(const char *fname)
 
 	if (strcmp(fname, "-") == 0) {
 		Parse_File(NULL /*stdin*/, -1);
-		Var_Set("MAKEFILE", "", VAR_INTERNAL);
+		Var_Set("MAKEFILE", "", SCOPE_INTERNAL);
 	} else {
 		/* if we've chdir'd, rebuild the path name */
 		if (strcmp(curdir, objdir) != 0 && *fname != '/') {
@@ -1735,7 +1735,7 @@ ReadMakefile(const char *fname)
 		 */
 found:
 		if (!doing_depend)
-			Var_Set("MAKEFILE", fname, VAR_INTERNAL);
+			Var_Set("MAKEFILE", fname, SCOPE_INTERNAL);
 		Parse_File(fname, fd);
 	}
 	free(path);
@@ -2105,7 +2105,7 @@ SetErrorVars(GNode *gn)
 	 * We can print this even if there is no .ERROR target.
 	 */
 	Global_Set(".ERROR_TARGET", gn->name);
-	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
+	Var_Delete(".ERROR_CMD", SCOPE_GLOBAL);
 
 	for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
@@ -2147,7 +2147,7 @@ PrintOnError(GNode *gn, const char *msg)
 	{
 		char *errorVarsValues;
 		(void)Var_Subst("${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
-				VAR_GLOBAL, VARE_WANTRES, &errorVarsValues);
+				SCOPE_GLOBAL, VARE_WANTRES, &errorVarsValues);
 		/* TODO: handle errors */
 		printf("%s", errorVarsValues);
 		free(errorVarsValues);
@@ -2177,7 +2177,7 @@ Main_ExportMAKEFLAGS(Boolean first)
 	once = FALSE;
 
 	expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
-	(void)Var_Subst(expr, VAR_CMDLINE, VARE_WANTRES, &s);
+	(void)Var_Subst(expr, SCOPE_CMDLINE, VARE_WANTRES, &s);
 	/* TODO: handle errors */
 	if (s[0] != '\0') {
 #ifdef POSIX
@@ -2199,7 +2199,7 @@ getTmpdir(void)
 
 	/* Honor $TMPDIR but only if it is valid. Ensure it ends with '/'. */
 	(void)Var_Subst("${TMPDIR:tA:U" _PATH_TMP "}/",
-	    VAR_GLOBAL, VARE_WANTRES, &tmpdir);
+	    SCOPE_GLOBAL, VARE_WANTRES, &tmpdir);
 	/* TODO: handle errors */
 
 	if (stat(tmpdir, &st) < 0 || !S_ISDIR(st.st_mode)) {
