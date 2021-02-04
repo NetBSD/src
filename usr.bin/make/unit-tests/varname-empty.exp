@@ -14,7 +14,6 @@ Global:.PATH = . <curdir>
 Global:.TARGETS = 
 Internal:MAKEFILE = varname-empty.mk
 Global:.MAKE.MAKEFILES = varname-empty.mk
-Global:.PARSEDIR = <curdir>
 Global:.PARSEFILE = varname-empty.mk
 Global:delete .INCLUDEDFROMDIR (not found)
 Global:delete .INCLUDEDFROMFILE (not found)
