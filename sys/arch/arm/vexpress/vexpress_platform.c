@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.19 2020/10/30 18:54:36 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.20 2021/02/04 22:36:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.19 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.20 2021/02/04 22:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -195,6 +195,7 @@ vexpress_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 vexpress_platform_device_register(device_t self, void *aux)
 {
+	fdtbus_device_register(dev, aux);
 }
 
 static void
