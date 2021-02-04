@@ -1,4 +1,4 @@
-/* $NetBSD: mesong12_clkc.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: mesong12_clkc.c,v 1.6 2021/02/04 22:55:36 joerg Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesong12_clkc.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesong12_clkc.c,v 1.6 2021/02/04 22:55:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -939,7 +939,7 @@ struct mesong12_clkc_config {
 	    __BIT(18),			/* sel */			\
 	    0)
 #define G12_CLK_vid_pll							\
-	MESON_CLK_GATE(MESONG12_CLOCK_VID_PLL_DIV, "vid_pll",		\
+	MESON_CLK_GATE(MESONG12_CLOCK_VID_PLL, "vid_pll",		\
 	    "vid_pll_sel",		/* parent */			\
 	    HHI_VID_PLL_CLK_DIV,	/* reg */			\
 	    19)				/* bit */
