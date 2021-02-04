@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.204 2021/01/31 14:05:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.205 2021/02/04 06:54:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.204 2021/01/31 14:05:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.205 2021/02/04 06:54:59 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2101,7 +2101,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	    psize(nt) != psize(ot)) {
 		/* representation and/or width change */
 		if (!is_integer(ot) || psize(ot) > psize(INT)) {
-			/* argument #%d is converted from '%s' to '%s' */
+			/* argument #%d is converted from '%s' to '%s' ... */
 			warning(259,
 			    arg, type_name(tn->tn_type), type_name(tp));
 		}
@@ -2118,7 +2118,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else {
-			/* argument #%d is converted from '%s' to '%s' */
+			/* argument #%d is converted from '%s' to '%s' ... */
 			warning(259,
 			    arg, type_name(tn->tn_type), type_name(tp));
 		}
