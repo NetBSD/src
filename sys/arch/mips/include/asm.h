@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.62 2020/09/26 08:19:11 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.63 2021/02/04 08:51:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -619,7 +619,7 @@ _C_LABEL(x):
 #define	SETUP_GPX(r)		/* o32 specific */
 #define	SETUP_GPX_L(r,lbl)	/* o32 specific */
 #define	SAVE_GP(x)		/* o32 specific */
-#define	SETUP_GP64(a,b)		.cpsetup $25, a, b
+#define	SETUP_GP64(a,b)		.cpsetup t9, a, b
 #define	SETUP_GPX64(a,b)	\
 				.set push;			\
 				move	b,ra;			\
