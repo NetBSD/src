@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.253 2021/02/04 21:42:46 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.254 2021/02/04 21:50:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -751,19 +751,19 @@ GNode_IsError(const GNode *gn)
 }
 
 MAKE_INLINE const char *
-GNode_VarTarget(GNode *gn) { return Var_ValueDirect(TARGET, gn); }
+GNode_VarTarget(GNode *gn) { return GNode_ValueDirect(gn, TARGET); }
 MAKE_INLINE const char *
-GNode_VarOodate(GNode *gn) { return Var_ValueDirect(OODATE, gn); }
+GNode_VarOodate(GNode *gn) { return GNode_ValueDirect(gn, OODATE); }
 MAKE_INLINE const char *
-GNode_VarAllsrc(GNode *gn) { return Var_ValueDirect(ALLSRC, gn); }
+GNode_VarAllsrc(GNode *gn) { return GNode_ValueDirect(gn, ALLSRC); }
 MAKE_INLINE const char *
-GNode_VarImpsrc(GNode *gn) { return Var_ValueDirect(IMPSRC, gn); }
+GNode_VarImpsrc(GNode *gn) { return GNode_ValueDirect(gn, IMPSRC); }
 MAKE_INLINE const char *
-GNode_VarPrefix(GNode *gn) { return Var_ValueDirect(PREFIX, gn); }
+GNode_VarPrefix(GNode *gn) { return GNode_ValueDirect(gn, PREFIX); }
 MAKE_INLINE const char *
-GNode_VarArchive(GNode *gn) { return Var_ValueDirect(ARCHIVE, gn); }
+GNode_VarArchive(GNode *gn) { return GNode_ValueDirect(gn, ARCHIVE); }
 MAKE_INLINE const char *
-GNode_VarMember(GNode *gn) { return Var_ValueDirect(MEMBER, gn); }
+GNode_VarMember(GNode *gn) { return GNode_ValueDirect(gn, MEMBER); }
 
 #ifdef __GNUC__
 #define UNCONST(ptr)	({		\
