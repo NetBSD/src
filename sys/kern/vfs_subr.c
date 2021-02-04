@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.489 2020/07/26 21:28:33 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.490 2021/02/04 21:07:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.489 2020/07/26 21:28:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.490 2021/02/04 21:07:06 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1253,11 +1253,40 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	return 0;
 }
 
-void
-vfs_timestamp(struct timespec *ts)
-{
+/*
+ * Knob to control the precision of file timestamps:
+ *
+ *   0 = seconds only; nanoseconds zeroed.
+ *   1 = seconds and nanoseconds, accurate within 1/HZ.
+ *   2 = seconds and nanoseconds, truncated to microseconds.
+ * >=3 = seconds and nanoseconds, maximum precision.
+ */
+enum { TSP_SEC, TSP_HZ, TSP_USEC, TSP_NSEC };
 
-	nanotime(ts);
+int vfs_timestamp_precision __read_mostly = TSP_NSEC;
+
+void
+vfs_timestamp(struct timespec *tsp)
+{
+	struct timeval tv;
+
+	switch (vfs_timestamp_precision) {
+	case TSP_SEC:
+		tsp->tv_sec = time_second;
+		tsp->tv_nsec = 0;
+		break;
+	case TSP_HZ:
+		getnanotime(tsp);
+		break;
+	case TSP_USEC:
+		microtime(&tv);
+		TIMEVAL_TO_TIMESPEC(&tv, tsp);
+		break;
+	case TSP_NSEC:
+	default:
+		nanotime(tsp);
+		break;
+	}
 }
 
 /*
