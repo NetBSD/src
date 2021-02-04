@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.544 2021/02/04 19:00:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.545 2021/02/04 21:33:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.544 2021/02/04 19:00:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.545 2021/02/04 21:33:14 rillig Exp $");
 
 /* types and constants */
 
@@ -576,13 +576,13 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	/* Find out which makefile is the culprit.
 	 * We try ${.PARSEDIR} and apply realpath(3) if not absolute. */
 
-	dir = Var_Value(".PARSEDIR", VAR_GLOBAL);
+	dir = Var_Value(".PARSEDIR", SCOPE_GLOBAL);
 	if (dir.str == NULL)
 		dir.str = ".";
 	if (dir.str[0] != '/')
 		dir.str = realpath(dir.str, dirbuf);
 
-	base = Var_Value(".PARSEFILE", VAR_GLOBAL);
+	base = Var_Value(".PARSEFILE", SCOPE_GLOBAL);
 	if (base.str == NULL)
 		base.str = str_basename(fname);
 
@@ -695,7 +695,7 @@ ParseMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 		return;
 	}
 
-	(void)Var_Subst(umsg, VAR_CMDLINE, VARE_WANTRES, &xmsg);
+	(void)Var_Subst(umsg, SCOPE_CMDLINE, VARE_WANTRES, &xmsg);
 	/* TODO: handle errors */
 
 	Parse_Error(level, "%s", xmsg);
@@ -1045,7 +1045,7 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
 			const char *nested_p = cp;
 			FStr nested_val;
 
-			(void)Var_Parse(&nested_p, VAR_CMDLINE, VARE_NONE,
+			(void)Var_Parse(&nested_p, SCOPE_CMDLINE, VARE_NONE,
 			    &nested_val);
 			/* TODO: handle errors */
 			FStr_Done(&nested_val);
@@ -1444,7 +1444,7 @@ ParseDoDependencyTargets(char **inout_cp,
 			 * there was an error in the specification. On error,
 			 * line should remain untouched.
 			 */
-			if (!Arch_ParseArchive(&tgt, targets, VAR_CMDLINE)) {
+			if (!Arch_ParseArchive(&tgt, targets, SCOPE_CMDLINE)) {
 				Parse_Error(PARSE_FATAL,
 				    "Error in archive specification: \"%s\"",
 				    tgt);
@@ -1549,7 +1549,8 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 
 		if (*end == '(') {
 			GNodeList sources = LST_INIT;
-			if (!Arch_ParseArchive(&start, &sources, VAR_CMDLINE)) {
+			if (!Arch_ParseArchive(&start, &sources,
+			    SCOPE_CMDLINE)) {
 				Parse_Error(PARSE_FATAL,
 				    "Error in source archive spec \"%s\"",
 				    start);
@@ -1920,7 +1921,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 	cmd = FStr_InitRefer(uvalue);
 	if (strchr(cmd.str, '$') != NULL) {
 		char *expanded;
-		(void)Var_Subst(cmd.str, VAR_CMDLINE,
+		(void)Var_Subst(cmd.str, SCOPE_CMDLINE,
 		    VARE_WANTRES | VARE_UNDEFERR, &expanded);
 		/* TODO: handle errors */
 		cmd = FStr_InitOwn(expanded);
@@ -2254,7 +2255,7 @@ ParseDoInclude(char *directive)
 	 * Substitute for any variables in the filename before trying to
 	 * find the file.
 	 */
-	(void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &file);
+	(void)Var_Subst(file, SCOPE_CMDLINE, VARE_WANTRES, &file);
 	/* TODO: handle errors */
 
 	IncludeFile(file, endc == '>', directive[0] == 'd', silent);
@@ -2320,8 +2321,8 @@ ParseSetParseFile(const char *filename)
 		SetFilenameVars(including,
 		    ".INCLUDEDFROMDIR", ".INCLUDEDFROMFILE");
 	} else {
-		Var_Delete(".INCLUDEDFROMDIR", VAR_GLOBAL);
-		Var_Delete(".INCLUDEDFROMFILE", VAR_GLOBAL);
+		Var_Delete(".INCLUDEDFROMDIR", SCOPE_GLOBAL);
+		Var_Delete(".INCLUDEDFROMFILE", SCOPE_GLOBAL);
 	}
 }
 
@@ -2358,7 +2359,7 @@ StrContainsWord(const char *str, const char *word)
 static Boolean
 VarContainsWord(const char *varname, const char *word)
 {
-	FStr val = Var_Value(varname, VAR_GLOBAL);
+	FStr val = Var_Value(varname, SCOPE_GLOBAL);
 	Boolean found = val.str != NULL && StrContainsWord(val.str, word);
 	FStr_Done(&val);
 	return found;
@@ -2492,7 +2493,7 @@ ParseTraditionalInclude(char *line)
 	 * Substitute for any variables in the file name before trying to
 	 * find the thing.
 	 */
-	(void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &all_files);
+	(void)Var_Subst(file, SCOPE_CMDLINE, VARE_WANTRES, &all_files);
 	/* TODO: handle errors */
 
 	if (*file == '\0') {
@@ -2542,7 +2543,7 @@ ParseGmakeExport(char *line)
 	/*
 	 * Expand the value before putting it in the environment.
 	 */
-	(void)Var_Subst(value, VAR_CMDLINE, VARE_WANTRES, &value);
+	(void)Var_Subst(value, SCOPE_CMDLINE, VARE_WANTRES, &value);
 	/* TODO: handle errors */
 
 	setenv(variable, value, 1);
@@ -2593,10 +2594,10 @@ ParseEOF(void)
 
 	if (includes.len == 0) {
 		/* We've run out of input */
-		Var_Delete(".PARSEDIR", VAR_GLOBAL);
-		Var_Delete(".PARSEFILE", VAR_GLOBAL);
-		Var_Delete(".INCLUDEDFROMDIR", VAR_GLOBAL);
-		Var_Delete(".INCLUDEDFROMFILE", VAR_GLOBAL);
+		Var_Delete(".PARSEDIR", SCOPE_GLOBAL);
+		Var_Delete(".PARSEFILE", SCOPE_GLOBAL);
+		Var_Delete(".INCLUDEDFROMDIR", SCOPE_GLOBAL);
+		Var_Delete(".INCLUDEDFROMFILE", SCOPE_GLOBAL);
 		return FALSE;
 	}
 
@@ -3053,7 +3054,7 @@ ParseVarassign(const char *line)
 		return FALSE;
 
 	FinishDependencyGroup();
-	Parse_DoVar(&var, VAR_GLOBAL);
+	Parse_DoVar(&var, SCOPE_GLOBAL);
 	return TRUE;
 }
 
@@ -3135,7 +3136,7 @@ ParseDependency(char *line)
 	 * It simply returns the special empty string var_Error,
 	 * which cannot be detected in the result of Var_Subst. */
 	eflags = opts.strict ? VARE_WANTRES : VARE_WANTRES | VARE_UNDEFERR;
-	(void)Var_Subst(line, VAR_CMDLINE, eflags, &expanded_line);
+	(void)Var_Subst(line, SCOPE_CMDLINE, eflags, &expanded_line);
 	/* TODO: handle errors */
 
 	/* Need a fresh list for the target nodes */

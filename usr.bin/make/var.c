@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.800 2021/02/04 19:43:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.801 2021/02/04 21:33:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.800 2021/02/04 19:43:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.801 2021/02/04 21:33:14 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -303,9 +303,9 @@ static Boolean save_dollars = TRUE;
  * The four contexts are searched in the reverse order from which they are
  * listed (but see opts.checkEnvFirst).
  */
-GNode          *VAR_INTERNAL;	/* variables from make itself */
-GNode          *VAR_GLOBAL;	/* variables from the makefile */
-GNode          *VAR_CMDLINE;	/* variables defined on the command-line */
+GNode          *SCOPE_INTERNAL;	/* variables from make itself */
+GNode          *SCOPE_GLOBAL;	/* variables from the makefile */
+GNode          *SCOPE_CMDLINE;	/* variables defined on the command-line */
 
 ENUM_FLAGS_RTTI_6(VarFlags,
 		  VAR_IN_USE, VAR_FROM_ENV,
@@ -414,14 +414,14 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
 	 * The variable was not found in the given context.
 	 * Now look for it in the other contexts as well.
 	 */
-	if (var == NULL && ctxt != VAR_CMDLINE)
-		var = GNode_FindVar(VAR_CMDLINE, name, nameHash);
+	if (var == NULL && ctxt != SCOPE_CMDLINE)
+		var = GNode_FindVar(SCOPE_CMDLINE, name, nameHash);
 
-	if (!opts.checkEnvFirst && var == NULL && ctxt != VAR_GLOBAL) {
-		var = GNode_FindVar(VAR_GLOBAL, name, nameHash);
-		if (var == NULL && ctxt != VAR_INTERNAL) {
-			/* VAR_INTERNAL is subordinate to VAR_GLOBAL */
-			var = GNode_FindVar(VAR_INTERNAL, name, nameHash);
+	if (!opts.checkEnvFirst && var == NULL && ctxt != SCOPE_GLOBAL) {
+		var = GNode_FindVar(SCOPE_GLOBAL, name, nameHash);
+		if (var == NULL && ctxt != SCOPE_INTERNAL) {
+			/* SCOPE_INTERNAL is subordinate to SCOPE_GLOBAL */
+			var = GNode_FindVar(SCOPE_INTERNAL, name, nameHash);
 		}
 	}
 
@@ -433,10 +433,10 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
 			return VarNew(FStr_InitOwn(varname), env, VAR_FROM_ENV);
 		}
 
-		if (opts.checkEnvFirst && ctxt != VAR_GLOBAL) {
-			var = GNode_FindVar(VAR_GLOBAL, name, nameHash);
-			if (var == NULL && ctxt != VAR_INTERNAL)
-				var = GNode_FindVar(VAR_INTERNAL, name,
+		if (opts.checkEnvFirst && ctxt != SCOPE_GLOBAL) {
+			var = GNode_FindVar(SCOPE_GLOBAL, name, nameHash);
+			if (var == NULL && ctxt != SCOPE_INTERNAL)
+				var = GNode_FindVar(SCOPE_INTERNAL, name,
 				    nameHash);
 			return var;
 		}
@@ -524,7 +524,7 @@ Var_DeleteExpand(const char *name, GNode *ctxt)
 
 	if (strchr(varname.str, '$') != NULL) {
 		char *expanded;
-		(void)Var_Subst(varname.str, VAR_GLOBAL, VARE_WANTRES,
+		(void)Var_Subst(varname.str, SCOPE_GLOBAL, VARE_WANTRES,
 		    &expanded);
 		/* TODO: handle errors */
 		varname = FStr_InitOwn(expanded);
@@ -552,7 +552,7 @@ Var_Undef(const char *arg)
 		return;
 	}
 
-	vpr = Var_Subst(arg, VAR_GLOBAL, VARE_WANTRES, &expanded);
+	vpr = Var_Subst(arg, SCOPE_GLOBAL, VARE_WANTRES, &expanded);
 	if (vpr != VPR_OK) {
 		Parse_Error(PARSE_FATAL,
 		    "Error in variable names to be undefined");
@@ -565,7 +565,7 @@ Var_Undef(const char *arg)
 
 	for (i = 0; i < varnames.len; i++) {
 		const char *varname = varnames.words[i];
-		Var_Delete(varname, VAR_GLOBAL);
+		Var_Delete(varname, SCOPE_GLOBAL);
 	}
 
 	Words_Free(varnames);
@@ -623,7 +623,7 @@ ExportVarEnv(Var *v)
 
 	/* XXX: name is injected without escaping it */
 	expr = str_concat3("${", name, "}");
-	(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &val);
+	(void)Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES, &val);
 	/* TODO: handle errors */
 	setenv(name, val, 1);
 	free(val);
@@ -678,7 +678,7 @@ ExportVar(const char *name, VarExportMode mode)
 	if (!MayExport(name))
 		return FALSE;
 
-	v = VarFind(name, VAR_GLOBAL, FALSE);
+	v = VarFind(name, SCOPE_GLOBAL, FALSE);
 	if (v == NULL)
 		return FALSE;
 
@@ -716,7 +716,7 @@ Var_ReexportVars(void)
 		HashIter hi;
 
 		/* Ouch! Exporting all variables at once is crazy... */
-		HashIter_Init(&hi, &VAR_GLOBAL->vars);
+		HashIter_Init(&hi, &SCOPE_GLOBAL->vars);
 		while (HashIter_Next(&hi) != NULL) {
 			Var *var = hi.entry->value;
 			ExportVar(var->name.str, VEM_ENV);
@@ -724,7 +724,7 @@ Var_ReexportVars(void)
 		return;
 	}
 
-	(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES,
+	(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", SCOPE_GLOBAL, VARE_WANTRES,
 	    &xvarnames);
 	/* TODO: handle errors */
 	if (xvarnames[0] != '\0') {
@@ -766,7 +766,7 @@ ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportMode mode)
 {
 	char *xvarnames;
 
-	(void)Var_Subst(uvarnames, VAR_GLOBAL, VARE_WANTRES, &xvarnames);
+	(void)Var_Subst(uvarnames, SCOPE_GLOBAL, VARE_WANTRES, &xvarnames);
 	/* TODO: handle errors */
 	ExportVars(xvarnames, isExport, mode);
 	free(xvarnames);
@@ -843,7 +843,7 @@ GetVarnamesToUnexport(Boolean isEnv, const char *arg,
 	if (what != UNEXPORT_NAMED) {
 		char *expanded;
 		/* Using .MAKE.EXPORTED */
-		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
+		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", SCOPE_GLOBAL,
 		    VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
 		varnames = FStr_InitOwn(expanded);
@@ -856,7 +856,7 @@ GetVarnamesToUnexport(Boolean isEnv, const char *arg,
 static void
 UnexportVar(const char *varname, UnexportWhat what)
 {
-	Var *v = VarFind(varname, VAR_GLOBAL, FALSE);
+	Var *v = VarFind(varname, SCOPE_GLOBAL, FALSE);
 	if (v == NULL) {
 		DEBUG1(VAR, "Not unexporting \"%s\" (not found)\n", varname);
 		return;
@@ -874,7 +874,7 @@ UnexportVar(const char *varname, UnexportWhat what)
 		char *expr = str_concat3("${" MAKE_EXPORTED ":N",
 		    v->name.str, "}");
 		char *cp;
-		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
+		(void)Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES, &cp);
 		/* TODO: handle errors */
 		Global_Set(MAKE_EXPORTED, cp);
 		free(cp);
@@ -899,7 +899,7 @@ UnexportVars(FStr *varnames, UnexportWhat what)
 	Words_Free(words);
 
 	if (what != UNEXPORT_NAMED)
-		Var_Delete(MAKE_EXPORTED, VAR_GLOBAL);
+		Var_Delete(MAKE_EXPORTED, SCOPE_GLOBAL);
 }
 
 /*
@@ -931,8 +931,8 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 		return;
 	}
 
-	if (ctxt == VAR_GLOBAL) {
-		v = VarFind(name, VAR_CMDLINE, FALSE);
+	if (ctxt == SCOPE_GLOBAL) {
+		v = VarFind(name, SCOPE_CMDLINE, FALSE);
 		if (v != NULL) {
 			if (v->flags & VAR_FROM_CMD) {
 				DEBUG3(VAR, "%s:%s = %s ignored!\n",
@@ -950,14 +950,14 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 	 */
 	v = VarFind(name, ctxt, FALSE);
 	if (v == NULL) {
-		if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
+		if (ctxt == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
 			/*
 			 * This var would normally prevent the same name being
-			 * added to VAR_GLOBAL, so delete it from there if
+			 * added to SCOPE_GLOBAL, so delete it from there if
 			 * needed. Otherwise -V name may show the wrong value.
 			 */
 			/* XXX: name is expanded for the second time */
-			Var_DeleteExpand(name, VAR_GLOBAL);
+			Var_DeleteExpand(name, SCOPE_GLOBAL);
 		}
 		VarAdd(name, val, ctxt, flags);
 	} else {
@@ -978,7 +978,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 	 * to the environment (as per POSIX standard)
 	 * Other than internals.
 	 */
-	if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
+	if (ctxt == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
 	    name[0] != '.') {
 		if (v == NULL)
 			v = VarFind(name, ctxt, FALSE); /* we just added it */
@@ -1055,13 +1055,13 @@ Var_SetExpand(const char *name, const char *val, GNode *ctxt)
 void
 Global_Set(const char *name, const char *value)
 {
-	Var_Set(name, value, VAR_GLOBAL);
+	Var_Set(name, value, SCOPE_GLOBAL);
 }
 
 void
 Global_SetExpand(const char *name, const char *value)
 {
-	Var_SetExpand(name, value, VAR_GLOBAL);
+	Var_SetExpand(name, value, SCOPE_GLOBAL);
 }
 
 /*
@@ -1075,14 +1075,14 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 {
 	Var *v;
 
-	v = VarFind(name, ctxt, ctxt == VAR_GLOBAL);
+	v = VarFind(name, ctxt, ctxt == SCOPE_GLOBAL);
 
 	if (v == NULL) {
 		Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
 	} else if (v->flags & VAR_READONLY) {
 		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
 		    name);
-	} else if (ctxt == VAR_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
+	} else if (ctxt == SCOPE_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
 		Buf_AddByte(&v->val, ' ');
 		Buf_AddStr(&v->val, val);
 
@@ -1156,7 +1156,7 @@ Var_AppendExpand(const char *name, const char *val, GNode *ctxt)
 void
 Global_Append(const char *name, const char *value)
 {
-	Var_Append(name, value, VAR_GLOBAL);
+	Var_Append(name, value, SCOPE_GLOBAL);
 }
 
 Boolean
@@ -3266,10 +3266,10 @@ ok:
 	}
 
 	ctxt = st->ctxt;	/* context where v belongs */
-	if (st->exprStatus == VES_NONE && st->ctxt != VAR_GLOBAL) {
+	if (st->exprStatus == VES_NONE && st->ctxt != SCOPE_GLOBAL) {
 		Var *gv = VarFind(st->var->name.str, st->ctxt, FALSE);
 		if (gv == NULL)
-			ctxt = VAR_GLOBAL;
+			ctxt = SCOPE_GLOBAL;
 		else
 			VarFreeEnv(gv, TRUE);
 	}
@@ -3804,7 +3804,7 @@ VarnameIsDynamic(const char *name, size_t len)
 static const char *
 UndefinedShortVarValue(char varname, const GNode *ctxt)
 {
-	if (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL) {
+	if (ctxt == SCOPE_CMDLINE || ctxt == SCOPE_GLOBAL) {
 		/*
 		 * If substituting a local variable in a non-local context,
 		 * assume it's for dynamic source stuff. We have to handle
@@ -3972,7 +3972,7 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
 		   const char **out_extraModifiers)
 {
 	/* Only resolve these variables if ctxt is a "real" target. */
-	if (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL)
+	if (ctxt == SCOPE_CMDLINE || ctxt == SCOPE_GLOBAL)
 		return NULL;
 
 	if (namelen != 2)
@@ -4094,7 +4094,7 @@ ParseVarnameLong(
 		 * non-local context since they are not defined there.
 		 */
 		dynamic = VarnameIsDynamic(varname, namelen) &&
-			  (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL);
+			  (ctxt == SCOPE_CMDLINE || ctxt == SCOPE_GLOBAL);
 
 		if (!haveModifier) {
 			p++;	/* skip endc */
@@ -4438,9 +4438,9 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 void
 Var_Init(void)
 {
-	VAR_INTERNAL = GNode_New("Internal");
-	VAR_GLOBAL = GNode_New("Global");
-	VAR_CMDLINE = GNode_New("Command");
+	SCOPE_INTERNAL = GNode_New("Internal");
+	SCOPE_GLOBAL = GNode_New("Global");
+	SCOPE_CMDLINE = GNode_New("Command");
 }
 
 /* Clean up the variables module. */
@@ -4453,7 +4453,7 @@ Var_End(void)
 void
 Var_Stats(void)
 {
-	HashTable_DebugStats(&VAR_GLOBAL->vars, "VAR_GLOBAL");
+	HashTable_DebugStats(&SCOPE_GLOBAL->vars, "VAR_GLOBAL");
 }
 
 /* Print all variables in a context, sorted by name. */

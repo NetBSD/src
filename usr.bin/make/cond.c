@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.254 2021/01/30 20:53:29 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.255 2021/02/04 21:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.254 2021/01/30 20:53:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.255 2021/02/04 21:33:13 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -268,7 +268,7 @@ ParseFuncArg(CondParser *par, const char **pp, Boolean doEval, const char *func,
 			    ? VARE_WANTRES | VARE_UNDEFERR
 			    : VARE_NONE;
 			FStr nestedVal;
-			(void)Var_Parse(&p, VAR_CMDLINE, eflags, &nestedVal);
+			(void)Var_Parse(&p, SCOPE_CMDLINE, eflags, &nestedVal);
 			/* TODO: handle errors */
 			Buf_AddStr(&argBuf, nestedVal.str);
 			FStr_Done(&nestedVal);
@@ -303,7 +303,7 @@ ParseFuncArg(CondParser *par, const char **pp, Boolean doEval, const char *func,
 static Boolean
 FuncDefined(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
-	FStr value = Var_Value(arg, VAR_CMDLINE);
+	FStr value = Var_Value(arg, SCOPE_CMDLINE);
 	Boolean result = value.str != NULL;
 	FStr_Done(&value);
 	return result;
@@ -426,7 +426,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
 
 	nested_p = par->p;
 	atStart = nested_p == start;
-	parseResult = Var_Parse(&nested_p, VAR_CMDLINE, eflags, inout_str);
+	parseResult = Var_Parse(&nested_p, SCOPE_CMDLINE, eflags, inout_str);
 	/* TODO: handle errors */
 	if (inout_str->str == var_Error) {
 		if (parseResult == VPR_ERR) {
@@ -741,7 +741,7 @@ ParseEmptyArg(CondParser *par MAKE_ATTR_UNUSED, const char **pp,
 	*out_arg = NULL;
 
 	(*pp)--;		/* Make (*pp)[1] point to the '('. */
-	(void)Var_Parse(pp, VAR_CMDLINE, doEval ? VARE_WANTRES : VARE_NONE,
+	(void)Var_Parse(pp, SCOPE_CMDLINE, doEval ? VARE_WANTRES : VARE_NONE,
 	    &val);
 	/* TODO: handle errors */
 	/* If successful, *pp points beyond the closing ')' now. */

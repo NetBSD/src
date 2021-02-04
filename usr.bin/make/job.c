@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.415 2021/02/03 13:53:12 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.416 2021/02/04 21:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.415 2021/02/03 13:53:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.416 2021/02/04 21:33:13 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2136,7 +2136,7 @@ Shell_Init(void)
 	if (shellPath == NULL)
 		InitShellNameAndPath();
 
-	Var_SetWithFlags(".SHELL", shellPath, VAR_CMDLINE, VAR_SET_READONLY);
+	Var_SetWithFlags(".SHELL", shellPath, SCOPE_CMDLINE, VAR_SET_READONLY);
 	if (shell->errFlag == NULL)
 		shell->errFlag = "";
 	if (shell->echoFlag == NULL)
@@ -2176,12 +2176,12 @@ Job_SetPrefix(void)
 {
 	if (targPrefix != NULL) {
 		free(targPrefix);
-	} else if (!Var_Exists(MAKE_JOB_PREFIX, VAR_GLOBAL)) {
+	} else if (!Var_Exists(MAKE_JOB_PREFIX, SCOPE_GLOBAL)) {
 		Global_Set(MAKE_JOB_PREFIX, "---");
 	}
 
 	(void)Var_Subst("${" MAKE_JOB_PREFIX "}",
-	    VAR_GLOBAL, VARE_WANTRES, &targPrefix);
+	    SCOPE_GLOBAL, VARE_WANTRES, &targPrefix);
 	/* TODO: handle errors */
 }
 

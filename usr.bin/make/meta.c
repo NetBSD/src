@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.174 2021/02/03 15:08:17 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.175 2021/02/04 21:33:14 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -609,7 +609,7 @@ meta_mode_init(const char *make_mode)
 	get_mode_bf(metaMissing, "missing-meta=");
 	get_mode_bf(metaSilent, "silent=");
     }
-    if (metaVerbose && !Var_Exists(MAKE_META_PREFIX, VAR_GLOBAL)) {
+    if (metaVerbose && !Var_Exists(MAKE_META_PREFIX, SCOPE_GLOBAL)) {
 	/*
 	 * The default value for MAKE_META_PREFIX
 	 * prints the absolute path of the target.
@@ -627,7 +627,7 @@ meta_mode_init(const char *make_mode)
      * We consider ourselves master of all within ${.MAKE.META.BAILIWICK}
      */
     (void)Var_Subst("${.MAKE.META.BAILIWICK:O:u:tA}",
-		    VAR_GLOBAL, VARE_WANTRES, &metaBailiwickStr);
+		    SCOPE_GLOBAL, VARE_WANTRES, &metaBailiwickStr);
     /* TODO: handle errors */
     str2Lst_Append(&metaBailiwick, metaBailiwickStr);
     /*
@@ -636,19 +636,19 @@ meta_mode_init(const char *make_mode)
     Global_Append(MAKE_META_IGNORE_PATHS,
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}");
     (void)Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
-		    VAR_GLOBAL, VARE_WANTRES, &metaIgnorePathsStr);
+		    SCOPE_GLOBAL, VARE_WANTRES, &metaIgnorePathsStr);
     /* TODO: handle errors */
     str2Lst_Append(&metaIgnorePaths, metaIgnorePathsStr);
 
     /*
      * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}
      */
-    value = Var_Value(MAKE_META_IGNORE_PATTERNS, VAR_GLOBAL);
+    value = Var_Value(MAKE_META_IGNORE_PATTERNS, SCOPE_GLOBAL);
     if (value.str != NULL) {
 	metaIgnorePatterns = TRUE;
 	FStr_Done(&value);
     }
-    value = Var_Value(MAKE_META_IGNORE_FILTER, VAR_GLOBAL);
+    value = Var_Value(MAKE_META_IGNORE_FILTER, SCOPE_GLOBAL);
     if (value.str != NULL) {
 	metaIgnoreFilter = TRUE;
 	FStr_Done(&value);
@@ -812,7 +812,7 @@ meta_job_output(Job *job, char *cp, const char *nl)
 		char *cp2;
 
 		(void)Var_Subst("${" MAKE_META_PREFIX "}",
-				VAR_GLOBAL, VARE_WANTRES, &meta_prefix);
+				SCOPE_GLOBAL, VARE_WANTRES, &meta_prefix);
 		/* TODO: handle errors */
 		if ((cp2 = strchr(meta_prefix, '$')) != NULL)
 		    meta_prefix_len = (size_t)(cp2 - meta_prefix);
@@ -1223,12 +1223,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 			snprintf(lcwd_vname, sizeof lcwd_vname, LCWD_VNAME_FMT, pid);
 			snprintf(ldir_vname, sizeof ldir_vname, LDIR_VNAME_FMT, pid);
 			lastpid = pid;
-			ldir = Var_Value(ldir_vname, VAR_GLOBAL);
+			ldir = Var_Value(ldir_vname, SCOPE_GLOBAL);
 			if (ldir.str != NULL) {
 			    strlcpy(latestdir, ldir.str, sizeof latestdir);
 			    FStr_Done(&ldir);
 			}
-			ldir = Var_Value(lcwd_vname, VAR_GLOBAL);
+			ldir = Var_Value(lcwd_vname, SCOPE_GLOBAL);
 			if (ldir.str != NULL) {
 			    strlcpy(lcwd, ldir.str, sizeof lcwd);
 			    FStr_Done(&ldir);
@@ -1251,8 +1251,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		/* Process according to record type. */
 		switch (buf[0]) {
 		case 'X':		/* eXit */
-		    Var_DeleteExpand(lcwd_vname, VAR_GLOBAL);
-		    Var_DeleteExpand(ldir_vname, VAR_GLOBAL);
+		    Var_DeleteExpand(lcwd_vname, SCOPE_GLOBAL);
+		    Var_DeleteExpand(ldir_vname, SCOPE_GLOBAL);
 		    lastpid = 0;	/* no need to save ldir_vname */
 		    break;
 
