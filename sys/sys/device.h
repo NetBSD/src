@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.164 2021/01/27 04:54:08 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.165 2021/02/04 23:29:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -544,6 +544,7 @@ void		device_active_deregister(device_t,
 				         void (*)(device_t, devactive_t));
 
 bool		device_is_a(device_t, const char *);
+bool		device_attached_to_iattr(device_t, const char *);
 
 device_t	device_find_by_xname(const char *);
 device_t	device_find_by_driver_unit(const char *, int);
