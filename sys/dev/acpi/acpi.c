@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.288 2020/12/13 20:24:26 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.289 2021/02/04 21:39:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.288 2020/12/13 20:24:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.289 2021/02/04 21:39:00 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -1122,6 +1122,17 @@ acpi_print(void *aux, const char *pnp)
 	aprint_normal(")");
 
 	return UNCONF;
+}
+
+/*
+ * acpi_device_register --
+ *	Called by the platform device_register() routine when
+ *	attaching devices.
+ */
+void
+acpi_device_register(device_t dev __unused, void *v __unused)
+{
+	/* Placeholder. */
 }
 
 /*
