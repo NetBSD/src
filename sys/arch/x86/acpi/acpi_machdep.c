@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.30 2020/05/02 16:44:35 bouyer Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.31 2021/02/04 23:54:48 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.30 2020/05/02 16:44:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.31 2021/02/04 23:54:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,6 +602,8 @@ device_acpi_register(device_t dev, void *aux)
 	parent = device_parent(dev);
 	if (parent == NULL)
 		return;
+
+	acpi_device_register(dev, aux);
 
 	device_is_vga = device_is_a(dev, "vga") || device_is_a(dev, "genfb");
 	device_is_pci = device_is_a(parent, "pci");
