@@ -1,4 +1,4 @@
-# $NetBSD: varmisc.mk,v 1.29 2020/11/28 14:08:37 rillig Exp $
+# $NetBSD: varmisc.mk,v 1.30 2021/02/04 21:42:47 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -134,7 +134,7 @@ VAR.${param}=	${param}
 .endif
 
 # Appending to a variable from the environment creates a copy of that variable
-# in the global context.
+# in the global scope.
 # The appended value is not exported automatically.
 # When a variable is exported, the exported value is taken at the time of the
 # .export directive. Later changes to the variable have no effect.
@@ -152,8 +152,8 @@ export-appended:
 # begin parse-dynamic
 #
 # Demonstrate that the target-specific variables are not evaluated in
-# the global context. They are preserved until there is a local context
-# in which resolving them makes sense.
+# the global scope. Their expressions are preserved until there is a local
+# scope in which resolving them makes sense.
 
 # There are different code paths for short names ...
 ${:U>}=		before
