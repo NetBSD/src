@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofw,v 1.15 2020/04/03 06:02:51 macallan Exp $
+#	$NetBSD: files.ofw,v 1.16 2021/02/04 20:19:09 thorpej Exp $
 #
 # First cut on Openfirmware interface
 #
@@ -13,7 +13,9 @@ file 	dev/ofw/ofw_sysctl.c		openfirm | ofw_subr
 
 file	dev/ofw/ofw_subr.c		ofbus | openfirm | ofw_subr
 
+file	dev/ofw/ofw_i2c_subr.c		ofbus | openfirm | ofw_subr
 file	dev/ofw/ofw_network_subr.c	of_network_dev
+file	dev/ofw/ofw_spi_subr.c		ofbus | openfirm | ofw_subr
 
 # Generic disk support
 device	ofdisk: disk
