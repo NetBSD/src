@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.799 2021/02/04 19:15:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.800 2021/02/04 19:43:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.799 2021/02/04 19:15:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.800 2021/02/04 19:43:00 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -919,8 +919,9 @@ Var_UnExport(Boolean isEnv, const char *arg)
 }
 
 /* Set the variable to the value; the name is not expanded. */
-static void
-SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
+void
+Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
+		 VarSetFlags flags)
 {
 	Var *v;
 
@@ -1001,13 +1002,6 @@ SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 		VarFreeEnv(v, TRUE);
 }
 
-void
-Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
-		 VarSetFlags flags)
-{
-	SetVar(name, val, ctxt, flags);
-}
-
 /* See Var_Set for documentation. */
 void
 Var_SetExpandWithFlags(const char *name, const char *val, GNode *ctxt,
@@ -1030,7 +1024,7 @@ Var_SetExpandWithFlags(const char *name, const char *val, GNode *ctxt,
 			    "name expands to empty string - ignored\n",
 		    unexpanded_name, val);
 	} else
-		SetVar(varname.str, val, ctxt, flags);
+		Var_SetWithFlags(varname.str, val, ctxt, flags);
 
 	FStr_Done(&varname);
 }
@@ -1038,7 +1032,7 @@ Var_SetExpandWithFlags(const char *name, const char *val, GNode *ctxt,
 void
 Var_Set(const char *name, const char *val, GNode *ctxt)
 {
-	SetVar(name, val, ctxt, VAR_SET_NONE);
+	Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
 }
 
 /*
@@ -1061,7 +1055,7 @@ Var_SetExpand(const char *name, const char *val, GNode *ctxt)
 void
 Global_Set(const char *name, const char *value)
 {
-	SetVar(name, value, VAR_GLOBAL, VAR_SET_NONE);
+	Var_Set(name, value, VAR_GLOBAL);
 }
 
 void
@@ -1084,7 +1078,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	v = VarFind(name, ctxt, ctxt == VAR_GLOBAL);
 
 	if (v == NULL) {
-		SetVar(name, val, ctxt, VAR_SET_NONE);
+		Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
 	} else if (v->flags & VAR_READONLY) {
 		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
 		    name);
