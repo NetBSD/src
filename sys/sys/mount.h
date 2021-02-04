@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.236 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.237 2021/02/04 21:07:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -115,6 +115,7 @@
 					   as next argument */
 #define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
+#define	VFS_TIMESTAMP_PRECISION  5	/* file timestamp precision */
 
 /* vfsquery flags for kqueue(2) */
 #define VQ_MOUNT	0x0001	/* new filesystem arrived */
