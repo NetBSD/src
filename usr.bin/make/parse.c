@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.543 2021/02/03 14:33:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.544 2021/02/04 19:00:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.543 2021/02/03 14:33:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.544 2021/02/04 19:00:45 rillig Exp $");
 
 /* types and constants */
 
@@ -1898,13 +1898,13 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 	 *  apart from making the debug log longer.
 	 */
 	if (!Var_ExistsExpand(name, ctxt))
-		Var_Set(name, "", ctxt);
+		Var_SetExpand(name, "", ctxt);
 
 	(void)Var_Subst(uvalue, ctxt,
 	    VARE_WANTRES | VARE_KEEP_DOLLAR | VARE_KEEP_UNDEF, &evalue);
 	/* TODO: handle errors */
 
-	Var_Set(name, evalue, ctxt);
+	Var_SetExpand(name, evalue, ctxt);
 
 	*out_avalue = FStr_InitOwn(evalue);
 }
@@ -1927,7 +1927,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 	}
 
 	cmdOut = Cmd_Exec(cmd.str, &errfmt);
-	Var_Set(name, cmdOut, ctxt);
+	Var_SetExpand(name, cmdOut, ctxt);
 	*out_avalue = FStr_InitOwn(cmdOut);
 
 	if (errfmt != NULL)
@@ -1964,7 +1964,7 @@ VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
 			return FALSE;
 
 		/* Normal assignment -- just do it. */
-		Var_Set(name, uvalue, ctxt);
+		Var_SetExpand(name, uvalue, ctxt);
 	}
 
 	*out_TRUE_avalue = avalue;
