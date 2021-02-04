@@ -1,2 +1,2 @@
-d_gcc_extension.c(11): warning: argument #1 is converted from 'double' to 'long double' [259]
-d_gcc_extension.c(11): warning: argument #1 is converted from 'double' to 'long double' [259]
+d_gcc_extension.c(11): warning: argument #1 is converted from 'double' to 'long double' due to prototype [259]
+d_gcc_extension.c(11): warning: argument #1 is converted from 'double' to 'long double' due to prototype [259]
