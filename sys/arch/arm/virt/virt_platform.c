@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.12 2020/10/30 18:54:37 skrll Exp $ */
+/* $NetBSD: virt_platform.c,v 1.13 2021/02/04 22:36:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.12 2020/10/30 18:54:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.13 2021/02/04 22:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -107,6 +107,7 @@ virt_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 virt_platform_device_register(device_t self, void *aux)
 {
+	fdtbus_device_register(self, aux);
 }
 
 static u_int

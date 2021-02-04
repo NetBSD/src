@@ -1,4 +1,4 @@
-/* $NetBSD: arm_platform.c,v 1.3 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: arm_platform.c,v 1.4 2021/02/04 22:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.3 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.4 2021/02/04 22:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,7 @@ arm_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 arm_platform_device_register(device_t self, void *aux)
 {
+	fdtbus_device_register(self, aux);
 }
 
 static const struct pmap_devmap *

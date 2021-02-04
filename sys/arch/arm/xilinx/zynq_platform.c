@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.3 2020/09/28 11:54:24 jmcneill Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.4 2021/02/04 22:36:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.3 2020/09/28 11:54:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.4 2021/02/04 22:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,6 +128,8 @@ static void
 zynq_platform_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
+
+	fdtbus_device_register(dev, aux);
 
 	if (device_is_a(dev, "arma9tmr")) {
 		prop_dictionary_set_uint32(dict, "frequency",
