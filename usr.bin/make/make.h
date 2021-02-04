@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.251 2021/02/02 21:26:51 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.252 2021/02/04 21:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -429,11 +429,14 @@ typedef struct GNode {
 	/* Last time (sequence number) we tried to make this node */
 	unsigned int checked_seqno;
 
-	/* The "local" variables that are specific to this target and this
+	/*
+	 * The "local" variables that are specific to this target and this
 	 * target only, such as $@, $<, $?.
 	 *
-	 * Also used for the global variable scopes VAR_GLOBAL, VAR_CMDLINE,
-	 * VAR_INTERNAL, which contain variables with arbitrary names. */
+	 * Also used for the global variable scopes SCOPE_GLOBAL,
+	 * SCOPE_CMDLINE, SCOPE_INTERNAL, which contain variables with
+	 * arbitrary names.
+	 */
 	HashTable /* of Var pointer */ vars;
 
 	/* The commands to be given to a shell to create this target. */
@@ -496,11 +499,11 @@ extern GNode *defaultNode;
  * Variables defined internally by make which should not override those set
  * by makefiles.
  */
-extern GNode *VAR_INTERNAL;
+extern GNode *SCOPE_INTERNAL;
 /* Variables defined in a global context, e.g in the Makefile itself. */
-extern GNode *VAR_GLOBAL;
+extern GNode *SCOPE_GLOBAL;
 /* Variables defined on the command line. */
-extern GNode *VAR_CMDLINE;
+extern GNode *SCOPE_CMDLINE;
 
 /*
  * Value returned by Var_Parse when an error is encountered. It actually
