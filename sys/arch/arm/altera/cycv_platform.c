@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.16 2021/01/29 13:10:07 rin Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.17 2021/02/04 22:36:52 thorpej Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.16 2021/01/29 13:10:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.17 2021/02/04 22:36:52 thorpej Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -137,8 +137,11 @@ cycv_platform_init_attach_args(struct fdt_attach_args *faa) {
 }
 
 static void
-cycv_platform_device_register(device_t dev, void *aux) {
+cycv_platform_device_register(device_t dev, void *aux)
+{
 	prop_dictionary_t dict = device_properties(dev);
+
+	fdtbus_device_register(dev, aux);
 
 	if (device_is_a(dev, "arma9tmr")) {
 		prop_dictionary_set_uint32(dict, "frequency",

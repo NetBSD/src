@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.36 2021/01/27 03:16:37 thorpej Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.37 2021/02/04 22:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.36 2021/01/27 03:16:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.37 2021/02/04 22:36:53 thorpej Exp $");
 
 
 /*
@@ -248,6 +248,7 @@ exynos_platform_early_putchar(char c)
 static void
 exynos_platform_device_register(device_t self, void *aux)
 {
+	fdtbus_device_register(self, aux);
 	exynos_device_register(self, aux);
 }
 

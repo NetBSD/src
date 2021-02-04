@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.25 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.26 2021/02/04 22:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.25 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.26 2021/02/04 22:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,6 +150,8 @@ static void
 tegra_platform_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
+
+	fdtbus_device_register(self, aux);
 
 	if (device_is_a(self, "tegrafb") &&
 	    match_bootconf_option(boot_args, "console", "fb")) {
