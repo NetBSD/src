@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_acpi.c,v 1.6 2021/01/26 00:19:53 jmcneill Exp $ */
+/* $NetBSD: dwiic_acpi.c,v 1.7 2021/02/04 23:59:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.6 2021/01/26 00:19:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.7 2021/02/04 23:59:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,12 +59,12 @@ static void	dwiic_acpi_configure(struct dwiic_softc *, ACPI_HANDLE);
 
 CFATTACH_DECL_NEW(dwiic_acpi, sizeof(struct dwiic_softc), dwiic_acpi_match, dwiic_acpi_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"AMD0010",	/* AMD FCH */
-	"AMDI0010",	/* AMD FCH */
-	"AMDI0510",	/* AMD Seattle */
-	"APMC0D0F",	/* Ampere eMAG */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "AMD0010" },	/* AMD FCH */
+	{ .compat = "AMDI0010" },	/* AMD FCH */
+	{ .compat = "AMDI0510" },	/* AMD Seattle */
+	{ .compat = "APMC0D0F" },	/* Ampere eMAG */
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -72,10 +72,7 @@ dwiic_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
