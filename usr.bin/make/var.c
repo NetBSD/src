@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.802 2021/02/04 21:42:46 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.803 2021/02/04 21:50:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.802 2021/02/04 21:42:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.803 2021/02/04 21:50:39 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1228,9 +1228,9 @@ Var_Value(const char *name, GNode *scope)
  * up the variable in any other scope.
  */
 const char *
-Var_ValueDirect(const char *name, GNode *scope)
+GNode_ValueDirect(GNode *gn, const char *name)
 {
-	Var *v = VarFind(name, scope, FALSE);
+	Var *v = VarFind(name, gn, FALSE);
 	return v != NULL ? v->val.data : NULL;
 }
 
