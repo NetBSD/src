@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.252 2021/02/04 21:33:13 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.253 2021/02/04 21:42:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -500,7 +500,7 @@ extern GNode *defaultNode;
  * by makefiles.
  */
 extern GNode *SCOPE_INTERNAL;
-/* Variables defined in a global context, e.g in the Makefile itself. */
+/* Variables defined in a global scope, e.g in the Makefile itself. */
 extern GNode *SCOPE_GLOBAL;
 /* Variables defined on the command line. */
 extern GNode *SCOPE_CMDLINE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.545 2021/02/04 21:33:14 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.546 2021/02/04 21:42:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.545 2021/02/04 21:33:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.546 2021/02/04 21:42:46 rillig Exp $");
 
 /* types and constants */
 
@@ -1871,13 +1871,13 @@ Parse_IsVar(const char *p, VarAssign *out_var)
  * Check for syntax errors such as unclosed expressions or unknown modifiers.
  */
 static void
-VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
+VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *scope)
 {
 	if (opts.strict) {
 		if (type != VAR_SUBST && strchr(uvalue, '$') != NULL) {
 			char *expandedValue;
 
-			(void)Var_Subst(uvalue, ctxt, VARE_NONE,
+			(void)Var_Subst(uvalue, scope, VARE_NONE,
 			    &expandedValue);
 			/* TODO: handle errors */
 			free(expandedValue);
@@ -1886,7 +1886,7 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
 }
 
 static void
-VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
+VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *scope,
 		    FStr *out_avalue)
 {
 	char *evalue;
@@ -1898,20 +1898,20 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 	 * TODO: Add a test that demonstrates why this code is needed,
 	 *  apart from making the debug log longer.
 	 */
-	if (!Var_ExistsExpand(name, ctxt))
-		Var_SetExpand(name, "", ctxt);
+	if (!Var_ExistsExpand(name, scope))
+		Var_SetExpand(name, "", scope);
 
-	(void)Var_Subst(uvalue, ctxt,
+	(void)Var_Subst(uvalue, scope,
 	    VARE_WANTRES | VARE_KEEP_DOLLAR | VARE_KEEP_UNDEF, &evalue);
 	/* TODO: handle errors */
 
-	Var_SetExpand(name, evalue, ctxt);
+	Var_SetExpand(name, evalue, scope);
 
 	*out_avalue = FStr_InitOwn(evalue);
 }
 
 static void
-VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
+VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 		    FStr *out_avalue)
 {
 	FStr cmd;
@@ -1928,7 +1928,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 	}
 
 	cmdOut = Cmd_Exec(cmd.str, &errfmt);
-	Var_SetExpand(name, cmdOut, ctxt);
+	Var_SetExpand(name, cmdOut, scope);
 	*out_avalue = FStr_InitOwn(cmdOut);
 
 	if (errfmt != NULL)
@@ -1950,22 +1950,22 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
  */
 static Boolean
 VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
-	       GNode *ctxt, FStr *out_TRUE_avalue)
+	       GNode *scope, FStr *out_TRUE_avalue)
 {
 	FStr avalue = FStr_InitRefer(uvalue);
 
 	if (op == VAR_APPEND)
-		Var_AppendExpand(name, uvalue, ctxt);
+		Var_AppendExpand(name, uvalue, scope);
 	else if (op == VAR_SUBST)
-		VarAssign_EvalSubst(name, uvalue, ctxt, &avalue);
+		VarAssign_EvalSubst(name, uvalue, scope, &avalue);
 	else if (op == VAR_SHELL)
-		VarAssign_EvalShell(name, uvalue, ctxt, &avalue);
+		VarAssign_EvalShell(name, uvalue, scope, &avalue);
 	else {
-		if (op == VAR_DEFAULT && Var_ExistsExpand(name, ctxt))
+		if (op == VAR_DEFAULT && Var_ExistsExpand(name, scope))
 			return FALSE;
 
 		/* Normal assignment -- just do it. */
-		Var_SetExpand(name, uvalue, ctxt);
+		Var_SetExpand(name, uvalue, scope);
 	}
 
 	*out_TRUE_avalue = avalue;
@@ -1991,14 +1991,14 @@ VarAssignSpecial(const char *name, const char *avalue)
 		Var_ExportVars(avalue);
 }
 
-/* Perform the variable variable assignment in the given context. */
+/* Perform the variable variable assignment in the given scope. */
 void
-Parse_DoVar(VarAssign *var, GNode *ctxt)
+Parse_DoVar(VarAssign *var, GNode *scope)
 {
 	FStr avalue;	/* actual value (maybe expanded) */
 
-	VarCheckSyntax(var->op, var->value, ctxt);
-	if (VarAssign_Eval(var->varname, var->op, var->value, ctxt, &avalue)) {
+	VarCheckSyntax(var->op, var->value, scope);
+	if (VarAssign_Eval(var->varname, var->op, var->value, scope, &avalue)) {
 		VarAssignSpecial(var->varname, avalue.str);
 		FStr_Done(&avalue);
 	}
