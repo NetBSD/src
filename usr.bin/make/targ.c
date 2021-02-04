@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.164 2021/02/04 21:33:14 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.165 2021/02/04 21:42:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.164 2021/02/04 21:33:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.165 2021/02/04 21:42:46 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -246,7 +246,7 @@ GNode_Free(void *gnp)
 	 * SCOPE_GLOBAL), it should be safe to free the variables as well,
 	 * since each node manages the memory for all its variables itself.
 	 *
-	 * XXX: The GNodes that are only used as variable contexts (VAR_CMD,
+	 * XXX: The GNodes that are only used as variable scopes (VAR_CMD,
 	 * SCOPE_GLOBAL, SCOPE_INTERNAL) are not freed at all (see Var_End,
 	 * where they are not mentioned).  These might be freed at all, if
 	 * their variable values are indeed not used anywhere else (see

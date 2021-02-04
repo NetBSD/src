@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.343 2021/02/03 08:08:18 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.344 2021/02/04 21:42:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.343 2021/02/03 08:08:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.344 2021/02/04 21:42:46 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1388,9 +1388,9 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 
 		if (cgn->type & OP_ARCHV) {
 			/*
-			 * Node was an archive(member) target, so we want to
+			 * Node was an 'archive(member)' target, so
 			 * call on the Arch module to find the nodes for us,
-			 * expanding variables in the parent's context.
+			 * expanding variables in the parent's scope.
 			 */
 			char *p = cp;
 			(void)Arch_ParseArchive(&p, &members, pgn);

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.222 2021/02/02 17:47:56 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.223 2021/02/04 21:42:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.222 2021/02/02 17:47:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.223 2021/02/04 21:42:46 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -257,7 +257,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 			/*
 			 * Append the expanded command, to prevent the
 			 * local variables from being interpreted in the
-			 * context of the .END node.
+			 * scope of the .END node.
 			 *
 			 * A probably unintended side effect of this is that
 			 * the expanded command will be expanded again in the
