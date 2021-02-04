@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.801 2021/02/04 21:33:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.802 2021/02/04 21:42:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
  * Debugging:
  *	Var_Stats	Print out hashing statistics if in -dh mode.
  *
- *	Var_Dump	Print out all variables defined in the given context.
+ *	Var_Dump	Print out all variables defined in the given scope.
  *
  * XXX: There's a lot of duplication in these functions.
  */
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.801 2021/02/04 21:33:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.802 2021/02/04 21:42:46 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -187,11 +187,11 @@ typedef enum VarFlags {
  * value can be queried by expressions such as $V, ${VAR}, or with modifiers
  * such as ${VAR:S,from,to,g:Q}.
  *
- * There are 3 kinds of variables: context variables, environment variables,
+ * There are 3 kinds of variables: scope variables, environment variables,
  * undefined variables.
  *
- * Context variables are stored in a GNode.context.  The only way to undefine
- * a context variable is using the .undef directive.  In particular, it must
+ * Scope variables are stored in a GNode.scope.  The only way to undefine
+ * a scope variable is using the .undef directive.  In particular, it must
  * not be possible to undefine a variable during the evaluation of an
  * expression, or Var.name might point nowhere.
  *
@@ -204,7 +204,7 @@ typedef enum VarFlags {
 typedef struct Var {
 	/*
 	 * The name of the variable, once set, doesn't change anymore.
-	 * For context variables, it aliases the corresponding HashEntry name.
+	 * For scope variables, it aliases the corresponding HashEntry name.
 	 * For environment and undefined variables, it is allocated.
 	 */
 	FStr name;
@@ -289,18 +289,17 @@ static char varUndefined[] = "";
 static Boolean save_dollars = TRUE;
 
 /*
- * Internally, variables are contained in four different contexts.
+ * Internally, variables are contained in four different scopes.
  *	1) the environment. They cannot be changed. If an environment
  *	   variable is appended to, the result is placed in the global
- *	   context.
- *	2) the global context. Variables set in the makefiles are located
+ *	   scope.
+ *	2) the global scope. Variables set in the makefiles are located
  *	   here.
- *	3) the command-line context. All variables set on the command line
- *	   are placed in this context.
- *	4) the local context. Each target has associated with it a context
- *	   list. On this list are located the structures describing such
- *	   local variables as $(@) and $(*)
- * The four contexts are searched in the reverse order from which they are
+ *	3) the command-line scope. All variables set on the command line
+ *	   are placed in this scope.
+ *	4) the local scope, containing only the 7 local variables such as
+ *	   '.TARGET'.
+ * The four scopes are searched in the reverse order from which they are
  * listed (but see opts.checkEnvFirst).
  */
 GNode          *SCOPE_INTERNAL;	/* variables from make itself */
@@ -372,18 +371,18 @@ CanonicalVarname(const char *name)
 }
 
 static Var *
-GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
+GNode_FindVar(GNode *scope, const char *varname, unsigned int hash)
 {
-	return HashTable_FindValueHash(&ctxt->vars, varname, hash);
+	return HashTable_FindValueHash(&scope->vars, varname, hash);
 }
 
 /*
- * Find the variable in the context, and maybe in other contexts as well.
+ * Find the variable in the scope, and maybe in other scopes as well.
  *
  * Input:
  *	name		name to find, is not expanded any further
- *	ctxt		context in which to look first
- *	elsewhere	TRUE to look in other contexts as well
+ *	scope		scope in which to look first
+ *	elsewhere	TRUE to look in other scopes as well
  *
  * Results:
  *	The found variable, or NULL if the variable does not exist.
@@ -391,7 +390,7 @@ GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
  *	VarFreeEnv after use.
  */
 static Var *
-VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
+VarFind(const char *name, GNode *scope, Boolean elsewhere)
 {
 	Var *var;
 	unsigned int nameHash;
@@ -405,21 +404,21 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
 	name = CanonicalVarname(name);
 	nameHash = Hash_Hash(name);
 
-	/* First look for the variable in the given context. */
-	var = GNode_FindVar(ctxt, name, nameHash);
+	/* First look for the variable in the given scope. */
+	var = GNode_FindVar(scope, name, nameHash);
 	if (!elsewhere)
 		return var;
 
 	/*
-	 * The variable was not found in the given context.
-	 * Now look for it in the other contexts as well.
+	 * The variable was not found in the given scope.
+	 * Now look for it in the other scopes as well.
 	 */
-	if (var == NULL && ctxt != SCOPE_CMDLINE)
+	if (var == NULL && scope != SCOPE_CMDLINE)
 		var = GNode_FindVar(SCOPE_CMDLINE, name, nameHash);
 
-	if (!opts.checkEnvFirst && var == NULL && ctxt != SCOPE_GLOBAL) {
+	if (!opts.checkEnvFirst && var == NULL && scope != SCOPE_GLOBAL) {
 		var = GNode_FindVar(SCOPE_GLOBAL, name, nameHash);
-		if (var == NULL && ctxt != SCOPE_INTERNAL) {
+		if (var == NULL && scope != SCOPE_INTERNAL) {
 			/* SCOPE_INTERNAL is subordinate to SCOPE_GLOBAL */
 			var = GNode_FindVar(SCOPE_INTERNAL, name, nameHash);
 		}
@@ -433,9 +432,9 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
 			return VarNew(FStr_InitOwn(varname), env, VAR_FROM_ENV);
 		}
 
-		if (opts.checkEnvFirst && ctxt != SCOPE_GLOBAL) {
+		if (opts.checkEnvFirst && scope != SCOPE_GLOBAL) {
 			var = GNode_FindVar(SCOPE_GLOBAL, name, nameHash);
-			if (var == NULL && ctxt != SCOPE_INTERNAL)
+			if (var == NULL && scope != SCOPE_INTERNAL)
 				var = GNode_FindVar(SCOPE_INTERNAL, name,
 				    nameHash);
 			return var;
@@ -473,52 +472,52 @@ VarFreeEnv(Var *v, Boolean freeValue)
 }
 
 /*
- * Add a new variable of the given name and value to the given context.
+ * Add a new variable of the given name and value to the given scope.
  * The name and val arguments are duplicated so they may safely be freed.
  */
 static void
-VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
+VarAdd(const char *name, const char *val, GNode *scope, VarSetFlags flags)
 {
-	HashEntry *he = HashTable_CreateEntry(&ctxt->vars, name, NULL);
+	HashEntry *he = HashTable_CreateEntry(&scope->vars, name, NULL);
 	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), val,
 	    flags & VAR_SET_READONLY ? VAR_READONLY : VAR_NONE);
 	HashEntry_Set(he, v);
-	DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
+	DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, val);
 }
 
 /*
- * Remove a variable from a context, freeing all related memory as well.
+ * Remove a variable from a scope, freeing all related memory as well.
  * The variable name is kept as-is, it is not expanded.
  */
 void
-Var_Delete(const char *varname, GNode *ctxt)
+Var_Delete(const char *varname, GNode *scope)
 {
-	HashEntry *he = HashTable_FindEntry(&ctxt->vars, varname);
+	HashEntry *he = HashTable_FindEntry(&scope->vars, varname);
 	Var *v;
 
 	if (he == NULL) {
-		DEBUG2(VAR, "%s:delete %s (not found)\n", ctxt->name, varname);
+		DEBUG2(VAR, "%s:delete %s (not found)\n", scope->name, varname);
 		return;
 	}
 
-	DEBUG2(VAR, "%s:delete %s\n", ctxt->name, varname);
+	DEBUG2(VAR, "%s:delete %s\n", scope->name, varname);
 	v = HashEntry_Get(he);
 	if (v->flags & VAR_EXPORTED)
 		unsetenv(v->name.str);
 	if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
 		var_exportedVars = VAR_EXPORTED_NONE;
 	assert(v->name.freeIt == NULL);
-	HashTable_DeleteEntry(&ctxt->vars, he);
+	HashTable_DeleteEntry(&scope->vars, he);
 	Buf_Done(&v->val);
 	free(v);
 }
 
 /*
- * Remove a variable from a context, freeing all related memory as well.
+ * Remove a variable from a scope, freeing all related memory as well.
  * The variable name is expanded once.
  */
 void
-Var_DeleteExpand(const char *name, GNode *ctxt)
+Var_DeleteExpand(const char *name, GNode *scope)
 {
 	FStr varname = FStr_InitRefer(name);
 
@@ -530,7 +529,7 @@ Var_DeleteExpand(const char *name, GNode *ctxt)
 		varname = FStr_InitOwn(expanded);
 	}
 
-	Var_Delete(varname.str, ctxt);
+	Var_Delete(varname.str, scope);
 	FStr_Done(&varname);
 }
 
@@ -582,8 +581,8 @@ MayExport(const char *name)
 	if (name[1] == '\0') {
 		/*
 		 * A single char.
-		 * If it is one of the vars that should only appear in
-		 * local context, skip it, else we can get Var_Subst
+		 * If it is one of the variables that should only appear in
+		 * local scope, skip it, else we can get Var_Subst
 		 * into a loop.
 		 */
 		switch (name[0]) {
@@ -920,7 +919,7 @@ Var_UnExport(Boolean isEnv, const char *arg)
 
 /* Set the variable to the value; the name is not expanded. */
 void
-Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
+Var_SetWithFlags(const char *name, const char *val, GNode *scope,
 		 VarSetFlags flags)
 {
 	Var *v;
@@ -931,12 +930,12 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 		return;
 	}
 
-	if (ctxt == SCOPE_GLOBAL) {
+	if (scope == SCOPE_GLOBAL) {
 		v = VarFind(name, SCOPE_CMDLINE, FALSE);
 		if (v != NULL) {
 			if (v->flags & VAR_FROM_CMD) {
 				DEBUG3(VAR, "%s:%s = %s ignored!\n",
-				    ctxt->name, name, val);
+				    scope->name, name, val);
 				return;
 			}
 			VarFreeEnv(v, TRUE);
@@ -944,13 +943,13 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 	}
 
 	/*
-	 * We only look for a variable in the given context since anything set
-	 * here will override anything in a lower context, so there's not much
+	 * Only look for a variable in the given scope since anything set
+	 * here will override anything in a lower scope, so there's not much
 	 * point in searching them all just to save a bit of memory...
 	 */
-	v = VarFind(name, ctxt, FALSE);
+	v = VarFind(name, scope, FALSE);
 	if (v == NULL) {
-		if (ctxt == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
+		if (scope == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
 			/*
 			 * This var would normally prevent the same name being
 			 * added to SCOPE_GLOBAL, so delete it from there if
@@ -959,17 +958,17 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 			/* XXX: name is expanded for the second time */
 			Var_DeleteExpand(name, SCOPE_GLOBAL);
 		}
-		VarAdd(name, val, ctxt, flags);
+		VarAdd(name, val, scope, flags);
 	} else {
 		if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
 			DEBUG3(VAR, "%s:%s = %s ignored (read-only)\n",
-			    ctxt->name, name, val);
+			    scope->name, name, val);
 			return;
 		}
 		Buf_Empty(&v->val);
 		Buf_AddStr(&v->val, val);
 
-		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
+		DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, val);
 		if (v->flags & VAR_EXPORTED)
 			ExportVar(name, VEM_PLAIN);
 	}
@@ -978,10 +977,10 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 	 * to the environment (as per POSIX standard)
 	 * Other than internals.
 	 */
-	if (ctxt == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
+	if (scope == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
 	    name[0] != '.') {
 		if (v == NULL)
-			v = VarFind(name, ctxt, FALSE); /* we just added it */
+			v = VarFind(name, scope, FALSE); /* we just added it */
 		v->flags |= VAR_FROM_CMD;
 
 		/*
@@ -1004,7 +1003,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 
 /* See Var_Set for documentation. */
 void
-Var_SetExpandWithFlags(const char *name, const char *val, GNode *ctxt,
+Var_SetExpandWithFlags(const char *name, const char *val, GNode *scope,
 		 VarSetFlags flags)
 {
 	const char *unexpanded_name = name;
@@ -1014,7 +1013,7 @@ Var_SetExpandWithFlags(const char *name, const char *val, GNode *ctxt,
 
 	if (strchr(varname.str, '$') != NULL) {
 		char *expanded;
-		(void)Var_Subst(varname.str, ctxt, VARE_WANTRES, &expanded);
+		(void)Var_Subst(varname.str, scope, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
 		varname = FStr_InitOwn(expanded);
 	}
@@ -1024,19 +1023,19 @@ Var_SetExpandWithFlags(const char *name, const char *val, GNode *ctxt,
 			    "name expands to empty string - ignored\n",
 		    unexpanded_name, val);
 	} else
-		Var_SetWithFlags(varname.str, val, ctxt, flags);
+		Var_SetWithFlags(varname.str, val, scope, flags);
 
 	FStr_Done(&varname);
 }
 
 void
-Var_Set(const char *name, const char *val, GNode *ctxt)
+Var_Set(const char *name, const char *val, GNode *scope)
 {
-	Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
+	Var_SetWithFlags(name, val, scope, VAR_SET_NONE);
 }
 
 /*
- * Set the variable name to the value val in the given context.
+ * Set the variable name to the value val in the given scope.
  *
  * If the variable doesn't yet exist, it is created.
  * Otherwise the new value overwrites and replaces the old value.
@@ -1044,12 +1043,12 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
  * Input:
  *	name		name of the variable to set, is expanded once
  *	val		value to give to the variable
- *	ctxt		context in which to set it
+ *	scope		scope in which to set it
  */
 void
-Var_SetExpand(const char *name, const char *val, GNode *ctxt)
+Var_SetExpand(const char *name, const char *val, GNode *scope)
 {
-	Var_SetExpandWithFlags(name, val, ctxt, VAR_SET_NONE);
+	Var_SetExpandWithFlags(name, val, scope, VAR_SET_NONE);
 }
 
 void
@@ -1071,27 +1070,27 @@ Global_SetExpand(const char *name, const char *value)
  * and the given value are appended.
  */
 void
-Var_Append(const char *name, const char *val, GNode *ctxt)
+Var_Append(const char *name, const char *val, GNode *scope)
 {
 	Var *v;
 
-	v = VarFind(name, ctxt, ctxt == SCOPE_GLOBAL);
+	v = VarFind(name, scope, scope == SCOPE_GLOBAL);
 
 	if (v == NULL) {
-		Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
+		Var_SetWithFlags(name, val, scope, VAR_SET_NONE);
 	} else if (v->flags & VAR_READONLY) {
 		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
 		    name);
-	} else if (ctxt == SCOPE_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
+	} else if (scope == SCOPE_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
 		Buf_AddByte(&v->val, ' ');
 		Buf_AddStr(&v->val, val);
 
-		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, v->val.data);
+		DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, v->val.data);
 
 		if (v->flags & VAR_FROM_ENV) {
 			/*
 			 * If the original variable came from the environment,
-			 * we have to install it in the global context (we
+			 * we have to install it in the global scope (we
 			 * could place it in the environment, but then we
 			 * should provide a way to export other variables...)
 			 */
@@ -1099,16 +1098,16 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 			/*
 			 * This is the only place where a variable is
 			 * created whose v->name is not the same as
-			 * ctxt->context->key.
+			 * scope->vars->key.
 			 */
-			HashTable_Set(&ctxt->vars, name, v);
+			HashTable_Set(&scope->vars, name, v);
 		}
 	}
 }
 
 /*
  * The variable of the given name has the given value appended to it in the
- * given context.
+ * given scope.
  *
  * If the variable doesn't exist, it is created. Otherwise the strings are
  * concatenated, with a space in between.
@@ -1116,18 +1115,18 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
  * Input:
  *	name		name of the variable to modify, is expanded once
  *	val		string to append to it
- *	ctxt		context in which this should occur
+ *	scope		scope in which this should occur
  *
  * Notes:
- *	Only if the variable is being sought in the global context is the
+ *	Only if the variable is being sought in the global scope is the
  *	environment searched.
- *	XXX: Knows its calling circumstances in that if called with ctxt
- *	an actual target, it will only search that context since only
+ *	XXX: Knows its calling circumstances in that if called with scope
+ *	an actual target, it will only search that scope since only
  *	a local variable could be being appended to. This is actually
  *	a big win and must be tolerated.
  */
 void
-Var_AppendExpand(const char *name, const char *val, GNode *ctxt)
+Var_AppendExpand(const char *name, const char *val, GNode *scope)
 {
 	char *name_freeIt = NULL;
 
@@ -1135,7 +1134,7 @@ Var_AppendExpand(const char *name, const char *val, GNode *ctxt)
 
 	if (strchr(name, '$') != NULL) {
 		const char *unexpanded_name = name;
-		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+		(void)Var_Subst(name, scope, VARE_WANTRES, &name_freeIt);
 		/* TODO: handle errors */
 		name = name_freeIt;
 		if (name[0] == '\0') {
@@ -1148,7 +1147,7 @@ Var_AppendExpand(const char *name, const char *val, GNode *ctxt)
 		}
 	}
 
-	Var_Append(name, val, ctxt);
+	Var_Append(name, val, scope);
 
 	free(name_freeIt);
 }
@@ -1160,9 +1159,9 @@ Global_Append(const char *name, const char *value)
 }
 
 Boolean
-Var_Exists(const char *name, GNode *ctxt)
+Var_Exists(const char *name, GNode *scope)
 {
-	Var *v = VarFind(name, ctxt, TRUE);
+	Var *v = VarFind(name, scope, TRUE);
 	if (v == NULL)
 		return FALSE;
 
@@ -1171,38 +1170,38 @@ Var_Exists(const char *name, GNode *ctxt)
 }
 
 /*
- * See if the given variable exists, in the given context or in other
- * fallback contexts.
+ * See if the given variable exists, in the given scope or in other
+ * fallback scopes.
  *
  * Input:
  *	name		Variable to find, is expanded once
- *	ctxt		Context in which to start search
+ *	scope		Scope in which to start search
  */
 Boolean
-Var_ExistsExpand(const char *name, GNode *ctxt)
+Var_ExistsExpand(const char *name, GNode *scope)
 {
 	FStr varname = FStr_InitRefer(name);
 	Boolean exists;
 
 	if (strchr(varname.str, '$') != NULL) {
 		char *expanded;
-		(void)Var_Subst(varname.str, ctxt, VARE_WANTRES, &expanded);
+		(void)Var_Subst(varname.str, scope, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
 		varname = FStr_InitOwn(expanded);
 	}
 
-	exists = Var_Exists(varname.str, ctxt);
+	exists = Var_Exists(varname.str, scope);
 	FStr_Done(&varname);
 	return exists;
 }
 
 /*
- * Return the unexpanded value of the given variable in the given context,
- * or the usual contexts.
+ * Return the unexpanded value of the given variable in the given scope,
+ * or the usual scopes.
  *
  * Input:
  *	name		name to find, is not expanded any further
- *	ctxt		context in which to search for it
+ *	scope		scope in which to search for it
  *
  * Results:
  *	The value if the variable exists, NULL if it doesn't.
@@ -1210,9 +1209,9 @@ Var_ExistsExpand(const char *name, GNode *ctxt)
  *	out_freeIt when the returned value is no longer needed.
  */
 FStr
-Var_Value(const char *name, GNode *ctxt)
+Var_Value(const char *name, GNode *scope)
 {
-	Var *v = VarFind(name, ctxt, TRUE);
+	Var *v = VarFind(name, scope, TRUE);
 	char *value;
 
 	if (v == NULL)
@@ -1226,12 +1225,12 @@ Var_Value(const char *name, GNode *ctxt)
 
 /*
  * Return the unexpanded variable value from this node, without trying to look
- * up the variable in any other context.
+ * up the variable in any other scope.
  */
 const char *
-Var_ValueDirect(const char *name, GNode *ctxt)
+Var_ValueDirect(const char *name, GNode *scope)
 {
-	Var *v = VarFind(name, ctxt, FALSE);
+	Var *v = VarFind(name, scope, FALSE);
 	return v != NULL ? v->val.data : NULL;
 }
 
@@ -2056,7 +2055,7 @@ typedef struct ApplyModifiersState {
 	/* '\0' or '}' or ')' */
 	const char endc;
 	Var *const var;
-	GNode *const ctxt;
+	GNode *const scope;
 	const VarEvalFlags eflags;
 	/*
 	 * The new value of the expression, after applying the modifier,
@@ -2169,7 +2168,7 @@ ParseModifierPartSubst(
 			VarEvalFlags nested_eflags =
 			    eflags & ~(unsigned)VARE_KEEP_DOLLAR;
 
-			(void)Var_Parse(&nested_p, st->ctxt, nested_eflags,
+			(void)Var_Parse(&nested_p, st->scope, nested_eflags,
 			    &nested_val);
 			/* TODO: handle errors */
 			Buf_AddStr(&buf, nested_val.str);
@@ -2348,7 +2347,7 @@ ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 	char prev_sep;
 	VarParseResult res;
 
-	args.ctx = st->ctxt;
+	args.ctx = st->scope;
 
 	(*pp)++;		/* Skip the first '@' */
 	res = ParseModifierPart(pp, '@', VARE_NONE, st, &args.tvar);
@@ -2373,7 +2372,7 @@ ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 	    ModifyWords(val, ModifyWord_Loop, &args, st->oneBigWord, st->sep));
 	st->sep = prev_sep;
 	/* XXX: Consider restoring the previous variable instead of deleting. */
-	Var_DeleteExpand(args.tvar, st->ctxt);
+	Var_DeleteExpand(args.tvar, st->scope);
 	free(args.tvar);
 	free(args.str);
 	return AMR_OK;
@@ -2414,7 +2413,7 @@ ApplyModifier_Defined(const char **pp, const char *val, ApplyModifiersState *st)
 		if (*p == '$') {
 			FStr nested_val;
 
-			(void)Var_Parse(&p, st->ctxt, eflags, &nested_val);
+			(void)Var_Parse(&p, st->scope, eflags, &nested_val);
 			/* TODO: handle errors */
 			Buf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
@@ -2696,7 +2695,7 @@ ApplyModifier_Match(const char **pp, const char *val, ApplyModifiersState *st)
 
 	if (needSubst) {
 		char *old_pattern = pattern;
-		(void)Var_Subst(pattern, st->ctxt, st->eflags, &pattern);
+		(void)Var_Subst(pattern, st->scope, st->eflags, &pattern);
 		/* TODO: handle errors */
 		free(old_pattern);
 	}
@@ -3245,7 +3244,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 {
-	GNode *ctxt;
+	GNode *scope;
 	char delim;
 	char *val;
 	VarParseResult res;
@@ -3265,11 +3264,11 @@ ok:
 		return AMR_BAD;
 	}
 
-	ctxt = st->ctxt;	/* context where v belongs */
-	if (st->exprStatus == VES_NONE && st->ctxt != SCOPE_GLOBAL) {
-		Var *gv = VarFind(st->var->name.str, st->ctxt, FALSE);
+	scope = st->scope;	/* scope where v belongs */
+	if (st->exprStatus == VES_NONE && st->scope != SCOPE_GLOBAL) {
+		Var *gv = VarFind(st->var->name.str, st->scope, FALSE);
 		if (gv == NULL)
-			ctxt = SCOPE_GLOBAL;
+			scope = SCOPE_GLOBAL;
 		else
 			VarFreeEnv(gv, TRUE);
 	}
@@ -3296,7 +3295,7 @@ ok:
 	if (st->eflags & VARE_WANTRES) {
 		switch (op[0]) {
 		case '+':
-			Var_AppendExpand(st->var->name.str, val, ctxt);
+			Var_AppendExpand(st->var->name.str, val, scope);
 			break;
 		case '!': {
 			const char *errfmt;
@@ -3305,7 +3304,7 @@ ok:
 				Error(errfmt, val);
 			else
 				Var_SetExpand(st->var->name.str, cmd_output,
-				    ctxt);
+				    scope);
 			free(cmd_output);
 			break;
 		}
@@ -3314,7 +3313,7 @@ ok:
 				break;
 			/* FALLTHROUGH */
 		default:
-			Var_SetExpand(st->var->name.str, val, ctxt);
+			Var_SetExpand(st->var->name.str, val, scope);
 			break;
 		}
 	}
@@ -3338,11 +3337,11 @@ ApplyModifier_Remember(const char **pp, const char *val,
 	if (mod[1] == '=') {
 		size_t n = strcspn(mod + 2, ":)}");
 		char *name = bmake_strldup(mod + 2, n);
-		Var_SetExpand(name, val, st->ctxt);
+		Var_SetExpand(name, val, st->scope);
 		free(name);
 		*pp = mod + 2 + n;
 	} else {
-		Var_Set("_", val, st->ctxt);
+		Var_Set("_", val, st->scope);
 		*pp = mod + 1;
 	}
 	st->newVal = FStr_InitRefer(val);
@@ -3422,7 +3421,7 @@ ApplyModifier_SysV(const char **pp, const char *val, ApplyModifiersState *st)
 	if (lhs[0] == '\0' && val[0] == '\0') {
 		st->newVal = FStr_InitRefer(val); /* special case */
 	} else {
-		struct ModifyWord_SYSVSubstArgs args = { st->ctxt, lhs, rhs };
+		struct ModifyWord_SYSVSubstArgs args = { st->scope, lhs, rhs };
 		st->newVal = FStr_InitOwn(
 		    ModifyWords(val, ModifyWord_SYSVSubst, &args,
 			st->oneBigWord, st->sep));
@@ -3590,7 +3589,7 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	const char *p = *pp;
 	FStr mods;
 
-	(void)Var_Parse(&p, st->ctxt, st->eflags, &mods);
+	(void)Var_Parse(&p, st->scope, st->eflags, &mods);
 	/* TODO: handle errors */
 
 	if (mods.str[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
@@ -3604,7 +3603,7 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	if (mods.str[0] != '\0') {
 		const char *modsp = mods.str;
 		FStr newVal = ApplyModifiers(&modsp, *inout_value, '\0', '\0',
-		    st->var, &st->exprStatus, st->ctxt, st->eflags);
+		    st->var, &st->exprStatus, st->scope, st->eflags);
 		*inout_value = newVal;
 		if (newVal.str == var_Error || *modsp != '\0') {
 			FStr_Done(&mods);
@@ -3701,12 +3700,12 @@ ApplyModifiers(
     char endc,			/* ')' or '}', or '\0' for indirect modifiers */
     Var *v,
     VarExprStatus *exprStatus,
-    GNode *ctxt,		/* for looking up and modifying variables */
+    GNode *scope,		/* for looking up and modifying variables */
     VarEvalFlags eflags
 )
 {
 	ApplyModifiersState st = {
-	    startc, endc, v, ctxt, eflags,
+	    startc, endc, v, scope, eflags,
 #if defined(lint)
 	    /* lint cannot parse C99 struct initializers yet. */
 	    { var_Error, NULL },
@@ -3802,11 +3801,11 @@ VarnameIsDynamic(const char *name, size_t len)
 }
 
 static const char *
-UndefinedShortVarValue(char varname, const GNode *ctxt)
+UndefinedShortVarValue(char varname, const GNode *scope)
 {
-	if (ctxt == SCOPE_CMDLINE || ctxt == SCOPE_GLOBAL) {
+	if (scope == SCOPE_CMDLINE || scope == SCOPE_GLOBAL) {
 		/*
-		 * If substituting a local variable in a non-local context,
+		 * If substituting a local variable in a non-local scope,
 		 * assume it's for dynamic source stuff. We have to handle
 		 * this specially and return the longhand for the variable
 		 * with the dollar sign escaped so it makes it back to the
@@ -3834,7 +3833,7 @@ UndefinedShortVarValue(char varname, const GNode *ctxt)
  */
 static char *
 ParseVarname(const char **pp, char startc, char endc,
-	     GNode *ctxt, VarEvalFlags eflags,
+	     GNode *scope, VarEvalFlags eflags,
 	     size_t *out_varname_len)
 {
 	Buffer buf;
@@ -3857,7 +3856,7 @@ ParseVarname(const char **pp, char startc, char endc,
 		/* A variable inside a variable, expand. */
 		if (*p == '$') {
 			FStr nested_val;
-			(void)Var_Parse(&p, ctxt, eflags, &nested_val);
+			(void)Var_Parse(&p, scope, eflags, &nested_val);
 			/* TODO: handle errors */
 			Buf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
@@ -3905,7 +3904,7 @@ ValidShortVarname(char varname, const char *start)
  * Return whether to continue parsing.
  */
 static Boolean
-ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
+ParseVarnameShort(char startc, const char **pp, GNode *scope,
 		  VarEvalFlags eflags,
 		  VarParseResult *out_FALSE_res, const char **out_FALSE_val,
 		  Var **out_TRUE_var)
@@ -3930,12 +3929,12 @@ ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
 
 	name[0] = startc;
 	name[1] = '\0';
-	v = VarFind(name, ctxt, TRUE);
+	v = VarFind(name, scope, TRUE);
 	if (v == NULL) {
 		const char *val;
 		*pp += 2;
 
-		val = UndefinedShortVarValue(startc, ctxt);
+		val = UndefinedShortVarValue(startc, scope);
 		if (val == NULL)
 			val = eflags & VARE_UNDEFERR ? var_Error : varUndefined;
 
@@ -3968,11 +3967,11 @@ ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
 
 /* Find variables like @F or <D. */
 static Var *
-FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
+FindLocalLegacyVar(const char *varname, size_t namelen, GNode *scope,
 		   const char **out_extraModifiers)
 {
-	/* Only resolve these variables if ctxt is a "real" target. */
-	if (ctxt == SCOPE_CMDLINE || ctxt == SCOPE_GLOBAL)
+	/* Only resolve these variables if scope is a "real" target. */
+	if (scope == SCOPE_CMDLINE || scope == SCOPE_GLOBAL)
 		return NULL;
 
 	if (namelen != 2)
@@ -3984,7 +3983,7 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
 
 	{
 		char name[] = { varname[0], '\0' };
-		Var *v = VarFind(name, ctxt, FALSE);
+		Var *v = VarFind(name, scope, FALSE);
 
 		if (v != NULL) {
 			if (varname[1] == 'D') {
@@ -4037,7 +4036,7 @@ static Boolean
 ParseVarnameLong(
 	const char *p,
 	char startc,
-	GNode *ctxt,
+	GNode *scope,
 	VarEvalFlags eflags,
 
 	const char **out_FALSE_pp,
@@ -4063,7 +4062,7 @@ ParseVarnameLong(
 	char endc = startc == '(' ? ')' : '}';
 
 	p += 2;			/* skip "${" or "$(" or "y(" */
-	varname = ParseVarname(&p, startc, endc, ctxt, eflags, &namelen);
+	varname = ParseVarname(&p, startc, endc, scope, eflags, &namelen);
 
 	if (*p == ':') {
 		haveModifier = TRUE;
@@ -4078,23 +4077,23 @@ ParseVarnameLong(
 		return FALSE;
 	}
 
-	v = VarFind(varname, ctxt, TRUE);
+	v = VarFind(varname, scope, TRUE);
 
 	/* At this point, p points just after the variable name,
 	 * either at ':' or at endc. */
 
 	if (v == NULL) {
-		v = FindLocalLegacyVar(varname, namelen, ctxt,
+		v = FindLocalLegacyVar(varname, namelen, scope,
 		    out_TRUE_extraModifiers);
 	}
 
 	if (v == NULL) {
 		/*
 		 * Defer expansion of dynamic variables if they appear in
-		 * non-local context since they are not defined there.
+		 * non-local scope since they are not defined there.
 		 */
 		dynamic = VarnameIsDynamic(varname, namelen) &&
-			  (ctxt == SCOPE_CMDLINE || ctxt == SCOPE_GLOBAL);
+			  (scope == SCOPE_CMDLINE || scope == SCOPE_GLOBAL);
 
 		if (!haveModifier) {
 			p++;	/* skip endc */
@@ -4157,7 +4156,7 @@ FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
  *			When parsing a condition in ParseEmptyArg, it may also
  *			point to the "y" of "empty(VARNAME:Modifiers)", which
  *			is syntactically the same.
- *	ctxt		The context for finding variables
+ *	scope		The scope for finding variables
  *	eflags		Control the exact details of parsing
  *
  * Output:
@@ -4185,7 +4184,7 @@ FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
  */
 /* coverity[+alloc : arg-*4] */
 VarParseResult
-Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
+Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 {
 	const char *p = *pp;
 	const char *const start = p;
@@ -4197,7 +4196,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	char endc;
 	/*
 	 * TRUE if the variable is local and we're expanding it in a
-	 * non-local context. This is done to support dynamic sources.
+	 * non-local scope. This is done to support dynamic sources.
 	 * The result is just the expression, unaltered.
 	 */
 	Boolean dynamic;
@@ -4223,14 +4222,14 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	startc = p[1];
 	if (startc != '(' && startc != '{') {
 		VarParseResult res;
-		if (!ParseVarnameShort(startc, pp, ctxt, eflags, &res,
+		if (!ParseVarnameShort(startc, pp, scope, eflags, &res,
 		    &out_val->str, &v))
 			return res;
 		haveModifier = FALSE;
 		p++;
 	} else {
 		VarParseResult res;
-		if (!ParseVarnameLong(p, startc, ctxt, eflags,
+		if (!ParseVarnameLong(p, startc, scope, eflags,
 		    pp, &res, out_val,
 		    &endc, &p, &v, &haveModifier, &extramodifiers,
 		    &dynamic, &exprStatus))
@@ -4261,7 +4260,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 		if (opts.strict)
 			nested_eflags &= ~(unsigned)VARE_UNDEFERR;
 		v->flags |= VAR_IN_USE;
-		(void)Var_Subst(value.str, ctxt, nested_eflags, &expanded);
+		(void)Var_Subst(value.str, scope, nested_eflags, &expanded);
 		v->flags &= ~(unsigned)VAR_IN_USE;
 		/* TODO: handle errors */
 		value = FStr_InitOwn(expanded);
@@ -4271,14 +4270,14 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 		if (extramodifiers != NULL) {
 			const char *em = extramodifiers;
 			value = ApplyModifiers(&em, value, '\0', '\0',
-			    v, &exprStatus, ctxt, eflags);
+			    v, &exprStatus, scope, eflags);
 		}
 
 		if (haveModifier) {
 			p++;	/* Skip initial colon. */
 
 			value = ApplyModifiers(&p, value, startc, endc,
-			    v, &exprStatus, ctxt, eflags);
+			    v, &exprStatus, scope, eflags);
 		}
 	}
 
@@ -4328,14 +4327,14 @@ VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalFlags eflags)
 }
 
 static void
-VarSubstExpr(const char **pp, Buffer *buf, GNode *ctxt,
+VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 	     VarEvalFlags eflags, Boolean *inout_errorReported)
 {
 	const char *p = *pp;
 	const char *nested_p = p;
 	FStr val;
 
-	(void)Var_Parse(&nested_p, ctxt, eflags, &val);
+	(void)Var_Parse(&nested_p, scope, eflags, &val);
 	/* TODO: handle errors */
 
 	if (val.str == var_Error || val.str == varUndefined) {
@@ -4403,12 +4402,12 @@ VarSubstPlain(const char **pp, Buffer *res)
  * Input:
  *	str		The string in which the variable expressions are
  *			expanded.
- *	ctxt		The context in which to start searching for
- *			variables.  The other contexts are searched as well.
+ *	scope		The scope in which to start searching for
+ *			variables.  The other scopes are searched as well.
  *	eflags		Special effects during expansion.
  */
 VarParseResult
-Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
+Var_Subst(const char *str, GNode *scope, VarEvalFlags eflags, char **out_res)
 {
 	const char *p = str;
 	Buffer res;
@@ -4425,7 +4424,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 		if (p[0] == '$' && p[1] == '$')
 			VarSubstDollarDollar(&p, &res, eflags);
 		else if (p[0] == '$')
-			VarSubstExpr(&p, &res, ctxt, eflags, &errorReported);
+			VarSubstExpr(&p, &res, scope, eflags, &errorReported);
 		else
 			VarSubstPlain(&p, &res);
 	}
@@ -4453,12 +4452,12 @@ Var_End(void)
 void
 Var_Stats(void)
 {
-	HashTable_DebugStats(&SCOPE_GLOBAL->vars, "VAR_GLOBAL");
+	HashTable_DebugStats(&SCOPE_GLOBAL->vars, "Global variables");
 }
 
-/* Print all variables in a context, sorted by name. */
+/* Print all variables in a scope, sorted by name. */
 void
-Var_Dump(GNode *ctxt)
+Var_Dump(GNode *scope)
 {
 	Vector /* of const char * */ vec;
 	HashIter hi;
@@ -4467,7 +4466,7 @@ Var_Dump(GNode *ctxt)
 
 	Vector_Init(&vec, sizeof(const char *));
 
-	HashIter_Init(&hi, &ctxt->vars);
+	HashIter_Init(&hi, &scope->vars);
 	while (HashIter_Next(&hi) != NULL)
 		*(const char **)Vector_Push(&vec) = hi.entry->key;
 	varnames = vec.items;
@@ -4476,7 +4475,7 @@ Var_Dump(GNode *ctxt)
 
 	for (i = 0; i < vec.len; i++) {
 		const char *varname = varnames[i];
-		Var *var = HashTable_FindValue(&ctxt->vars, varname);
+		Var *var = HashTable_FindValue(&scope->vars, varname);
 		debug_printf("%-16s = %s\n", varname, var->val.data);
 	}
 

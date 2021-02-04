@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.240 2021/02/02 21:26:51 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.241 2021/02/04 21:42:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -78,8 +78,8 @@
  *	Make_Update	After a target is made, update all its parents.
  *			Perform various bookkeeping chores like the updating
  *			of the youngestChild field of the parent, filling
- *			of the IMPSRC context variable, etc. Place the parent
- *			on the toBeMade queue if it should be.
+ *			of the IMPSRC variable, etc. Place the parent on the
+ *			toBeMade queue if it should be.
  *
  *	GNode_UpdateYoungestChild
  *			Update the node's youngestChild field based on the
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.240 2021/02/02 21:26:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.241 2021/02/04 21:42:46 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1032,9 +1032,9 @@ MakeStartJobs(void)
 			if (gn->type & OP_JOIN) {
 				/*
 				 * Even for an up-to-date .JOIN node, we
-				 * need it to have its context variables so
+				 * need it to have its local variables so
 				 * references to it get the correct value
-				 * for .TARGET when building up the context
+				 * for .TARGET when building up the local
 				 * variables of its parent(s)...
 				 */
 				Make_DoAllVar(gn);
