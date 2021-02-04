@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.267 2021/02/03 08:34:15 rillig Exp $
+# $NetBSD: Makefile,v 1.268 2021/02/04 00:16:03 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -520,6 +520,7 @@ SED_CMDS.varname-dot-shell=	-e 's, = /[^ ]*, = (details omitted),g'
 SED_CMDS.varname-dot-shell+=	-e 's,"/[^" ]*","(details omitted)",g'
 SED_CMDS.varname-dot-shell+=	-e 's,\[/[^] ]*\],[(details omitted)],g'
 SED_CMDS.varname-empty=		-e 's,${.CURDIR},<curdir>,g'
+SED_CMDS.varname-empty+=	-e '/\.PARSEDIR/d'
 SED_CMDS.varname-empty+=	-e '/\.SHELL/d'
 
 # Some tests need an additional round of postprocessing.
