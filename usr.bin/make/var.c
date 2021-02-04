@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.797 2021/02/03 15:08:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.798 2021/02/04 19:00:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -80,7 +80,9 @@
  *
  *	Var_End		Clean up the module.
  *
- *	Var_Set		Set the value of the variable, creating it if
+ *	Var_Set
+ *	Var_SetExpand
+ *			Set the value of the variable, creating it if
  *			necessary.
  *
  *	Var_Append
@@ -137,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.797 2021/02/03 15:08:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.798 2021/02/04 19:00:45 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1026,6 +1028,12 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 	FStr_Done(&varname);
 }
 
+void
+Var_Set(const char *name, const char *val, GNode *ctxt)
+{
+	SetVar(name, val, ctxt, VAR_SET_NONE);
+}
+
 /*
  * Set the variable name to the value val in the given context.
  *
@@ -1038,7 +1046,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
  *	ctxt		context in which to set it
  */
 void
-Var_Set(const char *name, const char *val, GNode *ctxt)
+Var_SetExpand(const char *name, const char *val, GNode *ctxt)
 {
 	Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
 }
@@ -1052,7 +1060,7 @@ Global_Set(const char *name, const char *value)
 void
 Global_SetExpand(const char *name, const char *value)
 {
-	Var_Set(name, value, VAR_GLOBAL);
+	Var_SetExpand(name, value, VAR_GLOBAL);
 }
 
 /*
@@ -3282,6 +3290,7 @@ ok:
 
 	(*pp)--;
 
+	/* XXX: Expanding the variable name at this point sounds wrong. */
 	if (st->eflags & VARE_WANTRES) {
 		switch (op[0]) {
 		case '+':
@@ -3293,7 +3302,8 @@ ok:
 			if (errfmt != NULL)
 				Error(errfmt, val);
 			else
-				Var_Set(st->var->name.str, cmd_output, ctxt);
+				Var_SetExpand(st->var->name.str, cmd_output,
+				    ctxt);
 			free(cmd_output);
 			break;
 		}
@@ -3302,7 +3312,7 @@ ok:
 				break;
 			/* FALLTHROUGH */
 		default:
-			Var_Set(st->var->name.str, val, ctxt);
+			Var_SetExpand(st->var->name.str, val, ctxt);
 			break;
 		}
 	}
@@ -3326,7 +3336,7 @@ ApplyModifier_Remember(const char **pp, const char *val,
 	if (mod[1] == '=') {
 		size_t n = strcspn(mod + 2, ":)}");
 		char *name = bmake_strldup(mod + 2, n);
-		Var_Set(name, val, st->ctxt);
+		Var_SetExpand(name, val, st->ctxt);
 		free(name);
 		*pp = mod + 2 + n;
 	} else {
