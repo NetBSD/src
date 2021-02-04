@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.55 2021/01/27 04:55:42 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.56 2021/02/04 20:19:09 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,14 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.55 2021/01/27 04:55:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.56 2021/02/04 20:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 #include <dev/ofw/openfirm.h>
-#include <dev/i2c/i2cvar.h>
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
 #define	OFW_PATH_BUF_SIZE	512
@@ -429,129 +428,6 @@ of_get_mode_string(char *buffer, int len)
 	strncpy(buffer, pos + 2, len);
 	return buffer;
 }
-
-/*
- * Iterate over the subtree of a i2c controller node.
- * Add all sub-devices into an array as part of the controller's
- * device properties.
- * This is used by the i2c bus attach code to do direct configuration.
- */
-void
-of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
-    int addr_shift)
-{
-	int node, len;
-	char name[32];
-	uint64_t reg64;
-	uint32_t reg32;
-	uint64_t addr;
-	prop_array_t array = NULL;
-	prop_dictionary_t dev;
-
-	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
-			continue;
-		len = OF_getproplen(node, "reg");
-		addr = 0;
-		if (cell_size == 8 && len >= sizeof(reg64)) {
-			if (OF_getprop(node, "reg", &reg64, sizeof(reg64))
-			    < sizeof(reg64))
-				continue;
-			addr = be64toh(reg64);
-			/*
-			 * The i2c bus number (0 or 1) is encoded in bit 33
-			 * of the register, but we encode it in bit 8 of
-			 * i2c_addr_t.
-			 */
-			if (addr & 0x100000000)
-				addr = (addr & 0xff) | 0x100;
-		} else if (cell_size == 4 && len >= sizeof(reg32)) {
-			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
-			    < sizeof(reg32))
-				continue;
-			addr = be32toh(reg32);
-		} else {
-			continue;
-		}
-		addr >>= addr_shift;
-		if (addr == 0) continue;
-
-		if (array == NULL)
-			array = prop_array_create();
-
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", name);
-		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", node);
-		prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_OF);
-		of_to_dataprop(dev, node, "compatible", "compatible");
-		prop_array_add(array, dev);
-		prop_object_release(dev);
-	}
-
-	if (array != NULL) {
-		prop_dictionary_set(props, "i2c-child-devices", array);
-		prop_object_release(array);
-	}
-}
-
-void
-of_enter_spi_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
-{
-	int node, len;
-	char name[32];
-	uint64_t reg64;
-	uint32_t reg32;
-	uint32_t slave;
-	u_int32_t maxfreq;
-	prop_array_t array = NULL;
-	prop_dictionary_t dev;
-	int mode;
-
-	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
-			continue;
-		len = OF_getproplen(node, "reg");
-		slave = 0;
-		if (cell_size == 8 && len >= sizeof(reg64)) {
-			if (OF_getprop(node, "reg", &reg64, sizeof(reg64))
-			    < sizeof(reg64))
-				continue;
-			slave = be64toh(reg64);
-		} else if (cell_size == 4 && len >= sizeof(reg32)) {
-			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
-			    < sizeof(reg32))
-				continue;
-			slave = be32toh(reg32);
-		} else {
-			continue;
-		}
-		if (of_getprop_uint32(node, "spi-max-frequency", &maxfreq)) {
-			maxfreq = 0;
-		}
-		mode = ((int)of_hasprop(node, "cpol") << 1) | (int)of_hasprop(node, "cpha");
-
-		if (array == NULL)
-			array = prop_array_create();
-
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", name);
-		prop_dictionary_set_uint32(dev, "slave", slave);
-		prop_dictionary_set_uint32(dev, "mode", mode);
-		if (maxfreq > 0)
-			prop_dictionary_set_uint32(dev, "spi-max-frequency", maxfreq);
-		prop_dictionary_set_uint64(dev, "cookie", node);
-		of_to_dataprop(dev, node, "compatible", "compatible");
-		prop_array_add(array, dev);
-		prop_object_release(dev);
-	}
-
-	if (array != NULL) {
-		prop_dictionary_set(props, "spi-child-devices", array);
-		prop_object_release(array);
-	}
-}
-
 
 /*
  * Returns true if the specified property is present.
