@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.38 2021/01/29 21:01:53 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.39 2021/02/04 19:31:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1439,4 +1439,47 @@ usr.bin/ftp/version.h				1.92
 
 	PR 55857: ftp(1): don't use restartable signals.
 	[lukem, ticket #1190]
+
+sys/kern/kern_event.c				1.110-1.115
+
+	Fix kevent(2) race causing missed events, and Go timer latency issues.
+	[jdolecek, ticket #1191]
+
+sys/dev/hyperv/hvkbd.c				1.7 (patch)
+sys/dev/hyperv/if_hvn.c				1.20 (patch)
+sys/dev/hyperv/vmbus.c				1.12 (patch)
+
+	hvkbd(4), vmbus(4), hvn(4): don't wait forever.
+	[nonaka, ticket #1192]
+
+share/mk/bsd.own.mk				1.1229
+
+	PR 55751: use gzip'd sets for alpha.
+	[tsutsui, ticket #1193]
+
+xsrc/external/mit/libXxf86dga/dist/src/XF86DGA.c	1.3
+
+	Fix "no output of xdpyinfo(1) on redirect or pipe" problem.
+	[tsutsui, ticket #1194]
+
+sys/miscfs/procfs/procfs_vfsops.c		1.110
+
+	Fix procfs environ node.
+	[riastradh, ticket #1195]
+
+sys/dev/usb/uhid.c				1.115 (patch)
+sys/dev/usb/uhidev.c				1.79 (patch)
+sys/dev/usb/uhidev.h				1.21 (patch)
+
+	Fix uhid and uhidev locking.
+	[riastradh, ticket #1196]
+
+sys/dev/usb/if_urtwn.c				1.89,1.90
+sys/dev/usb/usbdevs				1.788,1.789
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	urtwn(4): add TPLINK WN821N and another TPLINK RTL8192EU variant.
+	To avoid confusion use TP-Link's names for these variants.
+	[nia, ticket #1197]
 
