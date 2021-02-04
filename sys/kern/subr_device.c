@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_device.c,v 1.4 2021/01/28 15:53:46 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.5 2021/02/04 23:29:16 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.4 2021/01/28 15:53:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.5 2021/02/04 23:29:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,6 +39,7 @@ device_t			root_device;
 /*
  * Accessor functions for the device_t type.
  */
+
 devclass_t
 device_class(device_t dev)
 {
@@ -181,4 +182,23 @@ device_is_a(device_t dev, const char *dname)
 	}
 
 	return strcmp(dev->dv_cfdriver->cd_name, dname) == 0;
+}
+
+/*
+ * device_attached_to_iattr:
+ *
+ *	Returns true if the device attached to the specified interface
+ *	attribute.
+ */
+bool
+device_attached_to_iattr(device_t dev, const char *iattr)
+{
+	cfdata_t cfdata = device_cfdata(dev);
+	const struct cfparent *pspec;
+
+	if (cfdata == NULL || (pspec = cfdata->cf_pspec) == NULL) {
+		return false;
+	}
+
+	return strcmp(pspec->cfp_iattr, iattr) == 0;
 }
