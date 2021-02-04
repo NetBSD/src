@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.798 2021/02/04 19:00:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.799 2021/02/04 19:15:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.798 2021/02/04 19:00:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.799 2021/02/04 19:15:13 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1001,9 +1001,16 @@ SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 		VarFreeEnv(v, TRUE);
 }
 
-/* See Var_Set for documentation. */
 void
 Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
+		 VarSetFlags flags)
+{
+	SetVar(name, val, ctxt, flags);
+}
+
+/* See Var_Set for documentation. */
+void
+Var_SetExpandWithFlags(const char *name, const char *val, GNode *ctxt,
 		 VarSetFlags flags)
 {
 	const char *unexpanded_name = name;
@@ -1048,7 +1055,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
 void
 Var_SetExpand(const char *name, const char *val, GNode *ctxt)
 {
-	Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
+	Var_SetExpandWithFlags(name, val, ctxt, VAR_SET_NONE);
 }
 
 void
@@ -1675,7 +1682,8 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 		return;
 
 	args = data;
-	Var_SetWithFlags(args->tvar, word, args->ctx, VAR_SET_NO_EXPORT);
+	/* XXX: The variable name should not be expanded here. */
+	Var_SetExpandWithFlags(args->tvar, word, args->ctx, VAR_SET_NO_EXPORT);
 	(void)Var_Subst(args->str, args->ctx, args->eflags, &s);
 	/* TODO: handle errors */
 
