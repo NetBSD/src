@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.68 2021/01/16 09:09:37 ryo Exp $ */
+/* $NetBSD: fdtvar.h,v 1.69 2021/02/04 22:14:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -434,7 +434,9 @@ void		fdt_add_child(device_t, int, struct fdt_attach_args *, u_int);
 void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);
 int		fdt_find_with_property(const char *, int *);
+
 int		fdtbus_print(void *, const char *);
+void		fdtbus_device_register(device_t, void *);
 
 bus_dma_tag_t	fdtbus_dma_tag_create(int, const struct fdt_dma_range *,
 		    u_int);

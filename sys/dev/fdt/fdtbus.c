@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.38 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.39 2021/02/04 22:14:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.38 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.39 2021/02/04 22:14:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,4 +549,10 @@ fdtbus_print(void *aux, const char *pnp)
 		aprint_debug(" (%s)", name);
 
 	return UNCONF;
+}
+
+void
+fdtbus_device_register(device_t dev __unused, void *aux __unused)
+{
+	/* Placeholder. */
 }
