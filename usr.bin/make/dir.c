@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.267 2021/02/03 13:53:12 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.268 2021/02/04 21:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.267 2021/02/03 13:53:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.268 2021/02/04 21:33:13 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -549,7 +549,7 @@ Dir_SetPATH(void)
 	CachedDirListNode *ln;
 	Boolean seenDotLast = FALSE;	/* true if we should search '.' last */
 
-	Var_Delete(".PATH", VAR_GLOBAL);
+	Var_Delete(".PATH", SCOPE_GLOBAL);
 
 	if ((ln = dirSearchPath.dirs.first) != NULL) {
 		CachedDir *dir = ln->datum;
