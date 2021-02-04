@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.8 2021/02/03 15:13:49 isaki Exp $	*/
+/*	$NetBSD: harmony.c,v 1.9 2021/02/04 15:06:11 isaki Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -437,7 +437,7 @@ harmony_query_format(void *vsc, audio_format_query_t *afp)
 int
 harmony_set_format(void *vsc, int setmode,
     const audio_params_t *play, const audio_params_t *rec,
-	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct harmony_softc *sc;
 	uint32_t bits;
@@ -467,7 +467,8 @@ harmony_set_format(void *vsc, int setmode,
 
 	/* XXX modify harmony_speed_bits() not to rewrite rate */
 	rate = play->sample_rate;
-	sc->sc_cntlbits |= harmony_speed_bits(sc, &rate);
+	bits |= harmony_speed_bits(sc, &rate);
+	sc->sc_cntlbits = bits;
 	sc->sc_need_commit = 1;
 
 	return 0;
