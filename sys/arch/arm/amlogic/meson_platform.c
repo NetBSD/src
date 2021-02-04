@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.17 2021/01/29 13:10:07 rin Exp $ */
+/* $NetBSD: meson_platform.c,v 1.18 2021/02/04 22:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.17 2021/01/29 13:10:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.18 2021/02/04 22:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,6 +182,8 @@ meson_platform_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
 
+	fdtbus_device_register(self, aux);
+
 	if (device_is_a(self, "awge") && device_unit(self) == 0) {
 		uint8_t enaddr[ETHER_ADDR_LEN];
 		if (get_bootconf_option(boot_args, "awge0.mac-address",
@@ -231,6 +233,8 @@ meson8b_platform_device_register(device_t self, void *aux)
 {
 	device_t parent = device_parent(self);
 	char *ptr;
+
+	fdtbus_device_register(dev, aux);
 
 	if (device_is_a(self, "ld") &&
 	    device_is_a(parent, "sdmmc") &&
