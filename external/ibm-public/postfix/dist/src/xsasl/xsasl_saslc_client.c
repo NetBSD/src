@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_saslc_client.c,v 1.1 2011/02/12 19:07:09 christos Exp $	*/
+/*	$NetBSD: xsasl_saslc_client.c,v 1.2 2021/02/05 21:45:24 joerg Exp $	*/
 
 /*++
 /* NAME
@@ -167,8 +167,10 @@ xsasl_saslc_client_first(
 		return XSASL_AUTH_FAIL;
 	}
 	vstring_strcpy(init_resp, outlen ? out : "");
-	if (msg_verbose)
-		msg_info("%s: client_reply='%s'", __func__, outlen ? out : "");
+	if (msg_verbose) {
+		msg_info("%s: client_reply='%s'", __func__,
+		    outlen ? (const char *)out : "");
+	}
 
 	if (outlen > 0)
 		memset(out, 0, outlen);		/* XXX: silly? */
@@ -201,9 +203,10 @@ xsasl_saslc_client_next(XSASL_CLIENT *xp, const char *server_reply,
 		return XSASL_AUTH_FAIL;
 	}
 	vstring_strcpy(client_reply, outlen ? out : "");
-	if (msg_verbose)
+	if (msg_verbose) {
 		msg_info("%s: client_reply='%s'", __func__,
-		    outlen ? out : "");
+		    outlen ? (const char *) out : "");
+	}
 
 	if (outlen > 0)
 		memset(out, 0, outlen);		/* XXX: silly? */
