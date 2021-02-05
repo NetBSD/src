@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.46 2021/02/05 19:18:23 reinoud Exp $	*/
+/*	$NetBSD: virtio.c,v 1.47 2021/02/05 20:45:38 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.46 2021/02/05 19:18:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.47 2021/02/05 20:45:38 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ virtio_read_device_config_4(struct virtio_softc *sc, int index) {
 /*
  * The Virtio spec explicitly tells that reading and writing 8 bytes are not
  * considered atomic and no triggers may be connected to reading or writing
- * it. This allows for reading byte-by-byte.
+ * it. We access it using two 32 reads. See virtio spec 4.1.3.1.
  */
 uint64_t
 virtio_read_device_config_8(struct virtio_softc *sc, int index) {
@@ -212,12 +212,16 @@ virtio_read_device_config_8(struct virtio_softc *sc, int index) {
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	union {
 		uint64_t u64;
-		uint8_t  b[8];
+		uint32_t l[2];
 	} v;
 	uint64_t val;
 
-	for (int i = 0; i < 8; i++)
-		v.b[i] = bus_space_read_1(iot, ioh, index + i);
+	v.l[0] = bus_space_read_4(iot, ioh, index);
+	v.l[1] = bus_space_read_4(iot, ioh, index + 4);
+	if (sc->sc_bus_endian != sc->sc_struct_endian) {
+		v.l[0] = bswap32(v.l[0]);
+		v.l[1] = bswap32(v.l[1]);
+	}
 	val = v.u64;
 
 	if (BYTE_ORDER != sc->sc_struct_endian)
@@ -306,8 +310,9 @@ virtio_write_device_config_4(struct virtio_softc *sc, int index, uint32_t value)
 /*
  * The Virtio spec explicitly tells that reading and writing 8 bytes are not
  * considered atomic and no triggers may be connected to reading or writing
- * it. This allows for writing byte-by-byte. For good measure it is stated to
- * always write lsb first just in case of a hypervisor bug.
+ * it. We access it using two 32 bit writes. For good measure it is stated to
+ * always write lsb first just in case of a hypervisor bug. See See virtio
+ * spec 4.1.3.1.
  */
 void
 virtio_write_device_config_8(struct virtio_softc *sc, int index, uint64_t value)
@@ -316,19 +321,25 @@ virtio_write_device_config_8(struct virtio_softc *sc, int index, uint64_t value)
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	union {
 		uint64_t u64;
-		uint8_t  b[8];
+		uint32_t l[2];
 	} v;
 
 	if (BYTE_ORDER != sc->sc_struct_endian)
 		value = bswap64(value);
 
 	v.u64 = value;
-	if (sc->sc_struct_endian == LITTLE_ENDIAN)
-		for (int i = 0; i < 8; i++)
-			bus_space_write_1(iot, ioh, index + i, v.b[i]);
- 	else
-		for (int i = 7; i >= 0; i--)
-			bus_space_write_1(iot, ioh, index + i, v.b[i]);
+	if (sc->sc_bus_endian != sc->sc_struct_endian) {
+		v.l[0] = bswap32(v.l[0]);
+		v.l[1] = bswap32(v.l[1]);
+	}
+
+	if (sc->sc_struct_endian == LITTLE_ENDIAN) {
+		bus_space_write_4(iot, ioh, index,     v.l[0]);
+		bus_space_write_4(iot, ioh, index + 4, v.l[1]);
+	} else {
+		bus_space_write_4(iot, ioh, index + 4, v.l[1]);
+		bus_space_write_4(iot, ioh, index,     v.l[0]);
+	}
 }
 
 /*
