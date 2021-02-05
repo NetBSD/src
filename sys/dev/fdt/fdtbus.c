@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.39 2021/02/04 22:14:08 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.40 2021/02/05 17:20:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.39 2021/02/04 22:14:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40 2021/02/05 17:20:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,7 +552,18 @@ fdtbus_print(void *aux, const char *pnp)
 }
 
 void
-fdtbus_device_register(device_t dev __unused, void *aux __unused)
+fdtbus_device_register(device_t dev, void *aux)
 {
-	/* Placeholder. */
+	/* All we do here is set the devhandle in the device_t. */
+	int phandle = -1;
+
+	if (device_attached_to_iattr(dev, "fdt")) {
+		const struct fdt_attach_args *faa = aux;
+		phandle = faa->faa_phandle;
+	} else {
+		return;
+	}
+	KASSERT(phandle != -1);
+
+	of_device_register(dev, phandle);
 }
