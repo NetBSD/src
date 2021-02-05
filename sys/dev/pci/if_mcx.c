@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.15 2021/01/30 21:26:32 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.16 2021/02/05 22:23:30 jmcneill Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.98 2021/01/27 07:46:11 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.15 2021/01/30 21:26:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.16 2021/02/05 22:23:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.15 2021/01/30 21:26:32 jmcneill Exp $")
 #include <sys/kmem.h>
 #include <sys/bus.h>
 #include <sys/interrupt.h>
+#include <sys/pcq.h>
+#include <sys/cpu.h>
 
 #include <machine/intr.h>
 
@@ -69,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.15 2021/01/30 21:26:32 jmcneill Exp $")
 /* #else */
 #define	CALLOUT_FLAGS	0
 /* #endif */
+
+#define	MCX_TXQ_NUM		2048
 
 #define BUS_DMASYNC_PRERW	(BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
 #define BUS_DMASYNC_POSTRW	(BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
@@ -2318,6 +2322,9 @@ struct mcx_rx {
 
 struct mcx_tx {
 	struct mcx_softc	*tx_softc;
+	kmutex_t		 tx_lock;
+	pcq_t			*tx_pcq;
+	void			*tx_softint;
 
 	int			 tx_uar;
 	int			 tx_sqn;
@@ -2624,6 +2631,8 @@ static int	mcx_init(struct ifnet *);
 static void	mcx_stop(struct ifnet *, int);
 static int	mcx_ioctl(struct ifnet *, u_long, void *);
 static void	mcx_start(struct ifnet *);
+static int	mcx_transmit(struct ifnet *, struct mbuf *);
+static void	mcx_deferred_transmit(void *);
 static void	mcx_watchdog(struct ifnet *);
 static void	mcx_media_add_types(struct mcx_softc *);
 static void	mcx_media_status(struct ifnet *, struct ifmediareq *);
@@ -2954,6 +2963,9 @@ mcx_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = mcx_stop;
 	ifp->if_ioctl = mcx_ioctl;
 	ifp->if_start = mcx_start;
+	if (sc->sc_nqueues > 1) {
+		ifp->if_transmit = mcx_transmit;
+	}
 	ifp->if_watchdog = mcx_watchdog;
 	ifp->if_mtu = sc->sc_hardmtu;
 	ifp->if_capabilities = IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx |
@@ -3009,6 +3021,10 @@ mcx_attach(device_t parent, device_t self, void *aux)
 		callout_setfunc(&rx->rx_refill, mcx_refill, rx);
 
 		tx->tx_softc = sc;
+		mutex_init(&tx->tx_lock, MUTEX_DEFAULT, IPL_NET);
+		tx->tx_pcq = pcq_create(MCX_TXQ_NUM, KM_SLEEP);
+		tx->tx_softint = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+		    mcx_deferred_transmit, tx);
 
 		snprintf(intrxname, sizeof(intrxname), "%s queue %d",
 		    DEVNAME(sc), i);
@@ -7763,11 +7779,9 @@ mcx_load_mbuf(struct mcx_softc *sc, struct mcx_slot *ms, struct mbuf *m)
 }
 
 static void
-mcx_start(struct ifnet *ifp)
+mcx_send_common_locked(struct ifnet *ifp, struct mcx_tx *tx, bool is_transmit)
 {
 	struct mcx_softc *sc = ifp->if_softc;
-	/* mcx_start() always uses TX ring[0] */
-	struct mcx_tx *tx = &sc->sc_queues[0].q_tx;
 	struct mcx_sq_entry *sq, *sqe;
 	struct mcx_sq_entry_seg *sqs;
 	struct mcx_slot *ms;
@@ -7778,6 +7792,11 @@ mcx_start(struct ifnet *ifp)
 	uint32_t csum;
 	size_t bf_base;
 	int i, seg, nseg;
+
+	KASSERT(mutex_owned(&tx->tx_lock));
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
 
 	bf_base = (tx->tx_uar * MCX_PAGE_SIZE) + MCX_UAR_BF;
 
@@ -7798,7 +7817,11 @@ mcx_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (is_transmit) {
+			m = pcq_get(tx->tx_pcq);
+		} else {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+		}
 		if (m == NULL) {
 			break;
 		}
@@ -7914,6 +7937,56 @@ mcx_start(struct ifnet *ifp)
 		/* next write goes to the other buffer */
 		tx->tx_bf_offset ^= sc->sc_bf_size;
 	}
+}
+
+static void
+mcx_start(struct ifnet *ifp)
+{
+	struct mcx_softc *sc = ifp->if_softc;
+	/* mcx_start() always uses TX ring[0] */
+	struct mcx_tx *tx = &sc->sc_queues[0].q_tx;
+
+	mutex_enter(&tx->tx_lock);
+	if (!ISSET(ifp->if_flags, IFF_OACTIVE)) {
+		mcx_send_common_locked(ifp, tx, false);
+	}
+	mutex_exit(&tx->tx_lock);
+}
+
+static int
+mcx_transmit(struct ifnet *ifp, struct mbuf *m)
+{
+	struct mcx_softc *sc = ifp->if_softc;
+	struct mcx_tx *tx;
+
+	tx = &sc->sc_queues[cpu_index(curcpu()) % sc->sc_nqueues].q_tx;
+	if (__predict_false(!pcq_put(tx->tx_pcq, m))) {
+		m_freem(m);
+		return ENOBUFS;
+	}
+
+	if (mutex_tryenter(&tx->tx_lock)) {
+		mcx_send_common_locked(ifp, tx, true);
+		mutex_exit(&tx->tx_lock);
+	} else {
+		softint_schedule(tx->tx_softint);
+	}
+
+	return 0;
+}
+
+static void
+mcx_deferred_transmit(void *arg)
+{
+	struct mcx_tx *tx = arg;
+	struct mcx_softc *sc = tx->tx_softc;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+
+	mutex_enter(&tx->tx_lock);
+	if (pcq_peek(tx->tx_pcq) != NULL) {
+		mcx_send_common_locked(ifp, tx, true);
+	}
+	mutex_exit(&tx->tx_lock);
 }
 
 static void
