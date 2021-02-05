@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.803 2021/02/04 21:50:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.804 2021/02/05 04:41:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.803 2021/02/04 21:50:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.804 2021/02/05 04:41:17 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -564,7 +564,7 @@ Var_Undef(const char *arg)
 
 	for (i = 0; i < varnames.len; i++) {
 		const char *varname = varnames.words[i];
-		Var_Delete(varname, SCOPE_GLOBAL);
+		Global_Delete(varname);
 	}
 
 	Words_Free(varnames);
@@ -898,7 +898,7 @@ UnexportVars(FStr *varnames, UnexportWhat what)
 	Words_Free(words);
 
 	if (what != UNEXPORT_NAMED)
-		Var_Delete(MAKE_EXPORTED, SCOPE_GLOBAL);
+		Global_Delete(MAKE_EXPORTED);
 }
 
 /*
@@ -1061,6 +1061,12 @@ void
 Global_SetExpand(const char *name, const char *value)
 {
 	Var_SetExpand(name, value, SCOPE_GLOBAL);
+}
+
+void
+Global_Delete(const char *name)
+{
+	Var_Delete(name, SCOPE_GLOBAL);
 }
 
 /*

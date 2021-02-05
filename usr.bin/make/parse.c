@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.546 2021/02/04 21:42:46 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.547 2021/02/05 04:41:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.546 2021/02/04 21:42:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.547 2021/02/05 04:41:17 rillig Exp $");
 
 /* types and constants */
 
@@ -2321,8 +2321,8 @@ ParseSetParseFile(const char *filename)
 		SetFilenameVars(including,
 		    ".INCLUDEDFROMDIR", ".INCLUDEDFROMFILE");
 	} else {
-		Var_Delete(".INCLUDEDFROMDIR", SCOPE_GLOBAL);
-		Var_Delete(".INCLUDEDFROMFILE", SCOPE_GLOBAL);
+		Global_Delete(".INCLUDEDFROMDIR");
+		Global_Delete(".INCLUDEDFROMFILE");
 	}
 }
 
@@ -2594,10 +2594,10 @@ ParseEOF(void)
 
 	if (includes.len == 0) {
 		/* We've run out of input */
-		Var_Delete(".PARSEDIR", SCOPE_GLOBAL);
-		Var_Delete(".PARSEFILE", SCOPE_GLOBAL);
-		Var_Delete(".INCLUDEDFROMDIR", SCOPE_GLOBAL);
-		Var_Delete(".INCLUDEDFROMFILE", SCOPE_GLOBAL);
+		Global_Delete(".PARSEDIR");
+		Global_Delete(".PARSEFILE");
+		Global_Delete(".INCLUDEDFROMDIR");
+		Global_Delete(".INCLUDEDFROMFILE");
 		return FALSE;
 	}
 

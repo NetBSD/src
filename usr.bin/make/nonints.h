@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.200 2021/02/04 21:50:39 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.201 2021/02/05 04:41:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -393,6 +393,7 @@ void Var_UnExport(Boolean, const char *);
 void Global_Set(const char *, const char *);
 void Global_SetExpand(const char *, const char *);
 void Global_Append(const char *, const char *);
+void Global_Delete(const char *);
 
 /* util.c */
 typedef void (*SignalProc)(int);
