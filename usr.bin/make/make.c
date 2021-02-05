@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.241 2021/02/04 21:42:46 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.242 2021/02/05 05:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.241 2021/02/04 21:42:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.242 2021/02/05 05:15:12 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -568,9 +568,9 @@ UpdateImplicitParentsVars(GNode *cgn, const char *cname)
 	for (ln = cgn->implicitParents.first; ln != NULL; ln = ln->next) {
 		GNode *pgn = ln->datum;
 		if (pgn->flags & REMAKE) {
-			Var_Set(IMPSRC, cname, pgn);
+			Var_Set(pgn, IMPSRC, cname);
 			if (cpref != NULL)
-				Var_Set(PREFIX, cpref, pgn);
+				Var_Set(pgn, PREFIX, cpref);
 		}
 	}
 }
@@ -823,11 +823,11 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 		allsrc = child;
 
 	if (allsrc != NULL)
-		Var_Append(ALLSRC, allsrc, pgn);
+		Var_Append(pgn, ALLSRC, allsrc);
 
 	if (pgn->type & OP_JOIN) {
 		if (cgn->made == MADE)
-			Var_Append(OODATE, child, pgn);
+			Var_Append(pgn, OODATE, child);
 
 	} else if ((pgn->mtime < cgn->mtime) ||
 		   (cgn->mtime >= now && cgn->made == MADE)) {
@@ -849,7 +849,7 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 		 * to now in Make_Update. According to some people,
 		 * this is good...
 		 */
-		Var_Append(OODATE, child, pgn);
+		Var_Append(pgn, OODATE, child);
 	}
 }
 
@@ -879,13 +879,13 @@ Make_DoAllVar(GNode *gn)
 	for (ln = gn->children.first; ln != NULL; ln = ln->next)
 		MakeAddAllSrc(ln->datum, gn);
 
-	if (!Var_Exists(OODATE, gn))
-		Var_Set(OODATE, "", gn);
-	if (!Var_Exists(ALLSRC, gn))
-		Var_Set(ALLSRC, "", gn);
+	if (!Var_Exists(gn, OODATE))
+		Var_Set(gn, OODATE, "");
+	if (!Var_Exists(gn, ALLSRC))
+		Var_Set(gn, ALLSRC, "");
 
 	if (gn->type & OP_JOIN)
-		Var_Set(TARGET, GNode_VarAllsrc(gn), gn);
+		Var_Set(gn, TARGET, GNode_VarAllsrc(gn));
 	gn->flags |= DONE_ALLSRC;
 }
 
@@ -1237,14 +1237,14 @@ Make_ExpandUse(GNodeList *targs)
 				continue;
 			*eoa = '\0';
 			*eon = '\0';
-			Var_Set(MEMBER, eoa + 1, gn);
-			Var_Set(ARCHIVE, gn->name, gn);
+			Var_Set(gn, MEMBER, eoa + 1);
+			Var_Set(gn, ARCHIVE, gn->name);
 			*eoa = '(';
 			*eon = ')';
 		}
 
 		Dir_UpdateMTime(gn, FALSE);
-		Var_Set(TARGET, GNode_Path(gn), gn);
+		Var_Set(gn, TARGET, GNode_Path(gn));
 		UnmarkChildren(gn);
 		HandleUseNodes(gn);
 

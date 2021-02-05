@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.416 2021/02/04 21:33:13 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.417 2021/02/05 05:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.416 2021/02/04 21:33:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.417 2021/02/05 05:15:12 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1316,7 +1316,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 		 * .DEFAULT itself.
 		 */
 		Make_HandleUse(defaultNode, gn);
-		Var_Set(IMPSRC, GNode_VarTarget(gn), gn);
+		Var_Set(gn, IMPSRC, GNode_VarTarget(gn));
 		return TRUE;
 	}
 
@@ -2136,7 +2136,7 @@ Shell_Init(void)
 	if (shellPath == NULL)
 		InitShellNameAndPath();
 
-	Var_SetWithFlags(".SHELL", shellPath, SCOPE_CMDLINE, VAR_SET_READONLY);
+	Var_SetWithFlags(SCOPE_CMDLINE, ".SHELL", shellPath, VAR_SET_READONLY);
 	if (shell->errFlag == NULL)
 		shell->errFlag = "";
 	if (shell->echoFlag == NULL)
@@ -2176,7 +2176,7 @@ Job_SetPrefix(void)
 {
 	if (targPrefix != NULL) {
 		free(targPrefix);
-	} else if (!Var_Exists(MAKE_JOB_PREFIX, SCOPE_GLOBAL)) {
+	} else if (!Var_Exists(SCOPE_GLOBAL, MAKE_JOB_PREFIX)) {
 		Global_Set(MAKE_JOB_PREFIX, "---");
 	}
 
@@ -2891,7 +2891,7 @@ Job_RunTarget(const char *target, const char *fname)
 		return FALSE;
 
 	if (fname != NULL)
-		Var_Set(ALLSRC, fname, gn);
+		Var_Set(gn, ALLSRC, fname);
 
 	JobRun(gn);
 	/* XXX: Replace with GNode_IsError(gn) */
