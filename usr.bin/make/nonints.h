@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.201 2021/02/05 04:41:17 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.202 2021/02/05 05:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -368,18 +368,18 @@ typedef enum VarExportMode {
 	VEM_LITERAL
 } VarExportMode;
 
-void Var_Delete(const char *, GNode *);
-void Var_DeleteExpand(const char *, GNode *);
+void Var_Delete(GNode *, const char *);
+void Var_DeleteExpand(GNode *, const char *);
 void Var_Undef(const char *);
-void Var_Set(const char *, const char *, GNode *);
-void Var_SetExpand(const char *, const char *, GNode *);
-void Var_SetWithFlags(const char *, const char *, GNode *, VarSetFlags);
-void Var_SetExpandWithFlags(const char *, const char *, GNode *, VarSetFlags);
-void Var_Append(const char *, const char *, GNode *);
-void Var_AppendExpand(const char *, const char *, GNode *);
-Boolean Var_Exists(const char *, GNode *);
-Boolean Var_ExistsExpand(const char *, GNode *);
-FStr Var_Value(const char *, GNode *);
+void Var_Set(GNode *, const char *, const char *);
+void Var_SetExpand(GNode *, const char *, const char *);
+void Var_SetWithFlags(GNode *, const char *, const char *, VarSetFlags);
+void Var_SetExpandWithFlags(GNode *, const char *, const char *, VarSetFlags);
+void Var_Append(GNode *, const char *, const char *);
+void Var_AppendExpand(GNode *, const char *, const char *);
+Boolean Var_Exists(GNode *, const char *);
+Boolean Var_ExistsExpand(GNode *, const char *);
+FStr Var_Value(GNode *, const char *);
 const char *GNode_ValueDirect(GNode *, const char *);
 VarParseResult Var_Parse(const char **, GNode *, VarEvalFlags, FStr *);
 VarParseResult Var_Subst(const char *, GNode *, VarEvalFlags, char **);
