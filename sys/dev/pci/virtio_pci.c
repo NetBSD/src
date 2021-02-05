@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.27 2021/01/28 15:43:12 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.28 2021/02/05 19:18:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.27 2021/01/28 15:43:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.28 2021/02/05 19:18:23 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,15 +127,11 @@ static int	virtio_pci_setup_intx_interrupt(struct virtio_softc *,
  * suddenly read BIG_ENDIAN where it should stay LITTLE_ENDIAN. The data read
  * 1 byte at a time seem OK but reading bigger lengths result in swapped
  * endian. This is most notable on reading 8 byters since we can't use
- * bus_space_{read,write}_8() and it has to be patched there explicitly. We
- * define the AARCH64EB_PROBLEM to signal we're vulnerable to this and set the
- * accompanied sc->sc_aarch64_eb_bus_problem variable when attaching using the
- * IO space.
+ * bus_space_{read,write}_8().
  */
 
 #if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	/* source of AARCH64EB_PROBLEM */
-#	define READ_ENDIAN_09	BIG_ENDIAN	/* XXX bug, should be LITTLE_ENDIAN */
+#	define READ_ENDIAN_09	BIG_ENDIAN	/* should be LITTLE_ENDIAN */
 #	define READ_ENDIAN_10	BIG_ENDIAN
 #	define STRUCT_ENDIAN_09	BIG_ENDIAN
 #	define STRUCT_ENDIAN_10	LITTLE_ENDIAN
@@ -369,9 +365,6 @@ virtio_pci_attach_09(device_t self, void *aux)
 	sc->sc_ops = &virtio_pci_ops_09;
 	sc->sc_bus_endian    = READ_ENDIAN_09;
 	sc->sc_struct_endian = STRUCT_ENDIAN_09;
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-	sc->sc_aarch64eb_bus_problem = true;
-#endif
 	return 0;
 }
 
