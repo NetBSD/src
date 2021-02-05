@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.42 2021/01/23 11:34:41 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.43 2021/02/05 05:48:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@ char *SearchPath_ToFlags(SearchPath *, const char *);
 void SearchPath_Clear(SearchPath *);
 void SearchPath_AddAll(SearchPath *, SearchPath *);
 void Dir_PrintDirectories(void);
-void SearchPath_Print(SearchPath *);
+void SearchPath_Print(const SearchPath *);
 SearchPath *Dir_CopyDirSearchPath(void);
 
 /* Stripped-down variant of struct stat. */
