@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.5 2021/02/04 23:29:16 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.6 2021/02/05 17:03:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.5 2021/02/04 23:29:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.6 2021/02/05 17:03:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -35,6 +35,75 @@ __KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.5 2021/02/04 23:29:16 thorpej Exp 
 
 /* Root device. */
 device_t			root_device;
+
+/*
+ * device_handle_t accessors / mutators.
+ */
+
+static bool
+devhandle_is_valid_internal(const devhandle_t * const handlep)
+{
+	if (handlep->impl == NULL) {
+		return false;
+	}
+	return handlep->impl->type != DEVHANDLE_TYPE_INVALID;
+}
+
+bool
+devhandle_is_valid(devhandle_t handle)
+{
+	return devhandle_is_valid_internal(&handle);
+}
+
+void
+devhandle_invalidate(devhandle_t * const handlep)
+{
+	handlep->impl = NULL;
+	handlep->uintptr = 0;
+}
+
+devhandle_type_t
+devhandle_type(devhandle_t handle)
+{
+	if (!devhandle_is_valid_internal(&handle)) {
+		return DEVHANDLE_TYPE_INVALID;
+	}
+
+	return handle.impl->type;
+}
+
+static device_call_t
+devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	const struct devhandle_impl *impl;
+	device_call_t call;
+
+	/*
+	 * The back-end can override the handle to use for the call,
+	 * if needed.
+	 */
+	*call_handlep = handle;
+
+	for (impl = handle.impl; impl != NULL; impl = impl->super) {
+		if (impl->lookup_device_call != NULL) {
+			call = impl->lookup_device_call(handle, name,
+			    call_handlep);
+			if (call != NULL) {
+				return call;
+			}
+		}
+	}
+	return NULL;
+}
+
+void
+devhandle_impl_inherit(struct devhandle_impl *impl,
+    const struct devhandle_impl *super)
+{
+	memcpy(impl, super, sizeof(*impl));
+	impl->super = super;
+}
 
 /*
  * Accessor functions for the device_t type.
@@ -201,4 +270,43 @@ device_attached_to_iattr(device_t dev, const char *iattr)
 	}
 
 	return strcmp(pspec->cfp_iattr, iattr) == 0;
+}
+
+void
+device_set_handle(device_t dev, devhandle_t handle)
+{
+	dev->dv_handle = handle;
+}
+
+devhandle_t
+device_handle(device_t dev)
+{
+	return dev->dv_handle;
+}
+
+int
+device_call(device_t dev, const char *name, void *arg)
+{
+	devhandle_t handle = device_handle(dev);
+	device_call_t call;
+	devhandle_t call_handle;
+
+	call = devhandle_lookup_device_call(handle, name, &call_handle);
+	if (call == NULL) {
+		return ENOTSUP;
+	}
+	return call(dev, call_handle, arg);
+}
+
+int
+device_enumerate_children(device_t dev,
+    bool (*callback)(device_t, devhandle_t, void *),
+    void *callback_arg)
+{
+	struct device_enumerate_children_args args = {
+		.callback = callback,
+		.callback_arg = callback_arg,
+	};
+
+	return device_call(dev, "device-enumerate-children", &args);
 }
