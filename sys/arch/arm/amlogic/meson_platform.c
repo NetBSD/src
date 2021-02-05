@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.18 2021/02/04 22:36:53 thorpej Exp $ */
+/* $NetBSD: meson_platform.c,v 1.19 2021/02/05 08:07:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.18 2021/02/04 22:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.19 2021/02/05 08:07:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -234,7 +234,7 @@ meson8b_platform_device_register(device_t self, void *aux)
 	device_t parent = device_parent(self);
 	char *ptr;
 
-	fdtbus_device_register(dev, aux);
+	fdtbus_device_register(self, aux);
 
 	if (device_is_a(self, "ld") &&
 	    device_is_a(parent, "sdmmc") &&
