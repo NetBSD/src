@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.44 2021/01/27 04:55:42 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.45 2021/02/05 17:17:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #ifndef _OPENFIRM_H_
 #define _OPENFIRM_H_
 
+#include <sys/device.h>
 #include <prop/proplib.h>
 
 /*
@@ -105,6 +106,12 @@ int	openfirmware(void *);
  */
 struct device_compatible_entry;
 
+devhandle_t	devhandle_from_of(int);
+int		devhandle_to_of(devhandle_t);
+
+#define	OF_DEVICE_CALL_REGISTER(_n_, _c_)				\
+	DEVICE_CALL_REGISTER(of_device_calls, _n_, _c_)
+
 int	of_compatible(int, const char * const *);
 int	of_compatible_match(int, const struct device_compatible_entry *);
 const struct device_compatible_entry *
@@ -116,6 +123,8 @@ int	of_find_bycompat(int, const char *);
 int	of_getnode_byname(int, const char *);
 bool	of_to_uint32_prop(prop_dictionary_t, int, const char *, const char *);
 bool	of_to_dataprop(prop_dictionary_t, int, const char *, const char *);
+void	of_device_register(device_t, int);
+device_t of_device_from_phandle(int);
 
 int	*of_network_decode_media(int, int *, int *);
 char	*of_get_mode_string(char *, int);

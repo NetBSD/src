@@ -1,4 +1,30 @@
-/*	$NetBSD: ofw_subr.c,v 1.56 2021/02/04 20:19:09 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.57 2021/02/05 17:17:59 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1998
@@ -34,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.56 2021/02/04 20:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.57 2021/02/05 17:17:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +70,68 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.56 2021/02/04 20:19:09 thorpej Exp $"
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
 #define	OFW_PATH_BUF_SIZE	512
+
+/*
+ * OpenFirmware device handle support.
+ */
+
+static device_call_t
+of_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	__link_set_decl(of_device_calls, struct device_call_descriptor);
+	struct device_call_descriptor * const *desc;
+
+	__link_set_foreach(desc, of_device_calls) {
+		if (strcmp((*desc)->name, name) == 0) {
+			return (*desc)->call;
+		}
+	}
+	return NULL;
+}
+
+static const struct devhandle_impl of_devhandle_impl = {
+	.type = DEVHANDLE_TYPE_OF,
+	.lookup_device_call = of_devhandle_lookup_device_call,
+};
+
+devhandle_t
+devhandle_from_of(int phandle)
+{
+	devhandle_t handle = {
+		.impl = &of_devhandle_impl,
+		.integer = phandle,
+	};
+
+	return handle;
+}
+
+int
+devhandle_to_of(devhandle_t const handle)
+{
+	KASSERT(devhandle_type(handle) == DEVHANDLE_TYPE_OF);
+
+	return handle.integer;
+}
+
+static int
+of_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct device_enumerate_children_args *args = v;
+	int phandle = devhandle_to_of(call_handle);
+	int child;
+
+	for (child = OF_child(phandle); child != 0; child = OF_peer(child)) {
+		if (!args->callback(dev, devhandle_from_of(child),
+				    args->callback_arg)) {
+			break;
+		}
+	}
+
+	return 0;
+}
+OF_DEVICE_CALL_REGISTER("device-enumerate-children",
+			of_device_enumerate_children)
 
 /*
  * int of_decode_int(p)
@@ -427,6 +515,45 @@ of_get_mode_string(char *buffer, int len)
 		return NULL;
 	strncpy(buffer, pos + 2, len);
 	return buffer;
+}
+
+void
+of_device_register(device_t dev, int phandle)
+{
+
+	/* All we do here is set the devhandle in the device_t. */
+	device_set_handle(dev, devhandle_from_of(phandle));
+}
+
+/*
+ * of_device_from_phandle --
+ *
+ *	Return a device_t associated with the specified phandle.
+ *
+ *	This is expected to be used rarely, so we don't care if
+ *	it's fast.  Also, it can only find devices that have
+ *	gone through of_device_register() (obviously).
+ */
+device_t
+of_device_from_phandle(int phandle)
+{
+	devhandle_t devhandle;
+	deviter_t di;
+	device_t dev;
+
+	for (dev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dev != NULL;
+	     dev = deviter_next(&di)) {
+		devhandle = device_handle(dev);
+		if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+			if (devhandle_to_of(devhandle) == phandle) {
+				/* Found it! */
+				break;
+			}
+		}
+	}
+	deviter_release(&di);
+	return dev;
 }
 
 /*
