@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.19 2021/01/28 15:43:12 reinoud Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.20 2021/02/05 19:18:23 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -147,9 +147,6 @@ struct virtio_softc {
 	device_t		sc_dev;
 	const struct virtio_ops *sc_ops;
 	bus_dma_tag_t		sc_dmat;
-
-#define AARCH64EB_PROBLEM	/* see comment in virtio_pci.c */
-	bool			sc_aarch64eb_bus_problem;
 
 	int			sc_bus_endian;
 	int			sc_struct_endian;
