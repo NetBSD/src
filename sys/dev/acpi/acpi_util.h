@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.h,v 1.10 2021/01/26 00:19:53 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.h,v 1.11 2021/02/05 17:12:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -66,6 +66,12 @@
 
 #ifndef _SYS_DEV_ACPI_ACPI_UTIL_H
 #define _SYS_DEV_ACPI_ACPI_UTIL_H
+
+devhandle_t	devhandle_from_acpi(ACPI_HANDLE);
+ACPI_HANDLE	devhandle_to_acpi(devhandle_t);
+
+#define	ACPI_DEVICE_CALL_REGISTER(_n_, _c_)				\
+	DEVICE_CALL_REGISTER(acpi_device_calls, _n_, _c_)
 
 ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
 ACPI_STATUS	acpi_eval_set_integer(ACPI_HANDLE handle, const char *path,
