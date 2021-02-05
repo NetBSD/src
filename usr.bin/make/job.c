@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.419 2021/02/05 19:19:17 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.420 2021/02/05 22:15:44 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.419 2021/02/05 19:19:17 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.420 2021/02/05 22:15:44 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1582,8 +1582,6 @@ JobWriteShellCommands(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 	}
 
 	tfd = Job_TempFile(TMPPAT, tfile, sizeof tfile);
-	if (!DEBUG(SCRIPT))
-	    eunlink(tfile);
 
 	job->cmdFILE = fdopen(tfd, "w+");
 	if (job->cmdFILE == NULL)
@@ -2768,6 +2766,8 @@ Job_TempFile(const char *pattern, char *tfile, size_t tfile_sz)
 
 	JobSigLock(&mask);
 	fd = mkTempFile(pattern, tfile, tfile_sz);
+	if (tfile != NULL && !DEBUG(SCRIPT))
+	    unlink(tfile);
 	JobSigUnlock(&mask);
 
 	return fd;
