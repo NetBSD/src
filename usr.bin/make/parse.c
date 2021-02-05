@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.548 2021/02/05 05:15:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.549 2021/02/05 05:46:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.548 2021/02/05 05:15:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.549 2021/02/05 05:46:27 rillig Exp $");
 
 /* types and constants */
 
@@ -247,8 +247,8 @@ CurFile(void)
 }
 
 /* include paths */
-SearchPath *parseIncPath;	/* dirs for "..." includes */
-SearchPath *sysIncPath;		/* dirs for <...> includes */
+SearchPath *parseIncPath;	/* directories for "..." includes */
+SearchPath *sysIncPath;		/* directories for <...> includes */
 SearchPath *defSysIncPath;	/* default for sysIncPath */
 
 /* parser tables */
@@ -681,7 +681,7 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 
 
 /*
- * Parse and handle a .info, .warning or .error directive.
+ * Parse and handle an .info, .warning or .error directive.
  * For an .error directive, immediately exit.
  */
 static void
@@ -872,11 +872,9 @@ static void
 ParseDependencySourceMain(const char *src)
 {
 	/*
-	 * In a line like ".MAIN: source1 source2", it means we need to add
-	 * the sources of said target to the list of things to create.
-	 *
-	 * Note that this will only be invoked if the user didn't specify a
-	 * target on the command line and the .MAIN occurs for the first time.
+	 * In a line like ".MAIN: source1 source2", add all sources to the
+	 * list of things to create, but only if the user didn't specify a
+	 * target on the command line and .MAIN occurs for the first time.
 	 *
 	 * See ParseDoDependencyTargetSpecial, branch SP_MAIN.
 	 * See unit-tests/cond-func-make-main.mk.
@@ -923,12 +921,11 @@ ParseDependencySourceOther(const char *src, GNodeType tOp,
 	GNode *gn;
 
 	/*
-	 * If the source is not an attribute, we need to find/create
-	 * a node for it. After that we can apply any operator to it
-	 * from a special target or link it to its parents, as
-	 * appropriate.
+	 * The source is not an attribute, so find/create a node for it.
+	 * After that, apply any operator to it from a special target or
+	 * link it to its parents, as appropriate.
 	 *
-	 * In the case of a source that was the object of a :: operator,
+	 * In the case of a source that was the object of a '::' operator,
 	 * the attribute is applied to all of its instances (as kept in
 	 * the 'cohorts' list of the node) or all the cohorts are linked
 	 * to all the targets.
