@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.23 2021/01/27 05:11:54 thorpej Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.24 2021/02/05 17:12:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.23 2021/01/27 05:11:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.24 2021/02/05 17:12:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -86,6 +86,75 @@ static const char * const acpicpu_ids[] = {
 	"ACPI0007",
 	NULL
 };
+
+/*
+ * ACPI device handle support.
+ */
+
+static device_call_t
+acpi_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	__link_set_decl(acpi_device_calls, struct device_call_descriptor);
+	struct device_call_descriptor * const *desc;
+
+	__link_set_foreach(desc, acpi_device_calls) {
+		if (strcmp((*desc)->name, name) == 0) {
+			return (*desc)->call;
+		}
+	}
+	return NULL;
+}
+
+static const struct devhandle_impl acpi_devhandle_impl = {
+	.type = DEVHANDLE_TYPE_ACPI,
+	.lookup_device_call = acpi_devhandle_lookup_device_call,
+};
+
+devhandle_t
+devhandle_from_acpi(ACPI_HANDLE const hdl)
+{
+	devhandle_t handle = {
+		.impl = &acpi_devhandle_impl,
+		.pointer = hdl,
+	};
+
+	return handle;
+}
+
+ACPI_HANDLE
+devhandle_to_acpi(devhandle_t const handle)
+{
+	KASSERT(devhandle_type(handle) == DEVHANDLE_TYPE_ACPI);
+
+	return handle.pointer;
+}
+
+static int
+acpi_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct device_enumerate_children_args *args = v;
+	ACPI_HANDLE hdl = devhandle_to_acpi(call_handle);
+	struct acpi_devnode *devnode, *ad;
+
+	devnode = acpi_match_node(hdl);
+	KASSERT(devnode != NULL);
+
+	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
+		    !acpi_device_present(ad->ad_handle)) {
+			continue;
+		}
+		if (!args->callback(dev, devhandle_from_acpi(ad->ad_handle),
+				    args->callback_arg)) {
+			break;
+		}
+	}
+
+	return 0;
+}
+ACPI_DEVICE_CALL_REGISTER("device-enumerate-children",
+			  acpi_device_enumerate_children)
 
 /*
  * Evaluate an integer object.
