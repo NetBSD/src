@@ -1,4 +1,30 @@
-/* $NetBSD: device.h,v 1.165 2021/02/04 23:29:16 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.166 2021/02/05 17:03:35 thorpej Exp $ */
+
+/*
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -156,7 +182,73 @@ struct device_garbage {
 	int		dg_ndevs;
 };
 
+/*
+ * devhandle_t --
+ *
+ *	This is an abstraction of the device handles used by ACPI,
+ *	OpenFirmware, and others, to support device enumeration and
+ *	device tree linkage.  A devhandle_t can be safely passed
+ *	by value.
+ */
+struct devhandle {
+	const struct devhandle_impl *	impl;
+	union {
+		/*
+		 * Storage for the device handle.  Which storage field
+		 * is used is at the sole discretion of the type
+		 * implementation.
+		 */
+		void *			pointer;
+		const void *		const_pointer;
+		uintptr_t		uintptr;
+		int			integer;
+	};
+};
+typedef struct devhandle devhandle_t;
+
+typedef enum {
+	/* Used to represent invalid states. */
+	DEVHANDLE_TYPE_INVALID		=	0,
+
+	/* ACPI */
+	DEVHANDLE_TYPE_ACPI		=	0x41435049,	/* 'ACPI' */
+
+	/* OpenFirmware, FDT */
+	DEVHANDLE_TYPE_OF		=	0x4f504657,	/* 'OPFW' */
+
+	/* Private (opaque data) */
+	DEVHANDLE_TYPE_PRIVATE		=	0x50525654,	/* 'PRVT' */
+
+	/* Max value. */
+	DEVHANDLE_TYPE_MAX		=	0xffffffff
+} devhandle_type_t;
+
+/* Device method call function signature. */
+typedef int (*device_call_t)(device_t, devhandle_t, void *);
+
+struct device_call_descriptor {
+	const char *name;
+	device_call_t call;
+};
+
+#define	_DEVICE_CALL_REGISTER(_g_, _c_)					\
+	__link_set_add_rodata(_g_, __CONCAT(_c_,_descriptor));
+#define	DEVICE_CALL_REGISTER(_g_, _n_, _c_)				\
+static const struct device_call_descriptor __CONCAT(_c_,_descriptor) = {\
+	.name = (_n_), .call = (_c_)					\
+};									\
+_DEVICE_CALL_REGISTER(_g_, _c_)
+
+struct devhandle_impl {
+	devhandle_type_t		type;
+	const struct devhandle_impl *	super;
+	device_call_t			(*lookup_device_call)(devhandle_t,
+					    const char *, devhandle_t *);
+};
+
 struct device {
+	devhandle_t	dv_handle;	/* this device's handle;
+					   new device_t's get INVALID */
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
 	cfdata_t	dv_cfdata;	/* config data that found us
@@ -531,6 +623,15 @@ bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
 prop_dictionary_t device_properties(device_t);
+void		device_set_handle(device_t, devhandle_t);
+devhandle_t	device_handle(device_t);
+
+bool		devhandle_is_valid(devhandle_t);
+void		devhandle_invalidate(devhandle_t *);
+devhandle_type_t devhandle_type(devhandle_t);
+
+void		devhandle_impl_inherit(struct devhandle_impl *,
+		    const struct devhandle_impl *);
 
 device_t	deviter_first(deviter_t *, deviter_flags_t);
 void		deviter_init(deviter_t *, deviter_flags_t);
@@ -548,6 +649,9 @@ bool		device_attached_to_iattr(device_t, const char *);
 
 device_t	device_find_by_xname(const char *);
 device_t	device_find_by_driver_unit(const char *, int);
+
+int		device_enumerate_children(device_t,
+		    bool (*)(device_t, devhandle_t, void *), void *);
 
 int		device_compatible_match(const char **, int,
 				const struct device_compatible_entry *);
@@ -627,6 +731,35 @@ void		device_pmf_class_deregister(device_t);
 
 device_t	shutdown_first(struct shutdown_state *);
 device_t	shutdown_next(struct shutdown_state *);
+
+/*
+ * device calls --
+ *
+ * This provides a generic mechanism for invoking special methods on
+ * devices, often dependent on the device tree implementation used
+ * by the platform.
+ *
+ * While individual subsystems may define their own device calls,
+ * the ones prefixed with "device-" are reserved, and defined by
+ * the device autoconfiguration subsystem.  It is the responsibility
+ * of each device tree back end to implement these calls.
+ *
+ * device-enumerate-children
+ *
+ *	Enumerates the direct children of a device, invoking the
+ *	callback for each one.  The callback is passed the devhandle_t
+ *	corresponding to the child device, as well as a user-supplied
+ *	argument.  If the callback returns true, then enumeration
+ *	continues.  If the callback returns false, enumeration is stopped.
+ */
+
+struct device_enumerate_children_args {
+	bool	(*callback)(device_t, devhandle_t, void *);
+	void *	callback_arg;
+};
+
+int		device_call(device_t, const char *, void *);
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */
