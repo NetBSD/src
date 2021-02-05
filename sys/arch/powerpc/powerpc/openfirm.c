@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.31 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.32 2021/02/05 00:06:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.31 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.32 2021/02/05 00:06:11 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -603,7 +603,7 @@ OF_start_cpu(int phandle, u_int pc, int arg)
 #endif
 
 void
-OF_boot(const char *bootspec)
+OF_boot(const char *bstr)
 {
 	static struct {
 		const char *name;
@@ -617,10 +617,10 @@ OF_boot(const char *bootspec)
 	};
 	int l;
 
-	if ((l = strlen(bootspec)) >= PAGE_SIZE)
+	if ((l = strlen(bstr)) >= PAGE_SIZE)
 		panic("OF_boot");
 	ofw_stack();
-	ofbcopy(bootspec, OF_buf, l + 1);
+	ofbcopy(bstr, OF_buf, l + 1);
 	args.bootspec = OF_buf;
 	openfirmware(&args);
 	panic("OF_boot didn't");
