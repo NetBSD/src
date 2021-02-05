@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.806 2021/02/05 05:19:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.807 2021/02/05 05:42:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.806 2021/02/05 05:19:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.807 2021/02/05 05:42:39 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -289,22 +289,29 @@ static char varUndefined[] = "";
 static Boolean save_dollars = TRUE;
 
 /*
- * Internally, variables are contained in four different scopes.
- *	1) the environment. They cannot be changed. If an environment
- *	   variable is appended to, the result is placed in the global
- *	   scope.
- *	2) the global scope. Variables set in the makefiles are located
- *	   here.
- *	3) the command-line scope. All variables set on the command line
- *	   are placed in this scope.
- *	4) the local scope, containing only the 7 local variables such as
- *	   '.TARGET'.
- * The four scopes are searched in the reverse order from which they are
- * listed (but see opts.checkEnvFirst).
+ * A scope collects variable names and their values.
+ *
+ * The main scope is SCOPE_GLOBAL, which contains the variables that are set
+ * in the makefiles.  SCOPE_INTERNAL acts as a fallback for SCOPE_GLOBAL and
+ * contains some internal make variables.  These internal variables can thus
+ * be overridden, they can also be restored by undefining the overriding
+ * variable.
+ *
+ * SCOPE_CMDLINE contains variables from the command line arguments.  These
+ * override variables from SCOPE_GLOBAL.
+ *
+ * There is no scope for environment variables, these are generated on-the-fly
+ * whenever they are referenced.  If there were such a scope, each change to
+ * environment variables would have to be reflected in that scope, which may
+ * be simpler or more complex than the current implementation.
+ *
+ * Each target has its own scope, containing the 7 target-local variables
+ * .TARGET, .ALLSRC, etc.  No other variables are in these scopes.
  */
-GNode          *SCOPE_INTERNAL;	/* variables from make itself */
-GNode          *SCOPE_GLOBAL;	/* variables from the makefile */
-GNode          *SCOPE_CMDLINE;	/* variables defined on the command-line */
+
+GNode *SCOPE_CMDLINE;
+GNode *SCOPE_GLOBAL;
+GNode *SCOPE_INTERNAL;
 
 ENUM_FLAGS_RTTI_6(VarFlags,
 		  VAR_IN_USE, VAR_FROM_ENV,
@@ -2379,6 +2386,10 @@ ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 	    ModifyWords(val, ModifyWord_Loop, &args, st->oneBigWord, st->sep));
 	st->sep = prev_sep;
 	/* XXX: Consider restoring the previous variable instead of deleting. */
+	/*
+	 * XXX: The variable name should not be expanded here, see
+	 * ModifyWord_Loop.
+	 */
 	Var_DeleteExpand(st->scope, args.tvar);
 	free(args.tvar);
 	free(args.str);
