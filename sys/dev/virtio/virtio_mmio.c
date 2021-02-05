@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.5 2021/01/28 15:43:13 reinoud Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.6 2021/02/05 21:25:36 reinoud Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.5 2021/01/28 15:43:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.6 2021/02/05 21:25:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,16 @@ virtio_mmio_set_status(struct virtio_softc *vsc, int status)
 				       VIRTIO_MMIO_STATUS);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_STATUS,
 			  status|old);
+}
+
+bool
+virtio_mmio_common_probe_present(struct virtio_mmio_softc *sc)
+{
+	uint32_t magic;
+
+	magic = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    VIRTIO_MMIO_MAGIC_VALUE);
+	return (magic == VIRTIO_MMIO_MAGIC);
 }
 
 void
