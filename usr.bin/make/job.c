@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.417 2021/02/05 05:15:12 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.418 2021/02/05 05:53:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.417 2021/02/05 05:15:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.418 2021/02/05 05:53:40 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1666,31 +1666,25 @@ JobStart(GNode *gn, Boolean special)
 	    (!opts.noExecute && !opts.touchFlag)) {
 		/*
 		 * The above condition looks very similar to
-		 * GNode_ShouldExecute but is subtly different.
-		 * It prevents that .MAKE targets are touched.
+		 * GNode_ShouldExecute but is subtly different.  It prevents
+		 * that .MAKE targets are touched since these are usually
+		 * virtual targets.
 		 */
 
 		JobWriteShellCommands(job, gn, cmdsOK, &run);
 		(void)fflush(job->cmdFILE);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
-		 * Not executing anything -- just print all the commands to
-		 * stdout in one fell swoop. This will still set up
-		 * job->tailCmds correctly.
+		 * Just print all the commands to stdout in one fell swoop.
+		 * This still sets up job->tailCmds correctly.
 		 */
 		SwitchOutputTo(gn);
 		job->cmdFILE = stdout;
 		if (cmdsOK)
 			JobPrintCommands(job);
-		/* Don't execute the shell, thank you. */
 		run = FALSE;
 		(void)fflush(job->cmdFILE);
 	} else {
-		/*
-		 * Just touch the target and note that no shell should be
-		 * executed. Set cmdFILE to stdout to make life easier.
-		 */
-		job->cmdFILE = stdout;
 		Job_Touch(gn, job->echo);
 		run = FALSE;
 	}
