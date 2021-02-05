@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.805 2021/02/05 05:15:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.806 2021/02/05 05:19:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.805 2021/02/05 05:15:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.806 2021/02/05 05:19:57 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1435,7 +1435,7 @@ SysVMatch(const char *word, const char *pattern,
 }
 
 struct ModifyWord_SYSVSubstArgs {
-	GNode *ctx;
+	GNode *scope;
 	const char *lhs;
 	const char *rhs;
 };
@@ -1462,7 +1462,7 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
 	 * match, but only if the lhs had a '%' as well.
 	 */
 
-	(void)Var_Subst(args->rhs, args->ctx, VARE_WANTRES, &rhs_expanded);
+	(void)Var_Subst(args->rhs, args->scope, VARE_WANTRES, &rhs_expanded);
 	/* TODO: handle errors */
 
 	rhs = rhs_expanded;
@@ -1664,7 +1664,7 @@ tryagain:
 
 
 struct ModifyWord_LoopArgs {
-	GNode *ctx;
+	GNode *scope;
 	char *tvar;		/* name of temporary variable */
 	char *str;		/* string to expand */
 	VarEvalFlags eflags;
@@ -1682,8 +1682,9 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 
 	args = data;
 	/* XXX: The variable name should not be expanded here. */
-	Var_SetExpandWithFlags(args->ctx, args->tvar, word, VAR_SET_NO_EXPORT);
-	(void)Var_Subst(args->str, args->ctx, args->eflags, &s);
+	Var_SetExpandWithFlags(args->scope, args->tvar, word,
+	    VAR_SET_NO_EXPORT);
+	(void)Var_Subst(args->str, args->scope, args->eflags, &s);
 	/* TODO: handle errors */
 
 	DEBUG4(VAR, "ModifyWord_Loop: "
@@ -2353,7 +2354,7 @@ ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 	char prev_sep;
 	VarParseResult res;
 
-	args.ctx = st->scope;
+	args.scope = st->scope;
 
 	(*pp)++;		/* Skip the first '@' */
 	res = ParseModifierPart(pp, '@', VARE_NONE, st, &args.tvar);
