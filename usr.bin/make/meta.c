@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.175 2021/02/04 21:33:14 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.176 2021/02/05 05:15:12 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -323,7 +323,7 @@ is_submake(const char *cmd, GNode *gn)
     Boolean rc = FALSE;
 
     if (p_make == NULL) {
-	p_make = Var_Value(".MAKE", gn).str;
+	p_make = Var_Value(gn, ".MAKE").str;
 	p_len = strlen(p_make);
     }
     cp = strchr(cmd, '$');
@@ -479,7 +479,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     fp = NULL;
 
-    dname = Var_Value(".OBJDIR", gn);
+    dname = Var_Value(gn, ".OBJDIR");
     tname = GNode_VarTarget(gn);
 
     /* if this succeeds objdir_realpath is realpath of dname */
@@ -609,7 +609,7 @@ meta_mode_init(const char *make_mode)
 	get_mode_bf(metaMissing, "missing-meta=");
 	get_mode_bf(metaSilent, "silent=");
     }
-    if (metaVerbose && !Var_Exists(MAKE_META_PREFIX, SCOPE_GLOBAL)) {
+    if (metaVerbose && !Var_Exists(SCOPE_GLOBAL, MAKE_META_PREFIX)) {
 	/*
 	 * The default value for MAKE_META_PREFIX
 	 * prints the absolute path of the target.
@@ -643,12 +643,12 @@ meta_mode_init(const char *make_mode)
     /*
      * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}
      */
-    value = Var_Value(MAKE_META_IGNORE_PATTERNS, SCOPE_GLOBAL);
+    value = Var_Value(SCOPE_GLOBAL, MAKE_META_IGNORE_PATTERNS);
     if (value.str != NULL) {
 	metaIgnorePatterns = TRUE;
 	FStr_Done(&value);
     }
-    value = Var_Value(MAKE_META_IGNORE_FILTER, SCOPE_GLOBAL);
+    value = Var_Value(SCOPE_GLOBAL, MAKE_META_IGNORE_FILTER);
     if (value.str != NULL) {
 	metaIgnoreFilter = TRUE;
 	FStr_Done(&value);
@@ -989,7 +989,13 @@ meta_ignore(GNode *gn, const char *p)
 	const char *expr;
 	char *pm;
 
-	Var_Set(".p.", p, gn);
+	/*
+	 * XXX: This variable is set on a target GNode but is not one of
+	 * the usual local variables.  It should be deleted afterwards.
+	 * Ideally it would not be created in the first place, just like
+	 * in a .for loop.
+	 */
+	Var_Set(gn, ".p.", p);
 	expr = "${" MAKE_META_IGNORE_PATTERNS ":@m@${.p.:M$m}@}";
 	(void)Var_Subst(expr, gn, VARE_WANTRES, &pm);
 	/* TODO: handle errors */
@@ -1089,7 +1095,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     if (oodate)
 	return oodate;		/* we're done */
 
-    dname = Var_Value(".OBJDIR", gn);
+    dname = Var_Value(gn, ".OBJDIR");
     tname = GNode_VarTarget(gn);
 
     /* if this succeeds fname3 is realpath of dname */
@@ -1223,12 +1229,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 			snprintf(lcwd_vname, sizeof lcwd_vname, LCWD_VNAME_FMT, pid);
 			snprintf(ldir_vname, sizeof ldir_vname, LDIR_VNAME_FMT, pid);
 			lastpid = pid;
-			ldir = Var_Value(ldir_vname, SCOPE_GLOBAL);
+			ldir = Var_Value(SCOPE_GLOBAL, ldir_vname);
 			if (ldir.str != NULL) {
 			    strlcpy(latestdir, ldir.str, sizeof latestdir);
 			    FStr_Done(&ldir);
 			}
-			ldir = Var_Value(lcwd_vname, SCOPE_GLOBAL);
+			ldir = Var_Value(SCOPE_GLOBAL, lcwd_vname);
 			if (ldir.str != NULL) {
 			    strlcpy(lcwd, ldir.str, sizeof lcwd);
 			    FStr_Done(&ldir);
@@ -1251,8 +1257,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		/* Process according to record type. */
 		switch (buf[0]) {
 		case 'X':		/* eXit */
-		    Var_DeleteExpand(lcwd_vname, SCOPE_GLOBAL);
-		    Var_DeleteExpand(ldir_vname, SCOPE_GLOBAL);
+		    Var_DeleteExpand(SCOPE_GLOBAL, lcwd_vname);
+		    Var_DeleteExpand(SCOPE_GLOBAL, ldir_vname);
 		    lastpid = 0;	/* no need to save ldir_vname */
 		    break;
 
@@ -1601,8 +1607,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 	 * We have decided it is oodate, so .OODATE needs to be set.
 	 * All we can sanely do is set it to .ALLSRC.
 	 */
-	Var_Delete(OODATE, gn);
-	Var_Set(OODATE, GNode_VarAllsrc(gn), gn);
+	Var_Delete(gn, OODATE);
+	Var_Set(gn, OODATE, GNode_VarAllsrc(gn));
     }
 
  oodate_out:

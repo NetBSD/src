@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.344 2021/02/04 21:42:46 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.345 2021/02/05 05:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.344 2021/02/04 21:42:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.345 2021/02/05 05:15:12 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1626,8 +1626,8 @@ FindDepsArchive(GNode *gn, CandidateSearcher *cs)
 	gn->unmade++;
 
 	/* Copy in the variables from the member node to this one. */
-	Var_Set(PREFIX, GNode_VarPrefix(mem), gn);
-	Var_Set(TARGET, GNode_VarTarget(mem), gn);
+	Var_Set(gn, PREFIX, GNode_VarPrefix(mem));
+	Var_Set(gn, TARGET, GNode_VarTarget(mem));
 
 	memSuff = mem->suffix;
 	if (memSuff == NULL) {	/* Didn't know what it was. */
@@ -1637,10 +1637,10 @@ FindDepsArchive(GNode *gn, CandidateSearcher *cs)
 
 
 	/* Set the other two local variables required for this target. */
-	Var_Set(MEMBER, name, gn);
-	Var_Set(ARCHIVE, gn->name, gn);
+	Var_Set(gn, MEMBER, name);
+	Var_Set(gn, ARCHIVE, gn->name);
 	/* Set $@ for compatibility with other makes. */
-	Var_Set(TARGET, gn->name, gn);
+	Var_Set(gn, TARGET, gn->name);
 
 	/*
 	 * Now we've got the important local variables set, expand any sources
@@ -1691,7 +1691,7 @@ FindDepsLib(GNode *gn)
 		Arch_FindLib(gn, suff->searchPath);
 	} else {
 		Suffix_Unassign(&gn->suffix);
-		Var_Set(TARGET, gn->name, gn);
+		Var_Set(gn, TARGET, gn->name);
 	}
 
 	/*
@@ -1699,7 +1699,7 @@ FindDepsLib(GNode *gn)
 	 * filesystem conventions, we don't set the regular variables for
 	 * the thing. .PREFIX is simply made empty.
 	 */
-	Var_Set(PREFIX, "", gn);
+	Var_Set(gn, PREFIX, "");
 }
 
 static void
@@ -1776,7 +1776,7 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
 	if (gn->path == NULL)
 		return;
 
-	Var_Set(TARGET, gn->path, gn);
+	Var_Set(gn, TARGET, gn->path);
 
 	if (targ != NULL) {
 		/*
@@ -1791,7 +1791,7 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
 		savec = gn->path[savep];
 		gn->path[savep] = '\0';
 
-		Var_Set(PREFIX, str_basename(gn->path), gn);
+		Var_Set(gn, PREFIX, str_basename(gn->path));
 
 		gn->path[savep] = savec;
 	} else {
@@ -1800,7 +1800,7 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
 		 * known suffix.
 		 */
 		Suffix_Unassign(&gn->suffix);
-		Var_Set(PREFIX, str_basename(gn->path), gn);
+		Var_Set(gn, PREFIX, str_basename(gn->path));
 	}
 }
 
@@ -1890,8 +1890,8 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 		}
 	}
 
-	Var_Set(TARGET, GNode_Path(gn), gn);
-	Var_Set(PREFIX, targ != NULL ? targ->prefix : gn->name, gn);
+	Var_Set(gn, TARGET, GNode_Path(gn));
+	Var_Set(gn, PREFIX, targ != NULL ? targ->prefix : gn->name);
 
 	/*
 	 * Now we've got the important local variables set, expand any sources
@@ -1981,8 +1981,8 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 			 * we need to do is set the standard variables.
 			 */
 			targ->node->type |= OP_DEPS_FOUND;
-			Var_Set(PREFIX, targ->prefix, targ->node);
-			Var_Set(TARGET, targ->node->name, targ->node);
+			Var_Set(targ->node, PREFIX, targ->prefix);
+			Var_Set(targ->node, TARGET, targ->node->name);
 		}
 	}
 
@@ -2048,8 +2048,8 @@ FindDeps(GNode *gn, CandidateSearcher *cs)
 	gn->type |= OP_DEPS_FOUND;
 
 	/* Make sure we have these set, may get revised below. */
-	Var_Set(TARGET, GNode_Path(gn), gn);
-	Var_Set(PREFIX, gn->name, gn);
+	Var_Set(gn, TARGET, GNode_Path(gn));
+	Var_Set(gn, PREFIX, gn->name);
 
 	DEBUG1(SUFF, "SuffFindDeps \"%s\"\n", gn->name);
 
