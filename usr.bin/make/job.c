@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.418 2021/02/05 05:53:40 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.419 2021/02/05 19:19:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.418 2021/02/05 05:53:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.419 2021/02/05 19:19:17 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1569,8 +1569,7 @@ JobWriteShellCommands(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 	 * are put. It is removed before the child shell is executed,
 	 * unless DEBUG(SCRIPT) is set.
 	 */
-	char *tfile;
-	sigset_t mask;
+	char tfile[MAXPATHLEN];
 	int tfd;		/* File descriptor to the temp file */
 
 	/*
@@ -1582,11 +1581,9 @@ JobWriteShellCommands(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 		DieHorribly();
 	}
 
-	JobSigLock(&mask);
-	tfd = mkTempFile(TMPPAT, &tfile);
+	tfd = Job_TempFile(TMPPAT, tfile, sizeof tfile);
 	if (!DEBUG(SCRIPT))
-		(void)eunlink(tfile);
-	JobSigUnlock(&mask);
+	    eunlink(tfile);
 
 	job->cmdFILE = fdopen(tfd, "w+");
 	if (job->cmdFILE == NULL)
@@ -1603,8 +1600,6 @@ JobWriteShellCommands(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 #endif
 
 	*out_run = JobPrintCommands(job);
-
-	free(tfile);
 }
 
 /*
@@ -2762,6 +2757,20 @@ JobTokenAdd(void)
 	    getpid(), aborting, JOB_TOKENS[aborting]);
 	while (write(tokenWaitJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
 		continue;
+}
+
+/* Get a temp file */
+int
+Job_TempFile(const char *pattern, char *tfile, size_t tfile_sz)
+{
+	int fd;
+	sigset_t mask;
+
+	JobSigLock(&mask);
+	fd = mkTempFile(pattern, tfile, tfile_sz);
+	JobSigUnlock(&mask);
+
+	return fd;
 }
 
 /* Prep the job token pipe in the root make process. */

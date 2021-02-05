@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.176 2021/02/05 05:15:12 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.177 2021/02/05 19:19:17 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -140,7 +140,10 @@ meta_open_filemon(BuildMon *pbm)
      * cwd causing getcwd to do a lot more work.
      * We only care about the descriptor.
      */
-    pbm->mon_fd = mkTempFile("filemon.XXXXXX", NULL);
+    if (!opts.compatMake)
+	pbm->mon_fd = Job_TempFile("filemon.XXXXXX", NULL, 0);
+    else
+	pbm->mon_fd = mkTempFile("filemon.XXXXXX", NULL, 0);
     if ((dupfd = dup(pbm->mon_fd)) == -1) {
 	err(1, "Could not dup filemon output!");
     }

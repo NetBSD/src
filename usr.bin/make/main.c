@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.532 2021/02/05 05:15:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.533 2021/02/05 19:19:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.532 2021/02/05 05:15:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.533 2021/02/05 19:19:17 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2215,27 +2215,29 @@ getTmpdir(void)
  * Otherwise unlink the file once open.
  */
 int
-mkTempFile(const char *pattern, char **out_fname)
+mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 {
 	static char *tmpdir = NULL;
-	char tfile[MAXPATHLEN];
+	char tbuf[MAXPATHLEN];
 	int fd;
 
 	if (pattern == NULL)
 		pattern = TMPPAT;
 	if (tmpdir == NULL)
 		tmpdir = getTmpdir();
+	if (tfile == NULL) {
+	    tfile = tbuf;
+	    tfile_sz = sizeof tbuf;
+	}
 	if (pattern[0] == '/') {
-		snprintf(tfile, sizeof tfile, "%s", pattern);
+		snprintf(tfile, tfile_sz, "%s", pattern);
 	} else {
-		snprintf(tfile, sizeof tfile, "%s%s", tmpdir, pattern);
+		snprintf(tfile, tfile_sz, "%s%s", tmpdir, pattern);
 	}
 	if ((fd = mkstemp(tfile)) < 0)
 		Punt("Could not create temporary file %s: %s", tfile,
 		    strerror(errno));
-	if (out_fname != NULL) {
-		*out_fname = bmake_strdup(tfile);
-	} else {
+	if (tfile == tbuf) {
 		unlink(tfile);	/* we just want the descriptor */
 	}
 	return fd;
