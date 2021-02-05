@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.547 2021/02/05 04:41:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.548 2021/02/05 05:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.547 2021/02/05 04:41:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.548 2021/02/05 05:15:12 rillig Exp $");
 
 /* types and constants */
 
@@ -576,13 +576,13 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	/* Find out which makefile is the culprit.
 	 * We try ${.PARSEDIR} and apply realpath(3) if not absolute. */
 
-	dir = Var_Value(".PARSEDIR", SCOPE_GLOBAL);
+	dir = Var_Value(SCOPE_GLOBAL, ".PARSEDIR");
 	if (dir.str == NULL)
 		dir.str = ".";
 	if (dir.str[0] != '/')
 		dir.str = realpath(dir.str, dirbuf);
 
-	base = Var_Value(".PARSEFILE", SCOPE_GLOBAL);
+	base = Var_Value(SCOPE_GLOBAL, ".PARSEFILE");
 	if (base.str == NULL)
 		base.str = str_basename(fname);
 
@@ -1886,7 +1886,7 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *scope)
 }
 
 static void
-VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *scope,
+VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 		    FStr *out_avalue)
 {
 	char *evalue;
@@ -1898,14 +1898,14 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *scope,
 	 * TODO: Add a test that demonstrates why this code is needed,
 	 *  apart from making the debug log longer.
 	 */
-	if (!Var_ExistsExpand(name, scope))
-		Var_SetExpand(name, "", scope);
+	if (!Var_ExistsExpand(scope, name))
+		Var_SetExpand(scope, name, "");
 
 	(void)Var_Subst(uvalue, scope,
 	    VARE_WANTRES | VARE_KEEP_DOLLAR | VARE_KEEP_UNDEF, &evalue);
 	/* TODO: handle errors */
 
-	Var_SetExpand(name, evalue, scope);
+	Var_SetExpand(scope, name, evalue);
 
 	*out_avalue = FStr_InitOwn(evalue);
 }
@@ -1928,7 +1928,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 	}
 
 	cmdOut = Cmd_Exec(cmd.str, &errfmt);
-	Var_SetExpand(name, cmdOut, scope);
+	Var_SetExpand(scope, name, cmdOut);
 	*out_avalue = FStr_InitOwn(cmdOut);
 
 	if (errfmt != NULL)
@@ -1955,17 +1955,17 @@ VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
 	FStr avalue = FStr_InitRefer(uvalue);
 
 	if (op == VAR_APPEND)
-		Var_AppendExpand(name, uvalue, scope);
+		Var_AppendExpand(scope, name, uvalue);
 	else if (op == VAR_SUBST)
-		VarAssign_EvalSubst(name, uvalue, scope, &avalue);
+		VarAssign_EvalSubst(scope, name, uvalue, &avalue);
 	else if (op == VAR_SHELL)
 		VarAssign_EvalShell(name, uvalue, scope, &avalue);
 	else {
-		if (op == VAR_DEFAULT && Var_ExistsExpand(name, scope))
+		if (op == VAR_DEFAULT && Var_ExistsExpand(scope, name))
 			return FALSE;
 
 		/* Normal assignment -- just do it. */
-		Var_SetExpand(name, uvalue, scope);
+		Var_SetExpand(scope, name, uvalue);
 	}
 
 	*out_TRUE_avalue = avalue;
@@ -2359,7 +2359,7 @@ StrContainsWord(const char *str, const char *word)
 static Boolean
 VarContainsWord(const char *varname, const char *word)
 {
-	FStr val = Var_Value(varname, SCOPE_GLOBAL);
+	FStr val = Var_Value(SCOPE_GLOBAL, varname);
 	Boolean found = val.str != NULL && StrContainsWord(val.str, word);
 	FStr_Done(&val);
 	return found;

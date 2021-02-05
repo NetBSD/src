@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.804 2021/02/05 04:41:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.805 2021/02/05 05:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.804 2021/02/05 04:41:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.805 2021/02/05 05:15:12 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -490,7 +490,7 @@ VarAdd(const char *name, const char *val, GNode *scope, VarSetFlags flags)
  * The variable name is kept as-is, it is not expanded.
  */
 void
-Var_Delete(const char *varname, GNode *scope)
+Var_Delete(GNode *scope, const char *varname)
 {
 	HashEntry *he = HashTable_FindEntry(&scope->vars, varname);
 	Var *v;
@@ -517,7 +517,7 @@ Var_Delete(const char *varname, GNode *scope)
  * The variable name is expanded once.
  */
 void
-Var_DeleteExpand(const char *name, GNode *scope)
+Var_DeleteExpand(GNode *scope, const char *name)
 {
 	FStr varname = FStr_InitRefer(name);
 
@@ -529,7 +529,7 @@ Var_DeleteExpand(const char *name, GNode *scope)
 		varname = FStr_InitOwn(expanded);
 	}
 
-	Var_Delete(varname.str, scope);
+	Var_Delete(scope, varname.str);
 	FStr_Done(&varname);
 }
 
@@ -919,7 +919,7 @@ Var_UnExport(Boolean isEnv, const char *arg)
 
 /* Set the variable to the value; the name is not expanded. */
 void
-Var_SetWithFlags(const char *name, const char *val, GNode *scope,
+Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		 VarSetFlags flags)
 {
 	Var *v;
@@ -956,7 +956,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *scope,
 			 * needed. Otherwise -V name may show the wrong value.
 			 */
 			/* XXX: name is expanded for the second time */
-			Var_DeleteExpand(name, SCOPE_GLOBAL);
+			Var_DeleteExpand(SCOPE_GLOBAL, name);
 		}
 		VarAdd(name, val, scope, flags);
 	} else {
@@ -1003,8 +1003,8 @@ Var_SetWithFlags(const char *name, const char *val, GNode *scope,
 
 /* See Var_Set for documentation. */
 void
-Var_SetExpandWithFlags(const char *name, const char *val, GNode *scope,
-		 VarSetFlags flags)
+Var_SetExpandWithFlags(GNode *scope, const char *name, const char *val,
+		       VarSetFlags flags)
 {
 	const char *unexpanded_name = name;
 	FStr varname = FStr_InitRefer(name);
@@ -1023,15 +1023,15 @@ Var_SetExpandWithFlags(const char *name, const char *val, GNode *scope,
 			    "name expands to empty string - ignored\n",
 		    unexpanded_name, val);
 	} else
-		Var_SetWithFlags(varname.str, val, scope, flags);
+		Var_SetWithFlags(scope, varname.str, val, flags);
 
 	FStr_Done(&varname);
 }
 
 void
-Var_Set(const char *name, const char *val, GNode *scope)
+Var_Set(GNode *scope, const char *name, const char *val)
 {
-	Var_SetWithFlags(name, val, scope, VAR_SET_NONE);
+	Var_SetWithFlags(scope, name, val, VAR_SET_NONE);
 }
 
 /*
@@ -1046,27 +1046,27 @@ Var_Set(const char *name, const char *val, GNode *scope)
  *	scope		scope in which to set it
  */
 void
-Var_SetExpand(const char *name, const char *val, GNode *scope)
+Var_SetExpand(GNode *scope, const char *name, const char *val)
 {
-	Var_SetExpandWithFlags(name, val, scope, VAR_SET_NONE);
+	Var_SetExpandWithFlags(scope, name, val, VAR_SET_NONE);
 }
 
 void
 Global_Set(const char *name, const char *value)
 {
-	Var_Set(name, value, SCOPE_GLOBAL);
+	Var_Set(SCOPE_GLOBAL, name, value);
 }
 
 void
 Global_SetExpand(const char *name, const char *value)
 {
-	Var_SetExpand(name, value, SCOPE_GLOBAL);
+	Var_SetExpand(SCOPE_GLOBAL, name, value);
 }
 
 void
 Global_Delete(const char *name)
 {
-	Var_Delete(name, SCOPE_GLOBAL);
+	Var_Delete(SCOPE_GLOBAL, name);
 }
 
 /*
@@ -1076,14 +1076,14 @@ Global_Delete(const char *name)
  * and the given value are appended.
  */
 void
-Var_Append(const char *name, const char *val, GNode *scope)
+Var_Append(GNode *scope, const char *name, const char *val)
 {
 	Var *v;
 
 	v = VarFind(name, scope, scope == SCOPE_GLOBAL);
 
 	if (v == NULL) {
-		Var_SetWithFlags(name, val, scope, VAR_SET_NONE);
+		Var_SetWithFlags(scope, name, val, VAR_SET_NONE);
 	} else if (v->flags & VAR_READONLY) {
 		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
 		    name);
@@ -1132,7 +1132,7 @@ Var_Append(const char *name, const char *val, GNode *scope)
  *	a big win and must be tolerated.
  */
 void
-Var_AppendExpand(const char *name, const char *val, GNode *scope)
+Var_AppendExpand(GNode *scope, const char *name, const char *val)
 {
 	char *name_freeIt = NULL;
 
@@ -1153,7 +1153,7 @@ Var_AppendExpand(const char *name, const char *val, GNode *scope)
 		}
 	}
 
-	Var_Append(name, val, scope);
+	Var_Append(scope, name, val);
 
 	free(name_freeIt);
 }
@@ -1161,11 +1161,11 @@ Var_AppendExpand(const char *name, const char *val, GNode *scope)
 void
 Global_Append(const char *name, const char *value)
 {
-	Var_Append(name, value, SCOPE_GLOBAL);
+	Var_Append(SCOPE_GLOBAL, name, value);
 }
 
 Boolean
-Var_Exists(const char *name, GNode *scope)
+Var_Exists(GNode *scope, const char *name)
 {
 	Var *v = VarFind(name, scope, TRUE);
 	if (v == NULL)
@@ -1184,7 +1184,7 @@ Var_Exists(const char *name, GNode *scope)
  *	scope		Scope in which to start search
  */
 Boolean
-Var_ExistsExpand(const char *name, GNode *scope)
+Var_ExistsExpand(GNode *scope, const char *name)
 {
 	FStr varname = FStr_InitRefer(name);
 	Boolean exists;
@@ -1196,7 +1196,7 @@ Var_ExistsExpand(const char *name, GNode *scope)
 		varname = FStr_InitOwn(expanded);
 	}
 
-	exists = Var_Exists(varname.str, scope);
+	exists = Var_Exists(scope, varname.str);
 	FStr_Done(&varname);
 	return exists;
 }
@@ -1215,7 +1215,7 @@ Var_ExistsExpand(const char *name, GNode *scope)
  *	out_freeIt when the returned value is no longer needed.
  */
 FStr
-Var_Value(const char *name, GNode *scope)
+Var_Value(GNode *scope, const char *name)
 {
 	Var *v = VarFind(name, scope, TRUE);
 	char *value;
@@ -1682,7 +1682,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 
 	args = data;
 	/* XXX: The variable name should not be expanded here. */
-	Var_SetExpandWithFlags(args->tvar, word, args->ctx, VAR_SET_NO_EXPORT);
+	Var_SetExpandWithFlags(args->ctx, args->tvar, word, VAR_SET_NO_EXPORT);
 	(void)Var_Subst(args->str, args->ctx, args->eflags, &s);
 	/* TODO: handle errors */
 
@@ -2378,7 +2378,7 @@ ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 	    ModifyWords(val, ModifyWord_Loop, &args, st->oneBigWord, st->sep));
 	st->sep = prev_sep;
 	/* XXX: Consider restoring the previous variable instead of deleting. */
-	Var_DeleteExpand(args.tvar, st->scope);
+	Var_DeleteExpand(st->scope, args.tvar);
 	free(args.tvar);
 	free(args.str);
 	return AMR_OK;
@@ -3301,7 +3301,7 @@ ok:
 	if (st->eflags & VARE_WANTRES) {
 		switch (op[0]) {
 		case '+':
-			Var_AppendExpand(st->var->name.str, val, scope);
+			Var_AppendExpand(scope, st->var->name.str, val);
 			break;
 		case '!': {
 			const char *errfmt;
@@ -3309,8 +3309,8 @@ ok:
 			if (errfmt != NULL)
 				Error(errfmt, val);
 			else
-				Var_SetExpand(st->var->name.str, cmd_output,
-				    scope);
+				Var_SetExpand(scope,
+				    st->var->name.str, cmd_output);
 			free(cmd_output);
 			break;
 		}
@@ -3319,7 +3319,7 @@ ok:
 				break;
 			/* FALLTHROUGH */
 		default:
-			Var_SetExpand(st->var->name.str, val, scope);
+			Var_SetExpand(scope, st->var->name.str, val);
 			break;
 		}
 	}
@@ -3343,11 +3343,11 @@ ApplyModifier_Remember(const char **pp, const char *val,
 	if (mod[1] == '=') {
 		size_t n = strcspn(mod + 2, ":)}");
 		char *name = bmake_strldup(mod + 2, n);
-		Var_SetExpand(name, val, st->scope);
+		Var_SetExpand(st->scope, name, val);
 		free(name);
 		*pp = mod + 2 + n;
 	} else {
-		Var_Set("_", val, st->scope);
+		Var_Set(st->scope, "_", val);
 		*pp = mod + 1;
 	}
 	st->newVal = FStr_InitRefer(val);

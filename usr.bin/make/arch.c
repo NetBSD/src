@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.196 2021/02/04 21:42:46 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.197 2021/02/05 05:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.196 2021/02/04 21:42:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.197 2021/02/05 05:15:12 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -973,9 +973,9 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 	free(libName);
 
 #ifdef LIBRARIES
-	Var_Set(TARGET, gn->name, gn);
+	Var_Set(gn, TARGET, gn->name);
 #else
-	Var_Set(TARGET, GNode_Path(gn), gn);
+	Var_Set(gn, TARGET, GNode_Path(gn));
 #endif
 }
 
