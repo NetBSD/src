@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.11 2020/12/11 18:03:33 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.12 2021/02/05 21:44:34 joerg Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12 2021/02/05 21:44:34 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2020/12/11 18:03:33 skrll Exp 
 #include <ddb/db_interface.h>
 
 #include <dev/cons.h>
+
+db_regs_t ddb_regs;
 
 void
 db_read_bytes(vaddr_t addr, size_t size, char *data)

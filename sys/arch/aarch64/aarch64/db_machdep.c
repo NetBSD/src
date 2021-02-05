@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.32 2021/01/18 01:38:44 rin Exp $ */
+/* $NetBSD: db_machdep.c,v 1.33 2021/02/05 21:44:34 joerg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.32 2021/01/18 01:38:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.33 2021/02/05 21:44:34 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -207,9 +207,7 @@ const struct db_variable db_regs[] = {
 };
 
 const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
-
 int db_active;
-db_regs_t ddb_regs;
 
 
 void
