@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.52 2019/06/08 08:02:37 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.53 2021/02/06 09:27:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.52 2019/06/08 08:02:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.53 2021/02/06 09:27:35 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -72,8 +72,6 @@ static int  vs_dmaintr(void *);
 static int  vs_dmaerrintr(void *);
 
 /* MI audio layer interface */
-static int  vs_open(void *, int);
-static void vs_close(void *);
 static int  vs_query_format(void *, audio_format_query_t *);
 static int  vs_set_format(void *, int,
 	const audio_params_t *, const audio_params_t *,
@@ -108,8 +106,6 @@ CFATTACH_DECL_NEW(vs, sizeof(struct vs_softc),
 static int vs_attached;
 
 static const struct audio_hw_if vs_hw_if = {
-	.open			= vs_open,
-	.close			= vs_close,
 	.query_format		= vs_query_format,
 	.set_format		= vs_set_format,
 	.commit_settings	= vs_commit_settings,
@@ -220,7 +216,6 @@ vs_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = (void *) ia->ia_addr;
 	sc->sc_dmas = NULL;
 	sc->sc_prev_vd = NULL;
-	sc->sc_active = 0;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
 
@@ -284,27 +279,6 @@ vs_dmaerrintr(void *hdl)
 /*
  * audio MD layer interfaces
  */
-
-static int
-vs_open(void *hdl, int flags)
-{
-	struct vs_softc *sc;
-
-	DPRINTF(1, ("vs_open: flags=%d\n", flags));
-	sc = hdl;
-	sc->sc_pintr = NULL;
-	sc->sc_rintr = NULL;
-	sc->sc_active = 0;
-
-	return 0;
-}
-
-static void
-vs_close(void *hdl)
-{
-
-	DPRINTF(1, ("vs_close\n"));
-}
 
 static int
 vs_query_format(void *hdl, audio_format_query_t *afp)
@@ -398,9 +372,6 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	DPRINTF(2, ("%s: block=%p blksize=%d\n", __func__, block, blksize));
 	sc = hdl;
 
-	sc->sc_pintr = intr;
-	sc->sc_parg  = arg;
-
 	/* Find DMA buffer. */
 	for (vd = sc->sc_dmas; vd != NULL; vd = vd->vd_next) {
 		if (KVADDR(vd) <= block && block < KVADDR_END(vd)
@@ -424,11 +395,13 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer,
 	    (int)block - (int)KVADDR(vd), blksize);
 
-	if (sc->sc_active == 0) {
+	if (sc->sc_pintr == NULL) {
+		sc->sc_pintr = intr;
+		sc->sc_parg  = arg;
+
 		vs_set_panout(sc, VS_PANOUT_LR);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			MSM6258_CMD, MSM6258_CMD_PLAY_START);
-		sc->sc_active = 1;
 	}
 
 	return 0;
@@ -444,9 +417,6 @@ vs_start_input(void *hdl, void *block, int blksize, void (*intr)(void *),
 
 	DPRINTF(2, ("%s: block=%p blksize=%d\n", __func__, block, blksize));
 	sc = hdl;
-
-	sc->sc_rintr = intr;
-	sc->sc_rarg  = arg;
 
 	/* Find DMA buffer. */
 	for (vd = sc->sc_dmas; vd != NULL; vd = vd->vd_next) {
@@ -471,10 +441,12 @@ vs_start_input(void *hdl, void *block, int blksize, void (*intr)(void *),
 	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer,
 	    (int)block - (int)KVADDR(vd), blksize);
 
-	if (sc->sc_active == 0) {
+	if (sc->sc_rintr == NULL) {
+		sc->sc_rintr = intr;
+		sc->sc_rarg  = arg;
+
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			MSM6258_CMD, MSM6258_CMD_REC_START);
-		sc->sc_active = 1;
 	}
 
 	return 0;
@@ -487,13 +459,12 @@ vs_halt_output(void *hdl)
 
 	DPRINTF(1, ("vs_halt_output\n"));
 	sc = hdl;
-	if (sc->sc_active) {
-		/* stop ADPCM play */
-		dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			MSM6258_CMD, MSM6258_CMD_STOP);
-		sc->sc_active = 0;
-	}
+
+	/* stop ADPCM play */
+	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    MSM6258_CMD, MSM6258_CMD_STOP);
+	sc->sc_pintr = NULL;
 
 	return 0;
 }
@@ -505,13 +476,12 @@ vs_halt_input(void *hdl)
 
 	DPRINTF(1, ("vs_halt_input\n"));
 	sc = hdl;
-	if (sc->sc_active) {
-		/* stop ADPCM recoding */
-		dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			MSM6258_CMD, MSM6258_CMD_STOP);
-		sc->sc_active = 0;
-	}
+
+	/* stop ADPCM recoding */
+	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    MSM6258_CMD, MSM6258_CMD_STOP);
+	sc->sc_rintr = NULL;
 
 	return 0;
 }
