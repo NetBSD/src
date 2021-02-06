@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.39 2021/02/04 19:31:25 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.40 2021/02/06 15:31:03 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1482,4 +1482,10 @@ sys/dev/usb/usbdevs_data.h			(regen)
 	urtwn(4): add TPLINK WN821N and another TPLINK RTL8192EU variant.
 	To avoid confusion use TP-Link's names for these variants.
 	[nia, ticket #1197]
+
+lib/libc/arch/mips/sys/cerror.S			1.20
+
+	MIPS n32/n64: fix __errno() calls from other libraries
+	(eg __posix_cerror() in libposix).
+	[simonb, ticket #1199]
 
