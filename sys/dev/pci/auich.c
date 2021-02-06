@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.159 2020/02/29 06:34:30 isaki Exp $	*/
+/*	$NetBSD: auich.c,v 1.160 2021/02/06 09:45:17 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.159 2020/02/29 06:34:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.160 2021/02/06 09:45:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -930,9 +930,7 @@ auich_open(void *addr, int flags)
 	struct auich_softc *sc;
 
 	sc = (struct auich_softc *)addr;
-	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->lock(sc->codec_if);
-	mutex_spin_enter(&sc->sc_intr_lock);
 	return 0;
 }
 
@@ -942,9 +940,7 @@ auich_close(void *addr)
 	struct auich_softc *sc;
 
 	sc = (struct auich_softc *)addr;
-	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
-	mutex_spin_enter(&sc->sc_intr_lock);
 }
 
 static int
