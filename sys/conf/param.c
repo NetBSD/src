@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.67.10.1 2019/04/10 07:39:31 martin Exp $	*/
+/*	$NetBSD: param.c,v 1.67.10.2 2021/02/06 15:22:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.67.10.1 2019/04/10 07:39:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.67.10.2 2021/02/06 15:22:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hz.h"
@@ -103,10 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.67.10.1 2019/04/10 07:39:31 martin Exp $
 
 #ifndef HZ
 #define	HZ 100
-#endif
-
-#ifndef MAXFILES
-#define	MAXFILES	(3 * (NPROC + MAXUSERS) + 80)
 #endif
 
 #ifndef MAXEXEC
