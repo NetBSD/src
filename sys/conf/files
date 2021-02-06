@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1278 2021/01/16 23:51:50 chs Exp $
+#	$NetBSD: files,v 1.1279 2021/02/06 16:03:31 dbj Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -235,6 +235,7 @@ file	kern/kern_history.c		kernhist
 #
 # top level usb debug defines
 defflag	opt_usb.h			USB_DEBUG: KERNHIST
+defflag	opt_usb.h			USBHIST_PRINT
 defparam opt_usb.h			USBHIST_SIZE
 
 #
