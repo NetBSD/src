@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.268 2021/02/04 00:16:03 rillig Exp $
+# $NetBSD: Makefile,v 1.269 2021/02/06 18:26:03 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -30,6 +30,8 @@
 # and are thus not added to TESTS.  Such files must be ignored in
 # src/tests/usr.bin/make/t_make.sh.
 #
+
+.MAIN: all
 
 # we use these below but we might be an older make
 .MAKE.OS?= ${uname -s:L:sh}
@@ -441,16 +443,10 @@ TESTS+=		varquote
 #	escape-for-item.mk
 #	posix-*.mk (see posix.mk and posix1.mk)
 
-.if ${.OBJDIR} != ${.CURDIR}
-RO_OBJDIR:=	${.OBJDIR}/roobj
-.else
-RO_OBJDIR:=	${TMPDIR:U/tmp}/roobj
-.endif
 # Additional environment variables for some of the tests.
 # The base environment is -i PATH="$PATH".
 ENV.depsrc-optional+=   TZ=UTC
 ENV.envfirst=		FROM_ENV=value-from-env
-ENV.objdir-writable+=	RO_OBJDIR=${RO_OBJDIR}
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
@@ -486,7 +482,6 @@ SED_CMDS.job-output-long-lines= \
 	${:D marker should always be at the beginning of the line. } \
 	-e '/^aa*--- job-b ---$$/d' \
 	-e '/^bb*--- job-a ---$$/d'
-SED_CMDS.objdir-writable=	-e 's,${RO_OBJDIR},OBJDIR/roobj,g'
 SED_CMDS.opt-debug-graph1=	${STD_SED_CMDS.dg1}
 SED_CMDS.opt-debug-graph2=	${STD_SED_CMDS.dg2}
 SED_CMDS.opt-debug-graph3=	${STD_SED_CMDS.dg3}
@@ -593,8 +588,6 @@ STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: ,,'
 
 # End of the configuration helpers section.
 
-.MAIN: all
-
 UNIT_TESTS:=	${.PARSEDIR}
 .PATH: ${UNIT_TESTS}
 
@@ -623,7 +616,22 @@ LC_ALL=		C
 LANG=		C
 .export LANG LC_ALL
 
+
+# for many tests we need a TMPDIR that will not collide
+# with other users.
+.if ${.OBJDIR} != ${.CURDIR}
+# easy
+TMPDIR:=	${.OBJDIR}/tmp
+.else
+TMPDIR:=	${TMPDIR:U/tmp}/uid${.MAKE.UID}
+.endif
+# make sure it exists
+.if !exist(${TMPDIR})
+x!= echo; mkdir -p ${TMPDIR}
+.endif
+
 MAKE_TEST_ENV?=	MALLOC_OPTIONS="JA"	# for jemalloc
+MAKE_TEST_ENV+= TMPDIR=${TMPDIR}
 
 .if ${.MAKE.OS} == "NetBSD"
 LIMIT_RESOURCES?=	ulimit -v 200000
@@ -657,6 +665,7 @@ _SED_CMDS+=	-e 's,${TEST_MAKE:T:S,.,\\.,g}[][0-9]* warning,make warning,'
 _SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
 # replace anything after 'stopped in' with unit-tests
 _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
+_SED_CMDS+=	-e 's,${TMPDIR},TMPDIR,g'
 # strip ${.CURDIR}/ from the output
 _SED_CMDS+=	-e 's,${.CURDIR:S,.,\\.,g}/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
