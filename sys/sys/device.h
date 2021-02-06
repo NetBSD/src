@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.166 2021/02/05 17:03:35 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.167 2021/02/06 21:08:51 christos Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -148,7 +148,33 @@ typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
 
-#if defined(_KERNEL) || defined(_KMEMUSER)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_STANDALONE)
+/*
+ * devhandle_t --
+ *
+ *	This is an abstraction of the device handles used by ACPI,
+ *	OpenFirmware, and others, to support device enumeration and
+ *	device tree linkage.  A devhandle_t can be safely passed
+ *	by value.
+ */
+struct devhandle {
+	const struct devhandle_impl *	impl;
+	union {
+		/*
+		 * Storage for the device handle.  Which storage field
+		 * is used is at the sole discretion of the type
+		 * implementation.
+		 */
+		void *			pointer;
+		const void *		const_pointer;
+		uintptr_t		uintptr;
+		int			integer;
+	};
+};
+typedef struct devhandle devhandle_t;
+#endif
+
+#if defined(_KERNEL) || defined(_KMEMUSER) 
 struct device_compatible_entry {
 	union {
 		const char *compat;
@@ -182,29 +208,6 @@ struct device_garbage {
 	int		dg_ndevs;
 };
 
-/*
- * devhandle_t --
- *
- *	This is an abstraction of the device handles used by ACPI,
- *	OpenFirmware, and others, to support device enumeration and
- *	device tree linkage.  A devhandle_t can be safely passed
- *	by value.
- */
-struct devhandle {
-	const struct devhandle_impl *	impl;
-	union {
-		/*
-		 * Storage for the device handle.  Which storage field
-		 * is used is at the sole discretion of the type
-		 * implementation.
-		 */
-		void *			pointer;
-		const void *		const_pointer;
-		uintptr_t		uintptr;
-		int			integer;
-	};
-};
-typedef struct devhandle devhandle_t;
 
 typedef enum {
 	/* Used to represent invalid states. */
