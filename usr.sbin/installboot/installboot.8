@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.99 2020/06/06 20:30:23 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.100 2021/02/06 12:18:45 rin Exp $
 .\"
 .\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2019
+.Dd February 6, 2021
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -784,8 +784,17 @@ Install new boot blocks on an existing
 .Sy FFSv2
 mounted root file system on
 .Sq wd0 ,
-setting the timeout to five seconds, after copying a new secondary
-bootstrap:
+setting the timeout to five seconds, after installing an MBR bootcode and
+copying a new secondary bootstrap:
+.Dl Ic fdisk -c /usr/mdec/mbr /dev/rwd0d
+.Bd -ragged -offset indent-two -compact
+.Em Note :
+See
+.Xr fdisk 8
+and
+.Xr x86/mbr 8
+for more details.
+.Ed
 .Dl Ic cp /usr/mdec/boot /boot
 .Dl Ic installboot -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv2
 .Bd -ragged -offset indent-two -compact
@@ -958,6 +967,7 @@ already present:
 .Xr disklabel 8 ,
 .Xr dumpfs 8 ,
 .Xr fdisk 8 ,
+.Xr x86/mbr 8 ,
 .Xr x86/pxeboot 8
 .
 .Sh HISTORY
