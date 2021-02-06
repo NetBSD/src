@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.4 2006/07/13 16:09:58 bjh21 Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.5 2021/02/06 21:45:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 Ben Harris
@@ -35,6 +35,8 @@
 #include <riscoscalls.h>
 
 #include "nbfs.h"
+
+.syntax unified
 
 rmbase:
 	.word	0			/* Start code */
@@ -97,7 +99,7 @@ Laddfs:
 	stmfd	r13!, {r14}
 	mov	r0, #OSFSControl_AddFS
 	adr	r1, rmbase
-	mov	r2, #(fsib - rmbase)
+	ldr	r2, =(fsib - rmbase)
 	mov	r3, #0
 	swi	XOS_FSControl
 	ldmfd	r13!, {pc}		/* If that failed, so do we */
@@ -119,8 +121,8 @@ rmservice:
 	
 Lerror:
 	teq	pc, pc			/* In 26-bit mode? */
-	ldmneia	r13!, {r14}		/* If so, load up return address */
-	orrnes	pc, r14, #R15_FLAG_V	/* and return setting V flag */
+	ldmfdne	r13!, {r14}		/* If so, load up return address */
+	orrsne	pc, r14, #R15_FLAG_V	/* and return setting V flag */
 	mrs	r14, cpsr		/* Otherwise get cpsr */
 	orr	r14, r14, #PSR_V_bit	/* set V flag */
 	msr	cpsr_c, r14		/* put it back */
@@ -176,9 +178,9 @@ fsentry_func:
 
 fsentry_ret:
 	cmp	r0, #0
-	ldmeqfd	r13!, {r0-r7, pc}
+	popeq	{r0-r7, pc}
 	add	r13, r13, #4
-	ldmfd	r13!, {r1-r7}
+	pop	{r1-r7}
 	b	Lerror
 
 rmcmdtbl:

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.3 2008/02/03 14:59:16 chris Exp $	*/
+/*	$NetBSD: start.S,v 1.4 2021/02/06 21:45:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 Reinoud Zandijk
@@ -50,7 +50,7 @@ ENTRY(relocate_code)
 	 * determine processor architecture version. This is nessisary for the
 	 * correct coprocessor instruction.
 	 */
-	mrc	15, 0, r0, c0, c0, 0					/* read CPU id in r0			*/
+	mrc	p15, 0, r0, c0, c0, 0					/* read CPU id in r0			*/
 	mov	r3, r0							/* store in r3				*/
 
 	/* assume its ARMv4 instruction set									*/
@@ -77,23 +77,23 @@ ENTRY(relocate_code)
 	/* flush ID cache											*/
 	mov	r0, #0
 	cmp	r14, #0
-	mcreq	15, 0, r0, c7, c0, 0					/* flush v3 ID cache			*/
-	mcrne	15, 0, r0, c7, c7, 0					/* flush v4 ID cache			*/
-	mcrne	15, 0, r0, c7, c10, 4					/* drain WB (v4)			*/
+	mcreq	p15, 0, r0, c7, c0, 0					/* flush v3 ID cache			*/
+	mcrne	p15, 0, r0, c7, c7, 0					/* flush v4 ID cache			*/
+	mcrne	p15, 0, r0, c7, c10, 4					/* drain WB (v4)			*/
 
 	/* flush TLB												*/
-	mcr	15, 0, r0, c5, c0, 0					/* flush TLB for v3 and v4		*/
+	mcr	p15, 0, r0, c5, c0, 0					/* flush TLB for v3 and v4		*/
 
 	/* switch off MMU, IDcache and WB and branch to physical code space					*/
 	cmp	r14, #0
-	mrcne	15, 0, r0, c1, c0, 0					/* read processor control register if v4*/
+	mrcne	p15, 0, r0, c1, c0, 0					/* read processor control register if v4*/
 	bic	r0, r0, #0x3f						/* clear only known bits		*/
 	moveq	r0, #0							/* for v3 just set to zero		*/
 	orr	r0, r0, #CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_32BP_ENABLE
 	mov	r13, r0							/* save this control value in r13	*/
 	cmp	r14, #0
-	mcr	15, 0, r0, c1, c0, 0					/* write control register!		*/
-/*1*/	mcrne	15, 0, r1, c7, c5, 0					/* write zero in ARMv4 MMU disable	*/
+	mcr	p15, 0, r0, c1, c0, 0					/* write control register!		*/
+/*1*/	mcrne	p15, 0, r1, c7, c5, 0					/* write zero in ARMv4 MMU disable	*/
 /*2*/	mov	pc, r9							/* branch to physical address		*/	
 	
 relocate_code_physical_restart:
@@ -132,25 +132,25 @@ loop_one_page:
 	/* flush ID cache											*/
 	mov	r0, #0
 	cmp	r14, #0
-	mcreq	15, 0, r0, c7, c0, 0					/* flush v3 ID cache			*/
-	mcrne	15, 0, r0, c7, c7, 0					/* flush v4 ID cache			*/
+	mcreq	p15, 0, r0, c7, c0, 0					/* flush v3 ID cache			*/
+	mcrne	p15, 0, r0, c7, c7, 0					/* flush v4 ID cache			*/
 
 	/* drain write buffer (v4)										*/
 	mov	r0, #0
 	cmp	r14, #0
-	mcrne	15, 0, r0, c7, c10, 4					/* drain WB (v4)			*/
+	mcrne	p15, 0, r0, c7, c10, 4					/* drain WB (v4)			*/
 
 	/* flush TLB												*/
-	mcr	15, 0, r0, c5, c0, 0					/* flush TLB for v3 and v4		*/
+	mcr	p15, 0, r0, c5, c0, 0					/* flush TLB for v3 and v4		*/
 
 	/* set new TLB address											*/
 	mov	r0, r11
-	mcr	15, 0, r0, c2, c0, 0					/* write TLB address			*/
+	mcr	p15, 0, r0, c2, c0, 0					/* write TLB address			*/
 
 	/* Switch on MMU, IDCache and WB and keep on running on flat translated memory				*/
 	orr	r0, r13, #CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_32BP_ENABLE
 	orr	r0, r0,  #CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_DC_ENABLE   | CPU_CONTROL_MMU_ENABLE
-	mcr	15, 0, r0, c1, c0, 0					/* write register !!!			*/
+	mcr	p15, 0, r0, c1, c0, 0					/* write register !!!			*/
 	mov	r0, r0							/* flat					*/
 	mov	r0, r0							/* flat					*/
 	/* not flat anymore but we just continue								*/
@@ -196,7 +196,7 @@ ENTRY(start_kernel)
 
 	/* relocate the relocation routine to the given page */
 	adr	r6, relocate_code
-	mov	r7, #relocate_table_start - relocate_code	/* get length to copy */
+	ldr	r7, =relocate_table_start - relocate_code	/* get length to copy */
 	mov	r8, r0
 relocate_code_loop:
 	ldr	r9, [r6], #4
@@ -242,7 +242,7 @@ flush_ID_cache_try:
 
 	/* set up info */
 	mov	r9, r0							/* save relocated page address		*/
-	mov	r7, #relocate_code_physical_restart - relocate_code	/* get offset				*/
+	ldr	r7, =relocate_code_physical_restart - relocate_code	/* get offset			*/
 	add	r1, r0, r1						/* get physical address			*/
 	add	r1, r1, r7						/* add offset				*/
 	mov	r0, r2							/* put configuration structure in r0	*/
