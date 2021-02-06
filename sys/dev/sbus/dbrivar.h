@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.16 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.17 2021/02/06 09:15:11 isaki Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -140,7 +140,6 @@ struct dbri_softc {
 
 	int		sc_waitseen;
 
-	int		sc_refcount;
 	int		sc_playing;
 	int		sc_recording;
 
