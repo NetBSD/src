@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.6 2021/02/05 17:03:35 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.7 2021/02/06 05:33:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.6 2021/02/05 17:03:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.7 2021/02/06 05:33:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.6 2021/02/05 17:03:35 thorpej Exp 
 device_t			root_device;
 
 /*
- * device_handle_t accessors / mutators.
+ * devhandle_t accessors / mutators.
  */
 
 static bool
