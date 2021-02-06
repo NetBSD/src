@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.67 2021/01/29 18:19:21 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.68 2021/02/06 15:29:14 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1531,4 +1531,20 @@ sys/dev/hyperv/vmbus.c				1.12 (patch)
 
 	hvkbd(4), vmbus(4), hvn(4): don't wait forever.
 	[nonaka, ticket #1647]
+
+sys/conf/param.c				1.69
+sys/kern/init_main.c				1.533 (via patch)
+sys/sys/param.h					1.679
+
+	Set a better default for MAXFILES on larger RAM machines if not
+	otherwise specified the kernel config file.  Arbitary numbers are
+	20,000 files for 16GB RAM or more and 10,000 files for 1GB RAM or
+	more.
+	[simonb, ticket #1649]
+
+lib/libc/arch/mips/sys/cerror.S			1.20
+
+	MIPS n32/n64: fix __errno() calls from other libraries
+	(eg __posix_cerror() in libposix).
+	[simonb, ticket #1648]
 
