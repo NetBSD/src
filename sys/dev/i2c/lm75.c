@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.40 2021/01/30 01:22:06 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.41 2021/02/06 05:21:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.40 2021/01/30 01:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.41 2021/02/06 05:21:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +94,23 @@ static void	lmtemp_setlim_lm77(struct sysmon_envsys *, envsys_data_t *,
 static void	lmtemp_setup_sysctl(struct lmtemp_softc *);
 static int	sysctl_lm75_temp(SYSCTLFN_ARGS);
 
+enum {
+	lmtemp_lm75 = 0,
+	lmtemp_ds75 = 1,
+	lmtemp_lm77 = 2,
+};
+
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "i2c-lm75" },
-	{ .compat = "lm75" },
-	{ .compat = "ds1775" },
+	{ .compat = "national,lm75",	.value = lmtemp_lm75 },
+	{ .compat = "i2c-lm75",		.value = lmtemp_lm75 },
+	{ .compat = "lm75",		.value = lmtemp_lm75 },
+
+	/* XXX Linux treats ds1775 and ds75 differently. */
+	{ .compat = "dallas,ds1775",	.value = lmtemp_ds75 },
+	{ .compat = "ds1775",		.value = lmtemp_ds75 },
+
+	{ .compat = "national,lm77",	.value = lmtemp_lm77 },
+
 	/*
 	 * see XXX in _attach() below: add code once non-lm75 matches are
 	 * added here!
@@ -105,13 +118,7 @@ static const struct device_compatible_entry compat_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
-enum {
-	lmtemp_lm75 = 0,
-	lmtemp_ds75,
-	lmtemp_lm77,
-};
 static const struct {
-	int lmtemp_type;
 	const char *lmtemp_name;
 	int lmtemp_addrmask;
 	int lmtemp_addr;
@@ -122,18 +129,36 @@ static const struct {
 	void (*lmtemp_setlim)(struct sysmon_envsys *, envsys_data_t *,
 		sysmon_envsys_lim_t *, uint32_t *);
 } lmtemptbl[] = {
-	{ lmtemp_lm75,	"LM75",	LM75_ADDRMASK,	LM75_ADDR,
-	    lmtemp_decode_lm75,	lmtemp_encode_lm75,
-	    lmtemp_getlim_lm75,	lmtemp_setlim_lm75 },
-	{ lmtemp_ds75,	"DS75",	LM75_ADDRMASK,	LM75_ADDR,
-	    lmtemp_decode_ds75,	lmtemp_encode_ds75,
-	    lmtemp_getlim_lm75,	lmtemp_setlim_lm75 },
-	{ lmtemp_lm77,	"LM77",	LM77_ADDRMASK,	LM77_ADDR,
-	    lmtemp_decode_lm77, lmtemp_encode_lm77,
-	    lmtemp_getlim_lm77,	lmtemp_setlim_lm77 },
-	{ -1,		NULL,	 0,		0,
-	    NULL,		NULL,
-	    NULL,		NULL }
+[lmtemp_lm75] =
+	{
+		.lmtemp_name = "LM75",
+		.lmtemp_addrmask = LM75_ADDRMASK,
+		.lmtemp_addr = LM75_ADDR,
+		.lmtemp_decode = lmtemp_decode_lm75,
+		.lmtemp_encode = lmtemp_encode_lm75,
+		.lmtemp_getlim = lmtemp_getlim_lm75,
+		.lmtemp_setlim = lmtemp_setlim_lm75,
+	},
+[lmtemp_ds75] =
+	{
+		.lmtemp_name = "DS75",
+		.lmtemp_addrmask = LM75_ADDRMASK,
+		.lmtemp_addr = LM75_ADDR,
+		.lmtemp_decode = lmtemp_decode_ds75,
+		.lmtemp_encode = lmtemp_encode_ds75,
+		.lmtemp_getlim = lmtemp_getlim_lm75,
+		.lmtemp_setlim = lmtemp_setlim_lm75,
+	},
+[lmtemp_lm77] =
+	{
+		.lmtemp_name = "LM77",
+		.lmtemp_addrmask = LM77_ADDRMASK,
+		.lmtemp_addr = LM77_ADDR,
+		.lmtemp_decode = lmtemp_decode_lm77,
+		.lmtemp_encode = lmtemp_encode_lm77,
+		.lmtemp_getlim = lmtemp_getlim_lm77,
+		.lmtemp_setlim = lmtemp_setlim_lm77,
+	},
 };
 
 static int
@@ -148,11 +173,14 @@ lmtemp_match(device_t parent, cfdata_t cf, void *aux)
 	/*
 	 * Indirect config - not much we can do!
 	 */
-	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
-		if (lmtemptbl[i].lmtemp_type == cf->cf_flags)
+	for (i = 0; i < __arraycount(lmtemptbl); i++) {
+		if (i == cf->cf_flags) {
 			break;
-	if (lmtemptbl[i].lmtemp_type == -1)
+		}
+	}
+	if (i == __arraycount(lmtemptbl)) {
 		return 0;
+	}
 
 	if ((ia->ia_addr & lmtemptbl[i].lmtemp_addrmask) ==
 	    lmtemptbl[i].lmtemp_addr)
@@ -166,23 +194,22 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	const struct device_compatible_entry *dce;
 	char name[64];
 	const char *desc;
 	int i;
 
 	sc->sc_dev = self;
-	if (ia->ia_name == NULL) {
-		for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
-			if (lmtemptbl[i].lmtemp_type ==
-			    device_cfdata(self)->cf_flags)
-				break;
+	dce = iic_compatible_lookup(ia, compat_data);
+	if (dce != NULL) {
+		i = (int)dce->value;
 	} else {
-		if (strcmp(ia->ia_name, "ds1775") == 0) {
-			i = 1;	/* LMTYPE_DS75 */
-		} else {
-			/* XXX - add code when adding other direct matches! */
-			i = 0;
+		for (i = 0; i < __arraycount(lmtemptbl); i++) {
+			if (i == device_cfdata(self)->cf_flags) {
+				break;
+			}
 		}
+		KASSERT(i < __arraycount(lmtemptbl));
 	}
 
 	sc->sc_tag = ia->ia_tag;
