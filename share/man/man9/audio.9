@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.59 2021/02/06 06:15:13 isaki Exp $
+.\"	$NetBSD: audio.9,v 1.60 2021/02/06 13:55:40 nia Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 9, 2019
+.Dd February 2, 2021
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -175,9 +175,9 @@ It should fill the
 .Vt audio_format_t
 structure according to given number
 .Va afp->index .
-If there is no format with given number, return
+If there is no format with the given number, return
 .Er EINVAL .
-It is called at any time.
+It can be called at any time.
 .Bd -literal
 typedef struct audio_format_query {
 	u_int	index;
@@ -185,8 +185,7 @@ typedef struct audio_format_query {
 } audio_format_query_t;
 .Ed
 .Pp
-It is also used to determine the default format.
-The upper layer chooses the most preferred one as default format by following:
+It is also used by the upper layer to determine the default format, as follows:
 .Bl -enum
 .It
 Higher priority is preferred (normally 0, the highest is 3, the lowest is 0).
@@ -197,19 +196,19 @@ is preferred if exists.
 .Dv AUDIO_ENCODING_SLINEAR_OE:16
 is preferred if exists.
 .It
-More channels is preferred.
+The format with more channels is preferred.
 .El
 .Pp
 If the driver supports
 .Dv SLINEAR_NE:16
 and the upper layer chooses it,
-the driver does not need to provide conversion function in
+the driver does not need to provide a conversion function in
 .Va set_format .
 Similarly, if the driver supports
 .Dv SLINEAR_OE:16
 and the upper layer chooses it,
-the driver does not need to provide a conversion function.
-Because the upper layer only supports conversion between
+the driver does not need to provide a conversion function,
+because the upper layer supports conversion between
 .Dv SLINEAR_NE:16
 and
 .Dv SLINEAR_OE:16
@@ -224,7 +223,7 @@ If the driver can not provide the conversion from/to
 set priority to \-1.
 It means that the hardware supports this format but the driver does not
 (e.g. AC3), and it will never be chosen.
-.It Dv int set_foramt(void *hdl, int setmode,
+.It Dv int set_format(void *hdl, int setmode,
 .Dv "const audio_params_t *play, const audio_params_t *rec,"
 .Dv "audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)"
 .Pp
@@ -242,8 +241,7 @@ The
 and
 .Va rec
 structures contain the encoding parameters that should be set to the hardware.
-If the driver has query_format interface,
-all parameters on
+If the driver has query_format, all parameters on
 .Va play
 and/or
 .Va rec
@@ -253,8 +251,7 @@ Therefore
 and/or
 .Va rec
 are always settable.
-If the driver does not have query_format interface,
-the driver has to validate the format.
+If the driver does not have query_format, the driver has to validate the format.
 If the hardware does not support
 .Dv AUDIO_ENCODING_SLINEAR_{NE,OE}:16 ,
 conversion information should be filled the
@@ -312,7 +309,7 @@ are guaranteed to be able to consecutively access number of frames
 specified by
 .Va count.
 .Va codec
-must fill entire
+must fill the entirety of
 .Va dst .
 For example, let count = 100, srcfmt is { precision = 16, channels = 3 },
 dstfmt is { precision = 8, channels = 4 },
@@ -334,7 +331,7 @@ property the same value is passed in both
 .Va play
 and
 .Va rec .
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 It is called in the Attach or Closed phases.
 .It Dv int round_blocksize(void *hdl, int bs, int mode,
 .Dv "const audio_params_t *param)"
@@ -365,7 +362,7 @@ are done.
 A hardware driver that needs to get the hardware in and out of command
 mode for each change can save all the changes during previous calls and
 do them all here.
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 It is called in the Attach or Closed phases.
 .It Dv int init_output(void *hdl, void *buffer, int size)
 optional, is called before any output starts, but when the total
@@ -383,7 +380,7 @@ of the input
 .Va buffer
 has been determined.
 It can be used to initialize looping DMA for hardware that needs that.
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 It is called in the Attach or Closed phases.
 .It Dv int start_output(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
@@ -403,7 +400,7 @@ Calling
 .Va intr
 will normally initiate another call to
 .Va start_output .
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 This field is optional only if the driver doesn't support playback.
 It is called in the Opened phase.
 .It Dv int start_input(void *hdl, void *block, int blksize,
@@ -424,21 +421,21 @@ Calling
 .Va intr
 will normally initiate another call to
 .Va start_input .
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 This field is optional only if the driver doesn't support recording.
 It is called in the Opened phase.
 .It Dv int halt_output(void *hdl)
 is called to abort the output transfer (started by
 .Va start_output )
 in progress.
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 This field is optional only if the driver doesn't support playback.
 It is called in the Opened phase.
 .It Dv int halt_input(void *hdl)
 is called to abort the input transfer (started by
 .Va start_input )
 in progress.
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 This field is optional only if the driver doesn't support recording,
 It is called in the Opened phase.
 .It Dv int speaker_ctl(void *hdl, int on)
@@ -446,13 +443,13 @@ optional, is called when a half duplex device changes between
 playing and recording.
 It can, e.g., be used to turn on
 and off the speaker.
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 It is called in the Opened phase.
 .It Dv int getdev(void *hdl, struct audio_device *ret)
 Should fill the
 .Va audio_device
 struct with relevant information about the driver.
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 It is called in the Opened phase.
 .It Dv int set_port(void *hdl, mixer_ctrl_t *mc)
 is called in when
@@ -460,8 +457,8 @@ is called in when
 is used.
 It should take data from the
 .Va mixer_ctrl_t
-struct at set the corresponding mixer values.
-Return 0 on success, otherwise an error code.
+struct and set the corresponding mixer values.
+Returns 0 on success, otherwise an error code.
 It is called in the Opened or Closed phases.
 .It Dv int get_port(void *hdl, mixer_ctrl_t *mc)
 is called in when
@@ -470,7 +467,7 @@ is used.
 It should fill the
 .Va mixer_ctrl_t
 struct.
-Return 0 on success, otherwise an error code.
+Returns 0 on success, otherwise an error code.
 It is called in the Opened or Closed phases.
 .It Dv int query_devinfo(void *hdl, mixer_devinfo_t *di)
 is called in when
