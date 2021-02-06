@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.807 2021/02/05 05:42:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.808 2021/02/06 21:40:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.807 2021/02/05 05:42:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.808 2021/02/06 21:40:14 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3239,17 +3239,18 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 }
 
 /*
- * The ::= modifiers actually assign a value to the variable.
- * Their main purpose is in supporting modifiers of .for loop
- * iterators and other obscure uses.  They always expand to
- * nothing.  In a target rule that would otherwise expand to an
- * empty line they can be preceded with @: to keep make happy.
- * Eg.
+ * The ::= modifiers are special in that they do not read the variable value
+ * but instead assign to that variable.  They always expand to an empty
+ * string.
  *
- * foo:	.USE
+ * Their main purpose is in supporting .for loops that generate shell commands
+ * since an ordinary variable assignment at that point would terminate the
+ * dependency group for these targets.  For example:
+ *
+ * list-targets: .USE
  * .for i in ${.TARGET} ${.TARGET:R}.gz
- *	@: ${t::=$i}
- *	@echo blah ${t:T}
+ *	@${t::=$i}
+ *	@echo 'The target is ${t:T}.'
  * .endfor
  *
  *	  ::=<str>	Assigns <str> as the new value of variable.
