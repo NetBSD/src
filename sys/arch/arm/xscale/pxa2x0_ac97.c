@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.18 2020/04/19 08:18:19 isaki Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.19 2021/02/06 07:16:54 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -545,8 +545,6 @@ acu_close(void *arg)
 	/*
 	 * Make sure the hardware is quiescent
 	 */
-	acu_halt_output(sc);
-	acu_halt_input(sc);
 	delay(100);
 
 	/* Assert Cold Reset */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.118 2020/02/29 05:51:11 isaki Exp $	*/
+/*	$NetBSD: gus.c,v 1.119 2021/02/06 07:16:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.118 2020/02/29 05:51:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.119 2021/02/06 07:16:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1359,14 +1359,10 @@ gusclose(void *addr)
 	sc = addr;
 	DPRINTF(("gus_close: sc=%p\n", sc));
 
+	KASSERT((sc->sc_flags & (GUS_DMAOUT_ACTIVE | GUS_LOCKED)) == 0);
+	KASSERT((sc->sc_flags & GUS_DMAIN_ACTIVE) == 0);
 
-/*	if (sc->sc_flags & GUS_DMAOUT_ACTIVE) */ {
-		gus_halt_out_dma(sc);
-	}
-/*	if (sc->sc_flags & GUS_DMAIN_ACTIVE) */ {
-		gus_halt_in_dma(sc);
-	}
-	sc->sc_flags &= ~(GUS_OPEN|GUS_LOCKED|GUS_DMAOUT_ACTIVE|GUS_DMAIN_ACTIVE);
+	sc->sc_flags &= ~GUS_OPEN;
 
 	/* turn off speaker, etc. */
 
