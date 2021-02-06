@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.86 2020/04/19 08:18:19 isaki Exp $	*/
+/*	$NetBSD: auvia.c,v 1.87 2021/02/06 09:45:17 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.86 2020/04/19 08:18:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.87 2021/02/06 09:45:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,9 +614,7 @@ auvia_open(void *addr, int flags)
 	struct auvia_softc *sc;
 
 	sc = (struct auvia_softc *)addr;
-	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->lock(sc->codec_if);
-	mutex_spin_enter(&sc->sc_intr_lock);
 	return 0;
 }
 
@@ -626,9 +624,7 @@ auvia_close(void *addr)
 	struct auvia_softc *sc;
 
 	sc = (struct auvia_softc *)addr;
-	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
-	mutex_spin_enter(&sc->sc_intr_lock);
 }
 
 static int
