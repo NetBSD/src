@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.70 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.71 2021/02/06 05:15:03 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.70 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.71 2021/02/06 05:15:03 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -217,8 +217,6 @@ static void	emuxki_play_start(struct emuxki_softc *, int, uint32_t,
 		    uint32_t);
 static void	emuxki_play_stop(struct emuxki_softc *, int);
 
-static int	emuxki_open(void *, int);
-static void	emuxki_close(void *);
 static int	emuxki_query_format(void *, audio_format_query_t *);
 static int	emuxki_set_format(void *, int,
 		    const audio_params_t *, const audio_params_t *,
@@ -254,8 +252,6 @@ CFATTACH_DECL_NEW(emuxki, sizeof(struct emuxki_softc),
     emuxki_match, emuxki_attach, emuxki_detach, NULL);
 
 static const struct audio_hw_if emuxki_hw_if = {
-	.open			= emuxki_open,
-	.close			= emuxki_close,
 	.query_format		= emuxki_query_format,
 	.set_format		= emuxki_set_format,
 	.round_blocksize	= emuxki_round_blocksize,
@@ -950,24 +946,6 @@ emuxki_timer_stop(struct emuxki_softc *sc)
 /*
  * audio interface
  */
-
-static int
-emuxki_open(void *hdl, int flags)
-{
-
-	DPRINTF("%s for %s%s\n", __func__,
-	    (flags & FWRITE) ? "P" : "",
-	    (flags & FREAD)  ? "R" : "");
-
-	return 0;
-}
-
-static void
-emuxki_close(void *hdl)
-{
-
-	DPRINTF("%s\n", __func__);
-}
 
 static int
 emuxki_query_format(void *hdl, audio_format_query_t *afp)
