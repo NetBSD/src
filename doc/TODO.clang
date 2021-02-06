@@ -1,10 +1,7 @@
-$NetBSD: TODO.clang,v 1.23 2019/08/02 12:06:20 joerg Exp $
+$NetBSD: TODO.clang,v 1.24 2021/02/06 22:00:59 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
-
-src/sys/arch/acorn32/stand
-    "-fno-integrated-as" is used for pre-unified ARM assembler.
 
 src/sys/arch/i386/stand
     "-no-integrated-as" is used to compensate
