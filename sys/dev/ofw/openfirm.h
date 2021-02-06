@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.45 2021/02/05 17:17:59 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.46 2021/02/06 16:07:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -104,6 +104,7 @@ int	openfirmware(void *);
 /*
  * Functions and variables provided by machine-independent code.
  */
+#ifdef _KERNEL
 struct device_compatible_entry;
 
 devhandle_t	devhandle_from_of(int);
@@ -131,6 +132,7 @@ char	*of_get_mode_string(char *, int);
 
 void	of_enter_i2c_devs(prop_dictionary_t, int, size_t, int);
 void	of_enter_spi_devs(prop_dictionary_t, int, size_t);
+#endif /* _KERNEL */
 
 bool	of_hasprop(int, const char *);
 #define of_getprop_bool	of_hasprop
