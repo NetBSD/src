@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.408 2020/11/30 17:06:02 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.409 2021/02/06 21:24:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.408 2020/11/30 17:06:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.409 2021/02/06 21:24:19 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -338,6 +338,9 @@ paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 #define	VM_PAGE_TO_PP(pg)	(&(pg)->mdpage.mp_pp)
 #define	PMAP_CHECK_PP(pp) \
     KASSERTMSG((pp)->pp_lock.mtx_ipl._ipl == IPL_VM, "bad pmap_page %p", pp)
+
+#define PAGE_ALIGNED(pp)	\
+	__builtin_assume_aligned((void *)(pp), PAGE_SIZE)
 
 /*
  * Other data structures
@@ -1297,7 +1300,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	xen_dummy_user_pgd = xen_dummy_page - KERNBASE;
 
 	/* Zero fill it, the less checks in Xen it requires the better */
-	memset((void *)(xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
+	memset(PAGE_ALIGNED(xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
 	/* Mark read-only */
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PTE_P | pmap_pg_nx,
@@ -1542,7 +1545,7 @@ pmap_init_pcpu(void)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		memset((void *)tmpva, 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(tmpva), 0, PAGE_SIZE);
 
 		L4_BASE[L4e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1556,7 +1559,7 @@ pmap_init_pcpu(void)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		memset((void *)tmpva, 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(tmpva), 0, PAGE_SIZE);
 
 		L3_BASE[L3e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1571,7 +1574,7 @@ pmap_init_pcpu(void)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		memset((void *)tmpva, 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(tmpva), 0, PAGE_SIZE);
 
 		L2_BASE[L2e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1663,7 +1666,7 @@ pmap_init_directmap(struct pmap *kpm)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		memset((void *)tmpva, 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(tmpva), 0, PAGE_SIZE);
 
 		L4_BASE[L4e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1677,7 +1680,7 @@ pmap_init_directmap(struct pmap *kpm)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		memset((void *)tmpva, 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(tmpva), 0, PAGE_SIZE);
 
 		L3_BASE[L3e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -2627,7 +2630,7 @@ pmap_pdp_init(pd_entry_t *pdir)
 	int s;
 #endif
 
-	memset(pdir, 0, PDP_SIZE * PAGE_SIZE);
+	memset(PAGE_ALIGNED(pdir), 0, PDP_SIZE * PAGE_SIZE);
 
 	/*
 	 * NOTE: This is all done unlocked, but we will check afterwards
@@ -3805,7 +3808,7 @@ void
 pmap_zero_page(paddr_t pa)
 {
 #if defined(__HAVE_DIRECT_MAP)
-	memset((void *)PMAP_DIRECT_MAP(pa), 0, PAGE_SIZE);
+	memset(PAGE_ALIGNED(PMAP_DIRECT_MAP(pa)), 0, PAGE_SIZE);
 #else
 #if defined(XENPV)
 	if (XEN_VERSION_SUPPORTED(3, 4))
@@ -3829,7 +3832,7 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_flush();
 	pmap_update_pg(zerova);		/* flush TLB */
 
-	memset((void *)zerova, 0, PAGE_SIZE);
+	memset(PAGE_ALIGNED(zerova), 0, PAGE_SIZE);
 
 #if defined(DIAGNOSTIC) || defined(XENPV)
 	pmap_pte_set(zpte, 0);				/* zap ! */
@@ -3847,7 +3850,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	vaddr_t srcva = PMAP_DIRECT_MAP(srcpa);
 	vaddr_t dstva = PMAP_DIRECT_MAP(dstpa);
 
-	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
+	memcpy(PAGE_ALIGNED(dstva), PAGE_ALIGNED(srcva), PAGE_SIZE);
 #else
 #if defined(XENPV)
 	if (XEN_VERSION_SUPPORTED(3, 4)) {
@@ -3877,7 +3880,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_update_pg(srcva);
 	pmap_update_pg(dstva);
 
-	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
+	memcpy(PAGE_ALIGNED(dstva), PAGE_ALIGNED(srcva), PAGE_SIZE);
 
 #if defined(DIAGNOSTIC) || defined(XENPV)
 	pmap_pte_set(srcpte, 0);
@@ -5403,7 +5406,7 @@ pmap_get_physpage(void)
 		if (!uvm_page_physget(&pa))
 			panic("%s: out of memory", __func__);
 #if defined(__HAVE_DIRECT_MAP)
-		memset((void *)PMAP_DIRECT_MAP(pa), 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(PMAP_DIRECT_MAP(pa)), 0, PAGE_SIZE);
 #else
 #if defined(XENPV)
 		if (XEN_VERSION_SUPPORTED(3, 4)) {
@@ -5416,7 +5419,7 @@ pmap_get_physpage(void)
 		    PTE_W | pmap_pg_nx);
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
-		memset(early_zerop, 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(early_zerop), 0, PAGE_SIZE);
 #if defined(DIAGNOSTIC) || defined(XENPV)
 		pmap_pte_set(early_zero_pte, 0);
 		pmap_pte_flush();
@@ -5782,13 +5785,13 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 	/* Zero levels 1-3 */
 	for (level = 0; level < PTP_LEVELS - 1; ++level) {
 		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
-		memset(tmp_pml, 0, PAGE_SIZE);
+		memset(PAGE_ALIGNED(tmp_pml), 0, PAGE_SIZE);
 	}
 
 	/* Copy PML4 */
 	kernel_pml = pmap_kernel()->pm_pdir;
 	tmp_pml = (void *)x86_tmp_pml_vaddr[PTP_LEVELS - 1];
-	memcpy(tmp_pml, kernel_pml, PAGE_SIZE);
+	memcpy(PAGE_ALIGNED(tmp_pml), PAGE_ALIGNED(kernel_pml), PAGE_SIZE);
 
 #ifdef PAE
 	/*
@@ -6701,7 +6704,7 @@ pmap_ept_transform(struct pmap *pmap)
 	pmap->pm_write_protect = pmap_ept_write_protect;
 	pmap->pm_unwire = pmap_ept_unwire;
 
-	memset(pmap->pm_pdir, 0, PAGE_SIZE);
+	memset(PAGE_ALIGNED(pmap->pm_pdir), 0, PAGE_SIZE);
 }
 
 #endif /* __HAVE_DIRECT_MAP && __x86_64__ && !XENPV */
