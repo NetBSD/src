@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.206 2020/07/28 21:38:15 uwe Exp $
+#	$NetBSD: Makefile,v 1.207 2021/02/06 16:14:55 dbj Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -25,26 +25,25 @@
 TOOLS_BUILDRUMP?=no
 
 .if ${TOOLCHAIN_MISSING} == "no"
-. if defined(HAVE_GCC) && ${HAVE_GCC} > 0
-TOOLCHAIN_BITS= gmake .WAIT
+. if (defined(HAVE_GCC) && ${HAVE_GCC} > 0) || \
+     (defined(HAVE_GDB) && ${HAVE_GDB} > 0 && ${MKCROSSGDB:Uno} != "no")
+TOOLCHAIN_BITS+= gmake .WAIT
 TOOLCHAIN_BITS+= gmp .WAIT
 TOOLCHAIN_BITS+= mpfr .WAIT
 TOOLCHAIN_BITS+= mpc .WAIT
 . endif
-.endif
 
-.if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= binutils .WAIT
-.endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} > 0
-. if ${TOOLCHAIN_MISSING} == "no"
+. if defined(HAVE_GCC) && ${HAVE_GCC} > 0
 TOOLCHAIN_BITS+= gcc
-.  if ${MKCROSSGDB:Uno} != "no" || make(obj)
-TOOLCHAIN_BITS+= gdb
-.  endif
-TOOLCHAIN_BITS+= .WAIT
 . endif
+
+. if defined(HAVE_GDB) && ${HAVE_GDB} > 0 && ${MKCROSSGDB:Uno} != "no"
+TOOLCHAIN_BITS+= gdb
+. endif
+
+TOOLCHAIN_BITS+= .WAIT
 .endif
 
 .if defined(HAVE_PCC)
