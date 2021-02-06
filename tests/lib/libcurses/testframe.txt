@@ -1,3 +1,4 @@
+$NetBSD: testframe.txt,v 1.6 2021/02/06 20:09:43 rillig Exp $
 
 CURSES TESTFRAME
 ----------------
@@ -7,9 +8,9 @@ CURSES TESTFRAME
 The curses library is a complex piece of software and, often, changes
 made to the library may introduce subtle bugs that are hidden by other
 actions so a visual check of the curses output may look correct in
-some circumstances and the bug only show itself after a certain
+some circumstances and the bug only shows itself after a certain
 sequence of actions.  To assist with validating that changes made to
-the curses library have no undesired effects an automated test is
+the curses library have no undesired effects, an automated test is
 needed to detect and highlight any changes in the curses application
 output stream.  The programmer can then analyse the output changes and
 either correct a bug or update the automated test to accept the new
@@ -246,17 +247,14 @@ there is one more special call called "drain".  This call repeatedly
 called wgetch(win) until there are no more characters in win.  The call
 assumes that the curses input is either in no delay or timed input
 mode otherwise the test will time out and fail.  This call can be used
-to clear any pending input when testing testing a timed read to
-prevent the input being used in a later test.
+to clear any pending input when testing a timed read, to prevent the
+input from being used in a later test.
 
 4. Slave
 
 The user has no direct interaction with the slave process.  The slave
-is forked off by the director communicates to the director over a set
-of pipes and a pseudo-tty connected to its standard i/o file
+is forked off by the director and communicates to the director over a
+set of pipes and a pseudo-tty connected to its standard i/o file
 descriptors.  The slave executes the passed curses calls and passes
 back return values to the director.  The slave automatically calls
-initscr() on start up.
-
-
-
+initscr() on startup.
