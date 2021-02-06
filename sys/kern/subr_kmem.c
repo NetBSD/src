@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.81 2021/01/24 17:29:11 thorpej Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.82 2021/02/06 13:54:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.81 2021/01/24 17:29:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.82 2021/02/06 13:54:48 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -505,7 +505,7 @@ kmem_tmpbuf_free(void *buf, size_t size, void *stackbuf)
 static void
 kmem_size_set(void *p, size_t sz)
 {
-	memcpy((size_t *)((uintptr_t)p + sz), &sz, sizeof(size_t));
+	memcpy((char *)p + sz, &sz, sizeof(size_t));
 }
 
 static void
@@ -513,13 +513,13 @@ kmem_size_check(void *p, size_t sz)
 {
 	size_t hsz;
 
-	memcpy(&hsz, (size_t *)((uintptr_t)p + sz), sizeof(size_t));
+	memcpy(&hsz, (char *)p + sz, sizeof(size_t));
 
 	if (hsz != sz) {
 		panic("kmem_free(%p, %zu) != allocated size %zu; overwrote?",
 		    p, sz, hsz);
 	}
 
-	memset((size_t *)((uintptr_t)p + sz), 0xff, sizeof(size_t));
+	memset((char *)p + sz, 0xff, sizeof(size_t));
 }
 #endif /* defined(KMEM_SIZE) */
