@@ -1,4 +1,4 @@
-.\" $NetBSD: pad.4,v 1.9 2021/02/06 12:07:57 nia Exp $
+.\" $NetBSD: pad.4,v 1.10 2021/02/06 12:13:44 nia Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -39,6 +39,10 @@ is a pseudo-device driver which provides support for feeding back PCM data
 from consumers of an
 .Xr audio 4
 device to userland.
+.Pp
+The raw PCM data readable from
+.Pa /dev/padN
+is encoded in stereo little-endian 16-bit linear PCM at 44100 Hz.
 .Sh FILES
 The
 .Nm
