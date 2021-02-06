@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.12 2020/10/20 20:36:53 rillig Exp $
+# $NetBSD: t_make.sh,v 1.13 2021/02/06 19:00:25 martin Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,7 +59,8 @@ test_case()
 	eval "${atfname}_head() { \
 		if [ -n '${descr}' ]; then \
 		    atf_set descr '${descr}'; \
-		fi \
+		fi; \
+		atf_set require.user unprivileged; \
 	}"
 	eval "${atfname}_body() { \
 		run_and_check '${atfname}' '${makename}'; \
