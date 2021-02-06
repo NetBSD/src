@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.44 2021/02/06 09:15:11 isaki Exp $	*/
+/*	$NetBSD: dbri.c,v 1.45 2021/02/06 13:02:28 isaki Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.44 2021/02/06 09:15:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.45 2021/02/06 13:02:28 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1065,7 +1065,6 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 		if (error == EINTR) {
 			DPRINTF("%s: interrupted\n", device_xname(sc->sc_dev));
 			ret = -1;
-			mutex_spin_exit(&sc->sc_intr_lock);
 			goto fail;
 		}
 		bail++;
