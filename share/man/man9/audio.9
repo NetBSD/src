@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.58 2020/02/29 05:39:03 isaki Exp $
+.\"	$NetBSD: audio.9,v 1.59 2021/02/06 06:15:13 isaki Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,6 +163,11 @@ It is called in the Closed phase.
 .It Dv void close(void *hdl)
 optional, is called when the last audio device combining
 playback and recording is closed.
+Before call to this,
+.Va halt_input
+and
+.Va halt_output
+are called if necessary.
 It is called in the Opened phase.
 .It Dv int query_format(void *hdl, audio_format_query_t *afp)
 is called to enumerate formats supported by the hardware.
