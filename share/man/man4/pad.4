@@ -1,4 +1,4 @@
-.\" $NetBSD: pad.4,v 1.7 2021/02/06 11:58:10 nia Exp $
+.\" $NetBSD: pad.4,v 1.8 2021/02/06 12:01:57 nia Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -46,6 +46,10 @@ pseudo-device driver receives data from
 .Pa /dev/audioN
 and feeds the raw PCM output to
 .Pa /dev/padN .
+.Pa /dev/audioN
+is created once
+.Pa /dev/padN
+is opened.
 .Bl -item
 .It
 .Pa /dev/audioN
@@ -57,6 +61,12 @@ The following example streams an MP3 to an Apple AirTunes compatible device:
 .Bd -literal -offset indent
 $ rtunes - < /dev/pad0 &
 $ mpg123 -a /dev/audio1 mozart.mp3
+.Ed
+.Pp
+Record the output of an application (in this case, audioplay):
+.Bd -literal -offset indent
+$ ffmpeg -f s16le -ar 44100 -ac 2 -i /dev/pad0 output.wav
+$ audioplay -d /dev/audio1 input.wav
 .Ed
 .Sh SEE ALSO
 .Xr audio 4
