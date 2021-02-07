@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.10 2021/02/07 11:52:43 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.11 2021/02/07 12:05:36 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -364,15 +364,16 @@ include		BEGIN(incl);
 			return VARIABLE;
 		}
 
-	/* comments, white-outs */
+	/* whitespace, comments */
 [ \t\r]		|
 #.*		;
-^#.*\n		|
-#.*\n		|
+
+^[ \t\r]*#.*\n	|
 \\\n		|
 ^\n		line++;
 
 	/* eol on a line with data. need to process, return eol */
+#.*\n		|
 \n		{
 			line++;
 			return EOL;
