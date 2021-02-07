@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.19 2020/10/24 14:45:06 roy Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.20 2021/02/07 12:08:42 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -297,7 +297,7 @@ check		: CHECK var returns eol {
 	 * Check if var and return have same data types
 	 */
 	if (((command.returns[1].data_type == data_byte) &&
--            (vars[command.returns[0].data_index].type != data_byte)))
+	     (vars[command.returns[0].data_index].type != data_byte)))
 		err(1, "Var type %s (%d) does not match return type %s (%d)",
 		    enum_names[
 		    vars[command.returns[0].data_index].type],
