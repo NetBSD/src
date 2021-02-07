@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.131 2021/02/07 10:20:35 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.132 2021/02/07 10:47:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.131 2021/02/07 10:20:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.132 2021/02/07 10:47:40 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1633,7 +1633,14 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 *
 		 */
 		bool coherent;
-		pmap_extract_coherency(pmap, vaddr, &curaddr, &coherent);
+		bool ok __diagused;
+		ok = pmap_extract_coherency(pmap, vaddr, &curaddr, &coherent);
+
+		/*
+		 * trying to bus_dmamap_load an unmapped buffer is a
+		 * programming error.
+		 */
+		KASSERT(ok);
 
 		KASSERTMSG((vaddr & PAGE_MASK) == (curaddr & PAGE_MASK),
 		    "va %#lx curaddr %#lx", vaddr, curaddr);
