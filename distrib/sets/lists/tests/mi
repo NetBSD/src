@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1015 2021/02/01 20:31:41 rillig Exp $
+# $NetBSD: mi,v 1.1016 2021/02/07 01:53:54 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3265,6 +3265,7 @@
 ./usr/tests/lib/libcurses/check_files/addchstr.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addchstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addchstr3.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/addnstr.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addnwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addnwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addstr.chk		tests-lib-tests		compattestfile,atf
@@ -3475,6 +3476,7 @@
 ./usr/tests/lib/libcurses/check_files/waddchstr.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddnwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddnwstr2.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/waddstr.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddwstr3.chk		tests-lib-tests		compattestfile,atf

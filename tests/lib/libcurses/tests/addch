@@ -1,6 +1,22 @@
 include start
 call OK addch `\001t`
 call OK refresh
-call OK mvaddch 5 3`\003e`
+call OK mvaddch 5 3 `\003e`
+call OK refresh
+call OK addch "\n"
+
+# Somewhere between NetBSD 8.0 and 9.0, a bug was added to addch that
+# doubled the spaces for a tab.  Instead of 8 spaces, there are now 16.
+call OK addch "\t"
+call OK addch "8"
+call OK addch "\n"
+
+# Somewhere between NetBSD 8.0 and 9.0, a bug was added to addch that
+# doubled the spaces for a tab.  Instead of 1 space, there are now 2.
+call OK addstr "0123456"
+call OK addch "\t"
+call OK addch "8"
+call OK addch "\n"
+
 call OK refresh
 compare addch.chk
