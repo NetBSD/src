@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.15 2021/02/07 20:32:25 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.16 2021/02/07 20:40:05 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -164,6 +164,7 @@ RPAREN		\)
 LBRACK		\[
 RBRACK		\]
 MULTIPLIER	\*
+COMMA		,
 
 %x incl
 %option noinput nounput
@@ -245,6 +246,7 @@ include		BEGIN(incl);
 {OK_RET}	return OK_RET;
 {ERR_RET}	return ERR_RET;
 {MULTIPLIER}	return MULTIPLIER;
+{COMMA}		return COMMA;
 {CCHAR}		return CCHAR;
 {WCHAR}		return WCHAR;
 {OR}		return OR;
