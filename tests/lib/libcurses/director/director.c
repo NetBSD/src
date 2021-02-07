@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.12 2021/02/07 13:22:23 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.13 2021/02/07 13:44:22 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -70,6 +70,9 @@ void init_parse_variables(int); /* in testlang_parse.y */
 /*
  * Handle the slave exiting unexpectedly, try to recover the exit message
  * and print it out.
+ *
+ * FIXME: Must not use stdio in a signal handler.  This leads to incomplete
+ * output in verbose mode, truncating the useful part of the error message.
  */
 static void
 slave_died(int param)
