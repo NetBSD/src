@@ -1,4 +1,4 @@
-# $NetBSD: var-op-sunsh.mk,v 1.6 2020/11/15 20:20:58 rillig Exp $
+# $NetBSD: var-op-sunsh.mk,v 1.7 2021/02/07 17:17:25 rillig Exp $
 #
 # Tests for the :sh= variable assignment operator, which runs its right-hand
 # side through the shell.  It is a seldom-used alternative to the !=
@@ -75,7 +75,7 @@ VAR.key:shift=		Shift
 # the ':sh' assignment operator modifier.  Let's see what happens ...
 #
 # Well, the end result is correct but the way until there is rather
-# adventurous.  This only works because the parser replaces each an every
+# adventurous.  This only works because the parser replaces each and every
 # whitespace character that is not nested with '\0' (see Parse_DoVar).
 # The variable name therefore ends before the first ':sh', and the last
 # ':sh' turns the assignment operator into the shell command evaluation.
