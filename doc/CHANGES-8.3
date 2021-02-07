@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.68 2021/02/06 15:29:14 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.69 2021/02/07 13:56:00 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1547,4 +1547,9 @@ lib/libc/arch/mips/sys/cerror.S			1.20
 	MIPS n32/n64: fix __errno() calls from other libraries
 	(eg __posix_cerror() in libposix).
 	[simonb, ticket #1648]
+
+usr.sbin/isibootd/isibootd.c			1.4
+
+	Fix isibootd(8) "Cannot allocate memory" failure on amd64.
+	[tsutsui, ticket #1650]
 
