@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.10 2012/01/31 04:32:07 matt Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.11 2021/02/07 13:59:36 martin Exp $	*/
 
 /*
  * Copyright 1997
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.10 2012/01/31 04:32:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.11 2021/02/07 13:59:36 martin Exp $");
 
 #include <sys/param.h>
 
@@ -647,7 +647,7 @@ OF_milliseconds(void)
 }
 
 void
-OF_boot(const char *bootspec)
+OF_boot(const char *btspec)
 {
 	static struct {
 		const char *name;
@@ -660,7 +660,7 @@ OF_boot(const char *bootspec)
 		0,
 	};
 	
-	args.bootspec = bootspec;
+	args.bootspec = btspec;
 	openfirmware(&args);
 	while (1);			/* just in case */
 }
