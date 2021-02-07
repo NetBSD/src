@@ -1,4 +1,9 @@
 include window
-call OK waddstr $win1 "abcde"
-call OK wrefresh $win1
-compare addstr.chk
+call OK waddstr $win1 "abcde\n"
+call OK waddstr $win1 "\n"
+call OK waddstr $win1 "\t8\n"
+# XXX: The following line causes an unexpected "ERR Resource temporarily
+# unavailable" on NetBSD/amd64 9.99.80.
+#call OK waddstr $win1 "0123456\t8\n"
+call OK refresh
+compare waddstr.chk
