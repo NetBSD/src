@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.47 2021/02/05 20:45:38 reinoud Exp $	*/
+/*	$NetBSD: virtio.c,v 1.48 2021/02/07 09:26:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.47 2021/02/05 20:45:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.48 2021/02/07 09:26:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,7 +649,7 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
 	vq->vq_queued++;
 }
-	       
+
 /*
  * Allocate/free a vq.
  */
@@ -864,7 +864,7 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
  *	  virtio_enqueue_abort(sc, vq, slot);
  *	  return r;
  *	}
- *	r = virtio_enqueue_reserve(sc, vq, slot, 
+ *	r = virtio_enqueue_reserve(sc, vq, slot,
  *				   dmamap_payload[slot]->dm_nsegs+1);
  *							// ^ +1 for command
  *	if (r) {	// currently 0 or EAGAIN
@@ -1159,7 +1159,7 @@ virtio_dequeue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot)
  * Attach a child, fill all the members.
  */
 void
-virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl, 
+virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl,
 		    struct virtqueue *vqs,
 		    virtio_callback config_change,
 		    virtio_callback intr_hand,
@@ -1207,7 +1207,7 @@ virtio_child_attach_finish(struct virtio_softc *sc)
 
 	KASSERT(sc->sc_soft_ih == NULL);
 	if (sc->sc_flags & VIRTIO_F_INTR_SOFTINT) {
-		u_int flags = SOFTINT_NET; 
+		u_int flags = SOFTINT_NET;
 		if (sc->sc_flags & VIRTIO_F_INTR_MPSAFE)
 			flags |= SOFTINT_MPSAFE;
 
@@ -1323,24 +1323,24 @@ virtio_print_device_type(device_t self, int id, int revision)
 
 
 MODULE(MODULE_CLASS_DRIVER, virtio, NULL);
- 
+
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
- 
+
 static int
 virtio_modcmd(modcmd_t cmd, void *opaque)
 {
 	int error = 0;
- 
+
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_init_component(cfdriver_ioconf_virtio, 
-		    cfattach_ioconf_virtio, cfdata_ioconf_virtio); 
+		error = config_init_component(cfdriver_ioconf_virtio,
+		    cfattach_ioconf_virtio, cfdata_ioconf_virtio);
 		break;
 	case MODULE_CMD_FINI:
-		error = config_fini_component(cfdriver_ioconf_virtio, 
+		error = config_fini_component(cfdriver_ioconf_virtio,
 		    cfattach_ioconf_virtio, cfdata_ioconf_virtio);
 		break;
 	default:
@@ -1348,6 +1348,6 @@ virtio_modcmd(modcmd_t cmd, void *opaque)
 		break;
 	}
 #endif
- 
-	return error; 
+
+	return error;
 }
