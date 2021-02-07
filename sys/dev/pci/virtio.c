@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.48 2021/02/07 09:26:17 skrll Exp $	*/
+/*	$NetBSD: virtio.c,v 1.49 2021/02/07 09:29:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.48 2021/02/07 09:26:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.49 2021/02/07 09:29:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -692,7 +692,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 
 	/* alloc and map the memory */
 	r = bus_dmamem_alloc(sc->sc_dmat, allocsize, VIRTIO_PAGE_SIZE, 0,
-			     &vq->vq_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
+			     &vq->vq_segs[0], 1, &rsegs, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 				 "virtqueue %d for %s allocation failed, "
@@ -700,7 +700,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		goto err;
 	}
 	r = bus_dmamem_map(sc->sc_dmat, &vq->vq_segs[0], rsegs, allocsize,
-			   &vq->vq_vaddr, BUS_DMA_NOWAIT);
+			   &vq->vq_vaddr, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 				 "virtqueue %d for %s map failed, "
@@ -708,7 +708,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		goto err;
 	}
 	r = bus_dmamap_create(sc->sc_dmat, allocsize, 1, allocsize, 0,
-			      BUS_DMA_NOWAIT, &vq->vq_dmamap);
+			      BUS_DMA_WAITOK, &vq->vq_dmamap);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 				 "virtqueue %d for %s dmamap creation failed, "
@@ -716,7 +716,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		goto err;
 	}
 	r = bus_dmamap_load(sc->sc_dmat, vq->vq_dmamap,
-			    vq->vq_vaddr, allocsize, NULL, BUS_DMA_NOWAIT);
+			    vq->vq_vaddr, allocsize, NULL, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 				 "virtqueue %d for %s dmamap load failed, "
