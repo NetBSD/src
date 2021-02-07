@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.130 2021/02/07 10:19:49 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.131 2021/02/07 10:20:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.130 2021/02/07 10:19:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.131 2021/02/07 10:20:35 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1497,7 +1497,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			bool uncached = (flags & BUS_DMA_COHERENT);
 			bool prefetchable = (flags & BUS_DMA_PREFETCHABLE);
 #ifdef DEBUG_DMA
-			printf("wiring p%#lx to v%#lx", pa, va);
+			printf("wiring P%#lx to V%#lx\n", pa, va);
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
