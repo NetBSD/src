@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.28 2021/02/07 17:50:16 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.29 2021/02/07 18:14:43 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1092,14 +1092,9 @@ compare_streams(char *filename, bool discard)
 		}
 
 		if (create_check_file) {
-			if ((result = write(check_fd, &data, 1)) < 1) {
-				if (result != 0) {
-					err(2,
-						"Bad write on file %s", check_file);
-				}
-			}
-			else
-				ref = data;
+			if ((result = write(check_fd, &data, 1)) < 1)
+				err(2, "Bad write on file %s", check_file);
+			ref = data;
 		}
 
 		if (verbose) {
