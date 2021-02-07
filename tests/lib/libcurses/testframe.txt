@@ -1,4 +1,4 @@
-$NetBSD: testframe.txt,v 1.6 2021/02/06 20:09:43 rillig Exp $
+$NetBSD: testframe.txt,v 1.7 2021/02/07 20:20:06 rillig Exp $
 
 CURSES TESTFRAME
 ----------------
@@ -63,29 +63,47 @@ assign:
       overwritten on each subsequent use.
 
 call, call2, call3, call4:
-      All these are used to call curses routines, the only difference
-      between then is the number of expected return values.  Call
+
+      All these are used to call curses routines.  The only difference
+      between them is the number of expected return values.  Call
       expects one return value, call2 expects 2, call3 expects 3 and
-      call4 expects four.  Any parameters that are passed by reference
-      and updated by the call are treated like returns.  So, for
-      example, calling the function getyx() which has three
-      parameters, the window, a pointer to storage for y and a pointer
-      to storage for x would be called like this:
+      call4 expects 4.  Any parameters that are passed by reference and
+      updated by the call are treated like returns and are listed after
+      the regular return value.  The general form of a call is:
 
-      	 	 call3 OK 4 5 getyx $win1
+		call[234] <return...> <function> <argument...>
 
-      Which calls getyx, the first (and possibly only) return is the
-      return status of the function call, in this case we expect "OK"
-      indicating that the call succeeded.  The next two returns are
-      the values of y and x respectively, the parameter $win1 is a
-      variable that was assigned by a previous call.  Any return can
-      be assigned to a variable by including the variable name in a
-      call return list.  Variables are referenced in a call parameter
-      list by prefixing the name with a $ character.  All returns are
-      validated against the expected values and an error raised if
-      there is a mismatch.  The only exception to this is when the
-      return is assigned to a variable.  Valid values for the returns
-      list are:
+      As an example, the macro 'getyx' has 3 parameters, as seen by a C
+      programmer, and it has return type 'void'.  If its return type
+      were not void, that would be its first return value.  The first
+      parameter is a window and is passed by value.  The other two, 'y'
+      and 'x' are references to return values, thus they do not count as
+      parameters.  In summary, there are 2 return values, therefore
+      'call2' is used:
+
+		call2	4 5	getyx		$win1
+
+      The two return values from the actual function call are validated
+      to be '4' and '5'.  The parameter '$win' refers to a variable that
+      has been defined by a previous call or variable assignment.
+
+      Instead of directly validating the return values, they can also be
+      assigned to variables:
+
+		call2	y x	getyx		$win1
+		check	y 4
+		check	x 5
+
+      Another example is 'mvwaddwstr', which has a single return value
+      (OK or ERR) and 4 parameters.  It is called like this:
+
+		call	OK	mvwaddwstr	$win1 4 5 "text"
+
+      Variables are referenced in a call parameter list by prefixing the
+      name with a '$' sign.  All returns are validated against the
+      expected values and an error raised if there is a mismatch.  The
+      only exception to this is when the return is assigned to a
+      variable.  Valid values for the returns list are:
 
       	  	  variable - assign the return to the given variable
 		             name.
