@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.20 2021/02/07 12:08:42 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.21 2021/02/07 12:16:26 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -130,8 +130,8 @@ static void	validate(int, void *);
 static void	validate_return(const char *, const char *, int);
 static void	validate_variable(int, data_enum_t, const void *, int, int);
 static void	validate_byte(ct_data_t *, ct_data_t *, int);
-static void validate_cchar(cchar_t *, cchar_t *, int);
-static void validate_wchar(wchar_t *, wchar_t *, int);
+static void	validate_cchar(cchar_t *, cchar_t *, int);
+static void	validate_wchar(wchar_t *, wchar_t *, int);
 static void	write_cmd_pipe(char *);
 static void	write_cmd_pipe_args(data_enum_t, void *);
 static void	read_cmd_pipe(ct_data_t *);
@@ -142,12 +142,12 @@ static void	save_slave_output(bool);
 static void	validate_type(data_enum_t, ct_data_t *, int);
 static void	set_var(data_enum_t, char *, void *);
 static void	validate_reference(int, void *);
-static char	*numeric_or(char *, char *);
-static char	*get_numeric_var(const char *);
+static char *	numeric_or(char *, char *);
+static char *	get_numeric_var(const char *);
 static void	perform_delay(struct timespec *);
 static void	set_cchar(char *, void *);
-static void set_wchar(char *);
-static wchar_t	*add_to_vals(data_enum_t, void *);
+static void	set_wchar(char *);
+static wchar_t *add_to_vals(data_enum_t, void *);
 
 static const char *input_functions[] = {
 	"getch", "mvgetch", "mvwgetch", "wgetch", "getnstr", "getstr", "mvgetnstr",
@@ -196,21 +196,24 @@ extern saved_data_t saved_output;
 
 %%
 
-statement	:	/* empty */
-		| assign statement
-		| call statement
-		| call2 statement
-		| call3 statement
-		| call4 statement
-		| check statement
-		| delay statement
-		| input statement
-		| noinput statement
-		| compare statement
-		| comparend statement
-		| cchar statement
-		| wchar statement
-		| eol statement
+statements	: /* empty */
+		| statement statements
+		;
+
+statement	: assign
+		| call
+		| call2
+		| call3
+		| call4
+		| check
+		| delay
+		| input
+		| noinput
+		| compare
+		| comparend
+		| cchar
+		| wchar
+		| eol
 		;
 
 assign		: ASSIGN VARNAME numeric {set_var(data_number, $2, $3);} eol
