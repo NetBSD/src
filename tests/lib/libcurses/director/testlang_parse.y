@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.21 2021/02/07 12:16:26 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.22 2021/02/07 12:24:18 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -197,7 +197,7 @@ extern saved_data_t saved_output;
 %%
 
 statements	: /* empty */
-		| statement statements
+		| statement eol statements
 		;
 
 statement	: assign
@@ -213,22 +213,22 @@ statement	: assign
 		| comparend
 		| cchar
 		| wchar
-		| eol
+		| /* empty */
 		;
 
-assign		: ASSIGN VARNAME numeric {set_var(data_number, $2, $3);} eol
-		| ASSIGN VARNAME LHB expr RHB {set_var(data_number, $2, $<string>4);} eol
-		| ASSIGN VARNAME STRING {set_var(data_string, $2, $3);} eol
-		| ASSIGN VARNAME BYTE {set_var(data_byte, $2, $3);} eol
+assign		: ASSIGN VARNAME numeric {set_var(data_number, $2, $3);}
+		| ASSIGN VARNAME LHB expr RHB {set_var(data_number, $2, $<string>4);}
+		| ASSIGN VARNAME STRING {set_var(data_string, $2, $3);}
+		| ASSIGN VARNAME BYTE {set_var(data_byte, $2, $3);}
 		;
 
-cchar		: CCHAR VARNAME attributes char_vals eol
+cchar		: CCHAR VARNAME attributes char_vals
 			{
 				set_cchar($2, $<string>3);
 			}
 		;
 
-wchar		: WCHAR VARNAME char_vals eol
+wchar		: WCHAR VARNAME char_vals
 			{
 				set_wchar($2);
 			}
@@ -252,27 +252,27 @@ char_vals	: numeric
 			{ add_to_vals(data_byte, $1); }
 		;
 
-call		: CALL result fn_name args eol {
+call		: CALL result fn_name args {
 	do_function_call(1);
 }
 		;
 
-call2		: CALL2 result result fn_name args eol {
+call2		: CALL2 result result fn_name args {
 	do_function_call(2);
 }
 		;
 
-call3		: CALL3 result result result fn_name args eol {
+call3		: CALL3 result result result fn_name args {
 	do_function_call(3);
 }
 		;
 
-call4		: CALL4 result result result result fn_name args eol {
+call4		: CALL4 result result result result fn_name args {
 	do_function_call(4);
  }
 		;
 
-check		: CHECK var returns eol {
+check		: CHECK var returns {
 	ct_data_t retvar;
 	var_t *vptr;
 
@@ -366,7 +366,7 @@ check		: CHECK var returns eol {
  }
 	;
 
-delay		: DELAY numeric eol {
+delay		: DELAY numeric {
 	/* set the inter-character delay */
 	if (sscanf($2, "%d", &input_delay) == 0)
 		err(1, "delay specification %s could not be converted to "
@@ -394,7 +394,7 @@ delay		: DELAY numeric eol {
  }
 	;
 
-input		: INPUT STRING eol {
+input		: INPUT STRING {
 	if (input_str != NULL) {
 		warnx("%s, %zu: Discarding unused input string",
 		    cur_file, line);
@@ -409,7 +409,7 @@ input		: INPUT STRING eol {
 	;
 
 
-noinput		: NOINPUT eol {
+noinput		: NOINPUT {
 	if (input_str != NULL) {
 		warnx("%s, %zu: Discarding unused input string",
 		    cur_file, line);
@@ -419,16 +419,16 @@ noinput		: NOINPUT eol {
 	no_input = true;
  }
 
-compare		: COMPARE PATH eol
-		| COMPARE FILENAME eol
+compare		: COMPARE PATH
+		| COMPARE FILENAME
 {
 	compare_streams($2, true);
 }
 	;
 
 
-comparend	: COMPAREND PATH eol
-		| COMPAREND FILENAME eol
+comparend	: COMPAREND PATH
+		| COMPAREND FILENAME
 {
 	compare_streams($2, false);
 }
