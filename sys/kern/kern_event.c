@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.104.4.1 2021/02/04 16:57:25 martin Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.104.4.2 2021/02/07 16:42:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.104.4.1 2021/02/04 16:57:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.104.4.2 2021/02/07 16:42:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1399,9 +1399,11 @@ relock:
 		/* XXXAD should be got from f_event if !oneshot. */
 		*kevp++ = kn->kn_kevent;
 		nkev++;
+		influx = 1;
 		if (kn->kn_flags & EV_ONESHOT) {
 			/* delete ONESHOT events after retrieval */
 			kn->kn_status &= ~KN_BUSY;
+			kq->kq_count--;
 			mutex_spin_exit(&kq->kq_lock);
 			knote_detach(kn, fdp, true);
 			mutex_enter(&fdp->fd_lock);
