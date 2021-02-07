@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.32 2021/02/07 20:40:05 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.33 2021/02/07 20:48:07 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -253,7 +253,7 @@ attributes	: numeric
 char_vals	: numeric {
 			add_to_vals(data_number, $1);
 		}
-		| LBRACK array RBRACK
+		| LBRACK array_elements RBRACK
 		| VARIABLE {
 			add_to_vals(data_var, $1);
 		}
@@ -485,10 +485,13 @@ fn_name		: VARNAME {
 		}
 		;
 
-array		: numeric {
+array_elements	: array_element
+		| array_element COMMA array_elements
+		;
+
+array_element	: numeric {
 			$<vals>$ = add_to_vals(data_number, $1);
 		}
-		; /* XXX: extra semicolon; yacc seems to ignore this. */
 		| VARIABLE {
 			$<vals>$ = add_to_vals(data_number,
 			    get_numeric_var($1));
@@ -535,7 +538,6 @@ array		: numeric {
 				    (void *) $1);
 			}
 		}
-		| array COMMA array
 		;
 
 expr		: numeric
