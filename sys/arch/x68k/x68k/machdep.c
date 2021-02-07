@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.203 2020/06/11 19:20:46 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.204 2021/02/07 15:51:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2021/02/07 15:51:11 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -568,7 +568,10 @@ cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	uvm_physseg_t i;
+	psize_t size;
+#ifdef EXTENDED_MEMORY
+	int i, seg;
+#endif
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
@@ -617,25 +620,20 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * X68k has multiple RAM segments on some models.
 	 */
-	m->ram_segs[0].start = lowram;
-	m->ram_segs[0].size = mem_size - lowram;
-
-	i = uvm_physseg_get_first();
-	
-        for (uvm_physseg_get_next(i); uvm_physseg_valid_p(i); i = uvm_physseg_get_next(i)) {
-		if (uvm_physseg_valid_p(i) == false)
-			break;
-
-		const paddr_t startpfn = uvm_physseg_get_start(i);
-		const paddr_t endpfn = uvm_physseg_get_end(i);
-
-		KASSERT(startpfn != -1 && endpfn != -1);
-
-		m->ram_segs[i].start = 
-		    ctob(startpfn);
-		m->ram_segs[i].size  =			
-		    ctob(endpfn - startpfn);
+	size = phys_basemem_seg.end - phys_basemem_seg.start;
+	m->ram_segs[0].start = phys_basemem_seg.start;
+	m->ram_segs[0].size  = size;
+#ifdef EXTENDED_MEMORY
+	seg = 1;
+	for (i = 0; i < EXTMEM_SEGS; i++) {
+		size = phys_extmem_seg[i].end - phys_extmem_seg[i].start;
+		if (size == 0)
+			continue;
+		m->ram_segs[seg].start = phys_extmem_seg[i].start;
+		m->ram_segs[seg].size  = size;
+		seg++;
 	}
+#endif
 }
 
 /*
