@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.129 2020/12/22 13:07:32 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.130 2021/02/07 10:19:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.129 2020/12/22 13:07:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.130 2021/02/07 10:19:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -339,8 +339,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	int error = 0;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_create: t=%p size=%lx nseg=%x msegsz=%lx boundary=%lx"
-	    " flags=%x\n", t, size, nsegments, maxsegsz, boundary, flags);
+	printf("dmamap_create: t=%p size=%#lx nseg=%#x msegsz=%#lx boundary=%#lx"
+	    " flags=%#x\n", t, size, nsegments, maxsegsz, boundary, flags);
 #endif	/* DEBUG_DMA */
 
 	/*
@@ -495,7 +495,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	int error;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_load: t=%p map=%p buf=%p len=%lx p=%p f=%d\n",
+	printf("dmamap_load: t=%p map=%p buf=%p len=%#lx p=%p f=%#x\n",
 	    t, map, buf, buflen, p, flags);
 #endif	/* DEBUG_DMA */
 
@@ -569,7 +569,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	int error;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_load_mbuf: t=%p map=%p m0=%p f=%d\n",
+	printf("dmamap_load_mbuf: t=%p map=%p m0=%p f=%#x\n",
 	    t, map, m0, flags);
 #endif	/* DEBUG_DMA */
 
@@ -1076,7 +1076,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 #ifdef DEBUG_DMA
-	printf("dmamap_sync: t=%p map=%p offset=%lx len=%lx ops=%x\n",
+	printf("dmamap_sync: t=%p map=%p offset=%#lx len=%#lx ops=%#x\n",
 	    t, map, offset, len, ops);
 #endif	/* DEBUG_DMA */
 
@@ -1320,8 +1320,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	int error, i;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_alloc t=%p size=%lx align=%lx boundary=%lx "
-	    "segs=%p nsegs=%x rsegs=%p flags=%x\n", t, size, alignment,
+	printf("dmamem_alloc t=%p size=%#lx align=%#lx boundary=%#lx "
+	    "segs=%p nsegs=%#x rsegs=%p flags=%#x\n", t, size, alignment,
 	    boundary, segs, nsegs, rsegs, flags);
 #endif
 
@@ -1364,7 +1364,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 	int curseg;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_free: t=%p segs=%p nsegs=%x\n", t, segs, nsegs);
+	printf("dmamem_free: t=%p segs=%p nsegs=%#x\n", t, segs, nsegs);
 #endif	/* DEBUG_DMA */
 
 	/*
@@ -1398,7 +1398,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vsize_t align = 0;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_map: t=%p segs=%p nsegs=%x size=%lx flags=%x\n", t,
+	printf("dmamem_map: t=%p segs=%p nsegs=%#x size=%#lx flags=%#x\n", t,
 	    segs, nsegs, (unsigned long)size, flags);
 #endif	/* DEBUG_DMA */
 
@@ -1497,7 +1497,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			bool uncached = (flags & BUS_DMA_COHERENT);
 			bool prefetchable = (flags & BUS_DMA_PREFETCHABLE);
 #ifdef DEBUG_DMA
-			printf("wiring p%lx to v%lx", pa, va);
+			printf("wiring p%#lx to v%#lx", pa, va);
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
@@ -1539,7 +1539,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DEBUG_DMA
-	printf("dmamem_unmap: t=%p kva=%p size=%zx\n", t, kva, size);
+	printf("dmamem_unmap: t=%p kva=%p size=%#zx\n", t, kva, size);
 #endif	/* DEBUG_DMA */
 	KASSERTMSG(((uintptr_t)kva & PAGE_MASK) == 0,
 	    "kva %p (%#"PRIxPTR")", kva, ((uintptr_t)kva & PAGE_MASK));
@@ -1621,7 +1621,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pmap_t pmap;
 
 #ifdef DEBUG_DMA
-	printf("_bus_dmamem_load_buffer(buf=%p, len=%lx, flags=%d)\n",
+	printf("_bus_dmamem_load_buffer(buf=%p, len=%#lx, flags=%#x)\n",
 	    buf, buflen, flags);
 #endif	/* DEBUG_DMA */
 
@@ -1675,7 +1675,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	    "invalid boundary %#lx", boundary);
 
 #ifdef DEBUG_DMA
-	printf("alloc_range: t=%p size=%lx align=%lx boundary=%lx segs=%p nsegs=%x rsegs=%p flags=%x lo=%lx hi=%lx\n",
+	printf("alloc_range: t=%p size=%#lx align=%#lx boundary=%#lx segs=%p nsegs=%#x rsegs=%p flags=%#x lo=%#lx hi=%#lx\n",
 	    t, size, alignment, boundary, segs, nsegs, rsegs, flags, low, high);
 #endif	/* DEBUG_DMA */
 
@@ -1713,7 +1713,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
 #ifdef DEBUG_DMA
-		printf("alloc: page %lx\n", lastaddr);
+		printf("alloc: page %#lx\n", lastaddr);
 #endif	/* DEBUG_DMA */
 	m = TAILQ_NEXT(m, pageq.queue);
 
@@ -1723,7 +1723,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 		    "uvm_pglistalloc returned non-sensicaladdress %#lx "
 		    "(low=%#lx, high=%#lx\n", curaddr, low, high);
 #ifdef DEBUG_DMA
-		printf("alloc: page %lx\n", curaddr);
+		printf("alloc: page %#lx\n", curaddr);
 #endif	/* DEBUG_DMA */
 		if (curaddr == lastaddr + PAGE_SIZE
 		    && (lastaddr & boundary) == (curaddr & boundary))
