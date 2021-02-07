@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.11 2020/10/24 04:46:17 blymn Exp $	*/
+/*	$NetBSD: director.c,v 1.12 2021/02/07 13:22:23 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -108,7 +108,7 @@ usage(void)
 	fprintf(stderr, "    -g enables check file generation if does not exist\n");
 	fprintf(stderr, "    -f forces check file generation if -g flag is set\n");
 	fprintf(stderr, "    -T is a directory containing the terminfo.cdb "
-	    "file, or a file holding the terminfo description n");
+	    "file, or a file holding the terminfo description\n");
 	fprintf(stderr, "    -s is the path to the slave executable\n");
 	fprintf(stderr, "    -t is value to set TERM to for the test\n");
 	fprintf(stderr, "    -I is the directory to include files\n");
