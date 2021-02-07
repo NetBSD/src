@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.14 2021/02/07 20:27:40 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.15 2021/02/07 20:32:25 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -137,7 +137,7 @@ dequote(const char *s, size_t *len)
 HEX		0[xX][0-9a-zA-Z]+
 STRING		[0-9a-z!#-&(-^ \t%._\\]+
 numeric		[-0-9]+
-PCHAR           (\\.|[^ \t\n])
+PCHAR           (\\.|[!-~])
 ASSIGN		assign
 CALL2		call2
 CALL3		call3
