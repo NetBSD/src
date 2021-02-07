@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.22 2021/02/07 12:24:18 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.23 2021/02/07 12:48:34 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -216,60 +216,72 @@ statement	: assign
 		| /* empty */
 		;
 
-assign		: ASSIGN VARNAME numeric {set_var(data_number, $2, $3);}
-		| ASSIGN VARNAME LHB expr RHB {set_var(data_number, $2, $<string>4);}
-		| ASSIGN VARNAME STRING {set_var(data_string, $2, $3);}
-		| ASSIGN VARNAME BYTE {set_var(data_byte, $2, $3);}
+assign		: ASSIGN VARNAME numeric {
+			set_var(data_number, $2, $3);
+		}
+		| ASSIGN VARNAME LHB expr RHB {
+			set_var(data_number, $2, $<string>4);
+		}
+		| ASSIGN VARNAME STRING {
+			set_var(data_string, $2, $3);
+		}
+		| ASSIGN VARNAME BYTE {
+			set_var(data_byte, $2, $3);
+		}
 		;
 
-cchar		: CCHAR VARNAME attributes char_vals
-			{
-				set_cchar($2, $<string>3);
-			}
+cchar		: CCHAR VARNAME attributes char_vals {
+			set_cchar($2, $<string>3);
+		}
 		;
 
-wchar		: WCHAR VARNAME char_vals
-			{
-				set_wchar($2);
-			}
+wchar		: WCHAR VARNAME char_vals {
+			set_wchar($2);
+		}
 		;
 
 attributes	: numeric
-		| LHB expr RHB
-			{ $<string>$ = $<string>2; }
-		| VARIABLE
-			{ $<string>$ = get_numeric_var($1); }
+		| LHB expr RHB {
+			$<string>$ = $<string>2;
+		}
+		| VARIABLE {
+			$<string>$ = get_numeric_var($1);
+		}
 		;
 
-char_vals	: numeric
-			{ add_to_vals(data_number, $1); }
+char_vals	: numeric {
+			add_to_vals(data_number, $1);
+		}
 		| LHSB array RHSB
-		| VARIABLE
-			{ add_to_vals(data_var, $1); }
-		| STRING
-			{ add_to_vals(data_string, $1); }
-		| BYTE
-			{ add_to_vals(data_byte, $1); }
+		| VARIABLE {
+			add_to_vals(data_var, $1);
+		}
+		| STRING {
+			add_to_vals(data_string, $1);
+		}
+		| BYTE {
+			add_to_vals(data_byte, $1);
+		}
 		;
 
 call		: CALL result fn_name args {
-	do_function_call(1);
-}
+			do_function_call(1);
+		}
 		;
 
 call2		: CALL2 result result fn_name args {
-	do_function_call(2);
-}
+			do_function_call(2);
+		}
 		;
 
 call3		: CALL3 result result result fn_name args {
-	do_function_call(3);
-}
+			do_function_call(3);
+		}
 		;
 
 call4		: CALL4 result result result result fn_name args {
-	do_function_call(4);
- }
+			do_function_call(4);
+		}
 		;
 
 check		: CHECK var returns {
@@ -280,7 +292,7 @@ check		: CHECK var returns {
 		err(1, "Undefined variable in check statement, line %zu"
 		    " of file %s", line, cur_file);
 
-	if (command.returns[1].data_type == data_var){
+	if (command.returns[1].data_type == data_var) {
 		vptr = &vars[command.returns[1].data_index];
 		command.returns[1].data_type = vptr->type;
 		command.returns[1].data_len = vptr->len;
@@ -363,7 +375,7 @@ check		: CHECK var returns {
 	}
 
 	init_parse_variables(0);
- }
+}
 	;
 
 delay		: DELAY numeric {
@@ -417,22 +429,21 @@ noinput		: NOINPUT {
 	}
 
 	no_input = true;
- }
+}
 
 compare		: COMPARE PATH
-		| COMPARE FILENAME
-{
-	compare_streams($2, true);
-}
-	;
-
+			/* FIXME: missing action */
+		| COMPARE FILENAME {
+			compare_streams($2, true);
+		}
+		;
 
 comparend	: COMPAREND PATH
-		| COMPAREND FILENAME
-{
-	compare_streams($2, false);
-}
-	;
+			/* FIXME: missing action */
+		| COMPAREND FILENAME {
+			compare_streams($2, false);
+		}
+		;
 
 
 result		: returns
@@ -451,87 +462,89 @@ returns		: numeric { assign_rets(data_number, $1); }
 		;
 
 var		: VARNAME {
-	assign_rets(data_var, $1);
- }
+			assign_rets(data_var, $1);
+		}
 		;
 
 reference	: VARIABLE {
-	assign_rets(data_ref, $1);
- }
+			assign_rets(data_ref, $1);
+		}
+		/* XXX: missing semicolon; how does yacc interpret this? */
 
 fn_name		: VARNAME {
-	if (command.function != NULL)
-		free(command.function);
+			if (command.function != NULL)
+				free(command.function);
 
-	command.function = malloc(strlen($1) + 1);
-	if (command.function == NULL)
-		err(1, "Could not allocate memory for function name");
-	strcpy(command.function, $1);
- }
+			command.function = malloc(strlen($1) + 1);
+			if (command.function == NULL)
+				err(1, "Could not allocate memory for function name");
+			strcpy(command.function, $1);
+		}
 		;
 
-array		: numeric { $<vals>$ = add_to_vals(data_number, $1); };
-		| VARIABLE
-			{ $<vals>$ = add_to_vals(data_number,
-				get_numeric_var($1)); }
-		| BYTE
-			{
+array		: numeric {
+			$<vals>$ = add_to_vals(data_number, $1);
+		}
+		; /* XXX: extra semicolon; yacc seems to ignore this. */
+		| VARIABLE {
+			$<vals>$ = add_to_vals(data_number,
+			    get_numeric_var($1));
+		}
+		| BYTE {
+			$<vals>$ = add_to_vals(data_byte, (void *) $1);
+		}
+		| STRING {
+			$<vals>$ = add_to_vals(data_string, (void *) $1);
+		}
+		| numeric MULTIPLIER numeric {
+			unsigned long i;
+			unsigned long acount;
+
+			acount = strtoul($3, NULL, 10);
+			for (i = 0; i < acount; i++) {
+				$<vals>$ = add_to_vals(data_number, $1);
+			}
+		}
+		| VARIABLE MULTIPLIER numeric {
+			unsigned long i, acount;
+			char *val;
+
+			acount = strtoul($3, NULL, 10);
+			val = get_numeric_var($1);
+			for (i = 0; i < acount; i++) {
+				$<vals>$ = add_to_vals(data_number, val);
+			}
+		}
+		| BYTE MULTIPLIER numeric {
+			unsigned long i, acount;
+
+			acount = strtoul($3, NULL, 10);
+			for (i = 0; i < acount; i++) {
 				$<vals>$ = add_to_vals(data_byte, (void *) $1);
 			}
-		| STRING
-			{
-				$<vals>$ = add_to_vals(data_string, (void *) $1);
-			}
-		| numeric MULTIPLIER numeric
-			{
-				unsigned long i;
-				unsigned long acount;
+		}
+		| STRING MULTIPLIER numeric {
+			unsigned long i, acount;
 
-				acount = strtoul($3, NULL, 10);
-				for (i = 0; i < acount; i++) {
-					$<vals>$ = add_to_vals(data_number, $1);
-				}
+			acount = strtoul($3, NULL, 10);
+			for (i = 0; i < acount; i++) {
+				$<vals>$ = add_to_vals(data_string,
+				    (void *) $1);
 			}
-		| VARIABLE MULTIPLIER numeric
-			{
-				unsigned long i, acount;
-				char *val;
-
-				acount = strtoul($3, NULL, 10);
-				val = get_numeric_var($1);
-				for (i = 0; i < acount; i++) {
-					$<vals>$ = add_to_vals(data_number, val);
-				}
-			}
-		| BYTE MULTIPLIER numeric
-			{
-				unsigned long i, acount;
-
-				acount = strtoul($3, NULL, 10);
-				for (i = 0; i < acount; i++) {
-					$<vals>$ = add_to_vals(data_byte, (void *) $1); 
-				}
-			}
-		| STRING MULTIPLIER numeric
-			{
-				unsigned long i, acount;
-
-				acount = strtoul($3, NULL, 10);
-				for (i = 0; i < acount; i++) {
-					$<vals>$ = add_to_vals(data_string,
-					    (void *) $1); 
-				}
-			}
+		}
 		| array array
 		;
 
 expr		: numeric
-		| VARIABLE
-			{ $<string>$ = get_numeric_var($1); }
-		| expr OR expr
-			{ $<string>$ = numeric_or($<string>1, $<string>3); }
+		| VARIABLE {
+			$<string>$ = get_numeric_var($1);
+		}
+		| expr OR expr {
+			$<string>$ = numeric_or($<string>1, $<string>3);
+		}
 		;
 
+		/* TODO: split into 'arg' */
 args		: /* empty */
 		| LHB expr RHB { assign_arg(data_static, $<string>2); } args
 		| numeric { assign_arg(data_static, $1); } args
@@ -995,7 +1008,7 @@ compare_streams(char *filename, bool discard)
 
 	if (check_file_flag == (GEN_CHECK_FILE | FORCE_GEN))
 		create_check_file = 1;
-	else if ((check_fd = open(check_file, O_RDONLY, 0)) < 0){
+	else if ((check_fd = open(check_file, O_RDONLY, 0)) < 0) {
 		if (check_file_flag & GEN_CHECK_FILE)
 			create_check_file = 1;
 		else
@@ -1003,10 +1016,12 @@ compare_streams(char *filename, bool discard)
 				check_file, line, cur_file);
 	}
 
-	if (create_check_file)
-		if ((check_fd = open(check_file, O_WRONLY | O_CREAT, 0644)) < 0){
+	if (create_check_file) {
+		check_fd = open(check_file, O_WRONLY | O_CREAT, 0644);
+		if (check_fd < 0) {
 			err(2, "failed to create file %s line %zu of file %s",
 				check_file, line, cur_file);
+		}
 	}
 
 	fds[0].fd = check_fd;
@@ -1025,12 +1040,12 @@ compare_streams(char *filename, bool discard)
 	offs = 0;
 	while (poll(fds, nfd, 500) == nfd) {
 		/* Read from check file if doing comparison */
-		if (!create_check_file){
+		if (!create_check_file) {
 			if (fds[0].revents & POLLIN) {
 				if ((result = read(check_fd, &ref, 1)) < 1) {
 					if (result != 0) {
-						err(2,
-							"Bad read on file %s", check_file);
+						err(2, "Bad read on file %s",
+						    check_file);
 					} else {
 						break;
 					}
@@ -1054,7 +1069,7 @@ compare_streams(char *filename, bool discard)
 				continue;
 		}
 
-		if (create_check_file){
+		if (create_check_file) {
 			if ((result = write(check_fd, &data, 1)) < 1) {
 				if (result != 0) {
 					err(2,
@@ -1094,7 +1109,7 @@ compare_streams(char *filename, bool discard)
 	 * if creating a check file, there shouldn't be
 	 * anymore saved output
 	 */
-	if (saved_output.count > 0){
+	if (saved_output.count > 0) {
 		if (create_check_file)
 			err(2, "Slave output not flushed correctly");
 		else
@@ -1618,7 +1633,7 @@ validate_cchar(cchar_t *expected, cchar_t *value, int check)
 	/*
 	 * No chance of a match if elements count differ...
 	 */
-	if ((expected->elements != value->elements)){
+	if ((expected->elements != value->elements)) {
 		if (check == 0)
 			errx(1, "cchar validation failed, elements count mismatch, "
 			"expected %d, received %d", expected->elements, value->elements);
@@ -1636,7 +1651,7 @@ validate_cchar(cchar_t *expected, cchar_t *value, int check)
 	 */
 
 	if ((expected->attributes & WA_ATTRIBUTES) !=
-			(value->attributes & WA_ATTRIBUTES )){
+			(value->attributes & WA_ATTRIBUTES )) {
 		if (check == 0)
 			errx(1, "cchar validation failed,attributes mismatch, expected "
 			"0x%x, received 0x%x", expected->attributes & WA_ATTRIBUTES,
@@ -1702,7 +1717,7 @@ validate_wchar(wchar_t *expected, wchar_t *value, int check)
 	/*
 	 * No chance of a match if length differ...
 	 */
-	if (len1 != len2){
+	if (len1 != len2) {
 		if (check == 0)
 			errx(1, "wchar string validation failed, length mismatch, "
 			"expected %d, received %d", len1, len2);
