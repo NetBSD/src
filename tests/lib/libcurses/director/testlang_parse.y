@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.33 2021/02/07 20:48:07 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.34 2021/02/07 21:33:27 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -198,7 +198,7 @@ extern saved_data_t saved_output;
 %%
 
 statements	: /* empty */
-		| statement eol statements
+		| statement EOL statements
 		;
 
 statement	: assign
@@ -290,8 +290,8 @@ check		: CHECK var returns {
 	var_t *vptr;
 
 	if (command.returns[0].data_index == -1)
-		err(1, "Undefined variable in check statement, line %zu"
-		    " of file %s", line, cur_file);
+		err(1, "%s:%zu: Undefined variable in check statement",
+		    cur_file, line);
 
 	if (command.returns[1].data_type == data_var) {
 		vptr = &vars[command.returns[1].data_index];
@@ -315,8 +315,7 @@ check		: CHECK var returns {
 	if (((command.returns[1].data_type == data_byte) &&
 	     (vars[command.returns[0].data_index].type != data_byte)))
 		err(1, "Var type %s (%d) does not match return type %s (%d)",
-		    enum_names[
-		    vars[command.returns[0].data_index].type],
+		    enum_names[vars[command.returns[0].data_index].type],
 		    vars[command.returns[0].data_index].type,
 		    enum_names[command.returns[1].data_type],
 		    command.returns[1].data_type);
@@ -370,8 +369,7 @@ check		: CHECK var returns {
 		break;
 
 	default:
-		err(1, "Malformed check statement at line %zu "
-		    "of file %s", line, cur_file);
+		err(1, "%s:%zu: Malformed check statement", cur_file, line);
 		break;
 	}
 
@@ -382,8 +380,8 @@ check		: CHECK var returns {
 delay		: DELAY numeric {
 	/* set the inter-character delay */
 	if (sscanf($2, "%d", &input_delay) == 0)
-		err(1, "delay specification %s could not be converted to "
-		    "numeric at line %zu of file %s", $2, line, cur_file);
+		err(1, "%s:%zu: Delay specification %s must be an int",
+		    cur_file, line, $2);
 	if (verbose) {
 		fprintf(stderr, "Set input delay to %d ms\n", input_delay);
 	}
@@ -409,8 +407,7 @@ delay		: DELAY numeric {
 
 input		: INPUT STRING {
 	if (input_str != NULL) {
-		warnx("%s, %zu: Discarding unused input string",
-		    cur_file, line);
+		warnx("%s:%zu: Discarding unused input string", cur_file, line);
 		free(input_str);
 	}
 
@@ -424,8 +421,7 @@ input		: INPUT STRING {
 
 noinput		: NOINPUT {
 	if (input_str != NULL) {
-		warnx("%s, %zu: Discarding unused input string",
-		    cur_file, line);
+		warnx("%s:%zu: Discarding unused input string", cur_file, line);
 		free(input_str);
 	}
 
@@ -582,9 +578,6 @@ arg		: LPAREN expr RPAREN {
 		}
 		;
 
-eol		: EOL
-		;
-
 %%
 
 static void
@@ -600,7 +593,7 @@ excess(const char *fname, size_t lineno, const char *func, const char *comment,
 	if (strnvisx(dst, dstlen, data, datalen, VIS_WHITE | VIS_OCTAL) == -1)
 		err(1, "strnvisx");
 
-	warnx("%s, %zu: [%s] Excess %zu bytes%s [%s]",
+	warnx("%s:%zu: [%s] Excess %zu bytes%s [%s]",
 	    fname, lineno, func, datalen, comment, dst);
 	free(dst);
 }
@@ -704,8 +697,8 @@ static wchar_t	*add_to_vals(data_enum_t argtype, void *arg)
 
 	case data_var:
 		if ((i = find_var_index((char *) arg)) < 0)
-			err(1, "Variable %s is undefined at line %zu "
-			    "of file %s", (char *) arg, line, cur_file);
+			err(1, "%s:%zu: Variable %s is undefined",
+			    cur_file, line, (const char *) arg);
 
 		switch (vars[i].type) {
 
@@ -716,17 +709,16 @@ static wchar_t	*add_to_vals(data_enum_t argtype, void *arg)
 			break;
 
 		default:
-			err(1, "Variable %s is not a valid type for cchar"
-			    " at line %zu of file %s", (char *) arg, line,
-			    cur_file);
+			err(1, "%s:%zu: Variable %s has invalid type for cchar",
+			    cur_file, line, (const char *) arg);
 			break;
 
 		}
 		break;
 
 	default:
-		err(1, "add_to_vals: Unhandled type for vals array "
-		    "at line %zu of file %s", line, cur_file);
+		err(1, "%s:%zu: Internal error: Unhandled type for vals array",
+		    cur_file, line);
 
 		/* if we get here without a value then tidy up */
 		if ((nvals == 0) && (have_malloced == 1)) {
@@ -784,16 +776,16 @@ set_cchar(char *name, void *attributes)
 	attr_t attribs;
 
 	if (nvals >= CURSES_CCHAR_MAX)
-		err(1, "%s: too many characters in complex char type at "
-			"line %zu of file %s", __func__, line, cur_file);
+		err(1, "%s:%zu: %s: too many characters in complex char type",
+		    cur_file, line, __func__);
 
 	i = find_var_index(name);
 	if (i < 0)
 		i = assign_var(name);
 
 	if (sscanf((char *) attributes, "%d", &attribs) != 1)
-		err(1, "%s: conversion of attributes to integer failed at"
-			"line %zu of file %s", __func__, line, cur_file);
+		err(1, "%s:%zu: %s: conversion of attributes to integer failed",
+		    cur_file, line, __func__);
 
 	vars[i].type = data_cchar;
 	vars[i].cchar.attributes = attribs;
@@ -881,8 +873,8 @@ assign_arg(data_enum_t arg_type, void *arg)
 	if (cur.arg_type == data_var) {
 		cur.var_index = find_var_index(arg);
 		if (cur.var_index < 0)
-			err(1, "Invalid variable %s at line %zu of file %s",
-			    str, line, cur_file);
+			err(1, "%s:%zu: Invalid variable %s",
+			    cur_file, line, str);
 	} else if (cur.arg_type == data_byte) {
 		ret = arg;
 		cur.arg_len = ret->data_len;
@@ -1037,15 +1029,15 @@ compare_streams(const char *filename, bool discard)
 		if (check_file_flag & GEN_CHECK_FILE)
 			create_check_file = 1;
 		else
-			err(2, "failed to open file %s line %zu of file %s",
-				check_file, line, cur_file);
+			err(2, "%s:%zu: failed to open file %s",
+			    cur_file, line, check_file);
 	}
 
 	if (create_check_file) {
 		check_fd = open(check_file, O_WRONLY | O_CREAT, 0644);
 		if (check_fd < 0) {
-			err(2, "failed to create file %s line %zu of file %s",
-				check_file, line, cur_file);
+			err(2, "%s:%zu: failed to create file %s",
+			    cur_file, line, check_file);
 		}
 	}
 
@@ -1114,9 +1106,9 @@ compare_streams(const char *filename, bool discard)
 		}
 
 		if (!create_check_file && ref != data) {
-			errx(2, "%s, %zu: refresh data from slave does "
-			    "not match expected from file %s offs %zu "
-			    "[reference 0x%x (%c) != slave 0x%x (%c)]",
+			errx(2, "%s:%zu: refresh data from slave does "
+			    "not match expected from file %s offset %zu "
+			    "[reference 0x%02x (%c) != slave 0x%02x (%c)]",
 			    cur_file, line, check_file, offs,
 			    ref, (ref >= ' ') ? ref : '-',
 			    data, (data >= ' ') ? data : '-');
@@ -1216,7 +1208,7 @@ do_function_call(size_t nresults)
 		}
 
 		if (input_str == NULL)
-			errx(2, "%s, %zu: Call to input function "
+			errx(2, "%s:%zu: Call to input function "
 			    "but no input defined", cur_file, line);
 
 		fds[0].fd = slvpipe[READ_PIPE];
@@ -1231,7 +1223,7 @@ do_function_call(size_t nresults)
 			if (poll(fds, 2, 0) < 0)
 				err(2, "poll failed");
 			if (fds[0].revents & POLLIN) {
-				warnx("%s, %zu: Slave function "
+				warnx("%s:%zu: Slave function "
 				    "returned before end of input string",
 				    cur_file, line);
 				break;
@@ -1243,7 +1235,7 @@ do_function_call(size_t nresults)
 				    *p);
 			}
 			if (write(master, p, 1) != 1) {
-				warn("%s, %zu: Slave function write error",
+				warn("%s:%zu: Slave function write error",
 				    cur_file, line);
 				break;
 			}
@@ -1427,7 +1419,7 @@ init_parse_variables(int initial)
 	if (result < 0)
 		err(2, "Poll of slave pty failed");
 	else if (result > 0)
-		warnx("%s, %zu: Unexpected data from slave", cur_file, line);
+		warnx("%s:%zu: Unexpected data from slave", cur_file, line);
 }
 
 /*
@@ -1447,11 +1439,11 @@ validate(int i, void *data)
 		if ((byte_response->data_type == data_byte) ||
 		    (byte_response->data_type == data_err) ||
 		    (byte_response->data_type == data_ok))
-			err(1, "%s: expecting type %s, received type %s"
-			    " at line %zu of file %s", __func__,
+			err(1,
+			    "%s:%zu: %s: expecting type %s, received type %s",
+			    cur_file, line, __func__,
 			    enum_names[command.returns[i].data_type],
-			    enum_names[byte_response->data_type],
-			    line, cur_file);
+			    enum_names[byte_response->data_type]);
 
 		response = byte_response->data_value;
 	}
@@ -1488,8 +1480,7 @@ validate(int i, void *data)
 		break;
 
 	default:
-		err(1, "Malformed statement at line %zu of file %s",
-		    line, cur_file);
+		err(1, "%s:%zu: Malformed statement", cur_file, line);
 		break;
 	}
 }
@@ -1537,9 +1528,8 @@ validate_reference(int i, void *data)
 		break;
 
 	default:
-		err(1,
-		    "Invalid return type for reference at line %zu of file %s",
-		    line, cur_file);
+		err(1, "%s:%zu: Invalid return type for reference",
+		    cur_file, line);
 		break;
 	}
 }
@@ -1553,17 +1543,18 @@ validate_type(data_enum_t expected, ct_data_t *value, int check)
 {
 	if (((check == 0) && (expected != value->data_type)) ||
 	    ((check == 1) && (expected == value->data_type)))
-		err(1, "Validate expected type %s %s %s line %zu of file %s",
+		err(1, "%s:%zu: Validate expected type %s %s %s",
+		    cur_file, line,
 		    enum_names[expected],
 		    (check == 0)? "matching" : "not matching",
-		    enum_names[value->data_type], line, cur_file);
+		    enum_names[value->data_type]);
 
 	if (verbose) {
-		fprintf(stderr, "Validate expected type %s %s %s line %zu"
-		    " of file %s\n",
+		fprintf(stderr, "%s:%zu: Validated expected type %s %s %s\n",
+		    cur_file, line,
 		    enum_names[expected],
 		    (check == 0)? "matching" : "not matching",
-		    enum_names[value->data_type], line, cur_file);
+		    enum_names[value->data_type]);
 	}
 }
 
@@ -1576,15 +1567,18 @@ validate_return(const char *expected, const char *value, int check)
 {
 	if (((check == 0) && strcmp(expected, value) != 0) ||
 	    ((check == 1) && strcmp(expected, value) == 0))
-		errx(1, "Validate expected >%s< %s >%s< line %zu of file %s",
+		errx(1, "%s:%zu: Validate expected >%s< %s >%s<",
+		    cur_file, line,
 		    expected,
-		    (check == 0)? "matching" : "not matching", value,
-		    line, cur_file);
+		    (check == 0)? "matching" : "not matching",
+		    value);
 	if (verbose) {
-		fprintf(stderr, "Validated expected value >%s< %s >%s< "
-		    "at line %zu of file %s\n", expected,
+		fprintf(stderr,
+		    "%s:%zu: Validated expected value >%s< %s >%s<\n",
+		    cur_file, line,
+		    expected,
 		    (check == 0)? "matches" : "does not match",
-		    value, line, cur_file);
+		    value);
 	}
 }
 
@@ -1617,8 +1611,10 @@ validate_byte(ct_data_t *expected, ct_data_t *value, int check)
 	 * No chance of a match if lengths differ...
 	 */
 	if ((check == 0) && (expected->data_len != value->data_len))
-	    errx(1, "Byte validation failed, length mismatch, expected %zu,"
-		"received %zu", expected->data_len, value->data_len);
+		errx(1,
+		    "Byte validation failed, length mismatch, "
+		    "expected %zu, received %zu",
+		    expected->data_len, value->data_len);
 
 	/*
 	 * If check is 0 then we want to throw an error IFF the byte streams
@@ -1630,14 +1626,13 @@ validate_byte(ct_data_t *expected, ct_data_t *value, int check)
 	    ((check == 1) && (expected->data_len == value->data_len) &&
 	     memcmp(expected->data_value, value->data_value,
 		    value->data_len) == 0))
-		errx(1, "Validate expected %s byte stream at line %zu"
-		    "of file %s",
-		    (check == 0)? "matching" : "not matching", line, cur_file);
+		errx(1, "%s:%zu: Validate expected %s byte stream",
+		    cur_file, line,
+		    (check == 0)? "matching" : "not matching");
 	if (verbose) {
-		fprintf(stderr, "Validated expected %s byte stream "
-		    "at line %zu of file %s\n",
-		    (check == 0)? "matching" : "not matching",
-		    line, cur_file);
+		fprintf(stderr, "%s:%zu: Validated expected %s byte stream\n",
+		    cur_file, line,
+		    (check == 0)? "matching" : "not matching");
 	}
 }
 
@@ -1655,13 +1650,15 @@ validate_cchar(cchar_t *expected, cchar_t *value, int check)
 	 */
 	if ((expected->elements != value->elements)) {
 		if (check == 0)
-			errx(1, "cchar validation failed, elements count mismatch, "
-			"expected %d, received %d", expected->elements, value->elements);
+			errx(1,
+			    "cchar validation failed, elements count mismatch, "
+			    "expected %d, received %d",
+			    expected->elements, value->elements);
 		else {
 			if (verbose)
-				fprintf(stderr, "Validated expected %s cchar"
-					"at line %zu of file %s\n", "not matching",
-					line, cur_file);
+				fprintf(stderr,
+				    "%s:%zu: Validated expected %s cchar",
+				    cur_file, line, "not matching");
 			return;
 		}
 	}
@@ -1673,14 +1670,16 @@ validate_cchar(cchar_t *expected, cchar_t *value, int check)
 	if ((expected->attributes & WA_ATTRIBUTES) !=
 			(value->attributes & WA_ATTRIBUTES )) {
 		if (check == 0)
-			errx(1, "cchar validation failed,attributes mismatch, expected "
-			"0x%x, received 0x%x", expected->attributes & WA_ATTRIBUTES,
-			value->attributes & WA_ATTRIBUTES);
+			errx(1,
+			    "cchar validation failed, attributes mismatch, "
+			    "expected 0x%x, received 0x%x",
+			    expected->attributes & WA_ATTRIBUTES,
+			    value->attributes & WA_ATTRIBUTES);
 		else {
 			if (verbose)
-				fprintf(stderr, "Validated expected %s cchar"
-					"at line %zu of file %s\n", "not matching",
-					line, cur_file);
+				fprintf(stderr,
+				    "%s:%zu: Validated expected %s cchar\n",
+				    cur_file, line, "not matching");
 			return;
 		}
 	}
@@ -1693,23 +1692,25 @@ validate_cchar(cchar_t *expected, cchar_t *value, int check)
 	for(j = 0; j < expected->elements; j++) {
 		if (expected->vals[j] != value->vals[j]) {
 			if (check == 0)
-				errx(1, "cchar validation failed, vals mismatch,expected 0x%x,"
-				"received 0x%x", expected->vals[j], value->vals[j]);
+				errx(1,
+				    "cchar validation failed, vals mismatch, "
+				    "expected 0x%x, received 0x%x",
+				    expected->vals[j], value->vals[j]);
 			else {
 				if (verbose)
-					fprintf(stderr, "Validated expected %s cchar"
-						"at line %zu of file %s\n", "not matching",
-						line, cur_file);
+					fprintf(stderr,
+					    "%s:%zu: Validated expected %s "
+					    "cchar\n",
+					    cur_file, line, "not matching");
 				return;
 			}
 		}
 	}
 
 	if (verbose) {
-		fprintf(stderr, "Validated expected %s cchar "
-		    "at line %zu of file %s\n",
-		    (check == 0)? "matching" : "not matching",
-		    line, cur_file);
+		fprintf(stderr,
+		    "%s:%zu: Validated expected %s cchar\n",
+		    cur_file, line, (check == 0)? "matching" : "not matching");
 	}
 }
 
@@ -1739,13 +1740,15 @@ validate_wchar(wchar_t *expected, wchar_t *value, int check)
 	 */
 	if (len1 != len2) {
 		if (check == 0)
-			errx(1, "wchar string validation failed, length mismatch, "
-			"expected %d, received %d", len1, len2);
+			errx(1,
+			    "wchar string validation failed, length mismatch, "
+			    "expected %d, received %d",
+			    len1, len2);
 		else {
 			if (verbose)
-				fprintf(stderr, "Validated expected %s wchar"
-					"at line %zu of file %s\n", "not matching",
-					line, cur_file);
+				fprintf(stderr,
+				    "%s:%zu: Validated expected %s wchar\n",
+				    cur_file, line, "not matching");
 			return;
 		}
 	}
@@ -1762,19 +1765,19 @@ validate_wchar(wchar_t *expected, wchar_t *value, int check)
 				"received %d", j, expected[j], value[j]);
 			else {
 				if (verbose)
-					fprintf(stderr, "Validated expected %s wchar"
-						"at line %zu of file %s\n", "not matching",
-						line, cur_file);
+					fprintf(stderr,
+					    "%s:%zu: Validated expected %s wchar\n",
+					    cur_file, line, "not matching");
 				return;
 			}
 		}
 	}
 
 	if (verbose) {
-		fprintf(stderr, "Validated expected %s wchar "
-		    "at line %zu of file %s\n",
-		    (check == 0)? "matching" : "not matching",
-		    line, cur_file);
+		fprintf(stderr,
+		    "%s:%zu: Validated expected %s wchar\n",
+		    cur_file, line,
+		    (check == 0)? "matching" : "not matching");
 	}
 }
 
@@ -1803,18 +1806,19 @@ validate_variable(int ret, data_enum_t type, const void *value, int i,
 	if (type != data_byte) {
 		if ((((check == 0) && strcmp(value, varptr->value) != 0))
 		    || ((check == 1) && strcmp(value, varptr->value) == 0))
-			err(1, "Variable %s contains %s instead of %s"
-			    " value %s at line %zu of file %s",
+			err(1, "%s:%zu: Variable %s contains %s instead of %s"
+			    " value %s",
+			    cur_file, line,
 			    varptr->name, (const char *)varptr->value,
 			    (check == 0)? "expected" : "not matching",
-			    (const char *)value,
-			    line, cur_file);
+			    (const char *)value);
 		if (verbose) {
-			fprintf(stderr, "Variable %s contains %s value "
-			    "%s at line %zu of file %s\n",
+			fprintf(stderr,
+			    "%s:%zu: Variable %s contains %s value %s\n",
+			    cur_file, line,
 			    varptr->name,
 			    (check == 0)? "expected" : "not matching",
-			    (const char *)varptr->value, line, cur_file);
+			    (const char *)varptr->value);
 		}
 	} else {
 		if ((check == 0) && (retval->data_len != varptr->len))
@@ -1830,15 +1834,14 @@ validate_variable(int ret, data_enum_t type, const void *value, int i,
 		    ((check == 1) && (retval->data_len == varptr->len) &&
 		     memcmp(retval->data_value, varptr->value,
 			    varptr->len) == 0))
-			err(1, "Validate expected %s byte stream at line %zu"
-			    " of file %s",
-			    (check == 0)? "matching" : "not matching",
-			    line, cur_file);
+			err(1, "%s:%zu: Validate expected %s byte stream",
+			    cur_file, line,
+			    (check == 0)? "matching" : "not matching");
 		if (verbose) {
-			fprintf(stderr, "Validated expected %s byte stream "
-			    "at line %zu of file %s\n",
-			    (check == 0)? "matching" : "not matching",
-			    line, cur_file);
+			fprintf(stderr,
+			    "%s:%zu: Validated expected %s byte stream\n",
+			    cur_file, line,
+			    (check == 0)? "matching" : "not matching");
 		}
 	}
 }
@@ -1976,7 +1979,7 @@ read_cmd_pipe(ct_data_t *response)
 
 	do {
 		if (poll(rfd, 2, 4000) == 0)
-			errx(2, "%s, %zu: Command pipe read timeout",
+			errx(2, "%s:%zu: Command pipe read timeout",
 			    cur_file, line);
 
 		if ((rfd[1].revents & POLLIN) == POLLIN) {
@@ -2076,9 +2079,9 @@ save_slave_output(bool discard)
 			}
 
 			if (verbose) {
-				fprintf(stderr, "count = %zu, "
-				    "allocated = %zu\n", saved_output.count,
-				    saved_output.allocated);
+				fprintf(stderr,
+				    "count = %zu, allocated = %zu\n",
+				    saved_output.count, saved_output.allocated);
 				for (i = 0; i < (size_t)result; i++) {
 					fprintf(stderr, "Saving slave output "
 					    "at %zu: 0x%x (%c)\n",
@@ -2092,9 +2095,9 @@ save_slave_output(bool discard)
 			saved_output.count += result;
 
 			if (verbose) {
-				fprintf(stderr, "count = %zu, "
-				    "allocated = %zu\n", saved_output.count,
-				    saved_output.allocated);
+				fprintf(stderr,
+				    "count = %zu, allocated = %zu\n",
+				    saved_output.count, saved_output.allocated);
 			}
 		} else {
 			if (verbose) {
@@ -2112,5 +2115,5 @@ save_slave_output(bool discard)
 static void
 yyerror(const char *msg)
 {
-	errx(1, "%s in line %zu of file %s", msg, line, cur_file);
+	errx(1, "%s:%zu: %s", cur_file, line, msg);
 }
