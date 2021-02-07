@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.26 2021/02/07 17:26:15 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.27 2021/02/07 17:32:55 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -189,7 +189,7 @@ extern saved_data_t saved_output;
 %token <string> ASSIGN
 %token <string> CCHAR
 %token <string> WCHAR
-%token EOL CALL CHECK NOINPUT OR MULTIPLIER LHB RHB LHSB RHSB
+%token EOL CALL CHECK NOINPUT OR MULTIPLIER LPAREN RPAREN LBRACK RBRACK
 %token CALL2 CALL3 CALL4 DRAIN
 
 %nonassoc OR
@@ -219,7 +219,7 @@ statement	: assign
 assign		: ASSIGN VARNAME numeric {
 			set_var(data_number, $2, $3);
 		}
-		| ASSIGN VARNAME LHB expr RHB {
+		| ASSIGN VARNAME LPAREN expr RPAREN {
 			set_var(data_number, $2, $<string>4);
 		}
 		| ASSIGN VARNAME STRING {
@@ -241,7 +241,7 @@ wchar		: WCHAR VARNAME char_vals {
 		;
 
 attributes	: numeric
-		| LHB expr RHB {
+		| LPAREN expr RPAREN {
 			$<string>$ = $<string>2;
 		}
 		| VARIABLE {
@@ -252,7 +252,7 @@ attributes	: numeric
 char_vals	: numeric {
 			add_to_vals(data_number, $1);
 		}
-		| LHSB array RHSB
+		| LBRACK array RBRACK
 		| VARIABLE {
 			add_to_vals(data_var, $1);
 		}
@@ -451,7 +451,7 @@ result		: returns
 		;
 
 returns		: numeric { assign_rets(data_number, $1); }
-		| LHB expr RHB { assign_rets(data_number, $<string>2); }
+		| LPAREN expr RPAREN { assign_rets(data_number, $<string>2); }
 		| STRING { assign_rets(data_string, $1); }
 		| BYTE { assign_rets(data_byte, (void *) $1); }
 		| ERR_RET { assign_rets(data_err, NULL); }
@@ -549,7 +549,7 @@ args		: /* empty */
 		| arg args
 		;
 
-arg		: LHB expr RHB {
+arg		: LPAREN expr RPAREN {
 			assign_arg(data_static, $<string>2);
 		}
 		| numeric {

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.11 2021/02/07 12:05:36 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.12 2021/02/07 17:32:55 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -159,10 +159,10 @@ CCHAR		[cC][cC][hH][aA][rR]
 WCHAR		[wW][cC][hH][aA][rR]
 BYTE		BYTE
 OR		\|
-LHB		\(
-RHB		\)
-LHSB		\[
-RHSB		\]
+LPAREN		\(
+RPAREN		\)
+LBRACK		\[
+RBRACK		\]
 MULTIPLIER	\*
 
 %x incl
@@ -248,10 +248,10 @@ include		BEGIN(incl);
 {CCHAR}		return CCHAR;
 {WCHAR}		return WCHAR;
 {OR}		return OR;
-{LHB}		return LHB;
-{RHB}		return RHB;
-{LHSB}		return LHSB;
-{RHSB}		return RHSB;
+{LPAREN}	return LPAREN;
+{RPAREN}	return RPAREN;
+{LBRACK}	return LBRACK;
+{RBRACK}	return RBRACK;
 
 {HEX}		{
 			/* Hex value, convert to decimal and return numeric */
