@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.42 2021/02/07 16:43:30 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.43 2021/02/07 17:42:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1493,4 +1493,9 @@ usr.sbin/isibootd/isibootd.c			1.4
 
 	Fix isibootd(8) "Cannot allocate memory" failure on amd64.
 	[tsutsui, ticket #1200]
+
+lib/libc/stdio/fread.c				1.24 (patch)
+
+	PR 55808: optimize buffer handling for unbuffered I/O.
+	[jdolecek, ticket #1198]
 
