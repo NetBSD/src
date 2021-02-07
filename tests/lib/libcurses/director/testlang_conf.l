@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.13 2021/02/07 19:49:32 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.14 2021/02/07 20:27:40 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -380,7 +380,12 @@ include		BEGIN(incl);
 		}
 
 .		{
-			/* FIXME: report syntax error */
+			if (isprint((unsigned char)yytext[0]))
+				errx(1, "%s:%zu: Invalid character '%c'",
+				    cur_file, line + 1, yytext[0]);
+			else
+				errx(1, "%s:%zu: Invalid character '0x%02x'",
+				    cur_file, line + 1, yytext[0]);
 		}
 
 %%
