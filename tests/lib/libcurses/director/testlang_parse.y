@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.27 2021/02/07 17:32:55 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.28 2021/02/07 17:50:16 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -431,15 +431,17 @@ noinput		: NOINPUT {
 	no_input = true;
 }
 
-compare		: COMPARE PATH
-			/* FIXME: missing action */
+compare		: COMPARE PATH {
+			compare_streams($2, true);
+		}
 		| COMPARE FILENAME {
 			compare_streams($2, true);
 		}
 		;
 
-comparend	: COMPAREND PATH
-			/* FIXME: missing action */
+comparend	: COMPAREND PATH {
+			compare_streams($2, false);
+		}
 		| COMPAREND FILENAME {
 			compare_streams($2, false);
 		}
@@ -544,7 +546,6 @@ expr		: numeric
 		}
 		;
 
-		/* TODO: split into 'arg' */
 args		: /* empty */
 		| arg args
 		;
