@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2778 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2779 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -330,3 +330,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	pppd(8): updated to version 2.4.9. [christos 20210109]
 	tzdata updated to 2021a [kre 20210124] 
 	evbmips: Add support for QEMU "mipssim" emulator. [simonb 20210127]
+	x68k: Add Emulate3Buttons support to X68k Xorg based monolithic server.
+		[tsutsui 20210207]
