@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.30 2021/02/07 18:32:20 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.31 2021/02/07 19:44:34 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -471,7 +471,7 @@ var		: VARNAME {
 reference	: VARIABLE {
 			assign_rets(data_ref, $1);
 		}
-		/* XXX: missing semicolon; how does yacc interpret this? */
+		;
 
 fn_name		: VARNAME {
 			if (command.function != NULL)
