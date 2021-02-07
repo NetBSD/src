@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.24 2021/02/07 12:56:53 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.25 2021/02/07 17:23:29 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -546,15 +546,18 @@ expr		: numeric
 
 		/* TODO: split into 'arg' */
 args		: /* empty */
-		| LHB expr RHB { assign_arg(data_static, $<string>2); } args
-		| numeric { assign_arg(data_static, $1); } args
-		| STRING { assign_arg(data_static, $1); } args
-		| BYTE { assign_arg(data_byte, $1); } args
-		| PATH { assign_arg(data_static, $1); } args
-		| FILENAME { assign_arg(data_static, $1); } args
-		| VARNAME { assign_arg(data_static, $1); } args
-		| VARIABLE  { assign_arg(data_var, $1); } args
-		| NULL_RET { assign_arg(data_null, $1); } args
+		| arg args
+		;
+
+arg		: LHB expr RHB { assign_arg(data_static, $<string>2); }
+		| numeric { assign_arg(data_static, $1); }
+		| STRING { assign_arg(data_static, $1); }
+		| BYTE { assign_arg(data_byte, $1); }
+		| PATH { assign_arg(data_static, $1); }
+		| FILENAME { assign_arg(data_static, $1); }
+		| VARNAME { assign_arg(data_static, $1); }
+		| VARIABLE  { assign_arg(data_var, $1); }
+		| NULL_RET { assign_arg(data_null, $1); }
 		;
 
 eol		: EOL
