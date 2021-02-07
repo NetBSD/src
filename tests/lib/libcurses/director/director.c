@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.13 2021/02/07 13:44:22 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.14 2021/02/07 13:56:23 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
-	if (argc < 1)
+	if (argc != 1)
 		usage();
 
 	if (termpath == NULL)
