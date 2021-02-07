@@ -3,23 +3,22 @@ call OK addch `\001t`
 call OK refresh
 call OK mvaddch 5 3 `\003e`
 call OK refresh
-call OK addch "\n"
+call OK addch `\000\n`
 
 # Somewhere between NetBSD 8.0 and 9.0, a bug was added to addch that
 # doubled the spaces for a tab.  Instead of 8 spaces, there are now 16.
-call OK addch "\t"
+call OK addch `\000\t`
 call2 6 16 getyx STDSCR		# FIXME: must be 8, not 16
-call OK addch "8"
-call OK addch "\n"
+call OK addch `\0008`
+call OK addch `\000\n`
 
 # Somewhere between NetBSD 8.0 and 9.0, a bug was added to addch that
 # doubled the spaces for a tab.  Instead of 1 space, there are now 2.
 call OK addstr "0123456"
-call OK addch "\t"
-call2 7 9 getyx STDSCR		# FIXME: with probability around 50%, the
-				# 7 comes out as a 6.
-call OK addch "8"
-call OK addch "\n"
+call OK addch `\000\t`
+call2 7 9 getyx STDSCR
+call OK addch `\0008`
+call OK addch `\000\n`
 
 call OK refresh
 compare addch.chk
