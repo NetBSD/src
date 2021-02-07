@@ -1,4 +1,4 @@
-/*	$NetBSD: returns.h,v 1.3 2020/10/24 04:46:17 blymn Exp $	*/
+/*	$NetBSD: returns.h,v 1.4 2021/02/07 19:28:07 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -51,7 +51,7 @@ typedef enum {
 
 typedef struct {
 	data_enum_t	data_type;
-	void		*data_value;	/* used if data_type is data_num or
+	void		*data_value;	/* used if data_type is data_num
 					   or data_byte or data_string */
 	size_t		data_len;	/* number of bytes in return_value iff
 					   return_type is data_byte */
