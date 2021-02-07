@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.23 2021/02/07 12:48:34 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.24 2021/02/07 12:56:53 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -2092,5 +2092,5 @@ save_slave_output(bool discard)
 static void
 yyerror(const char *msg)
 {
-	warnx("%s in line %zu of file %s", msg, line, cur_file);
+	errx(1, "%s in line %zu of file %s", msg, line, cur_file);
 }
