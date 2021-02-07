@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.12 2021/02/07 17:32:55 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.13 2021/02/07 19:49:32 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -138,25 +138,25 @@ HEX		0[xX][0-9a-zA-Z]+
 STRING		[0-9a-z!#-&(-^ \t%._\\]+
 numeric		[-0-9]+
 PCHAR           (\\.|[^ \t\n])
-ASSIGN		[aA][sS][sS][iI][gG][nN]
-CALL2		[cC][aA][lL][lL]2
-CALL3		[cC][aA][lL][lL]3
-CALL4		[cC][aA][lL][lL]4
-CALL		[cC][aA][lL][lL]
-CHECK		[cC][hH][eE][cC][kK]
-DELAY		[dD][eE][lL][aA][yY]
-INPUT		[iI][nN][pP][uU][tT]
-NOINPUT		[nN][oO][iI][nN][pP][uU][tT]
-OK_RET		[oO][kK]
-ERR_RET		[eE][rR][rR]
-COMPARE		[cC][oO][mM][pP][aA][rR][eE]
-COMPAREND	[cC][oO][mM][pP][aA][rR][eE][Nn][Dd]
+ASSIGN		assign
+CALL2		call2
+CALL3		call3
+CALL4		call4
+CALL		call
+CHECK		check
+DELAY		delay
+INPUT		input
+NOINPUT		noinput
+OK_RET		OK
+ERR_RET		ERR
+COMPARE		compare
+COMPAREND	comparend
 FILENAME	[A-Za-z0-9.][A-Za-z0-9./_-]+
 VARNAME		[A-Za-z][A-Za-z0-9_-]+
 NULL_RET	NULL
 NON_NULL	NON_NULL
-CCHAR		[cC][cC][hH][aA][rR]
-WCHAR		[wW][cC][hH][aA][rR]
+CCHAR		cchar
+WCHAR		wchar
 BYTE		BYTE
 OR		\|
 LPAREN		\(
