@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.29 2021/02/07 18:14:43 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.30 2021/02/07 18:32:20 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -124,7 +124,7 @@ static var_t *vars; 		/* Variables defined during the test. */
 static int	check_function_table(char *, const char *[], int);
 static int	find_var_index(const char *);
 static void 	assign_arg(data_enum_t, void *);
-static int	assign_var(char *);
+static int	assign_var(const char *);
 void		init_parse_variables(int);
 static void	validate(int, void *);
 static void	validate_return(const char *, const char *, int);
@@ -136,11 +136,11 @@ static void	write_cmd_pipe(char *);
 static void	write_cmd_pipe_args(data_enum_t, void *);
 static void	read_cmd_pipe(ct_data_t *);
 static void	write_func_and_args(void);
-static void	compare_streams(char *, bool);
+static void	compare_streams(const char *, bool);
 static void	do_function_call(size_t);
 static void	save_slave_output(bool);
 static void	validate_type(data_enum_t, ct_data_t *, int);
-static void	set_var(data_enum_t, char *, void *);
+static void	set_var(data_enum_t, const char *, void *);
 static void	validate_reference(int, void *);
 static char *	numeric_or(char *, char *);
 static char *	get_numeric_var(const char *);
@@ -741,7 +741,7 @@ static wchar_t	*add_to_vals(data_enum_t argtype, void *arg)
  * Assign the value given to the named variable.
  */
 static void
-set_var(data_enum_t type, char *name, void *value)
+set_var(data_enum_t type, const char *name, void *value)
 {
 	int i;
 	char *number;
@@ -836,7 +836,7 @@ set_wchar(char *name)
  * when a test function call returns.
  */
 static int
-assign_var(char *varname)
+assign_var(const char *varname)
 {
 	var_t *temp;
 	char *name;
@@ -998,7 +998,7 @@ static int check_function_table(char *function, const char *table[],
  * any differences.
  */
 static void
-compare_streams(char *filename, bool discard)
+compare_streams(const char *filename, bool discard)
 {
 	char check_file[PATH_MAX], drain[100], ref, data;
 	struct pollfd fds[2];
