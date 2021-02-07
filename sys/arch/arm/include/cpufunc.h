@@ -353,6 +353,9 @@ enable_interrupts(uint32_t mask)
 #define restore_interrupts(old_cpsr)					\
 	(__set_cpsr_c((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
 
+#define	ENABLE_INTERRUPT()	cpsie(I32_bit)
+#define	DISABLE_INTERRUPT()	cpsid(I32_bit)
+
 static inline void cpsie(register_t psw) __attribute__((__unused__));
 static inline register_t cpsid(register_t psw) __attribute__((__unused__));
 
