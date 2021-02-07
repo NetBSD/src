@@ -1,4 +1,7 @@
 include start
-call OK addstr "abcde"
+call OK addstr "abcde\n"
+call OK addstr "\n"
+call OK addstr "\t8\n"
+call OK addstr "0123456\t8\n"
 call OK refresh
 compare addstr.chk
