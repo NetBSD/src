@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2020/11/16 11:38:29 rin Exp $
+#	$NetBSD: Makefile,v 1.8 2021/02/08 19:11:41 martin Exp $
 
 .include <bsd.own.mk>
 
-INSTIMGBASE=	NetBSD-${DISTRIBVER}-${MACHINE_ARCH}-install	# gives ${IMGBASE}.img
+INSTIMGBASE=	NetBSD-${DISTRIBVER}-evbarm-${MACHINE_ARCH}-install	# gives ${IMGBASE}.img
 
 INSTIMAGEMB?=	1550			# for all installation binaries
 
