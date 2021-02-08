@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.29 2021/02/08 00:35:25 simonb Exp $
+#	$NetBSD: ADM5120-NB,v 1.30 2021/02/08 00:47:53 simonb Exp $
 #
 # Kernel config for the ADM5120 based boards and routers,
 # including the RouterBOARD 100 series.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -13,7 +13,7 @@ options 	MIPS32
 options 	NOFPU		# No FPU
 options 	FPEMUL		# emulate FPU insn
 #options 	CONSPEED=115200	# YAMON default
-options 	HZ=512		# for profiling
+#options 	HZ=512		# for profiling
 options 	MEMSIZE="(16*1024*1024)"
 
 #options 	LOCKDEBUG
