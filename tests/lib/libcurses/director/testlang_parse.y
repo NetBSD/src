@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.41 2021/02/08 20:39:33 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.42 2021/02/08 20:55:42 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -333,14 +333,30 @@ result		: returns
 		| reference
 		;
 
-returns		: numeric { assign_rets(data_number, $1); }
-		| LPAREN expr RPAREN { assign_rets(data_number, $2); }
-		| STRING { assign_rets(data_string, $1); }
-		| BYTE { assign_rets(data_byte, (void *) $1); }
-		| ERR_RET { assign_rets(data_err, NULL); }
-		| OK_RET { assign_rets(data_ok, NULL); }
-		| NULL_RET { assign_rets(data_null, NULL); }
-		| NON_NULL { assign_rets(data_nonnull, NULL); }
+returns		: numeric {
+			assign_rets(data_number, $1);
+		}
+		| LPAREN expr RPAREN {
+			assign_rets(data_number, $2);
+		}
+		| STRING {
+			assign_rets(data_string, $1);
+		}
+		| BYTE {
+			assign_rets(data_byte, (void *) $1);
+		}
+		| ERR_RET {
+			assign_rets(data_err, NULL);
+		}
+		| OK_RET {
+			assign_rets(data_ok, NULL);
+		}
+		| NULL_RET {
+			assign_rets(data_null, NULL);
+		}
+		| NON_NULL {
+			assign_rets(data_nonnull, NULL);
+		}
 		| var
 		;
 
