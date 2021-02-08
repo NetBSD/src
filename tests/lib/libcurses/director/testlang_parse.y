@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.36 2021/02/08 19:15:20 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.37 2021/02/08 19:28:08 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -138,6 +138,7 @@ static void	read_cmd_pipe(ct_data_t *);
 static void	write_func_and_args(void);
 static void	compare_streams(const char *, bool);
 static void	do_function_call(size_t);
+static void	check(void);
 static void	save_slave_output(bool);
 static void	validate_type(data_enum_t, ct_data_t *, int);
 static void	set_var(data_enum_t, const char *, void *);
@@ -286,96 +287,9 @@ call4		: CALL4 result result result result fn_name args {
 		;
 
 check		: CHECK var returns {
-	ct_data_t retvar;
-	var_t *vptr;
-
-	if (command.returns[0].data_index == -1)
-		err(1, "%s:%zu: Undefined variable in check statement",
-		    cur_file, line);
-
-	if (command.returns[1].data_type == data_var) {
-		vptr = &vars[command.returns[1].data_index];
-		command.returns[1].data_type = vptr->type;
-		command.returns[1].data_len = vptr->len;
-		if (vptr->type != data_cchar)
-			command.returns[1].data_value = vptr->value;
-		else
-			command.returns[1].data_value = &vptr->cchar;
-	}
-
-	if (verbose) {
-		fprintf(stderr, "Checking contents of variable %s for %s\n",
-		    vars[command.returns[0].data_index].name,
-		    enum_names[command.returns[1].data_type]);
-	}
-
-	/*
-	 * Check if var and return have same data types
-	 */
-	if (((command.returns[1].data_type == data_byte) &&
-	     (vars[command.returns[0].data_index].type != data_byte)))
-		err(1, "Var type %s (%d) does not match return type %s (%d)",
-		    enum_names[vars[command.returns[0].data_index].type],
-		    vars[command.returns[0].data_index].type,
-		    enum_names[command.returns[1].data_type],
-		    command.returns[1].data_type);
-
-	switch (command.returns[1].data_type) {
-	case data_err:
-	case data_ok:
-		validate_type(vars[command.returns[0].data_index].type,
-			&command.returns[1], 0);
-		break;
-
-	case data_null:
-		validate_variable(0, data_string, "NULL",
-				  command.returns[0].data_index, 0);
-		break;
-
-	case data_nonnull:
-		validate_variable(0, data_string, "NULL",
-				  command.returns[0].data_index, 1);
-		break;
-
-	case data_string:
-	case data_number:
-		if (verbose) {
-			fprintf(stderr, " %s == returned %s\n",
-			    (const char *)command.returns[1].data_value,
-			    (const char *)
-			    vars[command.returns[0].data_index].value);
+			check();
 		}
-		validate_variable(0, data_string,
-		    command.returns[1].data_value,
-		    command.returns[0].data_index, 0);
-		break;
-
-	case data_byte:
-		vptr = &vars[command.returns[0].data_index];
-		retvar.data_len = vptr->len;
-		retvar.data_type = vptr->type;
-		retvar.data_value = vptr->value;
-		validate_byte(&retvar, &command.returns[1], 0);
-		break;
-
-	case data_cchar:
-		validate_cchar(&vars[command.returns[0].data_index].cchar,
-			(cchar_t *) command.returns[1].data_value, 0);
-		break;
-
-	case data_wchar:
-		validate_wchar((wchar_t *) vars[command.returns[0].data_index].value,
-			(wchar_t *) command.returns[1].data_value, 0);
-		break;
-
-	default:
-		err(1, "%s:%zu: Malformed check statement", cur_file, line);
-		break;
-	}
-
-	init_parse_variables(0);
-}
-	;
+		;
 
 delay		: DELAY numeric {
 	/* set the inter-character delay */
@@ -1360,6 +1274,99 @@ write_func_and_args(void)
 	}
 
 	write_cmd_pipe(NULL); /* signal end of arguments */
+}
+
+static void
+check(void)
+{
+	ct_data_t retvar;
+	var_t *vptr;
+
+	if (command.returns[0].data_index == -1)
+		err(1, "%s:%zu: Undefined variable in check statement",
+		    cur_file, line);
+
+	if (command.returns[1].data_type == data_var) {
+		vptr = &vars[command.returns[1].data_index];
+		command.returns[1].data_type = vptr->type;
+		command.returns[1].data_len = vptr->len;
+		if (vptr->type != data_cchar)
+			command.returns[1].data_value = vptr->value;
+		else
+			command.returns[1].data_value = &vptr->cchar;
+	}
+
+	if (verbose) {
+		fprintf(stderr, "Checking contents of variable %s for %s\n",
+		    vars[command.returns[0].data_index].name,
+		    enum_names[command.returns[1].data_type]);
+	}
+
+	/*
+	 * Check if var and return have same data types
+	 */
+	if (((command.returns[1].data_type == data_byte) &&
+	     (vars[command.returns[0].data_index].type != data_byte)))
+		err(1, "Var type %s (%d) does not match return type %s (%d)",
+		    enum_names[vars[command.returns[0].data_index].type],
+		    vars[command.returns[0].data_index].type,
+		    enum_names[command.returns[1].data_type],
+		    command.returns[1].data_type);
+
+	switch (command.returns[1].data_type) {
+	case data_err:
+	case data_ok:
+		validate_type(vars[command.returns[0].data_index].type,
+			&command.returns[1], 0);
+		break;
+
+	case data_null:
+		validate_variable(0, data_string, "NULL",
+				  command.returns[0].data_index, 0);
+		break;
+
+	case data_nonnull:
+		validate_variable(0, data_string, "NULL",
+				  command.returns[0].data_index, 1);
+		break;
+
+	case data_string:
+	case data_number:
+		if (verbose) {
+			fprintf(stderr, " %s == returned %s\n",
+			    (const char *)command.returns[1].data_value,
+			    (const char *)
+			    vars[command.returns[0].data_index].value);
+		}
+		validate_variable(0, data_string,
+		    command.returns[1].data_value,
+		    command.returns[0].data_index, 0);
+		break;
+
+	case data_byte:
+		vptr = &vars[command.returns[0].data_index];
+		retvar.data_len = vptr->len;
+		retvar.data_type = vptr->type;
+		retvar.data_value = vptr->value;
+		validate_byte(&retvar, &command.returns[1], 0);
+		break;
+
+	case data_cchar:
+		validate_cchar(&vars[command.returns[0].data_index].cchar,
+			(cchar_t *) command.returns[1].data_value, 0);
+		break;
+
+	case data_wchar:
+		validate_wchar((wchar_t *) vars[command.returns[0].data_index].value,
+			(wchar_t *) command.returns[1].data_value, 0);
+		break;
+
+	default:
+		err(1, "%s:%zu: Malformed check statement", cur_file, line);
+		break;
+	}
+
+	init_parse_variables(0);
 }
 
 /*
