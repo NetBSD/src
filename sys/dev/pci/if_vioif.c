@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.69 2021/02/03 21:04:41 reinoud Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.70 2021/02/08 06:56:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.69 2021/02/03 21:04:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.70 2021/02/08 06:56:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1669,12 +1669,12 @@ vioif_rx_handle_locked(void *xrxq, u_int limit)
 	if (more) {
 		vioif_rx_sched_handle(sc, rxq);
 		return;
-	} 
+	}
 	more = virtio_start_vq_intr(vsc, rxq->rxq_vq);
 	if (more) {
 		vioif_rx_sched_handle(sc, rxq);
 		return;
-	} 
+	}
 	atomic_store_relaxed(&rxq->rxq_active, false);
 }
 
@@ -1777,7 +1777,7 @@ vioif_tx_handle_locked(struct vioif_txqueue *txq, u_int limit)
 		return;
 	}
 
-	if (virtio_features(vsc) & VIRTIO_F_RING_EVENT_IDX) 
+	if (virtio_features(vsc) & VIRTIO_F_RING_EVENT_IDX)
 		more = virtio_postpone_intr_smart(vsc, vq);
 	else
 		more = virtio_start_vq_intr(vsc, vq);
