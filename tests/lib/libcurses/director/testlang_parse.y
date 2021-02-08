@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.42 2021/02/08 20:55:42 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.43 2021/02/08 23:54:03 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -60,7 +60,7 @@ extern char *cur_file;		/* from director.c */
 
 int yylex(void);
 
-size_t line;
+size_t line = 1;
 
 static int input_delay;
 
@@ -1433,7 +1433,7 @@ init_parse_variables(int initial)
 		}
 		free(command.args);
 	} else {
-		line = 0;
+		line = 1;
 		input_delay = 0;
 		vars = NULL;
 		nvars = 0;
