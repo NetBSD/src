@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.39 2021/02/08 20:09:45 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.40 2021/02/08 20:26:46 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -553,7 +553,8 @@ perform_delay(struct timespec *ts)
 /*
  * Add to temporary vals array
  */
-static wchar_t	*add_to_vals(data_enum_t argtype, void *arg)
+static wchar_t *
+add_to_vals(data_enum_t argtype, void *arg)
 {
 	wchar_t *retval = NULL;
 	int have_malloced;
@@ -867,8 +868,8 @@ find_var_index(const char *var_name)
  * Check the given function name in the given table of names, return 1 if
  * there is a match.
  */
-static int check_function_table(char *function, const char *table[],
-				int nfunctions)
+static int
+check_function_table(char *function, const char *table[], int nfunctions)
 {
 	int i;
 
