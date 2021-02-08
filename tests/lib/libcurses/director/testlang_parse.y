@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.37 2021/02/08 19:28:08 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.38 2021/02/08 19:35:21 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -139,6 +139,7 @@ static void	write_func_and_args(void);
 static void	compare_streams(const char *, bool);
 static void	do_function_call(size_t);
 static void	check(void);
+static void	delay_millis(const char *);
 static void	save_slave_output(bool);
 static void	validate_type(data_enum_t, ct_data_t *, int);
 static void	set_var(data_enum_t, const char *, void *);
@@ -292,32 +293,9 @@ check		: CHECK var returns {
 		;
 
 delay		: DELAY numeric {
-	/* set the inter-character delay */
-	if (sscanf($2, "%d", &input_delay) == 0)
-		err(1, "%s:%zu: Delay specification %s must be an int",
-		    cur_file, line, $2);
-	if (verbose) {
-		fprintf(stderr, "Set input delay to %d ms\n", input_delay);
-	}
-
-	if (input_delay < DELAY_MIN)
-		input_delay = DELAY_MIN;
-	/*
-	 * Fill in the timespec structure now ready for use later.
-	 * The delay is specified in milliseconds so convert to timespec
-	 * values
-	 */
-	delay_spec.tv_sec = input_delay / 1000;
-	delay_spec.tv_nsec = (input_delay - 1000 * delay_spec.tv_sec) * 1000;
-	if (verbose) {
-		fprintf(stderr, "set delay to %jd.%jd\n",
-		    (intmax_t)delay_spec.tv_sec,
-		    (intmax_t)delay_spec.tv_nsec);
-	}
-
-	init_parse_variables(0);
- }
-	;
+			delay_millis($2);
+		}
+		;
 
 input		: INPUT STRING {
 	if (input_str != NULL) {
@@ -1364,6 +1342,35 @@ check(void)
 	default:
 		err(1, "%s:%zu: Malformed check statement", cur_file, line);
 		break;
+	}
+
+	init_parse_variables(0);
+}
+
+static void
+delay_millis(const char *millis)
+{
+	/* set the inter-character delay */
+	if (sscanf(millis, "%d", &input_delay) == 0)
+		err(1, "%s:%zu: Delay specification %s must be an int",
+		    cur_file, line, millis);
+	if (verbose) {
+		fprintf(stderr, "Set input delay to %d ms\n", input_delay);
+	}
+
+	if (input_delay < DELAY_MIN)
+		input_delay = DELAY_MIN;
+	/*
+	 * Fill in the timespec structure now ready for use later.
+	 * The delay is specified in milliseconds so convert to timespec
+	 * values
+	 */
+	delay_spec.tv_sec = input_delay / 1000;
+	delay_spec.tv_nsec = (input_delay - 1000 * delay_spec.tv_sec) * 1000;
+	if (verbose) {
+		fprintf(stderr, "set delay to %jd.%jd\n",
+		    (intmax_t)delay_spec.tv_sec,
+		    (intmax_t)delay_spec.tv_nsec);
 	}
 
 	init_parse_variables(0);
