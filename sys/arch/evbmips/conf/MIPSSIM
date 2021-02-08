@@ -1,10 +1,10 @@
-# $NetBSD: MIPSSIM,v 1.1 2021/01/27 05:24:16 simonb Exp $
+# $NetBSD: MIPSSIM,v 1.2 2021/02/08 00:47:53 simonb Exp $
 #
 # Kernel config for the QEMU MIPS "mipssim" simulator
 
 include 	"arch/evbmips/conf/std.mipssim"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -12,7 +12,7 @@ options 	MIPS32
 options 	MIPS32R2
 options 	NOFPU		# No FPU
 options 	FPEMUL		# emulate FPU insn
-options 	HZ=512		# for profiling
+#options 	HZ=512		# for profiling
 
 #options 	LOCKDEBUG
 options 	SOSEND_COUNTERS
