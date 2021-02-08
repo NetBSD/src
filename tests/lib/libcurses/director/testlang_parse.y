@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.40 2021/02/08 20:26:46 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.41 2021/02/08 20:39:33 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -140,6 +140,8 @@ static void	compare_streams(const char *, bool);
 static void	do_function_call(size_t);
 static void	check(void);
 static void	delay_millis(const char *);
+static void	do_input(const char *);
+static void	do_noinput(void);
 static void	save_slave_output(bool);
 static void	validate_type(data_enum_t, ct_data_t *, int);
 static void	set_var(data_enum_t, const char *, void *);
@@ -301,27 +303,14 @@ delay		: DELAY numeric {
 		;
 
 input		: INPUT STRING {
-	if (input_str != NULL) {
-		warnx("%s:%zu: Discarding unused input string", cur_file, line);
-		free(input_str);
-	}
-
-	if ((input_str = malloc(strlen($2) + 1)) == NULL)
-		err(2, "Cannot allocate memory for input string");
-
-	strlcpy(input_str, $2, strlen($2) + 1);
-}
-	;
-
+			do_input($2);
+		}
+		;
 
 noinput		: NOINPUT {
-	if (input_str != NULL) {
-		warnx("%s:%zu: Discarding unused input string", cur_file, line);
-		free(input_str);
-	}
-
-	no_input = true;
-}
+			do_noinput();
+		}
+		;
 
 compare		: COMPARE PATH {
 			compare_streams($2, true);
@@ -1376,6 +1365,31 @@ delay_millis(const char *millis)
 	}
 
 	init_parse_variables(0);
+}
+
+static void
+do_input(const char *s)
+{
+	if (input_str != NULL) {
+		warnx("%s:%zu: Discarding unused input string", cur_file, line);
+		free(input_str);
+	}
+
+	if ((input_str = malloc(strlen(s) + 1)) == NULL)
+		err(2, "Cannot allocate memory for input string");
+
+	strlcpy(input_str, s, strlen(s) + 1);
+}
+
+static void
+do_noinput(void)
+{
+	if (input_str != NULL) {
+		warnx("%s:%zu: Discarding unused input string", cur_file, line);
+		free(input_str);
+	}
+
+	no_input = true;
 }
 
 /*
