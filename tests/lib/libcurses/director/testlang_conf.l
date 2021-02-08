@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.17 2021/02/08 19:15:20 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.18 2021/02/08 23:54:03 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -212,7 +212,7 @@ include		BEGIN(incl);
 		cur_file = strdup(inc_file);
 		if (cur_file == NULL)
 			err(2, "Cannot allocate new include file string");
-		line = 0;
+		line = 1;
 		BEGIN(INITIAL);
 	}
 
