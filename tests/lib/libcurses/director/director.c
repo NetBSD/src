@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.14 2021/02/07 13:56:23 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.15 2021/02/08 19:00:22 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -84,8 +84,11 @@ slave_died(int param)
 	if (saved_output.count > 0) {
 		fprintf(stderr, "output from slave: ");
 		for (count = 0; count < saved_output.count; count ++) {
-			if (isprint((unsigned char)saved_output.data[count]))
-			    fprintf(stderr, "%c", saved_output.data[count]);
+			unsigned char b = saved_output.data[count];
+			if (isprint(b))
+				fprintf(stderr, "%c", b);
+			else
+				fprintf(stderr, "\\x%02x", b);
 		}
 		fprintf(stderr, "\n");
 	}
