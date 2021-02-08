@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.38 2021/02/08 19:35:21 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.39 2021/02/08 20:09:45 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -195,6 +195,9 @@ extern saved_data_t saved_output;
 %token COMMA
 %token CALL2 CALL3 CALL4
 
+%type <string> attributes expr
+%type <vals> array_elements array_element
+
 %nonassoc OR
 
 %%
@@ -223,7 +226,7 @@ assign		: ASSIGN VARNAME numeric {
 			set_var(data_number, $2, $3);
 		}
 		| ASSIGN VARNAME LPAREN expr RPAREN {
-			set_var(data_number, $2, $<string>4);
+			set_var(data_number, $2, $4);
 		}
 		| ASSIGN VARNAME STRING {
 			set_var(data_string, $2, $3);
@@ -234,7 +237,7 @@ assign		: ASSIGN VARNAME numeric {
 		;
 
 cchar		: CCHAR VARNAME attributes char_vals {
-			set_cchar($2, $<string>3);
+			set_cchar($2, $3);
 		}
 		;
 
@@ -245,10 +248,10 @@ wchar		: WCHAR VARNAME char_vals {
 
 attributes	: numeric
 		| LPAREN expr RPAREN {
-			$<string>$ = $<string>2;
+			$$ = $2;
 		}
 		| VARIABLE {
-			$<string>$ = get_numeric_var($1);
+			$$ = get_numeric_var($1);
 		}
 		;
 
@@ -342,7 +345,7 @@ result		: returns
 		;
 
 returns		: numeric { assign_rets(data_number, $1); }
-		| LPAREN expr RPAREN { assign_rets(data_number, $<string>2); }
+		| LPAREN expr RPAREN { assign_rets(data_number, $2); }
 		| STRING { assign_rets(data_string, $1); }
 		| BYTE { assign_rets(data_byte, (void *) $1); }
 		| ERR_RET { assign_rets(data_err, NULL); }
@@ -378,17 +381,16 @@ array_elements	: array_element
 		;
 
 array_element	: numeric {
-			$<vals>$ = add_to_vals(data_number, $1);
+			$$ = add_to_vals(data_number, $1);
 		}
 		| VARIABLE {
-			$<vals>$ = add_to_vals(data_number,
-			    get_numeric_var($1));
+			$$ = add_to_vals(data_number, get_numeric_var($1));
 		}
 		| BYTE {
-			$<vals>$ = add_to_vals(data_byte, (void *) $1);
+			$$ = add_to_vals(data_byte, (void *) $1);
 		}
 		| STRING {
-			$<vals>$ = add_to_vals(data_string, (void *) $1);
+			$$ = add_to_vals(data_string, (void *) $1);
 		}
 		| numeric MULTIPLIER numeric {
 			unsigned long i;
@@ -396,7 +398,7 @@ array_element	: numeric {
 
 			acount = strtoul($3, NULL, 10);
 			for (i = 0; i < acount; i++) {
-				$<vals>$ = add_to_vals(data_number, $1);
+				$$ = add_to_vals(data_number, $1);
 			}
 		}
 		| VARIABLE MULTIPLIER numeric {
@@ -406,7 +408,7 @@ array_element	: numeric {
 			acount = strtoul($3, NULL, 10);
 			val = get_numeric_var($1);
 			for (i = 0; i < acount; i++) {
-				$<vals>$ = add_to_vals(data_number, val);
+				$$ = add_to_vals(data_number, val);
 			}
 		}
 		| BYTE MULTIPLIER numeric {
@@ -414,7 +416,7 @@ array_element	: numeric {
 
 			acount = strtoul($3, NULL, 10);
 			for (i = 0; i < acount; i++) {
-				$<vals>$ = add_to_vals(data_byte, (void *) $1);
+				$$ = add_to_vals(data_byte, (void *) $1);
 			}
 		}
 		| STRING MULTIPLIER numeric {
@@ -422,18 +424,17 @@ array_element	: numeric {
 
 			acount = strtoul($3, NULL, 10);
 			for (i = 0; i < acount; i++) {
-				$<vals>$ = add_to_vals(data_string,
-				    (void *) $1);
+				$$ = add_to_vals(data_string, (void *) $1);
 			}
 		}
 		;
 
 expr		: numeric
 		| VARIABLE {
-			$<string>$ = get_numeric_var($1);
+			$$ = get_numeric_var($1);
 		}
 		| expr OR expr {
-			$<string>$ = numeric_or($<string>1, $<string>3);
+			$$ = numeric_or($1, $3);
 		}
 		;
 
@@ -442,7 +443,7 @@ args		: /* empty */
 		;
 
 arg		: LPAREN expr RPAREN {
-			assign_arg(data_static, $<string>2);
+			assign_arg(data_static, $2);
 		}
 		| numeric {
 			assign_arg(data_static, $1);
