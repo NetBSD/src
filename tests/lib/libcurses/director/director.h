@@ -1,4 +1,4 @@
-/*	$NetBSD: director.h,v 1.1 2020/10/24 04:46:17 blymn Exp $	*/
+/*	$NetBSD: director.h,v 1.2 2021/02/08 19:15:20 rillig Exp $	*/
 
 /*-
  * Copyright 2020 Naman Jain <jnaman806@gmail.com>, this code was
@@ -14,7 +14,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
