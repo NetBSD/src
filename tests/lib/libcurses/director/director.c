@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.15 2021/02/08 19:00:22 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.16 2021/02/08 19:04:37 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -273,7 +273,7 @@ main(int argc, char *argv[])
 		if (asprintf(&arg4, "%d", slvpipe[1]) < 0)
 			err(1, "arg4 conversion failed");
 
-		if (execl(slave, slave, arg1, arg2, arg3, arg4, NULL) < 0)
+		if (execl(slave, slave, arg1, arg2, arg3, arg4, (char *)0) < 0)
 			err(1, "Exec of slave %s failed", slave);
 
 		/* NOT REACHED */
