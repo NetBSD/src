@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.28 2020/05/19 09:26:44 rin Exp $
+#	$NetBSD: ADM5120-NB,v 1.29 2021/02/08 00:35:25 simonb Exp $
 #
-# Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
-# DBAu1000 and DBAu1500 evaluation boards.
+# Kernel config for the ADM5120 based boards and routers,
+# including the RouterBOARD 100 series.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32
 
