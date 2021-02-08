@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.34 2021/02/07 21:33:27 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.35 2021/02/08 19:09:59 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -191,7 +191,7 @@ extern saved_data_t saved_output;
 %token <string> WCHAR
 %token EOL CALL CHECK NOINPUT OR MULTIPLIER LPAREN RPAREN LBRACK RBRACK
 %token COMMA
-%token CALL2 CALL3 CALL4 DRAIN
+%token CALL2 CALL3 CALL4
 
 %nonassoc OR
 
