@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.88 2021/01/15 05:34:49 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.89 2021/02/09 05:53:14 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.88 2021/01/15 05:34:49 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.89 2021/02/09 05:53:14 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1334,9 +1334,10 @@ audiodetach(device_t self, int flags)
 	 * that hold sc, and any new calls with files that were for sc will
 	 * fail.  Thus, we now have exclusive access to the softc.
 	 */
+	sc->sc_exlock = 1;
 
 	/*
-	 * Nuke all open instances.
+	 * Clean up all open instances.
 	 * Here, we no longer need any locks to traverse sc_files.
 	 */
 	while ((file = SLIST_FIRST(&sc->sc_files)) != NULL) {
@@ -1359,7 +1360,6 @@ audiodetach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	/* Free resources */
-	sc->sc_exlock = 1;
 	if (sc->sc_pmixer) {
 		audio_mixer_destroy(sc, sc->sc_pmixer);
 		kmem_free(sc->sc_pmixer, sizeof(*sc->sc_pmixer));
@@ -2396,6 +2396,7 @@ bad:
 int
 audio_close(struct audio_softc *sc, audio_file_t *file)
 {
+	int error;
 
 	/* Protect entering new fileops to this file */
 	atomic_store_relaxed(&file->dying, true);
@@ -2410,12 +2411,27 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 		mutex_exit(sc->sc_lock);
 	}
 
-	return audio_unlink(sc, file);
+	error = audio_exlock_enter(sc);
+	if (error) {
+		/*
+		 * If EIO, this sc is about to detach.  In this case, even if
+		 * we don't do subsequent _unlink(), audiodetach() will do it.
+		 */
+		if (error == EIO)
+			return error;
+
+		/* XXX This should not happen but what should I do ? */
+		panic("%s: can't acquire exlock: errno=%d", __func__, error);
+	}
+	error = audio_unlink(sc, file);
+	audio_exlock_exit(sc);
+
+	return error;
 }
 
 /*
  * Unlink this file, but not freeing memory here.
- * Must be called without sc_lock nor sc_exlock held.
+ * Must be called with sc_exlock held and without sc_lock held.
  */
 int
 audio_unlink(struct audio_softc *sc, audio_file_t *file)
@@ -2431,25 +2447,6 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 	KASSERTMSG(sc->sc_popens + sc->sc_ropens > 0,
 	    "sc->sc_popens=%d, sc->sc_ropens=%d",
 	    sc->sc_popens, sc->sc_ropens);
-
-	/*
-	 * Acquire exlock to protect counters.
-	 * audio_exlock_enter() cannot be used here because we have to go
-	 * forward even if sc_dying is set.
-	 */
-	while (__predict_false(sc->sc_exlock != 0)) {
-		error = cv_timedwait_sig(&sc->sc_exlockcv, sc->sc_lock,
-		    mstohz(AUDIO_TIMEOUT));
-		/* XXX what should I do on error? */
-		if (error == EWOULDBLOCK) {
-			mutex_exit(sc->sc_lock);
-			audio_printf(sc,
-			    "%s: cv_timedwait_sig failed: errno=%d\n",
-			    __func__, error);
-			return error;
-		}
-	}
-	sc->sc_exlock = 1;
 
 	device_active(sc->sc_dev, DVA_SYSTEM);
 
@@ -2517,7 +2514,6 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 		kauth_cred_free(sc->sc_cred);
 
 	TRACE(3, "done");
-	audio_exlock_exit(sc);
 
 	return 0;
 }
