@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.29 2021/02/06 09:14:03 isaki Exp $	*/
+/*	$NetBSD: aica.c,v 1.30 2021/02/09 12:39:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.29 2021/02/06 09:14:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.30 2021/02/09 12:39:28 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ aica_intr(void *arg)
 
 	aica_fillbuffer(sc);
 
-	/* call audio interrupt handler (audio_pint()) */
+	/* call audio interrupt handler (audio_pintr()) */
 	if (sc->sc_intr != NULL) {
 		(*(sc->sc_intr))(sc->sc_intr_arg);
 	}
