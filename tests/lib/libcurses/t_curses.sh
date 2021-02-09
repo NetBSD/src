@@ -1,4 +1,5 @@
-h_run(){
+h_run()
+{
 	file=$1
 	if [ -z "$2" ]; then
 		export LC_ALL=C

@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.9 2021/02/09 20:39:20 rillig Exp $	*/
+/*	$NetBSD: commands.c,v 1.10 2021/02/09 20:42:31 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -61,7 +61,7 @@ command_execute(char *func, int nargs, char **args)
 		if (strcmp(func, commands[i].name) == 0) {
 			/* Check only restricted set of functions is called before
 			 * initscr/newterm */
-			if (!initdone){
+			if (!initdone) {
 				j = 0;
 				while (j < nrcmds) {
 					if (strcmp(func, restricted_commands[j]) == 0) {
