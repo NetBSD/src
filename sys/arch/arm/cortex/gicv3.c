@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.40 2021/02/07 21:24:50 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.41 2021/02/09 17:44:01 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.40 2021/02/07 21:24:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.41 2021/02/09 17:44:01 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,11 +79,13 @@ gicd_write_4(struct gicv3_softc *sc, bus_size_t reg, uint32_t val)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_d, reg, val);
 }
 
+#ifdef MULTIPROCESSOR
 static inline uint64_t
 gicd_read_8(struct gicv3_softc *sc, bus_size_t reg)
 {
 	return bus_space_read_8(sc->sc_bst, sc->sc_bsh_d, reg);
 }
+#endif
 
 static inline void
 gicd_write_8(struct gicv3_softc *sc, bus_size_t reg, uint64_t val)
