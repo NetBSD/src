@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.43 2021/02/08 23:54:03 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.44 2021/02/09 20:42:31 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1116,7 +1116,7 @@ do_function_call(size_t nresults)
 		fds[1].events = POLLOUT;
  		p = input_str;
 		save_slave_output(false);
-		while(*p != '\0') {
+		while (*p != '\0') {
 			perform_delay(&delay_spec);
 
 			if (poll(fds, 2, 0) < 0)
@@ -1774,11 +1774,11 @@ validate_wchar(wchar_t *expected, wchar_t *value, int check)
 	wchar_t *p;
 
 	p = expected;
-	while(*p++ != L'\0')
+	while (*p++ != L'\0')
 		len1++;
 
 	p = value;
-	while(*p++ != L'\0')
+	while (*p++ != L'\0')
 		len2++;
 
 	/*
@@ -2036,7 +2036,7 @@ read_cmd_pipe(ct_data_t *response)
 			save_slave_output(false);
 		}
 	}
-	while((rfd[1].revents & POLLIN) == POLLIN);
+	while ((rfd[1].revents & POLLIN) == POLLIN);
 
 	if (read(slvpipe[READ_PIPE], &type, sizeof(int)) < 0)
 		err(1, "command pipe read for type failed");
