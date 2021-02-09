@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.43 2020/12/03 07:45:52 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.44 2021/02/09 14:24:14 jakllsch Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.43 2020/12/03 07:45:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.44 2021/02/09 14:24:14 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -367,9 +367,9 @@ armgic_irq_handler(void *tf)
 			gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ipl));
 			ci->ci_cpl = ipl;
 		}
-		cpsie(I32_bit);
+		ENABLE_INTERRUPT();
 		pic_dispatch(is, tf);
-		cpsid(I32_bit);
+		DISABLE_INTERRUPT();
 		gicc_write(sc, GICC_EOIR, iar);
 #ifdef DEBUG
 		n++;
@@ -529,7 +529,7 @@ armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	}
 	gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ci->ci_cpl));	// set PMR
 	gicc_write(sc, GICC_CTRL, GICC_CTRL_V1_Enable);	// enable interrupt
-	cpsie(I32_bit);					// allow IRQ exceptions
+	ENABLE_INTERRUPT();				// allow IRQ exceptions
 }
 
 void
@@ -656,7 +656,7 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	armgic_set_priority(&sc->sc_pic, ci->ci_cpl);	// set PMR
 	gicd_write(sc, GICD_CTRL, GICD_CTRL_Enable);	// enable Distributer
 	gicc_write(sc, GICC_CTRL, GICC_CTRL_V1_Enable);	// enable CPU interrupts
-	cpsie(I32_bit);					// allow interrupt exceptions
+	ENABLE_INTERRUPT();				// allow interrupt exceptions
 
 	/*
 	 * For each line that isn't valid, we set the intrsource for it to
