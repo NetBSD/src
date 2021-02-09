@@ -10,8 +10,8 @@ input "b"
 # since delay is in effect and we set timeout the following getch should
 # return ERR not the character b.
 call -1 wgetch $win1
-# drain input....
-call OK drain $win1
+# drain input ...
+call OK DRAIN $win1
 call OK wtimeout $win1 -1
 call OK keypad $win1 1
 delay 0

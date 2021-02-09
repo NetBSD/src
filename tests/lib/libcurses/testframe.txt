@@ -1,4 +1,4 @@
-$NetBSD: testframe.txt,v 1.7 2021/02/07 20:20:06 rillig Exp $
+$NetBSD: testframe.txt,v 1.8 2021/02/09 20:31:02 rillig Exp $
 
 CURSES TESTFRAME
 ----------------
@@ -261,8 +261,8 @@ of the operation can either be used as an argument for a call or can
 be used as an expected result for a call.
 
 In addition to all the curses calls being supported by the slave,
-there is one more special call called "drain".  This call repeatedly
-called wgetch(win) until there are no more characters in win.  The call
+there is one more special call called "DRAIN".  This call repeatedly
+calls wgetch(win) until there are no more characters in win.  The call
 assumes that the curses input is either in no delay or timed input
 mode otherwise the test will time out and fail.  This call can be used
 to clear any pending input when testing a timed read, to prevent the
