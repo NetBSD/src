@@ -10,8 +10,8 @@ input "b"
 # since delay is in effect and we set timeout the following getch should
 # return ERR not the character b.
 call -1 getch
-# drain input....
-call OK drain STDSCR
+# drain input ...
+call OK DRAIN STDSCR
 call OK timeout -1
 call OK keypad STDSCR 1
 delay 0
