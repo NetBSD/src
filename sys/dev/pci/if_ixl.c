@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.75 2020/09/08 10:05:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.76 2021/02/09 15:05:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.75 2020/09/08 10:05:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.76 2021/02/09 15:05:49 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5925,7 +5925,7 @@ ixl_setup_interrupts(struct ixl_softc *sc)
 			    PCI_INTR_MPSAFE, true);
 		}
 
-		sc->sc_ihs = kmem_alloc(sizeof(sc->sc_ihs[0]) * sc->sc_nintrs,
+		sc->sc_ihs = kmem_zalloc(sizeof(sc->sc_ihs[0]) * sc->sc_nintrs,
 		    KM_SLEEP);
 
 		if (intr_type == PCI_INTR_TYPE_MSIX) {
