@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.12 2021/02/08 19:15:21 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.13 2021/02/09 20:22:11 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -54,7 +54,7 @@ set_int(char *arg, int *x)
 int
 set_uint(char *arg, unsigned int *x)
 {
-	if (sscanf(arg, "%d", x) == 0) {
+	if (sscanf(arg, "%u", x) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return -1;
