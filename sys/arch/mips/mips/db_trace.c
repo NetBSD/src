@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.48 2021/02/09 13:26:25 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.49 2021/02/09 13:28:47 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.48 2021/02/09 13:26:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2021/02/09 13:28:47 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -81,7 +81,6 @@ void db_mips_stack_trace(int, vaddr_t, vaddr_t, vaddr_t, int, vaddr_t);
 int db_mips_variable_func(const struct db_variable *, db_expr_t *, int);
 
 #define DB_SETF_REGS db_mips_variable_func
-#define DBREGS_REG()
 
 const struct db_variable db_regs[] = {
 	{ "at",	(long *)&ddb_regs.r_regs[_R_AST],  DB_SETF_REGS, NULL },
