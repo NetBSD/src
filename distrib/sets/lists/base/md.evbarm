@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.19 2020/08/27 15:31:59 riastradh Exp $
+# $NetBSD: md.evbarm,v 1.20 2021/02/09 11:57:20 yamt Exp $
 ./libdata/firmware/if_bwfm/brcmfmac43143-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b0-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b4-sdio.bin	base-firmware-root	firmware
@@ -19,6 +19,7 @@
 ./libdata/firmware/if_bwfm/brcmfmac43430-sdio.sinovoip,bpi-m2-zero.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43430a0-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43455-sdio.raspberrypi,3-model-a-plus.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.xunlong,orangepi-lite2.txt	base-firmware-root	firmware

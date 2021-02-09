@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2020/03/27 04:31:18 thorpej Exp $
+# $NetBSD: Makefile,v 1.9 2021/02/09 11:57:20 yamt Exp $
 
 NOMAN=	# define
 
@@ -76,6 +76,11 @@ LINKS+=	${FILESDIR}/brcmfmac43430-sdio.AP6212.txt \
 # used the the same nvram config as the raspberrypi,3-model-b-plus.
 LINKS+=	${FILESDIR}/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt \
 	${FILESDIR}/brcmfmac43455-sdio.xunlong,orangepi-lite2.txt
+
+# The model A+ has successully used the same nvram config as the B+.
+# cf. https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/commit/?id=923bfa68a1c97929652f029da699495f4ce43f14
+LINKS+=	${FILESDIR}/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt \
+    ${FILESDIR}/brcmfmac43455-sdio.raspberrypi,3-model-a-plus.txt
 .endif
 
 .include <bsd.links.mk>
