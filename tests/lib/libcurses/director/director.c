@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.17 2021/02/08 19:15:20 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.18 2021/02/09 20:42:31 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 	check_file_flag = 0;
 
 	while ((ch = getopt(argc, argv, "vgfC:I:p:s:t:T:")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'I':
 			include_path = optarg;
 			break;
