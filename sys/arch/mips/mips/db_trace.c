@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.47 2020/09/26 20:38:27 mrg Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.48 2021/02/09 13:26:25 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47 2020/09/26 20:38:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.48 2021/02/09 13:26:25 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -182,7 +182,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		struct lwp lstore;
 
 		db_read_bytes(addr, sizeof(lstore), (char *)&lstore);
-		db_read_bytes((db_addr_t)lstore.l_proc, sizeof(pstore), 
+		db_read_bytes((db_addr_t)lstore.l_proc, sizeof(pstore),
 		    (char *)&pstore);
 		(*pr)("pid %d.%d ", pstore.p_pid, lstore.l_lid);
 		pcb = lwp_getpcb(&lstore);
@@ -198,7 +198,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (p == NULL) {
 			(*pr)("not found\n");
 			return;
-		}	
+		}
 		l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
 		pcb = lwp_getpcb(l);
 #else
@@ -298,9 +298,8 @@ db_mips_stack_trace(int count, vaddr_t stackp, vaddr_t the_pc, vaddr_t the_ra,
 	/* nothing... */
 }
 
-
 int
-db_mips_variable_func (const struct db_variable *vp, db_expr_t *valuep,
+db_mips_variable_func(const struct db_variable *vp, db_expr_t *valuep,
     int db_var_fcn)
 {
 
