@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.33 2021/02/07 18:22:51 rillig Exp $
+.\"	$NetBSD: poll.2,v 1.34 2021/02/09 00:50:47 dholland Exp $
 .\"
 .\" Copyright (c) 1998, 2005, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 25, 2020
+.Dd February 8, 2021
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -56,95 +56,27 @@ and
 .Fn ppoll
 examine a set of file descriptors to see if some of them are ready for
 I/O.
+For each object inspected, the caller provides a list of conditions
+(called ``events'') to check for, and the kernel returns a list of 
+conditions that are true.
+The intent, as with
+.Xr select 2 ,
+is to check for whether I/O is possible before performing any, so as
+to permit a top-level event loop to process input from many sources
+(and output to many destinations)
+without blocking on any of them and thus becoming stuck.
+.Ss Arguments
 The
 .Fa fds
-argument is a pointer to an array of pollfd structures as defined in
+argument is a pointer to an array of pollfd structures, one per file
+to inspect, as defined in
 .In poll.h
 (shown below).
 The
 .Fa nfds
-argument determines the size of the
+argument gives the size of the
 .Fa fds
 array.
-.Bd -literal
-struct pollfd {
-    int    fd;       /* file descriptor */
-    short  events;   /* events to look for */
-    short  revents;  /* events returned */
-};
-.Ed
-.Pp
-The fields of
-.Fa struct pollfd
-are as follows:
-.Bl -tag -width XXXrevents
-.It fd
-File descriptor to poll.
-If the value in
-.Em fd
-is negative, the file descriptor is ignored and
-.Em revents
-is set to 0.
-.It events
-Events to poll for.
-(See below.)
-.It revents
-Events which may occur.
-(See below.)
-.El
-.Pp
-The event bitmasks in
-.Fa events
-and
-.Fa revents
-have the following bits:
-.Bl -tag -width XXXPOLLWRNORM
-.It POLLIN
-Data other than high priority data may be read without blocking.
-.It POLLRDNORM
-Normal data may be read without blocking.
-.It POLLRDBAND
-Data with a non-zero priority may be read without blocking.
-.It POLLPRI
-High priority data may be read without blocking.
-.It POLLOUT
-Normal data may be written without blocking.
-.It POLLWRNORM
-Equivalent to
-POLLOUT.
-.It POLLWRBAND
-Data with a non-zero priority may be written without blocking.
-.It POLLERR
-An exceptional condition has occurred on the device or socket.
-This flag is always checked, even if not present in the
-.Fa events
-bitmask.
-.It POLLHUP
-The device or socket has been disconnected.
-This flag is always
-checked, even if not present in the
-.Fa events
-bitmask.
-Note that
-POLLHUP
-and
-POLLOUT
-should never be present in the
-.Fa revents
-bitmask at the same time.
-If the remote end of a socket is closed,
-.Fn poll
-returns a
-POLLIN
-event, rather than a
-POLLHUP.
-.It POLLNVAL
-The file descriptor is not open.
-This flag is always checked, even
-if not present in the
-.Fa events
-bitmask.
-.El
 .Pp
 If
 .Fa timeout
@@ -152,14 +84,16 @@ is neither zero nor INFTIM (\-1), it specifies a maximum interval to
 wait for any file descriptor to become ready, in milliseconds.
 If
 .Fa timeout
-is INFTIM (\-1), the poll blocks indefinitely.
+is INFTIM (\-1), then
+.Pn poll
+blocks indefinitely.
 If
 .Fa timeout
 is zero, then
 .Fn poll
 will return without blocking.
 .Pp
-If
+Similarly, if
 .Fa ts
 is a non-null pointer, it references a timespec structure which specifies a
 maximum interval to wait for any file descriptor to become ready.
@@ -169,7 +103,7 @@ is a null pointer,
 .Fn pollts
 and
 .Fn ppoll
-blocks indefinitely.
+block indefinitely.
 If
 .Fa ts
 is a non-null pointer, referencing a zero-valued timespec structure, then
@@ -184,11 +118,97 @@ is a non-null pointer, then the
 .Fn pollts
 and
 .Fn ppoll
-function shall replace the signal mask of the caller by the set of
+functions replace the signal mask of the caller by the set of
 signals pointed to by
 .Fa sigmask
-before examining the descriptors, and shall restore the signal mask
-of the caller before returning.
+while the call is in progress, and restore the caller's original
+signal mask before returning.
+.Pp
+The
+.Vt pollfd
+structure:
+.Bd -literal
+struct pollfd {
+    int    fd;       /* file descriptor */
+    short  events;   /* events to look for */
+    short  revents;  /* events returned */
+};
+.Ed
+.\" without this Pp there is no blank line after the struct which is oogly
+.Pp
+The fields of
+.Fa struct pollfd
+are as follows:
+.Pp
+.Bl -tag -width XXXrevents -compact
+.It Fa fd
+File descriptor to poll.
+(Input)
+.It Fa events
+Conditions to poll for.
+(Input)
+.It Fa revents
+Conditions that are true.
+(Output)
+.El
+.Pp
+.Ss Conditions
+There are four conditions that can be placed in
+.Fa events
+and reported in 
+.Fa revents :
+.Pp
+.Bl -tag -width XXXPOLLWRNORM -compact
+.It POLLRDNORM
+Normal data may be read without blocking.
+.It POLLRDBAND
+Urgent/out-of-band data may be read without blocking.
+.It POLLWRNORM
+Normal data may be written without blocking.
+.It POLLWRBAND
+Urgent/out-of-band data may be written without blocking.
+.El
+.Pp
+There are three more conditions that are always checked for regardless
+of
+.Fa events
+and thus may always be reported in
+.Fa revents :
+.Pp
+.Bl -tag -width XXXPOLLWRNORM -compact
+.It POLLERR
+An exceptional condition has occurred on the object.
+.It POLLHUP
+The object has been disconnected.
+.It POLLNVAL
+The file descriptor is not open.
+.El
+.Pp
+The following additional flags are defined:
+.Pp
+.Bl -tag -width XXXPOLLWRNORM -compact
+.It POLLIN
+Synonym for POLLRDNORM.
+.It POLLOUT
+Synonym for POLLWRNORM.
+.It POLLPRI
+Synonym for POLLRDBAND.
+.El
+.Ss Notes
+If the value passed in
+.Fa fd
+is negative, the entry is ignored and
+.Fa revents
+is set to 0.
+(POLLNVAL is
+.Em not
+set.)
+.Pp
+No file descriptor will ever produce POLLHUP at the same time as POLLWRNORM.
+.\" (XXX but what about POLLWRBAND? POLLRDBAND? POLLRDNORM?)
+.Pp
+Sockets produce POLLIN rather than POLLHUP when the remote
+end is closed.
 .Sh RETURN VALUES
 .Fn poll
 returns the number of descriptors that are ready for I/O, or \-1 if an
@@ -204,8 +224,8 @@ the
 .Fa fds
 array will be unmodified.
 .Sh COMPATIBILITY
-This implementation differs from the historical one in that a given
-file descriptor may not cause
+This implementation differs from the historical one in that no individual
+file descriptor may cause
 .Fn poll
 to return with an error.
 In cases where this would have happened in the historical implementation
@@ -262,9 +282,17 @@ The
 function first appeared in
 .Nx 10.0 .
 .Sh BUGS
-The distinction between some of the fields in the
-.Fa events
-and
-.Fa revents
-bitmasks is really not useful without STREAMS.
-The fields are defined for compatibility with existing software.
+As of this writing, in the underlying implementation, POLLIN and
+POLLPRI are distinct flags from POLLRDNORM and POLLRDBAND
+(respectively) and the behavior is not always exactly identical.
+.Pp
+The detailed behavior of specific flags is not very portable from one
+OS to another.
+.\" The old note, which is too vague to be helpful:
+.\"
+.\" The distinction between some of the fields in the
+.\" .Fa events
+.\" and
+.\" .Fa revents
+.\" bitmasks is really not useful without STREAMS.
+.\" The fields are defined for compatibility with existing software.
