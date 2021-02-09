@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.36 2021/02/09 01:12:01 dholland Exp $
+.\"	$NetBSD: poll.2,v 1.37 2021/02/09 09:01:29 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2005, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ and
 examine a set of file descriptors to see if some of them are ready for
 I/O.
 For each object inspected, the caller provides a list of conditions
-(called ``events'') to check for, and the kernel returns a list of 
+(called ``events'') to check for, and the kernel returns a list of
 conditions that are true.
 The intent, as with
 .Xr select 2 ,
@@ -95,7 +95,7 @@ will return without blocking.
 .Pp
 Similarly, if
 .Fa ts
-is a non-null pointer, it references a timespec structure which specifies a
+is not a null pointer, it references a timespec structure which specifies a
 maximum interval to wait for any file descriptor to become ready.
 If
 .Fa ts
@@ -106,7 +106,7 @@ and
 block indefinitely.
 If
 .Fa ts
-is a non-null pointer, referencing a zero-valued timespec structure, then
+is not a null pointer, referencing a zero-valued timespec structure, then
 .Fn pollts
 and
 .Fn ppoll
@@ -114,7 +114,7 @@ will return without blocking.
 .Pp
 If
 .Fa sigmask
-is a non-null pointer, then the
+is not a null pointer, then the
 .Fn pollts
 and
 .Fn ppoll
@@ -134,7 +134,7 @@ struct pollfd {
     short  revents;  /* events returned */
 };
 .Ed
-.\" without this Pp there is no blank line after the struct which is oogly
+.\" without this Pp there is no blank line after the struct which is ugly
 .Pp
 The fields of
 .Fa struct pollfd
@@ -151,11 +151,10 @@ Conditions to poll for.
 Conditions that are true.
 (Output)
 .El
-.Pp
 .Ss Conditions
 There are four conditions that can be placed in
 .Fa events
-and reported in 
+and reported in
 .Fa revents :
 .Pp
 .Bl -tag -width XXXPOLLWRNORM -compact
@@ -237,13 +236,13 @@ bitmask to the
 .Fa revents
 bitmask.
 Attempting to perform I/O on this descriptor will then return an error.
-This behaviour is believed to be more useful.
+This behavior is believed to be more useful.
 .Pp
 The
 .Fn ppoll
 function is a wrapper for
 .Fn pollts
-to provide compatiblity with the Linux implementation.
+to provide compatibility with the Linux implementation.
 .Sh ERRORS
 An error return from
 .Fn poll
@@ -273,7 +272,9 @@ The
 .Fn poll
 function appeared in
 .At V.3 ,
-and was added to NetBSD in
+and was added to
+.Nx
+in
 .Nx 1.3 .
 The
 .Fn pollts
