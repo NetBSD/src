@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.43 2021/02/07 17:42:35 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.44 2021/02/10 16:55:39 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1498,4 +1498,10 @@ lib/libc/stdio/fread.c				1.24 (patch)
 
 	PR 55808: optimize buffer handling for unbuffered I/O.
 	[jdolecek, ticket #1198]
+
+usr.bin/nl/nl.c					1.13-1.15
+
+	nl(1): fix PR 55891 and a delimiter parsing error plus
+	minor cleanup.
+	[ginsbach, ticket #1202]
 
