@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.69 2021/02/07 13:56:00 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.70 2021/02/10 16:57:42 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1552,4 +1552,10 @@ usr.sbin/isibootd/isibootd.c			1.4
 
 	Fix isibootd(8) "Cannot allocate memory" failure on amd64.
 	[tsutsui, ticket #1650]
+
+usr.bin/nl/nl.c					1.13-1.15
+
+	nl(1): fix PR 55891 and a delimiter parsing error plus
+	minor cleanup.
+	[ginsbach, ticket #1651]
 
