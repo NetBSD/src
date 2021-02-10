@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.37 2019/06/02 06:09:17 mrg Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.38 2021/02/10 07:17:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -80,16 +80,16 @@ void		db_show_all_device(db_expr_t, bool, db_expr_t, const char *);
 /* kern/subr_disk.c, dev/dksubr.c */
 void		db_show_disk(db_expr_t, bool, db_expr_t, const char *);
 
-#define	db_stacktrace() \
-    db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
-	true, 65535, "", printf)
 
-#define	db_ustacktrace() \
+/* The db_stacktrace_print macro may be overridden by an MD macro */
+#ifndef db_stacktrace_print
+#define	db_stacktrace_print(prfunc) \
     db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
-	true, 65535, "", uprintf)
+	true, 65535, "", prfunc)
+#endif	/* !db_stacktrace_print */
 
-#define	db_lstacktrace() \
-    db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
-	true, 65535, "", addlog)
+#define	db_stacktrace()		db_stacktrace_print(printf);
+#define	db_ustacktrace()	db_stacktrace_print(uprintf);
+#define	db_lstacktrace()	db_stacktrace_print(log);
 
 #endif /* _DDB_DB_INTERFACE_H_ */
