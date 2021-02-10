@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.12 2013/09/17 20:00:50 wiz Exp $	*/
+/*	$NetBSD: nl.c,v 1.12.18.1 2021/02/10 16:56:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.12 2013/09/17 20:00:50 wiz Exp $");
+__RCSID("$NetBSD: nl.c,v 1.12.18.1 2021/02/10 16:56:52 martin Exp $");
 #endif    
 
 #include <errno.h>
@@ -157,14 +157,15 @@ main(int argc, char *argv[])
 		case 'd':
 			if (optarg[0] != '\0')
 				delim[0] = optarg[0];
-			if (optarg[1] != '\0')
+			if (optarg[1] != '\0') {
 				delim[1] = optarg[1];
-			/* at most two delimiter characters */
-			if (optarg[2] != '\0') {
-				errx(EXIT_FAILURE,
-				    "invalid delim argument -- %s",
-				    optarg);
-				/* NOTREACHED */
+				/* at most two delimiter characters */
+				if (optarg[2] != '\0') {
+					errx(EXIT_FAILURE,
+					    "invalid delim argument -- %s",
+					    optarg);
+					/* NOTREACHED */
+				}
 			}
 			break;
 		case 'f':
@@ -331,13 +332,13 @@ filter(void)
 		if (donumber) {
 			consumed = snprintf(intbuffer, intbuffersize, format,
 			    width, line);
-			(void)printf("%s",
-			    intbuffer + max(0, consumed - width));
+			(void)printf("%s%s",
+			    intbuffer + max(0, consumed - width), sep);
 			line += incr;
 		} else {
-			(void)printf("%*s", width, "");
+			(void)printf("%*s%*s", width, "", (int)strlen(sep), "");
 		}
-		(void)printf("%s%s", sep, buffer);
+		(void)printf("%s", buffer);
 
 		if (ferror(stdout))
 			err(EXIT_FAILURE, "output error");
@@ -392,7 +393,6 @@ parse_numbering(const char *argstr, int section)
 		errx(EXIT_FAILURE,
 		    "illegal %s line numbering type -- %s",
 		    numbering_properties[section].name, argstr);
-		exit(EXIT_FAILURE);
 	}
 }
 
