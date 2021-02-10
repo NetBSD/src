@@ -11,6 +11,7 @@ SECTIONS
 	.text :
 	{
 		PROVIDE(__kernel_text = .);
+		PROVIDE(kernel_text = .);
 		*(.text)
 		*(.text.*)
 		*(.stub)

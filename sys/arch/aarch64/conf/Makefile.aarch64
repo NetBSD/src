@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.21 2020/05/11 03:00:57 ryo Exp $
+#	$NetBSD: Makefile.aarch64,v 1.22 2021/02/10 08:25:01 ryo Exp $
 
 # Makefile for NetBSD
 #
@@ -38,6 +38,11 @@ CFLAGS+=	-march=armv8-a+nofp+nosimd
 CFLAGS+=	-fno-omit-frame-pointer
 CFLAGS+=	-mno-omit-leaf-frame-pointer
 #CFLAGS+=	-mno-unaligned-access
+
+.if defined(PROF) && ${HAVE_GCC:U0} > 0
+# For accurate profiling, it is better to suppress the tail call.
+CFLAGS+=	-fno-optimize-sibling-calls
+.endif
 
 .if ${HAVE_LLVM:Uno} == "yes"
 .if ${ARMV83_PAC:U0} > 0 && ${ARMV85_BTI:U0} > 0
