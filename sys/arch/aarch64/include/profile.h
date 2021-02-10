@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.3 2021/02/10 08:25:01 ryo Exp $ */
+/* $NetBSD: profile.h,v 1.4 2021/02/10 12:31:34 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifdef __aarch64__
 
-#define	_MCOUNT_DECL void _mcount
+#define	_MCOUNT_DECL void mcount
 
 /*
  * Cannot implement mcount in C as GCC will trash the ip register when it
@@ -39,7 +39,8 @@
  * prologue.
  */
 
-#define MCOUNT_ASM_NAME "__mcount"
+#define MCOUNT_ASM_NAME "_mcount"		/* gcc */
+#define MCOUNT_ASM_NAME_ALIAS "__mcount"	/* llvm */
 #define	PLTSYM
 
 #define	MCOUNT								\
@@ -47,7 +48,9 @@
 	__asm(".align	6");						\
 	__asm(".type	" MCOUNT_ASM_NAME ",@function");		\
 	__asm(".global	" MCOUNT_ASM_NAME);				\
+	__asm(".global	" MCOUNT_ASM_NAME_ALIAS);			\
 	__asm(MCOUNT_ASM_NAME ":");					\
+	__asm(MCOUNT_ASM_NAME_ALIAS ":");				\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
@@ -70,7 +73,7 @@
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
-	__asm("bl	" ___STRING(_C_LABEL(_mcount)));		\
+	__asm("bl	" ___STRING(_C_LABEL(mcount)));			\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
