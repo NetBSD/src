@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.49 2021/02/09 13:28:47 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.50 2021/02/10 07:19:54 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2021/02/09 13:28:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2021/02/10 07:19:54 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -74,10 +74,6 @@ db_sym_t localsym(db_sym_t sym, bool isreg, int *lex_level);
  */
 struct mips_saved_state *db_cur_exc_frame = 0;
 
-/*
- * Stack trace helper.
- */
-void db_mips_stack_trace(int, vaddr_t, vaddr_t, vaddr_t, int, vaddr_t);
 int db_mips_variable_func(const struct db_variable *, db_expr_t *, int);
 
 #define DB_SETF_REGS db_mips_variable_func
@@ -289,12 +285,24 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif
 }
 
+/*
+ * Helper function for db_stacktrace() and friends, used to get the
+ * pc via the return address.
+ */
 void
-db_mips_stack_trace(int count, vaddr_t stackp, vaddr_t the_pc, vaddr_t the_ra,
-    int flags, vaddr_t kstackp)
+db_mips_stack_trace(void *ra, void *fp, void (*pr)(const char *, ...))
 {
+	vaddr_t pc;
 
-	/* nothing... */
+	/*
+	 * The jal instruction for our caller is two insns before the
+	 * return address.
+	 */
+	pc = (vaddr_t)__builtin_return_address(0) - sizeof(uint32_t) * 2;
+
+	stacktrace_subr(0, 0, 0, 0,	/* no args known */
+	    pc, (intptr_t)fp, (intptr_t)fp, (intptr_t)ra,
+	    pr);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.33 2020/08/17 03:19:35 mrg Exp $ */
+/* $NetBSD: db_machdep.h,v 1.34 2021/02/10 07:19:54 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -127,6 +127,7 @@ db_addr_t next_instr_address(db_addr_t pc, bool bd);
 bool ddb_running_on_this_cpu_p(void);
 bool ddb_running_on_any_cpu_p(void);
 void db_resume_others(void);
+void db_mips_stack_trace(void *, void *, void (*pr)(const char *, ...));
 
 extern void (*cpu_reset_address)(void);
 
@@ -136,5 +137,9 @@ extern void (*cpu_reset_address)(void);
  */
 #define	DB_MACHINE_COMMANDS
 #endif
+
+#define	db_stacktrace_print(prfunc) \
+    db_mips_stack_trace(__builtin_return_address(0), \
+	__builtin_frame_address(0), prfunc)
 
 #endif	/* _MIPS_DB_MACHDEP_H_ */
