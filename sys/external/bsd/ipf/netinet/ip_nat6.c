@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.11 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.12 2021/02/10 00:28:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -382,7 +382,7 @@ ipf_nat6_hostmap(ipf_nat_softc_t *softn, ipnat_t *np, i6addr_t *src,
 	hv += dst->i6[2];
 	hv += dst->i6[1];
 	hv += dst->i6[0];
-	hv %= HOSTMAP_SIZE;
+	hv %= softn->ipf_nat_hostmap_sz;
 	for (hm = softn->ipf_hm_maptable[hv]; hm; hm = hm->hm_next)
 		if (IP6_EQ(&hm->hm_osrc6, src) &&
 		    IP6_EQ(&hm->hm_odst6, dst) &&
