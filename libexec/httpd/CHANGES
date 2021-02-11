@@ -1,4 +1,8 @@
-$NetBSD: CHANGES,v 1.44 2020/10/15 04:21:53 mrg Exp $
+$NetBSD: CHANGES,v 1.45 2021/02/11 09:23:55 mrg Exp $
+
+changes in bozohttpd 20210210:
+	o  fix various NULL derefs from malformed headers.  mostly from
+	   <emily@ingalls.rocks>.
 
 changes in bozohttpd 20201014:
 	o  also set -D_GNU_SOURCE in Makefile.boot.  from

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.51 2020/10/15 04:21:53 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.52 2021/02/11 09:23:55 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -610,10 +610,16 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_daemon_closefds(httpd);
 
 		if (-1 == execve(path, argv, envp)) {
+			int saveerrno = errno;
 			bozo_http_error(httpd, 404, request,
 				"Cannot execute CGI");
-			bozoerr(httpd, 1, "child exec failed: %s: %s",
-			      path, strerror(errno));
+			/* don't log easy to trigger events */
+			if (saveerrno != ENOENT &&
+			    saveerrno != EISDIR &&
+			    saveerrno != EACCES)
+				bozoerr(httpd, 1, "child exec failed: %s: %s",
+				      path, strerror(saveerrno));
+			_exit(1);
 		}
 		/* NOT REACHED */
 		bozoerr(httpd, 1, "child execve returned?!");
