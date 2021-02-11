@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.7 2020/07/19 07:18:07 ryo Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.8 2021/02/11 08:35:11 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -33,6 +33,7 @@
  */
 
 #include "opt_cputypes.h"
+#include "opt_gprof.h"
 #include "opt_multiprocessor.h"
 #include <aarch64/asm.h>
 
