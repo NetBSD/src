@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.44 2021/02/10 16:55:39 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.45 2021/02/11 13:03:10 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1504,4 +1504,22 @@ usr.bin/nl/nl.c					1.13-1.15
 	nl(1): fix PR 55891 and a delimiter parsing error plus
 	minor cleanup.
 	[ginsbach, ticket #1202]
+
+sys/dev/scsipi/cd.c				1.350
+sys/dev/scsipi/sd.c				1.331
+
+	PR 55986: DK_BUSY must have mask as second argument.
+	[ryoon, ticket #1203]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.136
+
+	PR 55985: do not insist on valid MSDOS bootloader signatures for
+	mounting an msdosfs.
+	[ryoon, ticket #1204]
+
+sys/arch/x68k/x68k/machdep.c			1.204
+
+	Restore fixes for PR 51663 lost in r1.195 (uvm_hotplug(9) merge),
+	fixing kernel crash dumps for x68k.
+	[tsutsui, ticket #1205]
 
