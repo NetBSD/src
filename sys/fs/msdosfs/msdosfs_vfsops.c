@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.127.4.2 2018/01/22 12:34:25 martin Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.127.4.3 2021/02/11 12:59:38 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.127.4.2 2018/01/22 12:34:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.127.4.3 2021/02/11 12:59:38 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -518,6 +518,13 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
 	b710 = (struct byte_bpb710 *)bsp->bs710.bsBPB;
 
+#if 0
+	/*
+	 * Some FAT partition, for example Raspberry Pi Pico's
+	 * USB mass storage, does not have exptected BOOTSIGs.
+	 * According to FreeBSD's comment, some PC-9800/9821
+	 * FAT floppy disks have similar problems.
+	 */
 	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
 		if (bsp->bs50.bsBootSectSig0 != BOOTSIG0
 		    || bsp->bs50.bsBootSectSig1 != BOOTSIG1) {
@@ -528,6 +535,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 			goto error_exit;
 		}
 	}
+#endif
 
 	pmp = malloc(sizeof(*pmp), M_MSDOSFSMNT, M_WAITOK|M_ZERO);
 	pmp->pm_mountp = mp;
