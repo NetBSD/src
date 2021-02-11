@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_page.S,v 1.5 2020/11/10 07:51:19 skrll Exp $ */
+/* $NetBSD: pmap_page.S,v 1.6 2021/02/11 08:35:12 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_gprof.h"
 #include <aarch64/asm.h>
 
 #include "assym.h"
 
-RCSID("$NetBSD: pmap_page.S,v 1.5 2020/11/10 07:51:19 skrll Exp $");
+RCSID("$NetBSD: pmap_page.S,v 1.6 2021/02/11 08:35:12 ryo Exp $");
 
 /* LINTSTUB: void pmap_zero_page(paddr_t pa); */
 ENTRY(pmap_zero_page)
