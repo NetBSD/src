@@ -1,4 +1,4 @@
-/* $NetBSD: idle_machdep.S,v 1.6 2020/08/12 13:19:35 skrll Exp $ */
+/* $NetBSD: idle_machdep.S,v 1.7 2021/02/11 08:35:12 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,13 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_intr_impl.h"
+#include "opt_ddb.h"
+#include "opt_gprof.h"
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
 #include "assym.h"
-#include "opt_arm_intr_impl.h"
-#include "opt_ddb.h"
 
-RCSID("$NetBSD: idle_machdep.S,v 1.6 2020/08/12 13:19:35 skrll Exp $");
+RCSID("$NetBSD: idle_machdep.S,v 1.7 2021/02/11 08:35:12 ryo Exp $");
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
