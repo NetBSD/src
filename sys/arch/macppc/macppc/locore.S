@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.74 2019/10/11 21:56:55 macallan Exp $	*/
+/*	$NetBSD: locore.S,v 1.75 2021/02/11 19:06:24 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -90,11 +90,6 @@ __start:
 #ifndef FIRMWORKSBUGS
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
 #endif
-#if defined(PMAP_OEA64_BRIDGE)
-	mfmsr	0			/* Clear SF and ISF bits */
-	clrldi	0,0,3
-	mtmsrd	0
-#endif /* PMAP_OEA64_BRIDGE */
 	isync
 
 /* compute end of kernel memory */
