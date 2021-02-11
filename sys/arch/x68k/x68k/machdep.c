@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.204 2021/02/07 15:51:11 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205 2021/02/11 02:37:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2021/02/07 15:51:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2021/02/11 02:37:11 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -957,7 +957,7 @@ candbtimer(void *arg)
 #endif
 
 /*
- * Level 7 interrupts can be caused by the keyboard or parity errors.
+ * Level 7 interrupts can be caused by the NMI button.
  */
 void
 nmihand(struct frame frame)
@@ -975,7 +975,7 @@ nmihand(struct frame frame)
 		 */
 		if (innmihand == 0) {
 			innmihand = 1;
-			printf("Got a keyboard NMI\n");
+			printf("NMI button pressed\n");
 			innmihand = 0;
 		}
 #ifdef DDB
