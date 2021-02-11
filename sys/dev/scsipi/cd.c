@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.342.4.1 2020/04/02 19:15:35 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.342.4.2 2021/02/11 12:53:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.342.4.1 2020/04/02 19:15:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.342.4.2 2021/02/11 12:53:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1378,7 +1378,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE));
 	case DIOCEJECT:
 		if (*(int *)addr == 0) {
-			int pmask = 1 << part;
+			int pmask = __BIT(part);
 			/*
 			 * Don't force eject: check that we are the only
 			 * partition open. If so, unlock it.
