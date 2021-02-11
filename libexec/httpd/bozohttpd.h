@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.66 2021/02/11 09:23:55 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.67 2021/02/11 09:57:52 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -443,6 +443,7 @@ int bozo_init_httpd(bozohttpd_t *);
 int bozo_init_prefs(bozohttpd_t *, bozoprefs_t *);
 int bozo_set_defaults(bozohttpd_t *, bozoprefs_t *);
 int bozo_setup(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
+void bozo_cleanup(bozohttpd_t *, bozoprefs_t *);
 bozo_httpreq_t *bozo_read_request(bozohttpd_t *);
 void bozo_process_request(bozo_httpreq_t *);
 void bozo_clean_request(bozo_httpreq_t *);

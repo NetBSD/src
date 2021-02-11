@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.125 2021/02/11 09:23:55 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.126 2021/02/11 09:57:52 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -239,6 +239,20 @@ bozo_set_pref(bozohttpd_t *httpd, bozoprefs_t *bozoprefs,
 	return 1;
 }
 
+static void
+bozo_clear_prefs(bozohttpd_t *httpd, bozoprefs_t *prefs)
+{
+	size_t	i;
+
+	for (i = 0; i < prefs->count; i++) {
+		free(prefs->name[i]);
+		free(prefs->value[i]);
+	}
+
+	free(prefs->name);
+	free(prefs->value);
+}
+
 /*
  * get a variable's value, or NULL
  */
@@ -339,8 +353,11 @@ bozo_clean_request(bozo_httpreq_t *request)
 	free(request->hr_serverport);
 	free(request->hr_virthostname);
 	free(request->hr_file_free);
+	/* XXX this is gross */
 	if (request->hr_file_free != request->hr_oldfile)
 		free(request->hr_oldfile);
+	else
+		free(request->hr_file);
 	free(request->hr_query);
 	free(request->hr_host);
 	bozo_user_free(request->hr_user);
@@ -2692,6 +2709,23 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 			httpd->virthostname, httpd->slashdir));
 
 	return 1;
+}
+
+void
+bozo_cleanup(bozohttpd_t *httpd, bozoprefs_t *prefs)
+{
+	bozo_clear_prefs(httpd, prefs);
+
+	free(httpd->virthostname);
+	free(httpd->errorbuf);
+	free(httpd->getln_buffer);
+	free(httpd->slashdir);
+#define bozo_unconst(x) ((void *)(uintptr_t)x)
+	free(bozo_unconst(httpd->server_software));
+	free(bozo_unconst(httpd->index_html));
+	free(bozo_unconst(httpd->dir_readme));
+	free(bozo_unconst(httpd->public_html));
+#undef bozo_unconst
 }
 
 int
