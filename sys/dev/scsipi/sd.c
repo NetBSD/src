@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.327.4.1 2020/03/21 15:52:09 martin Exp $	*/
+/*	$NetBSD: sd.c,v 1.327.4.2 2021/02/11 12:53:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.327.4.1 2020/03/21 15:52:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.327.4.2 2021/02/11 12:53:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -954,11 +954,12 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		if ((periph->periph_flags & PERIPH_REMOVABLE) == 0)
 			return (ENOTTY);
 		if (*(int *)addr == 0) {
+			int pmask = __BIT(part);
 			/*
 			 * Don't force eject: check that we are the only
 			 * partition open. If so, unlock it.
 			 */
-			if (DK_BUSY(dksc, part) == 0) {
+			if (DK_BUSY(dksc, pmask) == 0) {
 				error = scsipi_prevent(periph, SPAMR_ALLOW,
 				    XS_CTL_IGNORE_NOT_READY);
 				if (error)
