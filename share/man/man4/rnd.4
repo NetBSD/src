@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.37 2021/01/15 15:54:20 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.38 2021/02/12 01:52:09 riastradh Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -521,7 +521,7 @@ entropy of the adversary's state of knowledge about the pool is zero.
 If the operator is confident that the drivers' estimates of the entropy
 of the sampling processes are too conservative, the operator can issue
 .Dl # sysctl -w kern.entropy.consolidate=1
-to force consolidation into the ready pool.
+to force consolidation into the global pool.
 The operator can also fool the system into thinking it has more entropy
 than it does by feeding data from
 .Pa /dev/urandom
