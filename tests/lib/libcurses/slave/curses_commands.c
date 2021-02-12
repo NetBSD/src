@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.18 2021/02/12 16:59:32 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.19 2021/02/12 18:20:05 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -119,10 +119,23 @@ set_scrn(char *arg, SCREEN **x)
 		return
 
 #define ARG_CHTYPE(i, arg) \
-	chtype arg = ((chtype *)args[i])[0]
+	chtype arg = ((const chtype *)args[i])[0]
+
+#define ARG_WCHAR(i, arg) \
+	wchar_t arg = ((const wchar_t *)args[i])[0]
+
+#define ARG_STRING(i, arg) \
+	const char *arg = args[i]
+
+/* Only used for legacy interfaces that are missing the 'const'. */
+#define ARG_MODIFIABLE_STRING(i, arg) \
+	char *arg = args[i]
+
+#define ARG_CHTYPE_STRING(i, arg) \
+	const chtype *arg = (const chtype *)args[i]
 
 #define ARG_CCHAR_STRING(i, arg) \
-	cchar_t *arg = (cchar_t *)args[i]
+	const cchar_t *arg = (const cchar_t *)args[i]
 
 #define ARG_WCHAR_STRING(i, arg) \
 	wchar_t *arg = (wchar_t *)args[i]
@@ -152,11 +165,11 @@ void
 cmd_addbytes(int nargs, char **args)
 {
 	ARGC(2);
-	/* TODO: arg 0 */
+	ARG_STRING(0, str);
 	ARG_INT(1, count);
 
 	report_count(1);
-	report_return(addbytes(args[0], count));
+	report_return(addbytes(str, count));
 }
 
 
@@ -175,11 +188,11 @@ void
 cmd_addchnstr(int nargs, char **args)
 {
 	ARGC(2);
-	/* TODO: arg 0 */
+	ARG_CHTYPE_STRING(0, chstr);
 	ARG_INT(1, count);
 
 	report_count(1);
-	report_return(addchnstr((chtype *) args[0], count));
+	report_return(addchnstr(chstr, count));
 }
 
 
@@ -187,10 +200,10 @@ void
 cmd_addchstr(int nargs, char **args)
 {
 	ARGC(1);
-	/* TODO: arg 0 */
+	ARG_CHTYPE_STRING(0, chstr);
 
 	report_count(1);
-	report_return(addchstr((chtype *) args[0]));
+	report_return(addchstr(chstr));
 }
 
 
@@ -198,11 +211,11 @@ void
 cmd_addnstr(int nargs, char **args)
 {
 	ARGC(2);
-	/* TODO: arg 0 */
+	ARG_STRING(0, str);
 	ARG_INT(1, count);
 
 	report_count(1);
-	report_return(addnstr(args[0], count));
+	report_return(addnstr(str, count));
 }
 
 
@@ -210,10 +223,10 @@ void
 cmd_addstr(int nargs, char **args)
 {
 	ARGC(1);
-	/* TODO: arg 0 */
+	ARG_STRING(0, str);
 
 	report_count(1);
-	report_return(addstr(args[0]));
+	report_return(addstr(str));
 }
 
 
@@ -684,11 +697,11 @@ cmd_waddbytes(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
-	/* TODO: arg 1 */
+	ARG_STRING(1, str);
 	ARG_INT(2, count);
 
 	report_count(1);
-	report_return(waddbytes(win, args[1], count));
+	report_return(waddbytes(win, str, count));
 }
 
 
@@ -697,10 +710,10 @@ cmd_waddstr(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
-	/* TODO: arg 1 */
+	ARG_STRING(1, str);
 
 	report_count(1);
-	report_return(waddstr(win, args[1]));
+	report_return(waddstr(win, str));
 }
 
 
@@ -710,11 +723,11 @@ cmd_mvaddbytes(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	/* TODO: arg 2 */
+	ARG_STRING(2, str);
 	ARG_INT(3, count);
 
 	report_count(1);
-	report_return(mvaddbytes(y, x, args[2], count));
+	report_return(mvaddbytes(y, x, str, count));
 }
 
 
@@ -737,11 +750,11 @@ cmd_mvaddchnstr(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	/* TODO: arg 2 */
+	ARG_CHTYPE_STRING(2, chstr);
 	ARG_INT(3, count);
 
 	report_count(1);
-	report_return(mvaddchnstr(y, x, (chtype *) args[2], count));
+	report_return(mvaddchnstr(y, x, chstr, count));
 }
 
 
@@ -751,10 +764,10 @@ cmd_mvaddchstr(int nargs, char **args)
 	ARGC(3);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	/* TODO: arg 2 */
+	ARG_CHTYPE_STRING(2, chstr);
 
 	report_count(1);
-	report_return(mvaddchstr(y, x, (chtype *) args[2]));
+	report_return(mvaddchstr(y, x, chstr));
 }
 
 
@@ -764,11 +777,11 @@ cmd_mvaddnstr(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	/* TODO: arg 2 */
+	ARG_STRING(2, str);
 	ARG_INT(3, count);
 
 	report_count(1);
-	report_return(mvaddnstr(y, x, args[2], count));
+	report_return(mvaddnstr(y, x, str, count));
 }
 
 
@@ -778,10 +791,10 @@ cmd_mvaddstr(int nargs, char **args)
 	ARGC(3);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	/* TODO: arg 2 */
+	ARG_STRING(2, str);
 
 	report_count(1);
-	report_return(mvaddstr(y, x, args[2]));
+	report_return(mvaddstr(y, x, str));
 }
 
 
@@ -956,11 +969,11 @@ cmd_mvwaddbytes(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	/* TODO: arg 3 */
+	ARG_STRING(3, str);
 	ARG_INT(4, count);
 
 	report_count(1);
-	report_return(mvwaddbytes(win, y, x, args[3], count));
+	report_return(mvwaddbytes(win, y, x, str, count));
 }
 
 
@@ -985,10 +998,11 @@ cmd_mvwaddchnstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
+	ARG_CHTYPE_STRING(3, chstr);
 	ARG_INT(4, count);
 
 	report_count(1);
-	report_return(mvwaddchnstr(win, y, x, (chtype *) args[3], count));
+	report_return(mvwaddchnstr(win, y, x, chstr, count));
 }
 
 
@@ -999,9 +1013,10 @@ cmd_mvwaddchstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
+	ARG_CHTYPE_STRING(3, chstr);
 
 	report_count(1);
-	report_return(mvwaddchstr(win, y, x, (chtype *) args[3]));
+	report_return(mvwaddchstr(win, y, x, chstr));
 }
 
 
@@ -1012,11 +1027,11 @@ cmd_mvwaddnstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	/* TODO: arg 3 */
+	ARG_STRING(3, str);
 	ARG_INT(4, count);
 
 	report_count(1);
-	report_return(mvwaddnstr(win, y, x, args[3], count));
+	report_return(mvwaddnstr(win, y, x, str, count));
 }
 
 
@@ -1027,9 +1042,10 @@ cmd_mvwaddstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
+	ARG_STRING(3, str);
 
 	report_count(1);
-	report_return(mvwaddstr(win, y, x, args[3]));
+	report_return(mvwaddstr(win, y, x, str));
 }
 
 
@@ -1162,16 +1178,13 @@ cmd_beep(int nargs, char **args)
 void
 cmd_box(int nargs, char **args)
 {
-	chtype *vertical, *horizontal;
-
 	ARGC(3);
 	ARG_WINDOW(0, win);
-
-	vertical = (chtype *) args[1];
-	horizontal = (chtype *) args[2];
+	ARG_CHTYPE(1, vertical);
+	ARG_CHTYPE(2, horizontal);
 
 	report_count(1);
-	report_return(box(win, vertical[0], horizontal[0]));
+	report_return(box(win, vertical, horizontal));
 }
 
 
@@ -1279,10 +1292,11 @@ void
 cmd_define_key(int nargs, char **args)
 {
 	ARGC(2);
+	ARG_MODIFIABLE_STRING(0, sequence);
 	ARG_INT(1, symbol);
 
 	report_count(1);
-	report_return(define_key(args[0], symbol));
+	report_return(define_key(sequence, symbol));
 }
 
 
@@ -1426,9 +1440,10 @@ cmd_fullname(int nargs, char **args)
 	char string[256];
 
 	ARGC(1);
+	ARG_STRING(0, termbuf);
 
 	report_count(2);
-	report_status(fullname(args[0], string));
+	report_status(fullname(termbuf, string));
 	report_status(string);
 }
 
@@ -1640,8 +1655,9 @@ cmd_getwin(int nargs, char **args)
 	FILE *fp;
 
 	ARGC(1);
+	ARG_STRING(0, filename);
 
-	if ((fp = fopen(args[0], "r")) == NULL) {
+	if ((fp = fopen(filename, "r")) == NULL) {
 		report_count(1);
 		report_error("BAD FILE_ARGUMENT");
 		return;
@@ -1945,9 +1961,11 @@ cmd_mvprintw(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
+	ARG_STRING(2, fmt);	/* Must have a single "%s" in this test. */
+	ARG_STRING(3, arg);
 
 	report_count(1);
-	report_return(mvprintw(y, x, args[2], args[3]));
+	report_return(mvprintw(y, x, fmt, arg));
 }
 
 
@@ -1959,9 +1977,10 @@ cmd_mvscanw(int nargs, char **args)
 	ARGC(3);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
+	ARG_STRING(2, fmt);	/* Must have a single "%s" in this test. */
 
 	report_count(2);
-	report_return(mvscanw(y, x, args[2], &string));
+	report_return(mvscanw(y, x, fmt, &string));
 	report_status(string);
 }
 
@@ -2110,9 +2129,11 @@ cmd_mvwprintw(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
+	ARG_STRING(3, fmt);	/* Must have a single "%s" in this test. */
+	ARG_STRING(4, arg);
 
 	report_count(1);
-	report_return(mvwprintw(win, y, x, args[3], args[4]));
+	report_return(mvwprintw(win, y, x, fmt, arg));
 }
 
 
@@ -2125,9 +2146,10 @@ cmd_mvwscanw(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
+	ARG_STRING(3, fmt);	/* Must have a single "%s" in this test. */
 
 	report_count(2);
-	report_int(mvwscanw(win, y, x, args[3], &string));
+	report_int(mvwscanw(win, y, x, fmt, &string));
 	report_status(string);
 }
 
@@ -2161,19 +2183,23 @@ cmd_newterm(int nargs, char **args)
 	FILE *in, *out;
 
 	ARGC(3);
+	ARG_MODIFIABLE_STRING(0, type);
+	ARG_STRING(1, in_fname);
+	ARG_STRING(2, out_fname);
 
-	if ((in = fopen(args[1], "rw")) == NULL) {
+	if ((in = fopen(in_fname, "rw")) == NULL) {
 		report_count(1);
 		report_error("BAD FILE_ARGUMENT");
 		return;
 	}
-	if ((out = fopen(args[2], "rw")) == NULL) {
+	if ((out = fopen(out_fname, "rw")) == NULL) {
 		report_count(1);
 		report_error("BAD FILE_ARGUMENT");
 		return;
 	}
+
 	report_count(1);
-	report_ptr(newterm(args[0], out, in));
+	report_ptr(newterm(type, out, in));
 }
 
 
@@ -2379,25 +2405,28 @@ void
 cmd_printw(int nargs, char **args)
 {
 	ARGC(2);
+	ARG_STRING(0, fmt);	/* Must have a single "%s" in this test. */
+	ARG_STRING(1, arg);
 
 	report_count(1);
-	report_return(printw(args[0], args[1]));
+	report_return(printw(fmt, arg));
 }
 
 
 void
 cmd_putwin(int nargs, char **args)
 {
-	FILE *fp;
-
 	ARGC(2);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, filename);
 
-	if ((fp = fopen(args[1], "w")) == NULL) {
+	FILE *fp;
+	if ((fp = fopen(filename, "w")) == NULL) {
 		report_count(1);
 		report_error("BAD FILE_ARGUMENT");
 		return;
 	}
+
 	report_count(1);
 	report_return(putwin(win, fp));
 	fclose(fp);
@@ -2528,9 +2557,10 @@ void
 cmd_setterm(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_MODIFIABLE_STRING(0, name);
 
 	report_count(1);
-	report_return(setterm(args[0]));
+	report_return(setterm(name));
 }
 
 
@@ -2686,13 +2716,13 @@ cmd_vline(int nargs, char **args)
 
 
 static int
-internal_vw_printw(WINDOW * win, char *arg1,...)
+internal_vw_printw(WINDOW * win, const char *fmt, ...)
 {
 	va_list va;
 	int rv;
 
-	va_start(va, arg1);
-	rv = vw_printw(win, arg1, va);
+	va_start(va, fmt);
+	rv = vw_printw(win, fmt, va);
 	va_end(va);
 
 	return rv;
@@ -2703,20 +2733,22 @@ cmd_vw_printw(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, fmt);	/* Must have a single "%s" in this test. */
+	ARG_STRING(2, arg);
 
 	report_count(1);
-	report_return(internal_vw_printw(win, args[1], args[2]));
+	report_return(internal_vw_printw(win, fmt, arg));
 }
 
 
 static int
-internal_vw_scanw(WINDOW * win, char *arg1,...)
+internal_vw_scanw(WINDOW * win, const char *fmt, ...)
 {
 	va_list va;
 	int rv;
 
-	va_start(va, arg1);
-	rv = vw_scanw(win, arg1, va);
+	va_start(va, fmt);
+	rv = vw_scanw(win, fmt, va);
 	va_end(va);
 
 	return rv;
@@ -2729,9 +2761,10 @@ cmd_vw_scanw(int nargs, char **args)
 
 	ARGC(2);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, fmt);
 
 	report_count(2);
-	report_int(internal_vw_scanw(win, args[1], string));
+	report_int(internal_vw_scanw(win, fmt, string));
 	report_status(string);
 }
 
@@ -2767,10 +2800,11 @@ cmd_waddchnstr(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
+	ARG_CHTYPE_STRING(1, chstr);
 	ARG_INT(2, count);
 
 	report_count(1);
-	report_return(waddchnstr(win, (chtype *) args[1], count));
+	report_return(waddchnstr(win, chstr, count));
 }
 
 
@@ -2779,9 +2813,10 @@ cmd_waddchstr(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
+	ARG_CHTYPE_STRING(1, chstr);
 
 	report_count(1);
-	report_return(waddchstr(win, (chtype *) args[1]));
+	report_return(waddchstr(win, chstr));
 }
 
 
@@ -2790,10 +2825,11 @@ cmd_waddnstr(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, str);
 	ARG_INT(2, count);
 
 	report_count(1);
-	report_return(waddnstr(win, args[1], count));
+	report_return(waddnstr(win, str, count));
 
 }
 
@@ -3212,9 +3248,11 @@ cmd_wprintw(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, fmt);
+	ARG_STRING(2, arg);
 
 	report_count(1);
-	report_return(wprintw(win, args[1], args[2]));
+	report_return(wprintw(win, fmt, arg));
 }
 
 
@@ -3263,9 +3301,10 @@ cmd_wscanw(int nargs, char **args)
 
 	ARGC(2);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, fmt);
 
 	report_count(1);
-	report_return(wscanw(win, args[1], &string));
+	report_return(wscanw(win, fmt, &string));
 }
 
 
@@ -3382,10 +3421,11 @@ void
 cmd_insnstr(int nargs, char **args)
 {
 	ARGC(2);
+	ARG_STRING(0, str);
 	ARG_INT(1, n);
 
 	report_count(1);
-	report_return(insnstr(args[0], n));
+	report_return(insnstr(str, n));
 }
 
 
@@ -3393,9 +3433,10 @@ void
 cmd_insstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_STRING(0, str);
 
 	report_count(1);
-	report_return(insstr(args[0]));
+	report_return(insstr(str));
 }
 
 
@@ -3405,10 +3446,11 @@ cmd_mvinsnstr(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
+	ARG_STRING(2, str);
 	ARG_INT(3, n);
 
 	report_count(1);
-	report_return(mvinsnstr(y, x, args[2], n));
+	report_return(mvinsnstr(y, x, str, n));
 }
 
 
@@ -3418,9 +3460,10 @@ cmd_mvinsstr(int nargs, char **args)
 	ARGC(3);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
+	ARG_STRING(2, str);
 
 	report_count(1);
-	report_return(mvinsstr(y, x, args[2]));
+	report_return(mvinsstr(y, x, str));
 }
 
 
@@ -3431,10 +3474,11 @@ cmd_mvwinsnstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
+	ARG_STRING(3, str);
 	ARG_INT(4, n);
 
 	report_count(1);
-	report_return(mvwinsnstr(win, y, x, args[3], n));
+	report_return(mvwinsnstr(win, y, x, str, n));
 
 }
 
@@ -3446,9 +3490,10 @@ cmd_mvwinsstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
+	ARG_STRING(3, str);
 
 	report_count(1);
-	report_return(mvwinsstr(win, y, x, args[3]));
+	report_return(mvwinsstr(win, y, x, str));
 }
 
 
@@ -3457,10 +3502,11 @@ cmd_winsnstr(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, str);
 	ARG_INT(2, n);
 
 	report_count(1);
-	report_return(winsnstr(win, args[1], n));
+	report_return(winsnstr(win, str, n));
 }
 
 
@@ -3469,9 +3515,10 @@ cmd_winsstr(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
+	ARG_STRING(1, str);
 
 	report_count(1);
-	report_return(winsstr(win, args[1]));
+	report_return(winsstr(win, str));
 }
 
 
@@ -3981,13 +4028,11 @@ cmd_get_wch(int nargs, char **args)
 void
 cmd_unget_wch(int nargs, char **args)
 {
-	wchar_t *wch;
 	ARGC(1);
-
-	wch = (wchar_t *) args[0];
+	ARG_WCHAR(0, wch);
 
 	report_count(1);
-	report_return(unget_wch(*wch));
+	report_return(unget_wch(wch));
 }
 
 
@@ -4435,7 +4480,6 @@ cmd_setcchar(int nargs, char **args)
 void
 cmd_getcchar(int nargs, char **args)
 {
-	cchar_t *wcval;
 	wchar_t wch[256];
 	attr_t attrs;
 	short color_pair;
@@ -4445,8 +4489,7 @@ cmd_getcchar(int nargs, char **args)
          */
 
 	ARGC(2);
-
-	wcval = (cchar_t *) args[0];
+	ARG_CCHAR_STRING(0, wcval);
 
 	report_count(4);
 	report_return(getcchar(wcval, wch, &attrs, &color_pair, NULL));
@@ -4461,11 +4504,8 @@ cmd_getcchar(int nargs, char **args)
 void
 cmd_key_name(int nargs, char **args)
 {
-	wchar_t w;
-
 	ARGC(1);
-
-	w = *((wchar_t *) args[0]);
+	ARG_WCHAR(0, w);
 
 	report_count(1);
 	report_status(key_name(w));
@@ -4475,18 +4515,15 @@ cmd_key_name(int nargs, char **args)
 void
 cmd_border_set(int nargs, char **args)
 {
-	cchar_t *ls, *rs, *ts, *bs, *tl, *tr, *bl, *br;
-
 	ARGC(8);
-
-	ls = (cchar_t *) args[0];
-	rs = (cchar_t *) args[1];
-	ts = (cchar_t *) args[2];
-	bs = (cchar_t *) args[3];
-	tl = (cchar_t *) args[4];
-	tr = (cchar_t *) args[5];
-	bl = (cchar_t *) args[6];
-	br = (cchar_t *) args[7];
+	ARG_CCHAR_STRING(0, ls);
+	ARG_CCHAR_STRING(1, rs);
+	ARG_CCHAR_STRING(2, ts);
+	ARG_CCHAR_STRING(3, bs);
+	ARG_CCHAR_STRING(4, tl);
+	ARG_CCHAR_STRING(5, tr);
+	ARG_CCHAR_STRING(6, bl);
+	ARG_CCHAR_STRING(7, br);
 
 	report_count(1);
 	report_return(border_set(ls, rs, ts, bs, tl, tr, bl, br));
@@ -4496,19 +4533,16 @@ cmd_border_set(int nargs, char **args)
 void
 cmd_wborder_set(int nargs, char **args)
 {
-	cchar_t *ls, *rs, *ts, *bs, *tl, *tr, *bl, *br;
-
 	ARGC(9);
 	ARG_WINDOW(0, win);
-
-	ls = (cchar_t *) args[1];
-	rs = (cchar_t *) args[2];
-	ts = (cchar_t *) args[3];
-	bs = (cchar_t *) args[4];
-	tl = (cchar_t *) args[5];
-	tr = (cchar_t *) args[6];
-	bl = (cchar_t *) args[7];
-	br = (cchar_t *) args[8];
+	ARG_CCHAR_STRING(1, ls);
+	ARG_CCHAR_STRING(2, rs);
+	ARG_CCHAR_STRING(3, ts);
+	ARG_CCHAR_STRING(4, bs);
+	ARG_CCHAR_STRING(5, tl);
+	ARG_CCHAR_STRING(6, tr);
+	ARG_CCHAR_STRING(7, bl);
+	ARG_CCHAR_STRING(8, br);
 
 	report_count(1);
 	report_return(wborder_set(win, ls, rs, ts, bs, tl, tr, bl, br));
@@ -4921,10 +4955,11 @@ cmd_slk_set(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_INT(0, labnum);
+	ARG_STRING(1, label);
 	ARG_INT(2, justify);
 
 	report_count(1);
-	report_return(slk_set(labnum, args[1], justify));
+	report_return(slk_set(labnum, label, justify));
 }
 
 void
