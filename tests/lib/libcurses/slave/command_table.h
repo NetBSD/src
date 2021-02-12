@@ -1,4 +1,4 @@
-/*	$NetBSD: command_table.h,v 1.5 2021/02/08 19:15:21 rillig Exp $	*/
+/*	$NetBSD: command_table.h,v 1.6 2021/02/12 21:29:03 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -430,4 +430,4 @@ struct command_def commands[] = {
 
 size_t ncmds = sizeof(commands) / sizeof(struct command_def);
 
-#endif /* _COMMAND_TABLE_H */
+#endif
