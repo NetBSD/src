@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.10 2021/02/09 20:42:31 rillig Exp $	*/
+/*	$NetBSD: slave.c,v 1.11 2021/02/12 21:29:54 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -64,7 +64,7 @@ process_commands(void)
 	if ((cmdbuf = malloc(maxlen)) == NULL)
 		err(1, "slave cmdbuf malloc failed");
 
-	while (1) {
+	for (;;) {
 		if (read(cmdpipe[READ_PIPE], &type, sizeof(int)) < 0)
 			err(1, "slave command type read failed");
 
@@ -139,8 +139,7 @@ process_commands(void)
 
 				argslen++;
 			}
-		}
-		while (len >= 0);
+		} while (len >= 0);
 
 		command_execute(cmdbuf, argslen, args);
 
