@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.23 2021/02/04 22:36:52 thorpej Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.24 2021/02/12 12:26:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,13 +35,14 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.23 2021/02/04 22:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.24 2021/02/12 12:26:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/kprintf.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <arm/fdt/arm_fdtvar.h>
@@ -214,6 +215,13 @@ acpi_platform_attach_uart(ACPI_TABLE_SPCR *spcr)
 		break;
 	}
 
+	/*
+	 * UEFI firmware may leave the console in an undesireable state (wrong
+	 * foreground/background colour, etc). Reset the terminal and clear
+	 * text from the cursor to the end of the screne.
+	 */
+        printf_flags(TOCONS|NOTSTAMP, "\033[0m");
+        printf_flags(TOCONS|NOTSTAMP, "\033[0J");
 }
 
 static void
