@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.19 2021/02/12 18:20:05 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.20 2021/02/12 20:41:37 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -149,6 +149,16 @@ set_scrn(char *arg, SCREEN **x)
 	SCREEN *arg;							\
 	if (set_scrn(args[i], &arg) != 0)				\
 		return
+
+/*
+ * Required by the API, intended for future extensions, but this
+ * implementation does not support the extension.
+ */
+#define ARG_NULL(i) \
+	(void)0
+
+#define ARG_IGNORE(i) \
+	(void)0
 
 void
 cmd_DRAIN(int nargs, char **args)
@@ -391,7 +401,7 @@ cmd_color_set(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_SHORT(0, colour_pair);
-	/* TODO: arg 1 */
+	ARG_NULL(1);
 
 	report_count(1);
 	report_return(color_set(colour_pair, NULL));
@@ -1947,8 +1957,8 @@ cmd_mvhline(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_INT(3, n);
 	ARG_CHTYPE(2, ch);
+	ARG_INT(3, n);
 
 	report_count(1);
 	report_return(mvhline(y, x, ch, n));
@@ -1991,8 +2001,8 @@ cmd_mvvline(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_INT(3, n);
 	ARG_CHTYPE(2, ch);
+	ARG_INT(3, n);
 
 	report_count(1);
 	report_return(mvvline(y, x, ch, n));
@@ -2006,8 +2016,8 @@ cmd_mvwhline(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_INT(4, n);
 	ARG_CHTYPE(3, ch);
+	ARG_INT(4, n);
 
 	report_count(1);
 	report_return(mvwhline(win, y, x, ch, n));
@@ -2021,8 +2031,8 @@ cmd_mvwvline(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_INT(4, n);
 	ARG_CHTYPE(3, ch);
+	ARG_INT(4, n);
 
 	report_count(1);
 	report_return(mvwvline(win, y, x, ch, n));
@@ -3007,7 +3017,7 @@ cmd_wcolor_set(int nargs, char **args)
 	ARGC(3);
 	ARG_WINDOW(0, win);
 	ARG_SHORT(1, pair);
-	/* TODO: arg 2 */
+	ARG_NULL(2);
 
 	report_count(1);
 	report_return(wcolor_set(win, pair, NULL));
@@ -3107,8 +3117,8 @@ cmd_whline(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
-	ARG_INT(2, count);
 	ARG_CHTYPE(1, ch);
+	ARG_INT(2, count);
 
 	report_count(1);
 	report_return(whline(win, ch, count));
@@ -3409,8 +3419,8 @@ cmd_wvline(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
-	ARG_INT(2, n);
 	ARG_CHTYPE(1, ch);
+	ARG_INT(2, n);
 
 	report_count(1);
 	report_return(wvline(win, ch, n));
@@ -3530,8 +3540,8 @@ cmd_chgat(int nargs, char **args)
 	ARG_INT(0, n);
 	ARG_INT(1, attr);
 	ARG_INT(2, colour);
+	ARG_NULL(3);
 
-	/* Note: 4th argument unused in current curses implementation */
 	report_count(1);
 	report_return(chgat(n, attr, colour, NULL));
 }
@@ -3545,6 +3555,7 @@ cmd_wchgat(int nargs, char **args)
 	ARG_INT(1, n);
 	ARG_INT(2, attr);
 	ARG_SHORT(3, colour);
+	ARG_NULL(4);
 
 	report_count(1);
 	report_return(wchgat(win, n, attr, colour, NULL));
@@ -3560,6 +3571,7 @@ cmd_mvchgat(int nargs, char **args)
 	ARG_INT(2, n);
 	ARG_INT(3, attr);
 	ARG_SHORT(4, colour);
+	ARG_NULL(5);
 
 	report_count(1);
 	report_return(mvchgat(y, x, n, attr, colour, NULL));
@@ -3576,6 +3588,7 @@ cmd_mvwchgat(int nargs, char **args)
 	ARG_INT(3, n);
 	ARG_INT(4, attr);
 	ARG_SHORT(5, colour);
+	ARG_NULL(6);
 
 	report_count(1);
 	report_return(mvwchgat(win, y, x, n, attr, colour, NULL));
@@ -3637,6 +3650,7 @@ void
 cmd_add_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3647,6 +3661,7 @@ void
 cmd_add_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3657,6 +3672,7 @@ void
 cmd_wadd_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3667,6 +3683,7 @@ void
 cmd_wadd_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3677,6 +3694,7 @@ void
 cmd_mvadd_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3687,6 +3705,7 @@ void
 cmd_mvadd_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3697,6 +3716,7 @@ void
 cmd_mvwadd_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3707,6 +3727,7 @@ void
 cmd_mvwadd_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -3743,8 +3764,8 @@ cmd_mvaddnwstr(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_INT(3, n);
 	ARG_WCHAR_STRING(2, wstr);
+	ARG_INT(3, n);
 
 	report_count(1);
 	report_return(mvaddnwstr(y, x, wstr, n));
@@ -3771,8 +3792,8 @@ cmd_mvwaddnwstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_INT(4, n);
 	ARG_WCHAR_STRING(3, wstr);
+	ARG_INT(4, n);
 
 	report_count(1);
 	report_return(mvwaddnwstr(win, y, x, wstr, n));
@@ -3798,8 +3819,8 @@ cmd_waddnwstr(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
-	ARG_INT(2, n);
 	ARG_WCHAR_STRING(1, wstr);
+	ARG_INT(2, n);
 
 	report_count(1);
 	report_return(waddnwstr(win, wstr, n));
@@ -3936,8 +3957,8 @@ cmd_mvins_nwstr(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_INT(3, n);
 	ARG_WCHAR_STRING(2, wstr);
+	ARG_INT(3, n);
 
 	report_count(1);
 	report_return(mvins_nwstr(y, x, wstr, n));
@@ -3964,8 +3985,8 @@ cmd_mvwins_nwstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_INT(4, n);
 	ARG_WCHAR_STRING(3, wstr);
+	ARG_INT(4, n);
 
 	report_count(1);
 	report_return(mvwins_nwstr(win, y, x, wstr, n));
@@ -3991,8 +4012,8 @@ cmd_wins_nwstr(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
-	ARG_INT(2, n);
 	ARG_WCHAR_STRING(1, wstr);
+	ARG_INT(2, n);
 
 	report_count(1);
 	report_return(wins_nwstr(win, wstr, n));
@@ -4262,6 +4283,7 @@ void
 cmd_in_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4272,6 +4294,7 @@ void
 cmd_in_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4282,6 +4305,7 @@ void
 cmd_mvin_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4292,6 +4316,7 @@ void
 cmd_mvin_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4302,6 +4327,7 @@ void
 cmd_mvwin_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4312,6 +4338,7 @@ void
 cmd_mvwin_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4322,6 +4349,7 @@ void
 cmd_win_wchnstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4332,6 +4360,7 @@ void
 cmd_win_wchstr(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4469,7 +4498,7 @@ cmd_setcchar(int nargs, char **args)
 	ARG_WCHAR_STRING(0, wch);
 	ARG_INT(1, attrs);
 	ARG_SHORT(2, color_pair);
-	/* TODO: arg 3 */
+	ARG_NULL(3);
 
 	report_count(2);
 	report_return(setcchar(&wcval, wch, attrs, color_pair, NULL));
@@ -4490,6 +4519,7 @@ cmd_getcchar(int nargs, char **args)
 
 	ARGC(2);
 	ARG_CCHAR_STRING(0, wcval);
+	ARG_NULL(1);
 
 	report_count(4);
 	report_return(getcchar(wcval, wch, &attrs, &color_pair, NULL));
@@ -4606,8 +4636,8 @@ cmd_mvhline_set(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_INT(3, n);
 	ARG_CCHAR_STRING(2, wch);
+	ARG_INT(3, n);
 
 	report_count(1);
 	report_return(mvhline_set(y, x, wch, n));
@@ -4620,8 +4650,8 @@ cmd_mvvline_set(int nargs, char **args)
 	ARGC(4);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_INT(3, n);
 	ARG_CCHAR_STRING(2, wch);
+	ARG_INT(3, n);
 
 	report_count(1);
 	report_return(mvvline_set(y, x, wch, n));
@@ -4635,8 +4665,8 @@ cmd_mvwhline_set(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_INT(4, n);
 	ARG_CCHAR_STRING(3, wch);
+	ARG_INT(4, n);
 
 	report_count(1);
 	report_return(mvwhline_set(win, y, x, wch, n));
@@ -4650,8 +4680,8 @@ cmd_mvwvline_set(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_INT(4, n);
 	ARG_CCHAR_STRING(3, wch);
+	ARG_INT(4, n);
 
 	report_count(1);
 	report_return(mvwvline_set(win, y, x, wch, n));
@@ -4675,8 +4705,8 @@ cmd_whline_set(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
-	ARG_INT(2, n);
 	ARG_CCHAR_STRING(1, wch);
+	ARG_INT(2, n);
 
 	report_count(1);
 	report_return(whline_set(win, wch, n));
@@ -4688,8 +4718,8 @@ cmd_wvline_set(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_WINDOW(0, win);
-	ARG_INT(2, n);
 	ARG_CCHAR_STRING(1, wch);
+	ARG_INT(2, n);
 
 	report_count(1);
 	report_return(wvline_set(win, wch, n));
@@ -4976,8 +5006,8 @@ cmd_slk_wset(int nargs, char **args)
 {
 	ARGC(3);
 	ARG_INT(0, labnum);
-	ARG_INT(2, justify);
 	ARG_WCHAR_STRING(1, label);
+	ARG_INT(2, justify);
 
 	report_count(1);
 	report_return(slk_wset(labnum, label, justify));
@@ -4998,6 +5028,7 @@ void
 cmd_use_env(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5007,6 +5038,7 @@ void
 cmd_ripoffline(int nargs, char **args)
 {
 	ARGC(1);
+	ARG_IGNORE(0);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
