@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.15 2021/02/12 12:58:52 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.16 2021/02/12 14:05:57 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -218,7 +218,6 @@ cmd_attr_get(int nargs, char **args)
 
 	retval = attr_get(&attrs, &colours, NULL);
 
-	/* XXXX - call3 */
 	report_count(3);
 	report_return(retval);
 	report_int(attrs);
@@ -442,7 +441,7 @@ cmd_getnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_return(getnstr(string, limit));
 	report_status(string);
@@ -457,7 +456,6 @@ cmd_getstr(int nargs, char **args)
 
 	ARGC(0);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(getstr(string));
 	report_status(string);
@@ -487,7 +485,7 @@ cmd_inchnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_return(inchnstr(string, limit));
 	report_nstr(string);
@@ -502,7 +500,6 @@ cmd_inchstr(int nargs, char **args)
 
 	ARGC(0);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(inchstr(string));
 	report_nstr(string);
@@ -522,7 +519,7 @@ cmd_innstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_int(innstr(string, limit));
 	report_status(string);
@@ -569,7 +566,6 @@ cmd_instr(int nargs, char **args)
 
 	ARGC(0);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(instr(string));
 	report_status(string);
@@ -818,7 +814,7 @@ cmd_mvgetnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_return(mvgetnstr(y, x, string, count));
 	report_status(string);
@@ -835,7 +831,6 @@ cmd_mvgetstr(int nargs, char **args)
 	ARG_INT(0, y);
 	ARG_INT(1, x);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(mvgetstr(y, x, string));
 	report_status(string);
@@ -869,7 +864,7 @@ cmd_mvinchnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_return(mvinchnstr(y, x, string, count));
 	report_nstr(string);
@@ -886,7 +881,6 @@ cmd_mvinchstr(int nargs, char **args)
 	ARG_INT(0, y);
 	ARG_INT(1, x);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(mvinchstr(y, x, string));
 	report_nstr(string);
@@ -908,7 +902,7 @@ cmd_mvinnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_int(mvinnstr(y, x, string, count));
 	report_status(string);
@@ -1072,7 +1066,7 @@ cmd_mvwgetnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_return(mvwgetnstr(win, y, x, string, count));
 	report_status(string);
@@ -1090,7 +1084,6 @@ cmd_mvwgetstr(int nargs, char **args)
 	ARG_INT(1, y);
 	ARG_INT(2, x);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(mvwgetstr(win, y, x, string));
 	report_status(string);
@@ -1214,7 +1207,6 @@ cmd_color_content(int nargs, char **args)
 	if (set_short(args[0], &colour) != 0)
 		return;
 
-	/* XXX - call4 */
 	report_count(4);
 	report_return(color_content(colour, &red, &green, &blue));
 	report_int(red);
@@ -1429,7 +1421,6 @@ cmd_fullname(int nargs, char **args)
 
 	ARGC(1);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_status(fullname(args[0], string));
 	report_status(string);
@@ -1967,7 +1958,6 @@ cmd_mvscanw(int nargs, char **args)
 	ARG_INT(0, y);
 	ARG_INT(1, x);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(mvscanw(y, x, args[2], &string));
 	report_status(string);
@@ -2047,7 +2037,7 @@ cmd_mvwinchnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_return(mvwinchnstr(win, y, x, string, count));
 	report_nstr(string);
@@ -2065,7 +2055,6 @@ cmd_mvwinchstr(int nargs, char **args)
 	ARG_INT(1, y);
 	ARG_INT(2, x);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(mvwinchstr(win, y, x, string));
 	report_nstr(string);
@@ -2078,7 +2067,6 @@ cmd_mvwinnstr(int nargs, char **args)
 	char *string;
 
 	ARGC(4);
-
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
@@ -2089,7 +2077,7 @@ cmd_mvwinnstr(int nargs, char **args)
 		report_error("MALLOC_FAILED");
 		return;
 	}
-	/* XXX call2 */
+
 	report_count(2);
 	report_int(mvwinnstr(win, y, x, string, count));
 	report_status(string);
@@ -2107,7 +2095,6 @@ cmd_mvwinstr(int nargs, char **args)
 	ARG_INT(1, y);
 	ARG_INT(2, x);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(mvwinstr(win, y, x, string));
 	report_status(string);
@@ -2137,7 +2124,6 @@ cmd_mvwscanw(int nargs, char **args)
 	ARG_INT(1, y);
 	ARG_INT(2, x);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_int(mvwscanw(win, y, x, args[3], &string));
 	report_status(string);
@@ -2332,7 +2318,6 @@ cmd_pair_content(int nargs, char **args)
 	if (set_short(args[0], &pair) != 0)
 		return;
 
-	/* XXX - call3 */
 	report_count(3);
 	report_return(pair_content(pair, &fore, &back));
 	report_int(fore);
@@ -2386,7 +2371,6 @@ cmd_prefresh(int nargs, char **args)
 	report_count(1);
 	report_return(prefresh(pad, pbeg_y, pbeg_x, sbeg_y, sbeg_x, smax_y,
 		smax_x));
-
 }
 
 
@@ -2510,7 +2494,6 @@ cmd_scanw(int nargs, char **args)
 
 	ARGC(0);
 
-	/* XXX call2 */
 	report_count(2);
 	report_return(scanw("%s", string));
 	report_status(string);
@@ -2749,7 +2732,6 @@ cmd_vw_scanw(int nargs, char **args)
 	ARGC(2);
 	ARG_WINDOW(0, win);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_int(internal_vw_scanw(win, args[1], string));
 	report_status(string);
@@ -2827,7 +2809,6 @@ cmd_wattr_get(int nargs, char **args)
 	ARGC(1);
 	ARG_WINDOW(0, win);
 
-	/* XXX - call3 */
 	report_count(3);
 	report_return(wattr_get(win, &attr, &pair, NULL));
 	report_int(attr);
@@ -3065,7 +3046,6 @@ cmd_wgetnstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, count);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(wgetnstr(win, string, count));
 	report_status(string);
@@ -3121,7 +3101,6 @@ cmd_winchnstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, count);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(winchnstr(win, string, count));
 	report_nstr(string);
@@ -3136,7 +3115,6 @@ cmd_winchstr(int nargs, char **args)
 	ARGC(1);
 	ARG_WINDOW(0, win);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(winchstr(win, string));
 	report_nstr(string);
@@ -3152,7 +3130,6 @@ cmd_winnstr(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, count);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_int(winnstr(win, string, count));
 	report_status(string);
@@ -3202,7 +3179,6 @@ cmd_winstr(int nargs, char **args)
 	ARGC(1);
 	ARG_WINDOW(0, win);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(winstr(win, string));
 	report_status(string);
@@ -4561,7 +4537,6 @@ cmd_erasewchar(int nargs, char **args)
 
 	ARGC(0);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(erasewchar(&ch));
 	report_wchar(ch);
@@ -4575,7 +4550,6 @@ cmd_killwchar(int nargs, char **args)
 
 	ARGC(0);
 
-	/* XXX - call2 */
 	report_count(2);
 	report_return(killwchar(&ch));
 	report_wchar(ch);
