@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.20 2020/07/07 02:33:54 rin Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.21 2021/02/12 23:38:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -51,7 +51,6 @@ struct confargs {
 };
 
 /* there are in locore.S */
-void ofbcopy(const void *, void *, size_t);
 int badaddr(volatile void *, int);
 
 /* these are in clock.c */
