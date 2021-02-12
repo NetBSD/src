@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.320 2021/01/30 19:20:44 jakllsch Exp $
+$NetBSD: acronyms.comp,v 1.321 2021/02/12 08:56:04 leot Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -683,6 +683,7 @@ HLL	high-level language
 HMA	high memory area
 HMI	human-machine interface
 HOOD	hierarchical object oriented design
+HOTP	HMAC-based one time password
 HP	Hewlett-Packard
 HPC	high performance computing
 HPD	hot plug detection
@@ -1638,6 +1639,7 @@ TOFU	trust on first use
 TOS	terms of service
 TOS	trusted operating system
 TOS	type of service
+TOTP	time-based one time password
 TP	transaction processing
 TPI	tracks per inch
 TPM	transactions per minute
