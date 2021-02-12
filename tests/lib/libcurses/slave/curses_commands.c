@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.20 2021/02/12 20:41:37 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.21 2021/02/12 20:45:00 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -969,7 +969,6 @@ cmd_mvinstr(int nargs, char **args)
 	report_return(mvinstr(y, x, string));
 	report_status(string);
 }
-
 
 
 void
@@ -3532,7 +3531,6 @@ cmd_winsstr(int nargs, char **args)
 }
 
 
-
 void
 cmd_chgat(int nargs, char **args)
 {
@@ -3645,7 +3643,6 @@ cmd_mvwadd_wch(int nargs, char **args)
 }
 
 
-
 void
 cmd_add_wchnstr(int nargs, char **args)
 {
@@ -3732,7 +3729,6 @@ cmd_mvwadd_wchstr(int nargs, char **args)
 	report_count(1);
 	report_error("UNSUPPORTED");
 }
-
 
 
 void
@@ -3839,7 +3835,6 @@ cmd_waddwstr(int nargs, char **args)
 }
 
 
-
 void
 cmd_echo_wchar(int nargs, char **args)
 {
@@ -3873,7 +3868,6 @@ cmd_pecho_wchar(int nargs, char **args)
 	report_count(1);
 	report_return(pecho_wchar(pad, wch));
 }
-
 
 
 /* insert */
@@ -3925,7 +3919,6 @@ cmd_mvwins_wch(int nargs, char **args)
 	report_count(1);
 	report_return(mvwins_wch(win, y, x, wch));
 }
-
 
 
 void
@@ -4032,7 +4025,6 @@ cmd_wins_wstr(int nargs, char **args)
 }
 
 
-
 /* input */
 void
 cmd_get_wch(int nargs, char **args)
@@ -4100,7 +4092,6 @@ cmd_wget_wch(int nargs, char **args)
 	report_return(wget_wch(win, &ch));
 	report_wchar(ch);
 }
-
 
 
 void
@@ -4219,7 +4210,6 @@ cmd_wget_wstr(int nargs, char **args)
 	report_return(wget_wstr(win, wstr));
 	report_wstr(wstr);
 }
-
 
 
 void
@@ -4367,7 +4357,6 @@ cmd_win_wchstr(int nargs, char **args)
 }
 
 
-
 void
 cmd_innwstr(int nargs, char **args)
 {
@@ -4487,7 +4476,6 @@ cmd_winwstr(int nargs, char **args)
 }
 
 
-
 /* cchar handling */
 void
 cmd_setcchar(int nargs, char **args)
@@ -4527,7 +4515,6 @@ cmd_getcchar(int nargs, char **args)
 	report_int(attrs);
 	report_int(color_pair);
 }
-
 
 
 /* misc */
