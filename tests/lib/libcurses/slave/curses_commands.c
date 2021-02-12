@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.13 2021/02/09 20:22:11 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.14 2021/02/12 08:55:32 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -99,16 +99,25 @@ set_scrn(char *arg, SCREEN **x)
 	return 0;
 }
 
+#define ARGC(n) \
+	if (check_arg_count(nargs, n) == 1)				\
+		return
+
+#define ARG_INT(i, arg) \
+	int arg;							\
+	if (set_int(args[i], &arg) != 0)				\
+		return
+
+#define ARG_WINDOW(i, arg) \
+	WINDOW *arg;							\
+	if (set_win(args[i], &arg) != 0)				\
+		return
 
 void
 cmd_DRAIN(int nargs, char **args)
 {
-	WINDOW *win;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	while (wgetch(win) != ERR);
 	report_count(1);
@@ -118,13 +127,8 @@ cmd_DRAIN(int nargs, char **args)
 void
 cmd_addbytes(int nargs, char **args)
 {
-	int count;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_int(args[1], &count) != 0)
-		return;
+	ARGC(2);
+	ARG_INT(1, count);
 
 	report_count(1);
 	report_return(addbytes(args[0], count));
@@ -136,8 +140,7 @@ cmd_addch(int nargs, char **args)
 {
 	chtype *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 	report_count(1);
@@ -148,13 +151,8 @@ cmd_addch(int nargs, char **args)
 void
 cmd_addchnstr(int nargs, char **args)
 {
-	int count;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_int(args[1], &count) != 0)
-		return;
+	ARGC(2);
+	ARG_INT(1, count);
 
 	report_count(1);
 	report_return(addchnstr((chtype *) args[0], count));
@@ -164,8 +162,7 @@ cmd_addchnstr(int nargs, char **args)
 void
 cmd_addchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_return(addchstr((chtype *) args[0]));
@@ -175,13 +172,8 @@ cmd_addchstr(int nargs, char **args)
 void
 cmd_addnstr(int nargs, char **args)
 {
-	int count;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_int(args[1], &count) != 0)
-		return;
+	ARGC(2);
+	ARG_INT(1, count);
 
 	report_count(1);
 	report_return(addnstr(args[0], count));
@@ -191,8 +183,7 @@ cmd_addnstr(int nargs, char **args)
 void
 cmd_addstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_return(addstr(args[0]));
@@ -206,8 +197,7 @@ cmd_attr_get(int nargs, char **args)
 	short colours;
 	int retval;
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	retval = attr_get(&attrs, &colours, NULL);
 
@@ -222,13 +212,8 @@ cmd_attr_get(int nargs, char **args)
 void
 cmd_attr_off(int nargs, char **args)
 {
-	int attrib;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &attrib) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, attrib);
 
 	report_count(1);
 	report_return(attr_off(attrib, NULL));
@@ -238,13 +223,8 @@ cmd_attr_off(int nargs, char **args)
 void
 cmd_attr_on(int nargs, char **args)
 {
-	int attrib;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &attrib) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, attrib);
 
 	report_count(1);
 	report_return(attr_on(attrib, NULL));
@@ -257,8 +237,7 @@ cmd_attr_set(int nargs, char **args)
 	int attrib;
 	short pair;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &attrib) != 0) ||
 	    (set_short(args[1], &pair) != 0))
@@ -272,13 +251,8 @@ cmd_attr_set(int nargs, char **args)
 void
 cmd_attroff(int nargs, char **args)
 {
-	int attrib;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &attrib) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, attrib);
 
 	report_count(1);
 	report_return(attroff(attrib));
@@ -288,13 +262,8 @@ cmd_attroff(int nargs, char **args)
 void
 cmd_attron(int nargs, char **args)
 {
-	int attrib;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &attrib) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, attrib);
 
 	report_count(1);
 	report_return(attron(attrib));
@@ -304,13 +273,8 @@ cmd_attron(int nargs, char **args)
 void
 cmd_attrset(int nargs, char **args)
 {
-	int attrib;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &attrib) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, attrib);
 
 	report_count(1);
 	report_return(attrset(attrib));
@@ -322,8 +286,7 @@ cmd_bkgd(int nargs, char **args)
 {
 	chtype *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 	report_count(1);
@@ -336,8 +299,7 @@ cmd_bkgdset(int nargs, char **args)
 {
 	chtype *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 
@@ -352,8 +314,7 @@ cmd_border(int nargs, char **args)
 {
 	int ls, rs, ts, bs, tl, tr, bl, br;
 
-	if (check_arg_count(nargs, 8) == 1)
-		return;
+	ARGC(8);
 
 	if ((set_int(args[0], &ls) != 0) ||
 	    (set_int(args[1], &rs) != 0) ||
@@ -373,8 +334,7 @@ cmd_border(int nargs, char **args)
 void
 cmd_clear(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(clear());
@@ -384,8 +344,7 @@ cmd_clear(int nargs, char **args)
 void
 cmd_clrtobot(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(clrtobot());
@@ -395,8 +354,7 @@ cmd_clrtobot(int nargs, char **args)
 void
 cmd_clrtoeol(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(clrtoeol());
@@ -408,11 +366,11 @@ cmd_color_set(int nargs, char **args)
 {
 	short colour_pair;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if (set_short(args[0], &colour_pair) != 0)
 		return;
+	/* XXX: args[1] is unused */
 
 	report_count(1);
 	report_return(color_set(colour_pair, NULL));
@@ -422,8 +380,7 @@ cmd_color_set(int nargs, char **args)
 void
 cmd_delch(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(delch());
@@ -433,8 +390,7 @@ cmd_delch(int nargs, char **args)
 void
 cmd_deleteln(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(deleteln());
@@ -445,8 +401,7 @@ void
 cmd_echochar(int nargs, char **args)
 {
 	chtype *ch;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 	/* XXX causes refresh */
@@ -458,8 +413,7 @@ cmd_echochar(int nargs, char **args)
 void
 cmd_erase(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(erase());
@@ -469,8 +423,7 @@ cmd_erase(int nargs, char **args)
 void
 cmd_getch(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX causes refresh */
 	report_count(1);
@@ -481,14 +434,10 @@ cmd_getch(int nargs, char **args)
 void
 cmd_getnstr(int nargs, char **args)
 {
-	int limit;
 	char *string;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &limit) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, limit);
 
 	if ((string = malloc(limit + 1)) == NULL) {
 		report_count(1);
@@ -508,8 +457,7 @@ cmd_getstr(int nargs, char **args)
 {
 	char string[256];
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX call2 */
 	report_count(2);
@@ -521,8 +469,7 @@ cmd_getstr(int nargs, char **args)
 void
 cmd_inch(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_byte(inch());
@@ -532,14 +479,10 @@ cmd_inch(int nargs, char **args)
 void
 cmd_inchnstr(int nargs, char **args)
 {
-	int limit;
 	chtype *string;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &limit) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, limit);
 
 	if ((string = malloc((limit + 1) * sizeof(chtype))) == NULL) {
 		report_count(1);
@@ -559,8 +502,7 @@ cmd_inchstr(int nargs, char **args)
 {
 	chtype string[256];
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX call2 */
 	report_count(2);
@@ -572,14 +514,10 @@ cmd_inchstr(int nargs, char **args)
 void
 cmd_innstr(int nargs, char **args)
 {
-	int limit;
 	char *string;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &limit) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, limit);
 
 	if ((string = malloc(limit + 1)) == NULL) {
 		report_count(1);
@@ -598,8 +536,7 @@ void
 cmd_insch(int nargs, char **args)
 {
 	chtype *ch;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 	report_count(1);
@@ -610,13 +547,8 @@ cmd_insch(int nargs, char **args)
 void
 cmd_insdelln(int nargs, char **args)
 {
-	int nlines;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &nlines) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, nlines);
 
 	report_count(1);
 	report_return(insdelln(nlines));
@@ -626,8 +558,7 @@ cmd_insdelln(int nargs, char **args)
 void
 cmd_insertln(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(insertln());
@@ -639,8 +570,7 @@ cmd_instr(int nargs, char **args)
 {
 	char string[256];
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX call2 */
 	report_count(2);
@@ -654,8 +584,7 @@ cmd_move(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -669,8 +598,7 @@ cmd_move(int nargs, char **args)
 void
 cmd_refresh(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(refresh());
@@ -680,13 +608,8 @@ cmd_refresh(int nargs, char **args)
 void
 cmd_scrl(int nargs, char **args)
 {
-	int nlines;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &nlines) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, nlines);
 
 	report_count(1);
 	report_return(scrl(nlines));
@@ -698,8 +621,7 @@ cmd_setscrreg(int nargs, char **args)
 {
 	int top, bottom;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &top) != 0) ||
 	    (set_int(args[1], &bottom) != 0))
@@ -713,8 +635,7 @@ cmd_setscrreg(int nargs, char **args)
 void
 cmd_standend(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(standend());
@@ -724,8 +645,7 @@ cmd_standend(int nargs, char **args)
 void
 cmd_standout(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(standout());
@@ -735,13 +655,8 @@ cmd_standout(int nargs, char **args)
 void
 cmd_timeout(int nargs, char **args)
 {
-	int tval;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &tval) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, tval);
 
 	timeout(tval);		/* void return */
 	report_count(1);
@@ -752,8 +667,7 @@ cmd_timeout(int nargs, char **args)
 void
 cmd_underscore(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(underscore());
@@ -763,8 +677,7 @@ cmd_underscore(int nargs, char **args)
 void
 cmd_underend(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(underend());
@@ -777,8 +690,7 @@ cmd_waddbytes(int nargs, char **args)
 	WINDOW *win;
 	int count;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &count) != 0))
@@ -792,13 +704,8 @@ cmd_waddbytes(int nargs, char **args)
 void
 cmd_waddstr(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(waddstr(win, args[1]));
@@ -810,8 +717,7 @@ cmd_mvaddbytes(int nargs, char **args)
 {
 	int y, x, count;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -829,8 +735,7 @@ cmd_mvaddch(int nargs, char **args)
 	int y, x;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -847,8 +752,7 @@ cmd_mvaddchnstr(int nargs, char **args)
 {
 	int y, x, count;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -865,8 +769,7 @@ cmd_mvaddchstr(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -882,8 +785,7 @@ cmd_mvaddnstr(int nargs, char **args)
 {
 	int y, x, count;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -900,8 +802,7 @@ cmd_mvaddstr(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -917,8 +818,7 @@ cmd_mvdelch(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -934,8 +834,7 @@ cmd_mvgetch(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -952,8 +851,7 @@ cmd_mvgetnstr(int nargs, char **args)
 	int y, x, count;
 	char *string;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -979,8 +877,7 @@ cmd_mvgetstr(int nargs, char **args)
 	int y, x;
 	char string[256];
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -998,8 +895,7 @@ cmd_mvinch(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -1016,8 +912,7 @@ cmd_mvinchnstr(int nargs, char **args)
 	int y, x, count;
 	chtype *string;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -1043,8 +938,7 @@ cmd_mvinchstr(int nargs, char **args)
 	int y, x;
 	chtype string[256];
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -1063,8 +957,7 @@ cmd_mvinnstr(int nargs, char **args)
 	int y, x, count;
 	char *string;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -1090,8 +983,7 @@ cmd_mvinsch(int nargs, char **args)
 	int y, x;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -1109,8 +1001,7 @@ cmd_mvinstr(int nargs, char **args)
 	char string[256];
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -1129,8 +1020,7 @@ cmd_mvwaddbytes(int nargs, char **args)
 	int y, x, count;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1150,8 +1040,7 @@ cmd_mvwaddch(int nargs, char **args)
 	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1170,8 +1059,7 @@ cmd_mvwaddchnstr(int nargs, char **args)
 	int y, x, count;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1190,8 +1078,7 @@ cmd_mvwaddchstr(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1209,8 +1096,7 @@ cmd_mvwaddnstr(int nargs, char **args)
 	int y, x, count;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1229,8 +1115,7 @@ cmd_mvwaddstr(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1248,8 +1133,7 @@ cmd_mvwdelch(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1267,8 +1151,7 @@ cmd_mvwgetch(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1288,8 +1171,7 @@ cmd_mvwgetnstr(int nargs, char **args)
 	char *string;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1317,8 +1199,7 @@ cmd_mvwgetstr(int nargs, char **args)
 	WINDOW *win;
 	char string[256];
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1338,8 +1219,7 @@ cmd_mvwinch(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if (set_win(args[0], &win) != 0) return;
 	if (set_int(args[1], &y) != 0) return;
@@ -1357,8 +1237,7 @@ cmd_mvwinsch(int nargs, char **args)
 	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -1377,8 +1256,7 @@ cmd_assume_default_colors(int nargs, char **args)
 {
 	short fore, back;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_short(args[0], &fore) != 0) ||
 	    (set_short(args[1], &back) != 0))
@@ -1392,8 +1270,7 @@ cmd_assume_default_colors(int nargs, char **args)
 void
 cmd_baudrate(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(baudrate());
@@ -1403,8 +1280,7 @@ cmd_baudrate(int nargs, char **args)
 void
 cmd_beep(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(beep());
@@ -1414,14 +1290,10 @@ cmd_beep(int nargs, char **args)
 void
 cmd_box(int nargs, char **args)
 {
-	WINDOW *win;
 	chtype *vertical, *horizontal;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(3);
+	ARG_WINDOW(0, win);
 
 	vertical = (chtype *) args[1];
 	horizontal = (chtype *) args[2];
@@ -1434,8 +1306,7 @@ cmd_box(int nargs, char **args)
 void
 cmd_can_change_color(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(can_change_color());
@@ -1445,8 +1316,7 @@ cmd_can_change_color(int nargs, char **args)
 void
 cmd_cbreak(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(cbreak());
@@ -1459,8 +1329,7 @@ cmd_clearok(int nargs, char **args)
 	WINDOW *win;
 	int flag;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -1476,8 +1345,7 @@ cmd_color_content(int nargs, char **args)
 {
 	short colour, red, green, blue;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if (set_short(args[0], &colour) != 0)
 		return;
@@ -1497,8 +1365,7 @@ cmd_copywin(int nargs, char **args)
 	int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, ovlay;
 	WINDOW *source, *destination;
 
-	if (check_arg_count(nargs, 9) == 1)
-		return;
+	ARGC(9);
 
 	if ((set_win(args[0], &source) != 0) ||
 	    (set_win(args[1], &destination) != 0) ||
@@ -1520,13 +1387,8 @@ cmd_copywin(int nargs, char **args)
 void
 cmd_curs_set(int nargs, char **args)
 {
-	int vis;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &vis) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, vis);
 
 	report_count(1);
 	report_int(curs_set(vis));
@@ -1536,8 +1398,7 @@ cmd_curs_set(int nargs, char **args)
 void
 cmd_def_prog_mode(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(def_prog_mode());
@@ -1547,8 +1408,7 @@ cmd_def_prog_mode(int nargs, char **args)
 void
 cmd_def_shell_mode(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(def_shell_mode());
@@ -1558,13 +1418,8 @@ cmd_def_shell_mode(int nargs, char **args)
 void
 cmd_define_key(int nargs, char **args)
 {
-	int symbol;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_int(args[1], &symbol) != 0)
-		return;
+	ARGC(2);
+	ARG_INT(1, symbol);
 
 	report_count(1);
 	report_return(define_key(args[0], symbol));
@@ -1574,13 +1429,8 @@ cmd_define_key(int nargs, char **args)
 void
 cmd_delay_output(int nargs, char **args)
 {
-	int dtime;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &dtime) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, dtime);
 
 	report_count(1);
 	report_return(delay_output(dtime));
@@ -1592,8 +1442,7 @@ cmd_delscreen(int nargs, char **args)
 {
 	SCREEN *scrn;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if (set_scrn(args[0], &scrn) != 0)
 		return;
@@ -1607,13 +1456,8 @@ cmd_delscreen(int nargs, char **args)
 void
 cmd_delwin(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(delwin(win));
@@ -1626,8 +1470,7 @@ cmd_derwin(int nargs, char **args)
 	int lines, cols, y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &lines) != 0) ||
@@ -1644,13 +1487,8 @@ cmd_derwin(int nargs, char **args)
 void
 cmd_dupwin(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_ptr(dupwin(win));
@@ -1660,8 +1498,7 @@ cmd_dupwin(int nargs, char **args)
 void
 cmd_doupdate(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX - implicit refresh */
 	report_count(1);
@@ -1672,8 +1509,7 @@ cmd_doupdate(int nargs, char **args)
 void
 cmd_echo(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(echo());
@@ -1683,8 +1519,7 @@ cmd_echo(int nargs, char **args)
 void
 cmd_endwin(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(endwin());
@@ -1694,8 +1529,7 @@ cmd_endwin(int nargs, char **args)
 void
 cmd_erasechar(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(erasechar());
@@ -1705,8 +1539,7 @@ cmd_erasechar(int nargs, char **args)
 void
 cmd_flash(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(flash());
@@ -1716,8 +1549,7 @@ cmd_flash(int nargs, char **args)
 void
 cmd_flushinp(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(flushinp());
@@ -1730,8 +1562,7 @@ cmd_flushok(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -1747,8 +1578,7 @@ cmd_fullname(int nargs, char **args)
 {
 	char string[256];
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	/* XXX - call2 */
 	report_count(2);
@@ -1760,13 +1590,8 @@ cmd_fullname(int nargs, char **args)
 void
 cmd_getattrs(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getattrs(win));
@@ -1776,13 +1601,8 @@ cmd_getattrs(int nargs, char **args)
 void
 cmd_getbkgd(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_byte(getbkgd(win));
@@ -1792,13 +1612,8 @@ cmd_getbkgd(int nargs, char **args)
 void
 cmd_getcury(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getcury(win));
@@ -1808,13 +1623,8 @@ cmd_getcury(int nargs, char **args)
 void
 cmd_getcurx(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getcurx(win));
@@ -1824,15 +1634,10 @@ cmd_getcurx(int nargs, char **args)
 void
 cmd_getyx(int nargs, char **args)
 {
-	WINDOW *win;
+	ARGC(1);
+	ARG_WINDOW(0, win);
+
 	int y, x;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
-
 	getyx(win, y, x);
 	report_count(2);
 	report_int(y);
@@ -1843,13 +1648,8 @@ cmd_getyx(int nargs, char **args)
 void
 cmd_getbegy(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getbegy(win));
@@ -1859,13 +1659,8 @@ cmd_getbegy(int nargs, char **args)
 void
 cmd_getbegx(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getbegx(win));
@@ -1875,13 +1670,8 @@ cmd_getbegx(int nargs, char **args)
 void
 cmd_getmaxy(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getmaxy(win));
@@ -1891,13 +1681,8 @@ cmd_getmaxy(int nargs, char **args)
 void
 cmd_getmaxx(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getmaxx(win));
@@ -1907,13 +1692,8 @@ cmd_getmaxx(int nargs, char **args)
 void
 cmd_getpary(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getpary(win));
@@ -1923,13 +1703,8 @@ cmd_getpary(int nargs, char **args)
 void
 cmd_getparx(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(getparx(win));
@@ -1939,15 +1714,10 @@ cmd_getparx(int nargs, char **args)
 void
 cmd_getparyx(int nargs, char **args)
 {
-	WINDOW *win;
+	ARGC(1);
+	ARG_WINDOW(0, win);
+
 	int y, x;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
-
 	report_count(2);
 	getparyx(win, y, x);
 	report_int(y);
@@ -1957,16 +1727,12 @@ cmd_getparyx(int nargs, char **args)
 void
 cmd_getmaxyx(int nargs, char **args)
 {
-	WINDOW *win;
+	ARGC(1);
+	ARG_WINDOW(0, win);
+
 	int y, x;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
-
 	getmaxyx(win, y, x);
+
 	report_count(2);
 	report_int(y);
 	report_int(x);
@@ -1975,16 +1741,12 @@ cmd_getmaxyx(int nargs, char **args)
 void
 cmd_getbegyx(int nargs, char **args)
 {
-	WINDOW *win;
+	ARGC(1);
+	ARG_WINDOW(0, win);
+
 	int y, x;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
-
 	getbegyx(win, y, x);
+
 	report_count(2);
 	report_int(y);
 	report_int(x);
@@ -1995,8 +1757,7 @@ cmd_setsyx(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -2012,8 +1773,7 @@ cmd_getsyx(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(3);
 	getsyx(y, x);
@@ -2025,8 +1785,7 @@ cmd_getsyx(int nargs, char **args)
 void
 cmd_gettmode(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(gettmode());
@@ -2038,8 +1797,7 @@ cmd_getwin(int nargs, char **args)
 {
 	FILE *fp;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if ((fp = fopen(args[0], "r")) == NULL) {
 		report_count(1);
@@ -2055,13 +1813,8 @@ cmd_getwin(int nargs, char **args)
 void
 cmd_halfdelay(int nargs, char **args)
 {
-	int ms;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &ms) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, ms);
 
 	report_count(1);
 	report_return(halfdelay(ms));
@@ -2071,8 +1824,7 @@ cmd_halfdelay(int nargs, char **args)
 void
 cmd_has_colors(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(has_colors());
@@ -2082,8 +1834,7 @@ cmd_has_colors(int nargs, char **args)
 void
 cmd_has_ic(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(has_ic());
@@ -2093,8 +1844,7 @@ cmd_has_ic(int nargs, char **args)
 void
 cmd_has_il(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(has_il());
@@ -2104,15 +1854,12 @@ cmd_has_il(int nargs, char **args)
 void
 cmd_hline(int nargs, char **args)
 {
-	int count;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	ch = (chtype *) args[0];
-	if (set_int(args[1], &count) != 0)
-		return;
+	ARG_INT(1, count);
 
 	report_count(1);
 	report_return(hline(ch[0], count));
@@ -2125,8 +1872,7 @@ cmd_idcok(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2143,8 +1889,7 @@ cmd_idlok(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2160,8 +1905,7 @@ cmd_init_color(int nargs, char **args)
 {
 	short colour, red, green, blue;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_short(args[0], &colour) != 0) ||
 	    (set_short(args[1], &red) != 0) ||
@@ -2179,8 +1923,7 @@ cmd_init_pair(int nargs, char **args)
 {
 	short pair, fore, back;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_short(args[0], &pair) != 0) ||
 	    (set_short(args[1], &fore) != 0) ||
@@ -2195,8 +1938,7 @@ cmd_init_pair(int nargs, char **args)
 void
 cmd_initscr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_ptr(initscr());
@@ -2209,8 +1951,7 @@ cmd_intrflush(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2224,8 +1965,7 @@ cmd_intrflush(int nargs, char **args)
 void
 cmd_isendwin(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(isendwin());
@@ -2238,8 +1978,7 @@ cmd_is_linetouched(int nargs, char **args)
 	int line;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &line) != 0))
@@ -2253,13 +1992,8 @@ cmd_is_linetouched(int nargs, char **args)
 void
 cmd_is_wintouched(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(is_wintouched(win));
@@ -2271,8 +2005,7 @@ cmd_keyok(int nargs, char **args)
 {
 	int keysym, flag;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &keysym) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2289,8 +2022,7 @@ cmd_keypad(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2303,13 +2035,8 @@ cmd_keypad(int nargs, char **args)
 void
 cmd_is_keypad(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(is_keypad(win));
@@ -2320,8 +2047,7 @@ cmd_keyname(int nargs, char **args)
 {
 	unsigned int key;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if (set_uint(args[0], &key) != 0)
 		return;
@@ -2334,8 +2060,7 @@ cmd_keyname(int nargs, char **args)
 void
 cmd_killchar(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(killchar());
@@ -2348,8 +2073,7 @@ cmd_leaveok(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2362,13 +2086,8 @@ cmd_leaveok(int nargs, char **args)
 void
 cmd_is_leaveok(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(is_leaveok(win));
@@ -2380,8 +2099,7 @@ cmd_meta(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2397,8 +2115,7 @@ cmd_mvcur(int nargs, char **args)
 {
 	int oldy, oldx, y, x;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &oldy) != 0) ||
 	    (set_int(args[1], &oldx) != 0) ||
@@ -2417,8 +2134,7 @@ cmd_mvderwin(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2436,8 +2152,7 @@ cmd_mvhline(int nargs, char **args)
 	int y, x, n;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -2456,8 +2171,7 @@ cmd_mvprintw(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -2474,8 +2188,7 @@ cmd_mvscanw(int nargs, char **args)
 	int y, x;
 	char string[256];
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -2494,8 +2207,7 @@ cmd_mvvline(int nargs, char **args)
 	int y, x, n;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -2516,8 +2228,7 @@ cmd_mvwhline(int nargs, char **args)
 	chtype *ch;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2539,8 +2250,7 @@ cmd_mvwvline(int nargs, char **args)
 	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2561,8 +2271,7 @@ cmd_mvwin(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2581,8 +2290,7 @@ cmd_mvwinchnstr(int nargs, char **args)
 	chtype *string;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2610,8 +2318,7 @@ cmd_mvwinchstr(int nargs, char **args)
 	chtype string[256];
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2632,8 +2339,7 @@ cmd_mvwinnstr(int nargs, char **args)
 	char *string;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2661,8 +2367,7 @@ cmd_mvwinstr(int nargs, char **args)
 	char string[256];
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2682,8 +2387,7 @@ cmd_mvwprintw(int nargs, char **args)
 	int y, x;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2702,8 +2406,7 @@ cmd_mvwscanw(int nargs, char **args)
 	WINDOW *win;
 	char string[256];
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -2720,13 +2423,8 @@ cmd_mvwscanw(int nargs, char **args)
 void
 cmd_napms(int nargs, char **args)
 {
-	int naptime;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &naptime) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, naptime);
 
 	report_count(1);
 	report_return(napms(naptime));
@@ -2738,8 +2436,7 @@ cmd_newpad(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -2755,8 +2452,7 @@ cmd_newterm(int nargs, char **args)
 {
 	FILE *in, *out;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((in = fopen(args[1], "rw")) == NULL) {
 		report_count(1);
@@ -2778,8 +2474,7 @@ cmd_newwin(int nargs, char **args)
 {
 	int lines, cols, begin_y, begin_x;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &lines) != 0) ||
 	    (set_int(args[1], &cols) != 0) ||
@@ -2795,8 +2490,7 @@ cmd_newwin(int nargs, char **args)
 void
 cmd_nl(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(nl());
@@ -2806,8 +2500,7 @@ cmd_nl(int nargs, char **args)
 void
 cmd_no_color_attributes(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(no_color_attributes());
@@ -2817,8 +2510,7 @@ cmd_no_color_attributes(int nargs, char **args)
 void
 cmd_nocbreak(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(nocbreak());
@@ -2831,8 +2523,7 @@ cmd_nodelay(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2846,8 +2537,7 @@ cmd_nodelay(int nargs, char **args)
 void
 cmd_noecho(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(noecho());
@@ -2857,8 +2547,7 @@ cmd_noecho(int nargs, char **args)
 void
 cmd_nonl(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(nonl());
@@ -2868,8 +2557,7 @@ cmd_nonl(int nargs, char **args)
 void
 cmd_noqiflush(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	noqiflush();
 	report_count(1);
@@ -2880,8 +2568,7 @@ cmd_noqiflush(int nargs, char **args)
 void
 cmd_noraw(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(noraw());
@@ -2894,8 +2581,7 @@ cmd_notimeout(int nargs, char **args)
 	int flag;
 	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -2911,8 +2597,7 @@ cmd_overlay(int nargs, char **args)
 {
 	WINDOW *source, *dest;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &source) != 0) ||
 	    (set_win(args[1], &dest) != 0))
@@ -2928,8 +2613,7 @@ cmd_overwrite(int nargs, char **args)
 {
 	WINDOW *source, *dest;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &source) != 0) ||
 	    (set_win(args[1], &dest) != 0))
@@ -2945,8 +2629,7 @@ cmd_pair_content(int nargs, char **args)
 {
 	short pair, fore, back;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if (set_short(args[0], &pair) != 0)
 		return;
@@ -2963,13 +2646,9 @@ void
 cmd_pechochar(int nargs, char **args)
 {
 	chtype *ch;
-	WINDOW *pad;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &pad) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, pad);
 
 	ch = (chtype *) args[1];
 
@@ -2984,8 +2663,7 @@ cmd_pnoutrefresh(int nargs, char **args)
 	int pbeg_y, pbeg_x, sbeg_y, sbeg_x, smax_y, smax_x;
 	WINDOW *pad;
 
-	if (check_arg_count(nargs, 7) == 1)
-		return;
+	ARGC(7);
 
 	if ((set_win(args[0], &pad) != 0) ||
 	    (set_int(args[1], &pbeg_y) != 0) ||
@@ -3008,8 +2686,7 @@ cmd_prefresh(int nargs, char **args)
 	int pbeg_y, pbeg_x, sbeg_y, sbeg_x, smax_y, smax_x;
 	WINDOW *pad;
 
-	if (check_arg_count(nargs, 7) == 1)
-		return;
+	ARGC(7);
 
 	if ((set_win(args[0], &pad) != 0) ||
 	    (set_int(args[1], &pbeg_y) != 0) ||
@@ -3031,8 +2708,7 @@ cmd_prefresh(int nargs, char **args)
 void
 cmd_printw(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	report_count(1);
 	report_return(printw(args[0], args[1]));
@@ -3043,13 +2719,9 @@ void
 cmd_putwin(int nargs, char **args)
 {
 	FILE *fp;
-	WINDOW *win;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	if ((fp = fopen(args[1], "w")) == NULL) {
 		report_count(1);
@@ -3065,8 +2737,7 @@ cmd_putwin(int nargs, char **args)
 void
 cmd_qiflush(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	qiflush();
 	report_count(1);
@@ -3077,8 +2748,7 @@ cmd_qiflush(int nargs, char **args)
 void
 cmd_raw(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(raw());
@@ -3088,13 +2758,8 @@ cmd_raw(int nargs, char **args)
 void
 cmd_redrawwin(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(redrawwin(win));
@@ -3104,8 +2769,7 @@ cmd_redrawwin(int nargs, char **args)
 void
 cmd_reset_prog_mode(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(reset_prog_mode());
@@ -3115,8 +2779,7 @@ cmd_reset_prog_mode(int nargs, char **args)
 void
 cmd_reset_shell_mode(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(reset_shell_mode());
@@ -3126,8 +2789,7 @@ cmd_reset_shell_mode(int nargs, char **args)
 void
 cmd_resetty(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(resetty());
@@ -3139,8 +2801,7 @@ cmd_resizeterm(int nargs, char **args)
 {
 	int rows, cols;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &rows) != 0) ||
 	    (set_int(args[1], &cols) != 0))
@@ -3154,8 +2815,7 @@ cmd_resizeterm(int nargs, char **args)
 void
 cmd_savetty(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(savetty());
@@ -3167,8 +2827,7 @@ cmd_scanw(int nargs, char **args)
 {
 	char string[256];
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX call2 */
 	report_count(2);
@@ -3180,13 +2839,8 @@ cmd_scanw(int nargs, char **args)
 void
 cmd_scroll(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(scroll(win));
@@ -3199,8 +2853,7 @@ cmd_scrollok(int nargs, char **args)
 	WINDOW *win;
 	int flag;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &flag) != 0))
@@ -3214,8 +2867,7 @@ cmd_scrollok(int nargs, char **args)
 void
 cmd_setterm(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_return(setterm(args[0]));
@@ -3227,8 +2879,7 @@ cmd_set_term(int nargs, char **args)
 {
 	SCREEN *scrn;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if (set_scrn(args[0], &scrn) != 0) return;
 
@@ -3240,8 +2891,7 @@ cmd_set_term(int nargs, char **args)
 void
 cmd_start_color(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(start_color());
@@ -3254,8 +2904,7 @@ cmd_subpad(int nargs, char **args)
 	WINDOW *pad;
 	int lines, cols, begin_y, begin_x;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &pad) != 0) ||
 	    (set_int(args[1], &lines) != 0) ||
@@ -3275,8 +2924,7 @@ cmd_subwin(int nargs, char **args)
 	WINDOW *win;
 	int lines, cols, begin_y, begin_x;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &lines) != 0) ||
@@ -3293,8 +2941,7 @@ cmd_subwin(int nargs, char **args)
 void
 cmd_termattrs(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(termattrs());
@@ -3304,8 +2951,7 @@ cmd_termattrs(int nargs, char **args)
 void
 cmd_term_attrs(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_int(term_attrs());
@@ -3318,8 +2964,7 @@ cmd_touchline(int nargs, char **args)
 	WINDOW *win;
 	int start, count;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &start) != 0) ||
@@ -3336,8 +2981,7 @@ cmd_touchoverlap(int nargs, char **args)
 {
 	WINDOW *win1, *win2;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win1) != 0) ||
 	    (set_win(args[1], &win2) != 0))
@@ -3351,13 +2995,8 @@ cmd_touchoverlap(int nargs, char **args)
 void
 cmd_touchwin(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(touchwin(win));
@@ -3367,13 +3006,8 @@ cmd_touchwin(int nargs, char **args)
 void
 cmd_ungetch(int nargs, char **args)
 {
-	int ch;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &ch) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, ch);
 
 	report_count(1);
 	report_return(ungetch(ch));
@@ -3383,13 +3017,8 @@ cmd_ungetch(int nargs, char **args)
 void
 cmd_untouchwin(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(untouchwin(win));
@@ -3399,8 +3028,7 @@ cmd_untouchwin(int nargs, char **args)
 void
 cmd_use_default_colors(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(use_default_colors());
@@ -3410,15 +3038,12 @@ cmd_use_default_colors(int nargs, char **args)
 void
 cmd_vline(int nargs, char **args)
 {
-	int count;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	ch = (chtype *) args[0];
-	if (set_int(args[1], &count) != 0)
-		return;
+	ARG_INT(1, count);
 
 	report_count(1);
 	report_return(vline(ch[0], count));
@@ -3441,13 +3066,8 @@ internal_vw_printw(WINDOW * win, char *arg1,...)
 void
 cmd_vw_printw(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 3) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(3);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(internal_vw_printw(win, args[1], args[2]));
@@ -3470,14 +3090,10 @@ internal_vw_scanw(WINDOW * win, char *arg1,...)
 void
 cmd_vw_scanw(int nargs, char **args)
 {
-	WINDOW *win;
 	char string[256];
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	/* XXX - call2 */
 	report_count(2);
@@ -3503,14 +3119,10 @@ cmd_vwscanw(int nargs, char **args)
 void
 cmd_waddch(int nargs, char **args)
 {
-	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	ch = (chtype *) args[1];
 
@@ -3525,8 +3137,7 @@ cmd_waddchnstr(int nargs, char **args)
 	WINDOW *win;
 	int count;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &count) != 0))
@@ -3540,13 +3151,8 @@ cmd_waddchnstr(int nargs, char **args)
 void
 cmd_waddchstr(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(waddchstr(win, (chtype *) args[1]));
@@ -3559,8 +3165,7 @@ cmd_waddnstr(int nargs, char **args)
 	WINDOW *win;
 	int count;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &count) != 0))
@@ -3575,15 +3180,11 @@ cmd_waddnstr(int nargs, char **args)
 void
 cmd_wattr_get(int nargs, char **args)
 {
-	WINDOW *win;
 	int attr;
 	short pair;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	/* XXX - call3 */
 	report_count(3);
@@ -3599,8 +3200,7 @@ cmd_wattr_off(int nargs, char **args)
 	WINDOW *win;
 	int attr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &attr) != 0))
@@ -3617,8 +3217,7 @@ cmd_wattr_on(int nargs, char **args)
 	WINDOW *win;
 	int attr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &attr) != 0))
@@ -3636,8 +3235,7 @@ cmd_wattr_set(int nargs, char **args)
 	int attr;
 	short pair;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &attr) != 0) ||
@@ -3655,8 +3253,7 @@ cmd_wattroff(int nargs, char **args)
 	WINDOW *win;
 	int attr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &attr) != 0))
@@ -3673,8 +3270,7 @@ cmd_wattron(int nargs, char **args)
 	WINDOW *win;
 	int attr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &attr) != 0))
@@ -3691,8 +3287,7 @@ cmd_wattrset(int nargs, char **args)
 	WINDOW *win;
 	int attr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &attr) != 0))
@@ -3706,14 +3301,10 @@ cmd_wattrset(int nargs, char **args)
 void
 cmd_wbkgd(int nargs, char **args)
 {
-	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	ch = (chtype *) args[1];
 	report_count(1);
@@ -3724,14 +3315,10 @@ cmd_wbkgd(int nargs, char **args)
 void
 cmd_wbkgdset(int nargs, char **args)
 {
-	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	ch = (chtype *) args[1];
 
@@ -3747,8 +3334,7 @@ cmd_wborder(int nargs, char **args)
 	WINDOW *win;
 	int ls, rs, ts, bs, tl, tr, bl, br;
 
-	if (check_arg_count(nargs, 9) == 1)
-		return;
+	ARGC(9);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &ls) != 0) ||
@@ -3769,13 +3355,8 @@ cmd_wborder(int nargs, char **args)
 void
 cmd_wclear(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wclear(win));
@@ -3785,13 +3366,8 @@ cmd_wclear(int nargs, char **args)
 void
 cmd_wclrtobot(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wclrtobot(win));
@@ -3801,13 +3377,8 @@ cmd_wclrtobot(int nargs, char **args)
 void
 cmd_wclrtoeol(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wclrtoeol(win));
@@ -3821,8 +3392,7 @@ cmd_wcolor_set(int nargs, char **args)
 	WINDOW *win;
 	short pair;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_short(args[1], &pair) != 0))
@@ -3836,13 +3406,8 @@ cmd_wcolor_set(int nargs, char **args)
 void
 cmd_wdelch(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wdelch(win));
@@ -3852,13 +3417,8 @@ cmd_wdelch(int nargs, char **args)
 void
 cmd_wdeleteln(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wdeleteln(win));
@@ -3869,14 +3429,10 @@ cmd_wdeleteln(int nargs, char **args)
 void
 cmd_wechochar(int nargs, char **args)
 {
-	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	ch = (chtype *) args[1];
 
@@ -3888,13 +3444,8 @@ cmd_wechochar(int nargs, char **args)
 void
 cmd_werase(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(werase(win));
@@ -3904,13 +3455,8 @@ cmd_werase(int nargs, char **args)
 void
 cmd_wgetch(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(wgetch(win));
@@ -3924,8 +3470,7 @@ cmd_wgetnstr(int nargs, char **args)
 	int count;
 	char string[256];
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &count) != 0))
@@ -3941,15 +3486,11 @@ cmd_wgetnstr(int nargs, char **args)
 void
 cmd_wgetstr(int nargs, char **args)
 {
-	WINDOW *win;
 	char string[256];
 
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	string[0] = '\0';
 
@@ -3966,8 +3507,7 @@ cmd_whline(int nargs, char **args)
 	int count;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &count) != 0))
@@ -3983,13 +3523,8 @@ cmd_whline(int nargs, char **args)
 void
 cmd_winch(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_byte(winch(win));
@@ -4003,8 +3538,7 @@ cmd_winchnstr(int nargs, char **args)
 	chtype string[256];
 	int count;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &count) != 0))
@@ -4020,14 +3554,10 @@ cmd_winchnstr(int nargs, char **args)
 void
 cmd_winchstr(int nargs, char **args)
 {
-	WINDOW *win;
 	chtype string[256];
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	/* XXX - call2 */
 	report_count(2);
@@ -4043,8 +3573,7 @@ cmd_winnstr(int nargs, char **args)
 	char string[256];
 	int count;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &count) != 0))
@@ -4060,14 +3589,10 @@ cmd_winnstr(int nargs, char **args)
 void
 cmd_winsch(int nargs, char **args)
 {
-	WINDOW *win;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	ch = (chtype *) args[1];
 
@@ -4082,8 +3607,7 @@ cmd_winsdelln(int nargs, char **args)
 	WINDOW *win;
 	int count;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &count) != 0))
@@ -4097,13 +3621,8 @@ cmd_winsdelln(int nargs, char **args)
 void
 cmd_winsertln(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(winsertln(win));
@@ -4113,14 +3632,10 @@ cmd_winsertln(int nargs, char **args)
 void
 cmd_winstr(int nargs, char **args)
 {
-	WINDOW *win;
 	char string[256];
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	/* XXX - call2 */
 	report_count(2);
@@ -4135,8 +3650,7 @@ cmd_wmove(int nargs, char **args)
 	WINDOW *win;
 	int y, x;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -4151,13 +3665,8 @@ cmd_wmove(int nargs, char **args)
 void
 cmd_wnoutrefresh(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wnoutrefresh(win));
@@ -4167,13 +3676,8 @@ cmd_wnoutrefresh(int nargs, char **args)
 void
 cmd_wprintw(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 3) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(3);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wprintw(win, args[1], args[2]));
@@ -4186,8 +3690,7 @@ cmd_wredrawln(int nargs, char **args)
 	WINDOW *win;
 	int beg_line, num_lines;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &beg_line) != 0) ||
@@ -4202,13 +3705,8 @@ cmd_wredrawln(int nargs, char **args)
 void
 cmd_wrefresh(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	/* XXX - generates output */
 	report_count(1);
@@ -4222,8 +3720,7 @@ cmd_wresize(int nargs, char **args)
 	WINDOW *win;
 	int lines, cols;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &lines) != 0) ||
@@ -4238,14 +3735,10 @@ cmd_wresize(int nargs, char **args)
 void
 cmd_wscanw(int nargs, char **args)
 {
-	WINDOW *win;
 	char string[256];
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(wscanw(win, args[1], &string));
@@ -4258,8 +3751,7 @@ cmd_wscrl(int nargs, char **args)
 	WINDOW *win;
 	int n;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &n) != 0))
@@ -4276,8 +3768,7 @@ cmd_wsetscrreg(int nargs, char **args)
 	WINDOW *win;
 	int top, bottom;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &top) != 0) ||
@@ -4292,13 +3783,8 @@ cmd_wsetscrreg(int nargs, char **args)
 void
 cmd_wstandend(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(wstandend(win));
@@ -4308,13 +3794,8 @@ cmd_wstandend(int nargs, char **args)
 void
 cmd_wstandout(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(wstandout(win));
@@ -4327,8 +3808,7 @@ cmd_wtimeout(int nargs, char **args)
 	WINDOW *win;
 	int tval;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &tval) != 0))
@@ -4346,8 +3826,7 @@ cmd_wtouchln(int nargs, char **args)
 	WINDOW *win;
 	int line, n, changed;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &line) != 0) ||
@@ -4363,13 +3842,8 @@ cmd_wtouchln(int nargs, char **args)
 void
 cmd_wunderend(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(wunderend(win));
@@ -4379,13 +3853,8 @@ cmd_wunderend(int nargs, char **args)
 void
 cmd_wunderscore(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_int(wunderscore(win));
@@ -4399,8 +3868,7 @@ cmd_wvline(int nargs, char **args)
 	int n;
 	chtype *ch;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &n) != 0))
@@ -4416,13 +3884,8 @@ cmd_wvline(int nargs, char **args)
 void
 cmd_insnstr(int nargs, char **args)
 {
-	int n;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_int(args[1], &n) != 0)
-		return;
+	ARGC(2);
+	ARG_INT(1, n);
 
 	report_count(1);
 	report_return(insnstr(args[0], n));
@@ -4432,8 +3895,7 @@ cmd_insnstr(int nargs, char **args)
 void
 cmd_insstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_return(insstr(args[0]));
@@ -4445,8 +3907,7 @@ cmd_mvinsnstr(int nargs, char **args)
 {
 	int y, x, n;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -4463,8 +3924,7 @@ cmd_mvinsstr(int nargs, char **args)
 {
 	int y, x;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -4481,8 +3941,7 @@ cmd_mvwinsnstr(int nargs, char **args)
 	WINDOW *win;
 	int y, x, n;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -4502,8 +3961,7 @@ cmd_mvwinsstr(int nargs, char **args)
 	WINDOW *win;
 	int y, x;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -4521,8 +3979,7 @@ cmd_winsnstr(int nargs, char **args)
 	WINDOW *win;
 	int n;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &n) != 0))
@@ -4536,13 +3993,8 @@ cmd_winsnstr(int nargs, char **args)
 void
 cmd_winsstr(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	report_return(winsstr(win, args[1]));
@@ -4555,8 +4007,7 @@ cmd_chgat(int nargs, char **args)
 {
 	int n, attr, colour;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &n) != 0) ||
 	    (set_int(args[1], &attr) != 0) ||
@@ -4576,8 +4027,7 @@ cmd_wchgat(int nargs, char **args)
 	int n, attr;
 	short colour;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &n) != 0) ||
@@ -4596,8 +4046,7 @@ cmd_mvchgat(int nargs, char **args)
 	int y, x, n, attr;
 	short colour;
 
-	if (check_arg_count(nargs, 6) == 1)
-		return;
+	ARGC(6);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -4618,8 +4067,7 @@ cmd_mvwchgat(int nargs, char **args)
 	int y, x, n, attr;
 	short colour;
 
-	if (check_arg_count(nargs, 7) == 1)
-		return;
+	ARGC(7);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -4639,8 +4087,7 @@ cmd_add_wch(int nargs, char **args)
 {
 	cchar_t *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (cchar_t *) args[0];
 
@@ -4652,13 +4099,9 @@ cmd_add_wch(int nargs, char **args)
 void
 cmd_wadd_wch(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t *ch;
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	ch = (cchar_t *) args[1];
 
@@ -4673,8 +4116,7 @@ cmd_mvadd_wch(int nargs, char **args)
 	int y, x;
 	cchar_t *ch;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -4694,8 +4136,7 @@ cmd_mvwadd_wch(int nargs, char **args)
 	int y, x;
 	cchar_t *ch;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -4713,8 +4154,7 @@ cmd_mvwadd_wch(int nargs, char **args)
 void
 cmd_add_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4724,8 +4164,7 @@ cmd_add_wchnstr(int nargs, char **args)
 void
 cmd_add_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4735,8 +4174,7 @@ cmd_add_wchstr(int nargs, char **args)
 void
 cmd_wadd_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4746,8 +4184,7 @@ cmd_wadd_wchnstr(int nargs, char **args)
 void
 cmd_wadd_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4757,8 +4194,7 @@ cmd_wadd_wchstr(int nargs, char **args)
 void
 cmd_mvadd_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4768,8 +4204,7 @@ cmd_mvadd_wchnstr(int nargs, char **args)
 void
 cmd_mvadd_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4779,8 +4214,7 @@ cmd_mvadd_wchstr(int nargs, char **args)
 void
 cmd_mvwadd_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4790,8 +4224,7 @@ cmd_mvwadd_wchnstr(int nargs, char **args)
 void
 cmd_mvwadd_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -4802,16 +4235,12 @@ cmd_mvwadd_wchstr(int nargs, char **args)
 void
 cmd_addnwstr(int nargs, char **args)
 {
-	int n;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	wstr = (wchar_t *) args[0];
-
-	if (set_int(args[1], &n) != 0)
-		return;
+	ARG_INT(1, n);
 
 	report_count(1);
 	report_return(addnwstr(wstr, n));
@@ -4823,8 +4252,7 @@ cmd_addwstr(int nargs, char **args)
 {
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	wstr = (wchar_t *) args[0];
 
@@ -4839,8 +4267,7 @@ cmd_mvaddnwstr(int nargs, char **args)
 	int y, x, n;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -4859,8 +4286,7 @@ cmd_mvaddwstr(int nargs, char **args)
 	int y, x;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -4880,8 +4306,7 @@ cmd_mvwaddnwstr(int nargs, char **args)
 	int y, x, n;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -4903,8 +4328,7 @@ cmd_mvwaddwstr(int nargs, char **args)
 	int y, x;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -4925,8 +4349,7 @@ cmd_waddnwstr(int nargs, char **args)
 	int n;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &n) != 0))
@@ -4942,14 +4365,10 @@ cmd_waddnwstr(int nargs, char **args)
 void
 cmd_waddwstr(int nargs, char **args)
 {
-	WINDOW *win;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	wstr = (wchar_t *) args[1];
 
@@ -4964,8 +4383,7 @@ cmd_echo_wchar(int nargs, char **args)
 {
 	cchar_t *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (cchar_t *) args[0];
 
@@ -4977,14 +4395,10 @@ cmd_echo_wchar(int nargs, char **args)
 void
 cmd_wecho_wchar(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t *ch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	ch = (cchar_t *) args[1];
 
@@ -4996,14 +4410,10 @@ cmd_wecho_wchar(int nargs, char **args)
 void
 cmd_pecho_wchar(int nargs, char **args)
 {
-	WINDOW *pad;
 	cchar_t *wch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &pad) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, pad);
 
 	wch = (cchar_t *) args[1];
 
@@ -5019,8 +4429,7 @@ cmd_ins_wch(int nargs, char **args)
 {
 	cchar_t *wch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	wch = (cchar_t *) args[0];
 
@@ -5032,14 +4441,10 @@ cmd_ins_wch(int nargs, char **args)
 void
 cmd_wins_wch(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t *wch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	wch = (cchar_t *) args[1];
 
@@ -5054,8 +4459,7 @@ cmd_mvins_wch(int nargs, char **args)
 	int y, x;
 	cchar_t *wch;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -5075,8 +4479,7 @@ cmd_mvwins_wch(int nargs, char **args)
 	int y, x;
 	cchar_t *wch;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5095,14 +4498,11 @@ void
 cmd_ins_nwstr(int nargs, char **args)
 {
 	wchar_t *wstr;
-	int n;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	wstr = (wchar_t *) args[0];
-	if (set_int(args[1], &n) != 0)
-		return;
+	ARG_INT(1, n);
 
 	report_count(1);
 	report_return(ins_nwstr(wstr, n));
@@ -5114,8 +4514,7 @@ cmd_ins_wstr(int nargs, char **args)
 {
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	wstr = (wchar_t *) args[0];
 
@@ -5131,8 +4530,7 @@ cmd_mvins_nwstr(int nargs, char **args)
 	wchar_t *wstr;
 	int n;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -5152,8 +4550,7 @@ cmd_mvins_wstr(int nargs, char **args)
 	int y, x;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -5174,8 +4571,7 @@ cmd_mvwins_nwstr(int nargs, char **args)
 	wchar_t *wstr;
 	int n;
 
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5197,8 +4593,7 @@ cmd_mvwins_wstr(int nargs, char **args)
 	int y, x;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5219,8 +4614,7 @@ cmd_wins_nwstr(int nargs, char **args)
 	wchar_t *wstr;
 	int n;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &n) != 0))
@@ -5236,14 +4630,10 @@ cmd_wins_nwstr(int nargs, char **args)
 void
 cmd_wins_wstr(int nargs, char **args)
 {
-	WINDOW *win;
 	wchar_t *wstr;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	wstr = (wchar_t *) args[1];
 
@@ -5258,8 +4648,7 @@ void
 cmd_get_wch(int nargs, char **args)
 {
 	wchar_t ch;
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(2);
 	report_return(get_wch(&ch));
@@ -5271,8 +4660,7 @@ void
 cmd_unget_wch(int nargs, char **args)
 {
 	wchar_t *wch;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	wch = (wchar_t *) args[0];
 
@@ -5286,8 +4674,7 @@ cmd_mvget_wch(int nargs, char **args)
 {
 	wchar_t ch;
 	int y, x;
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -5306,8 +4693,7 @@ cmd_mvwget_wch(int nargs, char **args)
 	WINDOW *win;
 	int y, x;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5324,13 +4710,9 @@ void
 cmd_wget_wch(int nargs, char **args)
 {
 	wchar_t ch;
-	WINDOW *win;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(2);
 	report_return(wget_wch(win, &ch));
@@ -5343,13 +4725,9 @@ void
 cmd_getn_wstr(int nargs, char **args)
 {
 	wchar_t wstr[256];
-	int n;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &n) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, n);
 
 	report_count(2);
 	report_return(getn_wstr(wstr, n));
@@ -5362,8 +4740,7 @@ cmd_get_wstr(int nargs, char **args)
 {
 	wchar_t wstr[256];
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(2);
 	report_return(get_wstr(wstr));
@@ -5376,8 +4753,7 @@ cmd_mvgetn_wstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x, n;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -5395,8 +4771,7 @@ cmd_mvget_wstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -5415,8 +4790,7 @@ cmd_mvwgetn_wstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x, n;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5437,8 +4811,7 @@ cmd_mvwget_wstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5458,8 +4831,7 @@ cmd_wgetn_wstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int n;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &n) != 0))
@@ -5474,14 +4846,10 @@ cmd_wgetn_wstr(int nargs, char **args)
 void
 cmd_wget_wstr(int nargs, char **args)
 {
-	WINDOW *win;
 	wchar_t wstr[256];
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(2);
 	report_return(wget_wstr(win, wstr));
@@ -5494,8 +4862,7 @@ void
 cmd_in_wch(int nargs, char **args)
 {
 	cchar_t wcval;
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(2);
 	report_return(in_wch(&wcval));
@@ -5508,8 +4875,7 @@ cmd_mvin_wch(int nargs, char **args)
 {
 	cchar_t wcval;
 	int y, x;
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -5527,8 +4893,7 @@ cmd_mvwin_wch(int nargs, char **args)
 	cchar_t wcval;
 	WINDOW *win;
 	int y, x;
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5545,12 +4910,8 @@ void
 cmd_win_wch(int nargs, char **args)
 {
 	cchar_t wcval;
-	WINDOW *win;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(2);
 	report_return(win_wch(win, &wcval));
@@ -5561,8 +4922,7 @@ cmd_win_wch(int nargs, char **args)
 void
 cmd_in_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5572,8 +4932,7 @@ cmd_in_wchnstr(int nargs, char **args)
 void
 cmd_in_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5583,8 +4942,7 @@ cmd_in_wchstr(int nargs, char **args)
 void
 cmd_mvin_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5594,8 +4952,7 @@ cmd_mvin_wchnstr(int nargs, char **args)
 void
 cmd_mvin_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5605,8 +4962,7 @@ cmd_mvin_wchstr(int nargs, char **args)
 void
 cmd_mvwin_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5616,8 +4972,7 @@ cmd_mvwin_wchnstr(int nargs, char **args)
 void
 cmd_mvwin_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5627,8 +4982,7 @@ cmd_mvwin_wchstr(int nargs, char **args)
 void
 cmd_win_wchnstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5638,8 +4992,7 @@ cmd_win_wchnstr(int nargs, char **args)
 void
 cmd_win_wchstr(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -5651,13 +5004,9 @@ void
 cmd_innwstr(int nargs, char **args)
 {
 	wchar_t wstr[256];
-	int n;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &n) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, n);
 
 	report_count(2);
 	report_int(innwstr(wstr, n));
@@ -5669,8 +5018,7 @@ void
 cmd_inwstr(int nargs, char **args)
 {
 	wchar_t wstr[256];
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(2);
 	report_return(inwstr(wstr));
@@ -5684,8 +5032,7 @@ cmd_mvinnwstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x, n;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -5704,8 +5051,7 @@ cmd_mvinwstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0))
@@ -5724,8 +5070,7 @@ cmd_mvwinnwstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x, n;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5746,8 +5091,7 @@ cmd_mvwinwstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int y, x;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -5767,8 +5111,7 @@ cmd_winnwstr(int nargs, char **args)
 	wchar_t wstr[256];
 	int n;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &n) != 0))
@@ -5783,14 +5126,10 @@ cmd_winnwstr(int nargs, char **args)
 void
 cmd_winwstr(int nargs, char **args)
 {
-	WINDOW *win;
 	wchar_t wstr[256];
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(2);
 	report_return(winwstr(win, wstr));
@@ -5808,8 +5147,7 @@ cmd_setcchar(int nargs, char **args)
 	attr_t attrs;
 	short color_pair;
 
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	wch = (wchar_t *) args[0];
 	if ((set_int(args[1], &attrs) != 0) ||
@@ -5834,8 +5172,7 @@ cmd_getcchar(int nargs, char **args)
          * XXX - not handling passing of wch as NULL
          */
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	wcval = (cchar_t *) args[0];
 
@@ -5854,8 +5191,7 @@ cmd_key_name(int nargs, char **args)
 {
 	wchar_t w;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	w = *((wchar_t *) args[0]);
 
@@ -5869,8 +5205,7 @@ cmd_border_set(int nargs, char **args)
 {
 	cchar_t *ls, *rs, *ts, *bs, *tl, *tr, *bl, *br;
 
-	if (check_arg_count(nargs, 8) == 1)
-		return;
+	ARGC(8);
 
 	ls = (cchar_t *) args[0];
 	rs = (cchar_t *) args[1];
@@ -5889,14 +5224,10 @@ cmd_border_set(int nargs, char **args)
 void
 cmd_wborder_set(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t *ls, *rs, *ts, *bs, *tl, *tr, *bl, *br;
 
-	if (check_arg_count(nargs, 9) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(9);
+	ARG_WINDOW(0, win);
 
 	ls = (cchar_t *) args[1];
 	rs = (cchar_t *) args[2];
@@ -5915,14 +5246,10 @@ cmd_wborder_set(int nargs, char **args)
 void
 cmd_box_set(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t *verch, *horch;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(3);
+	ARG_WINDOW(0, win);
 
 	verch = (cchar_t *) args[1];
 	horch = (cchar_t *) args[2];
@@ -5937,8 +5264,7 @@ cmd_erasewchar(int nargs, char **args)
 {
 	wchar_t ch;
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX - call2 */
 	report_count(2);
@@ -5952,8 +5278,7 @@ cmd_killwchar(int nargs, char **args)
 {
 	wchar_t ch;
 
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	/* XXX - call2 */
 	report_count(2);
@@ -5966,14 +5291,11 @@ void
 cmd_hline_set(int nargs, char **args)
 {
 	cchar_t *wch;
-	int n;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	wch = (cchar_t *) args[0];
-	if (set_int(args[1], &n) != 0)
-		return;
+	ARG_INT(1, n);
 
 	report_count(1);
 	report_return(hline_set(wch, n));
@@ -5985,8 +5307,7 @@ cmd_mvhline_set(int nargs, char **args)
 {
 	cchar_t *wch;
 	int y, x, n;
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -6005,8 +5326,7 @@ cmd_mvvline_set(int nargs, char **args)
 {
 	cchar_t *wch;
 	int y, x, n;
-	if (check_arg_count(nargs, 4) == 1)
-		return;
+	ARGC(4);
 
 	if ((set_int(args[0], &y) != 0) ||
 	    (set_int(args[1], &x) != 0) ||
@@ -6026,8 +5346,7 @@ cmd_mvwhline_set(int nargs, char **args)
 	WINDOW *win;
 	cchar_t *wch;
 	int y, x, n;
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -6048,8 +5367,7 @@ cmd_mvwvline_set(int nargs, char **args)
 	WINDOW *win;
 	cchar_t *wch;
 	int y, x, n;
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	ARGC(5);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &y) != 0) ||
@@ -6068,15 +5386,11 @@ void
 cmd_vline_set(int nargs, char **args)
 {
 	cchar_t *wch;
-	int n;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	wch = (cchar_t *) args[0];
-
-	if (set_int(args[1], &n) != 0)
-		return;
+	ARG_INT(1, n);
 
 	report_count(1);
 	report_return(vline_set(wch, n));
@@ -6090,8 +5404,7 @@ cmd_whline_set(int nargs, char **args)
 	cchar_t *wch;
 	int n;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &n) != 0))
@@ -6111,8 +5424,7 @@ cmd_wvline_set(int nargs, char **args)
 	cchar_t *wch;
 	int n;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[2], &n) != 0))
@@ -6129,8 +5441,7 @@ void
 cmd_bkgrnd(int nargs, char **args)
 {
 	cchar_t *wch;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	wch = (cchar_t *) args[0];
 
@@ -6143,8 +5454,7 @@ void
 cmd_bkgrndset(int nargs, char **args)
 {
 	cchar_t *wch;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	wch = (cchar_t *) args[0];
 
@@ -6158,8 +5468,7 @@ void
 cmd_getbkgrnd(int nargs, char **args)
 {
 	cchar_t wch;
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(2);
 	report_return(getbkgrnd(&wch));
@@ -6170,14 +5479,10 @@ cmd_getbkgrnd(int nargs, char **args)
 void
 cmd_wbkgrnd(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t *wch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	wch = (cchar_t *) args[1];
 
@@ -6189,14 +5494,10 @@ cmd_wbkgrnd(int nargs, char **args)
 void
 cmd_wbkgrndset(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t *wch;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(2);
+	ARG_WINDOW(0, win);
 
 	wch = (cchar_t *) args[1];
 
@@ -6209,13 +5510,9 @@ cmd_wbkgrndset(int nargs, char **args)
 void
 cmd_wgetbkgrnd(int nargs, char **args)
 {
-	WINDOW *win;
 	cchar_t wch;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(2);
 	report_return(wgetbkgrnd(win, &wch));
@@ -6229,8 +5526,7 @@ cmd_immedok(int nargs, char **args)
 	WINDOW *win;
 	int bf;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &bf) != 0))
@@ -6247,8 +5543,7 @@ cmd_syncok(int nargs, char **args)
 	WINDOW *win;
 	int bf;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_win(args[0], &win) != 0) ||
 	    (set_int(args[1], &bf) != 0))
@@ -6261,13 +5556,8 @@ cmd_syncok(int nargs, char **args)
 void
 cmd_wcursyncup(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	wcursyncup(win);
@@ -6277,13 +5567,8 @@ cmd_wcursyncup(int nargs, char **args)
 void
 cmd_wsyncup(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	wsyncup(win);
@@ -6293,13 +5578,8 @@ cmd_wsyncup(int nargs, char **args)
 void
 cmd_wsyncdown(int nargs, char **args)
 {
-	WINDOW *win;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_win(args[0], &win) != 0)
-		return;
+	ARGC(1);
+	ARG_WINDOW(0, win);
 
 	report_count(1);
 	wsyncdown(win);
@@ -6313,8 +5593,7 @@ cmd_slk_attroff(int nargs, char **args)
 {
 	chtype *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 
@@ -6325,13 +5604,8 @@ cmd_slk_attroff(int nargs, char **args)
 void
 cmd_slk_attr_off(int nargs, char **args)
 {
-	attr_t attrs;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &attrs) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, attrs);
 
 	report_count(1);
 	report_return(slk_attr_off(attrs, NULL));
@@ -6342,8 +5616,7 @@ cmd_slk_attron(int nargs, char **args)
 {
 	chtype *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 
@@ -6354,13 +5627,8 @@ cmd_slk_attron(int nargs, char **args)
 void
 cmd_slk_attr_on(int nargs, char **args)
 {
-	chtype attrs;
-
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &attrs) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, attrs);
 
 	report_count(1);
 	report_return(slk_attr_on(attrs, NULL));
@@ -6371,8 +5639,7 @@ cmd_slk_attrset(int nargs, char **args)
 {
 	chtype *ch;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	ch = (chtype *) args[0];
 
@@ -6386,8 +5653,7 @@ cmd_slk_attr_set(int nargs, char **args)
 	attr_t attrs;
 	short color_pair_number;
 
-	if (check_arg_count(nargs, 2) == 1)
-		return;
+	ARGC(2);
 
 	if ((set_int(args[0], &attrs) != 0) ||
 	    (set_short(args[1], &color_pair_number) != 0))
@@ -6400,8 +5666,7 @@ cmd_slk_attr_set(int nargs, char **args)
 void
 cmd_slk_clear(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(slk_clear());
@@ -6412,8 +5677,7 @@ cmd_slk_color(int nargs, char **args)
 {
 	short color_pair_number;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	if (set_short(args[0], &color_pair_number) != 0)
 		return;
@@ -6426,13 +5690,9 @@ void
 cmd_slk_label(int nargs, char **args)
 {
 	char *label;
-	int labnum;
 
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &labnum) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, labnum);
 
 	label = slk_label(labnum);
 	report_count(1);
@@ -6445,8 +5705,7 @@ cmd_slk_label(int nargs, char **args)
 void
 cmd_slk_noutrefresh(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(slk_noutrefresh());
@@ -6455,8 +5714,7 @@ cmd_slk_noutrefresh(int nargs, char **args)
 void
 cmd_slk_refresh(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(slk_refresh());
@@ -6465,8 +5723,7 @@ cmd_slk_refresh(int nargs, char **args)
 void
 cmd_slk_restore(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(slk_restore());
@@ -6478,8 +5735,7 @@ cmd_slk_set(int nargs, char **args)
 	int labnum;
 	int justify;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &labnum) != 0) ||
 	    (set_int(args[2], &justify) != 0))
@@ -6492,8 +5748,7 @@ cmd_slk_set(int nargs, char **args)
 void
 cmd_slk_touch(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	report_return(slk_touch());
@@ -6506,8 +5761,7 @@ cmd_slk_wset(int nargs, char **args)
 	wchar_t *label;
 	int justify;
 
-	if (check_arg_count(nargs, 3) == 1)
-		return;
+	ARGC(3);
 
 	if ((set_int(args[0], &labnum) != 0) ||
 	    (set_int(args[2], &justify) != 0))
@@ -6523,12 +5777,8 @@ cmd_slk_wset(int nargs, char **args)
 void
 cmd_slk_init(int nargs, char **args)
 {
-	int fmt;
-	if (check_arg_count(nargs, 1) == 1)
-		return;
-
-	if (set_int(args[0], &fmt) != 0)
-		return;
+	ARGC(1);
+	ARG_INT(0, fmt);
 
 	report_count(1);
 	report_return(slk_init(fmt));
@@ -6537,8 +5787,7 @@ cmd_slk_init(int nargs, char **args)
 void
 cmd_use_env(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -6547,8 +5796,7 @@ cmd_use_env(int nargs, char **args)
 void
 cmd_ripoffline(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 1)
-		return;
+	ARGC(1);
 
 	report_count(1);
 	report_error("UNSUPPORTED");
@@ -6557,8 +5805,7 @@ cmd_ripoffline(int nargs, char **args)
 void
 cmd_filter(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 0) == 1)
-		return;
+	ARGC(0);
 
 	report_count(1);
 	filter();
