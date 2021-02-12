@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.h,v 1.5 2021/02/08 19:15:21 rillig Exp $	*/
+/*	$NetBSD: curses_commands.h,v 1.6 2021/02/12 21:29:03 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -458,4 +458,4 @@ void cmd_slk_set(int, char**);
 void cmd_slk_touch(int, char**);
 void cmd_slk_wset(int, char**);
 
-#endif /* !_CURSES_COMMAND_H_ */
+#endif
