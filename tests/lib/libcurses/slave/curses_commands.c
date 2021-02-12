@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.16 2021/02/12 14:05:57 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.17 2021/02/12 16:49:18 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -113,6 +113,11 @@ set_scrn(char *arg, SCREEN **x)
 	if (set_int(args[i], &arg) != 0)				\
 		return
 
+#define ARG_UINT(i, arg) \
+	unsigned int arg;						\
+	if (set_uint(args[i], &arg) != 0)				\
+		return
+
 #define ARG_CHTYPE_STRING(i, arg) \
 	chtype *arg = (chtype *)args[i]
 
@@ -125,6 +130,11 @@ set_scrn(char *arg, SCREEN **x)
 #define ARG_WINDOW(i, arg) \
 	WINDOW *arg;							\
 	if (set_win(args[i], &arg) != 0)				\
+		return
+
+#define ARG_SCREEN(i, arg) \
+	SCREEN *arg;							\
+	if (set_scrn(args[i], &arg) != 0)				\
 		return
 
 void
@@ -1200,15 +1210,14 @@ cmd_clearok(int nargs, char **args)
 void
 cmd_color_content(int nargs, char **args)
 {
-	short colour, red, green, blue;
-
 	ARGC(1);
+	ARG_SHORT(0, colour);
 
-	if (set_short(args[0], &colour) != 0)
-		return;
+	short red, green, blue;
+	int ret = color_content(colour, &red, &green, &blue);
 
 	report_count(4);
-	report_return(color_content(colour, &red, &green, &blue));
+	report_return(ret);
 	report_int(red);
 	report_int(green);
 	report_int(blue);
@@ -1291,14 +1300,11 @@ cmd_delay_output(int nargs, char **args)
 void
 cmd_delscreen(int nargs, char **args)
 {
-	SCREEN *scrn;
-
 	ARGC(1);
-
-	if (set_scrn(args[0], &scrn) != 0)
-		return;
+	ARG_SCREEN(0, scrn);
 
 	delscreen(scrn);	/* void return */
+
 	report_count(1);
 	report_return(OK);
 }
@@ -1841,12 +1847,8 @@ cmd_is_keypad(int nargs, char **args)
 void
 cmd_keyname(int nargs, char **args)
 {
-	unsigned int key;
-
 	ARGC(1);
-
-	if (set_uint(args[0], &key) != 0)
-		return;
+	ARG_UINT(0, key);
 
 	report_count(1);
 	report_status(keyname(key));
@@ -2311,15 +2313,14 @@ cmd_overwrite(int nargs, char **args)
 void
 cmd_pair_content(int nargs, char **args)
 {
-	short pair, fore, back;
-
 	ARGC(1);
+	ARG_SHORT(0, pair);
 
-	if (set_short(args[0], &pair) != 0)
-		return;
+	short fore, back;
+	int ret = pair_content(pair, &fore, &back);
 
 	report_count(3);
-	report_return(pair_content(pair, &fore, &back));
+	report_return(ret);
 	report_int(fore);
 	report_int(back);
 }
@@ -2536,11 +2537,8 @@ cmd_setterm(int nargs, char **args)
 void
 cmd_set_term(int nargs, char **args)
 {
-	SCREEN *scrn;
-
 	ARGC(1);
-
-	if (set_scrn(args[0], &scrn) != 0) return;
+	ARG_SCREEN(0, scrn);
 
 	report_count(1);
 	report_ptr(set_term(scrn));
