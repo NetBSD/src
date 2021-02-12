@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.17 2021/02/12 16:49:18 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.18 2021/02/12 16:59:32 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -118,8 +118,8 @@ set_scrn(char *arg, SCREEN **x)
 	if (set_uint(args[i], &arg) != 0)				\
 		return
 
-#define ARG_CHTYPE_STRING(i, arg) \
-	chtype *arg = (chtype *)args[i]
+#define ARG_CHTYPE(i, arg) \
+	chtype arg = ((chtype *)args[i])[0]
 
 #define ARG_CCHAR_STRING(i, arg) \
 	cchar_t *arg = (cchar_t *)args[i]
@@ -164,10 +164,10 @@ void
 cmd_addch(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
 	report_count(1);
-	report_return(addch(ch[0]));
+	report_return(addch(ch));
 }
 
 
@@ -306,10 +306,10 @@ void
 cmd_bkgd(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
 	report_count(1);
-	report_return(bkgd(ch[0]));
+	report_return(bkgd(ch));
 }
 
 
@@ -317,9 +317,9 @@ void
 cmd_bkgdset(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
-	bkgdset(ch[0]);		/* returns void */
+	bkgdset(ch);		/* returns void */
 	report_count(1);
 	report_return(OK);
 }
@@ -409,11 +409,11 @@ void
 cmd_echochar(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
 	/* XXX causes refresh */
 	report_count(1);
-	report_return(echochar(ch[0]));
+	report_return(echochar(ch));
 }
 
 
@@ -541,10 +541,10 @@ void
 cmd_insch(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
 	report_count(1);
-	report_return(insch(ch[0]));
+	report_return(insch(ch));
 }
 
 
@@ -724,10 +724,10 @@ cmd_mvaddch(int nargs, char **args)
 	ARGC(3);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_CHTYPE_STRING(2, ch);
+	ARG_CHTYPE(2, ch);
 
 	report_count(1);
-	report_return(mvaddch(y, x, ch[0]));
+	report_return(mvaddch(y, x, ch));
 }
 
 
@@ -926,10 +926,10 @@ cmd_mvinsch(int nargs, char **args)
 	ARGC(3);
 	ARG_INT(0, y);
 	ARG_INT(1, x);
-	ARG_CHTYPE_STRING(2, ch);
+	ARG_CHTYPE(2, ch);
 
 	report_count(1);
-	report_return(mvinsch(y, x, ch[0]));
+	report_return(mvinsch(y, x, ch));
 }
 
 
@@ -971,10 +971,10 @@ cmd_mvwaddch(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_CHTYPE_STRING(3, ch);
+	ARG_CHTYPE(3, ch);
 
 	report_count(1);
-	report_return(mvwaddch(win, y, x, ch[0]));
+	report_return(mvwaddch(win, y, x, ch));
 }
 
 
@@ -1120,10 +1120,10 @@ cmd_mvwinsch(int nargs, char **args)
 	ARG_WINDOW(0, win);
 	ARG_INT(1, y);
 	ARG_INT(2, x);
-	ARG_CHTYPE_STRING(3, ch);
+	ARG_CHTYPE(3, ch);
 
 	report_count(1);
-	report_return(mvwinsch(win, y, x, ch[0]));
+	report_return(mvwinsch(win, y, x, ch));
 }
 
 
@@ -1697,11 +1697,11 @@ void
 cmd_hline(int nargs, char **args)
 {
 	ARGC(2);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 	ARG_INT(1, count);
 
 	report_count(1);
-	report_return(hline(ch[0], count));
+	report_return(hline(ch, count));
 }
 
 
@@ -1932,10 +1932,10 @@ cmd_mvhline(int nargs, char **args)
 	ARG_INT(0, y);
 	ARG_INT(1, x);
 	ARG_INT(3, n);
-	ARG_CHTYPE_STRING(2, ch);
+	ARG_CHTYPE(2, ch);
 
 	report_count(1);
-	report_return(mvhline(y, x, ch[0], n));
+	report_return(mvhline(y, x, ch, n));
 }
 
 
@@ -1973,10 +1973,10 @@ cmd_mvvline(int nargs, char **args)
 	ARG_INT(0, y);
 	ARG_INT(1, x);
 	ARG_INT(3, n);
-	ARG_CHTYPE_STRING(2, ch);
+	ARG_CHTYPE(2, ch);
 
 	report_count(1);
-	report_return(mvvline(y, x, ch[0], n));
+	report_return(mvvline(y, x, ch, n));
 }
 
 
@@ -1988,10 +1988,10 @@ cmd_mvwhline(int nargs, char **args)
 	ARG_INT(1, y);
 	ARG_INT(2, x);
 	ARG_INT(4, n);
-	ARG_CHTYPE_STRING(3, ch);
+	ARG_CHTYPE(3, ch);
 
 	report_count(1);
-	report_return(mvwhline(win, y, x, ch[0], n));
+	report_return(mvwhline(win, y, x, ch, n));
 }
 
 
@@ -2003,10 +2003,10 @@ cmd_mvwvline(int nargs, char **args)
 	ARG_INT(1, y);
 	ARG_INT(2, x);
 	ARG_INT(4, n);
-	ARG_CHTYPE_STRING(3, ch);
+	ARG_CHTYPE(3, ch);
 
 	report_count(1);
-	report_return(mvwvline(win, y, x, ch[0], n));
+	report_return(mvwvline(win, y, x, ch, n));
 }
 
 
@@ -2331,10 +2331,10 @@ cmd_pechochar(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, pad);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
 	report_count(1);
-	report_return(pechochar(pad, ch[0]));
+	report_return(pechochar(pad, ch));
 }
 
 
@@ -2677,11 +2677,11 @@ void
 cmd_vline(int nargs, char **args)
 {
 	ARGC(2);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 	ARG_INT(1, count);
 
 	report_count(1);
-	report_return(vline(ch[0], count));
+	report_return(vline(ch, count));
 }
 
 
@@ -2755,10 +2755,10 @@ cmd_waddch(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
 	report_count(1);
-	report_return(waddch(win, ch[0]));
+	report_return(waddch(win, ch));
 }
 
 
@@ -2892,10 +2892,10 @@ cmd_wbkgd(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
 	report_count(1);
-	report_return(wbkgd(win, ch[0]));
+	report_return(wbkgd(win, ch));
 }
 
 
@@ -2904,9 +2904,9 @@ cmd_wbkgdset(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
-	wbkgdset(win, *ch);	/* void return */
+	wbkgdset(win, ch);	/* void return */
 	report_count(1);
 	report_return(OK);
 }
@@ -3006,10 +3006,10 @@ cmd_wechochar(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
 	report_count(1);
-	report_return(wechochar(win, ch[0]));
+	report_return(wechochar(win, ch));
 }
 
 
@@ -3072,10 +3072,10 @@ cmd_whline(int nargs, char **args)
 	ARGC(3);
 	ARG_WINDOW(0, win);
 	ARG_INT(2, count);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
 	report_count(1);
-	report_return(whline(win, ch[0], count));
+	report_return(whline(win, ch, count));
 }
 
 
@@ -3139,10 +3139,10 @@ cmd_winsch(int nargs, char **args)
 {
 	ARGC(2);
 	ARG_WINDOW(0, win);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
 	report_count(1);
-	report_return(winsch(win, ch[0]));
+	report_return(winsch(win, ch));
 }
 
 
@@ -3371,10 +3371,10 @@ cmd_wvline(int nargs, char **args)
 	ARGC(3);
 	ARG_WINDOW(0, win);
 	ARG_INT(2, n);
-	ARG_CHTYPE_STRING(1, ch);
+	ARG_CHTYPE(1, ch);
 
 	report_count(1);
-	report_return(wvline(win, ch[0], n));
+	report_return(wvline(win, ch, n));
 }
 
 
@@ -4797,10 +4797,10 @@ void
 cmd_slk_attroff(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
 	report_count(1);
-	report_return(slk_attroff(ch[0]));
+	report_return(slk_attroff(ch));
 }
 
 void
@@ -4817,10 +4817,10 @@ void
 cmd_slk_attron(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
 	report_count(1);
-	report_return(slk_attron(ch[0]));
+	report_return(slk_attron(ch));
 }
 
 void
@@ -4837,10 +4837,10 @@ void
 cmd_slk_attrset(int nargs, char **args)
 {
 	ARGC(1);
-	ARG_CHTYPE_STRING(0, ch);
+	ARG_CHTYPE(0, ch);
 
 	report_count(1);
-	report_return(slk_attrset(ch[0]));
+	report_return(slk_attrset(ch));
 }
 
 void
