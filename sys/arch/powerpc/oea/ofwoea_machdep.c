@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.50 2020/07/07 02:33:54 rin Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.51 2021/02/12 23:40:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.50 2020/07/07 02:33:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.51 2021/02/12 23:40:02 thorpej Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -510,7 +510,7 @@ ofwoea_batinit(void)
 		0xf0000000, BAT_BL_256M,
 		0);
 	else
-#endif
+#endif /* PPC_OEA601 */
 	/*
 	 * map to bats
 	 */
@@ -519,7 +519,7 @@ ofwoea_batinit(void)
 		    0xf8000000, BAT_BL_64M,
 		    0xfe000000, BAT_BL_8M,	/* Grackle IO */
 		    0);
-#else
+#else /* ! macppc */
 	uint16_t bitmap;
 	int node, i;
 
@@ -537,7 +537,7 @@ ofwoea_batinit(void)
 			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
 		}
 	}
-#endif
+#endif /* macppc */
 #endif /* OEA */
 }
 
