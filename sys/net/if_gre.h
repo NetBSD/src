@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.47 2021/02/03 18:13:13 roy Exp $ */
+/*	$NetBSD: if_gre.h,v 1.48 2021/02/12 19:57:49 roy Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -131,6 +131,11 @@ struct gre_h {
 				Present if (rt_pres == 1)
  */
 };
+#ifdef __NO_STRICT_ALIGNMENT
+#define	GRE_HDR_ALIGNED_P(gh)	1
+#else
+#define	GRE_HDR_ALIGNED_P(gh)	((((vaddr_t) (gh)) & 3) == 0)
+#endif
 #ifdef __CTASSERT
 __CTASSERT(sizeof(struct gre_h) == 4);
 #endif

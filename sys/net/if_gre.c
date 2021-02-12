@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.177 2020/01/29 04:18:34 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.178 2021/02/12 19:57:49 roy Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.177 2020/01/29 04:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.178 2021/02/12 19:57:49 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -395,10 +395,26 @@ gre_receive(struct socket *so, void *arg, int events, int waitflag)
 		sc->sc_error_ev.ev_count++;
 		return;
 	}
-	if (m->m_len < sizeof(*gh) && (m = m_pullup(m, sizeof(*gh))) == NULL) {
-		GRE_DPRINTF(sc, "m_pullup failed\n");
-		sc->sc_pullup_ev.ev_count++;
-		return;
+
+	/* If the GRE header is not aligned, slurp it up into a new
+	 * mbuf with space for link headers, in the event we forward
+	 * it.  Otherwise, if it is aligned, make sure the entire
+	 * base GRE header is in the first mbuf of the chain.
+	 */
+	if (GRE_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
+		if ((m = m_copyup(m, sizeof(struct gre_h),
+		    (max_linkhdr + 3) & ~3)) == NULL) {
+			/* XXXJRT new stat, please */
+			GRE_DPRINTF(sc, "m_copyup failed\n");
+			sc->sc_pullup_ev.ev_count++;
+			return;
+		}
+	} else if (__predict_false(m->m_len < sizeof(struct gre_h))) {
+		if ((m = m_pullup(m, sizeof(struct gre_h))) == NULL) {
+			GRE_DPRINTF(sc, "m_pullup failed\n");
+			sc->sc_pullup_ev.ev_count++;
+			return;
+		}
 	}
 	gh = mtod(m, const struct gre_h *);
 
@@ -940,7 +956,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 #endif
 
 	M_PREPEND(m, sizeof(*gh), M_DONTWAIT);
-
 	if (m == NULL) {
 		IF_DROP(&ifp->if_snd);
 		error = ENOBUFS;
@@ -948,6 +963,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	gh = mtod(m, struct gre_h *);
+	KASSERT(GRE_HDR_ALIGNED_P(gh));
 	gh->flags = 0;
 	gh->ptype = etype;
 	/* XXX Need to handle IP ToS.  Look at how I handle IP TTL. */
