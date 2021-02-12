@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.29 2021/01/21 17:33:55 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.30 2021/02/12 19:48:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.29 2021/01/21 17:33:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.30 2021/02/12 19:48:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.29 2021/01/21 17:33:55 riastradh 
 #include <sys/percpu.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
+#include <sys/reboot.h>
 #include <sys/rnd.h>		/* legacy kernel API */
 #include <sys/rndio.h>		/* userland ioctl interface */
 #include <sys/rndsource.h>	/* kernel rndsource driver API */
@@ -1031,9 +1032,11 @@ entropy_do_consolidate(void)
 	atomic_store_relaxed(&E->needed, E->needed - diff);
 	E->pending -= diff;
 	if (__predict_false(E->needed > 0)) {
-		if (ratecheck(&lasttime, &interval))
-			log(LOG_DEBUG, "entropy: WARNING:"
+		if (ratecheck(&lasttime, &interval) &&
+		    (boothowto & AB_DEBUG) != 0) {
+			printf("entropy: WARNING:"
 			    " consolidating less than full entropy\n");
+		}
 	}
 
 	/* Advance the epoch and notify waiters.  */
