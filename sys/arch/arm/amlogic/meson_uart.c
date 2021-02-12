@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: meson_uart.c,v 1.6 2021/02/12 21:39:55 ryo Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.6 2021/02/12 21:39:55 ryo Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -260,7 +260,7 @@ meson_uart_cngetc(dev_t dev)
 		return -1;
 	}
 
-	c = bus_space_read_4(bst, bsh, UART_RFIFO_REG);
+	c = bus_space_read_4(bst, bsh, UART_RFIFO_REG) & 0xff;
 #if defined(DDB)
 	extern int db_active;
 	if (!db_active)
@@ -272,7 +272,7 @@ meson_uart_cngetc(dev_t dev)
 
 	splx(s);
 
-	return c & 0xff;
+	return c;
 }
 
 static void
