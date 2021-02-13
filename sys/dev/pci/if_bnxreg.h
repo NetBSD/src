@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.26 2019/05/24 06:26:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.27 2021/02/13 16:33:30 jakllsch Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -128,7 +128,7 @@
 /* Print a message based on the logging level and code path. */
 #define DBPRINT(sc, level, format, args...)				\
 	if (BNX_LOG_MSG(level)) {					\
-		aprint_debug_dev((sc)->bnx_dev, format, ## args);	\
+		device_printf((sc)->bnx_dev, format, ## args);	\
 	}
 
 /* Runs a particular command based on the logging level and code path. */
@@ -673,7 +673,7 @@ struct flash_spec {
 /* Convenience definitions.						    */
 /****************************************************************************/
 #define	BNX_PRINTF(sc, fmt, ...)	\
-	aprint_error_dev((sc)->bnx_dev, fmt, __VA_ARGS__)
+	device_printf((sc)->bnx_dev, fmt, __VA_ARGS__)
 #define BNX_STATS(x)			(u_long) stats->stat_ ## x ## _lo
 
 /*
