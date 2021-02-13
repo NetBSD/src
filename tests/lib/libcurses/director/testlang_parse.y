@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.44 2021/02/09 20:42:31 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.45 2021/02/13 07:08:45 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -51,8 +51,6 @@
 
 extern int verbose;
 extern int check_file_flag;
-extern int cmdpipe[2];
-extern int slvpipe[2];
 extern int master;
 extern struct pollfd readfd;
 extern char *check_path;
@@ -83,9 +81,6 @@ static bool no_input;	/* don't need more input */
 
 static wchar_t *vals = NULL;	/* wchars to attach to a cchar type */
 static unsigned nvals;		/* number of wchars */
-
-#define READ_PIPE  0
-#define WRITE_PIPE 1
 
 const char *enum_names[] = {
 	"unused", "static", "numeric", "string", "byte", "cchar", "wchar", "ERR",
@@ -1110,7 +1105,7 @@ do_function_call(size_t nresults)
 			errx(2, "%s:%zu: Call to input function "
 			    "but no input defined", cur_file, line);
 
-		fds[0].fd = slvpipe[READ_PIPE];
+		fds[0].fd = from_slave;
 		fds[0].events = POLLIN;
 		fds[1].fd = master;
 		fds[1].events = POLLOUT;
@@ -1153,10 +1148,10 @@ do_function_call(size_t nresults)
 	}
 
 	if (verbose) {
-		fds[0].fd = slvpipe[READ_PIPE];
+		fds[0].fd = to_slave;
 		fds[0].events = POLLIN;
 
-		fds[1].fd = slvpipe[WRITE_PIPE];
+		fds[1].fd = from_slave;
 		fds[1].events = POLLOUT;
 
 		fds[2].fd = master;
@@ -1973,7 +1968,7 @@ write_cmd_pipe_args(data_enum_t type, void *data)
 		    enum_names[send_type]);
 	}
 
-	if (write(cmdpipe[WRITE_PIPE], &send_type, sizeof(int)) < 0)
+	if (write(to_slave, &send_type, sizeof(int)) < 0)
 		err(1, "command pipe write for type failed");
 
 	if (verbose) {
@@ -1988,7 +1983,7 @@ write_cmd_pipe_args(data_enum_t type, void *data)
 			    "Writing length %d to command pipe\n", len);
 	}
 
-	if (write(cmdpipe[WRITE_PIPE], &len, sizeof(int)) < 0)
+	if (write(to_slave, &len, sizeof(int)) < 0)
 		err(1, "command pipe write for length failed");
 
 	if (len > 0) {
@@ -1996,7 +1991,7 @@ write_cmd_pipe_args(data_enum_t type, void *data)
 			fprintf(stderr, "Writing data >%s< to command pipe\n",
 			    (const char *)cmd);
 		}
-		if (write(cmdpipe[WRITE_PIPE], cmd, len) < 0)
+		if (write(to_slave, cmd, len) < 0)
 			err(1, "command pipe write of data failed");
 	}
 }
@@ -2018,7 +2013,7 @@ read_cmd_pipe(ct_data_t *response)
 	 * output from the slave because the slave may be blocked waiting
 	 * for a flush on its stdout.
 	 */
-	rfd[0].fd = slvpipe[READ_PIPE];
+	rfd[0].fd = from_slave;
 	rfd[0].events = POLLIN;
 	rfd[1].fd = master;
 	rfd[1].events = POLLIN;
@@ -2038,12 +2033,12 @@ read_cmd_pipe(ct_data_t *response)
 	}
 	while ((rfd[1].revents & POLLIN) == POLLIN);
 
-	if (read(slvpipe[READ_PIPE], &type, sizeof(int)) < 0)
+	if (read(from_slave, &type, sizeof(int)) < 0)
 		err(1, "command pipe read for type failed");
 	response->data_type = type;
 
 	if ((type != data_ok) && (type != data_err) && (type != data_count)) {
-		if (read(slvpipe[READ_PIPE], &len, sizeof(int)) < 0)
+		if (read(from_slave, &len, sizeof(int)) < 0)
 			err(1, "command pipe read for length failed");
 		response->data_len = len;
 
@@ -2055,7 +2050,7 @@ read_cmd_pipe(ct_data_t *response)
 		if ((response->data_value = malloc(len + 1)) == NULL)
 			err(1, "Failed to alloc memory for cmd pipe read");
 
-		if (read(slvpipe[READ_PIPE], response->data_value, len) < 0)
+		if (read(from_slave, response->data_value, len) < 0)
 			err(1, "command pipe read of data failed");
 
 		if (response->data_type != data_byte) {
@@ -2070,7 +2065,7 @@ read_cmd_pipe(ct_data_t *response)
 	} else {
 		response->data_value = NULL;
 		if (type == data_count) {
-			if (read(slvpipe[READ_PIPE], &len, sizeof(int)) < 0)
+			if (read(from_slave, &len, sizeof(int)) < 0)
 				err(1, "command pipe read for number of "
 				       "returns failed");
 			response->data_len = len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: director.h,v 1.2 2021/02/08 19:15:20 rillig Exp $	*/
+/*	$NetBSD: director.h,v 1.3 2021/02/13 07:08:45 rillig Exp $	*/
 
 /*-
  * Copyright 2020 Naman Jain <jnaman806@gmail.com>, this code was
@@ -30,9 +30,12 @@
  *
  */
 #ifndef DIRECTOR_H
-#define DIRECTOR_H 1
+#define DIRECTOR_H
 
 #define GEN_CHECK_FILE 1
 #define FORCE_GEN 2
+
+extern int to_slave;
+extern int from_slave;
 
 #endif /* DIRECTOR_H */
