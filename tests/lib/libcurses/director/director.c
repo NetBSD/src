@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.25 2021/02/13 08:14:46 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.26 2021/02/13 08:22:34 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -114,7 +114,6 @@ usage(void)
 	    "file, or a file holding the terminfo description\n");
 	fprintf(stderr, "    -s is the path to the slave executable\n");
 	fprintf(stderr, "    -t is value to set TERM to for the test\n");
-	fprintf(stderr, "    -I is the directory to include files\n");
 	fprintf(stderr, "    -C is the directory for check-files\n");
 	fprintf(stderr, "    commandfile is a file of test directives\n");
 	exit(1);
