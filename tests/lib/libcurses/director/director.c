@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.18 2021/02/09 20:42:31 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.19 2021/02/13 05:38:16 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -194,14 +194,14 @@ main(int argc, char *argv[])
 	if (check_path == NULL)
 		check_path = getenv("CHECK_PATH");
 	if ((check_path == NULL) || (check_path[0] == '\0')) {
-		warn("$CHECK_PATH not set, defaulting to %s", def_check_path);
+		warnx("$CHECK_PATH not set, defaulting to %s", def_check_path);
 		check_path = def_check_path;
 	}
 
 	if (include_path == NULL)
 		include_path = getenv("INCLUDE_PATH");
 	if ((include_path == NULL) || (include_path[0] == '\0')) {
-		warn("$INCLUDE_PATH not set, defaulting to %s",
+		warnx("$INCLUDE_PATH not set, defaulting to %s",
 			def_include_path);
 		include_path = def_include_path;
 	}
