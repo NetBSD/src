@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.14 2021/02/13 09:18:12 rillig Exp $	*/
+/*	$NetBSD: slave.c,v 1.15 2021/02/13 09:28:27 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <err.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +51,31 @@ static const char *returns_enum_names[] = {
 };
 #endif
 
+static bool
+try_read_from_director(void *data, size_t n)
+{
+	ssize_t nread = read(from_director, data, n);
+	if (nread < 0)
+		err(2, "error reading from command pipe");
+	if (nread == 0)
+		return false;
+	if ((size_t)nread != n)
+		errx(2, "short read from command pipe: expected %zu, got %zu",
+		    n, (size_t)nread);
+	return true;
+}
+
+static void
+read_from_director(void *data, size_t n)
+{
+	ssize_t nread = read(from_director, data, n);
+	if (nread < 0)
+		err(2, "error reading from command pipe");
+	if ((size_t)nread != n)
+		errx(2, "short read from command pipe: expected %zu, got %zu",
+		    n, (size_t)nread);
+}
+
 /*
  * Read the command pipe for the function to execute, gather the args
  * and then process the command.
@@ -59,23 +85,16 @@ process_commands(void)
 {
 	int len, maxlen, argslen, i, ret, type;
 	char *cmdbuf, *tmpbuf, **args, **tmpargs;
-	ssize_t nread;
 
 	len = maxlen = 30;
 	if ((cmdbuf = malloc(maxlen)) == NULL)
 		err(1, "slave cmdbuf malloc failed");
 
-	for (;;) {
-		if ((nread = read(from_director, &type, sizeof(int))) < 0)
-			err(1, "slave command type read failed");
-		if (nread == 0)
-			break;
-
+	while (try_read_from_director(&type, sizeof type)) {
 		if (type != data_string)
 			errx(1, "Unexpected type for command, got %d", type);
 
-		if (read(from_director, &len, sizeof(int)) < 0)
-			err(1, "slave command len read failed");
+		read_from_director(&len, sizeof len);
 
 		if ((len + 1) > maxlen) {
 			maxlen = len + 1;
@@ -85,18 +104,14 @@ process_commands(void)
 			cmdbuf = tmpbuf;
 		}
 
-		if (read(from_director, cmdbuf, len) < 0)
-			err(1, "slave command read failed");
+		read_from_director(cmdbuf, len);
 		cmdbuf[len] = '\0';
 		argslen = 0;
 		args = NULL;
 
 		do {
-			if (read(from_director, &type, sizeof(int)) < 0)
-				err(1, "slave arg type read failed");
-
-			if (read(from_director, &len, sizeof(int)) < 0)
-				err(1, "slave arg len read failed");
+			read_from_director(&type, sizeof type);
+			read_from_director(&len, sizeof len);
 
 			if (len >= 0) {
 				tmpargs = realloc(args,
@@ -120,8 +135,7 @@ process_commands(void)
 					else
 						args[argslen][0] = '\0';
 				} else {
-					read(from_director, args[argslen],
-					     len);
+					read_from_director(args[argslen], len);
 					if (type != data_byte)
 						args[argslen][len] = '\0';
 
