@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.57 2021/01/31 22:45:46 rillig Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.58 2021/02/13 15:31:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1387,6 +1387,8 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 	 * Pass one: calculate space available for expanding
 	 * the marked partition.
 	 */
+	if (parts->free_space != parts->disk_size)
+		planned_space = align;	/* align first part */
 	for (i = 0; i < wanted->num; i++) {
 		if ((wanted->infos[i].flags & PUIFLAG_EXTEND) &&
 		    exp_ndx == ~0U)
@@ -1403,8 +1405,9 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 			if (!(wanted->infos[i].flags & PUIFLG_IS_OUTER))
 				nsp -= infos[i].size;
 		}
-		if (nsp > 0)
-			planned_space += roundup(nsp, align);
+		if (nsp <= 0)
+			continue;
+		planned_space += roundup(nsp, align);
 	}
 
 	/*
@@ -1412,12 +1415,10 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 	 * but check size limits.
 	 */
 	if (exp_ndx < wanted->num) {
-		daddr_t free_space =
-		    parts->free_space - roundup(wanted->reserved_space, align);
-		free_space -= planned_space;
+		daddr_t free_space = parts->free_space - planned_space;
 		daddr_t new_size = wanted->infos[exp_ndx].size;
 		if (free_space > 0)
-			new_size += free_space;
+			new_size += roundup(free_space,align);
 
 		if (wanted->infos[exp_ndx].limit > 0 &&
 		    (new_size + wanted->infos[exp_ndx].cur_start)
