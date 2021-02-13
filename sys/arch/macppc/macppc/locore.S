@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.75 2021/02/11 19:06:24 macallan Exp $	*/
+/*	$NetBSD: locore.S,v 1.76 2021/02/13 01:11:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,15 +82,16 @@ _C_LABEL(kernel_text):
 	.globl	__start
 __start:
 	bl	_C_LABEL(ofwinit)		/* init OF */
-	mr	13,6
-	mr	14,7
-	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
 
 	li	0,0
 #ifndef FIRMWORKSBUGS
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
 #endif
 	isync
+
+	mr	13,6
+	mr	14,7
+	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
 
 /* compute end of kernel memory */
 	lis	4,_C_LABEL(end)@ha
