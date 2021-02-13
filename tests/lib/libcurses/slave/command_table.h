@@ -1,7 +1,8 @@
-/*	$NetBSD: command_table.h,v 1.6 2021/02/12 21:29:03 rillig Exp $	*/
+/*	$NetBSD: command_table.h,v 1.7 2021/02/13 08:14:46 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
+ * Copyright 2021 Roland Illig <rillig@NetBSD.org>
  *
  * All rights reserved.
  *
@@ -25,16 +26,15 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
 
-#ifndef _COMMAND_TABLE_H_
-#define	_COMMAND_TABLE_H_
+#ifndef CTF_COMMAND_TABLE_H
+#define	CTF_COMMAND_TABLE_H
 
 #include "curses_commands.h"
 
-static const char *restricted_commands[] = { "filter", "ripoffline", "use_env",
+static const char *restricted_commands[] = {
+	"filter", "ripoffline", "use_env",
 	"slk_init", "initscr", "newterm"
 };
 

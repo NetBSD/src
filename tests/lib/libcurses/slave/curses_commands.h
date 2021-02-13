@@ -1,7 +1,8 @@
-/*	$NetBSD: curses_commands.h,v 1.6 2021/02/12 21:29:03 rillig Exp $	*/
+/*	$NetBSD: curses_commands.h,v 1.7 2021/02/13 08:14:46 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
+ * Copyright 2021 Roland Illig <rillig@NetBSD.org>
  *
  * All rights reserved.
  *
@@ -25,12 +26,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
 
-#ifndef _CURSES_COMMANDS_H_
-#define	_CURSES_COMMANDS_H_
+#ifndef CTF_CURSES_COMMANDS_H
+#define	CTF_CURSES_COMMANDS_H
 
 struct command_def {
 	const char *name;
@@ -324,10 +323,6 @@ void cmd_mvwinsstr(int, char **);
 void cmd_winsnstr(int, char **);
 void cmd_winsstr(int, char **);
 
-void cmd_chgat(int, char **);
-void cmd_wchgat(int, char **);
-void cmd_mvchgat(int, char **);
-void cmd_mvwchgat(int, char **);
 void cmd_add_wch(int, char **);
 void cmd_wadd_wch(int, char **);
 void cmd_mvadd_wch(int, char **);

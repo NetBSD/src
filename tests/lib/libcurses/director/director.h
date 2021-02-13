@@ -1,8 +1,9 @@
-/*	$NetBSD: director.h,v 1.3 2021/02/13 07:08:45 rillig Exp $	*/
+/*	$NetBSD: director.h,v 1.4 2021/02/13 08:14:46 rillig Exp $	*/
 
 /*-
  * Copyright 2020 Naman Jain <jnaman806@gmail.com>, this code was
  * created as part of the Google Summer of Code 2020.
+ * Copyright 2021 Roland Illig <rillig@NetBSD.org>
  *
  * All rights reserved.
  *
@@ -26,11 +27,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
-#ifndef DIRECTOR_H
-#define DIRECTOR_H
+
+#ifndef CTF_DIRECTOR_H
+#define CTF_DIRECTOR_H
 
 #define GEN_CHECK_FILE 1
 #define FORCE_GEN 2
@@ -38,4 +38,4 @@
 extern int to_slave;
 extern int from_slave;
 
-#endif /* DIRECTOR_H */
+#endif
