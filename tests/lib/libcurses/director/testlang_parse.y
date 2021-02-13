@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.46 2021/02/13 08:14:46 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.47 2021/02/13 08:43:03 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -767,7 +767,7 @@ assign_arg(data_enum_t arg_type, void *arg)
 	if (cur.arg_type == data_var) {
 		cur.var_index = find_var_index(arg);
 		if (cur.var_index < 0)
-			err(1, "%s:%zu: Invalid variable %s",
+			errx(1, "%s:%zu: Invalid variable %s",
 			    cur_file, line, str);
 	} else if (cur.arg_type == data_byte) {
 		ret = arg;
@@ -1085,7 +1085,7 @@ do_function_call(size_t nresults)
 	 */
 	read_cmd_pipe(&returns_count);
 	if (returns_count.data_type != data_count)
-		err(2, "expected return type of data_count but received %s",
+		errx(2, "expected return type of data_count but received %s",
 		    enum_names[returns_count.data_type]);
 
 	perform_delay(&delay_post_call); /* let slave catch up */
