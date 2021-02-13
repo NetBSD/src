@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.13 2021/02/13 08:17:15 rillig Exp $	*/
+/*	$NetBSD: slave.c,v 1.14 2021/02/13 09:18:12 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -59,14 +59,17 @@ process_commands(void)
 {
 	int len, maxlen, argslen, i, ret, type;
 	char *cmdbuf, *tmpbuf, **args, **tmpargs;
+	ssize_t nread;
 
 	len = maxlen = 30;
 	if ((cmdbuf = malloc(maxlen)) == NULL)
 		err(1, "slave cmdbuf malloc failed");
 
 	for (;;) {
-		if (read(from_director, &type, sizeof(int)) < 0)
+		if ((nread = read(from_director, &type, sizeof(int))) < 0)
 			err(1, "slave command type read failed");
+		if (nread == 0)
+			break;
 
 		if (type != data_string)
 			errx(1, "Unexpected type for command, got %d", type);
