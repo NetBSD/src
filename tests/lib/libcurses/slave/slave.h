@@ -1,7 +1,8 @@
-/*	$NetBSD: slave.h,v 1.6 2021/02/13 06:45:42 rillig Exp $	*/
+/*	$NetBSD: slave.h,v 1.7 2021/02/13 08:17:15 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
+ * Copyright 2021 Roland Illig <rillig@NetBSD.org>
  *
  * All rights reserved.
  *
@@ -25,11 +26,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
-#ifndef CURTEST_SLAVE_H
-#define CURTEST_SLAVE_H
+
+#ifndef CTF_SLAVE_H
+#define CTF_SLAVE_H
 
 #include <curses.h>
 
