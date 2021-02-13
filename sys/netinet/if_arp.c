@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.299 2021/02/13 07:57:09 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.300 2021/02/13 13:00:16 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.299 2021/02/13 07:57:09 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.300 2021/02/13 13:00:16 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -700,14 +700,9 @@ arpintr(void)
 		MCLAIM(m, &arpdomain.dom_mowner);
 		ARP_STATINC(ARP_STAT_RCVTOTAL);
 
-		/* If the ARP header is not aligned, slurp it up into a new
-		 * mbuf with space for link headers, in the event we forward
-		 * it.  Otherwise, if it is aligned, make sure the entire
-		 * base ARP header is in the first mbuf of the chain.
-		 */
+		/* Enforce alignment */
 		if (ARP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-			if ((m = m_copyup(m, sizeof(*ar),
-			    (max_linkhdr + 3) & ~3)) == NULL)
+			if ((m = m_copyup(m, sizeof(*ar), 0)) == NULL)
 				goto badlen;
 		} else if (__predict_false(m->m_len < sizeof(*ar))) {
 			if ((m = m_pullup(m, sizeof(*ar))) == NULL)
@@ -732,9 +727,6 @@ arpintr(void)
 				ARP_STATINC(ARP_STAT_RCVBADPROTO);
 				goto free;
 			}
-
-			arplen = sizeof(struct arphdr) +
-			    ar->ar_hln + 2 * ar->ar_pln;
 			break;
 		default:
 			if (ntohs(ar->ar_hrd) == ARPHRD_IEEE1394) {
@@ -742,17 +734,18 @@ arpintr(void)
 				ARP_STATINC(ARP_STAT_RCVBADPROTO);
 				goto free;
 			}
-
-			arplen = sizeof(struct arphdr) +
-			    2 * ar->ar_hln + 2 * ar->ar_pln;
 			break;
 		}
 
 		m_put_rcvif(rcvif, &s);
 
-		if (m->m_len < arplen && (m = m_pullup(m, arplen)) == NULL)
-			goto badlen;
-		ar = mtod(m, struct arphdr *);
+		arplen = sizeof(*ar) + 2 * ar->ar_hln + 2 * ar->ar_pln;
+		if (m->m_len < arplen) {
+			if ((m = m_pullup(m, arplen)) == NULL)
+				goto badlen;
+			ar = mtod(m, struct arphdr *);
+			KASSERT(ARP_HDR_ALIGNED_P(ar));
+		}
 
 		switch (ntohs(ar->ar_pro)) {
 		case ETHERTYPE_IP:
