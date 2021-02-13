@@ -1,7 +1,8 @@
-/*	$NetBSD: commands.c,v 1.11 2021/02/13 06:45:42 rillig Exp $	*/
+/*	$NetBSD: commands.c,v 1.12 2021/02/13 08:14:46 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
+ * Copyright 2021 Roland Illig <rillig@NetBSD.org>
  *
  * All rights reserved.
  *
@@ -25,8 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
 
 #include <curses.h>
@@ -36,6 +35,7 @@
 #include <unistd.h>
 #include <err.h>
 #include <sys/types.h>
+
 #include "returns.h"
 #include "slave.h"
 #include "command_table.h"

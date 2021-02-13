@@ -1,8 +1,9 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.45 2021/02/13 07:08:45 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.46 2021/02/13 08:14:46 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
+ * Copyright 2021 Roland Illig <rillig@NetBSD.org>
  *
  * All rights reserved.
  *
@@ -26,9 +27,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
+
 #include <assert.h>
 #include <curses.h>
 #include <errno.h>
