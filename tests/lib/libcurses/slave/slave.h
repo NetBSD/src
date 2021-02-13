@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.h,v 1.5 2021/02/08 19:15:21 rillig Exp $	*/
+/*	$NetBSD: slave.h,v 1.6 2021/02/13 06:45:42 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -33,8 +33,8 @@
 
 #include <curses.h>
 
-#define READ_PIPE  0
-#define WRITE_PIPE 1
+extern int from_director;
+extern int to_director;
 
 void command_execute(char *, int, char **);
 void report_count(int);
