@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: lint.lua,v 1.1 2021/02/12 20:41:37 rillig Exp $
+-- $NetBSD: lint.lua,v 1.2 2021/02/13 18:24:11 rillig Exp $
 
 --[[
 
@@ -80,15 +80,6 @@ local function check_args(errors)
       end
     end
   end
-end
-
-
-local function check_file(fname, msgs)
-  local errors = collect_errors(fname, msgs)
-  for _, err in ipairs(errors) do
-    print(err)
-  end
-  return #errors == 0
 end
 
 
