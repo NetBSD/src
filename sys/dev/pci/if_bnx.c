@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.105 2020/07/17 10:56:15 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.106 2021/02/13 01:51:24 jakllsch Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.105 2020/07/17 10:56:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.106 2021/02/13 01:51:24 jakllsch Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -625,7 +625,13 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (pci_intr_alloc(pa, &sc->bnx_ih, NULL, 0)) {
+	/* XXX driver needs more work before MSI or MSI-X can be enabled */
+	int counts[PCI_INTR_TYPE_SIZE] = {
+		[PCI_INTR_TYPE_INTX] = 1,
+		[PCI_INTR_TYPE_MSI] = 0,
+		[PCI_INTR_TYPE_MSIX] = 0,
+	};
+	if (pci_intr_alloc(pa, &sc->bnx_ih, counts, PCI_INTR_TYPE_INTX)) {
 		aprint_error_dev(sc->bnx_dev, "couldn't map interrupt\n");
 		goto bnx_attach_fail;
 	}
