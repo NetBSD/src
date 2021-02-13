@@ -1,6 +1,9 @@
-# $NetBSD: addbytes,v 1.1 2021/02/13 06:29:45 rillig Exp $
+# $NetBSD: addbytes,v 1.2 2021/02/13 22:19:47 rillig Exp $
 #
 # Tests adding bytes to stdscr.
+#
+# Note that addbytes is not part of the official curses API, it is merely
+# an internal helper function.
 
 include start
 
