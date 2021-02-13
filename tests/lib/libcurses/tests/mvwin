@@ -2,11 +2,11 @@ include window
 call OK wmove $win1 1 1
 call OK wprintw $win1 "%s" "xxxx"
 call OK wrefresh $win1
-compare /dev/zero
+compare /dev/null
 call OK refresh
-compare /dev/zero
+compare /dev/null
 call OK mvwin $win1 4 7
 call OK wrefresh $win1
-compare /dev/zero
+compare /dev/null
 call OK refresh
-compare /dev/zero
+compare /dev/null
