@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.23 2021/02/13 07:32:19 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.24 2021/02/13 08:00:07 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -51,7 +51,6 @@ void yyparse(void);
 #define DEF_SLAVE "./slave"
 
 const char *def_check_path = "./"; /* default check path */
-const char *def_include_path = "./"; /* default include path */
 
 extern size_t nvars;		/* In testlang_conf.y */
 saved_data_t  saved_output;	/* In testlang_conf.y */
@@ -62,7 +61,6 @@ int verbose;			/* control verbosity of tests */
 int check_file_flag;		/* control check-file generation */
 const char *check_path;		/* path to prepend to check files for output
 				   validation */
-const char *include_path;	/* path to prepend to include files */
 char *cur_file;			/* name of file currently being read */
 
 void init_parse_variables(int);	/* in testlang_parse.y */
@@ -142,11 +140,8 @@ main(int argc, char *argv[])
 	verbose = 0;
 	check_file_flag = 0;
 
-	while ((ch = getopt(argc, argv, "vgfC:I:p:s:t:T:")) != -1) {
+	while ((ch = getopt(argc, argv, "vgfC:p:s:t:T:")) != -1) {
 		switch (ch) {
-		case 'I':
-			include_path = optarg;
-			break;
 		case 'C':
 			check_path = optarg;
 			break;
@@ -197,14 +192,6 @@ main(int argc, char *argv[])
 	if ((check_path == NULL) || (check_path[0] == '\0')) {
 		warnx("$CHECK_PATH not set, defaulting to %s", def_check_path);
 		check_path = def_check_path;
-	}
-
-	if (include_path == NULL)
-		include_path = getenv("INCLUDE_PATH");
-	if ((include_path == NULL) || (include_path[0] == '\0')) {
-		warnx("$INCLUDE_PATH not set, defaulting to %s",
-			def_include_path);
-		include_path = def_include_path;
 	}
 
 	signal(SIGCHLD, slave_died);

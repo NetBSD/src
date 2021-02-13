@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.18 2021/02/08 23:54:03 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.19 2021/02/13 08:00:07 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -45,7 +45,6 @@
 int yylex(void);
 
 extern size_t line;
-extern char *include_path; 	/* from director.c */
 extern char *cur_file;		/* from director.c */
 
 static int include_stack[MAX_INCLUDES];
@@ -175,7 +174,7 @@ include		BEGIN(incl);
 
 <incl>[ \t]*	/* eat the whitespace */
 <incl>[^ \t\n]+ { /* got the include file name */
-		char inc_file[MAXPATHLEN];
+		char *inc_file;
 
 		if (include_ptr > MAX_INCLUDES) {
 			fprintf(stderr,
@@ -184,23 +183,27 @@ include		BEGIN(incl);
 				exit(2);
 		}
 
-		if (yytext[0] != '/') {
-			if (strlcpy(inc_file, include_path, sizeof(inc_file))
-			    >= sizeof(inc_file))
-				err(2, "CHECK_PATH too long");
-			if ((include_path[strlen(include_path) - 1] != '/') &&
-			    ((strlcat(inc_file, "/", sizeof(inc_file))
-			    >= sizeof(inc_file))))
-				err(2, "Could not append / to include file path");
+		const char *dir_begin;
+		int dir_len;
+		if (yytext[0] == '/') {
+			dir_begin = "";
+			dir_len = 0;
 		} else {
-			inc_file[0] = '\0';
+			dir_begin = cur_file;
+			const char *dir_end = strrchr(cur_file, '/');
+			if (dir_end != NULL) {
+				dir_len = (int)(dir_end + 1 - dir_begin);
+			} else {
+				dir_begin = ".";
+				dir_len = 1;
+			}
 		}
 
-		if (strlcat(inc_file, yytext, sizeof(inc_file))
-		    >= sizeof(inc_file))
-			err(2, "Path to include file path overflowed");
+		if (asprintf(&inc_file, "%.*s%s",
+		    dir_len, dir_begin, yytext) == -1)
+			err(2, "Cannot construct include path");
 
-		yyin = fopen(inc_file, "r" );
+		yyin = fopen(inc_file, "r");
 
 		if (!yyin)
 			err(1, "Error opening %s", inc_file);
@@ -209,9 +212,7 @@ include		BEGIN(incl);
 
 		include_stack[include_ptr] = line;
 		include_files[include_ptr++] = cur_file;
-		cur_file = strdup(inc_file);
-		if (cur_file == NULL)
-			err(2, "Cannot allocate new include file string");
+		cur_file = inc_file;
 		line = 1;
 		BEGIN(INITIAL);
 	}
@@ -336,7 +337,7 @@ include		BEGIN(incl);
 			rv = yylval.retval->data_value;
 			for (i = 0; i < len; i += 2)
 				*rv++ = (str[i] << 8) | str[i+1];
-			*rv = __NORMAL | '\0'; /* terminates chtype array */	
+			*rv = __NORMAL | '\0'; /* terminates chtype array */
 			yylval.retval->data_type = data_byte;
 			yylval.retval->data_len = chlen;
 			return BYTE;
