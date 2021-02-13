@@ -1,0 +1,17 @@
+# $NetBSD: addbytes,v 1.1 2021/02/13 06:29:45 rillig Exp $
+#
+# Tests adding bytes to stdscr.
+
+include start
+
+call OK addbytes "\t" 1
+call2 0 8 getyx STDSCR
+
+call OK addbytes "123456" 6
+call2 0 14 getyx STDSCR
+
+call OK addbytes "\t" 1
+call2 0 16 getyx STDSCR
+
+call OK addbytes "\n" 1
+call2 1 0 getyx STDSCR
