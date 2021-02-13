@@ -1,7 +1,8 @@
-/*	$NetBSD: slave.c,v 1.12 2021/02/13 06:45:42 rillig Exp $	*/
+/*	$NetBSD: slave.c,v 1.13 2021/02/13 08:17:15 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
+ * Copyright 2021 Roland Illig <rillig@NetBSD.org>
  *
  * All rights reserved.
  *
@@ -25,9 +26,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
+
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
