@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1016 2021/02/07 01:53:54 rillig Exp $
+# $NetBSD: mi,v 1.1017 2021/02/13 06:29:45 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3523,6 +3523,7 @@
 ./usr/tests/lib/libcurses/terminfo.db			tests-obsolete		obsolete
 ./usr/tests/lib/libcurses/tests				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/add_wch			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/tests/addbytes		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/addch			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/addchnstr		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/addchstr		tests-lib-tests		compattestfile,atf

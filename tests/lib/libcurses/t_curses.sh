@@ -98,6 +98,16 @@ varcheck_body()
 # curses add characters to window routines
 ##########################################
 
+atf_test_case addbytes
+addbytes_head()
+{
+	atf_set "descr" "Tests adding bytes to stdscr"
+}
+addbytes_body()
+{
+	h_run addbytes
+}
+
 atf_test_case addch
 addch_head()
 {
@@ -2172,6 +2182,7 @@ atf_init_test_cases()
 	atf_add_test_case varcheck
 
 	# curses add characters to window routines
+	atf_add_test_case addbytes
 	atf_add_test_case addch
 	atf_add_test_case waddch
 	atf_add_test_case mvaddch
@@ -2416,4 +2427,3 @@ atf_init_test_cases()
 	atf_add_test_case underscore
 	atf_add_test_case wunderscore
 }
-
