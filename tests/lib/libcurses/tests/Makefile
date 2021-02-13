@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/10/24 14:21:26 martin Exp $
+# $NetBSD: Makefile,v 1.5 2021/02/13 06:29:45 rillig Exp $
 
 NOMAN=		# defined
 
@@ -11,6 +11,7 @@ TESTSDIR=	${TESTSBASE}/lib/libcurses
 FILESDIR=	${TESTSDIR}/tests
 FILES=		start
 FILES+=		add_wch
+FILES+=		addbytes
 FILES+=		addch
 FILES+=		addchnstr
 FILES+=		addchstr
