@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.22 2021/02/13 07:31:07 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.23 2021/02/13 07:32:19 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -53,19 +53,19 @@ void yyparse(void);
 const char *def_check_path = "./"; /* default check path */
 const char *def_include_path = "./"; /* default include path */
 
-extern size_t nvars;	/* In testlang_conf.y */
+extern size_t nvars;		/* In testlang_conf.y */
 saved_data_t  saved_output;	/* In testlang_conf.y */
 int to_slave;
 int from_slave;
-int master;		/* pty to the slave */
-int verbose;		/* control verbosity of tests */
+int master;			/* pty to the slave */
+int verbose;			/* control verbosity of tests */
 int check_file_flag;		/* control check-file generation */
-const char *check_path;	/* path to prepend to check files for output
-			   validation */
+const char *check_path;		/* path to prepend to check files for output
+				   validation */
 const char *include_path;	/* path to prepend to include files */
-char *cur_file;		/* name of file currently being read */
+char *cur_file;			/* name of file currently being read */
 
-void init_parse_variables(int); /* in testlang_parse.y */
+void init_parse_variables(int);	/* in testlang_parse.y */
 
 /*
  * Handle the slave exiting unexpectedly, try to recover the exit message
