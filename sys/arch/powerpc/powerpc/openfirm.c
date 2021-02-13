@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.32 2021/02/05 00:06:11 thorpej Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.33 2021/02/13 01:48:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.32 2021/02/05 00:06:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.33 2021/02/13 01:48:33 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -50,11 +50,37 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.32 2021/02/05 00:06:11 thorpej Exp $"
 
 char *OF_buf;
 
-void ofw_stack(void);
-void ofbcopy(const void *, void *, size_t);
+static void ofbcopy(const void *, void *, size_t);
+
 #ifdef MULTIPROCESSOR
 void OF_start_cpu(int, u_int, int);
-#endif
+
+
+static __cpu_simple_lock_t ofw_mutex = __SIMPLELOCK_UNLOCKED;
+#endif /* MULTIPROCESSOR */
+
+static inline register_t
+ofw_lock(void)
+{
+	const register_t s = mfmsr();
+
+	mtmsr(s & ~(PSL_EE|PSL_RI));	/* disable interrupts */
+
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock(&ofw_mutex);
+#endif /* MULTIPROCESSOR */
+
+	return s;
+}
+
+static inline void
+ofw_unlock(register_t s)
+{
+#ifdef MULTIPROCESSOR
+	__cpu_simple_unlock(&ofw_mutex);
+#endif /* MULTIPROCESSOR */
+	mtmsr(s);
+}
 
 int
 OF_peer(int phandle)
@@ -71,11 +97,17 @@ OF_peer(int phandle)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
-		return 0;
-	return args.sibling;
+		rv = 0;
+	else
+		rv = args.sibling;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -93,11 +125,17 @@ OF_child(int phandle)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
-		return 0;
-	return args.child;
+		rv = 0;
+	else
+		rv = args.child;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -115,11 +153,17 @@ OF_parent(int phandle)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
-		return 0;
-	return args.parent;
+		rv = 0;
+	else
+		rv = args.parent;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -137,11 +181,17 @@ OF_instance_to_package(int ihandle)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	args.ihandle = ihandle;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.phandle;
+		rv = -1;
+	else
+		rv = args.phandle;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -160,13 +210,19 @@ OF_getproplen(int handle, const char *prop)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	strncpy(OF_buf, prop, 32);
 	args.phandle = handle;
 	args.prop = OF_buf;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.proplen;
+		rv = -1;
+	else
+		rv = args.proplen;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -187,21 +243,29 @@ OF_getprop(int handle, const char *prop, void *buf, int buflen)
 		1,
 	};
 
-	ofw_stack();
 	if (buflen > PAGE_SIZE)
 		return -1;
+
+	const register_t s = ofw_lock();
+	int rv;
+
 	strncpy(OF_buf, prop, 32);
 	args.phandle = handle;
 	args.prop = OF_buf;
 	args.buf = &OF_buf[33];
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
-		return -1;
-	if (args.size > buflen)
-		args.size = buflen;
-	if (args.size > 0)
-		ofbcopy(&OF_buf[33], buf, args.size);
-	return args.size;
+		rv = -1;
+	else {
+		if (args.size > buflen)
+			args.size = buflen;
+		if (args.size > 0)
+			ofbcopy(&OF_buf[33], buf, args.size);
+		rv = args.size;
+	}
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -221,10 +285,12 @@ OF_setprop(int handle, const char *prop, const void *buf, int buflen)
 		4,
 		1
 	};
-	ofw_stack();
 
-	if (buflen > NBPG)
+	if (buflen > PAGE_SIZE)
 		return -1;
+
+	const register_t s = ofw_lock();
+	int rv;
 
 	ofbcopy(buf, OF_buf, buflen);
 	args.phandle = handle;
@@ -232,8 +298,12 @@ OF_setprop(int handle, const char *prop, const void *buf, int buflen)
 	args.buf = OF_buf;
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.size;
+		rv = -1;
+	else
+		rv = args.size;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -253,15 +323,22 @@ OF_nextprop(int handle, const char *prop, void *nextprop)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	strncpy(OF_buf, prop, 32);
 	args.phandle = handle;
 	args.prop = OF_buf;
 	args.buf = &OF_buf[33];
 	if (openfirmware(&args) == -1)
-		return -1;
-	strncpy(nextprop, &OF_buf[33], 32);
-	return args.flag;
+		rv = -1;
+	else {
+		strncpy(nextprop, &OF_buf[33], 32);
+		rv = args.flag;
+	}
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -279,12 +356,18 @@ OF_finddevice(const char *name)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	strncpy(OF_buf, name, NBPG);
 	args.device = OF_buf;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.phandle;
+		rv = -1;
+	else
+		rv = args.phandle;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -306,16 +389,25 @@ OF_instance_to_path(int ihandle, char *buf, int buflen)
 
 	if (buflen > PAGE_SIZE)
 		return -1;
+
+	const register_t s = ofw_lock();
+	int rv;
+
 	args.ihandle = ihandle;
 	args.buf = OF_buf;
 	args.buflen = buflen;
 	if (openfirmware(&args) < 0)
-		return -1;
-	if (args.length > buflen)
-		args.length = buflen;
-	if (args.length > 0)
-		ofbcopy(OF_buf, buf, args.length);
-	return args.length;
+		rv = -1;
+	else {
+		if (args.length > buflen)
+			args.length = buflen;
+		if (args.length > 0)
+			ofbcopy(OF_buf, buf, args.length);
+		rv = args.length;
+	}
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -335,25 +427,32 @@ OF_package_to_path(int phandle, char *buf, int buflen)
 		1,
 	};
 
-	ofw_stack();
 	if (buflen > PAGE_SIZE)
 		return -1;
+
+	const register_t s = ofw_lock();
+	int rv;
+
 	args.phandle = phandle;
 	args.buf = OF_buf;
 	args.buflen = buflen;
 	if (openfirmware(&args) < 0)
-		return -1;
-	if (args.length > buflen)
-		args.length = buflen;
-	if (args.length > 0)
-		ofbcopy(OF_buf, buf, args.length);
-	return args.length;
+		rv = -1;
+	else {
+		if (args.length > buflen)
+			args.length = buflen;
+		if (args.length > 0)
+			ofbcopy(OF_buf, buf, args.length);
+		rv = args.length;
+	}
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
 OF_call_method(const char *method, int ihandle, int nargs, int nreturns, ...)
 {
-	va_list ap;
 	static struct {
 		const char *name;
 		int nargs;
@@ -366,36 +465,48 @@ OF_call_method(const char *method, int ihandle, int nargs, int nreturns, ...)
 		2,
 		1,
 	};
-	int *ip, n;
 
 	if (nargs > 6)
 		return -1;
+
+	va_list ap;
+	int *ip, n;
+	int rv;
+
+	const register_t s = ofw_lock();
+
 	args.nargs = nargs + 2;
 	args.nreturns = nreturns + 1;
 	args.method = method;
 	args.ihandle = ihandle;
+
 	va_start(ap, nreturns);
-	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
+
+	for (ip = args.args_n_results + (n = nargs); --n >= 0;) {
 		*--ip = va_arg(ap, int);
-	ofw_stack();
+	}
+
 	if (openfirmware(&args) == -1) {
-		va_end(ap);
-		return -1;
+		rv = -1;
+	} else if (args.args_n_results[nargs]) {
+		rv = args.args_n_results[nargs];
+	} else {
+		for (ip = args.args_n_results + nargs + (n = args.nreturns);
+		     --n > 0;) {
+			*va_arg(ap, int *) = *--ip;
+		}
+		rv = 0;
 	}
-	if (args.args_n_results[nargs]) {
-		va_end(ap);
-		return args.args_n_results[nargs];
-	}
-	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
-		*va_arg(ap, int *) = *--ip;
+
 	va_end(ap);
-	return 0;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
 OF_call_method_1(const char *method, int ihandle, int nargs, ...)
 {
-	va_list ap;
 	static struct {
 		const char *name;
 		int nargs;
@@ -408,23 +519,35 @@ OF_call_method_1(const char *method, int ihandle, int nargs, ...)
 		2,
 		2,
 	};
-	int *ip, n;
 
 	if (nargs > 6)
 		return -1;
+
+	va_list ap;
+	int *ip, n;
+	int rv;
+
+	const register_t s = ofw_lock();
+
 	args.nargs = nargs + 2;
 	args.method = method;
 	args.ihandle = ihandle;
+
 	va_start(ap, nargs);
-	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
+	for (ip = args.args_n_results + (n = nargs); --n >= 0;) {
 		*--ip = va_arg(ap, int);
+	}
 	va_end(ap);
-	ofw_stack();
+
 	if (openfirmware(&args) == -1)
-		return -1;
-	if (args.args_n_results[nargs])
-		return -1;
-	return args.args_n_results[nargs + 1];
+		rv = -1;
+	else if (args.args_n_results[nargs])
+		rv = -1;
+	else
+		rv = args.args_n_results[nargs + 1];
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
@@ -443,14 +566,21 @@ OF_open(const char *dname)
 	};
 	int l;
 
-	ofw_stack();
 	if ((l = strlen(dname)) >= PAGE_SIZE)
 		return -1;
+
+	const register_t s = ofw_lock();
+	int rv;
+
 	ofbcopy(dname, OF_buf, l + 1);
 	args.dname = OF_buf;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.handle;
+		rv = -1;
+	else
+		rv = args.handle;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 void
@@ -467,9 +597,12 @@ OF_close(int handle)
 		0,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+
 	args.handle = handle;
 	openfirmware(&args);
+
+	ofw_unlock(s);
 }
 
 /*
@@ -494,25 +627,31 @@ OF_read(int handle, void *addr, int len)
 	int l, act = 0;
 	char *p = addr;
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
 		l = uimin(PAGE_SIZE, len);
 		args.len = l;
-		if (openfirmware(&args) == -1)
-			return -1;
+		if (openfirmware(&args) == -1) {
+			act = -1;
+			goto out;
+		}
 		if (args.actual > 0) {
 			ofbcopy(OF_buf, p, args.actual);
 			act += args.actual;
 		}
 		if (args.actual < l) {
-			if (act)
-				return act;
-			else
-				return args.actual;
+			if (act == 0) {
+				act = args.actual;
+			}
+			goto out;
 		}
 	}
+
+ out:
+	ofw_unlock(s);
 	return act;
 }
 
@@ -535,7 +674,8 @@ OF_write(int handle, const void *addr, int len)
 	int l, act = 0;
 	const char *p = addr;
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
@@ -543,11 +683,16 @@ OF_write(int handle, const void *addr, int len)
 		ofbcopy(p, OF_buf, l);
 		args.len = l;
 		args.actual = l;	/* work around a PIBS bug */
-		if (openfirmware(&args) == -1)
-			return -1;
+		if (openfirmware(&args) == -1) {
+			act = -1;
+			goto out;
+		}
 		l = args.actual;
 		act += l;
 	}
+
+ out:
+	ofw_unlock(s);
 	return act;
 }
 
@@ -568,13 +713,19 @@ OF_seek(int handle, u_quad_t pos)
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	int rv;
+
 	args.handle = handle;
 	args.poshi = (int)(pos >> 32);
 	args.poslo = (int)pos;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.status;
+		rv = -1;
+	else
+		rv = args.status;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 #ifdef MULTIPROCESSOR
@@ -593,12 +744,20 @@ OF_start_cpu(int phandle, u_int pc, int arg)
 		3,
 		0,
 	};
-	ofw_stack();
+
+	const register_t s = ofw_lock();
+	bool failed = false;
+
 	args.phandle = phandle;
 	args.pc = pc;
 	args.arg = arg;
 	if (openfirmware(&args) == -1)
+		failed = true;
+
+	ofw_unlock(s);
+	if (failed) {
 		panic("WTF?");
+	}
 }
 #endif
 
@@ -619,10 +778,14 @@ OF_boot(const char *bstr)
 
 	if ((l = strlen(bstr)) >= PAGE_SIZE)
 		panic("OF_boot");
-	ofw_stack();
+
+	const register_t s = ofw_lock();
+
 	ofbcopy(bstr, OF_buf, l + 1);
 	args.bootspec = OF_buf;
 	openfirmware(&args);
+
+	ofw_unlock(s);
 	panic("OF_boot didn't");
 }
 
@@ -639,8 +802,11 @@ OF_enter(void)
 		0,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+
 	openfirmware(&args);
+
+	ofw_unlock(s);
 }
 
 void
@@ -656,8 +822,11 @@ OF_exit(void)
 		0,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+
 	openfirmware(&args);
+
+	ofw_unlock(s);
 	while (1);			/* just in case */
 }
 
@@ -676,18 +845,22 @@ void
 		1,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+	void (*rv)(void *);
+
 	args.newfunc = newfunc;
 	if (openfirmware(&args) == -1)
-		return 0;
-	return args.oldfunc;
+		rv = NULL;
+	else
+		rv = args.oldfunc;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 int
 OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 {
-	va_list ap;
-	int i, len, status;
 	static struct {
 		const char *name;
 		uint32_t nargs;
@@ -699,11 +872,17 @@ OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 		2,
 	};
 
-	ofw_stack();
+	va_list ap;
+	int i, len;
+	int rv;
+
 	if (nreturns > 8)
 		return -1;
 	if ((len = strlen(cmd)) >= PAGE_SIZE)
 		return -1;
+
+	const register_t s = ofw_lock();
+
 	ofbcopy(cmd, OF_buf, len + 1);
 	i = 0;
 	args.slots[i] = (uintptr_t)OF_buf;
@@ -717,16 +896,20 @@ OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 	}
 
 	if (openfirmware(&args) == -1)
-		return -1;
-	status = args.slots[i];
-	i++;
-
-	while (i < args.nargs + args.nreturns) {
-		*va_arg(ap, uint32_t *) = args.slots[i];
+		rv = -1;
+	else {
+		rv = args.slots[i];
 		i++;
+
+		while (i < args.nargs + args.nreturns) {
+			*va_arg(ap, uint32_t *) = args.slots[i];
+			i++;
+		}
 	}
 	va_end(ap);
-	return status;
+
+	ofw_unlock(s);
+	return rv;
 }
 
 void
@@ -742,14 +925,17 @@ OF_quiesce(void)
 		0,
 	};
 
-	ofw_stack();
+	const register_t s = ofw_lock();
+
 	openfirmware(&args);
+
+	ofw_unlock(s);
 }
 
 /*
  * This version of bcopy doesn't work for overlapping regions!
  */
-void
+static void
 ofbcopy(const void *src, void *dst, size_t len)
 {
 	const char *sp = src;
@@ -758,9 +944,6 @@ ofbcopy(const void *src, void *dst, size_t len)
 	if (src == dst)
 		return;
 
-	/*
-	 * Do some optimization?						XXX
-	 */
 	while (len-- > 0)
 		*dp++ = *sp++;
 }

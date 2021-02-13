@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.12 2020/07/06 10:31:23 rin Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.13 2021/02/13 01:48:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,9 +103,18 @@ ENTRY_NOPROFILE(ofwinit)
  */
 	.text
 ENTRY(openfirmware)
-	mflr	%r0			/* save return address */
-	stw	%r0,4(%r1)
-	stwu	%r1,-32(%r1)		/* setup stack frame */
+	mflr	%r0
+	stw	%r0,4(%r1)		/* save return address */
+
+	/*
+	 * Switch to OpenFirmware stack.
+	 *
+	 * -48 == -16 to stack old SP and align, -32 for save area
+	 */
+	lis	%r7,firmstk+NBPG-48@ha
+	addi	%r7,%r7,firmstk+NBPG-48@l
+	stw	%r1,32(%r7)		/* stash away prev stack pointer */
+	mr	%r1,%r7
 
 	lis	%r4,openfirmware_entry@ha	/* get firmware entry point */
 	lwz	%r4,openfirmware_entry@l(%r4)
@@ -202,77 +211,7 @@ ENTRY(openfirmware)
 	lwz	%r5,28(%r1)
 	mtsprg3	%r5
 
-	lwz	%r1,0(%r1)		/* and return */
-	lwz	%r0,4(%r1)
-	mtlr	%r0
-	blr
-
-/*
- * Switch to/from OpenFirmware real mode stack
- *
- * Note: has to be called as the very first thing in OpenFirmware interface
- * routines.
- * E.g.:
- * int
- * OF_xxx(arg1, arg2)
- * type arg1, arg2;
- * {
- *	static struct {
- *		char *name;
- *		int nargs;
- *		int nreturns;
- *		char *method;
- *		int arg1;
- *		int arg2;
- *		int ret;
- *	} args = {
- *		"xxx",
- *		2,
- *		1,
- *	};
- *
- *	ofw_stack();
- *	args.arg1 = arg1;
- *	args.arg2 = arg2;
- *	if (openfirmware(&args) < 0)
- *		return -1;
- *	return args.ret;
- * }
- */
-
-ENTRY(ofw_stack)
-	mfmsr	%r8			/* turn off interrupts */
-	andi.	%r0,%r8,~(PSL_EE|PSL_RI)@l
-	mtmsr	%r0
-	stw	%r8,4(%r1)		/* abuse return address slot */
-
-	lwz	%r5,0(%r1)		/* get length of stack frame */
-	subf	%r5,%r1,%r5
-
-	lis	%r7,firmstk+NBPG-8@ha
-	addi	%r7,%r7,firmstk+NBPG-8@l
-	lis	%r6,ofw_back@ha
-	addi	%r6,%r6,ofw_back@l
-	subf	%r4,%r5,%r7		/* make room for stack frame on
-					   new stack */
-	stw	%r6,-4(%r7)		/* setup return pointer */
-	stwu	%r1,-8(%r7)
-
-	stw	%r7,-8(%r4)
-
-	addi	%r3,%r1,8
-	addi	%r1,%r4,-8
-	subi	%r5,%r5,8
-
-	b	_C_LABEL(ofbcopy)	/* and copy it */
-
-ofw_back:
-	lwz	%r1,0(%r1)		/* get callers original stack pointer */
-
-	lwz	%r0,4(%r1)		/* get saved msr from abused slot */
-	mtmsr	%r0
-
-	lwz	%r1,0(%r1)		/* return */
-	lwz	%r0,4(%r1)
+	lwz	%r1,32(%r1)		/* restore previous stack pointer */
+	lwz	%r0,4(%r1)		/* return address */
 	mtlr	%r0
 	blr
