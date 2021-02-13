@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.18 2013/09/22 10:02:05 apb Exp $
+.\"	$NetBSD: fsync.2,v 1.19 2021/02/13 06:24:08 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd September 22, 2013
+.Dd February 12, 2021
 .Dt FSYNC 2
 .Os
 .Sh NAME
@@ -163,6 +163,9 @@ is not open for writing.
 .Fa length
 is less than
 .Fa start .
+.It Bq Er EINVAL
+.Fa how
+contains an invalid value.
 .El
 .Sh NOTES
 For optimal efficiency, the
