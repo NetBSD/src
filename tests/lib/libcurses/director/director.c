@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.26 2021/02/13 08:22:34 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.27 2021/02/13 08:26:12 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -138,15 +138,12 @@ main(int argc, char *argv[])
 	verbose = 0;
 	check_file_flag = 0;
 
-	while ((ch = getopt(argc, argv, "vgfC:p:s:t:T:")) != -1) {
+	while ((ch = getopt(argc, argv, "vgfC:s:t:T:")) != -1) {
 		switch (ch) {
 		case 'C':
 			check_path = optarg;
 			break;
 		case 'T':
-			termpath = optarg;
-			break;
-		case 'p':
 			termpath = optarg;
 			break;
 		case 's':
