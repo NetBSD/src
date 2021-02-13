@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.11 2021/02/12 21:29:54 rillig Exp $	*/
+/*	$NetBSD: slave.c,v 1.12 2021/02/13 06:45:42 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -39,8 +39,8 @@
 #include "returns.h"
 #include "slave.h"
 
-int cmdpipe[2];
-int slvpipe[2];
+int from_director;
+int to_director;
 int initdone = 0;
 
 #if 0
@@ -65,13 +65,13 @@ process_commands(void)
 		err(1, "slave cmdbuf malloc failed");
 
 	for (;;) {
-		if (read(cmdpipe[READ_PIPE], &type, sizeof(int)) < 0)
+		if (read(from_director, &type, sizeof(int)) < 0)
 			err(1, "slave command type read failed");
 
 		if (type != data_string)
 			errx(1, "Unexpected type for command, got %d", type);
 
-		if (read(cmdpipe[READ_PIPE], &len, sizeof(int)) < 0)
+		if (read(from_director, &len, sizeof(int)) < 0)
 			err(1, "slave command len read failed");
 
 		if ((len + 1) > maxlen) {
@@ -82,17 +82,17 @@ process_commands(void)
 			cmdbuf = tmpbuf;
 		}
 
-		if (read(cmdpipe[READ_PIPE], cmdbuf, len) < 0)
+		if (read(from_director, cmdbuf, len) < 0)
 			err(1, "slave command read failed");
 		cmdbuf[len] = '\0';
 		argslen = 0;
 		args = NULL;
 
 		do {
-			if (read(cmdpipe[READ_PIPE], &type, sizeof(int)) < 0)
+			if (read(from_director, &type, sizeof(int)) < 0)
 				err(1, "slave arg type read failed");
 
-			if (read(cmdpipe[READ_PIPE], &len, sizeof(int)) < 0)
+			if (read(from_director, &len, sizeof(int)) < 0)
 				err(1, "slave arg len read failed");
 
 			if (len >= 0) {
@@ -117,7 +117,7 @@ process_commands(void)
 					else
 						args[argslen][0] = '\0';
 				} else {
-					read(cmdpipe[READ_PIPE], args[argslen],
+					read(from_director, args[argslen],
 					     len);
 					if (type != data_byte)
 						args[argslen][len] = '\0';
@@ -155,15 +155,12 @@ process_commands(void)
 int
 main(int argc, char *argv[])
 {
-	if (argc != 5) {
-		fprintf(stderr, "Usage: %s <cmdin> <cmdout> <slvin> <slvout>\n",
-			getprogname());
+	if (argc != 3) {
+		fprintf(stderr, "usage: %s <in_fd> <out_fd>\n", getprogname());
 		return 0;
 	}
-	sscanf(argv[1], "%d", &cmdpipe[0]);
-	sscanf(argv[2], "%d", &cmdpipe[1]);
-	sscanf(argv[3], "%d", &slvpipe[0]);
-	sscanf(argv[4], "%d", &slvpipe[1]);
+	sscanf(argv[1], "%d", &from_director);
+	sscanf(argv[2], "%d", &to_director);
 
 	process_commands();
 

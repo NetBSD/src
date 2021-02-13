@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.19 2021/02/13 05:38:16 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.20 2021/02/13 06:45:42 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	int ch;
 	pid_t slave_pid;
 	extern FILE *yyin;
-	char *arg1, *arg2, *arg3, *arg4;
+	char *arg1, *arg2;
 	struct termios term_attr;
 	struct stat st;
 
@@ -263,17 +263,13 @@ main(int argc, char *argv[])
 		/* slave side, just exec the slave process */
 		if (asprintf(&arg1, "%d", cmdpipe[0]) < 0)
 			err(1, "arg1 conversion failed");
+		close(cmdpipe[1]);
 
-		if (asprintf(&arg2, "%d", cmdpipe[1]) < 0)
+		close(slvpipe[0]);
+		if (asprintf(&arg2, "%d", slvpipe[1]) < 0)
 			err(1, "arg2 conversion failed");
 
-		if (asprintf(&arg3, "%d", slvpipe[0]) < 0)
-			err(1, "arg3 conversion failed");
-
-		if (asprintf(&arg4, "%d", slvpipe[1]) < 0)
-			err(1, "arg4 conversion failed");
-
-		if (execl(slave, slave, arg1, arg2, arg3, arg4, (char *)0) < 0)
+		if (execl(slave, slave, arg1, arg2, (char *)0) < 0)
 			err(1, "Exec of slave %s failed", slave);
 
 		/* NOT REACHED */
