@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.129 2020/03/23 13:37:36 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.130 2021/02/13 10:37:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -61,14 +61,14 @@ typedef wchar_t	attr_t;
 #ifdef HAVE_WCHAR
 /*
  * The complex character structure required by the X/Open reference and used
- * in * functions such as in_wchstr(). It includes a string of up to 8 wide
+ * in functions such as in_wchstr(). It includes a string of up to 8 wide
  * characters and its length, an attribute, and a color-pair.
  */
 #define CURSES_CCHAR_MAX 8
 #define CCHARW_MAX       5
 typedef struct {
 	attr_t		attributes;		/* character attributes */
-	unsigned	elements;		/* number of wide char in
+	unsigned	elements;		/* number of wide chars in
 						   vals[] */
 	wchar_t		vals[CURSES_CCHAR_MAX]; /* wide chars including
 						   non-spacing */
@@ -86,12 +86,12 @@ typedef chtype cchar_t;
 
 #ifndef _CURSES_PRIVATE
 
-#define _puts(s)        tputs(s, 0, __cputchar)
-#define _putchar(c)     __cputchar(c)
+#define _puts(s)	tputs(s, 0, __cputchar)
+#define _putchar(c)	__cputchar(c)
 
 /* Old-style terminal modes access. */
-#define crmode()        cbreak()
-#define nocrmode()      nocbreak()
+#define crmode()	cbreak()
+#define nocrmode()	nocbreak()
 #endif /* _CURSES_PRIVATE */
 
 
@@ -107,7 +107,7 @@ typedef chtype cchar_t;
 
 /* First function key (block of 64 follow) */
 #define    KEY_F0         0x108
-/* Function defining other function key values*/
+/* Function defining other function key values */
 #define    KEY_F(n)       (KEY_F0+(n))
 
 #define    KEY_DL         0x148    /* Delete Line */
@@ -132,7 +132,7 @@ typedef chtype cchar_t;
 #define    KEY_LL         0x15B    /* Home Down */
 
 /*
- * "Keypad" keys arranged like this:
+ * "Keypad" keys are arranged like this:
  *
  *  A1   up  A3
  * left  B2 right
@@ -170,7 +170,7 @@ typedef chtype cchar_t;
 #define    KEY_RESTART    0x177    /* Restart key */
 #define    KEY_RESUME     0x178    /* Resume key */
 #define    KEY_SAVE       0x179    /* Save key */
-#define    KEY_SBEG       0x17A    /* Shift begin key */
+#define    KEY_SBEG       0x17A    /* Shift Begin key */
 #define    KEY_SCANCEL    0x17B    /* Shift Cancel key */
 #define    KEY_SCOMMAND   0x17C    /* Shift Command key */
 #define    KEY_SCOPY      0x17D    /* Shift Copy key */
@@ -204,12 +204,12 @@ typedef chtype cchar_t;
 #define    KEY_MOUSE      0x199    /* Mouse event has occurred */
 #define    KEY_RESIZE     0x200    /* Resize event has occurred */
 #define    KEY_MAX        0x240    /* maximum extended key value */
-#define    KEY_CODE_YES   0x241    /* A function key pressed */
+#define    KEY_CODE_YES   0x241    /* A function key was pressed */
 
 #include <unctrl.h>
 
 /*
- * A window an array of __LINE structures pointed to by the 'lines' pointer.
+ * A window is an array of __LINE structures pointed to by the 'lines' pointer.
  * A line is an array of __LDATA structures pointed to by the 'line' pointer.
  */
 
@@ -638,7 +638,7 @@ __END_DECLS
 	} while(0 /* CONSTCOND */)
 
 
-/* Public function prototypes. */
+/* Public functions. */
 __BEGIN_DECLS
 int	 assume_default_colors(short, short);
 int	 baudrate(void);
@@ -1034,9 +1034,9 @@ bool is_pad(const WINDOW *);
 
 typedef unsigned long mmask_t;
 typedef struct {
-	short id;	/* ID to distinguish multiple devices */
-	int x, y, z;	/* event coordinates */
-	mmask_t bstate;   /* button state bits */
+	short id;		/* ID to distinguish multiple devices */
+	int x, y, z;		/* event coordinates */
+	mmask_t bstate;		/* button state bits */
 } MEVENT;
 
 bool has_mouse(void);
@@ -1052,10 +1052,10 @@ int mouseinterval(int);
 const char *curses_version(void);
 
 /* Private functions that are needed for user programs prototypes. */
-int	 __cputchar(int);
-int	 __waddbytes(WINDOW *, const char *, int, attr_t);
+int	__cputchar(int);
+int	__waddbytes(WINDOW *, const char *, int, attr_t);
 #ifdef HAVE_WCHAR
-int __cputwchar( wchar_t );
+int	__cputwchar(wchar_t);
 #endif /* HAVE_WCHAR */
 __END_DECLS
 
