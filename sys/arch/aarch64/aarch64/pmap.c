@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2021/02/01 18:12:11 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2021/02/13 18:13:53 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2021/02/01 18:12:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2021/02/13 18:13:53 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2237,7 +2237,7 @@ pmap_page_remove(struct pmap_page *pp, vm_prot_t prot)
 			KASSERT(pv == &pp->pp_pv);
 		} else {
 			KASSERT(pv == pvtmp);
-			pp->pp_pv.pv_next = pv->pv_next;
+			KASSERT(pp->pp_pv.pv_next == pv->pv_next);
 			pv->pv_next = pvtofree;
 			pvtofree = pv;
 		}
