@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.20 2021/02/13 06:45:42 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.21 2021/02/13 07:08:45 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -55,8 +55,8 @@ const char *def_include_path = "./"; /* default include path */
 
 extern size_t nvars;	/* In testlang_conf.y */
 saved_data_t  saved_output;	/* In testlang_conf.y */
-int cmdpipe[2];		/* command pipe between director and slave */
-int slvpipe[2];		/* reply pipe back from slave */
+int to_slave;
+int from_slave;
 int master;		/* pty to the slave */
 int verbose;		/* control verbosity of tests */
 int check_file_flag;		/* control checkfile generation */
@@ -136,6 +136,7 @@ main(int argc, char *argv[])
 	char *arg1, *arg2;
 	struct termios term_attr;
 	struct stat st;
+	int pipe_to_slave[2], pipe_from_slave[2];
 
 	termpath = term = slave = NULL;
 	verbose = 0;
@@ -238,11 +239,13 @@ main(int argc, char *argv[])
 		munmap(tinfo, (size_t)st.st_size);
 	}
 
-	if (pipe(cmdpipe) < 0)
+	if (pipe(pipe_to_slave) < 0)
 		err(1, "Command pipe creation failed");
+	to_slave = pipe_to_slave[1];
 
-	if (pipe(slvpipe) < 0)
+	if (pipe(pipe_from_slave) < 0)
 		err(1, "Slave pipe creation failed");
+	from_slave = pipe_from_slave[0];
 
 	/*
 	 * Create default termios settings for later use
@@ -261,12 +264,12 @@ main(int argc, char *argv[])
 
 	if (slave_pid == 0) {
 		/* slave side, just exec the slave process */
-		if (asprintf(&arg1, "%d", cmdpipe[0]) < 0)
+		if (asprintf(&arg1, "%d", pipe_to_slave[0]) < 0)
 			err(1, "arg1 conversion failed");
-		close(cmdpipe[1]);
+		close(pipe_to_slave[1]);
 
-		close(slvpipe[0]);
-		if (asprintf(&arg2, "%d", slvpipe[1]) < 0)
+		close(pipe_from_slave[0]);
+		if (asprintf(&arg2, "%d", pipe_from_slave[1]) < 0)
 			err(1, "arg2 conversion failed");
 
 		if (execl(slave, slave, arg1, arg2, (char *)0) < 0)
@@ -274,6 +277,9 @@ main(int argc, char *argv[])
 
 		/* NOT REACHED */
 	}
+
+	(void)close(pipe_to_slave[0]);
+	(void)close(pipe_from_slave[1]);
 
 	fcntl(master, F_SETFL, O_NONBLOCK);
 
