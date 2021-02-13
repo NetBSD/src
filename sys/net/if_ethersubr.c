@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.290 2021/02/13 07:28:04 roy Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.291 2021/02/13 13:00:16 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.290 2021/02/13 07:28:04 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.291 2021/02/13 13:00:16 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -649,23 +649,19 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	if ((ifp->if_flags & IFF_UP) == 0)
 		goto drop;
 
-	/* If the Ethernet header is not aligned, slurp it up into a new
-	 * mbuf with space for link headers, in the event we forward
-	 * it.  Otherwise, if it is aligned, make sure the entire
-	 * base Ethernet header is in the first mbuf of the chain.
-	 */
+#ifdef MBUFTRACE
+	m_claimm(m, &ec->ec_rx_mowner);
+#endif
+
+	/* Enforce alignement */
 	if (ETHER_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(*eh),
-		    (max_linkhdr + 3) & ~3)) == NULL)
+		if ((m = m_copyup(m, sizeof(*eh), 0)) == NULL)
 			goto dropped;
 	} else if (__predict_false(m->m_len < sizeof(*eh))) {
 		if ((m = m_pullup(m, sizeof(*eh))) == NULL)
 			goto dropped;
 	}
 
-#ifdef MBUFTRACE
-	m_claimm(m, &ec->ec_rx_mowner);
-#endif
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
 	ehlen = sizeof(*eh);

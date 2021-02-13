@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.178 2021/02/12 19:57:49 roy Exp $ */
+/*	$NetBSD: if_gre.c,v 1.179 2021/02/13 13:00:16 roy Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.178 2021/02/12 19:57:49 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.179 2021/02/13 13:00:16 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -396,14 +396,9 @@ gre_receive(struct socket *so, void *arg, int events, int waitflag)
 		return;
 	}
 
-	/* If the GRE header is not aligned, slurp it up into a new
-	 * mbuf with space for link headers, in the event we forward
-	 * it.  Otherwise, if it is aligned, make sure the entire
-	 * base GRE header is in the first mbuf of the chain.
-	 */
+	/* Enforce alignment */
 	if (GRE_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(struct gre_h),
-		    (max_linkhdr + 3) & ~3)) == NULL) {
+		if ((m = m_copyup(m, sizeof(struct gre_h), 0)) == NULL) {
 			/* XXXJRT new stat, please */
 			GRE_DPRINTF(sc, "m_copyup failed\n");
 			sc->sc_pullup_ev.ev_count++;
