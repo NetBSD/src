@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.27 2021/02/13 08:26:12 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.28 2021/02/13 09:18:12 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -72,7 +73,7 @@ void init_parse_variables(int);	/* in testlang_parse.y */
  * output in verbose mode, truncating the useful part of the error message.
  */
 static void
-slave_died(int param)
+slave_died(int signo)
 {
 	char last_words[256];
 	size_t count;
@@ -275,6 +276,13 @@ main(int argc, char *argv[])
 
 	yyparse();
 	fclose(yyin);
+
+	signal(SIGCHLD, SIG_DFL);
+	(void)close(to_slave);
+	(void)close(from_slave);
+
+	int status;
+	(void)waitpid(slave_pid, &status, 0);
 
 	exit(0);
 }
