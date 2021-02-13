@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.106 2021/02/13 01:51:24 jakllsch Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.107 2021/02/13 16:33:30 jakllsch Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.106 2021/02/13 01:51:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.107 2021/02/13 16:33:30 jakllsch Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -923,10 +923,8 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	sc->bnx_intrhand = pci_intr_establish_xname(pc, sc->bnx_ih[0], IPL_NET,
 	    bnx_intr, sc, device_xname(self));
 	if (sc->bnx_intrhand == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
+		aprint_error_dev(self, "couldn't establish interrupt%s%s\n",
+		    intrstr ? " at " : "", intrstr ? intrstr : "");
 		goto bnx_attach_fail;
 	}
 	aprint_normal_dev(sc->bnx_dev, "interrupting at %s\n", intrstr);
@@ -3991,7 +3989,7 @@ bnx_get_buf(struct bnx_softc *sc, uint16_t *prod,
 
 	/* Make sure the inputs are valid. */
 	DBRUNIF((*chain_prod > MAX_RX_BD),
-	    aprint_error_dev(sc->bnx_dev,
+	    device_printf(sc->bnx_dev,
 		"RX producer out of range: 0x%04X > 0x%04X\n",
 		*chain_prod, (uint16_t)MAX_RX_BD));
 
@@ -4007,7 +4005,7 @@ bnx_get_buf(struct bnx_softc *sc, uint16_t *prod,
 	while (sc->free_rx_bd >= min_free_bd) {
 		/* Simulate an mbuf allocation failure. */
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_mbuf_allocation_failure),
-		    aprint_error_dev(sc->bnx_dev,
+		    device_printf(sc->bnx_dev,
 		    "Simulating mbuf allocation failure.\n");
 			sc->mbuf_sim_alloc_failed++;
 			rc = ENOBUFS;
@@ -4260,7 +4258,7 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->tx_mbuf_alloc),
-	    aprint_error_dev(sc->bnx_dev,
+	    device_printf(sc->bnx_dev,
 		"Memory leak! Lost %d mbufs from tx chain!\n",
 		sc->tx_mbuf_alloc));
 
@@ -4415,7 +4413,7 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->rx_mbuf_alloc),
-	    aprint_error_dev(sc->bnx_dev,
+	    device_printf(sc->bnx_dev,
 		"Memory leak! Lost %d mbufs from rx chain!\n",
 		sc->rx_mbuf_alloc));
 
@@ -4589,7 +4587,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 		rxbd = &sc->rx_bd_chain[RX_PAGE(sw_chain_cons)][RX_IDX(sw_chain_cons)];
 		sc->free_rx_bd++;
 
-		DBRUN(BNX_VERBOSE_RECV, aprint_error("%s(): ", __func__);
+		DBRUN(BNX_VERBOSE_RECV, printf("%s(): ", __func__);
 		bnx_dump_rxbd(sc, sw_chain_cons, rxbd));
 
 		/* The mbuf is stored with the last rx_bd entry of a packet. */
@@ -4650,13 +4648,13 @@ bnx_rx_intr(struct bnx_softc *sc)
 			status = l2fhdr->l2_fhdr_status;
 
 			DBRUNIF(DB_RANDOMTRUE(bnx_debug_l2fhdr_status_check),
-			    aprint_error("Simulating l2_fhdr status error.\n");
+			    printf("Simulating l2_fhdr status error.\n");
 			    status = status | L2_FHDR_ERRORS_PHY_DECODE);
 
 			/* Watch for unusual sized frames. */
 			DBRUNIF(((len < BNX_MIN_MTU) ||
 			    (len > BNX_MAX_JUMBO_ETHER_MTU_VLAN)),
-			    aprint_error_dev(sc->bnx_dev,
+			    device_printf(sc->bnx_dev,
 				"Unusual frame size found. "
 				"Min(%d), Actual(%d), Max(%d)\n",
 				(int)BNX_MIN_MTU, len,
@@ -4697,7 +4695,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 */
 			if (bnx_get_buf(sc, &sw_prod, &sw_chain_prod,
 			    &sw_prod_bseq)) {
-				DBRUN(BNX_WARN, aprint_debug_dev(sc->bnx_dev,
+				DBRUN(BNX_WARN, device_printf(sc->bnx_dev,
 				    "Failed to allocate "
 				    "new mbuf, incoming frame dropped!\n"));
 
@@ -4728,7 +4726,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			DBRUN(BNX_VERBOSE_RECV,
 			    struct ether_header *eh;
 			    eh = mtod(m, struct ether_header *);
-			    aprint_error("%s: to: %s, from: %s, type: 0x%04X\n",
+			    printf("%s: to: %s, from: %s, type: 0x%04X\n",
 			    __func__, ether_sprintf(eh->ether_dhost),
 			    ether_sprintf(eh->ether_shost),
 			    htons(eh->ether_type)));
@@ -4868,7 +4866,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 		    __func__, hw_tx_cons, sw_tx_cons, sw_tx_chain_cons);
 
 		DBRUNIF((sw_tx_chain_cons > MAX_TX_BD),
-		    aprint_error_dev(sc->bnx_dev,
+		    device_printf(sc->bnx_dev,
 			"TX chain consumer out of range! 0x%04X > 0x%04X\n",
 			sw_tx_chain_cons, (int)MAX_TX_BD); bnx_breakpoint(sc));
 
@@ -4876,11 +4874,11 @@ bnx_tx_intr(struct bnx_softc *sc)
 		    [TX_PAGE(sw_tx_chain_cons)][TX_IDX(sw_tx_chain_cons)]);
 
 		DBRUNIF((txbd == NULL),
-		    aprint_error_dev(sc->bnx_dev,
+		    device_printf(sc->bnx_dev,
 			"Unexpected NULL tx_bd[0x%04X]!\n", sw_tx_chain_cons);
 		    bnx_breakpoint(sc));
 
-		DBRUN(BNX_INFO_SEND, aprint_debug("%s: ", __func__);
+		DBRUN(BNX_INFO_SEND, printf("%s: ", __func__);
 		    bnx_dump_txbd(sc, sw_tx_chain_cons, txbd));
 
 
@@ -4935,7 +4933,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 	/* Clear the tx hardware queue full flag. */
 	if (sc->used_tx_bd < sc->max_tx_bd) {
 		DBRUNIF((ifp->if_flags & IFF_OACTIVE),
-		    aprint_debug_dev(sc->bnx_dev,
+		    device_printf(sc->bnx_dev,
 			"Open TX chain! %d/%d (used/total)\n",
 			sc->used_tx_bd, sc->max_tx_bd));
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -4996,19 +4994,19 @@ bnx_init(struct ifnet *ifp)
 	bnx_stop(ifp, 0);
 
 	if ((error = bnx_reset(sc, BNX_DRV_MSG_CODE_RESET)) != 0) {
-		aprint_error_dev(sc->bnx_dev,
+		device_printf(sc->bnx_dev,
 		    "Controller reset failed!\n");
 		goto bnx_init_exit;
 	}
 
 	if ((error = bnx_chipinit(sc)) != 0) {
-		aprint_error_dev(sc->bnx_dev,
+		device_printf(sc->bnx_dev,
 		    "Controller initialization failed!\n");
 		goto bnx_init_exit;
 	}
 
 	if ((error = bnx_blockinit(sc)) != 0) {
-		aprint_error_dev(sc->bnx_dev,
+		device_printf(sc->bnx_dev,
 		    "Block initialization failed!\n");
 		goto bnx_init_exit;
 	}
@@ -5452,7 +5450,7 @@ bnx_watchdog(struct ifnet *ifp)
 	if (REG_RD(sc, BNX_EMAC_TX_STATUS) & BNX_EMAC_TX_STATUS_XOFFED)
 		return;
 
-	aprint_error_dev(sc->bnx_dev, "Watchdog timeout -- resetting!\n");
+	device_printf(sc->bnx_dev, "Watchdog timeout -- resetting!\n");
 
 	/* DBRUN(BNX_FATAL, bnx_breakpoint(sc)); */
 
@@ -5511,7 +5509,7 @@ bnx_intr(void *xsc)
 		status_attn_bits = sblk->status_attn_bits;
 
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_unexpected_attention),
-		    aprint_debug("Simulating unexpected status attention bit set.");
+		    printf("Simulating unexpected status attention bit set.");
 		    status_attn_bits = status_attn_bits |
 		    STATUS_ATTN_BITS_PARITY_ERROR);
 
@@ -5943,22 +5941,22 @@ bnx_dump_mbuf(struct bnx_softc *sc, struct mbuf *m)
 
 	if (m == NULL) {
 		/* Index out of range. */
-		aprint_error("mbuf ptr is null!\n");
+		printf("mbuf ptr is null!\n");
 		return;
 	}
 
 	while (mp) {
-		aprint_debug("mbuf: vaddr = %p, m_len = %d, m_flags = ",
+		printf("mbuf: vaddr = %p, m_len = %d, m_flags = ",
 		    mp, mp->m_len);
 
 		if (mp->m_flags & M_EXT)
-			aprint_debug("M_EXT ");
+			printf("M_EXT ");
 		if (mp->m_flags & M_PKTHDR)
-			aprint_debug("M_PKTHDR ");
-		aprint_debug("\n");
+			printf("M_PKTHDR ");
+		printf("\n");
 
 		if (mp->m_flags & M_EXT)
-			aprint_debug("- m_ext: vaddr = %p, "
+			printf("- m_ext: vaddr = %p, "
 			    "ext_size = 0x%04zX\n", mp, mp->m_ext.ext_size);
 
 		mp = mp->m_next;
@@ -5978,7 +5976,7 @@ bnx_dump_tx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 	struct mbuf		*m;
 	int			i;
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "  tx mbuf data  "
 	    "----------------------------\n");
@@ -5990,7 +5988,7 @@ bnx_dump_tx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 		chain_prod = TX_CHAIN_IDX(NEXT_TX_BD(chain_prod));
 	}
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "--------------------------------------------"
 	    "----------------------------\n");
 #endif
@@ -6005,7 +6003,7 @@ bnx_dump_rx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 	struct mbuf		*m;
 	int			i;
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "  rx mbuf data  "
 	    "----------------------------\n");
@@ -6018,7 +6016,7 @@ bnx_dump_rx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 	}
 
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "--------------------------------------------"
 	    "----------------------------\n");
 }
@@ -6083,7 +6081,7 @@ bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 	int			i;
 
 	/* First some info about the tx_bd chain structure. */
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "  tx_bd  chain  "
 	    "----------------------------\n");
@@ -6098,7 +6096,7 @@ bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 
 	BNX_PRINTF(sc, "total tx_bd    = 0x%08X\n", (uint32_t)TOTAL_TX_BD);
 
-	aprint_error_dev(sc->bnx_dev, ""
+	device_printf(sc->bnx_dev, ""
 	    "-----------------------------"
 	    "   tx_bd data   "
 	    "-----------------------------\n");
@@ -6110,7 +6108,7 @@ bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 		tx_prod = TX_CHAIN_IDX(NEXT_TX_BD(tx_prod));
 	}
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "-----------------------------"
 	    "--------------"
 	    "-----------------------------\n");
@@ -6126,12 +6124,12 @@ bnx_dump_rx_chain(struct bnx_softc *sc, int rx_prod, int count)
 	int			i;
 
 	/* First some info about the tx_bd chain structure. */
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "  rx_bd  chain  "
 	    "----------------------------\n");
 
-	aprint_debug_dev(sc->bnx_dev, "----- RX_BD Chain -----\n");
+	device_printf(sc->bnx_dev, "----- RX_BD Chain -----\n");
 
 	BNX_PRINTF(sc,
 	    "page size      = 0x%08X, rx chain pages        = 0x%08X\n",
@@ -6143,7 +6141,7 @@ bnx_dump_rx_chain(struct bnx_softc *sc, int rx_prod, int count)
 
 	BNX_PRINTF(sc, "total rx_bd    = 0x%08X\n", (uint32_t)TOTAL_RX_BD);
 
-	aprint_error_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "   rx_bd data   "
 	    "----------------------------\n");
@@ -6155,7 +6153,7 @@ bnx_dump_rx_chain(struct bnx_softc *sc, int rx_prod, int count)
 		rx_prod = RX_CHAIN_IDX(NEXT_RX_BD(rx_prod));
 	}
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "--------------"
 	    "----------------------------\n");
@@ -6173,7 +6171,7 @@ bnx_dump_status_block(struct bnx_softc *sc)
 
 	sblk = sc->status_block;
 
-	aprint_debug_dev(sc->bnx_dev, "----------------------------- "
+	device_printf(sc->bnx_dev, "----------------------------- "
 	    "Status Block -----------------------------\n");
 
 	BNX_PRINTF(sc,
@@ -6248,7 +6246,7 @@ bnx_dump_status_block(struct bnx_softc *sc)
 		    sblk->status_completion_producer_index,
 		    sblk->status_cmd_consumer_index);
 
-	aprint_debug_dev(sc->bnx_dev, "-------------------------------------------"
+	device_printf(sc->bnx_dev, "-------------------------------------------"
 	    "-----------------------------\n");
 }
 
@@ -6264,7 +6262,7 @@ bnx_dump_stats_block(struct bnx_softc *sc)
 
 	sblk = sc->stats_block;
 
-	aprint_debug_dev(sc->bnx_dev, ""
+	device_printf(sc->bnx_dev, ""
 	    "-----------------------------"
 	    " Stats  Block "
 	    "-----------------------------\n");
@@ -6486,7 +6484,7 @@ bnx_dump_stats_block(struct bnx_softc *sc)
 		BNX_PRINTF(sc, "0x%08X : CatchupInRuleCheckerP4Hit\n",
 		    sblk->stat_CatchupInRuleCheckerP4Hit);
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "-----------------------------"
 	    "--------------"
 	    "-----------------------------\n");
@@ -6495,7 +6493,7 @@ bnx_dump_stats_block(struct bnx_softc *sc)
 void
 bnx_dump_driver_state(struct bnx_softc *sc)
 {
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "-----------------------------"
 	    " Driver State "
 	    "-----------------------------\n");
@@ -6592,7 +6590,7 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	    "simulated mbuf alloc failures\n",
 	    sc->mbuf_sim_alloc_failed);
 
-	aprint_debug_dev(sc->bnx_dev, "-------------------------------------------"
+	device_printf(sc->bnx_dev, "-------------------------------------------"
 	    "-----------------------------\n");
 }
 
@@ -6602,7 +6600,7 @@ bnx_dump_hw_state(struct bnx_softc *sc)
 	uint32_t		val1;
 	int			i;
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    " Hardware State "
 	    "----------------------------\n");
@@ -6638,12 +6636,12 @@ bnx_dump_hw_state(struct bnx_softc *sc)
 	val1 = REG_RD(sc, BNX_HC_STATUS);
 	BNX_PRINTF(sc, "0x%08X : (0x%04X) hc_status\n", val1, BNX_HC_STATUS);
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "----------------"
 	    "----------------------------\n");
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    " Register  Dump "
 	    "----------------------------\n");
@@ -6653,7 +6651,7 @@ bnx_dump_hw_state(struct bnx_softc *sc)
 		    i, REG_RD(sc, i), REG_RD(sc, i + 0x4),
 		    REG_RD(sc, i + 0x8), REG_RD(sc, i + 0xC));
 
-	aprint_debug_dev(sc->bnx_dev,
+	device_printf(sc->bnx_dev,
 	    "----------------------------"
 	    "----------------"
 	    "----------------------------\n");
