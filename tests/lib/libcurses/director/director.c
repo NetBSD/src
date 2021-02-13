@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.21 2021/02/13 07:08:45 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.22 2021/02/13 07:31:07 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -59,7 +59,7 @@ int to_slave;
 int from_slave;
 int master;		/* pty to the slave */
 int verbose;		/* control verbosity of tests */
-int check_file_flag;		/* control checkfile generation */
+int check_file_flag;		/* control check-file generation */
 const char *check_path;	/* path to prepend to check files for output
 			   validation */
 const char *include_path;	/* path to prepend to include files */
@@ -111,14 +111,14 @@ usage(void)
 	    "commandfile\n", getprogname());
 	fprintf(stderr, " where:\n");
 	fprintf(stderr, "    -v enables verbose test output\n");
-	fprintf(stderr, "    -g enables check file generation if does not exist\n");
-	fprintf(stderr, "    -f forces check file generation if -g flag is set\n");
+	fprintf(stderr, "    -g generates check-files if they do not exist\n");
+	fprintf(stderr, "    -f overwrites check-files with the actual data\n");
 	fprintf(stderr, "    -T is a directory containing the terminfo.cdb "
 	    "file, or a file holding the terminfo description\n");
 	fprintf(stderr, "    -s is the path to the slave executable\n");
 	fprintf(stderr, "    -t is value to set TERM to for the test\n");
 	fprintf(stderr, "    -I is the directory to include files\n");
-	fprintf(stderr, "    -C is the directory for config files\n");
+	fprintf(stderr, "    -C is the directory for check-files\n");
 	fprintf(stderr, "    commandfile is a file of test directives\n");
 	exit(1);
 }
