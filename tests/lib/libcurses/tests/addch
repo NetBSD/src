@@ -6,17 +6,19 @@ call OK refresh
 call OK addch `\000\n`
 
 # Somewhere between NetBSD 8.0 and 9.0, a bug was added to addch that
-# doubled the spaces for a tab.  Instead of 8 spaces, there are now 16.
+# doubled the spaces for a tab.  Instead of 8 spaces, there were 16.
+# Fixed in NetBSD 9.99.80.
 call OK addch `\000\t`
-call2 6 16 getyx STDSCR		# FIXME: must be 8, not 16
+call2 6 8 getyx STDSCR
 call OK addch `\0008`
 call OK addch `\000\n`
 
 # Somewhere between NetBSD 8.0 and 9.0, a bug was added to addch that
-# doubled the spaces for a tab.  Instead of 1 space, there are now 2.
+# doubled the spaces for a tab.  Instead of 1 space, there were 2.
+# Fixed in NetBSD 9.99.80.
 call OK addstr "0123456"
 call OK addch `\000\t`
-call2 7 9 getyx STDSCR
+call2 7 8 getyx STDSCR
 call OK addch `\0008`
 call OK addch `\000\n`
 
