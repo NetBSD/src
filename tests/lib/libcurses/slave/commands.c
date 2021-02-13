@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.12 2021/02/13 08:14:46 rillig Exp $	*/
+/*	$NetBSD: commands.c,v 1.13 2021/02/13 19:23:11 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -42,8 +42,7 @@
 
 extern int initdone;
 
-static void report_type(data_enum_t);
-static void report_message(int, const char *);
+static void report_message(data_enum_t, const char *);
 
 /*
  * Match the passed command string and execute the associated test
@@ -85,6 +84,29 @@ command_execute(char *func, int nargs, char **args)
 	report_status("UNKNOWN_FUNCTION");
 }
 
+static void
+write_to_director(const void *mem, size_t size)
+{
+	ssize_t nwritten = write(to_director, mem, size);
+	if (nwritten == -1)
+		err(1, "writing to director failed");
+	if ((size_t)nwritten != size)
+		err(1, "short write to director, expected %zu, got %zd",
+		    size, nwritten);
+}
+
+static void
+write_to_director_int(int i)
+{
+	write_to_director(&i, sizeof i);
+}
+
+static void
+write_to_director_type(data_enum_t return_type)
+{
+	write_to_director_int(return_type);
+}
+
 /*
  * Report an pointer value back to the director
  */
@@ -121,27 +143,13 @@ void
 report_return(int status)
 {
 	if (status == ERR)
-		report_type(data_err);
+		write_to_director_type(data_err);
 	else if (status == OK)
-		report_type(data_ok);
+		write_to_director_type(data_ok);
 	else if (status == KEY_CODE_YES)
 		report_int(status);
 	else
 		report_status("INVALID_RETURN");
-}
-
-/*
- * Report the type back to the director via the command pipe
- */
-static void
-report_type(data_enum_t return_type)
-{
-	int type;
-
-	type = return_type;
-	if (write(to_director, &type, sizeof(int)) < 0)
-		err(1, "command pipe write for status type failed");
-
 }
 
 /*
@@ -150,14 +158,8 @@ report_type(data_enum_t return_type)
 void
 report_count(int count)
 {
-	int type;
-
-	type = data_count;
-	if (write(to_director, &type, sizeof(int)) < 0)
-		err(1, "command pipe write for count type failed");
-
-	if (write(to_director, &count, sizeof(int)) < 0)
-		err(1, "command pipe write for count");
+	write_to_director_type(data_count);
+	write_to_director_int(count);
 }
 
 /*
@@ -183,20 +185,12 @@ report_error(const char *status)
  * command pipe.
  */
 static void
-report_message(int type, const char *status)
+report_message(data_enum_t type, const char *status)
 {
-	int len;
-
-	len = strlen(status);
-
-	if (write(to_director, &type, sizeof(int)) < 0)
-		err(1, "command pipe write for message type failed");
-
-	if (write(to_director, &len, sizeof(int)) < 0)
-		err(1, "command pipe write for message length failed");
-
-	if (write(to_director, status, len) < 0)
-		err(1, "command pipe write of message data failed");
+	size_t len = strlen(status);
+	write_to_director_type(type);
+	write_to_director_int(len);
+	write_to_director(status, len);
 }
 
 /*
@@ -218,31 +212,17 @@ report_byte(chtype c)
 void
 report_nstr(chtype *string)
 {
-	int len, type;
+	size_t size;
 	chtype *p;
 
-	len = 0;
-	p = string;
+	for (p = string; (*p & __CHARTEXT) != 0; p++)
+		continue;
 
-	while ((*p++ & __CHARTEXT) != 0) {
-		len++;
-	}
+	size = (size_t)(p + 1 - string) * sizeof *p;
 
-	len++; /* add in the termination chtype */
-	len *= sizeof(chtype);
-
-	type = data_byte;
-	if (write(to_director, &type, sizeof(int)) < 0)
-		err(1, "%s: command pipe write for status type failed",
-		    __func__);
-
-	if (write(to_director, &len, sizeof(int)) < 0)
-		err(1, "%s: command pipe write for status length failed",
-		    __func__);
-
-	if (write(to_director, string, len) < 0)
-		err(1, "%s: command pipe write of status data failed",
-		    __func__);
+	write_to_director_type(data_byte);
+	write_to_director_int(size);
+	write_to_director(string, size);
 }
 
 /*
@@ -251,21 +231,10 @@ report_nstr(chtype *string)
 void
 report_cchar(cchar_t c)
 {
-	int len, type;
-	len = sizeof(cchar_t);
-	type = data_cchar;
 
-	if (write(to_director, &type, sizeof(int)) < 0)
-		err(1, "%s: command pipe write for status type failed",
-		    __func__);
-
-	if (write(to_director, &len, sizeof(int)) < 0)
-		err(1, "%s: command pipe write for status length failed",
-		    __func__);
-
-	if (write(to_director, &c, len) < 0)
-		err(1, "%s: command pipe write of status data failed",
-		    __func__);
+	write_to_director_type(data_cchar);
+	write_to_director_int(sizeof c);
+	write_to_director(&c, sizeof c);
 }
 
 /*
@@ -288,30 +257,17 @@ report_wchar(wchar_t ch)
 void
 report_wstr(wchar_t *wstr)
 {
-	int len, type;
+	size_t size;
 	wchar_t *p;
 
-	len = 0;
-	p = wstr;
+	for (p = wstr; *p != L'\0'; p++)
+		continue;
+	size = (size_t)(p + 1 - wstr) * sizeof *p;
 
-	while (*p++ != L'\0')
-		len++;
 
-	len++; /* add in the termination chtype */
-	len *= sizeof(wchar_t);
-
-	type = data_wchar;
-	if (write(to_director, &type, sizeof(int)) < 0)
-		err(1, "%s: command pipe write for status type failed",
-		    __func__);
-
-	if (write(to_director, &len, sizeof(int)) < 0)
-		err(1, "%s: command pipe write for status length failed",
-		    __func__);
-
-	if (write(to_director, wstr, len) < 0)
-		err(1, "%s: command pipe write of status data failed",
-		    __func__);
+	write_to_director_type(data_wchar);
+	write_to_director_int(size);
+	write_to_director(wstr, size);
 }
 
 /*
@@ -324,8 +280,8 @@ check_arg_count(int nargs, int expected)
 	if (nargs != expected) {
 		report_count(1);
 		report_error("INCORRECT_ARGUMENT_NUMBER");
-		return(1);
+		return 1;
 	}
 
-	return(0);
+	return 0;
 }
