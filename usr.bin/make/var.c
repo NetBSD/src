@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.816 2021/02/14 18:21:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.817 2021/02/14 18:55:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.816 2021/02/14 18:21:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.817 2021/02/14 18:55:51 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3921,11 +3921,11 @@ ValidShortVarname(char varname, const char *start)
 }
 
 /*
- * Parse a single-character variable name such as $V or $@.
+ * Parse a single-character variable name such as in $V or $@.
  * Return whether to continue parsing.
  */
 static Boolean
-ParseVarnameShort(char startc, const char **pp, GNode *scope,
+ParseVarnameShort(char varname, const char **pp, GNode *scope,
 		  VarEvalFlags eflags,
 		  VarParseResult *out_FALSE_res, const char **out_FALSE_val,
 		  Var **out_TRUE_var)
@@ -3934,28 +3934,22 @@ ParseVarnameShort(char startc, const char **pp, GNode *scope,
 	Var *v;
 	VarParseResult vpr;
 
-	/*
-	 * If it's not bounded by braces of some sort, life is much simpler.
-	 * We just need to check for the first character and return the
-	 * value if it exists.
-	 */
-
-	vpr = ValidShortVarname(startc, *pp);
+	vpr = ValidShortVarname(varname, *pp);
 	if (vpr != VPR_OK) {
 		(*pp)++;
-		*out_FALSE_val = var_Error;
 		*out_FALSE_res = vpr;
+		*out_FALSE_val = var_Error;
 		return FALSE;
 	}
 
-	name[0] = startc;
+	name[0] = varname;
 	name[1] = '\0';
 	v = VarFind(name, scope, TRUE);
 	if (v == NULL) {
 		const char *val;
 		*pp += 2;
 
-		val = UndefinedShortVarValue(startc, scope);
+		val = UndefinedShortVarValue(varname, scope);
 		if (val == NULL)
 			val = eflags & VARE_UNDEFERR ? var_Error : varUndefined;
 
