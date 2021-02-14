@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1017 2021/02/13 06:29:45 rillig Exp $
+# $NetBSD: mi,v 1.1018 2021/02/14 20:16:17 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5473,6 +5473,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varmod-subst-regex.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-subst.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-subst.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-sun-shell.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-sun-shell.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-sysv.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-sysv.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-tail.exp				tests-usr.bin-tests	compattestfile,atf
