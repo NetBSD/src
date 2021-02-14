@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.291 2021/02/13 13:00:16 roy Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.292 2021/02/14 19:35:37 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.291 2021/02/13 13:00:16 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.292 2021/02/14 19:35:37 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -163,6 +163,9 @@ extern u_char	aarp_org_code[3];
 #include <netmpls/mpls.h>
 #include <netmpls/mpls_var.h>
 #endif
+
+CTASSERT(sizeof(struct ether_addr) == 6);
+CTASSERT(sizeof(struct ether_header) == 14);
 
 #ifdef DIAGNOSTIC
 static struct timeval bigpktppslim_last;
@@ -653,11 +656,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	m_claimm(m, &ec->ec_rx_mowner);
 #endif
 
-	/* Enforce alignement */
-	if (ETHER_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(*eh), 0)) == NULL)
-			goto dropped;
-	} else if (__predict_false(m->m_len < sizeof(*eh))) {
+	if (__predict_false(m->m_len < sizeof(*eh))) {
 		if ((m = m_pullup(m, sizeof(*eh))) == NULL)
 			goto dropped;
 	}
