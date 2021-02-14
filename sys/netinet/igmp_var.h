@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.25 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.26 2021/02/14 20:58:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,11 +105,7 @@
  */
 #define	IGMP_RANDOM_DELAY(X)	(cprng_fast32() % (X) + 1)
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	IGMP_HDR_ALIGNED_P(ig)	1
-#else
-#define	IGMP_HDR_ALIGNED_P(ig)	((((vaddr_t) (ig)) & 3) == 0)
-#endif
+#define	IGMP_HDR_ALIGNMENT	3
 
 void	igmp_init(void);
 void	igmp_input(struct mbuf *, int, int);

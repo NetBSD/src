@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.684 2021/02/05 17:03:35 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.685 2021/02/14 20:58:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -285,6 +285,12 @@
 #endif
 #ifndef ALIGNED_POINTER_LOAD
 #define	ALIGNED_POINTER_LOAD(q,p,t)	(*(q) = *((const t *)(p)))
+#endif
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define	POINTER_ALIGNED_P(p, a)		1
+#else
+#define	POINTER_ALIGNED_P(p, a)		(((uintptr_t)(p) + (a)) & ~(a))
 #endif
 
 /*

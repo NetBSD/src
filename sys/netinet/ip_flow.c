@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.82 2018/04/11 08:29:19 maxv Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.83 2021/02/14 20:58:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.82 2018/04/11 08:29:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.83 2021/02/14 20:58:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -230,9 +230,8 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * IP header with no option and valid version and length
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, const void *)))
-		ip = mtod(m, struct ip *);
-	else {
+	ip = mtod(m, struct ip *);
+	if (!POINTER_ALIGNED_P(ip, IP_HDR_ALIGNMENT) {
 		memcpy(&ip_store, mtod(m, const void *), sizeof(ip_store));
 		ip = &ip_store;
 	}
@@ -314,7 +313,7 @@ ipflow_fastforward(struct mbuf *m)
 	 *
 	 * XXX Use m_copyback_cow(9) here? --dyoung
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0)
+	if (!POINTER_ALIGNED_P(mtod(m, void *), IP_HDR_ALIGNMENT))
 		memcpy(mtod(m, void *), &ip_store, sizeof(ip_store));
 
 	/*

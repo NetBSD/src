@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_private.h,v 1.3 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_private.h,v 1.4 2021/02/14 20:58:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,11 +43,7 @@ extern	percpu_t *tcpstat_percpu;
 #define	TCP_STATINC(x)		_NET_STATINC(tcpstat_percpu, x)
 #define	TCP_STATADD(x, v)	_NET_STATADD(tcpstat_percpu, x, v)
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	TCP_HDR_ALIGNED_P(th)	1
-#else
-#define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t)(th)) & 3) == 0)
-#endif /* __NO_STRICT_ALIGNMENT */
+#define	TCP_HDR_ALIGNMENT	3
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_TCP_PRIVATE_H_ */

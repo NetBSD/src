@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.148 2020/08/20 21:21:32 riastradh Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.149 2021/02/14 20:58:35 christos Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.148 2020/08/20 21:21:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.149 2021/02/14 20:58:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -665,7 +665,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
 	 */
-	if (UDP_HDR_ALIGNED_P(uh) == 0) {
+	if (POINTER_ALIGNED_P(uh, UDP_HDR_ALIGNMENT) == 0) {
 		m = m_copyup(m, off + sizeof(struct udphdr), 0);
 		if (m == NULL) {
 			IP6_STATINC(IP6_STAT_TOOSHORT);
@@ -674,7 +674,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 		ip6 = mtod(m, struct ip6_hdr *);
 		uh = (struct udphdr *)(mtod(m, char *) + off);
 	}
-	KASSERT(UDP_HDR_ALIGNED_P(uh));
+	KASSERT(POINTER_ALIGNED_P(uh, UDP_HDR_ALIGNMENT));
 	ulen = ntohs((u_short)uh->uh_ulen);
 
 	/*
