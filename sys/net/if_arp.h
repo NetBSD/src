@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.38 2021/02/13 07:57:09 roy Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.39 2021/02/14 19:47:16 roy Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -72,14 +72,6 @@ struct	arphdr {
 	uint8_t  ar_tpa[];	/* target protocol address */
 #endif
 };
-#ifdef __NO_STRICT_ALIGNMENT
-#define	ARP_HDR_ALIGNED_P(ah)	1
-#else
-#define	ARP_HDR_ALIGNED_P(ah)	((((vaddr_t) (ah)) & 3) == 0)
-#endif
-#ifdef __CTASSERT
-__CTASSERT(sizeof(struct arphdr) == 8);
-#endif
 
 static __inline uint8_t *
 ar_data(struct arphdr *ap)
