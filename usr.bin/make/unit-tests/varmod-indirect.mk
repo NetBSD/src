@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.7 2021/02/14 17:22:37 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.8 2021/02/14 17:47:33 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -217,9 +217,30 @@ _:=	before ${UNDEF:${:UZ}} after
 .  error
 .endif
 # In this expression, the ':ts*' is indirect, therefore the changed separator
-# only lasts until the end of the indirect modifier.  It does not affect the
-# ':M' since that is outside the scope.
+# only applies to the modifiers from the indirect text.  It does not affect
+# the ':M' since that is not part of the text from the indirect modifier.
+#
+# Implementation detail: when ApplyModifiersIndirect calls ApplyModifiers
+# (which creates a new ApplyModifiersState containing a fresh separator),
+# the outer separator character is not passed by reference to the inner
+# evaluation, therefore the scope of the inner separator ends after applying
+# the modifier ':ts*'.
 .if ${1 2 3:L:${:Uts*}:Ua b c:M*} != "a b c"
+.  error
+.endif
+
+# A direct modifier ':U' turns the expression from undefined to defined.
+# An indirect modifier ':U' has the same effect, unlike the separator from
+# ':ts*' or the single-word marker from ':tW'.
+#
+# This is because when ApplyModifiersIndirect calls ApplyModifiers, it passes
+# the definedness of the outer expression by reference.  If that weren't the
+# case, the first condition below would result in a parse error because its
+# left-hand side would be undefined.
+.if ${UNDEF:${:UUindirect-fallback}} != "indirect-fallback"
+.  error
+.endif
+.if ${UNDEF:${:UUindirect-fallback}:Uouter-fallback} != "outer-fallback"
 .  error
 .endif
 
