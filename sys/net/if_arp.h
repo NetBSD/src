@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.39 2021/02/14 19:47:16 roy Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.40 2021/02/14 20:58:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -72,6 +72,7 @@ struct	arphdr {
 	uint8_t  ar_tpa[];	/* target protocol address */
 #endif
 };
+#define	ARP_HDR_ALIGNMENT	3
 
 static __inline uint8_t *
 ar_data(struct arphdr *ap)
