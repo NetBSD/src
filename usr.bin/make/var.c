@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.810 2021/02/14 12:24:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.811 2021/02/14 12:35:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.810 2021/02/14 12:24:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.811 2021/02/14 12:35:27 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2772,18 +2772,14 @@ ApplyModifier_Subst(const char **pp, const char *val, ApplyModifiersState *st)
 
 	oneBigWord = st->oneBigWord;
 	for (;; (*pp)++) {
-		switch (**pp) {
-		case 'g':
+		if (**pp == 'g')
 			args.pflags.subGlobal = TRUE;
-			continue;
-		case '1':
+		else if (**pp == '1')
 			args.pflags.subOnce = TRUE;
-			continue;
-		case 'W':
+		else if (**pp == 'W')
 			oneBigWord = TRUE;
-			continue;
-		}
-		break;
+		else
+			break;
 	}
 
 	st->newVal = FStr_InitOwn(ModifyWords(val, ModifyWord_Subst, &args,
@@ -2829,18 +2825,14 @@ ApplyModifier_Regex(const char **pp, const char *val, ApplyModifiersState *st)
 	args.matched = FALSE;
 	oneBigWord = st->oneBigWord;
 	for (;; (*pp)++) {
-		switch (**pp) {
-		case 'g':
+		if (**pp == 'g')
 			args.pflags.subGlobal = TRUE;
-			continue;
-		case '1':
+		else if (**pp == '1')
 			args.pflags.subOnce = TRUE;
-			continue;
-		case 'W':
+		else if (**pp == 'W')
 			oneBigWord = TRUE;
-			continue;
-		}
-		break;
+		else
+			break;
 	}
 
 	error = regcomp(&args.re, re, REG_EXTENDED);
