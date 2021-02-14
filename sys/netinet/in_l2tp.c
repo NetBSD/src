@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.18 2020/01/29 04:37:24 thorpej Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.19 2021/02/14 20:58:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.18 2020/01/29 04:37:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.19 2021/02/14 20:58:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -197,13 +197,8 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 		error = ENOBUFS;
 		goto out;
 	}
-	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		m = m_copyup(m, sizeof(struct ip), 0);
-	} else {
-		if (m->m_len < sizeof(struct ip))
-			m = m_pullup(m, sizeof(struct ip));
-	}
-	if (m == NULL) {
+	if (m_get_aligned_hdr(&m, IP_HDR_ALIGNMENT, sizeof(iphdr), false) != 0)
+	{
 		error = ENOBUFS;
 		goto out;
 	}

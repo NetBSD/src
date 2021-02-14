@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.397 2020/08/28 06:31:42 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.398 2021/02/14 20:58:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.397 2020/08/28 06:31:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.398 2021/02/14 20:58:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -454,18 +454,10 @@ ip_input(struct mbuf *m, struct ifnet *ifp)
 	 * it.  Otherwise, if it is aligned, make sure the entire
 	 * base IP header is in the first mbuf of the chain.
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(struct ip),
-		    (max_linkhdr + 3) & ~3)) == NULL) {
-			/* XXXJRT new stat, please */
-			IP_STATINC(IP_STAT_TOOSMALL);
-			goto out;
-		}
-	} else if (__predict_false(m->m_len < sizeof(struct ip))) {
-		if ((m = m_pullup(m, sizeof(struct ip))) == NULL) {
-			IP_STATINC(IP_STAT_TOOSMALL);
-			goto out;
-		}
+	if (m_get_aligned_hdr(&m, IP_HDR_ALIGNMENT, sizeof(*ip), true) != 0) {
+		/* XXXJRT new stat, please */
+		IP_STATINC(IP_STAT_TOOSMALL);
+		goto out;
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {

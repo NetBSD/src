@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_private.h,v 1.3 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: ip6_private.h,v 1.4 2021/02/14 20:58:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,11 +43,7 @@ extern	percpu_t *ip6stat_percpu;
 #define	IP6_STATINC(x)		_NET_STATINC(ip6stat_percpu, x)
 #define	IP6_STATDEC(x)		_NET_STATDEC(ip6stat_percpu, x)
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	IP6_HDR_ALIGNED_P(ip)	1
-#else
-#define	IP6_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
-#endif
+#define	IP6_HDR_ALIGNMENT	3
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_IP6_PRIVATE_H_ */
