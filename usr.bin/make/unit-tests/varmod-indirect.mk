@@ -1,11 +1,13 @@
-# $NetBSD: varmod-indirect.mk,v 1.6 2021/02/14 16:12:46 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.7 2021/02/14 17:22:37 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
 # uppercase or lowercase, as well as for fairly advanced modifiers that first
 # look like line noise and are hard to decipher.
 #
-# TODO: Since when are indirect modifiers supported?
+# Initial support for indirect modifiers was added in var.c 1.101 from
+# 2006-02-18.  Since var.c 1.108 from 2006-05-11 it is possible to use
+# indirect modifiers for all but the very first modifier as well.
 
 
 # To apply a modifier indirectly via another variable, the whole
@@ -202,7 +204,7 @@ _:=	before ${UNDEF:${:UZ}} after
 # interpretation only lasts until the end of the indirect modifier, it does
 # not influence the outer variable expression.
 #
-# In this expression, the direct ':ts*' has no effect since ':U' does not
+# In this first expression, the direct ':ts*' has no effect since ':U' does not
 # treat the expression value as a list of words but as a single word.  It has
 # to be ':U', not ':D', since the "expression name" is "1 2 3" and there is no
 # variable of that name.
