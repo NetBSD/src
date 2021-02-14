@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.818 2021/02/14 18:59:36 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.819 2021/02/14 20:22:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.818 2021/02/14 18:59:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.819 2021/02/14 20:22:30 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3463,9 +3463,10 @@ ApplyModifier_SunShell(const char **pp, const char *val,
 	if (p[1] == 'h' && (p[2] == st->endc || p[2] == ':')) {
 		if (st->eflags & VARE_WANTRES) {
 			const char *errfmt;
-			Expr_SetValueOwn(st, Cmd_Exec(val, &errfmt));
+			char *output = Cmd_Exec(val, &errfmt);
 			if (errfmt != NULL)
 				Error(errfmt, val);
+			Expr_SetValueOwn(st, output);
 		} else
 			Expr_SetValueRefer(st, "");
 		*pp = p + 2;
