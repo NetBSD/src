@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.301 2021/02/14 19:47:17 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.302 2021/02/14 20:58:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.301 2021/02/14 19:47:17 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.302 2021/02/14 20:58:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -712,7 +712,7 @@ arpintr(void)
 				goto badlen;
 		}
 		ar = mtod(m, struct arphdr *);
-		KASSERT(ARP_HDR_ALIGNED_P(ar));
+		KASSERT(POINTER_ALIGNED_P(ar, ARP_HDR_ALIGNMENT));
 
 		rcvif = m_get_rcvif(m, &s);
 		if (__predict_false(rcvif == NULL)) {
@@ -741,7 +741,7 @@ arpintr(void)
 			if ((m = m_pullup(m, arplen)) == NULL)
 				goto badlen;
 			ar = mtod(m, struct arphdr *);
-			KASSERT(ARP_HDR_ALIGNED_P(ar));
+			KASSERT(POINTER_ALIGNED_P(ar, ARP_HDR_ALIGNMENT));
 		}
 
 		switch (ntohs(ar->ar_pro)) {
