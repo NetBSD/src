@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.811 2021/02/14 12:35:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.812 2021/02/14 13:46:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.811 2021/02/14 12:35:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.812 2021/02/14 13:46:01 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2087,11 +2087,13 @@ typedef struct ApplyModifiersState {
 	VarExprStatus exprStatus;
 } ApplyModifiersState;
 
+typedef ApplyModifiersState Expr;
+
 static void
-ApplyModifiersState_Define(ApplyModifiersState *st)
+Expr_Define(Expr *expr)
 {
-	if (st->exprStatus == VES_UNDEF)
-		st->exprStatus = VES_DEF;
+	if (expr->exprStatus == VES_UNDEF)
+		expr->exprStatus = VES_DEF;
 }
 
 typedef enum ApplyModifierResult {
@@ -2444,7 +2446,7 @@ ApplyModifier_Defined(const char **pp, const char *val, ApplyModifiersState *st)
 	}
 	*pp = p;
 
-	ApplyModifiersState_Define(st);
+	Expr_Define(st);
 
 	if (eflags & VARE_WANTRES) {
 		st->newVal = FStr_InitOwn(Buf_DoneData(&buf));
@@ -2459,7 +2461,7 @@ ApplyModifier_Defined(const char **pp, const char *val, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
 {
-	ApplyModifiersState_Define(st);
+	Expr_Define(st);
 	st->newVal = FStr_InitOwn(bmake_strdup(st->var->name.str));
 	(*pp)++;
 	return AMR_OK;
@@ -2556,7 +2558,7 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 	GNode *gn;
 	char *path;
 
-	ApplyModifiersState_Define(st);
+	Expr_Define(st);
 
 	gn = Targ_FindNode(st->var->name.str);
 	if (gn == NULL || gn->type & OP_NOPATH) {
@@ -2597,7 +2599,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 		Error(errfmt, cmd);	/* XXX: why still return AMR_OK? */
 	free(cmd);
 
-	ApplyModifiersState_Define(st);
+	Expr_Define(st);
 	return AMR_OK;
 }
 
@@ -3223,7 +3225,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 		st->newVal = FStr_InitOwn(else_expr);
 		free(then_expr);
 	}
-	ApplyModifiersState_Define(st);
+	Expr_Define(st);
 	return AMR_OK;
 }
 
