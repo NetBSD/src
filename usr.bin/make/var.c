@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.808 2021/02/06 21:40:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.809 2021/02/14 12:16:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.808 2021/02/06 21:40:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.809 2021/02/14 12:16:13 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3220,7 +3220,8 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	(*pp)--;
+	(*pp)--;		/* Go back to the st->endc. */
+
 	if (cond_rc == COND_INVALID) {
 		Error("Bad conditional expression `%s' in %s?%s:%s",
 		    st->var->name.str, st->var->name.str, then_expr, else_expr);
@@ -3264,7 +3265,6 @@ static ApplyModifierResult
 ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 {
 	GNode *scope;
-	char delim;
 	char *val;
 	VarParseResult res;
 
@@ -3303,12 +3303,11 @@ ok:
 		break;
 	}
 
-	delim = st->startc == '(' ? ')' : '}';
-	res = ParseModifierPart(pp, delim, st->eflags, st, &val);
+	res = ParseModifierPart(pp, st->endc, st->eflags, st, &val);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	(*pp)--;
+	(*pp)--;		/* Go back to the st->endc. */
 
 	/* XXX: Expanding the variable name at this point sounds wrong. */
 	if (st->eflags & VARE_WANTRES) {
@@ -3436,7 +3435,8 @@ ApplyModifier_SysV(const char **pp, const char *val, ApplyModifiersState *st)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	(*pp)--;
+	(*pp)--;		/* Go back to the st->endc. */
+
 	if (lhs[0] == '\0' && val[0] == '\0') {
 		st->newVal = FStr_InitRefer(val); /* special case */
 	} else {
