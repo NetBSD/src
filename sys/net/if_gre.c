@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.179 2021/02/13 13:00:16 roy Exp $ */
+/*	$NetBSD: if_gre.c,v 1.180 2021/02/14 19:33:29 roy Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.179 2021/02/13 13:00:16 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.180 2021/02/14 19:33:29 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -141,6 +141,8 @@ int gre_debug = 0;
 #else
 #define	GRE_DPRINTF(__sc, __fmt, ...)	do { } while (/*CONSTCOND*/0)
 #endif /* GRE_DEBUG */
+
+CTASSERT(sizeof(struct gre_h) == 4);
 
 int ip_gre_ttl = GRE_TTL;
 
@@ -374,7 +376,7 @@ gre_receive(struct socket *so, void *arg, int events, int waitflag)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 	int rc;
-	const struct gre_h *gh;
+	struct gre_h gh;
 	struct mbuf *m;
 
 	GRE_DPRINTF(sc, "enter\n");
@@ -396,24 +398,16 @@ gre_receive(struct socket *so, void *arg, int events, int waitflag)
 		return;
 	}
 
-	/* Enforce alignment */
-	if (GRE_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(struct gre_h), 0)) == NULL) {
-			/* XXXJRT new stat, please */
-			GRE_DPRINTF(sc, "m_copyup failed\n");
-			sc->sc_pullup_ev.ev_count++;
-			return;
-		}
-	} else if (__predict_false(m->m_len < sizeof(struct gre_h))) {
-		if ((m = m_pullup(m, sizeof(struct gre_h))) == NULL) {
+	if (__predict_false(m->m_len < sizeof(gh))) {
+		if ((m = m_pullup(m, sizeof(gh))) == NULL) {
 			GRE_DPRINTF(sc, "m_pullup failed\n");
 			sc->sc_pullup_ev.ev_count++;
 			return;
 		}
 	}
-	gh = mtod(m, const struct gre_h *);
+	memcpy(&gh, mtod(m, void *), sizeof(gh));
 
-	if (gre_input(sc, m, gh) == 0) {
+	if (gre_input(sc, m, &gh) == 0) {
 		sc->sc_unsupp_ev.ev_count++;
 		GRE_DPRINTF(sc, "dropping unsupported\n");
 		m_freem(m);
@@ -898,7 +892,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	int error = 0;
 	struct gre_softc *sc = ifp->if_softc;
-	struct gre_h *gh;
+	struct gre_h gh = { .flags = 0 };
 	uint16_t etype = 0;
 
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -950,17 +944,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 #endif
 
-	M_PREPEND(m, sizeof(*gh), M_DONTWAIT);
+	M_PREPEND(m, sizeof(gh), M_DONTWAIT);
 	if (m == NULL) {
 		IF_DROP(&ifp->if_snd);
 		error = ENOBUFS;
 		goto end;
 	}
 
-	gh = mtod(m, struct gre_h *);
-	KASSERT(GRE_HDR_ALIGNED_P(gh));
-	gh->flags = 0;
-	gh->ptype = etype;
+	gh.ptype = etype;
+	memcpy(mtod(m, void *), &gh, sizeof(gh));
 	/* XXX Need to handle IP ToS.  Look at how I handle IP TTL. */
 
 	if_statadd2(ifp, if_opackets, 1, if_obytes, m->m_pkthdr.len);
