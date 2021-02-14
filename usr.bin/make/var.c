@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.817 2021/02/14 18:55:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.818 2021/02/14 18:59:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.817 2021/02/14 18:55:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.818 2021/02/14 18:59:36 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3894,16 +3894,9 @@ ParseVarname(const char **pp, char startc, char endc,
 static VarParseResult
 ValidShortVarname(char varname, const char *start)
 {
-	switch (varname) {
-	case '\0':
-	case ')':
-	case '}':
-	case ':':
-	case '$':
-		break;		/* and continue below */
-	default:
+	if (varname != '$' && varname != ':' && varname != '}' &&
+	    varname != ')' && varname != '\0')
 		return VPR_OK;
-	}
 
 	if (!opts.strict)
 		return VPR_ERR;	/* XXX: Missing error message */
