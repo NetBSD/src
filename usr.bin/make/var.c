@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.809 2021/02/14 12:16:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.810 2021/02/14 12:24:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.809 2021/02/14 12:16:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.810 2021/02/14 12:24:53 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2998,13 +2998,12 @@ ApplyModifier_To(const char **pp, const char *val, ApplyModifiersState *st)
 	if (mod[1] == 's')
 		return ApplyModifier_ToSep(pp, val, st);
 
-	if (mod[2] != st->endc && mod[2] != ':') {
+	if (mod[2] != st->endc && mod[2] != ':') {	/* :t<unrecognized> */
 		*pp = mod + 1;
-		return AMR_BAD;	/* Found ":t<unrecognised><unrecognised>". */
+		return AMR_BAD;
 	}
 
-	/* Check for two-character options: ":tu", ":tl" */
-	if (mod[1] == 'A') {	/* absolute path */
+	if (mod[1] == 'A') {				/* :tA */
 		st->newVal = FStr_InitOwn(
 		    ModifyWords(val, ModifyWord_Realpath, NULL,
 		        st->oneBigWord, st->sep));
@@ -3012,19 +3011,19 @@ ApplyModifier_To(const char **pp, const char *val, ApplyModifiersState *st)
 		return AMR_OK;
 	}
 
-	if (mod[1] == 'u') {	/* :tu */
+	if (mod[1] == 'u') {				/* :tu */
 		st->newVal = FStr_InitOwn(str_toupper(val));
 		*pp = mod + 2;
 		return AMR_OK;
 	}
 
-	if (mod[1] == 'l') {	/* :tl */
+	if (mod[1] == 'l') {				/* :tl */
 		st->newVal = FStr_InitOwn(str_tolower(val));
 		*pp = mod + 2;
 		return AMR_OK;
 	}
 
-	if (mod[1] == 'W' || mod[1] == 'w') { /* :tW, :tw */
+	if (mod[1] == 'W' || mod[1] == 'w') {		/* :tW, :tw */
 		st->oneBigWord = mod[1] == 'W';
 		st->newVal = FStr_InitRefer(val);
 		*pp = mod + 2;
@@ -3050,14 +3049,13 @@ ApplyModifier_Words(const char **pp, const char *val, ApplyModifiersState *st)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	/* now *pp points just after the closing ']' */
 	if (**pp != ':' && **pp != st->endc)
-		goto bad_modifier;	/* Found junk after ']' */
+		goto bad_modifier;		/* Found junk after ']' */
 
 	if (estr[0] == '\0')
-		goto bad_modifier;	/* empty square brackets in ":[]". */
+		goto bad_modifier;			/* Found ":[]". */
 
-	if (estr[0] == '#' && estr[1] == '\0') { /* Found ":[#]" */
+	if (estr[0] == '#' && estr[1] == '\0') {	/* Found ":[#]" */
 		if (st->oneBigWord) {
 			st->newVal = FStr_InitRefer("1");
 		} else {
@@ -3075,15 +3073,13 @@ ApplyModifier_Words(const char **pp, const char *val, ApplyModifiersState *st)
 		goto ok;
 	}
 
-	if (estr[0] == '*' && estr[1] == '\0') {
-		/* Found ":[*]" */
+	if (estr[0] == '*' && estr[1] == '\0') {	/* Found ":[*]" */
 		st->oneBigWord = TRUE;
 		st->newVal = FStr_InitRefer(val);
 		goto ok;
 	}
 
-	if (estr[0] == '@' && estr[1] == '\0') {
-		/* Found ":[@]" */
+	if (estr[0] == '@' && estr[1] == '\0') {	/* Found ":[@]" */
 		st->oneBigWord = FALSE;
 		st->newVal = FStr_InitRefer(val);
 		goto ok;
