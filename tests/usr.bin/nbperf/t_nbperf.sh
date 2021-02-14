@@ -1,4 +1,4 @@
-# $NetBSD: t_nbperf.sh,v 1.4 2021/01/07 16:03:08 joerg Exp $
+# $NetBSD: t_nbperf.sh,v 1.5 2021/02/14 01:27:33 joerg Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,17 +62,17 @@ chm_fudged_head()
 }
 chm_fudged_body()
 {
-	seq 0 9 > reference.txt
-	seq 1 10 > input.txt
+	seq 0 11 > reference.txt
+	seq 1 12 > input.txt
 
 	atf_check -o file:reference.txt \
 	    $(atf_get_srcdir)/h_nbperf input.txt "chm -p" cat \
-	    10 $(atf_get_srcdir)/hash_driver.c
+	    12 $(atf_get_srcdir)/hash_driver.c
 	atf_check -s exit:1 fgrep -q '^=' hash.c
 
 	atf_check -o file:reference.txt \
 	    $(atf_get_srcdir)/h_nbperf input.txt "chm -f -p" cat \
-	    10 $(atf_get_srcdir)/hash_driver.c
+	    12 $(atf_get_srcdir)/hash_driver.c
 	atf_check -s exit:0 fgrep -q '^=' hash.c
 }
 chm_fudged_clean()
@@ -163,17 +163,17 @@ bpz_fudged_head()
 }
 bpz_fudged_body()
 {
-	seq 0 9 > reference.txt
-	seq 1 10 > input.txt
+	seq 0 11 > reference.txt
+	seq 1 12 > input.txt
 
 	atf_check -o file:reference.txt \
 	    $(atf_get_srcdir)/h_nbperf input.txt "bpz -p" "sort -n" \
-	    10 $(atf_get_srcdir)/hash_driver.c
+	    12 $(atf_get_srcdir)/hash_driver.c
 	atf_check -s exit:1 fgrep -q '^=' hash.c
 
 	atf_check -o file:reference.txt \
 	    $(atf_get_srcdir)/h_nbperf input.txt "bpz -f -p" "sort -n" \
-	    10 $(atf_get_srcdir)/hash_driver.c
+	    12 $(atf_get_srcdir)/hash_driver.c
 	atf_check -s exit:0 fgrep -q '^= (' hash.c
 	atf_check -s exit:0 fgrep -q '^= 2' hash.c
 }
