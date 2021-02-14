@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.107 2021/02/13 16:33:30 jakllsch Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.108 2021/02/14 14:05:03 jakllsch Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.107 2021/02/13 16:33:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.108 2021/02/14 14:05:03 jakllsch Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4588,7 +4588,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 		sc->free_rx_bd++;
 
 		DBRUN(BNX_VERBOSE_RECV, printf("%s(): ", __func__);
-		bnx_dump_rxbd(sc, sw_chain_cons, rxbd));
+		    bnx_dump_rxbd(sc, sw_chain_cons, rxbd));
 
 		/* The mbuf is stored with the last rx_bd entry of a packet. */
 		if (sc->rx_mbuf_ptr[sw_chain_cons] != NULL) {
