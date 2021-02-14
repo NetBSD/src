@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.815 2021/02/14 17:27:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.816 2021/02/14 18:21:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.815 2021/02/14 17:27:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.816 2021/02/14 18:21:31 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2044,8 +2044,8 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * Some modifiers need to free some memory.
  */
 
-typedef enum VarExprStatus {
-	/* The variable expression is based in a regular, defined variable. */
+typedef enum ExprStatus {
+	/* The variable expression is based on a regular, defined variable. */
 	VES_NONE,
 	/* The variable expression is based on an undefined variable. */
 	VES_UNDEF,
@@ -2055,12 +2055,12 @@ typedef enum VarExprStatus {
 	 * undefined to defined.
 	 */
 	VES_DEF
-} VarExprStatus;
+} ExprStatus;
 
-static const char * const VarExprStatus_Name[] = {
-	    "none",
-	    "VES_UNDEF",
-	    "VES_DEF"
+static const char *const ExprStatus_Name[] = {
+	"none",
+	"VES_UNDEF",
+	"VES_DEF"
 };
 
 typedef struct ApplyModifiersState {
@@ -2084,7 +2084,7 @@ typedef struct ApplyModifiersState {
 	 * big word, possibly containing spaces.
 	 */
 	Boolean oneBigWord;
-	VarExprStatus exprStatus;
+	ExprStatus exprStatus;
 } ApplyModifiersState;
 
 typedef ApplyModifiersState Expr;
@@ -3490,7 +3490,7 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc,
 	    st->var->name.str, mod[0], is_single_char ? "" : "...", val,
 	    VarEvalFlags_ToString(eflags_str, st->eflags),
 	    VarFlags_ToString(vflags_str, st->var->flags),
-	    VarExprStatus_Name[st->exprStatus]);
+	    ExprStatus_Name[st->exprStatus]);
 }
 
 static void
@@ -3506,7 +3506,7 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 	    st->var->name.str, (int)(p - mod), mod, quot, newValue, quot,
 	    VarEvalFlags_ToString(eflags_str, st->eflags),
 	    VarFlags_ToString(vflags_str, st->var->flags),
-	    VarExprStatus_Name[st->exprStatus]);
+	    ExprStatus_Name[st->exprStatus]);
 }
 
 static ApplyModifierResult
@@ -3576,7 +3576,7 @@ ApplyModifier(const char **pp, const char *val, ApplyModifiersState *st)
 }
 
 static FStr ApplyModifiers(const char **, FStr, char, char, Var *,
-			    VarExprStatus *, GNode *, VarEvalFlags);
+			   ExprStatus *, GNode *, VarEvalFlags);
 
 typedef enum ApplyModifiersIndirectResult {
 	/* The indirect modifiers have been applied successfully. */
@@ -3720,7 +3720,7 @@ ApplyModifiers(
     char startc,		/* '(' or '{', or '\0' for indirect modifiers */
     char endc,			/* ')' or '}', or '\0' for indirect modifiers */
     Var *v,
-    VarExprStatus *exprStatus,
+    ExprStatus *exprStatus,
     GNode *scope,		/* for looking up and modifying variables */
     VarEvalFlags eflags
 )
@@ -4070,7 +4070,7 @@ ParseVarnameLong(
 	Boolean *out_TRUE_haveModifier,
 	const char **out_TRUE_extraModifiers,
 	Boolean *out_TRUE_dynamic,
-	VarExprStatus *out_TRUE_exprStatus
+	ExprStatus *out_TRUE_exprStatus
 )
 {
 	size_t namelen;
@@ -4225,7 +4225,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	Var *v;
 	FStr value;
 	char eflags_str[VarEvalFlags_ToStringSize];
-	VarExprStatus exprStatus = VES_NONE;
+	ExprStatus exprStatus = VES_NONE;
 
 	DEBUG2(VAR, "Var_Parse: %s with %s\n", start,
 	    VarEvalFlags_ToString(eflags_str, eflags));
