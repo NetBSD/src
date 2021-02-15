@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.206 2021/02/15 07:36:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.207 2021/02/15 07:40:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.206 2021/02/15 07:36:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.207 2021/02/15 07:40:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1049,7 +1049,6 @@ typeok_colon(const mod_t *mp,
 	if (lt == UNION && rt == UNION && ltp->t_str == rtp->t_str)
 		return true;
 
-	/* combination of any pointer and null pointer is ok */
 	if (lt == PTR && is_null_pointer(rn))
 		return true;
 	if (rt == PTR && is_null_pointer(ln))
