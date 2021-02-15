@@ -1,9 +1,9 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.8 2020/12/07 22:27:56 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.9 2021/02/15 07:42:35 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
-# The output of this test suite must be inspected manuelly to see the
+# The output of this test suite must be inspected manually to see the
 # interesting details.  The main purpose is to list the available build
 # options.
 
