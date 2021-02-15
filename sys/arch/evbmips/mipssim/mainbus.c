@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1 2021/01/27 05:24:16 simonb Exp $ */
+/* $NetBSD: mainbus.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2021/01/27 05:24:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,11 +84,23 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mainbus_found = 1;
 	printf("\n");
 
+	/* attach children */
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
 		maa.ma_name = md->md_name;
 		maa.ma_addr = md->md_addr;
 		maa.ma_irq = md->md_irq;
 		maa.ma_iot = &mcp->mc_iot;
+		maa.ma_dmat = &mcp->mc_dmat;
+		config_found_ia(self, "mainbus", &maa, mainbus_print);
+	}
+
+	/* attach virtio children */
+	for (int i = 0; i < VIRTIO_NUM_TRANSPORTS; i++) {
+		maa.ma_name = "virtio";
+		maa.ma_addr = MIPSSIM_VIRTIO_ADDR + VIRTIO_STRIDE * i;
+		maa.ma_irq  = 1;
+		maa.ma_iot  = &mcp->mc_iot;
+		maa.ma_dmat = &mcp->mc_dmat;
 		config_found_ia(self, "mainbus", &maa, mainbus_print);
 	}
 }

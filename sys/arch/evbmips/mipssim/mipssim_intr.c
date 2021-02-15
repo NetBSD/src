@@ -1,4 +1,4 @@
-/* $NetBSD: mipssim_intr.c,v 1.1 2021/01/27 05:24:16 simonb Exp $ */
+/* $NetBSD: mipssim_intr.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mipssim_intr.c,v 1.1 2021/01/27 05:24:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mipssim_intr.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $");
 
 #define __INTR_PRIVATE
 
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: mipssim_intr.c,v 1.1 2021/01/27 05:24:16 simonb Exp 
 #include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
 
 #include <mips/locore.h>
 #include <machine/intr.h>
@@ -49,10 +50,11 @@ static const struct ipl_sr_map mipssim_ipl_sr_map = {
 	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
 	[IPL_VM] =		MIPS_SOFT_INT_MASK
-				    | MIPS_INT_MASK_0 | MIPS_INT_MASK_2,
+				    | MIPS_INT_MASK_0 | MIPS_INT_MASK_1
+				    | MIPS_INT_MASK_2,
 	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
-				    | MIPS_INT_MASK_0 | MIPS_INT_MASK_2
-				    | MIPS_INT_MASK_5,
+				    | MIPS_INT_MASK_0 | MIPS_INT_MASK_1
+				    | MIPS_INT_MASK_2 | MIPS_INT_MASK_5,
 	[IPL_DDB] =		MIPS_INT_MASK,
 	[IPL_HIGH] =		MIPS_INT_MASK,
     },
@@ -61,7 +63,6 @@ static const struct ipl_sr_map mipssim_ipl_sr_map = {
 /* XXX - add evcnt bits to <machine/intr.h> struct evbmips_intrhand */
 struct intrhand {
 	LIST_ENTRY(intrhand) ih_q;
-	struct evcnt ih_count;
 	int (*ih_func)(void *);
 	void *ih_arg;
 	int ih_irq;
@@ -74,10 +75,12 @@ struct intrhand {
  */
 #define	NINTR		5	/* MIPS INT0 - INT4 */
 
-struct intrhand intrs[NINTR];
+LIST_HEAD(intrlist, intrhand) intrs[NINTR];
+struct evcnt ih_count[NINTR];
+
 const char * const intrnames[NINTR] = {
 	"int 0 (mipsnet)",
-	"int 1 (unused)",
+	"int 1 (virtio)",
 	"int 2 (uart)",
 	"int 3 (unused)",
 	"int 4 (unused)",
@@ -94,10 +97,8 @@ evbmips_intr_init(void)
 
 	/* zero all handlers */
 	for (i = 0; i < NINTR; i++) {
-		intrs[i].ih_func = NULL;
-		intrs[i].ih_arg = NULL;
-		intrs[i].ih_irq = i;
-		evcnt_attach_dynamic(&intrs[i].ih_count, EVCNT_TYPE_INTR,
+		LIST_INIT(&intrs[i]);
+		evcnt_attach_dynamic(&ih_count[i], EVCNT_TYPE_INTR,
 		    NULL, "cpu", intrnames[i]);
 	}
 }
@@ -105,6 +106,7 @@ evbmips_intr_init(void)
 void
 evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
+	struct intrlist *list;
 
 	for (int level = NINTR - 1; level >= 0; level--) {
 		struct intrhand *ih;
@@ -112,11 +114,13 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
 			continue;
 
-		ih = &intrs[level];
+		ih_count[level].ev_count++;
+		list = &intrs[level];
 
-		ih->ih_count.ev_count++;
-		if (ih->ih_func) {
-			(*ih->ih_func)(ih->ih_arg);
+		LIST_FOREACH(ih, list, ih_q) {
+			if (ih->ih_func) {
+				(*ih->ih_func)(ih->ih_arg);
+			}
 		}
 	}
 }
@@ -124,6 +128,7 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 void *
 evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
 {
+	struct intrlist *list;
 	struct intrhand *ih;
 	int s;
 
@@ -132,11 +137,15 @@ evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
 		return NULL;
 	}
 
-	ih = &intrs[irq];
+	list = &intrs[irq];
+	ih = kmem_alloc(sizeof(struct intrhand), KM_SLEEP);
 
 	s = splhigh();
+
 	ih->ih_func = func;
 	ih->ih_arg = arg;
+	ih->ih_irq = irq;
+	LIST_INSERT_HEAD(list, ih, ih_q);
 
 	/* now enable the IRQ (nothing to do here?) */
 
@@ -159,6 +168,8 @@ evbmips_intr_disestablish(void *cookie)
 
 	ih->ih_func = NULL;
 	ih->ih_arg = NULL;
+	LIST_REMOVE(ih, ih_q);
+	kmem_free(ih, sizeof(struct intrhand));
 
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: mipssim_bus_io.c,v 1.1 2021/01/27 05:24:16 simonb Exp $ */
+/* $NetBSD: mipssim_bus_io.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mipssim_bus_io.c,v 1.1 2021/01/27 05:24:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mipssim_bus_io.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $");
 
 #include <sys/param.h>
 
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: mipssim_bus_io.c,v 1.1 2021/01/27 05:24:16 simonb Ex
 
 /* IO region 1 */
 #define	CHIP_W1_BUS_START(v)	0
-#define	CHIP_W1_BUS_END(v)	MIPSSIM_ISA_IO_SIZE
+#define	CHIP_W1_BUS_END(v)	(MIPSSIM_ISA_IO_SIZE + MIPSSIM_VIRTIO_IO_SIZE)
 #define	CHIP_W1_SYS_START(v)	MIPSSIM_ISA_IO_BASE
-#define	CHIP_W1_SYS_END(v)	(CHIP_W1_SYS_START(v) + CHIP_W1_SYS_START(v))
+#define	CHIP_W1_SYS_END(v)	(CHIP_W1_SYS_START(v) + CHIP_W1_BUS_END(v))
 
 #include <mips/mips/bus_space_alignstride_chipdep.c>
