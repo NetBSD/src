@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.821 2021/02/14 22:48:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.822 2021/02/15 06:46:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.821 2021/02/14 22:48:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.822 2021/02/15 06:46:01 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1298,10 +1298,10 @@ SepBuf_DoneData(SepBuf *buf)
  * and typically adds a modification of this word to the buffer. It may also
  * do nothing or add several words.
  *
- * For example, in ${:Ua b c:M*2}, the callback is called 3 times, once for
- * each word of "a b c".
+ * For example, when evaluating the modifier ':M*b' in ${:Ua b c:M*b}, the
+ * callback is called 3 times, once for "a", "b" and "c".
  */
-typedef void (*ModifyWordsCallback)(const char *word, SepBuf *buf, void *data);
+typedef void (*ModifyWordProc)(const char *word, SepBuf *buf, void *data);
 
 
 /*
@@ -2324,16 +2324,12 @@ TryParseChar(const char **pp, int base, char *out_ch)
 }
 
 /*
- * Modify each of the words of the passed string using the given function.
- *
- * Input:
- *	str		String whose words should be modified
- *	modifyWord	Function that modifies a single word
- *	modifyWord_args Custom arguments for modifyWord
+ * Modify each word of the expression using the given function and place the
+ * result back in the expression.
  */
 static void
 ModifyWords(ApplyModifiersState *st,
-	    ModifyWordsCallback modifyWord, void *modifyWord_args,
+	    ModifyWordProc modifyWord, void *modifyWord_args,
 	    Boolean oneBigWord)
 {
 	SepBuf result;
@@ -2667,7 +2663,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	Boolean needSubst = FALSE;
 	const char *endpat;
 	char *pattern;
-	ModifyWordsCallback callback;
+	ModifyWordProc modifyWord;
 
 	/*
 	 * In the loop below, ignore ':' unless we are at (or back to) the
@@ -2730,8 +2726,8 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	DEBUG3(VAR, "Pattern[%s] for [%s] is [%s]\n",
 	    st->var->name.str, st->value.str, pattern);
 
-	callback = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
-	ModifyWords(st, callback, pattern, st->oneBigWord);
+	modifyWord = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
+	ModifyWords(st, modifyWord, pattern, st->oneBigWord);
 	free(pattern);
 	return AMR_OK;
 }
@@ -3359,7 +3355,7 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
  */
 static ApplyModifierResult
 ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
-		       ModifyWordsCallback modifyWord)
+		       ModifyWordProc modifyWord)
 {
 	char delim = (*pp)[1];
 	if (delim != st->endc && delim != ':')
