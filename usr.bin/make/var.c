@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.824 2021/02/15 17:59:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.825 2021/02/15 18:21:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.824 2021/02/15 17:59:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.825 2021/02/15 18:21:13 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2001,23 +2001,23 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * Some modifiers need to free some memory.
  */
 
-typedef enum ExprStatus {
+typedef enum ExprDefined {
 	/* The variable expression is based on a regular, defined variable. */
-	VES_NONE,
+	DEF_REGULAR,
 	/* The variable expression is based on an undefined variable. */
-	VES_UNDEF,
+	DEF_UNDEF,
 	/*
 	 * The variable expression started as an undefined expression, but one
-	 * of the modifiers (such as :D or :U) has turned the expression from
-	 * undefined to defined.
+	 * of the modifiers (such as ':D' or ':U') has turned the expression
+	 * from undefined to defined.
 	 */
-	VES_DEF
-} ExprStatus;
+	DEF_DEFINED
+} ExprDefined;
 
-static const char *const ExprStatus_Name[] = {
-	"none",
-	"VES_UNDEF",
-	"VES_DEF"
+static const char *const ExprDefined_Name[] = {
+	"none",		/* TODO: rename */
+	"VES_UNDEF",	/* TODO: rename */
+	"VES_DEF"	/* TODO: rename */
 };
 
 /* A variable expression such as $@ or ${VAR:Mpattern:Q}. */
@@ -2026,7 +2026,7 @@ typedef struct Expr {
 	FStr value;
 	VarEvalFlags const eflags;
 	GNode *const scope;
-	ExprStatus status;
+	ExprDefined defined;
 } Expr;
 
 /*
@@ -2059,8 +2059,8 @@ typedef struct ApplyModifiersState {
 static void
 Expr_Define(Expr *expr)
 {
-	if (expr->status == VES_UNDEF)
-		expr->status = VES_DEF;
+	if (expr->defined == DEF_UNDEF)
+		expr->defined = DEF_DEFINED;
 }
 
 static void
@@ -2429,7 +2429,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 	VarEvalFlags eflags = VARE_NONE;
 	if (expr->eflags & VARE_WANTRES)
-		if ((**pp == 'D') == (expr->status == VES_NONE))
+		if ((**pp == 'D') == (expr->defined == DEF_REGULAR))
 			eflags = expr->eflags;
 
 	Buf_Init(&buf);
@@ -3298,7 +3298,7 @@ ok:
 	}
 
 	scope = expr->scope;	/* scope where v belongs */
-	if (expr->status == VES_NONE && expr->scope != SCOPE_GLOBAL) {
+	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL) {
 		Var *gv = VarFind(expr->var->name.str, expr->scope, FALSE);
 		if (gv == NULL)
 			scope = SCOPE_GLOBAL;
@@ -3341,7 +3341,7 @@ ok:
 			break;
 		}
 		case '?':
-			if (expr->status == VES_NONE)
+			if (expr->defined == DEF_REGULAR)
 				break;
 			/* FALLTHROUGH */
 		default:
@@ -3503,7 +3503,7 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc)
 	    expr->value.str,
 	    VarEvalFlags_ToString(eflags_str, expr->eflags),
 	    VarFlags_ToString(vflags_str, expr->var->flags),
-	    ExprStatus_Name[expr->status]);
+	    ExprDefined_Name[expr->defined]);
 }
 
 static void
@@ -3520,7 +3520,7 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 	    quot, value == var_Error ? "error" : value, quot,
 	    VarEvalFlags_ToString(eflags_str, expr->eflags),
 	    VarFlags_ToString(vflags_str, expr->var->flags),
-	    ExprStatus_Name[expr->status]);
+	    ExprDefined_Name[expr->defined]);
 }
 
 static ApplyModifierResult
@@ -4050,7 +4050,7 @@ ParseVarnameLong(
 	Boolean *out_TRUE_haveModifier,
 	const char **out_TRUE_extraModifiers,
 	Boolean *out_TRUE_dynamic,
-	ExprStatus *out_TRUE_exprStatus
+	ExprDefined *out_TRUE_exprDefined
 )
 {
 	size_t namelen;
@@ -4119,7 +4119,7 @@ ParseVarnameLong(
 		 * instead of the actually computed value.
 		 */
 		v = VarNew(FStr_InitOwn(varname), "", VAR_NONE);
-		*out_TRUE_exprStatus = VES_UNDEF;
+		*out_TRUE_exprDefined = DEF_UNDEF;
 	} else
 		free(varname);
 
@@ -4215,7 +4215,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 #endif
 		eflags,
 		scope,
-		VES_NONE
+		DEF_REGULAR
 	};
 
 	DEBUG2(VAR, "Var_Parse: %s with %s\n", start,
@@ -4244,7 +4244,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 		if (!ParseVarnameLong(p, startc, scope, eflags,
 		    pp, &res, out_val,
 		    &endc, &p, &expr.var, &haveModifier, &extramodifiers,
-		    &dynamic, &expr.status))
+		    &dynamic, &expr.defined))
 			return res;
 	}
 
@@ -4300,8 +4300,8 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	if (v->flags & VAR_FROM_ENV) {
 		FreeEnvVar(&expr.value.freeIt, v, expr.value.str);
 
-	} else if (expr.status != VES_NONE) { /* XXX: rename VES_NONE */
-		if (expr.status != VES_DEF) { /* XXX: replace '!=' with '==' */
+	} else if (expr.defined != DEF_REGULAR) {
+		if (expr.defined == DEF_UNDEF) {
 			if (dynamic) {
 				Expr_SetValueOwn(&expr,
 				    bmake_strsedup(start, p));
