@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.63 2021/02/15 13:03:52 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.64 2021/02/15 16:32:07 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.63 2021/02/15 13:03:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.64 2021/02/15 16:32:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -130,7 +130,7 @@ pic_set_priority(struct cpu_info *ci, int newipl)
 		cpsie(I32_bit);
 }
 
-static void
+void
 pic_set_priority_psw(struct cpu_info *ci, register_t psw, int newipl)
 {
 	if ((psw & I32_bit) == 0) {

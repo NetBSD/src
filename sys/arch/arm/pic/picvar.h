@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.26 2019/12/24 20:40:09 skrll Exp $	*/
+/*	$NetBSD: picvar.h,v 1.27 2021/02/15 16:32:07 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -181,6 +181,7 @@ struct pic_ops {
  */
 struct cpu_info;
 void	pic_set_priority(struct cpu_info *, int);
+void	pic_set_priority_psw(struct cpu_info *, register_t, int);
 #else
 /* Using an inline causes catch-22 problems with cpu.h */
 #define	pic_set_priority(ci, newipl)	((void)((ci)->ci_cpl = (newipl)))
