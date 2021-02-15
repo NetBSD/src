@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.825 2021/02/15 18:21:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.826 2021/02/15 18:23:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.825 2021/02/15 18:21:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.826 2021/02/15 18:23:32 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2015,9 +2015,9 @@ typedef enum ExprDefined {
 } ExprDefined;
 
 static const char *const ExprDefined_Name[] = {
-	"none",		/* TODO: rename */
-	"VES_UNDEF",	/* TODO: rename */
-	"VES_DEF"	/* TODO: rename */
+	"regular",
+	"undefined",
+	"defined"
 };
 
 /* A variable expression such as $@ or ${VAR:Mpattern:Q}. */
