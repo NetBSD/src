@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.20 2021/02/13 08:14:46 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.21 2021/02/15 07:06:27 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -223,7 +223,7 @@ include		BEGIN(incl);
 			yyterminate();
 
 		if (--include_ptr < 0)
-			err(2, "Include stack underflow");
+			errx(2, "Include stack underflow");
 
 		free(cur_file);
 		cur_file = include_files[include_ptr];
@@ -260,7 +260,7 @@ include		BEGIN(incl);
 			unsigned long val;
 
 			if (sscanf(yytext, "%lx", &val) != 1)
-				err(1, "Bad hex conversion");
+				errx(1, "Bad hex conversion");
 
 			asprintf(&yylval.string, "%ld", val);
 			return numeric;
