@@ -1,6 +1,6 @@
 Var_Parse: ${:U\$\$\$\$\$\$\$\$} with VARE_WANTRES
-Applying ${:U...} to "" (VARE_WANTRES, none, VES_UNDEF)
-Result of ${:U\$\$\$\$\$\$\$\$} is "$$$$$$$$" (VARE_WANTRES, none, VES_DEF)
+Applying ${:U...} to "" (VARE_WANTRES, none, undefined)
+Result of ${:U\$\$\$\$\$\$\$\$} is "$$$$$$$$" (VARE_WANTRES, none, defined)
 Global:VAR.$$$$$$$$ = dollars
 Global:.MAKEFLAGS =  -r -k -d v -d
 Global:.MAKEFLAGS =  -r -k -d v -d 0

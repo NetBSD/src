@@ -1,10 +1,10 @@
 Global:SPECIALS = \: : \\ * \*
 CondParser_Eval: ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}}
 Var_Parse: ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}} with VARE_UNDEFERR|VARE_WANTRES
-Applying ${SPECIALS:M...} to "\: : \\ * \*" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Applying ${SPECIALS:M...} to "\: : \\ * \*" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 Var_Parse: ${:U}\: with VARE_UNDEFERR|VARE_WANTRES
-Applying ${:U} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VES_UNDEF)
-Result of ${:U} is "" (VARE_UNDEFERR|VARE_WANTRES, none, VES_DEF)
+Applying ${:U} to "" (VARE_UNDEFERR|VARE_WANTRES, none, undefined)
+Result of ${:U} is "" (VARE_UNDEFERR|VARE_WANTRES, none, defined)
 Pattern[SPECIALS] for [\: : \\ * \*] is [\:]
 ModifyWords: split "\: : \\ * \*" into 5 words
 VarMatch [\:] [\:]
@@ -12,12 +12,12 @@ VarMatch [:] [\:]
 VarMatch [\\] [\:]
 VarMatch [*] [\:]
 VarMatch [\*] [\:]
-Result of ${SPECIALS:M${:U}\:} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Result of ${SPECIALS:M${:U}\:} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 Var_Parse: ${SPECIALS:M\:${:U}} with VARE_UNDEFERR|VARE_WANTRES
-Applying ${SPECIALS:M...} to "\: : \\ * \*" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Applying ${SPECIALS:M...} to "\: : \\ * \*" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 Var_Parse: ${:U} with VARE_UNDEFERR|VARE_WANTRES
-Applying ${:U} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VES_UNDEF)
-Result of ${:U} is "" (VARE_UNDEFERR|VARE_WANTRES, none, VES_DEF)
+Applying ${:U} to "" (VARE_UNDEFERR|VARE_WANTRES, none, undefined)
+Result of ${:U} is "" (VARE_UNDEFERR|VARE_WANTRES, none, defined)
 Pattern[SPECIALS] for [\: : \\ * \*] is [:]
 ModifyWords: split "\: : \\ * \*" into 5 words
 VarMatch [\:] [:]
@@ -25,32 +25,32 @@ VarMatch [:] [:]
 VarMatch [\\] [:]
 VarMatch [*] [:]
 VarMatch [\*] [:]
-Result of ${SPECIALS:M\:${:U}} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Result of ${SPECIALS:M\:${:U}} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 lhs = ":", rhs = ":", op = !=
 Global:VALUES = : :: :\:
 CondParser_Eval: ${VALUES:M\:${:U\:}} != ${VALUES:M${:U\:}\:}
 Var_Parse: ${VALUES:M\:${:U\:}} != ${VALUES:M${:U\:}\:} with VARE_UNDEFERR|VARE_WANTRES
-Applying ${VALUES:M...} to ": :: :\:" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Applying ${VALUES:M...} to ": :: :\:" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 Var_Parse: ${:U:} with VARE_UNDEFERR|VARE_WANTRES
-Applying ${:U} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VES_UNDEF)
-Result of ${:U} is "" (VARE_UNDEFERR|VARE_WANTRES, none, VES_DEF)
+Applying ${:U} to "" (VARE_UNDEFERR|VARE_WANTRES, none, undefined)
+Result of ${:U} is "" (VARE_UNDEFERR|VARE_WANTRES, none, defined)
 Pattern[VALUES] for [: :: :\:] is [:]
 ModifyWords: split ": :: :\:" into 3 words
 VarMatch [:] [:]
 VarMatch [::] [:]
 VarMatch [:\:] [:]
-Result of ${VALUES:M\:${:U\:}} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Result of ${VALUES:M\:${:U\:}} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 Var_Parse: ${VALUES:M${:U\:}\:} with VARE_UNDEFERR|VARE_WANTRES
-Applying ${VALUES:M...} to ": :: :\:" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Applying ${VALUES:M...} to ": :: :\:" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 Var_Parse: ${:U\:}\: with VARE_UNDEFERR|VARE_WANTRES
-Applying ${:U...} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VES_UNDEF)
-Result of ${:U\:} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, VES_DEF)
+Applying ${:U...} to "" (VARE_UNDEFERR|VARE_WANTRES, none, undefined)
+Result of ${:U\:} is ":" (VARE_UNDEFERR|VARE_WANTRES, none, defined)
 Pattern[VALUES] for [: :: :\:] is [:\:]
 ModifyWords: split ": :: :\:" into 3 words
 VarMatch [:] [:\:]
 VarMatch [::] [:\:]
 VarMatch [:\:] [:\:]
-Result of ${VALUES:M${:U\:}\:} is "::" (VARE_UNDEFERR|VARE_WANTRES, none, none)
+Result of ${VALUES:M${:U\:}\:} is "::" (VARE_UNDEFERR|VARE_WANTRES, none, regular)
 lhs = ":", rhs = "::", op = !=
 make: "varmod-match-escape.mk" line 42: warning: XXX: Oops
 Global:.MAKEFLAGS =  -r -k -d cv -d
