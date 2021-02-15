@@ -1,4 +1,4 @@
-/* $NetBSD: mipssimreg.h,v 1.1 2021/01/27 05:24:16 simonb Exp $ */
+/* $NetBSD: mipssimreg.h,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,15 +35,27 @@
  *
  *	0000.0000	128MB	RAM (max ~500MB)
  *	1fd0.0000	 64kB	ISA IO space
+ *	1fd1.0000	 64kB	'ISA' VirtIO IO space (non standard)
  *
  *	CPU interrupts
  *
  *	 0	mipsnet
+ *	 1	virtio
  *	 2	16450 UART
  */
 
-#define	MIPSSIM_UART0_ADDR	0x3f8
-#define	MIPSSIM_MIPSNET0_ADDR	0x4200
+#define	MIPSSIM_UART0_ADDR	0x003f8
+#define	MIPSSIM_MIPSNET0_ADDR	0x04200
+#define MIPSSIM_VIRTIO_ADDR	0x10000
 
 #define	MIPSSIM_ISA_IO_BASE	0x1fd00000  /* ISA IO memory:	*/
 #define	MIPSSIM_ISA_IO_SIZE	0x00010000  /*    64 kByte	*/
+#define MIPSSIM_VIRTIO_IO_SIZE	0x00010000  /*    64 kByte      */
+
+#define MIPSSIM_DMA_BASE	0x00000000
+#define MIPSSIM_DMA_PHYSBASE	0x00000000
+#define MIPSSIM_DMA_SIZE	(MIPSSIM_ISA_IO_BASE - MIPSSIM_DMA_BASE)
+
+#define VIRTIO_NUM_TRANSPORTS	32
+#define VIRTIO_STRIDE		512
+

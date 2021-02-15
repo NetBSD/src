@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.1 2021/01/27 05:24:16 simonb Exp $ */
+/* $NetBSD: autoconf.h,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,4 +42,5 @@ struct mainbus_attach_args {
 	unsigned long	ma_addr;
 	int		ma_irq;
 	bus_space_tag_t	ma_iot;
+	bus_dma_tag_t	ma_dmat;
 };
