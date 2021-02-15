@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.302 2021/02/14 20:58:35 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.303 2021/02/15 19:19:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.302 2021/02/14 20:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.303 2021/02/15 19:19:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -707,10 +707,9 @@ arpintr(void)
 		MCLAIM(m, &arpdomain.dom_mowner);
 		ARP_STATINC(ARP_STAT_RCVTOTAL);
 
-		if (__predict_false(m->m_len < sizeof(*ar))) {
-			if ((m = m_pullup(m, sizeof(*ar))) == NULL)
-				goto badlen;
-		}
+		if (m_get_aligned_hdr(&m, ARP_HDR_ALIGNMENT, sizeof(*ar),
+		    false) != 0)
+			goto badlen;
 		ar = mtod(m, struct arphdr *);
 		KASSERT(POINTER_ALIGNED_P(ar, ARP_HDR_ALIGNMENT));
 
