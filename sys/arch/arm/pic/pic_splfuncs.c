@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.9 2021/02/15 15:07:47 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.10 2021/02/15 15:42:58 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.9 2021/02/15 15:07:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.10 2021/02/15 15:42:58 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -90,15 +90,17 @@ splx(int savedipl)
 	KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
 	    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
 
-	ci->ci_intr_depth++;
-	pic_do_pending_ints(psw, savedipl, NULL);
-	ci->ci_intr_depth--;
-	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
-	    ci->ci_cpl, savedipl);
 	if ((psw & I32_bit) == 0) {
+		ci->ci_intr_depth++;
+		pic_do_pending_ints(psw, savedipl, NULL);
+		ci->ci_intr_depth--;
+		KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
+		    ci->ci_cpl, savedipl);
+
 		cpsie(I32_bit);
 		cpu_dosoftints();
 	}
+
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
 	    ci->ci_cpl, savedipl);
 }
