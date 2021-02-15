@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.229 2021/02/15 00:44:09 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.230 2021/02/15 09:29:56 kre Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -849,7 +849,7 @@ m_get_aligned_hdr(struct mbuf **m, int align, size_t hlen, bool linkhdr)
 	if (POINTER_ALIGNED_P(mtod(*m, void *), align) == 0)
 		*m = m_copyup(*m, hlen, 
 		      linkhdr ? (max_linkhdr + align) & ~align : 0);
-	else if (__predict_false((*m)->m_len < hlen))
+	else if (__predict_false((size_t)(*m)->m_len < hlen))
 		*m = m_pullup(*m, hlen);
 	return *m == NULL;
 }
