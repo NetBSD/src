@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.48 2021/02/15 07:06:27 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.49 2021/02/15 15:55:50 joerg Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1388,10 +1388,8 @@ do_input(const char *s)
 		free(input_str);
 	}
 
-	if ((input_str = malloc(strlen(s) + 1)) == NULL)
+	if ((input_str = strdup(s)) == NULL)
 		err(2, "Cannot allocate memory for input string");
-
-	strlcpy(input_str, s, strlen(s) + 1);
 }
 
 static void
