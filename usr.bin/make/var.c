@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.823 2021/02/15 17:44:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.824 2021/02/15 17:59:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.823 2021/02/15 17:44:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.824 2021/02/15 17:59:08 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1983,8 +1983,8 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * during parsing though.
  *
  * Evaluating the modifier usually takes the current value of the variable
- * expression from st->value, or the variable name from st->var->name and
- * stores the result back in st->value via Expr_SetValueOwn or
+ * expression from st->expr->value, or the variable name from st->var->name
+ * and stores the result back in expr->value via Expr_SetValueOwn or
  * Expr_SetValueRefer.
  *
  * If evaluating fails (as of 2020-08-23), an error message is printed using
