@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.248 2021/02/14 20:58:35 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.249 2021/02/15 10:13:45 martin Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.248 2021/02/14 20:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.249 2021/02/15 10:13:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -538,7 +538,7 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
 	 */
-	if (POINTER_ALIGNED_P(icmp6, ICMP6_HDR_ALIGNMENT) == 0) {
+	if (POINTER_ALIGNED_P(icmp6, IP6_HDR_ALIGNMENT) == 0) {
 		m = m_copyup(m, off + sizeof(struct icmp6_hdr), 0);
 		if (m == NULL) {
 			ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
@@ -548,7 +548,7 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 		ip6 = mtod(m, struct ip6_hdr *);
 		icmp6 = (struct icmp6_hdr *)(mtod(m, char *) + off);
 	}
-	KASSERT(POINTER_ALIGNED_P(icmp6, ICMP6_HDR_ALIGNMENT));
+	KASSERT(POINTER_ALIGNED_P(icmp6, IP6_HDR_ALIGNMENT));
 
 	/*
 	 * calculate the checksum
