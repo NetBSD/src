@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.13 2021/02/13 19:23:11 rillig Exp $	*/
+/*	$NetBSD: commands.c,v 1.14 2021/02/15 07:06:27 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -91,7 +91,7 @@ write_to_director(const void *mem, size_t size)
 	if (nwritten == -1)
 		err(1, "writing to director failed");
 	if ((size_t)nwritten != size)
-		err(1, "short write to director, expected %zu, got %zd",
+		errx(1, "short write to director, expected %zu, got %zd",
 		    size, nwritten);
 }
 

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.47 2021/02/13 08:43:03 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.48 2021/02/15 07:06:27 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -501,10 +501,10 @@ get_numeric_var(const char *var)
 	int i;
 
 	if ((i = find_var_index(var)) < 0)
-		err(1, "Variable %s is undefined", var);
+		errx(1, "Variable %s is undefined", var);
 
 	if (vars[i].type != data_number)
-		err(1, "Variable %s is not a numeric type", var);
+		errx(1, "Variable %s is not a numeric type", var);
 
 	return vars[i].value;
 }
@@ -591,7 +591,7 @@ add_to_vals(data_enum_t argtype, void *arg)
 
 	case data_var:
 		if ((i = find_var_index((char *) arg)) < 0)
-			err(1, "%s:%zu: Variable %s is undefined",
+			errx(1, "%s:%zu: Variable %s is undefined",
 			    cur_file, line, (const char *) arg);
 
 		switch (vars[i].type) {
@@ -603,7 +603,8 @@ add_to_vals(data_enum_t argtype, void *arg)
 			break;
 
 		default:
-			err(1, "%s:%zu: Variable %s has invalid type for cchar",
+			errx(1,
+			    "%s:%zu: Variable %s has invalid type for cchar",
 			    cur_file, line, (const char *) arg);
 			break;
 
@@ -611,7 +612,7 @@ add_to_vals(data_enum_t argtype, void *arg)
 		break;
 
 	default:
-		err(1, "%s:%zu: Internal error: Unhandled type for vals array",
+		errx(1, "%s:%zu: Internal error: Unhandled type for vals array",
 		    cur_file, line);
 
 		/* if we get here without a value then tidy up */
@@ -670,7 +671,7 @@ set_cchar(char *name, void *attributes)
 	attr_t attribs;
 
 	if (nvals >= CURSES_CCHAR_MAX)
-		err(1, "%s:%zu: %s: too many characters in complex char type",
+		errx(1, "%s:%zu: %s: too many characters in complex char type",
 		    cur_file, line, __func__);
 
 	i = find_var_index(name);
@@ -678,7 +679,8 @@ set_cchar(char *name, void *attributes)
 		i = assign_var(name);
 
 	if (sscanf((char *) attributes, "%d", &attribs) != 1)
-		err(1, "%s:%zu: %s: conversion of attributes to integer failed",
+		errx(1,
+		    "%s:%zu: %s: conversion of attributes to integer failed",
 		    cur_file, line, __func__);
 
 	vars[i].type = data_cchar;
@@ -826,7 +828,7 @@ assign_rets(data_enum_t ret_type, void *ret)
 			       cur.data_len);
 		} else if (ret_type == data_ref) {
 			if ((cur.data_index = find_var_index(ret)) < 0)
-				err(1, "Undefined variable reference");
+				errx(1, "Undefined variable reference");
 		}
 	} else {
 		cur.data_index = find_var_index(ret);
@@ -902,18 +904,18 @@ compare_streams(const char *filename, bool discard)
 	if (filename[0] != '/') {
 		if (strlcpy(check_file, check_path, sizeof(check_file))
 		    >= sizeof(check_file))
-			err(2, "CHECK_PATH too long");
+			errx(2, "CHECK_PATH too long");
 
 		if (strlcat(check_file, "/", sizeof(check_file))
 		    >= sizeof(check_file))
-			err(2, "Could not append / to check file path");
+			errx(2, "Could not append / to check file path");
 	} else {
 		check_file[0] = '\0';
 	}
 
 	if (strlcat(check_file, filename, sizeof(check_file))
 	    >= sizeof(check_file))
-		err(2, "Path to check file path overflowed");
+		errx(2, "Path to check file path overflowed");
 
 	int create_check_file = 0;
 
@@ -1017,7 +1019,7 @@ compare_streams(const char *filename, bool discard)
 	 */
 	if (saved_output.count > 0) {
 		if (create_check_file)
-			err(2, "Slave output not flushed correctly");
+			errx(2, "Slave output not flushed correctly");
 		else
 			excess(cur_file, line, __func__, " from slave",
 				&saved_output.data[saved_output.readp], saved_output.count);
@@ -1180,11 +1182,11 @@ do_function_call(size_t nresults)
 	 */
 	if ((returns_count.data_len > 0) &&
 	    (response[0].data_type == data_slave_error))
-		err(2, "Slave returned error: %s",
+		errx(2, "Slave returned error: %s",
 		    (const char *)response[0].data_value);
 
 	if (returns_count.data_len != nresults)
-		err(2, "Incorrect number of returns from slave, expected %zu "
+		errx(2, "Incorrect number of returns from slave, expected %zu "
 		    "but received %zu", nresults, returns_count.data_len);
 
 	if (verbose) {
@@ -1263,7 +1265,7 @@ check(void)
 	var_t *vptr;
 
 	if (command.returns[0].data_index == -1)
-		err(1, "%s:%zu: Undefined variable in check statement",
+		errx(1, "%s:%zu: Undefined variable in check statement",
 		    cur_file, line);
 
 	if (command.returns[1].data_type == data_var) {
@@ -1287,7 +1289,7 @@ check(void)
 	 */
 	if (((command.returns[1].data_type == data_byte) &&
 	     (vars[command.returns[0].data_index].type != data_byte)))
-		err(1, "Var type %s (%d) does not match return type %s (%d)",
+		errx(1, "Var type %s (%d) does not match return type %s (%d)",
 		    enum_names[vars[command.returns[0].data_index].type],
 		    vars[command.returns[0].data_index].type,
 		    enum_names[command.returns[1].data_type],
@@ -1342,7 +1344,7 @@ check(void)
 		break;
 
 	default:
-		err(1, "%s:%zu: Malformed check statement", cur_file, line);
+		errx(1, "%s:%zu: Malformed check statement", cur_file, line);
 		break;
 	}
 
@@ -1354,7 +1356,7 @@ delay_millis(const char *millis)
 {
 	/* set the inter-character delay */
 	if (sscanf(millis, "%d", &input_delay) == 0)
-		err(1, "%s:%zu: Delay specification %s must be an int",
+		errx(1, "%s:%zu: Delay specification %s must be an int",
 		    cur_file, line, millis);
 	if (verbose) {
 		fprintf(stderr, "Set input delay to %d ms\n", input_delay);
@@ -1480,7 +1482,7 @@ validate(int i, void *data)
 		if ((byte_response->data_type == data_byte) ||
 		    (byte_response->data_type == data_err) ||
 		    (byte_response->data_type == data_ok))
-			err(1,
+			errx(1,
 			    "%s:%zu: %s: expecting type %s, received type %s",
 			    cur_file, line, __func__,
 			    enum_names[command.returns[i].data_type],
@@ -1521,7 +1523,7 @@ validate(int i, void *data)
 		break;
 
 	default:
-		err(1, "%s:%zu: Malformed statement", cur_file, line);
+		errx(1, "%s:%zu: Malformed statement", cur_file, line);
 		break;
 	}
 }
@@ -1569,7 +1571,7 @@ validate_reference(int i, void *data)
 		break;
 
 	default:
-		err(1, "%s:%zu: Invalid return type for reference",
+		errx(1, "%s:%zu: Invalid return type for reference",
 		    cur_file, line);
 		break;
 	}
@@ -1584,7 +1586,7 @@ validate_type(data_enum_t expected, ct_data_t *value, int check)
 {
 	if (((check == 0) && (expected != value->data_type)) ||
 	    ((check == 1) && (expected == value->data_type)))
-		err(1, "%s:%zu: Validate expected type %s %s %s",
+		errx(1, "%s:%zu: Validate expected type %s %s %s",
 		    cur_file, line,
 		    enum_names[expected],
 		    (check == 0)? "matching" : "not matching",
@@ -1838,16 +1840,16 @@ validate_variable(int ret, data_enum_t type, const void *value, int i,
 	varptr = &vars[command.returns[ret].data_index];
 
 	if (varptr->value == NULL)
-		err(1, "Variable %s has no value assigned to it", varptr->name);
+		errx(1, "Variable %s has no value assigned to it", varptr->name);
 
 
 	if (varptr->type != type)
-		err(1, "Variable %s is not the expected type", varptr->name);
+		errx(1, "Variable %s is not the expected type", varptr->name);
 
 	if (type != data_byte) {
 		if ((((check == 0) && strcmp(value, varptr->value) != 0))
 		    || ((check == 1) && strcmp(value, varptr->value) == 0))
-			err(1, "%s:%zu: Variable %s contains %s instead of %s"
+			errx(1, "%s:%zu: Variable %s contains %s instead of %s"
 			    " value %s",
 			    cur_file, line,
 			    varptr->name, (const char *)varptr->value,
@@ -1863,7 +1865,7 @@ validate_variable(int ret, data_enum_t type, const void *value, int i,
 		}
 	} else {
 		if ((check == 0) && (retval->data_len != varptr->len))
-			err(1, "Byte validation failed, length mismatch");
+			errx(1, "Byte validation failed, length mismatch");
 
 		/*
 		 * If check is 0 then we want to throw an error IFF
@@ -1875,7 +1877,7 @@ validate_variable(int ret, data_enum_t type, const void *value, int i,
 		    ((check == 1) && (retval->data_len == varptr->len) &&
 		     memcmp(retval->data_value, varptr->value,
 			    varptr->len) == 0))
-			err(1, "%s:%zu: Validate expected %s byte stream",
+			errx(1, "%s:%zu: Validate expected %s byte stream",
 			    cur_file, line,
 			    (check == 0)? "matching" : "not matching");
 		if (verbose) {
