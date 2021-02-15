@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.64 2013/08/18 20:03:48 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.65 2021/02/15 14:35:04 christos Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -21,7 +21,7 @@ CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus
 
-MAN+=	setlocale.3 nl_langinfo.3
+MAN+=	duplocale.3 freelocale.3 newlocale.3 setlocale.3 nl_langinfo.3 
 
 MAN+=	mbtowc.3 mbstowcs.3 wctomb.3 wcstombs.3 mblen.3 \
 
