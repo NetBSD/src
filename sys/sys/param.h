@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.687 2021/02/15 18:33:28 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.688 2021/02/15 19:46:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -290,7 +290,7 @@
 #ifdef __NO_STRICT_ALIGNMENT
 #define	POINTER_ALIGNED_P(p, a)		1
 #else
-#define	POINTER_ALIGNED_P(p, a)		(((uintptr_t)(p) + (a)) == 0)
+#define	POINTER_ALIGNED_P(p, a)		(((uintptr_t)(p) & (a)) == 0)
 #endif
 
 /*
