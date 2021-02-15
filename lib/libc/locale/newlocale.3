@@ -1,4 +1,4 @@
-.\" $NetBSD: newlocale.3,v 1.2 2021/02/15 15:36:53 christos Exp $
+.\" $NetBSD: newlocale.3,v 1.3 2021/02/15 15:38:43 wiz Exp $
 .\" Copyright (c) 2011 The FreeBSD Foundation
 .\" All rights reserved.
 .\"
@@ -78,8 +78,8 @@ and
 .It LC_CTYPE_MASK
 The locale for the
 .Xr ctype 3
-and
-.Xr multibyte 3
+.\" and
+.\" .Xr multibyte 3
 functions.
 This controls recognition of upper and lower case, alphabetic or
 non-alphabetic characters, and so on.
@@ -117,7 +117,7 @@ You must free the returned locale with
 .Sh SEE ALSO
 .Xr duplocale 3 ,
 .Xr freelocale 3 ,
-.Xr localeconv 3 ,
+.Xr localeconv 3
 .\" .Xr querylocale 3 ,
 .\" .Xr uselocale 3 ,
 .\" .Xr xlocale 3
