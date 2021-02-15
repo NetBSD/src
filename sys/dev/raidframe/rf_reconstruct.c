@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.124 2019/12/08 12:14:40 mlelstv Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.125 2021/02/15 23:27:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.124 2019/12/08 12:14:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.125 2021/02/15 23:27:03 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -616,7 +616,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	mapPtr = raidPtr->reconControl->reconMap;
 
 	incPSID = RF_RECONMAP_SIZE;
-	lastPSID = raidPtr->Layout.numStripe / raidPtr->Layout.SUsPerPU;
+	lastPSID = raidPtr->Layout.numStripe / raidPtr->Layout.SUsPerPU - 1;
 	RUsPerPU = raidPtr->Layout.SUsPerPU / raidPtr->Layout.SUsPerRU;
 	recon_error = 0;
 	write_error = 0;
@@ -631,7 +631,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		raidPtr->reconControl->lastPSID = lastPSID;
 
 	if (pending_writes > lastPSID)
-		pending_writes = lastPSID;
+		pending_writes = lastPSID + 1;
 
 	/* start the actual reconstruction */
 
@@ -796,7 +796,6 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 			pending_writes = lastPSID - prev;
 			raidPtr->reconControl->lastPSID = lastPSID;
 		}
-		
 		/* back down curPSID to get ready for the next round... */
 		for (i = 0; i < raidPtr->numCol; i++) {
 			if (i != col) {
