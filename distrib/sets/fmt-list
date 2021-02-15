@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: fmt-list,v 1.4 2021/02/15 23:00:03 rillig Exp $
+-- $NetBSD: fmt-list,v 1.5 2021/02/15 23:46:46 rillig Exp $
 
 --[[
 
@@ -337,7 +337,14 @@ local function normalize(entries)
 
   local function less(a, b)
     if a.fullname ~= b.fullname then
+      -- To sort by directory first, comment out the following line.
       return a.fullname < b.fullname
+    end
+    if a.dirname ~= b.dirname then
+      return a.dirname < b.dirname
+    end
+    if a.basename ~= b.basename then
+      return a.basename < b.basename
     end
     if a.category ~= nil and b.category ~= nil and a.category ~= b.category then
       return a.category < b.category
