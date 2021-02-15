@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: fmt-list,v 1.3 2020/11/02 20:14:01 rillig Exp $
+-- $NetBSD: fmt-list,v 1.4 2021/02/15 23:00:03 rillig Exp $
 
 --[[
 
@@ -106,10 +106,10 @@ end)
 local function parse_entry(line)
 
   local category_align, prefix, fullname, flags_align, category, flags =
-    line:match("^((%-?)(%.%S*)%s+)((%S+)%s+)(%S+)$")
+    line:match("^(([#%-]?)(%.%S*)%s+)((%S+)%s+)(%S+)$")
   if fullname == nil then
     category_align, prefix, fullname, category =
-      line:match("^((%-?)(%.%S*)%s+)(%S+)$")
+      line:match("^(([#%-]?)(%.%S*)%s+)(%S+)$")
   end
   if fullname == nil then
     prefix, fullname = line:match("^(%-)(%.%S*)$")
@@ -152,6 +152,16 @@ test(function()
   assert_equals(entry.category_col, 40)
   assert_equals(entry.category, "category")
   assert_equals(entry.flags_col, 16)
+  assert_equals(entry.flags, "flags")
+
+  entry = parse_entry("#./dirname/filename\tcat\tflags")
+  assert_equals(entry.prefix, "#")
+  assert_equals(entry.fullname, "./dirname/filename")
+  assert_equals(entry.dirname, "./dirname")
+  assert_equals(entry.basename, "filename")
+  assert_equals(entry.category_col, 24)
+  assert_equals(entry.category, "cat")
+  assert_equals(entry.flags_col, 8)
   assert_equals(entry.flags, "flags")
 end)
 
@@ -397,6 +407,8 @@ local function write_list(fname, head, entries)
     if line ~= prev_line then
       prev_line = line
       f:write(line, "\n")
+    else
+      --print(string.format("%s: duplicate entry: %s", fname, line))
     end
   end
 
