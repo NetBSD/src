@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2373 2021/01/24 17:29:11 thorpej Exp $
+#	$NetBSD: mi,v 1.2374 2021/02/15 14:38:06 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -984,8 +984,6 @@
 ./usr/include/g++/bitdo1.h			comp-obsolete		obsolete
 ./usr/include/g++/bitdo2.h			comp-obsolete		obsolete
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
-./usr/include/g++/bits/erase_if.h		comp-cxx-include	gcc=9,cxx,libstdcxx
-./usr/include/g++/bits/unique_lock.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/bits/algorithmfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/allocated_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1027,6 +1025,7 @@
 ./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/deque.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/enable_special_members.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/erase_if.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/bits/error_constants.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/exception.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/exception_defines.h	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1149,6 +1148,7 @@
 ./usr/include/g++/bits/time_members.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/type_traits.h		comp-obsolete		obsolete
 ./usr/include/g++/bits/uniform_int_dist.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/unique_lock.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/bits/unique_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/unordered_map.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/unordered_set.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1825,27 +1825,27 @@
 ./usr/include/g++/profile/unordered_set		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/profile/vector		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/projectn.h			comp-obsolete		obsolete
-./usr/include/g++/pstl/algorithm_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/algorithm_fwd.h		comp-cxx-include	gcc=9,cxx,libstdcxx
-./usr/include/g++/pstl/glue_algorithm_defs.h	comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/pstl/algorithm_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/execution_defs.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/execution_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
-./usr/include/g++/pstl/numeric_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/pstl/glue_algorithm_defs.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/glue_algorithm_impl.h	comp-cxx-include	gcc=9,cxx,libstdcxx
-./usr/include/g++/pstl/glue_memory_defs.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/glue_execution_defs.h	comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/pstl/glue_memory_defs.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/glue_memory_impl.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/glue_numeric_defs.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/glue_numeric_impl.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/memory_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/numeric_fwd.h		comp-cxx-include	gcc=9,cxx,libstdcxx
-./usr/include/g++/pstl/parallel_backend_utils.h	comp-cxx-include	gcc=9,cxx,libstdcxx
-./usr/include/g++/pstl/parallel_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/pstl/numeric_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/parallel_backend.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/parallel_backend_tbb.h	comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/pstl/parallel_backend_utils.h	comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/pstl/parallel_impl.h		comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/pstl/pstl_config.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/unseq_backend_simd.h	comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pstl/utils.h			comp-cxx-include	gcc=9,cxx,libstdcxx
-./usr/include/g++/pstl/pstl_config.h		comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/pthread_alloc			comp-obsolete		obsolete
 ./usr/include/g++/pthread_alloc.h		comp-obsolete		obsolete
 ./usr/include/g++/queue				comp-cxx-include	gcc,cxx,libstdcxx
@@ -2162,7 +2162,6 @@
 ./usr/include/gcc-7/sanitizer/lsan_interface.h		comp-gcc-include	obsolete
 ./usr/include/gcc-7/sanitizer/tsan_interface_atomic.h	comp-gcc-include	obsolete
 ./usr/include/gcc-7/stdatomic.h				comp-gcc-include	obsolete
-./usr/include/gcc-8/stdatomic.h				comp-gcc-include	gcc=8
 ./usr/include/gcc-8/omp.h				comp-gcc-include	gcc=8
 ./usr/include/gcc-8/openacc.h				comp-gcc-include	gcc=8
 ./usr/include/gcc-8/sanitizer/allocator_interface.h	comp-gcc-include	gcc=8
@@ -6660,6 +6659,7 @@
 ./usr/share/man/cat3/drand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dsa.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/dup_field.0		comp-c-catman		.cat
+./usr/share/man/cat3/duplocale.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dupwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dwarf.0	comp-c-catman	.cat
 ./usr/share/man/cat3/dwarf_add_AT_comp_dir.0	comp-c-catman	.cat
@@ -7301,6 +7301,7 @@
 ./usr/share/man/cat3/free_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freeaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freeifaddrs.0		comp-c-catman		.cat
+./usr/share/man/cat3/freelocale.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freemntopts.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/frexp.0			comp-c-catman		.cat
@@ -8787,6 +8788,7 @@
 ./usr/share/man/cat3/new_menu.0			comp-c-catman		.cat
 ./usr/share/man/cat3/new_page.0			comp-c-catman		.cat
 ./usr/share/man/cat3/new_panel.0		comp-c-catman		.cat
+./usr/share/man/cat3/newlocale.0		comp-c-catman		.cat
 ./usr/share/man/cat3/newpad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/newterm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/newwin.0			comp-c-catman		.cat
@@ -14926,6 +14928,7 @@
 ./usr/share/man/html3/dprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/drand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/dup_field.html		comp-c-htmlman		html
+./usr/share/man/html3/duplocale.html		comp-c-htmlman		html
 ./usr/share/man/html3/dupwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/dwarf.html	comp-c-htmlman	html
 ./usr/share/man/html3/dwarf_add_AT_comp_dir.html	comp-c-htmlman	html
@@ -15566,6 +15569,7 @@
 ./usr/share/man/html3/free_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/freeaddrinfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/freeifaddrs.html		comp-c-htmlman		html
+./usr/share/man/html3/freelocale.html		comp-c-htmlman		html
 ./usr/share/man/html3/freemntopts.html		comp-c-htmlman		html
 ./usr/share/man/html3/freopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/frexp.html		comp-c-htmlman		html
@@ -17018,6 +17022,7 @@
 ./usr/share/man/html3/new_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_page.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_panel.html		comp-c-htmlman		html
+./usr/share/man/html3/newlocale.html		comp-c-htmlman		html
 ./usr/share/man/html3/newpad.html		comp-c-htmlman		html
 ./usr/share/man/html3/newterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/newwin.html		comp-c-htmlman		html
@@ -23127,6 +23132,7 @@
 ./usr/share/man/man3/drand48.3			comp-c-man		.man
 ./usr/share/man/man3/dsa.3			comp-obsolete		obsolete
 ./usr/share/man/man3/dup_field.3		comp-c-man		.man
+./usr/share/man/man3/duplocale.3		comp-c-man		.man
 ./usr/share/man/man3/dupwin.3			comp-c-man		.man
 ./usr/share/man/man3/dwarf.3	comp-c-man	.man
 ./usr/share/man/man3/dwarf_add_AT_comp_dir.3	comp-c-man	.man
@@ -23768,6 +23774,7 @@
 ./usr/share/man/man3/free_menu.3		comp-c-man		.man
 ./usr/share/man/man3/freeaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/freeifaddrs.3		comp-c-man		.man
+./usr/share/man/man3/freelocale.3		comp-c-man		.man
 ./usr/share/man/man3/freemntopts.3		comp-c-man		.man
 ./usr/share/man/man3/freopen.3			comp-c-man		.man
 ./usr/share/man/man3/frexp.3			comp-c-man		.man
@@ -25255,6 +25262,7 @@
 ./usr/share/man/man3/new_menu.3			comp-c-man		.man
 ./usr/share/man/man3/new_page.3			comp-c-man		.man
 ./usr/share/man/man3/new_panel.3		comp-c-man		.man
+./usr/share/man/man3/newlocale.3		comp-c-man		.man
 ./usr/share/man/man3/newpad.3			comp-c-man		.man
 ./usr/share/man/man3/newterm.3			comp-c-man		.man
 ./usr/share/man/man3/newwin.3			comp-c-man		.man
