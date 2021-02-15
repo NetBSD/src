@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.205 2021/02/04 06:54:59 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.206 2021/02/15 07:36:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.205 2021/02/04 06:54:59 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.206 2021/02/15 07:36:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1008,13 +1008,36 @@ typeok_quest(tspec_t lt, const tnode_t **rn)
 	return true;
 }
 
+static void
+typeok_colon_pointer(const mod_t *mp,
+		     const tnode_t *ln, const type_t *ltp,
+		     const tnode_t *rn, const type_t *rtp)
+{
+	type_t *lstp = ltp->t_subt;
+	type_t *rstp = rtp->t_subt;
+	tspec_t lst = lstp->t_tspec;
+	tspec_t rst = rstp->t_tspec;
+
+	if ((lst == VOID && rst == FUNC) || (lst == FUNC && rst == VOID)) {
+		/* (void *)0 handled above */
+		if (sflag)
+			/* ANSI C forbids conv. of %s to %s, op %s */
+			warning(305, "function pointer", "'void *'",
+			    mp->m_name);
+		return;
+	}
+
+	if (eqptrtype(lstp, rstp, true))
+		return;
+	if (!eqtype(lstp, rstp, true, false, NULL))
+		warn_incompatible_pointers(mp, ltp, rtp);
+}
+
 static bool
 typeok_colon(const mod_t *mp,
 	     const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	     const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
-	type_t *lstp, *rstp;
-	tspec_t lst, rst;
 
 	if (is_arithmetic(lt) && is_arithmetic(rt))
 		return true;
@@ -1025,11 +1048,6 @@ typeok_colon(const mod_t *mp,
 		return true;
 	if (lt == UNION && rt == UNION && ltp->t_str == rtp->t_str)
 		return true;
-
-	lstp = lt == PTR ? ltp->t_subt : NULL;
-	rstp = rt == PTR ? rtp->t_subt : NULL;
-	lst = lstp != NULL ? lstp->t_tspec : NOTSPEC;
-	rst = rstp != NULL ? rstp->t_tspec : NOTSPEC;
 
 	/* combination of any pointer and null pointer is ok */
 	if (lt == PTR && is_null_pointer(rn))
@@ -1053,21 +1071,8 @@ typeok_colon(const mod_t *mp,
 		return true;
 	}
 
-	if (lt == PTR && rt == PTR && ((lst == VOID && rst == FUNC) ||
-				       (lst == FUNC && rst == VOID))) {
-		/* (void *)0 handled above */
-		if (sflag)
-			/* ANSI C forbids conv. of %s to %s, op %s */
-			warning(305, "function pointer", "'void *'",
-			    mp->m_name);
-		return true;
-	}
-
-	if (rt == PTR && lt == PTR) {
-		if (eqptrtype(lstp, rstp, true))
-			return true;
-		if (!eqtype(lstp, rstp, true, false, NULL))
-			warn_incompatible_pointers(mp, ltp, rtp);
+	if (lt == PTR && rt == PTR) {
+		typeok_colon_pointer(mp, ln, ltp, rn, rtp);
 		return true;
 	}
 
