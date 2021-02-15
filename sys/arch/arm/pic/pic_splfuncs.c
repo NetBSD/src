@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.10 2021/02/15 15:42:58 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.11 2021/02/15 16:04:01 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.10 2021/02/15 15:42:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.11 2021/02/15 16:04:01 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -99,6 +99,8 @@ splx(int savedipl)
 
 		cpsie(I32_bit);
 		cpu_dosoftints();
+	} else {
+		pic_set_priority(ci, savedipl);
 	}
 
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
