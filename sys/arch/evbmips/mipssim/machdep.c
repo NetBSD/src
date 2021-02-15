@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2021/01/27 05:24:16 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2001,2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2021/01/27 05:24:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,8 +113,11 @@ cal_timer(void)
 {
 	uint32_t cntfreq;
 
-	/* Pick a random clock frequency.  XXX Any better way? */
-	cntfreq = curcpu()->ci_cpu_freq = 10 * 1000 * 1000;
+	/*
+	 * Qemu seems to default to 200 MHz; wall clock looks the right speed
+	 * but we don't have an RTC to check.
+	 */
+	cntfreq = curcpu()->ci_cpu_freq = 200 * 1000 * 1000;
 
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;
@@ -157,6 +160,8 @@ mach_init(u_long arg0, u_long arg1, u_long arg2, u_long arg3)
 	 * Initialize bus space tags and bring up the main console.
 	 */
 	mipssim_bus_io_init(&mcp->mc_iot, mcp);
+	mipssim_dma_init(mcp);
+
 	if (comcnattach(&mcp->mc_iot, MIPSSIM_UART0_ADDR, COMCNRATE,
 	    COM_FREQ, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)

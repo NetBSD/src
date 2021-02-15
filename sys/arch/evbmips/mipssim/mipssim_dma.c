@@ -1,7 +1,7 @@
-/* $NetBSD: mipssimvar.h,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
+/*	$NetBSD: mipssim_dma.c,v 1.1 2021/02/15 22:39:46 reinoud Exp $	*/
 
 /*-
- * Copyright (c) 2001,2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,21 +29,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Platform-specific DMA support for the mipssim.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mipssim_dma.c,v 1.1 2021/02/15 22:39:46 reinoud Exp $");
+
+#include <sys/param.h>
+#include <sys/device.h>
+
+#define	_MIPS_BUS_DMA_PRIVATE
 #include <sys/bus.h>
+
 #include <dev/isa/isavar.h>
 
-struct mipssim_config {
-	struct mips_bus_space	mc_iot;
-	struct mips_bus_dma_tag	mc_dmat;
+#include <evbmips/mipssim/mipssimreg.h>
+#include <evbmips/mipssim/mipssimvar.h>
 
-	struct mips_isa_chipset	mc_ic;
+void
+mipssim_dma_init(struct mipssim_config *mcp)
+{
+	bus_dma_tag_t t;
 
-	struct extent *mc_io_ex;
-
-	int	mc_mallocsafe;
-};
-
-extern struct mipssim_config mipssim_configuration;
-
-void	mipssim_bus_io_init(bus_space_tag_t, void *);
-void	mipssim_dma_init(struct mipssim_config *);
+	t = &mcp->mc_dmat;
+	t->_cookie = mcp;
+	t->_wbase = MIPSSIM_DMA_BASE;
+	t->_bounce_alloc_lo = MIPSSIM_DMA_PHYSBASE;
+	t->_bounce_alloc_hi = MIPSSIM_DMA_PHYSBASE + MIPSSIM_DMA_SIZE;
+	t->_dmamap_ops = mips_bus_dmamap_ops;
+	t->_dmamem_ops = mips_bus_dmamem_ops;
+	t->_dmatag_ops = mips_bus_dmatag_ops;
+}
