@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.133 2021/02/16 09:58:35 hannken Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.134 2021/02/16 10:00:27 hannken Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.133 2021/02/16 09:58:35 hannken Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.134 2021/02/16 10:00:27 hannken Exp $");
 #endif
 #endif				/* not lint */
 
@@ -226,7 +226,8 @@ __dead static void no_nfs(int);
 static struct exportlist *exphead;
 static struct mountlist *mlhead;
 static struct grouplist *grphead;
-static const char *exname;
+static char *const exnames_default[] = { __UNCONST(_PATH_EXPORTS), NULL };
+static char *const *exnames;
 static struct uucred def_anon = {
 	1,
 	(uid_t) -2,
@@ -384,15 +385,15 @@ main(int argc, char **argv)
 #ifdef IPSEC
 			    " [-P policy]"
 #endif
-			    " [-p port] [exportsfile]\n", getprogname());
+			    " [-p port] [exportsfile ...]\n", getprogname());
 			exit(1);
 		};
 	argc -= optind;
 	argv += optind;
-	if (argc == 1)
-		exname = *argv;
+	if (argc > 0)
+		exnames = argv;
 	else
-		exname = _PATH_EXPORTS;
+		exnames = exnames_default;
 
 	s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	if (s < 0)
@@ -408,7 +409,7 @@ main(int argc, char **argv)
 
 	sem_init(&exportsem, 0, 0);
 	pthread_create(&ptdummy, NULL, exportlist_thread, NULL);
-	exname = _PATH_EXPORTS;
+	exnames = exnames_default;
 	have_v6 = 0;
 	(void)signal(SIGHUP, signal_get_exportlist);
 #endif
@@ -1261,20 +1262,22 @@ get_exportlist(int n)
 	 * Read in the exports file and build the list, calling
 	 * mount() as we go along to push the export rules into the kernel.
 	 */
-	if ((exp_file = fopen(exname, "r")) == NULL) {
-		/*
-		 * Don't exit here; we can still reload the config
-		 * after a SIGHUP.
-		 */
-		if (mountd_debug)
-			(void)fprintf(stderr, "Can't open %s: %s\n", exname,
-			    strerror(errno));
-		return;
+	for (i = 0; exnames[i] != NULL; i++) {
+		if ((exp_file = fopen(exnames[i], "r")) == NULL) {
+			/*
+			 * Don't exit here; we can still reload the config
+			 * after a SIGHUP.
+			 */
+			if (mountd_debug)
+				(void)fprintf(stderr, "Can't open %s: %s\n",
+				    exnames[i], strerror(errno));
+			continue;
+		}
+
+		get_exportlist_one(exp_file);
+
+		(void)fclose(exp_file);
 	}
-
-	get_exportlist_one(exp_file);
-
-	(void)fclose(exp_file);
 }
 
 /*
