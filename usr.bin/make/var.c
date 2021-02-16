@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.826 2021/02/15 18:23:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.827 2021/02/16 16:14:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -120,7 +120,8 @@
  *
  *	Var_Dump	Print out all variables defined in the given scope.
  *
- * XXX: There's a lot of duplication in these functions.
+ * XXX: There's a lot of almost duplicate code in these functions that only
+ *  differs in subtle details that are not mentioned in the manual page.
  */
 
 #include <sys/stat.h>
@@ -139,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.826 2021/02/15 18:23:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.827 2021/02/16 16:14:27 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
