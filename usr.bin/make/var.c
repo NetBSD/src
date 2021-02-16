@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.830 2021/02/16 17:41:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.831 2021/02/16 19:46:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.830 2021/02/16 17:41:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.831 2021/02/16 19:46:15 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -486,18 +486,15 @@ VarFreeEnv(Var *v, Boolean freeValue)
 	return TRUE;
 }
 
-/*
- * Add a new variable of the given name and value to the given scope.
- * The name and val arguments are duplicated so they may safely be freed.
- */
+/* Add a new variable of the given name and value to the given scope. */
 static void
-VarAdd(const char *name, const char *val, GNode *scope, VarSetFlags flags)
+VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
 {
 	HashEntry *he = HashTable_CreateEntry(&scope->vars, name, NULL);
-	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), val,
+	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), value,
 	    flags & VAR_SET_READONLY ? VFL_READONLY : VFL_NONE);
 	HashEntry_Set(he, v);
-	DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, val);
+	DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, value);
 }
 
 /*
@@ -516,7 +513,7 @@ Var_Delete(GNode *scope, const char *varname)
 	}
 
 	DEBUG2(VAR, "%s:delete %s\n", scope->name, varname);
-	v = HashEntry_Get(he);
+	v = he->value;
 	if (v->flags & VFL_EXPORTED)
 		unsetenv(v->name.str);
 	if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
@@ -717,7 +714,7 @@ Var_ReexportVars(void)
 	 * We allow the makefiles to update MAKELEVEL and ensure
 	 * children see a correctly incremented value.
 	 */
-	char tmp[BUFSIZ];
+	char tmp[21];
 	snprintf(tmp, sizeof tmp, "%d", makelevel + 1);
 	setenv(MAKE_LEVEL_ENV, tmp, 1);
 
@@ -727,7 +724,7 @@ Var_ReexportVars(void)
 	if (var_exportedVars == VAR_EXPORTED_ALL) {
 		HashIter hi;
 
-		/* Ouch! Exporting all variables at once is crazy... */
+		/* Ouch! Exporting all variables at once is crazy. */
 		HashIter_Init(&hi, &SCOPE_GLOBAL->vars);
 		while (HashIter_Next(&hi) != NULL) {
 			Var *var = hi.entry->value;
@@ -752,6 +749,7 @@ Var_ReexportVars(void)
 
 static void
 ExportVars(const char *varnames, Boolean isExport, VarExportMode mode)
+/* TODO: try to combine the parameters 'isExport' and 'mode'. */
 {
 	Words words = Str_Words(varnames, FALSE);
 	size_t i;
