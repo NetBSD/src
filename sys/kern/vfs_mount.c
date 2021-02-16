@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.85 2020/11/19 10:47:47 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.86 2021/02/16 09:56:32 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.85 2020/11/19 10:47:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.86 2021/02/16 09:56:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.85 2020/11/19 10:47:47 hannken Exp $
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+#include <uvm/uvm_swap.h>
 
 enum mountlist_type {
 	ME_MOUNT,
@@ -1022,6 +1024,7 @@ bool
 vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 {
 	struct mount *mp;
+	mount_iterator_t *iter;
 	bool any_error = false, progress = false;
 	uint64_t gen;
 	int error;
@@ -1056,6 +1059,13 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 	if (any_error && verbose) {
 		printf("WARNING: some file systems would not unmount\n");
 	}
+	/* If the mountlist is empty it is time to remove swap. */
+	mountlist_iterator_init(&iter);
+	if (mountlist_iterator_next(iter) == NULL) {
+		uvm_swap_shutdown(l);
+	}
+	mountlist_iterator_destroy(iter);
+
 	return progress;
 }
 
