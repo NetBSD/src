@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.112 2020/09/27 10:35:57 mrg Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.113 2021/02/16 06:06:58 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.112 2020/09/27 10:35:57 mrg Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.113 2021/02/16 06:06:58 simonb Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2627,8 +2627,10 @@ END(MIPSX(tlb_record_asids))
  * Arrange for a function to be invoked neatly, after a cpu_switch().
  * Call the service function with one argument, specified by the s0
  * and s1 respectively.  There is no need register save operation.
+ * XXX - Not profiled because we pass an arg in with v0 which isn't
+ *       preserved by _mcount()
  */
-LEAF(MIPSX(lwp_trampoline))
+LEAF_NOPROFILE(MIPSX(lwp_trampoline))
 	PTR_ADDU sp, -CALLFRAME_SIZ
 
 	# Call lwp_startup(), with args from cpu_switchto()/cpu_lwp_fork()
