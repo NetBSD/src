@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.71 2019/02/09 09:20:47 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.72 2021/02/16 15:30:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.71 2019/02/09 09:20:47 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.72 2021/02/16 15:30:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ struct parsefile {
 	int fd;			/* file descriptor (or -1 if string) */
 	int nleft;		/* number of chars left in this line */
 	int lleft;		/* number of chars left in this buffer */
+	int nskip;		/* number of \0's dropped in previous line */
 	const char *nextc;	/* next char in buffer */
 	char *buf;		/* input buffer */
 	struct strpush *strpush; /* for pushing strings at this level */
@@ -274,7 +275,12 @@ preadbuffer(void)
 			parselleft = parsenleft = EOF_NLEFT;
 			return PEOF;
 		}
+		parsefile->nskip = 0;
 	}
+
+		/* jump over slots for any \0 chars that were dropped */
+	parsenextc += parsefile->nskip;
+	parsefile->nskip = 0;
 
 		/* p = (not const char *)parsenextc; */
 	p = parsefile->buf + (parsenextc - parsefile->buf);
@@ -288,6 +294,7 @@ preadbuffer(void)
 		switch (*p) {
 		case '\0':
 			p++;	/* Skip nul */
+			parsefile->nskip++;
 			goto check;
 
 		case '\t':
@@ -306,7 +313,11 @@ preadbuffer(void)
 			break;
 		}
 
-		*q++ = *p++;
+		if (parsefile->nskip)
+			*q++ = *p++;
+		else
+			q = ++p;
+
  check:
 		if (--parselleft <= 0) {
 			parsenleft = q - parsenextc - 1;
