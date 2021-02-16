@@ -5,10 +5,10 @@ Global:.MAKE.EXPORTED = UT_VAR
 ParseReadLine (32): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} with VARE_UNDEFERR|VARE_WANTRES
 Var_Parse: ${REF}> with VARE_UNDEFERR|VARE_WANTRES
-Applying ${UT_VAR:N...} to "<>" (VARE_UNDEFERR|VARE_WANTRES, VAR_EXPORTED|VAR_REEXPORT, regular)
+Applying ${UT_VAR:N...} to "<>" (VARE_UNDEFERR|VARE_WANTRES, VFL_EXPORTED|VFL_REEXPORT, regular)
 Pattern[UT_VAR] for [<>] is [*]
 ModifyWords: split "<>" into 1 words
-Result of ${UT_VAR:N*} is "" (VARE_UNDEFERR|VARE_WANTRES, VAR_EXPORTED|VAR_REEXPORT, regular)
+Result of ${UT_VAR:N*} is "" (VARE_UNDEFERR|VARE_WANTRES, VFL_EXPORTED|VFL_REEXPORT, regular)
 ParseDoDependency(: )
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" with VARE_UNDEFERR|VARE_WANTRES
@@ -26,10 +26,10 @@ lhs = "<>", rhs = "<>", op = !=
 ParseReadLine (49): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} with VARE_UNDEFERR|VARE_WANTRES
 Var_Parse: ${REF}> with VARE_UNDEFERR|VARE_WANTRES
-Applying ${UT_VAR:N...} to "<>" (VARE_UNDEFERR|VARE_WANTRES, VAR_EXPORTED|VAR_REEXPORT, regular)
+Applying ${UT_VAR:N...} to "<>" (VARE_UNDEFERR|VARE_WANTRES, VFL_EXPORTED|VFL_REEXPORT, regular)
 Pattern[UT_VAR] for [<>] is [*]
 ModifyWords: split "<>" into 1 words
-Result of ${UT_VAR:N*} is "" (VARE_UNDEFERR|VARE_WANTRES, VAR_EXPORTED|VAR_REEXPORT, regular)
+Result of ${UT_VAR:N*} is "" (VARE_UNDEFERR|VARE_WANTRES, VFL_EXPORTED|VFL_REEXPORT, regular)
 ParseDoDependency(: )
 ParseReadLine (53): 'REF=		defined'
 Global:REF = defined

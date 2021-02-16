@@ -1,4 +1,4 @@
-# $NetBSD: directive-export-impl.mk,v 1.1 2020/12/29 01:45:06 rillig Exp $
+# $NetBSD: directive-export-impl.mk,v 1.2 2021/02/16 16:28:41 rillig Exp $
 #
 # Test for the implementation of exporting variables to child processes.
 # This involves marking variables for export, actually exporting them,
@@ -8,8 +8,8 @@
 #	Var_Export
 #	ExportVar
 #	VarExportedMode (global)
-#	VAR_EXPORTED (per variable)
-#	VAR_REEXPORT (per variable)
+#	VFL_EXPORTED (per variable)
+#	VFL_REEXPORT (per variable)
 #	VarExportMode (per call of Var_Export and ExportVar)
 
 : ${:U:sh}			# side effect: initialize .SHELL
@@ -22,13 +22,13 @@ UT_VAR=		<${REF}>
 
 # At this point, ExportVar("UT_VAR", VEM_PLAIN) is called.  Since the
 # variable value refers to another variable, ExportVar does not actually
-# export the variable but only marks it as VAR_EXPORTED and VAR_REEXPORT.
+# export the variable but only marks it as VFL_EXPORTED and VFL_REEXPORT.
 # After that, ExportVars registers the variable name in .MAKE.EXPORTED.
 # That's all for now.
 .export UT_VAR
 
 # Evaluating this expression shows the variable flags in the debug log,
-# which are VAR_EXPORTED|VAR_REEXPORT.
+# which are VFL_EXPORTED|VFL_REEXPORT.
 : ${UT_VAR:N*}
 
 # At the last moment before actually forking off the child process for the
@@ -44,7 +44,7 @@ UT_VAR=		<${REF}>
 .endif
 
 # Evaluating this expression shows the variable flags in the debug log,
-# which are still VAR_EXPORTED|VAR_REEXPORT, which means that the variable
+# which are still VFL_EXPORTED|VFL_REEXPORT, which means that the variable
 # is still marked as being re-exported for each child process.
 : ${UT_VAR:N*}
 
