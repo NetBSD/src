@@ -1,4 +1,4 @@
-.\" $NetBSD: wprintf.3,v 1.8 2010/12/16 17:42:27 wiz Exp $
+.\" $NetBSD: wprintf.3,v 1.9 2021/02/16 14:44:25 riastradh Exp $
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -459,13 +459,13 @@ is equal to the precision specification.
 If the precision is missing, it is taken as enough to exactly
 represent the floating-point number; if the precision is
 explicitly zero, no hexadecimal-point character appears.
-This is an exact conversion of the mantissa+exponent internal
+This is an exact conversion of the significand+exponent internal
 floating point representation; the
 .Sm off
 .Oo \- Oc Li 0x Ar h Li \&. Ar hhh
 .Sm on
-portion represents exactly the mantissa; only denormalized
-mantissas have a zero value to the left of the hexadecimal
+portion represents exactly the significand; only in subnormal numbers do
+significands have a zero value to the left of the hexadecimal
 point.
 The
 .Cm p
@@ -488,7 +488,7 @@ to represent the hex digits, and the letter
 .Ql P
 (rather than
 .Ql p )
-to separate the mantissa and exponent.
+to separate the significand and exponent.
 .It Cm C
 Treated as
 .Cm c
