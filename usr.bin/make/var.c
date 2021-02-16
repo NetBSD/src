@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.828 2021/02/16 16:28:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.829 2021/02/16 16:33:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.828 2021/02/16 16:28:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.829 2021/02/16 16:33:40 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -149,20 +149,20 @@ typedef enum VarFlags {
 	 * The variable's value is currently being used by Var_Parse or
 	 * Var_Subst.  This marker is used to avoid endless recursion.
 	 */
-	VFL_IN_USE = 0x01,
+	VFL_IN_USE	= 1 << 0,
 
 	/*
 	 * The variable comes from the environment.
 	 * These variables are not registered in any GNode, therefore they
 	 * must be freed as soon as they are not used anymore.
 	 */
-	VFL_FROM_ENV = 0x02,
+	VFL_FROM_ENV	= 1 << 1,
 
 	/*
 	 * The variable is exported to the environment, to be used by child
 	 * processes.
 	 */
-	VFL_EXPORTED = 0x10,
+	VFL_EXPORTED	= 1 << 2,
 
 	/*
 	 * At the point where this variable was exported, it contained an
@@ -170,17 +170,17 @@ typedef enum VarFlags {
 	 * process is started, it needs to be exported again, in the hope
 	 * that the referenced variable can then be resolved.
 	 */
-	VFL_REEXPORT = 0x20,
+	VFL_REEXPORT	= 1 << 3,
 
 	/* The variable came from the command line. */
-	VFL_FROM_CMD = 0x40,
+	VFL_FROM_CMD	= 1 << 4,
 
 	/*
 	 * The variable value cannot be changed anymore, and the variable
 	 * cannot be deleted.  Any attempts to do so are silently ignored,
 	 * they are logged with -dv though.
 	 */
-	VFL_READONLY = 0x80
+	VFL_READONLY	= 1 << 5
 } VarFlags;
 
 /*
