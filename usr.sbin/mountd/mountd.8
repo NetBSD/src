@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.38 2016/12/24 08:26:57 abhinav Exp $
+.\"	$NetBSD: mountd.8,v 1.39 2021/02/16 10:00:27 hannken Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mountd.8	8.4 (Berkeley) 4/28/95
 .\"
-.Dd November 2, 2011
+.Dd February 16, 2021
 .Dt MOUNTD 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ mount requests
 .Op Fl dN
 .Op Fl P Ar policy
 .Op Fl p Ar port
-.Op Ar exportsfile
+.Op Ar exportsfile ...
 .Sh DESCRIPTION
 .Nm
 is the server for
@@ -101,6 +101,7 @@ The
 .Ar exportsfile
 argument specifies an alternative location
 for the exports file.
+There can many exports files.
 .El
 .Pp
 When
