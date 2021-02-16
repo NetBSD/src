@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.22 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: profile.h,v 1.23 2021/02/16 06:06:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,10 @@
 #ifndef _MIPS_PROFILE_H_
 #define	_MIPS_PROFILE_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_gprof.h"
+#endif
+
 #ifdef _KERNEL
  /*
   *  Declare non-profiled _splhigh() /_splx() entrypoints for _mcount.
@@ -61,35 +65,78 @@
     _KERNEL_MCOUNT_DECL \
     void __attribute__((unused)) __mcount
 
+#ifdef __mips_o32	/* 32-bit version */
 #define	MCOUNT \
 	__asm(".globl _mcount;" \
-	".type _mcount,@function;" \
-	"_mcount:;" \
-	".set noreorder;" \
-	".set noat;" \
-	_PROF_CPLOAD \
-	"addu $29,$29,-16;" \
-	"sw $4,8($29);" \
-	"sw $5,12($29);" \
-	"sw $6,16($29);" \
-	"sw $7,20($29);" \
-	"sw $1,0($29);" \
-	"sw $31,4($29);" \
-	"move $5,$31;" \
-	"move $4,$1;" \
-	"jal __mcount;" \
-	"nop;" \
-	"lw $4,8($29);" \
-	"lw $5,12($29);" \
-	"lw $6,16($29);" \
-	"lw $7,20($29);" \
-	"lw $31,4($29);" \
-	"lw $1,0($29);" \
-	"addu $29,$29,24;" \
-	"j $31;" \
-	"move $31,$1;" \
-	".set reorder;" \
-	".set at");
+	      ".type _mcount,@function;" \
+	      "_mcount:;" \
+	      ".set noreorder;" \
+	      ".set noat;" \
+	      _PROF_CPLOAD \
+	      "addu $29,$29,-16;" \
+	      "sw $4,8($29);" \
+	      "sw $5,12($29);" \
+	      "sw $6,16($29);" \
+	      "sw $7,20($29);" \
+	      "sw $1,0($29);" \
+	      "sw $31,4($29);" \
+	      "move $5,$31;" \
+	      "move $4,$1;" \
+	      "jal __mcount;" \
+	      " nop;" \
+	      "lw $4,8($29);" \
+	      "lw $5,12($29);" \
+	      "lw $6,16($29);" \
+	      "lw $7,20($29);" \
+	      "lw $31,4($29);" \
+	      "lw $1,0($29);" \
+	      "addu $29,$29,24;" \
+	      "j $31;" \
+	      " move $31,$1;" \
+	      ".set reorder;" \
+	      ".set at");
+#else /* 64-bit */
+#ifdef __mips_o64
+# error yeahnah
+#endif
+#define	MCOUNT \
+	__asm(".globl _mcount;" \
+	      ".type _mcount,@function;" \
+	      "_mcount:;" \
+	      ".set noreorder;" \
+	      ".set noat;" \
+	      _PROF_CPLOAD \
+	      "daddu $29,$29,-80;"\
+	      "sd $4,16($29);" \
+	      "sd $5,24($29);" \
+	      "sd $6,32($29);" \
+	      "sd $7,40($29);" \
+	      "sd $8,48($29);" \
+	      "sd $9,56($29);" \
+	      "sd $10,64($29);" \
+	      "sd $11,72($29);" \
+	      "sd $1,0($29);" \
+	      "sd $31,8($29);" \
+	      "move $5,$31;" \
+	      "move $4,$1;" \
+	      "jal __mcount;" \
+	      " nop;" \
+	      "ld $4,16($29);" \
+	      "ld $5,24($29);" \
+	      "ld $6,32($29);" \
+	      "ld $7,40($29);" \
+	      "ld $8,48($29);" \
+	      "ld $9,56($29);" \
+	      "ld $10,64($29);" \
+	      "ld $11,72($29);" \
+	      "ld $31,8($29);" \
+	      "ld $1,0($29);" \
+	      "daddu $29,$29,80;" \
+	      "j $31;" \
+	      " move $31,$1;" \
+	      ".set reorder;" \
+	      ".set at");
+#endif /* 64-bit */
 
 #ifdef _KERNEL
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.63 2021/02/04 08:51:42 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.64 2021/02/16 06:06:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,10 @@
 #include <sys/cdefs.h>		/* for API selection */
 #include <mips/regdef.h>
 
+#if defined(_KERNEL_OPT)
+#include "opt_gprof.h"
+#endif
+
 #define	__BIT(n)	(1 << (n))
 #define	__BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
 
@@ -66,24 +70,45 @@
 
 /*
  * Define -pg profile entry code.
- * Must always be noreorder, must never use a macro instruction
- * Final addiu to t9 must always equal the size of this _KERN_MCOUNT
+ * Must always be noreorder, must never use a macro instruction.
+ */
+#if defined(__mips_o32)		/* Old 32-bit ABI */
+/*
+ * The old ABI version must also decrement two less words off the
+ * stack and the final addiu to t9 must always equal the size of this
+ * _KERN_MCOUNT.
  */
 #define	_KERN_MCOUNT						\
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
-	subu	sp,sp,16;					\
+	subu	sp,16;						\
 	sw	t9,12(sp);					\
 	move	AT,ra;						\
 	lui	t9,%hi(_mcount); 				\
 	addiu	t9,t9,%lo(_mcount);				\
 	jalr	t9;						\
-	nop;							\
+	 nop;							\
 	lw	t9,4(sp);					\
-	addiu	sp,sp,8;					\
-	addiu	t9,t9,40;					\
+	addiu	sp,8;						\
+	addiu	t9,40;						\
 	.set	pop;
+#elif defined(__mips_o64)	/* Old 64-bit ABI */
+# error yeahnah
+#else				/* New (n32/n64) ABI */
+/*
+ * The new ABI version just needs to put the return address in AT and
+ * call _mcount().
+ */
+#define	_KERN_MCOUNT						\
+	.set	push;						\
+	.set	noreorder;					\
+	.set	noat;						\
+	move	AT,ra;						\
+	jal	_mcount;					\
+	 nop;							\
+	.set	pop;
+#endif /* n32/n64 */
 
 #ifdef GPROF
 #define	MCOUNT _KERN_MCOUNT
