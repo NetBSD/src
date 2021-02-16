@@ -1,4 +1,4 @@
-/* $NetBSD: mipssimreg.h,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
+/* $NetBSD: mipssimreg.h,v 1.3 2021/02/16 15:06:30 simonb Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -58,4 +58,3 @@
 
 #define VIRTIO_NUM_TRANSPORTS	32
 #define VIRTIO_STRIDE		512
-
