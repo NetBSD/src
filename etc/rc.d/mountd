@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountd,v 1.13 2008/11/12 12:35:52 ad Exp $
+# $NetBSD: mountd,v 1.14 2021/02/16 10:02:42 hannken Exp $
 #
 
 # PROVIDE: mountd
@@ -19,6 +19,12 @@ mountd_precmd()
 {
 	rm -f /var/db/mountdtab
 	( umask 022 ; > /var/db/mountdtab )
+	if checkyesno zfs; then
+		if [ ! -r /etc/zfs/exports ]; then
+			touch /etc/zfs/exports
+		fi
+		rc_flags="${rc_flags} /etc/exports /etc/zfs/exports"
+	fi
 	return 0
 }
 
