@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.12 2020/08/17 14:17:49 skrll Exp $ */
+/* $NetBSD: intr.h,v 1.13 2021/02/16 05:11:26 simonb Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ extern	struct ipl_sr_map ipl_sr_map;
 #endif /* __INTR_PRIVATE */
 
 int	splhigh(void);
-int	splhigh_noprof(void);
+int	__noprofile splhigh_noprof(void);
 int	splsched(void);
 int	splvm(void);
 int	splsoftserial(void);
@@ -134,7 +134,7 @@ int	splsoftbio(void);
 int	splsoftclock(void);
 int	splraise(int);
 void	splx(int);
-void	splx_noprof(int);
+void	__noprofile splx_noprof(int);
 void	spl0(void);
 int	splintr(uint32_t *);
 void	_setsoftintr(uint32_t);
