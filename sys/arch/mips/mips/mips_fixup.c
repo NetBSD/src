@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.20 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.21 2021/02/16 06:06:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.20 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.21 2021/02/16 06:06:58 simonb Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -286,11 +286,25 @@ mips_fixup_addr(const uint32_t *stubp)
 	 *	dmtc0	at, $22
 	 *	jr	t9
 	 *	nop
+	 *
+	 * A profiled n32/n64 stub will start with:
+	 *	move	ta, ra
+	 *	jal	_mcount
+	 *	 nop
 	 */
 	mips_reg_t regs[32];
 	uint32_t used = 1 |__BIT(_R_A0)|__BIT(_R_A1)|__BIT(_R_A2)|__BIT(_R_A3);
 	size_t n;
 	const char *errstr = "mips";
+
+#ifdef GPROF
+	static uint32_t mcount_addr = 0;
+	extern void _mcount(u_long, u_long);	/* XXX decl */
+
+	if (mcount_addr == 0)
+		mcount_addr = (uint32_t)(uintptr_t)_mcount & 0x0fffffff;
+#endif /* GPROF */
+
 	/*
 	 * This is basically a small MIPS emulator for those instructions
 	 * that might be in a stub routine.
@@ -361,6 +375,14 @@ mips_fixup_addr(const uint32_t *stubp)
 				goto out;
 			}
 			break;
+#ifdef GPROF
+		case OP_JAL:
+			if (insn.JType.target << 2 != mcount_addr) {
+				errstr = "JAL-non-_mcount";
+				goto out;
+			}
+			break;
+#endif /* GPROF */
 		case OP_SPECIAL:
 			switch (insn.RType.func) {
 			case OP_JALR:
@@ -404,6 +426,19 @@ mips_fixup_addr(const uint32_t *stubp)
 					goto out;
 				}
 				break;
+#ifdef GPROF
+			case OP_OR:
+				if (insn.RType.rt != 0) {
+					errstr = "NON-MOVE OR";
+					goto out;
+				}
+				if (insn.RType.rd != 1 ||
+				    insn.RType.rs != 31) {
+					errstr = "NON at,ra MOVE";
+					goto out;
+				}
+				break;
+#endif /* GPROF */
 			case OP_DSLL:
 			default:
 				errstr = "SPECIAL";
