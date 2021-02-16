@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.64 2021/02/15 16:32:07 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.65 2021/02/16 22:12:49 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.64 2021/02/15 16:32:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.65 2021/02/16 22:12:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -59,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.64 2021/02/15 16:32:07 jmcneill Exp $");
 #include <arm/pic/picvar.h>
 
 #if defined(__HAVE_PIC_PENDING_INTRS)
+
+bool pic_pending_used __read_mostly = false;
+
 /*
  * This implementation of pending interrupts on a MULTIPROCESSOR system makes
  * the assumption that a PIC (pic_softc) shall only have all its interrupts
@@ -279,6 +282,9 @@ pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 {
 	const uint32_t ipl_mask = __BIT(is->is_ipl);
 
+	if (!pic_pending_used)
+		pic_pending_used = true;
+
 	atomic_or_32(&pic->pic_pending_irqs[is->is_irq >> 5],
 	    __BIT(is->is_irq & 0x1f));
 
@@ -308,6 +314,9 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	struct intrsource *is;
 	volatile uint32_t *ipending = &pic->pic_pending_irqs[irq_base >> 5];
 	uint32_t ipl_mask = 0;
+
+	if (!pic_pending_used)
+		pic_pending_used = true;
 
 	if (pending == 0)
 		return ipl_mask;

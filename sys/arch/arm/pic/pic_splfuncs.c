@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.12 2021/02/15 16:32:07 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.13 2021/02/16 22:12:50 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.12 2021/02/15 16:32:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.13 2021/02/16 22:12:50 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -46,6 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.12 2021/02/15 16:32:07 jmcneill E
 
 #include <arm/pic/picvar.h>
 
+#if defined(__HAVE_PIC_PENDING_INTRS)
+extern bool pic_pending_used;
+#else
+#define pic_pending_used	false
+#endif
 
 int
 _splraise(int newipl)
@@ -65,12 +70,16 @@ _spllower(int newipl)
 	const int oldipl = ci->ci_cpl;
 	KASSERT(panicstr || newipl <= ci->ci_cpl);
 	if (newipl < ci->ci_cpl) {
-		register_t psw = cpsid(I32_bit);
-		ci->ci_intr_depth++;
-		pic_do_pending_ints(psw, newipl, NULL);
-		ci->ci_intr_depth--;
-		if ((psw & I32_bit) == 0 || newipl == IPL_NONE)
-			cpsie(I32_bit);
+		if (__predict_false(pic_pending_used)) {
+			register_t psw = cpsid(I32_bit);
+			ci->ci_intr_depth++;
+			pic_do_pending_ints(psw, newipl, NULL);
+			ci->ci_intr_depth--;
+			if ((psw & I32_bit) == 0 || newipl == IPL_NONE)
+				cpsie(I32_bit);
+		} else {
+			pic_set_priority(ci, newipl);
+		}
 		cpu_dosoftints();
 	}
 	return oldipl;
@@ -86,21 +95,26 @@ splx(int savedipl)
 		return;
 	}
 
-	register_t psw = cpsid(I32_bit);
-	KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
-	    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
+	if (__predict_false(pic_pending_used)) {
+		register_t psw = cpsid(I32_bit);
+		KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
+		    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
 
-	if ((psw & I32_bit) == 0) {
-		ci->ci_intr_depth++;
-		pic_do_pending_ints(psw, savedipl, NULL);
-		ci->ci_intr_depth--;
-		KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
-		    ci->ci_cpl, savedipl);
+		if ((psw & I32_bit) == 0) {
+			ci->ci_intr_depth++;
+			pic_do_pending_ints(psw, savedipl, NULL);
+			ci->ci_intr_depth--;
+			KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
+			    ci->ci_cpl, savedipl);
 
-		cpsie(I32_bit);
-		cpu_dosoftints();
+			cpsie(I32_bit);
+			cpu_dosoftints();
+		} else {
+			pic_set_priority_psw(ci, psw, savedipl);
+		}
 	} else {
-		pic_set_priority_psw(ci, psw, savedipl);
+		pic_set_priority(ci, savedipl);
+		cpu_dosoftints();
 	}
 
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
