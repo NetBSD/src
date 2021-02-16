@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.829 2021/02/16 16:33:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.830 2021/02/16 17:41:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.829 2021/02/16 16:33:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.830 2021/02/16 17:41:23 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -179,6 +179,8 @@ typedef enum VarFlags {
 	 * The variable value cannot be changed anymore, and the variable
 	 * cannot be deleted.  Any attempts to do so are silently ignored,
 	 * they are logged with -dv though.
+	 *
+	 * See VAR_SET_READONLY.
 	 */
 	VFL_READONLY	= 1 << 5
 } VarFlags;
@@ -217,7 +219,11 @@ typedef struct Var {
 } Var;
 
 /*
- * Exporting vars is expensive so skip it if we can
+ * Exporting variables is expensive and may leak memory, so skip it if we
+ * can.
+ *
+ * To avoid this, it might be worth encapsulating the environment variables
+ * in a separate data structure called EnvVars.
  */
 typedef enum VarExportedMode {
 	VAR_EXPORTED_NONE,
@@ -226,8 +232,17 @@ typedef enum VarExportedMode {
 } VarExportedMode;
 
 typedef enum UnexportWhat {
+	/* Unexport the variables given by name. */
 	UNEXPORT_NAMED,
+	/*
+	 * Unexport all globals previously exported, but keep the environment
+	 * inherited from the parent.
+	 */
 	UNEXPORT_ALL,
+	/*
+	 * Unexport all globals previously exported and clear the environment
+	 * inherited from the parent.
+	 */
 	UNEXPORT_ENV
 } UnexportWhat;
 
@@ -244,7 +259,7 @@ typedef struct VarPatternFlags {
 	Boolean anchorEnd: 1;
 } VarPatternFlags;
 
-/* SepBuf is a string being built from words, interleaved with separators. */
+/* SepBuf builds a string from words interleaved with separators. */
 typedef struct SepBuf {
 	Buffer buf;
 	Boolean needSep;
@@ -275,6 +290,8 @@ char var_Error[] = "";
  * a case where VARE_UNDEFERR is not set.  This undefined variable is
  * typically a dynamic variable such as ${.TARGET}, whose expansion needs to
  * be deferred until it is defined in an actual target.
+ *
+ * See VARE_KEEP_UNDEF.
  */
 static char varUndefined[] = "";
 
@@ -403,24 +420,14 @@ VarFind(const char *name, GNode *scope, Boolean elsewhere)
 	Var *var;
 	unsigned int nameHash;
 
-	/*
-	 * If the variable name begins with a '.', it could very well be
-	 * one of the local ones.  We check the name against all the local
-	 * variables and substitute the short version in for 'name' if it
-	 * matches one of them.
-	 */
+	/* Replace '.TARGET' with '@', likewise for other local variables. */
 	name = CanonicalVarname(name);
 	nameHash = Hash_Hash(name);
 
-	/* First look for the variable in the given scope. */
 	var = GNode_FindVar(scope, name, nameHash);
 	if (!elsewhere)
 		return var;
 
-	/*
-	 * The variable was not found in the given scope.
-	 * Now look for it in the other scopes as well.
-	 */
 	if (var == NULL && scope != SCOPE_CMDLINE)
 		var = GNode_FindVar(SCOPE_CMDLINE, name, nameHash);
 
@@ -652,6 +659,7 @@ ExportVarPlain(Var *v)
 	 * Flag the variable as something we need to re-export.
 	 * No point actually exporting it now though,
 	 * the child process can do it at the last minute.
+	 * Avoid calling setenv more often than necessary since it can leak.
 	 */
 	v->flags |= VFL_EXPORTED | VFL_REEXPORT;
 	return TRUE;
@@ -670,12 +678,9 @@ ExportVarLiteral(Var *v)
 }
 
 /*
- * Export a single variable.
+ * Mark a single variable to be exported later for subprocesses.
  *
- * We ignore make internal variables (those which start with '.').
- * Also we jump through some hoops to avoid calling setenv
- * more than necessary since it can leak.
- * We only manipulate flags of vars if 'parent' is set.
+ * Internal variables (those starting with '.') are not exported.
  */
 static Boolean
 ExportVar(const char *name, VarExportMode mode)
@@ -838,6 +843,7 @@ GetVarnamesToUnexport(Boolean isEnv, const char *arg,
 			Parse_Error(PARSE_FATAL,
 			    "The directive .unexport-env does not take "
 			    "arguments");
+			/* continue anyway */
 		}
 		what = UNEXPORT_ENV;
 
@@ -953,7 +959,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 	/*
 	 * Only look for a variable in the given scope since anything set
 	 * here will override anything in a lower scope, so there's not much
-	 * point in searching them all just to save a bit of memory...
+	 * point in searching them all.
 	 */
 	v = VarFind(name, scope, FALSE);
 	if (v == NULL) {
@@ -1219,8 +1225,7 @@ Var_ExistsExpand(GNode *scope, const char *name)
  *
  * Results:
  *	The value if the variable exists, NULL if it doesn't.
- *	If the returned value is not NULL, the caller must free
- *	out_freeIt when the returned value is no longer needed.
+ *	The value is valid until the next modification to any variable.
  */
 FStr
 Var_Value(GNode *scope, const char *name)
@@ -1346,7 +1351,7 @@ ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 
 /*
  * Callback for ModifyWords to implement the :R modifier.
- * Add the basename of the given word to the buffer.
+ * Add the filename without extension of the given word to the buffer.
  */
 /*ARGSUSED*/
 static void
@@ -1409,7 +1414,7 @@ SysVMatch(const char *word, const char *pattern,
 
 	*out_hasPercent = FALSE;
 	percent = strchr(p, '%');
-	if (percent != NULL) {	/* ${VAR:...%...=...} */
+	if (percent != NULL) {		/* ${VAR:...%...=...} */
 		*out_hasPercent = TRUE;
 		if (w[0] == '\0')
 			return NULL;	/* empty word does not match pattern */
@@ -1609,6 +1614,11 @@ tryagain:
 	case 0:
 		args->matched = TRUE;
 		SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
+
+		/*
+		 * Replacement of regular expressions is not specified by
+		 * POSIX, therefore implement it here.
+		 */
 
 		for (rp = args->replace; *rp != '\0'; rp++) {
 			if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
@@ -1934,19 +1944,9 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
 
 /*
  * The ApplyModifier functions take an expression that is being evaluated.
- * Their task is to apply a single modifier to the expression.
- * To do this, they parse the modifier and its parameters from pp, apply
- * the parsed modifier to the current value of the expression and finally
- * update the value of the expression.
- *
- * The modifier typically lasts until the next ':', or a closing '}' or ')'
- * (taken from st->endc), or the end of the string (parse error).
- *
- * The high-level behavior of these functions is:
- *
- * 1. parse the modifier
- * 2. evaluate the modifier
- * 3. housekeeping
+ * Their task is to apply a single modifier to the expression.  This involves
+ * parsing the modifier, evaluating it and finally updating the value of the
+ * expression.
  *
  * Parsing the modifier
  *
@@ -1974,14 +1974,16 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * message.  Both of these return values will stop processing the variable
  * expression.  (XXX: As of 2020-08-23, evaluation of the whole string
  * continues nevertheless after skipping a few bytes, which essentially is
- * undefined behavior.  Not in the sense of C, but still it's impossible to
- * predict what happens in the parser.)
+ * undefined behavior.  Not in the sense of C, but still the resulting string
+ * is garbage.)
  *
  * Evaluating the modifier
  *
  * After parsing, the modifier is evaluated.  The side effects from evaluating
  * nested variable expressions in the modifier text often already happen
- * during parsing though.
+ * during parsing though.  For most modifiers this doesn't matter since their
+ * only noticeable effect is that the update the value of the expression.
+ * Some modifiers such as ':sh' or '::=' have noticeable side effects though.
  *
  * Evaluating the modifier usually takes the current value of the variable
  * expression from st->expr->value, or the variable name from st->var->name
@@ -2081,11 +2083,11 @@ Expr_SetValueRefer(Expr *expr, const char *value)
 typedef enum ApplyModifierResult {
 	/* Continue parsing */
 	AMR_OK,
-	/* Not a match, try other modifiers as well */
+	/* Not a match, try other modifiers as well. */
 	AMR_UNKNOWN,
-	/* Error out with "Bad modifier" message */
+	/* Error out with "Bad modifier" message. */
 	AMR_BAD,
-	/* Error out without error message */
+	/* Error out without the standard error message. */
 	AMR_CLEANUP
 } ApplyModifierResult;
 
@@ -2439,9 +2441,10 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 		/* XXX: This code is similar to the one in Var_Parse.
 		 * See if the code can be merged.
-		 * See also ApplyModifier_Match. */
+		 * See also ApplyModifier_Match and ParseModifierPart. */
 
 		/* Escaped delimiter or other special character */
+		/* See Buf_AddEscaped in for.c. */
 		if (*p == '\\') {
 			char c = p[1];
 			if (c == st->endc || c == ':' || c == '$' ||
@@ -2777,10 +2780,6 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 	args.pflags = (VarPatternFlags){ FALSE, FALSE, FALSE, FALSE };
 	args.matched = FALSE;
 
-	/*
-	 * If pattern begins with '^', it is anchored to the
-	 * start of the word -- skip over it and flag pattern.
-	 */
 	if (**pp == '^') {
 		args.pflags.anchorStart = TRUE;
 		(*pp)++;
@@ -3613,9 +3612,6 @@ typedef enum ApplyModifiersIndirectResult {
  *
  * If the variable expression is not followed by st->endc or ':', fall
  * back to trying the SysV modifier, such as in ${VAR:${FROM}=${TO}}.
- *
- * The expression ${VAR:${M1}${M2}} is not treated as an indirect
- * modifier, and it is neither a SysV modifier but a parse error.
  */
 static ApplyModifiersIndirectResult
 ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp)
@@ -4115,7 +4111,7 @@ ParseVarnameLong(
 		 * :P turn this undefined expression into a defined
 		 * expression (VES_DEF).
 		 *
-		 * At the end, after applying all modifiers, if the expression
+		 * In the end, after applying all modifiers, if the expression
 		 * is still undefined, Var_Parse will return an empty string
 		 * instead of the actually computed value.
 		 */
@@ -4330,10 +4326,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 static void
 VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalFlags eflags)
 {
-	/*
-	 * A dollar sign may be escaped with another dollar
-	 * sign.
-	 */
+	/* A dollar sign may be escaped with another dollar sign. */
 	if (save_dollars && (eflags & VARE_KEEP_DOLLAR))
 		Buf_AddByte(res, '$');
 	Buf_AddByte(res, '$');
