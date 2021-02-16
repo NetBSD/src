@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.92 2021/01/19 03:41:22 simonb Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.93 2021/02/16 14:47:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.92 2021/01/19 03:41:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.93 2021/02/16 14:47:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,6 +825,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
  
 	udata = data = SCARG_P32(uap, data);
 	memset(&fs_args32, 0, sizeof(fs_args32));
+	memset(&fs_args, 0, sizeof(fs_args));
 
 	error = copyinstr(type, mtype, sizeof(mtype), &len);
 	if (error)
