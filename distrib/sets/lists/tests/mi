@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1018 2021/02/14 20:16:17 rillig Exp $
+# $NetBSD: mi,v 1.1019 2021/02/16 09:46:24 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1296,6 +1296,7 @@
 ./usr/tests/bin/sh/t_expand				tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_fsplit				tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_here				tests-bin-tests		compattestfile,atf
+./usr/tests/bin/sh/t_input				tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_option				tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_patterns				tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_redir				tests-bin-tests		compattestfile,atf
