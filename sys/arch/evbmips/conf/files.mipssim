@@ -1,14 +1,18 @@
-# $NetBSD: files.mipssim,v 1.1 2021/01/27 05:24:16 simonb Exp $
+# $NetBSD: files.mipssim,v 1.2 2021/02/16 10:58:33 reinoud Exp $
 
 file	arch/evbmips/mipssim/autoconf.c
 file	arch/evbmips/mipssim/machdep.c
 file	arch/evbmips/mipssim/mipssim_intr.c
+file	arch/evbmips/mipssim/mipssim_dma.c
 file	arch/evbmips/mipssim/mipssim_bus_io.c
 
 file	arch/evbmips/evbmips/interrupt.c
 
+file	arch/mips/mips/bus_dma.c
 file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/mips3_clockintr.c
+
+file	kern/subr_disk_mbr.c			disk
 
 # System bus
 device	mainbus {}
@@ -27,5 +31,12 @@ attach	mipsnet at mainbus
 file	arch/evbmips/mipssim/if_mipsnet.c	mipsnet
 defparam opt_mipsnet.h				MIPSSIM_ETH_MACADDR
 
+attach	virtio at mainbus with virtio_mainbus:	virtio_mmio
+file	arch/evbmips/mipssim/virtio_mainbus.c	virtio_mainbus
+
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
+
+# SCSI support
+include "dev/scsipi/files.scsipi"
+
