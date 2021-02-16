@@ -1,4 +1,4 @@
-.\"	$NetBSD: rand48.3,v 1.13 2020/02/22 13:20:21 kamil Exp $
+.\"	$NetBSD: rand48.3,v 1.14 2021/02/16 14:44:25 riastradh Exp $
 .\"
 .\" Copyright (c) 1993 Martin Birgmeier
 .\" All rights reserved.
@@ -67,7 +67,7 @@ computational step is to perform a single iteration of the algorithm.
 and
 .Fn erand48
 return values of type double.
-The full 48 bits of r(n+1) are loaded into the mantissa of the
+The full 48 bits of r(n+1) are loaded into the significand of the
 returned value, with the exponent set such that the values produced
 lie in the interval [0.0, 1.0).
 .Pp
