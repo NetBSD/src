@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.698 2021/02/17 08:10:33 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.699 2021/02/17 08:15:43 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.698 2021/02/17 08:10:33 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.699 2021/02/17 08:15:43 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -312,6 +312,12 @@ static const uint32_t wm_82580_rxpbs_table[] = {
 };
 
 struct wm_softc;
+
+#if defined(_LP64) && !defined(WM_DISABLE_EVENT_COUNTERS)
+#if !defined(WM_EVENT_COUNTERS)
+#define WM_EVENT_COUNTERS 1
+#endif
+#endif
 
 #ifdef WM_EVENT_COUNTERS
 #define WM_Q_EVCNT_DEFINE(qname, evname)				\
