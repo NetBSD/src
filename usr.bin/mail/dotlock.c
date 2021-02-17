@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.13 2015/07/04 22:45:08 christos Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.14 2021/02/17 21:09:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.13 2015/07/04 22:45:08 christos Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.14 2021/02/17 21:09:39 christos Exp $");
 #endif
 
 #include "rcv.h"
@@ -81,7 +81,8 @@ create_exclusive(const char *fname)
 	 * We try to create the unique filename.
 	 */
 	for (ntries = 0; ; ntries++) {
-		fd = open(path, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL|O_SYNC, 0);
+		fd = open(path,
+		    O_WRONLY|O_CREAT|O_TRUNC|O_EXCL|O_SYNC|O_CLOEXEC, 0);
 		if (fd != -1) {
 			(void)close(fd);
 			break;
