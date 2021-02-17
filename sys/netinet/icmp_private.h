@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_private.h,v 1.4 2021/02/14 20:58:35 christos Exp $	*/
+/*	$NetBSD: icmp_private.h,v 1.5 2021/02/17 22:32:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ extern percpu_t *icmpstat_percpu;
 
 #define	ICMP_STATINC(x)		_NET_STATINC(icmpstat_percpu, x)
 
-#define	ICMP_HDR_ALIGNMENT	3
 #endif /* _KERNEL_ */
 
 #endif /* !_NETINET_ICMP_PRIVATE_H_ */
