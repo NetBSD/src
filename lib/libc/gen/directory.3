@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.42 2021/02/17 23:39:46 dholland Exp $
+.\"	$NetBSD: directory.3,v 1.43 2021/02/17 23:51:04 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 22, 2016
+.Dd February 17, 2021
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -225,6 +225,15 @@ It also causes the directory stream to refer to the
 current state of the corresponding directory, as if a call to
 .Fn opendir
 was made.
+It is not specified whether this refers to the ``corresponding directory''
+by name or by underlying object.
+(These can differ if
+.Xr rename 2
+has been used.)
+.\" Note: currently the underlying fd is reopened if and only if
+.\" __DTF_READALL is in effect, which is true for union mounts and
+.\" nfs; documenting that exactly seems inadvisable since it might
+.\" change.  -- dholland 20210217
 .Pp
 If
 .Fa dirp
