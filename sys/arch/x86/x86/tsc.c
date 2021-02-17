@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.52 2020/06/15 20:27:30 riastradh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.53 2021/02/17 06:33:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.52 2020/06/15 20:27:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.53 2021/02/17 06:33:47 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,8 +424,9 @@ tsc_get_timecount(struct timecounter *tc)
 		    __cpu_simple_lock_try(&lock)) {
 			ticks = getticks();
 			if (ticks - lastwarn >= hz) {
-				printf("WARNING: TSC time went backwards "
-				    " by %u\n", (unsigned)(prev - cur));
+				printf(
+				    "WARNING: TSC time went backwards by %u\n",
+				    (unsigned)(prev - cur));
 				lastwarn = ticks;
 			}
 			__cpu_simple_unlock(&lock);
