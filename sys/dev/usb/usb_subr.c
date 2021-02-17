@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.248 2020/06/11 02:39:30 thorpej Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.249 2021/02/17 06:30:57 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.248 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.249 2021/02/17 06:30:57 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -862,10 +862,36 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 }
 
 static void
-usbd_serialnumber(device_t dv, struct usbd_device *dev)
+usbd_properties(device_t dv, struct usbd_device *dev)
 {
+	usb_device_descriptor_t *dd = &dev->ud_ddesc;
+	prop_dictionary_t dict = device_properties(dv);
+	int class, subclass, release, proto, vendor, product;
+
+	class = dd->bDeviceClass;
+	subclass = dd->bDeviceSubClass;
+	release = UGETW(dd->bcdDevice);
+	proto = dd->bDeviceProtocol;
+	vendor = UGETW(dd->idVendor);
+	product = UGETW(dd->idProduct);
+
+	prop_dictionary_set_uint16(dict, "class", class);
+	prop_dictionary_set_uint16(dict, "subclass", subclass);
+	prop_dictionary_set_uint16(dict, "release", release);
+	prop_dictionary_set_uint16(dict, "proto", proto);
+	prop_dictionary_set_uint16(dict, "vendor", vendor);
+	prop_dictionary_set_uint16(dict, "product", product);
+
+	if (dev->ud_vendor) {
+		prop_dictionary_set_string(dict,
+		    "vendor-string", dev->ud_vendor);
+	}
+	if (dev->ud_product) {
+		prop_dictionary_set_string(dict,
+		    "product-string", dev->ud_product);
+	}
 	if (dev->ud_serial) {
-		prop_dictionary_set_string(device_properties(dv),
+		prop_dictionary_set_string(dict,
 		    "serialnumber", dev->ud_serial);
 	}
 }
@@ -907,7 +933,7 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 		dev->ud_subdevs[0] = dv;
 		dev->ud_subdevlen = 1;
 		dev->ud_nifaces_claimed = 1; /* XXX */
-		usbd_serialnumber(dv, dev);
+		usbd_properties(dv, dev);
 	}
 	config_pending_decr(parent);
 	return USBD_NORMAL_COMPLETION;
@@ -983,7 +1009,7 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		if (!dv)
 			continue;
 
-		usbd_serialnumber(dv, dev);
+		usbd_properties(dv, dev);
 
 		/* claim */
 		ifaces[i] = NULL;
