@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.71 2021/02/11 13:05:16 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.72 2021/02/17 09:56:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1576,4 +1576,156 @@ sys/arch/x68k/x68k/machdep.c			1.204
 	Restore fixes for PR 51663 lost in r1.195 (uvm_hotplug(9) merge),
 	fixing kernel crash dumps for x68k.
 	[tsutsui, ticket #1654]
+
+sys/dev/raidframe/rf_reconstruct.c		1.125
+
+	raid(4): fix am issue where a RAID reconstruction would also rebuild
+	the unused end portion of a component.
+	[oster, ticket #1655]
+
+xsrc/external/mit/xterm/dist/package/debian/xterm-dev.lintian-overrides up to 1.1.1.1
+xsrc/external/mit/xterm/dist/package/freebsd/distinfo up to 1.1.1.1
+xsrc/external/mit/xterm/dist/package/freebsd/pkg-message.wchar up to 1.1.1.1
+xsrc/external/mit/xterm/dist/package/pkgsrc/Makefile up to 1.1.1.1
+xsrc/external/mit/xterm/dist/package/pkgsrc/DESCR    up to 1.1.1.1
+xsrc/external/mit/xterm/dist/package/pkgsrc/distinfo up to 1.1.1.1
+xsrc/external/mit/xterm/dist/package/pkgsrc/PLIST    up to 1.1.1.1
+xsrc/external/mit/xterm/dist/package/pkgsrc/options.mk up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/closest-rgb.pl  up to 1.1.1.2
+xsrc/external/mit/xterm/dist/vttests/query-status.pl up to 1.1.1.2
+xsrc/external/mit/xterm/dist/vttests/modify-keys.pl  up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/mouse-codes     up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/other-sgr.sh    up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/print-vt-chars.pl up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/query-dynamic.pl up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/query-xres.pl   up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/report-sgr.pl   up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/sgrPushPop.pl   up to 1.1.1.1
+xsrc/external/mit/xterm/dist/vttests/sgrPushPop2.pl  up to 1.1.1.1
+xsrc/external/mit/xterm/dist/COPYING                 up to 1.1.1.1
+xsrc/external/mit/xterm/dist/gen-charsets.pl         up to 1.1.1.1
+xsrc/external/mit/xterm/include/Tekparse.hin         delete
+xsrc/external/mit/xterm/include/VTparse.hin          delete
+xsrc/external/mit/xterm/dist/INSTALL                 up to 1.1.1.12
+xsrc/external/mit/xterm/dist/Imakefile               up to 1.1.1.10
+xsrc/external/mit/xterm/dist/MANIFEST                up to 1.1.1.16
+xsrc/external/mit/xterm/dist/Makefile.in             up to 1.1.1.13
+xsrc/external/mit/xterm/dist/NEWS                    up to 1.1.1.3
+xsrc/external/mit/xterm/dist/THANKS                  up to 1.1.1.9
+xsrc/external/mit/xterm/dist/TekPrsTbl.c             up to 1.1.1.2
+xsrc/external/mit/xterm/dist/Tekproc.c               up to 1.1.1.14
+xsrc/external/mit/xterm/dist/UXTerm.ad               up to 1.1.1.3
+xsrc/external/mit/xterm/dist/VTPrsTbl.c              up to 1.1.1.9
+xsrc/external/mit/xterm/dist/VTparse.def             up to 1.1.1.8
+xsrc/external/mit/xterm/dist/VTparse.h               up to 1.1.1.10
+xsrc/external/mit/xterm/dist/XTerm.ad                up to 1.11
+xsrc/external/mit/xterm/dist/aclocal.m4              up to 1.1.1.14
+xsrc/external/mit/xterm/dist/button.c                up to 1.1.1.16
+xsrc/external/mit/xterm/dist/cachedGCs.c             up to 1.1.1.11
+xsrc/external/mit/xterm/dist/charclass.c             up to 1.1.1.6
+xsrc/external/mit/xterm/dist/charclass.h             up to 1.1.1.3
+xsrc/external/mit/xterm/dist/charproc.c              up to 1.1.1.15
+xsrc/external/mit/xterm/dist/charsets.c              up to 1.1.1.6
+xsrc/external/mit/xterm/dist/config.guess            up to 1.1.1.12
+xsrc/external/mit/xterm/dist/config.sub              up to 1.1.1.12
+xsrc/external/mit/xterm/dist/configure               up to 1.1.1.14
+xsrc/external/mit/xterm/dist/configure.in            up to 1.1.1.13
+xsrc/external/mit/xterm/dist/ctlseqs.ms              up to 1.1.1.15
+xsrc/external/mit/xterm/dist/ctlseqs.txt             up to 1.1.1.15
+xsrc/external/mit/xterm/dist/cursor.c                up to 1.1.1.9
+xsrc/external/mit/xterm/dist/data.c                  up to 1.1.1.7
+xsrc/external/mit/xterm/dist/data.h                  up to 1.1.1.10
+xsrc/external/mit/xterm/dist/df-install.in           up to 1.1.1.3
+xsrc/external/mit/xterm/dist/doublechr.c             up to 1.1.1.9
+xsrc/external/mit/xterm/dist/error.h                 up to 1.1.1.6
+xsrc/external/mit/xterm/dist/fontutils.c             up to 1.8
+xsrc/external/mit/xterm/dist/fontutils.h             up to 1.1.1.10
+xsrc/external/mit/xterm/dist/graphics.c              up to 1.1.1.6
+xsrc/external/mit/xterm/dist/graphics_regis.c        up to 1.1.1.5
+xsrc/external/mit/xterm/dist/graphics_sixel.c        up to 1.1.1.4
+xsrc/external/mit/xterm/dist/html.c                  up to 1.1.1.3
+xsrc/external/mit/xterm/dist/input.c                 up to 1.1.1.13
+xsrc/external/mit/xterm/dist/keysym2ucs.c            up to 1.1.1.3
+xsrc/external/mit/xterm/dist/koi8rxterm              up to 1.1.1.3
+xsrc/external/mit/xterm/dist/koi8rxterm.man          up to 1.1.1.3
+xsrc/external/mit/xterm/dist/linedata.c              up to 1.6
+xsrc/external/mit/xterm/dist/main.c                  up to 1.1.1.13
+xsrc/external/mit/xterm/dist/main.h                  up to 1.1.1.6
+xsrc/external/mit/xterm/dist/menu.c                  up to 1.1.1.13
+xsrc/external/mit/xterm/dist/menu.h                  up to 1.1.1.12
+xsrc/external/mit/xterm/dist/minstall.in             up to 1.1.1.5
+xsrc/external/mit/xterm/dist/misc.c                  up to 1.17
+xsrc/external/mit/xterm/dist/plink.sh                up to 1.1.1.5
+xsrc/external/mit/xterm/dist/print.c                 up to 1.1.1.11
+xsrc/external/mit/xterm/dist/ptydata.c               up to 1.1.1.9
+xsrc/external/mit/xterm/dist/ptyx.h                  up to 1.15
+xsrc/external/mit/xterm/dist/resize.c                up to 1.1.1.9
+xsrc/external/mit/xterm/dist/resize.man              up to 1.1.1.5
+xsrc/external/mit/xterm/dist/run-tic.sh              up to 1.1.1.3
+xsrc/external/mit/xterm/dist/screen.c                up to 1.1.1.12
+xsrc/external/mit/xterm/dist/scrollback.c            up to 1.6
+xsrc/external/mit/xterm/dist/scrollbar.c             up to 1.1.1.11
+xsrc/external/mit/xterm/dist/svg.c                   up to 1.1.1.2
+xsrc/external/mit/xterm/dist/tabs.c                  up to 1.1.1.6
+xsrc/external/mit/xterm/dist/termcap                 up to 1.1.1.6
+xsrc/external/mit/xterm/dist/terminfo                up to 1.1.1.7
+xsrc/external/mit/xterm/dist/testxmc.c               up to 1.1.1.7
+xsrc/external/mit/xterm/dist/trace.c                 up to 1.1.1.13
+xsrc/external/mit/xterm/dist/trace.h                 up to 1.1.1.13
+xsrc/external/mit/xterm/dist/util.c                  up to 1.1.1.13
+xsrc/external/mit/xterm/dist/uxterm                  up to 1.1.1.3
+xsrc/external/mit/xterm/dist/uxterm.desktop          up to 1.1.1.5
+xsrc/external/mit/xterm/dist/uxterm.man              up to 1.1.1.3
+xsrc/external/mit/xterm/dist/version.c               up to 1.1.1.5
+xsrc/external/mit/xterm/dist/version.h               up to 1.1.1.16
+xsrc/external/mit/xterm/dist/vms.c                   up to 1.1.1.4
+xsrc/external/mit/xterm/dist/wcwidth.c               up to 1.1.1.6
+xsrc/external/mit/xterm/dist/wcwidth.h               up to 1.1.1.2
+xsrc/external/mit/xterm/dist/xcharmouse.h            up to 1.1.1.5
+xsrc/external/mit/xterm/dist/xstrings.c              up to 1.1.1.10
+xsrc/external/mit/xterm/dist/xstrings.h              up to 1.1.1.6
+xsrc/external/mit/xterm/dist/xterm.appdata.xml       up to 1.1.1.3
+xsrc/external/mit/xterm/dist/xterm.dat               up to 1.1.1.3
+xsrc/external/mit/xterm/dist/xterm.h                 up to 1.3
+xsrc/external/mit/xterm/dist/xterm.log.html          up to 1.1.1.16
+xsrc/external/mit/xterm/dist/xterm.man               up to 1.17
+xsrc/external/mit/xterm/dist/xterm_io.h              up to 1.1.1.7
+xsrc/external/mit/xterm/dist/xtermcap.c              up to 1.1.1.9
+xsrc/external/mit/xterm/dist/xtermcfg.hin            up to 1.1.1.13
+xsrc/external/mit/xterm/dist/xutf8.c                 up to 1.1.1.6
+xsrc/external/mit/xterm/dist/icons/filled-xterm.svg  up to 1.1.1.2
+xsrc/external/mit/xterm/dist/icons/mini.xterm.svg    up to 1.1.1.2
+xsrc/external/mit/xterm/dist/icons/terminal_48x48.svg up to 1.1.1.2
+xsrc/external/mit/xterm/dist/icons/xterm-color.svg   up to 1.1.1.2
+xsrc/external/mit/xterm/dist/icons/xterm.svg         up to 1.1.1.2
+xsrc/external/mit/xterm/dist/package/xterm.spec      up to 1.1.1.11
+xsrc/external/mit/xterm/dist/package/debian/changelog up to 1.1.1.11
+xsrc/external/mit/xterm/dist/package/debian/compat   up to 1.1.1.2
+xsrc/external/mit/xterm/dist/package/debian/control  up to 1.1.1.5
+xsrc/external/mit/xterm/dist/package/debian/copyright up to 1.1.1.7
+xsrc/external/mit/xterm/dist/package/debian/rules    up to 1.1.1.8
+xsrc/external/mit/xterm/dist/package/debian/watch    up to 1.1.1.2
+xsrc/external/mit/xterm/dist/package/debian/xterm-dev.docs up to 1.1.1.2
+xsrc/external/mit/xterm/dist/package/debian/xterm-dev.menu up to 1.1.1.2
+xsrc/external/mit/xterm/dist/package/freebsd/Makefile up to 1.1.1.7
+xsrc/external/mit/xterm/dist/package/freebsd/pkg-descr up to 1.1.1.2
+xsrc/external/mit/xterm/dist/unicode/convmap.pl      up to 1.1.1.3
+xsrc/external/mit/xterm/dist/unicode/keysym.map      up to 1.1.1.3
+xsrc/external/mit/xterm/dist/vttests/256colors.pl    up to 1.1.1.4
+xsrc/external/mit/xterm/dist/vttests/256colors2.pl   up to 1.1.1.6
+xsrc/external/mit/xterm/dist/vttests/88colors.pl     up to 1.1.1.4
+xsrc/external/mit/xterm/dist/vttests/88colors2.pl    up to 1.1.1.6
+xsrc/external/mit/xterm/dist/vttests/dynamic.pl      up to 1.1.1.4
+xsrc/external/mit/xterm/dist/vttests/paste64.pl      up to 1.1.1.5
+xsrc/external/mit/xterm/dist/vttests/query-color.pl  up to 1.1.1.4
+xsrc/external/mit/xterm/dist/vttests/query-fonts.pl  up to 1.1.1.3
+xsrc/external/mit/xterm/dist/vttests/resize.pl       up to 1.1.1.5
+xsrc/external/mit/xterm/dist/vttests/tcapquery.pl    up to 1.1.1.6
+xsrc/external/mit/xterm/include/xtermcfg.h           up to 1.15
+external/mit/xorg/bin/xterm/Makefile		1.20 (patch)
+
+	Import xterm 366 to fix CVE-2021-27135:
+	correct upper-limit for selection buffer, accounting
+	for combining characters.
+	[mrg, ticket #1656]
 
