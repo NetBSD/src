@@ -1,18 +1,20 @@
-#	$NetBSD: Makefile,v 1.15 2015/07/23 09:37:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.15.8.1 2021/02/17 09:55:20 martin Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xterm
 SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
-	fontutils.c input.c linedata.c menu.c misc.c print.c ptydata.c \
-	screen.c scrollback.c scrollbar.c tabs.c util.c xstrings.c \
-	TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c charclass.c precompose.c \
-	wcwidth.c xutf8.c cachedGCs.c xtermcap.c version.c
+	graphics.c graphics_sixel.c fontutils.c input.c linedata.c menu.c \
+	misc.c print.c ptydata.c screen.c scrollback.c scrollbar.c tabs.c \
+	util.c xstrings.c TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c \
+	charclass.c precompose.c wcwidth.c xutf8.c cachedGCs.c xtermcap.c \
+	svg.c html.c version.c
 
 # graphics_regis.c graphics_sixel.c
 # xterm.appdata.xml
 
-CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
+CPPFLAGS+=	-I. \
+		-I${X11SRCDIR.${PROG}} \
 		-I${X11SRCDIR.${PROG}}/../include \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-DPROJECTROOT=${X11ROOTDIR} \
@@ -43,6 +45,12 @@ SUBDIR=	resize uxterm
 COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
 
 # XXXMRG should probably build builtin_icons.h
+
+.SUFFIXES: .def .hin
+.def.hin:
+	${TOOL_AWK} '/^CASE_/{printf "#define %s %d\n", $$1, n++}' < $< >$@
+DPSRCS+= Tekparse.hin VTparse.hin
+CLEANFILES+= Tekparse.hin VTparse.hin
 
 .include "Makefile.inc"
 
