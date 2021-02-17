@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.697 2020/11/19 02:36:30 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.698 2021/02/17 08:10:33 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.697 2020/11/19 02:36:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.698 2021/02/17 08:10:33 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -661,8 +661,12 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 #ifdef WM_EVENT_COUNTERS
-#define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
-#define	WM_EVCNT_ADD(ev, val)	(ev)->ev_count += (val)
+#define	WM_EVCNT_INCR(ev)						\
+	atomic_store_relaxed(&((ev)->ev_count),				\
+	    atomic_load_relaxed(&(ev)->ev_count) + 1)
+#define	WM_EVCNT_ADD(ev, val)						\
+	atomic_store_relaxed(&((ev)->ev_count),				\
+	    atomic_load_relaxed(&(ev)->ev_count) + (val))
 
 #define WM_Q_EVCNT_INCR(qname, evname)			\
 	WM_EVCNT_INCR(&(qname)->qname##_ev_##evname)
