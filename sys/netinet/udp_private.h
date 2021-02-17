@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_private.h,v 1.4 2021/02/14 20:58:35 christos Exp $	*/
+/*	$NetBSD: udp_private.h,v 1.5 2021/02/17 22:32:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,8 @@ extern	percpu_t *udpstat_percpu;
 
 #define	UDP_STATINC(x)		_NET_STATINC(udpstat_percpu, x)
 
-#define	UDP_HDR_ALIGNMENT	3
+#define	UDP_HDR_ALIGNMENT	__alignof(struct udphdr)
+__CTASSERT(UDP_HDR_ALIGNMENT == 2);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_UDP_PRIVATE_H_ */
