@@ -1,11 +1,11 @@
-/*	$NetBSD: idle_machdep.c,v 1.5 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.6 2021/02/17 06:54:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nick Hudson 
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.5 2013/08/18 06:28:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.6 2021/02/17 06:54:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
