@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.20 2021/02/17 17:43:09 dholland Exp $
+.\"	$NetBSD: fsync.2,v 1.21 2021/02/17 22:55:20 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,7 +106,7 @@ on the specified range.
 .It Dv FFILESYNC
 Synchronize all modified file data and meta-data for the specified range.
 This is equivalent to
-.Xr fsync 2
+.Nm
 on the specified range.
 .It Dv FDISKSYNC
 Request the destination device to ensure that the relevant data
@@ -165,8 +165,7 @@ is less than zero, or
 .Fa length
 is less than
 .Fa start
-or triggers an integer overflow.
-.It Bq Er EINVAL
+or triggers an integer overflow; or
 .Fa how
 contains an invalid value.
 .El
