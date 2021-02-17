@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.4.1 2020/10/08 15:40:52 martin Exp $
+#	$NetBSD: Makefile,v 1.17.4.2 2021/02/17 09:50:20 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 	misc.c print.c ptydata.c screen.c scrollback.c scrollbar.c tabs.c \
 	util.c xstrings.c TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c \
 	charclass.c precompose.c wcwidth.c xutf8.c cachedGCs.c xtermcap.c \
-	version.c
+	svg.c html.c version.c
 
 CPPFLAGS+=	-I. \
 		-I${X11SRCDIR.${PROG}} \
