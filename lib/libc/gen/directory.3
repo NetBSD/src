@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.41 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: directory.3,v 1.42 2021/02/17 23:39:46 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -224,7 +224,7 @@ stream to the beginning of the directory.
 It also causes the directory stream to refer to the
 current state of the corresponding directory, as if a call to
 .Fn opendir
-would have been made.
+was made.
 .Pp
 If
 .Fa dirp
@@ -281,7 +281,7 @@ return (NOT_FOUND);
 .Sh COMPATIBILITY
 The described directory operations have traditionally been problematic
 in terms of portability.
-A good example is the semantics around
+A good example is the semantics of
 .Sq \&.
 (dot) and
 .Sq \&..
@@ -313,7 +313,7 @@ When a file descriptor is used to implement the directory stream, the
 function behaves as if the
 .Dv FD_CLOEXEC
 had been set for the file descriptor.
-In another words, it is mandatory that
+In other words, it is mandatory that
 .Fn closedir
 deallocates the file descriptor.
 .It
@@ -344,9 +344,9 @@ occurred between the calls to
 .Fn telldir
 and
 .Fn seekdir ,
-any subsequent call to
+the results of any subsequent call to
 .Fn readdir
-is unspecified, possibly resulting in undefined behavior.
+are unspecified, possibly resulting in undefined behavior.
 .It
 After a call to
 .Xr fork 2 ,
