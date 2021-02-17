@@ -1,4 +1,4 @@
-/*	$NetBSD: glx.c,v 1.7 2021/02/17 08:18:39 skrll Exp $	*/
+/*	$NetBSD: glx.c,v 1.8 2021/02/17 08:19:06 skrll Exp $	*/
 /*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  * XXX too many hardcoded numbers... need to expand glxreg.h
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.7 2021/02/17 08:18:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.8 2021/02/17 08:19:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ glx_pci_write_hook(void *v, pcitag_t tag,
 		gen_pci_conf_write(v, tag, offset, data);
 		return;
 	}
-		
+
 
 	pci_decompose_tag(glxbase_pc, tag, &bus, &dev, &fn);
 	if (bus != 0 || dev != glxbase_dev) {
