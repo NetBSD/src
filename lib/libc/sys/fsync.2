@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.19 2021/02/13 06:24:08 dholland Exp $
+.\"	$NetBSD: fsync.2,v 1.20 2021/02/17 17:43:09 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd February 12, 2021
+.Dd February 17, 2021
 .Dt FSYNC 2
 .Os
 .Sh NAME
@@ -159,10 +159,13 @@ fails if:
 is not open for writing.
 .It Bq Er EINVAL
 .Fa start
+is less than zero, or
+.Fa start
 +
 .Fa length
 is less than
-.Fa start .
+.Fa start
+or triggers an integer overflow.
 .It Bq Er EINVAL
 .Fa how
 contains an invalid value.
