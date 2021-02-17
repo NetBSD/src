@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.548 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.549 2021/02/17 17:39:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.548 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.549 2021/02/17 17:39:08 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4198,11 +4198,12 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 	/* If length == 0, we do the whole file, and s = e = 0 will do that */
 	if (len) {
 		s = SCARG(uap, start);
-		e = s + len;
-		if (e < s) {
+		if (s < 0 || len < 0 || len > OFF_T_MAX - s) {
 			error = EINVAL;
 			goto out;
 		}
+		e = s + len;
+		KASSERT(s <= e);
 	} else {
 		e = 0;
 		s = 0;
