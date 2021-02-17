@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.23 2021/02/16 06:06:58 simonb Exp $	*/
+/*	$NetBSD: profile.h,v 1.24 2021/02/17 08:09:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #ifdef _KERNEL
 # define _PROF_CPLOAD	""
 #else
-# define _PROF_CPLOAD	".cpload $25;"
+# define _PROF_CPLOAD	".cpload t9;"
 #endif
 
 
