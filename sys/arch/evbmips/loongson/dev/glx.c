@@ -1,4 +1,4 @@
-/*	$NetBSD: glx.c,v 1.6 2018/02/08 09:05:17 dholland Exp $	*/
+/*	$NetBSD: glx.c,v 1.7 2021/02/17 08:18:39 skrll Exp $	*/
 /*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  * XXX too many hardcoded numbers... need to expand glxreg.h
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.6 2018/02/08 09:05:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.7 2021/02/17 08:18:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,8 +460,7 @@ glx_fn0_write(int reg, pcireg_t data)
 		if (data == 0xffffffff) {
 			pcib_bar_values[index] = data;
 		} else if (pcib_bar_msr[index] != 0) {
-			if ((data & PCI_MAPREG_TYPE_MASK) ==
-			    PCI_MAPREG_TYPE_IO) {
+			if (PCI_MAPREG_TYPE(data) == PCI_MAPREG_TYPE_IO) {
 				data &= PCI_MAPREG_IO_ADDR_MASK;
 				data &= ~(pcib_bar_sizes[index] - 1);
 				wrmsr(pcib_bar_msr[index],
@@ -573,8 +572,7 @@ glx_fn2_write(int reg, pcireg_t data)
 		if (data == 0xffffffff) {
 			pciide_bar_value = data;
 		} else {
-			if ((data & PCI_MAPREG_TYPE_MASK) ==
-			    PCI_MAPREG_TYPE_IO) {
+			if (PCI_MAPREG_TYPE(data) == PCI_MAPREG_TYPE_IO) {
 				data &= PCI_MAPREG_IO_ADDR_MASK;
 				msr = (uint32_t)data & 0xfffffff0;
 				wrmsr(GCSC_IDE_IO_BAR, msr);
@@ -686,8 +684,7 @@ glx_fn3_write(int reg, pcireg_t data)
 		if (data == 0xffffffff) {
 			ac97_bar_value = data;
 		} else {
-			if ((data & PCI_MAPREG_TYPE_MASK) ==
-			    PCI_MAPREG_TYPE_IO) {
+			if (PCI_MAPREG_TYPE(data) == PCI_MAPREG_TYPE_IO) {
 				data &= PCI_MAPREG_IO_ADDR_MASK;
 				msr = rdmsr(GCSC_GLIU_IOD_BM1);
 				msr &= 0x0fffff0000000000ULL;
@@ -799,8 +796,7 @@ glx_fn4_write(int reg, pcireg_t data)
 		if (data == 0xffffffff) {
 			ohci_bar_value = data;
 		} else {
-			if ((data & PCI_MAPREG_TYPE_MASK) ==
-			    PCI_MAPREG_TYPE_MEM) {
+			if (PCI_MAPREG_TYPE(data) == PCI_MAPREG_TYPE_MEM) {
 				data &= PCI_MAPREG_MEM_ADDR_MASK;
 				msr = rdmsr(GCSC_GLIU_P2D_BM3);
 				msr &= 0x0fffff0000000000ULL;
@@ -925,9 +921,8 @@ glx_fn5_write(int reg, pcireg_t data)
 		if (data == 0xffffffff) {
 			ehci_bar_value = data;
 		} else {
-			if ((data & PCI_MAPREG_TYPE_MASK) ==
-			    PCI_MAPREG_TYPE_MEM) {
-				data &= PCI_MAPREG_MEM_ADDR_MASK;
+			if (PCI_MAPREG_TYPE(data) == PCI_MAPREG_TYPE_MEM) {
+				data = PCI_MAPREG_MEM_ADDR(data);
 				msr = rdmsr(GCSC_GLIU_P2D_BM4);
 				msr &= 0x0fffff0000000000ULL;
 				msr |= 2ULL << 61;	/* USB */
