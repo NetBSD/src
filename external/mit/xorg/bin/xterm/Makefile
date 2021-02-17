@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2021/02/11 12:30:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2021/02/17 03:06:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,9 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 	charclass.c precompose.c wcwidth.c xutf8.c cachedGCs.c xtermcap.c \
 	svg.c html.c version.c
 
+# XXX
+# xterm.appdata.xml
+
 CPPFLAGS+=	-I. \
 		-I${X11SRCDIR.${PROG}} \
 		-I${X11SRCDIR.${PROG}}/../include \
@@ -17,8 +20,6 @@ CPPFLAGS+=	-I. \
 		-I${DESTDIR}${X11INCDIR}/freetype2/freetype \
 		-DPROJECTROOT=${X11ROOTDIR} \
 		-DHAVE_CONFIG_H \
-		-DOPT_GRAPHICS \
-		-DOPT_SIXEL_GRAPHICS \
 		-D_REENTRANT \
 		${X11FLAGS.VERSION}
 
