@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.25 2021/02/18 17:05:51 christos Exp $ */
+/* $NetBSD: unzip.c,v 1.26 2021/02/18 17:58:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.25 2021/02/18 17:05:51 christos Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.26 2021/02/18 17:58:51 christos Exp $");
 
 #ifdef __GLIBC__
 #define _GNU_SOURCE
+#define explicit_memset memset_s
 #endif
 
 #include <sys/queue.h>
@@ -58,6 +59,9 @@ __RCSID("$NetBSD: unzip.c,v 1.25 2021/02/18 17:05:51 christos Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
+#ifdef __GLIBC__
+#include <readpassphrase.h>
+#endif
 
 /* command-line options */
 static int		 a_opt;		/* convert EOL */
@@ -71,6 +75,7 @@ static int		 n_opt;		/* never overwrite */
 static int		 o_opt;		/* always overwrite */
 static int		 p_opt;		/* extract to stdout, quiet */
 static int		 q_opt;		/* quiet */
+static char		*P_arg;		/* passphrase */
 static int		 t_opt;		/* test */
 static int		 u_opt;		/* update */
 static int		 v_opt;		/* verbose/list */
@@ -92,7 +97,7 @@ static int		 tty;
 		int acret = (call);				\
 		if (acret != ARCHIVE_OK)			\
 			errorx("%s", archive_error_string(a));	\
-	} while (0)
+	} while (/*CONSTCONST*/0)
 
 /*
  * Indicates that last info() did not end with EOL.  This helps error() et
@@ -100,6 +105,9 @@ static int		 tty;
  * informational message.
  */
 static int noeol;
+
+/* for an interactive passphrase input */
+static char passbuf[1024];
 
 /* fatal error message + errno */
 __dead __printflike(1, 2) static void
@@ -110,12 +118,12 @@ error(const char *fmt, ...)
 	if (noeol)
 		fprintf(stdout, "\n");
 	fflush(stdout);
-	fprintf(stderr, "unzip: ");
+	fprintf(stderr, "%s: ", getprogname());
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fprintf(stderr, ": %s\n", strerror(errno));
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 /* fatal error message, no errno */
@@ -127,12 +135,12 @@ errorx(const char *fmt, ...)
 	if (noeol)
 		fprintf(stdout, "\n");
 	fflush(stdout);
-	fprintf(stderr, "unzip: ");
+	fprintf(stderr, "%s: ", getprogname());
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fprintf(stderr, "\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 /* non-fatal error message + errno */
@@ -227,7 +235,7 @@ pathdup(const char *path)
 	}
 	str[len] = '\0';
 
-	return (str);
+	return str;
 }
 
 /* concatenate two path names */
@@ -249,7 +257,7 @@ pathcat(const char *prefix, const char *path)
 	}
 	memcpy(str + prelen, path, len);	/* includes zero */
 
-	return (str);
+	return str;
 }
 
 /*
@@ -293,9 +301,9 @@ match_pattern(struct pattern_list *list, const char *str)
 
 	STAILQ_FOREACH(entry, list, link) {
 		if (fnmatch(entry->pattern, str, C_opt ? FNM_CASEFOLD : 0) == 0)
-			return (1);
+			return 1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -307,10 +315,10 @@ accept_pathname(const char *pathname)
 {
 
 	if (!STAILQ_EMPTY(&include) && !match_pattern(&include, pathname))
-		return (0);
+		return 0;
 	if (!STAILQ_EMPTY(&exclude) && match_pattern(&exclude, pathname))
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 }
 
 /*
@@ -853,6 +861,34 @@ test(struct archive *a, struct archive_entry *e)
 }
 
 /*
+ * Callback function for reading passphrase.
+ * Originally from cpio.c and passphrase.c, libarchive.
+ */
+static const char *
+passphrase_callback(struct archive *a, void *client_data)
+{
+	char *p;
+	static const char prompt[] = "\nEnter passphrase:";
+
+	(void)a; /* UNUSED */
+	(void)client_data; /* UNUSED */
+
+#if defined(RPP_ECHO_OFF)
+	p = readpassphrase(prompt, passbuf, sizeof(passbuf), RPP_ECHO_OFF);
+#elif defined(GETPASS_NEED_TTY)
+	p = getpass_r(prompt, passbuf, sizeof(passbuf));
+#else
+	p = getpass(prompt);
+	if (p != NULL)
+		strlcpy(passbuf, p, sizeof(passbuf));
+#endif
+	if (p == NULL && errno != EINTR)
+		error("Error reading password");
+
+	return p;
+}
+
+/*
  * Main loop: open the zipfile, iterate over its contents and decide what
  * to do with each entry.
  */
@@ -868,6 +904,12 @@ unzip(const char *fn)
 		error("archive_read_new failed");
 
 	ac(archive_read_support_format_zip(a));
+
+	if (P_arg)
+		archive_read_add_passphrase(a, P_arg);
+	else
+		archive_read_set_passphrase_callback(a, passbuf, &passphrase_callback);
+
 	ac(archive_read_open_filename(a, fn, 8192));
 
 	if (!q_opt && !p_opt)
@@ -915,6 +957,7 @@ unzip(const char *fn)
 
 	ac(archive_read_free(a));
 
+	explicit_memset(passbuf, 0, sizeof(passbuf));
 	if (t_opt) {
 		if (error_count > 0) {
 			errorx("%ju checksum error(s) found.", error_count);
@@ -930,15 +973,16 @@ static void __dead
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-aCcfjLlnopqtuvy] [-d dir] [-x pattern] "
-	    "zipfile\n", getprogname());
-	exit(1);
+	fprintf(stderr, "Usage: %s [-aCcfjLlnopqtuvy] [-d <dir>] "
+	    "[-x <pattern>] [-P <passphrase>] <zipfile>\n", getprogname());
+	exit(EXIT_FAILURE);
 }
 
 static int
 getopts(int argc, char *argv[])
 {
 	int opt;
+	size_t len;
 
 #ifdef __GLIBC__
 	optind = 0;
@@ -984,6 +1028,11 @@ getopts(int argc, char *argv[])
 		case 'p':
 			p_opt = 1;
 			break;
+		case 'P':
+			len = strlcpy(passbuf, optarg, sizeof(passbuf));
+			memset(optarg, '*', len);
+			P_arg = passbuf;
+			break;
 		case 'q':
 			q_opt = 1;
 			break;
@@ -1006,7 +1055,7 @@ getopts(int argc, char *argv[])
 			usage();
 		}
 
-	return (optind);
+	return optind;
 }
 
 int
@@ -1051,5 +1100,5 @@ main(int argc, char *argv[])
 
 	unzip(zipfile);
 
-	exit(0);
+	exit(EXIT_SUCCESS);
 }

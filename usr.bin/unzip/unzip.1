@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: revision 180125$
-.\" $NetBSD: unzip.1,v 1.12 2021/02/18 17:04:39 christos Exp $
+.\" $NetBSD: unzip.1,v 1.13 2021/02/18 17:58:51 christos Exp $
 .\"
 .Dd February 18, 2021
 .Dt UNZIP 1
@@ -83,6 +83,9 @@ When extracting files from the zipfile, they are written to stdout.
 The normal output is suppressed as if
 .Fl q
 was specified.
+.It Fl P Ar password
+Extract encrypted files using a password. Putting a password on
+the command line using this option can be insecure.
 .It Fl q
 Quiet: print less information while extracting.
 .It Fl t
