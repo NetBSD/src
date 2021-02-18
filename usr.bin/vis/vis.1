@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.1,v 1.23 2015/05/24 19:42:39 christos Exp $
+.\"	$NetBSD: vis.1,v 1.24 2021/02/18 18:27:24 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)vis.1	8.4 (Berkeley) 4/19/94
 .\"
-.Dd May 24, 2015
+.Dd February 18, 2021
 .Dt VIS 1
 .Os
 .Sh NAME
@@ -171,6 +171,25 @@ instead.
 Specify the locale of the input data.
 Set to C if the input data locale is unknown.
 .El
+.Sh EXAMPLES
+Visualize characters encoding white spaces and tabs:
+.Bd -literal -offset indent
+$ printf "\\x10\\n\\t\\n" | vis -w -t
+\\^P\\012\\011\\012
+.Ed
+.Pp
+Same as above but using `\\$' for newline followed by an actual newline:
+.Bd -literal -offset indent
+$ printf "\\x10\\n\\t\\n" | vis -w -t -l
+\\^P\\$
+\\011\\$
+.Ed
+.Pp
+Visualize string using URI encoding:
+.Bd -literal -offset indent
+$ printf http://www.freebsd.org | vis -h
+http%3a%2f%2fwww.freebsd.org
+.Ed
 .Sh SEE ALSO
 .Xr unvis 1 ,
 .Xr svis 3 ,
