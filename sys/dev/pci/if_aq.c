@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.19 2020/09/24 05:13:03 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.20 2021/02/18 17:56:04 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.19 2020/09/24 05:13:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.20 2021/02/18 17:56:04 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1407,6 +1407,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_baudrate = IF_Gbps(10);
 	ifp->if_init = aq_init;
 	ifp->if_ioctl = aq_ioctl;
@@ -1463,11 +1464,18 @@ aq_attach(device_t parent, device_t self, void *aux)
 	/* RX hardware checksum offloadding */
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx;
 
-	if_attach(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto attach_failure;
+	}
+	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr.ether_addr_octet);
 	ether_set_vlan_cb(&sc->sc_ethercom, aq_vlan_cb);
 	ether_set_ifflags_cb(&sc->sc_ethercom, aq_ifflags_cb);
+	if_register(ifp);
 
 	aq_enable_intr(sc, true, false);	/* only intr about link */
 
