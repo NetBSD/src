@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.24 2018/07/19 18:04:25 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.25 2021/02/18 17:05:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.24 2018/07/19 18:04:25 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.25 2021/02/18 17:05:51 christos Exp $");
+
+#ifdef __GLIBC__
+#define _GNU_SOURCE
+#endif
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -936,7 +940,13 @@ getopts(int argc, char *argv[])
 {
 	int opt;
 
-	optreset = optind = 1;
+#ifdef __GLIBC__
+	optind = 0;
+#else
+ 	optreset = optind = 1;
+#endif
+
+ 	while ((opt = getopt(argc, argv, "aCcd:fjLlnopP:qtuvyx:")) != -1)
 	while ((opt = getopt(argc, argv, "aCcd:fjLlnopqtuvyx:")) != -1)
 		switch (opt) {
 		case 'a':
