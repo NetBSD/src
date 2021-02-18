@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.26 2021/01/27 03:17:24 thorpej Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.27 2021/02/18 18:31:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.26 2021/01/27 03:17:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.27 2021/02/18 18:31:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.26 2021/01/27 03:17:24 thorpej Exp
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>
 
+#include <powerpc/ofw_machdep.h>
+
 #ifdef DEBUG
 #define DPRINTF aprint_error
 #else
@@ -59,15 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.26 2021/01/27 03:17:24 thorpej Exp
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 
-/*
- * This is called during initppc, before the system is really initialized.
- * It shall provide the total and the available regions of RAM.
- * Both lists must have a zero-size entry as terminator.
- * The available regions need not take the kernel into account, but needs
- * to provide space for two additional entry beyond the terminating one.
- */
-void
-mem_regions(struct mem_region **memp, struct mem_region **availp)
+static void
+ofw_bootstrap_get_memory(void)
 {
 	const char *macrisc[] = {"MacRISC", "MacRISC2", "MacRISC4", NULL};
 	int hroot, hmem, i, cnt, memcnt, regcnt, acells, scells;
@@ -225,8 +220,6 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		}
 	}
 
-	*memp = OFmem;
-	*availp = OFavail;
 	return;
 
 error:
@@ -239,12 +232,38 @@ error:
 	OFavail[0].start = 0x3000;
 	OFavail[0].size = 0x20000000 - 0x3000;
 
-	*memp = OFmem;
-	*availp = OFavail;
 #else
 	panic("no memory?");
 #endif
 	return;
+}
+
+/*
+ * Called from ofwinit() very early in bootstrap.  We are still
+ * running on the stack provided by OpenFirmware and in the same
+ * OpenFirmware client environment as the boot loader.  Our calls
+ * to OpenFirmware are direct, and not via the trampoline that
+ * saves / restores kernel state.
+ */
+void
+ofw_bootstrap(void)
+{
+	/* Get the system memory configuration. */
+	ofw_bootstrap_get_memory();
+}
+
+/*
+ * This is called during initppc, before the system is really initialized.
+ * It shall provide the total and the available regions of RAM.
+ * Both lists must have a zero-size entry as terminator.
+ * The available regions need not take the kernel into account, but needs
+ * to provide space for two additional entry beyond the terminating one.
+ */
+void
+mem_regions(struct mem_region **memp, struct mem_region **availp)
+{
+	*memp = OFmem;
+	*availp = OFavail;
 }
 
 void
