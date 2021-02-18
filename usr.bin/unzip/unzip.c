@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.26 2021/02/18 17:58:51 christos Exp $ */
+/* $NetBSD: unzip.c,v 1.27 2021/02/18 18:06:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.26 2021/02/18 17:58:51 christos Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.27 2021/02/18 18:06:02 christos Exp $");
 
 #ifdef __GLIBC__
 #define _GNU_SOURCE
@@ -97,7 +97,7 @@ static int		 tty;
 		int acret = (call);				\
 		if (acret != ARCHIVE_OK)			\
 			errorx("%s", archive_error_string(a));	\
-	} while (/*CONSTCONST*/0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * Indicates that last info() did not end with EOL.  This helps error() et
@@ -991,7 +991,6 @@ getopts(int argc, char *argv[])
 #endif
 
  	while ((opt = getopt(argc, argv, "aCcd:fjLlnopP:qtuvyx:")) != -1)
-	while ((opt = getopt(argc, argv, "aCcd:fjLlnopqtuvyx:")) != -1)
 		switch (opt) {
 		case 'a':
 			a_opt = 1;
