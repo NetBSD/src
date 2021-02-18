@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.13 2021/02/13 01:48:33 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.14 2021/02/18 16:29:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,25 +35,43 @@
 #include "opt_ppcarch.h"
 #endif
 
-	.local	firmstk
-	.globl	openfirmware_entry
-	.globl	ofwmsr
-	.local	ofwsrsave
-	.local	OF_buffer
-
+	/* Stack used to call into OpenFirmware. */
 	.lcomm	firmstk,NBPG,16
+
+	/* Buffer used to pass data to/from OpenFirmware. */
 	.lcomm	OF_buffer,NBPG + 36,4
-	.comm	openfirmware_entry,4,4	/* openfirmware entry point */
-	.lcomm	ofwsrsave,64,4		/* openfirmware SR savearea */
-	.comm	ofwmsr,20,4		/* msr & sprg[0-3] used in OF */
-	.comm	ofwreal_incharge,4,4
+
+	/* The OpenFirmware entry point, provided by OpenFirmware. */
+	.lcomm	ofentry,4,4
+
+	/* Entry trampoline used by openfirmware(). */
+	.lcomm	oftramp,4,4
+
+	/* OpenFirmware SR save area */
+	.lcomm	ofwsrsave,64,4
+
+	/* MSR and SPRG[0-3] used in OpenFirmware */
+	.globl	ofwmsr
+	.comm	ofwmsr,20,4
 
 /*
  * Called by start to save the initial OFW state so we can restore it
  * when call back to OFW.
+ *
+ * We expect the registers to be as for the entry point into the kernel:
+ *
+ *	%r1	Stack provided by OpenFirmware / boot loader
+ *	%r5	OpenFirmware client entry point
+ *
+ * (others -- don't care)
  */
 ENTRY_NOPROFILE(ofwinit)
-#ifdef	FIRMWORKSBUGS
+	/* Save return address, Push a stack frame. */
+	mflr	%r0
+	stw	%r0,4(%r1)
+	stwu	%r1,-16(%r1)
+
+#ifdef FIRMWORKSBUGS
 	mfmsr	%r0
 	andi.	%r0,%r0,PSL_IR|PSL_DR
 	beq	1f
@@ -62,25 +80,24 @@ ENTRY_NOPROFILE(ofwinit)
 	lis	%r9,ofwreal_incharge@ha
 	stw	%r8,ofwreal_incharge@l(%r9)
 
-	mflr	%r30
 	bl	_C_LABEL(ofwr_init)
-	mtlr	%r30
 1:
 #endif
-	lis	%r8,openfirmware_entry@ha
-	stw	%r5,openfirmware_entry@l(%r8) /* save client interface handler*/
 
+	lis	%r8,ofentry@ha
+	stw	%r5,ofentry@l(%r8)	/* save client interface handler */
+
+	/*
+	 * Call directly into OpenFirmware until we're ready to use
+	 * the trampoline.
+	 */
+	lis	%r8,oftramp@ha
+	stw	%r5,oftramp@l(%r8)
+
+	/* Save the MSR that OpenFirmware is using. */
 	mfmsr	%r0
-/*
- * XXX
- * doing this here instead of later on in ofwoea_initppc() after setting
- * up the console and such makes my PowerBook 3400c hang.
- * Probably just another OF 2.0 weirdness
- */
-	/*li	%r8,PSL_IP*/
-	/*andc	%r0,%r0,%r8*/			/* make sure PSL_IP is off */
 	lis	%r9,ofwmsr@ha
-	stwu	%r0,ofwmsr@l(%r9)		/* save initial MSR value */
+	stwu	%r0,ofwmsr@l(%r9)
 
 	mfsprg0	%r0				/* save SPRGs */
 	stw	%r0,4(%r9)
@@ -96,28 +113,42 @@ ENTRY_NOPROFILE(ofwinit)
 	lis	%r9,_C_LABEL(OF_buf)@ha
 	stw	%r8,_C_LABEL(OF_buf)@l(%r9)
 
+	/* XXX Do other stuff in C code. */
+
+	/*
+	 * Jump off the trampoline for all subsequent calls
+	 * into OpenFirmware.
+	 */
+	lis	%r5,_C_LABEL(openfirmware_trampoline)@ha
+	addi	%r5,%r5,_C_LABEL(openfirmware_trampoline)@l
+	lis	%r8,oftramp@ha
+	stw	%r5,oftramp@l(%r8)
+
+	/* Retrieve LR, pop stack frame. */
+	addi	%r1,%r1,16
+	lwz	%r0,4(%r1)
+	mtlr	%r0
+
 	blr
 
 /*
- * OpenFirmware entry point
+ * OpenFirmware trampoline.  We are already on the OpenFirmware stack.
  */
-	.text
-ENTRY(openfirmware)
+ENTRY_NOPROFILE(openfirmware_trampoline)
 	mflr	%r0
 	stw	%r0,4(%r1)		/* save return address */
 
 	/*
-	 * Switch to OpenFirmware stack.
+	 * Push stack frame and save area:
 	 *
-	 * -48 == -16 to stack old SP and align, -32 for save area
+	 * [SP+8 save area]
+	 * [SP+4 slot for saved LR in callee]
+	 * [SP+0 saved SP]
 	 */
-	lis	%r7,firmstk+NBPG-48@ha
-	addi	%r7,%r7,firmstk+NBPG-48@l
-	stw	%r1,32(%r7)		/* stash away prev stack pointer */
-	mr	%r1,%r7
+	stwu	%r1,-48(%r1)
 
-	lis	%r4,openfirmware_entry@ha	/* get firmware entry point */
-	lwz	%r4,openfirmware_entry@l(%r4)
+	lis	%r4,ofentry@ha		/* get firmware entry point */
+	lwz	%r4,ofentry@l(%r4)
 	mtlr	%r4
 
 	mfsprg0	%r5			/* save current sprg0 (curcpu) */
@@ -211,7 +242,31 @@ ENTRY(openfirmware)
 	lwz	%r5,28(%r1)
 	mtsprg3	%r5
 
-	lwz	%r1,32(%r1)		/* restore previous stack pointer */
+	addi	%r1,%r1,48		/* pop stack frame and save area */
+	lwz	%r0,4(%r1)		/* return address */
+	mtlr	%r0
+	blr
+
+/*
+ * Call into OpenFirmware.
+ */
+ENTRY_NOPROFILE(openfirmware)
+	mflr	%r0
+	stw	%r0,4(%r1)		/* save return address */
+
+	/* Switch to OpenFirmware stack. */
+	lis	%r7,firmstk+NBPG-16@ha
+	addi	%r7,%r7,firmstk+NBPG-16@l
+	stw	%r1,0(%r7)		/* stash away prev stack pointer */
+	mr	%r1,%r7
+
+	lis	%r4,oftramp@ha
+	lwz	%r4,oftramp@l(%r4)
+
+	mtctr	%r4
+	bctrl
+
+	lwz	%r1,0(%r1)		/* restore previous stack pointer */
 	lwz	%r0,4(%r1)		/* return address */
 	mtlr	%r0
 	blr
