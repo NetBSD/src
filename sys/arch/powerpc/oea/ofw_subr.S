@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.14 2021/02/18 16:29:12 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.15 2021/02/18 18:31:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,7 +113,13 @@ ENTRY_NOPROFILE(ofwinit)
 	lis	%r9,_C_LABEL(OF_buf)@ha
 	stw	%r8,_C_LABEL(OF_buf)@l(%r9)
 
-	/* XXX Do other stuff in C code. */
+	/*
+	 * Call into C code to perform additional early initialization.
+	 */
+	lis	%r8,_C_LABEL(ofw_bootstrap)@ha
+	addi	%r8,%r8,_C_LABEL(ofw_bootstrap)@l
+	mtctr	%r8
+	bctrl
 
 	/*
 	 * Jump off the trampoline for all subsequent calls
