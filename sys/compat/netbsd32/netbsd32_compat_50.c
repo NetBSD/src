@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.50 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.51 2021/02/18 12:54:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.50 2021/01/19 03:20:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.51 2021/02/18 12:54:03 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -875,8 +875,6 @@ compat_50_netbsd32_setitimer(struct lwp *l,
 	struct itimerval aitv;
 	int error;
 
-	if ((u_int)which > ITIMER_PROF)
-		return EINVAL;
 	itv32 = SCARG_P32(uap, itv);
 	if (itv32) {
 		if ((error = copyin(itv32, &s32it, sizeof(s32it))))

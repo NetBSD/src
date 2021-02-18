@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.54 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.55 2021/02/18 12:54:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.54 2021/01/19 03:20:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.55 2021/02/18 12:54:03 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -142,8 +142,6 @@ netbsd32___setitimer50(struct lwp *l, const struct netbsd32___setitimer50_args *
 	struct itimerval aitv;
 	int error;
 
-	if ((u_int)which > ITIMER_PROF)
-		return EINVAL;
 	itv32 = SCARG_P32(uap, itv);
 	if (itv32) {
 		if ((error = copyin(itv32, &s32it, sizeof(s32it))))
