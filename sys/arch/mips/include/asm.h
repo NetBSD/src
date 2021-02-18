@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.64 2021/02/16 06:06:58 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.65 2021/02/18 12:28:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,9 +76,9 @@
 /*
  * The old ABI version must also decrement two less words off the
  * stack and the final addiu to t9 must always equal the size of this
- * _KERN_MCOUNT.
+ * _MIPS_ASM_MCOUNT.
  */
-#define	_KERN_MCOUNT						\
+#define	_MIPS_ASM_MCOUNT					\
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
@@ -98,9 +98,25 @@
 #else				/* New (n32/n64) ABI */
 /*
  * The new ABI version just needs to put the return address in AT and
- * call _mcount().
+ * call _mcount().  For the no abicalls case, skip the reloc dance.
  */
-#define	_KERN_MCOUNT						\
+#ifdef __mips_abicalls
+#define	_MIPS_ASM_MCOUNT					\
+	.set	push;						\
+	.set	noreorder;					\
+	.set	noat;						\
+	subu	sp,16;						\
+	sw	t9,8(sp);					\
+	move	AT,ra;						\
+	lui	t9,%hi(_mcount); 				\
+	addiu	t9,t9,%lo(_mcount);				\
+	jalr	t9;						\
+	 nop;							\
+	lw	t9,8(sp);					\
+	addiu	sp,16;						\
+	.set	pop;
+#else /* !__mips_abicalls */
+#define	_MIPS_ASM_MCOUNT					\
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
@@ -108,10 +124,11 @@
 	jal	_mcount;					\
 	 nop;							\
 	.set	pop;
+#endif /* !__mips_abicalls */
 #endif /* n32/n64 */
 
 #ifdef GPROF
-#define	MCOUNT _KERN_MCOUNT
+#define	MCOUNT _MIPS_ASM_MCOUNT
 #else
 #define	MCOUNT
 #endif
