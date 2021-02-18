@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.42 2021/02/15 17:46:36 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.43 2021/02/18 11:23:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.42 2021/02/15 17:46:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.43 2021/02/18 11:23:15 jmcneill Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -521,10 +521,7 @@ interrupt(struct trapframe *tf)
 	ARM_IRQ_HANDLER(tf);
 	ci->ci_intr_depth--;
 
-	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0) {
-		ENABLE_INTERRUPT();
-		cpu_dosoftints();
-	}
+	cpu_dosoftints();
 }
 
 #ifdef COMPAT_NETBSD32
