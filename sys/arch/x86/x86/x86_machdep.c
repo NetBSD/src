@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.147 2021/02/19 02:18:09 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.148 2021/02/19 03:28:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.147 2021/02/19 02:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.148 2021/02/19 03:28:53 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1329,7 +1329,7 @@ sysctl_machdep_hypervisor(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	const char *t = NULL;
-	char buf[10];
+	char buf[64];
 
 	node = *rnode;
 	node.sysctl_data = buf;
