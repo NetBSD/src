@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.1 2021/02/19 12:28:56 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.2 2021/02/19 14:44:29 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -29,9 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.1 2021/02/19 12:28:56 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.2 2021/02/19 14:44:29 rillig Exp $");
 #endif
 
 #include <stdbool.h>
