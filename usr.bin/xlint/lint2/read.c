@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.38 2021/01/16 16:53:24 rillig Exp $ */
+/* $NetBSD: read.c,v 1.39 2021/02/19 22:27:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.38 2021/01/16 16:53:24 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.39 2021/02/19 22:27:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -680,7 +680,7 @@ inptype(const char *cp, const char **epp)
 		break;
 	case ENUM:
 		tp->t_tspec = INT;
-		tp->t_isenum = true;
+		tp->t_is_enum = true;
 		/* FALLTHROUGH */
 	case STRUCT:
 	case UNION:

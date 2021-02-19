@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.12 2021/01/02 01:06:15 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.13 2021/02/19 22:27:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -42,7 +42,7 @@ struct type {
 	bool	t_const : 1;	/* constant */
 	bool	t_volatile : 1;	/* volatile */
 	bool	t_vararg : 1;	/* function has variable number of arguments */
-	bool	t_isenum : 1;	/* enum type */
+	bool	t_is_enum : 1;
 	bool	t_proto : 1;	/* this is a prototype */
 	bool	t_istag : 1;	/* tag with _t_tag valid */
 	bool	t_istynam : 1;	/* tag with _t_tynam valid */
@@ -51,9 +51,9 @@ struct type {
 		int	_t_dim;		/* if the type is an ARRAY than this
 					   is the dimension of the array. */
 		struct	hte *_t_tag;	/* hash table entry of tag if
-					   t_isenum, STRUCT or UNION */
+					   t_is_enum, STRUCT or UNION */
 		struct	hte *_t_tynam;	/* hash table entry of typename if
-					   t_isenum, STRUCT or UNION */
+					   t_is_enum, STRUCT or UNION */
 		struct {
 			int p_line;
 			short p_file;
