@@ -1,11 +1,11 @@
-/*	$NetBSD: sockaddr.c,v 1.8 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.9 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -139,14 +139,17 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		snprintf(pbuf, sizeof(pbuf), "%u",
 			 ntohs(sockaddr->type.sin6.sin6_port));
 		break;
-#ifdef ISC_PLAFORM_HAVESYSUNH
+#ifdef ISC_PLATFORM_HAVESYSUNH
 	case AF_UNIX:
 		plen = strlen(sockaddr->type.sunix.sun_path);
 		if (plen >= isc_buffer_availablelength(target)) {
 			return (ISC_R_NOSPACE);
 		}
 
-		isc_buffer_putmem(target, sockaddr->type.sunix.sun_path, plen);
+		isc_buffer_putmem(
+			target,
+			(const unsigned char *)sockaddr->type.sunix.sun_path,
+			plen);
 
 		/*
 		 * Null terminate after used region.
@@ -156,7 +159,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		avail.base[0] = '\0';
 
 		return (ISC_R_SUCCESS);
-#endif /* ifdef ISC_PLAFORM_HAVESYSUNH */
+#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
 	default:
 		return (ISC_R_FAILURE);
 	}
@@ -505,7 +508,7 @@ isc_sockaddr_fromsockaddr(isc_sockaddr_t *isa, const struct sockaddr *sa) {
 	}
 
 	memset(isa, 0, sizeof(isc_sockaddr_t));
-	memcpy(isa, sa, length);
+	memmove(isa, sa, length);
 	isa->length = length;
 
 	return (ISC_R_SUCCESS);

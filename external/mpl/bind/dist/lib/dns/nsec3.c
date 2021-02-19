@@ -1,11 +1,11 @@
-/*	$NetBSD: nsec3.c,v 1.6 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,8 +18,8 @@
 #include <isc/buffer.h>
 #include <isc/hex.h>
 #include <isc/iterated_hash.h>
-#include <isc/log.h>
 #include <isc/md.h>
+#include <isc/nonce.h>
 #include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -226,6 +226,15 @@ dns_nsec3_typepresent(dns_rdata_t *rdata, dns_rdatatype_t type) {
 	}
 	dns_rdata_freestruct(&nsec3);
 	return (present);
+}
+
+isc_result_t
+dns_nsec3_generate_salt(unsigned char *salt, size_t saltlen) {
+	if (saltlen > 255U) {
+		return (ISC_R_RANGE);
+	}
+	isc_nonce_buf(salt, saltlen);
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t

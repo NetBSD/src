@@ -1,11 +1,11 @@
-/*	$NetBSD: client.h,v 1.10 2020/08/03 17:23:43 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.11 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -185,14 +185,20 @@ struct ns_client {
 	isc_task_t *	 task;
 	dns_view_t *	 view;
 	dns_dispatch_t * dispatch;
-	isc_nmhandle_t * handle;
-	unsigned char *	 tcpbuf;
-	dns_message_t *	 message;
-	unsigned char *	 sendbuf;
-	dns_rdataset_t * opt;
-	uint16_t	 udpsize;
-	uint16_t	 extflags;
-	int16_t		 ednsversion; /* -1 noedns */
+	isc_nmhandle_t * handle;	/* Permanent pointer to handle */
+	isc_nmhandle_t * sendhandle;	/* Waiting for send callback */
+	isc_nmhandle_t * reqhandle;	/* Waiting for request callback
+					   (query, update, notify) */
+	isc_nmhandle_t *fetchhandle;	/* Waiting for recursive fetch */
+	isc_nmhandle_t *prefetchhandle; /* Waiting for prefetch / rpzfetch */
+	isc_nmhandle_t *updatehandle;	/* Waiting for update callback */
+	unsigned char * tcpbuf;
+	dns_message_t * message;
+	unsigned char * sendbuf;
+	dns_rdataset_t *opt;
+	uint16_t	udpsize;
+	uint16_t	extflags;
+	int16_t		ednsversion; /* -1 noedns */
 	void (*cleanup)(ns_client_t *);
 	void (*shutdown)(void *arg, isc_result_t result);
 	void *	      shutdown_arg;
@@ -265,7 +271,8 @@ struct ns_client {
 #define NS_CLIENTATTR_WANTPAD	   0x08000 /*%< pad reply */
 #define NS_CLIENTATTR_USEKEEPALIVE 0x10000 /*%< use TCP keepalive */
 
-#define NS_CLIENTATTR_NOSETFC 0x20000 /*%< don't set servfail cache */
+#define NS_CLIENTATTR_NOSETFC	0x20000 /*%< don't set servfail cache */
+#define NS_CLIENTATTR_RECURSING 0x40000 /*%< client is recursing */
 
 /*
  * Flag to use with the SERVFAIL cache to indicate
@@ -470,7 +477,8 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
  */
 
 void
-ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg);
+ns__client_request(isc_nmhandle_t *handle, isc_result_t eresult,
+		   isc_region_t *region, void *arg);
 
 /*%<
  * Handle client requests.

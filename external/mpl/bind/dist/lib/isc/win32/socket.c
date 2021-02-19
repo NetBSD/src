@@ -1,11 +1,11 @@
-/*	$NetBSD: socket.c,v 1.8 2020/08/03 17:23:43 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.9 2021/02/19 16:42:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -175,13 +175,14 @@ typedef isc_event_t intev_t;
 /*
  * Socket State
  */
-enum { SOCK_INITIALIZED, /* Socket Initialized */
-       SOCK_OPEN,	 /* Socket opened but nothing yet to do */
-       SOCK_DATA,	 /* Socket sending or receiving data */
-       SOCK_LISTEN,	 /* TCP Socket listening for connects */
-       SOCK_ACCEPT,	 /* TCP socket is waiting to accept */
-       SOCK_CONNECT,	 /* TCP Socket connecting */
-       SOCK_CLOSED,	 /* Socket has been closed */
+enum {
+	SOCK_INITIALIZED, /* Socket Initialized */
+	SOCK_OPEN,	  /* Socket opened but nothing yet to do */
+	SOCK_DATA,	  /* Socket sending or receiving data */
+	SOCK_LISTEN,	  /* TCP Socket listening for connects */
+	SOCK_ACCEPT,	  /* TCP socket is waiting to accept */
+	SOCK_CONNECT,	  /* TCP Socket connecting */
+	SOCK_CLOSED,	  /* Socket has been closed */
 };
 
 #define SOCKET_MAGIC	ISC_MAGIC('I', 'O', 'i', 'o')
@@ -274,7 +275,7 @@ struct isc_socket {
 	unsigned int listener : 1,		    /* listener socket */
 		connected : 1, pending_connect : 1, /* connect
 						     * pending */
-		bound : 1,			    /* bound to local addr */
+		bound  : 1,			    /* bound to local addr */
 		dupped : 1;	     /* created by isc_socket_dup() */
 	unsigned int pending_iocp;   /* Should equal the counters below.
 				      * Debug. */
@@ -2490,7 +2491,7 @@ SocketIoThread(LPVOID ThreadContext) {
 					closesocket(lpo->adev->newsocket->fd);
 					lpo->adev->newsocket->fd =
 						INVALID_SOCKET;
-					isc_refcount_decrement(
+					isc_refcount_decrementz(
 						&lpo->adev->newsocket
 							 ->references);
 					free_socket(&lpo->adev->newsocket,
@@ -3503,7 +3504,7 @@ isc_socket_cancel(isc_socket_t *sock, isc_task_t *task, unsigned int how) {
 			next = ISC_LIST_NEXT(dev, ev_link);
 
 			if ((task == NULL) || (task == current_task)) {
-				isc_refcount_decrement(
+				isc_refcount_decrementz(
 					&dev->newsocket->references);
 				closesocket(dev->newsocket->fd);
 				dev->newsocket->fd = INVALID_SOCKET;

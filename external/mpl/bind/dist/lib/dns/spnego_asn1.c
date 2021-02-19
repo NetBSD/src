@@ -1,11 +1,11 @@
-/*	$NetBSD: spnego_asn1.c,v 1.6 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: spnego_asn1.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -96,13 +96,13 @@ free_MechTypeList(MechTypeList *);
  */
 
 typedef struct ContextFlags {
-	unsigned int delegFlag : 1;
-	unsigned int mutualFlag : 1;
-	unsigned int replayFlag : 1;
+	unsigned int delegFlag	  : 1;
+	unsigned int mutualFlag	  : 1;
+	unsigned int replayFlag	  : 1;
 	unsigned int sequenceFlag : 1;
-	unsigned int anonFlag : 1;
-	unsigned int confFlag : 1;
-	unsigned int integFlag : 1;
+	unsigned int anonFlag	  : 1;
+	unsigned int confFlag	  : 1;
+	unsigned int integFlag	  : 1;
 } ContextFlags;
 
 static int
@@ -147,10 +147,12 @@ free_NegTokenInit(NegTokenInit *);
  */
 
 typedef struct NegTokenResp {
-	enum { accept_completed = 0,
-	       accept_incomplete = 1,
-	       reject = 2,
-	       request_mic = 3 } *
+	enum {
+		accept_completed = 0,
+		accept_incomplete = 1,
+		reject = 2,
+		request_mic = 3
+	} *
 		negState;
 
 	MechType *supportedMech;

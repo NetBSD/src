@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2020  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2021  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2017,9 +2017,6 @@
 
 #define RDATATYPE_FROMTEXT_SW(_hash,_typename,_length,_typep) \
 	switch (_hash) { \
-		case 16: \
-			RDATATYPE_COMPARE("reserved0", 0, _typename,  _length, _typep); \
-			break; \
 		case 34: \
 			RDATATYPE_COMPARE("a", 1, _typename,  _length, _typep); \
 			break; \
@@ -2251,7 +2248,6 @@
 	}
 #define RDATATYPE_ATTRIBUTE_SW \
 	switch (type) { \
-	case 0: return (DNS_RDATATYPEATTR_RESERVED); \
 	case 1: return (RRTYPE_A_ATTRIBUTES); \
 	case 2: return (RRTYPE_NS_ATTRIBUTES); \
 	case 3: return (RRTYPE_MD_ATTRIBUTES); \
@@ -2343,7 +2339,6 @@
 	}
 #define RDATATYPE_TOTEXT_SW \
 	switch (type) { \
-	case 0: return (str_totext("RESERVED0", target)); \
 	case 1: return (str_totext("A", target)); \
 	case 2: return (str_totext("NS", target)); \
 	case 3: return (str_totext("MD", target)); \

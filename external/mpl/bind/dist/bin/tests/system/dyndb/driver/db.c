@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.4 2020/05/24 19:46:16 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.5 2021/02/19 16:42:12 christos Exp $	*/
 
 /*
  * Database API implementation. The interface is defined in lib/dns/db.h.
@@ -591,7 +591,10 @@ static dns_dbmethods_t sampledb_methods = {
 	NULL, /* getsize */
 	NULL, /* setservestalettl */
 	NULL, /* getservestalettl */
-	NULL  /* setgluecachestats */
+	NULL, /* setservestalerefresh */
+	NULL, /* getservestalerefresh */
+	NULL, /* setgluecachestats */
+	NULL  /* adjusthashsize */
 };
 
 /* Auxiliary driver functions. */

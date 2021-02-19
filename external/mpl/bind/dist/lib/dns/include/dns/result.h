@@ -1,11 +1,11 @@
-/*	$NetBSD: result.h,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -157,8 +157,15 @@
 #define DNS_R_TOOMANYRECORDS	(ISC_RESULTCLASS_DNS + 117)
 #define DNS_R_VERIFYFAILURE	(ISC_RESULTCLASS_DNS + 118)
 #define DNS_R_ATZONETOP		(ISC_RESULTCLASS_DNS + 119)
+#define DNS_R_NOKEYMATCH	(ISC_RESULTCLASS_DNS + 120)
+#define DNS_R_TOOMANYKEYS	(ISC_RESULTCLASS_DNS + 121)
+#define DNS_R_KEYNOTACTIVE	(ISC_RESULTCLASS_DNS + 122)
+#define DNS_R_NSEC3ITERRANGE	(ISC_RESULTCLASS_DNS + 123)
+#define DNS_R_NSEC3SALTRANGE	(ISC_RESULTCLASS_DNS + 124)
+#define DNS_R_NSEC3BADALG	(ISC_RESULTCLASS_DNS + 125)
+#define DNS_R_NSEC3RESALT	(ISC_RESULTCLASS_DNS + 126)
 
-#define DNS_R_NRESULTS 120 /*%< Number of results */
+#define DNS_R_NRESULTS 127 /*%< Number of results */
 
 /*
  * DNS wire format rcodes.

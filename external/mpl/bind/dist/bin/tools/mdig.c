@@ -1,11 +1,11 @@
-/*	$NetBSD: mdig.c,v 1.6 2020/05/24 19:46:19 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.7 2021/02/19 16:42:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -84,10 +84,15 @@
 #define UDPTIMEOUT 5
 #define MAXTRIES   0xffffffff
 
+#define NS_PER_US  1000	   /*%< Nanoseconds per microsecond. */
+#define US_PER_SEC 1000000 /*%< Microseconds per second. */
+#define US_PER_MS  1000	   /*%< Microseconds per millisecond. */
+
 static isc_mem_t *mctx;
 static dns_requestmgr_t *requestmgr;
 static const char *batchname;
 static FILE *batchfp;
+static bool burst = false;
 static bool have_ipv4 = false;
 static bool have_ipv6 = false;
 static bool have_src = false;
@@ -211,8 +216,7 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 		}
 	}
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
-	CHECK("dns_message_create", result);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
 
 	parseflags |= DNS_MESSAGEPARSE_PRESERVEORDER;
 	if (besteffort) {
@@ -535,10 +539,10 @@ cleanup:
 		dns_master_styledestroy(&style, mctx);
 	}
 	if (query != NULL) {
-		dns_message_destroy(&query);
+		dns_message_detach(&query);
 	}
 	if (response != NULL) {
-		dns_message_destroy(&response);
+		dns_message_detach(&response);
 	}
 	dns_request_destroy(&reqev->request);
 	isc_event_free(&event);
@@ -595,8 +599,7 @@ sendquery(struct query *query, isc_task_t *task) {
 	CHECK("dns_name_fromtext", result);
 
 	message = NULL;
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
-	CHECK("dns_message_create", result);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
 
 	message->opcode = dns_opcode_query;
 	if (query->recurse) {
@@ -1226,18 +1229,29 @@ plus_option(char *option, struct query *query, bool global) {
 			GLOBAL();
 			besteffort = state;
 			break;
-		case 'u': /* bufsize */
-			FULLCHECK("bufsize");
-			if (value == NULL) {
-				goto need_value;
-			}
-			if (!state) {
+		case 'u':
+			switch (cmd[2]) {
+			case 'f': /* bufsize */
+				FULLCHECK("bufsize");
+				if (value == NULL) {
+					goto need_value;
+				}
+				if (!state) {
+					goto invalid_option;
+				}
+				result = parse_uint(&num, value, COMMSIZE,
+						    "buffer size");
+				CHECK("parse_uint(buffer size)", result);
+				query->udpsize = num;
+				break;
+			case 'r': /* burst */
+				FULLCHECK("burst");
+				GLOBAL();
+				burst = state;
+				break;
+			default:
 				goto invalid_option;
 			}
-			result = parse_uint(&num, value, COMMSIZE,
-					    "buffer size");
-			CHECK("parse_uint(buffer size)", result);
-			query->udpsize = num;
 			break;
 		default:
 			goto invalid_option;
@@ -2048,6 +2062,21 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 	}
 }
 
+#ifdef WIN32
+static void
+usleep(unsigned int usec) {
+	HANDLE timer;
+	LARGE_INTEGER ft;
+
+	ft.QuadPart = -(10 * (__int64)usec);
+
+	timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+	WaitForSingleObject(timer, INFINITE);
+	CloseHandle(timer);
+}
+#endif
+
 /*% Main processing routine for mdig */
 int
 main(int argc, char *argv[]) {
@@ -2155,6 +2184,32 @@ main(int argc, char *argv[]) {
 
 	query = ISC_LIST_HEAD(queries);
 	RUNCHECK(isc_app_onrun(mctx, task, sendqueries, query));
+
+	/*
+	 * Stall to the start of a new second.
+	 */
+	if (burst) {
+		isc_time_t start, now;
+		RUNCHECK(isc_time_now(&start));
+		/*
+		 * Sleep to 1ms of the end of the second then run a busy loop
+		 * until the second changes.
+		 */
+		do {
+			RUNCHECK(isc_time_now(&now));
+			if (isc_time_seconds(&start) == isc_time_seconds(&now))
+			{
+				int us = US_PER_SEC -
+					 (isc_time_nanoseconds(&now) /
+					  NS_PER_US);
+				if (us > US_PER_MS) {
+					usleep(us - US_PER_MS);
+				}
+			} else {
+				break;
+			}
+		} while (1);
+	}
 
 	(void)isc_app_run();
 

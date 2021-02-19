@@ -1,11 +1,11 @@
-/*	$NetBSD: dig.h,v 1.4 2020/05/24 19:46:11 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.5 2021/02/19 16:42:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -70,6 +70,10 @@
 #define SERVER_TIMEOUT 1
 
 #define LOOKUP_LIMIT 64
+
+#define DEFAULT_EDNS_VERSION 0
+#define DEFAULT_EDNS_BUFSIZE 4096
+
 /*%
  * Lookup_limit is just a limiter, keeping too many lookups from being
  * created.  It's job is mainly to prevent the program from running away
@@ -139,7 +143,7 @@ struct dig_lookup {
 	dig_query_t *	  xfr_q;
 	uint32_t	  retries;
 	int		  nsfound;
-	uint16_t	  udpsize;
+	int16_t		  udpsize;
 	int16_t		  edns;
 	int16_t		  padding;
 	uint32_t	  ixfr_serial;

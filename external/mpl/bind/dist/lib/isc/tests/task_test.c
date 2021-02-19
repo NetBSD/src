@@ -1,11 +1,11 @@
-/*	$NetBSD: task_test.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.7 2021/02/19 16:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -24,9 +24,11 @@
 #include <unistd.h>
 
 #define UNIT_TESTING
+
 #include <cmocka.h>
 
 #include <isc/atomic.h>
+#include <isc/cmocka.h>
 #include <isc/commandline.h>
 #include <isc/condition.h>
 #include <isc/mem.h>
@@ -799,6 +801,7 @@ manytasks(void **state) {
 			      (unsigned long)ntasks);
 	}
 
+	isc_mutex_init(&lock);
 	isc_condition_init(&cv);
 
 	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
@@ -823,6 +826,7 @@ manytasks(void **state) {
 	isc_taskmgr_destroy(&taskmgr);
 	isc_mem_destroy(&mctx);
 	isc_condition_destroy(&cv);
+	isc_mutex_destroy(&lock);
 }
 
 /*
@@ -1528,31 +1532,52 @@ purgeevent_notpurge(void **state) {
 int
 main(int argc, char **argv) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(create_task, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(shutdown, _setup4, _teardown),
 		cmocka_unit_test(manytasks),
 		cmocka_unit_test_setup_teardown(all_events, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(basic, _setup2, _teardown),
-		cmocka_unit_test_setup_teardown(privileged_events, _setup,
-						_teardown),
-		cmocka_unit_test_setup_teardown(privilege_drop, _setup,
-						_teardown),
-		cmocka_unit_test_setup_teardown(task_exclusive, _setup4,
+		cmocka_unit_test_setup_teardown(create_task, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(pause_unpause, _setup,
 						_teardown),
 		cmocka_unit_test_setup_teardown(post_shutdown, _setup2,
 						_teardown),
+		cmocka_unit_test_setup_teardown(privilege_drop, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(privileged_events, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(purge, _setup2, _teardown),
-		cmocka_unit_test_setup_teardown(purgerange, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(purgeevent, _setup2, _teardown),
 		cmocka_unit_test_setup_teardown(purgeevent_notpurge, _setup,
 						_teardown),
-		cmocka_unit_test_setup_teardown(pause_unpause, _setup,
+		cmocka_unit_test_setup_teardown(purgerange, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(shutdown, _setup4, _teardown),
+		cmocka_unit_test_setup_teardown(task_exclusive, _setup4,
 						_teardown),
 	};
+	struct CMUnitTest selected[sizeof(tests) / sizeof(tests[0])];
+	size_t i;
 	int c;
 
-	while ((c = isc_commandline_parse(argc, argv, "v")) != -1) {
+	memset(selected, 0, sizeof(selected));
+
+	while ((c = isc_commandline_parse(argc, argv, "lt:v")) != -1) {
 		switch (c) {
+		case 'l':
+			for (i = 0; i < (sizeof(tests) / sizeof(tests[0])); i++)
+			{
+				if (tests[i].name != NULL) {
+					fprintf(stdout, "%s\n", tests[i].name);
+				}
+			}
+			return (0);
+		case 't':
+			if (!cmocka_add_test_byname(
+				    tests, isc_commandline_argument, selected))
+			{
+				fprintf(stderr, "unknown test '%s'\n",
+					isc_commandline_argument);
+				exit(1);
+			}
+			break;
 		case 'v':
 			verbose = true;
 			break;
@@ -1561,7 +1586,11 @@ main(int argc, char **argv) {
 		}
 	}
 
-	return (cmocka_run_group_tests(tests, NULL, NULL));
+	if (selected[0].name != NULL) {
+		return (cmocka_run_group_tests(selected, NULL, NULL));
+	} else {
+		return (cmocka_run_group_tests(tests, NULL, NULL));
+	}
 }
 
 #else /* HAVE_CMOCKA */

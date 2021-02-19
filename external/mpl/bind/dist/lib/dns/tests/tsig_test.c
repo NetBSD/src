@@ -1,11 +1,11 @@
-/*	$NetBSD: tsig_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.6 2021/02/19 16:42:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -211,8 +211,7 @@ render(isc_buffer_t *buf, unsigned flags, dns_tsigkey_t *key,
 	dns_compress_t cctx;
 	isc_result_t result;
 
-	result = dns_message_create(dt_mctx, DNS_MESSAGE_INTENTRENDER, &msg);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_create(dt_mctx, DNS_MESSAGE_INTENTRENDER, &msg);
 	assert_non_null(msg);
 
 	msg->id = 50;
@@ -264,7 +263,7 @@ render(isc_buffer_t *buf, unsigned flags, dns_tsigkey_t *key,
 	}
 
 	dns_compress_invalidate(&cctx);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 }
 
 /*
@@ -319,12 +318,12 @@ tsig_tcp_test(void **state) {
 	 */
 	isc_buffer_allocate(dt_mctx, &buf, 65535);
 	render(buf, DNS_MESSAGEFLAG_QR, key, &querytsig, &tsigout, NULL);
+	assert_non_null(tsigout);
 
 	/*
 	 * Process response message 1.
 	 */
-	result = dns_message_create(dt_mctx, DNS_MESSAGE_INTENTPARSE, &msg);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_create(dt_mctx, DNS_MESSAGE_INTENTPARSE, &msg);
 	assert_non_null(msg);
 
 	result = dns_message_settsigkey(msg, key);
@@ -354,7 +353,7 @@ tsig_tcp_test(void **state) {
 	tsigctx = msg->tsigctx;
 	msg->tsigctx = NULL;
 	isc_buffer_free(&buf);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 
 	result = dst_context_create(key->key, dt_mctx, DNS_LOGCATEGORY_DNSSEC,
 				    false, 0, &outctx);
@@ -378,8 +377,7 @@ tsig_tcp_test(void **state) {
 	/*
 	 * Process response message 2.
 	 */
-	result = dns_message_create(dt_mctx, DNS_MESSAGE_INTENTPARSE, &msg);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_create(dt_mctx, DNS_MESSAGE_INTENTPARSE, &msg);
 	assert_non_null(msg);
 
 	msg->tcp_continuation = 1;
@@ -411,7 +409,7 @@ tsig_tcp_test(void **state) {
 	tsigctx = msg->tsigctx;
 	msg->tsigctx = NULL;
 	isc_buffer_free(&buf);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 
 	/*
 	 * Create response message 3.
@@ -425,8 +423,7 @@ tsig_tcp_test(void **state) {
 	/*
 	 * Process response message 3.
 	 */
-	result = dns_message_create(dt_mctx, DNS_MESSAGE_INTENTPARSE, &msg);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_create(dt_mctx, DNS_MESSAGE_INTENTPARSE, &msg);
 	assert_non_null(msg);
 
 	msg->tcp_continuation = 1;
@@ -462,7 +459,7 @@ tsig_tcp_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_free(&buf);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 
 	if (outctx != NULL) {
 		dst_context_destroy(&outctx);
@@ -537,7 +534,7 @@ test_name(const char *name_string, const dns_name_t *expected) {
 	dns_name_init(&name, NULL);
 	assert_int_equal(dns_name_fromstring(&name, name_string, 0, dt_mctx),
 			 ISC_R_SUCCESS);
-	assert_int_equal(dns__tsig_algnamefromname(&name), expected);
+	assert_ptr_equal(dns__tsig_algnamefromname(&name), expected);
 	dns_name_free(&name, dt_mctx);
 }
 
@@ -557,7 +554,7 @@ algnamefromname_test(void **state) {
 	test_name("gss.microsoft.com", DNS_TSIG_GSSAPIMS_NAME);
 
 	/* try another name that isn't a standard algorithm name */
-	assert_int_equal(dns__tsig_algnamefromname(dns_rootname), NULL);
+	assert_null(dns__tsig_algnamefromname(dns_rootname));
 }
 
 /* Tests the dns__tsig_algallocated function */

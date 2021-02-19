@@ -1,11 +1,11 @@
-/*	$NetBSD: nslookup.c,v 1.6 2020/05/24 19:46:11 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.7 2021/02/19 16:42:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -48,6 +48,11 @@
 #elif defined(HAVE_EDITLINE_READLINE_H)
 #include <editline/readline.h>
 #elif defined(HAVE_READLINE_READLINE_H)
+/* Prevent deprecated functions being declared. */
+#define _FUNCTION_DEF 1
+/* Ensure rl_message() gets prototype. */
+#define USE_VARARGS   1
+#define PREFER_STDARG 1
 #include <readline/readline.h>
 #if defined(HAVE_READLINE_HISTORY_H)
 #include <readline/history.h>
@@ -788,7 +793,6 @@ addlookup(char *opt) {
 	lookup->recurse = recurse;
 	lookup->aaonly = aaonly;
 	lookup->retries = tries;
-	lookup->udpsize = 0;
 	lookup->comments = comments;
 	if (lookup->rdtype == dns_rdatatype_any && !tcpmode_set) {
 		lookup->tcp_mode = true;
@@ -961,7 +965,7 @@ flush_lookup_list(void) {
 			isc_mem_free(mctx, sp);
 		}
 		if (l->sendmsg != NULL) {
-			dns_message_destroy(&l->sendmsg);
+			dns_message_detach(&l->sendmsg);
 		}
 		lp = l;
 		l = ISC_LIST_NEXT(l, link);

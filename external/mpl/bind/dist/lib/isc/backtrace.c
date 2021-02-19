@@ -1,11 +1,11 @@
-/*	$NetBSD: backtrace.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -42,7 +42,7 @@
  */
 #ifdef HAVE_LIBCTRACE
 #define BACKTRACE_LIBC
-#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__ia64__))
+#elif defined(HAVE_UNWIND_BACKTRACE)
 #define BACKTRACE_GCC
 #elif defined(WIN32)
 #define BACKTRACE_WIN32
@@ -140,7 +140,9 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 #ifdef __x86_64__
 static unsigned long
 getrbp(void) {
-	__asm("movq %rbp, %rax\n");
+	unsigned long rbp;
+	__asm("movq %%rbp, %0\n" : "=r"(rbp));
+	return rbp;
 }
 #endif /* ifdef __x86_64__ */
 
