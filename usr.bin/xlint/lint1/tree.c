@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.207 2021/02/15 07:40:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.208 2021/02/19 22:16:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.207 2021/02/15 07:40:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.208 2021/02/19 22:16:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -335,7 +335,7 @@ new_string_node(strg_t *strg)
 sym_t *
 struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 {
-	str_t	*str;
+	struct_or_union	*str;
 	type_t	*tp;
 	sym_t	*sym, *csym;
 	bool	eq;
@@ -351,9 +351,9 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
-		msym->s_styp = tgetblk(sizeof (str_t));
-		msym->s_styp->stag = tgetblk(sizeof (sym_t));
-		msym->s_styp->stag->s_name = unnamed;
+		msym->s_styp = tgetblk(sizeof (struct_or_union));
+		msym->s_styp->sou_tag = tgetblk(sizeof (sym_t));
+		msym->s_styp->sou_tag->s_name = unnamed;
 		msym->s_value.v_tspec = INT;
 		return msym;
 	}
@@ -2626,7 +2626,7 @@ has_constant_member(const type_t *tp)
 
 	lint_assert((t = tp->t_tspec) == STRUCT || t == UNION);
 
-	for (m = tp->t_str->memb; m != NULL; m = m->s_next) {
+	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
 		tp = m->s_type;
 		if (tp->t_const)
 			return true;
@@ -2987,7 +2987,7 @@ plength(type_t *tp)
 		break;
 	case STRUCT:
 	case UNION:
-		if ((elsz = tp->t_str->size) == 0)
+		if ((elsz = tp->t_str->sou_size_in_bit) == 0)
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		break;
@@ -3362,7 +3362,7 @@ tsize(type_t *tp)
 			error(143);
 			elsz = 1;
 		} else {
-			elsz = tp->t_str->size;
+			elsz = tp->t_str->sou_size_in_bit;
 		}
 		break;
 	case ENUM:
@@ -3453,13 +3453,13 @@ cast(tnode_t *tn, type_t *tp)
 		 */
 	} else if (nt == UNION) {
 		sym_t *m;
-		str_t *str = tp->t_str;
+		struct_or_union *str = tp->t_str;
 		if (!Sflag) {
 			/* union cast is a C9X feature */
 			error(328);
 			return NULL;
 		}
-		for (m = str->memb; m != NULL; m = m->s_next) {
+		for (m = str->sou_first_member; m != NULL; m = m->s_next) {
 			if (sametype(m->s_type, tn->tn_type)) {
 				tn = getnode();
 				tn->tn_op = CVT;

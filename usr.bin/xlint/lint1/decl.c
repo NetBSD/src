@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.133 2021/01/31 11:23:01 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.134 2021/02/19 22:16:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.133 2021/01/31 11:23:01 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.134 2021/02/19 22:16:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -181,7 +181,7 @@ is_incomplete(const type_t *tp)
 	} else if (t == ARRAY) {
 		return tp->t_aincompl;
 	} else if (t == STRUCT || t == UNION) {
-		return tp->t_str->sincompl;
+		return tp->t_str->sou_incomplete;
 	} else if (t == ENUM) {
 		return tp->t_enum->eincompl;
 	}
@@ -199,7 +199,7 @@ setcomplete(type_t *tp, bool complete)
 	if ((t = tp->t_tspec) == ARRAY) {
 		tp->t_aincompl = !complete;
 	} else if (t == STRUCT || t == UNION) {
-		tp->t_str->sincompl = !complete;
+		tp->t_str->sou_incomplete = !complete;
 	} else {
 		lint_assert(t == ENUM);
 		tp->t_enum->eincompl = !complete;
@@ -482,8 +482,8 @@ settdsym(type_t *tp, sym_t *sym)
 	tspec_t	t;
 
 	if ((t = tp->t_tspec) == STRUCT || t == UNION) {
-		if (tp->t_str->stdef == NULL)
-			tp->t_str->stdef = sym;
+		if (tp->t_str->sou_first_typedef == NULL)
+			tp->t_str->sou_first_typedef = sym;
 	} else if (t == ENUM) {
 		if (tp->t_enum->etdef == NULL)
 			tp->t_enum->etdef = sym;
@@ -504,25 +504,26 @@ bitfieldsize(sym_t **mem)
 static void
 setpackedsize(type_t *tp)
 {
-	str_t *sp;
+	struct_or_union *sp;
 	sym_t *mem;
 
 	switch (tp->t_tspec) {
 	case STRUCT:
 	case UNION:
 		sp = tp->t_str;
-		sp->size = 0;
-		for (mem = sp->memb; mem != NULL; mem = mem->s_next) {
+		sp->sou_size_in_bit = 0;
+		for (mem = sp->sou_first_member;
+		     mem != NULL; mem = mem->s_next) {
 			if (mem->s_type->t_bitfield) {
-				sp->size += bitfieldsize(&mem);
+				sp->sou_size_in_bit += bitfieldsize(&mem);
 				if (mem == NULL)
 					break;
 			}
 			size_t x = (size_t)tsize(mem->s_type);
 			if (tp->t_tspec == STRUCT)
-				sp->size += x;
-			else if (x > sp->size)
-				sp->size = x;
+				sp->sou_size_in_bit += x;
+			else if (x > sp->sou_size_in_bit)
+				sp->sou_size_in_bit = x;
 		}
 		break;
 	default:
@@ -905,9 +906,9 @@ length(const type_t *tp, const char *name)
 	case UNION:
 		if (is_incomplete(tp) && name != NULL) {
 			/* incomplete structure or union %s: %s */
-			error(31, tp->t_str->stag->s_name, name);
+			error(31, tp->t_str->sou_tag->s_name, name);
 		}
-		elsz = tp->t_str->size;
+		elsz = tp->t_str->sou_size_in_bit;
 		break;
 	case ENUM:
 		if (is_incomplete(tp) && name != NULL) {
@@ -940,7 +941,7 @@ getbound(const type_t *tp)
 		return -1;
 
 	if ((t = tp->t_tspec) == STRUCT || t == UNION) {
-		a = tp->t_str->align;
+		a = tp->t_str->sou_align_in_bit;
 	} else if (t == FUNC) {
 		/* compiler takes alignment of function */
 		error(14);
@@ -1660,9 +1661,9 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	if (tp->t_tspec == NOTSPEC) {
 		tp->t_tspec = kind;
 		if (kind != ENUM) {
-			tp->t_str = getblk(sizeof (str_t));
-			tp->t_str->align = CHAR_SIZE;
-			tp->t_str->stag = tag;
+			tp->t_str = getblk(sizeof (struct_or_union));
+			tp->t_str->sou_align_in_bit = CHAR_SIZE;
+			tp->t_str->sou_tag = tag;
 		} else {
 			tp->t_isenum = true;
 			tp->t_enum = getblk(sizeof(*tp->t_enum));
@@ -1763,7 +1764,7 @@ type_t *
 complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 {
 	tspec_t	t;
-	str_t	*sp;
+	struct_or_union	*sp;
 	int	n;
 	sym_t	*mem;
 
@@ -1772,14 +1773,14 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	t = tp->t_tspec;
 	align(dcs->d_stralign, 0);
 	sp = tp->t_str;
-	sp->align = dcs->d_stralign;
-	sp->memb = fmem;
+	sp->sou_align_in_bit = dcs->d_stralign;
+	sp->sou_first_member = fmem;
 	if (tp->t_packed)
 		setpackedsize(tp);
 	else
-		sp->size = dcs->d_offset;
+		sp->sou_size_in_bit = dcs->d_offset;
 
-	if (sp->size == 0) {
+	if (sp->sou_size_in_bit == 0) {
 		/* zero sized %s is a C9X feature */
 		c99ism(47, ttab[t].tt_name);
 	}
@@ -1790,17 +1791,17 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 		if (mem->s_styp == NULL) {
 			mem->s_styp = sp;
 			if (mem->s_type->t_bitfield) {
-				sp->size += bitfieldsize(&mem);
+				sp->sou_size_in_bit += bitfieldsize(&mem);
 				if (mem == NULL)
 					break;
 			}
-			sp->size += tsize(mem->s_type);
+			sp->sou_size_in_bit += tsize(mem->s_type);
 		}
 		if (mem->s_name != unnamed)
 			n++;
 	}
 
-	if (n == 0 && sp->size != 0) {
+	if (n == 0 && sp->sou_size_in_bit != 0) {
 		/* %s has no named members */
 		warning(65, t == STRUCT ? "structure" : "union");
 	}
