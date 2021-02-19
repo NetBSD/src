@@ -36,7 +36,7 @@ controls {
 view one {
 	match-clients { geoip db country country AU; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example1.db";
 	};
 };
@@ -44,7 +44,7 @@ view one {
 view two {
 	match-clients { geoip db country country US; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example2.db";
 	};
 };
@@ -52,7 +52,7 @@ view two {
 view three {
 	match-clients { geoip db country country GB; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example3.db";
 	};
 };
@@ -60,7 +60,7 @@ view three {
 view four {
 	match-clients { geoip db country country CA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example4.db";
 	};
 };
@@ -68,7 +68,7 @@ view four {
 view five {
 	match-clients { geoip db country country CL; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example5.db";
 	};
 };
@@ -76,7 +76,7 @@ view five {
 view six {
 	match-clients { geoip db country country DE; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example6.db";
 	};
 };
@@ -84,7 +84,7 @@ view six {
 view seven {
 	match-clients { geoip db country country EH; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example7.db";
 	};
 };
@@ -92,7 +92,7 @@ view seven {
 view other {
 	match-clients { geoip db country country O1; };
 	zone "example" {
-		type master;
+		type primary;
 		file "exampleother.db";
 	};
 };
@@ -100,7 +100,7 @@ view other {
 view none {
 	match-clients { any; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db.in";
 	};
 };

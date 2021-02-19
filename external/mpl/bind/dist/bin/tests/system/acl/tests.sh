@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -169,7 +169,7 @@ status=`expr $status + $ret`
 echo_i "testing allow-transfer ACLs against ns3 (no existing zones)"
 
 echo_i "calling addzone example.com on ns3"
-$RNDCCMD 10.53.0.3 addzone 'example.com {type master; file "example.db"; }; '
+$RNDCCMD 10.53.0.3 addzone 'example.com {type primary; file "example.db"; }; '
 sleep 1
 
 t=`expr $t + 1`
@@ -198,7 +198,7 @@ status=`expr $status + $ret`
 echo_i "testing allow-transfer ACLs against ns4 (1 pre-existing zone)"
 
 echo_i "calling addzone example.com on ns4"
-$RNDCCMD 10.53.0.4 addzone 'example.com {type master; file "example.db"; }; '
+$RNDCCMD 10.53.0.4 addzone 'example.com {type primary; file "example.db"; }; '
 sleep 1
 
 t=`expr $t + 1`

@@ -36,14 +36,14 @@ controls {
 /* Inherit dnssec-policy (which is none) */
 
 zone "unsigned.tld" {
-	type master;
+	type primary;
 	file "unsigned.tld.db";
 };
 
 /* Override dnssec-policy */
 
 zone "signed.tld" {
-	type master;
+	type primary;
 	dnssec-policy "default";
 	file "signed.tld.db";
 };
@@ -51,7 +51,7 @@ zone "signed.tld" {
 /* Primary service for ns3 */
 
 zone "secondary.kasp" {
-	type master;
+	type primary;
 	file "secondary.kasp.db";
 	allow-transfer { 10.53.0.3; };
 	notify yes;

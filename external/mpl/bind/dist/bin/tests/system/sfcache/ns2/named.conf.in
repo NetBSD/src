@@ -39,7 +39,7 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db.signed";
 	allow-update { any; };
 };

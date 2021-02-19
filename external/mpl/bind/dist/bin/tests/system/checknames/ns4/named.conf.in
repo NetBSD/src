@@ -29,7 +29,7 @@ zone "." {
 };
 
 zone "master-ignore.update" {
-	type master;
+	type primary;
 	file "master-ignore.update.db";
 	allow-update { any; };
 };

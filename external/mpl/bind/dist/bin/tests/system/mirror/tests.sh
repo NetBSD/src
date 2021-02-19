@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -15,12 +15,12 @@ SYSTEMTESTTOP=..
 DIGOPTS="-p ${PORT} -b 10.53.0.1 +dnssec +time=2 +tries=1 +multi"
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
 
-# Wait until the transfer of the given zone to ns3 either completes successfully
-# or is aborted by a verification failure or a REFUSED response from the master.
-# Note that matching on any transfer status is deliberately avoided because some
-# checks performed by this test cause transfer attempts to end with the "IXFR
-# failed" status, which is followed by an AXFR retry and this test needs to
-# check what the result of the latter transfer attempt is.
+# Wait until the transfer of the given zone to ns3 either completes
+# successfully or is aborted by a verification failure or a REFUSED response
+# from the primary.  Note that matching on any transfer status is deliberately
+# avoided because some checks performed by this test cause transfer attempts to
+# end with the "IXFR failed" status, which is followed by an AXFR retry and
+# this test needs to check what the result of the latter transfer attempt is.
 wait_for_transfer() {
 	zone=$1
 	for i in 1 2 3 4 5 6 7 8 9 10; do
@@ -376,7 +376,7 @@ echo_i "checking that resolution succeeds with unavailable mirror zone data ($n)
 ret=0
 wait_for_transfer initially-unavailable
 # Query for a record in a zone that is set up to be mirrored, but
-# untransferrable from the configured master.  Resolution should still succeed.
+# untransferrable from the configured primary.  Resolution should still succeed.
 $DIG $DIGOPTS @10.53.0.3 foo.initially-unavailable. A > dig.out.ns3.test$n.1 2>&1 || ret=1
 # Check response code and flags in the answer.
 grep "NOERROR" dig.out.ns3.test$n.1 > /dev/null || ret=1
@@ -469,7 +469,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking that \"rndc reconfig\" properly handles a mirror -> slave zone type change ($n)"
+echo_i "checking that \"rndc reconfig\" properly handles a mirror -> secondary zone type change ($n)"
 ret=0
 # Sanity check before we start.
 $DIG $DIGOPTS @10.53.0.3 +norec verify-reconfig SOA > dig.out.ns3.test$n.1 2>&1 || ret=1
@@ -479,7 +479,7 @@ grep "flags:.* ad" dig.out.ns3.test$n.1 > /dev/null || ret=1
 # Reconfigure the zone so that it is no longer a mirror zone.
 # (NOTE: Keep the embedded newline in the sed function list below.)
 sed '/^zone "verify-reconfig" {$/,/^};$/ {
-	s/type mirror;/type slave;/
+	s/type mirror;/type secondary;/
 }' ns3/named.conf > ns3/named.conf.modified
 mv ns3/named.conf.modified ns3/named.conf
 nextpart ns3/named.run > /dev/null
@@ -496,7 +496,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking that \"rndc reconfig\" properly handles a slave -> mirror zone type change ($n)"
+echo_i "checking that \"rndc reconfig\" properly handles a secondary -> mirror zone type change ($n)"
 ret=0
 # Put an incorrectly signed version of the zone in the zone file used by ns3.
 nextpart ns3/named.run > /dev/null
@@ -504,7 +504,7 @@ cat ns2/verify-reconfig.db.bad.signed > ns3/verify-reconfig.db.mirror
 # Reconfigure the zone so that it is a mirror zone again.
 # (NOTE: Keep the embedded newline in the sed function list below.)
 sed '/^zone "verify-reconfig" {$/,/^};$/ {
-	s/type slave;/type mirror;/
+	s/type secondary;/type mirror;/
 }' ns3/named.conf > ns3/named.conf.modified
 mv ns3/named.conf.modified ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
@@ -526,7 +526,7 @@ grep "flags:.* aa" dig.out.ns3.test$n.1 > /dev/null && ret=1
 grep "flags:.* ad" dig.out.ns3.test$n.1 > /dev/null || ret=1
 # Mirror a zone which does not exist in the root zone.
 nextpart ns3/named.run > /dev/null
-$RNDCCMD 10.53.0.3 addzone verify-addzone '{ type mirror; masters { 10.53.0.2; }; };' > rndc.out.ns3.test$n 2>&1 || ret=1
+$RNDCCMD 10.53.0.3 addzone verify-addzone '{ type mirror; primaries { 10.53.0.2; }; };' > rndc.out.ns3.test$n 2>&1 || ret=1
 wait_for_transfer verify-addzone
 # Check whether the mirror zone was added and whether it behaves as expected.
 $DIG $DIGOPTS @10.53.0.3 +norec verify-addzone SOA > dig.out.ns3.test$n.2 2>&1 || ret=1

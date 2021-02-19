@@ -33,6 +33,6 @@ key rndc_key {
 };
 
 zone "existing" {
-	type master;
+	type primary;
 	file "existing.db";
 };

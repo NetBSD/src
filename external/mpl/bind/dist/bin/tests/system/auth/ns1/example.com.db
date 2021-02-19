@@ -20,3 +20,4 @@ ns                      A       10.53.0.1
 www			CNAME	server.example.net.
 inzone			CNAME	a.example.com.
 a			A	10.53.0.1
+dname			DNAME	@

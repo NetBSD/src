@@ -19,7 +19,7 @@ options {
 };
 
 zone "signing.test" {
-	type master;
+	type primary;
 	masterfile-format text;
 	allow-update { any; };
 	file "signing.test.db";

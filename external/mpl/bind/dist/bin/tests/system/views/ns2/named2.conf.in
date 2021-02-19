@@ -40,24 +40,24 @@ view "internal" {
 	};
 
 	zone "example" {
-		type master;
+		type primary;
 		file "internal.db";
 		allow-update { any; };
 	};
 
 	zone "clone" {
-		type master;
+		type primary;
 		file "clone.db";
 		allow-update { any; };
 	};
 
 	zone "1.10.in-addr.arpa" {
-		type master;
+		type primary;
 		file "1.10.in-addr.arpa.db";
 	};
 
 	zone "inline" {
-		type master;
+		type primary;
 		file "internal/inline.db";
 		key-directory "internal";
 		auto-dnssec maintain;
@@ -74,7 +74,7 @@ view "external" {
 	};
 
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db";
 	};
 
@@ -89,7 +89,7 @@ view "external" {
 	};
 
 	zone "inline" {
-		type master;
+		type primary;
 		file "external/inline.db";
 		key-directory "external";
 		auto-dnssec maintain;

@@ -44,7 +44,7 @@ acl gEH { geoip db country country EH; };
 view one {
 	match-clients { gAU; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example1.db";
 	};
 };
@@ -52,7 +52,7 @@ view one {
 view two {
 	match-clients { gUS; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example2.db";
 	};
 };
@@ -60,7 +60,7 @@ view two {
 view three {
 	match-clients { gGB; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example3.db";
 	};
 };
@@ -68,7 +68,7 @@ view three {
 view four {
 	match-clients { gCA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example4.db";
 	};
 };
@@ -76,7 +76,7 @@ view four {
 view five {
 	match-clients { gCL; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example5.db";
 	};
 };
@@ -84,7 +84,7 @@ view five {
 view six {
 	match-clients { gDE; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example6.db";
 	};
 };
@@ -92,7 +92,7 @@ view six {
 view seven {
 	match-clients { gEH; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example7.db";
 	};
 };
@@ -100,7 +100,7 @@ view seven {
 view none {
 	match-clients { any; };
 	zone "example" {
-		type master;
+		type primary;
 		file "examplebogus.db";
 	};
 };

@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -46,7 +46,7 @@ appending the extension ``.jnl`` to the name of the corresponding zone
 file.
 
 ``named-journalprint`` converts the contents of a given journal file
-into a human-readable text format. Each line begins with "add" or "del",
+into a human-readable text format. Each line begins with ``add`` or ``del``,
 to indicate whether the record was added or deleted, and continues with
 the resource record in master-file format.
 

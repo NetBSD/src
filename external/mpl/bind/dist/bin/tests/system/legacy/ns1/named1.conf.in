@@ -19,6 +19,9 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dnssec-validation yes;
+	max-udp-size 4096;
+	edns-udp-size 4096;
+	nocookie-udp-size 4096;
 };
 
 key rndc_key {
@@ -31,6 +34,6 @@ controls {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };

@@ -27,16 +27,16 @@ statistics-channels {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "example.info." {
-	type master;
+	type primary;
 	file "example-info.db";
 };
 
 zone "32/1.0.0.127-in-addr.example." {
-	type master;
+	type primary;
 	file "zone.db";
 };

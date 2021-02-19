@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -37,7 +27,7 @@ standard AXFR/IXFR zone transfer mechanism.
 Catalog zones' format and behavior are specified as an Internet draft
 for interoperability among DNS implementations. The
 latest revision of the DNS catalog zones draft can be found here:
-https://datatracker.ietf.org/doc/draft-toorop-dnsop-dns-catalog-zones/.
+https://datatracker.ietf.org/doc/draft-toorop-dnsop-dns-catalog-zones/ .
 
 Principle of Operation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -68,14 +58,14 @@ To use the catalog zone feature to serve a new member zone:
    ``rndc addzone``.
 
 -  Add an entry to the catalog zone for the new member zone. This can
-   be done by editing the catalog zone's master file and running
+   be done by editing the catalog zone's zone file and running
    ``rndc reload``, or by updating the zone using ``nsupdate``.
 
 The change to the catalog zone is propagated from the primary to all
 secondaries using the normal AXFR/IXFR mechanism. When the secondary receives the
 update to the catalog zone, it detects the entry for the new member
 zone, creates an instance of that zone on the secondary server, and points
-that instance to the ``masters`` specified in the catalog zone data. The
+that instance to the ``primaries`` specified in the catalog zone data. The
 newly created member zone is a normal secondary zone, so BIND
 immediately initiates a transfer of zone contents from the primary. Once
 complete, the secondary starts serving the member zone.
@@ -100,7 +90,7 @@ Catalog zones are configured with a ``catalog-zones`` statement in the
 
    catalog-zones {
        zone "catalog.example"
-            default-masters { 10.53.0.1; }
+            default-primaries { 10.53.0.1; }
             in-memory no
             zone-directory "catzones"
             min-update-interval 10;
@@ -129,7 +119,7 @@ specified in any order.
 
 ``zone-directory``
    This option causes local copies of member zones'
-   master files to be stored in
+   zone files to be stored in
    the specified directory, if ``in-memory`` is not set to ``yes``. The default is to store zone files in the
    server's working directory. A non-absolute pathname in
    ``zone-directory`` is assumed to be relative to the working directory.
@@ -165,7 +155,7 @@ then a catalog zone may not be used by that server.
    version.catalog.example.    IN TXT "1"
 
 Note that this record must have the domain name
-version.catalog-zone-name. The data
+``version.catalog-zone-name``. The data
 stored in a catalog zone is indicated by the domain name label
 immediately before the catalog zone domain.
 
@@ -178,27 +168,27 @@ Global options are set at the apex of the catalog zone, e.g.:
 
 ::
 
-    masters.catalog.example.    IN AAAA 2001:db8::1
+    primaries.catalog.example.    IN AAAA 2001:db8::1
 
 BIND currently supports the following options:
 
--  A simple ``masters`` definition:
+-  A simple ``primaries`` definition:
 
    ::
 
-           masters.catalog.example.    IN A 192.0.2.1
+           primaries.catalog.example.    IN A 192.0.2.1
 
 
-   This option defines a primary server for the member zones - it can be
+   This option defines a primary server for the member zones, which can be
    either an A or AAAA record. If multiple primaries are set, the order in
    which they are used is random.
 
--  A ``masters`` with a TSIG key defined:
+-  A ``primaries`` with a TSIG key defined:
 
    ::
 
-               label.masters.catalog.example.     IN A 192.0.2.2
-               label.masters.catalog.example.     IN TXT "tsig_key_name"
+               label.primaries.catalog.example.     IN A 192.0.2.2
+               label.primaries.catalog.example.     IN TXT "tsig_key_name"
 
 
    This option defines a primary server for the member zone with a TSIG
@@ -235,9 +225,9 @@ options, but in the member zone subdomain:
 
 ::
 
-   masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN A 192.0.2.2
-   label.masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN AAAA 2001:db8::2
-   label.masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN TXT "tsig_key"
+   primaries.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN A 192.0.2.2
+   label.primaries.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN AAAA 2001:db8::2
+   label.primaries.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN TXT "tsig_key"
    allow-query.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN APL 1:10.0.0.0/24
 
 Options defined for a specific zone override the

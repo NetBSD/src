@@ -22,15 +22,15 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "root-servers.nil" {
-	type master;
+	type primary;
 	file "root-servers.nil.db";
 };
 zone "net" {
-	type master;
+	type primary;
 	file "net.db";
 };

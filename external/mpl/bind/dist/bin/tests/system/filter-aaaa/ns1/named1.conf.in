@@ -40,6 +40,6 @@ controls {
 };
 
 
-zone "." { type master; file "root.db"; };
-zone "signed" { type master; file "signed.db.signed"; };
-zone "unsigned" { type master; file "unsigned.db"; };
+zone "." { type primary; file "root.db"; };
+zone "signed" { type primary; file "signed.db.signed"; };
+zone "unsigned" { type primary; file "unsigned.db"; };

@@ -23,21 +23,21 @@ options {
 };
 
 zone "example.com" {
-	type master;
+	type primary;
 	file "example.com.db";
 };
 
 zone "example.org" {
-	type master;
+	type primary;
 	file "example.org.db";
 };
 
 zone "sub.example" {
-	type master;
+	type primary;
 	file "sub.example.db.signed";
 };
 
 zone "example.info" {
-	type master;
+	type primary;
 	file "example.info.db";
 };

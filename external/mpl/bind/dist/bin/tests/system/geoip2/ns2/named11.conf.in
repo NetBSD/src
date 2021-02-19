@@ -36,7 +36,7 @@ controls {
 view one {
 	match-clients { geoip domain one.de; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example1.db";
 	};
 };
@@ -44,7 +44,7 @@ view one {
 view two {
 	match-clients { geoip domain two.com; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example2.db";
 	};
 };
@@ -52,7 +52,7 @@ view two {
 view three {
 	match-clients { geoip domain three.com; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example3.db";
 	};
 };
@@ -60,7 +60,7 @@ view three {
 view four {
 	match-clients { geoip domain four.edu; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example4.db";
 	};
 };
@@ -68,7 +68,7 @@ view four {
 view five {
 	match-clients { geoip domain five.es; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example5.db";
 	};
 };
@@ -76,7 +76,7 @@ view five {
 view six {
 	match-clients { geoip domain six.it; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example6.db";
 	};
 };
@@ -84,7 +84,7 @@ view six {
 view seven {
 	match-clients { geoip domain seven.org; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example7.db";
 	};
 };
@@ -92,7 +92,7 @@ view seven {
 view none {
 	match-clients { any; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db.in";
 	};
 };

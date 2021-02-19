@@ -22,37 +22,37 @@ options {
 };
 
 zone "." {
-	type master;
-	file "root.db";
+	type primary;
+	file "root.db.signed";
 };
 
 zone "example1." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example2." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example3." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example4." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example5." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "sld.tld" {
-	type master;
+	type primary;
 	file "sld.tld.db";
 };
 

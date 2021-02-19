@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -245,7 +245,7 @@ n=`expr $n + 1`
 ret=0
 echo_i "check that TYPE=0 update is handled ($n)"
 echo "a0e4280000010000000100000000060001c00c000000fe000000000000" |
-$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp > /dev/null
+$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp > /dev/null || ret=1
 $DIG $DIGOPTS +tcp version.bind txt ch @10.53.0.1 > dig.out.ns1.$n
 grep "status: NOERROR" dig.out.ns1.$n > /dev/null || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
@@ -254,7 +254,7 @@ n=`expr $n + 1`
 ret=0
 echo_i "check that TYPE=0 additional data is handled ($n)"
 echo "a0e4280000010000000000010000060001c00c000000fe000000000000" |
-$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp > /dev/null
+$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp > /dev/null || ret=1
 $DIG $DIGOPTS +tcp version.bind txt ch @10.53.0.1 > dig.out.ns1.$n
 grep "status: NOERROR" dig.out.ns1.$n > /dev/null || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
@@ -263,7 +263,7 @@ n=`expr $n + 1`
 ret=0
 echo_i "check that update to undefined class is handled ($n)"
 echo "a0e4280000010001000000000000060101c00c000000fe000000000000" |
-$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp > /dev/null
+$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp > /dev/null || ret=1
 $DIG $DIGOPTS +tcp version.bind txt ch @10.53.0.1 > dig.out.ns1.$n
 grep "status: NOERROR" dig.out.ns1.$n > /dev/null || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
@@ -363,7 +363,7 @@ digcomp dig.out.ns1 dig.out.ns1.after || ret=1
 echo_i "begin RT #482 regression test"
 
 ret=0
-echo_i "update master"
+echo_i "update primary"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || ret=1
 server 10.53.0.1 ${PORT}
 update add updated2.example.nil. 600 A 10.10.10.2
@@ -376,17 +376,17 @@ END
 sleep 5
 
 if [ ! "$CYGWIN" ]; then
-    echo_i "SIGHUP slave"
+    echo_i "SIGHUP secondary"
     $KILL -HUP `cat ns2/named.pid`
 else
-    echo_i "reload slave"
+    echo_i "reload secondary"
     rndc_reload ns2 10.53.0.2
 fi
 
 sleep 5
 
 ret=0
-echo_i "update master again"
+echo_i "update primary again"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || ret=1
 server 10.53.0.1 ${PORT}
 update add updated3.example.nil. 600 A 10.10.10.3
@@ -399,10 +399,10 @@ END
 sleep 5
 
 if [ ! "$CYGWIN" ]; then
-    echo_i "SIGHUP slave again"
+    echo_i "SIGHUP secondary again"
     $KILL -HUP `cat ns2/named.pid`
 else
-    echo_i "reload slave again"
+    echo_i "reload secondary again"
     rndc_reload ns2 10.53.0.2
 fi
 
@@ -430,7 +430,7 @@ EOF
 # this also proves that the server is still running.
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocmd +norec example.\
 	@10.53.0.3 nsec3param > dig.out.ns3.$n || ret=1
-grep "ANSWER: 0" dig.out.ns3.$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns3.$n > /dev/null || ret=1
 grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
@@ -445,7 +445,7 @@ EOF
 
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocmd +norec nsec3param.test.\
         @10.53.0.3 nsec3param > dig.out.ns3.$n || ret=1
-grep "ANSWER: 1" dig.out.ns3.$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns3.$n > /dev/null || ret=1
 grep "3600.*NSEC3PARAM" dig.out.ns3.$n > /dev/null || ret=1
 grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
@@ -462,7 +462,7 @@ EOF
 _ret=1
 for i in 0 1 2 3 4 5 6 7 8 9; do
 	$DIG $DIGOPTS +tcp +norec +time=1 +tries=1 @10.53.0.3 nsec3param.test. NSEC3PARAM > dig.out.ns3.$n || _ret=1
-	if grep "ANSWER: 2" dig.out.ns3.$n > /dev/null; then
+	if grep "ANSWER: 2," dig.out.ns3.$n > /dev/null; then
 		_ret=0
 		break
 	fi
@@ -487,7 +487,7 @@ EOF
 _ret=1
 for i in 0 1 2 3 4 5 6 7 8 9; do
 	$DIG $DIGOPTS +tcp +norec +time=1 +tries=1 @10.53.0.3 nsec3param.test. NSEC3PARAM > dig.out.ns3.$n || _ret=1
-	if grep "ANSWER: 1" dig.out.ns3.$n > /dev/null; then
+	if grep "ANSWER: 1," dig.out.ns3.$n > /dev/null; then
 		_ret=0
 		break
 	fi
@@ -509,7 +509,7 @@ if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $ret + $status`; fi
 
 
 ret=0
-echo_i "testing that rndc stop updates the master file"
+echo_i "testing that rndc stop updates the file"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || ret=1
 server 10.53.0.1 ${PORT}
 update add updated4.example.nil. 600 A 10.10.10.3
@@ -520,7 +520,7 @@ $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} nsupdate ns1
 sleep 3
 # Removing the journal file and restarting the server means
 # that the data served by the new server process are exactly
-# those dumped to the master file by "rndc stop".
+# those dumped to the file by "rndc stop".
 rm -f ns1/*jnl
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} nsupdate ns1
 for try in 0 1 2 3 4 5 6 7 8 9; do
@@ -642,6 +642,86 @@ fi
 
 n=`expr $n + 1`
 ret=0
+echo_i "check that 'update-policy subdomain' is properly enforced ($n)"
+# "restricted.example.nil" matches "grant ... subdomain restricted.example.nil"
+# and thus this UPDATE should succeed.
+$NSUPDATE -d <<END > nsupdate.out1-$n 2>&1 || ret=1
+server 10.53.0.1 ${PORT}
+key restricted.example.nil 1234abcd8765
+update add restricted.example.nil 0 IN TXT everywhere.
+send
+END
+$DIG $DIGOPTS +tcp @10.53.0.1 restricted.example.nil TXT > dig.out.1.test$n || ret=1
+grep "TXT.*everywhere" dig.out.1.test$n > /dev/null || ret=1
+# "example.nil" does not match "grant ... subdomain restricted.example.nil" and
+# thus this UPDATE should fail.
+$NSUPDATE -d <<END > nsupdate.out2-$n 2>&1 && ret=1
+server 10.53.0.1 ${PORT}
+key restricted.example.nil 1234abcd8765
+update add example.nil 0 IN TXT everywhere.
+send
+END
+$DIG $DIGOPTS +tcp @10.53.0.1 example.nil TXT > dig.out.2.test$n || ret=1
+grep "TXT.*everywhere" dig.out.2.test$n > /dev/null && ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check that 'update-policy zonesub' is properly enforced ($n)"
+# grant zonesub-key.example.nil zonesub TXT;
+# the A record update should be rejected as it is not in the type list
+$NSUPDATE -d <<END > nsupdate.out1-$n 2>&1 && ret=1
+server 10.53.0.1 ${PORT}
+key zonesub-key.example.nil 1234subk8765
+update add zonesub.example.nil 0 IN A 1.2.3.4
+send
+END
+$DIG $DIGOPTS +tcp @10.53.0.1 zonesub.example.nil A > dig.out.1.test$n || ret=1
+grep "status: REFUSED" nsupdate.out1-$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.1.test$n > /dev/null || ret=1
+# the TXT record update should be accepted as it is in the type list
+$NSUPDATE -d <<END > nsupdate.out2-$n 2>&1 || ret=1
+server 10.53.0.1 ${PORT}
+key zonesub-key.example.nil 1234subk8765
+update add zonesub.example.nil 0 IN TXT everywhere.
+send
+END
+$DIG $DIGOPTS +tcp @10.53.0.1 zonesub.example.nil TXT > dig.out.2.test$n || ret=1
+grep "status: REFUSED" nsupdate.out2-$n > /dev/null && ret=1
+grep "ANSWER: 1," dig.out.2.test$n > /dev/null || ret=1
+grep "TXT.*everywhere" dig.out.2.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check 'grant' in deny name + grant subdomain ($n)"
+$NSUPDATE << EOF > nsupdate.out-$n 2>&1 || ret=1
+key hmac-sha256:subkey 1234abcd8765
+server 10.53.0.9 ${PORT}
+zone denyname.example
+update add foo.denyname.example 3600 IN TXT added
+send
+EOF
+$DIG $DIGOPTS +tcp @10.53.0.9 foo.denyname.example TXT > dig.out.ns9.test$n
+grep "added" dig.out.ns9.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check 'deny' in deny name + grant subdomain ($n)"
+$NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+key hmac-sha256:subkey 1234abcd8765
+server 10.53.0.9 ${PORT}
+zone denyname.example
+update add denyname.example 3600 IN TXT added
+send
+EOF
+$DIG $DIGOPTS +tcp @10.53.0.9 denyname.example TXT > dig.out.ns9.test$n
+grep "added" dig.out.ns9.test$n > /dev/null && ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
 echo_i "check that changes to the DNSKEY RRset TTL do not have side effects ($n)"
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
         @10.53.0.3 dnskey | \
@@ -716,7 +796,7 @@ fi
 
 n=`expr $n + 1`
 ret=0
-echo_i "check TSIG key algorithms ($n)"
+echo_i "check TSIG key algorithms (nsupdate -k) ($n)"
 for alg in md5 sha1 sha224 sha256 sha384 sha512; do
     $NSUPDATE -k ns1/${alg}.key <<END > /dev/null || ret=1
 server 10.53.0.1 ${PORT}
@@ -727,6 +807,26 @@ done
 sleep 2
 for alg in md5 sha1 sha224 sha256 sha384 sha512; do
     $DIG $DIGOPTS +short @10.53.0.1 ${alg}.keytests.nil | grep 10.10.10.3 > /dev/null 2>&1 || ret=1
+done
+if [ $ret -ne 0 ]; then
+    echo_i "failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo_i "check TSIG key algorithms (nsupdate -y) ($n)"
+for alg in md5 sha1 sha224 sha256 sha384 sha512; do
+    secret=$(sed -n 's/.*secret "\(.*\)";.*/\1/p' ns1/${alg}.key)
+    $NSUPDATE -y "hmac-${alg}:${alg}-key:$secret" <<END > /dev/null || ret=1
+server 10.53.0.1 ${PORT}
+update add ${alg}.keytests.nil. 600 A 10.10.10.50
+send
+END
+done
+sleep 2
+for alg in md5 sha1 sha224 sha256 sha384 sha512; do
+    $DIG $DIGOPTS +short @10.53.0.1 ${alg}.keytests.nil | grep 10.10.10.50 > /dev/null 2>&1 || ret=1
 done
 if [ $ret -ne 0 ]; then
     echo_i "failed"
@@ -925,7 +1025,7 @@ grep "records in zone (4) exceeds max-records (3)" ns3/named.run > /dev/null || 
 
 n=`expr $n + 1`
 ret=0
-echo_i "check whether valid addresses are used for master failover ($n)"
+echo_i "check whether valid addresses are used for primary failover ($n)"
 $NSUPDATE -t 1 <<END > nsupdate.out-$n 2>&1 && ret=1
 server 10.53.0.4 ${PORT}
 zone unreachable.

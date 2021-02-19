@@ -19,12 +19,12 @@ options {
 };
 
 zone "." {
-        type master;
+        type primary;
         file "root.db";
 };
 
 // A signed zone that ns5 has a delegation for.
 zone "signed." {
-        type master;
+        type primary;
         file "signed.db.signed";
 };

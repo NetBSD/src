@@ -35,7 +35,7 @@ view root {
 	match-destinations { 127.0.0.1; };
 
 	zone "." {
-		type master;
+		type primary;
 		file "root.db.signed";
 	};
 };

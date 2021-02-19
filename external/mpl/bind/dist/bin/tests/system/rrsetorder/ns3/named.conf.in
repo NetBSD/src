@@ -24,6 +24,7 @@ options {
 		name "fixed.example" order fixed;
 		name "random.example" order random;
 		name "cyclic.example" order cyclic;
+		name "none.example" order none;
 		type NS order random;
 		order cyclic;
 	};

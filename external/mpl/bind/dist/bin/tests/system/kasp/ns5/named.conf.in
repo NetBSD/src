@@ -56,20 +56,20 @@ view "inherit" {
 
 	/* Inherit dnssec-policy 'none' */
 	zone "inherit.inherit.unsigned" {
-		type master;
+		type primary;
 		file "inherit.inherit.unsigned.db";
 	};
 
 	/* Override dnssec-policy */
 	zone "override.inherit.unsigned" {
-		type master;
+		type primary;
 		dnssec-policy "default";
 		file "override.inherit.unsigned.db";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.inherit.unsigned" {
-		type master;
+		type primary;
 		dnssec-policy "none";
 		file "none.inherit.unsigned.db";
 	};
@@ -81,20 +81,20 @@ view "override" {
 
 	/* Inherit dnssec-policy 'default' */
 	zone "inherit.override.unsigned" {
-		type master;
+		type primary;
 		file "inherit.override.unsigned.db";
 	};
 
 	/* Override dnssec-policy */
 	zone "override.override.unsigned" {
-		type master;
+		type primary;
 		dnssec-policy "test";
 		file "override.override.unsigned.db";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.override.unsigned" {
-		type master;
+		type primary;
 		dnssec-policy "none";
 		file "none.override.unsigned.db";
 	};
@@ -106,20 +106,20 @@ view "none" {
 
 	/* Inherit dnssec-policy 'none' */
 	zone "inherit.none.unsigned" {
-		type master;
+		type primary;
 		file "inherit.none.unsigned.db";
 	};
 
 	/* Override dnssec-policy */
 	zone "override.none.unsigned" {
-		type master;
+		type primary;
 		dnssec-policy "test";
 		file "override.none.unsigned.db";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.none.unsigned" {
-		type master;
+		type primary;
 		dnssec-policy "none";
 		file "none.none.unsigned.db";
 	};

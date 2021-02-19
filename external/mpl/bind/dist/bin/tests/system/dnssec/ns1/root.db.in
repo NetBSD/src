@@ -29,3 +29,5 @@ ns2.trusted.		A	10.53.0.2
 optout-tld		NS	ns6.optout-tld.
 ns6.optout-tld.		A	10.53.0.6
 in-addr.arpa.		NS	ns2.example.
+inprogress.		NS	ns10.inprogress.
+ns10.inprogress.	A	10.53.0.10

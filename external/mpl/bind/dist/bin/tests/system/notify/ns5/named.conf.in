@@ -39,7 +39,7 @@ options {
 view "a" {
 	match-clients { key "a"; };
 	zone "x21" {
-		type master;
+		type primary;
 		also-notify { 10.53.0.5 key "b"; 10.53.0.5 key "c"; };
 		file "x21.db";
 		allow-update { any; };
@@ -49,8 +49,8 @@ view "a" {
 view "b" {
 	match-clients { key "b"; };
 	zone "x21" {
-		type slave;
-		masters { 10.53.0.5 key "a"; };
+		type secondary;
+		primaries { 10.53.0.5 key "a"; };
 		file "x21.bk-b";
 		notify no;
 	};
@@ -59,8 +59,8 @@ view "b" {
 view "c" {
 	match-clients { key "c"; };
 	zone "x21" {
-		type slave;
-		masters { 10.53.0.5 key "a"; };
+		type secondary;
+		primaries { 10.53.0.5 key "a"; };
 		file "x21.bk-c";
 		notify no;
 	};

@@ -28,11 +28,10 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dump-file "named_dump3.db";
-	// This configuration has no serve-stale options set.
 };
 
 zone "." {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "root.bk";
 };
