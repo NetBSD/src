@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.223 2021/02/14 20:58:35 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.224 2021/02/19 14:52:00 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.223 2021/02/14 20:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.224 2021/02/19 14:52:00 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -301,7 +301,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * it.  Otherwise, if it is aligned, make sure the entire base
 	 * IPv6 header is in the first mbuf of the chain.
 	 */
-	if (m_get_aligned_hdr(&m, IP6_HDR_ALIGNMENT, sizeof(*ip6), true) != 0) {
+	if (M_GET_ALIGNED_HDR(&m, struct ip6_hdr, true) != 0) {
 		/* XXXJRT new stat, please */
 		IP6_STATINC(IP6_STAT_TOOSMALL);
 		in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
@@ -602,7 +602,7 @@ hbhcheck:
 			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
-		KASSERT(POINTER_ALIGNED_P(hbh, IP6_HDR_ALIGNMENT));
+		KASSERT(ACCESSIBLE_POINTER(hbh, struct ip6_hdr));
 		nxt = hbh->ip6h_nxt;
 
 		/*
@@ -875,7 +875,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
 		IP6_STATINC(IP6_STAT_TOOSHORT);
 		return -1;
 	}
-	KASSERT(POINTER_ALIGNED_P(hbh, IP6_HDR_ALIGNMENT));
+	KASSERT(ACCESSIBLE_POINTER(hbh, struct ip6_hdr));
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
 
@@ -1215,7 +1215,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 				IP6_STATINC(IP6_STAT_TOOSHORT);
 				return;
 			}
-			KASSERT(POINTER_ALIGNED_P(ip6e, IP6_HDR_ALIGNMENT));
+			KASSERT(ACCESSIBLE_POINTER(ip6e, struct ip6_hdr));
 
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:

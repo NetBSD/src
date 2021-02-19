@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.20 2021/02/14 20:58:35 christos Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.21 2021/02/19 14:52:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.20 2021/02/14 20:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.21 2021/02/19 14:52:00 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -193,8 +193,7 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	if (m == NULL)
 		return ENOBUFS;
-	if (m_get_aligned_hdr(&m, IP6_HDR_ALIGNMENT, sizeof(ip6hdr),
-	    false) != 0)
+	if (M_GET_ALIGNED_HDR(&m, struct ip6_hdr, false) != 0)
 		return ENOBUFS;
 	memcpy(mtod(m, struct ip6_hdr *), &ip6hdr, sizeof(struct ip6_hdr));
 

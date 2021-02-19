@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.231 2021/02/17 22:32:04 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.232 2021/02/19 14:51:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -843,15 +843,21 @@ m_copy_rcvif(struct mbuf *m, const struct mbuf *n)
 	m->m_pkthdr.rcvif_index = n->m_pkthdr.rcvif_index;
 }
 
+#define M_GET_ALIGNED_HDR(m, type, linkhdr) \
+    m_get_aligned_hdr((m), __alignof(type) - 1, sizeof(type), (linkhdr))
+
 static __inline int
-m_get_aligned_hdr(struct mbuf **m, int align, size_t hlen, bool linkhdr)
+m_get_aligned_hdr(struct mbuf **m, int mask, size_t hlen, bool linkhdr)
 {
-	if (POINTER_ALIGNED_P(mtod(*m, void *), align) == 0) {
-		--align;	// Turn into mask
+#ifndef __NO_STRICT_ALIGNMENT
+	if (((uintptr_t)mtod(*m, void *) & mask) != 0)
 		*m = m_copyup(*m, hlen, 
-		      linkhdr ? (max_linkhdr + align) & ~align : 0);
-	} else if (__predict_false((size_t)(*m)->m_len < hlen))
+		      linkhdr ? (max_linkhdr + mask) & ~mask : 0);
+	else
+#endif
+	if (__predict_false((size_t)(*m)->m_len < hlen))
 		*m = m_pullup(*m, hlen);
+
 	return *m == NULL;
 }
 
