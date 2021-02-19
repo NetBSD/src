@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.208 2021/02/19 22:16:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.209 2021/02/19 22:27:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.208 2021/02/19 22:16:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.209 2021/02/19 22:27:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1456,13 +1456,13 @@ typeok_enum(op_t op, const mod_t *mp, int arg,
 	    const tnode_t *rn, const type_t *rtp)
 {
 	if (mp->m_bad_on_enum &&
-	    (ltp->t_isenum || (mp->m_binary && rtp->t_isenum))) {
+	    (ltp->t_is_enum || (mp->m_binary && rtp->t_is_enum))) {
 		check_bad_enum_operation(op, ln, rn);
 	} else if (mp->m_valid_on_enum &&
-		   (ltp->t_isenum && rtp != NULL && rtp->t_isenum)) {
+		   (ltp->t_is_enum && rtp != NULL && rtp->t_is_enum)) {
 		check_enum_type_mismatch(op, arg, ln, rn);
 	} else if (mp->m_valid_on_enum &&
-		   (ltp->t_isenum || (rtp != NULL && rtp->t_isenum))) {
+		   (ltp->t_is_enum || (rtp != NULL && rtp->t_is_enum))) {
 		check_enum_int_mismatch(op, arg, ln, rn);
 	}
 }
@@ -1692,8 +1692,8 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 
 	mp = &modtab[op];
 
-	if (!(ln->tn_type->t_isenum ||
-	      (mp->m_binary && rn->tn_type->t_isenum))) {
+	if (!(ln->tn_type->t_is_enum ||
+	      (mp->m_binary && rn->tn_type->t_is_enum))) {
 		return;
 	}
 
@@ -1702,8 +1702,8 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 	 * could not be used as array indices).
 	 */
 	if (op == PLUS &&
-	    ((ln->tn_type->t_isenum && rn->tn_type->t_tspec == PTR) ||
-	     (rn->tn_type->t_isenum && ln->tn_type->t_tspec == PTR))) {
+	    ((ln->tn_type->t_is_enum && rn->tn_type->t_tspec == PTR) ||
+	     (rn->tn_type->t_is_enum && ln->tn_type->t_tspec == PTR))) {
 		return;
 	}
 
@@ -1764,7 +1764,7 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 		 * Initialization with 0 is allowed. Otherwise, all implicit
 		 * initializations would need to be warned upon as well.
 		 */
-		if (!rn->tn_type->t_isenum && rn->tn_op == CON &&
+		if (!rn->tn_type->t_is_enum && rn->tn_op == CON &&
 		    is_integer(rn->tn_type->t_tspec) &&
 		    rn->tn_val->v_quad == 0) {
 			return;
@@ -1929,7 +1929,7 @@ promote(op_t op, bool farg, tnode_t *tn)
 		ntp = tduptyp(tn->tn_type);
 		ntp->t_tspec = t;
 		/*
-		 * Keep t_isenum so we are later able to check compatibility
+		 * Keep t_is_enum so we are later able to check compatibility
 		 * of enum types.
 		 */
 		tn = convert(op, 0, ntp, tn);
@@ -3622,7 +3622,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 			error(152, n);
 			return NULL;
 		} else if (is_integer(at) &&
-			   arg->tn_left->tn_type->t_isenum &&
+			   arg->tn_left->tn_type->t_is_enum &&
 			   is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			warning(152, n);
