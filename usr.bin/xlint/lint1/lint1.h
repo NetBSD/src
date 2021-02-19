@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.64 2021/02/19 22:27:49 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.65 2021/02/19 22:35:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -200,15 +200,15 @@ typedef enum {
 	AUTO,		/* automatic symbols (except register) */
 	REG,		/* register */
 	TYPEDEF,	/* typedef */
-	STRTAG,
-	UNIONTAG,
-	ENUMTAG,
+	STRUCT_TAG,
+	UNION_TAG,
+	ENUM_TAG,
 	MOS,		/* member of struct */
 	MOU,		/* member of union */
 	CTCONST,	/* enumerator, enum constant or bool constant */
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
 	ARG,		/* argument */
-	PARG,		/* used in declaration stack during prototype
+	PROTO_ARG,	/* used in declaration stack during prototype
 			   declaration */
 	INLINE		/* only used by the parser */
 } scl_t;
@@ -313,13 +313,14 @@ typedef	struct tnode {
  *
  * ctx describes the context of the current declaration. Its value is
  * one of
- *	EXTERN	global declarations
- *	MOS oder MOU declarations of struct or union members
- *	CTCONST	declarations of enums
- *	ARG	declaration of arguments in old style function definitions
- *	PARG	declaration of arguments in function prototypes
- *	AUTO	declaration of local symbols
- *	ABSTRACT abstract declarations (sizeof, casts)
+ *	EXTERN		global declarations
+ *	MOS or MOU	declarations of struct or union members
+ *	CTCONST		declarations of enums
+ *	ARG		declaration of arguments in old style function
+ *			definitions
+ *	PROTO_ARG	declaration of arguments in function prototypes
+ *	AUTO		declaration of local symbols
+ *	ABSTRACT	abstract declarations (sizeof, casts)
  *
  */
 typedef	struct dinfo {
