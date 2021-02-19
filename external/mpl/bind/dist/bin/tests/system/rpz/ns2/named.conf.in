@@ -35,15 +35,15 @@ controls {
 include "../trusted.conf";
 zone "." { type hint; file "hints"; };
 
-zone "tld2."		    {type master; file "tld2.db";};
-zone "sub1.tld2."	    {type master; file "tld2.db";};
-zone "subsub.sub1.tld2."    {type master; file "tld2.db";};
-zone "sub2.tld2."	    {type master; file "tld2.db";};
-zone "subsub.sub2.tld2."    {type master; file "tld2.db";};
-zone "sub3.tld2."	    {type master; file "tld2.db";};
-zone "subsub.sub3.tld2."    {type master; file "tld2.db";};
+zone "tld2."		    {type primary; file "tld2.db";};
+zone "sub1.tld2."	    {type primary; file "tld2.db";};
+zone "subsub.sub1.tld2."    {type primary; file "tld2.db";};
+zone "sub2.tld2."	    {type primary; file "tld2.db";};
+zone "subsub.sub2.tld2."    {type primary; file "tld2.db";};
+zone "sub3.tld2."	    {type primary; file "tld2.db";};
+zone "subsub.sub3.tld2."    {type primary; file "tld2.db";};
 
-zone "tld2s."		    {type master; file "tld2s.db";};
+zone "tld2s."		    {type primary; file "tld2s.db";};
 
-zone "bl.tld2."		    {type master; file "bl.tld2.db";
+zone "bl.tld2."		    {type primary; file "bl.tld2.db";
 				notify yes; notify-delay 0;};

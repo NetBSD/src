@@ -1,0 +1,12 @@
+# Transaction ID
+0001
+# Standard query
+0000
+# Questions: 1, Additional: 1
+0001 0000 0000 0000
+# QNAME: www.isc.org
+03 697363 03 6F7267 00
+# Type: AXFR
+00fc
+# Class: IN
+0001

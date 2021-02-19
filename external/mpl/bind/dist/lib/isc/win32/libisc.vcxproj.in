@@ -80,7 +80,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>@OPENSSL_LIB@@LIBUV_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIBCRYPTO@@OPENSSL_LIBSSL@@LIBUV_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
     </Link>
@@ -90,13 +90,21 @@
 if NOT Exist ..\Build mkdir ..\Build
 if NOT Exist ..\Build\Debug mkdir ..\Build\Debug
 
+echo Copying documentation.
+
+copy ..\*.md ..\Build\Debug
+copy ..\CHANGES* ..\Build\Debug
+copy ..\COPYRIGHT ..\Build\Debug
+copy ..\LICENSE ..\Build\Debug
+
 echo Copying COPYRIGHT notice.
 
 copy ..\COPYRIGHT ..\Build\Debug
 
 echo Copying the OpenSSL DLL and LICENSE.
 
-copy @OPENSSL_DLL@ ..\Build\Debug\
+copy @OPENSSL_DLLCRYPTO@ ..\Build\Debug\
+copy @OPENSSL_DLLSSL@ ..\Build\Debug\
 copy @OPENSSL_PATH@\LICENSE ..\Build\Debug\OpenSSL-LICENSE
 
 echo Copying libuv DLL.
@@ -176,7 +184,7 @@ copy InstallFiles ..\Build\Debug\
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>@OPENSSL_LIB@@LIBUV_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIBCRYPTO@@OPENSSL_LIBSSL@@LIBUV_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -187,9 +195,17 @@ copy InstallFiles ..\Build\Debug\
 if NOT Exist ..\Build mkdir ..\Build
 if NOT Exist ..\Build\Release mkdir ..\Build\Release
 
+echo Copying documentation.
+
+copy ..\*.md ..\Build\Release
+copy ..\CHANGES* ..\Build\Release
+copy ..\COPYRIGHT ..\Build\Release
+copy ..\LICENSE ..\Build\Release
+
 echo Copying the OpenSSL DLL and LICENSE.
 
-copy @OPENSSL_DLL@ ..\Build\Release\
+copy @OPENSSL_DLLCRYPTO@ ..\Build\Release\
+copy @OPENSSL_DLLSSL@ ..\Build\Release\
 copy @OPENSSL_PATH@\LICENSE ..\Build\Release\OpenSSL-LICENSE
 
 echo Copying libuv DLL.
@@ -399,6 +415,8 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\netmgr\uverr2result.c" />
     <ClCompile Include="..\netmgr\uv-compat.c" />
     <ClCompile Include="..\netmgr\tcpdns.c" />
+    <ClCompile Include="..\netmgr\tls.c" />
+    <ClCompile Include="..\netmgr\tlsdns.c" />
     <ClCompile Include="..\netscope.c" />
     <ClCompile Include="..\nonce.c" />
     <ClCompile Include="..\openssl_shim.c" />

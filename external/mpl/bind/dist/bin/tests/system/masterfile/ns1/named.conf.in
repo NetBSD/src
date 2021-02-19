@@ -22,16 +22,16 @@ options {
 };
 
 zone "include" {
-	type master;
+	type primary;
 	file "include.db";
 };
 
 zone "ttl1" {
-	type master;
+	type primary;
 	file "ttl1.db";
 };
 
 zone "ttl2" {
-	type master;
+	type primary;
 	file "ttl2.db";
 };

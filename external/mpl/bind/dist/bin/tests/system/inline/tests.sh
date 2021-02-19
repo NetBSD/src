@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -143,7 +143,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking that the record is added on the hidden master ($n)"
+echo_i "checking that the record is added on the hidden primary ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.2 added.bits A > dig.out.ns2.test$n
 grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
@@ -174,7 +174,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking YYYYMMDDVV (2011072400) serial on hidden master ($n)"
+echo_i "checking YYYYMMDDVV (2011072400) serial on hidden primary ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.2 bits SOA > dig.out.ns2.test$n
 grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
@@ -221,7 +221,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking that the record is added on the hidden master, noixfr ($n)"
+echo_i "checking that the record is added on the hidden primary, noixfr ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.4 added.noixfr A > dig.out.ns4.test$n
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
@@ -252,7 +252,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking YYYYMMDDVV (2011072400) serial on hidden master, noixfr ($n)"
+echo_i "checking YYYYMMDDVV (2011072400) serial on hidden primary, noixfr ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.4 noixfr SOA > dig.out.ns4.test$n
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
@@ -277,7 +277,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking that the master zone signed on initial load ($n)"
+echo_i "checking that the primary zone signed on initial load ($n)"
 ret=0
 for i in 1 2 3 4 5 6 7 8 9 10
 do
@@ -292,7 +292,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking removal of private type record via 'rndc signing -clear' (master) ($n)"
+echo_i "checking removal of private type record via 'rndc signing -clear' (primary) ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 signing -list master > signing.out.test$n 2>&1
 keys=`sed -n -e 's/Done signing with key \(.*\)$/\1/p' signing.out.test$n`
@@ -315,7 +315,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking private type was properly signed (master) ($n)"
+echo_i "checking private type was properly signed (primary) ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.6 master TYPE65534 > dig.out.ns6.test$n
 grep "ANSWER: 2," dig.out.ns6.test$n > /dev/null || ret=1
@@ -325,7 +325,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking removal of remaining private type record via 'rndc signing -clear' (master) ($n)"
+echo_i "checking removal of remaining private type record via 'rndc signing -clear' (primary) ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 signing -clear all master > /dev/null || ret=1
 for i in 1 2 3 4 5 6 7 8 9 10
@@ -342,7 +342,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check adding of record to unsigned master ($n)"
+echo_i "check adding of record to unsigned primary ($n)"
 ret=0
 cp ns3/master2.db.in ns3/master.db
 rndc_reload ns3 10.53.0.3 master
@@ -399,7 +399,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking that the dynamic master zone signed on initial load ($n)"
+echo_i "checking that the dynamic primary zone signed on initial load ($n)"
 ret=0
 for i in 1 2 3 4 5 6 7 8 9 10
 do
@@ -414,7 +414,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking master zone that was updated while offline is correct ($n)"
+echo_i "checking primary zone that was updated while offline is correct ($n)"
 ret=0
 $DIG $DIGOPTS +nodnssec +short @10.53.0.3 updated SOA >dig.out.ns2.soa.test$n
 serial=`awk '{print $3}' dig.out.ns2.soa.test$n`
@@ -437,7 +437,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking adding of record to unsigned master using UPDATE ($n)"
+echo_i "checking adding of record to unsigned primary using UPDATE ($n)"
 ret=0
 
 [ -f ns3/dynamic.db.jnl ] && { ret=1 ; echo_i "journal exists (pretest)" ; }
@@ -488,7 +488,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking YYYYMMDDVV (2011072450) serial on hidden master ($n)"
+echo_i "checking YYYYMMDDVV (2011072450) serial on hidden primary ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.2 bits SOA > dig.out.ns2.test$n
 grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
@@ -520,7 +520,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking YYYYMMDDVV (2011072450) serial on hidden master, noixfr ($n)"
+echo_i "checking YYYYMMDDVV (2011072450) serial on hidden primary, noixfr ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.4 noixfr SOA > dig.out.ns4.test$n
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
@@ -552,7 +552,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking forwarded update on hidden master ($n)"
+echo_i "checking forwarded update on hidden primary ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.2 bits SOA > dig.out.ns2.test$n
 grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
@@ -584,7 +584,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking forwarded update on hidden master, noixfr ($n)"
+echo_i "checking forwarded update on hidden primary, noixfr ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.4 noixfr SOA > dig.out.ns4.test$n
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
@@ -610,7 +610,7 @@ status=`expr $status + $ret`
 
 ret=0
 n=`expr $n + 1`
-echo_i "checking turning on of inline signing in a slave zone via reload ($n)"
+echo_i "checking turning on of inline signing in a secondary zone via reload ($n)"
 $DIG $DIGOPTS @10.53.0.5 +dnssec bits SOA > dig.out.ns5.test$n
 grep "status: NOERROR" dig.out.ns5.test$n > /dev/null || ret=1
 grep "ANSWER: 1," dig.out.ns5.test$n > /dev/null || ret=1
@@ -729,7 +729,7 @@ send
 EOF
 
 n=`expr $n + 1`
-echo_i "checking that the retransfer record is added on the hidden master ($n)"
+echo_i "checking that the retransfer record is added on the hidden primary ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.2 added.retransfer A > dig.out.ns2.test$n
 grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
@@ -752,7 +752,7 @@ if [ $ans != 1 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check rndc retransfer of a inline slave zone works ($n)"
+echo_i "check rndc retransfer of a inline secondary zone works ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 retransfer retransfer 2>&1 || ret=1
 for i in 0 1 2 3 4 5 6 7 8 9
@@ -807,7 +807,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check rndc retransfer of a inline nsec3 slave retains nsec3 ($n)"
+echo_i "check rndc retransfer of a inline nsec3 secondary retains nsec3 ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 signing -nsec3param 1 0 0 - retransfer3 > /dev/null 2>&1 || ret=1
 for i in 0 1 2 3 4 5 6 7 8 9
@@ -836,13 +836,13 @@ status=`expr $status + $ret`
 # NOTE: The test below should be considered fragile.  More details can be found
 # in the comment inside ns7/named.conf.
 n=`expr $n + 1`
-echo_i "check rndc retransfer of a inline nsec3 slave does not trigger an infinite loop ($n)"
+echo_i "check rndc retransfer of a inline nsec3 secondary does not trigger an infinite loop ($n)"
 ret=0
 zone=nsec3-loop
-# Add slave zone using rndc
+# Add secondary zone using rndc
 $RNDCCMD 10.53.0.7 addzone $zone \
-	'{ type slave; masters { 10.53.0.2; }; file "'$zone'.db"; inline-signing yes; auto-dnssec maintain; };'
-# Wait until slave zone is fully signed using NSEC
+	'{ type secondary; primaries { 10.53.0.2; }; file "'$zone'.db"; inline-signing yes; auto-dnssec maintain; };'
+# Wait until secondary zone is fully signed using NSEC
 for i in 1 2 3 4 5 6 7 8 9 0
 do
 	ret=1
@@ -851,9 +851,9 @@ do
 	[ $keys -eq 3 ] && ret=0 && break
 	sleep 1
 done
-# Switch slave zone to NSEC3
+# Switch secondary zone to NSEC3
 $RNDCCMD 10.53.0.7 signing -nsec3param 1 0 2 12345678 $zone > /dev/null 2>&1
-# Wait until slave zone is fully signed using NSEC3
+# Wait until secondary zone is fully signed using NSEC3
 for i in 1 2 3 4 5 6 7 8 9 0
 do
 	ret=1
@@ -861,7 +861,7 @@ do
 	test "$nsec3param" = "1 0 2 12345678" && ret=0 && break
 	sleep 1
 done
-# Attempt to retransfer the slave zone from master
+# Attempt to retransfer the secondary zone from primary
 $RNDCCMD 10.53.0.7 retransfer $zone
 # Check whether the signer managed to fully sign the retransferred zone by
 # waiting for a specific SOA serial number to appear in the logs; if this
@@ -918,7 +918,7 @@ n=`expr $n + 1`
 echo_i "check that reloading all zones does not cause zone maintenance to cease for inline-signed zones ($n)"
 ret=1
 # Ensure "rndc reload" attempts to load ns3/master.db by waiting 1 second so
-# that the master file modification time has no possibility of being equal to
+# that the file modification time has no possibility of being equal to
 # the one stored during server startup.
 sleep 1
 nextpart ns3/named.run > /dev/null
@@ -932,7 +932,7 @@ do
 	fi
 	sleep 1
 done
-# Sanity check: master file updates should be reflected in the signed zone,
+# Sanity check: file updates should be reflected in the signed zone,
 # i.e. SOA RNAME should no longer be set to "hostmaster".
 $DIG $DIGOPTS @10.53.0.3 master SOA > dig.out.ns3.test$n || ret=1
 grep "hostmaster" dig.out.ns3.test$n > /dev/null && ret=1
@@ -968,11 +968,11 @@ ret=0
 for zone in a b c d e f g h i j k l m n o p q r s t u v w x y z
 do
 $RNDCCMD 10.53.0.2 addzone test-$zone \
-	'{ type master; file "bits.db.in"; allow-transfer { any; }; };'
+	'{ type primary; file "bits.db.in"; allow-transfer { any; }; };'
 $DIG $DIGOPTS @10.53.0.2 test-$zone SOA > dig.out.ns2.$zone.test$n
 grep "status: NOERROR," dig.out.ns2.$zone.test$n  > /dev/null || { ret=1; cat dig.out.ns2.$zone.test$n; }
 $RNDCCMD 10.53.0.3 addzone test-$zone \
-	'{ type slave; masters { 10.53.0.2; }; file "'test-$zone.bk'"; inline-signing yes; auto-dnssec maintain; allow-transfer { any; }; };'
+	'{ type secondary; primaries { 10.53.0.2; }; file "'test-$zone.bk'"; inline-signing yes; auto-dnssec maintain; allow-transfer { any; }; };'
 $RNDCCMD 10.53.0.3 delzone test-$zone > /dev/null 2>&1
 done
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -1184,7 +1184,7 @@ grep "RRSIG" dig.out.ns3.pre.test$n > /dev/null && ret=1
 # Ensure the wait_until_raw_zone_update_is_processed() call below will ignore
 # log messages generated before the raw zone is updated.
 nextpart ns3/named.run > /dev/null
-# Add a record to the raw zone on the master.
+# Add a record to the raw zone on the primary.
 $NSUPDATE << EOF || ret=1
 zone nokeys.
 server 10.53.0.2 ${PORT}
@@ -1213,7 +1213,7 @@ mv -f ns3/Kremovedkeys-primary* ns3/removedkeys
 # Ensure the wait_until_raw_zone_update_is_processed() call below will ignore
 # log messages generated before the raw zone is updated.
 nextpart ns3/named.run > /dev/null
-# Add a record to the raw zone on the master.
+# Add a record to the raw zone on the primary.
 $NSUPDATE << EOF || ret=1
 zone removedkeys-primary.
 server 10.53.0.3 ${PORT}
@@ -1270,7 +1270,7 @@ mv -f ns3/Kremovedkeys-secondary* ns3/removedkeys
 # Ensure the wait_until_raw_zone_update_is_processed() call below will ignore
 # log messages generated before the raw zone is updated.
 nextpart ns3/named.run > /dev/null
-# Add a record to the raw zone on the master.
+# Add a record to the raw zone on the primary.
 $NSUPDATE << EOF || ret=1
 zone removedkeys-secondary.
 server 10.53.0.2 ${PORT}
@@ -1297,7 +1297,7 @@ BUMPED_SOA=`sed -n 's/.*\(add removedkeys-secondary.*IN.*SOA\)/\1/p;' ns2/named.
 # Ensure the wait_until_raw_zone_update_is_processed() call below will ignore
 # log messages generated before the raw zone is updated.
 nextpart ns3/named.run > /dev/null
-# Bump the SOA serial number of the raw zone on the master.
+# Bump the SOA serial number of the raw zone on the primary.
 $NSUPDATE << EOF || ret=1
 zone removedkeys-secondary.
 server 10.53.0.2 ${PORT}
@@ -1314,7 +1314,7 @@ grep "RRSIG" dig.out.ns3.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-# Check that the master file $2 for zone $1 does not contain RRSIG records
+# Check that the file $2 for zone $1 does not contain RRSIG records
 # while the journal file for that zone does contain them.
 ensure_sigs_only_in_journal() {
 	origin="$1"
@@ -1339,7 +1339,7 @@ check_done_signing () (
     [ $num -eq 2 ]
 )
 retry_quiet 10 check_done_signing || ret=1
-# Halt rather than stopping the server to prevent the master file from being
+# Halt rather than stopping the server to prevent the file from being
 # flushed upon shutdown since we specifically want to avoid it.
 $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --halt --port ${CONTROLPORT} inline ns3
 ensure_sigs_only_in_journal delayedkeys ns3/delayedkeys.db.signed
@@ -1356,7 +1356,7 @@ nextpart ns3/named.run > /dev/null
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} inline ns3
 # We can now test whether the secure zone journal was correctly processed:
 # unless the records contained in it were scheduled for resigning, no resigning
-# event will be scheduled at all since the secure zone master file contains no
+# event will be scheduled at all since the secure zone file contains no
 # DNSSEC records.
 wait_for_log 20 "all zones loaded" ns3/named.run || ret=1
 $RNDCCMD 10.53.0.3 zonestatus delayedkeys > rndc.out.ns3.post.test$n 2>&1 || ret=1
@@ -1365,18 +1365,18 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
-echo_i "check that zonestatus reports 'type: master' for a inline master zone ($n)"
+echo_i "check that zonestatus reports 'type: primary' for an inline primary zone ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 zonestatus master > rndc.out.ns3.test$n
-grep "type: master" rndc.out.ns3.test$n > /dev/null || ret=1
+grep "type: primary" rndc.out.ns3.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check that zonestatus reports 'type: slave' for a inline slave zone ($n)"
+echo_i "check that zonestatus reports 'type: secondary' for an inline secondary zone ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 zonestatus bits > rndc.out.ns3.test$n
-grep "type: slave" rndc.out.ns3.test$n > /dev/null || ret=1
+grep "type: secondary" rndc.out.ns3.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

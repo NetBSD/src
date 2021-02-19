@@ -1,2 +1,2 @@
 # run the performance test close to real life
--c named.conf -D rpz-ns5 -X named.lock -gd3
+-c named.conf -D rpz-ns5 -X named.lock -gd3 -T maxcachesize=2097152

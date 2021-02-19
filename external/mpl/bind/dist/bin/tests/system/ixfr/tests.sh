@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -18,6 +18,12 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
+wait_for_serial() (
+    $DIG $DIGOPTS "@$1" "$2" SOA > "$4"
+    serial=$(awk '$4 == "SOA" { print $7 }' "$4")
+    [ "$3" -eq "${serial:--1}" ]
+)
+
 status=0
 n=0
 
@@ -27,6 +33,7 @@ RNDCCMD="$RNDC -p ${CONTROLPORT} -c ../common/rndc.conf -s"
 
 n=$((n+1))
 echo_i "testing initial AXFR ($n)"
+ret=0
 
 $SENDCMD <<EOF
 /SOA/
@@ -46,32 +53,27 @@ sleep 1
 
 # Initially, ns1 is not authoritative for anything (see setup.sh).
 # Now that ans is up and running with the right data, we make it
-# a slave for nil.
+# a secondary for nil.
 
 cat <<EOF >>ns1/named.conf
 zone "nil" {
-	type slave;
+	type secondary;
 	file "myftp.db";
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 };
 EOF
 
 rndc_reload ns1 10.53.0.1
 
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	$DIG $DIGOPTS @10.53.0.1 nil. SOA > dig.out.test$n
-	grep "SOA" dig.out.test$n > /dev/null && break
-	sleep 1
-done
+retry_quiet 10 wait_for_serial 10.53.0.1 nil. 1 dig.out.test$n || ret=1
 
-$DIG $DIGOPTS @10.53.0.1 nil. TXT | grep 'initial AXFR' >/dev/null || {
-    echo_i "failed"
-    status=1
-}
+$DIG $DIGOPTS @10.53.0.1 nil. TXT | grep 'initial AXFR' >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 n=$((n+1))
 echo_i "testing successful IXFR ($n)"
+ret=0
 
 # We change the IP address of a.nil., and the TXT record at the apex.
 # Then we do a SOA-only update.
@@ -94,17 +96,17 @@ EOF
 
 sleep 1
 
-$RNDCCMD 10.53.0.1 refresh nil
+$RNDCCMD 10.53.0.1 refresh nil | sed 's/^/ns1 /' | cat_i
 
 sleep 2
 
-$DIG $DIGOPTS @10.53.0.1 nil. TXT | grep 'successful IXFR' >/dev/null || {
-    echo_i "failed"
-    status=1
-}
+$DIG $DIGOPTS @10.53.0.1 nil. TXT | grep 'successful IXFR' >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 n=$((n+1))
 echo_i "testing AXFR fallback after IXFR failure ($n)"
+ret=0
 
 # Provide a broken IXFR response and a working fallback AXFR response
 
@@ -129,167 +131,100 @@ EOF
 
 sleep 1
 
-$RNDCCMD 10.53.0.1 refresh nil
+$RNDCCMD 10.53.0.1 refresh nil | sed 's/^/ns1 /' | cat_i
 
 sleep 2
 
-$DIG $DIGOPTS @10.53.0.1 nil. TXT | grep 'fallback AXFR' >/dev/null || {
-    echo_i "failed"
-    status=1
-}
+$DIG $DIGOPTS @10.53.0.1 nil. TXT | grep 'fallback AXFR' >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 n=$((n+1))
 echo_i "testing ixfr-from-differences option ($n)"
-# ns3 is master; ns4 is slave
+# ns3 is primary; ns4 is secondary
 $CHECKZONE test. ns3/mytest.db > /dev/null 2>&1
 if [ $? -ne 0 ]
 then
     echo_i "named-checkzone returned failure on ns3/mytest.db"
 fi
-# modify the master
-#echo_i "digging against master: "
-#$DIG $DIGOPTS @10.53.0.3 a host1.test.
-#echo_i "digging against slave: "
-#$DIG $DIGOPTS @10.53.0.4 a host1.test.
 
-# wait for slave to be stable
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	$DIG $DIGOPTS +tcp @10.53.0.4 SOA test > dig.out.test$n
-	grep -i "hostmaster\.test\..1" dig.out.test$n > /dev/null && break
-	sleep 1
-done
+retry_quiet 10 wait_for_serial 10.53.0.4 test. 1 dig.out.test$n || ret=1
 
-# modify the master
+nextpart ns4/named.run > /dev/null
+
+# modify the primary
 cp ns3/mytest1.db ns3/mytest.db
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
 
-#wait for master to reload load
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	$DIG $DIGOPTS +tcp @10.53.0.3 SOA test > dig.out.test$n
-	grep -i "hostmaster\.test\..2" dig.out.test$n > /dev/null && break
-	sleep 1
-done
+# wait for primary to reload
+retry_quiet 10 wait_for_serial 10.53.0.3 test. 2 dig.out.test$n || ret=1
 
-#wait for slave to transfer zone
-for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
-do
-	$DIG $DIGOPTS +tcp @10.53.0.4 SOA test > dig.out.test$n
-	grep -i "hostmaster\.test\..2" dig.out.test$n > /dev/null && break
-
-	# re-notify if we've been waiting a long time
-	if [ $i -ge 5 ]; then
-	    $RNDCCMD 10.53.0.3 notify test | set 's/^/ns3 /' | cat_i
-	fi
-	sleep 1
-done
-
-# slave should have gotten notify and updated
-
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
-	[ $INCR -eq 1 ] && break
-	sleep 1
-done
-if [ $INCR -ne 1 ]
-then
-    echo_i "failed to get incremental response"
-    status=1
+# wait for secondary to reload
+tret=0
+retry_quiet 5 wait_for_serial 10.53.0.4 test. 2 dig.out.test$n || tret=1
+if [ $tret -eq 1 ]; then
+    # re-noitfy after 5 seconds, then wait another 10
+    $RNDCCMD 10.53.0.3 notify test | set 's/^/ns3 /' | cat_i
+    retry_quiet 10 wait_for_serial 10.53.0.4 test. 2 dig.out.test$n || ret=1
 fi
 
+wait_for_log 10 'got incremental' ns4/named.run || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
 n=$((n+1))
-echo_i "testing request-ixfr option in view vs zone ($n)"
+echo_i "testing 'request-ixfr no' option inheritance from view ($n)"
+ret=0
 # There's a view with 2 zones. In the view, "request-ixfr yes"
 # but in the zone "sub.test", request-ixfr no"
 # we want to make sure that a change to sub.test results in AXFR, while
 # changes to test. result in IXFR
 
-echo_ic "this result should be AXFR"
 cp ns3/subtest1.db ns3/subtest.db # change to sub.test zone, should be AXFR
+nextpart ns4/named.run > /dev/null
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
 
-#wait for master to reload zone
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	$DIG $DIGOPTS +tcp @10.53.0.3 SOA sub.test > dig.out.test$n
-	grep -i "hostmaster\.test\..3" dig.out.test$n > /dev/null && break
-	sleep 1
-done
+# wait for primary to reload
+retry_quiet 10 wait_for_serial 10.53.0.3 sub.test. 3 dig.out.test$n || ret=1
 
-#wait for slave to transfer zone
-for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
-do
-	$DIG $DIGOPTS +tcp @10.53.0.4 SOA sub.test > dig.out.test$n
-	grep -i "hostmaster\.test\..3" dig.out.test$n > /dev/null && break
-
-	# re-notify if we've been waiting a long time
-	if [ $i -ge 5 ]; then
-	    $RNDCCMD 10.53.0.3 notify sub.test | set 's/^/ns3 /' | cat_i
-	fi
-	sleep 1
-done
-
-echo_ic "this result should be AXFR"
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	NONINCR=`grep 'sub\.test/IN/primary' ns4/named.run|grep "got nonincremental" | wc -l`
-	[ $NONINCR -eq 2 ] && break
-	sleep 1
-done
-if [ $NONINCR -ne 2 ]
-then
-    echo_ic "failed to get nonincremental response in 2nd AXFR test"
-
-    echo_i "failed"
-    status=1
-else
-    echo_ic "success: AXFR it was"
+# wait for secondary to reload
+tret=0
+retry_quiet 5 wait_for_serial 10.53.0.4 sub.test. 3 dig.out.test$n || tret=1
+if [ $tret -eq 1 ]; then
+    # re-noitfy after 5 seconds, then wait another 10
+    $RNDCCMD 10.53.0.3 notify sub.test | set 's/^/ns3 /' | cat_i
+    retry_quiet 10 wait_for_serial 10.53.0.4 sub.test. 3 dig.out.test$n || ret=1
 fi
 
-echo_ic "this result should be IXFR"
-cp ns3/mytest2.db ns3/mytest.db # change to test zone, should be IXFR
-$RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
-
-# wait for master to reload zone
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	$DIG +tcp -p 5300 @10.53.0.3 SOA test > dig.out.test$n
-	grep -i "hostmaster\.test\..4" dig.out.test$n > /dev/null && break
-	sleep 1
-done
-
-# wait for slave to transfer zone
-for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
-do
-	$DIG $DIGOPTS +tcp @10.53.0.4 SOA test > dig.out.test$n
-	grep -i "hostmaster\.test\..4" dig.out.test$n > /dev/null && break
-
-	# re-notify if we've been waiting a long time
-	if [ $i -ge 5 ]; then
-	    $RNDCCMD 10.53.0.3 notify test | set 's/^/ns3 /' | cat_i
-	fi
-	sleep 1
-done
-
-for i in 0 1 2 3 4 5 6 7 8 9
-do
-	INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
-	[ $INCR -eq 2 ] && break
-	sleep 1
-done
-if [ $INCR -ne 2 ]
-then
-    echo_ic "failed to get incremental response in 2nd IXFR test"
-
-    echo_i "failed"
-    status=1
-else
-    echo_ic "success: IXFR it was"
-fi
+wait_for_log 10 'got nonincremental response' ns4/named.run || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 n=$((n+1))
+echo_i "testing 'request-ixfr yes' option inheritance from view ($n)"
+ret=0
+cp ns3/mytest2.db ns3/mytest.db # change to test zone, should be IXFR
+nextpart ns4/named.run > /dev/null
+$RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
+
+# wait for primary to reload
+retry_quiet 10 wait_for_serial 10.53.0.3 test. 3 dig.out.test$n || ret=1
+
+# wait for secondary to reload
+tret=0
+retry_quiet 5 wait_for_serial 10.53.0.4 test. 3 dig.out.test$n || tret=1
+if [ $tret -eq 1 ]; then
+    # re-noitfy after 5 seconds, then wait another 10
+    $RNDCCMD 10.53.0.3 notify test | set 's/^/ns3 /' | cat_i
+    retry_quiet 10 wait_for_serial 10.53.0.4 test. 3 dig.out.test$n || ret=1
+fi
+
+wait_for_log 10 'got incremental response' ns4/named.run || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+ret=0
 echo_i "testing DiG's handling of a multi message AXFR style IXFR response ($n)"
 (
 (sleep 10 && kill $$) 2>/dev/null &
@@ -298,9 +233,11 @@ $DIG -p ${PORT} ixfr=0 large @10.53.0.3 > dig.out.test$n
 kill $sub
 )
 lines=`grep hostmaster.large dig.out.test$n | wc -l`
-test ${lines:-0} -eq 2 || { echo_i "failed"; status=1; }
+test ${lines:-0} -eq 2 || ret=1
 messages=`sed -n 's/^;;.*messages \([0-9]*\),.*/\1/p' dig.out.test$n`
-test ${messages:-0} -gt 1 || { echo_i "failed"; status=1; }
+test ${messages:-0} -gt 1 || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 n=$((n+1))
 echo_i "test 'dig +notcp ixfr=<value>' vs 'dig ixfr=<value> +notcp' vs 'dig ixfr=<value>' ($n)"
@@ -314,23 +251,18 @@ awk '$4 == "SOA" { if ($7 == 3) exit(0); else exit(1);}' dig.out1.test$n || ret=
 # Should be incremental transfer.
 $DIG $DIGOPTS ixfr=1 test @10.53.0.4 > dig.out3.test$n || ret=1
 awk '$4 == "SOA" { soacnt++} END { if (soacnt == 6) exit(0); else exit(1);}' dig.out3.test$n || ret=1
-if [ ${ret} != 0 ]; then
-	echo_i "failed"
-	status=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+# make sure ns5 has transfered the zone
+# wait for secondary to reload
+tret=0
+retry_quiet 5 wait_for_serial 10.53.0.5 test. 4 dig.out.test$n || tret=1
+if [ $tret -eq 1 ]; then
+    # re-noitfy after 5 seconds, then wait another 10
+    $RNDCCMD 10.53.0.3 notify test | set 's/^/ns3 /' | cat_i
+    retry_quiet 10 wait_for_serial 10.53.0.5 test. 3 dig.out.test$n || ret=1
 fi
-
-# wait for slave to transfer zone
-for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
-do
-	$DIG $DIGOPTS +tcp @10.53.0.5 SOA test > dig.out.test$n
-	grep -i "hostmaster\.test\..4" dig.out.test$n > /dev/null && break
-
-	# re-notify if we've been waiting a long time
-	if [ $i -ge 5 ]; then
-	    $RNDCCMD 10.53.0.3 notify test | set 's/^/ns3 /' | cat_i
-	fi
-	sleep 1
-done
 
 n=$((n+1))
 echo_i "test 'provide-ixfr no;' (serial < current) ($n)"
@@ -342,32 +274,6 @@ $DIG $DIGOPTS ixfr=1 test @10.53.0.5 > dig.out1.test$n || ret=1
 $DIG $DIGOPTS ixfr=1 +notcp test @10.53.0.5 > dig.out2.test$n || ret=1
 awk '$4 == "SOA" { soacnt++} END {if (soacnt == 2) exit(0); else exit(1);}' dig.out1.test$n || ret=1
 awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out2.test$n || ret=1
-msg="IXFR delta response disabled due to 'provide-ixfr no;' being set"
-nextpart ns5/named.run | grep "$msg" > /dev/null || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
-
-n=$((n+1))
-echo_i "test 'provide-ixfr no;' (serial = current) ($n)"
-ret=0
-# Should be "AXFR style" response
-$DIG $DIGOPTS ixfr=3 test @10.53.0.5 > dig.out1.test$n || ret=1
-# Should be "switch to TCP" response
-$DIG $DIGOPTS ixfr=3 +notcp test @10.53.0.5 > dig.out2.test$n || ret=1
-awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out1.test$n || ret=1
-awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out2.test$n || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
-
-n=$((n+1))
-echo_i "test 'provide-ixfr no;' (serial > current) ($n)"
-ret=0
-# Should be "AXFR style" response
-$DIG $DIGOPTS ixfr=4 test @10.53.0.5 > dig.out1.test$n || ret=1
-# Should be "switch to TCP" response
-$DIG $DIGOPTS ixfr=4 +notcp test @10.53.0.5 > dig.out2.test$n || ret=1
-awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out1.test$n || ret=1
-awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out2.test$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
@@ -376,32 +282,51 @@ echo_i "checking whether dig calculates IXFR statistics correctly ($n)"
 ret=0
 $DIG $DIGOPTS +noedns +stat -b 10.53.0.4 @10.53.0.4 test. ixfr=2 > dig.out1.test$n
 get_dig_xfer_stats dig.out1.test$n > stats.dig
-diff ixfr-stats.good stats.dig || ret=1
+diff ixfr-stats.good stats.dig > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 # Note: in the next two tests, we use ns4 logs for checking both incoming and
 # outgoing transfer statistics as ns4 is both a secondary server (for ns3) and a
 # primary server (for dig queries from the previous test) for "test".
+
+_wait_for_stats () {
+    get_named_xfer_stats ns4/named.run "$1" test "$2" > "$3"
+    diff ixfr-stats.good "$3" > /dev/null || return 1
+    return 0
+}
+
 n=$((n+1))
 echo_i "checking whether named calculates incoming IXFR statistics correctly ($n)"
 ret=0
-get_named_xfer_stats ns4/named.run 10.53.0.3 test "Transfer completed" > stats.incoming
-diff ixfr-stats.good stats.incoming || ret=1
+retry_quiet 10 _wait_for_stats 10.53.0.3 "Transfer completed" stats.incoming
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 n=$((n+1))
 echo_i "checking whether named calculates outgoing IXFR statistics correctly ($n)"
-ret=1
-for i in 0 1 2 3 4 5 6 7 8 9; do
-	get_named_xfer_stats ns4/named.run 10.53.0.4 test "IXFR ended" > stats.outgoing
-	if diff ixfr-stats.good stats.outgoing > /dev/null; then
-		ret=0
-		break
-	fi
-	sleep 1
-done
+retry_quiet 10 _wait_for_stats 10.53.0.4 "IXFR ended" stats.outgoing
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+ret=0
+echo_i "testing fallback to AXFR when max-ixfr-ratio is exceeded ($n)"
+nextpart ns4/named.run > /dev/null
+
+cp ns3/mytest3.db ns3/mytest.db # change to test zone, too big for IXFR
+$RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
+
+# wait for secondary to reload
+tret=0
+retry_quiet 5 wait_for_serial 10.53.0.4 test. 4 dig.out.test$n || tret=1
+if [ $tret -eq 1 ]; then
+    # re-noitfy after 5 seconds, then wait another 10
+    $RNDCCMD 10.53.0.3 notify test | set 's/^/ns3 /' | cat_i
+    retry_quiet 10 wait_for_serial 10.53.0.4 test. 4 dig.out.test$n || ret=1
+fi
+
+wait_for_log 10 'got nonincremental response' ns4/named.run || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 

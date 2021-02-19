@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -12,12 +12,12 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL ../genzone.sh 1 6 7 >ns1/slave.db
+$SHELL ../genzone.sh 1 6 7 >ns1/sec.db
 $SHELL ../genzone.sh 1 6 7 >ns1/edns-expire.db
 $SHELL ../genzone.sh 2 3 >ns2/example.db
 $SHELL ../genzone.sh 2 3 >ns2/tsigzone.db
-$SHELL ../genzone.sh 6 3 >ns6/master.db
-$SHELL ../genzone.sh 7 >ns7/master2.db
+$SHELL ../genzone.sh 6 3 >ns6/primary.db
+$SHELL ../genzone.sh 7 >ns7/primary2.db
 
 cp -f ns4/root.db.in ns4/root.db
 $PERL -e 'for ($i=0;$i<10000;$i++){ printf("x%u 0 in a 10.53.0.1\n", $i);}' >> ns4/root.db
@@ -31,8 +31,8 @@ copy_setports ns8/named.conf.in ns8/named.conf
 
 copy_setports ns4/named.conf.base ns4/named.conf
 
-cp ns2/slave.db.in ns2/slave.db
-touch -t 200101010000 ns2/slave.db
+cp ns2/sec.db.in ns2/sec.db
+touch -t 200101010000 ns2/sec.db
 
 cp ns2/mapped.db.in ns2/mapped.db
 

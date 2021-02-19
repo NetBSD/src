@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -27,12 +27,10 @@ $DIFF ref output > /dev/null && { ret=1 ; echo_i "diff out of order failed"; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-# flush resolver so queries will be from others again
-$RNDCCMD 10.53.0.4 flush
-sleep 1
-
 echo_i "check pipelined TCP queries using mdig"
 ret=0
+$RNDCCMD 10.53.0.4 flush
+sleep 1
 $MDIG $MDIGOPTS +noall +answer +vc -f input -b 10.53.0.4 @10.53.0.4 > raw.mdig
 awk '{ print $1 " " $5 }' < raw.mdig > output.mdig
 sort < output.mdig > output-sorted.mdig
@@ -43,6 +41,8 @@ status=`expr $status + $ret`
 
 echo_i "check keep-response-order"
 ret=0
+$RNDCCMD 10.53.0.4 flush
+sleep 1
 $PIPEQUERIES -p ${PORT} ++ < inputb > rawb || ret=1
 awk '{ print $1 " " $5 }' < rawb > outputb
 $DIFF refb outputb || ret=1
@@ -51,6 +51,8 @@ status=`expr $status + $ret`
 
 echo_i "check keep-response-order using mdig"
 ret=0
+$RNDCCMD 10.53.0.4 flush
+sleep 1
 $MDIG $MDIGOPTS +noall +answer +vc -f inputb -b 10.53.0.7 @10.53.0.4 > rawb.mdig
 awk '{ print $1 " " $5 }' < rawb.mdig > outputb.mdig
 $DIFF refb outputb.mdig || ret=1
@@ -59,6 +61,8 @@ status=`expr $status + $ret`
 
 echo_i "check mdig -4 -6"
 ret=0
+$RNDCCMD 10.53.0.4 flush
+sleep 1
 $MDIG $MDIGOPTS -4 -6 -f input @10.53.0.4 > output46.mdig 2>&1 && ret=1
 grep "only one of -4 and -6 allowed" output46.mdig > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

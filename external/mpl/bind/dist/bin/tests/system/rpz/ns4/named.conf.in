@@ -36,8 +36,8 @@ controls {
 include "../trusted.conf";
 zone "." { type hint; file "hints"; };
 
-zone "tld4."		    {type master; file "tld4.db";};
-zone "sub1.tld4."	    {type master; file "tld4.db";};
-zone "subsub.sub1.tld4."    {type master; file "tld4.db";};
-zone "sub2.tld4."	    {type master; file "tld4.db";};
-zone "subsub.sub2.tld4."    {type master; file "tld4.db";};
+zone "tld4."		    {type primary; file "tld4.db";};
+zone "sub1.tld4."	    {type primary; file "tld4.db";};
+zone "subsub.sub1.tld4."    {type primary; file "tld4.db";};
+zone "sub2.tld4."	    {type primary; file "tld4.db";};
+zone "subsub.sub2.tld4."    {type primary; file "tld4.db";};

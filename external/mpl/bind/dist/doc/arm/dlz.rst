@@ -3,15 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -37,7 +30,7 @@ dynamically at runtime, via the DLZ "dlopen" driver, which acts as a
 generic wrapper around a shared object implementing the DLZ API. The
 "dlopen" driver is linked into ``named`` by default, so configure
 options are no longer necessary when using these dynamically linkable
-drivers, but are still needed for the older drivers in
+drivers; they are still needed for the older drivers in
 ``contrib/dlz/drivers``.
 
 The DLZ module provides data to ``named`` in text
@@ -45,7 +38,7 @@ format, which is then converted to DNS wire format by ``named``. This
 conversion, and the lack of any internal caching, places significant
 limits on the query performance of DLZ modules. Consequently, DLZ is not
 recommended for use on high-volume servers. However, it can be used in a
-hidden primary (master) configuration, with secondaries retrieving zone updates via
+hidden primary configuration, with secondaries retrieving zone updates via
 AXFR. Note, however, that DLZ has no built-in support for DNS notify;
 secondary servers are not automatically informed of changes to the zones in the
 database.
@@ -129,7 +122,7 @@ querying client and alter its response on the basis of this
 information. To demonstrate this feature, the example driver responds to
 queries for "source-addr.``zonename``>/TXT" with the source address of
 the query. Note, however, that this record will *not* be included in
-AXFR or ANY responses. Normally, this feature would be used to alter
+AXFR or ANY responses. Normally, this feature is used to alter
 responses in some other fashion, e.g., by providing different address
 records for a particular name depending on the network from which the
 query arrived.

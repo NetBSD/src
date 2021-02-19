@@ -34,7 +34,7 @@ controls {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 	allow-transfer { any; };
 	allow-query { any; };

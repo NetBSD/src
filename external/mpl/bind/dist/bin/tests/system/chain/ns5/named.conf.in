@@ -30,11 +30,11 @@ zone "." {
 };
 
 zone "sub5.example" {
-	type master;
+	type primary;
 	file "sub.db";
 };
 
 zone "signed-sub5.example" {
-	type master;
+	type primary;
 	file "sub.db";
 };

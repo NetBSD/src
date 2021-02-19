@@ -2,7 +2,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -141,6 +141,19 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
+echo_i "checking named-checkconf servestale warnings ($n)"
+ret=0
+$CHECKCONF servestale.stale-refresh-time.0.conf > checkconf.out$n.1 2>&1
+grep "'stale-refresh-time' should either be 0 or otherwise 30 seconds or higher" < checkconf.out$n.1 > /dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+ret=0
+$CHECKCONF servestale.stale-refresh-time.29.conf > checkconf.out$n.1 2>&1
+grep "'stale-refresh-time' should either be 0 or otherwise 30 seconds or higher" < checkconf.out$n.1 > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "range checking fields that do not allow zero ($n)"
 ret=0
 for field in max-retry-time min-retry-time max-refresh-time min-refresh-time; do
@@ -169,8 +182,8 @@ EOF
     [ $? -eq 1 ] || { echo_i "options + view $field failed" ; ret=1; }
     cat > badzero.conf << EOF
 zone dummy {
-    type slave;
-    masters { 0.0.0.0; };
+    type secondary;
+    primaries { 0.0.0.0; };
     $field 0;
 };
 EOF
@@ -181,7 +194,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking options allowed in inline-signing slaves ($n)"
+echo_i "checking options allowed in inline-signing secondaries ($n)"
 ret=0
 $CHECKCONF bad-dnssec.conf > checkconf.out$n.1 2>&1
 l=`grep "dnssec-dnskey-kskonly.*requires inline" < checkconf.out$n.1 | wc -l`
@@ -196,7 +209,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check file + inline-signing for slave zones ($n)"
+echo_i "check file + inline-signing for secondary zones ($n)"
 $CHECKCONF inline-no.conf > checkconf.out$n.1 2>&1
 l=`grep "missing 'file' entry" < checkconf.out$n.1 | wc -l`
 [ $l -eq 0 ] || ret=1
@@ -497,7 +510,35 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking named-checkconf kasp predefined key lengths ($n)"
+echo_i "checking named-checkconf kasp nsec3 iterations errors ($n)"
+ret=0
+$CHECKCONF kasp-bad-nsec3-iter.conf > checkconf.out$n 2>&1 && ret=1
+grep "dnssec-policy: nsec3 iterations value 151 out of range" < checkconf.out$n > /dev/null || ret=1
+grep "dnssec-policy: nsec3 iterations value 501 out of range" < checkconf.out$n > /dev/null || ret=1
+grep "dnssec-policy: nsec3 iterations value 2501 out of range" < checkconf.out$n > /dev/null || ret=1
+lines=$(wc -l < "checkconf.out$n")
+if [ $lines != 3 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking named-checkconf kasp nsec3 algorithm errors ($n)"
+ret=0
+$CHECKCONF kasp-bad-nsec3-alg.conf > checkconf.out$n 2>&1 && ret=1
+grep "dnssec-policy: cannot use nsec3 with algorithm 'RSASHA1'" < checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking named-checkconf kasp key errors ($n)"
+ret=0
+$CHECKCONF kasp-bad-keylen.conf > checkconf.out$n 2>&1 && ret=1
+grep "dnssec-policy: key with algorithm rsasha1 has invalid key length 511" < checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking named-checkconf kasp predefined key length ($n)"
 ret=0
 $CHECKCONF kasp-ignore-keylen.conf > checkconf.out$n 2>&1 || ret=1
 grep "dnssec-policy: key algorithm ecdsa256 has predefined length; ignoring length value 2048" < checkconf.out$n > /dev/null || ret=1
@@ -518,8 +559,15 @@ awk 'BEGIN { ok = 0; } /cut here/ { ok = 1; getline } ok == 1 { print }' good-ka
 [ -s good-kasp.conf.in ] || ret=1
 $CHECKCONF -p good-kasp.conf.in | grep -v '^good-kasp.conf.in:' > good-kasp.conf.out 2>&1 || ret=1
 cmp good-kasp.conf.in good-kasp.conf.out || ret=1
-
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check that max-ixfr-ratio 100% generates a warning ($n)"
+ret=0
+$CHECKCONF warn-maxratio1.conf > checkconf.out$n 2>/dev/null || ret=1
+grep "exceeds 100%" < checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
 echo_i "exit status: $status"

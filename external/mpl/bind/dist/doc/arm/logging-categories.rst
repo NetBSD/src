@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -22,7 +12,7 @@
     Processing of client requests.
 
 ``cname``
-    Nameservers that are skipped due to them being a CNAME rather than A / AAAA records.
+    Name servers that are skipped for being a CNAME rather than A/AAAA records.
      
 ``config``
     Configuration file parsing and processing.
@@ -79,13 +69,13 @@
     ``client ::1#62537 (www.example.net):``
     ``query: www.example.net IN AAAA -SE``
     
-    (The first part of this log message, showing the client address/port number and query name, is repeated in all subsequent log messages related to the same query.)
+    The first part of this log message, showing the client address/port number and query name, is repeated in all subsequent log messages related to the same query.
 
 ``query-errors``
     Information about queries that resulted in some failure.
 
 ``rate-limit``
-    Start, periodic, and final notices of the rate limiting of a stream of responses that are logged at ``info`` severity in this category. These messages include a hash value of the domain name of the response and the name itself, except when there is insufficient memory to record the name for the final notice. The final notice is normally delayed until about one minute after rate limiting stops. A lack of memory can hurry the final notice, which is indicated by an initial asterisk (*). Various internal events are logged at debug 1 level and higher.
+    Start, periodic, and final notices of the rate limiting of a stream of responses that are logged at ``info`` severity in this category. These messages include a hash value of the domain name of the response and the name itself, except when there is insufficient memory to record the name for the final notice. The final notice is normally delayed until about one minute after rate limiting stops. A lack of memory can hurry the final notice, which is indicated by an initial asterisk (\*). Various internal events are logged at debug level 1 and higher.
     
     Rate limiting of individual requests is logged in the ``query-errors`` category.
 

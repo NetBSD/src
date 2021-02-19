@@ -27,12 +27,12 @@ options {
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dump-file "named_dump4.db";
+	dump-file "named_dump.db";
 	stale-answer-enable no;
 };
 
 zone "." {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "root.bk";
 };

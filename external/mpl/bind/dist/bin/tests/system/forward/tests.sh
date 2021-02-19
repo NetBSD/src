@@ -2,7 +2,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -18,6 +18,10 @@ dig_with_opts() (
 sendcmd() (
 	"$PERL" ../send.pl 10.53.0.6 "$EXTRAPORT1"
 )
+
+rndccmd() {
+    "$RNDC" -c ../common/rndc.conf -p "$CONTROLPORT" -s "$@"
+}
 
 root=10.53.0.1
 hidden=10.53.0.2
@@ -230,6 +234,24 @@ grep "status: SERVFAIL" dig.out.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
+n=$((n+1))
+echo_i "checking switch from forwarding to normal resolution while chasing DS ($n)"
+ret=0
+copy_setports ns3/named2.conf.in ns3/named.conf
+rndccmd 10.53.0.3 reconfig 2>&1 | sed 's/^/ns3 /' | cat_i
+sleep 1
+sendcmd << EOF
+/ns1.sld.tld/A/
+300 A 10.53.0.2
+/sld.tld/NS/
+300 NS ns1.sld.tld.
+/sld.tld/
+EOF
+nextpart ns3/named.run >/dev/null
+dig_with_opts @$f1 xxx.yyy.sld.tld ds > dig.out.$n.f1 || ret=1
+grep "status: SERVFAIL" dig.out.$n.f1 > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

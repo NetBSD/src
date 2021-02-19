@@ -13,8 +13,6 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-@LIBISCCFG_API@
-
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. ${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES}
@@ -49,9 +47,6 @@ TARGETS = 	timestamp
 version.@O@: version.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
 libisccfg.@SA@: ${OBJS}
@@ -61,7 +56,7 @@ libisccfg.@SA@: ${OBJS}
 libisccfg.la: ${OBJS}
 	 ${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisccfg.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 timestamp: libisccfg.@A@

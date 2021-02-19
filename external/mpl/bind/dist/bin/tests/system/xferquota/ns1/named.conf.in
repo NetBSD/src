@@ -31,12 +31,12 @@ controls {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "changing." {
-	type master;
+	type primary;
 	file "changing.db";
 };
 

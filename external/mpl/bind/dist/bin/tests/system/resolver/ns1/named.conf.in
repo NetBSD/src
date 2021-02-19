@@ -47,7 +47,7 @@ server fd92:7065:b8e:ffff::1000 {
  */
 view "class" chaos {
 	zone "chaostest" CHAOS {
-                type master;
+                type primary;
                 file "chaostest.db";
         };
 };

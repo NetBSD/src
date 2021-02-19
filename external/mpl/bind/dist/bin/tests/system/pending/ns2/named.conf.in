@@ -32,18 +32,18 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db.signed";
 };
 
 zone "example.com" {
-	type master;
+	type primary;
 	file "example.com.db.signed";
 	allow-update { 10.53.0.0/16; };
 };
 
 zone "good" {
-	type master;
+	type primary;
 	file "forgery.db";
 	allow-query { any; };
 };

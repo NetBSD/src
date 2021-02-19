@@ -50,8 +50,8 @@ controls {
 include "../trusted.conf";
 
 zone "policy1" {
-	type slave;
-	masters { 10.53.0.5; };
+	type secondary;
+	primaries { 10.53.0.5; };
 	file "empty.db";
 	also-notify { 10.53.0.3 port @EXTRAPORT1@; };
 	notify-delay 0;

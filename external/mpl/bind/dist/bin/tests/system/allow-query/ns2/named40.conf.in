@@ -39,67 +39,67 @@ zone "." {
 };
 
 zone "normal.example" {
-	type master;
+	type primary;
 	file "generic.db";
 };
 
 zone "any.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { any; };
 };
 
 zone "none.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { none; };
 };
 
 zone "addrallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { 10.53.0.2; };
 };
 
 zone "addrnotallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { 10.53.0.1; };
 };
 
 zone "addrdisallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { ! 10.53.0.2; };
 };
 
 zone "aclallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { accept; };
 };
 
 zone "aclnotallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { badaccept; };
 };
 
 zone "acldisallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { ! accept; };
 };
 
 /* Also usable for testing key not allowed */
 zone "keyallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { key one; };
 };
 
 zone "keydisallow.example" {
-	type master;
+	type primary;
 	file "generic.db";
 	allow-query { ! key one; };
 };

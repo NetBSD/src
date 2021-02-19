@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -20,6 +20,7 @@ rm -f ./*/named.secroots
 rm -f ./*/tmp* ./*/*.jnl ./*/*.bk ./*/*.jbk
 rm -f ./*/trusted.conf ./*/managed.conf ./*/revoked.conf
 rm -f ./Kexample.* ./Kkeygen* ./keygen*.err
+rm -f ./ans10/query.log ./ans10/ans.run
 rm -f ./canonical?.*
 rm -f ./delv.out*
 rm -f ./delve.out*

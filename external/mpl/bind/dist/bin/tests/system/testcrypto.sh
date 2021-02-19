@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -66,8 +66,8 @@ then
     rm -f Kfoo*
 else
     if test $quiet -eq 0; then
-        echo "I:This test requires support for $msg" >&2
-        echo "I:configure with --with-openssl, or --enable-native-pkcs11" \
+        echo_i "This test requires support for $msg" >&2
+        echo_i "configure with --with-openssl, or --enable-native-pkcs11" \
             "--with-pkcs11" >&2
     fi
     exit 255

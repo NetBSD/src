@@ -1,0 +1,10 @@
+$ORIGIN given.zone.
+$TTL 3600
+@               IN SOA ns.given.zone.  hostmaster.given.zone. 1 600 300 604800 3600
+                IN NS  ns.given.zone.
+
+ns.given.zone. IN A 127.0.0.1
+; this should be ignored as it matches an earlier passthru entry.
+example.com CNAME .
+; this should be ignored as it matches an earlier wildcard passthru entry.
+www.example.com CNAME .

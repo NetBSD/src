@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -77,8 +67,8 @@ arguments in the ``dyndb`` statement:
        dyndb sample "sample.so" { example.nil. arpa. };
 
 
-In the above example, the module is configured to create a zone
-"example.nil" which can answer queries and AXFR requests and accept
+In the above example, the module is configured to create a zone,
+"example.nil", which can answer queries and AXFR requests and accept
 DDNS updates. At runtime, prior to any updates, the zone contains an
 SOA, NS, and a single A record at the apex:
 
@@ -92,7 +82,7 @@ SOA, NS, and a single A record at the apex:
 
 
 When the zone is updated dynamically, the DynDB module determines
-whether the updated RR is an address (i.e., type A or AAAA) and if so,
+whether the updated RR is an address (i.e., type A or AAAA); if so,
 it automatically updates the corresponding PTR record in a reverse
 zone. Note that updates are not stored permanently; all updates are lost when the
 server is restarted.

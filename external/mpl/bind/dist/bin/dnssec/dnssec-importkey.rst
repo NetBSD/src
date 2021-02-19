@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -37,12 +37,12 @@ Description
 ~~~~~~~~~~~
 
 ``dnssec-importkey`` reads a public DNSKEY record and generates a pair
-of .key/.private files. The DNSKEY record may be read from an existing
-.key file, in which case a corresponding .private file will be
+of .key/.private files. The DNSKEY record may be read from an
+existing .key file, in which case a corresponding .private file is
 generated, or it may be read from any other file or from the standard
-input, in which case both .key and .private files will be generated.
+input, in which case both .key and .private files are generated.
 
-The newly-created .private file does *not* contain private key data, and
+The newly created .private file does *not* contain private key data, and
 cannot be used for signing. However, having a .private file makes it
 possible to set publication (``-P``) and deletion (``-D``) times for the
 key, which means the public key can be added to and removed from the
@@ -51,70 +51,70 @@ DNSKEY RRset on schedule even if the true private key is stored offline.
 Options
 ~~~~~~~
 
-**-f** filename
-   Zone file mode: instead of a public keyfile name, the argument is the
+``-f filename``
+   This option indicates the zone file mode. Instead of a public keyfile name, the argument is the
    DNS domain name of a zone master file, which can be read from
-   ``file``. If the domain name is the same as ``file``, then it may be
+   ``filename``. If the domain name is the same as ``filename``, then it may be
    omitted.
 
-   If ``file`` is set to ``"-"``, then the zone data is read from the
+   If ``filename`` is set to ``"-"``, then the zone data is read from the
    standard input.
 
-**-K** directory
-   Sets the directory in which the key files are to reside.
+``-K directory``
+   This option sets the directory in which the key files are to reside.
 
-**-L** ttl
-   Sets the default TTL to use for this key when it is converted into a
-   DNSKEY RR. If the key is imported into a zone, this is the TTL that
-   will be used for it, unless there was already a DNSKEY RRset in
-   place, in which case the existing TTL would take precedence. Setting
-   the default TTL to ``0`` or ``none`` removes it.
+``-L ttl``
+   This option sets the default TTL to use for this key when it is converted into a
+   DNSKEY RR. This is the TTL used when the key is imported into a zone,
+   unless there was already a DNSKEY RRset in
+   place, in which case the existing TTL takes precedence. Setting the default TTL to ``0`` or ``none``
+   removes it from the key.
 
-**-h**
-   Emit usage message and exit.
+``-h``
+   This option emits a usage message and exits.
 
-**-v** level
-   Sets the debugging level.
+``-v level``
+   This option sets the debugging level.
 
-**-V**
-   Prints version information.
+``-V``
+   This option prints version information.
 
 Timing Options
 ~~~~~~~~~~~~~~
 
 Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS. If the
-argument begins with a '+' or '-', it is interpreted as an offset from
+argument begins with a ``+`` or ``-``, it is interpreted as an offset from
 the present time. For convenience, if such an offset is followed by one
-of the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the offset is
+of the suffixes ``y``, ``mo``, ``w``, ``d``, ``h``, or ``mi``, then the offset is
 computed in years (defined as 365 24-hour days, ignoring leap years),
 months (defined as 30 24-hour days), weeks, days, hours, or minutes,
 respectively. Without a suffix, the offset is computed in seconds. To
-explicitly prevent a date from being set, use 'none' or 'never'.
+explicitly prevent a date from being set, use ``none`` or ``never``.
 
-**-P** date/offset
-   Sets the date on which a key is to be published to the zone. After
-   that date, the key will be included in the zone but will not be used
+``-P date/offset``
+   This option sets the date on which a key is to be published to the zone. After
+   that date, the key is included in the zone but is not used
    to sign it.
 
-**-P** sync date/offset
-   Sets the date on which CDS and CDNSKEY records that match this key
+``-P sync date/offset``
+   This option sets the date on which CDS and CDNSKEY records that match this key
    are to be published to the zone.
 
-**-D** date/offset
-   Sets the date on which the key is to be deleted. After that date, the
-   key will no longer be included in the zone. (It may remain in the key
-   repository, however.)
+``-D date/offset``
+   This option sets the date on which the key is to be deleted. After that date, the
+   key is no longer included in the zone. (However, it may remain in the key
+   repository.)
 
-**-D** sync date/offset
-   Sets the date on which the CDS and CDNSKEY records that match this
+``-D sync date/offset``
+   This option sets the date on which the CDS and CDNSKEY records that match this
    key are to be deleted.
 
 Files
 ~~~~~
 
 A keyfile can be designed by the key identification ``Knnnn.+aaa+iiiii``
-or the full file name ``Knnnn.+aaa+iiiii.key`` as generated by
-dnssec-keygen8.
+or the full file name ``Knnnn.+aaa+iiiii.key``, as generated by
+``dnssec-keygen``.
 
 See Also
 ~~~~~~~~

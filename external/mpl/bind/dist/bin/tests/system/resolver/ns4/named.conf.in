@@ -26,32 +26,32 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "moves" {
-	type master;
+	type primary;
 	file "moves.db";
 };
 
 zone "child.server" {
-	type master;
+	type primary;
 	file "child.server.db";
 };
 
 zone "tld" {
-	type master;
+	type primary;
 	file "tld.db";
 };
 
 zone "broken" {
-	type master;
+	type primary;
 	file "broken.db";
 };
 
 zone "sourcens" {
-    type master;
+    type primary;
     file "sourcens.db";
 };
 

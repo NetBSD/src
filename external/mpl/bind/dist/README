@@ -329,8 +329,8 @@ the change that was made; these categories are:
 [doc]          Documentation
 [contrib]      Changes to the contributed tools and libraries in the
                'contrib' subdirectory
-               Used in the master development branch to reserve change
-[placeholder]  numbers for use in other branches, e.g. when fixing a bug
+               Used in the main development branch to reserve change
+[placeholder]  numbers for use in other branches, e.g., when fixing a bug
                that only exists in older releases
 
 In general, [func] and [experimental] tags will only appear in new-feature
@@ -375,9 +375,7 @@ Acknowledgments
 
   * This product includes software developed by the OpenSSL Project for
     use in the OpenSSL Toolkit. http://www.OpenSSL.org/
-
   * This product includes cryptographic software written by Eric Young
     (eay@cryptsoft.com)
-
   * This product includes software written by Tim Hudson
     (tjh@cryptsoft.com)

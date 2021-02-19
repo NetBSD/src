@@ -27,7 +27,7 @@ zone "." {
 };
 
 zone "example" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "example.bk";
 };

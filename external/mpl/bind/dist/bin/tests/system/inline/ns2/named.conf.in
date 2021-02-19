@@ -32,20 +32,20 @@ options {
 };
 
 zone "bits" {
-	type master;
+	type primary;
 	file "bits.db";
 	allow-update { any; };
 };
 
 zone "retransfer" {
-	type master;
+	type primary;
 	file "retransfer.db";
 	allow-update { any; };
 	notify no;
 };
 
 zone "retransfer3" {
-	type master;
+	type primary;
 	file "retransfer3.db";
 	allow-update { any; };
 	allow-transfer { none; };	// changed dynamically by tests.sh
@@ -53,31 +53,31 @@ zone "retransfer3" {
 };
 
 zone "nsec3-loop" {
-	type master;
+	type primary;
 	file "nsec3-loop.db";
 	notify no;
 };
 
 zone "inactiveksk" {
-	type master;
+	type primary;
 	file "inactiveksk.db";
 	allow-update { any; };
 };
 
 zone "inactivezsk" {
-	type master;
+	type primary;
 	file "inactivezsk.db";
 	allow-update { any; };
 };
 
 zone "nokeys" {
-	type master;
+	type primary;
 	file "nokeys.db";
 	allow-update { any; };
 };
 
 zone "removedkeys-secondary" {
-	type master;
+	type primary;
 	file "removedkeys-secondary.db";
 	allow-update { any; };
 };

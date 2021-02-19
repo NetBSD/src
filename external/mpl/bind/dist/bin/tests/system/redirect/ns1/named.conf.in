@@ -27,22 +27,22 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "signed" {
-	type master;
+	type primary;
 	file "signed.db.signed";
 };
 
 zone "nsec3" {
-	type master;
+	type primary;
 	file "nsec3.db.signed";
 };
 

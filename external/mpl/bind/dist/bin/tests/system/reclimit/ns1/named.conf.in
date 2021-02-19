@@ -22,4 +22,4 @@ options {
 	dnssec-validation no;
 };
 
-zone "." { type master; file "root.db"; };
+zone "." { type primary; file "root.db"; };

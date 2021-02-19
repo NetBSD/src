@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -74,12 +74,12 @@ rndc_reload ns7 10.53.0.7
 
 sleep 2
 
-echo_i "updating master zones for ixfr-from-differences tests"
+echo_i "updating primary zones for ixfr-from-differences tests"
 
 $PERL -i -p -e '
 	s/0\.0\.0\.0/0.0.0.1/;
 	s/1397051952/1397051953/
-' ns1/slave.db
+' ns1/sec.db
 
 rndc_reload ns1 10.53.0.1
 
@@ -93,14 +93,14 @@ rndc_reload ns2 10.53.0.2
 $PERL -i -p -e '
 	s/0\.0\.0\.0/0.0.0.1/;
 	s/1397051952/1397051953/
-' ns6/master.db
+' ns6/primary.db
 
 rndc_reload ns6 10.53.0.6
 
 $PERL -i -p -e '
 	s/0\.0\.0\.0/0.0.0.1/;
 	s/1397051952/1397051953/
-' ns7/master2.db
+' ns7/primary2.db
 
 rndc_reload ns7 10.53.0.7
 
@@ -110,9 +110,9 @@ n=$((n+1))
 echo_i "testing zone is dumped after successful transfer ($n)"
 tmp=0
 $DIG $DIGOPTS +noall +answer +multi @10.53.0.2 \
-	slave. soa > dig.out.ns2.test$n || tmp=1
+	secondary. soa > dig.out.ns2.test$n || tmp=1
 grep "1397051952 ; serial" dig.out.ns2.test$n > /dev/null 2>&1 || tmp=1
-grep "1397051952 ; serial" ns2/slave.db > /dev/null 2>&1 || tmp=1
+grep "1397051952 ; serial" ns2/sec.db > /dev/null 2>&1 || tmp=1
 if test $tmp != 0 ; then echo_i "failed"; fi
 status=$((status+tmp))
 
@@ -122,9 +122,9 @@ tmp=0
 
 echo_i "wait for reloads..."
 wait_for_reloads() (
-	$DIG $DIGOPTS @10.53.0.6 +noall +answer soa master > dig.out.soa1.ns6.test$n
+	$DIG $DIGOPTS @10.53.0.6 +noall +answer soa primary > dig.out.soa1.ns6.test$n
 	grep "1397051953" dig.out.soa1.ns6.test$n > /dev/null || return 1
-	$DIG $DIGOPTS @10.53.0.1 +noall +answer soa slave  > dig.out.soa2.ns1.test$n
+	$DIG $DIGOPTS @10.53.0.1 +noall +answer soa secondary  > dig.out.soa2.ns1.test$n
 	grep "1397051953" dig.out.soa2.ns1.test$n > /dev/null || return 1
 	$DIG $DIGOPTS @10.53.0.2 +noall +answer soa example > dig.out.soa3.ns2.test$n
 	grep "1397051953" dig.out.soa3.ns2.test$n > /dev/null || return 1
@@ -137,15 +137,15 @@ wait_for_transfers() (
 	a=0 b=0 c=0 d=0
 	$DIG $DIGOPTS @10.53.0.3 +noall +answer soa example > dig.out.soa1.ns3.test$n
 	grep "1397051953" dig.out.soa1.ns3.test$n > /dev/null && a=1
-	$DIG $DIGOPTS @10.53.0.3 +noall +answer soa master > dig.out.soa2.ns3.test$n
+	$DIG $DIGOPTS @10.53.0.3 +noall +answer soa primary > dig.out.soa2.ns3.test$n
 	grep "1397051953" dig.out.soa2.ns3.test$n > /dev/null && b=1
-	$DIG $DIGOPTS @10.53.0.6 +noall +answer soa slave  > dig.out.soa3.ns6.test$n
+	$DIG $DIGOPTS @10.53.0.6 +noall +answer soa secondary > dig.out.soa3.ns6.test$n
 	grep "1397051953" dig.out.soa3.ns6.test$n > /dev/null && c=1
 	[ $a -eq 1 -a $b -eq 1 -a $c -eq 1 ] && return 0
 
 	# re-notify if necessary
-	$RNDCCMD 10.53.0.6 notify master 2>&1 | sed 's/^/ns6 /' | cat_i
-	$RNDCCMD 10.53.0.1 notify slave 2>&1 | sed 's/^/ns1 /' | cat_i
+	$RNDCCMD 10.53.0.6 notify primary 2>&1 | sed 's/^/ns6 /' | cat_i
+	$RNDCCMD 10.53.0.1 notify secondary 2>&1 | sed 's/^/ns1 /' | cat_i
 	$RNDCCMD 10.53.0.2 notify example 2>&1 | sed 's/^/ns2 /' | cat_i
 	return 1
 )
@@ -165,75 +165,75 @@ if test $tmp != 0 ; then echo_i "failed"; fi
 status=$((status+tmp))
 
 n=$((n+1))
-echo_i "testing ixfr-from-differences master; (master zone) ($n)"
+echo_i "testing ixfr-from-differences primary; (primary zone) ($n)"
 tmp=0
 
-$DIG $DIGOPTS master. \
+$DIG $DIGOPTS primary. \
 	@10.53.0.6 axfr > dig.out.ns6.test$n || tmp=1
 grep "^;" dig.out.ns6.test$n | cat_i
 
-$DIG $DIGOPTS master. \
+$DIG $DIGOPTS primary. \
 	@10.53.0.3 axfr > dig.out.ns3.test$n || tmp=1
 grep "^;" dig.out.ns3.test$n > /dev/null && cat_i dig.out.ns3.test$n
 
 digcomp dig.out.ns6.test$n dig.out.ns3.test$n || tmp=1
 
 # ns3 has a journal iff it received an IXFR.
-test -f ns3/master.bk || tmp=1
-test -f ns3/master.bk.jnl || tmp=1
+test -f ns3/primary.bk || tmp=1
+test -f ns3/primary.bk.jnl || tmp=1
 
 if test $tmp != 0 ; then echo_i "failed"; fi
 status=$((status+tmp))
 
 n=$((n+1))
-echo_i "testing ixfr-from-differences master; (slave zone) ($n)"
+echo_i "testing ixfr-from-differences primary; (secondary zone) ($n)"
 tmp=0
 
-$DIG $DIGOPTS slave. \
+$DIG $DIGOPTS secondary. \
 	@10.53.0.6 axfr > dig.out.ns6.test$n || tmp=1
 grep "^;" dig.out.ns6.test$n | cat_i
 
-$DIG $DIGOPTS slave. \
+$DIG $DIGOPTS secondary. \
 	@10.53.0.1 axfr > dig.out.ns1.test$n || tmp=1
 grep "^;" dig.out.ns1.test$n | cat_i
 
 digcomp dig.out.ns6.test$n dig.out.ns1.test$n || tmp=1
 
 # ns6 has a journal iff it received an IXFR.
-test -f ns6/slave.bk || tmp=1
-test -f ns6/slave.bk.jnl && tmp=1
+test -f ns6/sec.bk || tmp=1
+test -f ns6/sec.bk.jnl && tmp=1
 
 if test $tmp != 0 ; then echo_i "failed"; fi
 status=$((status+tmp))
 
 n=$((n+1))
-echo_i "testing ixfr-from-differences slave; (master zone) ($n)"
+echo_i "testing ixfr-from-differences secondary; (secondary zone) ($n)"
 tmp=0
 
 # ns7 has a journal iff it generates an IXFR.
-test -f ns7/master2.db || tmp=1
-test -f ns7/master2.db.jnl && tmp=1
+test -f ns7/primary2.db || tmp=1
+test -f ns7/primary2.db.jnl && tmp=1
 
 if test $tmp != 0 ; then echo_i "failed"; fi
 status=$((status+tmp))
 
 n=$((n+1))
-echo_i "testing ixfr-from-differences slave; (slave zone) ($n)"
+echo_i "testing ixfr-from-differences secondary; (secondary zone) ($n)"
 tmp=0
 
-$DIG $DIGOPTS slave. \
+$DIG $DIGOPTS secondary. \
 	@10.53.0.1 axfr > dig.out.ns1.test$n || tmp=1
 grep "^;" dig.out.ns1.test$n | cat_i
 
-$DIG $DIGOPTS slave. \
+$DIG $DIGOPTS secondary. \
 	@10.53.0.7 axfr > dig.out.ns7.test$n || tmp=1
 grep "^;" dig.out.ns7.test$n | cat_i
 
 digcomp dig.out.ns7.test$n dig.out.ns1.test$n || tmp=1
 
 # ns7 has a journal iff it generates an IXFR.
-test -f ns7/slave.bk || tmp=1
-test -f ns7/slave.bk.jnl || tmp=1
+test -f ns7/sec.bk || tmp=1
+test -f ns7/sec.bk.jnl || tmp=1
 
 if test $tmp != 0 ; then echo_i "failed"; fi
 status=$((status+tmp))
@@ -259,13 +259,13 @@ $SENDCMD < ans5/goodaxfr
 
 # Initially, ns4 is not authoritative for anything.
 # Now that ans is up and running with the right data, we make ns4
-# a slave for nil.
+# a secondary for nil.
 
 cat <<EOF >>ns4/named.conf
 zone "nil" {
-	type slave;
+	type secondary;
 	file "nil.db";
-	masters { 10.53.0.5 key tsig_key; };
+	primaries { 10.53.0.5 key tsig_key; };
 };
 EOF
 
