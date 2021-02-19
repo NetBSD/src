@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.20 2021/02/19 05:21:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.20 2021/02/19 05:21:39 thorpej Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $"
 #include <sys/bus.h>
 
 #include <powerpc/ofw_cons.h>
+#include <powerpc/ofw_machdep.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -88,25 +89,13 @@ extern struct consdev consdev_zs;
 #include <dev/ic/pckbcvar.h>
 #endif
 
-int console_node = 0, console_instance = 0;
+extern int console_node, console_instance;
 
-int chosen, stdin, stdout;
 int ofkbd_ihandle;
 
 static void cninit_kd(void);
-static void ofwoea_bootstrap_console(void);
-static int ofwbootcons_cngetc(dev_t);
-static void ofwbootcons_cnputc(dev_t, int);
 
 /*#define OFDEBUG*/
-
-struct consdev consdev_ofwbootcons = {
-	NULL, NULL,
-	ofwbootcons_cngetc,
-	ofwbootcons_cnputc,
-	nullcnpollc,
-	NULL, NULL, NULL, NODEV, CN_INTERNAL,
-};
 
 #ifdef OFDEBUG
 void ofprint(const char *, ...);
@@ -133,11 +122,9 @@ cninit(void)
 {
 	char name[32];
 
-	ofwoea_bootstrap_console();
-
 	OFPRINTF("console node: %08x\n", console_node);
 
-	if (console_node == -1)
+	if (console_node <= 0)
 		goto nocons;
 
 	memset(name, 0, sizeof(name));
@@ -171,9 +158,7 @@ cninit(void)
 		return;
 #endif /* NZTTY */
 
-		/* fallback to OFW boot console */
-		cp = &consdev_ofwbootcons;
-		cn_tab = cp;
+		/* fallback to OFW boot console (already set) */
 		return;
 	}
 	else
@@ -207,7 +192,7 @@ cninit_kd(void)
 	/*
 	 * We must determine which keyboard type we have.
 	 */
-	if (OF_getprop(chosen, "stdin", &kstdin, sizeof(kstdin))
+	if (OF_getprop(ofw_chosen, "stdin", &kstdin, sizeof(kstdin))
 	    != sizeof(kstdin)) {
 		printf("WARNING: no `stdin' property in /chosen\n");
 		return;
@@ -324,7 +309,7 @@ cninit_kd(void)
 	 */
 
 #if NUKBD > 0
-	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) >= 0 &&
+	if (OF_call_method("`usb-kbd-ihandles", kstdin, 0, 1, &ukbds) >= 0 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
 		printf("usb-kbd-ihandles matches\n");
@@ -407,30 +392,6 @@ ofkbd_cngetc(dev_t dev)
 	return c;
 }
 
-/*
- * Bootstrap console support functions
- */
-
-static int
-ofwbootcons_cngetc(dev_t dev)
-{
-	unsigned char ch = '\0';
-	int l;
-
-	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return -1;
-	return ch;
-}
-
-static void
-ofwbootcons_cnputc(dev_t dev, int c)
-{
-	char ch = c;
-
-	OF_write(stdout, &ch, 1);
-}
-
 void
 ofwoea_consinit(void)
 {
@@ -441,34 +402,4 @@ ofwoea_consinit(void)
 
 	initted = 1;
 	cninit();
-}
-
-static void
-ofwoea_bootstrap_console(void)
-{
-	int node;
-
-	chosen = OF_finddevice("/chosen");
-	if (chosen == -1)
-		goto nocons;
-
-	if (OF_getprop(chosen, "stdout", &stdout,
-	    sizeof(stdout)) != sizeof(stdout))
-		goto nocons;
-	if (OF_getprop(chosen, "stdin", &stdin,
-	    sizeof(stdin)) != sizeof(stdin))
-		goto nocons;
-	if (stdout == 0) {
-		 /* screen should be console, but it is not open */
-		 stdout = OF_open("screen");
-	}
-	node = OF_instance_to_package(stdout);
-	console_node = node;
-	console_instance = stdout;
-
-	return;
-nocons:
-	panic("No /chosen could be found!\n");
-	console_node = -1;
-	return;
 }
