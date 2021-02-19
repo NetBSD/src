@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_private.h,v 1.5 2021/02/17 22:32:04 christos Exp $	*/
+/*	$NetBSD: ip_private.h,v 1.6 2021/02/19 14:51:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@ extern	percpu_t *ipstat_percpu;
 #define	IP_STATINC(x)		_NET_STATINC(ipstat_percpu, x)
 #define	IP_STATDEC(x)		_NET_STATDEC(ipstat_percpu, x)
 
-#define	IP_HDR_ALIGNMENT	__alignof(struct ip)
-__CTASSERT(IP_HDR_ALIGNMENT == 4);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_IP_PRIVATE_H_ */
