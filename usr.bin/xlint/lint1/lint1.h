@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.62 2021/02/19 22:16:12 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.63 2021/02/19 22:20:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -138,11 +138,11 @@ typedef	struct {
  * same as above for enums
  */
 typedef	struct {
-	bool	eincompl : 1;	/* incomplete enum type */
-	struct	sym *elem;	/* list of enumerators */
-	struct	sym *etag;	/* symbol table entry of tag */
-	struct	sym *etdef;	/* symbol table entry of first typename */
-} tenum_t;
+	bool	en_incomplete : 1;
+	struct	sym *en_first_enumerator;
+	struct	sym *en_tag;
+	struct	sym *en_first_typedef;
+} enumeration;
 
 /*
  * Types are represented by concatenation of structures of type type_t
@@ -161,8 +161,8 @@ struct type {
 	bool	t_packed : 1;
 	union {
 		int	_t_dim;		/* dimension */
-		struct_or_union	*_t_str;	/* struct/union tag */
-		tenum_t	*_t_enum;	/* enum tag */
+		struct_or_union	*_t_str;
+		enumeration	*_t_enum;
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
 	struct {
@@ -247,7 +247,7 @@ typedef	struct sym {
 	val_t	s_value;	/* value (if enum or bool constant) */
 	union {
 		struct_or_union	*_s_st;
-		tenum_t	*_s_et;	/* tag, if it is an enumerator */
+		enumeration	*_s_et;
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function
