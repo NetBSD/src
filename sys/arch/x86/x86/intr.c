@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.153 2020/11/18 16:36:43 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.154 2021/02/19 05:34:37 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.153 2020/11/18 16:36:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.154 2021/02/19 05:34:37 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -636,6 +636,9 @@ intr_source_free(struct cpu_info *ci, int slot, struct pic *pic, int idtvec)
 	ci->ci_isources[slot] = NULL;
 	if (pic != &i8259_pic)
 		idt_vec_free(iv, idtvec);
+
+	isp->is_recurse = NULL;
+	isp->is_resume = NULL;
 }
 
 #ifdef MULTIPROCESSOR
@@ -1136,11 +1139,11 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	else if (source->is_mask_count == 0)
 		(*pic->pic_hwunmask)(pic, ih->ih_pin);
 
-	/* Re-enable interrupts. */
-	x86_write_psl(psl);
-
 	/* If the source is free we can drop it now. */
 	intr_source_free(ci, ih->ih_slot, pic, idtvec);
+
+	/* Re-enable interrupts. */
+	x86_write_psl(psl);
 
 	DPRINTF(("%s: remove slot %d (pic %s pin %d vec %d)\n",
 	    device_xname(ci->ci_dev), ih->ih_slot, pic->pic_name,
