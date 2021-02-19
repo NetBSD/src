@@ -1,11 +1,11 @@
-/*	$NetBSD: sig0_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.5 2021/02/19 16:42:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -102,8 +102,7 @@ recvdone(isc_task_t *task, isc_event_t *event) {
 	isc_buffer_add(&source, sevent->n);
 
 	response = NULL;
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
-	CHECK("dns_message_create", result);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
 	result = dns_message_parse(response, &source, 0);
 	CHECK("dns_message_parse", result);
 
@@ -113,7 +112,7 @@ recvdone(isc_task_t *task, isc_event_t *event) {
 	printf("%.*s\n", (int)isc_buffer_usedlength(&outbuf),
 	       (char *)isc_buffer_base(&outbuf));
 
-	dns_message_destroy(&response);
+	dns_message_detach(&response);
 	isc_event_free(&event);
 
 	isc_app_shutdown();
@@ -133,8 +132,7 @@ buildquery(void) {
 	dns_compress_t cctx;
 
 	query = NULL;
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &query);
-	CHECK("dns_message_create", result);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &query);
 	result = dns_message_setsig0key(query, key);
 	CHECK("dns_message_setsig0key", result);
 
@@ -188,7 +186,7 @@ buildquery(void) {
 	inr.length = sizeof(rdata);
 	result = isc_socket_recv(s, &inr, 1, task1, recvdone, NULL);
 	CHECK("isc_socket_recv", result);
-	dns_message_destroy(&query);
+	dns_message_detach(&query);
 }
 
 int

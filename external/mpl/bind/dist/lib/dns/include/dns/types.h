@@ -1,11 +1,11 @@
-/*	$NetBSD: types.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -97,8 +97,9 @@ typedef struct dns_kasp		   dns_kasp_t;
 typedef ISC_LIST(dns_kasp_t) dns_kasplist_t;
 typedef struct dns_kasp_key dns_kasp_key_t;
 typedef ISC_LIST(dns_kasp_key_t) dns_kasp_keylist_t;
-typedef uint16_t	   dns_keyflags_t;
-typedef struct dns_keynode dns_keynode_t;
+typedef struct dns_kasp_nsec3param dns_kasp_nsec3param_t;
+typedef uint16_t		   dns_keyflags_t;
+typedef struct dns_keynode	   dns_keynode_t;
 typedef ISC_LIST(dns_keynode_t) dns_keynodelist_t;
 typedef struct dns_keytable	   dns_keytable_t;
 typedef uint16_t		   dns_keytag_t;
@@ -275,26 +276,29 @@ enum {
 /*%
  * TSIG errors.
  */
-enum { dns_tsigerror_badsig = 16,
-       dns_tsigerror_badkey = 17,
-       dns_tsigerror_badtime = 18,
-       dns_tsigerror_badmode = 19,
-       dns_tsigerror_badname = 20,
-       dns_tsigerror_badalg = 21,
-       dns_tsigerror_badtrunc = 22 };
+enum {
+	dns_tsigerror_badsig = 16,
+	dns_tsigerror_badkey = 17,
+	dns_tsigerror_badtime = 18,
+	dns_tsigerror_badmode = 19,
+	dns_tsigerror_badname = 20,
+	dns_tsigerror_badalg = 21,
+	dns_tsigerror_badtrunc = 22
+};
 
 /*%
  * Opcodes.
  */
-enum { dns_opcode_query = 0,
+enum {
+	dns_opcode_query = 0,
 #define dns_opcode_query ((dns_opcode_t)dns_opcode_query)
-       dns_opcode_iquery = 1,
+	dns_opcode_iquery = 1,
 #define dns_opcode_iquery ((dns_opcode_t)dns_opcode_iquery)
-       dns_opcode_status = 2,
+	dns_opcode_status = 2,
 #define dns_opcode_status ((dns_opcode_t)dns_opcode_status)
-       dns_opcode_notify = 4,
+	dns_opcode_notify = 4,
 #define dns_opcode_notify ((dns_opcode_t)dns_opcode_notify)
-       dns_opcode_update = 5 /* dynamic update */
+	dns_opcode_update = 5 /* dynamic update */
 #define dns_opcode_update ((dns_opcode_t)dns_opcode_update)
 };
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: quota_test.c,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: quota_test.c,v 1.3 2021/02/19 16:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -54,18 +54,28 @@ isc_quota_get_set_test(void **state) {
 	isc_quota_destroy(&quota);
 }
 
-#define add_quota(quota, quotasp, exp, attached, exp_used)              \
-	{                                                               \
-		*quotasp = NULL;                                        \
-		isc_result_t result = isc_quota_attach(quota, quotasp); \
-		assert_int_equal(result, exp);                          \
-		if (attached) {                                         \
-			assert_ptr_equal(*quotasp, quota);              \
-		} else {                                                \
-			assert_null(*quotasp);                          \
-		}                                                       \
-		assert_int_equal(isc_quota_getused(quota), exp_used);   \
+static void
+add_quota(isc_quota_t *source, isc_quota_t **target,
+	  isc_result_t expected_result, int expected_used) {
+	isc_result_t result;
+
+	*target = NULL;
+
+	result = isc_quota_attach(source, target);
+	assert_int_equal(result, expected_result);
+
+	switch (expected_result) {
+	case ISC_R_SUCCESS:
+	case ISC_R_SOFTQUOTA:
+		assert_ptr_equal(*target, source);
+		break;
+	default:
+		assert_null(*target);
+		break;
 	}
+
+	assert_int_equal(isc_quota_getused(source), expected_used);
+}
 
 static void
 isc_quota_hard_test(void **state) {
@@ -77,18 +87,18 @@ isc_quota_hard_test(void **state) {
 	isc_quota_init(&quota, 100);
 
 	for (i = 0; i < 100; i++) {
-		add_quota(&quota, &quotas[i], ISC_R_SUCCESS, true, i + 1);
+		add_quota(&quota, &quotas[i], ISC_R_SUCCESS, i + 1);
 	}
 
-	add_quota(&quota, &quotas[100], ISC_R_QUOTA, false, 100);
+	add_quota(&quota, &quotas[100], ISC_R_QUOTA, 100);
 
 	assert_int_equal(isc_quota_getused(&quota), 100);
 
 	isc_quota_detach(&quotas[0]);
 	assert_null(quotas[0]);
 
-	add_quota(&quota, &quotas[100], ISC_R_SUCCESS, true, 100);
-	add_quota(&quota, &quotas[101], ISC_R_QUOTA, false, 100);
+	add_quota(&quota, &quotas[100], ISC_R_SUCCESS, 100);
+	add_quota(&quota, &quotas[101], ISC_R_QUOTA, 100);
 
 	for (i = 100; i > 0; i--) {
 		isc_quota_detach(&quotas[i]);
@@ -110,13 +120,13 @@ isc_quota_soft_test(void **state) {
 	isc_quota_soft(&quota, 50);
 
 	for (i = 0; i < 50; i++) {
-		add_quota(&quota, &quotas[i], ISC_R_SUCCESS, true, i + 1);
+		add_quota(&quota, &quotas[i], ISC_R_SUCCESS, i + 1);
 	}
 	for (i = 50; i < 100; i++) {
-		add_quota(&quota, &quotas[i], ISC_R_SOFTQUOTA, true, i + 1);
+		add_quota(&quota, &quotas[i], ISC_R_SOFTQUOTA, i + 1);
 	}
 
-	add_quota(&quota, &quotas[i], ISC_R_QUOTA, false, 100);
+	add_quota(&quota, &quotas[i], ISC_R_QUOTA, 100);
 
 	for (i = 99; i >= 0; i--) {
 		isc_quota_detach(&quotas[i]);

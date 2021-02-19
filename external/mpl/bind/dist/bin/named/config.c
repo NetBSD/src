@@ -1,11 +1,11 @@
-/*	$NetBSD: config.c,v 1.9 2020/08/03 17:23:37 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.10 2021/02/19 16:42:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -61,7 +61,7 @@ options {\n\
 #	directory <none>\n\
 	dnssec-policy \"none\";\n\
 	dump-file \"named_dump.db\";\n\
-	edns-udp-size 4096;\n\
+	edns-udp-size 1232;\n\
 #	fake-iquery <obsolete>;\n"
 #ifndef WIN32
 			    "	files unlimited;\n"
@@ -83,8 +83,9 @@ options {\n\
 	listen-on-v6 {any;};\n\
 #	lock-file \"" NAMED_LOCALSTATEDIR "/run/named/named.lock\";\n\
 	match-mapped-addresses no;\n\
+	max-ixfr-ratio 100%;\n\
 	max-rsa-exponent-size 0; /* no limit */\n\
-	max-udp-size 4096;\n\
+	max-udp-size 1232;\n\
 	memstatistics-file \"named.memstats\";\n\
 #	multiple-cnames <obsolete>;\n\
 #	named-xfer <obsolete>;\n\
@@ -170,8 +171,8 @@ options {\n\
 	max-clients-per-query 100;\n\
 	max-ncache-ttl 10800; /* 3 hours */\n\
 	max-recursion-depth 7;\n\
-	max-recursion-queries 75;\n\
-	max-stale-ttl 43200; /* 12 hours */\n\
+	max-recursion-queries 100;\n\
+	max-stale-ttl 86400; /* 1 day */\n\
 	message-compression yes;\n\
 	min-ncache-ttl 0; /* 0 hours */\n\
 	min-cache-ttl 0; /* 0 seconds */\n\
@@ -196,7 +197,10 @@ options {\n\
 	servfail-ttl 1;\n\
 #	sortlist <none>\n\
 	stale-answer-enable false;\n\
-	stale-answer-ttl 1; /* 1 second */\n\
+	stale-answer-client-timeout 1800; /* in milliseconds */\n\
+	stale-answer-ttl 30; /* 30 seconds */\n\
+	stale-cache-enable true;\n\
+	stale-refresh-time 30; /* 30 seconds */\n\
 	synth-from-dnssec no;\n\
 #	topology <none>\n\
 	transfer-format many-answers;\n\
@@ -303,7 +307,7 @@ view \"_bind\" chaos {\n\
 
 			    "# END MANAGED KEYS\n\
 \n\
-masters " DEFAULT_IANA_ROOT_ZONE_MASTERS " {\n\
+primaries " DEFAULT_IANA_ROOT_ZONE_PRIMARIES " {\n\
 	2001:500:84::b;		# b.root-servers.net\n\
 	2001:500:2f::f;		# f.root-servers.net\n\
 	2001:7fd::1;		# k.root-servers.net\n\
@@ -567,31 +571,44 @@ named_config_putiplist(isc_mem_t *mctx, isc_sockaddr_t **addrsp,
 	}
 }
 
-isc_result_t
-named_config_getmastersdef(const cfg_obj_t *cctx, const char *name,
-			   const cfg_obj_t **ret) {
+static isc_result_t
+getprimariesdef(const cfg_obj_t *cctx, const char *list, const char *name,
+		const cfg_obj_t **ret) {
 	isc_result_t result;
-	const cfg_obj_t *masters = NULL;
+	const cfg_obj_t *obj = NULL;
 	const cfg_listelt_t *elt;
 
-	result = cfg_map_get(cctx, "masters", &masters);
+	REQUIRE(cctx != NULL);
+	REQUIRE(name != NULL);
+	REQUIRE(ret != NULL && *ret == NULL);
+
+	result = cfg_map_get(cctx, list, &obj);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
-	for (elt = cfg_list_first(masters); elt != NULL;
-	     elt = cfg_list_next(elt)) {
-		const cfg_obj_t *list;
-		const char *listname;
-
-		list = cfg_listelt_value(elt);
-		listname = cfg_obj_asstring(cfg_tuple_get(list, "name"));
-
-		if (strcasecmp(listname, name) == 0) {
-			*ret = list;
+	elt = cfg_list_first(obj);
+	while (elt != NULL) {
+		obj = cfg_listelt_value(elt);
+		if (strcasecmp(cfg_obj_asstring(cfg_tuple_get(obj, "name")),
+			       name) == 0) {
+			*ret = obj;
 			return (ISC_R_SUCCESS);
 		}
+		elt = cfg_list_next(elt);
 	}
 	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+named_config_getprimariesdef(const cfg_obj_t *cctx, const char *name,
+			     const cfg_obj_t **ret) {
+	isc_result_t result;
+
+	result = getprimariesdef(cctx, "primaries", name, ret);
+	if (result != ISC_R_SUCCESS) {
+		result = getprimariesdef(cctx, "masters", name, ret);
+	}
+	return (result);
 }
 
 isc_result_t
@@ -679,7 +696,7 @@ resume:
 		isc_buffer_t b;
 
 		addr = cfg_tuple_get(cfg_listelt_value(element),
-				     "masterselement");
+				     "primarieselement");
 		key = cfg_tuple_get(cfg_listelt_value(element), "key");
 
 		if (!cfg_obj_issockaddr(addr)) {
@@ -711,11 +728,12 @@ resume:
 			if (j < l) {
 				continue;
 			}
-			tresult = named_config_getmastersdef(config, listname,
-							     &list);
+			list = NULL;
+			tresult = named_config_getprimariesdef(config, listname,
+							       &list);
 			if (tresult == ISC_R_NOTFOUND) {
 				cfg_obj_log(addr, named_g_lctx, ISC_LOG_ERROR,
-					    "masters \"%s\" not found",
+					    "primaries \"%s\" not found",
 					    listname);
 
 				result = tresult;
@@ -966,13 +984,15 @@ named_config_getdscp(const cfg_obj_t *config, isc_dscp_t *dscpp) {
 
 struct keyalgorithms {
 	const char *str;
-	enum { hmacnone,
-	       hmacmd5,
-	       hmacsha1,
-	       hmacsha224,
-	       hmacsha256,
-	       hmacsha384,
-	       hmacsha512 } hmac;
+	enum {
+		hmacnone,
+		hmacmd5,
+		hmacsha1,
+		hmacsha224,
+		hmacsha256,
+		hmacsha384,
+		hmacsha512
+	} hmac;
 	unsigned int type;
 	uint16_t size;
 } algorithms[] = { { "hmac-md5", hmacmd5, DST_ALG_HMACMD5, 128 },

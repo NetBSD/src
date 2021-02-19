@@ -1,11 +1,11 @@
-/*	$NetBSD: time_test.c,v 1.5 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: time_test.c,v 1.6 2021/02/19 16:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -120,6 +120,43 @@ isc_time_formatISO8601ms_test(void **state) {
 	assert_string_equal(buf, "2015-12-13T09:46:40.123Z");
 }
 
+/* print UTC in ISO8601 with microseconds */
+static void
+isc_time_formatISO8601us_test(void **state) {
+	isc_result_t result;
+	isc_time_t t;
+	char buf[64];
+
+	UNUSED(state);
+
+	setenv("TZ", "America/Los_Angeles", 1);
+	result = isc_time_now(&t);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/* check formatting: yyyy-mm-ddThh:mm:ss.ssssssZ */
+	memset(buf, 'X', sizeof(buf));
+	isc_time_formatISO8601us(&t, buf, sizeof(buf));
+	assert_int_equal(strlen(buf), 27);
+	assert_int_equal(buf[4], '-');
+	assert_int_equal(buf[7], '-');
+	assert_int_equal(buf[10], 'T');
+	assert_int_equal(buf[13], ':');
+	assert_int_equal(buf[16], ':');
+	assert_int_equal(buf[19], '.');
+	assert_int_equal(buf[26], 'Z');
+
+	/* check time conversion correctness */
+	memset(buf, 'X', sizeof(buf));
+	isc_time_settoepoch(&t);
+	isc_time_formatISO8601us(&t, buf, sizeof(buf));
+	assert_string_equal(buf, "1970-01-01T00:00:00.000000Z");
+
+	memset(buf, 'X', sizeof(buf));
+	isc_time_set(&t, 1450000000, 123456000);
+	isc_time_formatISO8601us(&t, buf, sizeof(buf));
+	assert_string_equal(buf, "2015-12-13T09:46:40.123456Z");
+}
+
 /* print local time in ISO8601 */
 static void
 isc_time_formatISO8601L_test(void **state) {
@@ -191,6 +228,42 @@ isc_time_formatISO8601Lms_test(void **state) {
 	assert_string_equal(buf, "2015-12-13T01:46:40.123");
 }
 
+/* print local time in ISO8601 with microseconds */
+static void
+isc_time_formatISO8601Lus_test(void **state) {
+	isc_result_t result;
+	isc_time_t t;
+	char buf[64];
+
+	UNUSED(state);
+
+	setenv("TZ", "America/Los_Angeles", 1);
+	result = isc_time_now(&t);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/* check formatting: yyyy-mm-ddThh:mm:ss.ssssss */
+	memset(buf, 'X', sizeof(buf));
+	isc_time_formatISO8601Lus(&t, buf, sizeof(buf));
+	assert_int_equal(strlen(buf), 26);
+	assert_int_equal(buf[4], '-');
+	assert_int_equal(buf[7], '-');
+	assert_int_equal(buf[10], 'T');
+	assert_int_equal(buf[13], ':');
+	assert_int_equal(buf[16], ':');
+	assert_int_equal(buf[19], '.');
+
+	/* check time conversion correctness */
+	memset(buf, 'X', sizeof(buf));
+	isc_time_settoepoch(&t);
+	isc_time_formatISO8601Lus(&t, buf, sizeof(buf));
+	assert_string_equal(buf, "1969-12-31T16:00:00.000000");
+
+	memset(buf, 'X', sizeof(buf));
+	isc_time_set(&t, 1450000000, 123456000);
+	isc_time_formatISO8601Lus(&t, buf, sizeof(buf));
+	assert_string_equal(buf, "2015-12-13T01:46:40.123456");
+}
+
 /* print UTC time as yyyymmddhhmmsssss */
 static void
 isc_time_formatshorttimestamp_test(void **state) {
@@ -227,8 +300,10 @@ main(void) {
 		cmocka_unit_test(isc_time_parsehttptimestamp_test),
 		cmocka_unit_test(isc_time_formatISO8601_test),
 		cmocka_unit_test(isc_time_formatISO8601ms_test),
+		cmocka_unit_test(isc_time_formatISO8601us_test),
 		cmocka_unit_test(isc_time_formatISO8601L_test),
 		cmocka_unit_test(isc_time_formatISO8601Lms_test),
+		cmocka_unit_test(isc_time_formatISO8601Lus_test),
 		cmocka_unit_test(isc_time_formatshorttimestamp_test),
 	};
 

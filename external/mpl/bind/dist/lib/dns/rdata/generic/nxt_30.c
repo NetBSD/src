@@ -1,11 +1,11 @@
-/*	$NetBSD: nxt_30.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
+/*	$NetBSD: nxt_30.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -150,8 +150,8 @@ fromwire_nxt(ARGS_FROMWIRE) {
 	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length > 0 && (sr.base[0] & 0x80) == 0 &&
-	    ((sr.length > 16) || sr.base[sr.length - 1] == 0))
+	if (sr.length > 0 && ((sr.base[0] & 0x80) != 0 || sr.length > 16 ||
+			      sr.base[sr.length - 1] == 0))
 	{
 		return (DNS_R_BADBITMAP);
 	}

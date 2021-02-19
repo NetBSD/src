@@ -1,11 +1,11 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.7 2020/08/03 17:23:37 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.8 2021/02/19 16:42:10 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -270,8 +270,8 @@ kasp_from_conf(cfg_obj_t *config, isc_mem_t *mctx, const char *name,
 			continue;
 		}
 
-		result = cfg_kasp_fromconfig(kconfig, mctx, lctx, &kasplist,
-					     &kasp);
+		result = cfg_kasp_fromconfig(kconfig, NULL, mctx, lctx,
+					     &kasplist, &kasp);
 		if (result != ISC_R_SUCCESS) {
 			fatal("failed to configure dnssec-policy '%s': %s",
 			      cfg_obj_asstring(cfg_tuple_get(kconfig, "name")),
@@ -285,7 +285,7 @@ kasp_from_conf(cfg_obj_t *config, isc_mem_t *mctx, const char *name,
 	*kaspp = kasp;
 
 	/*
-	 * Same cleanup for kasp list.
+	 * Cleanup kasp list.
 	 */
 	for (kasp = ISC_LIST_HEAD(kasplist); kasp != NULL; kasp = kasp_next) {
 		kasp_next = ISC_LIST_NEXT(kasp, link);
@@ -783,7 +783,7 @@ keygen(keygen_ctx_t *ctx, isc_mem_t *mctx, int argc, char **argv) {
 		}
 
 		/* Set dnssec-policy related metadata */
-		if (ctx->policy) {
+		if (ctx->policy != NULL) {
 			dst_key_setnum(key, DST_NUM_LIFETIME, ctx->lifetime);
 			dst_key_setbool(key, DST_BOOL_KSK, ctx->ksk);
 			dst_key_setbool(key, DST_BOOL_ZSK, ctx->zsk);

@@ -1,11 +1,11 @@
-/*	$NetBSD: sdlz.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: sdlz.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -314,8 +314,8 @@ dns_sdlzunregister(dns_sdlzimplementation_t **sdlzimp);
  */
 
 typedef isc_result_t
-		      dns_sdlz_putnamedrr_t(dns_sdlzallnodes_t *allnodes, const char *name,
-					    const char *type, dns_ttl_t ttl, const char *data);
+dns_sdlz_putnamedrr_t(dns_sdlzallnodes_t *allnodes, const char *name,
+		      const char *type, dns_ttl_t ttl, const char *data);
 dns_sdlz_putnamedrr_t dns_sdlz_putnamedrr;
 
 /*%<
@@ -324,8 +324,8 @@ dns_sdlz_putnamedrr_t dns_sdlz_putnamedrr;
  */
 
 typedef isc_result_t
-		 dns_sdlz_putrr_t(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
-				  const char *data);
+dns_sdlz_putrr_t(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
+		 const char *data);
 dns_sdlz_putrr_t dns_sdlz_putrr;
 /*%<
  * Add a single resource record to the lookup structure to be later
@@ -347,8 +347,8 @@ dns_sdlz_putsoa_t dns_sdlz_putsoa;
  */
 
 typedef isc_result_t
-		 dns_sdlz_setdb_t(dns_dlzdb_t *dlzdatabase, dns_rdataclass_t rdclass,
-				  const dns_name_t *name, dns_db_t **dbp);
+dns_sdlz_setdb_t(dns_dlzdb_t *dlzdatabase, dns_rdataclass_t rdclass,
+		 const dns_name_t *name, dns_db_t **dbp);
 dns_sdlz_setdb_t dns_sdlz_setdb;
 /*%<
  * Create the database pointers for a writeable SDLZ zone

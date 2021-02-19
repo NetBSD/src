@@ -1,11 +1,11 @@
-/*	$NetBSD: journal.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -223,6 +223,7 @@ typedef union {
  */
 typedef struct {
 	unsigned char size[4];	  /*%< In bytes, excluding header. */
+	unsigned char count[4];	  /*%< Number of records in transaction */
 	unsigned char serial0[4]; /*%< SOA serial before update. */
 	unsigned char serial1[4]; /*%< SOA serial after update. */
 } journal_rawxhdr_t;
@@ -258,9 +259,9 @@ typedef struct {
 /*%
  * The in-core representation of the transaction header.
  */
-
 typedef struct {
 	uint32_t size;
+	uint32_t count;
 	uint32_t serial0;
 	uint32_t serial1;
 } journal_xhdr_t;
@@ -306,13 +307,13 @@ struct dns_journal {
 	isc_offset_t offset;	 /*%< Current file offset */
 	journal_header_t header; /*%< In-core journal header */
 	unsigned char *rawindex; /*%< In-core buffer for journal index
-				  * in
-				  * on-disk format */
+				  * in on-disk format */
 	journal_pos_t *index;	 /*%< In-core journal index */
 
 	/*% Current transaction state (when writing). */
 	struct {
 		unsigned int n_soa;   /*%< Number of SOAs seen */
+		unsigned int n_rr;    /*%< Number of RRs to write */
 		journal_pos_t pos[2]; /*%< Begin/end position */
 	} x;
 
@@ -325,8 +326,7 @@ struct dns_journal {
 		uint32_t current_serial; /*%< Current SOA serial
 					  * */
 		isc_buffer_t source;	 /*%< Data from disk */
-		isc_buffer_t target;	 /*%< Data from _fromwire check
-					  * */
+		isc_buffer_t target;	 /*%< Data from _fromwire check */
 		dns_decompress_t dctx;	 /*%< Dummy decompression ctx */
 		dns_name_t name;	 /*%< Current domain name */
 		dns_rdata_t rdata;	 /*%< Current rdata */
@@ -464,16 +464,18 @@ journal_read_xhdr(dns_journal_t *j, journal_xhdr_t *xhdr) {
 		return (result);
 	}
 	xhdr->size = decode_uint32(raw.size);
+	xhdr->count = decode_uint32(raw.count);
 	xhdr->serial0 = decode_uint32(raw.serial0);
 	xhdr->serial1 = decode_uint32(raw.serial1);
 	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
-journal_write_xhdr(dns_journal_t *j, uint32_t size, uint32_t serial0,
-		   uint32_t serial1) {
+journal_write_xhdr(dns_journal_t *j, uint32_t size, uint32_t count,
+		   uint32_t serial0, uint32_t serial1) {
 	journal_rawxhdr_t raw;
 	encode_uint32(size, raw.size);
+	encode_uint32(count, raw.count);
 	encode_uint32(serial0, raw.serial0);
 	encode_uint32(serial1, raw.serial1);
 	return (journal_write(j, &raw, sizeof(raw)));
@@ -1028,7 +1030,8 @@ dns_journal_writediff(dns_journal_t *j, dns_diff_t *diff) {
 	dns_difftuple_t *t;
 	isc_buffer_t buffer;
 	void *mem = NULL;
-	uint64_t size;
+	uint64_t size = 0;
+	uint32_t rrcount = 0;
 	isc_result_t result;
 	isc_region_t used;
 
@@ -1042,7 +1045,6 @@ dns_journal_writediff(dns_journal_t *j, dns_diff_t *diff) {
 	 * Pass 1: determine the buffer size needed, and
 	 * keep track of SOA serial numbers.
 	 */
-	size = 0;
 	for (t = ISC_LIST_HEAD(diff->tuples); t != NULL;
 	     t = ISC_LIST_NEXT(t, link)) {
 		if (t->rdata.type == dns_rdatatype_soa) {
@@ -1091,12 +1093,15 @@ dns_journal_writediff(dns_journal_t *j, dns_diff_t *diff) {
 		isc_buffer_putuint16(&buffer, (uint16_t)t->rdata.length);
 		INSIST(isc_buffer_availablelength(&buffer) >= t->rdata.length);
 		isc_buffer_putmem(&buffer, t->rdata.data, t->rdata.length);
+
+		rrcount++;
 	}
 
 	isc_buffer_usedregion(&buffer, &used);
 	INSIST(used.length == size);
 
 	j->x.pos[1].offset += used.length;
+	j->x.n_rr = rrcount;
 
 	/*
 	 * Write the buffer contents to the journal file.
@@ -1207,7 +1212,8 @@ dns_journal_commit(dns_journal_t *j) {
 		 * Update the transaction header.
 		 */
 		CHECK(journal_seek(j, j->x.pos[0].offset));
-		CHECK(journal_write_xhdr(j, offset, j->x.pos[0].serial,
+		CHECK(journal_write_xhdr(j, offset, j->x.n_rr,
+					 j->x.pos[0].serial,
 					 j->x.pos[1].serial));
 	}
 
@@ -1357,7 +1363,7 @@ roll_forward(dns_journal_t *j, dns_db_t *db, unsigned int options) {
 		CHECK(DNS_R_UPTODATE);
 	}
 
-	CHECK(dns_journal_iter_init(j, db_serial, end_serial));
+	CHECK(dns_journal_iter_init(j, db_serial, end_serial, NULL));
 
 	for (result = dns_journal_first_rr(j); result == ISC_R_SUCCESS;
 	     result = dns_journal_next_rr(j))
@@ -1517,7 +1523,7 @@ dns_journal_print(isc_mem_t *mctx, const char *filename, FILE *file) {
 	start_serial = dns_journal_first_serial(j);
 	end_serial = dns_journal_last_serial(j);
 
-	CHECK(dns_journal_iter_init(j, start_serial, end_serial));
+	CHECK(dns_journal_iter_init(j, start_serial, end_serial, NULL));
 
 	for (result = dns_journal_first_rr(j); result == ISC_R_SUCCESS;
 	     result = dns_journal_next_rr(j))
@@ -1674,7 +1680,7 @@ size_buffer(isc_mem_t *mctx, isc_buffer_t *b, unsigned size) {
 
 isc_result_t
 dns_journal_iter_init(dns_journal_t *j, uint32_t begin_serial,
-		      uint32_t end_serial) {
+		      uint32_t end_serial, size_t *xfrsizep) {
 	isc_result_t result;
 
 	CHECK(journal_find(j, begin_serial, &j->it.bpos));
@@ -1682,6 +1688,41 @@ dns_journal_iter_init(dns_journal_t *j, uint32_t begin_serial,
 
 	CHECK(journal_find(j, end_serial, &j->it.epos));
 	INSIST(j->it.epos.serial == end_serial);
+
+	if (xfrsizep != NULL) {
+		journal_pos_t pos = j->it.bpos;
+		journal_xhdr_t xhdr;
+		uint64_t size = 0;
+		uint32_t count = 0;
+
+		/*
+		 * We already know the beginning and ending serial
+		 * numbers are in the journal. Scan through them,
+		 * adding up sizes and RR counts so we can calculate
+		 * the IXFR size.
+		 */
+		CHECK(journal_seek(j, pos.offset));
+		do {
+			CHECK(journal_read_xhdr(j, &xhdr));
+
+			size += xhdr.size;
+			count += xhdr.count;
+
+			result = journal_next(j, &pos);
+			if (result == ISC_R_NOMORE) {
+				result = ISC_R_SUCCESS;
+			}
+			CHECK(result);
+		} while (pos.serial != end_serial);
+
+		/*
+		 * For each RR, subtract the length of the RR header,
+		 * as this would not be present in IXFR messages.
+		 * (We don't need to worry about the transaction header
+		 * because that was already excluded from xdr.size.)
+		 */
+		*xfrsizep = size - (count * sizeof(journal_rawrrhdr_t));
+	}
 
 	result = ISC_R_SUCCESS;
 failure:

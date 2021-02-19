@@ -1,11 +1,11 @@
-/*	$NetBSD: xfrout.c,v 1.8 2020/08/03 17:23:43 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.9 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,7 +18,6 @@
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/stats.h>
-#include <isc/timer.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
@@ -36,7 +35,6 @@
 #include <dns/rriterator.h>
 #include <dns/soa.h>
 #include <dns/stats.h>
-#include <dns/timer.h>
 #include <dns/tsig.h>
 #include <dns/view.h>
 #include <dns/zone.h>
@@ -231,10 +229,10 @@ static rrstream_methods_t ixfr_rrstream_methods;
 
 static isc_result_t
 ixfr_rrstream_create(isc_mem_t *mctx, const char *journal_filename,
-		     uint32_t begin_serial, uint32_t end_serial,
+		     uint32_t begin_serial, uint32_t end_serial, size_t *sizep,
 		     rrstream_t **sp) {
-	ixfr_rrstream_t *s;
 	isc_result_t result;
+	ixfr_rrstream_t *s = NULL;
 
 	INSIST(sp != NULL && *sp == NULL);
 
@@ -246,7 +244,8 @@ ixfr_rrstream_create(isc_mem_t *mctx, const char *journal_filename,
 
 	CHECK(dns_journal_open(mctx, journal_filename, DNS_JOURNAL_READ,
 			       &s->journal));
-	CHECK(dns_journal_iter_init(s->journal, begin_serial, end_serial));
+	CHECK(dns_journal_iter_init(s->journal, begin_serial, end_serial,
+				    sizep));
 
 	*sp = (rrstream_t *)s;
 	return (ISC_R_SUCCESS);
@@ -669,6 +668,7 @@ typedef struct {
 	bool shuttingdown;
 	bool poll;
 	const char *mnemonic;	/* Style of transfer */
+	uint32_t end_serial;	/* Serial number after XFR is done */
 	struct xfr_stats stats; /*%< Transfer statistics */
 } xfrout_ctx_t;
 
@@ -967,6 +967,26 @@ got_soa:
 
 	current_serial = dns_soa_getserial(&current_soa_tuple->rdata);
 	if (reqtype == dns_rdatatype_ixfr) {
+		size_t jsize;
+		uint64_t dbsize;
+
+		/*
+		 * Outgoing IXFR may have been disabled for this peer
+		 * or globally.
+		 */
+		if ((client->attributes & NS_CLIENTATTR_TCP) != 0) {
+			bool provide_ixfr;
+
+			provide_ixfr = client->view->provideixfr;
+			if (peer != NULL) {
+				(void)dns_peer_getprovideixfr(peer,
+							      &provide_ixfr);
+			}
+			if (provide_ixfr == false) {
+				goto axfr_fallback;
+			}
+		}
+
 		if (!have_soa) {
 			FAILC(DNS_R_FORMERR, "IXFR request missing SOA");
 		}
@@ -1018,7 +1038,7 @@ got_soa:
 		if (journalfile != NULL) {
 			result = ixfr_rrstream_create(
 				mctx, journalfile, begin_serial, current_serial,
-				&data_stream);
+				&jsize, &data_stream);
 		} else {
 			result = ISC_R_NOTFOUND;
 		}
@@ -1031,6 +1051,32 @@ got_soa:
 			goto axfr_fallback;
 		}
 		CHECK(result);
+
+		result = dns_db_getsize(db, ver, NULL, &dbsize);
+		if (result == ISC_R_SUCCESS) {
+			uint32_t ratio = dns_zone_getixfrratio(zone);
+			if (ratio != 0 && ((100 * jsize) / dbsize) > ratio) {
+				data_stream->methods->destroy(&data_stream);
+				data_stream = NULL;
+				xfrout_log1(client, question_name,
+					    question_class, ISC_LOG_DEBUG(4),
+					    "IXFR delta size (%zu bytes) "
+					    "exceeds the maximum ratio to "
+					    "database size "
+					    "(%" PRIu64 " bytes), "
+					    "falling back to AXFR",
+					    jsize, dbsize);
+				mnemonic = "AXFR-style IXFR";
+				goto axfr_fallback;
+			} else {
+				xfrout_log1(client, question_name,
+					    question_class, ISC_LOG_DEBUG(4),
+					    "IXFR delta size (%zu bytes); "
+					    "database size "
+					    "(%" PRIu64 " bytes)",
+					    jsize, dbsize);
+			}
+		}
 		is_ixfr = true;
 	} else {
 	axfr_fallback:
@@ -1070,6 +1116,7 @@ have_stream:
 			(format == dns_many_answers) ? true : false, &xfr);
 	}
 
+	xfr->end_serial = current_serial;
 	xfr->mnemonic = mnemonic;
 	stream = NULL;
 	quota = NULL;
@@ -1166,7 +1213,7 @@ failure:
 			      NS_LOGMODULE_XFER_OUT, ISC_LOG_DEBUG(3),
 			      "zone transfer setup failed");
 		ns_client_error(client, result);
-		isc_nmhandle_unref(client->handle);
+		isc_nmhandle_detach(&client->reqhandle);
 	}
 }
 
@@ -1250,11 +1297,6 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->txmem = mem;
 	xfr->txmemlen = len;
 
-#if 0
-	CHECK(dns_timer_setidle(xfr->client->timer,
-				maxtime,idletime,false));
-#endif /* if 0 */
-
 	/*
 	 * Register a shutdown callback with the client, so that we
 	 * can stop the transfer immediately when the client task
@@ -1315,8 +1357,8 @@ sendstream(xfrout_ctx_t *xfr) {
 		 * message.
 		 */
 
-		CHECK(dns_message_create(xfr->mctx, DNS_MESSAGE_INTENTRENDER,
-					 &tcpmsg));
+		dns_message_create(xfr->mctx, DNS_MESSAGE_INTENTRENDER,
+				   &tcpmsg);
 		msg = tcpmsg;
 
 		msg->id = xfr->id;
@@ -1546,15 +1588,17 @@ sendstream(xfrout_ctx_t *xfr) {
 		xfrout_log(xfr, ISC_LOG_DEBUG(8),
 			   "sending TCP message of %d bytes", used.length);
 
-		CHECK(isc_nm_send(xfr->client->handle, &used, xfrout_senddone,
-				  xfr));
+		isc_nmhandle_attach(xfr->client->handle,
+				    &xfr->client->sendhandle);
+		isc_nm_send(xfr->client->sendhandle, &used, xfrout_senddone,
+			    xfr);
 		xfr->sends++;
 		xfr->cbytes = used.length;
 	} else {
 		xfrout_log(xfr, ISC_LOG_DEBUG(8), "sending IXFR UDP response");
 		ns_client_send(xfr->client);
 		xfr->stream->methods->pause(xfr->stream);
-		isc_nmhandle_unref(xfr->client->handle);
+		isc_nmhandle_detach(&xfr->client->reqhandle);
 		xfrout_ctx_destroy(&xfr);
 		return;
 	}
@@ -1581,7 +1625,7 @@ failure:
 	}
 
 	if (tcpmsg != NULL) {
-		dns_message_destroy(&tcpmsg);
+		dns_message_detach(&tcpmsg);
 	}
 
 	if (cleanup_cctx) {
@@ -1595,6 +1639,10 @@ failure:
 
 	if (result == ISC_R_SUCCESS) {
 		return;
+	}
+
+	if (xfr->client->sendhandle != NULL) {
+		isc_nmhandle_detach(&xfr->client->sendhandle);
 	}
 
 	xfrout_fail(xfr, result, "sending zone data");
@@ -1649,6 +1697,8 @@ xfrout_senddone(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
 	xfr->sends--;
 	INSIST(xfr->sends == 0);
 
+	isc_nmhandle_detach(&xfr->client->sendhandle);
+
 	/*
 	 * Update transfer statistics if sending succeeded, accounting for the
 	 * two-byte TCP length prefix included in the number of bytes sent.
@@ -1657,10 +1707,6 @@ xfrout_senddone(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
 		xfr->stats.nmsg++;
 		xfr->stats.nbytes += xfr->cbytes;
 	}
-
-#if 0
-	(void)isc_timer_touch(xfr->client->timer);
-#endif /* if 0 */
 
 	if (xfr->shuttingdown) {
 		xfrout_maybe_destroy(xfr);
@@ -1684,14 +1730,18 @@ xfrout_senddone(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
 			   "%s ended: "
 			   "%" PRIu64 " messages, %" PRIu64 " records, "
 			   "%" PRIu64 " bytes, "
-			   "%u.%03u secs (%u bytes/sec)",
+			   "%u.%03u secs (%u bytes/sec) (serial %u)",
 			   xfr->mnemonic, xfr->stats.nmsg, xfr->stats.nrecs,
 			   xfr->stats.nbytes, (unsigned int)(msecs / 1000),
-			   (unsigned int)(msecs % 1000), (unsigned int)persec);
+			   (unsigned int)(msecs % 1000), (unsigned int)persec,
+			   xfr->end_serial);
 
+		/*
+		 * We're done, unreference the handle and destroy the xfr
+		 * context.
+		 */
+		isc_nmhandle_detach(&xfr->client->reqhandle);
 		xfrout_ctx_destroy(&xfr);
-		/* We're done, unreference the handle */
-		isc_nmhandle_unref(handle);
 	}
 }
 
@@ -1705,23 +1755,11 @@ xfrout_fail(xfrout_ctx_t *xfr, isc_result_t result, const char *msg) {
 
 static void
 xfrout_maybe_destroy(xfrout_ctx_t *xfr) {
-	INSIST(xfr->shuttingdown);
-#if 0
-	if (xfr->sends > 0) {
-		/*
-		 * If we are currently sending, cancel it and wait for
-		 * cancel event before destroying the context.
-		 */
-		isc_socket_cancel(xfr->client->tcpsocket,xfr->client->task,
-				  ISC_SOCKCANCEL_SEND);
-	} else {
-#endif /* if 0 */
+	REQUIRE(xfr->shuttingdown);
+
 	ns_client_drop(xfr->client, ISC_R_CANCELED);
-	isc_nmhandle_unref(xfr->client->handle);
+	isc_nmhandle_detach(&xfr->client->reqhandle);
 	xfrout_ctx_destroy(&xfr);
-#if 0
-}
-#endif /* if 0 */
 }
 
 static void

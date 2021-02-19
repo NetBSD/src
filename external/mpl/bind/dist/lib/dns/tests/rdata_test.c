@@ -1,11 +1,11 @@
-/*	$NetBSD: rdata_test.c,v 1.7 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.8 2021/02/19 16:42:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -23,8 +23,9 @@
 #include <unistd.h>
 
 #define UNIT_TESTING
-#include <cmocka.h>
 
+#include <isc/cmocka.h>
+#include <isc/commandline.h>
 #include <isc/hex.h>
 #include <isc/lex.h>
 #include <isc/print.h>
@@ -77,6 +78,7 @@ typedef struct text_ok {
 	const char *text_in;  /* text passed to fromtext_*() */
 	const char *text_out; /* text expected from totext_*();
 			       * NULL indicates text_in is invalid */
+	unsigned int loop;
 } text_ok_t;
 
 /*
@@ -86,6 +88,7 @@ typedef struct wire_ok {
 	unsigned char data[512]; /* RDATA in wire format */
 	size_t len;		 /* octets of data to parse */
 	bool ok;		 /* is this RDATA valid? */
+	unsigned int loop;
 } wire_ok_t;
 
 #define COMPARE(r1, r2, answer)          \
@@ -99,32 +102,41 @@ typedef struct wire_ok {
 
 #define TEXT_VALID_CHANGED(data_in, data_out) \
 	{                                     \
-		data_in, data_out             \
+		data_in, data_out, 0          \
 	}
-#define TEXT_VALID(data)   \
-	{                  \
-		data, data \
+#define TEXT_VALID(data)      \
+	{                     \
+		data, data, 0 \
 	}
-#define TEXT_INVALID(data) \
-	{                  \
-		data, NULL \
+#define TEXT_VALID_LOOP(loop, data) \
+	{                           \
+		data, data, loop    \
+	}
+#define TEXT_VALID_LOOPCHG(loop, data_in, data_out) \
+	{                                           \
+		data_in, data_out, loop             \
+	}
+#define TEXT_INVALID(data)    \
+	{                     \
+		data, NULL, 0 \
 	}
 #define TEXT_SENTINEL() TEXT_INVALID(NULL)
 
 #define VARGC(...) (sizeof((unsigned char[]){ __VA_ARGS__ }))
-#define WIRE_TEST(ok, ...)                              \
-	{                                               \
-		{ __VA_ARGS__ }, VARGC(__VA_ARGS__), ok \
+#define WIRE_TEST(ok, loop, ...)                              \
+	{                                                     \
+		{ __VA_ARGS__ }, VARGC(__VA_ARGS__), ok, loop \
 	}
-#define WIRE_VALID(...) WIRE_TEST(true, __VA_ARGS__)
+#define WIRE_VALID(...)		   WIRE_TEST(true, 0, __VA_ARGS__)
+#define WIRE_VALID_LOOP(loop, ...) WIRE_TEST(true, loop, __VA_ARGS__)
 /*
  * WIRE_INVALID() test cases must always have at least one octet specified to
  * distinguish them from WIRE_SENTINEL().  Use the 'empty_ok' parameter passed
  * to check_wire_ok() for indicating whether empty RDATA is allowed for a given
  * RR type or not.
  */
-#define WIRE_INVALID(FIRST, ...) WIRE_TEST(false, FIRST, __VA_ARGS__)
-#define WIRE_SENTINEL()		 WIRE_TEST(false)
+#define WIRE_INVALID(FIRST, ...) WIRE_TEST(false, 0, FIRST, __VA_ARGS__)
+#define WIRE_SENTINEL()		 WIRE_TEST(false, 0)
 
 /*
  * Call dns_rdata_fromwire() for data in 'src', which is 'srclen' octets in
@@ -254,13 +266,15 @@ rdata_checknames(dns_rdata_t *rdata) {
  * check_text_ok_single() and check_wire_ok_single().
  */
 static void
-check_struct_conversions(dns_rdata_t *rdata, size_t structsize) {
+check_struct_conversions(dns_rdata_t *rdata, size_t structsize,
+			 unsigned int loop) {
 	dns_rdataclass_t rdclass = rdata->rdclass;
 	dns_rdatatype_t type = rdata->type;
 	isc_result_t result;
 	isc_buffer_t target;
 	void *rdata_struct;
 	char buf[1024];
+	unsigned int count = 0;
 
 	rdata_struct = isc_mem_allocate(dt_mctx, structsize);
 	assert_non_null(rdata_struct);
@@ -285,6 +299,29 @@ check_struct_conversions(dns_rdata_t *rdata, size_t structsize) {
 	assert_int_equal(isc_buffer_usedlength(&target), rdata->length);
 
 	assert_memory_equal(buf, rdata->data, rdata->length);
+
+	/*
+	 * Check that one can walk hip rendezvous servers.
+	 */
+	switch (type) {
+	case dns_rdatatype_hip: {
+		dns_rdata_hip_t *hip = rdata_struct;
+
+		for (result = dns_rdata_hip_first(hip); result == ISC_R_SUCCESS;
+		     result = dns_rdata_hip_next(hip))
+		{
+			dns_name_t name;
+			dns_name_init(&name, NULL);
+			dns_rdata_hip_current(hip, &name);
+			assert_int_not_equal(dns_name_countlabels(&name), 0);
+			assert_true(dns_name_isabsolute(&name));
+			count++;
+		}
+		assert_int_equal(result, ISC_R_NOMORE);
+		assert_int_equal(count, loop);
+		break;
+	}
+	}
 
 	isc_mem_free(dt_mctx, rdata_struct);
 }
@@ -384,7 +421,7 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	 * Perform two-way conversion checks between uncompressed wire form and
 	 * type-specific struct.
 	 */
-	check_struct_conversions(&rdata, structsize);
+	check_struct_conversions(&rdata, structsize, text_ok->loop);
 }
 
 /*
@@ -523,7 +560,7 @@ check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
 	 *   - uncompressed wire form and text form,
 	 *   - uncompressed wire form and multi-line text form.
 	 */
-	check_struct_conversions(&rdata, structsize);
+	check_struct_conversions(&rdata, structsize, wire_ok->loop);
 	if (!dns_rdatatype_ismeta(rdata.type)) {
 		check_text_conversions(&rdata);
 		check_multiline_text_conversions(&rdata);
@@ -578,7 +615,7 @@ check_text_ok(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 static void
 check_wire_ok(const wire_ok_t *wire_ok, bool empty_ok, dns_rdataclass_t rdclass,
 	      dns_rdatatype_t type, size_t structsize) {
-	wire_ok_t empty_wire = WIRE_TEST(empty_ok);
+	wire_ok_t empty_wire = WIRE_TEST(empty_ok, 0);
 	size_t i;
 
 	/*
@@ -1757,6 +1794,33 @@ eid(void **state) {
  */
 static void
 hip(void **state) {
+	text_ok_t text_ok[] = {
+		/* RFC 8005 examples. */
+		TEXT_VALID_LOOP(0, "2 200100107B1A74DF365639CC39F1D578 "
+				   "AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cI"
+				   "vM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbW"
+				   "Iy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+b"
+				   "SRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWx"
+				   "Z48AWkskmdHaVDP4BcelrTI3rMXdXF5D"),
+		TEXT_VALID_LOOP(1, "2 200100107B1A74DF365639CC39F1D578 "
+				   "AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cI"
+				   "vM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbW"
+				   "Iy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+b"
+				   "SRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWx"
+				   "Z48AWkskmdHaVDP4BcelrTI3rMXdXF5D "
+				   "rvs1.example.com."),
+		TEXT_VALID_LOOP(2, "2 200100107B1A74DF365639CC39F1D578 "
+				   "AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cI"
+				   "vM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbW"
+				   "Iy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+b"
+				   "SRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWx"
+				   "Z48AWkskmdHaVDP4BcelrTI3rMXdXF5D "
+				   "rvs1.example.com. rvs2.example.com."),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
 	unsigned char hipwire[DNS_RDATA_MAXLENGTH] = { 0x01, 0x00, 0x00, 0x01,
 						       0x00, 0x00, 0x04, 0x41,
 						       0x42, 0x43, 0x44, 0x00 };
@@ -1778,6 +1842,8 @@ hip(void **state) {
 	result = wire_to_rdata(hipwire, sizeof(hipwire), dns_rdataclass_in,
 			       dns_rdatatype_hip, buf, sizeof(buf), &rdata);
 	assert_int_equal(result, DNS_R_FORMERR);
+	check_text_ok(text_ok, dns_rdataclass_in, dns_rdatatype_hip,
+		      sizeof(dns_rdata_hip_t));
 }
 
 /*
@@ -1904,6 +1970,70 @@ key(void **state) {
 
 	check_rdata(NULL, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_key, sizeof(dns_rdata_key_t));
+}
+
+/*
+ * LOC tests.
+ */
+static void
+loc(void **state) {
+	text_ok_t text_ok[] = {
+		TEXT_VALID_CHANGED("0 N 0 E 0", "0 0 0.000 N 0 0 0.000 E 0.00m "
+						"1m 10000m 10m"),
+		TEXT_VALID_CHANGED("0 S 0 W 0", "0 0 0.000 N 0 0 0.000 E 0.00m "
+						"1m 10000m 10m"),
+		TEXT_VALID_CHANGED("0 0 N 0 0 E 0", "0 0 0.000 N 0 0 0.000 E "
+						    "0.00m 1m 10000m 10m"),
+		TEXT_VALID_CHANGED("0 0 0 N 0 0 0 E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_VALID_CHANGED("0 0 0 N 0 0 0 E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_VALID_CHANGED("0 0 0. N 0 0 0. E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_VALID_CHANGED("0 0 .0 N 0 0 .0 E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_INVALID("0 North 0 East 0"),
+		TEXT_INVALID("0 South 0 West 0"),
+		TEXT_INVALID("0 0 . N 0 0 0. E 0"),
+		TEXT_INVALID("0 0 0. N 0 0 . E 0"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E m"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 ."),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 m"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 ."),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 m"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 0 ."),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 0 m"),
+		TEXT_VALID_CHANGED("90 N 180 E 0", "90 0 0.000 N 180 0 0.000 E "
+						   "0.00m 1m 10000m 10m"),
+		TEXT_INVALID("90 1 N 180 E 0"),
+		TEXT_INVALID("90 0 1 N 180 E 0"),
+		TEXT_INVALID("90 N 180 1 E 0"),
+		TEXT_INVALID("90 N 180 0 1 E 0"),
+		TEXT_VALID_CHANGED("90 S 180 W 0", "90 0 0.000 S 180 0 0.000 W "
+						   "0.00m 1m 10000m 10m"),
+		TEXT_INVALID("90 1 S 180 W 0"),
+		TEXT_INVALID("90 0 1 S 180 W 0"),
+		TEXT_INVALID("90 S 180 1 W 0"),
+		TEXT_INVALID("90 S 180 0 1 W 0"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -0.95m 1m 10000m 10m"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -0.05m 1m 10000m 10m"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -100000.00m 1m 10000m 10m"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E 42849672.95m 1m 10000m "
+			   "10m"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, 0, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_loc, sizeof(dns_rdata_loc_t));
 }
 
 /*
@@ -2516,6 +2646,7 @@ main(int argc, char **argv) {
 		cmocka_unit_test_setup_teardown(hip, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(isdn, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(key, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(loc, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nimloc, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nsec, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nsec3, _setup, _teardown),
@@ -2528,14 +2659,44 @@ main(int argc, char **argv) {
 		cmocka_unit_test_setup_teardown(atparent, NULL, NULL),
 		cmocka_unit_test_setup_teardown(iszonecutauth, NULL, NULL),
 	};
+	struct CMUnitTest selected[sizeof(tests) / sizeof(tests[0])];
+	size_t i;
+	int c;
 
-	UNUSED(argv);
+	memset(selected, 0, sizeof(selected));
 
-	if (argc > 1) {
-		debug = true;
+	while ((c = isc_commandline_parse(argc, argv, "dlt:")) != -1) {
+		switch (c) {
+		case 'd':
+			debug = true;
+			break;
+		case 'l':
+			for (i = 0; i < (sizeof(tests) / sizeof(tests[0])); i++)
+			{
+				if (tests[i].name != NULL) {
+					fprintf(stdout, "%s\n", tests[i].name);
+				}
+			}
+			return (0);
+		case 't':
+			if (!cmocka_add_test_byname(
+				    tests, isc_commandline_argument, selected))
+			{
+				fprintf(stderr, "unknown test '%s'\n",
+					isc_commandline_argument);
+				exit(1);
+			}
+			break;
+		default:
+			break;
+		}
 	}
 
-	return (cmocka_run_group_tests(tests, NULL, NULL));
+	if (selected[0].name != NULL) {
+		return (cmocka_run_group_tests(selected, NULL, NULL));
+	} else {
+		return (cmocka_run_group_tests(tests, NULL, NULL));
+	}
 }
 
 #else /* HAVE_CMOCKA */
