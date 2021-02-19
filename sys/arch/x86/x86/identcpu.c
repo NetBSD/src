@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.118 2020/10/27 08:57:11 ryo Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.119 2021/02/19 02:15:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.118 2020/10/27 08:57:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.119 2021/02/19 02:15:24 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -1104,21 +1104,27 @@ cpu_identify(struct cpu_info *ci)
  */
 vm_guest_t vm_guest = VM_GUEST_NO;
 
-static const char * const vm_bios_vendors[] = {
-	"QEMU",				/* QEMU */
-	"Plex86",			/* Plex86 */
-	"Bochs",			/* Bochs */
-	"Xen",				/* Xen */
-	"BHYVE",			/* bhyve */
-	"Seabios",			/* KVM */
+struct vm_name_guest {
+	const char *name;
+	vm_guest_t guest;
 };
 
-static const char * const vm_system_products[] = {
-	"VMware Virtual Platform",	/* VMWare VM */
-	"Virtual Machine",		/* Microsoft VirtualPC */
-	"VirtualBox",			/* Sun xVM VirtualBox */
-	"Parallels Virtual Platform",	/* Parallels VM */
-	"KVM",				/* KVM */
+static const struct vm_name_guest vm_bios_vendors[] = {
+	{ "QEMU", VM_GUEST_VM },			/* QEMU */
+	{ "Plex86", VM_GUEST_VM },			/* Plex86 */
+	{ "Bochs", VM_GUEST_VM },			/* Bochs */
+	{ "Xen", VM_GUEST_VM },				/* Xen */
+	{ "BHYVE", VM_GUEST_VM },			/* bhyve */
+	{ "Seabios", VM_GUEST_VM },			/* KVM */
+	{ "innotek GmbH", VM_GUEST_VIRTUALBOX },	/* Oracle VirtualBox */
+};
+
+static const struct vm_name_guest vm_system_products[] = {
+	{ "VMware Virtual Platform", VM_GUEST_VM },	/* VMWare VM */
+	{ "Virtual Machine", VM_GUEST_VM },		/* Microsoft VirtualPC */
+	{ "VirtualBox", VM_GUEST_VIRTUALBOX },		/* Sun xVM VirtualBox */
+	{ "Parallels Virtual Platform", VM_GUEST_VM },	/* Parallels VM */
+	{ "KVM", VM_GUEST_VM },				/* KVM */
 };
 
 void
@@ -1129,8 +1135,18 @@ identify_hypervisor(void)
 	const char *p;
 	int i;
 
+#if 0	
+	/* 
+	 * This is called from cpu_probe() and cpu_configure()
+	 * During cpu_probe() we have not called platform_init()
+	 * yet, so the bios tables have not been loaded.
+	 * We allow this to be called twice in order to override
+	 * the cpuid setting because some hypervisors don't return
+	 * specific enough info with cpuid it.
+	 */
 	if (vm_guest != VM_GUEST_NO)
 		return;
+#endif
 
 	/*
 	 * [RFC] CPUID usage for interaction between Hypervisors and Linux.
@@ -1162,7 +1178,9 @@ identify_hypervisor(void)
 			/* OpenBSD vmm:   "OpenBSDVMM58" */
 			/* NetBSD nvmm:   "___ NVMM ___" */
 		}
-		return;
+		// VirtualBox returns KVM, so keep going.
+		if (vm_guest != VM_GUEST_KVM)
+			return;
 	}
 
 	/*
@@ -1181,8 +1199,8 @@ identify_hypervisor(void)
 	p = pmf_get_platform("bios-vendor");
 	if (p != NULL) {
 		for (i = 0; i < __arraycount(vm_bios_vendors); i++) {
-			if (strcmp(p, vm_bios_vendors[i]) == 0) {
-				vm_guest = VM_GUEST_VM;
+			if (strcmp(p, vm_bios_vendors[i].name) == 0) {
+				vm_guest = vm_bios_vendors[i].guest;
 				return;
 			}
 		}
@@ -1190,8 +1208,8 @@ identify_hypervisor(void)
 	p = pmf_get_platform("system-product");
 	if (p != NULL) {
 		for (i = 0; i < __arraycount(vm_system_products); i++) {
-			if (strcmp(p, vm_system_products[i]) == 0) {
-				vm_guest = VM_GUEST_VM;
+			if (strcmp(p, vm_system_products[i].name) == 0) {
+				vm_guest = vm_system_products[i].guest;
 				return;
 			}
 		}
