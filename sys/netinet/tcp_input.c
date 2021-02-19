@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.426 2021/02/19 14:51:59 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.427 2021/02/19 15:43:56 jakllsch Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.426 2021/02/19 14:51:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.427 2021/02/19 15:43:56 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1274,7 +1274,7 @@ tcp_input(struct mbuf *m, int off, int proto)
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
 	 */
-	if (ACCESSIBLE_POINTER(th, struct tcp_hdr) == 0) {
+	if (ACCESSIBLE_POINTER(th, struct tcphdr) == 0) {
 		m = m_copyup(m, off + sizeof(struct tcphdr), 0);
 		if (m == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
@@ -1282,7 +1282,7 @@ tcp_input(struct mbuf *m, int off, int proto)
 		}
 		th = (struct tcphdr *)(mtod(m, char *) + off);
 	}
-	KASSERT(ACCESSIBLE_POINTER(th, struct tcp_hdr));
+	KASSERT(ACCESSIBLE_POINTER(th, struct tcphdr));
 
 	/*
 	 * Get IP and TCP header.
@@ -1362,7 +1362,7 @@ tcp_input(struct mbuf *m, int off, int proto)
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
-		KASSERT(ACCESSIBLE_POINTER(th, struct tcp_hdr));
+		KASSERT(ACCESSIBLE_POINTER(th, struct tcphdr));
 		optlen = thlen - sizeof(struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
 
