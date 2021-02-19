@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.67 2021/01/31 12:44:34 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.68 2021/02/19 12:28:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.67 2021/01/31 12:44:34 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.68 2021/02/19 12:28:56 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -478,6 +478,8 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		/* duplicate case in switch: %ld */
 		error(199, (long)nv.v_quad);
 	} else {
+		check_getopt_case_label(nv.v_quad);
+
 		/*
 		 * append the value to the list of
 		 * case values
@@ -642,6 +644,7 @@ switch1(tnode_t *tn)
 		tp->t_tspec = INT;
 	}
 
+	check_getopt_begin_switch();
 	expr(tn, true, false, true, false);
 
 	pushctrl(T_SWITCH);
@@ -684,9 +687,11 @@ switch2(void)
 		}
 	}
 
+	check_getopt_end_switch();
+
 	if (cstmt->c_break) {
 		/*
-		 * end of switch alway reached (c_break is only set if the
+		 * end of switch always reached (c_break is only set if the
 		 * break statement can be reached).
 		 */
 		reached = true;
@@ -726,6 +731,7 @@ while1(tnode_t *tn)
 	if (tn != NULL && tn->tn_op == CON)
 		cstmt->c_infinite = is_nonzero(tn);
 
+	check_getopt_begin_while(tn);
 	expr(tn, false, true, true, false);
 }
 
@@ -744,6 +750,7 @@ while2(void)
 	reached = !cstmt->c_infinite || cstmt->c_break;
 	rchflg = false;
 
+	check_getopt_end_while();
 	popctrl(T_WHILE);
 }
 
