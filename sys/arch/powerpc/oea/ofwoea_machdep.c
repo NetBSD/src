@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.52 2021/02/19 05:21:39 thorpej Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.53 2021/02/19 18:10:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.52 2021/02/19 05:21:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.53 2021/02/19 18:10:51 thorpej Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -242,6 +242,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	if (oeacpufeat & OEACPU_64_BRIDGE) {
 		vaddr_t va;
 		paddr_t pa;
+		vsize_t size;
 		int i;
 
 		pmap_setup_segment0_map(0, msgbuf_paddr, msgbuf_paddr,
@@ -249,12 +250,22 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 		/* Map OFW code+data */
 
-		for (i = 0; i < ofmaplen / sizeof(struct ofw_translations); i++) {
-			if (ofmap[i].va < 0xff800000)
+		for (i = 0; i < __arraycount(ofw_translations); i++) {
+			va = ofw_translations[i].virt;
+			size = ofw_translations[i].size;
+			pa = ofw_translations[i].phys;
+			/* XXX mode */
+
+			if (size == 0) {
+				/* No more, all done! */
+				break;
+			}
+
+			if (va < 0xff800000)
 				continue;
 
-			for (va = ofmap[i].va, pa = ofmap[i].pa;
-			    va < ofmap[i].va + ofmap[i].len;
+
+			for (; va < (ofw_translations[i].virt + size);
 			    va += PAGE_SIZE, pa += PAGE_SIZE) {
 				pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL,
 				    VM_PROT_ALL | PMAP_WIRED);
