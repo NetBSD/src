@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.41 2021/02/19 22:20:18 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.42 2021/02/19 22:27:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.41 2021/02/19 22:20:18 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.42 2021/02/19 22:27:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -99,7 +99,7 @@ outtype(const type_t *tp)
 	tspec_t	ts;
 
 	while (tp != NULL) {
-		if ((ts = tp->t_tspec) == INT && tp->t_isenum)
+		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
 			ts = ENUM;
 		switch (ts) {
 		case BOOL:	t = 'B';	s = '\0';	break;
