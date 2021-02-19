@@ -1,4 +1,4 @@
-/* $NetBSD: videoctl.c,v 1.2 2011/09/16 15:39:30 joerg Exp $ */
+/* $NetBSD: videoctl.c,v 1.3 2021/02/19 11:39:11 rillig Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: videoctl.c,v 1.2 2011/09/16 15:39:30 joerg Exp $");
+__RCSID("$NetBSD: videoctl.c,v 1.3 2021/02/19 11:39:11 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -120,7 +120,6 @@ main(int argc, char *argv[])
 		case 'w':
 			wflag = true;
 			break;
-		case 'h':
 		default:
 			usage();
 			/* NOTREACHED */
