@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.66 2021/01/31 12:44:34 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.67 2021/02/19 22:16:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.66 2021/01/31 12:44:34 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.67 2021/02/19 22:16:12 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -236,7 +236,8 @@ initstack_pop_item(void)
 		    __func__, istk->i_remaining,
 		    type_name(istk->i_type), namedmem->n_name));
 
-		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
+		for (m = istk->i_type->t_str->sou_first_member;
+		     m != NULL; m = m->s_next) {
 			DPRINTF(("%s: pop lhs.name=%s rhs.name=%s\n", __func__,
 			    m->s_name, namedmem->n_name));
 			if (m->s_bitfield && m->s_name == unnamed)
@@ -380,7 +381,8 @@ again:
 		DPRINTF(("%s: lookup type=%s, name=%s named=%d\n", __func__,
 		    type_name(istk->i_type),
 		    namedmem ? namedmem->n_name : "*none*", istk->i_namedmem));
-		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
+		for (m = istk->i_type->t_str->sou_first_member;
+		     m != NULL; m = m->s_next) {
 			if (m->s_bitfield && m->s_name == unnamed)
 				continue;
 			if (namedmem != NULL) {
