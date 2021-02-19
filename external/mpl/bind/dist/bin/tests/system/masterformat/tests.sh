@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -94,7 +94,7 @@ rndccmd() {
 
 status=0
 
-echo_i "checking that master files in raw format loaded ($n)"
+echo_i "checking that files in raw format loaded ($n)"
 ret=0
 set -- 1 2 3
 for zone in example example-explicit example-compat; do
@@ -149,14 +149,14 @@ do
 	sleep 1
 done
 
-echo_i "checking that slave was saved in raw format by default ($n)"
+echo_i "checking that secondary was saved in raw format by default ($n)"
 ret=0
 israw ns2/transfer.db.raw || ret=1
 n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
 
-echo_i "checking that slave was saved in text format when configured ($n)"
+echo_i "checking that secondary was saved in text format when configured ($n)"
 ret=0
 israw ns2/transfer.db.txt && ret=1
 isfull ns2/transfer.db.txt && ret=1
@@ -164,14 +164,14 @@ n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
 
-echo_i "checking that slave was saved in 'full' style when configured ($n)"
+echo_i "checking that secondary was saved in 'full' style when configured ($n)"
 ret=0
 isfull ns2/transfer.db.full > /dev/null 2>&1 || ret=1
 n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
 
-echo_i "checking that slave formerly in text format is now raw ($n)"
+echo_i "checking that secondary formerly in text format is now raw ($n)"
 for i in 0 1 2 3 4 5 6 7 8 9
 do
     ret=0
@@ -235,7 +235,7 @@ grep "added text" "dig.out.dynamic1.ns3.test$n" > /dev/null 2>&1 || ret=1
 dig_with_opts +comm @10.53.0.3 added.dynamic txt > "dig.out.dynamic2.ns3.test$n"
 grep "NXDOMAIN" "dig.out.dynamic2.ns3.test$n" > /dev/null 2>&1 || ret=1
 # using "rndc halt" ensures that we don't dump the zone file
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --halt --port ${CONTROLPORT} rndc ns3
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --halt --port ${CONTROLPORT} masterformat ns3
 restart
 check_added_text() {
 	dig_with_opts @10.53.0.3 newtext.dynamic txt > "dig.out.dynamic3.ns3.test$n" || return 1
@@ -260,7 +260,7 @@ END
 dig_with_opts @10.53.0.3 moretext.dynamic txt > "dig.out.dynamic1.ns3.test$n"
 grep "more text" "dig.out.dynamic1.ns3.test$n" > /dev/null 2>&1 || ret=1
 # using "rndc stop" will cause the zone file to flush before shutdown
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rndc ns3
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} masterformat ns3
 rm ns3/*.jnl
 restart
 #shellcheck disable=SC2034

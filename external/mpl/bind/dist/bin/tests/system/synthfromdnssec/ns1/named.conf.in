@@ -25,17 +25,17 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db.signed";
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db.signed";
 };
 
 zone "dnamed" {
-	type master;
+	type primary;
 	file "dnamed.db.signed";
 };
 

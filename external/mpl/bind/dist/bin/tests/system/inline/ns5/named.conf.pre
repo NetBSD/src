@@ -31,7 +31,7 @@ options {
 };
 
 zone "bits" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "bits.bk";
 };

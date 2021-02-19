@@ -33,13 +33,13 @@ controls {
 };
 
 zone "in-addr.arpa" {
-	type master;
+	type primary;
 	file "in-addr.db";
 	update-policy {	grant EXAMPLE.COM krb5-subdomain . PTR; };
 };
 
 zone "example.com" {
-	type master;
+	type primary;
 	file "example.com.db";
 	update-policy {
 		grant EXAMPLE.COM krb5-self . ANY;

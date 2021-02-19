@@ -25,13 +25,13 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 	also-notify { 10.53.0.2; };
 };
 
 zone "dynamic" {
-	type master;
+	type primary;
 	file "dynamic.db";
 	allow-update { any; };
 	also-notify { 10.53.0.2; };

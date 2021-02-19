@@ -37,7 +37,7 @@ view internal {
 	};
 
 	zone "policy" {
-		type master;
+		type primary;
 		file "normal.db";
 	};
 };

@@ -2,7 +2,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -47,6 +47,7 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
 		${BIND9_INCLUDES} ${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} \
 		${ISC_INCLUDES} ${DLZDRIVER_INCLUDES} \
 		${DBDRIVER_INCLUDES} \
+		${LIBUV_CFLAGS} \
 		${FSTRM_CFLAGS} \
 		${OPENSSL_CFLAGS} \
 		${PROTOBUF_C_CFLAGS} \
@@ -81,13 +82,13 @@ LIBS =		${NSLIBS} ${DNSLIBS} ${BIND9LIBS} \
 		${DLZDRIVER_LIBS} ${DBDRIVER_LIBS} @LIBCAP_LIBS@ \
 		${FSTRM_LIBS} ${PROTOBUF_C_LIBS} ${LMDB_LIBS} ${ZLIB_LIBS} \
 		${JSON_C_LIBS} ${LIBXML2_LIBS} ${MAXMINDDB_LIBS} \
-		${OPENSSL_LIBS} @LIBS@
+		${LIBUV_LIBS} ${OPENSSL_LIBS} @LIBS@
 
 NOSYMLIBS =	${NSLIBS} ${DNSLIBS} ${BIND9LIBS} \
 		${ISCCFGLIBS} ${ISCCCLIBS} ${ISCNOSYMLIBS} \
 		${DLZDRIVER_LIBS} ${DBDRIVER_LIBS} @LIBCAP_LIBS@ \
 		${FSTRM_LIBS} ${PROTOBUF_C_LIBS} ${LMDB_LIBS} ${ZLIB_LIBS} \
-		@LIBS@
+		${LIBUV_LIBS} @LIBS@
 
 SUBDIRS =	unix
 

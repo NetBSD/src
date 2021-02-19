@@ -41,7 +41,7 @@ key "tkeytest." {
 };
 
 zone example {
-	type master;
+	type primary;
 	file "example.db";
 	allow-query { key tkeytest.; none; };
 };

@@ -46,17 +46,17 @@ zone "." {
 };
 
 zone "server" {
-	type master;
+	type primary;
 	file "server.db";
 	allow-update { any; };
 };
 
 zone "edns-version.tld" {
-	type master;
+	type primary;
 	file "edns-version.tld.db";
 };
 
 zone "all-cnames" {
-	type master;
+	type primary;
 	file "all-cnames.db";
 };

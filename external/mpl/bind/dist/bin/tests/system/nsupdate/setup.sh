@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -80,5 +80,6 @@ cp -f ns8/in-addr.db.in ns8/in-addr.db
 cp -f ns8/example.com.db.in ns8/example.com.db
 cp -f ns9/in-addr.db.in ns9/in-addr.db
 cp -f ns9/example.com.db.in ns9/example.com.db
+cp -f ns9/example.com.db.in ns9/denyname.example.db
 cp -f ns10/in-addr.db.in ns10/in-addr.db
 cp -f ns10/example.com.db.in ns10/example.com.db

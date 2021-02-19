@@ -35,12 +35,12 @@ zone "." {
 };
 
 zone "moves" {
-	type master;
+	type primary;
 	file "moves.db";
 };
 
 zone "child.server" {
-	type master;
+	type primary;
 	file "child.server.db";
 };
 

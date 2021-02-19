@@ -22,19 +22,19 @@ options {
 	notify yes;
 };
 
-zone "." { type master; file "root.db.signed"; };
+zone "." { type primary; file "root.db.signed"; };
 
 /*
  * RFC 4592 example zone.
  */
-zone "example" { type master; file "example.db"; };
-zone "nsec" { type master; file "nsec.db.signed"; };
-zone "private.nsec" { type master; file "private.nsec.db.signed"; };
+zone "example" { type primary; file "example.db"; };
+zone "nsec" { type primary; file "nsec.db.signed"; };
+zone "private.nsec" { type primary; file "private.nsec.db.signed"; };
 
 /*
  * The contents of nsec3 and private.nsec3 are specially chosen to
  * have separate NSEC3 records for the "no qname proof" and the
  * "closest encloser proof".
  */
-zone "nsec3" { type master; file "nsec3.db.signed"; };
-zone "private.nsec3" { type master; file "private.nsec3.db.signed"; };
+zone "nsec3" { type primary; file "nsec3.db.signed"; };
+zone "private.nsec3" { type primary; file "private.nsec3.db.signed"; };

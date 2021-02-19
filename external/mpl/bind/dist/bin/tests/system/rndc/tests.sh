@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -588,7 +588,7 @@ echo_i "test 'rndc reconfig' with loading of a large zone ($n)"
 ret=0
 cur=`awk 'BEGIN {l=0} /^/ {l++} END { print l }' ns6/named.run`
 cp ns6/named.conf ns6/named.conf.save
-echo "zone \"huge.zone\" { type master; file \"huge.zone.db\"; };" >> ns6/named.conf
+echo "zone \"huge.zone\" { type primary; file \"huge.zone.db\"; };" >> ns6/named.conf
 echo_i "reloading config"
 $RNDCCMD 10.53.0.6 reconfig > rndc.out.1.test$n 2>&1 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -611,7 +611,7 @@ n=`expr $n + 1`
 echo_i "wait for the zones to be loaded ($n)"
 ret=1
 try=0
-while test $try -lt 100
+while test $try -lt 180
 do
     sleep 1
     sed -n "$cur,"'$p' < ns6/named.run | grep "any newly configured zones are now loaded" > /dev/null && {
@@ -690,6 +690,17 @@ n=`expr $n + 1`
 echo_i "check rndc nta reports adding to multiple views ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 nta test.com > rndc.out.test$n 2>&1 || ret=1
+lines=`cat rndc.out.test$n | wc -l`
+[ ${lines:-0} -eq 2 ] || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check 'rndc retransfer' of primary error message ($n)"
+ret=0
+$RNDCCMD 10.53.0.2 retransfer nil > rndc.out.test$n 2>&1 && ret=1
+grep "rndc: 'retransfer' failed: failure" rndc.out.test$n > /dev/null || ret=1
+grep "retransfer: inappropriate zone type: primary" rndc.out.test$n > /dev/null || ret=1
 lines=`cat rndc.out.test$n | wc -l`
 [ ${lines:-0} -eq 2 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

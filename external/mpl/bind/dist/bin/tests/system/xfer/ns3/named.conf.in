@@ -41,15 +41,15 @@ zone "." {
 };
 
 zone "example" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "example.bk";
 };
 
-zone "master" {
-	type slave;
-	masters { 10.53.0.6; };
-	file "master.bk";
+zone "primary" {
+	type secondary;
+	primaries { 10.53.0.6; };
+	file "primary.bk";
 };
 
 server 10.53.0.2 {
@@ -57,21 +57,21 @@ server 10.53.0.2 {
 };
 
 zone "tsigzone" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "tsigzone.bk";
 	allow-transfer { key tsigzone.; };
 };
 
 zone "mapped" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	masterfile-format map;
 	file "mapped.bk";
 };
 
 zone "xfer-stats" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "xfer-stats.bk";
 };

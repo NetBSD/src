@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -162,8 +162,8 @@ echo_i "checking 'rdnc zonestatus' output"
 ret=0 
 for i in 0 1 2 3 4 5 6 7 8 9
 do
-	$RNDCCMD 10.53.0.1 zonestatus master.example > rndc.out.master 2>&1
-	grep "zone not loaded" rndc.out.master > /dev/null || break
+	$RNDCCMD 10.53.0.1 zonestatus primary.example > rndc.out.pri 2>&1
+	grep "zone not loaded" rndc.out.pri > /dev/null || break
 	sleep 1
 done
 checkfor() {
@@ -172,34 +172,34 @@ checkfor() {
 		echo_i "missing string '$1' from '$2'"
 	}
 }
-checkfor "name: master.example" rndc.out.master
-checkfor "type: master" rndc.out.master
-checkfor "files: master.db, master.db.signed" rndc.out.master
-checkfor "serial: " rndc.out.master
-checkfor "nodes: " rndc.out.master
-checkfor "last loaded: " rndc.out.master
-checkfor "secure: yes" rndc.out.master
-checkfor "inline signing: no" rndc.out.master
-checkfor "key maintenance: automatic" rndc.out.master
-checkfor "next key event: " rndc.out.master
-checkfor "next resign node: " rndc.out.master
-checkfor "next resign time: " rndc.out.master
-checkfor "dynamic: yes" rndc.out.master
-checkfor "frozen: no" rndc.out.master
+checkfor "name: primary.example" rndc.out.pri
+checkfor "type: primary" rndc.out.pri
+checkfor "files: primary.db, primary.db.signed" rndc.out.pri
+checkfor "serial: " rndc.out.pri
+checkfor "nodes: " rndc.out.pri
+checkfor "last loaded: " rndc.out.pri
+checkfor "secure: yes" rndc.out.pri
+checkfor "inline signing: no" rndc.out.pri
+checkfor "key maintenance: automatic" rndc.out.pri
+checkfor "next key event: " rndc.out.pri
+checkfor "next resign node: " rndc.out.pri
+checkfor "next resign time: " rndc.out.pri
+checkfor "dynamic: yes" rndc.out.pri
+checkfor "frozen: no" rndc.out.pri
 for i in 0 1 2 3 4 5 6 7 8 9
 do
-	$RNDCCMD 10.53.0.2 zonestatus master.example > rndc.out.slave 2>&1
-	grep "zone not loaded" rndc.out.slave > /dev/null || break
+	$RNDCCMD 10.53.0.2 zonestatus primary.example > rndc.out.sec 2>&1
+	grep "zone not loaded" rndc.out.sec > /dev/null || break
 	sleep 1
 done
-checkfor "name: master.example" rndc.out.slave
-checkfor "type: slave" rndc.out.slave
-checkfor "files: slave.db" rndc.out.slave
-checkfor "serial: " rndc.out.slave
-checkfor "nodes: " rndc.out.slave
-checkfor "next refresh: " rndc.out.slave
-checkfor "expires: " rndc.out.slave
-checkfor "secure: yes" rndc.out.slave
+checkfor "name: primary.example" rndc.out.sec
+checkfor "type: secondary" rndc.out.sec
+checkfor "files: sec.db" rndc.out.sec
+checkfor "serial: " rndc.out.sec
+checkfor "nodes: " rndc.out.sec
+checkfor "next refresh: " rndc.out.sec
+checkfor "expires: " rndc.out.sec
+checkfor "secure: yes" rndc.out.sec
 for i in 0 1 2 3 4 5 6 7 8 9
 do
 	$RNDCCMD 10.53.0.1 zonestatus reload.example > rndc.out.prereload 2>&1

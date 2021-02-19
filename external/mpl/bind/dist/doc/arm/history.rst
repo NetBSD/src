@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -56,7 +46,8 @@ and Mike Schwartz. BIND maintenance was subsequently handled by Mike
 Karels and Øivind Kure.
 
 BIND versions 4.9 and 4.9.1 were released by Digital Equipment
-Corporation (now Compaq Computer Corporation). Paul Vixie, then a DEC
+Corporation (which became Compaq Computer Corporation and eventually merged
+with Hewlett-Packard). Paul Vixie, then a DEC
 employee, became BIND's primary caretaker. He was assisted by Phil
 Almquist, Robert Elz, Alan Barrett, Paul Albitz, Bryan Beecher, Andrew
 Partan, Andy Cherenson, Tom Limoncelli, Berthold Paffrath, Fuat Baran,
@@ -67,7 +58,7 @@ In 1994, BIND version 4.9.2 was sponsored by Vixie Enterprises. Paul
 Vixie became BIND's principal architect/programmer.
 
 BIND versions from 4.9.3 onward have been developed and maintained by
-the Internet Systems Consortium and its predecessor, the Internet
+Internet Systems Consortium and its predecessor, the Internet
 Software Consortium, with support provided by ISC's sponsors.
 
 As co-architects/programmers, Bob Halley and Paul Vixie released the
@@ -80,5 +71,6 @@ BIND versions 4 and 8 are officially deprecated. No additional
 development is done on BIND version 4 or BIND version 8.
 
 BIND development work is made possible today by the sponsorship of
-corporations who purchase professional support services from ISC (https://www.isc.org/contact/) and/or donate to our mission, and by the tireless efforts of numerous
-individuals.
+corporations who purchase professional support services from ISC
+(https://www.isc.org/contact/) and/or donate to our mission, and by the
+tireless efforts of numerous individuals.

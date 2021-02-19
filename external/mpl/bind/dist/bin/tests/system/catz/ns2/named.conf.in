@@ -45,27 +45,27 @@ options {
 };
 
 zone "catalog1.example" {
-	type slave;
+	type secondary;
 	file "catalog1.example.db";
-	masters { 10.53.0.1; };
+	primaries { 10.53.0.1; };
 };
 
 zone "catalog2.example" {
-	type slave;
+	type secondary;
 	file "catalog2.example.db";
-	masters { 10.53.0.3; };
+	primaries { 10.53.0.3; };
 };
 
 zone "catalog3.example" {
-	type slave;
+	type secondary;
 	file "catalog3.example.db";
-	masters { 10.53.0.1; };
+	primaries { 10.53.0.1; };
 };
 
 zone "catalog4.example" {
-	type slave;
+	type secondary;
 	file "catalog4.example.db";
-	masters { 10.53.0.1; };
+	primaries { 10.53.0.1; };
 };
 
 key tsig_key. {

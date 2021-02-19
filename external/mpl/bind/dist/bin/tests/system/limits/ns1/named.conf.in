@@ -23,11 +23,11 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };

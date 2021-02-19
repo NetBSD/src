@@ -31,51 +31,51 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "example.net" {
-	type master;
+	type primary;
 	file "example.net.db.signed";
 	allow-update { any; };
 };
 
 zone "ds.example.net" {
-	type master;
+	type primary;
 	file "ds.example.net.db.signed";
 	allow-update { any; };
 };
 
 zone "to-be-removed.tld" {
-	type master;
+	type primary;
 	file "to-be-removed.tld.db";
 	allow-update { any; };
 };
 
 zone "broken" {
-	type master;
+	type primary;
 	file "broken.db";
 	allow-update { any; };
 };
 
 zone "no-edns-version.tld" {
-	type master;
+	type primary;
 	file "no-edns-version.tld.db";
 };
 
 zone "delegation-only" {
-	type master;
+	type primary;
 	file "delegation-only.db";
 };
 
 zone "fetch.tld" {
-	type master;
+	type primary;
 	file "fetch.tld.db";
 };
 
 zone "targetns" {
-	type master;
+	type primary;
 	file "targetns.db";
 };
 

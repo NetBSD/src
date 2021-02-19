@@ -37,7 +37,7 @@ zone "." {
 };
 
 zone "exampleb" {
-	type master;
+	type primary;
 	file "exampleb.db";
 	allow-update { any; };
 };

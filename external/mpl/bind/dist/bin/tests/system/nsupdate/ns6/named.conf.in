@@ -32,7 +32,7 @@ controls {
 };
 
 zone "in-addr.arpa" {
-	type master;
+	type primary;
 	file "in-addr.db";
 	update-policy {	grant * tcp-self . PTR; };
 };

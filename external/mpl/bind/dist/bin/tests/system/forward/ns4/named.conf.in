@@ -57,6 +57,6 @@ zone "grafted" {
 };
 
 zone "malicious." {
-	type master;
+	type primary;
 	file "malicious.db";
 };

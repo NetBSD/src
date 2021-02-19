@@ -20,8 +20,6 @@ VERSION=@BIND9_VERSION@
 
 @LIBDNS_MAPAPI@
 
-@LIBDNS_API@
-
 @BIND9_MAKE_INCLUDES@
 
 USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
@@ -137,9 +135,6 @@ version.@O@: version.c
 		-DVERSION=\"${VERSION}\" \
 		-DMAJOR=\"${MAJOR}\" \
 		-DMAPAPI=\"${MAPAPI}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
 libdns.@SA@: ${OBJS}
@@ -149,7 +144,7 @@ libdns.@SA@: ${OBJS}
 libdns.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libdns.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
 
 include: gen

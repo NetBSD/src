@@ -1,3 +1,358 @@
+	--- 9.16.12 released ---
+
+5578.	[protocol]	Make "check-names" accept A records below "_spf",
+			"_spf_rate", and "_spf_verify" labels in order to cater
+			for the "exists" SPF mechanism specified in RFC 7208
+			section 5.7 and appendix D.1. [GL #2377]
+
+5577.	[bug]		Fix the "three is a crowd" key rollover bug in KASP by
+			correctly implementing Equation (2) of the "Flexible and
+			Robust Key Rollover" paper. [GL #2375]
+
+5575.	[bug]		When migrating to KASP, BIND 9 considered keys with the
+			"Inactive" and/or "Delete" timing metadata to be
+			possible active keys. This has been fixed. [GL #2406]
+
+5572.	[bug]		Address potential double free in generatexml().
+			[GL #2420]
+
+5571.	[bug]		named failed to start when its configuration included a
+			zone with a non-builtin "allow-update" ACL attached.
+			[GL #2413]
+
+5570.	[bug]		Improve performance of the DNSSEC verification code by
+			reducing the number of repeated calls to
+			dns_dnssec_keyfromrdata(). [GL #2073]
+
+5569.	[bug]		Emit useful error message when "rndc retransfer" is
+			applied to a zone of inappropriate type. [GL #2342]
+
+5568.	[bug]		Fixed a crash in "dnssec-keyfromlabel" when using ECDSA
+			keys. [GL #2178]
+
+5567.	[bug]		Dig now reports unknown dash options while pre-parsing
+			the options. This prevents "-multi" instead of "+multi"
+			from reporting memory usage before ending option parsing
+			with "Invalid option: -lti". [GL #2403]
+
+5566.	[func]		Add "stale-answer-client-timeout" option, which is the
+			amount of time a recursive resolver waits before
+			attempting to answer the query using stale data from
+			cache. [GL #2247]
+
+5565.	[func]		The SONAMEs for BIND 9 libraries now include the current
+			BIND 9 version number, in an effort to tightly couple
+			internal libraries with a specific release. [GL #2387]
+
+5562.	[security]	Fix off-by-one bug in ISC SPNEGO implementation.
+			(CVE-2020-8625) [GL #2354]
+
+5561.	[bug]		KASP incorrectly set signature validity to the value of
+			the DNSKEY signature validity. This is now fixed.
+			[GL #2383]
+
+5560.	[func]		The default value of "max-stale-ttl" has been changed
+			from 12 hours to 1 day and the default value of
+			"stale-answer-ttl" has been changed from 1 second to 30
+			seconds, following RFC 8767 recommendations. [GL #2248]
+
+5456.	[func]		Added "primaries" as a synonym for "masters" in
+			named.conf, and "primary-only" as a synonym for
+			"master-only" in the parameters to "notify", to bring
+			terminology up-to-date with RFC 8499. [GL #1948]
+
+5362.	[func]		Limit the size of IXFR responses so that AXFR will
+			be used instead if it would be smaller. This is
+			controlled by the "max-ixfr-ratio" option, which
+			is a percentage representing the ratio of IXFR size
+			to the size of the entire zone. This value cannot
+			exceed 100%, which is the default. [GL #1515]
+
+	--- 9.16.11 released ---
+
+5559.	[bug]		The --with-maxminddb=PATH form of the build-time option
+			enabling support for libmaxminddb was not working
+			correctly. This has been fixed. [GL #2366]
+
+5557.	[bug]		Prevent RBTDB instances from being destroyed by multiple
+			threads at the same time. [GL #2317]
+
+5556.	[bug]		Further tweak newline printing in dnssec-signzone and
+			dnssec-verify. [GL #2359]
+
+5555.	[bug]		server->reload_status was not properly initialized.
+			[GL #2361]
+
+5554.	[bug]		dnssec-signzone and dnssec-verify were missing newlines
+			between log messages. [GL #2359]
+
+5553.	[bug]		When reconfiguring named, removing "auto-dnssec" did not
+			turn off DNSSEC maintenance. [GL #2341]
+
+5552.	[func]		When switching to "dnssec-policy none;", named now
+			permits a safe transition to insecure mode and publishes
+			the CDS and CDNSKEY DELETE records, as described in RFC
+			8078. [GL #1750]
+
+5551.	[bug]		named no longer attempts to assign threads to CPUs
+			outside the CPU affinity set. Thanks to Ole Bjørn
+			Hessen. [GL #2245]
+
+5550.	[func]		dnssec-signzone and named now log a warning when falling
+			back to the "increment" SOA serial method. [GL #2058]
+
+5545.	[func]		OS support for load-balanced sockets is no longer
+			required to receive incoming queries in multiple netmgr
+			threads. [GL #2137]
+
+5543.	[bug]		Fix UDP performance issues caused by making netmgr
+			callbacks asynchronous-only. [GL #2320]
+
+5542.	[bug]		Refactor netmgr. [GL #1920] [GL #2034] [GL #2061]
+			[GL #2194] [GL #2221] [GL #2266] [GL #2283] [GL #2318]
+			[GL #2321]
+
+	--- 9.16.10 released ---
+
+5544.	[func]		Restore the default value of "nocookie-udp-size" to 4096
+			bytes. [GL #2250]
+
+5541.	[func]		Adjust the "max-recursion-queries" default from 75 to
+			100. [GL #2305]
+
+5540.	[port]		Fix building with native PKCS#11 support for AEP Keyper.
+			[GL #2315]
+
+5539.	[bug]		Tighten handling of missing DNS COOKIE responses over
+			UDP by falling back to TCP. [GL #2275]
+
+5538.	[func]		Add NSEC3 support to KASP. A new option for
+			"dnssec-policy", "nsec3param", can be used to set the
+			desired NSEC3 parameters. NSEC3 salt collisions are
+			automatically prevented during resalting. Salt
+			generation is now logged with zone context. [GL #1620]
+
+5534.	[bug]		The CNAME synthesized from a DNAME was incorrectly
+			followed when the QTYPE was CNAME or ANY. [GL #2280]
+
+	--- 9.16.9 released ---
+
+5533.	[func]		Add the "stale-refresh-time" option, a time window that
+			starts after a failed lookup, during which a stale RRset
+			is served directly from cache before a new attempt to
+			refresh it is made. [GL #2066]
+
+5530.	[bug]		dnstap did not capture responses to forwarded UPDATE
+			requests. [GL #2252]
+
+5527.	[bug]		A NULL pointer dereference occurred when creating an NTA
+			recheck query failed. [GL #2244]
+
+5525.	[bug]		Change 5503 inadvertently broke cross-compilation by
+			replacing a call to AC_LINK_IFELSE() with a call to
+			AC_RUN_IFELSE() in configure.ac.  This has been fixed,
+			making cross-compilation possible again. [GL #2237]
+
+5523.	[bug]		The initial lookup in a zone transitioning to/from a
+			signed state could fail if the DNSKEY RRset was not
+			found. [GL #2236]
+
+5522.	[bug]		Fixed a race/NULL dereference in TCPDNS send. [GL #2227]
+
+5520.	[bug]		Fixed a number of shutdown races, reference counting
+			errors, and spurious log messages that could occur
+			in the network manager. [GL #2221]
+
+5518.	[bug]		Stub zones now work correctly with primary servers using
+			"minimal-responses yes". [GL #1736]
+
+5517.	[bug]		Do not treat UV_EOF as a TCP4RecvErr or a TCP6RecvErr.
+			[GL #2208]
+
+	--- 9.16.8 released ---
+
+5516.	[func]		The default EDNS buffer size has been changed from 4096
+			to 1232 bytes. [GL #2183]
+
+5515.	[func]		Add 'rndc dnssec -rollover' command to trigger a manual
+			rollover for a specific key. [GL #1749]
+
+5514.	[bug]		Fix KASP expected key size for Ed25519 and Ed448.
+			[GL #2171]
+
+5513.	[doc]		The ARM section describing the "rrset-order" statement
+			was rewritten to make it unambiguous and up-to-date with
+			the source code. [GL #2139]
+
+5512.	[bug]		"rrset-order" rules using "order none" were causing
+			named to crash despite named-checkconf treating them as
+			valid. [GL #2139]
+
+5511.	[bug]		'dig -u +yaml' failed to display timestamps to the
+			microsecond. [GL #2190]
+
+5510.	[bug]		Implement the attach/detach semantics for dns_message_t
+			to fix a data race in accessing an already-destroyed
+			fctx->rmessage. [GL #2124]
+
+5509.	[bug]		filter-aaaa: named crashed upon shutdown if it was in
+			the process of recursing for A RRsets. [GL #1040]
+
+5508.	[func]		Added new parameter "-expired" for "rndc dumpdb" that
+			also prints expired RRsets (awaiting cleanup) to the
+			dump file. [GL #1870]
+
+5507.	[bug]		Named could compute incorrect SIG(0) responses.
+			[GL #2109]
+
+5506.	[bug]		Properly handle failed sysconf() calls, so we don't
+			report invalid memory size. [GL #2166]
+
+5505.	[bug]		Updating contents of a mixed-case RPZ could cause some
+			rules to be ignored. [GL #2169]
+
+5503.	[bug]		Cleaned up reference counting of network manager
+			handles, now using isc_nmhandle_attach() and _detach()
+			instead of _ref() and _unref(). [GL #2122]
+
+	--- 9.16.7 released ---
+
+5501.	[func]		Log CDS/CDNSKEY publication. [GL #1748]
+
+5500.	[bug]		Fix (non-)publication of CDS and CDNSKEY records.
+			[GL #2103]
+
+5499.	[func]		Add '-P ds' and '-D ds' arguments to dnssec-settime.
+			[GL #1748]
+
+5497.	[bug]		'dig +bufsize=0' failed to disable EDNS. [GL #2054]
+
+5496.	[bug]		Address a TSAN report by ensuring each rate limiter
+			object holds a reference to its task. [GL #2081]
+
+5495.	[bug]		With query minimization enabled, named failed to
+			resolve ip6.arpa. names that had extra labels to the
+			left of the IPv6 part. [GL #1847]
+
+5494.	[bug]		Silence the EPROTO syslog message on older systems.
+			[GL #1928]
+
+5493.	[bug]		Fix off-by-one error when calculating new hash table
+			size. [GL #2104]
+
+5492.	[bug]		Tighten LOC parsing to reject a period (".") and/or "m"
+			as a value. Fix handling of negative altitudes which are
+			not whole meters. [GL #2074]
+
+5491.	[bug]		rbtversion->glue_table_size could be read without the
+			appropriate lock being held. [GL #2080]
+
+5489.	[bug]		Named erroneously accepted certain invalid resource
+			records that were incorrectly processed after
+			subsequently being written to disk and loaded back, as
+			the wire format differed. Such records include: CERT,
+			IPSECKEY, NSEC3, NSEC3PARAM, NXT, SIG, TLSA, WKS, and
+			X25. [GL !3953]
+
+5488.	[bug]		NTA code needed to have a weak reference on its
+			associated view to prevent the latter from being deleted
+			while NTA tests were being performed. [GL #2067]
+
+5486.	[func]		Add 'rndc dnssec -checkds' command, which signals to
+			named that the DS record for a given zone or key has
+			been updated in the parent zone. [GL #1613]
+
+	--- 9.16.6 released ---
+
+5484.	[func]		Expire zero TTL records quickly rather than using them
+			for stale answers. [GL #1829]
+
+5483.	[func]		A new configuration option "stale-cache-enable" has been
+			introduced to enable or disable keeping stale answers in
+			cache. [GL #1712]
+
+5482.	[bug]		If the Duplicate Address Detection (DAD) mechanism had
+			not yet finished after adding a new IPv6 address to the
+			system, BIND 9 would fail to bind to IPv6 addresses in a
+			tentative state. [GL #2038]
+
+5481.	[security]	"update-policy" rules of type "subdomain" were
+			incorrectly treated as "zonesub" rules, which allowed
+			keys used in "subdomain" rules to update names outside
+			of the specified subdomains. The problem was fixed by
+			making sure "subdomain" rules are again processed as
+			described in the ARM. (CVE-2020-8624) [GL #2055]
+
+5480.	[security]	When BIND 9 was compiled with native PKCS#11 support, it
+			was possible to trigger an assertion failure in code
+			determining the number of bits in the PKCS#11 RSA public
+			key with a specially crafted packet. (CVE-2020-8623)
+			[GL #2037]
+
+5479.	[security]	named could crash in certain query resolution scenarios
+			where QNAME minimization and forwarding were both
+			enabled. (CVE-2020-8621) [GL #1997]
+
+5478.	[security]	It was possible to trigger an assertion failure by
+			sending a specially crafted large TCP DNS message.
+			(CVE-2020-8620) [GL #1996]
+
+5477.	[bug]		The idle timeout for connected TCP sockets, which was
+			previously set to a high fixed value, is now derived
+			from the client query processing timeout configured for
+			a resolver. [GL #2024]
+
+5476.	[security]	It was possible to trigger an assertion failure when
+			verifying the response to a TSIG-signed request.
+			(CVE-2020-8622) [GL #2028]
+
+5475.	[bug]		Wildcard RPZ passthru rules could incorrectly be
+			overridden by other rules that were loaded from RPZ
+			zones which appeared later in the "response-policy"
+			statement. This has been fixed. [GL #1619]
+
+5474.	[bug]		dns_rdata_hip_next() failed to return ISC_R_NOMORE
+			when it should have. [GL !3880]
+
+5473.	[func]		The RBT hash table implementation has been changed
+			to use a faster hash function (HalfSipHash2-4) and
+			Fibonacci hashing for better distribution. Setting
+			"max-cache-size" now preallocates a fixed-size hash
+			table so that rehashing does not cause resolution
+			brownouts while the hash table is grown. [GL #1775]
+
+5471.	[bug]		The introduction of KASP support inadvertently caused
+			the second field of "sig-validity-interval" to always be
+			calculated in hours, even in cases when it should have
+			been calculated in days. This has been fixed. (Thanks to
+			Tony Finch.) [GL !3735]
+
+5469.	[port]		On illumos, a constant called SEC is already defined in
+			<sys/time.h>, which conflicts with an identically named
+			constant in libbind9. This conflict has been resolved.
+			[GL #1993]
+
+5468.	[bug]		Addressed potential double unlock in process_fd().
+			[GL #2005]
+
+5466.	[bug]		Addressed an error in recursive clients stats reporting.
+			[GL #1719]
+
+5465.	[func]		Added fallback to built-in trust-anchors, managed-keys,
+			or trusted-keys if the bindkeys-file (bind.keys) cannot
+			be parsed. [GL #1235]
+
+5464.	[bug]		Requesting more than 128 files to be saved when rolling
+			dnstap log files caused a buffer overflow. This has been
+			fixed. [GL #1989]
+
+5462.	[bug]		Move LMDB locking from LMDB itself to named. [GL #1976]
+
+5461.	[bug]		The STALE rdataset header attribute was updated while
+			the write lock was not being held, leading to incorrect
+			statistics. The header attributes are now converted to
+			use atomic operations. [GL #1475]
+
 	--- 9.16.5 released ---
 
 5458.	[bug]		Prevent a theoretically possible NULL dereference caused

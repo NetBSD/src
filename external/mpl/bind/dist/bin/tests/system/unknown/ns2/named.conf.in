@@ -23,8 +23,8 @@ options {
 
 view "in" {
 	zone "example." {
-		type slave;
-		masters { 10.53.0.1; };
+		type secondary;
+		primaries { 10.53.0.1; };
 		file "example-in.bk";
 	};
 };

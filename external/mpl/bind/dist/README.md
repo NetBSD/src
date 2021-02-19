@@ -344,7 +344,7 @@ the change that was made; these categories are:
 | [cleanup] | Minor corrections and refactoring |
 | [doc] | Documentation |
 | [contrib] | Changes to the contributed tools and libraries in the 'contrib' subdirectory |
-| [placeholder] | Used in the master development branch to reserve change numbers for use in other branches, e.g. when fixing a bug that only exists in older releases |
+| [placeholder] | Used in the main development branch to reserve change numbers for use in other branches, e.g., when fixing a bug that only exists in older releases |
 
 In general, [func] and [experimental] tags will only appear in new-feature
 releases (i.e., those with version numbers ending in zero).  Some new

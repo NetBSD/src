@@ -33,8 +33,8 @@ options {
 };
 
 zone "bits" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update-forwarding { any; };
@@ -45,8 +45,8 @@ zone "bits" {
 server 10.53.0.4 { request-ixfr no; };
 
 zone "noixfr" {
-	type slave;
-	masters { 10.53.0.4; };
+	type secondary;
+	primaries { 10.53.0.4; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update-forwarding { any; };
@@ -54,7 +54,7 @@ zone "noixfr" {
 };
 
 zone "master" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "master.db";
@@ -65,7 +65,7 @@ zone "master" {
 };
 
 zone "dynamic" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -73,7 +73,7 @@ zone "dynamic" {
 };
 
 zone "updated" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update { none; };
@@ -81,7 +81,7 @@ zone "updated" {
 };
 
 zone "expired" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -89,15 +89,15 @@ zone "expired" {
 };
 
 zone "retransfer" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "retransfer.bk";
 };
 
 zone "nsec3" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -105,7 +105,7 @@ zone "nsec3" {
 };
 
 zone "externalkey" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -113,16 +113,16 @@ zone "externalkey" {
 };
 
 zone "retransfer3" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "retransfer3.bk";
 };
 
 zone "inactiveksk" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	dnssec-dnskey-kskonly yes;
@@ -130,30 +130,30 @@ zone "inactiveksk" {
 };
 
 zone "inactivezsk" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "inactivezsk.bk";
 };
 
 zone "nokeys" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "nokeys.bk";
 };
 
 zone "delayedkeys" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "delayedkeys.db";
 };
 
 zone "removedkeys-primary" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -162,15 +162,15 @@ zone "removedkeys-primary" {
 };
 
 zone "removedkeys-secondary" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "removedkeys-secondary.bk";
 };
 
 zone "unsupported" {
-	type master;
+	type primary;
 	file "unsupported.db";
 	inline-signing yes;
 	auto-dnssec maintain;

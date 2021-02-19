@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -270,7 +270,8 @@ my @substlib = ("GSSAPI_LIB",
                 "KRB5_LIB",
                 "LIBXML2_LIB",
                 "LIBUV_LIB",
-                "OPENSSL_LIB",
+                "OPENSSL_LIBCRYPTO",
+                "OPENSSL_LIBSSL",
                 "READLINE_LIB",
                 "READLINE_LIBD",
                 "ZLIB_LIB");
@@ -287,7 +288,8 @@ my @substdll = ("COMERR_DLL",
                 "K5SPRT_DLL",
                 "LIBXML2_DLL",
                 "LIBUV_DLL",
-                "OPENSSL_DLL",
+                "OPENSSL_DLLCRYPTO",
+                "OPENSSL_DLLSSL",
                 "WSHELP_DLL",
                 "ZLIB_DLL");
 
@@ -1304,14 +1306,14 @@ if ($use_libuv eq "yes") {
         die "can't find libuv uv.h include\n";
     }
     my $libuv_inc = File::Spec->catdir($libuv_path, "include");
-    my $libuv_libdir = File::Spec->catdir($libuv_path, "Release");
-    my $libuv_lib = File::Spec->catfile($libuv_libdir, "libuv.lib");
-    my $libuv_dll = File::Spec->catfile($libuv_libdir, "libuv.dll");
+    my $libuv_libdir = File::Spec->catdir($libuv_path, "build\\Release");
+    my $libuv_lib = File::Spec->catfile($libuv_libdir, "uv.lib");
+    my $libuv_dll = File::Spec->catfile($libuv_libdir, "uv.dll");
     if (!-f $libuv_lib) {
-       die "can't find libuv.lib library\n";
+       die "can't find uv.lib library\n";
     }
     if (!-f $libuv_dll) {
-       die "can't find libuv.dll library\n";
+       die "can't find uv.dll library\n";
     }
     $configvar{"LIBUV_PATH"} = "$libuv_path";
     $configinc{"LIBUV_INC"} = "$libuv_inc";
@@ -1366,60 +1368,59 @@ if ($use_openssl eq "auto") {
 }
 # falls into (so no else)
 if ($use_openssl eq "yes") {
+    my @dirlist;
     $openssl_path = File::Spec->rel2abs($openssl_path);
     if ($verbose) {
         print "checking for OpenSSL built directory at \"$openssl_path\"\n";
     }
-    my $openssl_new = 0;
     if (!-f File::Spec->catfile($openssl_path,
-                                "inc32\\openssl\\opensslv.h")) {
-        $openssl_new = 1;
-        if (!-f File::Spec->catfile($openssl_path,
-                                "include\\openssl\\opensslv.h")) {
-            die "can't find OpenSSL opensslv.h include\n";
-        }
+                                "include/openssl/opensslv.h")) {
+	die "can't find OpenSSL 1.1 opensslv.h include\n";
     }
-    my $openssl_inc = File::Spec->catdir($openssl_path, "inc32");
-    my $openssl_libdir = File::Spec->catdir($openssl_path, "out32dll");
-    my $openssl_lib = File::Spec->catfile($openssl_libdir, "libeay32.lib");
-    my $openssl_dll = File::Spec->catfile($openssl_libdir, "libeay32.dll");
-    if (!$openssl_new) {
-        # Check libraries are where we expect
-        if (!-f $openssl_lib) {
-            die "can't find OpenSSL libeay32.lib library\n";
-        }
-        if (!-f $openssl_dll) {
-            die "can't find OpenSSL libeay32.dll DLL\n";
-        }
-    } else {
-        # OpenSSL >= 1.1 is easier at the exception of the DLL
-        if ($verbose) {
-            print "new (>= 1.1) OpenSSL version\n";
-        }
-        $openssl_inc = File::Spec->catdir($openssl_path, "include");
-        $openssl_libdir = $openssl_path;
-        $openssl_lib = File::Spec->catfile($openssl_path, "libcrypto.lib");
-        if (!-f $openssl_lib) {
-            die "can't find OpenSSL libcrypto.lib library\n";
-        }
-        opendir DIR, $openssl_path || die "No Directory: $!\n";
-        my @dirlist = grep (/^libcrypto-[^.]+\.dll$/i, readdir(DIR));
-        closedir(DIR);
-        # We must get one file only
-        if (scalar(@dirlist) == 0) {
-            die "can't find OpenSSL libcrypto-*.dll DLL\n";
-        }
-        if (scalar(@dirlist) != 1) {
-            die "find more than one OpenSSL libcrypto-*.dll DLL candidate\n";
-        }
-        $openssl_dll = File::Spec->catdir($openssl_path, "@dirlist[0]");
+    my $openssl_inc = File::Spec->catdir($openssl_path, "include");
+    my $openssl_libdir = $openssl_path;
+    my $openssl_libcrypto = File::Spec->catfile($openssl_path, "libcrypto.lib");
+    my $openssl_libssl = File::Spec->catfile($openssl_libdir, "libssl.lib");
+    my $openssl_dllcrypto = File::Spec->catfile($openssl_libdir, "libcrypto.dll");
+    my $openssl_dllssl = File::Spec->catfile($openssl_libdir, "libssl.dll");
+
+    if (!-f $openssl_libcrypto) {
+	die "can't find OpenSSL libcrypto.lib library\n";
     }
+    opendir DIR, $openssl_path || die "No Directory: $!\n";
+    @dirlist = grep (/^libcrypto-[^.]+\.dll$/i, readdir(DIR));
+    closedir(DIR);
+    # We must get one file only
+    if (scalar(@dirlist) == 0) {
+	die "can't find OpenSSL libcrypto-*.dll DLL\n";
+    }
+    if (scalar(@dirlist) != 1) {
+	die "found more than one OpenSSL libcrypto-*.dll DLL candidate\n";
+    }
+    $openssl_dllcrypto = File::Spec->catdir($openssl_path, "$dirlist[0]");
+
+    if (!-f $openssl_libssl) {
+	die "can't find OpenSSL libssl.lib library\n";
+    }
+    opendir DIR, $openssl_path || die "No Directory: $!\n";
+    @dirlist = grep (/^libssl-[^.]+\.dll$/i, readdir(DIR));
+    closedir(DIR);
+    # We must get one file only
+    if (scalar(@dirlist) == 0) {
+	die "can't find OpenSSL libssl-*.dll DLL\n";
+    }
+    if (scalar(@dirlist) != 1) {
+	die "found more than one OpenSSL libssl-*.dll DLL candidate\n";
+    }
+    $openssl_dllssl = File::Spec->catdir($openssl_path, "$dirlist[0]");
 
     $cryptolib = "openssl";
     $configvar{"OPENSSL_PATH"} = "$openssl_path";
     $configinc{"OPENSSL_INC"} = "$openssl_inc";
-    $configlib{"OPENSSL_LIB"} = "$openssl_lib";
-    $configdll{"OPENSSL_DLL"} = "$openssl_dll";
+    $configlib{"OPENSSL_LIBCRYPTO"} = "$openssl_libcrypto";
+    $configdll{"OPENSSL_DLLCRYPTO"} = "$openssl_dllcrypto";
+    $configlib{"OPENSSL_LIBSSL"} = "$openssl_libssl";
+    $configdll{"OPENSSL_DLLSSL"} = "$openssl_dllssl";
 }
 
 if ($cryptolib eq "openssl") {
@@ -1432,14 +1433,28 @@ if ($cryptolib eq "openssl") {
 
 # check OpenSSL
 if ($use_openssl eq "yes") {
-    if ($verbose) {
-        print "checking whether linking with OpenSSL works\n";
-    }
-    my $dll = $configdll{"OPENSSL_DLL"};
+#prepare the environment
+    my $dll = $configdll{"OPENSSL_DLLCRYPTO"};
     my $ret = `copy "$dll" .`;
     if ($? != 0) {
         die "Can't copy OpenSSL DLL to working directory: $ret\n";
     }
+
+    $dll = $configdll{"OPENSSL_DLLSSL"};
+    $ret = `copy "$dll" .`;
+    if ($? != 0) {
+        die "Can't copy OpenSSL DLL to working directory: $ret\n";
+    }
+
+    my $include = $configinc{"OPENSSL_INC"};
+    my $libcrypto = $configlib{"OPENSSL_LIBCRYPTO"};
+    my $libssl = $configlib{"OPENSSL_LIBSSL"};
+
+# check libcrypto
+    if ($verbose) {
+        print "checking whether linking with OpenSSL libcrypto works\n";
+    }
+
     open F, ">testossl.c" || die $!;
     print F << 'EOF';
 #include <openssl/err.h>
@@ -1452,21 +1467,45 @@ main(void)
 }
 EOF
     close F;
-    my $include = $configinc{"OPENSSL_INC"};
-    my $library = $configlib{"OPENSSL_LIB"};
-    $compret = `cl /nologo /MD /I "$include" testossl.c "$library"`;
-    if (grep { -f and -x } ".\\testossl.exe") {
-        `.\\testossl.exe`;
+
+    $compret = `cl /nologo /MD /I "$include" testossl.c "$libcrypto"`;
+    if (grep { -f and -x } "./testossl.exe") {
+        `./testossl.exe`;
         if ($? != 0) {
-            die "OpenSSL test failed\n";
+            die "OpenSSL libcrypto test failed\n";
         }
     } else {
-        die "can't compile OpenSSL test: $compret\n";
+        die "can't compile OpenSSL libcrypto test: $compret\n";
     }
+
+    if ($verbose) {
+	print "checking whether linking with OpenSSL libssl works\n";
+    }
+
+    open F, ">testossl.c" || die $!;
+    print F << 'EOF';
+#include <openssl/ssl.h>
+
+int
+main(void)
+{
+        SSL_CTX *ctx = SSL_CTX_new(SSLv23_method());
+        SSL_CTX_free(ctx);
+        return(0);
 }
+EOF
+    close F;
+    $compret = `cl /nologo /MD /I "$include" testossl.c "$libcrypto" "$libssl"`;
+    if (grep { -f and -x } "./testossl.exe") {
+        `./testossl.exe`;
+        if ($? != 0) {
+            die "OpenSSL libssl test failed\n";
+        }
+    } else {
+        die "can't compile OpenSSL libssl test: $compret\n";
+    }
 
 # check OpenSSL version
-if ($use_openssl eq "yes") {
     if ($verbose) {
         printf "checking OpenSSL library version\n";
     }
@@ -1486,21 +1525,18 @@ int main() {
 }
 EOF
     close F;
-    my $include = $configinc{"OPENSSL_INC"};
-    my $library = $configlib{"OPENSSL_LIB"};
-    $compret = `cl /nologo /MD /I "$include" testosslv.c "$library"`;
-    if (grep { -f and -x } ".\\testosslv.exe") {
-        `.\\testosslv.exe`;
+
+    $compret = `cl /nologo /MD /I "$include" testosslv.c "$libcrypto"`;
+    if (grep { -f and -x } "./testosslv.exe") {
+        `./testosslv.exe`;
         if ($? != 0) {
             die "OpenSSL version test failed\n";
         }
     } else {
         die "can't compile OpenSSL version test: $compret\n";
     }
-}
 
 # check OpenSSL built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions
-if ($use_openssl eq "yes") {
     if ($verbose) {
         printf "checking OpenSSL built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions\n";
     }
@@ -1520,11 +1556,10 @@ int main() {
 }
 EOF
     close F;
-    my $include = $configinc{"OPENSSL_INC"};
-    my $library = $configlib{"OPENSSL_LIB"};
-    $compret = `cl /nologo /MD /I "$include" testosslfunc.c "$library"`;
-    if (grep { -f and -x } ".\\testosslfunc.exe") {
-        `.\\testosslfunc.exe`;
+
+    $compret = `cl /nologo /MD /I "$include" testosslfunc.c "$libcrypto"`;
+    if (grep { -f and -x } "./testosslfunc.exe") {
+        `./testosslfunc.exe`;
         if ($? == 0) {
             $configdefh{"HAVE_DH_GET0_KEY"} = 1;
             $configdefh{"HAVE_ECDSA_SIG_GET0"} = 1;
@@ -1541,9 +1576,7 @@ EOF
             $configdefh{"HAVE_HMAC_CTX_RESET"} = 1;
         }
     }
-}
 
-if ($use_openssl eq "yes") {
     if ($verbose) {
         print "checking for OpenSSL Ed25519 support\n";
     }
@@ -1564,11 +1597,10 @@ main(void)
 }
 EOF
     close F;
-    my $include = $configinc{"OPENSSL_INC"};
-    my $library = $configlib{"OPENSSL_LIB"};
-    $compret = `cl /nologo /MD /I "$include" tested25519.c "$library"`;
-    if (grep { -f and -x } ".\\tested25519.exe") {
-        `.\\tested25519.exe`;
+
+    $compret = `cl /nologo /MD /I "$include" tested25519.c "$libcrypto"`;
+    if (grep { -f and -x } "./tested25519.exe") {
+        `./tested25519.exe`;
         if ($? == 0) {
             $configdefh{"HAVE_OPENSSL_ED25519"} = 1;
         } else {
@@ -1582,9 +1614,7 @@ EOF
             print "disabling Ed25519\n";
         }
     }
-}
 
-if ($use_openssl eq "yes") {
     if ($verbose) {
         print "checking for OpenSSL Ed448 support\n";
     }
@@ -1605,11 +1635,10 @@ main(void)
 }
 EOF
     close F;
-    my $include = $configinc{"OPENSSL_INC"};
-    my $library = $configlib{"OPENSSL_LIB"};
-    $compret = `cl /nologo /MD /I "$include" tested448.c "$library"`;
-    if (grep { -f and -x } ".\\tested448.exe") {
-        `.\\tested448.exe`;
+
+    $compret = `cl /nologo /MD /I "$include" tested448.c "$libcrypto"`;
+    if (grep { -f and -x } "./tested448.exe") {
+        `./tested448.exe`;
         if ($? == 0) {
             $configdefh{"HAVE_OPENSSL_ED448"} = 1;
         } else {
@@ -2438,18 +2467,7 @@ sub setupproject {
 sub makeversion {
     # List of directories with version files
 
-    my @dirlist = ("isc", "dns", "ns", "isccc", "isccfg", "bind9", "irs");
-    my %LibMacros = (
-        "bind9"   => "LIBBIND9_EXPORTS",
-        "dns"     => "LIBDNS_EXPORTS",
-        "irs"     => "LIBIRS_EXPORTS",
-        "isc"     => "LIBISC_EXPORTS",
-        "isccc"   => "LIBISCCC_EXPORTS",
-        "isccfg"  => "LIBISCCFG_EXPORTS",
-        "ns"      => "LIBNS_EXPORTS");
-    my @VersionNames = ("LIBINTERFACE", "LIBREVISION", "LIBAGE");
     my $Version;
-    my %ApiVersions;
     my $Mapapi;
     my $versionfile = "versions.h";
     my $versionpath = "..\\$versionfile";
@@ -2524,30 +2542,6 @@ sub makeversion {
     print O
         "#define MAJOR \"$Versions{'MAJORVER'}.$Versions{'MINORVER'}\"\n\n";
     print O "#define MAPAPI \"$Mapapi\"\n\n";
-
-    my $dir;
-    my $apifile;
-    foreach $dir (@dirlist) {
-        $apifile = "..\\lib\\$dir\\api";
-        open A, $apifile || die $!;
-        while (<A>) {
-            chomp;
-            ($data) = split(/\#/);
-            if ($data) {
-                ($name, $value) = split(/=/, $data);
-                $name =~ s/\s+//;
-                $value =~ s/\s+//;
-                $ApiVersions{$name} = $value;
-            }
-        }
-        close A;
-
-        print O "\n#ifdef $LibMacros{$dir}\n";
-        foreach $name (@VersionNames) {
-            print O "#define $name\t$ApiVersions{$name}\n";
-        }
-        print O "#endif\n\n";
-    }
 
     print O "#endif /* VERSIONS_H */\n";
     close O;
@@ -2652,12 +2646,14 @@ sub makeinstallfile {
     print LOUT "libdns.dll-BCFT\n";
     print LOUT "libirs.dll-BCFT\n";
     print LOUT "libns.dll-BCFT\n";
-    print LOUT "libuv.dll-BCFT\n";
+    print LOUT "uv.dll-BCFT\n";
     if ($use_openssl eq "yes") {
         my $v;
         my $d;
         my $name;
-        ($v, $d, $name) =File::Spec->splitpath($configdll{"OPENSSL_DLL"});
+        ($v, $d, $name) =File::Spec->splitpath($configdll{"OPENSSL_DLLCRYPTO"});
+        print LOUT "${name}-BCFT\n";
+        ($v, $d, $name) =File::Spec->splitpath($configdll{"OPENSSL_DLLSSL"});
         print LOUT "${name}-BCFT\n";
     }
     if ($use_libxml2 eq "yes") {

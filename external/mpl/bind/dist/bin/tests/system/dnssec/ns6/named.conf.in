@@ -31,7 +31,7 @@ zone "." {
 };
 
 zone "optout-tld" {
-	type master;
+	type primary;
 	file "optout-tld.db.signed";
 };
 

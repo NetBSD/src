@@ -30,11 +30,11 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "missing" {
-	type master;
+	type primary;
 	file "missing.db";
 };

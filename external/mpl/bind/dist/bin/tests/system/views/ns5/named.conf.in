@@ -37,6 +37,6 @@ zone "." {
 };
 
 zone "child.clone" {
-	type master;
+	type primary;
 	file "child.clone.db";
 };

@@ -32,51 +32,51 @@ controls {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	masterfile-format raw;
 	file "example.db.raw";
 };
 
 zone "compat-example" {
-	type master;
+	type primary;
 	masterfile-format raw;
 	file "example.db.compat";
 };
 
 zone "transfer1" {
-	type master;
+	type primary;
 	file "example.db";
 	allow-transfer { any; };
 };
 
 zone "transfer2" {
-	type master;
+	type primary;
 	file "example.db";
 	allow-transfer { any; };
 };
 
 zone "transfer3" {
-	type master;
+	type primary;
 	file "example.db";
 	allow-transfer { any; };
 };
 
 zone "transfer4" {
-	type master;
+	type primary;
 	file "example.db";
 	allow-transfer { any; };
 };
 
 
 zone "large" {
-	type master;
+	type primary;
 	file "large.db.raw";
 	masterfile-format raw;
 	allow-transfer { any; };
 };
 
 zone "signed" {
-	type master;
+	type primary;
 	file "signed.db.map";
 	masterfile-format map;
 	allow-transfer { any; };

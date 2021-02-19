@@ -23,19 +23,19 @@ options {
 
 view main in {
 	zone example.net {
-		type master;
+		type primary;
 		file "example.net.db";
 	};
 
 	zone example.com {
-		type master;
+		type primary;
 		file "example.com.db";
 	};
 };
 
 view alt chaos {
 	zone example.chaos chaos {
-		type master;
+		type primary;
 		file "chaos.db";
 	};
 };

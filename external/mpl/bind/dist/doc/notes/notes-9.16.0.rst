@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -36,7 +36,7 @@ New Features
 
    When used with the keyword ``initial-key``, ``trust-anchors`` has the
    same behavior as ``managed-keys``, i.e., it configures a trust anchor
-   that is to be maintained via RFC 5011.
+   that is to be maintained via :rfc:`5011`.
 
    When used with the new keyword ``static-key``, ``trust-anchors`` has
    the same behavior as ``trusted-keys``, i.e., it configures a
@@ -51,8 +51,8 @@ New Features
 
    As with the ``initial-key`` and ``static-key`` keywords,
    ``initial-ds`` configures a dynamic trust anchor to be maintained via
-   RFC 5011, and ``static-ds`` configures a permanent trust anchor. [GL
-   #6] [GL #622]
+   :rfc:`5011`, and ``static-ds`` configures a permanent trust anchor.
+   [GL #6] [GL #622]
 
 -  ``dig``, ``mdig`` and ``delv`` can all now take a ``+yaml`` option to
    print output in a detailed YAML format. [GL #1145]
@@ -64,7 +64,8 @@ New Features
 
 -  ``dig`` now accepts a new command line option, ``+[no]expandaaaa``,
    which causes the IPv6 addresses in AAAA records to be printed in full
-   128-bit notation rather than the default RFC 5952 format. [GL #765]
+   128-bit notation rather than the default :rfc:`5952` format.
+   [GL #765]
 
 -  Statistics channel groups can now be toggled. [GL #1030]
 
@@ -74,10 +75,10 @@ Feature Changes
 -  When static and managed DNSSEC keys were both configured for the same
    name, or when a static key was used to configure a trust anchor for
    the root zone and ``dnssec-validation`` was set to the default value
-   of ``auto``, automatic RFC 5011 key rollovers would be disabled. This
-   combination of settings was never intended to work, but there was no
-   check for it in the parser. This has been corrected, and it is now a
-   fatal configuration error. [GL #868]
+   of ``auto``, automatic :rfc:`5011` key rollovers would be disabled.
+   This combination of settings was never intended to work, but there
+   was no check for it in the parser. This has been corrected, and it is
+   now a fatal configuration error. [GL #868]
 
 -  DS and CDS records are now generated with SHA-256 digests only,
    instead of both SHA-1 and SHA-256. This affects the default output of
@@ -91,7 +92,7 @@ Feature Changes
 -  ``named`` will now log a warning if a static key is configured for
    the root zone. [GL #6]
 
--  A SipHash 2-4 based DNS Cookie (RFC 7873) algorithm has been added
+-  A SipHash 2-4 based DNS Cookie (:rfc:`7873`) algorithm has been added
    and made default. Old non-default HMAC-SHA based DNS Cookie
    algorithms have been removed, and only the default AES algorithm is
    being kept for legacy reasons. This change has no operational impact

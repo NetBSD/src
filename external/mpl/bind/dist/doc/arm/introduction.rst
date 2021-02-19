@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -65,41 +55,29 @@ information related to BIND and the Domain Name System.
 Conventions Used in This Document
 ---------------------------------
 
-In this document, we use the following general typographic conventions:
+In this document, we generally use ``Fixed Width`` text to indicate the
+following types of information:
 
-+-------------------------------------+--------------------------------+
-| *To describe:*                      | *We use the style:*            |
-+-------------------------------------+--------------------------------+
-| a pathname, filename, URL,          | ``Fixed width``                |
-| hostname, mailing list name, or new |                                |
-| term or concept                     |                                |
-+-------------------------------------+--------------------------------+
-| literal user input                  | ``Fixed Width Bold``           |
-+-------------------------------------+--------------------------------+
-| program output                      | ``Fixed Width``                |
-+-------------------------------------+--------------------------------+
+- pathnames
+- filenames
+- URLs
+- hostnames
+- mailing list names
+- new terms or concepts
+- literal user input
+- program output
+- keywords
+- variables
 
-The following conventions are used in descriptions of the BIND
-configuration file:
-
-+-------------------------------------+--------------------------------+
-| *To describe:*                      | *We use the style:*            |
-+-------------------------------------+--------------------------------+
-| keywords                            | ``Fixed Width``                |
-+-------------------------------------+--------------------------------+
-| variables                           | ``Fixed Width``                |
-+-------------------------------------+--------------------------------+
-| Optional input                      | [Text is enclosed in square    |
-|                                     | brackets]                      |
-+-------------------------------------+--------------------------------+
+Text in "quotes," **bold**, or *italics* is also used for emphasis or clarity.
 
 .. _dns_overview:
 
 The Domain Name System (DNS)
 ----------------------------
 
-The purpose of this document is to explain the installation and upkeep
-of the BIND (Berkeley Internet Name Domain) software package, and we
+This document explains the installation and upkeep
+of the BIND (Berkeley Internet Name Domain) software package. We
 begin by reviewing the fundamentals of the Domain Name System (DNS) as
 they relate to BIND.
 
@@ -132,12 +110,12 @@ written form as a string of labels listed from right to left and
 separated by dots. A label need only be unique within its parent domain.
 
 For example, a domain name for a host at the company *Example, Inc.*
-could be ``ourhost.example.com``, where ``com`` is the top level domain
+could be ``ourhost.example.com``, where ``com`` is the top-level domain
 to which ``ourhost.example.com`` belongs, ``example`` is a subdomain of
 ``com``, and ``ourhost`` is the name of the host.
 
 For administrative purposes, the name space is partitioned into areas
-called *zones*, each starting at a node and extending down to the leaf
+called *zones*, each starting at a node and extending down to the "leaf"
 nodes or to nodes where other zones start. The data for each zone is
 stored in a *name server*, which answers queries about the zone using
 the *DNS protocol*.
@@ -163,8 +141,8 @@ tree except those which are delegated to other zones. A delegation point
 is marked by one or more *NS records* in the parent zone, which should
 be matched by equivalent NS records at the root of the delegated zone.
 
-For instance, consider the ``example.com`` domain which includes names
-such as ``host.aaa.example.com`` and ``host.bbb.example.com`` even
+For instance, consider the ``example.com`` domain, which includes names
+such as ``host.aaa.example.com`` and ``host.bbb.example.com``, even
 though the ``example.com`` zone includes only delegations for the
 ``aaa.example.com`` and ``bbb.example.com`` zones. A zone can map
 exactly to a single domain, but could also include only part of a
@@ -172,14 +150,14 @@ domain, the rest of which could be delegated to other name servers.
 Every name in the DNS tree is a *domain*, even if it is *terminal*, that
 is, has no *subdomains*. Every subdomain is a domain and every domain
 except the root is also a subdomain. The terminology is not intuitive
-and we suggest that you read :rfc:`1033`, :rfc:`1034` and :rfc:`1035` to gain a complete
+and we suggest reading :rfc:`1033`, :rfc:`1034`, and :rfc:`1035` to gain a complete
 understanding of this difficult and subtle topic.
 
-Though BIND is called a "domain name server", it deals primarily in
-terms of zones. The master and slave declarations in the ``named.conf``
-file specify zones, not domains. When you ask some other site if it is
-willing to be a slave server for your *domain*, you are actually asking
-for slave service for some collection of zones.
+Though BIND 9 is called a "domain name server," it deals primarily in
+terms of zones. The ``primary`` and ``secondary`` declarations in the ``named.conf``
+file specify zones, not domains. When BIND asks some other site if it is
+willing to be a secondary server for a *domain*, it is actually asking
+for secondary service for some collection of *zones*.
 
 .. _auth_servers:
 
@@ -197,11 +175,11 @@ when debugging DNS configurations using tools like ``dig`` (:ref:`diagnostic_too
 
 .. _primary_master:
 
-The Primary Master
+The Primary Server
 ^^^^^^^^^^^^^^^^^^
 
-The authoritative server where the master copy of the zone data is
-maintained is called the *primary master* server, or simply the
+The authoritative server, where the main copy of the zone data is
+maintained, is called the *primary* (formerly *master*) server, or simply the
 *primary*. Typically it loads the zone contents from some local file
 edited by humans or perhaps generated mechanically from some other local
 file which is edited by humans. This file is called the *zone file* or
@@ -210,21 +188,21 @@ file which is edited by humans. This file is called the *zone file* or
 In some cases, however, the master file may not be edited by humans at
 all, but may instead be the result of *dynamic update* operations.
 
-.. _slave_server:
+.. _secondary_server:
 
-Slave Servers
-^^^^^^^^^^^^^
+Secondary Servers
+^^^^^^^^^^^^^^^^^
 
-The other authoritative servers, the *slave* servers (also known as
-*secondary* servers) load the zone contents from another server using a
-replication process known as a *zone transfer*. Typically the data are
-transferred directly from the primary master, but it is also possible to
-transfer it from another slave. In other words, a slave server may
-itself act as a master to a subordinate slave server.
+The other authoritative servers, the *secondary* servers (formerly known as
+*slave* servers) load the zone contents from another server using a
+replication process known as a *zone transfer*. Typically the data is
+transferred directly from the primary, but it is also possible to
+transfer it from another secondary. In other words, a secondary server may
+itself act as a primary to a subordinate secondary server.
 
-Periodically, the slave server must send a refresh query to determine
+Periodically, the secondary server must send a refresh query to determine
 whether the zone contents have been updated. This is done by sending a
-query for the zone's SOA record and checking whether the SERIAL field
+query for the zone's Start of Authority (SOA) record and checking whether the SERIAL field
 has been updated; if so, a new transfer request is initiated. The timing
 of these refresh queries is controlled by the SOA REFRESH and RETRY
 fields, but can be overridden with the ``max-refresh-time``,
@@ -232,32 +210,32 @@ fields, but can be overridden with the ``max-refresh-time``,
 options.
 
 If the zone data cannot be updated within the time specified by the SOA
-EXPIRE option (up to a hard-coded maximum of 24 weeks) then the slave
-zone expires and will no longer respond to queries.
+EXPIRE option (up to a hard-coded maximum of 24 weeks), the secondary
+zone expires and no longer responds to queries.
 
 .. _stealth_server:
 
 Stealth Servers
 ^^^^^^^^^^^^^^^
 
-Usually all of the zone's authoritative servers are listed in NS records
+Usually, all of the zone's authoritative servers are listed in NS records
 in the parent zone. These NS records constitute a *delegation* of the
 zone from the parent. The authoritative servers are also listed in the
-zone file itself, at the *top level* or *apex* of the zone. You can list
-servers in the zone's top-level NS records that are not in the parent's
-NS delegation, but you cannot list servers in the parent's delegation
-that are not present at the zone's top level.
+zone file itself, at the *top level* or *apex* of the zone.
+Servers that are not in the parent's
+NS delegation can be listed in the zone's top-level NS records, but servers that are not present at the zone's top level
+cannot be listed in the parent's delegation.
 
 A *stealth server* is a server that is authoritative for a zone but is
 not listed in that zone's NS records. Stealth servers can be used for
-keeping a local copy of a zone to speed up access to the zone's records
+keeping a local copy of a zone, to speed up access to the zone's records
 or to make sure that the zone is available even if all the "official"
 servers for the zone are inaccessible.
 
-A configuration where the primary master server itself is a stealth
+A configuration where the primary server itself is a stealth
 server is often referred to as a "hidden primary" configuration. One use
-for this configuration is when the primary master is behind a firewall
-and therefore unable to communicate directly with the outside world.
+for this configuration is when the primary is behind a firewall
+and is therefore unable to communicate directly with the outside world.
 
 .. _cache_servers:
 
@@ -278,7 +256,7 @@ intimately connected, the terms *recursive server* and *caching server*
 are often used synonymously.
 
 The length of time for which a record may be retained in the cache of a
-caching name server is controlled by the Time To Live (TTL) field
+caching name server is controlled by the Time-To-Live (TTL) field
 associated with each resource record.
 
 .. _forwarder:
@@ -291,22 +269,34 @@ recursive lookup itself. Instead, it can *forward* some or all of the
 queries that it cannot satisfy from its cache to another caching name
 server, commonly referred to as a *forwarder*.
 
-There may be one or more forwarders, and they are queried in turn until
-the list is exhausted or an answer is found. Forwarders are typically
-used when you do not wish all the servers at a given site to interact
-directly with the rest of the Internet servers. A typical scenario would
-involve a number of internal DNS servers and an Internet firewall.
-Servers unable to pass packets through the firewall would forward to the
-server that can do it, and that server would query the Internet DNS
-servers on the internal server's behalf.
+Forwarders are typically used when an administrator does not wish for
+all the servers at a given site to interact directly with the rest of
+the Internet. For example, a common scenario is when multiple internal
+DNS servers are behind an Internet firewall. Servers behind the firewall
+forward their requests to the server with external access, which queries
+Internet DNS servers on the internal servers' behalf.
+
+Another scenario (largely now superseded by Response Policy Zones) is to
+send queries first to a custom server for RBL processing before
+forwarding them to the wider Internet.
+
+There may be one or more forwarders in a given setup. The order in which
+the forwarders are listed in ``named.conf`` does not determine the
+sequence in which they are queried; rather, ``named`` uses the response
+times from previous queries to select the server that is likely to
+respond the most quickly. A server that has not yet been queried is
+given an initial small random response time to ensure that it is tried
+at least once. Dynamic adjustment of the recorded response times ensures
+that all forwarders are queried, even those with slower response times.
+This permits changes in behavior based on server responsiveness.
 
 .. _multi_role:
 
 Name Servers in Multiple Roles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The BIND name server can simultaneously act as a master for some zones,
-a slave for other zones, and as a caching (recursive) server for a set
+The BIND name server can simultaneously act as a primary for some zones,
+a secondary for other zones, and as a caching (recursive) server for a set
 of local clients.
 
 However, since the functions of authoritative name service and

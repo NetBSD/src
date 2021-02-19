@@ -48,6 +48,7 @@ options {
 	    zone "bl-tcp-only"	policy tcp-only;
 	    zone "bl.tld2";
 	    zone "manual-update-rpz";
+	    zone "mixed-case-rpz";
 	}
 	add-soa yes
 	min-ns-dots 0
@@ -75,48 +76,54 @@ controls {
 
 zone "." { type hint; file "hints"; };
 
-zone "bl."		{type master; file "bl.db";
+zone "bl."		{type primary; file "bl.db";
 				allow-update {any;};};
-zone "bl-2."		{type master; file "bl-2.db";
+zone "bl-2."		{type primary; file "bl-2.db";
 				allow-update {any;};};
-zone "bl-given."	{type master; file "bl-given.db";
+zone "bl-given."	{type primary; file "bl-given.db";
 				allow-update {any;};};
-zone "bl-passthru."	{type master; file "bl-passthru.db";
+zone "bl-passthru."	{type primary; file "bl-passthru.db";
 				allow-update {any;};};
-zone "bl-no-op."	{type master; file "bl-no-op.db";
+zone "bl-no-op."	{type primary; file "bl-no-op.db";
 				allow-update {any;};};
-zone "bl-disabled."	{type master; file "bl-disabled.db";
+zone "bl-disabled."	{type primary; file "bl-disabled.db";
 				allow-update {any;};};
-zone "bl-nodata."	{type master; file "bl-nodata.db";
+zone "bl-nodata."	{type primary; file "bl-nodata.db";
 				allow-update {any;};};
-zone "bl-nxdomain."	{type master; file "bl-nxdomain.db";
+zone "bl-nxdomain."	{type primary; file "bl-nxdomain.db";
 				allow-update {any;};};
-zone "bl-cname."	{type master; file "bl-cname.db";
+zone "bl-cname."	{type primary; file "bl-cname.db";
 				allow-update {any;};};
-zone "bl-wildcname."	{type master; file "bl-wildcname.db";
+zone "bl-wildcname."	{type primary; file "bl-wildcname.db";
 				allow-update {any;};};
-zone "bl-garden."	{type master; file "bl-garden.db";
+zone "bl-garden."	{type primary; file "bl-garden.db";
 				allow-update {any;};};
-zone "bl-drop."		{type master; file "bl-drop.db";
+zone "bl-drop."		{type primary; file "bl-drop.db";
 				allow-update {any;};};
-zone "bl-tcp-only."	{type master; file "bl-tcp-only.db";
+zone "bl-tcp-only."	{type primary; file "bl-tcp-only.db";
 				allow-update {any;};};
 
-zone "bl.tld2."		{type slave; file "bl.tld2.db"; masters {10.53.0.2;};
+zone "bl.tld2."		{type secondary; file "bl.tld2.db"; primaries {10.53.0.2;};
 				request-ixfr no; masterfile-format text;};
 
-zone "crash1.tld2"	{type master; file "crash1"; notify no;};
-zone "crash2.tld3."	{type master; file "crash2"; notify no;};
+zone "crash1.tld2"	{type primary; file "crash1"; notify no;};
+zone "crash2.tld3."	{type primary; file "crash2"; notify no;};
 
 zone "manual-update-rpz." {
-	type master;
+	type primary;
 	file "manual-update-rpz.db";
+	notify no;
+};
+
+zone "mixed-case-rpz." {
+	type primary;
+	file "mixed-case-rpz.db";
 	notify no;
 };
 
 zone "fast-expire." {
 	type secondary;
 	file "fast-expire.db";
-	masters { 10.53.0.5; };
+	primaries { 10.53.0.5; };
 	notify no;
 };

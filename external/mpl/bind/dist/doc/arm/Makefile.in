@@ -27,6 +27,7 @@ SPHINXBUILD = @SPHINX_BUILD@
 SPHINXBUILDDIR = ${builddir}/_build
 
 common_SPHINXOPTS =	\
+	-W		\
 	-a		\
 	-v		\
 	-c "${abs_srcdir}"
@@ -56,10 +57,10 @@ man:: $(man1_MANS) $(man5_MANS) $(man8_MANS) @PKCS11_MANS@
 doc:: @HTMLTARGET@ @PDFTARGET@
 
 html dirhtml:
-	$(SPHINXBUILD) -b $@ $(ALLSPHINXOPTS) "$(SPHINXBUILDDIR)"/$@
+	$(SPHINXBUILD) -b $@ -d "$(SPHINXBUILDDIR)"/.doctrees/$@ $(ALLSPHINXOPTS) "$(SPHINXBUILDDIR)"/$@
 
 pdf:
-	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) "$(SPHINXBUILDDIR)"/latex
+	$(SPHINXBUILD) -b latex -d "$(SPHINXBUILDDIR)"/.doctrees/$@ $(ALLSPHINXOPTS) "$(SPHINXBUILDDIR)"/latex
 	make -C "$(SPHINXBUILDDIR)"/latex
 	cp "$(SPHINXBUILDDIR)"/latex/Bv9ARM.pdf "${builddir}"
 

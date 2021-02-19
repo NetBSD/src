@@ -14,6 +14,15 @@ key rndc_key {
 	algorithm hmac-sha256;
 };
 
+key foo {
+	secret "aaaaaaaaaaaa";
+	algorithm hmac-sha256;
+};
+
+server 10.53.0.10 {
+	keys foo;
+};
+
 controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
@@ -44,6 +53,6 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };

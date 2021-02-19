@@ -7,7 +7,7 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-; master for slave RPZ zone
+; primary for secondary RPZ zone
 
 $TTL	3600
 @		SOA	rpz.tld2.  hostmaster.ns.tld2. ( 1 3600 1200 604800 60 )

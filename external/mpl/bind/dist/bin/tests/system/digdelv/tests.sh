@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -941,6 +941,67 @@ if [ -x "$DIG" ] ; then
   dig_with_opts @10.53.0.6 +tries=1 +time=2 a a.example > dig.out.test$n && ret=1
   grep 'reply from unexpected source' dig.out.test$n > /dev/null || ret=1
   grep "status: NOERROR" < dig.out.test$n > /dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig +bufsize=0 disables EDNS ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 a.example +bufsize=0 +qr > dig.out.test$n 2>&1 || ret=1
+  grep "EDNS:" dig.out.test$n > /dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig +bufsize=0 +edns sends EDNS with bufsize of 0 ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 a.example +bufsize=0 +edns +qr > dig.out.test$n 2>&1 || ret=1
+  grep -E 'EDNS:.* udp: 0\r{0,1}$' dig.out.test$n > /dev/null|| ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig +bufsize restores default bufsize ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 a.example +bufsize=0 +bufsize +qr > dig.out.test$n 2>&1 || ret=1
+  lines1232=`grep "EDNS:.* udp: 1232" dig.out.test$n | wc -l`
+  lines4096=`grep "EDNS:.* udp: 4096" dig.out.test$n | wc -l`
+  test $lines1232 -eq 1 || ret=1
+  test $lines4096 -eq 1 || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig without -u displays 'Query time' in millseconds ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 a.example > dig.out.test$n 2>&1 || ret=1
+  grep ';; Query time: [0-9][0-9]* msec' dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig -u displays 'Query time' in microseconds ($n)"
+  ret=0
+  dig_with_opts -u @10.53.0.3 a.example > dig.out.test$n 2>&1 || ret=1
+  grep ';; Query time: [0-9][0-9]* usec' dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig +yaml without -u displays timestamps in milliseconds ($n)"
+  ret=0
+  dig_with_opts +yaml @10.53.0.3 a.example > dig.out.test$n 2>&1 || ret=1
+  grep 'query_time: !!timestamp ....-..-..T..:..:..\....Z' dig.out.test$n >/dev/null || ret=1
+  grep 'response_time: !!timestamp ....-..-..T..:..:..\....Z' dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig -u +yaml displays timestamps in microseconds ($n)"
+  ret=0
+  dig_with_opts -u +yaml @10.53.0.3 a.example > dig.out.test$n 2>&1 || ret=1
+  grep 'query_time: !!timestamp ....-..-..T..:..:..\.......Z' dig.out.test$n >/dev/null || ret=1
+  grep 'response_time: !!timestamp ....-..-..T..:..:..\.......Z' dig.out.test$n >/dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 

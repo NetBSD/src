@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -40,7 +40,7 @@ Description
 Until BIND 9.12, this feature was implemented natively in ``named`` and
 enabled with the ``filter-aaaa`` ACL and the ``filter-aaaa-on-v4`` and
 ``filter-aaaa-on-v6`` options. These options are now deprecated in
-``named.conf``, but can be passed as parameters to the
+``named.conf`` but can be passed as parameters to the
 ``filter-aaaa.so`` plugin, for example:
 
 ::
@@ -60,22 +60,22 @@ necessary.
 Note: This mechanism can erroneously cause other servers not to give
 AAAA records to their clients. If a recursing server with both IPv6 and
 IPv4 network connections queries an authoritative server using this
-mechanism via IPv4, it will be denied AAAA records even if its client is
+mechanism via IPv4, it is denied AAAA records even if its client is
 using IPv6.
 
 Options
 ~~~~~~~
 
 ``filter-aaaa``
-   Specifies a list of client addresses for which AAAA filtering is to
+   This option specifies a list of client addresses for which AAAA filtering is to
    be applied. The default is ``any``.
 
 ``filter-aaaa-on-v4``
-   If set to ``yes``, the DNS client is at an IPv4 address, in
-   ``filter-aaaa``, and if the response does not include DNSSEC
+   If set to ``yes``, this option indicates that the DNS client is at an IPv4 address, in
+   ``filter-aaaa``. If the response does not include DNSSEC
    signatures, then all AAAA records are deleted from the response. This
-   filtering applies to all responses and not only authoritative
-   responses.
+   filtering applies to all responses, not only authoritative
+   ones.
 
    If set to ``break-dnssec``, then AAAA records are deleted even when
    DNSSEC is enabled. As suggested by the name, this causes the response
@@ -83,13 +83,13 @@ Options
    deletions.
 
    This mechanism can erroneously cause other servers not to give AAAA
-   records to their clients. A recursing server with both IPv6 and IPv4
-   network connections that queries an authoritative server using this
-   mechanism via IPv4 will be denied AAAA records even if its client is
+   records to their clients. If a recursing server with both IPv6 and IPv4
+   network connections queries an authoritative server using this
+   mechanism via IPv4, it is denied AAAA records even if its client is
    using IPv6.
 
 ``filter-aaaa-on-v6``
-   Identical to ``filter-aaaa-on-v4``, except it filters AAAA responses
+   This option is identical to ``filter-aaaa-on-v4``, except that it filters AAAA responses
    to queries from IPv6 clients instead of IPv4 clients. To filter all
    responses, set both options to ``yes``.
 

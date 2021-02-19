@@ -52,220 +52,220 @@ to direct use of \fBdnssec\-keygen\fP\&.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-\fB\-3\fP
-Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this
+.B \fB\-3\fP
+This option uses an NSEC3\-capable algorithm to generate a DNSSEC key. If this
 option is used with an algorithm that has both NSEC and NSEC3
-versions, then the NSEC3 version will be used; for example,
+versions, then the NSEC3 version is selected; for example,
 \fBdnssec\-keygen \-3a RSASHA1\fP specifies the NSEC3RSASHA1 algorithm.
 .TP
-\fB\-a\fP algorithm
-Selects the cryptographic algorithm. For DNSSEC keys, the value of
+.B \fB\-a algorithm\fP
+This option selects the cryptographic algorithm. For DNSSEC keys, the value of
 \fBalgorithm\fP must be one of RSASHA1, NSEC3RSASHA1, RSASHA256,
-RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519 or ED448. For
-TKEY, the value must be DH (Diffie Hellman); specifying his value
-will automatically set the \fB\-T KEY\fP option as well.
+RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448. For
+TKEY, the value must be DH (Diffie\-Hellman); specifying this value
+automatically sets the \fB\-T KEY\fP option as well.
 .sp
-These values are case insensitive. In some cases, abbreviations are
+These values are case\-insensitive. In some cases, abbreviations are
 supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384 for
 ECDSAP384SHA384. If RSASHA1 is specified along with the \fB\-3\fP
-option, then NSEC3RSASHA1 will be used instead.
+option, NSEC3RSASHA1 is used instead.
 .sp
 This parameter \fImust\fP be specified except when using the \fB\-S\fP
 option, which copies the algorithm from the predecessor key.
 .sp
 In prior releases, HMAC algorithms could be generated for use as TSIG
-keys, but that feature has been removed as of BIND 9.13.0. Use
+keys, but that feature was removed in BIND 9.13.0. Use
 \fBtsig\-keygen\fP to generate TSIG keys.
 .TP
-\fB\-b\fP keysize
-Specifies the number of bits in the key. The choice of key size
-depends on the algorithm used. RSA keys must be between 1024 and 4096
-bits. Diffie Hellman keys must be between 128 and 4096 bits. Elliptic
-curve algorithms don\(aqt need this parameter.
+.B \fB\-b keysize\fP
+This option specifies the number of bits in the key. The choice of key size
+depends on the algorithm used: RSA keys must be between 1024 and 4096
+bits; Diffie\-Hellman keys must be between 128 and 4096 bits. Elliptic
+curve algorithms do not need this parameter.
 .sp
 If the key size is not specified, some algorithms have pre\-defined
-defaults. For example, RSA keys for use as DNSSEC zone signing keys
-have a default size of 1024 bits; RSA keys for use as key signing
+defaults. For example, RSA keys for use as DNSSEC zone\-signing keys
+have a default size of 1024 bits; RSA keys for use as key\-signing
 keys (KSKs, generated with \fB\-f KSK\fP) default to 2048 bits.
 .TP
-\fB\-C\fP
-Compatibility mode: generates an old\-style key, without any timing
-metadata. By default, \fBdnssec\-keygen\fP will include the key\(aqs
-creation date in the metadata stored with the private key, and other
-dates may be set there as well (publication date, activation date,
-etc). Keys that include this data may be incompatible with older
+.B \fB\-C\fP
+This option enables compatibility mode, which generates an old\-style key, without any timing
+metadata. By default, \fBdnssec\-keygen\fP includes the key\(aqs
+creation date in the metadata stored with the private key; other
+dates may be set there as well, including publication date, activation date,
+etc. Keys that include this data may be incompatible with older
 versions of BIND; the \fB\-C\fP option suppresses them.
 .TP
-\fB\-c\fP class
-Indicates that the DNS record containing the key should have the
+.B \fB\-c class\fP
+This option indicates that the DNS record containing the key should have the
 specified class. If not specified, class IN is used.
 .TP
-\fB\-d\fP bits
-Key size in bits. For the algorithms RSASHA1, NSEC3RSASA1, RSASHA256 and
-RSASHA512 the key size must be in range 1024\-4096.  DH size is between 128
-and 4096. This option is ignored for algorithms ECDSAP256SHA256,
-ECDSAP384SHA384, ED25519 and ED448.
+.B \fB\-d bits\fP
+This option specifies the key size in bits. For the algorithms RSASHA1, NSEC3RSASA1, RSASHA256, and
+RSASHA512 the key size must be between 1024 and 4096 bits; DH size is between 128
+and 4096 bits. This option is ignored for algorithms ECDSAP256SHA256,
+ECDSAP384SHA384, ED25519, and ED448.
 .TP
-\fB\-E\fP engine
-Specifies the cryptographic hardware to use, when applicable.
+.B \fB\-E engine\fP
+This option specifies the cryptographic hardware to use, when applicable.
 .sp
-When BIND is built with OpenSSL PKCS#11 support, this defaults to the
-string "pkcs11", which identifies an OpenSSL engine that can drive a
-cryptographic accelerator or hardware service module. When BIND is
-built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it
+When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
+engine identifier that drives the cryptographic accelerator or
+hardware service module (usually \fBpkcs11\fP). When BIND is
+built with native PKCS#11 cryptography (\fB\-\-enable\-native\-pkcs11\fP), it
 defaults to the path of the PKCS#11 provider library specified via
-"\-\-with\-pkcs11".
+\fB\-\-with\-pkcs11\fP\&.
 .TP
-\fB\-f\fP flag
-Set the specified flag in the flag field of the KEY/DNSKEY record.
-The only recognized flags are KSK (Key Signing Key) and REVOKE.
+.B \fB\-f flag\fP
+This option sets the specified flag in the flag field of the KEY/DNSKEY record.
+The only recognized flags are KSK (Key\-Signing Key) and REVOKE.
 .TP
-\fB\-G\fP
-Generate a key, but do not publish it or sign with it. This option is
-incompatible with \-P and \-A.
+.B \fB\-G\fP
+This option generates a key, but does not publish it or sign with it. This option is
+incompatible with \fB\-P\fP and \fB\-A\fP\&.
 .TP
-\fB\-g\fP generator
-If generating a Diffie Hellman key, use this generator. Allowed
+.B \fB\-g generator\fP
+This option indicates the generator to use if generating a Diffie\-Hellman key. Allowed
 values are 2 and 5. If no generator is specified, a known prime from
-\fI\%RFC 2539\fP will be used if possible; otherwise the default is 2.
+\fI\%RFC 2539\fP is used if possible; otherwise the default is 2.
 .TP
-\fB\-h\fP
-Prints a short summary of the options and arguments to
+.B \fB\-h\fP
+This option prints a short summary of the options and arguments to
 \fBdnssec\-keygen\fP\&.
 .TP
-\fB\-K\fP directory
-Sets the directory in which the key files are to be written.
+.B \fB\-K directory\fP
+This option sets the directory in which the key files are to be written.
 .TP
-\fB\-k\fP policy
-Create keys for a specific dnssec\-policy.  If a policy uses multiple keys,
-\fBdnssec\-keygen\fP will generate multiple keys.  This will also
-create a ".state" file to keep track of the key state.
+.B \fB\-k policy\fP
+This option creates keys for a specific \fBdnssec\-policy\fP\&. If a policy uses multiple keys,
+\fBdnssec\-keygen\fP generates multiple keys. This also
+creates a ".state" file to keep track of the key state.
 .sp
-This option creates keys according to the dnssec\-policy configuration, hence
-it cannot be used together with many of the other options that
+This option creates keys according to the \fBdnssec\-policy\fP configuration, hence
+it cannot be used at the same time as many of the other options that
 \fBdnssec\-keygen\fP provides.
 .TP
-\fB\-L\fP ttl
-Sets the default TTL to use for this key when it is converted into a
-DNSKEY RR. If the key is imported into a zone, this is the TTL that
-will be used for it, unless there was already a DNSKEY RRset in
-place, in which case the existing TTL would take precedence. If this
-value is not set and there is no existing DNSKEY RRset, the TTL will
-default to the SOA TTL. Setting the default TTL to \fB0\fP or \fBnone\fP
+.B \fB\-L ttl\fP
+This option sets the default TTL to use for this key when it is converted into a
+DNSKEY RR. This is the TTL used when the key is imported into a zone,
+unless there was already a DNSKEY RRset in
+place, in which case the existing TTL takes precedence. If this
+value is not set and there is no existing DNSKEY RRset, the TTL
+defaults to the SOA TTL. Setting the default TTL to \fB0\fP or \fBnone\fP
 is the same as leaving it unset.
 .TP
-\fB\-l\fP file
-Provide a configuration file that contains a dnssec\-policy statement
+.B \fB\-l file\fP
+This option provides a configuration file that contains a \fBdnssec\-policy\fP statement
 (matching the policy set with \fB\-k\fP).
 .TP
-\fB\-n\fP nametype
-Specifies the owner type of the key. The value of \fBnametype\fP must
+.B \fB\-n nametype\fP
+This option specifies the owner type of the key. The value of \fBnametype\fP must
 either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY
 (for a key associated with a host (KEY)), USER (for a key associated
-with a user(KEY)) or OTHER (DNSKEY). These values are case
-insensitive. Defaults to ZONE for DNSKEY generation.
+with a user (KEY)), or OTHER (DNSKEY). These values are
+case\-insensitive. The default is ZONE for DNSKEY generation.
 .TP
-\fB\-p\fP protocol
-Sets the protocol value for the generated key, for use with
+.B \fB\-p protocol\fP
+This option sets the protocol value for the generated key, for use with
 \fB\-T KEY\fP\&. The protocol is a number between 0 and 255. The default
 is 3 (DNSSEC). Other possible values for this argument are listed in
 \fI\%RFC 2535\fP and its successors.
 .TP
-\fB\-q\fP
-Quiet mode: Suppresses unnecessary output, including progress
+.B \fB\-q\fP
+This option sets quiet mode, which suppresses unnecessary output, including progress
 indication. Without this option, when \fBdnssec\-keygen\fP is run
-interactively to generate an RSA or DSA key pair, it will print a
+interactively to generate an RSA or DSA key pair, it prints a
 string of symbols to \fBstderr\fP indicating the progress of the key
-generation. A \(aq.\(aq indicates that a random number has been found which
-passed an initial sieve test; \(aq+\(aq means a number has passed a single
-round of the Miller\-Rabin primality test; a space means that the
+generation. A \fB\&.\fP indicates that a random number has been found which
+passed an initial sieve test; \fB+\fP means a number has passed a single
+round of the Miller\-Rabin primality test; and a space ( ) means that the
 number has passed all the tests and is a satisfactory key.
 .TP
-\fB\-S\fP key
-Create a new key which is an explicit successor to an existing key.
-The name, algorithm, size, and type of the key will be set to match
-the existing key. The activation date of the new key will be set to
-the inactivation date of the existing one. The publication date will
-be set to the activation date minus the prepublication interval,
+.B \fB\-S key\fP
+This option creates a new key which is an explicit successor to an existing key.
+The name, algorithm, size, and type of the key are set to match
+the existing key. The activation date of the new key is set to
+the inactivation date of the existing one. The publication date is
+set to the activation date minus the prepublication interval,
 which defaults to 30 days.
 .TP
-\fB\-s\fP strength
-Specifies the strength value of the key. The strength is a number
+.B \fB\-s strength\fP
+This option specifies the strength value of the key. The strength is a number
 between 0 and 15, and currently has no defined purpose in DNSSEC.
 .TP
-\fB\-T\fP rrtype
-Specifies the resource record type to use for the key. \fBrrtype\fP
+.B \fB\-T rrtype\fP
+This option specifies the resource record type to use for the key. \fBrrtype\fP
 must be either DNSKEY or KEY. The default is DNSKEY when using a
 DNSSEC algorithm, but it can be overridden to KEY for use with
 SIG(0).
 .TP
-\fB\-t\fP type
-Indicates the use of the key, for use with \fB\-T  KEY\fP\&. \fBtype\fP
+.B \fB\-t type\fP
+This option indicates the type of the key for use with \fB\-T KEY\fP\&. \fBtype\fP
 must be one of AUTHCONF, NOAUTHCONF, NOAUTH, or NOCONF. The default
 is AUTHCONF. AUTH refers to the ability to authenticate data, and
-CONF the ability to encrypt data.
+CONF to the ability to encrypt data.
 .TP
-\fB\-V\fP
-Prints version information.
+.B \fB\-V\fP
+This option prints version information.
 .TP
-\fB\-v\fP level
-Sets the debugging level.
+.B \fB\-v level\fP
+This option sets the debugging level.
 .UNINDENT
 .SH TIMING OPTIONS
 .sp
 Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS. If the
-argument begins with a \(aq+\(aq or \(aq\-\(aq, it is interpreted as an offset from
+argument begins with a \fB+\fP or \fB\-\fP, it is interpreted as an offset from
 the present time. For convenience, if such an offset is followed by one
-of the suffixes \(aqy\(aq, \(aqmo\(aq, \(aqw\(aq, \(aqd\(aq, \(aqh\(aq, or \(aqmi\(aq, then the offset is
+of the suffixes \fBy\fP, \fBmo\fP, \fBw\fP, \fBd\fP, \fBh\fP, or \fBmi\fP, then the offset is
 computed in years (defined as 365 24\-hour days, ignoring leap years),
 months (defined as 30 24\-hour days), weeks, days, hours, or minutes,
 respectively. Without a suffix, the offset is computed in seconds. To
-explicitly prevent a date from being set, use \(aqnone\(aq or \(aqnever\(aq.
+explicitly prevent a date from being set, use \fBnone\fP or \fBnever\fP\&.
 .INDENT 0.0
 .TP
-\fB\-P\fP date/offset
-Sets the date on which a key is to be published to the zone. After
-that date, the key will be included in the zone but will not be used
-to sign it. If not set, and if the \-G option has not been used, the
-default is "now".
+.B \fB\-P date/offset\fP
+This option sets the date on which a key is to be published to the zone. After
+that date, the key is included in the zone but is not used
+to sign it. If not set, and if the \fB\-G\fP option has not been used, the
+default is the current date.
 .TP
-\fB\-P\fP sync date/offset
-Sets the date on which CDS and CDNSKEY records that match this key
+.B \fB\-P sync date/offset\fP
+This option sets the date on which CDS and CDNSKEY records that match this key
 are to be published to the zone.
 .TP
-\fB\-A\fP date/offset
-Sets the date on which the key is to be activated. After that date,
-the key will be included in the zone and used to sign it. If not set,
-and if the \-G option has not been used, the default is "now". If set,
-if and \-P is not set, then the publication date will be set to the
+.B \fB\-A date/offset\fP
+This option sets the date on which the key is to be activated. After that date,
+the key is included in the zone and used to sign it. If not set,
+and if the \fB\-G\fP option has not been used, the default is the current date. If set,
+and \fB\-P\fP is not set, the publication date is set to the
 activation date minus the prepublication interval.
 .TP
-\fB\-R\fP date/offset
-Sets the date on which the key is to be revoked. After that date, the
-key will be flagged as revoked. It will be included in the zone and
-will be used to sign it.
+.B \fB\-R date/offset\fP
+This option sets the date on which the key is to be revoked. After that date, the
+key is flagged as revoked. It is included in the zone and
+is used to sign it.
 .TP
-\fB\-I\fP date/offset
-Sets the date on which the key is to be retired. After that date, the
-key will still be included in the zone, but it will not be used to
+.B \fB\-I date/offset\fP
+This option sets the date on which the key is to be retired. After that date, the
+key is still included in the zone, but it is not used to
 sign it.
 .TP
-\fB\-D\fP date/offset
-Sets the date on which the key is to be deleted. After that date, the
-key will no longer be included in the zone. (It may remain in the key
-repository, however.)
+.B \fB\-D date/offset\fP
+This option sets the date on which the key is to be deleted. After that date, the
+key is no longer included in the zone. (However, it may remain in the key
+repository.)
 .TP
-\fB\-D\fP sync date/offset
-Sets the date on which the CDS and CDNSKEY records that match this
+.B \fB\-D sync date/offset\fP
+This option sets the date on which the CDS and CDNSKEY records that match this
 key are to be deleted.
 .TP
-\fB\-i\fP interval
-Sets the prepublication interval for a key. If set, then the
+.B \fB\-i interval\fP
+This option sets the prepublication interval for a key. If set, then the
 publication and activation dates must be separated by at least this
 much time. If the activation date is specified but the publication
-date isn\(aqt, then the publication date will default to this much time
+date is not, the publication date defaults to this much time
 before the activation date; conversely, if the publication date is
-specified but activation date isn\(aqt, then activation will be set to
+specified but not the activation date, activation is set to
 this much time after publication.
 .sp
 If the key is being created as an explicit successor to another key,
@@ -273,7 +273,7 @@ then the default prepublication interval is 30 days; otherwise it is
 zero.
 .sp
 As with date offsets, if the argument is followed by one of the
-suffixes \(aqy\(aq, \(aqmo\(aq, \(aqw\(aq, \(aqd\(aq, \(aqh\(aq, or \(aqmi\(aq, then the interval is
+suffixes \fBy\fP, \fBmo\fP, \fBw\fP, \fBd\fP, \fBh\fP, or \fBmi\fP, the interval is
 measured in years, months, weeks, days, hours, or minutes,
 respectively. Without a suffix, the interval is measured in seconds.
 .UNINDENT
@@ -296,9 +296,9 @@ string. \fBKnnnn.+aaa+iiiii.key\fP contains the public key, and
 \fBKnnnn.+aaa+iiiii.private\fP contains the private key.
 .sp
 The \fB\&.key\fP file contains a DNSKEY or KEY record. When a zone is being
-signed by \fBnamed\fP or \fBdnssec\-signzone\fP \fB\-S\fP, DNSKEY records are
+signed by \fBnamed\fP or \fBdnssec\-signzone \-S\fP, DNSKEY records are
 included automatically. In other cases, the \fB\&.key\fP file can be
-inserted into a zone file manually or with a \fB$INCLUDE\fP statement.
+inserted into a zone file manually or with an \fB$INCLUDE\fP statement.
 .sp
 The \fB\&.private\fP file contains algorithm\-specific fields. For obvious
 security reasons, this file does not have general read permission.
@@ -309,7 +309,7 @@ To generate an ECDSAP256SHA256 zone\-signing key for the zone
 .sp
 \fBdnssec\-keygen \-a ECDSAP256SHA256 example.com\fP
 .sp
-The command would print a string of the form:
+The command prints a string of the form:
 .sp
 \fBKexample.com.+013+26160\fP
 .sp
@@ -326,6 +326,6 @@ To generate a matching key\-signing key, issue the command:
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2020, Internet Systems Consortium
+2021, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

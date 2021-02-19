@@ -28,12 +28,12 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "child.example" {
 	type stub;
 	file "child.example.st";
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 };

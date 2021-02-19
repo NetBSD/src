@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -81,7 +81,7 @@ for algbits in rsasha256:2048 rsasha512:2048 ecdsap256sha256:256 ecdsap384sha384
 
 	cat >> ns1/named.conf <<EOF
 zone "$alg.example." {
-	type master;
+	type primary;
 	file "$alg.example.db.signed";
 	allow-update { any; };
 };

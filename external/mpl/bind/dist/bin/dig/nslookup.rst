@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -34,11 +34,11 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``Nslookup`` is a program to query Internet domain name servers.
-``Nslookup`` has two modes: interactive and non-interactive. Interactive
+``nslookup`` is a program to query Internet domain name servers.
+``nslookup`` has two modes: interactive and non-interactive. Interactive
 mode allows the user to query name servers for information about various
 hosts and domains or to print a list of hosts in a domain.
-Non-interactive mode is used to print just the name and requested
+Non-interactive mode prints just the name and requested
 information for a host or domain.
 
 Arguments
@@ -46,7 +46,7 @@ Arguments
 
 Interactive mode is entered in the following cases:
 
-a. when no arguments are given (the default name server will be used)
+a. when no arguments are given (the default name server is used);
 
 b. when the first argument is a hyphen (-) and the second argument is
    the host name or Internet address of a name server.
@@ -57,7 +57,7 @@ argument specifies the host name or address of a name server.
 
 Options can also be specified on the command line if they precede the
 arguments and are prefixed with a hyphen. For example, to change the
-default query type to host information, and the initial timeout to 10
+default query type to host information, with an initial timeout of 10
 seconds, type:
 
 ::
@@ -65,59 +65,59 @@ seconds, type:
    nslookup -query=hinfo  -timeout=10
 
 The ``-version`` option causes ``nslookup`` to print the version number
-and immediately exits.
+and immediately exit.
 
 Interactive Commands
 ~~~~~~~~~~~~~~~~~~~~
 
-``host`` [server]
-   Look up information for host using the current default server or
-   using server, if specified. If host is an Internet address and the
-   query type is A or PTR, the name of the host is returned. If host is
-   a name and does not have a trailing period, the search list is used
+``host [server]``
+   This command looks up information for ``host`` using the current default server or
+   using ``server``, if specified. If ``host`` is an Internet address and the
+   query type is A or PTR, the name of the host is returned. If ``host`` is
+   a name and does not have a trailing period (``.``), the search list is used
    to qualify the name.
 
    To look up a host not in the current domain, append a period to the
    name.
 
-``server`` domain | ``lserver`` domain
-   Change the default server to domain; ``lserver`` uses the initial
-   server to look up information about domain, while ``server`` uses the
-   current default server. If an authoritative answer can't be found,
+``server domain`` | ``lserver domain``
+   These commands change the default server to ``domain``; ``lserver`` uses the initial
+   server to look up information about ``domain``, while ``server`` uses the
+   current default server. If an authoritative answer cannot be found,
    the names of servers that might have the answer are returned.
 
 ``root``
-   not implemented
+   This command is not implemented.
 
 ``finger``
-   not implemented
+   This command is not implemented.
 
 ``ls``
-   not implemented
+   This command is not implemented.
 
 ``view``
-   not implemented
+   This command is not implemented.
 
 ``help``
-   not implemented
+   This command is not implemented.
 
 ``?``
-   not implemented
+   This command is not implemented.
 
 ``exit``
-   Exits the program.
+   This command exits the program.
 
-``set`` keyword[=value]
+``set keyword[=value]``
    This command is used to change state information that affects the
    lookups. Valid keywords are:
 
    ``all``
-      Prints the current values of the frequently used options to
+      This keyword prints the current values of the frequently used options to
       ``set``. Information about the current default server and host is
       also printed.
 
-   ``class=``\ value
-      Change the query class to one of:
+   ``class=value``
+      This keyword changes the query class to one of:
 
       ``IN``
          the Internet class
@@ -131,72 +131,62 @@ Interactive Commands
       ``ANY``
          wildcard
 
-      The class specifies the protocol group of the information.
-
-      (Default = IN; abbreviation = cl)
+      The class specifies the protocol group of the information. The default
+      is ``IN``; the abbreviation for this keyword is ``cl``.
 
    ``nodebug``
-      Turn on or off the display of the full response packet and any
-      intermediate response packets when searching.
-
-      (Default = nodebug; abbreviation = [no]deb)
+      This keyword turns on or off the display of the full response packet, and any
+      intermediate response packets, when searching. The default for this keyword is
+      ``nodebug``; the abbreviation for this keyword is ``[no]deb``.
 
    ``nod2``
-      Turn debugging mode on or off. This displays more about what
-      nslookup is doing.
+      This keyword turns debugging mode on or off. This displays more about what
+      nslookup is doing. The default is ``nod2``.
 
-      (Default = nod2)
-
-   ``domain=``\ name
-      Sets the search list to name.
+   ``domain=name``
+      This keyword sets the search list to ``name``.
 
    ``nosearch``
-      If the lookup request contains at least one period but doesn't end
-      with a trailing period, append the domain names in the domain
-      search list to the request until an answer is received.
+      If the lookup request contains at least one period, but does not end
+      with a trailing period, this keyword appends the domain names in the domain
+      search list to the request until an answer is received. The default is ``search``.
 
-      (Default = search)
+   ``port=value``
+      This keyword changes the default TCP/UDP name server port to ``value`` from
+      its default, port 53. The abbreviation for this keyword is ``po``.
 
-   ``port=``\ value
-      Change the default TCP/UDP name server port to value.
+   ``querytype=value`` | ``type=value``
+      This keyword changes the type of the information query to ``value``. The
+      defaults are A and then AAAA; the abbreviations for these keywords are
+      ``q`` and ``ty``.
 
-      (Default = 53; abbreviation = po)
-
-   ``querytype=``\ value | ``type=``\ value
-      Change the type of the information query.
-
-      (Default = A and then AAAA; abbreviations = q, ty)
-
-      **Note:** It is only possible to specify one query type, only the default
-        behavior looks up both when an alternative is not specified.
+      Please note that it is only possible to specify one query type. Only the default
+      behavior looks up both when an alternative is not specified.
 
    ``norecurse``
-      Tell the name server to query other servers if it does not have
-      the information.
+      This keyword tells the name server to query other servers if it does not have
+      the information. The default is ``recurse``; the abbreviation for this
+      keyword is ``[no]rec``.
 
-      (Default = recurse; abbreviation = [no]rec)
+   ``ndots=number``
+      This keyword sets the number of dots (label separators) in a domain that
+      disables searching. Absolute names always stop searching.
 
-   ``ndots=``\ number
-      Set the number of dots (label separators) in a domain that will
-      disable searching. Absolute names always stop searching.
+   ``retry=number``
+      This keyword sets the number of retries to ``number``.
 
-   ``retry=``\ number
-      Set the number of retries to number.
-
-   ``timeout=``\ number
-      Change the initial timeout interval for waiting for a reply to
-      number seconds.
+   ``timeout=number``
+      This keyword changes the initial timeout interval to wait for a reply to
+      ``number``, in seconds.
 
    ``novc``
-      Always use a virtual circuit when sending requests to the server.
-
-      (Default = novc)
+      This keyword indicates that a virtual circuit should always be used when sending requests to the server.
+      ``novc`` is the default.
 
    ``nofail``
-      Try the next nameserver if a nameserver responds with SERVFAIL or
-      a referral (nofail) or terminate query (fail) on such a response.
-
-      (Default = nofail)
+      This keyword tries the next nameserver if a nameserver responds with SERVFAIL or
+      a referral (nofail), or terminates the query (fail) on such a response. The
+      default is ``nofail``.
 
 Return Values
 ~~~~~~~~~~~~~
@@ -209,11 +199,11 @@ IDN Support
 
 If ``nslookup`` has been built with IDN (internationalized domain name)
 support, it can accept and display non-ASCII domain names. ``nslookup``
-appropriately converts character encoding of domain name before sending
-a request to DNS server or displaying a reply from the server. If you'd
-like to turn off the IDN support for some reason, define the IDN_DISABLE
-environment variable. The IDN support is disabled if the variable is set
-when ``nslookup`` runs or when the standard output is not a tty.
+appropriately converts character encoding of a domain name before sending
+a request to a DNS server or displaying a reply from the server.
+To turn off IDN support, define the ``IDN_DISABLE``
+environment variable. IDN support is disabled if the variable is set
+when ``nslookup`` runs, or when the standard output is not a tty.
 
 Files
 ~~~~~

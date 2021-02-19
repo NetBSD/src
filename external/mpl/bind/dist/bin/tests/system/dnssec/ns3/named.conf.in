@@ -41,325 +41,325 @@ zone "." {
 };
 
 zone "example" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "example.bk";
 };
 
 zone "secure.example" {
-	type master;
+	type primary;
 	file "secure.example.db.signed";
 	allow-update { any; };
 };
 
 zone "bogus.example" {
-	type master;
+	type primary;
 	file "bogus.example.db.signed";
 	allow-update { any; };
 };
 
 zone "badds.example" {
-	type master;
+	type primary;
 	file "badds.example.db.signed";
 	allow-update { any; };
 };
 
 zone "dynamic.example" {
-	type master;
+	type primary;
 	file "dynamic.example.db.signed";
 	allow-update { any; };
 };
 
 zone "insecure.example" {
-	type master;
+	type primary;
 	file "insecure.example.db";
 	allow-update { any; };
 };
 
 zone "insecure.nsec3.example" {
-	type master;
+	type primary;
 	file "insecure.nsec3.example.db";
 	allow-update { any; };
 };
 
 zone "insecure.optout.example" {
-	type master;
+	type primary;
 	file "insecure.optout.example.db";
 	allow-update { any; };
 };
 
 zone "keyless.example" {
-	type master;
+	type primary;
 	file "keyless.example.db.signed";
 };
 
 zone "nsec3.example" {
-	type master;
+	type primary;
 	file "nsec3.example.db.signed";
 };
 
 zone "optout.nsec3.example" {
-	type master;
+	type primary;
 	file "optout.nsec3.example.db.signed";
 };
 
 zone "nsec3.nsec3.example" {
-	type master;
+	type primary;
 	file "nsec3.nsec3.example.db.signed";
 };
 
 zone "secure.nsec3.example" {
-	type master;
+	type primary;
 	file "secure.nsec3.example.db.signed";
 };
 
 zone "optout.example" {
-	type master;
+	type primary;
 	file "optout.example.db.signed";
 };
 
 zone "secure.optout.example" {
-	type master;
+	type primary;
 	file "secure.optout.example.db.signed";
 };
 
 zone "nsec3.optout.example" {
-	type master;
+	type primary;
 	file "nsec3.optout.example.db.signed";
 };
 
 zone "optout.optout.example" {
-	type master;
+	type primary;
 	file "optout.optout.example.db.signed";
 };
 
 zone "nsec3-unknown.example" {
-	type master;
+	type primary;
 	nsec3-test-zone yes;
 	file "nsec3-unknown.example.db.signed";
 };
 
 zone "optout-unknown.example" {
-	type master;
+	type primary;
 	nsec3-test-zone yes;
 	file "optout-unknown.example.db.signed";
 };
 
 zone "dnskey-unknown.example" {
-	type master;
+	type primary;
 	file "dnskey-unknown.example.db.signed";
 };
 
 zone "dnskey-unsupported.example" {
-	type master;
+	type primary;
 	file "dnskey-unsupported.example.db.signed";
 };
 
 zone "dnskey-unsupported-2.example" {
-	type master;
+	type primary;
 	file "dnskey-unsupported-2.example.db.signed";
 };
 
 zone "dnskey-nsec3-unknown.example" {
-	type master;
+	type primary;
 	nsec3-test-zone yes;
 	file "dnskey-nsec3-unknown.example.db.signed";
 };
 
 zone "multiple.example" {
-	type master;
+	type primary;
 	file "multiple.example.db.signed";
 	allow-update { any; };
 };
 
 zone "rfc2335.example" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "rfc2335.example.bk";
 };
 
 zone "rsasha256.example" {
-	type master;
+	type primary;
 	file "rsasha256.example.db.signed";
 };
 
 zone "rsasha512.example" {
-	type master;
+	type primary;
 	file "rsasha512.example.db.signed";
 };
 
 zone "kskonly.example" {
-	type master;
+	type primary;
 	file "kskonly.example.db.signed";
 };
 
 zone "expired.example" {
-	type master;
+	type primary;
 	allow-update { none; };
 	file "expired.example.db.signed";
 };
 
 zone "update-nsec3.example" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "update-nsec3.example.db.signed";
 };
 
 zone "auto-nsec.example" {
-	type master;
+	type primary;
 	auto-dnssec maintain;
 	allow-update { !0.0.0.0; };
 	file "auto-nsec.example.db.signed";
 };
 
 zone "auto-nsec3.example" {
-	type master;
+	type primary;
 	auto-dnssec maintain;
 	allow-update { !0.0.0.0; };
 	file "auto-nsec3.example.db.signed";
 };
 
 zone "insecure.below-cname.example" {
-	type master;
+	type primary;
 	file "insecure.below-cname.example.db";
 };
 
 zone "secure.below-cname.example" {
-	type master;
+	type primary;
 	file "secure.below-cname.example.db.signed";
 };
 
 zone "ttlpatch.example" {
-	type master;
+	type primary;
 	file "ttlpatch.example.db.patched";
 };
 
 zone "split-dnssec.example" {
-	type master;
+	type primary;
 	file "split-dnssec.example.db";
 };
 
 zone "split-smart.example" {
-	type master;
+	type primary;
 	file "split-smart.example.db";
 };
 
 zone "nsec3chain-test" {
-	type slave;
+	type secondary;
 	file "nsec3chain-test.bk";
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 };
 
 zone "expiring.example" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "expiring.example.db.signed";
 };
 
 zone "nosign.example" {
-	type master;
+	type primary;
 	allow-update { any; };
 	dnssec-update-mode no-resign;
 	file "nosign.example.db.signed";
 };
 
 zone "upper.example" {
-	type master;
+	type primary;
 	file "upper.example.db.signed";
 };
 
 zone "LOWER.EXAMPLE" {
-	type master;
+	type primary;
 	file "lower.example.db.signed";
 };
 
 zone "inline.example" {
-	type master;
+	type primary;
 	file "inline.example.db";
 	inline-signing yes;
 	auto-dnssec maintain;
 };
 
 zone "publish-inactive.example" {
-	type master;
+	type primary;
 	file "publish-inactive.example.db";
 	auto-dnssec maintain;
 	update-policy local;
 };
 
 zone "future.example" {
-	type master;
+	type primary;
 	file "future.example.db.signed";
 };
 
 zone "managed-future.example" {
-	type master;
+	type primary;
 	file "managed-future.example.db.signed";
 	allow-update { any; };
 };
 
 zone "revkey.example" {
-	type master;
+	type primary;
 	file "revkey.example.db.signed";
 };
 
 zone "dname-at-apex-nsec3.example" {
-	type master;
+	type primary;
 	file "dname-at-apex-nsec3.example.db.signed";
 };
 
 zone "occluded.example" {
-	type master;
+	type primary;
 	file "occluded.example.db.signed";
 };
 
 zone "secure.managed" {
-	type master;
+	type primary;
 	file "secure.managed.db.signed";
 };
 
 zone "disabled.managed" {
-	type master;
+	type primary;
 	file "disabled.managed.db.signed";
 };
 
 zone "enabled.managed" {
-	type master;
+	type primary;
 	file "enabled.managed.db.signed";
 };
 
 zone "unsupported.managed" {
-	type master;
+	type primary;
 	file "unsupported.managed.db.signed";
 };
 
 zone "revoked.managed" {
-	type master;
+	type primary;
 	file "revoked.managed.db.signed";
 };
 
 zone "secure.trusted" {
-	type master;
+	type primary;
 	file "secure.trusted.db.signed";
 };
 
 zone "disabled.trusted" {
-	type master;
+	type primary;
 	file "disabled.trusted.db.signed";
 };
 
 zone "enabled.trusted" {
-	type master;
+	type primary;
 	file "enabled.trusted.db.signed";
 };
 
 zone "unsupported.trusted" {
-	type master;
+	type primary;
 	file "unsupported.trusted.db.signed";
 };
 
 zone "revoked.trusted" {
-	type master;
+	type primary;
 	file "revoked.trusted.db.signed";
 };
 

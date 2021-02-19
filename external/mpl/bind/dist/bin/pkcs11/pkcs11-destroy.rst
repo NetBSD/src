@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -37,32 +37,32 @@ Description
 by their ``ID`` or ``label``.
 
 Matching keys are displayed before being destroyed. By default, there is
-a five second delay to allow the user to interrupt the process before
+a five-second delay to allow the user to interrupt the process before
 the destruction takes place.
 
-Arguments
-~~~~~~~~~
+Options
+~~~~~~~
 
-**-m** module
-   Specify the PKCS#11 provider module. This must be the full path to a
+``-m module``
+   This option specifies the PKCS#11 provider module. This must be the full path to a
    shared library object implementing the PKCS#11 API for the device.
 
-**-s** slot
-   Open the session with the given PKCS#11 slot. The default is slot 0.
+``-s slot``
+   This option opens the session with the given PKCS#11 slot. The default is slot 0.
 
-**-i** ID
-   Destroy keys with the given object ID.
+``-i ID``
+   This option destroys keys with the given object ID.
 
-**-l** label
-   Destroy keys with the given label.
+``-l label``
+   This option destroys keys with the given label.
 
-**-p** PIN
-   Specify the PIN for the device. If no PIN is provided on the command
-   line, ``pkcs11-destroy`` will prompt for it.
+``-p PIN``
+   This option specifies the ``PIN`` for the device. If no ``PIN`` is provided on the command
+   line, ``pkcs11-destroy`` prompts for it.
 
-**-w** seconds
-   Specify how long to pause before carrying out key destruction. The
-   default is five seconds. If set to ``0``, destruction will be
+``-w seconds``
+   This option specifies how long, in seconds, to pause before carrying out key destruction. The
+   default is 5 seconds. If set to ``0``, destruction is
    immediate.
 
 See Also

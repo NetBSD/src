@@ -40,6 +40,6 @@ controls {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db.signed";
 };

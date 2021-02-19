@@ -24,13 +24,14 @@ options {
 		name "fixed.example" order fixed;
 		name "random.example" order random;
 		name "cyclic.example" order cyclic;
+		name "none.example" order none;
 		type NS order random;
 		order cyclic;
 	};
 };
 
 zone "." {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "root.bk";
 };

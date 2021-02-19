@@ -68,7 +68,7 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
 	    AS_IF([test -f "$ssldir/include/openssl/ssl.h"],
 	        [
 		    OPENSSL_CFLAGS="-I$ssldir/include"
-                    OPENSSL_LIBS="-L$ssldir/lib -lcrypto"
+                    OPENSSL_LIBS="-L$ssldir/lib -lcrypto -lssl"
                     found=true
                     AC_MSG_RESULT([yes])
                     break

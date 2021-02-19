@@ -43,4 +43,4 @@ options {
 
 zone "." { type hint; file "hints"; };
 
-zone "tld3."{ type master; file "tld3.db"; };
+zone "tld3."{ type primary; file "tld3.db"; };

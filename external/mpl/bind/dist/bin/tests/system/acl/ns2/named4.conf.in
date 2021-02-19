@@ -60,12 +60,12 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "tsigzone" {
-	type master;
+	type primary;
 	file "tsigzone.db";
 	allow-transfer { !rejectkeys; !rejectaddrs; !check1; !check2; any; };
 };

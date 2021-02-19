@@ -24,13 +24,14 @@ options {
 		name "fixed.example" order fixed;
 		name "random.example" order random;
 		name "cyclic.example" order cyclic;
+		name "none.example" order none;
 		type NS order random;
 		order cyclic;
 	};
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 	notify explicit;
 	also-notify { 10.53.0.2; };

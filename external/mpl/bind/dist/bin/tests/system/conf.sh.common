@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -53,25 +53,95 @@ SEQUENTIAL_COMMON="ecdsa eddsa tkey"
 # parallelism.
 #
 PARALLEL_COMMON="dnssec rpzrecurse serve-stale \
-	acl additional addzone allow-query auth autosign \
-	builtin cacheclean case catz cds chain \
-	checkconf checknames checkzone \
-	cookie database digdelv dlz dlzexternal \
-	dns64 dscp dsdigest dyndb \
-	ednscompliance emptyzones \
-	fetchlimit filter-aaaa formerr forward \
-	geoip2 glue idna inline integrity ixfr \
-	keepalive legacy limits \
-	masterfile masterformat metadata mirror mkeys \
-	names notify nslookup nsupdate nzd2nzf \
-	padding pending pipelined qmin \
-	reclimit redirect resolver rndc rootkeysentinel rpz \
-	rrchecker rrl rrsetorder rsabigexponent runtime \
-	sfcache shutdown smartsign sortlist \
-	spf staticstub statistics statschannel stub synthfromdnssec \
-	tcp tools tsig tsiggss ttl \
-	unknown upforwd verify views wildcard \
-	xfer xferquota zero zonechecks"
+acl \
+additional \
+addzone \
+allow-query \
+auth \
+autosign \
+builtin \
+cacheclean \
+case \
+catz \
+cds \
+chain \
+checkconf \
+checknames \
+checkzone \
+database \
+digdelv \
+dlz \
+dlzexternal \
+dns64 \
+dscp \
+dsdigest \
+dyndb \
+ednscompliance \
+emptyzones \
+fetchlimit \
+filter-aaaa \
+formerr \
+forward \
+geoip2 \
+glue \
+idna \
+inline \
+integrity \
+ixfr \
+kasp \
+keepalive \
+legacy \
+limits \
+masterfile \
+masterformat \
+metadata \
+mirror \
+mkeys \
+names \
+notify \
+nsec3 \
+nslookup \
+nsupdate \
+nzd2nzf \
+padding \
+pending \
+pipelined \
+qmin \
+reclimit \
+redirect \
+resolver \
+rndc \
+rootkeysentinel \
+rpz \
+rrchecker \
+rrl \
+rrsetorder \
+rsabigexponent \
+runtime \
+sfcache \
+shutdown \
+smartsign \
+sortlist \
+spf \
+staticstub \
+statistics \
+statschannel \
+stub \
+synthfromdnssec \
+tcp \
+tools \
+tsig \
+tsiggss \
+ttl \
+unknown \
+upforwd \
+verify \
+views \
+wildcard \
+xfer \
+xferquota \
+zero \
+zonechecks"
 
 #
 # Set up color-coded test output

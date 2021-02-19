@@ -66,20 +66,20 @@ view "inherit" {
 
 	/* Inherit dnssec-policy 'test' */
 	zone "inherit.inherit.signed" {
-		type master;
+		type primary;
 		file "inherit.inherit.signed.db";
 	};
 
 	/* Override dnssec-policy */
 	zone "override.inherit.signed" {
-		type master;
+		type primary;
 		dnssec-policy "default";
 		file "override.inherit.signed.db";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.inherit.signed" {
-		type master;
+		type primary;
 		dnssec-policy "none";
 		file "none.inherit.signed.db";
 	};
@@ -91,20 +91,20 @@ view "override" {
 
 	/* Inherit dnssec-policy 'test' */
 	zone "inherit.override.signed" {
-		type master;
+		type primary;
 		file "inherit.override.signed.db";
 	};
 
 	/* Override dnssec-policy */
 	zone "override.override.signed" {
-		type master;
+		type primary;
 		dnssec-policy "test";
 		file "override.override.signed.db";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.override.signed" {
-		type master;
+		type primary;
 		dnssec-policy "none";
 		file "none.override.signed.db";
 	};
@@ -116,20 +116,20 @@ view "none" {
 
 	/* Inherit dnssec-policy 'none' */
 	zone "inherit.none.signed" {
-		type master;
+		type primary;
 		file "inherit.none.signed.db";
 	};
 
 	/* Override dnssec-policy */
 	zone "override.none.signed" {
-		type master;
+		type primary;
 		dnssec-policy "test";
 		file "override.none.signed.db";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.none.signed" {
-		type master;
+		type primary;
 		dnssec-policy "none";
 		file "none.none.signed.db";
 	};
@@ -139,7 +139,7 @@ view "example1" {
 	match-clients { key "keyforview1"; };
 
 	zone "example.net" {
-		type master;
+		type primary;
 		file "example1.db";
 	};
 };
@@ -148,7 +148,7 @@ view "example2" {
 	match-clients { key "keyforview2"; };
 
 	zone "example.net" {
-		type master;
+		type primary;
 		file "example2.db";
 	};
 };

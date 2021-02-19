@@ -39,59 +39,59 @@ zone "." {
 
 zone "." {
 	type mirror;
-	masters { 10.53.0.1; };
+	primaries { 10.53.0.1; };
 	file "root.db.mirror";
 };
 
 zone "initially-unavailable" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "initially-unavailable.db.mirror";
 	use-alt-transfer-source no;
 };
 
 zone "verify-axfr" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "verify-axfr.db.mirror";
 };
 
 zone "verify-csk" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "verify-csk.db.mirror";
 };
 
 zone "verify-ixfr" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "verify-ixfr.db.mirror";
 	masterfile-format text;
 };
 
 zone "verify-load" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "verify-load.db.mirror";
 	masterfile-format text;
 };
 
 zone "verify-reconfig" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "verify-reconfig.db.mirror";
 	masterfile-format text;
 };
 
 zone "verify-unsigned" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "verify-unsigned.db.mirror";
 };
 
 zone "verify-untrusted" {
 	type mirror;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "verify-untrusted.db.mirror";
 };
 

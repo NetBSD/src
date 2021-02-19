@@ -13,8 +13,6 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-@LIBISCCC_API@
-
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. ${DNS_INCLUDES} ${ISC_INCLUDES} \
@@ -51,9 +49,6 @@ TESTDIRS =	@UNITTESTS@
 version.@O@: version.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
 libisccc.@SA@: ${OBJS}
@@ -63,7 +58,7 @@ libisccc.@SA@: ${OBJS}
 libisccc.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisccc.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} ${ISCLIBS} ${LIBS}
 
 timestamp: libisccc.@A@

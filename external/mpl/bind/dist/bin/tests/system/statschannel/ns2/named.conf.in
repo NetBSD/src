@@ -46,13 +46,13 @@ dnssec-policy "manykeys" {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 	allow-transfer { any; };
 };
 
 zone "dnssec" {
-	type master;
+	type primary;
 	file "dnssec.db.signed";
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -62,7 +62,7 @@ zone "dnssec" {
 };
 
 zone "manykeys" {
-        type master;
+        type primary;
         file "manykeys.db.signed";
 	zone-statistics full;
 	dnssec-policy "manykeys";

@@ -34,6 +34,6 @@ options {
 };
 
 zone "database" {
-	type master;
+	type primary;
 	database "_builtin empty localhost. marka.isc.org.";
 };

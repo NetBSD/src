@@ -33,7 +33,7 @@ controls {
 };
 
 zone "example.nil." IN {
-	type master;
+	type primary;
 	file "example.nil.db";
 
 	update-policy {

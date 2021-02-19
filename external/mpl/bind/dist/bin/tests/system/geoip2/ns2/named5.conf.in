@@ -36,7 +36,7 @@ controls {
 view one {
 	match-clients { geoip region CA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example1.db";
 	};
 };
@@ -44,7 +44,7 @@ view one {
 view three {
 	match-clients { geoip region OK; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example3.db";
 	};
 };
@@ -52,7 +52,7 @@ view three {
 view four {
 	match-clients { geoip region VA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example4.db";
 	};
 };
@@ -60,7 +60,7 @@ view four {
 view five {
 	match-clients { geoip region GA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example5.db";
 	};
 };
@@ -68,7 +68,7 @@ view five {
 view six {
 	match-clients { geoip region CO; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example6.db";
 	};
 };
@@ -76,7 +76,7 @@ view six {
 view seven {
 	match-clients { geoip region AK; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example7.db";
 	};
 };
@@ -84,7 +84,7 @@ view seven {
 view none {
 	match-clients { any; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db.in";
 	};
 };

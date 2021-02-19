@@ -19,12 +19,12 @@ options {
 };
 
 zone "." {
-        type master;
+        type primary;
         file "root.db.signed";
 };
 
 // An unsigned zone that ns6 has a delegation for.
 zone "unsigned." {
-        type master;
+        type primary;
         file "unsigned.db";
 };

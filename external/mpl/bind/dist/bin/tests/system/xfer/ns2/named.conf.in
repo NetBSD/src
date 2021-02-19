@@ -47,26 +47,26 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "tsigzone" {
-	type master;
+	type primary;
 	file "tsigzone.db";
 	allow-transfer { tzkey; };
 };
 
-zone "slave" {
-	type slave;
-	file "slave.db";
-	masters { 10.53.0.1; };
+zone "secondary" {
+	type secondary;
+	file "sec.db";
+	primaries { 10.53.0.1; };
 	masterfile-format text;
 };
 
 zone "mapped" {
-	type slave;
+	type secondary;
 	file "mapped.db";
 	masterfile-format text;
-	masters { 10.53.0.100; };
+	primaries { 10.53.0.100; };
 };

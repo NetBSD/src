@@ -1,3 +1,11 @@
+logging {
+	channel basic {
+		file "named.run";
+		severity debug 999;
+		print-time yes;
+	};
+	category default { basic; };
+};
 key rndc_key {
     secret "1234abcd8765";
 	algorithm hmac-sha256;

@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -209,7 +209,7 @@ restart () {
 	fi
     fi
     rm -f ns$1/*.jnl
-    if [ "$2" == "rebuild-bl-rpz" ]; then
+    if [ "$2" = "rebuild-bl-rpz" ]; then
         if test -f ns$1/base.db; then
 	    for NM in ns$1/bl*.db; do
 	        cp -f ns$1/base.db $NM
@@ -316,22 +316,25 @@ clean_result () {
 # $2=other dig output file
 ckresult () {
     #ckalive "$1" "server crashed by 'dig $1'" || return 1
+    expr "$1" : 'TCP ' > /dev/null && tcp=1 || tcp=0
+    digarg=${1#TCP }
+
     if grep "flags:.* aa .*ad;" $DIGNM; then
-	setret "'dig $1' AA and AD set;"
+	setret "'dig $digarg' AA and AD set;"
     elif grep "flags:.* aa .*ad;" $DIGNM; then
-	setret "'dig $1' AD set;"
+	setret "'dig $digarg' AD set;"
     fi
+
     if $PERL $SYSTEMTESTTOP/digcomp.pl $DIGNM $2 >/dev/null; then
-	NEED_TCP=`echo "$1" | sed -n -e 's/[Tt][Cc][Pp].*/TCP/p'`
-	RESULT_TCP=`sed -n -e 's/.*Truncated, retrying in TCP.*/TCP/p' $DIGNM`
-	if test "$NEED_TCP" != "$RESULT_TCP"; then
-	    setret "'dig $1' wrong; no or unexpected truncation in $DIGNM"
+	grep -q 'Truncated, retrying in TCP' $DIGNM && trunc=1 || trunc=0
+	if [ "$tcp" -ne "$trunc" ]; then
+	    setret "'dig $digarg' wrong; no or unexpected truncation in $DIGNM"
 	    return 1
 	fi
 	clean_result ${DIGNM}*
 	return 0
     fi
-    setret "'dig $1' wrong; diff $DIGNM $2"
+    setret "'dig $digarg' wrong; diff $DIGNM $2"
     return 1
 }
 
@@ -526,7 +529,7 @@ for mode in native dnsrps; do
   nochange a0-1.tld2s srv +auth +dnssec		# 30 no write for DNSSEC and no record
   nxdomain a0-1.tld2s srv +nodnssec		# 31
   drop a3-8.tld2 any				# 32 drop
-  nochange tcp a3-9.tld2			# 33 tcp-only
+  nochange TCP a3-9.tld2			# 33 tcp-only
   here x.servfail <<'EOF'			# 34 qname-wait-recurse yes
     ;; status: SERVFAIL, x
 EOF
@@ -580,7 +583,7 @@ EOF
   nochange a4-4.tld2				# 15 PASSTHRU
   nxdomain c2.crash2.tld3			# 16 assert in rbtdb.c
   addr 127.0.0.17 "a4-4.tld2 -b $ns1"		# 17 client-IP address trigger
-  nxdomain a7-1.tld2				# 18 slave policy zone (RT34450)
+  nxdomain a7-1.tld2				# 18 secondary policy zone (RT34450)
   # updating an response zone policy
   cp ns2/blv2.tld2.db.in ns2/bl.tld2.db
   rndc_reload ns2 $ns2 bl.tld2
@@ -591,7 +594,7 @@ EOF
   cp ns2/blv3.tld2.db.in ns2/bl.tld2.db
   rndc_reload ns2 $ns2 bl.tld2
   ck_soa 3 bl.tld2 $ns3
-  nxdomain a7-1.tld2				# 20 slave policy zone (RT34450)
+  nxdomain a7-1.tld2				# 20 secondary policy zone (RT34450)
   end_group
   ckstats $ns3 test2 ns3 12
 
@@ -779,7 +782,10 @@ EOF
     done
   fi
 
-  # reconfigure the ns5 master server without the fast-exire zone, so
+  # Ensure ns3 manages to transfer the fast-expire zone before shutdown.
+  wait_for_log 20 "zone fast-expire/IN: transferred serial 1" ns3/named.run
+
+  # reconfigure the ns5 primary server without the fast-expire zone, so
   # it can't be refreshed on ns3, and will expire in 5 seconds.
   cat /dev/null > ns5/expire.conf
   rndc_reconfig ns5 10.53.0.5
@@ -824,6 +830,24 @@ EOF
     # ensure previous RPZ rules still apply.
     $DIG -p ${PORT} @$ns3 walled.tld2 > dig.out.$t.after
     grep "walled\.tld2\..*IN.*A.*10\.0\.0\.1" dig.out.$t.after > /dev/null || setret "failed"
+
+    t=`expr $t + 1`
+    echo_i "checking reload of a mixed-case RPZ zone (${t})"
+    # First, a sanity check: the A6-2.TLD2.mixed-case-rpz RPZ record should
+    # cause a6-2.tld2 NOERROR answers to be rewritten to NXDOMAIN answers.
+    $DIG -p ${PORT} @$ns3 a6-2.tld2. A > dig.out.$t.before
+    grep "status: NXDOMAIN" dig.out.$t.before >/dev/null || setret "failed"
+    # Add a sibling name (a6-1.tld2.mixed-case-rpz, with "tld2" in lowercase
+    # rather than uppercase) before A6-2.TLD.mixed-case-rpz.
+    nextpart ns3/named.run > /dev/null
+    cp ns3/mixed-case-rpz-2.db.in ns3/mixed-case-rpz.db
+    rndc_reload ns3 $ns3 mixed-case-rpz
+    wait_for_log 20 "rpz: mixed-case-rpz: reload done" ns3/named.run
+    # a6-2.tld2 NOERROR answers should still be rewritten to NXDOMAIN answers.
+    # (The bug we try to trigger here caused a6-2.tld2.mixed-case-rpz to be
+    # erroneously removed from the summary RPZ database after reload.)
+    $DIG -p ${PORT} @$ns3 a6-2.tld2. A > dig.out.$t.after
+    grep "status: NXDOMAIN" dig.out.$t.after >/dev/null || setret "failed"
   fi
 
   t=`expr $t + 1`
@@ -835,7 +859,7 @@ EOF
   t=`expr $t + 1`
   echo_i "checking rpz updates/transfers with parent nodes added after children (${t})"
   # regression test for RT #36272: the success condition
-  # is the slave server not crashing.
+  # is the secondary server not crashing.
   for i in 1 2 3 4 5; do
     nsd $ns5 add example.com.policy1. '*.example.com.policy1.'
     nsd $ns5 delete example.com.policy1. '*.example.com.policy1.'

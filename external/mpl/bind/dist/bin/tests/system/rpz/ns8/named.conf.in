@@ -59,7 +59,7 @@ controls {
 zone "." { type hint; file "hints"; };
 
 zone "manual-update-rpz." {
-	type master;
+	type primary;
 	file "manual-update-rpz.db";
 	notify no;
 };

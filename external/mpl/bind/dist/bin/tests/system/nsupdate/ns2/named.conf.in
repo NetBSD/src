@@ -40,8 +40,8 @@ view alternate {
 	match-clients { key altkey; };
 
 	zone "update.nil" {
-		type slave;
-		masters { 10.53.0.1; };
+		type secondary;
+		primaries { 10.53.0.1; };
 		file "update.alt.bk";
 		allow-transfer { any; };
 	};
@@ -51,21 +51,21 @@ view primary {
 	match-clients { any; };
 
 	zone "example.nil" {
-		type slave;
-		masters { 10.53.0.1; };
+		type secondary;
+		primaries { 10.53.0.1; };
 		file "example.bk";
 		allow-transfer { any; };
 	};
 
 	zone "update.nil" {
-		type slave;
-		masters { 10.53.0.1; };
+		type secondary;
+		primaries { 10.53.0.1; };
 		file "update.bk";
 		allow-transfer { any; };
 	};
 
 	zone "sample" {
-		type master;
+		type primary;
 		allow-update { any; };
 		file "sample.db";
 	};

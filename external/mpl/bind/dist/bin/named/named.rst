@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -38,119 +38,119 @@ Description
 distribution from ISC. For more information on the DNS, see :rfc:`1033`,
 :rfc:`1034`, and :rfc:`1035`.
 
-When invoked without arguments, ``named`` will read the default
-configuration file ``/etc/named.conf``, read any initial data, and
-listen for queries.
+When invoked without arguments, ``named`` reads the default
+configuration file ``/etc/named.conf``, reads any initial data, and
+listens for queries.
 
 Options
 ~~~~~~~
 
-**-4**
-   Use IPv4 only even if the host machine is capable of IPv6. ``-4`` and
+``-4``
+   This option tells ``named`` to use only IPv4, even if the host machine is capable of IPv6. ``-4`` and
    ``-6`` are mutually exclusive.
 
-**-6**
-   Use IPv6 only even if the host machine is capable of IPv4. ``-4`` and
+``-6``
+   This option tells ``named`` to use only IPv6, even if the host machine is capable of IPv4. ``-4`` and
    ``-6`` are mutually exclusive.
 
-**-c** config-file
-   Use config-file as the configuration file instead of the default,
-   ``/etc/named.conf``. To ensure that reloading the configuration file
-   continues to work after the server has changed its working directory
+``-c config-file``
+   This option tells ``named`` to use ``config-file`` as its configuration file instead of the default,
+   ``/etc/named.conf``. To ensure that the configuration file
+   can be reloaded after the server has changed its working directory
    due to to a possible ``directory`` option in the configuration file,
-   config-file should be an absolute pathname.
+   ``config-file`` should be an absolute pathname.
 
-**-d** debug-level
-   Set the daemon's debug level to debug-level. Debugging traces from
+``-d debug-level``
+   This option sets the daemon's debug level to ``debug-level``. Debugging traces from
    ``named`` become more verbose as the debug level increases.
 
-**-D** string
-   Specifies a string that is used to identify a instance of ``named``
-   in a process listing. The contents of string are not examined.
+``-D string``
+   This option specifies a string that is used to identify a instance of ``named``
+   in a process listing. The contents of ``string`` are not examined.
 
-**-E** engine-name
-   When applicable, specifies the hardware to use for cryptographic
+``-E engine-name``
+   When applicable, this option specifies the hardware to use for cryptographic
    operations, such as a secure key store used for signing.
 
-   When BIND is built with OpenSSL PKCS#11 support, this defaults to the
-   string "pkcs11", which identifies an OpenSSL engine that can drive a
-   cryptographic accelerator or hardware service module. When BIND is
-   built with native PKCS#11 cryptography (--enable-native-pkcs11), it
+   When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
+   engine identifier that drives the cryptographic accelerator or
+   hardware service module (usually ``pkcs11``). When BIND is
+   built with native PKCS#11 cryptography (``--enable-native-pkcs11``), it
    defaults to the path of the PKCS#11 provider library specified via
-   "--with-pkcs11".
+   ``--with-pkcs11``.
 
-**-f**
-   Run the server in the foreground (i.e. do not daemonize).
+``-f``
+   This option runs the server in the foreground (i.e., do not daemonize).
 
-**-g**
-   Run the server in the foreground and force all logging to ``stderr``.
+``-g``
+   This option runs the server in the foreground and forces all logging to ``stderr``.
 
-**-L** logfile
-   Log to the file ``logfile`` by default instead of the system log.
+``-L logfile``
+   This option sets the log to the file ``logfile`` by default, instead of the system log.
 
-**-M** option
-   Sets the default memory context options. If set to external, this
-   causes the internal memory manager to be bypassed in favor of
-   system-provided memory allocation functions. If set to fill, blocks
-   of memory will be filled with tag values when allocated or freed, to
-   assist debugging of memory problems. (nofill disables this behavior,
+``-M option``
+   This option sets the default memory context options. If set to ``external``,
+   the internal memory manager is bypassed in favor of
+   system-provided memory allocation functions. If set to ``fill``, blocks
+   of memory are filled with tag values when allocated or freed, to
+   assist debugging of memory problems. ``nofill`` disables this behavior,
    and is the default unless ``named`` has been compiled with developer
-   options.)
+   options.
 
-**-m** flag
-   Turn on memory usage debugging flags. Possible flags are usage,
-   trace, record, size, and mctx. These correspond to the
-   ISC_MEM_DEBUGXXXX flags described in ``<isc/mem.h>``.
+``-m flag``
+   This option turns on memory usage debugging flags. Possible flags are ``usage``,
+   ``trace``, ``record``, ``size``, and ``mctx``. These correspond to the
+   ``ISC_MEM_DEBUGXXXX`` flags described in ``<isc/mem.h>``.
 
-**-n** #cpus
-   Create #cpus worker threads to take advantage of multiple CPUs. If
-   not specified, ``named`` will try to determine the number of CPUs
-   present and create one thread per CPU. If it is unable to determine
-   the number of CPUs, a single worker thread will be created.
+``-n #cpus``
+   This option creates ``#cpus`` worker threads to take advantage of multiple CPUs. If
+   not specified, ``named`` tries to determine the number of CPUs
+   present and creates one thread per CPU. If it is unable to determine
+   the number of CPUs, a single worker thread is created.
 
-**-p** port
-   Listen for queries on port port. If not specified, the default is
+``-p port``
+   This option listens for queries on ``port``. If not specified, the default is
    port 53.
 
-**-s**
-   Write memory usage statistics to ``stdout`` on exit.
+``-s``
+   This option writes memory usage statistics to ``stdout`` on exit.
 
 .. note::
 
       This option is mainly of interest to BIND 9 developers and may be
       removed or changed in a future release.
 
-**-S** #max-socks
-   Allow ``named`` to use up to #max-socks sockets. The default value is
+``-S #max-socks``
+   This option allows ``named`` to use up to ``#max-socks`` sockets. The default value is
    21000 on systems built with default configuration options, and 4096
-   on systems built with "configure --with-tuning=small".
+   on systems built with ``configure --with-tuning=small``.
 
 .. warning::
 
       This option should be unnecessary for the vast majority of users.
-      The use of this option could even be harmful because the specified
+      The use of this option could even be harmful, because the specified
       value may exceed the limitation of the underlying system API. It
       is therefore set only when the default configuration causes
       exhaustion of file descriptors and the operational environment is
       known to support the specified number of sockets. Note also that
-      the actual maximum number is normally a little fewer than the
-      specified value because ``named`` reserves some file descriptors
+      the actual maximum number is normally slightly fewer than the
+      specified value, because ``named`` reserves some file descriptors
       for its internal use.
 
-**-t** directory
-   Chroot to directory after processing the command line arguments, but
+``-t directory``
+   This option tells ``named`` to chroot to ``directory`` after processing the command-line arguments, but
    before reading the configuration file.
 
 .. warning::
 
       This option should be used in conjunction with the ``-u`` option,
       as chrooting a process running as root doesn't enhance security on
-      most systems; the way ``chroot(2)`` is defined allows a process
+      most systems; the way ``chroot`` is defined allows a process
       with root privileges to escape a chroot jail.
 
-**-U** #listeners
-   Use #listeners worker threads to listen for incoming UDP packets on
-   each address. If not specified, ``named`` will calculate a default
+``-U #listeners``
+   This option tells ``named`` the number of ``#listeners`` worker threads to listen on, for incoming UDP packets on
+   each address. If not specified, ``named`` calculates a default
    value based on the number of detected CPUs: 1 for 1 CPU, and the
    number of detected CPUs minus one for machines with more than 1 CPU.
    This cannot be increased to a value higher than the number of CPUs.
@@ -159,38 +159,38 @@ Options
    higher. On Windows, the number of UDP listeners is hardwired to 1 and
    this option has no effect.
 
-**-u** user
-   Setuid to user after completing privileged operations, such as
+``-u user``
+   This option sets the setuid to ``user`` after completing privileged operations, such as
    creating sockets that listen on privileged ports.
 
 .. note::
 
       On Linux, ``named`` uses the kernel's capability mechanism to drop
-      all root privileges except the ability to ``bind(2)`` to a
+      all root privileges except the ability to ``bind`` to a
       privileged port and set process resource limits. Unfortunately,
       this means that the ``-u`` option only works when ``named`` is run
       on kernel 2.2.18 or later, or kernel 2.3.99-pre3 or later, since
       previous kernels did not allow privileges to be retained after
-      ``setuid(2)``.
+      ``setuid``.
 
-**-v**
-   Report the version number and exit.
+``-v``
+   This option reports the version number and exits.
 
-**-V**
-   Report the version number and build options, and exit.
+``-V``
+   This option reports the version number and build options, and exits.
 
-**-X** lock-file
-   Acquire a lock on the specified file at runtime; this helps to
+``-X lock-file``
+   This option acquires a lock on the specified file at runtime; this helps to
    prevent duplicate ``named`` instances from running simultaneously.
    Use of this option overrides the ``lock-file`` option in
    ``named.conf``. If set to ``none``, the lock file check is disabled.
 
-**-x** cache-file
-   Load data from cache-file into the cache of the default view.
+``-x cache-file``
+   This option loads data from ``cache-file`` into the cache of the default view.
 
 .. warning::
 
-      This option must not be used. It is only of interest to BIND 9
+      This option must not be used in normal operations. It is only of interest to BIND 9
       developers and may be removed or changed in a future release.
 
 Signals
@@ -200,10 +200,10 @@ In routine operation, signals should not be used to control the
 nameserver; ``rndc`` should be used instead.
 
 SIGHUP
-   Force a reload of the server.
+   This signal forces a reload of the server.
 
 SIGINT, SIGTERM
-   Shut down the server.
+   These signals shut down the server.
 
 The result of sending any other signals to the server is undefined.
 
@@ -231,4 +231,4 @@ Files
 See Also
 ~~~~~~~~
 
-:rfc:`1033`, :rfc:`1034`, :rfc:`1035`, :manpage:`named-checkconf(8)`, :manpage:`named-checkzone(8)`, :manpage:`rndc(8), :manpage:`named.conf(5)`, BIND 9 Administrator Reference Manual.
+:rfc:`1033`, :rfc:`1034`, :rfc:`1035`, :manpage:`named-checkconf(8)`, :manpage:`named-checkzone(8)`, :manpage:`rndc(8)`, :manpage:`named.conf(5)`, BIND 9 Administrator Reference Manual.

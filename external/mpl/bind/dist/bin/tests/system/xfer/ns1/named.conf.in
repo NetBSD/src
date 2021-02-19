@@ -28,32 +28,32 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
-zone "slave" {
-	type master;
-	file "slave.db";
+zone "secondary" {
+	type primary;
+	file "sec.db";
 };
 
 zone "edns-expire" {
-	type master;
+	type primary;
 	file "edns-expire.db";
 };
 
 zone "axfr-too-big" {
-	type master;
+	type primary;
 	file "axfr-too-big.db";
 };
 
 zone "ixfr-too-big" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "ixfr-too-big.db";
 };
 
 zone "xfer-stats" {
-	type master;
+	type primary;
 	file "xfer-stats.db";
 };

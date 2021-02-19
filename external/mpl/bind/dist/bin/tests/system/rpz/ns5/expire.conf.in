@@ -10,7 +10,7 @@
  */
 
 zone "fast-expire." {
-	type master;
+	type primary;
 	file "fast-expire.db";
 	allow-transfer { any; };
 	notify no;

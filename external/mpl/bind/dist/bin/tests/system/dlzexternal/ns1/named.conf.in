@@ -37,7 +37,7 @@ controls {
 include "dlzs.conf";
 
 zone zone.nil {
-	type master;
+	type primary;
 	dlz unsearched2;
 };
 
@@ -47,6 +47,6 @@ zone "." {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };

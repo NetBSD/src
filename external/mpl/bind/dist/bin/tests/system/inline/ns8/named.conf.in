@@ -34,112 +34,112 @@ options {
 };
 
 zone "example01.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example01.com.db";
 };
 
 zone "example02.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example02.com.db";
 };
 
 zone "example03.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example03.com.db";
 };
 
 zone "example04.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example04.com.db";
 };
 
 zone "example05.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example05.com.db";
 };
 
 zone "example06.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example06.com.db";
 };
 
 zone "example07.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example07.com.db";
 };
 
 zone "example08.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example08.com.db";
 };
 
 zone "example09.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example09.com.db";
 };
 
 zone "example10.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example10.com.db";
 };
 
 zone "example11.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example11.com.db";
 };
 
 zone "example12.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example12.com.db";
 };
 
 zone "example13.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example13.com.db";
 };
 
 zone "example14.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example14.com.db";
 };
 
 zone "example15.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example15.com.db";
 };
 
 zone "example16.com" {
-	type master;
+	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "example16.com.db";

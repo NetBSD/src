@@ -26,10 +26,10 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "redirect.db";
 };
 
-masters "testmaster" {
+primaries "test" {
 	192.5.5.241;
 };

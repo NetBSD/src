@@ -41,6 +41,7 @@ SRCS =		acl_test.c \
 		master_test.c \
 		name_test.c \
 		nsec3_test.c \
+		nsec3param_test.c \
 		peer_test.c \
 		private_test.c \
 		rbt_test.c \
@@ -73,6 +74,7 @@ TARGETS =	acl_test@EXEEXT@ \
 		master_test@EXEEXT@ \
 		name_test@EXEEXT@ \
 		nsec3_test@EXEEXT@ \
+		nsec3param_test@EXEEXT@ \
 		peer_test@EXEEXT@ \
 		private_test@EXEEXT@ \
 		rbt_test@EXEEXT@ \
@@ -170,6 +172,11 @@ name_test@EXEEXT@: name_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 nsec3_test@EXEEXT@: nsec3_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ nsec3_test.@O@ dnstest.@O@ \
+		${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+nsec3param_test@EXEEXT@: nsec3param_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ nsec3param_test.@O@ dnstest.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 peer_test@EXEEXT@: peer_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}

@@ -23,32 +23,32 @@ options {
 
 view "in" {
 	zone "example." {
-		type master;
+		type primary;
 		file "example-in.db";
 	};
 
 	zone "broken1." {
-		type master;
+		type primary;
 		file "broken1.db";
 	};
 
 	zone "broken2." {
-		type master;
+		type primary;
 		file "broken2.db";
 	};
 
 	zone "broken3." {
-		type master;
+		type primary;
 		file "broken3.db";
 	};
 
 	zone "broken4." {
-		type master;
+		type primary;
 		file "broken4.db";
 	};
 
 	zone "broken5." {
-		type master;
+		type primary;
 		file "broken5.db";
 	};
 };
@@ -60,7 +60,7 @@ view "class10" class10 {
 	};
 
 	zone "example." class10 {
-		type master;
+		type primary;
 		file "example-class10.db";
 	};
 };

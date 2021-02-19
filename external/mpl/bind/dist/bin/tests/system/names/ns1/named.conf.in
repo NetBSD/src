@@ -27,7 +27,7 @@ options {
 view compress {
 	match-clients { 10.53.0.1/32; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db";
 	};
 };
@@ -36,7 +36,7 @@ view nocompress {
 	match-clients { 10.53.0.2/32; };
 	message-compression no;
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db";
 	};
 };

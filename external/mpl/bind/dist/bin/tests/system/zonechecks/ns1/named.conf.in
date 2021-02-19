@@ -37,7 +37,7 @@ view unused {
 	match-clients { none; };
 
 	zone "duplicate.example" {
-		type master;
+		type primary;
 		file "duplicate.db";
 	};
 };
@@ -45,26 +45,26 @@ view unused {
 view primary {
 	match-clients { any; };
 
-	zone "master.example" {
+	zone "primary.example" {
 		type primary;
-		file "master.db";
+		file "primary.db";
 		allow-update { any; };
 		allow-transfer { any; };
 		auto-dnssec maintain;
 	};
 
 	zone "bigserial.example" {
-		type master;
+		type primary;
 		file "bigserial.db";
 	};
 
 	zone "reload.example" {
-		type master;
+		type primary;
 		file "reload.db";
 	};
 
 	zone "duplicate.example" {
-		type master;
+		type primary;
 		file "duplicate.db";
 	};
 };

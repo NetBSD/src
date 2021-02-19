@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -79,16 +79,16 @@ checkjitter () {
 	_expiretimes=$(freq "$_file" | awk '{print $1}')
 
 	_count=0
-	# Check if we have at least 5 days
+	# Check if we have at least 4 days
 	# This number has been tuned for `sig-validity-interval 10 2`, as
-	# 1. 1. signature expiration dates should be spread out across at most 8 (10-2) days
+	# 1 signature expiration dates should be spread out across at most 8 (10-2) days
 	# 2. we remove first and last day to remove frequency outlier, we are left with 6 (8-2) days
-	# 3. we subtract one more day to allow test pass on day boundaries, etc. leaving us with 5 (6-1) days
+	# 3. we subtract two more days to allow test pass on day boundaries, etc. leaving us with 4 (6-2)
 	for _num in $_expiretimes
 	do
 		_count=$((_count+1))
 	done
-	if [ "$_count" -lt 5 ]; then
+	if [ "$_count" -lt 4 ]; then
 		echo_i "error: not enough categories"
 		return 1
 	fi
@@ -1360,11 +1360,11 @@ status=`expr $status + $ret`
 echo_i "test turning on auto-dnssec during reconfig ($n)"
 ret=0
 # first create a zone that doesn't have auto-dnssec
-($RNDCCMD 10.53.0.3 addzone reconf.example '{ type master; file "reconf.example.db"; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
+($RNDCCMD 10.53.0.3 addzone reconf.example '{ type primary; file "reconf.example.db"; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 rekey_calls=`grep "zone reconf.example.*next key event" ns3/named.run | wc -l`
 [ "$rekey_calls" -eq 0 ] || ret=1
 # ...then we add auto-dnssec and reconfigure
-($RNDCCMD 10.53.0.3 modzone reconf.example '{ type master; file "reconf.example.db"; allow-update { any; }; auto-dnssec maintain; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
+($RNDCCMD 10.53.0.3 modzone reconf.example '{ type primary; file "reconf.example.db"; allow-update { any; }; auto-dnssec maintain; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 rndc_reconfig ns3 10.53.0.3
 for i in 0 1 2 3 4 5 6 7 8 9; do
     lret=0

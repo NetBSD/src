@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -23,7 +13,7 @@
 Name Server Configuration
 =========================
 
-In this chapter we provide some suggested configurations along with
+In this chapter we provide some suggested configurations, along with
 guidelines for their use. We suggest reasonable values for certain
 option settings.
 
@@ -40,7 +30,7 @@ A Caching-only Name Server
 The following sample configuration is appropriate for a caching-only
 name server for use by clients internal to a corporation. All queries
 from outside clients are refused using the ``allow-query`` option.
-Alternatively, the same effect could be achieved using suitable firewall
+The same effect can be achieved using suitable firewall
 rules.
 
 ::
@@ -56,7 +46,7 @@ rules.
    // Provide a reverse mapping for the loopback
    // address 127.0.0.1
    zone "0.0.127.in-addr.arpa" {
-        type master;
+        type primary;
         file "localhost.rev";
         notify no;
    };
@@ -67,7 +57,7 @@ An Authoritative-only Name Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This sample configuration is for an authoritative-only server that is
-the primary (master) server for ``example.com`` and a secondary (slave) server for the subdomain
+the primary server for ``example.com`` and a secondary server for the subdomain
 ``eng.example.com``.
 
 ::
@@ -86,26 +76,26 @@ the primary (master) server for ``example.com`` and a secondary (slave) server f
    // Provide a reverse mapping for the loopback
    // address 127.0.0.1
    zone "0.0.127.in-addr.arpa" {
-        type master;
+        type primary;
         file "localhost.rev";
         notify no;
    };
-   // We are the master server for example.com
+   // We are the primary server for example.com
    zone "example.com" {
-        type master;
+        type primary;
         file "example.com.db";
-        // IP addresses of slave servers allowed to
+        // IP addresses of secondary servers allowed to
         // transfer example.com
         allow-transfer {
          192.168.4.14;
          192.168.5.53;
         };
    };
-   // We are a slave server for eng.example.com
+   // We are a secondary server for eng.example.com
    zone "eng.example.com" {
-        type slave;
+        type secondary;
         file "eng.example.com.bk";
-        // IP address of eng.example.com master server
+        // IP address of eng.example.com primary server
         masters { 192.168.4.12; };
    };
 
@@ -118,8 +108,8 @@ A primitive form of load balancing can be achieved in the DNS by using
 multiple records (such as multiple A records) for one name.
 
 For example, assuming three HTTP servers with network addresses of
-10.0.0.1, 10.0.0.2 and 10.0.0.3, a set of records such as the following
-means that clients will connect to each machine one third of the time:
+10.0.0.1, 10.0.0.2, and 10.0.0.3, a set of records such as the following
+means that clients will connect to each machine one-third of the time:
 
 +-----------+------+----------+----------+----------------------------+
 | Name      | TTL  | CLASS    | TYPE     | Resource Record (RR) Data  |
@@ -166,12 +156,12 @@ output format.
 ``dig``
    ``dig`` is the most versatile and complete of these lookup tools. It
    has two modes: simple interactive mode for a single query, and batch
-   mode which executes a query for each in a list of several query
+   mode, which executes a query for each in a list of several query
    lines. All query options are accessible from the command line.
 
    ``dig [@server] domain [query-type][query-class][+query-option][-dig-option][%comment]``
 
-   The usual simple use of ``dig`` will take the form
+   The usual simple use of ``dig`` takes the form
 
    ``dig @server domain query-type query-class``
 
@@ -183,7 +173,8 @@ output format.
    default, it converts between host names and Internet addresses, but
    its functionality can be extended with the use of options.
 
-   ``host [-aCdlnrsTwv][-c class][-N ndots][-t type][-W timeout][-R retries][-m flag][-4][-6] hostname [server]``
+   ``host [-aCdlnrsTwv][-c class][-N ndots][-t type][-W timeout][-R retries]
+   [-m flag][-4][-6] hostname [server]``
 
    For more information and a list of available commands and options,
    see the ``host`` man page.
@@ -191,7 +182,7 @@ output format.
 ``nslookup``
    ``nslookup`` has two modes: interactive and non-interactive.
    Interactive mode allows the user to query name servers for
-   information about various hosts and domains or to print a list of
+   information about various hosts and domains, or to print a list of
    hosts in a domain. Non-interactive mode is used to print just the
    name and requested information for a host or domain.
 
@@ -225,10 +216,11 @@ server.
    ``named-checkconf [-jvz][-t directory][filename]``
 
 ``named-checkzone``
-   The ``named-checkzone`` program checks a master file for syntax and
+   The ``named-checkzone`` program checks a zone file for syntax and
    consistency.
 
-   ``named-checkzone [-djqvD][-c class][-o output][-t directory][-w directory][-k (ignore|warn|fail)][-n (ignore|warn|fail)][-W (ignore|warn)] zone [filename]``
+   ``named-checkzone [-djqvD][-c class][-o output][-t directory][-w directory]
+   [-k (ignore|warn|fail)][-n (ignore|warn|fail)][-W (ignore|warn)] zone [filename]``
 
 ``named-compilezone``
    This tool is similar to ``named-checkzone,`` but it always dumps the zone content
@@ -237,7 +229,7 @@ server.
 ``rndc``
    The remote name daemon control (``rndc``) program allows the system
    administrator to control the operation of a name server. If ``rndc`` is run
-   without any options, it will display a usage message as
+   without any options, it displays a usage message as
    follows:
 
    ``rndc [-c config][-s server][-p port][-y key] command [command...]``
@@ -251,7 +243,7 @@ server.
    with a configuration file. The default location for the ``rndc``
    configuration file is ``/etc/rndc.conf``, but an alternate location
    can be specified with the ``-c`` option. If the configuration file is
-   not found, ``rndc`` will also look in ``/etc/rndc.key`` (or whatever
+   not found, ``rndc`` also looks in ``/etc/rndc.key`` (or whatever
    ``sysconfdir`` was defined when the BIND build was configured). The
    ``rndc.key`` file is generated by running ``rndc-confgen -a`` as
    described in :ref:`controls_statement_definition_and_usage`.
@@ -264,7 +256,7 @@ server.
 
    The ``options`` statement has three clauses: ``default-server``,
    ``default-key``, and ``default-port``. ``default-server`` takes a
-   host name or address argument and represents the server that will be
+   host name or address argument and represents the server that is
    contacted if no ``-s`` option is provided on the command line.
    ``default-key`` takes the name of a key as its argument, as defined
    by a ``key`` statement. ``default-port`` specifies the port to which
@@ -275,13 +267,13 @@ server.
    authenticating with ``named``. Its syntax is identical to the ``key``
    statement in ``named.conf``. The keyword ``key`` is followed by a key
    name, which must be a valid domain name, though it need not actually
-   be hierarchical; thus, a string like "``rndc_key``" is a valid name.
+   be hierarchical; thus, a string like ``rndc_key`` is a valid name.
    The ``key`` statement has two clauses: ``algorithm`` and ``secret``.
-   While the configuration parser will accept any string as the argument
-   to the algorithm, currently only the strings ``hmac-md5``,
+   While the configuration parser accepts any string as the argument
+   to ``algorithm``, currently only the strings ``hmac-md5``,
    ``hmac-sha1``, ``hmac-sha224``, ``hmac-sha256``,
    ``hmac-sha384``, and ``hmac-sha512`` have any meaning. The secret
-   is a Base64 encoded string as specified in :rfc:`3548`.
+   is a Base64-encoded string as specified in :rfc:`3548`.
 
    The ``server`` statement associates a key defined using the ``key``
    statement with a server. The keyword ``server`` is followed by a host
@@ -309,7 +301,7 @@ server.
 
    ``$ rndc reload``
 
-   to connect to 127.0.0.1 port 953 and cause the name server to reload,
+   to connect to 127.0.0.1 port 953 and causes the name server to reload,
    if a name server on the local machine is running with the following
    controls statements:
 
@@ -322,16 +314,16 @@ server.
 
    and it has an identical key statement for ``rndc_key``.
 
-   Running the ``rndc-confgen`` program conveniently creates a
+   Running the ``rndc-confgen`` program conveniently creates an
    ``rndc.conf`` file, and also displays the corresponding
    ``controls`` statement needed to add to ``named.conf``.
-   Alternatively, it is possible to run ``rndc-confgen -a`` to set up a
+   Alternatively, it is possible to run ``rndc-confgen -a`` to set up an
    ``rndc.key`` file and not modify ``named.conf`` at all.
 
 Signals
 ~~~~~~~
 
-Certain UNIX signals cause the name server to take specific actions, as
+Certain Unix signals cause the name server to take specific actions, as
 described in the following table. These signals can be sent using the
 ``kill`` command.
 

@@ -3,7 +3,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -67,6 +67,8 @@ def create_response(msg):
     r = dns.message.make_response(m)
     r.set_rcode(NOERROR)
 
+    ip6req = False
+
     if lqname.endswith("bad."):
         bad = True
         suffix = "bad."
@@ -82,6 +84,8 @@ def create_response(msg):
         slow = True
         suffix = "slow."
         lqname = lqname[:-5]
+    elif lqname.endswith("8.2.6.0.1.0.0.2.ip6.arpa."):
+        ip6req = True 
     else:
         r.set_rcode(REFUSED)
         return r
@@ -101,6 +105,9 @@ def create_response(msg):
     elif lqname.endswith("zoop.boing."):
         r.authority.append(dns.rrset.from_text("zoop.boing." + suffix, 1, IN, SOA, "ns3." + suffix + " hostmaster.arpa. 2018050100 1 1 1 1"))
         r.set_rcode(NXDOMAIN)
+    elif ip6req:
+        r.authority.append(dns.rrset.from_text("1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.", 60, IN, NS, "ns4.good."))
+        r.additional.append(dns.rrset.from_text("ns4.good.", 60, IN, A, "10.53.0.4"))
     else:
         r.set_rcode(REFUSED)
 

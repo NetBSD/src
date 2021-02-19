@@ -13,8 +13,6 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-@LIBBIND9_API@
-
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. ${BIND9_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
@@ -50,9 +48,6 @@ TARGETS = 	timestamp
 version.@O@: version.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
 libbind9.@SA@: ${OBJS}
@@ -62,7 +57,7 @@ libbind9.@SA@: ${OBJS}
 libbind9.la: ${OBJS} ${ISCCFGDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libbind9.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} ${NSLIBS} ${DNSLIBS} ${ISCCFGLIBS} ${ISCLIBS} \
 		@DNS_CRYPTO_LIBS@ ${LIBS}
 

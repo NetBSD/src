@@ -53,7 +53,7 @@ controls {
 zone "." { type hint; file "hints"; };
 
 zone "rpz." {
-	type master;
+	type primary;
 	file "rpz.db";
 	notify no;
 };

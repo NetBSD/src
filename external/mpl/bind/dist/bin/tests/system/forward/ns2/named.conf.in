@@ -27,41 +27,41 @@ zone "." {
 };
 
 zone "example1." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example2." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example3." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example4." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example7." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "grafted." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "1.0.10.in-addr.arpa." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "tld" {
-	type master;
+	type primary;
 	file "tld.db";
 };

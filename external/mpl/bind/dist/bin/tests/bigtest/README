@@ -1,6 +1,6 @@
 Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 
-See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+See COPYRIGHT in the source root or https://isc.org/copyright.html for terms.
 
 	bash buildzones.sh < zones	# creates setup, run, servers/* master/*
 					# named.conf

@@ -48,39 +48,39 @@ C++ style: // to end of line
 Unix style: # to end of line
 .sp
 \fBrndc.conf\fP is much simpler than \fBnamed.conf\fP\&. The file uses three
-statements: an options statement, a server statement and a key
+statements: an options statement, a server statement, and a key
 statement.
 .sp
 The \fBoptions\fP statement contains five clauses. The \fBdefault\-server\fP
 clause is followed by the name or address of a name server. This host
-will be used when no name server is given as an argument to \fBrndc\fP\&.
-The \fBdefault\-key\fP clause is followed by the name of a key which is
+is used when no name server is given as an argument to \fBrndc\fP\&.
+The \fBdefault\-key\fP clause is followed by the name of a key, which is
 identified by a \fBkey\fP statement. If no \fBkeyid\fP is provided on the
 rndc command line, and no \fBkey\fP clause is found in a matching
-\fBserver\fP statement, this default key will be used to authenticate the
+\fBserver\fP statement, this default key is used to authenticate the
 server\(aqs commands and responses. The \fBdefault\-port\fP clause is followed
 by the port to connect to on the remote name server. If no \fBport\fP
 option is provided on the rndc command line, and no \fBport\fP clause is
-found in a matching \fBserver\fP statement, this default port will be used
+found in a matching \fBserver\fP statement, this default port is used
 to connect. The \fBdefault\-source\-address\fP and
-\fBdefault\-source\-address\-v6\fP clauses which can be used to set the IPv4
+\fBdefault\-source\-address\-v6\fP clauses can be used to set the IPv4
 and IPv6 source addresses respectively.
 .sp
 After the \fBserver\fP keyword, the server statement includes a string
 which is the hostname or address for a name server. The statement has
-three possible clauses: \fBkey\fP, \fBport\fP and \fBaddresses\fP\&. The key
+three possible clauses: \fBkey\fP, \fBport\fP, and \fBaddresses\fP\&. The key
 name must match the name of a key statement in the file. The port number
-specifies the port to connect to. If an \fBaddresses\fP clause is supplied
-these addresses will be used instead of the server name. Each address
+specifies the port to connect to. If an \fBaddresses\fP clause is supplied,
+these addresses are used instead of the server name. Each address
 can take an optional port. If an \fBsource\-address\fP or
-\fBsource\-address\-v6\fP of supplied then these will be used to specify the
-IPv4 and IPv6 source addresses respectively.
+\fBsource\-address\-v6\fP is supplied, it is used to specify the
+IPv4 and IPv6 source address, respectively.
 .sp
 The \fBkey\fP statement begins with an identifying string, the name of the
 key. The statement has two clauses. \fBalgorithm\fP identifies the
 authentication algorithm for \fBrndc\fP to use; currently only HMAC\-MD5
 (for compatibility), HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256 (default),
-HMAC\-SHA384 and HMAC\-SHA512 are supported. This is followed by a secret
+HMAC\-SHA384, and HMAC\-SHA512 are supported. This is followed by a secret
 clause which contains the base\-64 encoding of the algorithm\(aqs
 authentication key. The base\-64 string is enclosed in double quotes.
 .sp
@@ -88,7 +88,7 @@ There are two common ways to generate the base\-64 string for the secret.
 The BIND 9 program \fBrndc\-confgen\fP can be used to generate a random
 key, or the \fBmmencode\fP program, also known as \fBmimencode\fP, can be
 used to generate a base\-64 string from known input. \fBmmencode\fP does
-not ship with BIND 9 but is available on many systems. See the EXAMPLE
+not ship with BIND 9 but is available on many systems. See the Example
 section for sample command lines for each.
 .SH EXAMPLE
 .INDENT 0.0
@@ -156,23 +156,23 @@ key testkey {
 .UNINDENT
 .UNINDENT
 .sp
-In the above example, \fBrndc\fP will by default use the server at
-localhost (127.0.0.1) and the key called samplekey. Commands to the
-localhost server will use the samplekey key, which must also be defined
+In the above example, \fBrndc\fP by default uses the server at
+localhost (127.0.0.1) and the key called "samplekey". Commands to the
+localhost server use the "samplekey" key, which must also be defined
 in the server\(aqs configuration file with the same name and secret. The
-key statement indicates that samplekey uses the HMAC\-SHA256 algorithm
+key statement indicates that "samplekey" uses the HMAC\-SHA256 algorithm
 and its secret clause contains the base\-64 encoding of the HMAC\-SHA256
 secret enclosed in double quotes.
 .sp
-If \fBrndc \-s testserver\fP is used then \fBrndc\fP will connect to server
-on localhost port 5353 using the key testkey.
+If \fBrndc \-s testserver\fP is used, then \fBrndc\fP connects to the server
+on localhost port 5353 using the key "testkey".
 .sp
 To generate a random secret with \fBrndc\-confgen\fP:
 .sp
 \fBrndc\-confgen\fP
 .sp
 A complete \fBrndc.conf\fP file, including the randomly generated key,
-will be written to the standard output. Commented\-out \fBkey\fP and
+is written to the standard output. Commented\-out \fBkey\fP and
 \fBcontrols\fP statements for \fBnamed.conf\fP are also printed.
 .sp
 To generate a base\-64 secret with \fBmmencode\fP:
@@ -191,6 +191,6 @@ details.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2020, Internet Systems Consortium
+2021, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

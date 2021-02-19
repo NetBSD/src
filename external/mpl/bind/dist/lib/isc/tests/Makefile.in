@@ -34,8 +34,12 @@ SRCS =		isctest.c aes_test.c buffer_test.c \
 		mem_test.c md_test.c netaddr_test.c parse_test.c pool_test.c \
 		quota_test.c radix_test.c random_test.c \
 		regex_test.c result_test.c safe_test.c siphash_test.c sockaddr_test.c \
-		socket_test.c socket_test.c symtab_test.c task_test.c \
-		taskpool_test.c time_test.c timer_test.c
+		socket_test.c symtab_test.c task_test.c \
+		taskpool_test.c time_test.c timer_test.c \
+		tcp_test.c \
+		tcp_quota_test.c \
+		tcpdns_test.c \
+		udp_test.c
 
 SUBDIRS =
 TARGETS =	aes_test@EXEEXT@ buffer_test@EXEEXT@ \
@@ -47,9 +51,13 @@ TARGETS =	aes_test@EXEEXT@ buffer_test@EXEEXT@ \
 		netaddr_test@EXEEXT@ parse_test@EXEEXT@ pool_test@EXEEXT@ \
 		quota_test@EXEEXT@ radix_test@EXEEXT@ \
 		random_test@EXEEXT@ regex_test@EXEEXT@ result_test@EXEEXT@ \
-		safe_test@EXEEXT@ siphash_test@EXEEXT@ sockaddr_test@EXEEXT@ socket_test@EXEEXT@ \
+		safe_test@EXEEXT@ siphash_test@EXEEXT@ sockaddr_test@EXEEXT@ \
 		socket_test@EXEEXT@ symtab_test@EXEEXT@ task_test@EXEEXT@ \
-		taskpool_test@EXEEXT@ time_test@EXEEXT@ timer_test@EXEEXT@
+		taskpool_test@EXEEXT@ time_test@EXEEXT@ timer_test@EXEEXT@ \
+		tcp_test@EXEEXT@ \
+		tcp_quota_test@EXEEXT@ \
+		tcpdns_test@EXEEXT@ \
+		udp_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
@@ -193,6 +201,21 @@ taskpool_test@EXEEXT@: taskpool_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 		${LDFLAGS} -o $@ taskpool_test.@O@ isctest.@O@ \
 		${ISCLIBS} ${LIBS}
 
+tcp_test@EXEEXT@: tcp_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ tcp_test.@O@ isctest.@O@ \
+		${ISCLIBS} ${LIBS} -luv
+
+tcp_quota_test@EXEEXT@: tcp_quota_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ tcp_quota_test.@O@ isctest.@O@ \
+		${ISCLIBS} ${LIBS} -luv
+
+tcpdns_test@EXEEXT@: tcpdns_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ tcpdns_test.@O@ isctest.@O@ \
+		${ISCLIBS} ${LIBS} -luv
+
 time_test@EXEEXT@: time_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ time_test.@O@ \
@@ -202,6 +225,11 @@ timer_test@EXEEXT@: timer_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ timer_test.@O@ isctest.@O@ \
 		${ISCLIBS} ${LIBS}
+
+udp_test@EXEEXT@: udp_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ udp_test.@O@ isctest.@O@ \
+		${ISCLIBS} ${LIBS} -luv
 
 unit::
 	sh ${top_builddir}/unit/unittest.sh

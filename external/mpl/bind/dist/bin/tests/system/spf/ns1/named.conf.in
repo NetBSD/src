@@ -23,18 +23,18 @@ options {
 };
 
 zone "spf" {
-	type master;
+	type primary;
 	file "spf.db";
 };
 
 zone "warn" {
-	type master;
+	type primary;
 	file "spf.db";
 	check-spf warn;
 };
 
 zone "nowarn" {
-	type master;
+	type primary;
 	file "spf.db";
 	check-spf ignore;
 };

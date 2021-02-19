@@ -25,7 +25,7 @@ options {
 };
 
 zone "noixfr" {
-	type master;
+	type primary;
 	file "noixfr.db";
 	allow-update { any; };
 };

@@ -25,28 +25,28 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db.signed";
 	allow-update { any; };
 };
 
 zone "sub2.example" {
-	type master;
+	type primary;
 	file "sub.db";
 };
 
 zone "signed-sub2.example" {
-	type master;
+	type primary;
 	file "sub.db";
 };
 
-zone "domain0.nil" { type master; file "generic.db"; };
-zone "domain1.nil" { type master; file "generic.db"; };
-zone "domain2.nil" { type master; file "generic.db"; };
-zone "domain3.nil" { type master; file "generic.db"; };
-zone "domain4.nil" { type master; file "generic.db"; };
-zone "domain5.nil" { type master; file "generic.db"; };
-zone "domain6.nil" { type master; file "generic.db"; };
-zone "domain7.nil" { type master; file "generic.db"; };
-zone "domain8.nil" { type master; file "generic.db"; };
-zone "domain9.nil" { type master; file "generic.db"; };
+zone "domain0.nil" { type primary; file "generic.db"; };
+zone "domain1.nil" { type primary; file "generic.db"; };
+zone "domain2.nil" { type primary; file "generic.db"; };
+zone "domain3.nil" { type primary; file "generic.db"; };
+zone "domain4.nil" { type primary; file "generic.db"; };
+zone "domain5.nil" { type primary; file "generic.db"; };
+zone "domain6.nil" { type primary; file "generic.db"; };
+zone "domain7.nil" { type primary; file "generic.db"; };
+zone "domain8.nil" { type primary; file "generic.db"; };
+zone "domain9.nil" { type primary; file "generic.db"; };

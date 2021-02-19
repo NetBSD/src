@@ -21,11 +21,11 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "example.net" {
-	type master;
+	type primary;
 	file "example.net.db";
 };

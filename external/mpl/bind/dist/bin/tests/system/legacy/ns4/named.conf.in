@@ -22,6 +22,6 @@ options {
 };
 
 zone "plain" {
-	type master;
+	type primary;
 	file "plain.db";
 };

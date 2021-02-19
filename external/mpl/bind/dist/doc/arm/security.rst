@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -34,7 +24,7 @@ and nicknamed for future use in ``allow-notify``, ``allow-query``,
 ``allow-transfer``, ``match-clients``, etc.
 
 ACLs give users finer control over who can access the
-name server, without cluttering up config files with huge lists of
+name server, without cluttering up configuration files with huge lists of
 IP addresses.
 
 It is a *good idea* to use ACLs, and to control access.
@@ -43,8 +33,8 @@ spoofing and denial of service (DoS) attacks against the server.
 
 ACLs match clients on the basis of up to three characteristics: 1) The
 client's IP address; 2) the TSIG or SIG(0) key that was used to sign the
-request, if any; and 3) an address prefix encoded in an EDNS Client
-Subnet option, if any.
+request, if any; and 3) an address prefix encoded in an EDNS
+Client-Subnet option, if any.
 
 Here is an example of ACLs based on client addresses:
 
@@ -72,7 +62,7 @@ Here is an example of ACLs based on client addresses:
    };
 
    zone "example.com" {
-     type master;
+     type primary;
      file "m/example.com";
      allow-query { any; };
    };
@@ -98,7 +88,7 @@ are ``country``, ``region``, ``city``, ``continent``, ``postal`` (postal code),
 if it contains spaces or other special characters. An ``asnum`` search for
 autonomous system number can be specified using the string "ASNNNN" or the
 integer NNNN. If a ``country`` search is specified with a string that is two characters
-long, it must be a standard ISO-3166-1 two-letter country code; otherwise
+long, it must be a standard ISO-3166-1 two-letter country code; otherwise,
 it is interpreted as the full name of the country.  Similarly, if
 ``region`` is the search term and the string is two characters long, it is treated as a
 standard two-letter state or province abbreviation; otherwise, it is treated as the
@@ -128,7 +118,7 @@ Some example GeoIP ACLs:
    geoip tz "America/Los_Angeles";
    geoip org "Internet Systems Consortium";
 
-ACLs use a "first-match" logic rather than "best-match": if an address
+ACLs use a "first-match" logic rather than "best-match"; if an address
 prefix matches an ACL element, then that ACL is considered to have
 matched even if a later element would have matched more specifically.
 For example, the ACL ``{ 10/8; !10.0.0.1; }`` would actually match a
@@ -139,7 +129,7 @@ When using "nested" ACLs (that is, ACLs included or referenced within
 other ACLs), a negative match of a nested ACL tells the containing ACL to
 continue looking for matches. This enables complex ACLs to be
 constructed, in which multiple client characteristics can be checked at
-the same time. For example, to construct an ACL which allows queries
+the same time. For example, to construct an ACL which allows a query
 only when it originates from a particular network *and* only when it is
 signed with a particular key, use:
 
@@ -166,7 +156,7 @@ On Unix servers, it is possible to run BIND in a *chrooted* environment
 "sandbox," which limits the damage done if a server is compromised.
 
 Another useful feature in the Unix version of BIND is the ability to run
-the daemon as an unprivileged user ( ``-u`` user ). We suggest running
+the daemon as an unprivileged user (``-u`` user). We suggest running
 as an unprivileged user when using the ``chroot`` feature.
 
 Here is an example command line to load BIND in a ``chroot`` sandbox,
@@ -217,7 +207,7 @@ Access to the dynamic update facility should be strictly limited. In
 earlier versions of BIND, the only way to do this was based on the IP
 address of the host requesting the update, by listing an IP address or
 network prefix in the ``allow-update`` zone option. This method is
-insecure since the source address of the update UDP packet is easily
+insecure, since the source address of the update UDP packet is easily
 forged. Also note that if the IP addresses allowed by the
 ``allow-update`` option include the address of a secondary server which
 performs forwarding of dynamic updates, the primary can be trivially
@@ -228,10 +218,10 @@ it without question.
 For these reasons, we strongly recommend that updates be
 cryptographically authenticated by means of transaction signatures
 (TSIG). That is, the ``allow-update`` option should list only TSIG key
-names, not IP addresses or network prefixes. Alternatively, the new
+names, not IP addresses or network prefixes. Alternatively, the
 ``update-policy`` option can be used.
 
-Some sites choose to keep all dynamically-updated DNS data in a
+Some sites choose to keep all dynamically updated DNS data in a
 subdomain and delegate that subdomain to a separate zone. This way, the
-top-level zone containing critical data such as the IP addresses of
-public web and mail servers need not allow dynamic updates at all.
+top-level zone containing critical data, such as the IP addresses of
+public web and mail servers, need not allow dynamic updates at all.

@@ -48,32 +48,32 @@ controls {
 include "../trusted.conf";
 zone "."		{type hint; file "hints"; };
 
-zone "tld5."		{type master; file "tld5.db"; };
-zone "example.tld5."	{type master; file "example.db"; };
+zone "tld5."		{type primary; file "tld5.db"; };
+zone "example.tld5."	{type primary; file "example.db"; };
 
-zone "bl0."		{type master; file "bl.db"; };
-zone "bl1."		{type master; file "bl.db"; };
-zone "bl2."		{type master; file "bl.db"; };
-zone "bl3."		{type master; file "bl.db"; };
-zone "bl4."		{type master; file "bl.db"; };
-zone "bl5."		{type master; file "bl.db"; };
-zone "bl6."		{type master; file "bl.db"; };
-zone "bl7."		{type master; file "bl.db"; };
-zone "bl8."		{type master; file "bl.db"; };
-zone "bl9."		{type master; file "bl.db"; };
-zone "bl10."		{type master; file "bl.db"; };
-zone "bl11."		{type master; file "bl.db"; };
-zone "bl12."		{type master; file "bl.db"; };
-zone "bl13."		{type master; file "bl.db"; };
-zone "bl14."		{type master; file "bl.db"; };
-zone "bl15."		{type master; file "bl.db"; };
-zone "bl16."		{type master; file "bl.db"; };
-zone "bl17."		{type master; file "bl.db"; };
-zone "bl18."		{type master; file "bl.db"; };
-zone "bl19."		{type master; file "bl.db"; };
+zone "bl0."		{type primary; file "bl.db"; };
+zone "bl1."		{type primary; file "bl.db"; };
+zone "bl2."		{type primary; file "bl.db"; };
+zone "bl3."		{type primary; file "bl.db"; };
+zone "bl4."		{type primary; file "bl.db"; };
+zone "bl5."		{type primary; file "bl.db"; };
+zone "bl6."		{type primary; file "bl.db"; };
+zone "bl7."		{type primary; file "bl.db"; };
+zone "bl8."		{type primary; file "bl.db"; };
+zone "bl9."		{type primary; file "bl.db"; };
+zone "bl10."		{type primary; file "bl.db"; };
+zone "bl11."		{type primary; file "bl.db"; };
+zone "bl12."		{type primary; file "bl.db"; };
+zone "bl13."		{type primary; file "bl.db"; };
+zone "bl14."		{type primary; file "bl.db"; };
+zone "bl15."		{type primary; file "bl.db"; };
+zone "bl16."		{type primary; file "bl.db"; };
+zone "bl17."		{type primary; file "bl.db"; };
+zone "bl18."		{type primary; file "bl.db"; };
+zone "bl19."		{type primary; file "bl.db"; };
 
 zone "policy1" {
-	type master;
+	type primary;
 	file "empty.db";
 	also-notify { 10.53.0.6; };
 	allow-update { any; };
@@ -81,7 +81,7 @@ zone "policy1" {
 };
 
 zone "policy2" {
-	type master;
+	type primary;
 	file "policy2.db";
 	allow-update { any; };
 	allow-transfer { any; };

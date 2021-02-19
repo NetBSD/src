@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -53,11 +53,24 @@ U="UNRETENTIVE"
 for zn in default rsasha1 dnssec-keygen some-keys legacy-keys pregenerated \
 	  rumoured rsasha1-nsec3 rsasha256 rsasha512 ecdsa256 ecdsa384 \
 	  dynamic dynamic-inline-signing inline-signing \
-	  inherit unlimited
+	  checkds-ksk checkds-doubleksk checkds-csk inherit unlimited \
+	  manual-rollover multisigner-model2
 do
 	setup "${zn}.kasp"
 	cp template.db.in "$zonefile"
 done
+
+if [ -f ../ed25519-supported.file ]; then
+	setup "ed25519.kasp"
+	cp template.db.in "$zonefile"
+	cat ed25519.conf >> named.conf
+fi
+
+if [ -f ../ed448-supported.file ]; then
+	setup "ed448.kasp"
+	cp template.db.in "$zonefile"
+	cat ed448.conf >> named.conf
+fi
 
 # Set up zone that stays unsigned.
 zone="unsigned.kasp"
@@ -74,13 +87,34 @@ zone="some-keys.kasp"
 $KEYGEN -G -a RSASHA1 -b 2000 -L 1234 $zone > keygen.out.$zone.1 2>&1
 $KEYGEN -G -a RSASHA1 -f KSK  -L 1234 $zone > keygen.out.$zone.2 2>&1
 
-zone="legacy.kasp"
-$KEYGEN -a RSASHA1 -b 2000 -L 1234 $zone > keygen.out.$zone.1 2>&1
-$KEYGEN -a RSASHA1 -f KSK  -L 1234 $zone > keygen.out.$zone.2 2>&1
+zone="legacy-keys.kasp"
+ZSK=$($KEYGEN -a RSASHA1 -b 2048 -L 1234 $zone 2> keygen.out.$zone.1)
+KSK=$($KEYGEN -a RSASHA1 -f KSK  -L 1234 $zone 2> keygen.out.$zone.2)
+echo $ZSK > legacy-keys.kasp.zsk
+echo $KSK > legacy-keys.kasp.ksk
+# Predecessor keys:
+Tact="now-9mo"
+Tret="now-3mo"
+ZSK=$($KEYGEN -a RSASHA1 -b 2048 -L 1234 $zone 2> keygen.out.$zone.3)
+KSK=$($KEYGEN -a RSASHA1 -f KSK  -L 1234 $zone 2> keygen.out.$zone.4)
+$SETTIME -P $Tact -A $Tact -I $Tret -D $Tret "$ZSK"  > settime.out.$zone.1 2>&1
+$SETTIME -P $Tact -A $Tact -I $Tret -D $Tret "$KSK"  > settime.out.$zone.2 2>&1
 
 zone="pregenerated.kasp"
 $KEYGEN -G -k rsasha1 -l policies/kasp.conf $zone > keygen.out.$zone.1 2>&1
 $KEYGEN -G -k rsasha1 -l policies/kasp.conf $zone > keygen.out.$zone.2 2>&1
+
+zone="multisigner-model2.kasp"
+# Import the ZSK sets of the other providers into their DNSKEY RRset.
+ZSK1=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 $zone 2> keygen.out.$zone.1)
+ZSK2=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 $zone 2> keygen.out.$zone.2)
+# ZSK1 will be added to the unsigned zonefile.
+cat "../${ZSK1}.key" | grep -v ";.*" >> "${zone}.db"
+cat "../${ZSK1}.key" | grep -v ";.*" > "${zone}.zsk1"
+rm -f "../${ZSK1}.*"
+# ZSK2 will be used with a Dynamic Update.
+cat "../${ZSK2}.key" | grep -v ";.*" > "${zone}.zsk2"
+rm -f "../${ZSK2}.*"
 
 zone="rumoured.kasp"
 Tpub="now"
@@ -97,18 +131,32 @@ $SETTIME -s -g $O -k $R $Tpub -z $R $Tpub              "$ZSK2" > settime.out.$zo
 # Set up zones that are already signed.
 #
 
+# Zone to test manual rollover.
+setup manual-rollover.kasp
+T="now-1d"
+ksktimes="-P $T -A $T -P sync $T"
+zsktimes="-P $T -A $T"
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
+$SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
+cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
+$SIGNER -PS -x -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+
 # These signatures are set to expire long in the past, update immediately.
 setup expired-sigs.autosign
 T="now-6mo"
 ksktimes="-P $T -A $T -P sync $T"
 zsktimes="-P $T -A $T"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -PS -x -s now-2mo -e now-1mo -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # These signatures are still good, and can be reused.
@@ -116,13 +164,13 @@ setup fresh-sigs.autosign
 T="now-6mo"
 ksktimes="-P $T -A $T -P sync $T"
 zsktimes="-P $T -A $T"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # These signatures are still good, but not fresh enough, update immediately.
@@ -130,13 +178,13 @@ setup unfresh-sigs.autosign
 T="now-6mo"
 ksktimes="-P $T -A $T -P sync $T"
 zsktimes="-P $T -A $T"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1w -e now+1w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # These signatures are already expired, and the private ZSK is missing.
@@ -144,13 +192,13 @@ setup zsk-missing.autosign
 T="now-6mo"
 ksktimes="-P $T -A $T -P sync $T"
 zsktimes="-P $T -A $T"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -PS -x -s now-2w -e now-1mi -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 rm -f "${ZSK}".private
 
@@ -159,13 +207,13 @@ setup zsk-retired.autosign
 T="now-6mo"
 ksktimes="-P $T -A $T -P sync $T"
 zsktimes="-P $T -A $T -I now"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -PS -x -s now-2w -e now-1mi -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 $SETTIME -s -g HIDDEN "$ZSK" > settime.out.$zone.3 2>&1
 
@@ -198,7 +246,7 @@ keytimes="-P ${TpubN} -P sync ${TsbmN} -A ${TpubN}"
 CSK=$($KEYGEN -k enable-dnssec -l policies/autosign.conf $keytimes $zone 2> keygen.out.$zone.1)
 $SETTIME -s -g $O -k $R $TpubN -r $R $TpubN -d $H $TpubN -z $R $TpubN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone 13 "$CSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 3:
@@ -214,30 +262,29 @@ keytimes="-P ${TpubN} -P sync ${TsbmN} -A ${TpubN}"
 CSK=$($KEYGEN -k enable-dnssec -l policies/autosign.conf $keytimes $zone 2> keygen.out.$zone.1)
 $SETTIME -s -g $O -k $O $TcotN -r $O $TcotN -d $H $TpubN -z $R $TpubN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone 13 "$CSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 setup step3.enable-dnssec.autosign
 
 # Step 4:
 # The DS has been submitted long enough ago to become OMNIPRESENT.
 setup step4.enable-dnssec.autosign
-# DS TTL:                    1 day (86400 seconds)
-# parent-registration-delay: 1 day (86400 seconds)
+# DS TTL:                    2 hour (7200 seconds)
 # parent-propagation-delay:  1 hour (3600 seconds)
 # retire-safety:             20 minutes (1200 seconds)
-# Total aditional time:      98400 seconds
-# 44700 + 98400 = 143100
-TpubN="now-143100s"
-# 43800 + 98400 = 142200
-TcotN="now-142200s"
-TsbmN="now-98400s"
+# Total aditional time:      12000 seconds
+# 44700 + 12000 = 56700
+TpubN="now-56700s"
+# 43800 + 12000 = 55800
+TcotN="now-55800s"
+TsbmN="now-12000s"
 keytimes="-P ${TpubN} -P sync ${TsbmN} -A ${TpubN}"
 CSK=$($KEYGEN -k enable-dnssec -l policies/autosign.conf $keytimes $zone 2> keygen.out.$zone.1)
-$SETTIME -s -g $O -k $O $TcotN -r $O $TcotN -d $R $TsbmN -z $O $TsbmN "$CSK" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -P ds $TsbmN -k $O $TcotN -r $O $TcotN -d $R $TsbmN -z $O $TsbmN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone 13 "$CSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
-setup step3.enable-dnssec.autosign
+setup step4.enable-dnssec.autosign
 
 #
 # The zones at zsk-prepub.autosign represent the various steps of a ZSK
@@ -250,13 +297,13 @@ setup step1.zsk-prepub.autosign
 TactN="now"
 ksktimes="-P ${TactN} -A ${TactN} -P sync ${TactN}"
 zsktimes="-P ${TactN} -A ${TactN}"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $TactN -z $O $TactN              "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 2:
@@ -289,13 +336,13 @@ setup step2.zsk-prepub.autosign
 TactN="now-694h"
 ksktimes="-P ${TactN} -A ${TactN} -P sync ${TactN}"
 zsktimes="-P ${TactN} -A ${TactN}"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $TactN -z $O $TactN              "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 3:
@@ -345,9 +392,9 @@ TremN1="now+961h"
 ksktimes="-P ${TactN}  -A ${TactN}  -P sync ${TactN}"
 zsktimes="-P ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
 newtimes="-P ${TpubN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
-KSK=$($KEYGEN  -a ECDSAP256SHA256 -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a ECDSAP256SHA256 -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
-ZSK2=$($KEYGEN -a ECDSAP256SHA256 -L 3600        $newtimes $zone 2> keygen.out.$zone.3)
+KSK=$($KEYGEN  -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
+ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $newtimes $zone 2> keygen.out.$zone.3)
 $SETTIME -s -g $O -k $O $TactN  -r $O $TactN  -d $O $TactN "$KSK"  > settime.out.$zone.1 2>&1
 $SETTIME -s -g $H -k $O $TactN  -z $O $TactN               "$ZSK1" > settime.out.$zone.2 2>&1
 $SETTIME -s -g $O -k $R $TpubN1 -z $H $TpubN1              "$ZSK2" > settime.out.$zone.3 2>&1
@@ -355,9 +402,9 @@ $SETTIME -s -g $O -k $R $TpubN1 -z $H $TpubN1              "$ZSK2" > settime.out
 key_successor $ZSK1 $ZSK2
 # Sign zone.
 cat template.db.in "${KSK}.key" "${ZSK1}.key" "${ZSK2}.key" > "$infile"
-private_type_record $zone 13 "$KSK"  >> "$infile"
-private_type_record $zone 13 "$ZSK1" >> "$infile"
-private_type_record $zone 13 "$ZSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK"  >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK2" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 4:
@@ -407,9 +454,9 @@ TremN1="now+30d"
 ksktimes="-P ${TactN}  -A ${TactN}  -P sync ${TactN}"
 zsktimes="-P ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
 newtimes="-P ${TpubN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
-KSK=$($KEYGEN  -a ECDSAP256SHA256 -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a ECDSAP256SHA256 -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
-ZSK2=$($KEYGEN -a ECDSAP256SHA256 -L 3600        $newtimes $zone 2> keygen.out.$zone.3)
+KSK=$($KEYGEN  -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
+ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $newtimes $zone 2> keygen.out.$zone.3)
 $SETTIME -s -g $O -k $O $TactN  -r $O $TactN -d $O $TactN "$KSK"  > settime.out.$zone.1 2>&1
 $SETTIME -s -g $H -k $O $TactN  -z $U $TretN              "$ZSK1" > settime.out.$zone.2 2>&1
 $SETTIME -s -g $O -k $O $TactN1 -z $R $TactN1             "$ZSK2" > settime.out.$zone.3 2>&1
@@ -442,9 +489,9 @@ TremN1="now+719h"
 ksktimes="-P ${TactN}  -A ${TactN}  -P sync ${TactN}"
 zsktimes="-P ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
 newtimes="-P ${TpubN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
-KSK=$($KEYGEN  -a ECDSAP256SHA256  -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a ECDSAP256SHA256  -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
-ZSK2=$($KEYGEN -a ECDSAP256SHA256  -L 3600        $newtimes $zone 2> keygen.out.$zone.3)
+KSK=$($KEYGEN  -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
+ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $newtimes $zone 2> keygen.out.$zone.3)
 $SETTIME -s -g $O -k $O $TactN  -r $O $TactN -d $O $TactN "$KSK"  > settime.out.$zone.1 2>&1
 $SETTIME -s -g $H -k $U $TdeaN  -z $H $TdeaN              "$ZSK1" > settime.out.$zone.2 2>&1
 $SETTIME -s -g $O -k $O $TactN1 -z $O $TdeaN              "$ZSK2" > settime.out.$zone.3 2>&1
@@ -452,9 +499,9 @@ $SETTIME -s -g $O -k $O $TactN1 -z $O $TdeaN              "$ZSK2" > settime.out.
 key_successor $ZSK1 $ZSK2
 # Sign zone.
 cat template.db.in "${KSK}.key" "${ZSK1}.key" "${ZSK2}.key" > "$infile"
-private_type_record $zone 13 "$KSK"  >> "$infile"
-private_type_record $zone 13 "$ZSK1" >> "$infile"
-private_type_record $zone 13 "$ZSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK"  >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK2" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 #
@@ -468,8 +515,8 @@ setup step1.ksk-doubleksk.autosign
 TactN="now"
 ksktimes="-P ${TactN} -A ${TactN} -P sync ${TactN}"
 zsktimes="-P ${TactN} -A ${TactN}"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 7200        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O              -k $O $TactN -z $O $TactN "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
@@ -517,13 +564,13 @@ setup step2.ksk-doubleksk.autosign
 TactN="now-1413h"
 ksktimes="-P ${TactN} -A ${TactN} -P sync ${TactN}"
 zsktimes="-P ${TactN} -A ${TactN}"
-KSK=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a ECDSAP256SHA256 -L 7200        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $TactN -z $O $TactN              "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 3:
@@ -547,7 +594,7 @@ setup step3.ksk-doubleksk.autosign
 #                                   Tnow
 #
 # Lksk:           60d
-# Dreg:           1d
+# Dreg:           N/A
 # DprpP:          1h
 # TTLds:          1h
 # retire-safety:  2d
@@ -557,29 +604,29 @@ setup step3.ksk-doubleksk.autosign
 # publish-safety: 1d
 # IpubC:          27h
 #
-# Tact(N)    = Tnow + Dreg - Lksk = now + 1d - 60d = now - 59d
-# Tret(N)    = Tnow + Dreg = now + 1d
-# Trem(N)    = Tnow + Dreg + Iret = now + 1d + 50h = now + 74h
+# Tact(N)    = Tnow + Lksk = now - 60d = now - 60d
+# Tret(N)    = now
+# Trem(N)    = Tnow + Iret = now + 50h
 # Tpub(N+1)  = Tnow - IpubC = now - 27h
 # Tsbm(N+1)  = now
 # Tact(N+1)  = Tret(N)
-# Tret(N+1)  = Tnow + Dreg + Lksk = now + 1d + 60d = now + 61d
-# Trem(N+1)  = Tnow + Dreg + Lksk + Iret = now + 61d + 50h
-#            = now + 1464h + 50h = 1514h
-TactN="now-59d"
-TretN="now+1d"
-TremN="now+74h"
+# Tret(N+1)  = Tnow + Lksk = now + 60d
+# Trem(N+1)  = Tnow + Lksk + Iret = now + 60d + 50h
+#            = now + 1440h + 50h = 1490h
+TactN="now-60d"
+TretN="now"
+TremN="now+50h"
 TpubN1="now-27h"
 TsbmN1="now"
 TactN1="${TretN}"
-TretN1="now+61d"
-TremN1="now+1514h"
+TretN1="now+60d"
+TremN1="now+1490h"
 ksktimes="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}  -D ${TremN}"
 newtimes="-P ${TpubN1} -A ${TactN1} -P sync ${TsbmN1} -I ${TretN1} -D ${TremN1}"
 zsktimes="-P ${TactN}  -A ${TactN}"
-KSK1=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-KSK2=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $newtimes $zone 2> keygen.out.$zone.2)
-ZSK=$($KEYGEN  -a ECDSAP256SHA256 -L 7200        $zsktimes $zone 2> keygen.out.$zone.3)
+KSK1=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $newtimes $zone 2> keygen.out.$zone.2)
+ZSK=$($KEYGEN  -a $DEFAULT_ALGORITHM -L 7200        $zsktimes $zone 2> keygen.out.$zone.3)
 $SETTIME -s -g $H -k $O $TactN   -r $O $TactN  -d $O $TactN  "$KSK1" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $R $TpubN1  -r $R $TpubN1 -d $H $TpubN1 "$KSK2" > settime.out.$zone.2 2>&1
 $SETTIME -s -g $O -k $O $TactN   -z $O $TactN                "$ZSK"  > settime.out.$zone.3 2>&1
@@ -587,9 +634,9 @@ $SETTIME -s -g $O -k $O $TactN   -z $O $TactN                "$ZSK"  > settime.o
 key_successor $KSK1 $KSK2
 # Sign zone.
 cat template.db.in "${KSK1}.key" "${KSK2}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK1" >> "$infile"
-private_type_record $zone 13 "$KSK2" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 4:
@@ -597,7 +644,7 @@ $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer
 setup step4.ksk-doubleksk.autosign
 # According to RFC 7583:
 #
-# Tret(N)   = Tsbm(N+1) + Dreg
+# Tret(N)   = Tsbm(N+1)
 # Tdea(N)   = Tret(N) + Iret
 # Tact(N+1) = Tret(N)
 #
@@ -613,43 +660,43 @@ setup step4.ksk-doubleksk.autosign
 #                                                             Tnow
 #
 # Lksk: 60d
-# Dreg: 1d
+# Dreg: N/A
 # Iret: 50h
 #
 # Tact(N)   = Tnow - Lksk - Iret = now - 60d - 50h
 #           = now - 1440h - 50h = now - 1490h
 # Tret(N)   = Tnow - Iret = now - 50h
 # Trem(N)   = Tnow
-# Tpub(N+1) = Tnow - Iret - Dreg - IpubC = now - 50h - 1d - 27h
-#           = now - 101h
-# Tsbm(N+1) = Tnow - Iret - Dreg = now - 50h - 1d = now - 74h
+# Tpub(N+1) = Tnow - Iret - IpubC = now - 50h - 27h
+#           = now - 77h
+# Tsbm(N+1) = Tnow - Iret = now - 50h
 # Tact(N+1) = Tret(N)
 # Tret(N+1) = Tnow + Lksk - Iret = now + 60d - 50h = now + 1390h
 # Trem(N+1) = Tnow + Lksk = now + 60d
 TactN="now-1490h"
 TretN="now-50h"
 TremN="now"
-TpubN1="now-101h"
-TsbmN1="now-74h"
+TpubN1="now-77h"
+TsbmN1="now-50h"
 TactN1="${TretN}"
 TretN1="now+1390h"
 TremN1="now+60d"
 ksktimes="-P ${TactN}  -A ${TactN} -P sync ${TactN}  -I ${TretN}  -D ${TremN}"
 newtimes="-P ${TpubN1} -A ${TretN} -P sync ${TsbmN1} -I ${TretN1} -D ${TremN1}"
 zsktimes="-P ${TactN}  -A ${TactN}"
-KSK1=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-KSK2=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $newtimes $zone 2> keygen.out.$zone.2)
-ZSK=$($KEYGEN  -a ECDSAP256SHA256 -L 7200        $zsktimes $zone 2> keygen.out.$zone.3)
-$SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $U $TsbmN1 "$KSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $R $TsbmN1 "$KSK2" > settime.out.$zone.2 2>&1
-$SETTIME -s -g $O -k $O $TactN  -z $O $TactN                "$ZSK"  > settime.out.$zone.3 2>&1
+KSK1=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $newtimes $zone 2> keygen.out.$zone.2)
+ZSK=$($KEYGEN  -a $DEFAULT_ALGORITHM -L 7200        $zsktimes $zone 2> keygen.out.$zone.3)
+$SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $U $TsbmN1 -D ds $TsbmN1 "$KSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $R $TsbmN1 -P ds $TsbmN1 "$KSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $O -k $O $TactN  -z $O $TactN                              "$ZSK"  > settime.out.$zone.3 2>&1
 # Set key rollover relationship.
 key_successor $KSK1 $KSK2
 # Sign zone.
 cat template.db.in "${KSK1}.key" "${KSK2}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK1" >> "$infile"
-private_type_record $zone 13 "$KSK2" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 5:
@@ -657,27 +704,27 @@ $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer
 setup step5.ksk-doubleksk.autosign
 # Subtract DNSKEY TTL from all the times (2h).
 # Tact(N)   = now - 1490h - 2h = now - 1492h
-# Tret(N)   = now - 52h - 2h = now - 52h
+# Tret(N)   = now - 50h - 2h = now - 52h
 # Trem(N)   = now - 2h
-# Tpub(N+1) = now - 101h - 2h = now - 103h
-# Tsbm(N+1) = now - 74h - 2h = now - 76h
+# Tpub(N+1) = now - 77h - 2h = now - 79h
+# Tsbm(N+1) = now - 50h - 2h = now - 52h
 # Tact(N+1) = Tret(N)
 # Tret(N+1) = now + 1390h - 2h = now + 1388h
 # Trem(N+1) = now + 60d + 2h = now + 1442h
 TactN="now-1492h"
 TretN="now-52h"
 TremN="now-2h"
-TpubN1="now-103h"
-TsbmN1="now-76h"
+TpubN1="now-79h"
+TsbmN1="now-52h"
 TactN1="${TretN}"
 TretN1="now+1388h"
-TremN1="now+1438h"
+TremN1="now+1442h"
 ksktimes="-P ${TactN}  -A ${TactN} -P sync ${TactN}  -I ${TretN}  -D ${TremN}"
 newtimes="-P ${TpubN1} -A ${TretN} -P sync ${TsbmN1} -I ${TretN1} -D ${TremN1}"
 zsktimes="-P ${TactN}  -A ${TactN}"
-KSK1=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-KSK2=$($KEYGEN -a ECDSAP256SHA256 -L 7200 -f KSK $newtimes $zone 2> keygen.out.$zone.2)
-ZSK=$($KEYGEN  -a ECDSAP256SHA256 -L 7200        $zsktimes $zone 2> keygen.out.$zone.3)
+KSK1=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $newtimes $zone 2> keygen.out.$zone.2)
+ZSK=$($KEYGEN  -a $DEFAULT_ALGORITHM -L 7200        $zsktimes $zone 2> keygen.out.$zone.3)
 $SETTIME -s -g $H -k $U $TretN  -r $U $TretN  -d $H $TretN  "$KSK1" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $TactN1 -r $O $TactN1 -d $O $TactN1 "$KSK2" > settime.out.$zone.2 2>&1
 $SETTIME -s -g $O -k $O $TactN  -z $O $TactN                "$ZSK"  > settime.out.$zone.3 2>&1
@@ -685,19 +732,14 @@ $SETTIME -s -g $O -k $O $TactN  -z $O $TactN                "$ZSK"  > settime.ou
 key_successor $KSK1 $KSK2
 # Sign zone.
 cat template.db.in "${KSK1}.key" "${KSK2}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 13 "$KSK1" >> "$infile"
-private_type_record $zone 13 "$KSK2" >> "$infile"
-private_type_record $zone 13 "$ZSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 #
 # The zones at csk-roll.autosign represent the various steps of a CSK rollover
 # (which is essentially a ZSK Pre-Publication / KSK Double-KSK rollover).
-#
-#
-# The activation time for zone signing (ZSK) is different than for chain of
-# trust validation (KSK). Therefor, for zone signing we use TactZ and TretZ
-# instead of Tact and Tret.
 #
 
 # Step 1:
@@ -708,37 +750,34 @@ csktimes="-P ${TactN} -P sync ${TactN} -A ${TactN}"
 CSK=$($KEYGEN -k csk-roll -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone 13 "$CSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 2:
 # It is time to introduce the new CSK.
 setup step2.csk-roll.autosign
 # According to RFC 7583:
-# KSK: Tpub(N+1) <= Tact(N) + Lksk - Dreg - IpubC
-# ZSK: Tpub(N+1) <= TactZ(N) + Lzsk - Ipub
+# KSK: Tpub(N+1) <= Tact(N) + Lksk - IpubC
+# ZSK: Tpub(N+1) <= Tact(N) + Lzsk - Ipub
 # IpubC = DprpC + TTLkey (+publish-safety)
 # Ipub  = IpubC
 # Lcsk = Lksk = Lzsk
 #
 # Lcsk:           6mo (186d, 4464h)
-# Dreg:           1d
+# Dreg:           N/A
 # DprpC:          1h
 # TTLkey:         1h
 # publish-safety: 1h
 # Ipub:           3h
 #
-# Tact(N)  = Tnow - Lcsk + Ipub + Dreg = now - 186d + 3h + 1d
-#          = now - 4464h + 3h + 24h = now - 4437h
-# TactZ(N) = Tnow - Lcsk + IpubC = now - 186d + 3h
-#          = now - 4464h + 3h = now - 4461h
-TactN="now-4437h"
-TactZN="now-4461h"
-csktimes="-P ${TactN} -P sync ${TactZN} -A ${TactZN}"
+# Tact(N) = Tnow - Lcsk + Ipub = now - 186d + 3h
+#         = now - 4464h + 3h = now - 4461h
+TactN="now-4461h"
+csktimes="-P ${TactN} -P sync ${TactN} -A ${TactN}"
 CSK=$($KEYGEN -k csk-roll -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
-$SETTIME -s -g $O -k $O $TactZN -r $O $TactZN -d $O $TactN -z $O $TactZN "$CSK" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone 13 "$CSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 3:
@@ -747,15 +786,15 @@ setup step3.csk-roll.autosign
 # According to RFC 7583:
 #
 # Tsbm(N+1) >= Trdy(N+1)
-# KSK: Tact(N+1)  = Tsbm(N+1) + Dreg
-# ZSK: TactZ(N+1) = Tpub(N+1) + Ipub = Tsbm(N+1)
+# KSK: Tact(N+1) = Tsbm(N+1)
+# ZSK: Tact(N+1) = Tpub(N+1) + Ipub = Tsbm(N+1)
 # KSK: Iret  = DprpP + TTLds (+retire-safety)
 # ZSK: IretZ = Dsgn + Dprp + TTLsig (+retire-safety)
 #
 # Lcsk:           186d
 # Dprp:           1h
 # DprpP:          1h
-# Dreg:           1d
+# Dreg:           N/A
 # Dsgn:           25d
 # TTLds:          1h
 # TTLsig:         1d
@@ -764,99 +803,81 @@ setup step3.csk-roll.autosign
 # IretZ:          26d3h
 # Ipub:           3h
 #
-# TactZ(N)   = Tnow - Lcsk = now - 186d
-# TretZ(N)   = now
-# Tact(N)    = Tnow + Dreg - Lcsk = now + 1d - 186d = now - 185d
-# Tret(N)    = Tnow + Dreg = now + 1d
-# Trem(N)    = Tnow + IretZ = now + 26d3h = now + 627h
-# Tpub(N+1)  = Tnow - Ipub = now - 3h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = Tnow + Lcsk = now + 186d
-# Tact(N+1)  = Tret(N)
-# Tret(N+1)  = Tnow + Dreg + Lcsk = now + 1d + 186d = now + 187d
-# Trem(N+1)  = Tnow + Lcsk + IretZ = now + 186d + 26d3h =
-#            = now + 5091h
-TactZN="now-186d"
-TretZN="now"
-TactN="now-185d"
-TretN="now+1d"
+# Tact(N)   = Tnow - Lcsk = now - 186d
+# Tret(N)   = now
+# Trem(N)   = Tnow + IretZ = now + 26d3h = now + 627h
+# Tpub(N+1) = Tnow - Ipub = now - 3h
+# Tsbm(N+1) = Tret(N)
+# Tact(N+1) = Tret(N)
+# Tret(N+1) = Tnow + Lcsk = now + 186d = now + 186d
+# Trem(N+1) = Tnow + Lcsk + IretZ = now + 186d + 26d3h =
+#           = now + 5091h
+TactN="now-186d"
+TretN="now"
 TremN="now+627h"
 TpubN1="now-3h"
 TsbmN1="now"
-TactZN1="${TsbmN1}"
-TretZN1="now+186d"
 TactN1="${TretN}"
-TretN1="now+187d"
+TretN1="now+186d"
 TremN1="now+5091h"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $O $TactZN  -r $O $TactZN -d $O $TactN  -z $O $TactZN "$CSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $R $TpubN1  -r $R $TpubN1 -d $H $TpubN1 -z $H $TpubN1 "$CSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $O $TactN  -z $O $TactN  "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $R $TpubN1 -r $R $TpubN1 -d $H $TpubN1 -z $H $TpubN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 4:
 # Some time later all the ZRRSIG records should be from the new CSK, and the
 # DS should be swapped.  The ZRRSIG records are all replaced after IretZ
-# (which is 26d3h).  The DS is swapped after Dreg + Iret (which is 1d4h).
+# (which is 26d3h).  The DS is swapped after Iret (which is 4h).
 # In other words, the DS is swapped before all zone signatures are replaced.
 setup step4.csk-roll.autosign
 # According to RFC 7583:
-# Trem(N)    = TretZ(N) + IretZ
-# Tnow       = Tsbm(N+1) + Dreg + Iret
+# Trem(N)    = Tret(N) - Iret + IretZ
+# Tnow       = Tsbm(N+1) + Iret
 #
 # Lcsk:   186d
 # Iret:   4h
 # IretZ:  26d3h
 #
-# TactZ(N)   = Tnow - Iret - Dreg - Lcsk = now - 4h - 24h - 4464h
-#            = now - 4492h
-# TretZ(N)   = Tnow - Iret - Dreg = now - 4h - 1d = now - 28h
-# Tact(N)    = Tnow - Iret - Lcsk = now - 4h - 186d = now - 4468h
-# Tret(N)    = Tnow - Iret = now - 4h = now - 4h
-# Trem(N)    = Tnow - Iret - Dreg + IretZ = now - 4h - 1d + 26d3h
-#            = now + 24d23h = now + 599h
-# Tpub(N+1)  = Tnow - Iret - Dreg - IpubC = now - 4h - 1d - 3h = now - 31h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = Tnow - Iret - Dreg + Lcsk = now - 4h - 1d + 186d
-#            = now + 4436h
-# Tact(N+1)  = Tret(N)
-# Tret(N+1)  = Tnow - Iret + Lcsk = now + 6mo - 4h = now + 4460h
-# Trem(N+1)  = Tnow - Iret - Dreg + Lcsk + IretZ = now - 4h - 1d + 186d + 26d3h
-#	     = now + 5063h
-TactZN="now-4492h"
-TretZN="now-28h"
+# Tact(N)   = Tnow - Iret - Lcsk = now - 4h - 186d = now - 4468h
+# Tret(N)   = Tnow - Iret = now - 4h = now - 4h
+# Trem(N)   = Tnow - Iret + IretZ = now - 4h + 26d3h
+#           = now + 623h
+# Tpub(N+1) = Tnow - Iret - IpubC = now - 4h - 3h = now - 7h
+# Tsbm(N+1) = Tret(N)
+# Tact(N+1) = Tret(N)
+# Tret(N+1) = Tnow - Iret + Lcsk = now - 4h + 186d = now + 4460h
+# Trem(N+1) = Tnow - Iret + Lcsk + IretZ = now - 4h + 186d + 26d3h
+#	    = now + 5087h
 TactN="now-4468h"
 TretN="now-4h"
-TremN="now+599h"
-TpubN1="now-31h"
-TsbmN1="${TretZN}"
-TactZN1="${TretZN}"
-TretZN1="now+4436h"
+TremN="now+623h"
+TpubN1="now-7h"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
 TretN1="now+4460h"
-TremN1="now+5063h"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+TremN1="now+5087h"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $O $TactZN -r $O $TactZN -d $U $TsbmN1 -z $U $TsbmN1 "$CSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $R $TsbmN1 -z $R $TsbmN1 "$CSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $U $TsbmN1 -z $U $TsbmN1 -D ds $TsbmN1 "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $R $TsbmN1 -z $R $TsbmN1 -P ds $TsbmN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 5:
@@ -864,42 +885,34 @@ $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > si
 # At this time these have all become hidden.
 setup step5.csk-roll.autosign
 # Subtract DNSKEY TTL plus zone propagation delay from all the times (2h).
-# TactZ(N)   = now - 4492h - 2h = now - 4494h
-# TretZ(N)   = now - 28h - 2h = now - 30h
-# Tact(N)    = now - 4468h - 2h = now - 4470h
-# Tret(N)    = now - 4h - 2h = now - 6h
-# Trem(N)    = now + 599h - 2h = now + 597h
-# Tpub(N+1)  = now - 31h - 2h = now - 33h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = now + 4436h - 2h = now + 4434h
-# Tact(N+1)  = Tret(N)
-# Tret(N+1)  = now + 4460h - 2h = now + 4458h
-# Trem(N+1)  = now + 5063h - 2h = now + 5061h
-TactZN="now-4494h"
-TretZN="now-30h"
+# Tact(N)   = now - 4468h - 2h = now - 4470h
+# Tret(N)   = now - 4h - 2h = now - 6h
+# Trem(N)   = now + 623h - 2h = now + 621h
+# Tpub(N+1) = now - 7h - 2h = now - 9h
+# Tsbm(N+1) = Tret(N)
+# Tact(N+1) = Tret(N)
+# Tret(N+1) = now + 4460h - 2h = now + 4458h
+# Trem(N+1) = now + 5087h - 2h = now + 5085h
 TactN="now-4470h"
 TretN="now-6h"
-TremN="now+597h"
-TpubN1="now-33h"
-TsbmN1="now-30h"
-TactZN1="${TsbmN1}"
-TretZN1="now+4434h"
+TremN="now+621h"
+TpubN1="now-9h"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
 TretN1="now+4458h"
-TremN1="now+5061h"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+TremN1="now+5085h"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $O $TactZN -r $U now-2h  -d $H now-2h -z $U $TactZN1 "$CSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $O now-2h -z $R $TactZN1 "$CSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $H -k $O $TactN  -r $U now-2h  -d $H now-2h -z $U $TactN1 "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $O now-2h -z $R $TactN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 6:
@@ -907,94 +920,76 @@ $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > si
 # removed from the zone.
 setup step6.csk-roll.autosign
 # According to RFC 7583:
-# Trem(N) = TretZ(N) + IretZ
-# TretZ(N) = TactZ(N) + Lcsk
+# Trem(N) = Tret(N) + IretZ
+# Tret(N) = Tact(N) + Lcsk
 #
 # Lcsk:   186d
 # Iret:   4h
 # IretZ:  26d3h
 #
-# TactZ(N)   = Tnow - IretZ - Lcsk = now - 627h - 186d
-#            = now - 627h - 4464h = now - 5091h
-# TretZ(N)   = Tnow - IretZ = now - 627h
-# Tact(N)    = Tnow - IretZ - Lcsk + Dreg = now - 627h - 186d + 1d =
-#              now - 627h - 4464h + 24h = now - 5067h
-# Tret(N)    = Tnow - IretZ + Dreg = now - 627h + 24h
-#            = Tnow - 603h
-# Trem(N)    = Tnow
-# Tpub(N+1)  = Tnow - IretZ - Ipub = now - 627h - 3h = now - 630h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = Tnow - IretZ + Lcsk = now - 627h + 186d = now + 3837h
-# Tact(N+1)  = Tret(N)
-# Tret(N+1)  = Tnow - Iret + Lcsk = now - 4h + 186d = now + 4460h
-# Trem(N+1)  = Tnow + Lcsk = now + 186d
-TactZN="now-5091h"
-TretZN="now-627h"
-TactN="now-5067h"
-TretN="now-603h"
+# Tact(N)   = Tnow - IretZ - Lcsk = now - 627h - 186d
+#           = now - 627h - 4464h = now - 5091h
+# Tret(N)   = Tnow - IretZ = now - 627h
+# Trem(N)   = Tnow
+# Tpub(N+1) = Tnow - IretZ - Ipub = now - 627h - 3h = now - 630h
+# Tsbm(N+1) = Tret(N)
+# Tact(N+1) = Tret(N)
+# Tret(N+1) = Tnow - IretZ + Lcsk = now - 627h + 186d = now + 3837h
+# Trem(N+1) = Tnow + Lcsk = now + 186d
+TactN="now-5091h"
+TretN="now-627h"
 TremN="now"
 TpubN1="now-630h"
-TsbmN1="${TretZN}"
-TactZN1="${TretZN}"
-TretZN1="now+3837h"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
-TretN1="now+4460h"
+TretN1="now+3837h"
 TremN1="now+186d"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $O $TactZN -r $H $TremN  -d $H $TremN  -z $U $TsbmN1 "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $H -k $O $TactN  -r $H $TremN  -d $H $TremN  -z $U $TsbmN1 "$CSK1" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $O $TremN  -z $R $TsbmN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 7:
 # Some time later the predecessor DNSKEY enters the HIDDEN state.
 setup step7.csk-roll.autosign
 # Subtract DNSKEY TTL plus zone propagation delay from all the times (2h).
-# TactZ(N) = now - 5091h - 2h = now - 5093h
-# TretZ(N) = now - 627h - 2h  = now - 629h
-# Tact(N)  = now - 5067h - 2h = now - 5069h
-# Tret(N)  = now - 603h - 2h  = now - 605h
+# Tact(N) = now - 5091h - 2h = now - 5093h
+# Tret(N) = now - 627h - 2h  = now - 629h
 # Trem(N) = now - 2h
 # Tpub(N+1) = now - 630h - 2h = now - 632h
-# Tsbm(N+1) = now - 627h - 2h = now - 629h
-# TactZ(N+1) = Tsbm(N+1)
-# TretZ(N+1) = now + 3837h - 2h = now + 3835h
+# Tsbm(N+1) = Tret(N)
 # Tact(N+1) = Tret(N)
-# Tret(N+1) = now + 4460h - 2h = now + 4458h
+# Tret(N+1) = now + 3837h - 2h = now + 3835h
 # Trem(N+1) = now + 186d - 2h = now + 4462h
-TactZN="now-5093h"
-TretZN="now-629h"
-TactN="now-5069h"
-TretN="now-605h"
+TactN="now-5093h"
+TretN="now-629h"
 TremN="now-2h"
 TpubN1="now-632h"
-TsbmN1="${TretZN}"
-TactZN1="${TretZN}"
-TretZN1="now+3835h"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
-TretN1="now+4458h"
+TretN1="now+3835h"
 TremN1="now+4462h"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $U $TremN  -r $H $TremN  -d $H $TremN  -z $H $TactZN1 "$CSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $O $TactN1 -z $O $TactZN1 "$CSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $H -k $U $TremN  -r $H $TremN  -d $H $TremN  -z $H $TactN1 "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $O $TactN1 -z $O $TactN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 #
@@ -1002,11 +997,6 @@ $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > si
 # (which is essentially a ZSK Pre-Publication / KSK Double-KSK rollover).
 # This scenario differs from the above one because the zone signatures (ZRRSIG)
 # are replaced with the new key sooner than the DS is swapped.
-#
-#
-# The activation time for zone signing (ZSK) is different than for chain of
-# trust validation (KSK). Therefor, for zone signing we use TactZ and TretZ
-# instead of Tact and Tret.
 #
 
 # Step 1:
@@ -1017,37 +1007,34 @@ csktimes="-P ${TactN} -P sync ${TactN} -A ${TactN}"
 CSK=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone 13 "$CSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 2:
 # It is time to introduce the new CSK.
 setup step2.csk-roll2.autosign
 # According to RFC 7583:
-# KSK: Tpub(N+1) <= Tact(N) + Lksk - Dreg - IpubC
-# ZSK: Tpub(N+1) <= TactZ(N) + Lzsk - Ipub
+# KSK: Tpub(N+1) <= Tact(N) + Lksk - IpubC
+# ZSK: Tpub(N+1) <= Tact(N) + Lzsk - Ipub
 # IpubC = DprpC + TTLkey (+publish-safety)
 # Ipub  = IpubC
 # Lcsk = Lksk = Lzsk
 #
 # Lcsk:           6mo (186d, 4464h)
-# Dreg:           1w
+# Dreg:           N/A
 # DprpC:          1h
 # TTLkey:         1h
 # publish-safety: 1h
 # Ipub:           3h
 #
-# Tact(N)  = Tnow - Lcsk + Ipub + Dreg = now - 186d + 3h + 1w
-#          = now - 4464h + 3h + 168h = now - 4293h
-# TactZ(N) = Tnow - Lcsk + IpubC = now - 186d + 3h
+# Tact(N)  = Tnow - Lcsk + Ipub = now - 186d + 3h
 #          = now - 4464h + 3h = now - 4461h
-TactN="now-4293h"
-TactZN="now-4461h"
-csktimes="-P ${TactN} -P sync ${TactZN} -A ${TactZN}"
+TactN="now-4461h"
+csktimes="-P ${TactN} -P sync ${TactN} -A ${TactN}"
 CSK=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
-$SETTIME -s -g $O -k $O $TactZN -r $O $TactZN -d $O $TactN -z $O $TactZN "$CSK" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone 13 "$CSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 3:
@@ -1056,60 +1043,52 @@ setup step3.csk-roll2.autosign
 # According to RFC 7583:
 #
 # Tsbm(N+1) >= Trdy(N+1)
-# KSK: Tact(N+1)  = Tsbm(N+1) + Dreg
-# ZSK: TactZ(N+1) = Tpub(N+1) + Ipub = Tsbm(N+1)
+# KSK: Tact(N+1) = Tsbm(N+1)
+# ZSK: Tact(N+1) = Tpub(N+1) + Ipub = Tsbm(N+1)
 # KSK: Iret  = DprpP + TTLds (+retire-safety)
 # ZSK: IretZ = Dsgn + Dprp + TTLsig (+retire-safety)
 #
 # Lcsk:           186d
 # Dprp:           1h
-# DprpP:          1h
-# Dreg:           1w
+# DprpP:          1w
+# Dreg:           N/A
 # Dsgn:           12h
 # TTLds:          1h
 # TTLsig:         1d
 # retire-safety:  1h
-# Iret:           3h
+# Iret:           170h
 # IretZ:          38h
 # Ipub:           3h
 #
-# TactZ(N)   = Tnow - Lcsk = now - 186d
-# TretZ(N)   = now
-# Tact(N)    = Tnow + Dreg - Lcsk = now + 1w - 186d = now - 179d
-# Tret(N)    = Tnow + Dreg = now + 7d
-# Trem(N)    = Tnow + Dreg + Iret = now + 1w + 3h = now + 171h
-# Tpub(N+1)  = Tnow - Ipub = now - 3h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = Tnow + Lcsk = now + 186d
-# Tact(N+1)  = Tret(N)
-# Tret(N+1)  = Tnow + Lcsk + Dreg = now + 186d + 7d = now + 193d
-# Trem(N+1)  = Tnow + Lcsk + Dreg + Iret = now + 186d + 7d + 3h =
-#            = now + 193d + 3h = now + 4632h + 3h = now + 4635h
-TactZN="now-186d"
-TretZN="now"
-TactN="now-179d"
-TretN="now+7d"
-TremN="now+171h"
+# Tact(N)   = Tnow - Lcsk = now - 186d
+# Tret(N)   = now
+# Trem(N)   = Tnow + Iret = now + 170h
+# Tpub(N+1) = Tnow - Ipub = now - 3h
+# Tsbm(N+1) = Tret(N)
+# Tact(N+1) = Tret(N)
+# Tret(N+1) = Tnow + Lcsk = now + 186d
+# Trem(N+1) = Tnow + Lcsk + Iret = now + 186d + 170h =
+#           = now + 4464h + 170h = now + 4634h
+TactN="now-186d"
+TretN="now"
+TremN="now+170h"
 TpubN1="now-3h"
-TsbmN1="${TretZN}"
-TactZN1="${TretZN}"
-TretZN1="now+186d"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
-TretN1="now+193d"
-TremN1="now+4635h"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+TretN1="now+186d"
+TremN1="now+4634h"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $O $TactZN  -r $O $TactZN -d $O $TactN  -z $O $TactZN "$CSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $R $TpubN1  -r $R $TpubN1 -d $H $TpubN1 -z $H $TpubN1 "$CSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $O $TactN  -z $O $TactN  "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $R $TpubN1 -r $R $TpubN1 -d $H $TpubN1 -z $H $TpubN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 4:
@@ -1119,99 +1098,80 @@ $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > si
 # signatures are replaced before the DS is swapped.
 setup step4.csk-roll2.autosign
 # According to RFC 7583:
-# Trem(N)    = Tret(N) + Iret
-# Tnow       = TretZ(N) + IretZ
+# Trem(N)    = Tret(N) + IretZ
 #
 # Lcsk:   186d
-# Dreg:   1w
-# Iret:   3h
+# Dreg:   N/A
+# Iret:   170h
 # IretZ:  38h
 #
-# TactZ(N)   = Tnow - IretZ = Lcsk = now - 38h - 186d
+# Tact(N)    = Tnow - IretZ = Lcsk = now - 38h - 186d
 #            = now - 38h - 4464h = now - 4502h
-# TretZ(N)   = Tnow - IretZ = now - 38h
-# Tact(N)    = Tnow - IretZ - Lcsk + Dreg = now - 38h - 4464h + 168h
-#            = now - 4334h
-# Tret(N)    = Tnow - IretZ + Dreg = now - 38h + 168h = now + 130h
-# Trem(N)    = Tnow - IretZ + Dreg + Iret = now + 130h + 3h = now + 133h
+# Tret(N)    = Tnow - IretZ = now - 38h
+# Trem(N)    = Tnow - IretZ + Iret = now - 38h + 170h = now + 132h
 # Tpub(N+1)  = Tnow - IretZ - IpubC = now - 38h - 3h = now - 41h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = Tnow - IretZ + Lcsk = now - 38h + 186d
-#            = now + 4426h
+# Tsbm(N+1)  = Tret(N)
 # Tact(N+1)  = Tret(N)
-# Tret(N+1)  = Tnow - IretZ + Dreg + Lcsk = now - 38h + 168h + 4464h
-#            = now + 4594h
-# Trem(N+1)  = Tnow - IretZ + Dreg + Lcsk + Iret
-#            = now + 4594h + 3h = now + 4597h
-TactZN="now-4502h"
-TretZN="now-38h"
-TactN="now-4334h"
-TretN="now+130h"
-TremN="now+133h"
+# Tret(N+1)  = Tnow - IretZ + Lcsk = now - 38h + 186d
+#            = now + 4426h
+# Trem(N+1)  = Tnow - IretZ + Lcsk + Iret
+#            = now + 4426h + 3h = now + 4429h
+TactN="now-4502h"
+TretN="now-38h"
+TremN="now+132h"
 TpubN1="now-41h"
-TsbmN1="${TretZN}"
-TactZN1="${TretZN}"
-TretZN1="now+4426h"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
-TretN1="now+4594h"
-TremN1="now+4597h"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+TretN1="now+4426h"
+TremN1="now+4429h"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $O $TactZN -r $O $TactZN -d $U $TsbmN1 -z $U $TretZN  "$CSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $R $TsbmN1 -z $R $TactZN1 "$CSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -z $U $TretN  -d $U $TsbmN1 -D ds $TsbmN1 "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -z $R $TactN1 -d $R $TsbmN1 -P ds $TsbmN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 5:
 # Some time later the DS can be swapped and the old DNSKEY can be removed from
 # the zone.
 setup step5.csk-roll2.autosign
-# Subtract Dreg + Iret (171h) - IretZ (38h) = 133h.
+# Subtract Iret (170h) - IretZ (38h) = 132h.
 #
-# TactZ(N)   = now - 4502h - 133h = now - 4635h
-# TretZ(N)   = now - 38h - 133h = now - 171h
-# Tact(N)    = now - 4334h = 133h = now - 4467h
-# Tret(N)    = now + 130h - 133h = now - 3h
-# Trem(N)    = now + 133h - 133h = now
-# Tpub(N+1)  = now - 41h - 133h = now - 174h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = now + 4426h - 133h = now + 4293h
-# Tact(N+1)  = Tret(N)
-# Tret(N+1)  = now + 4594h - 133h = now + 4461h
-# Trem(N+1)  = now + 4597h - 133h = now + 4464h = now + 186d
-TactZN="now-4635h"
-TretZN="now-171h"
-TactN="now-4467h"
-TretN="now-3h"
+# Tact(N)   = now - 4502h - 132h = now - 4634h
+# Tret(N)   = now - 38h - 132h = now - 170h
+# Trem(N)   = now + 132h - 132h = now
+# Tpub(N+1) = now - 41h - 132h = now - 173h
+# Tsbm(N+1) = Tret(N)
+# Tact(N+1) = Tret(N)
+# Tret(N+1) = now + 4426h - 132h = now + 4294h
+# Trem(N+1) = now + 4492h - 132h = now + 4360h
+TactN="now-4634h"
+TretN="now-170h"
 TremN="now"
-TpubN1="now-174h"
-TsbmN1="${TretZN}"
-TactZN1="${TretZN}"
-TretZN1="now+4293h"
+TpubN1="now-173h"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
-TretN1="now+4461h"
-TremN1="now+186d"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+TretN1="now+4294h"
+TremN1="now+4360h"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
-$SETTIME -s -g $H -k $O $TactZN -r $O $TactZN -d $U $TsbmN1 -z $H now-133h "$CSK1" > settime.out.$zone.1 2>&1
-$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $R $TsbmN1 -z $O now-133h "$CSK2" > settime.out.$zone.2 2>&1
+$SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -z $H now-133h -d $U $TsbmN1 -D ds $TsbmN1 "$CSK1" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -z $O now-133h -d $R $TsbmN1 -P ds $TsbmN1 "$CSK2" > settime.out.$zone.2 2>&1
 # Set key rollover relationship.
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Step 6:
@@ -1219,32 +1179,24 @@ $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > si
 setup step6.csk-roll2.autosign
 # Subtract DNSKEY TTL plus zone propagation delay (2h).
 #
-# TactZ(N)   = now - 4635h - 2h = now - 4637h
-# TretZ(N)   = now - 171h - 2h = now - 173h
-# Tact(N)    = now - 4467h - 2h = now - 4469h
-# Tret(N)    = now - 3h - 2h = now - 5h
-# Trem(N)    = now - 2h
-# Tpub(N+1)  = now - 174h - 2h = now - 176h
-# Tsbm(N+1)  = TretZ(N)
-# TactZ(N+1) = TretZ(N)
-# TretZ(N+1) = now + 4293h - 2h = now + 4291h
-# Tact(N+1)  = Tret(N)
-# Tret(N+1)  = now + 4461h - 2h = now + 4459h
-# Trem(N+1)  = now + 4464h - 2h = now + 4462h
-TactZN="now-4637h"
-TretZN="now-173h"
-TactN="now-4469h"
-TretN="now-5h"
+# Tact(N)   = now - 4634h - 2h = now - 4636h
+# Tret(N)   = now - 170h - 2h = now - 172h
+# Trem(N)   = now - 2h
+# Tpub(N+1) = now - 173h - 2h = now - 175h
+# Tsbm(N+1) = Tret(N)
+# Tact(N+1) = Tret(N)
+# Tret(N+1) = now + 4294h - 2h = now + 4292h
+# Trem(N+1) = now + 4360h - 2h = now + 4358h
+TactN="now-4636h"
+TretN="now-172h"
 TremN="now-2h"
-TpubN1="now-176h"
-TsbmN1="${TretZN}"
-TactZN1="${TretZN}"
-TretZN1="now+4291h"
+TpubN1="now-175h"
+TsbmN1="${TretN}"
 TactN1="${TretN}"
-TretN1="now+4459h"
-TremN1="now+4462h"
-csktimes="-P ${TactN}  -P sync ${TactZN} -A ${TactZN}  -I ${TretZN}  -D ${TremN}"
-newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactZN1} -I ${TretZN1} -D ${TremN1}"
+TretN1="now+4292h"
+TremN1="now+4358h"
+csktimes="-P ${TactN}  -P sync ${TactN}  -A ${TactN}  -I ${TretN}  -D ${TremN}"
+newtimes="-P ${TpubN1} -P sync ${TsbmN1} -A ${TactN1} -I ${TretN1} -D ${TremN1}"
 CSK1=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $csktimes $zone 2> keygen.out.$zone.1)
 CSK2=$($KEYGEN -k csk-roll2 -l policies/autosign.conf $newtimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $H -k $U $TremN  -r $U $TremN  -d $H $TremN -z $H now-135h "$CSK1" > settime.out.$zone.1 2>&1
@@ -1253,6 +1205,6 @@ $SETTIME -s -g $O -k $O $TsbmN1 -r $O $TsbmN1 -d $O $TremN -z $O now-135h "$CSK2
 key_successor $CSK1 $CSK2
 # Sign zone.
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
-private_type_record $zone 13 "$CSK1" >> "$infile"
-private_type_record $zone 13 "$CSK2" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1

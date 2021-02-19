@@ -32,7 +32,7 @@ controls {
 };
 
 zone "local.nil" {
-	type master;
+	type primary;
 	file "local.db";
 	update-policy local;
 };

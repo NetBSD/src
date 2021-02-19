@@ -22,6 +22,6 @@ options {
 };
 
 zone "dropedns-notcp" {
-	type master;
+	type primary;
 	file "dropedns-notcp.db";
 };

@@ -37,6 +37,6 @@ zone "." {
 };
 
 zone "normal.example" {
-	type master;
+	type primary;
 	file "generic.db";
 };

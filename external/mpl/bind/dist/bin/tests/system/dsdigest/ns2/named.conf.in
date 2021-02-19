@@ -32,12 +32,12 @@ zone "." {
 };
 
 zone "good" {
-	type master;
+	type primary;
 	file "good.db.signed";
 };
 
 zone "bad" {
-	type master;
+	type primary;
 	file "bad.db.signed";
 };
 

@@ -40,41 +40,69 @@ controls {
 
 /* The default case: No keys created, using default policy. */
 zone "default.kasp" {
-	type master;
+	type primary;
 	file "default.kasp.db";
 	dnssec-policy "default";
 };
 
+/* checkds: Zone with one KSK. */
+zone "checkds-ksk.kasp" {
+	type primary;
+	file "checkds-ksk.kasp.db";
+	dnssec-policy "checkds-ksk";
+};
+
+/* checkds: Zone with two KSKs. */
+zone "checkds-doubleksk.kasp" {
+	type primary;
+	file "checkds-doubleksk.kasp.db";
+	dnssec-policy "checkds-doubleksk";
+};
+
+/* checkds: Zone with one CSK. */
+zone "checkds-csk.kasp" {
+	type primary;
+	file "checkds-csk.kasp.db";
+	dnssec-policy "checkds-csk";
+};
+
 /* Key lifetime unlimited. */
 zone "unlimited.kasp" {
-	type master;
+	type primary;
 	file "unlimited.kasp.db";
 	dnssec-policy "unlimited";
 };
 
+/* Manual rollover. */
+zone "manual-rollover.kasp" {
+	type primary;
+	file "manual-rollover.kasp.db";
+	dnssec-policy "manual-rollover";
+};
+
 /* A master zone with dnssec-policy, no keys created. */
 zone "rsasha1.kasp" {
-	type master;
+	type primary;
 	file "rsasha1.kasp.db";
 	dnssec-policy "rsasha1";
 };
 
 /* A zone that inherits dnssec-policy. */
 zone "inherit.kasp" {
-	type master;
+	type primary;
 	file "inherit.kasp.db";
 };
 
 /* A zone that overrides dnssec-policy. */
 zone "unsigned.kasp" {
-	type master;
+	type primary;
 	file "unsigned.kasp.db";
 	dnssec-policy "none";
 };
 
 /* A master zone with dnssec-policy but keys already created. */
 zone "dnssec-keygen.kasp" {
-	type master;
+	type primary;
 	file "dnssec-keygen.kasp.db";
 	dnssec-policy "rsasha1";
 };
@@ -82,14 +110,14 @@ zone "dnssec-keygen.kasp" {
 /* A secondary zone with dnssec-policy. */
 zone "secondary.kasp" {
 	type secondary;
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 	file "secondary.kasp.db";
 	dnssec-policy "rsasha1";
 };
 
 /* A dynamic zone with dnssec-policy. */
 zone "dynamic.kasp" {
-	type master;
+	type primary;
 	file "dynamic.kasp.db";
 	dnssec-policy "default";
 	allow-update { any; };
@@ -97,7 +125,7 @@ zone "dynamic.kasp" {
 
 /* A dynamic inline-signed zone with dnssec-policy. */
 zone "dynamic-inline-signing.kasp" {
-	type master;
+	type primary;
 	file "dynamic-inline-signing.kasp.db";
 	dnssec-policy "default";
 	allow-update { any; };
@@ -106,7 +134,7 @@ zone "dynamic-inline-signing.kasp" {
 
 /* An inline-signed zone with dnssec-policy. */
 zone "inline-signing.kasp" {
-	type master;
+	type primary;
 	file "inline-signing.kasp.db";
 	dnssec-policy "default";
 	inline-signing yes;
@@ -116,7 +144,7 @@ zone "inline-signing.kasp" {
  * A configured dnssec-policy but some keys already created.
  */
 zone "some-keys.kasp" {
-	type master;
+	type primary;
 	file "some-keys.kasp.db";
 	dnssec-policy "rsasha1";
 };
@@ -125,16 +153,16 @@ zone "some-keys.kasp" {
  * A configured dnssec-policy but some keys already in use.
  */
 zone "legacy-keys.kasp" {
-	type master;
+	type primary;
 	file "legacy-keys.kasp.db";
-	dnssec-policy "rsasha1";
+	dnssec-policy "migrate-to-dnssec-policy";
 };
 
 /*
  * A configured dnssec-policy with (too) many keys pregenerated.
  */
 zone "pregenerated.kasp" {
-	type master;
+	type primary;
 	file "pregenerated.kasp.db";
 	dnssec-policy "rsasha1";
 };
@@ -144,36 +172,44 @@ zone "pregenerated.kasp" {
  * Bugfix case for GL #1593.
  */
 zone "rumoured.kasp" {
-	type master;
+	type primary;
 	file "rumoured.kasp.db";
 	dnssec-policy "rsasha1";
+};
+
+/* RFC 8901 Multi-signer Model 2. */
+zone "multisigner-model2.kasp" {
+	type primary;
+	file "multisigner-model2.kasp.db";
+	dnssec-policy "multisigner-model2";
+	allow-update { any; };
 };
 
 /*
  * Different algorithms.
  */
 zone "rsasha1-nsec3.kasp" {
-	type master;
+	type primary;
 	file "rsasha1-nsec3.kasp.db";
 	dnssec-policy "rsasha1-nsec3";
 };
 zone "rsasha256.kasp" {
-	type master;
+	type primary;
 	file "rsasha256.kasp.db";
 	dnssec-policy "rsasha256";
 };
 zone "rsasha512.kasp" {
-	type master;
+	type primary;
 	file "rsasha512.kasp.db";
 	dnssec-policy "rsasha512";
 };
 zone "ecdsa256.kasp" {
-	type master;
+	type primary;
 	file "ecdsa256.kasp.db";
 	dnssec-policy "ecdsa256";
 };
 zone "ecdsa384.kasp" {
-	type master;
+	type primary;
 	file "ecdsa384.kasp.db";
 	dnssec-policy "ecdsa384";
 };
@@ -186,7 +222,7 @@ zone "ecdsa384.kasp" {
  * Zone that has expired signatures.
  */
 zone "expired-sigs.autosign" {
-	type master;
+	type primary;
 	file "expired-sigs.autosign.db";
 	dnssec-policy "autosign";
 };
@@ -195,7 +231,7 @@ zone "expired-sigs.autosign" {
  * Zone that has valid, fresh signatures.
  */
 zone "fresh-sigs.autosign" {
-	type master;
+	type primary;
 	file "fresh-sigs.autosign.db";
 	dnssec-policy "autosign";
 };
@@ -204,7 +240,7 @@ zone "fresh-sigs.autosign" {
  * Zone that has unfresh signatures.
  */
 zone "unfresh-sigs.autosign" {
-	type master;
+	type primary;
 	file "unfresh-sigs.autosign.db";
 	dnssec-policy "autosign";
 };
@@ -213,7 +249,7 @@ zone "unfresh-sigs.autosign" {
  * Zone that has missing private ZSK.
  */
 zone "zsk-missing.autosign" {
-	type master;
+	type primary;
 	file "zsk-missing.autosign.db";
 	dnssec-policy "autosign";
 };
@@ -222,7 +258,7 @@ zone "zsk-missing.autosign" {
  * Zone that has inactive ZSK.
  */
 zone "zsk-retired.autosign" {
-	type master;
+	type primary;
 	file "zsk-retired.autosign.db";
 	dnssec-policy "autosign";
 };
@@ -231,22 +267,22 @@ zone "zsk-retired.autosign" {
  * Zones for testing enabling DNSSEC.
  */
 zone "step1.enable-dnssec.autosign" {
-	type master;
+	type primary;
 	file "step1.enable-dnssec.autosign.db";
 	dnssec-policy "enable-dnssec";
 };
 zone "step2.enable-dnssec.autosign" {
-	type master;
+	type primary;
 	file "step2.enable-dnssec.autosign.db";
 	dnssec-policy "enable-dnssec";
 };
 zone "step3.enable-dnssec.autosign" {
-	type master;
+	type primary;
 	file "step3.enable-dnssec.autosign.db";
 	dnssec-policy "enable-dnssec";
 };
 zone "step4.enable-dnssec.autosign" {
-	type master;
+	type primary;
 	file "step4.enable-dnssec.autosign.db";
 	dnssec-policy "enable-dnssec";
 };
@@ -255,27 +291,27 @@ zone "step4.enable-dnssec.autosign" {
  * Zones for testing ZSK Pre-Publication steps.
  */
 zone "step1.zsk-prepub.autosign" {
-	type master;
+	type primary;
 	file "step1.zsk-prepub.autosign.db";
 	dnssec-policy "zsk-prepub";
 };
 zone "step2.zsk-prepub.autosign" {
-	type master;
+	type primary;
 	file "step2.zsk-prepub.autosign.db";
 	dnssec-policy "zsk-prepub";
 };
 zone "step3.zsk-prepub.autosign" {
-	type master;
+	type primary;
 	file "step3.zsk-prepub.autosign.db";
 	dnssec-policy "zsk-prepub";
 };
 zone "step4.zsk-prepub.autosign" {
-	type master;
+	type primary;
 	file "step4.zsk-prepub.autosign.db";
 	dnssec-policy "zsk-prepub";
 };
 zone "step5.zsk-prepub.autosign" {
-	type master;
+	type primary;
 	file "step5.zsk-prepub.autosign.db";
 	dnssec-policy "zsk-prepub";
 };
@@ -284,27 +320,27 @@ zone "step5.zsk-prepub.autosign" {
  * Zones for testing KSK Double-KSK steps.
  */
 zone "step1.ksk-doubleksk.autosign" {
-	type master;
+	type primary;
 	file "step1.ksk-doubleksk.autosign.db";
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step2.ksk-doubleksk.autosign" {
-	type master;
+	type primary;
 	file "step2.ksk-doubleksk.autosign.db";
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step3.ksk-doubleksk.autosign" {
-	type master;
+	type primary;
 	file "step3.ksk-doubleksk.autosign.db";
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step4.ksk-doubleksk.autosign" {
-	type master;
+	type primary;
 	file "step4.ksk-doubleksk.autosign.db";
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step5.ksk-doubleksk.autosign" {
-	type master;
+	type primary;
 	file "step5.ksk-doubleksk.autosign.db";
 	dnssec-policy "ksk-doubleksk";
 };
@@ -313,68 +349,68 @@ zone "step5.ksk-doubleksk.autosign" {
  * Zones for testing CSK rollover steps.
  */
 zone "step1.csk-roll.autosign" {
-	type master;
+	type primary;
 	file "step1.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
 zone "step2.csk-roll.autosign" {
-	type master;
+	type primary;
 	file "step2.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
 zone "step3.csk-roll.autosign" {
-	type master;
+	type primary;
 	file "step3.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
 zone "step4.csk-roll.autosign" {
-	type master;
+	type primary;
 	file "step4.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
 zone "step5.csk-roll.autosign" {
-	type master;
+	type primary;
 	file "step5.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
 zone "step6.csk-roll.autosign" {
-	type master;
+	type primary;
 	file "step6.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
 zone "step7.csk-roll.autosign" {
-	type master;
+	type primary;
 	file "step7.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
 
 zone "step1.csk-roll2.autosign" {
-	type master;
+	type primary;
 	file "step1.csk-roll2.autosign.db";
 	dnssec-policy "csk-roll2";
 };
 zone "step2.csk-roll2.autosign" {
-	type master;
+	type primary;
 	file "step2.csk-roll2.autosign.db";
 	dnssec-policy "csk-roll2";
 };
 zone "step3.csk-roll2.autosign" {
-	type master;
+	type primary;
 	file "step3.csk-roll2.autosign.db";
 	dnssec-policy "csk-roll2";
 };
 zone "step4.csk-roll2.autosign" {
-	type master;
+	type primary;
 	file "step4.csk-roll2.autosign.db";
 	dnssec-policy "csk-roll2";
 };
 zone "step5.csk-roll2.autosign" {
-	type master;
+	type primary;
 	file "step5.csk-roll2.autosign.db";
 	dnssec-policy "csk-roll2";
 };
 zone "step6.csk-roll2.autosign" {
-	type master;
+	type primary;
 	file "step6.csk-roll2.autosign.db";
 	dnssec-policy "csk-roll2";
 };

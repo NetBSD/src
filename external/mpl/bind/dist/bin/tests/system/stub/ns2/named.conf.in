@@ -28,6 +28,6 @@ zone "." {
 };
 
 zone "child.example" {
-	type master;
+	type primary;
 	file "child.example.db";
 };

@@ -25,7 +25,7 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	notify yes;
-	ixfr-from-differences slave;
+	ixfr-from-differences secondary;
 	check-integrity no;
 };
 
@@ -34,19 +34,19 @@ zone "." {
 	file "../../common/root.hint";
 };
 
-zone "master2" {
-	type master;
-	file "master2.db";
+zone "primary2" {
+	type primary;
+	file "primary2.db";
 };
 
-zone "slave" {
-	type slave;
-	masters { 10.53.0.1; };
-	file "slave.bk";
+zone "secondary" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	file "sec.bk";
 };
 
 zone "edns-expire" {
-	type slave;
-	masters { 10.53.0.6; };
+	type secondary;
+	primaries { 10.53.0.6; };
 	file "edns-expire.bk";
 };

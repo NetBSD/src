@@ -30,54 +30,54 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db.signed";
 };
 
 zone "sub.example" {
-	type master;
+	type primary;
 	file "sub.example.db.signed";
 };
 
 zone "initially-unavailable" {
-	type master;
+	type primary;
 	file "initially-unavailable.db.signed";
 	allow-transfer { 10.53.0.254; };
 };
 
 zone "verify-addzone" {
-	type master;
+	type primary;
 	file "verify-addzone.db.original.signed";
 };
 
 zone "verify-axfr" {
-	type master;
+	type primary;
 	file "verify-axfr.db.signed";
 };
 
 zone "verify-csk" {
-	type master;
+	type primary;
 	file "verify-csk.db.signed";
 };
 
 zone "verify-ixfr" {
-	type master;
+	type primary;
 	file "verify-ixfr.db.signed";
 	ixfr-from-differences yes;
 	allow-transfer { 10.53.0.3; };
 };
 
 zone "verify-reconfig" {
-	type master;
+	type primary;
 	file "verify-reconfig.db.signed";
 };
 
 zone "verify-unsigned" {
-	type master;
+	type primary;
 	file "verify.db.in";
 };
 
 zone "verify-untrusted" {
-	type master;
+	type primary;
 	file "verify-untrusted.db.signed";
 };

@@ -45,13 +45,13 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "internal.db";
 };
 
-zone "a-slave" {
-	type slave;
-	file "slave.bk";
-	masters { 10.53.0.1; };
+zone "a-secondary" {
+	type secondary;
+	file "sec.bk";
+	primaries { 10.53.0.1; };
 };

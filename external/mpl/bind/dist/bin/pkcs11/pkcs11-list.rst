@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -31,34 +31,34 @@ pkcs11-list - list PKCS#11 objects
 Description
 ~~~~~~~~~~~
 
-``pkcs11-list`` lists the PKCS#11 objects with ``ID`` or ``label`` or by
-default all objects. The object class, label, and ID are displayed for
+``pkcs11-list`` lists the PKCS#11 objects with ``ID`` or ``label`` or, by
+default, all objects. The object class, label, and ID are displayed for
 all keys. For private or secret keys, the extractability attribute is
 also displayed, as either ``true``, ``false``, or ``never``.
 
-Arguments
-~~~~~~~~~
+Options
+~~~~~~~
 
-**-P**
-   List only the public objects. (Note that on some PKCS#11 devices, all
+``-P``
+   This option lists only the public objects. (Note that on some PKCS#11 devices, all
    objects are private.)
 
-**-m** module
-   Specify the PKCS#11 provider module. This must be the full path to a
+``-m module``
+   This option specifies the PKCS#11 provider module. This must be the full path to a
    shared library object implementing the PKCS#11 API for the device.
 
-**-s** slot
-   Open the session with the given PKCS#11 slot. The default is slot 0.
+``-s slot``
+   This option opens the session with the given PKCS#11 slot. The default is slot 0.
 
-**-i** ID
-   List only key objects with the given object ID.
+``-i ID``
+   This option lists only key objects with the given object ID.
 
-**-l** label
-   List only key objects with the given label.
+``-l label``
+   This option lists only key objects with the given label.
 
-**-p** PIN
-   Specify the PIN for the device. If no PIN is provided on the command
-   line, ``pkcs11-list`` will prompt for it.
+``-p PIN``
+   This option specifies the ``PIN`` for the device. If no ``PIN`` is provided on the command
+   line, ``pkcs11-list`` prompts for it.
 
 See Also
 ~~~~~~~~

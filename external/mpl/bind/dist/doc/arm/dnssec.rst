@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -26,19 +16,21 @@ DNSSEC, Dynamic Zones, and Automatic Signing
 Converting From Insecure to Secure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Changing a zone from insecure to secure can be done in two ways: using a
-dynamic DNS update, or via the ``auto-dnssec`` zone option.
+A zone can be changed from insecure to secure in three ways: using a
+dynamic DNS update, via the ``auto-dnssec`` zone option, or by setting a
+DNSSEC policy for the zone with ``dnssec-policy``.
 
-For either method, ``named`` must be configured so that it can see
+For any method, ``named`` must be configured so that it can see
 the ``K*`` files which contain the public and private parts of the keys
 that are used to sign the zone. These files are generated
-by ``dnssec-keygen``, and they should be placed in the
+by ``dnssec-keygen``, or created when needed by ``named`` if
+``dnssec-policy`` is used. Keys should be placed in the
 key-directory, as specified in ``named.conf``:
 
 ::
 
        zone example.net {
-           type master;
+           type primary;
            update-policy local;
            file "dynamic/example.net/example.net";
            key-directory "dynamic/example.net";
@@ -48,6 +40,18 @@ If one KSK and one ZSK DNSKEY key have been generated, this
 configuration causes all records in the zone to be signed with the
 ZSK, and the DNSKEY RRset to be signed with the KSK. An NSEC
 chain is generated as part of the initial signing process.
+
+With ``dnssec-policy``, it is possible to specify which keys should be
+KSK and/or ZSK. To sign all records with a key, a CSK must be specified.
+For example:
+
+::
+
+        dnssec-policy csk {
+	    keys {
+                csk lifetime unlimited algorithm 13;
+            };
+	};
 
 Dynamic DNS Update Method
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,7 +67,7 @@ To insert the keys via dynamic update:
        > send
 
 While the update request completes almost immediately, the zone is
-not completely signed until ``named`` has had time to walk the zone
+not completely signed until ``named`` has had time to "walk" the zone
 and generate the NSEC and RRSIG records. The NSEC record at the apex
 is added last, to signal that there is a complete NSEC chain.
 
@@ -93,9 +97,9 @@ other updates are possible as well.
 Fully Automatic Zone Signing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To enable automatic signing, add the ``auto-dnssec`` option to the zone
-statement in ``named.conf``. ``auto-dnssec`` has two possible arguments:
-``allow`` or ``maintain``.
+To enable automatic signing, set a ``dnssec-policy`` or add the
+``auto-dnssec`` option to the zone statement in ``named.conf``.
+``auto-dnssec`` has two possible arguments: ``allow`` or ``maintain``.
 
 With ``auto-dnssec allow``, ``named`` can search the key directory for
 keys matching the zone, insert them into the zone, and use them to sign
@@ -107,11 +111,16 @@ automatically adjusts the zone's DNSKEY records on a schedule according to
 the keys' timing metadata. (See :ref:`man_dnssec-keygen` and
 :ref:`man_dnssec-settime` for more information.)
 
+``dnssec-policy`` is similar to ``auto-dnssec maintain``, but
+``dnssec-policy`` also automatically creates new keys when necessary. In
+addition, any configuration related to DNSSEC signing is retrieved from the
+policy, ignoring existing DNSSEC ``named.conf`` options.
+
 ``named`` periodically searches the key directory for keys matching
 the zone; if the keys' metadata indicates that any change should be
-made to the zone, such as adding, removing, or revoking a key, then that
+made to the zone - such as adding, removing, or revoking a key - then that
 action is carried out. By default, the key directory is checked for
-changes every 60 minutes; this period can be adjusted with the
+changes every 60 minutes; this period can be adjusted with
 ``dnssec-loadkeys-interval``, up to a maximum of 24 hours. The
 ``rndc loadkeys`` command forces ``named`` to check for key updates immediately.
 
@@ -138,34 +147,34 @@ allow dynamic updates, by adding an ``allow-update`` or
 ``update-policy`` statement to the zone configuration. If this has not
 been done, the configuration fails.
 
-Private-type Records
+Private Type Records
 ~~~~~~~~~~~~~~~~~~~~
 
-The state of the signing process is signaled by private-type records
+The state of the signing process is signaled by private type records
 (with a default type value of 65534). When signing is complete, those
-records with a nonzero initial octet have a nonzero value for the final octet.
+records with a non-zero initial octet have a non-zero value for the final octet.
 
-If the first octet of a private-type record is non-zero, the
+If the first octet of a private type record is non-zero, the
 record indicates either that the zone needs to be signed with the key matching
 the record, or that all signatures that match the record should be
-removed.
+removed. Here are the meanings of the different values of the first octet:
 
-   algorithm (octet 1)
+   - algorithm (octet 1)
 
-   key id in network order (octet 2 and 3)
+   - key id in network order (octet 2 and 3)
 
-   removal flag (octet 4)
+   - removal flag (octet 4)
    
-   complete flag (octet 5)
+   - complete flag (octet 5)
 
-Only records flagged as "complete" can be removed via dynamic update.
-Attempts to remove other private type records are silently ignored.
+Only records flagged as "complete" can be removed via dynamic update; attempts
+to remove other private type records are silently ignored.
 
 If the first octet is zero (this is a reserved algorithm number that
-should never appear in a DNSKEY record), the record indicates
+should never appear in a DNSKEY record), the record indicates that
 changes to the NSEC3 chains are in progress. The rest of the record
 contains an NSEC3PARAM record, while the flag field tells what operation to
-perform based on the flag bits.
+perform based on the flag bits:
 
    0x01 OPTOUT
 
@@ -189,7 +198,7 @@ To perform key rollovers via dynamic update, the ``K*``
 files for the new keys must be added so that ``named`` can find them.
 The new DNSKEY RRs can then be added via dynamic update. ``named`` then causes the
 zone to be signed with the new keys; when the signing is complete, the
-private-type records are updated so that the last octet is non-zero.
+private type records are updated so that the last octet is non-zero.
 
 If this is for a KSK, the parent and any trust anchor
 repositories of the new KSK must be informed.
@@ -208,7 +217,7 @@ Automatic Key Rollovers
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 When a new key reaches its activation date (as set by ``dnssec-keygen``
-or ``dnssec-settime``), if the ``auto-dnssec`` zone option is set to
+or ``dnssec-settime``), and if the ``auto-dnssec`` zone option is set to
 ``maintain``, ``named`` automatically carries out the key rollover.
 If the key's algorithm has not previously been used to sign the zone,
 then the zone is fully signed as quickly as possible. However, if
@@ -229,15 +238,21 @@ removed after the update request completes.
 Converting From NSEC to NSEC3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To do this, an NSEC3PARAM record must be added. When the
-conversion is complete, the NSEC chain is removed and the
-NSEC3PARAM record has a zero flag field. The NSEC3 chain is
-generated before the NSEC chain is destroyed.
+Add a ``nsec3param`` option to your ``dnssec-policy`` and
+run ``rndc reconfig``.
+
+Or use ``nsupdate`` to add an NSEC3PARAM record.
+
+In both cases, the NSEC3 chain is generated and the NSEC3PARAM record is
+added before the NSEC chain is destroyed.
 
 Converting From NSEC3 to NSEC
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To do this, use ``nsupdate`` to remove all NSEC3PARAM records with a
+To do this, remove the ``nsec3param`` option from the ``dnssec-policy`` and
+run ``rndc reconfig``.
+
+Or use ``nsupdate`` to remove all NSEC3PARAM records with a
 zero flag field. The NSEC chain is generated before the NSEC3 chain
 is removed.
 

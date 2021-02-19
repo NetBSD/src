@@ -18,7 +18,6 @@ options {
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
 	notify yes;
-	max-cache-size 80%;
 	disable-empty-zone 127.IN-ADDR.ARPA;
 	recursion yes;
 	dnssec-validation yes;
@@ -44,6 +43,6 @@ zone "flushtest.example" {
 };
 
 zone "expire-test" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 };

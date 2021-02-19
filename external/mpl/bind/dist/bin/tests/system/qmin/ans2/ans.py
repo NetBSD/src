@@ -3,7 +3,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -48,6 +48,7 @@ def logquery(type, qname):
 #
 # For 1.0.0.2.ip6.arpa it serves
 # 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.f.4.0.1.0.0.2.ip6.arpa. IN PTR nee.com.
+# 8.2.6.0.1.0.0.2.ip6.arpa IN NS ns3.good
 # 1.0.0.2.ip6.arpa. IN NS ns2.good
 # ip6.arpa. IN NS ns2.good
 ############################################################################
@@ -76,33 +77,37 @@ def create_response(msg):
 
     if lqname.endswith("1.0.0.2.ip6.arpa."):
         # Direct query - give direct answer
-        if lqname == "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.f.4.0.1.0.0.2.ip6.arpa." and rrtype == PTR:
+        if lqname.endswith("8.2.6.0.1.0.0.2.ip6.arpa."):
+            # Delegate to ns3
+            r.authority.append(dns.rrset.from_text("8.2.6.0.1.0.0.2.ip6.arpa.", 60, IN, NS, "ns3.good."))
+            r.additional.append(dns.rrset.from_text("ns3.good.", 60, IN, A, "10.53.0.3"))
+        elif lqname == "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.f.4.0.1.0.0.2.ip6.arpa." and rrtype == PTR:
             # Direct query - give direct answer
             r.answer.append(dns.rrset.from_text("1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.f.4.0.1.0.0.2.ip6.arpa.", 1, IN, PTR, "nee.com."))
             r.flags |= dns.flags.AA
         elif lqname == "1.0.0.2.ip6.arpa." and rrtype == NS:
             # NS query at the apex
-            r.answer.append(dns.rrset.from_text("1.0.0.2.ip6.arpa.", 1, IN, NS, "ns2.good."))
+            r.answer.append(dns.rrset.from_text("1.0.0.2.ip6.arpa.", 30, IN, NS, "ns2.good."))
             r.flags |= dns.flags.AA
         elif "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.f.4.0.1.0.0.2.ip6.arpa.".endswith(lqname):
             # NODATA answer
-            r.authority.append(dns.rrset.from_text("1.0.0.2.ip6.arpa.", 1, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
+            r.authority.append(dns.rrset.from_text("1.0.0.2.ip6.arpa.", 30, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
         else:
             # NXDOMAIN
-            r.authority.append(dns.rrset.from_text("1.0.0.2.ip6.arpa.", 1, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
+            r.authority.append(dns.rrset.from_text("1.0.0.2.ip6.arpa.", 30, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
             r.set_rcode(NXDOMAIN)
         return r
     elif lqname.endswith("ip6.arpa."):
         if lqname == "ip6.arpa." and rrtype == NS:
             # NS query at the apex
-            r.answer.append(dns.rrset.from_text("ip6.arpa.", 1, IN, NS, "ns2.good."))
+            r.answer.append(dns.rrset.from_text("ip6.arpa.", 30, IN, NS, "ns2.good."))
             r.flags |= dns.flags.AA
         elif "1.0.0.2.ip6.arpa.".endswith(lqname):
             # NODATA answer
-            r.authority.append(dns.rrset.from_text("ip6.arpa.", 1, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
+            r.authority.append(dns.rrset.from_text("ip6.arpa.", 30, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
         else:
             # NXDOMAIN
-            r.authority.append(dns.rrset.from_text("ip6.arpa.", 1, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
+            r.authority.append(dns.rrset.from_text("ip6.arpa.", 30, IN, SOA, "ns2.good. hostmaster.arpa. 2018050100 1 1 1 1"))
             r.set_rcode(NXDOMAIN)
         return r
     elif lqname.endswith("bad."):
@@ -134,19 +139,25 @@ def create_response(msg):
         r.answer.append(dns.rrset.from_text(lqname + suffix, 1, IN, A, "192.0.2.2"))
         r.flags |= dns.flags.AA
     elif lqname == "" and rrtype == NS:
-        r.answer.append(dns.rrset.from_text(suffix, 1, IN, NS, "ns2." + suffix))
+        r.answer.append(dns.rrset.from_text(suffix, 30, IN, NS, "ns2." + suffix))
         r.flags |= dns.flags.AA
     elif lqname == "ns2." and rrtype == A:
-        r.answer.append(dns.rrset.from_text("ns2."+suffix, 1, IN, A, "10.53.0.2"))
+        r.answer.append(dns.rrset.from_text("ns2."+suffix, 30, IN, A, "10.53.0.2"))
         r.flags |= dns.flags.AA
     elif lqname == "ns2." and rrtype == AAAA:
-        r.answer.append(dns.rrset.from_text("ns2."+suffix, 1, IN, AAAA, "fd92:7065:b8e:ffff::2"))
+        r.answer.append(dns.rrset.from_text("ns2."+suffix, 30, IN, AAAA, "fd92:7065:b8e:ffff::2"))
         r.flags |= dns.flags.AA
     elif lqname == "ns3." and rrtype == A:
-        r.answer.append(dns.rrset.from_text("ns3."+suffix, 1, IN, A, "10.53.0.3"))
+        r.answer.append(dns.rrset.from_text("ns3."+suffix, 30, IN, A, "10.53.0.3"))
         r.flags |= dns.flags.AA
     elif lqname == "ns3." and rrtype == AAAA:
-        r.answer.append(dns.rrset.from_text("ns3."+suffix, 1, IN, AAAA, "fd92:7065:b8e:ffff::3"))
+        r.answer.append(dns.rrset.from_text("ns3."+suffix, 30, IN, AAAA, "fd92:7065:b8e:ffff::3"))
+        r.flags |= dns.flags.AA
+    elif lqname == "ns4." and rrtype == A:
+        r.answer.append(dns.rrset.from_text("ns4."+suffix, 30, IN, A, "10.53.0.4"))
+        r.flags |= dns.flags.AA
+    elif lqname == "ns4." and rrtype == AAAA:
+        r.answer.append(dns.rrset.from_text("ns4."+suffix, 30, IN, AAAA, "fd92:7065:b8e:ffff::4"))
         r.flags |= dns.flags.AA
     elif lqname == "a.bit.longer.ns.name." and rrtype == A:
         r.answer.append(dns.rrset.from_text("a.bit.longer.ns.name."+suffix, 1, IN, A, "10.53.0.4"))

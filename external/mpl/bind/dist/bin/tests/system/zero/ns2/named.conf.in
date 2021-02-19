@@ -22,11 +22,11 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "tld" {
-	type master;
+	type primary;
 	file "tld.db";
 };

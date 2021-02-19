@@ -28,21 +28,35 @@ key rndc_key {
 	algorithm hmac-sha256;
 };
 
+key subkey {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
 controls {
 	inet 10.53.0.9 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
 zone "in-addr.arpa" {
-	type master;
+	type primary;
 	file "in-addr.db";
 	update-policy {	grant EXAMPLE.COM ms-subdomain . PTR; };
 };
 
 zone "example.com" {
-	type master;
+	type primary;
 	file "example.com.db";
 	update-policy {
 		grant EXAMPLE.COM ms-self . ANY;
 		grant EXAMPLE.COM ms-subdomain _tcp.example.com SRV;
+	};
+};
+
+zone "denyname.example" {
+	type master;
+	file "denyname.example.db";
+	update-policy {
+		deny subkey name denyname.example;
+		grant subkey subdomain denyname.example;
 	};
 };
