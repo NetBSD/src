@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.28 2021/01/18 20:02:34 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.29 2021/02/19 12:28:56 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -184,7 +184,7 @@ all_messages_body()
 	srcdir="$(atf_get_srcdir)"
 	ok="true"
 
-	for msg in $(seq 0 337); do
+	for msg in $(seq 0 339); do
 		base="$(printf '%s/msg_%03d' "${srcdir}" "${msg}")"
 		flags="$(extract_flags "${base}.c")"
 
