@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -60,32 +50,32 @@ Multiple ``plugin`` statements can be specified, to load different
 plugins or multiple instances of the same plugin.
 
 ``parameters`` are passed as an opaque string to the plugin's initialization
-routine. Configuration syntax will differ depending on the module.
+routine. Configuration syntax differs depending on the module.
 
 Developing Plugins
 ~~~~~~~~~~~~~~~~~~
 
 Each plugin implements four functions:
 
--  plugin_register
+-  ``plugin_register``
    to allocate memory, configure a plugin instance, and attach to hook
    points within
-   named
+   ``named``
    ,
--  plugin_destroy
+-  ``plugin_destroy``
    to tear down the plugin instance and free memory,
--  plugin_version
+-  ``plugin_version``
    to check that the plugin is compatible with the current version of
    the plugin API,
--  plugin_check
+-  ``plugin_check``
    to test syntactic correctness of the plugin parameters.
 
 At various locations within the ``named`` source code, there are "hook
 points" at which a plugin may register itself. When a hook point is
 reached while ``named`` is running, it is checked to see whether any
 plugins have registered themselves there; if so, the associated "hook
-action" is called - this is a function within the plugin library. Hook
-actions may examine the runtime state and make changes - for example,
+action" - a function within the plugin library - is called. Hook
+actions may examine the runtime state and make changes: for example,
 modifying the answers to be sent back to a client or forcing a query to
 be aborted. More details can be found in the file
 ``lib/ns/include/ns/hooks.h``.

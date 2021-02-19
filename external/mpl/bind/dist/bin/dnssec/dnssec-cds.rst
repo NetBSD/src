@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -29,7 +29,7 @@ dnssec-cds - change DS records for a child zone based on CDS/CDNSKEY
 Synopsis
 ~~~~~~~~
 
-:program:`dnssec-cds` [**-a** alg...] [**-c** class] [**-D**] {**-d** dsset-file} {**-f** child-file} [**-i** [extension]] [**-s** start-time] [**-T** ttl] [**-u**] [**-v** level] [**-V**] {domain}
+:program:`dnssec-cds` [**-a** alg...] [**-c** class] [**-D**] {**-d** dsset-file} {**-f** child-file} [**-i**[extension]] [**-s** start-time] [**-T** ttl] [**-u**] [**-v** level] [**-V**] {domain}
 
 Description
 ~~~~~~~~~~~
@@ -38,8 +38,8 @@ The ``dnssec-cds`` command changes DS records at a delegation point
 based on CDS or CDNSKEY records published in the child zone. If both CDS
 and CDNSKEY records are present in the child zone, the CDS is preferred.
 This enables a child zone to inform its parent of upcoming changes to
-its key-signing keys; by polling periodically with ``dnssec-cds``, the
-parent can keep the DS records up to date and enable automatic rolling
+its key-signing keys (KSKs); by polling periodically with ``dnssec-cds``, the
+parent can keep the DS records up-to-date and enable automatic rolling
 of KSKs.
 
 Two input files are required. The ``-f child-file`` option specifies a
@@ -52,12 +52,12 @@ output of a previous run of ``dnssec-cds``.
 
 The ``dnssec-cds`` command uses special DNSSEC validation logic
 specified by :rfc:`7344`. It requires that the CDS and/or CDNSKEY records
-are validly signed by a key represented in the existing DS records. This
-will typically be the pre-existing key-signing key (KSK).
+be validly signed by a key represented in the existing DS records. This
+is typically the pre-existing KSK.
 
 For protection against replay attacks, the signatures on the child
 records must not be older than they were on a previous run of
-``dnssec-cds``. This time is obtained from the modification time of the
+``dnssec-cds``. Their age is obtained from the modification time of the
 ``dsset-`` file, or from the ``-s`` option.
 
 To protect against breaking the delegation, ``dnssec-cds`` ensures that
@@ -67,103 +67,104 @@ type.
 
 By default, replacement DS records are written to the standard output;
 with the ``-i`` option the input file is overwritten in place. The
-replacement DS records will be the same as the existing records when no
-change is required. The output can be empty if the CDS / CDNSKEY records
-specify that the child zone wants to go insecure.
+replacement DS records are the same as the existing records, when no
+change is required. The output can be empty if the CDS/CDNSKEY records
+specify that the child zone wants to be insecure.
 
-Warning: Be careful not to delete the DS records when ``dnssec-cds``
-fails!
+.. warning::
+
+   Be careful not to delete the DS records when ``dnssec-cds`` fails!
 
 Alternatively, ``dnssec-cds -u`` writes an ``nsupdate`` script to the
-standard output. You can use the ``-u`` and ``-i`` options together to
+standard output. The ``-u`` and ``-i`` options can be used together to
 maintain a ``dsset-`` file as well as emit an ``nsupdate`` script.
 
 Options
 ~~~~~~~
 
-**-a** algorithm
-   Specify a digest algorithm to use when converting CDNSKEY records to
+``-a algorithm``
+   This option specifies a digest algorithm to use when converting CDNSKEY records to
    DS records. This option can be repeated, so that multiple DS records
    are created for each CDNSKEY record. This option has no effect when
    using CDS records.
 
    The algorithm must be one of SHA-1, SHA-256, or SHA-384. These values
-   are case insensitive, and the hyphen may be omitted. If no algorithm
+   are case-insensitive, and the hyphen may be omitted. If no algorithm
    is specified, the default is SHA-256.
 
-**-c** class
-   Specifies the DNS class of the zones.
+``-c class``
+   This option specifies the DNS class of the zones.
 
-**-D**
-   Generate DS records from CDNSKEY records if both CDS and CDNSKEY
+``-D``
+   This option generates DS records from CDNSKEY records if both CDS and CDNSKEY
    records are present in the child zone. By default CDS records are
    preferred.
 
-**-d** path
-   Location of the parent DS records. The path can be the name of a file
-   containing the DS records, or if it is a directory, ``dnssec-cds``
+``-d path``
+   This specifies the location of the parent DS records. The path can be the name of a file
+   containing the DS records; if it is a directory, ``dnssec-cds``
    looks for a ``dsset-`` file for the domain inside the directory.
 
    To protect against replay attacks, child records are rejected if they
    were signed earlier than the modification time of the ``dsset-``
    file. This can be adjusted with the ``-s`` option.
 
-**-f** child-file
-   File containing the child's CDS and/or CDNSKEY records, plus its
-   DNSKEY records and the covering RRSIG records so that they can be
+``-f child-file``
+   This option specifies the file containing the child's CDS and/or CDNSKEY records, plus its
+   DNSKEY records and the covering RRSIG records, so that they can be
    authenticated.
 
-   The EXAMPLES below describe how to generate this file.
+   The examples below describe how to generate this file.
 
-**-iextension**
-   Update the ``dsset-`` file in place, instead of writing DS records to
+``-iextension``
+   This option updates the ``dsset-`` file in place, instead of writing DS records to
    the standard output.
 
-   There must be no space between the ``-i`` and the extension. If you
-   provide no extension then the old ``dsset-`` is discarded. If an
+   There must be no space between the ``-i`` and the extension. If
+   no extension is provided, the old ``dsset-`` is discarded. If an
    extension is present, a backup of the old ``dsset-`` file is kept
    with the extension appended to its filename.
 
    To protect against replay attacks, the modification time of the
    ``dsset-`` file is set to match the signature inception time of the
-   child records, provided that is later than the file's current
+   child records, provided that it is later than the file's current
    modification time.
 
-**-s** start-time
-   Specify the date and time after which RRSIG records become
-   acceptable. This can be either an absolute or relative time. An
+``-s start-time``
+   This option specifies the date and time after which RRSIG records become
+   acceptable. This can be either an absolute or a relative time. An
    absolute start time is indicated by a number in YYYYMMDDHHMMSS
    notation; 20170827133700 denotes 13:37:00 UTC on August 27th, 2017. A
-   time relative to the ``dsset-`` file is indicated with -N, which is N
+   time relative to the ``dsset-`` file is indicated with ``-N``, which is N
    seconds before the file modification time. A time relative to the
-   current time is indicated with now+N.
+   current time is indicated with ``now+N``.
 
    If no start-time is specified, the modification time of the
    ``dsset-`` file is used.
 
-**-T** ttl
-   Specifies a TTL to be used for new DS records. If not specified, the
-   default is the TTL of the old DS records. If they had no explicit TTL
-   then the new DS records also have no explicit TTL.
+``-T ttl``
+   This option specifies a TTL to be used for new DS records. If not specified, the
+   default is the TTL of the old DS records. If they had no explicit TTL,
+   the new DS records also have no explicit TTL.
 
-**-u**
-   Write an ``nsupdate`` script to the standard output, instead of
-   printing the new DS reords. The output will be empty if no change is
+``-u``
+   This option writes an ``nsupdate`` script to the standard output, instead of
+   printing the new DS reords. The output is empty if no change is
    needed.
 
-   Note: The TTL of new records needs to be specified, either in the
-   original ``dsset-`` file, or with the ``-T`` option, or using the
+   Note: The TTL of new records needs to be specified: it can be done in the
+   original ``dsset-`` file, with the ``-T`` option, or using the
    ``nsupdate`` ``ttl`` command.
 
-**-V**
-   Print version information.
+``-V``
+   This option prints version information.
 
-**-v** level
-   Sets the debugging level. Level 1 is intended to be usefully verbose
+``-v level``
+   This option sets the debugging level. Level 1 is intended to be usefully verbose
    for general users; higher levels are intended for developers.
 
-domain
-   The name of the delegation point / child zone apex.
+``domain``
+   This indicates the name of the delegation point/child zone apex.
 
 Exit Status
 ~~~~~~~~~~~
@@ -171,17 +172,17 @@ Exit Status
 The ``dnssec-cds`` command exits 0 on success, or non-zero if an error
 occurred.
 
-In the success case, the DS records might or might not need to be
+If successful, the DS records may or may not need to be
 changed.
 
 Examples
 ~~~~~~~~
 
-Before running ``dnssec-signzone``, you can ensure that the delegations
+Before running ``dnssec-signzone``, ensure that the delegations
 are up-to-date by running ``dnssec-cds`` on every ``dsset-`` file.
 
-To fetch the child records required by ``dnssec-cds`` you can invoke
-``dig`` as in the script below. It's okay if the ``dig`` fails since
+To fetch the child records required by ``dnssec-cds``, invoke
+``dig`` as in the script below. It is acceptable if the ``dig`` fails, since
 ``dnssec-cds`` performs all the necessary checking.
 
 ::
@@ -193,10 +194,10 @@ To fetch the child records required by ``dnssec-cds`` you can invoke
        dnssec-cds -i -f /dev/stdin -d $f $d
    done
 
-When the parent zone is automatically signed by ``named``, you can use
-``dnssec-cds`` with ``nsupdate`` to maintain a delegation as follows.
+When the parent zone is automatically signed by ``named``,
+``dnssec-cds`` can be used with ``nsupdate`` to maintain a delegation as follows.
 The ``dsset-`` file allows the script to avoid having to fetch and
-validate the parent DS records, and it keeps the replay attack
+validate the parent DS records, and it maintains the replay attack
 protection time.
 
 ::

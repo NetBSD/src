@@ -34,14 +34,15 @@ view "primary" {
 	ixfr-from-differences yes;
 	request-ixfr yes;
 	zone "test" IN {
-		type slave;
+		type secondary;
 		file "mytest.db";
-		masters { 10.53.0.3; };
+		primaries { 10.53.0.3; };
+		max-ixfr-ratio unlimited;
 	};
 	zone "sub.test" IN {
-		type slave;
+		type secondary;
 		file "subtest.db";
 		request-ixfr no;
-		masters { 10.53.0.3; };
+		primaries { 10.53.0.3; };
 	};
 };

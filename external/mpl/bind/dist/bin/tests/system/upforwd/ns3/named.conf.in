@@ -19,26 +19,36 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	notify yes;
+	include "dnstap.conf";
+};
+
+key rndc_key {
+        secret "1234abcd8765";
+        algorithm hmac-sha256;
+};
+
+controls {
+        inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
 zone "example" {
-	type slave;
+	type secondary;
 	file "example.bk";
 	allow-update-forwarding { any; };
-	masters { 10.53.0.1; };
+	primaries { 10.53.0.1; };
 };
 
 zone "example2" {
-	type slave;
+	type secondary;
 	file "example2.bk";
 	allow-update-forwarding { any; };
-	masters { 10.53.0.1; };
+	primaries { 10.53.0.1; };
 };
 
 zone "nomaster" {
-	type slave;
+	type secondary;
 	file "nomaster1.db";
 	allow-update-forwarding { any; };
 	masterfile-format text;
-	masters { 10.53.0.4; };
+	primaries { 10.53.0.4; };
 };

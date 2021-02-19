@@ -22,6 +22,6 @@ options {
 };
 
 zone "dropedns" {
-	type master;
+	type primary;
 	file "dropedns.db";
 };

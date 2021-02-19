@@ -3,18 +3,8 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
-..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
@@ -42,7 +32,7 @@ The ``NOTIFY`` protocol is specified in :rfc:`1996`.
 
    As a secondary zone can also be a primary to other secondaries, ``named``, by
    default, sends ``NOTIFY`` messages for every zone it loads.
-   Specifying ``notify master-only;`` causes ``named`` to only send
+   Specifying ``notify primary-only;`` causes ``named`` to only send
    ``NOTIFY`` for primary zones that it loads.
 
 .. _dynamic_update:
@@ -108,8 +98,8 @@ that the zone file of a dynamic zone is up-to-date is to run
 ``rndc stop``.
 
 To make changes to a dynamic zone manually, follow these steps:
-First, disable dynamic updates to the zone using
-``rndc freeze zone``; this updates the zone's master file with the
+first, disable dynamic updates to the zone using
+``rndc freeze zone``. This updates the zone file with the
 changes stored in its ``.jnl`` file. Then, edit the zone file. Finally, run
 ``rndc thaw zone`` to reload the changed zone and re-enable dynamic
 updates.
@@ -156,21 +146,21 @@ Split DNS
 ---------
 
 Setting up different views of the DNS space to internal
-and external resolvers is usually referred to as a Split DNS setup.
-There are several reasons an organization would want to set up its DNS
+and external resolvers is usually referred to as a *split DNS* setup.
+There are several reasons an organization might want to set up its DNS
 this way.
 
-One common reason to use Split DNS is to hide
+One common reason to use split DNS is to hide
 "internal" DNS information from "external" clients on the Internet.
 There is some debate as to whether this is actually useful.
 Internal DNS information leaks out in many ways (via email headers, for
 example) and most savvy "attackers" can find the information they need
 using other means. However, since listing addresses of internal servers
 that external clients cannot possibly reach can result in connection
-delays and other annoyances, an organization may choose to use Split
+delays and other annoyances, an organization may choose to use split
 DNS to present a consistent view of itself to the outside world.
 
-Another common reason for setting up a Split DNS system is to allow
+Another common reason for setting up a split DNS system is to allow
 internal networks that are behind filters or in :rfc:`1918` space (reserved
 IP space, as documented in :rfc:`1918`) to resolve DNS on the Internet.
 Split DNS can also be used to allow mail from outside back into the
@@ -295,7 +285,7 @@ Internal DNS server config:
 
    // sample primary zone
    zone "site1.example.com" {
-     type master;
+     type primary;
      file "m/site1.example.com";
      // do normal iterative resolution (do not forward)
      forwarders { };
@@ -305,16 +295,16 @@ Internal DNS server config:
 
    // sample secondary zone
    zone "site2.example.com" {
-     type slave;
+     type secondary;
      file "s/site2.example.com";
-     masters { 172.16.72.3; };
+     primaries { 172.16.72.3; };
      forwarders { };
      allow-query { internals; externals; };
      allow-transfer { internals; };
    };
 
    zone "site1.internal" {
-     type master;
+     type primary;
      file "m/site1.internal";
      forwarders { };
      allow-query { internals; };
@@ -322,9 +312,9 @@ Internal DNS server config:
    };
 
    zone "site2.internal" {
-     type slave;
+     type secondary;
      file "s/site2.internal";
-     masters { 172.16.72.3; };
+     primaries { 172.16.72.3; };
      forwarders { };
      allow-query { internals };
      allow-transfer { internals; }
@@ -355,13 +345,13 @@ External (bastion host) DNS server configuration:
 
    // sample secondary zone
    zone "site1.example.com" {
-     type master;
+     type primary;
      file "m/site1.foo.com";
      allow-transfer { internals; externals; };
    };
 
    zone "site2.example.com" {
-     type slave;
+     type secondary;
      file "s/site2.foo.com";
      masters { another_bastion_host_maybe; };
      allow-transfer { internals; externals; }
@@ -398,8 +388,8 @@ configuration syntax and the process of creating TSIG keys.
 the tools included with BIND support it for sending messages to
 ``named``:
 
-   * :ref:`man_nsupdate` supports TSIG via the ``-k``, ``-l`` and ``-y`` command line options, or via the ``key`` command when running interactively.
-   * :ref:`man_dig` supports TSIG via the ``-k`` and ``-y`` command line options.
+   * :ref:`man_nsupdate` supports TSIG via the ``-k``, ``-l``, and ``-y`` command-line options, or via the ``key`` command when running interactively.
+   * :ref:`man_dig` supports TSIG via the ``-k`` and ``-y`` command-line options.
 
 Generating a Shared Key
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -407,12 +397,12 @@ Generating a Shared Key
 TSIG keys can be generated using the ``tsig-keygen`` command; the output
 of the command is a ``key`` directive suitable for inclusion in
 ``named.conf``. The key name, algorithm, and size can be specified by
-command line parameters; the defaults are "tsig-key", HMAC-SHA256, and
+command-line parameters; the defaults are "tsig-key", HMAC-SHA256, and
 256 bits, respectively.
 
 Any string which is a valid DNS name can be used as a key name. For
 example, a key to be shared between servers called ``host1`` and ``host2``
-could be called "host1-host2.", and this key could be generated using:
+could be called "host1-host2.", and this key can be generated using:
 
 ::
 
@@ -463,7 +453,7 @@ Instructing the Server to Use a Key
 A server sending a request to another server must be told whether to use
 a key, and if so, which key to use.
 
-For example, a key may be specified for each server in the ``masters``
+For example, a key may be specified for each server in the ``primaries``
 statement in the definition of a secondary zone; in this case, all SOA QUERY
 messages, NOTIFY messages, and zone transfer requests (AXFR or IXFR)
 are signed using the specified key. Keys may also be specified in
@@ -499,7 +489,7 @@ TSIG keys may be specified in ACL definitions and ACL directives such as
 ``allow-query``, ``allow-transfer``, and ``allow-update``. The above key
 would be denoted in an ACL element as ``key host1-host2.``
 
-Here's an example of an ``allow-update`` directive using a TSIG key:
+Here is an example of an ``allow-update`` directive using a TSIG key:
 
 ::
 
@@ -566,7 +556,7 @@ SIG(0)
 
 BIND partially supports DNSSEC SIG(0) transaction signatures as
 specified in :rfc:`2535` and :rfc:`2931`. SIG(0) uses public/private keys to
-authenticate messages. Access control is performed in the same manner as
+authenticate messages. Access control is performed in the same manner as with
 TSIG keys; privileges can be granted or denied in ACL directives based
 on the key name.
 
@@ -594,8 +584,7 @@ which must be followed. BIND 9 ships with several tools that are used in
 this process, which are explained in more detail below. In all cases,
 the ``-h`` option prints a full list of parameters. Note that the DNSSEC
 tools require the keyset files to be in the working directory or the
-directory specified by the ``-d`` option, and that the tools shipped
-with BIND 9.2.x and earlier are not compatible with the current versions.
+directory specified by the ``-d`` option.
 
 There must also be communication with the administrators of the parent
 and/or child zone to transmit keys. A zone's security status must be
@@ -603,8 +592,8 @@ indicated by the parent zone for a DNSSEC-capable resolver to trust its
 data. This is done through the presence or absence of a ``DS`` record at
 the delegation point.
 
-For other servers to trust data in this zone, they must either be
-statically configured with this zone's zone key or the zone key of
+For other servers to trust data in this zone, they must be
+statically configured with either this zone's zone key or the zone key of
 another zone above this one in the DNS tree.
 
 .. _generating_dnssec_keys:
@@ -640,13 +629,13 @@ To generate another key with the same properties but with a different
 key tag, repeat the above command.
 
 The ``dnssec-keyfromlabel`` program is used to get a key pair from a
-crypto hardware and build the key files. Its usage is similar to
+crypto hardware device and build the key files. Its usage is similar to
 ``dnssec-keygen``.
 
 The public keys should be inserted into the zone file by including the
 ``.key`` files using ``$INCLUDE`` statements.
 
-.. _dnssec_signing:
+.. _dnssec_zone_signing:
 
 Signing the Zone
 ~~~~~~~~~~~~~~~~
@@ -668,7 +657,7 @@ it is in a file called ``zone.child.example``:
 One output file is produced: ``zone.child.example.signed``. This file
 should be referenced by ``named.conf`` as the input file for the zone.
 
-``dnssec-signzone`` also produces a keyset and dsset files. These are used
+``dnssec-signzone`` also produces keyset and dsset files. These are used
 to provide the parent zone administrators with the ``DNSKEYs`` (or their
 corresponding ``DS`` records) that are the secure entry point to the zone.
 
@@ -829,7 +818,7 @@ Address Lookups Using AAAA Records
 
 The IPv6 AAAA record is a parallel to the IPv4 A record, and, unlike the
 deprecated A6 record, specifies the entire IPv6 address in a single
-record. For example,
+record. For example:
 
 ::
 
@@ -846,7 +835,7 @@ Address-to-Name Lookups Using Nibble Format
 When looking up an address in nibble format, the address components are
 simply reversed, just as in IPv4, and ``ip6.arpa.`` is appended to the
 resulting name. For example, the following would provide reverse name
-lookup for a host with address ``2001:db8::1``.
+lookup for a host with address ``2001:db8::1``:
 
 ::
 

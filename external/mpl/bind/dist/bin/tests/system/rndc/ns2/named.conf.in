@@ -39,24 +39,24 @@ zone "." {
 };
 
 zone "nil" {
-	type master;
+	type primary;
 	update-policy local;
 	file "nil.db";
 	ixfr-from-differences yes;
 };
 
 zone "other" {
-	type master;
+	type primary;
 	update-policy local;
 	file "other.db";
 };
 
 zone "static" {
-	type master;
+	type primary;
 	file "static.db";
 };
 
 zone "incl" {
-	type master;
+	type primary;
 	file "incl.db";
 };

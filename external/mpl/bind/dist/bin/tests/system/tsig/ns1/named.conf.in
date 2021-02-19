@@ -17,7 +17,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
-	recursion no;
+	recursion yes;
 	notify no;
 };
 
@@ -82,6 +82,16 @@ key "sha512-trunc" {
 };
 
 zone "example.nil" {
-	type master;
+	type primary;
 	file "example.db";
+};
+
+server 10.53.0.2 {
+	keys sha256;
+};
+
+zone "bad-tsig" {
+	type forward;
+	forwarders { 10.53.0.2; };
+	forward only;
 };

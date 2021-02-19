@@ -32,11 +32,11 @@ zone "." {
 };
 
 zone "mail.example" {
-	type master;
+	type primary;
 	file "mail.example.db";
 };
 
 zone "hostile" {
-	type master;
+	type primary;
 	file "hostile.db";
 };

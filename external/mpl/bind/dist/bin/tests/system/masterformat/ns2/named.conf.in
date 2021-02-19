@@ -22,40 +22,40 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "transfer1" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "transfer.db.raw";
 };
 
 zone "transfer2" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	masterfile-format text;
 	file "transfer.db.txt";
 };
 
 zone "transfer3" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "formerly-text.db";
 };
 
 zone "transfer4" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	masterfile-format text;
 	masterfile-style full;
 	file "transfer.db.full";
 };
 
 zone "large" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	masterfile-format raw;
 	file "large.bk";
 };

@@ -38,7 +38,7 @@ acl tzkey {
 };
 
 zone "example." {
-	type master;
+	type primary;
 	file "example.db";
 	allow-transfer { tzkey; };
 };

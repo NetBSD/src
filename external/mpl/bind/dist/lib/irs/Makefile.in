@@ -13,8 +13,6 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-@LIBIRS_API@
-
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. -I./include -I${srcdir}/include \
@@ -60,9 +58,6 @@ TARGETS =	timestamp
 version.@O@: version.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
 libirs.@SA@: ${OBJS} version.@O@
@@ -72,7 +67,7 @@ libirs.@SA@: ${OBJS} version.@O@
 libirs.la: ${OBJS} version.@O@
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libirs.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} version.@O@ ${ISCLIBS} ${DNSLIBS} ${ISCCFGLIBS} ${LIBS}
 
 timestamp: libirs.@A@

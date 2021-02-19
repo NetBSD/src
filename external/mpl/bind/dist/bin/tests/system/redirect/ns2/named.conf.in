@@ -50,6 +50,6 @@ zone "." {
 };
 
 zone "example.nil" {
-	type master;
+	type primary;
 	file "example.db";
 };

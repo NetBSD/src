@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -46,7 +46,7 @@ was implemented in BIND as of release 9.14.0.
 
 As a result, some domains may be non-resolvable without manual
 intervention. In these cases, resolution can be restored by adding
-``server`` clauses for the offending servers, specifying ``edns no`` or
+``server`` clauses for the offending servers, or by specifying ``edns no`` or
 ``send-cookie no``, depending on the specific noncompliance.
 
 To determine which ``server`` clause to use, run the following commands
@@ -70,9 +70,9 @@ them to upgrade their broken DNS servers.
 Incrementing and Changing the Serial Number
 -------------------------------------------
 
-Zone serial numbers are just numbers — they are not date related. However, many
+Zone serial numbers are just numbers — they are not date-related. However, many
 people set them to a number that represents a date, usually of the
-form YYYYMMDDRR. Occasionally they will make a mistake and set the serial number to a
+form YYYYMMDDRR. Occasionally they make a mistake and set the serial number to a
 date in the future, then try to correct it by setting it to the
 current date. This causes problems because serial numbers are used to
 indicate that a zone has been updated. If the serial number on the secondary
@@ -97,7 +97,7 @@ peer user support. In addition, ISC maintains a Knowledgebase of helpful article
 at https://kb.isc.org.
 
 Internet Systems Consortium (ISC) offers annual support agreements
-for BIND 9, ISC DHCP and Kea DHCP. 
+for BIND 9, ISC DHCP, and Kea DHCP. 
 All paid support contracts include advance security notifications; some levels include
 service level agreements (SLAs), premium software features, and increased priority on bug fixes
 and feature requests.

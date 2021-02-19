@@ -44,59 +44,59 @@ zone "." {
 };
 
 zone "example" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "example.bk";
 };
 
 zone "bar" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "bar.bk";
 };
 
 zone "secure.example" {
-	type master;
+	type primary;
 	file "secure.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "insecure.example" {
-	type master;
+	type primary;
 	file "insecure.example.db";
 };
 
 zone "nsec3.example" {
-	type master;
+	type primary;
 	file "nsec3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "autonsec3.example" {
-	type master;
+	type primary;
 	file "autonsec3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "optout.nsec3.example" {
-	type master;
+	type primary;
 	file "optout.nsec3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "nsec3.nsec3.example" {
-	type master;
+	type primary;
 	file "nsec3.nsec3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "jitter.nsec3.example" {
-	type master;
+	type primary;
 	file "jitter.nsec3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
@@ -106,77 +106,77 @@ zone "jitter.nsec3.example" {
 };
 
 zone "secure.nsec3.example" {
-	type master;
+	type primary;
 	file "secure.nsec3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "optout.example" {
-	type master;
+	type primary;
 	file "optout.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "secure.optout.example" {
-	type master;
+	type primary;
 	file "secure.optout.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "nsec3.optout.example" {
-	type master;
+	type primary;
 	file "nsec3.optout.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "optout.optout.example" {
-	type master;
+	type primary;
 	file "optout.optout.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "rsasha256.example" {
-	type master;
+	type primary;
 	file "rsasha256.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "rsasha512.example" {
-	type master;
+	type primary;
 	file "rsasha512.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "nsec.example" {
-	type master;
+	type primary;
 	file "nsec.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "nsec3-to-nsec.example" {
-	type master;
+	type primary;
 	file "nsec3-to-nsec.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "secure-to-insecure.example" {
-	type master;
+	type primary;
 	file "secure-to-insecure.example.db";
 	allow-update { any; };
 	dnssec-secure-to-insecure yes;
 };
 
 zone "secure-to-insecure2.example" {
-	type master;
+	type primary;
 	file "secure-to-insecure2.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
@@ -184,7 +184,7 @@ zone "secure-to-insecure2.example" {
 };
 
 zone "oldsigs.example" {
-	type master;
+	type primary;
 	file "oldsigs.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
@@ -194,70 +194,70 @@ zone "oldsigs.example" {
 };
 
 zone "prepub.example" {
-	type master;
+	type primary;
 	file "prepub.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "ttl1.example" {
-	type master;
+	type primary;
 	file "ttl1.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "ttl2.example" {
-	type master;
+	type primary;
 	file "ttl2.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "ttl3.example" {
-	type master;
+	type primary;
 	file "ttl3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "ttl4.example" {
-	type master;
+	type primary;
 	file "ttl4.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "delay.example" {
-	type master;
+	type primary;
 	file "delay.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "nozsk.example" {
-	type master;
+	type primary;
 	file "nozsk.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "inaczsk.example" {
-	type master;
+	type primary;
 	file "inaczsk.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "sync.example" {
-	type master;
+	type primary;
 	file "sync.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "kskonly.example" {
-	type master;
+	type primary;
 	file "kskonly.example.db";
 	allow-update { any; };
 	dnssec-dnskey-kskonly yes;
@@ -265,7 +265,7 @@ zone "kskonly.example" {
 };
 
 zone "inacksk2.example" {
-	type master;
+	type primary;
 	file "inacksk2.example.db";
 	allow-update { any; };
 	dnssec-dnskey-kskonly yes;
@@ -273,7 +273,7 @@ zone "inacksk2.example" {
 };
 
 zone "inacksk3.example" {
-	type master;
+	type primary;
 	file "inacksk3.example.db";
 	allow-update { any; };
 	dnssec-dnskey-kskonly yes;
@@ -281,28 +281,28 @@ zone "inacksk3.example" {
 };
 
 zone "inaczsk2.example" {
-	type master;
+	type primary;
 	file "inaczsk2.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "inaczsk3.example" {
-	type master;
+	type primary;
 	file "inaczsk3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "delzsk.example." {
-	type master;
+	type primary;
 	file "delzsk.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };
 
 zone "dname-at-apex-nsec3.example" {
-	type master;
+	type primary;
 	file "dname-at-apex-nsec3.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;

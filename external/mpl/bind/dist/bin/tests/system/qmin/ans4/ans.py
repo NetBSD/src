@@ -3,7 +3,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -68,6 +68,8 @@ def create_response(msg):
     r = dns.message.make_response(m)
     r.set_rcode(NOERROR)
 
+    ip6req = False
+
     if lqname.endswith("bad."):
         bad = True
         suffix = "bad."
@@ -83,6 +85,8 @@ def create_response(msg):
         slow = True
         suffix = "slow."
         lqname = lqname[:-5]
+    elif lqname.endswith("1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa."):
+        ip6req = True
     else:
         r.set_rcode(REFUSED)
         return r
@@ -103,6 +107,17 @@ def create_response(msg):
             r.set_rcode(NXDOMAIN)
         if ugly:
             r.set_rcode(FORMERR)
+    elif ip6req:
+        r.flags |= dns.flags.AA
+        if lqname == "test1.test2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.0.9.4.1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa." and rrtype == TXT:
+            r.answer.append(dns.rrset.from_text("test1.test2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.0.9.4.1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.", 1, IN, TXT, "long_ip6_name"))
+        elif "0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.0.9.4.1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.".endswith(lqname):
+            #NODATA answer
+            r.authority.append(dns.rrset.from_text("1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.", 60, IN, SOA, "ns4.good. hostmaster.arpa. 2018050100 120 30 320 16"))
+        else:
+            # NXDOMAIN
+            r.authority.append(dns.rrset.from_text("1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.", 60, IN, SOA, "ns4.good. hostmaster.arpa. 2018050100 120 30 320 16"))
+            r.set_rcode(NXDOMAIN)
     else:
         r.set_rcode(REFUSED)
 

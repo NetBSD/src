@@ -33,7 +33,7 @@ controls {
 
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 	allow-update { any; };
 };

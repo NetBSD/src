@@ -22,13 +22,13 @@ options {
 };
 
 zone example.net {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "example.net.bk";
 };
 
 zone example.com {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "example.com.bk";
 };

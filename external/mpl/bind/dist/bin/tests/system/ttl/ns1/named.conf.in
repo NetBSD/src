@@ -36,11 +36,11 @@ zone "." {
 };
 
 zone "min-example" {
-	type master;
+	type primary;
 	file "min-example.db";
 };
 
 zone "max-example" {
-	type master;
+	type primary;
 	file "max-example.db";
 };

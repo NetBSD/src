@@ -30,7 +30,7 @@ options {
 };
 
 zone "catalog2.example" {
-	type master;
+	type primary;
 	file "catalog2.example.db";
 	allow-transfer { any; };
 	allow-update { any; };
@@ -39,7 +39,7 @@ zone "catalog2.example" {
 };
 
 zone "dom5.example" {
-	type master;
+	type primary;
 	file "dom5.example.db";
 	allow-transfer { any; };
 	allow-update { any; };
@@ -47,7 +47,7 @@ zone "dom5.example" {
 };
 
 zone "dom6.example" {
-	type master;
+	type primary;
 	file "dom6.example.db";
 	allow-transfer { any; };
 	allow-update { any; };

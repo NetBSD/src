@@ -13,8 +13,6 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-@LIBISC_API@
-
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I${srcdir}/unix/include \
@@ -55,7 +53,7 @@ OBJS =		pk11.@O@ pk11_result.@O@ \
 		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
 		md.@O@ mem.@O@ mutexblock.@O@ \
 		netmgr/netmgr.@O@ netmgr/tcp.@O@ netmgr/udp.@O@ \
-		netmgr/tcpdns.@O@ netmgr/uverr2result.@O@ netmgr/uv-compat.@O@ \
+		netmgr/tcpdns.@O@ netmgr/tls.@O@ netmgr/tlsdns.@O@ netmgr/uverr2result.@O@ netmgr/uv-compat.@O@ \
 		netaddr.@O@ netscope.@O@ nonce.@O@ openssl_shim.@O@ pool.@O@ \
 		parseint.@O@ portset.@O@ queue.@O@ quota.@O@ \
 		radix.@O@ random.@O@ ratelimiter.@O@ \
@@ -97,9 +95,6 @@ TESTDIRS =	@UNITTESTS@
 version.@O@: version.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
 libisc.@SA@: ${OBJS} ${SYMTBLOBJS}
@@ -113,13 +108,13 @@ libisc-nosymtbl.@SA@: ${OBJS}
 libisc.la: ${OBJS} ${SYMTBLOBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} ${SYMTBLOBJS} ${LIBS}
 
 libisc-nosymtbl.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc-nosymtbl.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} ${LIBS}
 
 timestamp: libisc.@A@ libisc-nosymtbl.@A@

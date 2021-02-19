@@ -23,6 +23,10 @@ options {
 	minimal-responses no;
 };
 
+acl named-acl {
+	any;
+};
+
 key rndc_key {
 	secret "1234abcd8765";
 	algorithm hmac-sha256;
@@ -37,30 +41,42 @@ key altkey {
 	secret "1234abcd8765";
 };
 
+key restricted.example.nil {
+	algorithm hmac-md5;
+	secret "1234abcd8765";
+};
+
+key zonesub-key.example.nil {
+	algorithm hmac-md5;
+	secret "1234subk8765";
+};
+
 include "ddns.key";
 
 zone "example.nil" {
-	type master;
+	type primary;
 	file "example.db";
 	check-integrity no;
 	check-mx ignore;
 	update-policy {
+		grant zonesub-key.example.nil zonesub TXT;
 		grant ddns-key.example.nil subdomain example.nil ANY;
+		grant restricted.example.nil subdomain restricted.example.nil ANY;
 	};
 	allow-transfer { any; };
 };
 
 zone "max-ttl.nil" {
-	type master;
+	type primary;
 	file "max-ttl.db";
 	max-zone-ttl 300;
 	check-integrity no;
-	allow-update { any; };
+	allow-update { named-acl; };
 	allow-transfer { any; };
 };
 
 zone "other.nil" {
-	type master;
+	type primary;
 	file "other.db";
 	check-integrity no;
 	check-mx warn;
@@ -69,23 +85,23 @@ zone "other.nil" {
 	allow-transfer { any; };
 };
 
-masters othermasters {
+primaries others {
 	10.53.0.2 port @PORT@;
 	10.53.0.2 port @PORT@ key altkey;
 };
 
 zone "update.nil" {
-	type master;
+	type primary;
 	file "update.db";
 	check-integrity no;
 	check-mx fail;
 	allow-update { any; };
 	allow-transfer { any; };
-	also-notify { othermasters; };
+	also-notify { others; };
 };
 
 zone "unixtime.nil" {
-	type master;
+	type primary;
 	file "unixtime.db";
 	check-integrity no;
 	allow-update { any; };
@@ -94,7 +110,7 @@ zone "unixtime.nil" {
 };
 
 zone "yyyymmddvv.nil" {
-	type master;
+	type primary;
 	file "yyyymmddvv.db";
 	check-integrity no;
 	allow-update { any; };
@@ -110,7 +126,7 @@ include "sha384.key";
 include "sha512.key";
 
 zone "keytests.nil" {
-	type master;
+	type primary;
 	file "keytests.db";
 	update-policy {
 	    grant md5-key name md5.keytests.nil. ANY;
@@ -123,19 +139,19 @@ zone "keytests.nil" {
 };
 
 zone "many.test" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "many.test.db";
 };
 
 zone "sample" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "sample.db";
 };
 
 zone "maxjournal.test" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "maxjournal.db";
 	max-journal-size default;

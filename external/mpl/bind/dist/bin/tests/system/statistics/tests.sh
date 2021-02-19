@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -162,6 +162,8 @@ if $FEATURETEST --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XSLTPROC}" ]  ; th
     ${CURL} http://10.53.0.3:${EXTRAPORT1}/xml/v3 > curl.out.${n}.xml 2>/dev/null || ret=1
     ${CURL} http://10.53.0.3:${EXTRAPORT1}/bind9.xsl > curl.out.${n}.xsl 2>/dev/null || ret=1
     ${XSLTPROC} curl.out.${n}.xsl - < curl.out.${n}.xml > xsltproc.out.${n} 2>/dev/null || ret=1
+    cp curl.out.${n}.xml stats.xml.out || ret=1
+
     #
     # grep for expected sections.
     #
@@ -199,6 +201,30 @@ if $FEATURETEST --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XSLTPROC}" ]  ; th
     grep "<h2>Tasks</h2>" xsltproc.out.${n} >/dev/null || ret=1
     grep "<h2>Memory Usage Summary</h2>" xsltproc.out.${n} >/dev/null || ret=1
     grep "<h2>Memory Contexts</h2>" xsltproc.out.${n} >/dev/null || ret=1
+else
+    echo_i "skipping test as libxml2 and/or curl and/or xsltproc was not found"
+fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+ret=0
+echo_i "checking bind9.xml socket statistics ($n)"
+if $FEATURETEST --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XSLTPROC}" ]  ; then
+    # Socket statistics (expect no errors)
+    grep "<counter name=\"TCP4AcceptFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP4BindFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP4ConnFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP4OpenFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP4RecvErr\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP4SendErr\">0</counter>" stats.xml.out >/dev/null || ret=1
+
+    grep "<counter name=\"TCP6AcceptFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP6BindFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP6ConnFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP6OpenFail\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP6RecvErr\">0</counter>" stats.xml.out >/dev/null || ret=1
+    grep "<counter name=\"TCP6SendErr\">0</counter>" stats.xml.out >/dev/null || ret=1
 else
     echo_i "skipping test as libxml2 and/or curl and/or xsltproc was not found"
 fi

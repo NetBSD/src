@@ -33,9 +33,9 @@ zone "." {
 	file "../../common/root.hint";
 };
 
-zone "inlineslave.example" {
-	type master;
-	file "inlineslave.db";
+zone "inlinesec.example" {
+	type primary;
+	file "inlinesec.db";
 };
 
 zone "." {

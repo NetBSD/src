@@ -37,12 +37,12 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "internal.db";
 };
 
 zone "child.clone" {
-	type master;
+	type primary;
 	file "child.clone.db";
 };

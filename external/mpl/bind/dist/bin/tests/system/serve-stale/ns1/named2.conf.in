@@ -30,10 +30,12 @@ options {
 	max-stale-ttl 20;
 	stale-answer-ttl 3;
 	stale-answer-enable yes;
+	stale-answer-client-timeout disabled;
+	stale-cache-enable yes;
 	servfail-ttl 0;
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };

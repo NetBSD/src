@@ -1,6 +1,6 @@
 Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 
-See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+See COPYRIGHT in the source root or https://isc.org/copyright.html for terms.
 
 BIND 9 is striving for strict compliance with IETF standards.  We
 believe this release of BIND 9 complies with the following RFCs, with
@@ -97,6 +97,7 @@ or Best Current Practice (BCP) documents.  The list is non exhaustive.
   RFC7793
   RFC7830 [15]
   RFC7929
+  RFC8078 [20]
   RFC8080
 
 No longer supported

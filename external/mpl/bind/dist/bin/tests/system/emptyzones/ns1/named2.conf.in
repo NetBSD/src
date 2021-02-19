@@ -42,5 +42,5 @@ zone "." {
 };
 
 zone "1.10.in-addr.arpa" {
-	type master; file "empty.db";
+	type primary; file "empty.db";
 };
