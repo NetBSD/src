@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.16 2021/02/19 18:02:45 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.17 2021/02/19 18:03:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,7 +55,7 @@
 	.comm	ofwmsr,20,4
 
 #ifdef FIRMWORKSBUGS
-	.comm	ofwreal_incharge,4,4
+	.lcomm	ofwreal_incharge,4,4
 #endif
 
 /*
