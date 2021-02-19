@@ -1,4 +1,4 @@
-#       $NetBSD: t_libarchive.sh,v 1.7 2020/08/28 18:46:05 christos Exp $
+#       $NetBSD: t_libarchive.sh,v 1.8 2021/02/19 18:36:50 martin Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,10 +40,6 @@ libarchive_body()
 	local m=$(( $( sysctl -n hw.usermem64 ) / 1024 / 1024 ))
 	if [ $m -lt 400 ]; then
 		atf_skip "Not enough RAM"
-	fi
-	local ncpu=$( sysctl -n hw.ncpuonline )
-	if [ $ncpu -lt 2 ]; then
-		atf_skip "PR kern/55272: too dangerous to run this test"
 	fi
 	local d=$(atf_get_srcdir)
 	atf_check -s exit:0 -o 'not-match:^Details for failing tests:.*' \
