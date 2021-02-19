@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.20 2021/02/19 05:21:39 thorpej Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.21 2021/02/19 05:23:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.20 2021/02/19 05:21:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.21 2021/02/19 05:23:53 thorpej Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -124,7 +124,7 @@ cninit(void)
 
 	OFPRINTF("console node: %08x\n", console_node);
 
-	if (console_node <= 0)
+	if (console_node == -1)
 		goto nocons;
 
 	memset(name, 0, sizeof(name));
