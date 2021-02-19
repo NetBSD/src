@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.201 2021/02/16 09:56:32 hannken Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.202 2021/02/19 13:20:43 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.201 2021/02/16 09:56:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.202 2021/02/19 13:20:43 hannken Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1155,14 +1155,11 @@ again:
 			printf("\nturning off swap on %s...", sdp->swd_path);
 #endif
 			/* Have to lock and reference vnode for swap_off(). */
-			if (vn_lock(vp = sdp->swd_vp, LK_EXCLUSIVE)) {
-				error = EBUSY;
-			} else {
-				vref(vp);
-				error = swap_off(l, sdp);
-				vput(vp);
-				mutex_enter(&uvm_swap_data_lock);
-			}
+			vn_lock(vp = sdp->swd_vp, LK_EXCLUSIVE|LK_RETRY);
+			vref(vp);
+			error = swap_off(l, sdp);
+			vput(vp);
+			mutex_enter(&uvm_swap_data_lock);
 			if (error) {
 				printf("stopping swap on %s failed "
 				    "with error %d\n", sdp->swd_path, error);
