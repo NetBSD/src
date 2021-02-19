@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.15 2021/02/18 18:31:22 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.16 2021/02/19 18:02:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,10 @@
 	/* MSR and SPRG[0-3] used in OpenFirmware */
 	.globl	ofwmsr
 	.comm	ofwmsr,20,4
+
+#ifdef FIRMWORKSBUGS
+	.comm	ofwreal_incharge,4,4
+#endif
 
 /*
  * Called by start to save the initial OFW state so we can restore it
