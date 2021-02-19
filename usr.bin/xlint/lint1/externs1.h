@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.65 2021/01/31 12:44:34 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.66 2021/02/19 12:28:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -328,3 +328,12 @@ extern	int	lex_input(void);
  * print.c
  */
 extern	char	*print_tnode(char *, size_t, const tnode_t *);
+
+/*
+ * ckgetopt.c
+ */
+extern	void	check_getopt_begin_while(const tnode_t *);
+extern	void	check_getopt_begin_switch(void);
+extern	void	check_getopt_case_label(int64_t);
+extern	void	check_getopt_end_switch(void);
+extern	void	check_getopt_end_while(void);
