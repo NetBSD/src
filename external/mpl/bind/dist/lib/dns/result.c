@@ -1,11 +1,11 @@
-/*	$NetBSD: result.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -167,6 +167,15 @@ static const char *text[DNS_R_NRESULTS] = {
 	"too many records",	    /*%< 117 DNS_R_TOOMANYRECORDS */
 	"verify failure",	    /*%< 118 DNS_R_VERIFYFAILURE */
 	"at top of zone",	    /*%< 119 DNS_R_ATZONETOP */
+
+	"no matching key found",	 /*%< 120 DNS_R_NOKEYMATCH */
+	"too many keys matching",	 /*%< 121 DNS_R_TOOMANYKEYS */
+	"key is not actively signing",	 /*%< 122 DNS_R_KEYNOTACTIVE */
+	"NSEC3 iterations out of range", /*%< 123 DNS_R_NSEC3ITERRANGE */
+	"NSEC3 salt length too high",	 /*%< 124 DNS_R_NSEC3SALTRANGE */
+
+	"cannot use NSEC3 with key algorithm", /*%< 125 DNS_R_NSEC3BADALG */
+	"NSEC3 resalt",			       /*%< 126 DNS_R_NSEC3RESALT */
 };
 
 static const char *ids[DNS_R_NRESULTS] = {
@@ -294,6 +303,13 @@ static const char *ids[DNS_R_NRESULTS] = {
 	"DNS_R_TOOMANYRECORDS",
 	"DNS_R_VERIFYFAILURE",
 	"DNS_R_ATZONETOP",
+	"DNS_R_NOKEYMATCH",
+	"DNS_R_TOOMANYKEYS",
+	"DNS_R_KEYNOTACTIVE",
+	"DNS_R_NSEC3ITERRANGE",
+	"DNS_R_NSEC3SALTRANGE",
+	"DNS_R_NSEC3BADALG",
+	"DNS_R_NSEC3RESALT",
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {

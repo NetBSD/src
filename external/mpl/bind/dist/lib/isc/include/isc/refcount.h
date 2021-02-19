@@ -1,11 +1,11 @@
-/*	$NetBSD: refcount.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: refcount.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -120,7 +120,7 @@ isc_refcount_increment(isc_refcount_t *target) {
 static inline uint_fast32_t
 isc_refcount_decrement(isc_refcount_t *target) {
 	uint_fast32_t __v;
-	__v = (uint_fast32_t)atomic_fetch_sub_release(target, 1);
+	__v = (uint_fast32_t)atomic_fetch_sub_acq_rel(target, 1);
 	INSIST(__v > 0);
 	return (__v);
 }
@@ -129,10 +129,28 @@ isc_refcount_decrement(isc_refcount_t *target) {
 	({                                                 \
 		/* cppcheck-suppress shadowVariable */     \
 		uint_fast32_t __v;                         \
-		__v = atomic_fetch_sub_release(target, 1); \
+		__v = atomic_fetch_sub_acq_rel(target, 1); \
 		INSIST(__v > 0);                           \
 		__v;                                       \
 	})
 #endif /* _MSC_VER */
+
+#define isc_refcount_decrementz(target)                               \
+	do {                                                          \
+		uint_fast32_t _refs = isc_refcount_decrement(target); \
+		ISC_INSIST(_refs == 1);                               \
+	} while (0)
+
+#define isc_refcount_decrement1(target)                               \
+	do {                                                          \
+		uint_fast32_t _refs = isc_refcount_decrement(target); \
+		ISC_INSIST(_refs > 1);                                \
+	} while (0)
+
+#define isc_refcount_decrement0(target)                               \
+	do {                                                          \
+		uint_fast32_t _refs = isc_refcount_decrement(target); \
+		ISC_INSIST(_refs > 0);                                \
+	} while (0)
 
 ISC_LANG_ENDDECLS

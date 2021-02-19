@@ -1,11 +1,11 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -178,9 +178,9 @@ opensslecdsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		DST_RET(ISC_R_NOSPACE);
 	}
 
-	if (!EVP_DigestFinal(evp_md_ctx, digest, &dgstlen)) {
+	if (!EVP_DigestFinal_ex(evp_md_ctx, digest, &dgstlen)) {
 		DST_RET(dst__openssl_toresult3(
-			dctx->category, "EVP_DigestFinal", ISC_R_FAILURE));
+			dctx->category, "EVP_DigestFinal_ex", ISC_R_FAILURE));
 	}
 
 	ecdsasig = ECDSA_do_sign(digest, dgstlen, eckey);
@@ -543,7 +543,7 @@ opensslecdsa_tofile(const dst_key_t *key, const char *directory) {
 	}
 
 	if (key->label != NULL) {
-		priv.elements[i].tag = TAG_RSA_LABEL;
+		priv.elements[i].tag = TAG_ECDSA_LABEL;
 		priv.elements[i].length = (unsigned short)strlen(key->label) +
 					  1;
 		priv.elements[i].data = (unsigned char *)key->label;
@@ -565,40 +565,22 @@ static isc_result_t
 ecdsa_check(EC_KEY *eckey, EC_KEY *pubeckey) {
 	const EC_POINT *pubkey;
 
-	pubkey = EC_KEY_get0_public_key(pubeckey);
-	if (pubkey == NULL) {
+	pubkey = EC_KEY_get0_public_key(eckey);
+	if (pubkey != NULL) {
 		return (ISC_R_SUCCESS);
-	}
-	if (EC_KEY_set_public_key(eckey, pubkey) != 1) {
-		return (ISC_R_SUCCESS);
+	} else if (pubeckey != NULL) {
+		pubkey = EC_KEY_get0_public_key(pubeckey);
+		if (pubkey == NULL) {
+			return (ISC_R_SUCCESS);
+		}
+		if (EC_KEY_set_public_key(eckey, pubkey) != 1) {
+			return (ISC_R_SUCCESS);
+		}
 	}
 	if (EC_KEY_check_key(eckey) == 1) {
 		return (ISC_R_SUCCESS);
 	}
-
 	return (ISC_R_FAILURE);
-}
-
-static bool
-uses_engine(const dst_private_t *priv, const char **engine,
-	    const char **label) {
-	for (unsigned short i = 0; i < priv->nelements; i++) {
-		switch (priv->elements[i].tag) {
-		case TAG_ECDSA_ENGINE:
-			*engine = (char *)priv->elements[i].data;
-			break;
-		case TAG_ECDSA_LABEL:
-			*label = (char *)priv->elements[i].data;
-			break;
-		default:
-			break;
-		}
-	}
-	if (*label != NULL) {
-		return (true);
-	}
-
-	return (false);
 }
 
 static isc_result_t
@@ -617,92 +599,6 @@ load_privkey_from_privstruct(EC_KEY *eckey, dst_private_t *priv) {
 
 	BN_clear_free(privkey);
 	return (result);
-}
-
-#if !defined(OPENSSL_NO_ENGINE)
-static isc_result_t
-load_pubkey_from_engine(EC_KEY *eckey, const char *engine, const char *label) {
-	if (engine == NULL || label == NULL) {
-		return (DST_R_NOENGINE);
-	}
-
-	ENGINE *ep = dst__openssl_getengine(engine);
-	;
-	if (ep == NULL) {
-		return (DST_R_NOENGINE);
-	}
-
-	EVP_PKEY *pubkey = ENGINE_load_private_key(ep, label, NULL, NULL);
-	if (pubkey == NULL) {
-		return (dst__openssl_toresult2("ENGINE_load_public_key",
-					       ISC_R_NOTFOUND));
-	}
-
-	eckey = EVP_PKEY_get1_EC_KEY(pubkey);
-	EVP_PKEY_free(pubkey);
-
-	if (eckey == NULL) {
-		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-load_privkey_from_engine(EC_KEY *eckey, const char *engine, const char *label) {
-	if (engine == NULL || label == NULL) {
-		return (DST_R_NOENGINE);
-	}
-
-	ENGINE *ep = dst__openssl_getengine(engine);
-	;
-	if (ep == NULL) {
-		return (DST_R_NOENGINE);
-	}
-
-	EVP_PKEY *privkey = ENGINE_load_private_key(ep, label, NULL, NULL);
-	if (privkey == NULL) {
-		return (dst__openssl_toresult2("ENGINE_load_private_key",
-					       ISC_R_NOTFOUND));
-	}
-
-	eckey = EVP_PKEY_get1_EC_KEY(privkey);
-	EVP_PKEY_free(privkey);
-
-	if (eckey == NULL) {
-		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-	}
-
-	return (ISC_R_SUCCESS);
-}
-#else
-static isc_result_t
-load_pubkey_from_engine(EC_KEY *eckey, const char *engine, const char *label) {
-	UNUSED(eckey);
-	UNUSED(engine);
-	UNUSED(label);
-
-	return (DST_R_NOENGINE);
-}
-
-static isc_result_t
-load_privkey_from_engine(EC_KEY *eckey, const char *engine, const char *label) {
-	UNUSED(eckey);
-	UNUSED(engine);
-	UNUSED(label);
-
-	return (DST_R_NOENGINE);
-}
-#endif
-
-static isc_result_t
-load_privkey(EC_KEY *eckey, dst_private_t *priv, const char **engine,
-	     const char **label) {
-	if (uses_engine(priv, engine, label)) {
-		return (load_privkey_from_engine(eckey, *engine, *label));
-	} else {
-		return (load_privkey_from_privstruct(eckey, priv));
-	}
 }
 
 static isc_result_t
@@ -772,6 +668,10 @@ dst__key_to_eckey(dst_key_t *key, EC_KEY **eckey) {
 }
 
 static isc_result_t
+opensslecdsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
+		       const char *pin);
+
+static isc_result_t
 opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result = ISC_R_SUCCESS;
@@ -779,6 +679,8 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	EC_KEY *pubeckey = NULL;
 	const char *engine = NULL;
 	const char *label = NULL;
+	int i, privkey_index = -1;
+	bool finalize_key = false;
 
 	/* read private key file */
 	result = dst__privstruct_parse(key, DST_ALG_ECDSA256, lexer, key->mctx,
@@ -797,18 +699,55 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		goto end;
 	}
 
+	for (i = 0; i < priv.nelements; i++) {
+		switch (priv.elements[i].tag) {
+		case TAG_ECDSA_ENGINE:
+			engine = (char *)priv.elements[i].data;
+			break;
+		case TAG_ECDSA_LABEL:
+			label = (char *)priv.elements[i].data;
+			break;
+		case TAG_ECDSA_PRIVATEKEY:
+			privkey_index = i;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (privkey_index < 0) {
+		result = DST_R_INVALIDPRIVATEKEY;
+		goto end;
+	}
+
+	if (label != NULL) {
+		result = opensslecdsa_fromlabel(key, engine, label, NULL);
+		if (result != ISC_R_SUCCESS) {
+			goto end;
+		}
+
+		eckey = EVP_PKEY_get1_EC_KEY(key->keydata.pkey);
+		if (eckey == NULL) {
+			result = dst__openssl_toresult(DST_R_OPENSSLFAILURE);
+			goto end;
+		}
+
+	} else {
+		result = dst__key_to_eckey(key, &eckey);
+		if (result != ISC_R_SUCCESS) {
+			goto end;
+		}
+
+		result = load_privkey_from_privstruct(eckey, &priv);
+		if (result != ISC_R_SUCCESS) {
+			goto end;
+		}
+
+		finalize_key = true;
+	}
+
 	if (pub != NULL && pub->keydata.pkey != NULL) {
 		pubeckey = EVP_PKEY_get1_EC_KEY(pub->keydata.pkey);
-	}
-
-	result = dst__key_to_eckey(key, &eckey);
-	if (result != ISC_R_SUCCESS) {
-		goto end;
-	}
-
-	result = load_privkey(eckey, &priv, &engine, &label);
-	if (result != ISC_R_SUCCESS) {
-		goto end;
 	}
 
 	if (ecdsa_check(eckey, pubeckey) != ISC_R_SUCCESS) {
@@ -816,7 +755,9 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		goto end;
 	}
 
-	result = finalize_eckey(key, eckey, engine, label);
+	if (finalize_key) {
+		result = finalize_eckey(key, eckey, engine, label);
+	}
 
 end:
 	if (pubeckey != NULL) {
@@ -834,40 +775,83 @@ static isc_result_t
 opensslecdsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 		       const char *pin) {
 #if !defined(OPENSSL_NO_ENGINE)
-	isc_result_t result = ISC_R_SUCCESS;
+	isc_result_t ret = ISC_R_SUCCESS;
+	ENGINE *e;
 	EC_KEY *eckey = NULL;
 	EC_KEY *pubeckey = NULL;
+	EVP_PKEY *pkey = NULL;
+	EVP_PKEY *pubkey = NULL;
+	int group_nid = 0;
 
 	UNUSED(pin);
 
-	result = dst__key_to_eckey(key, &eckey);
-	if (result != ISC_R_SUCCESS) {
-		goto end;
+	if (engine == NULL || label == NULL) {
+		return (DST_R_NOENGINE);
+	}
+	e = dst__openssl_getengine(engine);
+	if (e == NULL) {
+		return (DST_R_NOENGINE);
 	}
 
-	result = dst__key_to_eckey(key, &pubeckey);
-	if (result != ISC_R_SUCCESS) {
-		goto end;
+	if (key->key_alg == DST_ALG_ECDSA256) {
+		group_nid = NID_X9_62_prime256v1;
+	} else {
+		group_nid = NID_secp384r1;
 	}
 
-	result = load_pubkey_from_engine(pubeckey, engine, label);
-	if (result != ISC_R_SUCCESS) {
-		goto end;
+	/* Load private key. */
+	pkey = ENGINE_load_private_key(e, label, NULL, NULL);
+	if (pkey == NULL) {
+		return (dst__openssl_toresult2("ENGINE_load_private_key",
+					       DST_R_OPENSSLFAILURE));
+	}
+	/* Check base id, group nid */
+	if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
+		DST_RET(DST_R_INVALIDPRIVATEKEY);
+	}
+	eckey = EVP_PKEY_get1_EC_KEY(pkey);
+	if (eckey == NULL) {
+		DST_RET(dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+	}
+	if (EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey)) != group_nid) {
+		DST_RET(DST_R_INVALIDPRIVATEKEY);
 	}
 
-	result = load_privkey_from_engine(eckey, engine, label);
-	if (result != ISC_R_SUCCESS) {
-		return (result);
+	/* Load public key. */
+	pubkey = ENGINE_load_public_key(e, label, NULL, NULL);
+	if (pubkey == NULL) {
+		DST_RET(dst__openssl_toresult2("ENGINE_load_public_key",
+					       DST_R_OPENSSLFAILURE));
+	}
+	/* Check base id, group nid */
+	if (EVP_PKEY_base_id(pubkey) != EVP_PKEY_EC) {
+		DST_RET(DST_R_INVALIDPUBLICKEY);
+	}
+	pubeckey = EVP_PKEY_get1_EC_KEY(pubkey);
+	if (pubeckey == NULL) {
+		DST_RET(dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+	}
+	if (EC_GROUP_get_curve_name(EC_KEY_get0_group(pubeckey)) != group_nid) {
+		DST_RET(DST_R_INVALIDPUBLICKEY);
 	}
 
 	if (ecdsa_check(eckey, pubeckey) != ISC_R_SUCCESS) {
-		result = DST_R_INVALIDPRIVATEKEY;
-		goto end;
+		DST_RET(DST_R_INVALIDPRIVATEKEY);
 	}
 
-	result = finalize_eckey(key, eckey, engine, label);
+	key->label = isc_mem_strdup(key->mctx, label);
+	key->engine = isc_mem_strdup(key->mctx, engine);
+	key->key_size = EVP_PKEY_bits(pkey);
+	key->keydata.pkey = pkey;
+	pkey = NULL;
 
-end:
+err:
+	if (pubkey != NULL) {
+		EVP_PKEY_free(pubkey);
+	}
+	if (pkey != NULL) {
+		EVP_PKEY_free(pkey);
+	}
 	if (pubeckey != NULL) {
 		EC_KEY_free(pubeckey);
 	}
@@ -875,7 +859,7 @@ end:
 		EC_KEY_free(eckey);
 	}
 
-	return (result);
+	return (ret);
 #else
 	UNUSED(key);
 	UNUSED(engine);

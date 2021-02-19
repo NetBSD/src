@@ -1,11 +1,11 @@
-/*	$NetBSD: zoneconf.c,v 1.8 2020/08/03 17:23:37 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.9 2021/02/19 16:42:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -31,6 +31,7 @@
 #include <dns/log.h>
 #include <dns/masterdump.h>
 #include <dns/name.h>
+#include <dns/nsec3.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
@@ -177,7 +178,7 @@ configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
 
 parse_acl:
 	result = cfg_acl_fromconfig(aclobj, config, named_g_lctx, actx,
-				    dns_zone_getmctx(zone), 0, &acl);
+				    named_g_mctx, 0, &acl);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
@@ -254,7 +255,8 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone,
 
 		str = cfg_obj_asstring(matchtype);
 		CHECK(dns_ssu_mtypefromstring(str, &mtype));
-		if (mtype == dns_ssumatchtype_subdomain) {
+		if (mtype == dns_ssumatchtype_subdomain &&
+		    strcasecmp(str, "zonesub") == 0) {
 			usezone = true;
 		}
 
@@ -892,6 +894,7 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	bool check = false, fail = false;
 	bool warn = false, ignore = false;
 	bool ixfrdiff;
+	bool use_kasp = false;
 	dns_masterformat_t masterformat;
 	const dns_master_style_t *masterstyle = &dns_master_style_default;
 	isc_stats_t *zoneqrystats;
@@ -1217,8 +1220,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 	/*
 	 * Configure master functionality.  This applies
-	 * to primary masters (type "master") and slaves
-	 * acting as masters (type "slave"), but not to stubs.
+	 * to primary servers (type "primary") and secondaries
+	 * acting as primaries (type "secondary"), but not to stubs.
 	 */
 	if (ztype != dns_zone_stub && ztype != dns_zone_staticstub &&
 	    ztype != dns_zone_redirect)
@@ -1227,19 +1230,15 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		result = named_config_get(maps, "dnssec-policy", &obj);
 		if (result == ISC_R_SUCCESS) {
 			kaspname = cfg_obj_asstring(obj);
-			if (strcmp(kaspname, "none") != 0) {
-				result = dns_kasplist_find(kasplist, kaspname,
-							   &kasp);
-				if (result != ISC_R_SUCCESS) {
-					cfg_obj_log(obj, named_g_lctx,
-						    ISC_LOG_ERROR,
-						    "'dnssec-policy '%s' not "
-						    "found ",
-						    kaspname);
-					RETERR(result);
-				}
-				dns_zone_setkasp(zone, kasp);
+			result = dns_kasplist_find(kasplist, kaspname, &kasp);
+			if (result != ISC_R_SUCCESS) {
+				cfg_obj_log(obj, named_g_lctx, ISC_LOG_ERROR,
+					    "'dnssec-policy '%s' not found ",
+					    kaspname);
+				RETERR(result);
 			}
+			dns_zone_setkasp(zone, kasp);
+			use_kasp = dns_zone_use_kasp(zone);
 		}
 
 		obj = NULL;
@@ -1252,10 +1251,12 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 				notifytype = dns_notifytype_no;
 			}
 		} else {
-			const char *notifystr = cfg_obj_asstring(obj);
-			if (strcasecmp(notifystr, "explicit") == 0) {
+			const char *str = cfg_obj_asstring(obj);
+			if (strcasecmp(str, "explicit") == 0) {
 				notifytype = dns_notifytype_explicit;
-			} else if (strcasecmp(notifystr, "master-only") == 0) {
+			} else if (strcasecmp(str, "master-only") == 0 ||
+				   strcasecmp(str, "primary-only") == 0)
+			{
 				notifytype = dns_notifytype_masteronly;
 			} else {
 				INSIST(0);
@@ -1400,6 +1401,15 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		}
 
 		obj = NULL;
+		result = named_config_get(maps, "max-ixfr-ratio", &obj);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
+		if (cfg_obj_isstring(obj)) {
+			dns_zone_setixfrratio(zone, 0);
+		} else {
+			dns_zone_setixfrratio(zone, cfg_obj_aspercentage(obj));
+		}
+
+		obj = NULL;
 		result = named_config_get(maps, "request-expire", &obj);
 		INSIST(result == ISC_R_SUCCESS);
 		dns_zone_setrequestexpire(zone, cfg_obj_asboolean(obj));
@@ -1503,7 +1513,7 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 	/*
 	 * Configure update-related options.  These apply to
-	 * primary masters only.
+	 * primary servers only.
 	 */
 	if (ztype == dns_zone_master) {
 		dns_acl_t *updateacl;
@@ -1529,7 +1539,21 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		bool allow = false, maint = false;
 		bool sigvalinsecs;
 
-		if (kasp) {
+		if (use_kasp) {
+			if (dns_kasp_nsec3(kasp)) {
+				result = dns_zone_setnsec3param(
+					zone, 1, dns_kasp_nsec3flags(kasp),
+					dns_kasp_nsec3iter(kasp),
+					dns_kasp_nsec3saltlen(kasp), NULL, true,
+					false);
+			} else {
+				result = dns_zone_setnsec3param(
+					zone, 0, 0, 0, 0, NULL, true, false);
+			}
+			INSIST(result == ISC_R_SUCCESS);
+		}
+
+		if (use_kasp) {
 			seconds = (uint32_t)dns_kasp_sigvalidity_dnskey(kasp);
 		} else {
 			obj = NULL;
@@ -1540,7 +1564,7 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		}
 		dns_zone_setkeyvalidityinterval(zone, seconds);
 
-		if (kasp) {
+		if (use_kasp) {
 			seconds = (uint32_t)dns_kasp_sigvalidity(kasp);
 			dns_zone_setsigvalidityinterval(zone, seconds);
 			seconds = (uint32_t)dns_kasp_sigrefresh(kasp);
@@ -1564,11 +1588,11 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			if (cfg_obj_isvoid(resign)) {
 				seconds /= 4;
 			} else if (!sigvalinsecs) {
-				seconds = cfg_obj_asuint32(resign);
+				uint32_t r = cfg_obj_asuint32(resign);
 				if (seconds > 7 * 86400) {
-					seconds *= 86400;
+					seconds = r * 86400;
 				} else {
-					seconds *= 3600;
+					seconds = r * 3600;
 				}
 			} else {
 				seconds = cfg_obj_asuint32(resign);
@@ -1627,7 +1651,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = cfg_map_get(zoptions, "auto-dnssec", &obj);
-		if (dns_zone_getkasp(zone) != NULL) {
+		if (kasp != NULL && strcmp(dns_kasp_getname(kasp), "none") != 0)
+		{
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, true);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, true);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, true);
@@ -1646,6 +1671,11 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, allow);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, false);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, maint);
+		} else {
+			bool s2i = dns_zone_secure_to_insecure(zone, false);
+			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, s2i);
+			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, false);
+			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, s2i);
 		}
 	}
 
@@ -1838,17 +1868,21 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	case dns_zone_redirect:
 		count = 0;
 		obj = NULL;
-		(void)cfg_map_get(zoptions, "masters", &obj);
+		(void)cfg_map_get(zoptions, "primaries", &obj);
+		if (obj == NULL) {
+			(void)cfg_map_get(zoptions, "masters", &obj);
+		}
+
 		/*
-		 * Use the built-in master server list if one was not
+		 * Use the built-in primary server list if one was not
 		 * explicitly specified and this is a root zone mirror.
 		 */
 		if (obj == NULL && ztype == dns_zone_mirror &&
 		    dns_name_equal(dns_zone_getorigin(zone), dns_rootname))
 		{
-			result = named_config_getmastersdef(
-				named_g_config, DEFAULT_IANA_ROOT_ZONE_MASTERS,
-				&obj);
+			result = named_config_getprimariesdef(
+				named_g_config,
+				DEFAULT_IANA_ROOT_ZONE_PRIMARIES, &obj);
 			RETERR(result);
 		}
 		if (obj != NULL) {
@@ -1857,13 +1891,13 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 			RETERR(named_config_getipandkeylist(config, obj, mctx,
 							    &ipkl));
-			result = dns_zone_setmasterswithkeys(
+			result = dns_zone_setprimarieswithkeys(
 				mayberaw, ipkl.addrs, ipkl.keys, ipkl.count);
 			count = ipkl.count;
 			dns_ipkeylist_clear(mctx, &ipkl);
 			RETERR(result);
 		} else {
-			result = dns_zone_setmasters(mayberaw, NULL, 0);
+			result = dns_zone_setprimaries(mayberaw, NULL, 0);
 		}
 		RETERR(result);
 
@@ -2014,13 +2048,15 @@ named_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase, dns_zone_t *zone,
 }
 
 bool
-named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig) {
+named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig,
+		    const cfg_obj_t *vconfig, const cfg_obj_t *config,
+		    cfg_aclconfctx_t *actx) {
 	const cfg_obj_t *zoptions = NULL;
 	const cfg_obj_t *obj = NULL;
 	const char *cfilename;
 	const char *zfilename;
 	dns_zone_t *raw = NULL;
-	bool has_raw;
+	bool has_raw, inline_signing;
 	dns_zonetype_t ztype;
 
 	zoptions = cfg_tuple_get(zconfig, "options");
@@ -2048,13 +2084,13 @@ named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig) {
 		has_raw = false;
 	}
 
-	obj = NULL;
-	(void)cfg_map_get(zoptions, "inline-signing", &obj);
-	if ((obj == NULL || !cfg_obj_asboolean(obj)) && has_raw) {
+	inline_signing = named_zone_inlinesigning(zone, zconfig, vconfig,
+						  config, actx);
+	if (!inline_signing && has_raw) {
 		dns_zone_log(zone, ISC_LOG_DEBUG(1),
 			     "not reusable: old zone was inline-signing");
 		return (false);
-	} else if ((obj != NULL && cfg_obj_asboolean(obj)) && !has_raw) {
+	} else if (inline_signing && !has_raw) {
 		dns_zone_log(zone, ISC_LOG_DEBUG(1),
 			     "not reusable: old zone was not inline-signing");
 		return (false);
@@ -2083,4 +2119,90 @@ named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig) {
 	}
 
 	return (true);
+}
+
+bool
+named_zone_inlinesigning(dns_zone_t *zone, const cfg_obj_t *zconfig,
+			 const cfg_obj_t *vconfig, const cfg_obj_t *config,
+			 cfg_aclconfctx_t *actx) {
+	isc_result_t res;
+	const cfg_obj_t *zoptions = NULL;
+	const cfg_obj_t *voptions = NULL;
+	const cfg_obj_t *options = NULL;
+	const cfg_obj_t *signing = NULL;
+	const cfg_obj_t *allowupdate = NULL;
+	const cfg_obj_t *updatepolicy = NULL;
+	bool zone_is_dynamic = false;
+	bool inline_signing = false;
+
+	(void)cfg_map_get(config, "options", &options);
+
+	zoptions = cfg_tuple_get(zconfig, "options");
+	if (vconfig != NULL) {
+		voptions = cfg_tuple_get(vconfig, "options");
+	}
+
+	inline_signing = (cfg_map_get(zoptions, "inline-signing", &signing) ==
+				  ISC_R_SUCCESS &&
+			  cfg_obj_asboolean(signing));
+	if (inline_signing) {
+		return (true);
+	}
+
+	if (cfg_map_get(zoptions, "update-policy", &updatepolicy) ==
+	    ISC_R_SUCCESS) {
+		zone_is_dynamic = true;
+	} else {
+		res = cfg_map_get(zoptions, "allow-update", &allowupdate);
+		if (res != ISC_R_SUCCESS && voptions != NULL) {
+			res = cfg_map_get(voptions, "allow-update",
+					  &allowupdate);
+		}
+		if (res != ISC_R_SUCCESS && options != NULL) {
+			res = cfg_map_get(options, "allow-update",
+					  &allowupdate);
+		}
+		if (res == ISC_R_SUCCESS) {
+			dns_acl_t *acl = NULL;
+			res = cfg_acl_fromconfig(
+				allowupdate, config, named_g_lctx, actx,
+				dns_zone_getmctx(zone), 0, &acl);
+			if (res == ISC_R_SUCCESS && acl != NULL &&
+			    !dns_acl_isnone(acl)) {
+				zone_is_dynamic = true;
+			}
+			if (acl != NULL) {
+				dns_acl_detach(&acl);
+			}
+		}
+	}
+
+	/*
+	 * If inline-signing is not set, perhaps implictly through a
+	 * dnssec-policy.  Since automated DNSSEC maintenance requires
+	 * a dynamic zone, or inline-siging to be enabled, check if
+	 * the zone with dnssec-policy allows updates.  If not, enable
+	 * inline-signing.
+	 */
+	signing = NULL;
+	if (!inline_signing && !zone_is_dynamic &&
+	    cfg_map_get(zoptions, "dnssec-policy", &signing) == ISC_R_SUCCESS &&
+	    signing != NULL)
+	{
+		if (strcmp(cfg_obj_asstring(signing), "none") != 0) {
+			inline_signing = true;
+			dns_zone_log(zone, ISC_LOG_DEBUG(1),
+				     "inline-signing: "
+				     "implicitly through dnssec-policy");
+		} else {
+			inline_signing = dns_zone_secure_to_insecure(zone,
+								     true);
+			dns_zone_log(
+				zone, ISC_LOG_DEBUG(1), "inline-signing: %s",
+				inline_signing ? "transitioning to insecure"
+					       : "no");
+		}
+	}
+
+	return (inline_signing);
 }

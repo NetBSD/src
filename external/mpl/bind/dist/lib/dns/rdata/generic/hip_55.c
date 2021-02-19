@@ -1,11 +1,11 @@
-/*	$NetBSD: hip_55.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -167,7 +167,9 @@ totext_hip(ARGS_TOTEXT) {
 	region.length = key_len;
 	RETERR(isc_base64_totext(&region, 1, "", target));
 	region.length = length - key_len;
-	RETERR(str_totext(tctx->linebreak, target));
+	if (region.length > 0) {
+		RETERR(str_totext(tctx->linebreak, target));
+	}
 
 	/*
 	 * Rendezvous Servers.
@@ -443,7 +445,7 @@ dns_rdata_hip_next(dns_rdata_hip_t *hip) {
 	dns_name_fromregion(&name, &region);
 	hip->offset += name.length;
 	INSIST(hip->offset <= hip->servers_len);
-	return (ISC_R_SUCCESS);
+	return (hip->offset < hip->servers_len ? ISC_R_SUCCESS : ISC_R_NOMORE);
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/08/03 17:23:35 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2021/02/19 16:42:08 christos Exp $
 
 LDADD+=-lns
 DPADD+=${LIBNS}
@@ -11,6 +11,7 @@ BINDIR=	/usr/sbin
 
 DIST=${IDIST}/bin/named
 CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include -DCONFIGARGS=\"defaults\"
+CPPFLAGS+=-I${LIBUVDIR}/dist/include
 CPPFLAGS+=-DNO_VERSION_DATE -DPRODUCT=\"BIND\" -DSRCID=\"${SRCID}\"
 CPPFLAGS+=-DDESCRIPTION=\"\(Extended\ Support\ Version\)\"
 CPPFLAGS+=-DBUILDER=\"make\"	# I am tempted to say Bob

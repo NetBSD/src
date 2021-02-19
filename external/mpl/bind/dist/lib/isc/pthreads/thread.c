@@ -1,11 +1,11 @@
-/*	$NetBSD: thread.c,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.5 2021/02/19 16:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -130,40 +130,92 @@ isc_thread_yield(void) {
 #endif /* if defined(HAVE_SCHED_YIELD) */
 }
 
+#if defined(HAVE_CPUSET_SETAFFINITY) || defined(HAVE_PTHREAD_SETAFFINITY_NP)
+#if defined(HAVE_CPUSET_SETAFFINITY)
+static int
+getaffinity(cpuset_t *set) {
+	return (cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1,
+				   sizeof(*set), set));
+}
+static int
+issetaffinity(int cpu, cpuset_t *set) {
+	return ((cpu >= CPU_SETSIZE) ? -1 : CPU_ISSET(cpu, set) ? 1 : 0);
+}
+static int
+setaffinity(int cpu, cpuset_t *set) {
+	CPU_ZERO(set);
+	CPU_SET(cpu, set);
+	return (cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1,
+				   sizeof(*set), set));
+}
+#elif defined(__NetBSD__)
+static int
+getaffinity(cpuset_t *set) {
+	return (pthread_getaffinity_np(pthread_self(), cpuset_size(set), set));
+}
+static int
+issetaffinity(int cpu, cpuset_t *set) {
+	return (cpuset_isset(cpu, set));
+}
+static int
+setaffinity(int cpu, cpuset_t *set) {
+	cpuset_zero(set);
+	cpuset_set(cpu, set);
+	return (pthread_setaffinity_np(pthread_self(), cpuset_size(set), set));
+}
+#else /* linux ? */
+static int
+getaffinity(cpu_set_t *set) {
+	return (pthread_getaffinity_np(pthread_self(), sizeof(*set), set));
+}
+static int
+issetaffinity(int cpu, cpu_set_t *set) {
+	return ((cpu >= CPU_SETSIZE) ? -1 : CPU_ISSET(cpu, set) ? 1 : 0);
+}
+static int
+setaffinity(int cpu, cpu_set_t *set) {
+	CPU_ZERO(set);
+	CPU_SET(cpu, set);
+	return (pthread_setaffinity_np(pthread_self(), sizeof(*set), set));
+}
+#endif
+#endif
+
 isc_result_t
 isc_thread_setaffinity(int cpu) {
+#if defined(HAVE_CPUSET_SETAFFINITY) || defined(HAVE_PTHREAD_SETAFFINITY_NP)
+	int cpu_id = -1, cpu_aff_ok_counter = -1, n;
 #if defined(HAVE_CPUSET_SETAFFINITY)
-	cpuset_t cpuset;
-	CPU_ZERO(&cpuset);
-	CPU_SET(cpu, &cpuset);
-	if (cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1,
-			       sizeof(cpuset), &cpuset) != 0)
-	{
+	cpuset_t _set, *set = &_set;
+#define cpuset_destroy(x) ((void)0)
+#elif defined(__NetBSD__)
+	cpuset_t *set = cpuset_create();
+	if (set == NULL) {
 		return (ISC_R_FAILURE);
 	}
-#elif defined(HAVE_PTHREAD_SETAFFINITY_NP)
-#if defined(__NetBSD__)
-	cpuset_t *cset;
-	cset = cpuset_create();
-	if (cset == NULL) {
+#else /* linux? */
+	cpu_set_t _set, *set = &_set;
+#define cpuset_destroy(x) ((void)0)
+#endif
+
+	if (getaffinity(set) != 0) {
+		cpuset_destroy(set);
 		return (ISC_R_FAILURE);
 	}
-	cpuset_set(cpu, cset);
-	if (pthread_setaffinity_np(pthread_self(), cpuset_size(cset), cset) !=
-	    0) {
-		cpuset_destroy(cset);
+	while (cpu_aff_ok_counter < cpu) {
+		cpu_id++;
+		if ((n = issetaffinity(cpu_id, set)) > 0) {
+			cpu_aff_ok_counter++;
+		} else if (n < 0) {
+			cpuset_destroy(set);
+			return (ISC_R_FAILURE);
+		}
+	}
+	if (setaffinity(cpu_id, set) != 0) {
+		cpuset_destroy(set);
 		return (ISC_R_FAILURE);
 	}
-	cpuset_destroy(cset);
-#else  /* linux? */
-	cpu_set_t set;
-	CPU_ZERO(&set);
-	CPU_SET(cpu, &set);
-	if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &set) !=
-	    0) {
-		return (ISC_R_FAILURE);
-	}
-#endif /* __NetBSD__ */
+	cpuset_destroy(set);
 #elif defined(HAVE_PROCESSOR_BIND)
 	if (processor_bind(P_LWPID, P_MYID, cpu, NULL) != 0) {
 		return (ISC_R_FAILURE);

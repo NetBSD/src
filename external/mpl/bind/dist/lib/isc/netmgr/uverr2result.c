@@ -1,11 +1,11 @@
-/*	$NetBSD: uverr2result.c,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: uverr2result.c,v 1.3 2021/02/19 16:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -29,8 +29,10 @@
  */
 isc_result_t
 isc___nm_uverr2result(int uverr, bool dolog, const char *file,
-		      unsigned int line) {
+		      unsigned int line, const char *func) {
 	switch (uverr) {
+	case 0:
+		return (ISC_R_SUCCESS);
 	case UV_ENOTDIR:
 	case UV_ELOOP:
 	case UV_EINVAL: /* XXX sometimes this is not for files */
@@ -81,12 +83,17 @@ isc___nm_uverr2result(int uverr, bool dolog, const char *file,
 		return (ISC_R_ADDRNOTAVAIL);
 	case UV_ECONNREFUSED:
 		return (ISC_R_CONNREFUSED);
+	case UV_ECANCELED:
+		return (ISC_R_CANCELED);
+	case UV_EOF:
+		return (ISC_R_EOF);
 	default:
 		if (dolog) {
-			UNEXPECTED_ERROR(file, line,
-					 "unable to convert libuv "
-					 "error code to isc_result: %d: %s",
-					 uverr, uv_strerror(uverr));
+			UNEXPECTED_ERROR(
+				file, line,
+				"unable to convert libuv "
+				"error code in %s to isc_result: %d: %s",
+				func, uverr, uv_strerror(uverr));
 		}
 		return (ISC_R_UNEXPECTED);
 	}

@@ -1,11 +1,11 @@
-/*	$NetBSD: dispatch.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.7 2021/02/19 16:42:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -623,11 +623,10 @@ new_portentry(dns_dispatch_t *disp, in_port_t port) {
 }
 
 /*%
- * The caller must not hold the qid->lock.
+ * The caller must hold the qid->lock.
  */
 static void
 deref_portentry(dns_dispatch_t *disp, dispportentry_t **portentryp) {
-	dns_qid_t *qid;
 	dispportentry_t *portentry = *portentryp;
 	*portentryp = NULL;
 
@@ -635,13 +634,10 @@ deref_portentry(dns_dispatch_t *disp, dispportentry_t **portentryp) {
 	REQUIRE(portentry != NULL);
 
 	if (isc_refcount_decrement(&portentry->refs) == 1) {
-		qid = DNS_QID(disp);
-		LOCK(&qid->lock);
 		ISC_LIST_UNLINK(disp->port_table[portentry->port %
 						 DNS_DISPATCH_PORTTABLESIZE],
 				portentry, link);
 		isc_mempool_put(disp->portpool, portentry);
-		UNLOCK(&qid->lock);
 	}
 }
 
@@ -781,9 +777,9 @@ get_dispsocket(dns_dispatch_t *disp, const isc_sockaddr_t *dest,
 	if (result == ISC_R_SUCCESS) {
 		dispsock->socket = sock;
 		dispsock->host = *dest;
-		dispsock->portentry = portentry;
 		dispsock->bucket = bucket;
 		LOCK(&qid->lock);
+		dispsock->portentry = portentry;
 		ISC_LIST_APPEND(qid->sock_table[bucket], dispsock, blink);
 		UNLOCK(&qid->lock);
 		*dispsockp = dispsock;
@@ -809,7 +805,7 @@ get_dispsocket(dns_dispatch_t *disp, const isc_sockaddr_t *dest,
 static void
 destroy_dispsocket(dns_dispatch_t *disp, dispsocket_t **dispsockp) {
 	dispsocket_t *dispsock;
-	dns_qid_t *qid;
+	dns_qid_t *qid = DNS_QID(disp);
 
 	/*
 	 * The dispatch must be locked.
@@ -823,13 +819,15 @@ destroy_dispsocket(dns_dispatch_t *disp, dispsocket_t **dispsockp) {
 	disp->nsockets--;
 	dispsock->magic = 0;
 	if (dispsock->portentry != NULL) {
+		/* socket_search() tests and dereferences portentry. */
+		LOCK(&qid->lock);
 		deref_portentry(disp, &dispsock->portentry);
+		UNLOCK(&qid->lock);
 	}
 	if (dispsock->socket != NULL) {
 		isc_socket_detach(&dispsock->socket);
 	}
 	if (ISC_LINK_LINKED(dispsock, blink)) {
-		qid = DNS_QID(disp);
 		LOCK(&qid->lock);
 		ISC_LIST_UNLINK(qid->sock_table[dispsock->bucket], dispsock,
 				blink);
@@ -848,7 +846,7 @@ destroy_dispsocket(dns_dispatch_t *disp, dispsocket_t **dispsockp) {
 static void
 deactivate_dispsocket(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 	isc_result_t result;
-	dns_qid_t *qid;
+	dns_qid_t *qid = DNS_QID(disp);
 
 	/*
 	 * The dispatch must be locked.
@@ -860,14 +858,16 @@ deactivate_dispsocket(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 	}
 
 	INSIST(dispsock->portentry != NULL);
+	/* socket_search() tests and dereferences portentry. */
+	LOCK(&qid->lock);
 	deref_portentry(disp, &dispsock->portentry);
+	UNLOCK(&qid->lock);
 
 	if (disp->nsockets > DNS_DISPATCH_POOLSOCKS) {
 		destroy_dispsocket(disp, &dispsock);
 	} else {
 		result = isc_socket_close(dispsock->socket);
 
-		qid = DNS_QID(disp);
 		LOCK(&qid->lock);
 		ISC_LIST_UNLINK(qid->sock_table[dispsock->bucket], dispsock,
 				blink);
@@ -1221,15 +1221,16 @@ udp_recv(isc_event_t *ev_in, dns_dispatch_t *disp, dispsocket_t *dispsock) {
 			     "search for response in bucket %d: %s", bucket,
 			     (resp == NULL ? "not found" : "found"));
 
-		if (resp == NULL) {
-			inc_stats(mgr, dns_resstatscounter_mismatch);
-			free_buffer(disp, ev->region.base, ev->region.length);
-			goto unlock;
-		}
 	} else if (resp->id != id ||
 		   !isc_sockaddr_equal(&ev->address, &resp->host)) {
 		dispatch_log(disp, LVL(90),
 			     "response to an exclusive socket doesn't match");
+		inc_stats(mgr, dns_resstatscounter_mismatch);
+		free_buffer(disp, ev->region.base, ev->region.length);
+		goto unlock;
+	}
+
+	if (resp == NULL) {
 		inc_stats(mgr, dns_resstatscounter_mismatch);
 		free_buffer(disp, ev->region.base, ev->region.length);
 		goto unlock;

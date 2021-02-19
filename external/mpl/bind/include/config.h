@@ -176,7 +176,7 @@
 /* #undef HAVE_GETPASSPHRASE */
 
 /* Define to 1 if you have the `getrandom' function. */
-/* #undef HAVE_GETRANDOM */
+#define HAVE_GETRANDOM 1
 
 /* Define to use gperftools CPU profiler. */
 /* #undef HAVE_GPERFTOOLS_PROFILER */
@@ -279,9 +279,6 @@
 
 /* define if OpenSSL supports Ed448 */
 #define HAVE_OPENSSL_ED448 1
-
-/* define if OpenSSL supports SipHash */
-#define HAVE_OPENSSL_SIPHASH 1
 
 /* Define to 1 if you have the `processor_bind' function. */
 /* #undef HAVE_PROCESSOR_BIND */
@@ -451,6 +448,9 @@
 /* Define if Thread-Local Storage is available */
 #define HAVE_TLS 1
 
+/* Define to 1 if you have the `TLS_server_method' function. */
+#define HAVE_TLS_SERVER_METHOD 1
+
 /* Define to 1 if you have the `tzset' function. */
 #define HAVE_TZSET 1
 
@@ -466,6 +466,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* define if the compiler supports _Unwind_Backtrace() */
+#define HAVE_UNWIND_BACKTRACE 1
+
 /* Define to 1 if you have the `usleep' function. */
 #define HAVE_USLEEP 1
 
@@ -477,6 +480,12 @@
 
 /* Define to 1 if you have the `uv_import' function. */
 /* #undef HAVE_UV_IMPORT */
+
+/* Define to 1 if you have the `uv_translate_sys_error' function. */
+#define HAVE_UV_TRANSLATE_SYS_ERROR 1
+
+/* Define to 1 if you have the `uv_udp_connect' function. */
+#define HAVE_UV_UDP_CONNECT 1
 
 /* Use zlib library */
 #define HAVE_ZLIB 1
@@ -548,7 +557,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Define to use large-system tuning. */
-/* #undef TUNE_LARGE */
+#define TUNE_LARGE 1
 
 /* define if we can use backtrace */
 #define USE_BACKTRACE 1

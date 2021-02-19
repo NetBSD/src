@@ -1,11 +1,11 @@
-/*	$NetBSD: dnstap.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.9 2021/02/19 16:42:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -1145,11 +1145,11 @@ dns_dt_parse(isc_mem_t *mctx, isc_region_t *src, dns_dtdata_t **destp) {
 
 	isc_buffer_init(&b, d->msgdata.base, d->msgdata.length);
 	isc_buffer_add(&b, d->msgdata.length);
-	CHECK(dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &d->msg));
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &d->msg);
 	result = dns_message_parse(d->msg, &b, 0);
 	if (result != ISC_R_SUCCESS) {
 		if (result != DNS_R_RECOVERABLE) {
-			dns_message_destroy(&d->msg);
+			dns_message_detach(&d->msg);
 		}
 		result = ISC_R_SUCCESS;
 	}
@@ -1372,7 +1372,7 @@ dns_dtdata_free(dns_dtdata_t **dp) {
 	*dp = NULL;
 
 	if (d->msg != NULL) {
-		dns_message_destroy(&d->msg);
+		dns_message_detach(&d->msg);
 	}
 	if (d->frame != NULL) {
 		dnstap__dnstap__free_unpacked(d->frame, NULL);

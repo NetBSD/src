@@ -1,11 +1,11 @@
-/*	$NetBSD: masterdump.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.9 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -87,6 +87,8 @@ struct dns_master_style {
 
 /*% Does the rdataset 'r' contain a stale answer? */
 #define STALE(r) (((r)->attributes & DNS_RDATASETATTR_STALE) != 0)
+/*% Does the rdataset 'r' contain an expired answer? */
+#define ANCIENT(r) (((r)->attributes & DNS_RDATASETATTR_ANCIENT) != 0)
 
 /*%
  * Context structure for a masterfile dump in progress.
@@ -172,6 +174,21 @@ LIBDNS_EXTERNAL_DATA const dns_master_style_t dns_master_style_cache = {
 	8,
 	UINT_MAX
 };
+
+LIBDNS_EXTERNAL_DATA const dns_master_style_t
+	dns_master_style_cache_with_expired = {
+		DNS_STYLEFLAG_OMIT_OWNER | DNS_STYLEFLAG_OMIT_CLASS |
+			DNS_STYLEFLAG_MULTILINE | DNS_STYLEFLAG_RRCOMMENT |
+			DNS_STYLEFLAG_TRUST | DNS_STYLEFLAG_NCACHE |
+			DNS_STYLEFLAG_EXPIRED,
+		24,
+		32,
+		32,
+		40,
+		80,
+		8,
+		UINT_MAX
+	};
 
 LIBDNS_EXTERNAL_DATA const dns_master_style_t dns_master_style_simple = {
 	0, 24, 32, 32, 40, 80, 8, UINT_MAX
@@ -1067,6 +1084,14 @@ again:
 
 	for (i = 0; i < n; i++) {
 		dns_rdataset_t *rds = sorted[i];
+
+		if (ANCIENT(rds) &&
+		    (ctx->style.flags & DNS_STYLEFLAG_EXPIRED) == 0) {
+			/* Omit expired entries */
+			dns_rdataset_disassociate(rds);
+			continue;
+		}
+
 		if ((ctx->style.flags & DNS_STYLEFLAG_TRUST) != 0) {
 			if ((ctx->style.flags & DNS_STYLEFLAG_INDENT) != 0 ||
 			    (ctx->style.flags & DNS_STYLEFLAG_YAML) != 0)
@@ -1086,10 +1111,20 @@ again:
 			isc_result_t result;
 			if (STALE(rds)) {
 				fprintf(f,
-					"; stale (will be retained for "
-					"%u more seconds)\n",
+					"; stale (will be retained for %u more "
+					"seconds)\n",
 					(rds->stale_ttl -
 					 ctx->serve_stale_ttl));
+			} else if (ANCIENT(rds)) {
+				isc_buffer_t b;
+				char buf[sizeof("YYYYMMDDHHMMSS")];
+				memset(buf, 0, sizeof(buf));
+				isc_buffer_init(&b, buf, sizeof(buf) - 1);
+				dns_time64_totext((uint64_t)rds->stale_ttl, &b);
+				fprintf(f,
+					"; expired since %s "
+					"(awaiting cleanup)\n",
+					buf);
 			}
 			result = dump_rdataset(mctx, name, rds, ctx, buffer, f);
 			if (result != ISC_R_SUCCESS) {

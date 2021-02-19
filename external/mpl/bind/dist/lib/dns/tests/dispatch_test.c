@@ -1,11 +1,11 @@
-/*	$NetBSD: dispatch_test.c,v 1.6 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: dispatch_test.c,v 1.7 2021/02/19 16:42:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -134,10 +134,10 @@ dispatchset_get(void **state) {
 	d4 = dns_dispatchset_get(dset);
 	d5 = dns_dispatchset_get(dset);
 
-	assert_int_equal(d1, d2);
-	assert_int_equal(d2, d3);
-	assert_int_equal(d3, d4);
-	assert_int_equal(d4, d5);
+	assert_ptr_equal(d1, d2);
+	assert_ptr_equal(d2, d3);
+	assert_ptr_equal(d3, d4);
+	assert_ptr_equal(d4, d5);
 
 	reset();
 
@@ -150,11 +150,11 @@ dispatchset_get(void **state) {
 	d4 = dns_dispatchset_get(dset);
 	d5 = dns_dispatchset_get(dset);
 
-	assert_int_equal(d1, d5);
-	assert_true(d1 != d2);
-	assert_true(d2 != d3);
-	assert_true(d3 != d4);
-	assert_true(d4 != d5);
+	assert_ptr_equal(d1, d5);
+	assert_ptr_not_equal(d1, d2);
+	assert_ptr_not_equal(d2, d3);
+	assert_ptr_not_equal(d3, d4);
+	assert_ptr_not_equal(d4, d5);
 
 	reset();
 }

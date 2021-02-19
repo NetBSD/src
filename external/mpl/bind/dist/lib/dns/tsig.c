@@ -1,11 +1,11 @@
-/*	$NetBSD: tsig.c,v 1.7 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.8 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -351,7 +351,7 @@ dns_tsigkey_createfromkey(const dns_name_t *name, const dns_name_t *algorithm,
 cleanup_refs:
 	tkey->magic = 0;
 	while (refs-- > 0) {
-		isc_refcount_decrement(&tkey->refs);
+		isc_refcount_decrement0(&tkey->refs);
 	}
 	isc_refcount_destroy(&tkey->refs);
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: netscope.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: netscope.c,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,6 +20,7 @@
 #include <isc/netscope.h>
 #include <isc/result.h>
 #include <isc/string.h>
+#include <isc/util.h>
 
 isc_result_t
 isc_netscope_pton(int af, char *scopename, void *addr, uint32_t *zoneid) {
@@ -28,8 +29,12 @@ isc_netscope_pton(int af, char *scopename, void *addr, uint32_t *zoneid) {
 	unsigned int ifid;
 	struct in6_addr *in6;
 #endif /* ifdef HAVE_IF_NAMETOINDEX */
-	uint32_t zone;
+	uint32_t zone = 0;
 	uint64_t llz;
+
+#ifndef HAVE_IF_NAMETOINDEX
+	UNUSED(addr);
+#endif
 
 	/* at this moment, we only support AF_INET6 */
 	if (af != AF_INET6) {
