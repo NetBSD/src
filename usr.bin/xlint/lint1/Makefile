@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2021/02/19 12:28:56 rillig Exp $
+#	$NetBSD: Makefile,v 1.61 2021/02/19 23:25:26 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
 BINDIR=		/usr/libexec
 
 CLEANFILES+=	${MAN}
+CLEANFILES+=	*.gcno *.gcda *.gcov
 
 .if ${USETOOLS} == "yes"
 LINT1=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-lint1
