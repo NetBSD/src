@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.60 2021/01/23 22:20:17 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.61 2021/02/19 21:35:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -234,7 +234,7 @@ typedef	struct sym {
 	bool	s_reg : 1;	/* symbol is register variable */
 	bool	s_defarg : 1;	/* undefined symbol in old style function
 				   definition */
-	bool	s_rimpl : 1;	/* return value of function implicit decl. */
+	bool	s_return_type_implicit_int : 1;
 	bool	s_osdef : 1;	/* symbol stems from old style function def. */
 	bool	s_inline : 1;	/* true if this is an inline function */
 	struct	sym *s_ext_sym;	/* for local declared external symbols pointer
