@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_machdep.h,v 1.1 2021/02/18 18:31:22 thorpej Exp $ */
+/* $NetBSD: ofw_machdep.h,v 1.2 2021/02/19 05:21:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,6 +31,31 @@
 
 #ifdef _KERNEL
 #include <machine/powerpc.h>
+
+/*
+ * The general format of an OpenFirmware virtual translation record is:
+ *
+ *	cell(s)		virt
+ *	cell(s)		size
+ *	cell(s)		phys
+ *	cell		mode
+ *
+ * "mode" contains PTE WIMG bits.
+ *
+ * We define this structure to describe these translations that's independent
+ * of the number of cells each field consumes.
+ */
+struct OF_translation {
+	vaddr_t		virt;
+	vsize_t		size;
+	paddr_t		phys;
+	uint32_t	mode;
+};
+
+#define	OFW_MAX_TRANSLATIONS	32
+
+extern int ofw_chosen;		/* cached handle for "/chosen" */
+extern struct OF_translation ofw_translations[OFW_MAX_TRANSLATIONS];
 
 void	ofw_bootstrap(void);
 #endif /* _KERNEL */
