@@ -1,11 +1,11 @@
-/*	$NetBSD: db.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -180,7 +180,10 @@ typedef struct dns_dbmethods {
 				uint64_t *records, uint64_t *bytes);
 	isc_result_t (*setservestalettl)(dns_db_t *db, dns_ttl_t ttl);
 	isc_result_t (*getservestalettl)(dns_db_t *db, dns_ttl_t *ttl);
+	isc_result_t (*setservestalerefresh)(dns_db_t *db, uint32_t interval);
+	isc_result_t (*getservestalerefresh)(dns_db_t *db, uint32_t *interval);
 	isc_result_t (*setgluecachestats)(dns_db_t *db, isc_stats_t *stats);
+	isc_result_t (*adjusthashsize)(dns_db_t *db, size_t size);
 } dns_dbmethods_t;
 
 typedef isc_result_t (*dns_dbcreatefunc_t)(isc_mem_t *	     mctx,
@@ -238,7 +241,35 @@ struct dns_dbonupdatelistener {
 #define DNS_DBFIND_FORCENSEC3	0x0080
 #define DNS_DBFIND_ADDITIONALOK 0x0100
 #define DNS_DBFIND_NOZONECUT	0x0200
-#define DNS_DBFIND_STALEOK	0x0400
+
+/*
+ * DNS_DBFIND_STALEOK: This flag is set when BIND fails to refresh a
+ * RRset due to timeout (resolver-query-timeout), its intent is to
+ * try to look for stale data in cache as a fallback, but only if
+ * stale answers are enabled in configuration.
+ *
+ * This flag is also used to activate stale-refresh-time window, since it
+ * is the only way the database knows that a resolution has failed.
+ */
+#define DNS_DBFIND_STALEOK 0x0400
+
+/*
+ * DNS_DBFIND_STALEENABLED: This flag is used as a hint to the database
+ * that it may use stale data. It is always set during query lookup if
+ * stale answers are enabled, but only effectively used during
+ * stale-refresh-time window. Also during this window, the resolver will
+ * not try to resolve the query, in other words no attempt to refresh the
+ * data in cache is made when the stale-refresh-time window is active.
+ */
+#define DNS_DBFIND_STALEENABLED 0x0800
+
+/*
+ * DNS_DBFIND_STALEONLY: This new introduced flag is used when we want
+ * stale data from the database, but not due to a failure in resolution,
+ * it also doesn't require stale-refresh-time window timer to be active.
+ * As long as there is a stale RRset available, it should be returned.
+ */
+#define DNS_DBFIND_STALEONLY 0x1000
 /*@}*/
 
 /*@{*/
@@ -1365,6 +1396,23 @@ dns_db_hashsize(dns_db_t *db);
  *      0 if not implemented.
  */
 
+isc_result_t
+dns_db_adjusthashsize(dns_db_t *db, size_t size);
+/*%<
+ * For database implementations using a hash table, adjust
+ * the size of the hash table to store objects with size
+ * memory footprint.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database.
+ * \li  'size' is maximum memory footprint of the database
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS	The registration succeeded
+ * \li	#ISC_R_NOMEMORY	Out of memory
+ */
+
 void
 dns_db_settask(dns_db_t *db, isc_task_t *task);
 /*%<
@@ -1470,10 +1518,10 @@ dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
 
 isc_result_t
 dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, uint64_t *records,
-	       uint64_t *bytes);
+	       uint64_t *xfrsize);
 /*%<
  * On success if 'records' is not NULL, it is set to the number of records
- * in the given version of the database. If 'bytes' is not NULL, it is
+ * in the given version of the database. If 'xfrisize' is not NULL, it is
  * set to the approximate number of bytes needed to transfer the records,
  * counting name, TTL, type, class, and rdata for each RR.  (This is meant
  * to be a rough approximation of the size of a full zone transfer, though
@@ -1483,7 +1531,7 @@ dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, uint64_t *records,
  * \li	'db' is a valid zone database.
  * \li	'version' is NULL or a valid version.
  * \li	'records' is NULL or a pointer to return the record count in.
- * \li	'bytes' is NULL or a pointer to return the byte count in.
+ * \li	'xfrsize' is NULL or a pointer to return the byte count in.
  *
  * Returns:
  * \li	#ISC_R_SUCCESS
@@ -1679,6 +1727,39 @@ dns_db_getservestalettl(dns_db_t *db, dns_ttl_t *ttl);
  * Requires:
  * \li	'db' is a valid cache database.
  * \li	'ttl' is the number of seconds to retain data past its normal expiry.
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOTIMPLEMENTED - Not supported by this DB implementation.
+ */
+
+isc_result_t
+dns_db_setservestalerefresh(dns_db_t *db, uint32_t interval);
+/*%<
+ * Sets the length of time to wait before attempting to refresh a rrset
+ * if a previous attempt in doing so has failed.
+ * During this time window if stale rrset are available in cache they
+ * will be directly returned to client.
+ *
+ * Requires:
+ * \li	'db' is a valid cache database.
+ * \li	'interval' is number of seconds before attempting to refresh data.
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOTIMPLEMENTED - Not supported by this DB implementation.
+ */
+
+isc_result_t
+dns_db_getservestalerefresh(dns_db_t *db, uint32_t *interval);
+/*%<
+ * Gets the length of time in which stale answers are directly returned from
+ * cache before attempting to refresh them, in case a previous attempt in
+ * doing so has failed.
+ *
+ * Requires:
+ * \li	'db' is a valid cache database.
+ * \li	'interval' is number of seconds before attempting to refresh data.
  *
  * Returns:
  * \li	#ISC_R_SUCCESS

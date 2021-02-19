@@ -1,11 +1,11 @@
-/*	$NetBSD: notify.c,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: notify.c,v 1.5 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -56,7 +56,7 @@ respond(ns_client_t *client, isc_result_t result) {
 	}
 	if (msg_result != ISC_R_SUCCESS) {
 		ns_client_drop(client, msg_result);
-		isc_nmhandle_unref(client->handle);
+		isc_nmhandle_detach(&client->reqhandle);
 		return;
 	}
 	message->rcode = rcode;
@@ -67,11 +67,11 @@ respond(ns_client_t *client, isc_result_t result) {
 	}
 
 	ns_client_send(client);
-	isc_nmhandle_unref(client->handle);
+	isc_nmhandle_detach(&client->reqhandle);
 }
 
 void
-ns_notify_start(ns_client_t *client) {
+ns_notify_start(ns_client_t *client, isc_nmhandle_t *handle) {
 	dns_message_t *request = client->message;
 	isc_result_t result;
 	dns_name_t *zonename;
@@ -80,6 +80,11 @@ ns_notify_start(ns_client_t *client) {
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char tsigbuf[DNS_NAME_FORMATSIZE * 2 + sizeof(": TSIG '' ()")];
 	dns_tsigkey_t *tsigkey;
+
+	/*
+	 * Attach to the request handle
+	 */
+	isc_nmhandle_attach(handle, &client->reqhandle);
 
 	/*
 	 * Interpret the question section.

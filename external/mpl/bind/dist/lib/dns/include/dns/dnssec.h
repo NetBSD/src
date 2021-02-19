@@ -1,11 +1,11 @@
-/*	$NetBSD: dnssec.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -359,6 +359,25 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 		      isc_mem_t *mctx);
 /*%<
  * Update the CDS and CDNSKEY RRsets, adding and removing keys as needed.
+ *
+ * Returns:
+ *\li   ISC_R_SUCCESS
+ *\li   Other values indicate error
+ */
+
+isc_result_t
+dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
+		      dns_name_t *origin, dns_rdataclass_t zclass,
+		      dns_ttl_t ttl, dns_diff_t *diff, isc_mem_t *mctx,
+		      bool dnssec_insecure);
+/*%<
+ * Add or remove the CDS DELETE record and the CDNSKEY DELETE record.
+ * If 'dnssec_insecure' is true, the DELETE records should be present.
+ * Otherwise, the DELETE records must be removed from the RRsets (if present).
+ *
+ * Returns:
+ *\li   ISC_R_SUCCESS
+ *\li   Other values indicate error
  */
 
 isc_result_t

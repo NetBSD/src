@@ -1,11 +1,11 @@
-/*	$NetBSD: sample-request.c,v 1.3 2020/05/24 19:46:30 christos Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.4 2021/02/19 16:42:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -114,7 +114,7 @@ cleanup:
 	if (qrdataset != NULL) {
 		dns_message_puttemprdataset(message, &qrdataset);
 	}
-	dns_message_destroy(&message);
+	dns_message_detach(&message);
 	return (result);
 }
 
@@ -192,15 +192,8 @@ main(int argc, char *argv[]) {
 	rmessage = NULL;
 
 	isc_mem_create(&mctx);
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &qmessage);
-	if (result == ISC_R_SUCCESS) {
-		result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE,
-					    &rmessage);
-	}
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to create messages\n");
-		exit(1);
-	}
+	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &qmessage);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &rmessage);
 
 	/* Initialize the nameserver address */
 	memset(&hints, 0, sizeof(hints));
@@ -247,8 +240,8 @@ main(int argc, char *argv[]) {
 	isc_buffer_free(&outputbuf);
 
 	/* Cleanup */
-	dns_message_destroy(&qmessage);
-	dns_message_destroy(&rmessage);
+	dns_message_detach(&qmessage);
+	dns_message_detach(&rmessage);
 	isc_mem_destroy(&mctx);
 	dns_client_destroy(&client);
 	dns_lib_shutdown();

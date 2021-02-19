@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_test.c,v 1.1.1.1 2021/02/19 16:37:15 christos Exp $	*/
+/*	$NetBSD: nsec3param_test.c,v 1.2 2021/02/19 16:42:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

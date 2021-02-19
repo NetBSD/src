@@ -1,11 +1,11 @@
-/*	$NetBSD: name_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.6 2021/02/19 16:42:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -354,7 +354,7 @@ init_test(void **state) {
 	assert_int_equal(name.length, 0);
 	assert_int_equal(name.labels, 0);
 	assert_int_equal(name.attributes, 0);
-	assert_int_equal(name.offsets, offsets);
+	assert_ptr_equal(name.offsets, offsets);
 	assert_null(name.buffer);
 }
 
@@ -389,7 +389,7 @@ buffer_test(void **state) {
 	isc_buffer_init(&b, buf, BUFSIZ);
 	dns_name_init(&name, NULL);
 	dns_name_setbuffer(&name, &b);
-	assert_int_equal(name.buffer, &b);
+	assert_ptr_equal(name.buffer, &b);
 	assert_true(dns_name_hasbuffer(&name));
 }
 

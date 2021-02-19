@@ -1,11 +1,11 @@
-/*	$NetBSD: mem.c,v 1.7 2020/08/03 17:23:42 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.8 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -1017,7 +1017,7 @@ isc_mem_destroy(isc_mem_t **ctxp) {
 		print_active(ctx, stderr);
 	}
 #else  /* if ISC_MEM_TRACKLINES */
-	isc_refcount_decrement(&ctx->references);
+	isc_refcount_decrementz(&ctx->references);
 #endif /* if ISC_MEM_TRACKLINES */
 	isc_refcount_destroy(&ctx->references);
 	destroy(ctx);
@@ -1541,7 +1541,7 @@ isc_mem_setwater(isc_mem_t *ctx0, isc_mem_water_t water, void *water_arg,
 	}
 }
 
-bool
+ISC_NO_SANITIZE_THREAD bool
 isc_mem_isovermem(isc_mem_t *ctx0) {
 	REQUIRE(VALID_CONTEXT(ctx0));
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: view.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.9 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -316,10 +316,10 @@ cleanup_dynkeys:
 	}
 
 cleanup_weakrefs:
-	isc_refcount_decrement(&view->weakrefs);
+	isc_refcount_decrementz(&view->weakrefs);
 	isc_refcount_destroy(&view->weakrefs);
 
-	isc_refcount_decrement(&view->references);
+	isc_refcount_decrementz(&view->references);
 	isc_refcount_destroy(&view->references);
 
 	if (view->fwdtable != NULL) {
@@ -629,7 +629,6 @@ view_flushanddetach(dns_view_t **viewp, bool flush) {
 		dns_zone_t *mkzone = NULL, *rdzone = NULL;
 
 		isc_refcount_destroy(&view->references);
-		LOCK(&view->lock);
 		if (!RESSHUTDOWN(view)) {
 			dns_resolver_shutdown(view->resolver);
 		}
@@ -639,6 +638,7 @@ view_flushanddetach(dns_view_t **viewp, bool flush) {
 		if (!REQSHUTDOWN(view)) {
 			dns_requestmgr_shutdown(view->requestmgr);
 		}
+		LOCK(&view->lock);
 		if (view->zonetable != NULL) {
 			if (view->flush) {
 				dns_zt_flushanddetach(&view->zonetable);
@@ -662,6 +662,9 @@ view_flushanddetach(dns_view_t **viewp, bool flush) {
 		}
 		if (view->catzs != NULL) {
 			dns_catz_catzs_detach(&view->catzs);
+		}
+		if (view->ntatable_priv != NULL) {
+			dns_ntatable_shutdown(view->ntatable_priv);
 		}
 		UNLOCK(&view->lock);
 
@@ -1708,7 +1711,7 @@ dns_view_flushnode(dns_view_t *view, const dns_name_t *name, bool tree) {
 isc_result_t
 dns_view_adddelegationonly(dns_view_t *view, const dns_name_t *name) {
 	dns_name_t *item;
-	uint32_t hash;
+	unsigned int hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
@@ -1738,7 +1741,7 @@ dns_view_adddelegationonly(dns_view_t *view, const dns_name_t *name) {
 isc_result_t
 dns_view_excludedelegationonly(dns_view_t *view, const dns_name_t *name) {
 	dns_name_t *item;
-	uint32_t hash;
+	unsigned int hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
@@ -1768,7 +1771,7 @@ dns_view_excludedelegationonly(dns_view_t *view, const dns_name_t *name) {
 bool
 dns_view_isdelegationonly(dns_view_t *view, const dns_name_t *name) {
 	dns_name_t *item;
-	uint32_t hash;
+	unsigned int hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
@@ -2456,25 +2459,37 @@ cleanup:
 
 void
 dns_view_setviewcommit(dns_view_t *view) {
+	dns_zone_t *redirect = NULL, *managed_keys = NULL;
+
 	REQUIRE(DNS_VIEW_VALID(view));
 
 	LOCK(&view->lock);
 
 	if (view->redirect != NULL) {
-		dns_zone_setviewcommit(view->redirect);
+		dns_zone_attach(view->redirect, &redirect);
 	}
 	if (view->managed_keys != NULL) {
-		dns_zone_setviewcommit(view->managed_keys);
+		dns_zone_attach(view->managed_keys, &managed_keys);
 	}
 	if (view->zonetable != NULL) {
 		dns_zt_setviewcommit(view->zonetable);
 	}
 
 	UNLOCK(&view->lock);
+
+	if (redirect != NULL) {
+		dns_zone_setviewcommit(redirect);
+		dns_zone_detach(&redirect);
+	}
+	if (managed_keys != NULL) {
+		dns_zone_setviewcommit(managed_keys);
+		dns_zone_detach(&managed_keys);
+	}
 }
 
 void
 dns_view_setviewrevert(dns_view_t *view) {
+	dns_zone_t *redirect = NULL, *managed_keys = NULL;
 	dns_zt_t *zonetable;
 
 	REQUIRE(DNS_VIEW_VALID(view));
@@ -2485,15 +2500,45 @@ dns_view_setviewrevert(dns_view_t *view) {
 	 */
 	LOCK(&view->lock);
 	if (view->redirect != NULL) {
-		dns_zone_setviewrevert(view->redirect);
+		dns_zone_attach(view->redirect, &redirect);
 	}
 	if (view->managed_keys != NULL) {
-		dns_zone_setviewrevert(view->managed_keys);
+		dns_zone_attach(view->managed_keys, &managed_keys);
 	}
 	zonetable = view->zonetable;
 	UNLOCK(&view->lock);
 
+	if (redirect != NULL) {
+		dns_zone_setviewrevert(redirect);
+		dns_zone_detach(&redirect);
+	}
+	if (managed_keys != NULL) {
+		dns_zone_setviewrevert(managed_keys);
+		dns_zone_detach(&managed_keys);
+	}
 	if (zonetable != NULL) {
 		dns_zt_setviewrevert(zonetable);
 	}
+}
+
+bool
+dns_view_staleanswerenabled(dns_view_t *view) {
+	uint32_t stale_ttl = 0;
+	bool result = false;
+
+	REQUIRE(DNS_VIEW_VALID(view));
+
+	if (dns_db_getservestalettl(view->cachedb, &stale_ttl) != ISC_R_SUCCESS)
+	{
+		return (false);
+	}
+	if (stale_ttl > 0) {
+		if (view->staleanswersok == dns_stale_answer_yes) {
+			result = true;
+		} else if (view->staleanswersok == dns_stale_answer_conf) {
+			result = view->staleanswersenable;
+		}
+	}
+
+	return (result);
 }

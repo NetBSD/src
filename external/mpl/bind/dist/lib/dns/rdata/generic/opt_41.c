@@ -1,11 +1,11 @@
-/*	$NetBSD: opt_41.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.9 2021/02/19 16:42:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -199,6 +199,10 @@ fromwire_opt(ARGS_FROMWIRE) {
 			isc_region_consume(&sregion, length);
 			break;
 		case DNS_OPT_COOKIE:
+			/*
+			 * Client cookie alone has length 8.
+			 * Client + server cookie is 8 + [8..32].
+			 */
 			if (length != 8 && (length < 16 || length > 40)) {
 				return (DNS_R_OPTERR);
 			}

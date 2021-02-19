@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/09/09 14:40:40 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2021/02/19 16:42:24 christos Exp $
 
 LIB=ns
 #USE_SHLIBDIR=   yes
@@ -8,7 +8,6 @@ LIB=ns
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=	${IDIST}/lib/ns
-.include "${DIST}/api"
 
 .PATH.c:	${DIST}
 CPPFLAGS+=	-I${BIND_SRCDIR}/include/ns -I${DIST}

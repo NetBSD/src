@@ -1,11 +1,11 @@
-/*	$NetBSD: log.c,v 1.5 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -1101,13 +1101,67 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 	return (ISC_R_SUCCESS);
 }
 
+static void
+insert_sort(int64_t to_keep[], int64_t versions, int version) {
+	int i = 0;
+	while (i < versions && version < to_keep[i]) {
+		i++;
+	}
+	if (i == versions) {
+		return;
+	}
+	if (i < versions - 1) {
+		memmove(&to_keep[i + 1], &to_keep[i],
+			sizeof(to_keep[0]) * (versions - i - 1));
+	}
+	to_keep[i] = version;
+}
+
+static int64_t
+last_to_keep(int64_t versions, isc_dir_t *dirp, char *bname, size_t bnamelen) {
+	if (versions <= 0) {
+		return INT64_MAX;
+	}
+
+	int64_t to_keep[ISC_LOG_MAX_VERSIONS] = { 0 };
+	int64_t version = 0;
+	if (versions > ISC_LOG_MAX_VERSIONS) {
+		versions = ISC_LOG_MAX_VERSIONS;
+	}
+	/*
+	 * First we fill 'to_keep' structure using insertion sort
+	 */
+	memset(to_keep, 0, sizeof(to_keep));
+	while (isc_dir_read(dirp) == ISC_R_SUCCESS) {
+		if (dirp->entry.length <= bnamelen ||
+		    strncmp(dirp->entry.name, bname, bnamelen) != 0 ||
+		    dirp->entry.name[bnamelen] != '.')
+		{
+			continue;
+		}
+
+		char *digit_end;
+		char *ename = &dirp->entry.name[bnamelen + 1];
+		version = strtoull(ename, &digit_end, 10);
+		if (*digit_end == '\0') {
+			insert_sort(to_keep, versions, version);
+		}
+	}
+
+	isc_dir_reset(dirp);
+
+	/*
+	 * to_keep[versions - 1] is the last one we want to keep
+	 */
+	return (to_keep[versions - 1]);
+}
+
 static isc_result_t
 remove_old_tsversions(isc_logfile_t *file, int versions) {
 	isc_result_t result;
 	char *bname, *digit_end;
 	const char *dirname;
 	int64_t version, last = INT64_MAX;
-	int64_t to_keep[ISC_LOG_MAX_VERSIONS];
 	size_t bnamelen;
 	isc_dir_t dir;
 	char sep = '/';
@@ -1154,42 +1208,7 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 		return (result);
 	}
 
-	if (versions > 0) {
-		/*
-		 * First we fill 'to_keep' structure using insertion sort
-		 */
-		memset(to_keep, 0, versions * sizeof(long long));
-		while (isc_dir_read(&dir) == ISC_R_SUCCESS) {
-			if (dir.entry.length > bnamelen &&
-			    strncmp(dir.entry.name, bname, bnamelen) == 0 &&
-			    dir.entry.name[bnamelen] == '.')
-			{
-				char *ename = &dir.entry.name[bnamelen + 1];
-				version = strtoull(ename, &digit_end, 10);
-				if (*digit_end == '\0') {
-					int i = 0;
-					while (i < versions &&
-					       version < to_keep[i]) {
-						i++;
-					}
-					if (i < versions) {
-						memmove(&to_keep[i + 1],
-							&to_keep[i],
-							sizeof(long long) *
-									versions -
-								i - 1);
-						to_keep[i] = version;
-					}
-				}
-			}
-		}
-
-		/*
-		 * to_keep[versions - 1] is the last one we want to keep
-		 */
-		last = to_keep[versions - 1];
-		isc_dir_reset(&dir);
-	}
+	last = last_to_keep(versions, &dir, bname, bnamelen);
 
 	/*
 	 * Then we remove all files that we don't want to_keep
@@ -1440,7 +1459,7 @@ isc_log_open(isc_logchannel_t *channel) {
 	return (result);
 }
 
-bool
+ISC_NO_SANITIZE_THREAD bool
 isc_log_wouldlog(isc_log_t *lctx, int level) {
 	/*
 	 * Try to avoid locking the mutex for messages which can't

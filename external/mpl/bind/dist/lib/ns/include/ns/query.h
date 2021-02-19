@@ -1,11 +1,11 @@
-/*	$NetBSD: query.h,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: query.h,v 1.5 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -117,6 +117,8 @@ struct ns_query {
 #define NS_QUERYATTR_DNS64EXCLUDE    0x08000
 #define NS_QUERYATTR_RRL_CHECKED     0x10000
 #define NS_QUERYATTR_REDIRECT	     0x20000
+#define NS_QUERYATTR_ANSWERED	     0x40000
+#define NS_QUERYATTR_STALEOK	     0x80000
 
 typedef struct query_ctx query_ctx_t;
 
@@ -176,11 +178,6 @@ struct query_ctx {
 	int	     line;   /* line to report error */
 };
 
-/*
- * The following functions are expected to be used only within query.c
- * and query modules.
- */
-
 isc_result_t
 ns_query_done(query_ctx_t *qctx);
 /*%<
@@ -211,7 +208,7 @@ void
 ns_query_free(ns_client_t *client);
 
 void
-ns_query_start(ns_client_t *client);
+ns_query_start(ns_client_t *client, isc_nmhandle_t *handle);
 
 void
 ns_query_cancel(ns_client_t *client);
@@ -219,29 +216,6 @@ ns_query_cancel(ns_client_t *client);
 /*
  * The following functions are expected to be used only within query.c
  * and query modules.
- */
-
-isc_result_t
-ns_query_done(query_ctx_t *qctx);
-/*%<
- * Finalize this phase of the query process:
- *
- * - Clean up.
- * - If we have an answer ready (positive or negative), send it.
- * - If we need to restart for a chaining query, call ns__query_start() again.
- * - If we've started recursion, then just clean up; things will be
- *   restarted via fetch_callback()/query_resume().
- */
-
-isc_result_t
-ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
-		 dns_name_t *qdomain, dns_rdataset_t *nameservers,
-		 bool resuming);
-/*%<
- * Prepare client for recursion, then create a resolver fetch, with
- * the event callback set to fetch_callback(). Afterward we terminate
- * this phase of the query, and resume with a new query context when
- * recursion completes.
  */
 
 isc_result_t

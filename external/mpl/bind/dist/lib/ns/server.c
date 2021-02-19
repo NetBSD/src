@@ -1,11 +1,11 @@
-/*	$NetBSD: server.c,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.5 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -89,7 +89,7 @@ ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 	CHECKFATAL(isc_stats_create(mctx, &sctx->tcpoutstats6,
 				    dns_sizecounter_out_max));
 
-	sctx->udpsize = 4096;
+	sctx->udpsize = 1232;
 	sctx->transfer_tcp_message_size = 20480;
 
 	sctx->fuzztype = isc_fuzz_none;

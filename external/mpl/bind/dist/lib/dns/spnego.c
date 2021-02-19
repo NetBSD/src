@@ -1,11 +1,11 @@
-/*	$NetBSD: spnego.c,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: spnego.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -214,21 +214,23 @@ typedef enum { PRIM = 0, CONS = 1 } Der_type;
 
 /* Universal tags */
 
-enum { UT_Boolean = 1,
-       UT_Integer = 2,
-       UT_BitString = 3,
-       UT_OctetString = 4,
-       UT_Null = 5,
-       UT_OID = 6,
-       UT_Enumerated = 10,
-       UT_Sequence = 16,
-       UT_Set = 17,
-       UT_PrintableString = 19,
-       UT_IA5String = 22,
-       UT_UTCTime = 23,
-       UT_GeneralizedTime = 24,
-       UT_VisibleString = 26,
-       UT_GeneralString = 27 };
+enum {
+	UT_Boolean = 1,
+	UT_Integer = 2,
+	UT_BitString = 3,
+	UT_OctetString = 4,
+	UT_Null = 5,
+	UT_OID = 6,
+	UT_Enumerated = 10,
+	UT_Sequence = 16,
+	UT_Set = 17,
+	UT_PrintableString = 19,
+	UT_IA5String = 22,
+	UT_UTCTime = 23,
+	UT_GeneralizedTime = 24,
+	UT_VisibleString = 26,
+	UT_GeneralString = 27
+};
 
 #define ASN1_INDEFINITE 0xdce0deed
 
@@ -848,7 +850,7 @@ der_get_oid(const unsigned char *p, size_t len, oid *data, size_t *size) {
 		return (ASN1_OVERRUN);
 	}
 
-	data->components = malloc(len * sizeof(*data->components));
+	data->components = malloc((len + 1) * sizeof(*data->components));
 	if (data->components == NULL) {
 		return (ENOMEM);
 	}
@@ -1509,7 +1511,7 @@ spnego_initial(OM_uint32 *minor_status,
 	gss_buffer_desc krb5_output_token = GSS_C_EMPTY_BUFFER;
 	unsigned char *buf = NULL;
 	size_t buf_size;
-	size_t len = 0;	/* XXX: gcc */
+	size_t len = 0;
 	int ret;
 
 	(void)mech_type;

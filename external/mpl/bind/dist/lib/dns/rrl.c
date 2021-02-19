@@ -1,11 +1,11 @@
-/*	$NetBSD: rrl.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -956,7 +956,7 @@ make_log_buf(dns_rrl_t *rrl, dns_rrl_entry_t *e, const char *str1,
 				(void)dns_rdatatype_totext(e->key.s.qtype, &lb);
 			}
 		}
-		snprintf(strbuf, sizeof(strbuf), "  (%08x)",
+		snprintf(strbuf, sizeof(strbuf), "  (%08" PRIx32 ")",
 			 e->key.s.qname_hash);
 		add_log_str(&lb, strbuf, strlen(strbuf));
 	}

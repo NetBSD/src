@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2021/02/19 16:42:23 christos Exp $
 
 LIB=bind9
 
@@ -7,7 +7,6 @@ LIB=bind9
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=	${IDIST}/lib/bind9
-.include "${DIST}/api"
 
 .PATH.c:	${DIST}
 

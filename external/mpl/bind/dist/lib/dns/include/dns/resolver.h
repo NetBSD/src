@@ -1,11 +1,11 @@
-/*	$NetBSD: resolver.h,v 1.6 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -133,9 +133,10 @@ typedef enum { dns_quotatype_zone = 0, dns_quotatype_server } dns_quotatype_t;
 		    *   if possible. */
 
 /* Reserved in use by adb.c		0x00400000 */
-#define DNS_FETCHOPT_EDNSVERSIONSET   0x00800000
-#define DNS_FETCHOPT_EDNSVERSIONMASK  0xff000000
-#define DNS_FETCHOPT_EDNSVERSIONSHIFT 24
+#define DNS_FETCHOPT_EDNSVERSIONSET	0x00800000
+#define DNS_FETCHOPT_EDNSVERSIONMASK	0xff000000
+#define DNS_FETCHOPT_EDNSVERSIONSHIFT	24
+#define DNS_FETCHOPT_TRYSTALE_ONTIMEOUT 0x01000000
 
 /*
  * Upper bounds of class of query RTT (ms).  Corresponds to

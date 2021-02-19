@@ -1,11 +1,11 @@
-/*	$NetBSD: view.h,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -175,6 +175,7 @@ struct dns_view {
 	dns_stale_answer_t    staleanswersok;	  /* rndc setting */
 	bool		      staleanswersenable; /* named.conf setting
 						   * */
+	uint32_t	  staleanswerclienttimeout;
 	uint16_t	  nocookieudp;
 	uint16_t	  padding;
 	dns_acl_t *	  pad_acl;
@@ -1326,6 +1327,15 @@ dns_view_setviewrevert(dns_view_t *view);
 /*%<
  * Revert dns_zone_setview() calls previously made for all zones in this
  * view.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ */
+
+bool
+dns_view_staleanswerenabled(dns_view_t *view);
+/*%<
+ * Check if stale answers are enabled for this view.
  *
  * Requires:
  *\li	'view' to be valid.

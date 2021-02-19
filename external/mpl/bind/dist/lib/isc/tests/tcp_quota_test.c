@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_quota_test.c,v 1.1.1.1 2021/02/19 16:37:17 christos Exp $	*/
+/*	$NetBSD: tcp_quota_test.c,v 1.2 2021/02/19 16:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

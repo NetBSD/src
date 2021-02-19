@@ -1,11 +1,11 @@
-/*	$NetBSD: dig.c,v 1.5 2020/05/24 19:46:11 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.6 2021/02/19 16:42:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -181,7 +181,7 @@ help(void) {
 	      "responses)\n"
 	      "                 +[no]besteffort     (Try to parse even illegal "
 	      "messages)\n"
-	      "                 +bufsize=###        (Set EDNS0 Max UDP packet "
+	      "                 +bufsize[=###]      (Set EDNS0 Max UDP packet "
 	      "size)\n"
 	      "                 +[no]cdflag         (Set checking disabled "
 	      "flag in query)\n"
@@ -668,15 +668,25 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 
 		if (!isc_time_isepoch(&query->time_sent)) {
 			char tbuf[100];
-			isc_time_formatISO8601ms(&query->time_sent, tbuf,
-						 sizeof(tbuf));
+			if (query->lookup->use_usec) {
+				isc_time_formatISO8601us(&query->time_sent,
+							 tbuf, sizeof(tbuf));
+			} else {
+				isc_time_formatISO8601ms(&query->time_sent,
+							 tbuf, sizeof(tbuf));
+			}
 			printf("    query_time: !!timestamp %s\n", tbuf);
 		}
 
 		if (!isquery && !isc_time_isepoch(&query->time_recv)) {
 			char tbuf[100];
-			isc_time_formatISO8601ms(&query->time_recv, tbuf,
-						 sizeof(tbuf));
+			if (query->lookup->use_usec) {
+				isc_time_formatISO8601us(&query->time_recv,
+							 tbuf, sizeof(tbuf));
+			} else {
+				isc_time_formatISO8601ms(&query->time_recv,
+							 tbuf, sizeof(tbuf));
+			}
 			printf("    response_time: !!timestamp %s\n", tbuf);
 		}
 
@@ -1039,11 +1049,12 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 			break;
 		case 'u': /* bufsize */
 			FULLCHECK("bufsize");
-			if (value == NULL) {
-				goto need_value;
-			}
 			if (!state) {
 				goto invalid_option;
+			}
+			if (value == NULL) {
+				lookup->udpsize = DEFAULT_EDNS_BUFSIZE;
+				break;
 			}
 			result = parse_uint(&num, value, COMMSIZE,
 					    "buffer size");
@@ -1052,6 +1063,9 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 				goto exit_or_usage;
 			}
 			lookup->udpsize = num;
+			if (lookup->udpsize == 0) {
+				lookup->edns = -1;
+			}
 			break;
 		default:
 			goto invalid_option;
@@ -1091,7 +1105,7 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 			case 'o': /* cookie */
 				FULLCHECK("cookie");
 				if (state && lookup->edns == -1) {
-					lookup->edns = 0;
+					lookup->edns = DEFAULT_EDNS_VERSION;
 				}
 				lookup->sendcookie = state;
 				if (value != NULL) {
@@ -1130,7 +1144,7 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 			FULLCHECK("dnssec");
 		dnssec:
 			if (state && lookup->edns == -1) {
-				lookup->edns = 0;
+				lookup->edns = DEFAULT_EDNS_VERSION;
 			}
 			lookup->dnssec = state;
 			break;
@@ -1182,7 +1196,8 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 							break;
 						}
 						if (value == NULL) {
-							lookup->edns = 0;
+							lookup->edns =
+								DEFAULT_EDNS_VERSION;
 							break;
 						}
 						result = parse_uint(&num, value,
@@ -1397,7 +1412,7 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 			case 'i': /* nsid */
 				FULLCHECK("nsid");
 				if (state && lookup->edns == -1) {
-					lookup->edns = 0;
+					lookup->edns = DEFAULT_EDNS_VERSION;
 				}
 				lookup->nsid = state;
 				break;
@@ -1467,7 +1482,7 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 	case 'p':
 		FULLCHECK("padding");
 		if (state && lookup->edns == -1) {
-			lookup->edns = 0;
+			lookup->edns = DEFAULT_EDNS_VERSION;
 		}
 		if (value == NULL) {
 			goto need_value;
@@ -1635,7 +1650,7 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 				break;
 			}
 			if (lookup->edns == -1) {
-				lookup->edns = 0;
+				lookup->edns = DEFAULT_EDNS_VERSION;
 			}
 			if (lookup->ecs_addr != NULL) {
 				isc_mem_free(mctx, lookup->ecs_addr);
@@ -2184,16 +2199,20 @@ preparse_args(int argc, char **argv) {
 			continue;
 		}
 		/* Look for dash value option. */
-		if (strpbrk(option, dash_opts) != &option[0] ||
-		    strlen(option) > 1U) {
-			/* Error or value in option. */
+		if (strpbrk(option, dash_opts) != &option[0]) {
+			goto invalid_option;
+		}
+		if (strlen(option) > 1U) {
+			/* value in option. */
 			continue;
 		}
 		/* Dash value is next argument so we need to skip it. */
 		rc--, rv++;
 		/* Handle missing argument */
 		if (rc == 0) {
-			break;
+		invalid_option:
+			fprintf(stderr, "Invalid option: -%s\n", option);
+			usage();
 		}
 	}
 }
@@ -2250,7 +2269,7 @@ parse_args(bool is_batchfile, bool config_only, int argc, char **argv) {
 		debug("making new lookup");
 		default_lookup = make_empty_lookup();
 		default_lookup->adflag = true;
-		default_lookup->edns = 0;
+		default_lookup->edns = DEFAULT_EDNS_VERSION;
 		default_lookup->sendcookie = true;
 
 #ifndef NOPOSIX

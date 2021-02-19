@@ -1,11 +1,11 @@
-/*	$NetBSD: aclconf.h,v 1.5 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.6 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -83,6 +83,10 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
  * of a matching family (AF_INET or AF_INET6) may be configured.
  *
  * On success, attach '*target' to the new dns_acl_t object.
+ *
+ * Require:
+ *	'ctx' to be non NULL.
+ *	'*target' to be NULL or a valid dns_acl_t.
  */
 
 ISC_LANG_ENDDECLS

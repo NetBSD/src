@@ -12,6 +12,9 @@ VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 top_builddir =  @top_builddir@
 
+PANDOC = @PANDOC@
+W3M = @W3M@
+
 VERSION=@BIND9_VERSION@
 
 SUBDIRS =	make lib fuzz bin doc

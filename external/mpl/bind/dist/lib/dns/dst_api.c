@@ -1,11 +1,11 @@
-/*	$NetBSD: dst_api.c,v 1.7 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.8 2021/02/19 16:42:15 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -112,7 +112,9 @@ static const char *timingtags[TIMING_NTAGS] = {
 
 	"DSPublish:",	 "SyncPublish:",  "SyncDelete:",
 
-	"DNSKEYChange:", "ZRRSIGChange:", "KRRSIGChange:", "DSChange:"
+	"DNSKEYChange:", "ZRRSIGChange:", "KRRSIGChange:", "DSChange:",
+
+	"DSRemoved:"
 };
 
 #define KEYSTATES_NTAGS (DST_MAX_KEYSTATES + 1)
@@ -649,12 +651,14 @@ dst_key_fromnamedfile(const char *filename, const char *dirname, int type,
 				   filename, ".state");
 		INSIST(result == ISC_R_SUCCESS);
 
+		key->kasp = false;
 		result = dst_key_read_state(newfilename, mctx, &key);
-		if (result == ISC_R_FILENOTFOUND) {
+		if (result == ISC_R_SUCCESS) {
+			key->kasp = true;
+		} else if (result == ISC_R_FILENOTFOUND) {
 			/* Having no state is valid. */
 			result = ISC_R_SUCCESS;
 		}
-
 		isc_mem_put(mctx, newfilename, newfilenamelen);
 		newfilename = NULL;
 		RETERR(result);
@@ -1925,8 +1929,7 @@ printtime(const dst_key_t *key, int type, const char *tag, FILE *stream) {
 	}
 
 	isc_buffer_usedregion(&b, &r);
-	fprintf(stream, "%s: %.*s (%.*s)\n", tag, (int)r.length, r.base,
-		(int)strlen(output) - 1, output);
+	fprintf(stream, "%s: %.*s (%s)\n", tag, (int)r.length, r.base, output);
 	return;
 
 error:
@@ -2011,6 +2014,8 @@ write_key_state(const dst_key_t *key, int type, const char *directory) {
 		printtime(key, DST_TIME_INACTIVE, "Retired", fp);
 		printtime(key, DST_TIME_REVOKE, "Revoked", fp);
 		printtime(key, DST_TIME_DELETE, "Removed", fp);
+		printtime(key, DST_TIME_DSPUBLISH, "DSPublish", fp);
+		printtime(key, DST_TIME_DSDELETE, "DSRemoved", fp);
 		printtime(key, DST_TIME_SYNCPUBLISH, "PublishCDS", fp);
 		printtime(key, DST_TIME_SYNCDELETE, "DeleteCDS", fp);
 
@@ -2599,11 +2604,20 @@ dst_key_goal(dst_key_t *key) {
 	dst_key_state_t state;
 	isc_result_t result;
 
+	REQUIRE(VALID_KEY(key));
+
 	result = dst_key_getstate(key, DST_KEY_GOAL, &state);
 	if (result == ISC_R_SUCCESS) {
 		return (state);
 	}
 	return (DST_KEY_STATE_HIDDEN);
+}
+
+bool
+dst_key_haskasp(dst_key_t *key) {
+	REQUIRE(VALID_KEY(key));
+
+	return (key->kasp);
 }
 
 void

@@ -1,11 +1,11 @@
-/*	$NetBSD: keymgr.h,v 1.3 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: keymgr.h,v 1.4 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -51,6 +51,65 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
  *
  *	Ensures:
  *\li		On error, keypool is unchanged
+ */
+
+isc_result_t
+dns_keymgr_checkds(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
+		   const char *directory, isc_stdtime_t now, isc_stdtime_t when,
+		   bool dspublish);
+isc_result_t
+dns_keymgr_checkds_id(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
+		      const char *directory, isc_stdtime_t now,
+		      isc_stdtime_t when, bool dspublish, dns_keytag_t id,
+		      unsigned int algorithm);
+/*%<
+ * Check DS for one key in 'keyring'. The key must have the KSK role.
+ * If 'dspublish' is set to true, set the DS Publish time to 'now'.
+ * If 'dspublish' is set to false, set the DS Removed time to 'now'.
+ * If a specific key 'id' is given it must match the keytag.
+ * If the 'algorithm' is non-zero, it must match the key's algorithm.
+ * The result is stored in the key state file.
+ *
+ *	Requires:
+ *\li		'kasp' is not NULL.
+ *\li		'keyring' is not NULL.
+ *
+ *	Returns:
+ *\li		#ISC_R_SUCCESS (No error).
+ *\li		#DNS_R_NOKEYMATCH (No matching keys found).
+ *\li		#DNS_R_TOOMANYKEYS (More than one matching keys found).
+ *
+ */
+
+isc_result_t
+dns_keymgr_rollover(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
+		    const char *directory, isc_stdtime_t now,
+		    isc_stdtime_t when, dns_keytag_t id,
+		    unsigned int algorithm);
+/*%<
+ * Rollover key with given 'id'. If the 'algorithm' is non-zero, it must
+ * match the key's algorithm. The changes are stored in the key state file.
+ *
+ * A rollover means adjusting the key metadata so that keymgr will start the
+ * actual rollover on the next run. Update the 'inactive' time and adjust
+ * key lifetime to match the 'when' to rollover time.
+ *
+ * The 'when' time may be in the past. In that case keymgr will roll the
+ * key as soon as possible.
+ *
+ * The 'when' time may be in the future. This may extend the lifetime,
+ * overriding the default lifetime from the policy.
+ *
+ *	Requires:
+ *\li		'kasp' is not NULL.
+ *\li		'keyring' is not NULL.
+ *
+ *	Returns:
+ *\li		#ISC_R_SUCCESS (No error).
+ *\li		#DNS_R_NOKEYMATCH (No matching keys found).
+ *\li		#DNS_R_TOOMANYKEYS (More than one matching keys found).
+ *\li		#DNS_R_KEYNOTACTIVE (Key is not active).
+ *
  */
 
 void

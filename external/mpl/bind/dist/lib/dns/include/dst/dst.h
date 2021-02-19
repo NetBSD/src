@@ -1,11 +1,11 @@
-/*	$NetBSD: dst.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -135,7 +135,8 @@ typedef enum dst_key_state {
 #define DST_TIME_ZRRSIG	     10
 #define DST_TIME_KRRSIG	     11
 #define DST_TIME_DS	     12
-#define DST_MAX_TIMES	     12
+#define DST_TIME_DSDELETE    13
+#define DST_MAX_TIMES	     13
 
 /* Numeric metadata definitions */
 #define DST_NUM_PREDECESSOR 0
@@ -1099,6 +1100,15 @@ bool
 dst_key_isexternal(dst_key_t *key);
 /*%<
  * Check if this is an external key.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+bool
+dst_key_haskasp(dst_key_t *key);
+/*%<
+ * Check if this key has state (and thus uses KASP).
  *
  * Requires:
  *	'key' to be valid.

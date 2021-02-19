@@ -1,11 +1,11 @@
-/*	$NetBSD: update.c,v 1.7 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.8 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -1089,7 +1089,6 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	 bool keyset_kskonly) {
 	isc_result_t result;
 	dns_dbnode_t *node = NULL;
-	dns_kasp_t *kasp = dns_zone_getkasp(zone);
 	dns_rdataset_t rdataset;
 	dns_rdata_t sig_rdata = DNS_RDATA_INIT;
 	dns_stats_t *dnssecsignstats = dns_zone_getdnssecsignstats(zone);
@@ -1097,11 +1096,13 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	unsigned char data[1024]; /* XXX */
 	unsigned int i, j;
 	bool added_sig = false;
+	bool use_kasp = false;
 	isc_mem_t *mctx = diff->mctx;
 
-	if (kasp != NULL) {
+	if (dns_zone_use_kasp(zone)) {
 		check_ksk = false;
 		keyset_kskonly = true;
+		use_kasp = true;
 	}
 
 	dns_rdataset_init(&rdataset);
@@ -1176,7 +1177,7 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			}
 		}
 
-		if (kasp != NULL) {
+		if (use_kasp) {
 			/*
 			 * A dnssec-policy is found. Check what RRsets this
 			 * key should sign.
@@ -1475,14 +1476,16 @@ struct dns_update_state {
 	isc_stdtime_t inception, expire, soaexpire, keyexpire;
 	dns_ttl_t nsecttl;
 	bool check_ksk, keyset_kskonly, build_nsec3;
-	enum { sign_updates,
-	       remove_orphaned,
-	       build_chain,
-	       process_nsec,
-	       sign_nsec,
-	       update_nsec3,
-	       process_nsec3,
-	       sign_nsec3 } state;
+	enum {
+		sign_updates,
+		remove_orphaned,
+		build_chain,
+		process_nsec,
+		sign_nsec,
+		update_nsec3,
+		process_nsec3,
+		sign_nsec3
+	} state;
 };
 
 static uint32_t
@@ -2185,7 +2188,7 @@ failure:
 		dst_key_free(&state->zone_keys[i]);
 	}
 
-	if (state != &mystate && state != NULL) {
+	if (state != &mystate) {
 		*statep = NULL;
 		state->magic = 0;
 		isc_mem_put(diff->mctx, state, sizeof(*state));
@@ -2204,35 +2207,55 @@ epoch_to_yyyymmdd(time_t when) {
 		tm->tm_mday);
 }
 
-uint32_t
-dns_update_soaserial(uint32_t serial, dns_updatemethod_t method) {
+static uint32_t
+dns__update_soaserial(uint32_t serial, dns_updatemethod_t method) {
 	isc_stdtime_t now;
-	uint32_t new_serial;
 
 	switch (method) {
 	case dns_updatemethod_none:
 		return (serial);
 	case dns_updatemethod_unixtime:
 		isc_stdtime_get(&now);
-		if (now != 0 && isc_serial_gt(now, serial)) {
-			return (now);
-		}
-		break;
+		return (now);
 	case dns_updatemethod_date:
 		isc_stdtime_get(&now);
-		new_serial = epoch_to_yyyymmdd((time_t)now) * 100;
-		if (new_serial != 0 && isc_serial_gt(new_serial, serial)) {
-			return (new_serial);
+		return (epoch_to_yyyymmdd((time_t)now) * 100);
+	case dns_updatemethod_increment:
+		/* RFC1982 */
+		serial = (serial + 1) & 0xFFFFFFFF;
+		if (serial == 0) {
+			return (1);
 		}
+		return (serial);
+	default:
+		INSIST(0);
+		ISC_UNREACHABLE();
+	}
+}
+
+uint32_t
+dns_update_soaserial(uint32_t serial, dns_updatemethod_t method,
+		     dns_updatemethod_t *used) {
+	uint32_t new_serial = dns__update_soaserial(serial, method);
+	switch (method) {
+	case dns_updatemethod_none:
 	case dns_updatemethod_increment:
 		break;
+	case dns_updatemethod_unixtime:
+	case dns_updatemethod_date:
+		if (!(new_serial != 0 && isc_serial_gt(new_serial, serial))) {
+			method = dns_updatemethod_increment;
+			new_serial = dns__update_soaserial(serial, method);
+		}
+		break;
+	default:
+		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
-	/* RFC1982 */
-	serial = (serial + 1) & 0xFFFFFFFF;
-	if (serial == 0) {
-		serial = 1;
+	if (used != NULL) {
+		*used = method;
 	}
 
-	return (serial);
+	return (new_serial);
 }

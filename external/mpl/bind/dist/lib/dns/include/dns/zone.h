@@ -1,11 +1,11 @@
-/*	$NetBSD: zone.h,v 1.6 2020/05/25 15:14:04 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -60,10 +60,11 @@ typedef enum {
 	DNS_ZONEOPT_NOMERGE = 1 << 2,	    /*%< don't merge journal */
 	DNS_ZONEOPT_CHECKNS = 1 << 3,	    /*%< check if NS's are addresses */
 	DNS_ZONEOPT_FATALNS = 1 << 4,	    /*%< DNS_ZONEOPT_CHECKNS is fatal */
-	DNS_ZONEOPT_MULTIMASTER = 1 << 5, /*%< this zone has multiple masters */
-	DNS_ZONEOPT_USEALTXFRSRC = 1 << 6,   /*%< use alternate transfer sources
-					      */
-	DNS_ZONEOPT_CHECKNAMES = 1 << 7,     /*%< check-names */
+	DNS_ZONEOPT_MULTIMASTER = 1 << 5,   /*%< this zone has multiple
+						 primaries */
+	DNS_ZONEOPT_USEALTXFRSRC = 1 << 6,  /*%< use alternate transfer sources
+					     */
+	DNS_ZONEOPT_CHECKNAMES = 1 << 7,    /*%< check-names */
 	DNS_ZONEOPT_CHECKNAMESFAIL = 1 << 8, /*%< fatal check-name failures */
 	DNS_ZONEOPT_CHECKWILDCARD = 1 << 9, /*%< check for internal wildcards */
 	DNS_ZONEOPT_CHECKMX = 1 << 10,	    /*%< check-mx */
@@ -612,24 +613,24 @@ dns_zone_maintenance(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_setmasters(dns_zone_t *zone, const isc_sockaddr_t *masters,
-		    uint32_t count);
+dns_zone_setprimaries(dns_zone_t *zone, const isc_sockaddr_t *primaries,
+		      uint32_t count);
 isc_result_t
-dns_zone_setmasterswithkeys(dns_zone_t *zone, const isc_sockaddr_t *masters,
-			    dns_name_t **keynames, uint32_t count);
+dns_zone_setprimarieswithkeys(dns_zone_t *zone, const isc_sockaddr_t *primaries,
+			      dns_name_t **keynames, uint32_t count);
 /*%<
  *	Set the list of master servers for the zone.
  *
  * Require:
  *\li	'zone' to be a valid zone.
- *\li	'masters' array of isc_sockaddr_t with port set or NULL.
- *\li	'count' the number of masters.
+ *\li	'primaries' array of isc_sockaddr_t with port set or NULL.
+ *\li	'count' the number of primaries.
  *\li      'keynames' array of dns_name_t's for tsig keys or NULL.
  *
- *  \li    dns_zone_setmasters() is just a wrapper to setmasterswithkeys(),
+ *  \li    dns_zone_setprimaries() is just a wrapper to setprimarieswithkeys(),
  *      passing NULL in the keynames field.
  *
- * \li	If 'masters' is NULL then 'count' must be zero.
+ * \li	If 'primaries' is NULL then 'count' must be zero.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS
@@ -677,6 +678,32 @@ dns_kasp_t *
 dns_zone_getkasp(dns_zone_t *zone);
 /*%<
  *	Returns the current kasp.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+bool
+dns_zone_secure_to_insecure(dns_zone_t *zone, bool reconfig);
+/*%<
+ *	Returns true if the zone is transitioning to insecure.
+ *	Only can happen if a zone previously used a dnssec-policy,
+ *	but changed the value to "none" (or removed the configuration
+ *	option). If 'reconfig' is true, only check the key files,
+ *	because the zone structure is not yet updated with the
+ *	newest configuration.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+bool
+dns_zone_use_kasp(dns_zone_t *zone);
+/*%<
+ *	Check if zone needs to use kasp.
+ *	True if there is a policy that is not "none",
+ *	or if there are state files associated with the keys
+ *	related to this zone.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -1539,7 +1566,7 @@ dns_zone_forwardupdate(dns_zone_t *zone, dns_message_t *msg,
 		       dns_updatecallback_t callback, void *callback_arg);
 /*%<
  * Forward 'msg' to each master in turn until we get an answer or we
- * have exhausted the list of masters. 'callback' will be called with
+ * have exhausted the list of primaries. 'callback' will be called with
  * ISC_R_SUCCESS if we get an answer and the returned message will be
  * passed as 'answer_message', otherwise a non ISC_R_SUCCESS result code
  * will be passed and answer_message will be NULL.  The callback function
@@ -2317,6 +2344,25 @@ dns_zone_setrequestixfr(dns_zone_t *zone, bool flag);
  * \li	'zone' to be valid.
  */
 
+uint32_t
+dns_zone_getixfrratio(dns_zone_t *zone);
+/*%
+ * Returns the zone's current IXFR ratio.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
+void
+dns_zone_setixfrratio(dns_zone_t *zone, uint32_t ratio);
+/*%
+ * Sets the ratio of IXFR size to zone size above which we use an AXFR
+ * response, expressed as a percentage. Cannot exceed 100.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
 void
 dns_zone_setserialupdatemethod(dns_zone_t *zone, dns_updatemethod_t method);
 /*%
@@ -2350,13 +2396,14 @@ dns_zone_keydone(dns_zone_t *zone, const char *data);
 isc_result_t
 dns_zone_setnsec3param(dns_zone_t *zone, uint8_t hash, uint8_t flags,
 		       uint16_t iter, uint8_t saltlen, unsigned char *salt,
-		       bool replace);
+		       bool replace, bool resalt);
 /*%
  * Set the NSEC3 parameters for the zone.
  *
  * If 'replace' is true, then the existing NSEC3 chain, if any, will
  * be replaced with the new one.  If 'hash' is zero, then the replacement
- * chain will be NSEC rather than NSEC3.
+ * chain will be NSEC rather than NSEC3. If 'resalt' is true, or if 'salt'
+ * is NULL, generate a new salt with the given salt length.
  *
  * Requires:
  * \li	'zone' to be valid.
@@ -2525,6 +2572,12 @@ dns_zone_verifydb(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver);
  *				a trusted key
  *
  * \li	#DNS_R_VERIFYFAILURE	any other case
+ */
+
+const char *
+dns_zonetype_name(dns_zonetype_t type);
+/*%<
+ * Return the name of the zone type 'type'.
  */
 
 #endif /* DNS_ZONE_H */

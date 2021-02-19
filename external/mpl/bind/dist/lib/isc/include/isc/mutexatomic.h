@@ -1,11 +1,11 @@
-/*	$NetBSD: mutexatomic.h,v 1.2 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: mutexatomic.h,v 1.3 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -15,8 +15,12 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#if HAVE_UCHAR_H
+#include <uchar.h>
+#endif /* HAVE_UCHAR_H */
 
 #include <isc/mutex.h>
+#include <isc/util.h>
 
 #if !defined(__has_feature)
 #define __has_feature(x) 0
@@ -75,35 +79,65 @@ enum memory_order {
 
 typedef enum memory_order memory_order;
 
-typedef struct atomic_int_fast32 {
-	isc_mutex_t  m;
-	int_fast32_t v;
-} atomic_int_fast32_t;
+#define ___TYPEDEF(type, name, orig) \
+	typedef struct name {        \
+		isc_mutex_t m;       \
+		orig	    v;       \
+	} type;
 
-typedef struct atomic_int_fast64 {
-	isc_mutex_t  m;
-	int_fast64_t v;
-} atomic_int_fast64_t;
+#define _TYPEDEF_S(type) ___TYPEDEF(atomic_##type, atomic_##type##_s, type)
+#define _TYPEDEF_O(type, orig) \
+	___TYPEDEF(atomic_##type, atomic_##type##_s, orig)
+#define _TYPEDEF_T(type) \
+	___TYPEDEF(atomic_##type##_t, atomic_##type##_s, type##_t)
 
-typedef struct atomic_uint_fast32 {
-	isc_mutex_t   m;
-	uint_fast32_t v;
-} atomic_uint_fast32_t;
+#ifndef HAVE_UCHAR_H
+typedef uint_least16_t char16_t;
+typedef uint_least32_t char32_t;
+#endif /* HAVE_UCHAR_H */
 
-typedef struct atomic_uint_fast64 {
-	isc_mutex_t   m;
-	uint_fast64_t v;
-} atomic_uint_fast64_t;
+_TYPEDEF_S(bool);
+_TYPEDEF_S(char);
+_TYPEDEF_O(schar, signed char);
+_TYPEDEF_O(uchar, unsigned char);
+_TYPEDEF_S(short);
+_TYPEDEF_O(ushort, unsigned short);
+_TYPEDEF_S(int);
+_TYPEDEF_O(uint, unsigned int);
+_TYPEDEF_S(long);
+_TYPEDEF_O(ulong, unsigned long);
+_TYPEDEF_O(llong, long long);
+_TYPEDEF_O(ullong, unsigned long long);
+_TYPEDEF_T(char16);
+_TYPEDEF_T(char32);
+_TYPEDEF_T(wchar);
+_TYPEDEF_T(int_least8);
+_TYPEDEF_T(uint_least8);
+_TYPEDEF_T(int_least16);
+_TYPEDEF_T(uint_least16);
+_TYPEDEF_T(int_least32);
+_TYPEDEF_T(uint_least32);
+_TYPEDEF_T(int_least64);
+_TYPEDEF_T(uint_least64);
+_TYPEDEF_T(int_fast8);
+_TYPEDEF_T(uint_fast8);
+_TYPEDEF_T(int_fast16);
+_TYPEDEF_T(uint_fast16);
+_TYPEDEF_T(int_fast32);
+_TYPEDEF_T(uint_fast32);
+_TYPEDEF_T(int_fast64);
+_TYPEDEF_T(uint_fast64);
+_TYPEDEF_T(intptr);
+_TYPEDEF_T(uintptr);
+_TYPEDEF_T(size);
+_TYPEDEF_T(ptrdiff);
+_TYPEDEF_T(intmax);
+_TYPEDEF_T(uintmax);
 
-typedef struct atomic_uintptr {
-	isc_mutex_t m;
-	uintptr_t   v;
-} atomic_uintptr_t;
-
-typedef struct atomic_bool_s {
-	isc_mutex_t m;
-	bool	    v;
-} atomic_bool;
+#undef ___TYPEDEF
+#undef _TYPEDEF_S
+#undef _TYPEDEF_T
+#undef _TYPEDEF_O
 
 #define ATOMIC_VAR_INIT(arg)                             \
 	{                                                \

@@ -1,11 +1,11 @@
-/*	$NetBSD: db.c,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.6 2021/02/19 16:42:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -833,6 +833,17 @@ dns_db_hashsize(dns_db_t *db) {
 	return ((db->methods->hashsize)(db));
 }
 
+isc_result_t
+dns_db_adjusthashsize(dns_db_t *db, size_t size) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	if (db->methods->adjusthashsize != NULL) {
+		return ((db->methods->adjusthashsize)(db, size));
+	}
+
+	return (ISC_R_NOTIMPLEMENTED);
+}
+
 void
 dns_db_settask(dns_db_t *db, isc_task_t *task) {
 	REQUIRE(DNS_DB_VALID(db));
@@ -1076,6 +1087,28 @@ dns_db_getservestalettl(dns_db_t *db, dns_ttl_t *ttl) {
 
 	if (db->methods->getservestalettl != NULL) {
 		return ((db->methods->getservestalettl)(db, ttl));
+	}
+	return (ISC_R_NOTIMPLEMENTED);
+}
+
+isc_result_t
+dns_db_setservestalerefresh(dns_db_t *db, uint32_t interval) {
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE((db->attributes & DNS_DBATTR_CACHE) != 0);
+
+	if (db->methods->setservestalerefresh != NULL) {
+		return ((db->methods->setservestalerefresh)(db, interval));
+	}
+	return (ISC_R_NOTIMPLEMENTED);
+}
+
+isc_result_t
+dns_db_getservestalerefresh(dns_db_t *db, uint32_t *interval) {
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE((db->attributes & DNS_DBATTR_CACHE) != 0);
+
+	if (db->methods->getservestalerefresh != NULL) {
+		return ((db->methods->getservestalerefresh)(db, interval));
 	}
 	return (ISC_R_NOTIMPLEMENTED);
 }

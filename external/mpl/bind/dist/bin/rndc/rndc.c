@@ -1,11 +1,11 @@
-/*	$NetBSD: rndc.c,v 1.5 2020/08/03 17:23:38 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.6 2021/02/19 16:42:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -106,6 +106,15 @@ command is one of the following:\n\
 		Add zone to given view. Requires allow-new-zones option.\n\
   delzone [-clean] zone [class [view]]\n\
 		Removes zone from given view.\n\
+  dnssec -checkds [-key id [-alg algorithm]] [-when time] (published|withdrawn) zone [class [view]]\n\
+		Mark the DS record for the KSK of the given zone as seen\n\
+		in the parent.  If the zone has multiple KSKs, select a\n\
+		specific key by providing the keytag with -key id and\n\
+		optionally the key's algorithm with -alg algorithm.\n\
+		Requires the zone to have a dnssec-policy.\n\
+  dnssec -rollover -key id [-alg algorithm] [-when time] zone [class [view]]\n\
+		Rollover key with id of the given zone. Requires the zone\n\
+		to have a dnssec-policy.\n\
   dnssec -status zone [class [view]]\n\
 		Show the DNSSEC signing state for the specified zone.\n\
 		Requires the zone to have a dnssec-policy.\n\
@@ -113,7 +122,7 @@ command is one of the following:\n\
 		Close, truncate and re-open the DNSTAP output file.\n\
   dnstap -roll count\n\
 		Close, rename and re-open the DNSTAP output file(s).\n\
-  dumpdb [-all|-cache|-zones|-adb|-bad|-fail] [view ...]\n\
+  dumpdb [-all|-cache|-zones|-adb|-bad|-expired|-fail] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
   flush 	Flushes all of the server's caches.\n\
   flush [view]	Flushes the server's cache for a view.\n\

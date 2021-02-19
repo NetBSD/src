@@ -1,11 +1,11 @@
-/*	$NetBSD: gsstest.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.5 2021/02/19 16:42:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -142,8 +142,7 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 	}
 
 	response = NULL;
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
-	CHECK("dns_message_create", result);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
 
 	printf("\nReceived Response:\n");
 
@@ -159,12 +158,12 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 	CHECK("dns_request_getresponse", result2);
 
 	if (response != NULL) {
-		dns_message_destroy(&response);
+		dns_message_detach(&response);
 	}
 
 end:
 	if (query != NULL) {
-		dns_message_destroy(&query);
+		dns_message_detach(&query);
 	}
 
 	if (reqev->request != NULL) {
@@ -208,10 +207,7 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 				   dns_rootname, 0, NULL);
 	CHECK("dns_name_fromtext", result);
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
-	if (result != ISC_R_SUCCESS) {
-		goto end;
-	}
+	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
 
 	message->opcode = dns_opcode_query;
 	message->rdclass = dns_rdataclass_in;
@@ -257,7 +253,7 @@ end:
 		dns_message_puttemprdataset(message, &qrdataset);
 	}
 	if (message != NULL) {
-		dns_message_destroy(&message);
+		dns_message_detach(&message);
 	}
 }
 
@@ -285,8 +281,7 @@ initctx2(isc_task_t *task, isc_event_t *event) {
 	}
 
 	response = NULL;
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
-	CHECK("dns_message_create", result);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &response);
 
 	result = dns_request_getresponse(reqev->request, response,
 					 DNS_MESSAGEPARSE_PRESERVEORDER);
@@ -323,11 +318,11 @@ initctx2(isc_task_t *task, isc_event_t *event) {
 		tsigkey = NULL;
 	}
 
-	dns_message_destroy(&response);
+	dns_message_detach(&response);
 
 end:
 	if (query != NULL) {
-		dns_message_destroy(&query);
+		dns_message_detach(&query);
 	}
 
 	if (reqev->request != NULL) {
@@ -388,8 +383,7 @@ initctx1(isc_task_t *task, isc_event_t *event) {
 	CHECK("dns_name_fromtext", result);
 
 	query = NULL;
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &query);
-	CHECK("dns_message_create", result);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &query);
 
 	printf("Calling gss_init_sec_context()\n");
 	gssctx = GSS_C_NO_CONTEXT;

@@ -1,11 +1,11 @@
-/*	$NetBSD: message.c,v 1.10 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.11 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -541,7 +541,7 @@ msgresetsigs(dns_message_t *msg, bool replying) {
 
 /*
  * Free all but one (or everything) for this message.  This is used by
- * both dns_message_reset() and dns_message_destroy().
+ * both dns_message_reset() and dns__message_destroy().
  */
 static void
 msgreset(dns_message_t *msg, bool everything) {
@@ -716,7 +716,7 @@ spacefortsig(dns_tsigkey_t *key, int otherlen) {
 	return (26 + r1.length + r2.length + x + otherlen);
 }
 
-isc_result_t
+void
 dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
 	dns_message_t *m;
 	isc_buffer_t *dynbuf;
@@ -729,11 +729,6 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
 		intent == DNS_MESSAGE_INTENTRENDER);
 
 	m = isc_mem_get(mctx, sizeof(dns_message_t));
-
-	/*
-	 * No allocations until further notice.  Just initialize all lists
-	 * and other members that are freed in the cleanup phase here.
-	 */
 
 	m->magic = DNS_MESSAGE_MAGIC;
 	m->from_to_wire = intent;
@@ -756,10 +751,6 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
 	ISC_LIST_INIT(m->freerdata);
 	ISC_LIST_INIT(m->freerdatalist);
 
-	/*
-	 * Ok, it is safe to allocate (and then "goto cleanup" if failure)
-	 */
-
 	isc_mempool_create(m->mctx, sizeof(dns_name_t), &m->namepool);
 	isc_mempool_setfillcount(m->namepool, NAME_COUNT);
 	isc_mempool_setfreemax(m->namepool, NAME_COUNT);
@@ -776,8 +767,9 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
 
 	m->cctx = NULL;
 
+	isc_refcount_init(&m->refcount, 1);
+
 	*msgp = m;
-	return (ISC_R_SUCCESS);
 }
 
 void
@@ -790,21 +782,36 @@ dns_message_reset(dns_message_t *msg, unsigned int intent) {
 	msg->from_to_wire = intent;
 }
 
-void
-dns_message_destroy(dns_message_t **msgp) {
-	dns_message_t *msg;
-
-	REQUIRE(msgp != NULL);
-	REQUIRE(DNS_MESSAGE_VALID(*msgp));
-
-	msg = *msgp;
-	*msgp = NULL;
+static void
+dns__message_destroy(dns_message_t *msg) {
+	REQUIRE(msg != NULL);
+	REQUIRE(DNS_MESSAGE_VALID(msg));
 
 	msgreset(msg, true);
 	isc_mempool_destroy(&msg->namepool);
 	isc_mempool_destroy(&msg->rdspool);
+	isc_refcount_destroy(&msg->refcount);
 	msg->magic = 0;
 	isc_mem_putanddetach(&msg->mctx, msg, sizeof(dns_message_t));
+}
+
+void
+dns_message_attach(dns_message_t *source, dns_message_t **target) {
+	REQUIRE(DNS_MESSAGE_VALID(source));
+
+	isc_refcount_increment(&source->refcount);
+	*target = source;
+}
+
+void
+dns_message_detach(dns_message_t **messagep) {
+	REQUIRE(messagep != NULL && DNS_MESSAGE_VALID(*messagep));
+	dns_message_t *msg = *messagep;
+	*messagep = NULL;
+
+	if (isc_refcount_decrement(&msg->refcount) == 1) {
+		dns__message_destroy(msg);
+	}
 }
 
 static isc_result_t
@@ -1711,6 +1718,16 @@ dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
 	msg->header_ok = 0;
 	msg->question_ok = 0;
 
+	if ((options & DNS_MESSAGEPARSE_CLONEBUFFER) == 0) {
+		isc_buffer_usedregion(&origsource, &msg->saved);
+	} else {
+		msg->saved.length = isc_buffer_usedlength(&origsource);
+		msg->saved.base = isc_mem_get(msg->mctx, msg->saved.length);
+		memmove(msg->saved.base, isc_buffer_base(&origsource),
+			msg->saved.length);
+		msg->free_saved = 1;
+	}
+
 	isc_buffer_remainingregion(source, &r);
 	if (r.length < DNS_MESSAGE_HEADERLEN) {
 		return (ISC_R_UNEXPECTEDEND);
@@ -1795,15 +1812,6 @@ dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
 	}
 
 truncated:
-	if ((options & DNS_MESSAGEPARSE_CLONEBUFFER) == 0) {
-		isc_buffer_usedregion(&origsource, &msg->saved);
-	} else {
-		msg->saved.length = isc_buffer_usedlength(&origsource);
-		msg->saved.base = isc_mem_get(msg->mctx, msg->saved.length);
-		memmove(msg->saved.base, isc_buffer_base(&origsource),
-			msg->saved.length);
-		msg->free_saved = 1;
-	}
 
 	if (ret == ISC_R_UNEXPECTEDEND && ignore_tc) {
 		return (DNS_R_RECOVERABLE);
@@ -2269,10 +2277,11 @@ dns_message_renderend(dns_message_t *msg) {
 		dns_message_renderrelease(msg, msg->opt_reserved);
 		msg->opt_reserved = 0;
 		/*
-		 * Set the extended rcode.
+		 * Set the extended rcode.  Cast msg->rcode to dns_ttl_t
+		 * so that we do a unsigned shift.
 		 */
 		msg->opt->ttl &= ~DNS_MESSAGE_EDNSRCODE_MASK;
-		msg->opt->ttl |= ((msg->rcode << 20) &
+		msg->opt->ttl |= (((dns_ttl_t)(msg->rcode) << 20) &
 				  DNS_MESSAGE_EDNSRCODE_MASK);
 		/*
 		 * Render.
@@ -4748,4 +4757,22 @@ dns_message_setpadding(dns_message_t *msg, uint16_t padding) {
 		padding = 512;
 	}
 	msg->padding = padding;
+}
+
+void
+dns_message_clonebuffer(dns_message_t *msg) {
+	REQUIRE(DNS_MESSAGE_VALID(msg));
+
+	if (msg->free_saved == 0 && msg->saved.base != NULL) {
+		msg->saved.base =
+			memmove(isc_mem_get(msg->mctx, msg->saved.length),
+				msg->saved.base, msg->saved.length);
+		msg->free_saved = 1;
+	}
+	if (msg->free_query == 0 && msg->query.base != NULL) {
+		msg->query.base =
+			memmove(isc_mem_get(msg->mctx, msg->query.length),
+				msg->query.base, msg->query.length);
+		msg->free_query = 1;
+	}
 }

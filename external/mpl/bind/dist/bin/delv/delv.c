@@ -1,11 +1,11 @@
-/*	$NetBSD: delv.c,v 1.7 2020/08/03 17:23:36 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.8 2021/02/19 16:42:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -603,11 +603,13 @@ key_fromconfig(const cfg_obj_t *key, dns_client_t *client) {
 	dns_name_t *keyname;
 	isc_result_t result;
 	bool match_root = false;
-	enum { INITIAL_KEY,
-	       STATIC_KEY,
-	       INITIAL_DS,
-	       STATIC_DS,
-	       TRUSTED } anchortype;
+	enum {
+		INITIAL_KEY,
+		STATIC_KEY,
+		INITIAL_DS,
+		STATIC_DS,
+		TRUSTED
+	} anchortype;
 	const cfg_obj_t *obj;
 
 	keynamestr = cfg_obj_asstring(cfg_tuple_get(key, "name"));

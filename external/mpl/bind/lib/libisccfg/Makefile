@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/05/24 19:46:31 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2021/02/19 16:42:24 christos Exp $
 
 LIB=isccfg
 
@@ -10,7 +10,6 @@ LIBDPLIBS+=	isc	${.CURDIR}/../libisc \
 		dns	${.CURDIR}/../libdns
 
 DIST=	${IDIST}/lib/isccfg
-.include "${DIST}/api"
 
 .PATH.c:	${DIST}/unix ${DIST}
 

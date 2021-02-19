@@ -1,11 +1,11 @@
-/*	$NetBSD: nsec3.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: nsec3.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,6 +18,7 @@
 
 #include <isc/iterated_hash.h>
 #include <isc/lang.h>
+#include <isc/log.h>
 
 #include <dns/db.h>
 #include <dns/diff.h>
@@ -72,6 +73,12 @@ dns_nsec3_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
  *
  * Requires:
  *	'nsec' points to a valid rdataset of type NSEC3
+ */
+
+isc_result_t
+dns_nsec3_generate_salt(unsigned char *salt, size_t saltlen);
+/*%<
+ * Generate a salt with the given salt length.
  */
 
 isc_result_t

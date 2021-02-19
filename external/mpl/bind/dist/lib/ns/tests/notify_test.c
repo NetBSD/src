@@ -1,11 +1,11 @@
-/*	$NetBSD: notify_test.c,v 1.6 2020/05/24 19:46:30 christos Exp $	*/
+/*	$NetBSD: notify_test.c,v 1.7 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -69,8 +69,7 @@ check_response(isc_buffer_t *buf) {
 	char rcodebuf[20];
 	isc_buffer_t b;
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
 
 	result = dns_message_parse(message, buf, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -81,7 +80,7 @@ check_response(isc_buffer_t *buf) {
 
 	assert_int_equal(message->rcode, dns_rcode_noerror);
 
-	dns_message_destroy(&message);
+	dns_message_detach(&message);
 }
 
 /* test ns_notify_start() */
@@ -89,6 +88,7 @@ static void
 notify_start(void **state) {
 	isc_result_t result;
 	ns_client_t *client = NULL;
+	isc_nmhandle_t *handle = NULL;
 	dns_message_t *nmsg = NULL;
 	unsigned char ndata[4096];
 	isc_buffer_t nbuf;
@@ -117,8 +117,7 @@ notify_start(void **state) {
 	isc_buffer_init(&nbuf, ndata, nsize);
 	isc_buffer_add(&nbuf, nsize);
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &nmsg);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &nmsg);
 
 	result = dns_message_parse(nmsg, &nbuf, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -128,18 +127,21 @@ notify_start(void **state) {
 	 * handler.
 	 */
 	if (client->message != NULL) {
-		dns_message_destroy(&client->message);
+		dns_message_detach(&client->message);
 	}
 	client->message = nmsg;
 	nmsg = NULL;
 	client->sendcb = check_response;
-	ns_notify_start(client);
+	ns_notify_start(client, client->handle);
 
 	/*
 	 * Clean up
 	 */
 	ns_test_cleanup_zone();
-	isc_nmhandle_unref(client->handle);
+
+	handle = client->handle;
+	isc_nmhandle_detach(&client->handle);
+	isc_nmhandle_detach(&handle);
 }
 #endif /* if defined(USE_LIBTOOL) || LD_WRAP */
 

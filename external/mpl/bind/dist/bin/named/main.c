@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.9 2020/08/03 17:23:37 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2021/02/19 16:42:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
 #include <isc/app.h>
 #include <isc/backtrace.h>
@@ -538,6 +539,9 @@ printversion(bool verbose) {
 	printf("linked to OpenSSL version: %s\n",
 	       SSLeay_version(SSLEAY_VERSION));
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
+	printf("compiled with libuv version: %d.%d.%d\n", UV_VERSION_MAJOR,
+	       UV_VERSION_MINOR, UV_VERSION_PATCH);
+	printf("linked to libuv version: %s\n", uv_version_string());
 #ifdef HAVE_LIBXML2
 	printf("compiled with libxml2 version: %s\n", LIBXML_DOTTED_VERSION);
 	printf("linked to libxml2 version: %s\n", xmlParserVersion);
@@ -659,6 +663,8 @@ parse_T_opt(char *option) {
 		named_g_nosyslog = true;
 	} else if (!strcmp(option, "notcp")) {
 		notcp = true;
+	} else if (!strncmp(option, "maxcachesize=", 13)) {
+		named_g_maxcachesize = atoi(option + 13);
 	} else if (!strcmp(option, "maxudp512")) {
 		maxudp = 512;
 	} else if (!strcmp(option, "maxudp1460")) {

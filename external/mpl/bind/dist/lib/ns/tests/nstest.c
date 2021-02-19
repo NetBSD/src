@@ -1,11 +1,11 @@
-/*	$NetBSD: nstest.c,v 1.4 2020/05/24 19:46:30 christos Exp $	*/
+/*	$NetBSD: nstest.c,v 1.5 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -80,11 +80,13 @@ atomic_uint_fast32_t client_refs[32];
 atomic_uintptr_t client_addrs[32];
 
 void
-__wrap_isc_nmhandle_unref(isc_nmhandle_t *handle);
+__wrap_isc__nmhandle_attach(isc_nmhandle_t *source, isc_nmhandle_t **targetp);
+void
+__wrap_isc__nmhandle_detach(isc_nmhandle_t **handlep);
 
 void
-__wrap_isc_nmhandle_unref(isc_nmhandle_t *handle) {
-	ns_client_t *client = (ns_client_t *)handle;
+__wrap_isc__nmhandle_attach(isc_nmhandle_t *source, isc_nmhandle_t **targetp) {
+	ns_client_t *client = (ns_client_t *)source;
 	int i;
 
 	for (i = 0; i < 32; i++) {
@@ -92,7 +94,29 @@ __wrap_isc_nmhandle_unref(isc_nmhandle_t *handle) {
 			break;
 		}
 	}
-	REQUIRE(i < 32);
+	INSIST(i < 32);
+	INSIST(atomic_load(&client_refs[i]) > 0);
+
+	atomic_fetch_add(&client_refs[i], 1);
+
+	*targetp = source;
+	return;
+}
+
+void
+__wrap_isc__nmhandle_detach(isc_nmhandle_t **handlep) {
+	isc_nmhandle_t *handle = *handlep;
+	ns_client_t *client = (ns_client_t *)handle;
+	int i;
+
+	*handlep = NULL;
+
+	for (i = 0; i < 32; i++) {
+		if (atomic_load(&client_addrs[i]) == (uintptr_t)client) {
+			break;
+		}
+	}
+	INSIST(i < 32);
 
 	if (atomic_fetch_sub(&client_refs[i], 1) == 1) {
 		dns_view_detach(&client->view);
@@ -101,8 +125,20 @@ __wrap_isc_nmhandle_unref(isc_nmhandle_t *handle) {
 		ns__client_put_cb(client);
 		isc_mem_put(mctx, client, sizeof(ns_client_t));
 	}
+
 	return;
 }
+
+#ifdef USE_LIBTOOL
+void
+isc__nmhandle_attach(isc_nmhandle_t *source, isc_nmhandle_t **targetp) {
+	__wrap_isc__nmhandle_attach(source, targetp);
+}
+void
+isc__nmhandle_detach(isc_nmhandle_t **handle) {
+	__wrap_isc__nmhandle_detach(handle);
+}
+#endif /* USE_LIBTOOL */
 
 /*
  * Logging categories: this needs to match the list in lib/ns/log.c.
@@ -596,10 +632,7 @@ attach_query_msg_to_client(ns_client_t *client, const char *qnamestr,
 	/*
 	 * Create a new DNS message holding a query.
 	 */
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
-	if (result != ISC_R_SUCCESS) {
-		return (result);
-	}
+	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
 
 	/*
 	 * Set query ID to a random value.
@@ -659,7 +692,7 @@ attach_query_msg_to_client(ns_client_t *client, const char *qnamestr,
 	 * Destroy the created message as it was rendered into "querybuf" and
 	 * the latter is all we are going to need from now on.
 	 */
-	dns_message_destroy(&message);
+	dns_message_detach(&message);
 
 	/*
 	 * Parse the rendered query, storing results in client->message.
@@ -672,7 +705,7 @@ put_name:
 put_rdataset:
 	dns_message_puttemprdataset(message, &qrdataset);
 destroy_message:
-	dns_message_destroy(&message);
+	dns_message_detach(&message);
 
 	return (result);
 }
@@ -745,10 +778,12 @@ create_qctx_for_client(ns_client_t *client, query_ctx_t **qctxp) {
 	saved_hook_table = ns__hook_table;
 	ns__hook_table = query_hooks;
 
-	ns_query_start(client);
+	ns_query_start(client, client->handle);
 
 	ns__hook_table = saved_hook_table;
 	ns_hooktable_free(mctx, (void **)&query_hooks);
+
+	isc_nmhandle_detach(&client->reqhandle);
 
 	if (*qctxp == NULL) {
 		return (ISC_R_NOMEMORY);
@@ -762,6 +797,7 @@ ns_test_qctx_create(const ns_test_qctx_create_params_t *params,
 		    query_ctx_t **qctxp) {
 	ns_client_t *client = NULL;
 	isc_result_t result;
+	isc_nmhandle_t *handle = NULL;
 
 	REQUIRE(params != NULL);
 	REQUIRE(params->qname != NULL);
@@ -792,7 +828,7 @@ ns_test_qctx_create(const ns_test_qctx_create_params_t *params,
 	result = attach_query_msg_to_client(client, params->qname,
 					    params->qtype, params->qflags);
 	if (result != ISC_R_SUCCESS) {
-		goto detach_client;
+		goto detach_view;
 	}
 
 	/*
@@ -808,21 +844,25 @@ ns_test_qctx_create(const ns_test_qctx_create_params_t *params,
 	 */
 	result = create_qctx_for_client(client, qctxp);
 	if (result != ISC_R_SUCCESS) {
-		goto destroy_query;
+		goto detach_query;
 	}
 
 	/*
-	 * Reference count for "client" is now at 2, so decrement it in order
-	 * for it to drop to zero when "qctx" gets destroyed.
+	 * The reference count for "client" is now at 2, so we need to
+	 * decrement it in order for it to drop to zero when "qctx" gets
+	 * destroyed.
 	 */
-	isc_nmhandle_unref(client->handle);
+	handle = client->handle;
+	isc_nmhandle_detach(&handle);
 
 	return (ISC_R_SUCCESS);
 
-destroy_query:
-	dns_message_destroy(&client->message);
+detach_query:
+	dns_message_detach(&client->message);
+detach_view:
+	dns_view_detach(&client->view);
 detach_client:
-	isc_nmhandle_unref(client->handle);
+	isc_nmhandle_detach(&client->handle);
 
 	return (result);
 }
@@ -844,7 +884,7 @@ ns_test_qctx_destroy(query_ctx_t **qctxp) {
 		dns_db_detach(&qctx->db);
 	}
 	if (qctx->client != NULL) {
-		isc_nmhandle_unref(qctx->client->handle);
+		isc_nmhandle_detach(&qctx->client->handle);
 	}
 
 	isc_mem_put(mctx, qctx, sizeof(*qctx));

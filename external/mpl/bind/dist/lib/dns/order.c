@@ -1,11 +1,11 @@
-/*	$NetBSD: order.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: order.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -75,7 +75,8 @@ dns_order_add(dns_order_t *order, const dns_name_t *name,
 	REQUIRE(DNS_ORDER_VALID(order));
 	REQUIRE(mode == DNS_RDATASETATTR_RANDOMIZE ||
 		mode == DNS_RDATASETATTR_FIXEDORDER ||
-		mode == DNS_RDATASETATTR_CYCLIC);
+		mode == DNS_RDATASETATTR_CYCLIC ||
+		mode == DNS_RDATASETATTR_NONE);
 
 	ent = isc_mem_get(order->mctx, sizeof(*ent));
 

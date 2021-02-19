@@ -1,11 +1,11 @@
-/*	$NetBSD: controlconf.c,v 1.5 2020/08/03 17:23:37 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.6 2021/02/19 16:42:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -21,6 +21,7 @@
 #include <isc/event.h>
 #include <isc/file.h>
 #include <isc/mem.h>
+#include <isc/mutex.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
 #include <isc/nonce.h>
@@ -108,6 +109,7 @@ struct named_controls {
 	named_server_t *server;
 	controllistenerlist_t listeners;
 	bool shuttingdown;
+	isc_mutex_t symtab_lock;
 	isccc_symtab_t *symtab;
 };
 
@@ -442,8 +444,10 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 	/*
 	 * Duplicate suppression (required for UDP).
 	 */
+	LOCK(&listener->controls->symtab_lock);
 	isccc_cc_cleansymtab(listener->controls->symtab, now);
 	result = isccc_cc_checkdup(listener->controls->symtab, request, now);
+	UNLOCK(&listener->controls->symtab_lock);
 	if (result != ISC_R_SUCCESS) {
 		if (result == ISC_R_EXISTS) {
 			result = ISCCC_R_DUPLICATE;
@@ -1258,10 +1262,8 @@ add_listener(named_controls_t *cp, controllistener_t **listenerp,
 			      "command channel listening on %s", socktext);
 		*listenerp = listener;
 	} else {
-		if (listener != NULL) {
-			listener->exiting = true;
-			free_listener(listener);
-		}
+		listener->exiting = true;
+		free_listener(listener);
 
 		if (control != NULL) {
 			cfg_obj_log(control, named_g_lctx, ISC_LOG_WARNING,
@@ -1526,15 +1528,19 @@ named_controls_create(named_server_t *server, named_controls_t **ctrlsp) {
 	isc_result_t result;
 	named_controls_t *controls = isc_mem_get(mctx, sizeof(*controls));
 
-	if (controls == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-	controls->server = server;
+	*controls = (named_controls_t){
+		.server = server,
+	};
+
 	ISC_LIST_INIT(controls->listeners);
-	controls->shuttingdown = false;
-	controls->symtab = NULL;
+
+	isc_mutex_init(&controls->symtab_lock);
+	LOCK(&controls->symtab_lock);
 	result = isccc_cc_createsymtab(&controls->symtab);
+	UNLOCK(&controls->symtab_lock);
+
 	if (result != ISC_R_SUCCESS) {
+		isc_mutex_destroy(&controls->symtab_lock);
 		isc_mem_put(server->mctx, controls, sizeof(*controls));
 		return (result);
 	}
@@ -1549,6 +1555,9 @@ named_controls_destroy(named_controls_t **ctrlsp) {
 
 	REQUIRE(ISC_LIST_EMPTY(controls->listeners));
 
+	LOCK(&controls->symtab_lock);
 	isccc_symtab_destroy(&controls->symtab);
+	UNLOCK(&controls->symtab_lock);
+	isc_mutex_destroy(&controls->symtab_lock);
 	isc_mem_put(controls->server->mctx, controls, sizeof(*controls));
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: dlz.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: dlz.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -308,8 +308,8 @@ dns_dlzunregister(dns_dlzimplementation_t **dlzimp);
  */
 
 typedef isc_result_t
-			dns_dlz_writeablezone_t(dns_view_t *view, dns_dlzdb_t *dlzdb,
-						const char *zone_name);
+dns_dlz_writeablezone_t(dns_view_t *view, dns_dlzdb_t *dlzdb,
+			const char *zone_name);
 dns_dlz_writeablezone_t dns_dlz_writeablezone;
 /*%<
  * creates a writeable DLZ zone. Must be called from within the

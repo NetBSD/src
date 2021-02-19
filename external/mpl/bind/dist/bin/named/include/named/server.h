@@ -1,11 +1,11 @@
-/*	$NetBSD: server.h,v 1.6 2020/08/03 17:23:37 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.7 2021/02/19 16:42:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -40,6 +40,8 @@
 #define NAMED_EVENTCLASS    ISC_EVENTCLASS(0x4E43)
 #define NAMED_EVENT_RELOAD  (NAMED_EVENTCLASS + 0)
 #define NAMED_EVENT_DELZONE (NAMED_EVENTCLASS + 1)
+#define NAMED_EVENT_COMMAND (NAMED_EVENTCLASS + 2)
+#define NAMED_EVENT_TATSEND (NAMED_EVENTCLASS + 3)
 
 /*%
  * Name server state.  Better here than in lots of separate global variables.
@@ -82,9 +84,9 @@ struct named_server {
 	uint32_t interface_interval;
 	uint32_t heartbeat_interval;
 
-	isc_mutex_t    reload_event_lock;
-	isc_event_t *  reload_event;
-	named_reload_t reload_status;
+	isc_mutex_t  reload_event_lock;
+	isc_event_t *reload_event;
+	atomic_int   reload_status;
 
 	bool flushonshutdown;
 

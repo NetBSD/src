@@ -1,11 +1,11 @@
-/*	$NetBSD: time.h,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.5 2021/02/19 16:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -358,6 +358,20 @@ isc_time_formatISO8601Lms(const isc_time_t *t, char *buf, unsigned int len);
  */
 
 void
+isc_time_formatISO8601Lus(const isc_time_t *t, char *buf, unsigned int len);
+/*%<
+ * Format the time 't' into the buffer 'buf' of length 'len',
+ * using the ISO8601 format: "yyyy-mm-ddThh:mm:ss.ssssss"
+ * If the text does not fit in the buffer, the result is indeterminate,
+ * but is always guaranteed to be null terminated.
+ *
+ *  Requires:
+ *\li      'len' > 0
+ *\li      'buf' points to an array of at least len chars
+ *
+ */
+
+void
 isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len);
 /*%<
  * Format the time 't' into the buffer 'buf' of length 'len',
@@ -376,6 +390,20 @@ isc_time_formatISO8601ms(const isc_time_t *t, char *buf, unsigned int len);
 /*%<
  * Format the time 't' into the buffer 'buf' of length 'len',
  * using the ISO8601 format: "yyyy-mm-ddThh:mm:ss.sssZ"
+ * If the text does not fit in the buffer, the result is indeterminate,
+ * but is always guaranteed to be null terminated.
+ *
+ *  Requires:
+ *\li      'len' > 0
+ *\li      'buf' points to an array of at least len chars
+ *
+ */
+
+void
+isc_time_formatISO8601us(const isc_time_t *t, char *buf, unsigned int len);
+/*%<
+ * Format the time 't' into the buffer 'buf' of length 'len',
+ * using the ISO8601 format: "yyyy-mm-ddThh:mm:ss.ssssssZ"
  * If the text does not fit in the buffer, the result is indeterminate,
  * but is always guaranteed to be null terminated.
  *

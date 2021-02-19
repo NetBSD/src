@@ -1,18 +1,14 @@
-/*	$NetBSD: hash.c,v 1.5 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- */
-
-/*
- * 32 bit Fowler/Noll/Vo FNV-1a hash code with modification for BIND
  */
 
 #include <inttypes.h>
@@ -34,21 +30,25 @@
 #include "isc/util.h"
 
 static uint8_t isc_hash_key[16];
+static uint8_t isc_hash32_key[8];
 static bool hash_initialized = false;
 static isc_once_t isc_hash_once = ISC_ONCE_INIT;
 
 static void
 isc_hash_initialize(void) {
-	uint64_t key[2] = { 0, 1 };
-#if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 	/*
 	 * Set a constant key to help in problem reproduction should
 	 * fuzzing find a crash or a hang.
 	 */
-#else  /* if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
+	uint64_t key[2] = { 0, 1 };
+#if !FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 	isc_entropy_get(key, sizeof(key));
 #endif /* if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
 	memmove(isc_hash_key, key, sizeof(isc_hash_key));
+#if !FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+	isc_entropy_get(key, sizeof(key));
+#endif /* if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
+	memmove(isc_hash32_key, key, sizeof(isc_hash32_key));
 	hash_initialized = true;
 }
 
@@ -106,8 +106,7 @@ isc_hash_set_initializer(const void *initializer) {
 }
 
 uint64_t
-isc_hash_function(const void *data, const size_t length,
-		  const bool case_sensitive) {
+isc_hash64(const void *data, const size_t length, const bool case_sensitive) {
 	uint64_t hval;
 
 	REQUIRE(length == 0 || data != NULL);
@@ -124,6 +123,30 @@ isc_hash_function(const void *data, const size_t length,
 			input[i] = maptolower[((const uint8_t *)data)[i]];
 		}
 		isc_siphash24(isc_hash_key, input, length, (uint8_t *)&hval);
+	}
+
+	return (hval);
+}
+
+uint32_t
+isc_hash32(const void *data, const size_t length, const bool case_sensitive) {
+	uint32_t hval;
+
+	REQUIRE(length == 0 || data != NULL);
+
+	RUNTIME_CHECK(isc_once_do(&isc_hash_once, isc_hash_initialize) ==
+		      ISC_R_SUCCESS);
+
+	if (case_sensitive) {
+		isc_halfsiphash24(isc_hash_key, data, length, (uint8_t *)&hval);
+	} else {
+		uint8_t input[1024];
+		REQUIRE(length <= 1024);
+		for (unsigned int i = 0; i < length; i++) {
+			input[i] = maptolower[((const uint8_t *)data)[i]];
+		}
+		isc_halfsiphash24(isc_hash_key, input, length,
+				  (uint8_t *)&hval);
 	}
 
 	return (hval);

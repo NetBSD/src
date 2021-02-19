@@ -1,11 +1,11 @@
-/*	$NetBSD: time.c,v 1.5 2020/05/24 19:46:28 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.6 2021/02/19 16:42:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -406,6 +406,35 @@ isc_time_formatISO8601Lms(const isc_time_t *t, char *buf, unsigned int len) {
 }
 
 void
+isc_time_formatISO8601Lus(const isc_time_t *t, char *buf, unsigned int len) {
+	SYSTEMTIME st;
+	char DateBuf[50];
+	char TimeBuf[50];
+
+	/* strtime() format: "%Y-%m-%dT%H:%M:%S.SSSSSS" */
+
+	REQUIRE(t != NULL);
+	REQUIRE(buf != NULL);
+	REQUIRE(len > 0);
+
+	if (FileTimeToSystemTime(&t->absolute, &st)) {
+		ULARGE_INTEGER i;
+
+		GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, "yyyy-MM-dd",
+			      DateBuf, 50);
+		GetTimeFormat(LOCALE_USER_DEFAULT,
+			      TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &st,
+			      "hh':'mm':'ss", TimeBuf, 50);
+		i.LowPart = t->absolute.dwLowDateTime;
+		i.HighPart = t->absolute.dwHighDateTime;
+		snprintf(buf, len, "%sT%s.%06u", DateBuf, TimeBuf,
+			 (uint32_t)(i.QuadPart % 10000000) / 10);
+	} else {
+		buf[0] = 0;
+	}
+}
+
+void
 isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
 	SYSTEMTIME st;
 	char DateBuf[50];
@@ -449,6 +478,35 @@ isc_time_formatISO8601ms(const isc_time_t *t, char *buf, unsigned int len) {
 			      "hh':'mm':'ss", TimeBuf, 50);
 		snprintf(buf, len, "%sT%s.%03uZ", DateBuf, TimeBuf,
 			 st.wMilliseconds);
+	} else {
+		buf[0] = 0;
+	}
+}
+
+void
+isc_time_formatISO8601us(const isc_time_t *t, char *buf, unsigned int len) {
+	SYSTEMTIME st;
+	char DateBuf[50];
+	char TimeBuf[50];
+
+	/* strtime() format: "%Y-%m-%dT%H:%M:%S.SSSSSSZ" */
+
+	REQUIRE(t != NULL);
+	REQUIRE(buf != NULL);
+	REQUIRE(len > 0);
+
+	if (FileTimeToSystemTime(&t->absolute, &st)) {
+		ULARGE_INTEGER i;
+
+		GetDateFormat(LOCALE_NEUTRAL, 0, &st, "yyyy-MM-dd", DateBuf,
+			      50);
+		GetTimeFormat(LOCALE_NEUTRAL,
+			      TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &st,
+			      "hh':'mm':'ss", TimeBuf, 50);
+		i.LowPart = t->absolute.dwLowDateTime;
+		i.HighPart = t->absolute.dwHighDateTime;
+		snprintf(buf, len, "%sT%s.%06uZ", DateBuf, TimeBuf,
+			 (uint32_t)(i.QuadPart % 10000000) / 10);
 	} else {
 		buf[0] = 0;
 	}

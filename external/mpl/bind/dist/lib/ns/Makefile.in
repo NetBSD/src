@@ -14,8 +14,6 @@ top_srcdir =	@top_srcdir@
 VERSION=@BIND9_VERSION@
 @BIND9_MAJOR@
 
-@LIBNS_API@
-
 @BIND9_MAKE_INCLUDES@
 
 USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
@@ -62,9 +60,6 @@ version.@O@: version.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
 		-DMAJOR=\"${MAJOR}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
 libns.@SA@: ${OBJS}
@@ -74,7 +69,7 @@ libns.@SA@: ${OBJS}
 libns.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libns.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		-release "${VERSION}" \
 		${OBJS} ${ISCLIBS} ${DNSLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
 
 timestamp: libns.@A@

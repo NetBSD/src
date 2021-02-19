@@ -1,11 +1,11 @@
-/*	$NetBSD: namedconf.c,v 1.8 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.9 2021/02/19 16:42:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -94,13 +94,14 @@ static cfg_type_t cfg_type_dnstapoutput;
 static cfg_type_t cfg_type_dyndb;
 static cfg_type_t cfg_type_plugin;
 static cfg_type_t cfg_type_ixfrdifftype;
+static cfg_type_t cfg_type_ixfrratio;
 static cfg_type_t cfg_type_key;
 static cfg_type_t cfg_type_logfile;
 static cfg_type_t cfg_type_logging;
 static cfg_type_t cfg_type_logseverity;
 static cfg_type_t cfg_type_logsuffix;
 static cfg_type_t cfg_type_logversions;
-static cfg_type_t cfg_type_masterselement;
+static cfg_type_t cfg_type_primarieselement;
 static cfg_type_t cfg_type_maxduration;
 static cfg_type_t cfg_type_minimal;
 static cfg_type_t cfg_type_nameportiplist;
@@ -168,8 +169,8 @@ static cfg_type_t cfg_type_acl = { "acl",	    cfg_parse_tuple,
 				   cfg_print_tuple, cfg_doc_tuple,
 				   &cfg_rep_tuple,  acl_fields };
 
-/*% masters */
-static cfg_tuplefielddef_t masters_fields[] = {
+/*% primaries */
+static cfg_tuplefielddef_t primaries_fields[] = {
 	{ "name", &cfg_type_astring, 0 },
 	{ "port", &cfg_type_optional_port, 0 },
 	{ "dscp", &cfg_type_optional_dscp, 0 },
@@ -177,19 +178,19 @@ static cfg_tuplefielddef_t masters_fields[] = {
 	{ NULL, NULL, 0 }
 };
 
-static cfg_type_t cfg_type_masters = { "masters",	cfg_parse_tuple,
-				       cfg_print_tuple, cfg_doc_tuple,
-				       &cfg_rep_tuple,	masters_fields };
+static cfg_type_t cfg_type_primaries = { "primaries",	  cfg_parse_tuple,
+					 cfg_print_tuple, cfg_doc_tuple,
+					 &cfg_rep_tuple,  primaries_fields };
 
 /*%
  * "sockaddrkeylist", a list of socket addresses with optional keys
- * and an optional default port, as used in the masters option.
+ * and an optional default port, as used in the primaries option.
  * E.g.,
- *   "port 1234 { mymasters; 10.0.0.1 key foo; 1::2 port 69; }"
+ *   "port 1234 { myprimaries; 10.0.0.1 key foo; 1::2 port 69; }"
  */
 
 static cfg_tuplefielddef_t namesockaddrkey_fields[] = {
-	{ "masterselement", &cfg_type_masterselement, 0 },
+	{ "primarieselement", &cfg_type_primarieselement, 0 },
 	{ "key", &cfg_type_optional_keyref, 0 },
 	{ NULL, NULL, 0 },
 };
@@ -568,6 +569,39 @@ static cfg_tuplefielddef_t kaspkey_fields[] = {
 static cfg_type_t cfg_type_kaspkey = { "kaspkey",	cfg_parse_tuple,
 				       cfg_print_tuple, cfg_doc_tuple,
 				       &cfg_rep_tuple,	kaspkey_fields };
+
+/*%
+ * NSEC3 parameters.
+ */
+static keyword_type_t nsec3iter_kw = { "iterations", &cfg_type_uint32 };
+static cfg_type_t cfg_type_nsec3iter = {
+	"iterations",	       parse_optional_keyvalue, print_keyvalue,
+	doc_optional_keyvalue, &cfg_rep_uint32,		&nsec3iter_kw
+};
+
+static keyword_type_t nsec3optout_kw = { "optout", &cfg_type_boolean };
+static cfg_type_t cfg_type_nsec3optout = {
+	"optout",	  parse_optional_keyvalue,
+	print_keyvalue,	  doc_optional_keyvalue,
+	&cfg_rep_boolean, &nsec3optout_kw
+};
+
+static keyword_type_t nsec3salt_kw = { "salt-length", &cfg_type_uint32 };
+static cfg_type_t cfg_type_nsec3salt = {
+	"salt-length",	       parse_optional_keyvalue, print_keyvalue,
+	doc_optional_keyvalue, &cfg_rep_uint32,		&nsec3salt_kw
+};
+
+static cfg_tuplefielddef_t nsec3param_fields[] = {
+	{ "iterations", &cfg_type_nsec3iter, 0 },
+	{ "optout", &cfg_type_nsec3optout, 0 },
+	{ "salt-length", &cfg_type_nsec3salt, 0 },
+	{ NULL, NULL, 0 }
+};
+
+static cfg_type_t cfg_type_nsec3 = { "nsec3param",    cfg_parse_tuple,
+				     cfg_print_tuple, cfg_doc_tuple,
+				     &cfg_rep_tuple,  nsec3param_fields };
 
 /*%
  * Wild class, type, name.
@@ -1069,8 +1103,9 @@ static cfg_clausedef_t namedconf_clauses[] = {
 	{ "logging", &cfg_type_logging, 0 },
 	{ "lwres", &cfg_type_bracketed_text,
 	  CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_OBSOLETE },
-	{ "masters", &cfg_type_masters, CFG_CLAUSEFLAG_MULTI },
+	{ "masters", &cfg_type_primaries, CFG_CLAUSEFLAG_MULTI },
 	{ "options", &cfg_type_options, 0 },
+	{ "primaries", &cfg_type_primaries, CFG_CLAUSEFLAG_MULTI },
 	{ "statistics-channels", &cfg_type_statschannels,
 	  CFG_CLAUSEFLAG_MULTI },
 	{ "view", &cfg_type_view, CFG_CLAUSEFLAG_MULTI },
@@ -1915,6 +1950,28 @@ static cfg_type_t cfg_type_dns64 = { "dns64",	    cfg_parse_netprefix_map,
 				     cfg_print_map, cfg_doc_map,
 				     &cfg_rep_map,  dns64_clausesets };
 
+static const char *staleanswerclienttimeout_enums[] = { "disabled", "off",
+							NULL };
+static isc_result_t
+parse_staleanswerclienttimeout(cfg_parser_t *pctx, const cfg_type_t *type,
+			       cfg_obj_t **ret) {
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_uint32, ret));
+}
+
+static void
+doc_staleanswerclienttimeout(cfg_printer_t *pctx, const cfg_type_t *type) {
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_uint32);
+}
+
+static cfg_type_t cfg_type_staleanswerclienttimeout = {
+	"staleanswerclienttimeout",
+	parse_staleanswerclienttimeout,
+	cfg_print_ustring,
+	doc_staleanswerclienttimeout,
+	&cfg_rep_string,
+	staleanswerclienttimeout_enums
+};
+
 /*%
  * Clauses that can be found within the 'view' statement,
  * with defaults in the 'options' statement.
@@ -2043,7 +2100,11 @@ static cfg_clausedef_t view_clauses[] = {
 	{ "servfail-ttl", &cfg_type_duration, 0 },
 	{ "sortlist", &cfg_type_bracketed_aml, 0 },
 	{ "stale-answer-enable", &cfg_type_boolean, 0 },
+	{ "stale-answer-client-timeout", &cfg_type_staleanswerclienttimeout,
+	  0 },
 	{ "stale-answer-ttl", &cfg_type_duration, 0 },
+	{ "stale-cache-enable", &cfg_type_boolean, 0 },
+	{ "stale-refresh-time", &cfg_type_duration, 0 },
 	{ "suppress-initial-notify", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
 	{ "synth-from-dnssec", &cfg_type_boolean, 0 },
 	{ "topology", &cfg_type_bracketed_aml, CFG_CLAUSEFLAG_ANCIENT },
@@ -2089,9 +2150,11 @@ static cfg_clausedef_t dnssecpolicy_clauses[] = {
 	{ "dnskey-ttl", &cfg_type_duration, 0 },
 	{ "keys", &cfg_type_kaspkeys, 0 },
 	{ "max-zone-ttl", &cfg_type_duration, 0 },
+	{ "nsec3param", &cfg_type_nsec3, 0 },
 	{ "parent-ds-ttl", &cfg_type_duration, 0 },
 	{ "parent-propagation-delay", &cfg_type_duration, 0 },
-	{ "parent-registration-delay", &cfg_type_duration, 0 },
+	{ "parent-registration-delay", &cfg_type_duration,
+	  CFG_CLAUSEFLAG_OBSOLETE },
 	{ "publish-safety", &cfg_type_duration, 0 },
 	{ "retire-safety", &cfg_type_duration, 0 },
 	{ "signatures-refresh", &cfg_type_duration, 0 },
@@ -2167,6 +2230,8 @@ static cfg_clausedef_t zone_clauses[] = {
 	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
 		  CFG_ZONE_REDIRECT },
 	{ "max-ixfr-log-size", &cfg_type_size, CFG_CLAUSEFLAG_ANCIENT },
+	{ "max-ixfr-ratio", &cfg_type_ixfrratio,
+	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
 	{ "max-journal-size", &cfg_type_size,
 	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
 	{ "max-records", &cfg_type_uint32,
@@ -2271,6 +2336,9 @@ static cfg_clausedef_t zone_only_clauses[] = {
 	{ "journal", &cfg_type_qstring,
 	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
 	{ "masters", &cfg_type_namesockaddrkeylist,
+	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
+		  CFG_ZONE_REDIRECT },
+	{ "primaries", &cfg_type_namesockaddrkeylist,
 	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
 		  CFG_ZONE_REDIRECT },
 	{ "pubkey", &cfg_type_pubkey, CFG_CLAUSEFLAG_ANCIENT },
@@ -2702,6 +2770,28 @@ static cfg_type_t cfg_type_sizeorpercent = {
 };
 
 /*%
+ * An IXFR size ratio: percentage, or "unlimited".
+ */
+
+static isc_result_t
+parse_ixfrratio(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_percentage, ret));
+}
+
+static void
+doc_ixfrratio(cfg_printer_t *pctx, const cfg_type_t *type) {
+	UNUSED(type);
+	cfg_print_cstr(pctx, "( unlimited | ");
+	cfg_doc_terminal(pctx, &cfg_type_percentage);
+	cfg_print_cstr(pctx, " )");
+}
+
+static const char *ixfrratio_enums[] = { "unlimited", NULL };
+static cfg_type_t cfg_type_ixfrratio = { "ixfr_ratio", parse_ixfrratio,
+					 NULL,	       doc_ixfrratio,
+					 NULL,	       ixfrratio_enums };
+
+/*%
  * optional_keyvalue
  */
 static isc_result_t
@@ -2784,7 +2874,8 @@ static cfg_type_t cfg_type_dialuptype = { "dialuptype",	     parse_dialup_type,
 					  cfg_print_ustring, doc_dialup_type,
 					  &cfg_rep_string,   dialup_enums };
 
-static const char *notify_enums[] = { "explicit", "master-only", NULL };
+static const char *notify_enums[] = { "explicit", "master-only", "primary-only",
+				      NULL };
 static isc_result_t
 parse_notify_type(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
@@ -3597,14 +3688,14 @@ static cfg_type_t cfg_type_nameportiplist = {
 };
 
 /*%
- * masters element.
+ * primaries element.
  */
 
 static void
-doc_masterselement(cfg_printer_t *pctx, const cfg_type_t *type) {
+doc_primarieselement(cfg_printer_t *pctx, const cfg_type_t *type) {
 	UNUSED(type);
 	cfg_print_cstr(pctx, "( ");
-	cfg_print_cstr(pctx, "<masters>");
+	cfg_print_cstr(pctx, "<primaries>");
 	cfg_print_cstr(pctx, " | ");
 	cfg_print_cstr(pctx, "<ipv4_address>");
 	cfg_print_cstr(pctx, " ");
@@ -3617,8 +3708,8 @@ doc_masterselement(cfg_printer_t *pctx, const cfg_type_t *type) {
 }
 
 static isc_result_t
-parse_masterselement(cfg_parser_t *pctx, const cfg_type_t *type,
-		     cfg_obj_t **ret) {
+parse_primarieselement(cfg_parser_t *pctx, const cfg_type_t *type,
+		       cfg_obj_t **ret) {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
 	UNUSED(type);
@@ -3636,7 +3727,7 @@ parse_masterselement(cfg_parser_t *pctx, const cfg_type_t *type,
 		}
 	} else {
 		cfg_parser_error(pctx, CFG_LOG_NEAR,
-				 "expected IP address or masters name");
+				 "expected IP address or primaries list name");
 		return (ISC_R_UNEXPECTEDTOKEN);
 	}
 cleanup:
@@ -3644,12 +3735,12 @@ cleanup:
 	return (result);
 }
 
-static cfg_type_t cfg_type_masterselement = { "masters_element",
-					      parse_masterselement,
-					      NULL,
-					      doc_masterselement,
-					      NULL,
-					      NULL };
+static cfg_type_t cfg_type_primarieselement = { "primaries_element",
+						parse_primarieselement,
+						NULL,
+						doc_primarieselement,
+						NULL,
+						NULL };
 
 static int
 cmp_clause(const void *ap, const void *bp) {

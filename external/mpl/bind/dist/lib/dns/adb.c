@@ -1,11 +1,11 @@
-/*	$NetBSD: adb.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.7 2021/02/19 16:42:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -758,7 +758,8 @@ grow_names(isc_task_t *task, isc_event_t *ev) {
 	isc_mutex_t *newnamelocks = NULL;
 	isc_result_t result;
 	unsigned int *newname_refcnt = NULL;
-	unsigned int i, n, bucket;
+	unsigned int i, n;
+	unsigned int bucket;
 
 	adb = ev->ev_arg;
 	INSIST(DNS_ADB_VALID(adb));
@@ -4840,7 +4841,7 @@ void
 dns_adb_flushname(dns_adb_t *adb, const dns_name_t *name) {
 	dns_adbname_t *adbname;
 	dns_adbname_t *nextname;
-	int bucket;
+	unsigned int bucket;
 
 	REQUIRE(DNS_ADB_VALID(adb));
 	REQUIRE(name != NULL);

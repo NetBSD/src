@@ -1,11 +1,11 @@
-/*	$NetBSD: dighost.c,v 1.9 2020/08/03 17:23:36 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.10 2021/02/19 16:42:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -669,7 +669,7 @@ make_empty_lookup(void) {
 	looknew->idnin = false;
 	looknew->idnout = false;
 #endif /* HAVE_LIBIDN2 */
-	looknew->udpsize = 0;
+	looknew->udpsize = -1;
 	looknew->edns = -1;
 	looknew->recurse = true;
 	looknew->aaonly = false;
@@ -1678,7 +1678,7 @@ destroy_lookup(dig_lookup_t *lookup) {
 		isc_mem_free(mctx, ptr);
 	}
 	if (lookup->sendmsg != NULL) {
-		dns_message_destroy(&lookup->sendmsg);
+		dns_message_detach(&lookup->sendmsg);
 	}
 	if (lookup->querysig != NULL) {
 		debug("freeing buffer %p", lookup->querysig);
@@ -2103,9 +2103,7 @@ setup_lookup(dig_lookup_t *lookup) {
 
 	debug("setup_lookup(%p)", lookup);
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER,
-				    &lookup->sendmsg);
-	check_result(result, "dns_message_create");
+	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &lookup->sendmsg);
 
 	if (lookup->new_search) {
 		debug("resetting lookup counter.");
@@ -2368,11 +2366,11 @@ setup_lookup(dig_lookup_t *lookup) {
 		 * and DNS_EDNSOPTIONS set by other arguments
 		 * (+nsid, +cookie, etc).
 		 */
-		if (lookup->udpsize == 0) {
-			lookup->udpsize = 4096;
+		if (lookup->udpsize < 0) {
+			lookup->udpsize = DEFAULT_EDNS_BUFSIZE;
 		}
 		if (lookup->edns < 0) {
-			lookup->edns = 0;
+			lookup->edns = DEFAULT_EDNS_VERSION;
 		}
 
 		if (lookup->nsid) {
@@ -3768,8 +3766,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		goto udp_mismatch;
 	}
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &msg);
-	check_result(result, "dns_message_create");
+	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &msg);
 
 	if (tsigkey != NULL) {
 		if (l->querysig == NULL) {
@@ -3809,7 +3806,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			hex_dump(&b);
 		}
 		query->waiting_connect = false;
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		isc_event_free(&event);
 		clear_query(query);
 		cancel_lookup(l);
@@ -3831,7 +3828,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		dighost_warning("Warning: Opcode mismatch: expected %s, got %s",
 				expect, got);
 
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		if (l->tcp_mode) {
 			isc_event_free(&event);
 			clear_query(query);
@@ -3883,7 +3880,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			}
 		}
 		if (!match) {
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			if (l->tcp_mode) {
 				isc_event_free(&event);
 				clear_query(query);
@@ -3909,7 +3906,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		if (l->trace && l->trace_root) {
 			n->rdtype = l->qrdtype;
 		}
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		isc_event_free(&event);
 		clear_query(query);
 		cancel_lookup(l);
@@ -3928,7 +3925,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		if (l->trace && l->trace_root) {
 			n->rdtype = l->qrdtype;
 		}
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		isc_event_free(&event);
 		clear_query(query);
 		cancel_lookup(l);
@@ -3952,7 +3949,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			if (l->trace && l->trace_root) {
 				n->rdtype = l->qrdtype;
 			}
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			isc_event_free(&event);
 			clear_query(query);
 			cancel_lookup(l);
@@ -3993,7 +3990,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 					 query->servname);
 			clear_query(query);
 			check_next_lookup(l);
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			isc_event_free(&event);
 			UNLOCK_LOOKUP;
 			return;
@@ -4126,7 +4123,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 	if (l->doing_xfr) {
 		if (query != l->xfr_q) {
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			isc_event_free(&event);
 			query->waiting_connect = false;
 			UNLOCK_LOOKUP;
@@ -4136,7 +4133,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			docancel = check_for_more_data(query, msg, sevent);
 		}
 		if (docancel) {
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			clear_query(query);
 			cancel_lookup(l);
 			check_next_lookup(l);
@@ -4152,14 +4149,14 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		}
 		if (!query->lookup->ns_search_only ||
 		    query->lookup->trace_root || docancel) {
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			cancel_lookup(l);
 		}
 		clear_query(query);
 		check_next_lookup(l);
 	}
 	if (msg != NULL) {
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 	}
 	isc_event_free(&event);
 	UNLOCK_LOOKUP;

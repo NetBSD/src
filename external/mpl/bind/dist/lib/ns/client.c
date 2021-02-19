@@ -1,11 +1,11 @@
-/*	$NetBSD: client.c,v 1.11 2020/08/03 17:23:43 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.12 2021/02/19 16:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -276,7 +276,7 @@ static void
 client_senddone(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 	ns_client_t *client = cbarg;
 
-	REQUIRE(client->handle == handle);
+	REQUIRE(client->sendhandle == handle);
 
 	CTRACE("senddone");
 	if (result != ISC_R_SUCCESS) {
@@ -285,7 +285,7 @@ client_senddone(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 			      "send failed: %s", isc_result_totext(result));
 	}
 
-	isc_nmhandle_unref(handle);
+	isc_nmhandle_detach(&client->sendhandle);
 }
 
 static void
@@ -324,15 +324,15 @@ client_allocsendbuf(ns_client_t *client, isc_buffer_t *buffer,
 	*datap = data;
 }
 
-static isc_result_t
+static void
 client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 	isc_region_t r;
 
+	REQUIRE(client->sendhandle == NULL);
+
 	isc_buffer_usedregion(buffer, &r);
-
-	INSIST(client->handle != NULL);
-
-	return (isc_nm_send(client->handle, &r, client_senddone, client));
+	isc_nmhandle_attach(client->handle, &client->sendhandle);
+	isc_nm_send(client->handle, &r, client_senddone, client);
 }
 
 void
@@ -371,11 +371,26 @@ ns_client_sendraw(ns_client_t *client, dns_message_t *message) {
 	r.base[0] = (client->message->id >> 8) & 0xff;
 	r.base[1] = client->message->id & 0xff;
 
-	result = client_sendpkg(client, &buffer);
-	if (result == ISC_R_SUCCESS) {
-		return;
+#ifdef HAVE_DNSTAP
+	if (client->view != NULL) {
+		bool tcp = TCP_CLIENT(client);
+		dns_dtmsgtype_t dtmsgtype;
+		if (client->message->opcode == dns_opcode_update) {
+			dtmsgtype = DNS_DTTYPE_UR;
+		} else if ((client->message->flags & DNS_MESSAGEFLAG_RD) != 0) {
+			dtmsgtype = DNS_DTTYPE_CR;
+		} else {
+			dtmsgtype = DNS_DTTYPE_AR;
+		}
+		dns_dt_send(client->view, dtmsgtype, &client->peeraddr,
+			    &client->destsockaddr, tcp, NULL,
+			    &client->requesttime, NULL, &buffer);
 	}
+#endif
 
+	client_sendpkg(client, &buffer);
+
+	return;
 done:
 	if (client->tcpbuf != NULL) {
 		isc_mem_put(client->mctx, client->tcpbuf,
@@ -384,7 +399,6 @@ done:
 	}
 
 	ns_client_drop(client, result);
-	isc_nmhandle_unref(client->handle);
 }
 
 void
@@ -406,15 +420,15 @@ ns_client_send(ns_client_t *client) {
 	isc_region_t zr;
 #endif /* HAVE_DNSTAP */
 
+	REQUIRE(NS_CLIENT_VALID(client));
+
+	if ((client->query.attributes & NS_QUERYATTR_ANSWERED) != 0) {
+		return;
+	}
+
 	/*
 	 * XXXWPK TODO
 	 * Delay the response according to the -T delay option
-	 */
-
-	REQUIRE(NS_CLIENT_VALID(client));
-	/*
-	 * We need to do it to make sure the client and handle
-	 * won't disappear from under us with client_senddone.
 	 */
 
 	env = ns_interfacemgr_getaclenv(client->manager->interface->mgr);
@@ -456,7 +470,7 @@ ns_client_send(ns_client_t *client) {
 		result = ns_client_addopt(client, client->message,
 					  &client->opt);
 		if (result != ISC_R_SUCCESS) {
-			goto done;
+			goto cleanup;
 		}
 	}
 
@@ -464,7 +478,7 @@ ns_client_send(ns_client_t *client) {
 
 	result = dns_compress_init(&cctx, -1, client->mctx);
 	if (result != ISC_R_SUCCESS) {
-		goto done;
+		goto cleanup;
 	}
 	if (client->peeraddr_valid && client->view != NULL) {
 		isc_netaddr_t netaddr;
@@ -490,7 +504,7 @@ ns_client_send(ns_client_t *client) {
 
 	result = dns_message_renderbegin(client->message, &cctx, &buffer);
 	if (result != ISC_R_SUCCESS) {
-		goto done;
+		goto cleanup;
 	}
 
 	if (client->opt != NULL) {
@@ -498,7 +512,7 @@ ns_client_send(ns_client_t *client) {
 		opt_included = true;
 		client->opt = NULL;
 		if (result != ISC_R_SUCCESS) {
-			goto done;
+			goto cleanup;
 		}
 	}
 	result = dns_message_rendersection(client->message,
@@ -508,7 +522,7 @@ ns_client_send(ns_client_t *client) {
 		goto renderend;
 	}
 	if (result != ISC_R_SUCCESS) {
-		goto done;
+		goto cleanup;
 	}
 	/*
 	 * Stop after the question if TC was set for rate limiting.
@@ -524,7 +538,7 @@ ns_client_send(ns_client_t *client) {
 		goto renderend;
 	}
 	if (result != ISC_R_SUCCESS) {
-		goto done;
+		goto cleanup;
 	}
 	result = dns_message_rendersection(
 		client->message, DNS_SECTION_AUTHORITY,
@@ -534,18 +548,18 @@ ns_client_send(ns_client_t *client) {
 		goto renderend;
 	}
 	if (result != ISC_R_SUCCESS) {
-		goto done;
+		goto cleanup;
 	}
 	result = dns_message_rendersection(client->message,
 					   DNS_SECTION_ADDITIONAL,
 					   preferred_glue | render_opts);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOSPACE) {
-		goto done;
+		goto cleanup;
 	}
 renderend:
 	result = dns_message_renderend(client->message);
 	if (result != ISC_R_SUCCESS) {
-		goto done;
+		goto cleanup;
 	}
 
 #ifdef HAVE_DNSTAP
@@ -553,13 +567,14 @@ renderend:
 	if (((client->message->flags & DNS_MESSAGEFLAG_AA) != 0) &&
 	    (client->query.authzone != NULL))
 	{
+		isc_result_t eresult;
 		isc_buffer_t b;
 		dns_name_t *zo = dns_zone_getorigin(client->query.authzone);
 
 		isc_buffer_init(&b, zone, sizeof(zone));
 		dns_compress_setmethods(&cctx, DNS_COMPRESS_NONE);
-		result = dns_name_towire(zo, &cctx, &b);
-		if (result == ISC_R_SUCCESS) {
+		eresult = dns_name_towire(zo, &cctx, &b);
+		if (eresult == ISC_R_SUCCESS) {
 			isc_buffer_usedregion(&b, &zr);
 		}
 	}
@@ -575,7 +590,6 @@ renderend:
 
 	if (cleanup_cctx) {
 		dns_compress_invalidate(&cctx);
-		cleanup_cctx = false;
 	}
 
 	if (client->sendcb != NULL) {
@@ -592,12 +606,7 @@ renderend:
 
 		respsize = isc_buffer_usedlength(&buffer);
 
-		isc_nmhandle_ref(client->handle);
-		result = client_sendpkg(client, &buffer);
-		if (result != ISC_R_SUCCESS) {
-			/* We won't get a callback to clean it up */
-			isc_nmhandle_unref(client->handle);
-		}
+		client_sendpkg(client, &buffer);
 
 		switch (isc_sockaddr_pf(&client->peeraddr)) {
 		case AF_INET:
@@ -627,12 +636,7 @@ renderend:
 
 		respsize = isc_buffer_usedlength(&buffer);
 
-		isc_nmhandle_ref(client->handle);
-		result = client_sendpkg(client, &buffer);
-		if (result != ISC_R_SUCCESS) {
-			/* We won't get a callback to clean it up */
-			isc_nmhandle_unref(client->handle);
-		}
+		client_sendpkg(client, &buffer);
 
 		switch (isc_sockaddr_pf(&client->peeraddr)) {
 		case AF_INET:
@@ -671,11 +675,11 @@ renderend:
 				   ns_statscounter_truncatedresp);
 	}
 
-	if (result == ISC_R_SUCCESS) {
-		return;
-	}
+	client->query.attributes |= NS_QUERYATTR_ANSWERED;
 
-done:
+	return;
+
+cleanup:
 	if (client->tcpbuf != NULL) {
 		isc_mem_put(client->mctx, client->tcpbuf,
 			    NS_CLIENT_TCP_BUFFER_SIZE);
@@ -1033,8 +1037,8 @@ no_nsid:
 
 		INSIST(count < DNS_EDNSOPTIONS);
 
-		isc_nm_tcp_gettimeouts(isc_nmhandle_netmgr(client->handle),
-				       NULL, NULL, NULL, &adv);
+		isc_nm_gettimeouts(isc_nmhandle_netmgr(client->handle), NULL,
+				   NULL, NULL, &adv);
 		isc_buffer_init(&buf, advtimo, sizeof(advtimo));
 		isc_buffer_putuint16(&buf, (uint16_t)adv);
 		ednsopts[count].code = DNS_OPT_TCP_KEEPALIVE;
@@ -1586,7 +1590,7 @@ ns__client_put_cb(void *client0) {
 		dns_message_puttemprdataset(client->message, &client->opt);
 	}
 
-	dns_message_destroy(&client->message);
+	dns_message_detach(&client->message);
 
 	/*
 	 * Detaching the task must be done after unlinking from
@@ -1617,7 +1621,8 @@ ns__client_put_cb(void *client0) {
  * or tcpmsg (TCP case).
  */
 void
-ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
+ns__client_request(isc_nmhandle_t *handle, isc_result_t eresult,
+		   isc_region_t *region, void *arg) {
 	ns_client_t *client;
 	ns_clientmgr_t *mgr;
 	ns_interface_t *ifp;
@@ -1639,6 +1644,10 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 	dns_dtmsgtype_t dtmsgtype;
 #endif /* ifdef HAVE_DNSTAP */
 	ifp = (ns_interface_t *)arg;
+
+	if (eresult != ISC_R_SUCCESS) {
+		return;
+	}
 
 	mgr = ifp->clientmgr;
 	if (mgr == NULL) {
@@ -1675,6 +1684,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 				     ns__client_put_cb);
 		client->handle = handle;
 	}
+
 	if (isc_nmhandle_is_stream(handle)) {
 		client->attributes |= NS_CLIENTATTR_TCP;
 	}
@@ -1689,8 +1699,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 	isc_buffer_add(&tbuffer, region->length);
 	buffer = &tbuffer;
 
-	client->peeraddr = isc_nmhandle_peeraddr(client->handle);
-
+	client->peeraddr = isc_nmhandle_peeraddr(handle);
 	client->peeraddr_valid = true;
 
 	reqsize = isc_buffer_usedlength(buffer);
@@ -1813,7 +1822,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(1),
 			      "message parsing failed: %s",
 			      isc_result_totext(result));
-		if (result == ISC_R_NOSPACE) {
+		if (result == ISC_R_NOSPACE || result == DNS_R_BADTSIG) {
 			result = DNS_R_FORMERR;
 		}
 		ns_client_error(client, result);
@@ -1954,8 +1963,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 		isc_netaddr_fromsockaddr(&client->destaddr,
 					 &client->manager->interface->addr);
 	} else {
-		isc_sockaddr_t sockaddr =
-			isc_nmhandle_localaddr(client->handle);
+		isc_sockaddr_t sockaddr = isc_nmhandle_localaddr(handle);
 		isc_netaddr_fromsockaddr(&client->destaddr, &sockaddr);
 	}
 
@@ -2160,8 +2168,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 			    &client->requesttime, NULL, buffer);
 #endif /* HAVE_DNSTAP */
 
-		isc_nmhandle_ref(client->handle);
-		ns_query_start(client);
+		ns_query_start(client, handle);
 		break;
 	case dns_opcode_update:
 		CTRACE("update");
@@ -2171,14 +2178,12 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 			    &client->requesttime, NULL, buffer);
 #endif /* HAVE_DNSTAP */
 		ns_client_settimeout(client, 60);
-		isc_nmhandle_ref(client->handle);
-		ns_update_start(client, sigresult);
+		ns_update_start(client, handle, sigresult);
 		break;
 	case dns_opcode_notify:
 		CTRACE("notify");
 		ns_client_settimeout(client, 60);
-		isc_nmhandle_ref(client->handle);
-		ns_notify_start(client);
+		ns_notify_start(client, handle);
 		break;
 	case dns_opcode_iquery:
 		CTRACE("iquery");
@@ -2202,7 +2207,9 @@ ns__client_tcpconn(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
 	isc_netaddr_t netaddr;
 	int match;
 
-	UNUSED(result);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
 
 	if (handle != NULL) {
 		peeraddr = isc_nmhandle_peeraddr(handle);
@@ -2277,12 +2284,8 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 		ns_server_attach(mgr->sctx, &client->sctx);
 		get_clienttask(mgr, &client->task);
 
-		result = dns_message_create(client->mctx,
-					    DNS_MESSAGE_INTENTPARSE,
-					    &client->message);
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup;
-		}
+		dns_message_create(client->mctx, DNS_MESSAGE_INTENTPARSE,
+				   &client->message);
 
 		client->sendbuf = isc_mem_get(client->mctx,
 					      NS_CLIENT_SEND_BUFFER_SIZE);
@@ -2321,6 +2324,7 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 #endif
 	}
 
+	client->query.attributes &= ~NS_QUERYATTR_ANSWERED;
 	client->state = NS_CLIENTSTATE_INACTIVE;
 	client->udpsize = 512;
 	client->ednsversion = -1;
@@ -2345,7 +2349,7 @@ cleanup:
 	}
 
 	if (client->message != NULL) {
-		dns_message_destroy(&client->message);
+		dns_message_detach(&client->message);
 	}
 
 	if (client->task != NULL) {

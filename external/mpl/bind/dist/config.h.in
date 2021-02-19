@@ -279,9 +279,6 @@
 /* define if OpenSSL supports Ed448 */
 #undef HAVE_OPENSSL_ED448
 
-/* define if OpenSSL supports SipHash */
-#undef HAVE_OPENSSL_SIPHASH
-
 /* Define to 1 if you have the `processor_bind' function. */
 #undef HAVE_PROCESSOR_BIND
 
@@ -447,6 +444,9 @@
 /* Define if Thread-Local Storage is available */
 #undef HAVE_TLS
 
+/* Define to 1 if you have the `TLS_server_method' function. */
+#undef HAVE_TLS_SERVER_METHOD
+
 /* Define to 1 if you have the `tzset' function. */
 #undef HAVE_TZSET
 
@@ -462,6 +462,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* define if the compiler supports _Unwind_Backtrace() */
+#undef HAVE_UNWIND_BACKTRACE
+
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
 
@@ -473,6 +476,12 @@
 
 /* Define to 1 if you have the `uv_import' function. */
 #undef HAVE_UV_IMPORT
+
+/* Define to 1 if you have the `uv_translate_sys_error' function. */
+#undef HAVE_UV_TRANSLATE_SYS_ERROR
+
+/* Define to 1 if you have the `uv_udp_connect' function. */
+#undef HAVE_UV_UDP_CONNECT
 
 /* Use zlib library */
 #undef HAVE_ZLIB

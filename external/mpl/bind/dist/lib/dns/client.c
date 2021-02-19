@@ -1,11 +1,11 @@
-/*	$NetBSD: client.c,v 1.7 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.8 2021/02/19 16:42:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -593,7 +593,7 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 	return (ISC_R_SUCCESS);
 
 cleanup_references:
-	isc_refcount_decrement(&client->references);
+	isc_refcount_decrementz(&client->references);
 	isc_refcount_destroy(&client->references);
 cleanup_dispatchmgr:
 	if (dispatchv4 != NULL) {
@@ -1418,10 +1418,8 @@ cleanup:
 	if (sigrdataset != NULL) {
 		putrdataset(client->mctx, &sigrdataset);
 	}
-	if (rctx != NULL) {
-		isc_mutex_destroy(&rctx->lock);
-		isc_mem_put(mctx, rctx, sizeof(*rctx));
-	}
+	isc_mutex_destroy(&rctx->lock);
+	isc_mem_put(mctx, rctx, sizeof(*rctx));
 	isc_event_free(ISC_EVENT_PTR(&event));
 	isc_task_detach(&tclone);
 	dns_view_detach(&view);
@@ -1800,7 +1798,7 @@ dns_client_startrequest(dns_client_t *client, dns_message_t *qmessage,
 		return (ISC_R_SUCCESS);
 	}
 
-	isc_refcount_decrement(&client->references);
+	isc_refcount_decrement1(&client->references);
 
 	LOCK(&client->lock);
 	ISC_LIST_UNLINK(client->reqctxs, ctx, link);
@@ -1906,7 +1904,7 @@ static void
 update_sendevent(updatectx_t *uctx, isc_result_t result) {
 	isc_task_t *task;
 
-	dns_message_destroy(&uctx->updatemsg);
+	dns_message_detach(&uctx->updatemsg);
 	if (uctx->tsigkey != NULL) {
 		dns_tsigkey_detach(&uctx->tsigkey);
 	}
@@ -1949,11 +1947,7 @@ update_done(isc_task_t *task, isc_event_t *event) {
 		goto out;
 	}
 
-	result = dns_message_create(client->mctx, DNS_MESSAGE_INTENTPARSE,
-				    &answer);
-	if (result != ISC_R_SUCCESS) {
-		goto out;
-	}
+	dns_message_create(client->mctx, DNS_MESSAGE_INTENTPARSE, &answer);
 	uctx->state = dns_clientupdatestate_done;
 	result = dns_request_getresponse(request, answer,
 					 DNS_MESSAGEPARSE_PRESERVEORDER);
@@ -1963,7 +1957,7 @@ update_done(isc_task_t *task, isc_event_t *event) {
 
 out:
 	if (answer != NULL) {
-		dns_message_destroy(&answer);
+		dns_message_detach(&answer);
 	}
 	isc_event_free(&event);
 
@@ -2283,11 +2277,8 @@ receive_soa(isc_task_t *task, isc_event_t *event) {
 		goto out;
 	}
 
-	result = dns_message_create(uctx->client->mctx, DNS_MESSAGE_INTENTPARSE,
-				    &rcvmsg);
-	if (result != ISC_R_SUCCESS) {
-		goto out;
-	}
+	dns_message_create(uctx->client->mctx, DNS_MESSAGE_INTENTPARSE,
+			   &rcvmsg);
 	result = dns_request_getresponse(request, rcvmsg,
 					 DNS_MESSAGEPARSE_PRESERVEORDER);
 
@@ -2295,7 +2286,7 @@ receive_soa(isc_task_t *task, isc_event_t *event) {
 		dns_request_t *newrequest = NULL;
 
 		/* Retry SOA request without TSIG */
-		dns_message_destroy(&rcvmsg);
+		dns_message_detach(&rcvmsg);
 		dns_message_renderreset(uctx->soaquery);
 		reqoptions = 0;
 		if (uctx->want_tcp) {
@@ -2410,14 +2401,14 @@ out:
 	}
 
 	if (!droplabel || result != ISC_R_SUCCESS) {
-		dns_message_destroy(&uctx->soaquery);
+		dns_message_detach(&uctx->soaquery);
 		LOCK(&uctx->lock);
 		dns_request_destroy(&uctx->soareq);
 		UNLOCK(&uctx->lock);
 	}
 
 	if (rcvmsg != NULL) {
-		dns_message_destroy(&rcvmsg);
+		dns_message_detach(&rcvmsg);
 	}
 
 	if (result != ISC_R_SUCCESS) {
@@ -2434,12 +2425,8 @@ request_soa(updatectx_t *uctx) {
 	unsigned int reqoptions;
 
 	if (soaquery == NULL) {
-		result = dns_message_create(uctx->client->mctx,
-					    DNS_MESSAGE_INTENTRENDER,
-					    &soaquery);
-		if (result != ISC_R_SUCCESS) {
-			return (result);
-		}
+		dns_message_create(uctx->client->mctx, DNS_MESSAGE_INTENTRENDER,
+				   &soaquery);
 	}
 	soaquery->flags |= DNS_MESSAGEFLAG_RD;
 	result = dns_message_gettempname(soaquery, &name);
@@ -2479,7 +2466,7 @@ fail:
 	if (name != NULL) {
 		dns_message_puttempname(soaquery, &name);
 	}
-	dns_message_destroy(&soaquery);
+	dns_message_detach(&soaquery);
 
 	return (result);
 }
@@ -2891,11 +2878,8 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 	}
 
 	/* Make update message */
-	result = dns_message_create(client->mctx, DNS_MESSAGE_INTENTRENDER,
-				    &uctx->updatemsg);
-	if (result != ISC_R_SUCCESS) {
-		goto fail;
-	}
+	dns_message_create(client->mctx, DNS_MESSAGE_INTENTRENDER,
+			   &uctx->updatemsg);
 	uctx->updatemsg->opcode = dns_opcode_update;
 
 	if (prerequisites != NULL) {
@@ -2959,7 +2943,7 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 		return (result);
 	}
 
-	isc_refcount_decrement(&client->references);
+	isc_refcount_decrement1(&client->references);
 	*transp = NULL;
 
 fail:
@@ -2969,7 +2953,7 @@ fail:
 		UNLOCK(&client->lock);
 	}
 	if (uctx->updatemsg != NULL) {
-		dns_message_destroy(&uctx->updatemsg);
+		dns_message_detach(&uctx->updatemsg);
 	}
 	while ((sa = ISC_LIST_HEAD(uctx->servers)) != NULL) {
 		ISC_LIST_UNLINK(uctx->servers, sa, link);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2021/02/19 16:42:24 christos Exp $
 
 LIB=irs
 #USE_SHLIBDIR=   yes
@@ -10,7 +10,6 @@ LIB=irs
 CPPFLAGS+= -I${DIST}/include -I${IDIST}/lib/irs/include
 
 DIST=   ${IDIST}/lib/irs
-.include "${DIST}/api"
 
 .PATH.c:	${DIST}
 

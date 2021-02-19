@@ -1,11 +1,11 @@
-/*	$NetBSD: stats.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -73,14 +73,14 @@ typedef enum {
  *     S = 2 (0b10) means Ancient
  *
  * Since a counter cannot be stale and ancient at the same time, we
- * treat S = 0x11 as a special case to deal with NXDOMAIN counters.
+ * treat S = 0b11 as a special case to deal with NXDOMAIN counters.
  */
 #define RDTYPECOUNTER_STALE    (1 << 9)
 #define RDTYPECOUNTER_ANCIENT  (1 << 10)
 #define RDTYPECOUNTER_NXDOMAIN ((1 << 9) | (1 << 10))
 
 /*
- * S = 0x11 indicates an NXDOMAIN counter and in this case the RRtype
+ * S = 0b11 indicates an NXDOMAIN counter and in this case the RRtype
  * field signals the expiry of this cached item:
  *
  *     RRType = 0 (0b00) means Active
