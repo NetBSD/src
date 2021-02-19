@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.68 2021/02/19 12:28:56 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.69 2021/02/19 21:35:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.68 2021/02/19 12:28:56 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.69 2021/02/19 21:35:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -332,8 +332,7 @@ funcdef(sym_t *fsym)
 	}
 
 	if (dcs->d_notyp)
-		/* return value is implicitly declared to be int */
-		fsym->s_rimpl = true;
+		fsym->s_return_type_implicit_int = true;
 
 	reached = true;
 }
@@ -350,7 +349,7 @@ funcend(void)
 	if (reached) {
 		cstmt->c_had_return_noval = true;
 		if (funcsym->s_type->t_subt->t_tspec != VOID &&
-		    !funcsym->s_rimpl) {
+		    !funcsym->s_return_type_implicit_int) {
 			/* func. %s falls off bottom without returning value */
 			warning(217, funcsym->s_name);
 		}
@@ -362,7 +361,7 @@ funcend(void)
 	 * has already printed a warning.
 	 */
 	if (cstmt->c_had_return_noval && cstmt->c_had_return_value &&
-	    funcsym->s_rimpl)
+	    funcsym->s_return_type_implicit_int)
 		/* function %s has return (e); and return; */
 		warning(216, funcsym->s_name);
 
@@ -992,7 +991,7 @@ doreturn(tnode_t *tn)
 		 * Assume that the function has a return value only if it
 		 * is explicitly declared.
 		 */
-		if (!funcsym->s_rimpl)
+		if (!funcsym->s_return_type_implicit_int)
 			/* function %s expects to return value */
 			warning(214, funcsym->s_name);
 	}
