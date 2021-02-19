@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.21 2021/02/19 05:23:53 thorpej Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.22 2021/02/19 17:58:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.21 2021/02/19 05:23:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.22 2021/02/19 17:58:43 thorpej Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -134,12 +134,10 @@ cninit(void)
 	OFPRINTF("console type: %s\n", name);
 
 	if (strcmp(name, "serial") == 0) {
-		struct consdev *cp;
-
 #ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
 		extern struct consdev failsafe_cons;
-		cp = &failsafe_cons;
+		struct consdev *cp = &failsafe_cons;
 		cn_tab = cp;
 		(*cp->cn_probe)(cp);
 		(*cp->cn_init)(cp);
@@ -150,7 +148,7 @@ cninit(void)
 #if (NZSTTY > 0) && !defined(MAMBO)
 		OF_getprop(console_node, "name", name, sizeof(name));
 		if (strcmp(name, "ch-a") == 0 || strcmp(name, "ch-b") == 0) {
-			cp = &consdev_zs;
+			struct consdev *cp = &consdev_zs;
 			(*cp->cn_probe)(cp);
 			(*cp->cn_init)(cp);
 			cn_tab = cp;
