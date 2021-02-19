@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.61 2021/02/19 21:35:44 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.62 2021/02/19 22:16:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -116,7 +116,7 @@ typedef struct {
 #define v_ldbl	v_u._v_ldbl
 
 /*
- * Structures of type str_t uniquely identify structures. This can't
+ * Structures of type struct_or_union uniquely identify structures. This can't
  * be done in structures of type type_t, because these are copied
  * if they must be modified. So it would not be possible to check
  * if two structures are identical by comparing the pointers to
@@ -126,13 +126,13 @@ typedef struct {
  * the structure type in pass 2.
  */
 typedef	struct {
-	u_int	size;		/* size in bit */
-	u_int	align : 15;	/* alignment in bit */
-	bool	sincompl : 1;	/* set if incomplete type */
-	struct	sym *memb;	/* list of members */
-	struct	sym *stag;	/* symbol table entry of tag */
-	struct	sym *stdef;	/* symbol table entry of first typename */
-} str_t;
+	u_int	sou_size_in_bit;
+	u_int	sou_align_in_bit : 15;
+	bool	sou_incomplete : 1;
+	struct	sym *sou_first_member;
+	struct	sym *sou_tag;
+	struct	sym *sou_first_typedef;
+} struct_or_union;
 
 /*
  * same as above for enums
@@ -161,7 +161,7 @@ struct type {
 	bool	t_packed : 1;
 	union {
 		int	_t_dim;		/* dimension */
-		str_t	*_t_str;	/* struct/union tag */
+		struct_or_union	*_t_str;	/* struct/union tag */
 		tenum_t	*_t_enum;	/* enum tag */
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
@@ -246,7 +246,7 @@ typedef	struct sym {
 	type_t	*s_type;
 	val_t	s_value;	/* value (if enum or bool constant) */
 	union {
-		str_t	*_s_st;	/* tag, if it is a struct/union member */
+		struct_or_union	*_s_st;
 		tenum_t	*_s_et;	/* tag, if it is an enumerator */
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
