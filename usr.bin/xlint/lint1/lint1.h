@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.63 2021/02/19 22:20:18 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.64 2021/02/19 22:27:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -150,14 +150,14 @@ typedef	struct {
  */
 struct type {
 	tspec_t	t_tspec;	/* type specifier */
-	bool	t_aincompl : 1;	/* incomplete array type */
+	bool	t_incomplete_array : 1;
 	bool	t_const : 1;	/* const modifier */
 	bool	t_volatile : 1;	/* volatile modifier */
 	bool	t_proto : 1;	/* function prototype (t_args valid) */
 	bool	t_vararg : 1;	/* prototype with '...' */
 	bool	t_typedef : 1;	/* type defined with typedef */
 	bool	t_bitfield : 1;
-	bool	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */
+	bool	t_is_enum : 1;	/* type is (or was) enum (t_enum valid) */
 	bool	t_packed : 1;
 	union {
 		int	_t_dim;		/* dimension */

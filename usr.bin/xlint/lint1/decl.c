@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.135 2021/02/19 22:20:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.136 2021/02/19 22:27:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.135 2021/02/19 22:20:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.136 2021/02/19 22:27:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -179,7 +179,7 @@ is_incomplete(const type_t *tp)
 	if ((t = tp->t_tspec) == VOID) {
 		return true;
 	} else if (t == ARRAY) {
-		return tp->t_aincompl;
+		return tp->t_incomplete_array;
 	} else if (t == STRUCT || t == UNION) {
 		return tp->t_str->sou_incomplete;
 	} else if (t == ENUM) {
@@ -197,7 +197,7 @@ setcomplete(type_t *tp, bool complete)
 	tspec_t	t;
 
 	if ((t = tp->t_tspec) == ARRAY) {
-		tp->t_aincompl = !complete;
+		tp->t_incomplete_array = !complete;
 	} else if (t == STRUCT || t == UNION) {
 		tp->t_str->sou_incomplete = !complete;
 	} else {
@@ -1665,7 +1665,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 			tp->t_str->sou_align_in_bit = CHAR_SIZE;
 			tp->t_str->sou_tag = tag;
 		} else {
-			tp->t_isenum = true;
+			tp->t_is_enum = true;
 			tp->t_enum = getblk(sizeof(*tp->t_enum));
 			tp->t_enum->en_tag = tag;
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.37 2021/01/24 00:15:20 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.38 2021/02/19 22:27:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.37 2021/01/24 00:15:20 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.38 2021/02/19 22:27:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -496,7 +496,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	t1 = arg1->t_tspec;
 	t2 = arg2->t_tspec;
 	if (is_integer(t1) && is_integer(t2) &&
-	    !arg1->t_isenum && !arg2->t_isenum) {
+	    !arg1->t_is_enum && !arg2->t_is_enum) {
 		if (promote) {
 			/*
 			 * XXX Here is a problem: Although it is possible to
@@ -1244,7 +1244,7 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 				return false;
 		}
 
-		if (tp1->t_isenum && tp2->t_isenum) {
+		if (tp1->t_is_enum && tp2->t_is_enum) {
 			if (tp1->t_istag && tp2->t_istag) {
 				return tp1->t_tag == tp2->t_tag;
 			} else if (tp1->t_istynam && tp2->t_istynam) {

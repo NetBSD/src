@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.70 2021/02/19 22:20:18 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.71 2021/02/19 22:27:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.70 2021/02/19 22:20:18 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.71 2021/02/19 22:27:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -637,7 +637,7 @@ switch1(tnode_t *tn)
 	tp = xcalloc(1, sizeof (type_t));
 	if (tn != NULL) {
 		tp->t_tspec = tn->tn_type->t_tspec;
-		if ((tp->t_isenum = tn->tn_type->t_isenum) != false)
+		if ((tp->t_is_enum = tn->tn_type->t_is_enum) != false)
 			tp->t_enum = tn->tn_type->t_enum;
 	} else {
 		tp->t_tspec = INT;
@@ -671,7 +671,7 @@ switch2(void)
 	 * labels and the number of enumerators. If both counts are not
 	 * equal print a warning.
 	 */
-	if (cstmt->c_swtype->t_isenum) {
+	if (cstmt->c_swtype->t_is_enum) {
 		nenum = nclab = 0;
 		lint_assert(cstmt->c_swtype->t_enum != NULL);
 		for (esym = cstmt->c_swtype->t_enum->en_first_enumerator;
@@ -695,7 +695,7 @@ switch2(void)
 		 */
 		reached = true;
 	} else if (!cstmt->c_default &&
-		   (!hflag || !cstmt->c_swtype->t_isenum || nenum != nclab)) {
+		   (!hflag || !cstmt->c_swtype->t_is_enum || nenum != nclab)) {
 		/*
 		 * there are possible values which are not handled in
 		 * switch
