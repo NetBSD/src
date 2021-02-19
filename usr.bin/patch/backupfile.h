@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: backupfile.h,v 1.6 2003/07/28 18:35:36 otto Exp $
  * $DragonFly: src/usr.bin/patch/backupfile.h,v 1.3 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: backupfile.h,v 1.6 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: backupfile.h,v 1.7 2021/02/19 17:46:53 nia Exp $
  */
 
 /*
@@ -19,6 +19,8 @@
 
 /* When to make backup files. */
 enum backup_type {
+	undefined,
+
 	/* Never make backups. */
 	none,
 
