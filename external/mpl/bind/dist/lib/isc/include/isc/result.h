@@ -1,11 +1,11 @@
-/*	$NetBSD: result.h,v 1.1.1.6 2020/05/24 19:36:46 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.7 2021/02/19 16:37:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -90,9 +90,10 @@
 #define ISC_R_DISCFULL	       67	    /*%< disc full */
 #define ISC_R_DEFAULT	       68	    /*%< default */
 #define ISC_R_IPV4PREFIX       69	    /*%< IPv4 prefix */
+#define ISC_R_TLSERROR	       70	    /*%< TLS error */
 
 /*% Not a result code: the number of results. */
-#define ISC_R_NRESULTS 70
+#define ISC_R_NRESULTS 71
 
 ISC_LANG_BEGINDECLS
 

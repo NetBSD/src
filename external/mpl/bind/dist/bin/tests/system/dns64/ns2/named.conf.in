@@ -64,6 +64,6 @@ zone "." {
 };
 
 zone "rpz" {
-	type master;
+	type primary;
 	file "rpz.db";
 };

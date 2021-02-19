@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -23,6 +23,22 @@ copy_setports ns3/named.conf.in ns3/named.conf
 copy_setports ns4/named.conf.in ns4/named.conf
 copy_setports ns5/named.conf.in ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
+copy_setports ns7/named.conf.in ns7/named.conf
+
+if $SHELL ../testcrypto.sh ed25519; then
+	echo "yes" > ed25519-supported.file
+fi
+
+if $SHELL ../testcrypto.sh ed448; then
+	echo "yes" > ed448-supported.file
+fi
+
+copy_setports ns3/policies/autosign.conf.in ns3/policies/autosign.conf
+copy_setports ns3/policies/kasp.conf.in ns3/policies/kasp.conf
+
+copy_setports ns6/policies/csk1.conf.in ns6/policies/csk1.conf
+copy_setports ns6/policies/csk2.conf.in ns6/policies/csk2.conf
+copy_setports ns6/policies/kasp.conf.in ns6/policies/kasp.conf
 
 # Setup zones
 (
@@ -43,5 +59,9 @@ copy_setports ns6/named.conf.in ns6/named.conf
 )
 (
 	cd ns6
+	$SHELL setup.sh
+)
+(
+	cd ns7
 	$SHELL setup.sh
 )

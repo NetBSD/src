@@ -1,11 +1,11 @@
-/*	$NetBSD: socket.c,v 1.1.1.9 2020/08/03 17:07:15 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.10 2021/02/19 16:37:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -356,7 +356,7 @@ struct isc__socket {
 	unsigned int listener : 1,	       /* listener socket */
 		connected : 1, connecting : 1, /* connect pending
 						* */
-		bound : 1,		       /* bound to local addr */
+		bound  : 1,		       /* bound to local addr */
 		dupped : 1, active : 1,	       /* currently active */
 		pktdscp : 1;		       /* per packet dscp */
 
@@ -485,17 +485,19 @@ setdscp(isc__socket_t *sock, isc_dscp_t dscp);
 /*%
  * Shortcut index arrays to get access to statistics counters.
  */
-enum { STATID_OPEN = 0,
-       STATID_OPENFAIL = 1,
-       STATID_CLOSE = 2,
-       STATID_BINDFAIL = 3,
-       STATID_CONNECTFAIL = 4,
-       STATID_CONNECT = 5,
-       STATID_ACCEPTFAIL = 6,
-       STATID_ACCEPT = 7,
-       STATID_SENDFAIL = 8,
-       STATID_RECVFAIL = 9,
-       STATID_ACTIVE = 10 };
+enum {
+	STATID_OPEN = 0,
+	STATID_OPENFAIL = 1,
+	STATID_CLOSE = 2,
+	STATID_BINDFAIL = 3,
+	STATID_CONNECTFAIL = 4,
+	STATID_CONNECT = 5,
+	STATID_ACCEPTFAIL = 6,
+	STATID_ACCEPT = 7,
+	STATID_SENDFAIL = 8,
+	STATID_RECVFAIL = 9,
+	STATID_ACTIVE = 10
+};
 static const isc_statscounter_t udp4statsindex[] = {
 	isc_sockstatscounter_udp4open,
 	isc_sockstatscounter_udp4openfail,
@@ -705,7 +707,13 @@ watch_fd(isc__socketthread_t *thread, int fd, int msg) {
 	event.data.fd = fd;
 
 	op = (oldevents == 0U) ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+	if (thread->fds[fd] != NULL) {
+		LOCK(&thread->fds[fd]->lock);
+	}
 	ret = epoll_ctl(thread->epoll_fd, op, fd, &event);
+	if (thread->fds[fd] != NULL) {
+		UNLOCK(&thread->fds[fd]->lock);
+	}
 	if (ret == -1) {
 		if (errno == EEXIST) {
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -719,7 +727,6 @@ watch_fd(isc__socketthread_t *thread, int fd, int msg) {
 	return (result);
 #elif defined(USE_DEVPOLL)
 	struct pollfd pfd;
-	int lockid = FDLOCK_ID(fd);
 
 	memset(&pfd, 0, sizeof(pfd));
 	if (msg == SELECT_POKE_READ) {
@@ -895,7 +902,6 @@ wakeup_socket(isc__socketthread_t *thread, int fd, int msg) {
 		UNLOCK(&thread->fdlock[lockid]);
 		return;
 	}
-	UNLOCK(&thread->fdlock[lockid]);
 
 	/*
 	 * Set requested bit.
@@ -912,6 +918,7 @@ wakeup_socket(isc__socketthread_t *thread, int fd, int msg) {
 			      "failed to start watching FD (%d): %s", fd,
 			      isc_result_totext(result));
 	}
+	UNLOCK(&thread->fdlock[lockid]);
 }
 
 /*
@@ -1530,6 +1537,16 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 		SOFT_OR_HARD(EHOSTUNREACH, ISC_R_HOSTUNREACH);
 		SOFT_OR_HARD(EHOSTDOWN, ISC_R_HOSTDOWN);
 		SOFT_OR_HARD(ENOBUFS, ISC_R_NORESOURCES);
+		/*
+		 * Older operating systems may still return EPROTO in some
+		 * situations, for example when receiving ICMP/ICMPv6 errors.
+		 * A real life scenario is when ICMPv6 returns code 5 or 6.
+		 * These codes are introduced in RFC 4443 from March 2006,
+		 * and the document obsoletes RFC 1885. But unfortunately not
+		 * all operating systems have caught up with the new standard
+		 * (in 2020) and thus a generic protocol error is returned.
+		 */
+		SOFT_OR_HARD(EPROTO, ISC_R_HOSTUNREACH);
 		/* Should never get this one but it was seen. */
 #ifdef ENOPROTOOPT
 		SOFT_OR_HARD(ENOPROTOOPT, ISC_R_HOSTUNREACH);
@@ -2007,7 +2024,6 @@ set_sndbuf(void) {
 	socklen_t len;
 
 	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-#if defined(ISC_PLATFORM_HAVEIPV6)
 	if (fd == -1) {
 		switch (errno) {
 		case EPROTONOSUPPORT:
@@ -2022,7 +2038,6 @@ set_sndbuf(void) {
 			break;
 		}
 	}
-#endif /* if defined(ISC_PLATFORM_HAVEIPV6) */
 	if (fd == -1) {
 		return;
 	}
@@ -3003,7 +3018,7 @@ internal_accept(isc__socket_t *sock) {
 		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPT]);
 	} else {
 		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPTFAIL]);
-		(void)isc_refcount_decrement(&NEWCONNSOCK(dev)->references);
+		isc_refcount_decrementz(&NEWCONNSOCK(dev)->references);
 		free_socket((isc__socket_t **)&dev->newsocket);
 	}
 
@@ -3076,7 +3091,6 @@ finish:
 		unwatch_fd(&sock->manager->threads[sock->threadid], sock->fd,
 			   SELECT_POKE_READ);
 	}
-	UNLOCK(&sock->lock);
 }
 
 static void
@@ -3116,7 +3130,6 @@ finish:
 		unwatch_fd(&sock->manager->threads[sock->threadid], sock->fd,
 			   SELECT_POKE_WRITE);
 	}
-	UNLOCK(&sock->lock);
 }
 
 /*
@@ -3162,14 +3175,6 @@ process_fd(isc__socketthread_t *thread, int fd, bool readable, bool writeable) {
 	}
 
 	REQUIRE(readable || writeable);
-	if (readable) {
-		if (sock->listener) {
-			internal_accept(sock);
-		} else {
-			internal_recv(sock);
-		}
-	}
-
 	if (writeable) {
 		if (sock->connecting) {
 			internal_connect(sock);
@@ -3178,7 +3183,17 @@ process_fd(isc__socketthread_t *thread, int fd, bool readable, bool writeable) {
 		}
 	}
 
-	/* sock->lock is unlocked in internal_* function */
+	if (readable) {
+		if (sock->listener) {
+			internal_accept(sock); /* unlocks sock */
+		} else {
+			internal_recv(sock);
+			UNLOCK(&sock->lock);
+		}
+	} else {
+		UNLOCK(&sock->lock);
+	}
+
 	UNLOCK(&thread->fdlock[lockid]);
 
 	/*
@@ -3766,13 +3781,11 @@ cleanup_thread(isc_mem_t *mctx, isc__socketthread_t *thread) {
 	isc_mem_put(thread->manager->mctx, thread->fdstate,
 		    thread->manager->maxsocks * sizeof(int));
 
-	if (thread->fdlock != NULL) {
-		for (i = 0; i < FDLOCK_COUNT; i++) {
-			isc_mutex_destroy(&thread->fdlock[i]);
-		}
-		isc_mem_put(thread->manager->mctx, thread->fdlock,
-			    FDLOCK_COUNT * sizeof(isc_mutex_t));
+	for (i = 0; i < FDLOCK_COUNT; i++) {
+		isc_mutex_destroy(&thread->fdlock[i]);
 	}
+	isc_mem_put(thread->manager->mctx, thread->fdlock,
+		    FDLOCK_COUNT * sizeof(isc_mutex_t));
 }
 
 isc_result_t
@@ -4246,22 +4259,34 @@ isc_socket_cleanunix(const isc_sockaddr_t *sockaddr, bool active) {
 #define S_ISSOCK(mode) 0
 #endif /* ifndef S_ISSOCK */
 
-	if (active) {
-		if (stat(sockaddr->type.sunix.sun_path, &sb) < 0) {
+	if (stat(sockaddr->type.sunix.sun_path, &sb) < 0) {
+		switch (errno) {
+		case ENOENT:
+			if (active) { /* We exited cleanly last time */
+				break;
+			}
+			/* intentional fallthrough */
+		default:
 			strerror_r(errno, strbuf, sizeof(strbuf));
 			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-				      ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
+				      ISC_LOGMODULE_SOCKET,
+				      active ? ISC_LOG_ERROR : ISC_LOG_WARNING,
 				      "isc_socket_cleanunix: stat(%s): %s",
 				      sockaddr->type.sunix.sun_path, strbuf);
 			return;
 		}
+	} else {
 		if (!(S_ISSOCK(sb.st_mode) || S_ISFIFO(sb.st_mode))) {
 			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-				      ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
+				      ISC_LOGMODULE_SOCKET,
+				      active ? ISC_LOG_ERROR : ISC_LOG_WARNING,
 				      "isc_socket_cleanunix: %s: not a socket",
 				      sockaddr->type.sunix.sun_path);
 			return;
 		}
+	}
+
+	if (active) {
 		if (unlink(sockaddr->type.sunix.sun_path) < 0) {
 			strerror_r(errno, strbuf, sizeof(strbuf));
 			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
@@ -4280,29 +4305,6 @@ isc_socket_cleanunix(const isc_sockaddr_t *sockaddr, bool active) {
 			      "isc_socket_cleanunix: socket(%s): %s",
 			      sockaddr->type.sunix.sun_path, strbuf);
 		return;
-	}
-
-	if (stat(sockaddr->type.sunix.sun_path, &sb) < 0) {
-		switch (errno) {
-		case ENOENT: /* We exited cleanly last time */
-			break;
-		default:
-			strerror_r(errno, strbuf, sizeof(strbuf));
-			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-				      ISC_LOGMODULE_SOCKET, ISC_LOG_WARNING,
-				      "isc_socket_cleanunix: stat(%s): %s",
-				      sockaddr->type.sunix.sun_path, strbuf);
-			break;
-		}
-		goto cleanup;
-	}
-
-	if (!(S_ISSOCK(sb.st_mode) || S_ISFIFO(sb.st_mode))) {
-		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-			      ISC_LOGMODULE_SOCKET, ISC_LOG_WARNING,
-			      "isc_socket_cleanunix: %s: not a socket",
-			      sockaddr->type.sunix.sun_path);
-		goto cleanup;
 	}
 
 	if (connect(s, (const struct sockaddr *)&sockaddr->type.sunix,
@@ -4330,7 +4332,6 @@ isc_socket_cleanunix(const isc_sockaddr_t *sockaddr, bool active) {
 			break;
 		}
 	}
-cleanup:
 	close(s);
 #else  /* ifdef ISC_PLATFORM_HAVESYSUNH */
 	UNUSED(sockaddr);
@@ -4954,7 +4955,6 @@ internal_connect(isc__socket_t *sock) {
 finish:
 	unwatch_fd(&sock->manager->threads[sock->threadid], sock->fd,
 		   SELECT_POKE_CONNECT);
-	UNLOCK(&sock->lock);
 }
 
 isc_result_t
@@ -5098,7 +5098,7 @@ isc_socket_cancel(isc_socket_t *sock0, isc_task_t *task, unsigned int how) {
 				ISC_LIST_UNLINK(sock->accept_list, dev,
 						ev_link);
 
-				(void)isc_refcount_decrement(
+				isc_refcount_decrementz(
 					&NEWCONNSOCK(dev)->references);
 				free_socket((isc__socket_t **)&dev->newsocket);
 

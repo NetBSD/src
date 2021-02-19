@@ -29,7 +29,7 @@ view "internal" {
 	};
 
 	zone "normal.example" {
-		type master;
+		type primary;
 		file "generic.db";
 		allow-query { none; };
 	};

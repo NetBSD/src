@@ -60,4 +60,4 @@ logging {
 
 zone "." { type hint; file "hints"; };
 
-zone "tld2."{ type master; file "tld2.db"; };
+zone "tld2."{ type primary; file "tld2.db"; };

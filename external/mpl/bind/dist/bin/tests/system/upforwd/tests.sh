@@ -4,22 +4,35 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# ns1 = stealth master
-# ns2 = slave with update forwarding disabled; not currently used
-# ns3 = slave with update forwarding enabled
+# ns1 = stealth primary
+# ns2 = secondary with update forwarding disabled; not currently used
+# ns3 = secondary with update forwarding enabled
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 DIGOPTS="+tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p ${PORT}"
+RNDCCMD="$RNDC -p ${CONTROLPORT} -c ../common/rndc.conf"
 
 status=0
 n=1
+capture_dnstap() {
+	retry_quiet 20 test -f ns3/dnstap.out && mv ns3/dnstap.out dnstap.out.$n
+	$RNDCCMD -s 10.53.0.3 dnstap -reopen
+}
+
+uq_equals_ur() {
+	"$DNSTAPREAD" dnstap.out.$n |
+        awk '$3 == "UQ" { UQ+=1 } $3 == "UR" { UR += 1 } END { print UQ+0, UR+0 }' > dnstapread.out$n
+        read UQ UR < dnstapread.out$n
+	echo_i "UQ=$UQ UR=$UR"
+        test $UQ -eq $UR || return 1
+}
 
 echo_i "waiting for servers to be ready for testing ($n)"
 for i in 1 2 3 4 5 6 7 8 9 10
@@ -37,20 +50,20 @@ done
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 n=`expr $n + 1`
 
-echo_i "fetching master copy of zone before update ($n)"
+echo_i "fetching primary copy of zone before update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.1 axfr > dig.out.ns1 || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 n=`expr $n + 1`
 
-echo_i "fetching slave 1 copy of zone before update ($n)"
+echo_i "fetching secondary 1 copy of zone before update ($n)"
 $DIG $DIGOPTS example.\
 	@10.53.0.2 axfr > dig.out.ns2 || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 n=`expr $n + 1`
 
-echo_i "fetching slave 2 copy of zone before update ($n)"
+echo_i "fetching secondary 2 copy of zone before update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.3 axfr > dig.out.ns3 || ret=1
@@ -78,20 +91,20 @@ n=`expr $n + 1`
 echo_i "sleeping 15 seconds for server to incorporate changes"
 sleep 15
 
-echo_i "fetching master copy of zone after update ($n)"
+echo_i "fetching primary copy of zone after update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.1 axfr > dig.out.ns1 || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 n=`expr $n + 1`
 
-echo_i "fetching slave 1 copy of zone after update ($n)"
+echo_i "fetching secondary 1 copy of zone after update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.2 axfr > dig.out.ns2 || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 
-echo_i "fetching slave 2 copy of zone after update ($n)"
+echo_i "fetching secondary 2 copy of zone after update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.3 axfr > dig.out.ns3 || ret=1
@@ -111,6 +124,17 @@ grep "forwarding update for zone 'example/IN'" ns3/named.run > /dev/null || ret=
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 n=`expr $n + 1`
 
+if $FEATURETEST --enable-dnstap
+then
+	echo_i "checking DNSTAP logging of UPDATE forwarded update replies ($n)"
+	ret=0
+	capture_dnstap
+	uq_equals_ur || ret=1
+	if [ $ret != 0 ] ; then echo_i "failed"; fi
+	status=`expr $status + $ret`
+	n=`expr $n + 1`
+fi
+
 echo_i "updating zone (unsigned) ($n)"
 ret=0
 $NSUPDATE -- - <<EOF || ret=1
@@ -125,20 +149,20 @@ n=`expr $n + 1`
 echo_i "sleeping 15 seconds for server to incorporate changes"
 sleep 15
 
-echo_i "fetching master copy of zone after update ($n)"
+echo_i "fetching primary copy of zone after update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.1 axfr > dig.out.ns1 || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 
-echo_i "fetching slave 1 copy of zone after update ($n)"
+echo_i "fetching secondary 1 copy of zone after update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.2 axfr > dig.out.ns2 || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 n=`expr $n + 1`
 
-echo_i "fetching slave 2 copy of zone after update ($n)"
+echo_i "fetching secondary 2 copy of zone after update ($n)"
 ret=0
 $DIG $DIGOPTS example.\
 	@10.53.0.3 axfr > dig.out.ns3 || ret=1
@@ -150,9 +174,20 @@ digcomp knowngood.after2 dig.out.ns1 || ret=1
 digcomp knowngood.after2 dig.out.ns2 || ret=1
 digcomp knowngood.after2 dig.out.ns3 || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
+
+if $FEATURETEST --enable-dnstap
+then
+	echo_i "checking DNSTAP logging of UPDATE forwarded update replies ($n)"
+	ret=0
+	capture_dnstap
+	uq_equals_ur || ret=1
+	if [ $ret != 0 ] ; then echo_i "failed"; fi
+	status=`expr $status + $ret`
+	n=`expr $n + 1`
+fi
 n=`expr $n + 1`
 
-echo_i "checking update forwarding to dead master ($n)"
+echo_i "checking update forwarding to dead primary ($n)"
 count=0
 ret=0
 while [ $count -lt 5 -a $ret -eq 0 ]
@@ -173,6 +208,17 @@ done
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 n=`expr $n + 1`
 
+if $FEATURETEST --enable-dnstap
+then
+	echo_i "checking DNSTAP logging of UPDATE forwarded update replies ($n)"
+	ret=0
+	capture_dnstap
+	uq_equals_ur && ret=1
+	if [ $ret != 0 ] ; then echo_i "failed"; fi
+	status=`expr $status + $ret`
+	n=`expr $n + 1`
+fi
+
 if test -f keyname
 then
 	echo_i "checking update forwarding to with sig0 ($n)"
@@ -190,6 +236,17 @@ EOF
 	if [ $ret != 0 ] ; then echo_i "failed"; fi
 	status=`expr $status + $ret`
 	n=`expr $n + 1`
+
+	if $FEATURETEST --enable-dnstap
+	then
+		echo_i "checking DNSTAP logging of UPDATE forwarded update replies ($n)"
+		ret=0
+		capture_dnstap
+		uq_equals_ur || ret=1
+		if [ $ret != 0 ] ; then echo_i "failed"; fi
+		status=`expr $status + $ret`
+		n=`expr $n + 1`
+	fi
 fi
 
 echo_i "exit status: $status"

@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -34,22 +34,30 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``named-rrchecker`` read a individual DNS resource record from standard
-input and checks if it is syntactically correct.
+``named-rrchecker`` reads a individual DNS resource record from standard
+input and checks whether it is syntactically correct.
 
-The ``-h`` prints out the help menu.
+Options
+~~~~~~~
 
-The ``-o origin`` option specifies a origin to be used when interpreting
-the record.
+``-h``
+   This option prints out the help menu.
 
-The ``-p`` prints out the resulting record in canonical form. If there
-is no canonical form defined then the record will be printed in unknown
-record format.
+``-o origin``
+   This option specifies the origin to be used when interpreting
+   the record.
 
-The ``-u`` prints out the resulting record in unknown record form.
+``-p``
+   This option prints out the resulting record in canonical form. If there
+   is no canonical form defined, the record is printed in unknown
+   record format.
 
-The ``-C``, ``-T`` and ``-P`` print out the known class, standard type
-and private type mnemonics respectively.
+``-u``
+   This option prints out the resulting record in unknown record form.
+
+``-C``, ``-T``, and ``-P``
+   These options print out the known class, standard type,
+   and private type mnemonics, respectively.
 
 See Also
 ~~~~~~~~

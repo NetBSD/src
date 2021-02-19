@@ -25,16 +25,16 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "flushtest.example" {
-	type master;
+	type primary;
 	file "flushtest.db";
 };
 
 zone "expire-test" {
-	type master;
+	type primary;
 	file "expire-test.db";
 };

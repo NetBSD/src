@@ -41,132 +41,132 @@ zone "." {
 };
 
 zone "trusted" {
-	type master;
+	type primary;
 	file "trusted.db.signed";
 };
 
 zone "managed" {
-	type master;
+	type primary;
 	file "managed.db.signed";
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db.signed";
 	allow-update { any; };
 };
 
 zone "insecure.secure.example" {
-	type master;
+	type primary;
 	file "insecure.secure.example.db";
 	allow-update { any; };
 };
 
 zone "rfc2335.example" {
-	type master;
+	type primary;
 	file "rfc2335.example.db";
 };
 
 zone "child.nsec3.example" {
-	type master;
+	type primary;
 	file "child.nsec3.example.db";
 	allow-update { none; };
 };
 
 zone "child.optout.example" {
-	type master;
+	type primary;
 	file "child.optout.example.db";
 	allow-update { none; };
 };
 
 zone "badparam" {
-	type master;
+	type primary;
 	file "badparam.db.bad";
 };
 
 zone "single-nsec3" {
-	type master;
+	type primary;
 	file "single-nsec3.db.signed";
 };
 
 zone "algroll" {
-	type master;
+	type primary;
 	file "algroll.db.signed";
 };
 
 zone "nsec3chain-test" {
-	type master;
+	type primary;
 	file "nsec3chain-test.db.signed";
 	allow-update {any;};
 };
 
 zone "in-addr.arpa" {
-	type master;
+	type primary;
 	file "in-addr.arpa.db.signed";
 };
 
 zone "cds.secure" {
-	type master;
+	type primary;
 	file "cds.secure.db.signed";
 };
 
 zone "cds-x.secure" {
-	type master;
+	type primary;
 	file "cds-x.secure.db.signed";
 };
 
 zone "cds-update.secure" {
-	type master;
+	type primary;
 	file "cds-update.secure.db.signed";
 	allow-update { any; };
 };
 
 zone "cds-kskonly.secure" {
-	type master;
+	type primary;
 	dnssec-dnskey-kskonly yes;
 	file "cds-kskonly.secure.db.signed";
 	allow-update { any; };
 };
 
 zone "cds-auto.secure" {
-	type master;
+	type primary;
 	file "cds-auto.secure.db.signed";
 	auto-dnssec maintain;
 	allow-update { any; };
 };
 
 zone "cdnskey.secure" {
-	type master;
+	type primary;
 	file "cdnskey.secure.db.signed";
 };
 
 zone "cdnskey-x.secure" {
-	type master;
+	type primary;
 	file "cdnskey-x.secure.db.signed";
 };
 
 zone "cdnskey-update.secure" {
-	type master;
+	type primary;
 	file "cdnskey-update.secure.db.signed";
 	allow-update { any; };
 };
 
 zone "cdnskey-kskonly.secure" {
-	type master;
+	type primary;
 	dnssec-dnskey-kskonly yes;
 	file "cdnskey-kskonly.secure.db.signed";
 	allow-update { any; };
 };
 
 zone "cdnskey-auto.secure" {
-	type master;
+	type primary;
 	file "cdnskey-auto.secure.db.signed";
 	auto-dnssec maintain;
 	allow-update { any; };
 };
 
 zone "updatecheck-kskonly.secure" {
-	type master;
+	type primary;
 	auto-dnssec maintain;
 	key-directory ".";
 	dnssec-dnskey-kskonly yes;
@@ -178,8 +178,17 @@ zone "updatecheck-kskonly.secure" {
 };
 
 zone "corp" {
-	type master;
+	type primary;
 	file "corp.db";
+};
+
+zone "hours-vs-days" {
+	type master;
+	file "hours-vs-days.db.signed";
+	auto-dnssec maintain;
+	/* validity 500 days, resign in 499 days */
+	sig-validity-interval 500 499;
+	allow-update { any; };
 };
 
 include "trusted.conf";

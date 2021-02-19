@@ -19,9 +19,12 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	dnssec-validation no;
+	max-udp-size 4096;
+	edns-udp-size 4096;
+	nocookie-udp-size 4096;
 };
 
 zone "edns512-notcp" {
-	type master;
+	type primary;
 	file "edns512-notcp.db.signed";
 };

@@ -27,7 +27,7 @@ zone "." {
 };
 
 zone "x21" {
-	type slave;
-	masters { 10.53.0.2 port @PORT@; };
+	type secondary;
+	primaries { 10.53.0.2 port @PORT@; };
 	file "x21.bk";
 };

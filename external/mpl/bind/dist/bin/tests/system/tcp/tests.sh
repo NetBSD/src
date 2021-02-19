@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -181,6 +181,14 @@ ret=0
 close_connections 0 || ret=1
 dig_with_opts +tcp @10.53.0.5 txt.example > dig.out.test$n || ret=1
 grep "status: NXDOMAIN" dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that BIND 9 doesn't crash on long TCP messages ($n)"
+ret=0
+{ $PERL ../packet.pl -a "10.53.0.1" -p "${PORT}" -t tcp -r 300000 1996-alloc_dnsbuf-crash-test.pkt || ret=1 ; } | cat_i
+dig_with_opts +tcp @10.53.0.1 txt.example > dig.out.test$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

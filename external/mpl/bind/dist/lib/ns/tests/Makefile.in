@@ -15,11 +15,7 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-WRAP_INTERPOSE=	@WRAP_INTERPOSE@
-WRAP_OPTIONS =	-Wl,--wrap=isc_nmhandle_unref
-WRAP_NAME =	-Wl,-install_name,${top_builddir}/lib/ns/tests/$@
-WRAP_RPATH =	-Wl,-rpath,${top_builddir}/lib/ns/tests
-WRAP_LIB =	-L${top_builddir}/lib/ns/tests -lwrap
+WRAP_OPTIONS =	-Wl,--wrap=isc__nmhandle_detach -Wl,--wrap=isc__nmhandle_attach
 
 CINCLUDES =	-I. -Iinclude ${NS_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
 		${OPENSSL_CFLAGS} \
@@ -38,10 +34,6 @@ LIBS =		@LIBS@ @CMOCKA_LIBS@
 SO_CFLAGS =	@CFLAGS@ @SO_CFLAGS@
 SO_LDFLAGS =	@LDFLAGS@ @SO_LDFLAGS@
 
-SO_OBJS =	wrap.@O@
-SO_SRCS =	wrap.c
-SO_TARGETS =	libwrap.@SO@
-
 OBJS =		nstest.@O@
 SRCS =		nstest.c \
 		listenlist_test.c \
@@ -53,39 +45,35 @@ SUBDIRS =
 TARGETS =	listenlist_test@EXEEXT@ \
 		notify_test@EXEEXT@ \
 		plugin_test@EXEEXT@ \
-		query_test@EXEEXT@ \
-		@SO_TARGETS@
+		query_test@EXEEXT@
 
 LD_WRAP_TESTS=@LD_WRAP_TESTS@
 
 @BIND9_MAKE_RULES@
 
-libwrap.@SO@: wrap.@O@
-	${LIBTOOL_MODE_LINK} @SO_LD@ ${SO_LDFLAGS} ${WRAP_INTERPOSE} @WRAP_NAME@ -o $@ wrap.@O@ ${LIBS}
-
-listenlist_test@EXEEXT@: listenlist_test.@O@ nstest.@O@ libwrap.@SO@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
+listenlist_test@EXEEXT@: listenlist_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
 	if test "${LD_WRAP_TESTS}" = true -a -z "${LIBTOOL}"; then WRAP="${WRAP_OPTIONS}"; fi; \
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
-		${LDFLAGS} $${WRAP} ${WRAP_RPATH} -o $@ listenlist_test.@O@ nstest.@O@ \
-		${WRAP_LIB} ${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
+		${LDFLAGS} $${WRAP} -o $@ listenlist_test.@O@ nstest.@O@ \
+		${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-notify_test@EXEEXT@: notify_test.@O@ nstest.@O@ libwrap.@SO@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
+notify_test@EXEEXT@: notify_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
 	if test "${LD_WRAP_TESTS}" = true -a -z "${LIBTOOL}"; then WRAP="${WRAP_OPTIONS}"; fi; \
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
-		${LDFLAGS} $${WRAP} ${WRAP_RPATH} -o $@ notify_test.@O@ nstest.@O@ \
-		${WRAP_LIB} ${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
+		${LDFLAGS} $${WRAP} -o $@ notify_test.@O@ nstest.@O@ \
+		${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-plugin_test@EXEEXT@: plugin_test.@O@ nstest.@O@ libwrap.@SO@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
+plugin_test@EXEEXT@: plugin_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
 	if test "${LD_WRAP_TESTS}" = true -a -z "${LIBTOOL}"; then WRAP="${WRAP_OPTIONS}"; fi; \
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
-		${LDFLAGS} $${WRAP} ${WRAP_RPATH} -o $@ plugin_test.@O@ nstest.@O@ \
-		${WRAP_LIB} ${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
+		${LDFLAGS} $${WRAP} -o $@ plugin_test.@O@ nstest.@O@ \
+		${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-query_test@EXEEXT@: query_test.@O@ nstest.@O@ libwrap.@SO@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
+query_test@EXEEXT@: query_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
 	if test "${LD_WRAP_TESTS}" = true -a -z "${LIBTOOL}"; then WRAP="${WRAP_OPTIONS}"; fi; \
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
-		${LDFLAGS} $${WRAP} ${WRAP_RPATH} -o $@ query_test.@O@ nstest.@O@ \
-		${WRAP_LIB} ${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
+		${LDFLAGS} $${WRAP} -o $@ query_test.@O@ nstest.@O@ \
+		${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 unit::
 	sh ${top_builddir}/unit/unittest.sh

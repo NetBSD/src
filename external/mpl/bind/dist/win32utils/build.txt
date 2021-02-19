@@ -40,7 +40,7 @@ Step 1: Download and build libuv
 
   Download and untar the libuv sources from https://libuv.org/ in the same
   directory in which you extracted the BIND 9 source: if BIND 9 is in
-  \build\bind-9.16.0, for instance, libuv should be in \build\libuv-v1.34.2
+  \build\bind-9.16.9, for instance, libuv should be in \build\libuv-v1.40.0
   (subject to version number changes).
 
   As of this writing, a patch (win32utils/libuv.diff) needs to be applied
@@ -53,15 +53,14 @@ Step 1: Download and build libuv
   Applying the win32utils/libuv.diff patch will no longer be necessary
   for libuv versions released after this pull request has been merged.
 
-  To build libuv, use the vcbuild.bat script in the root directory of
-  libuv's source tree.  Here is a sample command which builds a 64-bit
-  shared libuv library:
+  On Windows, libuv is built using CMake.  Here is a sample sequence of
+  commands which builds a 64-bit shared libuv library:
 
-      cd libuv-v1.34.2
-      vcbuild.bat x64 shared
-
-  The vcbuild.bat script supports several command line switches which can
-  be listed by running "vcbuild.bat --help".
+      cd libuv-v1.40.0
+      mkdir build
+      cd build
+      cmake -DCMAKE_GENERATOR_PLATFORM=x64 ..
+      cmake --build . --config Release
 
 Step 2: Download and build OpenSSL
 

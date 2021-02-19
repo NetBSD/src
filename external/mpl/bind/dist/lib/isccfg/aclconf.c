@@ -1,11 +1,11 @@
-/*	$NetBSD: aclconf.c,v 1.1.1.5 2020/05/24 19:36:47 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.1.1.6 2021/02/19 16:37:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -645,6 +645,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		new_nest_level = nest_level - 1;
 	}
 
+	REQUIRE(ctx != NULL);
 	REQUIRE(target != NULL);
 	REQUIRE(*target == NULL || DNS_ACL_VALID(*target));
 

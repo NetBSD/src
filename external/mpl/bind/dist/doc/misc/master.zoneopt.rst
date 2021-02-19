@@ -6,7 +6,7 @@
   	allow-query-on { <address_match_element>; ... };
   	allow-transfer { <address_match_element>; ... };
   	allow-update { <address_match_element>; ... };
-  	also-notify [ port <integer> ] [ dscp <integer> ] { ( <masters> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
+  	also-notify [ port <integer> ] [ dscp <integer> ] { ( <primaries> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
   	alt-transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
   	alt-transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
   	auto-dnssec ( allow | maintain | off );
@@ -42,7 +42,7 @@
   	max-transfer-idle-out <integer>;
   	max-transfer-time-out <integer>;
   	max-zone-ttl ( unlimited | <duration> );
-  	notify ( explicit | master-only | <boolean> );
+  	notify ( explicit | master-only | primary-only | <boolean> );
   	notify-delay <integer>;
   	notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
   	notify-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];

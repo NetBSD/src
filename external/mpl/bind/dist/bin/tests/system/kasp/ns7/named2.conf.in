@@ -1,0 +1,81 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS7
+
+options {
+	query-source address 10.53.0.7;
+	notify-source 10.53.0.7;
+	transfer-source 10.53.0.7;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.7; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	key-directory ".";
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
+controls {
+	inet 10.53.0.7 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+key "external" {
+	algorithm "hmac-sha1";
+	secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
+};
+
+key "internal" {
+	algorithm "hmac-sha1";
+	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
+};
+
+dnssec-policy "rsasha256" {
+	keys {
+		zsk key-directory lifetime P3M algorithm 8 1024;
+		ksk key-directory lifetime P1Y algorithm 8 2048;
+	};
+
+	dnskey-ttl 6h;
+	publish-safety 1h;
+	retire-safety 1h;
+
+	signatures-refresh 5d;
+	signatures-validity 14d;
+	signatures-validity-dnskey 14d;
+
+	max-zone-ttl 1d;
+	zone-propagation-delay 300;
+
+	parent-ds-ttl 86400;
+	parent-propagation-delay 3h;
+};
+
+view "external-view" {
+	zone "view-rsasha256.kasp" {
+		type master;
+		file "view-rsasha256.kasp.ext.db";
+		dnssec-policy "rsasha256";
+	};
+};
+
+view "internal-view" {
+	zone "view-rsasha256.kasp" {
+		type master;
+		file "view-rsasha256.kasp.int.db";
+		dnssec-policy "rsasha256";
+	};
+};

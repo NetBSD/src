@@ -30,41 +30,41 @@ controls {
 };
 
 zone "." {
-        type master;
+        type primary;
         file "root.db";
 };
 
 zone "mx.example" {
-	type master;
+	type primary;
 	file "mx.db";
 };
 
 zone "srv.example" {
-	type master;
+	type primary;
 	file "srv.db";
 };
 
 zone "rt.example" {
-	type master;
+	type primary;
 	file "rt.db";
 };
 
 zone "naptr.example" {
-	type master;
+	type primary;
 	file "naptr.db";
 };
 
 zone "rt2.example" {
-	type master;
+	type primary;
 	file "rt2.db";
 };
 
 zone "naptr2.example" {
-	type master;
+	type primary;
 	file "naptr2.db";
 };
 
 zone "nid.example" {
-	type master;
+	type primary;
 	file "nid.db";
 };

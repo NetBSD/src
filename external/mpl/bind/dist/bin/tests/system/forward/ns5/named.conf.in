@@ -29,6 +29,6 @@ zone "." {
 };
 
 zone "rebind" {
-	type master;
+	type primary;
 	file "rebind.db";
 };

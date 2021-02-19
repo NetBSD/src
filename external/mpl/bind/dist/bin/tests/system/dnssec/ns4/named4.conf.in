@@ -64,12 +64,12 @@ view auth {
 	allow-recursion { none; };
 
 	zone secure.example {
-		type slave;
-		masters { 10.53.0.3; };
+		type secondary;
+		primaries { 10.53.0.3; };
 	};
 
 	zone insecure.secure.example {
-		type slave;
-		masters { 10.53.0.2; };
+		type secondary;
+		primaries { 10.53.0.2; };
 	};
 };

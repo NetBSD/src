@@ -36,7 +36,7 @@ controls {
 view one {
 	match-clients { geoip org "One Systems, Inc."; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example1.db";
 	};
 };
@@ -44,7 +44,7 @@ view one {
 view two {
 	match-clients { geoip org "Two Technology Ltd."; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example2.db";
 	};
 };
@@ -52,7 +52,7 @@ view two {
 view three {
 	match-clients { geoip org "Three Network Labs"; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example3.db";
 	};
 };
@@ -60,7 +60,7 @@ view three {
 view four {
 	match-clients { geoip org "Four University"; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example4.db";
 	};
 };
@@ -68,7 +68,7 @@ view four {
 view five {
 	match-clients { geoip org "Five Telecom"; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example5.db";
 	};
 };
@@ -76,7 +76,7 @@ view five {
 view six {
 	match-clients { geoip org "Six Company"; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example6.db";
 	};
 };
@@ -84,7 +84,7 @@ view six {
 view seven {
 	match-clients { geoip org "Seven Communications"; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example7.db";
 	};
 };
@@ -92,7 +92,7 @@ view seven {
 view none {
 	match-clients { any; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db.in";
 	};
 };

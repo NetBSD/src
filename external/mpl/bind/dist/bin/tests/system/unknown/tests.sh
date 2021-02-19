@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -24,7 +24,7 @@ do
 	echo 10.0.0.1 | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -37,7 +37,7 @@ do
 	echo '"hello"' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -50,7 +50,7 @@ do
 	echo '\# 1 00' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -77,7 +77,7 @@ do
 	echo '\# 4 0A000001' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -90,7 +90,7 @@ do
 	echo '"hello"' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -103,7 +103,7 @@ do
 	echo '\# 1 00' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -116,12 +116,12 @@ do
 	grep "SERVFAIL" dig.out > /dev/null || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
 
-echo_i "checking large unknown record loading on master"
+echo_i "checking large unknown record loading on primary"
 for try in 0 1 2 3 4 5 6 7 8 9; do
     ret=0
     $DIG $DIGOPTS @10.53.0.1 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
@@ -132,7 +132,7 @@ done
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-echo_i "checking large unknown record loading on slave"
+echo_i "checking large unknown record loading on secondary"
 for try in 0 1 2 3 4 5 6 7 8 9; do
     ret=0
     $DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
@@ -143,13 +143,13 @@ done
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-echo_i "stop and restart slave"
+echo_i "stop and restart secondary"
 $PERL $SYSTEMTESTTOP/stop.pl unknown ns2
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} unknown ns2
 
 # server may be answering queries before zones are loaded,
 # so retry a few times if this query fails
-echo_i "checking large unknown record loading on slave"
+echo_i "checking large unknown record loading on secondary"
 for try in 0 1 2 3 4 5 6 7 8 9; do
     ret=0
     $DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
@@ -160,20 +160,20 @@ done
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-echo_i "checking large unknown record loading on inline slave"
+echo_i "checking large unknown record loading on inline secondary"
 ret=0
 $DIG $DIGOPTS @10.53.0.3 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
 $DIFF large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-echo_i "stop and restart inline slave"
+echo_i "stop and restart inline secondary"
 $PERL $SYSTEMTESTTOP/stop.pl unknown ns3
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} unknown ns3
 
 # server may be answering queries before zones are loaded,
 # so retry a few times if this query fails
-echo_i "checking large unknown record loading on inline slave"
+echo_i "checking large unknown record loading on inline secondary"
 for try in 0 1 2 3 4 5 6 7 8 9; do
     ret=0
     $DIG $DIGOPTS @10.53.0.3 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }

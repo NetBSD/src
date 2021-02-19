@@ -36,71 +36,71 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .SH DESCRIPTION
 .sp
 \fBdnssec\-verify\fP verifies that a zone is fully signed for each
-algorithm found in the DNSKEY RRset for the zone, and that the NSEC /
-NSEC3 chains are complete.
+algorithm found in the DNSKEY RRset for the zone, and that the
+NSEC/NSEC3 chains are complete.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-\fB\-c\fP class
-Specifies the DNS class of the zone.
+.B \fB\-c class\fP
+This option specifies the DNS class of the zone.
 .TP
-\fB\-E\fP engine
-Specifies the cryptographic hardware to use, when applicable.
+.B \fB\-E engine\fP
+This option specifies the cryptographic hardware to use, when applicable.
 .sp
-When BIND is built with OpenSSL PKCS#11 support, this defaults to the
-string "pkcs11", which identifies an OpenSSL engine that can drive a
-cryptographic accelerator or hardware service module. When BIND is
-built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it
+When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
+engine identifier that drives the cryptographic accelerator or
+hardware service module (usually \fBpkcs11\fP). When BIND is
+built with native PKCS#11 cryptography (\fB\-\-enable\-native\-pkcs11\fP), it
 defaults to the path of the PKCS#11 provider library specified via
-"\-\-with\-pkcs11".
+\fB\-\-with\-pkcs11\fP\&.
 .TP
-\fB\-I\fP input\-format
-The format of the input zone file. Possible formats are \fB"text"\fP
-(default) and \fB"raw"\fP\&. This option is primarily intended to be used
-for dynamic signed zones so that the dumped zone file in a non\-text
-format containing updates can be verified independently. The use of
-this option does not make much sense for non\-dynamic zones.
+.B \fB\-I input\-format\fP
+This option sets the format of the input zone file. Possible formats are \fBtext\fP
+(the default) and \fBraw\fP\&. This option is primarily intended to be used
+for dynamic signed zones, so that the dumped zone file in a non\-text
+format containing updates can be verified independently.
+This option is not useful for non\-dynamic zones.
 .TP
-\fB\-o\fP origin
-The zone origin. If not specified, the name of the zone file is
+.B \fB\-o origin\fP
+This option indicates the zone origin. If not specified, the name of the zone file is
 assumed to be the origin.
 .TP
-\fB\-v\fP level
-Sets the debugging level.
+.B \fB\-v level\fP
+This option sets the debugging level.
 .TP
-\fB\-V\fP
-Prints version information.
+.B \fB\-V\fP
+This option prints version information.
 .TP
 .B \fB\-q\fP
-Quiet mode: Suppresses output.  Without this option, when \fBdnssec\-verify\fP
-is run it will print to standard output the number of keys in use, the
-algorithms used to verify the zone was signed correctly and other status
-information.  With it, all non\-error output is suppressed, and only the exit
-code will indicate success.
+This option sets quiet mode, which suppresses output.  Without this option, when \fBdnssec\-verify\fP
+is run it prints to standard output the number of keys in use, the
+algorithms used to verify the zone was signed correctly, and other status
+information.  With this option, all non\-error output is suppressed, and only the exit
+code indicates success.
 .TP
-\fB\-x\fP
-Only verify that the DNSKEY RRset is signed with key\-signing keys.
-Without this flag, it is assumed that the DNSKEY RRset will be signed
-by all active keys. When this flag is set, it will not be an error if
+.B \fB\-x\fP
+This option verifies only that the DNSKEY RRset is signed with key\-signing keys.
+Without this flag, it is assumed that the DNSKEY RRset is signed
+by all active keys. When this flag is set, it is not an error if
 the DNSKEY RRset is not signed by zone\-signing keys. This corresponds
 to the \fB\-x\fP option in \fBdnssec\-signzone\fP\&.
 .TP
-\fB\-z\fP
-Ignore the KSK flag on the keys when determining whether the zone if
-correctly signed. Without this flag it is assumed that there will be
+.B \fB\-z\fP
+This option indicates that the KSK flag on the keys should be ignored when determining whether the zone is
+correctly signed. Without this flag, it is assumed that there is
 a non\-revoked, self\-signed DNSKEY with the KSK flag set for each
-algorithm and that RRsets other than DNSKEY RRset will be signed with
+algorithm, and that RRsets other than DNSKEY RRset are signed with
 a different DNSKEY without the KSK flag set.
 .sp
-With this flag set, we only require that for each algorithm, there
-will be at least one non\-revoked, self\-signed DNSKEY, regardless of
-the KSK flag state, and that other RRsets will be signed by a
+With this flag set, BIND 9 only requires that for each algorithm, there
+be at least one non\-revoked, self\-signed DNSKEY, regardless of
+the KSK flag state, and that other RRsets be signed by a
 non\-revoked key for the same algorithm that includes the self\-signed
 key; the same key may be used for both purposes. This corresponds to
 the \fB\-z\fP option in \fBdnssec\-signzone\fP\&.
 .TP
-\fBzonefile\fP
-The file containing the zone to be signed.
+.B \fBzonefile\fP
+This option indicates the file containing the zone to be signed.
 .UNINDENT
 .SH SEE ALSO
 .sp
@@ -108,6 +108,6 @@ The file containing the zone to be signed.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2020, Internet Systems Consortium
+2021, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

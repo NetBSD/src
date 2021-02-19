@@ -20,3 +20,7 @@ large.xxx TXT	( large large large large large large large large
 		  large large large large large large large large
 		  large large large large large large large large
 		  large large large large large large large large )
+tld.	NS	ns.tld.
+ns.tld	A	10.53.0.9
+tsig.	NS	ns.tsig.
+ns.tsig	A	10.53.0.10

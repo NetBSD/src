@@ -1,11 +1,11 @@
-/*	$NetBSD: tlsa_52.c,v 1.1.1.5 2020/05/24 19:36:45 christos Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.1.1.6 2021/02/19 16:37:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -130,7 +130,8 @@ generic_fromwire_tlsa(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sr);
 
-	if (sr.length < 3) {
+	/* Usage(1), Selector(1), Type(1), Data(1+) */
+	if (sr.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
 	}
 

@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -45,9 +45,9 @@
 # In zone, with view set to none, zone set to any
 # In zone, with view set to any, zone set to none
 #
-# zone types of master, slave and stub can be tested in parallel by using
-# multiple instances (ns2 as master, ns3 as slave, ns4 as stub) and querying
-# as necessary.
+# zone types of primary, secondary and stub can be tested in parallel by
+# using multiple instances (ns2 as primary, ns3 as secondary, ns4 as stub)
+# and querying as necessary.
 #
 
 SYSTEMTESTTOP=..

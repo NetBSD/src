@@ -42,3 +42,8 @@ nomatch.example.	A	1.2.3.1
 nomatch.example.	A	1.2.3.2
 nomatch.example.	A	1.2.3.3
 nomatch.example.	A	1.2.3.4
+;
+none.example.		A	1.2.3.1
+none.example.		A	1.2.3.2
+none.example.		A	1.2.3.3
+none.example.		A	1.2.3.4

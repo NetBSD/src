@@ -24,44 +24,44 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "ignore.example" {
-	type master;
+	type primary;
 	file "ignore.example.db";
 	check-names ignore;
 };
 
 zone "warn.example" {
-	type master;
+	type primary;
 	file "warn.example.db";
 	check-names warn;
 };
 
 zone "fail.example" {
-	type master;
+	type primary;
 	file "fail.example.db";
 	check-names fail;
 };
 
 zone "ignore.update" {
-	type master;
+	type primary;
 	file "ignore.update.db";
 	allow-update { any; };
 	check-names ignore;
 };
 
 zone "warn.update" {
-	type master;
+	type primary;
 	file "warn.update.db";
 	allow-update { any; };
 	check-names warn;
 };
 
 zone "fail.update" {
-	type master;
+	type primary;
 	file "fail.update.db";
 	allow-update { any; };
 	check-names fail;

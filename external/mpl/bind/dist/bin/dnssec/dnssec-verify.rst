@@ -3,7 +3,7 @@
    
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+   file, you can obtain one at https://mozilla.org/MPL/2.0/.
    
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
@@ -35,72 +35,72 @@ Description
 ~~~~~~~~~~~
 
 ``dnssec-verify`` verifies that a zone is fully signed for each
-algorithm found in the DNSKEY RRset for the zone, and that the NSEC /
-NSEC3 chains are complete.
+algorithm found in the DNSKEY RRset for the zone, and that the
+NSEC/NSEC3 chains are complete.
 
 Options
 ~~~~~~~
 
-**-c** class
-   Specifies the DNS class of the zone.
+``-c class``
+   This option specifies the DNS class of the zone.
 
-**-E** engine
-   Specifies the cryptographic hardware to use, when applicable.
+``-E engine``
+   This option specifies the cryptographic hardware to use, when applicable.
 
-   When BIND is built with OpenSSL PKCS#11 support, this defaults to the
-   string "pkcs11", which identifies an OpenSSL engine that can drive a
-   cryptographic accelerator or hardware service module. When BIND is
-   built with native PKCS#11 cryptography (--enable-native-pkcs11), it
+   When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
+   engine identifier that drives the cryptographic accelerator or
+   hardware service module (usually ``pkcs11``). When BIND is
+   built with native PKCS#11 cryptography (``--enable-native-pkcs11``), it
    defaults to the path of the PKCS#11 provider library specified via
-   "--with-pkcs11".
+   ``--with-pkcs11``.
 
-**-I** input-format
-   The format of the input zone file. Possible formats are ``"text"``
-   (default) and ``"raw"``. This option is primarily intended to be used
-   for dynamic signed zones so that the dumped zone file in a non-text
-   format containing updates can be verified independently. The use of
-   this option does not make much sense for non-dynamic zones.
+``-I input-format``
+   This option sets the format of the input zone file. Possible formats are ``text``
+   (the default) and ``raw``. This option is primarily intended to be used
+   for dynamic signed zones, so that the dumped zone file in a non-text
+   format containing updates can be verified independently.
+   This option is not useful for non-dynamic zones.
 
-**-o** origin
-   The zone origin. If not specified, the name of the zone file is
+``-o origin``
+   This option indicates the zone origin. If not specified, the name of the zone file is
    assumed to be the origin.
 
-**-v** level
-   Sets the debugging level.
+``-v level``
+   This option sets the debugging level.
 
-**-V**
-   Prints version information.
+``-V``
+   This option prints version information.
 
 ``-q``
-   Quiet mode: Suppresses output.  Without this option, when ``dnssec-verify``
-   is run it will print to standard output the number of keys in use, the
-   algorithms used to verify the zone was signed correctly and other status
-   information.  With it, all non-error output is suppressed, and only the exit
-   code will indicate success.
+   This option sets quiet mode, which suppresses output.  Without this option, when ``dnssec-verify``
+   is run it prints to standard output the number of keys in use, the
+   algorithms used to verify the zone was signed correctly, and other status
+   information.  With this option, all non-error output is suppressed, and only the exit
+   code indicates success.
 
-**-x**
-   Only verify that the DNSKEY RRset is signed with key-signing keys.
-   Without this flag, it is assumed that the DNSKEY RRset will be signed
-   by all active keys. When this flag is set, it will not be an error if
+``-x``
+   This option verifies only that the DNSKEY RRset is signed with key-signing keys.
+   Without this flag, it is assumed that the DNSKEY RRset is signed
+   by all active keys. When this flag is set, it is not an error if
    the DNSKEY RRset is not signed by zone-signing keys. This corresponds
    to the ``-x`` option in ``dnssec-signzone``.
 
-**-z**
-   Ignore the KSK flag on the keys when determining whether the zone if
-   correctly signed. Without this flag it is assumed that there will be
+``-z``
+   This option indicates that the KSK flag on the keys should be ignored when determining whether the zone is
+   correctly signed. Without this flag, it is assumed that there is
    a non-revoked, self-signed DNSKEY with the KSK flag set for each
-   algorithm and that RRsets other than DNSKEY RRset will be signed with
+   algorithm, and that RRsets other than DNSKEY RRset are signed with
    a different DNSKEY without the KSK flag set.
 
-   With this flag set, we only require that for each algorithm, there
-   will be at least one non-revoked, self-signed DNSKEY, regardless of
-   the KSK flag state, and that other RRsets will be signed by a
+   With this flag set, BIND 9 only requires that for each algorithm, there
+   be at least one non-revoked, self-signed DNSKEY, regardless of
+   the KSK flag state, and that other RRsets be signed by a
    non-revoked key for the same algorithm that includes the self-signed
    key; the same key may be used for both purposes. This corresponds to
    the ``-z`` option in ``dnssec-signzone``.
 
-**zonefile**
-   The file containing the zone to be signed.
+``zonefile``
+   This option indicates the file containing the zone to be signed.
 
 See Also
 ~~~~~~~~

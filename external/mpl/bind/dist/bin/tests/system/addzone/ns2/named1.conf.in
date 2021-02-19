@@ -31,11 +31,11 @@ zone "." {
 };
 
 zone "normal.example" {
-	type master;
+	type primary;
 	file "normal.db";
 };
 
 zone "finaldot.example." {
-	type master;
+	type primary;
 	file "normal.db";
 };

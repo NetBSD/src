@@ -27,13 +27,13 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 	allow-update { key update.example.; 10.53.0.3; };
 };
 
 zone "example2" {
-	type master;
+	type primary;
 	file "example2.db";
 	allow-update { key sig0.example2.; };
 };
