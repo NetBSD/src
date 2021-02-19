@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.260 2021/02/14 20:58:35 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.261 2021/02/19 14:51:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.260 2021/02/14 20:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.261 2021/02/19 14:51:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -335,7 +335,7 @@ udp_input(struct mbuf *m, int off, int proto)
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
 	 */
-	if (POINTER_ALIGNED_P(uh, UDP_HDR_ALIGNMENT) == 0) {
+	if (ACCESSIBLE_POINTER(uh, struct udphdr) == 0) {
 		m = m_copyup(m, iphlen + sizeof(struct udphdr), 0);
 		if (m == NULL) {
 			UDP_STATINC(UDP_STAT_HDROPS);
@@ -344,7 +344,7 @@ udp_input(struct mbuf *m, int off, int proto)
 		ip = mtod(m, struct ip *);
 		uh = (struct udphdr *)(mtod(m, char *) + iphlen);
 	}
-	KASSERT(POINTER_ALIGNED_P(uh, UDP_HDR_ALIGNMENT));
+	KASSERT(ACCESSIBLE_POINTER(uh, struct udphdr));
 
 	/* destination port of 0 is illegal, based on RFC768. */
 	if (uh->uh_dport == 0)

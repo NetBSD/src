@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.178 2021/02/14 20:58:34 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.179 2021/02/19 14:51:59 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.178 2021/02/14 20:58:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.179 2021/02/19 14:51:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2806,7 +2806,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
 	if (*mp == NULL)
 		return -1;
 
-	if (m_get_aligned_hdr(&m, IP_HDR_ALIGNMENT, sizeof(*ip), true) != 0) {
+	if (M_GET_ALIGNED_HDR(&m, struct ip, true) != 0) {
 		/* XXXJRT new stat, please */
 		ip_statinc(IP_STAT_TOOSMALL);
 		goto bad;
@@ -2900,7 +2900,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
 	 * it.  Otherwise, if it is aligned, make sure the entire base
 	 * IPv6 header is in the first mbuf of the chain.
 	 */
-	if (m_get_aligned_hdr(&m, IP6_HDR_ALIGNMENT, sizeof(*ip6), true) != 0) {
+	if (M_GET_ALIGNED_HDR(&m, struct ip6_hdr, true) != 0) {
 		struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
 		/* XXXJRT new stat, please */
 		ip6_statinc(IP6_STAT_TOOSMALL);
