@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.161 2021/02/19 22:16:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.162 2021/02/19 22:35:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.161 2021/02/19 22:16:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.162 2021/02/19 22:35:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1212,7 +1212,7 @@ param_list:
 id_list_lparn:
 	  T_LPAREN {
 		blklev++;
-		pushdecl(PARG);
+		pushdecl(PROTO_ARG);
 	  }
 	;
 
@@ -1244,7 +1244,7 @@ abstract_decl_param_list:
 abstract_decl_lparn:
 	  T_LPAREN {
 		blklev++;
-		pushdecl(PARG);
+		pushdecl(PROTO_ARG);
 	  }
 	;
 

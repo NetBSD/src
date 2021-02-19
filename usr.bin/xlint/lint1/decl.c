@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.136 2021/02/19 22:27:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.137 2021/02/19 22:35:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.136 2021/02/19 22:27:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.137 2021/02/19 22:35:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -654,7 +654,7 @@ popdecl(void)
 		/* check usage of local vars */
 		check_usage(di);
 		/* FALLTHROUGH */
-	case PARG:
+	case PROTO_ARG:
 		/* usage of arguments will be checked by funcend() */
 		rmsyms(di->d_dlsyms);
 		break;
@@ -825,7 +825,7 @@ deftyp(void)
 			error(8);
 			scl = NOSCL;
 		}
-	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PARG) {
+	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PROTO_ARG) {
 		if (scl != NOSCL && scl != REG) {
 			/* only register valid as formal parameter storage... */
 			error(9);
@@ -1015,7 +1015,7 @@ check_type(sym_t *sym)
 				}
 				return;
 			} else if (tp->t_const || tp->t_volatile) {
-				if (sflag) {	/* XXX oder better !tflag ? */
+				if (sflag) {	/* XXX or better !tflag ? */
 					/* function cannot return const... */
 					warning(228);
 				}
@@ -1047,7 +1047,7 @@ check_type(sym_t *sym)
 #endif
 			}
 		} else if (to == NOTSPEC && t == VOID) {
-			if (dcs->d_ctx == PARG) {
+			if (dcs->d_ctx == PROTO_ARG) {
 				if (sym->s_scl != ABSTRACT) {
 					lint_assert(sym->s_name != unnamed);
 					/* void param. cannot have name: %s */
@@ -1414,7 +1414,7 @@ new_style_function(sym_t *decl, sym_t *args)
 	 */
 	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_dlnxt) {
 		sc = sym->s_scl;
-		if (sc == STRTAG || sc == UNIONTAG || sc == ENUMTAG) {
+		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
 			/* dubious tag declaration: %s %s */
 			warning(85, storage_class_name(sc), sym->s_name);
 		}
@@ -1534,7 +1534,7 @@ declarator_name(sym_t *sym)
 			sym->s_def = DECL;
 		}
 		break;
-	case PARG:
+	case PROTO_ARG:
 		sym->s_arg = true;
 		/* FALLTHROUGH */
 	case ARG:
@@ -1619,12 +1619,12 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	type_t	*tp;
 
 	if (kind == STRUCT) {
-		scl = STRTAG;
+		scl = STRUCT_TAG;
 	} else if (kind == UNION) {
-		scl = UNIONTAG;
+		scl = UNION_TAG;
 	} else {
 		lint_assert(kind == ENUM);
-		scl = ENUMTAG;
+		scl = ENUM_TAG;
 	}
 
 	if (tag != NULL) {
@@ -1633,7 +1633,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		} else {
 			/* a new tag, no empty declaration */
 			dcs->d_next->d_nedecl = true;
-			if (scl == ENUMTAG && !decl) {
+			if (scl == ENUM_TAG && !decl) {
 				if (!tflag && (sflag || pflag))
 					/* forward reference to enum type */
 					warning(42);
@@ -1749,9 +1749,9 @@ storage_class_name(scl_t sc)
 	case AUTO:	s = "auto";	break;
 	case REG:	s = "register";	break;
 	case TYPEDEF:	s = "typedef";	break;
-	case STRTAG:	s = "struct";	break;
-	case UNIONTAG:	s = "union";	break;
-	case ENUMTAG:	s = "enum";	break;
+	case STRUCT_TAG:s = "struct";	break;
+	case UNION_TAG:	s = "union";	break;
+	case ENUM_TAG:	s = "enum";	break;
 	default:	lint_assert(/*CONSTCOND*/false);
 	}
 	return s;
@@ -2798,7 +2798,7 @@ abstract_name(void)
 {
 	sym_t	*sym;
 
-	lint_assert(dcs->d_ctx == ABSTRACT || dcs->d_ctx == PARG);
+	lint_assert(dcs->d_ctx == ABSTRACT || dcs->d_ctx == PROTO_ARG);
 
 	sym = getblk(sizeof (sym_t));
 
@@ -2807,7 +2807,7 @@ abstract_name(void)
 	sym->s_scl = ABSTRACT;
 	sym->s_blklev = -1;
 
-	if (dcs->d_ctx == PARG)
+	if (dcs->d_ctx == PROTO_ARG)
 		sym->s_arg = true;
 
 	sym->s_type = dcs->d_type;
