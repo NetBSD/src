@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.6 2021/01/31 11:44:48 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.7 2021/02/19 23:22:19 rillig Exp $
 
 --[[
 
@@ -36,24 +36,24 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
     return
   end
 
-  msg = string.gsub(msg, "/%*", "**")
-  msg = string.gsub(msg, "%*/", "**")
-  msg = string.gsub(msg, "\\(.)", "%1")
+  msg = msg:gsub("/%*", "**")
+  msg = msg:gsub("%*/", "**")
+  msg = msg:gsub("\\(.)", "%1")
 
-  comment = string.gsub(comment, "arg%.", "argument")
-  comment = string.gsub(comment, "comb%.", "combination")
-  comment = string.gsub(comment, "conv%.", "conversion")
-  comment = string.gsub(comment, "decl%.", "declaration")
-  comment = string.gsub(comment, "defn%.", "definition")
-  comment = string.gsub(comment, "des%.s", "designators")
-  comment = string.gsub(comment, "expr%.", "expression")
-  comment = string.gsub(comment, "func%.", "function")
-  comment = string.gsub(comment, "incomp%.", "incompatible")
-  comment = string.gsub(comment, "init%.", "initialize")
-  comment = string.gsub(comment, "param%.", "parameter")
-  comment = string.gsub(comment, "req%.", "requires")
-  comment = string.gsub(comment, "poss%.", "possibly")
-  comment = string.gsub(comment, "trad%.", "traditional")
+  comment = comment:gsub("arg%.", "argument")
+  comment = comment:gsub("comb%.", "combination")
+  comment = comment:gsub("conv%.", "conversion")
+  comment = comment:gsub("decl%.", "declaration")
+  comment = comment:gsub("defn%.", "definition")
+  comment = comment:gsub("des%.s", "designators")
+  comment = comment:gsub("expr%.", "expression")
+  comment = comment:gsub("func%.", "function")
+  comment = comment:gsub("incomp%.", "incompatible")
+  comment = comment:gsub("init%.", "initialize")
+  comment = comment:gsub("param%.", "parameter")
+  comment = comment:gsub("req%.", "requires")
+  comment = comment:gsub("poss%.", "possibly")
+  comment = comment:gsub("trad%.", "traditional")
 
   if comment == msg then
     return
@@ -72,7 +72,7 @@ end
 local function collect_errors(fname, msgs)
   local errors = {}
   errors.add = function(self, fmt, ...)
-    table.insert(self, string.format(fmt, ...))
+    table.insert(self, fmt:format(...))
   end
   local f = assert(io.open(fname, "r"))
   local lineno = 0
@@ -119,5 +119,6 @@ local function main(arg)
   end
   return ok
 end
+
 
 os.exit(main(arg))
