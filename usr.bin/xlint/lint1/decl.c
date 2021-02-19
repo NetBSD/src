@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.134 2021/02/19 22:16:12 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.135 2021/02/19 22:20:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.134 2021/02/19 22:16:12 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.135 2021/02/19 22:20:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -183,7 +183,7 @@ is_incomplete(const type_t *tp)
 	} else if (t == STRUCT || t == UNION) {
 		return tp->t_str->sou_incomplete;
 	} else if (t == ENUM) {
-		return tp->t_enum->eincompl;
+		return tp->t_enum->en_incomplete;
 	}
 	return false;
 }
@@ -202,7 +202,7 @@ setcomplete(type_t *tp, bool complete)
 		tp->t_str->sou_incomplete = !complete;
 	} else {
 		lint_assert(t == ENUM);
-		tp->t_enum->eincompl = !complete;
+		tp->t_enum->en_incomplete = !complete;
 	}
 }
 
@@ -485,8 +485,8 @@ settdsym(type_t *tp, sym_t *sym)
 		if (tp->t_str->sou_first_typedef == NULL)
 			tp->t_str->sou_first_typedef = sym;
 	} else if (t == ENUM) {
-		if (tp->t_enum->etdef == NULL)
-			tp->t_enum->etdef = sym;
+		if (tp->t_enum->en_first_typedef == NULL)
+			tp->t_enum->en_first_typedef = sym;
 	}
 }
 
@@ -1667,7 +1667,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		} else {
 			tp->t_isenum = true;
 			tp->t_enum = getblk(sizeof(*tp->t_enum));
-			tp->t_enum->etag = tag;
+			tp->t_enum->en_tag = tag;
 		}
 		setcomplete(tp, false);
 	}
@@ -1813,7 +1813,7 @@ complete_tag_enum(type_t *tp, sym_t *fmem)
 {
 
 	setcomplete(tp, true);
-	tp->t_enum->elem = fmem;
+	tp->t_enum->en_first_enumerator = fmem;
 	return tp;
 }
 

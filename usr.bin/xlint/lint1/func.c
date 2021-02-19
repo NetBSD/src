@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.69 2021/02/19 21:35:44 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.70 2021/02/19 22:20:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.69 2021/02/19 21:35:44 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.70 2021/02/19 22:20:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -674,7 +674,7 @@ switch2(void)
 	if (cstmt->c_swtype->t_isenum) {
 		nenum = nclab = 0;
 		lint_assert(cstmt->c_swtype->t_enum != NULL);
-		for (esym = cstmt->c_swtype->t_enum->elem;
+		for (esym = cstmt->c_swtype->t_enum->en_first_enumerator;
 		     esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
