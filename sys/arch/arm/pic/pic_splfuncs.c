@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.15 2021/02/20 19:35:07 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.16 2021/02/20 22:53:31 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.15 2021/02/20 19:35:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.16 2021/02/20 22:53:31 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -85,13 +85,12 @@ splx(int savedipl)
 		return;
 	}
 
-	register_t psw = cpsid(I32_bit);
-
 #if defined(__HAVE_PIC_PENDING_INTRS)
 	if (__predict_true(ci->ci_pending_ipls == 0)) {
 		goto skip_pending;
 	}
 
+	const register_t psw = cpsid(I32_bit);
 	ci->ci_intr_depth++;
 	while ((ci->ci_pending_ipls & ~__BIT(savedipl)) > __BIT(savedipl)) {
 		KASSERT(ci->ci_pending_ipls < __BIT(NIPL));
@@ -108,10 +107,16 @@ splx(int savedipl)
 		}
 	}
 	ci->ci_intr_depth--;
+	if ((psw & I32_bit) == 0) {
+		cpsie(I32_bit);
+	}
 skip_pending:
 #endif
 
-	pic_set_priority_psw(ci, psw, savedipl);
+	ci->ci_cpl = savedipl;
+	if (__predict_true(pic_list[0] != NULL)) {
+		(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], savedipl);
+	}
 	cpu_dosoftints();
 
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
