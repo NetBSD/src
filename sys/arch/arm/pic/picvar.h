@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.29 2021/02/20 18:18:53 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.30 2021/02/20 19:30:46 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,6 +73,8 @@ void	pic_mark_pending(struct pic_softc *pic, int irq);
 void	pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is);
 uint32_t pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	    uint32_t pending);
+void	pic_list_deliver_irqs(struct cpu_info *, register_t, int, void *);
+void	pic_list_unblock_irqs(struct cpu_info *);
 #endif /* __HAVE_PIC_PENDING_INTRS */
 void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	    int (*func)(void *), void *arg, const char *);

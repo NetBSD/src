@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.66 2021/02/20 14:51:07 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.67 2021/02/20 19:30:46 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.66 2021/02/20 14:51:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.67 2021/02/20 19:30:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.66 2021/02/20 14:51:07 jmcneill Exp $");
 
 #if defined(__HAVE_PIC_PENDING_INTRS)
 
-bool pic_pending_used __read_mostly = false;
-
 /*
  * This implementation of pending interrupts on a MULTIPROCESSOR system makes
  * the assumption that a PIC (pic_softc) shall only have all its interrupts
@@ -74,8 +72,6 @@ static struct pic_softc *
 	pic_list_find_pic_by_pending_ipl(struct cpu_info *, uint32_t);
 static void
 	pic_deliver_irqs(struct cpu_info *, struct pic_softc *, int, void *);
-static void
-	pic_list_deliver_irqs(struct cpu_info *, register_t, int, void *);
 
 #endif /* __HAVE_PIC_PENDING_INTRS */
 
@@ -261,9 +257,6 @@ pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 	const uint32_t ipl_mask = __BIT(is->is_ipl);
 	struct cpu_info * const ci = curcpu();
 
-	if (!pic_pending_used)
-		pic_pending_used = true;
-
 	atomic_or_32(&pic->pic_pending_irqs[is->is_irq >> 5],
 	    __BIT(is->is_irq & 0x1f));
 
@@ -295,9 +288,6 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 
 	if (pending == 0)
 		return ipl_mask;
-
-	if (!pic_pending_used)
-		pic_pending_used = true;
 
 	KASSERT((irq_base & 31) == 0);
 
@@ -480,7 +470,7 @@ pic_deliver_irqs(struct cpu_info *ci, struct pic_softc *pic, int ipl,
 		atomic_and_32(&ci->ci_pending_pics, ~__BIT(pic->pic_id));
 }
 
-static void
+void
 pic_list_unblock_irqs(struct cpu_info *ci)
 {
 	uint32_t blocked_pics = ci->ci_blocked_pics;
