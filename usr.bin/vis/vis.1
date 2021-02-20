@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.1,v 1.24 2021/02/18 18:27:24 christos Exp $
+.\"	$NetBSD: vis.1,v 1.25 2021/02/20 09:31:51 nia Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -187,8 +187,8 @@ $ printf "\\x10\\n\\t\\n" | vis -w -t -l
 .Pp
 Visualize string using URI encoding:
 .Bd -literal -offset indent
-$ printf http://www.freebsd.org | vis -h
-http%3a%2f%2fwww.freebsd.org
+$ printf https://www.NetBSD.org | vis -h
+https%3a%2f%2fwww.NetBSD.org
 .Ed
 .Sh SEE ALSO
 .Xr unvis 1 ,
