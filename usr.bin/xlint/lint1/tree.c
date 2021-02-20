@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.209 2021/02/19 22:27:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.210 2021/02/20 16:34:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.209 2021/02/19 22:27:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.210 2021/02/20 16:34:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -98,8 +98,8 @@ static	void	check_precedence_confusion(tnode_t *);
 extern sig_atomic_t fpe;
 
 #ifdef DEBUG
-static void
-dprint_node(const tnode_t *tn)
+void
+debug_node(const tnode_t *tn)
 {
 	static int indent = 0;
 
@@ -120,6 +120,12 @@ dprint_node(const tnode_t *tn)
 
 	if (op == NAME)
 		printf(" %s\n", tn->tn_sym->s_name);
+	else if (op == CON && is_floating(tn->tn_type->t_tspec))
+		printf(" value=%Lg", tn->tn_val->v_ldbl);
+	else if (op == CON && is_uinteger(tn->tn_type->t_tspec))
+		printf(" value=%llu\n", (unsigned long long)tn->tn_val->v_quad);
+	else if (op == CON && is_integer(tn->tn_type->t_tspec))
+		printf(" value=%lld\n", (long long)tn->tn_val->v_quad);
 	else if (op == CON)
 		printf(" value=?\n");
 	else if (op == STRING)
@@ -128,17 +134,11 @@ dprint_node(const tnode_t *tn)
 		printf("\n");
 
 		indent += 2;
-		dprint_node(tn->tn_left);
+		debug_node(tn->tn_left);
 		if (modtab[op].m_binary || tn->tn_right != NULL)
-			dprint_node(tn->tn_right);
+			debug_node(tn->tn_right);
 		indent -= 2;
 	}
-}
-#else
-/*ARGSUSED*/
-static void
-dprint_node(const tnode_t *tn)
-{
 }
 #endif
 
@@ -4344,7 +4344,7 @@ check_precedence_confusion(tnode_t *tn)
 	if (!hflag)
 		return;
 
-	dprint_node(tn);
+	debug_node(tn);
 
 	lint_assert(modtab[tn->tn_op].m_binary);
 	for (ln = tn->tn_left; ln->tn_op == CVT; ln = ln->tn_left)
