@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.29 2008/04/23 13:29:45 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.30 2021/02/20 09:36:30 rin Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,12 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_nubus.c,v 1.29 2008/04/23 13:29:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_nubus.c,v 1.30 2021/02/20 09:36:30 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
