@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.211 2021/02/20 18:55:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.212 2021/02/20 19:10:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.211 2021/02/20 18:55:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.212 2021/02/20 19:10:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1009,9 +1009,7 @@ typeok_quest(tspec_t lt, const tnode_t **rn)
 }
 
 static void
-typeok_colon_pointer(const mod_t *mp,
-		     const tnode_t *ln, const type_t *ltp,
-		     const tnode_t *rn, const type_t *rtp)
+typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
 {
 	type_t *lstp = ltp->t_subt;
 	type_t *rstp = rtp->t_subt;
@@ -1071,7 +1069,7 @@ typeok_colon(const mod_t *mp,
 	}
 
 	if (lt == PTR && rt == PTR) {
-		typeok_colon_pointer(mp, ln, ltp, rn, rtp);
+		typeok_colon_pointer(mp, ltp, rtp);
 		return true;
 	}
 
@@ -1259,9 +1257,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 /* Check the types using the information from modtab[]. */
 static bool
-typeok_scalar(op_t op, const mod_t *mp,
-	      const tnode_t *ln, tspec_t lt,
-	      const tnode_t *rn, tspec_t rt)
+typeok_scalar(op_t op, const mod_t *mp, tspec_t lt, tspec_t rt)
 {
 	if (mp->m_takes_bool && lt == BOOL && rt == BOOL)
 		return true;
@@ -1490,7 +1486,7 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 
 	if (Tflag && !typeok_scalar_strict_bool(op, mp, arg, ln, rn))
 		return false;
-	if (!typeok_scalar(op, mp, ln, lt, rn, rt))
+	if (!typeok_scalar(op, mp, lt, rt))
 		return false;
 
 	if (!typeok_op(op, mp, arg, ln, ltp, lt, rn, rtp, rt))
