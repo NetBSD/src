@@ -1,12 +1,12 @@
-/*	$NetBSD: mstring.c,v 1.5 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: mstring.c,v 1.6 2021/02/20 22:57:56 christos Exp $	*/
 
-/* Id: mstring.c,v 1.7 2016/12/02 17:57:21 tom Exp  */
+/* Id: mstring.c,v 1.9 2019/11/19 23:54:53 tom Exp  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mstring.c,v 1.5 2017/02/11 19:33:12 christos Exp $");
+__RCSID("$NetBSD: mstring.c,v 1.6 2021/02/20 22:57:56 christos Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,13 +20,11 @@ __RCSID("$NetBSD: mstring.c,v 1.5 2017/02/11 19:33:12 christos Exp $");
 #define HEAD	24
 #define TAIL	8
 
-#if defined(YYBTYACC)
-
 static char *buf_ptr;
 static size_t buf_len;
 
 void
-msprintf(struct mstring *s, const char *fmt,...)
+msprintf(struct mstring *s, const char *fmt, ...)
 {
     va_list args;
     size_t len;
@@ -99,7 +97,6 @@ msprintf(struct mstring *s, const char *fmt,...)
     memcpy(s->ptr, buf_ptr, len);
     s->ptr += len;
 }
-#endif
 
 int
 mputchar(struct mstring *s, int ch)
@@ -142,6 +139,20 @@ msnew(void)
 	}
     }
     return n;
+}
+
+struct mstring *
+msrenew(char *value)
+{
+    struct mstring *r = 0;
+    if (value != 0)
+    {
+	r = msnew();
+	r->base = value;
+	r->end = value + strlen(value);
+	r->ptr = r->end;
+    }
+    return r;
 }
 
 char *
@@ -206,10 +217,8 @@ strnshash(const char *s)
 void
 mstring_leaks(void)
 {
-#if defined(YYBTYACC)
     free(buf_ptr);
     buf_ptr = 0;
     buf_len = 0;
-#endif
 }
 #endif

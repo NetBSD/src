@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.22 2020/05/22 22:59:14 jmcneill Exp $	*/
+/*	$NetBSD: output.c,v 1.23 2021/02/20 22:57:56 christos Exp $	*/
 
-/* Id: output.c,v 1.87 2018/05/10 09:08:46 tom Exp  */
+/* Id: output.c,v 1.94 2020/09/10 20:24:30 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.22 2020/05/22 22:59:14 jmcneill Exp $");
+__RCSID("$NetBSD: output.c,v 1.23 2021/02/20 22:57:56 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -35,18 +35,6 @@ static Value_t *table;
 static Value_t *check;
 static int lowzero;
 static long high;
-
-struct code_lines code_lines[CODE_MAX];
-
-static void
-output_code_lines(FILE *fp, int cl)
-{
-    if (code_lines[cl].lines == NULL)
-	return;
-    if (fp == code_file)
-	outline += code_lines[cl].num;
-    fputs(code_lines[cl].lines, fp);
-}
 
 static void
 putc_code(FILE * fp, int c)
@@ -200,6 +188,27 @@ output_prefix(FILE * fp)
     if (CountLine(fp))
 	++outline;
     fprintf(fp, "#define YYPREFIX \"%s\"\n", symbol_prefix);
+}
+
+static void
+output_code_lines(FILE * fp, int cl)
+{
+    if (code_lines[cl].lines != NULL)
+    {
+	if (fp == code_file)
+	{
+	    outline += (int)code_lines[cl].num;
+	    outline += 3;
+	    fprintf(fp, "\n");
+	}
+	fprintf(fp, "/* %%code \"%s\" block start */\n", code_lines[cl].name);
+	fputs(code_lines[cl].lines, fp);
+	fprintf(fp, "/* %%code \"%s\" block end */\n", code_lines[cl].name);
+	if (fp == code_file)
+	{
+	    write_code_lineno(fp);
+	}
+    }
 }
 
 static void
@@ -368,11 +377,11 @@ output_yydefred(void)
 static void
 output_accessing_symbols(void)
 {
-    int i, j;
-    int *translate;
-
     if (nstates != 0)
     {
+	int i, j;
+	int *translate;
+
 	translate = TMALLOC(int, nstates);
 	NO_SPACE(translate);
 
@@ -787,11 +796,9 @@ static int
 matching_vector(int vector)
 {
     int i;
-    int j;
     int k;
     int t;
     int w;
-    int match;
     int prev;
 
     i = order[vector];
@@ -803,19 +810,25 @@ matching_vector(int vector)
 
     for (prev = vector - 1; prev >= 0; prev--)
     {
-	j = order[prev];
+	int j = order[prev];
+
 	if (width[j] != w || tally[j] != t)
-	    return (-1);
-
-	match = 1;
-	for (k = 0; match && k < t; k++)
 	{
-	    if (tos[j][k] != tos[i][k] || froms[j][k] != froms[i][k])
-		match = 0;
+	    return (-1);
 	}
+	else
+	{
+	    int match = 1;
 
-	if (match)
-	    return (j);
+	    for (k = 0; match && k < t; k++)
+	    {
+		if (tos[j][k] != tos[i][k] || froms[j][k] != froms[i][k])
+		    match = 0;
+	    }
+
+	    if (match)
+		return (j);
+	}
     }
 
     return (-1);
@@ -909,7 +922,6 @@ pack_table(void)
 {
     int i;
     Value_t place;
-    int state;
 
     base = NEW2(nvectors, Value_t);
     pos = NEW2(nentries, Value_t);
@@ -926,7 +938,7 @@ pack_table(void)
 
     for (i = 0; i < nentries; i++)
     {
-	state = matching_vector(i);
+	int state = matching_vector(i);
 
 	if (state < 0)
 	    place = (Value_t)pack_vector(i);
@@ -1221,11 +1233,16 @@ static void
 output_defines(FILE * fp)
 {
     int c, i;
-    char *s;
+
+    if (fp == defines_file)
+    {
+	output_code_lines(fp, CODE_REQUIRES);
+    }
 
     for (i = 2; i < ntokens; ++i)
     {
-	s = symbol_name[i];
+	char *s = symbol_name[i];
+
 	if (is_C_identifier(s) && (!sflag || *s != '"'))
 	{
 	    fprintf(fp, "#define ");
@@ -1258,7 +1275,6 @@ output_defines(FILE * fp)
 
     if (fp == defines_file)
     {
-	output_code_lines(fp, CODE_REQUIRES);
 	output_code_lines(fp, CODE_PROVIDES);
     }
 
@@ -1301,9 +1317,9 @@ output_stored_text(FILE * fp)
     int c;
     FILE *in;
 
-    rewind(text_file);
     if (text_file == NULL)
 	open_error("text_file");
+    rewind(text_file);
     in = text_file;
     if ((c = getc(in)) == EOF)
 	return;
@@ -2078,10 +2094,6 @@ output(void)
 	output_externs(externs_file, global_vars);
 	if (!pure_parser)
 	    output_externs(externs_file, impure_vars);
-    }
-
-    if (iflag)
-    {
 	if (dflag)
 	{
 	    ++outline;
@@ -2111,22 +2123,30 @@ output(void)
     output_actions();
     free_parser();
     output_debug();
+
     if (rflag)
     {
 	write_section(code_file, xdecls);
 	output_YYINT_typedef(code_file);
 	write_section(code_file, tables);
     }
+
     write_section(code_file, global_vars);
     if (!pure_parser)
     {
 	write_section(code_file, impure_vars);
     }
+    output_code_lines(code_file, CODE_REQUIRES);
+
     write_section(code_file, hdr_defs);
     if (!pure_parser)
     {
 	write_section(code_file, hdr_vars);
     }
+
+    output_code_lines(code_file, CODE_PROVIDES);
+    output_code_lines(code_file, CODE_HEADER);
+
     output_trailing_text();
 #if defined(YYBTYACC)
     if (destructor)

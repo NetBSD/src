@@ -1,12 +1,12 @@
-/*	$NetBSD: grammar.tab.c,v 1.4 2018/12/23 15:38:53 christos Exp $	*/
+/*	$NetBSD: grammar.tab.c,v 1.5 2021/02/20 22:57:57 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
 /* (use YYMAJOR/YYMINOR for ifdefs dependent on parser version) */
 
 #define YYBYACC 1
-#define YYMAJOR 1
-#define YYMINOR 9
+#define YYMAJOR 2
+#define YYMINOR 0
 #define YYCHECK "yyyymmdd"
 
 #define YYEMPTY        (-1)
@@ -1195,7 +1195,7 @@ extern char *yytext;
 extern FILE *yyin, *yyout;
 
 static int curly;			/* number of curly brace nesting levels */
-static int ly_count;			/* number of occurances of %% */
+static int ly_count;			/* number of occurrences of %% */
 static int inc_depth;			/* include nesting level */
 static SymbolTable *included_files;	/* files already included */
 static int yy_start = 0;		/* start state number */
