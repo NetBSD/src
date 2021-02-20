@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.def,v 1.15 2021/01/17 15:06:54 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.16 2021/02/20 18:02:58 rillig Exp $ */
 
 begin_ops()
 
@@ -20,6 +20,7 @@ op(	UPLUS,	"+",		 , , , , , ,1, ,1,1, , , , , , , , ,1,1,1)
 op(	UMINUS,	"-",		 , , , , , ,1, ,1,1, , , ,1, , , , ,1,1,1)
 op(	INDIR,	"*",		 , , , , , , , , ,1, , , , , , , , , , ,1)
 op(	ADDR,	"&",		 , ,1, , , , , , , , , , , , , , , , , ,1)
+/* the operator 'arr[ind]' is translated to '*(arr + ind)' during parsing. */
 
 /*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
 op(	MULT,	"*",		1, , , , , ,1, ,1,1, ,1, , ,1, , , ,1,1,1)
