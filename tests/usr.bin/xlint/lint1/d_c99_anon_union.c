@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_anon_union.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_anon_union.c,v 1.4 2021/02/20 22:31:20 rillig Exp $	*/
 # 3 "d_c99_anon_union.c"
 
 /* struct with only anonymous members */
@@ -9,6 +9,8 @@ struct foo {
 		double doo;
 	};
 };
+
+int printf(const char *, ...);
 
 int
 main(void)

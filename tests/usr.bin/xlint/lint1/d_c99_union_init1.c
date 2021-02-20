@@ -1,11 +1,13 @@
-/*	$NetBSD: d_c99_union_init1.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_union_init1.c,v 1.4 2021/02/20 22:31:20 rillig Exp $	*/
 # 3 "d_c99_union_init1.c"
 
-/* C99 union initialization */
+/* GCC-style and C99-style union initialization */
 union {
 	int i;
 	char *s;
 } c[] = {
-	{ i: 1 },
-	{ s: "foo" }
+	{ i: 1 },		/* GCC-style */
+	{ s: "foo" },		/* GCC-style */
+	{ .i = 1 },		/* C99-style */
+	{ .s = "foo" }		/* C99-style */
 };
