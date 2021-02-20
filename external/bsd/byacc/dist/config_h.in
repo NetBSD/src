@@ -21,6 +21,15 @@
 /* Define if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define if you have the `getopt' function. */
+#undef HAVE_GETOPT
+
+/* Define if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define to 1 if getopt variables are declared in header */
+#undef HAVE_GETOPT_HEADER
+
 /* Define if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -65,6 +74,9 @@
 
 /* Define to 1 if filesystem supports mixed-case filenames. */
 #undef MIXEDCASE_FILENAMES
+
+/* Define to 1 if we must include getopt.h */
+#undef NEED_GETOPT_H
 
 /* Define to 1 if you want to perform memory-leak testing. */
 #undef NO_LEAKS

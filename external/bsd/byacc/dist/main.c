@@ -1,13 +1,13 @@
-/*	$NetBSD: main.c,v 1.18 2019/10/06 23:29:42 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2021/02/20 22:57:56 christos Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.18 2019/10/06 23:29:42 christos Exp $");
-/* Id: main.c,v 1.65 2019/06/16 19:59:58 tom Exp  */
+__RCSID("$NetBSD: main.c,v 1.19 2021/02/20 22:57:56 christos Exp $");
+/* Id: main.c,v 1.70 2020/09/10 17:32:55 tom Exp  */
 
 #include <signal.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__MINGW32__)
 #include <unistd.h>		/* for _exit() */
 #else
 #include <stdlib.h>		/* for _exit() */
@@ -317,6 +317,46 @@ static void
 getargs(int argc, char *argv[])
 {
     int i;
+#ifdef HAVE_GETOPT
+    int ch;
+
+    if (argc > 0)
+	myname = argv[0];
+
+    while ((ch = getopt(argc, argv, "Bb:dgH:ilLo:Pp:rstVvy")) != -1)
+    {
+	switch (ch)
+	{
+	case 'b':
+	    file_prefix = optarg;
+	    break;
+	case 'H':
+	    dflag = dflag2 = 1;
+	    defines_file_name = optarg;
+	    break;
+	case 'o':
+	    output_file_name = optarg;
+	    break;
+	case 'p':
+	    symbol_prefix = optarg;
+	    break;
+	default:
+	    setflag(ch);
+	    break;
+	}
+    }
+    if ((i = optind) < argc)
+    {
+	/* getopt handles "--" specially, while we handle "-" specially */
+	if (!strcmp(argv[i], "-"))
+	{
+	    if ((i + 1) < argc)
+		usage();
+	    input_file = stdin;
+	    return;
+	}
+    }
+#else
     char *s;
     int ch;
 
@@ -398,7 +438,9 @@ getargs(int argc, char *argv[])
       end_of_option:;
     }
 
-  no_more_options:;
+  no_more_options:
+
+#endif /* HAVE_GETOPT */
     if (i + 1 != argc)
 	usage();
     input_file_name_len = strlen(argv[i]);
@@ -622,10 +664,8 @@ open_tmpfile(const char *label)
 #define MY_FMT "%s/%.*sXXXXXX"
     FILE *result;
 #if USE_MKSTEMP
-    int fd;
     const char *tmpdir;
     char *name;
-    const char *mark;
 
     if (((tmpdir = getenv("TMPDIR")) == 0 || access(tmpdir, W_OK) != 0) ||
 	((tmpdir = getenv("TEMP")) == 0 || access(tmpdir, W_OK) != 0))
@@ -648,6 +688,9 @@ open_tmpfile(const char *label)
     result = 0;
     if (name != 0)
     {
+	int fd;
+	const char *mark;
+
 	mode_t save_umask = umask(0177);
 
 	if ((mark = strrchr(label, '_')) == 0)
@@ -655,27 +698,28 @@ open_tmpfile(const char *label)
 
 	sprintf(name, MY_FMT, tmpdir, (int)(mark - label), label);
 	fd = mkstemp(name);
-	if (fd >= 0)
+	if (fd >= 0
+	    && (result = fdopen(fd, "w+")) != 0)
 	{
-	    result = fdopen(fd, "w+");
-	    if (result != 0)
+	    MY_TMPFILES *item;
+
+	    if (my_tmpfiles == 0)
 	    {
-		MY_TMPFILES *item;
-
-		if (my_tmpfiles == 0)
-		{
-		    atexit(close_tmpfiles);
-		}
-
-		item = NEW(MY_TMPFILES);
-		NO_SPACE(item);
-
-		item->name = name;
-		NO_SPACE(item->name);
-
-		item->next = my_tmpfiles;
-		my_tmpfiles = item;
+		atexit(close_tmpfiles);
 	    }
+
+	    item = NEW(MY_TMPFILES);
+	    NO_SPACE(item);
+
+	    item->name = name;
+	    NO_SPACE(item->name);
+
+	    item->next = my_tmpfiles;
+	    my_tmpfiles = item;
+	}
+	else
+	{
+	    FREE(name);
 	}
 	(void)umask(save_umask);
     }
