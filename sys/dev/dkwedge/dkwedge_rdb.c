@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_rdb.c,v 1.7 2020/05/03 06:30:45 rin Exp $	*/
+/*	$NetBSD: dkwedge_rdb.c,v 1.8 2021/02/20 09:51:20 rin Exp $	*/
 
 /*
  * Adapted from arch/amiga/amiga/disksubr.c:
@@ -68,14 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.7 2020/05/03 06:30:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.8 2021/02/20 09:51:20 rin Exp $");
 
 #include <sys/param.h>
+#include <sys/buf.h>
 #include <sys/disklabel_rdb.h>
 #include <sys/disk.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 
 /*
  * In /usr/src/sys/dev/scsipi/sd.c, routine sdstart() adjusts the
@@ -95,8 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.7 2020/05/03 06:30:45 rin Exp $");
 #endif
 
 static unsigned rdbchksum(void *);
-static unsigned char getarchtype(unsigned);
-static const char *archtype_to_ptype(unsigned char);
+static unsigned char getarchtype(uint32_t);
+static const char *archtype_to_ptype(uint8_t);
 
 static int
 dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
@@ -106,9 +106,9 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	struct rdblock *rbp;
 	struct buf *bp;
 	int error;
-	unsigned blk_per_cyl, bufsize, newsecsize, nextb, secsize, tabsize;
+	uint32_t blk_per_cyl, bufsize, newsecsize, nextb, secsize, tabsize;
 	const char *ptype;
-	unsigned char archtype;
+	uint8_t archtype;
 	bool found, root, swap;
 
 	secsize = DEV_BSIZE << pdk->dk_blkshift;
@@ -276,10 +276,10 @@ done:
 	return error;
 }
 
-static unsigned
+static uint32_t
 rdbchksum(void *bdata)
 {
-	unsigned *blp, cnt, val;
+	uint32_t *blp, cnt, val;
 
 	blp = bdata;
 	cnt = be32toh(blp[1]);
@@ -287,13 +287,13 @@ rdbchksum(void *bdata)
 
 	while (cnt--)
 		val += be32toh(*blp++);
-	return(val);
+	return val;
 }
 
-static unsigned char
-getarchtype(unsigned dostype)
+static uint8_t
+getarchtype(uint32_t dostype)
 {
-	unsigned t3, b1;
+	uint32_t t3, b1;
 
 	t3 = dostype & 0xffffff00;
 	b1 = dostype & 0x000000ff;
@@ -341,6 +341,7 @@ getarchtype(unsigned dostype)
 static const char *
 archtype_to_ptype(unsigned char archtype)
 {
+
 	switch (archtype) {
 	case ADT_NETBSDROOT:
 	case ADT_NETBSDUSER:
