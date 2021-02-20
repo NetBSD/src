@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.68 2021/02/20 15:23:07 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.69 2021/02/20 16:03:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.68 2021/02/20 15:23:07 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.69 2021/02/20 16:03:56 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -616,7 +616,7 @@ init_rbrace(void)
 }
 
 void
-mkinit(tnode_t *tn)
+init_using_expr(tnode_t *tn)
 {
 	ptrdiff_t offs;
 	sym_t	*sym;
