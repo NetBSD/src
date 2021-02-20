@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_338.c,v 1.1 2021/02/19 12:28:56 rillig Exp $	*/
+/*	$NetBSD: msg_338.c,v 1.2 2021/02/20 09:40:42 rillig Exp $	*/
 # 3 "msg_338.c"
 
 // Test for message: option '%c' should be handled in the switch [338]
@@ -38,6 +38,14 @@ main(int argc, char **argv)
 		case '?':
 		default:
 			break;
+		}
+	}
+
+	/* A while loop that is not related to getopt is simply skipped. */
+	while (o != 0) {
+		switch (o) {
+		case '?':
+			o = ':';
 		}
 	}
 
