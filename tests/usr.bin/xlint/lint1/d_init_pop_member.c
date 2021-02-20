@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_pop_member.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_init_pop_member.c,v 1.4 2021/02/20 16:51:18 rillig Exp $	*/
 # 3 "d_init_pop_member.c"
 
 /*
@@ -26,7 +26,7 @@ struct person {
 };
 
 struct city {
-	struct person major;
+	struct person mayor;
 };
 
 struct state {
@@ -36,7 +36,7 @@ struct state {
 void func(void)
 {
 	struct state st = {
-	    .capital.major.hobbies.dancing = 1,
+	    .capital.mayor.hobbies.dancing = 1,
 	    /*
 	     * Since 2015-07-28:
 	     * wrong "undefined struct/union member: capital [101]"
@@ -45,7 +45,7 @@ void func(void)
 	     * Before init.c 1.52 from 2020-01-01:
 	     * wrong "warning: bit-field initializer does not fit [180]"
 	     */
-	    .capital.major.favorite_color.green = 0xFF,
+	    .capital.mayor.favorite_color.green = 0xFF,
 	    /*
 	     * Since 2015-07-28:
 	     * wrong "undefined struct/union member: capital [101]"
@@ -54,6 +54,6 @@ void func(void)
 	     * Before init.c 1.52 from 2020-01-01:
 	     * wrong "warning: bit-field initializer does not fit [180]"
 	     */
-	    .capital.major.favorite_color.red = 0xFF
+	    .capital.mayor.favorite_color.red = 0xFF
 	};
 }
