@@ -1,6 +1,6 @@
-/*	$NetBSD: grammar.y,v 1.1.1.8 2018/12/23 15:26:13 christos Exp $	*/
+/*	$NetBSD: grammar.y,v 1.1.1.9 2021/02/20 20:30:07 christos Exp $	*/
 
-/* Id: grammar.y,v 1.6 2018/05/09 00:59:02 tom Exp 
+/* Id: grammar.y,v 1.7 2020/03/30 23:55:49 tom Exp 
  *
  * yacc grammar for C function prototype generator
  * This was derived from the grammar in Appendix A of
@@ -1030,7 +1030,7 @@ extern char *yytext;
 extern FILE *yyin, *yyout;
 
 static int curly;			/* number of curly brace nesting levels */
-static int ly_count;			/* number of occurances of %% */
+static int ly_count;			/* number of occurrences of %% */
 static int inc_depth;			/* include nesting level */
 static SymbolTable *included_files;	/* files already included */
 static int yy_start = 0;		/* start state number */

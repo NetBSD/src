@@ -1,3 +1,228 @@
+2021-01-09  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/copyright, VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2021-01-05  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+2020-09-22  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* closure.c, warshall.c:
+	fix undefined-behavior diagnosed with gcc -fsanitize=undefined (report by
+	Alexander Richardson)
+
+2020-09-10  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* LICENSE: RCS_BASE
+
+	* reader.c, output.c: cppcheck -- reduce scope
+
+	* defs.h: update to 2.0
+
+	* test/btyacc/btyacc_calc1.tab.c, test/btyacc/btyacc_demo.tab.c, test/btyacc/btyacc_destroy1.tab.c, test/btyacc/btyacc_destroy2.tab.c, test/btyacc/btyacc_destroy3.tab.c, test/btyacc/calc.tab.c, test/btyacc/calc1.tab.c, test/btyacc/calc2.tab.c, test/btyacc/calc3.tab.c, test/btyacc/calc_code_all.tab.c, test/btyacc/calc_code_default.tab.c, test/btyacc/calc_code_imports.tab.c, test/btyacc/calc_code_provides.tab.c, test/btyacc/calc_code_requires.tab.c, test/btyacc/calc_code_top.tab.c, test/btyacc/code_calc.code.c, test/btyacc/code_error.code.c, test/btyacc/defines1.calc.c, test/btyacc/defines2.calc.c, test/btyacc/defines3.calc.c, test/btyacc/empty.tab.c, test/btyacc/err_inherit1.tab.c, test/btyacc/err_inherit2.tab.c, test/btyacc/err_inherit3.tab.c, test/btyacc/err_inherit4.tab.c, test/btyacc/err_inherit5.tab.c, test/btyacc/err_syntax1.tab.c, test/btyacc/err_syntax10.tab.c, test/btyacc/err_syntax11.tab.c, test/btyacc/err_syntax12.tab.c, test/btyacc/err_syntax13.tab.c, test/btyacc/err_syntax14.tab.c, test/btyacc/err_syntax15.tab.c, test/btyacc/err_syntax16.tab.c, test/btyacc/err_syntax17.tab.c, test/btyacc/err_syntax18.tab.c, test/btyacc/err_syntax19.tab.c, test/btyacc/err_syntax2.tab.c, test/btyacc/err_syntax20.tab.c, test/btyacc/err_syntax21.tab.c, test/btyacc/err_syntax22.tab.c, test/btyacc/err_syntax23.tab.c, test/btyacc/err_syntax24.tab.c, test/btyacc/err_syntax25.tab.c, test/btyacc/err_syntax26.tab.c, test/btyacc/err_syntax27.tab.c, test/btyacc/err_syntax3.tab.c, test/btyacc/err_syntax4.tab.c, test/btyacc/err_syntax5.tab.c, test/btyacc/err_syntax6.tab.c, test/btyacc/err_syntax7.tab.c, test/btyacc/err_syntax7a.tab.c, test/btyacc/err_syntax7b.tab.c, test/btyacc/err_syntax8.tab.c, test/btyacc/err_syntax8a.tab.c, test/btyacc/err_syntax9.tab.c, test/btyacc/error.tab.c, test/btyacc/expr.oxout.tab.c, test/btyacc/grammar.tab.c, test/btyacc/inherit0.tab.c, test/btyacc/inherit1.tab.c, test/btyacc/inherit2.tab.c, test/btyacc/ok_syntax1.tab.c, test/btyacc/pure_calc.tab.c, test/btyacc/pure_error.tab.c, test/btyacc/quote_calc-s.tab.c, test/btyacc/quote_calc.tab.c, test/btyacc/quote_calc2-s.tab.c, test/btyacc/quote_calc2.tab.c, test/btyacc/quote_calc3-s.tab.c, test/btyacc/quote_calc3.tab.c, test/btyacc/quote_calc4-s.tab.c, test/btyacc/quote_calc4.tab.c, test/btyacc/rename_debug.c, test/btyacc/stdin1.calc.c, test/btyacc/stdin2.calc.c, test/btyacc/varsyntax_calc1.tab.c, test/yacc/calc.tab.c, test/yacc/calc1.tab.c, test/yacc/calc2.tab.c, test/yacc/calc3.tab.c, test/yacc/calc_code_all.tab.c, test/yacc/calc_code_default.tab.c, test/yacc/calc_code_imports.tab.c, test/yacc/calc_code_provides.tab.c, test/yacc/calc_code_requires.tab.c, test/yacc/calc_code_top.tab.c, test/yacc/code_calc.code.c, test/yacc/code_error.code.c, test/yacc/defines1.calc.c, test/yacc/defines2.calc.c, test/yacc/defines3.calc.c, test/yacc/empty.tab.c, test/yacc/err_syntax1.tab.c, test/yacc/err_syntax10.tab.c, test/yacc/err_syntax11.tab.c, test/yacc/err_syntax12.tab.c, test/yacc/err_syntax13.tab.c, test/yacc/err_syntax14.tab.c, test/yacc/err_syntax15.tab.c, test/yacc/err_syntax16.tab.c, test/yacc/err_syntax17.tab.c, test/yacc/err_syntax18.tab.c, test/yacc/err_syntax19.tab.c, test/yacc/err_syntax2.tab.c, test/yacc/err_syntax20.tab.c, test/yacc/err_syntax21.tab.c, test/yacc/err_syntax22.tab.c, test/yacc/err_syntax23.tab.c, test/yacc/err_syntax24.tab.c, test/yacc/err_syntax25.tab.c, test/yacc/err_syntax26.tab.c, test/yacc/err_syntax27.tab.c, test/yacc/err_syntax3.tab.c, test/yacc/err_syntax4.tab.c, test/yacc/err_syntax5.tab.c, test/yacc/err_syntax6.tab.c, test/yacc/err_syntax7.tab.c, test/yacc/err_syntax7a.tab.c, test/yacc/err_syntax7b.tab.c, test/yacc/err_syntax8.tab.c, test/yacc/err_syntax8a.tab.c, test/yacc/err_syntax9.tab.c, test/yacc/error.tab.c, test/yacc/expr.oxout.tab.c, test/yacc/grammar.tab.c, test/yacc/ok_syntax1.tab.c, test/yacc/pure_calc.tab.c, test/yacc/pure_error.tab.c, test/yacc/quote_calc-s.tab.c, test/yacc/quote_calc.tab.c, test/yacc/quote_calc2-s.tab.c, test/yacc/quote_calc2.tab.c, test/yacc/quote_calc3-s.tab.c, test/yacc/quote_calc3.tab.c, test/yacc/quote_calc4-s.tab.c, test/yacc/quote_calc4.tab.c, test/yacc/rename_debug.c, test/yacc/stdin1.calc.c, test/yacc/stdin2.calc.c, test/yacc/varsyntax_calc1.tab.c:
+	update to version 2.0
+
+	* reader.c:
+	improve loop which skips backward through a (possibly nested) sequence of
+	square-brackets.
+
+	* reader.c: simplify a check to quiet a bogus cppcheck-warning
+
+	* yacc.1: bump date
+
+	* reader.c: add a note about a bogus cppcheck warning
+
+	* configure: regen
+
+	* configure.in:
+	always check for gcc attributes, to work around defect in clang's imitation
+	of this feature
+
+	* reader.c: cppcheck -- scope reduction
+	cppcheck -- eliminate bogus returns after no-return functions
+
+	* verbose.c, output.c, mkpar.c, main.c, warshall.c, lr0.c, lalr.c, graph.c, closure.c:
+	cppcheck -- scope reduction
+
+	* package/debian/compat: quiet compatibility-warning
+
+	* yacc.1: use "ASCII" for dashes which are part of proper names
+
+	* configure: regen
+
+	* configure.in: switch to --enable-warnings, for consistency
+
+	* aclocal.m4:
+	resync with my-autoconf, for compiler-warning fixes with macOS
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2020-08-16  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: 2020-08-17
+
+2020-06-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2020/06/28
+
+2020-06-14  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2020/04/26
+
+2020-03-30  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/copyright: bump
+
+	* test/yacc/grammar.tab.c, test/btyacc/grammar.tab.c, test/grammar.y, reader.c:
+	typo found with codespell
+
+	* yacc.1: fixes noted in the original report, overlooked in followup
+
+2020-03-30  Bjarni.Ingi.Gislason
+
+	* yacc.1: typography/spelling fixes - Debian #955175
+
+2020-03-30  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2020-03-10  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4:
+	resync with my-autoconf, mostly fixes for compiler-warnings
+
+	* configure.in: use macro to suppress X-dependency from newer macros
+
+2019-12-20  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2019-12-21
+
+2019-11-25  Tom.Shields
+
+	* main.c:
+	fix an inconsistency between the getopt and non-getopt configuration.
+	In the former, getopt always used "yacc", not the name of the executable.
+
+2019-11-25  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/run_make.sh:
+	suppress bison's -Wyacc warning, which is not useful.
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2019-11-19  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* yacc.1: new version of manpage
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+	* yacc.1: document %code
+
+	* test/btyacc/calc_code_all.error, test/btyacc/calc_code_all.output, test/btyacc/calc_code_all.tab.c, test/btyacc/calc_code_all.tab.h, test/btyacc/calc_code_default.error, test/btyacc/calc_code_default.output, test/btyacc/calc_code_default.tab.c, test/btyacc/calc_code_default.tab.h, test/btyacc/calc_code_imports.error, test/btyacc/calc_code_imports.output, test/btyacc/calc_code_imports.tab.c, test/btyacc/calc_code_imports.tab.h, test/btyacc/calc_code_provides.error, test/btyacc/calc_code_provides.output, test/btyacc/calc_code_provides.tab.c, test/btyacc/calc_code_provides.tab.h, test/btyacc/calc_code_requires.error, test/btyacc/calc_code_requires.output, test/btyacc/calc_code_requires.tab.c, test/btyacc/calc_code_requires.tab.h, test/btyacc/calc_code_top.error, test/btyacc/calc_code_top.output, test/btyacc/calc_code_top.tab.c, test/btyacc/calc_code_top.tab.h, test/yacc/calc_code_all.tab.c, test/yacc/calc_code_all.tab.h, test/yacc/calc_code_default.tab.c, test/yacc/calc_code_provides.tab.c, test/yacc/calc_code_provides.tab.h, test/yacc/calc_code_requires.tab.c, test/yacc/calc_code_requires.tab.h, test/yacc/calc_code_top.tab.c:
+	RCS_BASE
+
+	* output.c:
+	amend updates for 'outline' when processing "%code" in code-file
+
+	* output.c:
+	modify output_code_lines() to show begin/end block comments which were in
+	reader.c, and to generate a #line for the code-file.
+
+	* reader.c:
+	modify copy_code() to allow for multiple %code directives for a given
+	section, recording the input line-number for each directive as a #line
+	in the resulting string.  remove the block start/end comments, since those
+	will be done for a whole section in output.c
+
+	* mstring.c, defs.h: add msrenew()
+
+	* test/yacc/calc_code_all.error, test/yacc/calc_code_all.output, test/yacc/calc_code_default.error, test/yacc/calc_code_default.output, test/yacc/calc_code_default.tab.h, test/yacc/calc_code_imports.error, test/yacc/calc_code_imports.output, test/yacc/calc_code_imports.tab.c, test/yacc/calc_code_imports.tab.h, test/yacc/calc_code_provides.error, test/yacc/calc_code_provides.output, test/yacc/calc_code_requires.error, test/yacc/calc_code_requires.output, test/yacc/calc_code_top.error, test/yacc/calc_code_top.output, test/yacc/calc_code_top.tab.h:
+	RCS_BASE
+
+2019-11-18  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/calc_code_imports.y, test/calc_code_all.y, test/calc_code_default.y, test/calc_code_top.y, test/calc_code_provides.y, test/calc_code_requires.y:
+	RCS_BASE
+
+2019-11-04  Michael.Forney
+
+	* defs.h: add missing "extern" for new variable "code_lines"
+
+2019-11-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* main.c: build-fix for MinGW cross-compiling
+
+	* output.c, reader.c: gcc-warnings
+
+	* output.c: check validity of text_file before rewind
+	remove redundant check of iflag
+
+	* main.c: fix memory-leak reported by clang
+
+	* mkpar.c: guard against a null-reference reported by clang (unlikely)
+
+	* reader.c: fix two coverity warnings:
+	a) resource leak on malloc-failure
+	b) possible null-pointer dereference on parse-error
+
+	* test/btyacc/err_inherit4.tab.h, test/btyacc/btyacc_demo.tab.h: regen
+
+	* defs.h: use enum's to simplify recent change
+
+	* mstring.c:
+	enable mstring() in regular byacc, since Zoulas' change relies upon it
+
+2019-11-03  Christos.Zoulas
+
+	* defs.h, reader.c, output.c: add support for bison's "%code" feature
+	also fix a small bug: declare YYLTYPE externally when producing locations
+
+2019-11-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/btyacc/help.error, test/btyacc/no_b_opt.error, test/btyacc/no_output2.error, test/btyacc/no_p_opt.error, test/yacc/help.error, test/yacc/no_b_opt.error, test/yacc/no_output2.error, test/yacc/no_p_opt.error:
+	regen
+
+	* test/run_test.sh:
+	there's no standard wording for the options-errors from getopt;
+	filter that to "error message" in the test reference files.
+
+	* main.c:
+	provide for using getopt(), to accommodate a case where developers have
+	relied upon non-POSIX behavior.
+
+	* test/run_test.sh:
+	getopt's messages do not print the full pathname of yacc in some cases;
+	adjust the sed-script which changes those to "YACC"
+
+	* configure: regen
+
+	* config_h.in: regen, using autoheader-252
+
+	* configure.in: add configure check for getopt
+
+	* configure: regen
+
+	* aclocal.m4:
+	resync with my-autoconf adds a fix which accommodates a difference in
+	warning options between gcc/clang when --enable-warnings is not set.
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2019-09-11  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: 2019-09-10
+
 2019-06-17  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* test/btyacc/big_b.error, test/btyacc/big_l.error, test/btyacc/help.error, test/btyacc/no_b_opt.error, test/btyacc/no_output2.error, test/btyacc/no_p_opt.error, test/btyacc/nostdin.error, test/yacc/big_b.error, test/yacc/big_l.error, test/yacc/help.error, test/yacc/no_b_opt.error, test/yacc/no_output2.error, test/yacc/no_p_opt.error, test/yacc/nostdin.error:
@@ -1559,7 +1784,7 @@
 	* package/debian/changelog, VERSION, package/byacc.spec: bump
 
 	* aclocal.m4:
-	adapt tweak from Dave Becket to work around long-ago breakage in "new" autoconf.
+	adapt tweak from Dave Beckett to work around long-ago breakage in "new" autoconf.
 
 	* output.c:
 	fix bogus #include if "-i" is given but not "-d" (report by Richard Mitton).
