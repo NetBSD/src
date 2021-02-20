@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.72 2021/02/20 17:24:37 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.73 2021/02/20 17:44:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.72 2021/02/20 17:24:37 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.73 2021/02/20 17:44:39 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -227,6 +227,35 @@ debug_named_member(void)
 #define debug_named_member() (void)0
 #endif
 
+#ifdef DEBUG
+static void
+debug_initstack(void)
+{
+	static const char *const noyes[] = { "no", "yes" };
+
+	if (initstk == NULL) {
+		debug_step("initstk is empty");
+		return;
+	}
+
+	size_t i = 0;
+	for (const istk_t *elem = initstk; elem != NULL; elem = elem->i_next) {
+		debug_step("initstk[%zu]:", i);
+		debug_step("  i_type      = %s", type_name(elem->i_type));
+		debug_step("  i_subt      = %s", type_name(elem->i_subt));
+		debug_step("  i_brace     = %s", noyes[elem->i_brace]);
+		debug_step("  i_nolimit   = %s", noyes[elem->i_nolimit]);
+		debug_step("  i_namedmem  = %s", noyes[elem->i_namedmem]);
+		debug_step("  i_mem       = %s",
+		    elem->i_mem != NULL ? elem->i_mem->s_name : "(null)");
+		debug_step("  i_remaining = %d", elem->i_remaining);
+		i++;
+	}
+}
+#else
+#define debug_initstack() (void)0
+#endif
+
 /*
  * Initialize the initialisation stack by putting an entry for the variable
  * which is to be initialized on it.
@@ -258,6 +287,7 @@ initstack_init(void)
 	istk->i_subt = initsym->s_type;
 	istk->i_remaining = 1;
 
+	debug_initstack();
 	debug_leave();
 }
 
@@ -305,6 +335,7 @@ initstack_pop_item(void)
 				istk->i_subt = m->s_type;
 				istk->i_remaining++;
 				pop_member();
+				debug_initstack();
 				debug_leave();
 				return;
 			}
@@ -314,6 +345,7 @@ initstack_pop_item(void)
 		debug_step("end rhs.name=%s", namedmem->n_name);
 		pop_member();
 		istk->i_namedmem = true;
+		debug_initstack();
 		debug_leave();
 		return;
 	}
@@ -330,6 +362,7 @@ initstack_pop_item(void)
 		} while (m->s_bitfield && m->s_name == unnamed);
 		istk->i_subt = m->s_type;
 	}
+	debug_initstack();
 	debug_leave();
 }
 
@@ -343,11 +376,13 @@ initstack_pop_brace(void)
 	bool brace;
 
 	debug_enter();
+	debug_initstack();
 	do {
 		brace = initstk->i_brace;
 		debug_step("loop brace=%d", brace);
 		initstack_pop_item();
 	} while (!brace);
+	debug_initstack();
 	debug_leave();
 }
 
@@ -360,9 +395,11 @@ initstack_pop_nobrace(void)
 {
 
 	debug_enter();
+	debug_initstack();
 	while (!initstk->i_brace && initstk->i_remaining == 0 &&
 	       !initstk->i_nolimit)
 		initstack_pop_item();
+	debug_initstack();
 	debug_leave();
 }
 
@@ -374,6 +411,7 @@ initstack_push(void)
 	sym_t	*m;
 
 	debug_enter();
+	debug_initstack();
 
 	istk = initstk;
 
@@ -420,6 +458,7 @@ again:
 			/* initialisation of an incomplete type */
 			error(175);
 			initerr = true;
+			debug_initstack();
 			debug_leave();
 			return;
 		}
@@ -440,6 +479,7 @@ again:
 			/* initialisation of an incomplete type */
 			error(175);
 			initerr = true;
+			debug_initstack();
 			debug_leave();
 			return;
 		}
@@ -485,6 +525,7 @@ again:
 			/* cannot init. struct/union with no named member */
 			error(179);
 			initerr = true;
+			debug_initstack();
 			debug_leave();
 			return;
 		}
@@ -503,6 +544,7 @@ again:
 		break;
 	}
 
+	debug_initstack();
 	debug_leave();
 }
 
@@ -542,6 +584,7 @@ initstack_next_brace(void)
 {
 
 	debug_enter();
+	debug_initstack();
 
 	if (initstk->i_type != NULL && is_scalar(initstk->i_type->t_tspec)) {
 		/* invalid initializer type %s */
@@ -558,6 +601,7 @@ initstack_next_brace(void)
 			initstk->i_type ? initstk->i_type : initstk->i_subt));
 	}
 
+	debug_initstack();
 	debug_leave();
 }
 
@@ -565,6 +609,7 @@ static void
 initstack_next_nobrace(void)
 {
 	debug_enter();
+	debug_initstack();
 
 	if (initstk->i_type == NULL && !is_scalar(initstk->i_subt->t_tspec)) {
 		/* {}-enclosed initializer required */
@@ -588,6 +633,7 @@ initstack_next_nobrace(void)
 		initstack_push();
 	}
 
+	debug_initstack();
 	debug_leave();
 }
 
@@ -598,6 +644,7 @@ init_lbrace(void)
 		return;
 
 	debug_enter();
+	debug_initstack();
 
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
 	    initstk->i_next == NULL) {
@@ -614,6 +661,7 @@ init_lbrace(void)
 
 	initstack_next_brace();
 
+	debug_initstack();
 	debug_leave();
 }
 
@@ -624,9 +672,11 @@ init_rbrace(void)
 		return;
 
 	debug_enter();
+	debug_initstack();
 
 	initstack_pop_brace();
 
+	debug_initstack();
 	debug_leave();
 }
 
@@ -643,6 +693,7 @@ init_using_expr(tnode_t *tn)
 	debug_enter();
 	debug_named_member();
 	debug_node(tn);
+	debug_initstack();
 
 	if (initerr || tn == NULL) {
 		debug_leave();
@@ -669,6 +720,7 @@ init_using_expr(tnode_t *tn)
 		ln->tn_type->t_const = false;
 		tn = build(ASSIGN, ln, tn);
 		expr(tn, false, false, false, false);
+		debug_initstack();
 		debug_leave();
 		return;
 	}
@@ -681,12 +733,14 @@ init_using_expr(tnode_t *tn)
 
 	/* Initialisations by strings are done in initstack_string(). */
 	if (initstack_string(tn)) {
+		debug_initstack();
 		debug_leave();
 		return;
 	}
 
 	initstack_next_nobrace();
 	if (initerr || tn == NULL) {
+		debug_initstack();
 		debug_leave();
 		return;
 	}
@@ -709,6 +763,7 @@ init_using_expr(tnode_t *tn)
 	lint_assert(is_scalar(lt));
 
 	if (!typeok(INIT, 0, ln, tn)) {
+		debug_initstack();
 		debug_leave();
 		return;
 	}
@@ -748,6 +803,7 @@ init_using_expr(tnode_t *tn)
 		}
 	}
 
+	debug_initstack();
 	debug_leave();
 }
 
@@ -764,6 +820,7 @@ initstack_string(tnode_t *tn)
 		return false;
 
 	debug_enter();
+	debug_initstack();
 
 	istk = initstk;
 	strg = tn->tn_string;
@@ -822,6 +879,7 @@ initstack_string(tnode_t *tn)
 	/* In every case the array is initialized completely. */
 	istk->i_remaining = 0;
 
+	debug_initstack();
 	debug_leave();
 	return true;
 }
