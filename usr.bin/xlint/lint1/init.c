@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.70 2021/02/20 16:34:57 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.71 2021/02/20 17:12:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.70 2021/02/20 16:34:57 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.71 2021/02/20 17:12:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -172,7 +172,7 @@ push_member(sbuf_t *sb)
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
 	nam->n_name = sb->sb_name;
 
-	debug_step("%s: %s %p", __func__, nam->n_name, nam);
+	debug_step("%s: '%s' %p", __func__, nam->n_name, nam);
 
 	if (namedmem == NULL) {
 		/*
@@ -567,7 +567,14 @@ initstack_next_nobrace(void)
 		error(181);
 	}
 
-	/* Make sure an entry with a scalar type is at the top of the stack. */
+	/*
+	 * Make sure an entry with a scalar type is at the top of the stack.
+	 *
+	 * FIXME: Since C99 an initializer for an object with automatic
+	 *  storage need not be a constant expression anymore.  It is
+	 *  perfectly fine to initialize a struct with a struct expression,
+	 *  see d_struct_init_nested.c for a demonstration.
+	 */
 	if (!initerr)
 		initstack_check_too_many();
 	while (!initerr) {
