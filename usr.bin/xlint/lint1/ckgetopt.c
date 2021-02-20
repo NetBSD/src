@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.2 2021/02/19 14:44:29 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.3 2021/02/20 01:18:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.2 2021/02/19 14:44:29 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.3 2021/02/20 01:18:02 christos Exp $");
 #endif
 
 #include <stdbool.h>
@@ -100,7 +100,7 @@ is_getopt_call(const tnode_t *tn, char **out_options)
 static void
 check_unlisted_option(char opt)
 {
-	if (opt == '?')
+	if (opt == '?' || ck.options == NULL)
 		return;
 
 	const char *optptr = strchr(ck.options, opt);
@@ -116,6 +116,9 @@ check_unlisted_option(char opt)
 static void
 check_unhandled_option(void)
 {
+	if (ck.unhandled_options == NULL)
+		return;
+
 	for (const char *opt = ck.unhandled_options; *opt != '\0'; opt++) {
 		if (*opt == ' ' || *opt == ':')
 			continue;
