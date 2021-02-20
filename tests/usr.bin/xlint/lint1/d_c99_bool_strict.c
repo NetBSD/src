@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.17 2021/01/17 23:00:41 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.18 2021/02/20 18:02:58 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -726,4 +726,17 @@ strict_bool_assign_bit_field_then_compare(void)
 	struct s s = { __lint_false };
 
 	(void)((s.flag = s.flag) != __lint_false);
+}
+
+void
+bool_as_array_index(bool cond)
+{
+	static const char *repr[] = { "no", "yes" };
+	/*
+	 * The '+' in the error message reveals that lint internally
+	 * translates 'arr[ind]' to '*(arr + ind)' in an early stage of
+	 * parsing.
+	 */
+	println(repr[cond]);		/* expect: 337 */
+	println(cond ? "yes" : "no");
 }
