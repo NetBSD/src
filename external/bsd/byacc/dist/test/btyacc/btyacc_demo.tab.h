@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_demo.tab.h,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: btyacc_demo.tab.h,v 1.1.1.5 2021/02/20 20:30:11 christos Exp $	*/
 
 #ifndef _demo__defines_h_
 #define _demo__defines_h_
@@ -48,5 +48,6 @@ typedef struct YYLTYPE
 #define YYLTYPE_IS_DECLARED 1
 #endif
 #define YYRHSLOC(rhs, k) ((rhs)[k])
+extern YYLTYPE demo_lloc;
 
 #endif /* _demo__defines_h_ */

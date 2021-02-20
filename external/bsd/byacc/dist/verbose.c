@@ -1,6 +1,6 @@
-/*	$NetBSD: verbose.c,v 1.1.1.9 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.1.1.10 2021/02/20 20:30:07 christos Exp $	*/
 
-/* Id: verbose.c,v 1.12 2016/06/07 00:22:05 tom Exp  */
+/* Id: verbose.c,v 1.13 2020/09/10 17:57:34 tom Exp  */
 
 #include "defs.h"
 
@@ -174,18 +174,14 @@ static void
 print_core(int state)
 {
     int i;
-    int k;
-    int rule;
-    core *statep;
-    Value_t *sp;
-    Value_t *sp1;
-
-    statep = state_table[state];
-    k = statep->nitems;
+    core *statep = state_table[state];
+    int k = statep->nitems;
 
     for (i = 0; i < k; i++)
     {
-	sp1 = sp = ritem + statep->items[i];
+	int rule;
+	Value_t *sp = ritem + statep->items[i];
+	Value_t *sp1 = sp;
 
 	while (*sp >= 0)
 	    ++sp;
@@ -254,7 +250,6 @@ print_actions(int stateno)
 {
     action *p;
     shifts *sp;
-    int as;
 
     if (stateno == final_state)
 	fprintf(verbose_file, "\t$end  accept\n");
@@ -269,7 +264,8 @@ print_actions(int stateno)
     sp = shift_table[stateno];
     if (sp && sp->nshifts > 0)
     {
-	as = accessing_symbol[sp->shift[sp->nshifts - 1]];
+	int as = accessing_symbol[sp->shift[sp->nshifts - 1]];
+
 	if (ISVAR(as))
 	    print_gotos(stateno);
     }
@@ -307,7 +303,7 @@ print_shifts(action *p)
 static void
 print_reductions(action *p, int defred2)
 {
-    int k, anyreds;
+    int anyreds;
     action *q;
 
     anyreds = 0;
@@ -328,7 +324,8 @@ print_reductions(action *p, int defred2)
 	{
 	    if (p->action_code == REDUCE && p->number != defred2)
 	    {
-		k = p->number - 2;
+		int k = p->number - 2;
+
 		if (p->suppressed == 0)
 		    fprintf(verbose_file, "\t%s  reduce %d\n",
 			    symbol_name[p->symbol], k);
@@ -348,8 +345,7 @@ print_reductions(action *p, int defred2)
 static void
 print_gotos(int stateno)
 {
-    int i, k;
-    int as;
+    int i;
     Value_t *to_state2;
     shifts *sp;
 
@@ -358,8 +354,9 @@ print_gotos(int stateno)
     to_state2 = sp->shift;
     for (i = 0; i < sp->nshifts; ++i)
     {
-	k = to_state2[i];
-	as = accessing_symbol[k];
+	int k = to_state2[i];
+	int as = accessing_symbol[k];
+
 	if (ISVAR(as))
 	    fprintf(verbose_file, "\t%s  goto %d\n", symbol_name[as], k);
     }

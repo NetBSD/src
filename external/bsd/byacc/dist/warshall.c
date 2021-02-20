@@ -1,6 +1,6 @@
-/*	$NetBSD: warshall.c,v 1.1.1.7 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: warshall.c,v 1.1.1.8 2021/02/20 20:30:07 christos Exp $	*/
 
-/* Id: warshall.c,v 1.7 2010/06/06 22:48:51 tom Exp  */
+/* Id: warshall.c,v 1.9 2020/09/22 20:17:00 tom Exp  */
 
 #include "defs.h"
 
@@ -12,7 +12,6 @@ transitive_closure(unsigned *R, int n)
     unsigned *rowj;
     unsigned *rp;
     unsigned *rend;
-    unsigned *ccol;
     unsigned *relend;
     unsigned *cword;
     unsigned *rowi;
@@ -25,12 +24,13 @@ transitive_closure(unsigned *R, int n)
     rowi = R;
     while (rowi < relend)
     {
-	ccol = cword;
+	unsigned *ccol = cword;
+
 	rowj = R;
 
 	while (rowj < relend)
 	{
-	    if (*ccol & (unsigned)(1 << i))
+	    if (*ccol & (1U << i))
 	    {
 		rp = rowi;
 		rend = rowj + rowsize;
@@ -72,7 +72,7 @@ reflexive_transitive_closure(unsigned *R, int n)
     rp = R;
     while (rp < relend)
     {
-	*rp |= (unsigned)(1 << i);
+	*rp |= (1U << i);
 	if (++i >= BITS_PER_WORD)
 	{
 	    i = 0;

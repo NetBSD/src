@@ -1,6 +1,6 @@
-/*	$NetBSD: graph.c,v 1.1.1.7 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: graph.c,v 1.1.1.8 2021/02/20 20:30:07 christos Exp $	*/
 
-/* Id: graph.c,v 1.8 2014/02/19 00:46:57 Tom.Shields Exp  */
+/* Id: graph.c,v 1.9 2020/09/10 17:22:51 tom Exp  */
 
 #include "defs.h"
 
@@ -54,15 +54,16 @@ static void
 graph_state(int stateno)
 {
     Value_t *isp;
-    int rule;
     Value_t *sp;
-    Value_t *sp1;
 
     larno = (unsigned)lookaheads[stateno];
     fprintf(graph_file, "\n\tq%d [label=\"%d:\\l", stateno, stateno);
 
     for (isp = itemset; isp < itemsetend; isp++)
     {
+	Value_t *sp1;
+	int rule;
+
 	sp1 = sp = ritem + *isp;
 
 	while (*sp >= 0)
@@ -92,15 +93,14 @@ graph_state(int stateno)
 static void
 graph_LA(int ruleno)
 {
-    int i;
     unsigned tokensetsize;
-    unsigned *rowp;
 
     tokensetsize = (unsigned)WORDSIZE(ntokens);
 
     if (ruleno == LAruleno[larno])
     {
-	rowp = LA + larno * tokensetsize;
+	int i;
+	unsigned *rowp = LA + larno * tokensetsize;
 
 	fprintf(graph_file, " { ");
 	for (i = ntokens - 1; i >= 0; i--)

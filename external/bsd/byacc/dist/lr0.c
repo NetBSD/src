@@ -1,6 +1,6 @@
-/*	$NetBSD: lr0.c,v 1.1.1.9 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: lr0.c,v 1.1.1.10 2021/02/20 20:30:07 christos Exp $	*/
 
-/* Id: lr0.c,v 1.19 2016/06/07 00:21:53 tom Exp  */
+/* Id: lr0.c,v 1.20 2020/09/10 17:30:37 tom Exp  */
 
 #include "defs.h"
 
@@ -46,7 +46,6 @@ allocate_itemsets(void)
 {
     Value_t *itemp;
     Value_t *item_end;
-    int symbol;
     int i;
     int count;
     int max;
@@ -58,7 +57,8 @@ allocate_itemsets(void)
     item_end = ritem + nitems;
     for (itemp = ritem; itemp < item_end; itemp++)
     {
-	symbol = *itemp;
+	int symbol = *itemp;
+
 	if (symbol >= 0)
 	{
 	    count++;
@@ -96,7 +96,6 @@ static void
 append_states(void)
 {
     int i;
-    int j;
     Value_t symbol;
 
 #ifdef	TRACE
@@ -104,8 +103,9 @@ append_states(void)
 #endif
     for (i = 1; i < nshifts; i++)
     {
+	int j = i;
+
 	symbol = shift_symbol[i];
-	j = i;
 	while (j > 0 && shift_symbol[j - 1] > symbol)
 	{
 	    shift_symbol[j] = shift_symbol[j - 1];
@@ -163,10 +163,8 @@ get_state(int symbol)
 {
     int key;
     Value_t *isp1;
-    Value_t *isp2;
     Value_t *iend;
     core *sp;
-    int found;
     int n;
 
 #ifdef	TRACE
@@ -182,11 +180,14 @@ get_state(int symbol)
     sp = state_set[key];
     if (sp)
     {
-	found = 0;
+	int found = 0;
+
 	while (!found)
 	{
 	    if (sp->nitems == n)
 	    {
+		Value_t *isp2;
+
 		found = 1;
 		isp1 = kernel_base[symbol];
 		isp2 = sp->items;
@@ -254,7 +255,6 @@ new_itemsets(void)
     int shiftcount;
     Value_t *isp;
     Value_t *ksp;
-    Value_t symbol;
 
     for (i = 0; i < nsyms; i++)
 	kernel_end[i] = 0;
@@ -263,8 +263,9 @@ new_itemsets(void)
     isp = itemset;
     while (isp < itemsetend)
     {
-	i = *isp++;
-	symbol = ritem[i];
+	int j = *isp++;
+	Value_t symbol = ritem[j];
+
 	if (symbol > 0)
 	{
 	    ksp = kernel_end[symbol];
@@ -274,7 +275,7 @@ new_itemsets(void)
 		ksp = kernel_base[symbol];
 	    }
 
-	    *ksp++ = (Value_t)(i + 1);
+	    *ksp++ = (Value_t)(j + 1);
 	    kernel_end[symbol] = ksp;
 	}
     }
@@ -437,16 +438,14 @@ save_reductions(void)
 {
     Value_t *isp;
     Value_t *rp1;
-    Value_t *rp2;
-    int item;
     Value_t count;
     reductions *p;
-    Value_t *rend;
 
     count = 0;
     for (isp = itemset; isp < itemsetend; isp++)
     {
-	item = ritem[*isp];
+	int item = ritem[*isp];
+
 	if (item < 0)
 	{
 	    redset[count++] = (Value_t)-item;
@@ -455,6 +454,9 @@ save_reductions(void)
 
     if (count)
     {
+	Value_t *rp2;
+	Value_t *rend;
+
 	p = (reductions *)allocate((sizeof(reductions) +
 				      (unsigned)(count - 1) *
 				    sizeof(Value_t)));

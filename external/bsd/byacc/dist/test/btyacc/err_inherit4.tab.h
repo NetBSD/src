@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit4.tab.h,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: err_inherit4.tab.h,v 1.1.1.5 2021/02/20 20:30:11 christos Exp $	*/
 
 #ifndef _err_inherit4__defines_h_
 #define _err_inherit4__defines_h_
@@ -37,5 +37,6 @@ typedef struct YYLTYPE
 #define YYLTYPE_IS_DECLARED 1
 #endif
 #define YYRHSLOC(rhs, k) ((rhs)[k])
+extern YYLTYPE err_inherit4_lloc;
 
 #endif /* _err_inherit4__defines_h_ */

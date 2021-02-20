@@ -1,6 +1,6 @@
-/*	$NetBSD: mkpar.c,v 1.1.1.9 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.1.1.10 2021/02/20 20:30:07 christos Exp $	*/
 
-/* Id: mkpar.c,v 1.15 2016/06/07 00:22:12 tom Exp  */
+/* Id: mkpar.c,v 1.17 2020/09/10 17:37:33 tom Exp  */
 
 #include "defs.h"
 
@@ -78,18 +78,19 @@ get_shifts(int stateno)
     action *actions, *temp;
     shifts *sp;
     Value_t *to_state2;
-    Value_t i, k;
-    Value_t symbol;
 
     actions = 0;
     sp = shift_table[stateno];
     if (sp)
     {
+	Value_t i;
+
 	to_state2 = sp->shift;
 	for (i = (Value_t)(sp->nshifts - 1); i >= 0; i--)
 	{
-	    k = to_state2[i];
-	    symbol = accessing_symbol[k];
+	    Value_t k = to_state2[i];
+	    Value_t symbol = accessing_symbol[k];
+
 	    if (ISTOKEN(symbol))
 	    {
 		temp = NEW(action);
@@ -110,16 +111,16 @@ static action *
 add_reductions(int stateno, action *actions)
 {
     int i, j, m, n;
-    int ruleno, tokensetsize;
-    unsigned *rowp;
+    int tokensetsize;
 
     tokensetsize = WORDSIZE(ntokens);
     m = lookaheads[stateno];
     n = lookaheads[stateno + 1];
     for (i = m; i < n; i++)
     {
-	ruleno = LAruleno[i];
-	rowp = LA + i * tokensetsize;
+	int ruleno = LAruleno[i];
+	unsigned *rowp = LA + i * tokensetsize;
+
 	for (j = ntokens - 1; j >= 0; j--)
 	{
 	    if (BIT(rowp, j))
@@ -172,18 +173,21 @@ add_reduce(action *actions,
 static void
 find_final_state(void)
 {
-    int goal, i;
     Value_t *to_state2;
     shifts *p;
 
-    p = shift_table[0];
-    to_state2 = p->shift;
-    goal = ritem[1];
-    for (i = p->nshifts - 1; i >= 0; --i)
+    if ((p = shift_table[0]) != 0)
     {
-	final_state = to_state2[i];
-	if (accessing_symbol[final_state] == goal)
-	    break;
+	int i;
+	int goal = ritem[1];
+
+	to_state2 = p->shift;
+	for (i = p->nshifts - 1; i >= 0; --i)
+	{
+	    final_state = to_state2[i];
+	    if (accessing_symbol[final_state] == goal)
+		break;
+	}
     }
 }
 
@@ -226,7 +230,6 @@ static void
 remove_conflicts(void)
 {
     int i;
-    int symbol;
     action *p, *pref = 0;
 
     SRtotal = 0;
@@ -235,9 +238,10 @@ remove_conflicts(void)
     RRconflicts = NEW2(nstates, Value_t);
     for (i = 0; i < nstates; i++)
     {
+	int symbol = -1;
+
 	SRcount = 0;
 	RRcount = 0;
-	symbol = -1;
 #if defined(YYBTYACC)
 	pref = NULL;
 #endif
