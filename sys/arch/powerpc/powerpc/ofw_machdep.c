@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.28 2021/02/19 05:21:39 thorpej Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.29 2021/02/20 01:57:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.28 2021/02/19 05:21:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.29 2021/02/20 01:57:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -90,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.28 2021/02/19 05:21:39 thorpej Exp
 
 int	ofw_root;
 int	ofw_chosen;
+
+bool	ofw_real_mode;
 
 /*
  * Bootstrap console support functions.
@@ -411,6 +413,21 @@ ofw_bootstrap_get_translations(void)
 	}
 }
 
+static bool
+ofw_option_truefalse(const char *prop, int proplen)
+{
+	/* These are all supposed to be strings. */
+	switch (prop[0]) {
+	case 'y':
+	case 'Y':
+	case 't':
+	case 'T':
+	case '1':
+		return true;
+	}
+	return false;
+}
+
 /*
  * Called from ofwinit() very early in bootstrap.  We are still
  * running on the stack provided by OpenFirmware and in the same
@@ -421,12 +438,28 @@ ofw_bootstrap_get_translations(void)
 void
 ofw_bootstrap(void)
 {
+	char prop[32];
+	int handle, proplen;
+
 	/* Stash the handles for "/" and "/chosen" for convenience later. */
 	ofw_root = OF_finddevice("/");
 	ofw_chosen = OF_finddevice("/chosen");
 
 	/* Initialize the early bootstrap console. */
 	ofw_bootstrap_console();
+
+	/* Check to see if we're running in real-mode. */
+	handle = OF_finddevice("/options");
+	if (handle != -1) {
+		proplen = OF_getprop(handle, "real-mode?", prop, sizeof(prop));
+		if (proplen > 0) {
+			ofw_real_mode = ofw_option_truefalse(prop, proplen);
+		} else {
+			ofw_real_mode = false;
+		}
+	}
+	aprint_normal("OpenFirmware running in %s-mode\n",
+	    ofw_real_mode ? "real" : "virtual");
 
 	/* Get #address-cells and #size-cells to fething memory info. */
 	if (OF_getprop(ofw_root, "#address-cells", &ofw_address_cells,
