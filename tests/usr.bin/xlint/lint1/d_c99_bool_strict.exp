@@ -162,5 +162,4 @@ d_c99_bool_strict.c(652): warning: argument flags unused in function strict_bool
 d_c99_bool_strict.c(716): operands of '==' have incompatible types (_Bool != int) [107]
 d_c99_bool_strict.c(728): warning: expression has null effect [129]
 d_c99_bool_strict.c(740): right operand of '+' must not be bool [337]
-d_c99_bool_strict.c(749): warning: constant in conditional context [161]
 d_c99_bool_strict.c(757): warning: constant in conditional context [161]
