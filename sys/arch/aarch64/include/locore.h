@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.7 2021/02/07 21:15:09 jmcneill Exp $ */
+/* $NetBSD: locore.h,v 1.8 2021/02/20 19:27:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -80,10 +80,12 @@ static inline register_t __unused
 daif_disable(register_t psw)
 {
 	register_t oldpsw = reg_daif_read();
-	if (!__builtin_constant_p(psw)) {
-		reg_daif_write(oldpsw | psw);
-	} else {
-		reg_daifset_write((psw & DAIF_MASK) >> DAIF_SETCLR_SHIFT);
+	if ((oldpsw & psw) != psw) {
+		if (!__builtin_constant_p(psw)) {
+			reg_daif_write(oldpsw | psw);
+		} else {
+			reg_daifset_write((psw & DAIF_MASK) >> DAIF_SETCLR_SHIFT);
+		}
 	}
 	return oldpsw;
 }
