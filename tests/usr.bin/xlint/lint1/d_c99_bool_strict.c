@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.19 2021/02/20 18:49:26 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.20 2021/02/20 18:52:58 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -739,4 +739,20 @@ bool_as_array_index(bool cond)
 	 */
 	println(repr[cond]);		/* expect: 337 */
 	println(cond ? "yes" : "no");
+}
+
+void
+do_while_false(void)
+{
+	do {
+
+	} while (__lint_false);	/*FIXME*//* expect: 161 */
+}
+
+void
+do_while_true(void)
+{
+	do {
+
+	} while (__lint_true);	/* expect: 161 */
 }
