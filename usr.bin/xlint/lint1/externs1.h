@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.66 2021/02/19 12:28:56 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.67 2021/02/20 16:03:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -287,12 +287,11 @@ extern	void	bitfieldtype(int);
  */
 extern	bool	initerr;
 extern	sym_t	*initsym;
-extern	int	startinit;
 
 extern	void	initstack_init(void);
 extern	void	init_rbrace(void);
 extern	void	init_lbrace(void);
-extern	void	mkinit(tnode_t *);
+extern	void	init_using_expr(tnode_t *);
 extern	void	push_member(sbuf_t *);
 
 /*
