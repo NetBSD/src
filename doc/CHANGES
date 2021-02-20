@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2780 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2781 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -333,3 +333,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	x68k: Add Emulate3Buttons support to X68k Xorg based monolithic server.
 		[tsutsui 20210207]
 	bind: Import version 9.16.12. [christos 20210219]
+	OpenSSL: Imported 1.1.1j. [christos 20210219]
