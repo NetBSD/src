@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.71 2021/02/20 17:12:00 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.72 2021/02/20 17:24:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.71 2021/02/20 17:12:00 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.72 2021/02/20 17:24:37 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -206,6 +206,7 @@ pop_member(void)
 	}
 }
 
+#ifdef DEBUG
 static void
 debug_named_member(void)
 {
@@ -222,6 +223,9 @@ debug_named_member(void)
 	} while (name != namedmem);
 	debug_printf("\n");
 }
+#else
+#define debug_named_member() (void)0
+#endif
 
 /*
  * Initialize the initialisation stack by putting an entry for the variable
