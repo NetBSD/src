@@ -1,5 +1,5 @@
 #!/bin/sh
-# Id: run_make.sh,v 1.17 2018/05/26 01:24:57 tom Exp 
+# Id: run_make.sh,v 1.18 2019/11/25 23:23:26 tom Exp 
 # vi:ts=4 sw=4:
 
 # do a test-compile on each of the ".c" files in the test-directory
@@ -108,7 +108,7 @@ then
 
 		case $BISON in
 		[3-9].[0-9]*.[0-9]*)
-			bison -Wno-other -Wno-conflicts-sr -Wconflicts-rr -y run_make.y
+			bison -Wno-other -Wno-conflicts-sr -Wconflicts-rr -y -Wno-yacc run_make.y
 			;;
 		*)
 			bison -y run_make.y

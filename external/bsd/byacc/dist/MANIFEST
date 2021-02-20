@@ -1,8 +1,9 @@
-MANIFEST for byacc-20190617, version t20190617
+MANIFEST for byacc-20210109, version t20210109
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 ACKNOWLEDGEMENTS                original version of byacc - 1993
 AUTHORS                         nicknames for some contributors (see CHANGES for details)
+LICENSE                         summary of byacc's license
 Makefile.old                    renamed from Makefile
 NEW_FEATURES                    original version of byacc - 1993
 NOTES                           original version of byacc - 1993
@@ -105,6 +106,30 @@ test/btyacc/calc3.error         reference output for testing
 test/btyacc/calc3.output        reference output for testing
 test/btyacc/calc3.tab.c         reference output for testing
 test/btyacc/calc3.tab.h         reference output for testing
+test/btyacc/calc_code_all.error reference output for testing
+test/btyacc/calc_code_all.output  reference output for testing
+test/btyacc/calc_code_all.tab.c reference output for testing
+test/btyacc/calc_code_all.tab.h reference output for testing
+test/btyacc/calc_code_default.error  reference output for testing
+test/btyacc/calc_code_default.output  reference output for testing
+test/btyacc/calc_code_default.tab.c  reference output for testing
+test/btyacc/calc_code_default.tab.h  reference output for testing
+test/btyacc/calc_code_imports.error  reference output for testing
+test/btyacc/calc_code_imports.output  reference output for testing
+test/btyacc/calc_code_imports.tab.c  reference output for testing
+test/btyacc/calc_code_imports.tab.h  reference output for testing
+test/btyacc/calc_code_provides.error  reference output for testing
+test/btyacc/calc_code_provides.output  reference output for testing
+test/btyacc/calc_code_provides.tab.c  reference output for testing
+test/btyacc/calc_code_provides.tab.h  reference output for testing
+test/btyacc/calc_code_requires.error  reference output for testing
+test/btyacc/calc_code_requires.output  reference output for testing
+test/btyacc/calc_code_requires.tab.c  reference output for testing
+test/btyacc/calc_code_requires.tab.h  reference output for testing
+test/btyacc/calc_code_top.error reference output for testing
+test/btyacc/calc_code_top.output  reference output for testing
+test/btyacc/calc_code_top.tab.c reference output for testing
+test/btyacc/calc_code_top.tab.h reference output for testing
 test/btyacc/code_calc.code.c    reference output for testing
 test/btyacc/code_calc.error     reference output for testing
 test/btyacc/code_calc.output    reference output for testing
@@ -115,6 +140,18 @@ test/btyacc/code_error.error    reference output for testing
 test/btyacc/code_error.output   reference output for testing
 test/btyacc/code_error.tab.c    reference output for testing
 test/btyacc/code_error.tab.h    reference output for testing
+test/btyacc/defines1.calc.c     reference output for testing
+test/btyacc/defines1.calc.h     reference output for testing
+test/btyacc/defines1.error      reference output for testing
+test/btyacc/defines1.output     reference output for testing
+test/btyacc/defines2.calc.c     reference output for testing
+test/btyacc/defines2.calc.h     reference output for testing
+test/btyacc/defines2.error      reference output for testing
+test/btyacc/defines2.output     reference output for testing
+test/btyacc/defines3.calc.c     reference output for testing
+test/btyacc/defines3.calc.h     reference output for testing
+test/btyacc/defines3.error      reference output for testing
+test/btyacc/defines3.output     reference output for testing
 test/btyacc/empty.error         reference output for testing
 test/btyacc/empty.output        reference output for testing
 test/btyacc/empty.tab.c         reference output for testing
@@ -363,6 +400,12 @@ test/btyacc/rename_debug.error  reference output for testing
 test/btyacc/rename_debug.h      reference output for testing
 test/btyacc/rename_debug.i      reference output for testing
 test/btyacc/rename_debug.output reference output for testing
+test/btyacc/stdin1.calc.c       reference output for testing
+test/btyacc/stdin1.error        reference output for testing
+test/btyacc/stdin1.output       reference output for testing
+test/btyacc/stdin2.calc.c       reference output for testing
+test/btyacc/stdin2.error        reference output for testing
+test/btyacc/stdin2.output       reference output for testing
 test/btyacc/varsyntax_calc1.error  reference output for testing
 test/btyacc/varsyntax_calc1.output  reference output for testing
 test/btyacc/varsyntax_calc1.tab.c  reference output for testing
@@ -373,11 +416,16 @@ test/btyacc_demo.y              testcase for btyacc
 test/btyacc_destroy1.y          btyacc test-case for %parse-param
 test/btyacc_destroy2.y          btyacc test-case for %parse-param
 test/btyacc_destroy3.y          btyacc test-case for %parse-param
-test/calc.tab.c                 c-file for calc.y
 test/calc.y                     example from VMS freeware version of byacc
 test/calc1.y                    advanced example from Steve Johnson's paper.
 test/calc2.y                    test-cases and reference files for %lex-param / %parse-param
 test/calc3.y                    test-cases and reference files for %lex-param / %parse-param
+test/calc_code_all.y            test-case for "%code" with all recognized keywords
+test/calc_code_default.y        test-case for "%code" with no keyword
+test/calc_code_imports.y        test-case for "%code imports"
+test/calc_code_provides.y       test-case for "%code provides"
+test/calc_code_requires.y       test-case for "%code requires"
+test/calc_code_top.y            test-case for "%code top"
 test/code_calc.y                reference input for testing
 test/code_debug.y               test-input, for -i, -o, -d options
 test/code_error.y               reference input for testing
@@ -455,6 +503,30 @@ test/yacc/calc3.error           reference output for testing
 test/yacc/calc3.output          reference output for testing
 test/yacc/calc3.tab.c           reference output for testing
 test/yacc/calc3.tab.h           reference output for testing
+test/yacc/calc_code_all.error   reference output for testing
+test/yacc/calc_code_all.output  reference output for testing
+test/yacc/calc_code_all.tab.c   reference output for testing
+test/yacc/calc_code_all.tab.h   reference output for testing
+test/yacc/calc_code_default.error  reference output for testing
+test/yacc/calc_code_default.output  reference output for testing
+test/yacc/calc_code_default.tab.c  reference output for testing
+test/yacc/calc_code_default.tab.h  reference output for testing
+test/yacc/calc_code_imports.error  reference output for testing
+test/yacc/calc_code_imports.output  reference output for testing
+test/yacc/calc_code_imports.tab.c  reference output for testing
+test/yacc/calc_code_imports.tab.h  reference output for testing
+test/yacc/calc_code_provides.error  reference output for testing
+test/yacc/calc_code_provides.output  reference output for testing
+test/yacc/calc_code_provides.tab.c  reference output for testing
+test/yacc/calc_code_provides.tab.h  reference output for testing
+test/yacc/calc_code_requires.error  reference output for testing
+test/yacc/calc_code_requires.output  reference output for testing
+test/yacc/calc_code_requires.tab.c  reference output for testing
+test/yacc/calc_code_requires.tab.h  reference output for testing
+test/yacc/calc_code_top.error   reference output for testing
+test/yacc/calc_code_top.output  reference output for testing
+test/yacc/calc_code_top.tab.c   reference output for testing
+test/yacc/calc_code_top.tab.h   reference output for testing
 test/yacc/code_calc.code.c      reference output for testing
 test/yacc/code_calc.error       reference output for testing
 test/yacc/code_calc.output      reference output for testing
@@ -465,6 +537,18 @@ test/yacc/code_error.error      reference output for testing
 test/yacc/code_error.output     reference output for testing
 test/yacc/code_error.tab.c      reference output for testing
 test/yacc/code_error.tab.h      reference output for testing
+test/yacc/defines1.calc.c       reference output for testing
+test/yacc/defines1.calc.h       reference output for testing
+test/yacc/defines1.error        reference output for testing
+test/yacc/defines1.output       reference output for testing
+test/yacc/defines2.calc.c       reference output for testing
+test/yacc/defines2.calc.h       reference output for testing
+test/yacc/defines2.error        reference output for testing
+test/yacc/defines2.output       reference output for testing
+test/yacc/defines3.calc.c       reference output for testing
+test/yacc/defines3.calc.h       reference output for testing
+test/yacc/defines3.error        reference output for testing
+test/yacc/defines3.output       reference output for testing
 test/yacc/empty.error           reference output for testing
 test/yacc/empty.output          reference output for testing
 test/yacc/empty.tab.c           reference output for testing
@@ -681,6 +765,12 @@ test/yacc/rename_debug.error    reference output for testing
 test/yacc/rename_debug.h        reference output for testing
 test/yacc/rename_debug.i        reference output for testing
 test/yacc/rename_debug.output   reference output for testing
+test/yacc/stdin1.calc.c         reference output for testing
+test/yacc/stdin1.error          reference output for testing
+test/yacc/stdin1.output         reference output for testing
+test/yacc/stdin2.calc.c         reference output for testing
+test/yacc/stdin2.error          reference output for testing
+test/yacc/stdin2.output         reference output for testing
 test/yacc/varsyntax_calc1.error reference output for testing
 test/yacc/varsyntax_calc1.output  reference output for testing
 test/yacc/varsyntax_calc1.tab.c reference output for testing

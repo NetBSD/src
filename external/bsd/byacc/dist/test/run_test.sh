@@ -1,5 +1,5 @@
 #!/bin/sh
-# Id: run_test.sh,v 1.29 2019/06/17 08:12:47 tom Exp 
+# Id: run_test.sh,v 1.31 2019/11/03 23:44:07 tom Exp 
 # vi:ts=4 sw=4:
 
 errors=0
@@ -17,6 +17,9 @@ test_diffs() {
 	else
 		sed	-e s,$NEW,$REF, \
 			-e "s%$YACC_escaped%YACC%" \
+			-e "s%^yacc\>%YACC%" \
+			-e "s%YACC:.*option.*$%YACC: error message%" \
+			-e "s%^Usage: yacc\>%Usage: YACC%" \
 			-e '/YYPATCH/s/[0-9][0-9]*/"yyyymmdd"/' \
 			-e '/#define YYPATCH/s/PATCH/CHECK/' \
 			-e 's,#line \([1-9][0-9]*\) "'$REF_DIR'/,#line \1 ",' \
