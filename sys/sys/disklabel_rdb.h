@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_rdb.h,v 1.4 2017/02/26 11:51:38 rin Exp $	*/
+/*	$NetBSD: disklabel_rdb.h,v 1.5 2021/02/20 09:51:20 rin Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _SYS_DISKLABEL_RDB_H_
 #define _SYS_DISKLABEL_RDB_H_
 
@@ -211,8 +212,8 @@ struct lsegblock {
 #define DOST_SFS	0x53465300	/* 'SFSx' Smart fs partition */
 
 struct adostype {
-	unsigned char archtype;	/* see ADT_xxx below */
-	unsigned char fstype;	/* byte 3 from amiga dostype */
+	uint8_t archtype;	/* see ADT_xxx below */
+	uint8_t fstype;		/* byte 3 from amiga dostype */
 };
 
 /* archtypes */
