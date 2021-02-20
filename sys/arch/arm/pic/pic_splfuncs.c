@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.14 2021/02/20 19:30:46 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.15 2021/02/20 19:35:07 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.14 2021/02/20 19:30:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.15 2021/02/20 19:35:07 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -92,6 +92,7 @@ splx(int savedipl)
 		goto skip_pending;
 	}
 
+	ci->ci_intr_depth++;
 	while ((ci->ci_pending_ipls & ~__BIT(savedipl)) > __BIT(savedipl)) {
 		KASSERT(ci->ci_pending_ipls < __BIT(NIPL));
 		for (;;) {
@@ -106,6 +107,7 @@ splx(int savedipl)
 			pic_list_unblock_irqs(ci);
 		}
 	}
+	ci->ci_intr_depth--;
 skip_pending:
 #endif
 
