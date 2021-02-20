@@ -1,10 +1,10 @@
-/*	$NetBSD: graph.c,v 1.8 2018/12/23 20:27:23 jakllsch Exp $	*/
+/*	$NetBSD: graph.c,v 1.9 2021/02/20 22:57:56 christos Exp $	*/
 
 #include "defs.h"
-/* Id: graph.c,v 1.8 2014/02/19 00:46:57 Tom.Shields Exp  */
+/* Id: graph.c,v 1.9 2020/09/10 17:22:51 tom Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph.c,v 1.8 2018/12/23 20:27:23 jakllsch Exp $");
+__RCSID("$NetBSD: graph.c,v 1.9 2021/02/20 22:57:56 christos Exp $");
 
 static void graph_state(int stateno);
 static void graph_LA(int ruleno);
@@ -56,15 +56,16 @@ static void
 graph_state(int stateno)
 {
     Value_t *isp;
-    int rule;
     Value_t *sp;
-    Value_t *sp1;
 
     larno = (unsigned)lookaheads[stateno];
     fprintf(graph_file, "\n\tq%d [label=\"%d:\\l", stateno, stateno);
 
     for (isp = itemset; isp < itemsetend; isp++)
     {
+	Value_t *sp1;
+	int rule;
+
 	sp1 = sp = ritem + *isp;
 
 	while (*sp >= 0)
@@ -94,15 +95,14 @@ graph_state(int stateno)
 static void
 graph_LA(int ruleno)
 {
-    int i;
     unsigned tokensetsize;
-    unsigned *rowp;
 
     tokensetsize = (unsigned)WORDSIZE(ntokens);
 
     if (ruleno == LAruleno[larno])
     {
-	rowp = LA + larno * tokensetsize;
+	int i;
+	unsigned *rowp = LA + larno * tokensetsize;
 
 	fprintf(graph_file, " { ");
 	for (i = ntokens - 1; i >= 0; i--)

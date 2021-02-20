@@ -1,6 +1,6 @@
-.\"	$NetBSD: yacc.1,v 1.9 2019/10/06 23:29:42 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.10 2021/02/20 22:57:56 christos Exp $
 .\"
-.\" Id: yacc.1,v 1.29 2019/06/16 19:58:03 tom Exp 
+.\" Id: yacc.1,v 1.35 2020/09/10 19:30:12 tom Exp 
 .\"
 .\" .TH YACC 1 "July\ 15,\ 1990"
 .\" .UC 6
@@ -29,11 +29,11 @@
 .ie n  .IP \(bu 4
 .el    .IP \(bu 2
 ..
-.TH YACC 1 "June 16, 2019" "Berkeley Yacc" "User Commands"
+.TH YACC 1 "September 10, 2020" "Berkeley Yacc" "User Commands"
 .SH NAME
 \*N \- an LALR(1) parser generator
 .SH SYNOPSIS
-.B \*n [ -BdgilLPrtvVy ] [ \-b
+.B \*n [ \-BdgilLPrtvVy ] [ \-b
 .I file_prefix
 .B ] [ \-H
 .I defines_file
@@ -52,7 +52,7 @@ The parsers consist of a set of LALR(1) parsing tables and a driver routine
 written in the C programming language.
 .B \*N
 normally writes the parse tables and the driver routine to the file
-.I y.tab.c.
+.IR  y.tab.c .
 .PP
 The following options are available:
 .TP 5
@@ -85,15 +85,16 @@ The
 option causes a graphical description of the generated LALR(1) parser to
 be written to the file
 .B y.dot
-in graphviz format, ready to be processed by dot(1).
+in graphviz format, ready to be processed by
+.BR dot (1).
 .TP
 .B \-i
-The \fB-i\fR option causes a supplementary header file
+The \fB\-i\fR option causes a supplementary header file
 .B y.tab.i
 to be written.
 It contains extern declarations
 and supplementary #define's as needed to map the conventional \fIyacc\fP
-\fByy\fP-prefixed names to whatever the \fB-p\fP option may specify.
+\fByy\fP-prefixed names to whatever the \fB\-p\fP option may specify.
 The code file, e.g., \fBy.tab.c\fP is modified to #include this file
 as well as the \fBy.tab.h\fP file, enforcing consistent usage of the
 symbols defined in those files.
@@ -109,7 +110,7 @@ option is not specified,
 will insert \fI#line\fP directives in the generated code.
 The \fI#line\fP directives let the C compiler relate errors in the
 generated code to the user's original code.
-If the \fB-l\fR option is specified,
+If the \fB\-l\fR option is specified,
 .B \*n
 will not insert the \fI#line\fP directives.
 \&\fI#line\fP directives specified by the user will be retained.
@@ -122,7 +123,7 @@ e.g., \*(``%locations\*('' (compile-time configuration for \fBbtyacc\fP).
 specify the filename for the parser file.
 If this option is not given, the output filename is
 the file prefix concatenated with the file suffix, e.g., \fBy.tab.c\fP.
-This overrides the \fB-b\fP option.
+This overrides the \fB\-b\fP option.
 .TP
 \fB\-p \fP\fIsymbol_prefix\fR
 The
@@ -134,7 +135,7 @@ The default prefix is the string
 .B yy.
 .TP
 .B \-P
-create a reentrant parser, e.g., \*(``%pure-parser\*(''.
+create a reentrant parser, e.g., \*(``%pure\-parser\*(''.
 .TP
 .B \-r
 The
@@ -143,9 +144,9 @@ option causes
 .B \*n
 to produce separate files for code and tables.
 The code file is named
-.I y.code.c,
+.IR y.code.c ,
 and the tables file is named
-.I y.tab.c.
+.IR y.tab.c .
 The prefix \*(``\fIy.\fP\*('' can be overridden using the \fB\-b\fP option.
 .TP
 .B \-s
@@ -206,9 +207,34 @@ A single \fIfilename\fP parameter is expected after a \*(``\-\-\*('' marker.
 provides some extensions for
 compatibility with bison and other implementations of yacc.
 The \fB%destructor\fP and \fB%locations\fP features are available
-only if \fByacc\fP has been configured and compiled to support the
+only if \fB\*n\fP has been configured and compiled to support the
 back-tracking (\fBbtyacc\fP) functionality.
 The remaining features are always available:
+.TP
+\fB %code\fP \fIkeyword\fP { \fIcode\fP }
+Adds the indicated source \fIcode\fP at a given point in the output file.
+The optional \fIkeyword\fP tells \fB\*n\fP where to insert the \fIcode\fP:
+.RS 7
+.TP 5
+\fBtop\fP
+just after the version-definition in the generated code-file.
+.TP 5
+\fBrequires\fP
+just after the declaration of public parser variables.
+If the \fB\-d\fP option is given, the code is inserted at the
+beginning of the defines-file.
+.TP 5
+\fBprovides\fP
+just after the declaration of private parser variables.
+If the \fB\-d\fP option is given, the code is inserted at the
+end of the defines-file.
+.RE
+.IP
+If no \fIkeyword\fP is given, the code is inserted at the
+beginning of the section of code copied verbatim from the source file.
+Multiple \fB%code\fP directives may be given;
+\fB\*n\fP inserts those into the corresponding code- or defines-file
+in the order that they appear in the source file.
 .TP
 \fB %destructor\fP { \fIcode\fP } \fIsymbol+\fP
 defines code that is invoked when a symbol is automatically
@@ -229,11 +255,11 @@ The bracketed \fIcode\fP is invoked whenever the parser discards one of
 the symbols.
 Within \fIcode\fP, \*(``\fB$$\fP\*('' or
 \*(``\fB$<tag>$\fP\*('' designates the semantic value associated with the
-discarded symbol, and  \*(``\fB@$\fP\*('' designates its location (see
+discarded symbol, and \*(``\fB@$\fP\*('' designates its location (see
 \fB%locations\fP directive).
 .IP
 A per-symbol destructor is defined by listing a grammar symbol
-in \fIsymbol+\fP.  A per-type destructor is defined  by listing
+in \fIsymbol+\fP.  A per-type destructor is defined by listing
 a semantic type tag (e.g., \*(``<some_tag>\*('') in \fIsymbol+\fP; in this
 case, the parser will invoke \fIcode\fP whenever it discards any grammar
 symbol that has that semantic type tag, unless that symbol has its own
@@ -256,13 +282,13 @@ for grammar symbols that have no declared semantic type tag.
 tells \fByacc\fP the expected number of shift/reduce conflicts.
 That makes it only report the number if it differs.
 .TP
-\fB %expect-rr\fP \fInumber\fP
+\fB %expect\-rr\fP \fInumber\fP
 tell \fByacc\fP the expected number of reduce/reduce conflicts.
 That makes it only report the number if it differs.
 This is (unlike bison) allowable in LALR parsers.
 .TP
 \fB %locations\fP
-tells \fByacc\fP to enable  management of position information associated
+tells \fByacc\fP to enable management of position information associated
 with each token, provided by the lexer in the global variable \fByylloc\fP,
 similar to management of semantic value information provided in \fByylval\fP.
 .IP
@@ -296,23 +322,23 @@ the rule, before the associated action is executed; this macro can be
 redefined by the user.
 .IP
 This directive adds a \fBYYLTYPE\fP parameter to \fByyerror()\fP.
-If the \fB%pure-parser\fP directive is present,
+If the \fB%pure\-parser\fP directive is present,
 a \fBYYLTYPE\fP parameter is added to \fByylex()\fP calls.
 .TP
-\fB %lex-param\fP { \fIargument-declaration\fP }
+\fB %lex\-param\fP { \fIargument-declaration\fP }
 By default, the lexer accepts no parameters, e.g., \fByylex()\fP.
 Use this directive to add parameter declarations for your customized lexer.
 .TP
-\fB %parse-param\fP { \fIargument-declaration\fP }
+\fB %parse\-param\fP { \fIargument-declaration\fP }
 By default, the parser accepts no parameters, e.g., \fByyparse()\fP.
 Use this directive to add parameter declarations for your customized parser.
 .TP
-\fB %pure-parser\fP
+\fB %pure\-parser\fP
 Most variables (other than \fByydebug\fP and \fByynerrs\fP) are
 allocated on the stack within \fByyparse\fP, making the parser reasonably
 reentrant.
 .TP
-\fB %token-table\fP
+\fB %token\-table\fP
 Make the parser's names for tokens available in the \fByytname\fP array.
 However,
 .B \*n
@@ -322,7 +348,7 @@ or \*(``$undefined\*('' in this array.
 According to Robert Corbett,
 .Ex
 Berkeley Yacc is an LALR(1) parser generator.  Berkeley Yacc
-has been made as compatible as possible with AT&T Yacc. 
+has been made as compatible as possible with AT&T Yacc.
 Berkeley Yacc can accept any input specification that
 conforms to the AT&T Yacc documentation.  Specifications
 that take advantage of undocumented features of AT&T Yacc
@@ -358,14 +384,14 @@ yyerror without providing prototypes.
 Bison's support for \*(``%expect\*('' is broken in more than one release.
 For best results using bison, delete that directive.
 .bP
-Bison has no equivalent for some of \fByacc\fP's commmand-line options,
+Bison has no equivalent for some of \fByacc\fP's command-line options,
 relying on directives embedded in the grammar file.
 .bP
 Bison's \*(``\fB\-y\fP\*('' option does not affect bison's lack of support for
 features of AT&T yacc which were deemed obsolescent.
 .bP
 \fBYacc\fP accepts multiple parameters
-with \fB%lex-param\fP and \fB%parse-param\fP in two forms
+with \fB%lex\-param\fP and \fB%parse\-param\fP in two forms
 .Ex
 {type1 name1} {type2 name2} ...
 {type1 name1,  type2 name2 ...}
@@ -374,7 +400,7 @@ with \fB%lex-param\fP and \fB%parse-param\fP in two forms
 Bison accepts the latter (though undocumented), but depending on the
 release may generate bad code.
 .bP
-Like bison, \fByacc\fP will add parameters specified via \fB%parse-param\fP
+Like bison, \fByacc\fP will add parameters specified via \fB%parse\-param\fP
 to \fByyparse\fP, \fByyerror\fP and (if configured for back-tracking)
 to the destructor declared using \fB%destructor\fP.
 Bison puts the additional parameters \fIfirst\fP for
