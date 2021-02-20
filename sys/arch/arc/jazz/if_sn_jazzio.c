@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.13 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.14 2021/02/20 09:36:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.13 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.14 2021/02/20 09:36:30 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.13 2011/07/01 19:25:41 dyoung Exp
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/kcore.h>
+
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
