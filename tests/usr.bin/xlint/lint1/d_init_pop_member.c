@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_pop_member.c,v 1.4 2021/02/20 16:51:18 rillig Exp $	*/
+/*	$NetBSD: d_init_pop_member.c,v 1.5 2021/02/20 16:55:32 rillig Exp $	*/
 # 3 "d_init_pop_member.c"
 
 /*
@@ -45,7 +45,7 @@ void func(void)
 	     * Before init.c 1.52 from 2020-01-01:
 	     * wrong "warning: bit-field initializer does not fit [180]"
 	     */
-	    .capital.mayor.favorite_color.green = 0xFF,
+	    .capital.mayor.favorite_color.green = 0xFF,	/*FIXME*//* expect: 101 */
 	    /*
 	     * Since 2015-07-28:
 	     * wrong "undefined struct/union member: capital [101]"
@@ -55,5 +55,5 @@ void func(void)
 	     * wrong "warning: bit-field initializer does not fit [180]"
 	     */
 	    .capital.mayor.favorite_color.red = 0xFF
-	};
+	};			/*FIXME*//* expect: 101 */
 }
