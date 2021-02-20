@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.46 2020/03/15 22:19:00 thorpej Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.47 2021/02/20 09:36:31 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.46 2020/03/15 22:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.47 2021/02/20 09:36:31 rin Exp $");
 
 
 #include <sys/param.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.46 2020/03/15 22:19:00 thorpej Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -214,6 +216,9 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
+
+	rnd_attach_source(&sc->sc_rndsource, ifp->if_xname, RND_TYPE_NET,
+	    RND_FLAG_DEFAULT);
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
@@ -627,8 +632,9 @@ sonic_txintr(struct sonic_softc *sc)
 	struct sonic_tda32 *tda32;
 	struct sonic_tda16 *tda16;
 	uint16_t status, totstat = 0;
-	int i;
+	int i, count;
 
+	count = 0;
 	for (i = sc->sc_txdirty; sc->sc_txpending != 0;
 	     i = SONIC_NEXTTX(i), sc->sc_txpending--) {
 		ds = &sc->sc_txsoft[i];
@@ -662,9 +668,10 @@ sonic_txintr(struct sonic_softc *sc)
 		 * Check for errors and collisions.
 		 */
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-		if (status & TCR_PTX)
+		if (status & TCR_PTX) {
 			if_statinc_ref(nsr, if_opackets);
-		else
+			count++;
+		} else
 			if_statinc_ref(nsr, if_oerrors);
 		if (TDA_STATUS_NCOL(status))
 			if_statadd_ref(nsr, if_collisions,
@@ -682,6 +689,9 @@ sonic_txintr(struct sonic_softc *sc)
 	if (sc->sc_txpending == 0)
 		ifp->if_timer = 0;
 
+	if (count != 0)
+		rnd_add_uint32(&sc->sc_rndsource, count);
+
 	return totstat;
 }
 
@@ -698,9 +708,10 @@ sonic_rxintr(struct sonic_softc *sc)
 	struct sonic_rda32 *rda32;
 	struct sonic_rda16 *rda16;
 	struct mbuf *m;
-	int i, len;
+	int i, len, count;
 	uint16_t status, bytecount /*, ptr0, ptr1, seqno */;
 
+	count = 0;
 	for (i = sc->sc_rxptr;; i = SONIC_NEXTRX(i)) {
 		ds = &sc->sc_rxsoft[i];
 
@@ -838,11 +849,16 @@ sonic_rxintr(struct sonic_softc *sc)
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
+
+		count++;
 	}
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
 	CSR_WRITE(sc, SONIC_RWR, SONIC_CDRRADDR(sc, SONIC_PREVRX(i)));
+
+	if (count != 0)
+		rnd_add_uint32(&sc->sc_rndsource, count);
 }
 
 /*
