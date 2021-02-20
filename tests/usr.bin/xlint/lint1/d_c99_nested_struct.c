@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_nested_struct.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_nested_struct.c,v 1.4 2021/02/20 22:31:20 rillig Exp $	*/
 # 3 "d_c99_nested_struct.c"
 
 /* C99 nested struct init with named and non-named initializers */
@@ -22,6 +22,15 @@ typedef struct pthread_mutex_t {
 struct arc4random_global {
 	pthread_mutex_t lock;
 } arc4random_global = {
-	.lock = { 0x33330003, 0, { 0, 0, 0 }, 0, { 0, 0, 0 }, ((void *)0),
-		  ((void *)0), 0, ((void *)0) },
+	.lock = {
+		0x33330003,
+		0,
+		{ 0, 0, 0 },
+		0,
+		{ 0, 0, 0 },
+		((void *)0),
+		((void *)0),
+		0,
+		((void *)0)
+	},
 };
