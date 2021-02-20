@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.69 2021/02/20 16:03:56 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.70 2021/02/20 16:34:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.69 2021/02/20 16:03:56 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.70 2021/02/20 16:34:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -171,7 +171,9 @@ push_member(sbuf_t *sb)
 {
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
 	nam->n_name = sb->sb_name;
+
 	debug_step("%s: %s %p", __func__, nam->n_name, nam);
+
 	if (namedmem == NULL) {
 		/*
 		 * XXX: Why is this a circular list?
@@ -239,7 +241,7 @@ initstack_init(void)
 		free(istk);
 	}
 
-	debug_step("%s", __func__);
+	debug_enter();
 
 	/*
 	 * If the type which is to be initialized is an incomplete type,
@@ -251,6 +253,8 @@ initstack_init(void)
 	istk = initstk = xcalloc(1, sizeof (istk_t));
 	istk->i_subt = initsym->s_type;
 	istk->i_remaining = 1;
+
+	debug_leave();
 }
 
 static void
@@ -624,16 +628,10 @@ init_using_expr(tnode_t *tn)
 	tnode_t	*ln;
 	struct	mbl *tmem;
 	scl_t	sc;
-#ifdef DEBUG
-	char	sbuf[64];
-#endif
 
 	debug_enter();
-
-	debug_step("type=%s, value=%s",
-	    type_name(tn->tn_type),
-	    print_tnode(sbuf, sizeof(sbuf), tn));
 	debug_named_member();
+	debug_node(tn);
 
 	if (initerr || tn == NULL) {
 		debug_leave();
