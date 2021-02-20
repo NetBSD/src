@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.30 2021/02/19 17:46:53 nia Exp $
+ * $NetBSD: patch.c,v 1.31 2021/02/20 09:17:13 nia Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.30 2021/02/19 17:46:53 nia Exp $");
+__RCSID("$NetBSD: patch.c,v 1.31 2021/02/20 09:17:13 nia Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -115,7 +115,7 @@ static bool	remove_empty_files = false;
 static bool	reverse_flag_specified = false;
 
 /* buffer holding the name of the rejected patch file. */
-static char	rejname[NAME_MAX + 1];
+static char	rejname[PATH_MAX];
 
 /* buffer for stderr */
 static char	serrbuf[BUFSIZ];
