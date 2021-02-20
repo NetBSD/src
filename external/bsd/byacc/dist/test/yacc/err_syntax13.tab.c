@@ -1,12 +1,12 @@
-/*	$NetBSD: err_syntax13.tab.c,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: err_syntax13.tab.c,v 1.1.1.4 2021/02/20 20:30:08 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
 /* (use YYMAJOR/YYMINOR for ifdefs dependent on parser version) */
 
 #define YYBYACC 1
-#define YYMAJOR 1
-#define YYMINOR 9
+#define YYMAJOR 2
+#define YYMINOR 0
 #define YYCHECK "yyyymmdd"
 
 #define YYEMPTY        (-1)
