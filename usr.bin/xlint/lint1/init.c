@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.74 2021/02/20 19:10:38 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.75 2021/02/20 19:56:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.74 2021/02/20 19:10:38 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.75 2021/02/20 19:56:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -113,11 +113,11 @@ namlist_t	*namedmem = NULL;
 static	bool	initstack_string(tnode_t *);
 
 #ifndef DEBUG
-#define debug_printf(fmt, ...) (void)0
-#define debug_indent() (void)0
-#define debug_enter(a) (void)0
-#define debug_step(fmt, ...) (void)0
-#define debug_leave(a) (void)0
+#define debug_printf(fmt, ...)	do { } while (false)
+#define debug_indent()		do { } while (false)
+#define debug_enter(a)		do { } while (false)
+#define debug_step(fmt, ...)	do { } while (false)
+#define debug_leave(a)		do { } while (false)
 #else
 static int debug_ind = 0;
 
@@ -224,7 +224,7 @@ debug_named_member(void)
 	debug_printf("\n");
 }
 #else
-#define debug_named_member() (void)0
+#define debug_named_member()	do { } while (false)
 #endif
 
 #ifdef DEBUG
@@ -257,7 +257,7 @@ debug_initstack(void)
 	}
 }
 #else
-#define debug_initstack() (void)0
+#define debug_initstack()	do { } while (false)
 #endif
 
 /*
