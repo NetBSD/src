@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.20 2021/02/20 18:52:58 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.21 2021/02/20 18:55:10 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -746,7 +746,7 @@ do_while_false(void)
 {
 	do {
 
-	} while (__lint_false);	/*FIXME*//* expect: 161 */
+	} while (__lint_false);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.210 2021/02/20 16:34:57 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.211 2021/02/20 18:55:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.210 2021/02/20 16:34:57 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.211 2021/02/20 18:55:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3727,6 +3727,13 @@ constant(tnode_t *tn, bool required)
 	return v;
 }
 
+static bool
+is_constcond_false(const tnode_t *tn, tspec_t t)
+{
+	return (t == BOOL || t == INT) &&
+	       tn->tn_op == CON && tn->tn_val->v_quad == 0;
+}
+
 /*
  * Perform some tests on expressions which can't be done in build() and
  * functions called by build(). These tests must be done here because
@@ -3758,7 +3765,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_zero_ok)
 	} else if (tn->tn_op == CON) {
 		if (hflag && tctx && !constcond_flag &&
 		    !(constcond_zero_ok &&
-		      is_int_constant_zero(tn, tn->tn_type->t_tspec)))
+		      is_constcond_false(tn, tn->tn_type->t_tspec)))
 			/* constant in conditional context */
 			warning(161);
 	}
