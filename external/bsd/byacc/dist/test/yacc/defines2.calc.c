@@ -1,12 +1,12 @@
-/*	$NetBSD: defines2.calc.c,v 1.1.1.1 2019/10/06 23:19:26 christos Exp $	*/
+/*	$NetBSD: defines2.calc.c,v 1.1.1.2 2021/02/20 20:30:09 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
 /* (use YYMAJOR/YYMINOR for ifdefs dependent on parser version) */
 
 #define YYBYACC 1
-#define YYMAJOR 1
-#define YYMINOR 9
+#define YYMAJOR 2
+#define YYMINOR 0
 #define YYCHECK "yyyymmdd"
 
 #define YYEMPTY        (-1)
