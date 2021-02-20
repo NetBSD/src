@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.5 2021/02/20 10:01:27 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.6 2021/02/20 10:12:52 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.5 2021/02/20 10:01:27 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.6 2021/02/20 10:12:52 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -75,39 +75,32 @@ struct {
 	int switch_level;
 } ck;
 
+#define NEED(cond) \
+	do {				\
+		if (!(cond))		\
+			return false;	\
+	} while (false)
 
 static bool
 is_getopt_call(const tnode_t *tn, char **out_options)
 {
-	if (tn == NULL)
-		return false;
-	if (tn->tn_op != NE)
-		return false;
-	if (tn->tn_left->tn_op != ASSIGN)
-		return false;
+	NEED(tn != NULL);
+	NEED(tn->tn_op == NE);
+	NEED(tn->tn_left->tn_op == ASSIGN);
 
 	const tnode_t *call = tn->tn_left->tn_right;
-	if (call->tn_op != CALL)
-		return false;
-	if (call->tn_left->tn_op != ADDR)
-		return false;
-	if (call->tn_left->tn_left->tn_op != NAME)
-		return false;
-	if (strcmp(call->tn_left->tn_left->tn_sym->s_name, "getopt") != 0)
-		return false;
+	NEED(call->tn_op == CALL);
+	NEED(call->tn_left->tn_op == ADDR);
+	NEED(call->tn_left->tn_left->tn_op == NAME);
+	NEED(strcmp(call->tn_left->tn_left->tn_sym->s_name, "getopt") == 0);
 
-	if (call->tn_right->tn_op != PUSH)
-		return false;
+	NEED(call->tn_right->tn_op == PUSH);
 
 	const tnode_t *last_arg = call->tn_right->tn_left;
-	if (last_arg->tn_op != CVT)
-		return false;
-	if (last_arg->tn_left->tn_op != ADDR)
-		return false;
-	if (last_arg->tn_left->tn_left->tn_op != STRING)
-		return false;
-	if (last_arg->tn_left->tn_left->tn_string->st_tspec != CHAR)
-		return false;
+	NEED(last_arg->tn_op == CVT);
+	NEED(last_arg->tn_left->tn_op == ADDR);
+	NEED(last_arg->tn_left->tn_left->tn_op == STRING);
+	NEED(last_arg->tn_left->tn_left->tn_string->st_tspec == CHAR);
 
 	*out_options = xstrdup(
 	    (const char *)last_arg->tn_left->tn_left->tn_string->st_cp);
