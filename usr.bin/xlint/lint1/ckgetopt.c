@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.3 2021/02/20 01:18:02 christos Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.4 2021/02/20 09:57:02 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.3 2021/02/20 01:18:02 christos Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.4 2021/02/20 09:57:02 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -51,10 +51,28 @@ __RCSID("$NetBSD: ckgetopt.c,v 1.3 2021/02/20 01:18:02 christos Exp $");
  */
 
 struct {
+	/*
+	 * 0	means outside a while loop with a getopt call.
+	 * 1	means directly inside a while loop with a getopt call.
+	 * > 1	means in a nested while loop; this is used for finishing the
+	 *	check at the correct point.
+	 */
+	int while_level;
+
+	/*
+	 * The options string from the getopt call.  Whenever an option is
+	 * handled by a case label, it is set to ' ' in unhandled_options.
+	 * In the end, only ' ' and ':' should remain in unhandled_options.
+	 */
 	pos_t options_pos;
 	char *options;
 	char *unhandled_options;
-	int while_level;
+
+	/*
+	 * The nesting level of switch statements, is only modified if
+	 * while_level > 0.  Only the case labels at switch_level == 1 are
+	 * relevant, all nested case labels are ignored.
+	 */
 	int switch_level;
 } ck;
 
@@ -100,7 +118,9 @@ is_getopt_call(const tnode_t *tn, char **out_options)
 static void
 check_unlisted_option(char opt)
 {
-	if (opt == '?' || ck.options == NULL)
+	lint_assert(ck.options != NULL);
+
+	if (opt == '?')
 		return;
 
 	const char *optptr = strchr(ck.options, opt);
@@ -116,8 +136,7 @@ check_unlisted_option(char opt)
 static void
 check_unhandled_option(void)
 {
-	if (ck.unhandled_options == NULL)
-		return;
+	lint_assert(ck.unhandled_options != NULL);
 
 	for (const char *opt = ck.unhandled_options; *opt != '\0'; opt++) {
 		if (*opt == ' ' || *opt == ':')
@@ -135,7 +154,9 @@ check_unhandled_option(void)
 void
 check_getopt_begin_while(const tnode_t *tn)
 {
-	if (ck.while_level == 0 && is_getopt_call(tn, &ck.options)) {
+	if (ck.while_level == 0) {
+		if (!is_getopt_call(tn, &ck.options))
+			return;
 		ck.unhandled_options = xstrdup(ck.options);
 		ck.options_pos = curr_pos;
 	}
