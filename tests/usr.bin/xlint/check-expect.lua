@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.2 2021/01/16 15:02:11 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.3 2021/02/20 22:18:32 rillig Exp $
 
 --[[
 
@@ -25,7 +25,7 @@ local function load_lines(fname)
   return lines
 end
 
-local function load_expect_comments_from_c(fname)
+local function load_expect_comments_from_c(fname, errors)
 
   local lines = load_lines(fname)
   if lines == nil then return nil end
@@ -41,6 +41,14 @@ local function load_expect_comments_from_c(fname)
       end
     end
     comments_by_line[lineno] = comments_in_line
+
+    local pp_lineno, pp_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")
+    if pp_lineno ~= nil then
+      if pp_fname == fname and tonumber(pp_lineno) ~= lineno + 1 then
+        errors:add("error: %s:%d: preprocessor line number must be %d",
+          fname, lineno, lineno + 1)
+      end
+    end
   end
 
   if seen_comment then return comments_by_line else return nil end
@@ -69,7 +77,7 @@ end
 
 local function check_test(c_fname, errors)
   local exp_fname = c_fname:gsub("%.c$", ".exp")
-  local comments = load_expect_comments_from_c(c_fname)
+  local comments = load_expect_comments_from_c(c_fname, errors)
   if comments == nil or #comments == 0 then return end
   local messages = load_actual_messages_from_exp(exp_fname)
   if messages == nil then return end
