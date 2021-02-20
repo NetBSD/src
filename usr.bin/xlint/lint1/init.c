@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.73 2021/02/20 17:44:39 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.74 2021/02/20 19:10:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.73 2021/02/20 17:44:39 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.74 2021/02/20 19:10:38 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -228,11 +228,15 @@ debug_named_member(void)
 #endif
 
 #ifdef DEBUG
+static const char *
+noyes(bool cond)
+{
+	return cond ? "yes" : "no";
+}
+
 static void
 debug_initstack(void)
 {
-	static const char *const noyes[] = { "no", "yes" };
-
 	if (initstk == NULL) {
 		debug_step("initstk is empty");
 		return;
@@ -243,9 +247,9 @@ debug_initstack(void)
 		debug_step("initstk[%zu]:", i);
 		debug_step("  i_type      = %s", type_name(elem->i_type));
 		debug_step("  i_subt      = %s", type_name(elem->i_subt));
-		debug_step("  i_brace     = %s", noyes[elem->i_brace]);
-		debug_step("  i_nolimit   = %s", noyes[elem->i_nolimit]);
-		debug_step("  i_namedmem  = %s", noyes[elem->i_namedmem]);
+		debug_step("  i_brace     = %s", noyes(elem->i_brace));
+		debug_step("  i_nolimit   = %s", noyes(elem->i_nolimit));
+		debug_step("  i_namedmem  = %s", noyes(elem->i_namedmem));
 		debug_step("  i_mem       = %s",
 		    elem->i_mem != NULL ? elem->i_mem->s_name : "(null)");
 		debug_step("  i_remaining = %d", elem->i_remaining);
@@ -301,7 +305,7 @@ initstack_pop_item(void)
 
 	istk = initstk;
 	debug_step("pop type=%s, brace=%d remaining=%d named=%d",
-	    type_name(istk->i_type ? istk->i_type : istk->i_subt),
+	    type_name(istk->i_type != NULL ? istk->i_type : istk->i_subt),
 	    istk->i_brace, istk->i_remaining, istk->i_namedmem);
 
 	initstk = istk->i_next;
@@ -310,14 +314,14 @@ initstack_pop_item(void)
 	lint_assert(istk != NULL);
 
 	debug_step("top type=%s, brace=%d remaining=%d named=%d",
-	    type_name(istk->i_type ? istk->i_type : istk->i_subt),
+	    type_name(istk->i_type != NULL ? istk->i_type : istk->i_subt),
 	    istk->i_brace, istk->i_remaining, istk->i_namedmem);
 
 	istk->i_remaining--;
 	lint_assert(istk->i_remaining >= 0);
 
 	debug_step("top remaining=%d rhs.name=%s",
-	    istk->i_remaining, namedmem ? namedmem->n_name : "*null*");
+	    istk->i_remaining, namedmem != NULL ? namedmem->n_name : "*null*");
 
 	if (istk->i_remaining >= 0 && namedmem != NULL) {
 
@@ -467,7 +471,7 @@ again:
 		istk->i_remaining = istk->i_type->t_dim;
 		debug_step("elements array %s[%d] %s",
 		    type_name(istk->i_subt), istk->i_remaining,
-		    namedmem ? namedmem->n_name : "*none*");
+		    namedmem != NULL ? namedmem->n_name : "*none*");
 		break;
 	case UNION:
 		if (tflag)
@@ -486,7 +490,8 @@ again:
 		cnt = 0;
 		debug_step("lookup type=%s, name=%s named=%d",
 		    type_name(istk->i_type),
-		    namedmem ? namedmem->n_name : "*none*", istk->i_namedmem);
+		    namedmem != NULL ? namedmem->n_name : "*none*",
+		    istk->i_namedmem);
 		for (m = istk->i_type->t_str->sou_first_member;
 		     m != NULL; m = m->s_next) {
 			if (m->s_bitfield && m->s_name == unnamed)
@@ -519,7 +524,8 @@ again:
 		}
 		istk->i_brace = true;
 		debug_step("unnamed type=%s, brace=%d",
-		    type_name(istk->i_type ? istk->i_type : istk->i_subt),
+		    type_name(
+			istk->i_type != NULL ? istk->i_type : istk->i_subt),
 		    istk->i_brace);
 		if (cnt == 0) {
 			/* cannot init. struct/union with no named member */
@@ -598,7 +604,8 @@ initstack_next_brace(void)
 	if (!initerr) {
 		initstk->i_brace = true;
 		debug_step("%p %s", namedmem, type_name(
-			initstk->i_type ? initstk->i_type : initstk->i_subt));
+		    initstk->i_type != NULL ? initstk->i_type
+			: initstk->i_subt));
 	}
 
 	debug_initstack();
