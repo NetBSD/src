@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.18 2021/02/20 18:02:58 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.19 2021/02/20 18:49:26 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -97,7 +97,7 @@
  * __lint_false and true to __lint_true, two predefined constant expressions.
  */
 
-/* lint1-extra-flags: -T */
+/* lint1-extra-flags: -hT */
 
 /*
  * strict-bool-typedef
@@ -130,10 +130,10 @@ strict_bool_constant(void)
 
 enum strict_bool_constant_expressions {
 	/* Ok: __lint_false is a boolean constant expression. */
-	FALSE = __lint_false ? 100 : 101,
+	FALSE = __lint_false ? 100 : 101,	/* expect: 161 */
 
 	/* Ok: __lint_true is a boolean constant expression. */
-	TRUE = __lint_true ? 100 : 101,
+	TRUE = __lint_true ? 100 : 101,		/* expect: 161 */
 
 	/* Not ok: an integer is not a boolean constant expression. */
 	INT0 = 0 ? 100 : 101,	/* expect: 331 */
@@ -159,13 +159,13 @@ enum strict_bool_constant_expressions {
 	UNARY_PLUS = (+0) ? 100 : 101,	/* expect: 331 */
 
 	/* The main operator '>' has return type bool. */
-	Q1 = (13 > 12) ? 100 : 101,
+	Q1 = (13 > 12) ? 100 : 101,		/* expect: 161 */
 
 	/*
 	 * The parenthesized expression has type int and thus cannot be
 	 * used as the controlling expression in the '?:' operator.
 	 */
-	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,	/* expect: 331 */
+	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,	/* expect: 161, 331 */
 
 	BINAND_BOOL = __lint_false & __lint_true, /* expect: 55 */
 	BINAND_INT = 0 & 1,
@@ -176,10 +176,10 @@ enum strict_bool_constant_expressions {
 	BINOR_BOOL = __lint_false | __lint_true, /* expect: 55 */
 	BINOR_INT = 0 | 1,
 
-	LOGOR_BOOL = __lint_false || __lint_true, /* expect: 55 */
+	LOGOR_BOOL = __lint_false || __lint_true, /* expect: 161, 55 */
 	LOGOR_INT = 0 || 1,	/* expect: 331, 332 */
 
-	LOGAND_BOOL = __lint_false && __lint_true, /* expect: 55 */
+	LOGAND_BOOL = __lint_false && __lint_true, /* expect: 161, 55 */
 	LOGAND_INT = 0 && 1,	/* expect: 331, 332 */
 };
 
@@ -363,10 +363,10 @@ strict_bool_conversion_from_bool_to_scalar(bool b) /* expect: 231 */
 void
 strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 {
-	if (__lint_false)
+	if (__lint_false)	/* expect: 161 */
 		do_nothing();
 
-	if (__lint_true)
+	if (__lint_true)	/* expect: 161 */
 		do_nothing();
 
 	if (b)
@@ -415,8 +415,8 @@ strict_bool_operand_unary_not(void)
 
 	b = !b;
 	b = !!!b;
-	b = !__lint_false;
-	b = !__lint_true;
+	b = !__lint_false;	/* expect: 161, 239 */
+	b = !__lint_true;	/* expect: 161, 239 */
 
 	int i = 0;
 
@@ -579,8 +579,8 @@ strict_bool_operand_binary_all(bool b, unsigned u)
 bool
 strict_bool_operand_binary_comma(bool b, int i)
 {
-	b = (b, !b);
-	i = (i, i + 1);
+	b = (b, !b);		/* expect: 129 */
+	i = (i, i + 1);		/* expect: 129 */
 	return b;
 }
 
@@ -725,7 +725,7 @@ strict_bool_assign_bit_field_then_compare(void)
 
 	struct s s = { __lint_false };
 
-	(void)((s.flag = s.flag) != __lint_false);
+	(void)((s.flag = s.flag) != __lint_false);	/* expect: 129 */
 }
 
 void
