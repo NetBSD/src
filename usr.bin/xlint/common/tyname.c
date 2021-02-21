@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.30 2021/02/21 10:28:32 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.31 2021/02/21 14:19:27 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.30 2021/02/21 10:28:32 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.31 2021/02/21 14:19:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -366,7 +366,14 @@ type_name(const type_t *tp)
 		buf_add(&buf, " of ");
 		buf_add(&buf, type_name(tp->t_subt));
 		buf_add(&buf, "[");
+#ifdef t_str /* lint1 */
+		if (tp->t_incomplete_array)
+			buf_add(&buf, "unknown_size");
+		else
+			buf_add_int(&buf, tp->t_dim);
+#else
 		buf_add_int(&buf, tp->t_dim);
+#endif
 		buf_add(&buf, "]");
 		break;
 	case FUNC:

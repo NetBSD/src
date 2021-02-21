@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.84 2021/02/21 14:02:36 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.85 2021/02/21 14:19:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.84 2021/02/21 14:02:36 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.85 2021/02/21 14:19:27 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -466,16 +466,18 @@ initstack_push(void)
 
 	/* Extend an incomplete array type by one element */
 	if (istk->i_remaining == 0) {
-		debug_step("(extend) %s", type_name(istk->i_type));
 		/*
 		 * Inside of other aggregate types must not be an incomplete
 		 * type.
 		 */
 		lint_assert(istk->i_enclosing->i_enclosing == NULL);
-		istk->i_remaining = 1;
 		lint_assert(istk->i_type->t_tspec == ARRAY);
+		debug_step("extending array of unknown size '%s'",
+		    type_name(istk->i_type));
+		istk->i_remaining = 1;
 		istk->i_type->t_dim++;
 		setcomplete(istk->i_type, true);
+		debug_step("extended type is '%s'", type_name(istk->i_type));
 	}
 
 	lint_assert(istk->i_remaining > 0);
