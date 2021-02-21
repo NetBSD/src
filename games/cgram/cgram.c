@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.10 2021/02/21 20:33:42 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.11 2021/02/21 22:21:56 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.10 2021/02/21 20:33:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.11 2021/02/21 22:21:56 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -361,8 +361,8 @@ closecurses(void)
 static void
 saturate_cursor(void)
 {
-	assert(cursor_y >= 0);
-	assert(cursor_y <= cur_max_y());
+	cursor_y = imax(cursor_y, 0);
+	cursor_y = imin(cursor_y, cur_max_y());
 
 	assert(cursor_x >= 0);
 	cursor_x = imin(cursor_x, cur_max_x());
@@ -445,13 +445,17 @@ handle_key(void)
 		break;
 	case 14:		/* ^N */
 	case KEY_DOWN:
-		if (cursor_y < cur_max_y())
-			cursor_y++;
+		cursor_y++;
 		break;
 	case 16:		/* ^P */
 	case KEY_UP:
-		if (cursor_y > 0)
-			cursor_y--;
+		cursor_y--;
+		break;
+	case KEY_PPAGE:
+		cursor_y -= LINES - 2;
+		break;
+	case KEY_NPAGE:
+		cursor_y += LINES - 2;
 		break;
 	case '*':
 		hinting = !hinting;
