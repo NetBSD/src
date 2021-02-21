@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.16 2021/02/20 22:53:31 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.17 2021/02/21 17:07:45 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.16 2021/02/20 22:53:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.17 2021/02/21 17:07:45 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -101,7 +101,7 @@ splx(int savedipl)
 				break;
 			}
 
-			pic_set_priority_psw(ci, psw, ipl);
+			pic_set_priority(ci, ipl);
 			pic_list_deliver_irqs(ci, psw, ipl, NULL);
 			pic_list_unblock_irqs(ci);
 		}
@@ -113,11 +113,12 @@ splx(int savedipl)
 skip_pending:
 #endif
 
-	ci->ci_cpl = savedipl;
-	if (__predict_true(pic_list[0] != NULL)) {
-		(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], savedipl);
-	}
+	pic_set_priority(ci, savedipl);
+#if defined(__HAVE_CPU_DOSOFTINTS_CI)
+	cpu_dosoftints_ci(ci);
+#else
 	cpu_dosoftints();
+#endif
 
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
 	    ci->ci_cpl, savedipl);
