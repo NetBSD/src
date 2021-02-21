@@ -241,7 +241,7 @@ static void loop(void) {
       int ch = getch();
       switch (ch) {
        case 1: /* ^A */
-       case KEY_BEG:
+       case KEY_HOME:
 	curx=0;
 	break;
        case 2: /* ^B */
