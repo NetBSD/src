@@ -325,7 +325,7 @@ loop(void)
 			done = true;
 			break;
 		default:
-			if (isalpha(ch)) {
+			if (isascii(ch) && isalpha(ch)) {
 				if (substitute(ch)) {
 					if (curx < strlen(lines.v[cury])) {
 						curx++;
