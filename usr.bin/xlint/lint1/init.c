@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.85 2021/02/21 14:19:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.86 2021/02/21 14:57:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.85 2021/02/21 14:19:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.86 2021/02/21 14:57:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -729,6 +729,19 @@ init_rbrace(void)
 	debug_leave();
 }
 
+/* In traditional C, bit-fields can be initialized only by integer constants. */
+static void
+check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
+{
+	if (tflag &&
+	    is_integer(lt) &&
+	    ln->tn_type->t_bitfield &&
+	    !is_integer(rt)) {
+		/* bit-field initialisation is illegal in traditional C */
+		warning(186);
+	}
+}
+
 void
 init_using_expr(tnode_t *tn)
 {
@@ -822,15 +835,7 @@ init_using_expr(tnode_t *tn)
 	expr(tn, true, false, true, false);
 	trestor(tmem);
 
-	if (is_integer(lt) && ln->tn_type->t_bitfield && !is_integer(rt)) {
-		/*
-		 * Bit-fields can be initialized in trad. C only by integer
-		 * constants.
-		 */
-		if (tflag)
-			/* bit-field initialisation is illegal in trad. C */
-			warning(186);
-	}
+	check_bit_field_init(ln, lt, rt);
 
 	if (lt != rt || (initstk->i_type->t_bitfield && tn->tn_op == CON))
 		tn = convert(INIT, 0, initstk->i_type, tn);
