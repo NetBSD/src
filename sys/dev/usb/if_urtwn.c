@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.93 2021/02/02 10:46:17 yamt Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.94 2021/02/21 23:06:13 mrg Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.93 2021/02/02 10:46:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.94 2021/02/21 23:06:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2621,7 +2621,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				struct usbd_pipe *pipe = sc->tx_pipe[pidx];
 				usbd_clear_endpoint_stall_async(pipe);
 			}
-			printf("ERROR1\n");
+			device_printf(sc->sc_dev, "device timeout\n");
 			if_statinc(ifp, if_oerrors);
 		}
 		splx(s);
@@ -2916,7 +2916,7 @@ urtwn_start(struct ifnet *ifp)
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
-			printf("ERROR6\n");
+			device_printf(sc->sc_dev, "m_pullup failed\n");
 			if_statinc(ifp, if_oerrors);
 			urtwn_put_tx_data(sc, data);
 			continue;
@@ -2925,7 +2925,8 @@ urtwn_start(struct ifnet *ifp)
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
-			printf("ERROR5\n");
+			device_printf(sc->sc_dev,
+			    "unable to find transmit node\n");
 			if_statinc(ifp, if_oerrors);
 			urtwn_put_tx_data(sc, data);
 			continue;
@@ -2935,7 +2936,8 @@ urtwn_start(struct ifnet *ifp)
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
-			printf("ERROR4\n");
+			device_printf(sc->sc_dev,
+			    "unable to encapsulate packet\n");
 			if_statinc(ifp, if_oerrors);
 			urtwn_put_tx_data(sc, data);
 			continue;
@@ -2946,7 +2948,8 @@ urtwn_start(struct ifnet *ifp)
 		if (urtwn_tx(sc, m, ni, data) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
-			printf("ERROR3\n");
+			device_printf(sc->sc_dev,
+			    "unable to transmit packet\n");
 			if_statinc(ifp, if_oerrors);
 			continue;
 		}
@@ -2968,9 +2971,8 @@ urtwn_watchdog(struct ifnet *ifp)
 
 	if (sc->tx_timer > 0) {
 		if (--sc->tx_timer == 0) {
-			aprint_error_dev(sc->sc_dev, "device timeout\n");
+			device_printf(sc->sc_dev, "device timeout\n");
 			/* urtwn_init(ifp); XXX needs a process context! */
-			printf("ERROR2\n");
 			if_statinc(ifp, if_oerrors);
 			return;
 		}
