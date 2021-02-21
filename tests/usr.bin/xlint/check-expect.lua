@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.3 2021/02/20 22:18:32 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.4 2021/02/21 09:07:58 rillig Exp $
 
 --[[
 
@@ -51,7 +51,7 @@ local function load_expect_comments_from_c(fname, errors)
     end
   end
 
-  if seen_comment then return comments_by_line else return nil end
+  return comments_by_line
 end
 
 

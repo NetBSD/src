@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_union_cast.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_union_cast.c,v 1.4 2021/02/21 09:07:58 rillig Exp $	*/
 # 3 "d_c99_union_cast.c"
 
 /* union cast */
@@ -16,7 +16,7 @@ union foo {
 void
 foo(void)
 {
-	struct bar *a;
+	struct bar *a;		/* expect: 192 */
 
 	((union foo)a).a;
 }

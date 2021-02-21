@@ -1,4 +1,4 @@
-/*	$NetBSD: d_struct_init_nested.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_struct_init_nested.c,v 1.4 2021/02/21 09:07:58 rillig Exp $	*/
 # 3 "d_struct_init_nested.c"
 
 /*
@@ -32,9 +32,9 @@ funcOuter3Inner1(void)
 	};
 	struct Outer3Inner1 o3i1 = {
 	    O1C,
-	    inner,
+	    inner,		/*FIXME*//* expect: 185 */
 	    O3C
-	};
+	};			/*FIXME*//* expect: 172 */
 
 	return o3i1.o1;
 }
@@ -59,9 +59,9 @@ funcOuter3Inner2(void)
 	};
 	struct Outer3Inner2 o3i2 = {
 	    O1C,
-	    inner,
+	    inner,		/*FIXME*//* expect: 185 */
 	    O3C
-	};
-
+	};			/*FIXME*//* expect: 210 */
+/* FIXME: warning 210 must print the type names to be any useful */
 	return o3i2.o1;
 }
