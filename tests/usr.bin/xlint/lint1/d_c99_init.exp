@@ -1,1 +1,2 @@
 d_c99_init.c(16): invalid initializer type int [176]
+d_c99_init.c(17): too many initializers [174]
