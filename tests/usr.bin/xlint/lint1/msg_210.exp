@@ -1,1 +1,2 @@
-msg_210.c(6): syntax error ':' [249]
+msg_210.c(23): warning: enum type mismatch in initialisation [210]
+msg_210.c(25): warning: enum type mismatch in initialisation [210]
