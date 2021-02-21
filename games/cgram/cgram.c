@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <curses.h>
 #include <err.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,22 +100,22 @@ static void
 readquote(void)
 {
 	FILE *f = popen(_PATH_FORTUNE, "r");
-	if (!f) {
+	if (f == NULL) {
 		err(1, "%s", _PATH_FORTUNE);
 	}
 
 	char buf[128], buf2[8 * sizeof(buf)];
-	while (fgets(buf, sizeof(buf), f)) {
+	while (fgets(buf, sizeof buf, f) != NULL) {
 		char *s = strrchr(buf, '\n');
-		assert(s);
+		assert(s != NULL);
 		assert(strlen(s) == 1);
-		*s = 0;
+		*s = '\0';
 
 		int i, j;
-		for (i = j = 0; buf[i]; i++) {
+		for (i = j = 0; buf[i] != '\0'; i++) {
 			if (buf[i] == '\t') {
 				buf2[j++] = ' ';
-				while (j % 8)
+				while (j % 8 != 0)
 					buf2[j++] = ' ';
 			} else if (buf[i] == '\b') {
 				if (j > 0)
@@ -123,7 +124,7 @@ readquote(void)
 				buf2[j++] = buf[i];
 			}
 		}
-		buf2[j] = 0;
+		buf2[j] = '\0';
 
 		stringarray_add(&lines, buf2);
 		stringarray_add(&sollines, buf2);
@@ -146,7 +147,7 @@ encode(void)
 	}
 
 	for (int y = 0; y < lines.num; y++) {
-		for (unsigned x = 0; lines.v[y][x]; x++) {
+		for (unsigned x = 0; lines.v[y][x] != '\0'; x++) {
 			if (islower((unsigned char)lines.v[y][x])) {
 				int q = lines.v[y][x] - 'a';
 				lines.v[y][x] = 'a' + key[q];
@@ -159,19 +160,19 @@ encode(void)
 	}
 }
 
-static int
+static bool
 substitute(int ch)
 {
 	assert(cury >= 0 && cury < lines.num);
 	if (curx >= strlen(lines.v[cury])) {
 		beep();
-		return -1;
+		return false;
 	}
 
 	int och = lines.v[cury][curx];
 	if (!isalpha((unsigned char)och)) {
 		beep();
-		return -1;
+		return false;
 	}
 
 	int loch = tolower((unsigned char)och);
@@ -180,7 +181,7 @@ substitute(int ch)
 	int uch = toupper((unsigned char)ch);
 
 	for (int y = 0; y < lines.num; y++) {
-		for (unsigned x = 0; lines.v[y][x]; x++) {
+		for (unsigned x = 0; lines.v[y][x] != '\0'; x++) {
 			if (lines.v[y][x] == loch) {
 				lines.v[y][x] = lch;
 			} else if (lines.v[y][x] == uoch) {
@@ -192,7 +193,7 @@ substitute(int ch)
 			}
 		}
 	}
-	return 0;
+	return true;
 }
 
 ////////////////////////////////////////////////////////////
@@ -206,7 +207,7 @@ redraw(void)
 		move(i, 0);
 		int ln = i + scrolldown;
 		if (ln < lines.num) {
-			for (unsigned j = 0; lines.v[i][j]; j++) {
+			for (unsigned j = 0; lines.v[i][j] != '\0'; j++) {
 				int ch = lines.v[i][j];
 				if (ch != sollines.v[i][j] &&
 				    isalpha((unsigned char)ch)) {
@@ -325,7 +326,7 @@ loop(void)
 			break;
 		default:
 			if (isalpha(ch)) {
-				if (!substitute(ch)) {
+				if (substitute(ch)) {
 					if (curx < strlen(lines.v[cury])) {
 						curx++;
 					}
@@ -364,7 +365,7 @@ main(void)
 	encode();
 	opencurses();
 
-	keypad(stdscr, TRUE);
+	keypad(stdscr, true);
 	loop();
 
 	closecurses();

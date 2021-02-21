@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2013/08/04 05:42:47 dholland Exp $
+# $NetBSD: Makefile,v 1.2 2021/02/21 16:05:44 rillig Exp $
 
-PROG=cgram
-DPADD=${LIBCURSES} ${LIBTERMINFO}
-LDADD=-lcurses -lterminfo
-SRCS=cgram.c
-MAN=cgram.6
-HIDEGAME=hidegame
+PROG=		cgram
+DPADD=		${LIBCURSES} ${LIBTERMINFO}
+LDADD=		-lcurses -lterminfo
+SRCS=		cgram.c
+MAN=		cgram.6
+HIDEGAME=	hidegame
+LINTFLAGS+=	-T
 
 .include <bsd.prog.mk>
