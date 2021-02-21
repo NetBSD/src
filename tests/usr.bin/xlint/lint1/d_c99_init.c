@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.5 2021/02/21 13:10:57 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.6 2021/02/21 14:19:27 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -50,3 +50,6 @@ initialization_with_redundant_braces(any arg)
 	// FIXME: message 185 needs to be reworded to "cannot initialize '%s' from '%s'".
 	use(&arg);
 }
+
+// See initstack_push, 'extending array of unknown size'.
+const int primes[] = { 2, 3, 5, 7, 9 };
