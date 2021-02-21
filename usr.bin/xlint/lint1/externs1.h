@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.68 2021/02/20 16:34:57 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.69 2021/02/21 07:21:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -223,7 +223,7 @@ extern	bool	constant_addr(tnode_t *, sym_t **, ptrdiff_t *);
 extern	strg_t	*cat_strings(strg_t *, strg_t *);
 extern  int64_t tsize(type_t *);
 #ifdef DEBUG
-extern	void	debug_node(const tnode_t *);
+extern	void	debug_node(const tnode_t *, int);
 #else
 #define debug_node(tn) (void)0
 #endif
