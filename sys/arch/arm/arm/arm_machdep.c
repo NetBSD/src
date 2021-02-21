@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.65 2020/12/01 02:43:13 rin Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.66 2021/02/21 08:46:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.65 2020/12/01 02:43:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.66 2021/02/21 08:46:28 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -223,6 +223,8 @@ void
 cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
 
+	KASSERT(kpreempt_disabled());
+
 	if (flags & RESCHED_IDLE) {
 #ifdef MULTIPROCESSOR
 		/*
@@ -322,13 +324,17 @@ arm_curcpu(void)
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
+
+	KASSERT(kpreempt_disabled());
+
 	return s == IPL_NONE;
 }
 
 void
 cpu_kpreempt_exit(uintptr_t where)
 {
-	atomic_and_uint(&curcpu()->ci_astpending, (unsigned int)~__BIT(1));
+
+	/* do nothing */
 }
 
 bool
