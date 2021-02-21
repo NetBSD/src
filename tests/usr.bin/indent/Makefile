@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/04/04 15:27:35 kamil Exp $
+#	$NetBSD: Makefile,v 1.2 2021/02/21 21:26:26 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,8 @@ TESTS_SH=	t_indent
 FILESDIR=	${TESTSDIR}
 FILES=		binary.0
 FILES+=		binary.0.stdout
+FILES+=		comment-line-end.0
+FILES+=		comment-line-end.0.stdout
 FILES+=		comments.0
 FILES+=		comments.0.pro
 FILES+=		comments.0.stdout
