@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.16 2020/04/25 15:26:17 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.17 2021/02/21 20:11:59 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.16 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.17 2021/02/21 20:11:59 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,16 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.16 2020/04/25 15:26:17 bouyer 
  * Helper routines for the backend drivers. This implements the necessary
  * functions to map a bunch of pages from foreign domains into our kernel VM
  * space, do I/O to it, and unmap it.
- *
- * At boot time, we grab some kernel VM space that we'll use to map the foreign
- * pages. We also maintain a virtual-to-machine mapping table to give back
- * the appropriate address to bus_dma if requested.
- *
- * If no more VM space is available, we return an error. The caller can then
- * register a callback which will be called when the required VM space is
- * available.
  */
 
+/*
+ * Map the memory referenced via grefp to supplied VA space.
+ * If there is a failure for particular gref, no memory is mapped
+ * and error is returned.
+ */
 int
 xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
     grant_handle_t *handlep, int flags)
@@ -77,18 +74,67 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
 	}
 
 	ret = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, op, nentries);
-	if (__predict_false(ret)) {
-		printf("%s: HYPERVISOR_grant_table_op failed\n", __func__);
+	if (__predict_false(ret < 0)) {
+#ifdef DIAGNOSTIC
+		printf("%s: HYPERVISOR_grant_table_op failed %d\n", __func__,
+		    ret);
+#endif
 		return EINVAL;
 	}
 
+	/*
+	 * If ret is positive, it means there was an error in processing,
+	 * and only first ret entries were actually handled. If it's zero,
+	 * it only means all entries were processed, but there could still
+	 * be failure.
+	 */
+	if (__predict_false(ret > 0 && ret < nentries)) {
+		nentries = ret;
+	}
+
 	for (i = 0; i < nentries; i++) {
+		if (__predict_false(op[i].status)) {
 #ifdef DIAGNOSTIC
-		if (__predict_false(op[i].status))
-			panic("%s: op[%d] status %d", __func__, i,
-			    op[i].status);
+			printf("%s: op[%d] bad status %d gref %u\n", __func__,
+			    i, op[i].status, grefp[i]);
 #endif
+			ret = 1;
+			continue;
+		}
 		handlep[i] = op[i].handle;
+	}
+
+	if (__predict_false(ret > 0)) {
+		int uncnt = 0;
+		gnttab_unmap_grant_ref_t unop[XENSHM_MAX_PAGES_PER_REQUEST];
+
+		/*
+		 * When returning error, make sure the successfully mapped
+		 * entries are unmapped before returning the error.
+		 * xen_shm_unmap() can't be used, it assumes
+		 * linear consecutive space.
+		 */
+		for (i = uncnt = 0; i < nentries; i++) {
+			if (op[i].status == 0) {
+				unop[uncnt].host_addr = va + i * PAGE_SIZE;
+				unop[uncnt].dev_bus_addr = 0;
+				unop[uncnt].handle = handlep[i];
+				uncnt++;
+			}
+		}
+		if (uncnt > 0) {
+			ret = HYPERVISOR_grant_table_op(
+			    GNTTABOP_unmap_grant_ref, unop, uncnt);
+			if (ret != 0) {
+				panic("%s: unmap on error recovery failed"
+				    " %d", __func__, ret);
+			}
+		}
+#ifdef DIAGNOSTIC
+		printf("%s: HYPERVISOR_grant_table_op bad entry\n",
+		    __func__);
+#endif
+		return EINVAL;
 	}
 
 	return 0;
