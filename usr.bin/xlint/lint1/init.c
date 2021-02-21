@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.81 2021/02/21 11:23:33 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.82 2021/02/21 13:13:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.81 2021/02/21 11:23:33 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.82 2021/02/21 13:13:14 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -68,8 +68,18 @@ typedef	struct initstack_element {
 	type_t	*i_type;		/* type of initialisation */
 	type_t	*i_subt;		/* type of next level */
 
-	/* need '}' for pop; XXX: explain this */
+	/*
+	 * This level of the initializer requires a '}' to be completed.
+	 *
+	 * Multidimensional arrays do not need a closing brace to complete
+	 * an inner array; for example, { 1, 2, 3, 4 } is a valid initializer
+	 * for int arr[2][2].
+	 *
+	 * TODO: Do structs containing structs need a closing brace?
+	 * TODO: Do arrays of structs need a closing brace after each struct?
+	 */
 	bool i_brace: 1;
+
 	bool i_array_of_unknown_size: 1;
 	bool i_seen_named_member: 1;
 
@@ -133,7 +143,7 @@ initstack_element *initstk;
 namlist_t	*namedmem = NULL;
 
 
-static	bool	initstack_string(tnode_t *);
+static	bool	init_array_using_string(tnode_t *);
 
 #ifndef DEBUG
 #define debug_printf(fmt, ...)	do { } while (false)
@@ -759,24 +769,22 @@ init_using_expr(tnode_t *tn)
 	 */
 	if ((sclass == AUTO || sclass == REG) &&
 	    initsym->s_type->t_tspec != ARRAY && initstk->i_enclosing == NULL) {
+		debug_step("handing over to ASSIGN");
 		ln = new_name_node(initsym, 0);
 		ln->tn_type = tduptyp(ln->tn_type);
 		ln->tn_type->t_const = false;
 		tn = build(ASSIGN, ln, tn);
 		expr(tn, false, false, false, false);
-		debug_initstack();
+		/* XXX: why not clean up the initstack here already? */
 		debug_leave();
 		return;
 	}
 
-	/*
-	 * Remove all entries which cannot be used for further initializers
-	 * and do not require a closing brace.
-	 */
 	initstack_pop_nobrace();
 
-	/* Initialisations by strings are done in initstack_string(). */
-	if (initstack_string(tn)) {
+	if (init_array_using_string(tn)) {
+		debug_step("after initializing the string:");
+		/* XXX: why not clean up the initstack here already? */
 		debug_initstack();
 		debug_leave();
 		return;
@@ -852,8 +860,9 @@ init_using_expr(tnode_t *tn)
 }
 
 
+/* Initialize a character array or wchar_t array with a string literal. */
 static bool
-initstack_string(tnode_t *tn)
+init_array_using_string(tnode_t *tn)
 {
 	tspec_t	t;
 	initstack_element *istk;
@@ -882,6 +891,7 @@ initstack_string(tnode_t *tn)
 			debug_leave();
 			return false;
 		}
+		/* XXX: duplicate code, see below */
 		/* Put the array at top of stack */
 		initstack_push();
 		istk = initstk;
@@ -894,6 +904,7 @@ initstack_string(tnode_t *tn)
 			debug_leave();
 			return false;
 		}
+		/* XXX: duplicate code, see above */
 		/*
 		 * If the array is already partly initialized, we are
 		 * wrong here.
