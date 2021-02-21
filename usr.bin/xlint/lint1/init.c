@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.78 2021/02/21 08:27:41 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.79 2021/02/21 09:24:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.78 2021/02/21 08:27:41 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.79 2021/02/21 09:24:32 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: init.c,v 1.78 2021/02/21 08:27:41 rillig Exp $");
  * See C99 6.7.8, which spans 6 pages full of tricky details and carefully
  * selected examples.
  */
-typedef	struct istk {
+typedef	struct initstack_element {
 
 	/* XXX: Why is i_type often null? */
 	type_t	*i_type;		/* type of initialisation */
@@ -93,8 +93,8 @@ typedef	struct istk {
 	 * The initialization state of the enclosing data structure
 	 * (struct, union, array).
 	 */
-	struct istk *i_enclosing;
-} istk_t;
+	struct initstack_element *i_enclosing;
+} initstack_element;
 
 /*
  * The names for a nested C99 initialization designator, in a circular list.
@@ -127,7 +127,7 @@ bool	initerr;
 sym_t	*initsym;
 
 /* Points to the top element of the initialisation stack. */
-istk_t	*initstk;
+initstack_element *initstk;
 
 /* Points to a c9x named member; */
 namlist_t	*namedmem = NULL;
@@ -252,7 +252,7 @@ debug_named_member(void)
 
 #ifdef DEBUG
 static void
-debug_initstack_element(const istk_t *elem)
+debug_initstack_element(const initstack_element *elem)
 {
 	if (elem->i_type != NULL)
 		debug_step("  i_type           = %s", type_name(elem->i_type));
@@ -284,7 +284,7 @@ debug_initstack(void)
 	}
 
 	size_t i = 0;
-	for (const istk_t *elem = initstk;
+	for (const initstack_element *elem = initstk;
 	     elem != NULL; elem = elem->i_enclosing) {
 		debug_step("initstk[%zu]:", i);
 		debug_initstack_element(elem);
@@ -302,7 +302,7 @@ debug_initstack(void)
 void
 initstack_init(void)
 {
-	istk_t	*istk;
+	initstack_element *istk;
 
 	if (initerr)
 		return;
@@ -322,7 +322,7 @@ initstack_init(void)
 	if (initsym->s_type->t_tspec == ARRAY && is_incomplete(initsym->s_type))
 		initsym->s_type = duptyp(initsym->s_type);
 
-	istk = initstk = xcalloc(1, sizeof (istk_t));
+	istk = initstk = xcalloc(1, sizeof (initstack_element));
 	istk->i_subt = initsym->s_type;
 	istk->i_remaining = 1;
 
@@ -333,7 +333,7 @@ initstack_init(void)
 static void
 initstack_pop_item(void)
 {
-	istk_t	*istk;
+	initstack_element *istk;
 	sym_t	*m;
 
 	debug_enter();
@@ -446,7 +446,7 @@ initstack_pop_nobrace(void)
 static void
 initstack_push(void)
 {
-	istk_t	*istk, *inxt;
+	initstack_element *istk, *inxt;
 	int	cnt;
 	sym_t	*m;
 
@@ -472,7 +472,7 @@ initstack_push(void)
 	lint_assert(istk->i_remaining > 0);
 	lint_assert(istk->i_type == NULL || !is_scalar(istk->i_type->t_tspec));
 
-	initstk = xcalloc(1, sizeof (istk_t));
+	initstk = xcalloc(1, sizeof (initstack_element));
 	initstk->i_enclosing = istk;
 	initstk->i_type = istk->i_subt;
 	lint_assert(initstk->i_type->t_tspec != FUNC);
@@ -594,7 +594,7 @@ again:
 static void
 initstack_check_too_many(void)
 {
-	istk_t	*istk;
+	initstack_element *istk;
 
 	istk = initstk;
 
@@ -857,7 +857,7 @@ static bool
 initstack_string(tnode_t *tn)
 {
 	tspec_t	t;
-	istk_t	*istk;
+	initstack_element *istk;
 	int	len;
 	strg_t	*strg;
 
