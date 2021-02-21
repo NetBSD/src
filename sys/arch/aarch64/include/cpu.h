@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.31 2021/02/20 14:51:07 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.32 2021/02/21 15:00:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -100,7 +100,8 @@ struct cpu_info {
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
 
-	int ci_cpl;
+	int ci_cpl;		/* current processor level (spl) */
+	int ci_hwpl;		/* current hardware priority */
 	volatile u_int ci_softints;
 	volatile u_int ci_intr_depth;
 	volatile uint32_t ci_blocked_pics;
