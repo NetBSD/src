@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.83 2021/02/21 13:52:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.84 2021/02/21 14:02:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.83 2021/02/21 13:52:21 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.84 2021/02/21 14:02:36 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -601,35 +601,27 @@ again:
 }
 
 static void
-initstack_check_too_many(void)
+check_too_many_initializers(void)
 {
-	initstack_element *istk;
 
-	istk = initstk;
+	const initstack_element *istk = initstk;
+	if (istk->i_remaining > 0)
+		return;
+	if (istk->i_array_of_unknown_size || istk->i_seen_named_member)
+		return;
 
-	/*
-	 * If a closing brace is expected we have at least one initializer
-	 * too much.
-	 */
-	if (istk->i_remaining == 0 && !istk->i_array_of_unknown_size &&
-	    !istk->i_seen_named_member) {
-		switch (istk->i_type->t_tspec) {
-		case ARRAY:
-			/* too many array initializers, expected %d */
-			error(173, istk->i_type->t_dim);
-			break;
-		case STRUCT:
-		case UNION:
-			/* too many struct/union initializers */
-			error(172);
-			break;
-		default:
-			/* too many initializers */
-			error(174);
-			break;
-		}
-		initerr = true;
+	tspec_t t = istk->i_type->t_tspec;
+	if (t == ARRAY) {
+		/* too many array initializers, expected %d */
+		error(173, istk->i_type->t_dim);
+	} else if (t == STRUCT || t == UNION) {
+		/* too many struct/union initializers */
+		error(172);
+	} else {
+		/* too many initializers */
+		error(174);
 	}
+	initerr = true;
 }
 
 static void
@@ -645,7 +637,7 @@ initstack_next_brace(void)
 		initerr = true;
 	}
 	if (!initerr)
-		initstack_check_too_many();
+		check_too_many_initializers();
 	if (!initerr)
 		initstack_push();
 	if (!initerr) {
@@ -670,6 +662,9 @@ initstack_next_nobrace(void)
 		error(181);
 	}
 
+	if (!initerr)
+		check_too_many_initializers();
+
 	/*
 	 * Make sure an entry with a scalar type is at the top of the stack.
 	 *
@@ -678,8 +673,6 @@ initstack_next_nobrace(void)
 	 *  perfectly fine to initialize a struct with a struct expression,
 	 *  see d_struct_init_nested.c for a demonstration.
 	 */
-	if (!initerr)
-		initstack_check_too_many();
 	while (!initerr) {
 		if ((initstk->i_type != NULL &&
 		     is_scalar(initstk->i_type->t_tspec)))
