@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.66 2021/02/21 08:46:28 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.67 2021/02/21 08:47:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.66 2021/02/21 08:46:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.67 2021/02/21 08:47:13 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -310,12 +310,14 @@ cpu_intr_p(void)
 struct lwp *
 arm_curlwp(void)
 {
+
 	return curlwp;
 }
 
 struct cpu_info *
 arm_curcpu(void)
 {
+
 	return curcpu();
 }
 #endif
@@ -340,6 +342,7 @@ cpu_kpreempt_exit(uintptr_t where)
 bool
 cpu_kpreempt_disabled(void)
 {
+
 	return curcpu()->ci_cpl != IPL_NONE;
 }
 #endif /* __HAVE_PREEMPTION */
