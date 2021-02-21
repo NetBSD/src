@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.212 2021/02/20 19:10:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.213 2021/02/21 07:21:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.212 2021/02/20 19:10:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.213 2021/02/21 07:21:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -99,10 +99,8 @@ extern sig_atomic_t fpe;
 
 #ifdef DEBUG
 void
-debug_node(const tnode_t *tn)
+debug_node(const tnode_t *tn, int indent)
 {
-	static int indent = 0;
-
 	op_t op;
 
 	if (tn == NULL) {
@@ -112,7 +110,7 @@ debug_node(const tnode_t *tn)
 
 	op = tn->tn_op;
 	printf("%*s%s: %s%s%s",
-	    indent, "",
+	    2 * indent, "",
 	    op == CVT && !tn->tn_cast ? "convert" :
 		op == NAME ? "name" : getopname(op),
 	    type_name(tn->tn_type), tn->tn_lvalue ? " lvalue" : "",
@@ -133,11 +131,9 @@ debug_node(const tnode_t *tn)
 	else {
 		printf("\n");
 
-		indent += 2;
-		debug_node(tn->tn_left);
+		debug_node(tn->tn_left, indent + 1);
 		if (modtab[op].m_binary || tn->tn_right != NULL)
-			debug_node(tn->tn_right);
-		indent -= 2;
+			debug_node(tn->tn_right, indent + 1);
 	}
 }
 #endif
@@ -4347,7 +4343,7 @@ check_precedence_confusion(tnode_t *tn)
 	if (!hflag)
 		return;
 
-	debug_node(tn);
+	debug_node(tn, 0);
 
 	lint_assert(modtab[tn->tn_op].m_binary);
 	for (ln = tn->tn_left; ln->tn_op == CVT; ln = ln->tn_left)
