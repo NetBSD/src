@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.86 2021/02/21 14:57:25 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.87 2021/02/21 15:02:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.86 2021/02/21 14:57:25 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.87 2021/02/21 15:02:16 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -742,6 +742,26 @@ check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 	}
 }
 
+static void
+check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
+{
+	if (tn == NULL || tn->tn_op == CON)
+		return;
+
+	sym_t *sym;
+	ptrdiff_t offs;
+	if (constant_addr(tn, &sym, &offs))
+		return;
+
+	if (sclass == AUTO || sclass == REG) {
+		/* non-constant initializer */
+		c99ism(177);
+	} else {
+		/* non-constant initializer */
+		error(177);
+	}
+}
+
 void
 init_using_expr(tnode_t *tn)
 {
@@ -840,19 +860,7 @@ init_using_expr(tnode_t *tn)
 	if (lt != rt || (initstk->i_type->t_bitfield && tn->tn_op == CON))
 		tn = convert(INIT, 0, initstk->i_type, tn);
 
-	if (tn != NULL && tn->tn_op != CON) {
-		sym_t *sym;
-		ptrdiff_t offs;
-		if (!constant_addr(tn, &sym, &offs)) {
-			if (sclass == AUTO || sclass == REG) {
-				/* non-constant initializer */
-				c99ism(177);
-			} else {
-				/* non-constant initializer */
-				error(177);
-			}
-		}
-	}
+	check_non_constant_initializer(tn, sclass);
 
 	debug_initstack();
 	debug_leave();
