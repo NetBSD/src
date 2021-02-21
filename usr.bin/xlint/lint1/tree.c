@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.215 2021/02/21 11:23:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.216 2021/02/21 15:02:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.215 2021/02/21 11:23:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.216 2021/02/21 15:02:16 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4185,7 +4185,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
  * representation (including width).
  */
 bool
-constant_addr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
+constant_addr(const tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 {
 	sym_t	*sym;
 	ptrdiff_t offs1, offs2;
