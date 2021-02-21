@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2021/02/19 12:28:56 rillig Exp $
+# $NetBSD: Makefile,v 1.32 2021/02/21 08:05:51 rillig Exp $
 
 NOMAN=		# defined
 
@@ -28,6 +28,8 @@ FILES+=		d_c99_decls_after_stmt3.c
 FILES+=		d_c99_flex_array_packed.c
 FILES+=		d_c99_for_loops.c
 FILES+=		d_c99_func.c
+FILES+=		d_c99_init.c
+FILES+=		d_c99_init.exp
 FILES+=		d_c99_nested_struct.c
 FILES+=		d_c99_recursive_init.c
 FILES+=		d_c99_struct_init.c
