@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.4 2021/02/21 12:49:05 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.5 2021/02/21 13:10:57 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -31,9 +31,13 @@ struct_initialization_via_assignment(any arg)
 	use(&local);
 }
 
+
 // See init_using_expr, initstack_string.
+char static_duration[] = "static duration";
+
+// See init_using_expr.
 void
-initialization_by_string(void)
+initialization_by_braced_string(void)
 {
 	any local = { "hello" };
 	use(&local);
