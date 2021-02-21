@@ -56,6 +56,36 @@ xstrdup(const char *s)
 	return ret;
 }
 
+static char
+ch_toupper(char ch)
+{
+	return (char)toupper((unsigned char)ch);
+}
+
+static char
+ch_tolower(char ch)
+{
+	return (char)tolower((unsigned char)ch);
+}
+
+static bool
+ch_isalpha(char ch)
+{
+	return isalpha((unsigned char)ch);
+}
+
+static bool
+ch_islower(char ch)
+{
+	return islower((unsigned char)ch);
+}
+
+static bool
+ch_isupper(char ch)
+{
+	return isupper((unsigned char)ch);
+}
+
 ////////////////////////////////////////////////////////////
 
 struct stringarray {
@@ -148,11 +178,11 @@ encode(void)
 
 	for (int y = 0; y < lines.num; y++) {
 		for (unsigned x = 0; lines.v[y][x] != '\0'; x++) {
-			if (islower((unsigned char)lines.v[y][x])) {
+			if (ch_islower(lines.v[y][x])) {
 				int q = lines.v[y][x] - 'a';
 				lines.v[y][x] = 'a' + key[q];
 			}
-			if (isupper((unsigned char)lines.v[y][x])) {
+			if (ch_isupper(lines.v[y][x])) {
 				int q = lines.v[y][x] - 'A';
 				lines.v[y][x] = 'A' + key[q];
 			}
@@ -169,16 +199,16 @@ substitute(int ch)
 		return false;
 	}
 
-	int och = lines.v[cury][curx];
-	if (!isalpha((unsigned char)och)) {
+	char och = lines.v[cury][curx];
+	if (!ch_isalpha(och)) {
 		beep();
 		return false;
 	}
 
-	int loch = tolower((unsigned char)och);
-	int uoch = toupper((unsigned char)och);
-	int lch = tolower((unsigned char)ch);
-	int uch = toupper((unsigned char)ch);
+	char loch = ch_tolower(och);
+	char uoch = ch_toupper(och);
+	char lch = ch_tolower(ch);
+	char uch = ch_toupper(ch);
 
 	for (int y = 0; y < lines.num; y++) {
 		for (unsigned x = 0; lines.v[y][x] != '\0'; x++) {
@@ -208,14 +238,13 @@ redraw(void)
 		int ln = i + scrolldown;
 		if (ln < lines.num) {
 			for (unsigned j = 0; lines.v[i][j] != '\0'; j++) {
-				int ch = lines.v[i][j];
-				if (ch != sollines.v[i][j] &&
-				    isalpha((unsigned char)ch)) {
+				char ch = lines.v[i][j];
+				if (ch != sollines.v[i][j] && ch_isalpha(ch)) {
 					won = false;
 				}
 				bool bold = false;
 				if (hinting && ch == sollines.v[i][j] &&
-				    isalpha((unsigned char)ch)) {
+				    ch_isalpha(ch)) {
 					bold = true;
 					attron(A_BOLD);
 				}
