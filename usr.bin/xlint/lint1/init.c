@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.77 2021/02/21 08:01:14 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.78 2021/02/21 08:27:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.77 2021/02/21 08:01:14 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.78 2021/02/21 08:27:41 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -74,8 +74,8 @@ typedef	struct istk {
 	bool i_seen_named_member: 1;
 
 	/*
-	 * For structs (XXX: and unions?), the next member to be initialized
-	 * by an initializer without an optional designator.
+	 * For structs, the next member to be initialized by an initializer
+	 * without an optional designator.
 	 */
 	sym_t *i_current_object;
 
@@ -251,10 +251,28 @@ debug_named_member(void)
 #endif
 
 #ifdef DEBUG
-static const char *
-noyes(bool cond)
+static void
+debug_initstack_element(const istk_t *elem)
 {
-	return cond ? "yes" : "no";
+	if (elem->i_type != NULL)
+		debug_step("  i_type           = %s", type_name(elem->i_type));
+	if (elem->i_subt != NULL)
+		debug_step("  i_subt           = %s", type_name(elem->i_subt));
+
+	if (elem->i_brace)
+		debug_step("  i_brace");
+	if (elem->i_array_of_unknown_size)
+		debug_step("  i_array_of_unknown_size");
+	if (elem->i_seen_named_member)
+		debug_step("  i_seen_named_member");
+
+	const type_t *eff_type = elem->i_type != NULL
+	    ? elem->i_type : elem->i_subt;
+	if (eff_type->t_tspec == STRUCT && elem->i_current_object != NULL)
+		debug_step("  i_current_object = %s",
+		    elem->i_current_object->s_name);
+
+	debug_step("  i_remaining      = %d", elem->i_remaining);
 }
 
 static void
@@ -269,22 +287,7 @@ debug_initstack(void)
 	for (const istk_t *elem = initstk;
 	     elem != NULL; elem = elem->i_enclosing) {
 		debug_step("initstk[%zu]:", i);
-		debug_step("  i_type           = %s", type_name(elem->i_type));
-		debug_step("  i_subt           = %s", type_name(elem->i_subt));
-		debug_step("  flags            =%s%s%s%s",
-		    elem->i_brace
-			? " brace" : "",
-		    elem->i_array_of_unknown_size
-			? "array_of_unknown_size" : "",
-		    elem->i_seen_named_member ? "seen_named_member" : "",
-		    !(elem->i_brace || elem->i_array_of_unknown_size ||
-		      elem->i_seen_named_member)
-			? " none" : "");
-		debug_step("  i_current_object = %s",
-		    elem->i_current_object != NULL
-			? elem->i_current_object->s_name
-			: "(null)");
-		debug_step("  i_remaining      = %d", elem->i_remaining);
+		debug_initstack_element(elem);
 		i++;
 	}
 }
