@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.68 2021/02/21 08:31:36 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.69 2021/02/21 17:07:45 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.68 2021/02/21 08:31:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.69 2021/02/21 17:07:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -94,34 +94,6 @@ static struct evcnt pic_deferral_ev =
 EVCNT_ATTACH_STATIC(pic_deferral_ev);
 
 static int pic_init(void);
-
-#ifdef __HAVE_PIC_SET_PRIORITY
-void
-pic_set_priority(struct cpu_info *ci, int newipl)
-{
-	register_t psw = cpsid(I32_bit);
-	if (pic_list[0] != NULL)
-		(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl);
-	ci->ci_cpl = newipl;
-	if ((psw & I32_bit) == 0)
-		cpsie(I32_bit);
-}
-
-void
-pic_set_priority_psw(struct cpu_info *ci, register_t psw, int newipl)
-{
-	if ((psw & I32_bit) == 0) {
-		DISABLE_INTERRUPT();
-	}
-	if (pic_list[0] != NULL) {
-		(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl);
-	}
-	ci->ci_cpl = newipl;
-	if ((psw & I32_bit) == 0) {
-		ENABLE_INTERRUPT();
-	}
-}
-#endif
 
 #ifdef MULTIPROCESSOR
 int
@@ -564,7 +536,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 			if (ipl <= newipl)
 				break;
 
-			pic_set_priority_psw(ci, psw, ipl);
+			pic_set_priority(ci, ipl);
 			pic_list_deliver_irqs(ci, psw, ipl, frame);
 			pic_list_unblock_irqs(ci);
 		}
@@ -573,12 +545,12 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 #ifdef __HAVE_PREEMPTION
 	struct lwp *l = curlwp;
 	if (newipl == IPL_NONE && (l->l_md.md_astpending & __BIT(1))) {
-		pic_set_priority_psw(ci, psw, IPL_SCHED);
+		pic_set_priority(ci, IPL_SCHED);
 		kpreempt(0);
 	}
 #endif
 	if (ci->ci_cpl != newipl)
-		pic_set_priority_psw(ci, psw, newipl);
+		pic_set_priority(ci, newipl);
 }
 
 static void
