@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.96 2020/05/07 19:49:29 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.96 2020/05/07 19:49:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -1570,13 +1570,11 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 #endif
 		return xbd_io;
 	default:
-		if (ratecheck(&xbdi->xbdi_lasterr_time, &xbdback_err_intvl)) {
-			printf("xbdback_map_shm: xen_shm error %d ", error);
-		}
-		/* this will also free xbd_io via xbdback_iodone() */
-		xbdback_io_error(xbd_io, error);
+		/* reset xio_xv so error handling won't try to unmap it */
 		SLIST_INSERT_HEAD(&xbdi->xbdi_va_free, xbd_io->xio_xv, xv_next);
 		xbd_io->xio_xv = NULL;
+		/* this will also free xbd_io via xbdback_iodone() */
+		xbdback_io_error(xbd_io, error);
 		/* do not retry */
 		xbdi->xbdi_cont = xbdback_co_main_incr;
 		return xbdi;
