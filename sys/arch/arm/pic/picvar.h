@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.30 2021/02/20 19:30:46 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.31 2021/02/21 17:07:45 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -176,18 +176,21 @@ struct pic_ops {
 #endif
 };
 
+/* Using an inline causes catch-22 problems with cpu.h */
 #ifdef __HAVE_PIC_SET_PRIORITY
 /*
  * This is used to update a hardware pic with a value corresponding
  * to the ipl being set.
  */
-struct cpu_info;
-void	pic_set_priority(struct cpu_info *, int);
-void	pic_set_priority_psw(struct cpu_info *, register_t, int);
+#define pic_set_priority(ci, newipl)					\
+	do {								\
+		(ci)->ci_cpl = (newipl);				\
+		if (__predict_true(pic_list[0] != NULL)) {		\
+			(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl); \
+		}							\
+	} while (0)
 #else
-/* Using an inline causes catch-22 problems with cpu.h */
 #define	pic_set_priority(ci, newipl)		((void)((ci)->ci_cpl = (newipl)))
-#define	pic_set_priority_psw(ci, psw, newipl)	((void)((ci)->ci_cpl = (newipl)))
 #endif
 
 #define	PIC_IRQBASE_ALLOC	(-2)
