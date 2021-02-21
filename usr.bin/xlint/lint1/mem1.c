@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.25 2021/01/23 22:20:17 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.26 2021/02/21 13:27:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.25 2021/01/23 22:20:17 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.26 2021/02/21 13:27:22 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,9 +62,7 @@ static	fn_t	*fnames;
 
 static	fn_t	*srchfn(const char *, size_t);
 
-/*
- * Look for a Filename of length l.
- */
+/* Find the given filename, or return NULL. */
 static fn_t *
 srchfn(const char *s, size_t len)
 {
@@ -77,9 +75,7 @@ srchfn(const char *s, size_t len)
 	return fn;
 }
 
-/*
- * Return a shared string for filename s.
- */
+/* Return a copy of the filename s with unlimited lifetime. */
 const char *
 fnalloc(const char *s)
 {
@@ -140,7 +136,7 @@ fnnalloc(const char *s, size_t len)
 
 	if ((fn = srchfn(s, len)) == NULL) {
 		fn = xmalloc(sizeof (fn_t));
-		/* Do not use strdup() because string is not NUL-terminated.*/
+		/* Do not use strdup() because s is not NUL-terminated.*/
 		fn->fn_name = xmalloc(len + 1);
 		(void)memcpy(fn->fn_name, s, len);
 		fn->fn_name[len] = '\0';
@@ -157,9 +153,7 @@ fnnalloc(const char *s, size_t len)
 	return fn->fn_name;
 }
 
-/*
- * Get id of a filename.
- */
+/* Get the ID of a filename. */
 int
 getfnid(const char *s)
 {
@@ -295,9 +289,7 @@ initmem(void)
 }
 
 
-/*
- * Allocate memory associated with level l.
- */
+/* Allocate memory associated with level l. */
 void *
 getlblk(size_t l, size_t s)
 {
@@ -317,9 +309,7 @@ getblk(size_t s)
 	return getlblk(mblklev, s);
 }
 
-/*
- * Free all memory associated with level l.
- */
+/* Free all memory associated with level l. */
 void
 freelblk(int l)
 {
@@ -334,12 +324,12 @@ freeblk(void)
 	freelblk(mblklev);
 }
 
-/*
- * tgetblk() returns memory which is associated with the current
- * expression.
- */
 static	mbl_t	*tmblk;
 
+/*
+ * Return zero-initialized memory that is freed at the end of the current
+ * expression.
+ */
 void *
 tgetblk(size_t s)
 {
@@ -347,9 +337,7 @@ tgetblk(size_t s)
 	return xgetblk(&tmblk, s);
 }
 
-/*
- * Return a freshly allocated tree node.
- */
+/* Return a freshly allocated tree node. */
 tnode_t *
 getnode(void)
 {
@@ -358,9 +346,7 @@ getnode(void)
 	return tn;
 }
 
-/*
- * Free all memory which is allocated by the current expression.
- */
+/* Free all memory which is allocated by the current expression. */
 void
 tfreeblk(void)
 {
