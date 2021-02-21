@@ -1,4 +1,4 @@
-/*	$NetBSD: d_return_type.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_return_type.c,v 1.3 2021/02/21 09:07:58 rillig Exp $	*/
 # 3 "d_return_type.c"
 
 enum A {
@@ -12,5 +12,5 @@ enum B {
 enum A
 func(enum B arg)
 {
-	return arg;
+	return arg;		/* expect: 211 */
 }

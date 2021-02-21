@@ -1,4 +1,4 @@
-/*	$NetBSD: d_lint_assert.c,v 1.2 2021/01/10 18:13:43 rillig Exp $	*/
+/*	$NetBSD: d_lint_assert.c,v 1.3 2021/02/21 09:07:58 rillig Exp $	*/
 # 3 "d_lint_assert.c"
 
 /*
@@ -12,4 +12,4 @@ enum {
 	// failed in check_global_variable at decl.c:3135
 	// near d_lint_assert.c:14
 	A = +++
-};
+};				/* expect: 249 */
