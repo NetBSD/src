@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.188 2020/12/18 01:40:20 thorpej Exp $	*/
+/*	$NetBSD: usb.c,v 1.189 2021/02/21 23:06:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.188 2020/12/18 01:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.189 2021/02/21 23:06:39 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
+#include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -329,6 +330,70 @@ usb_attach(device_t parent, device_t self, void *aux)
 	config_interrupts(self, usb_doattach);
 }
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_output.h>
+#include <ddb/db_command.h>
+
+static void
+db_usb_xfer(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	struct usbd_xfer *xfer = (struct usbd_xfer *)addr;
+
+	if (!have_addr){
+		db_printf("%s: need usbd_xfer address\n", __func__);
+		return;
+	}
+
+	db_printf("usb xfer: %p pipe %p priv %p buffer %p\n",
+	    xfer, xfer->ux_pipe, xfer->ux_priv, xfer->ux_buffer);
+	db_printf(" len %x actlen %x flags %x timeout %x status %x\n",
+	    xfer->ux_length, xfer->ux_actlen, xfer->ux_flags, xfer->ux_timeout,
+	    xfer->ux_status);
+	db_printf(" callback %p done %x state %x tm_set %x tm_reset %x\n",
+	    xfer->ux_callback, xfer->ux_done, xfer->ux_state,
+	    xfer->ux_timeout_set, xfer->ux_timeout_reset);
+}
+
+static void
+db_usb_xferlist(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	struct usbd_pipe *pipe = (struct usbd_pipe *)addr;
+	struct usbd_xfer *xfer;
+
+	if (!have_addr){
+		db_printf("%s: need usbd_pipe address\n", __func__);
+		return;
+	}
+
+	db_printf("usb pipe: %p\n", pipe);
+	SIMPLEQ_FOREACH(xfer, &pipe->up_queue, ux_next) {
+		db_printf("     xfer = %p", xfer);
+	}
+}
+
+const struct db_command db_usb_command_table[] = {
+	{ DDB_ADD_CMD("usbxfer",	db_usb_xfer,	0, 
+	  "display a USB xfer structure",
+	  NULL, NULL) },
+	{ DDB_ADD_CMD("usbxferlist",	db_usb_xferlist,	0, 
+	  "display a USB xfer structure given pipe",
+	  NULL, NULL) },
+	{ DDB_ADD_CMD(NULL,	NULL,	0, NULL, NULL, NULL) }
+};
+
+static void
+usb_init_ddb(void)
+{
+
+	(void)db_register_tbl(DDB_SHOW_CMD, db_usb_command_table);
+}
+#else
+#define usb_init_ddb() /* nothing */
+#endif
+
 static int
 usb_once_init(void)
 {
@@ -368,6 +433,8 @@ usb_once_init(void)
 	KASSERT(usb_async_sih == NULL);
 	usb_async_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
 	   usb_async_intr, NULL);
+
+	usb_init_ddb();
 
 	return 0;
 }
