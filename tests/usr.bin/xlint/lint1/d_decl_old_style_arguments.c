@@ -7,9 +7,9 @@
 
 void func(int a, int b, int c);
 
-void func(num, ptr, dbl, def)
+void func(num, ptr, dbl, def)	/* expect: 231, 231, 231, 231 */
     int num;
     char *ptr;
     double dbl;
-{
+{				/* expect: 32, 51 */
 }
