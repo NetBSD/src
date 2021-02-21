@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.29 2021/02/19 22:27:49 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.30 2021/02/21 10:28:32 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.29 2021/02/19 22:27:49 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.30 2021/02/21 10:28:32 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -337,10 +337,17 @@ type_name(const type_t *tp)
 		buf_add(&buf, type_name(tp->t_subt));
 		break;
 	case ENUM:
-		buf_add(&buf, " ");
 #ifdef t_enum
-		buf_add(&buf, tp->t_enum->en_tag->s_name);
+		if (tp->t_enum->en_tag->s_name == unnamed &&
+		    tp->t_enum->en_first_typedef != NULL) {
+			buf.len -= strlen(tspec_name(t));
+			buf_add(&buf, tp->t_enum->en_first_typedef->s_name);
+		} else {
+			buf_add(&buf, " ");
+			buf_add(&buf, tp->t_enum->en_tag->s_name);
+		}
 #else
+		buf_add(&buf, " ");
 		buf_add(&buf,
 		    tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
 #endif
