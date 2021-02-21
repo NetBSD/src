@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.32 2021/02/21 15:00:04 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.33 2021/02/21 17:07:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -178,17 +178,28 @@ extern struct cpu_info cpu_info_store[];
 
 #define	LWP0_CPU_INFO	(&cpu_info_store[0])
 
+#define	__HAVE_CPU_DOSOFTINTS_CI
+
+static inline void
+cpu_dosoftints_ci(struct cpu_info *ci)
+{
+#if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
+	void dosoftints(void);
+
+	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0) {
+		dosoftints();
+	}
+#endif
+}
+
 static inline void
 cpu_dosoftints(void)
 {
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
-	void dosoftints(void);
-	struct cpu_info * const ci = curcpu();
-
-	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0)
-		dosoftints();
+	cpu_dosoftints_ci(curcpu());
 #endif
 }
+
 
 #endif /* _KERNEL */
 
