@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.79 2021/02/19 12:28:56 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.80 2021/02/21 10:28:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.79 2021/02/19 12:28:56 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.80 2021/02/21 10:28:33 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -269,7 +269,7 @@ const	char *msgs[] = {
 	"loop not entered at top",				      /* 207 */
 	"break outside loop or switch",				      /* 208 */
 	"continue outside loop",				      /* 209 */
-	"enum type mismatch in initialisation",			      /* 210 */
+	"enum type mismatch between '%s' and '%s' in initialisation", /* 210 */
 	"return value type mismatch (%s) and (%s)",		      /* 211 */
 	"cannot return incomplete type",			      /* 212 */
 	"void function %s cannot return value",			      /* 213 */
