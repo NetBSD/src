@@ -1,4 +1,4 @@
-/* $NetBSD: idle_machdep.S,v 1.7 2021/02/11 08:35:12 ryo Exp $ */
+/* $NetBSD: idle_machdep.S,v 1.8 2021/02/21 23:37:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <aarch64/locore.h>
 #include "assym.h"
 
-RCSID("$NetBSD: idle_machdep.S,v 1.7 2021/02/11 08:35:12 ryo Exp $");
+RCSID("$NetBSD: idle_machdep.S,v 1.8 2021/02/21 23:37:09 jmcneill Exp $");
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -93,6 +93,7 @@ ENTRY(cpu_idle)
 	str	w28, [x1, #CI_INTR_DEPTH]	/* ci->ci_intr_depth = old */
 
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
+	cbnz	w28, 1f				/* Skip if intr_depth > 0 */
 	ldr	w3, [x1, #CI_SOFTINTS]		/* Get pending softint mask */
 	/* CPL should be 0 */
 	ldr	w2, [x1, #CI_CPL]		/* Get current priority level */
