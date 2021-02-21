@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.96 2020/12/26 22:15:37 jym Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.97 2021/02/21 12:36:38 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.96 2020/12/26 22:15:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.97 2021/02/21 12:36:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -306,6 +306,55 @@ Static const struct usbd_quirk_entry {
 	{ UQ_HID_IGNORE | UQ_BAD_AUDIO, NULL }},
  { USB_VENDOR_APPLE,		USB_PRODUCT_APPLE_IPHONE_3GS,		ANY,
 	{ UQ_HID_IGNORE | UQ_BAD_AUDIO, NULL }},
+
+ /*
+  * Various devices using serial boot loader protocol, as supported
+  * by pkgsrc/sysutils/imx_usb_loader
+  */
+ { 0x066f,			0x3780,		/* mx23 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x004f,		/* mx28 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0052,		/* mx50 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0054,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0061,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0063,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0071,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x007d,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0080,		/* mx6ull */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x1fc9,			0x0128,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0076,		/* mx7 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x1fc9,			0x0126,		/* mx7ulp */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x0041,		/* mx51 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x004e,		/* mx53 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x15a2,			0x006a,		/* vybrid */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x066f,			0x37ff,		/* linux_gadget */	ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x1b67,			0x4fff,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x0525,			0xb4a4,		/* mx6 */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x1fc9,			0x012b,		/* mx8mq */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x1fc9,			0x0134,		/* mx8mm */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x1fc9,			0x013e,		/* mx8mn */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { 0x3016,			0x1001, 	/* mx8mn */		ANY,
+	{ UQ_HID_IGNORE, NULL }},
 
  { USB_VENDOR_LG,		USB_PRODUCT_LG_CDMA_MSM,		ANY,
 	{ UQ_ASSUME_CM_OVER_DATA, NULL }},
