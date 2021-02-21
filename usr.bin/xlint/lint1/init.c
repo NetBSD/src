@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.82 2021/02/21 13:13:14 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.83 2021/02/21 13:52:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.82 2021/02/21 13:13:14 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.83 2021/02/21 13:52:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -446,11 +446,9 @@ initstack_pop_nobrace(void)
 {
 
 	debug_enter();
-	debug_initstack();
 	while (!initstk->i_brace && initstk->i_remaining == 0 &&
 	       !initstk->i_array_of_unknown_size)
 		initstack_pop_item();
-	debug_initstack();
 	debug_leave();
 }
 
@@ -798,7 +796,8 @@ init_using_expr(tnode_t *tn)
 	}
 
 	initstk->i_remaining--;
-	debug_step("remaining=%d tn=%p", initstk->i_remaining, tn);
+	debug_step("%d elements remaining", initstk->i_remaining);
+
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof (tnode_t));
 	ln->tn_op = NAME;
