@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.19 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2021/02/21 00:36:06 christos Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.19 2021/02/20 22:57:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2021/02/21 00:36:06 christos Exp $");
 /* Id: main.c,v 1.70 2020/09/10 17:32:55 tom Exp  */
 
 #include <signal.h>
@@ -336,6 +336,7 @@ getargs(int argc, char *argv[])
 	    break;
 	case 'o':
 	    output_file_name = optarg;
+	    explicit_file_name = 1;
 	    break;
 	case 'p':
 	    symbol_prefix = optarg;
