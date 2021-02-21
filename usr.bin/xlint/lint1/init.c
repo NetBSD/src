@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.80 2021/02/21 10:03:35 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.81 2021/02/21 11:23:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.80 2021/02/21 10:03:35 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.81 2021/02/21 11:23:33 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -729,12 +729,10 @@ init_rbrace(void)
 void
 init_using_expr(tnode_t *tn)
 {
-	ptrdiff_t offs;
-	sym_t	*sym;
 	tspec_t	lt, rt;
 	tnode_t	*ln;
 	struct	mbl *tmem;
-	scl_t	sc;
+	scl_t	sclass;
 
 	debug_enter();
 	debug_named_member();
@@ -746,7 +744,7 @@ init_using_expr(tnode_t *tn)
 		return;
 	}
 
-	sc = initsym->s_scl;
+	sclass = initsym->s_scl;
 
 	/*
 	 * Do not test for automatic aggregate initialisation. If the
@@ -759,7 +757,7 @@ init_using_expr(tnode_t *tn)
 	 * Local initialisation of non-array-types with only one expression
 	 * without braces is done by ASSIGN
 	 */
-	if ((sc == AUTO || sc == REG) &&
+	if ((sclass == AUTO || sclass == REG) &&
 	    initsym->s_type->t_tspec != ARRAY && initstk->i_enclosing == NULL) {
 		ln = new_name_node(initsym, 0);
 		ln->tn_type = tduptyp(ln->tn_type);
@@ -836,10 +834,10 @@ init_using_expr(tnode_t *tn)
 		tn = convert(INIT, 0, initstk->i_type, tn);
 
 	if (tn != NULL && tn->tn_op != CON) {
-		sym = NULL;
-		offs = 0;
+		sym_t *sym;
+		ptrdiff_t offs;
 		if (!constant_addr(tn, &sym, &offs)) {
-			if (sc == AUTO || sc == REG) {
+			if (sclass == AUTO || sclass == REG) {
 				/* non-constant initializer */
 				c99ism(177);
 			} else {
