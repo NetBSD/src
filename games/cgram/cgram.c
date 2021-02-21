@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: cgram.c,v 1.9 2021/02/21 17:16:00 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ ch_isupper(char ch)
 
 struct stringarray {
 	char **v;
-	int num;
+	size_t num;
 };
 
 static void
@@ -123,7 +123,7 @@ static struct stringarray lines;
 static struct stringarray sollines;
 static bool hinting;
 static int scrolldown;
-static unsigned curx;
+static int curx;
 static int cury;
 
 static void
@@ -167,34 +167,32 @@ static void
 encode(void)
 {
 	int key[26];
+
 	for (int i = 0; i < 26; i++)
 		key[i] = i;
+
 	for (int i = 26; i > 1; i--) {
-		int c = random() % i;
+		int c = (int)(random() % i);
 		int t = key[i - 1];
 		key[i - 1] = key[c];
 		key[c] = t;
 	}
 
-	for (int y = 0; y < lines.num; y++) {
-		for (unsigned x = 0; lines.v[y][x] != '\0'; x++) {
-			if (ch_islower(lines.v[y][x])) {
-				int q = lines.v[y][x] - 'a';
-				lines.v[y][x] = 'a' + key[q];
-			}
-			if (ch_isupper(lines.v[y][x])) {
-				int q = lines.v[y][x] - 'A';
-				lines.v[y][x] = 'A' + key[q];
-			}
+	for (int y = 0; y < (int)lines.num; y++) {
+		for (char *p = lines.v[y]; *p != '\0'; p++) {
+			if (ch_islower(*p))
+				*p = (char)('a' + key[*p - 'a']);
+			if (ch_isupper(*p))
+				*p = (char)('A' + key[*p - 'A']);
 		}
 	}
 }
 
 static bool
-substitute(int ch)
+substitute(char ch)
 {
-	assert(cury >= 0 && cury < lines.num);
-	if (curx >= strlen(lines.v[cury])) {
+	assert(cury >= 0 && cury < (int)lines.num);
+	if (curx >= (int)strlen(lines.v[cury])) {
 		beep();
 		return false;
 	}
@@ -210,17 +208,16 @@ substitute(int ch)
 	char lch = ch_tolower(ch);
 	char uch = ch_toupper(ch);
 
-	for (int y = 0; y < lines.num; y++) {
-		for (unsigned x = 0; lines.v[y][x] != '\0'; x++) {
-			if (lines.v[y][x] == loch) {
-				lines.v[y][x] = lch;
-			} else if (lines.v[y][x] == uoch) {
-				lines.v[y][x] = uch;
-			} else if (lines.v[y][x] == lch) {
-				lines.v[y][x] = loch;
-			} else if (lines.v[y][x] == uch) {
-				lines.v[y][x] = uoch;
-			}
+	for (int y = 0; y < (int)lines.num; y++) {
+		for (char *p = lines.v[y]; *p != '\0'; p++) {
+			if (*p == loch)
+				*p = lch;
+			else if (*p == uoch)
+				*p = uch;
+			else if (*p == lch)
+				*p = loch;
+			else if (*p == uch)
+				*p = uoch;
 		}
 	}
 	return true;
@@ -236,7 +233,7 @@ redraw(void)
 	for (int i = 0; i < LINES - 1; i++) {
 		move(i, 0);
 		int ln = i + scrolldown;
-		if (ln < lines.num) {
+		if (ln < (int)lines.num) {
 			for (unsigned j = 0; lines.v[i][j] != '\0'; j++) {
 				char ch = lines.v[i][j];
 				if (ch != sollines.v[i][j] && ch_isalpha(ch)) {
@@ -304,18 +301,18 @@ loop(void)
 				curx--;
 			} else if (cury > 0) {
 				cury--;
-				curx = strlen(lines.v[cury]);
+				curx = (int)strlen(lines.v[cury]);
 			}
 			break;
 		case 5:		/* ^E */
 		case KEY_END:
-			curx = strlen(lines.v[cury]);
+			curx = (int)strlen(lines.v[cury]);
 			break;
 		case 6:		/* ^F */
 		case KEY_RIGHT:
-			if (curx < strlen(lines.v[cury])) {
+			if (curx < (int)strlen(lines.v[cury])) {
 				curx++;
-			} else if (cury < lines.num - 1) {
+			} else if (cury < (int)lines.num - 1) {
 				cury++;
 				curx = 0;
 			}
@@ -325,11 +322,11 @@ loop(void)
 			break;
 		case 14:	/* ^N */
 		case KEY_DOWN:
-			if (cury < lines.num - 1) {
+			if (cury < (int)lines.num - 1) {
 				cury++;
 			}
-			if (curx > strlen(lines.v[cury])) {
-				curx = strlen(lines.v[cury]);
+			if (curx > (int)strlen(lines.v[cury])) {
+				curx = (int)strlen(lines.v[cury]);
 			}
 			if (scrolldown < cury - (LINES - 2)) {
 				scrolldown = cury - (LINES - 2);
@@ -340,8 +337,8 @@ loop(void)
 			if (cury > 0) {
 				cury--;
 			}
-			if (curx > strlen(lines.v[cury])) {
-				curx = strlen(lines.v[cury]);
+			if (curx > (int)strlen(lines.v[cury])) {
+				curx = (int)strlen(lines.v[cury]);
 			}
 			if (scrolldown > cury) {
 				scrolldown = cury;
@@ -354,22 +351,22 @@ loop(void)
 			done = true;
 			break;
 		default:
-			if (isascii(ch) && isalpha(ch)) {
-				if (substitute(ch)) {
-					if (curx < strlen(lines.v[cury])) {
+			if (isascii(ch) && ch_isalpha((char)ch)) {
+				if (substitute((char)ch)) {
+					if (curx < (int)strlen(lines.v[cury])) {
 						curx++;
 					}
-					if (curx == strlen(lines.v[cury]) &&
-					    cury < lines.num - 1) {
+					if (curx == (int)strlen(lines.v[cury]) &&
+					    cury < (int)lines.num - 1) {
 						curx = 0;
 						cury++;
 					}
 				}
-			} else if (curx < strlen(lines.v[cury]) &&
+			} else if (curx < (int)strlen(lines.v[cury]) &&
 			    ch == lines.v[cury][curx]) {
 				curx++;
-				if (curx == strlen(lines.v[cury]) &&
-				    cury < lines.num - 1) {
+				if (curx == (int)strlen(lines.v[cury]) &&
+				    cury < (int)lines.num - 1) {
 					curx = 0;
 					cury++;
 				}
@@ -389,7 +386,7 @@ main(void)
 
 	stringarray_init(&lines);
 	stringarray_init(&sollines);
-	srandom(time(NULL));
+	srandom((unsigned int)time(NULL));
 	readquote();
 	encode();
 	opencurses();
