@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.3 2021/01/31 13:33:10 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.4 2021/02/21 09:17:55 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function %s falls off bottom without returning value [217]
@@ -30,3 +30,15 @@ do_while_return(int i)
 		return i;
 	} while (/*CONSTCOND*/0);	/*FIXME*//* expect: 193 */
 }					/*FIXME*//* expect: 217 */
+
+/*
+ * C99 5.1.2.2.3 "Program termination" p1 defines that as a special exception,
+ * the function 'main' does not have to return a value, reaching the bottom
+ * is equivalent to returning 0.
+ *
+ * Before func.c 1.72 from 2021-02-21, lint had wrongly warned about this.
+ */
+int
+main(void)
+{
+}

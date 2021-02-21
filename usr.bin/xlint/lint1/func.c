@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.71 2021/02/19 22:27:49 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.72 2021/02/21 09:17:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.71 2021/02/19 22:27:49 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.72 2021/02/21 09:17:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -337,6 +337,22 @@ funcdef(sym_t *fsym)
 	reached = true;
 }
 
+static void
+check_missing_return_value(void)
+{
+	if (funcsym->s_type->t_subt->t_tspec == VOID)
+		return;
+	if (funcsym->s_return_type_implicit_int)
+		return;
+
+	/* C99 5.1.2.2.3 "Program termination" p1 */
+	if (Sflag && strcmp(funcsym->s_name, "main") == 0)
+		return;
+
+	/* function %s falls off bottom without returning value */
+	warning(217, funcsym->s_name);
+}
+
 /*
  * Called at the end of a function definition.
  */
@@ -348,11 +364,7 @@ funcend(void)
 
 	if (reached) {
 		cstmt->c_had_return_noval = true;
-		if (funcsym->s_type->t_subt->t_tspec != VOID &&
-		    !funcsym->s_return_type_implicit_int) {
-			/* func. %s falls off bottom without returning value */
-			warning(217, funcsym->s_name);
-		}
+		check_missing_return_value();
 	}
 
 	/*
