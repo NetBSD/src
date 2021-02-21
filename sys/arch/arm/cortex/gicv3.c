@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.41 2021/02/09 17:44:01 ryo Exp $ */
+/* $NetBSD: gicv3.c,v 1.42 2021/02/21 15:00:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.41 2021/02/09 17:44:01 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.42 2021/02/21 15:00:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -222,11 +222,12 @@ static void
 gicv3_set_priority(struct pic_softc *pic, int ipl)
 {
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
-	const uint8_t curpmr = icc_pmr_read();
+	struct cpu_info * const ci = curcpu();
 	const uint8_t newpmr = IPL_TO_PMR(sc, ipl);
 
-	if (newpmr > curpmr) {
+	if (newpmr > ci->ci_hwpl) {
 		/* Lowering priority mask */
+		ci->ci_hwpl = newpmr;
 		icc_pmr_write(newpmr);
 	}
 }
@@ -414,7 +415,8 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 		;
 
 	/* Set initial priority mask */
-	icc_pmr_write(IPL_TO_PMR(sc, IPL_HIGH));
+	ci->ci_hwpl = IPL_TO_PMR(sc, IPL_HIGH);
+	icc_pmr_write(ci->ci_hwpl);
 
 	/* Set the binary point field to the minimum value */
 	icc_bpr1_write(0);
@@ -733,7 +735,8 @@ gicv3_irq_handler(void *frame)
 
 	ci->ci_data.cpu_nintr++;
 
-	if (icc_pmr_read() != pmr) {
+	if (ci->ci_hwpl != pmr) {
+		ci->ci_hwpl = pmr;
 		icc_pmr_write(pmr);
 	}
 
@@ -758,7 +761,7 @@ gicv3_irq_handler(void *frame)
 			pic_do_pending_ints(I32_bit, ipl, frame);
 		} else if (ci->ci_cpl != ipl) {
 			icc_pmr_write(IPL_TO_PMR(sc, ipl));
-			ci->ci_cpl = ipl;
+			ci->ci_hwpl = ci->ci_cpl = ipl;
 		}
 
 		if (early_eoi) {

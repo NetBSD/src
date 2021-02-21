@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.115 2021/02/20 14:51:06 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.116 2021/02/21 15:00:04 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -185,6 +185,7 @@ struct cpu_info {
 			ci_softc;	/* platform softc */
 
 	int		ci_cpl;		/* current processor level (spl) */
+	int		ci_hwpl;	/* current hardware priority */
 	int		ci_kfpu_spl;
 
 	volatile u_int	ci_intr_depth;	/* */
