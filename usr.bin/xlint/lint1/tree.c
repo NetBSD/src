@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.214 2021/02/21 10:28:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.215 2021/02/21 11:23:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.214 2021/02/21 10:28:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.215 2021/02/21 11:23:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4215,19 +4215,22 @@ constant_addr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		}
 		*symp = sym;
 		*offsp = offs1 + offs2;
-		break;
+		return true;
 	case ADDR:
 		if (tn->tn_left->tn_op == NAME) {
 			*symp = tn->tn_left->tn_sym;
 			*offsp = 0;
-		} else if (tn->tn_left->tn_op == STRING) {
+			return true;
+		} else {
 			/*
 			 * If this would be the front end of a compiler we
-			 * would return a label instead of 0.
+			 * would return a label instead of 0, at least if
+			 * 'tn->tn_left->tn_op == STRING'.
 			 */
+			*symp = NULL;
 			*offsp = 0;
+			return true;
 		}
-		break;
 	case CVT:
 		t = tn->tn_type->t_tspec;
 		ot = tn->tn_left->tn_type->t_tspec;
@@ -4248,13 +4251,10 @@ constant_addr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		else if (psize(t) != psize(ot))
 			return -1;
 #endif
-		if (!constant_addr(tn->tn_left, symp, offsp))
-			return false;
-		break;
+		return constant_addr(tn->tn_left, symp, offsp);
 	default:
 		return false;
 	}
-	return true;
 }
 
 /*
