@@ -1,0 +1,19 @@
+/* $NetBSD: comment-line-end.0.stdout,v 1.1 2021/02/21 21:26:26 rillig Exp $ */
+/* This $FreeBSD$ tag is required by the test suite, for no reason. */
+
+/*
+ * Demonstrates that line-end comments can affect the following lines.
+ *
+ * FIXME: The '{' of main must be in column 1, not directly after the ')'.
+ *
+ * FIXME: The 'Note: removing' below gets "indented" to 'Note:removing'.
+ *
+ * FIXME: The 'line-end' gets "indented" to 'line - end'.
+ */
+
+// Note:removing one of these line - end comments affects the formatting
+// of the main function below.
+
+int
+main(void){
+}
