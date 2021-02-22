@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.11 2021/02/21 22:21:56 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.12 2021/02/22 16:28:20 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.11 2021/02/21 22:21:56 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.12 2021/02/22 16:28:20 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -227,7 +227,8 @@ readquote(void)
 	for (int i = 0; i < extent_y; i++)
 		extent_x = imax(extent_x, (int)lines.v[i].len);
 
-	pclose(f);
+	if (pclose(f) != 0)
+		exit(1); /* error message must come from child process */
 }
 
 static void
