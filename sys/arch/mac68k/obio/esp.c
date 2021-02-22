@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.59 2021/02/22 04:24:41 rin Exp $	*/
+/*	$NetBSD: esp.c,v 1.60 2021/02/22 05:23:36 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59 2021/02/22 04:24:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.60 2021/02/22 05:23:36 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -327,8 +327,9 @@ dafb_dreq:	bst = oa->oa_tag;
 		 * No synchronous xfers w/o DMA.
 		 *
 		 * XXXRO
-		 * Also disable synchronous xfers for avdma for now,
-		 * by which some disks cannot be read.
+		 * Also disable synchronous xfers for AV Macs;
+		 * sync negotiation times out when drive advertises that
+		 * capability, even if avdma code is forcibly disabled.
 		 */
 		sc->sc_minsync = 0;
 	}
