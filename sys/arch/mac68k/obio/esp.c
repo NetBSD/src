@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.58 2019/07/23 15:19:07 rin Exp $	*/
+/*	$NetBSD: esp.c,v 1.59 2021/02/22 04:24:41 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.58 2019/07/23 15:19:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59 2021/02/22 04:24:41 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -315,8 +315,8 @@ dafb_dreq:	bst = oa->oa_tag;
 	/* We need this to fit into the TCR... */
 	sc->sc_maxxfer = 64 * 1024;
 
-        switch (current_mac_model->machineid) {
-        case MACH_MACQ630:
+	switch (current_mac_model->machineid) {
+	case MACH_MACQ630:
 		/* XXX on LC630 64k xfer causes timeout error */
 		sc->sc_maxxfer = 63 * 1024;
 		break;
@@ -382,7 +382,7 @@ dafb_dreq:	bst = oa->oa_tag;
 			printf("failed to map omess buffer.\n");
 			goto out2;
 		}
-		
+
 		if (bus_dmamem_alloc(esc->sc_dmat, NBPG, 16, NBPG,
 		    &isegs, 1, &irsegs, BUS_DMA_NOWAIT)) {
 			printf("failed to allocate imess buffer.\n");
@@ -391,8 +391,8 @@ dafb_dreq:	bst = oa->oa_tag;
 		if (bus_dmamem_map(esc->sc_dmat, &isegs, irsegs,
 		    NCR_MAX_MSG_LEN + 1, (void **)&sc->sc_imess,
 		    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
-			printf("failed to map imess buffer.");
-			
+			printf("failed to map imess buffer.\n");
+
 			bus_dmamem_free(esc->sc_dmat, &isegs, irsegs);
 		out3:	bus_dmamem_unmap(esc->sc_dmat, sc->sc_omess, NBPG);
 		out2:	bus_dmamem_free(esc->sc_dmat, &osegs, orsegs);
@@ -484,7 +484,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 
 	cnt = *esc->sc_dmalen;
 	if (*esc->sc_dmalen == 0) {
-		printf("data interrupt, but no count left.");
+		printf("data interrupt, but no count left.\n");
 	}
 
 	p = *esc->sc_dmaaddr;
@@ -624,7 +624,7 @@ esp_quick_dma_intr(struct ncr53c9x_softc *sc)
 
 	trans = esc->sc_dmasize - resid;
 	if (trans < 0) {
-		printf("dmaintr: trans < 0????");
+		printf("dmaintr: trans < 0????\n");
 		trans = *esc->sc_dmalen;
 	}
 
@@ -1107,7 +1107,7 @@ esp_av_pio_intr(struct ncr53c9x_softc *sc)
 	uint8_t *p;
 
 #if DEBUG
-	printf("[av_pio_intr: intr 0x%x stat 0x%x] ", sc->sc_espintr,
+	printf("[av_pio_intr: intr 0x%x stat 0x%x]\n", sc->sc_espintr,
 	    sc->sc_espstat);
 #endif
 
@@ -1123,7 +1123,7 @@ esp_av_pio_intr(struct ncr53c9x_softc *sc)
 	 * Is this possible?
 	 */
 	if (cnt == 0)
-		printf("data interrupt, but no count left.");
+		printf("data interrupt, but no count left.\n");
 #endif
 
 	p = *esc->sc_dmaaddr;
@@ -1227,7 +1227,7 @@ esp_av_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 #endif
 		return 0;
 	}
-	
+
 	/*
 	 * Ensure the transfer is on a 16-byte aligned boundary for
 	 * the DMA engine by doing PIO to the next 16-byte boundary.
