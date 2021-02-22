@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.18 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.19 2021/02/22 06:21:35 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.18 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.19 2021/02/22 06:21:35 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ cpufreq_dt_change_cb(void *arg1, void *arg2)
 	struct cpufreq_dt_softc * const sc = arg1;
 	struct cpu_info *ci = curcpu();
 
-	ci->ci_data.cpu_cc_freq = sc->sc_freq_target * 1000000;
+	ci->ci_data.cpu_cc_freq = clk_get_rate(sc->sc_clk);
 }
 
 static int
