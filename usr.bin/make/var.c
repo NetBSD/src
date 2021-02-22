@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.835 2021/02/22 22:26:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.836 2021/02/22 22:34:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.835 2021/02/22 22:26:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.836 2021/02/22 22:34:04 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -1020,6 +1020,9 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		 */
 		if (!opts.varNoExportEnv)
 			setenv(name, val, 1);
+		/* XXX: What about .MAKE.EXPORTED? */
+		/* XXX: Why not just mark the variable for needing export,
+		 *  as in ExportVarPlain? */
 
 		Global_Append(MAKEOVERRIDES, name);
 	}
