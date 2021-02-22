@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.88 2021/02/22 15:01:03 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.89 2021/02/22 15:09:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.88 2021/02/22 15:01:03 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.89 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: init.c,v 1.88 2021/02/22 15:01:03 rillig Exp $");
 
 
 /*
- * Type of stack which is used for initialisation of aggregate types.
+ * Type of stack which is used for initialization of aggregate types.
  *
  * XXX: Since C99, a stack is an inappropriate data structure for modelling
  * an initialization, since the designators don't have to be listed in a
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: init.c,v 1.88 2021/02/22 15:01:03 rillig Exp $");
 typedef	struct initstack_element {
 
 	/* XXX: Why is i_type often null? */
-	type_t	*i_type;		/* type of initialisation */
+	type_t	*i_type;		/* type of initialization */
 	type_t	*i_subt;		/* type of next level */
 
 	/*
@@ -127,16 +127,16 @@ typedef struct namlist {
 
 
 /*
- * initerr is set as soon as a fatal error occurred in an initialisation.
- * The effect is that the rest of the initialisation is ignored (parsed
- * by yacc, expression trees built, but no initialisation takes place).
+ * initerr is set as soon as a fatal error occurred in an initialization.
+ * The effect is that the rest of the initialization is ignored (parsed
+ * by yacc, expression trees built, but no initialization takes place).
  */
 bool	initerr;
 
 /* Pointer to the symbol which is to be initialized. */
 sym_t	*initsym;
 
-/* Points to the top element of the initialisation stack. */
+/* Points to the top element of the initialization stack. */
 initstack_element *initstk;
 
 /* Points to a c9x named member; */
@@ -307,7 +307,7 @@ debug_initstack(void)
 #endif
 
 /*
- * Initialize the initialisation stack by putting an entry for the object
+ * Initialize the initialization stack by putting an entry for the object
  * which is to be initialized on it.
  */
 void
@@ -318,7 +318,7 @@ initstack_init(void)
 	if (initerr)
 		return;
 
-	/* free memory used in last initialisation */
+	/* free memory used in last initialization */
 	while ((istk = initstk) != NULL) {
 		initstk = istk->i_enclosing;
 		free(istk);
@@ -507,7 +507,7 @@ again:
 
 		if (is_incomplete(istk->i_type) &&
 		    istk->i_enclosing->i_enclosing != NULL) {
-			/* initialisation of an incomplete type */
+			/* initialization of an incomplete type */
 			error(175);
 			initerr = true;
 			debug_initstack();
@@ -523,12 +523,12 @@ again:
 		break;
 	case UNION:
 		if (tflag)
-			/* initialisation of union is illegal in trad. C */
+			/* initialization of union is illegal in trad. C */
 			warning(238);
 		/* FALLTHROUGH */
 	case STRUCT:
 		if (is_incomplete(istk->i_type)) {
-			/* initialisation of an incomplete type */
+			/* initialization of an incomplete type */
 			error(175);
 			initerr = true;
 			debug_initstack();
@@ -737,7 +737,7 @@ check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 	    is_integer(lt) &&
 	    ln->tn_type->t_bitfield &&
 	    !is_integer(rt)) {
-		/* bit-field initialisation is illegal in traditional C */
+		/* bit-field initialization is illegal in traditional C */
 		warning(186);
 	}
 }
@@ -783,14 +783,14 @@ init_using_expr(tnode_t *tn)
 	sclass = initsym->s_scl;
 
 	/*
-	 * Do not test for automatic aggregate initialisation. If the
+	 * Do not test for automatic aggregate initialization. If the
 	 * initializer starts with a brace we have the warning already.
 	 * If not, an error will be printed that the initializer must
 	 * be enclosed by braces.
 	 */
 
 	/*
-	 * Local initialisation of non-array-types with only one expression
+	 * Local initialization of non-array-types with only one expression
 	 * without braces is done by ASSIGN
 	 */
 	if ((sclass == AUTO || sclass == REG) &&

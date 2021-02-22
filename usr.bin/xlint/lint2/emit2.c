@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.16 2021/02/19 22:27:49 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.17 2021/02/22 15:09:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.16 2021/02/19 22:27:49 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.17 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -223,7 +223,7 @@ dumpname(hte_t *hte)
 void
 outlib(const char *name)
 {
-	/* Open of output file and initialisation of the output buffer */
+	/* Open of output file and initialization of the output buffer */
 	outopen(name);
 
 	/* write name of lint library */
