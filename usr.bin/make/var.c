@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.840 2021/02/22 23:42:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.841 2021/02/22 23:46:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.840 2021/02/22 23:42:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.841 2021/02/22 23:46:03 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2376,13 +2376,12 @@ ModifyWords(ApplyModifiersState *st,
 		goto done;
 	}
 
-	SepBuf_Init(&result, st->sep);
-
 	words = Str_Words(val, FALSE);
 
 	DEBUG2(VAR, "ModifyWords: split \"%s\" into %u words\n",
 	    val, (unsigned)words.len);
 
+	SepBuf_Init(&result, st->sep);
 	for (i = 0; i < words.len; i++) {
 		modifyWord(words.words[i], &result, modifyWord_args);
 		if (result.buf.len > 0)
