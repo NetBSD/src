@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.13 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.14 2021/02/22 23:59:43 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -168,6 +168,24 @@ EXP.colons=	# empty
 .    warning error in ${test}: expected "${EXP.${test}}", got "${MOD.${test}}"
 .  endif
 .endfor
+
+# Even in expressions based on an unnamed variable, there may be errors.
+# XXX: The error message should mention the variable name of the expression,
+# even though that name is empty in this case.
+.if ${:Z}
+.  error
+.else
+.  error
+.endif
+
+# Even in expressions based on an unnamed variable, there may be errors.
+# XXX: The error message should not contain two spaces in a row.
+# XXX: The error message should report the filename:lineno.
+.if ${:S,}
+.  error
+.else
+.  error
+.endif
 
 all:
 	@echo ok
