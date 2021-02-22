@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.13 2021/02/22 17:36:42 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.14 2021/02/22 19:34:07 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.13 2021/02/22 17:36:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.14 2021/02/22 19:34:07 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -279,40 +279,26 @@ encode(void)
 	}
 }
 
-static bool
-substitute(char ch)
+static void
+substitute(char a, char b)
 {
-	assert(cursor_x >= 0 && cursor_x < extent_x);
-	assert(cursor_y >= 0 && cursor_y < extent_y);
-	if (cursor_x >= cur_max_x()) {
-		beep();
-		return false;
-	}
-
-	char och = char_at_cursor();
-	if (!ch_isalpha(och)) {
-		beep();
-		return false;
-	}
-
-	char loch = ch_tolower(och);
-	char uoch = ch_toupper(och);
-	char lch = ch_tolower(ch);
-	char uch = ch_toupper(ch);
+	char la = ch_tolower(a);
+	char ua = ch_toupper(a);
+	char lb = ch_tolower(b);
+	char ub = ch_toupper(b);
 
 	for (int y = 0; y < (int)lines.num; y++) {
 		for (char *p = lines.v[y].s; *p != '\0'; p++) {
-			if (*p == loch)
-				*p = lch;
-			else if (*p == uoch)
-				*p = uch;
-			else if (*p == lch)
-				*p = loch;
-			else if (*p == uch)
-				*p = uoch;
+			if (*p == la)
+				*p = lb;
+			else if (*p == ua)
+				*p = ub;
+			else if (*p == lb)
+				*p = la;
+			else if (*p == ub)
+				*p = ua;
 		}
 	}
-	return true;
 }
 
 static bool
@@ -457,19 +443,24 @@ go_to_next_word(void)
 		go_right();
 }
 
+static bool
+can_substitute_here(int ch)
+{
+	return isascii(ch) &&
+	    ch_isalpha((char)ch) &&
+	    cursor_x < cur_max_x() &&
+	    ch_isalpha(char_at_cursor());
+}
+
 static void
 handle_char_input(int ch)
 {
-	if (isascii(ch) && ch_isalpha((char)ch)) {
-		if (substitute((char)ch)) {
-			if (cursor_x < cur_max_x())
-				cursor_x++;
-			if (cursor_x == cur_max_x())
-				go_to_next_line();
-		}
-	} else if (ch == char_at_cursor())
+	if (ch == char_at_cursor())
 		go_right();
-	else
+	else if (can_substitute_here(ch)) {
+		substitute(char_at_cursor(), (char)ch);
+		go_right();
+	} else
 		beep();
 }
 
