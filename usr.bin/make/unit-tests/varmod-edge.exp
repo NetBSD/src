@@ -18,6 +18,10 @@ make: "varmod-edge.mk" line 166: ok colon
 make: "varmod-edge.mk" line 165: Unknown modifier ':'
 make: "varmod-edge.mk" line 165: Unknown modifier ':'
 make: "varmod-edge.mk" line 166: ok colons
+make: "varmod-edge.mk" line 175: Unknown modifier 'Z'
+make: "varmod-edge.mk" line 175: Malformed conditional (${:Z})
+make: Unfinished modifier for  (',' missing)
+make: "varmod-edge.mk" line 184: Malformed conditional (${:S,})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
