@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_counter.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: cpu_counter.h,v 1.2 2021/02/22 09:29:38 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -44,7 +44,12 @@
 #include <aarch64/armreg.h>
 
 #define cpu_hascounter()	(curcpu()->ci_data.cpu_cc_freq != 0)
-#define cpu_counter()		cpu_counter32()
+
+static __inline uint64_t
+cpu_counter(void)
+{
+	return reg_pmccntr_el0_read();
+}
 
 static __inline uint32_t
 cpu_counter32(void)
