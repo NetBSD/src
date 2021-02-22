@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.549 2021/02/05 05:46:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.550 2021/02/22 23:21:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.549 2021/02/05 05:46:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.550 2021/02/22 23:21:33 rillig Exp $");
 
 /* types and constants */
 
@@ -2266,25 +2266,24 @@ ParseDoInclude(char *directive)
 static void
 SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
 {
-	const char *slash, *dirname, *basename;
-	void *freeIt;
+	const char *slash, *basename;
+	FStr dirname;
 
 	slash = strrchr(filename, '/');
 	if (slash == NULL) {
-		dirname = curdir;
+		dirname = FStr_InitRefer(curdir);
 		basename = filename;
-		freeIt = NULL;
 	} else {
-		dirname = freeIt = bmake_strsedup(filename, slash);
+		dirname = FStr_InitOwn(bmake_strsedup(filename, slash));
 		basename = slash + 1;
 	}
 
-	Global_SetExpand(dirvar, dirname);
+	Global_SetExpand(dirvar, dirname.str);
 	Global_SetExpand(filevar, basename);
 
 	DEBUG5(PARSE, "%s: ${%s} = `%s' ${%s} = `%s'\n",
-	    __func__, dirvar, dirname, filevar, basename);
-	free(freeIt);
+	    __func__, dirvar, dirname.str, filevar, basename);
+	FStr_Done(&dirname);
 }
 
 /*

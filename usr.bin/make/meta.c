@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.177 2021/02/05 19:19:17 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.178 2021/02/22 23:21:33 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -373,17 +373,19 @@ any_is_submake(GNode *gn)
 }
 
 static void
-printCMD(const char *cmd, FILE *fp, GNode *gn)
+printCMD(const char *ucmd, FILE *fp, GNode *gn)
 {
-    char *cmd_freeIt = NULL;
+    FStr xcmd = FStr_InitRefer(ucmd);
 
-    if (strchr(cmd, '$') != NULL) {
-	(void)Var_Subst(cmd, gn, VARE_WANTRES, &cmd_freeIt);
+    if (strchr(ucmd, '$') != NULL) {
+    	char *expanded;
+	(void)Var_Subst(ucmd, gn, VARE_WANTRES, &expanded);
 	/* TODO: handle errors */
-	cmd = cmd_freeIt;
+	xcmd = FStr_InitOwn(expanded);
     }
-    fprintf(fp, "CMD %s\n", cmd);
-    free(cmd_freeIt);
+
+    fprintf(fp, "CMD %s\n", xcmd.str);
+    FStr_Done(&xcmd);
 }
 
 static void
