@@ -1,4 +1,4 @@
-.\" $NetBSD: intrctl.8,v 1.7 2019/09/24 11:31:06 wiz Exp $
+.\" $NetBSD: intrctl.8,v 1.8 2021/02/22 11:38:13 jmcneill Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 23, 2019
+.Dd February 22, 2021
 .Dt INTRCTL 8
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ The intrid is an interrupt name such as "ioapic0 pin 22" for x86.
 If
 .Fl c
 is specified, display compact list with total counts per interrupt,
-and CPU affinity as comma separated list of CPU indexes.
+and CPU affinity as list of CPU indexes.
 .Pp
 If
 .Fl w
