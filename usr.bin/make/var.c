@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.834 2021/02/22 21:43:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.835 2021/02/22 22:26:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.834 2021/02/22 21:43:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.835 2021/02/22 22:26:50 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -985,10 +985,9 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 			 * added to SCOPE_GLOBAL, so delete it from there if
 			 * needed. Otherwise -V name may show the wrong value.
 			 *
-			 * See 'scope == SCOPE_GLOBAL' above.
+			 * See ExistsInCmdline.
 			 */
-			/* XXX: name is expanded for the second time */
-			Var_DeleteExpand(SCOPE_GLOBAL, name);
+			Var_Delete(SCOPE_GLOBAL, name);
 		}
 		v = VarAdd(name, val, scope, flags);
 	} else {
