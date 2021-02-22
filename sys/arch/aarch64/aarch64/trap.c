@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.43 2021/02/18 11:23:15 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.44 2021/02/22 02:18:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.43 2021/02/18 11:23:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.44 2021/02/22 02:18:33 jmcneill Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -919,7 +919,8 @@ sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi)
 }
 #endif
 
-void do_trapsignal1(
+void
+do_trapsignal1(
 #ifdef TRAP_SIGDEBUG
     const char *func,
     size_t line,
