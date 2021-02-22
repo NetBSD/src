@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.33 2021/02/14 20:30:31 palle Exp $ */
+/* $NetBSD: TODO,v 1.34 2021/02/22 10:30:57 palle Exp $ */
 
 Things to be done:
 
@@ -11,23 +11,14 @@ sun4u:
 - GENERIC.UP kernel hangs on v445 (missing interrupt?)
 
 sun4v:
- - current status (verified on T5 ldom with 2 VCPU and 4GB):
-     The kernel boots and starts userland.
-	 During the execution of the sysinst process, a sub-process crashes.
-	 The crash happens when a call to sysctl from /bin/sh causes a mmu trap.
-	 Part of the TRAP_SETUP() call in sun4v_datatrap issues a 'save' instruction.
-	 Since %cansave is 0 (%canrestore is 6 and %otherwin is 0) a SPILL trap is generated.
-	 The current code ends up in the pcbspill codepath (which is based on code from openbsd).
-	 This code assumes that it is the register window in the OTHERWIN window that must be spilled
-	 to the pcb.
-	 Since %otherwin in this scenario actually is zero, we end up putting incorrect register
-	 window values to the pcb.
-	 So - this code should not save data to the pcb when %otherwin is 0 - it should spill the
-	 values to the stack of the user process. Special care should be taken here, since we
-	 may end up with a mmu fault again if the stack address is not present in the mmu, so
-	 perhaps spilling to the physical address of the stack will work.
-	 Time will show if this is correct...
-	 Status on T2000 ldom with 8 VCPU and 4GB is that is crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
+ - current status
+     T5 ldom with 2 VCPU and 4GB:
+       The kernel boots and starts userland when booting miniroot.fs.
+       The sysinst tool starts properly and requests terminal type.
+	   Upon entering characters on the console, a crash occurs inside
+	   OpenBoot (properly trashed registers).
+	 T2000 ldom with 8 VCPU and 4GB:
+	   On this platform it crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
 - 64-bit kernel support
 - 32-bit kernel support
 - libkvm
