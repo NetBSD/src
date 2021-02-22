@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112 2021/01/30 16:05:45 rillig Exp $
+#	$NetBSD: Makefile,v 1.113 2021/02/22 20:45:46 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -202,7 +202,7 @@ test-coverage: .PHONY
 
 report-coverage: .PHONY
 	@echo 'covered  uncovered  file'
-	@${GCOV} ${GCOV_OPTS} ${SRCS} 2>&1 \
+	@${GCOV} ${GCOV_OPTS} *.gcda 2>&1 \
 	| perl -ne ${GCOV_PERL:Q} \
 	| sort -nr
 	@sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
