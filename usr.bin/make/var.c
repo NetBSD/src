@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.833 2021/02/22 21:30:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.834 2021/02/22 21:43:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.833 2021/02/22 21:30:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.834 2021/02/22 21:43:57 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -930,6 +930,32 @@ Var_UnExport(Boolean isEnv, const char *arg)
 	FStr_Done(&varnames);
 }
 
+/*
+ * When there is a variable of the same name in the command line scope, the
+ * global variable would not be visible anywhere.  Therefore there is no
+ * point in setting it at all.
+ *
+ * See 'scope == SCOPE_CMDLINE' in Var_SetWithFlags.
+ */
+static Boolean
+ExistsInCmdline(const char *name, const char *val)
+{
+	Var *v;
+
+	v = VarFind(name, SCOPE_CMDLINE, FALSE);
+	if (v == NULL)
+		return FALSE;
+
+	if (v->flags & VFL_FROM_CMD) {
+		DEBUG3(VAR, "%s:%s = %s ignored!\n",
+		    SCOPE_GLOBAL->name, name, val);
+		return TRUE;
+	}
+
+	VarFreeEnv(v, TRUE);
+	return FALSE;
+}
+
 /* Set the variable to the value; the name is not expanded. */
 void
 Var_SetWithFlags(GNode *scope, const char *name, const char *val,
@@ -943,25 +969,8 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		return;
 	}
 
-	if (scope == SCOPE_GLOBAL) {
-		v = VarFind(name, SCOPE_CMDLINE, FALSE);
-		if (v != NULL) {
-			/*
-			 * When there is a variable of the same name in the
-			 * command line scope, the global variable would not
-			 * be visible anywhere.  Therefore there is no point
-			 * in setting it at all.
-			 *
-			 * See 'scope == SCOPE_CMDLINE' below.
-			 */
-			if (v->flags & VFL_FROM_CMD) {
-				DEBUG3(VAR, "%s:%s = %s ignored!\n",
-				    scope->name, name, val);
-				return;
-			}
-			VarFreeEnv(v, TRUE);
-		}
-	}
+	if (scope == SCOPE_GLOBAL && ExistsInCmdline(name, val))
+		return;
 
 	/*
 	 * Only look for a variable in the given scope since anything set
