@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.216 2021/02/21 15:02:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.217 2021/02/22 15:01:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.216 2021/02/21 15:02:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.217 2021/02/22 15:01:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3732,8 +3732,8 @@ is_constcond_false(const tnode_t *tn, tspec_t t)
  * functions called by build(). These tests must be done here because
  * we need some information about the context in which the operations
  * are performed.
- * After all tests are performed, expr() frees the memory which is used
- * for the expression.
+ * After all tests are performed and dofreeblk is true, expr() frees the
+ * memory which is used for the expression.
  */
 void
 expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_zero_ok)

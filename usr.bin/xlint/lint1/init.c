@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.87 2021/02/21 15:02:16 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.88 2021/02/22 15:01:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.87 2021/02/21 15:02:16 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.88 2021/02/22 15:01:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -491,7 +491,7 @@ initstack_push(void)
 again:
 	istk = initstk;
 
-	debug_step("typename %s", type_name(istk->i_type));
+	debug_step("expecting type '%s'", type_name(istk->i_type));
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
 		if (namedmem != NULL) {
