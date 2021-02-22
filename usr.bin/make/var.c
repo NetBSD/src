@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.838 2021/02/22 23:21:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.839 2021/02/22 23:39:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.838 2021/02/22 23:21:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.839 2021/02/22 23:39:24 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -1541,13 +1541,13 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 		    memcmp(word, args->lhs, args->lhsLen) != 0)
 			goto nosub;
 
-		if ((args->pflags.anchorEnd) && wordLen != args->lhsLen)
+		if (args->pflags.anchorEnd && wordLen != args->lhsLen)
 			goto nosub;
 
 		/* :S,^prefix,replacement, or :S,^whole$,replacement, */
 		SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
-		SepBuf_AddBytes(buf, word + args->lhsLen,
-		    wordLen - args->lhsLen);
+		SepBuf_AddBytesBetween(buf,
+		    word + args->lhsLen, word + wordLen);
 		args->matched = TRUE;
 		return;
 	}
