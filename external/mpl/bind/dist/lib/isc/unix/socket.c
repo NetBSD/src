@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.19 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.20 2021/02/22 01:31:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3214,8 +3214,6 @@ internal_fdwatch_write(isc__socket_t *sock)
 	if (more_data)
 		select_poke(sock->manager, sock->threadid, sock->fd,
 		    SELECT_POKE_WRITE);
-
-	UNLOCK(&sock->lock);
 }
 
 static void
@@ -3242,8 +3240,6 @@ internal_fdwatch_read(isc__socket_t *sock)
 	if (more_data)
 		select_poke(sock->manager, sock->threadid, sock->fd,
 		    SELECT_POKE_READ);
-
-	UNLOCK(&sock->lock);
 }
 
 /*
