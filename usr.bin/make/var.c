@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.836 2021/02/22 22:34:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.837 2021/02/22 22:55:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.836 2021/02/22 22:34:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.837 2021/02/22 22:55:43 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -462,28 +462,21 @@ VarFind(const char *name, GNode *scope, Boolean elsewhere)
 }
 
 /*
- * If the variable is an environment variable, free it.
- *
- * Input:
- *	v		the variable
- *	freeValue	true if the variable value should be freed as well
+ * If the variable is an environment variable, free it, including its value.
  *
  * Results:
- *	TRUE if it is an environment variable, FALSE otherwise.
+ *	TRUE if it was an environment variable,
+ *	FALSE if it is still a regular variable.
  */
-static Boolean
-VarFreeEnv(Var *v, Boolean freeValue)
+static void
+VarFreeEnv(Var *v)
 {
 	if (!(v->flags & VFL_FROM_ENV))
-		return FALSE;
+		return;
 
 	FStr_Done(&v->name);
-	if (freeValue)
-		Buf_Done(&v->val);
-	else
-		Buf_DoneData(&v->val);
+	Buf_Done(&v->val);
 	free(v);
-	return TRUE;
 }
 
 /* Add a new variable of the given name and value to the given scope. */
@@ -952,7 +945,7 @@ ExistsInCmdline(const char *name, const char *val)
 		return TRUE;
 	}
 
-	VarFreeEnv(v, TRUE);
+	VarFreeEnv(v);
 	return FALSE;
 }
 
@@ -1031,7 +1024,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		save_dollars = ParseBoolean(val, save_dollars);
 
 	if (v != NULL)
-		VarFreeEnv(v, TRUE);
+		VarFreeEnv(v);
 }
 
 /* See Var_Set for documentation. */
@@ -1204,7 +1197,7 @@ Var_Exists(GNode *scope, const char *name)
 	if (v == NULL)
 		return FALSE;
 
-	(void)VarFreeEnv(v, TRUE);
+	VarFreeEnv(v);
 	return TRUE;
 }
 
@@ -1255,10 +1248,14 @@ Var_Value(GNode *scope, const char *name)
 	if (v == NULL)
 		return FStr_InitRefer(NULL);
 
-	value = v->val.data;
-	return VarFreeEnv(v, FALSE)
-	    ? FStr_InitOwn(value)
-	    : FStr_InitRefer(value);
+	if (!(v->flags & VFL_FROM_ENV))
+		return FStr_InitRefer(v->val.data);
+
+	/* Since environment variables are short-lived, free it now. */
+	FStr_Done(&v->name);
+	value = Buf_DoneData(&v->val);
+	free(v);
+	return FStr_InitOwn(value);
 }
 
 /*
@@ -3322,7 +3319,7 @@ ok:
 		if (gv == NULL)
 			scope = SCOPE_GLOBAL;
 		else
-			VarFreeEnv(gv, TRUE);
+			VarFreeEnv(gv);
 	}
 
 	switch (op[0]) {
