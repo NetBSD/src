@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.839 2021/02/22 23:39:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.840 2021/02/22 23:42:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.839 2021/02/22 23:39:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.840 2021/02/22 23:42:29 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -1737,8 +1737,8 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
  * It can also reverse the words.
  */
 static char *
-VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
-	       int last)
+VarSelectWords(const char *str, int first, int last,
+	       char sep, Boolean oneBigWord)
 {
 	Words words;
 	int len, start, end, step;
@@ -3150,8 +3150,8 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 
 	/* Normal case: select the words described by first and last. */
 	Expr_SetValueOwn(expr,
-	    VarSelectWords(st->sep, st->oneBigWord, expr->value.str,
-	        first, last));
+	    VarSelectWords(expr->value.str, first, last,
+	        st->sep, st->oneBigWord));
 
 ok:
 	free(estr);
