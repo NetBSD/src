@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.8 2021/02/20 11:06:56 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.9 2021/02/22 15:09:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.8 2021/02/20 11:06:56 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.9 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -101,7 +101,7 @@ lex_unknown_character(int c)
 
 /*
  * Keywords.
- * During initialisation they are written to the symbol table.
+ * During initialization they are written to the symbol table.
  */
 static	struct	kwtab {
 	const	char *kw_name;	/* keyword */
