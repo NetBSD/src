@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.11 2019/09/24 11:31:06 wiz Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.12 2021/02/22 11:33:34 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.11 2019/09/24 11:31:06 wiz Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.12 2021/02/22 11:33:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -110,6 +110,22 @@ usage(void)
 
 static int intrctl_io_alloc_retry_count = 4;
 
+static bool
+intrctl_list_line_allcpus(struct intrio_list_line *illine, int ncpus)
+{
+	struct intrio_list_line_cpu *illc;
+	int i;
+
+	for (i = 0; i < ncpus; i++) {
+		illc = &illine->ill_cpu[i];
+		if (illc->illc_assigned == false) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 static void
 intrctl_list_one(bool compact, bool skipzero)
 {
@@ -187,14 +203,20 @@ intrctl_list_one(bool compact, bool skipzero)
 		printf("%-*s ", (int)intridlen, illine->ill_intrid);
 		if (compact) {
 			uint64_t total = 0;
+			bool allcpus = ncpus > 1 &&
+			    intrctl_list_line_allcpus(illine, ncpus);
 			char *affinity = NULL, *oaffinity = NULL;
 			for (i = 0; i < ncpus; i++) {
 				illc = &illine->ill_cpu[i];
 				total += illc->illc_count;
+				if (allcpus && i != 0 && i != ncpus - 1) {
+					continue;
+				}
 				if (illc->illc_assigned) {
+					const char *sep = allcpus ? "-" : ", ";
 					asprintf(&affinity, "%s%s%d",
 					    oaffinity ? oaffinity : "",
-					    oaffinity ? ", " : "",
+					    oaffinity ? sep : "",
 					    i);
 					if (oaffinity)
 						free(oaffinity);
