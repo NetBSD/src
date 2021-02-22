@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.137 2021/02/19 22:35:42 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.138 2021/02/22 15:09:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.137 2021/02/19 22:35:42 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.138 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2851,7 +2851,7 @@ declare_1_abstract(sym_t *sym)
 }
 
 /*
- * Checks size after declarations of variables and their initialisation.
+ * Checks size after declarations of variables and their initialization.
  */
 void
 check_size(sym_t *dsym)

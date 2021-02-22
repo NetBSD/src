@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.217 2021/02/22 15:01:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.218 2021/02/22 15:09:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.217 2021/02/22 15:01:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.218 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1654,7 +1654,7 @@ check_assign_types_compatible(op_t op, int arg,
 
 	switch (op) {
 	case INIT:
-		/* initialisation type mismatch (%s) and (%s) */
+		/* initialization type mismatch (%s) and (%s) */
 		error(185, type_name(ltp), type_name(rtp));
 		break;
 	case RETURN:
@@ -1762,7 +1762,7 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 		    rn->tn_val->v_quad == 0) {
 			return;
 		}
-		/* initialisation of '%s' with '%s' */
+		/* initialization of '%s' with '%s' */
 		warning(277, type_name(ln->tn_type), type_name(rn->tn_type));
 		break;
 	case FARG:
@@ -2434,7 +2434,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				/* assignment of negative constant to ... */
 				warning(164);
 			} else if (op == INIT) {
-				/* initialisation of unsigned with neg... */
+				/* initialization of unsigned with neg... */
 				warning(221);
 			} else if (op == FARG) {
 				/* conversion of negative constant to ... */
@@ -3746,7 +3746,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_zero_ok)
 		return;
 	}
 
-	/* expr() is also called in global initialisations */
+	/* expr() is also called in global initializations */
 	if (dcs->d_ctx != EXTERN)
 		check_statement_reachable();
 
@@ -4173,9 +4173,9 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 }
 
 /*
- * Return whether the expression can be used for static initialisation.
+ * Return whether the expression can be used for static initialization.
  *
- * Constant initialisation expressions must be constant or an address
+ * Constant initialization expressions must be constant or an address
  * of a static object with an optional offset. In the first case,
  * the result is returned in *offsp. In the second case, the static
  * object is returned in *symp and the offset in *offsp.

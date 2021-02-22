@@ -5,4 +5,4 @@
 (3): warning: 'long double' is illegal in traditional C [266]
 (3): warning: 'long double' is illegal in traditional C [266]
 (3): warning: function prototypes are illegal in traditional C [270]
-msg_186.c(16): warning: bit-field initialisation is illegal in traditional C [186]
+msg_186.c(16): warning: bit-field initialization is illegal in traditional C [186]

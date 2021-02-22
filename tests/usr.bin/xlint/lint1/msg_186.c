@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_186.c,v 1.3 2021/02/21 14:49:23 rillig Exp $	*/
+/*	$NetBSD: msg_186.c,v 1.4 2021/02/22 15:09:50 rillig Exp $	*/
 # 3 "msg_186.c"
 
-/* Test for message: bit-field initialisation is illegal in traditional C [186] */
+/* Test for message: bit-field initialization is illegal in traditional C [186] */
 
 /* lint1-flags: -tw */
 
@@ -16,4 +16,4 @@ struct bit_field bit_field = {
 	3.0,			/* expect: 186 */
 	2
 };
-/* XXX: The message is misleading.  Initialisation using integers is ok. */
+/* XXX: The message is misleading.  Initialization using integers is ok. */

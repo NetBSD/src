@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.80 2021/02/21 10:28:33 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.81 2021/02/22 15:09:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.80 2021/02/21 10:28:33 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.81 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -234,7 +234,7 @@ const	char *msgs[] = {
 	"too many struct/union initializers",			      /* 172 */
 	"too many array initializers, expected %d",		      /* 173 */
 	"too many initializers",				      /* 174 */
-	"initialisation of an incomplete type",			      /* 175 */
+	"initialization of an incomplete type",			      /* 175 */
 	"invalid initializer type %s",				      /* 176 */
 	"non-constant initializer",				      /* 177 */
 	"initializer does not fit",				      /* 178 */
@@ -244,8 +244,8 @@ const	char *msgs[] = {
 	"incompatible pointer types (%s != %s)",		      /* 182 */
 	"illegal combination of %s (%s) and %s (%s)",		      /* 183 */
 	"illegal pointer combination",				      /* 184 */
-	"initialisation type mismatch (%s) and (%s)",		      /* 185 */
-	"bit-field initialisation is illegal in traditional C",	      /* 186 */
+	"initialization type mismatch (%s) and (%s)",		      /* 185 */
+	"bit-field initialization is illegal in traditional C",	      /* 186 */
 	"non-null byte ignored in string initializer",		      /* 187 */
 	"no automatic aggregate initialization in traditional C",     /* 188 */
 	"",			/* no longer used */		      /* 189 */
@@ -269,7 +269,7 @@ const	char *msgs[] = {
 	"loop not entered at top",				      /* 207 */
 	"break outside loop or switch",				      /* 208 */
 	"continue outside loop",				      /* 209 */
-	"enum type mismatch between '%s' and '%s' in initialisation", /* 210 */
+	"enum type mismatch between '%s' and '%s' in initialization", /* 210 */
 	"return value type mismatch (%s) and (%s)",		      /* 211 */
 	"cannot return incomplete type",			      /* 212 */
 	"void function %s cannot return value",			      /* 213 */
@@ -280,7 +280,7 @@ const	char *msgs[] = {
 	"ANSI C treats constant as unsigned, op %s",		      /* 218 */
 	"concatenated strings are illegal in traditional C",	      /* 219 */
 	"fallthrough on case statement",			      /* 220 */
-	"initialisation of unsigned with negative constant",	      /* 221 */
+	"initialization of unsigned with negative constant",	      /* 221 */
 	"conversion of negative constant to unsigned type",	      /* 222 */
 	"end-of-loop code not reached",				      /* 223 */
 	"cannot recover from previous errors",			      /* 224 */
@@ -297,7 +297,7 @@ const	char *msgs[] = {
 	"enum %s never defined",				      /* 235 */
 	"static function %s unused",				      /* 236 */
 	"redeclaration of formal parameter %s",			      /* 237 */
-	"initialisation of union is illegal in traditional C",	      /* 238 */
+	"initialization of union is illegal in traditional C",	      /* 238 */
 	"constant argument to NOT",				      /* 239 */
 	"assignment of different structures (%s != %s)",	      /* 240 */
 	"dubious operation on enum, op %s",			      /* 241 */
@@ -336,7 +336,7 @@ const	char *msgs[] = {
 	"ANSI C forbids comparison of %s with %s",		      /* 274 */
 	"cast discards 'const' from type '%s'",			      /* 275 */
 	"__%s__ is illegal for type %s",			      /* 276 */
-	"initialisation of '%s' with '%s'",			      /* 277 */
+	"initialization of '%s' with '%s'",			      /* 277 */
 	"combination of '%s' and '%s', arg #%d",		      /* 278 */
 	"combination of '%s' and '%s' in return",		      /* 279 */
 	"must be outside function: /* %s */",			      /* 280 */
