@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.831 2021/02/16 19:46:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.832 2021/02/22 21:14:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.831 2021/02/16 19:46:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.832 2021/02/22 21:14:15 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -945,6 +945,14 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 	if (scope == SCOPE_GLOBAL) {
 		v = VarFind(name, SCOPE_CMDLINE, FALSE);
 		if (v != NULL) {
+			/*
+			 * When there is a variable of the same name in the
+			 * command line scope, the global variable would not
+			 * be visible anywhere.  Therefore there is no point
+			 * in setting it at all.
+			 *
+			 * See 'scope == SCOPE_CMDLINE' below.
+			 */
 			if (v->flags & VFL_FROM_CMD) {
 				DEBUG3(VAR, "%s:%s = %s ignored!\n",
 				    scope->name, name, val);
@@ -966,6 +974,8 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 			 * This var would normally prevent the same name being
 			 * added to SCOPE_GLOBAL, so delete it from there if
 			 * needed. Otherwise -V name may show the wrong value.
+			 *
+			 * See 'scope == SCOPE_GLOBAL' above.
 			 */
 			/* XXX: name is expanded for the second time */
 			Var_DeleteExpand(SCOPE_GLOBAL, name);
