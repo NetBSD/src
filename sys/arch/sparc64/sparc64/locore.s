@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.424 2020/12/20 11:58:58 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.425 2021/02/22 09:56:42 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -228,7 +228,7 @@
 	.endm
 
 	.macro sun4v_tl1_uspill_normal
-	ba,a,pt	%xcc, pcbspill_normals
+	ba,a,pt	%xcc, spill_normal_to_user_stack
 	 nop
 	.align 128
 	.endm
@@ -3485,6 +3485,58 @@ pcbspill_fail:
 	Debugger()
 	NOTREACHED
 
+spill_normal_to_user_stack:
+	mov	%sp, %g6						! calculate virtual address of destination stack
+	add	%g6, BIAS, %g6
+
+	mov	CTX_SECONDARY, %g2				! Is this context ok or should it be CTX_PRIMARY? XXX
+	GET_MMU_CONTEXTID %g3, %g2, %g1
+	sllx	%g3, 3, %g3					! Make it into an offset into ctxbusy (see below)
+	
+	GET_CTXBUSY %g1
+	ldx	[%g1 + %g3], %g1				! Fetch pmap for current context id
+
+	! Start of code to extract PA	
+	srlx	%g6, STSHIFT, %g7
+	and	%g7, STMASK, %g7
+	sll	%g7, 3, %g7						! byte offset into ctxbusy
+	add	%g7, %g1, %g1
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1	! Load pointer to directory
+	srlx	%g6, PDSHIFT, %g7			! Do page directory
+	and	%g7, PDMASK, %g7
+	sll	%g7, 3, %g7
+	brz,pn	%g1, spill_normal_to_user_stack_fail
+	 add	%g7, %g1, %g1
+
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1
+	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
+	and	%g7, PTMASK, %g7
+	brz	%g1, spill_normal_to_user_stack_fail
+	 sll	%g7, 3, %g7
+	
+	add	%g1, %g7, %g7
+	ldxa	[%g7] ASI_PHYS_CACHED, %g7	! This one is not
+	brgez	%g7, spill_normal_to_user_stack_fail
+	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
+	
+	sll	%g6, 32-PGSHIFT, %g6			! And offset
+	sllx	%g7, PGSHIFT+8, %g7			! There are 8 bits to the left of the PA in the TTE
+	srl	%g6, 32-PGSHIFT, %g6
+	srax	%g7, 8, %g7
+	or	%g7, %g6, %g6					! Then combine them to form PA
+	! End of code to extract PA
+
+	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
+	SPILL	stxa, %g6, 8, %asi			! Store the locals and ins
+	saved
+
+	retry
+	NOTREACHED
+
+spill_normal_to_user_stack_fail:
+	sir
+	 nop
+	
 /*
  * End of traps for sun4v.
  */
