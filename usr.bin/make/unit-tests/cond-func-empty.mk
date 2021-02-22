@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.11 2020/11/28 14:08:37 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.12 2021/02/22 20:38:55 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -42,7 +42,7 @@ WORD=	word
 .endif
 
 # The :U modifier modifies expressions based on undefined variables
-# (VAR_JUNK) by adding the VAR_KEEP flag, which marks the expression
+# (DEF_UNDEF) by adding the DEF_DEFINED flag, which marks the expression
 # as "being interesting enough to be further processed".
 #
 .if empty(UNDEF:S,^$,value,W:Ufallback)
