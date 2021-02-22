@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.189 2021/02/21 23:06:39 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.190 2021/02/22 20:45:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.189 2021/02/21 23:06:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.190 2021/02/22 20:45:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -341,7 +341,7 @@ db_usb_xfer(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 	struct usbd_xfer *xfer = (struct usbd_xfer *)addr;
 
-	if (!have_addr){
+	if (!have_addr) {
 		db_printf("%s: need usbd_xfer address\n", __func__);
 		return;
 	}
@@ -363,7 +363,7 @@ db_usb_xferlist(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct usbd_pipe *pipe = (struct usbd_pipe *)addr;
 	struct usbd_xfer *xfer;
 
-	if (!have_addr){
+	if (!have_addr) {
 		db_printf("%s: need usbd_pipe address\n", __func__);
 		return;
 	}
@@ -374,7 +374,7 @@ db_usb_xferlist(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 }
 
-const struct db_command db_usb_command_table[] = {
+static const struct db_command db_usb_command_table[] = {
 	{ DDB_ADD_CMD("usbxfer",	db_usb_xfer,	0, 
 	  "display a USB xfer structure",
 	  NULL, NULL) },
