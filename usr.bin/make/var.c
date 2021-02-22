@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.837 2021/02/22 22:55:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.838 2021/02/22 23:21:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.837 2021/02/22 22:55:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.838 2021/02/22 23:21:33 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -1160,28 +1160,28 @@ Var_Append(GNode *scope, const char *name, const char *val)
 void
 Var_AppendExpand(GNode *scope, const char *name, const char *val)
 {
-	char *name_freeIt = NULL;
+	FStr xname = FStr_InitRefer(name);
 
 	assert(val != NULL);
 
 	if (strchr(name, '$') != NULL) {
-		const char *unexpanded_name = name;
-		(void)Var_Subst(name, scope, VARE_WANTRES, &name_freeIt);
+		char *expanded;
+		(void)Var_Subst(name, scope, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
-		name = name_freeIt;
-		if (name[0] == '\0') {
+		xname = FStr_InitOwn(expanded);
+		if (expanded[0] == '\0') {
 			/* TODO: update function name in the debug message */
 			DEBUG2(VAR, "Var_Append(\"%s\", \"%s\", ...) "
 				    "name expands to empty string - ignored\n",
-			    unexpanded_name, val);
-			free(name_freeIt);
+			    name, val);
+			FStr_Done(&xname);
 			return;
 		}
 	}
 
-	Var_Append(scope, name, val);
+	Var_Append(scope, xname.str, val);
 
-	free(name_freeIt);
+	FStr_Done(&xname);
 }
 
 void
@@ -4146,11 +4146,11 @@ ParseVarnameLong(
 
 /* Free the environment variable now since we own it. */
 static void
-FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
+FreeEnvVar(Var *v, FStr *inout_val)
 {
 	char *varValue = Buf_DoneData(&v->val);
-	if (value == varValue)
-		*out_val_freeIt = varValue;
+	if (inout_val->str == varValue)
+		inout_val->freeIt = varValue;
 	else
 		free(varValue);
 
@@ -4194,7 +4194,6 @@ FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
  *			expression into a defined expression.
  *			XXX: It is not guaranteed that an error message has
  *			been printed.
- *	*out_val_freeIt	Must be freed by the caller after using *out_val.
  */
 /* coverity[+alloc : arg-*4] */
 VarParseResult
@@ -4311,7 +4310,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	*pp = p;
 
 	if (v->flags & VFL_FROM_ENV) {
-		FreeEnvVar(&expr.value.freeIt, v, expr.value.str);
+		FreeEnvVar(v, &expr.value);
 
 	} else if (expr.defined != DEF_REGULAR) {
 		if (expr.defined == DEF_UNDEF) {
