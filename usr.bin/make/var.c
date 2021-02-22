@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.832 2021/02/22 21:14:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.833 2021/02/22 21:30:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.832 2021/02/22 21:14:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.833 2021/02/22 21:30:33 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -487,7 +487,7 @@ VarFreeEnv(Var *v, Boolean freeValue)
 }
 
 /* Add a new variable of the given name and value to the given scope. */
-static void
+static Var *
 VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
 {
 	HashEntry *he = HashTable_CreateEntry(&scope->vars, name, NULL);
@@ -495,6 +495,7 @@ VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
 	    flags & VAR_SET_READONLY ? VFL_READONLY : VFL_NONE);
 	HashEntry_Set(he, v);
 	DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, value);
+	return v;
 }
 
 /*
@@ -980,7 +981,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 			/* XXX: name is expanded for the second time */
 			Var_DeleteExpand(SCOPE_GLOBAL, name);
 		}
-		VarAdd(name, val, scope, flags);
+		v = VarAdd(name, val, scope, flags);
 	} else {
 		if ((v->flags & VFL_READONLY) && !(flags & VAR_SET_READONLY)) {
 			DEBUG3(VAR, "%s:%s = %s ignored (read-only)\n",
@@ -994,15 +995,13 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		if (v->flags & VFL_EXPORTED)
 			ExportVar(name, VEM_PLAIN);
 	}
+
 	/*
 	 * Any variables given on the command line are automatically exported
-	 * to the environment (as per POSIX standard)
-	 * Other than internals.
+	 * to the environment (as per POSIX standard), except for internals.
 	 */
 	if (scope == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
 	    name[0] != '.') {
-		if (v == NULL)
-			v = VarFind(name, scope, FALSE); /* we just added it */
 		v->flags |= VFL_FROM_CMD;
 
 		/*
@@ -1016,6 +1015,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 
 		Global_Append(MAKEOVERRIDES, name);
 	}
+
 	if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
 		save_dollars = ParseBoolean(val, save_dollars);
 
