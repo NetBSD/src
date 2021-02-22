@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.38 2021/02/19 22:27:49 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.39 2021/02/22 15:09:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.38 2021/02/19 22:27:49 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.39 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -269,7 +269,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 				 * XXX Following massage may be confusing
 				 * because it appears also if the return value
 				 * was declared inconsistently. But this
-				 * behaviour matches pcc based lint, so it is
+				 * behavior matches pcc based lint, so it is
 				 * accepted for now.
 				 */
 				pos1 = xstrdup(mkpos(&def->s_pos));

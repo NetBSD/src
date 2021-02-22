@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.65 2021/02/19 22:35:42 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.66 2021/02/22 15:09:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -223,7 +223,7 @@ typedef	struct sym {
 				   prototype declaration, no-prototype-def.,
 				   tentative definition or declaration,
 				   in this order */
-	pos_t	s_set_pos;	/* position of first initialisation */
+	pos_t	s_set_pos;	/* position of first initialization */
 	pos_t	s_use_pos;	/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
 	void   *s_keyword;

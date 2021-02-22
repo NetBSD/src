@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.72 2021/02/21 09:17:55 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.73 2021/02/22 15:09:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.72 2021/02/21 09:17:55 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.73 2021/02/22 15:09:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -827,7 +827,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 {
 
 	/*
-	 * If there is no initialisation expression it is possible that
+	 * If there is no initialization expression it is possible that
 	 * it is intended not to enter the loop at top.
 	 */
 	if (tn1 != NULL && !reached) {
@@ -840,7 +840,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	cstmt->c_loop = true;
 
 	/*
-	 * Store the tree memory for the reinitialisation expression.
+	 * Store the tree memory for the reinitialization expression.
 	 * Also remember this expression itself. We must check it at
 	 * the end of the loop to get "used but not set" warnings correct.
 	 */
@@ -860,7 +860,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	cstmt->c_infinite =
 	    tn2 == NULL || (tn2->tn_op == CON && is_nonzero(tn2));
 
-	/* Checking the reinitialisation expression is done in for2() */
+	/* Checking the reinitialization expression is done in for2() */
 
 	reached = true;
 }
@@ -881,7 +881,7 @@ for2(void)
 	cpos = curr_pos;
 	cspos = csrc_pos;
 
-	/* Restore the tree memory for the reinitialisation expression */
+	/* Restore the tree memory for the reinitialization expression */
 	trestor(cstmt->c_fexprm);
 	tn3 = cstmt->c_f3expr;
 	curr_pos = cstmt->c_fpos;
