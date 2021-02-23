@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2021/02/23 15:00:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2021/02/23 17:13:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ options(int type, char *s)
 {
 	char *p;
 	int o = (type == 'c') ? copts : eopts;
-	const char *legal = (type == 'c') ? "bisnmpP" : "^$#tl";
+	const char *legal = (type == 'c') ? "bisnmpg" : "^$#tl";
 
 	for (p = s; *p != '\0'; p++)
 		if (strchr(legal, *p) != NULL)
@@ -376,8 +376,8 @@ options(int type, char *s)
 			case 'p':
 				o |= REG_PEND;
 				break;
-			case 'P':
-				o |= REG_POSIX;
+			case 'g':
+				o |= REG_GNU;
 				break;
 			case '^':
 				o |= REG_NOTBOL;
