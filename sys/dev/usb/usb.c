@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.191 2021/02/23 07:13:53 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.192 2021/02/23 08:51:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.191 2021/02/23 07:13:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.192 2021/02/23 08:51:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -369,8 +369,11 @@ db_usb_xferlist(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	db_printf("usb pipe: %p\n", pipe);
+	unsigned xfercount = 0;
 	SIMPLEQ_FOREACH(xfer, &pipe->up_queue, ux_next) {
-		db_printf("     xfer = %p", xfer);
+		db_printf("  xfer = %p%s", xfer,
+		    xfercount == 0 || xfercount % 2 == 0 ? "" : "\n");
+		xfercount++;
 	}
 }
 
