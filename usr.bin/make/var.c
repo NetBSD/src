@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.841 2021/02/22 23:46:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.842 2021/02/23 00:04:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.841 2021/02/22 23:46:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.842 2021/02/23 00:04:48 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2234,7 +2234,7 @@ ParseModifierPartSubst(
 
 	if (*p != delim) {
 		*pp = p;
-		Error("Unfinished modifier for %s ('%c' missing)",
+		Error("Unfinished modifier for \"%s\" ('%c' missing)",
 		    st->expr->var->name.str, delim);
 		*out_part = NULL;
 		return VPR_ERR;

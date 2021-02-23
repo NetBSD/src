@@ -18,7 +18,7 @@ mod-assign-empty: VAR=overwritten
 make: Unknown modifier ':'
 
 sysv:y
-make: Unfinished modifier for ASSIGN ('}' missing)
+make: Unfinished modifier for "ASSIGN" ('}' missing)
 
 ok=word
 make: " echo word; false " returned non-zero status
