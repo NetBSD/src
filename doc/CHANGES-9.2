@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.47 2021/02/19 17:48:17 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.48 2021/02/23 18:55:29 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1675,4 +1675,21 @@ sys/arch/x86/x86/intr.c				1.154 (patch)
 
 	x86: fix pci_intr_disestablish clean up routine.
 	[knakahara, ticket #1209]
+
+sys/arch/xen/x86/xen_shm_machdep.c		1.17 (patch)
+
+	xen: fix detection of partial failure of GNTTABOP_map_grant_ref.
+	A malicious DomU could trigger a Dom0 kernel panic.
+	Part of fixes for XSA-362.
+	[jdolecek, ticket #1210]
+
+sys/arch/xen/xen/xennetback_xenbus.c		1.92 (patch)
+
+	Remove support for legacy rx-flip mode for xennet(4)/xvif(4).
+	[jdolecek, ticket #1211]
+
+bin/ksh/siglist.sh				1.13
+
+	PR/56007: ksh unable to execute ERR traps.
+	[christos, ticket #1212]
 
