@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.854 2021/02/23 16:14:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.855 2021/02/23 16:29:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.854 2021/02/23 16:14:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.855 2021/02/23 16:29:52 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -4227,7 +4227,6 @@ FreeEnvVar(Var *v, FStr *inout_val)
  *			XXX: It is not guaranteed that an error message has
  *			been printed.
  */
-/* coverity[+alloc : arg-*4] */
 VarParseResult
 Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 {
@@ -4324,16 +4323,14 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 		Expr_SetValueOwn(&expr, expanded);
 	}
 
-	if (haveModifier || extramodifiers != NULL) {
-		if (extramodifiers != NULL) {
-			const char *em = extramodifiers;
-			ApplyModifiers(&expr, &em, '\0', '\0');
-		}
+	if (extramodifiers != NULL) {
+		const char *em = extramodifiers;
+		ApplyModifiers(&expr, &em, '\0', '\0');
+	}
 
-		if (haveModifier) {
-			p++;	/* Skip initial colon. */
-			ApplyModifiers(&expr, &p, startc, endc);
-		}
+	if (haveModifier) {
+		p++;	/* Skip initial colon. */
+		ApplyModifiers(&expr, &p, startc, endc);
 	}
 
 	if (*p != '\0')		/* Skip past endc if possible. */
