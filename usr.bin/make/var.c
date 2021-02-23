@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.850 2021/02/23 15:07:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.851 2021/02/23 15:19:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.850 2021/02/23 15:07:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.851 2021/02/23 15:19:41 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3720,7 +3720,6 @@ ApplySingleModifier(const char **pp, char endc, ApplyModifiersState *st)
 #endif
 
 	if (res == AMR_UNKNOWN) {
-		Parse_Error(PARSE_FATAL, "Unknown modifier '%c'", *mod);
 		/*
 		 * Guess the end of the current modifier.
 		 * XXX: Skipping the rest of the modifier hides
@@ -3729,6 +3728,8 @@ ApplySingleModifier(const char **pp, char endc, ApplyModifiersState *st)
 		 */
 		for (p++; *p != ':' && *p != st->endc && *p != '\0'; p++)
 			continue;
+		Parse_Error(PARSE_FATAL, "Unknown modifier \"%.*s\"",
+		    (int)(p - mod), mod);
 		Expr_SetValueRefer(st->expr, var_Error);
 	}
 	if (res == AMR_CLEANUP || res == AMR_BAD) {
