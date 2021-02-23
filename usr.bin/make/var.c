@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.848 2021/02/23 14:27:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.849 2021/02/23 15:03:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.848 2021/02/23 14:27:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.849 2021/02/23 15:03:56 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3639,7 +3639,7 @@ typedef enum ApplyModifiersIndirectResult {
 	/* The indirect modifiers have been applied successfully. */
 	AMIR_CONTINUE,
 	/* Fall back to the SysV modifier. */
-	AMIR_APPLY_MODS,
+	AMIR_SYSV,
 	/* Error out. */
 	AMIR_OUT
 } ApplyModifiersIndirectResult;
@@ -3669,7 +3669,7 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp)
 
 	if (mods.str[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
 		FStr_Done(&mods);
-		return AMIR_APPLY_MODS;
+		return AMIR_SYSV;
 	}
 
 	DEBUG3(VAR, "Indirect modifier \"%s\" from \"%.*s\"\n",
@@ -3796,12 +3796,17 @@ ApplyModifiers(
 		ApplyModifierResult res;
 
 		if (*p == '$') {
-			ApplyModifiersIndirectResult amir;
-			amir = ApplyModifiersIndirect(&st, &p);
+			ApplyModifiersIndirectResult amir =
+			    ApplyModifiersIndirect(&st, &p);
 			if (amir == AMIR_CONTINUE)
 				continue;
 			if (amir == AMIR_OUT)
 				break;
+			/*
+			 * It's neither '${VAR}:' nor '${VAR}}'.  Try to parse
+			 * it as a SysV modifier, as that is the only modifier
+			 * that can start with '$'.
+			 */
 		}
 
 		mod = p;
