@@ -1,18 +1,62 @@
-# $NetBSD: var-class-cmdline.mk,v 1.4 2021/02/23 14:17:21 rillig Exp $
+# $NetBSD: var-class-cmdline.mk,v 1.5 2021/02/23 21:59:31 rillig Exp $
 #
 # Tests for variables specified on the command line.
 #
 # Variables that are specified on the command line override those from the
 # global scope.
 #
-# For performance reasons, variable lookup often starts in the global scope
-# since that is where most practically used variables are stored.  But even
-# in these cases, variables from the command line scope must override the
-# global variables.  Therefore, whenever a global variable is tried to be
-# set, it is ignored when there is already a variable of the same name in
-# the cmdline scope.  In the same vein, when a cmdline variable is set and
-# there is already a variable of the same name in the global scope, that
-# global variable is deleted first.
+# For performance reasons, the actual implementation is more complex than the
+# above single-sentence rule, in order to avoid unnecessary lookups in scopes,
+# which before var.c 1.586 from 2020-10-25 calculated the hash value of the
+# variable name once for each lookup.  Instead, when looking up the value of
+# a variable, the search often starts in the global scope since that is where
+# most of the variables are stored.  This conflicts with the statement that
+# variables from the cmdline scope override global variables, since after the
+# common case of finding a variable in the global scope, another lookup would
+# be needed in the cmdline scope to ensure that there is no overriding
+# variable there.
+#
+# Instead of this costly lookup scheme, make implements it in a different
+# way:
+#
+#	Whenever a global variable is created, this creation is ignored if
+#	there is a cmdline variable of the same name.
+#
+#	Whenever a cmdline variable is created, any global variable of the
+#	same name is deleted.
+#
+#	Whenever a global variable is deleted, nothing special happens.
+#
+#	Deleting a cmdline variable is not possible.
+#
+# These 4 rules provide the guarantee that whenever a global variable exists,
+# there cannot be a cmdline variable of the same name.  Therefore, after
+# finding a variable in the global scope, no additional lookup is needed in
+# the cmdline scope.
+#
+# The above ruleset provides the same guarantees as the simple rule "cmdline
+# overrides global".  Due to an implementation mistake, the actual behavior
+# was not entirely equivalent to the simple rule though.  The mistake was
+# that when a cmdline variable with '$$' in its name was added, a global
+# variable was deleted, but not with the exact same name as the cmdline
+# variable.  Instead, the name of the global variable was expanded one more
+# time than the name of the cmdline variable.  For variable names that didn't
+# have a '$$' in their name, it was implemented correctly all the time.
+#
+# The bug was added in var.c 1.183 on 2013-07-16, when Var_Set called
+# Var_Delete to delete the global variable.  Just two months earlier, in var.c
+# 1.174 from 2013-05-18, Var_Delete had started to expand the variable name.
+# Together, these two changes made the variable name be expanded twice in a
+# row.  This bug was fixed in var.c 1.835 from 2021-02-22.
+#
+# Another bug was the wrong assumption that "deleting a cmdline variable is
+# not possible".  Deleting such a variable has been possible since var.c 1.204
+# from 2016-02-19, when the variable modifier ':@' started to delete the
+# temporary loop variable after finishing the loop.  It was probably not
+# intended back then that a side effect of this seemingly simple change was
+# that both global and cmdline variables could now be undefined at will as a
+# side effect of evaluating a variable expression.  As of 2021-02-23, this is
+# still possible.
 #
 # Most cmdline variables are set at the very beginning, when parsing the
 # command line arguments.  Using the special target '.MAKEFLAGS', it is
