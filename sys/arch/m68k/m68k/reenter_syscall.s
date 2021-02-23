@@ -1,4 +1,4 @@
-/*	$NetBSD: reenter_syscall.s,v 1.6 2021/02/21 07:23:41 tsutsui Exp $	*/
+/*	$NetBSD: reenter_syscall.s,v 1.7 2021/02/23 16:54:17 tsutsui Exp $	*/
 
 /*
  * Written by ITOH Yasufumi.
@@ -51,6 +51,19 @@ ENTRY_NOPROFILE(reenter_syscall)
 #endif
 	moveal	FR_SP(%sp),%a0		| grab and restore
 	movel	%a0,%usp		|   user SP
+	movw	FR_ADJ(%sp),%d0		| need to adjust stack?
+	jne	.Ladjstk		| yes, go to it
 	moveml	(%sp)+,#0x7FFF		| restore user registers
 	addql	#8,%sp			| pop SP and stack adjust
+	jra	_ASM_LABEL(rei)		| rte
+.Ladjstk:
+	lea	FR_HW(%sp),%a1		| pointer to HW frame
+	addql	#8,%a1			| source pointer
+	movl	%a1,%a0			| source
+	addw	%d0,%a0			|  + hole size = dest pointer
+	movl	-(%a1),-(%a0)		| copy
+	movl	-(%a1),-(%a0)		|  8 bytes
+	movl	%a0,FR_SP(%sp)		| new SSP
+	moveml	(%sp)+,#0x7FFF		| restore user register
+	movl	(%sp),%sp		| and do real RTE
 	jra	_ASM_LABEL(rei)		| rte
