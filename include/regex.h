@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.15 2016/01/14 21:45:18 christos Exp $	*/
+/*	$NetBSD: regex.h,v 1.16 2021/02/23 17:14:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,6 +101,7 @@ typedef struct {
 #define	REG_NOSPEC	0020
 #define	REG_PEND	0040
 #define	REG_DUMP	0200
+#define	REG_GNU		0400
 
 /* regerror() flags */
 #define	REG_NOMATCH	 1
@@ -119,7 +120,7 @@ typedef struct {
 #define	REG_EMPTY	14
 #define	REG_ASSERT	15
 #define	REG_INVARG	16
-#define	REG_ENOSYS	17
+#define	REG_ILLSEQ      17
 #define	REG_ATOI	255	/* convert name to number (!) */
 #define	REG_ITOA	0400	/* convert number to name (!) */
 
