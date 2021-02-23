@@ -20,15 +20,15 @@ VAR:S,V,v,=Thevariable
 
 unfinished-indirect:
 want: Unfinished modifier for VAR (',' missing)
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 VAR:S,V,v=
 
 unfinished-loop:
 want: Unfinished modifier for UNDEF ('@' missing)
-make: Unfinished modifier for UNDEF ('@' missing)
+make: Unfinished modifier for "UNDEF" ('@' missing)
 
 want: Unfinished modifier for UNDEF ('@' missing)
-make: Unfinished modifier for UNDEF ('@' missing)
+make: Unfinished modifier for "UNDEF" ('@' missing)
 
 1 2 3
 
@@ -39,10 +39,10 @@ make: Unclosed variable specification (expecting '}') for "UNDEF" (value "1}... 
 
 words:
 want: Unfinished modifier for UNDEF (']' missing)
-make: Unfinished modifier for UNDEF (']' missing)
+make: Unfinished modifier for "UNDEF" (']' missing)
 
 want: Unfinished modifier for UNDEF (']' missing)
-make: Unfinished modifier for UNDEF (']' missing)
+make: Unfinished modifier for "UNDEF" (']' missing)
 
 13=
 make: Bad modifier `:[123451234512345123451234512345]' for UNDEF
@@ -50,22 +50,22 @@ make: Bad modifier `:[123451234512345123451234512345]' for UNDEF
 
 exclam:
 want: Unfinished modifier for VARNAME ('!' missing)
-make: Unfinished modifier for VARNAME ('!' missing)
+make: Unfinished modifier for "VARNAME" ('!' missing)
 
 want: Unfinished modifier for ! ('!' missing)
-make: Unfinished modifier for ! ('!' missing)
+make: Unfinished modifier for "!" ('!' missing)
 
 
 mod-subst-delimiter:
 make: Missing delimiter for :S modifier
 1:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 2:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 3:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 4:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 5:
 make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier S
 6: TheVariable
@@ -74,13 +74,13 @@ make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVaria
 mod-regex-delimiter:
 make: Missing delimiter for :C modifier
 1:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 2:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 3:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 4:
-make: Unfinished modifier for VAR (',' missing)
+make: Unfinished modifier for "VAR" (',' missing)
 5:
 make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier C
 6: TheVariable
@@ -114,13 +114,13 @@ make: Bad modifier `:t' for FIB
 M*}
 
 mod-ifelse-parse:
-make: Unfinished modifier for FIB (':' missing)
+make: Unfinished modifier for "FIB" (':' missing)
 
-make: Unfinished modifier for FIB (':' missing)
+make: Unfinished modifier for "FIB" (':' missing)
 
-make: Unfinished modifier for FIB ('}' missing)
+make: Unfinished modifier for "FIB" ('}' missing)
 
-make: Unfinished modifier for FIB ('}' missing)
+make: Unfinished modifier for "FIB" ('}' missing)
 
 then
 
