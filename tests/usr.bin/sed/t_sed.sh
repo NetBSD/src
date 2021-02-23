@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.7 2019/10/05 20:24:16 christos Exp $
+# $NetBSD: t_sed.sh,v 1.8 2021/02/23 21:09:14 christos Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,16 +42,13 @@ c2048_body() {
 
 atf_test_case emptybackref
 emptybackref_head() {
-	atf_set "descr" "Test that sed(1) handles " \
-			"empty back references (PR bin/28126)"
+	atf_set "descr" "Test that sed(1) handles empty back references"
 }
 
 emptybackref_body() {
 
 	atf_check -o inline:"foo1bar1\n" \
 		-x "echo foo1bar1 | sed -ne '/foo\(.*\)bar\1/p'"
-
-	atf_expect_fail "PR bin/28126"
 
 	atf_check -o inline:"foobar\n" \
 		-x "echo foobar | sed -ne '/foo\(.*\)bar\1/p'"
