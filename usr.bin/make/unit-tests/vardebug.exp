@@ -71,7 +71,7 @@ Var_Parse: ${:Uvariable:unknown} with VARE_UNDEFERR|VARE_WANTRES
 Applying ${:U...} to "" (VARE_UNDEFERR|VARE_WANTRES, none, undefined)
 Result of ${:Uvariable} is "variable" (VARE_UNDEFERR|VARE_WANTRES, none, defined)
 Applying ${:u...} to "variable" (VARE_UNDEFERR|VARE_WANTRES, none, defined)
-make: "vardebug.mk" line 44: Unknown modifier 'u'
+make: "vardebug.mk" line 44: Unknown modifier "unknown"
 Result of ${:unknown} is error (VARE_UNDEFERR|VARE_WANTRES, none, defined)
 make: "vardebug.mk" line 44: Malformed conditional (${:Uvariable:unknown})
 Var_Parse: ${UNDEFINED} with VARE_UNDEFERR|VARE_WANTRES

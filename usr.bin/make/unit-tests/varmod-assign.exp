@@ -15,7 +15,7 @@ mod-assign-empty: value}
 make: Bad modifier `:' for 
 mod-assign-empty: overwritten}
 mod-assign-empty: VAR=overwritten
-make: Unknown modifier ':'
+make: Unknown modifier ":x"
 
 sysv:y
 make: Unfinished modifier for "ASSIGN" ('}' missing)

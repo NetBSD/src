@@ -1,5 +1,5 @@
-make: "varmod-indirect.mk" line 19: Unknown modifier '$'
-make: "varmod-indirect.mk" line 52: Unknown modifier '$'
+make: "varmod-indirect.mk" line 19: Unknown modifier "${"
+make: "varmod-indirect.mk" line 52: Unknown modifier "${"
 make: "varmod-indirect.mk" line 55: warning: FIXME: this expression should have resulted in a parse error rather than returning the unparsed portion of the expression.
 make: "varmod-indirect.mk" line 140: before
 make: "varmod-indirect.mk" line 140: after
@@ -7,7 +7,7 @@ make: "varmod-indirect.mk" line 146: before
 make: "varmod-indirect.mk" line 146: after
 make: "varmod-indirect.mk" line 152: before
 make: "varmod-indirect.mk" line 152: after
-make: "varmod-indirect.mk" line 156: Unknown modifier 'Z'
+make: "varmod-indirect.mk" line 156: Unknown modifier "Z"
 make: "varmod-indirect.mk" line 157: before
 make: "varmod-indirect.mk" line 157: after
 ParseReadLine (166): '_:=	before ${UNDEF} after'
@@ -46,7 +46,7 @@ Applying ${:U...} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, un
 Result of ${:UZ} is "Z" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, defined)
 Indirect modifier "Z" from "${:UZ}"
 Applying ${UNDEF:Z} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-make: "varmod-indirect.mk" line 184: Unknown modifier 'Z'
+make: "varmod-indirect.mk" line 184: Unknown modifier "Z"
 Result of ${UNDEF:Z} is error (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
 Var_Parse: ${:UZ}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
 Applying ${:U...} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)

@@ -1,11 +1,11 @@
 mod-unknown-direct:
 want: Unknown modifier 'Z'
-make: Unknown modifier 'Z'
+make: Unknown modifier "Z"
 VAR:Z=before--after
 
 mod-unknown-indirect:
 want: Unknown modifier 'Z'
-make: Unknown modifier 'Z'
+make: Unknown modifier "Z"
 VAR:Z=before-inner}-after
 
 unclosed-direct:
@@ -126,17 +126,17 @@ then
 
 mod-remember-parse:
 1 1 2 3 5 8 13 21 34
-make: Unknown modifier '_'
+make: Unknown modifier "__"
 
 
 mod-sysv-parse:
-make: Unknown modifier '3'
+make: Unknown modifier "3"
 make: Unclosed variable specification (expecting '}') for "FIB" (value "") modifier 3
 
-make: Unknown modifier '3'
+make: Unknown modifier "3="
 make: Unclosed variable specification (expecting '}') for "FIB" (value "") modifier 3
 
-make: Unknown modifier '3'
+make: Unknown modifier "3=x3"
 make: Unclosed variable specification (expecting '}') for "FIB" (value "") modifier 3
 
 1 1 2 x3 5 8 1x3 21 34
