@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.844 2021/02/23 00:15:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.845 2021/02/23 00:25:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.844 2021/02/23 00:15:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.845 2021/02/23 00:25:06 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2696,26 +2696,28 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 	return AMR_OK;
 }
 
-/* :Mpattern or :Npattern */
-static ApplyModifierResult
-ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
+/* Parse a ':M' or ':N' modifier. */
+static void
+ParseModifier_Match(const char **pp, const ApplyModifiersState *st,
+		    char **out_pattern)
 {
-	Expr *expr = st->expr;
 	const char *mod = *pp;
+	Expr *expr = st->expr;
 	Boolean copy = FALSE;	/* pattern should be, or has been, copied */
 	Boolean needSubst = FALSE;
 	const char *endpat;
 	char *pattern;
-	ModifyWordProc modifyWord;
 
 	/*
 	 * In the loop below, ignore ':' unless we are at (or back to) the
 	 * original brace level.
 	 * XXX: This will likely not work right if $() and ${} are intermixed.
 	 */
-	/* XXX: This code is similar to the one in Var_Parse.
+	/*
+	 * XXX: This code is similar to the one in Var_Parse.
 	 * See if the code can be merged.
-	 * See also ApplyModifier_Defined. */
+	 * See also ApplyModifier_Defined.
+	 */
 	int nest = 0;
 	const char *p;
 	for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 0); p++) {
@@ -2768,6 +2770,19 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 
 	DEBUG3(VAR, "Pattern[%s] for [%s] is [%s]\n",
 	    expr->var->name.str, expr->value.str, pattern);
+
+	*out_pattern = pattern;
+}
+
+/* :Mpattern or :Npattern */
+static ApplyModifierResult
+ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
+{
+	const char *mod = *pp;
+	char *pattern;
+	ModifyWordProc modifyWord;
+
+	ParseModifier_Match(pp, st, &pattern);
 
 	modifyWord = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
 	ModifyWords(st, modifyWord, pattern, st->oneBigWord);
