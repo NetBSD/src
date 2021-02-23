@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.45 2021/02/21 15:45:30 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.46 2021/02/23 10:03:04 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.45 2021/02/21 15:45:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.46 2021/02/23 10:03:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -331,6 +331,9 @@ armgic_irq_handler(void *tf)
 	if (ci->ci_hwpl != priority) {
 		ci->ci_hwpl = priority;
 		gicc_write(sc, GICC_PMR, priority);
+		if (old_ipl == IPL_HIGH) {
+			return;
+		}
 	}
 
 	for (;;) {

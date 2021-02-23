@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.42 2021/02/21 15:00:05 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.43 2021/02/23 10:03:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.42 2021/02/21 15:00:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.43 2021/02/23 10:03:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -738,6 +738,9 @@ gicv3_irq_handler(void *frame)
 	if (ci->ci_hwpl != pmr) {
 		ci->ci_hwpl = pmr;
 		icc_pmr_write(pmr);
+		if (oldipl == IPL_HIGH) {
+			return;
+		}
 	}
 
 	for (;;) {
