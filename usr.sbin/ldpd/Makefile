@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2021/02/03 06:46:27 roy Exp $
+# $NetBSD: Makefile,v 1.7 2021/02/23 15:05:08 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,7 @@ LDADD+=	-lcrypt
 CPPFLAGS+=-DINET6
 .endif
 
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
