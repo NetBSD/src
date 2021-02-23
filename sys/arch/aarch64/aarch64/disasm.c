@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.14 2021/02/23 20:26:50 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.15 2021/02/23 20:34:54 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.14 2021/02/23 20:26:50 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.15 2021/02/23 20:34:54 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1324,8 +1324,8 @@ static struct op_sys_table op_sys_table[] = {
 	{ SYSREG_ENC(1, 0, 7,  8, 1), OPE_XT,	"at\ts1e1w"		},
 	{ SYSREG_ENC(1, 0, 7,  8, 2), OPE_XT,	"at\ts1e0r"		},
 	{ SYSREG_ENC(1, 0, 7,  8, 3), OPE_XT,	"at\ts1e0w"		},
-	{ SYSREG_ENC(1, 0, 7,  9, 0), OPE_XT,	"at\ts1e1rp"	},
-	{ SYSREG_ENC(1, 0, 7,  9, 1), OPE_XT,	"at\ts1e1wp"	},
+	{ SYSREG_ENC(1, 0, 7,  9, 0), OPE_XT,	"at\ts1e1rp"		},
+	{ SYSREG_ENC(1, 0, 7,  9, 1), OPE_XT,	"at\ts1e1wp"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 0), OPE_XT,	"at\ts1e2r"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 1), OPE_XT,	"at\ts1e2w"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 4), OPE_XT,	"at\ts12e1r"		},
@@ -1335,9 +1335,9 @@ static struct op_sys_table op_sys_table[] = {
 	{ SYSREG_ENC(1, 6, 7,  8, 0), OPE_XT,	"at\ts1e3r"		},
 	{ SYSREG_ENC(1, 6, 7,  8, 1), OPE_XT,	"at\ts1e3w"		},
 
-	{ SYSREG_ENC(1, 3, 7,  3, 4), OPE_XT,	"cfp\trctx"			},
-	{ SYSREG_ENC(1, 3, 7,  3, 5), OPE_XT,	"dvp\trctx"			},
-	{ SYSREG_ENC(1, 3, 7,  3, 7), OPE_XT,	"cpp\trctx"			},
+	{ SYSREG_ENC(1, 3, 7,  3, 4), OPE_XT,	"cfp\trctx"		},
+	{ SYSREG_ENC(1, 3, 7,  3, 5), OPE_XT,	"dvp\trctx"		},
+	{ SYSREG_ENC(1, 3, 7,  3, 7), OPE_XT,	"cpp\trctx"		},
 
 	{ SYSREG_ENC(1, 0, 8,  3, 0), OPE_NONE,	"tlbi\tvmalle1is"	},
 	{ SYSREG_ENC(1, 0, 8,  3, 1), OPE_XT,	"tlbi\tvae1is"		},
