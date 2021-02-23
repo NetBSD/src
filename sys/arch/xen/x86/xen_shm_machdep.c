@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.13 2019/01/27 02:08:39 pgoyette Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.13.4.1 2021/02/23 11:02:12 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.13 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.13.4.1 2021/02/23 11:02:12 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,6 +123,7 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t *vap,
 	vmem_addr_t new_va_pg;
 	vaddr_t new_va;
 	int ret, i, s;
+	int orig_nentries = nentries;
 
 #ifdef DIAGNOSTIC
 	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
@@ -172,14 +173,69 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t *vap,
 	}
 
 	ret = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, op, nentries);
-	if (__predict_false(ret)) {
-		panic("xen_shm_map: HYPERVISOR_grant_table_op failed");
+	if (__predict_false(ret < 0)) {
+#ifdef DIAGNOSTIC
+		printf("%s: HYPERVISOR_grant_table_op failed %d\n", __func__,
+		    ret);
+#endif
+		goto bad;
+	}
+
+	/*
+	 * If ret is positive, it means there was an error in processing,
+	 * and only first ret entries were actually handled. If it's zero,
+	 * it only means all entries were processed, but there could still
+	 * be failure.
+	 */
+	if (__predict_false(ret > 0 && ret < nentries)) {
+		nentries = ret;
 	}
 
 	for (i = 0; i < nentries; i++) {
-		if (__predict_false(op[i].status))
-			return op[i].status;
+		if (__predict_false(op[i].status)) {
+#ifdef DIAGNOSTIC
+			printf("%s: op[%d] bad status %d gref %u\n", __func__,
+			    i, op[i].status, grefp[i]);
+#endif
+			ret = 1;
+			continue;
+		}
 		handlep[i] = op[i].handle;
+	}
+
+	if (__predict_false(ret > 0)) {
+		int uncnt = 0;
+		gnttab_unmap_grant_ref_t unop[XENSHM_MAX_PAGES_PER_REQUEST];
+
+		/*
+		 * When returning error, make sure the successfully mapped
+		 * entries are unmapped before returning the error.
+		 * xen_shm_unmap() can't be used, it assumes
+		 * linear consecutive space.
+		 */
+		for (i = uncnt = 0; i < nentries; i++) {
+			if (op[i].status == 0) {
+				unop[uncnt].host_addr = new_va + i * PAGE_SIZE;
+				unop[uncnt].dev_bus_addr = 0;
+				unop[uncnt].handle = handlep[i];
+				uncnt++;
+			}
+		}
+		if (uncnt > 0) {
+			ret = HYPERVISOR_grant_table_op(
+			    GNTTABOP_unmap_grant_ref, unop, uncnt);
+			if (ret != 0) {
+				panic("%s: unmap on error recovery failed"
+				    " %d", __func__, ret);
+			}
+		}
+#ifdef DIAGNOSTIC
+		printf("%s: HYPERVISOR_grant_table_op bad entry\n",
+		    __func__);
+#endif
+bad:
+		vmem_free(xen_shm_arena, new_va_pg, orig_nentries);
+		return EINVAL;
 	}
 
 	*vap = new_va;
