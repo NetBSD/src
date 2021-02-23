@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.25 2020/08/08 19:39:28 jnemeth Exp $ */
+/* $NetBSD: mpii.c,v 1.26 2021/02/23 07:15:30 skrll Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.25 2020/08/08 19:39:28 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.26 2021/02/23 07:15:30 skrll Exp $");
 
 #include "bio.h"
 
@@ -479,7 +479,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	/* find the appropriate memory base */
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
 		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, r);
-		if ((memtype & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM)
+		if (PCI_MAPREG_TYPE(memtype) == PCI_MAPREG_TYPE_MEM)
 			break;
 	}
 	if (r >= PCI_MAPREG_END) {
