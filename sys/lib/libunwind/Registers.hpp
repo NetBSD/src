@@ -244,16 +244,14 @@ enum {
   DWARF_AARCH64_X0 = 0,
   DWARF_AARCH64_X30 = 30,
   DWARF_AARCH64_SP = 31,
-  DWARF_AARCH64_ELR_MODE = 33,
   DWARF_AARCH64_V0 = 64,
   DWARF_AARCH64_V31 = 95,
 
   REGNO_AARCH64_X0 = 0,
   REGNO_AARCH64_X30 = 30,
   REGNO_AARCH64_SP = 31,
-  REGNO_AARCH64_ELR_MODE = 32,
-  REGNO_AARCH64_V0 = 33,
-  REGNO_AARCH64_V31 = 64,
+  REGNO_AARCH64_V0 = 32,
+  REGNO_AARCH64_V31 = 63,
 };
 
 class Registers_aarch64 {
@@ -272,8 +270,6 @@ public:
       return REGNO_AARCH64_X0 + (num - DWARF_AARCH64_X0);
     if (num == DWARF_AARCH64_SP)
       return REGNO_AARCH64_SP;
-    if (num == DWARF_AARCH64_ELR_MODE)
-      return REGNO_AARCH64_ELR_MODE;
     if (num >= DWARF_AARCH64_V0 && num <= DWARF_AARCH64_V31)
       return REGNO_AARCH64_V0 + (num - DWARF_AARCH64_V0);
     return LAST_REGISTER + 1;
@@ -307,17 +303,14 @@ public:
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
     const void *addr = reinterpret_cast<const void *>(addr_);
-    memcpy(vecreg + (num - REGNO_AARCH64_V0), addr, sizeof(vecreg[0]));
+    memcpy(vecreg + (num - REGNO_AARCH64_V0), addr, 16);
   }
 
   __dso_hidden void jumpto() const __dead;
 
 private:
-  struct vecreg_t {
-    uint64_t low, high;
-  };
-  uint64_t reg[REGNO_AARCH64_ELR_MODE + 1];
-  vecreg_t vecreg[32];
+  uint64_t reg[REGNO_AARCH64_SP + 1];
+  uint64_t vecreg[64];
 };
 
 enum {
