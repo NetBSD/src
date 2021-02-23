@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.11 2021/02/23 17:30:56 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.12 2021/02/23 17:48:46 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.11 2021/02/23 17:30:56 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.12 2021/02/23 17:48:46 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2126,7 +2126,7 @@ OP3FUNC(op_ldtrb, imm9, Rn, Rt)
 		PRINTF("ldtrb\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 
@@ -2140,7 +2140,7 @@ OP3FUNC(op_ldtrh, imm9, Rn, Rt)
 		PRINTF("ldtrh\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 
@@ -3000,7 +3000,7 @@ OP3FUNC(op_sttrb, imm9, Rn, Rt)
 		PRINTF("sttrb\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 
@@ -3014,7 +3014,7 @@ OP3FUNC(op_sttrh, imm9, Rn, Rt)
 		PRINTF("sttrh\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 
