@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.26 2021/02/23 07:15:30 skrll Exp $ */
+/* $NetBSD: mpii.c,v 1.27 2021/02/23 07:17:58 skrll Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.26 2021/02/23 07:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.27 2021/02/23 07:17:58 skrll Exp $");
 
 #include "bio.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.26 2021/02/23 07:15:30 skrll Exp $");
 
 #if NBIO > 0
 #include <dev/biovar.h>
-#include <dev/sysmon/sysmonvar.h>     
+#include <dev/sysmon/sysmonvar.h>
 #include <sys/envsys.h>
 #endif
 
@@ -445,10 +445,10 @@ mpii_match(device_t parent, cfdata_t match, void *aux)
 	struct pci_attach_args *pa = aux;
 	const struct mpii_pci_product *mpii;
 
-	for (mpii = mpii_devices; mpii->mpii_vendor != 0; mpii++) {     
-		if (PCI_VENDOR(pa->pa_id) == mpii->mpii_vendor &&       
-		    PCI_PRODUCT(pa->pa_id) == mpii->mpii_product)       
-			return (1);   
+	for (mpii = mpii_devices; mpii->mpii_vendor != 0; mpii++) {
+		if (PCI_VENDOR(pa->pa_id) == mpii->mpii_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == mpii->mpii_product)
+			return (1);
 	}
 	return (0);
 }
@@ -618,7 +618,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	memset(chan, 0, sizeof(*chan));
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_sas_bustype;
-	chan->chan_channel = 0;       
+	chan->chan_channel = 0;
 	chan->chan_flags = 0;
 	chan->chan_nluns = 8;
 	chan->chan_ntargets = sc->sc_max_devices;
@@ -719,7 +719,7 @@ mpii_detach(device_t self, int flags)
 }
 
 static int
-mpii_rescan(device_t self, const char *ifattr, const int *locators)     
+mpii_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct mpii_softc *sc = device_private(self);
 
@@ -737,11 +737,11 @@ mpii_childdetached(device_t self, device_t child)
 {
 	struct mpii_softc *sc = device_private(self);
 
-	KASSERT(self == sc->sc_dev);  
+	KASSERT(self == sc->sc_dev);
 	KASSERT(child == sc->sc_child);
 
-	if (child == sc->sc_child)    
-		sc->sc_child = NULL;  
+	if (child == sc->sc_child)
+		sc->sc_child = NULL;
 }
 
 
@@ -1884,7 +1884,7 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		    le16toh(pe->dev_handle),
 		    sc->sc_pd_id_start + tcl->start_phy_num + i,
 		    tcl->start_phy_num + i, le16toh(tcl->enclosure_handle), le16toh(tcl->expander_handle));
-			
+
 		switch (pe->phy_status & MPII_EVENT_SAS_TOPO_PS_RC_MASK) {
 		case MPII_EVENT_SAS_TOPO_PS_RC_ADDED:
 			handle = le16toh(pe->dev_handle);
@@ -1972,7 +1972,7 @@ mpii_event_sas_work(struct work *wq, void *xsc)
 			    le16toh(pe->dev_handle),
 			    sc->sc_pd_id_start + tcl->start_phy_num + i,
 			    tcl->start_phy_num + i, le16toh(tcl->enclosure_handle), le16toh(tcl->expander_handle));
-			
+
 			switch (pe->phy_status & MPII_EVENT_SAS_TOPO_PS_RC_MASK) {
 			case MPII_EVENT_SAS_TOPO_PS_RC_ADDED:
 				/* already handled */
@@ -2955,18 +2955,18 @@ mpii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 	switch (req) {
 	case ADAPTER_REQ_GROW_RESOURCES:
-		/* Not supported. */ 
+		/* Not supported. */
 		return;
 	case ADAPTER_REQ_SET_XFER_MODE:
 	{
 		struct scsipi_xfer_mode *xm = arg;
 		xm->xm_mode = PERIPH_CAP_TQING;
-		xm->xm_period = 0;   
-		xm->xm_offset = 0;   
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
 		scsipi_async_event(&sc->sc_chan, ASYNC_EVENT_XFER_MODE, xm);
 		return;
 	}
-	case ADAPTER_REQ_RUN_XFER:    
+	case ADAPTER_REQ_RUN_XFER:
 		break;
 	}
 
@@ -3132,33 +3132,33 @@ static u_int8_t
 map_scsi_status(u_int8_t mpii_scsi_status)
 {
 	u_int8_t scsi_status;
-	
-	switch (mpii_scsi_status) 
+
+	switch (mpii_scsi_status)
 	{
 	case MPII_SCSIIO_STATUS_GOOD:
 		scsi_status = SCSI_OK;
 		break;
-		
+
 	case MPII_SCSIIO_STATUS_CHECK_COND:
 		scsi_status = SCSI_CHECK;
 		break;
-		
+
 	case MPII_SCSIIO_STATUS_BUSY:
 		scsi_status = SCSI_BUSY;
 		break;
-		
+
 	case MPII_SCSIIO_STATUS_INTERMEDIATE:
 		scsi_status = SCSI_INTERM;
 		break;
-		
+
 	case MPII_SCSIIO_STATUS_INTERMEDIATE_CONDMET:
 		scsi_status = SCSI_INTERM;
 		break;
-		
+
 	case MPII_SCSIIO_STATUS_RESERVATION_CONFLICT:
 		scsi_status = SCSI_RESV_CONFLICT;
 		break;
-		
+
 	case MPII_SCSIIO_STATUS_CMD_TERM:
 	case MPII_SCSIIO_STATUS_TASK_ABORTED:
 		scsi_status = SCSI_TERMINATED;
@@ -3203,11 +3203,11 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 		bus_dmamap_unload(sc->sc_dmat, dmap);
 	}
-	
+
 	KASSERT(xs->error == XS_NOERROR);
 	KASSERT(xs->resid == xs->datalen);
 	KASSERT(xs->status == SCSI_OK);
-	
+
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */
 		xs->resid = 0;
@@ -3896,25 +3896,25 @@ mpii_create_sensors(struct mpii_softc *sc)
 		sc->sc_sensors[i].value_cur = ENVSYS_DRIVE_EMPTY;
 		sc->sc_sensors[i].flags |= ENVSYS_FMONSTCHANGED;
 
-		/* logical drives */  
+		/* logical drives */
 		snprintf(sc->sc_sensors[i].desc,
 		    sizeof(sc->sc_sensors[i].desc), "%s:%d",
-		    DEVNAME(sc), i); 
-												if ((rv = sysmon_envsys_sensor_attach(sc->sc_sme,      
+		    DEVNAME(sc), i);
+		if ((rv = sysmon_envsys_sensor_attach(sc->sc_sme,
 		    &sc->sc_sensors[i])) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach sensor (rv = %d)\n", rv);
-			goto out;    
-												}
+			goto out;
+		}
 	}
 	sc->sc_sme->sme_name =  DEVNAME(sc);
-	sc->sc_sme->sme_cookie = sc;  
+	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = mpii_refresh_sensors;
 
 	rv = sysmon_envsys_register(sc->sc_sme);
 	if (rv != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to register with sysmon (rv = %d)\n", rv); 
+		    "unable to register with sysmon (rv = %d)\n", rv);
 		goto out;
 	}
 	return 0;
@@ -3929,7 +3929,7 @@ out:
 static int
 mpii_destroy_sensors(struct mpii_softc *sc)
 {
-	if (sc->sc_sme == NULL)       
+	if (sc->sc_sme == NULL)
 		return 0;
 	sysmon_envsys_unregister(sc->sc_sme);
 	sc->sc_sme = NULL;
