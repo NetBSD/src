@@ -4,7 +4,8 @@ a[bc]d		&	abd	abd
 a\*c		&	a*c	a*c
 a\\b		&	a\b	a\b
 a\\\*b		&	a\*b	a\*b
-a\bc		&	abc	abc
+# legacy escape
+#a\bc		&	abc	abc
 a\		&C	EESCAPE
 a\\bc		&	a\bc	a\bc
 \{		bC	BADRPT
