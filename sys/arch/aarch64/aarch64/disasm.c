@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.10 2020/09/05 15:59:09 jakllsch Exp $	*/
+/*	$NetBSD: disasm.c,v 1.11 2021/02/23 17:30:56 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.10 2020/09/05 15:59:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.11 2021/02/23 17:30:56 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2751,13 +2751,13 @@ OP4FUNC(op_smsubl, Rm, Ra, Rn, Rd)
 	if (Ra == 31) {
 		PRINTF("smnegl\t%s, %s, %s\n",
 		    ZREGNAME(1, Rd),
-		    ZREGNAME(1, Rn),
-		    ZREGNAME(1, Rm));
+		    ZREGNAME(0, Rn),
+		    ZREGNAME(0, Rm));
 	} else {
 		PRINTF("smsubl\t%s, %s, %s, %s\n",
 		    ZREGNAME(1, Rd),
-		    ZREGNAME(1, Rn),
-		    ZREGNAME(1, Rm),
+		    ZREGNAME(0, Rn),
+		    ZREGNAME(0, Rm),
 		    ZREGNAME(1, Ra));
 	}
 }
