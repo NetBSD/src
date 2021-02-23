@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.852 2021/02/23 15:56:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.853 2021/02/23 16:07:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.852 2021/02/23 15:56:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.853 2021/02/23 16:07:14 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3826,7 +3826,7 @@ ApplyModifiers(
 
 bad_modifier:
 	/* XXX: The modifier end is only guessed. */
-	Error("Bad modifier `:%.*s' for %s",
+	Error("Bad modifier \":%.*s\" for variable \"%s\"",
 	    (int)strcspn(mod, ":)}"), mod, expr->var->name.str);
 
 cleanup:
