@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.345 2021/02/05 05:15:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.346 2021/02/23 15:56:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.345 2021/02/05 05:15:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.346 2021/02/23 15:56:29 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1282,7 +1282,7 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
  * add those nodes to the members list.
  *
  * Unfortunately, we can't use Str_Words because it doesn't understand about
- * variable specifications with spaces in them.
+ * variable expressions with spaces in them.
  */
 static void
 ExpandChildrenRegular(char *cp, GNode *pgn, GNodeList *members)

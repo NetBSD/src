@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.851 2021/02/23 15:19:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.852 2021/02/23 15:56:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.851 2021/02/23 15:19:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.852 2021/02/23 15:56:29 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3689,8 +3689,8 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp)
 	if (*p == ':')
 		p++;
 	else if (*p == '\0' && st->endc != '\0') {
-		Error("Unclosed variable specification after complex "
-		      "modifier (expecting '%c') for %s",
+		Error("Unclosed variable expression after indirect "
+		      "modifier, expecting '%c' for variable \"%s\"",
 		    st->endc, expr->var->name.str);
 		*pp = p;
 		return AMIR_OUT;
@@ -3742,10 +3742,11 @@ ApplySingleModifier(const char **pp, char endc, ApplyModifiersState *st)
 
 	if (*p == '\0' && st->endc != '\0') {
 		Error(
-		    "Unclosed variable specification (expecting '%c') "
-		    "for \"%s\" (value \"%s\") modifier %c",
+		    "Unclosed variable expression, expecting '%c' for "
+		    "modifier \"%.*s\" of variable \"%s\" with value \"%s\"",
 		    st->endc,
-		    st->expr->var->name.str, st->expr->value.str, *mod);
+		    (int)(p - mod), mod,
+		    st->expr->var->name.str, st->expr->value.str);
 	} else if (*p == ':') {
 		p++;
 	} else if (opts.strict && *p != '\0' && *p != endc) {

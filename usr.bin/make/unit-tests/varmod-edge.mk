@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.15 2021/02/23 00:04:48 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.16 2021/02/23 15:56:30 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -51,7 +51,7 @@ TESTS+=		M-nest-mix
 INP.M-nest-mix=	(parentheses)
 MOD.M-nest-mix=	${INP.M-nest-mix:M${:U*)}}
 EXP.M-nest-mix=	(parentheses)}
-# make: Unclosed variable specification (expecting '}') for "" (value "*)") modifier U
+# make: Unclosed variable expression, expecting '}' for modifier "U*)" of variable "" with value "*)"
 
 # In contrast to parentheses and braces, the brackets are not counted
 # when the :M modifier is parsed since Makefile variables only take the
