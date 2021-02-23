@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.853 2021/02/23 16:07:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.854 2021/02/23 16:14:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.853 2021/02/23 16:07:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.854 2021/02/23 16:14:11 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3900,20 +3900,17 @@ ParseVarname(const char **pp, char startc, char endc,
 {
 	Buffer buf;
 	const char *p = *pp;
-	int depth = 1;
+	int depth = 0;		/* Track depth so we can spot parse errors. */
 
 	Buf_Init(&buf);
 
 	while (*p != '\0') {
-		/* Track depth so we can spot parse errors. */
+		if ((*p == endc || *p == ':') && depth == 0)
+			break;
 		if (*p == startc)
 			depth++;
-		if (*p == endc) {
-			if (--depth == 0)
-				break;
-		}
-		if (*p == ':' && depth == 1)
-			break;
+		if (*p == endc)
+			depth--;
 
 		/* A variable inside a variable, expand. */
 		if (*p == '$') {
