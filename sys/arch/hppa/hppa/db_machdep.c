@@ -1,4 +1,4 @@
- /*	$NetBSD: db_machdep.c,v 1.8 2019/04/15 20:45:08 skrll Exp $	*/
+ /*	$NetBSD: db_machdep.c,v 1.9 2021/02/23 07:13:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2019/04/15 20:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.9 2021/02/23 07:13:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -125,7 +125,7 @@ const struct db_command db_machine_command_table[] = {
 	  "[/l] [addr]",
 	  "   addr:\tdisplay this trap frame (current kernel frame otherwise)\n"
 	  "   /l:\tdisplay the trap frame from lwp") },
-	{ DDB_ADD_CMD(NULL,	NULL,		0, NULL, NULL, NULL) }
+	{ DDB_END_CMD },
 };
 
 void

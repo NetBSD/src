@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.33 2021/02/05 21:44:34 joerg Exp $ */
+/* $NetBSD: db_machdep.c,v 1.34 2021/02/23 07:13:51 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.33 2021/02/05 21:44:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.34 2021/02/23 07:13:51 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -163,10 +163,8 @@ const struct db_command db_machine_command_table[] = {
 	},
 #endif
 	{
-		DDB_ADD_CMD(NULL, NULL, 0,
-		    NULL,
-		    NULL, NULL)
-	}
+		DDB_END_CMD
+	},
 };
 
 const struct db_variable db_regs[] = {

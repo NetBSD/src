@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2017/07/21 20:56:10 nakayama Exp $ */
+/*	$NetBSD: db_machdep.c,v 1.2 2021/02/23 07:13:52 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1 2017/07/21 20:56:10 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2 2021/02/23 07:13:52 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -123,6 +123,6 @@ db_sparc_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 
 #ifndef DDB
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 #endif /* DDB */

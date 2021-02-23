@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.8 2014/04/03 17:05:58 martin Exp $ */
+/* $NetBSD: db_interface.c,v 1.9 2021/02/23 07:13:52 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8 2014/04/03 17:05:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9 2021/02/23 07:13:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,7 +118,7 @@ const struct db_command db_machine_command_table[] = {
 	  "[vector]",
 	  "   vector:\tthe vector to show (all vectors otherwise)") },
 
-	{ DDB_ADD_CMD(NULL, NULL, 0, NULL,NULL,NULL) },
+	{ DDB_END_CMD },
 };
 
 static int
