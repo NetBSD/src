@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.9 2021/02/04 21:42:47 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.10 2021/02/23 14:17:21 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -34,13 +34,26 @@ mod-loop-varname:
 	@echo :${:U1 2 3:@\\@x${${:Ux:S,x,\\,}}y@}:
 
 	# The variable name can technically be empty, and in this situation
-	# the variable value cannot be accessed since the empty variable is
-	# protected to always return an empty string.
+	# the variable value cannot be accessed since the empty "variable"
+	# is protected to always return an empty string.
 	@echo empty: :${:U1 2 3:@@x${}y@}:
 
-# The :@ modifier resolves the variables a little more often than expected.
-# In particular, it resolves _all_ variables from the scope, and not only
-# the loop variable (in this case v).
+
+# The :@ modifier resolves the variables from the replacement text once more
+# than expected.  In particular, it resolves _all_ variables from the scope,
+# and not only the loop variable (in this case v).
+SRCS=		source
+CFLAGS.source=	before
+ALL_CFLAGS:=	${SRCS:@src@${CFLAGS.${src}}@}	# note the ':='
+CFLAGS.source+=	after
+.if ${ALL_CFLAGS} != "before"
+.  error
+.endif
+
+
+# In the following example, the modifier ':@' expands the '$$' to '$'.  This
+# means that when the resulting expression is evaluated, these resulting '$'
+# will be interpreted as starting a subexpression.
 #
 # The d means direct reference, the i means indirect reference.
 RESOLVE=	${RES1} $${RES1}
@@ -48,8 +61,10 @@ RES1=		1d${RES2} 1i$${RES2}
 RES2=		2d${RES3} 2i$${RES3}
 RES3=		3
 
+# TODO: convert to '.if'.
 mod-loop-resolve:
 	@echo $@:${RESOLVE:@v@w${v}w@:Q}:
+
 
 # Until 2020-07-20, the variable name of the :@ modifier could end with one
 # or two dollar signs, which were silently ignored.
@@ -145,3 +160,87 @@ SUBST_CONTAINING_LOOP:= ${USE_8_DOLLARS}
 .  error
 .endif
 .MAKEFLAGS: -d0
+
+# After looping over the words of the expression, the loop variable gets
+# undefined.  The modifier ':@' uses an ordinary global variable for this,
+# which is different from the '.for' loop, which replaces ${var} with
+# ${:Uvalue} in the body of the loop.  This choice of implementation detail
+# can be used for a nasty side effect.  The expression ${:U:@VAR@@} evaluates
+# to an empty string, plus it undefines the variable 'VAR'.  This is the only
+# possibility to undefine a global variable during evaluation.
+GLOBAL=		before-global
+RESULT:=	${:U${GLOBAL} ${:U:@GLOBAL@@} ${GLOBAL:Uundefined}}
+.if ${RESULT} != "before-global  undefined"
+.  error
+.endif
+
+# The above side effect of undefining a variable from a certain scope can be
+# further combined with the otherwise undocumented implementation detail that
+# the argument of an '.if' directive is evaluated in cmdline scope.  Putting
+# these together makes it possible to undefine variables from the cmdline
+# scope, something that is not possible in a straight-forward way.
+.MAKEFLAGS: CMDLINE=cmdline
+.if ${:U${CMDLINE}${:U:@CMDLINE@@}} != "cmdline"
+.  error
+.endif
+# Now the cmdline variable got undefined.
+.if ${CMDLINE} != "cmdline"
+.  error
+.endif
+# At this point, it still looks as if the cmdline variable were defined,
+# since the value of CMDLINE is still "cmdline".  That impression is only
+# superficial though, the cmdline variable is actually deleted.  To
+# demonstrate this, it is now possible to override its value using a global
+# variable, something that was not possible before:
+CMDLINE=	global
+.if ${CMDLINE} != "global"
+.  error
+.endif
+# Now undefine that global variable again, to get back to the original value.
+.undef CMDLINE
+.if ${CMDLINE} != "cmdline"
+.  error
+.endif
+# What actually happened is that when CMDLINE was set by the '.MAKEFLAGS'
+# target in the cmdline scope, that same variable was exported to the
+# environment, see Var_SetWithFlags.
+.unexport CMDLINE
+.if ${CMDLINE} != "cmdline"
+.  error
+.endif
+# The above '.unexport' has no effect since UnexportVar requires a global
+# variable of the same name to be defined, otherwise nothing is unexported.
+CMDLINE=	global
+.unexport CMDLINE
+.undef CMDLINE
+.if ${CMDLINE} != "cmdline"
+.  error
+.endif
+# This still didn't work since there must not only be a global variable, the
+# variable must be marked as exported as well, which it wasn't before.
+CMDLINE=	global
+.export CMDLINE
+.unexport CMDLINE
+.undef CMDLINE
+.if ${CMDLINE:Uundefined} != "undefined"
+.  error
+.endif
+# Finally the variable 'CMDLINE' from the cmdline scope is gone, and all its
+# traces from the environment are gone as well.  To do that, a global variable
+# had to be defined and exported, something that is far from obvious.  To
+# recap, here is the essence of the above story:
+.MAKEFLAGS: CMDLINE=cmdline	# have a cmdline + environment variable
+.if ${:U:@CMDLINE@@}}		# undefine cmdline, keep environment
+.endif
+CMDLINE=	global		# needed for deleting the environment
+.export CMDLINE			# needed for deleting the environment
+.unexport CMDLINE		# delete the environment
+.undef CMDLINE			# delete the global helper variable
+.if ${CMDLINE:Uundefined} != "undefined"
+.  error			# 'CMDLINE' is gone now from all scopes
+.endif
+
+
+# TODO: Actually trigger the undefined behavior (use after free) that was
+#  already suspected in Var_Parse, in the comment 'the value of the variable
+#  must not change'.
