@@ -57,7 +57,7 @@ make: Unfinished modifier for "!" ('!' missing)
 
 
 mod-subst-delimiter:
-make: Missing delimiter for :S modifier
+make: Missing delimiter for modifier ':S'
 1:
 make: Unfinished modifier for "VAR" (',' missing)
 2:
