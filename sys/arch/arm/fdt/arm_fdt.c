@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.14 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.15 2021/02/23 11:31:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.14 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.15 2021/02/23 11:31:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.14 2021/01/27 03:10:19 thorpej Exp $")
 static int	arm_fdt_match(device_t, cfdata_t, void *);
 static void	arm_fdt_attach(device_t, device_t, void *);
 
+static void	arm_fdt_irq_default_handler(void *);
+
 #ifdef EFI_RUNTIME
 static void	arm_fdt_efi_init(device_t);
 static int	arm_fdt_efi_rtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
@@ -76,7 +78,7 @@ struct arm_fdt_cpu_hatch_cb {
 static TAILQ_HEAD(, arm_fdt_cpu_hatch_cb) arm_fdt_cpu_hatch_cbs =
     TAILQ_HEAD_INITIALIZER(arm_fdt_cpu_hatch_cbs);
 
-static void (*_arm_fdt_irq_handler)(void *) = NULL;
+static void (*_arm_fdt_irq_handler)(void *) = arm_fdt_irq_default_handler;
 static void (*_arm_fdt_timer_init)(void) = NULL;
 
 int
@@ -169,10 +171,16 @@ arm_fdt_cpu_hatch(struct cpu_info *ci)
 		c->cb(c->priv, ci);
 }
 
+static void
+arm_fdt_irq_default_handler(void *frame)
+{
+	panic("missing interrupt controller driver");
+}
+
 void
 arm_fdt_irq_set_handler(void (*irq_handler)(void *))
 {
-	KASSERT(_arm_fdt_irq_handler == NULL);
+	KASSERT(_arm_fdt_irq_handler == arm_fdt_irq_default_handler);
 	_arm_fdt_irq_handler = irq_handler;
 }
 
