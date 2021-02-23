@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.842 2021/02/23 00:04:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.843 2021/02/23 00:11:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.842 2021/02/23 00:04:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.843 2021/02/23 00:11:07 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2538,13 +2538,13 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 
 	if (mod[6] == '=') {
-		const char *arg = mod + 7;
-		if (!TryParseTime(&arg, &utc)) {
+		const char *p = mod + 7;
+		if (!TryParseTime(&p, &utc)) {
 			Parse_Error(PARSE_FATAL,
 			    "Invalid time value: %s", mod + 7);
 			return AMR_CLEANUP;
 		}
-		*pp = arg;
+		*pp = p;
 	} else {
 		utc = 0;
 		*pp = mod + 6;
@@ -2565,13 +2565,13 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 
 	if (mod[9] == '=') {
-		const char *arg = mod + 10;
-		if (!TryParseTime(&arg, &utc)) {
+		const char *p = mod + 10;
+		if (!TryParseTime(&p, &utc)) {
 			Parse_Error(PARSE_FATAL,
 			    "Invalid time value: %s", mod + 10);
 			return AMR_CLEANUP;
 		}
-		*pp = arg;
+		*pp = p;
 	} else {
 		utc = 0;
 		*pp = mod + 9;
