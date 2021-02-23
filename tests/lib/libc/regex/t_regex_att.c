@@ -1,4 +1,4 @@
-/*	$NetBSD: t_regex_att.c,v 1.3 2017/01/14 20:59:23 christos Exp $	*/
+/*	$NetBSD: t_regex_att.c,v 1.4 2021/02/23 16:00:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_regex_att.c,v 1.3 2017/01/14 20:59:23 christos Exp $");
+__RCSID("$NetBSD: t_regex_att.c,v 1.4 2021/02/23 16:00:37 christos Exp $");
 
 #include <sys/param.h>
 
@@ -284,7 +284,12 @@ geterror(const char *s, int *comp, int *exec)
 		_DO(EMPTY, COMP)
 		_DO(ASSERT, COMP)
 		_DO(INVARG, COMP)
+#ifdef REG_ENOSYS
 		_DO(ENOSYS, COMP)
+#endif
+#ifdef REG_ILLSEQ
+		_DO(ILLSEQ, COMP)
+#endif
 #undef _DO
 	};
 	*comp = 0;
