@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.40 2020/10/30 06:59:43 skrll Exp $	*/
+/*	$NetBSD: db_command.h,v 1.41 2021/02/23 07:13:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@ struct db_command;
  name,funct,type
 #endif
 
+/* End of list for ddb command arrays. */
+#define DDB_END_CMD DDB_ADD_CMD(NULL, NULL, 0, NULL, NULL, NULL)
 
 
 /*

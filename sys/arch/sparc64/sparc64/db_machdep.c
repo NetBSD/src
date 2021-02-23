@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2 2020/03/10 15:54:52 christos Exp $ */
+/*	$NetBSD: db_machdep.c,v 1.3 2021/02/23 07:13:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2 2020/03/10 15:54:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2021/02/23 07:13:53 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -225,6 +225,6 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
 
 #ifndef	DDB
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 #endif	/* DDB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.190 2021/02/22 20:45:28 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.191 2021/02/23 07:13:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.190 2021/02/22 20:45:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.191 2021/02/23 07:13:53 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -381,7 +381,7 @@ static const struct db_command db_usb_command_table[] = {
 	{ DDB_ADD_CMD("usbxferlist",	db_usb_xferlist,	0, 
 	  "display a USB xfer structure given pipe",
 	  NULL, NULL) },
-	{ DDB_ADD_CMD(NULL,	NULL,	0, NULL, NULL, NULL) }
+	{ DDB_END_CMD },
 };
 
 static void

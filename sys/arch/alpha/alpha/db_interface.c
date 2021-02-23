@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.35 2020/09/18 00:02:43 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.36 2021/02/23 07:13:51 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2020/09/18 00:02:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2021/02/23 07:13:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,7 +95,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
 	  "switch to another cpu", "cpu-no", NULL) },
 #endif
-	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) },
+	{ DDB_END_CMD },
 };
 
 static int db_alpha_regop(const struct db_variable *, db_expr_t *, int);

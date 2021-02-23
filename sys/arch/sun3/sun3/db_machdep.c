@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.28 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.29 2021/02/23 07:13:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.28 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.29 2021/02/23 07:13:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -65,7 +65,7 @@ const struct db_command db_machine_command_table[] = {
 	  "Prints the PTE and segmap values", "virtual-address", NULL) },
 	{ DDB_ADD_CMD("reboot",	db_mach_reboot,	0,
 	  "Calls prom_boot()", NULL, NULL) },
-	{ DDB_ADD_CMD(NULL,NULL,0,NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 
 /*

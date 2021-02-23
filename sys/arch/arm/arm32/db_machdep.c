@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.38 2020/12/03 10:23:45 rin Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.39 2021/02/23 07:13:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.38 2020/12/03 10:23:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39 2021/02/23 07:13:51 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -142,7 +142,7 @@ const struct db_command db_machine_command_table[] = {
 #endif
 #endif /* _KERNEL */
 
-	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 
 void

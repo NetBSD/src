@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.95 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.96 2021/02/23 07:13:52 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.95 2021/01/24 07:36:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.96 2021/02/23 07:13:52 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -453,7 +453,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("xcall",	db_xcall_cmd,	0,
 	  "show xcall information on all cpus", NULL, NULL) },
 #endif
-	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 #endif /* DDB */
 

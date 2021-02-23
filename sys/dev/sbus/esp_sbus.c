@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.55 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.56 2021/02/23 07:13:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.55 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.56 2021/02/23 07:13:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,7 +687,7 @@ const struct db_command db_esp_command_table[] = {
 	{ DDB_ADD_CMD("esp",	db_esp,	0, 
 	  "display status of all esp SCSI controllers and their devices",
 	  NULL, NULL) },
-	{ DDB_ADD_CMD(NULL,	NULL,	0, NULL, NULL, NULL) }
+	{ DDB_END_CMD },
 };
 
 static void
