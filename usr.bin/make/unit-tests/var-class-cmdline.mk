@@ -1,4 +1,4 @@
-# $NetBSD: var-class-cmdline.mk,v 1.3 2021/02/22 22:04:28 rillig Exp $
+# $NetBSD: var-class-cmdline.mk,v 1.4 2021/02/23 14:17:21 rillig Exp $
 #
 # Tests for variables specified on the command line.
 #
@@ -23,9 +23,11 @@ VAR=	global
 .info ${VAR}
 
 # The global variable is "overridden" by simply deleting it and then
-# installing the cmdline variable instead.  Since there is no way to
+# installing the cmdline variable instead.  Since there is no obvious way to
 # undefine a cmdline variable, there is no need to remember the old value
 # of the global variable could become visible again.
+#
+# See varmod-loop.mk for a non-obvious way to undefine a cmdline variable.
 .MAKEFLAGS: VAR=makeflags
 .info ${VAR}
 
