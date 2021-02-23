@@ -1,4 +1,4 @@
-.\" $NetBSD: timeradd.3,v 1.8 2010/06/07 18:40:16 jruoho Exp $
+.\" $NetBSD: timeradd.3,v 1.9 2021/02/23 09:28:00 wiz Exp $
 .\"
 .\" Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
 .\" Copyright (c) 1999 Kelly Yancey <kbyanc@posi.net>
@@ -59,7 +59,7 @@
 .Ft int
 .Fn timespecisset "struct timespec *ts"
 .Ft int
-.Fn timespeccmp "struct timespec *a" "struct timespec b" CMP
+.Fn timespeccmp "struct timespec *a" "struct timespec *b" CMP
 .Sh DESCRIPTION
 These macros are provided for manipulating the
 .Fa timeval
