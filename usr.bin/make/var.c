@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.843 2021/02/23 00:11:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.844 2021/02/23 00:15:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.843 2021/02/23 00:11:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.844 2021/02/23 00:15:22 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2666,7 +2666,8 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 		const char *p = mod + 6;
 		if (!TryParseSize(&p, &n)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid number: %s", mod + 6);
+			    "Invalid number \"%s\" for ':range' modifier",
+			    mod + 6);
 			return AMR_CLEANUP;
 		}
 		*pp = p;
