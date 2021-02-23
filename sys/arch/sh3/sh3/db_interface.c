@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.65 2020/08/03 21:53:25 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.66 2021/02/23 07:13:52 mrg Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2020/08/03 21:53:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66 2021/02/23 07:13:52 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -120,7 +120,7 @@ const struct db_command db_machine_command_table[] = {
 		"Dump TLB contents.",
 		NULL, NULL) },
 
-	{ DDB_ADD_CMD(NULL, NULL, 0, NULL, NULL,NULL) }
+	{ DDB_END_CMD },
 };
 
 int db_active;
