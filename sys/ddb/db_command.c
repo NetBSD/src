@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.175 2020/10/30 16:29:49 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.176 2021/02/23 07:13:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.175 2020/10/30 16:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.176 2021/02/23 07:13:53 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -328,7 +328,7 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("watches",	db_listwatch_cmd, 	0,
 	    "Display all watchpoints.", NULL,NULL) },
 #endif
-	{ DDB_ADD_CMD(NULL,		NULL,			0,NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 
 static const struct db_command db_command_table[] = {
@@ -421,7 +421,7 @@ static const struct db_command db_command_table[] = {
 	{ DDB_ADD_CMD("x",		db_examine_cmd,		CS_SET_DOT,
 	    "Display the address locations.",
 	    "[/modifier] address[,count]",NULL) },
-	{ DDB_ADD_CMD(NULL, 	NULL,		   0, NULL, NULL, NULL) }
+	{ DDB_END_CMD },
 };
 
 static const struct db_command	*db_last_command = NULL;
