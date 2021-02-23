@@ -1,12 +1,12 @@
 For: end for 1
 For: loop body:
 .  info ${:U!"#$%&'()*+,-./0-9\:;<=>?@A-Z[\\]_^a-z{|\}~}
-make: Unclosed variable specification (expecting '}') for "" (value "!"") modifier U
+make: Unclosed variable expression, expecting '}' for modifier "U!"" of variable "" with value "!""
 make: "directive-for-escape.mk" line 19: !"
 For: end for 1
 For: loop body:
 .  info ${:U!"\\\\#$%&'()*+,-./0-9\:;<=>?@A-Z[\\]_^a-z{|\}~}
-make: Unclosed variable specification (expecting '}') for "" (value "!"\\") modifier U
+make: Unclosed variable expression, expecting '}' for modifier "U!"\\\\" of variable "" with value "!"\\"
 make: "directive-for-escape.mk" line 29: !"\\
 For: end for 1
 For: loop body:
