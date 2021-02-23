@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.73 2021/02/19 17:50:39 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.74 2021/02/23 18:57:36 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1733,4 +1733,9 @@ sys/arch/x86/x86/intr.c				1.154 (patch)
 
 	x86: fix pci_intr_disestablish clean up routine.
 	[knakahara, ticket #1657]
+
+bin/ksh/siglist.sh				1.13
+
+	PR/56007: ksh unable to execute ERR traps.
+	[christos, ticket #1658]
 
