@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.846 2021/02/23 00:27:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.847 2021/02/23 14:21:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.846 2021/02/23 00:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.847 2021/02/23 14:21:45 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3398,6 +3398,11 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 
 	if (mod[1] == '=') {
+		/*
+		 * XXX: This ad-hoc call to strcspn deviates from the usual
+		 * behavior defined in ParseModifierPart.  This creates an
+		 * unnecessary, undocumented inconsistency in make.
+		 */
 		size_t n = strcspn(mod + 2, ":)}");
 		char *name = bmake_strldup(mod + 2, n);
 		Var_SetExpand(expr->scope, name, expr->value.str);
