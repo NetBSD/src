@@ -1,9 +1,10 @@
 # the dreaded bounded repetitions
-{		&	{	{
-{abc		&	{abc	{abc
+# unclosed and with missing values are now errors
+#{		&	{	{
+#{abc		&	{abc	{abc
 {1		C	BADRPT
 {1}		C	BADRPT
-a{b		&	a{b	a{b
+#a{b		&	a{b	a{b
 a{1}b		-	ab	ab
 a\{1\}b		b	ab	ab
 a{1,}b		-	ab	ab
@@ -16,9 +17,9 @@ a{1a		C	EBRACE
 a\{1a		bC	EBRACE
 a{1a}		C	BADBR
 a\{1a\}		bC	BADBR
-a{,2}		-	a{,2}	a{,2}
+#a{,2}		-	a{,2}	a{,2}
 a\{,2\}		bC	BADBR
-a{,}		-	a{,}	a{,}
+#a{,}		-	a{,}	a{,}
 a\{,\}		bC	BADBR
 a{1,x}		C	BADBR
 a\{1,x\}	bC	BADBR
