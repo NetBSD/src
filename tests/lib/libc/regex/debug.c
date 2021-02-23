@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.3 2017/01/14 00:50:56 christos Exp $	*/
+/*	$NetBSD: debug.c,v 1.4 2021/02/23 14:59:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -36,14 +36,24 @@
 #include <wchar.h>
 #include <wctype.h>
 
+#ifndef __linux__
 /* Don't sort these! */
 #include "utils.h"
 #include "regex2.h"
+#else
+#define REGEX_NODEBUG
+#endif
+
+#ifdef REGEX_TRE
+#define REGEX_NODEBUG
+#endif
 
 #include "test_regex.h"
 
+#ifndef REGEX_NODEBUG
 static void s_print(struct re_guts *, FILE *);
 static char *regchar(int);
+#endif
 
 /*
  * regprint - print a regexp for debugging
@@ -51,13 +61,10 @@ static char *regchar(int);
 void
 regprint(regex_t *r, FILE *d)
 {
+#ifndef REGEX_NODEBUG
 	struct re_guts *g = r->re_g;
-	int c;
-	int last;
-	int nincat[NC];
 
-	fprintf(d, "%ld states, %zu categories", (long)g->nstates,
-							g->ncategories);
+	fprintf(d, "%ld states, %zu ncsets", (long)g->nstates, g->ncsets);
 	fprintf(d, ", first %ld last %ld", (long)g->firststate,
 						(long)g->laststate);
 	if (g->iflags&USEBOL)
@@ -77,43 +84,11 @@ regprint(regex_t *r, FILE *d)
 		fprintf(d, ", nplus %ld", (long)g->nplus);
 	fprintf(d, "\n");
 	s_print(g, d);
-	for (size_t i = 0; i < g->ncategories; i++) {
-		nincat[i] = 0;
-		for (c = CHAR_MIN; c <= CHAR_MAX; c++)
-			if (g->categories[c] == i)
-				nincat[i]++;
-	}
-	fprintf(d, "cc0#%d", nincat[0]);
-	for (size_t i = 1; i < g->ncategories; i++)
-		if (nincat[i] == 1) {
-			for (c = CHAR_MIN; c <= CHAR_MAX; c++)
-				if (g->categories[c] == i)
-					break;
-			fprintf(d, ", %zu=%s", i, regchar(c));
-		}
 	fprintf(d, "\n");
-	for (size_t i = 1; i < g->ncategories; i++)
-		if (nincat[i] != 1) {
-			fprintf(d, "cc%zu\t", i);
-			last = -1;
-			for (c = CHAR_MIN; c <= CHAR_MAX+1; c++)	/* +1 does flush */
-				if (c <= CHAR_MAX && g->categories[c] == i) {
-					if (last < 0) {
-						fprintf(d, "%s", regchar(c));
-						last = c;
-					}
-				} else {
-					if (last >= 0) {
-						if (last != c-1)
-							fprintf(d, "-%s",
-								regchar(c-1));
-						last = -1;
-					}
-				}
-			fprintf(d, "\n");
-		}
+#endif
 }
 
+#ifndef REGEX_NODEBUG
 /*
  * s_print - print the strip for debugging
  */
@@ -121,11 +96,9 @@ static void
 s_print(struct re_guts *g, FILE *d)
 {
 	sop *s;
-	cset *cs;
 	int done = 0;
 	sop opnd;
 	int col = 0;
-	ssize_t last;
 	sopno offset = 2;
 #	define	GAP()	{	if (offset % 5 == 0) { \
 					if (col > 40) { \
@@ -172,22 +145,6 @@ s_print(struct re_guts *g, FILE *d)
 			break;
 		case OANYOF:
 			fprintf(d, "[(%ld)", (long)opnd);
-			cs = &g->sets[opnd];
-			last = -1;
-			for (size_t i = 0; i < g->csetsize+1; i++)	/* +1 flushes */
-				if (CHIN(cs, i) && i < g->csetsize) {
-					if (last < 0) {
-						fprintf(d, "%s", regchar(i));
-						last = i;
-					}
-				} else {
-					if (last >= 0) {
-						if (last != (ssize_t)i - 1)
-							fprintf(d, "-%s",
-							    regchar(i - 1));
-						last = -1;
-					}
-				}
 			fprintf(d, "]");
 			break;
 		case OBACK_:
@@ -243,7 +200,7 @@ s_print(struct re_guts *g, FILE *d)
 			fprintf(d, ">");
 			break;
 		default:
-			fprintf(d, "!%d(%d)!", OP(*s), opnd);
+			fprintf(d, "!%ld(%ld)!", (long)OP(*s), (long)opnd);
 			break;
 		}
 		if (!done)
@@ -265,3 +222,4 @@ regchar(int ch)
 		sprintf(buf, "\\%o", ch);
 	return(buf);
 }
+#endif
