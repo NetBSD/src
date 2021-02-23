@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.14 2021/02/22 23:59:43 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.15 2021/02/23 00:04:48 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -179,7 +179,11 @@ EXP.colons=	# empty
 .endif
 
 # Even in expressions based on an unnamed variable, there may be errors.
-# XXX: The error message should not contain two spaces in a row.
+#
+# Before var.c 1.842 from 2021-02-23, the error message did not surround the
+# variable name with quotes, leading to the rather confusing "Unfinished
+# modifier for  (',' missing)", having two spaces in a row.
+#
 # XXX: The error message should report the filename:lineno.
 .if ${:S,}
 .  error
