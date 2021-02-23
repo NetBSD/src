@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.849 2021/02/23 15:03:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.850 2021/02/23 15:07:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.849 2021/02/23 15:03:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.850 2021/02/23 15:07:58 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3701,10 +3701,10 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp)
 }
 
 static ApplyModifierResult
-ApplySingleModifier(ApplyModifiersState *st, const char *mod, char endc,
-		    const char **pp)
+ApplySingleModifier(const char **pp, char endc, ApplyModifiersState *st)
 {
 	ApplyModifierResult res;
+	const char *mod = *pp;
 	const char *p = *pp;
 
 	if (DEBUG(VAR))
@@ -3811,7 +3811,7 @@ ApplyModifiers(
 
 		mod = p;
 
-		res = ApplySingleModifier(&st, mod, endc, &p);
+		res = ApplySingleModifier(&p, endc, &st);
 		if (res == AMR_CLEANUP)
 			goto cleanup;
 		if (res == AMR_BAD)
