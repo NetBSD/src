@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.33 2020/04/19 15:58:53 is Exp $
+#	$NetBSD: inter.phone,v 1.34 2021/02/23 21:59:04 mrg Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 7:317:Akmola:Republic of Kazakhstan
 7:329:Aktau:Republic of Kazakhstan
@@ -449,20 +449,53 @@
 352:::Luxembourg
 353:1:Dublin:Ireland, Rep. of
 353:21:Cork:Ireland, Rep. of
+353:22:Mallow:Ireland, Rep. of
+353:23:Bandon:Ireland, Rep. of
+353:24:Youghal:Ireland, Rep. of
+353:25:Fermoy:Ireland, Rep. of
+353:26:Macroom:Ireland, Rep. of
+353:27:Bantry:Ireland, Rep. of
+353:28:Skibbereen:Ireland, Rep. of
+353:29:Kanturk:Ireland, Rep. of
 353:41:Drogheda:Ireland, Rep. of
-353:42:Dundalk:Ireland, Rep. of
-353:45:Kildare:Ireland, Rep. of
-353:51:Waterford:Ireland, Rep. of
-353:52:Tipperary:Ireland, Rep. of
+353:42:Dundalk and Carrickmacross:Ireland, Rep. of
+353:43:Longford:Ireland, Rep. of
+353:44:Mullingar:Ireland, Rep. of
+353:45:Naas:Ireland, Rep. of
+353:46:Navan and Edenderry:Ireland, Rep. of
+353:47:Monaghan:Ireland, Rep. of
+353:49:Cavan and Oldcastle:Ireland, Rep. of
+353:51:Waterford, New Ross and Carrick-on-Suir:Ireland, Rep. of
+353:52:Clonmel:Ireland, Rep. of
 353:53:Wexford:Ireland, Rep. of
-353:61:Limerick:Ireland, Rep. of
+353:56:Kilkenny:Ireland, Rep. of
+353:57:Portlaoise and Tullamore:Ireland, Rep. of
+353:58:Dungarvan:Ireland, Rep. of
+353:59:Carlow, Athy and Baltinglass:Ireland, Rep. of
+353:61:Limerick and Scarriff:Ireland, Rep. of
+353:62:Tipperary:Ireland, Rep. of
+353:63:Charleville:Ireland, Rep. of
 353:64:Killarney:Ireland, Rep. of
 353:65:Ennis:Ireland, Rep. of
-353:66:Dingle:Ireland, Rep. of
 353:66:Tralee:Ireland, Rep. of
-353:71:Sligo:Ireland, Rep. of
+353:67:Nenagh:Ireland, Rep. of
+353:68:Listowel:Ireland, Rep. of
+353:69:Newcastle West:Ireland, Rep. of
+353:71:Sligo and Carrick-on-Shannon:Ireland, Rep. of
+353:74:Letterkenny:Ireland, Rep. of
+353:90:Athlone, Ballinasloe and Roscommon:Ireland, Rep. of
 353:91:Galway:Ireland, Rep. of
+353:93:Tuam:Ireland, Rep. of
+353:94:Castlebar and Castlerea:Ireland, Rep. of
+353:95:Clifden:Ireland, Rep. of
+353:96:Ballina:Ireland, Rep. of
+353:97:Belmullet:Ireland, Rep. of
+353:98:Westport:Ireland, Rep. of
+353:99:Kilronan:Ireland, Rep. of
 353:402:Arklow:Ireland, Rep. of
+353:404:Wicklow:Ireland, Rep. of
+353:504:Thurles:Ireland, Rep. of
+353:505:Roscrea:Ireland, Rep. of
 353:506:Tullamore:Ireland, Rep. of
 354:::Iceland
 355:::Albania, Republic of
