@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2011/09/16 16:13:18 plunky Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2021/02/23 15:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -52,6 +52,16 @@ static char empty = '\0';
 static char *eprint(int);
 static int efind(char *);
 
+#ifndef REG_ATOI
+#define REG_ATOI 0
+#define REG_ITOA 0
+#define REG_PEND 0
+#define REG_TRACE 0
+#define REG_BACKR 0
+#define REG_NOSPEC 0
+#define REG_LARGE 0
+#endif
+
 /*
  * main - do the simple case, hand off to regress() for regression
  */
@@ -72,7 +82,7 @@ main(int argc, char *argv[])
 
 	progname = argv[0];
 
-	while ((c = getopt(argc, argv, "c:e:S:E:x")) != -1)
+	while ((c = getopt(argc, argv, "c:E:e:S:x")) != -1)
 		switch (c) {
 		case 'c':	/* compile options */
 			copts = options('c', optarg);
@@ -80,11 +90,11 @@ main(int argc, char *argv[])
 		case 'e':	/* execute options */
 			eopts = options('e', optarg);
 			break;
-		case 'S':	/* start offset */
-			startoff = (regoff_t)atoi(optarg);
-			break;
 		case 'E':	/* end offset */
 			endoff = (regoff_t)atoi(optarg);
+			break;
+		case 'S':	/* start offset */
+			startoff = (regoff_t)atoi(optarg);
 			break;
 		case 'x':	/* Debugging. */
 			debug++;
@@ -211,7 +221,9 @@ regress(FILE *in)
 						erbuf, bpname);
 		status = 1;
 	}
+#if REG_ATOI
 	re.re_endp = bpname;
+#endif
 	ne = regerror(REG_ATOI, &re, erbuf, sizeof(erbuf));
 	if (atoi(erbuf) != (int)REG_BADPAT) {
 		fprintf(stderr, "end: regerror() ATOI test gave `%s' not `%ld'\n",
@@ -247,7 +259,9 @@ try(char *f0, char *f1, char *f2, char *f3, char *f4, int opts)
 	char f2copy[1000];
 
 	strcpy(f0copy, f0);
+#if REG_ATOI
 	re.re_endp = (opts&REG_PEND) ? f0copy + strlen(f0copy) : NULL;
+#endif
 	fixstr(f0copy);
 	err = regcomp(&re, f0copy, opts);
 	if (err != 0 && (!opt('C', f1) || err != efind(f2))) {
@@ -338,7 +352,7 @@ options(int type, char *s)
 {
 	char *p;
 	int o = (type == 'c') ? copts : eopts;
-	const char *legal = (type == 'c') ? "bisnmp" : "^$#tl";
+	const char *legal = (type == 'c') ? "bisnmpP" : "^$#tl";
 
 	for (p = s; *p != '\0'; p++)
 		if (strchr(legal, *p) != NULL)
@@ -361,6 +375,9 @@ options(int type, char *s)
 				break;
 			case 'p':
 				o |= REG_PEND;
+				break;
+			case 'P':
+				o |= REG_POSIX;
 				break;
 			case '^':
 				o |= REG_NOTBOL;
@@ -517,7 +534,9 @@ efind(char *name)
 
 	sprintf(efbuf, "REG_%s", name);
 	assert(strlen(efbuf) < sizeof(efbuf));
+#if REG_ATOI
 	re.re_endp = efbuf;
+#endif
 	(void) regerror(REG_ATOI, &re, efbuf, sizeof(efbuf));
 	return(atoi(efbuf));
 }
