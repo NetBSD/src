@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.26 2021/02/23 15:56:30 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.27 2021/02/23 16:04:16 rillig Exp $
 #
 # various modifier error tests
 
@@ -140,6 +140,7 @@ mod-ts-parse: print-header print-footer
 	@echo ${FIB:ts}
 	@echo ${FIB:ts\65}	# octal 065 == U+0035 == '5'
 	@echo ${FIB:ts\65oct}	# bad modifier
+	@echo ${:U${FIB}:ts\65oct} # bad modifier, variable name is ""
 	@echo ${FIB:tsxy}	# modifier too long
 
 mod-t-parse: print-header print-footer

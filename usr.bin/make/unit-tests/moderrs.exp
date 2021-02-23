@@ -100,6 +100,8 @@ mod-ts-parse:
 15152535558513521534
 make: Bad modifier `:ts\65oct' for FIB
 65oct}
+make: Bad modifier `:ts\65oct' for 
+65oct}
 make: Bad modifier `:tsxy' for FIB
 xy}
 
