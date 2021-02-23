@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: siglist.sh,v 1.12 2016/03/17 13:59:02 christos Exp $
+#	$NetBSD: siglist.sh,v 1.12.8.1 2021/02/23 18:56:12 martin Exp $
 #
 # Script to generate a sorted, complete list of signals, suitable
 # for inclusion in trap.c as array initializer.
@@ -21,16 +21,17 @@ CPP="${1-cc -E}"
 # The trap here to make up for a bug in bash (1.14.3(1)) that calls the trap
 (trap $trapsigs;
  echo '#include "sh.h"';
- echo '	{ QwErTy SIGNALS , "DUMMY" , "hook for number of signals" },';
+ echo ' { QwErTy /* dummy for sed sillies */ },';
  ${SED} -e '/^[	 ]*#/d' -e 's/^[	 ]*\([^ 	][^ 	]*\)[	 ][	 ]*\(.*[^ 	]\)[ 	]*$/#ifdef SIG\1\
 	{ QwErTy .signal = SIG\1 , .name = "\1", .mess = "\2" },\
 #endif/') > $in
-# work around for gcc 5
+echo '	{ QwErTy .signal = SIGNALS , .name = "DUMMY", .mess = "hook to expand array to total signals" },' >> $in
+# work around for gcc > 5
 $CPP $in | grep -v '^#' | tr -d '\n' | ${SED} 's/},/},\
 /g' > $out
 ${SED} -n 's/{ QwErTy/{/p' < $out | ${AWK} '{print NR, $0}' | sort -k 5n -k 1n |
-    ${SED} 's/^[0-9]* //' |
-    ${AWK} 'BEGIN { last=0; nsigs=0; }
+    ${SED} -E -e 's/^[0-9]* //' -e 's/ +/ /' |
+    ${AWK} 'BEGIN { last=0; }
 	{
 	    if ($4 ~ /^[0-9][0-9]*$/ && $5 == ",") {
 		n = $4;
