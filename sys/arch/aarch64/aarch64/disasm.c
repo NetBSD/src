@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.13 2021/02/23 20:15:04 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.14 2021/02/23 20:26:50 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.13 2021/02/23 20:15:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.14 2021/02/23 20:26:50 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -919,7 +919,7 @@ regoffset_b_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
 static void
 regoffset_h_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
     uint64_t Rm, uint64_t option, uint64_t shift, uint64_t Rn, uint64_t Rt,
-    const char *op)
+    uint64_t RtSz, const char *op)
 {
 	int r;
 
@@ -931,13 +931,13 @@ regoffset_h_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
 	if ((shift == 0) && (option == 3)) {
 		PRINTF("%s\t%s, [%s,%s]\n",
 		    op,
-		    ZREGNAME(0, Rt),
+		    ZREGNAME(RtSz, Rt),
 		    SREGNAME(1, Rn),
 		    ZREGNAME(r, Rm));
 	} else if (shift == 0) {
 		PRINTF("%s\t%s, [%s,%s,%s]\n",
 		    op,
-		    ZREGNAME(0, Rt),
+		    ZREGNAME(RtSz, Rt),
 		    SREGNAME(1, Rn),
 		    ZREGNAME(r, Rm),
 		    SHIFTOP8(option,
@@ -945,7 +945,7 @@ regoffset_h_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
 	} else {
 		PRINTF("%s\t%s, [%s,%s,%s #%u]\n",
 		    op,
-		    ZREGNAME(0, Rt),
+		    ZREGNAME(RtSz, Rt),
 		    SREGNAME(1, Rn),
 		    ZREGNAME(r, Rm),
 		    SHIFTOP8(option,
@@ -2030,7 +2030,7 @@ OP3FUNC(op_ldrh_immunsign, imm12, Rn, Rt)
 
 OP5FUNC(op_ldrh_reg, Rm, option, shift, Rn, Rt)
 {
-	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, "ldrh");
+	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, 0, "ldrh");
 }
 
 OP4FUNC(op_ldrsb_immpostidx, opc, imm9, Rn, Rt)
@@ -2100,7 +2100,8 @@ OP4FUNC(op_ldrsh_immunsign, opc, imm12, Rn, Rt)
 
 OP6FUNC(op_ldrsh_reg, opc, Rm, option, shift, Rn, Rt)
 {
-	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, "ldrsh");
+	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, opc ^ 1,
+	    "ldrsh");
 }
 
 OP3FUNC(op_ldrsw_immpostidx, imm9, Rn, Rt)
@@ -3016,7 +3017,7 @@ OP3FUNC(op_strh_immunsign, imm12, Rn, Rt)
 
 OP5FUNC(op_strh_reg, Rm, option, shift, Rn, Rt)
 {
-	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, "strh");
+	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, 0, "strh");
 }
 
 OP4FUNC(op_sttr, size, imm9, Rn, Rt)
