@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.92 2020/06/18 16:56:31 maxv Exp $	*/
+/*	$NetBSD: pool.h,v 1.93 2021/02/24 06:11:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007, 2020
@@ -151,9 +151,8 @@ struct pool {
 	unsigned int	pr_roflags;	/* r/o flags */
 #define PR_WAITOK	0x01	/* Note: matches KM_SLEEP */
 #define PR_NOWAIT	0x02	/* Note: matches KM_NOSLEEP */
-#define PR_WANTED	0x04
-#define PR_PHINPAGE	0x40
-#define PR_LOGGING	0x80
+#define PR_WANTED	0x04	/* waiting for free objects */
+#define PR_PHINPAGE	0x40	/* page header in page */
 #define PR_LIMITFAIL	0x100	/* even if waiting, fail if we hit limit */
 #define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
 #define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
