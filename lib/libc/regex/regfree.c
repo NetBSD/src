@@ -1,4 +1,4 @@
-/*	$NetBSD: regfree.c,v 1.16 2021/02/23 22:14:59 christos Exp $	*/
+/*	$NetBSD: regfree.c,v 1.17 2021/02/24 18:13:21 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regfree.c 326025 2017-11-20 19:49:47Z pfg $");
 #endif
-__RCSID("$NetBSD: regfree.c,v 1.16 2021/02/23 22:14:59 christos Exp $");
+__RCSID("$NetBSD: regfree.c,v 1.17 2021/02/24 18:13:21 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -83,14 +83,14 @@ regfree(regex_t *preg)
 	g->magic = 0;			/* mark it invalid */
 
 	if (g->strip != NULL)
-		free((char *)g->strip);
+		free(g->strip);
 	if (g->sets != NULL) {
 		for (i = 0; i < g->ncsets; i++) {
 			free(g->sets[i].ranges);
 			free(g->sets[i].wides);
 			free(g->sets[i].types);
 		}
-		free((char *)g->sets);
+		free(g->sets);
 	}
 	if (g->must != NULL)
 		free(g->must);
@@ -98,5 +98,5 @@ regfree(regex_t *preg)
 		free(&g->charjump[CHAR_MIN]);
 	if (g->matchjump != NULL)
 		free(g->matchjump);
-	free((char *)g);
+	free(g);
 }
