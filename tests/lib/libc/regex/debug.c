@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.4 2021/02/23 14:59:09 christos Exp $	*/
+/*	$NetBSD: debug.c,v 1.5 2021/02/24 02:33:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -181,21 +181,21 @@ s_print(struct re_guts *g, FILE *d)
 			break;
 		case OCH_:
 			fprintf(d, "<");
-			if (OP(*(s+opnd)) != OOR2)
+			if (OP(*(s+opnd)) != (sop)OOR2)
 				fprintf(d, "<%ld>", (long)opnd);
 			break;
 		case OOR1:
-			if (OP(*(s-opnd)) != OOR1 && OP(*(s-opnd)) != OCH_)
+			if (OP(*(s-opnd)) != (sop)OOR1 && OP(*(s-opnd)) != (sop)OCH_)
 				fprintf(d, "<%ld>", (long)opnd);
 			fprintf(d, "|");
 			break;
 		case OOR2:
 			fprintf(d, "|");
-			if (OP(*(s+opnd)) != OOR2 && OP(*(s+opnd)) != O_CH)
+			if (OP(*(s+opnd)) != (sop)OOR2 && OP(*(s+opnd)) != (sop)O_CH)
 				fprintf(d, "<%ld>", (long)opnd);
 			break;
 		case O_CH:
-			if (OP(*(s-opnd)) != OOR1)
+			if (OP(*(s-opnd)) != (sop)OOR1)
 				fprintf(d, "<%ld>", (long)opnd);
 			fprintf(d, ">");
 			break;
