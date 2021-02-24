@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.48 2021/02/23 18:55:29 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.49 2021/02/24 08:08:43 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1692,4 +1692,10 @@ bin/ksh/siglist.sh				1.13
 
 	PR/56007: ksh unable to execute ERR traps.
 	[christos, ticket #1212]
+
+sys/arch/xen/xen/xennetback_xenbus.c		(apply patch)
+
+	xen: do not panic Dom0 when hypervisor grant_table_op(GNTTABOP_copy)
+	fails in xennet(4) backend driver. Part of fixes for XSA-362.
+	[jdolecek, ticket #1213]
 
