@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.104 2020/07/06 10:31:23 rin Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.105 2021/02/24 16:42:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.104 2020/07/06 10:31:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.105 2021/02/24 16:42:38 thorpej Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -235,24 +235,27 @@ static const struct cputab models[] = {
 	{ "",		0,		REVFMT_HEX }
 };
 
+#include <powerpc/oea/bat.h>
+extern struct bat battable[];
+
 #ifdef MULTIPROCESSOR
 struct cpu_info cpu_info[CPU_MAXNUM] = {
     [0] = {
 	.ci_curlwp = &lwp0,
+	.ci_battable = battable,
     },
 };
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
 #define HATCH_STACK_SIZE 0x1000
 extern int ticks_per_intr;
-#include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h>
 #include <powerpc/pic/ipivar.h>
-extern struct bat battable[];
 #else
 struct cpu_info cpu_info[1] = {
     [0] = {
 	.ci_curlwp = &lwp0,
+	.ci_battable = battable,
     },
 };
 #endif /*MULTIPROCESSOR*/
@@ -1329,6 +1332,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	ci->ci_curpcb = lwp_getpcb(ci->ci_curlwp);
 	ci->ci_curpm = ci->ci_curpcb->pcb_pm;
+	ci->ci_battable = battable;
 
 	cpu_hatch_data = h;
 	h->hatch_running = 0;
