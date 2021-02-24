@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.75.4.1 2021/02/23 18:50:21 martin Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.75.4.2 2021/02/24 08:05:08 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.75.4.1 2021/02/23 18:50:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.75.4.2 2021/02/24 08:05:08 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -1041,15 +1041,19 @@ xennetback_ifsoftstart_copy(void *arg)
 			bpf_mtap(ifp, m, BPF_D_OUT);
 		}
 		if (i != 0) {
-			if (HYPERVISOR_grant_table_op(GNTTABOP_copy,
-			    xstart_gop_copy, i) != 0) {
-				panic("%s: GNTTABOP_copy failed",
-				    ifp->if_xname);
+			int result;
+
+			result = HYPERVISOR_grant_table_op(GNTTABOP_copy,
+			    xstart_gop_copy, i);
+			if (result != 0) {
+				printf("%s: GNTTABOP_copy failed %d",
+				    ifp->if_xname, result);
 			}
 
 			for (j = 0; j < i; j++) {
-				if (xstart_gop_copy[j].status != GNTST_okay) {
-					printf("%s GNTTABOP_copy[%d] %d\n",
+				if (result < 0 || (result > 0 && j >= result)
+				    || xstart_gop_copy[j].status != GNTST_okay){
+					printf("%s GNTTABOP_copy[%d] st %d\n",
 					    ifp->if_xname,
 					    j, xstart_gop_copy[j].status);
 					printf("%s: req_prod %u req_cons "
