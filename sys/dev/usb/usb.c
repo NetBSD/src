@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.192 2021/02/23 08:51:36 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.193 2021/02/24 01:46:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.192 2021/02/23 08:51:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.193 2021/02/24 01:46:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -339,7 +339,7 @@ static void
 db_usb_xfer(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	struct usbd_xfer *xfer = (struct usbd_xfer *)addr;
+	struct usbd_xfer *xfer = (struct usbd_xfer *)(uintptr_t)addr;
 
 	if (!have_addr) {
 		db_printf("%s: need usbd_xfer address\n", __func__);
@@ -360,7 +360,7 @@ static void
 db_usb_xferlist(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	struct usbd_pipe *pipe = (struct usbd_pipe *)addr;
+	struct usbd_pipe *pipe = (struct usbd_pipe *)(uintptr_t)addr;
 	struct usbd_xfer *xfer;
 
 	if (!have_addr) {
