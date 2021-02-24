@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.39 2021/02/23 22:14:59 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.40 2021/02/24 18:13:21 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regcomp.c 368359 2020-12-05 03:18:48Z kevans $");
 #endif
-__RCSID("$NetBSD: regcomp.c,v 1.39 2021/02/23 22:14:59 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.40 2021/02/24 18:13:21 christos Exp $");
 
 #define _OPENBSD_SOURCE
 #define REGEX_GNU_EXTENSIONS
@@ -208,8 +208,8 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	MUSTSEE(c, e)	(REQUIRE(MORE() && PEEK() == (c), e))
 #define	MUSTEAT(c, e)	(REQUIRE(MORE() && GETNEXT() == (c), e))
 #define	MUSTNOTSEE(c, e)	(REQUIRE(!MORE() || PEEK() != (c), e))
-#define	EMIT(op, sopnd)	doemit(p, (sop)(op), (size_t)(sopnd))
-#define	INSERT(op, pos)	doinsert(p, (sop)(op), HERE()-(pos)+1, pos)
+#define	EMIT(op, sopnd)	doemit(p, (op), (sopnd))
+#define	INSERT(op, pos)	doinsert(p, (op), HERE()-(pos)+1, pos)
 #define	AHEAD(pos)		dofwd(p, pos, HERE()-(pos))
 #define	ASTERN(sop, pos)	EMIT(sop, HERE()-pos)
 #define	HERE()		(p->slen)
@@ -264,18 +264,18 @@ regcomp_internal(regex_t * __restrict preg,
 	 * generically (who are we to stop people from using ~715MB+
 	 * patterns?).
 	 */
-	maxlen = ((size_t)-1 >> 1) / sizeof(sop) * 2 / 3;
+	maxlen = ((size_t)-1 >> 1) / sizeof(*p->strip) * 2 / 3;
 	if (len >= maxlen) {
-		free((char *)g);
+		free(g);
 		return(REG_ESPACE);
 	}
-	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
+	p->ssize = (sopno)(len / 2 * 3 + 1);	/* ugh */
 	assert(p->ssize >= len);
 
 	p->strip = calloc(p->ssize, sizeof(*p->strip));
 	p->slen = 0;
 	if (p->strip == NULL) {
-		free((char *)g);
+		free(g);
 		return(REG_ESPACE);
 	}
 
@@ -401,7 +401,7 @@ p_ere_exp(struct parse *p, struct branchc *bc)
 	int count;
 	int count2;
 #ifdef REGEX_GNU_EXTENSIONS
-	int i;
+	size_t i;
 	int handled;
 #endif
 	sopno subno;
@@ -421,7 +421,7 @@ p_ere_exp(struct parse *p, struct branchc *bc)
 	case '(':
 		(void)REQUIRE(MORE(), REG_EPAREN);
 		p->g->nsub++;
-		subno = p->g->nsub;
+		subno = (sopno)p->g->nsub;
 		if (subno < NPAREN)
 			p->pbegin[subno] = HERE();
 		EMIT(OLPAREN, subno);
@@ -727,7 +727,7 @@ static void
 p_bre_pre_parse(struct parse *p, struct branchc *bc)
 {
 
-	(void) bc;
+	(void)bc;
 	/*
 	 * Does not move cleanly into expression parser because of
 	 * ordinary interpration of * at the beginning position of
@@ -823,7 +823,7 @@ p_simp_re(struct parse *p, struct branchc *bc)
 	int count2;
 	sopno pos;
 	bool handled;
-	int i;
+	size_t i;
 	wint_t wc;
 	sopno subno;
 #	define	BACKSL	(1<<CHAR_BIT)
@@ -887,7 +887,7 @@ p_simp_re(struct parse *p, struct branchc *bc)
 			break;
 		case BACKSL|'(':
 			p->g->nsub++;
-			subno = p->g->nsub;
+			subno = (sopno)p->g->nsub;
 			if (subno < NPAREN)
 				p->pbegin[subno] = HERE();
 			EMIT(OLPAREN, subno);
@@ -1053,7 +1053,7 @@ p_bracket(struct parse *p)
 		ordinary(p, ch);
 		freeset(p, cs);
 	} else
-		EMIT(OANYOF, (int)(cs - p->g->sets));
+		EMIT(OANYOF, (size_t)(cs - p->g->sets));
 }
 
 static int
@@ -1189,7 +1189,7 @@ p_b_pseudoclass(struct parse *p, char c) {
 		return(0);
 	}
 
-	EMIT(OANYOF, (int)(cs - p->g->sets));
+	EMIT(OANYOF, (size_t)(cs - p->g->sets));
 	return(1);
 }
 #endif
@@ -1416,8 +1416,8 @@ ordinary(struct parse *p, wint_t ch)
 
 	if ((p->g->cflags&REG_ICASE) && iswalpha(ch) && othercase(ch) != ch)
 		bothcases(p, ch);
-	else if ((ch & OPDMASK) == ch)
-		EMIT(OCHAR, ch);
+	else if ((wint_t)(ch & OPDMASK) == ch)
+		EMIT(OCHAR, (size_t)ch);
 	else {
 		/*
 		 * Kludge: character is too big to fit into an OCHAR operand.
@@ -1426,7 +1426,7 @@ ordinary(struct parse *p, wint_t ch)
 		if ((cs = allocset(p)) == NULL)
 			return;
 		CHadd(p, cs, ch);
-		EMIT(OANYOF, (int)(cs - p->g->sets));
+		EMIT(OANYOF, (size_t)(cs - p->g->sets));
 	}
 }
 
@@ -1543,7 +1543,7 @@ wgetnext(struct parse *p)
 	size_t n;
 
 	memset(&mbs, 0, sizeof(mbs));
-	n = mbrtowc(&wc, p->next, p->end - p->next, &mbs);
+	n = mbrtowc(&wc, p->next, (size_t)(p->end - p->next), &mbs);
 	if (n == (size_t)-1 || n == (size_t)-2) {
 		SETERROR(REG_ILLSEQ);
 		return (0);
@@ -1652,7 +1652,7 @@ CHadd(struct parse *p, cset *cs, wint_t ch)
 
 	assert(ch >= 0);
 	if (ch < NC)
-		cs->bmp[ch >> 3] |= 1 << (ch & 7);
+		cs->bmp[(unsigned)ch >> 3] |= 1 << (ch & 7);
 	else {
 		newwides = reallocarray(cs->wides, cs->nwides + 1,
 		    sizeof(*cs->wides));
@@ -1665,9 +1665,9 @@ CHadd(struct parse *p, cset *cs, wint_t ch)
 	}
 	if (cs->icase) {
 		if ((nch = towlower(ch)) < NC)
-			cs->bmp[nch >> 3] |= 1 << (nch & 7);
+			cs->bmp[(unsigned)nch >> 3] |= 1 << (nch & 7);
 		if ((nch = towupper(ch)) < NC)
-			cs->bmp[nch >> 3] |= 1 << (nch & 7);
+			cs->bmp[(unsigned)nch >> 3] |= 1 << (nch & 7);
 	}
 }
 
@@ -1742,8 +1742,8 @@ dupl(struct parse *p,
 		return(ret);
 	if (!enlarge(p, p->ssize + len)) /* this many unexpected additions */
 		return(ret);
-	(void) memcpy((char *)(p->strip + p->slen),
-		(char *)(p->strip + start), (size_t)len*sizeof(sop));
+	(void) memcpy(p->strip + p->slen,
+	    p->strip + start, len * sizeof(*p->strip));
 	p->slen += len;
 	return(ret);
 }
@@ -1774,7 +1774,7 @@ doemit(struct parse *p, sop op, size_t opnd)
 			return;
 
 	/* finally, it's all reduced to the easy case */
-	p->strip[p->slen++] = SOP(op, opnd);
+	p->strip[p->slen++] = (sopno)SOP(op, opnd);
 }
 
 /*
@@ -1810,8 +1810,8 @@ doinsert(struct parse *p, sop op, size_t opnd, sopno pos)
 		}
 	}
 
-	memmove((char *)&p->strip[pos+1], (char *)&p->strip[pos],
-						(HERE()-pos-1)*sizeof(sop));
+	memmove(&p->strip[pos+1], &p->strip[pos],
+	    (HERE()-pos-1)*sizeof(*p->strip));
 	p->strip[pos] = s;
 }
 
@@ -1847,7 +1847,7 @@ enlarge(struct parse *p, sopno size)
 	if (p->ssize >= size)
 		return 1;
 
-	sp = reallocarray(p->strip, size, sizeof(sop));
+	sp = reallocarray(p->strip, size, sizeof(*p->strip));
 	if (sp == NULL) {
 		SETERROR(REG_ESPACE);
 		return 0;
@@ -1869,7 +1869,7 @@ stripsnug(struct parse *p, struct re_guts *g)
 	_DIAGASSERT(g != NULL);
 
 	g->nstates = p->slen;
-	g->strip = reallocarray((char *)p->strip, p->slen, sizeof(sop));
+	g->strip = reallocarray(p->strip, p->slen, sizeof(*p->strip));
 	if (g->strip == NULL) {
 		SETERROR(REG_ESPACE);
 		g->strip = p->strip;
@@ -1931,10 +1931,10 @@ findmust(struct parse *p, struct re_guts *g)
 				memset(&mbs, 0, sizeof(mbs));
 				newstart = scan - 1;
 			}
-			clen = wcrtomb(buf, OPND(s), &mbs);
+			clen = wcrtomb(buf, (int)OPND(s), &mbs);
 			if (clen == (size_t)-1)
 				goto toohard;
-			newlen += clen;
+			newlen += (sopno)clen;
 			break;
 		case OPLUS_:		/* things that don't break one */
 		case OLPAREN:
@@ -1948,12 +1948,12 @@ findmust(struct parse *p, struct re_guts *g)
 				scan += OPND(s);
 				s = *scan;
 				/* assert() interferes w debug printouts */
-				if (OP(s) != (sop)O_QUEST &&
-				    OP(s) != (sop)O_CH && OP(s) != (sop)OOR2) {
+				if (OP(s) != O_QUEST &&
+				    OP(s) != O_CH && OP(s) != OOR2) {
 					g->iflags |= BAD;
 					return;
 				}
-			} while (OP(s) != (sop)O_QUEST && OP(s) != (sop)O_CH);
+			} while (OP(s) != O_QUEST && OP(s) != O_CH);
 			/* FALLTHROUGH */
 		case OBOW:		/* things that break a sequence */
 		case OEOW:
@@ -2015,7 +2015,7 @@ findmust(struct parse *p, struct re_guts *g)
 				offset++;
 			newlen = 0;
 			break;
-		toohard:
+		toohard:/*FALLTHROUGH*/
 		default:
 			/* Anything here makes it impossible or too hard
 			 * to calculate the offset -- so we give up;
@@ -2054,7 +2054,7 @@ findmust(struct parse *p, struct re_guts *g)
 	while (cp < g->must + g->mlen) {
 		while (OP(s = *scan++) != OCHAR)
 			continue;
-		clen = wcrtomb(cp, OPND(s), &mbs);
+		clen = wcrtomb(cp, (int)OPND(s), &mbs);
 		assert(clen != (size_t)-1);
 		cp += clen;
 	}
@@ -2085,7 +2085,7 @@ altoffset(sop *scan, int offset)
 	largest = 0;
 	try = 0;
 	s = *scan++;
-	while (OP(s) != (sop)O_QUEST && OP(s) != (sop)O_CH) {
+	while (OP(s) != O_QUEST && OP(s) != O_CH) {
 		switch (OP(s)) {
 		case OOR1:
 			if (try > largest)
@@ -2101,10 +2101,10 @@ altoffset(sop *scan, int offset)
 			do {
 				scan += OPND(s);
 				s = *scan;
-				if (OP(s) != (sop)O_QUEST &&
-				    OP(s) != (sop)O_CH && OP(s) != (sop)OOR2)
+				if (OP(s) != O_QUEST &&
+				    OP(s) != O_CH && OP(s) != OOR2)
 					return -1;
-			} while (OP(s) != (sop)O_QUEST && OP(s) != (sop)O_CH);
+			} while (OP(s) != O_QUEST && OP(s) != O_CH);
 			/* We must skip to the next position, or we'll
 			 * leave altoffset() too early.
 			 */
@@ -2114,6 +2114,7 @@ altoffset(sop *scan, int offset)
 		case OCHAR:
 		case OANY:
 			try++;
+			/*FALLTHROUGH*/
 		case OBOW:
 		case OEOW:
 		case OWBND:

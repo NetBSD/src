@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.14 2021/02/23 22:14:59 christos Exp $	*/
+/*	$NetBSD: regex2.h,v 1.15 2021/02/24 18:13:21 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -76,40 +76,40 @@
  * In state representations, an operator's bit is on to signify a state
  * immediately *preceding* "execution" of that operator.
  */
-typedef unsigned long sop;	/* strip operator */
-typedef unsigned long sopno;
-#define	OPRMASK	0xf8000000L
-#define	OPDMASK	0x07ffffffL
-#define	OPSHIFT	((unsigned)27)
+typedef uint32_t sop;	/* strip operator */
+typedef uint32_t sopno;
+#define	OPRMASK	0xf8000000U
+#define	OPDMASK	0x07ffffffU
+#define	OPSHIFT	(27U)
 #define	OP(n)	((n)&OPRMASK)
 #define	OPND(n)	((n)&OPDMASK)
 #define	SOP(op, opnd)	((op)|(opnd))
 /* operators			   meaning	operand			*/
 /*						(back, fwd are offsets)	*/
-#define	OEND	(1L<<OPSHIFT)	/* endmarker	-			*/
-#define	OCHAR	(2L<<OPSHIFT)	/* character	wide character		*/
-#define	OBOL	(3L<<OPSHIFT)	/* left anchor	-			*/
-#define	OEOL	(4L<<OPSHIFT)	/* right anchor	-			*/
-#define	OANY	(5L<<OPSHIFT)	/* .		-			*/
-#define	OANYOF	(6L<<OPSHIFT)	/* [...]	set number		*/
-#define	OBACK_	(7L<<OPSHIFT)	/* begin \d	paren number		*/
-#define	O_BACK	(8L<<OPSHIFT)	/* end \d	paren number		*/
-#define	OPLUS_	(9L<<OPSHIFT)	/* + prefix	fwd to suffix		*/
-#define	O_PLUS	(10L<<OPSHIFT)	/* + suffix	back to prefix		*/
-#define	OQUEST_	(11L<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
-#define	O_QUEST	(12L<<OPSHIFT)	/* ? suffix	back to prefix		*/
-#define	OLPAREN	(13L<<OPSHIFT)	/* (		fwd to )		*/
-#define	ORPAREN	(14L<<OPSHIFT)	/* )		back to (		*/
-#define	OCH_	(15L<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
-#define	OOR1	(16L<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
-#define	OOR2	(17L<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
-#define	O_CH	(18L<<OPSHIFT)	/* end choice	back to OOR1		*/
-#define	OBOW	(19L<<OPSHIFT)	/* begin word	-			*/
-#define	OEOW	(20L<<OPSHIFT)	/* end word	-			*/
-#define	OBOS	(21L<<OPSHIFT)	/* begin subj.  -			*/
-#define	OEOS	(22L<<OPSHIFT)	/* end subj.	-			*/
-#define	OWBND	(23L<<OPSHIFT)	/* word bound	-			*/
-#define	ONWBND	(24L<<OPSHIFT)	/* not bound	-			*/
+#define	OEND	(1U<<OPSHIFT)	/* endmarker	-			*/
+#define	OCHAR	(2U<<OPSHIFT)	/* character	wide character		*/
+#define	OBOL	(3U<<OPSHIFT)	/* left anchor	-			*/
+#define	OEOL	(4U<<OPSHIFT)	/* right anchor	-			*/
+#define	OANY	(5U<<OPSHIFT)	/* .		-			*/
+#define	OANYOF	(6U<<OPSHIFT)	/* [...]	set number		*/
+#define	OBACK_	(7U<<OPSHIFT)	/* begin \d	paren number		*/
+#define	O_BACK	(8U<<OPSHIFT)	/* end \d	paren number		*/
+#define	OPLUS_	(9U<<OPSHIFT)	/* + prefix	fwd to suffix		*/
+#define	O_PLUS	(10U<<OPSHIFT)	/* + suffix	back to prefix		*/
+#define	OQUEST_	(11U<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
+#define	O_QUEST	(12U<<OPSHIFT)	/* ? suffix	back to prefix		*/
+#define	OLPAREN	(13U<<OPSHIFT)	/* (		fwd to )		*/
+#define	ORPAREN	(14U<<OPSHIFT)	/* )		back to (		*/
+#define	OCH_	(15U<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
+#define	OOR1	(16U<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
+#define	OOR2	(17U<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
+#define	O_CH	(18U<<OPSHIFT)	/* end choice	back to OOR1		*/
+#define	OBOW	(19U<<OPSHIFT)	/* begin word	-			*/
+#define	OEOW	(20U<<OPSHIFT)	/* end word	-			*/
+#define	OBOS	(21U<<OPSHIFT)	/* begin subj.  -			*/
+#define	OEOS	(22U<<OPSHIFT)	/* end subj.	-			*/
+#define	OWBND	(23U<<OPSHIFT)	/* word bound	-			*/
+#define	ONWBND	(24U<<OPSHIFT)	/* not bound	-			*/
 
 /*
  * Structures for [] character-set representation.
@@ -137,7 +137,7 @@ CHIN1(cset *cs, wint_t ch)
 
 	assert(ch >= 0);
 	if (ch < NC)
-		return (((cs->bmp[ch >> 3] & (1 << (ch & 7))) != 0) ^
+		return (((cs->bmp[(unsigned)ch >> 3] & (1 << (ch & 7))) != 0) ^
 		    cs->invert);
 	for (i = 0; i < cs->nwides; i++) {
 		if (cs->icase) {
@@ -162,7 +162,7 @@ CHIN(cset *cs, wint_t ch)
 
 	assert(ch >= 0);
 	if (ch < NC)
-		return (((cs->bmp[ch >> 3] & (1 << (ch & 7))) != 0) ^
+		return (((cs->bmp[(unsigned)ch >> 3] & (1 << (ch & 7))) != 0) ^
 		    cs->invert);
 	else if (cs->icase)
 		return (CHIN1(cs, ch) || CHIN1(cs, towlower(ch)) ||

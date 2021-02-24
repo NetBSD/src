@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.23 2021/02/23 22:14:59 christos Exp $	*/
+/*	$NetBSD: regexec.c,v 1.24 2021/02/24 18:13:21 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regexec.c 326025 2017-11-20 19:49:47Z pfg $");
 #endif
-__RCSID("$NetBSD: regexec.c,v 1.23 2021/02/23 22:14:59 christos Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.24 2021/02/24 18:13:21 christos Exp $");
 
 /*
  * the outer shell of regexec()
@@ -69,8 +69,6 @@ __weak_alias(regexec,_regexec)
 
 #include "utils.h"
 #include "regex2.h"
-
-static int nope __unused = 0;	/* for use in asserts; shuts lint up */
 
 static __inline size_t
 xmbrtowc(wint_t *wi, const char *s, size_t n, mbstate_t *mbs, wint_t dummy)
