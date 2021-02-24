@@ -1,3 +1,5 @@
+/* $NetBSD: engine.c,v 1.26 2021/02/24 09:10:12 wiz Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -39,7 +41,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libc/regex/engine.c 368358 2020-12-05 03:16:05Z kevans $");
 #endif
-__RCSID("$NetBSD: engine.c,v 1.25 2021/02/23 22:14:59 christos Exp $");
+__RCSID("$NetBSD: engine.c,v 1.26 2021/02/24 09:10:12 wiz Exp $");
 
 #include <stdbool.h>
 
