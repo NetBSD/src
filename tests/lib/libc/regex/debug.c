@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.5 2021/02/24 02:33:56 christos Exp $	*/
+/*	$NetBSD: debug.c,v 1.6 2021/02/24 18:18:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -64,9 +64,7 @@ regprint(regex_t *r, FILE *d)
 #ifndef REGEX_NODEBUG
 	struct re_guts *g = r->re_g;
 
-	fprintf(d, "%ld states, %zu ncsets", (long)g->nstates, g->ncsets);
-	fprintf(d, ", first %ld last %ld", (long)g->firststate,
-						(long)g->laststate);
+	fprintf(d, ", first %u last %u", g->firststate, g->laststate);
 	if (g->iflags&USEBOL)
 		fprintf(d, ", USEBOL");
 	if (g->iflags&USEEOL)
@@ -74,14 +72,13 @@ regprint(regex_t *r, FILE *d)
 	if (g->iflags&BAD)
 		fprintf(d, ", BAD");
 	if (g->nsub > 0)
-		fprintf(d, ", nsub=%ld", (long)g->nsub);
+		fprintf(d, ", nsub=%zu", g->nsub);
 	if (g->must != NULL)
-		fprintf(d, ", must(%ld) `%*s'", (long)g->mlen, (int)g->mlen,
-								g->must);
+		fprintf(d, ", must(%zu) `%*s'", g->mlen, (int)g->mlen, g->must);
 	if (g->backrefs)
 		fprintf(d, ", backrefs");
 	if (g->nplus > 0)
-		fprintf(d, ", nplus %ld", (long)g->nplus);
+		fprintf(d, ", nplus %u", g->nplus);
 	fprintf(d, "\n");
 	s_print(g, d);
 	fprintf(d, "\n");
@@ -144,63 +141,63 @@ s_print(struct re_guts *g, FILE *d)
 			fprintf(d, ".");
 			break;
 		case OANYOF:
-			fprintf(d, "[(%ld)", (long)opnd);
+			fprintf(d, "[(%u)", opnd);
 			fprintf(d, "]");
 			break;
 		case OBACK_:
-			fprintf(d, "(\\<%ld>", (long)opnd);
+			fprintf(d, "(\\<%u>", opnd);
 			break;
 		case O_BACK:
-			fprintf(d, "<%ld>\\)", (long)opnd);
+			fprintf(d, "<%u>\\)", opnd);
 			break;
 		case OPLUS_:
 			fprintf(d, "(+");
 			if (OP(*(s+opnd)) != O_PLUS)
-				fprintf(d, "<%ld>", (long)opnd);
+				fprintf(d, "<%u>", opnd);
 			break;
 		case O_PLUS:
 			if (OP(*(s-opnd)) != OPLUS_)
-				fprintf(d, "<%ld>", (long)opnd);
+				fprintf(d, "<%u>", opnd);
 			fprintf(d, "+)");
 			break;
 		case OQUEST_:
 			fprintf(d, "(?");
 			if (OP(*(s+opnd)) != O_QUEST)
-				fprintf(d, "<%ld>", (long)opnd);
+				fprintf(d, "<%u>", opnd);
 			break;
 		case O_QUEST:
 			if (OP(*(s-opnd)) != OQUEST_)
-				fprintf(d, "<%ld>", (long)opnd);
+				fprintf(d, "<%u>", opnd);
 			fprintf(d, "?)");
 			break;
 		case OLPAREN:
-			fprintf(d, "((<%ld>", (long)opnd);
+			fprintf(d, "((<%u>", opnd);
 			break;
 		case ORPAREN:
-			fprintf(d, "<%ld>))", (long)opnd);
+			fprintf(d, "<%u>))", opnd);
 			break;
 		case OCH_:
 			fprintf(d, "<");
-			if (OP(*(s+opnd)) != (sop)OOR2)
-				fprintf(d, "<%ld>", (long)opnd);
+			if (OP(*(s+opnd)) != OOR2)
+				fprintf(d, "<%u>", opnd);
 			break;
 		case OOR1:
-			if (OP(*(s-opnd)) != (sop)OOR1 && OP(*(s-opnd)) != (sop)OCH_)
-				fprintf(d, "<%ld>", (long)opnd);
+			if (OP(*(s-opnd)) != OOR1 && OP(*(s-opnd)) != OCH_)
+				fprintf(d, "<%u>", opnd);
 			fprintf(d, "|");
 			break;
 		case OOR2:
 			fprintf(d, "|");
-			if (OP(*(s+opnd)) != (sop)OOR2 && OP(*(s+opnd)) != (sop)O_CH)
-				fprintf(d, "<%ld>", (long)opnd);
+			if (OP(*(s+opnd)) != OOR2 && OP(*(s+opnd)) != O_CH)
+				fprintf(d, "<%u>", opnd);
 			break;
 		case O_CH:
-			if (OP(*(s-opnd)) != (sop)OOR1)
-				fprintf(d, "<%ld>", (long)opnd);
+			if (OP(*(s-opnd)) != OOR1)
+				fprintf(d, "<%u>", opnd);
 			fprintf(d, ">");
 			break;
 		default:
-			fprintf(d, "!%ld(%ld)!", (long)OP(*s), (long)opnd);
+			fprintf(d, "!%u(%u)!", OP(*s), opnd);
 			break;
 		}
 		if (!done)
