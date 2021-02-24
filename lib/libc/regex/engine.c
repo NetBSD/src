@@ -1,4 +1,4 @@
-/* $NetBSD: engine.c,v 1.26 2021/02/24 09:10:12 wiz Exp $ */
+/* $NetBSD: engine.c,v 1.27 2021/02/24 18:13:21 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -41,7 +41,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libc/regex/engine.c 368358 2020-12-05 03:16:05Z kevans $");
 #endif
-__RCSID("$NetBSD: engine.c,v 1.26 2021/02/24 09:10:12 wiz Exp $");
+__RCSID("$NetBSD: engine.c,v 1.27 2021/02/24 18:13:21 christos Exp $");
 
 #include <stdbool.h>
 
@@ -210,7 +210,7 @@ matcher(struct re_guts *g,
 	const char *stop;
 	/* Boyer-Moore algorithms variables */
 	const char *pp;
-	int cj, mj;
+	size_t cj, mj;
 	const char *mustfirst;
 	const char *mustlast;
 	size_t *matchjump;
@@ -325,7 +325,7 @@ matcher(struct re_guts *g,
 				break;
 			assert(m->coldp < m->endp);
 			m->coldp += XMBRTOWC(NULL, m->coldp,
-			    m->endp - m->coldp, &m->mbs, 0);
+			    (size_t)(m->endp - m->coldp), &m->mbs, 0);
 		}
 		if (nmatch == 1 && !g->backrefs)
 			break;		/* no further info needed */
@@ -385,7 +385,7 @@ matcher(struct re_guts *g,
 		NOTE("false alarm");
 		/* recycle starting later */
 		start = m->coldp + XMBRTOWC(NULL, m->coldp,
-		    stop - m->coldp, &m->mbs, 0);
+		    (size_t)(stop - m->coldp), &m->mbs, 0);
 		assert(start <= stop);
 	}
 
@@ -412,7 +412,7 @@ done:
 		m->pmatch = NULL;
 	}
 	if (m->lastpos != NULL) {
-		free((char *)m->lastpos);
+		free(__UNCONST(m->lastpos));
 		m->lastpos = NULL;
 	}
 	STATETEARDOWN(m);
@@ -461,7 +461,7 @@ dissect(
 			es += OPND(m->g->strip[es]);
 			break;
 		case OCH_:
-			while (OP(m->g->strip[es]) != (sop)O_CH)
+			while (OP(m->g->strip[es]) != O_CH)
 				es += OPND(m->g->strip[es]);
 			break;
 		}
@@ -473,7 +473,8 @@ dissect(
 			assert(nope);
 			break;
 		case OCHAR:
-			sp += XMBRTOWC(NULL, sp, stop - start, &m->mbs, 0);
+			sp += XMBRTOWC(NULL, sp, (size_t)(stop - start),
+			    &m->mbs, 0);
 			break;
 		case OBOL:
 		case OEOL:
@@ -486,7 +487,8 @@ dissect(
 			break;
 		case OANY:
 		case OANYOF:
-			sp += XMBRTOWC(NULL, sp, stop - start, &m->mbs, 0);
+			sp += XMBRTOWC(NULL, sp, (size_t)(stop - start),
+			    &m->mbs, 0);
 			break;
 		case OBACK_:
 		case O_BACK:
@@ -579,7 +581,7 @@ dissect(
 				assert(OP(m->g->strip[esub]) == OOR2);
 				ssub = esub + 1;
 				esub += OPND(m->g->strip[esub]);
-				if (OP(m->g->strip[esub]) == (sop)OOR2)
+				if (OP(m->g->strip[esub]) == OOR2)
 					esub--;
 				else
 					assert(OP(m->g->strip[esub]) == O_CH);
@@ -669,14 +671,16 @@ backref(
 		case OCHAR:
 			if (sp == stop)
 				return(NULL);
-			sp += XMBRTOWC(&wc, sp, stop - sp, &m->mbs, BADCHAR);
+			sp += XMBRTOWC(&wc, sp, (size_t)(stop - sp),
+			    &m->mbs, BADCHAR);
 			if (wc != (wint_t)OPND(s))
 				return(NULL);
 			break;
 		case OANY:
 			if (sp == stop)
 				return(NULL);
-			sp += XMBRTOWC(&wc, sp, stop - sp, &m->mbs, BADCHAR);
+			sp += XMBRTOWC(&wc, sp, (size_t)(stop - sp),
+			    &m->mbs, BADCHAR);
 			if (wc == BADCHAR)
 				return (NULL);
 			break;
@@ -684,7 +688,8 @@ backref(
 			if (sp == stop)
 				return (NULL);
 			cs = &m->g->sets[OPND(s)];
-			sp += XMBRTOWC(&wc, sp, stop - sp, &m->mbs, BADCHAR);
+			sp += XMBRTOWC(&wc, sp, (size_t)(stop - sp),
+			    &m->mbs, BADCHAR);
 			if (wc == BADCHAR || !CHIN(cs, wc))
 				return(NULL);
 			break;
@@ -751,7 +756,7 @@ backref(
 			do {
 				assert(OP(s) == OOR2);
 				ss += OPND(s);
-			} while (OP(s = m->g->strip[ss]) != (sop)O_CH);
+			} while (OP(s = m->g->strip[ss]) != O_CH);
 			/* note that the ss++ gets us past the O_CH */
 			break;
 		default:	/* have to make a choice */
@@ -784,7 +789,7 @@ backref(
 		ssp = m->offp + m->pmatch[i].rm_so;
 		if (memcmp(sp, ssp, len) != 0)
 			return(NULL);
-		while (m->g->strip[ss] != (sop)SOP(O_BACK, i))
+		while (m->g->strip[ss] != SOP(O_BACK, i))
 			ss++;
 		return(backref(m, sp+len, stop, ss+1, stopst, lev, rec));
 	case OQUEST_:		/* to null or not */
@@ -816,13 +821,13 @@ backref(
 			if (dp != NULL)
 				return(dp);
 			/* that one missed, try next one */
-			if (OP(m->g->strip[esub]) == (sop)O_CH)
+			if (OP(m->g->strip[esub]) == O_CH)
 				return(NULL);	/* there is none */
 			esub++;
-			assert(OP(m->g->strip[esub]) == (sop)OOR2);
+			assert(OP(m->g->strip[esub]) == OOR2);
 			ssub = esub + 1;
 			esub += OPND(m->g->strip[esub]);
-			if (OP(m->g->strip[esub]) == (sop)OOR2)
+			if (OP(m->g->strip[esub]) == OOR2)
 				esub--;
 			else
 				assert(OP(m->g->strip[esub]) == O_CH);
@@ -877,9 +882,9 @@ walk(struct match *m, const char *start, const char *stop, sopno startst,
 	wint_t c;
 	wint_t lastc;		/* previous c */
 	wint_t flagch;
-	int i, sflags;
+	int sflags;
 	const char *matchp;	/* last p at which a match ended */
-	size_t clen;
+	size_t i, clen;
 
 	_DIAGASSERT(m != NULL);
 	_DIAGASSERT(start != NULL);
@@ -912,7 +917,8 @@ walk(struct match *m, const char *start, const char *stop, sopno startst,
 			c = OUT;
 			clen = 0;
 		} else
-			clen = XMBRTOWC(&c, p, m->endp - p, &m->mbs, BADCHAR);
+			clen = XMBRTOWC(&c, p, (size_t)(m->endp - p),
+			    &m->mbs, BADCHAR);
 
 		if (fast && EQ(st, fresh))
 			matchp = p;
@@ -1000,7 +1006,8 @@ walk(struct match *m, const char *start, const char *stop, sopno startst,
 		assert(matchp != NULL);
 		m->coldp = matchp;
 		if (ISSET(st, stopst))
-			return (p + XMBRTOWC(NULL, p, stop - p, &m->mbs, 0));
+			return (p + XMBRTOWC(NULL, p, (size_t)(stop - p),
+			    &m->mbs, 0));
 		else
 			return (NULL);
 	} else
@@ -1121,22 +1128,22 @@ step(struct re_guts *g,
 			break;
 		case OCH_:		/* mark the first two branches */
 			FWD(aft, aft, 1);
-			assert(OP(g->strip[pc+OPND(s)]) == (sop)OOR2);
+			assert(OP(g->strip[pc+OPND(s)]) == OOR2);
 			FWD(aft, aft, OPND(s));
 			break;
 		case OOR1:		/* done a branch, find the O_CH */
 			if (ISSTATEIN(aft, here)) {
 				for (look = 1;
-				    OP(s = g->strip[pc+look]) != (sop)O_CH;
+				    OP(s = g->strip[pc+look]) != O_CH;
 				    look += OPND(s))
-					assert(OP(s) == (sop)OOR2);
+					assert(OP(s) == OOR2);
 				FWD(aft, aft, look + 1);
 			}
 			break;
 		case OOR2:		/* propagate OCH_'s marking */
 			FWD(aft, aft, 1);
-			if (OP(g->strip[pc+OPND(s)]) != (sop)O_CH) {
-				assert(OP(g->strip[pc+OPND(s)]) == (sop)OOR2);
+			if (OP(g->strip[pc+OPND(s)]) != O_CH) {
+				assert(OP(g->strip[pc+OPND(s)]) == OOR2);
 				FWD(aft, aft, OPND(s));
 			}
 			break;
