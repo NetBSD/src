@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.116 2021/02/03 10:37:05 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117 2021/02/24 16:42:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -94,6 +94,10 @@ struct cpu_info {
 	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
+#if defined(PPC_OEA) || defined(PPC_OEA601) || defined(PPC_OEA64) || \
+    defined(PPC_OEA64_BRIDGE) || defined(MODULAR) || defined(_MODULE)
+	void *ci_battable;		/* BAT table in use by this CPU */
+#endif
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 	int ci_cpuid;			/* from SPR_PIR */
 
