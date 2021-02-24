@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.53 2021/02/19 18:10:51 thorpej Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.54 2021/02/24 16:53:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.53 2021/02/19 18:10:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.54 2021/02/24 16:53:00 thorpej Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -100,7 +100,19 @@ typedef struct _rangemap {
 
 struct OF_translation ofw_translations[OFW_MAX_TRANSLATIONS];
 
+/*
+ * Data structures holding OpenFirmware's translations when running
+ * in virtual-mode.
+ *
+ * When we call into OpenFirmware, we point the calling CPU's
+ * cpu_info::ci_battable at ofw_battable[].  For now, this table
+ * is empty, which will ensure that any DSI exceptions that occur
+ * during the firmware call will not erroneously load kernel BAT
+ * mappings that could clobber the firmware's translations.
+ */
 struct pmap ofw_pmap;
+struct bat ofw_battable[BAT_VA2IDX(0xffffffff)+1];
+
 char bootpath[256];
 char model_name[64];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
