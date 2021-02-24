@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.17 2021/02/19 18:03:21 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.18 2021/02/24 16:53:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 
 	/* MSR and SPRG[0-3] used in OpenFirmware */
 	.globl	ofwmsr
-	.comm	ofwmsr,20,4
+	.comm	ofwmsr,4,4
 
 #ifdef FIRMWORKSBUGS
 	.lcomm	ofwreal_incharge,4,4
@@ -101,16 +101,7 @@ ENTRY_NOPROFILE(ofwinit)
 	/* Save the MSR that OpenFirmware is using. */
 	mfmsr	%r0
 	lis	%r9,ofwmsr@ha
-	stwu	%r0,ofwmsr@l(%r9)
-
-	mfsprg0	%r0				/* save SPRGs */
-	stw	%r0,4(%r9)
-	mfsprg1	%r0
-	stw	%r0,8(%r9)
-	mfsprg2	%r0
-	stw	%r0,12(%r9)
-	mfsprg3	%r0
-	stw	%r0,16(%r9)
+	stw	%r0,ofwmsr@l(%r9)
 
 	lis	%r8,OF_buffer@ha
 	addi	%r8,%r8,OF_buffer@l
@@ -161,15 +152,6 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	lwz	%r4,ofentry@l(%r4)
 	mtlr	%r4
 
-	mfsprg0	%r5			/* save current sprg0 (curcpu) */
-	stw	%r5,16(%r1)
-	mfsprg1	%r5			/* save current sprg1 */
-	stw	%r5,20(%r1)
-	mfsprg2	%r5			/* save current sprg1 */
-	stw	%r5,24(%r1)
-	mfsprg3	%r5			/* save current sprg3 */
-	stw	%r5,28(%r1)
-
 #ifdef FIRMWORKSBUGS
 	lis	%r4,ofwreal_incharge@ha
 	lwz	%r4,ofwreal_incharge@l(%r4)
@@ -214,20 +196,24 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	cmpwi	%r5,0
 	bne	1b
 2:
-	lis	%r4,ofwmsr+16@ha	/* Open Firmware msr + sprg[0-3] */
-	lwzu	%r5,ofwmsr+16@l(%r4)
-	mtsprg3	%r5
-	lwz	%r5,-4(%r4)
-	mtsprg2	%r5
-	lwz	%r5,-8(%r4)
-	mtsprg1	%r5
-	lwz	%r5,-12(%r4)
-	mtsprg0	%r5
-	lwz	%r5,-16(%r4)
+	/* curcpu()->ci_battable = &ofw_battable */
+	GET_CPUINFO(%r4)
+	lis	%r5,_C_LABEL(ofw_battable)@ha
+	addi	%r5,%r5,_C_LABEL(ofw_battable)@l
+	stw	%r5,CI_BATTABLE(%r4)
+
+	lis	%r4,ofwmsr@ha		/* Open Firmware msr */
+	lwz	%r5,ofwmsr@l(%r4)
 	mtmsr	%r5
 	isync
 
 	blrl				/* call Open Firmware */
+
+	/* curcpu()->ci_battable = &battable */
+	GET_CPUINFO(%r4)
+	lis	%r5,_C_LABEL(battable)@ha
+	addi	%r5,%r5,_C_LABEL(battable)@l
+	stw	%r5,CI_BATTABLE(%r4)
 
 	lis	%r4,ofwsrsave@ha	/* restore saved SRs */
 	addi	%r4,%r4,ofwsrsave@l
@@ -243,15 +229,6 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	mtmsr	%r4
 	isync
 4:	
-	lwz	%r5,16(%r1)		/* restore saved sprgs (curcpu) */
-	mtsprg0	%r5
-	lwz	%r5,20(%r1)
-	mtsprg1	%r5
-	lwz	%r5,24(%r1)
-	mtsprg2	%r5
-	lwz	%r5,28(%r1)
-	mtsprg3	%r5
-
 	addi	%r1,%r1,48		/* pop stack frame and save area */
 	lwz	%r0,4(%r1)		/* return address */
 	mtlr	%r0
