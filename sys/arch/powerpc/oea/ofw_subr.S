@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.18 2021/02/24 16:53:00 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.19 2021/02/24 17:35:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,10 +47,10 @@
 	/* Entry trampoline used by openfirmware(). */
 	.lcomm	oftramp,4,4
 
-	/* OpenFirmware SR save area */
-	.lcomm	ofwsrsave,64,4
+	/* Client SR save area */
+	.lcomm	clsrsave,64,4
 
-	/* MSR and SPRG[0-3] used in OpenFirmware */
+	/* MSR used in OpenFirmware */
 	.globl	ofwmsr
 	.comm	ofwmsr,4,4
 
@@ -173,8 +173,8 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	mtibatu	3,%r0
 #endif /* PPC_OEA */
 
-	lis	%r4,ofwsrsave@ha		/* save current SRs */
-	addi	%r4,%r4,ofwsrsave@l
+	lis	%r4,clsrsave@ha		/* save current SRs */
+	addi	%r4,%r4,clsrsave@l
 	li	%r5,0
 1:	mfsrin	%r0,%r5
 	stw	%r0,0(%r4)
@@ -215,8 +215,8 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	addi	%r5,%r5,_C_LABEL(battable)@l
 	stw	%r5,CI_BATTABLE(%r4)
 
-	lis	%r4,ofwsrsave@ha	/* restore saved SRs */
-	addi	%r4,%r4,ofwsrsave@l
+	lis	%r4,clsrsave@ha		/* restore saved SRs */
+	addi	%r4,%r4,clsrsave@l
 	li	%r5,0
 1:	lwz	%r0,0(%r4)
 	mtsrin	%r0,%r5
