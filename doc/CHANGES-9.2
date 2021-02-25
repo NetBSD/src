@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.49 2021/02/24 08:08:43 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.50 2021/02/25 09:37:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1698,4 +1698,9 @@ sys/arch/xen/xen/xennetback_xenbus.c		(apply patch)
 	xen: do not panic Dom0 when hypervisor grant_table_op(GNTTABOP_copy)
 	fails in xennet(4) backend driver. Part of fixes for XSA-362.
 	[jdolecek, ticket #1213]
+
+sys/arch/m68k/m68k/reenter_syscall.s		1.5-1.7
+
+	m68k: PR 55990: fix kernel stack overflow panic
+	[tsutsui, ticket #1214]
 
