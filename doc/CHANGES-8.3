@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.74 2021/02/23 18:57:36 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.75 2021/02/25 09:39:58 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1738,4 +1738,9 @@ bin/ksh/siglist.sh				1.13
 
 	PR/56007: ksh unable to execute ERR traps.
 	[christos, ticket #1658]
+
+sys/arch/m68k/m68k/reenter_syscall.s		1.5-1.7
+
+	m68k: PR 55990: fix kernel stack overflow panic
+	[tsutsui, ticket #1659]
 
