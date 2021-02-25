@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.6 2021/02/24 18:18:53 christos Exp $	*/
+/*	$NetBSD: debug.c,v 1.7 2021/02/25 22:37:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -33,8 +33,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <wchar.h>
-#include <wctype.h>
 
 #ifndef __linux__
 /* Don't sort these! */
