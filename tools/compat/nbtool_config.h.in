@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.52 2019/06/22 13:42:53 hannken Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.53 2021/02/25 13:41:58 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -293,6 +293,10 @@
 /* Define to 1 if you have the declaration of `reallocarr', and to 0 if you
    don't. */
 #undef HAVE_DECL_REALLOCARR
+
+/* Define to 1 if you have the declaration of `reallocarray', and to 0 if you
+   don't. */
+#undef HAVE_DECL_REALLOCARRAY
 
 /* Define to 1 if you have the declaration of `setenv', and to 0 if you don't.
    */
@@ -603,6 +607,9 @@
 
 /* Define to 1 if you have the `reallocarr' function. */
 #undef HAVE_REALLOCARR
+
+/* Define to 1 if you have the `reallocarray' function. */
+#undef HAVE_REALLOCARRAY
 
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H

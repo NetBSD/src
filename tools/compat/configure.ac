@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.98 2020/06/24 14:39:01 uwe Exp $
+#	$NetBSD: configure.ac,v 1.99 2021/02/25 13:41:58 christos Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -179,8 +179,9 @@ AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, f
 #include <stdio.h>
 ])
 
-AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, getsubopt,
-	setenv, strtoi, strtoll, strtou, setprogname, getprogname],,, [
+AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, reallocarray,
+	getsubopt, setenv, strtoi, strtoll, strtou, setprogname,
+	getprogname],,, [
 #include <stdlib.h>
 ])
 
@@ -223,7 +224,7 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
 	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
-	pwrite raise_default_signal random reallocarr setenv \
+	pwrite raise_default_signal random reallocarr reallocarray setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
 	strcasecmp strncasecmp strndup strnlen strsep strsuftoll strtoi \
