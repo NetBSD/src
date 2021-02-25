@@ -1,18 +1,15 @@
-#	$NetBSD: Makefile,v 1.22 2020/04/20 13:04:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.23 2021/02/25 21:56:35 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
+USE_BUILTIN_REGEX?=no	# Our regex supports widechar
 
 WARNS=	5
 
 COPTS.exf.c+=		-Wno-format-nonliteral
 COPTS.msg.c+=		-Wno-format-nonliteral
-.if ${USE_WIDECHAR} == "yes"
-.if ${ACTIVE_CC} == "gcc"
-COPTS.regexec.c+=	-Wno-old-style-definition
-.endif
-.else
+.if ${USE_WIDECHAR} != "yes"
 COPTS.v_increment.c+=	-Wno-format-nonliteral
 CWARNFLAGS.gcc+=	-Wno-unused
 CWARNFLAGS.clang+=	-Wno-unsequenced
@@ -57,7 +54,10 @@ NOTUSED=ip_funcs.c ip_read.c ip_screen.c ip_term.c \
 	ip_run.c ip_send.c ip_trans.c ipc_cmd.c ipc_method.c
 
 # For wide char support
-.if ${USE_WIDECHAR} == "yes"
+.if ${USE_BUILTIN_REGEX} == "yes"
+.if ${ACTIVE_CC} == "gcc"
+COPTS.regexec.c+=	-Wno-old-style-definition
+.endif
 SRCS+=	regcomp.c regerror.c regexec.c regfree.c
 CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE -DUSE_WIDECHAR
 .endif
