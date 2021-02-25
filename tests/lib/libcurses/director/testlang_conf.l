@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.22 2021/02/25 00:25:31 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.23 2021/02/25 00:32:44 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -79,6 +79,7 @@ dequote(const char *s, size_t *len)
 	while (*p) {
 		if (*p == '\\' && *(p+1)) {
 			++p;
+
 			if (isdigit(*p)) {
 				if (*(p+1) && isdigit(*(p+1)) && *(p+2) &&
 				    isdigit(*(p+2))) {
@@ -87,45 +88,46 @@ dequote(const char *s, size_t *len)
 				} else {
 					*q++ = *p++;
 				}
-			} else {
-				switch (*p) {
-				case 'e':
-					/* escape */
-					*q++ = '\e';
-					p++;
-					break;
+				continue;
+			}
 
-				case 'n':
-					/* newline */
-					*q++ = '\n';
-					p++;
-					break;
+			switch (*p) {
+			case 'e':
+				/* escape */
+				*q++ = '\e';
+				p++;
+				break;
 
-				case 'r':
-					/* carriage return */
-					*q++ = '\r';
-					p++;
-					break;
+			case 'n':
+				/* newline */
+				*q++ = '\n';
+				p++;
+				break;
 
-				case 't':
-					/* tab */
-					*q++ = '\t';
-					p++;
-					break;
+			case 'r':
+				/* carriage return */
+				*q++ = '\r';
+				p++;
+				break;
 
-				case '\\':
-					/* backslash */
-					*q++ = '\\';
-					p++;
-					break;
+			case 't':
+				/* tab */
+				*q++ = '\t';
+				p++;
+				break;
 
-				default:
-					if (isalpha((unsigned char)*p))
-						errx(2,
-						    "%s:%zu: invalid escape sequence '\\%c' in string literal",
-						    cur_file, line, *p);
-					*q++ = *p++;
-				}
+			case '\\':
+				/* backslash */
+				*q++ = '\\';
+				p++;
+				break;
+
+			default:
+				if (isalpha(*p))
+					errx(2,
+					    "%s:%zu: invalid escape sequence '\\%c' in string literal",
+					    cur_file, line, *p);
+				*q++ = *p++;
 			}
 		} else
 			*q++ = *p++;
