@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.10 2009/03/14 21:04:04 dsl Exp $
+ * $NetBSD: xd.c,v 1.11 2021/02/25 03:42:14 rin Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -53,8 +53,13 @@ struct devsw devsw[] = {
 };
 
 struct fs_ops file_system[] = {
+#if !defined(_PRIMARY_BOOT) || BOOTXX_FFS_VERSION == 1
 	FS_OPS(ufs),
 	FS_OPS(ustarfs),
+#endif
+#if !defined(_PRIMARY_BOOT) || BOOTXX_FFS_VERSION == 2
+	FS_OPS(ffsv2),
+#endif
 };
 
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2017/04/09 14:51:52 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2021/02/25 03:42:14 rin Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -24,12 +24,21 @@ S=		${DIR_TOP}
 .SUFFIXES:
 .SUFFIXES: .out .o .po .pico .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
 
-FILES= bootxx_ffs bootxx_fd
+.ifdef BOOTXX_FFSV2
+FILES=		bootxx_ffsv2
+FSOBJS=		ffsv2.o
+DEFS+=		-DBOOTXX_FFS_VERSION=2
+.else
+FILES=		bootxx_ffsv1 bootxx_fd
+FSOBJS=		ufs.o ustarfs.o
+DEFS+=		-DBOOTXX_FFS_VERSION=1
+.endif
+
 BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o vers.o read.o close.o dev.o errno.o
-COBJS+=  ufs.o ustarfs.o panic.o files.o
+COBJS+=  ${FSOBJS} panic.o files.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o fstat.o
@@ -37,7 +46,7 @@ SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
 
 OBJS+=	$(SOBJS) $(COBJS)
 
-DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -D_PRIMARY_BOOT -DSERCONSOLE
+DEFS+= -D_STANDALONE -DSA_EXEC_ANYOWNER -D_PRIMARY_BOOT -DSERCONSOLE
 
 .NOPATH: ${OBJS} x.out f.out libboot.a xxstart.o
 
@@ -45,7 +54,7 @@ DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -D_PRIMARY_BOOT -DSERCONSOLE
 
 realall: ${FILES}
 
-CLEANFILES += bootxx_ffs bootxx_fd x.out f.out xxstart.o fdstart.o libboot.a
+CLEANFILES += ${FILES} x.out f.out xxstart.o fdstart.o libboot.a
 
 VERSIONFILE=${.CURDIR}/../boot/version
 VERSIONFLAGS+=-n
@@ -87,7 +96,11 @@ DEFS+=	-D__daddr_t=int32_t
 	${_MKTARGET_COMPILE}
 	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
-bootxx_ffs: x.out
+bootxx_ffsv1: x.out
+	${_MKTARGET_CREATE}
+	${RELOC2BB} x.out $@ || (${NM} -u x.out && false)
+
+bootxx_ffsv2: x.out
 	${_MKTARGET_CREATE}
 	${RELOC2BB} x.out $@ || (${NM} -u x.out && false)
 
