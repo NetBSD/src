@@ -289,51 +289,56 @@ smu_setup_fans(struct smu_softc *sc)
 	struct sysctlnode *sysctl_fans, *sysctl_fan, *sysctl_node;
 	char type[32], sysctl_fan_name[32];
 	int node, i, j;
+	const char *fans[] = { "fans", "rpm-fans", 0 };
+	int n = 0;
+	
+	while (fans[n][0] != 0) {
+		node = of_getnode_byname(sc->sc_node, fans[n]);
+		for (node = OF_child(node);
+		    (node != 0) && (sc->sc_num_fans < SMU_MAX_FANS);
+		    node = OF_peer(node)) {
+			fan = &sc->sc_fans[sc->sc_num_fans];
+			fan->sc = sc;
 
-	node = of_getnode_byname(sc->sc_node, "fans");
-	for (node = OF_child(node);
-	    (node != 0) && (sc->sc_num_fans < SMU_MAX_FANS);
-	    node = OF_peer(node)) {
-		fan = &sc->sc_fans[sc->sc_num_fans];
-		fan->sc = sc;
+			memset(fan->location, 0, sizeof(fan->location));
+			OF_getprop(node, "location", fan->location,
+			    sizeof(fan->location));
 
-		memset(fan->location, 0, sizeof(fan->location));
-		OF_getprop(node, "location", fan->location,
-		    sizeof(fan->location));
+			if (OF_getprop(node, "reg", &fan->reg,
+			        sizeof(fan->reg)) <= 0)
+				continue;
 
-		if (OF_getprop(node, "reg", &fan->reg,
-		        sizeof(fan->reg)) <= 0)
-			continue;
+			if (OF_getprop(node, "zone", &fan->zone	,
+			        sizeof(fan->zone)) <= 0)
+				continue;
 
-		if (OF_getprop(node, "zone", &fan->zone,
-		        sizeof(fan->zone)) <= 0)
-			continue;
+			memset(type, 0, sizeof(type));
+			OF_getprop(node, "device_type", type, sizeof(type));
+			if (strcmp(type, "fan-rpm-control") == 0)
+				fan->rpm_ctl = 1;
+			else
+				fan->rpm_ctl = 0;
 
-		memset(type, 0, sizeof(type));
-		OF_getprop(node, "device_type", type, sizeof(type));
-		if (strcmp(type, "fan-rpm-control") == 0)
-			fan->rpm_ctl = 1;
-		else
-			fan->rpm_ctl = 0;
+			if (OF_getprop(node, "min-value", &fan->min_rpm,
+			    sizeof(fan->min_rpm)) <= 0)
+				fan->min_rpm = 0;
 
-		if (OF_getprop(node, "min-value", &fan->min_rpm,
-		    sizeof(fan->min_rpm)) <= 0)
-			fan->min_rpm = 0;
+			if (OF_getprop(node, "max-value", &fan->max_rpm,
+			    sizeof(fan->max_rpm)) <= 0)
+				fan->max_rpm = 0xffff;
 
-		if (OF_getprop(node, "max-value", &fan->max_rpm,
-		    sizeof(fan->max_rpm)) <= 0)
-			fan->max_rpm = 0xffff;
+			if (OF_getprop(node, "unmanage-value", &fan->default_rpm,
+			    sizeof(fan->default_rpm)) <= 0)
+				fan->default_rpm = fan->max_rpm;
 
-		if (OF_getprop(node, "unmanage-value", &fan->default_rpm,
-		    sizeof(fan->default_rpm)) <= 0)
-			fan->default_rpm = fan->max_rpm;
+			DPRINTF("fan: location %s reg %x zone %d rpm_ctl %d "
+			    "min_rpm %d max_rpm %d default_rpm %d\n",
+			    fan->location, fan->reg, fan->zone, fan->rpm_ctl,
+			    fan->min_rpm, fan->max_rpm, fan->default_rpm);
 
-		DPRINTF("fan: location %s reg %x zone %d rpm_ctl %d "
-		    "min_rpm %d max_rpm %d default_rpm %d\n",
-		    fan->location, fan->reg, fan->zone, fan->rpm_ctl,
-		    fan->min_rpm, fan->max_rpm, fan->default_rpm);
-
-		sc->sc_num_fans++;
+			sc->sc_num_fans++;
+		}
+		n++;
 	}
 
 	for (i = 0; i < sc->sc_num_fans; i++) {
@@ -433,12 +438,14 @@ smu_setup_iicbus(struct smu_softc *sc)
 	char name[32];
 
 	node = of_getnode_byname(sc->sc_node, "smu-i2c-control");
+	if (node == 0) node = sc->sc_node;
 	for (node = OF_child(node);
 	    (node != 0) && (sc->sc_num_iicbus < SMU_MAX_IICBUS);
 	    node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
 		OF_getprop(node, "name", name, sizeof(name));
-		if (strcmp(name, "i2c-bus") != 0)
+		if ((strcmp(name, "i2c-bus") != 0) &&
+		    (strcmp(name, "i2c") != 0))
 			continue;
 
 		iicbus = &sc->sc_iicbus[sc->sc_num_iicbus];
@@ -862,7 +869,8 @@ smu_setup_zones(struct smu_softc *sc)
 	z->nfans = 0;
 	for (i = 0; i < SMU_MAX_FANS; i++) {
 		f = &sc->sc_fans[i];
-		if (strstr(f->location, "CPU") != NULL) {
+		if ((strstr(f->location, "CPU") != NULL) || 
+		    (strstr(f->location, "System") != NULL)) {
 			z->fans[z->nfans] = i;
 			z->nfans++;
 		}
@@ -878,7 +886,8 @@ smu_setup_zones(struct smu_softc *sc)
 	z->nfans = 0;
 	for (i = 0; i < SMU_MAX_FANS; i++) {
 		f = &sc->sc_fans[i];
-		if (strstr(f->location, "DRIVE") != NULL) {
+		if ((strstr(f->location, "DRIVE") != NULL) ||
+		    (strstr(f->location, "Drive") != NULL)) {
 			z->fans[z->nfans] = i;
 			z->nfans++;
 		}
@@ -959,7 +968,7 @@ smu_adjust(void *cookie)
 	while (!sc->sc_dying) {
 		for (i = 0; i < SMU_ZONES; i++)
 			smu_adjust_zone(sc, i);
-		kpause("fanctrl", true, mstohz(30000), NULL);
+		kpause("fanctrl", true, mstohz(3000), NULL);
 	}
 	kthread_exit(0);
 }
@@ -968,10 +977,7 @@ static bool is_cpu_sensor(const envsys_data_t *edata)
 {
 	if (edata->units != ENVSYS_STEMP)
 		return false;
-	if ((strstr(edata->desc, "CPU") != NULL) &&
-	    (strstr(edata->desc, "DIODE") != NULL))
-		return TRUE;
-	if (strstr(edata->desc, "TUNNEL") != NULL)
+	if (strstr(edata->desc, "CPU") != NULL)
 		return TRUE;
 	return false;
 }
@@ -980,7 +986,9 @@ static bool is_drive_sensor(const envsys_data_t *edata)
 {
 	if (edata->units != ENVSYS_STEMP)
 		return false;
-	if (strstr(edata->desc, "DRIVE BAY") != NULL)
+	if (strstr(edata->desc, "DRIVE") != NULL)
+		return TRUE;
+	if (strstr(edata->desc, "drive") != NULL)
 		return TRUE;
 	return false;
 }
@@ -992,6 +1000,10 @@ static bool is_slots_sensor(const envsys_data_t *edata)
 	if (strstr(edata->desc, "BACKSIDE") != NULL)
 		return TRUE;
 	if (strstr(edata->desc, "INLET") != NULL)
+		return TRUE;
+	if (strstr(edata->desc, "DIODE") != NULL)
+		return TRUE;
+	if (strstr(edata->desc, "TUNNEL") != NULL)
 		return TRUE;
 	return false;
 }
