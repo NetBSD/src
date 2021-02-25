@@ -1,4 +1,4 @@
-# $NetBSD: addbytes,v 1.3 2021/02/25 00:26:57 rillig Exp $
+# $NetBSD: addbytes,v 1.4 2021/02/25 01:07:43 rillig Exp $
 #
 # Tests adding bytes to stdscr.
 #
@@ -19,13 +19,15 @@ call2 0 16 getyx STDSCR
 call OK addbytes "\n" 1
 call2 1 0 getyx STDSCR
 
+# Ensure that backspace works as intended.
+# See tests/addch.
 call OK addbytes "12345\010" 6
 call2 1 4 getyx STDSCR
 
 call OK addbytes "\010\010\010\010" 4
 call2 1 0 getyx STDSCR
 
-# When curx is already 0, backspace is a no-op.
+# If curx is already 0, backspace is a no-op.
 call OK addbytes "\010" 1
 call2 1 0 getyx STDSCR
 
