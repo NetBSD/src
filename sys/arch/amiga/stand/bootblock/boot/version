@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1 2001/12/17 05:41:13 mhitch Exp $
+$NetBSD: version,v 1.2 2021/02/25 03:42:14 rin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -11,3 +11,4 @@ is taken as the current.
 2.3:	???
 2.4:	Moved default command into fixed location for easy patching
 3.0:	Initial 2 stage amiga bootblocks
+3.1:	Add support for FFSv2
