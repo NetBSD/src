@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.41 2021/02/25 13:42:16 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.42 2021/02/25 21:28:40 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -47,12 +47,15 @@
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regcomp.c 368359 2020-12-05 03:18:48Z kevans $");
 #endif
-__RCSID("$NetBSD: regcomp.c,v 1.41 2021/02/25 13:42:16 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.42 2021/02/25 21:28:40 christos Exp $");
 
 #define _OPENBSD_SOURCE
+
+#ifndef LIBHACK
 #define REGEX_GNU_EXTENSIONS
 
 #include "namespace.h"
+#endif
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
@@ -61,10 +64,8 @@ __RCSID("$NetBSD: regcomp.c,v 1.41 2021/02/25 13:42:16 christos Exp $");
 #include <stdlib.h>
 #include <regex.h>
 #include <stdbool.h>
-#include <wchar.h>
-#include <wctype.h>
 
-#ifdef __weak_alias
+#if defined(_weak_alias) && !defined(LIBHACK)
 __weak_alias(regcomp,_regcomp)
 #endif
 
@@ -220,6 +221,46 @@ static char nuls[10];		/* place to point scanner in event of error */
 /* Macro used by computejump()/computematchjump() */
 #ifndef MIN
 #define MIN(a,b)	((a)<(b)?(a):(b))
+#endif
+
+#ifndef NLS
+static const struct {
+	const char *name;
+	int (*func)(int);
+} wctypes[] = {
+#define ADD(x) { .name = # x, .func = is ## x }
+	ADD(alnum),
+	ADD(alpha),
+	ADD(blank),
+	ADD(cntrl),
+	ADD(digit),
+	ADD(graph),
+	ADD(lower),
+	ADD(print),
+	ADD(punct),
+	ADD(space),
+	ADD(upper),
+	ADD(xdigit),
+#undef ADD
+};
+
+wctype_t
+__regex_wctype(const char *str)
+{
+	for (size_t i = 0; i < __arraycount(wctypes); i++) {
+		if (strcmp(wctypes[i].name, str) == 0)
+			return (wctype_t)(i + 1);
+	}
+	return (wctype_t)0;
+}
+
+int
+__regex_iswctype(wint_t c, wctype_t ct)
+{
+	if (ct == 0)
+		return 0;
+	return (*wctypes[ct - 1].func)(c);
+}
 #endif
 
 static int				/* 0 success, otherwise REG_something */
@@ -1063,7 +1104,7 @@ p_range_cmp(wchar_t c1, wchar_t c2)
 {
 #ifdef REGEX_LIBC_COLLATE
 	return __wcollate_range_cmp(c1, c2);
-#else
+#elif defined(NLS)
 	/* Copied from libc/collate __wcollate_range_cmp */
 	wchar_t s1[2], s2[2];
 
@@ -1071,7 +1112,15 @@ p_range_cmp(wchar_t c1, wchar_t c2)
 	s1[1] = L'\0';
 	s2[0] = c2;
 	s2[1] = L'\0';
-	return (wcscoll(s1, s2));
+	return wcscoll(s1, s2);
+#else
+	char s1[2], s2[2];
+
+	s1[0] = (char)c1;
+	s1[1] = '\0';
+	s2[0] = (char)c2;
+	s2[1] = '\0';
+	return strcoll(s1, s2);
 #endif
 }
 
@@ -1219,6 +1268,7 @@ p_b_cclass(struct parse *p, cset *cs)
 
 	p_b_cclass_named(p, cs, clname);
 }
+
 /*
  - p_b_cclass_named - deal with a named character class
  == static void p_b_cclass_named(struct parse *p, cset *cs, const char []);
@@ -1283,9 +1333,7 @@ p_b_coll_elem(struct parse *p,
 {
 	const char *sp = p->next;
 	struct cname *cp;
-	mbstate_t mbs;
-	wchar_t wc;
-	size_t clen, len;
+	size_t len;
 
 	_DIAGASSERT(p != NULL);
 
@@ -1299,6 +1347,11 @@ p_b_coll_elem(struct parse *p,
 	for (cp = cnames; cp->name != NULL; cp++)
 		if (strncmp(cp->name, sp, len) == 0 && strlen(cp->name) == len)
 			return(cp->code);	/* known name */
+#ifdef NLS
+	mbstate_t mbs;
+	wchar_t wc;
+	size_t clen;
+
 	memset(&mbs, 0, sizeof(mbs));
 	if ((clen = mbrtowc(&wc, sp, len, &mbs)) == len)
 		return (wc);			/* single character */
@@ -1307,6 +1360,12 @@ p_b_coll_elem(struct parse *p,
 	else
 		SETERROR(REG_ECOLLATE);		/* neither */
 	return(0);
+#else
+	if (len == 1)
+		return *sp;    /* single character */
+	SETERROR(REG_ECOLLATE);                 /* neither */
+	return 0;
+#endif
 }
 
 /*
@@ -1387,15 +1446,20 @@ bothcases(struct parse *p, wint_t ch)
 	const char *oldend = p->end;
 	char bracket[3 + MB_LEN_MAX];
 	size_t n;
-	mbstate_t mbs;
 
 	_DIAGASSERT(p != NULL);
 
 	assert(othercase(ch) != ch);	/* p_bracket() would recurse */
 	p->next = bracket;
+#ifdef NLS
+	mbstate_t mbs;
 	memset(&mbs, 0, sizeof(mbs));
 	n = wcrtomb(bracket, ch, &mbs);
 	assert(n != (size_t)-1);
+#else
+	n = 0;
+	bracket[n++] = ch;
+#endif
 	bracket[n] = ']';
 	bracket[n + 1] = '\0';
 	p->end = bracket+n+1;
@@ -1540,6 +1604,7 @@ repeat(struct parse *p,
 static wint_t
 wgetnext(struct parse *p)
 {
+#ifdef NLS
 	mbstate_t mbs;
 	wchar_t wc;
 	size_t n;
@@ -1553,7 +1618,10 @@ wgetnext(struct parse *p)
 	if (n == 0)
 		n = 1;
 	p->next += n;
-	return (wc);
+	return wc;
+#else
+	return *p->next++;
+#endif
 }
 
 /*
@@ -1898,8 +1966,6 @@ findmust(struct parse *p, struct re_guts *g)
 	sop s;
 	char *cp;
 	int offset;
-	char buf[MB_LEN_MAX];
-	size_t clen;
 	mbstate_t mbs;
 
 	_DIAGASSERT(p != NULL);
@@ -1933,10 +1999,15 @@ findmust(struct parse *p, struct re_guts *g)
 				memset(&mbs, 0, sizeof(mbs));
 				newstart = scan - 1;
 			}
-			clen = wcrtomb(buf, (int)OPND(s), &mbs);
+#ifdef NLS
+			char buf[MB_LEN_MAX];
+			size_t clen = wcrtomb(buf, (int)OPND(s), &mbs);
 			if (clen == (size_t)-1)
 				goto toohard;
 			newlen += (sopno)clen;
+#else
+			newlen++;
+#endif
 			break;
 		case OPLUS_:		/* things that don't break one */
 		case OLPAREN:
@@ -2017,7 +2088,9 @@ findmust(struct parse *p, struct re_guts *g)
 				offset++;
 			newlen = 0;
 			break;
+#ifdef NLS
 		toohard:/*FALLTHROUGH*/
+#endif
 		default:
 			/* Anything here makes it impossible or too hard
 			 * to calculate the offset -- so we give up;
@@ -2056,9 +2129,13 @@ findmust(struct parse *p, struct re_guts *g)
 	while (cp < g->must + g->mlen) {
 		while (OP(s = *scan++) != OCHAR)
 			continue;
+#ifdef NLS
 		clen = wcrtomb(cp, (int)OPND(s), &mbs);
 		assert(clen != (size_t)-1);
 		cp += clen;
+#else
+		*cp++ = OPND(s);
+#endif
 	}
 	assert(cp == g->must + g->mlen);
 	*cp++ = '\0';		/* just on general principles */

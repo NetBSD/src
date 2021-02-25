@@ -1,4 +1,4 @@
-/*	$NetBSD: regfree.c,v 1.17 2021/02/24 18:13:21 christos Exp $	*/
+/*	$NetBSD: regfree.c,v 1.18 2021/02/25 21:28:40 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regfree.c 326025 2017-11-20 19:49:47Z pfg $");
 #endif
-__RCSID("$NetBSD: regfree.c,v 1.17 2021/02/24 18:13:21 christos Exp $");
+__RCSID("$NetBSD: regfree.c,v 1.18 2021/02/25 21:28:40 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: regfree.c,v 1.17 2021/02/24 18:13:21 christos Exp $");
 #ifdef __weak_alias
 __weak_alias(regfree,_regfree)
 #endif
-#include <wchar.h>
-#include <wctype.h>
 
 #include "utils.h"
 #include "regex2.h"

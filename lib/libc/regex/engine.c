@@ -1,4 +1,4 @@
-/* $NetBSD: engine.c,v 1.27 2021/02/24 18:13:21 christos Exp $ */
+/* $NetBSD: engine.c,v 1.28 2021/02/25 21:28:40 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -41,7 +41,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libc/regex/engine.c 368358 2020-12-05 03:16:05Z kevans $");
 #endif
-__RCSID("$NetBSD: engine.c,v 1.27 2021/02/24 18:13:21 christos Exp $");
+__RCSID("$NetBSD: engine.c,v 1.28 2021/02/25 21:28:40 christos Exp $");
 
 #include <stdbool.h>
 
@@ -161,13 +161,14 @@ static const char *pchar(int ch);
 static const char *
 stepback(const char *start, const char *cur, int nchar)
 {
+#ifdef NLS
 	const char *ret;
 	size_t wc, mbc;
 	mbstate_t mbs;
 	size_t clen;
 
 	if (MB_CUR_MAX == 1)
-		return ((cur - nchar) > start ? cur - nchar : NULL);
+		goto out;
 
 	ret = cur;
 	for (wc = nchar; wc > 0; wc--) {
@@ -185,6 +186,10 @@ stepback(const char *start, const char *cur, int nchar)
 	}
 
 	return (ret);
+out:
+#else
+	return (cur - nchar) > start ? cur - nchar : NULL;
+#endif
 }
 
 /*

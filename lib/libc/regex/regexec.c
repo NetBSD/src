@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.24 2021/02/24 18:13:21 christos Exp $	*/
+/*	$NetBSD: regexec.c,v 1.25 2021/02/25 21:28:40 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regexec.c 326025 2017-11-20 19:49:47Z pfg $");
 #endif
-__RCSID("$NetBSD: regexec.c,v 1.24 2021/02/24 18:13:21 christos Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.25 2021/02/25 21:28:40 christos Exp $");
 
 /*
  * the outer shell of regexec()
@@ -52,7 +52,9 @@ __RCSID("$NetBSD: regexec.c,v 1.24 2021/02/24 18:13:21 christos Exp $");
  * representations for state sets and characters.
  */
 
+#ifndef LIBHACK
 #include "namespace.h"
+#endif
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,10 +62,8 @@ __RCSID("$NetBSD: regexec.c,v 1.24 2021/02/24 18:13:21 christos Exp $");
 #include <limits.h>
 #include <ctype.h>
 #include <regex.h>
-#include <wchar.h>
-#include <wctype.h>
 
-#ifdef __weak_alias
+#if defined(__weak_alias) && !defined(LIBHACK)
 __weak_alias(regexec,_regexec)
 #endif
 
@@ -73,6 +73,7 @@ __weak_alias(regexec,_regexec)
 static __inline size_t
 xmbrtowc(wint_t *wi, const char *s, size_t n, mbstate_t *mbs, wint_t dummy)
 {
+#ifdef NLS
 	size_t nr;
 	wchar_t wc;
 
@@ -88,6 +89,11 @@ xmbrtowc(wint_t *wi, const char *s, size_t n, mbstate_t *mbs, wint_t dummy)
 		return (1);
 	} else
                 return (nr);
+#else
+	if (wi)
+		*wi = *s;
+	return 1;
+#endif
 }
 
 static __inline size_t
