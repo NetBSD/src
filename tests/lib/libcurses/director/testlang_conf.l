@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.24 2021/02/25 00:42:00 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.25 2021/02/25 00:50:10 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -125,7 +125,8 @@ dequote(const char *s, size_t *len)
 			default:
 				if (isalpha(*p))
 					errx(2,
-					    "%s:%zu: invalid escape sequence '\\%c' in string literal",
+					    "%s:%zu: Invalid escape sequence "
+					    "'\\%c' in string literal",
 					    cur_file, line, *p);
 				*q++ = *p++;
 			}
@@ -182,10 +183,9 @@ include		BEGIN(incl);
 		char *inc_file;
 
 		if (include_ptr > MAX_INCLUDES) {
-			fprintf(stderr,
-				"Maximum number of nested includes exceeded "
-				"at line %zu of file %s\n", line, cur_file);
-				exit(2);
+			errx(2,
+			    "%s:%zu: Maximum number of nested includes "
+			    "exceeded", cur_file, line);
 		}
 
 		const char *dir_begin;
