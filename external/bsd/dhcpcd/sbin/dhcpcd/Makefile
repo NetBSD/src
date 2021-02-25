@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.54 2020/06/15 17:02:58 roy Exp $
+# $NetBSD: Makefile,v 1.55 2021/02/25 07:55:53 rin Exp $
 #
 
 WARNS?=		6
@@ -54,7 +54,7 @@ SRCS+=		ipv4ll.c
 .endif
 .endif
 
-.if (${USE_INET6} != "no")
+.if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
 SRCS+=		ipv6.c ipv6nd.c
 # -DSMALL already strips out prefix delegation
