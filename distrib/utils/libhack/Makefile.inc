@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.36 2020/04/17 14:55:24 jdolecek Exp $
+# $NetBSD: Makefile.inc,v 1.37 2021/02/25 21:24:00 christos Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -25,7 +25,7 @@ HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o jemalloc.o \
 		localeconv.o multibyte.o perror.o runetable.o setlocale.o \
 		nl_langinfo.o strcasecmp.o \
 		strerror.o strsignal.o syslog.o utmp.o fmtcheck.o \
-	    aligned_alloc.o
+		aligned_alloc.o regcomp.o regexec.o
 
 .if (${USE_YP} != "no")
 HACKOBJS+=	yplib.o
@@ -78,9 +78,12 @@ libhack.o: ${HACKOBJS}
 	${HACKSRC} \
 	${HACKSRC}/../../../lib/libc/gen \
 	${HACKSRC}/../../../lib/libc/locale \
+	${HACKSRC}/../../../lib/libc/regex \
 	${HACKSRC}/../../../lib/libc/stdlib
 .else
 # XXX .PATH won't work here, because of crunchgen used by various builds
+regcomp.o:	${HACKSRC}/../../../lib/libc/regex/regcomp.c
+regexec.o:	${HACKSRC}/../../../lib/libc/regex/regexec.c
 getcap.o:	${HACKSRC}/../../../lib/libc/gen/getcap.c
 getgrent.o:	${HACKSRC}/getgrent.c
 gethost.o:	${HACKSRC}/gethost.c
