@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.43 2021/02/25 21:47:46 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.44 2021/02/25 21:59:27 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regcomp.c 368359 2020-12-05 03:18:48Z kevans $");
 #endif
-__RCSID("$NetBSD: regcomp.c,v 1.43 2021/02/25 21:47:46 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.44 2021/02/25 21:59:27 christos Exp $");
 
 #define _OPENBSD_SOURCE
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: regcomp.c,v 1.43 2021/02/25 21:47:46 christos Exp $");
 #include <regex.h>
 #include <stdbool.h>
 
-#if defined(_weak_alias) && !defined(LIBHACK)
+#if defined(__weak_alias) && !defined(LIBHACK)
 __weak_alias(regcomp,_regcomp)
 #endif
 
