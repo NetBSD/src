@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.23 2017/07/03 21:31:00 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.24 2021/02/25 03:43:57 rin Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 2017
+.Dd February 25, 2021
 .Dt INSTALLBOOT 8 amiga
 .Os
 .Sh NAME
@@ -69,27 +69,30 @@ filesystem code in
 to load the kernel from the filesystem on the partition it was started from.
 The code for the boot program can be found in
 .Pa /usr/mdec/bootxx_fd
-.Pq floppy disk code
+.Pq floppy disk code ,
+.Pa /usr/mdec/bootxx_ffsv1
+.Pq generic RDB disk code for FFSv1 ,
 or
-.Pa /usr/mdec/bootxx_ffs
-.Pq generic RDB disk code .
+.Pa /usr/mdec/bootxx_ffsv2
+.Pq generic RDB disk code for FFSv2 .
 .Pp
 The arguments are:
 .Bl -tag -width bootblock
 .It Fl l Ar newcommandline
 Specify a different command line to replace the default.
 .It Ar bootblock
-The file containing the bootblock (normally /usr/mdec/bootxx_ffs for RDB devices).
+The file containing the bootblock (normally /usr/mdec/bootxx_ffsv1 or
+bootxx_ffsv2 for RDB devices).
 .It Ar device
 The name of the character special device specifying the partition on which the
 bootstrap is to be installed.
 .El
 .Sh EXAMPLES
 The following command will install the
-boot program in the bootblock area on
+boot program for FFSv1 in the bootblock area on
 .Dq sd0a :
 .Bd -literal -offset indent
-installboot /usr/mdec/bootxx_ffs /dev/rsd0a
+installboot /usr/mdec/bootxx_ffsv1 /dev/rsd0a
 .Ed
 .Sh SEE ALSO
 .Xr dd 1 ,
@@ -122,8 +125,8 @@ There is currently no easy way to edit the RDB from within
 .Nx .
 Therefore, you have to use HDTOOLBOX or a similar tool to
 set the partition to bootable, "use custom bootblocks" and the number
-of bootblocks to 16 (for bootxx_ffs) or 2 (for bootxx_fd), at least the first
-time you install the bootblock.
+of bootblocks to 16 (for bootxx_ffsv1 or bootxx_ffsv2) or 2 (for bootxx_fd),
+at least the first time you install the bootblock.
 .Pp
 As normal dd is used to install the bootblock, you can only install onto
 your currently used root (or any other mounted) partition from single-user
