@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.17 2020/08/20 15:54:12 riastradh Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.18 2021/02/25 03:40:27 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <err.h>
@@ -111,6 +112,7 @@ main(int argc, char *argv[])
 	int undefsyms;
 	uint32_t tmp32;
 	uint16_t tmp16;
+	int Sflag = 0;
 
 	progname = argv[0];
 
@@ -122,7 +124,7 @@ main(int argc, char *argv[])
 		break;
 	case 'S':
 		/* Dynamically size second-stage boot */
-		sumsize = 0;
+		Sflag = 1;
 		break;
 	case 'd':
 		debug = 1;
@@ -155,7 +157,7 @@ main(int argc, char *argv[])
 		    htobe16(eh->e_machine));
 
 	/* Calculate sizes from section headers. */
-	tsz = dsz = bsz = trsz = pcrelsz = r32sz = 0;
+	tsz = dsz = bsz = trsz = 0;
 	sh = (Elf32_Shdr *)(image + htobe32(eh->e_shoff));
 	shstrtab = (char *)(image + htobe32(sh[htobe16(eh->e_shstrndx)].sh_offset));
 	symtab = NULL;	/*XXX*/
@@ -201,30 +203,44 @@ main(int argc, char *argv[])
 
 	dprintf(("%d relocs\n", trsz/12));
 
-	if (sumsize == 0) {
+	if (Sflag) {
 		/*
-		 * XXX overly cautious, but this guarantees that 16bit
-		 * pc offsets and our relocs always work.
+		 * For second-stage boot, there's no limit for binary size,
+		 * and we dynamically scale it. However, it should be small
+		 * enough so that
+		 *
+		 *  (1) all R_68K_PC16 symbols get relocated, and
+		 *
+		 *  (2) all values in our relocation table for R_68K_32
+		 *      symbols fit within 16-bit integer.
+		 *
+		 * Both will be checked by codes below.
+		 *
+		 * At the moment, (2) is satisfied with sufficient margin.
+		 * But if it is not the case in the future, format for
+		 * relocation table should be modified.
 		 */
-		bbsize = 32768;
-		if (bbsize < (tsz + dsz + bsz)) {
-			errx(1, "%s: too big (%d < (%d + %d + %d))",
-			    argv[0], bbsize, tsz, dsz, bsz);
-		}
+		bbsize = roundup(tsz + dsz, 512);
 		sumsize = bbsize / 512;
+	} else {
+		/*
+		 * We have one contiguous area allocated by the ROM to us.
+		 */
+		if (tsz + dsz + bsz > bbsize)
+			errx(1, "%s: resulting image too big %d+%d+%d=%d",
+			    argv[0], tsz, dsz, bsz, tsz + dsz + bsz);
 	}
 
-	buffer = malloc(bbsize);
-	relbuf = (u_int32_t *)malloc(bbsize);
+	buffer = NULL;
+	relbuf = NULL;
+
+retry:
+	pcrelsz = r32sz = 0;
+
+	buffer = realloc(buffer, bbsize);
+	relbuf = realloc(relbuf, bbsize);
 	if (buffer == NULL || relbuf == NULL)
 		err(1, "Unable to allocate memory\n");
-
-	/*
-	 * We have one contiguous area allocated by the ROM to us.
-	 */
-	if (tsz+dsz+bsz > bbsize)
-		errx(1, "%s: resulting image too big %d+%d+%d=%d", argv[0],
-		    tsz, dsz, bsz, tsz + dsz + bsz);
 
 	memset(buffer, 0, bbsize);
 
@@ -363,7 +379,10 @@ main(int argc, char *argv[])
 		lptr = (u_int32_t *)&buffer[relbuf[i]];
 		addrdiff = relbuf[i] - oldaddr;
 		dprintf(("(0x%04x, 0x%04x): ", *lptr, addrdiff));
-		if (addrdiff > 255) {
+		if (addrdiff > 0xffff) {
+			errx(1, "addrdiff overflows: relbuf = 0x%08x, "
+			    "oldaddr = 0x%08x, abort.\n", relbuf[i], oldaddr);
+		} else if (addrdiff > 0xff) {
 			*rpo = 0;
 			if (delta > 0) {
 				++rpo;
@@ -387,8 +406,16 @@ main(int argc, char *argv[])
 		oldaddr = relbuf[i];
 
 		if (delta < 0 ? rpo <= buffer+tsz+dsz
-		    : rpo >= buffer + bbsize)
-			errx(1, "Relocs don't fit.");
+		    : rpo >= buffer + bbsize) {
+			printf("relocs don't fit, ");
+			if (Sflag) {
+				printf("retry.\n");
+				bbsize += 512;
+				sumsize++;
+				goto retry;
+			} else
+				errx(1, "abort.");
+		}
 	}
 	*rpo = 0; rpo += delta;
 	*rpo = 0; rpo += delta;
@@ -401,8 +428,16 @@ main(int argc, char *argv[])
 	 * RELOCs must fit into the bss area.
 	 */
 	if (delta < 0 ? rpo <= buffer+tsz+dsz
-	    : rpo >= buffer + bbsize)
-		errx(1, "Relocs don't fit.");
+	    : rpo >= buffer + bbsize) {
+		printf("relocs don't fit, ");
+		if (Sflag) {
+			printf("retry.\n");
+			bbsize += 512;
+			sumsize++;
+			goto retry;
+		} else
+			errx(1, "abort.");
+	}
 
 	if (undefsyms > 0)
 		errx(1, "Undefined symbols referenced");
