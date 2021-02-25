@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2017/01/24 18:04:01 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2021/02/25 21:46:55 rin Exp $
 
 IMAGESIZE=	7m
 MAKEFS_FLAGS+=   -o density=4k
@@ -9,4 +9,4 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \
 		${DESTDIR}/usr/mdec/boot.amiga \
 		${KERNOBJDIR}/INSTALL/netbsd
 
-IMAGEPOSTBUILD=	dd if=${DESTDIR}/usr/mdec/bootxx_ffs of=${IMAGE} bs=8192 conv=notrunc
+IMAGEPOSTBUILD=	dd if=${DESTDIR}/usr/mdec/bootxx_ffsv1 of=${IMAGE} bs=8192 conv=notrunc
