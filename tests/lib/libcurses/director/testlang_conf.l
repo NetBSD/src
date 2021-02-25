@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.21 2021/02/15 07:06:27 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.22 2021/02/25 00:25:31 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -120,6 +120,10 @@ dequote(const char *s, size_t *len)
 					break;
 
 				default:
+					if (isalpha((unsigned char)*p))
+						errx(2,
+						    "%s:%zu: invalid escape sequence '\\%c' in string literal",
+						    cur_file, line, *p);
 					*q++ = *p++;
 				}
 			}
