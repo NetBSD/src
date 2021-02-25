@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.14 2020/05/21 22:55:48 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.15 2021/02/25 19:11:44 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.14 2020/05/21 22:55:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.15 2021/02/25 19:11:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,8 @@ gffb_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GEFORCE2MX)
 		return 100;
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GEFORCE_6800U)
+		return 100;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GF_FXGO5200)
 		return 100;
 	return (0);
 }
