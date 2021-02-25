@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.h,v 1.7 2021/02/23 22:14:59 christos Exp $	*/
+/*	$NetBSD: utils.h,v 1.8 2021/02/25 21:28:40 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -37,6 +37,26 @@
  *	@(#)utils.h	8.3 (Berkeley) 3/20/94
  * $FreeBSD: head/lib/libc/regex/utils.h 341838 2018-12-12 04:23:00Z yuripv $
  */
+
+#ifdef NLS
+#include <wchar.h>
+#include <wctype.h>
+#else
+#include <ctype.h>
+typedef short wint_t;
+typedef char mbstate_t;
+typedef short wctype_t;
+#define iswupper(a) isupper(a)
+#define iswlower(a) islower(a)
+#define iswalpha(a) isalpha(a)
+#define iswalnum(a) isalnum(a)
+#define towupper(a) toupper(a)
+#define towlower(a) tolower(a)
+extern wctype_t __regex_wctype(const char *);
+extern int __regex_iswctype(wint_t, wctype_t);
+#define wctype(s) __regex_wctype(s)
+#define iswctype(c, t) __regex_iswctype((c), (t))
+#endif
 
 /* utility definitions */
 #define	DUPMAX		_POSIX2_RE_DUP_MAX	/* xxx is this right? */
