@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.42 2021/02/25 21:28:40 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.43 2021/02/25 21:47:46 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regcomp.c 368359 2020-12-05 03:18:48Z kevans $");
 #endif
-__RCSID("$NetBSD: regcomp.c,v 1.42 2021/02/25 21:28:40 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.43 2021/02/25 21:47:46 christos Exp $");
 
 #define _OPENBSD_SOURCE
 
@@ -2130,7 +2130,7 @@ findmust(struct parse *p, struct re_guts *g)
 		while (OP(s = *scan++) != OCHAR)
 			continue;
 #ifdef NLS
-		clen = wcrtomb(cp, (int)OPND(s), &mbs);
+		size_t clen = wcrtomb(cp, (int)OPND(s), &mbs);
 		assert(clen != (size_t)-1);
 		cp += clen;
 #else
