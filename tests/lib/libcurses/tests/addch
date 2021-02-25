@@ -1,4 +1,4 @@
-# $NetBSD: addch,v 1.7 2021/02/14 11:21:37 rillig Exp $
+# $NetBSD: addch,v 1.8 2021/02/25 01:07:43 rillig Exp $
 #
 # Between at least 2012 and 2016, addstr did not advance win->curx for a '\t',
 # but addch did.  This was inconsistent.
@@ -33,3 +33,29 @@ call OK addch `\000\n`
 
 call OK refresh
 compare addch.chk
+
+# Ensure that backspace works as intended.
+# See tests/addbytes.
+call OK move 1 0
+call OK addstr "12345"
+call OK addch `\000\010`
+call2 1 4 getyx STDSCR
+
+call OK addch `\000\010`
+call OK addch `\000\010`
+call OK addch `\000\010`
+call OK addch `\000\010`
+call2 1 0 getyx STDSCR
+
+# If curx is already 0, backspace is a no-op.
+call OK addch `\000\010`
+call2 1 0 getyx STDSCR
+
+call OK addstr "123"
+call OK addch `\000\t`
+call2 1 8 getyx STDSCR
+
+# Backspace affects the cursor position, no matter whether the previously
+# output char was a tab or a space.
+call OK addch `\000\010`
+call2 1 7 getyx STDSCR
