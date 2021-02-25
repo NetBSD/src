@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.16 2017/02/18 21:47:11 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.17 2021/02/25 03:43:57 rin Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"	From:
 .\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd February 17, 2017
+.Dd February 25, 2021
 .Dt BOOT 8 amiga
 .Os
 .Sh NAME
@@ -233,11 +233,13 @@ filesystems such as bffs to access the
 .Nx
 root partition from AmigaOS.
 .Sh FILES
-.Bl -tag -width /usr/mdec/bootxx_ffs -compact
+.Bl -tag -width /usr/mdec/bootxx_ffsv1 -compact
 .It Pa /netbsd
 system kernel
-.It Pa /usr/mdec/bootxx_ffs
-RDB device primary boot block
+.It Pa /usr/mdec/bootxx_ffsv1
+RDB device primary boot block for FFSv1 (and ustarfs)
+.It Pa /usr/mdec/bootxx_ffsv2
+RDB device primary boot block for FFSv2
 .It Pa /usr/mdec/bootxx_fd
 floppy disk primary boot block
 .It Pa /usr/mdec/boot.amiga
