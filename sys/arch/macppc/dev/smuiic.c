@@ -1,4 +1,4 @@
-/*	$NetBSD: smuiic.c,v 1.5 2020/07/02 12:47:19 macallan Exp $ */
+/*	$NetBSD: smuiic.c,v 1.6 2021/02/25 20:51:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -62,6 +62,8 @@ smuiic_match(device_t parent, struct cfdata *cf, void *aux)
 
 	if (strcmp(ca->ca_name, "i2c-bus") == 0)
 		return 5;
+	if (strcmp(ca->ca_name, "i2c") == 0)
+		return 5;
 	
 	return 0;
 }
@@ -73,13 +75,13 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 	struct smuiic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 	prop_dictionary_t dict = device_properties(self);
-	int devs;
+	int devs, devc;
 	uint32_t addr;
 	char compat[256];
 	prop_array_t cfg;
 	prop_dictionary_t dev;
 	prop_data_t data;
-	char name[32];
+	char name[32], descr[32], num[8];
 
 	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
@@ -108,6 +110,18 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 		prop_object_release(data);
 		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", devs);
+		devc = OF_child(devs);
+		while (devc != 0) {
+			int reg;
+			if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
+			if (OF_getprop(devc, "location", descr, 32) <= 0)
+				goto nope;
+			printf("found '%s' at %02x\n", descr, reg);
+			snprintf(num, 7, "s%02x", reg);
+			prop_dictionary_set_string(dev, num, descr);
+		nope:
+			devc = OF_peer(devc);
+		}
 		prop_array_add(cfg, dev);
 		prop_object_release(dev);
 	skip:
