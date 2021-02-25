@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.117 2021/02/23 16:03:00 rin Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.118 2021/02/25 13:41:58 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -554,6 +554,10 @@ int raise_default_signal(int);
 
 #if !HAVE_DECL_REALLOCARR
 int reallocarr(void *, size_t, size_t);
+#endif
+
+#if !HAVE_DECL_REALLOCARRAY
+void *reallocarray(void *, size_t, size_t);
 #endif
 
 #if !HAVE_DECL_SETENV
