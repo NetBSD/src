@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.23 2021/02/25 21:56:35 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2021/02/26 00:41:56 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
-USE_BUILTIN_REGEX?=no	# Our regex supports widechar
+USE_BUILTIN_REGEX?=yes	# Although our regex supports widechar nvi requires
+			# a non-standard API
 
 WARNS=	5
 
