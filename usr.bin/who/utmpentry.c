@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.21 2019/10/05 23:35:57 mrg Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.22 2021/02/26 02:45:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.21 2019/10/05 23:35:57 mrg Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.22 2021/02/26 02:45:43 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -95,14 +95,7 @@ setup(const char *fname)
 	struct stat st;
 	const char *sfname;
 
-	if (fname == NULL) {
-#ifdef SUPPORT_UTMPX
-		setutxent();
-#endif
-#ifdef SUPPORT_UTMP
-		setutent();
-#endif
-	} else {
+	if (fname != NULL) {
 		size_t len = strlen(fname);
 		if (len == 0)
 			errx(1, "Filename cannot be 0 length.");
@@ -133,9 +126,9 @@ setup(const char *fname)
 			what &= ~1;
 		} else {
 			if (timespeccmp(&st.st_mtimespec, &utmpxtime, >))
-			    utmpxtime = st.st_mtimespec;
+				utmpxtime = st.st_mtimespec;
 			else
-			    what &= ~1;
+				what &= ~1;
 		}
 	}
 #endif
@@ -204,10 +197,11 @@ getutentries(const char *fname, struct utmpentry **epp)
 #endif
 
 #ifdef SUPPORT_UTMPX
+	setutxent();
 	while ((what & 1) && (utx = getutxent()) != NULL) {
 		if (fname == NULL && ((1 << utx->ut_type) & etype) == 0)
 			continue;
-		if ((ep = calloc(1, sizeof(struct utmpentry))) == NULL) {
+		if ((ep = calloc(1, sizeof(*ep))) == NULL) {
 			warn(NULL);
 			return 0;
 		}
@@ -218,6 +212,7 @@ getutentries(const char *fname, struct utmpentry **epp)
 #endif
 
 #ifdef SUPPORT_UTMP
+	setutent();
 	if ((etype & (1 << USER_PROCESS)) != 0) {
 		while ((what & 2) && (ut = getutent()) != NULL) {
 			if (fname == NULL && (*ut->ut_name == '\0' ||
