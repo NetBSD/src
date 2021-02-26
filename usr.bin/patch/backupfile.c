@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: backupfile.c,v 1.19 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/backupfile.c,v 1.5 2008/08/11 00:05:06 joerg Exp $
- * $NetBSD: backupfile.c,v 1.15 2014/04/11 17:30:03 christos Exp $
+ * $NetBSD: backupfile.c,v 1.15.26.1 2021/02/26 13:29:16 martin Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backupfile.c,v 1.15 2014/04/11 17:30:03 christos Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.15.26.1 2021/02/26 13:29:16 martin Exp $");
 
 #include <ctype.h>
 #include <dirent.h>
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: backupfile.c,v 1.15 2014/04/11 17:30:03 christos Exp $");
 #define ISDIGIT(c) (isascii ((unsigned char)c) && isdigit ((unsigned char)c))
 
 /* Which type of backup file names are generated. */
-enum backup_type backup_type = none;
+enum backup_type backup_type = undefined;
 
 /*
  * The extension added to file names to produce a simple (as opposed to
