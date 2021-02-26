@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.50 2021/02/25 09:37:33 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.51 2021/02/26 13:31:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1703,4 +1703,11 @@ sys/arch/m68k/m68k/reenter_syscall.s		1.5-1.7
 
 	m68k: PR 55990: fix kernel stack overflow panic
 	[tsutsui, ticket #1214]
+
+usr.bin/patch/backupfile.c			1.16
+usr.bin/patch/backupfile.h			1.7
+usr.bin/patch/patch.c				1.30
+
+	patch(1): make '-V none' work.
+	[nia, ticket #1215]
 
