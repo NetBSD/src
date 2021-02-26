@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.130 2019/08/22 14:52:58 rin Exp $
+#	$NetBSD: files.mac68k,v 1.131 2021/02/26 10:54:12 rin Exp $
 
 # mac68k-specific configuration info
 
@@ -9,6 +9,8 @@ defflag	opt_mac68k.h		DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
 defflag	opt_grf_compat.h	GRF_COMPAT
 
 defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITEFONT
+
+defparam opt_mac68k.h		MAC68K_MEMSIZE
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
