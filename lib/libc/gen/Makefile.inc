@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.208 2021/02/26 03:19:34 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.209 2021/02/26 04:28:14 rin Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -56,7 +56,8 @@ COPTS.syslog.c = -Wno-format-nonliteral
 MAN+=	alarm.3 arc4random.3 basename.3 bsd_signal.3 bswap.3 \
 	clock.3 closefrom.3 confstr.3 \
 	cpuset.3 ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
-	endutxent.3 err.3 exec.3 extattr_copy_file.3 extattr_namespace_to_string.3 \
+	endutent.3 endutxent.3 err.3 exec.3 extattr_copy_file.3 \
+	extattr_namespace_to_string.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
 	ftok.3 fts.3 ftw.3 \
 	getbsize.3 cgetcap.3 getcwd.3 getdevmajor.3 \
