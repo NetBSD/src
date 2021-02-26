@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.31 2021/02/21 17:07:45 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.32 2021/02/26 10:06:42 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -107,6 +107,8 @@ void	intr_ipi_send(const kcpuset_t *, u_long ipi);
 #include <sys/evcnt.h>
 #include <sys/percpu.h>
 
+#include <machine/cpufunc.h>
+
 #ifndef PIC_MAXPICS
 #define PIC_MAXPICS	32
 #endif
@@ -184,9 +186,13 @@ struct pic_ops {
  */
 #define pic_set_priority(ci, newipl)					\
 	do {								\
+		register_t __psw = cpsid(I32_bit);			\
 		(ci)->ci_cpl = (newipl);				\
 		if (__predict_true(pic_list[0] != NULL)) {		\
 			(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl); \
+		}							\
+		if ((__psw & I32_bit) == 0) {				\
+			cpsie(I32_bit);					\
 		}							\
 	} while (0)
 #else
