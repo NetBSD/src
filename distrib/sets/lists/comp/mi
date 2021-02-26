@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2374 2021/02/15 14:38:06 christos Exp $
+#	$NetBSD: mi,v 1.2375 2021/02/26 03:08:25 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6992,6 +6992,7 @@
 ./usr/share/man/cat3/endservent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/endttyent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/endusershell.0		comp-c-catman		.cat
+./usr/share/man/cat3/endutent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/endutxent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/endwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erand48.0			comp-c-catman		.cat
@@ -7512,6 +7513,8 @@
 ./usr/share/man/cat3/getusershell.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getutmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getutmpx.0			comp-c-catman		.cat
+./usr/share/man/cat3/getutent.0			comp-c-catman		.cat
+./usr/share/man/cat3/getutline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getutxent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getutxid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getutxline.0		comp-c-catman		.cat
@@ -9532,6 +9535,7 @@
 ./usr/share/man/cat3/putenv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/puts.0			comp-c-catman		.cat
+./usr/share/man/cat3/pututline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pututxline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/putw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putwc.0			comp-c-catman		.cat
@@ -9941,6 +9945,7 @@
 ./usr/share/man/cat3/setupterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setusercontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setusershell.0		comp-c-catman		.cat
+./usr/share/man/cat3/setutent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setutxent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setvbuf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sha.0			comp-obsolete		obsolete
@@ -15261,6 +15266,7 @@
 ./usr/share/man/html3/endservent.html		comp-c-htmlman		html
 ./usr/share/man/html3/endttyent.html		comp-c-htmlman		html
 ./usr/share/man/html3/endusershell.html		comp-c-htmlman		html
+./usr/share/man/html3/endutent.html		comp-c-htmlman		html
 ./usr/share/man/html3/endutxent.html		comp-c-htmlman		html
 ./usr/share/man/html3/endwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/erand48.html		comp-c-htmlman		html
@@ -15778,6 +15784,8 @@
 ./usr/share/man/html3/getusershell.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutmpx.html		comp-c-htmlman		html
+./usr/share/man/html3/getutent.html		comp-c-htmlman		html
+./usr/share/man/html3/getutline.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxid.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxline.html		comp-c-htmlman		html
@@ -17783,6 +17791,7 @@
 ./usr/share/man/html3/putenv.html		comp-c-htmlman		html
 ./usr/share/man/html3/putp.html			comp-c-htmlman		html
 ./usr/share/man/html3/puts.html			comp-c-htmlman		html
+./usr/share/man/html3/pututline.html		comp-c-htmlman		html
 ./usr/share/man/html3/pututxline.html		comp-c-htmlman		html
 ./usr/share/man/html3/putw.html			comp-c-htmlman		html
 ./usr/share/man/html3/putwc.html		comp-c-htmlman		html
@@ -18183,6 +18192,7 @@
 ./usr/share/man/html3/setupterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/setusercontext.html	comp-c-htmlman		html
 ./usr/share/man/html3/setusershell.html		comp-c-htmlman		html
+./usr/share/man/html3/setutent.html		comp-c-htmlman		html
 ./usr/share/man/html3/setutxent.html		comp-c-htmlman		html
 ./usr/share/man/html3/setvbuf.html		comp-c-htmlman		html
 ./usr/share/man/html3/sha1.html			comp-c-htmlman		html
@@ -23465,6 +23475,7 @@
 ./usr/share/man/man3/endservent.3		comp-c-man		.man
 ./usr/share/man/man3/endttyent.3		comp-c-man		.man
 ./usr/share/man/man3/endusershell.3		comp-c-man		.man
+./usr/share/man/man3/endutent.3			comp-c-man		.man
 ./usr/share/man/man3/endutxent.3		comp-c-man		.man
 ./usr/share/man/man3/endwin.3			comp-c-man		.man
 ./usr/share/man/man3/erand48.3			comp-c-man		.man
@@ -23985,6 +23996,8 @@
 ./usr/share/man/man3/getusershell.3		comp-c-man		.man
 ./usr/share/man/man3/getutmp.3			comp-c-man		.man
 ./usr/share/man/man3/getutmpx.3			comp-c-man		.man
+./usr/share/man/man3/getutent.3			comp-c-man		.man
+./usr/share/man/man3/getutline.3		comp-c-man		.man
 ./usr/share/man/man3/getutxent.3		comp-c-man		.man
 ./usr/share/man/man3/getutxid.3			comp-c-man		.man
 ./usr/share/man/man3/getutxline.3		comp-c-man		.man
@@ -26029,6 +26042,7 @@
 ./usr/share/man/man3/putenv.3			comp-c-man		.man
 ./usr/share/man/man3/putp.3			comp-c-man		.man
 ./usr/share/man/man3/puts.3			comp-c-man		.man
+./usr/share/man/man3/pututline.3		comp-c-man		.man
 ./usr/share/man/man3/pututxline.3		comp-c-man		.man
 ./usr/share/man/man3/putw.3			comp-c-man		.man
 ./usr/share/man/man3/putwc.3			comp-c-man		.man
@@ -26434,6 +26448,7 @@
 ./usr/share/man/man3/setupterm.3		comp-c-man		.man
 ./usr/share/man/man3/setusercontext.3		comp-c-man		.man
 ./usr/share/man/man3/setusershell.3		comp-c-man		.man
+./usr/share/man/man3/setutent.3			comp-c-man		.man
 ./usr/share/man/man3/setutxent.3		comp-c-man		.man
 ./usr/share/man/man3/setvbuf.3			comp-c-man		.man
 ./usr/share/man/man3/sha.3			comp-obsolete		obsolete
