@@ -1,4 +1,4 @@
-.\" $NetBSD: intro.4,v 1.31 2017/07/03 21:30:59 wiz Exp $
+.\" $NetBSD: intro.4,v 1.32 2021/02/26 10:56:48 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd February 17, 2017
+.Dd February 26, 2021
 .Dt INTRO 4 i386
 .Os
 .Sh NAME
@@ -161,126 +161,6 @@ Console devices using ISA, EISA, or PCI video adaptors and standard
 AT or PS/2 keyboards are supported by the machine independent
 .Xr wscons 4
 console driver.
-.\"
-.\"
-.\"
-.Pp
-Disk, tape and SCSI devices:
-.Bl -tag -width speaker -offset indent -compact
-.It aha
-Adaptec 154x ISA SCSI adapter boards.
-.It ahb
-Adaptec 1742 EISA SCSI adapter boards.
-.It ahc
-Adaptec 274x, 284x, 2940 and 3940 VL/EISA/PCI SCSI adapter boards.
-.It aic
-Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
-.It bha
-Buslogic  BT-445 (ISA), BT-74x (EISA), and BT-9[45][68] (PCI) SCSI boards.
-.It mcd
-Mitsumi CD-ROM drives.
-.It ncr
-Symbios (formerly NCR) PCI SCSI adapter boards.
-.It pciide
-PCI IDE controllers.
-.It sea
-Seagate/Future Domain SCSI cards.
-ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
-.It uha
-Ultrastor ISA and EISA SCSI adapter cards.
-Ultrastore 14f, Ultrastore 34f, and Ultrastore 24f.
-.It wdc
-Standard ISA Western Digital type hard drives controllers.
-MFM, RLL, ESDI, and IDE.
-.It wt
-Wangtek and compatible ISA controllers for QIC-02 and QIC-36 tapes.
-.El
-.\"
-.\"
-.\"
-.Pp
-Network interfaces:
-.Bl -tag -width speaker -offset indent -compact
-.It de
-Ethernet driver for dc21040, dc21042, and dc21140-based  10Mbit and 100Mbit
-PCI Ethernet adaptors, including DE-430, DE-450 DE-500, SMC EtherPower,
-and Znyx.
-.It fea, fpa
-FDDI driver for Digital DEFEA (EISA) and DEFPA FDDI adaptors.
-.It ed
-Western Digital/SMC 80x3 and Ultra, 3Com 3c503, and Novell NE1000 and 2000
-Ethernet interface
-.It eg
-3Com 3c505 Ethernet board.
-.It el
-3Com 3c501 Ethernet board.
-.It ep
-3Com EtherLink III (3c5x9) Ethernet interface
-.It ie
-Ethernet driver for the AT&T StarLAN 10, EN100, StarLan Fiber, and 3Com 3c507.
-.It iy
-Ethernet driver for the ISA Intel EtherExpress PR0/10  adaptor.
-.It le
-Ethernet driver for BICC Isolan, Novell NE2100,  Digital DEPCA cards,
-and PCnet-PCI cards.
-.It tl
-Ethernet driver for ThunderLAN-based Ethernet adaptor.
-.El
-.\"
-.\"
-.\"
-.Pp
-Serial communication cards:
-.Bl -tag -width speaker -offset indent -compact
-.It ast
-multiplexing serial communications card first made by AST.
-.It boca
-Boca BB100[48] and BB2016 multiplexing serial communications cards.
-NS8250-, NS16450-, and NS16550-based asynchronous serial
-communications device interface, or  internal modems that provide
-a serial-chip compatible interface.
-.It cy
-Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
-device interface
-.It rtfps
-a multiplexing serial communications card derived from IBM PC/RT hardware.
-.El
-.\"
-.\"
-.\"
-Sound cards:
-.Bl -tag -width speaker -offset indent -compact
-.It gus
-Gravis Ultrasound non-PnP soundcards.
-.It guspnp
-Gravis Ultrasound PnP soundcards.
-.It pas
-ProAudio Spectrum soundcards.
-.It pss
-Personal Sound System-compatible soundcards, including
-Cardinal Digital SoundPro 16 and Orchid Soundwave 32.
-.It sb
-Soundblaster, Soundblaster 16, and Soundblaster Pro soundcards.
-.It wss
-Windows Sound System-compatible sound cards based on the ad1848 chip.
-.El
-.\"
-.\"
-.\"
-.Pp
-Mouse and pointer devices:
-.Bl -tag -width speaker -offset indent -compact
-.It joy
-joystick game adaptor
-.It lms
-Logitech-style bus mouse device interface
-.It mms
-Microsoft-style bus mouse device interface
-.It pms
-PS/2 auxiliary port mouse device interface
-.El
-.Pp
-Serial mice can be configured on any supported serial port.
 .\"
 .\"
 .\"
