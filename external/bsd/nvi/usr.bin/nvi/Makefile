@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.24 2021/02/26 00:41:56 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2021/02/26 02:54:21 rin Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
+
+.if ${USE_WIDECHAR} == "yes"
 USE_BUILTIN_REGEX?=yes	# Although our regex supports widechar nvi requires
 			# a non-standard API
+.else
+USE_BUILTIN_REGEX?=no
+.endif
 
 WARNS=	5
 
@@ -55,12 +60,13 @@ NOTUSED=ip_funcs.c ip_read.c ip_screen.c ip_term.c \
 	ip_run.c ip_send.c ip_trans.c ipc_cmd.c ipc_method.c
 
 # For wide char support
-.if ${USE_BUILTIN_REGEX} == "yes"
-.if ${ACTIVE_CC} == "gcc"
-COPTS.regexec.c+=	-Wno-old-style-definition
+.if ${USE_WIDECHAR} == "yes"
+CPPFLAGS+=-DUSE_WIDECHAR
 .endif
+.if ${USE_BUILTIN_REGEX} == "yes"
 SRCS+=	regcomp.c regerror.c regexec.c regfree.c
-CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE -DUSE_WIDECHAR
+CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE
+COPTS.regexec.c+= ${${ACTIVE_CC} == "gcc":? -Wno-old-style-definition :}
 .endif
 
 # For db3 db1 emulation
