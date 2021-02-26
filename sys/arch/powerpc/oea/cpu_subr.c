@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.106 2021/02/26 02:18:57 thorpej Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.107 2021/02/26 21:15:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.106 2021/02/26 02:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.107 2021/02/26 21:15:20 thorpej Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -267,20 +267,22 @@ register_t cpu_pslusermask = 0xffff;
 
 unsigned long oeacpufeat;
 
-/* This is to be called from locore.S, and nowhere else. */
-
 void
-cpu_model_init(void)
+cpu_features_probe(void)
 {
+	static bool feature_probe_done;
+
 	u_int pvr, vers;
+
+	if (feature_probe_done) {
+		return;
+	}
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
 
-	oeacpufeat = 0;
-
 	if ((vers >= IBMRS64II && vers <= IBM970GX) || vers == MPC620 ||
-		vers == IBMCELL || vers == IBMPOWER6P5) {
+	    vers == IBMCELL || vers == IBMPOWER6P5) {
 		oeacpufeat |= OEACPU_64;
 		oeacpufeat |= OEACPU_64_BRIDGE;
 		oeacpufeat |= OEACPU_NOBAT;
@@ -289,22 +291,53 @@ cpu_model_init(void)
 		oeacpufeat |= OEACPU_601;
 
 	} else if (MPC745X_P(vers)) {
-		register_t hid1 = mfspr(SPR_HID1);
-
 		if (vers != MPC7450) {
-			register_t hid0 = mfspr(SPR_HID0);
-
 			/* Enable more SPRG registers */
 			oeacpufeat |= OEACPU_HIGHSPRG;
 
 			/* Enable more BAT registers */
 			oeacpufeat |= OEACPU_HIGHBAT;
-			hid0 |= HID0_HIGH_BAT_EN;
 
 			/* Enable larger BAT registers */
 			oeacpufeat |= OEACPU_XBSEN;
-			hid0 |= HID0_XBSEN;
+		}
 
+	} else if (vers == IBM750FX || vers == IBM750GX) {
+		oeacpufeat |= OEACPU_HIGHBAT;
+	}
+
+	feature_probe_done = true;
+}
+
+void
+cpu_features_enable(void)
+{
+	static bool feature_enable_done;
+
+	if (feature_enable_done) {
+		return;
+	}
+
+	u_int pvr, vers;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
+
+	if (MPC745X_P(vers)) {
+		register_t hid0 = mfspr(SPR_HID0);
+		register_t hid1 = mfspr(SPR_HID1);
+
+		const register_t ohid0 = hid0;
+
+		if (oeacpufeat & OEACPU_HIGHBAT) {
+			hid0 |= HID0_HIGH_BAT_EN;
+		}
+
+		if (oeacpufeat & OEACPU_XBSEN) {
+			hid0 |= HID0_XBSEN;
+		}
+
+		if (hid0 != ohid0) {
 			mtspr(SPR_HID0, hid0);
 			__asm volatile("sync;isync");
 		}
@@ -314,10 +347,22 @@ cpu_model_init(void)
 
 		mtspr(SPR_HID1, hid1);
 		__asm volatile("sync;isync");
-
-	} else if (vers == IBM750FX || vers == IBM750GX) {
-		oeacpufeat |= OEACPU_HIGHBAT;
 	}
+
+	feature_enable_done = true;
+}
+
+/* This is to be called from locore.S, and nowhere else. */
+
+void
+cpu_model_init(void)
+{
+	/*
+	 * This is just a wrapper for backwards-compatibility, and will
+	 * probably be garbage-collected in the near future.
+	 */
+	cpu_features_probe();
+	cpu_features_enable();
 }
 
 void
