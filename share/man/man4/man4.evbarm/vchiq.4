@@ -1,4 +1,4 @@
-.\" $NetBSD: vcaudio.4,v 1.2 2021/02/26 10:33:46 nia Exp $
+.\" $NetBSD: vchiq.4,v 1.1 2021/02/26 10:33:46 nia Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,44 +25,40 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd February 26, 2021
-.Dt VCAUDIO 4
+.Dt VCHIQ 4
 .Os
 .Sh NAME
-.Nm vcaudio
-.Nd Broadcom VideoCore integrated audio device driver
+.Nm vchiq
+.Nd Broadcom VideoCore Host Interface device driver
 .Sh SYNOPSIS
-.Cd "vcaudio* at vchiq?"
+.Cd "vchiq* at simplebus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the VideoCore 4 audio interface found on
-Broadcom SoCs used in boards such as the Raspberry Pi.
+driver provides support for the VideoCore 4 GPU messaging interface in
+Broadcom SoCs found in boards such as the Raspberry Pi.
 .Pp
-Three outputs are supported:
-.Li auto ,
-.Li headphones ,
-and
-.Li hdmi .
-The selected output can be changed using the
-.Li outputs.select
-.Xr mixerctl 1
-variable.
-.Li headphones
-corresponds to the analog 3.5mm jack on the Raspberry Pi.
+Libraries in pkgsrc provide OpenGL ES support and video decoding acceleration
+for the VideoCore 4 using the
+.Pa /dev/vchiq
+interface exposed to userland.
 .Pp
-The hardware does not support recording.
+Audio output support is provided by the kernel through
+.Xr vcaudio 4 ,
+which uses this messaging interface to the GPU internally.
 .Sh SEE ALSO
-.Xr mixerctl 1 ,
-.Xr audio 4 ,
-.Xr mixer 4 ,
-.Xr vchiq 4
+.Xr bcmgpio 4 ,
+.Xr vcaudio 4 ,
+.Pa pkgsrc/misc/raspberrypi-userland ,
+.Pa pkgsrc/multimedia/omxplayer
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
 .Nx 7.0 .
 .Sh BUGS
-The playback block size is fixed at 40ms of audio.
-The hardware output format is fixed at stereo 48kHz 16-bit LPCM so is
-not configurable with
-.Xr audiocfg 1 .
+.Pa /dev/vchiq
+does not follow the standard model for graphical acceleration on Unix-like
+systems, so applications have to be specially built to take advantage of it.
+The interface to userland also cannot be exposed by 64-bit or big endian
+kernels due to problems in the upstream Broadcom code.
