@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.75 2021/02/25 09:39:58 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.76 2021/02/26 13:33:07 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1743,4 +1743,11 @@ sys/arch/m68k/m68k/reenter_syscall.s		1.5-1.7
 
 	m68k: PR 55990: fix kernel stack overflow panic
 	[tsutsui, ticket #1659]
+
+usr.bin/patch/backupfile.c			1.16
+usr.bin/patch/backupfile.h			1.7
+usr.bin/patch/patch.c				1.30
+
+	patch(1): make '-V none' work.
+	[nia, ticket #1660]
 
