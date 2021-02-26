@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41 2020/10/06 13:42:03 christos Exp $ */
+/*	$NetBSD: vmparam.h,v 1.42 2021/02/26 02:01:16 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@
 #define	DFLDSIZ		(128UL*1024*1024)	/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(1UL<<39)		/* max data size */
+#define	MAXDSIZ		(1UL<<39)		/* 512GB max data size */
 /*
  * For processes not using topdown VA, we need to limit the data size -
  * they probably have not been compiled with the proper compiler memory
