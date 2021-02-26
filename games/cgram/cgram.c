@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.15 2021/02/26 14:55:37 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.16 2021/02/26 15:15:34 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.15 2021/02/26 14:55:37 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.16 2021/02/26 15:15:34 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -342,13 +342,17 @@ redraw(void)
 	}
 
 	move(LINES - 1, 0);
+	addstr("~ to quit, * to cheat, ^pnfb to move");
+
 	if (is_solved()) {
+		if (extent_y + 1 - offset_y < LINES - 2)
+			move(extent_y + 1 - offset_y, 0);
+		else
+			addch(' ');
 		attron(A_BOLD | A_STANDOUT);
 		addstr("*solved*");
 		attroff(A_BOLD | A_STANDOUT);
-		addch(' ');
 	}
-	addstr("~ to quit, * to cheat, ^pnfb to move");
 
 	move(cursor_y - offset_y, cursor_x - offset_x);
 
