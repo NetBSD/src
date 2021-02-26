@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.101 2019/12/08 02:54:54 nia Exp $
+.\"	$NetBSD: pci.4,v 1.102 2021/02/26 09:46:58 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 12, 2018
+.Dd February 26, 2021
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -215,6 +215,8 @@ IDE disk controllers.
 4500/4800 and
 .Tn Cisco
 340 series 802.11 interfaces.
+.It aq
+Aquantia AQC multigigabit Ethernet interfaces.
 .It bnx
 Broadcom NetXtreme II 10/100/1000 Ethernet interfaces.
 .It de
@@ -234,16 +236,9 @@ interfaces.
 SMC83C170 (EPIC/100)
 .Tn Ethernet
 interfaces.
-.It esh
-RoadRunner-based HIPPI interfaces.
 .It ex
 3Com 3c900, 3c905, and 3c980
 .Tn Ethernet
-interfaces.
-.It fpa
-.Tn DEC
-DEFPA
-.Tn FDDI
 interfaces.
 .It fxp
 Intel EtherExpress PRO 10+/100B
@@ -264,6 +259,8 @@ interfaces.
 Note, the
 .Xr pcn 4
 driver supersedes this driver.
+.It mcx
+Mellanox 5th generation Ethernet devices.
 .It msk
 Marvell Yukon 2 based Gigabit
 .Tn Ethernet
@@ -284,6 +281,8 @@ AMD PCnet-PCI family of
 interfaces.
 .It ral
 Ralink Technology RT2500/RT2600-based 802.11a/b/g wireless network interfaces.
+.It re
+Realtek 10/100/1000 Ethernet adapters.
 .It rtk
 Realtek 8129/8139 based
 .Tn Ethernet
@@ -426,6 +425,8 @@ USB UHCI host controllers.
 VIA VT82C686A hardware monitors.
 .It vga
 VGA graphics boards.
+.It xhci
+USB XHCI host controllers.
 .El
 .Sh SEE ALSO
 .Xr aac 4 ,
@@ -436,6 +437,7 @@ VGA graphics boards.
 .Xr ahcisata 4 ,
 .Xr amr 4 ,
 .Xr an 4 ,
+.Xr aq 4 ,
 .Xr auich 4 ,
 .Xr autri 4 ,
 .Xr auvia 4 ,
@@ -448,7 +450,6 @@ VGA graphics boards.
 .Xr cmpci 4 ,
 .Xr cy 4 ,
 .Xr cz 4 ,
-.Xr de 4 ,
 .Xr dpt 4 ,
 .Xr eap 4 ,
 .Xr ehci 4 ,
@@ -456,12 +457,10 @@ VGA graphics boards.
 .Xr ep 4 ,
 .Xr epic 4 ,
 .Xr esa 4 ,
-.Xr esh 4 ,
 .Xr esm 4 ,
 .Xr eso 4 ,
 .Xr ex 4 ,
 .Xr fms 4 ,
-.Xr fpa 4 ,
 .Xr fxp 4 ,
 .Xr gsip 4 ,
 .Xr hme 4 ,
@@ -471,6 +470,7 @@ VGA graphics boards.
 .Xr iop 4 ,
 .Xr isp 4 ,
 .Xr le 4 ,
+.Xr mcx 4 ,
 .Xr mfi 4 ,
 .Xr mlx 4 ,
 .Xr mly 4 ,
@@ -491,6 +491,7 @@ VGA graphics boards.
 .Xr ppb 4 ,
 .Xr puc 4 ,
 .Xr ral 4 ,
+.Xr re 4 ,
 .Xr rtk 4 ,
 .Xr rtwn 4 ,
 .Xr sf 4 ,
@@ -515,6 +516,7 @@ VGA graphics boards.
 .Xr wi 4 ,
 .Xr wm 4 ,
 .Xr wscons 4 ,
+.Xr xhci 4 ,
 .Xr yds 4
 .Sh HISTORY
 The machine-independent
