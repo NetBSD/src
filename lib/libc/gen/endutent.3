@@ -1,4 +1,4 @@
-.\"	$NetBSD: endutent.3,v 1.1 2021/02/26 03:05:01 christos Exp $
+.\"	$NetBSD: endutent.3,v 1.2 2021/02/26 06:39:14 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ user accounting database.
 .Pp
 These interfaces are only provided for compatibility purpuses and
 have been superseeded by
-.Xr endutent 3 ,
+.Xr endutxent 3 ,
 .Xr utmpx 5 .
 .Pp
 .Fn getutent
@@ -88,7 +88,6 @@ the same user if it exists.
 The
 .Nm utmp
 structure has the following definition:
-.Pp
 .Bd -literal
 struct utmp {
         char ut_line[UT_LINESIZE];    /* tty name */
@@ -119,5 +118,5 @@ The
 .Fn getutline ,
 .Fn pututline ,
 .Fn setutent
-all conform to
+functions all conform to
 .St -xpg4.2 .
