@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.29 2011/09/06 18:25:14 joerg Exp $
+ * $NetBSD: patch.c,v 1.29.34.1 2021/02/26 13:32:14 martin Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.29 2011/09/06 18:25:14 joerg Exp $");
+__RCSID("$NetBSD: patch.c,v 1.29.34.1 2021/02/26 13:32:14 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -197,17 +197,18 @@ main(int argc, char *argv[])
 	else
 		simple_backup_suffix = ORIGEXT;
 
+	if ((v = getenv("PATCH_VERSION_CONTROL")) == NULL)
+		v = getenv("VERSION_CONTROL");
+	if (v != NULL)
+		backup_type = get_version(v);
+
 	/* parse switches */
 	Argc = argc;
 	Argv = argv;
 	get_some_switches();
 
-	if (backup_type == none) {
-		if ((v = getenv("PATCH_VERSION_CONTROL")) == NULL)
-			v = getenv("VERSION_CONTROL");
-		if (v != NULL || !posix)
-			backup_type = get_version(v);	/* OK to pass NULL. */
-	}
+	if (backup_type == undefined)
+		backup_type = posix ? none : numbered_existing;
 
 	/* make sure we clean up /tmp in case of disaster */
 	set_signals(0);
@@ -493,7 +494,7 @@ get_some_switches(void)
 	while ((ch = getopt_long(Argc, Argv, options, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'b':
-			if (backup_type == none)
+			if (backup_type == undefined)
 				backup_type = numbered_existing;
 			if (optarg == NULL)
 				break;
