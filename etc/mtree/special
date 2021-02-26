@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.170 2020/06/28 03:05:59 kim Exp $
+#	$NetBSD: special,v 1.171 2021/02/26 18:39:10 jakllsch Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -92,6 +92,7 @@
 ./etc/hosts.lpd			type=file mode=0644 optional
 ./etc/ifaliases			type=file mode=0644 optional
 ./etc/inetd.conf		type=file mode=0644
+./etc/ip6addrctl.conf		type=file mode=0644 optional
 ./etc/ipf.conf			type=file mode=0644 optional
 ./etc/ipf6.conf			type=file mode=0644 optional
 ./etc/ipnat.conf		type=file mode=0644 optional
