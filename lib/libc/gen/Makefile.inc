@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.207 2021/02/26 03:05:01 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.208 2021/02/26 03:19:34 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -145,6 +145,7 @@ MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 MLINKS+=getpwent.3 getpwnam_r.3 getpwent.3 getpwuid_r.3 getpwent.3 getpwent_r.3
 # getpwent.3 setpwfile.3 - deprecated
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 \
+	getttyent.3 setttyent.3 getttyent.3 setttyentpath.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
 MLINKS+=glob.3 glob_pattern_p.3
