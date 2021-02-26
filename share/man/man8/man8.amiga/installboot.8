@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.24 2021/02/25 03:43:57 rin Exp $
+.\"	$NetBSD: installboot.8,v 1.25 2021/02/26 10:44:31 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,8 @@
 .Ar device
 .Sh DESCRIPTION
 .Nm installboot
-copies the bootblock to a bootable partition. The
+copies the bootblock to a bootable partition.
+The
 bootstrap is written into the bootblock area on the partition, right
 in front of the superblock, and hence limited in size to
 8192 bytes.
@@ -57,7 +58,8 @@ the operator from the boot menu (on Amiga machines, hold down the outer
 mouse buttons during boot; on DraCo machines, press the left mouse button
 when prompted).
 .Pp
-On RDB devices, the whole bootblock is loaded by the ROM. The number of
+On RDB devices, the whole bootblock is loaded by the ROM.
+The number of
 boot blocks in the RDB partition entry must be correct.
 .Pp
 On floppy disks, the ROM always loads the first two blocks (1024 bytes),
@@ -108,9 +110,9 @@ If
 is accidentally used on the whole disk partition, the RDB will be overwritten,
 making your system unusable after the next reboot.
 .Pp
-Some third-party accelerator boards are not autoconfiguring. You won't
-be able to use their memory when booting from the bootblock after a cold
-start.
+Some third-party accelerator boards are not autoconfiguring.
+You won't be able to use their memory when booting from the bootblock
+after a cold start.
 .Pp
 Some third-party disk controllers don't support bootblock booting.
 .Pp
@@ -118,7 +120,9 @@ DraCo ROMs don't support bootblock booting from floppy disks.
 .Pp
 Most 68060 boards, unlike the DraCo, don't set the SysBase->AttnFlags
 bit for the 68060 CPU (a patch program which is called during
-AmigaOS startup does this). You need to add options BB060STUPIDROM
+AmigaOS startup does this).
+You need to add
+.Cd options BB060STUPIDROM
 to your kernel to boot on such a machine.
 .Pp
 There is currently no easy way to edit the RDB from within
@@ -128,6 +132,8 @@ set the partition to bootable, "use custom bootblocks" and the number
 of bootblocks to 16 (for bootxx_ffsv1 or bootxx_ffsv2) or 2 (for bootxx_fd),
 at least the first time you install the bootblock.
 .Pp
-As normal dd is used to install the bootblock, you can only install onto
+As normal
+.Xr dd 1
+is used to install the bootblock, you can only install onto
 your currently used root (or any other mounted) partition from single-user
 mode, or while otherwise running in insecure mode.
