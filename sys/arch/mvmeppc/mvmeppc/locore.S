@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2018/07/15 05:16:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2021/02/26 02:18:56 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ GLOBAL(startsym)
 	.long	0			/* start symbol table */
 GLOBAL(endsym)
 	.long	0			/* end symbol table */
-GLOBAL(oeacpufeat)
-	.long	0			/* cpu features */
 
 /* XXX All of this should die */
 GLOBAL(intrnames)

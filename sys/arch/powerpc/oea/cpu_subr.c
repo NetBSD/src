@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.105 2021/02/24 16:42:38 thorpej Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.106 2021/02/26 02:18:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.105 2021/02/24 16:42:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.106 2021/02/26 02:18:57 thorpej Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -264,6 +264,8 @@ int cpu_altivec;
 register_t cpu_psluserset;
 register_t cpu_pslusermod;
 register_t cpu_pslusermask = 0xffff;
+
+unsigned long oeacpufeat;
 
 /* This is to be called from locore.S, and nowhere else. */
 
