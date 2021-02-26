@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.26 2018/07/15 05:16:41 maxv Exp $   */
+/*      $NetBSD: locore.S,v 1.27 2021/02/26 02:18:55 thorpej Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -68,8 +68,6 @@ GLOBAL(startsym)
 	.long	0			/* start symbol table */
 GLOBAL(endsym)
 	.long	0			/* end symbol table */
-GLOBAL(oeacpufeat)
-	.long	0			/* cpu features */
 GLOBAL(eclockfreq)
 	.long	0			/* needed by the aucc driver only */
 

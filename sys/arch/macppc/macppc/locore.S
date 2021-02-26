@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.78 2021/02/17 23:21:46 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.79 2021/02/26 02:18:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,8 +62,6 @@
 	.data
 GLOBAL(esym)
 	.long	0			/* end of symbol table */
-GLOBAL(oeacpufeat)
-	.long	0			/* cpu features */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
