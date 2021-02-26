@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.358 2020/06/11 19:20:44 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.359 2021/02/26 10:47:24 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,15 +74,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.358 2020/06/11 19:20:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.359 2021/02/26 10:47:24 rin Exp $");
 
 #include "opt_adb.h"
+#include "opt_compat_netbsd.h"
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
-#include "opt_compat_netbsd.h"
+
 #include "akbd.h"
 #include "genfb.h"
 #include "macfb.h"
