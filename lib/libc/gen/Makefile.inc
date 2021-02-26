@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.206 2020/09/22 21:37:47 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.207 2021/02/26 03:05:01 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -98,6 +98,8 @@ MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 MLINKS+=endutxent.3 getutxent.3 endutxent.3 getutxid.3 \
 	endutxent.3 getutxline.3 endutxent.3 pututxline.3 \
 	endutxent.3 setutxent.3
+MLINKS+=endutent.3 getutent.3 endutent.3 getutline.3 endutent.3 pututline.3 \
+	endutent.3 setutent.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
         err.3 warnx.3 err.3 vwarnx.3 err.3 errc.3 err.3 verrc.3 err.3 warnc.3 \
 	err.3 vwarnc.3
@@ -143,7 +145,6 @@ MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 MLINKS+=getpwent.3 getpwnam_r.3 getpwent.3 getpwuid_r.3 getpwent.3 getpwent_r.3
 # getpwent.3 setpwfile.3 - deprecated
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 \
-	getttyent.3 setttyent.3 getttyent.3 setttyentpath.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
 MLINKS+=glob.3 glob_pattern_p.3
