@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.24 2021/02/23 22:14:59 christos Exp $	*/
+/*	$NetBSD: regerror.c,v 1.25 2021/02/26 19:24:47 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -37,12 +37,16 @@
  *	@(#)regerror.c	8.4 (Berkeley) 3/20/94
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regerror.c 326025 2017-11-20 19:49:47Z pfg $");
 #endif
-__RCSID("$NetBSD: regerror.c,v 1.24 2021/02/23 22:14:59 christos Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.25 2021/02/26 19:24:47 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
