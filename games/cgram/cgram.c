@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.16 2021/02/26 15:15:34 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.17 2021/02/26 15:18:40 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.16 2021/02/26 15:15:34 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.17 2021/02/26 15:18:40 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -525,6 +525,8 @@ handle_key(void)
 		break;
 	case '~':
 		return false;
+	case KEY_RESIZE:
+		break;
 	default:
 		handle_char_input(ch);
 		break;
