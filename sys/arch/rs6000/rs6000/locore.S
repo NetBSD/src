@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2018/07/15 05:16:44 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2021/02/26 02:18:56 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ GLOBAL(startsym)
 	.long	0			/* start symbol table */
 GLOBAL(endsym)
 	.long	0			/* end symbol table */
-GLOBAL(oeacpufeat)
-	.long	0			/* cpu features */
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
