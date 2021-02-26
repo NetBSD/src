@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.359 2021/02/26 10:47:24 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.360 2021/02/26 10:54:12 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.359 2021/02/26 10:47:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.360 2021/02/26 10:54:12 rin Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.359 2021/02/26 10:47:24 rin Exp $");
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_kgdb.h"
+#include "opt_mac68k.h"
 #include "opt_modular.h"
 
 #include "akbd.h"
@@ -903,7 +904,11 @@ getenvvars(u_long flag, char *buf)
 	 */
 	mac68k_machine.machineid = machineid = getenv("MACHINEID");
 	mac68k_machine.mach_processor = getenv("PROCESSOR");
+#ifndef MAC68K_MEMSIZE
 	mac68k_machine.mach_memsize = getenv("MEMSIZE");
+#else
+	mac68k_machine.mach_memsize = MAC68K_MEMSIZE;
+#endif
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
 	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
 	mac68k_machine.serial_console = getenv("SERIALCONSOLE");
