@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.4,v 1.7 2019/02/23 17:34:04 wiz Exp $
+.\"	$NetBSD: spi.4,v 1.8 2021/02/27 08:36:05 nia Exp $
 .\"
 .\" Copyright (c) 2006 Urbana-Champaign Independent Media Center.
 .\" Copyright (c) 2006 Garrett D'Amore.
@@ -39,7 +39,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 9, 2006
+.Dd February 27, 2021
 .Dt SPI 4
 .Os
 .Sh NAME
@@ -89,11 +89,47 @@ file, the
 must be provided, as
 .Tn SPI
 lacks any way to automatically probe devices.
+.Sh IOCTLS
+The following
+.Xr ioctl 2
+calls apply to
+.Em SPI
+devices.
+They are defined in the header file
+.In dev/spi/spi_io.h :
+.Bl -tag -width indent
+.It Dv SPI_IOCTL_CONFIGURE (spi_ioctl_configure_t)
+Used to choose the operational mode and clock.
+The
+.Li sic_mode
+defines polarity and phase of the clock.
+.Li sic_speed
+is the clock speed in Hz, a value of 0 means to keep the default speed
+of the device.
+.Bd -literal
+typedef struct spi_ioctl_configure {
+	int sic_addr;
+	int sic_mode;
+	int sic_speed;
+} spi_ioctl_configure_t;
+.Ed
+.It Dv SPI_IOCTL_TRANSFER (spi_ioctl_transfer_t)
+Used to handle an I/O transaction.
+.Bd -literal
+typedef struct spi_ioctl_transfer {
+	int sit_addr;
+	const void *sit_send;
+	size_t sit_sendlen;
+	void *sit_recv;
+	size_t sit_recvlen;
+} spi_ioctl_transfer_t;
+.Ed
+.El
 .Sh HARDWARE
 .Nx
 includes the following machine-independent
 .Tn SPI
-drivers
+drivers:
 .Bl -tag -width pcdisplay -offset indent
 .It m25p
 STMicroelectronics M25P family of NOR flash devices.
@@ -105,12 +141,15 @@ Microchip MCP3x0x SAR analog to digital converter.
 Microchip MCP4801/MCP4811/MCP4821 digital to analog converter.
 .It tm121temp
 Texas Instruments TMP121 temperature sensor.
+.It ssdfb
+OLED/PLED framebuffer modules.
 .El
 .Sh SEE ALSO
 .Xr m25p 4 ,
 .Xr mcp23s17gpio 4 ,
 .Xr mcp3kadc 4 ,
 .Xr mcp48x1dac 4 ,
+.Xr ssdfb 4 ,
 .Xr tm121temp 4 ,
 .Xr spi 9
 .Sh HISTORY
