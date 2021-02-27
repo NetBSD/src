@@ -1,1 +1,2 @@
-msg_278.c(6): syntax error ':' [249]
+msg_278.c(19): warning: combination of 'enum E' and 'int', arg #1 [278]
+msg_278.c(21): warning: combination of 'int' and 'enum E', arg #1 [278]
