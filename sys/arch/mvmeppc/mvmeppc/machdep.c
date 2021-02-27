@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2014/03/26 17:44:36 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2021/02/27 01:31:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2014/03/26 17:44:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2021/02/27 01:31:24 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -148,7 +148,7 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-	prep_initppc(startkernel, endkernel, boothowto);
+	prep_initppc(startkernel, endkernel, boothowto, 0);
 
 	(*platform->pic_setup)();
 }
