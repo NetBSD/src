@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.35 2021/02/27 18:19:57 palle Exp $ */
+/* $NetBSD: TODO,v 1.36 2021/02/27 18:29:38 palle Exp $ */
 
 Things to be done:
 
@@ -41,6 +41,19 @@ sun4v:
 - vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
 - vbus.c: handle prom_getprop() memory leaks
 - locore.s: rft_user (sun4v specific manaul fill) - seems to work, but is it good enough (compared to openbsds rft_user?
+- openfirmware interface
+    bounce handlng could need rework
+      - only #if __arch64__ independent for SUN4V, as OF for all ultrasparcs is
+        plain 32bit code too (and this #if only because the point below becomes
+        always false otherwise)
+      - only bounce if the address is >= 1UL<<32
+      - perhaps apply the lock to OF calls in general, not only the bounce'd ones
+        (in other words: let's protect the OF context with the lock, not
+        only the bounce buffer contents).
+	  - Are there any other bounce-worthy OF calls? If so, apply handling 
+	    to all of them now
+      - consider method used by Solaris/OpenSolaris/Illumos (look for PROM_32BIT_ADDRS in
+	    the Illumos codebase)
  - platforms tested so far:
  -- qemu sun4v/niagara - reaches the point where the kernel needs to mount a root fs
  -- T2000 - mmu fault somewhere
