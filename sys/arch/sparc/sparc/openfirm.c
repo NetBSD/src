@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.23 2017/03/26 12:38:24 martin Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.24 2021/02/27 18:10:46 palle Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.23 2017/03/26 12:38:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.24 2021/02/27 18:10:46 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,6 +503,15 @@ OF_read(int handle, void *addr, int len)
 	} args;
 	int l, act = 0;
 
+#ifdef SUN4V
+#if __arch64__
+	void *oaddr = addr;
+	__cpu_simple_lock(&ofcall_lock);
+	if (len > OFBOUNCE_MAXSIZE) 
+		panic("OF_read(len = %d) exceedes bounce buffer\n", len);
+	addr = ofbounce;
+#endif	
+#endif
 	args.name = ADR2CELL("read");
 	args.nargs = 3;
 	args.nreturns = 1;
@@ -511,18 +520,31 @@ OF_read(int handle, void *addr, int len)
 	for (; len > 0; len -= l) {
 		l = MIN(NBPG, len);
 		args.len = l;
-		if (openfirmware(&args) == -1)
-			return -1;
+		if (openfirmware(&args) == -1) {
+			act = -1;
+			goto OF_read_exit;
+		}
 		if (args.actual > 0) {
 			act += args.actual;
 		}
 		if (args.actual < l) {
 			if (act)
-				return act;
-			else
-				return args.actual;
+				goto OF_read_exit;
+			else {
+				act = args.actual;	
+				goto OF_read_exit;
+			}
 		}
 	}
+OF_read_exit:
+#ifdef SUN4V
+#if __arch64__
+	if (act > 0) {
+		memcpy(oaddr, addr, act);	
+	}
+	__cpu_simple_unlock(&ofcall_lock);
+#endif
+#endif
 	return act;
 }
 
