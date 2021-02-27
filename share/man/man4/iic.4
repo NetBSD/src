@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.22 2018/02/26 08:23:44 wiz Exp $
+.\"	$NetBSD: iic.4,v 1.23 2021/02/27 08:43:15 nia Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 26, 2018
+.Dd February 27, 2021
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -196,6 +196,8 @@ JEDEC JC-42.4 compatible memory module temperature sensors
 driver for SGS 7433 Basic Audio Processor found in some Apple machines
 .It Xr spdmem 4
 Generic Memory Module Serial Presence Detect
+.It Xr ssdfb 4
+OLED/PLED framebuffer modules
 .El
 .Sh SEE ALSO
 .Xr dtviic 4 ,
