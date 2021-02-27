@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.34 2021/02/22 10:30:57 palle Exp $ */
+/* $NetBSD: TODO,v 1.35 2021/02/27 18:19:57 palle Exp $ */
 
 Things to be done:
 
@@ -14,8 +14,10 @@ sun4v:
  - current status
      T5 ldom with 2 VCPU and 4GB:
        The kernel boots and starts userland when booting miniroot.fs.
-       The sysinst tool starts properly and requests terminal type.
-	   Upon entering characters on the console, a crash occurs inside
+       The sysinst tool starts properly and is functional.
+	   Installation is not possible, since no driver currently exists
+	   for the ldom network interfaces, but openbsd vnet and vsw drivers are
+	   possible to integrate and this work is progressing.
 	   OpenBoot (properly trashed registers).
 	 T2000 ldom with 8 VCPU and 4GB:
 	   On this platform it crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
