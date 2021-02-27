@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.218 2021/02/22 15:09:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.219 2021/02/27 15:26:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.218 2021/02/22 15:09:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.219 2021/02/27 15:26:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -493,7 +493,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
 	tnode_t	*ntn;
-	type_t	*rtp;
+	type_t	*rettp;
 
 	mp = &modtab[op];
 
@@ -619,10 +619,10 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		ntn = build_real_imag(op, ln);
 		break;
 	default:
-		rtp = mp->m_returns_bool
+		rettp = mp->m_returns_bool
 		    ? gettyp(Tflag ? BOOL : INT) : ln->tn_type;
 		lint_assert(mp->m_binary || rn == NULL);
-		ntn = new_tnode(op, rtp, ln, rn);
+		ntn = new_tnode(op, rettp, ln, rn);
 		break;
 	}
 
