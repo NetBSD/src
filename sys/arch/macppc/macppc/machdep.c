@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 2021/01/26 14:49:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.173 2021/02/27 02:52:48 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2021/01/26 14:49:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2021/02/27 02:52:48 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcarch.h"
 #include "adb.h"
 #include "zsc.h"
 
@@ -78,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2021/01/26 14:49:41 thorpej Exp $"
 #include <powerpc/trap.h>
 #include <powerpc/fpu.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/spr.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
@@ -124,13 +126,53 @@ static int of_upd_brightness(void *, int);
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	ofwoea_initppc(startkernel, endkernel, args);
-}
+	int node, l;
 
-/* perform model-specific actions at initppc() */
-void
-model_init(void)
-{
+	node = OF_finddevice("/");
+	if (node != -1) {
+		l = OF_getprop(node, "model", model_name, sizeof(model_name));
+		if (l == -1) {
+			OF_getprop(node, "name", model_name,
+			    sizeof(model_name));
+		}
+	}
+
+	ofw_quiesce = strncmp(model_name, "PowerMac11,2", 12) == 0 ||
+		      strncmp(model_name, "PowerMac12,1", 12) == 0;
+
+	/* switch CPUs to full speed */
+	if  (strncmp(model_name, "PowerMac7,", 10) == 0) {
+		int clock_ih = OF_open("/u3/i2c/i2c-hwclock");
+		if (clock_ih != 0) {
+			OF_call_method_1("slew-high", clock_ih, 0);
+		}
+	}
+
+	/*
+	 * Initialize BAT mappings for our I/O regions.  Note,
+	 * on the 601, we use segment mappings under the covers.
+	 */
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16 ) == MPC601) {
+		oea_batinit(
+		    0x80000000, BAT_BL_256M,
+		    0x90000000, BAT_BL_256M,
+		    0xa0000000, BAT_BL_256M,
+		    0xb0000000, BAT_BL_256M,
+		    0xf0000000, BAT_BL_256M,
+		    0);
+	} else
+#endif /* PPC_OEA601 */
+	{
+		oea_batinit(
+		    0x80000000, BAT_BL_1G,
+		    0xf0000000, BAT_BL_128M,
+		    0xf8000000, BAT_BL_64M,
+		    0xfe000000, BAT_BL_8M,	/* Grackle IO */
+		    0);
+	}
+
+	ofwoea_initppc(startkernel, endkernel, args);
 }
 
 void
