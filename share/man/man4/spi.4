@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.4,v 1.8 2021/02/27 08:36:05 nia Exp $
+.\"	$NetBSD: spi.4,v 1.9 2021/02/27 08:38:14 nia Exp $
 .\"
 .\" Copyright (c) 2006 Urbana-Champaign Independent Media Center.
 .\" Copyright (c) 2006 Garrett D'Amore.
@@ -143,6 +143,13 @@ Microchip MCP4801/MCP4811/MCP4821 digital to analog converter.
 Texas Instruments TMP121 temperature sensor.
 .It ssdfb
 OLED/PLED framebuffer modules.
+.El
+.Sh FILES
+.Bl -tag -width "/dev/spiu" -compact
+.It /dev/spi Ns Ar u
+SPI device unit
+.Ar u
+file.
 .El
 .Sh SEE ALSO
 .Xr m25p 4 ,
