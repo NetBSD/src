@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.4 2021/02/21 09:07:58 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.5 2021/02/27 17:16:48 rillig Exp $
 
 --[[
 
@@ -28,19 +28,32 @@ end
 local function load_expect_comments_from_c(fname, errors)
 
   local lines = load_lines(fname)
-  if lines == nil then return nil end
+  if lines == nil then return nil, nil end
 
-  local comments_by_line = {}
-  local seen_comment = false
+  local comment_linenos = {}
+  local comments_by_lineno = {}
+  local function add_expectation(lineno, msg)
+    if comments_by_lineno[lineno] == nil then
+      table.insert(comment_linenos, lineno)
+      comments_by_lineno[lineno] = {}
+    end
+    local trimmed_msg = msg:match("^%s*(.-)%s*$")
+    table.insert(comments_by_lineno[lineno], trimmed_msg)
+  end
+
   for lineno, line in ipairs(lines) do
-    local comments_in_line = {}
-    for comments in line:gmatch("/%* expect: (.-) %*/$") do
+
+    for offset, comments in line:gmatch("/%* expect([+%-]%d+): (.-) %*/") do
       for comment in comments:gmatch("[^,]+") do
-	table.insert(comments_in_line, comment:match("^%s*(.-)%s*$"))
-        seen_comment = true
+        add_expectation(lineno + tonumber(offset), comment)
       end
     end
-    comments_by_line[lineno] = comments_in_line
+
+    for comments in line:gmatch("/%* expect: (.-) %*/") do
+      for comment in comments:gmatch("[^,]+") do
+	add_expectation(lineno, comment)
+      end
+    end
 
     local pp_lineno, pp_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")
     if pp_lineno ~= nil then
@@ -51,7 +64,7 @@ local function load_expect_comments_from_c(fname, errors)
     end
   end
 
-  return comments_by_line
+  return comment_linenos, comments_by_lineno
 end
 
 
@@ -77,31 +90,20 @@ end
 
 local function check_test(c_fname, errors)
   local exp_fname = c_fname:gsub("%.c$", ".exp")
-  local comments = load_expect_comments_from_c(c_fname, errors)
-  if comments == nil or #comments == 0 then return end
+  local comment_linenos, comments_by_lineno =
+    load_expect_comments_from_c(c_fname, errors)
+  if comment_linenos == nil or #comment_linenos == 0 then return end
   local messages = load_actual_messages_from_exp(exp_fname)
   if messages == nil then return end
 
-  local remaining = 0
-  for lineno, exps in ipairs(comments) do
-    for _, msg in ipairs(exps) do
-      -- print("comment", lineno, msg)
-      remaining = remaining + 1
-    end
-  end
-
   for _, act in ipairs(messages) do
-    -- print("messages", act.exp_lineno, act.c_lineno, act.msg)
-
-    local exp = comments[act.c_lineno] or {}
+    local exp = comments_by_lineno[act.c_lineno] or {}
 
     local found = false
     for i, msg in ipairs(exp) do
       if msg ~= "" and act.msg:find(msg, 1, true) then
         exp[i] = ""
         found = true
-        remaining = remaining - 1
-        -- print("found", act.c_lineno, act.msg, msg, remaining)
         break
       end
     end
@@ -112,10 +114,11 @@ local function check_test(c_fname, errors)
     end
   end
 
-  for lineno, exps in ipairs(comments) do
-    for _, msg in ipairs(exps) do
+  for _, lineno in ipairs(comment_linenos) do
+    for _, msg in ipairs(comments_by_lineno[lineno]) do
       if msg ~= "" then
-        errors:add("error: %s:%d: declared message \"%s\" is not in the actual output",
+        errors:add(
+          "error: %s:%d: declared message \"%s\" is not in the actual output",
           c_fname, lineno, msg)
       end
     end
