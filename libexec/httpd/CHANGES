@@ -1,4 +1,11 @@
-$NetBSD: CHANGES,v 1.46 2021/02/27 12:36:46 mrg Exp $
+$NetBSD: CHANGES,v 1.47 2021/02/27 12:55:25 mrg Exp $
+
+changes in bozohttpd 20210227:
+	o  new support for content types: .tar.bz2, .tar.xz, .tar.lz,
+	   .tar.zst, .tbz2, .txz, .tlz, .zipx, .xz, .zst, .sz, .lz, .lzma,
+	   .lzo, .7z, .lzo, .cab, .dmg, .jar, and .rar.  should fix
+	   netbsd PR#56026:
+	   MIME type of .tar.xz file on ny{cdn,ftp}.NetBSD.org is invalid
 
 changes in bozohttpd 20210211:
 	o  fix various NULL derefs from malformed headers.  mostly from
