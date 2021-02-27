@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.7 2020/07/06 10:35:28 rin Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.8 2021/02/27 20:43:58 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.7 2020/07/06 10:35:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.8 2021/02/27 20:43:58 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -217,7 +217,8 @@ extern struct pic_ops pic_uic1;
 static void
 uic1_finish_setup(struct pic_ops *pic)
 {
-	intr_establish(30, IST_LEVEL, IPL_HIGH, pic_handle_intr, &pic_uic1);
+	intr_establish_xname(30, IST_LEVEL, IPL_HIGH, pic_handle_intr,
+	    &pic_uic1, "uic1");
 }
 
 struct uic uic1 = {
@@ -272,7 +273,8 @@ extern struct pic_ops pic_uic2;
 static void
 uic2_finish_setup(struct pic_ops *pic)
 {
-	intr_establish(28, IST_LEVEL, IPL_HIGH, pic_handle_intr, &pic_uic2);
+	intr_establish_xname(28, IST_LEVEL, IPL_HIGH, pic_handle_intr,
+	    &pic_uic2, "uic2");
 }
 
 static struct uic uic2 = {

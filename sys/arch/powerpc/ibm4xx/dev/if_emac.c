@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.54 2021/01/24 05:22:21 rin Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.55 2021/02/27 20:43:58 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.54 2021/01/24 05:22:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.55 2021/02/27 20:43:58 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_emac.h"
@@ -507,7 +507,8 @@ emac_attach(device_t parent, device_t self, void *aux)
 		sc->sc_stacr_completed = true;
 	}
 
-	intr_establish(oaa->opb_irq, IST_LEVEL, IPL_NET, emac_intr, sc);
+	intr_establish_xname(oaa->opb_irq, IST_LEVEL, IPL_NET, emac_intr, sc,
+	    device_xname(self));
 	mal_intr_establish(sc->sc_instance, sc);
 
 	if (oaa->opb_flags & OPB_FLAGS_EMAC_HT256)
