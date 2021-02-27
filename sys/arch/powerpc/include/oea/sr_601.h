@@ -1,4 +1,4 @@
-/*	$NetBSD: sr_601.h,v 1.5 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: sr_601.h,v 1.6 2021/02/27 01:16:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -63,9 +63,5 @@
 
 #define	SR601_PA_MATCH_P(sr, pa) 				\
 	 (((sr) & SR601_PACKET1) == ((pa) >> ADDR_SR_SHFT))
-
-#ifdef _KERNEL
-void mpc601_ioseg_add(paddr_t, register_t);
-#endif
 
 #endif /* !_POWERPC_OEA_SR_601_H_ */
