@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.12 2020/07/06 09:34:17 rin Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.13 2021/02/27 01:31:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.12 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.13 2021/02/27 01:31:23 thorpej Exp $");
 
 #include "ksyms.h"
 
@@ -136,24 +136,26 @@ prep_bus_space_init(void)
  */
 
 void
-prep_initppc(u_long startkernel, u_long endkernel, u_int args)
+prep_initppc(u_long startkernel, u_long endkernel, u_int args, paddr_t pa, ...)
 {
+	va_list ap;
 
 	/*
-	 * Now setup fixed bat registers
-	 * We setup the memory BAT, the IO space BAT, and a special
-	 * BAT for certain machines that have rs6k style PCI bridges
-	 * (only on port-prep)
+	 * Set up fixed BAT registers.  We map the PReP IO and MEM
+	 * space, plus any additional regions the platform wants.
 	 */
 	oea_batinit(
 	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
 	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
-#if defined(bebox)
-	    0x7ffff000, BAT_BL_8M,	/* BeBox Mainboard Registers (4KB) */
-#elif defined(prep)
-	    0xbf800000, BAT_BL_8M,
-#endif
 	    0);
+
+	va_start(ap, pa);
+	while (pa != 0) {
+		register_t len = va_arg(ap, register_t);
+		oea_iobat_add(pa, len);
+		pa = va_arg(ap, paddr_t);
+	}
+	va_end(ap);
 
 	/* Install vectors and interrupt handler. */
 	oea_init(NULL);
