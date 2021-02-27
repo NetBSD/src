@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_bus.h,v 1.4 2010/06/04 20:31:58 chs Exp $ */
+/* $NetBSD: ofw_bus.h,v 1.5 2021/02/27 02:52:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ extern struct powerpc_bus_space genppc_isa_mem_space_tag;
 
 void ofwoea_bus_space_init(void);
 void ofwoea_initppc(u_int, u_int, char *);
-void ofwoea_batinit(void);
 int ofwoea_map_space(int, int, int, struct powerpc_bus_space *, const char *);
 #endif
 
