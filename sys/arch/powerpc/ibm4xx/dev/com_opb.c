@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.24 2020/07/06 09:34:17 rin Exp $ */
+/* $NetBSD: com_opb.c,v 1.25 2021/02/27 20:43:58 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.24 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.25 2021/02/27 20:43:58 rin Exp $");
 
 #include "com.h"
 
@@ -133,7 +133,8 @@ com_opb_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	intr_establish(oaa->opb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
+	intr_establish_xname(oaa->opb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc,
+	    device_xname(self));
 }
 
 /*

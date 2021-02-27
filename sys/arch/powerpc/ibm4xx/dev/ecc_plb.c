@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.15 2014/02/25 14:09:13 martin Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.16 2021/02/27 20:43:58 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.15 2014/02/25 14:09:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.16 2021/02/27 20:43:58 rin Exp $");
 
 #include "locators.h"
 
@@ -127,7 +127,8 @@ ecc_plb_deferred(device_t self)
 {
 	struct ecc_plb_softc *sc = device_private(self);
 
-	intr_establish(sc->sc_irq, IST_LEVEL, IPL_SERIAL, ecc_plb_intr, sc);
+	intr_establish_xname(sc->sc_irq, IST_LEVEL, IPL_SERIAL, ecc_plb_intr,
+	    sc, device_xname(self));
 }
 
 /*
