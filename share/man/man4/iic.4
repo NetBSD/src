@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.23 2021/02/27 08:43:15 nia Exp $
+.\"	$NetBSD: iic.4,v 1.24 2021/02/27 08:56:14 nia Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -100,6 +100,37 @@ The master accesses a particular slave device using its address.
 .Pp
 System Management Bus (SMBus) protocol is also supported by emulating
 it with the I2C commands.
+.Sh IOCTLS
+The following
+.Xr ioctl 2
+calls apply to
+.Em SPI
+devices.
+They are defined in the header file
+.In dev/i2c/i2c_io.h :
+.Bl -tag -width indent
+.It Dv I2C_IOCTL_EXEC (i2c_ioctl_exec_t)
+User ioctl to execute an i2c operation.
+.Bd -literal
+typedef enum {
+        I2C_OP_READ,
+        I2C_OP_READ_WITH_STOP,
+        I2C_OP_WRITE,
+        I2C_OP_WRITE_WITH_STOP,
+        I2C_OP_READ_BLOCK,
+        I2C_OP_WRITE_BLOCK
+} i2c_op_t;
+
+typedef struct i2c_ioctl_exec {
+	i2c_op_t iie_op;	/* operation to perform */
+	i2c_addr_t iie_addr;	/* address of device */
+	const void *iie_cmd;	/* pointer to command */
+	size_t iie_cmdlen;	/* length of command */
+	void *iie_buf;		/* pointer to data buffer */
+	size_t iie_buflen;	/* length of data buffer */
+} i2c_ioctl_exec_t;
+.Ed
+.El
 .Sh SUPPORTED MASTERS
 A wide list of I2C masters are supported, among them are:
 .Pp
