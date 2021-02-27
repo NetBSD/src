@@ -1,4 +1,4 @@
-/* $NetBSD: prep_bus.h,v 1.3 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: prep_bus.h,v 1.4 2021/02/27 01:31:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ extern struct powerpc_bus_space genppc_isa_mem_space_tag;
 #include <machine/powerpc.h>
 
 void prep_bus_space_init(void);
-void prep_initppc(u_long, u_long, u_int);
+void prep_initppc(u_long, u_long, u_int, paddr_t, ...);
 void mem_regions(struct mem_region **, struct mem_region **);
 #endif
 

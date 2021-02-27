@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2018/07/15 05:16:41 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2021/02/27 01:31:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2018/07/15 05:16:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2021/02/27 01:31:24 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2018/07/15 05:16:41 maxv Exp $");
 #include <machine/bootinfo.h>
 #include <machine/powerpc.h>
 
+#include <powerpc/bat.h>
 #include <powerpc/pic/picvar.h> 
 #include <powerpc/pio.h>
 #include <powerpc/prep_bus.h>
@@ -140,7 +141,10 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-	prep_initppc(startkernel, endkernel, args);
+	prep_initppc(startkernel, endkernel, args,
+	    /* BeBox mainboard registers */
+	    0x7ffff000, BAT_BL_8M,		/* XXX magic number */
+	    0);
 }
 
 /*

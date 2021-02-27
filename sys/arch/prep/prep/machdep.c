@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2018/08/27 17:17:25 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2021/02/27 01:31:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2018/08/27 17:17:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2021/02/27 01:31:24 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -173,7 +173,10 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		busfreq = be32toh(vpd->ProcessorBusHz);
 	}
 
-	prep_initppc(startkernel, endkernel, args);
+	prep_initppc(startkernel, endkernel, args,
+	    /* rs6k-style PCI bridge */
+	    0xbf800000, BAT_BL_8M,		/* XXX magic number */
+	    0);
 }
 
 /*

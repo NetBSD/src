@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2012/07/28 23:11:00 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2021/02/27 01:31:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2012/07/28 23:11:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2021/02/27 01:31:24 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -149,7 +149,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 	 */
 	boothowto = 0;		/* XXX - should make this an option */
 
-	prep_initppc(startkernel, endkernel, args);
+	prep_initppc(startkernel, endkernel, args, 0);
 }
 
 /*
