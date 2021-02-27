@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.177 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.178 2021/02/27 13:02:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.177 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.178 2021/02/27 13:02:42 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ ktrinit(void)
 /*
  * Release a reference.  Called with ktrace_lock held.
  */
-void
+static void
 ktdrel(struct ktr_desc *ktd)
 {
 
@@ -278,7 +278,7 @@ ktdrel(struct ktr_desc *ktd)
 	}
 }
 
-void
+static void
 ktdref(struct ktr_desc *ktd)
 {
 
@@ -288,7 +288,7 @@ ktdref(struct ktr_desc *ktd)
 	ktrace_on++;
 }
 
-struct ktr_desc *
+static struct ktr_desc *
 ktd_lookup(file_t *fp)
 {
 	struct ktr_desc *ktd;
@@ -411,7 +411,7 @@ freekte:
 	ktrexit(l);
 }
 
-void
+static void
 ktefree(struct ktrace_entry *kte)
 {
 
@@ -426,7 +426,7 @@ ktefree(struct ktrace_entry *kte)
  * same underlying vnode/socket.
  */
 
-int
+static int
 ktrsamefile(file_t *f1, file_t *f2)
 {
 
@@ -462,7 +462,7 @@ ktradref(struct proc *p)
 	ktdref(ktd);
 }
 
-int
+static int
 ktrderefall(struct ktr_desc *ktd, int auth)
 {
 	lwp_t *curl = curlwp;
@@ -1165,7 +1165,7 @@ sys_fktrace(struct lwp *l, const struct sys_fktrace_args *uap,
 	return error;
 }
 
-int
+static int
 ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
     struct ktr_desc *ktd)
 {
@@ -1231,7 +1231,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 	return error ? 0 : 1;
 }
 
-int
+static int
 ktrsetchildren(lwp_t *curl, struct proc *top, int ops, int facs,
     struct ktr_desc *ktd)
 {
@@ -1265,7 +1265,7 @@ ktrsetchildren(lwp_t *curl, struct proc *top, int ops, int facs,
 	/*NOTREACHED*/
 }
 
-void
+static void
 ktrwrite(struct ktr_desc *ktd, struct ktrace_entry *kte)
 {
 	size_t hlen;
@@ -1359,7 +1359,7 @@ again:
 	}
 }
 
-void
+static void
 ktrace_thread(void *arg)
 {
 	struct ktr_desc *ktd = arg;
@@ -1427,7 +1427,7 @@ ktrace_thread(void *arg)
  *
  * TODO: check groups.  use caller effective gid.
  */
-int
+static int
 ktrcanset(lwp_t *calll, struct proc *targetp)
 {
 	KASSERT(mutex_owned(targetp->p_lock));
