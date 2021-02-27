@@ -1,8 +1,7 @@
-/* $NetBSD: resize.c,v 1.1 2020/12/27 21:13:18 reinoud Exp $ */
-/* $XTermId: resize.c,v 1.139 2017/05/31 08:58:56 tom Exp $ */
+/* $XTermId: resize.c,v 1.144 2020/06/03 00:26:23 tom Exp $ */
 
 /*
- * Copyright 2003-2015,2017 by Thomas E. Dickey
+ * Copyright 2003-2018,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -53,32 +52,51 @@
  * SOFTWARE.
  */
 
-/*
- * Extracted version from Xterm tailored for NetBSD
- */
 /* resize.c */
 
 #include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <errno.h>
-#include <unistd.h>
-#include <strings.h>
-#include <libgen.h>
-#include <termios.h>
-#include "xstrings.h"
 
+#ifdef RESIZE_ONLY
+#include "resize.h"
+#else
+#include <xterm.h>
+#include <version.h>
+#include <xstrings.h>
+#include <xtermcap.h>
+#include <xterm_io.h>
+#endif
 
-/* imported from origional <xterm.h> */
-#define DFT_TERMTYPE "xterm"
-#define UIntClr(dst,bits) dst = dst & (unsigned) ~(bits)
+#ifndef USE_TERMINFO		/* avoid conflict with configure script */
+#if defined(__QNX__) || defined(__SCO__) || defined(linux) || defined(__OpenBSD__) || defined(__UNIXWARE__)
+#define USE_TERMINFO
+#endif
+#endif
+
+#if defined(__QNX__)
+#include <unix.h>
+#endif
+
+/*
+ * Some OS's may want to use both, like SCO for example.  We catch here anyone
+ * who hasn't decided what they want.
+ */
+#if !defined(USE_TERMCAP) && !defined(USE_TERMINFO)
+#define USE_TERMINFO
+#endif
 
 #include <signal.h>
 #include <pwd.h>
 
+#ifdef USE_IGNORE_RC
+int ignore_unused;
+#endif
+
+#ifdef __MVS__
+#define ESCAPE(string) "\047" string
+#else
 #define ESCAPE(string) "\033" string
+#endif
 
 #define	EMULATIONS	2
 #define	SUN		1
@@ -89,6 +107,7 @@
 #define	SHELL_UNKNOWN	0
 #define	SHELL_C		1
 #define	SHELL_BOURNE	2
+
 /* *INDENT-OFF* */
 static struct {
     const char *name;
@@ -124,6 +143,13 @@ static const char *const getsize[EMULATIONS] =
     ESCAPE("7") ESCAPE("[r") ESCAPE("[9999;9999H") ESCAPE("[6n"),
     ESCAPE("[18t"),
 };
+#if defined(USE_STRUCT_WINSIZE)
+static const char *const getwsize[EMULATIONS] =
+{				/* size in pixels */
+    0,
+    ESCAPE("[14t"),
+};
+#endif /* USE_STRUCT_WINSIZE */
 static const char *const restore[EMULATIONS] =
 {
     ESCAPE("8"),
@@ -135,7 +161,13 @@ static const char *const setsize[EMULATIONS] =
     ESCAPE("[8;%s;%st"),
 };
 
+#ifdef USE_ANY_SYSV_TERMIO
+static struct termio tioorig;
+#elif defined(USE_TERMIOS)
 static struct termios tioorig;
+#else
+static struct sgttyb sgorig;
+#endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
 
 static const char *const size[EMULATIONS] =
 {
@@ -146,6 +178,18 @@ static const char sunname[] = "sunsize";
 static int tty;
 static FILE *ttyfp;
 
+#if defined(USE_STRUCT_WINSIZE)
+static const char *wsize[EMULATIONS] =
+{
+    0,
+    ESCAPE("[4;%hd;%hdt"),
+};
+#endif /* USE_STRUCT_WINSIZE */
+
+static void failed(const char *) GCC_NORETURN;
+static void onintr(int) GCC_NORETURN;
+static void resize_timeout(int) GCC_NORETURN;
+static void Usage(void) GCC_NORETURN;
 
 static void
 failed(const char *s)
@@ -162,7 +206,13 @@ failed(const char *s)
 static void
 onintr(int sig GCC_UNUSED)
 {
+#ifdef USE_ANY_SYSV_TERMIO
+    (void) ioctl(tty, TCSETAW, &tioorig);
+#elif defined(USE_TERMIOS)
     (void) tcsetattr(tty, TCSADRAIN, &tioorig);
+#else /* not USE_TERMIOS */
+    (void) ioctl(tty, TIOCSETP, &sgorig);
+#endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
     exit(EXIT_FAILURE);
 }
 
@@ -182,6 +232,31 @@ Usage(void)
     exit(EXIT_FAILURE);
 }
 
+#ifdef USE_TERMCAP
+static void
+print_termcap(const char *termcap)
+{
+    int ch;
+
+    putchar('\'');
+    while ((ch = *termcap++) != '\0') {
+	switch (ch & 0xff) {
+	case 127:		/* undo bug in GNU termcap */
+	    printf("^?");
+	    break;
+	case '\'':		/* must escape anyway (unlikely) */
+	    /* FALLTHRU */
+	case '!':		/* must escape for SunOS csh */
+	    putchar('\\');
+	    /* FALLTHRU */
+	default:
+	    putchar(ch);
+	    break;
+	}
+    }
+    putchar('\'');
+}
+#endif /* USE_TERMCAP */
 
 static int
 checkdigits(char *str)
@@ -198,12 +273,19 @@ static void
 readstring(FILE *fp, char *buf, const char *str)
 {
     int last, c;
+#if !defined(USG) && !defined(__minix)
+    /* What is the advantage of setitimer() over alarm()? */
     struct itimerval it;
+#endif
 
     signal(SIGALRM, resize_timeout);
+#if defined(USG) || defined(__minix)
+    alarm(TIMEOUT);
+#else
     memset((char *) &it, 0, sizeof(struct itimerval));
     it.it_value.tv_sec = TIMEOUT;
     setitimer(ITIMER_REAL, &it, (struct itimerval *) NULL);
+#endif
     if ((c = getc(fp)) == 0233) {	/* meta-escape, CSI */
 	c = ESCAPE("")[0];
 	*buf++ = (char) c;
@@ -219,8 +301,12 @@ readstring(FILE *fp, char *buf, const char *str)
     while ((*buf++ = (char) getc(fp)) != last) {
 	;
     }
+#if defined(USG) || defined(__minix)
+    alarm(0);
+#else
     memset((char *) &it, 0, sizeof(struct itimerval));
     setitimer(ITIMER_REAL, &it, (struct itimerval *) NULL);
+#endif
     *buf = 0;
 }
 
@@ -230,15 +316,35 @@ readstring(FILE *fp, char *buf, const char *str)
 int
 main(int argc, char **argv ENVP_ARG)
 {
+#ifdef USE_TERMCAP
+    char *env;
+#endif
     char *ptr;
     int emu = VT100;
     char *shell;
     int i;
     int rc;
     int rows, cols;
+#ifdef USE_ANY_SYSV_TERMIO
+    struct termio tio;
+#elif defined(USE_TERMIOS)
     struct termios tio;
+#else
+    struct sgttyb sg;
+#endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
+#ifdef USE_TERMCAP
+    int ok_tcap = 1;
+    char termcap[TERMCAP_SIZE];
+    char newtc[TERMCAP_SIZE];
+#endif /* USE_TERMCAP */
     char buf[BUFSIZ];
+#ifdef TTYSIZE_STRUCT
+    TTYSIZE_STRUCT ts;
+#endif
     char *name_of_tty;
+#ifdef CANT_OPEN_DEV_TTY
+    extern char *ttyname();
+#endif
     const char *setname = "";
 
     myname = x_basename(argv[0]);
@@ -258,7 +364,7 @@ main(int argc, char **argv ENVP_ARG)
 	    shell_type = SHELL_C;
 	    break;
 	case 'v':
-	    printf("Xterm(330)\n");
+	    printf("%s\n", xtermVersion());
 	    exit(EXIT_SUCCESS);
 	default:
 	    Usage();		/* Never returns */
@@ -307,6 +413,9 @@ main(int argc, char **argv ENVP_ARG)
     } else if (argc != 0) {
 	Usage();		/* Never returns */
     }
+#ifdef CANT_OPEN_DEV_TTY
+    if ((name_of_tty = ttyname(fileno(stderr))) == NULL)
+#endif
 	name_of_tty = x_strdup("/dev/tty");
 
     if ((ttyfp = fopen(name_of_tty, "r+")) == NULL) {
@@ -315,6 +424,21 @@ main(int argc, char **argv ENVP_ARG)
 	exit(EXIT_FAILURE);
     }
     tty = fileno(ttyfp);
+#ifdef USE_TERMCAP
+    if ((env = x_getenv("TERM")) == 0) {
+	env = x_strdup(DFT_TERMTYPE);
+	if (SHELL_BOURNE == shell_type) {
+	    setname = "TERM=" DFT_TERMTYPE ";\nexport TERM;\n";
+	} else {
+	    setname = "setenv TERM " DFT_TERMTYPE ";\n";
+	}
+    }
+    termcap[0] = 0;		/* ...just in case we've accidentally gotten terminfo */
+    if (tgetent(termcap, env) <= 0 || termcap[0] == 0) {
+	ok_tcap = 0;
+    }
+#endif /* USE_TERMCAP */
+#ifdef USE_TERMINFO
     if (x_getenv("TERM") == 0) {
 	if (SHELL_BOURNE == shell_type) {
 	    setname = "TERM=" DFT_TERMTYPE ";\nexport TERM;\n";
@@ -322,7 +446,17 @@ main(int argc, char **argv ENVP_ARG)
 	    setname = "setenv TERM " DFT_TERMTYPE ";\n";
 	}
     }
+#endif /* USE_TERMINFO */
 
+#ifdef USE_ANY_SYSV_TERMIO
+    rc = ioctl(tty, TCGETA, &tioorig);
+    tio = tioorig;
+    UIntClr(tio.c_iflag, (ICRNL | IUCLC));
+    UIntClr(tio.c_lflag, (ICANON | ECHO));
+    tio.c_cflag |= CS8;
+    tio.c_cc[VMIN] = 6;
+    tio.c_cc[VTIME] = 1;
+#elif defined(USE_TERMIOS)
     rc = tcgetattr(tty, &tioorig);
     tio = tioorig;
     UIntClr(tio.c_iflag, ICRNL);
@@ -330,6 +464,12 @@ main(int argc, char **argv ENVP_ARG)
     tio.c_cflag |= CS8;
     tio.c_cc[VMIN] = 6;
     tio.c_cc[VTIME] = 1;
+#else /* not USE_TERMIOS */
+    rc = ioctl(tty, TIOCGETP, &sgorig);
+    sg = sgorig;
+    sg.sg_flags |= RAW;
+    UIntClr(sg.sg_flags, ECHO);
+#endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
     if (rc != 0)
 	failed("get tty settings");
 
@@ -337,7 +477,13 @@ main(int argc, char **argv ENVP_ARG)
     signal(SIGQUIT, onintr);
     signal(SIGTERM, onintr);
 
+#ifdef USE_ANY_SYSV_TERMIO
+    rc = ioctl(tty, TCSETAW, &tio);
+#elif defined(USE_TERMIOS)
     rc = tcsetattr(tty, TCSADRAIN, &tio);
+#else /* not USE_TERMIOS */
+    rc = ioctl(tty, TIOCSETP, &sg);
+#endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
     if (rc != 0)
 	failed("set tty settings");
 
@@ -364,8 +510,38 @@ main(int argc, char **argv ENVP_ARG)
     }
     if (restore[emu])
 	IGNORE_RC(write(tty, restore[emu], strlen(restore[emu])));
+#if defined(USE_STRUCT_WINSIZE)
+    /* finally, set the tty's window size */
+    if (getwsize[emu]) {
+	/* get the window size in pixels */
+	IGNORE_RC(write(tty, getwsize[emu], strlen(getwsize[emu])));
+	readstring(ttyfp, buf, wsize[emu]);
+	if (sscanf(buf, wsize[emu], &ts.ws_xpixel, &ts.ws_ypixel) != 2) {
+	    fprintf(stderr, "%s: Can't get window size\r\n", myname);
+	    onintr(0);
+	}
+	setup_winsize(ts, rows, cols, 0, 0);
+	SET_TTYSIZE(tty, ts);
+    } else if (ioctl(tty, TIOCGWINSZ, &ts) != -1) {
+	/* we don't have any way of directly finding out
+	   the current height & width of the window in pixels.  We try
+	   our best by computing the font height and width from the "old"
+	   window-size values, and multiplying by these ratios... */
+#define scaled(old,new,len) (old)?((unsigned)(new)*(len)/(old)):(len)
+	setup_winsize(ts, rows, cols,
+		      scaled(TTYSIZE_ROWS(ts), rows, ts.ws_ypixel),
+		      scaled(TTYSIZE_COLS(ts), cols, ts.ws_xpixel));
+	SET_TTYSIZE(tty, ts);
+    }
+#endif /* USE_STRUCT_WINSIZE */
 
+#ifdef USE_ANY_SYSV_TERMIO
+    rc = ioctl(tty, TCSETAW, &tioorig);
+#elif defined(USE_TERMIOS)
     rc = tcsetattr(tty, TCSADRAIN, &tioorig);
+#else /* not USE_TERMIOS */
+    rc = ioctl(tty, TIOCSETP, &sgorig);
+#endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
     if (rc != 0)
 	failed("set tty settings");
 
@@ -373,16 +549,62 @@ main(int argc, char **argv ENVP_ARG)
     signal(SIGQUIT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
 
+#ifdef USE_TERMCAP
+    if (ok_tcap) {
+	/* update termcap string */
+	/* first do columns */
+	if ((ptr = x_strindex(termcap, "co#")) == NULL) {
+	    fprintf(stderr, "%s: No `co#'\n", myname);
+	    exit(EXIT_FAILURE);
+	}
+
+	i = (int) (ptr - termcap) + 3;
+	strncpy(newtc, termcap, (size_t) i);
+	sprintf(newtc + i, "%d", cols);
+	if ((ptr = strchr(ptr, ':')) != 0)
+	    strcat(newtc, ptr);
+
+	/* now do lines */
+	if ((ptr = x_strindex(newtc, "li#")) == NULL) {
+	    fprintf(stderr, "%s: No `li#'\n", myname);
+	    exit(EXIT_FAILURE);
+	}
+
+	i = (int) (ptr - newtc) + 3;
+	strncpy(termcap, newtc, (size_t) i);
+	sprintf(termcap + i, "%d", rows);
+	if ((ptr = strchr(ptr, ':')) != 0)
+	    strcat(termcap, ptr);
+    }
+#endif /* USE_TERMCAP */
 
     if (SHELL_BOURNE == shell_type) {
 
+#ifdef USE_TERMCAP
+	if (ok_tcap) {
+	    printf("%sTERMCAP=", setname);
+	    print_termcap(termcap);
+	    printf(";\nexport TERMCAP;\n");
+	}
+#endif /* USE_TERMCAP */
+#ifdef USE_TERMINFO
 	printf("%sCOLUMNS=%d;\nLINES=%d;\nexport COLUMNS LINES;\n",
 	       setname, cols, rows);
+#endif /* USE_TERMINFO */
 
     } else {			/* not Bourne shell */
 
+#ifdef USE_TERMCAP
+	if (ok_tcap) {
+	    printf("set noglob;\n%ssetenv TERMCAP ", setname);
+	    print_termcap(termcap);
+	    printf(";\nunset noglob;\n");
+	}
+#endif /* USE_TERMCAP */
+#ifdef USE_TERMINFO
 	printf("set noglob;\n%ssetenv COLUMNS '%d';\nsetenv LINES '%d';\nunset noglob;\n",
 	       setname, cols, rows);
+#endif /* USE_TERMINFO */
     }
     exit(EXIT_SUCCESS);
 }
