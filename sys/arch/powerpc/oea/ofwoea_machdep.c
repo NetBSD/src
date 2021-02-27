@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.54 2021/02/24 16:53:00 thorpej Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.55 2021/02/27 01:22:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.54 2021/02/24 16:53:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.55 2021/02/27 01:22:18 thorpej Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -215,15 +215,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	}
 #endif
 
-	oea_init(pic_ext_intr);
-
-/*
- * XXX
- * we need to do this here instead of earlier on in ofwinit() for some reason
- * At least some versions of Apple OF 2.0.1 hang if we do this earlier
- */ 
-	ofwmsr &= ~PSL_IP;
-
 	/* Parse the args string */
 	if (args) {
 		strcpy(bootpath, args);
@@ -242,6 +233,15 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		if (len > -1)
 			bootpath[len] = 0;
 	}
+
+	oea_init(pic_ext_intr);
+
+	/*
+	 * Now that we've installed our own exception vectors,
+	 * ensure that exceptions that happen while running
+	 * firmware code fall into ours.
+	 */
+	ofwmsr &= ~PSL_IP;
 
 	uvm_md_init();
 
