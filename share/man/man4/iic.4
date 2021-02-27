@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.24 2021/02/27 08:56:14 nia Exp $
+.\"	$NetBSD: iic.4,v 1.25 2021/02/27 08:59:24 nia Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -104,7 +104,7 @@ it with the I2C commands.
 The following
 .Xr ioctl 2
 calls apply to
-.Em SPI
+.Em IIC
 devices.
 They are defined in the header file
 .In dev/i2c/i2c_io.h :
@@ -229,6 +229,13 @@ driver for SGS 7433 Basic Audio Processor found in some Apple machines
 Generic Memory Module Serial Presence Detect
 .It Xr ssdfb 4
 OLED/PLED framebuffer modules
+.El
+.Sh FILES
+.Bl -tag -width "/dev/iicu" -compact
+.It /dev/iic Ns Ar u
+I2C device unit
+.Ar u
+file.
 .El
 .Sh SEE ALSO
 .Xr dtviic 4 ,
