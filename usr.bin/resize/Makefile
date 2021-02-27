@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/02/27 16:08:08 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2021/02/27 22:37:54 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,11 +14,13 @@ LDADD+= -lutil
 
 XTERM=${X11SRCDIR}/external/mit/xterm/dist
 
+.if exists(${XTERM})
 .for i in resize.c resize.man
 copy:: ${.CURDIR}/${i}
 ${.CURDIR}/${i}: ${XTERM}/${i}
 	cp -p ${.ALLSRC} ${.TARGET}
 .endfor
+.endif
 
 CLEANFILES+=resize.1
 
