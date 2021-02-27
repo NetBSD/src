@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.32 2021/02/26 10:06:42 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.33 2021/02/27 14:22:07 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -107,7 +107,7 @@ void	intr_ipi_send(const kcpuset_t *, u_long ipi);
 #include <sys/evcnt.h>
 #include <sys/percpu.h>
 
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 #ifndef PIC_MAXPICS
 #define PIC_MAXPICS	32
