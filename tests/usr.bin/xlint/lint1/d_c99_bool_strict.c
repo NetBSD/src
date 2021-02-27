@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.21 2021/02/20 18:55:10 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.22 2021/02/27 17:16:48 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -306,7 +306,7 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(p, p, p);	/* expect: 334, 154 */
 
 	/* Passing bool as vararg. */
-	take_arguments(b, i, p, b, i, p); /* expect: arg#4 */ // TODO
+	take_arguments(b, i, p, b, i, p); /* TODO: expect: arg#4 */
 
 	/* Passing a bool constant. */
 	take_arguments(__lint_false, i, p);
