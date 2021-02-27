@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.67 2021/02/11 09:57:52 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.68 2021/02/27 12:36:46 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2020 Matthew R. Green
+ * Copyright (c) 1997-2021 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
