@@ -1,4 +1,4 @@
-/* $NetBSD: mal.c,v 1.3 2011/06/18 08:17:58 matt Exp $ */
+/* $NetBSD: mal.c,v 1.4 2021/02/27 20:43:58 rin Exp $ */
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.3 2011/06/18 08:17:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.4 2021/02/27 20:43:58 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,16 +93,16 @@ mal_attach(int pvr)
 	}
 
 	/* establish MAL interrupts */
-	intr_establish(maltbl[i].intrs[0], IST_LEVEL, IPL_NET,
-	    mal_txeob_intr, NULL);
-	intr_establish(maltbl[i].intrs[1], IST_LEVEL, IPL_NET,
-	    mal_rxeob_intr, NULL);
-	intr_establish(maltbl[i].intrs[2], IST_LEVEL, IPL_NET,
-	    mal_txde_intr, NULL);
-	intr_establish(maltbl[i].intrs[3], IST_LEVEL, IPL_NET,
-	    mal_rxde_intr, NULL);
-	intr_establish(maltbl[i].intrs[4], IST_LEVEL, IPL_NET,
-	    mal_serr_intr, NULL);
+	intr_establish_xname(maltbl[i].intrs[0], IST_LEVEL, IPL_NET,
+	    mal_txeob_intr, NULL, "mal txeob");
+	intr_establish_xname(maltbl[i].intrs[1], IST_LEVEL, IPL_NET,
+	    mal_rxeob_intr, NULL, "mal rxeob");
+	intr_establish_xname(maltbl[i].intrs[2], IST_LEVEL, IPL_NET,
+	    mal_txde_intr, NULL, "mal txde");
+	intr_establish_xname(maltbl[i].intrs[3], IST_LEVEL, IPL_NET,
+	    mal_rxde_intr, NULL, "mal rxde");
+	intr_establish_xname(maltbl[i].intrs[4], IST_LEVEL, IPL_NET,
+	    mal_serr_intr, NULL, "mal serr");
 
 	/* Set the MAL configuration register */
 	if (maltbl[i].flags & MAL_GEN2)
