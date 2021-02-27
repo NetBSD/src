@@ -1,9 +1,9 @@
-/*	$NetBSD: content-bozo.c,v 1.19 2020/10/15 04:21:53 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.20 2021/02/27 12:55:25 mrg Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2020 Matthew R. Green
+ * Copyright (c) 1997-2021 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,11 +63,18 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".pa",	"application/x-ns-proxy-autoconfig", "",	"", NULL },
 	{ ".tar",	"multipart/x-tar",		"",		"", NULL },
 	{ ".gtar",	"application/x-gtar-compressed", "",		"", NULL },
-	{ ".tar.Z",	"application/x-gtar-compressed", "",		"", NULL },
 	{ ".tar.gz",	"application/x-gtar-compressed", "",		"", NULL },
-	{ ".taz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.bz2",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.xz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.lz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.zst",	"application/x-gtar-compressed", "",		"", NULL },
 	{ ".tgz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tbz2",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".txz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tlz",	"application/x-gtar-compressed", "",		"", NULL },
 	{ ".tar.z",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.Z",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".taz",	"application/x-gtar-compressed", "",		"", NULL },
 	{ ".Z",		"application/x-compress",	"",		"", NULL },
 	{ ".gz",	"application/x-gzip",		"",		"", NULL },
 	{ ".z",		"unknown",			"",		"", NULL },
@@ -131,6 +138,19 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".ustar",	"application/x-ustar",		"",		"", NULL },
 	{ ".src",	"application/x-wais-source",	"",		"", NULL },
 	{ ".zip",	"application/zip",		"",		"", NULL },
+	{ ".zipx",	"application/zip",		"",		"", NULL },
+	{ ".xz",	"application/x-xz",		"",		"", NULL },
+	{ ".zst",	"application/x-zstd",		"",		"", NULL },
+	{ ".sz",	"application/x-snappy-framed",	"",		"", NULL },
+	{ ".lz",	"application/x-lzip",		"",		"", NULL },
+	{ ".lzma",	"application/x-lzma",		"",		"", NULL },
+	{ ".lzo",	"application/x-lzop",		"",		"", NULL },
+	{ ".7z",	"application/x-7z-compressed",	"",		"", NULL },
+	{ ".lzo",	"application/x-lzop",		"",		"", NULL },
+	{ ".cab",	"application/vnd.ms-cab-compressed", "",	"", NULL },
+	{ ".dmg",	"application/x-apple-diskimage","",		"", NULL },
+	{ ".jar",	"application/java-archive",	"",		"", NULL },
+	{ ".rar",	"application/x-rar-compressed",	"",		"", NULL },
 	{ ".au",	"audio/basic",			"",		"", NULL },
 	{ ".snd",	"audio/basic",			"",		"", NULL },
 	{ ".mpga",	"audio/mpeg",			"",		"", NULL },
