@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_machdep.h,v 1.2 2021/02/19 05:21:39 thorpej Exp $ */
+/* $NetBSD: ofw_machdep.h,v 1.3 2021/02/28 20:31:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct OF_translation {
 	uint32_t	mode;
 };
 
-#define	OFW_MAX_TRANSLATIONS	32
+#define	OFW_MAX_TRANSLATIONS	48
 
 extern int ofw_chosen;		/* cached handle for "/chosen" */
 extern struct OF_translation ofw_translations[OFW_MAX_TRANSLATIONS];
