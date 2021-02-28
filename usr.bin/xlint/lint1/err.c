@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.82 2021/02/28 00:40:22 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.83 2021/02/28 01:06:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.82 2021/02/28 00:40:22 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.83 2021/02/28 01:06:57 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -212,7 +212,7 @@ const	char *msgs[] = {
 	"argument mismatch: %d arg%s passed, %d expected",	      /* 150 */
 	"void expressions may not be arguments, arg #%d",	      /* 151 */
 	"argument cannot have unknown size, arg #%d",		      /* 152 */
-	"argument has incompatible pointer type, arg #%d (%s != %s)", /* 153 */
+	"converting '%s' to incompatible '%s' for argument %d",	      /* 153 */
 	"illegal combination of %s (%s) and %s (%s), arg #%d",	      /* 154 */
 	"argument is incompatible with prototype, arg #%d",	      /* 155 */
 	"enum type mismatch, arg #%d (%s != %s)",		      /* 156 */
@@ -288,7 +288,7 @@ const	char *msgs[] = {
 	"static variable %s unused",				      /* 226 */
 	"const object %s should have initializer",		      /* 227 */
 	"function cannot return const or volatile object",	      /* 228 */
-	"questionable conversion of function pointer",		      /* 229 */
+	"converting '%s' to '%s' is questionable",		      /* 229 */
 	"nonportable character comparison, op %s",		      /* 230 */
 	"argument %s unused in function %s",			      /* 231 */
 	"label %s unused in function %s",			      /* 232 */
