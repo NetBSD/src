@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.221 2021/02/28 00:28:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.222 2021/02/28 00:40:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.221 2021/02/28 00:28:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.222 2021/02/28 00:40:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2245,8 +2245,8 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 
 	if (hflag && alignment_in_bits(tp->t_subt) >
 		     alignment_in_bits(tn->tn_type->t_subt)) {
-		/* possible pointer alignment problem */
-		warning(135);
+		/* converting '%s' to '%s' may cause alignment problem */
+		warning(135, type_name(tn->tn_type), type_name(tp));
 	}
 
 	if (((nt == STRUCT || nt == UNION) &&

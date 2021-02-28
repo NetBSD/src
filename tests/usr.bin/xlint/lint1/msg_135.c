@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_135.c,v 1.3 2021/02/28 00:20:19 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.4 2021/02/28 00:40:22 rillig Exp $	*/
 # 3 "msg_135.c"
 
-// Test for message: possible pointer alignment problem [135]
+// Test for message: converting '%s' to '%s' may cause alignment problem [135]
 
 /* lint1-extra-flags: -h */
 
