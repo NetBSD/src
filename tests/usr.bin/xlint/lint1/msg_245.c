@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_245.c,v 1.3 2021/02/28 01:53:49 rillig Exp $	*/
+/*	$NetBSD: msg_245.c,v 1.4 2021/02/28 02:00:06 rillig Exp $	*/
 # 3 "msg_245.c"
 
-// Test for message: illegal structure pointer combination, op %s [245]
+// Test for message: incompatible structure pointers: '%s' '%s' '%s' [245]
 
 typedef struct tag_and_typedef_tag {
 	int member;
