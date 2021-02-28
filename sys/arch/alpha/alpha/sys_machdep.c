@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.21 2012/02/06 02:14:12 matt Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.22 2021/02/28 21:34:34 tnn Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21 2012/02/06 02:14:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.22 2021/02/28 21:34:34 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		break;
 	    }
 
+#if NPCI > 0
 	case ALPHA_PCI_CONF_READWRITE:
 	    {
 		struct alpha_pci_conf_readwrite_args args;
@@ -222,6 +223,7 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		}
 		break;
 	    }
+#endif
 
 	default:
 		error = EINVAL;
