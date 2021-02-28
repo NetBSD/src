@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.19 2021/02/24 17:35:39 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.20 2021/02/28 19:01:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -148,10 +148,6 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	 */
 	stwu	%r1,-48(%r1)
 
-	lis	%r4,ofentry@ha		/* get firmware entry point */
-	lwz	%r4,ofentry@l(%r4)
-	mtlr	%r4
-
 #ifdef FIRMWORKSBUGS
 	lis	%r4,ofwreal_incharge@ha
 	lwz	%r4,ofwreal_incharge@l(%r4)
@@ -164,9 +160,12 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	mfmsr	%r4			/* save msr */
 	stw	%r4,8(%r1)
 
-	li	%r0,0			/* clear battable translations */
+	li	%r0,0			/* disable MMU */
 	mtmsr	%r0
+	isync
+
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	/* clear BAT translations */
 	mtdbatu	2,%r0
 	mtdbatu	3,%r0
 	mtibatu	2,%r0
@@ -202,12 +201,20 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	addi	%r5,%r5,_C_LABEL(ofw_battable)@l
 	stw	%r5,CI_BATTABLE(%r4)
 
-	lis	%r4,ofwmsr@ha		/* Open Firmware msr */
+	lis	%r4,ofentry@ha		/* get firmware entry point */
+	lwz	%r4,ofentry@l(%r4)
+	mtlr	%r4
+
+	lis	%r4,ofwmsr@ha		/* load Open Firmware MSR */
 	lwz	%r5,ofwmsr@l(%r4)
 	mtmsr	%r5
 	isync
 
 	blrl				/* call Open Firmware */
+
+	li	%r0,0			/* ensure disable MMU is disabled */
+	mtmsr	%r0
+	isync
 
 	/* curcpu()->ci_battable = &battable */
 	GET_CPUINFO(%r4)
