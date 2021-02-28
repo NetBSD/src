@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.225 2021/02/28 02:00:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.226 2021/02/28 03:33:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.225 2021/02/28 02:00:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.226 2021/02/28 03:33:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3738,7 +3738,7 @@ is_constcond_false(const tnode_t *tn, tspec_t t)
  * memory which is used for the expression.
  */
 void
-expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_zero_ok)
+expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
 {
 
 	lint_assert(tn != NULL || nerr != 0);
@@ -3759,7 +3759,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_zero_ok)
 			warning(159);
 	} else if (tn->tn_op == CON) {
 		if (hflag && tctx && !constcond_flag &&
-		    !(constcond_zero_ok &&
+		    !(constcond_false_ok &&
 		      is_constcond_false(tn, tn->tn_type->t_tspec)))
 			/* constant in conditional context */
 			warning(161);
