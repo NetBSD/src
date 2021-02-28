@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.219 2021/02/27 15:26:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.220 2021/02/28 00:23:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.219 2021/02/27 15:26:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.220 2021/02/28 00:23:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2243,7 +2243,8 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 		return;
 	}
 
-	if (getbound(tp->t_subt) > getbound(tn->tn_type->t_subt)) {
+	if (alignment_in_bits(tp->t_subt) >
+	    alignment_in_bits(tn->tn_type->t_subt)) {
 		if (hflag)
 			/* possible pointer alignment problem */
 			warning(135);
@@ -3420,7 +3421,7 @@ build_alignof(type_t *tp)
 	}
 
 	return new_integer_constant_node(SIZEOF_TSPEC,
-	    (int64_t)getbound(tp) / CHAR_SIZE);
+	    (int64_t)alignment_in_bits(tp) / CHAR_SIZE);
 }
 
 /*
