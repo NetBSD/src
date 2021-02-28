@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.59 2018/06/06 22:56:25 uwe Exp $
+#	$NetBSD: Makefile,v 1.60 2021/02/28 20:27:40 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c
+SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c \
+		loadfile_machdep.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-ffreestanding

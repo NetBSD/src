@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.27 2018/11/16 14:58:54 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.28 2021/02/28 20:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -100,11 +100,15 @@ devopen_dummy(struct open_file *of, ...) {
 static int
 devclose(struct open_file *of)
 {
+	uint32_t cells[2];
 	struct of_dev *op = of->f_devdata;
+
+	cells[0] = (uint32_t)op->dmabuf;
+	cells[1] = MAXPHYS;
 
 	if (op->type == OFDEV_NET)
 		net_close(op);
-	OF_call_method("dma-free", op->handle, 2, 0, op->dmabuf, MAXPHYS);
+	OF_call_method("dma-free", op->handle, 2, 0, (int *)cells);
 	OF_close(op->handle);
 	op->handle = -1;
 	return 0;
@@ -385,6 +389,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	int handle, part;
 	size_t nread;
 	int error = 0;
+	uint32_t cells[2];
 
 	if (ofdev.handle != -1)
 		panic("devopen");
@@ -432,7 +437,9 @@ devopen(struct open_file *of, const char *name, char **file)
 	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
 	ofdev.dmabuf = NULL;
-	OF_call_method("dma-alloc", handle, 1, 1, MAXPHYS, &ofdev.dmabuf);
+	cells[0] = MAXPHYS;
+	OF_call_method("dma-alloc", handle, 1, 1, (int *)cells);
+	ofdev.dmabuf = (void *)cells[1];
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;

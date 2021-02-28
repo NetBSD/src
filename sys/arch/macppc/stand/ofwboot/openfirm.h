@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.8 2018/06/06 23:50:29 uwe Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.9 2021/02/28 20:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,20 @@
 
 #include "boot.h"
 
+extern int	ofw_real_mode;
+extern int	ofw_address_cells;
+extern int	ofw_size_cells;
+extern int	ofw_root;
+extern int	ofw_chosen;
+extern int	ofw_options;
+extern int	ofw_openprom;
+extern int	ofw_stdin;
+extern int	ofw_stdout;
+extern int	ofw_memory_ihandle;
+extern int	ofw_mmu_ihandle;
+
+bool	ofw_option_truefalse(const char *, int);
+
 void OF_enter(void);
 __dead void OF_exit(void);
 int OF_finddevice(const char *);
@@ -56,4 +70,4 @@ void *OF_claim(void *, u_int, u_int);
 void OF_release(void *, u_int);
 int OF_milliseconds(void);
 void OF_chain(void *, u_int, boot_entry_t, void *, u_int);
-int OF_call_method(const char *, int, int, int, ...);
+int OF_call_method(const char *, int, int, int, int *);
