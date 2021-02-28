@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.31 2021/02/21 14:19:27 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.32 2021/02/28 02:29:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.31 2021/02/21 14:19:27 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.32 2021/02/28 02:29:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -280,6 +280,40 @@ type_name_of_function(buffer *buf, const type_t *tp)
 	buf_add(buf, type_name(tp->t_subt));
 }
 
+static void
+type_name_of_struct_or_union(buffer *buf, const type_t *tp)
+{
+	buf_add(buf, " ");
+#ifdef t_str
+	if (tp->t_str->sou_tag->s_name == unnamed &&
+	    tp->t_str->sou_first_typedef != NULL) {
+		buf_add(buf, "typedef ");
+		buf_add(buf, tp->t_str->sou_first_typedef->s_name);
+	} else {
+		buf_add(buf, tp->t_str->sou_tag->s_name);
+	}
+#else
+	buf_add(buf, tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
+#endif
+}
+
+static void
+type_name_of_enum(buffer *buf, const type_t *tp)
+{
+	buf_add(buf, " ");
+#ifdef t_enum
+	if (tp->t_enum->en_tag->s_name == unnamed &&
+	    tp->t_enum->en_first_typedef != NULL) {
+		buf_add(buf, "typedef ");
+		buf_add(buf, tp->t_enum->en_first_typedef->s_name);
+	} else {
+		buf_add(buf, tp->t_enum->en_tag->s_name);
+	}
+#else
+	buf_add(buf, tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
+#endif
+}
+
 const char *
 type_name(const type_t *tp)
 {
@@ -302,6 +336,7 @@ type_name(const type_t *tp)
 		buf_add(&buf, "const ");
 	if (tp->t_volatile)
 		buf_add(&buf, "volatile ");
+
 	buf_add(&buf, tspec_name(t));
 
 	switch (t) {
@@ -337,30 +372,11 @@ type_name(const type_t *tp)
 		buf_add(&buf, type_name(tp->t_subt));
 		break;
 	case ENUM:
-#ifdef t_enum
-		if (tp->t_enum->en_tag->s_name == unnamed &&
-		    tp->t_enum->en_first_typedef != NULL) {
-			buf.len -= strlen(tspec_name(t));
-			buf_add(&buf, tp->t_enum->en_first_typedef->s_name);
-		} else {
-			buf_add(&buf, " ");
-			buf_add(&buf, tp->t_enum->en_tag->s_name);
-		}
-#else
-		buf_add(&buf, " ");
-		buf_add(&buf,
-		    tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
-#endif
+		type_name_of_enum(&buf, tp);
 		break;
 	case STRUCT:
 	case UNION:
-		buf_add(&buf, " ");
-#ifdef t_str
-		buf_add(&buf, tp->t_str->sou_tag->s_name);
-#else
-		buf_add(&buf,
-		    tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
-#endif
+		type_name_of_struct_or_union(&buf, tp);
 		break;
 	case ARRAY:
 		buf_add(&buf, " of ");
