@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.229 2021/02/28 19:16:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.230 2021/02/28 19:24:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.229 2021/02/28 19:16:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.230 2021/02/28 19:24:15 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2289,7 +2289,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 
 	if (nt == BOOL) {	/* C99 6.3.1.2 */
 		nv->v_ansiu = false;
-		nv->v_quad = is_nonzero_val(ot, v) ? 1 : 0;
+		nv->v_quad = is_nonzero_val(v) ? 1 : 0;
 		return;
 	}
 
