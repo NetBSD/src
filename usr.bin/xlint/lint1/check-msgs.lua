@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.8 2021/02/28 12:40:00 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.9 2021/02/28 12:45:47 rillig Exp $
 
 --[[
 
@@ -113,14 +113,9 @@ end
 
 local function file_contains(filename, text)
   local f = assert(io.open(filename, "r"))
-  for line in f:lines() do
-    if line:find(text, 1, true) then
-      f:close()
-      return true
-    end
-  end
+  local found = f:read("a"):find(text, 1, true)
   f:close()
-  return false
+  return found
 end
 
 local function check_test_files(msgs)
