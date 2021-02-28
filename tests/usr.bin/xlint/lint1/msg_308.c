@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_308.c,v 1.4 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_308.c,v 1.5 2021/02/28 12:40:00 rillig Exp $	*/
 # 3 "msg_308.c"
 
-// Test for message: Invalid type for _Complex [308]
+// Test for message: invalid type for _Complex [308]
 
 float _Complex float_complex;
 double _Complex double_complex;
