@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2020/07/11 08:10:52 jruoho Exp $
+#	$NetBSD: Makefile,v 1.30 2021/02/28 02:39:15 mrg Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -80,6 +80,12 @@ CLEANFILES+=	bozohttpd.8.html bozohttpd.8.txt
 
 check:
 	cd ${.CURDIR}/testsuite && ${MAKE} check
+
+.if empty(BOZOVER)
+BOZOVER!=	sed -n \
+		    -e s/\"$$// -e \
+		    's/\#define[ 	]*SERVER_SOFTWARE[ 	]*\"bozohttpd\///p'  bozohttpd.c
+.endif
 
 # Create a distfile: uses /tmp
 BASE=bozohttpd-${BOZOVER}
