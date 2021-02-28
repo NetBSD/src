@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.228 2021/02/28 18:51:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.229 2021/02/28 19:16:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.228 2021/02/28 18:51:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.229 2021/02/28 19:16:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3188,8 +3188,8 @@ fold_test(tnode_t *tn)
 	v->v_tspec = tn->tn_type->t_tspec;
 	lint_assert(v->v_tspec == INT || (Tflag && v->v_tspec == BOOL));
 
-	l = is_nonzero(tn->tn_left);
-	r = modtab[tn->tn_op].m_binary && is_nonzero(tn->tn_right);
+	l = constant_is_nonzero(tn->tn_left);
+	r = modtab[tn->tn_op].m_binary && constant_is_nonzero(tn->tn_right);
 
 	switch (tn->tn_op) {
 	case NOT:

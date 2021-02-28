@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.67 2021/02/28 03:59:28 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.68 2021/02/28 19:16:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -470,7 +470,7 @@ is_nonzero_val(tspec_t t, const val_t *val)
 }
 
 static inline bool
-is_nonzero(const tnode_t *tn)
+constant_is_nonzero(const tnode_t *tn)
 {
 	/*
 	 * XXX: It's strange that val_t doesn't know itself whether it

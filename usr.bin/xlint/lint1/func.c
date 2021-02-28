@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.73 2021/02/22 15:09:50 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.74 2021/02/28 19:16:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.73 2021/02/22 15:09:50 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.74 2021/02/28 19:16:05 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -740,7 +740,7 @@ while1(tnode_t *tn)
 	pushctrl(T_WHILE);
 	cstmt->c_loop = true;
 	if (tn != NULL && tn->tn_op == CON)
-		cstmt->c_infinite = is_nonzero(tn);
+		cstmt->c_infinite = constant_is_nonzero(tn);
 
 	check_getopt_begin_while(tn);
 	expr(tn, false, true, true, false);
@@ -801,7 +801,7 @@ do2(tnode_t *tn)
 		tn = check_controlling_expression(tn);
 
 	if (tn != NULL && tn->tn_op == CON) {
-		cstmt->c_infinite = is_nonzero(tn);
+		cstmt->c_infinite = constant_is_nonzero(tn);
 		if (!cstmt->c_infinite && cstmt->c_cont)
 			/* continue in 'do ... while (0)' loop */
 			error(323);
@@ -858,7 +858,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 		expr(tn2, false, true, true, false);
 
 	cstmt->c_infinite =
-	    tn2 == NULL || (tn2->tn_op == CON && is_nonzero(tn2));
+	    tn2 == NULL || (tn2->tn_op == CON && constant_is_nonzero(tn2));
 
 	/* Checking the reinitialization expression is done in for2() */
 
