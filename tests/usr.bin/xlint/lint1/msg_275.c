@@ -1,7 +1,18 @@
-/*	$NetBSD: msg_275.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_275.c,v 1.3 2021/02/28 01:36:46 rillig Exp $	*/
 # 3 "msg_275.c"
 
 // Test for message: cast discards 'const' from pointer target type [275]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -h */
+
+char *
+unconst_string(const char *s)
+{
+	return (char *)s;	/* expect: 275 */
+}
+
+const char *
+const_string(char *s)
+{
+	return (const char *)s;
+}
