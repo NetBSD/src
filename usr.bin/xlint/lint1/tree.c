@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.224 2021/02/28 01:30:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.225 2021/02/28 02:00:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.224 2021/02/28 01:30:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.225 2021/02/28 02:00:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2567,8 +2567,8 @@ warn_incompatible_pointers(const mod_t *mp,
 			/* illegal structure pointer combination */
 			warning(244);
 		} else {
-			/* illegal structure pointer combination, op %s */
-			warning(245, mp->m_name);
+			/* incompatible structure pointers: '%s' '%s' '%s' */
+			warning(245, type_name(ltp), mp->m_name, type_name(rtp));
 		}
 	} else {
 		if (mp == NULL) {

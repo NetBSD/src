@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.84 2021/02/28 01:30:22 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.85 2021/02/28 02:00:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.84 2021/02/28 01:30:22 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.85 2021/02/28 02:00:05 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -304,7 +304,7 @@ const	char *msgs[] = {
 	"combination of '%s' and '%s', op %s",			      /* 242 */
 	"dubious comparison of enums, op %s",			      /* 243 */
 	"illegal structure pointer combination",		      /* 244 */
-	"illegal structure pointer combination, op %s",		      /* 245 */
+	"incompatible structure pointers: '%s' '%s' '%s'",	      /* 245 */
 	"dubious conversion of enum to '%s'",			      /* 246 */
 	"pointer cast from '%s' to '%s' may be troublesome",	      /* 247 */
 	"floating-point constant out of range",			      /* 248 */
