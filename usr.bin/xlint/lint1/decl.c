@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.138 2021/02/22 15:09:50 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.139 2021/02/28 00:23:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.138 2021/02/22 15:09:50 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.139 2021/02/28 00:23:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -925,11 +925,8 @@ length(const type_t *tp, const char *name)
 	return elem * elsz;
 }
 
-/*
- * Get the alignment of the given Type in bits.
- */
 int
-getbound(const type_t *tp)
+alignment_in_bits(const type_t *tp)
 {
 	size_t	a;
 	tspec_t	t;
@@ -1177,12 +1174,12 @@ declarator_1_struct_union(sym_t *dsym)
 		dcs->d_offset = 0;
 	}
 	if (dsym->s_bitfield) {
-		align(getbound(tp), tp->t_flen);
+		align(alignment_in_bits(tp), tp->t_flen);
 		dsym->s_value.v_quad = (dcs->d_offset / size(t)) * size(t);
 		tp->t_foffs = dcs->d_offset - (int)dsym->s_value.v_quad;
 		dcs->d_offset += tp->t_flen;
 	} else {
-		align(getbound(tp), 0);
+		align(alignment_in_bits(tp), 0);
 		dsym->s_value.v_quad = dcs->d_offset;
 		dcs->d_offset += sz;
 	}

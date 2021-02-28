@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.71 2021/02/21 15:02:16 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.72 2021/02/28 00:23:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -154,7 +154,7 @@ extern	void	setasm(void);
 extern	void	clrtyp(void);
 extern	void	deftyp(void);
 extern	int	length(const type_t *, const char *);
-extern	int	getbound(const type_t *);
+extern	int	alignment_in_bits(const type_t *);
 extern	sym_t	*lnklst(sym_t *, sym_t *);
 extern	void	check_type(sym_t *);
 extern	sym_t	*declarator_1_struct_union(sym_t *);
