@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.140 2021/02/28 02:45:37 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.141 2021/02/28 03:05:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.140 2021/02/28 02:45:37 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.141 2021/02/28 03:05:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1071,6 +1071,68 @@ check_type(sym_t *sym)
 	}
 }
 
+static void
+declare_bit_field(sym_t *const dsym, tspec_t *inout_t, type_t **const inout_tp)
+{
+	tspec_t t = *inout_t;
+	type_t *tp = *inout_tp;
+
+	/*
+	 * only unsigned and signed int are portable bit-field types
+	 *(at least in ANSI C, in traditional C only unsigned int)
+	 */
+	if (t == CHAR || t == UCHAR || t == SCHAR ||
+	    t == SHORT || t == USHORT || t == ENUM) {
+		if (!bitfieldtype_ok) {
+			if (sflag) {
+				/* bit-field type '%s' invalid in ANSI C */
+				warning(273, type_name(tp));
+			} else if (pflag) {
+				/* nonportable bit-field type */
+				warning(34);
+			}
+		}
+	} else if (t == INT && dcs->d_smod == NOTSPEC) {
+		if (pflag && !bitfieldtype_ok) {
+			/* nonportable bit-field type */
+			warning(34);
+		}
+	} else if (t != INT && t != UINT && t != BOOL) {
+		/*
+		 * Non-integer types are always illegal for bitfields,
+		 * regardless of BITFIELDTYPE. Integer types not dealt with
+		 * above are okay only if BITFIELDTYPE is in effect.
+		 */
+		if (!bitfieldtype_ok || !is_integer(t)) {
+			/* illegal bit-field type '%s' */
+			warning(35, type_name(tp));
+			int sz = tp->t_flen;
+			dsym->s_type = tp = duptyp(gettyp(t = INT));
+			if ((tp->t_flen = sz) > size(t))
+				tp->t_flen = size(t);
+		}
+	}
+
+	if (tp->t_flen < 0 || tp->t_flen > (ssize_t)size(t)) {
+		/* illegal bit-field size: %d */
+		error(36, tp->t_flen);
+		tp->t_flen = size(t);
+	} else if (tp->t_flen == 0 && dsym->s_name != unnamed) {
+		/* zero size bit-field */
+		error(37);
+		tp->t_flen = size(t);
+	}
+	if (dsym->s_scl == MOU) {
+		/* illegal use of bit-field */
+		error(41);
+		dsym->s_type->t_bitfield = false;
+		dsym->s_bitfield = false;
+	}
+
+	*inout_t = t;
+	*inout_tp = tp;
+}
+
 /*
  * Process the declarator of a struct/union element.
  */
@@ -1079,8 +1141,8 @@ declarator_1_struct_union(sym_t *dsym)
 {
 	type_t	*tp;
 	tspec_t	t;
-	int	sz, len;
-	int	o = 0;	/* Appease gcc */
+	int	sz;
+	int	o = 0;	/* Appease GCC */
 	scl_t	sc;
 
 	lint_assert((sc = dsym->s_scl) == MOS || sc == MOU);
@@ -1100,57 +1162,7 @@ declarator_1_struct_union(sym_t *dsym)
 	t = (tp = dsym->s_type)->t_tspec;
 
 	if (dsym->s_bitfield) {
-		/*
-		 * only unsigned and signed int are portable bit-field types
-		 *(at least in ANSI C, in traditional C only unsigned int)
-		 */
-		if (t == CHAR || t == UCHAR || t == SCHAR ||
-		    t == SHORT || t == USHORT || t == ENUM) {
-			if (!bitfieldtype_ok) {
-				if (sflag) {
-					/* bit-field type '%s' invalid ... */
-					warning(273, type_name(tp));
-				} else if (pflag) {
-					/* nonportable bit-field type */
-					warning(34);
-				}
-			}
-		} else if (t == INT && dcs->d_smod == NOTSPEC) {
-			if (pflag && !bitfieldtype_ok) {
-				/* nonportable bit-field type */
-				warning(34);
-			}
-		} else if (t != INT && t != UINT && t != BOOL) {
-			/*
-			 * Non-integer types are always illegal for
-			 * bitfields, regardless of BITFIELDTYPE.
-			 * Integer types not dealt with above are
-			 * okay only if BITFIELDTYPE is in effect.
-			 */
-			if (!bitfieldtype_ok || !is_integer(t)) {
-				/* illegal bit-field type '%s' */
-				warning(35, type_name(tp));
-				sz = tp->t_flen;
-				dsym->s_type = tp = duptyp(gettyp(t = INT));
-				if ((tp->t_flen = sz) > size(t))
-					tp->t_flen = size(t);
-			}
-		}
-		if ((len = tp->t_flen) < 0 || len > (ssize_t)size(t)) {
-			/* illegal bit-field size: %d */
-			error(36, len);
-			tp->t_flen = size(t);
-		} else if (len == 0 && dsym->s_name != unnamed) {
-			/* zero size bit-field */
-			error(37);
-			tp->t_flen = size(t);
-		}
-		if (dsym->s_scl == MOU) {
-			/* illegal use of bit-field */
-			error(41);
-			dsym->s_type->t_bitfield = false;
-			dsym->s_bitfield = false;
-		}
+		declare_bit_field(dsym, &t, &tp);
 	} else if (t == FUNC) {
 		/* function illegal in structure or union */
 		error(38);
