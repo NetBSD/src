@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.222 2021/02/28 00:40:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.223 2021/02/28 01:06:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.222 2021/02/28 00:40:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.223 2021/02/28 01:06:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1597,9 +1597,9 @@ check_assign_types_compatible(op_t op, int arg,
 				warning(182, type_name(lstp), type_name(rstp));
 				break;
 			case FARG:
-				/* argument has incompatible pointer type... */
+				/* converting '%s' to incompatible '%s' ... */
 				warning(153,
-				    arg, type_name(lstp), type_name(rstp));
+				    type_name(rtp), type_name(ltp), arg);
 				break;
 			default:
 				/* operands have incompatible pointer type... */
@@ -1642,8 +1642,8 @@ check_assign_types_compatible(op_t op, int arg,
 			warn_incompatible_pointers(NULL, ltp, rtp);
 			break;
 		case FARG:
-			/* arg. has incomp. pointer type, arg #%d (%s != %s) */
-			warning(153, arg, type_name(ltp), type_name(rtp));
+			/* converting '%s' to incompatible '%s' for ... */
+			warning(153, type_name(rtp), type_name(ltp), arg);
 			break;
 		default:
 			warn_incompatible_pointers(mp, ltp, rtp);
@@ -2238,8 +2238,8 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 	} else if (nt == FUNC && ot == FUNC) {
 		return;
 	} else if (nt == FUNC || ot == FUNC) {
-		/* questionable conversion of function pointer */
-		warning(229);
+		/* converting '%s' to '%s' is questionable */
+		warning(229, type_name(tn->tn_type), type_name(tp));
 		return;
 	}
 
