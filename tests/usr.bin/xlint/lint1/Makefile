@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2021/02/21 08:05:51 rillig Exp $
+# $NetBSD: Makefile,v 1.33 2021/02/28 20:17:14 rillig Exp $
 
 NOMAN=		# defined
 
@@ -39,6 +39,7 @@ FILES+=		d_c99_union_init1.c
 FILES+=		d_c99_union_init2.c
 FILES+=		d_c99_union_init3.c
 FILES+=		d_c99_union_init4.c
+FILES+=		d_c99_union_init5.c
 FILES+=		d_c9x_array_init.c
 FILES+=		d_c9x_recursive_init.c
 FILES+=		d_cast_fun_array_param.c
