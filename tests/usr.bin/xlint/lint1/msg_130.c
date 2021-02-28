@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_130.c,v 1.4 2021/02/27 13:43:36 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.5 2021/02/28 01:30:22 rillig Exp $	*/
 # 3 "msg_130.c"
 
-// Test for message: enum type mismatch, op %s [130]
+// Test for message: enum type mismatch: '%s' '%s' '%s' [130]
 
 enum color {
 	RED	= 1 << 0,
