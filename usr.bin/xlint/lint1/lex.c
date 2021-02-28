@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.9 2021/02/22 15:09:50 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.10 2021/02/28 18:51:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.9 2021/02/22 15:09:50 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.10 2021/02/28 18:51:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -681,7 +681,7 @@ msb(int64_t q, tspec_t t, int len)
 {
 
 	if (len <= 0)
-		len = size(t);
+		len = size_in_bits(t);
 	return (q & qbmasks[len - 1]) != 0 ? 1 : 0;
 }
 
@@ -693,7 +693,7 @@ xsign(int64_t q, tspec_t t, int len)
 {
 
 	if (len <= 0)
-		len = size(t);
+		len = size_in_bits(t);
 
 	if (t == PTR || is_uinteger(t) || !sign(q, t, len)) {
 		q &= qlmasks[len];

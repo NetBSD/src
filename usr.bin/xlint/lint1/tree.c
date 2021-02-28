@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.227 2021/02/28 03:59:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.228 2021/02/28 18:51:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.227 2021/02/28 03:59:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.228 2021/02/28 18:51:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -903,7 +903,7 @@ typeok_shr(const mod_t *mp,
 			warning(118, mp->m_name);
 		}
 	} else if (!tflag && !sflag && !is_uinteger(olt) && !is_uinteger(ort) &&
-		   psize(lt) < psize(rt)) {
+		   portable_size_in_bits(lt) < portable_size_in_bits(rt)) {
 		/*
 		 * In traditional C the left operand would be extended,
 		 * possibly with 1, and then shifted.
@@ -927,7 +927,7 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 	 * width of the right operand. For SHL this may result in
 	 * different results.
 	 */
-	if (psize(lt) < psize(rt)) {
+	if (portable_size_in_bits(lt) < portable_size_in_bits(rt)) {
 		/*
 		 * XXX If both operands are constant, make sure
 		 * that there is really a difference between
@@ -946,10 +946,12 @@ typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 		if (!is_uinteger(rt) && rn->tn_val->v_quad < 0) {
 			/* negative shift */
 			warning(121);
-		} else if ((uint64_t)rn->tn_val->v_quad == (uint64_t)size(lt)) {
+		} else if ((uint64_t)rn->tn_val->v_quad ==
+			   (uint64_t)size_in_bits(lt)) {
 			/* shift equal to size of object */
 			warning(267);
-		} else if ((uint64_t)rn->tn_val->v_quad > (uint64_t)size(lt)) {
+		} else if ((uint64_t)rn->tn_val->v_quad >
+			   (uint64_t)size_in_bits(lt)) {
 			/* shift greater than size of object */
 			warning(122);
 		}
@@ -1883,10 +1885,10 @@ promote(op_t op, bool farg, tnode_t *tn)
 		 */
 		if (tn->tn_type->t_bitfield) {
 			len = tn->tn_type->t_flen;
-			if (size(INT) > len) {
+			if (size_in_bits(INT) > len) {
 				t = INT;
 			} else {
-				lint_assert(len == size(INT));
+				lint_assert(len == size_in_bits(INT));
 				if (is_uinteger(t)) {
 					t = UINT;
 				} else {
@@ -1894,11 +1896,11 @@ promote(op_t op, bool farg, tnode_t *tn)
 				}
 			}
 		} else if (t == CHAR || t == UCHAR || t == SCHAR) {
-			t = (size(CHAR) < size(INT) || t != UCHAR) ?
-				INT : UINT;
+			t = (size_in_bits(CHAR) < size_in_bits(INT)
+			     || t != UCHAR) ? INT : UINT;
 		} else if (t == SHORT || t == USHORT) {
-			t = (size(SHORT) < size(INT) || t == SHORT) ?
-				INT : UINT;
+			t = (size_in_bits(SHORT) < size_in_bits(INT)
+			     || t == SHORT) ? INT : UINT;
 		} else if (t == ENUM) {
 			t = INT;
 		} else if (farg && t == FLOAT) {
@@ -1978,9 +1980,9 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 			 * If type A has more bits than type B it should
 			 * be able to hold all possible values of type B.
 			 */
-			if (size(lt) > size(rt)) {
+			if (size_in_bits(lt) > size_in_bits(rt)) {
 				t = lt;
-			} else if (size(lt) < size(rt)) {
+			} else if (size_in_bits(lt) < size_in_bits(rt)) {
 				t = rt;
 			} else {
 				for (i = 3; tl[i] != INT; i++) {
@@ -2097,9 +2099,10 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		return;
 
 	if (is_floating(nt) != is_floating(ot) ||
-	    psize(nt) != psize(ot)) {
+	    portable_size_in_bits(nt) != portable_size_in_bits(ot)) {
 		/* representation and/or width change */
-		if (!is_integer(ot) || psize(ot) > psize(INT)) {
+		if (!is_integer(ot) ||
+		    portable_size_in_bits(ot) > portable_size_in_bits(INT)) {
 			/* argument #%d is converted from '%s' to '%s' ... */
 			warning(259,
 			    arg, type_name(tn->tn_type), type_name(tp));
@@ -2140,7 +2143,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	if (op == CVT)
 		return;
 
-	if (Pflag && psize(nt) > psize(ot) &&
+	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
 	    is_uinteger(nt) != is_uinteger(ot)) {
 		if (aflag > 0 && pflag) {
 			if (op == FARG) {
@@ -2153,7 +2156,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		}
 	}
 
-	if (Pflag && psize(nt) > psize(ot)) {
+	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot)) {
 		switch (tn->tn_op) {
 		case PLUS:
 		case MINUS:
@@ -2168,7 +2171,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		}
 	}
 
-	if (psize(nt) < psize(ot) &&
+	if (portable_size_in_bits(nt) < portable_size_in_bits(ot) &&
 	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
 	     aflag > 1)) {
 		/* conversion from '%s' may lose accuracy */
@@ -2197,10 +2200,10 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 		return;
 	if (op != CVT)
 		return;		/* We got already an error. */
-	if (psize(nt) >= psize(PTR))
+	if (portable_size_in_bits(nt) >= portable_size_in_bits(PTR))
 		return;
 
-	if (pflag && size(nt) >= size(PTR)) {
+	if (pflag && size_in_bits(nt) >= size_in_bits(PTR)) {
 		/* conversion of pointer to '%s' may lose bits */
 		warning(134, type_name(tp));
 	} else {
@@ -2253,7 +2256,7 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 
 	if (((nt == STRUCT || nt == UNION) &&
 	     tp->t_subt->t_str != tn->tn_type->t_subt->t_str) ||
-	    psize(nt) != psize(ot)) {
+	    portable_size_in_bits(nt) != portable_size_in_bits(ot)) {
 		if (cflag) {
 			/* pointer cast from '%s' to '%s' may be troublesome */
 			warning(247, type_name(tn->tn_type), type_name(tp));
@@ -2373,7 +2376,8 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		warning(157);
 		v->v_ansiu = false;
 	} else if (v->v_ansiu && (is_integer(nt) && !is_uinteger(nt) &&
-				  psize(nt) > psize(ot))) {
+				  portable_size_in_bits(nt) >
+				  portable_size_in_bits(ot))) {
 		/* ANSI C treats constant as unsigned */
 		warning(157);
 		v->v_ansiu = false;
@@ -2388,14 +2392,14 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 	case LCOMPLEX:
 		break;
 	default:
-		sz = tp->t_bitfield ? tp->t_flen : size(nt);
+		sz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
 		nv->v_quad = xsign(nv->v_quad, nt, sz);
 		break;
 	}
 
 	if (rchk && op != CVT) {
-		osz = size(ot);
-		nsz = tp->t_bitfield ? tp->t_flen : size(nt);
+		osz = size_in_bits(ot);
+		nsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
 		xmask = qlmasks[nsz] ^ qlmasks[osz];
 		xmsk1 = qlmasks[nsz] ^ qlmasks[osz - 1];
 		/*
@@ -2933,7 +2937,7 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (op == SHLASS) {
-		if (psize(lt) < psize(rt)) {
+		if (portable_size_in_bits(lt) < portable_size_in_bits(rt)) {
 			if (hflag)
 				/* semantics of '%s' change in ANSI C; ... */
 				warning(118, "<<=");
@@ -2994,7 +2998,7 @@ plength(type_t *tp)
 		}
 		/* FALLTHROUGH */
 	default:
-		if ((elsz = size(tp->t_tspec)) == 0) {
+		if ((elsz = size_in_bits(tp->t_tspec)) == 0) {
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		} else {
@@ -3043,7 +3047,7 @@ fold(tnode_t *tn)
 	if (modtab[tn->tn_op].m_binary)
 		ur = sr = tn->tn_right->tn_val->v_quad;
 
-	mask = qlmasks[size(t)];
+	mask = qlmasks[size_in_bits(t)];
 	ovfl = false;
 
 	switch (tn->tn_op) {
@@ -3118,7 +3122,7 @@ fold(tnode_t *tn)
 		 * shifts of signed values are implementation dependent.
 		 */
 		q = ul >> sr;
-		q = xsign(q, t, size(t) - (int)sr);
+		q = xsign(q, t, size_in_bits(t) - (int)sr);
 		break;
 	case LT:
 		q = (utyp ? ul < ur : sl < sr) ? 1 : 0;
@@ -3387,7 +3391,7 @@ tsize(type_t *tp)
 			error(146);
 			elsz = 1;
 		} else {
-			elsz = size(tp->t_tspec);
+			elsz = size_in_bits(tp->t_tspec);
 			lint_assert(elsz > 0);
 		}
 		break;
