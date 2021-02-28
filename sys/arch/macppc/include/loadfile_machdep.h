@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.6 2014/08/06 21:57:50 joerg Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.7 2021/02/28 20:27:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,9 +36,21 @@
 
 #define LOADADDR(a)		(((u_long)(a)) + offset)
 #define ALIGNENTRY(a)		((u_long)(a))
+
+#ifdef _STANDALONE
+ssize_t	macppc_read(int, void *, size_t);
+void *	macppc_memcpy(void *, const void *, size_t);
+void *	macppc_memset(void *, int, size_t);
+
+#define READ(f, b, c)		macppc_read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		macppc_memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		macppc_memset((void *)LOADADDR(d), 0, (c))
+#else
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
 #define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+#endif /* _STANDALONE */
+
 #define	WARN(a)			do { \
 					(void)printf a; \
 					if (errno) \
