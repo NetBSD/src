@@ -1,1 +1,3 @@
-msg_245.c(6): syntax error ':' [249]
+msg_245.c(29): warning: illegal structure pointer combination, op == [245]
+msg_245.c(30): warning: illegal structure pointer combination, op == [245]
+msg_245.c(31): warning: illegal structure pointer combination, op == [245]
