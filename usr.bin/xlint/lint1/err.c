@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.83 2021/02/28 01:06:57 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.84 2021/02/28 01:30:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.83 2021/02/28 01:06:57 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.84 2021/02/28 01:30:22 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -189,7 +189,7 @@ const	char *msgs[] = {
 	"'&' before array or function: ignored",		      /* 127 */
 	"operands have incompatible pointer types, op %s (%s != %s)", /* 128 */
 	"expression has null effect",				      /* 129 */
-	"enum type mismatch, op %s",				      /* 130 */
+	"enum type mismatch: '%s' '%s' '%s'",			      /* 130 */
 	"conversion to '%s' may sign-extend incorrectly",	      /* 131 */
 	"conversion from '%s' to '%s' may lose accuracy",	      /* 132 */
 	"conversion of pointer to '%s' loses bits",		      /* 133 */
