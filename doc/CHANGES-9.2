@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.51 2021/02/26 13:31:21 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.52 2021/02/28 07:09:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1710,4 +1710,19 @@ usr.bin/patch/patch.c				1.30
 
 	patch(1): make '-V none' work.
 	[nia, ticket #1215]
+
+sys/arch/hppa/gsc/harmony.c			1.8-1.10
+
+	harmony(4): fix locking bug and handling of channel/speed bits.
+	[isaki, ticket #1216]
+
+sys/dev/audio/audio.c				1.46,1.82,1.85,1.87,1.88
+
+	audio(4): comments and diagnostics improvements.
+	[isaki, ticket #1217]
+
+sys/dev/audio/audio.c				1.84
+
+	Fix return value of audiopoll().
+	[isaki, ticket #1218]
 
