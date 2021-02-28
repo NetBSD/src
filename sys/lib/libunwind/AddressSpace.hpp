@@ -283,7 +283,6 @@ public:
   }
 
   bool addFDE(pint_t pcStart, pint_t pcEnd, pint_t fde) {
-    pthread_rwlock_wrlock(&fdeTreeLock);
     Range *n = (Range *)malloc(sizeof(*n));
     n->hdr_base = fde;
     n->hdr_start = 0;
@@ -292,6 +291,7 @@ public:
     n->last_pc = pcEnd;
     n->data_base = 0;
     n->ehframe_base = 0;
+    pthread_rwlock_wrlock(&fdeTreeLock);
     if (static_cast<Range *>(rb_tree_insert_node(&segmentTree, n)) == n) {
       pthread_rwlock_unlock(&fdeTreeLock);
       return true;
