@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.30 2020/04/23 00:12:28 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.31 2021/02/28 20:27:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -211,8 +211,8 @@ void
 main(void)
 {
 	extern char bootprog_name[], bootprog_rev[];
-	int chosen, options, openprom;
 	char bootline[512];		/* Should check size? */
+	char prop[32];
 	char *cp;
 	u_long marks[MARK_MAX];
 	u_int32_t entry;
@@ -224,25 +224,24 @@ main(void)
 	/*
 	 * Figure out what version of Open Firmware...
 	 */
-	if ((openprom = OF_finddevice("/openprom")) != -1) {
-		char model[32];
-
-		memset(model, 0, sizeof model);
-		OF_getprop(openprom, "model", model, sizeof model);
-		for (cp = model; *cp; cp++)
+	if (ofw_openprom != -1) {
+		memset(prop, 0, sizeof prop);
+		OF_getprop(ofw_openprom, "model", prop, sizeof prop);
+		for (cp = prop; *cp; cp++)
 			if (*cp >= '0' && *cp <= '9') {
 				ofw_version = *cp - '0';
 				break;
 			}
-		DPRINTF(">> Open Firmware version %d.x\n", ofw_version);
+		printf(">> Open Firmware version %d.x\n", ofw_version);
 	}
+	printf(">> Open Firmware running in %s-mode.\n",
+	    ofw_real_mode ? "real" : "virtual");
 
 	/*
 	 * Get the boot arguments from Openfirmware
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1 ||
-	    OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0 ||
-	    OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
+	if (OF_getprop(ofw_chosen, "bootpath", bootdev, sizeof bootdev) < 0 ||
+	    OF_getprop(ofw_chosen, "bootargs", bootline, sizeof bootline) < 0) {
 		printf("Invalid Openfirmware environment\n");
 		OF_exit();
 	}
@@ -253,8 +252,8 @@ main(void)
 	 */
 	if (bootdev[0] == 0) {
 		printf("Cannot use bootpath\n");
-		if ((options = OF_finddevice("/options")) == -1 ||
-		    OF_getprop(options, "boot-device", bootdev,
+		if (ofw_options == -1 ||
+		    OF_getprop(ofw_options, "boot-device", bootdev,
 			       sizeof bootdev) < 0) {
 			printf("Invalid Openfirmware environment\n");
 			OF_exit();
@@ -299,7 +298,8 @@ main(void)
 loaded:
 
 #ifdef	__notyet__
-	OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
+	OF_setprop(ofw_chosen, "bootpath", opened_name,
+		   strlen(opened_name) + 1);
 	cp = bootline;
 #else
 	strcpy(bootline, opened_name);
@@ -324,7 +324,7 @@ loaded:
 	else
 		*++cp = 0;
 #ifdef	__notyet__
-	OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
+	OF_setprop(ofw_chosen, "bootargs", bootline, strlen(bootline) + 1);
 #endif
 
 	entry = marks[MARK_ENTRY];
@@ -345,7 +345,7 @@ changedisk_hook(struct open_file *of)
 	struct of_dev *op = of->f_devdata;
 	int c;
 
-	OF_call_method("eject", op->handle, 0, 0);
+	OF_call_method("eject", op->handle, 0, 0, NULL);
 
 	c = getchar();
 	if (c == 'q') {
@@ -353,7 +353,7 @@ changedisk_hook(struct open_file *of)
 		OF_exit();
 	}
 
-	OF_call_method("close", op->handle, 0, 0);
-	OF_call_method("open", op->handle, 0, 0);
+	OF_call_method("close", op->handle, 0, 0, NULL);
+	OF_call_method("open", op->handle, 0, 0, NULL);
 }
 #endif
