@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.19 2021/02/20 19:10:37 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.20 2021/02/28 18:51:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.19 2021/02/20 19:10:37 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.20 2021/02/28 18:51:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -125,8 +125,9 @@ inittyp(void)
 				      DCOMPLEX, DCOMPLEX,
 				      0, 0, 1, 1, 1, 1, "double _Complex" } },
 		/*
-		 * XXX: with -p, LCOMPLEX.tt_psz != 2 * LDOUBLE.tt_psz.
-		 * This may or may not have been intentional.
+		 * XXX: with -p, LCOMPLEX.tt_portable_size_in_bits !=
+		 *  2 * LDOUBLE.tt_portable_size_in_bits.
+		 *  This may or may not have been intentional.
 		 */
 		{ LCOMPLEX,   { LDOUBLE_SIZE * 2, 64 * 2,
 				      LCOMPLEX, LCOMPLEX,
@@ -158,7 +159,8 @@ inittyp(void)
 		ttab[ittab[i].it_tspec] = ittab[i].it_ttab;
 	if (!pflag) {
 		for (i = 0; i < NTSPEC; i++)
-			ttab[i].tt_psz = ttab[i].tt_sz;
+			ttab[i].tt_portable_size_in_bits =
+			    ttab[i].tt_size_in_bits;
 	}
 	if (Tflag) {
 		ttab[BOOL].tt_is_integer = false;
