@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.226 2021/02/28 03:33:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.227 2021/02/28 03:59:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.226 2021/02/28 03:33:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.227 2021/02/28 03:59:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -641,7 +641,8 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	if (mp->m_left_test_context) {
 		if (ln->tn_op == CON ||
 		    ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) {
-			if (hflag && !constcond_flag)
+			if (hflag && !constcond_flag &&
+			    !ln->tn_system_dependent)
 				/* constant in conditional context */
 				warning(161);
 		}
@@ -3161,6 +3162,10 @@ fold(tnode_t *tn)
 	v->v_quad = xsign(q, t, -1);
 
 	cn = new_constant_node(tn->tn_type, v);
+	if (tn->tn_left->tn_system_dependent)
+		cn->tn_system_dependent = true;
+	if (modtab[tn->tn_op].m_binary && tn->tn_right->tn_system_dependent)
+		cn->tn_system_dependent = true;
 
 	return cn;
 }
@@ -3306,7 +3311,10 @@ fold_float(tnode_t *tn)
 tnode_t *
 build_sizeof(type_t *tp)
 {
-	return new_integer_constant_node(SIZEOF_TSPEC, tsize(tp) / CHAR_SIZE);
+	int64_t size_in_bytes = tsize(tp) / CHAR_SIZE;
+	tnode_t *tn = new_integer_constant_node(SIZEOF_TSPEC, size_in_bytes);
+	tn->tn_system_dependent = true;
+	return tn;
 }
 
 /*
@@ -3321,7 +3329,10 @@ build_offsetof(type_t *tp, sym_t *sym)
 		error(111, "offsetof");
 
 	// XXX: wrong size, no checking for sym fixme
-	return new_integer_constant_node(SIZEOF_TSPEC, tsize(tp) / CHAR_SIZE);
+	int64_t offset_in_bytes = tsize(tp) / CHAR_SIZE;
+	tnode_t *tn = new_integer_constant_node(SIZEOF_TSPEC, offset_in_bytes);
+	tn->tn_system_dependent = true;
+	return tn;
 }
 
 int64_t
@@ -3759,6 +3770,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
 			warning(159);
 	} else if (tn->tn_op == CON) {
 		if (hflag && tctx && !constcond_flag &&
+		    !tn->tn_system_dependent &&
 		    !(constcond_false_ok &&
 		      is_constcond_false(tn, tn->tn_type->t_tspec)))
 			/* constant in conditional context */
