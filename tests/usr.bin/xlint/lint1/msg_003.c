@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_003.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_003.c,v 1.4 2021/02/28 12:40:00 rillig Exp $	*/
 # 3 "msg_003.c"
 
-// Test for message: %s declared in argument declaration list [3]
+// Test for message: '%s' declared in argument declaration list [3]
 
 /*ARGSUSED*/
 void
