@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.7 2019/06/08 08:02:37 isaki Exp $	*/
+/*	$NetBSD: harmony.c,v 1.7.2.1 2021/02/28 07:01:01 martin Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -165,7 +165,7 @@ CFATTACH_DECL_NEW(harmony, sizeof(struct harmony_softc),
 int harmony_intr(void *);
 void harmony_intr_enable(struct harmony_softc *);
 void harmony_intr_disable(struct harmony_softc *);
-uint32_t harmony_speed_bits(struct harmony_softc *, u_int *);
+uint32_t harmony_speed_bits(struct harmony_softc *, u_int);
 int harmony_set_gainctl(struct harmony_softc *);
 void harmony_reset_codec(struct harmony_softc *);
 void harmony_start_cp(struct harmony_softc *, int);
@@ -437,11 +437,10 @@ harmony_query_format(void *vsc, audio_format_query_t *afp)
 int
 harmony_set_format(void *vsc, int setmode,
     const audio_params_t *play, const audio_params_t *rec,
-	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct harmony_softc *sc;
 	uint32_t bits;
-	int rate;
 
 	sc = vsc;
 
@@ -464,10 +463,8 @@ harmony_set_format(void *vsc, int setmode,
 		bits |= CNTL_OLB;
 
 	bits |= CNTL_CHANS_STEREO;
-
-	/* XXX modify harmony_speed_bits() not to rewrite rate */
-	rate = play->sample_rate;
-	sc->sc_cntlbits |= harmony_speed_bits(sc, &rate);
+	bits |= harmony_speed_bits(sc, play->sample_rate);
+	sc->sc_cntlbits = bits;
 	sc->sc_need_commit = 1;
 
 	return 0;
@@ -1004,8 +1001,6 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 		return EINVAL;
 	}
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-
 	c->c_intr = intr;
 	c->c_intrarg = intrarg;
 	c->c_blksz = blksize;
@@ -1019,8 +1014,6 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	harmony_start_pp(sc, 1);
 	harmony_start_cp(sc, 0);
 	harmony_intr_enable(sc);
-
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -1164,39 +1157,17 @@ static const struct speed_struct {
 };
 
 uint32_t
-harmony_speed_bits(struct harmony_softc *sc, u_int *speedp)
+harmony_speed_bits(struct harmony_softc *sc, u_int speed)
 {
-	int i, n, selected;
+	int i;
 
-	selected = -1;
-	n = sizeof(harmony_speeds) / sizeof(harmony_speeds[0]);
-
-	if ((*speedp) <= harmony_speeds[0].speed)
-		selected = 0;
-	else if ((*speedp) >= harmony_speeds[n - 1].speed)
-		selected = n - 1;
-	else {
-		for (i = 1; selected == -1 && i < n; i++) {
-			if ((*speedp) == harmony_speeds[i].speed)
-				selected = i;
-			else if ((*speedp) < harmony_speeds[i].speed) {
-				int diff1, diff2;
-
-				diff1 = (*speedp) - harmony_speeds[i - 1].speed;
-				diff2 = harmony_speeds[i].speed - (*speedp);
-				if (diff1 < diff2)
-					selected = i - 1;
-				else
-					selected = i;
-			}
+	for (i = 0; i < __arraycount(harmony_speeds); i++) {
+		if (speed == harmony_speeds[i].speed) {
+			return harmony_speeds[i].bits;
 		}
 	}
-
-	if (selected == -1)
-		selected = 2;
-
-	*speedp = harmony_speeds[selected].speed;
-	return harmony_speeds[selected].bits;
+	/* If this happens, harmony_formats[] is wrong */
+	panic("speed %u not supported", speed);
 }
 
 int
