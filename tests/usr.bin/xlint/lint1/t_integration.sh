@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.31 2021/02/28 20:17:14 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.32 2021/02/28 22:12:16 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -123,6 +123,7 @@ test_case c99_recursive_init
 test_case c9x_recursive_init
 test_case nested_structs
 test_case packed_structs
+test_case pr_22119
 test_case struct_init_nested
 
 test_case cast_init

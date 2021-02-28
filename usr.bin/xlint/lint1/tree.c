@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.231 2021/02/28 20:04:52 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.232 2021/02/28 22:12:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.231 2021/02/28 20:04:52 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.232 2021/02/28 22:12:16 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3453,6 +3453,14 @@ cast(tnode_t *tn, type_t *tp)
 	tspec_t	nt, ot;
 
 	if (tn == NULL)
+		return NULL;
+
+	/*
+	 * XXX: checking for tp == NULL is only a quick fix for PR 22119.
+	 *  The proper fix needs to be investigated properly.
+	 *  See d_pr_22119.c for how to get here.
+	 */
+	if (tp == NULL)
 		return NULL;
 
 	tn = cconv(tn);
