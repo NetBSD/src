@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.85 2021/02/28 02:00:05 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.86 2021/02/28 02:45:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.85 2021/02/28 02:00:05 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.86 2021/02/28 02:45:37 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -94,7 +94,7 @@ const	char *msgs[] = {
 	"argument type defaults to 'int': %s",			      /* 32 */
 	"duplicate member name: %s",				      /* 33 */
 	"nonportable bit-field type",				      /* 34 */
-	"illegal bit-field type",				      /* 35 */
+	"illegal bit-field type '%s'",				      /* 35 */
 	"illegal bit-field size: %d",				      /* 36 */
 	"zero size bit-field",					      /* 37 */
 	"function illegal in structure or union",		      /* 38 */
