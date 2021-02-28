@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.h,v 1.1 2021/02/27 15:36:39 christos Exp $	*/
+/*	$NetBSD: resize.h,v 1.2 2021/02/28 00:44:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #define TTYSIZE_STRUCT struct winsize
 #define TTYSIZE_ROWS(ws) (ws).ws_row
 #define TTYSIZE_COLS(ws) (ws).ws_col
-#define SET_TTYSIZE(fd, ws) ioctl((fd), TIOCSWINSZ, &ws)
+#define SET_TTYSIZE(fd, ws) ioctl((fd), TIOCSWINSZ, &(ws))
 
 #define x_basename(a) basename(a)
 #define x_strdup(a) estrdup(a)
