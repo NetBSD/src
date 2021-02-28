@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.230 2021/02/28 19:24:15 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.231 2021/02/28 20:04:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.230 2021/02/28 19:24:15 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.231 2021/02/28 20:04:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -673,6 +673,10 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
  * Arrays of type T are converted into pointers to type T.
  * Functions are converted to pointers to functions.
  * Lvalues are converted to rvalues.
+ *
+ * C99 6.3 "Conversions"
+ * C99 6.3.2 "Other operands"
+ * C99 6.3.2.1 "Lvalues, arrays, and function designators"
  */
 tnode_t *
 cconv(tnode_t *tn)
