@@ -1,1 +1,1 @@
-msg_135.c(6): syntax error ':' [249]
+msg_135.c(13): warning: possible pointer alignment problem [135]
