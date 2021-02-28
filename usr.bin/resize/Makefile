@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2021/02/27 22:37:54 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2021/02/28 00:43:24 christos Exp $
 
 .include <bsd.own.mk>
 
 WARNS=	5
 PROG=	resize
-SRCS=	resize.c
 
 CPPFLAGS+=-DRESIZE_ONLY -Wno-format-nonliteral
 DPADD+=	${LIBUTIL}
