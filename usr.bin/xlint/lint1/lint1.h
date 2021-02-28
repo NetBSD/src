@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.68 2021/02/28 19:16:05 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.69 2021/02/28 19:24:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -464,18 +464,17 @@ check_printf(const char *fmt, ...)
 #endif
 
 static inline bool
-is_nonzero_val(tspec_t t, const val_t *val)
+is_nonzero_val(const val_t *val)
 {
-	return is_floating(t) ? val->v_ldbl != 0.0 : val->v_quad != 0;
+	return is_floating(val->v_tspec)
+	    ? val->v_ldbl != 0.0
+	    : val->v_quad != 0;
 }
 
 static inline bool
 constant_is_nonzero(const tnode_t *tn)
 {
-	/*
-	 * XXX: It's strange that val_t doesn't know itself whether it
-	 * holds a floating-point or an integer value.
-	 */
 	lint_assert(tn->tn_op == CON);
-	return is_nonzero_val(tn->tn_type->t_tspec, tn->tn_val);
+	lint_assert(tn->tn_type->t_tspec == tn->tn_val->v_tspec);
+	return is_nonzero_val(tn->tn_val);
 }
