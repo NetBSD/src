@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_108.c,v 1.4 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_108.c,v 1.5 2021/02/28 12:40:00 rillig Exp $	*/
 # 3 "msg_108.c"
 
-// Test for message: operand of '%s' has incompatible type (%s != %s) [108]
+// Test for message: operand of '%s' has invalid type (%s) [108]
 
 /*
  * Before tree.c 1.137 from 2021-01-19, taking the complement of a struct

@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_210.c,v 1.4 2021/02/22 15:09:50 rillig Exp $	*/
+/*	$NetBSD: msg_210.c,v 1.5 2021/02/28 12:40:00 rillig Exp $	*/
 # 3 "msg_210.c"
 
-// Test for message: enum type mismatch in initialization [210]
+// Test for message: enum type mismatch between '%s' and '%s' in initialization [210]
 
 enum A {
 	A1

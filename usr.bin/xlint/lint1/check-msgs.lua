@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.7 2021/02/19 23:22:19 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.8 2021/02/28 12:40:00 rillig Exp $
 
 --[[
 
@@ -74,6 +74,7 @@ local function collect_errors(fname, msgs)
   errors.add = function(self, fmt, ...)
     table.insert(self, fmt:format(...))
   end
+
   local f = assert(io.open(fname, "r"))
   local lineno = 0
   local prev = ""
@@ -110,6 +111,39 @@ local function check_file(fname, msgs)
   return #errors == 0
 end
 
+local function file_contains(filename, text)
+  local f = assert(io.open(filename, "r"))
+  for line in f:lines() do
+    if line:find(text, 1, true) then
+      f:close()
+      return true
+    end
+  end
+  f:close()
+  return false
+end
+
+local function check_test_files(msgs)
+
+  local msgids = {}
+  for msgid, _ in pairs(msgs) do
+    table.insert(msgids, msgid)
+  end
+  table.sort(msgids)
+
+  local testdir = "../../../tests/usr.bin/xlint/lint1"
+  local ok = true
+  for _, msgid in ipairs(msgids) do
+    local msg = msgs[msgid]:gsub("\\(.)", "%1")
+    local filename = ("%s/msg_%03d.c"):format(testdir, msgid)
+    if not file_contains(filename, msg) then
+      ok = false
+      print(("%s must contain: %s"):format(filename, msg))
+    end
+  end
+
+  return ok
+end
 
 local function main(arg)
   local msgs = load_messages("err.c")
@@ -117,6 +151,7 @@ local function main(arg)
   for _, fname in ipairs(arg) do
     ok = check_file(fname, msgs) and ok
   end
+  ok = check_test_files(msgs) and ok
   return ok
 end
 

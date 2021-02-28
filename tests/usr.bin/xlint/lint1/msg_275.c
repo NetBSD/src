@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_275.c,v 1.3 2021/02/28 01:36:46 rillig Exp $	*/
+/*	$NetBSD: msg_275.c,v 1.4 2021/02/28 12:40:00 rillig Exp $	*/
 # 3 "msg_275.c"
 
-// Test for message: cast discards 'const' from pointer target type [275]
+// Test for message: cast discards 'const' from type '%s' [275]
 
 /* lint1-extra-flags: -h */
 
