@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.87 2020/10/15 09:54:22 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.88 2021/02/28 05:19:52 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2020 Matthew R. Green
+.\" Copyright (c) 1997-2021 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 14, 2020
+.Dd February 27, 2021
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -646,7 +646,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20201014.
+version 20210227.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -698,6 +698,9 @@ added support for serving gzipped files and better SSL handling
 .An Per Ekman
 .Aq Mt pek@pdc.kth.se
 provided a fix for a minor (non-security) buffer overflow condition
+.It
+.Aq Mt emily@ingalls.rocks
+provided fixes for some bad request parsing
 .It
 .An Jun-ichiro itojun Hagino, KAME
 .Aq Mt itojun@iijlab.net
@@ -751,6 +754,10 @@ provided man page fixes
 .Aq Mt denafcm@gmail.com
 provided a cgi-bin fix
 .It
+.An Jared McNeill
+.Aq Mt jmcneill@NetBSD.org
+added support for readme in directory indexing
+.It
 .An Julio Merino
 .Aq Mt jmmv@NetBSD.org
 Added the
@@ -789,6 +796,11 @@ provided the
 .Fl V
 option
 .It
+.An Jukka Ruohonen
+.Aq Mt jruoho@NetBSD.org
+provided support for
+.Xr blocklistd 8
+.It
 .An Thor Lancelot Simon
 .Aq Mt tls@NetBSD.org
 enhanced cgi-bin support
@@ -807,15 +819,7 @@ provided http authorization fixes
 .It
 .Aq Mt xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
-.It
-.An Jukka Ruohonen
-.Aq Mt jruoho@NetBSD.org
-provided support for
-.Xr blocklistd 8
-.It
-.An Jared McNeill
-.Aq Mt jmcneill@NetBSD.org
-added support for readme in directory indexing
+
 .It
 .An S.P.Zeidler
 .Aq Mt spz@NetBSD.org
