@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2021/02/28 02:39:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2021/02/28 04:18:46 mrg Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -84,7 +84,7 @@ check:
 .if empty(BOZOVER)
 BOZOVER!=	sed -n \
 		    -e s/\"$$// -e \
-		    's/\#define[ 	]*SERVER_SOFTWARE[ 	]*\"bozohttpd\///p'  bozohttpd.c
+		    's/\#define[ 	]*SERVER_SOFTWARE[ 	]*\"bozohttpd\///p'  ${.PARSEDIR}/bozohttpd.c
 .endif
 
 # Create a distfile: uses /tmp
