@@ -1,1 +1,1 @@
-msg_118.c(6): syntax error ':' [249]
+msg_118.c(17): warning: semantics of '<<' change in ANSI C; use explicit cast [118]
