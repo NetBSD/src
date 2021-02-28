@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_035.c,v 1.6 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_035.c,v 1.7 2021/02/28 02:45:37 rillig Exp $	*/
 # 3 "msg_035.c"
 
-// Test for message: illegal bit-field type [35]
+// Test for message: illegal bit-field type '%s' [35]
 
 /*
  * In traditional C, only unsigned int is a portable bit-field type.

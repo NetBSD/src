@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.139 2021/02/28 00:23:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.140 2021/02/28 02:45:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.139 2021/02/28 00:23:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.140 2021/02/28 02:45:37 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1128,8 +1128,8 @@ declarator_1_struct_union(sym_t *dsym)
 			 * okay only if BITFIELDTYPE is in effect.
 			 */
 			if (!bitfieldtype_ok || !is_integer(t)) {
-				/* illegal bit-field type */
-				warning(35);
+				/* illegal bit-field type '%s' */
+				warning(35, type_name(tp));
 				sz = tp->t_flen;
 				dsym->s_type = tp = duptyp(gettyp(t = INT));
 				if ((tp->t_flen = sz) > size(t))
