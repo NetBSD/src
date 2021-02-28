@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.34 2020/04/15 13:33:13 rin Exp $	*/
+/*	$NetBSD: Locore.c,v 1.35 2021/02/28 20:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -200,6 +200,34 @@ openfirmware(void *arg)
 	__asm volatile ("sync; isync");
 }
 #endif
+
+int	ofw_real_mode;
+int	ofw_address_cells;
+int	ofw_size_cells;
+
+int	ofw_root;		/* / */
+int	ofw_options;		/* /options */
+int	ofw_openprom;		/* /openprom */
+int	ofw_chosen;		/* /chosen (package) */
+int	ofw_stdin;		/* /chosen/stdin */
+int	ofw_stdout;		/* /chosen/stdout */
+int	ofw_memory_ihandle;	/* /chosen/memory */
+int	ofw_mmu_ihandle;	/* /chosen/mmu */
+
+bool
+ofw_option_truefalse(const char *prop, int proplen)
+{
+	/* These are all supposed to be strings. */
+	switch (prop[0]) {  
+	case 'y':
+	case 'Y':
+	case 't':
+	case 'T':
+	case '1':
+		return true; 
+	}
+	return false;
+}
 
 static void
 startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
@@ -623,9 +651,9 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 #endif
 
 int
-OF_call_method(const char *method, int ihandle, int nargs, int nreturns, ...)
+OF_call_method(const char *method, int ihandle, int nargs, int nreturns,
+    int *cells)
 {
-	va_list ap;
 	static struct {
 		const char *name;
 		int nargs;
@@ -642,47 +670,47 @@ OF_call_method(const char *method, int ihandle, int nargs, int nreturns, ...)
 
 	if (nargs > 6)
 		return -1;
+
 	args.nargs = nargs + 2;
 	args.nreturns = nreturns + 1;
 	args.method = method;
 	args.ihandle = ihandle;
-	va_start(ap, nreturns);
+
 	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
-		*--ip = va_arg(ap, int);
+		*--ip = *cells++;
 
 	if (openfirmware(&args) == -1) {
-		va_end(ap);
 		return -1;
 	}
+
 	if (args.args_n_results[nargs]) {
-		va_end(ap);
 		return args.args_n_results[nargs];
 	}
+
 	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
-		*va_arg(ap, int *) = *--ip;
-	va_end(ap);
+		*cells++ = *--ip;
+
 	return 0;
 }
-
-static int stdin;
-static int stdout;
 
 static void
 setup(void)
 {
-	int chosen;
+	char prop[32];
+	int proplen;
+	const char *reason = NULL;
 
-	if ((chosen = OF_finddevice("/chosen")) == -1)
+	if ((ofw_chosen = OF_finddevice("/chosen")) == -1)
 		OF_exit();
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) !=
-	    sizeof(stdin) ||
-	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
-	    sizeof(stdout))
+	if (OF_getprop(ofw_chosen, "stdin", &ofw_stdin, sizeof(ofw_stdin)) !=
+	    sizeof(ofw_stdin) ||
+	    OF_getprop(ofw_chosen, "stdout", &ofw_stdout, sizeof(ofw_stdout)) !=
+	    sizeof(ofw_stdout))
 		OF_exit();
 
-	if (stdout == 0) {
+	if (ofw_stdout == 0) {
 		/* screen should be console, but it is not open */
-		stdout = OF_open("screen");
+		ofw_stdout = OF_open("screen");
 	}
 
 #ifdef HEAP_VARIABLE
@@ -699,6 +727,72 @@ setup(void)
 
 	setheap(heapspace, heapspace + HEAP_SIZE);
 #endif	/* HEAP_VARIABLE */
+
+	ofw_root = OF_finddevice("/");
+	ofw_options = OF_finddevice("/options");
+	ofw_openprom = OF_finddevice("/openprom");
+	ofw_chosen = OF_finddevice("/chosen");
+
+	if (ofw_root == -1) {
+		reason = "No root node";
+		goto bad_environment;
+	}
+	if (ofw_chosen == -1) {
+		reason = "No chosen node";
+		goto bad_environment;
+	}
+
+	if (ofw_options != -1) {
+		proplen = OF_getprop(ofw_options, "real-mode?", prop,
+		    sizeof(prop));
+		if (proplen > 0) {
+			ofw_real_mode = ofw_option_truefalse(prop, proplen);
+		}
+	}
+
+	/*
+	 * Get #address-cells and #size-cells.
+	 */
+	ofw_address_cells = 1;
+	ofw_size_cells = 1;
+	OF_getprop(ofw_root, "#address-cells", &ofw_address_cells,
+		   sizeof(ofw_address_cells));
+	OF_getprop(ofw_root, "#size-cells", &ofw_size_cells,
+		   sizeof(ofw_size_cells));
+
+	/* See loadfile_machdep.c */
+	if (ofw_size_cells != 1) {
+		printf("#size-cells = %d not yet supported\n", ofw_size_cells);
+		reason = "unsupported #size-cells";
+		goto bad_environment;
+	}
+
+	/*
+	 * Get the ihandle on /chosen/memory and /chosen/mmu.
+	 */
+	ofw_memory_ihandle = -1;
+	ofw_mmu_ihandle = -1;
+	OF_getprop(ofw_chosen, "memory", &ofw_memory_ihandle,
+		   sizeof(ofw_memory_ihandle));
+	OF_getprop(ofw_chosen, "mmu", &ofw_mmu_ihandle,
+		   sizeof(ofw_mmu_ihandle));
+	if (ofw_memory_ihandle == -1) {
+		reason = "no /chosen/memory";
+		goto bad_environment;
+	}
+	if (ofw_mmu_ihandle == -1) {
+		reason = "no /chosen/mmu";
+		goto bad_environment;
+	}
+
+	return;
+
+ bad_environment:
+	if (reason == NULL) {
+		reason = "unknown reason";
+	}
+	printf("Invalid Openfirmware environment: %s\n", reason);
+	OF_exit();
 }
 
 void
@@ -708,7 +802,7 @@ putchar(int c)
 
 	if (c == '\n')
 		putchar('\r');
-	OF_write(stdout, &ch, 1);
+	OF_write(ofw_stdout, &ch, 1);
 }
 
 int
@@ -717,7 +811,7 @@ getchar(void)
 	unsigned char ch = '\0';
 	int l;
 
-	while ((l = OF_read(stdin, &ch, 1)) != 1)
+	while ((l = OF_read(ofw_stdin, &ch, 1)) != 1)
 		if (l != -2 && l != 0)
 			return -1;
 	return ch;
