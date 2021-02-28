@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28.2.19 2021/02/28 07:05:14 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.20 2021/02/28 07:07:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.19 2021/02/28 07:05:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.20 2021/02/28 07:07:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1885,7 +1885,7 @@ audiopoll(struct file *fp, int events)
 
 	sc = audio_file_enter(file, &sc_ref);
 	if (sc == NULL)
-		return EIO;
+		return POLLERR;
 
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
