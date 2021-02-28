@@ -1,1 +1,1 @@
-msg_153.c(6): syntax error ':' [249]
+msg_153.c(14): warning: argument has incompatible pointer type, arg #1 (pointer to function(double) returning double != pointer to int) [153]

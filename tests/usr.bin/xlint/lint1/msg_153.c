@@ -1,7 +1,15 @@
-/*	$NetBSD: msg_153.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_153.c,v 1.3 2021/02/28 00:52:16 rillig Exp $	*/
 # 3 "msg_153.c"
 
 // Test for message: argument has incompatible pointer type, arg #%d (%s != %s) [153]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+
+typedef double (*unary_operator)(double);
+
+void sink_unary_operator(unary_operator);
+
+void
+example(int x)
+{
+	sink_unary_operator(&x);
+}
