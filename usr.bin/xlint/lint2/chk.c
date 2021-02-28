@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.39 2021/02/22 15:09:50 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.40 2021/02/28 17:16:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.39 2021/02/22 15:09:50 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.40 2021/02/28 17:16:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -218,7 +218,7 @@ chkmd(hte_t *hte)
 			continue;
 		}
 		pos1 = xstrdup(mkpos(&def1->s_pos));
-		/* %s multiply defined\t%s  ::  %s */
+		/* %s multiply defined  \t%s  ::  %s */
 		msg(3, hte->h_name, pos1, mkpos(&sym->s_pos));
 		free(pos1);
 	}
@@ -273,7 +273,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 				 * accepted for now.
 				 */
 				pos1 = xstrdup(mkpos(&def->s_pos));
-				/* %s value must be decl. before use %s :: %s */
+				/* %s function value must be declared ... */
 				msg(17, hte->h_name,
 				    pos1, mkpos(&call->f_pos));
 				free(pos1);
@@ -282,7 +282,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 		}
 		if (!eq || (sflag && dowarn)) {
 			pos1 = xstrdup(mkpos(&def->s_pos));
-			/* %s value used inconsistently\t%s  ::  %s */
+			/* %s value used inconsistently  \t%s  ::  %s */
 			msg(4, hte->h_name, pos1, mkpos(&call->f_pos));
 			free(pos1);
 		}
@@ -323,7 +323,7 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 		}
 		if (!eq || (sflag && dowarn)) {
 			pos1 = xstrdup(mkpos(&def->s_pos));
-			/* %s value declared inconsistently\t%s  ::  %s */
+			/* %s value declared inconsistently (%s != %s) \t... */
 			msg(5, hte->h_name, type_name(xt1), type_name(xt2),
 			    pos1, mkpos(&sym->s_pos));
 			free(pos1);
@@ -406,7 +406,7 @@ chkfaui(hte_t *hte, sym_t *def, sym_t *decl)
 			 */
 		} else {
 			pos1 = xstrdup(mkpos(pos1p));
-			/* %s: variable # of args\t%s  ::  %s */
+			/* %s: variable # of args  \t%s  ::  %s */
 			msg(7, hte->h_name, pos1, mkpos(&call->f_pos));
 			free(pos1);
 			continue;
@@ -589,7 +589,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	}
 
 	pos1 = xstrdup(mkpos(pos1p));
-	/* %s, arg %d used inconsistently\t%s[%s]  ::  %s[%s] */
+	/* %s, arg %d used inconsistently  \t%s[%s]  ::  %s[%s] */
 	msg(6, hte->h_name, n, pos1, type_name(arg1),
 	    mkpos(&call->f_pos), type_name(arg2));
 	free(pos1);
@@ -1019,7 +1019,7 @@ static void
 badfmt(hte_t *hte, fcall_t *call)
 {
 
-	/* %s: malformed format string\t%s */
+	/* %s: malformed format string  \t%s */
 	msg(13, hte->h_name, mkpos(&call->f_pos));
 }
 
@@ -1027,7 +1027,7 @@ static void
 inconarg(hte_t *hte, fcall_t *call, int n)
 {
 
-	/* %s, arg %d inconsistent with format\t%s(%d) */
+	/* %s, arg %d inconsistent with format  \t%s */
 	msg(14, hte->h_name, n, mkpos(&call->f_pos));
 }
 
@@ -1102,14 +1102,14 @@ chkrvu(hte_t *hte, sym_t *def)
 			/* %s returns value which is always ignored */
 			msg(8, hte->h_name);
 		} else if (used && ignored) {
-			/* %s returns value which is sometimes ign. */
+			/* %s returns value which is sometimes ignored */
 			msg(9, hte->h_name);
 		}
 	} else {
 		/* function has no return value */
 		for (call = hte->h_calls; call != NULL; call = call->f_next) {
 			if (call->f_rused)
-				/* %s value is used( %s ), but none ret. */
+				/* %s value is used( %s ), but none returned */
 				msg(10, hte->h_name, mkpos(&call->f_pos));
 		}
 	}
@@ -1178,8 +1178,8 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 				continue;
 			}
 		}
-		/* %s: variable # of args declared\t%s  ::  %s */
 		pos1 = xstrdup(mkpos(&sym1->s_pos));
+		/* %s: variable # of args declared  \t%s  ::  %s */
 		msg(12, hte->h_name, pos1, mkpos(&sym->s_pos));
 		free(pos1);
 	}
