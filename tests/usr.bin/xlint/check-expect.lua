@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.5 2021/02/27 17:16:48 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.6 2021/02/28 01:20:54 rillig Exp $
 
 --[[
 
@@ -90,9 +90,11 @@ end
 
 local function check_test(c_fname, errors)
   local exp_fname = c_fname:gsub("%.c$", ".exp")
+
   local comment_linenos, comments_by_lineno =
     load_expect_comments_from_c(c_fname, errors)
-  if comment_linenos == nil or #comment_linenos == 0 then return end
+  if comment_linenos == nil then return end
+
   local messages = load_actual_messages_from_exp(exp_fname)
   if messages == nil then return end
 
