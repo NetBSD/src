@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.141 2021/02/28 03:05:12 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.142 2021/02/28 03:14:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.141 2021/02/28 03:05:12 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.142 2021/02/28 03:14:44 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1071,16 +1071,23 @@ check_type(sym_t *sym)
 	}
 }
 
+/*
+ * In traditional C, the only portable type for bit-fields is unsigned int.
+ *
+ * In C90, the only allowed types for bit-fields are int, signed int and
+ * unsigned int (3.5.2.1).  There is no mention of implementation-defined
+ * types.
+ *
+ * In C99, the only portable types for bit-fields are _Bool, signed int and
+ * unsigned int (6.7.2.1p4).  In addition, C99 allows "or some other
+ * implementation-defined type".
+ */
 static void
-declare_bit_field(sym_t *const dsym, tspec_t *inout_t, type_t **const inout_tp)
+declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 {
 	tspec_t t = *inout_t;
 	type_t *tp = *inout_tp;
 
-	/*
-	 * only unsigned and signed int are portable bit-field types
-	 *(at least in ANSI C, in traditional C only unsigned int)
-	 */
 	if (t == CHAR || t == UCHAR || t == SCHAR ||
 	    t == SHORT || t == USHORT || t == ENUM) {
 		if (!bitfieldtype_ok) {
