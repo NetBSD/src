@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.81 2021/02/22 15:09:50 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.82 2021/02/28 00:40:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.81 2021/02/22 15:09:50 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.82 2021/02/28 00:40:22 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -194,7 +194,7 @@ const	char *msgs[] = {
 	"conversion from '%s' to '%s' may lose accuracy",	      /* 132 */
 	"conversion of pointer to '%s' loses bits",		      /* 133 */
 	"conversion of pointer to '%s' may lose bits",		      /* 134 */
-	"possible pointer alignment problem",			      /* 135 */
+	"converting '%s' to '%s' may cause alignment problem",	      /* 135 */
 	"cannot do pointer arithmetic on operand of unknown size",    /* 136 */
 	"use of incomplete enum type, op %s",			      /* 137 */
 	"unknown operand size, op %s",				      /* 138 */
