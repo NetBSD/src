@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.142 2021/02/28 03:14:44 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.143 2021/02/28 18:51:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.142 2021/02/28 03:14:44 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.143 2021/02/28 18:51:51 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -917,7 +917,7 @@ length(const type_t *tp, const char *name)
 		}
 		/* FALLTHROUGH */
 	default:
-		elsz = size(tp->t_tspec);
+		elsz = size_in_bits(tp->t_tspec);
 		if (elsz <= 0)
 			LERROR("length(%d)", elsz);
 		break;
@@ -944,7 +944,7 @@ alignment_in_bits(const type_t *tp)
 		error(14);
 		a = WORST_ALIGN(1) * CHAR_SIZE;
 	} else {
-		if ((a = size(t)) == 0) {
+		if ((a = size_in_bits(t)) == 0) {
 			a = CHAR_SIZE;
 		} else if (a > WORST_ALIGN(1) * CHAR_SIZE) {
 			a = WORST_ALIGN(1) * CHAR_SIZE;
@@ -1115,19 +1115,19 @@ declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 			warning(35, type_name(tp));
 			int sz = tp->t_flen;
 			dsym->s_type = tp = duptyp(gettyp(t = INT));
-			if ((tp->t_flen = sz) > size(t))
-				tp->t_flen = size(t);
+			if ((tp->t_flen = sz) > size_in_bits(t))
+				tp->t_flen = size_in_bits(t);
 		}
 	}
 
-	if (tp->t_flen < 0 || tp->t_flen > (ssize_t)size(t)) {
+	if (tp->t_flen < 0 || tp->t_flen > (ssize_t)size_in_bits(t)) {
 		/* illegal bit-field size: %d */
 		error(36, tp->t_flen);
-		tp->t_flen = size(t);
+		tp->t_flen = size_in_bits(t);
 	} else if (tp->t_flen == 0 && dsym->s_name != unnamed) {
 		/* zero size bit-field */
 		error(37);
-		tp->t_flen = size(t);
+		tp->t_flen = size_in_bits(t);
 	}
 	if (dsym->s_scl == MOU) {
 		/* illegal use of bit-field */
@@ -1194,7 +1194,8 @@ declarator_1_struct_union(sym_t *dsym)
 	}
 	if (dsym->s_bitfield) {
 		align(alignment_in_bits(tp), tp->t_flen);
-		dsym->s_value.v_quad = (dcs->d_offset / size(t)) * size(t);
+		dsym->s_value.v_quad =
+		    (dcs->d_offset / size_in_bits(t)) * size_in_bits(t);
 		tp->t_foffs = dcs->d_offset - (int)dsym->s_value.v_quad;
 		dcs->d_offset += tp->t_flen;
 	} else {
