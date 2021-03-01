@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.41 2021/02/06 05:21:47 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.42 2021/03/01 04:40:39 rin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.41 2021/02/06 05:21:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.42 2021/03/01 04:40:39 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	/* Initialize sensor data. */
 	sc->sc_sensor.units =  ENVSYS_STEMP;
 	sc->sc_sensor.state =  ENVSYS_SINVALID;
-	sc->sc_sensor.flags =  ENVSYS_FMONLIMITS;
+	sc->sc_sensor.flags =  ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 
 	(void)strlcpy(name,
 	    ia->ia_name? ia->ia_name : device_xname(self),
