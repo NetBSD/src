@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2020/09/06 07:20:26 mrg Exp $
+# $NetBSD: Makefile,v 1.15 2021/03/01 03:42:57 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -16,12 +16,18 @@ authsrv.c \
 beacon.c \
 bss_load.c \
 ctrl_iface_ap.c \
+dpp.c \
+dpp_hostapd.c \
 drv_callbacks.c \
 eap_user_db.c \
+gas.c \
+gas_query_ap.c \
+gas_serv.c \
 hostapd.c \
 ieee802_11_auth.c \
 ieee802_11_shared.c \
 ieee802_1x.c \
+mbo_ap.c \
 neighbor_db.c \
 pmksa_cache_auth.c \
 preauth_auth.c \
@@ -65,6 +71,7 @@ SRCS+= \
 base64.c \
 common.c \
 eloop.c \
+json.c \
 ip_addr.c \
 os_unix.c \
 wpa_debug.c \
@@ -94,8 +101,15 @@ eap_server_methods.c
 
 # crypto
 SRCS+= \
+aes-siv.c \
 random.c \
-sha1-prf.c
+sha1-prf.c \
+sha256-kdf.c \
+sha256-prf.c \
+sha384-kdf.c \
+sha384-prf.c \
+sha512-kdf.c \
+sha512-prf.c \
 
 # crypto for non-openssl
 NO_SRCS+= \
@@ -131,6 +145,21 @@ CPPFLAGS+= -DCONFIG_IPV6
 .endif
 CPPFLAGS+= -DCONFIG_PEERKEY
 CPPFLAGS+= -DCONFIG_RSN_PREAUTH
+CPPFLAGS+= -DCONFIG_DPP
+CPPFLAGS+= -DCONFIG_DPP2
+CPPFLAGS+= -DCONFIG_ECC
+#CPPFLAGS+= -DCONFIG_OWE
+#CPPFLAGS+= -DCONFIG_SAE
+#CPPFLAGS+= -DCONFIG_AIRTIME_POLICY
+#CPPFLAGS+= -DCONFIG_FILS
+#CPPFLAGS+= -DCONFIG_OCV
+#CPPFLAGS+= -DCONFIG_IEEE80211AX
+CPPFLAGS+= -DCONFIG_IEEE80211W
+#CPPFLAGS+= -DCONFIG_IEEE80211R_AP
+CPPFLAGS+= -DCONFIG_MBO
+#CPPFLAGS+= -DCONFIG_NO_VLAN
+#CPPFLAGS+= -DCONFIG_SQLITE
+#CPPFLAGS+= -DCONFIG_SHA256 -DCONFIG_SHA484 -DCONFIG_SHA512
 
 DPADD+= ${LIBPCAP}
 LDADD+= -lpcap
@@ -169,6 +198,8 @@ fips_prf_openssl.c \
 ms_funcs.c \
 sha1-tlsprf.c \
 sha256.c \
+sha384.c \
+sha512.c \
 tls_openssl.c
 
 # eap_common
