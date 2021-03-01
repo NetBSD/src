@@ -1,6 +1,6 @@
 /*
  * IEEE 802.11 Common routines
- * Copyright (c) 2002-2015, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2019, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -125,6 +125,10 @@ static int ieee802_11_parse_vendor_specific(const u8 *pos, size_t elen,
 			/* Hotspot 2.0 Roaming Consortium Selection */
 			elems->roaming_cons_sel = pos;
 			elems->roaming_cons_sel_len = elen;
+			break;
+		case MULTI_AP_OUI_TYPE:
+			elems->multi_ap = pos;
+			elems->multi_ap_len = elen;
 			break;
 		default:
 			wpa_printf(MSG_MSGDUMP, "Unknown WFA "
@@ -266,6 +270,18 @@ static int ieee802_11_parse_extension(const u8 *pos, size_t elen,
 		elems->password_id = pos;
 		elems->password_id_len = elen;
 		break;
+	case WLAN_EID_EXT_HE_CAPABILITIES:
+		elems->he_capabilities = pos;
+		elems->he_capabilities_len = elen;
+		break;
+	case WLAN_EID_EXT_HE_OPERATION:
+		elems->he_operation = pos;
+		elems->he_operation_len = elen;
+		break;
+	case WLAN_EID_EXT_OCV_OCI:
+		elems->oci = pos;
+		elems->oci_len = elen;
+		break;
 	default:
 		if (show_errors) {
 			wpa_printf(MSG_MSGDUMP,
@@ -291,29 +307,17 @@ ParseRes ieee802_11_parse_elems(const u8 *start, size_t len,
 				struct ieee802_11_elems *elems,
 				int show_errors)
 {
-	size_t left = len;
-	const u8 *pos = start;
+	const struct element *elem;
 	int unknown = 0;
 
 	os_memset(elems, 0, sizeof(*elems));
 
-	while (left >= 2) {
-		u8 id, elen;
+	if (!start)
+		return ParseOK;
 
-		id = *pos++;
-		elen = *pos++;
-		left -= 2;
-
-		if (elen > left) {
-			if (show_errors) {
-				wpa_printf(MSG_DEBUG, "IEEE 802.11 element "
-					   "parse failed (id=%d elen=%d "
-					   "left=%lu)",
-					   id, elen, (unsigned long) left);
-				wpa_hexdump(MSG_MSGDUMP, "IEs", start, len);
-			}
-			return ParseFailed;
-		}
+	for_each_element(elem, start, len) {
+		u8 id = elem->id, elen = elem->datalen;
+		const u8 *pos = elem->data;
 
 		switch (id) {
 		case WLAN_EID_SSID:
@@ -461,8 +465,7 @@ ParseRes ieee802_11_parse_elems(const u8 *start, size_t len,
 			elems->mic = pos;
 			elems->mic_len = elen;
 			/* after mic everything is encrypted, so stop. */
-			left = elen;
-			break;
+			goto done;
 		case WLAN_EID_MULTI_BAND:
 			if (elems->mb_ies.nof_ies >= MAX_NOF_MB_IES_SUPPORTED) {
 				wpa_printf(MSG_MSGDUMP,
@@ -521,35 +524,33 @@ ParseRes ieee802_11_parse_elems(const u8 *start, size_t len,
 				   id, elen);
 			break;
 		}
-
-		left -= elen;
-		pos += elen;
 	}
 
-	if (left)
+	if (!for_each_element_completed(elem, start, len)) {
+		if (show_errors) {
+			wpa_printf(MSG_DEBUG,
+				   "IEEE 802.11 element parse failed @%d",
+				   (int) (start + len - (const u8 *) elem));
+			wpa_hexdump(MSG_MSGDUMP, "IEs", start, len);
+		}
 		return ParseFailed;
+	}
 
+done:
 	return unknown ? ParseUnknown : ParseOK;
 }
 
 
 int ieee802_11_ie_count(const u8 *ies, size_t ies_len)
 {
+	const struct element *elem;
 	int count = 0;
-	const u8 *pos, *end;
 
 	if (ies == NULL)
 		return 0;
 
-	pos = ies;
-	end = ies + ies_len;
-
-	while (end - pos >= 2) {
-		if (2 + pos[1] > end - pos)
-			break;
+	for_each_element(elem, ies, ies_len)
 		count++;
-		pos += 2 + pos[1];
-	}
 
 	return count;
 }
@@ -559,24 +560,17 @@ struct wpabuf * ieee802_11_vendor_ie_concat(const u8 *ies, size_t ies_len,
 					    u32 oui_type)
 {
 	struct wpabuf *buf;
-	const u8 *end, *pos, *ie;
+	const struct element *elem, *found = NULL;
 
-	pos = ies;
-	end = ies + ies_len;
-	ie = NULL;
-
-	while (end - pos > 1) {
-		if (2 + pos[1] > end - pos)
-			return NULL;
-		if (pos[0] == WLAN_EID_VENDOR_SPECIFIC && pos[1] >= 4 &&
-		    WPA_GET_BE32(&pos[2]) == oui_type) {
-			ie = pos;
+	for_each_element_id(elem, WLAN_EID_VENDOR_SPECIFIC, ies, ies_len) {
+		if (elem->datalen >= 4 &&
+		    WPA_GET_BE32(elem->data) == oui_type) {
+			found = elem;
 			break;
 		}
-		pos += 2 + pos[1];
 	}
 
-	if (ie == NULL)
+	if (!found)
 		return NULL; /* No specified vendor IE found */
 
 	buf = wpabuf_alloc(ies_len);
@@ -587,13 +581,9 @@ struct wpabuf * ieee802_11_vendor_ie_concat(const u8 *ies, size_t ies_len,
 	 * There may be multiple vendor IEs in the message, so need to
 	 * concatenate their data fields.
 	 */
-	while (end - pos > 1) {
-		if (2 + pos[1] > end - pos)
-			break;
-		if (pos[0] == WLAN_EID_VENDOR_SPECIFIC && pos[1] >= 4 &&
-		    WPA_GET_BE32(&pos[2]) == oui_type)
-			wpabuf_put_data(buf, pos + 6, pos[1] - 4);
-		pos += 2 + pos[1];
+	for_each_element_id(elem, WLAN_EID_VENDOR_SPECIFIC, ies, ies_len) {
+		if (elem->datalen >= 4 && WPA_GET_BE32(elem->data) == oui_type)
+			wpabuf_put_data(buf, elem->data + 4, elem->datalen - 4);
 	}
 
 	return buf;
@@ -716,7 +706,7 @@ enum hostapd_hw_mode ieee80211_freq_to_chan(int freq, u8 *channel)
 {
 	u8 op_class;
 
-	return ieee80211_freq_to_channel_ext(freq, 0, VHT_CHANWIDTH_USE_HT,
+	return ieee80211_freq_to_channel_ext(freq, 0, CHANWIDTH_USE_HT,
 					     &op_class, channel);
 }
 
@@ -726,7 +716,7 @@ enum hostapd_hw_mode ieee80211_freq_to_chan(int freq, u8 *channel)
  * for HT40 and VHT. DFS channels are not covered.
  * @freq: Frequency (MHz) to convert
  * @sec_channel: 0 = non-HT40, 1 = sec. channel above, -1 = sec. channel below
- * @vht: VHT channel width (VHT_CHANWIDTH_*)
+ * @vht: VHT channel width (CHANWIDTH_*)
  * @op_class: Buffer for returning operating class
  * @channel: Buffer for returning channel number
  * Returns: hw_mode on success, NUM_HOSTAPD_MODES on failure
@@ -781,13 +771,13 @@ enum hostapd_hw_mode ieee80211_freq_to_channel_ext(unsigned int freq,
 	}
 
 	switch (vht) {
-	case VHT_CHANWIDTH_80MHZ:
+	case CHANWIDTH_80MHZ:
 		vht_opclass = 128;
 		break;
-	case VHT_CHANWIDTH_160MHZ:
+	case CHANWIDTH_160MHZ:
 		vht_opclass = 129;
 		break;
-	case VHT_CHANWIDTH_80P80MHZ:
+	case CHANWIDTH_80P80MHZ:
 		vht_opclass = 130;
 		break;
 	default:
@@ -893,6 +883,41 @@ enum hostapd_hw_mode ieee80211_freq_to_channel_ext(unsigned int freq,
 	}
 
 	return NUM_HOSTAPD_MODES;
+}
+
+
+int ieee80211_chaninfo_to_channel(unsigned int freq, enum chan_width chanwidth,
+				  int sec_channel, u8 *op_class, u8 *channel)
+{
+	int vht = CHAN_WIDTH_UNKNOWN;
+
+	switch (chanwidth) {
+	case CHAN_WIDTH_UNKNOWN:
+	case CHAN_WIDTH_20_NOHT:
+	case CHAN_WIDTH_20:
+	case CHAN_WIDTH_40:
+		vht = CHANWIDTH_USE_HT;
+		break;
+	case CHAN_WIDTH_80:
+		vht = CHANWIDTH_80MHZ;
+		break;
+	case CHAN_WIDTH_80P80:
+		vht = CHANWIDTH_80P80MHZ;
+		break;
+	case CHAN_WIDTH_160:
+		vht = CHANWIDTH_160MHZ;
+		break;
+	}
+
+	if (ieee80211_freq_to_channel_ext(freq, sec_channel, vht, op_class,
+					  channel) == NUM_HOSTAPD_MODES) {
+		wpa_printf(MSG_WARNING,
+			   "Cannot determine operating class and channel (freq=%u chanwidth=%d sec_channel=%d)",
+			   freq, chanwidth, sec_channel);
+		return -1;
+	}
+
+	return 0;
 }
 
 
@@ -1294,30 +1319,209 @@ const char * fc2str(u16 fc)
 }
 
 
+const char * reason2str(u16 reason)
+{
+#define R2S(r) case WLAN_REASON_ ## r: return #r;
+	switch (reason) {
+	R2S(UNSPECIFIED)
+	R2S(PREV_AUTH_NOT_VALID)
+	R2S(DEAUTH_LEAVING)
+	R2S(DISASSOC_DUE_TO_INACTIVITY)
+	R2S(DISASSOC_AP_BUSY)
+	R2S(CLASS2_FRAME_FROM_NONAUTH_STA)
+	R2S(CLASS3_FRAME_FROM_NONASSOC_STA)
+	R2S(DISASSOC_STA_HAS_LEFT)
+	R2S(STA_REQ_ASSOC_WITHOUT_AUTH)
+	R2S(PWR_CAPABILITY_NOT_VALID)
+	R2S(SUPPORTED_CHANNEL_NOT_VALID)
+	R2S(BSS_TRANSITION_DISASSOC)
+	R2S(INVALID_IE)
+	R2S(MICHAEL_MIC_FAILURE)
+	R2S(4WAY_HANDSHAKE_TIMEOUT)
+	R2S(GROUP_KEY_UPDATE_TIMEOUT)
+	R2S(IE_IN_4WAY_DIFFERS)
+	R2S(GROUP_CIPHER_NOT_VALID)
+	R2S(PAIRWISE_CIPHER_NOT_VALID)
+	R2S(AKMP_NOT_VALID)
+	R2S(UNSUPPORTED_RSN_IE_VERSION)
+	R2S(INVALID_RSN_IE_CAPAB)
+	R2S(IEEE_802_1X_AUTH_FAILED)
+	R2S(CIPHER_SUITE_REJECTED)
+	R2S(TDLS_TEARDOWN_UNREACHABLE)
+	R2S(TDLS_TEARDOWN_UNSPECIFIED)
+	R2S(SSP_REQUESTED_DISASSOC)
+	R2S(NO_SSP_ROAMING_AGREEMENT)
+	R2S(BAD_CIPHER_OR_AKM)
+	R2S(NOT_AUTHORIZED_THIS_LOCATION)
+	R2S(SERVICE_CHANGE_PRECLUDES_TS)
+	R2S(UNSPECIFIED_QOS_REASON)
+	R2S(NOT_ENOUGH_BANDWIDTH)
+	R2S(DISASSOC_LOW_ACK)
+	R2S(EXCEEDED_TXOP)
+	R2S(STA_LEAVING)
+	R2S(END_TS_BA_DLS)
+	R2S(UNKNOWN_TS_BA)
+	R2S(TIMEOUT)
+	R2S(PEERKEY_MISMATCH)
+	R2S(AUTHORIZED_ACCESS_LIMIT_REACHED)
+	R2S(EXTERNAL_SERVICE_REQUIREMENTS)
+	R2S(INVALID_FT_ACTION_FRAME_COUNT)
+	R2S(INVALID_PMKID)
+	R2S(INVALID_MDE)
+	R2S(INVALID_FTE)
+	R2S(MESH_PEERING_CANCELLED)
+	R2S(MESH_MAX_PEERS)
+	R2S(MESH_CONFIG_POLICY_VIOLATION)
+	R2S(MESH_CLOSE_RCVD)
+	R2S(MESH_MAX_RETRIES)
+	R2S(MESH_CONFIRM_TIMEOUT)
+	R2S(MESH_INVALID_GTK)
+	R2S(MESH_INCONSISTENT_PARAMS)
+	R2S(MESH_INVALID_SECURITY_CAP)
+	R2S(MESH_PATH_ERROR_NO_PROXY_INFO)
+	R2S(MESH_PATH_ERROR_NO_FORWARDING_INFO)
+	R2S(MESH_PATH_ERROR_DEST_UNREACHABLE)
+	R2S(MAC_ADDRESS_ALREADY_EXISTS_IN_MBSS)
+	R2S(MESH_CHANNEL_SWITCH_REGULATORY_REQ)
+	R2S(MESH_CHANNEL_SWITCH_UNSPECIFIED)
+	}
+	return "UNKNOWN";
+#undef R2S
+}
+
+
+const char * status2str(u16 status)
+{
+#define S2S(s) case WLAN_STATUS_ ## s: return #s;
+	switch (status) {
+	S2S(SUCCESS)
+	S2S(UNSPECIFIED_FAILURE)
+	S2S(TDLS_WAKEUP_ALTERNATE)
+	S2S(TDLS_WAKEUP_REJECT)
+	S2S(SECURITY_DISABLED)
+	S2S(UNACCEPTABLE_LIFETIME)
+	S2S(NOT_IN_SAME_BSS)
+	S2S(CAPS_UNSUPPORTED)
+	S2S(REASSOC_NO_ASSOC)
+	S2S(ASSOC_DENIED_UNSPEC)
+	S2S(NOT_SUPPORTED_AUTH_ALG)
+	S2S(UNKNOWN_AUTH_TRANSACTION)
+	S2S(CHALLENGE_FAIL)
+	S2S(AUTH_TIMEOUT)
+	S2S(AP_UNABLE_TO_HANDLE_NEW_STA)
+	S2S(ASSOC_DENIED_RATES)
+	S2S(ASSOC_DENIED_NOSHORT)
+	S2S(SPEC_MGMT_REQUIRED)
+	S2S(PWR_CAPABILITY_NOT_VALID)
+	S2S(SUPPORTED_CHANNEL_NOT_VALID)
+	S2S(ASSOC_DENIED_NO_SHORT_SLOT_TIME)
+	S2S(ASSOC_DENIED_NO_HT)
+	S2S(R0KH_UNREACHABLE)
+	S2S(ASSOC_DENIED_NO_PCO)
+	S2S(ASSOC_REJECTED_TEMPORARILY)
+	S2S(ROBUST_MGMT_FRAME_POLICY_VIOLATION)
+	S2S(UNSPECIFIED_QOS_FAILURE)
+	S2S(DENIED_INSUFFICIENT_BANDWIDTH)
+	S2S(DENIED_POOR_CHANNEL_CONDITIONS)
+	S2S(DENIED_QOS_NOT_SUPPORTED)
+	S2S(REQUEST_DECLINED)
+	S2S(INVALID_PARAMETERS)
+	S2S(REJECTED_WITH_SUGGESTED_CHANGES)
+	S2S(INVALID_IE)
+	S2S(GROUP_CIPHER_NOT_VALID)
+	S2S(PAIRWISE_CIPHER_NOT_VALID)
+	S2S(AKMP_NOT_VALID)
+	S2S(UNSUPPORTED_RSN_IE_VERSION)
+	S2S(INVALID_RSN_IE_CAPAB)
+	S2S(CIPHER_REJECTED_PER_POLICY)
+	S2S(TS_NOT_CREATED)
+	S2S(DIRECT_LINK_NOT_ALLOWED)
+	S2S(DEST_STA_NOT_PRESENT)
+	S2S(DEST_STA_NOT_QOS_STA)
+	S2S(ASSOC_DENIED_LISTEN_INT_TOO_LARGE)
+	S2S(INVALID_FT_ACTION_FRAME_COUNT)
+	S2S(INVALID_PMKID)
+	S2S(INVALID_MDIE)
+	S2S(INVALID_FTIE)
+	S2S(REQUESTED_TCLAS_NOT_SUPPORTED)
+	S2S(INSUFFICIENT_TCLAS_PROCESSING_RESOURCES)
+	S2S(TRY_ANOTHER_BSS)
+	S2S(GAS_ADV_PROTO_NOT_SUPPORTED)
+	S2S(NO_OUTSTANDING_GAS_REQ)
+	S2S(GAS_RESP_NOT_RECEIVED)
+	S2S(STA_TIMED_OUT_WAITING_FOR_GAS_RESP)
+	S2S(GAS_RESP_LARGER_THAN_LIMIT)
+	S2S(REQ_REFUSED_HOME)
+	S2S(ADV_SRV_UNREACHABLE)
+	S2S(REQ_REFUSED_SSPN)
+	S2S(REQ_REFUSED_UNAUTH_ACCESS)
+	S2S(INVALID_RSNIE)
+	S2S(U_APSD_COEX_NOT_SUPPORTED)
+	S2S(U_APSD_COEX_MODE_NOT_SUPPORTED)
+	S2S(BAD_INTERVAL_WITH_U_APSD_COEX)
+	S2S(ANTI_CLOGGING_TOKEN_REQ)
+	S2S(FINITE_CYCLIC_GROUP_NOT_SUPPORTED)
+	S2S(CANNOT_FIND_ALT_TBTT)
+	S2S(TRANSMISSION_FAILURE)
+	S2S(REQ_TCLAS_NOT_SUPPORTED)
+	S2S(TCLAS_RESOURCES_EXCHAUSTED)
+	S2S(REJECTED_WITH_SUGGESTED_BSS_TRANSITION)
+	S2S(REJECT_WITH_SCHEDULE)
+	S2S(REJECT_NO_WAKEUP_SPECIFIED)
+	S2S(SUCCESS_POWER_SAVE_MODE)
+	S2S(PENDING_ADMITTING_FST_SESSION)
+	S2S(PERFORMING_FST_NOW)
+	S2S(PENDING_GAP_IN_BA_WINDOW)
+	S2S(REJECT_U_PID_SETTING)
+	S2S(REFUSED_EXTERNAL_REASON)
+	S2S(REFUSED_AP_OUT_OF_MEMORY)
+	S2S(REJECTED_EMERGENCY_SERVICE_NOT_SUPPORTED)
+	S2S(QUERY_RESP_OUTSTANDING)
+	S2S(REJECT_DSE_BAND)
+	S2S(TCLAS_PROCESSING_TERMINATED)
+	S2S(TS_SCHEDULE_CONFLICT)
+	S2S(DENIED_WITH_SUGGESTED_BAND_AND_CHANNEL)
+	S2S(MCCAOP_RESERVATION_CONFLICT)
+	S2S(MAF_LIMIT_EXCEEDED)
+	S2S(MCCA_TRACK_LIMIT_EXCEEDED)
+	S2S(DENIED_DUE_TO_SPECTRUM_MANAGEMENT)
+	S2S(ASSOC_DENIED_NO_VHT)
+	S2S(ENABLEMENT_DENIED)
+	S2S(RESTRICTION_FROM_AUTHORIZED_GDB)
+	S2S(AUTHORIZATION_DEENABLED)
+	S2S(FILS_AUTHENTICATION_FAILURE)
+	S2S(UNKNOWN_AUTHENTICATION_SERVER)
+	S2S(UNKNOWN_PASSWORD_IDENTIFIER)
+	}
+	return "UNKNOWN";
+#undef S2S
+}
+
+
 int mb_ies_info_by_ies(struct mb_ies_info *info, const u8 *ies_buf,
 		       size_t ies_len)
 {
+	const struct element *elem;
+
 	os_memset(info, 0, sizeof(*info));
 
-	while (ies_buf && ies_len >= 2 &&
-	       info->nof_ies < MAX_NOF_MB_IES_SUPPORTED) {
-		size_t len = 2 + ies_buf[1];
+	if (!ies_buf)
+		return 0;
 
-		if (len > ies_len) {
-			wpa_hexdump(MSG_DEBUG, "Truncated IEs",
-				    ies_buf, ies_len);
-			return -1;
-		}
+	for_each_element_id(elem, WLAN_EID_MULTI_BAND, ies_buf, ies_len) {
+		if (info->nof_ies >= MAX_NOF_MB_IES_SUPPORTED)
+			return 0;
 
-		if (ies_buf[0] == WLAN_EID_MULTI_BAND) {
-			wpa_printf(MSG_DEBUG, "MB IE of %zu bytes found", len);
-			info->ies[info->nof_ies].ie = ies_buf + 2;
-			info->ies[info->nof_ies].ie_len = ies_buf[1];
-			info->nof_ies++;
-		}
+		wpa_printf(MSG_DEBUG, "MB IE of %u bytes found",
+			   elem->datalen + 2);
+		info->ies[info->nof_ies].ie = elem->data;
+		info->ies[info->nof_ies].ie_len = elem->datalen;
+		info->nof_ies++;
+	}
 
-		ies_len -= len;
-		ies_buf += len;
+	if (!for_each_element_completed(elem, ies_buf, ies_len)) {
+		wpa_hexdump(MSG_DEBUG, "Truncated IEs", ies_buf, ies_len);
+		return -1;
 	}
 
 	return 0;
@@ -1440,22 +1644,13 @@ size_t global_op_class_size = ARRAY_SIZE(global_op_class);
  */
 const u8 * get_ie(const u8 *ies, size_t len, u8 eid)
 {
-	const u8 *end;
+	const struct element *elem;
 
 	if (!ies)
 		return NULL;
 
-	end = ies + len;
-
-	while (end - ies > 1) {
-		if (2 + ies[1] > end - ies)
-			break;
-
-		if (ies[0] == eid)
-			return ies;
-
-		ies += 2 + ies[1];
-	}
+	for_each_element_id(elem, eid, ies, len)
+		return &elem->id;
 
 	return NULL;
 }
@@ -1473,22 +1668,26 @@ const u8 * get_ie(const u8 *ies, size_t len, u8 eid)
  */
 const u8 * get_ie_ext(const u8 *ies, size_t len, u8 ext)
 {
-	const u8 *end;
+	const struct element *elem;
 
 	if (!ies)
 		return NULL;
 
-	end = ies + len;
+	for_each_element_extid(elem, ext, ies, len)
+		return &elem->id;
 
-	while (end - ies > 1) {
-		if (2 + ies[1] > end - ies)
-			break;
+	return NULL;
+}
 
-		if (ies[0] == WLAN_EID_EXTENSION && ies[1] >= 1 &&
-		    ies[2] == ext)
-			return ies;
 
-		ies += 2 + ies[1];
+const u8 * get_vendor_ie(const u8 *ies, size_t len, u32 vendor_type)
+{
+	const struct element *elem;
+
+	for_each_element_id(elem, WLAN_EID_VENDOR_SPECIFIC, ies, len) {
+		if (elem->datalen >= 4 &&
+		    vendor_type == WPA_GET_BE32(elem->data))
+			return &elem->id;
 	}
 
 	return NULL;
@@ -1516,6 +1715,26 @@ size_t mbo_add_ie(u8 *buf, size_t len, const u8 *attr, size_t attr_len)
 	os_memcpy(buf, attr, attr_len);
 
 	return 6 + attr_len;
+}
+
+
+size_t add_multi_ap_ie(u8 *buf, size_t len, u8 value)
+{
+	u8 *pos = buf;
+
+	if (len < 9)
+		return 0;
+
+	*pos++ = WLAN_EID_VENDOR_SPECIFIC;
+	*pos++ = 7; /* len */
+	WPA_PUT_BE24(pos, OUI_WFA);
+	pos += 3;
+	*pos++ = MULTI_AP_OUI_TYPE;
+	*pos++ = MULTI_AP_SUB_ELEM_TYPE;
+	*pos++ = 1; /* len */
+	*pos++ = value;
+
+	return pos - buf;
 }
 
 
@@ -1664,6 +1883,27 @@ const struct oper_class_map * get_oper_class(const char *country, u8 op_class)
 }
 
 
+int oper_class_bw_to_int(const struct oper_class_map *map)
+{
+	switch (map->bw) {
+	case BW20:
+		return 20;
+	case BW40PLUS:
+	case BW40MINUS:
+		return 40;
+	case BW80:
+		return 80;
+	case BW80P80:
+	case BW160:
+		return 160;
+	case BW2160:
+		return 2160;
+	default:
+		return 0;
+	}
+}
+
+
 int ieee802_11_parse_candidate_list(const char *pos, u8 *nei_rep,
 				    size_t nei_rep_len)
 {
@@ -1763,4 +2003,12 @@ int ieee802_11_parse_candidate_list(const char *pos, u8 *nei_rep,
 	}
 
 	return nei_pos - nei_rep;
+}
+
+
+int ieee802_11_ext_capab(const u8 *ie, unsigned int capab)
+{
+	if (!ie || ie[1] <= capab / 8)
+		return 0;
+	return !!(ie[2 + capab / 8] & BIT(capab % 8));
 }
