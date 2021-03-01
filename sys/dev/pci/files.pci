@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.434 2021/02/17 08:15:43 knakahara Exp $
+#	$NetBSD: files.pci,v 1.435 2021/03/01 17:48:52 jakllsch Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1182,4 +1182,9 @@ file    dev/pci/xmm7360.c               wwanc | wwan            needs-flag
 device	vmx: ether, ifnet, arp
 attach	vmx at pci
 file	dev/pci/if_vmx.c	vmx
+
+# Realtek RTL8125 2.5GBASE-T Ethernet
+device	rge: ether, ifnet, arp, mii
+attach	rge at pci
+file	dev/pci/if_rge.c		rge
 
