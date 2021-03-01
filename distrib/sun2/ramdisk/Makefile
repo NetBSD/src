@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2017/01/24 18:04:05 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2021/03/01 16:50:01 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,7 +9,7 @@ IMAGESIZE=	600k
 MAKEFS_FLAGS+=	-f 15 -o density=2048
 
 WARNS=		1
-DBG=		-Os
+DBG=		-Os -fno-unwind-tables
 
 CRUNCHBIN=	rd_bin
 LISTS=		${.CURDIR}/list
@@ -25,6 +25,7 @@ MDSET_RELEASEDIR=	binary/kernel
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
+.MAKEFLAGS+=	NOIEEE80211=1
 .include	"${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}:	libhack.o
 
