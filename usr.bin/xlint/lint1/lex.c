@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.10 2021/02/28 18:51:51 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.11 2021/03/01 00:51:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.10 2021/02/28 18:51:51 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.11 2021/03/01 00:51:01 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -478,6 +478,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	char	c, *eptr;
 	tspec_t	typ;
 	bool	ansiu;
+	bool	warned = false;
 #ifdef TARG_INT128_MAX
 	__uint128_t uq = 0;
 	static	tspec_t contypes[2][4] = {
@@ -531,9 +532,11 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 
 	uq = strtouq(cp, &eptr, base);
 	lint_assert(eptr == cp + len);
-	if (errno != 0)
+	if (errno != 0) {
 		/* integer constant out of range */
 		warning(252);
+		warned = true;
+	}
 
 	/*
 	 * If the value is too big for the current type, we must choose
@@ -550,7 +553,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			typ = LONG;
 		} else {
 			typ = ULONG;
-			if (uq > TARG_ULONG_MAX) {
+			if (uq > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
@@ -570,7 +573,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	case UINT:
 		if (uq > TARG_UINT_MAX) {
 			typ = ULONG;
-			if (uq > TARG_ULONG_MAX) {
+			if (uq > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
@@ -581,14 +584,14 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			typ = ULONG;
 			if (!sflag)
 				ansiu = true;
-			if (uq > TARG_ULONG_MAX) {
+			if (uq > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
 		}
 		break;
 	case ULONG:
-		if (uq > TARG_ULONG_MAX) {
+		if (uq > TARG_ULONG_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
@@ -601,7 +604,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		}
 		break;
 	case UQUAD:
-		if (uq > TARG_UQUAD_MAX) {
+		if (uq > TARG_UQUAD_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
@@ -618,7 +621,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		break;
 	case UINT128:
 #ifdef TARG_INT128_MAX
-		if (uq > TARG_UINT128_MAX) {
+		if (uq > TARG_UINT128_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
