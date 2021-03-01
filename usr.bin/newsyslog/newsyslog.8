@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.41 2017/10/23 01:06:52 wiz Exp $
+.\"	$NetBSD: newsyslog.8,v 1.42 2021/03/01 21:37:10 otis Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\"
 .\" from FreeBSD: newsyslog.8,v 1.14.2.1 1999/02/25 18:38:33 wollman Exp
 .\"
-.Dd June 16, 2012
+.Dd March 1, 2021
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -313,6 +313,13 @@ format: the ASCII message which
 inserts to indicate that the logs have been trimmed should not be included.
 .It Sy c
 Create an empty log file if none currently exists.
+.It Sy e
+Do not rotate log file with zero size (empty).
+This flag is mostly usable in conjunction with
+.Ar b
+flag that prevents
+.Nm
+from inserting an ASCII informational message.
 .It Sy n
 No signal should be sent when the log is trimmed.
 .It Sy p
