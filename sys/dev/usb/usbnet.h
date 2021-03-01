@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.19 2020/10/28 01:51:45 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.20 2021/03/01 22:59:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -261,6 +261,9 @@ struct usbnet {
 	/*
 	 * This section should be filled in before calling
 	 * usbnet_attach_ifp().
+	 *
+	 * XXX This should be of type "uByte".  enum usbnet_ep
+	 * is the index.  Fix this in a kernel version bump.
 	 */
 	enum usbnet_ep		un_ed[USBNET_ENDPT_MAX];
 
