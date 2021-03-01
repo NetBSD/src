@@ -235,6 +235,12 @@ L_CFLAGS += -DCONFIG_SUITEB192
 NEED_SHA384=y
 endif
 
+ifdef CONFIG_OCV
+L_CFLAGS += -DCONFIG_OCV
+OBJS += src/common/ocv.c
+CONFIG_IEEE80211W=y
+endif
+
 ifdef CONFIG_IEEE80211W
 L_CFLAGS += -DCONFIG_IEEE80211W
 NEED_SHA256=y
@@ -263,6 +269,7 @@ L_CFLAGS += -DCONFIG_SAE
 OBJS += src/common/sae.c
 NEED_ECC=y
 NEED_DH_GROUPS=y
+NEED_DRAGONFLY=y
 endif
 
 ifdef CONFIG_OWE
@@ -456,6 +463,7 @@ L_CFLAGS += -DEAP_SERVER_PWD
 OBJS += src/eap_server/eap_server_pwd.c src/eap_common/eap_pwd_common.c
 NEED_SHA256=y
 NEED_ECC=y
+NEED_DRAGONFLY=y
 endif
 
 ifdef CONFIG_EAP_EKE
@@ -476,6 +484,16 @@ OBJS += src/eap_server/eap_server_fast.c
 OBJS += src/eap_common/eap_fast_common.c
 TLS_FUNCS=y
 NEED_T_PRF=y
+NEED_AES_UNWRAP=y
+endif
+
+ifdef CONFIG_EAP_TEAP
+L_CFLAGS += -DEAP_SERVER_TEAP
+OBJS += src/eap_server/eap_server_teap.c
+OBJS += src/eap_common/eap_teap_common.c
+TLS_FUNCS=y
+NEED_T_PRF=y
+NEED_SHA384=y
 NEED_AES_UNWRAP=y
 endif
 
@@ -548,6 +566,9 @@ NEED_SHA512=y
 NEED_JSON=y
 NEED_GAS=y
 NEED_BASE64=y
+ifdef CONFIG_DPP2
+L_CFLAGS += -DCONFIG_DPP2
+endif
 endif
 
 ifdef CONFIG_EAP_IKEV2
@@ -584,6 +605,10 @@ endif
 
 ifdef CONFIG_PKCS12
 L_CFLAGS += -DPKCS12_FUNCS
+endif
+
+ifdef NEED_DRAGONFLY
+OBJS += src/common/dragonfly.c
 endif
 
 ifdef MS_FUNCS
