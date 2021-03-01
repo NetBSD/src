@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1780 2021/02/20 22:59:37 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1781 2021/03/01 01:43:15 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1209,8 +1209,7 @@ Version:	980911
 Current Vers:	980911
 Maintainer:	Mike Muuss
 Archive Site:
-Home Page:	http://ftp.arl.mil/mike/ping.html
-Date:		2019-01-09
+Date:		2021-02-28
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
@@ -1278,7 +1277,7 @@ Current Vers:	2.32
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:
 Home Page:
-Date:		2019-01-09
+Date:		2021-02-28
 Mailing List:
 Responsible:	christos
 License:	BSD (4-clause)
@@ -1430,12 +1429,12 @@ is too much inertia to apply them. Check for .gitignore files.
 For the data files, do use external/public-domain/tz/tzdata2netbsd.
 
 Package:	wpa_supplicant/hostapd
-Version:	2.7
+Version:	2.9
 Current Vers:	2.9
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
 Home Page:	http://w1.fi/wpa_supplicant/
-Date:		2020-06-13
+Date:		2021-02-28
 Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
