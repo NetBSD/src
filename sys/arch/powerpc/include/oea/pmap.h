@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2020/07/06 10:57:03 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 2021/03/01 01:53:46 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -145,6 +145,8 @@ extern unsigned int pmap_pteg_cnt;
 extern unsigned int pmap_pteg_mask;
 
 void pmap_bootstrap(vaddr_t, vaddr_t);
+void pmap_bootstrap1(vaddr_t, vaddr_t);
+void pmap_bootstrap2(void);
 bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
 bool pmap_query_bit(struct vm_page *, int);
 bool pmap_clear_bit(struct vm_page *, int);

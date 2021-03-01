@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2021/03/01 01:53:46 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2021/03/01 01:53:46 thorpej Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3145,12 +3145,11 @@ pmap_setup_segment0_map(int use_large_pages, ...)
 #endif /* PMAP_OEA64_BRIDGE */
 
 /*
- * This is not part of the defined PMAP interface and is specific to the
- * PowerPC architecture.  This is called during initppc, before the system
- * is really initialized.
+ * Set up the bottom level of the data structures necessary for the kernel
+ * to manage memory.  MMU hardware is programmed in pmap_bootstrap2().
  */
 void
-pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
+pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 {
 	struct mem_region *mp, tmp;
 	paddr_t s, e;
@@ -3413,34 +3412,20 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		    continue;
 #endif
  		pmap_kernel()->pm_sr[i] = KERNELN_SEGMENT(i)|SR_PRKEY;
-		__asm volatile ("mtsrin %0,%1"
- 			      :: "r"(KERNELN_SEGMENT(i)|SR_PRKEY), "r"(i << ADDR_SR_SHFT));
 	}
 
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm volatile ("mtsr %0,%1"
-		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
 #ifdef KERNEL2_SR
 	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm volatile ("mtsr %0,%1"
-		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
 #endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
 #if defined (PMAP_OEA)
 	for (i = 0; i < 16; i++) {
 		if (iosrtable[i] & SR601_T) {
 			pmap_kernel()->pm_sr[i] = iosrtable[i];
-			__asm volatile ("mtsrin %0,%1"
-			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
 		}
 	}
-	__asm volatile ("sync; mtsdr1 %0; isync"
-		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
-#elif defined (PMAP_OEA64) || defined (PMAP_OEA64_BRIDGE)
- 	__asm __volatile ("sync; mtsdr1 %0; isync"
- 		      :: "r"((uintptr_t)pmap_pteg_table | (32 - __builtin_clz(pmap_pteg_mask >> 11))));
 #endif
-	tlbia();
 
 #ifdef ALTIVEC
 	pmap_use_altivec = cpu_altivec;
@@ -3537,14 +3522,54 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			pmap_pte_insert(ptegidx, &pt);
 		}
 #endif
-
-		__asm volatile ("mtsrin %0,%1"
- 			      :: "r"(sr), "r"(kernelstart));
 	}
 #endif
+}
+
+/*
+ * Using the data structures prepared in pmap_bootstrap1(), program
+ * the MMU hardware.
+ */
+void
+pmap_bootstrap2(void)
+{
+/* PMAP_OEA64_BRIDGE does support these instructions */
+#if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
+	for (int i = 0; i < 16; i++) {
+#if defined(PPC_OEA601)
+		/* XXX wedges for segment register 0xf , so set later */
+		if ((iosrtable[i] & SR601_T) && ((MFPVR() >> 16) == MPC601))
+			continue;
+#endif /* PPC_OEA601 */
+		__asm volatile("mtsrin %0,%1"
+			:: "r"(pmap_kernel()->pm_sr[i]),
+			   "r"(i << ADDR_SR_SHFT));
+	}
+#endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
+#if defined (PMAP_OEA)
+	 __asm volatile("sync; mtsdr1 %0; isync"
+		:: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
+#elif defined (PMAP_OEA64) || defined (PMAP_OEA64_BRIDGE)
+	__asm __volatile("sync; mtsdr1 %0; isync"
+		:: "r"((uintptr_t)pmap_pteg_table |
+		       (32 - __builtin_clz(pmap_pteg_mask >> 11))));
+#endif
+	tlbia();
 
 #if defined(PMAPDEBUG)
 	if ( pmapdebug )
 	    pmap_print_mmuregs();
 #endif
+}
+
+/*
+ * This is not part of the defined PMAP interface and is specific to the
+ * PowerPC architecture.  This is called during initppc, before the system
+ * is really initialized.
+ */
+void
+pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
+{
+	pmap_bootstrap1(kernelstart, kernelend);
+	pmap_bootstrap2();
 }
