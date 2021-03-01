@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.8 2021/02/20 19:27:35 jmcneill Exp $ */
+/* $NetBSD: locore.h,v 1.9 2021/03/01 11:29:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -58,11 +58,12 @@
 #define cpsie(psw)		daif_enable((psw))
 #define cpsid(psw)		daif_disable((psw))
 
-
-#define ENABLE_INTERRUPT()	\
+#define ENABLE_INTERRUPT()						\
 	reg_daifclr_write((DAIF_I|DAIF_F) >> DAIF_SETCLR_SHIFT)
-#define DISABLE_INTERRUPT()	\
+#define DISABLE_INTERRUPT()						\
 	reg_daifset_write((DAIF_I|DAIF_F) >> DAIF_SETCLR_SHIFT)
+#define DISABLE_INTERRUPT_SAVE()					\
+	daif_disable(DAIF_I|DAIF_F)
 
 #define DAIF_MASK		(DAIF_D|DAIF_A|DAIF_I|DAIF_F)
 
