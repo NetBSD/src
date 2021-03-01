@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.18 2021/02/22 21:16:25 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.19 2021/03/01 11:29:14 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.18 2021/02/22 21:16:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.19 2021/03/01 11:29:14 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -75,12 +75,13 @@ _spllower(int newipl)
 	const int oldipl = ci->ci_cpl;
 	KDASSERT(panicstr || newipl <= ci->ci_cpl);
 	if (newipl < ci->ci_cpl) {
-		register_t psw = cpsid(I32_bit);
+		register_t psw = DISABLE_INTERRUPT_SAVE();
 		ci->ci_intr_depth++;
 		pic_do_pending_ints(psw, newipl, NULL);
 		ci->ci_intr_depth--;
-		if ((psw & I32_bit) == 0 || newipl == IPL_NONE)
-			cpsie(I32_bit);
+		if ((psw & I32_bit) == 0 || newipl == IPL_NONE) {
+			ENABLE_INTERRUPT();
+		}
 		cpu_dosoftints();
 	}
 	return oldipl;
@@ -113,7 +114,7 @@ splx(int savedipl)
 static void __noinline
 splx_dopendingints(struct cpu_info *ci, const int savedipl)
 {
-	const register_t psw = cpsid(I32_bit);
+	const register_t psw = DISABLE_INTERRUPT_SAVE();
 	ci->ci_intr_depth++;
 	while ((ci->ci_pending_ipls & ~__BIT(savedipl)) > __BIT(savedipl)) {
 		KASSERT(ci->ci_pending_ipls < __BIT(NIPL));
@@ -131,7 +132,7 @@ splx_dopendingints(struct cpu_info *ci, const int savedipl)
 	}
 	ci->ci_intr_depth--;
 	if ((psw & I32_bit) == 0) {
-		cpsie(I32_bit);
+		ENABLE_INTERRUPT();
 	}
 }
 #endif
