@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2019/12/29 18:26:18 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2021/03/01 09:24:27 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,6 +13,7 @@ KERNEL=		${KERNOBJDIR}/INSTALL/netbsd
 
 WARNS=		1
 DBG=		-Os -fno-unwind-tables
+USE_WIDECHAR=	no
 
 CRUNCHBIN=	instbin
 
@@ -42,6 +43,13 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 IMAGEPOSTBUILD=		${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
 		    	    ${DESTDIR}/usr/mdec/bootxx /ufsboot
 IMAGE_RELEASEDIR=	installation/miniroot
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+HACK_CURSES=	yes
+.MAKEFLAGS+=	USE_WIDECHAR=no
+.include	"${HACKSRC}/Makefile.inc"
+${CRUNCHBIN}:	libhack.o
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
