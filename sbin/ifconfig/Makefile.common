@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.5 2017/05/02 20:12:27 christos Exp $
+#	$NetBSD: Makefile.common,v 1.6 2021/03/01 16:47:48 martin Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
@@ -11,8 +11,11 @@ DPADD+=		${LIBUTIL} ${LIBPROP}
 LDADD+=		-lutil -lprop
 
 INCS+=		af_inetany.h env.h extern.h media.h parse.h util.h
-SRCS+=		af_inet.c af_inetany.c env.c ether.c ieee80211.c \
+SRCS+=		af_inet.c af_inetany.c env.c ether.c \
 		ifconfig.c media.c parse.c tunnel.c util.c vlan.c
+.ifndef	NOIEEE80211
+SRCS+=		ieee80211.c
+.endif
 .ifndef SMALLPROG
 SRCS+=		agr.c l2tp.c
 .endif
