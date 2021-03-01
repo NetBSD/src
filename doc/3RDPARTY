@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1781 2021/03/01 01:43:15 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1782 2021/03/01 04:43:54 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1409,14 +1409,14 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2020c / tzdata2021a
+Version:	tzcode2021a / tzdata2021a
 Current Vers:	tzcode2021a / tzdata2021a
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
-Date:		2020-12-31
+Date:		2021-02-28
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, kre
 License:	Public domain
