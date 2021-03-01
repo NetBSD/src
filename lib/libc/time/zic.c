@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.77 2020/10/09 18:38:48 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.78 2021/03/01 04:42:14 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.77 2020/10/09 18:38:48 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.78 2021/03/01 04:42:14 christos Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -669,7 +669,8 @@ static const char *	leapsec;
 static const char *	tzdefault;
 
 /* -1 if the TZif output file should be slim, 0 if default, 1 if the
-   output should be fat for backward compatibility.  The default is slim.  */
+   output should be fat for backward compatibility.  ZIC_BLOAT_DEFAULT
+   determines the default.  */
 static int bloat;
 
 static bool
@@ -806,8 +807,15 @@ _("%s: invalid time range: %s\n"),
 		}
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
 		usage(stderr, EXIT_FAILURE);	/* usage message by request */
-	if (bloat == 0)
-	  bloat = strcmp(ZIC_BLOAT_DEFAULT, "slim") == 0 ? -1 : 1;
+	if (bloat == 0) {
+	  static char const bloat_default[] = ZIC_BLOAT_DEFAULT;
+	  if (strcmp(bloat_default, "slim") == 0)
+	    bloat = -1;
+	  else if (strcmp(bloat_default, "fat") == 0)
+	    bloat = 1;
+	  else
+	    abort(); /* Configuration error.  */
+	}
 	if (directory == NULL)
 		directory = TZDIR;
 	if (tzdefault == NULL)
