@@ -33,6 +33,7 @@ struct sae_temporary_data {
 	struct crypto_bignum *sae_rand;
 	struct crypto_ec *ec;
 	int prime_len;
+	int order_len;
 	const struct dh_group *dh;
 	const struct crypto_bignum *prime;
 	const struct crypto_bignum *order;
@@ -40,6 +41,8 @@ struct sae_temporary_data {
 	struct crypto_bignum *order_buf;
 	struct wpabuf *anti_clogging_token;
 	char *pw_id;
+	int vlan_id;
+	u8 bssid[ETH_ALEN];
 };
 
 enum sae_state {

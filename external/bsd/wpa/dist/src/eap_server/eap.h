@@ -121,7 +121,10 @@ struct eap_config {
 	int eap_fast_prov;
 	int pac_key_lifetime;
 	int pac_key_refresh_time;
+	int eap_teap_auth;
+	int eap_teap_pac_no_inner;
 	int eap_sim_aka_result_ind;
+	int eap_sim_id;
 	int tnc;
 	struct wps_context *wps;
 	const struct wpabuf *assoc_wps_ie;
@@ -153,11 +156,14 @@ void eap_sm_pending_cb(struct eap_sm *sm);
 int eap_sm_method_pending(struct eap_sm *sm);
 const u8 * eap_get_identity(struct eap_sm *sm, size_t *len);
 const char * eap_get_serial_num(struct eap_sm *sm);
+const char * eap_get_method(struct eap_sm *sm);
+const char * eap_get_imsi(struct eap_sm *sm);
 struct eap_eapol_interface * eap_get_interface(struct eap_sm *sm);
 void eap_server_clear_identity(struct eap_sm *sm);
 void eap_server_mschap_rx_callback(struct eap_sm *sm, const char *source,
 				   const u8 *username, size_t username_len,
 				   const u8 *challenge, const u8 *response);
 void eap_erp_update_identity(struct eap_sm *sm, const u8 *eap, size_t len);
+void eap_user_free(struct eap_user *user);
 
 #endif /* EAP_H */

@@ -12,6 +12,7 @@
 #include "utils/eloop.h"
 #include "common/ieee802_11_defs.h"
 #include "common/hw_features_common.h"
+#include "common/ocv.h"
 #include "ap/hostapd.h"
 #include "ap/sta_info.h"
 #include "ap/ieee802_11.h"
@@ -188,7 +189,7 @@ static void mesh_mpm_init_link(struct wpa_supplicant *wpa_s,
 
 	do {
 		if (os_get_random((u8 *) &llid, sizeof(llid)) < 0)
-			continue;
+			llid = 0; /* continue */
 	} while (!llid || llid_in_use(wpa_s, llid));
 
 	sta->my_lid = llid;
@@ -244,8 +245,23 @@ static void mesh_mpm_send_plink_action(struct wpa_supplicant *wpa_s,
 			   2 + 5;  /* VHT Operation */
 	}
 #endif /* CONFIG_IEEE80211AC */
+#ifdef CONFIG_IEEE80211AX
+	if (type != PLINK_CLOSE && wpa_s->mesh_he_enabled) {
+		buf_len += 3 +
+			   HE_MAX_MAC_CAPAB_SIZE +
+			   HE_MAX_PHY_CAPAB_SIZE +
+			   HE_MAX_MCS_CAPAB_SIZE +
+			   HE_MAX_PPET_CAPAB_SIZE;
+		buf_len += 3 + sizeof(struct ieee80211_he_operation);
+	}
+#endif /* CONFIG_IEEE80211AX */
 	if (type != PLINK_CLOSE)
 		buf_len += conf->rsn_ie_len; /* RSN IE */
+#ifdef CONFIG_OCV
+	/* OCI is included even when the other STA doesn't support OCV */
+	if (type != PLINK_CLOSE && conf->ocv)
+		buf_len += OCV_OCI_EXTENDED_LEN;
+#endif /* CONFIG_OCV */
 
 	buf = wpabuf_alloc(buf_len);
 	if (!buf)
@@ -356,6 +372,37 @@ static void mesh_mpm_send_plink_action(struct wpa_supplicant *wpa_s,
 		wpabuf_put_data(buf, vht_capa_oper, pos - vht_capa_oper);
 	}
 #endif /* CONFIG_IEEE80211AC */
+#ifdef CONFIG_IEEE80211AX
+	if (type != PLINK_CLOSE && wpa_s->mesh_he_enabled) {
+		u8 he_capa_oper[3 +
+				HE_MAX_MAC_CAPAB_SIZE +
+				HE_MAX_PHY_CAPAB_SIZE +
+				HE_MAX_MCS_CAPAB_SIZE +
+				HE_MAX_PPET_CAPAB_SIZE +
+				3 + sizeof(struct ieee80211_he_operation)];
+
+		pos = hostapd_eid_he_capab(bss, he_capa_oper,
+					   IEEE80211_MODE_MESH);
+		pos = hostapd_eid_he_operation(bss, pos);
+		wpabuf_put_data(buf, he_capa_oper, pos - he_capa_oper);
+	}
+#endif /* CONFIG_IEEE80211AX */
+
+#ifdef CONFIG_OCV
+	if (type != PLINK_CLOSE && conf->ocv) {
+		struct wpa_channel_info ci;
+
+		if (wpa_drv_channel_info(wpa_s, &ci) != 0) {
+			wpa_printf(MSG_WARNING,
+				   "Mesh MPM: Failed to get channel info for OCI element");
+			goto fail;
+		}
+
+		pos = wpabuf_put(buf, OCV_OCI_EXTENDED_LEN);
+		if (ocv_insert_extended_oci(&ci, pos) < 0)
+			goto fail;
+	}
+#endif /* CONFIG_OCV */
 
 	if (ampe && mesh_rsn_protect_frame(wpa_s->mesh_rsn, sta, cat, buf)) {
 		wpa_msg(wpa_s, MSG_INFO,
@@ -699,8 +746,14 @@ static struct sta_info * mesh_mpm_add_peer(struct wpa_supplicant *wpa_s,
 
 #ifdef CONFIG_IEEE80211AC
 	copy_sta_vht_capab(data, sta, elems->vht_capabilities);
+	copy_sta_vht_oper(data, sta, elems->vht_operation);
 	set_sta_vht_opmode(data, sta, elems->vht_opmode_notif);
 #endif /* CONFIG_IEEE80211AC */
+
+#ifdef CONFIG_IEEE80211AX
+	copy_sta_he_capab(data, sta, IEEE80211_MODE_MESH,
+			  elems->he_capabilities, elems->he_capabilities_len);
+#endif /* CONFIG_IEEE80211AX */
 
 	if (hostapd_get_aid(data, sta) < 0) {
 		wpa_msg(wpa_s, MSG_ERROR, "No AIDs available");
@@ -719,6 +772,8 @@ static struct sta_info * mesh_mpm_add_peer(struct wpa_supplicant *wpa_s,
 	params.listen_interval = 100;
 	params.ht_capabilities = sta->ht_capabilities;
 	params.vht_capabilities = sta->vht_capabilities;
+	params.he_capab = sta->he_capab;
+	params.he_capab_len = sta->he_capab_len;
 	params.flags |= WPA_STA_WMM;
 	params.flags_mask |= WPA_STA_AUTHENTICATED;
 	if (conf->security == MESH_CONF_SEC_NONE) {
@@ -1196,6 +1251,56 @@ void mesh_mpm_action_rx(struct wpa_supplicant *wpa_s,
 			}
 			return;
 		}
+
+#ifdef CONFIG_OCV
+		if (action_field == PLINK_OPEN && elems.rsn_ie) {
+			struct wpa_state_machine *sm = sta->wpa_sm;
+			struct wpa_ie_data data;
+
+			res = wpa_parse_wpa_ie_rsn(elems.rsn_ie - 2,
+						   elems.rsn_ie_len + 2,
+						   &data);
+			if (res) {
+				wpa_printf(MSG_DEBUG,
+					   "Failed to parse RSN IE (res=%d)",
+					   res);
+				wpa_hexdump(MSG_DEBUG, "RSN IE", elems.rsn_ie,
+					    elems.rsn_ie_len);
+				return;
+			}
+
+			wpa_auth_set_ocv(sm, mconf->ocv &&
+					 (data.capabilities &
+					  WPA_CAPABILITY_OCVC));
+		}
+
+		if (action_field != PLINK_CLOSE &&
+		    wpa_auth_uses_ocv(sta->wpa_sm)) {
+			struct wpa_channel_info ci;
+			int tx_chanwidth;
+			int tx_seg1_idx;
+
+			if (wpa_drv_channel_info(wpa_s, &ci) != 0) {
+				wpa_printf(MSG_WARNING,
+					   "MPM: Failed to get channel info to validate received OCI in MPM Confirm");
+				return;
+			}
+
+			if (get_tx_parameters(
+				    sta, channel_width_to_int(ci.chanwidth),
+				    ci.seg1_idx, &tx_chanwidth,
+				    &tx_seg1_idx) < 0)
+				return;
+
+			if (ocv_verify_tx_params(elems.oci, elems.oci_len, &ci,
+						 tx_chanwidth, tx_seg1_idx) !=
+			    0) {
+				wpa_printf(MSG_WARNING, "MPM: %s",
+					   ocv_errorstr);
+				return;
+			}
+		}
+#endif /* CONFIG_OCV */
 	}
 
 	if (sta->plink_state == PLINK_BLOCKED) {

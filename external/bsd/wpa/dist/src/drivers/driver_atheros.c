@@ -86,7 +86,7 @@ struct atheros_driver_data {
 };
 
 static int atheros_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr,
-			      int reason_code);
+			      u16 reason_code);
 static int atheros_set_privacy(void *priv, int enabled);
 
 static const char * athr_get_ioctl_name(int op)
@@ -761,7 +761,7 @@ atheros_set_opt_ie(void *priv, const u8 *ie, size_t ie_len)
 
 static int
 atheros_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr,
-		   int reason_code)
+		   u16 reason_code)
 {
 	struct atheros_driver_data *drv = priv;
 	struct ieee80211req_mlme mlme;
@@ -785,7 +785,7 @@ atheros_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr,
 
 static int
 atheros_sta_disassoc(void *priv, const u8 *own_addr, const u8 *addr,
-		     int reason_code)
+		     u16 reason_code)
 {
 	struct atheros_driver_data *drv = priv;
 	struct ieee80211req_mlme mlme;
@@ -1218,8 +1218,7 @@ atheros_new_sta(struct atheros_driver_data *drv, u8 addr[IEEE80211_ADDR_LEN])
 
 #ifdef ATH_WPS_IE
 	/* if WPS IE is present, preference is given to WPS */
-	if (ie.wps_ie &&
-	    (ie.wps_ie[1] > 0 && (ie.wps_ie[0] == WLAN_EID_VENDOR_SPECIFIC))) {
+	if (ie.wps_ie[0] == WLAN_EID_VENDOR_SPECIFIC && ie.wps_ie[1] > 0) {
 		iebuf = ie.wps_ie;
 		ielen = ie.wps_ie[1];
 	}
