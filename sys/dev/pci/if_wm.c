@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.699 2021/02/17 08:15:43 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.700 2021/03/01 04:49:11 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.699 2021/02/17 08:15:43 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.700 2021/03/01 04:49:11 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9332,19 +9332,12 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 
 		/* Set up checksum info for this packet. */
 		wm_rxdesc_ensure_checksum(rxq, status, errors, m);
-		/*
-		 * Update the receive pointer holding rxq_lock consistent with
-		 * increment counter.
-		 */
+
 		rxq->rxq_ptr = i;
 		rxq->rxq_packets++;
 		rxq->rxq_bytes += len;
-		mutex_exit(rxq->rxq_lock);
-
 		/* Pass it on. */
 		if_percpuq_enqueue(sc->sc_ipq, m);
-
-		mutex_enter(rxq->rxq_lock);
 
 		if (rxq->rxq_stopping)
 			break;
