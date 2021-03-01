@@ -87,6 +87,16 @@ static inline int wpa_drv_leave_mesh(struct wpa_supplicant *wpa_s)
 	return -1;
 }
 
+static inline int wpa_drv_mesh_link_probe(struct wpa_supplicant *wpa_s,
+					  const u8 *addr,
+					  const u8 *eth, size_t len)
+{
+	if (wpa_s->driver->probe_mesh_link)
+		return wpa_s->driver->probe_mesh_link(wpa_s->drv_priv, addr,
+						      eth, len);
+	return -1;
+}
+
 static inline int wpa_drv_scan(struct wpa_supplicant *wpa_s,
 			       struct wpa_driver_scan_params *params)
 {
@@ -168,7 +178,7 @@ static inline int wpa_drv_get_seqnum(struct wpa_supplicant *wpa_s,
 }
 
 static inline int wpa_drv_sta_deauth(struct wpa_supplicant *wpa_s,
-				     const u8 *addr, int reason_code)
+				     const u8 *addr, u16 reason_code)
 {
 	if (wpa_s->driver->sta_deauth) {
 		return wpa_s->driver->sta_deauth(wpa_s->drv_priv,
@@ -179,7 +189,7 @@ static inline int wpa_drv_sta_deauth(struct wpa_supplicant *wpa_s,
 }
 
 static inline int wpa_drv_deauthenticate(struct wpa_supplicant *wpa_s,
-					 const u8 *addr, int reason_code)
+					 const u8 *addr, u16 reason_code)
 {
 	if (wpa_s->driver->deauthenticate) {
 		return wpa_s->driver->deauthenticate(wpa_s->drv_priv, addr,
@@ -492,6 +502,14 @@ static inline int wpa_drv_signal_poll(struct wpa_supplicant *wpa_s,
 	return -1;
 }
 
+static inline int wpa_drv_channel_info(struct wpa_supplicant *wpa_s,
+				       struct wpa_channel_info *ci)
+{
+	if (wpa_s->driver->channel_info)
+		return wpa_s->driver->channel_info(wpa_s->drv_priv, ci);
+	return -1;
+}
+
 static inline int wpa_drv_pktcnt_poll(struct wpa_supplicant *wpa_s,
 				      struct hostap_sta_driver_data *sta)
 {
@@ -796,6 +814,14 @@ static inline int wpa_drv_set_transmit_next_pn(struct wpa_supplicant *wpa_s,
 	return wpa_s->driver->set_transmit_next_pn(wpa_s->drv_priv, sa);
 }
 
+static inline int wpa_drv_set_receive_lowest_pn(struct wpa_supplicant *wpa_s,
+						struct receive_sa *sa)
+{
+	if (!wpa_s->driver->set_receive_lowest_pn)
+		return -1;
+	return wpa_s->driver->set_receive_lowest_pn(wpa_s->drv_priv, sa);
+}
+
 static inline int
 wpa_drv_create_receive_sc(struct wpa_supplicant *wpa_s, struct receive_sc *sc,
 			  unsigned int conf_offset, int validation)
@@ -1044,6 +1070,14 @@ wpa_drv_send_external_auth_status(struct wpa_supplicant *wpa_s,
 		return -1;
 	return wpa_s->driver->send_external_auth_status(wpa_s->drv_priv,
 							params);
+}
+
+static inline int wpa_drv_set_4addr_mode(struct wpa_supplicant *wpa_s, int val)
+{
+	if (!wpa_s->driver->set_4addr_mode)
+		return -1;
+	return wpa_s->driver->set_4addr_mode(wpa_s->drv_priv,
+					     wpa_s->bridge_ifname, val);
 }
 
 #endif /* DRIVER_I_H */
