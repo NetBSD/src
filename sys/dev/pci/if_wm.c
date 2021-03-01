@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.700 2021/03/01 04:49:11 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.701 2021/03/01 04:50:17 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.700 2021/03/01 04:49:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.701 2021/03/01 04:50:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9177,7 +9177,6 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 
 	for (i = rxq->rxq_ptr;; i = WM_NEXTRX(i)) {
 		if (limit-- == 0) {
-			rxq->rxq_ptr = i;
 			more = true;
 			DPRINTF(sc, WM_DEBUG_RX,
 			    ("%s: RX: loop limited, descriptor %d is not processed\n",
@@ -9203,11 +9202,6 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 #endif
 
 		if (!wm_rxdesc_dd(rxq, i, status)) {
-			/*
-			 * Update the receive pointer holding rxq_lock
-			 * consistent with increment counter.
-			 */
-			rxq->rxq_ptr = i;
 			break;
 		}
 
@@ -9333,7 +9327,6 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 		/* Set up checksum info for this packet. */
 		wm_rxdesc_ensure_checksum(rxq, status, errors, m);
 
-		rxq->rxq_ptr = i;
 		rxq->rxq_packets++;
 		rxq->rxq_bytes += len;
 		/* Pass it on. */
@@ -9342,6 +9335,7 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 		if (rxq->rxq_stopping)
 			break;
 	}
+	rxq->rxq_ptr = i;
 
 	if (count != 0)
 		rnd_add_uint32(&sc->rnd_source, count);
