@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.176 2021/01/27 15:52:46 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.177 2021/03/01 18:12:58 jakllsch Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -256,6 +256,7 @@ mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
+rge*		at pci? dev ? function ?	# Realtek 8125
 vmx*		at pci? dev ? function ?	# VMware VMXNET3
 wm*		at pci? dev ? function ?	# Intel Gigabit Ethernet
 
