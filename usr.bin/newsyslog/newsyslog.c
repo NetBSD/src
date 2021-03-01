@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.61 2013/09/05 11:34:40 prlw1 Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.62 2021/03/01 21:37:10 otis Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.61 2013/09/05 11:34:40 prlw1 Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.62 2021/03/01 21:37:10 otis Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,6 +94,7 @@ __RCSID("$NetBSD: newsyslog.c,v 1.61 2013/09/05 11:34:40 prlw1 Exp $");
 #define	CE_PLAIN0	0x10	/* Do not compress zero'th history file */
 #define	CE_SYSLPROTOCOL 0x20	/* log in syslog-protocol format,
 				   not configurable but detected at runtime */
+#define	CE_NOEMPTY	0x40	/* Do not rotate empty log file */
 
 struct conf_entry {
 	uid_t	uid;			/* Owner of log */
@@ -372,6 +373,9 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 		case 'C':
 			log->flags |= CE_CREATE;
 			break;
+		case 'E':
+			log->flags |= CE_NOEMPTY;
+			break;
 		case 'N':
 			log->flags |= CE_NOSIGNAL;
 			break;
@@ -459,6 +463,14 @@ log_examine(struct conf_entry *log, int force)
 
 	if (!S_ISREG(sb.st_mode)) {
 		PRHDRINFO(("not a regular file --> skip log\n"));
+		return;
+	}
+
+	/* Skip rotation of empty log file when flag
+	 * E is specified
+	 */
+	if (sb.st_size == 0 && (log->flags & CE_NOEMPTY) != 0) {
+		PRHDRINFO(("empty file --> skip log\n"));
 		return;
 	}
 
