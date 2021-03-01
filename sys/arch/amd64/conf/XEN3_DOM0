@@ -1,4 +1,14 @@
-# $NetBSD: XEN3_DOM0,v 1.186 2021/01/20 13:22:08 nia Exp $
+# $NetBSD: XEN3_DOM0,v 1.187 2021/03/01 13:52:50 gdt Exp $
+
+# XEN3_DOM0 machine description file
+#
+# This machine description file is used to generate a kernel to be
+# used as a PV dom0 under Xen.  It is similar to GENERIC in that it is
+# intended to be useful for most applications.  Generally, besides
+# changes that are specifically required for Xen (e.g., XENPV), it
+# should be similar to GENERIC.  Some differences are currently
+# necessary, such as drivers that fail under Xen but work in GENERIC,
+# for reasons that do not follow from Xen architecture.
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +22,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.186 $"
+#ident		"XEN3_DOM0-$Revision: 1.187 $"
 
 maxusers	32		# estimated number of users
 
