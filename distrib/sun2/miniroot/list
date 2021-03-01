@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.23 2020/10/06 13:32:41 rin Exp $
+# $NetBSD: list,v 1.24 2021/03/01 16:49:07 martin Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -155,4 +155,4 @@ SPECIAL	edlabel		srcdir	distrib/utils/edlabel
 ARGVLN	sh -sh
 
 LIBS	libhack.o
-LIBS	-lrmt -ledit -lutil -lcurses -lterminfo -lcrypt -ll -lm -lkvm -lz -lprop
+LIBS	-lrmt -ledit -lutil -lterminfo -lcrypt -ll -lm -lkvm -lz -lprop
