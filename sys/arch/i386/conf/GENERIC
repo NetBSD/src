@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1234 2021/01/20 13:22:08 nia Exp $
+# $NetBSD: GENERIC,v 1.1235 2021/03/01 18:12:58 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1234 $"
+#ident		"GENERIC-$Revision: 1.1235 $"
 
 maxusers	64		# estimated number of users
 
@@ -1001,6 +1001,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
+rge*	at pci? dev ? function ?	# Realtek 8125
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 rtwn*	at pci? dev ? function ?	# Realtek 8188CE/8192CE 802.11b/g/n
