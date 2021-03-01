@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.329 2020/09/09 05:23:26 yamaguchi Exp $
+#	$NetBSD: DEVNAMES,v 1.330 2021/03/01 18:18:39 jakllsch Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1146,6 +1146,7 @@ rbox			hp300
 rd			hp300
 rd			vax
 re			MI
+rge			MI
 repulse			amiga
 repulse			amigappc
 rf			MI
