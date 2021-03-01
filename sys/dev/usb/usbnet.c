@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.39 2020/08/28 17:05:32 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.40 2021/03/01 17:41:44 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.39 2020/08/28 17:05:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.40 2021/03/01 17:41:44 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -350,7 +350,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (usbd_ratecheck(&unp->unp_rx_notice))
-			aprint_error_dev(un->un_dev, "usb errors on rx: %s\n",
+			device_printf(un->un_dev, "usb errors on rx: %s\n",
 			    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(unp->unp_ep[USBNET_ENDPT_RX]);
@@ -422,7 +422,7 @@ usbnet_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		if_statinc(ifp, if_oerrors);
 		if (usbd_ratecheck(&unp->unp_tx_notice))
-			aprint_error_dev(un->un_dev, "usb error on tx: %s\n",
+			device_printf(un->un_dev, "usb error on tx: %s\n",
 			    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(unp->unp_ep[USBNET_ENDPT_TX]);
@@ -1139,13 +1139,13 @@ usbnet_watchdog(struct ifnet *ifp)
 	usbd_status err;
 
 	if_statinc(ifp, if_oerrors);
-	aprint_error_dev(un->un_dev, "watchdog timeout\n");
+	device_printf(un->un_dev, "watchdog timeout\n");
 
 	if (cd->uncd_tx_cnt > 0) {
 		DPRINTF("uncd_tx_cnt=%ju non zero, aborting pipe", 0, 0, 0, 0);
 		err = usbd_abort_pipe(unp->unp_ep[USBNET_ENDPT_TX]);
 		if (err)
-			aprint_error_dev(un->un_dev, "pipe abort failed: %s\n",
+			device_printf(un->un_dev, "pipe abort failed: %s\n",
 			    usbd_errstr(err));
 		if (cd->uncd_tx_cnt != 0)
 			DPRINTF("uncd_tx_cnt now %ju", cd->uncd_tx_cnt, 0, 0, 0);

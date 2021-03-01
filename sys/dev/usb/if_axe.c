@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.131 2020/03/27 18:04:45 nisimura Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.132 2021/03/01 17:41:00 jakllsch Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.131 2020/03/27 18:04:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.132 2021/03/01 17:41:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -335,7 +335,7 @@ axe_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
 
 	if (err) {
-		aprint_error_dev(un->un_dev, "read PHY failed\n");
+		device_printf(un->un_dev, "read PHY failed\n");
 		return EIO;
 	}
 
@@ -422,7 +422,7 @@ axe_uno_mii_statchg(struct ifnet *ifp)
 	DPRINTF("val=%#jx", val, 0, 0, 0);
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	if (err)
-		aprint_error_dev(un->un_dev, "media change failed\n");
+		device_printf(un->un_dev, "media change failed\n");
 }
 
 static void
@@ -442,7 +442,7 @@ axe_rcvfilt_locked(struct usbnet *un)
 		return;
 
 	if (axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, &rxmode)) {
-		aprint_error_dev(un->un_dev, "can't read rxmode");
+		device_printf(un->un_dev, "can't read rxmode");
 		return;
 	}
 	rxmode = le16toh(rxmode);
