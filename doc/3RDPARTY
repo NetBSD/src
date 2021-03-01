@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1782 2021/03/01 04:43:54 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1783 2021/03/01 22:07:58 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -440,7 +440,7 @@ Current Vers:	2.6.4
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
 Archive Site:	https://github.com/westes/flex/releases
 Home Page:	https://github.com/westes/flex
-Date:		2020-06-13
+Date:		2021-03-01
 Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
 Responsible:
 License:	BSD-like
@@ -545,9 +545,9 @@ Package:	heimdal
 Version:	7.7.0
 Current Vers:	7.7.0
 Maintainer:	Heimdal <heimdal@h5l.org>
-Archive Site:	https://github.com/heimdal/heimdal/releases/download/
+Archive Site:	https://github.com/heimdal/heimdal/releases/
 Home Page:	http://www.h5l.org/
-Date:		2020-06-13
+Date:		2021-03-01
 Mailing List:	heimdal-discuss@sics.se
 Responsible:	joda, lha
 License:	BSD
@@ -616,7 +616,7 @@ Current Vers:	5.2.1
 Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
-Date:		2020-06-13
+Date:		2021-03-01
 Mailing List:	
 Responsible:	christos
 License:	BSD
@@ -711,12 +711,12 @@ for importation.  Run ./configure beforehand to generate "defines.h".
 Talk to mrg before importing any new version.
 
 Package:	libarchive
-Version:	3.4.0
+Version:	3.5.1
 Current Vers:	3.4.3
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
-Date:		2020-06-13
+Date:		2021-03-01
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
@@ -739,11 +739,11 @@ repository. See the lvm2tools Notes for more information.
 
 Package:	libevent
 Version:	2.1.8-stable
-Current Vers:	2.1.11-stable
+Current Vers:	2.1.12-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
-Date:		2020-06-13
+Date:		2021-03-01
 Responsible:
 License:	BSD (3/4-clause)
 Location:	external/bsd/libevent/dist
@@ -789,7 +789,7 @@ Current Vers:	1.9.1
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2019-10-01
+Date:		2021-03-01
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
@@ -804,7 +804,7 @@ Current Vers:	4.9.3
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2020-06-13
+Date:		2021-03-01
 Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
@@ -892,7 +892,7 @@ Current Vers:	1.14.5
 Maintainer:	Kristaps Džonsons/Ingo Schwarze
 Archive Site:	http://mandoc.bsd.lv/snapshots/
 Home Page:	http://mandoc.bsd.lv/
-Date:		2020-06-13
+Date:		2021-03-01
 Mailing List:
 Responsible:	joerg
 License:	BSD (2-clause)
@@ -994,7 +994,7 @@ Current Vers:	4.2.8p14
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
-Date:		2020-06-13
+Date:		2021-03-01
 Mailing List:
 Responsible:	simonb, jonathan, kardel
 License:	BSD-like
@@ -1018,11 +1018,11 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.50
-Current Vers:	2.4.50
+Current Vers:	2.4.57
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
-Date:		2020-08-11
+Date:		2021-03-01
 Mailing List:
 Responsible:
 License:	BSD (3-clause)
@@ -1035,7 +1035,7 @@ Current Vers:	20190224 (Tabebuia)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
-Date:		2020-06-13
+Date:		2021-03-01
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
@@ -1075,7 +1075,7 @@ Current Vers:	8.4 / portable 8.4p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
-Date:		2020-12-04
+Date:		2021-03-01
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
 License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
@@ -1221,12 +1221,12 @@ and more. Vern's ping is gone. We are too different from everyone else
 now to do a new import.
 
 Package:	Postfix
-Version:	3.5.2
+Version:	3.5.9
 Current Vers:	3.5.2
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:
 Home Page:	http://www.postfix.org/
-Date: 		2020-06-13
+Date: 		2021-03-01
 Mailing List:	postfix-users@postfix.org
 Responsible:	christos
 License:	IBM Public License. See also src/external/ibm-public/postfix/dist.
@@ -1320,10 +1320,10 @@ original.
 
 Package:	sqlite
 Version:	3.26.0
-Current Vers:	3.32.2 (2020-06-04)
+Current Vers:	3.34.1 (2021-01-20)
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
-Date: 		2020-06-13
+Date: 		2021-03-01
 Responsible:	joerg
 License:	Public domain
 Location:	external/public-domain/sqlite/dist
