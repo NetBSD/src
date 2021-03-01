@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.11 2021/01/30 17:37:25 thorpej Exp $ */
+/* $NetBSD: dstemp.c,v 1.12 2021/03/01 04:39:45 rin Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.11 2021/01/30 17:37:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.12 2021/03/01 04:39:45 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sensor_temp.units = ENVSYS_STEMP;
 	sc->sc_sensor_temp.state = ENVSYS_SINVALID;
+	sc->sc_sensor_temp.flags = ENVSYS_FHAS_ENTROPY;
 
 	if (prop_dictionary_get_cstring_nocopy(sc->sc_prop, "s00", &desc)) {
 		strncpy(name, desc, 64);
