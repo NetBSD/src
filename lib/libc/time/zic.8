@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.35 2020/10/09 18:38:48 christos Exp $
-.Dd October 9, 2020
+.\"	$NetBSD: zic.8,v 1.36 2021/03/01 04:42:14 christos Exp $
+.Dd Fabruary 28, 2021
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ will act as if the input contained a link line of the form
 If
 .Ar timezone
 is
-.Dv \*- ,
+.Dv \&- ,
 any already-existing link is removed.
 .It Fl L Ar leapsecondfilename
 Read leap second information from the file with the given name.
@@ -82,7 +82,7 @@ Use
 .Ar timezone's
 rules when handling POSIX-format
 TZ strings like 
-.Qq EET\*-2EEST
+.Qq EET\&-2EEST
 that lack transition rules.
 .Nm
 will act as if the input contained a link line of the form
@@ -98,7 +98,7 @@ transitions are at standard time or Universal Time (UT) instead of local time.
 If
 .Ar timezone
 is
-.Dv \*- ,
+.Dv \&- ,
 any already-existing link is removed.
 .It Fl r Op Ar @lo / Op Ar @hi
 Reduce the size of output files by limiting their applicability
@@ -572,6 +572,36 @@ earliest rule use the rule in effect after
 first transition into standard time.
 In a single zone it is an error if two rules take effect at the same
 instant, or if two zone changes take effect at the same instant.
+.Pp
+If a continuation line subtracts
+.Dv N
+seconds from the UT offset after a transition that would be
+interpreted to be later if using the continuation line's UT offset and
+rules, the
+.Em until
+time of the previous zone or continuation line is interpreted
+according to the continuation line's UT offset and rules, and any rule
+that would otherwise take effect in the next
+.Dv N
+seconds is instead assumed to take effect simultaneously.
+For example:
+.Pp
+.Bl -column -compact -offset indent "# Rule" "Swiss" "FROM" "1995" "\&*" "Oct" "lastSun" "1:00u" "SAVE" "LETTER/S"
+.It # Rule	NAME	FROM	TO	\&-	IN	ON	AT	SAVE	LETTER/S
+.It Rule	US	1967	2006	\&-	Oct	lastSun	2:00	0	S
+.It Rule	US	1967	1973	\&-	Apr	lastSun	2:00	1:00	D
+.It # Zone	NAME				STDOFF	RULES	FORMAT	[UNTIL]
+.It Zone	America/Menominee	\&-5:00	\&-	EST	1973 Apr 29 2:00
+.It						\&-6:00	US	C%sT
+.El
+.Pp
+Here, an incorrect reading would be there were two clock changes on 1973-04-29,
+the first from 02:00 EST (\&-05) to 01:00 CST (\&-06),
+and the second an hour later from 02:00 CST (\&-06) to 03:00 CDT (\&-05).
+However,
+.Nm 
+interprets this more sensibly as a single transition from 02:00 CST (\&-05) to
+02:00 CDT (\&-05).
 .Pp
 A link line has the form
 .Pp
