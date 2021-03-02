@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.95 2021/02/26 01:38:44 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.96 2021/03/02 22:21:38 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.95 2021/02/26 01:38:44 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.96 2021/03/02 22:21:38 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1470,10 +1470,6 @@ urtwn_read_rom(struct urtwn_softc *sc)
 	    sc->pa_setting, sc->board_type, sc->regulatory, 0);
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->macaddr);
-#if 0
-	uint8_t new_myaddr[6] = {0x90,0x0a,0x1a,0xe7,0x1e,0xf0}; //Camera
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, new_myaddr);
-#endif
 
 	sc->sc_rf_write = urtwn_r92c_rf_write;
 	sc->sc_power_on = urtwn_r92c_power_on;
@@ -2913,7 +2909,6 @@ urtwn_start(struct ifnet *ifp)
 		data = urtwn_get_tx_data(sc, sc->ac2idx[qid]);
 
 		if (data == NULL) {
-			m_freem(m);
 			ifp->if_flags |= IFF_OACTIVE;
 			DPRINTFN(DBG_TX, "empty tx_free_list", 0, 0, 0, 0);
 			return;
