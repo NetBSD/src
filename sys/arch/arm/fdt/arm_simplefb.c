@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.9 2021/03/02 07:02:05 skrll Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.10 2021/03/02 11:51:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.9 2021/03/02 07:02:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.10 2021/03/02 11:51:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -237,8 +237,13 @@ arm_simplefb_preattach(void)
 		return;
 	}
 
-	if (size < width * height * depth)
+	/*
+	 * Make sure that the size of the linear FB mapping is big enough
+	 * to fit the requested screen dimensions.
+	 */
+	if (size < stride * height) {
 		return;
+	}
 
 	if (bus_space_map(bst, addr, size,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh) != 0)
