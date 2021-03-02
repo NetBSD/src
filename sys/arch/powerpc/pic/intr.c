@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29 2020/07/06 10:31:23 rin Exp $ */
+/*	$NetBSD: intr.c,v 1.30 2021/03/02 07:37:27 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2020/07/06 10:31:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2021/03/02 07:37:27 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -75,7 +75,7 @@ int num_pics = 0;
 int max_base = 0;
 uint8_t	virq_map[NIRQ];
 imask_t virq_mask = HWIRQ_MASK;
-imask_t	imask[NIPL];
+static imask_t imask[NIPL];
 int	primary_pic = 0;
 
 static int	fakeintr(void *);

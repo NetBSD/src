@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2020/04/16 23:29:52 rin Exp $ */
+/*	$NetBSD: intr.h,v 1.18 2021/03/02 07:37:27 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.17 2020/04/16 23:29:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.18 2021/03/02 07:37:27 rin Exp $");
 #endif
 
 #ifndef _POWERPC_INTR_MACHDEP_H_
@@ -102,8 +102,6 @@ typedef __IMASK_T imask_t;
 #else
 typedef uint32_t imask_t;
 #endif
-
-extern imask_t imask[];
 
 #define NVIRQ		(sizeof(imask_t)*8)	/* 32 virtual IRQs */
 #ifndef NIRQ
