@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2012/07/29 18:05:42 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2021/03/02 07:38:48 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2012/07/29 18:05:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2021/03/02 07:38:48 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -48,10 +48,7 @@ cpu_configure(void)
 	if (config_rootfound("elb", NULL) == NULL)
 		panic("configure: elb not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
-	
-	(void)spl0();
+	genppc_cpu_configure();
 }
 
 void
