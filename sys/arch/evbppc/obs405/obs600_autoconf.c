@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.9 2021/03/02 07:21:01 rin Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.10 2021/03/02 07:27:24 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.9 2021/03/02 07:21:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.10 2021/03/02 07:27:24 rin Exp $");
 
 #include "dwctwo.h"
 
@@ -100,8 +100,6 @@ cpu_configure(void)
 	intr_init();
 	pic_add(&pic_uic1);
 	pic_add(&pic_uic2);
-
-	calc_delayconst();
 
 	/* Make sure that timers run at CPU frequency */
 	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
