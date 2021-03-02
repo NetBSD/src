@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_elb.c,v 1.8 2020/11/21 15:42:20 thorpej Exp $	*/
+/*	$NetBSD: pckbc_elb.c,v 1.9 2021/03/02 11:59:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.8 2020/11/21 15:42:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.9 2021/03/02 11:59:49 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -118,5 +118,5 @@ pckbc_elb_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	if (irq >= 0)
 	 	intr_establish(irq, IST_LEVEL, IPL_SERIAL, pckbcintr, sc);
 
-	irq = -1;
+	msc->sc_irq = -1;
 }
