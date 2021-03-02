@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.29 2021/02/20 01:57:54 thorpej Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.30 2021/03/02 02:28:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.29 2021/02/20 01:57:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.30 2021/03/02 02:28:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -99,6 +99,8 @@ bool	ofw_real_mode;
 
 int	console_node = -1, console_instance = -1;
 int	ofw_stdin, ofw_stdout;
+bool	ofwbootcons_suppress;
+
 int	ofw_address_cells;
 int	ofw_size_cells;
 
@@ -107,6 +109,10 @@ ofwbootcons_cngetc(dev_t dev)
 {
 	unsigned char ch = '\0';
 	int l;
+
+	if (ofwbootcons_suppress) {
+		return ch;
+	}
 
 	while ((l = OF_read(ofw_stdin, &ch, 1)) != 1) {
 		if (l != -2 && l != 0) {
@@ -120,6 +126,10 @@ static void
 ofwbootcons_cnputc(dev_t dev, int c)
 {
 	char ch = c;
+
+	if (ofwbootcons_suppress) {
+		return;
+	}
 
 	OF_write(ofw_stdout, &ch, 1);
 }
@@ -394,8 +404,8 @@ ofw_bootstrap_get_translations(void)
 		}
 
 		aprint_normal("translation %d virt=%#"PRIx32
-		    " size=%#"PRIx32" phys=%#"PRIx64" mode=%#"PRIx32"\n",
-		    idx, virt, size, phys, mode);
+		    " phys=%#"PRIx64" size=%#"PRIx32" mode=%#"PRIx32"\n",
+		    idx, virt, phys, size, mode);
 		
 		if (sizeof(paddr_t) < 8 && phys >= 0x100000000ULL) {
 			panic("translation phys out of range");
