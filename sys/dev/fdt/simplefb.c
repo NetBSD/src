@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.13 2021/03/02 07:02:06 skrll Exp $ */
+/* $NetBSD: simplefb.c,v 1.14 2021/03/02 11:51:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.13 2021/03/02 07:02:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.14 2021/03/02 11:51:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,7 +169,7 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 		return ENXIO;
 	}
 
-	if (size < width * height * depth) {
+	if (size < stride * height) {
 		aprint_error(": incorrect size\n");
 		return ENXIO;
 	}
