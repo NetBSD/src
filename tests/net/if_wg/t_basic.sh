@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.2 2020/10/16 16:17:23 roy Exp $
+#	$NetBSD: t_basic.sh,v 1.3 2021/03/02 07:02:14 simonb Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -93,13 +93,13 @@ test_common()
 	setup_common shmif0 $outer_proto $ip_local $outer_prefix
 	setup_wg_common wg0 $inner_proto $ip_wg_local $inner_prefix $port "$key_priv_local"
 	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/$inner_prefixall
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 $outer_proto $ip_peer $outer_prefix
 	setup_wg_common wg0 $inner_proto $ip_wg_peer $inner_prefix $port "$key_priv_peer"
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/$inner_prefixall
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	if [ $type = basic ]; then
 		export RUMP_SERVER=$SOCK_LOCAL
@@ -327,19 +327,19 @@ wg_multiple_interfaces_body()
 	setup_wg_common wg1 inet $ip_wg_local2 24 $port2 "$key_priv_local"
 	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
 	add_peer wg1 peer0 $key_pub_peer2 $ip_peer2:$port2 $ip_wg_peer2/32
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	export RUMP_SERVER=$SOCK_PEER2
 	setup_common shmif0 inet $ip_peer2 24
 	setup_wg_common wg0 inet $ip_wg_peer2 24 $port2 "$key_priv_peer2"
 	add_peer wg0 peer0 $key_pub_local $ip_local2:$port2 $ip_wg_local2/32
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
@@ -412,19 +412,19 @@ wg_multiple_peers_body()
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
 	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
 	add_peer wg0 peer1 $key_pub_peer2 $ip_peer2:$port $ip_wg_peer2/32
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	export RUMP_SERVER=$SOCK_PEER2
 	setup_common shmif0 inet $ip_peer2 24
 	setup_wg_common wg0 inet $ip_wg_peer2 24 $port "$key_priv_peer2"
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
-	$ifconfig -w 10
+	$ifconfig -w 20
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
