@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.10 2018/07/15 05:16:42 maxv Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.11 2021/03/02 07:27:24 rin Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.10 2018/07/15 05:16:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.11 2021/03/02 07:27:24 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -206,10 +206,6 @@ cpu_startup(void)
 	 */
 	board_info_init();
 
-	read_eeprom(sizeof(buf), buf);
-	macaddr = &buf[0];
-	macaddr1 = &buf[8];
-
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
 	 */
@@ -228,7 +224,13 @@ cpu_startup(void)
 		panic("setting mem-size");
 	prop_object_release(pn);
 
+	calc_delayconst(); /* required by read_eeprom() */
+
 #define ETHER_ADDR_LEN	6
+
+	read_eeprom(sizeof(buf), buf);
+	macaddr = &buf[0];
+	macaddr1 = &buf[8];
 
 	pd = prop_data_create_data_nocopy(macaddr, ETHER_ADDR_LEN);
 	KASSERT(pd != NULL);
