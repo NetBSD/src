@@ -192,6 +192,7 @@ ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
 genfb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+gffb*	at pci? dev ? function ?	# some iMacs have nvidia graphics chips
 radeonfb*	at pci? dev ? function ?
 options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
 
