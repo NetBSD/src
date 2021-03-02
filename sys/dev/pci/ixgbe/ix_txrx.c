@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.64 2021/01/18 09:09:04 knakahara Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.65 2021/03/02 11:10:53 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1319,6 +1319,11 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
  *      exhaustion are unnecessary, if an mbuf cannot be obtained
  *      it just returns, keeping its placeholder, thus it can simply
  *      be recalled to try again.
+ *
+ *   XXX NetBSD TODO:
+ *    - The ixgbe_rxeof() function always preallocates mbuf cluster (jcl),
+ *      so the ixgbe_refresh_mbufs() function can be simplified.
+ *
  ************************************************************************/
 static void
 ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
@@ -1799,7 +1804,9 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct ixgbe_rx_buf	*rbuf, *nbuf;
 	int			i, nextp, processed = 0;
 	u32			staterr = 0;
-	u32			count = adapter->rx_process_limit;
+	u32			count = 0;
+	u32			limit = adapter->rx_process_limit;
+	bool			discard_multidesc = false;
 #ifdef RSS
 	u16			pkt_info;
 #endif
@@ -1816,7 +1823,14 @@ ixgbe_rxeof(struct ix_queue *que)
 	}
 #endif /* DEV_NETMAP */
 
-	for (i = rxr->next_to_check; count != 0;) {
+	/*
+	 * The max number of loop is rx_process_limit. If discard_multidesc is
+	 * true, continue processing to not to send broken packet to the upper
+	 * layer.
+	 */
+	for (i = rxr->next_to_check;
+	     (count < limit) || (discard_multidesc == true);) {
+
 		struct mbuf *sendmp, *mp;
 		struct mbuf *newmp;
 		u32         rsc, ptype;
@@ -1837,7 +1851,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		if ((staterr & IXGBE_RXD_STAT_DD) == 0)
 			break;
 
-		count--;
+		count++;
 		sendmp = NULL;
 		nbuf = NULL;
 		rsc = 0;
@@ -1858,17 +1872,37 @@ ixgbe_rxeof(struct ix_queue *que)
 #endif
 			rxr->rx_discarded.ev_count++;
 			ixgbe_rx_discard(rxr, i);
+			discard_multidesc = false;
 			goto next_desc;
 		}
 
 		/* pre-alloc new mbuf */
-		newmp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT, MT_DATA, M_PKTHDR,
-		    rxr->mbuf_sz);
+		if (!discard_multidesc)
+			newmp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT, MT_DATA,
+			    M_PKTHDR, rxr->mbuf_sz);
+		else
+			newmp = NULL;
 		if (newmp == NULL) {
 			rxr->rx_discarded.ev_count++;
-			ixgbe_rx_discard(rxr, i);
+			/*
+			 * Descriptor initialization is already done by the
+			 * above code (cur->wb.upper.status_error = 0).
+			 * So, we can reuse current rbuf->buf for new packet.
+			 *
+			 * Rewrite the buffer addr, see comment in
+			 * ixgbe_rx_discard().
+			 */
+			cur->read.pkt_addr = rbuf->addr;
+			m_freem(rbuf->fmp);
+			rbuf->fmp = NULL;
+			if (!eop) {
+				/* Discard the entire packet. */
+				discard_multidesc = true;
+			} else
+				discard_multidesc = false;
 			goto next_desc;
 		}
+		discard_multidesc = false;
 
 		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
 		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
