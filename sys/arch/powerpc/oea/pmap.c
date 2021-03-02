@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2021/03/02 00:28:55 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2021/03/02 01:47:44 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2021/03/02 00:28:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2021/03/02 01:47:44 thorpej Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -284,6 +284,8 @@ const struct pmap_ops PMAPNAME(ops) = {
 #endif
 	.pmapop_steal_memory = pmap_steal_memory,
 	.pmapop_bootstrap = pmap_bootstrap,
+	.pmapop_bootstrap1 = pmap_bootstrap1,
+	.pmapop_bootstrap2 = pmap_bootstrap2,
 };
 #endif /* !PMAPNAME */
 
