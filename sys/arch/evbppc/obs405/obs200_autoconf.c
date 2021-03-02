@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_autoconf.c,v 1.7 2011/12/12 11:23:57 kiyohara Exp $	*/
+/*	$NetBSD: obs200_autoconf.c,v 1.8 2021/03/02 07:21:01 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.7 2011/12/12 11:23:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.8 2021/03/02 07:21:01 rin Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -63,10 +63,7 @@ cpu_configure(void)
 	if (config_rootfound("plb", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
-
-	(void)spl0();
+	genppc_cpu_configure();
 }
 
 void device_register(device_t dev, void *aux)
