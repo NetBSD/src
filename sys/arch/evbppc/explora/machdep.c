@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2020/06/11 19:20:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2021/03/02 07:44:08 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2020/06/11 19:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2021/03/02 07:44:08 rin Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -116,11 +116,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	phys_mem[0].size = size & ~PGOFSET;
 	avail_mem[0].start = startkernel;
 	avail_mem[0].size = size-startkernel;
-
-	__asm volatile(
-	    "	mtpid %0	\n"
-	    "	sync		\n"
-	    : : "r" (KERNEL_PID) );
 
 	/*
 	 * Setup initial tlbs.
