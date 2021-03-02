@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.79 2021/01/01 14:08:33 riastradh Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.80 2021/03/02 01:20:35 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.79 2021/01/01 14:08:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.80 2021/03/02 01:20:35 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -851,7 +851,8 @@ static void
 lockdebug_show_trace(const void *ptr,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
-    db_stack_trace_print((db_expr_t)(intptr_t)ptr, true, 32, "a", pr);
+
+	db_stack_trace_print((db_expr_t)(intptr_t)ptr, true, 32, "a", pr);
 }
 
 static void
