@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 2021/03/01 01:53:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 2021/03/02 01:47:44 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -107,6 +107,8 @@ struct pmap_ops {
 	void (*pmapop_pvo_verify)(void);
 	vaddr_t (*pmapop_steal_memory)(vsize_t, vaddr_t *, vaddr_t *);
 	void (*pmapop_bootstrap)(paddr_t, paddr_t);
+	void (*pmapop_bootstrap1)(paddr_t, paddr_t);
+	void (*pmapop_bootstrap2)(void);
 };
 
 #ifdef	_KERNEL
