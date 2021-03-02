@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.17 2021/03/01 17:48:52 jakllsch Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.18 2021/03/02 07:55:16 knakahara Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.17 2021/03/01 17:48:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.18 2021/03/02 07:55:16 knakahara Exp $");
 
 #include <sys/types.h>
 
@@ -324,7 +324,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef RGE_MPSAFE
-	ifp->if_xflags = IFEF_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_ioctl = rge_ioctl;
 	ifp->if_stop = rge_stop;
