@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2021/03/01 01:53:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2021/03/02 00:28:55 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2021/03/01 01:53:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2021/03/02 00:28:55 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -191,6 +191,8 @@ static u_int mem_cnt, avail_cnt;
 #endif
 #define pmap_steal_memory	PMAPNAME(steal_memory)
 #define pmap_bootstrap		PMAPNAME(bootstrap)
+#define pmap_bootstrap1		PMAPNAME(bootstrap1)
+#define pmap_bootstrap2		PMAPNAME(bootstrap2)
 #else
 #define	STATIC			/* nothing */
 #endif /* PMAPNAME */
@@ -234,6 +236,8 @@ STATIC void pmap_pvo_verify(void);
 #endif
 STATIC vaddr_t pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 STATIC void pmap_bootstrap(paddr_t, paddr_t);
+STATIC void pmap_bootstrap1(paddr_t, paddr_t);
+STATIC void pmap_bootstrap2(void);
 
 #ifdef PMAPNAME
 const struct pmap_ops PMAPNAME(ops) = {
