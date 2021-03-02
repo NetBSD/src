@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.9 2021/03/02 07:02:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.9 2021/03/02 07:02:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -236,6 +236,9 @@ arm_simplefb_preattach(void)
 	} else {
 		return;
 	}
+
+	if (size < width * height * depth)
+		return;
 
 	if (bus_space_map(bst, addr, size,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh) != 0)
