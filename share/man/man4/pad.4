@@ -1,4 +1,4 @@
-.\" $NetBSD: pad.4,v 1.6 2017/07/03 21:30:58 wiz Exp $
+.\" $NetBSD: pad.4,v 1.6.8.1 2021/03/02 15:57:06 martin Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 11, 2007
+.Dd February 6, 2021
 .Dt PAD 4
 .Os
 .Sh NAME
@@ -36,19 +36,27 @@
 .Sh DESCRIPTION
 .Nm
 is a pseudo-device driver which provides support for feeding back PCM data
-from a consumer of the
+from consumers of an
 .Xr audio 4
-API to userland.
+device to userland.
+.Pp
+The raw PCM data readable from
+.Pa /dev/padN
+is encoded in stereo little-endian 16-bit linear PCM at 44100 Hz.
 .Sh FILES
 The
 .Nm
 pseudo-device driver receives data from
-.Pa /dev/soundN
+.Pa /dev/audioN
 and feeds the raw PCM output to
 .Pa /dev/padN .
+.Pa /dev/audioN
+is created once
+.Pa /dev/padN
+is opened.
 .Bl -item
 .It
-.Pa /dev/soundN
+.Pa /dev/audioN
 .It
 .Pa /dev/padN
 .El
@@ -56,7 +64,13 @@ and feeds the raw PCM output to
 The following example streams an MP3 to an Apple AirTunes compatible device:
 .Bd -literal -offset indent
 $ rtunes - < /dev/pad0 &
-$ mpg123 -a /dev/sound1 mozart.mp3
+$ mpg123 -a /dev/audio1 mozart.mp3
+.Ed
+.Pp
+Record the output of an application (in this case, audioplay):
+.Bd -literal -offset indent
+$ ffmpeg -f s16le -ar 44100 -ac 2 -i /dev/pad0 output.wav
+$ audioplay -d /dev/audio1 input.wav
 .Ed
 .Sh SEE ALSO
 .Xr audio 4
