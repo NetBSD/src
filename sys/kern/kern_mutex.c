@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.95 2020/12/15 08:35:52 skrll Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.96 2021/03/02 01:15:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.95 2020/12/15 08:35:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.96 2021/03/02 01:15:15 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -160,7 +160,7 @@ do {									\
 	struct cpu_info *x__ci = curcpu();				\
 	int s = x__ci->ci_mtx_oldspl;					\
 	__insn_barrier();						\
-	if (++(x__ci->ci_mtx_count) == 0)			\
+	if (++(x__ci->ci_mtx_count) == 0)				\
 		splx(s);						\
 } while (/* CONSTCOND */ 0)
 
