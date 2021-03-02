@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.43 2021/03/01 21:43:00 wiz Exp $
+.\"	$NetBSD: newsyslog.8,v 1.44 2021/03/02 10:12:33 uwe Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -104,17 +104,17 @@ that should be handled by
 Each line has six mandatory fields and three optional fields, with
 whitespace separating each field.
 Blank lines or lines beginning with
-.Dq #
+.Ql #
 are ignored.
 The fields of the configuration file are as
 follows:
 .Bl -tag -width indent
 .It Ar logfile_name
 Name of the system log file to be archived.
-.It Ar owner:group
+.It Ar owner Ns Li \&: Ns Ar group
 This optional field specifies the owner and group for the archive file.
 The
-.Dq \&:
+.Ql \&:
 is essential, even if the
 .Ar owner
 or
@@ -125,9 +125,9 @@ The field may be numeric, or a name which is present in
 or
 .Pa /etc/group .
 For backward compatibility,
-.Dq \&\.
+.Ql \&.
 is usable in lieu of
-.Dq \&: ,
+.Ql \&: ,
 however use of this feature is discouraged.
 .It Ar mode
 Specify the mode of the log file and archives.
@@ -245,22 +245,22 @@ The lead-in character for day, week and month specification is a
 .So Li \&$ Sc Ns No -sign .
 The particular format of day, week and month specification is:
 .Oo
-.Va D\&hh
+.Li D Ns Va \&hh
 .Oc ,
 .Sm off
 .Oo
-.Va W\&w
+.Li W Ns Va \&w
 .Oo
-.Va D\&hh
+.Li D Ns Va \&hh
 .Oc
 .Oc
 .Sm on
 and
 .Sm off
 .Oo
-.Va M\&dd
+.Li M Ns Va \&dd
 .Oo
-.Va D\&hh
+.Li D Ns Va \&hh
 .Oc
 .Oc
 .Sm on
@@ -275,26 +275,26 @@ hours, range 0 ... 23
 day of week, range 0 ... 6, 0 = Sunday
 .It Ar dd
 day of month, range 1 ... 31, or the letter
-.Em L
+.Ql L
 or
-.Em l
+.Ql l
 to specify the last day of the month.
 .El
 .Pp
 Some examples:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
-.It Ar $D0
+.It Li $D0
 rotate every night at midnight
-.It Ar $D23
+.It Li $D23
 rotate every day at 23:00 hr
-.It Ar $W0D23
+.It Li $W0D23
 rotate every week on Sunday at 23:00 hr
-.It Ar $W5D16
+.It Li $W5D16
 rotate every week on Friday at 16:00 hr
-.It Ar $MLD0
+.It Li $MLD0
 rotate at the last day of every month at midnight
-.It Ar $M5D6
+.It Li $M5D6
 rotate on every 5th day of month at 6:00 hr
 .El
 .It Ar flags
@@ -303,38 +303,38 @@ These flags are parsed in a case insensitive manner.
 Individual
 flags and their meanings:
 .Bl -tag -width indent
-.It Sy -
-This flag means nothing - it is used as a spacer when no flags are set.
-.It Sy b
+.It Ic \-
+This flag means nothing \(em it is used as a spacer when no flags are set.
+.It Ic b
 The file is a binary file or is not in
 .Xr syslogd 8
 format: the ASCII message which
 .Nm
 inserts to indicate that the logs have been trimmed should not be included.
-.It Sy c
+.It Ic c
 Create an empty log file if none currently exists.
-.It Sy e
+.It Ic e
 Do not rotate log file with zero size (empty).
 This flag is mostly usable in conjunction with
-.Ar b
+.Ic b
 flag that prevents
 .Nm
 from inserting an ASCII informational message.
-.It Sy n
+.It Ic n
 No signal should be sent when the log is trimmed.
-.It Sy p
+.It Ic p
 The first historical log file (i.e. the historical log file with the suffix
-.Dq \.0 )
+.Ql \.0 )
 should not be compressed.
-.It Sy j
+.It Ic j
 Archived log files should be compressed with
 .Xr bzip2 1
 to save space.
-.It Sy x
+.It Ic x
 Archived log files should be compressed with
 .Xr xz 1
 to save space.
-.It Sy z
+.It Ic z
 Archived log files should be compressed with
 .Xr gzip 1
 to save space.
@@ -351,13 +351,15 @@ is sent to the process id contained in this
 .Ar path_to_pid_file
 file.
 This field must start with
-.Sq /
+.Ql /
 in order to be recognized properly.
 .It Ar sigtype
 This optional field specifies the type of signal to be sent to the daemon
 process.
 This may be a numeric or symbolic value.
-By default a SIGHUP (hang-up) will be sent.
+By default a
+.Dv SIGHUP
+(hang-up) will be sent.
 .El
 .Sh OPTIONS
 The following options can be used with newsyslog:
@@ -380,7 +382,9 @@ Remove the restriction that
 must be running as root.
 When running as a regular user,
 .Nm
-will not be able to send a HUP signal to
+will not be able to send a
+.Dv SIGHUP
+signal to
 .Xr syslogd 8 ,
 so this option should be used only when debugging or trimming user generated
 logs.
