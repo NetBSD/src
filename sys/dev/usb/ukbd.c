@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.147 2020/09/12 18:10:37 macallan Exp $        */
+/*      $NetBSD: ukbd.c,v 1.148 2021/03/02 00:01:27 gdt Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.147 2020/09/12 18:10:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.148 2021/03/02 00:01:27 gdt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -435,7 +435,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 		sc->sc_flags = FLAG_GDIUM_FN;
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef USBVERBOSE
 	aprint_normal(": %d Variable keys, %d Array codes", sc->sc_nkeyloc,
 	       sc->sc_nkeycode);
 	if (sc->sc_flags & FLAG_APPLE_FN)
