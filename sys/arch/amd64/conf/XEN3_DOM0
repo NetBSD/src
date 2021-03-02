@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.188 2021/03/02 18:06:12 gdt Exp $
+# $NetBSD: XEN3_DOM0,v 1.189 2021/03/02 18:10:31 gdt Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -22,7 +22,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.188 $"
+#ident		"XEN3_DOM0-$Revision: 1.189 $"
 
 maxusers	32		# estimated number of users
 
@@ -166,6 +166,8 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# don't attach pckbd as the console if no PS/2 keyboard is found
+options 	PCKBD_CNATTACH_MAY_FAIL
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
