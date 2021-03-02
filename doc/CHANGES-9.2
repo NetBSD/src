@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.53 2021/03/01 16:01:06 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.54 2021/03/02 15:59:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1731,4 +1731,11 @@ sys/dev/audio/audio.c				1.89-1.91
 	audio(4): avoid a race condition between audio{,bell}open
 	and audiodetach. Refactor code around audio_unlink().
 	[isaki, ticket #1219]
+
+share/man/man4/pad.4				1.7-1.10
+
+	pad(4): update documentation:
+	 - explain the format of the device and a few quirks.
+	 - give an example of recording an application's output.
+	[nia, ticket #1220]
 
