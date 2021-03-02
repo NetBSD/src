@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.44 2021/03/02 10:12:33 uwe Exp $
+.\"	$NetBSD: newsyslog.8,v 1.45 2021/03/02 10:14:59 uwe Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -320,16 +320,16 @@ This flag is mostly usable in conjunction with
 flag that prevents
 .Nm
 from inserting an ASCII informational message.
+.It Ic j
+Archived log files should be compressed with
+.Xr bzip2 1
+to save space.
 .It Ic n
 No signal should be sent when the log is trimmed.
 .It Ic p
 The first historical log file (i.e. the historical log file with the suffix
 .Ql \.0 )
 should not be compressed.
-.It Ic j
-Archived log files should be compressed with
-.Xr bzip2 1
-to save space.
 .It Ic x
 Archived log files should be compressed with
 .Xr xz 1
@@ -364,6 +364,10 @@ By default a
 .Sh OPTIONS
 The following options can be used with newsyslog:
 .Bl -tag -width indent
+.It Fl F
+Force trimming of the logs, even if the trim conditions have not been met.
+This option is useful for diagnosing system problems by providing you with
+fresh logs.
 .It Fl f Ar config_file
 Use
 .Ar config_file
@@ -393,10 +397,6 @@ Do not signal daemon processes.
 .It Fl v
 Run in verbose mode.
 In this mode each action that is taken will be printed.
-.It Fl F
-Force trimming of the logs, even if the trim conditions have not been met.
-This option is useful for diagnosing system problems by providing you with
-fresh logs.
 .El
 .Pp
 If additional command line arguments are given,
