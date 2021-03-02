@@ -1,4 +1,4 @@
-/*	$NetBSD: com_elb.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $	*/
+/*	$NetBSD: com_elb.c,v 1.11 2021/03/02 12:01:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.11 2021/03/02 12:01:02 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -87,5 +87,6 @@ com_elb_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	intr_establish(eaa->elb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
+	intr_establish_xname(eaa->elb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc,
+	    device_xname(self));
 }

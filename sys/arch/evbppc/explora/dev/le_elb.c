@@ -1,4 +1,4 @@
-/*	$NetBSD: le_elb.c,v 1.9 2011/07/01 19:02:32 dyoung Exp $	*/
+/*	$NetBSD: le_elb.c,v 1.10 2021/03/02 12:01:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.9 2011/07/01 19:02:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.10 2021/03/02 12:01:02 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -170,7 +170,8 @@ le_elb_attach(device_t parent, device_t self, void *aux)
 	/* Chip is stopped. Set "software style" to 32-bit. */
 	le_wrcsr(sc, LE_CSR58, 2);
 
-	intr_establish(eaa->elb_irq, IST_LEVEL, IPL_NET, am79900_intr, sc);
+	intr_establish_xname(eaa->elb_irq, IST_LEVEL, IPL_NET, am79900_intr,
+	    sc, device_xname(self));
 }
 
 /*
