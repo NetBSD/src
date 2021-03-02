@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.187 2021/03/01 13:52:50 gdt Exp $
+# $NetBSD: XEN3_DOM0,v 1.188 2021/03/02 18:06:12 gdt Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -22,7 +22,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.187 $"
+#ident		"XEN3_DOM0-$Revision: 1.188 $"
 
 maxusers	32		# estimated number of users
 
@@ -133,6 +133,17 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	ACPIVERBOSE	# verbose ACPI configuration messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	HDAUDIOVERBOSE	# verbose HDAUDIO driver messages
+
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
@@ -197,8 +208,6 @@ acpi0		at mainbus?		# ACPI access in PVH(VM) mode
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-#options 	ACPIVERBOSE		# verbose ACPI configuration messages
-#options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 #options 	MPDEBUG			# MPBIOS configures PCI roots
 #options 	MPVERBOSE		# verbose MPBIOS autoconfig messages
@@ -206,9 +215,6 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
-#options 	PCIVERBOSE		# verbose PCI device autoconfig messages
-#options 	USBVERBOSE		# verbose USB device autoconfig messages
-#options 	HDAUDIOVERBOSE		# verbose HDAUDIO driver messages
 
 ioapic* 	at mainbus? apid ?
 
