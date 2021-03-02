@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.116 2020/08/22 09:08:21 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.117 2021/03/02 08:16:52 skrll Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -539,7 +539,7 @@ static inline void
 mips_sb(register_t addr, uint8_t val)
 {
 #if defined(__mips_n32)
-	__asm volatile("sb\t%1, 0(%0)" :: "d"(addr), "r"(val));
+	__asm volatile("sb\t%1, 0(%0)" :: "d"(addr), "r"(val) : "memory");
 #else
 	*(volatile uint8_t *)addr = val;
 #endif
@@ -549,7 +549,7 @@ static inline void
 mips_sh(register_t addr, uint16_t val)
 {
 #if defined(__mips_n32)
-	__asm volatile("sh\t%1, 0(%0)" :: "d"(addr), "r"(val));
+	__asm volatile("sh\t%1, 0(%0)" :: "d"(addr), "r"(val) : "memory");
 #else
 	*(volatile uint16_t *)addr = val;
 #endif
@@ -559,7 +559,7 @@ static inline void
 mips_sw(register_t addr, uint32_t val)
 {
 #if defined(__mips_n32)
-	__asm volatile("sw\t%1, 0(%0)" :: "d"(addr), "r"(val));
+	__asm volatile("sw\t%1, 0(%0)" :: "d"(addr), "r"(val) : "memory");
 #else
 	*(volatile uint32_t *)addr = val;
 #endif
@@ -570,7 +570,7 @@ static inline void
 mips3_sd(register_t addr, uint64_t val)
 {
 #if defined(__mips_n32)
-	__asm volatile("sd\t%1, 0(%0)" :: "d"(addr), "r"(val));
+	__asm volatile("sd\t%1, 0(%0)" :: "d"(addr), "r"(val) : "memory");
 #else
 	*(volatile uint64_t *)addr = val;
 #endif
