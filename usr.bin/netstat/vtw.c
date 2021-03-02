@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.10 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: vtw.c,v 1.11 2021/03/02 01:02:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.10 2018/05/03 07:13:48 maxv Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.11 2021/03/02 01:02:12 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,9 +115,27 @@ __RCSID("$NetBSD: vtw.c,v 1.10 2018/05/03 07:13:48 maxv Exp $");
 #include "vtw.h"
 #include "prog_ops.h"
 
+static bool	vtw_enabled(void);
 static void	snarf(const void *, void *, size_t);
 static void	*lookup(const char *);
 static void	process_vtw(const vtw_ctl_t *, void (*)(const vtw_t *));
+
+static bool
+vtw_enabled(void)
+{
+
+	if (use_sysctl) {
+		int enabled;
+		size_t size = sizeof(enabled);
+
+		if (prog_sysctlbyname("net.inet.tcp.vtw.enable",
+		    &enabled, &size, NULL, 0) == -1)
+			return true;
+		return enabled ? true : false;
+	} else {
+		return true;
+	}
+}
 
 static void 
 snarf(const void *addr, void *buf, size_t len)
@@ -172,6 +190,11 @@ timebase(struct timeval *tv)
 	void *p;
 	struct bintime timebasebin;
 
+	if (!vtw_enabled()) {
+		memset(tv, 0, sizeof(*tv));
+		return;
+	}
+
 	p = lookup("timebasebin");
 	if (!p)
 		return;
@@ -207,6 +230,9 @@ show_vtw_stats(void)
 	void *p;
 
 	if (!Vflag)
+		return;
+
+	if (!vtw_enabled())
 		return;
 
 	if ((p = lookup("vtw_stats")) == NULL)
@@ -247,6 +273,9 @@ show_vtw_v4(void (*print)(const vtw_t *))
 	int i;
 	int mem = 0;
 	void *p;
+
+	if (!vtw_enabled())
+		return;
 
 	if ((p = lookup("fat_tcpv4")) == NULL)
 		return;
@@ -349,6 +378,9 @@ show_vtw_v6(void (*print)(const vtw_t *))
 	int i;
 	int mem = 0;
 	void *p;
+
+	if (!vtw_enabled())
+		return;
 
 	if ((p = lookup("fat_tcpv6")) == NULL)
 		return;
