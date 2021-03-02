@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.11 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.12 2021/03/02 01:47:44 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.11 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.12 2021/03/02 01:47:44 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -109,6 +109,8 @@ void	pmap_pvo_verify(void)					__stub;
 #endif
 vaddr_t	pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *)	__stub;
 void	pmap_bootstrap(paddr_t, paddr_t)			__stub;
+void	pmap_bootstrap1(paddr_t, paddr_t)			__stub;
+void	pmap_bootstrap2(void)					__stub;
 
 int
 pmap_pte_spill(struct pmap *pm, vaddr_t va, bool exec)
@@ -299,5 +301,17 @@ void
 pmap_bootstrap(paddr_t startkernel, paddr_t endkernel)
 {
 	(*pmapops->pmapop_bootstrap)(startkernel, endkernel);
+}
+
+void
+pmap_bootstrap1(paddr_t startkernel, paddr_t endkernel)
+{
+	(*pmapops->pmapop_bootstrap1)(startkernel, endkernel);
+}
+
+void
+pmap_bootstrap2(void)
+{
+	(*pmapops->pmapop_bootstrap2)();
 }
 #endif
