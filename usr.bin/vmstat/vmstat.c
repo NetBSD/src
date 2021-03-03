@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.242 2020/06/14 21:41:42 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.243 2021/03/03 08:25:16 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.242 2020/06/14 21:41:42 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.243 2021/03/03 08:25:16 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1964,8 +1964,20 @@ dohashstat(int verbose, int todo, const char *hashname)
 		if (hashname != NULL &&
 		    strcmp(hashnl[curhash->hashsize].n_name + 1, hashname))
 			continue;
-		elemsize = curhash->type == HASH_LIST ?
-		    sizeof(*hashtbl_list) : sizeof(*hashtbl_tailq);
+		switch (curhash->type) {
+		case HASH_LIST:
+			elemsize = sizeof(*hashtbl_list);
+			break;
+		case HASH_SLIST:
+			elemsize = sizeof(*hashtbl_slist);
+			break;
+		case HASH_TAILQ:
+			elemsize = sizeof(*hashtbl_tailq);
+			break;
+		default:
+			/* shouldn't get here */
+			continue;
+		}
 		deref_kptr((void *)hashnl[curhash->hashsize].n_value,
 		    &hashsize, sizeof(hashsize),
 		    hashnl[curhash->hashsize].n_name);
