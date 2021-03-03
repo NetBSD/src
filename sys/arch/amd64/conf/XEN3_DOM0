@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.189 2021/03/02 18:10:31 gdt Exp $
+# $NetBSD: XEN3_DOM0,v 1.190 2021/03/03 12:31:19 gdt Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -12,22 +12,48 @@
 
 include 	"arch/amd64/conf/std.xen"
 
-options		XENPV		# PV dom0 support
-options 	MULTIPROCESSOR
-#options 	NO_PREEMPTION	# needed if MULTIPROCESSOR is disabled
-
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#options 	UVMHIST
-#options 	UVMHIST_PRINT
-#options 	SYSCALL_DEBUG
-
-#ident		"XEN3_DOM0-$Revision: 1.189 $"
+#ident		"XEN3_DOM0-$Revision: 1.190 $"
 
 maxusers	32		# estimated number of users
 
-#
+# delay between "rebooting ..." message and hardware reset, in milliseconds
+#options 	CPURESET_DELAY=2000
+
+# This option allows you to force a serial console at the specified
+# I/O address.   see console(4) for details.
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#	you don't want the option below ON iff you are using the
+#	serial console option of the new boot strap code.
+#options 	CONS_OVERRIDE	# Always use above! independent of boot info
+
+# The following options override the memory sizes passed in from the boot
+# block.  Use them *only* if the boot block is unable to determine the correct
+# values.  Note that the BIOS may *correctly* report less than 640k of base
+# memory if the extended BIOS data area is located at the top of base memory
+# (as is the case on most recent systems).
+#options 	REALBASEMEM=639		# size of base memory (in KB)
+#options 	REALEXTMEM=15360	# size of extended memory (in KB)
+
+# The following options limit the overall size of physical memory
+# and/or the maximum address used by the system.
+# Contrary to REALBASEMEM and REALEXTMEM, they still use the BIOS memory map
+# and can deal with holes in the memory layout.
+#options 	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
+#options 	PHYSMEM_MAX_ADDR=2048	# don't use memory above this (in MB)
+
+## Xen-specific options
+
+options		XENPV		# PV dom0 support
 options 	DOM0OPS
+options 	MULTIPROCESSOR
+#options 	NO_PREEMPTION	# needed if MULTIPROCESSOR is disabled
+
+#options 	CONSDEVNAME="\"xencons\""
+#options 	CONS_OVERRIDE
+
+## end Xen-specific options
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
@@ -36,10 +62,7 @@ options 	MSGBUFSIZE=24576
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
-#options 	MTRR		# memory-type range register syscall support
-
-#options 	CONSDEVNAME="\"xencons\""
-#options 	CONS_OVERRIDE
+# Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
 
@@ -50,6 +73,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	CPU_UCODE	# cpu ucode loading support
 
+# Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
@@ -65,15 +89,25 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# expensive locking checks/support
+
+#
+# Because gcc omits the frame pointer for any -O level, the line below
+# is needed to make backtraces in DDB work.
+#
+makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options 	DDB		# in-kernel debugger
+options		DDB_COMMANDONENTER="show registers"
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
-options DDB_COMMANDONENTER="show registers"
+#options 	SYSCALL_STATS	# per syscall counts
+#options 	SYSCALL_TIMES	# per syscall times
+#options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options
 include 	"conf/compat_netbsd15.config"
@@ -249,13 +283,17 @@ pci*		at ppb? bus ?
 pciback* at pci?			# pci backend device
 
 # PCI bridges
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
-					# watchdog and SpeedStep support
-pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+#options 	AGP_X86			# INTENTIONAL OMISSION - crashes reported with agp
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and SpeedStep support
+
+#agp*	at pchb?			# INTENTIONAL OMISSION - crashes reported with agp
 
 # ISA bus support
 isa0	at ichlpcib?
