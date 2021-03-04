@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.584 2021/03/01 18:12:58 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.585 2021/03/04 15:58:50 gdt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.584 $"
+#ident		"GENERIC-$Revision: 1.585 $"
 
 maxusers	64		# estimated number of users
 
@@ -297,7 +297,7 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-#IPMI support
+# IPMI support
 ipmi0		at mainbus?
 ipmi_acpi*	at acpi?
 ipmi0		at ipmi_acpi?
@@ -307,7 +307,7 @@ acpi0		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
-#options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing via ACPI
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
@@ -317,7 +317,7 @@ options 	VGA_POST		# in-kernel support for VGA POST
 acpiacad*	at acpi?		# ACPI AC Adapter
 acpibat*	at acpi?		# ACPI Battery
 acpibut*	at acpi?		# ACPI Button
-acpidalb*	at acpi?		# Direct Application Launch Button
+acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt*	at acpi?		# ACPI Embedded Controller (early)
 acpifan*	at acpi?		# ACPI Fan
