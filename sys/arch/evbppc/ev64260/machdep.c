@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2018/07/15 05:16:42 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2021/03/04 03:13:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2018/07/15 05:16:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2021/03/04 03:13:54 thorpej Exp $");
 
 #include "opt_marvell.h"
 #include "opt_modular.h"
@@ -214,7 +214,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	ev64260_gt_bs_tag.pbs_offset = gt_base;
 	ev64260_gt_bs_tag.pbs_base = gt_base;
 	ev64260_gt_bs_tag.pbs_limit += gt_base;
-	oea_batinit(gt_base, BAT_BL_256M);
+	oea_batinit(gt_base, BAT_BL_256M, 0);
 
 	oea_init(NULL);
 
