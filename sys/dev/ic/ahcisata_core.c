@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.95 2021/01/11 16:48:35 skrll Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.96 2021/03/04 07:24:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.95 2021/01/11 16:48:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.96 2021/03/04 07:24:38 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -604,7 +604,7 @@ ahci_intr(void *v)
 		while ((bit = ffs(ports)) != 0) {
 			bit--;
 			ahci_intr_port_common(&sc->sc_channels[bit].ata_channel);
-			ports &= ~(1U << bit);
+			ports &= ~__BIT(bit);
 		}
 		AHCI_WRITE(sc, AHCI_IS, is);
 	}
