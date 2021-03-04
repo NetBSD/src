@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.190 2021/03/03 12:31:19 gdt Exp $
+# $NetBSD: XEN3_DOM0,v 1.191 2021/03/04 16:02:10 gdt Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.190 $"
+#ident		"XEN3_DOM0-$Revision: 1.191 $"
 
 maxusers	32		# estimated number of users
 
@@ -80,6 +80,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Alternate buffer queue strategies for better responsiveness under high
@@ -108,9 +109,55 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
+#options 	KDTRACE_HOOKS	# kernel DTrace hooks
+
+# Kernel Undefined Behavior Sanitizer (kUBSan).
+#options 	KUBSAN			# mandatory
+#options 	UBSAN_ALWAYS_FATAL	# optional: panic on all kUBSan reports
+
+# Kernel Address Sanitizer (kASan). You need to disable SVS to use it.
+# The quarantine is optional and can help KASAN find more use-after-frees.
+# Use KASAN_PANIC if you want panics instead of warnings.
+#makeoptions 	KASAN=1		# mandatory
+#options 	KASAN		# mandatory
+#no options	SVS		# mandatory
+#options 	POOL_QUARANTINE	# optional
+#options 	KASAN_PANIC	# optional
+
+# Kernel Concurrency Sanitizer (kCSan).
+#makeoptions 	KCSAN=1		# mandatory
+#options 	KCSAN		# mandatory
+#options 	KCSAN_PANIC	# optional
+
+# Kernel Memory Sanitizer (kMSan). You need to disable SVS and kernel modules
+# to use it. POOL_NOCACHE is optional and can help KMSAN find uninitialized
+# memory in pool caches. Note that KMSAN requires at least 4GB of RAM.
+#makeoptions 	KMSAN=1		# mandatory
+#options 	KMSAN		# mandatory
+#no options	SVS		# mandatory
+#no options 	MODULAR		# mandatory
+#no options 	MODULAR_DEFAULT_AUTOLOAD	# mandatory
+#options 	POOL_NOCACHE	# optional
+#options 	KMSAN_PANIC	# optional
+
+# Kernel Code Coverage Driver.
+#makeoptions	KCOV=1
+#options 	KCOV
+
+# Fault Injection Driver.
+#options 	FAULT
 
 # Compatibility options
+# x86_64 never shipped with a.out binaries; the two options below are
+# only relevant to 32-bit i386 binaries
+#options 	EXEC_AOUT	# required by binaries from before 1.5
+#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+
+# NetBSD backward compatibility. Support goes from COMPAT_15 up until
+# the latest release. Note that really old compat (< COMPAT_16) is only
+# useful for 32-bit i386 binaries.
 include 	"conf/compat_netbsd15.config"
+
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_NETBSD32
@@ -128,17 +175,23 @@ options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
 include "conf/filesystems.config"
 
 # File system options
+# ffs
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	NFSSERVER	# Network File System server
+#options		UFS_ACL		# UFS Access Control Lists
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
+# ext2fs
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+# other
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+options 	NFSSERVER	# Network File System server
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -146,13 +199,16 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
+#options 	MPLS		# MultiProtocol Label Switching (needs mpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
+#options 	CAN		# Controller Area Network protocol
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+#options 	TCP_SIGNATURE	# Enable RFC-2385 TCP md5 signatures
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -190,8 +246,9 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # wscons options
 #
 # builtin terminal emulations
-#options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
+#options 	WSEMUL_DEFAULT="\"vt100\""  # NB: default is "sun" if enabled
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
@@ -216,18 +273,22 @@ options 	PCDISPLAY_SOFTCURSOR
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
+# enable splash screen support; requires genfb or radeonfb
+#options 	SPLASHSCREEN
+
+# Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on wd0a type ffs
 #config		netbsd	root on xennet0 type nfs
 
+#
+# Device configuration
+#
+
+## Xen-specific options
 mainbus0 at root
 
 cpu* at mainbus?
-
-# IPMI support
-ipmi0		at mainbus?
-ipmi_acpi*	at acpi?
-ipmi0		at ipmi_acpi? 
 
 hypervisor*	at mainbus?		# Xen hypervisor
 
@@ -237,20 +298,29 @@ xenbus* 	at hypervisor?		# Xen virtual bus
 
 xencons*	at hypervisor?		# Xen virtual console
 balloon*	at xenbus?		# Xen balloon device
+## end Xen-specific options
 
+# IPMI support
+ipmi0		at mainbus?
+ipmi_acpi*	at acpi?
+ipmi0		at ipmi_acpi?
+
+# ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0		at hypervisor?		# ACPI access in PV mode
 acpi0		at mainbus?		# ACPI access in PVH(VM) mode
 
-#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
-#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
+options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing via ACPI
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options 	VGA_POST		# in-kernel support for VGA POST
+
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 #options 	MPDEBUG			# MPBIOS configures PCI roots
 #options 	MPVERBOSE		# verbose MPBIOS autoconfig messages
-options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
-#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
-#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
-#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 ioapic* 	at mainbus? apid ?
 
@@ -261,12 +331,28 @@ acpibut*	at acpi?		# ACPI Button
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt*	at acpi?		# ACPI Embedded Controller (early)
+#acpifan*	at acpi?		# ACPI Fan
 acpilid*	at acpi?		# ACPI Lid Switch
+#acpipmtr*	at acpi?		# ACPI Power Meter (experimental)
+#acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
 acpitz* 	at acpi?		# ACPI Thermal Zone
+#acpivga*	at acpi?		# ACPI Display Adapter
+#acpiout*	at acpivga?		# ACPI Display Output Device
+#acpiwdrt*	at acpi?		# ACPI Watchdog Resource Table
+#acpiwmi*	at acpi?		# ACPI WMI Mapper
+
+# Mainboard devices
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
+#com*		at acpi?		# Serial communications interface
+#fdc*		at acpi?		# Floppy disk controller
+#hpacel* 	at acpi?		# HP 3D DriveGuard accelerometer
+#hpqlb*		at acpi?		# HP Quick Launch Buttons
 hpqlb*		at acpi?		# HP Quick Launch Buttons
+#lpt*		at acpi?		# Parallel port
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
+
+# Basic Bus Support
 
 # PCI bus support
 pci*		at hypervisor? bus ?
