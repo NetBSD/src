@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.241 2020/05/05 20:36:48 jdolecek Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.242 2021/03/04 01:35:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.241 2020/05/05 20:36:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.242 2021/03/04 01:35:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -120,6 +120,7 @@ static const char mclpool_warnmsg[] =
 
 MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
 
+void *watchpoint = (void *)0xdeadbeefdeadbeef;
 static percpu_t *mbstat_percpu;
 
 #ifdef MBUFTRACE
@@ -1992,6 +1993,7 @@ m_free(struct mbuf *m)
 	return n;
 }
 
+#if 0
 void
 m_freem(struct mbuf *m)
 {
@@ -2001,6 +2003,21 @@ m_freem(struct mbuf *m)
 		m = m_free(m);
 	} while (m);
 }
+#else
+void
+M_FREEM(struct mbuf *m, const char *func, int line)
+{
+	if (m == NULL)
+		return;
+	do {
+		if (((m->m_flags & M_EXT) != 0) &&
+		    (m->m_ext.ext_arg == watchpoint))
+			printf("catch %p (%s line %d)\n", watchpoint,
+			    func, line);
+		m = m_free(m);
+	} while (m);
+}
+#endif
 
 #if defined(DDB)
 void
