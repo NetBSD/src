@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.96 2021/03/04 07:24:38 skrll Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.97 2021/03/04 07:29:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.96 2021/03/04 07:24:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.97 2021/03/04 07:29:40 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -221,10 +221,10 @@ ahci_setup_port(struct ahci_softc *sc, int i)
 
 	achp = &sc->sc_channels[i];
 
-	AHCI_WRITE(sc, AHCI_P_CLB(i), achp->ahcic_bus_cmdh);
-	AHCI_WRITE(sc, AHCI_P_CLBU(i), (uint64_t)achp->ahcic_bus_cmdh>>32);
-	AHCI_WRITE(sc, AHCI_P_FB(i), achp->ahcic_bus_rfis);
-	AHCI_WRITE(sc, AHCI_P_FBU(i), (uint64_t)achp->ahcic_bus_rfis>>32);
+	AHCI_WRITE(sc, AHCI_P_CLB(i), BUS_ADDR_LO32(achp->ahcic_bus_cmdh));
+	AHCI_WRITE(sc, AHCI_P_CLBU(i), BUS_ADDR_HI32(achp->ahcic_bus_cmdh));
+	AHCI_WRITE(sc, AHCI_P_FB(i), BUS_ADDR_LO32(achp->ahcic_bus_rfis));
+	AHCI_WRITE(sc, AHCI_P_FBU(i), BUS_ADDR_HI32(achp->ahcic_bus_rfis));
 }
 
 static void
