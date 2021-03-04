@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.234 2021/01/31 08:07:25 martin Exp $
+# $NetBSD: GENERIC,v 1.235 2021/03/04 20:17:00 palle Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.234 $"
+#ident		"GENERIC-$Revision: 1.235 $"
 
 maxusers	64
 
@@ -248,6 +248,7 @@ iic* 	at jbusi2c?
 # Virtual devices for sun4v systems.
 vrtc0	at vbus?
 vdsk*	at cbus?
+vnet*	at cbus?
 
 #### Serial port configuration
 

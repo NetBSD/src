@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.163 2020/10/21 13:31:52 christos Exp $
+#	$NetBSD: files.sparc64,v 1.164 2021/03/04 20:17:00 palle Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -332,3 +332,8 @@ file	arch/sparc64/dev/ldc.c			ldc
 device	vdsk: ldc, scsi
 attach	vdsk at cbus
 file	arch/sparc64/dev/vdsk.c			vdsk
+
+# Virtual network
+device	vnet: ldc
+attach	vnet at cbus
+file	arch/sparc64/dev/vnet.c			vnet
