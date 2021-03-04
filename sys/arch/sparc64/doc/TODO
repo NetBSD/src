@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.36 2021/02/27 18:29:38 palle Exp $ */
+/* $NetBSD: TODO,v 1.37 2021/03/04 20:00:51 palle Exp $ */
 
 Things to be done:
 
@@ -18,9 +18,9 @@ sun4v:
 	   Installation is not possible, since no driver currently exists
 	   for the ldom network interfaces, but openbsd vnet and vsw drivers are
 	   possible to integrate and this work is progressing.
-	   OpenBoot (properly trashed registers).
 	 T2000 ldom with 8 VCPU and 4GB:
 	   On this platform it crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
+- idle handling - call hypervisor trap (openbsd code...??)	   
 - 64-bit kernel support
 - 32-bit kernel support
 - libkvm
