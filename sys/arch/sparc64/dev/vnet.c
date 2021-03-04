@@ -1,3 +1,4 @@
+/*	$NetBSD: vnet.c,v 1.2 2021/03/04 20:59:39 palle Exp $	*/
 /*	$OpenBSD: vnet.c,v 1.62 2020/07/10 13:26:36 patrick Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
@@ -265,7 +266,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tx_ino = ca->ca_tx_ino;
 	sc->sc_rx_ino = ca->ca_rx_ino;
 
-	printf(": ivec 0x%lx, 0x%lx", sc->sc_tx_ino, sc->sc_rx_ino);
+	printf(": ivec 0x%" PRIx64 ", 0x%" PRIx64, sc->sc_tx_ino, sc->sc_rx_ino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -488,7 +489,7 @@ FIXME openbsd
 	if (rx_head == rx_tail)
 		return (0);
 
-	lp = (struct ldc_pkt *)(lc->lc_rxq->lq_va + rx_head);
+	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_rxq->lq_va + rx_head);
 	switch (lp->type) {
 	case LDC_CTRL:
 		ldc_rx_ctrl(lc, lp);
