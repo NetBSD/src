@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.25 2020/12/26 08:58:03 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.26 2021/03/04 20:30:39 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.25 2020/12/26 08:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.26 2021/03/04 20:30:39 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -1260,7 +1260,7 @@ static const uint8_t
 sti_unitoroman[0x100 - 0xa0] = {
 	0xa0, 0xb8, 0xbf, 0xbb, 0xba, 0xbc,    0, 0xbd,
 	0xab,    0, 0xf9, 0xfb,    0, 0xf6,    0, 0xb0,
-	
+
 	0xb3, 0xfe,    0,    0, 0xa8, 0xf3, 0xf4, 0xf2,
 	   0,    0, 0xfa, 0xfd, 0xf7, 0xf8,    0, 0xb9,
 
@@ -1425,11 +1425,11 @@ sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
 	    WSATTR_UNDERLINE | WSATTR_WSCOLORS)) != 0)
 		return EINVAL;
 	if ((flags & WSATTR_REVERSE) != 0) {
-		fg = STI_COLOUR_BLACK; 
+		fg = STI_COLOUR_BLACK;
 		bg = STI_COLOUR_WHITE;
 	} else {
 		fg = STI_COLOUR_WHITE;
-		bg = STI_COLOUR_BLACK; 
+		bg = STI_COLOUR_BLACK;
 	}
 
 	*pattr = WSATTR_PACK(fg, bg, flags);
