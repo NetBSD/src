@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.54 2021/03/02 15:59:04 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.55 2021/03/05 13:57:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1738,4 +1738,50 @@ share/man/man4/pad.4				1.7-1.10
 	 - explain the format of the device and a few quirks.
 	 - give an example of recording an application's output.
 	[nia, ticket #1220]
+
+lib/lua/bozohttpd/Makefile			(apply patch)
+libexec/httpd/Makefile				1.30-1.31
+libexec/httpd/Makefile.boot			1.7-1.9
+libexec/httpd/auth-bozo.c			1.25-1.26
+libexec/httpd/bozohttpd.8			1.80-1.87
+libexec/httpd/bozohttpd.c			1.114-1.123,1.125-1.128
+libexec/httpd/bozohttpd.h			1.61-1.68
+libexec/httpd/cgi-bozo.c			1.49-1.53
+libexec/httpd/content-bozo.c			1.17-1.20
+libexec/httpd/daemon-bozo.c			1-.22
+libexec/httpd/dir-index-bozo.c			1.33-1.34
+libexec/httpd/main.c				1.23-1.27
+libexec/httpd/printenv.lua			1.4-1.5
+libexec/httpd/ssl-bozo.c			1.27-1.29
+libexec/httpd/libbozohttpd/libbozohttpd.3	1.5-1.6
+libexec/httpd/small/Makefile			1.4
+libexec/httpd/testsuite/Makefile		1.14
+libexec/httpd/testsuite/t16.in			1.1
+libexec/httpd/testsuite/t16.out			1.1
+libexec/httpd/testsuite/t17.in			1.1
+libexec/httpd/testsuite/t17.out			1.1
+libexec/httpd/testsuite/t18.in			1.1
+libexec/httpd/testsuite/t18.out			1.1
+
+	Update to bozohttpd 20210227.
+	[mrg, ticket #1221]
+
+sys/kern/kern_subr.c				1.229
+
+	Restore missing message for RB_ASKNAME.
+	[tsutsui, ticket #1222]
+
+share/man/man4/spi.4				1.8-1.10
+
+	spi(4): Improve the man page:
+	- Add reference to ssdfb(4)
+	- Document the userspace ioctl interface
+	[nia, ticket #1223]
+
+share/man/man4/iic.4				1.23-1.25
+
+	iic(4): Improve the man page:
+	- Add reference to ssdfb(4)
+	- Document the userspace ioctl interface
+	[nia, ticket #1224]
 
