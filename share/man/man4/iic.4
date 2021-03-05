@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.22 2018/02/26 08:23:44 wiz Exp $
+.\"	$NetBSD: iic.4,v 1.22.6.1 2021/03/05 13:55:27 martin Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 26, 2018
+.Dd February 27, 2021
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -100,6 +100,37 @@ The master accesses a particular slave device using its address.
 .Pp
 System Management Bus (SMBus) protocol is also supported by emulating
 it with the I2C commands.
+.Sh IOCTLS
+The following
+.Xr ioctl 2
+calls apply to
+.Em IIC
+devices.
+They are defined in the header file
+.In dev/i2c/i2c_io.h :
+.Bl -tag -width indent
+.It Dv I2C_IOCTL_EXEC (i2c_ioctl_exec_t)
+User ioctl to execute an i2c operation.
+.Bd -literal
+typedef enum {
+        I2C_OP_READ,
+        I2C_OP_READ_WITH_STOP,
+        I2C_OP_WRITE,
+        I2C_OP_WRITE_WITH_STOP,
+        I2C_OP_READ_BLOCK,
+        I2C_OP_WRITE_BLOCK
+} i2c_op_t;
+
+typedef struct i2c_ioctl_exec {
+	i2c_op_t iie_op;	/* operation to perform */
+	i2c_addr_t iie_addr;	/* address of device */
+	const void *iie_cmd;	/* pointer to command */
+	size_t iie_cmdlen;	/* length of command */
+	void *iie_buf;		/* pointer to data buffer */
+	size_t iie_buflen;	/* length of data buffer */
+} i2c_ioctl_exec_t;
+.Ed
+.El
 .Sh SUPPORTED MASTERS
 A wide list of I2C masters are supported, among them are:
 .Pp
@@ -196,6 +227,15 @@ JEDEC JC-42.4 compatible memory module temperature sensors
 driver for SGS 7433 Basic Audio Processor found in some Apple machines
 .It Xr spdmem 4
 Generic Memory Module Serial Presence Detect
+.It Xr ssdfb 4
+OLED/PLED framebuffer modules
+.El
+.Sh FILES
+.Bl -tag -width "/dev/iicu" -compact
+.It /dev/iic Ns Ar u
+I2C device unit
+.Ar u
+file.
 .El
 .Sh SEE ALSO
 .Xr dtviic 4 ,
