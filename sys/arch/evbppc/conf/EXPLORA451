@@ -1,6 +1,6 @@
-#	$NetBSD: EXPLORA451,v 1.69 2021/03/05 06:57:02 rin Exp $
+#	$NetBSD: EXPLORA451,v 1.70 2021/03/05 07:06:15 rin Exp $
 #
-#	GENERIC -- everything that's currently supported
+#	EXPLORA451 -- NCD Explora 450 Series Thin Client
 #
 
 include 	"arch/evbppc/conf/std.explora"
