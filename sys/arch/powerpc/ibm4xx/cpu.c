@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.35 2021/03/05 07:10:27 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.36 2021/03/05 07:11:24 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2021/03/05 07:10:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2021/03/05 07:11:24 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	if (__predict_false(cp->name == NULL))
 		cpu_setmodel("Version 0x%x", pvr);
 
-	aprint_normal(": %uMHz %s (PVR 0x%x)\n",
+	aprint_normal(": %uMHz %s (PVR 0x%08x)\n",
 	    (processor_freq + 500000) / 1000000,
 	    (cp->name != NULL ? cpu_getmodel() : "unknown model"),
 	    pvr);
