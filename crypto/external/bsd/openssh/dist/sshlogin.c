@@ -1,5 +1,6 @@
-/*	$NetBSD: sshlogin.c,v 1.12 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.34 2019/06/28 13:35:04 deraadt Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.13 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.35 2020/10/18 11:32:02 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.12 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.13 2021/03/05 17:47:16 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -112,12 +113,12 @@ get_last_login_time(uid_t uid, const char *logname,
 	pos = (off_t)uid * sizeof(ll);
 	r = lseek(fd, pos, SEEK_SET);
 	if (r == -1) {
-		error("%s: lseek: %s", __func__, strerror(errno));
+		error_f("lseek: %s", strerror(errno));
 		close(fd);
 		return (0);
 	}
 	if (r != pos) {
-		debug("%s: truncated lastlog", __func__);
+		debug_f("truncated lastlog");
 		close(fd);
 		return (0);
 	}
@@ -163,7 +164,7 @@ store_lastlog_message(const char *user, uid_t uid)
 			r = sshbuf_putf(loginmsg, "Last login: %s from %s\r\n",
 			    time_string, hostname);
 		if (r != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "sshbuf_putf");
 	}
 }
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-gss.h,v 1.9 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: ssh-gss.h,v 1.14 2018/07/10 09:13:30 djm Exp $ */
+/*	$NetBSD: ssh-gss.h,v 1.10 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: ssh-gss.h,v 1.15 2021/01/27 10:05:28 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -103,7 +103,7 @@ void ssh_gssapi_build_ctx(Gssctxt **);
 void ssh_gssapi_delete_ctx(Gssctxt **);
 OM_uint32 ssh_gssapi_sign(Gssctxt *, gss_buffer_t, gss_buffer_t);
 void ssh_gssapi_buildmic(struct sshbuf *, const char *,
-    const char *, const char *);
+    const char *, const char *, const struct sshbuf *);
 int ssh_gssapi_check_mechanism(Gssctxt **, gss_OID, const char *);
 
 /* In the server */

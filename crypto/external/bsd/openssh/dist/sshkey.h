@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.h,v 1.13 2020/12/04 18:42:50 christos Exp $	*/
-/* $OpenBSD: sshkey.h,v 1.46 2020/08/27 01:06:19 djm Exp $ */
+/*	$NetBSD: sshkey.h,v 1.14 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: sshkey.h,v 1.49 2021/01/26 00:49:30 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
+#define SSH_OPENSSL_VERSION OpenSSL_version(OPENSSL_VERSION)
 #else /* OPENSSL */
 #define BIGNUM		void
 #define RSA		void
@@ -42,6 +43,7 @@
 #define EC_KEY		void
 #define EC_GROUP	void
 #define EC_POINT	void
+#define SSH_OPENSSL_VERSION "without OpenSSL"
 #endif /* WITH_OPENSSL */
 
 #define SSH_RSA_MINIMUM_MODULUS_SIZE	1024
@@ -189,8 +191,10 @@ int	 sshkey_type_plain(int);
 int	 sshkey_to_certified(struct sshkey *);
 int	 sshkey_drop_cert(struct sshkey *);
 int	 sshkey_cert_copy(const struct sshkey *, struct sshkey *);
-int	 sshkey_cert_check_authority(const struct sshkey *, int, int,
+int	 sshkey_cert_check_authority(const struct sshkey *, int, int, int,
     const char *, const char **);
+int	 sshkey_cert_check_host(const struct sshkey *, const char *,
+    int , const char *, const char **);
 size_t	 sshkey_format_cert_validity(const struct sshkey_cert *,
     char *, size_t) __attribute__((__bounded__(__string__, 2, 3)));
 int	 sshkey_check_cert_sigtype(const struct sshkey *, const char *);
@@ -263,13 +267,12 @@ int	sshkey_parse_pubkey_from_private_fileblob_type(struct sshbuf *blob,
 int ssh_rsa_complete_crt_parameters(struct sshkey *, const BIGNUM *);
 
 /* stateful keys (e.g. XMSS) */
-typedef void sshkey_printfn(const char *, ...) __attribute__((format(printf, 1, 2)));
 int	 sshkey_set_filename(struct sshkey *, const char *);
 int	 sshkey_enable_maxsign(struct sshkey *, u_int32_t);
 u_int32_t sshkey_signatures_left(const struct sshkey *);
-int	 sshkey_forward_state(const struct sshkey *, u_int32_t, sshkey_printfn *);
-int	 sshkey_private_serialize_maxsign(struct sshkey *key, struct sshbuf *buf,
-    u_int32_t maxsign, sshkey_printfn *pr);
+int	 sshkey_forward_state(const struct sshkey *, u_int32_t, int);
+int	 sshkey_private_serialize_maxsign(struct sshkey *key,
+    struct sshbuf *buf, u_int32_t maxsign, int);
 
 void	 sshkey_sig_details_free(struct sshkey_sig_details *);
 

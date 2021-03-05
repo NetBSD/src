@@ -1,5 +1,6 @@
-/*	$NetBSD: digest-openssl.c,v 1.8 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: digest-openssl.c,v 1.8 2018/09/13 02:08:33 djm Exp $ */
+/*	$NetBSD: digest-openssl.c,v 1.9 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: digest-openssl.c,v 1.9 2020/10/29 02:52:43 djm Exp $ */
+
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  *
@@ -16,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-openssl.c,v 1.8 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: digest-openssl.c,v 1.9 2021/03/05 17:47:16 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -43,11 +44,11 @@ struct ssh_digest {
 
 /* NB. Indexed directly by algorithm number */
 const struct ssh_digest digests[] = {
-	{ SSH_DIGEST_MD5,	"MD5",	 	16,	EVP_md5 },
-	{ SSH_DIGEST_SHA1,	"SHA1",	 	20,	EVP_sha1 },
-	{ SSH_DIGEST_SHA256,	"SHA256", 	32,	EVP_sha256 },
+	{ SSH_DIGEST_MD5,	"MD5",		16,	EVP_md5 },
+	{ SSH_DIGEST_SHA1,	"SHA1",		20,	EVP_sha1 },
+	{ SSH_DIGEST_SHA256,	"SHA256",	32,	EVP_sha256 },
 	{ SSH_DIGEST_SHA384,	"SHA384",	48,	EVP_sha384 },
-	{ SSH_DIGEST_SHA512,	"SHA512", 	64,	EVP_sha512 },
+	{ SSH_DIGEST_SHA512,	"SHA512",	64,	EVP_sha512 },
 	{ -1,			NULL,		0,	NULL },
 };
 

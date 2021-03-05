@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2020/03/01 20:59:53 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2021/03/05 17:47:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ CWARNFLAGS.clang+=	-Wno-error=sizeof-array-div
 CWARNFLAGS.clang+=	-Wno-error=format-nonliteral
 LIB=	ssh
 SRCS=\
+addr.c \
 addrmatch.c \
 atomicio.c \
 authfd.c \
@@ -39,7 +40,7 @@ kexecdh.c \
 kexgen.c \
 kexgex.c \
 kexgexc.c \
-kexsntrup4591761x25519.c \
+kexsntrup761x25519.c \
 krl.c \
 log.c \
 mac.c \
@@ -55,7 +56,7 @@ readpass.c \
 recallocarray.c \
 sc25519.c \
 smult_curve25519_ref.c \
-sntrup4591761.c \
+sntrup761.c \
 ssh-ed25519.c \
 ssh-ed25519-sk.c \
 ssh-pkcs11.c \
@@ -96,7 +97,7 @@ COPTS.monitor_fdpass.c+=-Wno-stack-protector
 COPTS.xmss_fast.c+=	-Wno-stack-protector
 COPTS.xmss_hash.c+=	-Wno-stack-protector
 COPTS.xmss_wots.c+=	-Wno-stack-protector
-COPTS.sntrup4591761.c+=	-Wno-stack-protector
+COPTS.sntrup761.c+=	-Wno-stack-protector
 
 .if WITH_OPENSSL
 SRCS+=		${OPENSSL_SRCS}

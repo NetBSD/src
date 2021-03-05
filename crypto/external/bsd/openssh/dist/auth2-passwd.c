@@ -1,5 +1,6 @@
-/*	$NetBSD: auth2-passwd.c,v 1.13 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: auth2-passwd.c,v 1.18 2020/02/26 13:40:09 jsg Exp $ */
+/*	$NetBSD: auth2-passwd.c,v 1.14 2021/03/05 17:47:15 christos Exp $	*/
+/* $OpenBSD: auth2-passwd.c,v 1.19 2020/10/18 11:32:01 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-passwd.c,v 1.13 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: auth2-passwd.c,v 1.14 2021/03/05 17:47:15 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -61,7 +62,7 @@ userauth_passwd(struct ssh *ssh)
 	    (r = sshpkt_get_cstring(ssh, &password, &len)) != 0 ||
 	    (change && (r = sshpkt_get_cstring(ssh, NULL, NULL)) != 0) ||
 	    (r = sshpkt_get_end(ssh)) != 0)
-		fatal("%s: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse packet");
 
 	if (change)
 		logit("password change not supported");

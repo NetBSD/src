@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.c,v 1.21 2020/12/04 18:42:50 christos Exp $	*/
-/* $OpenBSD: compat.c,v 1.115 2020/07/05 23:59:45 djm Exp $ */
+/*	$NetBSD: compat.c,v 1.22 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: compat.c,v 1.117 2021/01/27 09:26:54 djm Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.21 2020/12/04 18:42:50 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.22 2021/03/05 17:47:16 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -40,11 +40,9 @@ __RCSID("$NetBSD: compat.c,v 1.21 2020/12/04 18:42:50 christos Exp $");
 #include "match.h"
 #include "kex.h"
 
-int datafellows = 0;
-
-/* datafellows bug compatibility */
-u_int
-compat_datafellows(const char *version)
+/* determine bug flags from SSH protocol banner */
+void
+compat_banner(struct ssh *ssh, const char *version)
 {
 	int i;
 	static struct {
@@ -147,72 +145,63 @@ compat_datafellows(const char *version)
 	};
 
 	/* process table, return first match */
+	ssh->compat = 0;
 	for (i = 0; check[i].pat; i++) {
 		if (match_pattern_list(version, check[i].pat, 0) == 1) {
-			debug("match: %s pat %s compat 0x%08x",
+			debug_f("match: %s pat %s compat 0x%08x",
 			    version, check[i].pat, check[i].bugs);
-			datafellows = check[i].bugs;	/* XXX for now */
-			/* Check to see if the remote side is OpenSSH and not HPN */
-			if(strstr(version,"OpenSSH") != NULL)
-			{
-				if (strstr(version,"hpn") == NULL)
-				{
-					datafellows |= SSH_BUG_LARGEWINDOW;
-					debug("Remote is NON-HPN aware");
-				}
-			}
-			return check[i].bugs;
+			ssh->compat = check[i].bugs;
+			return;
 		}
 	}
-	debug("no match: %s", version);
-	return 0;
+	debug_f("no match: %s", version);
 }
 
 const char *
-compat_cipher_proposal(const char *cipher_prop)
+compat_cipher_proposal(struct ssh *ssh, const char *cipher_prop)
 {
-	if (!(datafellows & SSH_BUG_BIGENDIANAES))
+	if (!(ssh->compat & SSH_BUG_BIGENDIANAES))
 		return cipher_prop;
-	debug2("%s: original cipher proposal: %s", __func__, cipher_prop);
+	debug2_f("original cipher proposal: %s", cipher_prop);
 	if ((cipher_prop = match_filter_denylist(cipher_prop, "aes*")) == NULL)
 		fatal("match_filter_denylist failed");
-	debug2("%s: compat cipher proposal: %s", __func__, cipher_prop);
+	debug2_f("compat cipher proposal: %s", cipher_prop);
 	if (*cipher_prop == '\0')
 		fatal("No supported ciphers found");
 	return cipher_prop;
 }
 
 char *
-compat_pkalg_proposal(char *pkalg_prop)
+compat_pkalg_proposal(struct ssh *ssh, char *pkalg_prop)
 {
-	if (!(datafellows & SSH_BUG_RSASIGMD5))
+	if (!(ssh->compat & SSH_BUG_RSASIGMD5))
 		return pkalg_prop;
-	debug2("%s: original public key proposal: %s", __func__, pkalg_prop);
+	debug2_f("original public key proposal: %s", pkalg_prop);
 	if ((pkalg_prop = match_filter_denylist(pkalg_prop, "ssh-rsa")) == NULL)
 		fatal("match_filter_denylist failed");
-	debug2("%s: compat public key proposal: %s", __func__, pkalg_prop);
+	debug2_f("compat public key proposal: %s", pkalg_prop);
 	if (*pkalg_prop == '\0')
 		fatal("No supported PK algorithms found");
 	return pkalg_prop;
 }
 
 const char *
-compat_kex_proposal(const char *p)
+compat_kex_proposal(struct ssh *ssh, const char *p)
 {
-	if ((datafellows & (SSH_BUG_CURVE25519PAD|SSH_OLD_DHGEX)) == 0)
+	if ((ssh->compat & (SSH_BUG_CURVE25519PAD|SSH_OLD_DHGEX)) == 0)
 		return p;
-	debug2("%s: original KEX proposal: %s", __func__, p);
-	if ((datafellows & SSH_BUG_CURVE25519PAD) != 0)
+	debug2_f("original KEX proposal: %s", p);
+	if ((ssh->compat & SSH_BUG_CURVE25519PAD) != 0)
 		if ((p = match_filter_denylist(p,
 		    "curve25519-sha256@libssh.org")) == NULL)
 			fatal("match_filter_denylist failed");
-	if ((datafellows & SSH_OLD_DHGEX) != 0) {
+	if ((ssh->compat & SSH_OLD_DHGEX) != 0) {
 		if ((p = match_filter_denylist(p,
 		    "diffie-hellman-group-exchange-sha256,"
 		    "diffie-hellman-group-exchange-sha1")) == NULL)
 			fatal("match_filter_denylist failed");
 	}
-	debug2("%s: compat KEX proposal: %s", __func__, p);
+	debug2_f("compat KEX proposal: %s", p);
 	if (*p == '\0')
 		fatal("No supported key exchange algorithms found");
 	return p;
