@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2784 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2785 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -337,3 +337,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	byacc: Update to 20210109. [christos 20210220]
 	wpa: Import wpa_supplicant and hostapd 2.9. [christos 20210228]
 	tzcode: Updated to 2021a. [christos 20210228]
+	OpenSSH: Import 8.5. [christos 20210304]
