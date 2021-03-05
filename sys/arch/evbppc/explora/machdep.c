@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2021/03/05 06:30:45 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2021/03/05 06:40:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2021/03/05 06:30:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2021/03/05 06:40:15 rin Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
+
+#include "fb_elb.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -119,7 +121,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	/* Map PCKBC, PCKBC2, COM, LPT. This is far beyond physmem. */
 	ppc4xx_tlb_reserve(BASE_ISA, BASE_ISA, TLB_PG_SIZE, TLB_I | TLB_G);
 
-#ifndef COM_IS_CONSOLE
+#if NFB_ELB > 0
 	ppc4xx_tlb_reserve(BASE_FB,  BASE_FB,  TLB_PG_SIZE, TLB_I | TLB_G);
 	ppc4xx_tlb_reserve(BASE_FB2, BASE_FB2, TLB_PG_SIZE, TLB_I | TLB_G);
 #endif
