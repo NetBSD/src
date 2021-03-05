@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9 2012/10/13 17:58:53 jdc Exp $	*/
+/*	$NetBSD: consinit.c,v 1.10 2021/03/05 06:06:34 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2012/10/13 17:58:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10 2021/03/05 06:06:34 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2012/10/13 17:58:53 jdc Exp $");
 #include "pckbd.h"
 
 #include <evbppc/explora/dev/elbvar.h>
+#include <powerpc/ibm4xx/cpu.h>
 
 #include "opt_explora.h"
 
@@ -86,6 +87,9 @@ consinit(void)
 
 	tag = elb_get_bus_space_tag(BASE_FB);
 	fb_cnattach(tag, BASE_FB2, (void *)BASE_FB);
+
+	calc_delayconst();	/* required by pckbc_cnattach() */
+
 	tag = elb_get_bus_space_tag(BASE_PCKBC);
 	pckbc_cnattach(tag, _BUS_SPACE_UNSTRIDE(tag, BASE_PCKBC),
 	    _BUS_SPACE_UNSTRIDE(tag, BASE_PCKBC2-BASE_PCKBC), PCKBC_KBD_SLOT,
