@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.13 2020/12/04 18:42:50 christos Exp $	*/
-/* $OpenBSD: compat.h,v 1.55 2020/06/01 07:11:38 dtucker Exp $ */
+/*	$NetBSD: compat.h,v 1.14 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: compat.h,v 1.56 2021/01/27 09:26:54 djm Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
@@ -60,10 +60,10 @@
 #define SSH_BUG_DHGEX_LARGE	0x40000000
 #define SSH_BUG_LARGEWINDOW     0x80000000
 
-u_int    compat_datafellows(const char *);
-const char	*compat_cipher_proposal(const char *);
-char	*compat_pkalg_proposal(char *);
-const char	*compat_kex_proposal(const char *);
+struct ssh;
 
-extern int datafellows;
+void    compat_banner(struct ssh *, const char *);
+const char	*compat_cipher_proposal(struct ssh *, const char *);
+char	*compat_pkalg_proposal(struct ssh *, char *);
+const char	*compat_kex_proposal(struct ssh *, const char *);
 #endif

@@ -1,5 +1,6 @@
-/*	$NetBSD: auth-options.c,v 1.24 2020/12/04 18:42:49 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.93 2020/08/27 01:07:09 djm Exp $ */
+/*	$NetBSD: auth-options.c,v 1.25 2021/03/05 17:47:15 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.94 2020/10/18 11:32:01 djm Exp $ */
+
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.24 2020/12/04 18:42:49 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.25 2021/03/05 17:47:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -80,7 +81,7 @@ cert_option_list(struct sshauthopt *opts, struct sshbuf *oblob,
 	int r, ret = -1, found;
 
 	if ((c = sshbuf_fromb(oblob)) == NULL) {
-		error("%s: sshbuf_fromb failed", __func__);
+		error_f("sshbuf_fromb failed");
 		goto out;
 	}
 
@@ -89,8 +90,7 @@ cert_option_list(struct sshauthopt *opts, struct sshbuf *oblob,
 		data = NULL;
 		if ((r = sshbuf_get_cstring(c, &name, NULL)) != 0 ||
 		    (r = sshbuf_froms(c, &data)) != 0) {
-			error("Unable to parse certificate options: %s",
-			    ssh_err(r));
+			error_r(r, "Unable to parse certificate options");
 			goto out;
 		}
 		debug3("found certificate option \"%.100s\" len %zu",
@@ -126,8 +126,8 @@ cert_option_list(struct sshauthopt *opts, struct sshbuf *oblob,
 			} else if (strcmp(name, "force-command") == 0) {
 				if ((r = sshbuf_get_cstring(data, &command,
 				    NULL)) != 0) {
-					error("Unable to parse \"%s\" "
-					    "section: %s", name, ssh_err(r));
+					error_r(r, "Unable to parse \"%s\" "
+					    "section", name);
 					goto out;
 				}
 				if (opts->force_command != NULL) {
@@ -141,8 +141,8 @@ cert_option_list(struct sshauthopt *opts, struct sshbuf *oblob,
 			} else if (strcmp(name, "source-address") == 0) {
 				if ((r = sshbuf_get_cstring(data, &allowed,
 				    NULL)) != 0) {
-					error("Unable to parse \"%s\" "
-					    "section: %s", name, ssh_err(r));
+					error_r(r, "Unable to parse \"%s\" "
+					    "section", name);
 					goto out;
 				}
 				if (opts->required_from_host_cert != NULL) {

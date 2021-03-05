@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.28 2020/12/04 18:42:50 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.212 2020/08/03 02:43:41 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.29 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.213 2020/10/18 11:32:01 djm Exp $ */
 
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.28 2020/12/04 18:42:50 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.29 2021/03/05 17:47:16 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -617,7 +617,7 @@ do_times(int fd, int verb, const struct stat *sb)
 
 static int
 parse_scp_uri(const char *uri, char **userp, char **hostp, int *portp,
-     const char **pathp)
+     char **pathp)
 {
 	int r;
 
@@ -835,7 +835,7 @@ brace_expand(const char *pattern, char ***patternsp, size_t *npatternsp)
 			goto fail;
 		}
 		if (invalid)
-			fatal("%s: invalid brace pattern \"%s\"", __func__, cp);
+			fatal_f("invalid brace pattern \"%s\"", cp);
 		if (expanded) {
 			/*
 			 * Current entry expanded to new entries on the
@@ -877,10 +877,8 @@ brace_expand(const char *pattern, char ***patternsp, size_t *npatternsp)
 void
 toremote(int argc, char **argv)
 {
-	char *suser = NULL, *host = NULL;
-	const char *src = NULL;
-	char *bp, *tuser, *thost;
-	const char *targ;
+	char *suser = NULL, *host = NULL, *src;
+	char *bp, *tuser, *thost, *targ;
 	int sport = -1, tport = -1;
 	arglist alist;
 	int i, r;
@@ -1000,8 +998,7 @@ out:
 static void
 tolocal(int argc, char **argv)
 {
-	char *bp, *host = NULL, *suser = NULL;
-	const char *src = NULL;
+	char *bp, *host = NULL, *suser = NULL, *src;
 	arglist alist;
 	int i, r, sport = -1;
 
@@ -1270,7 +1267,7 @@ sink(int argc, char **argv, const char *src)
 		 * the requested destination file glob.
 		 */
 		if (brace_expand(src, &patterns, &npatterns) != 0)
-			fatal("%s: could not expand pattern", __func__);
+			fatal_f("could not expand pattern");
 	}
 	for (first = 1;; first = 0) {
 		cp = buf;

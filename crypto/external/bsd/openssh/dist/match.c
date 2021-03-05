@@ -1,5 +1,5 @@
-/*	$NetBSD: match.c,v 1.14 2020/12/04 18:42:50 christos Exp $	*/
-/* $OpenBSD: match.c,v 1.42 2020/07/05 23:59:45 djm Exp $ */
+/*	$NetBSD: match.c,v 1.15 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: match.c,v 1.43 2020/11/03 22:53:12 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.14 2020/12/04 18:42:50 christos Exp $");
+__RCSID("$NetBSD: match.c,v 1.15 2021/03/05 17:47:16 christos Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: match.c,v 1.14 2020/12/04 18:42:50 christos Exp $");
  * Returns true if the given string matches the pattern (which may contain ?
  * and * as wildcards), and zero if it does not match.
  */
-
 int
 match_pattern(const char *s, const char *pattern)
 {
@@ -65,8 +64,9 @@ match_pattern(const char *s, const char *pattern)
 			return !*s;
 
 		if (*pattern == '*') {
-			/* Skip the asterisk. */
-			pattern++;
+			/* Skip this and any consecutive asterisks. */
+			while (*pattern == '*')
+				pattern++;
 
 			/* If at end of pattern, accept immediately. */
 			if (!*pattern)

@@ -1,5 +1,6 @@
-/*	$NetBSD: auth-rhosts.c,v 1.12 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: auth-rhosts.c,v 1.52 2020/04/17 03:30:05 djm Exp $ */
+/*	$NetBSD: auth-rhosts.c,v 1.13 2021/03/05 17:47:15 christos Exp $	*/
+/* $OpenBSD: auth-rhosts.c,v 1.53 2020/10/18 11:32:01 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rhosts.c,v 1.12 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.13 2021/03/05 17:47:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -222,7 +223,7 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 	if (!rhosts_files[rhosts_file_index] &&
 	    stat(_PATH_RHOSTS_EQUIV, &st) == -1 &&
 	    stat(_PATH_SSH_HOSTS_EQUIV, &st) == -1) {
-		debug3("%s: no hosts access files exist", __func__);
+		debug3_f("no hosts access files exist");
 		return 0;
 	}
 
@@ -231,7 +232,7 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 	 * shosts.equiv.
 	 */
 	if (pw->pw_uid == 0)
-		debug3("%s: root user, ignoring system hosts files", __func__);
+		debug3_f("root user, ignoring system hosts files");
 	else {
 		if (check_rhosts_file(_PATH_RHOSTS_EQUIV, hostname, ipaddr,
 		    client_user, pw->pw_name)) {

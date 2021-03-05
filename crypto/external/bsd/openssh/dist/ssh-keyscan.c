@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.27 2020/12/04 18:42:50 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.132 2020/08/12 01:23:45 cheloha Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.28 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.139 2021/01/27 09:26:54 djm Exp $ */
 
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.27 2020/12/04 18:42:50 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.28 2021/03/05 17:47:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -281,7 +281,7 @@ keygrab_ssh2(con *c)
 	c->c_ssh->kex->kex[KEX_ECDH_SHA2] = kex_gen_client;
 #endif
 	c->c_ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
-	c->c_ssh->kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_client;
 	ssh_set_verify_host_key_callback(c->c_ssh, key_print_wrapper);
 	/*
 	 * do the key-exchange until an error occurs or until
@@ -355,7 +355,7 @@ tcpconnect(char *host)
 			continue;
 		}
 		if (set_nonblock(s) == -1)
-			fatal("%s: set_nonblock(%d)", __func__, s);
+			fatal_f("set_nonblock(%d)", s);
 		if (connect(s, ai->ai_addr, ai->ai_addrlen) == -1 &&
 		    errno != EINPROGRESS)
 			error("connect (`%s'): %s", host, strerror(errno));
@@ -389,7 +389,7 @@ conalloc(char *iname, char *oname, int keytype)
 	if (fdcon[s].c_status)
 		fatal("conalloc: attempt to reuse fdno %d", s);
 
-	debug3("%s: oname %s kt %d", __func__, oname, keytype);
+	debug3_f("oname %s kt %d", oname, keytype);
 	fdcon[s].c_fd = s;
 	fdcon[s].c_status = CS_CON;
 	fdcon[s].c_namebase = namebase;
@@ -510,11 +510,10 @@ congreet(int s)
 		fatal("ssh_packet_set_connection failed");
 	ssh_packet_set_timeout(c->c_ssh, timeout, 1);
 	ssh_set_app_data(c->c_ssh, c);	/* back link */
+	c->c_ssh->compat = 0;
 	if (sscanf(buf, "SSH-%d.%d-%[^\n]\n",
 	    &remote_major, &remote_minor, remote_version) == 3)
-		c->c_ssh->compat = compat_datafellows(remote_version);
-	else
-		c->c_ssh->compat = 0;
+		compat_banner(c->c_ssh, remote_version);
 	if (!ssh2_capable(remote_major, remote_minor)) {
 		debug("%s doesn't support ssh2", c->c_name);
 		confree(s);
@@ -622,15 +621,16 @@ do_host(char *host)
 	}
 }
 
-__dead void
-fatal(const char *fmt,...)
+void
+sshfatal(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
+	sshlogv(file, func, line, showfunc, level, suffix, fmt, args);
 	va_end(args);
-	exit(255);
+	cleanup_exit(255);
 }
 
 __dead static void
@@ -772,8 +772,7 @@ main(int argc, char **argv)
 		if (argv[j] == NULL)
 			fp = stdin;
 		else if ((fp = fopen(argv[j], "r")) == NULL)
-			fatal("%s: %s: %s", __progname, argv[j],
-			    strerror(errno));
+			fatal("%s: %s: %s", __progname, argv[j], strerror(errno));
 
 		while (getline(&line, &linesize, fp) != -1) {
 			/* Chomp off trailing whitespace and comments */
@@ -795,8 +794,7 @@ main(int argc, char **argv)
 		}
 
 		if (ferror(fp))
-			fatal("%s: %s: %s", __progname, argv[j],
-			    strerror(errno));
+			fatal("%s: %s: %s", __progname, argv[j], strerror(errno));
 
 		fclose(fp);
 	}

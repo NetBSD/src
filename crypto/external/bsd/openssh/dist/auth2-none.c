@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-none.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: auth2-none.c,v 1.22 2018/07/09 21:35:50 markus Exp $ */
+/*	$NetBSD: auth2-none.c,v 1.12 2021/03/05 17:47:15 christos Exp $	*/
+/* $OpenBSD: auth2-none.c,v 1.23 2020/10/18 11:32:01 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-none.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.12 2021/03/05 17:47:15 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -60,7 +60,7 @@ userauth_none(struct ssh *ssh)
 
 	none_enabled = 0;
 	if ((r = sshpkt_get_end(ssh)) != 0)
-		fatal("%s: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse packet");
 	if (options.permit_empty_passwd && options.password_authentication)
 		return (PRIVSEP(auth_password(ssh, "")));
 	return (0);

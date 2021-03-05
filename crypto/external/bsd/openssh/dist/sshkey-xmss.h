@@ -1,5 +1,6 @@
-/*	$NetBSD: sshkey-xmss.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: sshkey-xmss.h,v 1.1 2018/02/23 15:58:38 markus Exp $ */
+/*	$NetBSD: sshkey-xmss.h,v 1.3 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: sshkey-xmss.h,v 1.2 2020/10/19 22:49:23 dtucker Exp $ */
+
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
  *
@@ -48,10 +49,10 @@ int	 sshkey_xmss_deserialize_pk_info(struct sshkey *, struct sshbuf *);
 int	 sshkey_xmss_siglen(const struct sshkey *, size_t *);
 void	*sshkey_xmss_params(const struct sshkey *);
 void	*sshkey_xmss_bds_state(const struct sshkey *);
-int	 sshkey_xmss_get_state(const struct sshkey *, sshkey_printfn *);
+int	 sshkey_xmss_get_state(const struct sshkey *, int);
 int	 sshkey_xmss_enable_maxsign(struct sshkey *, u_int32_t);
 int	 sshkey_xmss_forward_state(const struct sshkey *, u_int32_t);
-int	 sshkey_xmss_update_state(const struct sshkey *, sshkey_printfn *);
+int	 sshkey_xmss_update_state(const struct sshkey *, int);
 u_int32_t sshkey_xmss_signatures_left(const struct sshkey *);
 
 #endif /* SSHKEY_XMSS_H */

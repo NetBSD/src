@@ -1,3 +1,4 @@
+/*	$NetBSD: addr.c,v 1.2 2021/03/05 17:47:15 christos Exp $	*/
 /* $OpenBSD: addr.c,v 1.1 2021/01/09 11:58:50 dtucker Exp $ */
 
 /*
@@ -15,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "includes.h"
+__RCSID("$NetBSD: addr.c,v 1.2 2021/03/05 17:47:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
