@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.5 2021/02/28 01:30:22 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.6 2021/03/05 16:31:49 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
@@ -36,4 +36,17 @@ example(_Bool cond, enum color c, enum size s)
 
 	/* The cast to unsigned is required by GCC at WARNS=6. */
 	c &= ~(unsigned)MEDIUM;		/* might be useful to warn about */
+}
+
+void
+switch_example(enum color c)
+{
+	switch (c) {
+	case EVENING:			/* TODO: 130 */
+	case LARGE:			/* TODO: 130 */
+		sink(1 == 1);
+		break;
+	default:
+		break;
+	}
 }
