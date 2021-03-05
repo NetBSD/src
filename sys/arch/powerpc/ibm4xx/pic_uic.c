@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.8 2021/02/27 20:43:58 rin Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.9 2021/03/05 05:35:50 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.8 2021/02/27 20:43:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.9 2021/03/05 05:35:50 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -73,6 +73,19 @@ static void	uic_establish_irq(struct pic_ops *, int, int, int);
 
 struct uic {
 	uint32_t uic_intr_enable;	/* cached intr enable mask */
+#ifdef PPC_IBM403
+	/*
+	 * Not clearly documented in reference manual, but DCR_EXISR
+	 * register is not updated immediately after some bits are
+	 * cleared by mtdcr, no matter whether sync (= eieio) and/or
+	 * isync are issued.
+	 *
+	 * Therefore, we have to manage our own status mask in the
+	 * interrupt handler; see uic_{ack,get}_irq() for more details.
+	 * This is what we did in obsoleted powerpc/ibm4xx/intr.c.
+	 */
+	uint32_t uic_intr_status;
+#endif
 	uint32_t (*uic_mf_intr_status)(void);
 	uint32_t (*uic_mf_intr_enable)(void);
 	void (*uic_mt_intr_enable)(uint32_t);
@@ -356,15 +369,26 @@ uic_ack_irq(struct pic_ops *pic, int irq)
 	struct uic * const uic = pic->pic_cookie;
 	const uint32_t irqmask = IRQ_TO_MASK(irq);
 
+#ifdef PPC_IBM403
+	uic->uic_intr_status &= ~irqmask;
+#endif
+
 	(*uic->uic_mt_intr_ack)(irqmask);
 }
 
 static int
-uic_get_irq(struct pic_ops *pic, int dummy)
+uic_get_irq(struct pic_ops *pic, int req)
 {
 	struct uic * const uic = pic->pic_cookie;
 
+#ifdef PPC_IBM403
+	if (req == PIC_GET_IRQ)
+		uic->uic_intr_status = (*uic->uic_mf_intr_status)();
+	const uint32_t irqmask = uic->uic_intr_status;
+#else
 	const uint32_t irqmask = (*uic->uic_mf_intr_status)();
+#endif
+
 	if (irqmask == 0)
 		return 255;
 	return IRQ_OF_MASK(irqmask);
