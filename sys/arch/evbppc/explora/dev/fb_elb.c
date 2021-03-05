@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.14 2020/11/21 15:42:20 thorpej Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.15 2021/03/05 06:48:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.14 2020/11/21 15:42:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.15 2021/03/05 06:48:20 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -66,7 +66,7 @@ struct fb_elb_softc {
 static int	fb_elb_probe(device_t, cfdata_t, void *);
 static void	fb_elb_attach(device_t, device_t, void *);
 void		fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
-static void	fb_init(struct fb_dev *, int);
+static void	fb_init(struct fb_dev *);
 static int	fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	fb_mmap(void *, void *, off_t, int);
 static int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
@@ -153,7 +153,8 @@ fb_elb_attach(device_t parent, device_t self, void *aux)
 	bus_space_map(sc->sc_fb->fb_iot, eaa->elb_base2, FB_NPORTS,
 	    0, &sc->sc_fb->fb_ioh);
 
-	fb_init(sc->sc_fb, !is_console);
+	if (!is_console)
+		fb_init(sc->sc_fb);
 
 	ri = &sc->sc_fb->fb_ri;
 
@@ -168,24 +169,19 @@ fb_elb_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-fb_init(struct fb_dev *fb, int full)
+fb_init(struct fb_dev *fb)
 {
 	struct rasops_info *ri = &fb->fb_ri;
 
-	if (full) {
-		s3_init(fb, &ri->ri_width, &ri->ri_height);
-		ri->ri_depth = 8;
-		ri->ri_stride = ri->ri_width;
-		ri->ri_bits = fb->fb_vram;
-		ri->ri_flg = RI_CENTER;
-		if (ri == &console_dev.fb_ri)
-			ri->ri_flg |= RI_NO_AUTO;
+	s3_init(fb, &ri->ri_width, &ri->ri_height);
+	ri->ri_depth = 8;
+	ri->ri_stride = ri->ri_width;
+	ri->ri_bits = fb->fb_vram;
+	ri->ri_flg = RI_CENTER | RI_CLEAR;
+	if (ri == &console_dev.fb_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 
-		rasops_init(ri, 500, 500);
-	} else {
-		ri->ri_origbits = fb->fb_vram;	/*XXX*/
-		rasops_reconfig(ri, 500, 500);
-	}
+	rasops_init(ri, 500, 500);
 
 	/* Replace the copy/erase ops. */
 	ri->ri_hw = fb;
@@ -287,7 +283,7 @@ fb_cnattach(bus_space_tag_t iot, bus_addr_t iobase, void *vram)
 	console_dev.fb_ioh = iobase;
 	console_dev.fb_vram = vram;
 
-	fb_init(&console_dev, 1);
+	fb_init(&console_dev);
 
 	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 
