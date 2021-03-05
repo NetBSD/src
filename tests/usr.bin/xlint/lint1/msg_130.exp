@@ -1,3 +1,3 @@
-msg_130.c(27): warning: enum type mismatch: 'enum color' ':' 'enum daytime' [130]
-msg_130.c(29): warning: enum type mismatch: 'enum color' '!=' 'enum size' [130]
-msg_130.c(30): warning: enum type mismatch: 'enum color' '==' 'enum size' [130]
+msg_130.c(29): warning: enum type mismatch: 'enum color' ':' 'enum daytime' [130]
+msg_130.c(31): warning: enum type mismatch: 'enum color' '!=' 'enum size' [130]
+msg_130.c(32): warning: enum type mismatch: 'enum color' '==' 'enum size' [130]
