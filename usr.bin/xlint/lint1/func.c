@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.74 2021/02/28 19:16:05 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.75 2021/03/05 17:10:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.74 2021/02/28 19:16:05 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.75 2021/03/05 17:10:05 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -427,6 +427,22 @@ named_label(sym_t *sym)
 }
 
 static void
+check_case_label_enum(const tnode_t *tn, const cstk_t *ci)
+{
+	/* similar to typeok_enum in tree.c */
+
+	if (!(tn->tn_type->t_is_enum || ci->c_swtype->t_is_enum))
+		return;
+	if (tn->tn_type->t_is_enum && ci->c_swtype->t_is_enum &&
+	    tn->tn_type->t_enum == ci->c_swtype->t_enum)
+		return;
+
+	/* enum type mismatch: '%s' '%s' '%s' */
+	warning(130, type_name(ci->c_swtype), getopname(EQ),
+	    type_name(tn->tn_type));
+}
+
+static void
 check_case_label(tnode_t *tn, cstk_t *ci)
 {
 	clst_t	*cl;
@@ -451,6 +467,8 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		error(198);
 		return;
 	}
+
+	check_case_label_enum(tn, ci);
 
 	lint_assert(ci->c_swtype != NULL);
 
