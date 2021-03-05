@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.58 2021/03/05 02:58:13 thorpej Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.59 2021/03/05 18:10:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.58 2021/03/05 02:58:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.59 2021/03/05 18:10:06 thorpej Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -177,10 +177,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	/* Get the timebase frequency from the firmware. */
 	get_timebase_frequency();
 
-	/* Initialize bus_space */
-	ofwoea_bus_space_init();
-
-	ofwoea_consinit();
+	/* Probe for the console device; it's initialized later. */
+	ofwoea_cnprobe();
 
 	if (ofw_quiesce)
 		OF_quiesce();
@@ -193,6 +191,12 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	 * firmware code fall into ours.
 	 */
 	ofwmsr &= ~PSL_IP;
+
+	/* Initialize bus_space */
+	ofwoea_bus_space_init();
+
+	/* Initialize the console device. */
+	ofwoea_consinit();
 
 	uvm_md_init();
 
