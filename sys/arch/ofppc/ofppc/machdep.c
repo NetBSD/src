@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2021/02/27 02:52:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 2021/03/05 01:33:33 thorpej Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2021/02/27 02:52:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2021/03/05 01:33:33 thorpej Exp $");
 
 #include "opt_ofwoea.h"
 
@@ -158,6 +158,30 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 			}
 		}
 	}
+
+#if defined(MULTIPROCESSOR)
+	int l;
+	char cpupath[32];
+
+	extern void cpu_spinstart(u_int);
+	extern volatile u_int cpu_spinstart_ack;
+
+	for (i = 1; i < CPU_MAXNUM; i++) {
+		snprintf(cpupath, sizeof(cpupath), "/cpus/@%x", i);
+		node = OF_finddevice(cpupath);
+		if (node <= 0)
+			continue;
+		aprint_verbose("Starting up CPU %d %s\n", i, cpupath);
+		OF_start_cpu(node, (u_int)cpu_spinstart, i);
+		for (l = 0; l < 100000000; l++) {
+			if (cpu_spinstart_ack == i) {
+				aprint_verbose("CPU %d spun up.\n", i);
+				break;
+			}
+			__asm volatile ("sync");
+		}
+	}
+#endif /* MULTIPROCESSOR */
 
 	ofwoea_initppc(startkernel, endkernel, args);
 }

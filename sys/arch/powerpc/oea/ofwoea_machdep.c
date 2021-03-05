@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.56 2021/02/27 02:52:48 thorpej Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.57 2021/03/05 01:33:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.56 2021/02/27 02:52:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.57 2021/03/05 01:33:33 thorpej Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -139,9 +139,6 @@ extern uint32_t ticks_per_intr;
 static void restore_ofmap(void);
 static void set_timebase(void);
 
-extern void cpu_spinstart(u_int);
-extern volatile u_int cpu_spinstart_ack;
-
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 {
@@ -154,35 +151,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	    sizeof(endsym));
 	if (startsym == NULL || endsym == NULL)
 	    startsym = endsym = NULL;
-#endif
-
-	/* Initialize bus_space */
-	ofwoea_bus_space_init();
-
-	ofwoea_consinit();
-
-	if (ofw_quiesce)
-		OF_quiesce();
-
-#if defined(MULTIPROCESSOR) && defined(ofppc)
-	char cpupath[32];
-	int i, l, node;
-
-	for (i = 1; i < CPU_MAXNUM; i++) {
-		snprintf(cpupath, sizeof(cpupath), "/cpus/@%x", i);
-		node = OF_finddevice(cpupath);
-		if (node <= 0)
-			continue;
-		aprint_verbose("Starting up CPU %d %s\n", i, cpupath);
-		OF_start_cpu(node, (u_int)cpu_spinstart, i);
-		for (l = 0; l < 100000000; l++) {
-			if (cpu_spinstart_ack == i) {
-				aprint_verbose("CPU %d spun up.\n", i);
-				break;
-			}
-			__asm volatile ("sync");
-		}
-	}
 #endif
 
 	/* Parse the args string */
@@ -203,6 +171,14 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		if (len > -1)
 			bootpath[len] = 0;
 	}
+
+	/* Initialize bus_space */
+	ofwoea_bus_space_init();
+
+	ofwoea_consinit();
+
+	if (ofw_quiesce)
+		OF_quiesce();
 
 	oea_init(pic_ext_intr);
 
