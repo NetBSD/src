@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2019/01/17 07:39:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2021/03/05 13:34:19 martin Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -23,7 +23,7 @@
 # for setting CFLAGS relevant to your make, eg
 #   % make COPTS="-DDO_HTPASSWD"
 
-COPTS+=	-DDO_HTPASSWD
+COPTS+=	-DDO_HTPASSWD -DNO_BLOCKLIST_SUPPORT
 PROG=	bozohttpd
 LINKS=	${BINDIR}/bozohttpd ${BINDIR}/httpd
 MAN=	bozohttpd.8
@@ -79,6 +79,12 @@ CLEANFILES+=	bozohttpd.8.html bozohttpd.8.txt
 
 check:
 	cd ${.CURDIR}/testsuite && ${MAKE} check
+
+.if empty(BOZOVER)
+BOZOVER!=	sed -n \
+		    -e s/\"$$// -e \
+		    's/\#define[ 	]*SERVER_SOFTWARE[ 	]*\"bozohttpd\///p'  ${.PARSEDIR}/bozohttpd.c
+.endif
 
 # Create a distfile: uses /tmp
 BASE=bozohttpd-${BOZOVER}
