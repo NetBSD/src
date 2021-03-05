@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.3 2011/06/18 17:06:52 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.4 2021/03/05 07:10:27 rin Exp $	*/
 
 #ifndef _POWERPC_IBM4XX_SPR_H_
 #define	_POWERPC_IBM4XX_SPR_H_
@@ -43,7 +43,10 @@
 #define	PVR_401F2		0x00260000
 #define	PVR_401G2		0x00270000
 
-#define	PVR_403			0x00200000
+#define	PVR_403GA		0x00200000	/* XXX no MMU */
+#define	PVR_403GB		0x00200100	/* XXX no MMU */
+#define	PVR_403GC		0x00200200
+#define	PVR_403GCX		0x00201400
 
 #define PVR_405GP		0x40110000
 #define PVR_405GP_PASS1 	0x40110000	/* RevA */
