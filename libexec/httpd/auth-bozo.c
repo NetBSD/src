@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.24 2019/02/28 08:28:21 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.24.2.1 2021/03/05 13:34:19 martin Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2019 Matthew R. Green
+ * Copyright (c) 1997-2020 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -105,6 +105,11 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 					pass) != 0)
 				break;
 			fclose(fp);
+
+#ifndef NO_BLOCKLIST_SUPPORT
+			pfilter_notify(BLOCKLIST_AUTH_OK, 200);
+#endif /* !NO_BLOCKLIST_SUPPORT */
+
 			return 0;
 		}
 	}

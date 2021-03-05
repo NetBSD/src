@@ -1,9 +1,9 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.32 2019/02/28 08:28:21 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.32.2.1 2021/03/05 13:34:19 martin Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2019 Matthew R. Green
+ * Copyright (c) 1997-2020 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,11 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 #include <assert.h>
 
 #include "bozohttpd.h"
@@ -57,7 +59,8 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 	DIR *dp;
 	char buf[MAXPATHLEN];
 	char *file = NULL, *printname = NULL, *p;
-	int k, j;
+	int k, j, fd;
+	ssize_t rlen;
 
 	if (!isindex || !httpd->dir_indexing)
 		return 0;
@@ -197,6 +200,23 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
         	free(deo[k]);
 	free(deo);
 	bozo_printf(httpd, "</table>\r\n");
+	if (httpd->dir_readme != NULL) {
+		if (httpd->dir_readme[0] == '/')
+			snprintf(buf, sizeof buf, "%s", httpd->dir_readme);
+		else
+			snprintf(buf, sizeof buf, "%s/%s", dirpath, httpd->dir_readme);
+		fd = open(buf, O_RDONLY);
+		if (fd != -1) {
+			bozo_flush(httpd, stdout);
+			do {
+				rlen = read(fd, buf, sizeof buf);
+				if (rlen <= 0)
+					break;
+				bozo_write(httpd, STDOUT_FILENO, buf, rlen);
+			} while (1);
+			close(fd);
+		}
+	}
 	bozo_printf(httpd, "</body></html>\r\n\r\n");
 	bozo_flush(httpd, stdout);
 

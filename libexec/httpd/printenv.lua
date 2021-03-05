@@ -1,10 +1,10 @@
--- $NetBSD: printenv.lua,v 1.3 2015/12/07 03:11:48 kamil Exp $
+-- $NetBSD: printenv.lua,v 1.3.18.1 2021/03/05 13:34:19 martin Exp $
 
 -- this small Lua script demonstrates the use of Lua in (bozo)httpd
 -- it will simply output the "environment"
 
 -- Keep in mind that bozohttpd forks for each request when started in
--- daemon mode, you can set global veriables here, but they will have
+-- daemon mode, you can set global variables here, but they will have
 -- the same value on each invocation.  You can not keep state between
 -- two calls.
 
@@ -13,6 +13,10 @@
 -- and then navigate to: http://127.0.0.1:8080/test/printenv
 
 local httpd = require 'httpd'
+
+function escape_html(s)
+  return s:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;'):gsub('"', '&quot;')
+end
 
 function printenv(env, headers, query)
 
@@ -40,18 +44,18 @@ function printenv(env, headers, query)
 	httpd.print('<h2>Server Environment</h2>')
 	-- print the list of "environment" variables
 	for k, v in pairs(env) do
-		httpd.print(k .. '=' .. v .. '<br/>')
+		httpd.print(escape_html(k) .. '=' .. escape_html(v) .. '<br/>')
 	end
 
 	httpd.print('<h2>Request Headers</h2>')
 	for k, v in pairs(headers) do
-		httpd.print(k .. '=' .. v .. '<br/>')
+		httpd.print(escape_html(k) .. '=' .. escape_html(v) .. '<br/>')
 	end
 
 	if query ~= nil then
 		httpd.print('<h2>Query Variables</h2>')
 		for k, v in pairs(query) do
-			httpd.print(k .. '=' .. v .. '<br/>')
+			httpd.print(escape_html(k) .. '=' .. escape_html(v) .. '<br/>')
 		end
 	end
 
@@ -83,7 +87,7 @@ function form(env, header, query)
 		end
 
 		for k, v in pairs(query) do
-			httpd.print(k .. '=' .. v .. '<br/>')
+			httpd.print(escape_html(k) .. '=' .. escape_html(v) .. '<br/>')
 		end
 	else
 		httpd.print('No values')

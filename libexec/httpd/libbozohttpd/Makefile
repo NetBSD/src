@@ -6,8 +6,8 @@
 LIB=	bozohttpd
 COPTS+=	-I$(.CURDIR)/..
 
-COPTS+=	-DDO_HTPASSWD
-CPPFLAGS+= -DDO_HTPASSWD
+COPTS+=	-DDO_HTPASSWD 
+CPPFLAGS+= -DDO_HTPASSWD -DNO_BLOCKLIST_SUPPORT
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c
 SRCS+=	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
 SRCS+=	lua-bozo.c
