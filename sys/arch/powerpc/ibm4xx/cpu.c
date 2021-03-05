@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2020/03/05 01:21:09 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.35 2021/03/05 07:10:27 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2020/03/05 01:21:09 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2021/03/05 07:10:27 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,9 +130,39 @@ static const struct cputab models[] = {
 			.icache_line_size = 16,
 		}
 	}, {
-		.version = PVR_403, 
-		.mask = 0xffff0000,
-		.name = "403",
+		.version = PVR_403GA,	/* XXX no MMU */
+		.mask = 0xffffff00,
+		.name = "403GA",
+		.ci = {
+			.dcache_size = 1024,
+			.dcache_line_size = 16,
+			.icache_size = 2048,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_403GB,	/* XXX no MMU */
+		.mask = 0xffffff00,
+		.name = "403GB",
+		.ci = {
+			.dcache_size = 1024,
+			.dcache_line_size = 16,
+			.icache_size = 2048,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_403GC,
+		.mask = 0xffffff00,
+		.name = "403GC",
+		.ci = {
+			.dcache_size = 1024,
+			.dcache_line_size = 16,
+			.icache_size = 2048,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_403GCX,
+		.mask = 0xffffff00,
+		.name = "403GCX",
 		.ci = {
 			.dcache_size = 8192,
 			.dcache_line_size = 16,
