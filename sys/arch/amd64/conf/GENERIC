@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.585 2021/03/04 15:58:50 gdt Exp $
+# $NetBSD: GENERIC,v 1.586 2021/03/05 20:18:39 gdt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.585 $"
+#ident		"GENERIC-$Revision: 1.586 $"
 
 maxusers	64		# estimated number of users
 
@@ -1133,7 +1133,7 @@ pseudo-device	ccd			# concatenated/striped disk devices
 pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#Options to enable various other RAIDframe RAID types.
+# Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
 #options 	RF_INCLUDE_RAID5_RS=1
 #options 	RF_INCLUDE_PARITYLOGGING=1
