@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.29 2021/03/05 17:47:16 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.30 2021/03/05 17:53:51 christos Exp $	*/
 /* $OpenBSD: scp.c,v 1.213 2020/10/18 11:32:01 djm Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.29 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.30 2021/03/05 17:53:51 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -877,7 +877,7 @@ brace_expand(const char *pattern, char ***patternsp, size_t *npatternsp)
 void
 toremote(int argc, char **argv)
 {
-	char *suser = NULL, *host = NULL, *src;
+	char *suser = NULL, *host = NULL, *src = NULL;
 	char *bp, *tuser, *thost, *targ;
 	int sport = -1, tport = -1;
 	arglist alist;
@@ -911,7 +911,7 @@ toremote(int argc, char **argv)
 	for (i = 0; i < argc - 1; i++) {
 		free(suser);
 		free(host);
-		free(__UNCONST(src));
+		free(src);
 		r = parse_scp_uri(argv[i], &suser, &host, &sport, &src);
 		if (r == -1) {
 			fmprintf(stderr, "%s: invalid uri\n", argv[i]);
@@ -989,16 +989,16 @@ toremote(int argc, char **argv)
 out:
 	free(tuser);
 	free(thost);
-	free(__UNCONST(targ));
+	free(targ);
 	free(suser);
 	free(host);
-	free(__UNCONST(src));
+	free(src);
 }
 
 static void
 tolocal(int argc, char **argv)
 {
-	char *bp, *host = NULL, *suser = NULL, *src;
+	char *bp, *host = NULL, *suser = NULL, *src = NULL;
 	arglist alist;
 	int i, r, sport = -1;
 
@@ -1008,7 +1008,7 @@ tolocal(int argc, char **argv)
 	for (i = 0; i < argc - 1; i++) {
 		free(suser);
 		free(host);
-		free(__UNCONST(src));
+		free(src);
 		r = parse_scp_uri(argv[i], &suser, &host, &sport, &src);
 		if (r == -1) {
 			fmprintf(stderr, "%s: invalid uri\n", argv[i]);
@@ -1050,7 +1050,7 @@ tolocal(int argc, char **argv)
 	}
 	free(suser);
 	free(host);
-	free(__UNCONST(src));
+	free(src);
 }
 
 void
