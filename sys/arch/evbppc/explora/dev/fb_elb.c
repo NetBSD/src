@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.15 2021/03/05 06:48:20 rin Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.16 2021/03/05 06:50:57 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.15 2021/03/05 06:48:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.16 2021/03/05 06:50:57 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -389,20 +389,20 @@ fb_copycols(void *v, int row, int srccol, int dstcol, int ncols)
 
 static u_int8_t default_cmap[] = {
 	/* black */		  0,   0,   0,
-	/* blue */		  0,   0, 192,
-	/* green */		  0, 192,   0,
-	/* cyan */		  0, 192, 192,
 	/* red */		192,   0,   0,
-	/* magenta */		192,   0, 192,
+	/* green */		  0, 192,   0,
 	/* brown */		192, 192,   0,
+	/* blue */		  0,   0, 192,
+	/* magenta */		192,   0, 192,
+	/* cyan */		  0, 192, 192,
 	/* lightgrey */		212, 208, 200,
 	/* darkgrey */		200, 192, 188,
-	/* lightblue */		  0,   0, 255,
-	/* lightgreen */	  0, 255,   0,
-	/* lightcyan */		  0, 255, 255,
 	/* lightred */		255,   0,   0,
-	/* lightmagenta */	255,   0, 255,
+	/* lightgreen */	  0, 255,   0,
 	/* yellow */		255, 255,   0,
+	/* lightblue */		  0,   0, 255,
+	/* lightmagenta */	255,   0, 255,
+	/* lightcyan */		  0, 255, 255,
 	/* white */		255, 255, 255,
 };
 
