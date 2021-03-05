@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.23 2021/01/26 14:49:41 thorpej Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.24 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.23 2021/01/26 14:49:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.24 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -145,7 +145,8 @@ mediabay_attach(device_t parent, device_t self, void *aux)
 
 	printf(" irq %d %s\n", irq, intr_typename(itype));
 
-	intr_establish(irq, itype, IPL_BIO, mediabay_intr, sc);
+	intr_establish_xname(irq, itype, IPL_BIO, mediabay_intr, sc,
+	    device_xname(self));
 
 	sc->sc_content = NULL;
 
