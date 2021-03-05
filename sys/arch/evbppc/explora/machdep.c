@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2021/03/02 07:44:08 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2021/03/05 06:26:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2021/03/02 07:44:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2021/03/05 06:26:56 rin Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2021/03/02 07:44:08 rin Exp $");
 #include <ddb/db_extern.h>
 #endif
 
-#define MEMREGIONS	2
 #define TLB_PG_SIZE	(16*1024*1024)
 
 char machine[] = MACHINE;		/* from <machine/param.h> */
@@ -79,11 +78,7 @@ char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 static const unsigned int cpuspeed = 66000000;
 
-prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
-
-static struct mem_region phys_mem[MEMREGIONS];
-static struct mem_region avail_mem[MEMREGIONS];
 
 void		initppc(vaddr_t, vaddr_t);
 
@@ -112,11 +107,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 			size = maddr+msize;
 	}
 
-	phys_mem[0].start = 0;
-	phys_mem[0].size = size & ~PGOFSET;
-	avail_mem[0].start = startkernel;
-	avail_mem[0].size = size-startkernel;
-
 	/*
 	 * Setup initial tlbs.
 	 * Kernel memory and console device are
@@ -140,48 +130,29 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	/* Disable all timer interrupts */
 	mtspr(SPR_TCR, 0);
 
+	ibm40x_memsize_init(size, startkernel);
 	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
+
+	/*
+	 * Look for the ibm4xx modules in the right place.
+	 */
+	module_machine = module_machine_ibm4xx;
 }
 
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
 	prop_number_t pn;
-	char pbuf[9];
 
 	/*
-	 * Initialize error message buffer (before start of kernel)
+	 * cpu common startup
 	 */
-	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));
-
-	printf("%s%s", copyright, version);
-	printf("NCD Explora451\n");
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	ibm4xx_cpu_startup("NCD Explora 451");
 
 	/*
 	 * Set up the board properties database.
 	 */
-	board_properties = prop_dictionary_create();
-	KASSERT(board_properties != NULL);
+	board_info_init();
 
 	pn = prop_number_create_integer(ctob(physmem));
 	KASSERT(pn != NULL);
@@ -196,12 +167,9 @@ cpu_startup(void)
 		panic("setting processor-frequency");
 	prop_object_release(pn);
 
-	intr_init();
-	
 	/*
-	 * Look for the ibm4xx modules in the right place.
+	 * no fake mapiodev
 	 */
-	module_machine = module_machine_ibm4xx;
 	fake_mapiodev = 0;
 }
 
@@ -247,11 +215,4 @@ cpu_reboot(int howto, char *what)
 	while (1)
 		;
 #endif
-}
-
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-	*mem = phys_mem;
-	*avail = avail_mem;
 }

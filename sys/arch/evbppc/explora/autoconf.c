@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2021/03/02 07:38:48 rin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2021/03/05 06:26:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2021/03/02 07:38:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2021/03/05 06:26:56 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2021/03/02 07:38:48 rin Exp $");
 void
 cpu_configure(void)
 {
+
+	intr_init();
 	calc_delayconst();
 
 	if (config_rootfound("elb", NULL) == NULL)
