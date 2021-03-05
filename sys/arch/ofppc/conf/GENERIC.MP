@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.18 2012/02/09 19:04:04 matt Exp $
+# $NetBSD: GENERIC.MP,v 1.19 2021/03/05 01:31:43 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,3 +24,6 @@ include 	"arch/ofppc/conf/GENERIC"
 options 	MULTIPROCESSOR
 options 	IPI_OPENPIC
 options 	PMAP_NEED_FULL_MAPKERNEL
+
+no mvgbec*	at gt?
+no mvgbe0	at mvgbec?
