@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2021/03/05 06:26:56 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2021/03/05 06:30:45 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2021/03/05 06:26:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2021/03/05 06:30:45 rin Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -166,6 +166,11 @@ cpu_startup(void)
 				pn) == false)
 		panic("setting processor-frequency");
 	prop_object_release(pn);
+
+	/*
+	 * Now that we have VM, malloc()s are OK in bus_space.
+	 */
+	bus_space_mallocok();
 
 	/*
 	 * no fake mapiodev
