@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.35 2021/01/26 14:49:41 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.36 2021/03/05 07:15:53 rin Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.35 2021/01/26 14:49:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.36 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,8 @@ pmu_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map registers\n");
 		return;
 	}
-	sc->sc_ih = intr_establish(irq, type, IPL_TTY, pmu_intr, sc);
+	sc->sc_ih = intr_establish_xname(irq, type, IPL_TTY, pmu_intr, sc,
+	    device_xname(self));
 
 	pmu_init(sc);
 

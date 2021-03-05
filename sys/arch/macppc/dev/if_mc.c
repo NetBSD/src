@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.26 2019/12/05 06:28:20 msaitoh Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.27 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.26 2019/12/05 06:28:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.27 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,6 +108,7 @@ mc_attach(device_t parent, device_t self, void *aux)
 	struct mc_softc *sc = device_private(self);
 	uint8_t myaddr[ETHER_ADDR_LEN];
 	u_int *reg;
+	char intr_xname[INTRDEVNAMEBUF];
 
 	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
@@ -169,9 +170,16 @@ mc_attach(device_t parent, device_t self, void *aux)
 	dbdma_reset(sc->sc_txdma);
 
 	/* Install interrupt handlers */
+
 	/*intr_establish(ca->ca_intr[1], IST_EDGE, IPL_NET, mc_dmaintr, sc);*/
-	intr_establish(ca->ca_intr[2], IST_EDGE, IPL_NET, mc_dmaintr, sc);
-	intr_establish(ca->ca_intr[0], IST_EDGE, IPL_NET, mcintr, sc);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s dma", device_xname(self));
+	intr_establish_xname(ca->ca_intr[2], IST_EDGE, IPL_NET, mc_dmaintr, sc,
+	    intr_xname);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s pio", device_xname(self));
+	intr_establish_xname(ca->ca_intr[0], IST_EDGE, IPL_NET, mcintr, sc,
+	    intr_xname);
 
 	sc->sc_biucc = XMTSP_64;
 	sc->sc_fifocc = XMTFW_16 | RCVFW_64 | XMTFWU | RCVFWU |

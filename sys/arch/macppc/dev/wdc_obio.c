@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.62 2021/01/26 14:49:41 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.63 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.62 2021/01/26 14:49:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.63 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,8 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	wdr->data32ioh = wdr->cmd_ioh;
 #endif
 
-	sc->sc_ih = intr_establish(intr, type, IPL_BIO, wdcintr, chp);
+	sc->sc_ih = intr_establish_xname(intr, type, IPL_BIO, wdcintr, chp,
+	    device_xname(self));
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20,

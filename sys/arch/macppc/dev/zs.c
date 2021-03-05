@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.50 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: zs.c,v 1.51 2021/03/05 07:15:53 rin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.50 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.51 2021/03/05 07:15:53 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -211,6 +211,7 @@ zsc_attach(device_t parent, device_t self, void *aux)
 	int s, chip, theflags;
 	int node, intr[2][3];
 	u_int regs[6];
+	char intr_xname[INTRDEVNAMEBUF];
 
 	zsc_attached = 1;
 
@@ -377,12 +378,18 @@ zsc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* XXX - Now safe to install interrupt handlers. */
-	intr_establish(intr[0][0], IST_EDGE, IPL_TTY, zshard, zsc);
-	intr_establish(intr[1][0], IST_EDGE, IPL_TTY, zshard, zsc);
+	for (channel = 0; channel < 2; channel++) {
+		snprintf(intr_xname, sizeof(intr_xname), "%s pio%d",
+		    device_xname(self), channel);
+		intr_establish_xname(intr[channel][0], IST_EDGE, IPL_TTY,
+		    zshard, zsc, intr_xname);
 #ifdef ZS_TXDMA
-	intr_establish(intr[0][1], IST_EDGE, IPL_TTY, zs_txdma_int, (void *)0);
-	intr_establish(intr[1][1], IST_EDGE, IPL_TTY, zs_txdma_int, (void *)1);
+		snprintf(intr_xname, sizeof(intr_xname), "%s dma%d",
+		    device_xname(self), channel);
+		intr_establish_xname(intr[channel][1], IST_EDGE, IPL_TTY,
+		    zs_txdma_int, (void *)channel, intr_xname);
 #endif
+	}
 
 	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
 		(void (*)(void *)) zsc_intr_soft, zsc);

@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_hammerhead.c,v 1.5 2011/06/05 16:52:24 matt Exp $ */
+/* $NetBSD: ipi_hammerhead.c,v 1.6 2021/03/05 07:15:53 rin Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_hammerhead.c,v 1.5 2011/06/05 16:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_hammerhead.c,v 1.6 2021/03/05 07:15:53 rin Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
@@ -93,7 +93,8 @@ hh_send_ipi(cpuid_t target, uint32_t mesg)
 static void
 hh_establish_ipi(int type, int level, void *ih_args)
 {
-	intr_establish(ipiops.ppc_ipi_vector, type, level, ipi_intr, ih_args);
+	intr_establish_xname(ipiops.ppc_ipi_vector, type, level, ipi_intr,
+	    ih_args, "hh ipi");
 }
 
 #endif /*MULTIPROCESSOR*/

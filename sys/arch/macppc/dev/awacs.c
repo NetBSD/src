@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.50 2021/02/06 07:20:36 isaki Exp $	*/
+/*	$NetBSD: awacs.c,v 1.51 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.50 2021/02/06 07:20:36 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.51 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -307,7 +307,7 @@ awacs_attach(device_t parent, device_t self, void *aux)
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
 	int len = -1, perch;
 	int root_node;
-	char compat[256];
+	char compat[256], intr_xname[INTRDEVNAMEBUF];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -361,9 +361,18 @@ awacs_attach(device_t parent, device_t self, void *aux)
 		cirq_type = oirq_type = iirq_type = IST_EDGE;
 	}
 
-	intr_establish(cirq, cirq_type, IPL_BIO, awacs_status_intr, sc);
-	intr_establish(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc);
-	intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc);
+	snprintf(intr_xname, sizeof(intr_xname), "%s status",
+	    device_xname(self));
+	intr_establish_xname(cirq, cirq_type, IPL_BIO, awacs_status_intr, sc,
+	    intr_xname);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s out", device_xname(self));
+	intr_establish_xname(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc,
+	    intr_xname);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s in", device_xname(self));
+	intr_establish_xname(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc,
+	    intr_xname);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);

@@ -277,7 +277,8 @@ smu_setup_doorbell(struct smu_softc *sc)
 	aprint_normal(" mbox 0x%x gpio 0x%x irq %d",
 	    sc->sc_dbell_mbox, sc->sc_dbell_gpio, irq);
 
-	intr_establish(irq, IST_EDGE_FALLING, IPL_TTY, smu_dbell_gpio_intr, sc);
+	intr_establish_xname(irq, IST_EDGE_FALLING, IPL_TTY,
+	    smu_dbell_gpio_intr, sc, device_xname(sc->sc_dev));
 
 	return 0;
 }

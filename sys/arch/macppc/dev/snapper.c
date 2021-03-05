@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.55 2020/08/08 22:37:19 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.56 2021/03/05 07:15:53 rin Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.55 2020/08/08 22:37:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.56 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -710,7 +710,7 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	struct confargs *ca;
 	int cirq, oirq, iirq, /*cirq_type,*/ oirq_type, iirq_type, soundbus;
 	uint32_t intr[6], reg[6];
-	char compat[32];
+	char compat[32], intr_xname[INTRDEVNAMEBUF];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -781,8 +781,14 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	iirq_type = (intr[5] & 1) ? IST_LEVEL : IST_EDGE;
 
 	/* intr_establish(cirq, cirq_type, IPL_AUDIO, snapper_intr, sc); */
-	intr_establish(oirq, oirq_type, IPL_AUDIO, snapper_intr, sc);
-	intr_establish(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s out", device_xname(self));
+	intr_establish_xname(oirq, oirq_type, IPL_AUDIO, snapper_intr, sc,
+	    intr_xname);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s in", device_xname(self));
+	intr_establish_xname(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc,
+	    intr_xname);
 
 	aprint_normal(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
@@ -2064,6 +2070,7 @@ snapper_init(struct snapper_softc *sc, int node)
 	int gpio;
 	int headphone_detect_intr;
 	uint32_t gpio_base, reg[1], fcreg;
+	char intr_xname[INTRDEVNAMEBUF];
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
 
@@ -2147,9 +2154,12 @@ snapper_init(struct snapper_softc *sc, int node)
 	DPRINTF(" headphone-detect intr %x\n", headphone_detect_intr);
 	DPRINTF(" audio-hw-reset %x\n", audio_hw_reset);
 
-	if (headphone_detect_intr != -1)
-		intr_establish(headphone_detect_intr, IST_EDGE, IPL_AUDIO,
-		    snapper_cint, sc);
+	if (headphone_detect_intr != -1) {
+		snprintf(intr_xname, sizeof(intr_xname), "%s headphone",
+		    device_xname(sc->sc_dev));
+		intr_establish_xname(headphone_detect_intr, IST_EDGE, IPL_AUDIO,
+		    snapper_cint, sc, intr_xname);
+	}
 
 	sc->sc_rate = 44100;	/* default rate */
 	sc->sc_bitspersample = 16;

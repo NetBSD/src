@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.32 2016/07/15 22:10:47 macallan Exp $	*/
+/*	$NetBSD: esp.c,v 1.33 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.32 2016/07/15 22:10:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.33 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -232,7 +232,8 @@ espattach(device_t parent, device_t self, void *aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* and the interuppts */
-	intr_establish(esc->sc_pri, IST_EDGE, IPL_BIO, ncr53c9x_intr, sc);
+	intr_establish_xname(esc->sc_pri, IST_EDGE, IPL_BIO, ncr53c9x_intr, sc,
+	    device_xname(self));
 
 	/* Do the common parts of attachment. */
 	sc->sc_adapter.adapt_minphys = minphys;
