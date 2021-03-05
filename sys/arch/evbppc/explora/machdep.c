@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2021/03/05 06:40:15 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2021/03/05 07:06:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2021/03/05 06:40:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2021/03/05 07:06:15 rin Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -149,7 +149,7 @@ cpu_startup(void)
 	/*
 	 * cpu common startup
 	 */
-	ibm4xx_cpu_startup("NCD Explora 451");
+	ibm4xx_cpu_startup("NCD Explora 450");
 
 	/*
 	 * Set up the board properties database.
