@@ -1,4 +1,4 @@
-/*	$NetBSD: digest.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: digest.h,v 1.3 2021/03/05 17:47:16 christos Exp $	*/
 /* $OpenBSD: digest.h,v 1.8 2017/05/08 22:57:38 djm Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>

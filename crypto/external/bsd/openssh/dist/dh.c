@@ -1,5 +1,6 @@
-/*	$NetBSD: dh.c,v 1.18 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.71 2019/09/06 06:08:11 djm Exp $ */
+/*	$NetBSD: dh.c,v 1.19 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: dh.c,v 1.72 2020/10/18 11:32:01 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.18 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: dh.c,v 1.19 2021/03/05 17:47:16 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -239,7 +240,7 @@ dh_pub_is_valid(const DH *dh, const BIGNUM *dh_pub)
 	}
 
 	if ((tmp = BN_new()) == NULL) {
-		error("%s: BN_new failed", __func__);
+		error_f("BN_new failed");
 		return 0;
 	}
 	if (!BN_sub(tmp, dh_p, BN_value_one()) ||
@@ -457,7 +458,7 @@ dh_new_group18(void)
 DH *
 dh_new_group_fallback(int max)
 {
-	debug3("%s: requested max size %d", __func__, max);
+	debug3_f("requested max size %d", max);
 	if (max < 3072) {
 		debug3("using 2k bit group 14");
 		return dh_new_group14();

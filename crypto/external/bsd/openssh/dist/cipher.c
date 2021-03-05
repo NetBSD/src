@@ -1,5 +1,6 @@
-/*	$NetBSD: cipher.c,v 1.18 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: cipher.c,v 1.117 2020/04/03 04:27:03 djm Exp $ */
+/*	$NetBSD: cipher.c,v 1.19 2021/03/05 17:47:16 christos Exp $	*/
+/* $OpenBSD: cipher.c,v 1.118 2020/12/21 11:09:32 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.18 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.19 2021/03/05 17:47:16 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -88,8 +89,6 @@ static const struct sshcipher ciphers[] = {
 	{ "aes128-cbc",		16, 16, 0, 0, CFLAG_CBC, EVP_aes_128_cbc },
 	{ "aes192-cbc",		16, 24, 0, 0, CFLAG_CBC, EVP_aes_192_cbc },
 	{ "aes256-cbc",		16, 32, 0, 0, CFLAG_CBC, EVP_aes_256_cbc },
-	{ "rijndael-cbc@lysator.liu.se",
-				16, 32, 0, 0, CFLAG_CBC, EVP_aes_256_cbc },
 	{ "aes128-ctr",		16, 16, 0, 0, 0, EVP_aes_128_ctr },
 	{ "aes192-ctr",		16, 24, 0, 0, 0, EVP_aes_192_ctr },
 	{ "aes256-ctr",		16, 32, 0, 0, 0, EVP_aes_256_ctr },
