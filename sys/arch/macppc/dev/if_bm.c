@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.63 2020/02/04 13:47:34 martin Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.64 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.63 2020/02/04 13:47:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.64 2021/03/05 07:15:53 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -178,6 +178,7 @@ bmac_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct mii_data *mii = &sc->sc_mii;
 	u_char laddr[6];
+	char intr_xname[INTRDEVNAMEBUF];
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -224,8 +225,13 @@ bmac_attach(device_t parent, device_t self, void *aux)
 	    ca->ca_intr[0], ca->ca_intr[2],
 	    ether_sprintf(laddr));
 
-	intr_establish(ca->ca_intr[0], IST_EDGE, IPL_NET, bmac_intr, sc);
-	intr_establish(ca->ca_intr[2], IST_EDGE, IPL_NET, bmac_rint, sc);
+	snprintf(intr_xname, sizeof(intr_xname), "%s tx", device_xname(self));
+	intr_establish_xname(ca->ca_intr[0], IST_EDGE, IPL_NET, bmac_intr, sc,
+	    intr_xname);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s rx", device_xname(self));
+	intr_establish_xname(ca->ca_intr[2], IST_EDGE, IPL_NET, bmac_rint, sc,
+	    intr_xname);
 
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;

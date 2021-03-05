@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.57 2020/02/04 07:36:36 skrll Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.58 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.57 2020/02/04 07:36:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.58 2021/03/05 07:15:53 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -173,7 +173,8 @@ gmac_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, buf, sizeof(buf));
 
-	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, gmac_intr, sc) == NULL) {
+	if (pci_intr_establish_xname(pa->pa_pc, ih, IPL_NET, gmac_intr, sc,
+	    device_xname(self)) == NULL) {
 		printf(": unable to establish interrupt");
 		if (intrstr)
 			printf(" at %s", intrstr);
