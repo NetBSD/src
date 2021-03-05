@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.12 2021/02/09 15:05:49 jakllsch Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.13 2021/03/05 13:21:07 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.12 2021/02/09 15:05:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.13 2021/03/05 13:21:07 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4435,6 +4435,7 @@ iavf_process_vc_event(struct iavf_softc *sc, struct ixl_aq_desc *iaq,
 		if (event->link_status) {
 			link = LINK_STATE_UP;
 			sc->sc_media_status |= IFM_ACTIVE;
+			sc->sc_media_active |= IFM_FDX;
 
 			ifp->if_baudrate = 0;
 			speed = iavf_find_link_speed(sc, event->link_speed);
