@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.24 2012/10/27 17:18:00 chs Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.25 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.24 2012/10/27 17:18:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.25 2021/03/05 07:15:53 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -92,7 +92,8 @@ wi_obio_attach(device_t parent, device_t self, void *aux)
 	struct confargs * const ca = aux;
 
 	aprint_normal(" irq %d:", ca->ca_intr[0]);
-	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, wi_intr, sc);
+	intr_establish_xname(ca->ca_intr[0], IST_LEVEL, IPL_NET, wi_intr, sc,
+	    device_xname(self));
 
 	wisc->sc_dev = self;
 	sc->sc_tag = wisc->sc_iot = ca->ca_tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.40 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: kauai.c,v 1.41 2021/03/05 07:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.40 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.41 2021/03/05 07:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,8 @@ kauai_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, wdcintr, chp) == NULL) {
+	if (pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, wdcintr, chp,
+	    device_xname(self)) == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt\n");
 		return;
 	}
