@@ -1,4 +1,26 @@
-/* $NetBSD: opt-bbb.0,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-bbb.0,v 1.2 2021/03/06 19:30:44 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+/*
+ * This is a block comment.
+ */
+/* This is not a block comment since it is single-line. */
+/*
+ * This is a second block comment.
+ */
+/* This is not a block comment. */
+/*
+ * Documentation of global_variable.
+ */
+int global_variable;
+/*
+ * Documentation of function_declaration.
+ */
+void function_declaration(void);
+/*
+ * Documentation of function_definition.
+ */
+void
+function_definition(void)
+{
+}

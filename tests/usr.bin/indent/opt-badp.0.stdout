@@ -1,4 +1,34 @@
-/* $NetBSD: opt-badp.0.stdout,v 1.1 2021/03/06 17:56:33 rillig Exp $ */
+/* $NetBSD: opt-badp.0.stdout,v 1.2 2021/03/06 19:30:44 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+static void
+no_declarations(void)
+{
+
+	action();
+}
+
+static void
+declarations_without_blank_line(void)
+{
+	int		local_variable;
+	action();		/* FIXME: need empty line above */
+}
+
+static void
+declaration_with_blank_line(void)
+{
+	int		local_variable;
+
+	action();
+}
+
+static void
+declaration_with_several_blank_lines(void)
+{
+	int		local_variable;
+
+
+
+	action();
+}
