@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.21 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: psl.h,v 1.22 2021/03/06 08:08:19 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,7 +111,7 @@ extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 #define	PSL_USERMOD		cpu_pslusermod
 #define	PSL_USERMASK		cpu_pslusermask
 #elif defined(PPC_BOOKE)
-#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IS | PSL_DS | PSL_ME | PSL_CE | PSL_DE)
+#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IS | PSL_DS | PSL_ME | PSL_CE)
 #define	PSL_USERMASK		(PSL_SPV | PSL_CE | 0xFFFF)
 #define	PSL_USERMOD		(0)
 #else /* PPC_IBM4XX */
@@ -122,14 +122,7 @@ extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 #endif
 #define	PSL_USERMASK		0xFFFF
 #define	PSL_USERMOD		(0)
-/* 
- * We also need to override the PSL_SE bit.  4xx have completely different
- * debug register support.  The SE bit is actually the DWE bit.  We want to
- * set the DE bit to enable the debug regs instead of the DWE bit.
- */
-#undef	PSL_SE
-#define	PSL_SE			PSL_DE
-#endif /* PPC_OEA */
+#endif
 
 #define	PSL_USERSRR1		((PSL_USERSET|PSL_USERMOD) & PSL_USERMASK)
 #define	PSL_USEROK_P(psl)	(((psl) & ~PSL_USERMOD) == PSL_USERSET)
