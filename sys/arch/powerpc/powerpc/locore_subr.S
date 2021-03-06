@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.64 2021/03/06 08:08:19 rin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.65 2021/03/06 08:34:58 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -401,7 +401,7 @@ _ENTRY(softint_fast_dispatch)
 	addi	%r1, %r5, USPACE - FRAMELEN - CALLFRAMELEN
 
 #if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
-	wrteei	1			/* interrupts are okay again */
+	wrtee	%r29			/* interrupts are okay again */
 #else /* PPC_OEA */
 	mtmsr	%r29
 #endif
