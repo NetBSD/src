@@ -1,4 +1,17 @@
-/* $NetBSD: opt-nbs.0,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-nbs.0,v 1.2 2021/03/06 23:09:17 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+void
+example(int i)
+{
+	print(sizeof(i));
+	print(sizeof(int));
+
+	print(sizeof i);
+	print(sizeof (i));
+	print(sizeof (int));
+
+	print(sizeof   i);
+	print(sizeof   (i));
+	print(sizeof   (int));
+}
