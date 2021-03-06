@@ -1,4 +1,19 @@
-/* $NetBSD: opt-d.0,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-d.0,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+/* XXX: oops, the comments at level 0 move below the '{' */
+void
+example(void)
+/* comment at level 0 */
+	/* comment at level 0 */
+{
+/* comment at level 1 */
+	/* comment at level 1 */
+		/* comment at level 1 */
+	{
+/* comment at level 2 */
+	/* comment at level 2 */
+		/* comment at level 2 */
+			/* comment at level 2 */
+	}
+}
