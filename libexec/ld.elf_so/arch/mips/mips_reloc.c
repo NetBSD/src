@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.73 2019/11/03 03:15:59 christos Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.74 2021/03/06 20:11:08 christos Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.73 2019/11/03 03:15:59 christos Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.74 2021/03/06 20:11:08 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,7 +129,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	obj->pltgot[0] = (Elf_Addr) &_rtld_bind_start;
 	/* XXX only if obj->pltgot[1] & 0x80000000 ?? */
-	obj->pltgot[1] |= (Elf_Addr) obj;
+	obj->pltgot[1] = (Elf_Addr) obj;
 }
 
 void
