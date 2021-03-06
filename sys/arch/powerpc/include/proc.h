@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13 2013/08/23 06:19:46 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.14 2021/03/06 08:08:19 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,11 @@
 #ifndef _POWERPC_PROC_H_
 #define _POWERPC_PROC_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_modular.h"
+#include "opt_ppcarch.h"
+#endif
+
 /*
  * Machine-dependent part of the lwp structure
  */
@@ -47,6 +52,11 @@ struct trapframe;
 
 struct mdproc {
 	void (*md_syscall)(struct trapframe *);
+#if defined(PPC_BOOKE) || defined(PPC_IBM4XX) || \
+    defined(MODULAR) || defined(_MODULE)
+	vaddr_t md_ss_addr[2];
+	uint32_t md_ss_insn[2];
+#endif
 };
 
 #ifdef _KERNEL
