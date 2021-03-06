@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85 2020/07/15 09:10:14 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.86 2021/03/06 08:08:19 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2020/07/15 09:10:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2021/03/06 08:08:19 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2020/07/15 09:10:14 rin Exp $");
 #include <sys/cpu.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
@@ -157,20 +158,10 @@ trap(struct trapframe *tf)
 
 	switch (type) {
 	case EXC_DEBUG|EXC_USER:
-		{
-			int srr2, srr3;
+		/* We don't use hardware breakpoints for userland. */
+		goto brain_damage;
 
-			__asm volatile("mfspr %0,0x3f0" :
-			    "=r" (rv), "=r" (srr2), "=r" (srr3) :);
-			printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2,
-			    srr3);
-			/* XXX fall through or break here?! */
-		}
-		/*
-		 * DEBUG intr -- probably single-step.
-		 */
 	case EXC_TRC|EXC_USER:
-		tf->tf_srr1 &= ~PSL_SE;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_trap = EXC_TRC;
@@ -317,13 +308,26 @@ isi:
 		ksi.ksi_addr = (void *)tf->tf_srr0;
 
 		if (tf->tf_esr & ESR_PTR) {
+			vaddr_t va;
 sigtrap:
+			va = (vaddr_t)tf->tf_srr0;
+			/*
+		 	 * Restore original instruction and clear BP.
+		 	 */
+			if (p->p_md.md_ss_addr[0] == va ||
+			    p->p_md.md_ss_addr[1] == va) {
+				rv = ppc_sstep(l, 0);
+				if (rv != 0)
+					goto vm_signal;
+				ksi.ksi_code = TRAP_TRACE;
+			} else
+				ksi.ksi_code = TRAP_BRKPT;
 			if (p->p_raslist != NULL &&
-			    ras_lookup(p, (void *)tf->tf_srr0) != (void *) -1) {
-				tf->tf_srr1 += 4;
+			    ras_lookup(p, (void *)va) != (void *)-1) {
+				tf->tf_srr0 += (ksi.ksi_code == TRAP_TRACE) ?
+				    0 : 4;
 				break;
 			}
-			ksi.ksi_code = TRAP_BRKPT;
 			ksi.ksi_signo = SIGTRAP;
 		} else if (tf->tf_esr & ESR_PPR) {
 			uint32_t opcode;
@@ -411,20 +415,6 @@ ctx_setup(int ctx, int srr1)
 			ctx_alloc(__UNVOLATILE(pm));
 		}
 		ctx = pm->pm_ctx;
-		if (srr1 & PSL_SE) {
-			int dbreg, mask = 0x48000000;
-				/*
-				 * Set the Internal Debug and
-				 * Instruction Completion bits of
-				 * the DBCR0 register.
-				 *
-				 * XXX this is also used by jtag debuggers...
-				 */
-			__asm volatile("mfspr %0,0x3f2;"
-			    "or %0,%0,%1;"
-			    "mtspr 0x3f2,%0;" :
-			    "=&r" (dbreg) : "r" (mask));
-		}
 	}
 	else if (!ctx) {
 		ctx = KERNEL_PID;

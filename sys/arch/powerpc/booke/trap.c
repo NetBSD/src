@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 2021/01/06 08:04:57 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 2021/03/06 08:08:19 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.36 2021/01/06 08:04:57 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.37 2021/03/06 08:08:19 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.36 2021/01/06 08:04:57 rin Exp $");
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/ras.h>
 #include <sys/siginfo.h>
 #include <sys/systm.h>
@@ -461,11 +462,31 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	ci->ci_ev_pgm.ev_count++;
 
+	KSI_INIT_TRAP(ksi);
+
 	if (tf->tf_esr & ESR_PTR) {
-		struct proc *p = curlwp->l_proc;
-		if (p->p_raslist != NULL
-		    && ras_lookup(p, (void *)tf->tf_srr0) != (void *) -1) {
-			tf->tf_srr0 += 4;
+		struct lwp * const l = curlwp;
+		struct proc * const p = curlwp->l_proc;
+		vaddr_t va = (vaddr_t)tf->tf_srr0;
+		int error;
+
+		/*
+		 * Restore original instruction and clear BP.
+		 */
+		if (p->p_md.md_ss_addr[0] == va ||
+		    p->p_md.md_ss_addr[1] == va) {
+			error = ppc_sstep(l, 0);
+			if (error != 0) {
+				vm_signal(error, EXC_PGM /* XXX */, va, ksi);
+				return error;
+			}
+			ksi->ksi_code = TRAP_TRACE;
+		} else
+			ksi->ksi_code = TRAP_BRKPT;
+
+		if (p->p_raslist != NULL &&
+		    ras_lookup(p, (void *)va) != (void *)-1) {
+			tf->tf_srr0 += (ksi->ksi_code == TRAP_TRACE) ? 0 : 4;
 			return 0;
 		}
 	}
@@ -494,7 +515,6 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		}
 	}
 
-	KSI_INIT_TRAP(ksi);
 	ksi->ksi_signo = SIGILL;
 	ksi->ksi_trap = EXC_PGM;
 	if (tf->tf_esr & ESR_PIL) {
@@ -503,7 +523,6 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		ksi->ksi_code = ILL_PRVOPC;
 	} else if (tf->tf_esr & ESR_PTR) {
 		ksi->ksi_signo = SIGTRAP;
-		ksi->ksi_code = TRAP_BRKPT;
 	} else {
 		ksi->ksi_code = 0;
 	}
@@ -511,6 +530,7 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	return rv;
 }
 
+#if 0
 static int
 debug_exception(struct trapframe *tf, ksiginfo_t *ksi)
 {
@@ -545,6 +565,7 @@ debug_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	ksi->ksi_code = TRAP_TRACE;
 	return rv;
 }
+#endif
 
 static int
 ali_exception(struct trapframe *tf, ksiginfo_t *ksi)
@@ -752,6 +773,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	switch (trap_code) {
 	case T_CRITIAL_INPUT:
 	case T_EXTERNAL_INPUT:
+	case T_DEBUG:
 	case T_DECREMENTER:
 	case T_FIXED_INTERVAL:
 	case T_WATCHDOG:
@@ -791,6 +813,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	case T_INSTRUCTION_TLB_ERROR:
 		rv = itlb_exception(tf, &ksi);
 		break;
+#if 0
 	case T_DEBUG:
 #ifdef DDB
 		if (!usertrap && ddb_exception(tf))
@@ -798,6 +821,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 #endif
 		rv = debug_exception(tf, &ksi);
 		break;
+#endif
 	case T_EMBEDDED_FP_DATA:
 		rv = embedded_fp_data_exception(tf, &ksi);
 		break;

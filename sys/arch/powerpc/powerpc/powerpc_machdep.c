@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.80 2020/07/15 08:58:52 rin Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.81 2021/03/06 08:08:19 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.80 2020/07/15 08:58:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.81 2021/03/06 08:08:19 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -160,6 +160,11 @@ setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_vrsave = 0;
 #endif
 	pcb->pcb_flags = PSL_FE_DFLT;
+
+#if defined(PPC_BOOKE) || defined(PPC_IBM4XX)
+	p->p_md.md_ss_addr[0] = p->p_md.md_ss_addr[1] = 0;
+	p->p_md.md_ss_insn[0] = p->p_md.md_ss_insn[1] = 0;
+#endif
 }
 
 /*

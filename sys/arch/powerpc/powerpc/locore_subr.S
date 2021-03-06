@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.63 2020/07/06 11:06:52 rin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.64 2021/03/06 08:08:19 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -174,9 +174,6 @@ ENTRY(cpu_switchto)
 #ifdef PPC_BOOKE
 	mfmsr	%r0
 	andis.	%r0,%r0,PSL_CE@h
-	tweqi	%r0,0	
-	mfmsr	%r0
-	andi.	%r0,%r0,PSL_DE@l
 	tweqi	%r0,0	
 #endif
 
@@ -509,8 +506,6 @@ _ENTRY(cpu_lwp_bootstrap)
 	lis	%r30, 0xbeeffeed@h
 	ori	%r30, %r30, 0xbeeffeed@l
 	andis.	%r0,%r31,PSL_CE@h
-	tweqi	%r0,0
-	andi.	%r0,%r31,PSL_DE@l
 	tweqi	%r0,0
 #endif
 	li	%r4, 1			/* make sure userret gets called */

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.41 2020/10/15 18:57:16 martin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.42 2021/03/06 08:08:19 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.41 2020/10/15 18:57:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.42 2021/03/06 08:08:19 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
+#include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
@@ -132,6 +133,7 @@ process_set_pc(struct lwp *l, void *addr)
 int
 process_sstep(struct lwp *l, int sstep)
 {
+#if !defined(PPC_BOOKE) && !defined(PPC_IBM4XX)
 	struct trapframe * const tf = l->l_md.md_utf;
 	
 	if (sstep) {
@@ -142,6 +144,12 @@ process_sstep(struct lwp *l, int sstep)
 		l->l_md.md_flags &= ~PSL_SE;
 	}
 	return 0;
+#else
+/*
+ * We use the software single-stepping for booke/ibm4xx.
+ */
+	return ppc_sstep(l, sstep);
+#endif
 }
 
 
@@ -274,3 +282,127 @@ process_machdep_validvecregs(struct proc *p)
 #endif
 }
 #endif /* __HAVE_PTRACE_MACHDEP */
+
+#if defined(PPC_BOOKE) || defined(PPC_IBM4XX)
+/*
+ * ppc_ifetch and ppc_istore:
+ * fetch/store instructions from/to given process (therefore, we cannot use
+ * ufetch/ustore(9) here).
+ */
+
+static int
+ppc_ifetch(struct lwp *l, vaddr_t va, uint32_t *insn)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = insn;
+	iov.iov_len = sizeof(*insn);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(*insn);
+	uio.uio_rw = UIO_READ;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	return process_domem(curlwp, l, &uio);
+}
+
+static int
+ppc_istore(struct lwp *l, vaddr_t va, uint32_t insn)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = &insn;
+	iov.iov_len = sizeof(insn);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(insn);
+	uio.uio_rw = UIO_WRITE;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	return process_domem(curlwp, l, &uio);
+}
+
+/*
+ * Insert or remove single-step breakpoints:
+ * We need two breakpoints, in general, at (SRR0 + 4) and the address to
+ * which the process can branch into.
+ */
+
+int
+ppc_sstep(struct lwp *l, int step)
+{
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct proc * const p = l->l_proc;
+	const uint32_t trap = 0x7d821008;	/* twge %r2, %r2 */
+	uint32_t insn;
+	vaddr_t va[2];
+	int i, rv;
+
+	if (step) {
+		if (p->p_md.md_ss_addr[0] != 0)
+			return 0; /* XXX Should we reset breakpoints? */
+
+		va[0] = (vaddr_t)tf->tf_srr0;
+		va[1] = 0;
+
+		/*
+		 * Find the address to which the process can branch into.
+		 */
+		if ((rv = ppc_ifetch(l, va[0], &insn)) != 0)
+			return rv;
+		if ((insn >> 28) == 4) {
+			if ((insn >> 26) == 0x12) {
+				const int32_t off =
+				    ((int32_t)(insn << 6) >> 6) & ~3;
+				va[1] = ((insn & 2) ? 0 : va[0]) + off;
+			} else if ((insn >> 26) == 0x10) {
+				const int16_t off = (int16_t)insn & ~3;
+				va[1] = ((insn & 2) ? 0 : va[0]) + off;
+			} else if ((insn & 0xfc00fffe) == 0x4c000420)
+				va[1] = tf->tf_ctr;
+			  else if ((insn & 0xfc00fffe) == 0x4c000020)
+				va[1] = tf->tf_lr;
+		}
+		va[0] += sizeof(insn);
+		if (va[1] == va[0])
+			va[1] = 0;
+
+		for (i = 0; i < 2; i++) {
+			if (va[i] == 0)
+				return 0;
+			if ((rv = ppc_ifetch(l, va[i], &insn)) != 0)
+				goto error;
+			p->p_md.md_ss_insn[i] = insn;
+			if ((rv = ppc_istore(l, va[i], trap)) != 0) {
+error:				/* Recover as far as possible. */
+				if (i == 1 && ppc_istore(l, va[0],
+				    p->p_md.md_ss_insn[0]) == 0)
+					p->p_md.md_ss_addr[0] = 0;
+				return rv;
+			}
+			p->p_md.md_ss_addr[i] = va[i];
+		}
+	} else {
+		for (i = 0; i < 2; i++) {
+			va[i] = p->p_md.md_ss_addr[i];
+			if (va[i] == 0)
+				return 0;
+			if ((rv = ppc_ifetch(l, va[i], &insn)) != 0)
+				return rv;
+			if (insn != trap) {
+				panic("%s: ss_insn[%d] = 0x%x != trap",
+				    __func__, i, insn);
+			}
+			if ((rv = ppc_istore(l, va[i], p->p_md.md_ss_insn[i]))
+			    != 0)
+				return rv;
+			p->p_md.md_ss_addr[i] = 0;
+		}
+	}
+	return 0;
+}
+#endif /* PPC_BOOKE || PPC_IBM4XX */
