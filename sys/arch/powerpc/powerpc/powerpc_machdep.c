@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.81 2021/03/06 08:08:19 rin Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.82 2021/03/06 08:32:17 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.81 2021/03/06 08:08:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.82 2021/03/06 08:32:17 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -381,7 +381,8 @@ void
 cpu_idle(void)
 {
 	KASSERT(mfmsr() & PSL_EE);
-	KASSERT(curcpu()->ci_cpl == IPL_NONE);
+	KASSERTMSG(curcpu()->ci_cpl == IPL_NONE,
+	    "ci_cpl = %d", curcpu()->ci_cpl);
 	(*curcpu()->ci_idlespin)();
 }
 
