@@ -1,4 +1,19 @@
-/* $NetBSD: opt-nbacc.0,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-nbacc.0,v 1.2 2021/03/06 23:09:17 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+int		a;
+#if 0
+int		b;
+#endif
+int		c;
+
+
+int		space_a;
+
+#if 0
+
+int		space_b;
+
+#endif
+
+int		space_c;
