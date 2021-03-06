@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.2 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.3 2021/03/06 13:32:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.2 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.3 2021/03/06 13:32:56 martin Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -90,6 +90,15 @@ extern int suline(void *, void *);	/* locore.s */
 
 #define	KDFAULT(c)	(KDFAULT_060(c) || KDFAULT_040(c) || KDFAULT_OTH(c))
 #define	WRFAULT(c)	(WRFAULT_060(c) || WRFAULT_040(c) || WRFAULT_OTH(c))
+
+
+#ifdef DEBUG
+extern int mmudebug, mmupid;
+#define MDB_FOLLOW	1
+#define MDB_WBFOLLOW	2
+#define MDB_WBFAILED	4
+#define MDB_ISPID(pid)	((pid) == mmupid)
+#endif
 
 #ifdef M68040
 #ifdef DEBUG
