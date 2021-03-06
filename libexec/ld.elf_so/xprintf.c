@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.22 2019/12/08 22:41:42 uwe Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.23 2021/03/06 20:09:39 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xprintf.c,v 1.22 2019/12/08 22:41:42 uwe Exp $");
+__RCSID("$NetBSD: xprintf.c,v 1.23 2021/03/06 20:09:39 christos Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -73,9 +73,11 @@ xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)
 				prec = va_arg(ap, int);
 				/* FALLTHROUGH */
 			case '.':
+			case '#':
 				fmt++;
 				goto rflag;
 			case 'l':
+			case 'j':
 				size |= SZ_LONG;
 				fmt++;
 				goto rflag;
