@@ -1,4 +1,17 @@
-/* $NetBSD: opt-bacc.0.stdout,v 1.1 2021/03/06 17:56:33 rillig Exp $ */
+/* $NetBSD: opt-bacc.0.stdout,v 1.2 2021/03/06 19:30:44 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+int		a;
+#if 0				/* FIXME: need blank line above */
+int		b;
+#endif				/* FIXME: need blank line below */
+int		c;
+
+
+int		space_a;
+#if 0				/* FIXME: need blank line above */
+
+int		space_b;	/* FIXME: need no blank line above */
+#endif
+
+int		space_c;
