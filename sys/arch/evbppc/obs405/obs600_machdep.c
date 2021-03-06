@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.11 2021/03/02 07:27:24 rin Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.12 2021/03/06 08:29:19 rin Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.11 2021/03/02 07:27:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.12 2021/03/06 08:29:19 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -206,11 +206,6 @@ cpu_startup(void)
 	 */
 	board_info_init();
 
-	/*
-	 * Now that we have VM, malloc()s are OK in bus_space.
-	 */
-	bus_space_mallocok();
-
 	pn = prop_number_create_integer(OBS600_CPU_FREQ);
 	KASSERT(pn != NULL);
 	if (prop_dictionary_set(board_properties, "processor-frequency", pn) ==
@@ -256,6 +251,11 @@ cpu_startup(void)
 	if (prop_dictionary_set(board_properties, "emac1-mii-phy", pn) == false)
 		panic("setting emac1-mii-phy");
 	prop_object_release(pn);
+
+	/*
+	 * Now that we have VM, malloc()s are OK in bus_space.
+	 */
+	bus_space_mallocok();
 
 	/*
 	 * no fake mapiodev
