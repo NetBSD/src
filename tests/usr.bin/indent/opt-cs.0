@@ -1,4 +1,6 @@
-/* $NetBSD: opt-cs.0,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-cs.0,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+int		i0 = (int)3.0;
+int		i1 = (int) 3.0;
+int		i3 = (int)   3.0;

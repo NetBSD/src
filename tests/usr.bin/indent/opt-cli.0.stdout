@@ -1,4 +1,25 @@
-/* $NetBSD: opt-cli.0.stdout,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-cli.0.stdout,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+void
+classify(int n)
+{
+	switch (n) {
+		    case 0:
+			print("zero");
+			break;
+		    case 1:
+			print("one");
+			break;
+		    case 2:
+		    case 3:
+			print("prime");
+			break;
+		    case 4:
+			print("square");
+			break;
+		    default:
+			print("large");
+			break;
+	}
+}
