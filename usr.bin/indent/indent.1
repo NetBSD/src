@@ -1,4 +1,4 @@
-.\"	$NetBSD: indent.1,v 1.28 2019/04/04 22:02:06 wiz Exp $
+.\"	$NetBSD: indent.1,v 1.29 2021/03/06 21:08:08 rillig Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"	@(#)indent.1	8.1 (Berkeley) 7/1/93
 .\" $FreeBSD: head/usr.bin/indent/indent.1 334944 2018-06-11 05:35:57Z pstef $
 .\"
-.Dd June 11, 2018
+.Dd March 6, 2021
 .Dt INDENT 1
 .Os
 .Sh NAME
@@ -62,8 +62,8 @@
 .Op Fl \&di Ns Ar n
 .Op Fl dj | Fl ndj
 .Bk -words
-.Op Fl ei | Fl nei
 .Op Fl eei | Fl neei
+.Op Fl ei | Fl nei
 .Ek
 .Bk -words
 .Op Fl fbs | Fl nfbs
@@ -292,6 +292,16 @@ left justifies declarations.
 indents declarations the same as code.
 The default is
 .Fl ndj .
+.It Fl eei , neei
+Enables (disables) extra indentation on continuation lines of
+the expression part of
+.Ic if
+and
+.Ic while
+statements.
+These continuation lines will be indented one extra level.
+The default is
+.Fl neei .
 .It Fl \&ei , nei
 Enables (disables) special
 .Ic else-if
@@ -305,16 +315,6 @@ will have the same indentation as the preceding
 statement.
 The default is
 .Fl ei .
-.It Fl eei , neei
-Enables (disables) extra indentation on continuation lines of
-the expression part of
-.Ic if
-and
-.Ic while
-statements.
-These continuation lines will be indented one extra level.
-The default is
-.Fl neei .
 .It Fl fbs , nfbs
 Enables (disables) splitting the function declaration and opening brace
 across two lines.
