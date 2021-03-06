@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.34 2021/01/18 02:43:27 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.35 2021/03/06 08:08:19 rin Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.34 2021/01/18 02:43:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.35 2021/03/06 08:08:19 rin Exp $");
 
 #include "ksyms.h"
 
@@ -148,6 +148,8 @@ static const struct exc_info trap_table[] = {
 			errata51handler, (uintptr_t)&errata51size },
 #if defined(DDB)
 	{ EXC_PGM,	ddblow,		(uintptr_t)&ddbsize },
+#else
+	{ EXC_PGM,	accesstrap,	(uintptr_t)&accesssize },
 #endif
 };
 

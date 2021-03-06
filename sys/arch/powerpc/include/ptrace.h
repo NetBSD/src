@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.18 2020/10/15 17:37:35 mgorny Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.19 2021/03/06 08:08:19 rin Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -69,6 +69,10 @@ int procfs_machdep_dovecregs(struct lwp *, struct lwp *,
 int procfs_machdep_validvecregs(struct lwp *, struct mount *);
 
 #endif /* ALTIVEC || PPC_HAVE_SPE */
+
+#if defined(PPC_BOOKE) || defined(PPC_IBM4XX)
+int ppc_sstep(struct lwp *, int);
+#endif /* PPC_BOOKE || PPC_IBM4XX */
 #endif /* _KERNEL */
 
 #define PTRACE_ILLEGAL_ASM	__asm __volatile (".long 0" : : : "memory")
