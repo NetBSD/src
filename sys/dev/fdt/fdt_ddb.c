@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_ddb.c,v 1.1 2020/10/30 16:08:45 skrll Exp $	*/
+/*	$NetBSD: fdt_ddb.c,v 1.2 2021/03/06 13:21:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_ddb.c,v 1.1 2020/10/30 16:08:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_ddb.c,v 1.2 2021/03/06 13:21:26 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -49,8 +49,16 @@ fdt_isprint(const void *data, int len)
 	if (len == 0)
 		return false;
 
+	/* Count consecutive zeroes */
+	int cz = 0;
 	for (size_t j = 0; j < len; j++) {
-		if (!(isprint(c[j]) || c[j] == '\0'))
+		if (c[j] == '\0')
+			cz++;
+		else if (isprint(c[j]))
+			cz = 0;
+		else
+			return false;
+		if (cz > 1)
 			return false;
 	}
 	return true;
