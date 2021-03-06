@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.27 2020/04/23 00:17:34 joerg Exp $	*/
+/*	$NetBSD: indent.c,v 1.28 2021/03/06 20:30:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.27 2020/04/23 00:17:34 joerg Exp $");
+__RCSID("$NetBSD: indent.c,v 1.28 2021/03/06 20:30:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -228,7 +228,7 @@ main(int argc, char **argv)
         simple_backup_suffix = envval;
 
     /*--------------------------------------------------*\
-    |   		COMMAND LINE SCAN		 |
+    |			COMMAND LINE SCAN		 |
     \*--------------------------------------------------*/
 
 #ifdef undef
