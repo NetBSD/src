@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.27 2021/01/24 17:29:11 thorpej Exp $
+.\"	$NetBSD: kmem.9,v 1.28 2021/03/06 14:44:02 rin Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -78,7 +78,7 @@
 "size_t size" "void *stackbuf" "size_t stackbufsize" "km_flag_t kmflags"
 .Ft void
 .Fn kmem_tmpbuf_free \
-"void *p" "size_t size" "void *stsackbuf"
+"void *p" "size_t size" "void *stackbuf"
 .\" ------------------------------------------------------------
 .Pp
 .Cd "options KMEM_SIZE"
