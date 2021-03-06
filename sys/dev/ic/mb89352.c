@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.57 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.58 2021/03/06 05:37:18 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.57 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.58 2021/03/06 05:37:18 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -932,6 +932,7 @@ nextbyte:
 	 */
 	for (;;) {
 #ifdef NO_MANUAL_XFER /* XXX */
+		uint8_t intstat;
 		if (bus_space_read_1(iot, ioh, INTS) != 0) {
 			/*
 			 * Target left MESSAGE IN, probably because it
@@ -960,12 +961,18 @@ nextbyte:
 #else
 		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR);
 #endif
+		intstat = 0;
 		for (;;) {
 			if ((bus_space_read_1(iot, ioh, SSTS) &
 			    SSTS_DREG_EMPTY) == 0)
 				break;
-			if (bus_space_read_1(iot, ioh, INTS) != 0)
+			/*
+			 * We have to read INTS before checking SSTS to avoid
+			 * race between SSTS_DREG_EMPTY and INTS_CMD_DONE.
+			 */
+			if (intstat != 0)
 				goto out;
+			intstat = bus_space_read_1(iot, ioh, INTS);
 		}
 		msg = bus_space_read_1(iot, ioh, DREG);
 #else
