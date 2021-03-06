@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.20 2019/10/19 15:44:31 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.21 2021/03/06 20:30:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.20 2019/10/19 15:44:31 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.21 2021/03/06 20:30:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -277,7 +277,7 @@ compute_label_target(void)
  *
  * FUNCTION: Reads one block of input into input_buffer
  *
- * HISTORY: initial coding 	November 1976	D A Willcox of CAC 1/7/77 A
+ * HISTORY: initial coding	November 1976	D A Willcox of CAC 1/7/77 A
  * Willcox of CAC	Added check for switch back to partly full input
  * buffer from temporary buffer
  *
@@ -395,7 +395,7 @@ fill_buffer(void)
  *
  * CALLED BY: dump_line
  *
- * HISTORY: initial coding 	November 1976	D A Willcox of CAC
+ * HISTORY: initial coding	November 1976	D A Willcox of CAC
  *
  */
 static int
@@ -442,7 +442,7 @@ pad_output(int current, int target)
  * RETURNS: Integer value of position after printing "buffer" starting in column
  * "current".
  *
- * HISTORY: initial coding 	November 1976	D A Willcox of CAC
+ * HISTORY: initial coding	November 1976	D A Willcox of CAC
  *
  */
 int
