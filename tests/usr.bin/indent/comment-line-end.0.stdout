@@ -1,9 +1,28 @@
-/* $NetBSD: comment-line-end.0.stdout,v 1.1 2021/02/21 21:26:26 rillig Exp $ */
+/* $NetBSD: comment-line-end.0.stdout,v 1.2 2021/03/06 15:02:38 rillig Exp $ */
 /* This $FreeBSD$ tag is required by the test suite, for no reason. */
 
 /*
- * Demonstrates that line-end comments can affect the following lines.
+ * Demonstrates handling of line-end comments.
  *
+ * Even though this type of comments was added in C99, indent doesn't support
+ * them, as of 2021, and instead messes up the code in unpredictable ways.
+ */
+
+int		dummy //comment
+= //eq
+1 // one
++ //plus
+2;
+//two
+
+///// separator /////
+
+void
+function(void)
+{
+}
+
+/*
  * FIXME: The '{' of main must be in column 1, not directly after the ')'.
  *
  * FIXME: The 'Note: removing' below gets "indented" to 'Note:removing'.
@@ -11,7 +30,7 @@
  * FIXME: The 'line-end' gets "indented" to 'line - end'.
  */
 
-// Note:removing one of these line - end comments affects the formatting
+//Note:removing one of these line - end comments affects the formatting
 // of the main function below.
 
 int
