@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.10 2019/10/19 15:44:31 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.11 2021/03/06 20:30:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -265,7 +265,7 @@ parse(int tk) /* tk: the code for the construct scanned */
  *
  * CALLED BY: parse
  *
- * HISTORY: initial coding 	November 1976	D A Willcox of CAC
+ * HISTORY: initial coding	November 1976	D A Willcox of CAC
  *
  */
 /*----------------------------------------------*\
