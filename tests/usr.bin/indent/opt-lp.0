@@ -1,4 +1,14 @@
-/* $NetBSD: opt-lp.0,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-lp.0,v 1.2 2021/03/06 22:10:40 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+void
+example(void)
+{
+	p1 = first_procedure(second_procedure(p2, p3),
+	    third_procedure(p4, p5));
+
+	p1 = first_procedure(second_procedure(p2,
+	    p3),
+	    third_procedure(p4,
+	        p5));
+}

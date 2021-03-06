@@ -1,4 +1,32 @@
-/* $NetBSD: opt-fcb.0.stdout,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-fcb.0.stdout,v 1.2 2021/03/06 22:10:40 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+/* FIXME: The options -fcb and -nfcb result in exactly the same output. */
+
+/*
+ * Not
+ *
+ * so carefully formatted comment
+ */
+
+/*-
+ * car         mat         men
+ *    efu   for   ted   com   t
+ *       lly         box       .
+ */
+
+void
+example(void)
+{
+	/*
+	 * Not
+	 *
+	 * so carefully formatted comment
+	 */
+
+	/*-
+	 * car         mat         men
+	 *    efu   for   ted   com   t
+	 *       lly         box       .
+	 */
+}
