@@ -1,4 +1,31 @@
-/* $NetBSD: opt-nbap.0.stdout,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-nbap.0.stdout,v 1.2 2021/03/06 23:09:17 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+static void
+one_liner(void)
+{
+}
+static void
+several_lines(void)
+{
+	action();
+}
+int
+main(void)
+{
+}
+int		global_variable;
+
+void
+already_has_blank_line_below(void)
+{
+}
+
+void
+has_several_blank_lines_below(void)
+{
+}
+
+
+
+int		the_end;

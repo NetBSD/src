@@ -1,4 +1,15 @@
-/* $NetBSD: opt-nbad.0.stdout,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-nbad.0.stdout,v 1.2 2021/03/06 23:09:17 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+int		global_variable;
+void		function_declaration(void);
+#if 0
+#endif
+void
+function_definition(void)
+{
+	int		local_variable;
+	function_call();
+	int		local_variable_after_statement;
+	function_call();
+}
