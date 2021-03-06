@@ -1,8 +1,8 @@
-/*	$NetBSD: declarations.0,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
+/*	$NetBSD: declarations.0,v 1.2 2021/03/06 19:51:24 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 /* See r303570 */
 
-typedef void 	(*voidptr) (int *);
+typedef void	(*voidptr) (int *);
 
 static const struct
 {
@@ -23,7 +23,7 @@ typedef struct Complex
 	double		y;
 }	Complex;
 
-void 
+void
 t1 (char *a, int b,
 	void (*fn)(void))
 {}
