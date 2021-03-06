@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.119 2021/02/19 02:15:24 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.120 2021/03/06 19:16:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.119 2021/02/19 02:15:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.120 2021/03/06 19:16:45 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -1135,18 +1135,14 @@ identify_hypervisor(void)
 	const char *p;
 	int i;
 
-#if 0	
-	/* 
-	 * This is called from cpu_probe() and cpu_configure()
-	 * During cpu_probe() we have not called platform_init()
-	 * yet, so the bios tables have not been loaded.
-	 * We allow this to be called twice in order to override
-	 * the cpuid setting because some hypervisors don't return
-	 * specific enough info with cpuid it.
-	 */
-	if (vm_guest != VM_GUEST_NO)
+	switch(vm_guest) {
+	case VM_GUEST_XENPV:
+	case VM_GUEST_XENPVH:
+		/* guest type already known, no bios info */
 		return;
-#endif
+	default:
+		break;
+	}
 
 	/*
 	 * [RFC] CPUID usage for interaction between Hypervisors and Linux.
