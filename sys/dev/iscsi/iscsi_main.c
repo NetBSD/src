@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.33 2020/05/13 21:59:45 jdolecek Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.34 2021/03/07 12:30:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -422,11 +422,12 @@ unmap_session(session_t *sess)
  * grow_resources
  *    Try to grow openings up to current window size
  */
-static void
+static int
 grow_resources(session_t *sess)
 {
 	struct scsipi_adapter *adapt = &sess->s_sc_adapter;
 	int win;
+	int rc = -1;
 
 	mutex_enter(&sess->s_lock);
 	if (sess->s_refcount < CCBS_FOR_SCSIPI &&
@@ -435,10 +436,13 @@ grow_resources(session_t *sess)
 		if (win > sess->s_send_window) {
 			sess->s_send_window++;
 			adapt->adapt_openings++;
+			rc = 0;
 			DEB(5, ("Grow send window to %d\n", sess->s_send_window));
 		}
 	}
 	mutex_exit(&sess->s_lock);
+
+	return rc;
 }
 
 /******************************************************************************/
@@ -508,7 +512,10 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 	case ADAPTER_REQ_GROW_RESOURCES:
 		DEB(5, ("ISCSI: scsipi_request GROW_RESOURCES\n"));
-		grow_resources(sess);
+		if (grow_resources(sess)) {
+			/* reached maximum */
+			chan->chan_flags &= ~SCSIPI_CHAN_CANGROW;
+		}
 		break;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
