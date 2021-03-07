@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.27 2021/03/07 10:02:33 skrll Exp $	*/
+/*	$NetBSD: sti.c,v 1.28 2021/03/07 14:31:20 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.27 2021/03/07 10:02:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.28 2021/03/07 14:31:20 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -53,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.27 2021/03/07 10:02:33 skrll Exp $");
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
-
-#ifndef hp300	/* XXX */
-#include "sti_pci.h"
-#endif
 
 #ifdef STIDEBUG
 
@@ -139,7 +135,6 @@ void	ngle_timber_setupfb(struct sti_screen *);
 int	ngle_putcmap(struct sti_screen *, u_int, u_int);
 #endif
 
-#if NSTI_PCI > 0
 #define	STI_ENABLE_ROM(sc) \
 do { \
 	if ((sc) != NULL && (sc)->sc_enable_rom != NULL) \
@@ -150,10 +145,6 @@ do { \
 	if ((sc) != NULL && (sc)->sc_disable_rom != NULL) \
 		(*(sc)->sc_disable_rom)(sc); \
 } while (0)
-#else
-#define	STI_ENABLE_ROM(sc)		do { /* nothing */ } while (0)
-#define	STI_DISABLE_ROM(sc)		do { /* nothing */ } while (0)
-#endif
 
 /* Macros to read larger than 8 bit values from byte roms */
 #define	parseshort(o) \
