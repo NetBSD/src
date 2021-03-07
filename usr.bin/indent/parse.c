@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.12 2021/03/07 10:42:48 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.13 2021/03/07 10:56:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -60,7 +60,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 static void reduce(void);
 
 void
-parse(int tk) /* tk: the code for the construct scanned */
+parse(token_type tk) /* tk: the code for the construct scanned */
 {
     int         i;
 

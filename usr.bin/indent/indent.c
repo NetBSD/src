@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.29 2021/03/07 10:42:48 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.30 2021/03/07 10:56:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.29 2021/03/07 10:42:48 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.30 2021/03/07 10:56:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -143,8 +143,8 @@ main(int argc, char **argv)
     int         dec_ind;	/* current indentation for declarations */
     int         di_stack[20];	/* a stack of structure indentation levels */
     int         force_nl;	/* when true, code must be broken */
-    int         hd_type = 0;	/* used to store type of stmt for if (...),
-				 * for (...), etc */
+    token_type  hd_type = end_of_file; /* used to store type of stmt
+				 * for if (...), for (...), etc */
     int		i;		/* local loop counter */
     int         scase;		/* set to true when we see a case, so we will
 				 * know what to do with the following colon */
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 				 * construct */
     const char *t_ptr;		/* used for copying tokens */
     int		tabs_to_var;	/* true if using tabs to indent to var name */
-    int         type_code;	/* the type of token, returned by lexi */
+    token_type	type_code;	/* returned by lexi */
 
     int         last_else = 0;	/* true iff last keyword was an else */
     const char *profile_name = NULL;
@@ -505,7 +505,7 @@ main(int argc, char **argv)
 	     * We must make this check, just in case there was an unexpected
 	     * EOF.
 	     */
-	    if (type_code != 0) {
+	    if (type_code != end_of_file) {
 		/*
 		 * The only intended purpose of calling lexi() below is to
 		 * categorize the next token in order to decide whether to
@@ -546,7 +546,7 @@ main(int argc, char **argv)
 	}			/* end of while (search_brace) */
 	last_else = 0;
 check_type:
-	if (type_code == 0) {	/* we got eof */
+	if (type_code == end_of_file) {	/* we got eof */
 	    if (s_lab != e_lab || s_code != e_code
 		    || s_com != e_com)	/* must dump end of line */
 		dump_line();
@@ -1273,6 +1273,9 @@ check_type:
 
 	case comment:		/* we have gotten a / followed by * this is a biggie */
 	    pr_comment();
+	    break;
+
+	default:
 	    break;
 	}			/* end of big switch stmt */
 
