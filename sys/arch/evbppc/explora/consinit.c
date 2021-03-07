@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.10 2021/03/05 06:06:34 rin Exp $	*/
+/*	$NetBSD: consinit.c,v 1.11 2021/03/07 09:47:00 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10 2021/03/05 06:06:34 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11 2021/03/07 09:47:00 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10 2021/03/05 06:06:34 rin Exp $");
 #define COM_CONSOLE_SPEED	9600
 #endif
 
+extern void fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
+
 void
 consinit(void)
 {
 	bus_space_tag_t tag;
 	static int done = 0;
-#ifndef COM_IS_CONSOLE
-	extern void fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
-#endif
 
 	if (done)
 		return;
