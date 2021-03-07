@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.166 2021/03/07 19:42:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.167 2021/03/07 19:46:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.166 2021/03/07 19:42:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.167 2021/03/07 19:46:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1358,7 +1358,7 @@ range:
 	  }
 	;
 
-init_field:
+designator:			/* C99 6.7.8 "Initialization" */
 	  T_LBRACK range T_RBRACK {
 		if (!Sflag)
 			/* array initializer with des.s is a C9X feature */
@@ -1372,13 +1372,13 @@ init_field:
 	  }
 	;
 
-init_field_list:
-	  init_field
-	| init_field_list init_field
+designator_list:		/* C99 6.7.8 "Initialization" */
+	  designator
+	| designator_list designator
 	;
 
 init_by_name:
-	  init_field_list T_ASSIGN
+	  designator_list T_ASSIGN
 	| identifier T_COLON {
 		/* GCC style struct or union member name in initializer */
 		gnuism(315);
