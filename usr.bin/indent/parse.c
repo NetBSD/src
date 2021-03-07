@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.13 2021/03/07 10:56:18 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.14 2021/03/07 11:32:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -65,7 +65,7 @@ parse(token_type tk) /* tk: the code for the construct scanned */
     int         i;
 
 #ifdef debug
-    printf("%2d - %s\n", tk, token);
+    printf("parse token: '%s' \"%s\"\n", token_type_name(tk), token);
 #endif
 
     while (ps.p_stack[ps.tos] == ifhead && tk != elselit) {
@@ -223,12 +223,13 @@ parse(token_type tk) /* tk: the code for the construct scanned */
     reduce();			/* see if any reduction can be done */
 
 #ifdef debug
+    printf("parse stack:");
     for (i = 1; i <= ps.tos; ++i)
-	printf("(%d %d)", ps.p_stack[i], ps.il[i]);
+	printf(" ('%s' at %d)", token_type_name(ps.p_stack[i]), ps.il[i]);
+    if (ps.tos == 0)
+        printf(" empty");
     printf("\n");
 #endif
-
-    return;
 }
 
 /*
