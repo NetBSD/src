@@ -1,4 +1,4 @@
-/*	$NetBSD: elfdefinitions.h,v 1.4 2020/11/19 20:58:30 jkoshy Exp $	*/
+/*	$NetBSD: elfdefinitions.h,v 1.5 2021/03/07 14:53:59 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2010 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: elfdefinitions.h 3858 2020-05-11 22:53:38Z emaste
+ * Id: elfdefinitions.h 3916 2020-12-12 11:26:53Z jkoshy
  */
 
 /*
@@ -873,7 +873,34 @@ _ELF_DEFINE_EM(EM_KMX32,            211, "KM211 KMX32 32-bit processor") \
 _ELF_DEFINE_EM(EM_KMX16,            212, "KM211 KMX16 16-bit processor") \
 _ELF_DEFINE_EM(EM_KMX8,             213, "KM211 KMX8 8-bit processor")  \
 _ELF_DEFINE_EM(EM_KVARC,            214, "KM211 KMX32 KVARC processor") \
-_ELF_DEFINE_EM(EM_RISCV,            243, "RISC-V")
+_ELF_DEFINE_EM(EM_CDP,              215, "Paneve CDP architecture family") \
+_ELF_DEFINE_EM(EM_COGE,             216, "Cognitive Smart Memory Processor") \
+_ELF_DEFINE_EM(EM_COOL,             217, "Bluechip Systems CoolEngine") \
+_ELF_DEFINE_EM(EM_NORC,             218, "Nanoradio Optimized RISC")    \
+_ELF_DEFINE_EM(EM_CSR_KALIMBA,      219,                                \
+	"CSR Kalimba architecture family")                              \
+_ELF_DEFINE_EM(EM_Z80,              220, "Zilog Z80")                   \
+_ELF_DEFINE_EM(EM_VISIUM,           221,                                \
+	"Controls and Data Services VISIUMcore processor")              \
+_ELF_DEFINE_EM(EM_FT32,             222,                                \
+	"FTDI Chip FT32 high performance 32-bit RISC architecture")     \
+_ELF_DEFINE_EM(EM_MOXIE,            223, "Moxie processor family")      \
+_ELF_DEFINE_EM(EM_AMDGPU,           224, "AMD GPU architecture")        \
+_ELF_DEFINE_EM(EM_RISCV,            243, "RISC-V")                      \
+_ELF_DEFINE_EM(EM_LANAI,            244, "Lanai processor")             \
+_ELF_DEFINE_EM(EM_CEVA,             245,                                \
+	"CEVA Processor Architecture Family")             		\
+_ELF_DEFINE_EM(EM_CEVA_X2,          246, "CEVA X2 Processor Family") 	\
+_ELF_DEFINE_EM(EM_BPF,              247,                                \
+	"Linux BPF – in-kernel virtual machine") 	                \
+_ELF_DEFINE_EM(EM_GRAPHCORE_IPU,    248,                                \
+	"Graphcore Intelligent Processing Unit") 	                \
+_ELF_DEFINE_EM(EM_IMG1,             249, "Imagination Technologies") 	\
+_ELF_DEFINE_EM(EM_NFP,              250,                                \
+	"Netronome Flow Processor (NFP)") 	                        \
+_ELF_DEFINE_EM(EM_CSKY,             252, "C-SKY processor family")      \
+_ELF_DEFINE_EM(EM_65816,            257, "WDC 65816/65C816")            \
+_ELF_DEFINE_EM(EM_KF32,             259, "ChipON KungFu 32")
 
 #undef	_ELF_DEFINE_EM
 #define	_ELF_DEFINE_EM(N, V, DESCR)	N = V ,
