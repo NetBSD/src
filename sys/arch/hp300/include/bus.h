@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21 2021/01/23 19:38:07 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.22 2021/03/07 10:01:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -165,6 +165,20 @@ int	bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
  */
 
 void	bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+
+/*
+ *	paddr_t bus_space_mmap(bus_space_tag_t t,
+ *	    bus_addr_t addr, off_t off, int prot, int flags);
+ *
+ * Provide a cookie for pmap_phys_address/pmap_mmap_flags for bus_space address at
+ * addr + offset and flags.
+ */
+static __inline paddr_t
+bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot, int flags)
+{
+	/* Always fail for now */
+	return -1;
+}
 
 /*
  *	int bus_space_subregion(bus_space_tag_t t,
