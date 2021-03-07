@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.22 2021/03/07 10:42:48 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.23 2021/03/07 20:47:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.22 2021/03/07 10:42:48 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.23 2021/03/07 20:47:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -409,7 +409,7 @@ pad_output(int current, int target)
     int curr;			/* internal column pointer */
 
     if (current >= target)
-	return (current);	/* line is already long enough */
+	return current;		/* line is already long enough */
     curr = current;
     if (opt.use_tabs) {
 	int tcur;
@@ -422,7 +422,7 @@ pad_output(int current, int target)
     while (curr++ < target)
 	putc(' ', output);	/* pad with final blanks */
 
-    return (target);
+    return target;
 }
 
 /*
@@ -475,13 +475,13 @@ count_spaces_until(int cur, char *buffer, char *end)
 	    break;
 	}			/* end of switch */
     }				/* end of for loop */
-    return (cur);
+    return cur;
 }
 
 int
 count_spaces(int cur, char *buffer)
 {
-    return (count_spaces_until(cur, buffer, NULL));
+    return count_spaces_until(cur, buffer, NULL);
 }
 
 void
