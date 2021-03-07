@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.26 2021/03/04 20:30:39 skrll Exp $	*/
+/*	$NetBSD: sti.c,v 1.27 2021/03/07 10:02:33 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.26 2021/03/04 20:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.27 2021/03/07 10:02:33 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -1171,9 +1171,7 @@ paddr_t
 sti_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
-#if 0
 	struct sti_rom *rom = scr->scr_rom;
-#endif
 	paddr_t pa;
 
 	if ((offset & PAGE_MASK) != 0)
@@ -1182,12 +1180,14 @@ sti_mmap(void *v, void *vs, off_t offset, int prot)
 	if (offset < 0 || offset >= scr->fblen)
 		return -1;
 
-#if 0 /* XXX not all platforms provide bus_space_mmap() yet */
+	if (scr->scr_wsmode != WSDISPLAYIO_MODE_DUMBFB)
+		return -1;
+
 	pa = bus_space_mmap(rom->memt, scr->fbaddr, offset, prot,
 	    BUS_SPACE_MAP_LINEAR);
-#else
-	pa = scr->fbaddr + offset;
-#endif
+
+	if (pa == -1)
+		pa = scr->fbaddr + offset;
 
 	return pa;
 }
