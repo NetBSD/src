@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.69 2021/02/28 19:24:15 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.70 2021/03/07 18:02:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -403,8 +403,8 @@ typedef struct control_statement {
 } cstk_t;
 
 typedef struct {
-	size_t lo;
-	size_t hi;
+	size_t lo;			/* inclusive */
+	size_t hi;			/* inclusive */
 } range_t;
 
 #include "externs1.h"
