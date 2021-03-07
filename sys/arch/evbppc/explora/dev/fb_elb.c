@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.16 2021/03/05 06:50:57 rin Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.17 2021/03/07 10:01:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.16 2021/03/05 06:50:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.17 2021/03/07 10:01:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.16 2021/03/05 06:50:57 rin Exp $");
 #include <evbppc/explora/dev/elbvar.h>
 
 #define FB_NPORTS		65536
+#define CMAP_SIZE		256
 
 struct fb_dev {
 	void *fb_vram;
@@ -63,10 +64,13 @@ struct fb_elb_softc {
 	int sc_nscreens;
 };
 
+void		fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
+
 static int	fb_elb_probe(device_t, cfdata_t, void *);
 static void	fb_elb_attach(device_t, device_t, void *);
-void		fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
+
 static void	fb_init(struct fb_dev *);
+
 static int	fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	fb_mmap(void *, void *, off_t, int);
 static int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
@@ -111,6 +115,23 @@ static struct wsscreen_list screenlist = {
 	__arraycount(scrlist), scrlist
 };
 
+void
+fb_cnattach(bus_space_tag_t iot, bus_addr_t iobase, void *vram)
+{
+	struct rasops_info *ri = &console_dev.fb_ri;
+	long defattr;
+
+	console_dev.fb_iot = iot;
+	console_dev.fb_ioh = iobase;
+	console_dev.fb_vram = vram;
+
+	fb_init(&console_dev);
+
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+
+	wsdisplay_cnattach(&stdscreen, ri, 0, 0, defattr);
+}
+
 CFATTACH_DECL_NEW(fb_elb, sizeof(struct fb_elb_softc),
     fb_elb_probe, fb_elb_attach, NULL, NULL);
 
@@ -122,7 +143,7 @@ fb_elb_probe(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(oaa->elb_name, cf->cf_name) != 0)
 		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -206,7 +227,7 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;	/* XXX */
-		return(0);
+		return 0;
 
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -214,7 +235,7 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wdf->width = ri->ri_width;
 		wdf->depth = ri->ri_depth;
 		wdf->cmsize = 16; /*XXX*/
-		return(0);
+		return 0;
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GETCMAP:
@@ -222,7 +243,7 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
-	return(EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 static paddr_t
@@ -252,7 +273,7 @@ fb_alloc_screen(void *v, const struct wsscreen_descr *scrdesc, void **cookiep,
 	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, attrp);
 	sc->sc_nscreens++;
 
-	return(0);
+	return 0;
 }
 
 static void
@@ -270,24 +291,8 @@ static int
 fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
     void *cbarg)
 {
-	return(0);
-}
 
-void
-fb_cnattach(bus_space_tag_t iot, bus_addr_t iobase, void *vram)
-{
-	struct rasops_info *ri = &console_dev.fb_ri;
-	long defattr;
-
-	console_dev.fb_iot = iot;
-	console_dev.fb_ioh = iobase;
-	console_dev.fb_vram = vram;
-
-	fb_init(&console_dev);
-
-	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-
-	wsdisplay_cnattach(&stdscreen, ri, 0, 0, defattr);
+	return 0;
 }
 
 static void
@@ -384,8 +389,6 @@ fb_copycols(void *v, int row, int srccol, int dstcol, int ncols)
 #define S3_CSRC_FRGDCOL		0x0020
 #define S3_CSRC_DISPMEM		0x0060
 #define S3_MIX_NEW		0x0007
-
-#define CMAP_SIZE		256
 
 static u_int8_t default_cmap[] = {
 	/* black */		  0,   0,   0,
