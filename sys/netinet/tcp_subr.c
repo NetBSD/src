@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.284 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.285 2021/03/07 14:58:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.284 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.285 2021/03/07 14:58:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -163,7 +163,7 @@ int 	tcp_mssdflt = TCP_MSS;
 int	tcp_minmss = TCP_MINMSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
-int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
+int	tcp_do_rfc1948 = 1;	/* ISS by cryptographic hash */
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
