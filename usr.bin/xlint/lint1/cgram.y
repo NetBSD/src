@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.168 2021/03/07 19:57:46 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.169 2021/03/07 20:06:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.168 2021/03/07 19:57:46 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.169 2021/03/07 20:06:48 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1787,8 +1787,8 @@ declaration_list:
 	  }
 	;
 
-constant_expr:
-	  expr				%prec T_COMMA {
+constant_expr:			/* C99 6.6 */
+	  expr				%prec T_ASSIGN {
 		  $$ = $1;
 	  }
 	;
