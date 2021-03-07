@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.165 2021/03/07 18:02:45 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.166 2021/03/07 19:42:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.165 2021/03/07 18:02:45 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.166 2021/03/07 19:42:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1353,6 +1353,8 @@ range:
 	| constant T_ELLIPSIS constant {
 		$$.lo = toicon($1, 1);
 		$$.hi = toicon($3, 1);
+		/* initialization with '[a...b]' is a GNU extension */
+		gnuism(340);
 	  }
 	;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.86 2021/02/28 02:45:37 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.87 2021/03/07 19:42:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.86 2021/02/28 02:45:37 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.87 2021/03/07 19:42:54 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -399,6 +399,7 @@ const	char *msgs[] = {
 	"right operand of '%s' must not be bool",		      /* 337 */
 	"option '%c' should be handled in the switch",		      /* 338 */
 	"option '%c' should be listed in the options string",	      /* 339 */
+	"initialization with '[a...b]' is a GNU extension",	      /* 340 */
 };
 
 /*
