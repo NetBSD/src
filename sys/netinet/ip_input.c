@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.355.2.8 2019/09/24 18:27:10 martin Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.355.2.9 2021/03/07 19:13:24 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355.2.8 2019/09/24 18:27:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355.2.9 2021/03/07 19:13:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -202,7 +202,7 @@ int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 int	ipprintfs = 0;
 #endif
 
-int	ip_do_randomid = 0;
+int	ip_do_randomid = 1;
 
 /*
  * XXX - Setting ip_checkinterface mostly implements the receive side of

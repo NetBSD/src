@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.23 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: ip6.h,v 1.23.90.1 2021/03/07 19:13:24 martin Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -63,6 +63,11 @@
 
 #ifndef _NETINET_IP6_H_
 #define _NETINET_IP6_H_
+
+#include <sys/types.h>
+#include <sys/endian.h>
+
+#include <netinet/in.h>
 
 /*
  * Definition for internet protocol version 6.
