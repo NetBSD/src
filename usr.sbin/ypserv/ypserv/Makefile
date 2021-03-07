@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2019/10/13 07:28:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2021/03/07 15:09:13 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,8 @@ LIBCDIR=${NETBSDSRCDIR}/lib/libc
 CPPFLAGS+=-DOPTIMIZE_DB -DLIBWRAP -I. -I${LIBCDIR}/include
 YHEADER=1
 
-LDADD+=	-lwrap -lutil
-DPADD+=	${LIBWRAP} ${LIBUTIL}
+LDADD+=	-lwrap -lblocklist -lutil
+DPADD+=	${LIBWRAP} ${LIBBLOCKLIST} ${LIBUTIL}
 
 CPPFLAGS.gethnamaddr.c=	-UYP -D_LIBC
 CPPFLAGS.getnetnamadr.c=-UYP -D_LIBC

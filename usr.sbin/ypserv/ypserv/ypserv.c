@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.26 2012/03/15 02:02:24 joerg Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.27 2021/03/07 15:09:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.26 2012/03/15 02:02:24 joerg Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.27 2021/03/07 15:09:13 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -141,7 +141,7 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 #ifdef LIBWRAP
 	caller = svc_getrpccaller(transp)->buf;
 	(void)request_init(&req, RQ_DAEMON, getprogname(), RQ_CLIENT_SIN,
-	    caller, NULL);
+	    caller, RQ_FILE, transp->xp_fd, NULL);
 	sock_methods(&req);
 
 	/*
