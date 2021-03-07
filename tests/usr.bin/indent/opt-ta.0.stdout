@@ -1,4 +1,10 @@
-/* $NetBSD: opt-ta.0.stdout,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-ta.0.stdout,v 1.2 2021/03/07 10:12:18 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+void
+example(void *arg)
+{
+	int		mult = (unknown_type_name) * arg;
+
+	int		suff = (unknown_type_name_t)*arg;
+}

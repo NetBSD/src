@@ -1,4 +1,10 @@
-/* $NetBSD: opt-U.0,v 1.1 2021/03/06 17:56:33 rillig Exp $ */
+/* $NetBSD: opt-U.0,v 1.2 2021/03/07 10:12:18 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+void
+example(void *arg)
+{
+	int known_1 = (size_t)   *   arg;
+	int known_2 = (off_t)   *   arg;
+	int ignored = (ignored_t)   *   arg;
+}

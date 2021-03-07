@@ -1,4 +1,15 @@
-/* $NetBSD: opt-nsc.0,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-nsc.0,v 1.2 2021/03/07 10:12:18 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+/* comment
+without
+asterisks
+*/
+
+/*
+** This comment style is used by Lua.
+*/
+
+/**
+ * Javadoc, adopted by several other programming languages.
+ */

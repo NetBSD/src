@@ -1,4 +1,27 @@
-/* $NetBSD: opt-lpl.0.stdout,v 1.1 2021/03/06 17:56:34 rillig Exp $ */
+/* $NetBSD: opt-lpl.0.stdout,v 1.2 2021/03/07 10:12:18 rillig Exp $ */
 /* $FreeBSD$ */
 
-/* TODO: implement the test */
+/* $ TODO: Add code that differs between -lpl and -nlpl. */
+void
+example(void)
+{
+	int		sum1 = 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20 + 21;
+	int		sum2 = (1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20 + 21);
+
+/* $ XXX: There should be at least _some_ indentation for the */
+/* $ continuation lines. */
+	int		sum3 = 1 + 2 + 3 + 4 + 5 +
+	6 + 7 + 8 + 9 + 10 +
+	11 + 12 + 13 + 14 + 15 +
+	16 + 17 + 18 + 19 + 20 +
+	21;
+	int		sum4 = (1 + 2 + 3 + 4 + 5 +
+				6 + 7 + 8 + 9 + 10 +
+				11 + 12 + 13 + 14 + 15 +
+				16 + 17 + 18 + 19 + 20 +
+				21);
+
+	call_function(call_function(call_function(call_function(call_function(call_function())))));
+
+	call_function((call_function(call_function(call_function(call_function(call_function()))))));
+}
