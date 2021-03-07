@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.14 2021/03/07 20:30:48 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.15 2021/03/07 20:40:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -231,10 +231,10 @@ enum rwcode {
     rw_do_or_else,
     rw_switch,
     rw_case_or_default,
-    rw_break_or_goto_or_return,
+    rw_jump,
     rw_storage_class,
     rw_typedef,
-    rw_continue_or_inline_or_restrict
+    rw_inline_or_restrict
 };
 
 
