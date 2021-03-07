@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.14 2019/04/04 15:22:13 kamil Exp $	*/
+/*	$NetBSD: args.c,v 1.15 2021/03/07 10:42:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.14 2019/04/04 15:22:13 kamil Exp $");
+__RCSID("$NetBSD: args.c,v 1.15 2021/03/07 10:42:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -63,7 +63,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "indent_globs.h"
+
 #include "indent.h"
 
 #define INDENT_VERSION	"2.0"
@@ -209,22 +209,22 @@ set_profile(const char *profile_name)
 static void
 scan_profile(FILE *f)
 {
-    int		comment, i;
+    int		comment_index, i;
     char	*p;
     char        buf[BUFSIZ];
 
     while (1) {
 	p = buf;
-	comment = 0;
+	comment_index = 0;
 	while ((i = getc(f)) != EOF) {
-	    if (i == '*' && !comment && p > buf && p[-1] == '/') {
-		comment = p - buf;
+	    if (i == '*' && !comment_index && p > buf && p[-1] == '/') {
+		comment_index = p - buf;
 		*p++ = i;
-	    } else if (i == '/' && comment && p > buf && p[-1] == '*') {
-		p = buf + comment - 1;
-		comment = 0;
+	    } else if (i == '/' && comment_index && p > buf && p[-1] == '*') {
+		p = buf + comment_index - 1;
+		comment_index = 0;
 	    } else if (isspace((unsigned char)i)) {
-		if (p > buf && !comment)
+		if (p > buf && !comment_index)
 		    break;
 	    } else {
 		*p++ = i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.2 2019/10/19 15:44:31 christos Exp $	*/
+/*	$NetBSD: indent.h,v 1.3 2021/03/07 10:42:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,11 +30,14 @@
 
 #if 0
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.h,v 1.2 2019/10/19 15:44:31 christos Exp $");
+__RCSID("$NetBSD: indent.h,v 1.3 2021/03/07 10:42:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pstef $");
 #endif
 #endif
+
+#include "indent_codes.h"
+#include "indent_globs.h"
 
 #ifndef nitems
 #define nitems(array) (sizeof (array) / sizeof (array[0]))
