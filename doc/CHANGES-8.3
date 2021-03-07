@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.76 2021/02/26 13:33:07 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.77 2021/03/07 19:14:54 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1750,4 +1750,17 @@ usr.bin/patch/patch.c				1.30
 
 	patch(1): make '-V none' work.
 	[nia, ticket #1660]
+
+sys/netinet/ip6.h				1.30
+sys/netinet/ip_input.c				1.400
+sys/netinet/tcp_subr.c				1.285
+sys/netinet6/ip6_id.c				1.19-1.21
+sys/netinet6/ip6_var.h				1.88
+
+	netinet:
+	 - enable random IP fragment ids by default
+	 - enable RFC 1948 pseudorandom TCP ISS selection by default.
+	netinet6:
+	 - replace randomid() by cprng_fast32()
+	[christos, ticket #1661]
 
