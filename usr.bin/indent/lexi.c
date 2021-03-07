@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.20 2021/03/07 11:32:05 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.21 2021/03/07 20:30:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.20 2021/03/07 11:32:05 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.21 2021/03/07 20:30:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -70,7 +70,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 
 struct templ {
     const char *rwd;
-    int         rwcode;
+    enum rwcode rwcode;
 };
 
 /*
@@ -79,48 +79,48 @@ struct templ {
  */
 struct templ specials[] =
 {
-    {"_Bool", 4},
-    {"_Complex", 4},
-    {"_Imaginary", 4},
-    {"auto", 10},
-    {"bool", 4},
-    {"break", 9},
-    {"case", 8},
-    {"char", 4},
-    {"complex", 4},
-    {"const", 4},
-    {"continue", 12},
-    {"default", 8},
-    {"do", 6},
-    {"double", 4},
-    {"else", 6},
-    {"enum", 3},
-    {"extern", 10},
-    {"float", 4},
-    {"for", 5},
-    {"global", 4},
-    {"goto", 9},
-    {"if", 5},
-    {"imaginary", 4},
-    {"inline", 12},
-    {"int", 4},
-    {"long", 4},
-    {"offsetof", 1},
-    {"register", 10},
-    {"restrict", 12},
-    {"return", 9},
-    {"short", 4},
-    {"signed", 4},
-    {"sizeof", 2},
-    {"static", 10},
-    {"struct", 3},
-    {"switch", 7},
-    {"typedef", 11},
-    {"union", 3},
-    {"unsigned", 4},
-    {"void", 4},
-    {"volatile", 4},
-    {"while", 5}
+    {"_Bool", rw_type},
+    {"_Complex", rw_type},
+    {"_Imaginary", rw_type},
+    {"auto", rw_storage_class},
+    {"bool", rw_type},
+    {"break", rw_break_or_goto_or_return},
+    {"case", rw_case_or_default},
+    {"char", rw_type},
+    {"complex", rw_type},
+    {"const", rw_type},
+    {"continue", rw_continue_or_inline_or_restrict},
+    {"default", rw_case_or_default},
+    {"do", rw_do_or_else},
+    {"double", rw_type},
+    {"else", rw_do_or_else},
+    {"enum", rw_struct_or_union_or_enum},
+    {"extern", rw_storage_class},
+    {"float", rw_type},
+    {"for", rw_for_or_if_or_while},
+    {"global", rw_type},
+    {"goto", rw_break_or_goto_or_return},
+    {"if", rw_for_or_if_or_while},
+    {"imaginary", rw_type},
+    {"inline", rw_continue_or_inline_or_restrict},
+    {"int", rw_type},
+    {"long", rw_type},
+    {"offsetof", rw_offsetof},
+    {"register", rw_storage_class},
+    {"restrict", rw_continue_or_inline_or_restrict},
+    {"return", rw_break_or_goto_or_return},
+    {"short", rw_type},
+    {"signed", rw_type},
+    {"sizeof", rw_sizeof},
+    {"static", rw_storage_class},
+    {"struct", rw_struct_or_union_or_enum},
+    {"switch", rw_switch},
+    {"typedef", rw_typedef},
+    {"union", rw_struct_or_union_or_enum},
+    {"unsigned", rw_type},
+    {"void", rw_type},
+    {"volatile", rw_type},
+    {"while", rw_for_or_if_or_while}
 };
 
 const char **typenames;
@@ -313,7 +313,7 @@ lexi(struct parser_state *state)
 	    if (++buf_ptr >= buf_end)
 		fill_buffer();
 	}
-	state->keyword = 0;
+	state->keyword = rw_0;
 	if (state->last_token == structure && !state->p_l_follow) {
 				/* if last token was 'struct' and we're not
 				 * in parentheses, then this token
@@ -339,7 +339,7 @@ lexi(struct parser_state *state)
 	        strcmp(u, "_t") == 0) || (typename_top >= 0 &&
 		  bsearch(s_token, typenames, typename_top + 1,
 		    sizeof(typenames[0]), strcmp_type))) {
-		state->keyword = 4;	/* a type name */
+		state->keyword = rw_type;
 		state->last_u_d = true;
 	        goto found_typename;
 	    }
@@ -347,39 +347,37 @@ lexi(struct parser_state *state)
 	    state->keyword = p->rwcode;
 	    state->last_u_d = true;
 	    switch (p->rwcode) {
-	    case 7:		/* it is a switch */
+	    case rw_switch:
 		return lexi_end(swstmt);
-	    case 8:		/* a case or default */
+	    case rw_case_or_default:
 		return lexi_end(casestmt);
-
-	    case 3:		/* a "struct" */
-		/* FALLTHROUGH */
-	    case 4:		/* one of the declaration keywords */
+	    case rw_struct_or_union_or_enum:
+	    case rw_type:
 	    found_typename:
 		if (state->p_l_follow) {
 		    /* inside parens: cast, param list, offsetof or sizeof */
 		    state->cast_mask |= (1 << state->p_l_follow) & ~state->not_cast_mask;
 		}
 		if (state->last_token == period || state->last_token == unary_op) {
-		    state->keyword = 0;
+		    state->keyword = rw_0;
 		    break;
 		}
-		if (p != NULL && p->rwcode == 3)
+		if (p != NULL && p->rwcode == rw_struct_or_union_or_enum)
 		    return lexi_end(structure);
 		if (state->p_l_follow)
 		    break;
 		return lexi_end(decl);
 
-	    case 5:		/* if, while, for */
+	    case rw_for_or_if_or_while:
 		return lexi_end(sp_paren);
 
-	    case 6:		/* do, else */
+	    case rw_do_or_else:
 		return lexi_end(sp_nparen);
 
-	    case 10:		/* storage class specifier */
+	    case rw_storage_class:
 		return lexi_end(storage);
 
-	    case 11:		/* typedef */
+	    case rw_typedef:
 		return lexi_end(type_def);
 
 	    default:		/* all others are treated like any other
@@ -410,7 +408,7 @@ lexi(struct parser_state *state)
 		isalpha((unsigned char)*buf_ptr)) &&
 	    (state->last_token == semicolon || state->last_token == lbrace ||
 		state->last_token == rbrace)) {
-	    state->keyword = 4;	/* a type name */
+	    state->keyword = rw_type;
 	    state->last_u_d = true;
 	    return lexi_end(decl);
 	}
