@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.87 2020/08/28 06:32:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.88 2021/03/07 15:01:35 christos Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -64,8 +64,15 @@
 #ifndef _NETINET6_IP6_VAR_H_
 #define _NETINET6_IP6_VAR_H_
 
+#include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/socketvar.h>
+
+#include <net/if.h>
 #include <net/route.h>
+
+#include <netinet/in.h>
+#include <netinet/ip6.h>
 
 struct	ip6_moptions {
 	if_index_t im6o_multicast_if_index; /* I/F for outgoing multicasts */
@@ -219,6 +226,9 @@ struct ip6flow {
 };
 
 #ifdef _KERNEL
+
+#include <sys/protosw.h>
+
 /*
  * Auxiliary attributes of incoming IPv6 packets, which is initialized when we
  * come into ip6_input().
