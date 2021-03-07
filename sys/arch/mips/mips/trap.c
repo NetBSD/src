@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.256 2020/08/15 07:42:07 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.257 2021/03/07 15:10:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.256 2020/08/15 07:42:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.257 2021/03/07 15:10:05 christos Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -120,6 +120,14 @@ const char * const trap_names[] = {
 void trap(uint32_t, uint32_t, vaddr_t, vaddr_t, struct trapframe *);
 void ast(void);
 
+#ifdef TRAP_SIGDEBUG
+static void sigdebug(const struct trapframe *, const ksiginfo_t *, int,
+    vaddr_t);
+#define SIGDEBUG(a, b, c, d) sigdebug(a, b, c, d)
+#else
+#define SIGDEBUG(a, b, c, d)
+#endif
+
 /*
  * fork syscall returns directly to user process via lwp_trampoline(),
  * which will be called the very first time when child gets running.
@@ -160,7 +168,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	ksiginfo_t ksi;
 	extern void fswintrberr(void);
 	void *onfault;
-	int rv;
+	int rv = 0;
 
 	KSI_INIT_TRAP(&ksi);
 
@@ -628,20 +636,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	}
 	utf->tf_regs[_R_CAUSE] = cause;
 	utf->tf_regs[_R_BADVADDR] = vaddr;
-#if defined(DEBUG)
-	printf("trap: pid %d(%s): sig %d: cause=%#x epc=%#"PRIxREGISTER
-	    " va=%#"PRIxVADDR"\n",
-	    p->p_pid, p->p_comm, ksi.ksi_signo, cause,
-	    utf->tf_regs[_R_PC], vaddr);
-	printf("registers:\n");
-	for (size_t i = 0; i < 32; i += 4) {
-		printf(
-		    "[%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER
-		    " [%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER "\n",
-		    i+0, utf->tf_regs[i+0], i+1, utf->tf_regs[i+1],
-		    i+2, utf->tf_regs[i+2], i+3, utf->tf_regs[i+3]);
-	}
-#endif
+	SIGDEBUG(utf, &ksi, rv, pc);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	if ((type & T_USER) == 0) {
 #ifdef DDB
@@ -753,3 +748,64 @@ mips_singlestep(struct lwp *l)
 #endif
 	return 0;
 }
+
+#ifdef TRAP_SIGDEBUG
+static void
+frame_dump(const struct trapframe *tf, struct pcb *pcb)
+{
+
+	printf("trapframe %p\n", tf);
+	printf("ast %#018lx   v0 %#018lx   v1 %#018lx\n",
+	    tf->tf_regs[_R_AST], tf->tf_regs[_R_V0], tf->tf_regs[_R_V1]);
+	printf(" a0 %#018lx   a1 %#018lx   a2 %#018lx\n",
+	    tf->tf_regs[_R_A0], tf->tf_regs[_R_A1], tf->tf_regs[_R_A2]);
+#if defined(__mips_n32) || defined(__mips_n64)
+	printf(" a3 %#018lx   a4  %#018lx  a5  %#018lx\n",
+	    tf->tf_regs[_R_A3], tf->tf_regs[_R_A4], tf->tf_regs[_R_A5]);
+	printf(" a6 %#018lx   a7  %#018lx  t0  %#018lx\n",
+	    tf->tf_regs[_R_A6], tf->tf_regs[_R_A7], tf->tf_regs[_R_T0]);
+	printf(" t1 %#018lx   t2  %#018lx  t3  %#018lx\n",
+	    tf->tf_regs[_R_T1], tf->tf_regs[_R_T2], tf->tf_regs[_R_T3]);
+#else
+	printf(" a3 %#018lx   t0  %#018lx  t1  %#018lx\n",
+	    tf->tf_regs[_R_A3], tf->tf_regs[_R_T0], tf->tf_regs[_R_T1]);
+	printf(" t2 %#018lx   t3  %#018lx  t4  %#018lx\n",
+	    tf->tf_regs[_R_T2], tf->tf_regs[_R_T3], tf->tf_regs[_R_T4]);
+	printf(" t5 %#018lx   t6  %#018lx  t7  %#018lx\n",
+	    tf->tf_regs[_R_T5], tf->tf_regs[_R_T6], tf->tf_regs[_R_T7]);
+#endif
+	printf(" s0 %#018lx   s1  %#018lx  s2  %#018lx\n",
+	    tf->tf_regs[_R_S0], tf->tf_regs[_R_S1], tf->tf_regs[_R_S2]);
+	printf(" s3 %#018lx   s4  %#018lx  s5  %#018lx\n",
+	    tf->tf_regs[_R_S3], tf->tf_regs[_R_S4], tf->tf_regs[_R_S5]);
+	printf(" s6 %#018lx   s7  %#018lx  t8  %#018lx\n",
+	    tf->tf_regs[_R_S6], tf->tf_regs[_R_S7], tf->tf_regs[_R_T8]);
+	printf(" t9 %#018lx   k0  %#018lx  k1  %#018lx\n",
+	    tf->tf_regs[_R_T9], tf->tf_regs[_R_K0], tf->tf_regs[_R_K1]);
+	printf(" gp %#018lx   sp  %#018lx  s8  %#018lx\n",
+	    tf->tf_regs[_R_GP], tf->tf_regs[_R_SP], tf->tf_regs[_R_S8]);
+	printf(" ra %#018lx   sr  %#018lx  pc  %#018lx\n",
+	    tf->tf_regs[_R_RA], tf->tf_regs[_R_SR], tf->tf_regs[_R_PC]);
+	printf(" mullo     %#018lx mulhi %#018lx\n",
+	    tf->tf_regs[_R_MULLO], tf->tf_regs[_R_MULHI]);
+	printf(" badvaddr  %#018lx cause %#018lx\n",
+	    tf->tf_regs[_R_BADVADDR], tf->tf_regs[_R_CAUSE]);
+	printf("\n");
+	hexdump(printf, "Stack dump", tf, 256);
+}
+
+static void
+sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi, int e,
+    vaddr_t pc)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
+	printf("pid %d.%d (%s): signal %d code=%d (trap %#lx) "
+	    "@pc %#lx addr %#lx error=%d\n",
+	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, ksi->ksi_code,
+	    tf->tf_regs[_R_CAUSE], (unsigned long)pc, tf->tf_regs[_R_BADVADDR],
+	    e);
+	frame_dump(tf, lwp_getpcb(l));
+}
+#endif
