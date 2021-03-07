@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.7 2020/05/31 06:17:23 nat Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.8 2021/03/07 13:09:43 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -220,12 +220,14 @@ static struct event ctl_ev;			/* avdtp ctl event */
 struct l2cap_info	info;
 static bool		runasDaemon;
 static bool		asSpeaker;
+static bool		dontStop;
 static bool		initDiscover;	/* initiate avdtp discover */
 static bool 		verbose;	/* copy to stdout */
 static bool 		test_mode;	/* copy to stdout */
 static uint8_t		channel_mode = MODE_STEREO;
 static uint8_t		alloc_method = ALLOC_LOUDNESS;
 static uint8_t		frequency = FREQ_44_1K;
+static int		freqnum = 44100;
 static uint8_t		freqs[4];
 static uint8_t		blocks_config[4];
 static uint8_t		channel_config[4];
@@ -252,6 +254,7 @@ int audfile;
 static void do_interrupt(int, short, void *);
 static void do_recv(int, short, void *);
 static void do_ctlreq(int, short, void *);
+static void bt_exit(int fd);
 
 #define log_err(st, fmt, args...)	\
 	do { syslog(LOG_ERR, fmt, ##args); exit(st); } while (0)
@@ -262,12 +265,13 @@ static void do_ctlreq(int, short, void *);
 int
 main(int ac, char *av[])
 {
-	int enc, i, n, m, l, j, k, o, ch, freqnum, blocksnum;
+	int enc, i, n, m, l, j, k, o, ch, blocksnum;
 	u_int tmpbitpool;
 	bdaddr_copy(&info.laddr, BDADDR_ANY);
 
 	sc = hc = -1;
 	verbose = asSpeaker = test_mode = initDiscover = runasDaemon = false;
+	dontStop = false;
 	n = m = l = i = j = o = 0;
 	freqs[0] = frequency;
 	channel_config[0] = channel_mode;
@@ -276,7 +280,8 @@ main(int ac, char *av[])
 	alloc_config[0] = alloc_method;
 	channel_config[0] = channel_mode;
 
-	while ((ch = getopt(ac, av, "A:a:B:b:Dd:e:f:IKM:m:p:r:tV:v")) != EOF) {
+	while ((ch = getopt(ac, av, "A:a:B:b:Dd:e:f:IKnM:m:p:r:tV:v")) !=
+	    EOF) {
 		switch (ch) {
 		case 'A':
 			for (k = 0; k < (int)strlen(optarg); k++) {
@@ -404,6 +409,9 @@ main(int ac, char *av[])
 			else if (strcasecmp(optarg, "none"))
 				errx(EXIT_FAILURE, "%s: unknown mode", optarg);
 
+			break;
+		case 'n':
+			dontStop = true;
 			break;
 		case 'p':
 			l2cap_psm = (uint16_t)atoi(optarg);
@@ -556,7 +564,7 @@ again:
 		audfile = -1;
 	}
 
-	if (asSpeaker)
+	if (runasDaemon)
 		goto again;
 
 	return EXIT_SUCCESS;
@@ -566,9 +574,9 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage:\t%s [-v] [-D] [-d device] [-m mode] [-r rate] [-M mtu]\n"
-	    "\t\t[-V volume] [-f mode] [-b blocks] [-e bands] [-A alloc]\n"
-	    "\t\t[-B bitpool] -a address files...\n"
+	    "usage:\t%s [-v] [-D] [-n] [-d device] [-m mode] [-r rate]\n"
+	    "\t\t[-M mtu] [-V volume] [-f mode] [-b blocks] [-e bands]\n"
+	    "\t\t[-A alloc] [-B bitpool] -a address files...\n"
 	    "\t%s [-v] [-D] [-d device] [-m mode] [-p psm] [-B bitpool]\n"
 	    "\t\t[-a address] [-M mtu] [-r rate] [-I] -K file\n"
 	    "\t%s -t [-v] [-K] [-r rate] [-M mtu] [-V volume] [-f mode]\n"
@@ -623,6 +631,17 @@ usage(void)
 	    , getprogname(), getprogname(), getprogname());
 
 	exit(EXIT_FAILURE);
+}
+
+static void
+bt_exit(int fd)
+{
+	if (!runasDaemon) {
+			close(fd);
+			fd = -1;
+			exit(1);
+	}
+	/* Not reached */
 }
 
 static void
@@ -825,9 +844,7 @@ do_recv(int fd, short ev, void *arg)
 
 	if (len < 0) {
 		event_del(&recv_ev);
-		close(fd);
-		fd = -1;
-		exit(1);
+		bt_exit(fd);
 	}
 }
 
@@ -844,12 +861,13 @@ do_interrupt(int fd, short ev, void *arg)
 	len = stream(fd, sc, channel_mode, frequency, bands, blocks,
 	    alloc_method, bitpool, mtu, volume);
 
+
 next_file:
-	if (len == -1 && currentFileInd >= numfiles -1) {
+	if (dontStop && len == -1)
+		usleep(1);
+	else if (len == -1 && currentFileInd >= numfiles -1) {
 		event_del(&interrupt_ev);
-		close(fd);
-		fd = -1;
-		exit(1);
+		bt_exit(fd);
 	} else if (len == -1) {
 		close(fd);
 		currentFileInd++;
