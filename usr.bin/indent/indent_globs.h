@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.13 2021/03/07 10:56:18 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.14 2021/03/07 20:30:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -221,6 +221,23 @@ extern struct options {
 				 * are printed */
 } opt;
 
+enum rwcode {
+    rw_0,
+    rw_offsetof,
+    rw_sizeof,
+    rw_struct_or_union_or_enum,
+    rw_type,
+    rw_for_or_if_or_while,
+    rw_do_or_else,
+    rw_switch,
+    rw_case_or_default,
+    rw_break_or_goto_or_return,
+    rw_storage_class,
+    rw_typedef,
+    rw_continue_or_inline_or_restrict
+};
+
+
 extern int         found_err;
 extern int         n_real_blanklines;
 extern int         prefix_blankline_requested;
@@ -308,7 +325,7 @@ extern struct parser_state {
     int         want_blank;	/* set to true when the following token should
 				 * be prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
-    int         keyword;	/* the type of a keyword or 0 */
+    enum rwcode keyword;	/* the type of a keyword or 0 */
     int         dumped_decl_indent;
     int         in_parameter_declaration;
     int         tos;		/* pointer to top of stack */

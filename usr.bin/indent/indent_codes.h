@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_codes.h,v 1.7 2021/03/07 10:56:18 rillig Exp $	*/
+/*	$NetBSD: indent_codes.h,v 1.8 2021/03/07 20:30:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,12 +43,12 @@
 typedef enum token_type {
     end_of_file,
     newline,
-    lparen,
-    rparen,
-    unary_op,
-    binary_op,
-    postop,
-    question,
+    lparen,			/* '(' or '[' */
+    rparen,			/* ')' or ']' */
+    unary_op,			/* e.g. '+' or '&' */
+    binary_op,			/* e.g. '<<' or '+' or '&&' or '/=' */
+    postop,			/* trailing '++' or '--' */
+    question,			/* the '?' from a '?:' expression */
     casestmt,
     colon,
     semicolon,

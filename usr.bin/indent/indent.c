@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.30 2021/03/07 10:56:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.31 2021/03/07 20:30:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.30 2021/03/07 10:56:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.31 2021/03/07 20:30:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -642,10 +642,8 @@ check_type:
 	    else if (ps.want_blank &&
 		    ((ps.last_token != ident && ps.last_token != funcname) ||
 		    opt.proc_calls_space ||
-		    /* offsetof (1) is never allowed a space; sizeof (2) gets
-		     * one iff -bs; all other keywords (>2) always get a space
-		     * before lparen */
-			ps.keyword + opt.Bill_Shannon > 2))
+		    (ps.keyword == rw_sizeof ? opt.Bill_Shannon :
+		    ps.keyword != rw_0 && ps.keyword != rw_offsetof)))
 		*e_code++ = ' ';
 	    ps.want_blank = false;
 	    *e_code++ = token[0];
@@ -664,7 +662,7 @@ check_type:
 					 * initialization */
 	    }
 	    /* parenthesized type following sizeof or offsetof is not a cast */
-	    if (ps.keyword == 1 || ps.keyword == 2)
+	    if (ps.keyword == rw_offsetof || ps.keyword == rw_sizeof)
 		ps.not_cast_mask |= 1 << ps.p_l_follow;
 	    break;
 
