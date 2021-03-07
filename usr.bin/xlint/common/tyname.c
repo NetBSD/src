@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.33 2021/02/28 02:37:04 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.34 2021/03/07 17:12:41 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.33 2021/02/28 02:37:04 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.34 2021/03/07 17:12:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -317,8 +317,6 @@ type_name_of_enum(buffer *buf, const type_t *tp)
 static void
 type_name_of_array(buffer *buf, const type_t *tp)
 {
-	buf_add(buf, " of ");
-	buf_add(buf, type_name(tp->t_subt));
 	buf_add(buf, "[");
 #ifdef t_str /* lint1 */
 	if (tp->t_incomplete_array)
@@ -329,6 +327,8 @@ type_name_of_array(buffer *buf, const type_t *tp)
 	buf_add_int(buf, tp->t_dim);
 #endif
 	buf_add(buf, "]");
+	buf_add(buf, " of ");
+	buf_add(buf, type_name(tp->t_subt));
 }
 
 const char *
