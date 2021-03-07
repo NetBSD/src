@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1235 2020/12/06 14:28:34 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1236 2021/03/07 10:42:26 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1309,6 +1309,7 @@ MKSLJIT=	yes
     ${MACHINE} == "ews4800mips"	|| \
     ${MACHINE} == "evbarm"	|| \
     ${MACHINE} == "evbmips"	|| \
+    ${MACHINE} == "evbppc"	|| \
     ${MACHINE} == "hp300"	|| \
     ${MACHINE} == "hpcarm"	|| \
     ${MACHINE} == "hpcmips"	|| \
