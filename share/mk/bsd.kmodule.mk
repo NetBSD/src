@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.73 2021/03/07 07:30:15 rin Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.74 2021/03/07 07:37:35 rin Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -85,6 +85,8 @@ CPPFLAGS+=	-DPPC_PCI_MACHDEP_IMPL=${DPPC_PCI_MACHDEP_IMPL}
 CPPFLAGS+=	-DPPC_IBM4XX
 . elifdef PPC_BOOKE
 CPPFLAGS+=	-DPPC_BOOKE
+. elif ${MACHINE_ARCH} == "powerpc64"
+CPPFLAGS+=	-DPPC_OEA64
 . else
 CPPFLAGS+=	-DPPC_OEA
 . endif
