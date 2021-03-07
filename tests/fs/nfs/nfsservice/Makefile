@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2020/03/01 18:08:14 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2021/03/07 15:09:12 christos Exp $
 #
 
 NOMAN=	1
@@ -45,8 +45,8 @@ CPPFLAGS+=	-I${LIBRPCDIR} -DPORTMAP -DLIBWRAP -DRPCBIND_RUMP
 # CPPFLAGS+=	-DRPCBIND_DEBUG
 # CPPFLAGS+=	-DSVC_RUN_DEBUG
 
-LDADD+= -lwrap -lutil
-DPADD+= ${LIBWRAP} ${LIBUTIL}
+LDADD+= -lwrap -lblocklist -lutil
+DPADD+= ${LIBWRAP} ${LIBBLOCKLIST} ${LIBUTIL}
 
 SANITIZER_RENAME_SYMBOL+=	__getmntinfo13
 

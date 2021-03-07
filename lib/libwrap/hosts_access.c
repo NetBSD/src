@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.22 2020/03/30 08:34:38 ryo Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.23 2021/03/07 15:09:12 christos Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.22 2020/03/30 08:34:38 ryo Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.23 2021/03/07 15:09:12 christos Exp $");
 #endif
 #endif
 
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: hosts_access.c,v 1.22 2020/03/30 08:34:38 ryo Exp $");
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <blocklist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
@@ -103,6 +104,24 @@ static int masked_match6(char *, char *, char *);
 
 #define	BUFLEN 2048
 
+static void
+pfilter_notify(struct request_info *request, int b)
+{
+    static struct blocklist *blstate;
+
+    if (blstate == NULL) {
+	blstate = blocklist_open();
+    }
+    if (request->client->sin != NULL) {
+	    blocklist_sa_r(blstate, b, request->fd != -1 ? request->fd : 3,
+		request->client->sin, request->client->sin->sa_len,
+		request->daemon ? request->daemon : getprogname());
+    } else {
+	    blocklist_r(blstate, b, (request->fd != -1) ? request->fd : 3,
+		request->daemon ? request->daemon : getprogname());
+    }
+}
+
 /* hosts_access - host access control facility */
 
 int
@@ -128,12 +147,21 @@ hosts_access(struct request_info *request)
     if (resident <= 0)
 	resident++;
     verdict = setjmp(tcpd_buf);
-    if (verdict != 0)
+    if (verdict != 0) {
+	if (verdict != AC_PERMIT)
+	    pfilter_notify(request, BLOCKLIST_AUTH_FAIL);
+	/* XXX pfilter_notify(0)??? */
 	return (verdict == AC_PERMIT);
-    if (table_match(hosts_allow_table, request))
+    }
+    if (table_match(hosts_allow_table, request)) {
+	/* XXX pfilter_notify(0)??? */
 	return (YES);
-    if (table_match(hosts_deny_table, request))
+    }
+    if (table_match(hosts_deny_table, request)) {
+	pfilter_notify(request, BLOCKLIST_AUTH_FAIL);
 	return (NO);
+    }
+    /* XXX pfilter_notify(0)??? */
     return (YES);
 }
 

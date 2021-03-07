@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.286 2020/10/29 20:11:17 nia Exp $
+#	$NetBSD: Makefile,v 1.287 2021/03/07 15:09:12 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -27,7 +27,7 @@ SUBDIR+=	libarch \
 		libossaudio libpci libposix libprop libpthread \
 		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
-		libusbhid libutil libwrap liby libz
+		libusbhid libutil liby libz
 
 .if !defined(BSD_MK_COMPAT_FILE)
 SUBDIR+=	libkern
@@ -177,6 +177,8 @@ SUBDIR+=	../external/mit/libcbor/lib
 SUBDIR+=	../external/mit/libuv/lib
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+SUBDIR+=	libwrap
 
 .if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
 .for sanitizer in asan lsan ubsan
