@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.21 2021/03/07 20:30:48 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.22 2021/03/07 20:40:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.21 2021/03/07 20:30:48 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.22 2021/03/07 20:40:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -84,12 +84,12 @@ struct templ specials[] =
     {"_Imaginary", rw_type},
     {"auto", rw_storage_class},
     {"bool", rw_type},
-    {"break", rw_break_or_goto_or_return},
+    {"break", rw_jump},
     {"case", rw_case_or_default},
     {"char", rw_type},
     {"complex", rw_type},
     {"const", rw_type},
-    {"continue", rw_continue_or_inline_or_restrict},
+    {"continue", rw_jump},
     {"default", rw_case_or_default},
     {"do", rw_do_or_else},
     {"double", rw_type},
@@ -99,16 +99,16 @@ struct templ specials[] =
     {"float", rw_type},
     {"for", rw_for_or_if_or_while},
     {"global", rw_type},
-    {"goto", rw_break_or_goto_or_return},
+    {"goto", rw_jump},
     {"if", rw_for_or_if_or_while},
     {"imaginary", rw_type},
-    {"inline", rw_continue_or_inline_or_restrict},
+    {"inline", rw_inline_or_restrict},
     {"int", rw_type},
     {"long", rw_type},
     {"offsetof", rw_offsetof},
     {"register", rw_storage_class},
-    {"restrict", rw_continue_or_inline_or_restrict},
-    {"return", rw_break_or_goto_or_return},
+    {"restrict", rw_inline_or_restrict},
+    {"return", rw_jump},
     {"short", rw_type},
     {"signed", rw_type},
     {"sizeof", rw_sizeof},
