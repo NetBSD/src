@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.11 2019/04/04 15:22:13 kamil Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.12 2021/03/07 10:42:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.11 2019/04/04 15:22:13 kamil Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.12 2021/03/07 10:42:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -56,9 +56,9 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "indent_globs.h"
-#include "indent_codes.h"
+
 #include "indent.h"
+
 /*
  * NAME:
  *	pr_comment

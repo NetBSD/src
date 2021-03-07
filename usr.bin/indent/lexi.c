@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.17 2019/10/19 15:44:31 christos Exp $	*/
+/*	$NetBSD: lexi.c,v 1.18 2021/03/07 10:42:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.17 2019/10/19 15:44:31 christos Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.18 2021/03/07 10:42:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -65,8 +65,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 #include <string.h>
 #include <sys/param.h>
 
-#include "indent_globs.h"
-#include "indent_codes.h"
 #include "indent.h"
 
 struct templ {
