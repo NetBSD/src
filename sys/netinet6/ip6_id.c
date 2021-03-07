@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.20 2021/03/07 14:59:36 christos Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.21 2021/03/07 15:03:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.20 2021/03/07 14:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.21 2021/03/07 15:03:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
