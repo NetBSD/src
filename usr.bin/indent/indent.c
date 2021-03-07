@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.31 2021/03/07 20:30:48 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.32 2021/03/07 20:52:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.31 2021/03/07 20:30:48 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.32 2021/03/07 20:52:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1237,11 +1237,10 @@ check_type:
 		else
 		    ifdef_level--;
 	    } else {
-		struct directives {
+		static const struct directives {
 		    int size;
 		    const char *string;
-		}
-		recognized[] = {
+		} recognized[] = {
 		    {7, "include"},
 		    {6, "define"},
 		    {5, "undef"},
