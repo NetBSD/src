@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117 2021/02/24 16:42:38 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.118 2021/03/07 14:42:53 rin Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -118,18 +118,20 @@ struct cpu_info {
 	volatile uint32_t ci_pending_ipis;
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
-#if defined(PPC_IBM4XX) || defined(MODULAR) || defined(_MODULE)
+#if defined(PPC_IBM4XX) || \
+    ((defined(MODULAR) || defined(_MODULE)) && !defined(_LP64))
 	char *ci_intstk;
 #endif
 
 	register_t ci_savearea[CPUSAVE_SIZE];
-#if defined(PPC_BOOKE) || defined(MODULAR) || defined(_MODULE)
+#if defined(PPC_BOOKE) || \
+    ((defined(MODULAR) || defined(_MODULE)) && !defined(_LP64))
 	uint32_t ci_pmap_asid_cur;
 	union pmap_segtab *ci_pmap_segtabs[2];
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
-#endif /* PPC_BOOKE || MODULAR || _MODULE */
+#endif /* PPC_BOOKE || ((MODULAR || _MODULE) && !_LP64) */
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);
