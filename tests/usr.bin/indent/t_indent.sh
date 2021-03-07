@@ -1,3 +1,5 @@
+#! /bin/sh
+# $NetBSD: t_indent.sh,v 1.2 2021/03/07 08:57:38 rillig Exp $
 #
 # Copyright 2016 Dell EMC
 # All rights reserved.
@@ -38,13 +40,15 @@ check()
 	# to pass.
 	atf_check cp ${SRCDIR}/${tc}* .
 
-	# Remove $FreeBSD: head/usr.bin/indent/tests/functional_test.sh 314613 2017-03-03 20:15:22Z ngie $ RCS expansions because they get re-indented, which
-	# changes the output
+	# Remove single-line comments that start with '$'.  This removes RCS
+	# IDs, preventing them to be broken into several lines.  It also
+	# allows for remarks that are only needed in either the input or the
+	# output.  These removals affect the line numbers in the diffs.
 	local out_file="${tc}.stdout"
 	if [ -f "${out_file}" ]; then
 		parsed_file=output_file.parsed
 
-		atf_check -o save:$parsed_file sed -e '/\$NetBSD.*\$/,/\$FreeBSD.*\$/d' \
+		atf_check -o save:$parsed_file sed -e '/^\/\*[[:space:]]$.*/d' \
 		    ${tc}.stdout
 		out_flag="-o file:$parsed_file"
 	fi
@@ -56,7 +60,7 @@ check()
 		# host, for determinism purposes.
 		profile_flag="-npro"
 	fi
-	sed -e '/\$NetBSD.*\$/,/\$FreeBSD.*\$/d'  ${tc} > input_file.parsed
+	sed -e '/^\/\*[[:space:]]$.*/d'  ${tc} > input_file.parsed
 
 	atf_check -s exit:${tc##*.} ${out_flag} ${indent} ${profile_flag} < input_file.parsed
 }
