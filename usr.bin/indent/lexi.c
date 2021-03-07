@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.19 2021/03/07 10:56:18 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.20 2021/03/07 11:32:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.19 2021/03/07 10:56:18 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.20 2021/03/07 11:32:05 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -58,6 +58,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
  * of token scanned.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -176,6 +177,62 @@ strcmp_type(const void *e1, const void *e2)
     return (strcmp(e1, *(const char * const *)e2));
 }
 
+#ifdef debug
+const char *
+token_type_name(token_type tk)
+{
+    static const char *const name[] = {
+	"end_of_file", "newline", "lparen", "rparen", "unary_op",
+	"binary_op", "postop", "question", "casestmt", "colon",
+	"semicolon", "lbrace", "rbrace", "ident", "comma",
+	"comment", "swstmt", "preesc", "form_feed", "decl",
+	"sp_paren", "sp_nparen", "ifstmt", "whilestmt", "forstmt",
+	"stmt", "stmtl", "elselit", "dolit", "dohead",
+	"ifhead", "elsehead", "period", "strpfx", "storage",
+	"funcname", "type_def", "structure"
+    };
+
+    assert(0 <= tk && tk < sizeof name / sizeof name[0]);
+
+    return name[tk];
+}
+
+static void
+print_buf(const char *name, const char *s, const char *e)
+{
+    if (s == e)
+	return;
+
+    printf(" %s \"", name);
+    for (const char *p = s; p < e; p++) {
+	if (isprint((unsigned char)*p) && *p != '\\' && *p != '"')
+	    printf("%c", *p);
+	else if (*p == '\n')
+	    printf("\\n");
+	else if (*p == '\t')
+	    printf("\\t");
+	else
+	    printf("\\x%02x", *p);
+    }
+    printf("\"");
+}
+
+static token_type
+lexi_end(token_type code)
+{
+    printf("in line %d, lexi returns '%s'", line_no, token_type_name(code));
+    print_buf("token", s_token, e_token);
+    print_buf("label", s_lab, e_lab);
+    print_buf("code", s_code, e_code);
+    print_buf("comment", s_com, e_com);
+    printf("\n");
+
+    return code;
+}
+#else
+#  define lexi_end(tk) (tk)
+#endif
+
 token_type
 lexi(struct parser_state *state)
 {
@@ -250,7 +307,7 @@ lexi(struct parser_state *state)
 
 	if (s_token[0] == 'L' && s_token[1] == '\0' &&
 	      (*buf_ptr == '"' || *buf_ptr == '\''))
-	    return (strpfx);
+	    return lexi_end(strpfx);
 
 	while (*buf_ptr == ' ' || *buf_ptr == '\t') {	/* get rid of blanks */
 	    if (++buf_ptr >= buf_end)
@@ -262,7 +319,7 @@ lexi(struct parser_state *state)
 				 * in parentheses, then this token
 				 * should be treated as a declaration */
 	    state->last_u_d = true;
-	    return (decl);
+	    return lexi_end(decl);
 	}
 	/*
 	 * Operator after identifier is binary unless last token was 'struct'
@@ -291,9 +348,9 @@ lexi(struct parser_state *state)
 	    state->last_u_d = true;
 	    switch (p->rwcode) {
 	    case 7:		/* it is a switch */
-		return (swstmt);
+		return lexi_end(swstmt);
 	    case 8:		/* a case or default */
-		return (casestmt);
+		return lexi_end(casestmt);
 
 	    case 3:		/* a "struct" */
 		/* FALLTHROUGH */
@@ -308,26 +365,26 @@ lexi(struct parser_state *state)
 		    break;
 		}
 		if (p != NULL && p->rwcode == 3)
-		    return (structure);
+		    return lexi_end(structure);
 		if (state->p_l_follow)
 		    break;
-		return (decl);
+		return lexi_end(decl);
 
 	    case 5:		/* if, while, for */
-		return (sp_paren);
+		return lexi_end(sp_paren);
 
 	    case 6:		/* do, else */
-		return (sp_nparen);
+		return lexi_end(sp_nparen);
 
 	    case 10:		/* storage class specifier */
-		return (storage);
+		return lexi_end(storage);
 
 	    case 11:		/* typedef */
-		return (type_def);
+		return lexi_end(type_def);
 
 	    default:		/* all others are treated like any other
 				 * identifier */
-		return (ident);
+		return lexi_end(ident);
 	    }			/* end of switch */
 	}			/* end of if (found_it) */
 	if (*buf_ptr == '(' && state->tos <= 1 && state->ind_level == 0 &&
@@ -339,7 +396,7 @@ lexi(struct parser_state *state)
 	    strncpy(state->procname, token, sizeof state->procname - 1);
 	    if (state->in_decl)
 		state->in_parameter_declaration = 1;
-	    return (funcname);
+	    return lexi_end(funcname);
     not_proc:;
 	}
 	/*
@@ -355,12 +412,12 @@ lexi(struct parser_state *state)
 		state->last_token == rbrace)) {
 	    state->keyword = 4;	/* a type name */
 	    state->last_u_d = true;
-	    return decl;
+	    return lexi_end(decl);
 	}
 	if (state->last_token == decl)	/* if this is a declared variable,
 					 * then following sign is unary */
 	    state->last_u_d = true;	/* will make "int a -1" work */
-	return (ident);		/* the ident is not in the list */
+	return lexi_end(ident);		/* the ident is not in the list */
     }				/* end of procesing for alpanum character */
 
     /* Scan a non-alphanumeric token */
@@ -594,7 +651,7 @@ stop_lit:
     state->last_u_d = unary_delim;
     CHECK_SIZE_TOKEN(1);
     *e_token = '\0';		/* null terminate the token */
-    return (code);
+    return lexi_end(code);
 }
 
 /* Initialize constant transition table */
