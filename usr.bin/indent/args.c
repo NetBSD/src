@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.15 2021/03/07 10:42:48 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.16 2021/03/07 20:47:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.15 2021/03/07 10:42:48 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.16 2021/03/07 20:47:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -246,9 +246,9 @@ eqin(const char *s1, const char *s2)
 {
     while (*s1) {
 	if (*s1++ != *s2++)
-	    return (NULL);
+	    return NULL;
     }
-    return (s2);
+    return s2;
 }
 
 /*
