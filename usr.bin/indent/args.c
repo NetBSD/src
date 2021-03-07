@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.16 2021/03/07 20:47:13 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.17 2021/03/07 20:52:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.16 2021/03/07 20:47:13 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.17 2021/03/07 20:52:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -98,14 +98,13 @@ void add_typedefs_from_file(const char *str);
  * must be first.  Also, while (most) booleans occur more than once, the last
  * default value is the one actually assigned.
  */
-struct pro {
+const struct pro {
     const char *p_name;		/* name, e.g. -bl, -cli */
     int         p_type;		/* type (int, bool, special) */
     int         p_default;	/* the default value (if int) */
     int         p_special;	/* depends on type */
     int        *p_obj;		/* the associated variable */
 }           pro[] = {
-
     {"T", PRO_SPECIAL, 0, KEY, 0},
     {"U", PRO_SPECIAL, 0, KEY_FILE, 0},
     {"-version", PRO_SPECIAL, 0, VERSION, 0},
@@ -257,14 +256,13 @@ eqin(const char *s1, const char *s2)
 void
 set_defaults(void)
 {
-    struct pro *p;
-
     /*
      * Because ps.case_indent is a float, we can't initialize it from the
      * table:
      */
-    opt.case_indent = 0.0;	/* -cli0.0 */
-    for (p = pro; p->p_name; p++)
+    opt.case_indent = 0.0F;	/* -cli0.0 */
+
+    for (const struct pro *p = pro; p->p_name; p++)
 	if (p->p_type != PRO_SPECIAL)
 	    *p->p_obj = p->p_default;
 }
@@ -272,7 +270,7 @@ set_defaults(void)
 void
 set_option(char *arg)
 {
-    struct	pro *p;
+    const struct pro *p;
     const char	*param_start;
 
     arg++;			/* ignore leading "-" */
