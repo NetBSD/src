@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2021/03/07 15:09:12 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2021/03/07 20:54:41 christos Exp $
 
 USE_FORT?= yes	# network server
 
@@ -15,7 +15,7 @@ MLINKS+=hosts_access.3 request_init.3
 MLINKS+=hosts_access.3 request_set.3
 
 #LDADD+=-lblocklist
-PADD+=${LIBBLOCKLIST}
+#DPADD+=${LIBBLOCKLIST}
 
 INCS= tcpd.h
 INCSDIR=/usr/include
