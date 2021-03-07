@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.17 2021/03/07 10:01:03 rin Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.18 2021/03/07 10:33:07 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.17 2021/03/07 10:01:03 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.18 2021/03/07 10:33:07 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -58,18 +58,38 @@ struct fb_dev {
 	struct rasops_info fb_ri;
 };
 
+struct fb_cmap {
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+};
+
 struct fb_elb_softc {
 	device_t sc_dev;
 	struct fb_dev *sc_fb;
+	bus_addr_t sc_fbbase;
+	bus_size_t sc_fbsize;
 	int sc_nscreens;
+	int sc_mode;
+	struct fb_cmap sc_cmap[CMAP_SIZE];
 };
+
+/*
+ * We assume that rasops_cmap is compatible to sc_cmap.
+ */
+CTASSERT(sizeof(rasops_cmap) == CMAP_SIZE * 3);
 
 void		fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
 
 static int	fb_elb_probe(device_t, cfdata_t, void *);
 static void	fb_elb_attach(device_t, device_t, void *);
 
-static void	fb_init(struct fb_dev *);
+static void	fb_init(struct fb_dev *, int, int);
+static void	fb_initcmap(struct fb_elb_softc *);
+
+static int	fb_getcmap(struct fb_elb_softc *, struct wsdisplay_cmap *);
+static int	fb_putcmap(struct fb_elb_softc *,
+		    const struct wsdisplay_cmap *);
 
 static int	fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	fb_mmap(void *, void *, off_t, int);
@@ -84,7 +104,8 @@ static void	fb_erasecols(void *, int, int, int, long);
 static void	fb_copyrows(void *, int, int, int);
 static void	fb_copycols(void *, int, int, int, int);
 
-static void	s3_init(struct fb_dev *, int *, int *);
+static void	s3_getgeometry(struct fb_dev *, int *, int *);
+static void	s3_putcmap(struct fb_dev *, const struct fb_cmap *);
 static void	s3_copy(struct fb_dev *, int, int, int, int, int, int, int);
 static void	s3_fill(struct fb_dev *, int, int, int, int, int, int);
 
@@ -120,12 +141,17 @@ fb_cnattach(bus_space_tag_t iot, bus_addr_t iobase, void *vram)
 {
 	struct rasops_info *ri = &console_dev.fb_ri;
 	long defattr;
+	int width, height;
 
 	console_dev.fb_iot = iot;
 	console_dev.fb_ioh = iobase;
 	console_dev.fb_vram = vram;
 
-	fb_init(&console_dev);
+	s3_getgeometry(&console_dev, &width, &height);
+
+	fb_init(&console_dev, width, height);
+
+	s3_putcmap(&console_dev, (const struct fb_cmap*)rasops_cmap);
 
 	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 
@@ -152,35 +178,37 @@ fb_elb_attach(device_t parent, device_t self, void *aux)
 	struct fb_elb_softc *sc = device_private(self);
 	struct elb_attach_args *eaa = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct rasops_info *ri;
 	bus_space_handle_t ioh;
-	int is_console;
+	int is_console, width, height;
 
 	sc->sc_dev = self;
 
 	is_console = ((void *)eaa->elb_base == console_dev.fb_vram);
 
-	if (is_console) {
+	if (is_console)
 		sc->sc_fb = &console_dev;
-		sc->sc_fb->fb_ri.ri_flg &= ~RI_NO_AUTO;
-	} else {
+	else
 		sc->sc_fb = kmem_zalloc(sizeof(struct fb_dev), KM_SLEEP);
-	}
 
 	sc->sc_fb->fb_iot = eaa->elb_bt;
-	bus_space_map(sc->sc_fb->fb_iot, eaa->elb_base, SIZE_FB,
-	    BUS_SPACE_MAP_LINEAR, &ioh);
-	sc->sc_fb->fb_vram = bus_space_vaddr(sc->sc_fb->fb_iot, ioh);
 	bus_space_map(sc->sc_fb->fb_iot, eaa->elb_base2, FB_NPORTS,
 	    0, &sc->sc_fb->fb_ioh);
 
+	s3_getgeometry(sc->sc_fb, &width, &height);
+
+	sc->sc_fbbase = eaa->elb_base;
+	sc->sc_fbsize = width * height;
+	bus_space_map(sc->sc_fb->fb_iot, sc->sc_fbbase, sc->sc_fbsize,
+	    BUS_SPACE_MAP_LINEAR, &ioh);
+	sc->sc_fb->fb_vram = bus_space_vaddr(sc->sc_fb->fb_iot, ioh);
+
 	if (!is_console)
-		fb_init(sc->sc_fb);
+		fb_init(sc->sc_fb, width, height);
+	fb_initcmap(sc);
 
-	ri = &sc->sc_fb->fb_ri;
+	printf(": %dx%d 8bpp\n", width, height);
 
-	printf(": %d x %d\n", ri->ri_rows, ri->ri_cols);
-
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	waa.console = is_console;
 	waa.scrdata = &screenlist;
 	waa.accessops = &accessops;
@@ -190,11 +218,12 @@ fb_elb_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-fb_init(struct fb_dev *fb)
+fb_init(struct fb_dev *fb, int width, int height)
 {
 	struct rasops_info *ri = &fb->fb_ri;
 
-	s3_init(fb, &ri->ri_width, &ri->ri_height);
+	ri->ri_width = width;
+	ri->ri_height = height;
 	ri->ri_depth = 8;
 	ri->ri_stride = ri->ri_width;
 	ri->ri_bits = fb->fb_vram;
@@ -217,12 +246,71 @@ fb_init(struct fb_dev *fb)
 	stdscreen.capabilities = ri->ri_caps;
 }
 
+static void
+fb_initcmap(struct fb_elb_softc *sc)
+{
+
+	memcpy(&sc->sc_cmap, rasops_cmap, sizeof(sc->sc_cmap));
+	s3_putcmap(sc->sc_fb, sc->sc_cmap);
+}
+
+static int
+fb_getcmap(struct fb_elb_softc *sc, struct wsdisplay_cmap *p)
+{
+	u_int index = p->index, count = p->count;
+	uint8_t buf[CMAP_SIZE * 3];
+	int error, i;
+
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
+		return EINVAL;
+
+	for (i = 0; i < count; i++) {
+		buf[i]             = sc->sc_cmap[index + i].r;
+		buf[i + count]     = sc->sc_cmap[index + i].g;
+		buf[i + 2 * count] = sc->sc_cmap[index + i].b;
+	}
+
+	if ((error = copyout(&buf[0],         p->red,   count)) != 0 ||
+	    (error = copyout(&buf[count],     p->green, count)) != 0 ||
+	    (error = copyout(&buf[2 * count], p->blue,  count)) != 0)
+		return error;
+
+	return 0;
+}
+
+static int
+fb_putcmap(struct fb_elb_softc *sc, const struct wsdisplay_cmap *p)
+{
+	u_int index = p->index, count = p->count;
+	uint8_t buf[CMAP_SIZE * 3];
+	int error, i;
+
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
+		return EINVAL;
+
+	if ((error = copyin(p->red,   &buf[0],         count)) != 0 ||
+	    (error = copyin(p->green, &buf[count],     count)) != 0 ||
+	    (error = copyin(p->blue,  &buf[2 * count], count)) != 0)
+		return error;
+
+	for (i = 0; i < count; i++) {
+		sc->sc_cmap[index + i].r = buf[i];
+		sc->sc_cmap[index + i].g = buf[i + count];
+		sc->sc_cmap[index + i].b = buf[i + 2 * count];
+	}
+
+	s3_putcmap(sc->sc_fb, sc->sc_cmap);
+
+	return 0;
+}
+
 static int
 fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct fb_elb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_fb->fb_ri;
 	struct wsdisplay_fbinfo *wdf;
+	int new_mode;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -234,12 +322,33 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wdf->height = ri->ri_height;
 		wdf->width = ri->ri_width;
 		wdf->depth = ri->ri_depth;
-		wdf->cmsize = 16; /*XXX*/
+		wdf->cmsize = CMAP_SIZE;
 		return 0;
 
-	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = ri->ri_stride;
+		return 0;
+
 	case WSDISPLAYIO_GETCMAP:
+		return fb_getcmap(sc, (struct wsdisplay_cmap *)data);
+
 	case WSDISPLAYIO_PUTCMAP:
+		return fb_putcmap(sc, (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_SMODE:
+		new_mode = *(int *)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+				/* XXX */
+				memset(sc->sc_fb->fb_vram, 0, sc->sc_fbsize);
+
+				fb_initcmap(sc);
+			}
+		}
+		return 0;
+
+	default:
 		break;
 	}
 
@@ -251,10 +360,10 @@ fb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct fb_elb_softc *sc = v;
 
-	if (offset < 0 || offset >= SIZE_FB)
+	if (offset < 0 || offset >= sc->sc_fbsize)
 		return -1;
 
-	return bus_space_mmap(sc->sc_fb->fb_iot, BASE_FB, offset, prot,
+	return bus_space_mmap(sc->sc_fb->fb_iot, sc->sc_fbbase, offset, prot,
 	    BUS_SPACE_MAP_LINEAR);
 }
 
@@ -390,42 +499,12 @@ fb_copycols(void *v, int row, int srccol, int dstcol, int ncols)
 #define S3_CSRC_DISPMEM		0x0060
 #define S3_MIX_NEW		0x0007
 
-static u_int8_t default_cmap[] = {
-	/* black */		  0,   0,   0,
-	/* red */		192,   0,   0,
-	/* green */		  0, 192,   0,
-	/* brown */		192, 192,   0,
-	/* blue */		  0,   0, 192,
-	/* magenta */		192,   0, 192,
-	/* cyan */		  0, 192, 192,
-	/* lightgrey */		212, 208, 200,
-	/* darkgrey */		200, 192, 188,
-	/* lightred */		255,   0,   0,
-	/* lightgreen */	  0, 255,   0,
-	/* yellow */		255, 255,   0,
-	/* lightblue */		  0,   0, 255,
-	/* lightmagenta */	255,   0, 255,
-	/* lightcyan */		  0, 255, 255,
-	/* white */		255, 255, 255,
-};
-
 static void
-s3_init(struct fb_dev *fb, int *width, int *height)
+s3_getgeometry(struct fb_dev *fb, int *width, int *height)
 {
-	int i, j, w, h;
 	bus_space_tag_t iot = fb->fb_iot;
 	bus_space_handle_t ioh = fb->fb_ioh;
-
-	/* Initialize colormap */
-
-	bus_space_write_1(iot, ioh, S3_DAC_WR_INDEX, 0);
-
-	for (i = j = 0; i < CMAP_SIZE*3; i++) {
-		bus_space_write_1(iot, ioh, S3_DAC_DATA, default_cmap[j] >> 2);
-		j = (j+1) % sizeof(default_cmap)/sizeof(default_cmap[0]);
-	}
-
-	/* Retrieve frame buffer geometry */
+	int w, h, i;
 
 	bus_space_write_1(iot, ioh, S3_CRTC_INDEX, 1);
 	w = bus_space_read_1(iot, ioh, S3_CRTC_DATA);
@@ -441,6 +520,21 @@ s3_init(struct fb_dev *fb, int *width, int *height)
 
 	*width = (w+1) << 3;
 	*height = h+1;
+}
+
+static void
+s3_putcmap(struct fb_dev *fb, const struct fb_cmap *cmap)
+{
+	bus_space_tag_t iot = fb->fb_iot;
+	bus_space_handle_t ioh = fb->fb_ioh;
+	int i;
+
+	bus_space_write_1(iot, ioh, S3_DAC_WR_INDEX, 0);
+	for (i = 0; i < CMAP_SIZE; i++) {
+		bus_space_write_1(iot, ioh, S3_DAC_DATA, cmap[i].r >> 2);
+		bus_space_write_1(iot, ioh, S3_DAC_DATA, cmap[i].g >> 2);
+		bus_space_write_1(iot, ioh, S3_DAC_DATA, cmap[i].b >> 2);
+	}
 }
 
 static void
