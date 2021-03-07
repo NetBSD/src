@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.11 2021/03/07 09:47:00 rin Exp $	*/
+/*	$NetBSD: consinit.c,v 1.12 2021/03/07 09:48:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11 2021/03/07 09:47:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.12 2021/03/07 09:48:33 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,6 @@ consinit(void)
 	    COM_FREQ, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #else
-	/* Clear VRam */
-	memset((void *)BASE_FB, 0, SIZE_FB);
-
 	tag = elb_get_bus_space_tag(BASE_FB);
 	fb_cnattach(tag, BASE_FB2, (void *)BASE_FB);
 
