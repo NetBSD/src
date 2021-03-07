@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_svc.c,v 1.9 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: pmap_svc.c,v 1.10 2021/03/07 00:23:06 christos Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/pmap_svc.c 258564 2013-11-25 16:44:02Z hrs $ */
 
 /*-
@@ -173,17 +173,17 @@ pmapproc_change(struct svc_req *rqstp __unused, SVCXPRT *xprt, unsigned long op)
 	struct sockcred *sc;
 	char uidbuf[32];
 
+	if (!svc_getargs(xprt, (xdrproc_t) xdr_pmap, (char *)&reg)) {
+		svcerr_decode(xprt);
+		return (FALSE);
+	}
+
 #ifdef RPCBIND_DEBUG
 	if (debugging)
 		fprintf(stderr, "%s request for (%lu, %lu) : ",
 		    op == PMAPPROC_SET ? "PMAP_SET" : "PMAP_UNSET",
 		    reg.pm_prog, reg.pm_vers);
 #endif
-
-	if (!svc_getargs(xprt, (xdrproc_t) xdr_pmap, (char *)&reg)) {
-		svcerr_decode(xprt);
-		return (FALSE);
-	}
 
 	if (!check_access(xprt, op, &reg, PMAPVERS)) {
 		svcerr_weakauth(xprt);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2019/10/13 07:28:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2021/03/07 00:23:06 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ SRCS=	check_bound.c rpcb_stat.c rpcb_svc_4.c rpcbind.c pmap_svc.c \
 LIBCDIR=        ${NETBSDSRCDIR}/lib/libc
 LIBCRPCDIR=     ${LIBCDIR}/rpc
 
-CPPFLAGS+=	-I${LIBCRPCDIR} -DPORTMAP -DLIBWRAP
+CPPFLAGS+=	-I${LIBCRPCDIR} -DPORTMAP -DLIBWRAP -DWARMSTART
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
@@ -24,10 +24,11 @@ CPPFLAGS+=	-DYP
 
 # Uncomment these to get any useful output from 'rpcbind -d'
 # CPPFLAGS+=	-DRPCBIND_DEBUG
+# CPPFLAGS+=	-DDEBUG_RMTCALL
 # CPPFLAGS+=	-DSVC_RUN_DEBUG
 
-LDADD+= -lwrap -lutil
-DPADD+= ${LIBWRAP} ${LIBUTIL}
+LDADD+= -lwrap -lblocklist -lutil
+DPADD+= ${LIBWRAP} ${LIBBLOCKLIST} ${LIBUTIL}
 
 COPTS.rpcb_svc_4.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 COPTS.pmap_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}

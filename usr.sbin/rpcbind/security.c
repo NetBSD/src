@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.13 2019/04/24 10:27:49 roy Exp $	*/
+/*	$NetBSD: security.c,v 1.14 2021/03/07 00:23:06 christos Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/security.c 262860 2014-03-06 17:33:27Z mav $ */
 
 #include <sys/types.h>
@@ -123,7 +123,7 @@ check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, unsigned int rpcbvers)
 #ifdef LIBWRAP
 	if (libwrap && addr->sa_family != AF_LOCAL) {
 		request_init(&req, RQ_DAEMON, "rpcbind", RQ_CLIENT_SIN, addr,
-		    0);
+		    RQ_FILE, xprt->xp_fd, NULL);
 		sock_methods(&req);
 		if(!hosts_access(&req)) {
 			logit(deny_severity, addr, proc, prog,

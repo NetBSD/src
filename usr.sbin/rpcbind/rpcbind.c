@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.29 2020/06/17 00:16:22 kamil Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.30 2021/03/07 00:23:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, Sun Microsystems, Inc.
@@ -302,14 +302,14 @@ init_transport(struct netconfig *nconf)
 		return 1;	/* not my type */
 #ifdef RPCBIND_DEBUG
 	if (debugging) {
-		int i;
+		unsigned int i;
 		char **s;
 
 		(void)fprintf(stderr, "%s: %ld lookup routines :\n",
 		    nconf->nc_netid, nconf->nc_nlookups);
 		for (i = 0, s = nconf->nc_lookups; i < nconf->nc_nlookups;
 		     i++, s++)
-			(void)fprintf(stderr, "[%d] - %s\n", i, *s);
+			(void)fprintf(stderr, "[%u] - %s\n", i, *s);
 	}
 #endif
 
@@ -899,7 +899,7 @@ parseargs(int argc, char *argv[])
 			break;		/* errors; for rpcbind developers */
 					/* only! */
 		case 'd':
-			debugging = 1;
+			debugging++;
 			break;
 		case 'h':
 			++nhosts;
