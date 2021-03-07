@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.23 2021/03/07 20:47:13 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.24 2021/03/07 22:11:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.23 2021/03/07 20:47:13 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.24 2021/03/07 22:11:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -208,6 +208,11 @@ dump_line(void)
 	    prefix_blankline_requested = postfix_blankline_requested;
 	postfix_blankline_requested = 0;
     }
+
+    /* keep blank lines after '//' comments */
+    if (e_com - s_com > 1 && s_com[1] == '/')
+	fprintf(output, "%.*s", (int)(e_token - s_token), s_token);
+
     ps.decl_on_line = ps.in_decl;	/* if we are in the middle of a
 					 * declaration, remember that fact for
 					 * proper comment indentation */

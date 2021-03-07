@@ -1,33 +1,31 @@
-/* $NetBSD: comment-line-end.0.stdout,v 1.3 2021/03/07 08:57:38 rillig Exp $ */
+/* $NetBSD: comment-line-end.0.stdout,v 1.4 2021/03/07 22:11:01 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
- * Demonstrates handling of line-end comments.
+ * Demonstrates handling of line-end '//' comments.
  *
- * Even though this type of comments was added in C99, indent doesn't support
- * them, as of 2021, and instead messes up the code in unpredictable ways.
+ * Even though this type of comments had been added in C99, indent didn't
+ * support these comments until 2021 and instead messed up the code in
+ * unpredictable ways.
  */
 
-int		dummy //comment
-= //eq
-1 // one
-+ //plus
-2;
-//two
+int		dummy // comment
+ = // eq
+ 1 // one
+ + // plus
+ 2;				// two
 
-///// separator /////
+/////separator/////
 
 void
 function(void)
 {
 }
 
-/* $ FIXME: The space between 'Note: removing' must be preserved. */
-/* $ FIXME: The spacing around the '-' in 'line-end' must be preserved. */
-//Note:removing one of these line - end comments affects the formatting
-// of the main function below.
+// Note: removing one of these line-end comments affected the formatting
+// of the main function below, before indent supported '//' comments.
 
 int
-/* $ FIXME: The '{' must be in column 1, not directly after the ')'. */
-main(void){
+main(void)
+{
 }
