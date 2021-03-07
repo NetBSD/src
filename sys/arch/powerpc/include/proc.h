@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.14 2021/03/06 08:08:19 rin Exp $	*/
+/*	$NetBSD: proc.h,v 1.15 2021/03/07 14:31:53 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,7 +53,7 @@ struct trapframe;
 struct mdproc {
 	void (*md_syscall)(struct trapframe *);
 #if defined(PPC_BOOKE) || defined(PPC_IBM4XX) || \
-    defined(MODULAR) || defined(_MODULE)
+    ((defined(MODULAR) || defined(_MODULE)) && !defined(_LP64))
 	vaddr_t md_ss_addr[2];
 	uint32_t md_ss_insn[2];
 #endif
