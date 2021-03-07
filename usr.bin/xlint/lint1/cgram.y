@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.167 2021/03/07 19:46:18 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.168 2021/03/07 19:57:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.167 2021/03/07 19:46:18 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.168 2021/03/07 19:57:46 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -290,7 +290,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		type_member_decls
 %type	<y_sym>		notype_member_decl
 %type	<y_sym>		type_member_decl
-%type	<y_tnode>	constant
+%type	<y_tnode>	constant_expr
 %type	<y_sym>		enum_declaration
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enums
@@ -537,15 +537,15 @@ type_attribute_spec:
 	  /* empty */
 	| T_AT_DEPRECATED T_LPAREN string T_RPAREN
 	| T_AT_DEPRECATED
-	| T_AT_ALIGNED T_LPAREN constant T_RPAREN
-	| T_AT_ALLOC_SIZE T_LPAREN constant T_COMMA constant T_RPAREN
-	| T_AT_ALLOC_SIZE T_LPAREN constant T_RPAREN
+	| T_AT_ALIGNED T_LPAREN constant_expr T_RPAREN
+	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_COMMA constant_expr T_RPAREN
+	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_RPAREN
 	| T_AT_BOUNDED T_LPAREN type_attribute_bounded_type
-	  T_COMMA constant T_COMMA constant T_RPAREN
-	| T_AT_SENTINEL T_LPAREN constant T_RPAREN
+	  T_COMMA constant_expr T_COMMA constant_expr T_RPAREN
+	| T_AT_SENTINEL T_LPAREN constant_expr T_RPAREN
 	| T_AT_SENTINEL
-	| T_AT_FORMAT_ARG T_LPAREN constant T_RPAREN
-	| T_AT_NONNULL T_LPAREN constant T_RPAREN
+	| T_AT_FORMAT_ARG T_LPAREN constant_expr T_RPAREN
+	| T_AT_NONNULL T_LPAREN constant_expr T_RPAREN
 	| T_AT_MODE T_LPAREN T_NAME T_RPAREN
 	| T_AT_ALIAS T_LPAREN string T_RPAREN
 	| T_AT_OPTIMIZE T_LPAREN string T_RPAREN
@@ -571,7 +571,7 @@ type_attribute_spec:
 	| T_AT_GNU_INLINE
 	| T_AT_ALWAYS_INLINE
 	| T_AT_FORMAT T_LPAREN type_attribute_format_type T_COMMA
-	    constant T_COMMA constant T_RPAREN
+	    constant_expr T_COMMA constant_expr T_RPAREN
 	| T_AT_USED {
 		add_attr_used();
 	  }
@@ -580,7 +580,7 @@ type_attribute_spec:
 	  }
 	| T_AT_WARN_UNUSED_RESULT
 	| T_AT_WEAK
-	| T_AT_VISIBILITY T_LPAREN constant T_RPAREN
+	| T_AT_VISIBILITY T_LPAREN constant_expr T_RPAREN
 	| T_QUAL {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
@@ -872,12 +872,12 @@ notype_member_decl:
 	  notype_decl {
 		$$ = $1;
 	  }
-	| notype_decl T_COLON constant {
+	| notype_decl T_COLON constant_expr {		/* C99 6.7.2.1 */
 		$$ = bitfield($1, toicon($3, 1));
 	  }
 	| {
 		symtyp = FVFT;
-	  } T_COLON constant {
+	  } T_COLON constant_expr {			/* C99 6.7.2.1 */
 		$$ = bitfield(NULL, toicon($3, 1));
 	  }
 	;
@@ -886,12 +886,12 @@ type_member_decl:
 	  type_decl {
 		$$ = $1;
 	  }
-	| type_decl T_COLON constant {
+	| type_decl T_COLON constant_expr {
 		$$ = bitfield($1, toicon($3, 1));
 	  }
 	| {
 		symtyp = FVFT;
-	  } T_COLON constant {
+	  } T_COLON constant_expr {
 		$$ = bitfield(NULL, toicon($3, 1));
 	  }
 	;
@@ -974,7 +974,7 @@ enumerator:
 	  enumeration_constant {
 		$$ = enumeration_constant($1, enumval, 1);
 	  }
-	| enumeration_constant T_ASSIGN constant {
+	| enumeration_constant T_ASSIGN constant_expr {
 		$$ = enumeration_constant($1, toicon($3, 1), 0);
 	  }
 	;
@@ -1042,7 +1042,7 @@ notype_direct_decl:
 	| notype_direct_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
-	| notype_direct_decl T_LBRACK constant T_RBRACK {
+	| notype_direct_decl T_LBRACK constant_expr T_RBRACK {
 		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
@@ -1075,7 +1075,7 @@ type_direct_decl:
 	| type_direct_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
-	| type_direct_decl T_LBRACK constant T_RBRACK {
+	| type_direct_decl T_LBRACK constant_expr T_RBRACK {
 		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
@@ -1115,7 +1115,7 @@ direct_param_decl:
 	| direct_param_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
-	| direct_param_decl T_LBRACK constant T_RBRACK {
+	| direct_param_decl T_LBRACK constant_expr T_RBRACK {
 		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
@@ -1144,7 +1144,7 @@ direct_notype_param_decl:
 	| direct_notype_param_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
-	| direct_notype_param_decl T_LBRACK constant T_RBRACK {
+	| direct_notype_param_decl T_LBRACK constant_expr T_RBRACK {
 		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
@@ -1346,11 +1346,11 @@ init_expr_list:
 	;
 
 range:
-	  constant {
+	  constant_expr {
 		$$.lo = toicon($1, 1);
 		$$.hi = $$.lo;
 	  }
-	| constant T_ELLIPSIS constant {
+	| constant_expr T_ELLIPSIS constant_expr {
 		$$.lo = toicon($1, 1);
 		$$.hi = toicon($3, 1);
 		/* initialization with '[a...b]' is a GNU extension */
@@ -1444,7 +1444,7 @@ direct_abstract_decl:
 	| T_LBRACK T_RBRACK {
 		$$ = add_array(abstract_name(), 0, 0);
 	  }
-	| T_LBRACK constant T_RBRACK {
+	| T_LBRACK constant_expr T_RBRACK {
 		$$ = add_array(abstract_name(), 1, toicon($2, 0));
 	  }
 	| type_attribute direct_abstract_decl {
@@ -1453,7 +1453,7 @@ direct_abstract_decl:
 	| direct_abstract_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, 0, 0);
 	  }
-	| direct_abstract_decl T_LBRACK constant T_RBRACK {
+	| direct_abstract_decl T_LBRACK constant_expr T_RBRACK {
 		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| abstract_decl_param_list opt_asm_or_symbolrename {
@@ -1493,11 +1493,11 @@ label:
 		symtyp = FLABEL;
 		named_label(getsym($1));
 	  }
-	| T_CASE constant T_COLON {
+	| T_CASE constant_expr T_COLON {
 		case_label($2);
 		ftflg = true;
 	  }
-	| T_CASE constant T_ELLIPSIS constant T_COLON {
+	| T_CASE constant_expr T_ELLIPSIS constant_expr T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
 		ftflg = true;
@@ -1787,7 +1787,7 @@ declaration_list:
 	  }
 	;
 
-constant:
+constant_expr:
 	  expr				%prec T_COMMA {
 		  $$ = $1;
 	  }
@@ -2031,7 +2031,7 @@ point:
 	  }
 	;
 
-identifier:
+identifier:			/* C99 6.4.2.1 */
 	  T_NAME {
 		$$ = $1;
 		cgram_debug("name '%s'", $$->sb_name);
