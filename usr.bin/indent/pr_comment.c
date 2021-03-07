@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.12 2021/03/07 10:42:48 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.13 2021/03/07 22:11:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.12 2021/03/07 10:42:48 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.13 2021/03/07 22:11:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -119,7 +119,7 @@ pr_comment(void)
 	ps.com_col = 1;
     }
     else {
-	if (*buf_ptr == '-' || *buf_ptr == '*' ||
+	if (*buf_ptr == '-' || *buf_ptr == '*' || e_token[-1] == '/' ||
 	    (*buf_ptr == '\n' && !opt.format_block_comments)) {
 	    ps.box_com = true;	/* A comment with a '-' or '*' immediately
 				 * after the /+* is assumed to be a boxed
@@ -179,8 +179,8 @@ pr_comment(void)
 	    buf_ptr++;
     }
     ps.comment_delta = 0;
-    *e_com++ = '/';		/* put '/' followed by '*' into buffer */
-    *e_com++ = '*';
+    *e_com++ = '/';
+    *e_com++ = e_token[-1];
     if (*buf_ptr != ' ' && !ps.box_com)
 	*e_com++ = ' ';
 
@@ -235,6 +235,10 @@ pr_comment(void)
 	    break;
 
 	case '\n':
+	    if (e_token[-1] == '/') {
+		++line_no;
+		goto end_of_comment;
+	    }
 	    if (had_eof) {	/* check for unexpected eof */
 		printf("Unterminated comment\n");
 		dump_line();
@@ -306,7 +310,10 @@ pr_comment(void)
 		}
 		if (e_com[-1] != ' ' && e_com[-1] != '\t' && !ps.box_com)
 		    *e_com++ = ' ';	/* ensure blank before end */
-		*e_com++ = '*', *e_com++ = '/', *e_com = '\0';
+		if (e_token[-1] == '/')
+		    *e_com++ = '\n', *e_com = '\0';
+		else
+		    *e_com++ = '*', *e_com++ = '/', *e_com = '\0';
 		ps.just_saw_decl = l_just_saw_decl;
 		return;
 	    }
