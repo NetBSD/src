@@ -1,4 +1,4 @@
-.\"	$NetBSD: bta2dpd.8,v 1.4 2019/07/27 20:10:29 nakayama Exp $
+.\"	$NetBSD: bta2dpd.8,v 1.5 2021/03/07 13:09:43 nat Exp $
 .\"
 .\" Copyright (c) 2015 - 2016  Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd Bluetooth Advanced Audio Distribution Profile daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl \&Dv
+.Op Fl \&Dnv
 .Op Fl A Ar bitpool_allocation
 .Op Fl B Ar bitpool
 .Op Fl b Ar blocks
@@ -107,6 +107,10 @@ with only the
 option and the maximum bitpool for your device will be printed to stdout.
 .It Fl D
 Run in the background.
+.It Fl n
+Do not close conection on end of file (EOF).
+Useful for
+.Xr pad 4 .
 .It Fl d Ar device
 Local device address.
 May be given as BDADDR or device name.
