@@ -1,4 +1,4 @@
-#	$NetBSD: files.explora,v 1.12 2021/03/05 06:40:15 rin Exp $
+#	$NetBSD: files.explora,v 1.13 2021/03/07 09:43:56 rin Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 
@@ -50,4 +50,4 @@ file	arch/evbppc/explora/dev/pckbc_elb.c	pckbc_elb
 
 device	fb: wsemuldisplaydev, rasops8
 attach	fb at elb with fb_elb
-file	arch/evbppc/explora/dev/fb_elb.c	fb_elb		needs-flag
+file	arch/evbppc/explora/dev/fb_elb.c	fb_elb
