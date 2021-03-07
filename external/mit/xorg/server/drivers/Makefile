@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2020/10/09 04:28:38 macallan Exp $
+#	$NetBSD: Makefile,v 1.101 2021/03/07 10:42:27 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -194,6 +194,11 @@ SUBDIR+= \
 	xf86-video-sis \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "evbmips"
+
+.if ${MACHINE} == "evbppc"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "evbppc"
 
 .if ${MACHINE} == "ews4800mips"
 SUBDIR+= \
