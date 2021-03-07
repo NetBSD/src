@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.55 2021/03/05 13:57:33 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.56 2021/03/07 19:06:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1784,4 +1784,22 @@ share/man/man4/iic.4				1.23-1.25
 	- Add reference to ssdfb(4)
 	- Document the userspace ioctl interface
 	[nia, ticket #1224]
+
+sys/dev/usb/uaudio.c				1.169
+
+	uaudio(4): avoid dropping samples when recording.
+	[isaki, ticket #1225]
+
+sys/netinet/ip6.h				1.30
+sys/netinet/ip_input.c				1.400
+sys/netinet/tcp_subr.c				1.285
+sys/netinet6/ip6_id.c				1.19-1.21
+sys/netinet6/ip6_var.h				1.88
+
+	netinet:
+	 - enable random IP fragment ids by default
+	 - enable RFC 1948 pseudorandom TCP ISS selection by default.
+	netinet6:
+	 - replace randomid() by cprng_fast32()
+	[christos, ticket #1226]
 
