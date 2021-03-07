@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.161.2.1 2019/11/19 12:56:48 martin Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.161.2.2 2021/03/07 18:43:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.161.2.1 2019/11/19 12:56:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.161.2.2 2021/03/07 18:43:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3003,7 +3003,8 @@ uaudio_set_format(void *addr, int setmode,
 		raltidx = audio_indexof_format(sc->sc_formats, sc->sc_nformats,
 		    AUMODE_RECORD, rec);
 		/* Transfer should have halted */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, rec, 0);
+		uaudio_chan_init(&sc->sc_recchan, raltidx, rec,
+		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
 	}
 
 	if ((setmode & AUMODE_PLAY) && sc->sc_playchan.altidx != -1) {
