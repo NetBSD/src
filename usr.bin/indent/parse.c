@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.11 2021/03/06 20:30:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.12 2021/03/07 10:42:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -54,8 +54,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 
 #include <err.h>
 #include <stdio.h>
-#include "indent_globs.h"
-#include "indent_codes.h"
+
 #include "indent.h"
 
 static void reduce(void);
