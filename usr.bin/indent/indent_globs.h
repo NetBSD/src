@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.12 2020/04/23 00:17:34 joerg Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.13 2021/03/07 10:56:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -239,8 +239,8 @@ extern int         suppress_blanklines;/* set iff following blanklines should be
 #define	STACKSIZE 256
 
 extern struct parser_state {
-    int         last_token;
-    int         p_stack[STACKSIZE];	/* this is the parsers stack */
+    token_type  last_token;
+    token_type	p_stack[STACKSIZE];	/* this is the parsers stack */
     int         il[STACKSIZE];	/* this stack stores indentation levels */
     float       cstk[STACKSIZE];/* used to store case stmt indentation levels */
     int         box_com;	/* set to true when we are in a "boxed"

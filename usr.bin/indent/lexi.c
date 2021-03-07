@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.18 2021/03/07 10:42:48 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.19 2021/03/07 10:56:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.18 2021/03/07 10:42:48 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.19 2021/03/07 10:56:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -176,12 +176,12 @@ strcmp_type(const void *e1, const void *e2)
     return (strcmp(e1, *(const char * const *)e2));
 }
 
-int
+token_type
 lexi(struct parser_state *state)
 {
     int         unary_delim;	/* this is set to 1 if the current token
 				 * forces a following operator to be unary */
-    int         code;		/* internal code to be returned */
+    token_type  code;		/* internal code to be returned */
     char        qchar;		/* the delimiter character for a string */
 
     e_token = s_token;		/* point to start of place to save token */
@@ -376,7 +376,7 @@ lexi(struct parser_state *state)
     case '\n':
 	unary_delim = state->last_u_d;
 	state->last_nl = true;	/* remember that we just had a newline */
-	code = (had_eof ? 0 : newline);
+	code = (had_eof ? end_of_file : newline);
 
 	/*
 	 * if data has been exhausted, the newline is a dummy, and we should
