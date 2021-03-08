@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.400 2021/03/07 14:58:27 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.401 2021/03/08 18:03:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.400 2021/03/07 14:58:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.401 2021/03/08 18:03:25 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -189,7 +189,6 @@ struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 pktqueue_t *		ip_pktq			__read_mostly;
 pfil_head_t *		inet_pfil_hook		__read_mostly;
-ipid_state_t *		ip_ids			__read_mostly;
 percpu_t *		ipstat_percpu		__read_mostly;
 
 static percpu_t		*ipforward_rt_percpu	__cacheline_aligned;
@@ -291,7 +290,6 @@ ip_init(void)
 
 	ip_reass_init();
 
-	ip_ids = ip_id_init();
 	ip_id = time_uptime & 0xfffff;
 
 #ifdef GATEWAY

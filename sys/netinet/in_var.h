@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.99 2021/03/08 17:54:23 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.100 2021/03/08 18:03:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -447,14 +447,6 @@ void	in_addrhash_insert(struct in_ifaddr *);
 void	in_addrhash_remove(struct in_ifaddr *);
 int	ipflow_fastforward(struct mbuf *);
 
-struct ipid_state;
-typedef struct ipid_state ipid_state_t;
-
-ipid_state_t *	ip_id_init(void);
-void		ip_id_fini(ipid_state_t *);
-uint16_t	ip_randomid(ipid_state_t *, uint16_t);
-
-extern ipid_state_t *	ip_ids;
 extern uint16_t		ip_id;
 extern int		ip_do_randomid;
 
