@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.94 2021/03/08 06:27:06 mlelstv Exp $
+#	$NetBSD: GENERIC,v 1.95 2021/03/08 06:31:42 mlelstv Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -591,5 +591,16 @@ spiflash* 	at spiflashbus?
 include "dev/usb/usbdevices.config"
 midi* 		at midibus?
 pseudo-device	sequencer			# MIDI sequencer
+
+# Bluetooth USB Controllers
+ubt* at uhub? port ?
+
+# Bluetooth Device Hub
+bthub* at bcsp?
+bthub* at btuart?
+bthub* at bthfive?
+bthub* at ubt?
+
+include "dev/bluetooth/bluetoothdevices.config"
 
 cinclude "arch/evbarm/conf/GENERIC.local"
