@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.28 2015/04/13 16:35:33 riastradh Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.29 2021/03/08 23:34:58 christos Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.28 2015/04/13 16:35:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.29 2021/03/08 23:34:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1044,7 +1044,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	if (r->rule_flag & PFRULE_RANDOMID) {
 		u_int16_t id = h->ip_id;
 
-		h->ip_id = ip_randomid(ip_ids, 0);
+		h->ip_id = ip_randomid();
 		h->ip_sum = pf_cksum_fixup(h->ip_sum, id, h->ip_id, 0);
 	}
 	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0)
