@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.427 2021/02/19 15:43:56 jakllsch Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.428 2021/03/08 18:17:27 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.427 2021/02/19 15:43:56 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.428 2021/03/08 18:17:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4258,7 +4258,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 		sc->sc_iss = tcp_new_iss1(&dstin->sin_addr,
 		    &srcin->sin_addr, dstin->sin_port,
-		    srcin->sin_port, sizeof(dstin->sin_addr), 0);
+		    srcin->sin_port, sizeof(dstin->sin_addr));
 		break;
 	    }
 #ifdef INET6
@@ -4269,7 +4269,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 		sc->sc_iss = tcp_new_iss1(&dstin6->sin6_addr,
 		    &srcin6->sin6_addr, dstin6->sin6_port,
-		    srcin6->sin6_port, sizeof(dstin6->sin6_addr), 0);
+		    srcin6->sin6_port, sizeof(dstin6->sin6_addr));
 		break;
 	    }
 #endif

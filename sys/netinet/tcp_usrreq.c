@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.228 2020/11/23 00:52:53 chs Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.229 2021/03/08 18:17:27 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.228 2020/11/23 00:52:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.229 2021/03/08 18:17:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -826,7 +826,7 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	TCP_STATINC(TCP_STAT_CONNATTEMPT);
 	tp->t_state = TCPS_SYN_SENT;
 	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
-	tp->iss = tcp_new_iss(tp, 0);
+	tp->iss = tcp_new_iss(tp);
 	tcp_sendseqinit(tp);
 	error = tcp_output(tp);
 
