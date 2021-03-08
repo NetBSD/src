@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.25 2021/03/08 20:15:42 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.26 2021/03/08 20:20:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.25 2021/03/08 20:15:42 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.26 2021/03/08 20:20:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -301,10 +301,10 @@ lexi(struct parser_state *state)
 	}
 	else
 	    while (isalnum((unsigned char)*buf_ptr) ||
-	        *buf_ptr == BACKSLASH ||
+	        *buf_ptr == '\\' ||
 		*buf_ptr == '_' || *buf_ptr == '$') {
 		/* fill_buffer() terminates buffer with newline */
-		if (*buf_ptr == BACKSLASH) {
+		if (*buf_ptr == '\\') {
 		    if (*(buf_ptr + 1) == '\n') {
 			buf_ptr += 2;
 			if (buf_ptr >= buf_end)
@@ -467,7 +467,7 @@ lexi(struct parser_state *state)
 		*e_token = *buf_ptr++;
 		if (buf_ptr >= buf_end)
 		    fill_buffer();
-		if (*e_token == BACKSLASH) {	/* if escape, copy extra char */
+		if (*e_token == '\\') {		/* if escape, copy extra char */
 		    if (*buf_ptr == '\n')	/* check for escaped newline */
 			++line_no;
 		    *++e_token = *buf_ptr++;
