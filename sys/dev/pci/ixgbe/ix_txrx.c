@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.65 2021/03/02 11:10:53 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.66 2021/03/08 07:10:45 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1883,7 +1883,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		else
 			newmp = NULL;
 		if (newmp == NULL) {
-			rxr->rx_discarded.ev_count++;
+			rxr->no_jmbuf.ev_count++;
 			/*
 			 * Descriptor initialization is already done by the
 			 * above code (cur->wb.upper.status_error = 0).
