@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getsym.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: gelf_getsym.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getsym.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_getsym.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
-.Dd August 29, 2006
-.Os
+.Dd April 22, 2019
 .Dt GELF_GETSYM 3
+.Os
 .Sh NAME
 .Nm gelf_getsym ,
 .Nm gelf_update_sym
@@ -93,7 +93,9 @@ Function
 .Fn gelf_getsym
 returns the value of argument
 .Ar sym
-if successful, or NULL in case of an error.
+if successful, or
+.Dv NULL
+in case of an error.
 Function
 .Fn gelf_update_sym
 returns a non-zero value if successful, or zero in case of an error.
@@ -105,7 +107,8 @@ Arguments
 .Ar data
 or
 .Ar sym
-were NULL.
+were
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar ndx
@@ -117,6 +120,12 @@ Data descriptor
 was not associated with a section containing symbol information.
 .It Bq Er ELF_E_RANGE
 A value was not representable in the target type.
+.It Bq Er ELF_E_VERSION
+The
+.Vt Elf_Data
+descriptor denoted by argument
+.Ar data
+is associated with an ELF object with an unsupported version.
 .El
 .Sh SEE ALSO
 .Xr elf 3 ,

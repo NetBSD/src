@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_memory.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: elf_memory.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_memory.3 2314 2011-12-11 06:19:51Z jkoshy 
+.\" Id: elf_memory.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd June 28, 2006
-.Os
 .Dt ELF_MEMORY 3
+.Os
 .Sh NAME
 .Nm elf_memory
 .Nd process an ELF or ar(1) archive mapped into memory
@@ -59,7 +59,9 @@ with a command argument value of
 .Sh RETURN VALUES
 Function
 .Fn elf_memory
-returns a pointer to a new ELF descriptor if successful, or NULL if an
+returns a pointer to a new ELF descriptor if successful, or
+.Dv NULL
+if an
 error occurred.
 .Pp
 The return value may be queried for the file type using
@@ -90,7 +92,9 @@ Function
 can fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
-A NULL value was used for argument
+A
+.Dv NULL
+value was used for argument
 .Ar image
 or the value of argument
 .Ar sz
