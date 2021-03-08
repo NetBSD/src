@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.32 2021/03/07 20:52:11 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.33 2021/03/08 19:06:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.32 2021/03/07 20:52:11 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.33 2021/03/08 19:06:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -192,7 +192,7 @@ main(int argc, char **argv)
     l_token = tokenbuf + bufsize - 5;
     combuf[0] = codebuf[0] = labbuf[0] = ' ';	/* set up code, label, and
 						 * comment buffers */
-    combuf[1] = codebuf[1] = labbuf[1] = '\0';
+    combuf[1] = codebuf[1] = labbuf[1] = tokenbuf[1] = '\0';
     opt.else_if = 1;		/* Default else-if special processing to on */
     s_lab = e_lab = labbuf + 1;
     s_code = e_code = codebuf + 1;
