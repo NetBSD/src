@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2017/04/14 02:43:28 ozaki-r Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2021/03/08 20:43:22 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet
@@ -7,7 +7,7 @@ CPPFLAGS+=	-DINET
 
 # INET
 SRCS+=	in_proto.c igmp.c in.c in_offload.c in_pcb.c ip_carp.c ip_icmp.c\
-	ip_flow.c ip_id.c ip_input.c ip_reass.c ip_output.c raw_ip.c	\
+	ip_flow.c ip_input.c ip_reass.c ip_output.c raw_ip.c	\
 	in_cksum.c cpu_in_cksum.c in4_cksum.c ip_encap.c portalgo.c
 
 # ARP
