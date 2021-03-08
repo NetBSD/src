@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.98 2020/09/11 15:22:12 roy Exp $	*/
+/*	$NetBSD: in_var.h,v 1.99 2021/03/08 17:54:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #define _NETINET_IN_VAR_H_
 
 #include <sys/queue.h>
+#include <sys/cprng.h>
 
 #define IN_IFF_TENTATIVE	0x01	/* tentative address */
 #define IN_IFF_DUPLICATED	0x02	/* DAD detected duplicate */
@@ -469,7 +470,8 @@ ip_newid_range(const struct in_ifaddr *ia, u_int num)
 
 	if (ip_do_randomid) {
 		/* XXX ignore num */
-		return ip_randomid(ip_ids, ia ? ia->ia_idsalt : 0);
+		id = (uint16_t)cprng_fast32();
+		return id ? id : 1;
 	}
 
 	/* Never allow an IP ID of 0 (detect wrap). */
