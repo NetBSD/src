@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.100 2021/03/08 18:03:25 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.101 2021/03/08 20:01:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -450,6 +450,14 @@ int	ipflow_fastforward(struct mbuf *);
 extern uint16_t		ip_id;
 extern int		ip_do_randomid;
 
+static __inline uint16_t
+ip_randomid(void)
+{
+
+	uint16_t id = (uint16_t)cprng_fast32();
+	return id ? id : 1;
+}
+
 /*
  * ip_newid_range: "allocate" num contiguous IP IDs.
  *
@@ -462,8 +470,7 @@ ip_newid_range(const struct in_ifaddr *ia, u_int num)
 
 	if (ip_do_randomid) {
 		/* XXX ignore num */
-		id = (uint16_t)cprng_fast32();
-		return id ? id : 1;
+		return ip_randomid();
 	}
 
 	/* Never allow an IP ID of 0 (detect wrap). */
