@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.26 2021/03/08 20:20:11 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.27 2021/03/08 21:13:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.26 2021/03/08 20:20:11 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.27 2021/03/08 21:13:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -75,9 +75,9 @@ struct templ {
 
 /*
  * This table has to be sorted alphabetically, because it'll be used in binary
- * search. For the same reason, string must be the first thing in struct templ.
+ * search.
  */
-struct templ specials[] =
+const struct templ specials[] =
 {
     {"_Bool", rw_type},
     {"_Complex", rw_type},
@@ -187,9 +187,15 @@ check_size_token(size_t desired_size)
 }
 
 static int
-strcmp_type(const void *e1, const void *e2)
+compare_templ_array(const void *key, const void *elem)
 {
-    return strcmp(e1, *(const char *const *)e2);
+    return strcmp(key, ((const struct templ *)elem)->rwd);
+}
+
+static int
+compare_string_array(const void *key, const void *elem)
+{
+    return strcmp(key, *((const char *const *)elem));
 }
 
 #ifdef debug
@@ -341,11 +347,8 @@ lexi(struct parser_state *state)
 	 */
 	state->last_u_d = (state->last_token == structure);
 
-	p = bsearch(s_token,
-	    specials,
-	    sizeof(specials) / sizeof(specials[0]),
-	    sizeof(specials[0]),
-	    strcmp_type);
+	p = bsearch(s_token, specials, sizeof specials / sizeof specials[0],
+	    sizeof specials[0], compare_templ_array);
 	if (p == NULL) {	/* not a special keyword... */
 	    char *u;
 
@@ -353,7 +356,7 @@ lexi(struct parser_state *state)
 	    if ((opt.auto_typedefs && ((u = strrchr(s_token, '_')) != NULL) &&
 	        strcmp(u, "_t") == 0) || (typename_top >= 0 &&
 		  bsearch(s_token, typenames, typename_top + 1,
-		    sizeof(typenames[0]), strcmp_type))) {
+		    sizeof typenames[0], compare_string_array))) {
 		state->keyword = rw_type;
 		state->last_u_d = true;
 	        goto found_typename;
