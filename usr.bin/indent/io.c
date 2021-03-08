@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.24 2021/03/07 22:11:01 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.25 2021/03/08 22:23:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.24 2021/03/07 22:11:01 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.25 2021/03/08 22:23:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -126,8 +126,9 @@ dump_line(void)
 				    || strncmp(s_lab, "#endif", 6) == 0)) {
 		char *s = s_lab;
 		if (e_lab[-1] == '\n') e_lab--;
-		do putc(*s++, output);
-		while (s < e_lab && 'a' <= *s && *s<='z');
+		do {
+		    putc(*s++, output);
+		} while (s < e_lab && 'a' <= *s && *s <= 'z');
 		while ((*s == ' ' || *s == '\t') && s < e_lab)
 		    s++;
 		if (s < e_lab)
@@ -369,9 +370,9 @@ fill_buffer(void)
     }
     if (inhibit_formatting) {
 	p = in_buffer;
-	do
+	do {
 	    putc(*p, output);
-	while (*p++ != '\n');
+	} while (*p++ != '\n');
     }
 }
 
