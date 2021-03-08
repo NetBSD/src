@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1026 2021/03/07 19:42:54 rillig Exp $
+# $NetBSD: mi,v 1.1027 2021/03/08 20:12:04 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4728,6 +4728,9 @@
 ./usr/tests/usr.bin/indent/label.0			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/label.0.pro			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/label.0.stdout		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lineno.0			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lineno.0.pro			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lineno.0.stdout		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/list_head.0			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/list_head.0.stdout		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/ncs.0			tests-usr.bin-tests	compattestfile,atf

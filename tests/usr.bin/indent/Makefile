@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/03/06 17:56:33 rillig Exp $
+#	$NetBSD: Makefile,v 1.4 2021/03/08 20:12:04 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,9 @@ FILES+=		float.0.stdout
 FILES+=		label.0
 FILES+=		label.0.stdout
 FILES+=		label.0.pro
+FILES+=		lineno.0
+FILES+=		lineno.0.pro
+FILES+=		lineno.0.stdout
 FILES+=		list_head.0
 FILES+=		list_head.0.stdout
 FILES+=		ncs.0
