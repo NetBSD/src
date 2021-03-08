@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.37 2014/10/31 13:56:04 manu Exp $	*/
+/*	$NetBSD: opdump.c,v 1.38 2021/03/08 17:34:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.37 2014/10/31 13:56:04 manu Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.38 2021/03/08 17:34:10 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -215,7 +215,7 @@ puffsdump_req(struct puffs_req *preq)
 	    preq->preq_pid, preq->preq_lid);
 
 	if (isvn) {
-		switch (preq->preq_optype) {
+		switch ((enum puffs_vn)preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
 			puffsdump_lookup(preq);
 			break;
@@ -262,7 +262,7 @@ puffsdump_rv(struct puffs_req *preq)
 {
 
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
-		switch (preq->preq_optype) {
+		switch ((enum puffs_vn)preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
 			puffsdump_lookup_rv(preq);
 			break;

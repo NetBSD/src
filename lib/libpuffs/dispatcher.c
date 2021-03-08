@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.48 2014/10/31 13:56:04 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.49 2021/03/08 17:34:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.48 2014/10/31 13:56:04 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.49 2021/03/08 17:34:10 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -164,7 +164,7 @@ dispatch(struct puffs_cc *pcc)
 
 	/* Execute actual operation */
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
-		switch (preq->preq_optype) {
+		switch ((enum puffs_vfs)preq->preq_optype) {
 		case PUFFS_VFS_UNMOUNT:
 		{
 			struct puffs_vfsmsg_unmount *auxt = auxbuf;
@@ -260,7 +260,7 @@ dispatch(struct puffs_cc *pcc)
 	/* XXX: audit return values */
 	/* XXX: sync with kernel */
 	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
-		switch (preq->preq_optype) {
+		switch ((enum puffs_vn)preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
 		{
 			struct puffs_vnmsg_lookup *auxt = auxbuf;
