@@ -1,4 +1,4 @@
-/* $NetBSD: rpi_vcmbox.c,v 1.7 2020/12/01 04:14:31 rin Exp $ */
+/* $NetBSD: rpi_vcmbox.c,v 1.8 2021/03/08 13:53:08 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.7 2020/12/01 04:14:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.8 2021/03/08 13:53:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,19 +65,8 @@ struct vcmbox_clockrate_request {
 #define RATE2MHZ(rate)	((rate) / 1000000)
 #define MHZ2RATE(mhz)	((mhz) * 1000000)
 
-#define VCMBOX_INIT_REQUEST(req)					\
-	do {								\
-		memset(&(req), 0, sizeof((req)));			\
-		(req).vb_hdr.vpb_len = htole32(sizeof((req)));		\
-		(req).vb_hdr.vpb_rcode = htole32(VCPROP_PROCESS_REQUEST);\
-		(req).end.vpt_tag = htole32(VCPROPTAG_NULL);		\
-	} while (0)
-#define VCMBOX_INIT_TAG(s, t)						\
-	do {								\
-		(s).tag.vpt_tag = htole32(t);				\
-		(s).tag.vpt_rcode = htole32(VCPROPTAG_REQUEST);		\
-		(s).tag.vpt_len = htole32(VCPROPTAG_LEN(s));		\
-	} while (0)
+#define VCMBOX_INIT_REQUEST(r)		VCPROP_INIT_REQUEST(r)
+#define VCMBOX_INIT_TAG(s, t)		VCPROP_INIT_TAG(s, t)
 
 struct vcmbox_softc {
 	device_t		sc_dev;
