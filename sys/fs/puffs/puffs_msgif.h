@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.85 2019/09/23 12:00:57 christos Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.86 2021/03/08 17:34:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
 #define PUFFSOP_WANTREPLY(a)	(((a) & PUFFSOPFLAG_FAF) == 0)
 
-enum {
+enum puffs_vfs {
 	PUFFS_VFS_MOUNT,	PUFFS_VFS_START,	PUFFS_VFS_UNMOUNT,
 	PUFFS_VFS_ROOT,		PUFFS_VFS_QUOTACTL,	PUFFS_VFS_STATVFS,
 	PUFFS_VFS_SYNC,		PUFFS_VFS_VGET,		PUFFS_VFS_FHTOVP,
@@ -70,7 +70,7 @@ enum {
 };
 #define PUFFS_VFS_MAX PUFFS_VFS_SUSPEND
 
-enum {
+enum puffs_vn {
 	PUFFS_VN_LOOKUP,	PUFFS_VN_CREATE,	PUFFS_VN_MKNOD,
 	PUFFS_VN_OPEN,		PUFFS_VN_CLOSE,		PUFFS_VN_ACCESS,
 	PUFFS_VN_GETATTR,	PUFFS_VN_SETATTR,	PUFFS_VN_READ,
@@ -96,7 +96,7 @@ enum {
 /*
  * These signal invalid parameters the file system returned.
  */
-enum {
+enum puffs_err {
 	PUFFS_ERR_ERROR,
 	PUFFS_ERR_MAKENODE,	PUFFS_ERR_LOOKUP,	PUFFS_ERR_READDIR,
 	PUFFS_ERR_READLINK,	PUFFS_ERR_READ,		PUFFS_ERR_WRITE,
