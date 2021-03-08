@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.286 2021/03/08 17:53:20 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.287 2021/03/08 18:17:27 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.286 2021/03/08 17:53:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.287 2021/03/08 18:17:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -163,7 +163,7 @@ int 	tcp_mssdflt = TCP_MSS;
 int	tcp_minmss = TCP_MINMSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
-int	tcp_do_rfc1948 = 1;	/* ISS by cryptographic hash */
+int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
@@ -2136,21 +2136,19 @@ tcp_seq	 tcp_iss_seq = 0;	/* tcp initial seq # */
  * Get a new sequence value given a tcp control block
  */
 tcp_seq
-tcp_new_iss(struct tcpcb *tp, tcp_seq addin)
+tcp_new_iss(struct tcpcb *tp)
 {
 
 	if (tp->t_inpcb != NULL) {
-		return (tcp_new_iss1(&tp->t_inpcb->inp_laddr,
+		return tcp_new_iss1(&tp->t_inpcb->inp_laddr,
 		    &tp->t_inpcb->inp_faddr, tp->t_inpcb->inp_lport,
-		    tp->t_inpcb->inp_fport, sizeof(tp->t_inpcb->inp_laddr),
-		    addin));
+		    tp->t_inpcb->inp_fport, sizeof(tp->t_inpcb->inp_laddr));
 	}
 #ifdef INET6
 	if (tp->t_in6pcb != NULL) {
-		return (tcp_new_iss1(&tp->t_in6pcb->in6p_laddr,
+		return tcp_new_iss1(&tp->t_in6pcb->in6p_laddr,
 		    &tp->t_in6pcb->in6p_faddr, tp->t_in6pcb->in6p_lport,
-		    tp->t_in6pcb->in6p_fport, sizeof(tp->t_in6pcb->in6p_laddr),
-		    addin));
+		    tp->t_in6pcb->in6p_fport, sizeof(tp->t_in6pcb->in6p_laddr));
 	}
 #endif
 
@@ -2176,7 +2174,7 @@ tcp_iss_secret_init(void)
  */
 tcp_seq
 tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
-    size_t addrsz, tcp_seq addin)
+    size_t addrsz)
 {
 	tcp_seq tcp_iss;
 
@@ -2209,55 +2207,27 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 
 		memcpy(&tcp_iss, hash, sizeof(tcp_iss));
 
-		/*
-		 * Now increment our "timer", and add it in to
-		 * the computed value.
-		 *
-		 * XXX Use `addin'?
-		 * XXX TCP_ISSINCR too large to use?
-		 */
 #ifdef TCPISS_DEBUG
 		printf("ISS hash 0x%08x, ", tcp_iss);
 #endif
-		tcp_iss += tcp_iss_seq + addin;
+		/*
+		 * Add the offset in to the computed value.
+		 */
+		tcp_iss += tcp_iss_seq;
 #ifdef TCPISS_DEBUG
-		printf("new ISS 0x%08x\n", tcp_iss);
+		printf("ISS %08x\n", tcp_iss);
 #endif
 	} else {
 		/*
 		 * Randomize.
 		 */
 		tcp_iss = cprng_fast32();
-
-		/*
-		 * If we were asked to add some amount to a known value,
-		 * we will take a random value obtained above, mask off
-		 * the upper bits, and add in the known value.  We also
-		 * add in a constant to ensure that we are at least a
-		 * certain distance from the original value.
-		 *
-		 * This is used when an old connection is in timed wait
-		 * and we have a new one coming in, for instance.
-		 */
-		if (addin != 0) {
 #ifdef TCPISS_DEBUG
-			printf("Random %08x, ", tcp_iss);
+		printf("ISS random 0x%08x, ", tcp_iss);
 #endif
-			tcp_iss &= TCP_ISS_RANDOM_MASK;
-			tcp_iss += addin + TCP_ISSINCR;
-#ifdef TCPISS_DEBUG
-			printf("Old ISS %08x, ISS %08x\n", addin, tcp_iss);
-#endif
-		} else {
-			tcp_iss &= TCP_ISS_RANDOM_MASK;
-			tcp_iss += tcp_iss_seq;
-#ifdef TCPISS_DEBUG
-			printf("ISS %08x\n", tcp_iss);
-#endif
-		}
 	}
 
-	return (tcp_iss);
+	return tcp_iss;
 }
 
 #if defined(IPSEC)
