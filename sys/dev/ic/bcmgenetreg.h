@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetreg.h,v 1.3 2020/04/25 10:21:41 jmcneill Exp $ */
+/* $NetBSD: bcmgenetreg.h,v 1.4 2021/03/08 13:14:44 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -110,6 +110,7 @@
 #define	GENET_RX_DMA_START_ADDR_HI(qid)	(GENET_RX_DMA_RINGBASE(qid) + 0x18)
 #define	GENET_RX_DMA_END_ADDR_LO(qid)	(GENET_RX_DMA_RINGBASE(qid) + 0x1c)
 #define	GENET_RX_DMA_END_ADDR_HI(qid)	(GENET_RX_DMA_RINGBASE(qid) + 0x20)
+#define	GENET_RX_DMA_MBUF_DONE_THRES(qid) (GENET_RX_DMA_RINGBASE(qid) + 0x24)
 #define	GENET_RX_DMA_XON_XOFF_THRES(qid) (GENET_RX_DMA_RINGBASE(qid) + 0x28)
 #define	 GENET_RX_DMA_XON_XOFF_THRES_LO		__BITS(31,16)
 #define	 GENET_RX_DMA_XON_XOFF_THRES_HI		__BITS(15,0)
@@ -162,11 +163,18 @@
 #define	 GENET_RX_DMA_CTRL_RBUF_EN(qid)	__BIT((qid) + 1)
 #define	 GENET_RX_DMA_CTRL_EN		__BIT(0)
 #define	GENET_RX_SCB_BURST_SIZE		(GENET_RX_BASE + 0x1040 + 0x0c)
+#define	GENET_RX_DMA_RING_TIMEOUT(qid)	(GENET_RX_BASE + 0x1040 + 0x2c + 4 * (qid))
 
 #define	GENET_TX_DMA_RING_CFG		(GENET_TX_BASE + 0x1040 + 0x00)
 #define	GENET_TX_DMA_CTRL		(GENET_TX_BASE + 0x1040 + 0x04)
 #define	 GENET_TX_DMA_CTRL_RBUF_EN(qid)	__BIT((qid) + 1)
 #define	 GENET_TX_DMA_CTRL_EN		__BIT(0)
 #define	GENET_TX_SCB_BURST_SIZE		(GENET_TX_BASE + 0x1040 + 0x0c)
+#define	GENET_TX_DMA_RING_TIMEOUT(qid)	(GENET_TX_BASE + 0x1040 + 0x2c + 4 * (qid))
+
+/* GENET_RX_DMA_MBUF_DONE_THRES, GENET_TX_DMA_MBUF_DONE_THRES */
+#define GENET_INTR_THRESHOLD_MASK	__BITS(0,8)
+/* GENET_RX_DMA_RING_TIMEOUT, GENET_TX_DMA_RING_TIMEOUT */
+#define GENET_DMA_RING_TIMEOUT_MASK	__BITS(0,15)
 
 #endif /* !_BCMGENETREG_H */

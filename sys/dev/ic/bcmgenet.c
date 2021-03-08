@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.7 2020/06/27 13:34:20 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.8 2021/03/08 13:14:44 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.7 2020/06/27 13:34:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.8 2021/03/08 13:14:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,19 +72,23 @@ CTASSERT(MCLBYTES == 2048);
 #define	CALLOUT_FLAGS		0
 #endif
 
-#define	TX_SKIP(n, o)		(((n) + (o)) & (GENET_DMA_DESC_COUNT - 1))
-#define	TX_NEXT(n)		TX_SKIP(n, 1)
-#define	RX_NEXT(n)		(((n) + 1) & (GENET_DMA_DESC_COUNT - 1))
-
 #define	TX_MAX_SEGS		128
-#define	TX_DESC_COUNT		GENET_DMA_DESC_COUNT
-#define	RX_DESC_COUNT		GENET_DMA_DESC_COUNT
+#define	TX_DESC_COUNT		256 /* GENET_DMA_DESC_COUNT */
+#define	RX_DESC_COUNT		256 /* GENET_DMA_DESC_COUNT */
 #define	MII_BUSY_RETRY		1000
 #define	GENET_MAX_MDF_FILTER	17
+
+#define	TX_SKIP(n, o)		(((n) + (o)) % TX_DESC_COUNT)
+#define	TX_NEXT(n)		TX_SKIP(n, 1)
+#define	RX_NEXT(n)		(((n) + 1) % RX_DESC_COUNT)
 
 #define	GENET_LOCK(sc)		mutex_enter(&(sc)->sc_lock)
 #define	GENET_UNLOCK(sc)	mutex_exit(&(sc)->sc_lock)
 #define	GENET_ASSERT_LOCKED(sc)	KASSERT(mutex_owned(&(sc)->sc_lock))
+
+#define	GENET_TXLOCK(sc)		mutex_enter(&(sc)->sc_txlock)
+#define	GENET_TXUNLOCK(sc)		mutex_exit(&(sc)->sc_txlock)
+#define	GENET_ASSERT_TXLOCKED(sc)	KASSERT(mutex_owned(&(sc)->sc_txlock))
 
 #define	RD4(sc, reg)			\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
@@ -190,7 +194,6 @@ genet_setup_txdesc(struct genet_softc *sc, int index, int flags,
 	uint32_t status;
 
 	status = flags | __SHIFTIN(len, GENET_TX_DESC_STATUS_BUFLEN);
-	++sc->sc_tx.queued;
 
 	WR4(sc, GENET_TX_DESC_ADDRESS_LO(index), (uint32_t)paddr);
 	WR4(sc, GENET_TX_DESC_ADDRESS_HI(index), (uint32_t)(paddr >> 32));
@@ -203,48 +206,57 @@ genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 	bus_dma_segment_t *segs;
 	int error, nsegs, cur, i;
 	uint32_t flags;
+	bool nospace;
+
+	/* at least one descriptor free ? */
+	if (sc->sc_tx.queued >= TX_DESC_COUNT - 1)
+		return -1;
 
 	error = bus_dmamap_load_mbuf(sc->sc_tx.buf_tag,
 	    sc->sc_tx.buf_map[index].map, m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (error == EFBIG) {
 		device_printf(sc->sc_dev,
 		    "TX packet needs too many DMA segments, dropping...\n");
-		m_freem(m);
+		return -2;
+	}
+	if (error != 0) {
+		device_printf(sc->sc_dev,
+		    "TX packet cannot be mapped, retried...\n");
 		return 0;
 	}
-	if (error != 0)
-		return 0;
 
 	segs = sc->sc_tx.buf_map[index].map->dm_segs;
 	nsegs = sc->sc_tx.buf_map[index].map->dm_nsegs;
 
-	if (sc->sc_tx.queued >= GENET_DMA_DESC_COUNT - nsegs) {
+	nospace = sc->sc_tx.queued >= TX_DESC_COUNT - nsegs;
+	if (nospace) {
 		bus_dmamap_unload(sc->sc_tx.buf_tag,
 		    sc->sc_tx.buf_map[index].map);
+		/* XXX coalesce and retry ? */
 		return -1;
 	}
+
+	bus_dmamap_sync(sc->sc_tx.buf_tag, sc->sc_tx.buf_map[index].map,
+	    0, sc->sc_tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+	/* stored in same index as loaded map */
+	sc->sc_tx.buf_map[index].mbuf = m;
 
 	flags = GENET_TX_DESC_STATUS_SOP |
 		GENET_TX_DESC_STATUS_CRC |
 		GENET_TX_DESC_STATUS_QTAG;
 
 	for (cur = index, i = 0; i < nsegs; i++) {
-		sc->sc_tx.buf_map[cur].mbuf = (i == 0 ? m : NULL);
 		if (i == nsegs - 1)
 			flags |= GENET_TX_DESC_STATUS_EOP;
 
 		genet_setup_txdesc(sc, cur, flags, segs[i].ds_addr,
 		    segs[i].ds_len);
 
-		if (i == 0) {
+		if (i == 0)
 			flags &= ~GENET_TX_DESC_STATUS_SOP;
-			flags &= ~GENET_TX_DESC_STATUS_CRC;
-		}
 		cur = TX_NEXT(cur);
 	}
-
-	bus_dmamap_sync(sc->sc_tx.buf_tag, sc->sc_tx.buf_map[index].map,
-	    0, sc->sc_tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	return nsegs;
 }
@@ -426,6 +438,43 @@ genet_reset(struct genet_softc *sc)
 }
 
 static void
+genet_set_rxthresh(struct genet_softc *sc, int qid, int usecs, int count)
+{
+	int ticks;
+	uint32_t val;
+
+	/* convert to 125MHz/1024 ticks */
+	ticks = howmany(usecs * 125, 1024);
+
+	if (count < 1)
+		count = 1;
+	if (count > GENET_INTR_THRESHOLD_MASK)
+		count = GENET_INTR_THRESHOLD_MASK;
+	if (ticks < 0)
+		ticks = 0;
+	if (ticks > GENET_DMA_RING_TIMEOUT_MASK)
+		ticks = GENET_DMA_RING_TIMEOUT_MASK;
+
+	WR4(sc, GENET_RX_DMA_MBUF_DONE_THRES(qid), count);
+
+	val = RD4(sc, GENET_RX_DMA_RING_TIMEOUT(qid));
+	val &= ~GENET_DMA_RING_TIMEOUT_MASK;
+	val |= ticks;
+	WR4(sc, GENET_RX_DMA_RING_TIMEOUT(qid), val);
+}
+
+static void
+genet_set_txthresh(struct genet_softc *sc, int qid, int count)
+{
+	if (count < 1)
+		count = 1;
+	if (count > GENET_INTR_THRESHOLD_MASK)
+		count = GENET_INTR_THRESHOLD_MASK;
+
+	WR4(sc, GENET_TX_DMA_MBUF_DONE_THRES(qid), count);
+}
+
+static void
 genet_init_rings(struct genet_softc *sc, int qid)
 {
 	uint32_t val;
@@ -449,10 +498,12 @@ genet_init_rings(struct genet_softc *sc, int qid)
 	WR4(sc, GENET_TX_DMA_END_ADDR_LO(qid),
 	    TX_DESC_COUNT * GENET_DMA_DESC_SIZE / 4 - 1);
 	WR4(sc, GENET_TX_DMA_END_ADDR_HI(qid), 0);
-	WR4(sc, GENET_TX_DMA_MBUF_DONE_THRES(qid), 1);
 	WR4(sc, GENET_TX_DMA_FLOW_PERIOD(qid), 0);
 	WR4(sc, GENET_TX_DMA_WRITE_PTR_LO(qid), 0);
 	WR4(sc, GENET_TX_DMA_WRITE_PTR_HI(qid), 0);
+
+	/* interrupt after 10 packets or when ring empty */
+	genet_set_txthresh(sc, qid, 10);
 
 	WR4(sc, GENET_TX_DMA_RING_CFG, __BIT(qid));	/* enable */
 
@@ -486,6 +537,12 @@ genet_init_rings(struct genet_softc *sc, int qid)
 	WR4(sc, GENET_RX_DMA_READ_PTR_LO(qid), 0);
 	WR4(sc, GENET_RX_DMA_READ_PTR_HI(qid), 0);
 
+	/*
+	 * interrupt on first packet,
+	 * mitigation timeout timeout 57 us (~84 minimal packets at 1Gbit/s)
+	 */
+	genet_set_rxthresh(sc, qid, 57, 10);
+
 	WR4(sc, GENET_RX_DMA_RING_CFG, __BIT(qid));	/* enable */
 
 	/* Enable receive DMA */
@@ -504,6 +561,7 @@ genet_init_locked(struct genet_softc *sc)
 	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 	GENET_ASSERT_LOCKED(sc);
+	GENET_ASSERT_TXLOCKED(sc);
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		return 0;
@@ -555,7 +613,9 @@ genet_init(struct ifnet *ifp)
 	int error;
 
 	GENET_LOCK(sc);
+	GENET_TXLOCK(sc);
 	error = genet_init_locked(sc);
+	GENET_TXUNLOCK(sc);
 	GENET_UNLOCK(sc);
 
 	return error;
@@ -627,10 +687,33 @@ genet_rxintr(struct genet_softc *sc, int qid)
 
 	DPRINTF("RX pidx=%08x total=%d\n", pidx, total);
 
-	index = sc->sc_rx.cidx & (RX_DESC_COUNT - 1);
+	index = sc->sc_rx.cidx % RX_DESC_COUNT;
 	for (n = 0; n < total; n++) {
 		status = RD4(sc, GENET_RX_DESC_STATUS(index));
+
+		if (status & GENET_RX_DESC_STATUS_ALL_ERRS) {
+			if (status & GENET_RX_DESC_STATUS_OVRUN_ERR)
+				device_printf(sc->sc_dev, "overrun\n");
+			if (status & GENET_RX_DESC_STATUS_CRC_ERR)
+				device_printf(sc->sc_dev, "CRC error\n");
+			if (status & GENET_RX_DESC_STATUS_RX_ERR)
+				device_printf(sc->sc_dev, "receive error\n");
+			if (status & GENET_RX_DESC_STATUS_FRAME_ERR)
+				device_printf(sc->sc_dev, "frame error\n");
+			if (status & GENET_RX_DESC_STATUS_LEN_ERR)
+				device_printf(sc->sc_dev, "length error\n");
+			if_statinc(ifp, if_ierrors);
+			goto next;
+		}
+
+		if (status & GENET_RX_DESC_STATUS_OWN)
+			device_printf(sc->sc_dev, "OWN %d of %d\n",n,total);
+
 		len = __SHIFTOUT(status, GENET_RX_DESC_STATUS_BUFLEN);
+		if (len < ETHER_ALIGN) {
+			if_statinc(ifp, if_ierrors);
+			goto next;
+		}
 
 		m = sc->sc_rx.buf_map[index].mbuf;
 
@@ -638,29 +721,34 @@ genet_rxintr(struct genet_softc *sc, int qid)
 			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
-		error = genet_setup_rxbuf(sc, index, m0);
-		if (error != 0) {
-			if_statinc(ifp, if_ierrors);
-			goto next;
-		}
 
+		/* unload map before it gets loaded in setup_rxbuf */
 		bus_dmamap_sync(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map,
 		    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map);
+		sc->sc_rx.buf_map[index].mbuf = NULL;
+
+		error = genet_setup_rxbuf(sc, index, m0);
+		if (error != 0) {
+			m_freem(m0);
+			if_statinc(ifp, if_ierrors);
+
+			/* XXX mbuf is unloaded but load failed */
+			m_freem(m);
+			device_printf(sc->sc_dev,
+			    "cannot load RX mbuf. panic?\n");
+			goto next;
+		}
 
 		DPRINTF("RX [#%d] index=%02x status=%08x len=%d adj_len=%d\n",
 		    n, index, status, len, len - ETHER_ALIGN);
 
-		if (len > ETHER_ALIGN) {
-			m_adj(m, ETHER_ALIGN);
+		m_set_rcvif(m, ifp);
+		m->m_len = m->m_pkthdr.len = len;
+		m_adj(m, ETHER_ALIGN);
 
-			m_set_rcvif(m, ifp);
-			m->m_len = m->m_pkthdr.len = len - ETHER_ALIGN;
-			m->m_nextpkt = NULL;
-
-			if_percpuq_enqueue(ifp->if_percpuq, m);
-		}
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 next:
 		index = RX_NEXT(index);
@@ -675,34 +763,28 @@ genet_txintr(struct genet_softc *sc, int qid)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct genet_bufmap *bmap;
-	uint32_t cidx, total;
-	int i;
-
-	GENET_ASSERT_LOCKED(sc);
+	int cidx, i, pkts = 0;
 
 	cidx = RD4(sc, GENET_TX_DMA_CONS_INDEX(qid)) & 0xffff;
-	total = (cidx - sc->sc_tx.cidx) & 0xffff;
-
-	for (i = sc->sc_tx.next; sc->sc_tx.queued > 0 && total > 0; i = TX_NEXT(i), total--) {
-		/* XXX check for errors */
-
+	i = sc->sc_tx.cidx % TX_DESC_COUNT;
+	while (sc->sc_tx.cidx != cidx) {
 		bmap = &sc->sc_tx.buf_map[i];
 		if (bmap->mbuf != NULL) {
+			/* XXX first segment already unloads */
 			bus_dmamap_sync(sc->sc_tx.buf_tag, bmap->map,
 			    0, bmap->map->dm_mapsize,
 			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_tx.buf_tag, bmap->map);
 			m_freem(bmap->mbuf);
 			bmap->mbuf = NULL;
+			++pkts;
 		}
 
-		--sc->sc_tx.queued;
-		ifp->if_flags &= ~IFF_OACTIVE;
-		if_statinc(ifp, if_opackets);
+		i = TX_NEXT(i);
+		sc->sc_tx.cidx = (sc->sc_tx.cidx + 1) & 0xffff;
 	}
 
-	sc->sc_tx.next = i;
-	sc->sc_tx.cidx = cidx;
+	if_statadd(ifp, if_opackets, pkts);
 }
 
 static void
@@ -712,15 +794,18 @@ genet_start_locked(struct genet_softc *sc)
 	struct mbuf *m;
 	int nsegs, index, cnt;
 
-	GENET_ASSERT_LOCKED(sc);
+	GENET_ASSERT_TXLOCKED(sc);
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	const int qid = GENET_DMA_DEFAULT_QUEUE;
 
-	index = sc->sc_tx.pidx & (TX_DESC_COUNT - 1);
+	index = sc->sc_tx.pidx % TX_DESC_COUNT;
 	cnt = 0;
+
+	sc->sc_tx.queued = (RD4(sc, GENET_TX_DMA_PROD_INDEX(qid))
+	          - RD4(sc, GENET_TX_DMA_CONS_INDEX(qid))) & 0xffff;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
@@ -729,15 +814,21 @@ genet_start_locked(struct genet_softc *sc)
 
 		nsegs = genet_setup_txbuf(sc, index, m);
 		if (nsegs <= 0) {
-			if (nsegs == -1)
+			if (nsegs == -1) {
 				ifp->if_flags |= IFF_OACTIVE;
+			}
+			else if (nsegs == -2) {
+				IFQ_DEQUEUE(&ifp->if_snd, m);
+				m_freem(m);
+			}
 			break;
 		}
+
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		index = TX_SKIP(index, nsegs);
-
+		sc->sc_tx.queued += nsegs;
 		sc->sc_tx.pidx = (sc->sc_tx.pidx + nsegs) & 0xffff;
 		cnt++;
 	}
@@ -751,9 +842,9 @@ genet_start(struct ifnet *ifp)
 {
 	struct genet_softc *sc = ifp->if_softc;
 
-	GENET_LOCK(sc);
+	GENET_TXLOCK(sc);
 	genet_start_locked(sc);
-	GENET_UNLOCK(sc);
+	GENET_TXUNLOCK(sc);
 }
 
 int
@@ -762,22 +853,25 @@ genet_intr(void *arg)
 	struct genet_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t val;
-
-	GENET_LOCK(sc);
+	bool dotx = false;
 
 	val = RD4(sc, GENET_INTRL2_CPU_STAT);
 	val &= ~RD4(sc, GENET_INTRL2_CPU_STAT_MASK);
 	WR4(sc, GENET_INTRL2_CPU_CLEAR, val);
 
-	if (val & GENET_IRQ_RXDMA_DONE)
+	if (val & GENET_IRQ_RXDMA_DONE) {
+		GENET_LOCK(sc);
 		genet_rxintr(sc, GENET_DMA_DEFAULT_QUEUE);
+		GENET_UNLOCK(sc);
+	}
 
 	if (val & GENET_IRQ_TXDMA_DONE) {
 		genet_txintr(sc, GENET_DMA_DEFAULT_QUEUE);
-		if_schedule_deferred_start(ifp);
+		dotx = true;
 	}
 
-	GENET_UNLOCK(sc);
+	if (dotx)
+		if_schedule_deferred_start(ifp);
 
 	return 1;
 }
@@ -948,6 +1042,7 @@ genet_attach(struct genet_softc *sc)
 	aprint_normal(": GENETv%d.%d\n", maj, min);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_NET);
 	callout_init(&sc->sc_stat_ch, CALLOUT_FLAGS);
 	callout_setfunc(&sc->sc_stat_ch, genet_tick, sc);
 

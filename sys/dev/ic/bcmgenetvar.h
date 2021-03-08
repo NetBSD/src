@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetvar.h,v 1.2 2020/05/25 19:49:28 jmcneill Exp $ */
+/* $NetBSD: bcmgenetvar.h,v 1.3 2021/03/08 13:14:44 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -66,6 +66,7 @@ struct genet_softc {
 	struct mii_data		sc_mii;
 	callout_t		sc_stat_ch;
 	kmutex_t		sc_lock;
+	kmutex_t		sc_txlock;
 
 	struct genet_ring	sc_tx;
 	struct genet_ring	sc_rx;
