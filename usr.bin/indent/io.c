@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.26 2021/03/08 22:26:17 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.27 2021/03/08 22:28:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.26 2021/03/08 22:26:17 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.27 2021/03/08 22:28:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -73,8 +73,7 @@ static int pad_output(int current, int target);
 void
 dump_line(void)
 {
-    int cur_col,
-                target_col = 1;
+    int cur_col, target_col;
     static int  not_first_line;
 
     if (ps.procname[0]) {
