@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.101 2021/03/08 20:01:54 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.102 2021/03/08 22:01:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@
 #define _NETINET_IN_VAR_H_
 
 #include <sys/queue.h>
-#include <sys/cprng.h>
 
 #define IN_IFF_TENTATIVE	0x01	/* tentative address */
 #define IN_IFF_DUPLICATED	0x02	/* DAD detected duplicate */
@@ -383,6 +382,7 @@ struct in_multi {
 #ifdef _KERNEL
 
 #include <net/pktqueue.h>
+#include <sys/cprng.h>
 
 extern pktqueue_t *ip_pktq;
 
