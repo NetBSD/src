@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam.h,v 1.10 2020/04/29 02:16:56 riastradh Exp $	*/
+/*	$NetBSD: openpam.h,v 1.11 2021/03/08 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -201,7 +201,7 @@ openpam_get_feature(int _feature, int *_onoff);
 /*
  * Log levels
  */
-enum {
+enum openpam_log_primitives {
 	PAM_LOG_LIBDEBUG = -1,
 	PAM_LOG_DEBUG,
 	PAM_LOG_VERBOSE,
@@ -264,7 +264,7 @@ int openpam_nullconv(int _n,
 /*
  * PAM primitives
  */
-enum {
+enum openpam_sm_primitives {
 	PAM_SM_AUTHENTICATE,
 	PAM_SM_SETCRED,
 	PAM_SM_ACCT_MGMT,

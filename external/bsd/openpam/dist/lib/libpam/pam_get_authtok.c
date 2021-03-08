@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_get_authtok.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: pam_get_authtok.c,v 1.4 2021/03/08 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_get_authtok.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
+__RCSID("$NetBSD: pam_get_authtok.c,v 1.4 2021/03/08 19:38:10 christos Exp $");
 
 #include <sys/param.h>
 
@@ -83,7 +83,7 @@ pam_get_authtok(pam_handle_t *pamh,
 	ENTER();
 	*authtok = NULL;
 	twice = 0;
-	switch (item) {
+	switch ((enum openpam_item_primitives)item) {
 	case PAM_AUTHTOK:
 		pitem = PAM_AUTHTOK_PROMPT;
 		prompt_option = "authtok_prompt";
