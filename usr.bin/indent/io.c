@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.25 2021/03/08 22:23:58 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.26 2021/03/08 22:26:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.25 2021/03/08 22:23:58 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.26 2021/03/08 22:26:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -65,13 +65,14 @@ int         comment_open;
 static int  paren_target;
 static int pad_output(int current, int target);
 
+/*
+ * dump_line is the routine that actually effects the printing of the new
+ * source. It prints the label section, followed by the code section with
+ * the appropriate nesting level, followed by any comments.
+ */
 void
 dump_line(void)
-{				/* dump_line is the routine that actually
-				 * effects the printing of the new source. It
-				 * prints the label section, followed by the
-				 * code section with the appropriate nesting
-				 * level, followed by any comments */
+{
     int cur_col,
                 target_col = 1;
     static int  not_first_line;
