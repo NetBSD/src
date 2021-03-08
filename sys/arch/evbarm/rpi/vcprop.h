@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.19 2020/12/01 04:14:31 rin Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.20 2021/03/08 13:53:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@ struct vcprop_tag {
 	uint32_t vpt_tag;
 #define	VCPROPTAG_NULL			0x00000000
 #define	VCPROPTAG_GET_FIRMWAREREV	0x00000001
+#define	VCPROPTAG_GET_FIRMWAREVARIANT	0x00000002
+#define	VCPROPTAG_GET_FIRMWAREHASH	0x00000003
 #define	VCPROPTAG_GET_BOARDMODEL	0x00010001
 #define	VCPROPTAG_GET_BOARDREVISION	0x00010002
 #define	VCPROPTAG_GET_MACADDRESS	0x00010003
@@ -65,6 +67,11 @@ struct vcprop_tag {
 #define	VCPROPTAG_GET_TURBO		0x00030009
 #define	VCPROPTAG_SET_TURBO		0x00038009
 
+#define VCPROPTAG_GET_STC		0x0003000b
+#define	VCPROPTAG_GET_THROTTLED		0x00030046
+#define	VCPROPTAG_GET_CLOCK_MEASURED	0x00030047
+#define	VCPROPTAG_NOTIFY_REBOOT		0x00030048
+
 #define VCPROPTAG_GET_VOLTAGE		0x00030003
 #define VCPROPTAG_SET_VOLTAGE		0x00038003
 #define VCPROPTAG_GET_MIN_VOLTAGE	0x00030008
@@ -73,24 +80,84 @@ struct vcprop_tag {
 #define VCPROPTAG_GET_TEMPERATURE	0x00030006
 #define VCPROPTAG_GET_MAX_TEMPERATURE	0x0003000a
 
+#define VCPROPTAG_GET_DOMAIN_STATE	0x00030030
+#define VCPROPTAG_SET_DOMAIN_STATE	0x00038030
+
+#define VCPROPTAG_GET_GPIO_STATE	0x00030041
+#define VCPROPTAG_SET_GPIO_STATE	0x00038041
+#define VCPROPTAG_GET_GPIO_CONFIG	0x00030041
+#define VCPROPTAG_SET_GPIO_CONFIG	0x00038041
+#define VCPROPTAG_GET_PERIPH_REG	0x00030045
+#define VCPROPTAG_SET_PERIPH_REG	0x00038045
+
+#define VCPROPTAG_GET_OTP		0x00030021
+#define VCPROPTAG_SET_OTP		0x00038021
+
+#define VCPROPTAG_SET_SDHOST_CLOCK	0x00038042
+
+#define VCPROPTAG_GET_POE_HAT_VAL	0x00030049
+#define VCPROPTAG_SET_POE_HAT_VAL	0x00030050
+
+#define VCPROPTAG_NOTIFY_XHCI_RESET	0x00030058
+
 #define	VCPROPTAG_GET_CMDLINE		0x00050001
 #define	VCPROPTAG_GET_DMACHAN		0x00060001
 
 #define	VCPROPTAG_ALLOCATE_BUFFER	0x00040001
+#define	VCPROPTAG_RELEASE_BUFFER	0x00048001
 #define	VCPROPTAG_BLANK_SCREEN		0x00040002
 #define	VCPROPTAG_GET_FB_RES		0x00040003
+#define	VCPROPTAG_TST_FB_RES		0x00044003
 #define	VCPROPTAG_SET_FB_RES		0x00048003
 #define	VCPROPTAG_GET_FB_VRES		0x00040004
+#define	VCPROPTAG_TST_FB_VRES		0x00044004
 #define	VCPROPTAG_SET_FB_VRES		0x00048004
 #define	VCPROPTAG_GET_FB_DEPTH		0x00040005
+#define	VCPROPTAG_TST_FB_DEPTH		0x00044005
 #define	VCPROPTAG_SET_FB_DEPTH		0x00048005
 #define	VCPROPTAG_GET_FB_PIXEL_ORDER	0x00040006
+#define	VCPROPTAG_TST_FB_PIXEL_ORDER	0x00044006
 #define	VCPROPTAG_SET_FB_PIXEL_ORDER	0x00048006
 #define	VCPROPTAG_GET_FB_ALPHA_MODE	0x00040007
+#define	VCPROPTAG_TST_FB_ALPHA_MODE	0x00044007
 #define	VCPROPTAG_SET_FB_ALPHA_MODE	0x00048007
 #define	VCPROPTAG_GET_FB_PITCH		0x00040008
+#define	VCPROPTAG_GET_VIRTUAL_OFFSET	0x00040009
+#define	VCPROPTAG_TST_VIRTUAL_OFFSET	0x00044009
+#define	VCPROPTAG_SET_VIRTUAL_OFFSET	0x00048009
+#define	VCPROPTAG_GET_OVERSCAN		0x0004000a
+#define	VCPROPTAG_TST_OVERSCAN		0x0004400a
+#define	VCPROPTAG_SET_OVERSCAN		0x0004800a
+#define	VCPROPTAG_GET_PALETTE		0x0004000b
+#define	VCPROPTAG_TST_PALETTE		0x0004400b
+#define	VCPROPTAG_SET_PALETTE		0x0004800b
+#define	VCPROPTAG_GET_FB_LAYER		0x0004000c
+#define	VCPROPTAG_TST_FB_LAYER		0x0004400c
+#define	VCPROPTAG_SET_FB_LAYER		0x0004800c
+#define	VCPROPTAG_GET_TRANSFORM		0x0004000d
+#define	VCPROPTAG_TST_TRANSFORM		0x0004400d
+#define	VCPROPTAG_SET_TRANSFORM		0x0004800d
+#define	VCPROPTAG_GET_VSYNC		0x0004000e
+#define	VCPROPTAG_TST_VSYNC		0x0004400e
+#define	VCPROPTAG_SET_VSYNC		0x0004800e
+#define	VCPROPTAG_GET_TOUCHBUF		0x0004000f
+#define	VCPROPTAG_GET_SET_BACKLIGHT	0x0004800f
+#define	VCPROPTAG_GET_GPIOVIRTBUF	0x00040010
+#define	VCPROPTAG_SET_GPIOVIRTBUF	0x00048020
+#define	VCPROPTAG_GET_NUM_DISPLAYS	0x00040013
+#define	VCPROPTAG_SET_DISPLAYNUM	0x00048013
+#define	VCPROPTAG_GET_DISPLAY_SETTINGS	0x00040014
+#define	VCPROPTAG_GET_DISPLAYID		0x00040016
+
+#define	VCPROPTAG_VCHIQ_INIT		0x00048010
+
+#define	VCPROPTAG_SET_PLANE		0x00048015
+#define	VCPROPTAG_GET_TIMING		0x00040017
+#define	VCPROPTAG_SET_TIMING		0x00048017
+#define	VCPROPTAG_GET_DISPLAY_CFG	0x00048018
 
 #define	VCPROPTAG_GET_EDID_BLOCK	0x00030020
+#define	VCPROPTAG_GET_EDID_BLOCK_DISP	0x00030021
 
 #define	VCPROPTAG_ALLOCMEM		0x0003000c
 #define	VCPROPTAG_LOCKMEM		0x0003000d
@@ -112,6 +179,20 @@ struct vcprop_tag {
 };
 
 #define VCPROPTAG_LEN(x) (sizeof((x)) - sizeof(struct vcprop_tag))
+
+#define VCPROP_INIT_REQUEST(req)					\
+	do {								\
+		memset(&(req), 0, sizeof((req)));			\
+		(req).vb_hdr.vpb_len = htole32(sizeof((req)));		\
+		(req).vb_hdr.vpb_rcode = htole32(VCPROP_PROCESS_REQUEST);\
+		(req).end.vpt_tag = htole32(VCPROPTAG_NULL);			\
+	} while (0)
+#define VCPROP_INIT_TAG(s, t)						\
+	do {								\
+		(s).tag.vpt_tag = htole32(t);				\
+		(s).tag.vpt_rcode = htole32(VCPROPTAG_REQUEST);		\
+		(s).tag.vpt_len = htole32(VCPROPTAG_LEN(s));		\
+	} while (0)
 
 struct vcprop_memory {
 	uint32_t base;
@@ -148,16 +229,31 @@ struct vcprop_tag_boardrev {
 #define	 RPI_MODEL_B_PI2	4
 #define	 RPI_MODEL_ALPHA	5
 #define	 RPI_MODEL_COMPUTE	6
-#define	 RPI_MODEL_ZERO		7
 #define	 RPI_MODEL_B_PI3	8
-#define	 RPI_MODEL_COMPUTE_PI3	9
-#define	 RPI_MODEL_ZERO_W	10
+#define	 RPI_MODEL_ZERO		9
+#define	 RPI_MODEL_COMPUTE_PI3	10
+#define	 RPI_MODEL_ZERO_W	12
+#define	 RPI_MODEL_B_PLUS_PI3	13
+#define	 RPI_MODEL_A_PLUS_PI3	14
+#define	 RPI_MODEL_CM_PLUS_PI3	16
+#define	 RPI_MODEL_B_PI4	17
 #define	VCPROP_REV_PROCESSOR	__BITS(15,12)
 #define	 RPI_PROCESSOR_BCM2835	0
 #define	 RPI_PROCESSOR_BCM2836	1
 #define	 RPI_PROCESSOR_BCM2837	2
+#define	 RPI_PROCESSOR_BCM2711	3
 #define	VCPROP_REV_MANUF	__BITS(19,16)
+#define	 RPI_MANUF_SONY         0
+#define	 RPI_MANUF_EGOMAN       1
+#define	 RPI_MANUF_QISDA        16
+#define	 RPI_MANUF_EMBEST       2
+#define	 RPI_MANUF_SONYJAPAN    3
 #define	VCPROP_REV_MEMSIZE	__BITS(22,20)
+#define	 RPI_MEMSIZE_256	0
+#define	 RPI_MEMSIZE_512	1
+#define	 RPI_MEMSIZE_1024	2
+#define	 RPI_MEMSIZE_2048	3
+#define	 RPI_MEMSIZE_4096	4
 #define	VCPROP_REV_ENCFLAG	__BIT(23)
 #define	VCPROP_REV_WARRANTY	__BITS(25,24)
 
@@ -220,6 +316,13 @@ struct vcprop_tag_clockrate {
 	uint32_t noturbo;
 };
 
+struct vcprop_tag_sdhostclock {
+	struct vcprop_tag tag;
+	uint32_t clock;
+	uint32_t clock1;
+	uint32_t clock2;
+};
+
 #define VCPROP_VOLTAGE_CORE	1
 #define VCPROP_VOLTAGE_SDRAM_C	2
 #define VCPROP_VOLTAGE_SDRAM_P	3
@@ -248,6 +351,30 @@ struct vcprop_tag_temperature {
 #define	VCPROP_POWER_I2C2	6
 #define	VCPROP_POWER_SPI	7
 #define	VCPROP_POWER_CCP2TX	8
+
+#define VCPROP_DOMAIN_I2C0           1
+#define VCPROP_DOMAIN_I2C1           2
+#define VCPROP_DOMAIN_I2C2           3
+#define VCPROP_DOMAIN_VIDEO_SCALER   4
+#define VCPROP_DOMAIN_VPU1           5
+#define VCPROP_DOMAIN_HDMI           6
+#define VCPROP_DOMAIN_USB            7
+#define VCPROP_DOMAIN_VEC            8
+#define VCPROP_DOMAIN_JPEG           9
+#define VCPROP_DOMAIN_H264           10
+#define VCPROP_DOMAIN_V3D            11
+#define VCPROP_DOMAIN_ISP            12
+#define VCPROP_DOMAIN_UNICAM0        13
+#define VCPROP_DOMAIN_UNICAM1        14
+#define VCPROP_DOMAIN_CCP2RX         15
+#define VCPROP_DOMAIN_CSI2           16
+#define VCPROP_DOMAIN_CPI            17
+#define VCPROP_DOMAIN_DSI0           18
+#define VCPROP_DOMAIN_DSI1           19
+#define VCPROP_DOMAIN_TRANSPOSER     20
+#define VCPROP_DOMAIN_CCP2TX         21
+#define VCPROP_DOMAIN_CDP            22
+#define VCPROP_DOMAIN_ARM            23
 
 struct vcprop_tag_powertiming {
 	struct vcprop_tag tag;
@@ -291,7 +418,7 @@ struct vcprop_tag_fbdepth {
 
 struct vcprop_tag_fbpixelorder {
 	struct vcprop_tag tag;
-	uint32_t state;
+	uint32_t order;
 };
 
 struct vcprop_tag_fbpitch {
@@ -313,6 +440,16 @@ struct vcprop_tag_edidblock {
 	uint32_t blockno;
 	uint32_t status;
 	uint8_t data[128];
+};
+
+struct vcprop_tag_numdpy {
+	struct vcprop_tag tag;
+	uint32_t count;
+};
+
+struct vcprop_tag_setdpy {
+	struct vcprop_tag tag;
+	uint32_t display_num;
 };
 
 struct vcprop_tag_cursorinfo {
@@ -358,6 +495,16 @@ struct vcprop_tag_lockmem {
 	uint32_t handle;	/* bus address returned here */
 };
 
+struct vcprop_tag_vchiqinit {
+	struct vcprop_tag tag;
+	uint32_t base;
+};
+
+struct vcprop_tag_notifyxhcireset {
+	struct vcprop_tag tag;
+	uint32_t deviceaddress;
+};
+
 struct vcprop_buffer_hdr {
 	uint32_t vpb_len;
 	uint32_t vpb_rcode;
@@ -387,8 +534,6 @@ vcprop_tag_resplen(struct vcprop_tag *vpbt)
 	return le32toh(vpbt->vpt_rcode) & ~VCPROPTAG_RESPONSE;
 }
 
-#endif	/* _EVBARM_RPI_VCPROP_H_ */
-
 uint32_t rpi_alloc_mem(uint32_t, uint32_t, uint32_t);
 bus_addr_t rpi_lock_mem(uint32_t);
 int rpi_unlock_mem(uint32_t);
@@ -398,3 +543,16 @@ int rpi_fb_set_video(int);
 
 int rpi_fb_movecursor(int, int, int);
 int rpi_fb_initcursor(bus_addr_t, int, int);
+
+int rpi_fb_set_pixelorder(uint32_t);
+int rpi_fb_get_pixelorder(uint32_t *);
+
+int rpi_set_domain(uint32_t, uint32_t);
+int rpi_get_domain(uint32_t, uint32_t *);
+
+int rpi_vchiq_init(uint32_t *);
+
+int rpi_notify_xhci_reset(uint32_t);
+
+#endif	/* _EVBARM_RPI_VCPROP_H_ */
+
