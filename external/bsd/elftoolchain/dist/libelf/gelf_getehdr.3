@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getehdr.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: gelf_getehdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getehdr.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_getehdr.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd December 16, 2006
-.Os
 .Dt GELF_GETEHDR 3
+.Os
 .Sh NAME
 .Nm elf32_getehdr ,
 .Nm elf64_getehdr ,
@@ -75,7 +75,9 @@ if successful or
 in case of failure.
 .Sh RETURN VALUES
 These functions return a pointer to a translated header descriptor
-if successful, or NULL on failure.
+if successful, or
+.Dv NULL
+on failure.
 .Sh ERRORS
 These functions can fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"

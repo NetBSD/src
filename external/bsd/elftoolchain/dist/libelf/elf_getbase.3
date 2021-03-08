@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getbase.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: elf_getbase.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008,2010 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getbase.3 978 2010-06-06 12:40:19Z jkoshy 
+.\" Id: elf_getbase.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd June 6, 2010
-.Os
 .Dt ELF_GETBASE 3
+.Os
 .Sh NAME
 .Nm elf_getbase
 .Nd get the base offset for an object file
@@ -63,7 +63,8 @@ may fail with the following errors:
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
-was NULL.
+was
+.Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr elf 3 ,

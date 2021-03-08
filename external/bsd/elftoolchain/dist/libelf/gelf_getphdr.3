@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getphdr.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: gelf_getphdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006-2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getphdr.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_getphdr.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd October 21, 2007
-.Os
 .Dt GELF_GETPHDR 3
+.Os
 .Sh NAME
 .Nm elf32_getphdr ,
 .Nm elf64_getphdr ,
@@ -68,7 +68,7 @@ Function
 will retrieve the program header table entry at index
 .Ar index
 from ELF descriptor
-.Ar elf.
+.Ar elf .
 The translated program header table entry will be written to the
 address pointed to be argument
 .Ar dst .
@@ -84,15 +84,17 @@ interface need to use the
 API to copy modifications to a program header entry back to the underlying
 ELF descriptor.
 .Sh RETURN VALUES
-The functions a valid pointer if successful, or NULL in case an error
-was encountered.
+The functions a valid pointer if successful, or
+.Dv NULL
+in case an error was encountered.
 .Sh ERRORS
 These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
-was NULL.
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
@@ -100,7 +102,8 @@ was not a descriptor for an ELF object.
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar dst
-was NULL.
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Index
 .Ar index

@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_strptr.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: elf_strptr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_strptr.3 1081 2010-08-14 02:23:48Z jkoshy 
+.\" Id: elf_strptr.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd December 16, 2006
-.Os
 .Dt ELF_STRPTR 3
+.Os
 .Sh NAME
 .Nm elf_strptr
 .Nd retrieve a string pointer in a string table
@@ -59,14 +59,16 @@ table.
 .Sh RETURN VALUES
 Function
 .Fn elf_strptr
-returns a valid pointer on success or NULL in case an error was
-encountered.
+returns a valid pointer on success or
+.Dv NULL
+in case an error was encountered.
 .Sh ERRORS
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
-was NULL
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
