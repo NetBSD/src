@@ -206,7 +206,6 @@ flush)
 		# XXX this MUST be done last and separately as "-s" is executed
 		# _while_ the command arguments are being processed!
 		/sbin/ipf -s && echo OK
-		/sbin/ipf -Z -I -Fi -s > /dev/null && echo OK
 		;;
 
 	ipfw)
