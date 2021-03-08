@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_indent.sh,v 1.3 2021/03/08 20:01:16 rillig Exp $
+# $NetBSD: t_indent.sh,v 1.4 2021/03/08 22:13:05 rillig Exp $
 #
 # Copyright 2016 Dell EMC
 # All rights reserved.
@@ -79,7 +79,7 @@ add_testcase()
 
 	case "${tc%.*}" in
 	*-*)
-		local IFS="-"
+		local IFS="-+"
 		for word in ${tc%.*}; do
 			tc_escaped="${tc_escaped:+${tc_escaped}_}${word}"
 		done
