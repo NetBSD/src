@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getarhdr.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: elf_getarhdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getarhdr.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: elf_getarhdr.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd August 15, 2006
-.Os
 .Dt ELF_GETARHDR 3
+.Os
 .Sh NAME
 .Nm elf_getarhdr
 .Nd retrieve ar(1) header for an archive member
@@ -75,7 +75,9 @@ The size of the member in bytes.
 .Sh RETURN VALUES
 This function returns a valid pointer to an
 .Vt Elf_Arhdr
-structure if successful, or NULL if an error is encountered.
+structure if successful, or
+.Dv NULL
+if an error is encountered.
 .Sh ERRORS
 Function
 .Fn elf_getarhdr
@@ -84,7 +86,8 @@ may fail with the following errors:
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
-was NULL.
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf

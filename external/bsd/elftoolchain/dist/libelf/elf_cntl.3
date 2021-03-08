@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_cntl.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: elf_cntl.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_cntl.3 3181 2015-04-10 13:22:51Z emaste 
+.\" Id: elf_cntl.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd August 9, 2006
-.Os
 .Dt ELF_CNTL 3
+.Os
 .Sh NAME
 .Nm elf_cntl
 .Nd control an elf file descriptor
@@ -93,7 +93,8 @@ is a descriptor for an archive member.
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
-was NULL.
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar cmd
