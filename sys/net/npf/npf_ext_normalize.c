@@ -26,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.10 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.11 2021/03/08 20:01:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -114,7 +114,7 @@ npf_normalize_ip4(npf_cache_t *npc, npf_normalize_t *np)
 	if (np->n_random_id) {
 		uint16_t oid = ip->ip_id, nid;
 
-		nid = htons(ip_randomid(ip_ids, 0));
+		nid = ip_randomid();
 		cksum = npf_fixup16_cksum(cksum, oid, nid);
 		ip->ip_id = nid;
 	}
