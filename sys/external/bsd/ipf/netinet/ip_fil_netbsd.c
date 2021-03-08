@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.35 2020/06/12 10:35:59 roy Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.36 2021/03/08 23:34:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.35 2020/06/12 10:35:59 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.36 2021/03/08 23:34:58 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1637,7 +1637,7 @@ ipf_newisn(fr_info_t *fin)
 		return 0;
 #ifdef INET
 	return tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
-			    fin->fin_sport, fin->fin_dport, asz, 0);
+			    fin->fin_sport, fin->fin_dport, asz);
 #else
 	return ENOSYS;
 #endif
