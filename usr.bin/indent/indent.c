@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.33 2021/03/08 19:06:48 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.34 2021/03/08 20:15:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.33 2021/03/08 19:06:48 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.34 2021/03/08 20:15:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -132,6 +132,36 @@ const char *out_name = "Standard Output";	/* will always point to name
 const char *simple_backup_suffix = ".BAK";	/* Suffix to use for backup
 						 * files */
 char        bakfile[MAXPATHLEN] = "";
+
+static void
+check_size_code(size_t desired_size)
+{
+    if (e_code + (desired_size) >= l_code) {
+	int nsize = l_code - s_code + 400 + desired_size;
+	int code_len = e_code - s_code;
+	codebuf = (char *)realloc(codebuf, nsize);
+	if (codebuf == NULL)
+	    err(1, NULL);
+	e_code = codebuf + code_len + 1;
+	l_code = codebuf + nsize - 5;
+	s_code = codebuf + 1;
+    }
+}
+
+static void
+check_size_label(size_t desired_size)
+{
+    if (e_lab + (desired_size) >= l_lab) {
+	int nsize = l_lab - s_lab + 400 + desired_size;
+	int label_len = e_lab - s_lab;
+	labbuf = (char *)realloc(labbuf, nsize);
+	if (labbuf == NULL)
+	    err(1, NULL);
+	e_lab = labbuf + label_len + 1;
+	l_lab = labbuf + nsize - 5;
+	s_lab = labbuf + 1;
+    }
+}
 
 int
 main(int argc, char **argv)
@@ -584,7 +614,7 @@ check_type:
 					 * in a line. fix it */
 		int len = e_com - s_com;
 
-		CHECK_SIZE_CODE(len + 3);
+		check_size_code(len + 3);
 		*e_code++ = ' ';
 		memcpy(e_code, s_com, len);
 		e_code += len;
@@ -603,8 +633,8 @@ check_type:
 	/*-----------------------------------------------------*\
 	|	   do switch on type of token scanned		|
 	\*-----------------------------------------------------*/
-	CHECK_SIZE_CODE(3);	/* maximum number of increments of e_code
-				 * before the next CHECK_SIZE_CODE or
+	check_size_code(3);	/* maximum number of increments of e_code
+				 * before the next check_size_code or
 				 * dump_line() is 2. After that there's the
 				 * final increment for the null character. */
 	switch (type_code) {	/* now, decide what to do with the token */
@@ -720,7 +750,7 @@ check_type:
 	    {
 		int len = e_token - s_token;
 
-		CHECK_SIZE_CODE(len);
+		check_size_code(len);
 		memcpy(e_code, token, len);
 		e_code += len;
 	    }
@@ -731,7 +761,7 @@ check_type:
 	    {
 		int len = e_token - s_token;
 
-		CHECK_SIZE_CODE(len + 1);
+		check_size_code(len + 1);
 		if (ps.want_blank)
 		    *e_code++ = ' ';
 		memcpy(e_code, token, len);
@@ -782,7 +812,7 @@ check_type:
 	    {
 		int len = e_code - s_code;
 
-		CHECK_SIZE_LAB(len + 3);
+		check_size_label(len + 3);
 		memcpy(e_lab, s_code, len);
 		e_lab += len;
 		*e_lab++ = ':';
@@ -1073,7 +1103,7 @@ check_type:
 	    {
 		int len = e_token - s_token;
 
-		CHECK_SIZE_CODE(len + 1);
+		check_size_code(len + 1);
 		if (ps.want_blank)
 		    *e_code++ = ' ';
 		memcpy(e_code, s_token, len);
@@ -1087,7 +1117,7 @@ check_type:
 	    {
 		int len = e_token - s_token;
 
-		CHECK_SIZE_CODE(len + 1);
+		check_size_code(len + 1);
 		if (ps.want_blank)
 		    *e_code++ = ' ';
 		memcpy(e_code, token, len);
@@ -1128,7 +1158,7 @@ check_type:
 		    (s_lab != e_lab) ||
 		    (s_code != e_code))
 		dump_line();
-	    CHECK_SIZE_LAB(1);
+	    check_size_label(1);
 	    *e_lab++ = '#';	/* move whole line to 'label' buffer */
 	    {
 		int         in_comment = 0;
@@ -1142,7 +1172,7 @@ check_type:
 			fill_buffer();
 		}
 		while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
-		    CHECK_SIZE_LAB(2);
+		    check_size_label(2);
 		    *e_lab = *buf_ptr++;
 		    if (buf_ptr >= buf_end)
 			fill_buffer();
@@ -1210,7 +1240,7 @@ check_type:
 		    buf_end = sc_end;
 		    sc_end = NULL;
 		}
-		CHECK_SIZE_LAB(1);
+		check_size_label(1);
 		*e_lab = '\0';	/* null terminate line */
 		ps.pcase = false;
 	    }
@@ -1343,13 +1373,13 @@ indent_declaration(int cur_dec_ind, int tabs_to_var)
     if (tabs_to_var) {
 	int tpos;
 
-	CHECK_SIZE_CODE(cur_dec_ind / opt.tabsize);
+	check_size_code(cur_dec_ind / opt.tabsize);
 	while ((tpos = opt.tabsize * (1 + pos / opt.tabsize)) <= cur_dec_ind) {
 	    *e_code++ = '\t';
 	    pos = tpos;
 	}
     }
-    CHECK_SIZE_CODE(cur_dec_ind - pos + 1);
+    check_size_code(cur_dec_ind - pos + 1);
     while (pos < cur_dec_ind) {
 	*e_code++ = ' ';
 	pos++;

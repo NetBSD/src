@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.24 2021/03/07 22:11:01 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.25 2021/03/08 20:15:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.24 2021/03/07 22:11:01 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.25 2021/03/08 20:15:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -171,6 +171,21 @@ static char const *table[] = {
     [0]   = "uuiifuufiuuiiuiiiiiuiuuuuu",
 };
 
+static void
+check_size_token(size_t desired_size)
+{
+    if (e_token + (desired_size) >= l_token) {
+	int nsize = l_token - s_token + 400 + desired_size;
+	int token_len = e_token - s_token;
+	tokenbuf = (char *)realloc(tokenbuf, nsize);
+	if (tokenbuf == NULL)
+	    err(1, NULL);
+	e_token = tokenbuf + token_len + 1;
+	l_token = tokenbuf + nsize - 5;
+	s_token = tokenbuf + 1;
+    }
+}
+
 static int
 strcmp_type(const void *e1, const void *e2)
 {
@@ -277,7 +292,7 @@ lexi(struct parser_state *state)
 		    break;
 		}
 		s = table[i][s - 'A'];
-		CHECK_SIZE_TOKEN(1);
+		check_size_token(1);
 		*e_token++ = *buf_ptr++;
 		if (buf_ptr >= buf_end)
 		    fill_buffer();
@@ -297,7 +312,7 @@ lexi(struct parser_state *state)
 			} else
 			    break;
 		}
-		CHECK_SIZE_TOKEN(1);
+		check_size_token(1);
 		/* copy it over */
 		*e_token++ = *buf_ptr++;
 		if (buf_ptr >= buf_end)
@@ -420,7 +435,7 @@ lexi(struct parser_state *state)
 
     /* Scan a non-alphanumeric token */
 
-    CHECK_SIZE_TOKEN(3);		/* things like "<<=" */
+    check_size_token(3);		/* things like "<<=" */
     *e_token++ = *buf_ptr;		/* if it is only a one-character token, it is
 				 * moved here */
     *e_token = '\0';
@@ -448,7 +463,7 @@ lexi(struct parser_state *state)
 		    diag(1, "Unterminated literal");
 		    goto stop_lit;
 		}
-		CHECK_SIZE_TOKEN(2);
+		check_size_token(2);
 		*e_token = *buf_ptr++;
 		if (buf_ptr >= buf_end)
 		    fill_buffer();
@@ -598,7 +613,7 @@ stop_lit:
 	}
 	while (*buf_ptr == '*' || isspace((unsigned char)*buf_ptr)) {
 	    if (*buf_ptr == '*') {
-		CHECK_SIZE_TOKEN(1);
+		check_size_token(1);
 		*e_token++ = *buf_ptr;
 	    }
 	    if (++buf_ptr >= buf_end)
@@ -634,7 +649,7 @@ stop_lit:
 	    /*
 	     * handle ||, &&, etc, and also things as in int *****i
 	     */
-	    CHECK_SIZE_TOKEN(1);
+	    check_size_token(1);
 	    *e_token++ = *buf_ptr;
 	    if (++buf_ptr >= buf_end)
 		fill_buffer();
@@ -647,7 +662,7 @@ stop_lit:
     if (buf_ptr >= buf_end)	/* check for input buffer empty */
 	fill_buffer();
     state->last_u_d = unary_delim;
-    CHECK_SIZE_TOKEN(1);
+    check_size_token(1);
     *e_token = '\0';		/* null terminate the token */
     return lexi_end(code);
 }
