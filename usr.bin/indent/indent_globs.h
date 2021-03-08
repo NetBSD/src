@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.16 2021/03/08 20:15:42 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.17 2021/03/08 20:20:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -40,7 +40,6 @@
  * $FreeBSD: head/usr.bin/indent/indent_globs.h 337651 2018-08-11 19:20:06Z pstef $
  */
 
-#define BACKSLASH '\\'
 #define bufsize 200		/* size of internal buffers */
 #define sc_size 5000		/* size of save_com buffer */
 #define label_offset 2		/* number of levels a label is placed to left
