@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.15 2021/03/07 20:40:18 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.16 2021/03/08 20:15:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -53,58 +53,6 @@
 
 extern FILE       *input;		/* the fid for the input file */
 extern FILE       *output;		/* the output file */
-
-#define CHECK_SIZE_CODE(desired_size) \
-	if (e_code + (desired_size) >= l_code) { \
-	    int nsize = l_code-s_code + 400 + desired_size; \
-	    int code_len = e_code-s_code; \
-	    codebuf = (char *) realloc(codebuf, nsize); \
-	    if (codebuf == NULL) \
-		err(1, NULL); \
-	    e_code = codebuf + code_len + 1; \
-	    l_code = codebuf + nsize - 5; \
-	    s_code = codebuf + 1; \
-	}
-#define CHECK_SIZE_COM(desired_size) \
-	if (e_com + (desired_size) >= l_com) { \
-	    int nsize = l_com-s_com + 400 + desired_size; \
-	    int com_len = e_com - s_com; \
-	    int blank_pos; \
-	    if (last_bl != NULL) \
-		blank_pos = last_bl - combuf; \
-	    else \
-		blank_pos = -1; \
-	    combuf = (char *) realloc(combuf, nsize); \
-	    if (combuf == NULL) \
-		err(1, NULL); \
-	    e_com = combuf + com_len + 1; \
-	    if (blank_pos > 0) \
-		last_bl = combuf + blank_pos; \
-	    l_com = combuf + nsize - 5; \
-	    s_com = combuf + 1; \
-	}
-#define CHECK_SIZE_LAB(desired_size) \
-	if (e_lab + (desired_size) >= l_lab) { \
-	    int nsize = l_lab-s_lab + 400 + desired_size; \
-	    int label_len = e_lab - s_lab; \
-	    labbuf = (char *) realloc(labbuf, nsize); \
-	    if (labbuf == NULL) \
-		err(1, NULL); \
-	    e_lab = labbuf + label_len + 1; \
-	    l_lab = labbuf + nsize - 5; \
-	    s_lab = labbuf + 1; \
-	}
-#define CHECK_SIZE_TOKEN(desired_size) \
-	if (e_token + (desired_size) >= l_token) { \
-	    int nsize = l_token-s_token + 400 + desired_size; \
-	    int token_len = e_token - s_token; \
-	    tokenbuf = (char *) realloc(tokenbuf, nsize); \
-	    if (tokenbuf == NULL) \
-		err(1, NULL); \
-	    e_token = tokenbuf + token_len + 1; \
-	    l_token = tokenbuf + nsize - 5; \
-	    s_token = tokenbuf + 1; \
-	}
 
 extern char       *labbuf;		/* buffer for label */
 extern char       *s_lab;		/* start ... */
