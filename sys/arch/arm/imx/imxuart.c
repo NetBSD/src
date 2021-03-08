@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.26 2020/11/20 18:16:40 thorpej Exp $ */
+/* $NetBSD: imxuart.c,v 1.27 2021/03/08 06:23:31 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.26 2020/11/20 18:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.27 2021/03/08 06:23:31 mlelstv Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -1720,11 +1720,11 @@ imxuintr(void *arg)
 			cn_check_magic(sc->sc_tty->t_dev,
 				       CNC_BREAK, imxuart_cnm_state);
 			if (cn_trapped)
-				continue;
+				goto next;
 #if defined(KGDB) && !defined(DDB)
 			if (ISSET(sc->sc_hwflags, IMXUART_HW_KGDB)) {
 				kgdb_connect(1);
-				continue;
+				goto next;
 			}
 #endif
 		}
@@ -1776,6 +1776,7 @@ imxuintr(void *arg)
 		}
 #endif
 
+next:
 		usr2 = bus_space_read_4(iot, ioh, IMX_USR2);
 	} while (usr2 & (IMX_USR2_RDR|IMX_USR2_BRCD));
 
