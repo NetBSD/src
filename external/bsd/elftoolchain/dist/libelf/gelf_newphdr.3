@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_newphdr.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: gelf_newphdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006-2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_newphdr.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_newphdr.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
-.Dd October 22, 2007
-.Os
+.Dd June 12, 2019
 .Dt GELF_NEWPHDR 3
+.Os
 .Sh NAME
 .Nm elf32_newphdr ,
 .Nm elf64_newphdr ,
@@ -97,15 +97,28 @@ on the same descriptor
 .Ar elf
 will no longer be valid.
 .Sh RETURN VALUES
-The functions a valid pointer if successful, or NULL in case an error
-was encountered.
+The functions a valid pointer if successful, or
+.Dv NULL
+in case an error was encountered.
+.Sh COMPATIBILITY
+The
+.Fn gelf_newphdr
+function uses a type of
+.Ft "void *"
+for its returned value.
+This differs from some other implementations of the
+.Xr elf 3
+API, which use an
+.Ft "unsigned long"
+return type.
 .Sh ERRORS
 These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
-was NULL.
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf

@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_rawfile.3,v 1.3 2016/02/20 02:43:42 christos Exp $
+.\"	$NetBSD: elf_rawfile.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_rawfile.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: elf_rawfile.3 3928 2021-03-07 19:47:55Z jkoshy
 .\"
 .Dd July 3, 2006
-.Os
 .Dt ELF_RAWFILE 3
+.Os
 .Sh NAME
 .Nm elf_rawfile
 .Nd return uninterpreted contents of an ELF file
@@ -52,7 +52,9 @@ encountered.
 .Sh RETURN VALUES
 Function
 .Fn elf_rawfile
-returns a valid pointer if successful or NULL if an error occurs.
+returns a valid pointer if successful or
+.Dv NULL
+if an error occurs.
 .Sh ERRORS
 Function
 .Fn elf_rawfile
@@ -61,7 +63,8 @@ may fail with the following errors:
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Ar elf
-was NULL.
+was
+.Dv NULL .
 .It Bq Er ELF_E_SEQUENCE
 Argument
 .Ar elf
