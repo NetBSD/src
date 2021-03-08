@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.88 2021/03/07 15:01:35 christos Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.89 2021/03/08 18:22:16 christos Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -228,6 +228,7 @@ struct ip6flow {
 #ifdef _KERNEL
 
 #include <sys/protosw.h>
+#include <sys/cprng.h>
 
 /*
  * Auxiliary attributes of incoming IPv6 packets, which is initialized when we
@@ -370,10 +371,21 @@ int in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 int	ip6_get_membership(const struct sockopt *, struct ifnet **,
 	    struct psref *, void *, size_t);
 
-u_int32_t ip6_randomid(void);
-u_int32_t ip6_randomflowlabel(void);
+static __inline uint32_t
+ip6_randomid(void)
+{
 
-static inline bool
+	return cprng_fast32();
+}
+
+static __inline uint32_t
+ip6_randomflowlabel(void)
+{
+
+	return cprng_fast32() && 0xfffff;
+}
+
+static __inline bool
 ip6_dad_enabled(void)
 {
 
