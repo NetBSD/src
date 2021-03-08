@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_set_item.c,v 1.3 2017/05/06 19:50:10 christos Exp $	*/
+/*	$NetBSD: pam_set_item.c,v 1.4 2021/03/08 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_set_item.c,v 1.3 2017/05/06 19:50:10 christos Exp $");
+__RCSID("$NetBSD: pam_set_item.c,v 1.4 2021/03/08 19:38:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -72,7 +72,7 @@ pam_set_item(pam_handle_t *pamh,
 	ENTERI(item_type);
 	slot = &pamh->item[item_type];
 	osize = nsize = 0;
-	switch (item_type) {
+	switch ((enum openpam_item_primitives)item_type) {
 	case PAM_SERVICE:
 		/* set once only, by pam_start() */
 		if (*slot != NULL && item != NULL)

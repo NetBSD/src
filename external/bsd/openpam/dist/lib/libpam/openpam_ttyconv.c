@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.4 2021/03/08 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_ttyconv.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
+__RCSID("$NetBSD: openpam_ttyconv.c,v 1.4 2021/03/08 19:38:10 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -372,7 +372,7 @@ openpam_ttyconv(int n,
 	for (i = 0; i < n; ++i) {
 		aresp[i].resp_retcode = 0;
 		aresp[i].resp = NULL;
-		switch (msg[i]->msg_style) {
+		switch ((enum openpam_message_items)msg[i]->msg_style) {
 		case PAM_PROMPT_ECHO_OFF:
 			if (prompt(msg[i]->msg, respbuf, 0) < 0 ||
 			    (aresp[i].resp = strdup(respbuf)) == NULL)

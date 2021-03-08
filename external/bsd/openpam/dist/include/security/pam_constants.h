@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_constants.h,v 1.6 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: pam_constants.h,v 1.7 2021/03/08 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -90,7 +90,7 @@ enum {
 /*
  * XSSO 5.3
  */
-enum {
+enum openpam_message_items {
 	PAM_PROMPT_ECHO_OFF		=   1,
 	PAM_PROMPT_ECHO_ON		=   2,
 	PAM_ERROR_MSG			=   3,
@@ -119,7 +119,7 @@ enum {
 /*
  * XSSO 5.5
  */
-enum {
+enum openpam_item_primitives {
 	PAM_SERVICE			=   1,
 	PAM_USER			=   2,
 	PAM_TTY				=   3,

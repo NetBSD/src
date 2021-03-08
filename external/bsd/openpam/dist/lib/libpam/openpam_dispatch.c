@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dispatch.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_dispatch.c,v 1.4 2021/03/08 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_dispatch.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
+__RCSID("$NetBSD: openpam_dispatch.c,v 1.4 2021/03/08 19:38:10 christos Exp $");
 
 #include <sys/param.h>
 
@@ -86,7 +86,7 @@ openpam_dispatch(pam_handle_t *pamh,
 	}
 
 	/* pick a chain */
-	switch (primitive) {
+	switch ((enum openpam_sm_primitives)primitive) {
 	case PAM_SM_AUTHENTICATE:
 	case PAM_SM_SETCRED:
 		chain = pamh->chains[PAM_AUTH];
@@ -101,6 +101,7 @@ openpam_dispatch(pam_handle_t *pamh,
 	case PAM_SM_CHAUTHTOK:
 		chain = pamh->chains[PAM_PASSWORD];
 		break;
+	case PAM_NUM_PRIMITIVES:
 	default:
 		RETURNC(PAM_SYSTEM_ERR);
 	}
@@ -208,7 +209,7 @@ openpam_check_error_code(int primitive, int r)
 		return;
 
 	/* specific error codes */
-	switch (primitive) {
+	switch ((enum openpam_sm_primitives)primitive) {
 	case PAM_SM_AUTHENTICATE:
 		if (r == PAM_AUTH_ERR ||
 		    r == PAM_CRED_INSUFFICIENT ||
@@ -244,6 +245,8 @@ openpam_check_error_code(int primitive, int r)
 		    r == PAM_AUTHTOK_DISABLE_AGING ||
 		    r == PAM_TRY_AGAIN)
 			return;
+		break;
+	case PAM_NUM_PRIMITIVES:
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_log.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_log.c,v 1.4 2021/03/08 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_log.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
+__RCSID("$NetBSD: openpam_log.c,v 1.4 2021/03/08 19:38:10 christos Exp $");
 
 #include <errno.h>
 #include <stdarg.h>
@@ -110,7 +110,7 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
 	int priority;
 	int serrno;
 
-	switch (level) {
+	switch ((enum openpam_log_primitives)level) {
 	case PAM_LOG_LIBDEBUG:
 	case PAM_LOG_DEBUG:
 		if (!openpam_debug)
