@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_indent.sh,v 1.2 2021/03/07 08:57:38 rillig Exp $
+# $NetBSD: t_indent.sh,v 1.3 2021/03/08 20:01:16 rillig Exp $
 #
 # Copyright 2016 Dell EMC
 # All rights reserved.
@@ -44,25 +44,32 @@ check()
 	# IDs, preventing them to be broken into several lines.  It also
 	# allows for remarks that are only needed in either the input or the
 	# output.  These removals affect the line numbers in the diffs.
-	local out_file="${tc}.stdout"
-	if [ -f "${out_file}" ]; then
-		parsed_file=output_file.parsed
+	for fname in "$tc" "$tc.stdout" "$tc.stderr"; do
+		if [ -f "$fname" ]; then
+			atf_check -o "save:$fname.clean" \
+			    sed -e '/^\/\*[[:space:]]$.*/d' "$fname"
+		fi
+	done
 
-		atf_check -o save:$parsed_file sed -e '/^\/\*[[:space:]]$.*/d' \
-		    ${tc}.stdout
-		out_flag="-o file:$parsed_file"
+	local out_arg='empty'
+	if [ -f "$tc.stdout.clean" ]; then
+		out_arg="file:$tc.stdout.clean"
 	fi
-	local profile_file="${tc}.pro"
-	if [ -f "${profile_file}" ]; then
-		profile_flag="-P${profile_file}"
-	else
-		# Make sure we don't implicitly use ~/.indent.pro from the test
-		# host, for determinism purposes.
-		profile_flag="-npro"
-	fi
-	sed -e '/^\/\*[[:space:]]$.*/d'  ${tc} > input_file.parsed
 
-	atf_check -s exit:${tc##*.} ${out_flag} ${indent} ${profile_flag} < input_file.parsed
+	local err_arg='empty'
+	if [ -f "$tc.stderr.clean" ]; then
+		err_arg="file:$tc.stderr.clean"
+	fi
+
+	# Make sure we don't implicitly use ~/.indent.pro from the test
+	# host, for determinism purposes.
+	local pro_arg='-npro'
+	if [ -f "$tc.pro" ]; then
+		pro_arg="-P$tc.pro"
+	fi
+
+	atf_check -s "exit:${tc##*.}" -o "$out_arg" -e "$err_arg" \
+	    "$indent" "$pro_arg" < "$tc.clean"
 }
 
 add_testcase()
