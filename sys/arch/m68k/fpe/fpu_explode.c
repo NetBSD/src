@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.15 2015/02/05 12:23:27 isaki Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.16 2021/03/08 14:37:55 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.15 2015/02/05 12:23:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.16 2021/03/08 14:37:55 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -230,11 +230,6 @@ fpu_explode(struct fpemu *fe, struct fpn *fp, int type, const uint32_t *space)
 	fp->fp_sign = s >> 31;
 	fp->fp_sticky = 0;
 	switch (type) {
-
-	case FTYPE_BYT:
-		s >>= 8;
-	case FTYPE_WRD:
-		s >>= 16;
 	case FTYPE_LNG:
 		s = fpu_itof(fp, s);
 		break;
@@ -251,6 +246,10 @@ fpu_explode(struct fpemu *fe, struct fpn *fp, int type, const uint32_t *space)
 		s = fpu_xtof(fp, s, space[1], space[2]);
 		break;
 
+	case FTYPE_BYT:
+	case FTYPE_WRD:
+		/* Caller must cast it to signed LNG instead of calling this */
+		/* FALLTHROUGH */
 	default:
 		panic("fpu_explode");
 	}
