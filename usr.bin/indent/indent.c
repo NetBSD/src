@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.35 2021/03/08 20:20:11 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.36 2021/03/09 16:48:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.35 2021/03/08 20:20:11 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.36 2021/03/09 16:48:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -435,7 +435,7 @@ main(int argc, char **argv)
 		comment_buffered = true;
 		*sc_end++ = '/';	/* copy in start of comment */
 		*sc_end++ = '*';
-		for (;;) {	/* loop until we get to the end of the comment */
+		for (;;) {	/* loop until the end of the comment */
 		    *sc_end = *buf_ptr++;
 		    if (buf_ptr >= buf_end)
 			fill_buffer();
@@ -525,7 +525,7 @@ main(int argc, char **argv)
 		    buf_ptr = save_com;	/* fix so that subsequent calls to
 					 * lexi will take tokens out of
 					 * save_com */
-		    *sc_end++ = ' ';/* add trailing blank, just in case */
+		    *sc_end++ = ' ';	/* add trailing blank, just in case */
 		    buf_end = sc_end;
 		    sc_end = NULL;
 		    break;
@@ -639,7 +639,7 @@ check_type:
 				 * final increment for the null character. */
 	switch (type_code) {	/* now, decide what to do with the token */
 
-	case form_feed:	/* found a form feed in line */
+	case form_feed:		/* found a form feed in line */
 	    ps.use_ff = true;	/* a form feed is treated much like a newline */
 	    dump_line();
 	    ps.want_blank = false;
@@ -716,7 +716,7 @@ check_type:
 	    if (sp_sw && (ps.p_l_follow == 0)) {	/* check for end of if
 							 * (...), or some such */
 		sp_sw = false;
-		force_nl = true;/* must force newline after if */
+		force_nl = true;	/* must force newline after if */
 		ps.last_u_d = true;	/* inform lexi that a following
 					 * operator is unary */
 		ps.in_stmt = false;	/* dont use stmt continuation
@@ -757,7 +757,7 @@ check_type:
 	    ps.want_blank = false;
 	    break;
 
-	case binary_op:	/* any binary operation */
+	case binary_op:		/* any binary operation */
 	    {
 		int len = e_token - s_token;
 
@@ -830,8 +830,8 @@ check_type:
 
 	case semicolon:	/* got a ';' */
 	    if (ps.dec_nest == 0)
-		ps.in_or_st = false;/* we are not in an initialization or
-				     * structure declaration */
+		ps.in_or_st = false;	/* we are not in an initialization or
+					 * structure declaration */
 	    scase = false;	/* these will only need resetting in an error */
 	    squest = 0;
 	    if (ps.last_token == rparen)
@@ -1004,7 +1004,7 @@ check_type:
 	     */
 	    goto copy_id;	/* copy the token into line */
 
-	case sp_nparen:	/* got else, do */
+	case sp_nparen:		/* got else, do */
 	    ps.in_stmt = false;
 	    if (*token == 'e') {
 		if (e_code != s_code && (!opt.cuddle_else || e_code[-1] != '}')) {
