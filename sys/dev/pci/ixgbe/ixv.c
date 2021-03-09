@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.154 2020/09/07 05:50:58 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.155 2021/03/09 10:03:18 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -38,6 +38,7 @@
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_net_mpsafe.h"
+#include "opt_ixgbe.h"
 #endif
 
 #include "ixgbe.h"
@@ -511,6 +512,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixv_rxd;
+
+	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
 
 	/* Setup MSI-X */
 	error = ixv_configure_interrupts(adapter);
@@ -2555,6 +2558,13 @@ ixv_add_device_sysctls(struct adapter *adapter)
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", SYSCTL_DESCR("Debug Info"),
 	    ixv_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
+	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
+	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
