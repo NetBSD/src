@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.287 2021/03/08 18:17:27 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.288 2021/03/09 13:48:16 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.287 2021/03/08 18:17:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.288 2021/03/09 13:48:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2210,23 +2210,23 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 #ifdef TCPISS_DEBUG
 		printf("ISS hash 0x%08x, ", tcp_iss);
 #endif
-		/*
-		 * Add the offset in to the computed value.
-		 */
-		tcp_iss += tcp_iss_seq;
-#ifdef TCPISS_DEBUG
-		printf("ISS %08x\n", tcp_iss);
-#endif
 	} else {
 		/*
 		 * Randomize.
 		 */
-		tcp_iss = cprng_fast32();
+		tcp_iss = cprng_fast32() & TCP_ISS_RANDOM_MASK;
 #ifdef TCPISS_DEBUG
 		printf("ISS random 0x%08x, ", tcp_iss);
 #endif
 	}
 
+	/*
+	 * Add the offset in to the computed value.
+	 */
+	tcp_iss += tcp_iss_seq;
+#ifdef TCPISS_DEBUG
+	printf("ISS %08x\n", tcp_iss);
+#endif
 	return tcp_iss;
 }
 
