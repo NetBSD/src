@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.21 2020/10/15 08:37:20 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.22 2021/03/09 16:44:27 ryo Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -10,7 +10,7 @@
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
 
-RCSID("$NetBSD: vectors.S,v 1.21 2020/10/15 08:37:20 ryo Exp $")
+RCSID("$NetBSD: vectors.S,v 1.22 2021/03/09 16:44:27 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -313,6 +313,9 @@ ENTRY_NP(el0_trap_exit)
 	tbz	x1, #SPSR_SS_SHIFT, 1f
 	mrs	x0, mdscr_el1
 	orr	x0, x0, #MDSCR_SS
+#ifdef DDB
+	bic	x0, x0, #MDSCR_KDE
+#endif
 	msr	mdscr_el1, x0
 1:
 	unwind_x0_x2
