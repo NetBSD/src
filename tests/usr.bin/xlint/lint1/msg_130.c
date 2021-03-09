@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.8 2021/03/05 17:10:06 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.9 2021/03/09 23:09:48 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
@@ -52,4 +52,41 @@ switch_example(enum color c)
 	default:
 		break;
 	}
+}
+
+/*
+ * Unnamed enum types can be used as a container for constants, especially
+ * since in C90 and C99, even after the declaration 'static const int x = 3',
+ * 'x' is not a constant expression.
+ */
+enum {
+	sizeof_int = sizeof(int),
+	sizeof_long = sizeof(long)
+};
+
+enum {
+	sizeof_uint = sizeof(unsigned int)
+};
+
+int
+enum_constant_from_unnamed_type(int x)
+{
+	switch (x) {
+	case sizeof_int:		/* expect: 130 *//* FIXME */
+		return 1;
+	case sizeof_long:		/* expect: 130 *//* FIXME */
+		return 2;
+	default:
+		break;
+	}
+
+	if (x == sizeof_int)
+		return 4;
+	if (x > sizeof_int)
+		return 5;
+
+	if (sizeof_int == sizeof_uint)	/* expect: 130 *//* FIXME */
+		return 6;
+
+	return 0;
 }
