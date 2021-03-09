@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.29 2021/03/09 18:28:10 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.30 2021/03/09 19:14:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.29 2021/03/09 18:28:10 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.30 2021/03/09 19:14:39 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -204,13 +204,13 @@ token_type_name(token_type tk)
 {
     static const char *const name[] = {
 	"end_of_file", "newline", "lparen", "rparen", "unary_op",
-	"binary_op", "postop", "question", "casestmt", "colon",
+	"binary_op", "postop", "question", "case_label", "colon",
 	"semicolon", "lbrace", "rbrace", "ident", "comma",
-	"comment", "swstmt", "preesc", "form_feed", "decl",
+	"comment", "switch_expr", "preesc", "form_feed", "decl",
 	"keyword_for_if_while", "keyword_do_else",
-	"ifstmt", "whilestmt", "forstmt",
-	"stmt", "stmtl", "elselit", "dolit", "dohead",
-	"ifhead", "elsehead", "period", "strpfx", "storage",
+	"if_expr", "while_expr", "for_exprs",
+	"stmt", "stmt_list", "keyword_else", "keyword_do", "do_stmt",
+	"if_expr_stmt", "if_expr_stmt_else", "period", "strpfx", "storage",
 	"funcname", "type_def", "structure"
     };
 
@@ -367,9 +367,9 @@ lexi(struct parser_state *state)
 	    state->last_u_d = true;
 	    switch (p->rwcode) {
 	    case rw_switch:
-		return lexi_end(swstmt);
+		return lexi_end(switch_expr);
 	    case rw_case_or_default:
-		return lexi_end(casestmt);
+		return lexi_end(case_label);
 	    case rw_struct_or_union_or_enum:
 	    case rw_type:
 	    found_typename:
