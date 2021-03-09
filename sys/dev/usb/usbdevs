@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.790 2021/02/03 23:23:42 thorpej Exp $
+$NetBSD: usbdevs,v 1.791 2021/03/09 16:37:23 ryo Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -580,6 +580,7 @@ vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
 vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
+vendor COOLERMASTER	0x2516	Cooler Master Technology Inc.
 vendor HAILUCK		0x258a	HAILUCK Co., Ltd
 vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770	NHJ
@@ -1252,6 +1253,9 @@ product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
+
+/* Cooler Master Technology Inc. */
+product	COOLERMASTER AMD_SR4_LAMPLIGHT	0x0051	AMD SR4 lamplight Control
 
 /* Corega products */
 product COREGA ETHER_USB_T	0x0001	Ether USB-T
