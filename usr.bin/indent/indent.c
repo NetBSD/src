@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.38 2021/03/09 19:14:39 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.39 2021/03/09 19:23:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.38 2021/03/09 19:14:39 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.39 2021/03/09 19:23:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -595,7 +595,7 @@ check_type:
 	if (
 		(type_code != comment) &&
 		(type_code != newline) &&
-		(type_code != preesc) &&
+		(type_code != preprocessing) &&
 		(type_code != form_feed)) {
 	    if (force_nl &&
 		    (type_code != semicolon) &&
@@ -770,7 +770,7 @@ check_type:
 	    ps.want_blank = true;
 	    break;
 
-	case postop:		/* got a trailing ++ or -- */
+	case postfix_op:	/* got a trailing ++ or -- */
 	    *e_code++ = token[0];
 	    *e_code++ = token[1];
 	    ps.want_blank = true;
@@ -1032,11 +1032,11 @@ check_type:
 	    goto copy_id;	/* move the token into line */
 
 	case type_def:
-	case storage:
+	case storage_class:
 	    prefix_blankline_requested = 0;
 	    goto copy_id;
 
-	case structure:
+	case keyword_struct_union_enum:
 	    if (ps.p_l_follow > 0)
 		goto copy_id;
 	    /* FALLTHROUGH */
@@ -1114,7 +1114,7 @@ check_type:
 		ps.want_blank = true;
 	    break;
 
-	case strpfx:
+	case string_prefix:
 	    {
 		int len = e_token - s_token;
 
@@ -1154,7 +1154,7 @@ check_type:
 	    }
 	    break;
 
-	case preesc:		/* got the character '#' */
+	case preprocessing:	/* '#' */
 	    if ((s_com != e_com) ||
 		    (s_lab != e_lab) ||
 		    (s_code != e_code))
@@ -1308,7 +1308,9 @@ check_type:
 	}			/* end of big switch stmt */
 
 	*e_code = '\0';		/* make sure code section is null terminated */
-	if (type_code != comment && type_code != newline && type_code != preesc)
+	if (type_code != comment &&
+	    type_code != newline &&
+	    type_code != preprocessing)
 	    ps.last_token = type_code;
     }				/* end of main while (1) loop */
 }
