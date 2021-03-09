@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_codes.h,v 1.10 2021/03/09 19:14:39 rillig Exp $	*/
+/*	$NetBSD: indent_codes.h,v 1.11 2021/03/09 19:23:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -47,7 +47,7 @@ typedef enum token_type {
     rparen,			/* ')' or ']' */
     unary_op,			/* e.g. '+' or '&' */
     binary_op,			/* e.g. '<<' or '+' or '&&' or '/=' */
-    postop,			/* trailing '++' or '--' */
+    postfix_op,			/* trailing '++' or '--' */
     question,			/* the '?' from a '?:' expression */
     case_label,
     colon,
@@ -58,7 +58,7 @@ typedef enum token_type {
     comma,
     comment,
     switch_expr,		/* 'switch' '(' <expr> ')' */
-    preesc,
+    preprocessing,		/* '#' */
     form_feed,
     decl,
     keyword_for_if_while,	/* 'for', 'if' or 'while' */
@@ -74,9 +74,9 @@ typedef enum token_type {
     if_expr_stmt,		/* 'if' '(' <expr> ')' <stmt> */
     if_expr_stmt_else,		/* 'if' '(' <expr> ')' <stmt> 'else' */
     period,
-    strpfx,
-    storage,
+    string_prefix,		/* 'L' */
+    storage_class,
     funcname,
     type_def,
-    structure
+    keyword_struct_union_enum
 } token_type;

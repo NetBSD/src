@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.30 2021/03/09 19:14:39 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.31 2021/03/09 19:23:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.30 2021/03/09 19:14:39 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.31 2021/03/09 19:23:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -204,14 +204,14 @@ token_type_name(token_type tk)
 {
     static const char *const name[] = {
 	"end_of_file", "newline", "lparen", "rparen", "unary_op",
-	"binary_op", "postop", "question", "case_label", "colon",
+	"binary_op", "postfix_op", "question", "case_label", "colon",
 	"semicolon", "lbrace", "rbrace", "ident", "comma",
-	"comment", "switch_expr", "preesc", "form_feed", "decl",
+	"comment", "switch_expr", "preprocessing", "form_feed", "decl",
 	"keyword_for_if_while", "keyword_do_else",
 	"if_expr", "while_expr", "for_exprs",
 	"stmt", "stmt_list", "keyword_else", "keyword_do", "do_stmt",
-	"if_expr_stmt", "if_expr_stmt_else", "period", "strpfx", "storage",
-	"funcname", "type_def", "structure"
+	"if_expr_stmt", "if_expr_stmt_else", "period", "string_prefix",
+	"storage_class", "funcname", "type_def", "keyword_struct_union_enum"
     };
 
     assert(0 <= tk && tk < sizeof name / sizeof name[0]);
@@ -329,24 +329,24 @@ lexi(struct parser_state *state)
 
 	if (s_token[0] == 'L' && s_token[1] == '\0' &&
 	      (*buf_ptr == '"' || *buf_ptr == '\''))
-	    return lexi_end(strpfx);
+	    return lexi_end(string_prefix);
 
 	while (*buf_ptr == ' ' || *buf_ptr == '\t') {	/* get rid of blanks */
 	    if (++buf_ptr >= buf_end)
 		fill_buffer();
 	}
 	state->keyword = rw_0;
-	if (state->last_token == structure && !state->p_l_follow) {
-				/* if last token was 'struct' and we're not
-				 * in parentheses, then this token
-				 * should be treated as a declaration */
+	if (state->last_token == keyword_struct_union_enum &&
+	    !state->p_l_follow) {
+	    /* if last token was 'struct' and we're not in parentheses, then
+	     * this token should be treated as a declaration */
 	    state->last_u_d = true;
 	    return lexi_end(decl);
 	}
 	/*
 	 * Operator after identifier is binary unless last token was 'struct'
 	 */
-	state->last_u_d = (state->last_token == structure);
+	state->last_u_d = (state->last_token == keyword_struct_union_enum);
 
 	p = bsearch(s_token, specials, sizeof specials / sizeof specials[0],
 	    sizeof specials[0], compare_templ_array);
@@ -382,7 +382,7 @@ lexi(struct parser_state *state)
 		    break;
 		}
 		if (p != NULL && p->rwcode == rw_struct_or_union_or_enum)
-		    return lexi_end(structure);
+		    return lexi_end(keyword_struct_union_enum);
 		if (state->p_l_follow)
 		    break;
 		return lexi_end(decl);
@@ -394,7 +394,7 @@ lexi(struct parser_state *state)
 		return lexi_end(keyword_do_else);
 
 	    case rw_storage_class:
-		return lexi_end(storage);
+		return lexi_end(storage_class);
 
 	    case rw_typedef:
 		return lexi_end(type_def);
@@ -501,7 +501,7 @@ stop_lit:
 
     case '#':
 	unary_delim = state->last_u_d;
-	code = preesc;
+	code = preprocessing;
 	break;
 
     case '?':
@@ -562,7 +562,7 @@ stop_lit:
 	    *e_token++ = *buf_ptr++;
 	    /* buffer overflow will be checked at end of loop */
 	    if (state->last_token == ident || state->last_token == rparen) {
-		code = (state->last_u_d ? unary_op : postop);
+		code = (state->last_u_d ? unary_op : postfix_op);
 		/* check for following ++ or -- */
 		unary_delim = false;
 	    }
