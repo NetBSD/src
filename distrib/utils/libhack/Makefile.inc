@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.37 2021/02/25 21:24:00 christos Exp $
+# $NetBSD: Makefile.inc,v 1.38 2021/03/09 00:06:44 christos Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -25,7 +25,7 @@ HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o jemalloc.o \
 		localeconv.o multibyte.o perror.o runetable.o setlocale.o \
 		nl_langinfo.o strcasecmp.o \
 		strerror.o strsignal.o syslog.o utmp.o fmtcheck.o \
-		aligned_alloc.o regcomp.o regexec.o
+		aligned_alloc.o regcomp.o regexec.o wrap.o
 
 .if (${USE_YP} != "no")
 HACKOBJS+=	yplib.o
