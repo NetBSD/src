@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.91.8.1 2018/02/03 22:07:26 snj Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.91.8.2 2021/03/09 15:56:51 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.91.8.1 2018/02/03 22:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.91.8.2 2021/03/09 15:56:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.91.8.1 2018/02/03 22:07:26 snj Exp $
 #include <sys/kernel.h>
 #include <sys/callout.h>
 #include <sys/workqueue.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 
@@ -261,7 +262,7 @@ tcp_slowtimo_work(struct work *wk, void *arg)
 {
 
 	mutex_enter(softnet_lock);
-	tcp_iss_seq += TCP_ISSINCR;			/* increment iss */
+	tcp_iss_seq += TCP_ISSINCR + (TCP_ISS_RANDOM_MASK & cprng_fast32());
 	tcp_now++;					/* for timestamps */
 	mutex_exit(softnet_lock);
 
