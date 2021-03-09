@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.36 2021/03/09 16:48:28 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.37 2021/03/09 18:28:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.36 2021/03/09 16:48:28 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.37 2021/03/09 18:28:10 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -481,11 +481,11 @@ main(int argc, char **argv)
 
 		    remove_newlines =
 			/* "} else" */
-			(type_code == sp_nparen && *token == 'e' &&
+			(type_code == keyword_do_else && *token == 'e' &&
 			    e_code != s_code && e_code[-1] == '}')
 			/* "else if" */
-			|| (type_code == sp_paren && *token == 'i' &&
-			    last_else && opt.else_if);
+			|| (type_code == keyword_for_if_while &&
+			    *token == 'i' && last_else && opt.else_if);
 		    if (remove_newlines)
 			force_nl = false;
 		    if (sc_end == NULL) {	/* ignore buffering if
@@ -993,7 +993,7 @@ check_type:
 				 * expression */
 	    goto copy_id;	/* go move the token into buffer */
 
-	case sp_paren:		/* token is if, while, for */
+	case keyword_for_if_while:
 	    sp_sw = true;	/* the interesting stuff is done after the
 				 * expression is scanned */
 	    hd_type = (*token == 'i' ? ifstmt :
@@ -1004,7 +1004,7 @@ check_type:
 	     */
 	    goto copy_id;	/* copy the token into line */
 
-	case sp_nparen:		/* got else, do */
+	case keyword_do_else:
 	    ps.in_stmt = false;
 	    if (*token == 'e') {
 		if (e_code != s_code && (!opt.cuddle_else || e_code[-1] != '}')) {

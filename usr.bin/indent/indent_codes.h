@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_codes.h,v 1.8 2021/03/07 20:30:48 rillig Exp $	*/
+/*	$NetBSD: indent_codes.h,v 1.9 2021/03/09 18:28:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -61,8 +61,8 @@ typedef enum token_type {
     preesc,
     form_feed,
     decl,
-    sp_paren,
-    sp_nparen,
+    keyword_for_if_while,
+    keyword_do_else,
     ifstmt,
     whilestmt,
     forstmt,
