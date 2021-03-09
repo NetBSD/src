@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.35 2021/03/09 16:42:36 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.36 2021/03/09 16:43:13 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.35 2021/03/09 16:42:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.36 2021/03/09 16:43:13 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -944,11 +944,16 @@ db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (!have_addr) {
 		for (i = 0; i < ncpu; i++) {
-			if (db_readytoswitch[i] != NULL)
-				db_printf("cpu%d: ready. tf=%p\n", i,
-				    db_readytoswitch[i]);
-			else
+			if (db_readytoswitch[i] != NULL) {
+				db_printf("cpu%d: ready. tf=%p, pc=%016lx ", i,
+					db_readytoswitch[i],
+					db_readytoswitch[i]->tf_pc);
+				db_printsym(db_readytoswitch[i]->tf_pc,
+					DB_STGY_ANY, db_printf);
+				db_printf("\n");
+			} else {
 				db_printf("cpu%d: not responding\n", i);
+			}
 		}
 		return;
 	}
