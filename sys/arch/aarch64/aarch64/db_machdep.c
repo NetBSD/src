@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.34 2021/02/23 07:13:51 mrg Exp $ */
+/* $NetBSD: db_machdep.c,v 1.35 2021/03/09 16:42:36 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.34 2021/02/23 07:13:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.35 2021/03/09 16:42:36 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -606,58 +606,58 @@ db_md_sysreg_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 static void
 aarch64_set_bcr_bvr(int n, uint64_t bcr, uint64_t bvr)
 {
-#define DBG_BVR_BCR_SET(regno, bcr, bvr)			\
+#define DBG_BCR_BVR_SET(regno, bcr, bvr)			\
 	do {							\
 		reg_dbgbcr ## regno ## _el1_write(bcr);		\
 		reg_dbgbvr ## regno ## _el1_write(bvr);		\
 	} while (0 /* CONSTCOND */)
 
 	switch (n) {
-	case 0:		DBG_BVR_BCR_SET(0,  bcr, bvr);	break;
-	case 1:		DBG_BVR_BCR_SET(1,  bcr, bvr);	break;
-	case 2:		DBG_BVR_BCR_SET(2,  bcr, bvr);	break;
-	case 3:		DBG_BVR_BCR_SET(3,  bcr, bvr);	break;
-	case 4:		DBG_BVR_BCR_SET(4,  bcr, bvr);	break;
-	case 5:		DBG_BVR_BCR_SET(5,  bcr, bvr);	break;
-	case 6:		DBG_BVR_BCR_SET(6,  bcr, bvr);	break;
-	case 7:		DBG_BVR_BCR_SET(7,  bcr, bvr);	break;
-	case 8:		DBG_BVR_BCR_SET(8,  bcr, bvr);	break;
-	case 9:		DBG_BVR_BCR_SET(9,  bcr, bvr);	break;
-	case 10:	DBG_BVR_BCR_SET(10, bcr, bvr);	break;
-	case 11:	DBG_BVR_BCR_SET(11, bcr, bvr);	break;
-	case 12:	DBG_BVR_BCR_SET(12, bcr, bvr);	break;
-	case 13:	DBG_BVR_BCR_SET(13, bcr, bvr);	break;
-	case 14:	DBG_BVR_BCR_SET(14, bcr, bvr);	break;
-	case 15:	DBG_BVR_BCR_SET(15, bcr, bvr);	break;
+	case 0:		DBG_BCR_BVR_SET(0,  bcr, bvr);	break;
+	case 1:		DBG_BCR_BVR_SET(1,  bcr, bvr);	break;
+	case 2:		DBG_BCR_BVR_SET(2,  bcr, bvr);	break;
+	case 3:		DBG_BCR_BVR_SET(3,  bcr, bvr);	break;
+	case 4:		DBG_BCR_BVR_SET(4,  bcr, bvr);	break;
+	case 5:		DBG_BCR_BVR_SET(5,  bcr, bvr);	break;
+	case 6:		DBG_BCR_BVR_SET(6,  bcr, bvr);	break;
+	case 7:		DBG_BCR_BVR_SET(7,  bcr, bvr);	break;
+	case 8:		DBG_BCR_BVR_SET(8,  bcr, bvr);	break;
+	case 9:		DBG_BCR_BVR_SET(9,  bcr, bvr);	break;
+	case 10:	DBG_BCR_BVR_SET(10, bcr, bvr);	break;
+	case 11:	DBG_BCR_BVR_SET(11, bcr, bvr);	break;
+	case 12:	DBG_BCR_BVR_SET(12, bcr, bvr);	break;
+	case 13:	DBG_BCR_BVR_SET(13, bcr, bvr);	break;
+	case 14:	DBG_BCR_BVR_SET(14, bcr, bvr);	break;
+	case 15:	DBG_BCR_BVR_SET(15, bcr, bvr);	break;
 	}
 }
 
 static void
 aarch64_set_wcr_wvr(int n, uint64_t wcr, uint64_t wvr)
 {
-#define DBG_WVR_WCR_SET(regno, wcr, wvr)			\
+#define DBG_WCR_WVR_SET(regno, wcr, wvr)			\
 	do {							\
 		reg_dbgwcr ## regno ## _el1_write(wcr);		\
 		reg_dbgwvr ## regno ## _el1_write(wvr);		\
 	} while (0 /* CONSTCOND */)
 
 	switch (n) {
-	case 0:		DBG_WVR_WCR_SET(0,  wcr, wvr);	break;
-	case 1:		DBG_WVR_WCR_SET(1,  wcr, wvr);	break;
-	case 2:		DBG_WVR_WCR_SET(2,  wcr, wvr);	break;
-	case 3:		DBG_WVR_WCR_SET(3,  wcr, wvr);	break;
-	case 4:		DBG_WVR_WCR_SET(4,  wcr, wvr);	break;
-	case 5:		DBG_WVR_WCR_SET(5,  wcr, wvr);	break;
-	case 6:		DBG_WVR_WCR_SET(6,  wcr, wvr);	break;
-	case 7:		DBG_WVR_WCR_SET(7,  wcr, wvr);	break;
-	case 8:		DBG_WVR_WCR_SET(8,  wcr, wvr);	break;
-	case 9:		DBG_WVR_WCR_SET(9,  wcr, wvr);	break;
-	case 10:	DBG_WVR_WCR_SET(10, wcr, wvr);	break;
-	case 11:	DBG_WVR_WCR_SET(11, wcr, wvr);	break;
-	case 12:	DBG_WVR_WCR_SET(12, wcr, wvr);	break;
-	case 13:	DBG_WVR_WCR_SET(13, wcr, wvr);	break;
-	case 14:	DBG_WVR_WCR_SET(14, wcr, wvr);	break;
-	case 15:	DBG_WVR_WCR_SET(15, wcr, wvr);	break;
+	case 0:		DBG_WCR_WVR_SET(0,  wcr, wvr);	break;
+	case 1:		DBG_WCR_WVR_SET(1,  wcr, wvr);	break;
+	case 2:		DBG_WCR_WVR_SET(2,  wcr, wvr);	break;
+	case 3:		DBG_WCR_WVR_SET(3,  wcr, wvr);	break;
+	case 4:		DBG_WCR_WVR_SET(4,  wcr, wvr);	break;
+	case 5:		DBG_WCR_WVR_SET(5,  wcr, wvr);	break;
+	case 6:		DBG_WCR_WVR_SET(6,  wcr, wvr);	break;
+	case 7:		DBG_WCR_WVR_SET(7,  wcr, wvr);	break;
+	case 8:		DBG_WCR_WVR_SET(8,  wcr, wvr);	break;
+	case 9:		DBG_WCR_WVR_SET(9,  wcr, wvr);	break;
+	case 10:	DBG_WCR_WVR_SET(10, wcr, wvr);	break;
+	case 11:	DBG_WCR_WVR_SET(11, wcr, wvr);	break;
+	case 12:	DBG_WCR_WVR_SET(12, wcr, wvr);	break;
+	case 13:	DBG_WCR_WVR_SET(13, wcr, wvr);	break;
+	case 14:	DBG_WCR_WVR_SET(14, wcr, wvr);	break;
+	case 15:	DBG_WCR_WVR_SET(15, wcr, wvr);	break;
 	}
 }
 
