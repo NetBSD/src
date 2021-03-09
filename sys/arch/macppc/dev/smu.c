@@ -80,7 +80,7 @@ struct smu_iicbus {
 
 #define SMU_MAX_FANS		8
 #define SMU_MAX_IICBUS		3
-#define SMU_MAX_SME_SENSORS	SMU_MAX_FANS
+#define SMU_MAX_SME_SENSORS	(SMU_MAX_FANS + 8)
 
 struct smu_zone {
 	bool (*filter)(const envsys_data_t *);
@@ -120,6 +120,8 @@ struct smu_softc {
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sme_sensors[SMU_MAX_SME_SENSORS];
+	uint32_t cpu_m;
+	int32_t  cpu_b;
 
 	struct smu_zone sc_zones[SMU_ZONES];
 	lwp_t *sc_thread;
@@ -130,7 +132,7 @@ struct smu_softc {
 #define SMU_CMD_RTC	0x8e
 #define SMU_CMD_I2C	0x9a
 #define SMU_CMD_POWER	0xaa
-#define SMU_ADC		0xd8
+#define SMU_CMD_ADC	0xd8
 #define SMU_MISC	0xee
 #define  SMU_MISC_GET_DATA	0x02
 #define  SMU_MISC_LED_CTRL	0x04
@@ -165,6 +167,8 @@ static int smu_todr_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 static int smu_fan_update_rpm(struct smu_fan *);
 static int smu_fan_get_rpm(struct smu_fan *, int *);
 static int smu_fan_set_rpm(struct smu_fan *, int);
+static int smu_read_adc(struct smu_softc *, int);
+
 static int smu_iicbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
     size_t, void *, size_t, int);
 static int smu_sysctl_fan_rpm(SYSCTLFN_ARGS);
@@ -199,6 +203,7 @@ smu_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct smu_softc *sc = device_private(self);
+	uint16_t data[4];
 
 	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
@@ -226,6 +231,13 @@ smu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = smu_todr_settime_ymdhms;
 	sc->sc_todr.cookie = sc;
 	todr_attach(&sc->sc_todr);
+
+	/* calibration data */
+	memset(data, 0, 8);	
+	smu_get_datablock(SMU_CPUTEMP_CAL, (void *)data, 8);
+	DPRINTF("data %04x %04x %04x %04x\n", data[0], data[1], data[2], data[3]);
+	sc->cpu_m = data[2]; 
+	sc->cpu_b = (int16_t)data[3];
 
 	smu_setup_sme(sc);
 
@@ -476,7 +488,8 @@ smu_setup_sme(struct smu_softc *sc)
 {
 	struct smu_fan *fan;
 	envsys_data_t *sme_sensor;
-	int i;
+	int i, sensors, child, reg;
+	char loc[32], type[32];
 
 	sc->sc_sme = sysmon_envsys_create();
 
@@ -494,7 +507,26 @@ smu_setup_sme(struct smu_softc *sc)
 			return;
 		}
 	}
-
+	sensors = OF_finddevice("/smu/sensors");
+	child = OF_child(sensors);
+	while (child != 0) {
+		sme_sensor = &sc->sc_sme_sensors[i];
+		if (OF_getprop(child, "location", loc, 32) == 0) goto next;
+		if (OF_getprop(child, "device_type", type, 32) == 0) goto next;
+		if (OF_getprop(child, "reg", &reg, 4) == 0) goto next;
+		if (strcmp(type, "temp-sensor") == 0) {
+			sme_sensor->units = ENVSYS_STEMP;
+			sme_sensor->state = ENVSYS_SINVALID;
+			strncpy(sme_sensor->desc, loc, sizeof(sme_sensor->desc));
+			sme_sensor->private = reg;
+			sysmon_envsys_sensor_attach(sc->sc_sme, sme_sensor);
+			i++;
+			printf("%s: %s@%x\n", loc, type, reg); 
+		}
+next:
+		child = OF_peer(child);
+	}
+						
 	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = smu_sme_refresh;
@@ -533,6 +565,19 @@ smu_sme_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		ret = smu_fan_get_rpm(fan, &fan->current_rpm);
 		if (ret == 0) {
 			edata->value_cur = fan->current_rpm;
+			edata->state = ENVSYS_SVALID;
+		}
+	} else if (edata->private > 0) {
+		/* this works only for the CPU diode */
+		int64_t r = smu_read_adc(sc, edata->private);
+		if (r != -1) {
+			r = r * sc->cpu_m;
+			r >>= 3;
+			r += (int64_t)sc->cpu_b << 9;
+			r <<= 1;
+			r *= 15625;
+			r /= 1024;
+			edata->value_cur = r + 273150000;
 			edata->state = ENVSYS_SVALID;
 		}
 	}
@@ -768,6 +813,23 @@ smu_fan_set_rpm(struct smu_fan *fan, int rpm)
 	}
 
 	return ret;
+}
+
+static int
+smu_read_adc(struct smu_softc *sc, int id)
+{
+	struct smu_cmd cmd;
+	int ret;
+
+	cmd.cmd = SMU_CMD_ADC;
+	cmd.len = 1;
+	cmd.data[0] = id;
+
+	ret = smu_do_cmd(sc, &cmd, 800);
+	if (ret == 0) {
+		return cmd.data[0] << 8 | cmd.data[1];
+	}
+	return -1;
 }
 
 static int
