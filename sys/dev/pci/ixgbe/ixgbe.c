@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.278 2021/01/14 05:47:35 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.279 2021/03/09 10:03:18 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -67,6 +67,7 @@
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_net_mpsafe.h"
+#include "opt_ixgbe.h"
 #endif
 
 #include "ixgbe.h"
@@ -981,6 +982,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixgbe_rxd;
+
+	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
 
 	/* Allocate our TX/RX Queues */
 	if (ixgbe_allocate_queues(adapter)) {
@@ -3363,6 +3366,13 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	    CTLFLAG_READONLY, CTLTYPE_INT,
 	    "num_rx_desc", SYSCTL_DESCR("Number of rx descriptors"),
 	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
+	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
+	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,

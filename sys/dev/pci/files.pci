@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.435 2021/03/01 17:48:52 jakllsch Exp $
+#	$NetBSD: files.pci,v 1.436 2021/03/09 10:03:18 msaitoh Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -664,6 +664,7 @@ file	dev/pci/ixgbe/ixgbe_phy.c	ixg | ixv
 file	dev/pci/ixgbe/ixgbe_vf.c	ixg | ixv
 file	dev/pci/ixgbe/if_bypass.c	ixg | ixv
 file	dev/pci/ixgbe/if_fdir.c		ixg | ixv
+defparam opt_ixgbe.h	IXGBE_JCLNUM_MULTI
 
 # This appears to be the driver for virtual instances of i82599.
 device	ixv: ether, ifnet, arp, mii, mii_phy
