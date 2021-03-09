@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.77 2021/03/07 19:14:54 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.78 2021/03/09 16:00:14 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1763,4 +1763,11 @@ sys/netinet6/ip6_var.h				1.88
 	netinet6:
 	 - replace randomid() by cprng_fast32()
 	[christos, ticket #1661]
+
+sys/netinet/in_var.h				1.99,1.102
+sys/netinet/tcp_subr.c				1.286
+sys/netinet/tcp_timer.c				1.96
+
+	Avoid information disclosure.
+	[christos, ticket #1662]
 
