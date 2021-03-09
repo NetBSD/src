@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.11 2019/03/05 08:25:02 msaitoh Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.12 2021/03/09 10:03:18 msaitoh Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,20 @@
 #define	MJUM9BYTES	(9 * 1024)
 #define	MJUM16BYTES	(16 * 1024)
 #define	MJUMPAGESIZE	PAGE_SIZE
+
+/*
+ * Number of jcl per queue is calculated by
+ * adapter->num_rx_desc * IXGBE_JCLNUM_MULTI. The lower limit is 2.
+ */
+#define	IXGBE_JCLNUM_MULTI_LOWLIM	2
+#define	IXGBE_JCLNUM_MULTI_DEFAULT	3
+#if !defined(IXGBE_JCLNUM_MULTI)
+# define IXGBE_JCLNUM_MULTI IXGBE_JCLNUM_MULTI_DEFAULT
+#else
+# if (IXGBE_JCLNUM_MULTI < IXGBE_JCLNUM_MULTI_LOWLIM)
+#  error IXGBE_JCLNUM_MULTI is too low.
+# endif
+#endif
 
 #define IFCAP_RXCSUM	\
 	(IFCAP_CSUM_IPv4_Rx|IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx|\

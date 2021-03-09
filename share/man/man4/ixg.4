@@ -1,4 +1,4 @@
-.\" $NetBSD: ixg.4,v 1.12 2018/05/09 08:01:16 wiz Exp $
+.\" $NetBSD: ixg.4,v 1.13 2021/03/09 10:03:18 msaitoh Exp $
 .\"
 .\" Copyright (c) 2001-2008, Intel Corporation
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/ixgbe.4,v 1.3 2010/12/19 23:54:31 yongari Exp $
 .\"
-.Dd May 9, 2018
+.Dd March 9, 2021
 .Dt IXG 4
 .Os
 .Sh NAME
@@ -83,6 +83,24 @@ go to the Intel support website at:
 .\" with a supported adapter, email the specific information related to the
 .\" issue to
 .\" .Aq freebsdnic@mailbox.intel.com .
+.Sh OPTIONS
+The
+.Nm
+driver doesn't use the common
+.Xr MCLGET 9
+interface and use the driver specific cluster allocation mechanism.
+If it's exhausted,
+.Xr evcnt 9
+counter "ixgX qY Rx no jumbo mbuf" is incremented. If it's observed,
+The number can be changed by the following config parameter:
+.Bl -tag -width IXGBE_JCLNUM_MULTI -offset 3n
+.It Dv IXGBE_JCLNUM_MULTI
+The number of RX jumbo buffer (cluster) per queue is calculated by
+.Dv IXGBE_JCLNUM_MULTI
+* (number of rx descriptor).
+The total number of clusters per queue is available with
+hw.ixgN.num_jcl_per_queue sysctl.
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ixv 4 ,

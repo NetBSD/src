@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.66 2021/03/08 07:10:45 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.67 2021/03/09 10:03:18 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1507,7 +1507,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	 * Assume all of rxr->ptag are the same.
 	 */
 	ixgbe_jcl_reinit(adapter, rxr->ptag->dt_dmat, rxr,
-	    (2 * adapter->num_rx_desc), adapter->rx_mbuf_sz);
+	    adapter->num_jcl, adapter->rx_mbuf_sz);
 
 	IXGBE_RX_LOCK(rxr);
 

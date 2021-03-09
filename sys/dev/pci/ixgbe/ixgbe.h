@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.74 2020/12/26 06:07:16 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.75 2021/03/09 10:03:18 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -216,7 +216,7 @@
 #define IXGBE_TSO_SIZE                  262140
 #define IXGBE_RX_HDR                    128
 #define IXGBE_VFTA_SIZE                 128
-#define IXGBE_BR_SIZE                   4096
+#define IXGBE_BR_SIZE                   2048
 #define IXGBE_QUEUE_MIN_FREE            32
 #define IXGBE_MAX_TX_BUSY               10
 #define IXGBE_QUEUE_HUNG                0x80000000
@@ -568,6 +568,7 @@ struct adapter {
 	u64			active_queues;
 	u32			num_rx_desc;
 	u32			rx_process_limit;
+	int			num_jcl;
 
 	/* Multicast array memory */
 	struct ixgbe_mc_addr	*mta;
