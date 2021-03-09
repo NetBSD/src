@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.791 2021/03/09 16:37:23 ryo Exp $
+$NetBSD: usbdevs,v 1.792 2021/03/09 16:38:49 ryo Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -961,6 +961,7 @@ product ASUSTEK RTL8192CU	0x17ab	RTL8192CU
 product ASUSTEK USBN66		0x17ad	USB-N66
 product ASUSTEK USBN10NANO	0x17ba	USB-N10 Nano
 product ASUSTEK RTL8192CU_3	0x17c0	RTL8192CU_3
+product ASUSTEK AURALED		0x18f3	AURA LED
 product ASUSTEK MYPAL_A730	0x4202	MyPal A730
 product ASUSTEK2 USBN11		0x0b05	USB-N11
 
