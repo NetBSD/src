@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.1.2.2 2020/10/08 16:04:07 martin Exp $
+# $NetBSD: system.ctwmrc,v 1.1.2.3 2021/03/09 15:44:50 martin Exp $
 #
 # ctwmrc by nia
 #
@@ -48,8 +48,6 @@ DecorateTransients
 NoOpaqueMove
 NoOpaqueResize
 
-SloppyFocus
-
 AutoOccupy
 AutoRelativeResize
 
@@ -72,8 +70,8 @@ IgnoreLockModifier
 RandomPlacement          "on"
 
 MoveDelta                 3
-ClearShadowContrast       50
-DarkShadowContrast        50
+ClearShadowContrast       40
+DarkShadowContrast        60
 MovePackResistance        100
 
 RaiseWhenAutoUnSqueeze
@@ -87,7 +85,7 @@ StayUpMenus
 WarpToDefaultMenuEntry
 MenuShadowDepth      1
 
-NoTitleFocus
+TitleFocus
 
 # warp through all windows in the current workspace
 WindowRing
@@ -126,7 +124,7 @@ ReverseCurrentWorkspace
 StartInMapState
 WMgrHorizButtonIndent     0
 WMgrVertButtonIndent      0
-WorkSpaceManagerGeometry  "70x270-4-4" 1
+WorkSpaceManagerGeometry  "60x240-4-4" 1
 
 WorkSpaces 
 {
@@ -137,12 +135,27 @@ WorkSpaces
     "5"    { "lavender" "black" "darkslateblue" "white" }
 }
 
+Cursors
+{
+  Frame    "left_ptr"
+  Title    "left_ptr"
+  Icon     "left_ptr"
+  IconMgr  "left_ptr"
+  Move     "fleur"
+  Resize   "fleur"
+  Menu     "left_ptr"
+  Button   "hand2"
+  Wait     "watch"
+  Select   "dot"
+  Destroy  "pirate"
+}
+
 Color
 {
-  BorderColor           "steelblue"
+  BorderColor           "firebrick"
 
-  BorderTileBackground  "lavender"
-  BorderTileForeground  "lavender"
+  BorderTileBackground  "steelblue"
+  BorderTileForeground  "steelblue"
 
   DefaultBackground     "grey70"
   DefaultForeground     "black"
@@ -240,6 +253,8 @@ OccupyAll
 
 AlwaysOnTop
 {
+   "xclock"
+   "XEyes"
    "XVidCap"
 }
 
@@ -328,7 +343,7 @@ Button3 = mod4	: window 	: f.resize
 
 "XF86AudioRaiseVolume" = : all : !"mixerctl -w outputs.master+=5"
 "XF86AudioLowerVolume" = : all : !"mixerctl -w outputs.master-=5"
-"XF86AudioMute"        = : all : !"mixerctl -w outputs.master=0"
+#"XF86AudioMute"        = : all : !"mixerctl -w outputs.master=0"
 
 #
 # "Windows" style keyboard shortcuts
