@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.27 2021/03/08 21:13:33 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.28 2021/03/09 16:48:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.27 2021/03/08 21:13:33 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.28 2021/03/09 16:48:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -438,8 +438,8 @@ lexi(struct parser_state *state)
 
     /* Scan a non-alphanumeric token */
 
-    check_size_token(3);		/* things like "<<=" */
-    *e_token++ = *buf_ptr;		/* if it is only a one-character token, it is
+    check_size_token(3);	/* things like "<<=" */
+    *e_token++ = *buf_ptr;	/* if it is only a one-character token, it is
 				 * moved here */
     *e_token = '\0';
     if (++buf_ptr >= buf_end)
@@ -582,7 +582,7 @@ stop_lit:
     case '=':
 	if (state->in_or_st)
 	    state->block_init = 1;
-	if (*buf_ptr == '=') {/* == */
+	if (*buf_ptr == '=') {	/* == */
 	    *e_token++ = '=';	/* Flip =+ to += */
 	    buf_ptr++;
 	    *e_token = 0;
