@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.9 2021/03/09 23:09:48 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.10 2021/03/09 23:40:43 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
@@ -89,4 +89,40 @@ enum_constant_from_unnamed_type(int x)
 		return 6;
 
 	return 0;
+}
+
+/*
+ * A typical legitimate use case for an anonymous enum type that should not
+ * be mixed with other types is a state machine.
+ *
+ * This example demonstrates that the type of the 'switch' expression can be
+ * an anonymous enum.
+ */
+void
+state_machine(const char *str)
+{
+	enum {
+		begin,
+		seen_letter,
+		seen_letter_digit,
+		error
+	} state = begin;
+
+	for (const char *p = str; *p != '\0'; p++) {
+		switch (state) {
+		case begin:
+			state = *p == 'A' ? seen_letter : error;
+			break;
+		case seen_letter:
+			state = *p == '1' ? seen_letter_digit : error;
+			break;
+		default:
+			state = error;
+		}
+	}
+
+	if (state == 2)			/* might be worth a warning */
+		return;
+	if (state == sizeof_int)	/* expect: 130 */
+		return;
 }
