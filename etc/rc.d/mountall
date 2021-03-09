@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountall,v 1.14 2021/02/16 10:02:42 hannken Exp $
+# $NetBSD: mountall,v 1.15 2021/03/09 12:42:46 sborrill Exp $
 #
 
 # REQUIRE: mountcritremote named ypbind
@@ -41,4 +41,5 @@ mountall_stop()
 }
 
 load_rc_config $name
+load_rc_config_var zfs zfs
 run_rc_command "$1"
