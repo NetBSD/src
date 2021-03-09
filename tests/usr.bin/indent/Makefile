@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2021/03/08 22:13:05 rillig Exp $
+#	$NetBSD: Makefile,v 1.7 2021/03/09 20:43:20 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,9 @@ FILES+=		f_decls.0
 FILES+=		f_decls.0.stdout
 FILES+=		float.0
 FILES+=		float.0.stdout
+FILES+=		indent_variables.0
+FILES+=		indent_variables.0.pro
+FILES+=		indent_variables.0.stdout
 FILES+=		label.0
 FILES+=		label.0.stdout
 FILES+=		label.0.pro
@@ -268,5 +271,64 @@ FILES+=		types_from_file.0.list
 FILES+=		types_from_file.0.pro
 FILES+=		wchar.0
 FILES+=		wchar.0.stdout
+
+add-test: .PHONY
+	@set -eu; \
+	test=${NAME:Q}; \
+	[ "$$test" ] || { \
+		echo "usage: ${MAKE} add-test NAME=<name>"; \
+		exit; \
+	}; \
+	\
+	if [ -f "$$test" ]; then \
+		echo "error: test $$test already exists." 1>&2; \
+		exit 1; \
+	fi; \
+	\
+	echo "=> Adding test $$test"; \
+	printf '%s\n' \
+		'/* $$''NetBSD$$ */' \
+		'/* $$''FreeBSD$$ */' \
+		'' \
+		'/*' \
+		' * TODO: Explain the purpose of the test.' \
+		'*/' \
+		'' \
+		'// TODO: Add some code that passes.' \
+	> "$$test"; \
+	printf '%s\n' \
+		'/* $$''NetBSD$$ */' \
+		'/* $$''FreeBSD$$ */' \
+		'' \
+		'/*' \
+		' * TODO: Explain the command line options of the test.' \
+		' */' \
+		'' \
+		'/* TODO: Add some command line options */' \
+	> "$$test.pro"; \
+	cat < "$$test" > "$$test.stdout"; \
+	cvs add "$$test" "$$test.pro" "$$test.stdout"; \
+	printf '%s\n' \
+		'/^FILES+=/i' \
+		"FILES+=		$$test" \
+		"FILES+=		$$test.pro" \
+		"FILES+=		$$test.stdout" \
+		'.' 'w' 'q' \
+	| ed Makefile; \
+	${MAKE} sync-mi
+
+# Note: only works for adding tests.
+# To remove a test, the $$mi file must be edited manually.
+sync-mi: .PHONY
+	@set -eu;							\
+	cd "${MAKEFILE:tA:H}/../../..";					\
+	mi="distrib/sets/lists/tests/mi";				\
+	cvs update "$$mi";						\
+	fmt="./usr/tests/usr.bin/indent/%s\ttests-usr.bin-tests\tcompattestfile,atf\n"; \
+	cat "$$mi" > "$$mi.tmp";					\
+	printf "$$fmt" ${FILES:M${NAME}*} >> "$$mi.tmp";		\
+	distrib/sets/fmt-list "$$mi.tmp";				\
+	mv "$$mi.tmp" "$$mi";						\
+	cvs diff "$$mi" || true
 
 .include <bsd.test.mk>
