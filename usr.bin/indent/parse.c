@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.14 2021/03/07 11:32:05 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.15 2021/03/09 16:48:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -60,7 +60,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 static void reduce(void);
 
 void
-parse(token_type tk) /* tk: the code for the construct scanned */
+parse(token_type tk)		/* tk: the code for the construct scanned */
 {
     int         i;
 
@@ -111,7 +111,7 @@ parse(token_type tk) /* tk: the code for the construct scanned */
 		ps.i_l_follow = ps.il[ps.tos--];
 	/* the rest is the same as for dolit and forstmt */
 	/* FALLTHROUGH */
-    case dolit:		/* 'do' */
+    case dolit:			/* 'do' */
     case forstmt:		/* for (...) */
 	ps.p_stack[++ps.tos] = tk;
 	ps.il[ps.tos] = ps.ind_level = ps.i_l_follow;
@@ -269,7 +269,7 @@ parse(token_type tk) /* tk: the code for the construct scanned */
  *
  */
 /*----------------------------------------------*\
-|   REDUCTION PHASE				    |
+|   REDUCTION PHASE				 |
 \*----------------------------------------------*/
 static void
 reduce(void)
@@ -284,19 +284,17 @@ reduce(void)
 	case stmt:
 	    switch (ps.p_stack[ps.tos - 1]) {
 
-	    case stmt:
-	    case stmtl:
-		/* stmtl stmt or stmt stmt */
+	    case stmt:		/* stmt stmt */
+	    case stmtl:		/* stmtl stmt */
 		ps.p_stack[--ps.tos] = stmtl;
 		break;
 
-	    case dolit:	/* <do> <stmt> */
+	    case dolit:		/* <do> <stmt> */
 		ps.p_stack[--ps.tos] = dohead;
 		ps.i_l_follow = ps.il[ps.tos];
 		break;
 
-	    case ifstmt:
-		/* <if> <stmt> */
+	    case ifstmt:	/* <if> <stmt> */
 		ps.p_stack[--ps.tos] = ifhead;
 		for (i = ps.tos - 1;
 			(
@@ -315,17 +313,13 @@ reduce(void)
 		 */
 		break;
 
-	    case swstmt:
-		/* <switch> <stmt> */
+	    case swstmt:	/* <switch> <stmt> */
 		case_ind = ps.cstk[ps.tos - 1];
 		/* FALLTHROUGH */
 	    case decl:		/* finish of a declaration */
-	    case elsehead:
-		/* <<if> <stmt> else> <stmt> */
-	    case forstmt:
-		/* <for> <stmt> */
-	    case whilestmt:
-		/* <while> <stmt> */
+	    case elsehead:	/* <if> <stmt> else> <stmt> */
+	    case forstmt:	/* <for> <stmt> */
+	    case whilestmt:	/* <while> <stmt> */
 		ps.p_stack[--ps.tos] = stmt;
 		ps.i_l_follow = ps.il[ps.tos];
 		break;
@@ -336,7 +330,7 @@ reduce(void)
 	    }			/* end of section for <stmt> on top of stack */
 	    break;
 
-	case whilestmt:	/* while (...) on top */
+	case whilestmt:		/* while (...) on top */
 	    if (ps.p_stack[ps.tos - 1] == dohead) {
 		/* it is termination of a do while */
 		ps.tos -= 2;

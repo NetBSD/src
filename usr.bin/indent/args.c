@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.17 2021/03/07 20:52:11 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.18 2021/03/09 16:48:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.17 2021/03/07 20:52:11 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.18 2021/03/09 16:48:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -85,8 +85,8 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 
 static void scan_profile(FILE *);
 
-#define	KEY_FILE		5	/* only used for args */
-#define VERSION			6	/* only used for args */
+#define	KEY_FILE	5	/* only used for args */
+#define VERSION		6	/* only used for args */
 
 const char *option_source = "?";
 
