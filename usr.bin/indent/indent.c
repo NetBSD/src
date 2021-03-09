@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.37 2021/03/09 18:28:10 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.38 2021/03/09 19:14:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.37 2021/03/09 18:28:10 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.38 2021/03/09 19:14:39 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -786,7 +786,7 @@ check_type:
 	    ps.want_blank = true;
 	    break;
 
-	case casestmt:		/* got word 'case' or 'default' */
+	case case_label:	/* got word 'case' or 'default' */
 	    scase = true;	/* so we can process the later colon properly */
 	    goto copy_id;
 
@@ -853,7 +853,7 @@ check_type:
 						 * structure declaration, we
 						 * arent any more */
 
-	    if ((!sp_sw || hd_type != forstmt) && ps.p_l_follow > 0) {
+	    if ((!sp_sw || hd_type != for_exprs) && ps.p_l_follow > 0) {
 
 		/*
 		 * This should be true iff there were unbalanced parens in the
@@ -981,23 +981,24 @@ check_type:
 	    }
 	    prefix_blankline_requested = 0;
 	    parse(rbrace);	/* let parser know about this */
-	    ps.search_brace = opt.cuddle_else && ps.p_stack[ps.tos] == ifhead
+	    ps.search_brace = opt.cuddle_else
+	    	&& ps.p_stack[ps.tos] == if_expr_stmt
 		&& ps.il[ps.tos] >= ps.ind_level;
 	    if (ps.tos <= 1 && opt.blanklines_after_procs && ps.dec_nest <= 0)
 		postfix_blankline_requested = 1;
 	    break;
 
-	case swstmt:		/* got keyword "switch" */
+	case switch_expr:	/* got keyword "switch" */
 	    sp_sw = true;
-	    hd_type = swstmt;	/* keep this for when we have seen the
+	    hd_type = switch_expr; /* keep this for when we have seen the
 				 * expression */
 	    goto copy_id;	/* go move the token into buffer */
 
 	case keyword_for_if_while:
 	    sp_sw = true;	/* the interesting stuff is done after the
 				 * expression is scanned */
-	    hd_type = (*token == 'i' ? ifstmt :
-		       (*token == 'w' ? whilestmt : forstmt));
+	    hd_type = (*token == 'i' ? if_expr :
+		       (*token == 'w' ? while_expr : for_exprs));
 
 	    /*
 	     * remember the type of header for later use by parser
@@ -1015,7 +1016,7 @@ check_type:
 		}
 		force_nl = true;/* also, following stuff must go onto new line */
 		last_else = 1;
-		parse(elselit);
+		parse(keyword_else);
 	    }
 	    else {
 		if (e_code != s_code) {	/* make sure this starts a line */
@@ -1026,7 +1027,7 @@ check_type:
 		}
 		force_nl = true;/* also, following stuff must go onto new line */
 		last_else = 0;
-		parse(dolit);
+		parse(keyword_do);
 	    }
 	    goto copy_id;	/* move the token into line */
 
