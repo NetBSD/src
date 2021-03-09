@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.54 2020/09/30 08:40:49 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.55 2021/03/09 16:41:43 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1087,6 +1087,8 @@ AARCH64REG_WRITE_INLINE(dbgbvr14_el1)
 AARCH64REG_READ_INLINE(dbgbvr15_el1) // Debug Breakpoint Value Register 15
 AARCH64REG_WRITE_INLINE(dbgbvr15_el1)
 
+#define	DBGBVR_MASK		 __BITS(63,2)
+
 AARCH64REG_READ_INLINE(dbgwcr0_el1) // Debug Watchpoint Control Register 0
 AARCH64REG_WRITE_INLINE(dbgwcr0_el1)
 AARCH64REG_READ_INLINE(dbgwcr1_el1) // Debug Watchpoint Control Register 1
@@ -1163,7 +1165,7 @@ AARCH64REG_WRITE_INLINE(dbgwvr14_el1)
 AARCH64REG_READ_INLINE(dbgwvr15_el1) // Debug Watchpoint Value Register 15
 AARCH64REG_WRITE_INLINE(dbgwvr15_el1)
 
-#define	DBGWVR_MASK		 __BITS(64,3)
+#define	DBGWVR_MASK		 __BITS(63,2)
 
 
 AARCH64REG_READ_INLINE(mdscr_el1) // Monitor Debug System Control Register
