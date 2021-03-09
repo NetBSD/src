@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2021/02/13 18:13:53 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2021/03/09 16:40:59 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2021/02/13 18:13:53 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2021/03/09 16:40:59 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2632,8 +2632,6 @@ pmap_is_referenced(struct vm_page *pg)
 	return (pp->pp_pv.pv_va & VM_PROT_READ);
 }
 
-#ifdef DDB
-
 /* get pointer to kernel segment L2 or L3 table entry */
 pt_entry_t *
 kvtopte(vaddr_t va)
@@ -2642,6 +2640,8 @@ kvtopte(vaddr_t va)
 
 	return _pmap_pte_lookup_bs(pmap_kernel(), va, NULL);
 }
+
+#ifdef DDB
 
 /* change attribute of kernel segment */
 pt_entry_t
