@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.15 2021/03/09 16:48:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.16 2021/03/09 18:21:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -232,116 +232,78 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 #endif
 }
 
-/*
- * NAME: reduce
- *
- * FUNCTION: Implements the reduce part of the parsing algorithm
- *
- * ALGORITHM: The following reductions are done.  Reductions are repeated
- *	until no more are possible.
- *
- * Old TOS		New TOS
- * <stmt> <stmt>	<stmtl>
- * <stmtl> <stmt>	<stmtl>
- * do <stmt>		"dostmt"
- * if <stmt>		"ifstmt"
- * switch <stmt>	<stmt>
- * decl <stmt>		<stmt>
- * "ifelse" <stmt>	<stmt>
- * for <stmt>		<stmt>
- * while <stmt>		<stmt>
- * "dostmt" while	<stmt>
- *
- * On each reduction, ps.i_l_follow (the indentation for the following line)
- * is set to the indentation level associated with the old TOS.
- *
- * PARAMETERS: None
- *
- * RETURNS: Nothing
- *
- * GLOBALS: ps.cstk ps.i_l_follow = ps.il ps.p_stack = ps.tos =
- *
- * CALLS: None
- *
- * CALLED BY: parse
- *
- * HISTORY: initial coding	November 1976	D A Willcox of CAC
- *
- */
 /*----------------------------------------------*\
 |   REDUCTION PHASE				 |
 \*----------------------------------------------*/
+
+/*
+ * Try to combine the statement on the top of the parse stack with the symbol
+ * directly below it, replacing these two symbols with a single symbol.
+ */
+static int
+reduce_stmt(void)
+{
+    switch (ps.p_stack[ps.tos - 1]) {
+
+    case stmt:		/* stmt stmt */
+    case stmtl:		/* stmtl stmt */
+	ps.p_stack[--ps.tos] = stmtl;
+	return true;
+
+    case dolit:		/* do <stmt> */
+	ps.p_stack[--ps.tos] = dohead;
+	ps.i_l_follow = ps.il[ps.tos];
+	return true;
+
+    case ifstmt:	/* if (<expr>) <stmt> */
+	ps.p_stack[--ps.tos] = ifhead;
+	int i = ps.tos - 1;
+	while (ps.p_stack[i] != stmt &&
+	       ps.p_stack[i] != stmtl &&
+	       ps.p_stack[i] != lbrace)
+	    --i;
+	ps.i_l_follow = ps.il[i];
+	/*
+	 * for the time being, we will assume that there is no else on
+	 * this if, and set the indentation level accordingly. If an
+	 * else is scanned, it will be fixed up later
+	 */
+	return true;
+
+    case swstmt:	/* switch (<expr>) <stmt> */
+	case_ind = ps.cstk[ps.tos - 1];
+	/* FALLTHROUGH */
+    case decl:		/* finish of a declaration */
+    case elsehead:	/* if (<expr>) <stmt> else <stmt> */
+    case forstmt:	/* for (<...>) <stmt> */
+    case whilestmt:	/* while (<expr>) <stmt> */
+	ps.p_stack[--ps.tos] = stmt;
+	ps.i_l_follow = ps.il[ps.tos];
+	return true;
+
+    default:		/* <anything else> <stmt> */
+	return false;
+    }
+}
+
+/*
+ * Repeatedly try to reduce the top two symbols on the parse stack to a
+ * single symbol, until no more reductions are possible.
+ *
+ * On each reduction, ps.i_l_follow (the indentation for the following line)
+ * is set to the indentation level associated with the old TOS.
+ */
 static void
 reduce(void)
 {
-    int i;
-
-    for (;;) {			/* keep looping until there is nothing left to
-				 * reduce */
-
-	switch (ps.p_stack[ps.tos]) {
-
-	case stmt:
-	    switch (ps.p_stack[ps.tos - 1]) {
-
-	    case stmt:		/* stmt stmt */
-	    case stmtl:		/* stmtl stmt */
-		ps.p_stack[--ps.tos] = stmtl;
-		break;
-
-	    case dolit:		/* <do> <stmt> */
-		ps.p_stack[--ps.tos] = dohead;
-		ps.i_l_follow = ps.il[ps.tos];
-		break;
-
-	    case ifstmt:	/* <if> <stmt> */
-		ps.p_stack[--ps.tos] = ifhead;
-		for (i = ps.tos - 1;
-			(
-			 ps.p_stack[i] != stmt
-			 &&
-			 ps.p_stack[i] != stmtl
-			 &&
-			 ps.p_stack[i] != lbrace
-			 );
-			--i);
-		ps.i_l_follow = ps.il[i];
-		/*
-		 * for the time being, we will assume that there is no else on
-		 * this if, and set the indentation level accordingly. If an
-		 * else is scanned, it will be fixed up later
-		 */
-		break;
-
-	    case swstmt:	/* <switch> <stmt> */
-		case_ind = ps.cstk[ps.tos - 1];
-		/* FALLTHROUGH */
-	    case decl:		/* finish of a declaration */
-	    case elsehead:	/* <if> <stmt> else> <stmt> */
-	    case forstmt:	/* <for> <stmt> */
-	    case whilestmt:	/* <while> <stmt> */
-		ps.p_stack[--ps.tos] = stmt;
-		ps.i_l_follow = ps.il[ps.tos];
-		break;
-
-	    default:		/* <anything else> <stmt> */
-		return;
-
-	    }			/* end of section for <stmt> on top of stack */
-	    break;
-
-	case whilestmt:		/* while (...) on top */
-	    if (ps.p_stack[ps.tos - 1] == dohead) {
-		/* it is termination of a do while */
-		ps.tos -= 2;
-		break;
-	    }
-	    else
-		return;
-
-	default:		/* anything else on top */
-	    return;
-
+again:
+    if (ps.p_stack[ps.tos] == stmt) {
+	if (reduce_stmt())
+	    goto again;
+    } else if (ps.p_stack[ps.tos] == whilestmt) {
+	if (ps.p_stack[ps.tos - 1] == dohead) {
+	    ps.tos -= 2;
+	    goto again;
 	}
     }
 }
