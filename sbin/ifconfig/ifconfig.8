@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.121 2020/09/29 08:52:11 msaitoh Exp $
+.\"	$NetBSD: ifconfig.8,v 1.122 2021/03/09 14:39:43 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd September 29, 2020
+.Dd March 9, 2021
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -904,6 +904,14 @@ tried to alter an interface's configuration.
 .\" .Xr eon 5 ,
 .Xr rc 8 ,
 .Xr routed 8
+.Sh BUGS
+Due to hardware limitations some of the capabilities cannot be turned on
+and off individually and need to be specified together.
+For example the
+.Xr ixg 4
+driver can't enable separately tcp and udp, or the transmit and receive
+checksumming capabilities.
+Unfortunately the diagnostic messages in this case are lacking.
 .Sh HISTORY
 The
 .Nm
