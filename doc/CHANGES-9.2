@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.56 2021/03/07 19:06:20 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.57 2021/03/09 16:02:45 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1802,4 +1802,35 @@ sys/netinet6/ip6_var.h				1.88
 	netinet6:
 	 - replace randomid() by cprng_fast32()
 	[christos, ticket #1226]
+
+external/mit/ctwm/etc/system.ctwmrc		1.2-1.5,1.7,1.9-1.12
+
+	system.ctwmrc: acccessibility improvements based on user feedback
+	- improve contrast of focused windows.
+	- set xeyes and xclock to AlwaysOnTop.
+	- remove mute key binding.
+		- it conflicts with hardware mute on some laptops.
+	- slightly lower default workspace manager size.
+	- set default cursor styles.
+	- prevent multiple windows from having focus at once.
+	- allow programs like xev to obtain keyboard focus.
+	[nia, ticket #1227]
+
+sys/dev/ic/mb89352.c				1.58
+
+	Fix a possible race condition in spc_msgin() in NO_MANUAL_XFER case.
+	[tsutsui, ticket #1228]
+
+sys/netinet/in_var.h				1.99,1.102
+sys/netinet/tcp_subr.c				1.286
+sys/netinet/tcp_timer.c				1.96
+
+	Avoid information disclosure.
+	[christos, ticket #1229]
+
+etc/rc.d/mountall				1.15
+
+	Need to explicitly load value of zfs variable as zfs=YES may be set in
+	/etc/rc.conf.d/zfs, not /etc/rc.conf.
+	[sborrill, ticket #1230]
 
