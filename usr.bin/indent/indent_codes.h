@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_codes.h,v 1.9 2021/03/09 18:28:10 rillig Exp $	*/
+/*	$NetBSD: indent_codes.h,v 1.10 2021/03/09 19:14:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -49,7 +49,7 @@ typedef enum token_type {
     binary_op,			/* e.g. '<<' or '+' or '&&' or '/=' */
     postop,			/* trailing '++' or '--' */
     question,			/* the '?' from a '?:' expression */
-    casestmt,
+    case_label,
     colon,
     semicolon,
     lbrace,
@@ -57,22 +57,22 @@ typedef enum token_type {
     ident,
     comma,
     comment,
-    swstmt,
+    switch_expr,		/* 'switch' '(' <expr> ')' */
     preesc,
     form_feed,
     decl,
-    keyword_for_if_while,
-    keyword_do_else,
-    ifstmt,
-    whilestmt,
-    forstmt,
+    keyword_for_if_while,	/* 'for', 'if' or 'while' */
+    keyword_do_else,		/* 'do' or 'else' */
+    if_expr,			/* 'if' '(' <expr> ')' */
+    while_expr,			/* 'while' '(' <expr> ')' */
+    for_exprs,			/* 'for' '(' ... ')' */
     stmt,
-    stmtl,
-    elselit,
-    dolit,
-    dohead,
-    ifhead,
-    elsehead,
+    stmt_list,
+    keyword_else,		/* 'else' */
+    keyword_do,			/* 'do' */
+    do_stmt,			/* 'do' <stmt> */
+    if_expr_stmt,		/* 'if' '(' <expr> ')' <stmt> */
+    if_expr_stmt_else,		/* 'if' '(' <expr> ')' <stmt> 'else' */
     period,
     strpfx,
     storage,

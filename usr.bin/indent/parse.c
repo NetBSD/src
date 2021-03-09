@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.16 2021/03/09 18:21:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.17 2021/03/09 19:14:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -68,7 +68,7 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
     printf("parse token: '%s' \"%s\"\n", token_type_name(tk), token);
 #endif
 
-    while (ps.p_stack[ps.tos] == ifhead && tk != elselit) {
+    while (ps.p_stack[ps.tos] == if_expr_stmt && tk != keyword_else) {
 	/* true if we have an if without an else */
 	ps.p_stack[ps.tos] = stmt;	/* apply the if(..) stmt ::= stmt
 					 * reduction */
@@ -101,18 +101,19 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 	}
 	break;
 
-    case ifstmt:		/* scanned if (...) */
-	if (ps.p_stack[ps.tos] == elsehead && opt.else_if) /* "else if ..." */
-		/*
-		 * Note that the stack pointer here is decremented, effectively
-		 * reducing "else if" to "if". This saves a lot of stack space
-		 * in case of a long "if-else-if ... else-if" sequence.
-		 */
-		ps.i_l_follow = ps.il[ps.tos--];
-	/* the rest is the same as for dolit and forstmt */
+    case if_expr:		/* 'if' '(' <expr> ')' */
+	if (ps.p_stack[ps.tos] == if_expr_stmt_else && opt.else_if) {
+	    /*
+	     * Note that the stack pointer here is decremented, effectively
+	     * reducing "else if" to "if". This saves a lot of stack space
+	     * in case of a long "if-else-if ... else-if" sequence.
+	     */
+	    ps.i_l_follow = ps.il[ps.tos--];
+	}
+	/* the rest is the same as for keyword_do and for_exprs */
 	/* FALLTHROUGH */
-    case dolit:			/* 'do' */
-    case forstmt:		/* for (...) */
+    case keyword_do:		/* 'do' */
+    case for_exprs:		/* 'for' (...) */
 	ps.p_stack[++ps.tos] = tk;
 	ps.il[ps.tos] = ps.ind_level = ps.i_l_follow;
 	++ps.i_l_follow;	/* subsequent statements should be indented 1 */
@@ -122,7 +123,7 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
     case lbrace:		/* scanned { */
 	break_comma = false;	/* don't break comma in an initial list */
 	if (ps.p_stack[ps.tos] == stmt || ps.p_stack[ps.tos] == decl
-		|| ps.p_stack[ps.tos] == stmtl)
+		|| ps.p_stack[ps.tos] == stmt_list)
 	    ++ps.i_l_follow;	/* it is a random, isolated stmt group or a
 				 * declaration */
 	else {
@@ -134,7 +135,7 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 		/*
 		 * it is a group as part of a while, for, etc.
 		 */
-		if (ps.p_stack[ps.tos] == swstmt && opt.case_indent >= 1)
+		if (ps.p_stack[ps.tos] == switch_expr && opt.case_indent >= 1)
 		    --ps.ind_level;
 		/*
 		 * for a switch, brace should be two levels out from the code
@@ -149,15 +150,15 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 	ps.il[ps.tos] = ps.i_l_follow;
 	break;
 
-    case whilestmt:		/* scanned while (...) */
-	if (ps.p_stack[ps.tos] == dohead) {
+    case while_expr:		/* 'while' '(' <expr> ')' */
+	if (ps.p_stack[ps.tos] == do_stmt) {
 	    /* it is matched with do stmt */
 	    ps.ind_level = ps.i_l_follow = ps.il[ps.tos];
-	    ps.p_stack[++ps.tos] = whilestmt;
+	    ps.p_stack[++ps.tos] = while_expr;
 	    ps.il[ps.tos] = ps.ind_level = ps.i_l_follow;
 	}
 	else {			/* it is a while loop */
-	    ps.p_stack[++ps.tos] = whilestmt;
+	    ps.p_stack[++ps.tos] = while_expr;
 	    ps.il[ps.tos] = ps.i_l_follow;
 	    ++ps.i_l_follow;
 	    ps.search_brace = opt.btype_2;
@@ -165,23 +166,22 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 
 	break;
 
-    case elselit:		/* scanned an else */
-
-	if (ps.p_stack[ps.tos] != ifhead)
+    case keyword_else:
+	if (ps.p_stack[ps.tos] != if_expr_stmt)
 	    diag(1, "Unmatched 'else'");
 	else {
 	    ps.ind_level = ps.il[ps.tos];	/* indentation for else should
 						 * be same as for if */
 	    ps.i_l_follow = ps.ind_level + 1;	/* everything following should
 						 * be in 1 level */
-	    ps.p_stack[ps.tos] = elsehead;
+	    ps.p_stack[ps.tos] = if_expr_stmt_else;
 	    /* remember if with else */
 	    ps.search_brace = opt.btype_2 | opt.else_if;
 	}
 	break;
 
     case rbrace:		/* scanned a } */
-	/* stack should have <lbrace> <stmt> or <lbrace> <stmtl> */
+	/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
 	if (ps.tos > 0 && ps.p_stack[ps.tos - 1] == lbrace) {
 	    ps.ind_level = ps.i_l_follow = ps.il[--ps.tos];
 	    ps.p_stack[ps.tos] = stmt;
@@ -190,8 +190,8 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 	    diag(1, "Statement nesting error");
 	break;
 
-    case swstmt:		/* had switch (...) */
-	ps.p_stack[++ps.tos] = swstmt;
+    case switch_expr:		/* had switch (...) */
+	ps.p_stack[++ps.tos] = switch_expr;
 	ps.cstk[ps.tos] = case_ind;
 	/* save current case indent level */
 	ps.il[ps.tos] = ps.i_l_follow;
@@ -246,20 +246,20 @@ reduce_stmt(void)
     switch (ps.p_stack[ps.tos - 1]) {
 
     case stmt:		/* stmt stmt */
-    case stmtl:		/* stmtl stmt */
-	ps.p_stack[--ps.tos] = stmtl;
+    case stmt_list:	/* stmt_list stmt */
+	ps.p_stack[--ps.tos] = stmt_list;
 	return true;
 
-    case dolit:		/* do <stmt> */
-	ps.p_stack[--ps.tos] = dohead;
+    case keyword_do:	/* 'do' <stmt> */
+	ps.p_stack[--ps.tos] = do_stmt;
 	ps.i_l_follow = ps.il[ps.tos];
 	return true;
 
-    case ifstmt:	/* if (<expr>) <stmt> */
-	ps.p_stack[--ps.tos] = ifhead;
+    case if_expr:	/* 'if' '(' <expr> ')' <stmt> */
+	ps.p_stack[--ps.tos] = if_expr_stmt;
 	int i = ps.tos - 1;
 	while (ps.p_stack[i] != stmt &&
-	       ps.p_stack[i] != stmtl &&
+	       ps.p_stack[i] != stmt_list &&
 	       ps.p_stack[i] != lbrace)
 	    --i;
 	ps.i_l_follow = ps.il[i];
@@ -270,13 +270,13 @@ reduce_stmt(void)
 	 */
 	return true;
 
-    case swstmt:	/* switch (<expr>) <stmt> */
+    case switch_expr:	/* 'switch' '(' <expr> ')' <stmt> */
 	case_ind = ps.cstk[ps.tos - 1];
 	/* FALLTHROUGH */
     case decl:		/* finish of a declaration */
-    case elsehead:	/* if (<expr>) <stmt> else <stmt> */
-    case forstmt:	/* for (<...>) <stmt> */
-    case whilestmt:	/* while (<expr>) <stmt> */
+    case if_expr_stmt_else: /* 'if' '(' <expr> ')' <stmt> 'else' <stmt> */
+    case for_exprs:	/* 'for' '(' ... ')' <stmt> */
+    case while_expr:	/* 'while' '(' <expr> ')' <stmt> */
 	ps.p_stack[--ps.tos] = stmt;
 	ps.i_l_follow = ps.il[ps.tos];
 	return true;
@@ -300,8 +300,8 @@ again:
     if (ps.p_stack[ps.tos] == stmt) {
 	if (reduce_stmt())
 	    goto again;
-    } else if (ps.p_stack[ps.tos] == whilestmt) {
-	if (ps.p_stack[ps.tos - 1] == dohead) {
+    } else if (ps.p_stack[ps.tos] == while_expr) {
+	if (ps.p_stack[ps.tos - 1] == do_stmt) {
 	    ps.tos -= 2;
 	    goto again;
 	}
