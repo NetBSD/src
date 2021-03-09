@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.39 2021/03/09 19:23:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.40 2021/03/09 19:32:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.39 2021/03/09 19:23:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.40 2021/03/09 19:32:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -163,13 +163,28 @@ check_size_label(size_t desired_size)
     }
 }
 
+#if HAVE_CAPSICUM
+static void
+init_capsicum(void)
+{
+    cap_rights_t rights;
+
+    /* Restrict input/output descriptors and enter Capsicum sandbox. */
+    cap_rights_init(&rights, CAP_FSTAT, CAP_WRITE);
+    if (caph_rights_limit(fileno(output), &rights) < 0)
+	err(EXIT_FAILURE, "unable to limit rights for %s", out_name);
+    cap_rights_init(&rights, CAP_FSTAT, CAP_READ);
+    if (caph_rights_limit(fileno(input), &rights) < 0)
+	err(EXIT_FAILURE, "unable to limit rights for %s", in_name);
+    if (caph_enter() < 0)
+	err(EXIT_FAILURE, "unable to enter capability mode");
+}
+
+#endif
+
 int
 main(int argc, char **argv)
 {
-#if HAVE_CAPSICUM
-    cap_rights_t rights;
-#endif
-
     int         dec_ind;	/* current indentation for declarations */
     int         di_stack[20];	/* a stack of structure indentation levels */
     int         force_nl;	/* when true, code must be broken */
@@ -339,15 +354,7 @@ main(int argc, char **argv)
     }
 
 #if HAVE_CAPSICUM
-    /* Restrict input/output descriptors and enter Capsicum sandbox. */
-    cap_rights_init(&rights, CAP_FSTAT, CAP_WRITE);
-    if (caph_rights_limit(fileno(output), &rights) < 0)
-	err(EXIT_FAILURE, "unable to limit rights for %s", out_name);
-    cap_rights_init(&rights, CAP_FSTAT, CAP_READ);
-    if (caph_rights_limit(fileno(input), &rights) < 0)
-	err(EXIT_FAILURE, "unable to limit rights for %s", in_name);
-    if (caph_enter() < 0)
-	err(EXIT_FAILURE, "unable to enter capability mode");
+    init_capsicum();
 #endif
 
     if (opt.com_ind <= 1)
