@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.270.6.2 2021/03/07 19:13:24 martin Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.270.6.3 2021/03/09 15:56:51 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.270.6.2 2021/03/07 19:13:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.270.6.3 2021/03/09 15:56:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2301,7 +2301,6 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 		 * XXX Use `addin'?
 		 * XXX TCP_ISSINCR too large to use?
 		 */
-		tcp_iss_seq += TCP_ISSINCR;
 #ifdef TCPISS_DEBUG
 		printf("ISS hash 0x%08x, ", tcp_iss);
 #endif
@@ -2337,7 +2336,6 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 		} else {
 			tcp_iss &= TCP_ISS_RANDOM_MASK;
 			tcp_iss += tcp_iss_seq;
-			tcp_iss_seq += TCP_ISSINCR;
 #ifdef TCPISS_DEBUG
 			printf("ISS %08x\n", tcp_iss);
 #endif

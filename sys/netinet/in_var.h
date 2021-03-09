@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.95 2017/05/12 17:53:54 ryo Exp $	*/
+/*	$NetBSD: in_var.h,v 1.95.2.1 2021/03/09 15:56:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -374,6 +374,7 @@ struct in_multi {
 #ifdef _KERNEL
 
 #include <net/pktqueue.h>
+#include <sys/cprng.h>
 
 extern pktqueue_t *ip_pktq;
 
@@ -450,7 +451,8 @@ ip_newid_range(const struct in_ifaddr *ia, u_int num)
 
 	if (ip_do_randomid) {
 		/* XXX ignore num */
-		return ip_randomid(ip_ids, ia ? ia->ia_idsalt : 0);
+		id = (uint16_t)cprng_fast32();
+		return id ? id : 1;
 	}
 
 	/* Never allow an IP ID of 0 (detect wrap). */
