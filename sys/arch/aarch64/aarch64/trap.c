@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.44 2021/02/22 02:18:33 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.45 2021/03/09 16:44:27 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.44 2021/02/22 02:18:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.45 2021/03/09 16:44:27 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -416,8 +416,14 @@ trap_el0_sync(struct trapframe *tf)
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
 
+#ifdef DDB
+	/* disable trace, and enable hardware breakpoint/watchpoint */
+	reg_mdscr_el1_write(
+	    (reg_mdscr_el1_read() & ~MDSCR_SS) | MDSCR_KDE);
+#else
 	/* disable trace */
 	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
+#endif
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 
@@ -511,9 +517,14 @@ interrupt(struct trapframe *tf)
 	}
 #endif
 
+#ifdef DDB
+	/* disable trace, and enable hardware breakpoint/watchpoint */
+	reg_mdscr_el1_write(
+	    (reg_mdscr_el1_read() & ~MDSCR_SS) | MDSCR_KDE);
+#else
 	/* disable trace */
 	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
-
+#endif
 	/* enable traps */
 	daif_enable(DAIF_D|DAIF_A);
 
@@ -761,8 +772,14 @@ trap_el0_32sync(struct trapframe *tf)
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
 
+#ifdef DDB
+	/* disable trace, and enable hardware breakpoint/watchpoint */
+	reg_mdscr_el1_write(
+	    (reg_mdscr_el1_read() & ~MDSCR_SS) | MDSCR_KDE);
+#else
 	/* disable trace */
 	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
+#endif
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 
