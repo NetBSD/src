@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.185 2020/07/11 07:14:53 maxv Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.186 2021/03/10 13:27:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.185 2020/07/11 07:14:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.186 2021/03/10 13:27:51 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1056,6 +1056,20 @@ printf_nolog(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	vprintf_flags(TOCONS, fmt, ap);
+	va_end(ap);
+}
+
+/*
+ * printf_nostamp: Like printf(), but does not prepend a timestamp.
+ */
+
+void
+printf_nostamp(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf_flags(TOCONS|NOTSTAMP, fmt, ap);
 	va_end(ap);
 }
 
