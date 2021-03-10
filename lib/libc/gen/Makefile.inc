@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.209 2021/02/26 04:28:14 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.210 2021/03/10 13:30:34 simonb Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -181,8 +181,9 @@ MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigismember.3
 MLINKS+=stringlist.3 sl_init.3 stringlist.3 sl_free.3 stringlist.3 sl_add.3 \
 	stringlist.3 sl_find.3
-MLINKS+=sysctl.3 sysctlbyname.3 sysctl.3 sysctlgetmibinfo.3 \
-	sysctl.3 sysctlnametomib.3
+MLINKS+=sysctl.3 sysctlbyname.3 \
+	sysctl.3 sysctlgetmibinfo.3 sysctl.3 sysctlnametomib.3 \
+	sysctl.3 asysctl.3 sysctl.3 asysctlbyname.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
 MLINKS+=syslog.3 closelog_r.3 syslog.3 openlog_r.3 syslog.3 setlogmask_r.3 \
