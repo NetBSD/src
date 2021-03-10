@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 2021/02/27 02:52:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.174 2021/03/10 19:45:41 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2021/02/27 02:52:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2021/03/10 19:45:41 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -145,6 +145,14 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 		int clock_ih = OF_open("/u3/i2c/i2c-hwclock");
 		if (clock_ih != 0) {
 			OF_call_method_1("slew-high", clock_ih, 0);
+			OF_close(clock_ih);
+		}
+	}
+	if  (strncmp(model_name, "PowerMac8,", 10) == 0) {
+		int smu_ih = OF_open("/smu");
+		if (smu_ih != 0) {
+			OF_call_method_1("smu-powertune-hi", smu_ih, 0);
+			OF_close(smu_ih);
 		}
 	}
 
@@ -360,7 +368,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 	}
 	if (!of_to_uint32_prop(dict, node, "address", "address")) {
 		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
