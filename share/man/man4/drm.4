@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.17 2018/07/18 16:41:53 wiz Exp $
+.\"	$NetBSD: drm.4,v 1.18 2021/03/10 07:23:42 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2013 Thomas Klausner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 10, 2018
+.Dd March 10, 2021
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -41,6 +41,8 @@
 .Pp
 .Cd options        DRM_DEBUG
 .Cd options        DRM_NO_AGP
+.Cd options        DRM_MAX_RESOLUTION_HORIZONTAL=integer
+.Cd options        DRM_MAX_RESOLUTION_VERTICAL=integer
 .Sh DESCRIPTION
 The Direct Rendering Manager is part of the Direct Rendering
 Infrastructure for supporting video acceleration (3d acceleration,
@@ -87,6 +89,15 @@ provided with
 and compiled from
 .Xr pkgsrc 7
 do so automatically where supported.
+.Pp
+With some drivers (at least
+.Xr radeon 4 ) ,
+in some cases the driver does not choose the resolution correctly.
+The options
+.Dv DRM_MAX_RESOLUTION_HORIZONTAL
+and
+.Dv DRM_MAX_RESOLUTION_VERTICAL
+allow limiting the maximum resolution in X and Y direction.
 .Pp
 .Xr X 7
 will attempt to create the device node automatically.
