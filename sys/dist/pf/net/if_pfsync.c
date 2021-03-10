@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.21 2021/03/10 15:21:11 christos Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.22 2021/03/10 22:18:17 christos Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.21 2021/03/10 15:21:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.22 2021/03/10 22:18:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1587,7 +1587,7 @@ pfsync_sendout_mbuf(struct pfsync_softc *sc, struct mbuf *m)
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_tos = IPTOS_LOWDELAY;
 		ip->ip_len = htons(m->m_pkthdr.len);
-		ip->ip_id = htons(ip_randomid());
+		ip->ip_id = ip_randomid();
 		ip->ip_off = htons(IP_DF);
 		ip->ip_ttl = PFSYNC_DFLTTL;
 		ip->ip_p = IPPROTO_PFSYNC;
