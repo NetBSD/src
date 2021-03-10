@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2376 2021/03/10 13:27:51 simonb Exp $
+#	$NetBSD: mi,v 1.2377 2021/03/10 13:30:34 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6020,6 +6020,8 @@
 ./usr/share/man/cat3/asprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/assert.0			comp-c-catman		.cat
 ./usr/share/man/cat3/assume_default_colors.0	comp-c-catman		.cat
+./usr/share/man/cat3/asysctl.0			comp-c-catman		.cat
+./usr/share/man/cat3/asysctlbyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/at_quick_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atan2.0			comp-c-catman		.cat
@@ -14339,6 +14341,8 @@
 ./usr/share/man/html3/asprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/assert.html		comp-c-htmlman		html
 ./usr/share/man/html3/assume_default_colors.html	comp-c-htmlman		html
+./usr/share/man/html3/asysctl.html		comp-c-htmlman		html
+./usr/share/man/html3/asysctlbyname.html	comp-c-htmlman		html
 ./usr/share/man/html3/at_quick_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/atan.html			comp-c-htmlman		html
 ./usr/share/man/html3/atan2.html		comp-c-htmlman		html
@@ -22494,6 +22498,8 @@
 ./usr/share/man/man3/asprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/assert.3			comp-c-man		.man
 ./usr/share/man/man3/assume_default_colors.3	comp-c-man		.man
+./usr/share/man/man3/asysctl.3			comp-c-man		.man
+./usr/share/man/man3/asysctlbyname.3		comp-c-man		.man
 ./usr/share/man/man3/at_quick_exit.3		comp-c-man		.man
 ./usr/share/man/man3/atan.3			comp-c-man		.man
 ./usr/share/man/man3/atan2.3			comp-c-man		.man
