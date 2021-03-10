@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.39 2020/03/31 12:23:17 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.40 2021/03/10 11:03:48 mlelstv Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -45,6 +45,11 @@ device	bcm2838rng
 attach bcm2838rng at fdt with bcm2838rng_fdt
 file	arch/arm/broadcom/bcm2838_rng.c		bcm2838rng
 file	dev/ic/rng200.c				bcm2838rng
+
+# Broadcom STB PCIE host
+device	bcm2838pcie: pcibus
+attach bcm2838pcie at fdt with bcm2838pcie_fdt
+file	arch/arm/broadcom/bcm2838_pcie.c	bcm2838pcie
 
 # AUX
 device	bcmaux
