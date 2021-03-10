@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.10 2021/03/09 23:40:43 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.11 2021/03/10 00:02:00 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
@@ -44,9 +44,9 @@ void
 switch_example(enum color c)
 {
 	switch (c) {
-	case EVENING:			/* expect: 130 */
-	case LARGE:			/* expect: 130 */
-	case 0:				/* expect: 130 */
+	case EVENING:			/* maybe someday expect: 130 */
+	case LARGE:			/* maybe someday expect: 130 */
+	case 0:				/* maybe someday expect: 130 */
 		sink(1 == 1);
 		break;
 	default:
@@ -71,10 +71,11 @@ enum {
 int
 enum_constant_from_unnamed_type(int x)
 {
+	/* using an enum constant as constant-expression */
 	switch (x) {
-	case sizeof_int:		/* expect: 130 *//* FIXME */
+	case sizeof_int:
 		return 1;
-	case sizeof_long:		/* expect: 130 *//* FIXME */
+	case sizeof_long:
 		return 2;
 	default:
 		break;
