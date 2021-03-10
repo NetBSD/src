@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.587 2021/03/10 06:38:44 msaitoh Exp $
+# $NetBSD: GENERIC,v 1.588 2021/03/10 07:23:42 wiz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.587 $"
+#ident		"GENERIC-$Revision: 1.588 $"
 
 maxusers	64		# estimated number of users
 
@@ -455,6 +455,9 @@ nouveaufb*	at nouveaufbbus?
 
 # DRMUMS drivers
 #viadrmums*	at drm?
+
+#options 	DRM_MAX_RESOLUTION_HORIZONTAL=1920	# Limit DRM size in horizontal dimension
+#options 	DRM_MAX_RESOLUTION_VERTICAL=1080	# Limit DRM size in vertical dimension
 
 # Cryptographic Devices
 

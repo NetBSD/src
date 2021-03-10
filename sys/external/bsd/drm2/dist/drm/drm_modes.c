@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modes.c,v 1.8 2020/02/14 04:38:36 riastradh Exp $	*/
+/*	$NetBSD: drm_modes.c,v 1.9 2021/03/10 07:23:42 wiz Exp $	*/
 
 /*
  * Copyright © 1997-2003 by The XFree86 Project, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_modes.c,v 1.8 2020/02/14 04:38:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_modes.c,v 1.9 2021/03/10 07:23:42 wiz Exp $");
 
 #include <linux/list.h>
 #include <linux/list_sort.h>
@@ -1019,8 +1019,18 @@ drm_mode_validate_size(const struct drm_display_mode *mode,
 	if (maxX > 0 && mode->hdisplay > maxX)
 		return MODE_VIRTUAL_X;
 
+#if defined(DRM_MAX_RESOLUTION_HORIZONTAL)
+	if (mode->hdisplay > DRM_MAX_RESOLUTION_HORIZONTAL)
+		return MODE_VIRTUAL_X;
+#endif
+
 	if (maxY > 0 && mode->vdisplay > maxY)
 		return MODE_VIRTUAL_Y;
+
+#if defined(DRM_MAX_RESOLUTION_VERTICAL)
+	if (mode->vdisplay > DRM_MAX_RESOLUTION_VERTICAL)
+		return MODE_VIRTUAL_Y;
+#endif
 
 	return MODE_OK;
 }
