@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.25 2020/06/10 22:45:15 ad Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.26 2021/03/10 15:05:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ struct	__pthread_cond_st {
 
 	/* Protects the queue of waiters */
 	__pthread_spin_t ptc_lock;
-	void *volatile ptc_waiters;
+	void *__pthread_volatile ptc_waiters;
 	void *ptc_spare;
 
 	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
