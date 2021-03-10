@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2021/03/02 01:47:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2021/03/10 18:29:07 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2021/03/02 01:47:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2021/03/10 18:29:07 thorpej Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -595,45 +595,17 @@ tlbia(void)
 static inline register_t
 va_to_vsid(const struct pmap *pm, vaddr_t addr)
 {
-#if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
-	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID) >> SR_VSID_SHFT;
-#else /* PMAP_OEA64 */
-#if 0
-	const struct ste *ste;
-	register_t hash;
-	int i;
-
-	hash = (addr >> ADDR_ESID_SHFT) & ADDR_ESID_HASH;
-
 	/*
-	 * Try the primary group first
-	 */
-	ste = pm->pm_stes[hash].stes;
-	for (i = 0; i < 8; i++, ste++) {
-		if (ste->ste_hi & STE_V) &&
-		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
-			return ste;
-	}
-
-	/*
-	 * Then the secondary group.
-	 */
-	ste = pm->pm_stes[hash ^ ADDR_ESID_HASH].stes;
-	for (i = 0; i < 8; i++, ste++) {
-		if (ste->ste_hi & STE_V) &&
-		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
-			return addr;
-	}
-		
-	return NULL;
-#else
-	/*
-	 * Rather than searching the STE groups for the VSID, we know
-	 * how we generate that from the ESID and so do that.
+	 * Rather than searching the STE groups for the VSID or extracting
+	 * it from the SR, we know how we generate that from the ESID and
+	 * so do that.
+	 *
+	 * This makes the code the same for OEA and OEA64, and also allows
+	 * us to generate a correct-for-that-address-space VSID even if the
+	 * pmap contains a different SR value at any given moment (e.g.
+	 * kernel pmap on a 601 that is using I/O segments).
 	 */
 	return VSID_MAKE(addr >> ADDR_SR_SHFT, pm->pm_vsid) >> SR_VSID_SHFT;
-#endif
-#endif /* PMAP_OEA */
 }
 
 static inline register_t
@@ -3419,6 +3391,7 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 #endif
  		pmap_kernel()->pm_sr[i] = KERNELN_SEGMENT(i)|SR_PRKEY;
 	}
+	pmap_kernel()->pm_vsid = KERNEL_VSIDBITS;
 
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
 #ifdef KERNEL2_SR
