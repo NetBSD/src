@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.226 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.227 2021/03/10 22:28:26 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.226 2020/09/08 14:12:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.227 2021/03/10 22:28:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -889,7 +889,7 @@ ip6_output(
 		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
 	} else {
-		const u_int32_t id = htonl(ip6_randomid());
+		const uint32_t id = ip6_randomid();
 		struct mbuf **mnext, *m_frgpart;
 		const int hlen = unfragpartlen;
 		struct ip6_frag *ip6f;
