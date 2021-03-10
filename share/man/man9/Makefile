@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.455 2021/01/24 17:29:11 thorpej Exp $
+#       $NetBSD: Makefile,v 1.456 2021/03/10 13:27:51 simonb Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -464,7 +464,7 @@ MLINKS+=kpreempt.9 kpreempt_disable.9 \
 	kpreempt.9 kpreempt_disabled.9 \
 	kpreempt.9 kpreempt_enable.9
 MLINKS+=proc_find.9 pgrp_find.9
-MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 \
+MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 printf_nostamp.9 \
 	kprintf.9 snprintf.9 kprintf.9 vprintf.9 \
 	kprintf.9 vsnprintf.9 kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
 	kprintf.9 tprintf.9 kprintf.9 tprintf_open.9 kprintf.9 tprintf_close.9 \
