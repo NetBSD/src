@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.39 2019/05/21 09:24:21 wiz Exp $
+.\"     $NetBSD: kprintf.9,v 1.40 2021/03/10 13:27:51 simonb Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,13 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 20, 2019
+.Dd March 10, 2021
 .Dt KPRINTF 9
 .Os
 .Sh NAME
 .Nm device_printf ,
 .Nm printf ,
 .Nm printf_nolog ,
+.Nm printf_nostamp ,
 .Nm snprintf ,
 .Nm vasprintf ,
 .Nm vprintf ,
@@ -68,6 +69,8 @@
 .Fn printf "const char *format" "..."
 .Ft void
 .Fn printf_nolog "const char *format" "..."
+.Ft void
+.Fn printf_nostamp "const char *format" "..."
 .Ft int
 .Fn snprintf "char *buf" "size_t size" "const char *format" "..."
 .Ft int
@@ -140,6 +143,11 @@ The
 function is identical to
 .Fn printf ,
 except it does not send the data to the system log.
+The
+.Fn printf_nostamp
+function is identical to
+.Fn printf ,
+except it does not prefix the output with a timestamp.
 The functions
 .Fn snprintf ,
 .Fn vasprintf ,

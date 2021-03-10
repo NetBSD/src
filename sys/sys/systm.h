@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.298 2020/08/28 12:43:24 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.299 2021/03/10 13:27:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -268,6 +268,8 @@ int	aprint_get_error_count(void);
 void	printf_tolog(const char *, ...) __printflike(1, 2);
 
 void	printf_nolog(const char *, ...) __printflike(1, 2);
+
+void	printf_nostamp(const char *, ...) __printflike(1, 2);
 
 void	printf(const char *, ...) __printflike(1, 2);
 

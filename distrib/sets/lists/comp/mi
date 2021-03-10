@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2375 2021/02/26 03:08:25 christos Exp $
+#	$NetBSD: mi,v 1.2376 2021/03/10 13:27:51 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12043,6 +12043,7 @@
 ./usr/share/man/cat9/preempt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf_nolog.0		comp-sys-catman		.cat
+./usr/share/man/cat9/printf_nostamp.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_find.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_trampoline.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/profhz.0			comp-sys-catman		.cat
@@ -20213,6 +20214,7 @@
 ./usr/share/man/html9/preempt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf_nolog.html		comp-sys-htmlman	html
+./usr/share/man/html9/printf_nostamp.html	comp-sys-htmlman	html
 ./usr/share/man/html9/proc_find.html		comp-sys-htmlman	html
 ./usr/share/man/html9/proc_trampoline.html	comp-obsolete		obsolete
 ./usr/share/man/html9/profhz.html		comp-sys-htmlman	html
@@ -28545,6 +28547,7 @@
 ./usr/share/man/man9/preempt.9			comp-sys-man		.man
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
 ./usr/share/man/man9/printf_nolog.9		comp-sys-man		.man
+./usr/share/man/man9/printf_nostamp.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_find.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_trampoline.9		comp-obsolete		obsolete
 ./usr/share/man/man9/profhz.9			comp-sys-man		.man
