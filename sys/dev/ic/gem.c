@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.133 2021/01/30 07:53:01 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.134 2021/03/10 18:26:16 christos Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.133 2021/01/30 07:53:01 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.134 2021/03/10 18:26:16 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -2297,17 +2297,17 @@ gem_rx_watchdog(void *arg)
 		if (rx_fifo_wr_ptr != rx_fifo_rd_ptr) {
 			DPRINTF(sc,
 			    ("%s: rx_watchdog: wr & rd ptr different\n",
-			    device_xname(sc->sc_dev), state));
+			    device_xname(sc->sc_dev)));
 			needreset = 0;
 		}
 		if (sc->sc_rx_fifo_wr_ptr != rx_fifo_wr_ptr) {
 			DPRINTF(sc, ("%s: rx_watchdog: wr pointer != saved\n",
-			    device_xname(sc->sc_dev), state));
+			    device_xname(sc->sc_dev)));
 			needreset = 0;
 		}
 		if (sc->sc_rx_fifo_rd_ptr != rx_fifo_rd_ptr) {
 			DPRINTF(sc, ("%s: rx_watchdog: rd pointer != saved\n",
-			    device_xname(sc->sc_dev), state));
+			    device_xname(sc->sc_dev)));
 			needreset = 0;
 		}
 		if (needreset) {
