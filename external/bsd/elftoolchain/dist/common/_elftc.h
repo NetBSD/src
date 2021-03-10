@@ -1,4 +1,4 @@
-/*	$NetBSD: _elftc.h,v 1.7 2020/11/26 21:01:47 jkoshy Exp $	*/
+/*	$NetBSD: _elftc.h,v 1.8 2021/03/10 21:36:29 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _elftc.h 3894 2020-11-20 18:02:53Z jkoshy
+ * Id: _elftc.h 3933 2021-03-10 21:09:49Z jkoshy
  */
 
 /**
@@ -383,6 +383,10 @@ extern const char *__progname;
 
 #include <sys/param.h>
 #include <sys/endian.h>
+
+#ifndef	roundup2
+#define	roundup2	roundup
+#endif
 
 #define	ELFTC_BYTE_ORDER			_BYTE_ORDER
 #define	ELFTC_BYTE_ORDER_LITTLE_ENDIAN		_LITTLE_ENDIAN
