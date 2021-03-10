@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.100 2020/04/23 00:24:50 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.101 2021/03/10 00:32:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.100 2020/04/23 00:24:50 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.101 2021/03/10 00:32:15 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,19 +182,17 @@ struct nlist nl[] = {
 	{ "_atintrq1", 0, 0, 0, 0 },
 #define	N_ATINTRQ2	40
 	{ "_atintrq2", 0, 0, 0, 0 },
-#define	N_NATMINTRQ	41
-	{ "_natmintrq", 0, 0, 0, 0 },
-#define	N_PPPOEDISCINQ	42
+#define	N_PPPOEDISCINQ	41
 	{ "_ppoediscinq", 0, 0, 0, 0 },
-#define	N_PPPOEINQ	43
+#define	N_PPPOEINQ	42
 	{ "_ppoeinq", 0, 0, 0, 0 },
-#define	N_HARDCLOCK_TICKS 44
+#define	N_HARDCLOCK_TICKS 43
 	{ "_hardclock_ticks", 0, 0, 0, 0 },
-#define N_PIMSTAT	45
+#define N_PIMSTAT	44
 	{ "_pimstat", 0, 0, 0, 0 },
-#define N_CARPSTAT	46
+#define N_CARPSTAT	45
 	{ "_carpstats", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_PFSYNCSTAT	47
+#define N_PFSYNCSTAT	46
 	{ "_pfsyncstats", 0, 0, 0, 0},  /* not available via kvm */
 	{ "", 0, 0, 0, 0 },
 };
@@ -310,7 +308,6 @@ const struct softintrq {
 	{ "arpintrq", N_ARPINTRQ },
 	{ "atintrq1", N_ATINTRQ1 },
 	{ "atintrq2", N_ATINTRQ2 },
-	{ "natmintrq", N_NATMINTRQ },
 	{ "ppoediscinq", N_PPPOEDISCINQ },
 	{ "ppoeinq", N_PPPOEINQ },
 	{ NULL, -1 },
