@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.17 2021/03/11 22:28:30 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.18 2021/03/11 22:32:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.17 2021/03/11 22:28:30 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.18 2021/03/11 22:32:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -62,23 +62,20 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z
 static void
 check_size_comment(size_t desired_size, char **last_bl_ptr)
 {
-    if (e_com + (desired_size) >= l_com) {
-	int nsize = l_com - s_com + 400 + desired_size;
-	int com_len = e_com - s_com;
-	int blank_pos;
-	if (*last_bl_ptr != NULL)
-	    blank_pos = *last_bl_ptr - combuf;
-	else
-	    blank_pos = -1;
-	combuf = realloc(combuf, nsize);
-	if (combuf == NULL)
-	    err(1, NULL);
-	e_com = combuf + com_len + 1;
-	if (blank_pos > 0)
-	    *last_bl_ptr = combuf + blank_pos;
-	l_com = combuf + nsize - 5;
-	s_com = combuf + 1;
-    }
+    if (e_com + (desired_size) < l_com)
+        return;
+
+    size_t nsize = l_com - s_com + 400 + desired_size;
+    size_t com_len = e_com - s_com;
+    ssize_t blank_pos = *last_bl_ptr != NULL ? *last_bl_ptr - combuf : -1;
+    combuf = realloc(combuf, nsize);
+    if (combuf == NULL)
+	err(1, NULL);
+    e_com = combuf + com_len + 1;
+    if (blank_pos > 0)
+	*last_bl_ptr = combuf + blank_pos;
+    l_com = combuf + nsize - 5;
+    s_com = combuf + 1;
 }
 
 /*
