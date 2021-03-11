@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.4,v 1.10 2021/02/27 09:54:59 nia Exp $
+.\"	$NetBSD: spi.4,v 1.11 2021/03/11 15:46:03 nia Exp $
 .\"
 .\" Copyright (c) 2006 Urbana-Champaign Independent Media Center.
 .\" Copyright (c) 2006 Garrett D'Amore.
@@ -130,18 +130,18 @@ typedef struct spi_ioctl_transfer {
 includes the following machine-independent
 .Tn SPI
 drivers:
-.Bl -tag -width pcdisplay -offset indent
-.It m25p
+.Bl -tag -width mcp23s17gpio(4) -offset indent
+.It Xr m25p 4
 STMicroelectronics M25P family of NOR flash devices.
-.It mcp23s17gpio
+.It Xr mcp23s17gpio 4
 Microchip MCP23S17 16-bit GPIO chip.
-.It mcp3kadc
+.It Xr mcp3kadc 4
 Microchip MCP3x0x SAR analog to digital converter.
-.It mcp48x1dac
+.It Xr mcp48x1dac 4
 Microchip MCP4801/MCP4811/MCP4821 digital to analog converter.
-.It tm121temp
+.It Xr tm121temp 4
 Texas Instruments TMP121 temperature sensor.
-.It ssdfb
+.It Xr ssdfb 4
 OLED/PLED framebuffer modules.
 .El
 .Sh FILES
@@ -152,12 +152,6 @@ SPI device unit
 file.
 .El
 .Sh SEE ALSO
-.Xr m25p 4 ,
-.Xr mcp23s17gpio 4 ,
-.Xr mcp3kadc 4 ,
-.Xr mcp48x1dac 4 ,
-.Xr ssdfb 4 ,
-.Xr tm121temp 4 ,
 .Xr spi 9
 .Sh HISTORY
 The machine-independent
