@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.112 2021/03/11 15:40:02 nia Exp $
+.\"	$NetBSD: pci.4,v 1.113 2021/03/11 15:41:32 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -46,19 +46,11 @@
 .Cd options PCI_BUS_FIXUP
 .Cd options PCI_INTR_FIXUP
 .Sh DESCRIPTION
-Other
-.Nm
-attachments are machine-dependent and depend on the bus topology and
-PCI bus interface of your system.
-See
-.Xr intro 4
-for your system for details.
-.Pp
 .Nx
 includes a machine-independent PCI bus subsystem and several
 machine-independent PCI device drivers.
 .Pp
-Your system may support additional PCI devices.
+Your system may support additional PCI devices and attachments.
 Drivers for PCI devices not listed here are machine-dependent.
 Consult your system's
 .Xr intro 4
