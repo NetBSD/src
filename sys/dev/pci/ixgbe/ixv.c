@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.155 2021/03/09 10:03:18 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.156 2021/03/11 02:30:47 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2669,7 +2669,7 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue No Descriptor Available");
+		    "TX Queue No Descriptor Available");
 		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Queue Packets Transmitted");
