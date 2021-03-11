@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.89 2021/03/08 18:22:16 christos Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.90 2021/03/11 11:10:22 ryo Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ static __inline uint32_t
 ip6_randomflowlabel(void)
 {
 
-	return cprng_fast32() && 0xfffff;
+	return cprng_fast32() & 0xfffff;
 }
 
 static __inline bool
