@@ -1,4 +1,4 @@
-.\" $NetBSD: regex.3,v 1.29 2021/03/11 15:12:51 christos Exp $
+.\" $NetBSD: regex.3,v 1.30 2021/03/11 16:36:41 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -200,8 +200,10 @@ Use backreference
 .Dv N
 where
 .Dv N
-is between
-.Dv [1-9] .
+is a single digit number between 
+.Dv 1 
+and 
+.Dv 9 .
 .It \ea
 Visual Bell
 .It \eb
@@ -227,9 +229,9 @@ Alias for [[:alnum:]]
 .It \eW
 Alias for [^[:alnum:]]
 .It \e'
-Matches the end of the subject.
+Matches the end of the subject string (the string to be matched).
 .It \e`
-Matches the beginning of the subject.
+Matches the beginning of the subject string.
 .El
 .Pp
 This is an extension,
