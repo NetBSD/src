@@ -1,4 +1,4 @@
-.\" $NetBSD: regex.3,v 1.28 2021/02/24 09:10:12 wiz Exp $
+.\" $NetBSD: regex.3,v 1.29 2021/03/11 15:12:51 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\" $FreeBSD: head/lib/libc/regex/regex.3 363817 2020-08-04 02:06:49Z kevans $
 .\"
-.Dd February 22, 2021
+.Dd March 11, 2021
 .Dt REGEX 3
 .Os
 .Sh NAME
@@ -202,14 +202,26 @@ where
 .Dv N
 is between
 .Dv [1-9] .
+.It \ea
+Visual Bell
 .It \eb
 Match a position that is a word boundary.
 .It \eB
 Match a position that is a not word boundary.
+.It \ef
+Form Feed
+.It \en
+Line Feed
+.It \er
+Carriage return
 .It \es
 Alias for [[:space:]]
 .It \eS
 Alias for [^[:space:]]
+.It \et
+Horizontal Tab
+.It \ev
+Vertical Tab
 .It \ew
 Alias for [[:alnum:]]
 .It \eW
