@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.110 2021/03/11 14:19:43 nia Exp $
+.\"	$NetBSD: pci.4,v 1.111 2021/03/11 15:27:40 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -186,6 +186,8 @@ Broadcom NetXtreme II 10/100/1000 Ethernet interfaces.
 DEC DC21x4x (Tulip) based Ethernet interfaces, including the DE435,
 DE450, and DE500, and Znyx, SMC, Cogent/Adaptec, and Asante single- and
 multi-port Ethernet interfaces.
+.It ena
+Elastic Network Adapter interfaces.
 .It ep
 3Com 3c590, 3c595, 3c900, and 3c905 Ethernet interfaces.
 .It epic
@@ -404,6 +406,7 @@ USB XHCI host controllers.
 .Xr eap 4 ,
 .Xr ehci 4 ,
 .Xr emuxki 4 ,
+.Xr ena 4 ,
 .Xr ep 4 ,
 .Xr epic 4 ,
 .Xr esa 4 ,
