@@ -1,4 +1,4 @@
-.\"	$NetBSD: eisa.4,v 1.14 2003/05/06 19:02:46 wiz Exp $
+.\"	$NetBSD: eisa.4,v 1.15 2021/03/11 16:56:50 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -74,49 +74,47 @@ drivers, sorted by device type
 and driver name:
 .Ss Disk and tape controllers
 .Bl -tag -width pcdisplay -offset indent
-.It cac
+.It Xr cac 4
 Compaq array controllers.
-.It mlx
+.It Xr mlx 4
 Mylex DAC960 and DEC SWXCR RAID controllers.
 .El
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It ahb
+.It Xr ahb 4
 Adaptec 174x
 .Tn SCSI
 interfaces.
-.It ahc
+.It Xr ahc 4
 Adaptec AIC 7770, 274x, and 284x
 .Tn SCSI
 interfaces.
-.It bha
+.It Xr bha 4
 BusLogic BT-74x
 .Tn SCSI
 interfaces.
-.It dpt
+.It Xr dpt 4
 DPT SmartCache/SmartRAID III and IV
 .Tn SCSI
 interfaces.
-.It uha
+.It Xr uha 4
 Ultrastor 24f
 .Tn SCSI
 interfaces.
 .El
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It ep
+.It Xr ep 4
 3Com 3c579 and 3c592 10Mbit
 .Tn Ethernet ,
 and 3c597 10/100Mbit
 .Tn Ethernet
 interfaces.
-.It fea
-Digital DEFEA FDDI interfaces.
-.It le
+.It Xr le 4
 Digital DE422
 .Tn Ethernet
 interfaces.
-.It tlp
+.It Xr tlp 4
 Digital DE425
 .Tn Ethernet
 interfaces.
@@ -137,18 +135,7 @@ or
 respectively.  The manual pages for each individual driver also lists the
 supported bus variants.
 .Sh SEE ALSO
-.Xr ahb 4 ,
-.Xr ahc 4 ,
-.Xr bha 4 ,
-.Xr cac 4 ,
-.Xr dpt 4 ,
-.Xr ep 4 ,
-.Xr fea 4 ,
-.Xr intro 4 ,
-.Xr le 4 ,
-.Xr mlx 4 ,
-.Xr tlp 4 ,
-.Xr uha 4
+.Xr intro 4
 .Sh HISTORY
 The machine-independent
 .Tn EISA
