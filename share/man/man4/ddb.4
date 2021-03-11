@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.198 2021/02/19 08:57:56 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.199 2021/03/11 10:34:34 ryo Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd February 19, 2021
+.Dd March 11, 2021
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1017,6 +1017,8 @@ set (e.g.
 Some of these commands are:
 .Ss AARCH64
 .Bl -tag -width "traptrace" -compact
+.It Ic break
+Set or clear a hardware breakpoint.
 .It Ic cpu
 Switch to another CPU.
 .It Ic cpuinfo
@@ -1035,26 +1037,18 @@ Print system registers.
 Set or clear a hardware watchpoint.
 Pass the address to be watched, or watchpoint number to clear the watchpoint.
 Optional modifiers are
-.Dq l
-for load access,
-.Dq s
-for store access,
-.Dq 1
+.Dq r
+for read access,
+.Dq w
+for write access (default: trap on read or write access),
+.Dq b
 for 8 bit width,
-.Dq 2
+.Dq h
 for 16 bit,
-.Dq 3
-for 24 bit,
-.Dq 4
-for 32 bit,
-.Dq 5
-for 40 bit,
-.Dq 6
-for 48 bit,
-.Dq 7
-for 56 bit,
-.Dq 8
-for 64 bit.
+.Dq l
+for 32 bit or,
+.Dq q
+for 64 bit (default: 32 bit).
 .El
 .Ss ALPHA
 .Bl -tag -width "traptrace" -compact
