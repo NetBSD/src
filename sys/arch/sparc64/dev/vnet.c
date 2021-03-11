@@ -1,4 +1,4 @@
-/*	$NetBSD: vnet.c,v 1.2 2021/03/04 20:59:39 palle Exp $	*/
+/*	$NetBSD: vnet.c,v 1.3 2021/03/11 19:34:11 palle Exp $	*/
 /*	$OpenBSD: vnet.c,v 1.62 2020/07/10 13:26:36 patrick Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
@@ -34,6 +34,8 @@ FIXME openbsd
 #if 0
 FIXME openbsd
 #include <sys/timeout.h>
+#else
+#include <sys/callout.h>
 #endif
 
 #include <machine/autoconf.h>
@@ -56,6 +58,9 @@ FIXME openbsd
 #include <sparc64/dev/ldcvar.h>
 #include <sparc64/dev/viovar.h>
 
+#if 1
+#define VNET_DEBUG
+#endif
 #ifdef VNET_DEBUG
 #define DPRINTF(x)	printf x
 #else
@@ -169,6 +174,8 @@ struct vnet_softc {
 #if 0
 FIXME openbsd		
 	struct timeout	sc_handshake_to;
+#else
+	struct callout	sc_handshake_co;
 #endif		
 
 	uint8_t		sc_xfer_mode;
@@ -230,7 +237,7 @@ void	vnet_send_dring_data(struct vnet_softc *, uint32_t);
 
 void	vnet_start(struct ifnet *);
 void	vnet_start_desc(struct ifnet *);
-int		vnet_ioctl (struct ifnet *, u_long, void *);
+int		vnet_ioctl(struct ifnet *, u_long, void *);
 void	vnet_watchdog(struct ifnet *);
 
 int		vnet_media_change(struct ifnet *);
@@ -240,13 +247,14 @@ void	vnet_link_state(struct vnet_softc *sc);
 
 void	vnet_setmulti(struct vnet_softc *, int);
 
-void	vnet_init(struct ifnet *);
-void	vnet_stop(struct ifnet *);
+int		vnet_init(struct ifnet *);
+void	vnet_stop(struct ifnet *, int);
 
 int vnet_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	struct cbus_attach_args *ca = aux;
+	
 	if (strcmp(ca->ca_name, "network") == 0)
 		return (1);
 
@@ -308,6 +316,9 @@ FIXME openbsd
 #if 0
 FIXME openbsd	
 	timeout_set(&sc->sc_handshake_to, vnet_handshake, sc);
+#else
+	callout_init(&sc->sc_handshake_co, 0);
+/* netbsd callout do silmilar function...*/
 #endif 
 	sc->sc_peer_state = VIO_DP_STOPPED;
 
@@ -358,9 +369,13 @@ FIXME openbsd
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#if 0	
 	ifp->if_link_state = LINK_STATE_DOWN;
+#endif	
+	ifp->if_init = vnet_init;
 	ifp->if_ioctl = vnet_ioctl;
 	ifp->if_start = vnet_start;
+	ifp->if_stop = vnet_stop;
 	ifp->if_watchdog = vnet_watchdog;
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 #if 0
@@ -374,6 +389,7 @@ FIXME openbsd
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
+#if 0	
 	int error = if_initialize(ifp);
 	if (error != 0) {
 		printf(", if_initialize() failed\n");
@@ -381,7 +397,10 @@ FIXME openbsd
 	}
 	ether_ifattach(ifp, sc->sc_macaddr);
 	if_register(ifp);
-	
+#else
+	if_attach(ifp);
+	ether_ifattach(ifp, sc->sc_macaddr);
+#endif	
 	printf("\n");
 	return;
 free_txqueue:
@@ -424,7 +443,9 @@ vnet_tx_intr(void *arg)
 int
 vnet_rx_intr(void *arg)
 {
+#if 0		
 	DPRINTF(("%s: entry\n", __func__));
+#endif	
 
 	struct vnet_softc *sc = arg;
 	struct ldc_conn *lc = &sc->sc_lc;
@@ -433,34 +454,47 @@ vnet_rx_intr(void *arg)
 	int err;
 
 	err = hv_ldc_rx_get_state(lc->lc_id, &rx_head, &rx_tail, &rx_state);
-	if (err == H_EINVAL)
+	if (err == H_EINVAL) {
+		printf("hv_ldc_rx_get_state failed\n");
 		return (0);
+	}
 	if (err != H_EOK) {
 		printf("hv_ldc_rx_get_state %d\n", err);
 		return (0);
 	}
+#if 0	
+	DPRINTF(("%s: rx_state %" PRId64 "  head %" PRId64 "  tail %" PRId64 "\n",
+			 __func__, rx_state, rx_head, rx_tail));
+#endif	
 
 	if (rx_state != lc->lc_rx_state) {
+#if 0			
+		DPRINTF(("%s: rx_state %" PRId64 " != lc__rx_state %" PRId64 "\n",
+				 __func__, rx_state, lc->lc_rx_state));
+#endif		
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("%s: Rx link down\n", __func__));
 			lc->lc_tx_seqid = 0;
 			lc->lc_state = 0;
 			lc->lc_reset(lc);
 			if (rx_head == rx_tail)
 				break;
 			/* Discard and ack pending I/O. */
-			DPRINTF(("setting rx qhead to %lld\n", rx_tail));
+			DPRINTF(("setting rx qhead to %" PRId64 "\n", rx_tail));
 			err = hv_ldc_rx_set_qhead(lc->lc_id, rx_tail);
 			if (err == H_EOK)
 				break;
 			printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 			break;
 		case LDC_CHANNEL_UP:
+#if 0				
 			DPRINTF(("%s: Rx link up\n", __func__));
+#endif			
 #if 0
 FIXME openbsd			
 			timeout_add_msec(&sc->sc_handshake_to, 500);
+#else 
+			callout_reset(&sc->sc_handshake_co, hz / 2, vnet_handshake, sc);
 #endif 
 			break;
 		case LDC_CHANNEL_RESET:
@@ -471,37 +505,73 @@ FIXME openbsd
 #if 0
 FIXME openbsd			
 			timeout_add_msec(&sc->sc_handshake_to, 500);
+#else 
+			callout_reset(&sc->sc_handshake_co, hz / 2, vnet_handshake, sc);
 #endif 
-			if (rx_head == rx_tail)
+			if (rx_head == rx_tail) {
+#if 0					
+				DPRINTF(("%s: rx_head == rx_head\n", __func__));
+#endif				
 				break;
+			}
 			/* Discard and ack pending I/O. */
-			DPRINTF(("setting rx qhead to %lld\n", rx_tail));
+			DPRINTF(("setting rx qhead to %" PRId64 "\n", rx_tail));
 			err = hv_ldc_rx_set_qhead(lc->lc_id, rx_tail);
 			if (err == H_EOK)
 				break;
 			printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 			break;
+		default:	
+			DPRINTF(("%s: unhandled rx_state %" PRIx64 "\n", __func__, rx_state));
+			break;
 		}
 		lc->lc_rx_state = rx_state;
+#if 0		
+		DPRINTF(("%s: setting rx_state %" PRId64 " = lc__rx_state %" PRId64 "\n",
+				 __func__, rx_state, lc->lc_rx_state));
+#endif		
 		return (1);
+	} else {
+#if 0			
+		DPRINTF(("%s: rx_state %" PRId64 " == lc__rx_state %" PRId64 "\n",
+				 __func__, rx_state, lc->lc_rx_state));
+#endif		
 	}
 
 	if (rx_head == rx_tail)
+	{
+		DPRINTF(("%s: head eq tail\n", __func__));
 		return (0);
-
+	}
 	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_rxq->lq_va + rx_head);
+#if 0	
+	DPRINTF(("%s: lp->type %" PRId8 "\n", __func__, lp->type));
+	DPRINTF(("%s: lp->stype %" PRId8 "\n", __func__, lp->stype));
+	DPRINTF(("%s: lp->ctrl %" PRId8 "\n", __func__, lp->ctrl));
+	DPRINTF(("%s: lp->env %" PRId8 "\n", __func__, lp->env));
+	DPRINTF(("%s: lp->seqid %" PRId32 "\n", __func__, lp->seqid));
+	DPRINTF(("%s: lp->major %" PRId16 "\n", __func__, lp->major));
+	DPRINTF(("%s: lp->minor %" PRId16 "\n", __func__, lp->minor));
+#endif
 	switch (lp->type) {
 	case LDC_CTRL:
+#if 0			
+		DPRINTF(("%s: LDC_CTRL\n", __func__));
+#endif		
 		ldc_rx_ctrl(lc, lp);
 		break;
 
 	case LDC_DATA:
+#if 0			
+		DPRINTF(("%s: LDC_DATA\n", __func__));
+#endif		
 		ldc_rx_data(lc, lp);
 		break;
 
 	default:
-		DPRINTF(("%0x02/%0x02/%0x02\n", lp->type, lp->stype,
-		    lp->ctrl));
+		DPRINTF(("%s: unhandled type %0x02/%0x02/%0x02\n",
+				 __func__, lp->type, lp->stype, lp->ctrl));
+		Debugger();
 		ldc_reset(lc);
 		break;
 	}
@@ -514,14 +584,17 @@ FIXME openbsd
 	err = hv_ldc_rx_set_qhead(lc->lc_id, rx_head);
 	if (err != H_EOK)
 		printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
-
+#if 0
 	DPRINTF(("%s: exit\n", __func__));
+#endif	
 	return (1);
 }
  
 void
 vnet_handshake(void *arg)
 {
+	DPRINTF(("%s: entry\n", __func__));
+	
 	struct vnet_softc *sc = arg;
 
 	ldc_send_vers(&sc->sc_lc);
@@ -530,19 +603,27 @@ vnet_handshake(void *arg)
 void
 vio_rx_data(struct ldc_conn *lc, struct ldc_pkt *lp)
 {
+#if 0		
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+	
 	struct vio_msg *vm = (struct vio_msg *)lp;
 
 	switch (vm->type) {
 	case VIO_TYPE_CTRL:
 		if ((lp->env & LDC_FRAG_START) == 0 &&
-		    (lp->env & LDC_FRAG_STOP) == 0)
+		    (lp->env & LDC_FRAG_STOP) == 0) {
+			DPRINTF(("%s: FRAG_START==0 and FRAG_STOP==0\n", __func__));
 			return;
+		}
 		vnet_rx_vio_ctrl(lc->lc_sc, vm);
 		break;
 
 	case VIO_TYPE_DATA:
-		if((lp->env & LDC_FRAG_START) == 0)
+		if((lp->env & LDC_FRAG_START) == 0) {
+			DPRINTF(("%s: FRAG_START==0\n", __func__));
 			return;
+		}
 		vnet_rx_vio_data(lc->lc_sc, vm);
 		break;
 
@@ -556,6 +637,9 @@ vio_rx_data(struct ldc_conn *lc, struct ldc_pkt *lp)
 void
 vnet_rx_vio_ctrl(struct vnet_softc *sc, struct vio_msg *vm)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif		
 	struct vio_msg_tag *tag = (struct vio_msg_tag *)&vm->type;
 
 	switch (tag->stype_env) {
@@ -572,7 +656,8 @@ vnet_rx_vio_ctrl(struct vnet_softc *sc, struct vio_msg *vm)
 		vnet_rx_vio_rdx(sc, tag);
 		break;
 	default:
-		DPRINTF(("CTRL/0x%02x/0x%04x\n", tag->stype, tag->stype_env));
+		printf("%s: CTRL/0x%02x/0x%04x FIXME\n",
+				 __func__, tag->stype, tag->stype_env);
 		break;
 	}
 }
@@ -580,15 +665,21 @@ vnet_rx_vio_ctrl(struct vnet_softc *sc, struct vio_msg *vm)
 void
 vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vio_ver_info *vi = (struct vio_ver_info *)tag;
 
 	switch (vi->tag.stype) {
 	case VIO_SUBTYPE_INFO:
+#if 0			
 		DPRINTF(("CTRL/INFO/VER_INFO\n"));
+#endif		
 
 		/* Make sure we're talking to a virtual network device. */
 		if (vi->dev_class != VDEV_NETWORK &&
 		    vi->dev_class != VDEV_NETWORK_SWITCH) {
+			DPRINTF(("Class is not network or network switch\n"));
 			/* Huh, we're not talking to a network device? */
 			printf("Not a network device\n");
 			vi->tag.stype = VIO_SUBTYPE_NACK;
@@ -597,6 +688,8 @@ vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		}
 
 		if (vi->major != VNET_MAJOR) {
+			DPRINTF(("Major mismatch %" PRId8 " vs %" PRId8 "\n",
+					 vi->major, VNET_MAJOR));
 			vi->tag.stype = VIO_SUBTYPE_NACK;
 			vi->major = VNET_MAJOR;
 			vi->minor = VNET_MINOR;
@@ -612,7 +705,9 @@ vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
+#if 0			
 		DPRINTF(("CTRL/ACK/VER_INFO\n"));
+#endif		
 		if (!ISSET(sc->sc_vio_state, VIO_SND_VER_INFO)) {
 			ldc_reset(&sc->sc_lc);
 			break;
@@ -633,12 +728,18 @@ vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 void
 vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vnet_attr_info *ai = (struct vnet_attr_info *)tag;
 
 	switch (ai->tag.stype) {
 	case VIO_SUBTYPE_INFO:
+#if 0			
 		DPRINTF(("CTRL/INFO/ATTR_INFO\n"));
+#endif		
 		sc->sc_xfer_mode = ai->xfer_mode;
+		DPRINTF(("sc_xfer_mode %d\n", sc->sc_xfer_mode));
 
 		ai->tag.stype = VIO_SUBTYPE_ACK;
 		ai->tag.sid = sc->sc_local_sid;
@@ -647,7 +748,9 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
+#if 0			
 		DPRINTF(("CTRL/ACK/ATTR_INFO\n"));
+#endif		
 		if (!ISSET(sc->sc_vio_state, VIO_SND_ATTR_INFO)) {
 			ldc_reset(&sc->sc_lc);
 			break;
@@ -672,11 +775,16 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 void
 vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vio_dring_reg *dr = (struct vio_dring_reg *)tag;
 
 	switch (dr->tag.stype) {
 	case VIO_SUBTYPE_INFO:
+#if 0			
 		DPRINTF(("CTRL/INFO/DRING_REG\n"));
+#endif		
 
 		sc->sc_peer_dring_nentries = dr->num_descriptors;
 		sc->sc_peer_desc_size = dr->descriptor_size;
@@ -689,7 +797,9 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
+#if 0			
 		DPRINTF(("CTRL/ACK/DRING_REG\n"));
+#endif		
 		if (!ISSET(sc->sc_vio_state, VIO_SND_DRING_REG)) {
 			ldc_reset(&sc->sc_lc);
 			break;
@@ -715,6 +825,9 @@ void
 vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
 #if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+#if 0
 FIXME openbsd		
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 #else
@@ -723,7 +836,9 @@ FIXME openbsd
 
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
+#if 0			
 		DPRINTF(("CTRL/INFO/RDX\n"));
+#endif		
 
 		tag->stype = VIO_SUBTYPE_ACK;
 		tag->sid = sc->sc_local_sid;
@@ -732,7 +847,9 @@ FIXME openbsd
 		break;
 
 	case VIO_SUBTYPE_ACK:
+#if 0			
 		DPRINTF(("CTRL/ACK/RDX\n"));
+#endif		
 		if (!ISSET(sc->sc_vio_state, VIO_SND_RDX)) {
 			ldc_reset(&sc->sc_lc);
 			break;
@@ -778,6 +895,9 @@ FIXME openbsd
 void
 vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *vm)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vio_msg_tag *tag = (struct vio_msg_tag *)&vm->type;
 
 	if (!ISSET(sc->sc_vio_state, VIO_RCV_RDX) ||
@@ -805,6 +925,9 @@ vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *vm)
 void
 vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	struct vnet_desc_msg *dm = (struct vnet_desc_msg *)tag;
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct ldc_map *map = sc->sc_lm;
@@ -932,6 +1055,10 @@ FIXME openbsd
 void
 vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+	
 	struct vio_dring_msg *dm = (struct vio_dring_msg *)tag;
 	struct ldc_conn *lc = &sc->sc_lc;
 #if 0
@@ -940,7 +1067,9 @@ FIXME openbsd
 #else 
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 #endif
+#if 1
 	struct mbuf *m = NULL;
+#endif	
 	paddr_t pa;
 	psize_t nbytes;
 	int err;
@@ -948,6 +1077,9 @@ FIXME openbsd
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
 	{
+#if 0			
+		DPRINTF(("%s: VIO_SUBTYPE_INFO\n", __func__));
+#endif		
 		struct vnet_desc desc;
 		uint64_t cookie;
 		paddr_t desc_pa;
@@ -988,13 +1120,54 @@ FIXME openbsd
 			if (!m)
 				break;
 #else
-			MCLGET(NULL, M_DONTWAIT);
+#if 1
+#if 0			
+			DPRINTF(("%s: before MGETHDR\n", __func__));
+#endif			
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+#if 0			
+			DPRINTF(("%s: after MGETHDR\n", __func__));
+#endif			
+			if (m == NULL) {
+				DPRINTF(("%s: MGETHDR failed\n", __func__));
+				if_statinc(ifp, if_ierrors);
+				goto skip;
+			}
+#if 0			
+			DPRINTF(("%s: before MCLGET\n", __func__));
+#endif			
+			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0)
 				break;
-#endif 
+#if 0			
+			DPRINTF(("%s: after MCLGET\n", __func__));
+#endif			
+#endif			
+#endif
+#if 1
 			m->m_len = m->m_pkthdr.len = desc.nbytes;
+#endif			
 			nbytes = roundup(desc.nbytes + VNET_ETHER_ALIGN, 8);
-
+#if 1
+			DPRINTF(("%s: nbytes %" PRId64 " desc.nbytes %" PRId32 "\n",
+					 __func__, nbytes, desc.nbytes));
+			uint8_t buf[ETHER_MAX_LEN];
+			pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
+			err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
+			    desc.cookie[0].addr, pa, nbytes, &nbytes);
+			if (err != H_EOK) {
+					//m_freem(m);
+				goto skip;
+			}
+			for (int i = 0; i < desc.nbytes; i++) {
+					if (i % 16 == 0) {
+						printf("\n");
+					}
+					printf("%02x ", buf[i]);
+			}
+			printf("\n");
+#endif			
+#if 1
 			pmap_extract(pmap_kernel(), (vaddr_t)m->m_data, &pa);
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 			    desc.cookie[0].addr, pa, nbytes, &nbytes);
@@ -1007,9 +1180,16 @@ FIXME openbsd
 #if 0
 FIXME openbsd		
 			ml_enqueue(&ml, m);
-#else		
+#else
+#if 0 
+			DPRINTF(("%s: before if_percpuq_enqueue\n", __func__));
+#endif			
 			if_percpuq_enqueue(ifp->if_percpuq, m);
+#if 0			
+			DPRINTF(("%s: after if_percpuq_enqueue\n", __func__));
+#endif			
 #endif
+#endif			
 
 		skip:
 			desc.hdr.dstate = VIO_DESC_DONE;
@@ -1027,7 +1207,7 @@ FIXME openbsd
 FIXME openbd		
 		if_input(ifp, &ml);
 #else
-		printf("vnet_rx_vio_dring_data() ignoring if_input - FIXME\n");
+// FIXME??? printf("vnet_rx_vio_dring_data() ignoring if_input - FIXME\n");
 #endif 
 
 		if (ack_end_idx == -1) {
@@ -1044,6 +1224,9 @@ FIXME openbd
 
 	case VIO_SUBTYPE_ACK:
 	{
+#if 0			
+		DPRINTF(("%s: VIO_SUBTYPE_ACK\n", __func__));
+#endif		
 		struct ldc_map *map = sc->sc_lm;
 		u_int cons, count;
 
@@ -1111,11 +1294,16 @@ FIXME openbsd
 void
 vnet_ldc_reset(struct ldc_conn *lc)
 {
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	struct vnet_softc *sc = lc->lc_sc;
 	int i;
 #if 0
 FIXME openbsd	
 	timeout_del(&sc->sc_handshake_to);
+#else 
+	callout_stop(&sc->sc_handshake_co);
 #endif 
 	sc->sc_tx_prod = sc->sc_tx_cons = 0;
 	sc->sc_peer_state = VIO_DP_STOPPED;
@@ -1139,10 +1327,16 @@ FIXME openbsd
 void
 vnet_ldc_start(struct ldc_conn *lc)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+	
 	struct vnet_softc *sc = lc->lc_sc;
 #if 0
 FIXME openbsd	
 	timeout_del(&sc->sc_handshake_to);
+#else 
+	callout_stop(&sc->sc_handshake_co);
 #endif 
 	vnet_send_ver_info(sc, VNET_MAJOR, VNET_MINOR);
 }
@@ -1150,6 +1344,9 @@ FIXME openbsd
 void
 vnet_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct ldc_conn *lc = &sc->sc_lc;
 	int err;
 
@@ -1161,6 +1358,9 @@ vnet_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 void
 vnet_send_ver_info(struct vnet_softc *sc, uint16_t major, uint16_t minor)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vio_ver_info vi;
 
 	bzero(&vi, sizeof(vi));
@@ -1179,6 +1379,9 @@ vnet_send_ver_info(struct vnet_softc *sc, uint16_t major, uint16_t minor)
 void
 vnet_send_attr_info(struct vnet_softc *sc)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vnet_attr_info ai;
 	int i;
 
@@ -1204,6 +1407,10 @@ vnet_send_attr_info(struct vnet_softc *sc)
 void
 vnet_send_dring_reg(struct vnet_softc *sc)
 {
+#if 1
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+	
 	struct vio_dring_reg dr;
 
 	bzero(&dr, sizeof(dr));
@@ -1226,6 +1433,9 @@ vnet_send_dring_reg(struct vnet_softc *sc)
 void
 vio_send_rdx(struct vnet_softc *sc)
 {
+#if 1
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vio_msg_tag tag;
 
 	tag.type = VIO_TYPE_CTRL;
@@ -1240,6 +1450,9 @@ vio_send_rdx(struct vnet_softc *sc)
 void
 vnet_send_dring_data(struct vnet_softc *sc, uint32_t start_idx)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vio_dring_msg dm;
 	u_int peer_state;
 
@@ -1262,6 +1475,9 @@ vnet_send_dring_data(struct vnet_softc *sc, uint32_t start_idx)
 void
 vnet_start(struct ifnet *ifp)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vnet_softc *sc = ifp->if_softc;
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct ldc_map *map = sc->sc_lm;
@@ -1271,22 +1487,35 @@ vnet_start(struct ifnet *ifp)
 	uint64_t tx_head, tx_tail, tx_state;
 	u_int start, prod, count;
 	int err;
-
 #if 0
 FIXME openbsd	
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
+		return;	
 #else			
-	if (!(ifp->if_flags & IFF_RUNNING) || (ifp->if_flags & IFF_OACTIVE))
-#endif
+	if (!(ifp->if_flags & IFF_RUNNING))
+	{
+		DPRINTF(("%s: not in RUNNING state\n", __func__));
 		return;
+	}
+	if (ifp->if_flags & IFF_OACTIVE)
+	{
+		DPRINTF(("%s: already active\n", __func__));
+		return;
+	}
+#endif
 
 #if 0
 FIXME openbsd 
 	if (ifq_empty(&ifp->if_snd))
 #else
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
-#endif			
+#endif
+	{
+#if 0			
+		DPRINTF(("%s: queue is empty\n", __func__));
+#endif		
 		return;
+	}
 
 	/*
 	 * We cannot transmit packets until a VIO connection has been
@@ -1294,15 +1523,22 @@ FIXME openbsd
 	 */
 	if (!ISSET(sc->sc_vio_state, VIO_RCV_RDX) ||
 	    !ISSET(sc->sc_vio_state, VIO_ACK_RDX))
+	{
+#if 0			
+		DPRINTF(("%s: vio connection not established yet\n", __func__));
+#endif		
 		return;
+	}
 
 	/*
 	 * Make sure there is room in the LDC transmit queue to send a
 	 * DRING_DATA message.
 	 */
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK)
+	if (err != H_EOK) {
+		DPRINTF(("%s: no room in ldc transmit queue\n", __func__));
 		return;
+	}
 	tx_tail += sizeof(struct ldc_pkt);
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(struct ldc_pkt)) - 1);
 	if (tx_tail == tx_head) {
@@ -1311,11 +1547,15 @@ FIXME openbsd
 		ifq_set_oactive(&ifp->if_snd);
 #else
 		ifp->if_flags |= IFF_OACTIVE;
-#endif		
-		return;
+#endif
+		{
+			DPRINTF(("%s: tail equals head\n", __func__));
+			return;
+		}
 	}
 
 	if (sc->sc_xfer_mode == VIO_DESC_MODE) {
+		DPRINTF(("%s: vio_desc_mode\n", __func__));
 		vnet_start_desc(ifp);
 		return;
 	}
@@ -1363,7 +1603,9 @@ FIXME openbsd
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
+				{
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+				}
 #endif
 
 		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
@@ -1408,11 +1650,17 @@ FIXME openbsd
 		vnet_send_dring_data(sc, start);
 		ifp->if_timer = 5;
 	}
+#if 0	
+	DPRINTF(("%s: exit\n", __func__));
+#endif	
 }
 
 void
 vnet_start_desc(struct ifnet *ifp)
 {
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	struct vnet_softc *sc = ifp->if_softc;
 	struct ldc_map *map = sc->sc_lm;
 	struct vnet_desc_msg dm;
@@ -1516,7 +1764,9 @@ FIXME openbsd
 int
 vnet_ioctl(struct ifnet *ifp, u_long cmd, void* data)
 {
-
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct vnet_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -1534,7 +1784,7 @@ vnet_ioctl(struct ifnet *ifp, u_long cmd, void* data)
 					vnet_init(ifp);
 			} else {
 				if (ifp->if_flags & IFF_RUNNING)
-					vnet_stop(ifp);
+					vnet_stop(ifp, 0);
 			}
 		break;
 
@@ -1568,6 +1818,9 @@ vnet_ioctl(struct ifnet *ifp, u_long cmd, void* data)
 void
 vnet_watchdog(struct ifnet *ifp)
 {
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	struct vnet_softc *sc = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", sc->sc_dv.dv_xname);
@@ -1576,13 +1829,18 @@ vnet_watchdog(struct ifnet *ifp)
 int
 vnet_media_change(struct ifnet *ifp)
 {
-	printf("vnet_media_change()\n");
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	return (0);
 }
 
 void
 vnet_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	imr->ifm_status = IFM_AVALID;
 #if 0
@@ -1598,6 +1856,10 @@ FIXME openbsd
 void
 vnet_link_state(struct vnet_softc *sc)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+	
 #if 0
 FIXME openbsd		
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -1640,6 +1902,9 @@ FIXME openbsd
 void
 vnet_setmulti(struct vnet_softc *sc, int set)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1690,23 +1955,25 @@ FIXME openbsd
 }
 
 
-void
+int
 vnet_init(struct ifnet *ifp)
 {
-
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+	
 	struct vnet_softc *sc = ifp->if_softc;
 	struct ldc_conn *lc = &sc->sc_lc;
 	int err;
 	vaddr_t va;
 	paddr_t pa;
-
 #if OPENBSD_BUSDMA
 	sc->sc_lm = ldc_map_alloc(sc->sc_dmatag, 2048);
 #else 
 	sc->sc_lm = ldc_map_alloc(2048);
 #endif 
 	if (sc->sc_lm == NULL)
-		return;
+		return ENOMEM;
 
 #if OPENBSD_BUSDMA
 	err = hv_ldc_set_map_table(lc->lc_id,
@@ -1720,23 +1987,35 @@ vnet_init(struct ifnet *ifp)
 #endif	
 	if (err != H_EOK) {
 		printf("hv_ldc_set_map_table %d\n", err);
-		return;
+		return EINVAL;
 	}
 
 	sc->sc_vd = vnet_dring_alloc(sc->sc_dmatag, VNET_NUM_SOFT_DESC);
 	if (sc->sc_vd == NULL)
-		return;
+		return ENOMEM;
 	sc->sc_vsd = malloc(VNET_NUM_SOFT_DESC * sizeof(*sc->sc_vsd), M_DEVBUF,
 	    M_NOWAIT|M_ZERO);
 	if (sc->sc_vsd == NULL)
-		return;
+		return ENOMEM;
 
+#if OPENBSD_BUSDMA
 	sc->sc_lm->lm_slot[0].entry = sc->sc_vd->vd_map->dm_segs[0].ds_addr;
+#else
+	va = (vaddr_t)sc->sc_vd->vd_desc;
+	pa = 0;
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+		panic("pmap_extract failed %lx\n", va);
+	sc->sc_lm->lm_slot[0].entry = pa;
+#endif 
 	sc->sc_lm->lm_slot[0].entry &= LDC_MTE_RA_MASK;
 	sc->sc_lm->lm_slot[0].entry |= LDC_MTE_CPR | LDC_MTE_CPW;
 	sc->sc_lm->lm_next = 1;
 	sc->sc_lm->lm_count = 1;
-
+	
+	va = lc->lc_txq->lq_va;
+	pa = 0;
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+		panic("pmap_extract failed %lx\n", va);
 #if OPENBSD_BUSDMA
 	err = hv_ldc_tx_qconf(lc->lc_id,
 						  lc->lc_txq->lq_map->dm_segs[0].ds_addr, lc->lc_txq->lq_nentries);
@@ -1745,6 +2024,11 @@ vnet_init(struct ifnet *ifp)
 #endif	
 	if (err != H_EOK)
 		printf("hv_ldc_tx_qconf %d\n", err);
+	
+	va = (vaddr_t)lc->lc_rxq->lq_va;
+	pa = 0;
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+	  panic("pmap_extract failed %lx\n", va);
 
 #if OPENBSD_BUSDMA
 	err = hv_ldc_rx_qconf(lc->lc_id,
@@ -1761,16 +2045,26 @@ vnet_init(struct ifnet *ifp)
 	ldc_send_vers(lc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	
+
+#if 0	
+	DPRINTF(("%s: exit\n", __func__));
+#endif	
+	return 0;
 }
 
 void
-vnet_stop(struct ifnet *ifp)
+vnet_stop(struct ifnet *ifp, int disable)
 		
 {
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	struct vnet_softc *sc = ifp->if_softc;
 	struct ldc_conn *lc = &sc->sc_lc;
 
+	/* FIXME */
+	printf("vnet_stop() disable %d\n", disable);
+	
 	ifp->if_flags &= ~IFF_RUNNING;
 #if 0
 FIXME openbsd	
@@ -1818,6 +2112,10 @@ FIXME openbsd
 struct vnet_dring *
 vnet_dring_alloc(bus_dma_tag_t t, int nentries)
 {
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+	
 	struct vnet_dring *vd;
 	bus_size_t size;
 	vaddr_t va;
@@ -1872,6 +2170,9 @@ destroy:
 void
 vnet_dring_free(bus_dma_tag_t t, struct vnet_dring *vd)
 {
+
+	DPRINTF(("%s: entry\n", __func__));
+	
 	bus_size_t size;
 
 	size = vd->vd_nentries * sizeof(struct vnet_desc);
