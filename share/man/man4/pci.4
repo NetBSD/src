@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.105 2021/03/01 18:08:36 jakllsch Exp $
+.\"	$NetBSD: pci.4,v 1.106 2021/03/11 10:28:53 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 1, 2021
+.Dd March 11, 2021
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -208,13 +208,8 @@ IDE disk controllers.
 .It twe
 3Ware Escalade RAID controllers.
 .El
-.Ss Network interfaces
+.Ss Wired network interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It an
-.Tn Aironet
-4500/4800 and
-.Tn Cisco
-340 series 802.11 interfaces.
 .It aq
 Aquantia AQC multigigabit Ethernet interfaces.
 .It bnx
@@ -283,8 +278,6 @@ SDL Communications N2pci and WAN/ic 400 synchronous serial interfaces.
 AMD PCnet-PCI family of
 .Tn Ethernet
 interfaces.
-.It ral
-Ralink Technology RT2500/RT2600-based 802.11a/b/g wireless network interfaces.
 .It re
 Realtek 10/100/1000 Ethernet adapters.
 .It rge
@@ -296,8 +289,6 @@ interfaces.
 Realtek 8129/8139 based
 .Tn Ethernet
 interfaces.
-.It rtwn
-Realtek RTL8188CE/RTL8192CE 802.11b/g/n wireless network interfaces.
 .It sf
 Adaptec AIC-6915 10/100
 .Tn Ethernet
@@ -335,12 +326,46 @@ VIA Networking Technologies VT6122 PCI Gigabit Ethernet adapter driver.
 VIA VT3043 (Rhine) and VT86C100A (Rhine-II)
 .Tn Ethernet
 interfaces.
-.It wi
-WaveLAN/IEEE and PRISM-II 802.11 wireless interfaces.
 .It wm
 Intel i8254x Gigabit
 .Tn Ethernet
 driver.
+.El
+.Ss Wireless network interfaces
+.Bl -tag -width pcdisplay -offset indent
+.It an
+Aironet 4500/4800 and Cisco 340 series 802.11 interfaces.
+.It atw
+ADMtek ADM8211 IEEE 802.11b PCI/CardBus wireless network interaces.
+.It ath
+Atheros IEEE 802.11a/b/g wireless network interfaces.
+.It athn
+Atheros IEEE 802.11a/b/g/n wireless network interfaces.
+.It bwi
+Broadcom BCM430x/4318 IEEE 802.11b/g wireless network interfaces.
+.It bwfm
+Broadcom and Cypress FullMAC wireless network interfaces.
+.It ipw
+Intel PRO/Wireless 2100 MiniPCI network interfaces.
+.It iwi
+Intel PRO/Wireless 2200BG and 2915ABG MiniPCI network interfaces.
+.It iwm
+Intel Wireless 7260, 7265, and 3160 PCIe Mini Card Dual Band network interfaces.
+.It iwn
+Intel Wireless WiFi Link 4965/5000/1000 and Centrino Wireless-N 1000/2000/6000
+PCIe Mini network interfaces.
+.It malo
+Marvell Libertas 88W8335/88W8310/88W8385 802.11b/g wireless network interfaces.
+.It ral
+Ralink Technology RT2500/RT2600-based 802.11a/b/g wireless network interfaces.
+.It rtw
+Realtek RTL8180L 802.11b wireless network interfaces.
+.It rtwn
+Realtek RTL8188CE/RTL8192CE 802.11b/g/n wireless network interfaces.
+.It wi
+WaveLAN/IEEE and PRISM-II 802.11 wireless interfaces.
+.It wpi
+Intel PRO/Wireless 3945ABG Mini PCI Express network adapters.
 .El
 .Ss Serial interfaces
 .Bl -tag -width pcdisplay -offset indent
@@ -447,12 +472,17 @@ USB XHCI host controllers.
 .Xr amr 4 ,
 .Xr an 4 ,
 .Xr aq 4 ,
+.Xr ath 4 ,
+.Xr athn 4 ,
+.Xr atw 4 ,
 .Xr auich 4 ,
 .Xr autri 4 ,
 .Xr auvia 4 ,
 .Xr bha 4 ,
 .Xr bktr 4 ,
 .Xr bnx 4 ,
+.Xr bwfm 4 ,
+.Xr bwi 4 ,
 .Xr cac 4 ,
 .Xr cbb 4 ,
 .Xr clcs 4 ,
@@ -477,9 +507,14 @@ USB XHCI host controllers.
 .Xr iha 4 ,
 .Xr intro 4 ,
 .Xr iop 4 ,
+.Xr ipw 4 ,
 .Xr isp 4 ,
+.Xr iwi 4 ,
+.Xr iwm 4 ,
+.Xr iwn 4 ,
 .Xr ixl 4 ,
 .Xr le 4 ,
+.Xr malo 4 ,
 .Xr mcx 4 ,
 .Xr mfi 4 ,
 .Xr mlx 4 ,
@@ -503,6 +538,8 @@ USB XHCI host controllers.
 .Xr ral 4 ,
 .Xr re 4 ,
 .Xr rtk 4 ,
+.Xr rtw 4 ,
+.Xr rtwn 4 ,
 .Xr rtwn 4 ,
 .Xr sf 4 ,
 .Xr siisata 4 ,
@@ -525,6 +562,7 @@ USB XHCI host controllers.
 .Xr vr 4 ,
 .Xr wi 4 ,
 .Xr wm 4 ,
+.Xr wpi 4 ,
 .Xr wscons 4 ,
 .Xr xhci 4 ,
 .Xr yds 4
