@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.29 2021/01/06 08:14:34 rin Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.30 2021/03/11 08:33:34 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
 #ifndef	_PPC_DB_MACHDEP_H_
 #define	_PPC_DB_MACHDEP_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL_OPT)
 #include "opt_ppcarch.h"
 #endif
 
