@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.78 2021/03/09 16:00:14 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.79 2021/03/11 16:17:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1770,4 +1770,29 @@ sys/netinet/tcp_timer.c				1.96
 
 	Avoid information disclosure.
 	[christos, ticket #1662]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.259, 1.278-1.279
+sys/dev/pci/ixgbe/ixgbe.h			1.75
+sys/dev/pci/ixgbe/ixgbe_netbsd.h		1.12
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.24-1.26
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.17
+sys/dev/pci/ixgbe/ixv.c				1.155-1.156
+sys/dev/pci/ixgbe/ix_txrx.c			1.64-67
+sys/dev/pci/files.pci				1.436
+share/man/man4/ixg.4				1.13-1.14
+share/man/man4/ixv.4				1.3, 1.6-1.7
+
+	- Fix a problem that the RX path stalled when the mbuf cluster is
+	  exhausted.
+	- Modify some parameters to reduce packet dropping. See also the
+	  manual's OPTIONS section for the detail.
+	- ixv(4): The max number of queue(pair) is not 7 but 8. Correctly
+	  reset the hardware.
+	- Add "TX " to "Queue No Descriptor Available" evcnt(9) name to make
+	  it more understandable.
+	- Fix a bug that some advertise speeds can't be set with
+	  hw.ixgN.advertise_speed if both 2.5G and 5G are set. Fix the error
+	  message, too.
+	- Fix typo in comment or debug message.
+	[msaitoh, ticket #1663]
 
