@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.48 2019/10/05 20:23:55 christos Exp $	*/
+/*	$NetBSD: compile.c,v 1.49 2021/03/11 22:31:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.48 2019/10/05 20:23:55 christos Exp $");
+__RCSID("$NetBSD: compile.c,v 1.49 2021/03/11 22:31:19 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/compile.c 259132 2013-12-09 18:57:20Z eadler $");
 #endif
@@ -531,7 +531,6 @@ unescape(char **pp, char **spp)
 		break;
 	case 'a':
 		*sp = '\a';
-		p++;
 		break;
 #if 0
 	// No, \b RE
