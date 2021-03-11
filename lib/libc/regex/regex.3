@@ -1,4 +1,4 @@
-.\" $NetBSD: regex.3,v 1.31 2021/03/11 17:13:29 wiz Exp $
+.\" $NetBSD: regex.3,v 1.32 2021/03/11 18:49:18 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -225,9 +225,9 @@ Horizontal Tab
 .It \ev
 Vertical Tab
 .It \ew
-Alias for [[:alnum:]]
+Alias for [[:alnum:]_]
 .It \eW
-Alias for [^[:alnum:]]
+Alias for [^[:alnum:]_]
 .It \e'
 Matches the end of the subject string (the string to be matched).
 .It \e`
