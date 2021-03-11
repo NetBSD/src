@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.108 2021/03/11 10:45:33 nia Exp $
+.\"	$NetBSD: pci.4,v 1.109 2021/03/11 14:08:18 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -326,6 +326,8 @@ DECchip 21x4x and clone
 interfaces.
 .It vge
 VIA Networking Technologies VT6122 PCI Gigabit Ethernet adapter driver.
+.It vmx
+VMware VMXNET3 virtual Ethernet interfaces.
 .It vr
 VIA VT3043 (Rhine) and VT86C100A (Rhine-II)
 .Tn Ethernet
@@ -459,6 +461,8 @@ communications ports.
 USB UHCI host controllers.
 .It viapm
 VIA VT82C686A hardware monitors.
+.It virtio
+Para-virtualized I/O in a virtual machine.
 .It vga
 VGA graphics boards.
 .It xhci
@@ -562,6 +566,8 @@ USB XHCI host controllers.
 .Xr vga 4 ,
 .Xr vge 4 ,
 .\" .Xr viapm 4 ,
+.Xr virtio 4 ,
+.Xr vmx 4 ,
 .Xr vr 4 ,
 .Xr wi 4 ,
 .Xr wm 4 ,
