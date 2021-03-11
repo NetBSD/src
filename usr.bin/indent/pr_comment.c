@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.15 2021/03/09 16:48:28 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.16 2021/03/11 22:15:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.15 2021/03/09 16:48:28 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.16 2021/03/11 22:15:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -283,7 +283,7 @@ pr_comment(void)
 	    }
 	    else {
 		ps.last_nl = 1;
-		if (*(e_com - 1) == ' ' || *(e_com - 1) == '\t')
+		if (e_com[-1] == ' ' || e_com[-1] == '\t')
 		    last_bl = e_com - 1;
 		/*
 		 * if there was a space at the end of the last line, remember
