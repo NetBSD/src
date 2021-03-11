@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.107 2021/03/11 10:33:36 nia Exp $
+.\"	$NetBSD: pci.4,v 1.108 2021/03/11 10:45:33 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -249,7 +249,9 @@ interfaces.
 Sun Microelectronics STP2002-STQ
 .Tn Ethernet
 interfaces.
-.It ixl 
+.It ixg
+Intel 82598EB, 82599, X540 and X550 10 Gigabit Ethernet interfaces.
+.It ixl
 Intel 700 series
 .Tn Ethernet
 interfaces.
@@ -512,6 +514,7 @@ USB XHCI host controllers.
 .Xr iwi 4 ,
 .Xr iwm 4 ,
 .Xr iwn 4 ,
+.Xr ixg 4 ,
 .Xr ixl 4 ,
 .Xr le 4 ,
 .Xr malo 4 ,
