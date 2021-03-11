@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.42 2021/03/11 22:28:30 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.43 2021/03/11 22:32:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.42 2021/03/11 22:28:30 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.43 2021/03/11 22:32:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -136,31 +136,33 @@ char        bakfile[MAXPATHLEN] = "";
 static void
 check_size_code(size_t desired_size)
 {
-    if (e_code + (desired_size) >= l_code) {
-	int nsize = l_code - s_code + 400 + desired_size;
-	int code_len = e_code - s_code;
-	codebuf = realloc(codebuf, nsize);
-	if (codebuf == NULL)
-	    err(1, NULL);
-	e_code = codebuf + code_len + 1;
-	l_code = codebuf + nsize - 5;
-	s_code = codebuf + 1;
-    }
+    if (e_code + (desired_size) < l_code)
+        return;
+
+    size_t nsize = l_code - s_code + 400 + desired_size;
+    size_t code_len = e_code - s_code;
+    codebuf = realloc(codebuf, nsize);
+    if (codebuf == NULL)
+	err(1, NULL);
+    e_code = codebuf + code_len + 1;
+    l_code = codebuf + nsize - 5;
+    s_code = codebuf + 1;
 }
 
 static void
 check_size_label(size_t desired_size)
 {
-    if (e_lab + (desired_size) >= l_lab) {
-	int nsize = l_lab - s_lab + 400 + desired_size;
-	int label_len = e_lab - s_lab;
-	labbuf = realloc(labbuf, nsize);
-	if (labbuf == NULL)
-	    err(1, NULL);
-	e_lab = labbuf + label_len + 1;
-	l_lab = labbuf + nsize - 5;
-	s_lab = labbuf + 1;
-    }
+    if (e_lab + (desired_size) < l_lab)
+        return;
+
+    size_t nsize = l_lab - s_lab + 400 + desired_size;
+    size_t label_len = e_lab - s_lab;
+    labbuf = realloc(labbuf, nsize);
+    if (labbuf == NULL)
+	err(1, NULL);
+    e_lab = labbuf + label_len + 1;
+    l_lab = labbuf + nsize - 5;
+    s_lab = labbuf + 1;
 }
 
 #if HAVE_CAPSICUM
