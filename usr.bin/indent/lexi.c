@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.31 2021/03/09 19:23:08 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.32 2021/03/11 21:47:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.31 2021/03/09 19:23:08 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.32 2021/03/11 21:47:36 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -171,6 +171,28 @@ static char const *table[] = {
     [0]   = "uuiifuufiuuiiuiiiiiuiuuuuu",
 };
 
+static char
+inbuf_peek(void)
+{
+    return *buf_ptr;
+}
+
+static void
+inbuf_skip(void)
+{
+    buf_ptr++;
+    if (buf_ptr >= buf_end)
+	fill_buffer();
+}
+
+static char
+inbuf_next(void)
+{
+    char ch = inbuf_peek();
+    inbuf_skip();
+    return ch;
+}
+
 static void
 check_size_token(size_t desired_size)
 {
@@ -273,8 +295,7 @@ lexi(struct parser_state *state)
     while (*buf_ptr == ' ' || *buf_ptr == '\t') {	/* get rid of blanks */
 	state->col_1 = false;	/* leading blanks imply token is not in column
 				 * 1 */
-	if (++buf_ptr >= buf_end)
-	    fill_buffer();
+	inbuf_skip();
     }
 
     /* Scan an alphanumeric token */
@@ -300,9 +321,7 @@ lexi(struct parser_state *state)
 		}
 		s = table[i][s - 'A'];
 		check_size_token(1);
-		*e_token++ = *buf_ptr++;
-		if (buf_ptr >= buf_end)
-		    fill_buffer();
+		*e_token++ = inbuf_next();
 	    }
 	    /* s now indicates the type: f(loating), i(integer), u(nknown) */
 	}
@@ -320,10 +339,7 @@ lexi(struct parser_state *state)
 			    break;
 		}
 		check_size_token(1);
-		/* copy it over */
-		*e_token++ = *buf_ptr++;
-		if (buf_ptr >= buf_end)
-		    fill_buffer();
+		*e_token++ = inbuf_next();
 	    }
 	*e_token = '\0';
 
@@ -331,10 +347,8 @@ lexi(struct parser_state *state)
 	      (*buf_ptr == '"' || *buf_ptr == '\''))
 	    return lexi_end(string_prefix);
 
-	while (*buf_ptr == ' ' || *buf_ptr == '\t') {	/* get rid of blanks */
-	    if (++buf_ptr >= buf_end)
-		fill_buffer();
-	}
+	while (*buf_ptr == ' ' || *buf_ptr == '\t')	/* get rid of blanks */
+	    inbuf_next();
 	state->keyword = rw_0;
 	if (state->last_token == keyword_struct_union_enum &&
 	    !state->p_l_follow) {
@@ -440,11 +454,9 @@ lexi(struct parser_state *state)
     /* Scan a non-alphanumeric token */
 
     check_size_token(3);	/* things like "<<=" */
-    *e_token++ = *buf_ptr;	/* if it is only a one-character token, it is
+    *e_token++ = inbuf_next();	/* if it is only a one-character token, it is
 				 * moved here */
     *e_token = '\0';
-    if (++buf_ptr >= buf_end)
-	fill_buffer();
 
     switch (*token) {
     case '\n':
@@ -468,17 +480,13 @@ lexi(struct parser_state *state)
 		    goto stop_lit;
 		}
 		check_size_token(2);
-		*e_token = *buf_ptr++;
-		if (buf_ptr >= buf_end)
-		    fill_buffer();
+		*e_token = inbuf_next();
 		if (*e_token == '\\') {		/* if escape, copy extra char */
 		    if (*buf_ptr == '\n')	/* check for escaped newline */
 			++line_no;
-		    *++e_token = *buf_ptr++;
+		    *++e_token = inbuf_next();
 		    ++e_token;	/* we must increment this again because we
 				 * copied two chars */
-		    if (buf_ptr >= buf_end)
-			fill_buffer();
 		}
 		else
 		    break;	/* we copied one character */
@@ -596,11 +604,8 @@ stop_lit:
     case '>':
     case '<':
     case '!':			/* ops like <, <<, <=, !=, etc */
-	if (*buf_ptr == '>' || *buf_ptr == '<' || *buf_ptr == '=') {
-	    *e_token++ = *buf_ptr;
-	    if (++buf_ptr >= buf_end)
-		fill_buffer();
-	}
+	if (*buf_ptr == '>' || *buf_ptr == '<' || *buf_ptr == '=')
+	    *e_token++ = inbuf_next();
 	if (*buf_ptr == '=')
 	    *e_token++ = *buf_ptr++;
 	code = (state->last_u_d ? unary_op : binary_op);
@@ -620,8 +625,7 @@ stop_lit:
 		check_size_token(1);
 		*e_token++ = *buf_ptr;
 	    }
-	    if (++buf_ptr >= buf_end)
-		fill_buffer();
+	    inbuf_skip();
 	}
 	if (ps.in_decl) {
 	    char *tp = buf_ptr;
@@ -640,10 +644,7 @@ stop_lit:
     default:
 	if (token[0] == '/' && (*buf_ptr == '*' || *buf_ptr == '/')) {
 	    /* it is start of comment */
-	    *e_token++ = *buf_ptr;
-
-	    if (++buf_ptr >= buf_end)
-		fill_buffer();
+	    *e_token++ = inbuf_next();
 
 	    code = comment;
 	    unary_delim = state->last_u_d;
@@ -654,9 +655,7 @@ stop_lit:
 	     * handle ||, &&, etc, and also things as in int *****i
 	     */
 	    check_size_token(1);
-	    *e_token++ = *buf_ptr;
-	    if (++buf_ptr >= buf_end)
-		fill_buffer();
+	    *e_token++ = inbuf_next();
 	}
 	code = (state->last_u_d ? unary_op : binary_op);
 	unary_delim = true;
