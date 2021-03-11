@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.45 2021/02/26 19:24:47 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.46 2021/03/11 15:00:29 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -51,7 +51,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regcomp.c 368359 2020-12-05 03:18:48Z kevans $");
 #endif
-__RCSID("$NetBSD: regcomp.c,v 1.45 2021/02/26 19:24:47 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.46 2021/03/11 15:00:29 christos Exp $");
 
 #define _OPENBSD_SOURCE
 
@@ -547,6 +547,27 @@ p_ere_exp(struct parse *p, struct branchc *bc)
 			case 's':
 				p_b_pseudoclass(p, wc);
 				break;
+			case 'a':
+				ordinary(p, '\a');
+				break;
+			case 'e':
+				ordinary(p, '\e');
+				break;
+			case 'f':
+				ordinary(p, '\f');
+				break;
+			case 'n':
+				ordinary(p, '\n');
+				break;
+			case 'r':
+				ordinary(p, '\r');
+				break;
+			case 't':
+				ordinary(p, '\t');
+				break;
+			case 'v':
+				ordinary(p, '\v');
+				break;
 			case '1':
 			case '2':
 			case '3':
@@ -905,6 +926,27 @@ p_simp_re(struct parse *p, struct branchc *bc)
 			case BACKSL|'S':
 			case BACKSL|'s':
 				p_b_pseudoclass(p, cc);
+				break;
+			case BACKSL|'a':
+				ordinary(p, '\a');
+				break;
+			case BACKSL|'e':
+				ordinary(p, '\e');
+				break;
+			case BACKSL|'f':
+				ordinary(p, '\f');
+				break;
+			case BACKSL|'n':
+				ordinary(p, '\n');
+				break;
+			case BACKSL|'r':
+				ordinary(p, '\r');
+				break;
+			case BACKSL|'t':
+				ordinary(p, '\t');
+				break;
+			case BACKSL|'v':
+				ordinary(p, '\v');
 				break;
 			default:
 				handled = false;
