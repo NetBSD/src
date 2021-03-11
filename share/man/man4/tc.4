@@ -1,4 +1,4 @@
-.\" $NetBSD: tc.4,v 1.8 2021/02/26 11:12:45 nia Exp $
+.\" $NetBSD: tc.4,v 1.9 2021/03/11 17:01:55 nia Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
@@ -65,53 +65,40 @@ includes machine-independent
 drivers, sorted by device type and driver name:
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It asc
-PMAZ-A single-channel SCSI adapter
-.It tcds
+.It Xr tcds 4
 PMAZ-DS, PMAZ-FS, PMAZB-AA and PMAZC-AA dual-channel SCSI adapters
 .El
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It le
+.It Xr le 4
 LANCE Ethernet interface
 .El
 .Ss Frame buffers
 .Bl -tag -width pcdisplay -offset indent
-.It cfb
+.It Xr cfb 4
 PMAG-B CX colour unaccelerated 2-D framebuffer
-.It mfb
+.It Xr mfb 4
 PMAG-A MX monochrome framebuffer
-.It px
+.It Xr px 4
 PMAG-C PX accelerated graphics boards
-.It pxg
+.It Xr pxg 4
 PMAG-D, PMAG-E and PMAG-F PXG accelerated graphics
 boards
-.It sfb
+.It Xr sfb 4
 PMAGB-BA HX colour unaccelerated 2-D framebuffer
-.It tfb
+.It Xr tfb 4
 PMAG-J TX 24-bit colour unaccelerated 2-D framebuffer
 .El
 .Ss Miscellaneous
 .Bl -tag -width pcdisplay -offset indent
-.It ioasic
+.It Xr ioasic 4
 baseboard IO control ASIC for DEC TURBOchannel systems
-.It tcu
+.It Xr tcu 4
 TC-USB USB host and GPIO option
 .El
 .Sh SEE ALSO
-.Xr asc 4 ,
-.Xr cfb 4 ,
-.Xr fta 4 ,
 .Xr intro 4 ,
-.Xr ioasic 4 ,
-.Xr le 4 ,
-.Xr mfb 4 ,
-.Xr px 4 ,
-.Xr pxg 4 ,
-.Xr sfb 4 ,
-.Xr tcds 4 ,
-.Xr tcu 4 ,
-.Xr tfb 4
+.Xr tc 9
 .Sh HISTORY
 The
 .Nm
