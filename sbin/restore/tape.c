@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.69 2020/09/03 19:31:34 bouyer Exp $	*/
+/*	$NetBSD: tape.c,v 1.70 2021/03/11 01:13:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.69 2020/09/03 19:31:34 bouyer Exp $");
+__RCSID("$NetBSD: tape.c,v 1.70 2021/03/11 01:13:11 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1439,7 +1439,7 @@ skip:
 
 		default:
 			panic("unknown tape header type %d\n", spcl.c_type);
-			fprintf(stderr, "skiping to next header\n");
+			fprintf(stderr, "skipping to next header\n");
 			goto skip;
 
 		}
