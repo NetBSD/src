@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.40 2014/06/25 02:05:58 uwe Exp $
+.\"	$NetBSD: sed.1,v 1.41 2021/03/11 15:15:05 christos Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"	@(#)sed.1	8.2 (Berkeley) 12/30/93
 .\" $FreeBSD: head/usr.bin/sed/sed.1 259132 2013-12-09 18:57:20Z eadler $
 .\"
-.Dd June 18, 2014
+.Dd March 11, 2021
 .Dt SED 1
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Ar command
 .Op Ar
 .Nm
-.Op Fl aElnru
+.Op Fl aEGlnru
 .Op Fl e Ar command
 .Op Fl f Ar command_file
 .Op Fl I Ns Op Ar extension
@@ -97,6 +97,11 @@ Append the editing commands found in the file
 .Ar command_file
 to the list of commands.
 The editing commands should each be listed on a separate line.
+.It Fl G
+Support GNU regex extensions.
+See 
+.Xr regex 3
+for details.
 .It Fl I Ns Op Ar extension
 Edit files in-place, saving backups with the specified
 .Ar extension .

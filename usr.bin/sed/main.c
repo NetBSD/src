@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2020/05/15 22:39:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2021/03/11 15:15:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.36 2020/05/15 22:39:54 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2021/03/11 15:15:05 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -141,11 +141,14 @@ main(int argc, char *argv[])
 	fflag = 0;
 	inplace = NULL;
 
-	while ((c = getopt(argc, argv, "EI::ae:f:i::lnru")) != -1)
+	while ((c = getopt(argc, argv, "EGI::ae:f:i::lnru")) != -1)
 		switch (c) {
 		case 'r':		/* Gnu sed compat */
 		case 'E':
-			rflags = REG_EXTENDED;
+			rflags |= REG_EXTENDED;
+			break;
+		case 'G':
+			rflags |= REG_GNU;
 			break;
 		case 'I':
 			inplace = optarg ? optarg : __UNCONST("");
@@ -224,7 +227,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "Usage:  %s [-aElnru] command [file ...]\n"
-	    "\t%s [-aElnru] [-e command] [-f command_file] [-I[extension]]\n"
+	    "\t%s [-aEGlnru] [-e command] [-f command_file] [-I[extension]]\n"
 	    "\t    [-i[extension]] [file ...]\n", getprogname(), getprogname());
 	exit(1);
 }
