@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.125.2.10 2020/07/10 11:35:51 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.125.2.11 2021/03/11 16:00:24 martin Exp $*/
 
 /******************************************************************************
 
@@ -38,6 +38,7 @@
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_net_mpsafe.h"
+#include "opt_ixgbe.h"
 #endif
 
 #include "ixgbe.h"
@@ -497,6 +498,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixv_rxd;
+
+	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
 
 	/* Setup MSI-X */
 	error = ixv_configure_interrupts(adapter);
@@ -2499,6 +2502,13 @@ ixv_add_device_sysctls(struct adapter *adapter)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
+	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
+	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
 	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &adapter->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
@@ -2598,7 +2608,7 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue No Descriptor Available");
+		    "TX Queue No Descriptor Available");
 		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Queue Packets Transmitted");
