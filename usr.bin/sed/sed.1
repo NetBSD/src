@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.41 2021/03/11 15:15:05 christos Exp $
+.\"	$NetBSD: sed.1,v 1.42 2021/03/11 15:45:55 christos Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -40,11 +40,11 @@
 .Nd stream editor
 .Sh SYNOPSIS
 .Nm
-.Op Fl aElnru
+.Op Fl aEGglnru
 .Ar command
 .Op Ar
 .Nm
-.Op Fl aEGlnru
+.Op Fl aEGglnru
 .Op Fl e Ar command
 .Op Fl f Ar command_file
 .Op Fl I Ns Op Ar extension
@@ -98,7 +98,9 @@ Append the editing commands found in the file
 to the list of commands.
 The editing commands should each be listed on a separate line.
 .It Fl G
-Support GNU regex extensions.
+Turn off GNU regex extensions (the default).
+.It Fl g
+Turn on GNU regex extensions.
 See 
 .Xr regex 3
 for details.
