@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.38 2014/12/31 18:19:21 wiz Exp $
+.\"	$NetBSD: cardbus.4,v 1.39 2021/03/11 16:34:12 nia Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,66 +65,66 @@ devices, respectively.
 includes the following machine-independent CardBus
 drivers, sorted by function and driver name:
 .Ss Network interfaces
-.Bl -tag -width speaker -offset indent -compact
-.It ath
+.Bl -tag -width siisata(4) -offset indent -compact
+.It Xr ath 4
 Atheros 5210/5211/5212 802.11
-.It atw
+.It Xr atw 4
 ADMtek ADM8211 (802.11)
-.It bwi
+.It Xr bwi 4
 Broadcom BCM430x/4318 (802.11)
-.It ex
+.It Xr ex 4
 3Com 3c575TX and 3c575BTX
-.It fxp
+.It Xr fxp 4
 Intel i8255x
-.It ral
+.It Xr ral 4
 Ralink Technology RT25x0 (802.11)
-.It re
+.It Xr re 4
 RealTek 8139C+/8169/8169S/8110S
-.It rtk
+.It Xr rtk 4
 Realtek 8129/8139
-.It rtw
+.It Xr rtw 4
 Realtek 8180L (802.11)
-.It tlp
+.It Xr tlp 4
 DECchip 21143
 .El
 .Ss Serial interfaces
-.Bl -tag -width speaker -offset indent -compact
-.It com
+.Bl -tag -width siisata(4) -offset indent -compact
+.It Xr com 4
 Modems and serial cards
 .El
 .Ss SCSI controllers
-.Bl -tag -width speaker -offset indent -compact
-.It adv
+.Bl -tag -width siisata(4) -offset indent -compact
+.It Xr adv 4
 AdvanSys 1200[A,B], 9xx[U,UA]
-.It ahc
+.It Xr ahc 4
 Adaptec ADP-1480
-.It njs
+.It Xr njs 4
 Workbit NinjaSCSI-32
 .El
 .Ss USB controllers
-.Bl -tag -width speaker -offset indent -compact
-.It ehci
+.Bl -tag -width siisata(4) -offset indent -compact
+.It Xr ehci 4
 Enhanced Host Controller (2.0)
-.It ohci
+.It Xr ohci 4
 Open Host Controller
-.It uhci
+.It Xr uhci 4
 Universal Host Controller
 .El
 .Ss IEEE1394 controllers
-.Bl -tag -width speaker -offset indent -compact
-.It fwohci
+.Bl -tag -width siisata(4) -offset indent -compact
+.It Xr fwohci 4
 OHCI controller
 .El
 .Ss SD/MMC/SDIO controllers
-.Bl -tag -width speaker -offset indent -compact
-.It sdhc
+.Bl -tag -width siisata(4) -offset indent -compact
+.It Xr sdhc 4
 SD Host Controller
 .El
 .Ss Disk and tape controllers
-.Bl -tag -width speaker -offset indent -compact
-.It njata
+.Bl -tag -width siisata(4) -offset indent -compact
+.It Xr njata 4
 Workbit NinjaATA-32
-.It siisata
+.It Xr siisata 4
 Silicon Image SATA-II controllers
 .El
 .Sh DIAGNOSTICS
@@ -151,30 +151,9 @@ or (if ACPI is in use)
 .El
 in the kernel configuration might be of use.
 .Sh SEE ALSO
-.Xr adv 4 ,
-.Xr ahc 4 ,
-.Xr ath 4 ,
-.Xr atw 4 ,
-.Xr bwi 4 ,
-.Xr com 4 ,
-.Xr ehci 4 ,
-.Xr ex 4 ,
-.Xr fwohci 4 ,
-.Xr fxp 4 ,
-.Xr njata 4 ,
-.Xr njs 4 ,
-.Xr ohci 4 ,
 .Xr options 4 ,
 .Xr pci 4 ,
-.Xr pcmcia 4 ,
-.Xr ral 4 ,
-.Xr re 4 ,
-.Xr rtk 4 ,
-.Xr rtw 4 ,
-.Xr sdhc 4 ,
-.Xr siisata 4 ,
-.Xr tlp 4 ,
-.Xr uhci 4
+.Xr pcmcia 4
 .Sh HISTORY
 The
 .Nm
