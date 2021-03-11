@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2021/03/10 18:29:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2021/03/11 04:43:47 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2021/03/10 18:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2021/03/11 04:43:47 thorpej Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3378,17 +3378,10 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 	pmap_vsid_bitmap[0] |= 1;
 
 	/*
-	 * Initialize kernel pmap and hardware.
+	 * Initialize kernel pmap.
 	 */
-
-/* PMAP_OEA64_BRIDGE does support these instructions */
-#if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
+#if defined(PMAP_OEA) || defined(PMAP_OEA64_BRIDGE)
 	for (i = 0; i < 16; i++) {
-#if defined(PPC_OEA601)
-	    /* XXX wedges for segment register 0xf , so set later */
-	    if ((iosrtable[i] & SR601_T) && ((MFPVR() >> 16) == MPC601))
-		    continue;
-#endif
  		pmap_kernel()->pm_sr[i] = KERNELN_SEGMENT(i)|SR_PRKEY;
 	}
 	pmap_kernel()->pm_vsid = KERNEL_VSIDBITS;
@@ -3398,13 +3391,16 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
 #endif
 #endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
-#if defined (PMAP_OEA)
-	for (i = 0; i < 16; i++) {
-		if (iosrtable[i] & SR601_T) {
-			pmap_kernel()->pm_sr[i] = iosrtable[i];
+
+#if defined(PMAP_OEA) && defined(PPC_OEA601)
+	if ((MFPVR() >> 16) == MPC601)) {
+		for (i = 0; i < 16; i++) {
+			if (iosrtable[i] & SR601_T) {
+				pmap_kernel()->pm_sr[i] = iosrtable[i];
+			}
 		}
 	}
-#endif
+#endif /* PMAP_OEA && PPC_OEA601 */
 
 #ifdef ALTIVEC
 	pmap_use_altivec = cpu_altivec;
@@ -3500,9 +3496,9 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 			pmap_pte_create(&pt, pm, va, pa | PTE_M|PTE_BW);
 			pmap_pte_insert(ptegidx, &pt);
 		}
-#endif
+#endif /* PMAP_NEED_FULL_MAPKERNEL */
 	}
-#endif
+#endif /* PMAP_NEED_MAPKERNEL */
 }
 
 /*
@@ -3512,23 +3508,18 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 void
 pmap_bootstrap2(void)
 {
-/* PMAP_OEA64_BRIDGE does support these instructions */
-#if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
+#if defined(PMAP_OEA) || defined(PMAP_OEA64_BRIDGE)
 	for (int i = 0; i < 16; i++) {
-#if defined(PPC_OEA601)
-		/* XXX wedges for segment register 0xf , so set later */
-		if ((iosrtable[i] & SR601_T) && ((MFPVR() >> 16) == MPC601))
-			continue;
-#endif /* PPC_OEA601 */
 		__asm volatile("mtsrin %0,%1"
 			:: "r"(pmap_kernel()->pm_sr[i]),
 			   "r"(i << ADDR_SR_SHFT));
 	}
 #endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
-#if defined (PMAP_OEA)
+
+#if defined(PMAP_OEA)
 	 __asm volatile("sync; mtsdr1 %0; isync"
 		:: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
-#elif defined (PMAP_OEA64) || defined (PMAP_OEA64_BRIDGE)
+#elif defined(PMAP_OEA64) || defined(PMAP_OEA64_BRIDGE)
 	__asm __volatile("sync; mtsdr1 %0; isync"
 		:: "r"((uintptr_t)pmap_pteg_table |
 		       (32 - __builtin_clz(pmap_pteg_mask >> 11))));
@@ -3536,7 +3527,7 @@ pmap_bootstrap2(void)
 	tlbia();
 
 #if defined(PMAPDEBUG)
-	if ( pmapdebug )
+	if (pmapdebug)
 	    pmap_print_mmuregs();
 #endif
 }
