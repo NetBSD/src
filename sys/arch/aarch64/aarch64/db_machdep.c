@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.38 2021/03/11 09:48:40 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.39 2021/03/11 10:34:34 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.38 2021/03/11 09:48:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39 2021/03/11 10:34:34 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -179,10 +179,11 @@ const struct db_command db_machine_command_table[] = {
 		DDB_ADD_CMD(
 		    "watch", db_md_watch_cmd, 0,
 		    "set or clear watchpoint",
-		    "[/12345678] [address|#]",
+		    "[/rwbhlq] [address|#]",
 		    "\taddress: watchpoint address to set\n"
-		    "\t#: watchpoint number to remove"
-		    "\t/1..8: size of data\n")
+		    "\t#: watchpoint number to remove\n"
+		    "\t/rw: read or write access\n"
+		    "\t/bhlq: size of access\n")
 	},
 	{
 		DDB_ADD_CMD(
@@ -978,20 +979,22 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			ch = *modif;
 
 			switch (ch) {
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-				watchsize = ch - '0';
+			case 'b':
+				watchsize = 1;
+				break;
+			case 'h':
+				watchsize = 2;
 				break;
 			case 'l':
+				watchsize = 4;
+				break;
+			case 'q':
+				watchsize = 8;
+				break;
+			case 'r':
 				accesstype |= WATCHPOINT_ACCESS_LOAD;
 				break;
-			case 's':
+			case 'w':
 				accesstype |= WATCHPOINT_ACCESS_STORE;
 				break;
 			}
