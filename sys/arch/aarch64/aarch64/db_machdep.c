@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.37 2021/03/09 16:44:27 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.38 2021/03/11 09:48:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.37 2021/03/09 16:44:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.38 2021/03/11 09:48:40 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -699,7 +699,7 @@ aarch64_breakpoint_set(int n, vaddr_t addr)
 		bvr = 0;
 		bcr = 0;
 	} else {
-		bvr = addr;
+		bvr = addr & DBGBVR_MASK;
 		bcr =
 		    __SHIFTIN(0, DBGBCR_BT) |
 		    __SHIFTIN(0, DBGBCR_LBN) |
@@ -714,7 +714,7 @@ aarch64_breakpoint_set(int n, vaddr_t addr)
 }
 
 void
-aarch64_watchpoint_set(int n, vaddr_t addr, int size, int accesstype)
+aarch64_watchpoint_set(int n, vaddr_t addr, u_int size, u_int accesstype)
 {
 	uint64_t wvr, wcr;
 	uint32_t matchbytebit;
@@ -723,9 +723,13 @@ aarch64_watchpoint_set(int n, vaddr_t addr, int size, int accesstype)
 	if (size > 8)
 		size = 8;
 
-	/* BAS must be all of whose set bits are contiguous */
+	/*
+	 * It is always watched in 8byte units, and
+	 * BAS is a bit field of byte offset in 8byte units.
+	 */
 	matchbytebit = 0xff >> (8 - size);
 	matchbytebit <<= (addr & 7);
+	addr &= ~7UL;
 
 	/* load, store, or both */
 	accesstype &= WATCHPOINT_ACCESS_MASK;
@@ -752,24 +756,37 @@ aarch64_watchpoint_set(int n, vaddr_t addr, int size, int accesstype)
 	aarch64_set_wcr_wvr(n, wcr, wvr);
 }
 
-static void
+static int
 db_md_breakpoint_set(int n, vaddr_t addr)
 {
 	if (n >= __arraycount(breakpoint_buf))
-		return;
+		return -1;
+
+	if ((addr & 3) != 0) {
+		db_printf("address must be 4bytes aligned\n");
+		return -1;
+	}
 
 	breakpoint_buf[n].addr = addr;
+	return 0;
 }
 
-static void
-db_md_watchpoint_set(int n, vaddr_t addr, int size, int accesstype)
+static int
+db_md_watchpoint_set(int n, vaddr_t addr, u_int size, u_int accesstype)
 {
 	if (n >= __arraycount(watchpoint_buf))
-		return;
+		return -1;
+
+	if (size != 0 && ((addr) & ~7UL) != ((addr + size - 1) & ~7UL)) {
+		db_printf(
+		    "address and size must fit within a block of 8bytes\n");
+		return -1;
+	}
 
 	watchpoint_buf[n].addr = addr;
 	watchpoint_buf[n].size = size;
 	watchpoint_buf[n].accesstype = accesstype;
+	return 0;
 }
 
 static void
@@ -893,7 +910,7 @@ void
 db_md_break_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	int i;
+	int i, rc;
 	int added, cleared;
 
 	if (!have_addr) {
@@ -901,7 +918,6 @@ db_md_break_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		return;
 	}
 
-	addr &= DBGBVR_MASK;
 	added = -1;
 	cleared = -1;
 	if (0 <= addr && addr <= max_breakpoint) {
@@ -920,7 +936,9 @@ db_md_break_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (cleared == -1) {
 			for (i = 0; i <= max_breakpoint; i++) {
 				if (breakpoint_buf[i].addr == 0) {
-					db_md_breakpoint_set(i, addr);
+					rc = db_md_breakpoint_set(i, addr);
+					if (rc != 0)
+						return;
 					added = i;
 					break;
 				}
@@ -944,16 +962,15 @@ void
 db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	int i;
+	int i, rc;
 	int added, cleared;
-	int accesstype, watchsize;
+	u_int accesstype, watchsize;
 
 	if (!have_addr) {
 		show_watchpoints();
 		return;
 	}
 
-	addr &= DBGWVR_MASK;
 	accesstype = watchsize = 0;
 	if ((modif != NULL) && (*modif != '\0')) {
 		int ch;
@@ -1003,8 +1020,10 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (cleared == -1) {
 			for (i = 0; i <= max_watchpoint; i++) {
 				if (watchpoint_buf[i].addr == 0) {
-					db_md_watchpoint_set(i, addr, watchsize,
-					    accesstype);
+					rc = db_md_watchpoint_set(i, addr,
+					    watchsize, accesstype);
+					if (rc != 0)
+						return;
 					added = i;
 					break;
 				}

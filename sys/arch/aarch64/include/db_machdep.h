@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.12 2021/03/09 16:44:27 ryo Exp $ */
+/* $NetBSD: db_machdep.h,v 1.13 2021/03/11 09:48:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ void db_machdep_init(void);
 
 /* hardware breakpoint/watchpoint functions */
 void aarch64_breakpoint_set(int, vaddr_t);
-void aarch64_watchpoint_set(int, vaddr_t, int, int);
+void aarch64_watchpoint_set(int, vaddr_t, u_int, u_int);
 #define WATCHPOINT_ACCESS_LOAD		0x01
 #define WATCHPOINT_ACCESS_STORE		0x02
 #define WATCHPOINT_ACCESS_LOADSTORE	0x03
