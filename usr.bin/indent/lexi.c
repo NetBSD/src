@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.33 2021/03/11 22:15:44 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.34 2021/03/11 22:28:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.33 2021/03/11 22:15:44 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.34 2021/03/11 22:28:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -199,7 +199,7 @@ check_size_token(size_t desired_size)
     if (e_token + (desired_size) >= l_token) {
 	int nsize = l_token - s_token + 400 + desired_size;
 	int token_len = e_token - s_token;
-	tokenbuf = (char *)realloc(tokenbuf, nsize);
+	tokenbuf = realloc(tokenbuf, nsize);
 	if (tokenbuf == NULL)
 	    err(1, NULL);
 	e_token = tokenbuf + token_len + 1;
@@ -690,7 +690,7 @@ void
 alloc_typenames(void)
 {
 
-    typenames = (const char **)malloc(sizeof(typenames[0]) *
+    typenames = malloc(sizeof(typenames[0]) *
         (typename_count = 16));
     if (typenames == NULL)
 	err(1, NULL);
