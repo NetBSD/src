@@ -1,4 +1,4 @@
-.\"	$NetBSD: sbus.4,v 1.10 2018/09/06 09:47:30 maxv Exp $
+.\"	$NetBSD: sbus.4,v 1.11 2021/03/11 16:53:14 nia Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,91 +61,74 @@ includes machine-independent
 .Nm
 drivers, sorted by device type and driver name:
 .Ss SCSI interfaces
-.Bl -tag -width xxxxxxxx -offset indent
-.It esp
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It Xr esp 4
 NCR53c94 and compatible
 .Tn SCSI
 interfaces.
-.It isp
+.It Xr isp 4
 Qlogic
 .Tn SCSI
 interfaces.
 .El
 .Ss Network interfaces
-.Bl -tag -width xxxxxxxx -offset indent
-.It le
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It Xr le 4
 .Tn Lance
 7990 series
 .Tn Ethernet
 interfaces.
-.It hme
+.It Xr hme 4
 .Dq Happy Meal
 .Tn Ethernet
 interfaces.
-.It be
+.It Xr be 4
 .Dq Big Mac
 .Tn Ethernet
 board.
-.It qe
+.It Xr qe 4
 Quad Ethernet Controller
 board.
 .El
 .Ss Bridges
-.Bl -tag -width xxxxxxxx -offset indent
-.It xbox
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It Xr xbox 4
 an
 .Nm Sbus
 expansion box.
 .El
 .Ss Graphics devices
-.Bl -tag -width xxxxxxxx -offset indent
-.It bwtwo
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It Xr bwtwo 4
 framebuffer device.
-.It cgthree
+.It Xr cgthree 4
 framebuffer device.
-.It cgsix
+.It Xr cgsix 4
 framebuffer device.
-.It pnozz
+.It Xr pnozz 4
 framebuffer device.
-.It tcx
+.It Xr tcx 4
 framebuffer device.
-.It zx
+.It Xr zx 4
 framebuffer device.
 .El
 .Ss Audio devices
-.Bl -tag -width xxxxxxxx -offset indent
-.It audiocs
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It Xr audiocs 4
 CS4231 codec.
 .El
 .Ss Serial interfaces
-.Bl -tag -width xxxxxxxx -offset indent
-.It magma
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It Xr magma 4
 Magma Serial/Parallel combo device.
 .El
 .Ss Floppy interfaces
-.Bl -tag -width xxxxxxxx -offset indent
-.It fdc
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It Xr fdc 4
 Floppy disk controller
 .El
 .Sh SEE ALSO
-.Xr audiocs 4 ,
-.Xr be 4 ,
-.Xr bwtwo 4 ,
-.Xr cgsix 4 ,
-.Xr cgthree 4 ,
-.Xr en 4 ,
-.Xr esp 4 ,
-.Xr fdc 4 ,
-.Xr hme 4 ,
-.Xr intro 4 ,
-.Xr isp 4 ,
-.Xr le 4 ,
-.Xr magma 4 ,
-.Xr pnozz 4 ,
-.Xr qe 4 ,
-.Xr tcx 4 ,
-.Xr xbox 4 ,
-.Xr zx 4
+.Xr intro 4
 .Sh HISTORY
 The machine-independent
 .Nm SBus
