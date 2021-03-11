@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.37 2012/03/13 19:25:41 njoly Exp $
+.\" $NetBSD: pcmcia.4,v 1.38 2021/03/11 16:39:58 nia Exp $
 .\"
 .\" Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,93 +69,74 @@ includes the following machine-independent
 .Tn PCMCIA
 drivers, sorted by function and driver name:
 .Ss Serial interfaces and modems
-.Bl -tag -width speaker -offset indent
-.It com
+.Bl -tag -width speaker(4) -offset indent
+.It Xr com 4
 8250/16450/16550-compatible PCMCIA serial cards and modems.
 .El
 .Ss Network interfaces
-.Bl -tag -width speaker -offset indent
-.It an
+.Bl -tag -width speaker(4) -offset indent
+.It Xr an 4
 Aironet 4500/4800 and Cisco 340 series 802.11 controller.
-.It awi
+.It Xr awi 4
 802.11 controller based on the AMD PCnetMobile chipset.
-.It cnw
+.It Xr cnw 4
 Netwave AirSurfer Wireless LAN interface.
-.It ep
+.It Xr ep 4
 3Com 3c589 EtherLink III Ethernet card.
-.It mbe
+.It Xr mbe 4
 Ethernet card based on the Fujitsu MB86960A/MB86965A chipset.
-.It mhzc
+.It Xr mhzc 4
 Megahertz Ethernet/Modem combo cards
-.It ne
+.It Xr ne 4
 NE2000 compatible cards.
-.It ray
+.It Xr ray 4
 Raytheon Raylink and WebGear Aviator2.4 802.11 controller.
-.It sm
+.It Xr sm 4
 Megahertz Ethernet card.
-.It wi
+.It Xr wi 4
 Lucent WaveLAN/IEEE and PRISM-II based 802.11 controller.
-.It xi
+.It Xr xi 4
 Xircom CreditCard Ethernet
 .El
 .Ss SCSI controllers
-.Bl -tag -width speaker -offset indent
-.It aic
+.Bl -tag -width speaker(4) -offset indent
+.It Xr aic 4
 Adaptec APA-1460
 .Tn SCSI
 controller card.
-.It esp
+.It Xr esp 4
 NCR 53C9x, Emulex ESP406, and Qlogic FAS408
 .Tn SCSI
 controllers.
-.It spc
+.It Xr spc 4
 Fujitsu MB87030/MB89352
 .Tn SCSI
 controllers.
 .El
 .Ss IDE controllers
-.Bl -tag -width speaker -offset indent
-.It wdc
+.Bl -tag -width speaker(4) -offset indent
+.It Xr wdc 4
 Digital Hinote Ultra Mobile Media Adapter
 .El
 .Ss Bluetooth devices
-.Bl -tag -width speaker -offset indent
-.It bt3c
+.Bl -tag -width speaker(4) -offset indent
+.It Xr bt3c 4
 3Com 3CRWB6096 Bluetooth PC Card driver.
-.It btbc
+.It Xr btbc 4
 AnyCom Bluetooth BlueCard driver.
 .El
 .Ss USB Controller
-.Bl -tag -width speaker -offset indent
-.It slhci
+.Bl -tag -width speaker(4) -offset indent
+.It Xr slhci 4
 Cypress/ScanLogic SL811HS USB Host Controller driver.
 .El
 .Sh SEE ALSO
-.Xr aic 4 ,
-.Xr an 4 ,
-.Xr awi 4 ,
-.Xr bt3c 4 ,
-.Xr btbc 4 ,
 .Xr cardbus 4 ,
-.Xr cnw 4 ,
-.Xr com 4 ,
-.Xr ep 4 ,
-.Xr esp 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
-.Xr mbe 4 ,
-.Xr mhzc 4 ,
-.Xr ne 4 ,
 .Xr options 4 ,
 .Xr pcic 4 ,
-.Xr pcmcom 4 ,
-.Xr ray 4 ,
-.Xr slhci 4 ,
-.Xr sm 4 ,
-.Xr spc 4 ,
-.Xr tcic 4 ,
-.Xr wi 4 ,
-.Xr xi 4
+.Xr tcic 4
 .Sh HISTORY
 The
 .Nm
