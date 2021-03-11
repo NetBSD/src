@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.12 2020/09/02 12:34:55 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.13 2021/03/11 16:00:24 martin Exp $ */
 
 /******************************************************************************
 
@@ -67,6 +67,7 @@
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_net_mpsafe.h"
+#include "opt_ixgbe.h"
 #endif
 
 #include "ixgbe.h"
@@ -942,6 +943,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixgbe_rxd;
+
+	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
 
 	/* Allocate our TX/RX Queues */
 	if (ixgbe_allocate_queues(adapter)) {
@@ -1854,7 +1857,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue No Descriptor Available");
+		    "TX Queue No Descriptor Available");
 		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Queue Packets Transmitted");
@@ -3295,6 +3298,13 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	    CTLFLAG_READONLY, CTLTYPE_INT,
 	    "num_rx_desc", SYSCTL_DESCR("Number of rx descriptors"),
 	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
+	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
+	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
@@ -5382,9 +5392,9 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 		return (EINVAL);
 	}
 
-	if (advertise < 0x0 || advertise > 0x2f) {
+	if (advertise < 0x0 || advertise > 0x3f) {
 		device_printf(dev,
-		    "Invalid advertised speed; valid modes are 0x0 through 0x7\n");
+		    "Invalid advertised speed; valid modes are 0x0 through 0x3f\n");
 		return (EINVAL);
 	}
 
