@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.41 2021/03/09 19:46:28 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.42 2021/03/11 22:28:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.41 2021/03/09 19:46:28 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.42 2021/03/11 22:28:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -139,7 +139,7 @@ check_size_code(size_t desired_size)
     if (e_code + (desired_size) >= l_code) {
 	int nsize = l_code - s_code + 400 + desired_size;
 	int code_len = e_code - s_code;
-	codebuf = (char *)realloc(codebuf, nsize);
+	codebuf = realloc(codebuf, nsize);
 	if (codebuf == NULL)
 	    err(1, NULL);
 	e_code = codebuf + code_len + 1;
@@ -154,7 +154,7 @@ check_size_label(size_t desired_size)
     if (e_lab + (desired_size) >= l_lab) {
 	int nsize = l_lab - s_lab + 400 + desired_size;
 	int label_len = e_lab - s_lab;
-	labbuf = (char *)realloc(labbuf, nsize);
+	labbuf = realloc(labbuf, nsize);
 	if (labbuf == NULL)
 	    err(1, NULL);
 	e_lab = labbuf + label_len + 1;
@@ -397,16 +397,16 @@ main(int argc, char **argv)
     ps.last_nl = true;		/* this is true if the last thing scanned was
 				 * a newline */
     ps.last_token = semicolon;
-    combuf = (char *) malloc(bufsize);
+    combuf = malloc(bufsize);
     if (combuf == NULL)
 	err(1, NULL);
-    labbuf = (char *) malloc(bufsize);
+    labbuf = malloc(bufsize);
     if (labbuf == NULL)
 	err(1, NULL);
-    codebuf = (char *) malloc(bufsize);
+    codebuf = malloc(bufsize);
     if (codebuf == NULL)
 	err(1, NULL);
-    tokenbuf = (char *) malloc(bufsize);
+    tokenbuf = malloc(bufsize);
     if (tokenbuf == NULL)
 	err(1, NULL);
     alloc_typenames();
@@ -424,7 +424,7 @@ main(int argc, char **argv)
     s_com = e_com = combuf + 1;
     s_token = e_token = tokenbuf + 1;
 
-    in_buffer = (char *) malloc(10);
+    in_buffer = malloc(10);
     if (in_buffer == NULL)
 	err(1, NULL);
     in_buffer_limit = in_buffer + 8;
