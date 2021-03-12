@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.5 2021/03/07 11:32:05 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.6 2021/03/12 23:16:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #if 0
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.h,v 1.5 2021/03/07 11:32:05 rillig Exp $");
+__RCSID("$NetBSD: indent.h,v 1.6 2021/03/12 23:16:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pstef $");
 #endif
@@ -45,8 +45,8 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pst
 
 void	add_typename(const char *);
 void	alloc_typenames(void);
-int	compute_code_target(void);
-int	compute_label_target(void);
+int	compute_code_indent(void);
+int	compute_label_indent(void);
 int	count_spaces(int, char *);
 int	count_spaces_until(int, char *, char *);
 void	init_constant_tt(void);
