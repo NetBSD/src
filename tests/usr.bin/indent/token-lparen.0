@@ -1,0 +1,18 @@
+/* $NetBSD: token-lparen.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $FreeBSD$ */
+
+/*
+ * Tests for the token '(', which has several possible meanings.
+ *
+ * In an expression, it overrides the precedence rules by explicitly grouping
+ * a subexpression in parentheses.
+ *
+ * In an expression, it marks the beginning of a type cast or conversion.
+ *
+ * In a function call expression, it marks the beginning of the function
+ * arguments.
+ *
+ * In a type declaration, it marks the beginning of the function parameters.
+ */
+
+/* TODO: Add some code to be formatted. */

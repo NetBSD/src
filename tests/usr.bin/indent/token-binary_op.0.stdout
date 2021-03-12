@@ -1,0 +1,12 @@
+/* $NetBSD: token-binary_op.0.stdout,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $FreeBSD$ */
+
+/*
+ * Tests for binary operators like '+', '&&' and several others.
+ *
+ * Several binary operators can be used as unary operators as well, or in
+ * other contexts.  An example for such an operator is '*', which can be a
+ * multiplication, or pointer dereference, or pointer type declaration.
+ */
+
+/* TODO: Add some code to be formatted. */
