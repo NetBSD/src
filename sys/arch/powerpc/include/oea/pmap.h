@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2021/03/02 01:47:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35 2021/03/12 04:57:42 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -157,6 +157,13 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 int pmap_pte_spill(pmap_t, vaddr_t, bool);
 int pmap_ste_spill(pmap_t, vaddr_t, bool);
 void pmap_pinit(pmap_t);
+
+#ifdef PPC_OEA601
+bool	pmap_extract_ioseg601(vaddr_t, paddr_t *);
+#endif /* PPC_OEA601 */
+#ifdef PPC_OEA
+bool	pmap_extract_battable(vaddr_t, paddr_t *);
+#endif /* PPC_OEA */
 
 u_int powerpc_mmap_flags(paddr_t);
 #define POWERPC_MMAP_FLAG_MASK	0xf
