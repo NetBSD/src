@@ -1,4 +1,4 @@
-.\" $NetBSD: intro.4,v 1.33 2021/02/28 07:51:29 nia Exp $
+.\" $NetBSD: intro.4,v 1.34 2021/03/12 10:45:43 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -104,32 +104,32 @@ Not all supported devices are listed.
 .\"
 .Pp
 Standard builtin devices:
-.Bl -tag -width speaker -offset indent -compact
+.Bl -tag -width speaker(4) -offset indent -compact
 .\"
 .\"
 .\"
-.It com
+.It Xr com 4
 NS8250-, NS16450-, and NS16550-based asynchronous serial
 communications device interface
-.It lpt
+.It Xr x86/lpt 4
 Parallel port device interface
-.It fdc
+.It Xr x86/fdc 4
 Standard NEC 765 floppy disk controller.
-.It mca
+.It Xr mca 4
 MCA I/O bus.
-.It mem
+.It Xr x86/mem 4
 Main memory interface
-.It pci
+.It Xr pci 4
 PCI I/O bus.
-.It eisa
+.It Xr eisa 4
 EISA I/O bus, either as main bus or via PCI-EISA bridge.
-.It isa
+.It Xr isa 4
 ISA bus and ISA devices, either as main bus or via PCI-ISA bridge.
-.It isa
+.It Xr isa 4
 isa I/O bus.
-.It isapnp
+.It Xr isapnp 4
 ``bus'' for ISA devices with PnP support.
-.It speaker
+.It Xr speaker 4
 console speaker device interface
 .El
 .\"
@@ -166,18 +166,8 @@ console driver.
 .\"
 .Sh SEE ALSO
 .Xr config 1 ,
-.Xr com 4 ,
-.Xr eisa 4 ,
 .Xr i386/autoconf 4 ,
-.Xr isa 4 ,
-.Xr isapnp 4 ,
-.Xr mca 4 ,
-.Xr netintro 4 ,
-.Xr pci 4 ,
-.Xr speaker 4 ,
-.Xr x86/fdc 4 ,
-.Xr x86/lpt 4 ,
-.Xr x86/mem 4
+.Xr netintro 4
 .Sh HISTORY
 The
 .Tn i386
