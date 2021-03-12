@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.35 2021/03/11 22:32:06 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.36 2021/03/12 17:46:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.35 2021/03/11 22:32:06 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.36 2021/03/12 17:46:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -170,6 +170,22 @@ static char const *table[] = {
     /*       ABCDEFGHIJKLMNOPQRSTUVWXYZ */
     [0]   = "uuiifuufiuuiiuiiiiiuiuuuuu",
 };
+
+/* Initialize constant transition table */
+void
+init_constant_tt(void)
+{
+    table['-'] = table['+'];
+    table['8'] = table['9'];
+    table['2'] = table['3'] = table['4'] = table['5'] = table['6'] = table['7'];
+    table['A'] = table['C'] = table['D'] = table['c'] = table['d'] = table['a'];
+    table['B'] = table['b'];
+    table['E'] = table['e'];
+    table['U'] = table['u'];
+    table['X'] = table['x'];
+    table['P'] = table['p'];
+    table['F'] = table['f'];
+}
 
 static char
 inbuf_peek(void)
@@ -669,22 +685,6 @@ stop_lit:
     check_size_token(1);
     *e_token = '\0';		/* null terminate the token */
     return lexi_end(code);
-}
-
-/* Initialize constant transition table */
-void
-init_constant_tt(void)
-{
-    table['-'] = table['+'];
-    table['8'] = table['9'];
-    table['2'] = table['3'] = table['4'] = table['5'] = table['6'] = table['7'];
-    table['A'] = table['C'] = table['D'] = table['c'] = table['d'] = table['a'];
-    table['B'] = table['b'];
-    table['E'] = table['e'];
-    table['U'] = table['u'];
-    table['X'] = table['x'];
-    table['P'] = table['p'];
-    table['F'] = table['f'];
 }
 
 void
