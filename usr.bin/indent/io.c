@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.27 2021/03/08 22:28:31 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.28 2021/03/12 19:11:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.27 2021/03/08 22:28:31 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.28 2021/03/12 19:11:29 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -64,6 +64,30 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 int         comment_open;
 static int  paren_target;
 static int pad_output(int current, int target);
+
+static void
+output_char(char ch)
+{
+    fputc(ch, output);
+}
+
+static void
+output_range(const char *s, const char *e)
+{
+    fwrite(s, 1, (size_t)(e - s), output);
+}
+
+static void
+output_string(const char *s)
+{
+    output_range(s, s + strlen(s));
+}
+
+static void
+output_int(int i)
+{
+    fprintf(output, "%d", i);
+}
 
 /*
  * dump_line is the routine that actually effects the printing of the new
@@ -102,7 +126,7 @@ dump_line(void)
 	    }
 	}
 	while (--n_real_blanklines >= 0)
-	    putc('\n', output);
+	    output_char('\n');
 	n_real_blanklines = 0;
 	if (ps.ind_level == 0)
 	    ps.ind_stmt = 0;	/* this is a class A kludge. dont do
@@ -116,7 +140,7 @@ dump_line(void)
 	if (e_lab != s_lab) {	/* print lab, if any */
 	    if (comment_open) {
 		comment_open = 0;
-		fprintf(output, ".*/\n");
+		output_string(".*/\n");
 	    }
 	    while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
 		e_lab--;
@@ -127,15 +151,22 @@ dump_line(void)
 		char *s = s_lab;
 		if (e_lab[-1] == '\n') e_lab--;
 		do {
-		    putc(*s++, output);
+		    output_char(*s++);
 		} while (s < e_lab && 'a' <= *s && *s <= 'z');
 		while ((*s == ' ' || *s == '\t') && s < e_lab)
 		    s++;
-		if (s < e_lab)
-		    fprintf(output, s[0]=='/' && s[1]=='*' ? "\t%.*s" : "\t/* %.*s */",
-			    (int)(e_lab - s), s);
-	    }
-	    else fprintf(output, "%.*s", (int)(e_lab - s_lab), s_lab);
+		if (s < e_lab) {
+		    if (s[0] == '/' && s[1] == '*') {
+			output_char('\t');
+			output_range(s, e_lab);
+		    } else {
+		        output_string("\t/* ");
+			output_range(s, e_lab);
+			output_string(" */");
+		    }
+		}
+	    } else
+	        output_range(s_lab, e_lab);
 	    cur_col = count_spaces(cur_col, s_lab);
 	}
 	else
@@ -148,7 +179,7 @@ dump_line(void)
 
 	    if (comment_open) {
 		comment_open = 0;
-		fprintf(output, ".*/\n");
+		output_string(".*/\n");
 	    }
 	    target_col = compute_code_target();
 	    {
@@ -161,9 +192,9 @@ dump_line(void)
 	    cur_col = pad_output(cur_col, target_col);
 	    for (p = s_code; p < e_code; p++)
 		if (*p == (char) 0200)
-		    fprintf(output, "%d", target_col * 7);
+		    output_int(target_col * 7);
 		else
-		    putc(*p, output);
+		    output_char(*p);
 	    cur_col = count_spaces(cur_col, s_code);
 	}
 	if (s_com != e_com) {		/* print comment, if any */
@@ -185,21 +216,21 @@ dump_line(void)
 		    target = 1;
 	    if (cur_col > target) {	/* if comment can't fit on this line,
 				     * put it on next line */
-		putc('\n', output);
+		output_char('\n');
 		cur_col = 1;
 		++ps.out_lines;
 	    }
 	    while (e_com > com_st && isspace((unsigned char)e_com[-1]))
 		e_com--;
 	    (void)pad_output(cur_col, target);
-	    fwrite(com_st, e_com - com_st, 1, output);
+	    output_range(com_st, e_com);
 	    ps.comment_delta = ps.n_comment_delta;
 	    ++ps.com_lines;	/* count lines with comments */
 	}
 	if (ps.use_ff)
-	    putc('\014', output);
+	    output_char('\014');
 	else
-	    putc('\n', output);
+	    output_char('\n');
 	++ps.out_lines;
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_declarations) {
 	    prefix_blankline_requested = 1;
@@ -212,7 +243,7 @@ dump_line(void)
 
     /* keep blank lines after '//' comments */
     if (e_com - s_com > 1 && s_com[1] == '/')
-	fprintf(output, "%.*s", (int)(e_token - s_token), s_token);
+	output_range(s_token, e_token);
 
     ps.decl_on_line = ps.in_decl;	/* if we are in the middle of a
 					 * declaration, remember that fact for
@@ -371,7 +402,7 @@ fill_buffer(void)
     if (inhibit_formatting) {
 	p = in_buffer;
 	do {
-	    putc(*p, output);
+	    output_char(*p);
 	} while (*p++ != '\n');
     }
 }
@@ -421,12 +452,12 @@ pad_output(int current, int target)
 	int tcur;
 
 	while ((tcur = opt.tabsize * (1 + (curr - 1) / opt.tabsize) + 1) <= target) {
-	    putc('\t', output);
+	    output_char('\t');
 	    curr = tcur;
 	}
     }
     while (curr++ < target)
-	putc(' ', output);	/* pad with final blanks */
+	output_char(' ');	/* pad with final blanks */
 
     return target;
 }
