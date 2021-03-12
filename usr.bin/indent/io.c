@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.29 2021/03/12 19:14:18 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.30 2021/03/12 23:10:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.29 2021/03/12 19:14:18 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.30 2021/03/12 23:10:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -104,6 +104,7 @@ dump_line(void)
 	ps.ind_level = 0;
 	ps.procname[0] = 0;
     }
+
     if (s_code == e_code && s_lab == e_lab && s_com == e_com) {
 	if (suppress_blanklines > 0)
 	    suppress_blanklines--;
@@ -111,16 +112,14 @@ dump_line(void)
 	    ps.bl_line = true;
 	    n_real_blanklines++;
 	}
-    }
-    else if (!inhibit_formatting) {
+    } else if (!inhibit_formatting) {
 	suppress_blanklines = 0;
 	ps.bl_line = false;
 	if (prefix_blankline_requested && not_first_line) {
 	    if (opt.swallow_optional_blanklines) {
 		if (n_real_blanklines == 1)
 		    n_real_blanklines = 0;
-	    }
-	    else {
+	    } else {
 		if (n_real_blanklines == 0)
 		    n_real_blanklines = 1;
 	    }
@@ -168,8 +167,7 @@ dump_line(void)
 	    } else
 	        output_range(s_lab, e_lab);
 	    cur_col = count_spaces(cur_col, s_lab);
-	}
-	else
+	} else
 	    cur_col = 1;	/* there is no label section */
 
 	ps.pcase = false;
@@ -211,8 +209,7 @@ dump_line(void)
 		else if (*com_st == '\t') {
 		    target = opt.tabsize * (1 + (target - 1) / opt.tabsize) + 1;
 		    com_st++;
-		}
-		else
+		} else
 		    target = 1;
 	    if (cur_col > target) {	/* if comment can't fit on this line,
 				     * put it on next line */
@@ -235,8 +232,7 @@ dump_line(void)
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_declarations) {
 	    prefix_blankline_requested = 1;
 	    ps.just_saw_decl = 0;
-	}
-	else
+	} else
 	    prefix_blankline_requested = postfix_blankline_requested;
 	postfix_blankline_requested = 0;
     }
@@ -270,7 +266,7 @@ compute_code_target(void)
 {
     int target_col = opt.ind_size * ps.ind_level + 1;
 
-    if (ps.paren_level)
+    if (ps.paren_level) {
 	if (!opt.lineup_to_parens)
 	    target_col += opt.continuation_indent *
 		(2 * opt.continuation_indent == opt.ind_size ? 1 : ps.paren_level);
@@ -285,11 +281,10 @@ compute_code_target(void)
 		t -= w + 1;
 		if (t > target_col)
 		    target_col = t;
-	    }
-	    else
+	    } else
 		target_col = t;
 	}
-    else if (ps.ind_stmt)
+    } else if (ps.ind_stmt)
 	target_col += opt.continuation_indent;
     return target_col;
 }

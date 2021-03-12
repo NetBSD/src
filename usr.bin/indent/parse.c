@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.17 2021/03/09 19:14:39 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.18 2021/03/12 23:10:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -156,8 +156,7 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 	    ps.ind_level = ps.i_l_follow = ps.il[ps.tos];
 	    ps.p_stack[++ps.tos] = while_expr;
 	    ps.il[ps.tos] = ps.ind_level = ps.i_l_follow;
-	}
-	else {			/* it is a while loop */
+	} else {		/* it is a while loop */
 	    ps.p_stack[++ps.tos] = while_expr;
 	    ps.il[ps.tos] = ps.i_l_follow;
 	    ++ps.i_l_follow;
@@ -185,8 +184,7 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 	if (ps.tos > 0 && ps.p_stack[ps.tos - 1] == lbrace) {
 	    ps.ind_level = ps.i_l_follow = ps.il[--ps.tos];
 	    ps.p_stack[ps.tos] = stmt;
-	}
-	else
+	} else
 	    diag(1, "Statement nesting error");
 	break;
 
