@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.30 2021/03/12 23:10:18 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.31 2021/03/12 23:16:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.30 2021/03/12 23:10:18 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.31 2021/03/12 23:16:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -62,7 +62,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 #include "indent.h"
 
 int         comment_open;
-static int  paren_target;
+static int  paren_indent;
 static int pad_output(int current, int target);
 
 static void
@@ -144,7 +144,7 @@ dump_line(void)
 	    while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
 		e_lab--;
 	    *e_lab = '\0';
-	    cur_col = pad_output(1, compute_label_target());
+	    cur_col = pad_output(1, compute_label_indent());
 	    if (s_lab[0] == '#' && (strncmp(s_lab, "#else", 5) == 0
 				    || strncmp(s_lab, "#endif", 6) == 0)) {
 		char *s = s_lab;
@@ -179,7 +179,7 @@ dump_line(void)
 		comment_open = 0;
 		output_string(".*/\n");
 	    }
-	    target_col = compute_code_target();
+	    target_col = compute_code_indent();
 	    {
 		int i;
 
@@ -257,12 +257,12 @@ dump_line(void)
     ps.ind_level = ps.i_l_follow;
     ps.paren_level = ps.p_l_follow;
     if (ps.paren_level > 0)
-	paren_target = -ps.paren_indents[ps.paren_level - 1];
+	paren_indent = -ps.paren_indents[ps.paren_level - 1];
     not_first_line = 1;
 }
 
 int
-compute_code_target(void)
+compute_code_indent(void)
 {
     int target_col = opt.ind_size * ps.ind_level + 1;
 
@@ -271,10 +271,10 @@ compute_code_target(void)
 	    target_col += opt.continuation_indent *
 		(2 * opt.continuation_indent == opt.ind_size ? 1 : ps.paren_level);
 	else if (opt.lineup_to_parens_always)
-	    target_col = paren_target;
+	    target_col = paren_indent;
 	else {
 	    int w;
-	    int t = paren_target;
+	    int t = paren_indent;
 
 	    if ((w = count_spaces(t, s_code) - opt.max_col) > 0
 		    && count_spaces(target_col, s_code) <= opt.max_col) {
@@ -290,7 +290,7 @@ compute_code_target(void)
 }
 
 int
-compute_label_target(void)
+compute_label_indent(void)
 {
     return
 	ps.pcase ? (int) (case_ind * opt.ind_size) + 1
