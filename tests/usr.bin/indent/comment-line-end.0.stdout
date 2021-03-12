@@ -1,4 +1,4 @@
-/* $NetBSD: comment-line-end.0.stdout,v 1.4 2021/03/07 22:11:01 rillig Exp $ */
+/* $NetBSD: comment-line-end.0.stdout,v 1.5 2021/03/12 18:28:07 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -29,3 +29,6 @@ int
 main(void)
 {
 }
+
+// end-of-line comment at the end of the file
+
