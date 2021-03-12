@@ -1,8 +1,8 @@
-/*	$NetBSD: spleen5x8.h,v 1.7 2020/07/20 13:41:16 fcambus Exp $ */
+/*	$NetBSD: spleen5x8.h,v 1.8 2021/03/12 17:03:06 fcambus Exp $ */
 /*	$OpenBSD: spleen5x8.h,v 1.2 2018/12/02 14:47:23 fcambus Exp $ */
 
 /*
- * Copyright (c) 2018-2020 Frederic Cambus <fcambus@openbsd.org>
+ * Copyright (c) 2018-2021 Frederic Cambus <fcambus@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -871,14 +871,14 @@ static u_char spleen5x8_data[] = {
 	0x40, 	/* .*...... */
 	0x30, 	/* ..**.... */
 
-	0x00, 	/* ........ */
 	0x20, 	/* ..*..... */
 	0x20, 	/* ..*..... */
 	0x20, 	/* ..*..... */
 	0x20, 	/* ..*..... */
 	0x20, 	/* ..*..... */
 	0x20, 	/* ..*..... */
-	0x00, 	/* ........ */
+	0x20, 	/* ..*..... */
+	0x20, 	/* ..*..... */
 
 	0xc0, 	/* **...... */
 	0x20, 	/* ..*..... */
