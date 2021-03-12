@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.36 2021/03/12 17:46:48 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.37 2021/03/12 18:11:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.36 2021/03/12 17:46:48 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.37 2021/03/12 18:11:50 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -352,8 +352,8 @@ lexi(struct parser_state *state)
 			buf_ptr += 2;
 			if (buf_ptr >= buf_end)
 			    fill_buffer();
-			} else
-			    break;
+		    } else
+			break;
 		}
 		check_size_token(1);
 		*e_token++ = inbuf_next();
