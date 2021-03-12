@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.31 2021/03/12 23:16:00 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.32 2021/03/12 23:27:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.31 2021/03/12 23:16:00 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.32 2021/03/12 23:27:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -478,42 +478,40 @@ pad_output(int current, int target)
  *
  */
 int
-count_spaces_until(int cur, char *buffer, char *end)
+count_spaces_until(int col, const char *buffer, const char *end)
 /*
  * this routine figures out where the character position will be after
  * printing the text in buffer starting at column "current"
  */
 {
-    char *buf;		/* used to look thru buffer */
-
-    for (buf = buffer; *buf != '\0' && buf != end; ++buf) {
-	switch (*buf) {
+    for (const char *p = buffer; *p != '\0' && p != end; ++p) {
+	switch (*p) {
 
 	case '\n':
 	case 014:		/* form feed */
-	    cur = 1;
+	    col = 1;
 	    break;
 
 	case '\t':
-	    cur = opt.tabsize * (1 + (cur - 1) / opt.tabsize) + 1;
+	    col = 1 + opt.tabsize * ((col - 1) / opt.tabsize + 1);
 	    break;
 
 	case 010:		/* backspace */
-	    --cur;
+	    --col;
 	    break;
 
 	default:
-	    ++cur;
+	    ++col;
 	    break;
 	}			/* end of switch */
     }				/* end of for loop */
-    return cur;
+    return col;
 }
 
 int
-count_spaces(int cur, char *buffer)
+count_spaces(int col, const char *buffer)
 {
-    return count_spaces_until(cur, buffer, NULL);
+    return count_spaces_until(col, buffer, NULL);
 }
 
 void
