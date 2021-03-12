@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.115 2021/03/12 08:19:29 nia Exp $
+.\"	$NetBSD: pci.4,v 1.116 2021/03/12 08:28:20 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -147,7 +147,7 @@ Symbios Logic/NCR 53c8xx-family SCSI interfaces.
 .It Xr trm 4
 Tekram TRM-S1040 ASIC based SCSI interfaces.
 .El
-.Ss Disk and tape controllers
+.Ss Storage controllers
 .Bl -tag -width pcdisplay(4) -offset indent
 .It Xr aac 4
 The Adaptec AAC family of RAID controllers.
@@ -362,8 +362,10 @@ VGA graphics boards.
 USB XHCI host controllers.
 .El
 .Sh SEE ALSO
+.Xr pci 3 ,
 .Xr agp 4 ,
 .Xr intro 4 ,
+.Xr pcictl 8 ,
 .Xr pci 9
 .Sh HISTORY
 The machine-independent PCI subsystem appeared in
