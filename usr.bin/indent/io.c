@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.28 2021/03/12 19:11:29 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.29 2021/03/12 19:14:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.28 2021/03/12 19:11:29 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.29 2021/03/12 19:14:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -77,7 +77,7 @@ output_range(const char *s, const char *e)
     fwrite(s, 1, (size_t)(e - s), output);
 }
 
-static void
+static inline void
 output_string(const char *s)
 {
     output_range(s, s + strlen(s));
