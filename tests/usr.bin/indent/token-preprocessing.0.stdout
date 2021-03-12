@@ -1,4 +1,4 @@
-/* $NetBSD: token-preprocessing.0.stdout,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $NetBSD: token-preprocessing.0.stdout,v 1.2 2021/03/12 22:53:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -10,4 +10,20 @@
  * #line
  */
 
-/* TODO: Add some code to be formatted. */
+#include <system-header.h>
+#include "local-header.h"
+
+#if 0
+#else
+#endif
+
+#if 0				/* if comment */
+#else				/* else comment */
+#endif				/* endif comment */
+
+#if 0				/* outer if comment */
+/* $ XXX: The indentation is removed, which can get confusing */
+#if nested			/* inner if comment */
+#else				/* inner else comment */
+#endif				/* inner endif comment */
+#endif				/* outer endif comment */
