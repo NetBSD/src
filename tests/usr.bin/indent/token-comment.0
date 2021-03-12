@@ -1,0 +1,10 @@
+/* $NetBSD: token-comment.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $FreeBSD$ */
+
+/*
+ * Tests for formatting comments.  C99 defines block comments and end-of-line
+ * comments.  Indent further distinguishes box comments that are a special
+ * kind of block comments.
+ */
+
+/* TODO: Add some code to be formatted. */
