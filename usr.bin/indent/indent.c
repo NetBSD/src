@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.44 2021/03/12 00:15:34 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.45 2021/03/12 23:10:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.44 2021/03/12 00:15:34 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.45 2021/03/12 23:10:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -507,8 +507,7 @@ main(int argc, char **argv)
 		if (input == NULL)	/* check for open error */
 			err(1, "%s", in_name);
 		continue;
-	    }
-	    else if (output == NULL) {	/* we have the output file */
+	    } else if (output == NULL) {	/* we have the output file */
 		out_name = argv[i];	/* remember name of output file */
 		if (strcmp(in_name, out_name) == 0) {	/* attempt to overwrite
 							 * the file */
@@ -520,8 +519,7 @@ main(int argc, char **argv)
 		continue;
 	    }
 	    errx(1, "unknown parameter: %s", argv[i]);
-	}
-	else
+	} else
 	    set_option(argv[i]);
     }				/* end of for */
     if (input == NULL)
@@ -636,8 +634,7 @@ main(int argc, char **argv)
 		ps.want_blank = false;
 		e_com = s_com;
 	    }
-	}
-	else if (type_code != comment)	/* preserve force_nl thru a comment */
+	} else if (type_code != comment) /* preserve force_nl thru a comment */
 	    force_nl = false;	/* cancel forced newline after newline, form
 				 * feed, etc */
 
@@ -681,8 +678,7 @@ main(int argc, char **argv)
 		/* function pointer declarations */
 		indent_declaration(dec_ind, tabs_to_var);
 		ps.dumped_decl_indent = true;
-	    }
-	    else if (ps.want_blank &&
+	    } else if (ps.want_blank &&
 		    ((ps.last_token != ident && ps.last_token != funcname) ||
 		    opt.proc_calls_space ||
 		    (ps.keyword == rw_sizeof ? opt.Bill_Shannon :
@@ -756,8 +752,7 @@ main(int argc, char **argv)
 		    /* find length of token */;
 		indent_declaration(dec_ind - i, tabs_to_var);
 		ps.dumped_decl_indent = true;
-	    }
-	    else if (ps.want_blank)
+	    } else if (ps.want_blank)
 		*e_code++ = ' ';
 
 	    {
@@ -906,8 +901,7 @@ main(int argc, char **argv)
 		if (!opt.btype_2) {
 		    dump_line();
 		    ps.want_blank = false;
-		}
-		else if (ps.in_parameter_declaration && !ps.in_or_st) {
+		} else if (ps.in_parameter_declaration && !ps.in_or_st) {
 		    ps.i_l_follow = 0;
 		    if (opt.function_brace_split) { /* dump the line prior
 				 * to the brace ... */
@@ -942,8 +936,7 @@ main(int argc, char **argv)
 		    ps.dec_nest--;
 		}
 		/* ?		dec_ind = 0; */
-	    }
-	    else {
+	    } else {
 		ps.decl_on_line = false;	/* we can't be in the middle of
 						 * a declaration, so don't do
 						 * special indentation of
@@ -1030,8 +1023,7 @@ main(int argc, char **argv)
 		force_nl = true;/* also, following stuff must go onto new line */
 		last_else = 1;
 		parse(keyword_else);
-	    }
-	    else {
+	    } else {
 		if (e_code != s_code) {	/* make sure this starts a line */
 		    if (opt.verbose)
 			diag(0, "Line broken");
@@ -1092,21 +1084,18 @@ main(int argc, char **argv)
 		    if (opt.procnames_start_line && s_code != e_code) {
 			*e_code = '\0';
 			dump_line();
-		    }
-		    else if (ps.want_blank) {
+		    } else if (ps.want_blank) {
 			*e_code++ = ' ';
 		    }
 		    ps.want_blank = false;
-		}
-		else if (!ps.block_init && !ps.dumped_decl_indent &&
+		} else if (!ps.block_init && !ps.dumped_decl_indent &&
 		    ps.paren_level == 0) { /* if we are in a declaration, we
 					    * must indent identifier */
 		    indent_declaration(dec_ind, tabs_to_var);
 		    ps.dumped_decl_indent = true;
 		    ps.want_blank = false;
 		}
-	    }
-	    else if (sp_sw && ps.p_l_follow == 0) {
+	    } else if (sp_sw && ps.p_l_follow == 0) {
 		sp_sw = false;
 		force_nl = true;
 		ps.last_u_d = true;
@@ -1231,8 +1220,7 @@ main(int argc, char **argv)
 						 * we must set up the buffer */
 			save_com = sc_buf;
 			sc_end = &save_com[0];
-		    }
-		    else {
+		    } else {
 			*sc_end++ = '\n';	/* add newline between
 						 * comments */
 			*sc_end++ = ' ';
@@ -1263,19 +1251,16 @@ main(int argc, char **argv)
 		if ((size_t)ifdef_level < nitems(state_stack)) {
 		    match_state[ifdef_level].tos = -1;
 		    state_stack[ifdef_level++] = ps;
-		}
-		else
+		} else
 		    diag(1, "#if stack overflow");
-	    }
-	    else if (strncmp(s_lab, "#el", 3) == 0) { /* else, elif */
+	    } else if (strncmp(s_lab, "#el", 3) == 0) { /* else, elif */
 		if (ifdef_level <= 0)
 		    diag(1, s_lab[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
 		else {
 		    match_state[ifdef_level - 1] = ps;
 		    ps = state_stack[ifdef_level - 1];
 		}
-	    }
-	    else if (strncmp(s_lab, "#endif", 6) == 0) {
+	    } else if (strncmp(s_lab, "#endif", 6) == 0) {
 		if (ifdef_level <= 0)
 		    diag(1, "Unmatched #endif");
 		else
@@ -1304,8 +1289,7 @@ main(int argc, char **argv)
 	    if (opt.blanklines_around_conditional_compilation) {
 		postfix_blankline_requested++;
 		n_real_blanklines = 0;
-	    }
-	    else {
+	    } else {
 		postfix_blankline_requested = 0;
 		prefix_blankline_requested = 0;
 	    }

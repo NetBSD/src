@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.37 2021/03/12 18:11:50 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.38 2021/03/12 23:10:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.37 2021/03/12 18:11:50 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.38 2021/03/12 23:10:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -341,11 +341,10 @@ lexi(struct parser_state *state)
 		*e_token++ = inbuf_next();
 	    }
 	    /* s now indicates the type: f(loating), i(integer), u(nknown) */
-	}
-	else
+	} else {
 	    while (isalnum((unsigned char)*buf_ptr) ||
-	        *buf_ptr == '\\' ||
-		*buf_ptr == '_' || *buf_ptr == '$') {
+		   *buf_ptr == '\\' ||
+		   *buf_ptr == '_' || *buf_ptr == '$') {
 		/* fill_buffer() terminates buffer with newline */
 		if (*buf_ptr == '\\') {
 		    if (buf_ptr[1] == '\n') {
@@ -358,6 +357,7 @@ lexi(struct parser_state *state)
 		check_size_token(1);
 		*e_token++ = inbuf_next();
 	    }
+	}
 	*e_token = '\0';
 
 	if (s_token[0] == 'L' && s_token[1] == '\0' &&
@@ -504,8 +504,7 @@ lexi(struct parser_state *state)
 		    *++e_token = inbuf_next();
 		    ++e_token;	/* we must increment this again because we
 				 * copied two chars */
-		}
-		else
+		} else
 		    break;	/* we copied one character */
 	    }			/* end of while (1) */
 	} while (*e_token++ != qchar);
@@ -591,8 +590,7 @@ stop_lit:
 		/* check for following ++ or -- */
 		unary_delim = false;
 	    }
-	}
-	else if (*buf_ptr == '=')
+	} else if (*buf_ptr == '=')
 	    /* check for operator += */
 	    *e_token++ = *buf_ptr++;
 	else if (*buf_ptr == '>') {
@@ -715,8 +713,7 @@ add_typename(const char *key)
 	if (comparison == 0)	/* remove duplicates */
 	    return;
 	typenames[++typename_top] = copy = strdup(key);
-    }
-    else {
+    } else {
 	int p;
 
 	for (p = 0; (comparison = strcmp(key, typenames[p])) > 0; p++)
