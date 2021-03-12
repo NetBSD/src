@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2021/03/12 04:57:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2021/03/12 18:10:00 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2021/03/12 04:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2021/03/12 18:10:00 thorpej Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3432,7 +3432,7 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 #endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
 
 #if defined(PMAP_OEA) && defined(PPC_OEA601)
-	if ((MFPVR() >> 16) == MPC601)) {
+	if ((MFPVR() >> 16) == MPC601) {
 		for (i = 0; i < 16; i++) {
 			if (iosrtable[i] & SR601_T) {
 				pmap_kernel()->pm_sr[i] = iosrtable[i];
