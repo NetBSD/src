@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.18 2021/03/11 22:32:06 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.19 2021/03/12 23:10:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.18 2021/03/11 22:32:06 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.19 2021/03/12 23:10:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -136,8 +136,7 @@ pr_comment(void)
 	ps.box_com = true;
 	break_delim = false;
 	ps.com_col = 1;
-    }
-    else {
+    } else {
 	if (*buf_ptr == '-' || *buf_ptr == '*' || e_token[-1] == '/' ||
 	    (*buf_ptr == '\n' && !opt.format_block_comments)) {
 	    ps.box_com = true;	/* A comment with a '-' or '*' immediately
@@ -159,8 +158,7 @@ pr_comment(void)
 	    adj_max_col = opt.block_comment_max_col;
 	    if (ps.com_col <= 1)
 		ps.com_col = 1 + !opt.format_col1_comments;
-	}
-	else {
+	} else {
 	    int target_col;
 	    break_delim = false;
 	    if (s_code != e_code)
@@ -191,8 +189,7 @@ pr_comment(void)
 	start = buf_ptr >= save_com && buf_ptr < save_com + sc_size ?
 	    sc_buf : in_buffer;
 	ps.n_comment_delta = 1 - count_spaces_until(1, start, buf_ptr - 2);
-    }
-    else {
+    } else {
 	ps.n_comment_delta = 0;
 	while (*buf_ptr == ' ' || *buf_ptr == '\t')
 	    buf_ptr++;
@@ -245,8 +242,7 @@ pr_comment(void)
 		    *e_com++ = ' ', *e_com++ = '*', *e_com++ = ' ';
 		while (*++buf_ptr == ' ' || *buf_ptr == '\t')
 		    ;
-	    }
-	    else {
+	    } else {
 		if (++buf_ptr >= buf_end)
 		    fill_buffer();
 		*e_com++ = 014;
@@ -277,8 +273,7 @@ pr_comment(void)
 		dump_line();
 		if (!ps.box_com && opt.star_comment_cont)
 		    *e_com++ = ' ', *e_com++ = '*', *e_com++ = ' ';
-	    }
-	    else {
+	    } else {
 		ps.last_nl = 1;
 		if (e_com[-1] == ' ' || e_com[-1] == '\t')
 		    last_bl = e_com - 1;
@@ -305,8 +300,7 @@ pr_comment(void)
 			    goto end_of_comment;
 		    }
 		} while (*buf_ptr == ' ' || *buf_ptr == '\t');
-	    }
-	    else if (++buf_ptr >= buf_end)
+	    } else if (++buf_ptr >= buf_end)
 		fill_buffer();
 	    break;		/* end of case for newline */
 
@@ -320,9 +314,8 @@ pr_comment(void)
 		if (++buf_ptr >= buf_end)
 		    fill_buffer();
 		if (break_delim) {
-		    if (e_com > s_com + 3) {
+		    if (e_com > s_com + 3)
 			dump_line();
-		    }
 		    else
 			s_com = e_com;
 		    *e_com++ = ' ';
@@ -335,8 +328,7 @@ pr_comment(void)
 		    *e_com++ = '*', *e_com++ = '/', *e_com = '\0';
 		ps.just_saw_decl = l_just_saw_decl;
 		return;
-	    }
-	    else		/* handle isolated '*' */
+	    } else		/* handle isolated '*' */
 		*e_com++ = '*';
 	    break;
 	default:		/* we have a random char */
