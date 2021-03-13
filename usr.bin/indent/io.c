@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.39 2021/03/13 10:06:47 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.40 2021/03/13 10:20:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.39 2021/03/13 10:06:47 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.40 2021/03/13 10:20:54 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -425,42 +425,38 @@ fill_buffer(void)
     }
 }
 
-/*
- * Copyright (C) 1976 by the Board of Trustees of the University of Illinois
- *
- * All rights reserved
- */
 int
-count_spaces_until(int col, const char *buffer, const char *end)
+indentation_after_range(int ind, const char *start, const char *end)
 {
-    for (const char *p = buffer; *p != '\0' && p != end; ++p) {
-	switch (*p) {
-
-	case '\n':
-	case 014:		/* form feed */
-	    col = 1;
-	    break;
-
-	case '\t':
-	    col = 1 + opt.tabsize * ((col - 1) / opt.tabsize + 1);
-	    break;
-
-	case 010:		/* backspace */
-	    --col;
-	    break;
-
-	default:
-	    ++col;
-	    break;
-	}			/* end of switch */
-    }				/* end of for loop */
-    return col;
+    for (const char *p = start; *p != '\0' && p != end; ++p) {
+	if (*p == '\n' || *p == '\f')
+	    ind = 0;
+	else if (*p == '\t')
+	    ind = opt.tabsize * (ind / opt.tabsize + 1);
+	else if (*p == '\b')
+	    --ind;
+	else
+	    ++ind;
+    }
+    return ind;
 }
 
 int
-count_spaces(int col, const char *buffer)
+indentation_after(int ind, const char *s)
 {
-    return count_spaces_until(col, buffer, NULL);
+    return indentation_after_range(ind, s, NULL);
+}
+
+int
+count_spaces_until(int col, const char *s, const char *e)
+{
+    return 1 + indentation_after_range(col - 1, s, e);
+}
+
+int
+count_spaces(int col, const char *s)
+{
+    return 1 + indentation_after(col - 1, s);
 }
 
 void
