@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.47 2021/03/13 00:26:56 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.48 2021/03/13 09:21:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.47 2021/03/13 00:26:56 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.48 2021/03/13 09:21:57 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1389,3 +1389,46 @@ indent_declaration(int cur_dec_ind, int tabs_to_var)
 	ps.want_blank = false;
     }
 }
+
+#ifdef debug
+void
+debug_printf(const char *fmt, ...)
+{
+    FILE *f = output == stdout ? stderr : stdout;
+    va_list ap;
+
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+}
+
+void
+debug_println(const char *fmt, ...)
+{
+    FILE *f = output == stdout ? stderr : stdout;
+    va_list ap;
+
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+    fprintf(f, "\n");
+}
+
+void
+debug_vis_range(const char *prefix, const char *s, const char *e,
+		const char *suffix)
+{
+    debug_printf("%s", prefix);
+    for (const char *p = s; p < e; p++) {
+	if (isprint((unsigned char)*p) && *p != '\\' && *p != '"')
+	    debug_printf("%c", *p);
+	else if (*p == '\n')
+	    debug_printf("\\n");
+	else if (*p == '\t')
+	    debug_printf("\\t");
+	else
+	    debug_printf("\\x%02x", *p);
+    }
+    debug_printf("%s", suffix);
+}
+#endif
