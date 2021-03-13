@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.25 2021/03/13 10:47:59 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.26 2021/03/13 11:19:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.25 2021/03/13 10:47:59 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.26 2021/03/13 11:19:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -112,16 +112,15 @@ check_size_comment(size_t desired_size, char **last_bl_ptr)
 void
 pr_comment(void)
 {
-    int         now_col;	/* column we are in now */
-    int         adj_max_col;	/* Adjusted max_col for when we decide to
-				 * spill comments over the right margin */
+    int         adj_max_line_length; /* Adjusted max_line_length for comments
+				 * that spill over the right margin */
     char       *last_bl;	/* points to the last blank in the output
 				 * buffer */
     char       *t_ptr;		/* used for moving string */
     int         break_delim = opt.comment_delimiter_on_blankline;
     int         l_just_saw_decl = ps.just_saw_decl;
 
-    adj_max_col = opt.max_col;
+    adj_max_line_length = opt.max_line_length;
     ps.just_saw_decl = 0;
     last_bl = NULL;		/* no blanks found so far */
     ps.box_com = false;		/* at first, assume that we are not in
@@ -155,7 +154,7 @@ pr_comment(void)
 	     * out at left
 	     */
 	    ps.com_col = (ps.ind_level - opt.unindent_displace) * opt.ind_size + 1;
-	    adj_max_col = opt.block_comment_max_col;
+	    adj_max_line_length = opt.block_comment_max_line_length;
 	    if (ps.com_col <= 1)
 		ps.com_col = 1 + !opt.format_col1_comments;
 	} else {
@@ -171,8 +170,9 @@ pr_comment(void)
 	    ps.com_col = ps.decl_on_line || ps.ind_level == 0 ? opt.decl_com_ind : opt.com_ind;
 	    if (ps.com_col <= target_col)
 		ps.com_col = opt.tabsize * (1 + (target_col - 1) / opt.tabsize) + 1;
-	    if (ps.com_col + 24 > adj_max_col)
-		adj_max_col = ps.com_col + 24;
+	    if (ps.com_col + 24 > adj_max_line_length)
+	        /* XXX: mismatch between column and length */
+		adj_max_line_length = ps.com_col + 24;
 	}
     }
     if (ps.box_com) {
@@ -212,7 +212,8 @@ pr_comment(void)
 	    if (t_ptr >= buf_end)
 		fill_buffer();
 	    if (t_ptr[0] == '*' && t_ptr[1] == '/') {
-		if (adj_max_col >= 1 + indentation_after_range(ps.com_col - 1, buf_ptr, t_ptr + 2))
+	        /* XXX: strange mixture between indentation, column, length */
+		if (adj_max_line_length >= 1 + indentation_after_range(ps.com_col - 1, buf_ptr, t_ptr + 2))
 		    break_delim = false;
 		break;
 	    }
@@ -336,7 +337,8 @@ pr_comment(void)
 		*e_com++ = '*';
 	    break;
 	default:		/* we have a random char */
-	    now_col = 1 + indentation_after_range(ps.com_col - 1, s_com, e_com);
+	    ;
+	    int now_len = indentation_after_range(ps.com_col - 1, s_com, e_com);
 	    do {
 		check_size_comment(1, &last_bl);
 		*e_com = *buf_ptr++;
@@ -345,11 +347,13 @@ pr_comment(void)
 		if (*e_com == ' ' || *e_com == '\t')
 		    last_bl = e_com;	/* remember we saw a blank */
 		++e_com;
-		now_col++;
+		now_len++;
 	    } while (!memchr("*\n\r\b\t", *buf_ptr, 6) &&
-		(now_col <= adj_max_col || !last_bl));
+		(now_len < adj_max_line_length || !last_bl));
 	    ps.last_nl = false;
-	    if (now_col > adj_max_col && !ps.box_com && e_com[-1] > ' ') {
+	    /* XXX: signed character comparison '>' does not work for UTF-8 */
+	    if (now_len >= adj_max_line_length &&
+		    !ps.box_com && e_com[-1] > ' ') {
 		/*
 		 * the comment is too long, it must be broken up
 		 */
