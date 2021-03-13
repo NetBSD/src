@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.257 2021/03/07 15:10:05 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.258 2021/03/13 17:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.257 2021/03/07 15:10:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.258 2021/03/13 17:14:11 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -383,7 +383,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		if (p->p_pid == pfi->pfi_lastpid && va == pfi->pfi_faultaddr) {
 			if (++pfi->pfi_repeats > 4) {
 				tlb_asid_t asid = tlb_get_asid();
-				pt_entry_t *ptep = pfi->pfi_faultpte;
+				pt_entry_t *ptep = pfi->pfi_faultptep;
 				printf("trap: fault #%u (%s/%s) for %#"
 				    PRIxVADDR" (%#"PRIxVADDR") at pc %#"
 				    PRIxVADDR" curpid=%u/%u ptep@%p=%#"
@@ -402,7 +402,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			pfi->pfi_lastpid = p->p_pid;
 			pfi->pfi_faultaddr = va;
 			pfi->pfi_repeats = 0;
-			pfi->pfi_faultpte = NULL;
+			pfi->pfi_faultptep = NULL;
 			pfi->pfi_faulttype = TRAPTYPE(cause);
 		}
 #endif /* PMAP_FAULTINFO */
@@ -435,10 +435,10 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		if (rv == 0) {
 #ifdef PMAP_FAULTINFO
 			if (pfi->pfi_repeats == 0) {
-				pfi->pfi_faultpte =
+				pfi->pfi_faultptep =
 				    pmap_pte_lookup(map->pmap, va);
 			}
-			KASSERT(*(pt_entry_t *)pfi->pfi_faultpte);
+			KASSERT(*(pt_entry_t *)pfi->pfi_faultptep);
 #endif
 			if (type & T_USER) {
 				userret(l);
