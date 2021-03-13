@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.57 2021/03/13 13:51:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.58 2021/03/13 18:46:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.57 2021/03/13 13:51:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.58 2021/03/13 18:46:39 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -314,6 +314,7 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
 	    *sc_end++ = ' ';	/* add trailing blank, just in case */
 	    buf_end = sc_end;
 	    sc_end = NULL;
+	    debug_println("switched buf_ptr to save_com");
 	    break;
 	}
 	}			/* end of switch */
@@ -640,11 +641,17 @@ process_lparen_or_lbracket(int dec_ind, int tabs_to_var, int sp_sw)
 	*e_code++ = ' ';
     ps.want_blank = false;
     *e_code++ = token[0];
+
     ps.paren_indents[ps.p_l_follow - 1] =
 	indentation_after_range(0, s_code, e_code);
+    debug_println("paren_indent[%d] is now %d",
+	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
+
     if (sp_sw && ps.p_l_follow == 1 && opt.extra_expression_indent
-	    && ps.paren_indents[0] < 2 * opt.indent_size)
+	    && ps.paren_indents[0] < 2 * opt.indent_size) {
 	ps.paren_indents[0] = 2 * opt.indent_size;
+	debug_println("paren_indent[0] is now %d", ps.paren_indents[0]);
+    }
     if (ps.in_or_st && *token == '(' && ps.tos <= 2) {
 	/*
 	 * this is a kluge to make sure that declarations will be
@@ -1196,12 +1203,12 @@ process_preprocessing(void)
 		e_lab--;
 	    bp_save = buf_ptr;	/* save current input buffer */
 	    be_save = buf_end;
-	    buf_ptr = save_com;	/* fix so that subsequent calls to
-					 * lexi will take tokens out of
-					 * save_com */
+	    buf_ptr = save_com;	/* fix so that subsequent calls to lexi will
+				 * take tokens out of save_com */
 	    *sc_end++ = ' ';	/* add trailing blank, just in case */
 	    buf_end = sc_end;
 	    sc_end = NULL;
+	    debug_println("switched buf_ptr to save_com");
 	}
 	check_size_label(1);
 	*e_lab = '\0';	/* null terminate line */
