@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.36 2021/03/13 09:21:57 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.37 2021/03/13 09:48:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.36 2021/03/13 09:21:57 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.37 2021/03/13 09:48:04 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -357,15 +357,15 @@ fill_buffer(void)
 	    in_buffer_limit = in_buffer + size - 2;
 	}
 	if ((i = getc(f)) == EOF) {
-		*p++ = ' ';
-		*p++ = '\n';
-		had_eof = true;
-		break;
+	    *p++ = ' ';
+	    *p++ = '\n';
+	    had_eof = true;
+	    break;
 	}
 	if (i != '\0')
 	    *p++ = i;
 	if (i == '\n')
-		break;
+	    break;
     }
     buf_ptr = in_buffer;
     buf_end = p;
@@ -373,7 +373,7 @@ fill_buffer(void)
 	if (in_buffer[3] == 'I' && strncmp(in_buffer, "/**INDENT**", 11) == 0)
 	    fill_buffer();	/* flush indent error message */
 	else {
-	    int         com = 0;
+	    int com = 0;
 
 	    p = in_buffer;
 	    while (*p == ' ' || *p == '\t')
