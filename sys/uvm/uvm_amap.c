@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.125 2020/09/21 18:41:59 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.126 2021/03/13 15:29:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.125 2020/09/21 18:41:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.126 2021/03/13 15:29:55 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -827,7 +827,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	vsize_t len;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "  (map=%#j, entry=%#j, flags=%jd)",
+	UVMHIST_CALLARGS(maphist, "  (map=%#jx, entry=%#jx, flags=%#jx)",
 	    (uintptr_t)map, (uintptr_t)entry, flags, -2);
 
 	KASSERT(map != kernel_map);	/* we use nointr pool */
@@ -903,7 +903,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 		return;
 	}
 
-	UVMHIST_LOG(maphist,"  amap=%#j, ref=%jd, must copy it",
+	UVMHIST_LOG(maphist,"  amap=%#jx, ref=%jd, must copy it",
 	    (uintptr_t)srcamap, srcamap->am_ref, 0, 0);
 
 	/*

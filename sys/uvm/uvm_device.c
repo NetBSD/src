@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.71 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.72 2021/03/13 15:29:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.71 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.72 2021/03/13 15:29:55 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -364,7 +364,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	dev_t device;
 	vm_prot_t mapprot;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"  flags=%jd", flags,0,0,0);
+	UVMHIST_LOG(maphist,"  flags=%#jx", flags,0,0,0);
 
 	/*
 	 * we do not allow device mappings to be mapped copy-on-write
