@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.152 2020/11/04 01:30:19 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.153 2021/03/13 15:29:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.152 2020/11/04 01:30:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.153 2021/03/13 15:29:55 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -810,7 +810,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	struct uvm_page_array a;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pdhist, "aobj=%#jx offset=%jd, flags=%jd",
+	UVMHIST_CALLARGS(pdhist, "aobj=%#jx offset=%jd, flags=%#jx",
 		    (uintptr_t)uobj, offset, flags,0);
 
 	/*

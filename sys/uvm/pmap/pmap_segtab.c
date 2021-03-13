@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.26 2020/10/08 14:02:40 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.27 2021/03/13 15:29:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.26 2020/10/08 14:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.27 2021/03/13 15:29:55 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -265,7 +265,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmapsegtabhist, "pm=%#jx stpp=%#jx free=%jd",
 	    (uintptr_t)pmap, (uintptr_t)stp_p, free_stp, 0);
-	UVMHIST_LOG(pmapsegtabhist, " callback=%#jx flags=%jx va=%#jx vinc=%#jx",
+	UVMHIST_LOG(pmapsegtabhist, " callback=%#jx flags=%#jx va=%#jx vinc=%#jx",
 	    (uintptr_t)callback, flags, (uintptr_t)va, (uintptr_t)vinc);
 	for (size_t i = (va / vinc) & (PMAP_SEGTABSIZE - 1);
 	     i < PMAP_SEGTABSIZE;

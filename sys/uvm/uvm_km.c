@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.159 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.160 2021/03/13 15:29:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.159 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.160 2021/03/13 15:29:55 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -618,7 +618,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	kva = vm_map_min(map);	/* hint */
 	size = round_page(size);
 	obj = (flags & UVM_KMF_PAGEABLE) ? uvm_kernel_object : NULL;
-	UVMHIST_LOG(maphist,"  (map=%#jx, obj=%#jx, size=%#jx, flags=%jd)",
+	UVMHIST_LOG(maphist,"  (map=%#jx, obj=%#jx, size=%#jx, flags=%#jx)",
 	    (uintptr_t)map, (uintptr_t)obj, size, flags);
 
 	/*

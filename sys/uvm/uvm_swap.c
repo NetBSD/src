@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.202 2021/02/19 13:20:43 hannken Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.203 2021/03/13 15:29:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.202 2021/02/19 13:20:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.203 2021/03/13 15:29:55 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -933,7 +933,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		goto bad;
 	}
 
-	UVMHIST_LOG(pdhist, "  dev=%jx: size=%jd addr=%jd", dev, size, addr, 0);
+	UVMHIST_LOG(pdhist, "  dev=%#jx: size=%jd addr=%jd", dev, size, addr, 0);
 
 	/*
 	 * now we need to allocate an extent to manage this swap device
@@ -1052,7 +1052,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	int error = 0;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pdhist, "  dev=%jx, npages=%jd", sdp->swd_dev,npages, 0, 0);
+	UVMHIST_CALLARGS(pdhist, "  dev=%#jx, npages=%jd", sdp->swd_dev,npages, 0, 0);
 
 	KASSERT(rw_write_held(&swap_syscall_lock));
 	KASSERT(mutex_owned(&uvm_swap_data_lock));
@@ -1216,7 +1216,7 @@ swstrategy(struct buf *bp)
 	pageno -= sdp->swd_drumoffset;	/* page # on swapdev */
 	bn = btodb((uint64_t)pageno << PAGE_SHIFT); /* convert to diskblock */
 
-	UVMHIST_LOG(pdhist, "  Rd/Wr (0/1) %jd: mapoff=%jx bn=%jx bcount=%jd",
+	UVMHIST_LOG(pdhist, "  Rd/Wr (0/1) %jd: mapoff=%#jx bn=%#jx bcount=%jd",
 		((bp->b_flags & B_READ) == 0) ? 1 : 0,
 		sdp->swd_drumoffset, bn, bp->b_bcount);
 
@@ -1279,7 +1279,7 @@ static int
 swread(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
+	UVMHIST_CALLARGS(pdhist, "  dev=%#jx offset=%#jx", dev, uio->uio_offset, 0, 0);
 
 	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
 }
@@ -1292,7 +1292,7 @@ static int
 swwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
+	UVMHIST_CALLARGS(pdhist, "  dev=%#jx offset=%#jx", dev, uio->uio_offset, 0, 0);
 
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
@@ -1408,7 +1408,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 			sz = resid;
 
 		UVMHIST_LOG(pdhist, "sw_reg_strategy: "
-		    "vp %#jx/%#jx offset 0x%jx/0x%jx",
+		    "vp %#jx/%#jx offset %#jx/%#jx",
 		    (uintptr_t)sdp->swd_vp, (uintptr_t)vp, byteoff, nbn);
 
 		/*
@@ -1499,7 +1499,7 @@ sw_reg_start(struct swapdev *sdp)
 		sdp->swd_active++;
 
 		UVMHIST_LOG(pdhist,
-		    "sw_reg_start:  bp %#jx vp %#jx blkno %#jx cnt %jx",
+		    "sw_reg_start:  bp %#jx vp %#jx blkno %#jx cnt %#jx",
 		    (uintptr_t)bp, (uintptr_t)bp->b_vp, (uintptr_t)bp->b_blkno,
 		    bp->b_bcount);
 		vp = bp->b_vp;
@@ -1538,10 +1538,10 @@ sw_reg_iodone(struct work *wk, void *dummy)
 	int s, resid, error;
 	KASSERT(&vbp->vb_buf.b_work == wk);
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pdhist, "  vbp=%#jx vp=%#jx blkno=%jx addr=%#jx",
+	UVMHIST_CALLARGS(pdhist, "  vbp=%#jx vp=%#jx blkno=%#jx addr=%#jx",
 	    (uintptr_t)vbp, (uintptr_t)vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 	    (uintptr_t)vbp->vb_buf.b_data);
-	UVMHIST_LOG(pdhist, "  cnt=%jx resid=%jx",
+	UVMHIST_LOG(pdhist, "  cnt=%#jx resid=%#jx",
 	    vbp->vb_buf.b_bcount, vbp->vb_buf.b_resid, 0, 0);
 
 	/*
@@ -1836,7 +1836,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	int	error, mapinflags;
 	bool write, async, swap_encrypt;
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pdhist, "<- called, startslot=%jd, npages=%jd, flags=%jd",
+	UVMHIST_CALLARGS(pdhist, "<- called, startslot=%jd, npages=%jd, flags=%#jx",
 	    startslot, npages, flags, 0);
 
 	write = (flags & B_READ) == 0;
@@ -1967,7 +1967,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	}
 	UVMHIST_LOG(pdhist,
-	    "about to start io: data = %#jx blkno = 0x%jx, bcount = %jd",
+	    "about to start io: data = %#jx blkno = %#jx, bcount = %jd",
 	    (uintptr_t)bp->b_data, bp->b_blkno, bp->b_bcount, 0);
 
 	/*
