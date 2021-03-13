@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.32 2021/03/12 23:27:41 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.33 2021/03/13 00:03:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.32 2021/03/12 23:27:41 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.33 2021/03/13 00:03:29 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -304,15 +304,7 @@ compute_label_indent(void)
  *
  * All rights reserved
  *
- *
- * NAME: fill_buffer
- *
- * FUNCTION: Reads one block of input into input_buffer
- *
- * HISTORY: initial coding	November 1976	D A Willcox of CAC 1/7/77 A
- * Willcox of CAC	Added check for switch back to partly full input
- * buffer from temporary buffer
- *
+ * FUNCTION: Reads one block of input into the input buffer
  */
 void
 fill_buffer(void)
@@ -407,28 +399,8 @@ fill_buffer(void)
  *
  * All rights reserved
  *
- *
- * NAME: pad_output
- *
- * FUNCTION: Writes tabs and spaces to move the current column up to the desired
+ * Writes tabs and spaces to move the current column up to the desired
  * position.
- *
- * ALGORITHM: Put tabs and/or blanks into pobuf, then write pobuf.
- *
- * PARAMETERS: current		integer		The current column target
- * nteger		The desired column
- *
- * RETURNS: Integer value of the new column.  (If current >= target, no action is
- * taken, and current is returned.
- *
- * GLOBALS: None
- *
- * CALLS: write (sys)
- *
- * CALLED BY: dump_line
- *
- * HISTORY: initial coding	November 1976	D A Willcox of CAC
- *
  */
 static int
 pad_output(int current, int target)
@@ -461,28 +433,9 @@ pad_output(int current, int target)
  * Copyright (C) 1976 by the Board of Trustees of the University of Illinois
  *
  * All rights reserved
- *
- *
- * NAME: count_spaces
- *
- * FUNCTION: Find out where printing of a given string will leave the current
- * character position on output.
- *
- * ALGORITHM: Run thru input string and add appropriate values to current
- * position.
- *
- * RETURNS: Integer value of position after printing "buffer" starting in column
- * "current".
- *
- * HISTORY: initial coding	November 1976	D A Willcox of CAC
- *
  */
 int
 count_spaces_until(int col, const char *buffer, const char *end)
-/*
- * this routine figures out where the character position will be after
- * printing the text in buffer starting at column "current"
- */
 {
     for (const char *p = buffer; *p != '\0' && p != end; ++p) {
 	switch (*p) {
