@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.40 2021/03/13 10:20:54 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.41 2021/03/13 10:32:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.40 2021/03/13 10:20:54 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.41 2021/03/13 10:32:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -184,7 +184,7 @@ dump_line(void)
 		}
 	    } else
 	        output_range(s_lab, e_lab);
-	    cur_col = count_spaces(cur_col, s_lab);
+	    cur_col = 1 + indentation_after(cur_col - 1, s_lab);
 	} else
 	    cur_col = 1;	/* there is no label section */
 
@@ -215,7 +215,7 @@ dump_line(void)
 	    }
 	    cur_col = 1 + output_indent(cur_col - 1, target_col - 1);
 	    output_range(s_code, e_code);
-	    cur_col = count_spaces(cur_col, s_code);
+	    cur_col = 1 + indentation_after(cur_col - 1, s_code);
 	}
 	if (s_com != e_com) {		/* print comment, if any */
 	    int target = ps.com_col;
@@ -306,8 +306,8 @@ compute_code_indent(void)
 	    int w;
 	    int t = paren_indent;
 
-	    if ((w = count_spaces(t, s_code) - opt.max_col) > 0
-		    && count_spaces(target_ind + 1, s_code) <= opt.max_col) {
+	    if ((w = 1 + indentation_after(t - 1, s_code) - opt.max_col) > 0
+		&& 1 + indentation_after(target_ind, s_code) <= opt.max_col) {
 		t -= w + 1;
 		if (t > target_ind + 1)
 		    target_ind = t - 1;
@@ -445,18 +445,6 @@ int
 indentation_after(int ind, const char *s)
 {
     return indentation_after_range(ind, s, NULL);
-}
-
-int
-count_spaces_until(int col, const char *s, const char *e)
-{
-    return 1 + indentation_after_range(col - 1, s, e);
-}
-
-int
-count_spaces(int col, const char *s)
-{
-    return 1 + indentation_after(col - 1, s);
 }
 
 void

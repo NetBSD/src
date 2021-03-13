@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.49 2021/03/13 10:06:47 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.50 2021/03/13 10:32:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.49 2021/03/13 10:06:47 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.50 2021/03/13 10:32:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -686,7 +686,8 @@ main(int argc, char **argv)
 		*e_code++ = ' ';
 	    ps.want_blank = false;
 	    *e_code++ = token[0];
-	    ps.paren_indents[ps.p_l_follow - 1] = count_spaces_until(1, s_code, e_code) - 1;
+	    ps.paren_indents[ps.p_l_follow - 1] =
+		indentation_after_range(0, s_code, e_code);
 	    if (sp_sw && ps.p_l_follow == 1 && opt.extra_expression_indent
 		    && ps.paren_indents[0] < 2 * opt.ind_size)
 		ps.paren_indents[0] = 2 * opt.ind_size;
@@ -1150,8 +1151,9 @@ main(int argc, char **argv)
 		if (ps.block_init_level <= 0)
 		    ps.block_init = 0;
 		if (break_comma && (!opt.leave_comma ||
-		    count_spaces_until(1 + compute_code_indent(), s_code, e_code) >
-		    opt.max_col - opt.tabsize))
+			1 + indentation_after_range(
+			    compute_code_indent(), s_code, e_code)
+			> opt.max_col - opt.tabsize))
 		    force_nl = true;
 	    }
 	    break;

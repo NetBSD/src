@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.23 2021/03/13 10:06:47 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.24 2021/03/13 10:32:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.23 2021/03/13 10:06:47 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.24 2021/03/13 10:32:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -162,11 +162,11 @@ pr_comment(void)
 	    int target_col;
 	    break_delim = false;
 	    if (s_code != e_code)
-		target_col = count_spaces(1 + compute_code_indent(), s_code);
+		target_col = 1 + indentation_after(compute_code_indent(), s_code);
 	    else {
 		target_col = 1;
 		if (s_lab != e_lab)
-		    target_col = count_spaces(1 + compute_label_indent(), s_lab);
+		    target_col = 1 + indentation_after(compute_label_indent(), s_lab);
 	    }
 	    ps.com_col = ps.decl_on_line || ps.ind_level == 0 ? opt.decl_com_ind : opt.com_ind;
 	    if (ps.com_col <= target_col)
@@ -188,7 +188,7 @@ pr_comment(void)
 
 	start = buf_ptr >= save_com && buf_ptr < save_com + sc_size ?
 	    sc_buf : in_buffer;
-	ps.n_comment_delta = 1 - count_spaces_until(1, start, buf_ptr - 2);
+	ps.n_comment_delta = -indentation_after_range(0, start, buf_ptr - 2);
     } else {
 	ps.n_comment_delta = 0;
 	while (*buf_ptr == ' ' || *buf_ptr == '\t')
@@ -208,7 +208,7 @@ pr_comment(void)
 	    if (t_ptr >= buf_end)
 		fill_buffer();
 	    if (t_ptr[0] == '*' && t_ptr[1] == '/') {
-		if (adj_max_col >= count_spaces_until(ps.com_col, buf_ptr, t_ptr + 2))
+		if (adj_max_col >= 1 + indentation_after_range(ps.com_col - 1, buf_ptr, t_ptr + 2))
 		    break_delim = false;
 		break;
 	    }
@@ -332,7 +332,7 @@ pr_comment(void)
 		*e_com++ = '*';
 	    break;
 	default:		/* we have a random char */
-	    now_col = count_spaces_until(ps.com_col, s_com, e_com);
+	    now_col = 1 + indentation_after_range(ps.com_col - 1, s_com, e_com);
 	    do {
 		check_size_comment(1, &last_bl);
 		*e_com = *buf_ptr++;
