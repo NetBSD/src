@@ -1,4 +1,4 @@
-/* $NetBSD: token-preprocessing.0.stdout,v 1.3 2021/03/13 13:04:13 rillig Exp $ */
+/* $NetBSD: token-preprocessing.0.stdout,v 1.4 2021/03/13 13:14:14 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -34,6 +34,4 @@
  */ actual_value
 
 #define comment_in_string_literal "/* no comment "
-int this_is_an_ordinary_line_again;
-
-/* $ FIXME: The above empty line is wrong. */
+int		this_is_an_ordinary_line_again;

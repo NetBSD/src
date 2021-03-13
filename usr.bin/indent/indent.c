@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.54 2021/03/13 12:52:24 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.55 2021/03/13 13:14:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.54 2021/03/13 12:52:24 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.55 2021/03/13 13:14:14 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1121,7 +1121,7 @@ process_preprocessing(void)
     {
 	int         in_comment = 0;
 	int         com_start = 0;
-	char        quote = 0;
+	char        quote = '\0';
 	int         com_end = 0;
 
 	while (*buf_ptr == ' ' || *buf_ptr == '\t') {
@@ -1143,7 +1143,7 @@ process_preprocessing(void)
 		}
 		break;
 	    case '/':
-		if (*buf_ptr == '*' && !in_comment && !quote) {
+		if (*buf_ptr == '*' && !in_comment && quote == '\0') {
 		    in_comment = 1;
 		    *e_lab++ = *buf_ptr++;
 		    com_start = e_lab - s_lab - 2;
@@ -1151,11 +1151,15 @@ process_preprocessing(void)
 		break;
 	    case '"':
 		if (quote == '"')
-		    quote = 0;
+		    quote = '\0';
+		else if (quote == '\0')
+		    quote = '"';
 		break;
 	    case '\'':
 		if (quote == '\'')
-		    quote = 0;
+		    quote = '\0';
+		else if (quote == '\0')
+		    quote = '\'';
 		break;
 	    case '*':
 		if (*buf_ptr == '/' && in_comment) {
