@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.35 2021/03/13 09:06:12 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.36 2021/03/13 09:21:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.35 2021/03/13 09:06:12 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.36 2021/03/13 09:21:57 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -68,12 +68,14 @@ static void
 output_char(char ch)
 {
     fputc(ch, output);
+    debug_vis_range("output_char '", &ch, &ch + 1, "'\n");
 }
 
 static void
 output_range(const char *s, const char *e)
 {
     fwrite(s, 1, (size_t)(e - s), output);
+    debug_vis_range("output_range \"", s, e, "\"\n");
 }
 
 static inline void
@@ -93,14 +95,15 @@ output_indent(int old_ind, int new_ind)
 	if (n > 0)
 	    ind -= ind % tabsize;
 	for (int i = 0; i < n; i++) {
-	    output_char('\t');
+	    fputc('\t', output);
 	    ind += tabsize;
 	}
     }
 
     for (; ind < new_ind; ind++)
-        output_char(' ');
+        fputc(' ', output);
 
+    debug_println("output_indent %d", ind);
     return ind;
 }
 
@@ -196,9 +199,19 @@ dump_line(void)
 	    {
 		int i;
 
-		for (i = 0; i < ps.p_l_follow; i++)
-		    if (ps.paren_indents[i] >= 0)
-			ps.paren_indents[i] = -(ps.paren_indents[i] + target_col);
+		for (i = 0; i < ps.p_l_follow; i++) {
+		    if (ps.paren_indents[i] >= 0) {
+			int ind = ps.paren_indents[i];
+			/*
+			 * XXX: this mix of 'indent' and 'column' smells like
+			 * an off-by-one error.
+			 */
+			ps.paren_indents[i] = -(ind + target_col);
+			debug_println(
+			    "setting pi[%d] from %d to %d for column %d",
+			    i, ind, ps.paren_indents[i], target_col);
+		    }
+		}
 	    }
 	    cur_col = 1 + output_indent(cur_col - 1, target_col - 1);
 	    output_range(s_code, e_code);
@@ -265,8 +278,11 @@ dump_line(void)
     *(e_com = s_com = combuf + 1) = '\0';
     ps.ind_level = ps.i_l_follow;
     ps.paren_level = ps.p_l_follow;
-    if (ps.paren_level > 0)
+    if (ps.paren_level > 0) {
+        /* TODO: explain what negative indentation means */
 	paren_indent = -ps.paren_indents[ps.paren_level - 1];
+	debug_println("paren_indent is now %d", paren_indent);
+    }
     not_first_line = 1;
 }
 
