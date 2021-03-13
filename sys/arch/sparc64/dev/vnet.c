@@ -1,4 +1,4 @@
-/*	$NetBSD: vnet.c,v 1.3 2021/03/11 19:34:11 palle Exp $	*/
+/*	$NetBSD: vnet.c,v 1.4 2021/03/13 20:21:37 palle Exp $	*/
 /*	$OpenBSD: vnet.c,v 1.62 2020/07/10 13:26:36 patrick Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
@@ -221,6 +221,7 @@ void	vnet_rx_vio_ver_info(struct vnet_softc *, struct vio_msg_tag *);
 void	vnet_rx_vio_attr_info(struct vnet_softc *, struct vio_msg_tag *);
 void	vnet_rx_vio_dring_reg(struct vnet_softc *, struct vio_msg_tag *);
 void	vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *);
+void	vnet_rx_vio_mcast_info(struct vnet_softc *sc, struct vio_msg_tag *);
 void	vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *);
 void	vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *);
 void	vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *);
@@ -655,9 +656,15 @@ vnet_rx_vio_ctrl(struct vnet_softc *sc, struct vio_msg *vm)
 	case VIO_RDX:
 		vnet_rx_vio_rdx(sc, tag);
 		break;
+	case VNET_MCAST_INFO:
+		vnet_rx_vio_mcast_info(sc, tag);
+		break;
 	default:
 		printf("%s: CTRL/0x%02x/0x%04x FIXME\n",
 				 __func__, tag->stype, tag->stype_env);
+#if 0
+		Debugger();
+#endif		
 		break;
 	}
 }
@@ -739,7 +746,9 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		DPRINTF(("CTRL/INFO/ATTR_INFO\n"));
 #endif		
 		sc->sc_xfer_mode = ai->xfer_mode;
+#if 0		
 		DPRINTF(("sc_xfer_mode %d\n", sc->sc_xfer_mode));
+#endif		
 
 		ai->tag.stype = VIO_SUBTYPE_ACK;
 		ai->tag.sid = sc->sc_local_sid;
@@ -889,6 +898,40 @@ FIXME openbsd
 #else
 	KERNEL_UNLOCK_ONE(curlwp);
 #endif 
+	}
+}
+
+void
+vnet_rx_vio_mcast_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
+{
+#if 0
+	DPRINTF(("%s: entry\n", __func__));
+#endif	
+
+	switch(tag->stype) {
+			
+		case VIO_SUBTYPE_INFO:
+#if 0
+			DPRINTF(("CTRL/INFO/MCAST_INFO\n"));
+#endif		
+			break;
+
+		case VIO_SUBTYPE_ACK:
+#if 0			
+			DPRINTF(("CTRL/ACK/MCAST_INFO\n"));
+#endif		
+			break;
+
+		case VIO_SUBTYPE_NACK:
+#if 0			
+			DPRINTF(("CTRL/NACK/MCAST_INFO\n"));
+#endif		
+			break;
+			
+		default:
+			printf("%s: CTRL/0x%02x/0x%04x\n",
+				   __func__, tag->stype, tag->stype_env);
+			break;
 	}
 }
 
@@ -1077,7 +1120,7 @@ FIXME openbsd
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
 	{
-#if 0			
+#if 0
 		DPRINTF(("%s: VIO_SUBTYPE_INFO\n", __func__));
 #endif		
 		struct vnet_desc desc;
@@ -1148,9 +1191,9 @@ FIXME openbsd
 			m->m_len = m->m_pkthdr.len = desc.nbytes;
 #endif			
 			nbytes = roundup(desc.nbytes + VNET_ETHER_ALIGN, 8);
-#if 1
-			DPRINTF(("%s: nbytes %" PRId64 " desc.nbytes %" PRId32 "\n",
-					 __func__, nbytes, desc.nbytes));
+#if 0
+			DPRINTF(("%s: RX frame size %" PRId16 "\n",
+					 __func__, (int)nbytes));
 			uint8_t buf[ETHER_MAX_LEN];
 			pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
@@ -1161,11 +1204,12 @@ FIXME openbsd
 			}
 			for (int i = 0; i < desc.nbytes; i++) {
 					if (i % 16 == 0) {
-						printf("\n");
+						DPRINTF(("\n"));
 					}
-					printf("%02x ", buf[i]);
+					DPRINTF(("%02x ", buf[i]));
 			}
-			printf("\n");
+			DPRINTF(("\n"));
+			DPRINTF(("\n"));
 #endif			
 #if 1
 			pmap_extract(pmap_kernel(), (vaddr_t)m->m_data, &pa);
@@ -1176,6 +1220,7 @@ FIXME openbsd
 				goto skip;
 			}
 			m->m_data += VNET_ETHER_ALIGN;
+			m_set_rcvif(m, ifp);
 
 #if 0
 FIXME openbsd		
@@ -1224,7 +1269,7 @@ FIXME openbd
 
 	case VIO_SUBTYPE_ACK:
 	{
-#if 0			
+#if 0
 		DPRINTF(("%s: VIO_SUBTYPE_ACK\n", __func__));
 #endif		
 		struct ldc_map *map = sc->sc_lm;
@@ -1399,6 +1444,12 @@ vnet_send_attr_info(struct vnet_softc *sc)
 		ai.addr |= sc->sc_macaddr[i];
 	}
 	ai.mtu = ETHER_MAX_LEN - ETHER_CRC_LEN;
+#if 0
+	DPRINTF(("%s: ai.addr %" PRIx64 "\n",
+			 __func__, ai.addr));
+	DPRINTF(("%s: ai.mtu %" PRId64 "\n",
+			 __func__, ai.mtu));
+#endif	
 	vnet_sendmsg(sc, &ai, sizeof(ai));
 
 	sc->sc_vio_state |= VIO_SND_ATTR_INFO;
@@ -1407,7 +1458,7 @@ vnet_send_attr_info(struct vnet_softc *sc)
 void
 vnet_send_dring_reg(struct vnet_softc *sc)
 {
-#if 1
+#if 0
 	DPRINTF(("%s: entry\n", __func__));
 #endif	
 	
@@ -1433,7 +1484,7 @@ vnet_send_dring_reg(struct vnet_softc *sc)
 void
 vio_send_rdx(struct vnet_softc *sc)
 {
-#if 1
+#if 0
 	DPRINTF(("%s: entry\n", __func__));
 #endif	
 	struct vio_msg_tag tag;
@@ -1457,8 +1508,10 @@ vnet_send_dring_data(struct vnet_softc *sc, uint32_t start_idx)
 	u_int peer_state;
 
 	peer_state = atomic_swap_uint(&sc->sc_peer_state, VIO_DP_ACTIVE);
-	if (peer_state == VIO_DP_ACTIVE)
+	if (peer_state == VIO_DP_ACTIVE) {
+		DPRINTF(("%s: peer_state == VIO_DP_ACTIVE\n", __func__));
 		return;
+	}
 
 	bzero(&dm, sizeof(dm));
 	dm.tag.type = VIO_TYPE_DATA;
@@ -1466,10 +1519,17 @@ vnet_send_dring_data(struct vnet_softc *sc, uint32_t start_idx)
 	dm.tag.stype_env = VIO_DRING_DATA;
 	dm.tag.sid = sc->sc_local_sid;
 	dm.seq_no = sc->sc_seq_no++;
+#if 0
+	DPRINTF(("%s: dm.seq_no %" PRId64 "\n",
+			 __func__, dm.seq_no));
+#endif	
 	dm.dring_ident = sc->sc_dring_ident;
 	dm.start_idx = start_idx;
 	dm.end_idx = -1;
 	vnet_sendmsg(sc, &dm, sizeof(dm));
+#if 0
+	DPRINTF(("%s: exit\n", __func__));
+#endif	
 }
  
 void
@@ -1515,6 +1575,10 @@ FIXME openbsd
 		DPRINTF(("%s: queue is empty\n", __func__));
 #endif		
 		return;
+	} else {
+#if 0			
+		DPRINTF(("%s: queue size %d\n", __func__, ifp->if_snd.ifq_len));
+#endif		
 	}
 
 	/*
@@ -1524,7 +1588,7 @@ FIXME openbsd
 	if (!ISSET(sc->sc_vio_state, VIO_RCV_RDX) ||
 	    !ISSET(sc->sc_vio_state, VIO_ACK_RDX))
 	{
-#if 0			
+#if 0
 		DPRINTF(("%s: vio connection not established yet\n", __func__));
 #endif		
 		return;
@@ -1563,8 +1627,12 @@ FIXME openbsd
 	start = prod = sc->sc_tx_prod & (sc->sc_vd->vd_nentries - 1);
 	while (sc->sc_vd->vd_desc[prod].hdr.dstate == VIO_DESC_FREE) {
 		count = sc->sc_tx_prod - sc->sc_tx_cons;
+#if 0		
+		DPRINTF(("%s: count %d\n", __func__, count));
+#endif		
 		if (count >= (sc->sc_vd->vd_nentries - 1) ||
 		    map->lm_count >= map->lm_nentries) {
+			DPRINTF(("%s: count issue\n", __func__));
 #if 0
 FIXME openbsd
 			ifq_set_oactive(&ifp->if_snd);
@@ -1576,6 +1644,7 @@ FIXME openbsd
 
 		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
 		if (buf == NULL) {
+			DPRINTF(("%s: buff is NULL\n", __func__));
 #if 0
 FIXME openbsd				
 			ifq_set_oactive(&ifp->if_snd);
@@ -1591,21 +1660,53 @@ FIXME openbsd
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 #endif 
 		if (m == NULL) {
+#if 0				
+			DPRINTF(("%s: m is NULL\n", __func__));
+#endif			
 			pool_put(&sc->sc_pool, buf);
 			break;
+		} else {
+#if 0				
+			DPRINTF(("%s: m is not NULL\n", __func__));
+#endif			
 		}
 
+#if 1
 		m_copydata(m, 0, m->m_pkthdr.len, buf + VNET_ETHER_ALIGN);
-
+#if 0		
+		DPRINTF(("%s: TX frame size %" PRId16 "\n",
+				 __func__, m->m_pkthdr.len));
+		for (int i = 0; i < m->m_pkthdr.len; i++) {
+			if (i % 16 == 0) {
+				DPRINTF(("\n"));
+			}
+			DPRINTF(("%02x ", buf[VNET_ETHER_ALIGN+i]));
+		}
+		DPRINTF(("\n"));
+#endif		
+#else
+		m_copydata(m, 0, m->m_pkthdr.len, buf);
+		DPRINTF(("%s: TX frame size %" PRId16 "\n",
+				 __func__, m->m_pkthdr.len));
+		for (int i = 0; i < m->m_pkthdr.len; i++) {
+			if (i % 16 == 0) {
+				DPRINTF(("\n"));
+			}
+			DPRINTF(("%02x ", buf[i]));
+		}
+		DPRINTF(("\n"));
+#endif		
 #if NBPFILTER > 0
 		/*
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-				{
+		{
+			DPRINTF(("%s: before bpf\n", __func__));
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-				}
+			DPRINTF(("%s: after bpf\n", __func__));
+		}
 #endif
 
 		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
@@ -1647,10 +1748,16 @@ FIXME openbsd
 	membar_producer();
 
 	if (start != prod && sc->sc_peer_state != VIO_DP_ACTIVE) {
+#if 0			
+		DPRINTF(("%s: before vnet_send_dring_data()\n", __func__));
+#endif		
 		vnet_send_dring_data(sc, start);
 		ifp->if_timer = 5;
+	} else {
+		DPRINTF(("%s: no vnet_send_dring_data()\n", __func__));
 	}
-#if 0	
+			
+#if 0
 	DPRINTF(("%s: exit\n", __func__));
 #endif	
 }
@@ -1829,8 +1936,9 @@ vnet_watchdog(struct ifnet *ifp)
 int
 vnet_media_change(struct ifnet *ifp)
 {
-
+#if 0
 	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	
 	return (0);
 }
@@ -1838,8 +1946,9 @@ vnet_media_change(struct ifnet *ifp)
 void
 vnet_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
-
+#if 0
 	DPRINTF(("%s: entry\n", __func__));
+#endif	
 	
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	imr->ifm_status = IFM_AVALID;
