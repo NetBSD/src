@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.33 2021/03/13 00:03:29 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.34 2021/03/13 00:26:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.33 2021/03/13 00:03:29 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.34 2021/03/13 00:26:56 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -63,7 +63,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 
 int         comment_open;
 static int  paren_indent;
-static int pad_output(int current, int target);
 
 static void
 output_char(char ch)
@@ -87,6 +86,28 @@ static void
 output_int(int i)
 {
     fprintf(output, "%d", i);
+}
+
+static int
+output_indent(int old_ind, int new_ind)
+{
+    int ind = old_ind;
+
+    if (opt.use_tabs) {
+	int tabsize = opt.tabsize;
+	int n = new_ind / tabsize - ind / tabsize;
+	if (n > 0)
+	    ind -= ind % tabsize;
+	for (int i = 0; i < n; i++) {
+	    output_char('\t');
+	    ind += tabsize;
+	}
+    }
+
+    for (; ind < new_ind; ind++)
+        output_char(' ');
+
+    return ind;
 }
 
 /*
@@ -144,7 +165,7 @@ dump_line(void)
 	    while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
 		e_lab--;
 	    *e_lab = '\0';
-	    cur_col = pad_output(1, compute_label_indent());
+	    cur_col = 1 + output_indent(0, compute_label_column() - 1);
 	    if (s_lab[0] == '#' && (strncmp(s_lab, "#else", 5) == 0
 				    || strncmp(s_lab, "#endif", 6) == 0)) {
 		char *s = s_lab;
@@ -179,7 +200,7 @@ dump_line(void)
 		comment_open = 0;
 		output_string(".*/\n");
 	    }
-	    target_col = compute_code_indent();
+	    target_col = compute_code_column();
 	    {
 		int i;
 
@@ -187,7 +208,7 @@ dump_line(void)
 		    if (ps.paren_indents[i] >= 0)
 			ps.paren_indents[i] = -(ps.paren_indents[i] + target_col);
 	    }
-	    cur_col = pad_output(cur_col, target_col);
+	    cur_col = 1 + output_indent(cur_col - 1, target_col - 1);
 	    for (p = s_code; p < e_code; p++)
 		if (*p == (char) 0200)
 		    output_int(target_col * 7);
@@ -219,7 +240,7 @@ dump_line(void)
 	    }
 	    while (e_com > com_st && isspace((unsigned char)e_com[-1]))
 		e_com--;
-	    (void)pad_output(cur_col, target);
+	    (void)output_indent(cur_col - 1, target - 1);
 	    output_range(com_st, e_com);
 	    ps.comment_delta = ps.n_comment_delta;
 	    ++ps.com_lines;	/* count lines with comments */
@@ -262,7 +283,7 @@ dump_line(void)
 }
 
 int
-compute_code_indent(void)
+compute_code_column(void)
 {
     int target_col = opt.ind_size * ps.ind_level + 1;
 
@@ -290,7 +311,7 @@ compute_code_indent(void)
 }
 
 int
-compute_label_indent(void)
+compute_label_column(void)
 {
     return
 	ps.pcase ? (int) (case_ind * opt.ind_size) + 1
@@ -392,41 +413,6 @@ fill_buffer(void)
 	    output_char(*p);
 	} while (*p++ != '\n');
     }
-}
-
-/*
- * Copyright (C) 1976 by the Board of Trustees of the University of Illinois
- *
- * All rights reserved
- *
- * Writes tabs and spaces to move the current column up to the desired
- * position.
- */
-static int
-pad_output(int current, int target)
-			        /* writes tabs and blanks (if necessary) to
-				 * get the current output position up to the
-				 * target column */
-    /* current: the current column value */
-    /* target: position we want it at */
-{
-    int curr;			/* internal column pointer */
-
-    if (current >= target)
-	return current;		/* line is already long enough */
-    curr = current;
-    if (opt.use_tabs) {
-	int tcur;
-
-	while ((tcur = opt.tabsize * (1 + (curr - 1) / opt.tabsize) + 1) <= target) {
-	    output_char('\t');
-	    curr = tcur;
-	}
-    }
-    while (curr++ < target)
-	output_char(' ');	/* pad with final blanks */
-
-    return target;
 }
 
 /*
