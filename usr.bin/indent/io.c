@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.34 2021/03/13 00:26:56 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.35 2021/03/13 09:06:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.34 2021/03/13 00:26:56 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.35 2021/03/13 09:06:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -80,12 +80,6 @@ static inline void
 output_string(const char *s)
 {
     output_range(s, s + strlen(s));
-}
-
-static void
-output_int(int i)
-{
-    fprintf(output, "%d", i);
 }
 
 static int
@@ -194,8 +188,6 @@ dump_line(void)
 	ps.pcase = false;
 
 	if (s_code != e_code) {	/* print code section, if any */
-	    char *p;
-
 	    if (comment_open) {
 		comment_open = 0;
 		output_string(".*/\n");
@@ -209,11 +201,7 @@ dump_line(void)
 			ps.paren_indents[i] = -(ps.paren_indents[i] + target_col);
 	    }
 	    cur_col = 1 + output_indent(cur_col - 1, target_col - 1);
-	    for (p = s_code; p < e_code; p++)
-		if (*p == (char) 0200)
-		    output_int(target_col * 7);
-		else
-		    output_char(*p);
+	    output_range(s_code, e_code);
 	    cur_col = count_spaces(cur_col, s_code);
 	}
 	if (s_com != e_com) {		/* print comment, if any */
