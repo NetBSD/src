@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.26 2021/03/13 11:19:43 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.27 2021/03/13 11:27:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.26 2021/03/13 11:19:43 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.27 2021/03/13 11:27:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -147,7 +147,7 @@ pr_comment(void)
 				 * is nonzero (the default). */
 	    break_delim = false;
 	}
-	if ( /* ps.bl_line && */ (s_lab == e_lab) && (s_code == e_code)) {
+	if ( /* ps.bl_line && */ s_lab == e_lab && s_code == e_code) {
 	    /* klg: check only if this line is blank */
 	    /*
 	     * If this (*and previous lines are*) blank, dont put comment way

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.39 2021/03/13 09:21:57 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.40 2021/03/13 11:27:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.39 2021/03/13 09:21:57 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.40 2021/03/13 11:27:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -502,14 +502,14 @@ stop_lit:
 	code = ident;
 	break;
 
-    case ('('):
-    case ('['):
+    case '(':
+    case '[':
 	unary_delim = true;
 	code = lparen;
 	break;
 
-    case (')'):
-    case (']'):
+    case ')':
+    case ']':
 	code = rparen;
 	break;
 
@@ -523,17 +523,17 @@ stop_lit:
 	code = question;
 	break;
 
-    case (':'):
+    case ':':
 	code = colon;
 	unary_delim = true;
 	break;
 
-    case (';'):
+    case ';':
 	unary_delim = true;
 	code = semicolon;
 	break;
 
-    case ('{'):
+    case '{':
 	unary_delim = true;
 
 	/*
@@ -543,7 +543,7 @@ stop_lit:
 	code = lbrace;
 	break;
 
-    case ('}'):
+    case '}':
 	unary_delim = true;
 	/* ?	code = state->block_init ? rparen : rbrace; */
 	code = rbrace;
@@ -556,7 +556,7 @@ stop_lit:
 	code = form_feed;
 	break;
 
-    case (','):
+    case ',':
 	unary_delim = true;
 	code = comma;
 	break;
