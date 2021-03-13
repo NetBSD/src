@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.29 2021/03/13 13:51:08 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.30 2021/03/13 18:11:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.29 2021/03/13 13:51:08 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.30 2021/03/13 18:11:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -200,8 +200,9 @@ process_comment(void)
 	    if (t_ptr >= buf_end)
 		fill_buffer();
 	    if (t_ptr[0] == '*' && t_ptr[1] == '/') {
-	        /* XXX: strange mixture between indentation, column, length */
-		if (adj_max_line_length >= 1 + indentation_after_range(ps.com_col - 1, buf_ptr, t_ptr + 2))
+		int right_margin = indentation_after_range(ps.com_col - 1,
+		    buf_ptr, t_ptr + 2);
+		if (right_margin < adj_max_line_length)
 		    break_delim = false;
 		break;
 	    }
