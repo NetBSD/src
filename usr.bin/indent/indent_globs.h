@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.19 2021/03/13 13:25:23 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.20 2021/03/13 13:51:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -93,11 +93,11 @@ extern char       *be_save;		/* similarly saved value of buf_end */
 extern struct options {
     int         blanklines_around_conditional_compilation;
     int         blanklines_after_declarations_at_proctop; /* this is vaguely
-				 * similar to blanklines_after_decla except
-				 * that in only applies to the first set of
-				 * declarations in a procedure (just after
-				 * the first '{') and it causes a blank line
-				 * to be generated even if there are no
+				 * similar to blanklines_after_declarations
+				 * except that it only applies to the first
+				 * set of declarations in a procedure (just
+				 * after the first '{') and it causes a blank
+				 * line to be generated even if there are no
 				 * declarations */
     int         blanklines_after_declarations;
     int         blanklines_after_procs;
@@ -109,17 +109,17 @@ extern struct options {
     int         Bill_Shannon;	/* true iff a blank should always be
 				 * inserted after sizeof */
     int         comment_delimiter_on_blankline;
-    int         decl_com_ind;	/* the column in which comments after
+    int         decl_comment_column; /* the column in which comments after
 				 * declarations should be put */
-    int         cuddle_else;	/* true if else should cuddle up to '}' */
+    int         cuddle_else;	/* true if 'else' should cuddle up to '}' */
     int         continuation_indent; /* set to the indentation between the
 				 * edge of code and continuation lines */
-    float       case_indent;	/* The distance to indent case labels from the
-				 * switch statement */
-    /* XXX: TODO: rename to 'comment_column' since 'ind' is confusing */
-    int         com_ind;	/* the column in which comments to the right
+    float       case_indent;	/* The distance (measured in tabsize) to
+				 * indent case labels from the switch
+				 * statement */
+    int         comment_column;	/* the column in which comments to the right
 				 * of code should start */
-    int         decl_indent;	/* column to indent declared identifiers to */
+    int         decl_indent;	/* indentation of identifier in declaration */
     int         ljust_decl;	/* true if declarations should be left
 				 * justified */
     int         unindent_displace; /* comments not to the right of code
@@ -139,9 +139,9 @@ extern struct options {
 				 * are to be magically reformatted (just
 				 * like comments that begin in later columns) */
     int         format_block_comments; /* true if comments beginning with
-				 * `/ * \n' are to be reformatted */
+				 * '/ * \n' are to be reformatted */
     int         indent_parameters;
-    int         ind_size;	/* the size of one indentation level */
+    int         indent_size;	/* the size of one indentation level */
     int         block_comment_max_line_length;
     int         local_decl_indent; /* like decl_indent but for locals */
     int         lineup_to_parens_always; /* if true, do not attempt to keep

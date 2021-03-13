@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.42 2021/03/13 11:19:43 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.43 2021/03/13 13:51:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.42 2021/03/13 11:19:43 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.43 2021/03/13 13:51:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -289,12 +289,12 @@ dump_line(void)
 int
 compute_code_indent(void)
 {
-    int target_ind = opt.ind_size * ps.ind_level;
+    int target_ind = opt.indent_size * ps.ind_level;
 
     if (ps.paren_level != 0) {
 	if (!opt.lineup_to_parens)
 	    target_ind += opt.continuation_indent *
-		(2 * opt.continuation_indent == opt.ind_size ? 1 : ps.paren_level);
+		(2 * opt.continuation_indent == opt.indent_size ? 1 : ps.paren_level);
 	else if (opt.lineup_to_parens_always)
 	    /*
 	     * XXX: where does this '- 1' come from?  It looks strange but is
@@ -323,10 +323,10 @@ int
 compute_label_indent(void)
 {
     if (ps.pcase)
-	return (int) (case_ind * opt.ind_size);
+	return (int) (case_ind * opt.indent_size);
     if (s_lab[0] == '#')
         return 0;
-    return opt.ind_size * (ps.ind_level - label_offset);
+    return opt.indent_size * (ps.ind_level - label_offset);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.56 2021/03/13 13:25:23 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.57 2021/03/13 13:51:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.56 2021/03/13 13:25:23 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.57 2021/03/13 13:51:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -507,16 +507,18 @@ main_parse_command_line(int argc, char **argv)
 	}
     }
 
-    if (opt.com_ind <= 1)
-	opt.com_ind = 2;	/* don't put normal comments before column 2 */
+    if (opt.comment_column <= 1)
+	opt.comment_column = 2;	/* don't put normal comments before column 2 */
     if (opt.block_comment_max_line_length <= 0)
 	opt.block_comment_max_line_length = opt.max_line_length;
     if (opt.local_decl_indent < 0) /* if not specified by user, set this */
 	opt.local_decl_indent = opt.decl_indent;
-    if (opt.decl_com_ind <= 0)	/* if not specified by user, set this */
-	opt.decl_com_ind = opt.ljust_decl ? (opt.com_ind <= 10 ? 2 : opt.com_ind - 8) : opt.com_ind;
+    if (opt.decl_comment_column <= 0)	/* if not specified by user, set this */
+	opt.decl_comment_column = opt.ljust_decl
+	    ? (opt.comment_column <= 10 ? 2 : opt.comment_column - 8)
+	    : opt.comment_column;
     if (opt.continuation_indent == 0)
-	opt.continuation_indent = opt.ind_size;
+	opt.continuation_indent = opt.indent_size;
 }
 
 static void
@@ -538,8 +540,8 @@ main_prepare_parsing(void)
 	    break;
 	p++;
     }
-    if (col > opt.ind_size)
-	ps.ind_level = ps.i_l_follow = col / opt.ind_size;
+    if (col > opt.indent_size)
+	ps.ind_level = ps.i_l_follow = col / opt.indent_size;
 }
 
 static void
@@ -641,8 +643,8 @@ process_lparen_or_lbracket(int dec_ind, int tabs_to_var, int sp_sw)
     ps.paren_indents[ps.p_l_follow - 1] =
 	indentation_after_range(0, s_code, e_code);
     if (sp_sw && ps.p_l_follow == 1 && opt.extra_expression_indent
-	    && ps.paren_indents[0] < 2 * opt.ind_size)
-	ps.paren_indents[0] = 2 * opt.ind_size;
+	    && ps.paren_indents[0] < 2 * opt.indent_size)
+	ps.paren_indents[0] = 2 * opt.indent_size;
     if (ps.in_or_st && *token == '(' && ps.tos <= 2) {
 	/*
 	 * this is a kluge to make sure that declarations will be
@@ -1521,9 +1523,9 @@ indent_declaration(int cur_dec_ind, int tabs_to_var)
     /*
      * get the tab math right for indentations that are not multiples of tabsize
      */
-    if ((ps.ind_level * opt.ind_size) % opt.tabsize != 0) {
-	pos += (ps.ind_level * opt.ind_size) % opt.tabsize;
-	cur_dec_ind += (ps.ind_level * opt.ind_size) % opt.tabsize;
+    if ((ps.ind_level * opt.indent_size) % opt.tabsize != 0) {
+	pos += (ps.ind_level * opt.indent_size) % opt.tabsize;
+	cur_dec_ind += (ps.ind_level * opt.indent_size) % opt.tabsize;
     }
     if (tabs_to_var) {
 	int tpos;

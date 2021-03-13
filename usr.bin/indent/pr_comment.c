@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.28 2021/03/13 13:25:23 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.29 2021/03/13 13:51:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.28 2021/03/13 13:25:23 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.29 2021/03/13 13:51:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -140,7 +140,7 @@ process_comment(void)
 	     * If this (*and previous lines are*) blank, dont put comment way
 	     * out at left
 	     */
-	    ps.com_col = (ps.ind_level - opt.unindent_displace) * opt.ind_size + 1;
+	    ps.com_col = (ps.ind_level - opt.unindent_displace) * opt.indent_size + 1;
 	    adj_max_line_length = opt.block_comment_max_line_length;
 	    if (ps.com_col <= 1)
 		ps.com_col = 1 + !opt.format_col1_comments;
@@ -154,7 +154,8 @@ process_comment(void)
 		if (s_lab != e_lab)
 		    target_col = 1 + indentation_after(compute_label_indent(), s_lab);
 	    }
-	    ps.com_col = ps.decl_on_line || ps.ind_level == 0 ? opt.decl_com_ind : opt.com_ind;
+	    ps.com_col = ps.decl_on_line || ps.ind_level == 0
+		? opt.decl_comment_column : opt.comment_column;
 	    if (ps.com_col <= target_col)
 		ps.com_col = opt.tabsize * (1 + (target_col - 1) / opt.tabsize) + 1;
 	    if (ps.com_col + 24 > adj_max_line_length)
@@ -222,7 +223,7 @@ process_comment(void)
 
     while (1) {			/* this loop will go until the comment is
 				 * copied */
-	switch (*buf_ptr) {	/* this checks for various spcl cases */
+	switch (*buf_ptr) {	/* this checks for various special cases */
 	case 014:		/* check for a form feed */
 	    check_size_comment(3, &last_bl);
 	    if (!ps.box_com) {	/* in a text comment, break the line here */
