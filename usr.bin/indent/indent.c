@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.51 2021/03/13 11:19:43 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.52 2021/03/13 11:27:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.51 2021/03/13 11:19:43 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.52 2021/03/13 11:27:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -604,12 +604,12 @@ main(int argc, char **argv)
 	    exit(found_err);
 	}
 	if (
-		(type_code != comment) &&
-		(type_code != newline) &&
-		(type_code != preprocessing) &&
-		(type_code != form_feed)) {
+		type_code != comment &&
+		type_code != newline &&
+		type_code != preprocessing &&
+		type_code != form_feed) {
 	    if (force_nl &&
-		    (type_code != semicolon) &&
+		    type_code != semicolon &&
 		    (type_code != lbrace || !opt.btype_2)) {
 		/* we should force a broken line here */
 		if (opt.verbose)
@@ -1159,9 +1159,7 @@ main(int argc, char **argv)
 	    break;
 
 	case preprocessing:	/* '#' */
-	    if ((s_com != e_com) ||
-		    (s_lab != e_lab) ||
-		    (s_code != e_code))
+	    if (s_com != e_com || s_lab != e_lab || s_code != e_code)
 		dump_line();
 	    check_size_label(1);
 	    *e_lab++ = '#';	/* move whole line to 'label' buffer */
