@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.38 2021/03/13 09:54:11 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.39 2021/03/13 10:06:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.38 2021/03/13 09:54:11 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.39 2021/03/13 10:06:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -195,7 +195,7 @@ dump_line(void)
 		comment_open = 0;
 		output_string(".*/\n");
 	    }
-	    target_col = compute_code_column();
+	    target_col = 1 + compute_code_indent();
 	    {
 		int i;
 
@@ -287,31 +287,36 @@ dump_line(void)
 }
 
 int
-compute_code_column(void)
+compute_code_indent(void)
 {
-    int target_col = opt.ind_size * ps.ind_level + 1;
+    int target_ind = opt.ind_size * ps.ind_level;
 
-    if (ps.paren_level) {
+    if (ps.paren_level != 0) {
 	if (!opt.lineup_to_parens)
-	    target_col += opt.continuation_indent *
+	    target_ind += opt.continuation_indent *
 		(2 * opt.continuation_indent == opt.ind_size ? 1 : ps.paren_level);
 	else if (opt.lineup_to_parens_always)
-	    target_col = paren_indent;
+	    /*
+	     * XXX: where does this '- 1' come from?  It looks strange but is
+	     * nevertheless needed for proper indentation, as demonstrated in
+	     * the test opt-lpl.0.
+	     */
+	    target_ind = paren_indent - 1;
 	else {
 	    int w;
 	    int t = paren_indent;
 
 	    if ((w = count_spaces(t, s_code) - opt.max_col) > 0
-		    && count_spaces(target_col, s_code) <= opt.max_col) {
+		    && count_spaces(target_ind + 1, s_code) <= opt.max_col) {
 		t -= w + 1;
-		if (t > target_col)
-		    target_col = t;
+		if (t > target_ind + 1)
+		    target_ind = t - 1;
 	    } else
-		target_col = t;
+		target_ind = t - 1;
 	}
     } else if (ps.ind_stmt)
-	target_col += opt.continuation_indent;
-    return target_col;
+	target_ind += opt.continuation_indent;
+    return target_ind;
 }
 
 int

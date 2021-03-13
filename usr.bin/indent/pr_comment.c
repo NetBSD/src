@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.22 2021/03/13 09:54:11 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.23 2021/03/13 10:06:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.22 2021/03/13 09:54:11 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.23 2021/03/13 10:06:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -162,11 +162,11 @@ pr_comment(void)
 	    int target_col;
 	    break_delim = false;
 	    if (s_code != e_code)
-		target_col = count_spaces(compute_code_column(), s_code);
+		target_col = count_spaces(1 + compute_code_indent(), s_code);
 	    else {
 		target_col = 1;
 		if (s_lab != e_lab)
-		    target_col = count_spaces(compute_label_indent() + 1, s_lab);
+		    target_col = count_spaces(1 + compute_label_indent(), s_lab);
 	    }
 	    ps.com_col = ps.decl_on_line || ps.ind_level == 0 ? opt.decl_com_ind : opt.com_ind;
 	    if (ps.com_col <= target_col)
