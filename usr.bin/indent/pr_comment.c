@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.27 2021/03/13 11:27:01 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.28 2021/03/13 13:25:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.27 2021/03/13 11:27:01 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.28 2021/03/13 13:25:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -79,38 +79,25 @@ check_size_comment(size_t desired_size, char **last_bl_ptr)
 }
 
 /*
- * NAME:
- *	pr_comment
+ * Scan, reformat and output a single comment, which is either a block comment
+ * starting with '/' '*' or an end-of-line comment starting with '//'.
  *
- * FUNCTION:
- *	This routine takes care of scanning and printing comments.
+ * Try to keep comments from going over the maximum line length.  If a line is
+ * too long, move everything starting from the last blank to the next comment
+ * line.  Blanks and tabs from the beginning of the input line are removed.
  *
  * ALGORITHM:
  *	1) Decide where the comment should be aligned, and if lines should
  *	   be broken.
  *	2) If lines should not be broken and filled, just copy up to end of
  *	   comment.
- *	3) If lines should be filled, then scan thru input_buffer copying
- *	   characters to com_buf.  Remember where the last blank, tab, or
- *	   newline was.  When line is filled, print up to last blank and
- *	   continue copying.
- *
- * HISTORY:
- *	November 1976	D A Willcox of CAC	Initial coding
- *	12/6/76		D A Willcox of CAC	Modification to handle
- *						UNIX-style comments
- *
- */
-
-/*
- * this routine processes comments.  It makes an attempt to keep comments from
- * going over the max line length.  If a line is too long, it moves everything
- * from the last blank to the next comment line.  Blanks and tabs from the
- * beginning of the input line are removed
+ *	3) If lines should be filled, then scan through the input buffer,
+ *	   copying characters to com_buf.  Remember where the last blank,
+ *	   tab, or newline was.  When line is filled, print up to last blank
+ *	   and continue copying.
  */
-
 void
-pr_comment(void)
+process_comment(void)
 {
     int         adj_max_line_length; /* Adjusted max_line_length for comments
 				 * that spill over the right margin */
@@ -130,8 +117,8 @@ pr_comment(void)
 
     /* Figure where to align and how to treat the comment */
 
-    if (ps.col_1 && !opt.format_col1_comments) {	/* if comment starts in column
-						 * 1 it should not be touched */
+    if (ps.col_1 && !opt.format_col1_comments) { /* if the comment starts in
+				 * column 1, it should not be touched */
 	ps.box_com = true;
 	break_delim = false;
 	ps.com_col = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.55 2021/03/13 13:14:14 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.56 2021/03/13 13:25:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.55 2021/03/13 13:14:14 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.56 2021/03/13 13:25:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -212,7 +212,7 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
 	    if (sc_end == NULL) {
 		/*
 		 * Copy everything from the start of the line, because
-		 * pr_comment() will use that to calculate original
+		 * process_comment() will use that to calculate original
 		 * indentation of a boxed comment.
 		 */
 		memcpy(sc_buf, in_buffer, buf_ptr - in_buffer - 4);
@@ -1439,8 +1439,8 @@ main_loop(void)
 	case preprocessing:	/* '#' */
 	    process_preprocessing();
 	    break;
-	case comment:		/* we have gotten a '/' followed by '*' */
-	    pr_comment();
+	case comment:		/* the initial '/' '*' or '//' of a comment */
+	    process_comment();
 	    break;
 
 	default:
