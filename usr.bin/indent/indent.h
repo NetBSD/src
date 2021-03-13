@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.14 2021/03/13 13:25:23 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.15 2021/03/13 23:42:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,9 +29,7 @@
  */
 
 #if 0
-#if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.h,v 1.14 2021/03/13 13:25:23 rillig Exp $");
-#elif defined(__FreeBSD__)
+#if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pstef $");
 #endif
 #endif
