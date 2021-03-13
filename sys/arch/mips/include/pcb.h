@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.27 2020/09/26 04:31:53 simonb Exp $	*/
+/*	$NetBSD: pcb.h,v 1.28 2021/03/13 17:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include <mips/reg.h>
 
 struct pcb_faultinfo {
-	void *pfi_faultpte;
+	void *pfi_faultptep;
 	vaddr_t pfi_faultaddr;
 	u_int pfi_repeats;
 	pid_t pfi_lastpid;

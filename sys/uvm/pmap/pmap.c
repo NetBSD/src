@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2021/03/13 15:29:13 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2021/03/13 17:14:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2021/03/13 15:29:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2021/03/13 17:14:11 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1027,7 +1027,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 #ifdef PMAP_FAULTINFO
 	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
 	curpcb->pcb_faultinfo.pfi_repeats = 0;
-	curpcb->pcb_faultinfo.pfi_faultpte = NULL;
+	curpcb->pcb_faultinfo.pfi_faultptep = NULL;
 #endif
 	kpreempt_disable();
 	pmap_addr_range_check(pmap, sva, eva, __func__);
@@ -1572,7 +1572,7 @@ pmap_remove_all(struct pmap *pmap)
 #ifdef PMAP_FAULTINFO
 	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
 	curpcb->pcb_faultinfo.pfi_repeats = 0;
-	curpcb->pcb_faultinfo.pfi_faultpte = NULL;
+	curpcb->pcb_faultinfo.pfi_faultptep = NULL;
 #endif
 	kpreempt_enable();
 
