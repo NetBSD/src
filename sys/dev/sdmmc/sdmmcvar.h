@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.35 2020/05/24 17:26:18 riastradh Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.36 2021/03/13 23:22:44 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ struct sdmmc_command {
 #define SCF_XFER_SDHC	(1U << 15)	/* card is SDHC */
 #define SCF_POLL	(1U << 16)	/* polling required */
 #define SCF_NEED_BOUNCE	(1U << 17)	/* (driver) transfer requires bounce buffer */
+#define SCF_NO_STOP	(1U << 18)	/* don't enable automatic stop CMD12 */
 /* response types */
 #define SCF_RSP_R0	0	/* none */
 #define SCF_RSP_R1	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
