@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.18 2021/03/13 11:19:43 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.19 2021/03/13 13:25:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -254,7 +254,7 @@ extern struct parser_state {
     int         last_u_d;	/* set to true after scanning a token which
 				 * forces a following operator to be unary */
     int         out_coms;	/* the number of comments processed, set by
-				 * pr_comment */
+				 * process_comment */
     int         out_lines;	/* the number of lines written, set by
 				 * dump_line */
     int         p_l_follow;	/* used to remember how to indent following
