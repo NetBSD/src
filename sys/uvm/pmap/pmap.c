@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2020/12/20 16:38:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2021/03/13 15:29:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2020/12/20 16:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2021/03/13 15:29:13 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -950,7 +950,7 @@ pmap_update(struct pmap *pmap)
 	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 
-	UVMHIST_LOG(pmaphist, " <-- done (kernel=%jx)",
+	UVMHIST_LOG(pmaphist, " <-- done (kernel=%jd)",
 		    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
 }
 
@@ -969,7 +969,7 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx kernel=%jx va=%#jx..%#jx)",
+	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx kernel=%jd va=%#jx..%#jx)",
 	    (uintptr_t)pmap, (pmap == pmap_kernel() ? 1 : 0), sva, eva);
 	UVMHIST_LOG(pmaphist, "ptep=%#jx, flags(npte)=%#jx)",
 	    (uintptr_t)ptep, flags, 0, 0);
@@ -1113,7 +1113,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	const vm_prot_t prot = (flags & VM_PROT_ALL);
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx kernel=%jx va=%#jx..%#jx)",
+	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx kernel=%jd va=%#jx..%#jx)",
 	    (uintptr_t)pmap, (pmap == pmap_kernel() ? 1 : 0), sva, eva);
 	UVMHIST_LOG(pmaphist, "ptep=%#jx, flags(npte)=%#jx)",
 	    (uintptr_t)ptep, flags, 0, 0);
