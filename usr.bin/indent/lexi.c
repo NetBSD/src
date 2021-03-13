@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.38 2021/03/12 23:10:18 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.39 2021/03/13 09:21:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.38 2021/03/12 23:10:18 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.39 2021/03/13 09:21:57 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -261,32 +261,22 @@ token_type_name(token_type tk)
 static void
 print_buf(const char *name, const char *s, const char *e)
 {
-    if (s == e)
-	return;
-
-    printf(" %s \"", name);
-    for (const char *p = s; p < e; p++) {
-	if (isprint((unsigned char)*p) && *p != '\\' && *p != '"')
-	    printf("%c", *p);
-	else if (*p == '\n')
-	    printf("\\n");
-	else if (*p == '\t')
-	    printf("\\t");
-	else
-	    printf("\\x%02x", *p);
+    if (s < e) {
+	debug_printf(" %s ", name);
+	debug_vis_range("\"", s, e, "\"");
     }
-    printf("\"");
 }
 
 static token_type
 lexi_end(token_type code)
 {
-    printf("in line %d, lexi returns '%s'", line_no, token_type_name(code));
+    debug_printf("in line %d, lexi returns '%s'",
+	line_no, token_type_name(code));
     print_buf("token", s_token, e_token);
     print_buf("label", s_lab, e_lab);
     print_buf("code", s_code, e_code);
     print_buf("comment", s_com, e_com);
-    printf("\n");
+    debug_printf("\n");
 
     return code;
 }
