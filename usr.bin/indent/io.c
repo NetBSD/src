@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.44 2021/03/13 13:54:01 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.45 2021/03/13 13:55:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.44 2021/03/13 13:54:01 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.45 2021/03/13 13:55:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -218,22 +218,22 @@ dump_line(void)
 	    cur_col = 1 + indentation_after(cur_col - 1, s_code);
 	}
 	if (s_com != e_com) {		/* print comment, if any */
-	    int target = ps.com_col;
+	    int target_col = ps.com_col;
 	    char *com_st = s_com;
 
-	    target += ps.comment_delta;
+	    target_col += ps.comment_delta;
 	    while (*com_st == '\t')	/* consider original indentation in
 				     * case this is a box comment */
-		com_st++, target += opt.tabsize;
-	    while (target <= 0)
+		com_st++, target_col += opt.tabsize;
+	    while (target_col <= 0)
 		if (*com_st == ' ')
-		    target++, com_st++;
+		    target_col++, com_st++;
 		else if (*com_st == '\t') {
-		    target = opt.tabsize * (1 + (target - 1) / opt.tabsize) + 1;
+		    target_col = opt.tabsize * (1 + (target_col - 1) / opt.tabsize) + 1;
 		    com_st++;
 		} else
-		    target = 1;
-	    if (cur_col > target) {	/* if comment can't fit on this line,
+		    target_col = 1;
+	    if (cur_col > target_col) {	/* if comment can't fit on this line,
 				     * put it on next line */
 		output_char('\n');
 		cur_col = 1;
@@ -241,7 +241,7 @@ dump_line(void)
 	    }
 	    while (e_com > com_st && isspace((unsigned char)e_com[-1]))
 		e_com--;
-	    (void)output_indent(cur_col - 1, target - 1);
+	    (void)output_indent(cur_col - 1, target_col - 1);
 	    output_range(com_st, e_com);
 	    ps.comment_delta = ps.n_comment_delta;
 	    ++ps.com_lines;	/* count lines with comments */
