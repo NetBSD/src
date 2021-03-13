@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.37 2021/03/13 09:48:04 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.38 2021/03/13 09:54:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.37 2021/03/13 09:48:04 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.38 2021/03/13 09:54:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -162,7 +162,7 @@ dump_line(void)
 	    while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
 		e_lab--;
 	    *e_lab = '\0';
-	    cur_col = 1 + output_indent(0, compute_label_column() - 1);
+	    cur_col = 1 + output_indent(0, compute_label_indent());
 	    if (s_lab[0] == '#' && (strncmp(s_lab, "#else", 5) == 0
 				    || strncmp(s_lab, "#endif", 6) == 0)) {
 		char *s = s_lab;
@@ -315,12 +315,13 @@ compute_code_column(void)
 }
 
 int
-compute_label_column(void)
+compute_label_indent(void)
 {
-    return
-	ps.pcase ? (int) (case_ind * opt.ind_size) + 1
-	: *s_lab == '#' ? 1
-	: opt.ind_size * (ps.ind_level - label_offset) + 1;
+    if (ps.pcase)
+	return (int) (case_ind * opt.ind_size);
+    if (s_lab[0] == '#')
+        return 0;
+    return opt.ind_size * (ps.ind_level - label_offset);
 }
 
 
