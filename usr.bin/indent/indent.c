@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.52 2021/03/13 11:27:01 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.53 2021/03/13 11:47:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.52 2021/03/13 11:27:01 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.53 2021/03/13 11:47:22 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -366,33 +366,9 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
     *inout_last_else = 0;
 }
 
-int
-main(int argc, char **argv)
+static void
+main_init_globals(void)
 {
-    int         dec_ind;	/* current indentation for declarations */
-    int         di_stack[20];	/* a stack of structure indentation levels */
-    int         force_nl;	/* when true, code must be broken */
-    token_type  hd_type = end_of_file; /* used to store type of stmt
-				 * for if (...), for (...), etc */
-    int		i;		/* local loop counter */
-    int         scase;		/* set to true when we see a case, so we will
-				 * know what to do with the following colon */
-    int         sp_sw;		/* when true, we are in the expression of
-				 * if(...), while(...), etc. */
-    int         squest;		/* when this is positive, we have seen a ?
-				 * without the matching : in a <c>?<s>:<s>
-				 * construct */
-    int		tabs_to_var;	/* true if using tabs to indent to var name */
-    token_type	type_code;	/* returned by lexi */
-
-    int         last_else = 0;	/* true iff last keyword was an else */
-    const char *profile_name = NULL;
-    const char *envval = NULL;
-
-    /*-----------------------------------------------*\
-    |		      INITIALIZATION		      |
-    \*-----------------------------------------------*/
-
     found_err = 0;
 
     ps.p_stack[0] = stmt;	/* this is the parser's stack */
@@ -433,31 +409,29 @@ main(int argc, char **argv)
     buf_ptr = buf_end = in_buffer;
     line_no = 1;
     had_eof = ps.in_decl = ps.decl_on_line = break_comma = false;
-    sp_sw = force_nl = false;
     ps.in_or_st = false;
     ps.bl_line = true;
-    dec_ind = 0;
-    di_stack[ps.dec_nest = 0] = 0;
     ps.want_blank = ps.in_stmt = ps.ind_stmt = false;
 
-    scase = ps.pcase = false;
-    squest = 0;
+    ps.pcase = false;
     sc_end = NULL;
     bp_save = NULL;
     be_save = NULL;
 
     output = NULL;
-    tabs_to_var = 0;
 
-    envval = getenv("SIMPLE_BACKUP_SUFFIX");
-    if (envval)
-        simple_backup_suffix = envval;
+    const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
+    if (suffix != NULL)
+	simple_backup_suffix = suffix;
+}
 
-    /*--------------------------------------------------*\
-    |			COMMAND LINE SCAN		 |
-    \*--------------------------------------------------*/
+static void
+main_parse_command_line(int argc, char **argv)
+{
+    int i;
+    const char *profile_name = NULL;
 
-#ifdef undef
+#if 0
     max_line_length = 78;	/* -l78 */
     lineup_to_parens = 1;	/* -lp */
     lineup_to_parens_always = 0; /* -nlpl */
@@ -533,10 +507,6 @@ main(int argc, char **argv)
 	}
     }
 
-#if HAVE_CAPSICUM
-    init_capsicum();
-#endif
-
     if (opt.com_ind <= 1)
 	opt.com_ind = 2;	/* don't put normal comments before column 2 */
     if (opt.block_comment_max_line_length <= 0)
@@ -547,29 +517,56 @@ main(int argc, char **argv)
 	opt.decl_com_ind = opt.ljust_decl ? (opt.com_ind <= 10 ? 2 : opt.com_ind - 8) : opt.com_ind;
     if (opt.continuation_indent == 0)
 	opt.continuation_indent = opt.ind_size;
+}
+
+static void
+main_prepare_parsing(void)
+{
     fill_buffer();		/* get first batch of stuff into input buffer */
 
     parse(semicolon);
-    {
-	char *p = buf_ptr;
-	int col = 1;
 
-	while (1) {
-	    if (*p == ' ')
-		col++;
-	    else if (*p == '\t')
-		col = opt.tabsize * (1 + (col - 1) / opt.tabsize) + 1;
-	    else
-		break;
-	    p++;
-	}
-	if (col > opt.ind_size)
-	    ps.ind_level = ps.i_l_follow = col / opt.ind_size;
+    char *p = buf_ptr;
+    int col = 1;
+
+    while (1) {
+	if (*p == ' ')
+	    col++;
+	else if (*p == '\t')
+	    col = opt.tabsize * (1 + (col - 1) / opt.tabsize) + 1;
+	else
+	    break;
+	p++;
     }
+    if (col > opt.ind_size)
+	ps.ind_level = ps.i_l_follow = col / opt.ind_size;
+}
 
-    /*
-     * START OF MAIN LOOP
-     */
+static void
+main_loop(void)
+{
+    token_type type_code;
+    int force_nl;		/* when true, code must be broken */
+    int last_else = false;	/* true iff last keyword was an else */
+    int         dec_ind;	/* current indentation for declarations */
+    int         di_stack[20];	/* a stack of structure indentation levels */
+    int		tabs_to_var;	/* true if using tabs to indent to var name */
+    int         sp_sw;		/* when true, we are in the expression of
+				 * if(...), while(...), etc. */
+    token_type  hd_type = end_of_file; /* used to store type of stmt
+				 * for if (...), for (...), etc */
+    int         squest;		/* when this is positive, we have seen a ?
+				 * without the matching : in a <c>?<s>:<s>
+				 * construct */
+    int         scase;		/* set to true when we see a case, so we will
+				 * know what to do with the following colon */
+
+    sp_sw = force_nl = false;
+    dec_ind = 0;
+    di_stack[ps.dec_nest = 0] = 0;
+    scase = false;
+    squest = 0;
+    tabs_to_var = 0;
 
     while (1) {			/* this is the main loop.  it will go until we
 				 * reach eof */
@@ -749,6 +746,7 @@ main(int argc, char **argv)
 		 * if this is a unary op in a declaration, we should indent
 		 * this token
 		 */
+		int i;
 		for (i = 0; token[i]; ++i)
 		    /* find length of token */;
 		indent_declaration(dec_ind - i, tabs_to_var);
@@ -1064,6 +1062,7 @@ main(int argc, char **argv)
 	    if ( /* !ps.in_or_st && */ ps.dec_nest <= 0)
 		ps.just_saw_decl = 2;
 	    prefix_blankline_requested = 0;
+	    int i;
 	    for (i = 0; token[i++];);	/* get length of token */
 
 	    if (ps.ind_level == 0 || ps.dec_nest > 0) {
@@ -1309,7 +1308,19 @@ main(int argc, char **argv)
 	    type_code != newline &&
 	    type_code != preprocessing)
 	    ps.last_token = type_code;
-    }				/* end of main while (1) loop */
+    }
+}
+
+int
+main(int argc, char **argv)
+{
+    main_init_globals();
+    main_parse_command_line(argc, argv);
+#if HAVE_CAPSICUM
+    init_capsicum();
+#endif
+    main_prepare_parsing();
+    main_loop();
 }
 
 /*
