@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.24 2021/03/13 10:32:25 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.25 2021/03/13 10:47:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.24 2021/03/13 10:32:25 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.25 2021/03/13 10:47:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -186,6 +186,10 @@ pr_comment(void)
 	 */
 	char *start;
 
+	/*
+	 * XXX: ordered comparison between pointers from different objects
+	 * invokes undefined behavior (C99 6.5.8).
+	 */
 	start = buf_ptr >= save_com && buf_ptr < save_com + sc_size ?
 	    sc_buf : in_buffer;
 	ps.n_comment_delta = -indentation_after_range(0, start, buf_ptr - 2);
