@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.19 2021/03/12 23:10:18 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.20 2021/03/13 11:19:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.19 2021/03/12 23:10:18 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.20 2021/03/13 11:19:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -135,11 +135,11 @@ const struct pro {
     {"fcb", PRO_BOOL, true, ON, &opt.format_block_comments},
     {"ip", PRO_BOOL, true, ON, &opt.indent_parameters},
     {"i", PRO_INT, 8, 0, &opt.ind_size},
-    {"lc", PRO_INT, 0, 0, &opt.block_comment_max_col},
+    {"lc", PRO_INT, 0, 0, &opt.block_comment_max_line_length},
     {"ldi", PRO_INT, -1, 0, &opt.local_decl_indent},
     {"lpl", PRO_BOOL, false, ON, &opt.lineup_to_parens_always},
     {"lp", PRO_BOOL, true, ON, &opt.lineup_to_parens},
-    {"l", PRO_INT, 78, 0, &opt.max_col},
+    {"l", PRO_INT, 78, 0, &opt.max_line_length},
     {"nbacc", PRO_BOOL, false, OFF, &opt.blanklines_around_conditional_compilation},
     {"nbadp", PRO_BOOL, false, OFF, &opt.blanklines_after_declarations_at_proctop},
     {"nbad", PRO_BOOL, false, OFF, &opt.blanklines_after_declarations},

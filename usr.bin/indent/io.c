@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.41 2021/03/13 10:32:25 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.42 2021/03/13 11:19:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.41 2021/03/13 10:32:25 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.42 2021/03/13 11:19:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -306,8 +306,8 @@ compute_code_indent(void)
 	    int w;
 	    int t = paren_indent;
 
-	    if ((w = 1 + indentation_after(t - 1, s_code) - opt.max_col) > 0
-		&& 1 + indentation_after(target_ind, s_code) <= opt.max_col) {
+	    if ((w = 1 + indentation_after(t - 1, s_code) - opt.max_line_length) > 0
+		&& 1 + indentation_after(target_ind, s_code) <= opt.max_line_length) {
 		t -= w + 1;
 		if (t > target_ind + 1)
 		    target_ind = t - 1;

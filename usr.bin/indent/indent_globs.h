@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.17 2021/03/08 20:20:11 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.18 2021/03/13 11:19:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -116,6 +116,7 @@ extern struct options {
 				 * edge of code and continuation lines */
     float       case_indent;	/* The distance to indent case labels from the
 				 * switch statement */
+    /* XXX: TODO: rename to 'comment_column' since 'ind' is confusing */
     int         com_ind;	/* the column in which comments to the right
 				 * of code should start */
     int         decl_indent;	/* column to indent declared identifiers to */
@@ -141,7 +142,7 @@ extern struct options {
 				 * `/ * \n' are to be reformatted */
     int         indent_parameters;
     int         ind_size;	/* the size of one indentation level */
-    int         block_comment_max_col;
+    int         block_comment_max_line_length;
     int         local_decl_indent; /* like decl_indent but for locals */
     int         lineup_to_parens_always; /* if true, do not attempt to keep
 				 * lined-up code within the margin */
@@ -161,7 +162,7 @@ extern struct options {
     int         auto_typedefs;	/* set true to recognize identifiers
 				 * ending in "_t" like typedefs */
     int         tabsize;	/* the size of a tab */
-    int         max_col;	/* the maximum allowable line length */
+    int         max_line_length;
     int         use_tabs;	/* set true to use tabs for spacing, false
 				 * uses all spaces */
     int         verbose;	/* when true, non-essential error messages

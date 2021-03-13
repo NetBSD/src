@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.50 2021/03/13 10:32:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.51 2021/03/13 11:19:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.50 2021/03/13 10:32:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.51 2021/03/13 11:19:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -458,9 +458,9 @@ main(int argc, char **argv)
     \*--------------------------------------------------*/
 
 #ifdef undef
-    max_col = 78;		/* -l78 */
+    max_line_length = 78;	/* -l78 */
     lineup_to_parens = 1;	/* -lp */
-    lineup_to_parens_always = 0;	/* -nlpl */
+    lineup_to_parens_always = 0; /* -nlpl */
     ps.ljust_decl = 0;		/* -ndj */
     ps.com_ind = 33;		/* -c33 */
     star_comment_cont = 1;	/* -sc */
@@ -539,8 +539,8 @@ main(int argc, char **argv)
 
     if (opt.com_ind <= 1)
 	opt.com_ind = 2;	/* don't put normal comments before column 2 */
-    if (opt.block_comment_max_col <= 0)
-	opt.block_comment_max_col = opt.max_col;
+    if (opt.block_comment_max_line_length <= 0)
+	opt.block_comment_max_line_length = opt.max_line_length;
     if (opt.local_decl_indent < 0) /* if not specified by user, set this */
 	opt.local_decl_indent = opt.decl_indent;
     if (opt.decl_com_ind <= 0)	/* if not specified by user, set this */
@@ -1151,9 +1151,9 @@ main(int argc, char **argv)
 		if (ps.block_init_level <= 0)
 		    ps.block_init = 0;
 		if (break_comma && (!opt.leave_comma ||
-			1 + indentation_after_range(
+			indentation_after_range(
 			    compute_code_indent(), s_code, e_code)
-			> opt.max_col - opt.tabsize))
+			>= opt.max_line_length - opt.tabsize))
 		    force_nl = true;
 	    }
 	    break;
