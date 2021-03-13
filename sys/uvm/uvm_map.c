@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.385 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.386 2021/03/13 15:29:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.385 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.386 2021/03/13 15:29:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -806,7 +806,7 @@ static void
 uvm_mapent_free(struct vm_map_entry *me)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist,"<- freeing map entry=%#jx [flags=%jd]",
+	UVMHIST_CALLARGS(maphist,"<- freeing map entry=%#jx [flags=%#jx]",
 		(uintptr_t)me, me->flags, 0, 0);
 	pool_cache_put(&uvm_map_entry_cache, me);
 }
@@ -2115,9 +2115,9 @@ nextgap:
 	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=%#jx)", hint, 0,0,0);
-	KASSERTMSG( topdown || hint >= orig_hint, "hint: %jx, orig_hint: %jx",
+	KASSERTMSG( topdown || hint >= orig_hint, "hint: %#jx, orig_hint: %#jx",
 	    (uintmax_t)hint, (uintmax_t)orig_hint);
-	KASSERTMSG(!topdown || hint <= orig_hint, "hint: %jx, orig_hint: %jx",
+	KASSERTMSG(!topdown || hint <= orig_hint, "hint: %#jx, orig_hint: %#jx",
 	    (uintmax_t)hint, (uintmax_t)orig_hint);
 	KASSERT(entry->end <= hint);
 	KASSERT(hint + length <= entry->next->start);
@@ -4811,7 +4811,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 	void (*unlock_fn)(struct vm_map *);
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=%#jx,va=%jx)", (uintptr_t)map, va, 0, 0);
+	UVMHIST_LOG(maphist,"(map=%#jx,va=%#jx)", (uintptr_t)map, va, 0, 0);
 
 	const vaddr_t start = trunc_page(va);
 	const vaddr_t end = round_page(va+1);
@@ -4969,7 +4969,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 
 	if (result) {
 		UVMHIST_LOG(maphist,
-		    "<- done OK (type=%jd,owner=#%jx,offset=%jx)",
+		    "<- done OK (type=%jd,owner=%#jx,offset=%#jx)",
 		    UVM_VOADDR_GET_TYPE(voaddr),
 		    UVM_VOADDR_GET_OBJECT(voaddr),
 		    voaddr->offset, 0);
