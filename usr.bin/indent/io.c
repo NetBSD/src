@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.43 2021/03/13 13:51:08 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.44 2021/03/13 13:54:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.43 2021/03/13 13:51:08 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.44 2021/03/13 13:54:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -115,7 +115,7 @@ output_indent(int old_ind, int new_ind)
 void
 dump_line(void)
 {
-    int cur_col, target_col;
+    int cur_col;
     static int  not_first_line;
 
     if (ps.procname[0]) {
@@ -195,7 +195,7 @@ dump_line(void)
 		comment_open = 0;
 		output_string(".*/\n");
 	    }
-	    target_col = 1 + compute_code_indent();
+	    int target_col = 1 + compute_code_indent();
 	    {
 		int i;
 
