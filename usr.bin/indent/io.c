@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.45 2021/03/13 13:55:42 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.46 2021/03/13 18:24:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.45 2021/03/13 13:55:42 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.46 2021/03/13 18:24:56 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -223,7 +223,7 @@ dump_line(void)
 
 	    target_col += ps.comment_delta;
 	    while (*com_st == '\t')	/* consider original indentation in
-				     * case this is a box comment */
+				 * case this is a box comment */
 		com_st++, target_col += opt.tabsize;
 	    while (target_col <= 0)
 		if (*com_st == ' ')
@@ -234,7 +234,7 @@ dump_line(void)
 		} else
 		    target_col = 1;
 	    if (cur_col > target_col) {	/* if comment can't fit on this line,
-				     * put it on next line */
+				 * put it on next line */
 		output_char('\n');
 		cur_col = 1;
 		++ps.out_lines;
@@ -263,14 +263,12 @@ dump_line(void)
     if (e_com - s_com > 1 && s_com[1] == '/')
 	output_range(s_token, e_token);
 
-    ps.decl_on_line = ps.in_decl;	/* if we are in the middle of a
-					 * declaration, remember that fact for
-					 * proper comment indentation */
-    ps.ind_stmt = ps.in_stmt & ~ps.in_decl;	/* next line should be
-						 * indented if we have not
-						 * completed this stmt and if
-						 * we are not in the middle of
-						 * a declaration */
+    ps.decl_on_line = ps.in_decl; /* if we are in the middle of a declaration,
+				 * remember that fact for proper comment
+				 * indentation */
+    ps.ind_stmt = ps.in_stmt & ~ps.in_decl; /* next line should be indented if
+				 * we have not completed this stmt and if we
+				 * are not in the middle of a declaration */
     ps.use_ff = false;
     ps.dumped_decl_indent = 0;
     *(e_lab = s_lab) = '\0';	/* reset buffers */
