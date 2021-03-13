@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.20 2021/03/13 13:51:08 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.21 2021/03/13 23:36:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -261,7 +261,9 @@ extern struct parser_state {
 				 * statement */
     int         paren_level;	/* parenthesization level. used to indent
 				 * within statements */
-    short       paren_indents[20];	/* column positions of each paren */
+    short       paren_indents[20]; /* indentation of the operand/argument of
+				 * each level of parentheses or brackets,
+				 * relative to the enclosing statement */
     int         pcase;		/* set to 1 if the current line label is a
 				 * case.  It is printed differently from a
 				 * regular label */
