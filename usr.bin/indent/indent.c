@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.58 2021/03/13 18:46:39 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.59 2021/03/14 00:22:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.58 2021/03/13 18:46:39 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.59 2021/03/14 00:22:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -206,6 +206,7 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
 	     * done earlier.
 	     */
 	    *inout_force_nl = false;
+	    break;
 	case form_feed:
 	    break;
 	case comment:
@@ -215,7 +216,7 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
 		 * process_comment() will use that to calculate original
 		 * indentation of a boxed comment.
 		 */
-		memcpy(sc_buf, in_buffer, buf_ptr - in_buffer - 4);
+		memcpy(sc_buf, in_buffer, (size_t)(buf_ptr - in_buffer) - 4);
 		save_com = sc_buf + (buf_ptr - in_buffer - 4);
 		save_com[0] = save_com[1] = ' ';
 		sc_end = &save_com[2];
@@ -532,7 +533,7 @@ main_prepare_parsing(void)
     char *p = buf_ptr;
     int col = 1;
 
-    while (1) {
+    for (;;) {
 	if (*p == ' ')
 	    col++;
 	else if (*p == '\t')
@@ -585,7 +586,7 @@ process_comment_in_code(token_type type_code, int *inout_force_nl)
 				 * '}' */
     if (s_com != e_com) {	/* the turkey has embedded a comment
 				 * in a line. fix it */
-	int len = e_com - s_com;
+	size_t len = e_com - s_com;
 
 	check_size_code(len + 3);
 	*e_code++ = ' ';
@@ -724,7 +725,7 @@ process_unary_op(int dec_ind, int tabs_to_var)
 	*e_code++ = ' ';
 
     {
-	int len = e_token - s_token;
+	size_t len = e_token - s_token;
 
 	check_size_code(len);
 	memcpy(e_code, token, len);
@@ -736,7 +737,7 @@ process_unary_op(int dec_ind, int tabs_to_var)
 static void
 process_binary_op(void)
 {
-    int len = e_token - s_token;
+    size_t len = e_token - s_token;
 
     check_size_code(len + 1);
     if (ps.want_blank)
@@ -789,7 +790,7 @@ process_colon(int *inout_squest, int *inout_force_nl, int *inout_scase)
      * turn everything so far into a label
      */
     {
-	int len = e_code - s_code;
+	size_t len = e_code - s_code;
 
 	check_size_label(len + 3);
 	memcpy(e_lab, s_code, len);
@@ -1066,7 +1067,7 @@ process_ident(token_type type_code, int dec_ind, int tabs_to_var,
 static void
 copy_id(void)
 {
-    int len = e_token - s_token;
+    size_t len = e_token - s_token;
 
     check_size_code(len + 1);
     if (ps.want_blank)
@@ -1078,7 +1079,7 @@ copy_id(void)
 static void
 process_string_prefix(void)
 {
-    int len = e_token - s_token;
+    size_t len = e_token - s_token;
 
     check_size_code(len + 1);
     if (ps.want_blank)
@@ -1155,7 +1156,7 @@ process_preprocessing(void)
 		if (*buf_ptr == '*' && !in_comment && quote == '\0') {
 		    in_comment = 1;
 		    *e_lab++ = *buf_ptr++;
-		    com_start = e_lab - s_lab - 2;
+		    com_start = (int)(e_lab - s_lab) - 2;
 		}
 		break;
 	    case '"':
@@ -1174,7 +1175,7 @@ process_preprocessing(void)
 		if (*buf_ptr == '/' && in_comment) {
 		    in_comment = 0;
 		    *e_lab++ = *buf_ptr++;
-		    com_end = e_lab - s_lab;
+		    com_end = (int)(e_lab - s_lab);
 		}
 		break;
 	    }
@@ -1294,7 +1295,7 @@ main_loop(void)
     squest = 0;
     tabs_to_var = 0;
 
-    while (1) {			/* this is the main loop.  it will go until we
+    for (;;) {			/* this is the main loop.  it will go until we
 				 * reach eof */
 	int comment_buffered = false;
 
@@ -1384,7 +1385,7 @@ main_loop(void)
 
 	case lbrace:		/* got a '{' */
 	    process_lbrace(&force_nl, &sp_sw, hd_type, di_stack,
-		nitems(di_stack), &dec_ind);
+		(int)nitems(di_stack), &dec_ind);
 	    break;
 
 	case rbrace:		/* got a '}' */
@@ -1484,9 +1485,9 @@ main(int argc, char **argv)
 static void
 bakcopy(void)
 {
-    int         n,
-                bakchn;
-    char        buff[8 * 1024];
+    ssize_t n;
+    int bakchn;
+    char buff[8 * 1024];
     const char *p;
 
     /* construct file name .Bfile */
@@ -1502,7 +1503,7 @@ bakcopy(void)
     if (bakchn < 0)
 	err(1, "%s", bakfile);
     while ((n = read(fileno(input), buff, sizeof(buff))) > 0)
-	if (write(bakchn, buff, n) != n)
+	if (write(bakchn, buff, (size_t)n) != n)
 	    err(1, "%s", bakfile);
     if (n < 0)
 	err(1, "%s", in_name);
@@ -1524,7 +1525,7 @@ bakcopy(void)
 static void
 indent_declaration(int cur_dec_ind, int tabs_to_var)
 {
-    int pos = e_code - s_code;
+    int pos = (int)(e_code - s_code);
     char *startpos = e_code;
 
     /*

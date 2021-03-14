@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.40 2021/03/13 11:27:01 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.41 2021/03/14 00:22:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.40 2021/03/13 11:27:01 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.41 2021/03/14 00:22:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -481,7 +481,7 @@ lexi(struct parser_state *state)
     case '"':			/* start of string */
 	qchar = *token;
 	do {			/* copy the string */
-	    while (1) {		/* move one character or [/<char>]<char> */
+	    for (;;) {		/* move one character or [/<char>]<char> */
 		if (*buf_ptr == '\n') {
 		    diag(1, "Unterminated literal");
 		    goto stop_lit;

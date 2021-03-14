@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.21 2021/03/13 13:51:08 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.22 2021/03/14 00:22:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.21 2021/03/13 13:51:08 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.22 2021/03/14 00:22:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -212,12 +212,12 @@ scan_profile(FILE *f)
     char	*p;
     char        buf[BUFSIZ];
 
-    while (1) {
+    for (;;) {
 	p = buf;
 	comment_index = 0;
 	while ((i = getc(f)) != EOF) {
 	    if (i == '*' && !comment_index && p > buf && p[-1] == '/') {
-		comment_index = p - buf;
+		comment_index = (int)(p - buf);
 		*p++ = i;
 	    } else if (i == '/' && comment_index && p > buf && p[-1] == '*') {
 		p = buf + comment_index - 1;
@@ -314,6 +314,7 @@ found:
 	case VERSION:
 	    printf("FreeBSD indent %s\n", INDENT_VERSION);
 	    exit(0);
+	    /*NOTREACHED*/
 
 	default:
 	    errx(1, "set_option: internal error: p_special %d", p->p_special);
