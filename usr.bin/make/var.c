@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.876 2021/03/14 19:25:05 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.877 2021/03/14 19:29:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.876 2021/03/14 19:25:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.877 2021/03/14 19:29:37 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3150,6 +3150,9 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 
 	if (!IsDelimiter(**pp, st))
 		goto bad_modifier;		/* Found junk after ']' */
+
+	if (!(expr->eflags & VARE_WANTRES))
+		goto ok;
 
 	if (estr[0] == '\0')
 		goto bad_modifier;			/* Found ":[]". */
