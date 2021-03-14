@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.881 2021/03/14 20:12:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.882 2021/03/14 20:18:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.881 2021/03/14 20:12:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.882 2021/03/14 20:18:33 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3404,6 +3404,9 @@ ok:
 
 	(*pp)--;		/* Go back to the st->endc. */
 
+	if (!(expr->eflags & VARE_WANTRES))
+		goto done;
+
 	scope = expr->scope;	/* scope where v belongs */
 	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL) {
 		Var *gv = VarFind(expr->var->name.str, expr->scope, FALSE);
@@ -3414,33 +3417,32 @@ ok:
 	}
 
 	/* XXX: Expanding the variable name at this point sounds wrong. */
-	if (expr->eflags & VARE_WANTRES) {
-		switch (op[0]) {
-		case '+':
-			Var_AppendExpand(scope, expr->var->name.str, val);
-			break;
-		case '!': {
-			const char *errfmt;
-			char *cmd_output = Cmd_Exec(val, &errfmt);
-			if (errfmt != NULL)
-				Error(errfmt, val);
-			else
-				Var_SetExpand(scope,
-				    expr->var->name.str, cmd_output);
-			free(cmd_output);
-			break;
-		}
-		case '?':
-			if (expr->defined == DEF_REGULAR)
-				break;
-			/* FALLTHROUGH */
-		default:
-			Var_SetExpand(scope, expr->var->name.str, val);
-			break;
-		}
+	switch (op[0]) {
+	case '+':
+		Var_AppendExpand(scope, expr->var->name.str, val);
+		break;
+	case '!': {
+		const char *errfmt;
+		char *cmd_output = Cmd_Exec(val, &errfmt);
+		if (errfmt != NULL)
+			Error(errfmt, val);
+		else
+			Var_SetExpand(scope, expr->var->name.str, cmd_output);
+		free(cmd_output);
+		break;
 	}
-	free(val);
+	case '?':
+		if (expr->defined == DEF_REGULAR)
+			break;
+		/* FALLTHROUGH */
+	default:
+		Var_SetExpand(scope, expr->var->name.str, val);
+		break;
+	}
 	Expr_SetValueRefer(expr, "");
+
+done:
+	free(val);
 	return AMR_OK;
 }
 
