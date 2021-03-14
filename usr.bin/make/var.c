@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.878 2021/03/14 20:00:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.879 2021/03/14 20:03:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.878 2021/03/14 20:00:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.879 2021/03/14 20:03:56 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3274,6 +3274,9 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 		mode = mod[1] == 'r' ? DESC : SHUFFLE;
 	} else
 		return AMR_BAD;
+
+	if (!(st->expr->eflags & VARE_WANTRES))
+		return AMR_OK;
 
 	words = Str_Words(st->expr->value.str, FALSE);
 	if (mode == SHUFFLE)
