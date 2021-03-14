@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.112 2020/10/30 15:30:43 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.113 2021/03/14 03:14:42 rin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.112 2020/10/30 15:30:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.113 2021/03/14 03:14:42 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2953,6 +2953,9 @@ radeonfb_init_palette(struct radeonfb_display *dp)
 			tmp |= tmp >> 4;
 			b = tmp;
 
+			dp->rd_cmap_red[i] = r;
+			dp->rd_cmap_green[i] = g;
+			dp->rd_cmap_blue[i] = b;
 			radeonfb_putpal(dp, i, r, g, b);
 		}
 	} else {
