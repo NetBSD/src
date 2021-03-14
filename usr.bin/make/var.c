@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.855 2021/02/23 16:29:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.856 2021/03/14 10:57:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.855 2021/02/23 16:29:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.856 2021/03/14 10:57:12 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2890,6 +2890,12 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 			oneBigWord = TRUE;
 		else
 			break;
+	}
+
+	if (!(st->expr->eflags & VARE_WANTRES)) {
+		free(args.replace);
+		free(re);
+		return AMR_OK;
 	}
 
 	error = regcomp(&args.re, re, REG_EXTENDED);
