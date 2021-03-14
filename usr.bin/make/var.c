@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.861 2021/03/14 15:19:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.862 2021/03/14 15:22:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.861 2021/03/14 15:19:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.862 2021/03/14 15:22:21 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3329,8 +3329,8 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	if ((op[0] == '!' || op[0] == '+' || op[0] == '?') && op[1] == '=')
 		goto ok;
 	return AMR_UNKNOWN;	/* "::<unrecognised>" */
-ok:
 
+ok:
 	if (expr->var->name.str[0] == '\0') {
 		*pp = mod + 1;
 		return AMR_BAD;
@@ -3442,12 +3442,13 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
 static ApplyModifierResult
 ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
 {
-	if (IsDelimiter((*pp)[1], st)) {
-		Expr_SetValueOwn(st->expr, VarUniq(st->expr->value.str));
-		(*pp)++;
-		return AMR_OK;
-	} else
+	if (!IsDelimiter((*pp)[1], st))
 		return AMR_UNKNOWN;
+	(*pp)++;
+
+	Expr_SetValueOwn(st->expr, VarUniq(st->expr->value.str));
+
+	return AMR_OK;
 }
 
 #ifdef SYSVVARSUB
