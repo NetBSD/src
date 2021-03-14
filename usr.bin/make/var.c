@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.858 2021/03/14 15:04:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.859 2021/03/14 15:06:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.858 2021/03/14 15:04:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.859 2021/03/14 15:06:19 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2277,22 +2277,27 @@ ParseModifierPart(
 	    NULL, NULL, NULL);
 }
 
+MAKE_INLINE Boolean
+IsDelimiter(char ch, const ApplyModifiersState *st)
+{
+	return ch == ':' || ch == st->endc;
+}
+
 /* Test whether mod starts with modname, followed by a delimiter. */
 MAKE_INLINE Boolean
-ModMatch(const char *mod, const char *modname, char endc)
+ModMatch(const char *mod, const char *modname, const ApplyModifiersState *st)
 {
 	size_t n = strlen(modname);
-	return strncmp(mod, modname, n) == 0 &&
-	       (mod[n] == endc || mod[n] == ':');
+	return strncmp(mod, modname, n) == 0 && IsDelimiter(mod[n], st);
 }
 
 /* Test whether mod starts with modname, followed by a delimiter or '='. */
 MAKE_INLINE Boolean
-ModMatchEq(const char *mod, const char *modname, char endc)
+ModMatchEq(const char *mod, const char *modname, const ApplyModifiersState *st)
 {
 	size_t n = strlen(modname);
 	return strncmp(mod, modname, n) == 0 &&
-	       (mod[n] == endc || mod[n] == ':' || mod[n] == '=');
+	       (IsDelimiter(mod[n], st) || mod[n] == '=');
 }
 
 static Boolean
@@ -2452,7 +2457,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 	Buf_Init(&buf);
 	p = *pp + 1;
-	while (*p != st->endc && *p != ':' && *p != '\0') {
+	while (!IsDelimiter(*p, st) && *p != '\0') {
 
 		/* XXX: This code is similar to the one in Var_Parse.
 		 * See if the code can be merged.
@@ -2462,8 +2467,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 		/* See Buf_AddEscaped in for.c. */
 		if (*p == '\\') {
 			char c = p[1];
-			if (c == st->endc || c == ':' || c == '$' ||
-			    c == '\\') {
+			if (IsDelimiter(c, st) || c == '$' || c == '\\') {
 				Buf_AddByte(&buf, c);
 				p += 2;
 				continue;
@@ -2534,7 +2538,7 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 	time_t utc;
 
 	const char *mod = *pp;
-	if (!ModMatchEq(mod, "gmtime", st->endc))
+	if (!ModMatchEq(mod, "gmtime", st))
 		return AMR_UNKNOWN;
 
 	if (mod[6] == '=') {
@@ -2561,7 +2565,7 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 	time_t utc;
 
 	const char *mod = *pp;
-	if (!ModMatchEq(mod, "localtime", st->endc))
+	if (!ModMatchEq(mod, "localtime", st))
 		return AMR_UNKNOWN;
 
 	if (mod[9] == '=') {
@@ -2585,7 +2589,7 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Hash(const char **pp, ApplyModifiersState *st)
 {
-	if (!ModMatch(*pp, "hash", st->endc))
+	if (!ModMatch(*pp, "hash", st))
 		return AMR_UNKNOWN;
 
 	Expr_SetValueOwn(st->expr, VarHash(st->expr->value.str));
@@ -2659,7 +2663,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 	size_t i;
 
 	const char *mod = *pp;
-	if (!ModMatchEq(mod, "range", st->endc))
+	if (!ModMatchEq(mod, "range", st))
 		return AMR_UNKNOWN;
 
 	if (mod[5] == '=') {
@@ -2722,7 +2726,7 @@ ParseModifier_Match(const char **pp, const ApplyModifiersState *st,
 	const char *p;
 	for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 0); p++) {
 		if (*p == '\\' &&
-		    (p[1] == ':' || p[1] == st->endc || p[1] == st->startc)) {
+		    (IsDelimiter(p[1], st) || p[1] == st->startc)) {
 			if (!needSubst)
 				copy = TRUE;
 			p++;
@@ -2752,7 +2756,7 @@ ParseModifier_Match(const char **pp, const ApplyModifiersState *st,
 		for (; src < endpat; src++, dst++) {
 			if (src[0] == '\\' && src + 1 < endpat &&
 			    /* XXX: st->startc is missing here; see above */
-			    (src[1] == ':' || src[1] == st->endc))
+			    IsDelimiter(src[1], st))
 				src++;
 			*dst = *src;
 		}
@@ -2923,7 +2927,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Quote(const char **pp, ApplyModifiersState *st)
 {
-	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
+	if (IsDelimiter((*pp)[1], st)) {
 		Expr_SetValueOwn(st->expr,
 		    VarQuote(st->expr->value.str, **pp == 'q'));
 		(*pp)++;
@@ -2946,14 +2950,14 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 	const char *sep = *pp + 2;
 
 	/* ":ts<any><endc>" or ":ts<any>:" */
-	if (sep[0] != st->endc && (sep[1] == st->endc || sep[1] == ':')) {
+	if (sep[0] != st->endc && IsDelimiter(sep[1], st)) {
 		st->sep = sep[0];
 		*pp = sep + 1;
 		goto ok;
 	}
 
 	/* ":ts<endc>" or ":ts:" */
-	if (sep[0] == st->endc || sep[0] == ':') {
+	if (IsDelimiter(sep[0], st)) {
 		st->sep = '\0';	/* no separator */
 		*pp = sep;
 		goto ok;
@@ -2997,7 +3001,7 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 			    "Invalid character number: %s", p);
 			return AMR_CLEANUP;
 		}
-		if (*p != ':' && *p != st->endc) {
+		if (!IsDelimiter(*p, st)) {
 			(*pp)++;	/* just for backwards compatibility */
 			return AMR_BAD;
 		}
@@ -3046,7 +3050,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	const char *mod = *pp;
 	assert(mod[0] == 't');
 
-	if (mod[1] == st->endc || mod[1] == ':' || mod[1] == '\0') {
+	if (IsDelimiter(mod[1], st) || mod[1] == '\0') {
 		*pp = mod + 1;
 		return AMR_BAD;	/* Found ":t<endc>" or ":t:". */
 	}
@@ -3054,7 +3058,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	if (mod[1] == 's')
 		return ApplyModifier_ToSep(pp, st);
 
-	if (mod[2] != st->endc && mod[2] != ':') {	/* :t<unrecognized> */
+	if (!IsDelimiter(mod[2], st)) {			/* :t<unrecognized> */
 		*pp = mod + 1;
 		return AMR_BAD;
 	}
@@ -3103,7 +3107,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	if (**pp != ':' && **pp != st->endc)
+	if (!IsDelimiter(**pp, st))
 		goto bad_modifier;		/* Found junk after ']' */
 
 	if (estr[0] == '\0')
@@ -3216,13 +3220,13 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 
 	Words words = Str_Words(st->expr->value.str, FALSE);
 
-	if (mod[1] == st->endc || mod[1] == ':') {
+	if (IsDelimiter(mod[1], st)) {
 		/* :O sorts ascending */
 		qsort(words.words, words.len, sizeof words.words[0],
 		    str_cmp_asc);
 
 	} else if ((mod[1] == 'r' || mod[1] == 'x') &&
-		   (mod[2] == st->endc || mod[2] == ':')) {
+	    IsDelimiter(mod[2], st)) {
 		(*pp)++;
 
 		if (mod[1] == 'r') {	/* :Or sorts descending */
@@ -3400,7 +3404,7 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 {
 	Expr *expr = st->expr;
 	const char *mod = *pp;
-	if (!ModMatchEq(mod, "_", st->endc))
+	if (!ModMatchEq(mod, "_", st))
 		return AMR_UNKNOWN;
 
 	if (mod[1] == '=') {
@@ -3429,8 +3433,7 @@ static ApplyModifierResult
 ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
 		       ModifyWordProc modifyWord)
 {
-	char delim = (*pp)[1];
-	if (delim != st->endc && delim != ':')
+	if (!IsDelimiter((*pp)[1], st))
 		return AMR_UNKNOWN;
 
 	ModifyWords(st, modifyWord, NULL, st->oneBigWord);
@@ -3441,7 +3444,7 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
 static ApplyModifierResult
 ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
 {
-	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
+	if (IsDelimiter((*pp)[1], st)) {
 		Expr_SetValueOwn(st->expr, VarUniq(st->expr->value.str));
 		(*pp)++;
 		return AMR_OK;
@@ -3513,7 +3516,7 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 {
 	Expr *expr = st->expr;
 	const char *p = *pp;
-	if (p[1] == 'h' && (p[2] == st->endc || p[2] == ':')) {
+	if (p[1] == 'h' && IsDelimiter(p[2], st)) {
 		if (expr->eflags & VARE_WANTRES) {
 			const char *errfmt;
 			char *output = Cmd_Exec(expr->value.str, &errfmt);
@@ -3538,13 +3541,12 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 #endif
 
 static void
-LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc)
+LogBeforeApply(const ApplyModifiersState *st, const char *mod)
 {
-	Expr *expr = st->expr;
+	const Expr *expr = st->expr;
 	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
-	Boolean is_single_char = mod[0] != '\0' &&
-				 (mod[1] == endc || mod[1] == ':');
+	Boolean is_single_char = mod[0] != '\0' && IsDelimiter(mod[1], st);
 
 	/* At this point, only the first character of the modifier can
 	 * be used since the end of the modifier is not yet known. */
@@ -3557,9 +3559,9 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc)
 }
 
 static void
-LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
+LogAfterApply(const ApplyModifiersState *st, const char *p, const char *mod)
 {
-	Expr *expr = st->expr;
+	const Expr *expr = st->expr;
 	const char *value = expr->value.str;
 	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
@@ -3674,7 +3676,7 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp)
 	(void)Var_Parse(&p, expr->scope, expr->eflags, &mods);
 	/* TODO: handle errors */
 
-	if (mods.str[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
+	if (mods.str[0] != '\0' && *p != '\0' && !IsDelimiter(*p, st)) {
 		FStr_Done(&mods);
 		return AMIR_SYSV;
 	}
@@ -3708,14 +3710,14 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp)
 }
 
 static ApplyModifierResult
-ApplySingleModifier(const char **pp, char endc, ApplyModifiersState *st)
+ApplySingleModifier(const char **pp, ApplyModifiersState *st)
 {
 	ApplyModifierResult res;
 	const char *mod = *pp;
 	const char *p = *pp;
 
 	if (DEBUG(VAR))
-		LogBeforeApply(st, mod, endc);
+		LogBeforeApply(st, mod);
 
 	res = ApplyModifier(&p, st);
 
@@ -3733,7 +3735,7 @@ ApplySingleModifier(const char **pp, char endc, ApplyModifiersState *st)
 		 * errors and leads to wrong results.
 		 * Parsing should rather stop here.
 		 */
-		for (p++; *p != ':' && *p != st->endc && *p != '\0'; p++)
+		for (p++; !IsDelimiter(*p, st) && *p != '\0'; p++)
 			continue;
 		Parse_Error(PARSE_FATAL, "Unknown modifier \"%.*s\"",
 		    (int)(p - mod), mod);
@@ -3756,7 +3758,7 @@ ApplySingleModifier(const char **pp, char endc, ApplyModifiersState *st)
 		    st->expr->var->name.str, st->expr->value.str);
 	} else if (*p == ':') {
 		p++;
-	} else if (opts.strict && *p != '\0' && *p != endc) {
+	} else if (opts.strict && *p != '\0' && *p != st->endc) {
 		Parse_Error(PARSE_FATAL,
 		    "Missing delimiter ':' after modifier \"%.*s\"",
 		    (int)(p - mod), mod);
@@ -3820,7 +3822,7 @@ ApplyModifiers(
 
 		mod = p;
 
-		res = ApplySingleModifier(&p, endc, &st);
+		res = ApplySingleModifier(&p, &st);
 		if (res == AMR_CLEANUP)
 			goto cleanup;
 		if (res == AMR_BAD)
