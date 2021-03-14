@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.173 2020/07/21 06:10:26 rin Exp $	*/
+/*	$NetBSD: locore.s,v 1.174 2021/03/14 03:25:01 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -275,16 +275,16 @@ Lstart3:
 
 #if defined(DJMEMCMAX)
 	movl	%a3,%sp@-
-	cmp	#MACH_MACC610,_C_LABEL(machineid)
-	jra	Ldjmemc610
-	cmp	#MACH_MACQ610,_C_LABEL(machineid)
-	jra	Ldjmemc610
-	cmp	#MACH_MACC650,_C_LABEL(machineid)
-	jra	Ldjmemccfg
-	cmp	#MACH_MACQ650,_C_LABEL(machineid)
-	jra	Ldjmemccfg
-	cmp	#MACH_MACQ800,_C_LABEL(machineid)
-	jra	Ldjmemccfg
+	cmpl	#MACH_MACC610,_C_LABEL(machineid)
+	jeq	Ldjmemc610
+	cmpl	#MACH_MACQ610,_C_LABEL(machineid)
+	jeq	Ldjmemc610
+	cmpl	#MACH_MACC650,_C_LABEL(machineid)
+	jeq	Ldjmemccfg
+	cmpl	#MACH_MACQ650,_C_LABEL(machineid)
+	jeq	Ldjmemccfg
+	cmpl	#MACH_MACQ800,_C_LABEL(machineid)
+	jeq	Ldjmemccfg
 
 	jra	Lnodjmemc
        
