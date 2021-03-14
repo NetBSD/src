@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.48 2021/03/14 00:22:16 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.49 2021/03/14 01:44:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.48 2021/03/14 00:22:16 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.49 2021/03/14 01:44:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -291,8 +291,10 @@ compute_code_indent(void)
 
     if (ps.paren_level != 0) {
 	if (!opt.lineup_to_parens)
-	    target_ind += opt.continuation_indent *
-		(2 * opt.continuation_indent == opt.indent_size ? 1 : ps.paren_level);
+	    if (2 * opt.continuation_indent == opt.indent_size)
+		target_ind += opt.continuation_indent;
+	    else
+		target_ind += opt.continuation_indent * ps.paren_level;
 	else if (opt.lineup_to_parens_always)
 	    /*
 	     * XXX: where does this '- 1' come from?  It looks strange but is
