@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.857 2021/03/14 11:15:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.858 2021/03/14 15:04:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.857 2021/03/14 11:15:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.858 2021/03/14 15:04:13 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3837,6 +3837,16 @@ bad_modifier:
 	    (int)strcspn(mod, ":)}"), mod, expr->var->name.str);
 
 cleanup:
+	/*
+	 * TODO: Use p + strlen(p) instead, to stop parsing immediately.
+	 *
+	 * In the unit tests, this generates a few unterminated strings in the
+	 * shell commands though.  Instead of producing these unfinished
+	 * strings, commands with evaluation errors should not be run at all.
+	 *
+	 * To make that happen, Var_Subst must report the actual errors
+	 * instead of returning VPR_OK unconditionally.
+	 */
 	*pp = p;
 	Expr_SetValueRefer(expr, var_Error);
 }
