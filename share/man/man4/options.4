@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.517 2020/10/09 01:49:53 gutteridge Exp $
+.\"	$NetBSD: options.4,v 1.518 2021/03/14 02:56:07 rin Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 9, 2020
+.Dd March 14, 2021
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1194,8 +1194,8 @@ for details.
 Reduce the size of the NFS client code by omitting code that's only required
 for NFSv3 and NQNFS support, leaving only that code required to use NFSv2
 servers.
-.It Cd options NFS_BOOT_TCP
-Use NFS over TCP instead of the default UDP, for mounting root.
+.It Cd options NFS_BOOT_UDP
+Use NFS over UDP instead of the default TCP, for mounting root.
 .El
 .Ss Buffer queue strategy options
 The following options enable alternative buffer queue strategies.
