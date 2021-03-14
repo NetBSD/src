@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.47 2021/03/13 18:46:39 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.48 2021/03/14 00:22:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.47 2021/03/13 18:46:39 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.48 2021/03/14 00:22:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -353,8 +353,8 @@ fill_buffer(void)
     }
     for (p = in_buffer;;) {
 	if (p >= in_buffer_limit) {
-	    int size = (in_buffer_limit - in_buffer) * 2 + 10;
-	    int offset = p - in_buffer;
+	    size_t size = (in_buffer_limit - in_buffer) * 2 + 10;
+	    size_t offset = p - in_buffer;
 	    in_buffer = realloc(in_buffer, size);
 	    if (in_buffer == NULL)
 		errx(1, "input line too long");

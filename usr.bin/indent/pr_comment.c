@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.30 2021/03/13 18:11:31 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.31 2021/03/14 00:22:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.30 2021/03/13 18:11:31 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.31 2021/03/14 00:22:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -222,7 +222,7 @@ process_comment(void)
 
     /* Start to copy the comment */
 
-    while (1) {			/* this loop will go until the comment is
+    for (;;) {			/* this loop will go until the comment is
 				 * copied */
 	switch (*buf_ptr) {	/* this checks for various special cases */
 	case 014:		/* check for a form feed */
