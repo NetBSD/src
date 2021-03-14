@@ -1,4 +1,4 @@
-# $NetBSD: var-eval-short.mk,v 1.3 2021/03/14 19:21:28 rillig Exp $
+# $NetBSD: var-eval-short.mk,v 1.4 2021/03/14 20:41:39 rillig Exp $
 #
 # Tests for each variable modifier to ensure that they only do the minimum
 # necessary computations.  If the result of the expression is not needed, they
@@ -34,20 +34,34 @@ FAIL=	${:!echo unexpected 1>&2!}
 .if 0 && ${0:?${FAIL}:${FAIL}}
 .endif
 
+# Before var.c,v 1.870 from 2021-03-14, the expression ${FAIL} was evaluated
+# after the loop, when undefining the temporary global loop variable.
 .if 0 && ${:Uword:@${FAIL}@expr@}
 .endif
 
 .if 0 && ${:Uword:@var@${FAIL}@}
 .endif
 
+# Before var.c,v 1.877 from 2021-03-14, the modifier ':[...]' did not expand
+# the nested expression ${FAIL} and then tried to parse the unexpanded text,
+# which failed since '$' is not a valid range character.
 .if 0 && ${:Uword:[${FAIL}]}
 .endif
 
+# Before var.c,v 1.867 from 2021-03-14, the modifier ':_' defined the variable
+# even though the whole expression should have only been parsed, not
+# evaluated.
 .if 0 && ${:Uword:_=VAR}
 .elif defined(VAR)
 .  error
 .endif
 
+# Before var.c,v 1.856 from 2021-03-14, the modifier ':C' did not expand the
+# nested expression ${FAIL} and then tried to compile the unexpanded text as a
+# regular expression, which failed both because of the '{FAIL}', which is not
+# a valid repetition, and because of the '****', which are repeated
+# repetitions as well.
+# '${FAIL}'
 .if 0 && ${:Uword:C,${FAIL}****,,}
 .endif
 
