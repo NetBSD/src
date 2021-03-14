@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.879 2021/03/14 20:03:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.880 2021/03/14 20:09:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.879 2021/03/14 20:03:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.880 2021/03/14 20:09:26 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3586,15 +3586,6 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 		if (errfmt != NULL)
 			Error(errfmt, expr->value.str);
 		Expr_SetValueOwn(expr, output);
-	} else {
-		/*
-		 * TODO: Check whether returning ":sh" would be
-		 *  more consistent with the other modifiers.
-		 *
-		 * TODO: Add a unit test demonstrating that the
-		 *  actual value of this expression has any effect.
-		 */
-		Expr_SetValueRefer(expr, "");
 	}
 
 	return AMR_OK;
