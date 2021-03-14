@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.875 2021/03/14 19:21:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.876 2021/03/14 19:25:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.875 2021/03/14 19:21:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.876 2021/03/14 19:25:05 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2811,14 +2811,17 @@ ParseModifier_Match(const char **pp, const ApplyModifiersState *st,
 static ApplyModifierResult
 ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 {
-	const char *mod = *pp;
+	const char mod = **pp;
 	char *pattern;
-	ModifyWordProc modifyWord;
 
 	ParseModifier_Match(pp, st, &pattern);
 
-	modifyWord = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
-	ModifyWords(st, modifyWord, pattern, st->oneBigWord);
+	if (st->expr->eflags & VARE_WANTRES) {
+		ModifyWordProc modifyWord =
+		    mod == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
+		ModifyWords(st, modifyWord, pattern, st->oneBigWord);
+	}
+
 	free(pattern);
 	return AMR_OK;
 }
