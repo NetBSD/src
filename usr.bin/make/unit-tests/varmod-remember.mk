@@ -1,4 +1,4 @@
-# $NetBSD: varmod-remember.mk,v 1.5 2021/03/14 17:14:15 rillig Exp $
+# $NetBSD: varmod-remember.mk,v 1.6 2021/03/14 17:27:27 rillig Exp $
 #
 # Tests for the :_ modifier, which saves the current variable value
 # in the _ variable or another, to be used later again.
@@ -22,10 +22,13 @@
 # oversight than an intended feature.  The variable name stops at the first
 # '}' or ')' and thus cannot use the usual form ${VARNAME} of long variable
 # names.
+#
+# Because of all these edge-casey conditions, this "feature" has been removed
+# in var.c 1.867 from 2021-03-14.
 S=	INDIRECT_VARNAME
 .if ${value:L:@var@${var:_=$S}@} != "value"
 .  error
-.elif ${INDIRECT_VARNAME} != "value"
+.elif defined(INDIRECT_VARNAME)
 .  error
 .endif
 
