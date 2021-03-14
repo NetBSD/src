@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.882 2021/03/14 20:18:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.883 2021/03/14 20:23:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.882 2021/03/14 20:18:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.883 2021/03/14 20:23:29 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -461,13 +461,7 @@ VarFind(const char *name, GNode *scope, Boolean elsewhere)
 	return var;
 }
 
-/*
- * If the variable is an environment variable, free it, including its value.
- *
- * Results:
- *	TRUE if it was an environment variable,
- *	FALSE if it is still a regular variable.
- */
+/* If the variable is an environment variable, free it, including its value. */
 static void
 VarFreeEnv(Var *v)
 {
