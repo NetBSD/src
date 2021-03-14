@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2021/03/14 22:58:11 christos Exp $
 
 PROG = netboot
 
@@ -27,6 +27,6 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=yes SA_USE_CREAD=yes
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LDSCRIPT}
 	${_MKTARGET_LINK}
-	${LD} -T ${LDSCRIPT} -N -e start -o ${PROG}.sym \
+	${LD} ${LDABI} -T ${LDSCRIPT} -N -e start -o ${PROG}.sym \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} 
 	${SIZE} ${PROG}.sym
