@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.864 2021/03/14 15:43:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.865 2021/03/14 16:03:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.864 2021/03/14 15:43:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.865 2021/03/14 16:03:04 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2308,6 +2308,9 @@ TryParseIntBase0(const char **pp, int *out_num)
 
 	errno = 0;
 	n = strtol(*pp, &end, 0);
+
+	if (end == *pp)
+		return FALSE;
 	if ((n == LONG_MIN || n == LONG_MAX) && errno == ERANGE)
 		return FALSE;
 	if (n < INT_MIN || n > INT_MAX)
