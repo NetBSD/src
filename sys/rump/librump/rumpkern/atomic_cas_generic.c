@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_generic.c,v 1.2 2009/12/18 22:37:18 pooka Exp $	*/
+/*	$NetBSD: atomic_cas_generic.c,v 1.3 2021/03/14 22:56:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atomic_cas_generic.c,v 1.2 2009/12/18 22:37:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atomic_cas_generic.c,v 1.3 2021/03/14 22:56:39 christos Exp $");
 
 /*
  * This is basically common/lib/libc/atomic/atomic_init_testset.c
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: atomic_cas_generic.c,v 1.2 2009/12/18 22:37:18 pooka
 #define	I16	I2 I2 I2 I2 I2 I2 I2 I2
 #define	I128	I16 I16 I16 I16 I16 I16 I16 I16
 
-static __cpu_simple_lock_t atomic_locks[128] = { I128 };
+static __cpu_simple_lock_t atomic_locks32[128] = { I128 };
 
 uint32_t
 _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
@@ -53,7 +53,7 @@ _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	__cpu_simple_lock_t *lock;
 	uint32_t ret;
 
-	lock = &atomic_locks[((uintptr_t)ptr >> 3) & 127];
+	lock = &atomic_locks32[((uintptr_t)ptr >> 3) & 127];
 	__cpu_simple_lock(lock);
 	ret = *ptr;
 	if (__predict_true(ret == old)) {
@@ -65,23 +65,62 @@ _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 }
 
 #undef atomic_cas_32
+atomic_op_alias(atomic_cas_32,_atomic_cas_32)
+atomic_op_alias(atomic_cas_32_ni,_atomic_cas_32)
+__strong_alias(_atomic_cas_32_ni,_atomic_cas_32)
+
+#ifdef _LP64
+static __cpu_simple_lock_t atomic_locks64[128] = { I128 };
+
+uint64_t
+_atomic_cas_64(volatile uint64_t *ptr, uint64_t old, uint64_t new)
+{
+	__cpu_simple_lock_t *lock;
+	uint64_t ret;
+
+	lock = &atomic_locks64[((uintptr_t)ptr >> 4) & 127];
+	__cpu_simple_lock(lock);
+	ret = *ptr;
+	if (__predict_true(ret == old)) {
+		*ptr = new;
+	}
+	__cpu_simple_unlock(lock);
+
+	return ret;
+}
+
+#undef atomic_cas_64
+atomic_op_alias(atomic_cas_64,_atomic_cas_64)
+atomic_op_alias(atomic_cas_64_ni,_atomic_cas_64)
+__strong_alias(_atomic_cas_64_ni,_atomic_cas_64)
+
+#endif
+
 #undef atomic_cas_uint
 #undef atomic_cas_ulong
 #undef atomic_cas_ptr
 
-atomic_op_alias(atomic_cas_32,_atomic_cas_32)
 atomic_op_alias(atomic_cas_uint,_atomic_cas_32)
 __strong_alias(_atomic_cas_uint,_atomic_cas_32)
-atomic_op_alias(atomic_cas_ulong,_atomic_cas_32)
-__strong_alias(_atomic_cas_ulong,_atomic_cas_32)
-atomic_op_alias(atomic_cas_ptr,_atomic_cas_32)
-__strong_alias(_atomic_cas_ptr,_atomic_cas_32)
-
-atomic_op_alias(atomic_cas_32_ni,_atomic_cas_32)
-__strong_alias(_atomic_cas_32_ni,_atomic_cas_32)
 atomic_op_alias(atomic_cas_uint_ni,_atomic_cas_32)
 __strong_alias(_atomic_cas_uint_ni,_atomic_cas_32)
+
+#ifdef _LP64
+atomic_op_alias(atomic_cas_ulong,_atomic_cas_64)
+__strong_alias(_atomic_cas_ulong,_atomic_cas_64)
+atomic_op_alias(atomic_cas_ulong_ni,_atomic_cas_64)
+__strong_alias(_atomic_cas_ulong_ni,_atomic_cas_64)
+atomic_op_alias(atomic_cas_ptr,_atomic_cas_64)
+__strong_alias(_atomic_cas_ptr,_atomic_cas_64)
+atomic_op_alias(atomic_cas_ptr_ni,_atomic_cas_64)
+__strong_alias(_atomic_cas_ptr_ni,_atomic_cas_64)
+#else
+atomic_op_alias(atomic_cas_ulong,_atomic_cas_32)
+__strong_alias(_atomic_cas_ulong,_atomic_cas_32)
 atomic_op_alias(atomic_cas_ulong_ni,_atomic_cas_32)
 __strong_alias(_atomic_cas_ulong_ni,_atomic_cas_32)
+atomic_op_alias(atomic_cas_ptr,_atomic_cas_32)
+__strong_alias(_atomic_cas_ptr,_atomic_cas_32)
 atomic_op_alias(atomic_cas_ptr_ni,_atomic_cas_32)
 __strong_alias(_atomic_cas_ptr_ni,_atomic_cas_32)
+#endif
