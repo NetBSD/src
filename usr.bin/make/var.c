@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.863 2021/03/14 15:24:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.864 2021/03/14 15:43:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.863 2021/03/14 15:24:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.864 2021/03/14 15:43:31 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2506,9 +2506,12 @@ static ApplyModifierResult
 ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
 {
 	Expr *expr = st->expr;
+
+	(*pp)++;
+
 	Expr_Define(expr);
 	Expr_SetValueOwn(expr, bmake_strdup(expr->var->name.str));
-	(*pp)++;
+
 	return AMR_OK;
 }
 
@@ -2553,8 +2556,10 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 		utc = 0;
 		*pp = mod + 6;
 	}
+
 	Expr_SetValueOwn(st->expr,
 	    VarStrftime(st->expr->value.str, TRUE, utc));
+
 	return AMR_OK;
 }
 
@@ -2580,8 +2585,10 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 		utc = 0;
 		*pp = mod + 9;
 	}
+
 	Expr_SetValueOwn(st->expr,
 	    VarStrftime(st->expr->value.str, FALSE, utc));
+
 	return AMR_OK;
 }
 
@@ -2591,9 +2598,10 @@ ApplyModifier_Hash(const char **pp, ApplyModifiersState *st)
 {
 	if (!ModMatch(*pp, "hash", st))
 		return AMR_UNKNOWN;
+	*pp += 4;
 
 	Expr_SetValueOwn(st->expr, VarHash(st->expr->value.str));
-	*pp += 4;
+
 	return AMR_OK;
 }
 
@@ -2604,6 +2612,8 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 	Expr *expr = st->expr;
 	GNode *gn;
 	char *path;
+
+	(*pp)++;
 
 	Expr_Define(expr);
 
@@ -2620,7 +2630,6 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 		path = bmake_strdup(expr->var->name.str);
 	Expr_SetValueOwn(expr, path);
 
-	(*pp)++;
 	return AMR_OK;
 }
 
@@ -2646,8 +2655,8 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 	if (errfmt != NULL)
 		Error(errfmt, cmd);	/* XXX: why still return AMR_OK? */
 	free(cmd);
-
 	Expr_Define(expr);
+
 	return AMR_OK;
 }
 
@@ -2949,15 +2958,15 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 
 	/* ":ts<any><endc>" or ":ts<any>:" */
 	if (sep[0] != st->endc && IsDelimiter(sep[1], st)) {
-		st->sep = sep[0];
 		*pp = sep + 1;
+		st->sep = sep[0];
 		goto ok;
 	}
 
 	/* ":ts<endc>" or ":ts:" */
 	if (IsDelimiter(sep[0], st)) {
-		st->sep = '\0';	/* no separator */
 		*pp = sep;
+		st->sep = '\0';	/* no separator */
 		goto ok;
 	}
 
@@ -2969,15 +2978,15 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 
 	/* ":ts\n" */
 	if (sep[1] == 'n') {
-		st->sep = '\n';
 		*pp = sep + 2;
+		st->sep = '\n';
 		goto ok;
 	}
 
 	/* ":ts\t" */
 	if (sep[1] == 't') {
-		st->sep = '\t';
 		*pp = sep + 2;
+		st->sep = '\t';
 		goto ok;
 	}
 
@@ -3062,31 +3071,31 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	}
 
 	if (mod[1] == 'A') {				/* :tA */
-		ModifyWords(st, ModifyWord_Realpath, NULL, st->oneBigWord);
 		*pp = mod + 2;
+		ModifyWords(st, ModifyWord_Realpath, NULL, st->oneBigWord);
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'u') {				/* :tu */
-		Expr_SetValueOwn(expr, str_toupper(expr->value.str));
 		*pp = mod + 2;
+		Expr_SetValueOwn(expr, str_toupper(expr->value.str));
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {				/* :tl */
-		Expr_SetValueOwn(expr, str_tolower(expr->value.str));
 		*pp = mod + 2;
+		Expr_SetValueOwn(expr, str_tolower(expr->value.str));
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'W' || mod[1] == 'w') {		/* :tW, :tw */
-		st->oneBigWord = mod[1] == 'W';
 		*pp = mod + 2;
+		st->oneBigWord = mod[1] == 'W';
 		return AMR_OK;
 	}
 
 	/* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
-	*pp = mod + 1;
+	*pp = mod + 1;		/* XXX: unnecessary but observable */
 	return AMR_BAD;
 }
 
@@ -3216,6 +3225,8 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 {
 	const char *mod = (*pp)++;	/* skip past the 'O' in any case */
 
+	/* TODO: separate parsing from evaluating */
+
 	Words words = Str_Words(st->expr->value.str, FALSE);
 
 	if (IsDelimiter(mod[1], st)) {
@@ -3321,6 +3332,8 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	char *val;
 	VarParseResult res;
 
+	/* TODO: separate parsing from evaluating */
+
 	const char *mod = *pp;
 	const char *op = mod + 1;
 
@@ -3413,12 +3426,18 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 		 */
 		size_t n = strcspn(mod + 2, ":)}");
 		char *name = bmake_strldup(mod + 2, n);
+		*pp = mod + 2 + n;
+
+		/*
+		 * FIXME: do not expand the variable name here; it would only
+		 *  work for single-character variable names anyway.
+		 */
 		Var_SetExpand(expr->scope, name, expr->value.str);
 		free(name);
-		*pp = mod + 2 + n;
 	} else {
-		Var_Set(expr->scope, "_", expr->value.str);
 		*pp = mod + 1;
+
+		Var_Set(expr->scope, "_", expr->value.str);
 	}
 	return AMR_OK;
 }
@@ -3433,9 +3452,10 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
 {
 	if (!IsDelimiter((*pp)[1], st))
 		return AMR_UNKNOWN;
+	(*pp)++;
 
 	ModifyWords(st, modifyWord, NULL, st->oneBigWord);
-	(*pp)++;
+
 	return AMR_OK;
 }
 
@@ -3517,6 +3537,7 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 	const char *p = *pp;
 	if (!(p[1] == 'h' && IsDelimiter(p[2], st)))
 		return AMR_UNKNOWN;
+	*pp = p + 2;
 
 	if (expr->eflags & VARE_WANTRES) {
 		const char *errfmt;
@@ -3534,7 +3555,7 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 		 */
 		Expr_SetValueRefer(expr, "");
 	}
-	*pp = p + 2;
+
 	return AMR_OK;
 }
 #endif
