@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.868 2021/03/14 17:34:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.869 2021/03/14 17:38:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.868 2021/03/14 17:34:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.869 2021/03/14 17:38:24 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3430,9 +3430,10 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 		 * behavior defined in ParseModifierPart.  This creates an
 		 * unnecessary, undocumented inconsistency in make.
 		 */
-		size_t n = strcspn(mod + 2, ":)}");
-		*pp = mod + 2 + n;
-		name = FStr_InitOwn(bmake_strldup(mod + 2, n));
+		const char *arg = mod + 2;
+		size_t argLen = strcspn(arg, ":)}");
+		*pp = arg + argLen;
+		name = FStr_InitOwn(bmake_strldup(arg, argLen));
 	} else
 		*pp = mod + 1;
 
