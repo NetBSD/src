@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.425 2021/02/01 19:02:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.426 2021/03/14 10:36:46 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.425 2021/02/01 19:02:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.426 2021/03/14 10:36:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2837,6 +2837,7 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "md %#jx pa %#jx", (uintptr_t)md, pa, 0, 0);
 
+	kpreempt_disable();
 	pmap_acquire_page_lock(md);
 	struct pv_entry **pvp = &SLIST_FIRST(&md->pvh_list);
 	if (*pvp == NULL) {
@@ -2851,6 +2852,8 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		PMAP_VALIDATE_MD_PAGE(md);
 #endif
 		pmap_release_page_lock(md);
+		kpreempt_enable();
+
 		return;
 	}
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
@@ -3004,6 +3007,8 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 	}
 	cpu_cpwait();
 #endif /* ARM_MMU_EXTENDED */
+
+	kpreempt_enable();
 }
 
 /*
@@ -3111,6 +3116,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (flags & PMAP_WIRED)
 		nflags |= PVF_WIRED;
 
+	kpreempt_disable();
 	pmap_acquire_pmap_lock(pm);
 
 	/*
@@ -3125,6 +3131,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (l2b == NULL) {
 		if (flags & PMAP_CANFAIL) {
 			pmap_release_pmap_lock(pm);
+			kpreempt_enable();
+
 			error = ENOMEM;
 			goto free_pv;
 		}
@@ -3419,13 +3427,14 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif
 
 	pmap_release_pmap_lock(pm);
-
+	kpreempt_enable();
 
 	if (old_pv)
 		pool_put(&pmap_pv_pool, old_pv);
 free_pv:
 	if (new_pv)
 		pool_put(&pmap_pv_pool, new_pv);
+
 	return error;
 }
 
@@ -3470,6 +3479,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
+	kpreempt_disable();
 	pmap_acquire_pmap_lock(pm);
 
 #ifndef ARM_MMU_EXTENDED
@@ -3637,6 +3647,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	}
 
 	pmap_release_pmap_lock(pm);
+	kpreempt_enable();
+
 	SLIST_FOREACH_SAFE(pv, &opv_list, pv_link, npv) {
 		pool_put(&pmap_pv_pool, pv);
 	}
@@ -3709,6 +3721,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		     flags);
 	}
 
+	kpreempt_disable();
 	pmap_t kpm = pmap_kernel();
 	pmap_acquire_pmap_lock(kpm);
 	struct l2_bucket * const l2b = pmap_get_l2_bucket(kpm, va);
@@ -3845,6 +3858,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pool_put(&pmap_pv_pool, pv);
 #endif
 	}
+	kpreempt_enable();
+
 	if (pmap_initialized) {
 		UVMHIST_LOG(maphist, "  <-- done (ptep %#jx: %#jx -> %#jx)",
 		    (uintptr_t)ptep, opte, npte, 0);
@@ -3867,6 +3882,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	const vaddr_t eva = va + len;
 	pmap_t kpm = pmap_kernel();
 
+	kpreempt_disable();
 	pmap_acquire_pmap_lock(kpm);
 
 	while (va < eva) {
@@ -3931,6 +3947,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	}
 	pmap_release_pmap_lock(kpm);
 	cpu_cpwait();
+	kpreempt_enable();
+
 	UVMHIST_LOG(maphist, "  <--- done (%ju mappings removed)",
 	    total_mappings, 0, 0, 0);
 }
@@ -3952,6 +3970,7 @@ pmap_extract_coherency(pmap_t pm, vaddr_t va, paddr_t *pap, bool *coherentp)
 	u_int l1slot;
 	bool coherent;
 
+	kpreempt_disable();
 	pmap_acquire_pmap_lock(pm);
 
 	l1slot = l1pte_index(va);
@@ -3982,11 +4001,14 @@ pmap_extract_coherency(pmap_t pm, vaddr_t va, paddr_t *pap, bool *coherentp)
 		if (l2 == NULL ||
 		    (ptep = l2->l2_bucket[L2_BUCKET(l1slot)].l2b_kva) == NULL) {
 			pmap_release_pmap_lock(pm);
+			kpreempt_enable();
+
 			return false;
 		}
 
 		pte = ptep[l2pte_index(va)];
 		pmap_release_pmap_lock(pm);
+		kpreempt_enable();
 
 		if (pte == 0)
 			return false;
@@ -4023,6 +4045,7 @@ pmap_pv_remove(paddr_t pa)
 {
 	struct pmap_page *pp;
 
+	KASSERT(kpreempt_disabled());
 	pp = pmap_pv_tracked(pa);
 	if (pp == NULL)
 		panic("pmap_pv_protect: page not pv-tracked: 0x%"PRIxPADDR,
@@ -4064,6 +4087,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return;
 	}
 
+	kpreempt_disable();
 	pmap_acquire_pmap_lock(pm);
 
 #ifndef ARM_MMU_EXTENDED
@@ -4154,6 +4178,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #endif
 
 	pmap_release_pmap_lock(pm);
+	kpreempt_enable();
 }
 
 void
@@ -4364,6 +4389,7 @@ pmap_prefetchabt_fixup(void *v)
 
   out:
 	kpreempt_enable();
+
 	return rv;
 }
 #endif
@@ -4392,6 +4418,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu()))->pai_asid, 0);
 #endif
 
+	kpreempt_disable();
 	pmap_acquire_pmap_lock(pm);
 
 	/*
@@ -4785,6 +4812,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 out:
 	pmap_release_pmap_lock(pm);
+	kpreempt_enable();
 
 	return rv;
 }
@@ -4825,6 +4853,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "pm %#jx va %#jx", (uintptr_t)pm, va, 0, 0);
 
+	kpreempt_disable();
 	pmap_acquire_pmap_lock(pm);
 
 	l2b = pmap_get_l2_bucket(pm, va);
@@ -4846,6 +4875,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	}
 
 	pmap_release_pmap_lock(pm);
+	kpreempt_enable();
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
@@ -5188,6 +5218,7 @@ pmap_remove_all(pmap_t pm)
 
 	KASSERT(pm != pmap_kernel());
 
+	kpreempt_disable();
 	/*
 	 * The vmspace described by this pmap is about to be torn down.
 	 * Until pmap_update() is called, UVM will only make calls
@@ -5212,6 +5243,7 @@ pmap_remove_all(pmap_t pm)
 	pmap_tlb_asid_release_all(pm);
 #endif
 	pm->pm_remove_all = true;
+	kpreempt_enable();
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 	return false;
