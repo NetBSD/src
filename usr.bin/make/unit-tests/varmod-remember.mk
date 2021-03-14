@@ -1,4 +1,4 @@
-# $NetBSD: varmod-remember.mk,v 1.4 2021/03/14 17:07:11 rillig Exp $
+# $NetBSD: varmod-remember.mk,v 1.5 2021/03/14 17:14:15 rillig Exp $
 #
 # Tests for the :_ modifier, which saves the current variable value
 # in the _ variable or another, to be used later again.
@@ -14,6 +14,18 @@
 .if ${1 2 3:L:@var@${var:_=SAVED:}@} != "1 2 3"
 .  error
 .elif ${SAVED} != "3"
+.  error
+.endif
+
+# The ':_' modifier takes a variable name as optional argument.  This variable
+# name can refer to other variables, though this was rather an implementation
+# oversight than an intended feature.  The variable name stops at the first
+# '}' or ')' and thus cannot use the usual form ${VARNAME} of long variable
+# names.
+S=	INDIRECT_VARNAME
+.if ${value:L:@var@${var:_=$S}@} != "value"
+.  error
+.elif ${INDIRECT_VARNAME} != "value"
 .  error
 .endif
 
