@@ -1,4 +1,4 @@
-/*	$NetBSD: comments.0.stdout,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
+/*	$NetBSD: comments.0.stdout,v 1.2 2021/03/14 01:34:13 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/comments.0.stdout 334563 2018-06-03 15:28:55Z pstef $ */
 typedef enum x {
 	aaaaaaaaaaaaaaaaaaaaaa = 1 << 0,	/* test a */
@@ -18,10 +18,10 @@ t(void)
 	 */
 
 	/*
-	 * Old indent did not wrap to column 78
+	 * The default maximum line length for comments is 78, and the 'kk' at
+	 * the end makes the line exactly 78 bytes long.
 	 *
-	 * aaaaaa bbbbbb cccccc dddddd eeeeee ffffff ggggg hhhhh iiiii jjjj
-	 * kk
+	 * aaaaaa bbbbbb cccccc dddddd eeeeee ffffff ggggg hhhhh iiiii jjjj kk
 	 */
 
 	/*
