@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.31 2021/03/14 00:22:16 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.32 2021/03/14 01:34:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.31 2021/03/14 00:22:16 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.32 2021/03/14 01:34:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -200,6 +200,11 @@ process_comment(void)
 	    if (t_ptr >= buf_end)
 		fill_buffer();
 	    if (t_ptr[0] == '*' && t_ptr[1] == '/') {
+	        /*
+	         * XXX: This computation ignores the leading " * ", as well
+	         * as the trailing ' ' '*' '/'.  In simple cases, these cancel
+	         * out since they are equally long.
+	         */
 		int right_margin = indentation_after_range(ps.com_col - 1,
 		    buf_ptr, t_ptr + 2);
 		if (right_margin < adj_max_line_length)
@@ -341,7 +346,7 @@ process_comment(void)
 		(now_len < adj_max_line_length || !last_bl));
 	    ps.last_nl = false;
 	    /* XXX: signed character comparison '>' does not work for UTF-8 */
-	    if (now_len >= adj_max_line_length &&
+	    if (now_len > adj_max_line_length &&
 		    !ps.box_com && e_com[-1] > ' ') {
 		/*
 		 * the comment is too long, it must be broken up
