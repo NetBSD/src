@@ -71,6 +71,8 @@ make: Bad modifier ":[1.]" for variable "LIST"
 LIST:[1.]="" is an error
 make: Bad modifier ":[1..]" for variable "LIST"
 LIST:[1..]="" is an error
+make: Bad modifier ":[1.. ]" for variable "LIST"
+LIST:[1.. ]="" is an error
 LIST:[1..1]="one"
 make: Bad modifier ":[1..1.]" for variable "LIST"
 LIST:[1..1.]="" is an error
