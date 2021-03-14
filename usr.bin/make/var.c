@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.872 2021/03/14 18:10:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.873 2021/03/14 18:23:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.872 2021/03/14 18:10:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.873 2021/03/14 18:23:44 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2611,7 +2611,8 @@ ApplyModifier_Hash(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 	*pp += 4;
 
-	Expr_SetValueOwn(st->expr, VarHash(st->expr->value.str));
+	if (st->expr->eflags & VARE_WANTRES)
+		Expr_SetValueOwn(st->expr, VarHash(st->expr->value.str));
 
 	return AMR_OK;
 }
@@ -2625,6 +2626,9 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 	char *path;
 
 	(*pp)++;
+
+	if (!(st->expr->eflags & VARE_WANTRES))
+		return AMR_OK;
 
 	Expr_Define(expr);
 
@@ -2699,6 +2703,9 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 		n = 0;
 		*pp = mod + 5;
 	}
+
+	if (!(st->expr->eflags & VARE_WANTRES))
+		return AMR_OK;
 
 	if (n == 0) {
 		Words words = Str_Words(st->expr->value.str, FALSE);
@@ -2949,7 +2956,9 @@ ApplyModifier_Quote(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	Expr_SetValueOwn(st->expr, VarQuote(st->expr->value.str, quoteDollar));
+	if (st->expr->eflags & VARE_WANTRES)
+		Expr_SetValueOwn(st->expr,
+		    VarQuote(st->expr->value.str, quoteDollar));
 
 	return AMR_OK;
 }
@@ -2966,6 +2975,13 @@ static ApplyModifierResult
 ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 {
 	const char *sep = *pp + 2;
+
+	/*
+	 * Even if VARE_WANTRES is not set, proceed as normal since there is
+	 * neither any observable side effect nor a performance penalty.
+	 * Checking for VARE_WANTRES for every single piece of code in here
+	 * would make the code in this function too hard to read.
+	 */
 
 	/* ":ts<any><endc>" or ":ts<any>:" */
 	if (sep[0] != st->endc && IsDelimiter(sep[1], st)) {
@@ -3089,13 +3105,15 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 
 	if (mod[1] == 'u') {				/* :tu */
 		*pp = mod + 2;
-		Expr_SetValueOwn(expr, str_toupper(expr->value.str));
+		if (st->expr->eflags & VARE_WANTRES)
+			Expr_SetValueOwn(expr, str_toupper(expr->value.str));
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {				/* :tl */
 		*pp = mod + 2;
-		Expr_SetValueOwn(expr, str_tolower(expr->value.str));
+		if (st->expr->eflags & VARE_WANTRES)
+			Expr_SetValueOwn(expr, str_tolower(expr->value.str));
 		return AMR_OK;
 	}
 
@@ -3464,7 +3482,8 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	ModifyWords(st, modifyWord, NULL, st->oneBigWord);
+	if (st->expr->eflags & VARE_WANTRES)
+		ModifyWords(st, modifyWord, NULL, st->oneBigWord);
 
 	return AMR_OK;
 }
@@ -3476,7 +3495,8 @@ ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	Expr_SetValueOwn(st->expr, VarUniq(st->expr->value.str));
+	if (st->expr->eflags & VARE_WANTRES)
+		Expr_SetValueOwn(st->expr, VarUniq(st->expr->value.str));
 
 	return AMR_OK;
 }
