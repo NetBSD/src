@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.866 2021/03/14 16:43:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.867 2021/03/14 17:27:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.866 2021/03/14 16:43:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.867 2021/03/14 17:27:27 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3433,13 +3433,7 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 
 		if (expr->eflags & VARE_WANTRES) {
 			char *name = bmake_strldup(mod + 2, n);
-
-			/*
-			 * FIXME: do not expand the variable name here; it
-			 * would only work for single-character variable names
-			 * anyway.
-			 */
-			Var_SetExpand(expr->scope, name, expr->value.str);
+			Var_Set(expr->scope, name, expr->value.str);
 			free(name);
 		}
 	} else {
