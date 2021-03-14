@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.856 2021/03/14 10:57:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.857 2021/03/14 11:15:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.856 2021/03/14 10:57:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.857 2021/03/14 11:15:37 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3577,63 +3577,64 @@ static ApplyModifierResult
 ApplyModifier(const char **pp, ApplyModifiersState *st)
 {
 	switch (**pp) {
-	case ':':
-		return ApplyModifier_Assign(pp, st);
-	case '@':
-		return ApplyModifier_Loop(pp, st);
-	case '_':
-		return ApplyModifier_Remember(pp, st);
-	case 'D':
-	case 'U':
-		return ApplyModifier_Defined(pp, st);
-	case 'L':
-		return ApplyModifier_Literal(pp, st);
-	case 'P':
-		return ApplyModifier_Path(pp, st);
 	case '!':
 		return ApplyModifier_ShellCommand(pp, st);
-	case '[':
-		return ApplyModifier_Words(pp, st);
-	case 'g':
-		return ApplyModifier_Gmtime(pp, st);
-	case 'h':
-		return ApplyModifier_Hash(pp, st);
-	case 'l':
-		return ApplyModifier_Localtime(pp, st);
-	case 't':
-		return ApplyModifier_To(pp, st);
-	case 'N':
-	case 'M':
-		return ApplyModifier_Match(pp, st);
-	case 'S':
-		return ApplyModifier_Subst(pp, st);
+	case ':':
+		return ApplyModifier_Assign(pp, st);
 	case '?':
 		return ApplyModifier_IfElse(pp, st);
+	case '@':
+		return ApplyModifier_Loop(pp, st);
+	case '[':
+		return ApplyModifier_Words(pp, st);
+	case '_':
+		return ApplyModifier_Remember(pp, st);
 #ifndef NO_REGEX
 	case 'C':
 		return ApplyModifier_Regex(pp, st);
 #endif
-	case 'q':
-	case 'Q':
-		return ApplyModifier_Quote(pp, st);
-	case 'T':
-		return ApplyModifier_WordFunc(pp, st, ModifyWord_Tail);
-	case 'H':
-		return ApplyModifier_WordFunc(pp, st, ModifyWord_Head);
+	case 'D':
+		return ApplyModifier_Defined(pp, st);
 	case 'E':
 		return ApplyModifier_WordFunc(pp, st, ModifyWord_Suffix);
+	case 'g':
+		return ApplyModifier_Gmtime(pp, st);
+	case 'H':
+		return ApplyModifier_WordFunc(pp, st, ModifyWord_Head);
+	case 'h':
+		return ApplyModifier_Hash(pp, st);
+	case 'L':
+		return ApplyModifier_Literal(pp, st);
+	case 'l':
+		return ApplyModifier_Localtime(pp, st);
+	case 'M':
+	case 'N':
+		return ApplyModifier_Match(pp, st);
+	case 'O':
+		return ApplyModifier_Order(pp, st);
+	case 'P':
+		return ApplyModifier_Path(pp, st);
+	case 'Q':
+	case 'q':
+		return ApplyModifier_Quote(pp, st);
 	case 'R':
 		return ApplyModifier_WordFunc(pp, st, ModifyWord_Root);
 	case 'r':
 		return ApplyModifier_Range(pp, st);
-	case 'O':
-		return ApplyModifier_Order(pp, st);
-	case 'u':
-		return ApplyModifier_Unique(pp, st);
+	case 'S':
+		return ApplyModifier_Subst(pp, st);
 #ifdef SUNSHCMD
 	case 's':
 		return ApplyModifier_SunShell(pp, st);
 #endif
+	case 'T':
+		return ApplyModifier_WordFunc(pp, st, ModifyWord_Tail);
+	case 't':
+		return ApplyModifier_To(pp, st);
+	case 'U':
+		return ApplyModifier_Defined(pp, st);
+	case 'u':
+		return ApplyModifier_Unique(pp, st);
 	default:
 		return AMR_UNKNOWN;
 	}
