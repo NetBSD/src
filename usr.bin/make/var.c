@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.880 2021/03/14 20:09:26 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.881 2021/03/14 20:12:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.880 2021/03/14 20:09:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.881 2021/03/14 20:12:16 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3372,8 +3372,6 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	char *val;
 	VarParseResult res;
 
-	/* TODO: separate parsing from evaluating */
-
 	const char *mod = *pp;
 	const char *op = mod + 1;
 
@@ -3387,15 +3385,6 @@ ok:
 	if (expr->var->name.str[0] == '\0') {
 		*pp = mod + 1;
 		return AMR_BAD;
-	}
-
-	scope = expr->scope;	/* scope where v belongs */
-	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL) {
-		Var *gv = VarFind(expr->var->name.str, expr->scope, FALSE);
-		if (gv == NULL)
-			scope = SCOPE_GLOBAL;
-		else
-			VarFreeEnv(gv);
 	}
 
 	switch (op[0]) {
@@ -3414,6 +3403,15 @@ ok:
 		return AMR_CLEANUP;
 
 	(*pp)--;		/* Go back to the st->endc. */
+
+	scope = expr->scope;	/* scope where v belongs */
+	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL) {
+		Var *gv = VarFind(expr->var->name.str, expr->scope, FALSE);
+		if (gv == NULL)
+			scope = SCOPE_GLOBAL;
+		else
+			VarFreeEnv(gv);
+	}
 
 	/* XXX: Expanding the variable name at this point sounds wrong. */
 	if (expr->eflags & VARE_WANTRES) {
