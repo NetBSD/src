@@ -1,0 +1,11 @@
+unexpected
+make: Bad modifier ":[${FAIL" for variable ""
+make: "var-eval-short.mk" line 43: Malformed conditional (0 && ${:Uword:[${FAIL}]})
+make: "var-eval-short.mk" line 48: Missing argument for ".error"
+make: "var-eval-short.mk" line 63: Invalid time value: ${FAIL}}
+make: "var-eval-short.mk" line 63: Malformed conditional (0 && ${:Uword:gmtime=${FAIL}})
+make: "var-eval-short.mk" line 77: Invalid time value: ${FAIL}}
+make: "var-eval-short.mk" line 77: Malformed conditional (0 && ${:Uword:localtime=${FAIL}})
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1031 2021/03/12 00:13:06 rillig Exp $
+# $NetBSD: mi,v 1.1032 2021/03/14 11:49:37 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5727,6 +5727,8 @@
 ./usr/tests/usr.bin/make/unit-tests/var-class-local.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-class.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-class.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-eval-short.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-eval-short.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-op-append.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-op-append.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-op-assign.exp				tests-usr.bin-tests	compattestfile,atf
