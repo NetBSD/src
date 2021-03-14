@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.869 2021/03/14 17:38:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.870 2021/03/14 18:02:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.869 2021/03/14 17:38:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.870 2021/03/14 18:02:44 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2429,6 +2429,9 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
+	if (!(expr->eflags & VARE_WANTRES))
+		goto done;
+
 	args.eflags = expr->eflags & ~(unsigned)VARE_KEEP_DOLLAR;
 	prev_sep = st->sep;
 	st->sep = ' ';		/* XXX: should be st->sep for consistency */
@@ -2440,6 +2443,8 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	 * ModifyWord_Loop.
 	 */
 	Var_DeleteExpand(expr->scope, args.tvar);
+
+done:
 	free(args.tvar);
 	free(args.str);
 	return AMR_OK;
