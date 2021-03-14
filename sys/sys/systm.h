@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.299 2021/03/10 13:27:51 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.300 2021/03/14 02:53:57 rin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -192,6 +192,11 @@ enum hashtype {
 #ifdef _KERNEL
 #define COND_SET_STRUCT(dst, src, allow) \
 	do { \
+		/* \
+		 * Make sure we don't end up hashing/assigning large \
+		 * structure for performance. Upper-bound is arbitrary, \
+		 * but consider before bumping. \
+		 */ \
 		CTASSERT(sizeof(src) < 32); \
 		if (allow) \
 			dst = src; \
