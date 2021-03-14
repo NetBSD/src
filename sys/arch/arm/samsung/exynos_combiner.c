@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.13 2021/01/27 03:10:19 thorpej Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.14 2021/03/14 08:16:57 skrll Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.13 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.14 2021/03/14 08:16:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,12 +254,13 @@ exynos_combiner_establish(device_t dev, u_int *specifier,
 	if (!groupp) {
 		groupp = exynos_combiner_new_group(sc, group);
 		if (arg == NULL) {
-			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle,
-			    group, ipl /* XXX */, flags, func, NULL);
+			groupp->irq_ih = fdtbus_intr_establish_xname(
+			    sc->sc_phandle, group, ipl /* XXX */, flags, func, NULL,
+			    device_xname(dev));
 		} else {
-			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle,
-			    group, ipl /* XXX */, FDT_INTR_MPSAFE,
-			    exynos_combiner_irq, groupp);
+			groupp->irq_ih = fdtbus_intr_establish_xname(
+			    sc->sc_phandle,  group, ipl /* XXX */, FDT_INTR_MPSAFE,
+			    exynos_combiner_irq, groupp, device_xname(dev));
 		}
 		KASSERT(groupp->irq_ih != NULL);
 		groupp->irq_ipl = ipl;

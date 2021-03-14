@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.17 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: mct.c,v 1.18 2021/03/14 08:16:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014-2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.17 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.18 2021/03/14 08:16:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -193,8 +193,8 @@ mct_cpu_initclocks(void)
 	if (!fdtbus_intr_str(sc->sc_phandle, 0, intrstr, sizeof(intrstr)))
 		panic("%s: failed to decode interrupt", __func__);
 
-	sc->sc_global_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, mct_intr, NULL);
+	sc->sc_global_ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, mct_intr, NULL, device_xname(sc->sc_dev));
 	if (sc->sc_global_ih == NULL)
 		panic("%s: failed to establish timer interrupt on %s", __func__, intrstr);
 

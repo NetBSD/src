@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.14 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.15 2021/03/14 08:16:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.14 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.15 2021/03/14 08:16:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -165,8 +165,8 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	if (dwc_mmc_init(sc) != 0)
 		return;
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
-	    dwc_mmc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0,
+	    dwc_mmc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
