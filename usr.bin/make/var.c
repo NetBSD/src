@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.873 2021/03/14 18:23:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.874 2021/03/14 18:30:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.873 2021/03/14 18:23:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.874 2021/03/14 18:30:24 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2568,8 +2568,9 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 		*pp = mod + 6;
 	}
 
-	Expr_SetValueOwn(st->expr,
-	    VarStrftime(st->expr->value.str, TRUE, utc));
+	if (st->expr->eflags & VARE_WANTRES)
+		Expr_SetValueOwn(st->expr,
+		    VarStrftime(st->expr->value.str, TRUE, utc));
 
 	return AMR_OK;
 }
@@ -2597,8 +2598,9 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 		*pp = mod + 9;
 	}
 
-	Expr_SetValueOwn(st->expr,
-	    VarStrftime(st->expr->value.str, FALSE, utc));
+	if (st->expr->eflags & VARE_WANTRES)
+		Expr_SetValueOwn(st->expr,
+		    VarStrftime(st->expr->value.str, FALSE, utc));
 
 	return AMR_OK;
 }
