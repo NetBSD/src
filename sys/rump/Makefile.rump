@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.129 2020/06/12 11:04:45 roy Exp $
+#	$NetBSD: Makefile.rump,v 1.130 2021/03/14 13:11:59 rin Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -136,8 +136,12 @@ CPPFLAGS+=	${RUMPKERN_UNDEF}
 RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 
 # workaround: evbppc is not a well-defined arch
-.if (${MACHINE} == "evbppc")
+.if ${MACHINE} == "evbppc"
+.  if ${MACHINE_ARCH} == "powerpc"
 CPPFLAGS+=	-DPPC_OEA
+.  else
+CPPFLAGS+=	-DPPC_OEA64
+.  endif
 .endif
 
 # If any of these files change, we need a full rebuild
