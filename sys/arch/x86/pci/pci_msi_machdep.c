@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.14 2020/07/19 14:27:07 jdolecek Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.15 2021/03/14 08:10:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.14 2020/07/19 14:27:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.15 2021/03/14 08:10:23 skrll Exp $");
 
 #include "opt_intrdebug.h"
 #include "ioapic.h"
@@ -509,7 +509,7 @@ x86_pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
 /*
  * This function is used by device drivers like pci_intr_map().
  *
- * "ihps" is the array  of vector numbers which MSI used instead of IRQ number.
+ * "ihps" is the array of vector numbers which MSI used instead of IRQ number.
  * "count" must be power of 2.
  * "count" can decrease if struct intrsource cannot be allocated.
  * if count == 0, return non-zero value.
