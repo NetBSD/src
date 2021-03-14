@@ -1,4 +1,4 @@
-# $NetBSD: var-eval-short.mk,v 1.2 2021/03/14 19:16:41 rillig Exp $
+# $NetBSD: var-eval-short.mk,v 1.3 2021/03/14 19:21:28 rillig Exp $
 #
 # Tests for each variable modifier to ensure that they only do the minimum
 # necessary computations.  If the result of the expression is not needed, they
@@ -125,7 +125,7 @@ DEFINED=	# defined
 .if 0 && ${:Uword:word=replacement}
 .endif
 
-# Before var.c 1.XXX from 2021-03-14, Var_Parse returned "${FAIL}else" for the
+# Before var.c 1.875 from 2021-03-14, Var_Parse returned "${FAIL}else" for the
 # irrelevant right-hand side of the condition, even though this was not
 # necessary.  Since the return value from Var_Parse is supposed to be ignored
 # anyway, and since it is actually ignored in an overly complicated way,
@@ -137,7 +137,8 @@ DEFINED=	# defined
 # The ':L' is applied before the ':?' modifier, giving the expression a name
 # and a value, just to see whether this value gets passed through or whether
 # the parse-only mode results in an empty string (only visible in the debug
-# log).
+# log).  As of var.c 1.875 from 2021-03-14, the value of the variable gets
+# through, even though an empty string would suffice.
 DEFINED=	defined
 .if 0 && ${DEFINED:L:?${FAIL}then:${FAIL}else}
 .endif
