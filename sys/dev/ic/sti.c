@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.28 2021/03/07 14:31:20 skrll Exp $	*/
+/*	$NetBSD: sti.c,v 1.29 2021/03/14 08:13:58 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.28 2021/03/07 14:31:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.29 2021/03/14 08:13:58 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -1427,9 +1427,8 @@ sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
 	return 0;
 }
 
-#ifdef hp300	/* XXX */
 /*
- * Early console support.  Only used on hp300.
+ * Early console support.  Only used on hp300, currently
  */
 int
 sti_cnattach(struct sti_rom *rom, struct sti_screen *scr, bus_space_tag_t memt,
@@ -1465,7 +1464,6 @@ sti_cnattach(struct sti_rom *rom, struct sti_screen *scr, bus_space_tag_t memt,
 
 	return 0;
 }
-#endif
 
 int
 ngle_default_putcmap(struct sti_screen *scr, u_int idx, u_int count)
