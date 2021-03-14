@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.877 2021/03/14 19:29:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.878 2021/03/14 20:00:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.877 2021/03/14 19:29:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.878 2021/03/14 20:00:48 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3261,31 +3261,28 @@ static ApplyModifierResult
 ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 {
 	const char *mod = (*pp)++;	/* skip past the 'O' in any case */
-
-	/* TODO: separate parsing from evaluating */
-
-	Words words = Str_Words(st->expr->value.str, FALSE);
+	Words words;
+	enum SortMode {
+		ASC, DESC, SHUFFLE
+	} mode;
 
 	if (IsDelimiter(mod[1], st)) {
-		/* :O sorts ascending */
-		qsort(words.words, words.len, sizeof words.words[0],
-		    str_cmp_asc);
-
+		mode = ASC;
 	} else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	    IsDelimiter(mod[2], st)) {
 		(*pp)++;
-
-		if (mod[1] == 'r') {	/* :Or sorts descending */
-			qsort(words.words, words.len, sizeof words.words[0],
-			    str_cmp_desc);
-		} else
-			ShuffleStrings(words.words, words.len);
-	} else {
-		Words_Free(words);
+		mode = mod[1] == 'r' ? DESC : SHUFFLE;
+	} else
 		return AMR_BAD;
-	}
 
+	words = Str_Words(st->expr->value.str, FALSE);
+	if (mode == SHUFFLE)
+		ShuffleStrings(words.words, words.len);
+	else
+		qsort(words.words, words.len, sizeof words.words[0],
+		    mode == ASC ? str_cmp_asc : str_cmp_desc);
 	Expr_SetValueOwn(st->expr, Words_JoinFree(words));
+
 	return AMR_OK;
 }
 
