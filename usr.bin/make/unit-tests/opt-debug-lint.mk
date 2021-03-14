@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.12 2020/12/20 19:10:53 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.13 2021/03/14 10:45:51 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
@@ -77,5 +77,16 @@ ${UNDEF}: ${UNDEF}
 .  error
 .endif
 
-all:
-	@:;
+# Before var.c 1.XXX from 2021-03-14, the whole variable text was evaluated
+# to check for unclosed expressions and unknown operators.  During this check,
+# the subexpression '${:U2}' was not expanded, instead it was copied verbatim
+# into the regular expression, which was '.*=.{1,${:U2}}$'.  This regular
+# expression was then compiled (despite VARE_WANTRES being unset), which
+# resulted in a wrong error message.
+#
+# This only happened in lint mode since in default mode the early check for
+# unclosed expressions and unknown modifiers is skipped.
+#
+# See VarCheckSyntax, ApplyModifier_Regex.
+#
+VARMOD_REGEX=	${:UA=111 B=222 C=33:C/.*=.{1,${:U2}}$//g}
