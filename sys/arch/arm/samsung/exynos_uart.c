@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_uart.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.5 2021/03/14 08:16:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013-2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.5 2021/03/14 08:16:57 skrll Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -199,8 +199,8 @@ exynos_uart_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_freq = clk_get_rate(clk_uart_baud0);
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
-	    0, exynos_uart_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SERIAL,
+	    0, exynos_uart_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": failed to establish interrupt on %s\n",
 		    intrstr);
