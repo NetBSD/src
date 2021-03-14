@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.860 2021/03/14 15:15:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.861 2021/03/14 15:19:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.860 2021/03/14 15:15:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.861 2021/03/14 15:19:15 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2924,13 +2924,14 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Quote(const char **pp, ApplyModifiersState *st)
 {
-	if (IsDelimiter((*pp)[1], st)) {
-		Expr_SetValueOwn(st->expr,
-		    VarQuote(st->expr->value.str, **pp == 'q'));
-		(*pp)++;
-		return AMR_OK;
-	} else
+	Boolean quoteDollar = **pp == 'q';
+	if (!IsDelimiter((*pp)[1], st))
 		return AMR_UNKNOWN;
+	(*pp)++;
+
+	Expr_SetValueOwn(st->expr, VarQuote(st->expr->value.str, quoteDollar));
+
+	return AMR_OK;
 }
 
 /*ARGSUSED*/
