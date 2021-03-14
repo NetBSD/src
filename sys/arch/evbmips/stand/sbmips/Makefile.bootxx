@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $
+# $NetBSD: Makefile.bootxx,v 1.2 2021/03/14 22:58:10 christos Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c cfe.c cfe_api.c \
        putstr.c panic_putstr.c 
@@ -31,7 +31,7 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
 	${_MKTARGET_LINK}
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
+	${LD} ${LDABI} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
 	    ${OBJS} ${LIBSA} ${LIBKERN}
 	@chmod 644 ${PROG}.sym
 	@${SIZE} ${PROG}.sym
