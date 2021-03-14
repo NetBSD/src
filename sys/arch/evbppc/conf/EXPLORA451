@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.70 2021/03/05 07:06:15 rin Exp $
+#	$NetBSD: EXPLORA451,v 1.71 2021/03/14 03:35:39 rin Exp $
 #
 #	EXPLORA451 -- NCD Explora 450 Series Thin Client
 #
@@ -121,6 +121,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_DEFAULTSCREENS=1
 
 # Options for netboot
+options 	NFS_BOOT_UDP		# for much better performance
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_DHCP
 
