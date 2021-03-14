@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.870 2021/03/14 18:02:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.871 2021/03/14 18:08:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.870 2021/03/14 18:02:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.871 2021/03/14 18:08:25 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2488,7 +2488,8 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 			(void)Var_Parse(&p, expr->scope, eflags, &nested_val);
 			/* TODO: handle errors */
-			Buf_AddStr(&buf, nested_val.str);
+			if (expr->eflags & VARE_WANTRES)
+				Buf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
 			continue;
 		}
