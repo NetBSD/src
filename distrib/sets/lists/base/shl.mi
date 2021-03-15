@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.912 2021/03/05 18:08:21 christos Exp $
+# $NetBSD: shl.mi,v 1.913 2021/03/15 20:17:04 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -926,8 +926,8 @@
 ./usr/lib/libumem.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libumem.so.0.0			base-zfs-shlib		compatfile,zfs
 ./usr/lib/libunbound.so				base-sys-shlib		compatfile,unbound
-./usr/lib/libunbound.so.6			base-sys-shlib		compatfile,unbound
-./usr/lib/libunbound.so.6.2			base-sys-shlib		compatfile,unbound
+./usr/lib/libunbound.so.7			base-sys-shlib		compatfile,unbound
+./usr/lib/libunbound.so.7.0			base-sys-shlib		compatfile,unbound
 ./usr/lib/libusbhid.so				base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1			base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib		compatfile
