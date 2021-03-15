@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.887 2021/03/15 16:51:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.888 2021/03/15 18:56:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.887 2021/03/15 16:51:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.888 2021/03/15 18:56:37 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3425,10 +3425,9 @@ ok:
 			VarFreeEnv(gv);
 	}
 
-	/* XXX: Expanding the variable name at this point sounds wrong. */
 	switch (op[0]) {
 	case '+':
-		Var_AppendExpand(scope, expr->var->name.str, val);
+		Var_Append(scope, expr->var->name.str, val);
 		break;
 	case '!': {
 		const char *errfmt;
@@ -3436,7 +3435,7 @@ ok:
 		if (errfmt != NULL)
 			Error(errfmt, val);
 		else
-			Var_SetExpand(scope, expr->var->name.str, cmd_output);
+			Var_Set(scope, expr->var->name.str, cmd_output);
 		free(cmd_output);
 		break;
 	}
@@ -3445,7 +3444,7 @@ ok:
 			break;
 		/* FALLTHROUGH */
 	default:
-		Var_SetExpand(scope, expr->var->name.str, val);
+		Var_Set(scope, expr->var->name.str, val);
 		break;
 	}
 	Expr_SetValueRefer(expr, "");
