@@ -233,6 +233,9 @@ enum sec_status {
  *	the ttl value to send changes due to time.
  */
 struct packed_rrset_data {
+	/** Timestamp added to TTLs in the packed data.
+	 * Needed to support serving original TTLs. */
+	time_t ttl_add;
 	/** TTL (in seconds like time()) of the rrset.
 	 * Same for all RRs see rfc2181(5.2).  */
 	time_t ttl;
@@ -445,5 +448,18 @@ struct ub_packed_rrset_key* packed_rrset_copy_region(
 struct ub_packed_rrset_key* packed_rrset_copy_alloc(
 	struct ub_packed_rrset_key* key, struct alloc_cache* alloc, 
 	time_t now);
+
+/**
+ * Find RR index in packed rrset
+ * Raw comparison, does not canonicalize RDATA
+ * @param d: packed rrset
+ * @param rdata: RDATA of RR to find
+ * @param len: length of rdata
+ * @param index: pointer to int to store index of found RR
+ * @return 1 if RR found, 0 otherwise
+ */
+int
+packed_rrset_find_rr(struct packed_rrset_data* d, uint8_t* rdata, size_t len,
+	size_t* index);
 
 #endif /* UTIL_DATA_PACKED_RRSET_H */

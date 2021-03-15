@@ -8,8 +8,8 @@ Unbound is a validating, recursive, caching DNS resolver. It is designed to be
 fast and lean and incorporates modern features based on open standards. If you
 have any feedback, we would love to hear from you. Don’t hesitate to
 [create an issue on Github](https://github.com/NLnetLabs/unbound/issues/new)
-or post a message on the [Unbound mailing list](https://nlnetlabs.nl/mailman/listinfo/unbound-users).
-You can lean more about Unbound by reading our
+or post a message on the [Unbound mailing list](https://lists.nlnetlabs.nl/mailman/listinfo/unbound-users).
+You can learn more about Unbound by reading our
 [documentation](https://nlnetlabs.nl/documentation/unbound/).
 
 ## Compiling

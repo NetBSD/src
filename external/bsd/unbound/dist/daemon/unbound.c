@@ -88,6 +88,14 @@
 #  include "nss.h"
 #endif
 
+#ifdef HAVE_TARGETCONDITIONALS_H
+#include <TargetConditionals.h>
+#endif
+
+#if (defined(TARGET_OS_TV) && TARGET_OS_TV) || (defined(TARGET_OS_WATCH) && TARGET_OS_WATCH)
+#undef HAVE_FORK
+#endif
+
 /** print build options. */
 static void
 print_build_options(void)
@@ -259,21 +267,10 @@ checkrlimits(struct config_file* cfg)
 #endif /* S_SPLINT_S */
 }
 
-/** set default logfile identity based on value from argv[0] at startup **/
-static void
-log_ident_set_fromdefault(struct config_file* cfg,
-	const char *log_default_identity)
-{
-	if(cfg->log_identity == NULL || cfg->log_identity[0] == 0)
-		log_ident_set(log_default_identity);
-	else
-		log_ident_set(cfg->log_identity);
-}
-
 /** set verbosity, check rlimits, cache settings */
 static void
-apply_settings(struct daemon* daemon, struct config_file* cfg, 
-	int cmdline_verbose, int debug_mode, const char* log_default_identity)
+apply_settings(struct daemon* daemon, struct config_file* cfg,
+	int cmdline_verbose, int debug_mode)
 {
 	/* apply if they have changed */
 	verbosity = cmdline_verbose + cfg->verbosity;
@@ -289,7 +286,7 @@ apply_settings(struct daemon* daemon, struct config_file* cfg,
 		log_warn("use-systemd and do-daemonize should not be enabled at the same time");
 	}
 
-	log_ident_set_fromdefault(cfg, log_default_identity);
+	log_ident_set_or_default(cfg->log_identity);
 }
 
 #ifdef HAVE_KILL
@@ -340,22 +337,44 @@ readpid (const char* file)
 /** write pid to file. 
  * @param pidfile: file name of pid file.
  * @param pid: pid to write to file.
+ * @return false on failure
  */
-static void
+static int
 writepid (const char* pidfile, pid_t pid)
 {
-	FILE* f;
+	int fd;
+	char pidbuf[32];
+	size_t count = 0;
+	snprintf(pidbuf, sizeof(pidbuf), "%lu\n", (unsigned long)pid);
 
-	if ((f = fopen(pidfile, "w")) ==  NULL ) {
+	if((fd = open(pidfile, O_WRONLY | O_CREAT | O_TRUNC
+#ifdef O_NOFOLLOW
+		| O_NOFOLLOW
+#endif
+		, 0644)) == -1) {
 		log_err("cannot open pidfile %s: %s", 
 			pidfile, strerror(errno));
-		return;
+		return 0;
 	}
-	if(fprintf(f, "%lu\n", (unsigned long)pid) < 0) {
-		log_err("cannot write to pidfile %s: %s", 
-			pidfile, strerror(errno));
+	while(count < strlen(pidbuf)) {
+		ssize_t r = write(fd, pidbuf+count, strlen(pidbuf)-count);
+		if(r == -1) {
+			if(errno == EAGAIN || errno == EINTR)
+				continue;
+			log_err("cannot write to pidfile %s: %s",
+				pidfile, strerror(errno));
+			close(fd);
+			return 0;
+		} else if(r == 0) {
+			log_err("cannot write any bytes to pidfile %s: "
+				"write returns 0 bytes written", pidfile);
+			close(fd);
+			return 0;
+		}
+		count += r;
 	}
-	fclose(f);
+	close(fd);
+	return 1;
 }
 
 /**
@@ -509,16 +528,17 @@ perform_setup(struct daemon* daemon, struct config_file* cfg, int debug_mode,
 	/* write new pidfile (while still root, so can be outside chroot) */
 #ifdef HAVE_KILL
 	if(cfg->pidfile && cfg->pidfile[0] && need_pidfile) {
-		writepid(daemon->pidfile, getpid());
-		if(cfg->username && cfg->username[0] && cfg_uid != (uid_t)-1 &&
-			pidinchroot) {
+		if(writepid(daemon->pidfile, getpid())) {
+			if(cfg->username && cfg->username[0] && cfg_uid != (uid_t)-1 &&
+				pidinchroot) {
 #  ifdef HAVE_CHOWN
-			if(chown(daemon->pidfile, cfg_uid, cfg_gid) == -1) {
-				verbose(VERB_QUERY, "cannot chown %u.%u %s: %s",
-					(unsigned)cfg_uid, (unsigned)cfg_gid,
-					daemon->pidfile, strerror(errno));
-			}
+				if(chown(daemon->pidfile, cfg_uid, cfg_gid) == -1) {
+					verbose(VERB_QUERY, "cannot chown %u.%u %s: %s",
+						(unsigned)cfg_uid, (unsigned)cfg_gid,
+						daemon->pidfile, strerror(errno));
+				}
 #  endif /* HAVE_CHOWN */
+			}
 		}
 	}
 #else
@@ -537,6 +557,8 @@ perform_setup(struct daemon* daemon, struct config_file* cfg, int debug_mode,
 			LOGIN_SETALL & ~LOGIN_SETUSER & ~LOGIN_SETGROUP) != 0)
 			log_warn("unable to setusercontext %s: %s",
 				cfg->username, strerror(errno));
+#else
+		(void)pwd;
 #endif /* HAVE_SETUSERCONTEXT */
 	}
 #endif /* HAVE_GETPWNAM */
@@ -639,11 +661,10 @@ perform_setup(struct daemon* daemon, struct config_file* cfg, int debug_mode,
  * @param cmdline_verbose: verbosity resulting from commandline -v.
  *    These increase verbosity as specified in the config file.
  * @param debug_mode: if set, do not daemonize.
- * @param log_default_identity: Default identity to report in logs
  * @param need_pidfile: if false, no pidfile is checked or created.
  */
 static void 
-run_daemon(const char* cfgfile, int cmdline_verbose, int debug_mode, const char* log_default_identity, int need_pidfile)
+run_daemon(const char* cfgfile, int cmdline_verbose, int debug_mode, int need_pidfile)
 {
 	struct config_file* cfg = NULL;
 	struct daemon* daemon = NULL;
@@ -667,7 +688,7 @@ run_daemon(const char* cfgfile, int cmdline_verbose, int debug_mode, const char*
 					"or unbound-checkconf", cfgfile);
 			log_warn("Continuing with default config settings");
 		}
-		apply_settings(daemon, cfg, cmdline_verbose, debug_mode, log_default_identity);
+		apply_settings(daemon, cfg, cmdline_verbose, debug_mode);
 		if(!done_setup)
 			config_lookup_uid(cfg);
 	
@@ -733,6 +754,7 @@ main(int argc, char* argv[])
 
 	log_init(NULL, 0, NULL);
 	log_ident_default = strrchr(argv[0],'/')?strrchr(argv[0],'/')+1:argv[0];
+	log_ident_set_default(log_ident_default);
 	log_ident_set(log_ident_default);
 	/* parse the options */
 	while( (c=getopt(argc, argv, "c:dhpvw:V")) != -1) {
@@ -783,7 +805,7 @@ main(int argc, char* argv[])
 		return 1;
 	}
 
-	run_daemon(cfgfile, cmdline_verbose, debug_mode, log_ident_default, need_pidfile);
+	run_daemon(cfgfile, cmdline_verbose, debug_mode, need_pidfile);
 	log_init(NULL, 0, NULL); /* close logfile */
 #ifndef unbound_testbound
 	if(log_get_lock()) {
