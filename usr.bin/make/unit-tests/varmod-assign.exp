@@ -6,13 +6,10 @@ Var_Parse: ${${VARNAME}::=assigned-value} (eval-defined)
 Var_Parse: ${VARNAME}::=assigned-value} (eval-defined)
 Applying ${VAR.${param}::...} to "initial-value" (eval-defined, none, regular)
 Modifier part: "assigned-value"
-Var_Parse: ${param} (eval)
-Global:VAR.twice = assigned-value
+Global:VAR.${param} = assigned-value
 Result of ${VAR.${param}::=assigned-value} is "" (eval-defined, none, regular)
-Var_Parse: $ for symmetry with the usual assignment operators. (eval)
-make: "varmod-assign.mk" line 139: FIXME: don't expand the variable name twice here, for symmetry with the usual assignment operators.
-Var_Parse: ${${VARNAME}} != "initial-value" (eval-defined)
-Var_Parse: ${VARNAME}} != "initial-value" (eval-defined)
+Var_Parse: ${${VARNAME}} != "assigned-value" (eval-defined)
+Var_Parse: ${VARNAME}} != "assigned-value" (eval-defined)
 Global:.MAKEFLAGS =  -r -k -d v -d
 Global:.MAKEFLAGS =  -r -k -d v -d 0
 mod-assign: first=1.
