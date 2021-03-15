@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.884 2021/03/15 11:41:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.885 2021/03/15 12:15:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.884 2021/03/15 11:41:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.885 2021/03/15 12:15:03 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -267,10 +267,38 @@ typedef struct SepBuf {
 	char sep;
 } SepBuf;
 
+enum {
+	VarEvalFlags_ToStringSize = sizeof
+	    "VARE_UNDEFERR|VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF"
+};
 
-ENUM_FLAGS_RTTI_4(VarEvalFlags,
-		  VARE_UNDEFERR, VARE_WANTRES, VARE_KEEP_DOLLAR,
-		  VARE_KEEP_UNDEF);
+MAKE_INLINE char *
+str_append(char *dst, const char *src)
+{
+	size_t len = strlen(src);
+	memcpy(dst, src, len);
+	return dst + len;
+}
+
+static const char *
+VarEvalFlags_ToString(char *buf, VarEvalFlags eflags)
+{
+	char *p = buf;
+
+	/* TODO: WANTRES should be mentioned before UNDEFERR */
+	if (eflags.undefErr)
+		p = str_append(p, "VARE_UNDEFERR|");
+	if (eflags.wantRes)
+		p = str_append(p, "VARE_WANTRES|");
+	if (eflags.keepDollar)
+		p = str_append(p, "VARE_KEEP_DOLLAR|");
+	if (eflags.keepUndef)
+		p = str_append(p, "VARE_KEEP_UNDEF|");
+	if (p == buf)
+		return "none";
+	p[-1] = '\0';
+	return buf;
+}
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -287,11 +315,11 @@ char var_Error[] = "";
 
 /*
  * Special return value for Var_Parse, indicating an undefined variable in
- * a case where VARE_UNDEFERR is not set.  This undefined variable is
+ * a case where VarEvalFlags.undefErr is not set.  This undefined variable is
  * typically a dynamic variable such as ${.TARGET}, whose expansion needs to
  * be deferred until it is defined in an actual target.
  *
- * See VARE_KEEP_UNDEF.
+ * See VarEvalFlags.keepUndef.
  */
 static char varUndefined[] = "";
 
@@ -2172,11 +2200,11 @@ ParseModifierPartSubst(
 			continue;
 		}
 
-		if (eflags & VARE_WANTRES) { /* Nested variable, evaluated */
+		if (eflags.wantRes) {	/* Nested variable, evaluated */
 			const char *nested_p = p;
 			FStr nested_val;
-			VarEvalFlags nested_eflags =
-			    eflags & ~(unsigned)VARE_KEEP_DOLLAR;
+			VarEvalFlags nested_eflags = eflags;
+			nested_eflags.keepDollar = FALSE;
 
 			(void)Var_Parse(&nested_p, st->expr->scope,
 			    nested_eflags, &nested_val);
@@ -2189,10 +2217,10 @@ ParseModifierPartSubst(
 
 		/*
 		 * XXX: This whole block is very similar to Var_Parse without
-		 * VARE_WANTRES.  There may be subtle edge cases though that
-		 * are not yet covered in the unit tests and that are parsed
-		 * differently, depending on whether they are evaluated or
-		 * not.
+		 * VarEvalFlags.wantRes.  There may be subtle edge cases
+		 * though that are not yet covered in the unit tests and that
+		 * are parsed differently, depending on whether they are
+		 * evaluated or not.
 		 *
 		 * This subtle difference is not documented in the manual
 		 * page, neither is the difference between parsing :D and
@@ -2260,8 +2288,7 @@ ParseModifierPart(
     const char **pp,
     /* Parsing stops at this delimiter */
     char delim,
-    /* Flags for evaluating nested variables; if VARE_WANTRES is not set,
-     * the text is only parsed. */
+    /* Flags for evaluating nested variables. */
     VarEvalFlags eflags,
     ApplyModifiersState *st,
     char **out_part
@@ -2423,10 +2450,11 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	if (!(expr->eflags & VARE_WANTRES))
+	if (!expr->eflags.wantRes)
 		goto done;
 
-	args.eflags = expr->eflags & ~(unsigned)VARE_KEEP_DOLLAR;
+	args.eflags = expr->eflags;
+	args.eflags.keepDollar = FALSE;
 	prev_sep = st->sep;
 	st->sep = ' ';		/* XXX: should be st->sep for consistency */
 	ModifyWords(st, ModifyWord_Loop, &args, st->oneBigWord);
@@ -2453,7 +2481,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	const char *p;
 
 	VarEvalFlags eflags = VARE_PARSE_ONLY;
-	if (expr->eflags & VARE_WANTRES)
+	if (expr->eflags.wantRes)
 		if ((**pp == 'D') == (expr->defined == DEF_REGULAR))
 			eflags = expr->eflags;
 
@@ -2482,7 +2510,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 			(void)Var_Parse(&p, expr->scope, eflags, &nested_val);
 			/* TODO: handle errors */
-			if (expr->eflags & VARE_WANTRES)
+			if (expr->eflags.wantRes)
 				Buf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
 			continue;
@@ -2496,7 +2524,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 	Expr_Define(expr);
 
-	if (eflags & VARE_WANTRES)
+	if (eflags.wantRes)
 		Expr_SetValueOwn(expr, Buf_DoneData(&buf));
 	else
 		Buf_Done(&buf);
@@ -2512,7 +2540,7 @@ ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
 
 	(*pp)++;
 
-	if (expr->eflags & VARE_WANTRES) {
+	if (expr->eflags.wantRes) {
 		Expr_Define(expr);
 		Expr_SetValueOwn(expr, bmake_strdup(expr->var->name.str));
 	}
@@ -2562,7 +2590,7 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 		*pp = mod + 6;
 	}
 
-	if (st->expr->eflags & VARE_WANTRES)
+	if (st->expr->eflags.wantRes)
 		Expr_SetValueOwn(st->expr,
 		    VarStrftime(st->expr->value.str, TRUE, utc));
 
@@ -2592,7 +2620,7 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 		*pp = mod + 9;
 	}
 
-	if (st->expr->eflags & VARE_WANTRES)
+	if (st->expr->eflags.wantRes)
 		Expr_SetValueOwn(st->expr,
 		    VarStrftime(st->expr->value.str, FALSE, utc));
 
@@ -2607,7 +2635,7 @@ ApplyModifier_Hash(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 	*pp += 4;
 
-	if (st->expr->eflags & VARE_WANTRES)
+	if (st->expr->eflags.wantRes)
 		Expr_SetValueOwn(st->expr, VarHash(st->expr->value.str));
 
 	return AMR_OK;
@@ -2623,7 +2651,7 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 
 	(*pp)++;
 
-	if (!(st->expr->eflags & VARE_WANTRES))
+	if (!st->expr->eflags.wantRes)
 		return AMR_OK;
 
 	Expr_Define(expr);
@@ -2659,7 +2687,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 		return AMR_CLEANUP;
 
 	errfmt = NULL;
-	if (expr->eflags & VARE_WANTRES)
+	if (expr->eflags.wantRes)
 		Expr_SetValueOwn(expr, Cmd_Exec(cmd, &errfmt));
 	else
 		Expr_SetValueRefer(expr, "");
@@ -2700,7 +2728,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 		*pp = mod + 5;
 	}
 
-	if (!(st->expr->eflags & VARE_WANTRES))
+	if (!st->expr->eflags.wantRes)
 		return AMR_OK;
 
 	if (n == 0) {
@@ -2810,7 +2838,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 
 	ParseModifier_Match(pp, st, &pattern);
 
-	if (st->expr->eflags & VARE_WANTRES) {
+	if (st->expr->eflags.wantRes) {
 		ModifyWordProc modifyWord =
 		    mod == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
 		ModifyWords(st, modifyWord, pattern, st->oneBigWord);
@@ -2919,7 +2947,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 	oneBigWord = st->oneBigWord;
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
 
-	if (!(st->expr->eflags & VARE_WANTRES)) {
+	if (!(st->expr->eflags.wantRes)) {
 		free(args.replace);
 		free(re);
 		return AMR_OK;
@@ -2955,7 +2983,7 @@ ApplyModifier_Quote(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (st->expr->eflags & VARE_WANTRES)
+	if (st->expr->eflags.wantRes)
 		Expr_SetValueOwn(st->expr,
 		    VarQuote(st->expr->value.str, quoteDollar));
 
@@ -2976,9 +3004,9 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 	const char *sep = *pp + 2;
 
 	/*
-	 * Even if VARE_WANTRES is not set, proceed as normal since there is
+	 * Even in parse-only mode, proceed as normal since there is
 	 * neither any observable side effect nor a performance penalty.
-	 * Checking for VARE_WANTRES for every single piece of code in here
+	 * Checking for wantRes for every single piece of code in here
 	 * would make the code in this function too hard to read.
 	 */
 
@@ -3104,14 +3132,14 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 
 	if (mod[1] == 'u') {				/* :tu */
 		*pp = mod + 2;
-		if (st->expr->eflags & VARE_WANTRES)
+		if (st->expr->eflags.wantRes)
 			Expr_SetValueOwn(expr, str_toupper(expr->value.str));
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {				/* :tl */
 		*pp = mod + 2;
-		if (st->expr->eflags & VARE_WANTRES)
+		if (st->expr->eflags.wantRes)
 			Expr_SetValueOwn(expr, str_tolower(expr->value.str));
 		return AMR_OK;
 	}
@@ -3145,7 +3173,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	if (!IsDelimiter(**pp, st))
 		goto bad_modifier;		/* Found junk after ']' */
 
-	if (!(expr->eflags & VARE_WANTRES))
+	if (!(expr->eflags.wantRes))
 		goto ok;
 
 	if (estr[0] == '\0')
@@ -3269,7 +3297,7 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 	} else
 		return AMR_BAD;
 
-	if (!(st->expr->eflags & VARE_WANTRES))
+	if (!st->expr->eflags.wantRes)
 		return AMR_OK;
 
 	words = Str_Words(st->expr->value.str, FALSE);
@@ -3296,7 +3324,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 	VarEvalFlags else_eflags = VARE_PARSE_ONLY;
 
 	int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
-	if (expr->eflags & VARE_WANTRES) {
+	if (expr->eflags.wantRes) {
 		cond_rc = Cond_EvalCondition(expr->var->name.str, &value);
 		if (cond_rc != COND_INVALID && value)
 			then_eflags = expr->eflags;
@@ -3322,7 +3350,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 		return AMR_CLEANUP;
 	}
 
-	if (!(expr->eflags & VARE_WANTRES)) {
+	if (!expr->eflags.wantRes) {
 		free(then_expr);
 		free(else_expr);
 	} else if (value) {
@@ -3398,7 +3426,7 @@ ok:
 
 	(*pp)--;		/* Go back to the st->endc. */
 
-	if (!(expr->eflags & VARE_WANTRES))
+	if (!expr->eflags.wantRes)
 		goto done;
 
 	scope = expr->scope;	/* scope where v belongs */
@@ -3468,7 +3496,7 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 	} else
 		*pp = mod + 1;
 
-	if (expr->eflags & VARE_WANTRES)
+	if (expr->eflags.wantRes)
 		Var_Set(expr->scope, name.str, expr->value.str);
 	FStr_Done(&name);
 
@@ -3487,7 +3515,7 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (st->expr->eflags & VARE_WANTRES)
+	if (st->expr->eflags.wantRes)
 		ModifyWords(st, modifyWord, NULL, st->oneBigWord);
 
 	return AMR_OK;
@@ -3500,7 +3528,7 @@ ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (st->expr->eflags & VARE_WANTRES)
+	if (st->expr->eflags.wantRes)
 		Expr_SetValueOwn(st->expr, VarUniq(st->expr->value.str));
 
 	return AMR_OK;
@@ -3574,7 +3602,7 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 		return AMR_UNKNOWN;
 	*pp = p + 2;
 
-	if (expr->eflags & VARE_WANTRES) {
+	if (expr->eflags.wantRes) {
 		const char *errfmt;
 		char *output = Cmd_Exec(expr->value.str, &errfmt);
 		if (errfmt != NULL)
@@ -4047,7 +4075,7 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 
 		val = UndefinedShortVarValue(varname, scope);
 		if (val == NULL)
-			val = eflags & VARE_UNDEFERR ? var_Error : varUndefined;
+			val = eflags.undefErr ? var_Error : varUndefined;
 
 		if (opts.strict && val == var_Error) {
 			Parse_Error(PARSE_FATAL,
@@ -4067,7 +4095,7 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 		 * If undefined expressions are allowed, this should rather
 		 * be VPR_UNDEF instead of VPR_OK.
 		 */
-		*out_FALSE_res = eflags & VARE_UNDEFERR ? VPR_UNDEF : VPR_OK;
+		*out_FALSE_res = eflags.undefErr ? VPR_UNDEF : VPR_OK;
 		*out_FALSE_val = val;
 		return FALSE;
 	}
@@ -4118,7 +4146,7 @@ EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 		return VPR_OK;
 	}
 
-	if ((eflags & VARE_UNDEFERR) && opts.strict) {
+	if (eflags.undefErr && opts.strict) {
 		Parse_Error(PARSE_FATAL,
 		    "Variable \"%s\" is undefined", varname);
 		free(varname);
@@ -4126,7 +4154,7 @@ EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 		return VPR_ERR;
 	}
 
-	if (eflags & VARE_UNDEFERR) {
+	if (eflags.undefErr) {
 		free(varname);
 		*out_val = FStr_InitRefer(var_Error);
 		return VPR_UNDEF;	/* XXX: Should be VPR_ERR instead. */
@@ -4280,13 +4308,13 @@ FreeEnvVar(Var *v, FStr *inout_val)
  *	*out_val	The value of the variable expression, never NULL.
  *	*out_val	var_Error if there was a parse error.
  *	*out_val	var_Error if the base variable of the expression was
- *			undefined, eflags contains VARE_UNDEFERR, and none of
+ *			undefined, eflags has undefErr set, and none of
  *			the modifiers turned the undefined expression into a
  *			defined expression.
  *			XXX: It is not guaranteed that an error message has
  *			been printed.
  *	*out_val	varUndefined if the base variable of the expression
- *			was undefined, eflags did not contain VARE_UNDEFERR,
+ *			was undefined, eflags did not have undefErr set,
  *			and none of the modifiers turned the undefined
  *			expression into a defined expression.
  *			XXX: It is not guaranteed that an error message has
@@ -4375,11 +4403,11 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	 * Before applying any modifiers, expand any nested expressions from
 	 * the variable value.
 	 */
-	if (strchr(expr.value.str, '$') != NULL && (eflags & VARE_WANTRES)) {
+	if (strchr(expr.value.str, '$') != NULL && eflags.wantRes) {
 		char *expanded;
 		VarEvalFlags nested_eflags = eflags;
 		if (opts.strict)
-			nested_eflags &= ~(unsigned)VARE_UNDEFERR;
+			nested_eflags.undefErr = FALSE;
 		v->flags |= VFL_IN_USE;
 		(void)Var_Subst(expr.value.str, scope, nested_eflags,
 		    &expanded);
@@ -4418,7 +4446,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 				 * return an error marker instead.
 				 */
 				Expr_SetValueRefer(&expr,
-				    eflags & VARE_UNDEFERR
+				    eflags.undefErr
 					? var_Error : varUndefined);
 			}
 		}
@@ -4436,7 +4464,7 @@ static void
 VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalFlags eflags)
 {
 	/* A dollar sign may be escaped with another dollar sign. */
-	if (save_dollars && (eflags & VARE_KEEP_DOLLAR))
+	if (save_dollars && eflags.keepDollar)
 		Buf_AddByte(res, '$');
 	Buf_AddByte(res, '$');
 	*pp += 2;
@@ -4454,9 +4482,9 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 	/* TODO: handle errors */
 
 	if (val.str == var_Error || val.str == varUndefined) {
-		if (!(eflags & VARE_KEEP_UNDEF)) {
+		if (!eflags.keepUndef) {
 			p = nested_p;
-		} else if ((eflags & VARE_UNDEFERR) || val.str == var_Error) {
+		} else if (eflags.undefErr || val.str == var_Error) {
 
 			/*
 			 * XXX: This condition is wrong.  If val == var_Error,

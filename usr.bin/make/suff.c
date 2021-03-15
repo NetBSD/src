@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.347 2021/03/15 11:41:07 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.348 2021/03/15 12:15:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.347 2021/03/15 11:41:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.348 2021/03/15 12:15:03 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1380,7 +1380,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	}
 
 	DEBUG1(SUFF, "Expanding \"%s\"...", cgn->name);
-	(void)Var_Subst(cgn->name, pgn, VARE_WANTRES | VARE_UNDEFERR, &cp);
+	(void)Var_Subst(cgn->name, pgn, VARE_UNDEFERR, &cp);
 	/* TODO: handle errors */
 
 	{
