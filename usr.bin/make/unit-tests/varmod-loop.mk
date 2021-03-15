@@ -1,10 +1,10 @@
-# $NetBSD: varmod-loop.mk,v 1.12 2021/03/15 17:11:08 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.13 2021/03/15 17:54:49 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
 .MAKE.SAVE_DOLLARS=	yes
 
-all: mod-loop-varname
+all: varname-overwriting-target
 all: mod-loop-resolve
 all: mod-loop-varname-dollar
 all: mod-loop-dollar
@@ -13,31 +13,42 @@ all: mod-loop-dollar
 # dynamically.  There's no practical use-case for this, and hopefully nobody
 # will ever depend on this, but technically it's possible.
 # Therefore, in -dL mode, this is forbidden, see lint.mk.
-mod-loop-varname:
-	@echo $@:
-	@echo :${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@:Q}:
+.if ${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+"
+.  error
+.endif
 
-	# ":::" is a very creative variable name, unlikely in practice.
-	# The expression ${\:\:\:} would not work since backslashes can only
-	# be escaped in the modifiers, but not in the variable name.
-	@echo :${:U1 2 3:@:::@x${${:U\:\:\:}}y@}:
+# ":::" is a very creative variable name, unlikely in practice.
+# The expression ${\:\:\:} would not work since backslashes can only
+# be escaped in the modifiers, but not in the variable name.
+.if ${:U1 2 3:@:::@x${${:U\:\:\:}}y@} != "x1y x2y x3y"
+.  error
+.endif
 
-	# "@@" is another creative variable name.
-	@echo :${:U1 2 3:@\@\@@x${@@}y@}:
+# "@@" is another creative variable name.
+.if ${:U1 2 3:@\@\@@x${@@}y@} != "x1y x2y x3y"
+.  error
+.endif
 
+varname-overwriting-target:
 	# Even "@" works as a variable name since the variable is installed
 	# in the "current" scope, which in this case is the one from the
-	# target.
+	# target.  Because of this, after the loop has finished, '$@' is
+	# undefined.  This is something that make doesn't expect, this may
+	# even trigger an assertion failure somewhere.
 	@echo :$@: :${:U1 2 3:@\@@x${@}y@}: :$@:
 
-	# In extreme cases, even the backslash can be used as variable name.
-	# It needs to be doubled though.
-	@echo :${:U1 2 3:@\\@x${${:Ux:S,x,\\,}}y@}:
+# In extreme cases, even the backslash can be used as variable name.
+# It needs to be doubled though.
+.if ${:U1 2 3:@\\@x${${:Ux:S,x,\\,}}y@} != "x1y x2y x3y"
+.  error
+.endif
 
-	# The variable name can technically be empty, and in this situation
-	# the variable value cannot be accessed since the empty "variable"
-	# is protected to always return an empty string.
-	@echo empty: :${:U1 2 3:@@x${}y@}:
+# The variable name can technically be empty, and in this situation
+# the variable value cannot be accessed since the empty "variable"
+# is protected to always return an empty string.
+.if ${:U1 2 3:@@x${}y@} != "xy xy xy"
+.  error
+.endif
 
 
 # The :@ modifier resolves the variables from the replacement text once more
