@@ -85,6 +85,8 @@ struct config_file {
 	int do_ip4;
 	/** do ip6 query support. */
 	int do_ip6;
+	/** prefer ip4 upstream queries. */
+	int prefer_ip4;
 	/** prefer ip6 upstream queries. */
 	int prefer_ip6;
 	/** do udp query support. */
@@ -126,6 +128,23 @@ struct config_file {
 	char* tls_ciphers;
 	/** TLS chiphersuites (TLSv1.3) */
 	char* tls_ciphersuites;
+	/** if SNI is to be used */
+	int tls_use_sni;
+
+	/** port on which to provide DNS over HTTPS service */
+	int https_port;
+	/** endpoint for HTTP service */
+	char* http_endpoint;
+	/** MAX_CONCURRENT_STREAMS HTTP/2 setting */
+	uint32_t http_max_streams;
+	/** maximum size of all HTTP2 query buffers combined. */
+	size_t http_query_buffer_size;
+	/** maximum size of all HTTP2 response buffers combined. */
+	size_t http_response_buffer_size;
+	/** set TCP_NODELAY option for http sockets */
+	int http_nodelay;
+	/** Disable TLS for http sockets downstream */
+	int http_notls_downstream;
 
 	/** outgoing port range number of ports (per thread) */
 	int outgoing_num_ports;
@@ -162,8 +181,12 @@ struct config_file {
 	size_t infra_cache_numhosts;
 	/** min value for infra cache rtt */
 	int infra_cache_min_rtt;
+	/** keep probing hosts that are down */
+	int infra_keep_probing;
 	/** delay close of udp-timeouted ports, if 0 no delayclose. in msec */
 	int delay_close;
+	/** udp_connect enable uses UDP connect to mitigate ICMP side channel */
+	int udp_connect;
 
 	/** the target fetch policy for the iterator */
 	char* target_fetch_policy;
@@ -186,6 +209,8 @@ struct config_file {
 	int ip_transparent;
 	/** IP_FREEBIND socket option request on port 53 sockets */
 	int ip_freebind;
+	/** IP_TOS socket option requested on port 53 sockets */
+	int ip_dscp;
 
 	/** number of interfaces to open. If 0 default all interfaces. */
 	int num_ifs;
@@ -313,6 +338,10 @@ struct config_file {
 	char* identity;
 	/** version, package version returned if "". */
 	char* version;
+	/** nsid */
+	char *nsid_cfg_str;
+	uint8_t *nsid;
+	uint16_t nsid_len;
 
 	/** the module configuration string */
 	char* module_conf;
@@ -325,10 +354,6 @@ struct config_file {
 	struct config_strlist* auto_trust_anchor_file_list;
 	/** files with trusted DNSKEYs in named.conf format, list */
 	struct config_strlist* trusted_keys_file_list;
-	/** DLV anchor file */
-	char* dlv_anchor_file;
-	/** DLV anchor inline */
-	struct config_strlist* dlv_anchor_list;
 	/** insecure domain list */
 	struct config_strlist* domain_insecure;
 	/** send key tag query */
@@ -362,6 +387,13 @@ struct config_file {
 	int serve_expired_ttl;
 	/** reset serve expired TTL after failed update attempt */
 	int serve_expired_ttl_reset;
+	/** TTL for the serve expired replies */
+	int serve_expired_reply_ttl;
+	/** serve expired entries only after trying to update the entries and this
+	 *  timeout (in milliseconds) is reached */
+	int serve_expired_client_timeout;
+	/** serve original TTLs rather than decrementing ones */
+	int serve_original_ttl;
 	/** nsec3 maximum iterations per key size, string */
 	char* val_nsec3_key_iterations;
 	/** autotrust add holddown time, in seconds */
@@ -439,6 +471,9 @@ struct config_file {
 	/** Python script file */
 	struct config_strlist* python_script;
 
+	/** Dynamic library file */
+	struct config_strlist* dynlib_file;
+
 	/** Use systemd socket activation. */
 	int use_systemd;
 
@@ -467,8 +502,22 @@ struct config_file {
 
 	/** true to enable dnstap support */
 	int dnstap;
+	/** using bidirectional frame streams if true */
+	int dnstap_bidirectional;
 	/** dnstap socket path */
 	char* dnstap_socket_path;
+	/** dnstap IP */
+	char* dnstap_ip;
+	/** dnstap TLS enable */
+	int dnstap_tls;
+	/** dnstap tls server authentication name */
+	char* dnstap_tls_server_name;
+	/** dnstap server cert bundle */
+	char* dnstap_tls_cert_bundle;
+	/** dnstap client key for client authentication */
+	char* dnstap_tls_client_key_file;
+	/** dnstap client cert for client authentication */
+	char* dnstap_tls_client_cert_file;
 	/** true to send "identity" via dnstap */
 	int dnstap_send_identity;
 	/** true to send "version" via dnstap */
@@ -525,6 +574,11 @@ struct config_file {
 	/** SHM data - key for the shm */
 	int shm_key;
 
+	/** list of EDNS client string entries, linked list */
+	struct config_str2list* edns_client_strings;
+	/** EDNS opcode to use for EDNS client strings */
+	uint16_t edns_client_string_opcode;
+
 	/** DNSCrypt */
 	/** true to enable dnscrypt */
 	int dnscrypt;
@@ -548,6 +602,17 @@ struct config_file {
 	size_t dnscrypt_nonce_cache_size;
 	/** number of slabs for dnscrypt nonces cache */
 	size_t dnscrypt_nonce_cache_slabs;
+
+	/** EDNS padding according to RFC7830 and RFC8467 */
+	/** true to enable padding of responses (default: on) */
+	int pad_responses;
+	/** block size with which to pad encrypted responses (default: 468) */
+	size_t pad_responses_block_size;
+	/** true to enable padding of queries (default: on) */
+	int pad_queries;
+	/** block size with which to pad encrypted queries (default: 128) */
+	size_t pad_queries_block_size;
+
 	/** IPsec module */
 #ifdef USE_IPSECMOD
 	/** false to bypass the IPsec module */
@@ -577,6 +642,8 @@ struct config_file {
 	int redis_server_port;
 	/** timeout (in ms) for communication with the redis server */
 	int redis_timeout;
+	/** set timeout on redis records based on DNS response ttl */
+	int redis_expire_records;
 #endif
 #endif
 
@@ -595,6 +662,10 @@ extern gid_t cfg_gid;
 extern int autr_permit_small_holddown;
 /** size (in bytes) of stream wait buffers max */
 extern size_t stream_wait_max;
+/** size (in bytes) of all total HTTP2 query buffers max */
+extern size_t http2_query_buffer_max;
+/** size (in bytes) of all total HTTP2 response buffers max */
+extern size_t http2_response_buffer_max;
 
 /**
  * Stub config options
@@ -641,6 +712,21 @@ struct config_auth {
 	/** fallback to recursion to authorities if zone expired and other
 	 * reasons perhaps (like, query bogus) */
 	int fallback_enabled;
+	/** this zone is used to create local-zone policies */
+	int isrpz;
+	/** rpz tags (or NULL) */
+	uint8_t* rpz_taglist;
+	/** length of the taglist (in bytes) */
+	size_t rpz_taglistlen;
+	/** Override RPZ action for this zone, regardless of zone content */
+	char* rpz_action_override;
+	/** Log when this RPZ policy is applied */
+	int rpz_log;
+	/** Display this name in the log when RPZ policy is applied */
+	char* rpz_log_name;
+	/** Always reply with this CNAME target if the cname override action is
+	 * used */
+	char* rpz_cname;
 };
 
 /**
@@ -925,6 +1011,9 @@ void config_deldblstrlist(struct config_str2list* list);
  */
 void config_deltrplstrlist(struct config_str3list* list);
 
+/** delete string array */
+void config_del_strarray(char** array, int num);
+
 /** delete stringbytelist */
 void config_del_strbytelist(struct config_strbytelist* list);
 
@@ -999,6 +1088,16 @@ int cfg_count_numbers(const char* str);
 int cfg_parse_memsize(const char* str, size_t* res);
 
 /**
+ * Parse nsid from string into binary nsid. nsid is either a hexidecimal
+ * string or an ascii string prepended with ascii_ in which case the
+ * characters after ascii_ are simply copied.
+ * @param str: the string to parse.
+ * @param nsid_len: returns length of nsid in bytes.
+ * @return malloced bytes or NULL on parse error or malloc failure.
+ */
+uint8_t* cfg_parse_nsid(const char* str, uint16_t* nsid_len);
+
+/**
  * Add a tag name to the config.  It is added at the end with a new ID value.
  * @param cfg: the config structure.
  * @param tag: string (which is copied) with the name.
@@ -1043,7 +1142,7 @@ char* config_taglist2str(struct config_file* cfg, uint8_t* taglist,
  * @param list2len: length in bytes of second list.
  * @return true if there are tags in common, 0 if not.
  */
-int taglist_intersect(uint8_t* list1, size_t list1len, uint8_t* list2,
+int taglist_intersect(uint8_t* list1, size_t list1len, const uint8_t* list2,
 	size_t list2len);
 
 /**

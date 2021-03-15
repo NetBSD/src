@@ -50,11 +50,13 @@
 #include "services/authzone.h"
 #include "util/data/msgreply.h"
 #include "util/storage/slabhash.h"
+#include "util/edns.h"
 #include "sldns/sbuffer.h"
 
 int 
 context_finalize(struct ub_ctx* ctx)
 {
+	int is_rpz = 0;
 	struct config_file* cfg = ctx->env->cfg;
 	verbosity = cfg->verbosity;
 	if(ctx_logfile_overridden && !ctx->logfile_override) {
@@ -76,7 +78,9 @@ context_finalize(struct ub_ctx* ctx)
 		return UB_NOMEM;
 	if(!local_zones_apply_cfg(ctx->local_zones, cfg))
 		return UB_INITFAIL;
-	if(!auth_zones_apply_cfg(ctx->env->auth_zones, cfg, 1))
+	if(!auth_zones_apply_cfg(ctx->env->auth_zones, cfg, 1, &is_rpz))
+		return UB_INITFAIL;
+	if(!edns_strings_apply_cfg(ctx->env->edns_strings, cfg))
 		return UB_INITFAIL;
 	if(!slabhash_is_size(ctx->env->msg_cache, cfg->msg_cache_size,
 		cfg->msg_cache_slabs)) {
