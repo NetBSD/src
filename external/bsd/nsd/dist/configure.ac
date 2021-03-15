@@ -5,11 +5,25 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.2.4,nsd-bugs@nlnetlabs.nl)
-AC_CONFIG_HEADER([config.h])
+AC_INIT([NSD],[4.3.5],[nsd-bugs@nlnetlabs.nl])
+AC_CONFIG_HEADERS([config.h])
+
+#
+# Setup the standard programs
+# https://www.gnu.org/software/autoconf/manual/autoconf-2.69/html_node/Setting-Output-Variables.html
+
+AC_ARG_VAR(SED, [location of the sed program])
+AC_ARG_VAR(AWK, [location of the awk program])
+AC_ARG_VAR(GREP, [location of the grep program])
+AC_ARG_VAR(EGREP, [location of the egrep program])
+AC_ARG_VAR(LEX, [location of the lex program with GNU extensions (flex)])
+AC_ARG_VAR(YACC, [location of the yacc program with GNU extensions (bison)])
+
+cmdln="`echo $@ | sed -e 's/\\\\/\\\\\\\\/g' | sed -e 's/"/\\\\"/'g`"
+AC_DEFINE_UNQUOTED(CONFCMDLINE, ["$cmdln"], [Command line arguments used with configure])
 
 CFLAGS="$CFLAGS"
-AC_AIX
+AC_USE_SYSTEM_EXTENSIONS
 if test "$ac_cv_header_minix_config_h" = "yes"; then
 	AC_DEFINE(_NETBSD_SOURCE,1, [Enable for compile on Minix])
 fi
@@ -37,7 +51,7 @@ esac
 #
 configdir=$sysconfdir/nsd
 AC_ARG_WITH([configdir],
-	AC_HELP_STRING([--with-configdir=dir], [NSD configuration directory]),
+	AS_HELP_STRING([--with-configdir=dir],[NSD configuration directory]),
 	[configdir=$withval])
 AC_DEFINE_UNQUOTED(CONFIGDIR, ["`eval echo $configdir`"], [NSD config dir])
 AC_SUBST(configdir)
@@ -46,7 +60,7 @@ AC_SUBST(configdir)
 # Determine configuration file
 nsd_conf_file=${configdir}/nsd.conf
 AC_ARG_WITH([nsd_conf_file],
-	AC_HELP_STRING([--with-nsd_conf_file=path], [Pathname to the NSD configuration file]),
+	AS_HELP_STRING([--with-nsd_conf_file=path],[Pathname to the NSD configuration file]),
 	[nsd_conf_file=$withval])
 AC_SUBST(nsd_conf_file)
 # the eval is to evaluate shell expansion twice, once
@@ -58,7 +72,7 @@ AC_DEFINE_UNQUOTED(CONFIGFILE, ["`eval echo $nsd_conf_file`"], [Pathname to the 
 #
 logfile=${localstatedir}/log/nsd.log
 AC_ARG_WITH([logfile],
-	AC_HELP_STRING([--with-logfile=path], [Pathname to the default log file]),
+	AS_HELP_STRING([--with-logfile=path],[Pathname to the default log file]),
 	[logfile=$withval])
 AC_SUBST(logfile)
 
@@ -77,7 +91,7 @@ else
 	pidfile=${dbdir}/nsd.pid
 fi
 AC_ARG_WITH([pidfile],
-	AC_HELP_STRING([--with-pidfile=path], [Pathname to the NSD pidfile]),
+	AS_HELP_STRING([--with-pidfile=path],[Pathname to the NSD pidfile]),
 	[pidfile=$withval])
 AC_SUBST(pidfile)
 AC_DEFINE_UNQUOTED(PIDFILE, ["`eval echo $pidfile`"], [Pathname to the NSD pidfile])
@@ -87,7 +101,7 @@ AC_DEFINE_UNQUOTED(PIDFILE, ["`eval echo $pidfile`"], [Pathname to the NSD pidfi
 #
 dbfile=${dbdir}/nsd.db
 AC_ARG_WITH([dbfile],
-	AC_HELP_STRING([--with-dbfile=path], [Pathname to the NSD database]),
+	AS_HELP_STRING([--with-dbfile=path],[Pathname to the NSD database]),
 	[dbfile=$withval])
 AC_SUBST(dbfile)
 AC_DEFINE_UNQUOTED(DBFILE, ["`eval echo $dbfile`"], [Pathname to the NSD database])
@@ -105,29 +119,26 @@ AC_SUBST(piddir)
 #
 zonesdir=$configdir
 AC_ARG_WITH([zonesdir],
-	AC_HELP_STRING([--with-zonesdir=dir], [NSD default location for zone files]),
+	AS_HELP_STRING([--with-zonesdir=dir],[NSD default location for zone files]),
 	[zonesdir=$withval])
 AC_SUBST(zonesdir)
 AC_DEFINE_UNQUOTED(ZONESDIR, ["`eval echo $zonesdir`"], [NSD default location for zone files. Empty string or NULL to disable.])
 
 # default xfrd file location.
 xfrdfile=${dbdir}/xfrd.state
-AC_ARG_WITH([xfrdfile], AC_HELP_STRING([--with-xfrdfile=path], 
-	[Pathname to the NSD xfrd zone timer state file]), [xfrdfile=$withval])
+AC_ARG_WITH([xfrdfile], AS_HELP_STRING([--with-xfrdfile=path],[Pathname to the NSD xfrd zone timer state file]), [xfrdfile=$withval])
 AC_DEFINE_UNQUOTED(XFRDFILE, ["`eval echo $xfrdfile`"], [Pathname to the NSD xfrd zone timer state file.])
 AC_SUBST(xfrdfile)
 
 # default zonelist file location.
 zonelistfile=${dbdir}/zone.list
-AC_ARG_WITH([zonelistfile], AC_HELP_STRING([--with-zonelistfile=path], 
-	[Pathname to the NSD zone list file]), [zonelistfile=$withval])
+AC_ARG_WITH([zonelistfile], AS_HELP_STRING([--with-zonelistfile=path],[Pathname to the NSD zone list file]), [zonelistfile=$withval])
 AC_DEFINE_UNQUOTED(ZONELISTFILE, ["`eval echo $zonelistfile`"], [Pathname to the NSD zone list file.])
 AC_SUBST(zonelistfile)
 
 # default xfr dir location.
 xfrdir="/tmp"
-AC_ARG_WITH([xfrdir], AC_HELP_STRING([--with-xfrdir=path], 
-	[Pathname to where the NSD transfer dir is created]), [xfrdir=$withval])
+AC_ARG_WITH([xfrdir], AS_HELP_STRING([--with-xfrdir=path],[Pathname to where the NSD transfer dir is created]), [xfrdir=$withval])
 AC_DEFINE_UNQUOTED(XFRDIR, ["`eval echo $xfrdir`"], [Pathname to where the NSD transfer dir is created.])
 AC_SUBST(xfrdir)
 
@@ -146,7 +157,7 @@ AC_DEFINE_UNQUOTED(NSD_START_PATH, ["$nsd_start_path"], [Pathname to start nsd f
 # Determine default chroot directory
 #
 AC_ARG_WITH([chroot],
-	AC_HELP_STRING([--with-chroot=dir], [NSD default chroot directory]),
+	AS_HELP_STRING([--with-chroot=dir],[NSD default chroot directory]),
 	[
 		chrootdir=$withval
 		AC_DEFINE_UNQUOTED(CHROOTDIR, ["`eval echo $chrootdir`"], [NSD default chroot directory])
@@ -158,28 +169,43 @@ AC_SUBST(chrootdir)
 #
 user=nsd
 AC_ARG_WITH([user],
-	AC_HELP_STRING([--with-user=username], [User name or ID to answer the queries with]),
+	AS_HELP_STRING([--with-user=username],[User name or ID to answer the queries with]),
 	[user=$withval])
 AC_SUBST(user)
 AC_DEFINE_UNQUOTED(USER, ["$user"], [the user name to drop privileges to])
 
-# Checks for programs.
-AC_PROG_AWK
 AC_PROG_CC
+AC_PROG_SED
+AC_PROG_AWK
+AC_PROG_GREP
+AC_PROG_EGREP
+AC_PROG_LEX([noyywrap])
+AC_PROG_YACC
 AC_PROG_LN_S
 AC_PROG_INSTALL
-AC_PROG_LEX
-AC_PROG_YACC
 
 if test "$LEX" != ":" -a "$LEX" != ""; then
+# Solaris provides anemic tools, and they don't offer GNU extensions like
+# 'flex -i'. Solaris also does not offer GNU replacements in /usr/gnu/bin.
+AC_MSG_CHECKING([whether lex accepts -i])
+AS_IF([echo "%%" | $LEX -i -t >/dev/null 2>&1],
+  [
+    AC_MSG_RESULT([yes])
+  ],
+  [
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([unable to find a lexer that supports -i. If one is available then set the LEX variable])
+  ]
+)
+
   # Check if lex defines yy_current_buffer, because 2.4.6 and older use it,
   # but later could define it as a macro and then we should not redefine it.
   AC_MSG_CHECKING(if lex defines yy_current_buffer)
   cat <<EOF >conftest.lex
 %%
 EOF
-  $LEX -i -t conftest.lex >> conftest.c
-  if grep "^#define yy_current_buffer" conftest.c >/dev/null; then
+  $LEX -i -t conftest.lex >> conftest.c 2>/dev/null
+  if $GREP "^#define yy_current_buffer" conftest.c >/dev/null; then
 	  AC_DEFINE_UNQUOTED(LEX_DEFINES_YY_CURRENT_BUFFER, 1, [If flex defines yy_current_buffer as a macro])
 	AC_MSG_RESULT(yes)
   else
@@ -193,15 +219,12 @@ AC_DEFUN([AC_CHECK_FORMAT_ATTRIBUTE],
 AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "format" attribute)
 AC_CACHE_VAL(ac_cv_c_format_attribute,
 [ac_cv_c_format_attribute=no
-AC_TRY_COMPILE(
-[#include <stdio.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>
 void f (char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void (*pf) (char *format, ...) __attribute__ ((format (printf, 1, 2)));
-], [
+]], [[
    f ("%s", "str");
-],
-[ac_cv_c_format_attribute="yes"],
-[ac_cv_c_format_attribute="no"])
+]])],[ac_cv_c_format_attribute="yes"],[ac_cv_c_format_attribute="no"])
 ])
 
 AC_MSG_RESULT($ac_cv_c_format_attribute)
@@ -215,14 +238,11 @@ AC_DEFUN([AC_CHECK_UNUSED_ATTRIBUTE],
 AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "unused" attribute)
 AC_CACHE_VAL(ac_cv_c_unused_attribute,
 [ac_cv_c_unused_attribute=no
-AC_TRY_COMPILE(
-[#include <stdio.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>
 void f (char *u __attribute__((unused)));
-], [
+]], [[
    f ("x");
-],
-[ac_cv_c_unused_attribute="yes"],
-[ac_cv_c_unused_attribute="no"])
+]])],[ac_cv_c_unused_attribute="yes"],[ac_cv_c_unused_attribute="no"])
 ])
 
 AC_MSG_RESULT($ac_cv_c_unused_attribute)
@@ -236,14 +256,11 @@ AC_DEFUN([CHECK_NORETURN_ATTRIBUTE],
 AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "noreturn" attribute)
 AC_CACHE_VAL(ac_cv_c_noreturn_attribute,
 [ac_cv_c_noreturn_attribute=no
-AC_TRY_COMPILE(
-[ #include <stdio.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ #include <stdio.h>
 __attribute__((noreturn)) void f(int x) { printf("%d", x); }
-], [
+]], [[
    f(1);
-],
-[ac_cv_c_noreturn_attribute="yes"],
-[ac_cv_c_noreturn_attribute="no"])
+]])],[ac_cv_c_noreturn_attribute="yes"],[ac_cv_c_noreturn_attribute="no"])
 ])
 
 AC_MSG_RESULT($ac_cv_c_noreturn_attribute)
@@ -257,7 +274,7 @@ AC_DEFUN([CHECK_COMPILER_FLAG],
 [
 AC_REQUIRE([AC_PROG_CC])
 AC_MSG_CHECKING(whether $CC supports -$1)
-cache=`echo $1 | sed 'y%.=/+-%___p_%'`
+cache=`echo $1 | $SED 'y%.=/+-%___p_%'`
 AC_CACHE_VAL(cv_prog_cc_flag_$cache,
 [
 echo 'void f(){}' >conftest.c
@@ -284,14 +301,10 @@ AC_DEFUN([AC_CHECK_CTIME_R],
 AC_MSG_CHECKING(whether ctime_r works with two arguments)
 AC_CACHE_VAL(ac_cv_c_ctime_c,
 [ac_cv_c_ctime_c=no
-AC_TRY_COMPILE(
-[#include <time.h>
-void testing (void) { time_t clock; char current_time[40]; ctime_r(&clock, current_time); }],
-[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <time.h>
+void testing (void) { time_t clock; char current_time[40]; ctime_r(&clock, current_time); }]], [[
         testing();
-],
-[ac_cv_c_ctime_c="yes"],
-[ac_cv_c_ctime_c="no"])
+]])],[ac_cv_c_ctime_c="yes"],[ac_cv_c_ctime_c="no"])
 ])
 
 AC_MSG_RESULT($ac_cv_c_ctime_c)
@@ -337,16 +350,15 @@ AC_CHECK_CTIME_R
 # http://www.gnu.org/software/ac-archive/htmldoc/check_ssl.html and
 # modified for NSD.
 AC_DEFUN([CHECK_SSL], [
-    AC_ARG_WITH(ssl, AC_HELP_STRING([--with-ssl=pathname],
-                [enable SSL (will check /usr/local/ssl
-                /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr)]),[
+    AC_ARG_WITH(ssl, AS_HELP_STRING([--with-ssl=pathname],[enable SSL (will check /usr/local/ssl
+                /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl)]),[
         ],[
             withval="yes"
         ])
     if test x_$withval != x_no; then
         AC_MSG_CHECKING(for SSL)
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr"
+            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl"
         fi
         for dir in $withval; do
             ssldir="$dir"
@@ -358,12 +370,12 @@ AC_DEFUN([CHECK_SSL], [
                 fi
                 break;
             fi
-        done 
+        done
         if test x_$found_ssl != x_yes; then
-            AC_MSG_ERROR(Cannot find the SSL libraries in $withval)
+            AC_MSG_ERROR([Cannot find the SSL libraries in $withval])
         else
-            AC_MSG_RESULT(found in $ssldir)
-            HAVE_SSL=yes 
+            AC_MSG_RESULT([found in $ssldir])
+            HAVE_SSL=yes
             if test x_$ssldir != x_/usr; then
                 LDFLAGS="$LDFLAGS -Wl,-R$ssldir/lib -L$ssldir/lib";
             fi
@@ -373,13 +385,12 @@ AC_DEFUN([CHECK_SSL], [
 ])dnl
 
 # check for libevent
-AC_ARG_WITH(libevent, AC_HELP_STRING([--with-libevent=pathname],
-    [use libevent (will check /usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr  or you can specify an explicit path), useful when the zone count is high.]),
+AC_ARG_WITH(libevent, AS_HELP_STRING([--with-libevent=pathname],[use libevent (will check /usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr /usr/local/opt/libevent or you can specify an explicit path), useful when the zone count is high.]),
     [ ],[ withval="yes" ])
 if test x_$withval = x_yes -o x_$withval != x_no; then
         AC_MSG_CHECKING(for libevent)
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr"
+            withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr /usr/local/opt/libevent"
         fi
         for dir in $withval; do
             thedir="$dir"
@@ -398,7 +409,7 @@ if test x_$withval = x_yes -o x_$withval != x_no; then
             		AC_MSG_RESULT(found in $thedir)
                 	CPPFLAGS="$CPPFLAGS -I$thedir -I$thedir/include"
 			# remove evdns from linking
-			ev_files_o=`ls $thedir/*.o | grep -v evdns\.o | grep -v bufferevent_openssl\.o`
+			ev_files_o=`ls $thedir/*.o | $GREP -v evdns\.o | $GREP -v bufferevent_openssl\.o`
 			cp $ev_files_o .
 			LDFLAGS="$ev_files_o $LDFLAGS -lm"
 		else
@@ -442,9 +453,8 @@ else
 fi
 
 # Checks for header files.
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h login_cap.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h sys/random.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -510,7 +520,7 @@ if test c${cross_compiling} = cno; then
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #define _XOPEN_SOURCE 600
 #include <time.h>
-int main(void) { struct tm tm; char *res; 
+int main(void) { struct tm tm; char *res;
 res = strptime("20070207111842", "%Y%m%d%H%M%S", &tm);
 if (!res) return 1; return 0; }
 ]])] , [eval "ac_cv_c_strptime_works=yes"], [eval "ac_cv_c_strptime_works=no"])
@@ -541,7 +551,7 @@ fi
 if test "$srcdir" != "."; then
 	CPPFLAGS="$CPPFLAGS -I$srcdir"
 	if test -f $srcdir/config.h; then
-		AC_ERROR([$srcdir/config.h is in the way, please remove it])
+		AC_MSG_ERROR([$srcdir/config.h is in the way, please remove it])
 	fi
 fi
 
@@ -553,18 +563,15 @@ dnl systems to get some types.
 
 dnl AC_LIBGTOP_CHECK_TYPE(TYPE, DEFAULT)
 AC_DEFUN([AC_LIBGTOP_CHECK_TYPE],
-[AC_REQUIRE([AC_HEADER_STDC])dnl
-AC_MSG_CHECKING(for $1)
+[AC_MSG_CHECKING(for $1)
 AC_CACHE_VAL(ac_cv_type_$1,
 [AC_EGREP_CPP(dnl
 changequote(<<,>>)dnl
 <<(^|[^a-zA-Z_0-9])$1[^a-zA-Z_0-9]>>dnl
 changequote([,]), [
 #include <sys/types.h>
-#if STDC_HEADERS
 #include <stdlib.h>
 #include <stddef.h>
-#endif
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -593,7 +600,7 @@ if test $ac_cv_type_$1 = no; then
 fi
 ])
 
-AC_LIBGTOP_CHECK_TYPE(int8_t, char) 
+AC_LIBGTOP_CHECK_TYPE(int8_t, char)
 AC_LIBGTOP_CHECK_TYPE(int16_t, short)
 AC_LIBGTOP_CHECK_TYPE(int32_t, int)
 AC_LIBGTOP_CHECK_TYPE(int64_t, long long)
@@ -626,21 +633,21 @@ AC_INCLUDES_DEFAULT
 AC_FUNC_CHOWN
 AC_FUNC_FORK
 AC_FUNC_MALLOC
-AC_TYPE_SIGNAL
+AC_DEFINE(RETSIGTYPE,void,[Return type of signal handlers, but autoconf 2.70 says 'your code may safely assume C89 semantics that RETSIGTYPE is void.'])
 AC_FUNC_FSEEKO
 AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
-AC_CHECK_FUNCS([arc4random arc4random_uniform])
+AC_CHECK_FUNCS([getrandom arc4random arc4random_uniform])
 AC_SEARCH_LIBS([setusercontext],[util],[AC_CHECK_HEADERS([login_cap.h])])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4 getifaddrs])
 
 AC_CHECK_TYPE([struct mmsghdr], AC_DEFINE(HAVE_MMSGHDR, 1, [If sys/socket.h has a struct mmsghdr.]), [], [
 AC_INCLUDES_DEFAULT
 #include <sys/socket.h>
 ])
 
-AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems for IPv6]))
+AC_ARG_ENABLE(recvmmsg, AS_HELP_STRING([--enable-recvmmsg],[Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems for IPv6]))
 case "$enable_recvmmsg" in
         yes)
 		AC_CHECK_FUNC([recvmmsg], [
@@ -648,7 +655,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/socket.h>
 #include <errno.h>
 int main(void)
-{ 
+{
 	int s = socket(AF_INET, SOCK_DGRAM, 0);
 	int r = recvmmsg(s, 0, 0, 0, 0) == -1 && errno == ENOSYS;
 	close(s);
@@ -664,7 +671,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/socket.h>
 #include <errno.h>
 int main(void)
-{ 
+{
 	int s = socket(AF_INET, SOCK_DGRAM, 0);
 	int r = sendmmsg(s, 0, 0, 0) == -1 && errno == ENOSYS;
 	close(s);
@@ -682,9 +689,101 @@ AC_DEFINE([HAVE_SENDMMSG], [1], [Define if sendmmsg exists])]
 esac
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
-if echo $target_os | grep darwin8 > /dev/null; then
+if echo $target_os | $GREP -i darwin8 > /dev/null; then
 	AC_DEFINE(DARWIN_BROKEN_SETREUID, 1, [Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work])
 fi
+
+# GNU HURD needs _GNU_SOURCE defined for cpu affinity gear
+if echo $target_os | $EGREP -i 'linux|hurd' > /dev/null; then
+  AC_DEFINE([_GNU_SOURCE, 1, [Define this if on Linux or GNU Hurd for cpu affinity interface]])
+fi
+
+# see comment on _GNU_SOURCE above
+AC_CHECK_HEADERS([sched.h sys/cpuset.h])
+
+# Check for cpu_set_t (Linux) and cpuset_t (FreeBSD and NetBSD)
+AC_CHECK_TYPES([cpu_set_t, cpuset_t, cpuid_t],,,[
+AC_INCLUDES_DEFAULT
+#if HAVE_SCHED_H
+# include <sched.h>
+#endif
+#if HAVE_SYS_CPUSET_H
+# include <sys/cpuset.h>
+#endif
+])
+
+AC_DEFUN([AC_CHECK_CPU_OR],
+[AC_REQUIRE([AC_PROG_CC])
+AC_MSG_CHECKING(whether CPU_OR works with three arguments)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SCHED_H
+# include <sched.h>
+#endif
+#ifdef HAVE_SYS_CPUSET_H
+# include <sys/cpuset.h>
+#endif
+#include <string.h>
+#ifdef HAVE_CPUSET_T
+#define MY_CPUSET_TYPE cpuset_t
+#endif
+#ifdef HAVE_CPU_SET_T
+#define MY_CPUSET_TYPE cpu_set_t
+#endif
+void testing (void) {
+	MY_CPUSET_TYPE a, b;
+	memset(&a, 0, sizeof(a));
+	memset(&b, 0, sizeof(b));
+	CPU_OR(&a, &a, &b);
+}]], [[
+        testing();
+]])],[
+	AC_MSG_RESULT(yes)
+	AC_DEFINE([CPU_OR_THREE_ARGS], 1, [number of arguments for CPU_OR is three])
+],[
+	AC_MSG_RESULT(no)
+])])
+
+AS_IF([test x"$ac_cv_type_cpuset_t" = xyes -o x"$ac_cv_type_cpu_set_t" = xyes ],[
+	AC_CHECK_FUNC(cpuset_create)
+	AC_CHECK_FUNC(cpuset_destroy)
+	AC_CHECK_FUNC(cpuset_zero)
+	AC_CHECK_FUNC(cpuset_set)
+	AC_CHECK_FUNC(cpuset_clr)
+	AC_CHECK_FUNC(cpuset_isset)
+	AC_CHECK_FUNC(cpuset_size)
+	AC_LIBOBJ(cpuset)
+	AC_CHECK_FUNCS([sysconf])
+	AC_CHECK_CPU_OR
+])
+
+#
+# sched_setaffinity must be checked using proper includes.
+# also needs _GNU_SOURCE on Linux and Hurd; see above.
+# also see https://github.com/NLnetLabs/nsd/issues/82.
+#
+AC_MSG_CHECKING(for sched_setaffinity)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+  [[
+    #ifdef HAVE_SCHED_H
+    # include <sched.h>
+    #endif
+    #ifdef HAVE_SYS_CPUSET_H
+    #include <sys/cpuset.h>
+    #endif
+    #ifdef HAVE_CPUSET_T
+    #define MY_CPUSET_TYPE cpuset_t
+    #endif
+    #ifdef HAVE_CPU_SET_T
+    #define MY_CPUSET_TYPE cpu_set_t
+    #endif
+    void testing (void) {
+      MY_CPUSET_TYPE set;
+      CPU_ZERO(&set);
+      (void)sched_setaffinity(-1, sizeof(set), &set);
+    }
+]])],
+[  AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_SCHED_SETAFFINITY, 1, [Define this if sched_setaffinity is available])],
+[  AC_MSG_RESULT(no)])
 
 #
 # Checking for missing functions we can replace
@@ -701,12 +800,16 @@ AC_REPLACE_FUNCS(b64_pton)
 AC_REPLACE_FUNCS(b64_ntop)
 AC_REPLACE_FUNCS(pselect)
 AC_REPLACE_FUNCS(memmove)
+AC_REPLACE_FUNCS(setproctitle)
 AC_MSG_CHECKING([for reallocarray])
-AC_LINK_IFELSE([AC_LANG_SOURCE(AC_INCLUDES_DEFAULT
+AC_LINK_IFELSE([AC_LANG_SOURCE(
 [[
 #ifndef _OPENBSD_SOURCE
 #define _OPENBSD_SOURCE 1
 #endif
+]]
+AC_INCLUDES_DEFAULT
+[[
 #include <stdlib.h>
 int main(void) {
 	void* p = reallocarray(NULL, 10, 100);
@@ -715,17 +818,23 @@ int main(void) {
 }
 ]])], [AC_MSG_RESULT(yes)
 	AC_DEFINE(HAVE_REALLOCARRAY, 1, [If we have reallocarray(3)])
+	AC_CHECK_DECLS([reallocarray], [], [
+		AC_DEFINE(REALLOCARRAY_NEEDS_DEFINES, 1, [If reallocarray needs defines to appear in the headers])
+	], [
+AC_INCLUDES_DEFAULT
+#include <stdlib.h>
+	])
 ], [
 	AC_MSG_RESULT(no)
 	AC_LIBOBJ(reallocarray)
 ])
 
 AC_MSG_CHECKING(for pselect prototype in sys/select.h)
-AC_EGREP_HEADER([[^a-zA-Z_]*pselect[^a-zA-Z_]], sys/select.h, AC_DEFINE(HAVE_PSELECT_PROTO, 1, 
+AC_EGREP_HEADER([[^a-zA-Z_]*pselect[^a-zA-Z_]], sys/select.h, AC_DEFINE(HAVE_PSELECT_PROTO, 1,
 	[if sys/select.h provides pselect prototype]) AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
 AC_MSG_CHECKING(for ctime_r prototype in time.h)
-AC_EGREP_HEADER([[^a-zA-Z_]*ctime_r[^a-zA-Z_]], time.h, AC_DEFINE(HAVE_CTIME_R_PROTO, 1, 
+AC_EGREP_HEADER([[^a-zA-Z_]*ctime_r[^a-zA-Z_]], time.h, AC_DEFINE(HAVE_CTIME_R_PROTO, 1,
 	[if time.h provides ctime_r prototype]) AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
 AC_CHECK_TYPE([struct timespec], AC_DEFINE(HAVE_STRUCT_TIMESPEC, 1, [If time.h has a struct timespec (for pselect).]), [], [
@@ -748,7 +857,7 @@ AC_DEFINE_UNQUOTED([TCP_PORT], ["53"], [Define to the default tcp port.])
 AC_DEFINE_UNQUOTED([TCP_MAX_MESSAGE_LEN], [65535], [Define to the default maximum message length.])
 AC_DEFINE_UNQUOTED([UDP_PORT], ["53"], [Define to the default udp port.])
 AC_DEFINE_UNQUOTED([UDP_MAX_MESSAGE_LEN], [512], [Define to the default maximum udp message length.])
-AC_DEFINE_UNQUOTED([EDNS_MAX_MESSAGE_LEN], [4096], [Define to the default maximum message length with EDNS.])
+AC_DEFINE_UNQUOTED([EDNS_MAX_MESSAGE_LEN], [1232], [Define to the default maximum message length with EDNS.])
 AC_DEFINE_UNQUOTED([TLS_PORT], ["853"], [Define to the default DNS over TLS port.])
 AC_DEFINE_UNQUOTED([MAXSYSLOGMSGLEN], [512], [Define to the maximum message length to pass to syslog.])
 AC_DEFINE_UNQUOTED([NSD_CONTROL_PORT], [8952], [Define to the default nsd-control port.])
@@ -759,7 +868,7 @@ dnl Determine the syslog facility to use
 dnl
 facility=LOG_DAEMON
 AC_ARG_WITH([facility],
-        AC_HELP_STRING([--with-facility=name], [Syslog default facility (LOG_DAEMON)]),
+        AS_HELP_STRING([--with-facility=name],[Syslog default facility (LOG_DAEMON)]),
         [facility=$withval])
 AC_DEFINE_UNQUOTED([FACILITY], $facility, [Define to the default facility for syslog.])
 
@@ -768,14 +877,14 @@ dnl Determine the default tcp timeout
 dnl
 tcp_timeout=120
 AC_ARG_WITH([tcp_timeout],
-	AC_HELP_STRING([--with-tcp-timeout=number], [Limit the default tcp timeout]),
+	AS_HELP_STRING([--with-tcp-timeout=number],[Limit the default tcp timeout]),
 	[tcp_timeout=$withval])
 AC_DEFINE_UNQUOTED([TCP_TIMEOUT], $tcp_timeout, [Define to the default tcp timeout.])
 
 dnl
 dnl Features
 dnl
-AC_ARG_ENABLE(root-server, AC_HELP_STRING([--enable-root-server], [Configure NSD as a root server]))
+AC_ARG_ENABLE(root-server, AS_HELP_STRING([--enable-root-server],[Configure NSD as a root server]))
 case "$enable_root_server" in
         yes)
 		AC_DEFINE_UNQUOTED([ROOT_SERVER], [], [Define this to configure as a root server.])
@@ -784,7 +893,7 @@ case "$enable_root_server" in
                 ;;
 esac
 
-AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [Disables IPv6 support]))
+AC_ARG_ENABLE(ipv6, AS_HELP_STRING([--disable-ipv6],[Disables IPv6 support]))
 case "$enable_ipv6" in
         no)
                 ;;
@@ -793,7 +902,7 @@ case "$enable_ipv6" in
 		;;
 esac
 
-AC_ARG_ENABLE(bind8-stats, AC_HELP_STRING([--enable-bind8-stats], [Enables BIND8 like NSTATS & XSTATS and statistics in nsd-control]))
+AC_ARG_ENABLE(bind8-stats, AS_HELP_STRING([--enable-bind8-stats],[Enables BIND8 like NSTATS & XSTATS and statistics in nsd-control]))
 
 case "$enable_bind8_stats" in
 	yes|'')
@@ -803,7 +912,7 @@ case "$enable_bind8_stats" in
 		;;
 esac
 
-AC_ARG_ENABLE(zone-stats, AC_HELP_STRING([--enable-zone-stats], [Enable per-zone statistics gathering (needs --enable-bind8-stats)]))
+AC_ARG_ENABLE(zone-stats, AS_HELP_STRING([--enable-zone-stats],[Enable per-zone statistics gathering (needs --enable-bind8-stats)]))
 case "$enable_zone_stats" in
 	yes)
 		AC_DEFINE_UNQUOTED([USE_ZONE_STATS], [], [Define this to enable per-zone statistics gathering.])
@@ -813,7 +922,7 @@ case "$enable_zone_stats" in
 		;;
 esac
 
-AC_ARG_ENABLE(checking, AC_HELP_STRING([--enable-checking], [Enable internal runtime checks]))
+AC_ARG_ENABLE(checking, AS_HELP_STRING([--enable-checking],[Enable internal runtime checks]))
 case "$enable_checking" in
         yes)
 		CHECK_COMPILER_FLAG(W, [ CFLAGS="$CFLAGS -W" ])
@@ -826,11 +935,11 @@ case "$enable_checking" in
                 ;;
 esac
 
-AC_ARG_ENABLE(memclean, AC_HELP_STRING([--enable-memclean], [Cleanup memory (at exit) for eg. valgrind, memcheck]))
+AC_ARG_ENABLE(memclean, AS_HELP_STRING([--enable-memclean],[Cleanup memory (at exit) for eg. valgrind, memcheck]))
 if test "$enable_memclean" = "yes"; then AC_DEFINE_UNQUOTED([MEMCLEAN], [1], [Define this to cleanup memory at exit (eg. for valgrind, etc.)])
 fi
 
-AC_ARG_ENABLE(ratelimit, AC_HELP_STRING([--enable-ratelimit], [Enable rate limiting]))
+AC_ARG_ENABLE(ratelimit, AS_HELP_STRING([--enable-ratelimit],[Enable rate limiting]))
 case "$enable_ratelimit" in
 	yes)
 		AC_DEFINE_UNQUOTED([RATELIMIT], [], [Define this to enable rate limiting.])
@@ -843,7 +952,7 @@ case "$enable_ratelimit" in
 esac
 AC_SUBST(ratelimit)
 
-AC_ARG_ENABLE(ratelimit-default-is-off, AC_HELP_STRING([--enable-ratelimit-default-is-off], [Enable this to set default of ratelimit to off (enable in nsd.conf), otherwise ratelimit is enabled by default if --enable-ratelimit is enabled]))
+AC_ARG_ENABLE(ratelimit-default-is-off, AS_HELP_STRING([--enable-ratelimit-default-is-off],[Enable this to set default of ratelimit to off (enable in nsd.conf), otherwise ratelimit is enabled by default if --enable-ratelimit is enabled]))
 case "$enable_ratelimit_default_is_off" in
 	yes)
 		AC_DEFINE_UNQUOTED([RATELIMIT_DEFAULT_OFF], [], [Define this to set ratelimit to off by default.])
@@ -859,19 +968,21 @@ AC_SUBST(ratelimit_default)
 CHECK_SSL
 if test x$HAVE_SSL = x"yes"; then
 	ACX_LIB_SSL
+	# remove space after -ldl if there.
+	LIBS=`echo "$LIBS" | sed -e 's/ $//'`
 
 	# Check for -pthread
 	BAKLIBS="$LIBS"
 	LIBS="-lcrypto $LIBS"
-	AC_TRY_LINK([], [
-		int HMAC_Update(void);
-		(void)HMAC_Update();
-	], [],[
-		dnl so link fails for HMAC_Update, try with -pthread.
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[
+		int EVP_sha256(void);
+		(void)EVP_sha256();
+	]])],[],[
+		dnl so link fails for EVP_sha256, try with -pthread.
 		BAKCFLAGS="$CFLAGS"
 		CFLAGS="$CFLAGS -pthread"
 		AC_MSG_CHECKING([if libcrypto needs -pthread])
-		AC_TRY_LINK_FUNC([HMAC_Update], [
+		AC_TRY_LINK_FUNC([EVP_sha256], [
 			AC_MSG_RESULT([yes])
 		] , [
 			AC_MSG_RESULT([no])
@@ -881,15 +992,15 @@ if test x$HAVE_SSL = x"yes"; then
 	])
 	LIBS="$BAKLIBS"
 
-	if test -n "$ssldir"; then 
-            AC_CHECK_LIB(crypto, HMAC_Update,, [
+	if test -n "$ssldir"; then
+            AC_CHECK_LIB(crypto, EVP_sha256,, [
                     AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
                 ])
 	fi
 	SSL_LIBS="-lssl"
 	AC_SUBST(SSL_LIBS)
-	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h],,, [AC_INCLUDES_DEFAULT])
-	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto SSL_CTX_set_security_level CRYPTO_memcmp EC_KEY_new_by_curve_name])
+	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h openssl/core_names.h],,, [AC_INCLUDES_DEFAULT])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto SSL_CTX_set_security_level CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params])
 	AC_CHECK_DECLS([SSL_CTX_set_ecdh_auto,SSL_CTX_set_tmp_ecdh], [], [], [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_OPENSSL_ERR_H
@@ -922,7 +1033,7 @@ else
 	AC_MSG_WARN([No SSL, therefore TLS is disabled])
 fi
 
-AC_ARG_ENABLE(nsec3, AC_HELP_STRING([--disable-nsec3], [Disable NSEC3 support]))
+AC_ARG_ENABLE(nsec3, AS_HELP_STRING([--disable-nsec3],[Disable NSEC3 support]))
 case "$enable_nsec3" in
         no)
 		;;
@@ -938,7 +1049,7 @@ case "$enable_nsec3" in
                 ;;
 esac
 
-AC_ARG_ENABLE(minimal-responses, AC_HELP_STRING([--disable-minimal-responses], [Disable response minimization. More truncation.]))
+AC_ARG_ENABLE(minimal-responses, AS_HELP_STRING([--disable-minimal-responses],[Disable response minimization. More truncation.]))
 case "$enable_minimal_responses" in
         no)
 		;;
@@ -947,7 +1058,7 @@ case "$enable_minimal_responses" in
                 ;;
 esac
 
-AC_ARG_ENABLE(mmap, AC_HELP_STRING([--enable-mmap], [Use mmap instead of malloc. Experimental.]))
+AC_ARG_ENABLE(mmap, AS_HELP_STRING([--enable-mmap],[Use mmap instead of malloc. Experimental.]))
 case "$enable_mmap" in
         yes)
 		AC_CHECK_HEADERS([sys/mman.h])
@@ -959,7 +1070,7 @@ case "$enable_mmap" in
                 ;;
 esac
 
-AC_ARG_ENABLE(radix-tree, AC_HELP_STRING([--disable-radix-tree], [You can disable the radix tree and use the red-black tree for the main lookups, the red-black tree uses less memory, but uses some more CPU.]))
+AC_ARG_ENABLE(radix-tree, AS_HELP_STRING([--disable-radix-tree],[You can disable the radix tree and use the red-black tree for the main lookups, the red-black tree uses less memory, but uses some more CPU.]))
 case "$enable_radix_tree" in
         no)
 	;;
@@ -968,7 +1079,7 @@ case "$enable_radix_tree" in
 	;;
 esac
 
-AC_ARG_ENABLE(packed, AC_HELP_STRING([--enable-packed], [Enable packed structure alignment, uses less memory, but unaligned reads.]))
+AC_ARG_ENABLE(packed, AS_HELP_STRING([--enable-packed],[Enable packed structure alignment, uses less memory, but unaligned reads.]))
 case "$enable_packed" in
 	yes)
 	AC_DEFINE_UNQUOTED([PACKED_STRUCTS], [], [Define this to use packed structure alignment.])
@@ -1002,7 +1113,7 @@ dt_DNSTAP([${localstatedir}/run/nsd-dnstap.sock],
 sinclude(systemd.m4)
 # Include systemd.m4 - end
 
-AC_ARG_ENABLE(tcp-fastopen, AC_HELP_STRING([--enable-tcp-fastopen], [Enable TCP Fast Open]))
+AC_ARG_ENABLE(tcp-fastopen, AS_HELP_STRING([--enable-tcp-fastopen],[Enable TCP Fast Open]))
 case "$enable_tcp_fastopen" in
        yes)
              AC_CHECK_DECL([TCP_FASTOPEN], [], [AC_MSG_ERROR([TCP Fast Open is not available: please rerun without --enable-tcp-fastopen])], [AC_INCLUDES_DEFAULT
@@ -1018,7 +1129,7 @@ AH_BOTTOM([
 /* define before includes as it specifies what standard to use. */
 #if (defined(HAVE_PSELECT) && !defined (HAVE_PSELECT_PROTO)) \
 	|| !defined (HAVE_CTIME_R_PROTO) \
-	|| defined (STRPTIME_NEEDS_DEFINES)
+	|| defined (STRPTIME_NEEDS_DEFINES) || defined(REALLOCARRAY_NEEDS_DEFINES)
 #  ifndef _XOPEN_SOURCE
 #    define _XOPEN_SOURCE 600
 #  endif
@@ -1036,7 +1147,7 @@ AH_BOTTOM([
 #  endif
 #  ifndef __EXTENSIONS__
 #    define __EXTENSIONS__ 1
-#  endif 
+#  endif
 #  ifndef _STDC_C99
 #    define _STDC_C99 1
 #  endif
@@ -1057,10 +1168,8 @@ AH_BOTTOM([
 
 AH_BOTTOM([
 #include <sys/types.h>
-#if STDC_HEADERS
 #include <stdlib.h>
 #include <stddef.h>
-#endif
 
 #ifdef HAVE_TIME_H
 #include <time.h>
@@ -1170,12 +1279,22 @@ void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #endif
 #ifndef HAVE_STRPTIME
 #define HAVE_STRPTIME 1
-char *strptime(const char *s, const char *format, struct tm *tm); 
+char *strptime(const char *s, const char *format, struct tm *tm);
 #endif
 #ifndef STRPTIME_WORKS
 #define STRPTIME_WORKS 1
-char *nsd_strptime(const char *s, const char *format, struct tm *tm); 
+char *nsd_strptime(const char *s, const char *format, struct tm *tm);
 #define strptime(a,b,c) nsd_strptime((a),(b),(c))
+#endif
+#if (HAVE_CPU_SET_T || HAVE_CPUSET_T)
+#include "compat/cpuset.h"
+#endif
+#ifndef HAVE_SETPROCTITLE
+#ifdef __linux__
+#define HAVE_SETPROCTITLE 1
+#include <stdarg.h>
+void setproctitle(const char *fmt, ...);
+#endif
 #endif
 ])
 AH_BOTTOM(
