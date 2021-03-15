@@ -204,8 +204,9 @@ struct ub_result {
 	char* why_bogus;
 
 	/**
-	 * If the query or one of its subqueries was ratelimited. Useful if
-	 * ratelimiting is enabled and answer is SERVFAIL.
+	 * If the query or one of its subqueries was ratelimited.  Useful if
+	 * ratelimiting is enabled and answer to the client is SERVFAIL as a
+	 * result.
 	 */
 	int was_ratelimited;
 
@@ -641,6 +642,7 @@ struct ub_shm_stat_info {
 		long long respip;
 		long long dnscrypt_shared_secret;
 		long long dnscrypt_nonce;
+		long long dynlib;
 	} mem;
 };
 
@@ -654,6 +656,8 @@ struct ub_shm_stat_info {
 #define UB_STATS_OPCODE_NUM 16
 /** number of histogram buckets */
 #define UB_STATS_BUCKET_NUM 40
+/** number of RPZ actions */
+#define UB_STATS_RPZ_ACTION_NUM 10
 
 /** per worker statistics. */
 struct ub_server_stats {
@@ -693,6 +697,8 @@ struct ub_server_stats {
 	long long qtcp_outgoing;
 	/** number of queries over (DNS over) TLS */
 	long long qtls;
+	/** number of queries over (DNS over) HTTPS */
+	long long qhttps;
 	/** number of queries over IPv6 */
 	long long qipv6;
 	/** number of queries with QR bit */
@@ -733,8 +739,8 @@ struct ub_server_stats {
 	long long unwanted_queries;
 	/** usage of tcp accept list */
 	long long tcp_accept_usage;
-	/** answers served from expired cache */
-	long long zero_ttl_responses;
+	/** expired answers served from cache */
+	long long ans_expired;
 	/** histogram data exported to array 
 	 * if the array is the same size, no data is lost, and
 	 * if all histograms are same size (is so by default) then
@@ -783,8 +789,14 @@ struct ub_server_stats {
 	long long num_query_subnet_cache;
 	/** number of bytes in the stream wait buffers */
 	long long mem_stream_wait;
+	/** number of bytes in the HTTP2 query buffers */
+	long long mem_http2_query_buffer;
+	/** number of bytes in the HTTP2 response buffers */
+	long long mem_http2_response_buffer;
 	/** number of TLS connection resume */
 	long long qtls_resume;
+	/** RPZ action stats */
+	long long rpz_action[UB_STATS_RPZ_ACTION_NUM];
 };
 
 /** 
