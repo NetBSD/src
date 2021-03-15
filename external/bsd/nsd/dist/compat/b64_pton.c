@@ -384,7 +384,7 @@ b64_pton(char const *src, uint8_t *target, size_t targsize)
 		b64_initialize_rmap ();
 
 	if (target)
-		return b64_pton_do ((unsigned char*)src, target, targsize);
+		return b64_pton_do ((unsigned char const*)src, target, targsize);
 	else
-		return b64_pton_len ((unsigned char*)src);
+		return b64_pton_len ((unsigned char const*)src);
 }

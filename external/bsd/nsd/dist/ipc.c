@@ -50,6 +50,7 @@ ipc_child_quit(struct nsd* nsd)
 	region_destroy(nsd->server_region);
 #endif
 	server_shutdown(nsd);
+	/* ENOTREACH */
 	exit(0);
 }
 
@@ -530,10 +531,10 @@ parent_handle_reload_command(netio_type *ATTR_UNUSED(netio),
 	}
 	if (len == 0)
 	{
-		if(handler->fd != -1) {
-			close(handler->fd);
-			handler->fd = -1;
-		}
+		assert(handler->fd != -1); /* or read() would have failed */
+		close(handler->fd);
+		handler->fd = -1;
+
 		log_msg(LOG_ERR, "handle_reload_cmd: reload closed cmd channel");
 		nsd->reload_failed = 1;
 		return;
