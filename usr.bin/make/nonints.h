@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.205 2021/03/15 12:15:03 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.206 2021/03/15 15:39:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -341,7 +341,7 @@ typedef struct VarEvalFlags {
 	 * int (since that is the default representation of Boolean in make),
 	 * even for initializers consisting entirely of constants.
 	 */
-	Boolean : 1;
+	Boolean : 0;
 } VarEvalFlags;
 
 #define VARE_PARSE_ONLY	(VarEvalFlags) { FALSE, FALSE, FALSE, FALSE }

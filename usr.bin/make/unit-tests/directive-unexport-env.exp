@@ -4,11 +4,11 @@ Global:UT_EXPORTED = value
 Global:UT_UNEXPORTED = value
 Global:.MAKE.EXPORTED = UT_EXPORTED
 make: "directive-unexport-env.mk" line 21: The directive .unexport-env does not take arguments
-Var_Parse: ${.MAKE.EXPORTED:O:u} with VARE_WANTRES
-Applying ${.MAKE.EXPORTED:O} to "UT_EXPORTED" (VARE_WANTRES, none, regular)
-Result of ${.MAKE.EXPORTED:O} is "UT_EXPORTED" (VARE_WANTRES, none, regular)
-Applying ${.MAKE.EXPORTED:u} to "UT_EXPORTED" (VARE_WANTRES, none, regular)
-Result of ${.MAKE.EXPORTED:u} is "UT_EXPORTED" (VARE_WANTRES, none, regular)
+Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
+Applying ${.MAKE.EXPORTED:O} to "UT_EXPORTED" (eval, none, regular)
+Result of ${.MAKE.EXPORTED:O} is "UT_EXPORTED" (eval, none, regular)
+Applying ${.MAKE.EXPORTED:u} to "UT_EXPORTED" (eval, none, regular)
+Result of ${.MAKE.EXPORTED:u} is "UT_EXPORTED" (eval, none, regular)
 Unexporting "UT_EXPORTED"
 Global:delete .MAKE.EXPORTED
 Global:.MAKEFLAGS =  -r -k -d v -d

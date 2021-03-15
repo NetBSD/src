@@ -12,45 +12,45 @@ make: "varmod-indirect.mk" line 157: before
 make: "varmod-indirect.mk" line 157: after
 ParseReadLine (166): '_:=	before ${UNDEF} after'
 Global:_ = 
-Var_Parse: ${UNDEF} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
+Var_Parse: ${UNDEF} after (eval-keep-dollar-and-undefined)
 Global:_ = before ${UNDEF} after
 ParseReadLine (169): '_:=	before ${UNDEF:${:US,a,a,}} after'
-Var_Parse: ${UNDEF:${:US,a,a,}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Var_Parse: ${:US,a,a,}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Applying ${:U...} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Result of ${:US,a,a,} is "S,a,a," (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, defined)
+Var_Parse: ${UNDEF:${:US,a,a,}} after (eval-keep-dollar-and-undefined)
+Var_Parse: ${:US,a,a,}} after (eval-keep-dollar-and-undefined)
+Applying ${:U...} to "" (eval-keep-dollar-and-undefined, none, undefined)
+Result of ${:US,a,a,} is "S,a,a," (eval-keep-dollar-and-undefined, none, defined)
 Indirect modifier "S,a,a," from "${:US,a,a,}"
-Applying ${UNDEF:S...} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
+Applying ${UNDEF:S...} to "" (eval-keep-dollar-and-undefined, none, undefined)
 Modifier part: "a"
 Modifier part: "a"
 ModifyWords: split "" into 1 words
-Result of ${UNDEF:S,a,a,} is "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Var_Parse: ${:US,a,a,}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Applying ${:U...} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Result of ${:US,a,a,} is "S,a,a," (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, defined)
+Result of ${UNDEF:S,a,a,} is "" (eval-keep-dollar-and-undefined, none, undefined)
+Var_Parse: ${:US,a,a,}} after (eval-keep-dollar-and-undefined)
+Applying ${:U...} to "" (eval-keep-dollar-and-undefined, none, undefined)
+Result of ${:US,a,a,} is "S,a,a," (eval-keep-dollar-and-undefined, none, defined)
 Global:_ = before ${UNDEF:S,a,a,} after
 ParseReadLine (179): '_:=	before ${UNDEF:${:U}} after'
-Var_Parse: ${UNDEF:${:U}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Var_Parse: ${:U}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Applying ${:U} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Result of ${:U} is "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, defined)
+Var_Parse: ${UNDEF:${:U}} after (eval-keep-dollar-and-undefined)
+Var_Parse: ${:U}} after (eval-keep-dollar-and-undefined)
+Applying ${:U} to "" (eval-keep-dollar-and-undefined, none, undefined)
+Result of ${:U} is "" (eval-keep-dollar-and-undefined, none, defined)
 Indirect modifier "" from "${:U}"
-Var_Parse: ${:U}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Applying ${:U} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Result of ${:U} is "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, defined)
+Var_Parse: ${:U}} after (eval-keep-dollar-and-undefined)
+Applying ${:U} to "" (eval-keep-dollar-and-undefined, none, undefined)
+Result of ${:U} is "" (eval-keep-dollar-and-undefined, none, defined)
 Global:_ = before ${UNDEF:} after
 ParseReadLine (184): '_:=	before ${UNDEF:${:UZ}} after'
-Var_Parse: ${UNDEF:${:UZ}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Var_Parse: ${:UZ}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Applying ${:U...} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Result of ${:UZ} is "Z" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, defined)
+Var_Parse: ${UNDEF:${:UZ}} after (eval-keep-dollar-and-undefined)
+Var_Parse: ${:UZ}} after (eval-keep-dollar-and-undefined)
+Applying ${:U...} to "" (eval-keep-dollar-and-undefined, none, undefined)
+Result of ${:UZ} is "Z" (eval-keep-dollar-and-undefined, none, defined)
 Indirect modifier "Z" from "${:UZ}"
-Applying ${UNDEF:Z} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
+Applying ${UNDEF:Z} to "" (eval-keep-dollar-and-undefined, none, undefined)
 make: "varmod-indirect.mk" line 184: Unknown modifier "Z"
-Result of ${UNDEF:Z} is error (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Var_Parse: ${:UZ}} after with VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF
-Applying ${:U...} to "" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, undefined)
-Result of ${:UZ} is "Z" (VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF, none, defined)
+Result of ${UNDEF:Z} is error (eval-keep-dollar-and-undefined, none, undefined)
+Var_Parse: ${:UZ}} after (eval-keep-dollar-and-undefined)
+Applying ${:U...} to "" (eval-keep-dollar-and-undefined, none, undefined)
+Result of ${:UZ} is "Z" (eval-keep-dollar-and-undefined, none, defined)
 Global:_ = before ${UNDEF:Z} after
 ParseReadLine (186): '.MAKEFLAGS: -d0'
 ParseDoDependency(.MAKEFLAGS: -d0)
