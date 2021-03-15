@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.197 2021/02/05 05:15:12 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.198 2021/03/15 12:15:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.197 2021/02/05 05:15:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.198 2021/03/15 12:15:03 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -207,7 +207,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 
 			/* XXX: is expanded twice: once here and once below */
 			(void)Var_Parse(&nested_p, scope,
-					VARE_WANTRES | VARE_UNDEFERR, &result);
+			    VARE_UNDEFERR, &result);
 			/* TODO: handle errors */
 			isError = result.str == var_Error;
 			FStr_Done(&result);
@@ -223,8 +223,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 	*cp++ = '\0';
 	if (expandLibName) {
 		char *expanded;
-		(void)Var_Subst(libName.str, scope,
-		    VARE_WANTRES | VARE_UNDEFERR, &expanded);
+		(void)Var_Subst(libName.str, scope, VARE_UNDEFERR, &expanded);
 		/* TODO: handle errors */
 		libName = MFStr_InitOwn(expanded);
 	}
@@ -250,8 +249,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 				const char *nested_p = cp;
 
 				(void)Var_Parse(&nested_p, scope,
-						VARE_WANTRES | VARE_UNDEFERR,
-						&result);
+				    VARE_UNDEFERR, &result);
 				/* TODO: handle errors */
 				isError = result.str == var_Error;
 				FStr_Done(&result);
@@ -306,9 +304,8 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			char *p;
 			char *unexpandedMemName = memName;
 
-			(void)Var_Subst(memName, scope,
-					VARE_WANTRES | VARE_UNDEFERR,
-					&memName);
+			(void)Var_Subst(memName, scope, VARE_UNDEFERR,
+			    &memName);
 			/* TODO: handle errors */
 
 			/*

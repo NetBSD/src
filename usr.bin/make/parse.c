@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.551 2021/03/15 11:41:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.552 2021/03/15 12:15:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.551 2021/03/15 11:41:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.552 2021/03/15 12:15:03 rillig Exp $");
 
 /* types and constants */
 
@@ -1898,8 +1898,7 @@ VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 	if (!Var_ExistsExpand(scope, name))
 		Var_SetExpand(scope, name, "");
 
-	(void)Var_Subst(uvalue, scope,
-	    VARE_WANTRES | VARE_KEEP_DOLLAR | VARE_KEEP_UNDEF, &evalue);
+	(void)Var_Subst(uvalue, scope, VARE_KEEP_DOLLAR_UNDEF, &evalue);
 	/* TODO: handle errors */
 
 	Var_SetExpand(scope, name, evalue);
@@ -1918,8 +1917,8 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 	cmd = FStr_InitRefer(uvalue);
 	if (strchr(cmd.str, '$') != NULL) {
 		char *expanded;
-		(void)Var_Subst(cmd.str, SCOPE_CMDLINE,
-		    VARE_WANTRES | VARE_UNDEFERR, &expanded);
+		(void)Var_Subst(cmd.str, SCOPE_CMDLINE, VARE_UNDEFERR,
+		    &expanded);
 		/* TODO: handle errors */
 		cmd = FStr_InitOwn(expanded);
 	}
@@ -3131,7 +3130,7 @@ ParseDependency(char *line)
 	 * Var_Parse does not print any parse errors in such a case.
 	 * It simply returns the special empty string var_Error,
 	 * which cannot be detected in the result of Var_Subst. */
-	eflags = opts.strict ? VARE_WANTRES : VARE_WANTRES | VARE_UNDEFERR;
+	eflags = opts.strict ? VARE_WANTRES : VARE_UNDEFERR;
 	(void)Var_Subst(line, SCOPE_CMDLINE, eflags, &expanded_line);
 	/* TODO: handle errors */
 

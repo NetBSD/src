@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.178 2021/02/22 23:21:33 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.179 2021/03/15 12:15:03 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1516,7 +1516,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			DEBUG2(META, "%s: %d: cannot compare command using .OODATE\n",
 			       fname, lineno);
 		    }
-		    (void)Var_Subst(cmd, gn, VARE_WANTRES|VARE_UNDEFERR, &cmd);
+		    (void)Var_Subst(cmd, gn, VARE_UNDEFERR, &cmd);
 		    /* TODO: handle errors */
 
 		    if ((cp = strchr(cmd, '\n')) != NULL) {

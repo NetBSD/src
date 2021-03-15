@@ -1,4 +1,4 @@
-# $NetBSD: varmod-defined.mk,v 1.9 2020/11/12 00:40:55 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.10 2021/03/15 12:15:03 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
@@ -91,7 +91,7 @@ DEF=	defined
 # that they preserve dollars in a ':=' assignment.  This is because
 # ApplyModifier_Defined passes the eflags unmodified to Var_Parse, unlike
 # ApplyModifier_Loop, which uses ParseModifierPart, which in turn removes
-# VARE_KEEP_DOLLAR from eflags.
+# VarEvalFlags.keepDollar from eflags.
 #
 # XXX: This inconsistency is documented nowhere.
 .MAKEFLAGS: -dv

@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.10 2021/02/23 14:17:21 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.11 2021/03/15 12:15:03 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -124,9 +124,9 @@ mod-loop-dollar:
 # This string literal is written with 8 dollars, and this is saved as the
 # variable value.  But as soon as this value is evaluated, it goes through
 # Var_Subst, which replaces each '$$' with a single '$'.  This could be
-# prevented by VARE_KEEP_DOLLAR, but that flag is usually removed before
-# expanding subexpressions.  See ApplyModifier_Loop and ParseModifierPart
-# for examples.
+# prevented by VarEvalFlags.keepDollar, but that flag is usually removed
+# before expanding subexpressions.  See ApplyModifier_Loop and
+# ParseModifierPart for examples.
 #
 .MAKEFLAGS: -dcp
 USE_8_DOLLARS=	${:U1:@var@${8_DOLLARS}@} ${8_DOLLARS} $$$$$$$$
@@ -135,20 +135,20 @@ USE_8_DOLLARS=	${:U1:@var@${8_DOLLARS}@} ${8_DOLLARS} $$$$$$$$
 .endif
 #
 SUBST_CONTAINING_LOOP:= ${USE_8_DOLLARS}
-# The ':=' assignment operator evaluates the variable value using the flag
-# VARE_KEEP_DOLLAR, which means that some dollar signs are preserved, but not
-# all.  The dollar signs in the top-level expression and in the indirect
-# ${8_DOLLARS} are preserved.
+# The ':=' assignment operator evaluates the variable value using the mode
+# VARE_KEEP_DOLLAR_UNDEF, which means that some dollar signs are preserved,
+# but not all.  The dollar signs in the top-level expression and in the
+# indirect ${8_DOLLARS} are preserved.
 #
 # The variable modifier :@var@ does not preserve the dollar signs though, no
 # matter in which context it is evaluated.  What happens in detail is:
 # First, the modifier part "${8_DOLLARS}" is parsed without expanding it.
 # Next, each word of the value is expanded on its own, and at this moment
-# in ApplyModifier_Loop, the VARE_KEEP_DOLLAR flag is not passed down to
+# in ApplyModifier_Loop, the flag keepDollar is not passed down to
 # ModifyWords, resulting in "$$$$" for the first word of USE_8_DOLLARS.
 #
 # The remaining words of USE_8_DOLLARS are not affected by any variable
-# modifier and are thus expanded with the flag VARE_KEEP_DOLLAR in action.
+# modifier and are thus expanded with the flag keepDollar in action.
 # The variable SUBST_CONTAINING_LOOP therefore gets assigned the raw value
 # "$$$$ $$$$$$$$ $$$$$$$$".
 #

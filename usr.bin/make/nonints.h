@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.204 2021/03/15 11:41:07 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.205 2021/03/15 12:15:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -292,22 +292,25 @@ const char *GNodeMade_Name(GNodeMade);
 void Var_Init(void);
 void Var_End(void);
 
-typedef enum VarEvalFlags {
-	VARE_PARSE_ONLY		= 0,
+typedef struct VarEvalFlags {
 
 	/*
 	 * Expand and evaluate variables during parsing.
 	 *
+	 * Without this flag, the expression is only parsed, without
+	 * evaluating any part of it.
+	 *
 	 * TODO: Document what Var_Parse and Var_Subst return when this flag
-	 * is not set.
+	 *  is not set.  As of 2021-03-15, they return unspecified,
+	 *  inconsistent results.
 	 */
-	VARE_WANTRES		= 1 << 0,
+	Boolean wantRes: 1;
 
 	/*
 	 * Treat undefined variables as errors.
-	 * Must only be used in combination with VARE_WANTRES.
+	 * Must only be used in combination with wantRes.
 	 */
-	VARE_UNDEFERR		= 1 << 1,
+	Boolean undefErr: 1;
 
 	/*
 	 * Keep '$$' as '$$' instead of reducing it to a single '$'.
@@ -317,7 +320,7 @@ typedef enum VarEvalFlags {
 	 * expanding '$$file' to '$file' in the first assignment and
 	 * interpreting it as '${f}' followed by 'ile' in the next assignment.
 	 */
-	VARE_KEEP_DOLLAR	= 1 << 2,
+	Boolean keepDollar: 1;
 
 	/*
 	 * Keep undefined variables as-is instead of expanding them to an
@@ -330,8 +333,21 @@ typedef enum VarEvalFlags {
 	 *	# way) is still undefined, the updated CFLAGS becomes
 	 *	# "-I.. $(.INCLUDES)".
 	 */
-	VARE_KEEP_UNDEF		= 1 << 3
+	Boolean keepUndef: 1;
+
+	/*
+	 * Without this padding, GCC 9.3.0 on NetBSD 9.99.80 generates larger
+	 * code than necessary (1.2 kB), masking out the unused bits from the
+	 * int (since that is the default representation of Boolean in make),
+	 * even for initializers consisting entirely of constants.
+	 */
+	Boolean : 1;
 } VarEvalFlags;
+
+#define VARE_PARSE_ONLY	(VarEvalFlags) { FALSE, FALSE, FALSE, FALSE }
+#define VARE_WANTRES	(VarEvalFlags) { TRUE, FALSE, FALSE, FALSE }
+#define VARE_UNDEFERR	(VarEvalFlags) { TRUE, TRUE, FALSE, FALSE }
+#define VARE_KEEP_DOLLAR_UNDEF (VarEvalFlags) { TRUE, FALSE, TRUE, TRUE }
 
 typedef enum VarSetFlags {
 	VAR_SET_NONE		= 0,
@@ -361,7 +377,8 @@ typedef enum VarParseResult {
 	 * Some callers handle this case differently, so return this
 	 * information to them, for now.
 	 *
-	 * TODO: Replace this with a new flag VARE_KEEP_UNDEFINED.
+	 * TODO: Instead of having this special return value, rather ensure
+	 *  that VarEvalFlags.keepUndef is processed properly.
 	 */
 	VPR_UNDEF
 
