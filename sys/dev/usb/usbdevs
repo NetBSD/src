@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.792 2021/03/09 16:38:49 ryo Exp $
+$NetBSD: usbdevs,v 1.793 2021/03/15 07:29:26 nia Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1087,7 +1087,7 @@ product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 product BELKIN F5D7051		0x7051	F5D7051 54g USB Network Adapter
 product BELKIN F5D7050A		0x705a	F5D705A 54g USB Network Adapter
 product BELKIN F5D7050C		0x705c	F5D705C 54g USB Network Adapter
-product BELKIN F5D7050E		0x705c	F5D705E 54g USB Network Adapter
+product BELKIN F5D7050E		0x705e	F5D705E 54g USB Network Adapter
 product BELKIN RT2870_1		0x8053	RT2870
 product BELKIN RT2870_2		0x805c	RT2870
 product BELKIN F5D8053V3	0x815c	F5D8053 v3
