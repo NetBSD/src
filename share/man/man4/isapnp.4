@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.25 2021/02/26 11:12:45 nia Exp $
+.\"	$NetBSD: isapnp.4,v 1.26 2021/03/15 18:21:51 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -52,41 +52,41 @@ includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It aha
+.It Xr aha 4
 Adaptec AHA-154[02]
 .Tn SCSI
 interfaces.
-.It aic
+.It Xr aic 4
 Adaptec AHA-1520B
 .Tn SCSI
 interfaces.
 .El
 .Ss Disk controllers
 .Bl -tag -width pcdisplay -offset indent
-.It wdc
+.It Xr wdc 4
 Standard IDE and ATAPI drive controller.
 .El
 .Ss Serial and parallel interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It com
+.It Xr com 4
 8250/16450/16550-compatible ISA PnP serial cards and internal modems.
 .El
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
-.It an
+.It Xr an 4
 .Tn Aironet
 4500/4800 and
 .Tn Cisco
 340 series 802.11 interfaces.
-.It ep
+.It Xr ep 4
 3Com 3c509B EtherLink III
 .Tn Ethernet
 interface.
-.It le
+.It Xr le 4
 PCnet-PnP
 .Tn Ethernet
 interfaces based on the successor to the AMD LANCE chip.
-.It ne
+.It Xr ne 4
 NE2000-compatible
 .Tn Ethernet
 interfaces.
@@ -94,21 +94,21 @@ interfaces.
 .\"
 .Ss Sound cards
 .Bl -tag -width pcdisplay -offset indent
-.It ess
+.It Xr ess 4
 ESS Technology derived PnP sound cards and devices.
-.It guspnp
+.It Xr guspnp 4
 Gravis Ultrasound PnP sound cards.
-.It sb
+.It Xr sb 4
 SoundBlaster, SoundBlaster 16, and SoundBlaster Pro sound cards.
-.It wss
+.It Xr wss 4
 Windows Sound System compatible cards, e.g., most of the cards
 with Crystal Semiconductor chips.
-.It ym
+.It Xr ym 4
 Yamaha OPL3-SAx sound cards.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width pcdisplay -offset indent
-.It pcic
+.It Xr pcic 4
 .Tn PCI
 .Tn PCMCIA
 controllers, including the Cirrus Logic GD6729.
@@ -132,23 +132,9 @@ The manual pages for each individual
 driver also list
 the supported front-ends for other buses.
 .Sh SEE ALSO
-.Xr aha 4 ,
-.Xr aic 4 ,
-.Xr an 4 ,
-.Xr com 4 ,
-.Xr ep 4 ,
-.Xr ess 4 ,
-.Xr guspnp 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
-.Xr le 4 ,
-.Xr ne 4 ,
-.Xr pcic 4 ,
-.Xr sb 4 ,
-.Xr tr 4 ,
-.Xr wdc 4 ,
-.Xr wss 4 ,
-.Xr ym 4
+.Xr isapnp 9
 .Sh HISTORY
 The
 .Nm
