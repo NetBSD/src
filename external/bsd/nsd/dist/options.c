@@ -9,12 +9,14 @@
 #include "config.h"
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include "options.h"
 #include "query.h"
 #include "tsig.h"
 #include "difffile.h"
 #include "rrl.h"
+#include "bitset.h"
 
 #include "configyyrename.h"
 #include "configparser.h"
@@ -57,6 +59,7 @@ nsd_options_create(region_type* region)
 	opt->verbosity = 0;
 	opt->hide_version = 0;
 	opt->hide_identity = 0;
+	opt->drop_updates = 0;
 	opt->do_ip4 = 1;
 	opt->do_ip6 = 1;
 	opt->database = DBFILE;
@@ -64,12 +67,15 @@ nsd_options_create(region_type* region)
 	opt->version = 0;
 	opt->nsid = 0;
 	opt->logfile = 0;
+	opt->log_only_syslog = 0;
 	opt->log_time_ascii = 1;
 	opt->round_robin = 0; /* also packet.h::round_robin */
 	opt->minimal_responses = 0; /* also packet.h::minimal_responses */
 	opt->confine_to_zone = 0;
 	opt->refuse_any = 0;
 	opt->server_count = 1;
+	opt->cpu_affinity = NULL;
+	opt->service_cpu_affinity = NULL;
 	opt->tcp_count = 100;
 	opt->tcp_reject_overflow = 0;
 	opt->tcp_query_count = 0;
@@ -156,6 +162,20 @@ nsd_options_insert_pattern(struct nsd_options* opt,
 	return 1;
 }
 
+void
+warn_if_directory(const char* filetype, FILE* f, const char* fname)
+{
+	if(fileno(f) != -1) {
+		struct stat st;
+		memset(&st, 0, sizeof(st));
+		if(fstat(fileno(f), &st) != -1) {
+			if(S_ISDIR(st.st_mode)) {
+				log_msg(LOG_WARNING, "trying to read %s but it is a directory: %s", filetype, fname);
+			}
+		}
+	}
+}
+
 int
 parse_options_file(struct nsd_options* opt, const char* file,
 	void (*err)(void*,const char*), void* err_arg)
@@ -192,6 +212,7 @@ parse_options_file(struct nsd_options* opt, const char* file,
 		}
 		return 0;
 	}
+	warn_if_directory("configfile", in, file);
 	c_in = in;
 	c_parse();
 	fclose(in);
@@ -346,6 +367,7 @@ parse_zone_list_file(struct nsd_options* opt)
 	add foo.bar.nl slave
 	add rutabaga.uk config
 	*/
+	char hdr[64];
 	char buf[1024];
 	
 	/* create empty data structures */
@@ -364,15 +386,16 @@ parse_zone_list_file(struct nsd_options* opt)
 		return 0;
 	}
 	/* read header */
-	buf[strlen(ZONELIST_HEADER)] = 0;
-	if(fread(buf, 1, strlen(ZONELIST_HEADER), opt->zonelist) !=
-		strlen(ZONELIST_HEADER) || strncmp(buf, ZONELIST_HEADER,
+	hdr[strlen(ZONELIST_HEADER)] = 0;
+	if(fread(hdr, 1, strlen(ZONELIST_HEADER), opt->zonelist) !=
+		strlen(ZONELIST_HEADER) || strncmp(hdr, ZONELIST_HEADER,
 		strlen(ZONELIST_HEADER)) != 0) {
 		log_msg(LOG_ERR, "zone list %s contains bad header\n", opt->zonelistfile);
 		fclose(opt->zonelist);
 		opt->zonelist = NULL;
 		return 0;
 	}
+	buf[sizeof(buf)-1]=0;
 
 	/* read entries in file */
 	while(fgets(buf, sizeof(buf), opt->zonelist)) {
@@ -748,6 +771,16 @@ zone_options_create(region_type* region)
 /* true is booleans are the same truth value */
 #define booleq(x,y) ( ((x) && (y)) || (!(x) && !(y)) )
 
+/* true is min_expire_time_expr has either an equal known value
+ * or none of these known values but booleanally equal
+ */
+#define expire_expr_eq(x,y) (  (  (x) == REFRESHPLUSRETRYPLUS1 \
+                               && (y) == REFRESHPLUSRETRYPLUS1 ) \
+                            || (  (x) != REFRESHPLUSRETRYPLUS1 \
+                               && (y) != REFRESHPLUSRETRYPLUS1 \
+                               && booleq((x), (y))))
+
+
 int
 acl_equal(struct acl_options* p, struct acl_options* q)
 {
@@ -810,6 +843,8 @@ pattern_options_create(region_type* region)
 	p->max_retry_time_is_default = 1;
 	p->min_retry_time = 0;
 	p->min_retry_time_is_default = 1;
+	p->min_expire_time = 0;
+	p->min_expire_time_expr = EXPIRE_TIME_IS_DEFAULT;
 #ifdef RATELIMIT
 	p->rrl_whitelist = 0;
 #endif
@@ -941,6 +976,8 @@ copy_pat_fixed(region_type* region, struct pattern_options* orig,
 	orig->max_retry_time_is_default = p->max_retry_time_is_default;
 	orig->min_retry_time = p->min_retry_time;
 	orig->min_retry_time_is_default = p->min_retry_time_is_default;
+	orig->min_expire_time = p->min_expire_time;
+	orig->min_expire_time_expr = p->min_expire_time_expr;
 #ifdef RATELIMIT
 	orig->rrl_whitelist = p->rrl_whitelist;
 #endif
@@ -1027,6 +1064,9 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 	if(p->min_retry_time != q->min_retry_time) return 0;
 	if(!booleq(p->min_retry_time_is_default,
 		q->min_retry_time_is_default)) return 0;
+	if(p->min_expire_time != q->min_expire_time) return 0;
+	if(!expire_expr_eq(p->min_expire_time_expr,
+		q->min_expire_time_expr)) return 0;
 #ifdef RATELIMIT
 	if(p->rrl_whitelist != q->rrl_whitelist) return 0;
 #endif
@@ -1191,6 +1231,8 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_u8(b, p->max_retry_time_is_default);
 	marshal_u32(b, p->min_retry_time);
 	marshal_u8(b, p->min_retry_time_is_default);
+	marshal_u32(b, p->min_expire_time);
+	marshal_u8(b, p->min_expire_time_expr);
 	marshal_u8(b, p->multi_master_check);
 }
 
@@ -1223,6 +1265,8 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->max_retry_time_is_default = unmarshal_u8(b);
 	p->min_retry_time = unmarshal_u32(b);
 	p->min_retry_time_is_default = unmarshal_u8(b);
+	p->min_expire_time = unmarshal_u32(b);
+	p->min_expire_time_expr = unmarshal_u8(b);
 	p->multi_master_check = unmarshal_u8(b);
 	return p;
 }
@@ -1414,7 +1458,7 @@ acl_addr_matches_ipv6host(struct acl_options* acl, struct sockaddr_storage* addr
 			return 0;
 		break;
 	case acl_range_minmax:
-		if(!acl_addr_match_range((uint32_t*)&acl->addr.addr6, (uint32_t*)&addr->sin6_addr,
+		if(!acl_addr_match_range_v6((uint32_t*)&acl->addr.addr6, (uint32_t*)&addr->sin6_addr,
 			(uint32_t*)&acl->range_mask.addr6, sizeof(struct in6_addr)))
 			return 0;
 		break;
@@ -1442,7 +1486,7 @@ acl_addr_matches_ipv4host(struct acl_options* acl, struct sockaddr_in* addr, uns
 			return 0;
 		break;
 	case acl_range_minmax:
-		if(!acl_addr_match_range((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
+		if(!acl_addr_match_range_v4((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
 			(uint32_t*)&acl->range_mask.addr, sizeof(struct in_addr)))
 			return 0;
 		break;
@@ -1522,7 +1566,23 @@ acl_addr_match_mask(uint32_t* a, uint32_t* b, uint32_t* mask, size_t sz)
 }
 
 int
-acl_addr_match_range(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz)
+acl_addr_match_range_v4(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz)
+{
+	assert(sz == 4); (void)sz;
+	/* check treats x as one huge number */
+
+	/* if outside bounds, we are done */
+	if(*minval > *x)
+		return 0;
+	if(*maxval < *x)
+		return 0;
+
+	return 1;
+}
+
+#ifdef INET6
+int
+acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz)
 {
 	size_t i;
 	uint8_t checkmin = 1, checkmax = 1;
@@ -1550,6 +1610,7 @@ acl_addr_match_range(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz)
 	}
 	return 1;
 }
+#endif /* INET6 */
 
 int
 acl_key_matches(struct acl_options* acl, struct query* q)
@@ -1975,6 +2036,10 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 	if(!pat->min_retry_time_is_default) {
 		dest->min_retry_time = pat->min_retry_time;
 		dest->min_retry_time_is_default = 0;
+	}
+	if(!expire_time_is_default(pat->min_expire_time_expr)) {
+		dest->min_expire_time = pat->min_expire_time;
+		dest->min_expire_time_expr = pat->min_expire_time_expr;
 	}
 	dest->size_limit_xfr = pat->size_limit_xfr;
 #ifdef RATELIMIT

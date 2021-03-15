@@ -75,6 +75,11 @@ log_function_type log_file;
 log_function_type log_syslog;
 
 /*
+ * The function used to log to syslog only.
+ */
+log_function_type log_only_syslog;
+
+/*
  * Set the logging function to use (log_file or log_syslog).
  */
 void log_set_log_function(log_function_type *log_function);
@@ -143,6 +148,7 @@ void *xmallocarray(size_t num, size_t size);
 void *xalloc_zero(size_t size);
 void *xalloc_array_zero(size_t num, size_t size);
 void *xrealloc(void *ptr, size_t size);
+char *xstrdup(const char *src);
 
 /*
  * Mmap allocator routines.
@@ -224,9 +230,9 @@ static inline uint16_t
 read_uint16(const void *src)
 {
 #ifdef ALLOW_UNALIGNED_ACCESSES
-	return ntohs(* (uint16_t *) src);
+	return ntohs(* (const uint16_t *) src);
 #else
-	uint8_t *p = (uint8_t *) src;
+	const uint8_t *p = (const uint8_t *) src;
 	return (p[0] << 8) | p[1];
 #endif
 }
@@ -235,9 +241,9 @@ static inline uint32_t
 read_uint32(const void *src)
 {
 #ifdef ALLOW_UNALIGNED_ACCESSES
-	return ntohl(* (uint32_t *) src);
+	return ntohl(* (const uint32_t *) src);
 #else
-	uint8_t *p = (uint8_t *) src;
+	const uint8_t *p = (const uint8_t *) src;
 	return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
 #endif
 }
@@ -245,7 +251,7 @@ read_uint32(const void *src)
 static inline uint64_t
 read_uint64(const void *src)
 {
-	uint8_t *p = (uint8_t *) src;
+	const uint8_t *p = (const uint8_t *) src;
 	return
 	    ((uint64_t)p[0] << 56) |
 	    ((uint64_t)p[1] << 48) |
@@ -395,7 +401,7 @@ struct state_pretty_rr {
 struct state_pretty_rr* create_pretty_rr(struct region* region);
 /* print rr to file, returns 0 on failure(nothing is written) */
 int print_rr(FILE *out, struct state_pretty_rr* state, struct rr *record,
-	struct region* tmp_region, struct buffer* tmp_buffer); 
+	struct region* tmp_region, struct buffer* tmp_buffer);
 
 /*
  * Convert a numeric rcode value to a human readable string
@@ -428,5 +434,10 @@ int file_inside_chroot(const char* fname, const char* chr);
 
 /** Something went wrong, give error messages and exit. */
 void error(const char *format, ...) ATTR_FORMAT(printf, 1, 2) ATTR_NORETURN;
+
+#if HAVE_CPUSET_T
+int number_of_cpus(void);
+int set_cpu_affinity(cpuset_t *set);
+#endif
 
 #endif /* _UTIL_H_ */
