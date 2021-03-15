@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.8 2021/02/14 17:47:33 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.9 2021/03/15 20:00:50 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -221,7 +221,7 @@ _:=	before ${UNDEF:${:UZ}} after
 # the ':M' since that is not part of the text from the indirect modifier.
 #
 # Implementation detail: when ApplyModifiersIndirect calls ApplyModifiers
-# (which creates a new ApplyModifiersState containing a fresh separator),
+# (which creates a new ModChain containing a fresh separator),
 # the outer separator character is not passed by reference to the inner
 # evaluation, therefore the scope of the inner separator ends after applying
 # the modifier ':ts*'.
