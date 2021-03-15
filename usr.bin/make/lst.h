@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.96 2021/02/01 18:55:15 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.97 2021/03/15 16:06:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -118,15 +118,17 @@ void Lst_Free(List *);
 MAKE_INLINE void
 Lst_Init(List *list)
 {
-    list->first = NULL;
-    list->last = NULL;
+	list->first = NULL;
+	list->last = NULL;
 }
 
 /* Get information about a list */
 
 MAKE_INLINE Boolean
 Lst_IsEmpty(List *list)
-{ return list->first == NULL; }
+{
+	return list->first == NULL;
+}
 
 /* Find the first node that contains the given datum, or NULL. */
 ListNode *Lst_FindDatum(List *, const void *);
