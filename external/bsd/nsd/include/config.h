@@ -10,11 +10,17 @@
 /* NSD default chroot directory */
 #define CHROOTDIR "/var/chroot/nsd"
 
+/* Command line arguments used with configure */
+#define CONFCMDLINE ""
+
 /* NSD config dir */
 #define CONFIGDIR CHROOTDIR "/etc/nsd"
 
 /* Pathname to the NSD configuration file */
 #define CONFIGFILE CHROOTDIR "/etc/nsd/nsd.conf"
+
+/* number of arguments for CPU_OR is three */
+/* #undef CPU_OR_THREE_ARGS */
 
 /* Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work
    */
@@ -27,7 +33,7 @@
 /* #undef DNSTAP_SOCKET_PATH */
 
 /* Define to the default maximum message length with EDNS. */
-#define EDNS_MAX_MESSAGE_LEN 4096
+#define EDNS_MAX_MESSAGE_LEN 1232
 
 /* Define to the default facility for syslog. */
 #define FACILITY LOG_DAEMON
@@ -74,11 +80,24 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #define HAVE_CLOCK_GETTIME 1
 
+/* Define to 1 if the system has the type `cpuid_t'. */
+#define HAVE_CPUID_T 1
+
+/* Define to 1 if the system has the type `cpuset_t'. */
+/* #undef HAVE_CPUSET_T */
+
+/* Define to 1 if the system has the type `cpu_set_t'. */
+/* #undef HAVE_CPU_SET_T */
+
 /* Define to 1 if you have the `CRYPTO_memcmp' function. */
 #define HAVE_CRYPTO_MEMCMP 1
 
 /* if time.h provides ctime_r prototype */
 #define HAVE_CTIME_R_PROTO 1
+
+/* Define to 1 if you have the declaration of `reallocarray', and to 0 if you
+   don't. */
+#define HAVE_DECL_REALLOCARRAY 0
 
 /* Define to 1 if you have the declaration of `SSL_CTX_set_ecdh_auto', and to
    0 if you don't. */
@@ -121,6 +140,12 @@
 /* Define to 1 if you have the `EVP_cleanup' function. */
 /* #undef HAVE_EVP_CLEANUP */
 
+/* Define to 1 if you have the `EVP_MAC_CTX_new' function. */
+/* #undef HAVE_EVP_MAC_CTX_NEW */
+
+/* Define to 1 if you have the `EVP_MAC_CTX_set_params' function. */
+/* #undef HAVE_EVP_MAC_CTX_SET_PARAMS */
+
 /* Define to 1 if you have the `ev_default_loop' function. */
 /* #undef HAVE_EV_DEFAULT_LOOP */
 
@@ -148,11 +173,17 @@
 /* Define to 1 if you have the `gethostname' function. */
 #define HAVE_GETHOSTNAME 1
 
+/* Define to 1 if you have the `getifaddrs' function. */
+#define HAVE_GETIFADDRS 1
+
 /* Define to 1 if you have the `getnameinfo' function. */
 #define HAVE_GETNAMEINFO 1
 
 /* Define to 1 if you have the `getpwnam' function. */
 #define HAVE_GETPWNAM 1
+
+/* Define to 1 if you have the `getrandom' function. */
+#define HAVE_GETRANDOM 1
 
 /* Define to 1 if you have the `glob' function. */
 #define HAVE_GLOB 1
@@ -230,6 +261,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #define HAVE_NETINET_TCP_H 1
 
+/* Define to 1 if you have the <openssl/core_names.h> header file. */
+/* #undef HAVE_OPENSSL_CORE_NAMES_H */
+
 /* Define to 1 if you have the <openssl/err.h> header file. */
 #define HAVE_OPENSSL_ERR_H 1
 
@@ -266,8 +300,17 @@
 /* Define if recvmmsg is implemented */
 #define HAVE_RECVMMSG 1
 
+/* Define to 1 if you have the <sched.h> header file. */
+#define HAVE_SCHED_H 1
+
+/* Define this if sched_setaffinity is available */
+/* #undef HAVE_SCHED_SETAFFINITY */
+
 /* Define if sendmmsg is implemented */
 #define HAVE_SENDMMSG 1
+
+/* Define to 1 if you have the `setproctitle' function. */
+#define HAVE_SETPROCTITLE 1
 
 /* Define to 1 if you have the `setregid' function. */
 #define HAVE_SETREGID 1
@@ -365,17 +408,29 @@
 /* If time.h has a struct timespec (for pselect). */
 #define HAVE_STRUCT_TIMESPEC 1
 
+/* Define to 1 if you have the `sysconf' function. */
+/* #undef HAVE_SYSCONF */
+
 /* Define to 1 if you have the <syslog.h> header file. */
 #define HAVE_SYSLOG_H 1
 
+/* Define to 1 if systemd should be used */
+/* #undef HAVE_SYSTEMD */
+
 /* Define to 1 if you have the <sys/bitypes.h> header file. */
 /* #undef HAVE_SYS_BITYPES_H */
+
+/* Define to 1 if you have the <sys/cpuset.h> header file. */
+/* #undef HAVE_SYS_CPUSET_H */
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 /* #undef HAVE_SYS_MMAN_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
+
+/* Define to 1 if you have the <sys/random.h> header file. */
+#define HAVE_SYS_RANDOM_H 1
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #define HAVE_SYS_SELECT_H 1
@@ -478,7 +533,7 @@
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.2.4"
+#define PACKAGE_STRING "NSD 4.3.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -487,7 +542,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.4"
+#define PACKAGE_VERSION "4.3.5"
 
 /* Define this to use packed structure alignment. */
 /* #undef PACKED_STRUCTS */
@@ -501,7 +556,11 @@
 /* Define this to set ratelimit to off by default. */
 /* #undef RATELIMIT_DEFAULT_OFF */
 
-/* Define as the return type of signal handlers (`int' or `void'). */
+/* If reallocarray needs defines to appear in the headers */
+#define REALLOCARRAY_NEEDS_DEFINES 1
+
+/* Return type of signal handlers, but autoconf 2.70 says 'your code may
+   safely assume C89 semantics that RETSIGTYPE is void.' */
 #define RETSIGTYPE void
 
 /* Define this to configure as a root server. */
@@ -711,7 +770,7 @@
 /* define before includes as it specifies what standard to use. */
 #if (defined(HAVE_PSELECT) && !defined (HAVE_PSELECT_PROTO)) \
 	|| !defined (HAVE_CTIME_R_PROTO) \
-	|| defined (STRPTIME_NEEDS_DEFINES)
+	|| defined (STRPTIME_NEEDS_DEFINES) || defined(REALLOCARRAY_NEEDS_DEFINES)
 #  ifndef _XOPEN_SOURCE
 #    define _XOPEN_SOURCE 600
 #  endif
@@ -729,7 +788,7 @@
 #  endif
 #  ifndef __EXTENSIONS__
 #    define __EXTENSIONS__ 1
-#  endif 
+#  endif
 #  ifndef _STDC_C99
 #    define _STDC_C99 1
 #  endif
@@ -750,10 +809,8 @@
 
 
 #include <sys/types.h>
-#if STDC_HEADERS
 #include <stdlib.h>
 #include <stddef.h>
-#endif
 
 #ifdef HAVE_TIME_H
 #include <time.h>
@@ -859,12 +916,22 @@ void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #endif
 #ifndef HAVE_STRPTIME
 #define HAVE_STRPTIME 1
-char *strptime(const char *s, const char *format, struct tm *tm); 
+char *strptime(const char *s, const char *format, struct tm *tm);
 #endif
 #ifndef STRPTIME_WORKS
 #define STRPTIME_WORKS 1
-char *nsd_strptime(const char *s, const char *format, struct tm *tm); 
+char *nsd_strptime(const char *s, const char *format, struct tm *tm);
 #define strptime(a,b,c) nsd_strptime((a),(b),(c))
+#endif
+#if (HAVE_CPU_SET_T || HAVE_CPUSET_T)
+#include "compat/cpuset.h"
+#endif
+#ifndef HAVE_SETPROCTITLE
+#ifdef __linux__
+#define HAVE_SETPROCTITLE 1
+#include <stdarg.h>
+void setproctitle(const char *fmt, ...);
+#endif
 #endif
 
 

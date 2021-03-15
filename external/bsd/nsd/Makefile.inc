@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2019/02/14 14:40:07 prlw1 Exp $
+# $NetBSD: Makefile.inc,v 1.7 2021/03/15 19:48:51 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ USE_FORT?= yes  # network client/server
 
 NSD:=${.PARSEDIR}/dist
 
-CPPFLAGS+=-D_OPENBSD_SOURCE
+CPPFLAGS+=-D_OPENBSD_SOURCE -D_NETBSD_SOURCE
 CPPFLAGS+=-I${NSD} -I${NSD}/../include
 .PATH: ${NSD}
 
