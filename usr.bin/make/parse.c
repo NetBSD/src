@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.550 2021/02/22 23:21:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.551 2021/03/15 11:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.550 2021/02/22 23:21:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.551 2021/03/15 11:41:07 rillig Exp $");
 
 /* types and constants */
 
@@ -1042,8 +1042,8 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
 			const char *nested_p = cp;
 			FStr nested_val;
 
-			(void)Var_Parse(&nested_p, SCOPE_CMDLINE, VARE_NONE,
-			    &nested_val);
+			(void)Var_Parse(&nested_p, SCOPE_CMDLINE,
+			    VARE_PARSE_ONLY, &nested_val);
 			/* TODO: handle errors */
 			FStr_Done(&nested_val);
 			cp += nested_p - cp;
@@ -1874,7 +1874,7 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *scope)
 		if (type != VAR_SUBST && strchr(uvalue, '$') != NULL) {
 			char *expandedValue;
 
-			(void)Var_Subst(uvalue, scope, VARE_NONE,
+			(void)Var_Subst(uvalue, scope, VARE_PARSE_ONLY,
 			    &expandedValue);
 			/* TODO: handle errors */
 			free(expandedValue);
