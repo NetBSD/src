@@ -1,4 +1,4 @@
-Id
+$Id: REQUIREMENTS,v 1.1.1.6 2021/03/15 18:38:58 christos Exp $
 
 
 NSD Requirements and Specifications
@@ -1053,5 +1053,5 @@ Appendix D. Changes to this file.
 - KEY->DNSKEY, SIG->RRSIG in the text, dnssec-bis style.
 
 ______________________________________________________________________
-Id
+$Id: REQUIREMENTS,v 1.1.1.6 2021/03/15 18:38:58 christos Exp $
 

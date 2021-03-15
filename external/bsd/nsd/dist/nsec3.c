@@ -119,6 +119,7 @@ nsec3_hash_and_store(zone_type* zone, const dname_type* dname, uint8_t* store)
 
 	detect_nsec3_params(zone->nsec3_param, &nsec3_salt,
 		&nsec3_saltlength, &nsec3_iterations);
+	assert(nsec3_iterations >= 0 && nsec3_iterations <= 65536);
 	iterated_hash((unsigned char*)store, nsec3_salt, nsec3_saltlength,
 		dname_name(dname), dname->name_size, nsec3_iterations);
 }
@@ -393,6 +394,31 @@ nsec3_chain_find_prev(struct zone* zone, struct domain* domain)
 	if(zone->nsec3_last)
 		return zone->nsec3_last;
 	return NULL;
+}
+
+
+/** clear hash tree. Called from nsec3_clear_precompile() only. */
+static void
+hash_tree_clear(rbtree_type* tree)
+{
+	if(!tree) return;
+
+	/* Previously (before commit 4ca61188b3f7a0e077476875810d18a5d439871f
+	 * and/or svn commit 4776) prehashes and corresponding rbtree nodes
+	 * were part of struct nsec3_domain_data. Clearing the hash_tree would
+	 * then mean setting the key value of the nodes to NULL to indicate
+	 * absence of the prehash.
+	 * But since prehash structs are separatly allocated, this is no longer
+	 * necessary as currently the prehash structs are simply recycled and 
+	 * NULLed.
+	 *
+	 * rbnode_type* n;
+	 * for(n=rbtree_first(tree); n!=RBTREE_NULL; n=rbtree_next(n)) {
+	 *	n->key = NULL;
+	 * }
+	 */
+	tree->count = 0;
+	tree->root = RBTREE_NULL;
 }
 
 void
@@ -1051,6 +1077,17 @@ nsec3_answer_nodata(struct query* query, struct answer* answer,
 		}
 		/* query->zone must be the parent zone */
 		nsec3_add_ds_proof(query, answer, original, 0);
+		/* if the DS is from a wildcard match */
+		if (original==original->wildcard_child_closest_match
+			&& label_is_wildcard(dname_name(domain_dname(original)))) {
+			/* denial for wildcard is already there */
+			/* add parent proof to have a closest encloser proof for wildcard parent */
+			/* in other words: nsec3 matching closest encloser */
+			if(original->parent && original->parent->nsec3 &&
+				original->parent->nsec3->nsec3_is_exact)
+				nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+					original->parent->nsec3->nsec3_cover);
+		}
 	}
 	/* the nodata is result from a wildcard match */
 	else if (original==original->wildcard_child_closest_match

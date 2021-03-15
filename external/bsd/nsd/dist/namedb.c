@@ -289,21 +289,6 @@ domain_table_deldomain(namedb_type* db, domain_type* domain)
 	}
 }
 
-/** clear hash tree */
-void
-hash_tree_clear(rbtree_type* tree)
-{
-	rbnode_type* n;
-	if(!tree) return;
-
-	/* note that elements are no longer in the tree */
-	for(n=rbtree_first(tree); n!=RBTREE_NULL; n=rbtree_next(n)) {
-		n->key = NULL;
-	}
-	tree->count = 0;
-	tree->root = RBTREE_NULL;
-}
-
 void hash_tree_delete(region_type* region, rbtree_type* tree)
 {
 	region_recycle(region, tree, sizeof(rbtree_type));
@@ -316,7 +301,9 @@ void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 {
 	if(!*tree)
 		*tree = rbtree_create(region, cmpf);
-	if(node->key) return;
+	if(node->key && node->key == domain
+	&& rbtree_search(*tree, domain) == node)
+		return;
 	memset(node, 0, sizeof(rbnode_type));
 	node->key = domain;
 	rbtree_insert(*tree, node);
@@ -700,4 +687,66 @@ namedb_lookup(struct namedb* db,
 {
 	return domain_table_search(
 		db->domains, dname, closest_match, closest_encloser);
+}
+
+void zone_rr_iter_init(struct zone_rr_iter *iter, struct zone *zone)
+{
+	assert(iter != NULL);
+	assert(zone != NULL);
+	memset(iter, 0, sizeof(*iter));
+	iter->zone = zone;
+}
+
+rr_type *zone_rr_iter_next(struct zone_rr_iter *iter)
+{
+	assert(iter != NULL);
+	assert(iter->zone != NULL);
+
+	if(iter->index == -1) {
+		assert(iter->domain == NULL);
+		assert(iter->rrset == NULL);
+		return NULL;
+	} else if(iter->rrset == NULL) {
+		/* ensure SOA RR is returned first */
+		assert(iter->domain == NULL);
+		assert(iter->index == 0);
+		iter->rrset = iter->zone->soa_rrset;
+	}
+
+	while(iter->rrset != NULL) {
+		if(iter->index < iter->rrset->rr_count) {
+			return &iter->rrset->rrs[iter->index++];
+		}
+		iter->index = 0;
+		if(iter->domain == NULL) {
+			assert(iter->rrset == iter->zone->soa_rrset);
+			iter->domain = iter->zone->apex;
+			iter->rrset = iter->domain->rrsets;
+		} else {
+			iter->rrset = iter->rrset->next;
+		}
+		/* ensure SOA RR is not returned again and RR belongs to zone */
+		while((iter->rrset == NULL && iter->domain != NULL) ||
+		      (iter->rrset != NULL && (iter->rrset == iter->zone->soa_rrset ||
+		                               iter->rrset->zone != iter->zone)))
+		{
+			if(iter->rrset != NULL) {
+				iter->rrset = iter->rrset->next;
+			} else {
+				iter->domain = domain_next(iter->domain);
+				if(iter->domain != NULL &&
+				   dname_is_subdomain(domain_dname(iter->domain),
+				                      domain_dname(iter->zone->apex)))
+				{
+					iter->rrset = iter->domain->rrsets;
+				}
+			}
+		}
+	}
+
+	assert(iter->rrset == NULL);
+	assert(iter->domain == NULL);
+	iter->index = -1;
+
+	return NULL;
 }

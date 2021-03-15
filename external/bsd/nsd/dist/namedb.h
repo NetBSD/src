@@ -231,7 +231,6 @@ void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 	int (*cmpf)(const void*, const void*), domain_type* domain,
 	rbnode_type* node);
 void zone_del_domain_in_hash_tree(rbtree_type* tree, rbnode_type* node);
-void hash_tree_clear(rbtree_type* tree);
 void hash_tree_delete(region_type* region, rbtree_type* tree);
 void prehash_clear(domain_table_type* table);
 void prehash_add(domain_table_type* table, domain_type* domain);
@@ -443,4 +442,21 @@ rrset_rrclass(rrset_type* rrset)
 	return rrset->rrs[0].klass;
 }
 
-#endif
+/*
+ * zone_rr_iter can be used to iterate over all RRs in a given zone. the
+ * SOA RRSET is guaranteed to be returned first.
+ */
+typedef struct zone_rr_iter zone_rr_iter_type;
+
+struct zone_rr_iter {
+	zone_type *zone;
+	domain_type *domain;
+	rrset_type *rrset;
+	ssize_t index;
+};
+
+void zone_rr_iter_init(zone_rr_iter_type *iter, zone_type *zone);
+
+rr_type *zone_rr_iter_next(zone_rr_iter_type *iter);
+
+#endif /* _NAMEDB_H_ */

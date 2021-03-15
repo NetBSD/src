@@ -10,7 +10,6 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include "config.h"
 #include <stdarg.h>
 #include "region-allocator.h"
 #include "rbtree.h"
@@ -23,10 +22,14 @@ struct nsd;
 typedef struct nsd_options nsd_options_type;
 typedef struct pattern_options pattern_options_type;
 typedef struct zone_options zone_options_type;
+typedef struct range_option range_option_type;
 typedef struct ip_address_option ip_address_option_type;
+typedef struct cpu_option cpu_option_type;
+typedef struct cpu_map_option cpu_map_option_type;
 typedef struct acl_options acl_options_type;
 typedef struct key_options key_options_type;
 typedef struct config_parser_state config_parser_state_type;
+
 /*
  * Options global for nsd.
  */
@@ -67,13 +70,17 @@ struct nsd_options {
 	int verbosity;
 	int hide_version;
 	int hide_identity;
+	int drop_updates;
 	int do_ip4;
 	int do_ip6;
 	const char* database;
 	const char* identity;
 	const char* version;
 	const char* logfile;
+	int log_only_syslog;
 	int server_count;
+	struct cpu_option* cpu_affinity;
+	struct cpu_map_option* service_cpu_affinity;
 	int tcp_count;
 	int tcp_reject_overflow;
 	int confine_to_zone;
@@ -159,10 +166,41 @@ struct nsd_options {
 	region_type* region;
 };
 
+struct range_option {
+	struct range_option* next;
+	int first;
+	int last;
+};
+
 struct ip_address_option {
 	struct ip_address_option* next;
 	char* address;
+	struct range_option* servers;
+	int dev;
+	int fib;
 };
+
+struct cpu_option {
+	struct cpu_option* next;
+	int cpu;
+};
+
+struct cpu_map_option {
+	struct cpu_map_option* next;
+	int service;
+	int cpu;
+};
+
+/*
+ * Defines for min_expire_time_expr value
+ */
+#define EXPIRE_TIME_HAS_VALUE     0
+#define EXPIRE_TIME_IS_DEFAULT    1
+#define REFRESHPLUSRETRYPLUS1     2
+#define REFRESHPLUSRETRYPLUS1_STR "refresh+retry+1"
+#define expire_time_is_default(x) (!(  (x) == REFRESHPLUSRETRYPLUS1 \
+                                    || (x) == EXPIRE_TIME_HAS_VALUE ))
+
 
 /*
  * Pattern of zone options, used to contain options for zone(s).
@@ -194,6 +232,12 @@ struct pattern_options {
 	uint8_t max_retry_time_is_default;
 	uint32_t min_retry_time;
 	uint8_t min_retry_time_is_default;
+	uint32_t min_expire_time;
+	/* min_expir_time_expr is either a known value (REFRESHPLUSRETRYPLUS1
+	 * or EXPIRE_EXPR_HAS_VALUE) or else min_expire_time is the default.
+	 * This can be tested with expire_time_is_default(x) define.
+	 */
+	uint8_t min_expire_time_expr;
 	uint64_t size_limit_xfr;
 	uint8_t multi_master_check;
 } ATTR_PACKED;
@@ -300,12 +344,10 @@ struct config_parser_state {
 	int line;
 	int errors;
 	struct nsd_options* opt;
-	/* pointer to memory where options for the configuration block that is
-	   currently parsed must be stored. memory is dynamically allocated,
-	   the block is promoted once it is closed. */
 	struct pattern_options *pattern;
 	struct zone_options *zone;
 	struct key_options *key;
+	struct ip_address_option *ip;
 	void (*err)(void*,const char*);
 	void* err_arg;
 };
@@ -387,7 +429,8 @@ int acl_addr_matches_host(struct acl_options* acl, struct acl_options* host);
 int acl_addr_matches(struct acl_options* acl, struct query* q);
 int acl_key_matches(struct acl_options* acl, struct query* q);
 int acl_addr_match_mask(uint32_t* a, uint32_t* b, uint32_t* mask, size_t sz);
-int acl_addr_match_range(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
+int acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
+int acl_addr_match_range_v4(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
 
 /* returns true if acls are both from the same host */
 int acl_same_host(struct acl_options* a, struct acl_options* b);
@@ -424,5 +467,9 @@ void nsd_options_destroy(struct nsd_options* opt);
 void replace_str(char* buf, size_t len, const char* one, const char* two);
 /* apply pattern to the existing pattern in the parser */
 void config_apply_pattern(struct pattern_options *dest, const char* name);
+/* if the file is a directory, print a warning, because flex just exit()s
+ * when a fileread fails because it is a directory, helps the user figure
+ * out what just happened */
+void warn_if_directory(const char* filetype, FILE* f, const char* fname);
 
 #endif /* OPTIONS_H */

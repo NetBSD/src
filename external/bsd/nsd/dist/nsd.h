@@ -11,12 +11,21 @@
 #define	_NSD_H_
 
 #include <signal.h>
+#include <net/if.h>
+#ifndef IFNAMSIZ
+#  ifdef IF_NAMESIZE
+#    define IFNAMSIZ IF_NAMESIZE
+#  else
+#    define IFNAMSIZ 16
+#  endif
+#endif
 #ifdef HAVE_OPENSSL_SSL_H
 #include <openssl/ssl.h>
 #endif
 
 #include "dns.h"
 #include "edns.h"
+#include "bitset.h"
 struct netio_handler;
 struct nsd_options;
 struct udb_base;
@@ -111,6 +120,7 @@ typedef	unsigned long stc_type;
 #endif /* USE_ZONE_STATS */
 
 #define NSD_SOCKET_IS_OPTIONAL (1<<0)
+#define NSD_BIND_DEVICE (1<<1)
 
 struct nsd_addrinfo
 {
@@ -123,14 +133,22 @@ struct nsd_addrinfo
 
 struct nsd_socket
 {
-	struct nsd_addrinfo	addr;
-	int			s;
-	int			flags;
+	struct nsd_addrinfo addr;
+	int s;
+	int flags;
+	struct nsd_bitset *servers;
+	char device[IFNAMSIZ];
+	int fib;
 };
 
 struct nsd_child
 {
-	 /* The type of child process (UDP or TCP handler). */
+#ifdef HAVE_CPUSET_T
+	/* Processor(s) that child process must run on (if applicable). */
+	cpuset_t *cpuset;
+#endif
+
+	/* The type of child process (UDP or TCP handler). */
 	int kind;
 
 	/* The child's process id.  */
@@ -223,6 +241,12 @@ struct	nsd
 	unsigned char		*nsid;
 	uint8_t 		file_rotation_ok;
 
+#ifdef HAVE_CPUSET_T
+	int			use_cpu_affinity;
+	cpuset_t*		cpuset;
+	cpuset_t*		xfrd_cpuset;
+#endif
+
 	/* number of interfaces */
 	size_t	ifs;
 	/* non0 if so_reuseport is in use, if so, tcp, udp array increased */
@@ -313,6 +337,8 @@ void server_main(struct nsd *nsd);
 void server_child(struct nsd *nsd);
 void server_shutdown(struct nsd *nsd) ATTR_NORETURN;
 void server_close_all_sockets(struct nsd_socket sockets[], size_t n);
+const char* nsd_event_vs(void);
+const char* nsd_event_method(void);
 struct event_base* nsd_child_event_base(void);
 void service_remaining_tcp(struct nsd* nsd);
 /* extra domain numbers for temporary domains */

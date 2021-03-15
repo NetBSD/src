@@ -210,19 +210,19 @@ static void read_zone_recurse(udb_base* udb, namedb_type* db,
 		/* pre-order process of node->elem, for radix tree this is
 		 * also in-order processing (identical to order tree_next()) */
 		read_node_elem(udb, db, dname_region, zone, (struct domain_d*)
-			(udb->base + node->elem.data));
+			((char*)udb->base + node->elem.data));
 	}
 	if(node->lookup.data) {
 		uint16_t i;
 		struct udb_radarray_d* a = (struct udb_radarray_d*)
-			(udb->base + node->lookup.data);
+			((char*)udb->base + node->lookup.data);
 		/* we do not care for what the exact radix key is, we want
 		 * to add all of them and the read routine does not need
 		 * the radix-key, it has it stored */
 		for(i=0; i<a->len; i++) {
 			if(a->array[i].node.data) {
 				read_zone_recurse(udb, db, dname_region, zone,
-					(struct udb_radnode_d*)(udb->base +
+					(struct udb_radnode_d*)((char*)udb->base +
 						a->array[i].node.data));
 			}
 		}
@@ -240,7 +240,7 @@ read_zone_data(udb_base* udb, namedb_type* db, region_type* dname_region,
 	if(RADTREE(&dtree)->root.data)
 		read_zone_recurse(udb, db, dname_region, zone,
 			(struct udb_radnode_d*)
-			(udb->base + RADTREE(&dtree)->root.data));
+			((char*)udb->base + RADTREE(&dtree)->root.data));
 	udb_ptr_unlink(&dtree, udb);
 }
 
@@ -391,13 +391,13 @@ try_read_udb(namedb_type* db, int fd, const char* filename,
 	if(!(db->udb=udb_base_create_fd(filename, fd, &namedb_walkfunc,
 		NULL))) {
 		/* fd is closed by failed udb create call */
-		VERBOSITY(1, (LOG_WARNING, "can not use %s, "
+		VERBOSITY(1, (LOG_ERR, "can not use %s, "
 			"will create anew", filename));
 		return 0;
 	}
 	/* sanity check if can be opened */
 	if(udb_base_get_userflags(db->udb) != 0) {
-		log_msg(LOG_WARNING, "%s was not closed properly, it might "
+		log_msg(LOG_ERR, "%s was not closed properly, it might "
 			"be corrupted, will create anew", filename);
 		udb_base_free(db->udb);
 		db->udb = NULL;
@@ -527,6 +527,7 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 	mtime.tv_sec = 0;
 	mtime.tv_nsec = 0;
 	fname = config_make_zonefile(zone->opts, nsd);
+	assert(fname);
 	if(!file_get_mtime(fname, &mtime, &nonexist)) {
 		if(nonexist) {
 			VERBOSITY(2, (LOG_INFO, "zonefile %s does not exist",
@@ -559,8 +560,7 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 
 		/* if zone_fname, then the file was acquired from reading it,
 		 * and see if filename changed or mtime newer to read it */
-		} else if(zone_fname && fname &&
-		   strcmp(zone_fname, fname) == 0 &&
+		} else if(zone_fname && strcmp(zone_fname, fname) == 0 &&
 		   timespec_compare(&zone_mtime, &mtime) == 0) {
 			VERBOSITY(3, (LOG_INFO, "zonefile %s is not modified",
 				fname));

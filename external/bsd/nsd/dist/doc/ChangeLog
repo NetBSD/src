@@ -1,8 +1,392 @@
+19 January 2021: Wouter
+	- Set branch ready for 4.3.5 release.
+
+15 January 2021: Wouter
+	- Fix #152: '*' in Rdata causes the return code to be NOERROR instead
+	  of NX.
+	- Add config.guess and config.sub to .gitignore for autoconf 2.70.
+	- Fix #150: TXT record validation difference with BIND.
+	- Fixup TXT record validation fix for escaped quotes.
+	- Fixup TXT record validation fix for escaped backslashes.
+	- Fixup escape character parse for quoted strings.
+
+11 January 2021: Wouter
+	- Fix #151: DNAME not applied more than once to resolve the query.
+	- Fix dname test for #148.
+	- For #151: fix to not produce loops in output.
+
+5 January 2021: Wouter
+	- Fix configure.ac for autoconf 2.70.
+
+4 January 2021: Wouter
+	- Fix #148: CNAME need not be followed after a synthesized CNAME
+	  for a CNAME query.
+
+11 December 2020: Wouter
+	- Fix that nsd-control has timeout when connection is down.
+	- remove windows socket ifdefs from nsd-control.
+
+3 December 2020: Wouter
+	- For #145: Fix that service of remaining TCP and TLS connections
+	  does not allow new queries to be made, the connection is closed.
+	  Only existing queries and zone transfers are answered, new ones
+	  are rejected by a close of the channel.
+
+30 November 2020: Wouter
+	- Fix #144: fix better.
+
+27 November 2020: Wouter
+	- Fix #144: Typo fix in nsd.conf.5.in.
+
+26 November 2020: Wouter
+	- Fix #143: xfrd no hysteresis with NOT IMPLEMENTED rcode.
+
+24 November 2020: Wouter
+	- Merge PR #141: ZONEMD RR type.
+	- tag for 4.3.4rc1.  This became 4.3.4 release on 1 dec 2020.
+	  The code repo continues for 4.3.5 in development.
+
+23 November 2020: Wouter
+	- Fix #142: NODATA answers missin SOA in authority section after
+	  CNAME chain.
+	- Fix for CVE-2020-28935 : Fix that symlink does not interfere
+	  with chown of pidfile.
+	- fix writepid for retvalue 0.
+
+9 November 2020: Wouter
+	- Fix #138: NSD returns non-EDNS answer when QUESTION is empty.
+	- Fix to check nscount in previous fix for EDNS in formerr response
+	  when there is no question.
+
+28 October 2020: Wouter
+	- Remove unused init_cfg_parse routine from configlexer.
+
+20 October 2020: Wouter
+	- Fix to add missing closest encloser NSEC3 for wildcard nodata type
+	  DS answer.
+
+14 October 2020: Wouter
+	- Fix #134: IPV4_MINIMAL_RESPONSE_SIZE vs EDNS_MAX_MESSAGE_LEN.
+
+13 October 2020: Wouter
+	- Fix missing parenthesis on size of fix to init buffer.
+
+12 October 2020: Wouter
+	- Fix #127: two minor `-Wcast-qual` cleanups
+	- Fix #126: minor header hygiene
+	- Fix #125: include config.h in compat/setproctitle.c and fix prototype of `setproctitle`
+	- Fix #133: fix 0-init of local ( stack ) buffer.
+
+8 October 2020: Wouter
+	- tag for 4.3.3 release
+	- current repository contains 4.3.4 in development.
+	- Fix #129: ambiguous use of errno, in log message if sendmmsg fails.
+	- Fix #128: Fix that the invalid port number is logged for sendmmsg
+	  failed: Invalid argument.
+
+1 October 2020: Wouter
+	- tag for 4.3.3rc1 release.
+
+30 September 2020: Wouter
+	- Updated date in nsd -v output.
+	- Fixup bug013_truncate, checkconf and cutest_qroot tests for new
+	  default EDNS size.
+
+29 September 2020: Willem
+	- Follow DNS flag day 2020 advice and
+	  set default EDNS message size to 1232.
+
+4 September 2020: Wouter
+	- Remove unused space from LIBS on link line.
+
+3 September 2020: Wouter
+	- Merge PR #121: Increase log level of recreated database from
+	  WARNING to ERR.
+
+1 September 2020: Wouter
+	- Fix #119: fix compile warnings from new gcc.
+	- Fix #119: warn when trying to parse a directory.
+
+27 August 2020: Wouter
+	- Merged PR #113 with fixes.  Instead of listing an IP-address to
+	  listen on, an interface name can be specified in nsd.conf, with
+	  ip-address: eth0.  The IP-addresses for that interface are then used.
+
+26 August 2020: Wouter
+	- Add xstrdup for PR #113.
+	- Tidy up code like in PR #113.
+	- Import code from PR #113.
+	- Fix for unknown EVP_MAC_CTX_free function in openssl 3.0.0 tsig code.
+
+24 August 2020: Wouter
+	- Fix that configure checks for EVP_sha256 to detect openssl, because
+	  HMAC_CTX_new is deprecated in 3.0.0.
+	- Port TSIG code for openssl 3.0.0-alpha6.
+	- Sync acx_nlnetlabs.m4 with the unbound repo.
+	- Review fixes for tsig, defensive free and zero.
+
+4 August 2020: Wouter
+	- Merge #117: mini_event.h (4.3.2 and 4.3.1) on OpenBSD cannot find
+	  fd_set - patch.
+
+23 July 2020: Wouter
+	- Merge #115 from millert: Fix strlcpy() usage. From OpenBSD.
+
+15 July 2020: Wouter
+	- Fix make install with --with-pidfile="".
+
+14 July 2020: Wouter
+	- Tag for 4.3.2 release.  Master branch contains the next version
+	  in development, 4.3.3.
+
+7 July 2020: Wouter
+	- Tag for 4.3.2rc1.
+
+6 July 2020: Wouter
+	- Fix compile includes for xfr-inspect tool on FreeBSD.
+	- Add tpkg/run_vm.sh that runs test when in a virtual machine.
+	- Merge #112 from jaredmauch: log old and new serials when NSD
+	  rejects an IXFR due to an old serial number.
+	- Fix bug034 test for vm test changes.
+
+22 June 2020: Wouter
+	- Remove errno reset behaviour from sendmmsg and recvmmsg
+	  replacement functions.
+	- Fix unit test for different nsd-control-setup -h exit code.
+
+19 June 2020: Wouter
+	- Merge #108 from Nomis: Make the max-retry-time description clearer.
+	- Retry when udp send buffer is full to wait until buffer space is
+	  available.
+
+18 June 2020: Wouter
+	- Do not log EAGAIN errors for sendmmsg, to stop log spam on OpenBSD.
+
+17 June 2020: Wouter
+	- Fix #107: nsd -v shows configure line, openssl version and libevent version.
+
+27 May 2020: Wouter
+	- Fix unlink of pidfile warning if not possible due to permissions,
+	  nsd can display the message at high verbosity levels.
+	- Update contrib/nsd.service for chown of nsd.log and /var/log in
+	  ReadWritePaths.
+	- Removed contrib/nsd.service, example is too complicated and not
+	  useful.
+
+15 May 2020: Wouter
+	- Merge PR#102 from and0x000: add missing default in documentation
+	  for drop-updates.
+	- Fix checkconf test for log-only-syslog option.
+
+14 May 2020: Wouter
+	- Document default value for tcp-timeout.
+
+13 May 2020: Jeroen
+	- Fix #99: Fix copying of socket properties with reuseport enabled.
+
+24 April 2020: Wouter
+	- Fix #97: EDNS unknown version: query not in response.
+
+21 April 2020: Wouter
+	- Fix #96: log-only-syslog: yes sets to only use syslog, fixes
+	  that the default configuration and systemd results in duplicate
+	  log messages.
+
+20 April 2020: Wouter
+	- Fix #95: Removed make test check because tpkg not included in
+	  release tarballs.
+	- Fix unused parameter compile warnings.
+
+16 April 2020: Wouter
+	- Tag for 4.3.1 release and track 4.3.2 release in code repository.
+	- note sha256 digest algo use in makedist.sh.
+	- Fix for posix shell syntax for trap in nsd-control-setup.
+	- Fix to omit the listen-on lines from log at startup, unless verbose.
+	- Fix uninitialised values for bindtodevice option at startup with
+	  reuseport and multiple interfaces.
+
+8 April 2020: Wouter
+	- Tag for 4.3.1rc2.
+
+7 April 2020: Wouter
+	- Merge PR #91 by gearnode: nsd-control-setup recreate certificates.
+	  The '-r' option recreates certificates.  Without it it creates them
+	  if they do not exist, and does not modify them otherwise.
+
+6 April 2020: Wouter
+	- Merge PR #90 by phicoh: O_CLOEXEC should be FD_CLOEXEC.
+	- Merge PR #92 by tonysgi: Fix typo.
+
+2 April 2020: Wouter
+	- Tag for 4.3.1rc1.
+
+1 April 2020: Wouter
+	- Fix for whitespace in minimal responses test for FreeBSD.
+
+25 March 2020: Wouter
+	- Merge PR #86 from noloader: Use precious variables for GREP, EGREP,
+	  SED, AWK, LEX and YACC.
+	- For PR #86: Fix that programs loaded after CFLAGS and stuff is
+	  set, specifically the compiler, so that it can work if it needs
+	  special flags from that.  Fix that lex only needs to support -i
+	  if actually defined, otherwise the output included in the source
+	  tarball can be used.
+	- Merge PR #72 from noloader: Increase Travis testing coverage
+
+23 March 2020: Wouter
+	- Fix unterminated ifdef in nsd.h.
+	- Fix unknown u_long in util.c for Issue #80 .
+
+20 March 2020: Wouter
+	- Merge PR #83 from noloader: Fix GNU HURD sched_setaffinity compile.
+	- Fix #82: print error when system does not have setaffinity.
+	- Fix #80: NetBSD and implicit declaration of reallocarray.
+	- Fix for #80: Fix reallocarray test to define before include.
+	- Fix for #80: Define alternatives for IFNAMSIZ if it does not exist.
+
+19 March 2020: Wouter
+	- Fix #76: cpuid typedef for Hurd, DragonflyBSD compile.
+	- Fix #75: configure test for sched_setaffinity, and use
+	  cpuset_setaffinity otherwise.  Also test for presence of sysconf.
+	- Fix #74: GNU Hurd fix cast from pointer to integer of different size.
+	- Fix for #74, #75: cpuset test for header contents and provide code.
+	- Fix #78: Fix SO_SETFIB error on FreeBSD.
+
+18 March 2020: Wouter
+	- Fix #70: error: 'fd_set' undeclared.
+	- Fix #71: error: 'for' loop initial declaration used outside C99
+	  mode.
+	- Fix to move declarations out of for loops in event test too.
+	- Fix to move declarations out of for loops in popen3 test too.
+	- Another fix to move declaration out of for loop for event test.
+	- Fix to move declarations out of for loops in cutest regex display.
+
+17 March 2020: Wouter
+	- tag for 4.3.0 release and master branch has version 4.3.1.
+
+10 March 2020: Wouter
+	- repository has version number 4.3.0.  Tag for 4.3.0rc1.
+
+3 March 2020: Wouter
+	- Fix that the retry wait does not exceed one day for zone transfers.
+
+27 February 2020: Wouter
+	- Fix warning on FreeBSD about pointer size cast.
+
+26 February 2020: Wouter
+	- Fixup fix of reuseport TCP for server close of sockets not used
+	  by it.  And the unit test skips when the necessary debug output
+	  is not enabled.
+
+25 February 2020: Wouter
+	- Fix event unit test, signal has to be registered with signal_add,
+	  event_add not for every backend for signals.  The event_initialized
+	  is not possible for every backend, so event_added variable.  The
+	  agent write event fires after a timeout, instead of on event write
+	  so that it does not trigger a sigpipe event when the handlers stop.
+	  Timeout shorted to 0.1 second.  event_get_fd was not implemented,
+	  so used ev_fd.  Debug output printfs added to see what happens.
+	- Fix checkconf test for new drop-updates config option.
+	- Fix errors with reuseport and TCP file descriptors, it was
+	  closing them for server-1 in server-2 and server-3..
+
+7 February 2020: Jeroen
+	- Add feature to drop queries with opcode UPDATE.
+
+6 February 2020: Jeroen
+	- Support SO_BINDTODEVICE on Linux. Specify bindtodevice: yes
+	  to bind sockets directly to the network interface.
+	- Support SO_SETFIB on FreeBSD. Add setfib=<FIB> after an ip-address
+	  option to use the specified FIB for that socket.
+	- Require user to add servers=<range> after an ip-address option to
+	  specify the servers that must listen on that socket.
+
+6 February 2020: Wouter
+	- Merge PR#60: Minor portability fixes from michaelforney, with
+	  avoid pointer arithmetic on void* and avoid unnecessary VLA.
+
+4 February 2020: Wouter
+	- Merge PR#22: minimise-any: prefer polular and not large RRset,
+	  from Daisuke Higashi.
+	- Fix responses for IXFR so that the authority section is not echoed
+	  in the response.
+
+21 January 2020: Wouter
+	- Fix leak in server bitset setup.
+
+16 January 2020: Jeroen
+	- Add zone resource record iterator for future zone-verification port.
+	- Set FD_CLOEXEC on opened sockets.
+	- Add popen3 implementation for future zone-verification port.
+	- Add -r option to cutest so that a subset of tests can be run.
+
+15 January 2020: Jeroen
+	- Add feature to pin server proccesses to specific cpus.
+	- Add feature to pin IP addresses to selected server processes.
+	- Set process title to identify individual processes.
+
+13 January 2020: Wouter
+	- Merge pull request #59 from buddyns: add FreeBSD support
+	  for conf key ip-transparent.
+
+10 January 2020: Wouter
+	- Fix unreachable code in ssl set options code.
+	- Fix bad shift in assertion code analyzer complaint.
+
+6 January 2020: Wouter
+	- Fix #56: Drop sparse TSIG signing support in NSD.
+	  Sign every axfr packet with TSIG, according to the latest
+	  draft-ietf-dnsop-rfc2845bis-06, Section 5.3.1.
+
+12 December 2019: Wouter
+	- Note that use-systemd is not necessary and ignored in man page.
+
+11 December 2019: Wouter
+	- Fix whitespace in nsd.conf.sample.in, patch from Paul Wouters.
+	- use-systemd is ignored in nsd.conf, when NSD is compiled with
+	  libsystemd it always signals readiness, if possible.
+
+9 December 2019: Wouter
+	- Fix to define upper bounds on rr counts read from untrusted packet
+	  data.
+	- Try different annotation for radix_find_prefix_node not reachable.
+	- Separate acl_addr_match_range functions for ip4 and ip6, to
+	  please checkers.
+	- Avoid unused variable warning in new match_range_v4 function.
+
+6 December 2019: Wouter
+	- Fix to define max number of EDNS records we are willing to
+	  spend time on.
+	- Fix size of string len and capacity type cast in udbradtree.
+	- Fix to protect rrcount in tsig_find_rr from overflow.
+	- Annotate radix_find_prefix_node not reachable trail code.
+	- Fix to protect rrcount in packet_find_notify_serial from overflow.
+	- Fix to close socket on error in create_tcp_accept_sock.
+	- Fix to log on failure to chmod for socket for remote control.
+	- Fix to remove unneeded if in open of socket for remote control.
+	- Fix to restore input parameter on call failure in create_dirs.
+	- Please checker by terminating and initialising string read
+	  by remote control.
+	- Fixup of random_generate negative modulo, from previous commit,
+	  and return srandom when random is used if no getrandom.
+
+5 December 2019: Wouter
+	- Fix fname null check of fname in namedb_read_zonefile.
+	- Fix implicit cast of size in udb_radnode_array_grow.
+	- Fix ignore of return value of ssl_printf in remote.c.
+	- Fix unused check of fd in parent_handle_reload_command.
+	- Fix to use getrandom() for randomness, if available.
+	- Attempt to fix signedness of nscount lookup in ixfr query_process.
+	- Fix identical branches for ssl_print of errors in remote.c.
+	- Fix type cast bounds, signedness of opt_rdlen in edns_parse_record.
+	- Fix to separate header and data lines in parse_zone_list_file.
+
 3 December 2019: Wouter
 	- Fix #52: do not log transient network full errors unless higher
 	  verbosity is set.
 	- Fix checkconf test for new error output string.
-	- tag for 4.2.4rc1 release.
+	- tag for 4.2.4rc1 release.  This became the 4.2.4 release,
+	  and the master branch continues with 4.2.5 in development.
 
 27 November 2017 Jeroen
 	- Fix regressions in configparser.y
