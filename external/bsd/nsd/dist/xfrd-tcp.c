@@ -215,8 +215,8 @@ pipeline_find(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	/* smaller buf than a full pipeline with 64kb ID array, only need
 	 * the front part with the key info, this front part contains the
 	 * members that the compare function uses. */
-	const size_t keysize = sizeof(struct xfrd_tcp_pipeline) -
-		ID_PIPE_NUM*(sizeof(struct xfrd_zone*) + sizeof(uint16_t));
+	enum { keysize = sizeof(struct xfrd_tcp_pipeline) -
+		ID_PIPE_NUM*(sizeof(struct xfrd_zone*) + sizeof(uint16_t)) };
 	/* void* type for alignment of the struct,
 	 * divide the keysize by ptr-size and then add one to round up */
 	void* buf[ (keysize / sizeof(void*)) + 1 ];
@@ -607,6 +607,7 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 
 		xfrd_setup_packet(tcp->packet, TYPE_AXFR, CLASS_IN, zone->apex,
 			zone->query_id);
+		zone->query_type = TYPE_AXFR;
 	} else {
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "request incremental zone "
 						"transfer (IXFR) for %s to %s",
@@ -614,6 +615,7 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 
 		xfrd_setup_packet(tcp->packet, TYPE_IXFR, CLASS_IN, zone->apex,
 			zone->query_id);
+		zone->query_type = TYPE_IXFR;
         	NSCOUNT_SET(tcp->packet, 1);
 		xfrd_write_soa_buffer(tcp->packet, zone->apex, &zone->soa_disk);
 	}

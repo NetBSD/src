@@ -13,13 +13,14 @@
 3.4 ... Zone expiry of secondary zones
 3.5 ... Diagnosing NSD log entries
 3.6 ... Interfaces
+3.7 ... Tuning
 4.0 Support and Feedback
 4.1 ... Your Support
 
 
 1.0 Introduction
 
-This is NSD Name Server Daemon (NSD) version 4.2.4.
+This is NSD Name Server Daemon (NSD) version 4.3.5.
 
 The NLnet Labs Name Server Daemon (NSD) is an authoritative RFC compliant 
 DNS nameserver. It was first conceived to allow for more genetic 
@@ -55,7 +56,7 @@ and uses a simple configuration file 'nsd.conf'.
 
 1.2 Quick build and install
 
-Step 1: Unpack the source with gtar -xzvf nsd-4.2.4.tar.gz
+Step 1: Unpack the source with gtar -xzvf nsd-4.3.5.tar.gz
 
 Step 2: Create user nsd or any other unprivileged user of your
         choice. In case of later make sure to use
@@ -109,9 +110,9 @@ Step 11: If desired add 'nsd-control write' to your superuser crontab to
 Use your favorite combination of tar and gnu zip to unpack the source,
 for example
 
-$ gtar -xzvf nsd-4.2.4.tar.gz
+$ gtar -xzvf nsd-4.3.5.tar.gz
 
-will unpack the source into the ./nsd-4.2.4 directory...
+will unpack the source into the ./nsd-4.3.5 directory...
 
 
 2.2 Configuring NSD
@@ -693,6 +694,79 @@ all the interfaces as ip-address config file options.
 With the config file option ip-transparent you can allow NSD to bind to
 non local addresses.
 
+
+3.7 Tuning
+
+NSD is performant by design and most users will have little need for tuning
+it. For setups that do require every ounce of performance, NSD offers a number
+of configuration options.
+
+
+cpu-affinity, server-<N>-cpu-affinity and xfrd-cpu-affinity
+
+Modern computer systems have many cores available. By default the operating
+system's scheduling-algorithm determines which core a given task is allocated
+to. Processors build up state, like keeping frequently accessed data in cache
+memory, for the task (process/thread) that it is currently running. Whenever,
+a task switches cores, performance is degraded because the core it switched
+to has yet to build up said state. The cpu-affinity configuration options can
+be used to bind NSD to one or more cores.
+
+cpu-affinity can be used to designate a set of cores onto which NSD processes
+are scheduled. server-<N>-cpu-affinity and xfrd-cpu-affinity can be used to
+designate a specific core to each individual process. This improves L1/L2
+cache hits and reduces pipeline stalls/flushes.
+
+For example, a name server configured to fork two NSD servers that must run on
+dedicated cores 0 and 2, while the transfer daemon (xfrd) must run on core 1,
+the configuration becomes.
+
+	server:
+		server-count: 2
+		cpu-affinity: 0 1 2
+		server-1-cpu-affinity: 0
+		server-2-cpu-affinity: 2
+		xfrd-cpu-affinity: 1
+
+
+ip-address: x.x.x.x  servers=<N>
+
+ip-address options can be configured per (set of) server(s). Sockets that are
+configured for a specific server are closed by other servers on startup. This
+improves select/poll performance and avoids waking up multiple servers when a
+packet comes in.
+
+
+ip-address: x.x.x.x  bindtodevice=yes
+ip-address: x.x.x.x  setfib=<N>
+
+The bindtodevice attribute on Linux and the setfib ip-address attribute on
+FreeBSD can be used to skip the interface selection process in the kernel. This
+improves performance, and ensures responses written to the socket are pushed
+out the same interface the corresponding query came in on when multiple
+interfaces are configured to listen on the same subnet.
+
+The aforementioned options all complement eachother and best performance is
+achieved by assigning a socket to a single server that runs on a dedicated
+core and line that up with a dedicated network interface. Network interface
+interrupts are best handled by a core not designated to any NSD servers.
+
+	server:
+		server-count: 3
+		cpu-affinity: 0 1 2 4
+		server-1-cpu-affinity: 0
+		server-2-cpu-affinity: 1
+		server-3-cpu-affinity: 2
+		xfrd-cpu-affinity: 4
+		ip-address: 1.2.3.11  servers=1 setfib=1 bindtodevice=yes
+		ip-address: 1.2.3.12  servers=2 setfib=2 bindtodevice=yes
+		ip-address: 1.2.3.13  servers=3 setfib=3 bindtodevice=yes
+
+The number of NSD servers to fork and which cores are best used depends
+entirely on the hardware. cpu-affinity options are supported on Linux and
+FreeBSD.
+
+
 4.0 Support and Feedback
 
 NLnet Labs is committed to support NSD and its other software products on 
@@ -707,7 +781,7 @@ would be announced on our web pages at least two years in advance.
 The community mailing list nsd-users@nlnetlabs.nl can be used to discuss 
 issues with other users of NSD. Subscribe here
 
-	http://open.nlnetlabs.nl/mailman/listinfo/nsd-users	
+	http://lists.nlnetlabs.nl/mailman/listinfo/nsd-users
 
 NLnet Labs recognizes that in some corporate environments this commitment to
 community support is not sufficient and that support needs to be codified. 
@@ -756,4 +830,4 @@ larger and regular donations please contact us at users@NLnetLabs.nl. Also
 see http://www.nlnetlabs.nl/labs/contributors/.
 
 
-Id
+$Id: README,v 1.1.1.7 2021/03/15 18:38:58 christos Exp $
