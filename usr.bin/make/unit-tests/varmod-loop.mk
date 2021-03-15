@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.11 2021/03/15 12:15:03 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.12 2021/03/15 17:11:08 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -14,6 +14,7 @@ all: mod-loop-dollar
 # will ever depend on this, but technically it's possible.
 # Therefore, in -dL mode, this is forbidden, see lint.mk.
 mod-loop-varname:
+	@echo $@:
 	@echo :${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@:Q}:
 
 	# ":::" is a very creative variable name, unlikely in practice.
