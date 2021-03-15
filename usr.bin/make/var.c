@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.885 2021/03/15 12:15:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.886 2021/03/15 15:39:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.885 2021/03/15 12:15:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.886 2021/03/15 15:39:13 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -267,37 +267,25 @@ typedef struct SepBuf {
 	char sep;
 } SepBuf;
 
-enum {
-	VarEvalFlags_ToStringSize = sizeof
-	    "VARE_UNDEFERR|VARE_WANTRES|VARE_KEEP_DOLLAR|VARE_KEEP_UNDEF"
-};
-
-MAKE_INLINE char *
-str_append(char *dst, const char *src)
-{
-	size_t len = strlen(src);
-	memcpy(dst, src, len);
-	return dst + len;
-}
-
 static const char *
-VarEvalFlags_ToString(char *buf, VarEvalFlags eflags)
+VarEvalFlags_ToString(VarEvalFlags eflags)
 {
-	char *p = buf;
-
-	/* TODO: WANTRES should be mentioned before UNDEFERR */
-	if (eflags.undefErr)
-		p = str_append(p, "VARE_UNDEFERR|");
-	if (eflags.wantRes)
-		p = str_append(p, "VARE_WANTRES|");
+	if (!eflags.wantRes) {
+		assert(!eflags.undefErr);
+		assert(!eflags.keepDollar && !eflags.keepUndef);
+		return "parse-only";
+	}
+	if (eflags.undefErr) {
+		assert(!eflags.keepDollar && !eflags.keepUndef);
+		return "eval-defined";
+	}
+	if (eflags.keepDollar && eflags.keepUndef)
+		return "eval-keep-dollar-and-undefined";
 	if (eflags.keepDollar)
-		p = str_append(p, "VARE_KEEP_DOLLAR|");
+		return "eval-keep-dollar";
 	if (eflags.keepUndef)
-		p = str_append(p, "VARE_KEEP_UNDEF|");
-	if (p == buf)
-		return "none";
-	p[-1] = '\0';
-	return buf;
+		return "eval-keep-undefined";
+	return "eval";
 }
 
 /*
@@ -3618,7 +3606,6 @@ static void
 LogBeforeApply(const ApplyModifiersState *st, const char *mod)
 {
 	const Expr *expr = st->expr;
-	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
 	Boolean is_single_char = mod[0] != '\0' && IsDelimiter(mod[1], st);
 
@@ -3627,7 +3614,7 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod)
 	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
 	    expr->var->name.str, mod[0], is_single_char ? "" : "...",
 	    expr->value.str,
-	    VarEvalFlags_ToString(eflags_str, expr->eflags),
+	    VarEvalFlags_ToString(expr->eflags),
 	    VarFlags_ToString(vflags_str, expr->var->flags),
 	    ExprDefined_Name[expr->defined]);
 }
@@ -3637,14 +3624,13 @@ LogAfterApply(const ApplyModifiersState *st, const char *p, const char *mod)
 {
 	const Expr *expr = st->expr;
 	const char *value = expr->value.str;
-	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
 	const char *quot = value == var_Error ? "" : "\"";
 
 	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
 	    expr->var->name.str, (int)(p - mod), mod,
 	    quot, value == var_Error ? "error" : value, quot,
-	    VarEvalFlags_ToString(eflags_str, expr->eflags),
+	    VarEvalFlags_ToString(expr->eflags),
 	    VarFlags_ToString(vflags_str, expr->var->flags),
 	    ExprDefined_Name[expr->defined]);
 }
@@ -4338,7 +4324,6 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	 */
 	Boolean dynamic;
 	const char *extramodifiers;
-	char eflags_str[VarEvalFlags_ToStringSize];
 	Var *v;
 
 	Expr expr = {
@@ -4354,8 +4339,8 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 		DEF_REGULAR
 	};
 
-	DEBUG2(VAR, "Var_Parse: %s with %s\n", start,
-	    VarEvalFlags_ToString(eflags_str, eflags));
+	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start,
+	    VarEvalFlags_ToString(eflags));
 
 	*out_val = FStr_InitRefer(NULL);
 	extramodifiers = NULL;	/* extra modifiers to apply first */
