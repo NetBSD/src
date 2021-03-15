@@ -10,8 +10,8 @@ reliability, stability and security are of high importance.  If you
 have any feedback, we would love to hear from you. Don’t hesitate to
 [create an issue on Github](https://github.com/NLnetLabs/nsd/issues/new)
 or post a message on the
-[NSD mailing list](https://nlnetlabs.nl/mailman/listinfo/nsd-users).
-You can lean more about NSD by reading our
+[NSD mailing list](https://lists.nlnetlabs.nl/mailman/listinfo/nsd-users).
+You can learn more about NSD by reading our
 [documentation](https://nlnetlabs.nl/documentation/nsd/).
 
 ## Compiling
