@@ -1,11 +1,12 @@
-ParseReadLine (132): 'USE_8_DOLLARS=	${:U1:@var@${8_DOLLARS}@} ${8_DOLLARS} $$$$$$$$'
+ParseReadLine (133): 'USE_8_DOLLARS=	${:U1:@var@${8_DOLLARS}@} ${8_DOLLARS} $$$$$$$$'
 CondParser_Eval: ${USE_8_DOLLARS} != "\$\$\$\$ \$\$\$\$ \$\$\$\$"
 lhs = "$$$$ $$$$ $$$$", rhs = "$$$$ $$$$ $$$$", op = !=
-ParseReadLine (137): 'SUBST_CONTAINING_LOOP:= ${USE_8_DOLLARS}'
+ParseReadLine (138): 'SUBST_CONTAINING_LOOP:= ${USE_8_DOLLARS}'
 CondParser_Eval: ${SUBST_CONTAINING_LOOP} != "\$\$ \$\$\$\$ \$\$\$\$"
 lhs = "$$ $$$$ $$$$", rhs = "$$ $$$$ $$$$", op = !=
-ParseReadLine (162): '.MAKEFLAGS: -d0'
+ParseReadLine (163): '.MAKEFLAGS: -d0'
 ParseDoDependency(.MAKEFLAGS: -d0)
+mod-loop-varname:
 :+one+ +two+ +three+:
 :x1y x2y x3y:
 :x1y x2y x3y:
