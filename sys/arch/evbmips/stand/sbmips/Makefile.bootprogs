@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.4 2021/03/14 22:58:10 christos Exp $
+# $NetBSD: Makefile.bootprogs,v 1.5 2021/03/15 18:13:54 christos Exp $
 
 NOSSP=yes
 NOPIE=yes
@@ -17,6 +17,7 @@ LDABI=	-melf32btsmipn32
 .	else
 LDABI=	-melf32ltsmipn32
 .	endif
+CPUFLAGS+=	-mabi=n32
 .endif
 
 STRIPFLAG=
@@ -33,13 +34,12 @@ STRIP?=	strip
 
 CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${COMMON}/checksize.sh
 
-AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64
+AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64 -msoft-float
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
 CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0
 CFLAGS+=	-mips64
 CFLAGS+=	-Werror ${CWARNFLAGS}
-CPUFLAGS+=	-mabi=n32
 
 NETBSD_VERS!=${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
