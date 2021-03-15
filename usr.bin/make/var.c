@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.886 2021/03/15 15:39:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.887 2021/03/15 16:51:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.886 2021/03/15 15:39:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.887 2021/03/15 16:51:14 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2060,12 +2060,11 @@ typedef struct Expr {
 
 /*
  * Data that is used when applying a chain of modifiers to an expression.
- * For indirect modifiers, the effects of this data stops after the indirect
- * modifiers have been applies.
+ * For indirect modifiers, the effects of this data stop after the indirect
+ * modifiers have been applied.
  *
- * It may or may not be intended that 'status' has scope Expr while 'sep' and
- * 'oneBigWord' have smaller scope, terminating at the end of a chain of
- * indirect modifiers.
+ * It may or may not have been intended that 'defined' has scope Expr while
+ * 'sep' and 'oneBigWord' have smaller scope.
  *
  * See varmod-indirect.mk.
  */
