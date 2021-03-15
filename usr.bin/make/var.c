@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.888 2021/03/15 18:56:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.889 2021/03/15 19:02:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.888 2021/03/15 18:56:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.889 2021/03/15 19:02:57 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2062,6 +2062,14 @@ typedef struct Expr {
  * Data that is used when applying a chain of modifiers to an expression.
  * For indirect modifiers, the effects of this data stop after the indirect
  * modifiers have been applied.
+ *
+ * For example, the expression ${VAR:M*:${indirect}:O:u} has 3 chains of
+ * modifiers:
+ *
+ *	Chain 1 is ':M', consisting of a single modifier.
+ *	Chain 2 is whatever modifiers are in the value of the variable named
+ *	    'indirect'.
+ *	Chain 3 is ':O:u', consisting of the 2 modifiers ':O' and ':u'.
  *
  * It may or may not have been intended that 'defined' has scope Expr while
  * 'sep' and 'oneBigWord' have smaller scope.
