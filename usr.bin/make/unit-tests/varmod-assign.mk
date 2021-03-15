@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.11 2021/03/15 18:46:05 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.12 2021/03/15 18:56:38 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -132,13 +132,10 @@ ${VARNAME}=	initial-value	# Sets 'VAR.${param}' to 'expanded'.
 .if ${${VARNAME}::=assigned-value} # Here the variable name gets expanded once
 .  error			# too often.
 .endif
-.if !defined(VAR.twice)
-.  error			# FIXME: This is the unwanted current behavior.
-.else
-.  info		FIXME: don't expand the variable name twice here, $\
-        	for symmetry with the usual assignment operators.
+.if defined(VAR.twice)
+.  error The variable name in the '::=' modifier is expanded once too often.
 .endif
-.if ${${VARNAME}} != "initial-value"
+.if ${${VARNAME}} != "assigned-value"
 .  error
 .endif
 .MAKEFLAGS: -d0
