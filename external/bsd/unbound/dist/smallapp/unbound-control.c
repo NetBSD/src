@@ -62,6 +62,7 @@
 #include "daemon/stats.h"
 #include "sldns/wire2str.h"
 #include "sldns/pkthdr.h"
+#include "services/rpz.h"
 
 #ifdef HAVE_SYS_IPC_H
 #include "sys/ipc.h"
@@ -73,9 +74,16 @@
 #include <sys/un.h>
 #endif
 
+#ifdef HAVE_TARGETCONDITIONALS_H
+#include <TargetConditionals.h>
+#endif
+
 static void usage(void) ATTR_NORETURN;
 static void ssl_err(const char* s) ATTR_NORETURN;
 static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
+
+/** timeout to wait for connection over stream, in msec */
+#define UNBOUND_CONTROL_CONNECT_TIMEOUT 5000
 
 /** Give unbound-control usage, and exit (1). */
 static void
@@ -157,6 +165,11 @@ usage(void)
 	printf("  view_local_datas view 		add list of local-data to view\n");
 	printf("  					one entry per line read from stdin\n");
 	printf("  view_local_data_remove view name  	remove local-data in view\n");
+	printf("  view_local_datas_remove view 		remove list of local-data from view\n");
+	printf("  					one entry per line read from stdin\n");
+	printf("  rpz_enable zone		Enable the RPZ zone if it had previously\n");
+	printf("  				been disabled\n");
+	printf("  rpz_disable zone		Disable the RPZ zone\n");
 	printf("Version %s\n", PACKAGE_VERSION);
 	printf("BSD licensed, see LICENSE in source package for details.\n");
 	printf("Report bugs to %s\n", PACKAGE_BUGREPORT);
@@ -208,7 +221,7 @@ static void pr_stats(const char* nm, struct ub_stats_info* s)
 		s->svr.num_queries - s->svr.num_queries_missed_cache);
 	PR_UL_NM("num.cachemiss", s->svr.num_queries_missed_cache);
 	PR_UL_NM("num.prefetch", s->svr.num_queries_prefetch);
-	PR_UL_NM("num.zero_ttl", s->svr.zero_ttl_responses);
+	PR_UL_NM("num.expired", s->svr.ans_expired);
 	PR_UL_NM("num.recursivereplies", s->mesh_replies_sent);
 #ifdef USE_DNSCRYPT
     PR_UL_NM("num.dnscrypt.crypted", s->svr.num_query_dnscrypt_crypted);
@@ -261,6 +274,9 @@ static void print_mem(struct ub_shm_stat_info* shm_stat,
 #ifdef USE_IPSECMOD
 	PR_LL("mem.mod.ipsecmod", shm_stat->mem.ipsecmod);
 #endif
+#ifdef WITH_DYNLIBMODULE
+	PR_LL("mem.mod.dynlib", shm_stat->mem.dynlib);
+#endif
 #ifdef USE_DNSCRYPT
 	PR_LL("mem.cache.dnscrypt_shared_secret",
 		shm_stat->mem.dnscrypt_shared_secret);
@@ -268,6 +284,8 @@ static void print_mem(struct ub_shm_stat_info* shm_stat,
 		shm_stat->mem.dnscrypt_nonce);
 #endif
 	PR_LL("mem.streamwait", s->svr.mem_stream_wait);
+	PR_LL("mem.http.query_buffer", s->svr.mem_http2_query_buffer);
+	PR_LL("mem.http.response_buffer", s->svr.mem_http2_response_buffer);
 }
 
 /** print histogram */
@@ -332,6 +350,7 @@ static void print_extended(struct ub_stats_info* s)
 	PR_UL("num.query.tls", s->svr.qtls);
 	PR_UL("num.query.tls_resume", s->svr.qtls_resume);
 	PR_UL("num.query.ipv6", s->svr.qipv6);
+	PR_UL("num.query.https", s->svr.qhttps);
 
 	/* flags */
 	PR_UL("num.query.flags.QR", s->svr.qbit_QR);
@@ -372,6 +391,14 @@ static void print_extended(struct ub_stats_info* s)
 	PR_UL("rrset.cache.count", s->svr.rrset_cache_count);
 	PR_UL("infra.cache.count", s->svr.infra_cache_count);
 	PR_UL("key.cache.count", s->svr.key_cache_count);
+	/* applied RPZ actions */
+	for(i=0; i<UB_STATS_RPZ_ACTION_NUM; i++) {
+		if(i == RPZ_NO_OVERRIDE_ACTION)
+			continue;
+		if(inhibit_zero && s->svr.rpz_action[i] == 0)
+			continue;
+		PR_UL_SUB("num.rpz.action", rpz_action_to_string(i), s->svr.rpz_action[i]);
+	}
 #ifdef USE_DNSCRYPT
 	PR_UL("dnscrypt_shared_secret.cache.count",
 			 s->svr.shared_secret_cache_count);
@@ -493,9 +520,11 @@ setup_ctx(struct config_file* cfg)
 	ctx = SSL_CTX_new(SSLv23_client_method());
 	if(!ctx)
 		ssl_err("could not allocate SSL_CTX pointer");
+#if SSL_OP_NO_SSLv2 != 0
 	if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
 		!= SSL_OP_NO_SSLv2)
 		ssl_err("could not set SSL_OP_NO_SSLv2");
+#endif
 	if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
 		!= SSL_OP_NO_SSLv3)
 		ssl_err("could not set SSL_OP_NO_SSLv3");
@@ -520,6 +549,30 @@ setup_ctx(struct config_file* cfg)
 	free(c_key);
 	free(c_cert);
 	return ctx;
+}
+
+/** check connect error */
+static void
+checkconnecterr(int err, const char* svr, struct sockaddr_storage* addr,
+	socklen_t addrlen, int statuscmd, int useport)
+{
+#ifndef USE_WINSOCK
+	if(!useport) log_err("connect: %s for %s", strerror(err), svr);
+	else log_err_addr("connect", strerror(err), addr, addrlen);
+	if(err == ECONNREFUSED && statuscmd) {
+		printf("unbound is stopped\n");
+		exit(3);
+	}
+#else
+	int wsaerr = err;
+	if(!useport) log_err("connect: %s for %s", wsa_strerror(wsaerr), svr);
+	else log_err_addr("connect", wsa_strerror(wsaerr), addr, addrlen);
+	if(wsaerr == WSAECONNREFUSED && statuscmd) {
+		printf("unbound is stopped\n");
+		exit(3);
+	}
+#endif
+	exit(1);
 }
 
 /** contact the server with TCP connect */
@@ -573,32 +626,77 @@ contact_server(const char* svr, struct config_file* cfg, int statuscmd)
 		addrfamily = addr_is_ip6(&addr, addrlen)?PF_INET6:PF_INET;
 	fd = socket(addrfamily, SOCK_STREAM, proto);
 	if(fd == -1) {
-#ifndef USE_WINSOCK
-		fatal_exit("socket: %s", strerror(errno));
-#else
-		fatal_exit("socket: %s", wsa_strerror(WSAGetLastError()));
-#endif
+		fatal_exit("socket: %s", sock_strerror(errno));
 	}
+	fd_set_nonblock(fd);
 	if(connect(fd, (struct sockaddr*)&addr, addrlen) < 0) {
 #ifndef USE_WINSOCK
-		int err = errno;
-		if(!useport) log_err("connect: %s for %s", strerror(err), svr);
-		else log_err_addr("connect", strerror(err), &addr, addrlen);
-		if(err == ECONNREFUSED && statuscmd) {
-			printf("unbound is stopped\n");
-			exit(3);
-		}
-#else
-		int wsaerr = WSAGetLastError();
-		if(!useport) log_err("connect: %s for %s", wsa_strerror(wsaerr), svr);
-		else log_err_addr("connect", wsa_strerror(wsaerr), &addr, addrlen);
-		if(wsaerr == WSAECONNREFUSED && statuscmd) {
-			printf("unbound is stopped\n");
-			exit(3);
+#ifdef EINPROGRESS
+		if(errno != EINPROGRESS) {
+			checkconnecterr(errno, svr, &addr,
+				addrlen, statuscmd, useport);
 		}
 #endif
-		exit(1);
+#else
+		if(WSAGetLastError() != WSAEINPROGRESS &&
+			WSAGetLastError() != WSAEWOULDBLOCK) {
+			checkconnecterr(WSAGetLastError(), svr, &addr,
+				addrlen, statuscmd, useport);
+		}
+#endif
 	}
+	while(1) {
+		fd_set rset, wset, eset;
+		struct timeval tv;
+		FD_ZERO(&rset);
+		FD_SET(FD_SET_T fd, &rset);
+		FD_ZERO(&wset);
+		FD_SET(FD_SET_T fd, &wset);
+		FD_ZERO(&eset);
+		FD_SET(FD_SET_T fd, &eset);
+		tv.tv_sec = UNBOUND_CONTROL_CONNECT_TIMEOUT/1000;
+		tv.tv_usec= (UNBOUND_CONTROL_CONNECT_TIMEOUT%1000)*1000;
+		if(select(fd+1, &rset, &wset, &eset, &tv) == -1) {
+			fatal_exit("select: %s", sock_strerror(errno));
+		}
+		if(!FD_ISSET(fd, &rset) && !FD_ISSET(fd, &wset) &&
+			!FD_ISSET(fd, &eset)) {
+			fatal_exit("timeout: could not connect to server");
+		} else {
+			/* check nonblocking connect error */
+			int error = 0;
+			socklen_t len = (socklen_t)sizeof(error);
+			if(getsockopt(fd, SOL_SOCKET, SO_ERROR, (void*)&error,
+				&len) < 0) {
+#ifndef USE_WINSOCK
+				error = errno; /* on solaris errno is error */
+#else
+				error = WSAGetLastError();
+#endif
+			}
+			if(error != 0) {
+#ifndef USE_WINSOCK
+#ifdef EINPROGRESS
+				if(error == EINPROGRESS)
+					continue; /* try again later */
+#endif
+#ifdef EWOULDBLOCK
+				if(error == EWOULDBLOCK)
+					continue; /* try again later */
+#endif
+#else
+				if(error == WSAEINPROGRESS)
+					continue; /* try again later */
+				if(error == WSAEWOULDBLOCK)
+					continue; /* try again later */
+#endif
+				checkconnecterr(error, svr, &addr, addrlen,
+					statuscmd, useport);
+			}
+		}
+		break;
+	}
+	fd_set_block(fd);
 	return fd;
 }
 
@@ -661,11 +759,7 @@ remote_read(SSL* ssl, int fd, char* buf, size_t len)
 				/* EOF */
 				return 0;
 			}
-#ifndef USE_WINSOCK
-			fatal_exit("could not recv: %s", strerror(errno));
-#else
-			fatal_exit("could not recv: %s", wsa_strerror(WSAGetLastError()));
-#endif
+			fatal_exit("could not recv: %s", sock_strerror(errno));
 		}
 		buf[rr] = 0;
 	}
@@ -681,11 +775,7 @@ remote_write(SSL* ssl, int fd, const char* buf, size_t len)
 			ssl_err("could not SSL_write");
 	} else {
 		if(send(fd, buf, len, 0) < (ssize_t)len) {
-#ifndef USE_WINSOCK
-			fatal_exit("could not send: %s", strerror(errno));
-#else
-			fatal_exit("could not send: %s", wsa_strerror(WSAGetLastError()));
-#endif
+			fatal_exit("could not send: %s", sock_strerror(errno));
 		}
 	}
 }
@@ -704,7 +794,8 @@ check_args_for_listcmd(int argc, char* argv[])
 		fatal_exit("too many arguments for command '%s', "
 			"content is piped in from stdin", argv[0]);
 	}
-	if(argc >= 1 && strcmp(argv[0], "view_local_datas") == 0 &&
+	if(argc >= 1 && (strcmp(argv[0], "view_local_datas") == 0 ||
+		strcmp(argv[0], "view_local_datas_remove") == 0) &&
 		argc >= 3) {
 		fatal_exit("too many arguments for command '%s', "
 			"content is piped in from stdin", argv[0]);
@@ -753,7 +844,8 @@ go_cmd(SSL* ssl, int fd, int quiet, int argc, char* argv[])
 		strcmp(argv[0], "local_zones_remove") == 0 ||
 		strcmp(argv[0], "local_datas") == 0 ||
 		strcmp(argv[0], "view_local_datas") == 0 ||
-		strcmp(argv[0], "local_datas_remove") == 0)) {
+		strcmp(argv[0], "local_datas_remove") == 0 ||
+		strcmp(argv[0], "view_local_datas_remove") == 0)) {
 		send_file(ssl, fd, stdin, buf, sizeof(buf));
 		send_eof(ssl, fd);
 	}
@@ -802,11 +894,7 @@ go(const char* cfgfile, char* svr, int quiet, int argc, char* argv[])
 	ret = go_cmd(ssl, fd, quiet, argc, argv);
 
 	if(ssl) SSL_free(ssl);
-#ifndef USE_WINSOCK
-	close(fd);
-#else
-	closesocket(fd);
-#endif
+	sock_close(fd);
 	if(ctx) SSL_CTX_free(ctx);
 	config_delete(cfg);
 	return ret;
@@ -864,11 +952,16 @@ int main(int argc, char* argv[])
 	if(argc == 0)
 		usage();
 	if(argc >= 1 && strcmp(argv[0], "start")==0) {
+#if (defined(TARGET_OS_TV) && TARGET_OS_TV) || (defined(TARGET_OS_WATCH) && TARGET_OS_WATCH)
+		fatal_exit("could not exec unbound: %s",
+			strerror(ENOSYS));
+#else
 		if(execlp("unbound", "unbound", "-c", cfgfile, 
 			(char*)NULL) < 0) {
 			fatal_exit("could not exec unbound: %s",
 				strerror(errno));
 		}
+#endif
 	}
 	if(argc >= 1 && strcmp(argv[0], "stats_shm")==0) {
 		print_stats_shm(cfgfile);
