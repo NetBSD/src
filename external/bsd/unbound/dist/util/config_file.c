@@ -78,6 +78,8 @@ gid_t cfg_gid = (gid_t)-1;
 int autr_permit_small_holddown = 0;
 /** size (in bytes) of stream wait buffers max */
 size_t stream_wait_max = 4 * 1024 * 1024;
+size_t http2_query_buffer_max = 4 * 1024 * 1024;
+size_t http2_response_buffer_max = 4 * 1024 * 1024;
 
 /** global config during parsing */
 struct config_parser_state* cfg_parser = 0;
@@ -116,6 +118,13 @@ config_create(void)
 	cfg->ssl_upstream = 0;
 	cfg->tls_cert_bundle = NULL;
 	cfg->tls_win_cert = 0;
+	cfg->tls_use_sni = 1;
+	cfg->https_port = UNBOUND_DNS_OVER_HTTPS_PORT;
+	if(!(cfg->http_endpoint = strdup("/dns-query"))) goto error_exit;
+	cfg->http_max_streams = 100;
+	cfg->http_query_buffer_size = 4*1024*1024;
+	cfg->http_response_buffer_size = 4*1024*1024;
+	cfg->http_nodelay = 1;
 	cfg->use_syslog = 1;
 	cfg->log_identity = NULL; /* changed later with argv[0] */
 	cfg->log_time_ascii = 0;
@@ -143,7 +152,7 @@ config_create(void)
 	cfg->incoming_num_tcp = 2; 
 #endif
 	cfg->stream_wait_size = 4 * 1024 * 1024;
-	cfg->edns_buffer_size = 4096; /* 4k from rfc recommendation */
+	cfg->edns_buffer_size = 1232; /* from DNS flagday recommendation */
 	cfg->msg_buffer_size = 65552; /* 64 k + a small margin */
 	cfg->msg_cache_size = 4 * 1024 * 1024;
 	cfg->msg_cache_slabs = 4;
@@ -161,7 +170,9 @@ config_create(void)
 	cfg->infra_cache_slabs = 4;
 	cfg->infra_cache_numhosts = 10000;
 	cfg->infra_cache_min_rtt = 50;
+	cfg->infra_keep_probing = 0;
 	cfg->delay_close = 0;
+	cfg->udp_connect = 1;
 	if(!(cfg->outgoing_avail_ports = (int*)calloc(65536, sizeof(int))))
 		goto error_exit;
 	init_outgoing_availports(cfg->outgoing_avail_ports, 65536);
@@ -186,6 +197,7 @@ config_create(void)
 	cfg->so_reuseport = REUSEPORT_DEFAULT;
 	cfg->ip_transparent = 0;
 	cfg->ip_freebind = 0;
+	cfg->ip_dscp = 0;
 	cfg->num_ifs = 0;
 	cfg->ifs = NULL;
 	cfg->num_out_ifs = 0;
@@ -208,7 +220,7 @@ config_create(void)
 	cfg->views = NULL;
 	cfg->acls = NULL;
 	cfg->tcp_connection_limits = NULL;
-	cfg->harden_short_bufsize = 0;
+	cfg->harden_short_bufsize = 1;
 	cfg->harden_large_queries = 0;
 	cfg->harden_glue = 1;
 	cfg->harden_dnssec_stripped = 1;
@@ -225,14 +237,15 @@ config_create(void)
 	cfg->hide_trustanchor = 0;
 	cfg->identity = NULL;
 	cfg->version = NULL;
+	cfg->nsid_cfg_str = NULL;
+	cfg->nsid = NULL;
+	cfg->nsid_len = 0;
 	cfg->auto_trust_anchor_file_list = NULL;
 	cfg->trust_anchor_file_list = NULL;
 	cfg->trust_anchor_list = NULL;
 	cfg->trusted_keys_file_list = NULL;
 	cfg->trust_anchor_signaling = 1;
 	cfg->root_key_sentinel = 1;
-	cfg->dlv_anchor_file = NULL;
-	cfg->dlv_anchor_list = NULL;
 	cfg->domain_insecure = NULL;
 	cfg->val_date_override = 0;
 	cfg->val_sig_skew_min = 3600; /* at least daylight savings trouble */
@@ -246,6 +259,9 @@ config_create(void)
 	cfg->serve_expired = 0;
 	cfg->serve_expired_ttl = 0;
 	cfg->serve_expired_ttl_reset = 0;
+	cfg->serve_expired_reply_ttl = 30;
+	cfg->serve_expired_client_timeout = 0;
+	cfg->serve_original_ttl = 0;
 	cfg->add_holddown = 30*24*3600;
 	cfg->del_holddown = 30*24*3600;
 	cfg->keep_missing = 366*24*3600; /* one year plus a little leeway */
@@ -264,13 +280,14 @@ config_create(void)
 	cfg->unblock_lan_zones = 0;
 	cfg->insecure_lan_zones = 0;
 	cfg->python_script = NULL;
+	cfg->dynlib_file = NULL;
 	cfg->remote_control_enable = 0;
 	cfg->control_ifs.first = NULL;
 	cfg->control_ifs.last = NULL;
 	cfg->control_port = UNBOUND_CONTROL_PORT;
 	cfg->control_use_cert = 1;
 	cfg->minimal_responses = 1;
-	cfg->rrset_roundrobin = 0;
+	cfg->rrset_roundrobin = 1;
 	cfg->unknown_server_time_limit = 376;
 	cfg->max_udp_size = 4096;
 	if(!(cfg->server_key_file = strdup(RUN_DIR"/unbound_server.key"))) 
@@ -293,6 +310,8 @@ config_create(void)
 	if(!(cfg->dnstap_socket_path = strdup(DNSTAP_SOCKET_PATH)))
 		goto error_exit;
 #endif
+	cfg->dnstap_bidirectional = 1;
+	cfg->dnstap_tls = 1;
 	cfg->disable_dnssec_lame_check = 0;
 	cfg->ip_ratelimit = 0;
 	cfg->ratelimit = 0;
@@ -308,6 +327,8 @@ config_create(void)
 	cfg->qname_minimisation_strict = 0;
 	cfg->shm_enable = 0;
 	cfg->shm_key = 11777;
+	cfg->edns_client_strings = NULL;
+	cfg->edns_client_string_opcode = 65001;
 	cfg->dnscrypt = 0;
 	cfg->dnscrypt_port = 0;
 	cfg->dnscrypt_provider = NULL;
@@ -318,6 +339,10 @@ config_create(void)
 	cfg->dnscrypt_shared_secret_cache_slabs = 4;
 	cfg->dnscrypt_nonce_cache_size = 4*1024*1024;
 	cfg->dnscrypt_nonce_cache_slabs = 4;
+	cfg->pad_responses = 1;
+	cfg->pad_responses_block_size = 468; /* from RFC8467 */
+	cfg->pad_queries = 1;
+	cfg->pad_queries_block_size = 128; /* from RFC8467 */
 #ifdef USE_IPSECMOD
 	cfg->ipsecmod_enabled = 1;
 	cfg->ipsecmod_ignore_bogus = 0;
@@ -327,9 +352,15 @@ config_create(void)
 	cfg->ipsecmod_strict = 0;
 #endif
 #ifdef USE_CACHEDB
-	cfg->cachedb_backend = NULL;
-	cfg->cachedb_secret = NULL;
-#endif
+	if(!(cfg->cachedb_backend = strdup("testframe"))) goto error_exit;
+	if(!(cfg->cachedb_secret = strdup("default"))) goto error_exit;
+#ifdef USE_REDIS
+	if(!(cfg->redis_server_host = strdup("127.0.0.1"))) goto error_exit;
+	cfg->redis_timeout = 100;
+	cfg->redis_server_port = 6379;
+	cfg->redis_expire_records = 0;
+#endif  /* USE_REDIS */
+#endif  /* USE_CACHEDB */
 #ifdef USE_IPSET
 	cfg->ipset_name_v4 = NULL;
 	cfg->ipset_name_v6 = NULL;
@@ -365,6 +396,7 @@ struct config_file* config_create_forlib(void)
 	cfg->val_log_level = 2; /* to fill why_bogus with */
 	cfg->val_log_squelch = 1;
 	cfg->minimal_responses = 0;
+	cfg->harden_short_bufsize = 1;
 	return cfg;
 }
 
@@ -477,6 +509,8 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_YNO("do-ip6:", do_ip6)
 	else S_YNO("do-udp:", do_udp)
 	else S_YNO("do-tcp:", do_tcp)
+	else S_YNO("prefer-ip4:", prefer_ip4)
+	else S_YNO("prefer-ip6:", prefer_ip6)
 	else S_YNO("tcp-upstream:", tcp_upstream)
 	else S_YNO("udp-upstream-without-downstream:",
 		udp_upstream_without_downstream)
@@ -497,6 +531,14 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_STRLIST_APPEND("tls-session-ticket-keys:", tls_session_ticket_keys)
 	else S_STR("tls-ciphers:", tls_ciphers)
 	else S_STR("tls-ciphersuites:", tls_ciphersuites)
+	else S_YNO("tls-use-sni:", tls_use_sni)
+	else S_NUMBER_NONZERO("https-port:", https_port)
+	else S_STR("http-endpoint:", http_endpoint)
+	else S_NUMBER_NONZERO("http-max-streams:", http_max_streams)
+	else S_MEMSIZE("http-query-buffer-size:", http_query_buffer_size)
+	else S_MEMSIZE("http-response-buffer-size:", http_response_buffer_size)
+	else S_YNO("http-nodelay:", http_nodelay)
+	else S_YNO("http-notls-downstream:", http_notls_downstream)
 	else S_YNO("interface-automatic:", if_automatic)
 	else S_YNO("use-systemd:", use_systemd)
 	else S_YNO("do-daemonize:", do_daemonize)
@@ -516,6 +558,7 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_YNO("so-reuseport:", so_reuseport)
 	else S_YNO("ip-transparent:", ip_transparent)
 	else S_YNO("ip-freebind:", ip_freebind)
+	else S_NUMBER_OR_ZERO("ip-dscp:", ip_dscp)
 	else S_MEMSIZE("rrset-cache-size:", rrset_cache_size)
 	else S_POW2("rrset-cache-slabs:", rrset_cache_slabs)
 	else S_YNO("prefetch:", prefetch)
@@ -531,10 +574,12 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	    IS_NUMBER_OR_ZERO; cfg->infra_cache_min_rtt = atoi(val);
 	    RTT_MIN_TIMEOUT=cfg->infra_cache_min_rtt;
 	}
+	else S_YNO("infra-keep-probing:", infra_keep_probing)
 	else S_NUMBER_OR_ZERO("infra-host-ttl:", host_ttl)
 	else S_POW2("infra-cache-slabs:", infra_cache_slabs)
 	else S_SIZET_NONZERO("infra-cache-numhosts:", infra_cache_numhosts)
 	else S_NUMBER_OR_ZERO("delay-close:", delay_close)
+	else S_YNO("udp-connect:", udp_connect)
 	else S_STR("chroot:", chrootdir)
 	else S_STR("username:", username)
 	else S_STR("directory:", directory)
@@ -544,6 +589,20 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_YNO("hide-trustanchor:", hide_trustanchor)
 	else S_STR("identity:", identity)
 	else S_STR("version:", version)
+	else if(strcmp(opt, "nsid:") == 0) {
+		free(cfg->nsid_cfg_str);
+		if (!(cfg->nsid_cfg_str = strdup(val)))
+			return 0;
+		/* Empty string is just validly unsetting nsid */
+		if (*val == 0) {
+			free(cfg->nsid);
+			cfg->nsid = NULL;
+			cfg->nsid_len = 0;
+			return 1;
+		}
+		cfg->nsid = cfg_parse_nsid(val, &cfg->nsid_len);
+		return cfg->nsid != NULL;
+	}
 	else S_STRLIST("root-hints:", root_hints)
 	else S_STR("target-fetch-policy:", target_fetch_policy)
 	else S_YNO("harden-glue:", harden_glue)
@@ -566,8 +625,6 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_STRLIST("trusted-keys-file:", trusted_keys_file_list)
 	else S_YNO("trust-anchor-signaling:", trust_anchor_signaling)
 	else S_YNO("root-key-sentinel:", root_key_sentinel)
-	else S_STR("dlv-anchor-file:", dlv_anchor_file)
-	else S_STRLIST("dlv-anchor:", dlv_anchor_list)
 	else S_STRLIST("domain-insecure:", domain_insecure)
 	else S_NUMBER_OR_ZERO("val-bogus-ttl:", bogus_ttl)
 	else S_YNO("val-clean-additional:", val_clean_additional)
@@ -581,10 +638,16 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_YNO("val-permissive-mode:", val_permissive_mode)
 	else S_YNO("aggressive-nsec:", aggressive_nsec)
 	else S_YNO("ignore-cd-flag:", ignore_cd)
-	else S_YNO("serve-expired:", serve_expired)
-	else if(strcmp(opt, "serve_expired_ttl:") == 0)
+	else if(strcmp(opt, "serve-expired:") == 0)
+	{ IS_YES_OR_NO; cfg->serve_expired = (strcmp(val, "yes") == 0);
+	  SERVE_EXPIRED = cfg->serve_expired; }
+	else if(strcmp(opt, "serve-expired-ttl:") == 0)
 	{ IS_NUMBER_OR_ZERO; cfg->serve_expired_ttl = atoi(val); SERVE_EXPIRED_TTL=(time_t)cfg->serve_expired_ttl;}
 	else S_YNO("serve-expired-ttl-reset:", serve_expired_ttl_reset)
+	else if(strcmp(opt, "serve-expired-reply-ttl:") == 0)
+	{ IS_NUMBER_OR_ZERO; cfg->serve_expired_reply_ttl = atoi(val); SERVE_EXPIRED_REPLY_TTL=(time_t)cfg->serve_expired_reply_ttl;}
+	else S_NUMBER_OR_ZERO("serve-expired-client-timeout:", serve_expired_client_timeout)
+	else S_YNO("serve-original-ttl:", serve_original_ttl)
 	else S_STR("val-nsec3-keysize-iterations:", val_nsec3_key_iterations)
 	else S_UNSIGNED_OR_ZERO("add-holddown:", add_holddown)
 	else S_UNSIGNED_OR_ZERO("del-holddown:", del_holddown)
@@ -610,6 +673,7 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_STR("control-cert-file:", control_cert_file)
 	else S_STR("module-config:", module_conf)
 	else S_STRLIST("python-script:", python_script)
+	else S_STRLIST("dynlib-file:", dynlib_file)
 	else S_YNO("disable-dnssec-lame-check:", disable_dnssec_lame_check)
 #ifdef CLIENT_SUBNET
 	/* Can't set max subnet prefix here, since that value is used when
@@ -619,7 +683,15 @@ int config_set_option(struct config_file* cfg, const char* opt,
 #endif
 #ifdef USE_DNSTAP
 	else S_YNO("dnstap-enable:", dnstap)
+	else S_YNO("dnstap-bidirectional:", dnstap_bidirectional)
 	else S_STR("dnstap-socket-path:", dnstap_socket_path)
+	else S_STR("dnstap-ip:", dnstap_ip)
+	else S_YNO("dnstap-tls:", dnstap_tls)
+	else S_STR("dnstap-tls-server-name:", dnstap_tls_server_name)
+	else S_STR("dnstap-tls-cert-bundle:", dnstap_tls_cert_bundle)
+	else S_STR("dnstap-tls-client-key-file:", dnstap_tls_client_key_file)
+	else S_STR("dnstap-tls-client-cert-file:",
+		dnstap_tls_client_cert_file)
 	else S_YNO("dnstap-send-identity:", dnstap_send_identity)
 	else S_YNO("dnstap-send-version:", dnstap_send_version)
 	else S_STR("dnstap-identity:", dnstap_identity)
@@ -671,6 +743,10 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_NUMBER_OR_ZERO("fast-server-permil:", fast_server_permil)
 	else S_YNO("qname-minimisation:", qname_minimisation)
 	else S_YNO("qname-minimisation-strict:", qname_minimisation_strict)
+	else S_YNO("pad-responses:", pad_responses)
+	else S_SIZET_NONZERO("pad-responses-block-size:", pad_responses_block_size)
+	else S_YNO("pad-queries:", pad_queries)
+	else S_SIZET_NONZERO("pad-queries-block-size:", pad_queries_block_size)
 #ifdef USE_IPSECMOD
 	else S_YNO("ipsecmod-enabled:", ipsecmod_enabled)
 	else S_YNO("ipsecmod-ignore-bogus:", ipsecmod_ignore_bogus)
@@ -903,6 +979,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_YNO(opt, "so-reuseport", so_reuseport)
 	else O_YNO(opt, "ip-transparent", ip_transparent)
 	else O_YNO(opt, "ip-freebind", ip_freebind)
+	else O_DEC(opt, "ip-dscp", ip_dscp)
 	else O_MEM(opt, "rrset-cache-size", rrset_cache_size)
 	else O_DEC(opt, "rrset-cache-slabs", rrset_cache_slabs)
 	else O_YNO(opt, "prefetch-key", prefetch_key)
@@ -914,12 +991,16 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_DEC(opt, "infra-host-ttl", host_ttl)
 	else O_DEC(opt, "infra-cache-slabs", infra_cache_slabs)
 	else O_DEC(opt, "infra-cache-min-rtt", infra_cache_min_rtt)
+	else O_YNO(opt, "infra-keep-probing", infra_keep_probing)
 	else O_MEM(opt, "infra-cache-numhosts", infra_cache_numhosts)
 	else O_UNS(opt, "delay-close", delay_close)
+	else O_YNO(opt, "udp-connect", udp_connect)
 	else O_YNO(opt, "do-ip4", do_ip4)
 	else O_YNO(opt, "do-ip6", do_ip6)
 	else O_YNO(opt, "do-udp", do_udp)
 	else O_YNO(opt, "do-tcp", do_tcp)
+	else O_YNO(opt, "prefer-ip4", prefer_ip4)
+	else O_YNO(opt, "prefer-ip6", prefer_ip6)
 	else O_YNO(opt, "tcp-upstream", tcp_upstream)
 	else O_YNO(opt, "udp-upstream-without-downstream", udp_upstream_without_downstream)
 	else O_DEC(opt, "tcp-mss", tcp_mss)
@@ -937,6 +1018,14 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_LST(opt, "tls-session-ticket-keys", tls_session_ticket_keys.first)
 	else O_STR(opt, "tls-ciphers", tls_ciphers)
 	else O_STR(opt, "tls-ciphersuites", tls_ciphersuites)
+	else O_YNO(opt, "tls-use-sni", tls_use_sni)
+	else O_DEC(opt, "https-port", https_port)
+	else O_STR(opt, "http-endpoint", http_endpoint)
+	else O_UNS(opt, "http-max-streams", http_max_streams)
+	else O_MEM(opt, "http-query-buffer-size", http_query_buffer_size)
+	else O_MEM(opt, "http-response-buffer-size", http_response_buffer_size)
+	else O_YNO(opt, "http-nodelay", http_nodelay)
+	else O_YNO(opt, "http-notls-downstream", http_notls_downstream)
 	else O_YNO(opt, "use-systemd", use_systemd)
 	else O_YNO(opt, "do-daemonize", do_daemonize)
 	else O_STR(opt, "chroot", chrootdir)
@@ -954,6 +1043,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_YNO(opt, "hide-trustanchor", hide_trustanchor)
 	else O_STR(opt, "identity", identity)
 	else O_STR(opt, "version", version)
+	else O_STR(opt, "nsid", nsid_cfg_str)
 	else O_STR(opt, "target-fetch-policy", target_fetch_policy)
 	else O_YNO(opt, "harden-short-bufsize", harden_short_bufsize)
 	else O_YNO(opt, "harden-large-queries", harden_large_queries)
@@ -967,7 +1057,6 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_DEC(opt, "unwanted-reply-threshold", unwanted_threshold)
 	else O_YNO(opt, "do-not-query-localhost", donotquery_localhost)
 	else O_STR(opt, "module-config", module_conf)
-	else O_STR(opt, "dlv-anchor-file", dlv_anchor_file)
 	else O_DEC(opt, "val-bogus-ttl", bogus_ttl)
 	else O_YNO(opt, "val-clean-additional", val_clean_additional)
 	else O_DEC(opt, "val-log-level", val_log_level)
@@ -977,6 +1066,9 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_YNO(opt, "serve-expired", serve_expired)
 	else O_DEC(opt, "serve-expired-ttl", serve_expired_ttl)
 	else O_YNO(opt, "serve-expired-ttl-reset", serve_expired_ttl_reset)
+	else O_DEC(opt, "serve-expired-reply-ttl", serve_expired_reply_ttl)
+	else O_DEC(opt, "serve-expired-client-timeout", serve_expired_client_timeout)
+	else O_YNO(opt, "serve-original-ttl", serve_original_ttl)
 	else O_STR(opt, "val-nsec3-keysize-iterations",val_nsec3_key_iterations)
 	else O_UNS(opt, "add-holddown", add_holddown)
 	else O_UNS(opt, "del-holddown", del_holddown)
@@ -1003,7 +1095,6 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_LST(opt, "trusted-keys-file", trusted_keys_file_list)
 	else O_YNO(opt, "trust-anchor-signaling", trust_anchor_signaling)
 	else O_YNO(opt, "root-key-sentinel", root_key_sentinel)
-	else O_LST(opt, "dlv-anchor", dlv_anchor_list)
 	else O_LST(opt, "control-interface", control_ifs.first)
 	else O_LST(opt, "domain-insecure", domain_insecure)
 	else O_UNS(opt, "val-override-date", val_date_override)
@@ -1024,7 +1115,16 @@ config_get_option(struct config_file* cfg, const char* opt,
 #endif
 #ifdef USE_DNSTAP
 	else O_YNO(opt, "dnstap-enable", dnstap)
+	else O_YNO(opt, "dnstap-bidirectional", dnstap_bidirectional)
 	else O_STR(opt, "dnstap-socket-path", dnstap_socket_path)
+	else O_STR(opt, "dnstap-ip", dnstap_ip)
+	else O_YNO(opt, "dnstap-tls", dnstap_tls)
+	else O_STR(opt, "dnstap-tls-server-name", dnstap_tls_server_name)
+	else O_STR(opt, "dnstap-tls-cert-bundle", dnstap_tls_cert_bundle)
+	else O_STR(opt, "dnstap-tls-client-key-file",
+		dnstap_tls_client_key_file)
+	else O_STR(opt, "dnstap-tls-client-cert-file",
+		dnstap_tls_client_cert_file)
 	else O_YNO(opt, "dnstap-send-identity", dnstap_send_identity)
 	else O_YNO(opt, "dnstap-send-version", dnstap_send_version)
 	else O_STR(opt, "dnstap-identity", dnstap_identity)
@@ -1062,6 +1162,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_YNO(opt, "insecure-lan-zones", insecure_lan_zones)
 	else O_DEC(opt, "max-udp-size", max_udp_size)
 	else O_LST(opt, "python-script", python_script)
+	else O_LST(opt, "dynlib-file", dynlib_file)
 	else O_YNO(opt, "disable-dnssec-lame-check", disable_dnssec_lame_check)
 	else O_DEC(opt, "ip-ratelimit", ip_ratelimit)
 	else O_DEC(opt, "ratelimit", ratelimit)
@@ -1087,6 +1188,11 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_LS3(opt, "access-control-tag-action", acl_tag_actions)
 	else O_LS3(opt, "access-control-tag-data", acl_tag_datas)
 	else O_LS2(opt, "access-control-view", acl_view)
+	else O_YNO(opt, "pad-responses", pad_responses)
+	else O_DEC(opt, "pad-responses-block-size", pad_responses_block_size)
+	else O_YNO(opt, "pad-queries", pad_queries)
+	else O_DEC(opt, "pad-queries-block-size", pad_queries_block_size)
+	else O_LS2(opt, "edns-client-strings", edns_client_strings)
 #ifdef USE_IPSECMOD
 	else O_YNO(opt, "ipsecmod-enabled", ipsecmod_enabled)
 	else O_YNO(opt, "ipsecmod-ignore-bogus", ipsecmod_ignore_bogus)
@@ -1098,7 +1204,13 @@ config_get_option(struct config_file* cfg, const char* opt,
 #ifdef USE_CACHEDB
 	else O_STR(opt, "backend", cachedb_backend)
 	else O_STR(opt, "secret-seed", cachedb_secret)
-#endif
+#ifdef USE_REDIS
+	else O_STR(opt, "redis-server-host", redis_server_host)
+	else O_DEC(opt, "redis-server-port", redis_server_port)
+	else O_DEC(opt, "redis-timeout", redis_timeout)
+	else O_YNO(opt, "redis-expire-records", redis_expire_records)
+#endif  /* USE_REDIS */
+#endif  /* USE_CACHEDB */
 #ifdef USE_IPSET
 	else O_STR(opt, "name-v4", ipset_name_v4)
 	else O_STR(opt, "name-v6", ipset_name_v6)
@@ -1279,6 +1391,10 @@ config_delauth(struct config_auth* p)
 	config_delstrlist(p->urls);
 	config_delstrlist(p->allow_notify);
 	free(p->zonefile);
+	free(p->rpz_taglist);
+	free(p->rpz_action_override);
+	free(p->rpz_cname);
+	free(p->rpz_log_name);
 	free(p);
 }
 
@@ -1338,8 +1454,8 @@ config_delviews(struct config_view* p)
 		p = np;
 	}
 }
-/** delete string array */
-static void
+
+void
 config_del_strarray(char** array, int num)
 {
 	int i;
@@ -1381,7 +1497,11 @@ config_delete(struct config_file* cfg)
 	config_delstrlist(cfg->tls_session_ticket_keys.first);
 	free(cfg->tls_ciphers);
 	free(cfg->tls_ciphersuites);
-	free(cfg->log_identity);
+	free(cfg->http_endpoint);
+	if(cfg->log_identity) {
+		log_ident_revert_to_default();
+		free(cfg->log_identity);
+	}
 	config_del_strarray(cfg->ifs, cfg->num_ifs);
 	config_del_strarray(cfg->out_ifs, cfg->num_out_ifs);
 	config_delstubs(cfg->stubs);
@@ -1396,6 +1516,8 @@ config_delete(struct config_file* cfg)
 #endif
 	free(cfg->identity);
 	free(cfg->version);
+	free(cfg->nsid_cfg_str);
+	free(cfg->nsid);
 	free(cfg->module_conf);
 	free(cfg->outgoing_avail_ports);
 	config_delstrlist(cfg->caps_whitelist);
@@ -1406,8 +1528,6 @@ config_delete(struct config_file* cfg)
 	config_delstrlist(cfg->trusted_keys_file_list);
 	config_delstrlist(cfg->trust_anchor_list);
 	config_delstrlist(cfg->domain_insecure);
-	free(cfg->dlv_anchor_file);
-	config_delstrlist(cfg->dlv_anchor_list);
 	config_deldblstrlist(cfg->acls);
 	config_deldblstrlist(cfg->tcp_connection_limits);
 	free(cfg->val_nsec3_key_iterations);
@@ -1432,11 +1552,18 @@ config_delete(struct config_file* cfg)
 	free(cfg->dns64_prefix);
 	config_delstrlist(cfg->dns64_ignore_aaaa);
 	free(cfg->dnstap_socket_path);
+	free(cfg->dnstap_ip);
+	free(cfg->dnstap_tls_server_name);
+	free(cfg->dnstap_tls_cert_bundle);
+	free(cfg->dnstap_tls_client_key_file);
+	free(cfg->dnstap_tls_client_cert_file);
 	free(cfg->dnstap_identity);
 	free(cfg->dnstap_version);
 	config_deldblstrlist(cfg->ratelimit_for_domain);
 	config_deldblstrlist(cfg->ratelimit_below_domain);
 	config_delstrlist(cfg->python_script);
+	config_delstrlist(cfg->dynlib_file);
+	config_deldblstrlist(cfg->edns_client_strings);
 #ifdef USE_IPSECMOD
 	free(cfg->ipsecmod_hook);
 	config_delstrlist(cfg->ipsecmod_whitelist);
@@ -1444,7 +1571,10 @@ config_delete(struct config_file* cfg)
 #ifdef USE_CACHEDB
 	free(cfg->cachedb_backend);
 	free(cfg->cachedb_secret);
-#endif
+#ifdef USE_REDIS
+	free(cfg->redis_server_host);
+#endif  /* USE_REDIS */
+#endif  /* USE_CACHEDB */
 #ifdef USE_IPSET
 	free(cfg->ipset_name_v4);
 	free(cfg->ipset_name_v6);
@@ -1480,6 +1610,11 @@ int
 cfg_mark_ports(const char* str, int allow, int* avail, int num)
 {
 	char* mid = strchr(str, '-');
+#ifdef DISABLE_EXPLICIT_PORT_RANDOMISATION
+	log_warn("Explicit port randomisation disabled, ignoring "
+		"outgoing-port-permit and outgoing-port-avoid configuration "
+		"options");
+#endif
 	if(!mid) {
 		int port = atoi(str);
 		if(port == 0 && strcmp(str, "0") != 0) {
@@ -1921,6 +2056,38 @@ uint8_t* config_parse_taglist(struct config_file* cfg, char* str,
 	return taglist;
 }
 
+uint8_t* cfg_parse_nsid(const char* str, uint16_t* nsid_len)
+{
+	uint8_t* nsid = NULL;
+
+	if (strncasecmp(str, "ascii_", 6) == 0) {
+		if ((nsid = (uint8_t *)strdup(str + 6)))
+			*nsid_len = strlen(str + 6);
+
+	} else if (strlen(str) % 2) {
+		; /* hex string has even number of characters */
+	}
+
+	else if (*str && (nsid = calloc(1, strlen(str) / 2))) {
+		const char *ch;
+		uint8_t *dp;
+
+		for ( ch = str, dp = nsid
+		    ; isxdigit(ch[0]) && isxdigit(ch[1])
+		    ; ch += 2, dp++) {
+			*dp  = (uint8_t)sldns_hexdigit_to_int(ch[0]) * 16;
+			*dp += (uint8_t)sldns_hexdigit_to_int(ch[1]);
+		}
+		if (*ch) {
+			free(nsid);
+			nsid = NULL;
+		} else
+			*nsid_len = strlen(str) / 2;
+	}
+	return nsid;
+}
+
+
 char* config_taglist2str(struct config_file* cfg, uint8_t* taglist,
         size_t taglen)
 {
@@ -1942,7 +2109,7 @@ char* config_taglist2str(struct config_file* cfg, uint8_t* taglist,
 	return strdup(buf);
 }
 
-int taglist_intersect(uint8_t* list1, size_t list1len, uint8_t* list2,
+int taglist_intersect(uint8_t* list1, size_t list1len, const uint8_t* list2,
 	size_t list2len)
 {
 	size_t i;
@@ -1960,7 +2127,10 @@ config_apply(struct config_file* config)
 {
 	MAX_TTL = (time_t)config->max_ttl;
 	MIN_TTL = (time_t)config->min_ttl;
+	SERVE_EXPIRED = config->serve_expired;
 	SERVE_EXPIRED_TTL = (time_t)config->serve_expired_ttl;
+	SERVE_EXPIRED_REPLY_TTL = (time_t)config->serve_expired_reply_ttl;
+	SERVE_ORIGINAL_TTL = config->serve_original_ttl;
 	MAX_NEG_TTL = (time_t)config->max_negative_ttl;
 	RTT_MIN_TIMEOUT = config->infra_cache_min_rtt;
 	EDNS_ADVERTISED_SIZE = (uint16_t)config->edns_buffer_size;
@@ -1971,6 +2141,8 @@ config_apply(struct config_file* config)
 	log_set_time_asc(config->log_time_ascii);
 	autr_permit_small_holddown = config->permit_small_holddown;
 	stream_wait_max = config->stream_wait_size;
+	http2_query_buffer_max = config->http_query_buffer_size;
+	http2_response_buffer_max = config->http_response_buffer_size;
 }
 
 void config_lookup_uid(struct config_file* cfg)

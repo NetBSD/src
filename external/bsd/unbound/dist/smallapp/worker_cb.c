@@ -46,6 +46,9 @@
 #include "util/fptr_wlist.h"
 #include "util/log.h"
 #include "services/mesh.h"
+#ifdef USE_DNSTAP
+#include "dnstap/dtstream.h"
+#endif
 
 void worker_handle_control_cmd(struct tube* ATTR_UNUSED(tube),
 	uint8_t* ATTR_UNUSED(buffer), size_t ATTR_UNUSED(len),
@@ -248,3 +251,19 @@ void remote_get_opt_ssl(char* ATTR_UNUSED(str), void* ATTR_UNUSED(arg))
 {
         log_assert(0);
 }
+
+#ifdef USE_DNSTAP
+void dtio_tap_callback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif
+
+#ifdef USE_DNSTAP
+void dtio_mainfdcallback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif
