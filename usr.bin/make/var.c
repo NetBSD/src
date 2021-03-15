@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.883 2021/03/14 20:23:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.884 2021/03/15 11:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.883 2021/03/14 20:23:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.884 2021/03/15 11:41:07 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2408,7 +2408,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	args.scope = expr->scope;
 
 	(*pp)++;		/* Skip the first '@' */
-	res = ParseModifierPart(pp, '@', VARE_NONE, st, &args.tvar);
+	res = ParseModifierPart(pp, '@', VARE_PARSE_ONLY, st, &args.tvar);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 	if (opts.strict && strchr(args.tvar, '$') != NULL) {
@@ -2419,7 +2419,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 		return AMR_CLEANUP;
 	}
 
-	res = ParseModifierPart(pp, '@', VARE_NONE, st, &args.str);
+	res = ParseModifierPart(pp, '@', VARE_PARSE_ONLY, st, &args.str);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
@@ -2452,7 +2452,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	Buffer buf;
 	const char *p;
 
-	VarEvalFlags eflags = VARE_NONE;
+	VarEvalFlags eflags = VARE_PARSE_ONLY;
 	if (expr->eflags & VARE_WANTRES)
 		if ((**pp == 'D') == (expr->defined == DEF_REGULAR))
 			eflags = expr->eflags;
@@ -3292,8 +3292,8 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 	VarParseResult res;
 
 	Boolean value = FALSE;
-	VarEvalFlags then_eflags = VARE_NONE;
-	VarEvalFlags else_eflags = VARE_NONE;
+	VarEvalFlags then_eflags = VARE_PARSE_ONLY;
+	VarEvalFlags else_eflags = VARE_PARSE_ONLY;
 
 	int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
 	if (expr->eflags & VARE_WANTRES) {

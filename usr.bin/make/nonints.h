@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.203 2021/02/14 21:32:58 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.204 2021/03/15 11:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -293,7 +293,7 @@ void Var_Init(void);
 void Var_End(void);
 
 typedef enum VarEvalFlags {
-	VARE_NONE		= 0,
+	VARE_PARSE_ONLY		= 0,
 
 	/*
 	 * Expand and evaluate variables during parsing.
