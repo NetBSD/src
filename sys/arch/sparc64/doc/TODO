@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.37 2021/03/04 20:00:51 palle Exp $ */
+/* $NetBSD: TODO,v 1.38 2021/03/16 20:11:30 palle Exp $ */
 
 Things to be done:
 
@@ -13,11 +13,12 @@ sun4u:
 sun4v:
  - current status
      T5 ldom with 2 VCPU and 4GB:
-       The kernel boots and starts userland when booting miniroot.fs.
-       The sysinst tool starts properly and is functional.
-	   Installation is not possible, since no driver currently exists
-	   for the ldom network interfaces, but openbsd vnet and vsw drivers are
-	   possible to integrate and this work is progressing.
+       - kernel boots from miniroot.fs via ldom fisk (vdsk)
+	   - ldom virtual network interface (vnet) is working
+	     (verified by exiting sysinst and issuing a ping command)
+	   - the sysinst tool starts, disk setup is working,
+	     but the process crashes when selecting network installtion method
+		 (probably due to trashing of user proces registers)
 	 T2000 ldom with 8 VCPU and 4GB:
 	   On this platform it crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
 - idle handling - call hypervisor trap (openbsd code...??)	   
