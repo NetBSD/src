@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.33 2020/08/17 03:14:08 mrg Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.34 2021/03/16 07:34:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.33 2020/08/17 03:14:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.34 2021/03/16 07:34:44 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -363,6 +363,13 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 		case OP_BREAK:
 			db_printf("\t%d", (i.RType.rs << 5) | i.RType.rt);
+			break;
+
+		case OP_TEQ:
+			db_printf("\t%s,%s,%#x",
+			    reg_name[i.RType.rs],
+			    reg_name[i.RType.rt],
+			    (i.RType.rd << 5) | i.RType.shamt);
 			break;
 
 		default:
