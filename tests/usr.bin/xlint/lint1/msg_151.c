@@ -1,7 +1,13 @@
-/*	$NetBSD: msg_151.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_151.c,v 1.3 2021/03/16 23:39:41 rillig Exp $	*/
 # 3 "msg_151.c"
 
 // Test for message: void expressions may not be arguments, arg #%d [151]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+void sink_int(int);
+
+void
+example(int i)
+{
+	sink_int((void)i);	/* expect: 151 */
+	sink_int(i);
+}

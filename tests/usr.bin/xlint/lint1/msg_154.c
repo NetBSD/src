@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_154.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_154.c,v 1.3 2021/03/16 23:39:41 rillig Exp $	*/
 # 3 "msg_154.c"
 
 // Test for message: illegal combination of %s (%s) and %s (%s), arg #%d [154]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+void sink_int(int);
+
+void
+example(int *ptr)
+{
+	sink_int(ptr);		/* expect: 154 */
+}

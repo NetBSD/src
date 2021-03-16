@@ -1,1 +1,1 @@
-msg_151.c(6): syntax error ':' [249]
+msg_151.c(11): void expressions may not be arguments, arg #1 [151]
