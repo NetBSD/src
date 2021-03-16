@@ -1,4 +1,4 @@
-/*	$NetBSD: com_elb.c,v 1.11 2021/03/02 12:01:02 rin Exp $	*/
+/*	$NetBSD: com_elb.c,v 1.12 2021/03/16 08:16:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.11 2021/03/02 12:01:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.12 2021/03/16 08:16:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,12 +59,12 @@ CFATTACH_DECL_NEW(com_elb, sizeof(struct com_elb_softc),
 int
 com_elb_probe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct elb_attach_args *oaa = aux;
+	struct elb_attach_args *eaa = aux;
 
-	if (strcmp(oaa->elb_name, cf->cf_name) != 0)
+	if (strcmp(eaa->elb_name, cf->cf_name) != 0)
 		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
