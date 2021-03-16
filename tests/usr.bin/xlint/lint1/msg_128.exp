@@ -1,1 +1,1 @@
-msg_128.c(6): syntax error ':' [249]
+msg_128.c(10): warning: operands have incompatible pointer types, op = (char != const char) [128]
