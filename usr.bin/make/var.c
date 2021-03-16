@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.891 2021/03/15 20:00:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.892 2021/03/16 16:21:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.891 2021/03/15 20:00:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.892 2021/03/16 16:21:27 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2062,17 +2062,22 @@ typedef struct Expr {
  * The status of applying a chain of modifiers to an expression.
  *
  * The modifiers of an expression are broken into chains of modifiers,
- * starting a new chain whenever an indirect modifier starts or ends.
+ * starting a new nested chain whenever an indirect modifier starts.  There
+ * are at most 2 nesting levels: the outer one for the direct modifiers, and
+ * the inner one for the indirect modifiers.
  *
- * For example, the expression ${VAR:M*:${IND1}:${IND2}:O:u} has 4 chains of
+ * For example, the expression ${VAR:M*:${IND1}:${IND2}:O:u} has 3 chains of
  * modifiers:
  *
- *	Chain 1 is ':M*', consisting of the single modifier ':M*'.
- *	Chain 2 is all modifiers from the value of the variable named 'IND1'.
- *	Chain 3 is all modifiers from the value of the variable named 'IND2'.
- *	Chain 4 is ':O:u', consisting of the 2 modifiers ':O' and ':u'.
+ *	Chain 1 starts with the single modifier ':M*'.
+ *	  Chain 2 starts with all modifiers from ${IND1}.
+ *	  Chain 2 ends at the ':' between ${IND1} and ${IND2}.
+ *	  Chain 3 starts with all modifiers from ${IND1}.
+ *	  Chain 2 ends at the ':' after ${IND2}.
+ *	Chain 1 continues with the the 2 modifiers ':O' and ':u'.
+ *	Chain 1 ends at the final '}' of the expression.
  *
- * After such a chain has finished, its properties no longer have any effect.
+ * After such a chain ends, its properties no longer have any effect.
  *
  * It may or may not have been intended that 'defined' has scope Expr while
  * 'sep' and 'oneBigWord' have smaller scope.
