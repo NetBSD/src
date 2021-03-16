@@ -1,1 +1,1 @@
-msg_157.c(6): syntax error ':' [249]
+msg_157.c(10): warning: ANSI C treats constant as unsigned [157]
