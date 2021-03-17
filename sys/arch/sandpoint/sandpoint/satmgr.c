@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.29 2021/01/04 15:36:22 thorpej Exp $ */
+/* $NetBSD: satmgr.c,v 1.30 2021/03/17 14:50:11 rin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	struct btinfo_prodfamily *pfam;
 	struct satops *ops;
 	int i, sataddr, epicirq;
+	char intr_xname[INTRDEVNAMEBUF];
 
 	found = 1;
 
@@ -251,7 +252,8 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_repcv, "stalk");
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
-	intr_establish(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL, hwintr, sc);
+	intr_establish_xname(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL,
+	    hwintr, sc, device_xname(self));
 	aprint_normal_dev(self, "interrupting at irq %d\n",
 	    epicirq + I8259_ICU);
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, swintr, sc);
@@ -321,8 +323,10 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 			CTL_CREATE, CTL_EOL);
 	}
 	else if (strcmp(ops->family, "kurot4") == 0) {
-		intr_establish(2 + I8259_ICU,
-			IST_LEVEL, IPL_SERIAL, mbtnintr, sc);
+		snprintf(intr_xname, sizeof(intr_xname), "%s mbtn",
+		    device_xname(self));
+		intr_establish_xname(2 + I8259_ICU,
+			IST_LEVEL, IPL_SERIAL, mbtnintr, sc, intr_xname);
 	}
 
 	md_reboot = satmgr_reboot;	/* cpu_reboot() hook */

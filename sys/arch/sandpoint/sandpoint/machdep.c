@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2018/07/15 05:16:44 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2021/03/17 14:50:11 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2018/07/15 05:16:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2021/03/17 14:50:11 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -257,7 +257,8 @@ cpu_startup(void)
 	 * set up i8259 as a cascade on EPIC irq 0.
 	 * XXX exceptional SP2 has 17
 	 */
-	intr_establish(16, IST_LEVEL, IPL_HIGH, pic_handle_intr, isa_pic);
+	intr_establish_xname(16, IST_LEVEL, IPL_HIGH, pic_handle_intr, isa_pic,
+	    "i8259");
 #else
 	mpcpic_reserv16();
 	(void)setup_mpcpic(baseaddr);

@@ -1,4 +1,4 @@
-/* $NetBSD: nhpow.c,v 1.1 2012/01/14 19:39:25 phx Exp $ */
+/* $NetBSD: nhpow.c,v 1.2 2021/03/17 14:50:11 rin Exp $ */
 
 /*-
  * Copyright (c) 2012 Frank Wille.
@@ -32,7 +32,7 @@
  * NH230/231 power and LED control, button handling
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpow.c,v 1.1 2012/01/14 19:39:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpow.c,v 1.2 2021/03/17 14:50:11 rin Exp $");
 #include "gpio.h"
 
 #include <sys/param.h>
@@ -152,7 +152,8 @@ nhpow_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_ch_pbutton, 0);	/* power-button callout */
 
 	/* establish button interrupt handler */
-	intr_establish(I8259_ICU + 4, IST_EDGE_RISING, IPL_SCHED, hwintr, sc);
+	intr_establish_xname(I8259_ICU + 4, IST_EDGE_RISING, IPL_SCHED, hwintr,
+	    sc, device_xname(self));
 	aprint_normal_dev(self, "interrupting at irq %d\n", I8259_ICU + 4);
 
 	/* register power button with sysmon */
