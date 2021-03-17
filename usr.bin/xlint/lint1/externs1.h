@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.75 2021/03/17 01:53:21 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.76 2021/03/17 15:45:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -300,6 +300,7 @@ extern	void	init_rbrace(void);
 extern	void	init_lbrace(void);
 extern	void	init_using_expr(tnode_t *);
 extern	void	push_member(sbuf_t *);
+extern	void	designator_push_subscript(range_t);
 
 /*
  * emit.c
