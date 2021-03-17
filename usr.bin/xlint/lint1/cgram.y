@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.174 2021/03/17 01:38:31 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.175 2021/03/17 01:53:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.174 2021/03/17 01:38:31 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.175 2021/03/17 01:53:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -66,7 +66,6 @@ int	mem_block_level;
  */
 static int olwarn = LWARN_BAD;
 
-static	int	to_int_constant(tnode_t *, int);
 static	void	cgram_declare(sym_t *, bool, sbuf_t *);
 static	void	ignore_up_to_rparen(void);
 static	sym_t	*symbolrename(sym_t *, sbuf_t *);
@@ -873,12 +872,12 @@ notype_member_decl:
 		$$ = $1;
 	  }
 	| notype_decl T_COLON constant_expr {		/* C99 6.7.2.1 */
-		$$ = bitfield($1, to_int_constant($3, 1));
+		$$ = bitfield($1, to_int_constant($3, true));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant_expr {			/* C99 6.7.2.1 */
-		$$ = bitfield(NULL, to_int_constant($3, 1));
+		$$ = bitfield(NULL, to_int_constant($3, true));
 	  }
 	;
 
@@ -887,12 +886,12 @@ type_member_decl:
 		$$ = $1;
 	  }
 	| type_decl T_COLON constant_expr {
-		$$ = bitfield($1, to_int_constant($3, 1));
+		$$ = bitfield($1, to_int_constant($3, true));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant_expr {
-		$$ = bitfield(NULL, to_int_constant($3, 1));
+		$$ = bitfield(NULL, to_int_constant($3, true));
 	  }
 	;
 
@@ -975,7 +974,7 @@ enumerator:
 		$$ = enumeration_constant($1, enumval, 1);
 	  }
 	| enumeration_constant T_ASSIGN constant_expr {
-		$$ = enumeration_constant($1, to_int_constant($3, 1), 0);
+		$$ = enumeration_constant($1, to_int_constant($3, true), 0);
 	  }
 	;
 
@@ -1043,7 +1042,7 @@ notype_direct_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| notype_direct_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, false));
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1076,7 +1075,7 @@ type_direct_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| type_direct_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, false));
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1116,7 +1115,7 @@ direct_param_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| direct_param_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, false));
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1145,7 +1144,7 @@ direct_notype_param_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| direct_notype_param_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, false));
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1347,12 +1346,12 @@ init_expr_list:
 
 range:
 	  constant_expr {
-		$$.lo = to_int_constant($1, 1);
+		$$.lo = to_int_constant($1, true);
 		$$.hi = $$.lo;
 	  }
 	| constant_expr T_ELLIPSIS constant_expr {
-		$$.lo = to_int_constant($1, 1);
-		$$.hi = to_int_constant($3, 1);
+		$$.lo = to_int_constant($1, true);
+		$$.hi = to_int_constant($3, true);
 		/* initialization with '[a...b]' is a GNU extension */
 		gnuism(340);
 	  }
@@ -1445,7 +1444,7 @@ direct_abstract_decl:
 		$$ = add_array(abstract_name(), 0, 0);
 	  }
 	| T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array(abstract_name(), 1, to_int_constant($2, 0));
+		$$ = add_array(abstract_name(), 1, to_int_constant($2, false));
 	  }
 	| type_attribute direct_abstract_decl {
 		$$ = $2;
@@ -1454,7 +1453,7 @@ direct_abstract_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| direct_abstract_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, false));
 	  }
 	| abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
@@ -2053,84 +2052,6 @@ yyerror(const char *msg)
 	if (++sytxerr >= 5)
 		norecover();
 	return 0;
-}
-
-static __inline int uq_gt(uint64_t, uint64_t);
-static __inline int q_gt(int64_t, int64_t);
-
-static __inline int
-uq_gt(uint64_t a, uint64_t b)
-{
-
-	return a > b;
-}
-
-static __inline int
-q_gt(int64_t a, int64_t b)
-{
-
-	return a > b;
-}
-
-#define	q_lt(a, b)	q_gt(b, a)
-
-/*
- * Gets a node for a constant and returns the value of this constant
- * as integer.
- *
- * If the node is not constant or too large for int or of type float,
- * a warning will be printed.
- *
- * to_int_constant() should be used only inside declarations. If it is used in
- * expressions, it frees the memory used for the expression.
- */
-static int
-to_int_constant(tnode_t *tn, int required)
-{
-	int	i;
-	tspec_t	t;
-	val_t	*v;
-
-	v = constant(tn, required);
-
-	if (tn == NULL) {
-		i = 1;
-		goto done;
-	}
-
-	/*
-	 * Abstract declarations are used inside expression. To free
-	 * the memory would be a fatal error.
-	 * We don't free blocks that are inside casts because these
-	 * will be used later to match types.
-	 */
-	if (tn->tn_op != CON && dcs->d_ctx != ABSTRACT)
-		tfreeblk();
-
-	if ((t = v->v_tspec) == FLOAT || t == DOUBLE || t == LDOUBLE) {
-		i = (int)v->v_ldbl;
-		/* integral constant expression expected */
-		error(55);
-	} else {
-		i = (int)v->v_quad;
-		if (is_uinteger(t)) {
-			if (uq_gt((uint64_t)v->v_quad,
-				  (uint64_t)TARG_INT_MAX)) {
-				/* integral constant too large */
-				warning(56);
-			}
-		} else {
-			if (q_gt(v->v_quad, (int64_t)TARG_INT_MAX) ||
-			    q_lt(v->v_quad, (int64_t)TARG_INT_MIN)) {
-				/* integral constant too large */
-				warning(56);
-			}
-		}
-	}
-
-done:
-	free(v);
-	return i;
 }
 
 static void
