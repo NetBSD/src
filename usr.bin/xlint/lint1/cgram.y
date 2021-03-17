@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.169 2021/03/07 20:06:48 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.170 2021/03/17 01:07:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.169 2021/03/07 20:06:48 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.170 2021/03/17 01:07:33 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1200,7 +1200,7 @@ type_qualifier:
 	;
 
 param_list:
-	  id_list_lparn identifier_list T_RPAREN {
+	  id_list_lparen identifier_list T_RPAREN {
 		$$ = $2;
 	  }
 	| abstract_decl_param_list {
@@ -1208,7 +1208,7 @@ param_list:
 	  }
 	;
 
-id_list_lparn:
+id_list_lparen:
 	  T_LPAREN {
 		blklev++;
 		pushdecl(PROTO_ARG);
@@ -1228,19 +1228,19 @@ identifier_list:
 	;
 
 abstract_decl_param_list:
-	  abstract_decl_lparn T_RPAREN {
+	  abstract_decl_lparen T_RPAREN {
 		$$ = NULL;
 	  }
-	| abstract_decl_lparn vararg_parameter_type_list T_RPAREN {
+	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN {
 		dcs->d_proto = true;
 		$$ = $2;
 	  }
-	| abstract_decl_lparn error T_RPAREN {
+	| abstract_decl_lparen error T_RPAREN {
 		$$ = NULL;
 	  }
 	;
 
-abstract_decl_lparn:
+abstract_decl_lparen:
 	  T_LPAREN {
 		blklev++;
 		pushdecl(PROTO_ARG);
@@ -1763,16 +1763,16 @@ goto:
 	;
 
 asm_statement:
-	  T_ASM T_LPAREN read_until_rparn T_SEMI {
+	  T_ASM T_LPAREN read_until_rparen T_SEMI {
 		setasm();
 	  }
-	| T_ASM T_QUAL T_LPAREN read_until_rparn T_SEMI {
+	| T_ASM T_QUAL T_LPAREN read_until_rparen T_SEMI {
 		setasm();
 	  }
 	| T_ASM error
 	;
 
-read_until_rparn:
+read_until_rparen:
 	  /* empty */ {
 		ignore_up_to_rparen();
 	  }
