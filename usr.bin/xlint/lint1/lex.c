@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.11 2021/03/01 00:51:01 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.12 2021/03/17 01:15:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.11 2021/03/01 00:51:01 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.12 2021/03/17 01:15:31 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -415,7 +415,7 @@ lex_name(const char *yytext, size_t yyleng)
 	sb->sb_sym = sym;
 
 	if (sym != NULL) {
-		lint_assert(blklev >= sym->s_blklev);
+		lint_assert(block_level >= sym->s_block_level);
 		sb->sb_name = sym->s_name;
 		sb->sb_len = strlen(sym->s_name);
 		tok = sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
@@ -1407,7 +1407,7 @@ getsym(sbuf_t *sb)
 		s = getlblk(1, sb->sb_len + 1);
 		(void)memcpy(s, sb->sb_name, sb->sb_len + 1);
 		sym->s_name = s;
-		sym->s_blklev = 1;
+		sym->s_block_level = 1;
 		di = dcs;
 		while (di->d_next != NULL && di->d_next->d_next != NULL)
 			di = di->d_next;
@@ -1415,7 +1415,7 @@ getsym(sbuf_t *sb)
 	} else {
 		sym = getblk(sizeof (sym_t));
 		sym->s_name = sb->sb_name;
-		sym->s_blklev = blklev;
+		sym->s_block_level = block_level;
 		di = dcs;
 	}
 
@@ -1446,7 +1446,7 @@ mktempsym(type_t *t)
 {
 	static int n = 0;
 	int h;
-	char *s = getlblk(blklev, 64);
+	char *s = getlblk(block_level, 64);
 	sym_t *sym = getblk(sizeof (sym_t));
 
 	(void)snprintf(s, 64, "%.8d_tmp", n++);
@@ -1454,7 +1454,7 @@ mktempsym(type_t *t)
 
 	sym->s_name = s;
 	sym->s_type = t;
-	sym->s_blklev = blklev;
+	sym->s_block_level = block_level;
 	sym->s_scl = AUTO;
 	sym->s_kind = FVFT;
 	sym->s_used = true;
@@ -1472,7 +1472,7 @@ mktempsym(type_t *t)
 }
 
 /*
- * Remove a symbol forever from the symbol table. s_blklev
+ * Remove a symbol forever from the symbol table. s_block_level
  * is set to -1 to avoid that the symbol will later be put
  * back to the symbol table.
  */
@@ -1482,7 +1482,7 @@ rmsym(sym_t *sym)
 
 	if ((*sym->s_rlink = sym->s_link) != NULL)
 		sym->s_link->s_rlink = sym->s_rlink;
-	sym->s_blklev = -1;
+	sym->s_block_level = -1;
 	sym->s_link = NULL;
 }
 
@@ -1496,7 +1496,7 @@ rmsyms(sym_t *syms)
 	sym_t	*sym;
 
 	for (sym = syms; sym != NULL; sym = sym->s_dlnxt) {
-		if (sym->s_blklev != -1) {
+		if (sym->s_block_level != -1) {
 			if ((*sym->s_rlink = sym->s_link) != NULL)
 				sym->s_link->s_rlink = sym->s_rlink;
 			sym->s_link = NULL;
@@ -1518,9 +1518,9 @@ inssym(int bl, sym_t *sym)
 		symtab[h]->s_rlink = &sym->s_link;
 	sym->s_rlink = &symtab[h];
 	symtab[h] = sym;
-	sym->s_blklev = bl;
+	sym->s_block_level = bl;
 	lint_assert(sym->s_link == NULL ||
-		    sym->s_blklev >= sym->s_link->s_blklev);
+		    sym->s_block_level >= sym->s_link->s_block_level);
 }
 
 /*
@@ -1539,14 +1539,14 @@ cleanup(void)
 	for (i = 0; i < HSHSIZ1; i++) {
 		for (sym = symtab[i]; sym != NULL; sym = nsym) {
 			nsym = sym->s_link;
-			if (sym->s_blklev >= 1) {
+			if (sym->s_block_level >= 1) {
 				if ((*sym->s_rlink = nsym) != NULL)
 					nsym->s_rlink = sym->s_rlink;
 			}
 		}
 	}
 
-	for (i = mblklev; i > 0; i--)
+	for (i = mem_block_level; i > 0; i--)
 		freelblk(i);
 }
 
@@ -1561,11 +1561,11 @@ pushdown(sym_t *sym)
 
 	h = hash(sym->s_name);
 	nsym = getblk(sizeof (sym_t));
-	lint_assert(sym->s_blklev <= blklev);
+	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;
 	UNIQUE_CURR_POS(nsym->s_def_pos);
 	nsym->s_kind = sym->s_kind;
-	nsym->s_blklev = blklev;
+	nsym->s_block_level = block_level;
 
 	if ((nsym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &nsym->s_link;
