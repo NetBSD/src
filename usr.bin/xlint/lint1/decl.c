@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.145 2021/03/17 01:38:31 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.146 2021/03/17 01:53:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.145 2021/03/17 01:38:31 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.146 2021/03/17 01:53:21 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3300,4 +3300,62 @@ print_previous_declaration(int msg, const sym_t *psym)
 		message(260, psym->s_name);
 	}
 	curr_pos = cpos;
+}
+
+/*
+ * Gets a node for a constant and returns the value of this constant
+ * as integer.
+ *
+ * If the node is not constant or too large for int or of type float,
+ * a warning will be printed.
+ *
+ * to_int_constant() should be used only inside declarations. If it is used in
+ * expressions, it frees the memory used for the expression.
+ */
+int
+to_int_constant(tnode_t *tn, bool required)
+{
+	int	i;
+	tspec_t	t;
+	val_t	*v;
+
+	v = constant(tn, required);
+
+	if (tn == NULL) {
+		i = 1;
+		goto done;
+	}
+
+	/*
+	 * Abstract declarations are used inside expression. To free
+	 * the memory would be a fatal error.
+	 * We don't free blocks that are inside casts because these
+	 * will be used later to match types.
+	 */
+	if (tn->tn_op != CON && dcs->d_ctx != ABSTRACT)
+		tfreeblk();
+
+	if ((t = v->v_tspec) == FLOAT || t == DOUBLE || t == LDOUBLE) {
+		i = (int)v->v_ldbl;
+		/* integral constant expression expected */
+		error(55);
+	} else {
+		i = (int)v->v_quad;
+		if (is_uinteger(t)) {
+			if ((uint64_t)v->v_quad > (uint64_t)TARG_INT_MAX) {
+				/* integral constant too large */
+				warning(56);
+			}
+		} else {
+			if (v->v_quad > (int64_t)TARG_INT_MAX ||
+			    v->v_quad < (int64_t)TARG_INT_MIN) {
+				/* integral constant too large */
+				warning(56);
+			}
+		}
+	}
+
+done:
+	free(v);
+	return i;
 }

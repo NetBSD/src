@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.74 2021/03/17 01:38:31 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.75 2021/03/17 01:53:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -193,6 +193,7 @@ extern	void	check_usage(dinfo_t *);
 extern	void	check_usage_sym(bool, sym_t *);
 extern	void	check_global_symbols(void);
 extern	void	print_previous_declaration(int, const sym_t *);
+extern	int	to_int_constant(tnode_t *, bool);
 
 /*
  * tree.c
