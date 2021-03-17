@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.175 2021/03/17 01:53:21 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.176 2021/03/17 15:45:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.175 2021/03/17 01:53:21 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.176 2021/03/17 15:45:30 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -107,7 +107,7 @@ RESTORE_WARN_FLAGS(const char *file, size_t line)
 #define SAVE_WARN_FLAGS(f, l)	olwarn = lwarn
 #define RESTORE_WARN_FLAGS(f, l) \
 	(void)(olwarn == LWARN_BAD ? (clear_warn_flags(), 0) : (lwarn = olwarn))
-#define cgram_debug(fmt, args...) (void)0
+#define cgram_debug(fmt, args...) do { } while (false)
 #endif
 
 /* unbind the anonymous struct members from the struct */
@@ -1359,6 +1359,7 @@ range:
 
 designator:			/* C99 6.7.8 "Initialization" */
 	  T_LBRACK range T_RBRACK {
+		designator_push_subscript($2);
 		if (!Sflag)
 			/* array initializer with des.s is a C9X feature */
 			warning(321);
