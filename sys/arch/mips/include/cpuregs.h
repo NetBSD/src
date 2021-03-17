@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.109 2020/08/22 03:41:33 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.110 2021/03/17 11:05:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -679,6 +679,8 @@
 #define	MIPS_BREAK_INSTR	0x0000000d
 #define	MIPS_BREAK_VAL_MASK	0x03ff0000
 #define	MIPS_BREAK_VAL_SHIFT	16
+#define	MIPS_BREAK_INTOVERFLOW	  6 /* used by gas to indicate int overflow */
+#define	MIPS_BREAK_INTDIVZERO	  7 /* used by gas/gcc to indicate int div by zero */
 #define	MIPS_BREAK_KDB_VAL	512
 #define	MIPS_BREAK_SSTEP_VAL	513
 #define	MIPS_BREAK_BRKPT_VAL	514

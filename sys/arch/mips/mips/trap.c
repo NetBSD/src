@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.258 2021/03/13 17:14:11 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.259 2021/03/17 11:05:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.258 2021/03/13 17:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.259 2021/03/17 11:05:37 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -159,7 +159,6 @@ void
 trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
     struct trapframe *tf)
 {
-	int type;
 	struct lwp * const l = curlwp;
 	struct proc * const p = curproc;
 	struct trapframe * const utf = l->l_md.md_utf;
@@ -168,6 +167,9 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	ksiginfo_t ksi;
 	extern void fswintrberr(void);
 	void *onfault;
+	InstFmt insn;
+	uint32_t instr;
+	int type;
 	int rv = 0;
 
 	KSI_INIT_TRAP(&ksi);
@@ -547,21 +549,46 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		goto dopanic;
 #endif
 	case T_BREAK+T_USER: {
-		uint32_t instr;
-
 		/* compute address of break instruction */
 		vaddr_t va = pc + (cause & MIPS_CR_BR_DELAY ? sizeof(int) : 0);
 
 		/* read break instruction */
 		instr = mips_ufetch32((void *)va);
+		insn.word = instr;
 
 		if (l->l_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
+			bool advance_pc = false;
+
 			ksi.ksi_trap = type & ~T_USER;
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_addr = (void *)va;
 			ksi.ksi_code = TRAP_TRACE;
-			/* we broke, skip it to avoid infinite loop */
-			if (instr == MIPS_BREAK_INSTR)
+
+			if ((insn.JType.op == OP_SPECIAL) &&
+			    (insn.RType.func == OP_BREAK)) {
+				int code = (insn.RType.rs << 5) | insn.RType.rt;
+				switch (code) {
+				case 0:
+					/* we broke, skip it to avoid infinite loop */
+					advance_pc = true;
+					break;
+				case MIPS_BREAK_INTOVERFLOW:
+					ksi.ksi_signo = SIGFPE;
+					ksi.ksi_code = FPE_INTOVF;
+					advance_pc = true;
+					break;
+				case MIPS_BREAK_INTDIVZERO:
+					ksi.ksi_signo = SIGFPE;
+					ksi.ksi_code = FPE_INTDIV;
+					advance_pc = true;
+					break;
+				default:
+					/* do nothing */
+					break;
+				}
+			}
+
+			if (advance_pc)
 				tf->tf_regs[_R_PC] += 4;
 			break;
 		}
@@ -627,12 +654,40 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		userret(l);
 		return; /* GEN */
 	case T_OVFLOW+T_USER:
-	case T_TRAP+T_USER:
+	case T_TRAP+T_USER: {
+		/* compute address of trap/faulting instruction */
+		vaddr_t va = pc + (cause & MIPS_CR_BR_DELAY ? sizeof(int) : 0);
+		bool advance_pc = false;
+
+		/* read break instruction */
+		instr = mips_ufetch32((void *)va);
+		insn.word = instr;
+
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_addr = (void *)(intptr_t)pc /*utf->tf_regs[_R_PC]*/;
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
+
+		if ((insn.JType.op == OP_SPECIAL) &&
+		    (insn.RType.func == OP_TEQ)) {
+			int code = (insn.RType.rd << 5) | insn.RType.shamt;
+			switch (code) {
+			case MIPS_BREAK_INTOVERFLOW:
+				ksi.ksi_code = FPE_INTOVF;
+				advance_pc = true;
+				break;
+			case MIPS_BREAK_INTDIVZERO:
+				ksi.ksi_code = FPE_INTDIV;
+				advance_pc = true;
+				break;
+			}
+		}
+
+		/* XXX when else do we advance the PC? */
+		if (advance_pc)
+			tf->tf_regs[_R_PC] += 4;
 		break; /* SIGNAL */
+	 }
 	}
 	utf->tf_regs[_R_CAUSE] = cause;
 	utf->tf_regs[_R_BADVADDR] = vaddr;
