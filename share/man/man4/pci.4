@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.118 2021/03/17 13:42:03 nia Exp $
+.\"	$NetBSD: pci.4,v 1.119 2021/03/17 14:10:29 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -138,6 +138,10 @@ QLogic ISP-1020, ISP-1040, and ISP-2100 SCSI and FibreChannel interfaces.
 LSI Logic & Dell MegaRAID SAS RAID controllers.
 .It Xr mly 4
 Mylex AcceleRAID and eXtremeRAID controllers with v6 firmware.
+.It Xr mpii 4
+LSI Logic Fusion-MPT Message Passing Interface II SAS controllers.
+.It Xr mpt 4
+LSI Logic Fusion-MPT SCSI/Fibre Channel/SAS controllers.
 .It Xr nca 4
 Domex 536 SCSI interfaces.
 .It Xr pcscp 4
@@ -155,20 +159,34 @@ The Adaptec AAC family of RAID controllers.
 AHCI 1.0 and 1.1 compliant SATA controllers.
 .It Xr amr 4
 The AMI and LSI Logic MegaRAID family of RAID controllers.
+.It Xr arcmsr 4
+Areca Technology Corporation SATA/SAS RAID controllers.
 .It Xr cac 4
 Compaq array controllers.
+.It Xr ciss 4
+HP/Compaq Smart ARRAY 5/6 RAID controllers.
 .It Xr icp 4
 ICP Vortex GDT and Intel Storage RAID controllers.
+.It Xr ixpide 4
+ATI Technologies IXP IDE controllers
 .It Xr mlx 4
 Mylex DAC960 and DEC SWXCR RAID controllers.
+.It Xr nside 4
+National Semiconductor PC87415 PCI-IDE controllers.
 .It Xr nvme 4
 Non-Volatile Memory (NVM Express) host controllers.
 .It Xr pciide 4
 IDE disk controllers.
 .It Xr rtsx 4
 Realtek SD card readers.
+.It Xr svwsata 4
+Serverworks Serial ATA disk controllers.
+.It Xr twa 4
+3ware Apache RAID controllers.
 .It Xr twe 4
 3Ware Escalade RAID controllers.
+.It Xr viaide 4
+AMD, NVIDIA and VIA IDE disk controllers.
 .El
 .Ss Wired network interfaces
 .Bl -tag -width pcdisplay(4) -offset indent
@@ -190,6 +208,8 @@ Elastic Network Adapter interfaces.
 3Com 3c590, 3c595, 3c900, and 3c905 Ethernet interfaces.
 .It Xr epic 4
 SMC83C170 (EPIC/100) Ethernet interfaces.
+.It Xr et 4
+Agere/LSI ET1310/ET1301 10/100/1000 Ethernet interfaces.
 .It Xr ex 4
 3Com 3c900, 3c905, and 3c980 Ethernet interfaces.
 .It Xr fxp 4
@@ -202,11 +222,15 @@ Sun Microelectronics STP2002-STQ Ethernet interfaces.
 Intel 82598EB, 82599, X540 and X550 10 Gigabit Ethernet interfaces.
 .It Xr ixl 4
 Intel 700 series Ethernet interfaces.
+.It Xr jme 4
+JMicron Technologies JMC250/JMC260 Ethernet interfaces.
 .It Xr le 4
 PCNet-PCI Ethernet interfaces.
 Note, the
 .Xr pcn 4
 driver supersedes this driver.
+.It Xr lii 4
+Attansic/Atheros L2 Fast-Ethernet interfaces.
 .It Xr mcx 4
 Mellanox 5th generation Ethernet devices.
 .It Xr msk 4
@@ -344,6 +368,8 @@ Generic PCI bridges, including expansion backplanes.
 Brooktree 848 compatible TV cards.
 .It Xr ehci 4
 USB EHCI host controllers.
+.It Xr ibmcd 4
+IBM 4810 BSP cash drawer ports.
 .It Xr iop 4
 I2O I/O processors.
 .It Xr oboe 4
