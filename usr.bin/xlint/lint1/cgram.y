@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.171 2021/03/17 01:15:31 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.172 2021/03/17 01:19:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.171 2021/03/17 01:15:31 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.172 2021/03/17 01:19:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -66,7 +66,7 @@ int	mem_block_level;
  */
 static int olwarn = LWARN_BAD;
 
-static	int	toicon(tnode_t *, int);
+static	int	to_int_constant(tnode_t *, int);
 static	void	idecl(sym_t *, int, sbuf_t *);
 static	void	ignore_up_to_rparen(void);
 static	sym_t	*symbolrename(sym_t *, sbuf_t *);
@@ -873,12 +873,12 @@ notype_member_decl:
 		$$ = $1;
 	  }
 	| notype_decl T_COLON constant_expr {		/* C99 6.7.2.1 */
-		$$ = bitfield($1, toicon($3, 1));
+		$$ = bitfield($1, to_int_constant($3, 1));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant_expr {			/* C99 6.7.2.1 */
-		$$ = bitfield(NULL, toicon($3, 1));
+		$$ = bitfield(NULL, to_int_constant($3, 1));
 	  }
 	;
 
@@ -887,12 +887,12 @@ type_member_decl:
 		$$ = $1;
 	  }
 	| type_decl T_COLON constant_expr {
-		$$ = bitfield($1, toicon($3, 1));
+		$$ = bitfield($1, to_int_constant($3, 1));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant_expr {
-		$$ = bitfield(NULL, toicon($3, 1));
+		$$ = bitfield(NULL, to_int_constant($3, 1));
 	  }
 	;
 
@@ -975,7 +975,7 @@ enumerator:
 		$$ = enumeration_constant($1, enumval, 1);
 	  }
 	| enumeration_constant T_ASSIGN constant_expr {
-		$$ = enumeration_constant($1, toicon($3, 1), 0);
+		$$ = enumeration_constant($1, to_int_constant($3, 1), 0);
 	  }
 	;
 
@@ -1043,7 +1043,7 @@ notype_direct_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| notype_direct_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, 0));
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1076,7 +1076,7 @@ type_direct_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| type_direct_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, 0));
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1116,7 +1116,7 @@ direct_param_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| direct_param_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, 0));
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1145,7 +1145,7 @@ direct_notype_param_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| direct_notype_param_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, 0));
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1347,12 +1347,12 @@ init_expr_list:
 
 range:
 	  constant_expr {
-		$$.lo = toicon($1, 1);
+		$$.lo = to_int_constant($1, 1);
 		$$.hi = $$.lo;
 	  }
 	| constant_expr T_ELLIPSIS constant_expr {
-		$$.lo = toicon($1, 1);
-		$$.hi = toicon($3, 1);
+		$$.lo = to_int_constant($1, 1);
+		$$.hi = to_int_constant($3, 1);
 		/* initialization with '[a...b]' is a GNU extension */
 		gnuism(340);
 	  }
@@ -1445,7 +1445,7 @@ direct_abstract_decl:
 		$$ = add_array(abstract_name(), 0, 0);
 	  }
 	| T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array(abstract_name(), 1, toicon($2, 0));
+		$$ = add_array(abstract_name(), 1, to_int_constant($2, 0));
 	  }
 	| type_attribute direct_abstract_decl {
 		$$ = $2;
@@ -1454,7 +1454,7 @@ direct_abstract_decl:
 		$$ = add_array($1, 0, 0);
 	  }
 	| direct_abstract_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, to_int_constant($3, 0));
 	  }
 	| abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
@@ -2081,11 +2081,11 @@ q_gt(int64_t a, int64_t b)
  * If the node is not constant or too large for int or of type float,
  * a warning will be printed.
  *
- * toicon() should be used only inside declarations. If it is used in
+ * to_int_constant() should be used only inside declarations. If it is used in
  * expressions, it frees the memory used for the expression.
  */
 static int
-toicon(tnode_t *tn, int required)
+to_int_constant(tnode_t *tn, int required)
 {
 	int	i;
 	tspec_t	t;
