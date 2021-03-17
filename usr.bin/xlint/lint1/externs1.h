@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.73 2021/03/17 01:15:31 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.74 2021/03/17 01:38:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -171,6 +171,7 @@ extern	const	char *storage_class_name(scl_t);
 extern	type_t	*complete_tag_struct_or_union(type_t *, sym_t *);
 extern	type_t	*complete_tag_enum(type_t *, sym_t *);
 extern	sym_t	*enumeration_constant(sym_t *, int, bool);
+extern	void	declare(sym_t *, bool, sbuf_t *);
 extern	void	decl1ext(sym_t *, bool);
 extern	void	copy_usage_info(sym_t *, sym_t *);
 extern	bool	check_redeclaration(sym_t *, bool *);

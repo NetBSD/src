@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.144 2021/03/17 01:15:31 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.145 2021/03/17 01:38:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.144 2021/03/17 01:15:31 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.145 2021/03/17 01:38:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1879,6 +1879,48 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	}
 	enumval = val + 1;
 	return sym;
+}
+
+void
+declare(sym_t *decl, bool initflg, sbuf_t *renaming)
+{
+	char *s;
+
+	initerr = false;
+	initsym = decl;
+
+	switch (dcs->d_ctx) {
+	case EXTERN:
+		if (renaming != NULL) {
+			lint_assert(decl->s_rename == NULL);
+
+			s = getlblk(1, renaming->sb_len + 1);
+			(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
+			decl->s_rename = s;
+		}
+		decl1ext(decl, initflg);
+		break;
+	case ARG:
+		if (renaming != NULL) {
+			/* symbol renaming can't be used on function arguments */
+			error(310);
+			break;
+		}
+		(void)declare_argument(decl, initflg);
+		break;
+	default:
+		lint_assert(dcs->d_ctx == AUTO);
+		if (renaming != NULL) {
+			/* symbol renaming can't be used on automatic variables */
+			error(311);
+			break;
+		}
+		declare_local(decl, initflg);
+		break;
+	}
+
+	if (initflg && !initerr)
+		initstack_init();
 }
 
 /*
