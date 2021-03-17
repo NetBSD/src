@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.70 2021/03/07 18:02:45 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.71 2021/03/17 01:15:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -241,7 +241,7 @@ typedef	struct sym {
 				   to external symbol with same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
 	scl_t	s_scl;		/* storage class */
-	int	s_blklev;	/* level of declaration, -1 if not in symbol
+	int	s_block_level;	/* level of declaration, -1 if not in symbol
 				   table */
 	type_t	*s_type;
 	val_t	s_value;	/* value (if enum or bool constant) */
