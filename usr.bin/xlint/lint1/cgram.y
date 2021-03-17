@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.172 2021/03/17 01:19:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.173 2021/03/17 01:22:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.172 2021/03/17 01:19:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.173 2021/03/17 01:22:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2162,7 +2162,8 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 		}
 		(void)declare_argument(decl, initflg);
 		break;
-	case AUTO:
+	default:
+		lint_assert(dcs->d_ctx == AUTO);
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on automatic variables */
 			error(311);
@@ -2171,8 +2172,6 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 		}
 		declare_local(decl, initflg);
 		break;
-	default:
-		LERROR("idecl(%d)", dcs->d_ctx);
 	}
 
 	if (initflg && !initerr)
