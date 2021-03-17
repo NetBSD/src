@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.72 2021/03/17 02:18:03 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.73 2021/03/17 02:24:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -312,7 +312,7 @@ typedef	struct tnode {
  * needed for the current level. dcs points to the top element of this
  * stack.
  *
- * ctx describes the context of the current declaration. Its value is
+ * d_ctx describes the context of the current declaration. Its value is
  * one of
  *	EXTERN		global declarations
  *	MOS or MOU	declarations of struct or union members
@@ -342,7 +342,7 @@ typedef	struct dinfo {
 	bool	d_mscl : 1;	/* multiple storage classes */
 	bool	d_terr : 1;	/* invalid type combination */
 	bool	d_nedecl : 1;	/* if at least one tag is declared */
-	bool	d_vararg : 1;	/* ... in in current function decl. */
+	bool	d_vararg : 1;	/* ... in the current function decl. */
 	bool	d_proto : 1;	/* current function decl. is prototype */
 	bool	d_notyp : 1;	/* set if no type specifier was present */
 	bool	d_asm : 1;	/* set if d_ctx == AUTO and asm() present */
