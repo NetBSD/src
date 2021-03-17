@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.71 2021/03/17 01:15:31 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.72 2021/03/17 02:18:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -325,10 +325,10 @@ typedef	struct tnode {
  *
  */
 typedef	struct dinfo {
-	tspec_t	d_atyp;		/* VOID, CHAR, INT, or COMPLEX */
-	tspec_t	d_cmod;		/* FLOAT, or DOUBLE */
-	tspec_t	d_smod;		/* SIGNED or UNSIGN */
-	tspec_t	d_lmod;		/* SHORT, LONG or QUAD */
+	tspec_t	d_abstract_type;/* VOID, BOOL, CHAR, INT or COMPLEX */
+	tspec_t	d_complex_mod;	/* FLOAT or DOUBLE */
+	tspec_t	d_sign_mod;	/* SIGNED or UNSIGN */
+	tspec_t	d_rank_mod;	/* SHORT, LONG or QUAD */
 	scl_t	d_scl;		/* storage class */
 	type_t	*d_type;	/* after deftyp() pointer to the type used
 				   for all declarators */
