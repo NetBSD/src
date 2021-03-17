@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.232 2021/02/28 22:12:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.233 2021/03/17 01:15:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.232 2021/02/28 22:12:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.233 2021/03/17 01:15:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -222,7 +222,7 @@ fallback_symbol(sym_t *sym)
 		return;
 	}
 
-	if (blklev > 0 && (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
+	if (block_level > 0 && (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
 			   strcmp(sym->s_name, "__PRETTY_FUNCTION__") == 0)) {
 		/* __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension */
 		gnuism(316);
@@ -231,7 +231,7 @@ fallback_symbol(sym_t *sym)
 		return;
 	}
 
-	if (blklev > 0 && strcmp(sym->s_name, "__func__") == 0) {
+	if (block_level > 0 && strcmp(sym->s_name, "__func__") == 0) {
 		if (!Sflag)
 			/* __func__ is a C9X feature */
 			warning(317);

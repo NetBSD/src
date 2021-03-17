@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.76 2021/03/10 00:02:00 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.77 2021/03/17 01:15:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.76 2021/03/10 00:02:00 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.77 2021/03/17 01:15:31 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -224,8 +224,8 @@ funcdef(sym_t *fsym)
 	 * symbol table.
 	 */
 	for (sym = dcs->d_fpsyms; sym != NULL; sym = sym->s_dlnxt) {
-		if (sym->s_blklev != -1) {
-			lint_assert(sym->s_blklev == 1);
+		if (sym->s_block_level != -1) {
+			lint_assert(sym->s_block_level == 1);
 			inssym(1, sym);
 		}
 	}

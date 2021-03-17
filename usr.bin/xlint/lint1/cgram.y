@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.170 2021/03/17 01:07:33 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.171 2021/03/17 01:15:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.170 2021/03/17 01:07:33 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.171 2021/03/17 01:15:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -50,15 +50,15 @@ extern char *yytext;
  * Contains the level of current declaration, used for symbol table entries.
  * 0 is the top-level, > 0 is inside a function body.
  */
-int	blklev;
+int	block_level;
 
 /*
- * level for memory allocation. Normally the same as blklev.
+ * level for memory allocation. Normally the same as block_level.
  * An exception is the declaration of arguments in prototypes. Memory
  * for these can't be freed after the declaration, but symbols must
  * be removed from the symbol table after the declaration.
  */
-int	mblklev;
+int	mem_block_level;
 
 /*
  * Save the no-warns state and restore it to avoid the problem where
@@ -423,13 +423,13 @@ function_definition:		/* C99 6.9.1 */
 			YYERROR;
 		}
 		funcdef($1);
-		blklev++;
+		block_level++;
 		pushdecl(ARG);
 		if (lwarn == LWARN_NONE)
 			$1->s_used = true;
 	  } arg_declaration_list_opt {
 		popdecl();
-		blklev--;
+		block_level--;
 		check_func_lint_directives();
 		check_func_old_style_arguments();
 		pushctrl(0);
@@ -1048,7 +1048,7 @@ notype_direct_decl:
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	| notype_direct_decl type_attribute_list
 	;
@@ -1081,7 +1081,7 @@ type_direct_decl:
 	| type_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	| type_direct_decl type_attribute_list
 	;
@@ -1121,7 +1121,7 @@ direct_param_decl:
 	| direct_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	;
 
@@ -1150,7 +1150,7 @@ direct_notype_param_decl:
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	;
 
@@ -1210,7 +1210,7 @@ param_list:
 
 id_list_lparen:
 	  T_LPAREN {
-		blklev++;
+		block_level++;
 		pushdecl(PROTO_ARG);
 	  }
 	;
@@ -1242,7 +1242,7 @@ abstract_decl_param_list:
 
 abstract_decl_lparen:
 	  T_LPAREN {
-		blklev++;
+		block_level++;
 		pushdecl(PROTO_ARG);
 	  }
 	;
@@ -1459,12 +1459,12 @@ direct_abstract_decl:
 	| abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	| direct_abstract_decl abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	| direct_abstract_decl type_attribute_list
 	;
@@ -1527,8 +1527,8 @@ compound_statement:		/* C99 6.8.2 */
 
 compound_statement_lbrace:
 	  T_LBRACE {
-		blklev++;
-		mblklev++;
+		block_level++;
+		mem_block_level++;
 		pushdecl(AUTO);
 	  }
 	;
@@ -1537,8 +1537,8 @@ compound_statement_rbrace:
 	  T_RBRACE {
 		popdecl();
 		freeblk();
-		mblklev--;
-		blklev--;
+		mem_block_level--;
+		block_level--;
 		ftflg = false;
 	  }
 	;
@@ -1677,13 +1677,13 @@ iteration_statement:		/* C99 6.8.5 */
 		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		for2();
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	| for_exprs error {
 		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 		for2();
 		popdecl();
-		blklev--;
+		block_level--;
 	  }
 	;
 
@@ -1709,7 +1709,7 @@ do_while_expr:
 for_start:
 	  T_FOR T_LPAREN {
 		pushdecl(AUTO);
-		blklev++;
+		block_level++;
 	  }
 	;
 for_exprs:
@@ -1867,22 +1867,22 @@ term:
 	  }
 	| T_LPAREN compound_statement_lbrace declaration_list
 	    expr_statement_list {
-		blklev--;
-		mblklev--;
+		block_level--;
+		mem_block_level--;
 		initsym = mktempsym(duptyp($4->tn_type));
-		mblklev++;
-		blklev++;
+		mem_block_level++;
+		block_level++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	 } compound_statement_rbrace T_RPAREN {
 		$$ = new_name_node(initsym, 0);
 	 }
 	| T_LPAREN compound_statement_lbrace expr_statement_list {
-		blklev--;
-		mblklev--;
+		block_level--;
+		mem_block_level--;
 		initsym = mktempsym($3->tn_type);
-		mblklev++;
-		blklev++;
+		mem_block_level++;
+		block_level++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	 } compound_statement_rbrace T_RPAREN {

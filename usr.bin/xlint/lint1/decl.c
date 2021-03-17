@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.143 2021/02/28 18:51:51 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.144 2021/03/17 01:15:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.143 2021/02/28 18:51:51 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.144 2021/03/17 01:15:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1255,7 +1255,7 @@ bitfield(sym_t *dsym, int len)
 		dsym->s_kind = FMEMBER;
 		dsym->s_scl = MOS;
 		dsym->s_type = gettyp(UINT);
-		dsym->s_blklev = -1;
+		dsym->s_block_level = -1;
 	}
 	dsym->s_type = duptyp(dsym->s_type);
 	dsym->s_type->t_bitfield = true;
@@ -1606,7 +1606,7 @@ old_style_function_name(sym_t *sym)
 {
 
 	if (sym->s_scl != NOSCL) {
-		if (blklev == sym->s_blklev) {
+		if (block_level == sym->s_block_level) {
 			/* redeclaration of formal parameter %s */
 			error(21, sym->s_name);
 			lint_assert(sym->s_defarg);
@@ -1669,7 +1669,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		UNIQUE_CURR_POS(tag->s_def_pos);
 		tag->s_kind = FTAG;
 		tag->s_scl = scl;
-		tag->s_blklev = -1;
+		tag->s_block_level = -1;
 		tag->s_type = tp = getblk(sizeof (type_t));
 		tp->t_packed = dcs->d_packed;
 		dcs->d_next->d_nedecl = true;
@@ -1700,7 +1700,7 @@ static sym_t *
 newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 {
 
-	if (tag->s_blklev < blklev) {
+	if (tag->s_block_level < block_level) {
 		if (semi) {
 			/* "struct a;" */
 			if (!tflag) {
@@ -1846,7 +1846,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 {
 
 	if (sym->s_scl != NOSCL) {
-		if (sym->s_blklev == blklev) {
+		if (sym->s_block_level == block_level) {
 			/* no hflag, because this is illegal!!! */
 			if (sym->s_arg) {
 				/* enumeration constant hides parameter: %s */
@@ -1859,7 +1859,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 				 * complicated to find the position of the
 				 * previous declaration
 				 */
-				if (blklev == 0)
+				if (block_level == 0)
 					print_previous_declaration(-1, sym);
 			}
 		} else {
@@ -2355,7 +2355,8 @@ declare_argument(sym_t *sym, bool initflg)
 
 	check_type(sym);
 
-	if (dcs->d_rdcsym != NULL && dcs->d_rdcsym->s_blklev == blklev) {
+	if (dcs->d_rdcsym != NULL &&
+	    dcs->d_rdcsym->s_block_level == block_level) {
 		/* redeclaration of formal parameter %s */
 		error(237, sym->s_name);
 		rmsym(dcs->d_rdcsym);
@@ -2641,7 +2642,7 @@ declare_local(sym_t *dsym, bool initflg)
 
 	if (dcs->d_rdcsym != NULL) {
 
-		if (dcs->d_rdcsym->s_blklev == 0) {
+		if (dcs->d_rdcsym->s_block_level == 0) {
 
 			switch (dsym->s_scl) {
 			case AUTO:
@@ -2669,7 +2670,7 @@ declare_local(sym_t *dsym, bool initflg)
 				lint_assert(/*CONSTCOND*/false);
 			}
 
-		} else if (dcs->d_rdcsym->s_blklev == blklev) {
+		} else if (dcs->d_rdcsym->s_block_level == block_level) {
 
 			/* no hflag, because it's illegal! */
 			if (dcs->d_rdcsym->s_arg) {
@@ -2685,7 +2686,7 @@ declare_local(sym_t *dsym, bool initflg)
 				}
 			}
 
-		} else if (dcs->d_rdcsym->s_blklev < blklev) {
+		} else if (dcs->d_rdcsym->s_block_level < block_level) {
 
 			if (hflag)
 				/* declaration hides earlier one: %s */
@@ -2693,7 +2694,7 @@ declare_local(sym_t *dsym, bool initflg)
 
 		}
 
-		if (dcs->d_rdcsym->s_blklev == blklev) {
+		if (dcs->d_rdcsym->s_block_level == block_level) {
 
 			/* redeclaration of %s */
 			error(27, dsym->s_name);
@@ -2731,7 +2732,7 @@ declare_external_in_block(sym_t *dsym)
 
 	/* look for a symbol with the same name */
 	esym = dcs->d_rdcsym;
-	while (esym != NULL && esym->s_blklev != 0) {
+	while (esym != NULL && esym->s_block_level != 0) {
 		while ((esym = esym->s_link) != NULL) {
 			if (esym->s_kind != FVFT)
 				continue;
@@ -2822,7 +2823,7 @@ abstract_name(void)
 	sym->s_name = unnamed;
 	sym->s_def = DEF;
 	sym->s_scl = ABSTRACT;
-	sym->s_blklev = -1;
+	sym->s_block_level = -1;
 
 	if (dcs->d_ctx == PROTO_ARG)
 		sym->s_arg = true;
@@ -2845,8 +2846,8 @@ global_clean_up(void)
 		popdecl();
 
 	cleanup();
-	blklev = 0;
-	mblklev = 0;
+	block_level = 0;
+	mem_block_level = 0;
 
 	/*
 	 * remove all information about pending lint directives without
@@ -2964,7 +2965,7 @@ check_usage_sym(bool novar, sym_t *sym)
 {
 	pos_t	cpos;
 
-	if (sym->s_blklev == -1)
+	if (sym->s_block_level == -1)
 		return;
 
 	cpos = curr_pos;
@@ -3006,8 +3007,8 @@ check_variable_usage(bool novar, sym_t *sym)
 	scl_t	sc;
 	sym_t	*xsym;
 
-	lint_assert(blklev != 0);
-	lint_assert(sym->s_blklev != 0);
+	lint_assert(block_level != 0);
+	lint_assert(sym->s_block_level != 0);
 
 	/* errors in expressions easily cause lots of these warnings */
 	if (nerr != 0)
@@ -3071,8 +3072,8 @@ static void
 check_label_usage(sym_t *lab)
 {
 
-	lint_assert(blklev == 1);
-	lint_assert(lab->s_blklev == 1);
+	lint_assert(block_level == 1);
+	lint_assert(lab->s_block_level == 1);
 
 	if (lab->s_set && !lab->s_used) {
 		curr_pos = lab->s_set_pos;
@@ -3129,13 +3130,13 @@ check_global_symbols(void)
 	sym_t	*sym;
 	pos_t	cpos;
 
-	if (blklev != 0 || dcs->d_next != NULL)
+	if (block_level != 0 || dcs->d_next != NULL)
 		norecover();
 
 	cpos = curr_pos;
 
 	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_dlnxt) {
-		if (sym->s_blklev == -1)
+		if (sym->s_block_level == -1)
 			continue;
 		if (sym->s_kind == FVFT) {
 			check_global_variable(sym);

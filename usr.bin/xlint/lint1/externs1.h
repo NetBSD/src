@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.72 2021/02/28 00:23:55 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.73 2021/03/17 01:15:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -58,8 +58,8 @@ extern	void	norecover(void);
 /*
  * cgram.y
  */
-extern	int	blklev;
-extern	int	mblklev;
+extern	int	block_level;
+extern	int	mem_block_level;
 extern	int	yydebug;
 
 extern	int	yyerror(const char *);
