@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.89 2021/02/22 15:09:50 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.90 2021/03/17 15:37:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.89 2021/02/22 15:09:50 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.90 2021/03/17 15:37:42 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -146,12 +146,18 @@ namlist_t	*namedmem = NULL;
 static	bool	init_array_using_string(tnode_t *);
 
 #ifndef DEBUG
+
 #define debug_printf(fmt, ...)	do { } while (false)
 #define debug_indent()		do { } while (false)
 #define debug_enter(a)		do { } while (false)
 #define debug_step(fmt, ...)	do { } while (false)
 #define debug_leave(a)		do { } while (false)
+#define debug_named_member()	do { } while (false)
+#define debug_initstack_element(elem) do { } while (false)
+#define debug_initstack()	do { } while (false)
+
 #else
+
 static int debug_ind = 0;
 
 static void __printflike(1, 2)
@@ -192,6 +198,64 @@ static void
 debug_leave(const char *func)
 {
 	printf("%*s- %s\n", 2 * --debug_ind, "", func);
+}
+
+static void
+debug_named_member(void)
+{
+	namlist_t *name;
+
+	if (namedmem == NULL)
+		return;
+	name = namedmem;
+	debug_indent();
+	debug_printf("named member:");
+	do {
+		debug_printf(" %s", name->n_name);
+		name = name->n_next;
+	} while (name != namedmem);
+	debug_printf("\n");
+}
+
+static void
+debug_initstack_element(const initstack_element *elem)
+{
+	if (elem->i_type != NULL)
+		debug_step("  i_type           = %s", type_name(elem->i_type));
+	if (elem->i_subt != NULL)
+		debug_step("  i_subt           = %s", type_name(elem->i_subt));
+
+	if (elem->i_brace)
+		debug_step("  i_brace");
+	if (elem->i_array_of_unknown_size)
+		debug_step("  i_array_of_unknown_size");
+	if (elem->i_seen_named_member)
+		debug_step("  i_seen_named_member");
+
+	const type_t *eff_type = elem->i_type != NULL
+	    ? elem->i_type : elem->i_subt;
+	if (eff_type->t_tspec == STRUCT && elem->i_current_object != NULL)
+		debug_step("  i_current_object = %s",
+		    elem->i_current_object->s_name);
+
+	debug_step("  i_remaining      = %d", elem->i_remaining);
+}
+
+static void
+debug_initstack(void)
+{
+	if (initstk == NULL) {
+		debug_step("initstk is empty");
+		return;
+	}
+
+	size_t i = 0;
+	for (const initstack_element *elem = initstk;
+	     elem != NULL; elem = elem->i_enclosing) {
+		debug_step("initstk[%zu]:", i);
+		debug_initstack_element(elem);
+		i++;
+	}
 }
 
 #define debug_enter() debug_enter(__func__)
@@ -238,73 +302,6 @@ pop_member(void)
 		free(nam);
 	}
 }
-
-#ifdef DEBUG
-static void
-debug_named_member(void)
-{
-	namlist_t *name;
-
-	if (namedmem == NULL)
-		return;
-	name = namedmem;
-	debug_indent();
-	debug_printf("named member:");
-	do {
-		debug_printf(" %s", name->n_name);
-		name = name->n_next;
-	} while (name != namedmem);
-	debug_printf("\n");
-}
-#else
-#define debug_named_member()	do { } while (false)
-#endif
-
-#ifdef DEBUG
-static void
-debug_initstack_element(const initstack_element *elem)
-{
-	if (elem->i_type != NULL)
-		debug_step("  i_type           = %s", type_name(elem->i_type));
-	if (elem->i_subt != NULL)
-		debug_step("  i_subt           = %s", type_name(elem->i_subt));
-
-	if (elem->i_brace)
-		debug_step("  i_brace");
-	if (elem->i_array_of_unknown_size)
-		debug_step("  i_array_of_unknown_size");
-	if (elem->i_seen_named_member)
-		debug_step("  i_seen_named_member");
-
-	const type_t *eff_type = elem->i_type != NULL
-	    ? elem->i_type : elem->i_subt;
-	if (eff_type->t_tspec == STRUCT && elem->i_current_object != NULL)
-		debug_step("  i_current_object = %s",
-		    elem->i_current_object->s_name);
-
-	debug_step("  i_remaining      = %d", elem->i_remaining);
-}
-
-static void
-debug_initstack(void)
-{
-	if (initstk == NULL) {
-		debug_step("initstk is empty");
-		return;
-	}
-
-	size_t i = 0;
-	for (const initstack_element *elem = initstk;
-	     elem != NULL; elem = elem->i_enclosing) {
-		debug_step("initstk[%zu]:", i);
-		debug_initstack_element(elem);
-		i++;
-	}
-}
-#else
-#define debug_initstack_element(elem) do { } while (false)
-#define debug_initstack()	do { } while (false)
-#endif
 
 /*
  * Initialize the initialization stack by putting an entry for the object
