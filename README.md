@@ -19,8 +19,8 @@ Additional build information available in the [BUILDING](BUILDING) file.
 Binaries
 --------
 
-- [Daily builds](https://nycdn.netbsd.org/pub/NetBSD-daily/HEAD/latest/)
-- [Releases](https://cdn.netbsd.org/pub/NetBSD/)
+- [Daily builds](https://nycdn.NetBSD.org/pub/NetBSD-daily/HEAD/latest/)
+- [Releases](https://cdn.NetBSD.org/pub/NetBSD/)
 
 Testing
 -------
@@ -32,9 +32,9 @@ On a running NetBSD system:
 Troubleshooting
 ---------------
 
-- Send bugs and patches [via web form](https://www.netbsd.org/cgi-bin/sendpr.cgi?gndb=netbsd).
-- Subscribe to the [mailing lists](https://www.netbsd.org/mailinglists/).
-  The [netbsd-users](https://netbsd.org/mailinglists/#netbsd-users) list is a good choice for many problems; watch [current-users](https://netbsd.org/mailinglists/#current-users) if you follow the bleeding edge of NetBSD-current.
+- Send bugs and patches [via web form](https://www.NetBSD.org/cgi-bin/sendpr.cgi?gndb=netbsd).
+- Subscribe to the [mailing lists](https://www.NetBSD.org/mailinglists/).
+  The [netbsd-users](https://www.NetBSD.org/mailinglists/#netbsd-users) list is a good choice for many problems; watch [current-users](https://www.NetBSD.org/mailinglists/#current-users) if you follow the bleeding edge of NetBSD-current.
 - Join the community IRC channel [#netbsd @ freenode](https://webchat.freenode.net/?channels=#netbsd).
 
 Latest sources
@@ -51,6 +51,6 @@ To work in the Git mirror, which is updated every few hours from CVS:
 Additional Links
 ----------------
 
-- [The NetBSD Guide](https://www.netbsd.org/docs/guide/en/)
-- [NetBSD manual pages](http://man.netbsd.org/)
-- [NetBSD Cross-Reference](https://nxr.netbsd.org/)
+- [The NetBSD Guide](https://www.NetBSD.org/docs/guide/en/)
+- [NetBSD manual pages](http://man.NetBSD.org/)
+- [NetBSD Cross-Reference](https://nxr.NetBSD.org/)
