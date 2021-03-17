@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.90 2021/03/17 15:37:42 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.91 2021/03/17 15:45:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.90 2021/03/17 15:37:42 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.91 2021/03/17 15:45:30 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -285,6 +285,22 @@ push_member(sbuf_t *sb)
 		nam->n_next = namedmem;
 		namedmem->n_prev = nam;
 	}
+}
+
+/*
+ * A struct member that has array type is initialized using a designator.
+ *
+ * C99 example: struct { int member[4]; } var = { [2] = 12345 };
+ *
+ * GNU example: struct { int member[4]; } var = { [1 ... 3] = 12345 };
+ */
+void
+designator_push_subscript(range_t range)
+{
+	debug_enter();
+	debug_step("subscript range is %zu ... %zu", range.lo, range.hi);
+	debug_initstack();
+	debug_leave();
 }
 
 static void
