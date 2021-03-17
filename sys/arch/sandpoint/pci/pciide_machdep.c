@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.6 2021/03/17 14:50:11 rin Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.7 2021/03/17 14:58:16 rin Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2021/03/17 14:50:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.7 2021/03/17 14:58:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,12 @@ pciide_machdep_compat_intr_establish(device_t dev,
 #if NISA > 0
 	int irq;
 	void *cookie;
+	char intr_xname[INTRDEVNAMEBUF];
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
+	snprintf(intr_xname, sizeof(intr_xname), "%s isa", device_xname(dev));
 	cookie = isa_intr_establish_xname(NULL, irq, IST_LEVEL, IPL_BIO, func,
-	    arg, device_xname(dev));
+	    arg, intr_xname);
 	if (cookie == NULL)
 		return (NULL);
 	aprint_normal_dev(dev, "%s channel interrupting at irq %d\n",
