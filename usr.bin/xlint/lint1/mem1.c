@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.26 2021/02/21 13:27:22 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.27 2021/03/17 01:15:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.26 2021/02/21 13:27:22 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.27 2021/03/17 01:15:31 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ getfnid(const char *s)
 /*
  * Memory for declarations and other things which must be available
  * until the end of a block (or the end of the translation unit)
- * are associated with the level (mblklev) of the block (or with 0).
+ * are associated with the level (mem_block_level) of the block (or with 0).
  * Because this memory is allocated in large blocks associated with
  * a given level it can be freed easily at the end of a block.
  */
@@ -182,7 +182,7 @@ typedef struct mbl {
 } mbl_t;
 
 /*
- * Array of pointers to lists of memory blocks. mblklev is used as
+ * Array of pointers to lists of memory blocks. mem_block_level is used as
  * index into this array.
  */
 static	mbl_t	**mblks;
@@ -306,7 +306,7 @@ void *
 getblk(size_t s)
 {
 
-	return getlblk(mblklev, s);
+	return getlblk(mem_block_level, s);
 }
 
 /* Free all memory associated with level l. */
@@ -321,7 +321,7 @@ void
 freeblk(void)
 {
 
-	freelblk(mblklev);
+	freelblk(mem_block_level);
 }
 
 static	mbl_t	*tmblk;
