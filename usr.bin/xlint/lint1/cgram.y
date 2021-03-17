@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.173 2021/03/17 01:22:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.174 2021/03/17 01:38:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.173 2021/03/17 01:22:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.174 2021/03/17 01:38:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -67,7 +67,7 @@ int	mem_block_level;
 static int olwarn = LWARN_BAD;
 
 static	int	to_int_constant(tnode_t *, int);
-static	void	idecl(sym_t *, int, sbuf_t *);
+static	void	cgram_declare(sym_t *, bool, sbuf_t *);
 static	void	ignore_up_to_rparen(void);
 static	sym_t	*symbolrename(sym_t *, sbuf_t *);
 
@@ -998,11 +998,11 @@ type_init_decls:
 
 notype_init_decl:
 	  notype_decl opt_asm_or_symbolrename {
-		idecl($1, 0, $2);
+		cgram_declare($1, false, $2);
 		check_size($1);
 	  }
 	| notype_decl opt_asm_or_symbolrename {
-		idecl($1, 1, $2);
+		cgram_declare($1, true, $2);
 	  } T_ASSIGN initializer {
 		check_size($1);
 	  }
@@ -1010,11 +1010,11 @@ notype_init_decl:
 
 type_init_decl:
 	  type_decl opt_asm_or_symbolrename {
-		idecl($1, 0, $2);
+		cgram_declare($1, false, $2);
 		check_size($1);
 	  }
 	| type_decl opt_asm_or_symbolrename {
-		idecl($1, 1, $2);
+		cgram_declare($1, true, $2);
 	  } T_ASSIGN initializer {
 		check_size($1);
 	  }
@@ -1975,7 +1975,7 @@ term:
 	  }
 	| T_LPAREN type_name T_RPAREN			%prec T_UNARY {
 		sym_t *tmp = mktempsym($2);
-		idecl(tmp, 1, NULL);
+		cgram_declare(tmp, true, NULL);
 	  } init_lbrace init_expr_list init_rbrace {
 		if (!Sflag)
 			 /* compound literals are a C9X/GCC extension */
@@ -2134,48 +2134,11 @@ done:
 }
 
 static void
-idecl(sym_t *decl, int initflg, sbuf_t *renaming)
+cgram_declare(sym_t *decl, bool initflg, sbuf_t *renaming)
 {
-	char *s;
-
-	initerr = false;
-	initsym = decl;
-
-	switch (dcs->d_ctx) {
-	case EXTERN:
-		if (renaming != NULL) {
-			lint_assert(decl->s_rename == NULL);
-
-			s = getlblk(1, renaming->sb_len + 1);
-	                (void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
-			decl->s_rename = s;
-			freeyyv(&renaming, T_NAME);
-		}
-		decl1ext(decl, initflg);
-		break;
-	case ARG:
-		if (renaming != NULL) {
-			/* symbol renaming can't be used on function arguments */
-			error(310);
-			freeyyv(&renaming, T_NAME);
-			break;
-		}
-		(void)declare_argument(decl, initflg);
-		break;
-	default:
-		lint_assert(dcs->d_ctx == AUTO);
-		if (renaming != NULL) {
-			/* symbol renaming can't be used on automatic variables */
-			error(311);
-			freeyyv(&renaming, T_NAME);
-			break;
-		}
-		declare_local(decl, initflg);
-		break;
-	}
-
-	if (initflg && !initerr)
-		initstack_init();
+	declare(decl, initflg, renaming);
+	if (renaming != NULL)
+		freeyyv(&renaming, T_NAME);
 }
 
 /*
