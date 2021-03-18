@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.29 2021/03/18 14:01:18 nia Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.30 2021/03/18 14:05:37 nia Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.29 2021/03/18 14:01:18 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.30 2021/03/18 14:05:37 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -332,7 +332,7 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	if (ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000L)
 		return EINVAL;
 
-	if (flags == TIMER_ABSTIME || start != NULL) {
+	if ((flags & TIMER_ABSTIME) != 0 || start != NULL) {
 		error = clock_gettime1(clock_id, &tsd);
 		if (error != 0)
 			return error;
@@ -340,7 +340,7 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 			*start = tsd;
 	}
 
-	if (flags == TIMER_ABSTIME) {
+	if ((flags & TIMER_ABSTIME) != 0) {
 		if ((tsd.tv_sec > 0 && ts->tv_sec < LLONG_MIN + tsd.tv_sec) ||
 		    (tsd.tv_sec < 0 && ts->tv_sec > LLONG_MAX + tsd.tv_sec))
 			return EINVAL;
