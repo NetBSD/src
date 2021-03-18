@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.97 2021/03/18 23:23:40 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.98 2021/03/18 23:37:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.97 2021/03/18 23:23:40 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.98 2021/03/18 23:37:31 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -574,7 +574,9 @@ again:
 			debug_step("ARRAY %s brace=%d",
 			    namedmem->n_name, istk->i_brace);
 			goto pop;
-		} else if (istk->i_enclosing->i_seen_named_member) {
+		}
+
+		if (istk->i_enclosing->i_seen_named_member) {
 			istk->i_brace = true;
 			debug_step("ARRAY brace=%d, namedmem=%d",
 			    istk->i_brace,
@@ -586,9 +588,7 @@ again:
 			/* initialization of an incomplete type */
 			error(175);
 			initerr = true;
-			debug_initstack();
-			debug_leave();
-			return;
+			break;
 		}
 		istk->i_subt = istk->i_type->t_subt;
 		istk->i_array_of_unknown_size = is_incomplete(istk->i_type);
@@ -607,9 +607,7 @@ again:
 			/* initialization of an incomplete type */
 			error(175);
 			initerr = true;
-			debug_initstack();
-			debug_leave();
-			return;
+			break;
 		}
 		cnt = 0;
 		debug_named_member();
@@ -655,9 +653,7 @@ again:
 			/* cannot init. struct/union with no named member */
 			error(179);
 			initerr = true;
-			debug_initstack();
-			debug_leave();
-			return;
+			break;
 		}
 		istk->i_remaining = istk->i_type->t_tspec == STRUCT ? cnt : 1;
 		break;
