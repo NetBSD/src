@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.26 2016/06/13 00:04:40 pgoyette Exp $	*/
+/*	$NetBSD: find.h,v 1.27 2021/03/18 18:21:18 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,7 +65,7 @@ typedef struct _plandata {
 	int flags;				/* private flags */
 	enum ntype type;			/* plan node type */
 	union {
-		u_int32_t _f_data;		/* flags */
+		uint32_t _f_data;		/* flags */
 		gid_t _g_data;			/* gid */
 		ino_t _i_data;			/* inode */
 		mode_t _m_data;			/* mode mask */
