@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.233 2021/03/17 01:15:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.234 2021/03/18 21:26:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.233 2021/03/17 01:15:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.234 2021/03/18 21:26:56 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1661,7 +1661,7 @@ check_assign_types_compatible(op_t op, int arg,
 
 	switch (op) {
 	case INIT:
-		/* initialization type mismatch (%s) and (%s) */
+		/* cannot initialize '%s' from '%s' */
 		error(185, type_name(ltp), type_name(rtp));
 		break;
 	case RETURN:
