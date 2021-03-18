@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.21 2020/04/27 07:30:54 martin Exp $	*/
+/*	$NetBSD: crc.c,v 1.22 2021/03/18 18:12:35 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.21 2020/04/27 07:30:54 martin Exp $");
+__RCSID("$NetBSD: crc.c,v 1.22 2021/03/18 18:12:35 cheusov Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: crc.c,v 1.21 2020/04/27 07:30:54 martin Exp $");
 
 #include "extern.h"
 
-static const u_int32_t crctab[] = {
+static const uint32_t crctab[] = {
 	0x0,
 	0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b,
 	0x1a864db2, 0x1e475005, 0x2608edb8, 0x22c9f00f, 0x2f8ad6d6,
@@ -114,10 +114,10 @@ static const u_int32_t crctab[] = {
  * success and 1 on failure.  Errno is set on failure.
  */
 int
-crc(int fd, u_int32_t *cval, off_t *clen)
+crc(int fd, uint32_t *cval, off_t *clen)
 {
 	ssize_t nr;
-	u_int32_t thecrc;
+	uint32_t thecrc;
 	off_t len;
 	u_char buf[16 * 1024];
 
