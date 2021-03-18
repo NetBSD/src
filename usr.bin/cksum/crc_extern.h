@@ -1,4 +1,4 @@
-/*	$NetBSD: crc_extern.h,v 1.1 2006/09/04 20:01:10 dsl Exp $	*/
+/*	$NetBSD: crc_extern.h,v 1.2 2021/03/18 18:12:35 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 __BEGIN_DECLS
-int	 crc(int, u_int32_t *, off_t *);
+int	 crc(int, uint32_t *, off_t *);
 uint32_t crc_buf(uint32_t, const void *, size_t);
 uint32_t crc_byte(uint32_t, unsigned int);
 __END_DECLS
