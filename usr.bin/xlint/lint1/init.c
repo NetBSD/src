@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.92 2021/03/18 14:58:44 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.93 2021/03/18 20:22:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,13 +37,53 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.92 2021/03/18 14:58:44 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.93 2021/03/18 20:22:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "lint1.h"
+
+
+/*
+ * Initialization
+ *
+ * Handles initializations of global or local objects, like in:
+ *
+ *	int number = 12345;
+ *	int number_with_braces = { 12345 };
+ *
+ *	int array_of_unknown_size[] = { 111, 222, 333 };
+ *	int array_flat[2][2] = { 11, 12, 21, 22 };
+ *	int array_nested[2][2] = { { 11, 12 }, { 21, 22 } };
+ *
+ *	struct { int x, y; } point = { 3, 4 };
+ *	struct { int x, y; } point = { .y = 3, .x = 4 };
+ *
+ * An initializer may be surrounded by an extra pair of braces, like in the
+ * example 'number_with_braces'.  For multi-dimensional arrays, the inner
+ * braces may be omitted like in array_flat or spelled out like in
+ * array_nested.
+ *
+ * For the initializer, the grammar parser calls these functions:
+ *
+ *	init_lbrace	for a '{'
+ *	init_using_expr	for a value
+ *	init_rbrace	for a '}'
+ *
+ * The state of the current initialization is stored in initstk, a stack of
+ * initstack_element, one element per level of braces.
+ * (TODO: It might be more complicated for multi-dimensional arrays.)
+ *
+ * In initstk, when initializing an array, there is an additional level where
+ * the number of remaining elements toggles between 1 and 0.
+ * (TODO: Why is this extra level actually needed?  It seems redundant.)
+ *
+ * See also:
+ *	C99 6.7.8 "Initialization"
+ *	d_c99_init.c for more examples
+ */
 
 
 /*
@@ -94,6 +134,7 @@ typedef	struct initstack_element {
 	 */
 	bool i_brace: 1;
 
+	/* Whether i_type is an array of unknown size. */
 	bool i_array_of_unknown_size: 1;
 	bool i_seen_named_member: 1;
 
@@ -105,6 +146,8 @@ typedef	struct initstack_element {
 
 	/*
 	 * The number of remaining elements.
+	 *
+	 * For an array of unknown size, this is always 0 and thus irrelevant.
 	 *
 	 * XXX: for scalars?
 	 * XXX: for structs?
@@ -499,11 +542,13 @@ initstack_push(void)
 		 */
 		lint_assert(istk->i_enclosing->i_enclosing == NULL);
 		lint_assert(istk->i_type->t_tspec == ARRAY);
+
 		debug_step("extending array of unknown size '%s'",
 		    type_name(istk->i_type));
 		istk->i_remaining = 1;
 		istk->i_type->t_dim++;
 		setcomplete(istk->i_type, true);
+
 		debug_step("extended type is '%s'", type_name(istk->i_type));
 	}
 
@@ -544,9 +589,9 @@ again:
 		istk->i_subt = istk->i_type->t_subt;
 		istk->i_array_of_unknown_size = is_incomplete(istk->i_type);
 		istk->i_remaining = istk->i_type->t_dim;
-		debug_step("elements array %s[%d] %s",
-		    type_name(istk->i_subt), istk->i_remaining,
-		    namedmem != NULL ? namedmem->n_name : "*none*");
+		debug_named_member();
+		debug_step("type '%s' remaining %d",
+		    type_name(istk->i_type), istk->i_remaining);
 		break;
 	case UNION:
 		if (tflag)
@@ -563,10 +608,10 @@ again:
 			return;
 		}
 		cnt = 0;
-		debug_step("lookup type=%s, name=%s named=%d",
+		debug_named_member();
+		debug_step("lookup for '%s'%s",
 		    type_name(istk->i_type),
-		    namedmem != NULL ? namedmem->n_name : "*none*",
-		    istk->i_seen_named_member);
+		    istk->i_seen_named_member ? ", seen named member" : "");
 		for (m = istk->i_type->t_str->sou_first_member;
 		     m != NULL; m = m->s_next) {
 			if (m->s_bitfield && m->s_name == unnamed)
@@ -876,6 +921,8 @@ init_using_expr(tnode_t *tn)
 
 	lint_assert(is_scalar(lt));	/* at least before C99 */
 
+	debug_step("typeok '%s', '%s'",
+	    type_name(ln->tn_type), type_name(tn->tn_type));
 	if (!typeok(INIT, 0, ln, tn)) {
 		debug_initstack();
 		debug_leave();
@@ -892,6 +939,9 @@ init_using_expr(tnode_t *tn)
 
 	check_bit_field_init(ln, lt, rt);
 
+	/*
+	 * XXX: Is it correct to do this conversion _after_ the typeok above?
+	 */
 	if (lt != rt || (initstk->i_type->t_bitfield && tn->tn_op == CON))
 		tn = convert(INIT, 0, initstk->i_type, tn);
 
