@@ -1,4 +1,4 @@
 d_c99_init.c(22): invalid initializer type int [176]
 d_c99_init.c(23): too many initializers [174]
-d_c99_init.c(49): initialization type mismatch (pointer to const void) and (struct any) [185]
+d_c99_init.c(49): cannot initialize 'pointer to const void' from 'struct any' [185]
 d_c99_init.c(66): too many array initializers, expected 3 [173]
