@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.87 2021/03/07 19:42:54 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.88 2021/03/18 21:26:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.87 2021/03/07 19:42:54 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.88 2021/03/18 21:26:56 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -244,7 +244,7 @@ const	char *msgs[] = {
 	"incompatible pointer types (%s != %s)",		      /* 182 */
 	"illegal combination of %s (%s) and %s (%s)",		      /* 183 */
 	"illegal pointer combination",				      /* 184 */
-	"initialization type mismatch (%s) and (%s)",		      /* 185 */
+	"cannot initialize '%s' from '%s'",			      /* 185 */
 	"bit-field initialization is illegal in traditional C",	      /* 186 */
 	"non-null byte ignored in string initializer",		      /* 187 */
 	"no automatic aggregate initialization in traditional C",     /* 188 */
