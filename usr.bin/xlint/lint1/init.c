@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.91 2021/03/17 15:45:30 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.92 2021/03/18 14:58:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.91 2021/03/17 15:45:30 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.92 2021/03/18 14:58:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -64,9 +64,23 @@ __RCSID("$NetBSD: init.c,v 1.91 2021/03/17 15:45:30 rillig Exp $");
  */
 typedef	struct initstack_element {
 
-	/* XXX: Why is i_type often null? */
-	type_t	*i_type;		/* type of initialization */
-	type_t	*i_subt;		/* type of next level */
+	/*
+	 * The type to be initialized at this level.
+	 */
+	type_t	*i_type;
+	/*
+	 * The type that is initialized inside a further level of
+	 * braces.  It is completely independent from i_type->t_subt.
+	 *
+	 * For example, in 'int var = { init }', initially there is an
+	 * initstack_element with i_subt == int.  When the '{' is processed,
+	 * an element with i_type == int is pushed to the stack.  When the
+	 * corresponding '}' is processed, the inner element is popped again.
+	 *
+	 * During initialization, only the top 2 elements of the stack are
+	 * looked at.
+	 */
+	type_t	*i_subt;
 
 	/*
 	 * This level of the initializer requires a '}' to be completed.
@@ -607,6 +621,7 @@ again:
 			initstk = inxt;
 			goto again;
 		}
+		/* XXX: Why is this set to 1 unconditionally? */
 		istk->i_remaining = 1;
 		break;
 	}
@@ -639,6 +654,11 @@ check_too_many_initializers(void)
 	initerr = true;
 }
 
+/*
+ * Process a '{' in an initializer by starting the initialization of the
+ * nested data structure, with i_type being the i_subt of the outer
+ * initialization level.
+ */
 static void
 initstack_next_brace(void)
 {
@@ -657,8 +677,9 @@ initstack_next_brace(void)
 		initstack_push();
 	if (!initerr) {
 		initstk->i_brace = true;
-		debug_step("%p %s", namedmem, type_name(
-		    initstk->i_type != NULL ? initstk->i_type
+		debug_named_member();
+		debug_step("expecting type '%s'",
+		    type_name(initstk->i_type != NULL ? initstk->i_type
 			: initstk->i_subt));
 	}
 
@@ -675,6 +696,7 @@ initstack_next_nobrace(void)
 	if (initstk->i_type == NULL && !is_scalar(initstk->i_subt->t_tspec)) {
 		/* {}-enclosed initializer required */
 		error(181);
+		/* XXX: maybe set initerr here */
 	}
 
 	if (!initerr)
@@ -683,7 +705,7 @@ initstack_next_nobrace(void)
 	/*
 	 * Make sure an entry with a scalar type is at the top of the stack.
 	 *
-	 * FIXME: Since C99 an initializer for an object with automatic
+	 * FIXME: Since C99, an initializer for an object with automatic
 	 *  storage need not be a constant expression anymore.  It is
 	 *  perfectly fine to initialize a struct with a struct expression,
 	 *  see d_struct_init_nested.c for a demonstration.
@@ -727,6 +749,10 @@ init_lbrace(void)
 	debug_leave();
 }
 
+/*
+ * Process a '}' in an initializer by finishing the current level of the
+ * initialization stack.
+ */
 void
 init_rbrace(void)
 {
@@ -734,11 +760,7 @@ init_rbrace(void)
 		return;
 
 	debug_enter();
-	debug_initstack();
-
 	initstack_pop_brace();
-
-	debug_initstack();
 	debug_leave();
 }
 
@@ -784,9 +806,9 @@ init_using_expr(tnode_t *tn)
 	scl_t	sclass;
 
 	debug_enter();
+	debug_initstack();
 	debug_named_member();
 	debug_node(tn, debug_ind);
-	debug_initstack();
 
 	if (initerr || tn == NULL) {
 		debug_leave();
@@ -852,7 +874,7 @@ init_using_expr(tnode_t *tn)
 	lt = ln->tn_type->t_tspec;
 	rt = tn->tn_type->t_tspec;
 
-	lint_assert(is_scalar(lt));
+	lint_assert(is_scalar(lt));	/* at least before C99 */
 
 	if (!typeok(INIT, 0, ln, tn)) {
 		debug_initstack();

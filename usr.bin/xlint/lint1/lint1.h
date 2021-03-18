@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.73 2021/03/17 02:24:06 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.74 2021/03/18 14:58:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -160,7 +160,7 @@ struct type {
 	bool	t_is_enum : 1;	/* type is (or was) enum (t_enum valid) */
 	bool	t_packed : 1;
 	union {
-		int	_t_dim;		/* dimension */
+		int	_t_dim;		/* dimension (if ARRAY) */
 		struct_or_union	*_t_str;
 		enumeration	*_t_enum;
 		struct	sym *_t_args;	/* arguments (if t_proto) */
