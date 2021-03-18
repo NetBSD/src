@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.96 2021/03/18 22:51:32 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.97 2021/03/18 23:23:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.96 2021/03/18 22:51:32 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.97 2021/03/18 23:23:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -519,6 +519,31 @@ initstack_pop_nobrace(void)
 	debug_leave();
 }
 
+/* Extend an array of unknown size by one element */
+static void
+extend_if_array_of_unknown_size(void)
+{
+	initstack_element *istk = initstk;
+
+	if (istk->i_remaining != 0)
+		return;
+
+	/*
+	 * The only place where an incomplete array may appear is at the
+	 * outermost aggregate level of the object to be initialized.
+	 */
+	lint_assert(istk->i_enclosing->i_enclosing == NULL);
+	lint_assert(istk->i_type->t_tspec == ARRAY);
+
+	debug_step("extending array of unknown size '%s'",
+	    type_name(istk->i_type));
+	istk->i_remaining = 1;
+	istk->i_type->t_dim++;
+	setcomplete(istk->i_type, true);
+
+	debug_step("extended type is '%s'", type_name(istk->i_type));
+}
+
 static void
 initstack_push(void)
 {
@@ -528,26 +553,9 @@ initstack_push(void)
 
 	debug_enter();
 
+	extend_if_array_of_unknown_size();
+
 	istk = initstk;
-
-	/* Extend an incomplete array type by one element */
-	if (istk->i_remaining == 0) {
-		/*
-		 * Inside of other aggregate types must not be an incomplete
-		 * type.
-		 */
-		lint_assert(istk->i_enclosing->i_enclosing == NULL);
-		lint_assert(istk->i_type->t_tspec == ARRAY);
-
-		debug_step("extending array of unknown size '%s'",
-		    type_name(istk->i_type));
-		istk->i_remaining = 1;
-		istk->i_type->t_dim++;
-		setcomplete(istk->i_type, true);
-
-		debug_step("extended type is '%s'", type_name(istk->i_type));
-	}
-
 	lint_assert(istk->i_remaining > 0);
 	lint_assert(istk->i_type == NULL || !is_scalar(istk->i_type->t_tspec));
 
