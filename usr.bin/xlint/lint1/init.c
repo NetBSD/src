@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.95 2021/03/18 22:08:05 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.96 2021/03/18 22:51:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.95 2021/03/18 22:08:05 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.96 2021/03/18 22:51:32 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -428,14 +428,13 @@ initstack_pop_item(void)
 
 	istk->i_remaining--;
 	lint_assert(istk->i_remaining >= 0);
-
-	debug_step("new stack with updated remaining:");
-	debug_initstack_element(istk);
+	debug_step("%d elements remaining", istk->i_remaining);
 
 	if (namedmem != NULL) {
 		debug_step("initializing named member '%s'", namedmem->n_name);
 
-		/* XXX: undefined behavior if this is reached with an array? */
+		lint_assert(istk->i_type->t_tspec == STRUCT ||
+		    istk->i_type->t_tspec == UNION);
 		for (m = istk->i_type->t_str->sou_first_member;
 		     m != NULL; m = m->s_next) {
 

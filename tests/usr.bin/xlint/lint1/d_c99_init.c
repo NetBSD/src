@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.7 2021/03/18 20:20:55 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.8 2021/03/18 22:51:32 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -124,6 +124,13 @@ struct point point_with_mixed_designators = {
 	// FIXME: assertion failure '== ARRAY'
 	// 5,
 	.x = 3,
+};
+
+int array_with_designator[] = {
+	111,
+	// FIXME: assertion failure '== STRUCT'
+	// .member = 222,
+	333,
 };
 
 // See d_struct_init_nested.c for a more complicated example.
