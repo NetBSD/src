@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.23 2021/03/07 15:09:12 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.24 2021/03/18 01:49:09 christos Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.23 2021/03/07 15:09:12 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.24 2021/03/18 01:49:09 christos Exp $");
 #endif
 #endif
 
@@ -108,17 +108,16 @@ static void
 pfilter_notify(struct request_info *request, int b)
 {
     static struct blocklist *blstate;
+    int fd = request->fd != -1 ? request->fd : 3;
 
     if (blstate == NULL) {
 	blstate = blocklist_open();
     }
     if (request->client->sin != NULL) {
-	    blocklist_sa_r(blstate, b, request->fd != -1 ? request->fd : 3,
-		request->client->sin, request->client->sin->sa_len,
-		request->daemon ? request->daemon : getprogname());
+	    blocklist_sa_r(blstate, b, fd, request->client->sin,
+		request->client->sin->sa_len, request->daemon);
     } else {
-	    blocklist_r(blstate, b, (request->fd != -1) ? request->fd : 3,
-		request->daemon ? request->daemon : getprogname());
+	    blocklist_r(blstate, b, fd, request->daemon);
     }
 }
 
