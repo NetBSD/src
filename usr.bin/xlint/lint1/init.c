@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.98 2021/03/18 23:37:31 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.99 2021/03/18 23:45:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.98 2021/03/18 23:37:31 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.99 2021/03/18 23:45:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -545,11 +545,98 @@ extend_if_array_of_unknown_size(void)
 }
 
 static void
+initstack_push_array(void)
+{
+	initstack_element *const istk = initstk;
+
+	if (istk->i_enclosing->i_seen_named_member) {
+		istk->i_brace = true;
+		debug_step("ARRAY brace=%d, namedmem=%d",
+		    istk->i_brace, istk->i_enclosing->i_seen_named_member);
+	}
+
+	if (is_incomplete(istk->i_type) &&
+	    istk->i_enclosing->i_enclosing != NULL) {
+		/* initialization of an incomplete type */
+		error(175);
+		initerr = true;
+		return;
+	}
+
+	istk->i_subt = istk->i_type->t_subt;
+	istk->i_array_of_unknown_size = is_incomplete(istk->i_type);
+	istk->i_remaining = istk->i_type->t_dim;
+	debug_named_member();
+	debug_step("type '%s' remaining %d",
+	    type_name(istk->i_type), istk->i_remaining);
+}
+
+static bool
+initstack_push_struct_or_union(void)
+{
+	initstack_element *const istk = initstk;
+	int cnt;
+	sym_t *m;
+
+	if (is_incomplete(istk->i_type)) {
+		/* initialization of an incomplete type */
+		error(175);
+		initerr = true;
+		return false;
+	}
+	cnt = 0;
+	debug_named_member();
+	debug_step("lookup for '%s'%s",
+	    type_name(istk->i_type),
+	    istk->i_seen_named_member ? ", seen named member" : "");
+	for (m = istk->i_type->t_str->sou_first_member;
+	     m != NULL; m = m->s_next) {
+		if (m->s_bitfield && m->s_name == unnamed)
+			continue;
+		if (namedmem != NULL) {
+			debug_step("named lhs.member=%s, rhs.member=%s",
+			    m->s_name, namedmem->n_name);
+			if (strcmp(m->s_name, namedmem->n_name) == 0) {
+				cnt++;
+				break;
+			} else
+				continue;
+		}
+		if (++cnt == 1) {
+			istk->i_current_object = m;
+			istk->i_subt = m->s_type;
+		}
+	}
+	if (namedmem != NULL) {
+		if (m == NULL) {
+			debug_step("pop struct");
+			return true;
+		}
+		istk->i_current_object = m;
+		istk->i_subt = m->s_type;
+		istk->i_seen_named_member = true;
+		debug_step("named member '%s'", namedmem->n_name);
+		pop_member();
+		cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
+	}
+	istk->i_brace = true;
+	debug_step("unnamed element with type '%s'%s",
+	    type_name(istk->i_type != NULL ? istk->i_type : istk->i_subt),
+	    istk->i_brace ? ", needs closing brace" : "");
+	if (cnt == 0) {
+		/* cannot init. struct/union with no named member */
+		error(179);
+		initerr = true;
+		return false;
+	}
+	istk->i_remaining = istk->i_type->t_tspec == STRUCT ? cnt : 1;
+	return false;
+}
+
+static void
 initstack_push(void)
 {
 	initstack_element *istk, *inxt;
-	int	cnt;
-	sym_t	*m;
 
 	debug_enter();
 
@@ -576,86 +663,17 @@ again:
 			goto pop;
 		}
 
-		if (istk->i_enclosing->i_seen_named_member) {
-			istk->i_brace = true;
-			debug_step("ARRAY brace=%d, namedmem=%d",
-			    istk->i_brace,
-			    istk->i_enclosing->i_seen_named_member);
-		}
-
-		if (is_incomplete(istk->i_type) &&
-		    istk->i_enclosing->i_enclosing != NULL) {
-			/* initialization of an incomplete type */
-			error(175);
-			initerr = true;
-			break;
-		}
-		istk->i_subt = istk->i_type->t_subt;
-		istk->i_array_of_unknown_size = is_incomplete(istk->i_type);
-		istk->i_remaining = istk->i_type->t_dim;
-		debug_named_member();
-		debug_step("type '%s' remaining %d",
-		    type_name(istk->i_type), istk->i_remaining);
+		initstack_push_array();
 		break;
+
 	case UNION:
 		if (tflag)
 			/* initialization of union is illegal in trad. C */
 			warning(238);
 		/* FALLTHROUGH */
 	case STRUCT:
-		if (is_incomplete(istk->i_type)) {
-			/* initialization of an incomplete type */
-			error(175);
-			initerr = true;
-			break;
-		}
-		cnt = 0;
-		debug_named_member();
-		debug_step("lookup for '%s'%s",
-		    type_name(istk->i_type),
-		    istk->i_seen_named_member ? ", seen named member" : "");
-		for (m = istk->i_type->t_str->sou_first_member;
-		     m != NULL; m = m->s_next) {
-			if (m->s_bitfield && m->s_name == unnamed)
-				continue;
-			if (namedmem != NULL) {
-				debug_step("named lhs.member=%s, rhs.member=%s",
-				    m->s_name, namedmem->n_name);
-				if (strcmp(m->s_name, namedmem->n_name) == 0) {
-					cnt++;
-					break;
-				} else
-					continue;
-			}
-			if (++cnt == 1) {
-				istk->i_current_object = m;
-				istk->i_subt = m->s_type;
-			}
-		}
-		if (namedmem != NULL) {
-			if (m == NULL) {
-				debug_step("pop struct");
-				goto pop;
-			}
-			istk->i_current_object = m;
-			istk->i_subt = m->s_type;
-			istk->i_seen_named_member = true;
-			debug_step("named member '%s'", namedmem->n_name);
-			pop_member();
-			cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
-		}
-		istk->i_brace = true;
-		debug_step("unnamed element with type '%s'%s",
-		    type_name(
-			istk->i_type != NULL ? istk->i_type : istk->i_subt),
-		    istk->i_brace ? ", needs closing brace" : "");
-		if (cnt == 0) {
-			/* cannot init. struct/union with no named member */
-			error(179);
-			initerr = true;
-			break;
-		}
-		istk->i_remaining = istk->i_type->t_tspec == STRUCT ? cnt : 1;
+		if (initstack_push_struct_or_union())
+			goto pop;
 		break;
 	default:
 		if (namedmem != NULL) {
