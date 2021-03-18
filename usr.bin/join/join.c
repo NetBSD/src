@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.32 2021/03/18 19:41:54 cheusov Exp $	*/
+/*	$NetBSD: join.c,v 1.33 2021/03/18 19:47:41 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991\
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.32 2021/03/18 19:41:54 cheusov Exp $");
+__RCSID("$NetBSD: join.c,v 1.33 2021/03/18 19:47:41 cheusov Exp $");
 #endif
 #endif /* not lint */
 
@@ -589,8 +589,9 @@ obsolete(char **argv)
 			case '\0':
 				break;
 			default:
-jbad:				errx(1, "illegal option -- %s", ap);
+jbad:				warnx("illegal option -- %s", ap);
 				usage();
+				exit(1);
 			}
 			break;
 		case 'o':
