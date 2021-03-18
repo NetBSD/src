@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.31 2011/09/04 20:27:52 joerg Exp $	*/
+/*	$NetBSD: join.c,v 1.32 2021/03/18 19:41:54 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991\
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.31 2011/09/04 20:27:52 joerg Exp $");
+__RCSID("$NetBSD: join.c,v 1.32 2021/03/18 19:41:54 cheusov Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,8 @@ typedef struct {
 	u_long setalloc;	/* set allocated count */
 } INPUT;
 
-static INPUT input1 = { NULL, 0, 0, 1, NULL, -1, 0, 0, },
-      input2 = { NULL, 0, 0, 2, NULL, -1, 0, 0, };
+static INPUT input1 = { NULL, 0, 0, 1, NULL, (u_long)-1, 0, 0, };
+static INPUT input2 = { NULL, 0, 0, 2, NULL, (u_long)-1, 0, 0, };
 
 typedef struct {
 	u_long	fileno;		/* file number */
