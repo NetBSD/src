@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.18 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.19 2021/03/18 23:18:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,21 @@
 #define	PTRACE_REG_SET_PC(r, v)	(r)->r_regs[35] = (v)
 #define	PTRACE_REG_SP(r)	(r)->r_regs[29]
 #define	PTRACE_REG_INTRV(r)	(r)->r_regs[2]
+
+/*
+ * The sigrie is defined in the MIPS32r6 and MIPS64r6 specs to
+ * generate a Reserved Instruction trap but uses a previously
+ * reserved instruction encoding and is thus both backwards and
+ * forwards compatible.
+ */
+#define	PTRACE_ILLEGAL_ASM	do {					\
+		asm volatile(						\
+			".set	push;		"			\
+			".set	mips32r6;	"			\
+			"sigrie	0;		"			\
+			".set	pop;		"			\
+		);							\
+	} while (0);
 
 #define	PTRACE_BREAKPOINT	((const uint8_t[]) { 0x00, 0x00, 0x00, 0x0d })
 #define	PTRACE_BREAKPOINT_ASM	__asm __volatile("break")
