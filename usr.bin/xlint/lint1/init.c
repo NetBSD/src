@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.94 2021/03/18 20:55:58 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.95 2021/03/18 22:08:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.94 2021/03/18 20:55:58 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.95 2021/03/18 22:08:05 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -635,15 +635,15 @@ again:
 			istk->i_current_object = m;
 			istk->i_subt = m->s_type;
 			istk->i_seen_named_member = true;
-			debug_step("named name=%s", namedmem->n_name);
+			debug_step("named member '%s'", namedmem->n_name);
 			pop_member();
 			cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 		}
 		istk->i_brace = true;
-		debug_step("unnamed type=%s, brace=%d",
+		debug_step("unnamed element with type '%s'%s",
 		    type_name(
 			istk->i_type != NULL ? istk->i_type : istk->i_subt),
-		    istk->i_brace);
+		    istk->i_brace ? ", needs closing brace" : "");
 		if (cnt == 0) {
 			/* cannot init. struct/union with no named member */
 			error(179);
@@ -849,7 +849,8 @@ init_using_expr(tnode_t *tn)
 	debug_enter();
 	debug_initstack();
 	debug_named_member();
-	debug_node(tn, debug_ind);
+	debug_step("expr:");
+	debug_node(tn, debug_ind + 1);
 
 	if (initerr || tn == NULL) {
 		debug_leave();
