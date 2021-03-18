@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.43 2014/06/11 14:57:55 joerg Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.44 2021/03/18 19:34:05 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/inttypes.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
