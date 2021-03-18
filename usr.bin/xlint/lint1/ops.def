@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.def,v 1.16 2021/02/20 18:02:58 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.17 2021/03/18 21:56:34 rillig Exp $ */
 
 begin_ops()
 
@@ -63,7 +63,7 @@ op(	ORASS,	"|=",		1, ,1, ,1, , , , , , , ,1, , , , , ,1, ,1)
 
 /*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
 op(	NAME,	"name",		 , , , , , , , , , , , , , , , , , , , ,1)
-op(	CON,	"const",	 , , , , , , , , , , , , , , , , , , , ,1)
+op(	CON,	"constant",	 , , , , , , , , , , , , , , , , , , , ,1)
 op(	STRING,	"string",	 , , , , , , , , , , , , , , , , , , , ,1)
 op(	FSEL,	"fsel",		 , , , , , , , , , , , , , , , , , , , ,1)
 op(	CALL,	"call",		1, , , , , , , , , , , ,1, , , , , , , ,1)
