@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.77 2018/09/04 15:16:15 kre Exp $	*/
+/*	$NetBSD: function.c,v 1.78 2021/03/18 18:21:18 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.77 2018/09/04 15:16:15 kre Exp $");
+__RCSID("$NetBSD: function.c,v 1.78 2021/03/18 18:21:18 cheusov Exp $");
 #endif
 #endif /* not lint */
 
@@ -960,7 +960,7 @@ c_false(char ***argvp, int isok, char *opt)
 int
 f_flags(PLAN *plan, FTSENT *entry)
 {
-	u_int32_t flags;
+	uint32_t flags;
 
 	flags = entry->fts_statp->st_flags;
 	if (plan->flags == F_ATLEAST)
