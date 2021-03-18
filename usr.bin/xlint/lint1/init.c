@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.93 2021/03/18 20:22:50 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.94 2021/03/18 20:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.93 2021/03/18 20:22:50 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.94 2021/03/18 20:55:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -61,24 +61,22 @@ __RCSID("$NetBSD: init.c,v 1.93 2021/03/18 20:22:50 rillig Exp $");
  *	struct { int x, y; } point = { 3, 4 };
  *	struct { int x, y; } point = { .y = 3, .x = 4 };
  *
- * An initializer may be surrounded by an extra pair of braces, like in the
- * example 'number_with_braces'.  For multi-dimensional arrays, the inner
- * braces may be omitted like in array_flat or spelled out like in
- * array_nested.
+ * The initializer that follows the '=' may be surrounded by an extra pair of
+ * braces, like in the example 'number_with_braces'.  For multi-dimensional
+ * arrays, the inner braces may be omitted like in array_flat or spelled out
+ * like in array_nested.
  *
  * For the initializer, the grammar parser calls these functions:
  *
- *	init_lbrace	for a '{'
- *	init_using_expr	for a value
- *	init_rbrace	for a '}'
+ *	init_lbrace	for each '{'
+ *	init_using_expr	for each value
+ *	init_rbrace	for each '}'
  *
  * The state of the current initialization is stored in initstk, a stack of
- * initstack_element, one element per level of braces.
- * (TODO: It might be more complicated for multi-dimensional arrays.)
+ * initstack_element, one element per type aggregate level.
  *
- * In initstk, when initializing an array, there is an additional level where
- * the number of remaining elements toggles between 1 and 0.
- * (TODO: Why is this extra level actually needed?  It seems redundant.)
+ * Most of the time, the topmost level of initstk contains a scalar type, and
+ * its remaining count toggles between 1 and 0.
  *
  * See also:
  *	C99 6.7.8 "Initialization"
@@ -431,7 +429,7 @@ initstack_pop_item(void)
 	istk->i_remaining--;
 	lint_assert(istk->i_remaining >= 0);
 
-	debug_step("new top element with updated remaining:");
+	debug_step("new stack with updated remaining:");
 	debug_initstack_element(istk);
 
 	if (namedmem != NULL) {
@@ -530,7 +528,6 @@ initstack_push(void)
 	sym_t	*m;
 
 	debug_enter();
-	debug_initstack();
 
 	istk = initstk;
 
@@ -736,7 +733,6 @@ static void
 initstack_next_nobrace(void)
 {
 	debug_enter();
-	debug_initstack();
 
 	if (initstk->i_type == NULL && !is_scalar(initstk->i_subt->t_tspec)) {
 		/* {}-enclosed initializer required */
