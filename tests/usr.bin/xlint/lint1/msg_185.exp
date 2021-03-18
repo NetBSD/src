@@ -1,1 +1,1 @@
-msg_185.c(6): syntax error ':' [249]
+msg_185.c(15): initialization type mismatch (pointer to const void) and (double) [185]
