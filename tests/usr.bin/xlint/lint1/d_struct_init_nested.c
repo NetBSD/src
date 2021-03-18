@@ -1,4 +1,4 @@
-/*	$NetBSD: d_struct_init_nested.c,v 1.4 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: d_struct_init_nested.c,v 1.5 2021/03/18 20:58:02 rillig Exp $	*/
 # 3 "d_struct_init_nested.c"
 
 /*
@@ -62,6 +62,5 @@ funcOuter3Inner2(void)
 	    inner,		/*FIXME*//* expect: 185 */
 	    O3C
 	};			/*FIXME*//* expect: 210 */
-/* FIXME: warning 210 must print the type names to be any useful */
 	return o3i2.o1;
 }
