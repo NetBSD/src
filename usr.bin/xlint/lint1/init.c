@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.103 2021/03/19 00:55:02 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.104 2021/03/19 01:02:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.103 2021/03/19 00:55:02 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.104 2021/03/19 01:02:52 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -436,8 +436,14 @@ initstack_pop_item_named_member(void)
 
 	debug_step("initializing named member '%s'", namedmem->n_name);
 
-	lint_assert(istk->i_type->t_tspec == STRUCT ||
-	    istk->i_type->t_tspec == UNION);
+	if (istk->i_type->t_tspec != STRUCT &&
+	    istk->i_type->t_tspec != UNION) {
+		/* syntax error '%s' */
+		error(249, "named member must only be used with struct/union");
+		initerr = true;
+		return;
+	}
+
 	for (m = istk->i_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
 
