@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.31 2021/01/06 07:56:19 rin Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.32 2021/03/19 07:51:33 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.31 2021/01/06 07:56:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.32 2021/03/19 07:51:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -205,6 +205,9 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 		pmap_limits.virtual_end = VM_MIN_KERNEL_ADDRESS
 		    + kv_nsegtabs * NBSEG;
 	}
+
+	/* update the top of the kernel VM - pmap_growkernel not required */
+	pmap_curmaxkvaddr = pmap_limits.virtual_end;
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
