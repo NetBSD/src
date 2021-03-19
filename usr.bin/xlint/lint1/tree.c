@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.235 2021/03/18 22:05:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.236 2021/03/19 08:19:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.235 2021/03/18 22:05:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.236 2021/03/19 08:19:24 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1819,7 +1819,7 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 		if (rn->tn_op != CON)
 			break;
 		rnum = rn->tn_val->v_quad;
-		l = tsize(ln->tn_type) / CHAR_SIZE;
+		l = type_size_in_bits(ln->tn_type) / CHAR_SIZE;
 		t = ln->tn_type->t_tspec;
 		switch (l) {
 		case 8:
@@ -3318,7 +3318,7 @@ fold_float(tnode_t *tn)
 tnode_t *
 build_sizeof(type_t *tp)
 {
-	int64_t size_in_bytes = tsize(tp) / CHAR_SIZE;
+	int64_t size_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
 	tnode_t *tn = new_integer_constant_node(SIZEOF_TSPEC, size_in_bytes);
 	tn->tn_system_dependent = true;
 	return tn;
@@ -3336,14 +3336,14 @@ build_offsetof(type_t *tp, sym_t *sym)
 		error(111, "offsetof");
 
 	// XXX: wrong size, no checking for sym fixme
-	int64_t offset_in_bytes = tsize(tp) / CHAR_SIZE;
+	int64_t offset_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
 	tnode_t *tn = new_integer_constant_node(SIZEOF_TSPEC, offset_in_bytes);
 	tn->tn_system_dependent = true;
 	return tn;
 }
 
 int64_t
-tsize(type_t *tp)
+type_size_in_bits(type_t *tp)
 {
 	int	elem, elsz;
 	bool	flex;
