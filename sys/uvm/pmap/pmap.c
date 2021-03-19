@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2021/03/13 17:14:11 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2021/03/19 07:51:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2021/03/13 17:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2021/03/19 07:51:33 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2021/03/13 17:14:11 skrll Exp $");
 
 #include <sys/param.h>
 
+#include <sys/asan.h>
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/cpu.h>
@@ -212,8 +213,12 @@ struct pmap_kernel kernel_pmap_store = {
 
 struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 
+/* The current top of kernel VM - gets updated by pmap_growkernel */
+vaddr_t pmap_curmaxkvaddr;
+
 struct pmap_limits pmap_limits = {	/* VA and PA limits */
 	.virtual_start = VM_MIN_KERNEL_ADDRESS,
+	.virtual_end = VM_MAX_KERNEL_ADDRESS,
 };
 
 #ifdef UVMHIST
@@ -453,8 +458,18 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	vaddr_t virtual_end = pmap_limits.virtual_end;
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "maxkvaddr=%#jx (%#jx)", maxkvaddr,
+	    pmap_curmaxkvaddr, 0, 0);
+
+	vaddr_t virtual_end = pmap_curmaxkvaddr;
 	maxkvaddr = pmap_round_seg(maxkvaddr) - 1;
+
+	/*
+	 * Don't exceed VM_MAX_KERNEL_ADDRESS!
+	 */
+	if (maxkvaddr == 0 || maxkvaddr > VM_MAX_KERNEL_ADDRESS)
+		maxkvaddr = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Reserve PTEs for the new KVA space.
@@ -463,16 +478,16 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		pmap_pte_reserve(pmap_kernel(), virtual_end, 0);
 	}
 
-	/*
-	 * Don't exceed VM_MAX_KERNEL_ADDRESS!
-	 */
-	if (virtual_end == 0 || virtual_end > VM_MAX_KERNEL_ADDRESS)
-		virtual_end = VM_MAX_KERNEL_ADDRESS;
+	kasan_shadow_map((void *)pmap_curmaxkvaddr,
+	    (size_t)(virtual_end - pmap_curmaxkvaddr));
 
 	/*
 	 * Update new end.
 	 */
-	pmap_limits.virtual_end = virtual_end;
+	pmap_curmaxkvaddr = virtual_end;
+
+	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+
 	return virtual_end;
 }
 

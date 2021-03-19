@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 2020/12/21 08:41:38 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 2021/03/19 07:51:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,6 +185,11 @@ extern struct pmap_limits pmap_limits;
 extern u_int pmap_page_colormask;
 
 extern pmap_segtab_t pmap_kern_segtab;
+
+/*
+ * The current top of kernel VM
+ */
+extern vaddr_t pmap_curmaxkvaddr;
 
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
