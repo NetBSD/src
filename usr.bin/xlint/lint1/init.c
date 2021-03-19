@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.101 2021/03/19 00:19:32 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.102 2021/03/19 00:39:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.101 2021/03/19 00:19:32 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.102 2021/03/19 00:39:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -104,15 +104,29 @@ typedef	struct initstack_element {
 
 	/*
 	 * The type to be initialized at this level.
+	 *
+	 * On the outermost element, this is always NULL since the outermost
+	 * initializer-expression may be enclosed in an optional pair of
+	 * braces.  This optional pair of braces is handled by the combination
+	 * of i_type and i_subt.
+	 *
+	 * Everywhere else it is nonnull.
 	 */
 	type_t	*i_type;
+
 	/*
-	 * The type that is initialized inside a further level of
-	 * braces.  It is completely independent from i_type->t_subt.
+	 * The type that will be initialized at the next initialization level,
+	 * usually enclosed by another pair of braces.
 	 *
-	 * For example, in 'int var = { init }', initially there is an
-	 * initstack_element with i_subt == int.  When the '{' is processed,
-	 * an element with i_type == int is pushed to the stack.  When the
+	 * For an array, it is the element type, but without 'const'.
+	 *
+	 * For a struct or union type, it is one of the member types, but
+	 * without 'const'.
+	 *
+	 * The outermost stack element has no i_type but nevertheless has
+	 * i_subt.  For example, in 'int var = { 12345 }', initially there is
+	 * an initstack_element with i_subt 'int'.  When the '{' is processed,
+	 * an element with i_type 'int' is pushed to the stack.  When the
 	 * corresponding '}' is processed, the inner element is popped again.
 	 *
 	 * During initialization, only the top 2 elements of the stack are
@@ -143,7 +157,12 @@ typedef	struct initstack_element {
 	sym_t *i_current_object;
 
 	/*
-	 * The number of remaining elements.
+	 * The number of remaining elements to be used by expressions without
+	 * designator.
+	 *
+	 * This says nothing about which members have been initialized or not
+	 * since starting with C99, members may be initialized in arbitrary
+	 * order by using designators.
 	 *
 	 * For an array of unknown size, this is always 0 and thus irrelevant.
 	 *
