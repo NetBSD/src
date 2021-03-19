@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.104 2021/03/19 01:02:52 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.105 2021/03/19 17:37:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.104 2021/03/19 01:02:52 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.105 2021/03/19 17:37:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -378,7 +378,7 @@ designator_push_subscript(range_t range)
 }
 
 static void
-designator_pop_name(void)
+designator_shift_name(void)
 {
 	debug_step("%s: %s %p", __func__, namedmem->n_name, namedmem);
 	if (namedmem->n_next == namedmem) {
@@ -456,7 +456,7 @@ initstack_pop_item_named_member(void)
 			/* XXX: why ++? */
 			istk->i_remaining++;
 			/* XXX: why is i_seen_named_member not set? */
-			designator_pop_name();
+			designator_shift_name();
 			return;
 		}
 	}
@@ -464,7 +464,7 @@ initstack_pop_item_named_member(void)
 	/* undefined struct/union member: %s */
 	error(101, namedmem->n_name);
 
-	designator_pop_name();
+	designator_shift_name();
 	istk->i_seen_named_member = true;
 }
 
@@ -656,7 +656,7 @@ initstack_push_struct_or_union(void)
 		istk->i_subt = m->s_type;
 		istk->i_seen_named_member = true;
 		debug_step("named member '%s'", namedmem->n_name);
-		designator_pop_name();
+		designator_shift_name();
 		cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 	}
 	istk->i_brace = true;
