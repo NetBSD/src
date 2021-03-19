@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.78 2021/03/19 08:19:24 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.79 2021/03/19 08:23:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -227,7 +227,7 @@ extern  int64_t type_size_in_bits(type_t *);
 #ifdef DEBUG
 extern	void	debug_node(const tnode_t *, int);
 #else
-#define debug_node(tn, indent) (void)0
+#define debug_node(tn, indent) do { } while (false)
 #endif
 
 /*
