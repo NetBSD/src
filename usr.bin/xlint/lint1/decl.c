@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.147 2021/03/17 02:18:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.148 2021/03/19 08:19:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.147 2021/03/17 02:18:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.148 2021/03/19 08:19:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -524,7 +524,7 @@ setpackedsize(type_t *tp)
 				if (mem == NULL)
 					break;
 			}
-			size_t x = (size_t)tsize(mem->s_type);
+			size_t x = (size_t)type_size_in_bits(mem->s_type);
 			if (tp->t_tspec == STRUCT)
 				sp->sou_size_in_bit += x;
 			else if (x > sp->sou_size_in_bit)
@@ -1820,7 +1820,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 				if (mem == NULL)
 					break;
 			}
-			sp->sou_size_in_bit += tsize(mem->s_type);
+			sp->sou_size_in_bit += type_size_in_bits(mem->s_type);
 		}
 		if (mem->s_name != unnamed)
 			n++;
