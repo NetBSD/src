@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.99 2021/03/18 23:45:20 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.100 2021/03/19 00:08:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.99 2021/03/18 23:45:20 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.100 2021/03/19 00:08:13 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -584,17 +584,19 @@ initstack_push_struct_or_union(void)
 		initerr = true;
 		return false;
 	}
+
 	cnt = 0;
 	debug_named_member();
 	debug_step("lookup for '%s'%s",
 	    type_name(istk->i_type),
 	    istk->i_seen_named_member ? ", seen named member" : "");
+
 	for (m = istk->i_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
 		if (m->s_bitfield && m->s_name == unnamed)
 			continue;
 		if (namedmem != NULL) {
-			debug_step("named lhs.member=%s, rhs.member=%s",
+			debug_step("have member '%s', want member '%s'",
 			    m->s_name, namedmem->n_name);
 			if (strcmp(m->s_name, namedmem->n_name) == 0) {
 				cnt++;
@@ -607,6 +609,7 @@ initstack_push_struct_or_union(void)
 			istk->i_subt = m->s_type;
 		}
 	}
+
 	if (namedmem != NULL) {
 		if (m == NULL) {
 			debug_step("pop struct");
@@ -658,7 +661,7 @@ again:
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
 		if (namedmem != NULL) {
-			debug_step("ARRAY %s brace=%d",
+			debug_step("pop array namedmem=%s brace=%d",
 			    namedmem->n_name, istk->i_brace);
 			goto pop;
 		}
@@ -677,14 +680,14 @@ again:
 		break;
 	default:
 		if (namedmem != NULL) {
-			debug_step("pop");
+			debug_step("pop scalar");
 	pop:
 			inxt = initstk->i_enclosing;
 			free(istk);
 			initstk = inxt;
 			goto again;
 		}
-		/* XXX: Why is this set to 1 unconditionally? */
+		/* The initialization stack now expects a single scalar. */
 		istk->i_remaining = 1;
 		break;
 	}
