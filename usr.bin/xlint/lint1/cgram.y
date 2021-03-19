@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.176 2021/03/17 15:45:30 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.177 2021/03/19 00:55:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.176 2021/03/17 15:45:30 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.177 2021/03/19 00:55:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1368,7 +1368,7 @@ designator:			/* C99 6.7.8 "Initialization" */
 		if (!Sflag)
 			/* struct or union member name in initializer is ... */
 			warning(313);
-		push_member($2);
+		designator_push_name($2);
 	  }
 	;
 
@@ -1382,7 +1382,7 @@ init_by_name:
 	| identifier T_COLON {
 		/* GCC style struct or union member name in initializer */
 		gnuism(315);
-		push_member($1);
+		designator_push_name($1);
 	  }
 	;
 
