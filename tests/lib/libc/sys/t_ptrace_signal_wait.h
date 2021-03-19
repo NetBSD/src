@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.4 2020/06/22 12:21:02 rin Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.5 2021/03/19 00:44:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ traceme_raise(int sigval)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
 
-		DPRINTF("Assert that PT_GET_PROCESS_STATE returns non-error");
+		DPRINTF("Assert that PT_GET_PROCESS_STATE returns non-error\n");
 		SYSCALL_REQUIRE(
 		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 		ATF_REQUIRE(memcmp(&state, &zero_state, slen) == 0);
@@ -401,7 +401,7 @@ traceme_crash(int sig)
 
 	validate_status_stopped(status, sig);
 
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(
 	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
@@ -567,7 +567,7 @@ traceme_signalmasked_crash(int sig)
 
 	validate_status_stopped(status, sig);
 
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(
 	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
@@ -750,7 +750,7 @@ traceme_signalignored_crash(int sig)
 
 	validate_status_stopped(status, sig);
 
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(
 	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
