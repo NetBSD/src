@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.86 2020/12/18 07:37:21 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.87 2021/03/19 10:23:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.86 2020/12/18 07:37:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.87 2021/03/19 10:23:34 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -157,7 +157,7 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;
+	return -1;
 }
 
 static struct consdev earlycons = {
