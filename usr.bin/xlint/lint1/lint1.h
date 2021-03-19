@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.74 2021/03/18 14:58:44 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.75 2021/03/19 08:21:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -126,8 +126,8 @@ typedef struct {
  * the structure type in pass 2.
  */
 typedef	struct {
-	u_int	sou_size_in_bit;
-	u_int	sou_align_in_bit : 15;
+	u_int	sou_size_in_bits;
+	u_int	sou_align_in_bits : 15;
 	bool	sou_incomplete : 1;
 	struct	sym *sou_first_member;
 	struct	sym *sou_tag;
