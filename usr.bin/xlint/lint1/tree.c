@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.236 2021/03/19 08:19:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.237 2021/03/19 08:21:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.236 2021/03/19 08:19:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.237 2021/03/19 08:21:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2990,7 +2990,7 @@ plength(type_t *tp)
 		break;
 	case STRUCT:
 	case UNION:
-		if ((elsz = tp->t_str->sou_size_in_bit) == 0)
+		if ((elsz = tp->t_str->sou_size_in_bits) == 0)
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		break;
@@ -3375,7 +3375,7 @@ type_size_in_bits(type_t *tp)
 			error(143);
 			elsz = 1;
 		} else {
-			elsz = tp->t_str->sou_size_in_bit;
+			elsz = tp->t_str->sou_size_in_bits;
 		}
 		break;
 	case ENUM:
