@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.100 2021/03/19 00:08:13 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.101 2021/03/19 00:19:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.100 2021/03/19 00:08:13 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.101 2021/03/19 00:19:32 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -410,59 +410,44 @@ initstack_init(void)
 }
 
 static void
-initstack_pop_item(void)
+initstack_pop_item_named_member(void)
 {
-	initstack_element *istk;
-	sym_t	*m;
+	initstack_element *istk = initstk;
+	sym_t *m;
 
-	debug_enter();
+	debug_step("initializing named member '%s'", namedmem->n_name);
 
-	istk = initstk;
-	debug_step("popping:");
-	debug_initstack_element(istk);
+	lint_assert(istk->i_type->t_tspec == STRUCT ||
+	    istk->i_type->t_tspec == UNION);
+	for (m = istk->i_type->t_str->sou_first_member;
+	     m != NULL; m = m->s_next) {
 
-	initstk = istk->i_enclosing;
-	free(istk);
-	istk = initstk;
-	lint_assert(istk != NULL);
+		if (m->s_bitfield && m->s_name == unnamed)
+			continue;
 
-	istk->i_remaining--;
-	lint_assert(istk->i_remaining >= 0);
-	debug_step("%d elements remaining", istk->i_remaining);
-
-	if (namedmem != NULL) {
-		debug_step("initializing named member '%s'", namedmem->n_name);
-
-		lint_assert(istk->i_type->t_tspec == STRUCT ||
-		    istk->i_type->t_tspec == UNION);
-		for (m = istk->i_type->t_str->sou_first_member;
-		     m != NULL; m = m->s_next) {
-
-			if (m->s_bitfield && m->s_name == unnamed)
-				continue;
-
-			if (strcmp(m->s_name, namedmem->n_name) == 0) {
-				debug_step("found matching member");
-				istk->i_subt = m->s_type;
-				/* XXX: why ++? */
-				istk->i_remaining++;
-				/* XXX: why is i_seen_named_member not set? */
-				pop_member();
-				debug_initstack();
-				debug_leave();
-				return;
-			}
+		if (strcmp(m->s_name, namedmem->n_name) == 0) {
+			debug_step("found matching member");
+			istk->i_subt = m->s_type;
+			/* XXX: why ++? */
+			istk->i_remaining++;
+			/* XXX: why is i_seen_named_member not set? */
+			pop_member();
+			return;
 		}
-
-		/* undefined struct/union member: %s */
-		error(101, namedmem->n_name);
-
-		pop_member();
-		istk->i_seen_named_member = true;
-		debug_initstack();
-		debug_leave();
-		return;
 	}
+
+	/* undefined struct/union member: %s */
+	error(101, namedmem->n_name);
+
+	pop_member();
+	istk->i_seen_named_member = true;
+}
+
+static void
+initstack_pop_item_unnamed(void)
+{
+	initstack_element *istk = initstk;
+	sym_t *m;
 
 	/*
 	 * If the removed element was a structure member, we must go
@@ -480,6 +465,33 @@ initstack_pop_item(void)
 		/* XXX: duplicate code for skipping unnamed bit-fields */
 		istk->i_subt = m->s_type;
 	}
+}
+
+static void
+initstack_pop_item(void)
+{
+	initstack_element *istk;
+
+	debug_enter();
+
+	istk = initstk;
+	debug_step("popping:");
+	debug_initstack_element(istk);
+
+	initstk = istk->i_enclosing;
+	free(istk);
+	istk = initstk;
+	lint_assert(istk != NULL);
+
+	istk->i_remaining--;
+	lint_assert(istk->i_remaining >= 0);
+	debug_step("%d elements remaining", istk->i_remaining);
+
+	if (namedmem != NULL)
+		initstack_pop_item_named_member();
+	else
+		initstack_pop_item_unnamed();
+
 	debug_initstack();
 	debug_leave();
 }
