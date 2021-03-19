@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.105 2021/03/19 17:37:57 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.106 2021/03/19 18:17:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.105 2021/03/19 17:37:57 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.106 2021/03/19 18:17:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -283,9 +283,9 @@ debug_named_member(void)
 		return;
 	name = namedmem;
 	debug_indent();
-	debug_printf("named member:");
+	debug_printf("named member: ");
 	do {
-		debug_printf(" %s", name->n_name);
+		debug_printf(".%s", name->n_name);
 		name = name->n_next;
 	} while (name != namedmem);
 	debug_printf("\n");
@@ -343,8 +343,6 @@ designator_push_name(sbuf_t *sb)
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
 	nam->n_name = sb->sb_name;
 
-	debug_step("%s: '%s' %p", __func__, nam->n_name, nam);
-
 	if (namedmem == NULL) {
 		/*
 		 * XXX: Why is this a circular list?
@@ -359,6 +357,8 @@ designator_push_name(sbuf_t *sb)
 		nam->n_next = namedmem;
 		namedmem->n_prev = nam;
 	}
+
+	debug_named_member();
 }
 
 /*
@@ -380,7 +380,6 @@ designator_push_subscript(range_t range)
 static void
 designator_shift_name(void)
 {
-	debug_step("%s: %s %p", __func__, namedmem->n_name, namedmem);
 	if (namedmem->n_next == namedmem) {
 		free(namedmem);
 		namedmem = NULL;
@@ -391,6 +390,8 @@ designator_shift_name(void)
 		nam->n_next->n_prev = nam->n_prev;
 		free(nam);
 	}
+
+	debug_named_member();
 }
 
 /*
