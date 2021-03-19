@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_pop_member.c,v 1.5 2021/02/20 16:55:32 rillig Exp $	*/
+/*	$NetBSD: d_init_pop_member.c,v 1.6 2021/03/19 17:40:37 rillig Exp $	*/
 # 3 "d_init_pop_member.c"
 
 /*
@@ -54,6 +54,6 @@ void func(void)
 	     * Before init.c 1.52 from 2020-01-01:
 	     * wrong "warning: bit-field initializer does not fit [180]"
 	     */
-	    .capital.mayor.favorite_color.red = 0xFF
-	};			/*FIXME*//* expect: 101 */
+	    .capital.mayor.favorite_color.red = 0xFF, /*FIXME*//* expect: 101 */
+	};
 }
