@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.3 2019/06/26 06:57:45 isaki Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.4 2021/03/20 04:56:52 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.3 2019/06/26 06:57:45 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.4 2021/03/20 04:56:52 isaki Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -81,6 +81,13 @@ static const int32_t sinewave[] = {
 #undef A
 
 /*
+ * The minimum and the maximum buffer sizes must be a multiple of 32
+ * (32 = countof(sinewave) * sizeof(uint16_t)).
+ */
+#define MINBUFSIZE	(1024)
+#define MAXBUFSIZE	(4096)
+
+/*
  * dev is a device_t for the audio device to use.
  * pitch is the pitch of the bell in Hz,
  * period is the length in ms,
@@ -102,7 +109,7 @@ audiobell(void *dev, u_int pitch, u_int period, u_int volume, int poll)
 	u_int remainbytes;
 	u_int wave1count;
 	u_int wave1bytes;
-	u_int blkbytes;
+	u_int bufbytes;
 	u_int len;
 	u_int step;
 	u_int offset;
@@ -110,6 +117,10 @@ audiobell(void *dev, u_int pitch, u_int period, u_int volume, int poll)
 	u_int mixer_sample_rate;
 
 	KASSERT(volume <= 100);
+
+	/* Playing for 0msec does nothing. */
+	if (period == 0)
+		return;
 
 	/* The audio system isn't built for polling. */
 	if (poll)
@@ -158,16 +169,23 @@ audiobell(void *dev, u_int pitch, u_int period, u_int volume, int poll)
 	remainbytes = remaincount * sizeof(int16_t);
 	wave1bytes = wave1count * sizeof(int16_t);
 
-	blkbytes = ptrack->usrbuf_blksize;
-	blkbytes = rounddown(blkbytes, wave1bytes);
-	blkbytes = uimin(blkbytes, remainbytes);
-	buf = malloc(blkbytes, M_TEMP, M_WAITOK);
+	/* Based on 3*usrbuf_blksize, but not too small or too large */
+	bufbytes = ptrack->usrbuf_blksize * NBLKHW;
+	if (bufbytes < MINBUFSIZE)
+		bufbytes = MINBUFSIZE;
+	else if (bufbytes > MAXBUFSIZE)
+		bufbytes = MAXBUFSIZE;
+	else
+		bufbytes = roundup(bufbytes, wave1bytes);
+	bufbytes = uimin(bufbytes, remainbytes);
+	KASSERT(bufbytes != 0);
+	buf = malloc(bufbytes, M_TEMP, M_WAITOK);
 	if (buf == NULL)
 		goto out;
 
 	/* Generate sinewave with specified volume */
 	j = offset;
-	for (i = 0; i < blkbytes / sizeof(int16_t); i++) {
+	for (i = 0; i < bufbytes / sizeof(int16_t); i++) {
 		/* XXX audio already has track volume feature though #if 0 */
 		buf[i] = AUDIO_SCALEDOWN(sinewave[j] * (int)volume, 16);
 		j += step;
@@ -177,7 +195,7 @@ audiobell(void *dev, u_int pitch, u_int period, u_int volume, int poll)
 	/* Write while paused to avoid inserting silence. */
 	ptrack->is_pause = true;
 	for (; remainbytes > 0; remainbytes -= len) {
-		len = uimin(remainbytes, blkbytes);
+		len = uimin(remainbytes, bufbytes);
 		aiov.iov_base = (void *)buf;
 		aiov.iov_len = len;
 		auio.uio_iov = &aiov;
