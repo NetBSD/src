@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.15 2021/01/09 13:42:25 jmcneill Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.16 2021/03/20 14:30:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.15 2021/01/09 13:42:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.16 2021/03/20 14:30:50 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -207,7 +207,7 @@ tlb_contiguous_p(vaddr_t va, paddr_t pa, vaddr_t start, vaddr_t end,
  * pmapboot_enter() accesses pagetables by physical address.
  * this should be called while identity mapping (VA=PA) available.
  */
-int
+void
 pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
     pt_entry_t attr, void (*pr)(const char *, ...) __printflike(1, 2))
 {
@@ -232,7 +232,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		level = 3;
 		break;
 	default:
-		return -1;
+		panic("%s: bad blocksize (%" PRIxPSIZE ")", __func__, blocksize);
 	}
 
 	VPRINTF("pmapboot_enter: va=0x%lx, pa=0x%lx, size=0x%lx, "
@@ -260,7 +260,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		ttbr = 1;
 		break;
 	default:
-		return -1;
+		panic("%s: unknown address space (%d/%" PRIxVADDR ")", __func__,
+		    aarch64_addressspace(va), va);
 	}
 
 	while (va < va_end) {
@@ -275,7 +276,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			if (l1 == NULL) {
 				VPRINTF("pmapboot_enter: "
 				    "cannot allocate L1 page\n");
-				return -1;
+				panic("%s: can't allocate memory", __func__);
 			}
 
 			pte = (uint64_t)l1 | L0_TABLE;
@@ -320,7 +321,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			if (l2 == NULL) {
 				VPRINTF("pmapboot_enter: "
 				    "cannot allocate L2 page\n");
-				return -1;
+				panic("%s: can't allocate memory", __func__);
 			}
 
 			pte = (uint64_t)l2 | L1_TABLE;
@@ -364,7 +365,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			if (l3 == NULL) {
 				VPRINTF("pmapboot_enter: "
 				    "cannot allocate L3 page\n");
-				return -1;
+				panic("%s: can't allocate memory", __func__);
 			}
 
 			pte = (uint64_t)l3 | L2_TABLE;
@@ -440,7 +441,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 	dsb(ish);
 
-	return nskip;
+	if (nskip != 0)
+		panic("%s: overlapping/incompatible mappings (%d)", __func__, nskip);
 }
 
 paddr_t pmapboot_pagebase __attribute__((__section__(".data")));
@@ -465,13 +467,12 @@ pmapboot_pagealloc(void)
 	return (pd_entry_t *)pa;
 }
 
-int
+void
 pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	vaddr_t vend;
 	vsize_t left, mapsize, nblocks;
-	int nskip = 0;
 
 	vend = round_page(va + size);
 	va = trunc_page(va);
@@ -484,7 +485,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L3_SIZE;
 		VPRINTF("Creating L3 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, pr);
+		pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -497,7 +498,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L2_SIZE;
 		VPRINTF("Creating L2 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, pr);
+		pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -508,7 +509,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L1_SIZE;
 		VPRINTF("Creating L1 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L1_SIZE, attr, pr);
+		pmapboot_enter(va, pa, mapsize, L1_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -519,7 +520,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L2_SIZE;
 		VPRINTF("Creating L2 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, pr);
+		pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -530,11 +531,9 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L3_SIZE;
 		VPRINTF("Creating L3 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, pr);
+		pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
 	}
-
-	return nskip;
 }
