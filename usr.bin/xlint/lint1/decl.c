@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.149 2021/03/19 08:21:26 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.150 2021/03/20 13:06:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.149 2021/03/19 08:21:26 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.150 2021/03/20 13:06:05 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -721,6 +721,24 @@ clrtyp(void)
 	dcs->d_notyp = false;
 }
 
+static void
+dcs_adjust_storage_class(void)
+{
+	if (dcs->d_ctx == EXTERN) {
+		if (dcs->d_scl == REG || dcs->d_scl == AUTO) {
+			/* illegal storage class */
+			error(8);
+			dcs->d_scl = NOSCL;
+		}
+	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PROTO_ARG) {
+		if (dcs->d_scl != NOSCL && dcs->d_scl != REG) {
+			/* only register valid as formal parameter storage... */
+			error(9);
+			dcs->d_scl = NOSCL;
+		}
+	}
+}
+
 /*
  * Create a type structure from the information gathered in
  * the declaration stack.
@@ -732,14 +750,12 @@ deftyp(void)
 {
 	tspec_t	t, s, l, c;
 	type_t	*tp;
-	scl_t	scl;
 
 	t = dcs->d_abstract_type; /* VOID, BOOL, CHAR, INT or COMPLEX */
 	c = dcs->d_complex_mod;	/* FLOAT or DOUBLE */
 	s = dcs->d_sign_mod;	/* SIGNED or UNSIGN */
 	l = dcs->d_rank_mod;	/* SHORT, LONG or QUAD */
 	tp = dcs->d_type;
-	scl = dcs->d_scl;
 
 #ifdef DEBUG
 	printf("%s: %s\n", __func__, type_name(tp));
@@ -827,21 +843,7 @@ deftyp(void)
 		error(4);
 	}
 
-	if (dcs->d_ctx == EXTERN) {
-		if (scl == REG || scl == AUTO) {
-			/* illegal storage class */
-			error(8);
-			scl = NOSCL;
-		}
-	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PROTO_ARG) {
-		if (scl != NOSCL && scl != REG) {
-			/* only register valid as formal parameter storage... */
-			error(9);
-			scl = NOSCL;
-		}
-	}
-
-	dcs->d_scl = scl;
+	dcs_adjust_storage_class();
 
 	if (dcs->d_const && dcs->d_type->t_const) {
 		lint_assert(dcs->d_type->t_typedef);
