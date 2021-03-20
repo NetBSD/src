@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.151 2021/03/20 13:22:06 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.152 2021/03/20 13:25:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.151 2021/03/20 13:22:06 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.152 2021/03/20 13:25:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -684,8 +684,8 @@ popdecl(void)
  * There is no need to clear d_asm in dinfo structs with context AUTO,
  * because these structs are freed at the end of the compound statement.
  * But it must be cleared in the outermost dinfo struct, which has
- * context EXTERN. This could be done in clrtyp() and would work for
- * C, but not for C++ (due to mixed statements and declarations). Thus
+ * context EXTERN. This could be done in clrtyp() and would work for C90,
+ * but not for C99 or C++ (due to mixed statements and declarations). Thus
  * we clear it in global_clean_up_decl(), which is used to do some cleanup
  * after global declarations/definitions.
  */
