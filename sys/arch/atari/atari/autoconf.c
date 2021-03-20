@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.68.2.1 2021/03/20 19:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68.2.1 2021/03/20 19:33:32 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -155,7 +155,7 @@ atari_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search_ia(NULL, parent, NULL, aux)) != NULL) {
+	if ((cf = config_search(parent, aux, CFARG_EOL)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(parent, NULL, aux);

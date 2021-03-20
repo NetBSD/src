@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.23 2016/07/13 21:33:28 macallan Exp $	*/
+/*	$NetBSD: mace.c,v 1.23.32.1 2021/03/20 19:33:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.23 2016/07/13 21:33:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.23.32.1 2021/03/20 19:33:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,10 @@ mace_attach(device_t parent, device_t self, void *aux)
 		maceintrtab[scratch].irq = 0;
 	}
 
-	config_search_ia(mace_search, self, "mace", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, mace_search,
+	    CFARG_IATTR, "mace",
+	    CFARG_EOL);
 }
 
 

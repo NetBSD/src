@@ -1,4 +1,0 @@
-include start
-call OK mvprintw 10 14 "%s" "testing 1 2 3"
-call OK refresh
-compare mvprintw.chk

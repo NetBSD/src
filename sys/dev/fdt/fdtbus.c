@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.40 2021/02/05 17:20:32 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.40.2.1 2021/03/20 19:33:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40 2021/02/05 17:20:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40.2.1 2021/03/20 19:33:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,11 @@ fdt_scan_best(struct fdt_softc *sc, struct fdt_node *node)
 			[FDTCF_PASS] = pass
 		};
 		fdt_init_attach_args(&sc->sc_faa, node, true, &faa);
-		cf = config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
+		cf = config_search(node->n_bus, &faa,
+		    CFARG_SUBMATCH, fdt_scan_submatch,
+		    CFARG_IATTR, "fdt",
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 		if (cf == NULL)
 			continue;
 		match = config_match(node->n_bus, cf, &faa);

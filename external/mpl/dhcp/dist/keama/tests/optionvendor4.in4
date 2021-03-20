@@ -1,8 +1,0 @@
-# group and class declaration config
-
-# vendor option space
-option space foobar;
-
-option vendor.foobar code 12345 = encapsulate foobar;
-option foobar.test code 1 = text;
-option foobar.test "a test";

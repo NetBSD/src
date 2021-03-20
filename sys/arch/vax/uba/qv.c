@@ -1,4 +1,4 @@
-/* $NetBSD: qv.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $ */
+/* $NetBSD: qv.c,v 1.36.2.1 2021/03/20 19:33:39 thorpej Exp $ */
 /*
  * Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from smg.c
@@ -31,7 +31,7 @@
 /*3456789012345678901234567890123456789012345678901234567890123456789012345678*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.36.2.1 2021/03/20 19:33:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,7 +475,8 @@ qv_attach(device_t parent, device_t self, void *aux)
 	aa.ua_iot = ua->ua_iot;
 	aa.ua_ioh = ua->ua_ioh + 32; // offset
 	aa.ua_cvec = ua->ua_cvec - 4;
-	if (config_search_ia(NULL, self, "qv", &aa) != NULL) {
+	if (config_search(self, &aa,
+			  CFARG_IATTR, "qv") != NULL) {
 	        config_found_ia(self, "qv", &aa, qvauxprint);
                 uh->uh_lastiv -= 4;
 	}
@@ -484,7 +485,9 @@ qv_attach(device_t parent, device_t self, void *aux)
 	emulaa.scrdata = &qv_screenlist;
 	emulaa.accessops = &qv_accessops;
 	emulaa.accesscookie = self;
-	if (config_search_ia(NULL, self, "wsemuldisplaydev", &emulaa) != NULL) {
+	if (config_search(self, &emulaa,
+			  CFARG_IATTR, "wsemuldisplaydev",
+			  CFARG_EOL) != NULL) {
 	        config_found_ia(self, "wsemuldisplaydev", &emulaa,
 	            wsemuldisplaydevprint);
 	}

@@ -1,9 +1,0 @@
-min-example.	0	IN SOA	ns root (
-				2000082401 ; serial
-				1800       ; refresh (30 minutes)
-				1800       ; retry (30 minutes)
-				1814400    ; expire (3 weeks)
-				0          ; minimum (0 seconds)
-				)
-min-example.	0	IN NS	ns.min-example.
-ns.min-example.	0	IN A	10.53.0.1

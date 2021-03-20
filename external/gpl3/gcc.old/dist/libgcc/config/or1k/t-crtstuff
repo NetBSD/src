@@ -1,4 +1,0 @@
-# This will prevent gcc from appending data to .eh_frame.
-# Other archs use fno-asynchronous-unwind-tables but we do not have that flag.
-CRTSTUFF_T_CFLAGS += -fno-dwarf2-cfi-asm
-CRTSTUFF_T_CFLAGS_S += -fno-dwarf2-cfi-asm

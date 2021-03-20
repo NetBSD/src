@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.25 2011/06/06 16:52:18 matt Exp $	*/
+/*	$NetBSD: obio.c,v 1.25.68.1 2021/03/20 19:33:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.25 2011/06/06 16:52:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.25.68.1 2021/03/20 19:33:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	/* Search for and attach children. */
-	config_search_ia(obio_search, self, "obio", aux);
+	config_search(self, aux,
+	    CFARG_SUBMATCH, obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 }
 
 int

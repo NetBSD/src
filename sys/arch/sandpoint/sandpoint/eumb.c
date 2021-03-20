@@ -1,4 +1,4 @@
-/* $NetBSD: eumb.c,v 1.6 2011/12/18 14:28:59 phx Exp $ */
+/* $NetBSD: eumb.c,v 1.6.62.1 2021/03/20 19:33:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.6 2011/12/18 14:28:59 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.6.62.1 2021/03/20 19:33:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,7 +69,10 @@ eumb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-	config_search_ia(eumb_search, self, "eumb", aux);
+	config_search(self, aux,
+	    CFARG_SUBMATCH, eumb_search,
+	    CFARG_IATTR, "eumb",
+	    CFARG_EOL);
 }
 
 static int

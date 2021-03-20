@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.21 2012/10/27 17:17:54 chs Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.21.52.1 2021/03/20 19:33:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.21 2012/10/27 17:17:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.21.52.1 2021/03/20 19:33:35 thorpej Exp $");
 
 #undef TX39SIBDEBUG
 
@@ -177,7 +177,10 @@ tx39sib_attach(device_t parent, device_t self, void *aux)
 		tx39sib_dump(sc);
 #endif	
 
-	config_search_ia(tx39sib_search, self, "txsibif", tx39sib_print);
+	config_search(self, tx39sib_print,
+	    CFARG_SUBMATCH, tx39sib_search,
+	    CFARG_IATTR, "txsibif",
+	    CFARG_EOL);
 }
 
 void

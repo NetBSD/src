@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 2010/07/11 08:43:36 kiyohara Exp $	*/
+/*	$NetBSD: obio.c,v 1.15.76.1 2021/03/20 19:33:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2010/07/11 08:43:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15.76.1 2021/03/20 19:33:41 thorpej Exp $");
 
 #include "opt_marvell.h"
 
@@ -137,7 +137,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "addr %#x-%#x\n",
 	    GT_LowAddr_GET(datal), GT_HighAddr_GET(datah));
 
-        config_search_ia(obio_cfsearch, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, obio_cfsearch,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 }
 
 

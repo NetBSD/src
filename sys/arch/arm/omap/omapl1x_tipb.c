@@ -97,7 +97,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.1.50.1 2021/03/20 19:33:32 thorpej Exp $");
 
 #include "locators.h"
 
@@ -184,20 +184,26 @@ tipb_attach(struct device *parent, struct device *self, void *aux)
 	 * attach them in the order they appear in the array.
 	 */
 	const char *const *earlyp;
-	for (earlyp = earlies; *earlyp != NULL; earlyp++)
+	for (earlyp = earlies; *earlyp != NULL; earlyp++) {
 		/*
 		 * The bus search function is passed an aux argument that
 		 * "describes the device that has been found".  The type of it
 		 * is void *.  However, I want to pass a constant string, so
 		 * use __UNCONST to convince the compiler that this is ok.
 		 */
-		config_search_ia(tipb_search, self, "tipb",
-				 __UNCONST(*earlyp));
+		config_search(self, __UNCONST(*earlyp),
+		    CFARG_SUBMATCH, tipb_search,
+		    CFARG_IATTR, "tipb",
+		    CFARG_EOL);
+	}
 
 	/*
 	 * Attach all other devices
 	 */
-	config_search_ia(tipb_search, self, "tipb", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, tipb_search,
+	    CFARG_IATTR, "tipb",
+	    CFARG_EOL);
 }
 
 static int

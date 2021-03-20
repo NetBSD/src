@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.16 2012/10/14 14:20:57 msaitoh Exp $	*/
+/*	$NetBSD: becc.c,v 1.16.52.1 2021/03/20 19:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16 2012/10/14 14:20:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16.52.1 2021/03/20 19:33:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,10 @@ becc_attach(struct becc_softc *sc)
 	 * the BECC is a soft-core with a variety of peripherals, depending
 	 * on configuration.
 	 */
-	config_search_ia(becc_search, sc->sc_dev, "becc", NULL);
+	config_search(sc->sc_dev, NULL,
+	    CFARG_SUBMATCH, becc_search,
+	    CFARG_IATTR, "becc",
+	    CFARG_EOL);
 
 	/*
 	 * Attach the PCI bus.

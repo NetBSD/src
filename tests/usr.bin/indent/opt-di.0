@@ -1,8 +1,0 @@
-/* $NetBSD: opt-di.0,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
-/* $FreeBSD$ */
-
-int space;
-int	tab;
-int		tab16;
-
-struct long_name long_name;

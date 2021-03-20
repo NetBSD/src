@@ -1,8 +1,0 @@
-# $NetBSD: md.evbmips,v 1.4 2020/07/24 12:07:09 jmcneill Exp $
-./usr/mdec/sbmips				base-sysutil-bin
-./usr/mdec/sbmips/boot				base-sysutil-bin
-./usr/mdec/sbmips/bootxx_cd9660			base-sysutil-bin
-./usr/mdec/sbmips/bootxx_ffs			base-sysutil-bin
-./usr/mdec/sbmips/bootxx_lfs			base-sysutil-bin
-./usr/mdec/sbmips/netboot			base-sysutil-bin
-./usr/sbin/ofctl				base-sysutil-bin

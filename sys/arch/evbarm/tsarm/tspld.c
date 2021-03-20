@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.24 2014/02/25 18:30:08 pooka Exp $	*/
+/*	$NetBSD: tspld.c,v 1.24.44.1 2021/03/20 19:33:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.24 2014/02/25 18:30:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.24.44.1 2021/03/20 19:33:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -474,7 +474,10 @@ tspld_callback(device_t self)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(tspld_search, self, "tspldbus", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, tspld_search,
+	    CFARG_IATTR, "tspldbus",
+	    CFARG_EOL);
 	
 }
 

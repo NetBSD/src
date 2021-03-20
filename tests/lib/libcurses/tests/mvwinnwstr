@@ -1,3 +1,0 @@
-include waddwstr
-wchar WC [0x42, 0x3401]
-call2 2 $WC mvwinnwstr $win1 0 1 3

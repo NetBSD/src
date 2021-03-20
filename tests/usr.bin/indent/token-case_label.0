@@ -1,8 +1,0 @@
-/* $NetBSD: token-case_label.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Tests for formatting of case labels in switch statements.
- */
-
-/* TODO: Add some code to be formatted. */

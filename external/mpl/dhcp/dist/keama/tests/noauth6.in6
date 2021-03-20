@@ -1,6 +1,0 @@
-# no(t) authoritative config
-
-# authoritative is no longer mandatory
-#authoritative;
-
-subnet6 2001::/64 { }

@@ -1,7 +1,0 @@
-# DHCPv6 pool declaration in root config
-
-# DHCPv6 pool declaration must be in a shared-network or subnet declaration
-pool6 {
-    range6 2001::/64;
-}
-

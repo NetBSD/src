@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_axi.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq_axi.c,v 1.1.38.1 2021/03/20 19:33:32 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_axi.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_axi.c,v 1.1.38.1 2021/03/20 19:33:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,8 +80,15 @@ axi_attach(device_t parent __unused, device_t self, void *aux __unused)
 	aa.aa_name = "axi";
 	aa.aa_iot = sc->sc_iot;
 	aa.aa_dmat = sc->sc_dmat;
-	config_search_ia(axi_critical_search, self, "axi", &aa);
-	config_search_ia(axi_search, self, "axi", &aa);
+
+	config_search(self, &aa,
+	    CFARG_SUBMATCH, axi_critical_search,
+	    CFARG_IATTR, "axi",
+	    CFARG_EOL);
+	config_search(self, &aa,
+	    CFARG_SUBMATCH, axi_search,
+	    CFARG_IATTR, "axi",
+	    CFARG_EOL);
 }
 
 /* ARGSUSED */

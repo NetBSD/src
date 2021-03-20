@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.11 2011/07/01 20:38:16 dyoung Exp $	*/
+/*	$NetBSD: obio.c,v 1.11.68.1 2021/03/20 19:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11 2011/07/01 20:38:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11.68.1 2021/03/20 19:33:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 * Attach all on-board devices as described in the kernel
 	 * configuration file.
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 }
 
 int

@@ -1,4 +1,0 @@
-# bad (no identifier) numeric server duid config
-
-# server duid declaration
-server-duid 9;

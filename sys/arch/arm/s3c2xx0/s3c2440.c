@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440.c,v 1.2 2012/10/27 17:17:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440.c,v 1.2.52.1 2021/03/20 19:33:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,10 @@ s3c2440_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach devices.
 	 */
-	config_search_ia(s3c2440_search, self, "ssio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, s3c2440_search,
+	    CFARG_IATTR, "ssio",
+	    CFARG_EOL);
 	return;
 
 abort:

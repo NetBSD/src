@@ -1,2 +1,0 @@
-# $NetBSD: md.mipsco,v 1.2 2019/03/21 07:44:05 uki Exp $
-./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug		debug

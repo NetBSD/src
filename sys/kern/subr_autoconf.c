@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277 2021/01/27 04:54:08 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.1 2021/03/20 19:33:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277 2021/01/27 04:54:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.1 2021/03/20 19:33:41 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277 2021/01/27 04:54:08 thorpej 
 #include <sys/devmon.h>
 #include <sys/cpu.h>
 #include <sys/sysctl.h>
+#include <sys/stdarg.h>
 
 #include <sys/disk.h>
 
@@ -1001,6 +1002,50 @@ config_match(device_t parent, cfdata_t cf, void *aux)
 	return (*ca->ca_match)(parent, cf, aux);
 }
 
+static void
+config_get_cfargs(cfarg_t tag,
+		  cfsubmatch_t *fnp,		/* output */
+		  const char **ifattrp,		/* output */
+		  const int **locsp,		/* output */
+		  va_list ap)
+{
+	cfsubmatch_t fn = NULL;
+	const char *ifattr = NULL;
+	const int *locs = NULL;
+
+	while (tag != CFARG_EOL) {
+		switch (tag) {
+		case CFARG_SUBMATCH:
+			fn = va_arg(ap, cfsubmatch_t);
+			break;
+
+		case CFARG_IATTR:
+			ifattr = va_arg(ap, const char *);
+			break;
+
+		case CFARG_LOCATORS:
+			locs = va_arg(ap, const int *);
+			break;
+
+		default:
+			/* XXX panic? */
+			/* XXX dump stack backtrace? */
+			aprint_error("%s: unknown cfarg tag: %d\n",
+			    __func__, tag);
+			goto out;
+		}
+		tag = va_arg(ap, cfarg_t);
+	}
+
+ out:
+	if (fnp != NULL)
+		*fnp = fn;
+	if (ifattrp != NULL)
+		*ifattrp = ifattr;
+	if (locsp != NULL)
+		*locsp = locs;
+}
+
 /*
  * Iterate over all potential children of some device, calling the given
  * function (default being the child's match function) for each one.
@@ -1012,13 +1057,17 @@ config_match(device_t parent, cfdata_t cf, void *aux)
  * an arbitrary function to all potential children (its return value
  * can be ignored).
  */
-cfdata_t
-config_search_loc(cfsubmatch_t fn, device_t parent,
-		  const char *ifattr, const int *locs, void *aux)
+static cfdata_t
+config_vsearch(device_t parent, void *aux, cfarg_t tag, va_list ap)
 {
+	cfsubmatch_t fn;
+	const char *ifattr;
+	const int *locs;
 	struct cftable *ct;
 	cfdata_t cf;
 	struct matchinfo m;
+
+	config_get_cfargs(tag, &fn, &ifattr, &locs, ap);
 
 	KASSERT(config_initialized);
 	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
@@ -1064,11 +1113,16 @@ config_search_loc(cfsubmatch_t fn, device_t parent,
 }
 
 cfdata_t
-config_search_ia(cfsubmatch_t fn, device_t parent, const char *ifattr,
-    void *aux)
+config_search(device_t parent, void *aux, cfarg_t tag, ...)
 {
+	cfdata_t cf;
+	va_list ap;
 
-	return config_search_loc(fn, parent, ifattr, NULL, aux);
+	va_start(ap, tag);
+	cf = config_vsearch(parent, aux, tag, ap);
+	va_end(ap);
+
+	return cf;
 }
 
 /*
@@ -1120,7 +1174,11 @@ config_found_sm_loc(device_t parent,
 {
 	cfdata_t cf;
 
-	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
+	if ((cf = config_search(parent, aux,
+				CFARG_SUBMATCH, submatch,
+				CFARG_IATTR, ifattr,
+				CFARG_LOCATORS, locs,
+				CFARG_EOL)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
 		if (config_do_twiddle && cold)

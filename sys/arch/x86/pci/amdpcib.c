@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib.c,v 1.3 2008/07/20 17:18:21 martin Exp $ */
+/* $NetBSD: amdpcib.c,v 1.3.96.1 2021/03/20 19:33:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.3 2008/07/20 17:18:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.3.96.1 2021/03/20 19:33:39 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -71,7 +71,11 @@ amdpcib_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	pcibattach(parent, self, aux);
-	config_search_loc(amdpcib_search, self, "amdpcib", NULL, pa);
+
+	config_search(self, pa,
+	    CFARG_SUBMATCH, amdpcib_search,
+	    CFARG_IATTR, "amdpcib",
+	    CFARG_EOL);
 }
 
 static int

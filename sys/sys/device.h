@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.167 2021/02/06 21:08:51 christos Exp $ */
+/* $NetBSD: device.h,v 1.167.2.1 2021/03/20 19:33:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -524,6 +524,18 @@ struct pdevinit {
 /* This allows us to wildcard a device unit. */
 #define	DVUNIT_ANY	-1
 
+/*
+ * Tags for tag-value argument pairs passed to config_search() and
+ * config_found().
+ */
+typedef enum {
+	CFARG_SUBMATCH		= 0,	/* submatch function */
+	CFARG_IATTR		= 1,	/* interface attribute */
+	CFARG_LOCATORS		= 2,	/* locators array */
+
+	CFARG_EOL		= 0xffffffff
+} cfarg_t;
+
 #ifdef _KERNEL
 
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
@@ -567,10 +579,7 @@ const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
 const char *cfdata_ifattr(const struct cfdata *);
 
 int	config_stdsubmatch(device_t, cfdata_t, const int *, void *);
-cfdata_t config_search_loc(cfsubmatch_t, device_t,
-				 const char *, const int *, void *);
-cfdata_t config_search_ia(cfsubmatch_t, device_t,
-				 const char *, void *);
+cfdata_t config_search(device_t, void *, cfarg_t, ...);
 cfdata_t config_rootsearch(cfsubmatch_t, const char *, void *);
 device_t config_found_sm_loc(device_t, const char *, const int *,
 			     void *, cfprint_t, cfsubmatch_t);

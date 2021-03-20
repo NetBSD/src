@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.15 2011/07/19 15:37:38 dyoung Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.15.68.1 2021/03/20 19:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.15 2011/07/19 15:37:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.15.68.1 2021/03/20 19:33:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,10 @@ uda1341_attach(device_t parent, device_t self, void *aux)
 	 *  Attach each devices
 	 */
 
-	config_search_ia(uda1341_search, self, "udaif", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, uda1341_search,
+	    CFARG_IATTR, "udaif",
+	    CFARG_EOL);
 }
 
 static int

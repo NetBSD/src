@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.14 2012/10/27 17:17:39 chs Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.14.52.1 2021/03/20 19:33:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.14 2012/10/27 17:17:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.14.52.1 2021/03/20 19:33:31 thorpej Exp $");
 
 /*
  * Slow peripheral bus of ixp12x0 Processor
@@ -71,7 +71,10 @@ ixpsip_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(ixpsip_search, self, "ixpsip", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, ixpsip_search,
+	    CFARG_IATTR, "ixpsip",
+	    CFARG_EOL);
 }
 
 int

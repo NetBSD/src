@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.20 2020/02/04 07:40:45 skrll Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.20.8.1 2021/03/20 19:33:31 thorpej Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.20 2020/02/04 07:40:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.20.8.1 2021/03/20 19:33:31 thorpej Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -298,8 +298,10 @@ geminigmac_attach(device_t parent, device_t self, void *aux)
 	gma.gma_phy = -1;
 	gma.gma_intr = 1;
 
-	cf = config_search_ia(geminigmac_find, sc->sc_dev,
-	    geminigmac_cd.cd_name, &gma);
+	cf = config_search(sc->sc_dev, &gma,
+	    CFARG_SUBMATCH, geminigmac_find,
+	    CFARG_IATTR, geminigmac_cd.cd_name,
+	    CFARG_EOL);
 	if (cf != NULL)
 		config_attach(sc->sc_dev, cf, &gma, geminigmac_print);
 
@@ -307,8 +309,10 @@ geminigmac_attach(device_t parent, device_t self, void *aux)
 	gma.gma_phy = -1;
 	gma.gma_intr = 2;
 
-	cf = config_search_ia(geminigmac_find, sc->sc_dev,
-	    geminigmac_cd.cd_name, &gma);
+	cf = config_search(sc->sc_dev, &gma,
+	    CFARG_SUBMATCH, geminigmac_find,
+	    CFARG_IATTR, geminigmac_cd.cd_name,
+	    CFARG_EOL);
 	if (cf != NULL)
 		config_attach(sc->sc_dev, cf, &gma, geminigmac_print);
 }

@@ -1,6 +1,0 @@
-include window
-call OK waddch $win1 `\001a`
-call OK wrefresh $win1
-call OK mvwaddch $win1 2 3 `\001b`
-call OK wrefresh $win1
-compare waddch.chk

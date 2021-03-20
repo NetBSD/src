@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.10 2011/07/01 20:38:17 dyoung Exp $ */
+/*	$NetBSD: gb225.c,v 1.10.68.1 2021/03/20 19:33:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -173,7 +173,10 @@ opio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(opio_search, self, "opio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, opio_search,
+	    CFARG_IATTR, "opio",
+	    CFARG_EOL);
 }
 
 int

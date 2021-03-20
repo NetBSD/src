@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.24 2019/11/10 21:16:34 chs Exp $	*/
+/*	$NetBSD: gpib.c,v 1.24.10.1 2021/03/20 19:33:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.24 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.24.10.1 2021/03/20 19:33:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,13 +140,18 @@ gpibattach(device_t parent, device_t self, void *aux)
 	for (address=0; address<GPIB_NDEVS; address++) {
 		ga.ga_ic = sc->sc_ic;
 		ga.ga_address = address;
-		(void) config_search_ia(gpibsubmatch1, sc->sc_dev, "gpib",
-		    &ga);
+		config_search(sc->sc_dev, &ga,
+		    CFARG_SUBMATCH, gpibsubmatch1,
+		    CFARG_IATTR, "gpib",
+		    CFARG_EOL);
 	}
 
 	/* attach the wild-carded devices - probably protocol busses */
 	ga.ga_ic = sc->sc_ic;
-	(void) config_search_ia(gpibsubmatch2, sc->sc_dev, "gpib", &ga);
+	config_search(sc->sc_dev, &ga,
+	    CFARG_SUBMATCH, gpibsubmatch2,
+	    CFARG_IATTR, "gpib",
+	    CFARG_EOL);
 }
 
 int

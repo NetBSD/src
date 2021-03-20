@@ -1,8 +1,0 @@
-/*	$NetBSD: offsetof.0.stdout,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
-/* $FreeBSD: head/usr.bin/indent/tests/offsetof.0.stdout 321381 2017-07-23 14:04:45Z pstef $ */
-/* See r303718 */
-void
-t(void)
-{
-	int		n = malloc(offsetof(struct s, f) + 1);
-}

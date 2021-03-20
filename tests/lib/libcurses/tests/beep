@@ -1,4 +1,0 @@
-include start
-call OK beep
-call OK refresh
-compare bell.chk

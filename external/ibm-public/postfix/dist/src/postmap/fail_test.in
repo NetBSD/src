@@ -1,8 +1,0 @@
-${VALGRIND} ./postmap -q xx fail:aliases
-echo xx | ${VALGRIND} ./postmap -q - fail:aliases
-echo xx | ${VALGRIND} ./postmap -bq - fail:aliases
-${VALGRIND} ./postmap -d xx fail:aliases
-echo xx | ${VALGRIND} ./postmap -d - fail:aliases
-${VALGRIND} ./postmap -s fail:aliases
-${VALGRIND} ./postmap -i fail:aliases < aliases
-${VALGRIND} ./postmap fail:aliases

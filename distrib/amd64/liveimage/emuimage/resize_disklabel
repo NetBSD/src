@@ -1,3 +1,0 @@
-# $NetBSD: resize_disklabel,v 1.1 2020/08/05 01:35:18 jmcneill Exp $
-
-resize_disklabel=YES

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138 2010/08/21 17:08:15 jmcneill Exp $	*/
+/*	$NetBSD: isa.c,v 1.138.76.1 2021/03/20 19:33:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138 2010/08/21 17:08:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.1 2021/03/20 19:33:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,11 @@ isarescan(device_t self, const char *ifattr, const int *locators)
 	if (locs[ISACF_IOSIZ] == -1)
 		locs[ISACF_IOSIZ] = ISACF_IOSIZ_DEFAULT;
 
-	config_search_loc(isasearch, self, ifattr, locs, NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, isasearch,
+	    CFARG_IATTR, ifattr,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 	return (0);
 }
 

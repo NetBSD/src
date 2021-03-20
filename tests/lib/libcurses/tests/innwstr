@@ -1,3 +1,0 @@
-include addwstr
-call OK move 0 0
-call2 6 $WSTR innwstr 7

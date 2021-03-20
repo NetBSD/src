@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.14 2011/06/06 16:52:18 matt Exp $	*/
+/*	$NetBSD: intio.c,v 1.14.68.1 2021/03/20 19:33:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.14 2011/06/06 16:52:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.14.68.1 2021/03/20 19:33:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,10 @@ intioattach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	/* Search for and attach children. */
-	config_search_ia(intiosearch, self, "intio", aux);
+	config_search(self, aux,
+	    CFARG_SUBMATCH, intiosearch,
+	    CFARG_IATTR, "intio",
+	    CFARG_EOL);
 
 	intio_attached = true;
 }

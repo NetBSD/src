@@ -1,6 +1,0 @@
-/* $NetBSD: opt--version.0,v 1.2 2021/03/06 19:30:44 rillig Exp $ */
-/* $FreeBSD$ */
-
-When the option '--version' is given, any other options are ignored.
-Therefore the source file, if given, can contain arbitrary text that
-even might generate syntax errors when given to a C compiler.

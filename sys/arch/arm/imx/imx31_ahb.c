@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.7 2019/07/27 08:02:04 skrll Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.7.12.1 2021/03/20 19:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.7 2019/07/27 08:02:04 skrll Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.7.12.1 2021/03/20 19:33:31 thorpej Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -175,7 +175,10 @@ ahb_attach(device_t parent, device_t self, void *aux)
 	ahba.ahba_name = "ahb";
 	ahba.ahba_memt = sc->sc_memt;
 	ahba.ahba_dmat = sc->sc_dmat;
-	config_search_ia(ahb_search, self, "ahb", &ahba);
+	config_search(self, &ahba,
+	    CFARG_SUBMATCH, ahb_search,
+	    CFARG_IATTR, "ahb",
+	    CFARG_EOL);
 }
 
 static int
@@ -259,7 +262,10 @@ ahb_attach_critical(struct ahb_softc *sc)
 		ahba.ahba_intr = AHBCF_INTR_DEFAULT;
 		ahba.ahba_irqbase = AHBCF_IRQBASE_DEFAULT;
 
-		cf = config_search_ia(ahb_find, sc->sc_dev, "ahb", &ahba);
+		cf = config_search(sc->sc_dev, &ahba,
+		    CFARG_SUBMATCH, ahb_find,
+		    CFARG_IATTR, "ahb",
+		    CFARG_EOL);
 		if (cf == NULL && critical_devs[i].required)
 			panic("ahb_attach_critical: failed to find %s!",
 			    critical_devs[i].name);

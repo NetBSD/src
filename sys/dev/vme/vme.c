@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.27 2020/08/24 05:37:41 msaitoh Exp $ */
+/* $NetBSD: vme.c,v 1.27.4.1 2021/03/20 19:33:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27 2020/08/24 05:37:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27.4.1 2021/03/20 19:33:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,9 +201,15 @@ vmeattach(device_t parent, device_t self, void *aux)
 	if (sc->slaveconfig) {
 		/* first get info about the bus master's slave side,
 		 if present */
-		config_search_ia(vmesubmatch1, self, "vme", 0);
+		config_search(self, NULL,
+		    CFARG_SUBMATCH, vmesubmatch1,
+		    CFARG_IATTR, "vme",
+		    CFARG_EOL);
 	}
-	config_search_ia(vmesubmatch, self, "vme", 0);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, vmesubmatch,
+	    CFARG_IATTR, "vme",
+	    CFARG_EOL);
 
 #ifdef VMEDEBUG
 	if (sc->vme32ext)

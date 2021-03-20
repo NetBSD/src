@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.37 2012/10/27 17:17:56 chs Exp $	*/
+/*	$NetBSD: vrip.c,v 1.37.52.1 2021/03/20 19:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.37 2012/10/27 17:17:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.37.52.1 2021/03/20 19:33:35 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -245,10 +245,17 @@ vripattach_common(device_t parent, device_t self, void *aux)
 	 *	device. so attach first
 	 */
 	sc->sc_pri = 2;
-	config_search_ia(vrip_search, self, "vripif", vrip_print);
+	config_search(self, vrip_print,
+	    CFARG_SUBMATCH, vrip_search,
+	    CFARG_IATTR, "vripif",
+	    CFARG_EOL);
+
 	/* Other system devices. */
 	sc->sc_pri = 1;
-	config_search_ia(vrip_search, self, "vripif", vrip_print);
+	config_search(self, vrip_print,
+	    CFARG_SUBMATCH, vrip_search,
+	    CFARG_IATTR, "vripif",
+	    CFARG_EOL);
 }
 
 int

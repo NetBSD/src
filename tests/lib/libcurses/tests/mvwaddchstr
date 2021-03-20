@@ -1,8 +1,0 @@
-include window
-call OK mvwaddchstr $win1 0 0 `\004a\004b\004c`
-call OK wrefresh $win1
-# test should not wrap property and overlay property
-call OK wbkgdset $win1 `\002\000`
-call OK mvwaddchstr $win1 1 1 `\004d\004e\004f\004g\004h\004i`
-call OK wrefresh $win1
-compare waddchstr.chk

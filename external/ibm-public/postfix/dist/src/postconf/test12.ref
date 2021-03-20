@@ -1,2 +1,0 @@
-foo        inet  -       n       n       -       0       spawn -o always_bcc=$bar -o
-foo        inet  -       n       n       -       0       spawn -o always_bcc=$bar -o

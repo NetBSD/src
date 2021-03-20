@@ -1,8 +1,0 @@
-/* $NetBSD: opt-npro.0.stdout,v 1.2 2021/03/07 10:12:18 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Mentioning the option -npro in a .pro file has no effect since at that
- * point, indent has already decided to load the .pro file, and it only
- * decides once.
- */

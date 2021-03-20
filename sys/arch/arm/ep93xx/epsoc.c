@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.13 2012/11/12 18:00:36 skrll Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.13.52.1 2021/03/20 19:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13.52.1 2021/03/20 19:33:31 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,8 +171,10 @@ epsoc_attach(device_t parent, device_t self, void *aux)
 	sa.sa_gpio = device_private(
 	  config_found_sm_loc(self, "epsoc", locs, &sa,
 			      epsoc_print, epsoc_submatch));
-	config_search_ia(epsoc_search, self, "epsoc", &sa);
-	
+	config_search(self, &sa,
+	    CFARG_SUBMATCH, epsoc_search,
+	    CFARG_IATTR, "epsoc",
+	    CFARG_EOL);
 }
 
 int
