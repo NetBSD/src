@@ -1,7 +1,22 @@
-/*	$NetBSD: msg_327.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_327.c,v 1.3 2021/03/20 14:13:51 rillig Exp $	*/
 # 3 "msg_327.c"
 
-// Test for message: declarations after statements is a C9X feature [327]
+/* Test for message: declarations after statements is a C9X feature [327] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -w */
+
+void statement(void);
+
+/*ARGSUSED*/
+void
+example(void)
+{
+	statement();
+	int declaration_1;	/* FIXME: expect 327 */
+	statement();
+	int declaration_2;	/* expect: 327 */
+	statement();
+	int declaration_3;	/* expect: 327 */
+}				/*FIXME*//* expect: syntax error '}' */
+
+/*FIXME*//* expect+1: cannot recover */
