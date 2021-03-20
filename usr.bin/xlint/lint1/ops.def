@@ -1,10 +1,10 @@
-/*	$NetBSD: ops.def,v 1.17 2021/03/18 21:56:34 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.18 2021/03/20 20:15:37 rillig Exp $ */
 
 begin_ops()
 
 /* See mod_t in op.h for the definition of the table columns. */
 
-/*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
+/*	name	repr		b l b B i c a s f v t b s l r p c e e =	act */
 op(	NOOP,	"no-op",	 , , , , , , , , , , , , , , , , , , , ,0)
 op(	ARROW,	"->",		1, ,1, , , , , , ,1, , , , , , , , , , ,1)
 op(	POINT,	".",		1, ,1, , , , , , , , , , , , , , , , , ,1)
@@ -22,7 +22,7 @@ op(	INDIR,	"*",		 , , , , , , , , ,1, , , , , , , , , , ,1)
 op(	ADDR,	"&",		 , ,1, , , , , , , , , , , , , , , , , ,1)
 /* the operator 'arr[ind]' is translated to '*(arr + ind)' during parsing. */
 
-/*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
+/*	name	repr		b l b B i c a s f v t b s l r p c e e =	act */
 op(	MULT,	"*",		1, , , , , ,1, ,1,1, ,1, , ,1, , , ,1,1,1)
 op(	DIV,	"/",		1, , , , , ,1, ,1,1, ,1, ,1,1, , , ,1,1,1)
 op(	MOD,	"%",		1, , , ,1, , , ,1,1, ,1, ,1,1, , , ,1,1,1)
@@ -31,7 +31,7 @@ op(	MINUS,	"-",		1, , , , , , ,1,1,1, ,1, , , , , , ,1, ,1)
 op(	SHL,	"<<",		1, , , ,1, , , ,1,1, , , , , ,1, , ,1,1,1)
 op(	SHR,	">>",		1, , , ,1, , , ,1,1, , , ,1, ,1, , ,1,1,1)
 
-/*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
+/*	name	repr		b l b B i c a s f v t b s l r p c e e =	act */
 op(	LT,	"<",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1,1)
 op(	LE,	"<=",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1,1)
 op(	GT,	">",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1,1)
@@ -39,7 +39,7 @@ op(	GE,	">=",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1,1)
 op(	EQ,	"==",		1,1,1, , , , ,1,1,1, ,1, , , , ,1,1, ,1,1)
 op(	NE,	"!=",		1,1,1, , , , ,1,1,1, ,1, , , , ,1,1, ,1,1)
 
-/*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
+/*	name	repr		b l b B i c a s f v t b s l r p c e e =	act */
 op(	BITAND,	"&",		1, ,1, ,1, , , ,1,1, ,1, , , ,1, , ,1, ,1)
 op(	BITXOR,	"^",		1, ,1, ,1, , , ,1,1, ,1, , , ,1, , ,1, ,1)
 op(	BITOR,	"|",		1, ,1, ,1, , , ,1,1, ,1, , , ,1, , ,1, ,1)
@@ -48,7 +48,7 @@ op(	LOGOR,	"||",		1,1,1,1, , , ,1,1, ,1, , , , ,1, , ,1, ,1)
 op(	QUEST,	"?",		1, , , , , , , ,1, ,1, , , , , , , , , ,1)
 op(	COLON,	":",		1, ,1, , , , , , ,1, ,1, , , , , ,1, , ,1)
 
-/*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
+/*	name	repr		b l b B i c a s f v t b s l r p c e e =	act */
 op(	ASSIGN,	"=",		1, ,1, , , , , , , , , ,1, , , , ,1, , ,1)
 op(	MULASS,	"*=",		1, , , , , ,1, , , , , ,1, , , , , ,1, ,1)
 op(	DIVASS,	"/=",		1, , , , , ,1, , , , , ,1, ,1, , , ,1, ,1)
@@ -61,7 +61,7 @@ op(	ANDASS,	"&=",		1, ,1, ,1, , , , , , , ,1, , , , , ,1, ,1)
 op(	XORASS,	"^=",		1, ,1, ,1, , , , , , , ,1, , , , , ,1, ,1)
 op(	ORASS,	"|=",		1, ,1, ,1, , , , , , , ,1, , , , , ,1, ,1)
 
-/*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
+/*	name	repr		b l b B i c a s f v t b s l r p c e e =	act */
 op(	NAME,	"name",		 , , , , , , , , , , , , , , , , , , , ,1)
 op(	CON,	"constant",	 , , , , , , , , , , , , , , , , , , , ,1)
 op(	STRING,	"string",	 , , , , , , , , , , , , , , , , , , , ,1)
@@ -77,7 +77,7 @@ op(	REAL,	"real",		 , , , , , , , , , , , , , , , , , , , ,0)
 op(	IMAG,	"imag",		 , , , , , , , , , , , , , , , , , , , ,0)
 
 /* INIT, CASE and FARG are pseudo operators that don't appear in the tree. */
-/*	name	repr		b l b o i c a s f v t b s l r p c e e =	act */
+/*	name	repr		b l b B i c a s f v t b s l r p c e e =	act */
 op(	INIT,	"init",		1, ,1, , , , , , , , , , , , , , ,1, , ,1)
 op(	CASE,	"case",		 , , , , , , , , , , , , , , , , , , , ,0)
 op(	FARG,	"farg",		1, ,1, , , , , , , , , , , , , , ,1, , ,1)
