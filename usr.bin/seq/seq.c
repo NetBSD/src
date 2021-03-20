@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.11 2018/12/17 20:10:51 christos Exp $");
+__RCSID("$NetBSD: seq.c,v 1.12 2021/03/20 22:10:17 cheusov Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -308,7 +308,7 @@ unescape(char *orig)
 			*orig = '\b';
 			continue;
 		case 'e':	/* escape */
-			*orig = '\e';
+			*orig = '\x1B';
 			continue;
 		case 'f':	/* formfeed */
 			*orig = '\f';
