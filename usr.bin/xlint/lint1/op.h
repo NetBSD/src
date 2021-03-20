@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.15 2021/03/20 20:39:35 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.16 2021/03/20 20:56:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -72,5 +72,3 @@ extern const mod_t modtab[];
 	name,
 #define end_ops() } op_t;
 #include "ops.def"
-
-const char *getopname(op_t);
