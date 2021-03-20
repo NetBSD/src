@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.186 2021/03/20 15:30:58 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.187 2021/03/20 16:11:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.186 2021/03/20 15:30:58 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.187 2021/03/20 16:11:12 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -109,6 +109,10 @@ RESTORE_WARN_FLAGS(const char *file, size_t line)
 	(void)(olwarn == LWARN_BAD ? (clear_warn_flags(), 0) : (lwarn = olwarn))
 #define cgram_debug(fmt, args...) do { } while (false)
 #endif
+
+#define clear_warning_flags() CLEAR_WARN_FLAGS(__FILE__, __LINE__)
+#define save_warning_flags() SAVE_WARN_FLAGS(__FILE__, __LINE__)
+#define restore_warning_flags() RESTORE_WARN_FLAGS(__FILE__, __LINE__)
 
 /* unbind the anonymous struct members from the struct */
 static void
@@ -357,11 +361,11 @@ external_declaration:		/* C99 6.9 */
 	  asm_statement
 	| function_definition {
 		global_clean_up_decl(false);
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	| data_def {
 		global_clean_up_decl(false);
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	;
 
@@ -1548,12 +1552,11 @@ block_item_list:
 block_item:
 	  statement {
 		$$ = true;
-		RESTORE_WARN_FLAGS(__FILE__, __LINE__);
+		restore_warning_flags();
 	  }
 	| declaration {
-	/*fprintf(stderr, "block_item.declaration: %d\n", $$);*/
 		$$ = false;
-		RESTORE_WARN_FLAGS(__FILE__, __LINE__);
+		restore_warning_flags();
 	  }
 	;
 
@@ -1596,27 +1599,27 @@ expr_statement_list:
 
 selection_statement:		/* C99 6.8.4 */
 	  if_without_else {
-		SAVE_WARN_FLAGS(__FILE__, __LINE__);
+		save_warning_flags();
 		if2();
 		if3(false);
 	  }
 	| if_without_else T_ELSE {
-		SAVE_WARN_FLAGS(__FILE__, __LINE__);
+		save_warning_flags();
 		if2();
 	  } statement {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		if3(true);
 	  }
 	| if_without_else T_ELSE error {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		if3(false);
 	  }
 	| switch_expr statement {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		switch2();
 	  }
 	| switch_expr error {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		switch2();
 	  }
 	;
@@ -1629,14 +1632,14 @@ if_without_else:
 if_expr:
 	  T_IF T_LPAREN expr T_RPAREN {
 		if1($3);
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	;
 
 switch_expr:
 	  T_SWITCH T_LPAREN expr T_RPAREN {
 		switch1($3);
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	;
 
@@ -1658,17 +1661,17 @@ generic_expr:
 
 do_statement:
 	  do statement {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	;
 
 iteration_statement:		/* C99 6.8.5 */
 	  while_expr statement {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		while2();
 	  }
 	| while_expr error {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		while2();
 	  }
 	| do_statement do_while_expr {
@@ -1676,17 +1679,17 @@ iteration_statement:		/* C99 6.8.5 */
 		ftflg = false;
 	  }
 	| do error {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		do2(NULL);
 	  }
 	| for_exprs statement {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		for2();
 		popdecl();
 		block_level--;
 	  }
 	| for_exprs error {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 		for2();
 		popdecl();
 		block_level--;
@@ -1696,7 +1699,7 @@ iteration_statement:		/* C99 6.8.5 */
 while_expr:
 	  T_WHILE T_LPAREN expr T_RPAREN {
 		while1($3);
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	;
 
@@ -1724,11 +1727,11 @@ for_exprs:
 		/* variable declaration in for loop */
 		c99ism(325);
 		for1(NULL, $6, $8);
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	    }
 	  | for_start opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPAREN {
 		for1($2, $4, $6);
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	;
 
@@ -1786,10 +1789,10 @@ read_until_rparen:
 
 declaration_list:
 	  declaration {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	| declaration_list declaration {
-		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
+		clear_warning_flags();
 	  }
 	;
 
