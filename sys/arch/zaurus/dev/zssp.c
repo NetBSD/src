@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.13.62.1 2021/03/20 19:33:39 thorpej Exp $	*/
+/*	$NetBSD: zssp.c,v 1.13.62.2 2021/03/20 20:47:53 thorpej Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.13.62.1 2021/03/20 19:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.13.62.2 2021/03/20 20:47:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ zssp_attach(device_t parent, device_t self, void *aux)
 	zssp_init();
 
 	/* Attach all devices */
-	config_search(self, sc,
+	config_search(self, NULL,
 	    CFARG_SUBMATCH, zssp_search,
 	    CFARG_IATTR, "zssp",
 	    CFARG_EOL);
