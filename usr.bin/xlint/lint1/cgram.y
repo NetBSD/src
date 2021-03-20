@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.185 2021/03/20 15:28:07 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.186 2021/03/20 15:30:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.185 2021/03/20 15:28:07 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.186 2021/03/20 15:30:58 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -329,8 +329,6 @@ anonymize(sym_t *s)
 %type	<y_string>	string2
 %type	<y_sb>		opt_asm_or_symbolrename
 %type	<y_range>	range
-%type	<y_seen_statement> block
-%type	<y_seen_statement> block_begin
 %type	<y_seen_statement> block_item_list
 %type	<y_seen_statement> block_item
 
@@ -1517,7 +1515,7 @@ label:
 
 compound_statement:		/* C99 6.8.2 */
 	  compound_statement_lbrace compound_statement_rbrace
-	| compound_statement_lbrace block compound_statement_rbrace
+	| compound_statement_lbrace block_item_list compound_statement_rbrace
 	;
 
 compound_statement_lbrace:
@@ -1535,16 +1533,6 @@ compound_statement_rbrace:
 		mem_block_level--;
 		block_level--;
 		ftflg = false;
-	  }
-	;
-
-block:
-	  block_begin block_item_list
-	;
-
-block_begin:
-	  /* empty */ {
-		$$ = false;
 	  }
 	;
 
