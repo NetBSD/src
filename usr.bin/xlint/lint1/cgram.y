@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.182 2021/03/20 11:33:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.183 2021/03/20 13:53:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.182 2021/03/20 11:33:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.183 2021/03/20 13:53:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -353,11 +353,11 @@ translation_unit:		/* C99 6.9 */
 external_declaration:		/* C99 6.9 */
 	  asm_statement
 	| function_definition {
-		global_clean_up_decl(0);
+		global_clean_up_decl(false);
 		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	| data_def {
-		global_clean_up_decl(0);
+		global_clean_up_decl(false);
 		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
 	  }
 	;
@@ -699,15 +699,15 @@ struct_spec:
 		 * yychar is valid because otherwise the parser would not
 		 * have been able to decide if it must shift or reduce
 		 */
-		$$ = mktag($2, $1, 0, yychar == T_SEMI);
+		$$ = mktag($2, $1, false, yychar == T_SEMI);
 	  }
 	| struct struct_tag {
-		dcs->d_tagtyp = mktag($2, $1, 1, 0);
+		dcs->d_tagtyp = mktag($2, $1, true, false);
 	  } struct_declaration {
 		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $4);
 	  }
 	| struct {
-		dcs->d_tagtyp = mktag(NULL, $1, 1, 0);
+		dcs->d_tagtyp = mktag(NULL, $1, true, false);
 	  } struct_declaration {
 		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $3);
 	  }
@@ -897,15 +897,15 @@ type_member_decl:
 
 enum_spec:
 	  enum enum_tag {
-		$$ = mktag($2, ENUM, 0, 0);
+		$$ = mktag($2, ENUM, false, false);
 	  }
 	| enum enum_tag {
-		dcs->d_tagtyp = mktag($2, ENUM, 1, 0);
+		dcs->d_tagtyp = mktag($2, ENUM, true, false);
 	  } enum_declaration {
 		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
 	  }
 	| enum {
-		dcs->d_tagtyp = mktag(NULL, ENUM, 1, 0);
+		dcs->d_tagtyp = mktag(NULL, ENUM, true, false);
 	  } enum_declaration {
 		$$ = complete_tag_enum(dcs->d_tagtyp, $3);
 	  }
@@ -971,10 +971,10 @@ enums:
 
 enumerator:
 	  enumeration_constant {
-		$$ = enumeration_constant($1, enumval, 1);
+		$$ = enumeration_constant($1, enumval, true);
 	  }
 	| enumeration_constant T_ASSIGN constant_expr {
-		$$ = enumeration_constant($1, to_int_constant($3, true), 0);
+		$$ = enumeration_constant($1, to_int_constant($3, true), false);
 	  }
 	;
 
@@ -1039,10 +1039,10 @@ notype_direct_decl:
 		$$ = $2;
 	  }
 	| notype_direct_decl T_LBRACK T_RBRACK {
-		$$ = add_array($1, 0, 0);
+		$$ = add_array($1, false, 0);
 	  }
 	| notype_direct_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, false));
+		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1072,10 +1072,10 @@ type_direct_decl:
 		$$ = $2;
 	  }
 	| type_direct_decl T_LBRACK T_RBRACK {
-		$$ = add_array($1, 0, 0);
+		$$ = add_array($1, false, 0);
 	  }
 	| type_direct_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, false));
+		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1112,10 +1112,10 @@ direct_param_decl:
 		$$ = $2;
 	  }
 	| direct_param_decl T_LBRACK T_RBRACK {
-		$$ = add_array($1, 0, 0);
+		$$ = add_array($1, false, 0);
 	  }
 	| direct_param_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, false));
+		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1141,10 +1141,10 @@ direct_notype_param_decl:
 		$$ = $2;
 	  }
 	| direct_notype_param_decl T_LBRACK T_RBRACK {
-		$$ = add_array($1, 0, 0);
+		$$ = add_array($1, false, 0);
 	  }
 	| direct_notype_param_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, false));
+		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1278,13 +1278,13 @@ parameter_type_list:
 
 parameter_declaration:
 	  declmods deftyp {
-		$$ = declare_argument(abstract_name(), 0);
+		$$ = declare_argument(abstract_name(), false);
 	  }
 	| declspecs deftyp {
-		$$ = declare_argument(abstract_name(), 0);
+		$$ = declare_argument(abstract_name(), false);
 	  }
 	| declmods deftyp notype_param_decl {
-		$$ = declare_argument($3, 0);
+		$$ = declare_argument($3, false);
 	  }
 	/*
 	 * param_decl is needed because of following conflict:
@@ -1294,13 +1294,13 @@ parameter_declaration:
 	 * This grammar realizes the second case.
 	 */
 	| declspecs deftyp param_decl {
-		$$ = declare_argument($3, 0);
+		$$ = declare_argument($3, false);
 	  }
 	| declmods deftyp abstract_decl {
-		$$ = declare_argument($3, 0);
+		$$ = declare_argument($3, false);
 	  }
 	| declspecs deftyp abstract_decl {
-		$$ = declare_argument($3, 0);
+		$$ = declare_argument($3, false);
 	  }
 	;
 
@@ -1444,19 +1444,19 @@ direct_abstract_decl:
 		$$ = $2;
 	  }
 	| T_LBRACK T_RBRACK {
-		$$ = add_array(abstract_name(), 0, 0);
+		$$ = add_array(abstract_name(), false, 0);
 	  }
 	| T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array(abstract_name(), 1, to_int_constant($2, false));
+		$$ = add_array(abstract_name(), true, to_int_constant($2, false));
 	  }
 	| type_attribute direct_abstract_decl {
 		$$ = $2;
 	  }
 	| direct_abstract_decl T_LBRACK T_RBRACK {
-		$$ = add_array($1, 0, 0);
+		$$ = add_array($1, false, 0);
 	  }
 	| direct_abstract_decl T_LBRACK constant_expr T_RBRACK {
-		$$ = add_array($1, 1, to_int_constant($3, false));
+		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
@@ -1594,18 +1594,18 @@ selection_statement:		/* C99 6.8.4 */
 	  if_without_else {
 		SAVE_WARN_FLAGS(__FILE__, __LINE__);
 		if2();
-		if3(0);
+		if3(false);
 	  }
 	| if_without_else T_ELSE {
 		SAVE_WARN_FLAGS(__FILE__, __LINE__);
 		if2();
 	  } statement {
 		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
-		if3(1);
+		if3(true);
 	  }
 	| if_without_else T_ELSE error {
 		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
-		if3(0);
+		if3(false);
 	  }
 	| switch_expr statement {
 		CLEAR_WARN_FLAGS(__FILE__, __LINE__);
@@ -1964,7 +1964,7 @@ term:
 	| T_SIZEOF term					%prec T_SIZEOF {
 		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
 		if ($$ != NULL)
-			check_expr_misc($2, 0, 0, 0, 0, 0, 1);
+			check_expr_misc($2, false, false, false, false, false, true);
 	  }
 	| T_SIZEOF T_LPAREN type_name T_RPAREN		%prec T_SIZEOF {
 		$$ = build_sizeof($3);
