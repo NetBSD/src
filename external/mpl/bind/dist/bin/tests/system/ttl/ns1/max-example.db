@@ -1,9 +1,0 @@
-max-example.	1209600	IN SOA	ns root (
-				2000082401 ; serial
-				1800       ; refresh (30 minutes)
-				1800       ; retry (30 minutes)
-				1814400    ; expire (3 weeks)
-				1209600    ; minimum (2 weeks)
-				)
-max-example.	1209600	IN NS	ns.max-example.
-ns.max-example.	1209600	IN A	10.53.0.1

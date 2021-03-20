@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_mainbus.c,v 1.5 2016/10/05 15:54:58 ryo Exp $	*/
+/*	$NetBSD: ralink_mainbus.c,v 1.5.30.1 2021/03/20 19:33:36 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.5 2016/10/05 15:54:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.5.30.1 2021/03/20 19:33:36 thorpej Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -119,7 +119,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mainbus_attach_critical(sc);
 
 	/* attach other devices */
-	config_search_ia(mainbus_search, self, "mainbus", &ma);
+	config_search(self, &ma,
+	    CFARG_SUBMATCH, mainbus_search,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 }
 
 static int
@@ -177,7 +180,10 @@ mainbus_attach_critical(struct mainbus_softc *sc)
 		ma.ma_memt = sc->sc_memt;
 		ma.ma_dmat = sc->sc_dmat;
 
-		cf = config_search_ia(mainbus_find, sc->sc_dev, "mainbus", &ma);
+		cf = config_search(sc->sc_dev, &ma,
+				   CFARG_SUBMATCH, mainbus_find,
+				   CFARG_IATTR, "mainbus",
+				   CFARG_EOL);
 		if (cf == NULL && critical_devs[i].required)
 			panic("%s: failed to find %s",
 			    __func__, critical_devs[i].name);

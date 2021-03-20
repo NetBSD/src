@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2012/10/27 17:17:51 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.52.1 2021/03/20 19:33:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2012/10/27 17:17:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.52.1 2021/03/20 19:33:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	config_found_ia(self, "mainbus", &maa, mainbus_print);
 
 	/* Devices */
-	config_search_ia(mainbus_search, self, "mainbus", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, mainbus_search,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 }
 
 static int

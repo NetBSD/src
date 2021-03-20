@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.108 2020/11/18 02:22:16 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.108.2.1 2021/03/20 19:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.108 2020/11/18 02:22:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.108.2.1 2021/03/20 19:33:35 thorpej Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -260,7 +260,10 @@ mainbusattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* Search for and attach children. */
-	config_search_ia(mainbussearch, self, "mainbus", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, mainbussearch,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 }
 
 static int

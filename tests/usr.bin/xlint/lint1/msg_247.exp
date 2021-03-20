@@ -1,1 +1,0 @@
-msg_247.c(31): warning: pointer cast from 'pointer to struct Other' to 'pointer to struct <unnamed>' may be troublesome [247]

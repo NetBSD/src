@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.13 2020/11/21 15:59:53 thorpej Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.13.2.1 2021/03/20 19:33:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.13 2020/11/21 15:59:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.13.2.1 2021/03/20 19:33:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,10 @@ pnpbus_attach(device_t parent, device_t self, void *aux)
 	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
 #endif
 
-	(void)config_search_ia(pnpbus_search, self, "pnpbus", aux);
+	config_search(self, aux,
+	    CFARG_SUBMATCH, pnpbus_search,
+	    CFARG_IATTR, "pnpbus",
+	    CFARG_EOL);
 }
 
 static int

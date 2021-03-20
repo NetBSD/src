@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.91 2021/02/14 03:41:13 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.91.2.1 2021/03/20 19:33:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91 2021/02/14 03:41:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91.2.1 2021/03/20 19:33:40 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1417,7 +1417,10 @@ audiorescan(device_t self, const char *ifattr, const int *flags)
 	if (!ifattr_match(ifattr, "audio"))
 		return 0;
 
-	config_search_loc(audiosearch, sc->sc_dev, "audio", NULL, NULL);
+	config_search(sc->sc_dev, NULL,
+	    CFARG_SUBMATCH, audiosearch,
+	    CFARG_IATTR, "audio",
+	    CFARG_EOL);
 
 	return 0;
 }

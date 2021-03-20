@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.31 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31.70.1 2021/03/20 19:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.70.1 2021/03/20 19:33:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	/* search and attach devices in order */
 	for (i = 0; i < sizeof(devnames) / sizeof(devnames[0]); i++) {
 		ma.ma_name = devnames[i];
-		config_search_ia(mainbus_search, self, "mainbus", &ma);
+		config_search(self, &ma,
+		    CFARG_SUBMATCH, mainbus_search,
+		    CFARG_IATTR, "mainbus",
+		    CFARG_EOL);
 	}
 
 	/* APM */

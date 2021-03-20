@@ -1,9 +1,0 @@
-# $NetBSD
-
-FILESOWN=	${FIRMWAREOWN}
-FILESGRP=	${FIRMWAREGRP}
-FILESMODE=	${FIRMWAREMODE}
-
-includes:
-clean:
-cleandir:

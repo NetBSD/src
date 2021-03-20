@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: obio.c,v 1.10.68.1 2021/03/20 19:33:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10.68.1 2021/03/20 19:33:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 }
 
 int

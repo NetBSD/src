@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.74 2013/03/24 17:50:26 jdc Exp $	*/
+/*	$NetBSD: obio.c,v 1.74.50.1 2021/03/20 19:33:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.74 2013/03/24 17:50:26 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.74.50.1 2021/03/20 19:33:38 thorpej Exp $");
 
 #include "locators.h"
 
@@ -164,12 +164,18 @@ obioattach(device_t parent, device_t self, void *aux)
 		/* Find all `early' obio devices */
 		for (cpp = special4; *cpp != NULL; cpp++) {
 			oa.name = *cpp;
-			config_search_ia(obiosearch, self, "obio", &oa);
+			config_search(self, &oa,
+			    CFARG_SUBMATCH, obiosearch,
+			    CFARG_IATTR, "obio",
+			    CFARG_EOL);
 		}
 
 		/* Find all other obio devices */
 		oa.name = NULL;
-		config_search_ia(obiosearch, self, "obio", &oa);
+		config_search(self, &oa,
+		    CFARG_SUBMATCH, obiosearch,
+		    CFARG_IATTR, "obio",
+		    CFARG_EOL);
 #endif
 		return;
 	} else if (CPU_ISSUN4M) {

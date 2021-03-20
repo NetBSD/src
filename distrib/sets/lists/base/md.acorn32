@@ -1,2 +1,0 @@
-# $NetBSD: md.acorn32,v 1.13 2013/05/02 03:56:38 matt Exp $
-./dev/beep					base-obsolete		obsolete

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.21 2019/12/27 09:45:27 msaitoh Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.21.10.1 2021/03/20 19:33:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.21 2019/12/27 09:45:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.21.10.1 2021/03/20 19:33:41 thorpej Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -170,7 +170,10 @@ ppbus_attach(device_t parent, device_t self, void *aux)
 
 	/* Configure child devices */
 	SLIST_INIT(&(ppbus->sc_childlist_head));
-	config_search_ia(ppbus_search_children, self, "ppbus", &args);
+	config_search(self, &args,
+	    CFARG_SUBMATCH, ppbus_search_children,
+	    CFARG_IATTR, "ppbus",
+	    CFARG_EOL);
 
 #if NGPIO > 0
 	gpio_ppbus_attach(ppbus);

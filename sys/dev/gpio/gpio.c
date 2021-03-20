@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.64 2019/10/20 09:35:18 tnn Exp $ */
+/* $NetBSD: gpio.c,v 1.64.10.1 2021/03/20 19:33:40 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64 2019/10/20 09:35:18 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.1 2021/03/20 19:33:40 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -191,7 +191,11 @@ gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct gpio_softc *sc = device_private(self);
 
-	config_search_loc(gpio_search, self, ifattr, locators, sc);
+	config_search(self, sc,
+	    CFARG_SUBMATCH, gpio_search,
+	    CFARG_IATTR, ifattr,
+	    CFARG_LOCATORS, locators,
+	    CFARG_EOL);
 
 	return 0;
 }
@@ -852,7 +856,10 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		locs[GPIOCF_MASK] = ga.ga_mask;
 		locs[GPIOCF_FLAG] = ga.ga_flags;
 
-		cf = config_search_loc(NULL, sc->sc_dev, "gpio", locs, &ga);
+		cf = config_search(sc->sc_dev, &ga,
+		    CFARG_IATTR, "gpio",
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 		if (cf != NULL) {
 			dv = config_attach_loc(sc->sc_dev, cf, locs, &ga,
 			    gpiobus_print);

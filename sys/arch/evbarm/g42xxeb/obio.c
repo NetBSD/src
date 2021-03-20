@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.11 2012/10/27 17:17:47 chs Exp $ */
+/*	$NetBSD: obio.c,v 1.11.52.1 2021/03/20 19:33:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -261,7 +261,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 	return;
 
  fail:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.28 2020/07/07 03:38:46 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.28.4.1 2021/03/20 19:33:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28 2020/07/07 03:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28.4.1 2021/03/20 19:33:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -313,7 +313,10 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI > 0 */
 
 	/* Finally, search for children.  */
-	config_search_ia(ifpga_search, self, "ifpga", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, ifpga_search,
+	    CFARG_IATTR, "ifpga",
+	    CFARG_EOL);
 
 #if NPCI > 0
 	integrator_pci_dma_init(&ifpga_pci_bus_dma_tag);

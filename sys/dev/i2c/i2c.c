@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.77 2021/01/25 12:18:18 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.77.2.1 2021/03/20 19:33:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77 2021/01/25 12:18:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77.2.1 2021/03/20 19:33:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,10 @@ iic_child_detach(device_t parent, device_t child)
 static int
 iic_rescan(device_t self, const char *ifattr, const int *locators)
 {
-	config_search_ia(iic_search, self, ifattr, NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, iic_search,
+	    CFARG_IATTR, ifattr,
+	    CFARG_EOL);
 	return 0;
 }
 

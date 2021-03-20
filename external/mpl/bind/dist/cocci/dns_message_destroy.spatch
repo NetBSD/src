@@ -1,6 +1,0 @@
-@@
-expression M;
-@@
-
-- dns_message_destroy(M);
-+ dns_message_detach(M);

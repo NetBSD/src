@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.27 2020/04/18 11:00:37 skrll Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.27.4.1 2021/03/20 19:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.27 2020/04/18 11:00:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.27.4.1 2021/03/20 19:33:31 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -620,7 +620,10 @@ at91bus_attach(device_t parent, device_t self, void *aux)
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_iot = sc->sc_iot;
 	sa.sa_dmat = sc->sc_dmat;
-	config_search_ia(at91bus_search, self, "at91bus", &sa);
+	config_search(self, &sa,
+	    CFARG_SUBMATCH, at91bus_search,
+	    CFARG_IATTR, "at91bus",
+	    CFARG_EOL);
 }
 
 int

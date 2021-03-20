@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.36 2019/11/21 22:05:09 macallan Exp $	*/
+/*	$NetBSD: gio.c,v 1.36.10.1 2021/03/20 19:33:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.36 2019/11/21 22:05:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.36.10.1 2021/03/20 19:33:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -271,7 +271,10 @@ gio_attach(device_t parent, device_t self, void *aux)
 		    gio_submatch);
 	}
 
-	config_search_ia(gio_search, self, "gio", &ga);
+	config_search(self, &ga,
+	    CFARG_SUBMATCH, gio_search,
+	    CFARG_IATTR, "gio",
+	    CFARG_EOL);
 }
 
 static int

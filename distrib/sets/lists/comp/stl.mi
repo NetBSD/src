@@ -1,7 +1,0 @@
-# $NetBSD: stl.mi,v 1.7 2020/08/27 15:32:00 riastradh Exp $
-./usr/lib/crtbegin.o				comp-c-lib	compatfile
-./usr/lib/crtend.o				comp-c-lib	compatfile
-./usr/lib/crti.o				comp-c-lib	compatfile
-./usr/lib/crtn.o				comp-c-lib	compatfile
-./usr/lib/dtrace/drti.o				comp-c-lib	dtrace
-./usr/lib/sysident.o				comp-c-lib	compatfile

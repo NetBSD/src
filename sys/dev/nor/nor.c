@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.c,v 1.5 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: nor.c,v 1.5.46.1 2021/03/20 19:33:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NOR chips implementing the ONFI CFI specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.5 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.5.46.1 2021/03/20 19:33:41 thorpej Exp $");
 
 #include "locators.h"
 #include "opt_nor.h"
@@ -182,7 +182,9 @@ nor_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach all our devices
 	 */
-	config_search_ia(nor_search, self, NULL, NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, nor_search,
+	    CFARG_EOL);
 
 	return;
 

@@ -1,3 +1,0 @@
-include start
-call $FALSE has_ic
-call $TRUE has_il

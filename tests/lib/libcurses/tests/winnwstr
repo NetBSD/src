@@ -1,4 +1,0 @@
-include waddwstr
-wchar WC [0x42, 0x3401]
-call OK wmove $win1 0 1
-call2 2 $WC winnwstr $win1 3

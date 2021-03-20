@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_mainbus.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_mainbus.c,v 1.4.68.1 2021/03/20 19:33:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.4.68.1 2021/03/20 19:33:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,10 @@ mainbusattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach mainbus devices 
 	 */
-        config_search_ia(mainbus_search, self, "mainbus", mainbus_print);
+	config_search(self, mainbus_print,
+	    CFARG_SUBMATCH, mainbus_search,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 }
 
 static int

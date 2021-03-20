@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.10.68.1 2021/03/20 19:33:31 thorpej Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10.68.1 2021/03/20 19:33:31 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -204,7 +204,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach the rest of our devices
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 
 #if NPCI > 0
 	/*
@@ -374,7 +377,10 @@ obio_attach_critical(struct obio_softc *sc)
 			continue;
 #endif
 
-		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
+		cf = config_search(sc->sc_dev, &oa,
+		    CFARG_SUBMATCH, obio_find,
+		    CFARG_IATTR, "obio",
+		    CFARG_EOL);
 		if (cf == NULL && critical_devs[i].required)
 			panic("obio_attach_critical: failed to find %s!",
 			    critical_devs[i].name);

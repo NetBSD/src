@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3obio.c,v 1.5 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: pq3obio.c,v 1.5.4.1 2021/03/20 19:33:37 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define	LBC_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3obio.c,v 1.5 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3obio.c,v 1.5.4.1 2021/03/20 19:33:37 thorpej Exp $");
 
 #include "locators.h"
 
@@ -286,5 +286,9 @@ pq3obio_attach(device_t parent, device_t self, void *aux)
 	locs[OBIOCF_ADDR] = OBIOCF_ADDR_DEFAULT;
 	locs[OBIOCF_SIZE] = OBIOCF_SIZE_DEFAULT;
 	locs[OBIOCF_CS] = OBIOCF_CS_DEFAULT;
-	config_search_loc(pq3obio_search, self, "obio", locs, NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, pq3obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 }

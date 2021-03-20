@@ -1,5 +1,5 @@
-/*	$Id: at91pio.c,v 1.6 2012/11/12 18:00:36 skrll Exp $	*/
-/*	$NetBSD: at91pio.c,v 1.6 2012/11/12 18:00:36 skrll Exp $	*/
+/*	$Id: at91pio.c,v 1.6.52.1 2021/03/20 19:33:31 thorpej Exp $	*/
+/*	$NetBSD: at91pio.c,v 1.6.52.1 2021/03/20 19:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.6 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.6.52.1 2021/03/20 19:33:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,10 @@ at91pio_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* attach device */
-	config_search_ia(at91pio_search, self, "at91pio", at91pio_print);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, at91pio_search,
+	    CFARG_IATTR, "at91pio",
+	    CFARG_EOL);
 }
 
 #if NGPIO > 0

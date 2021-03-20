@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2016/07/19 17:04:25 maya Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16.30.1 2021/03/20 19:33:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2016/07/19 17:04:25 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16.30.1 2021/03/20 19:33:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &(struct mainbus_attach_args){.ma_name = "cpu"},
 	    mainbus_print);
 
-	config_search_ia(mainbus_search, self, "mainbus", 0);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, mainbus_search,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 }
 
 static int

@@ -1,8 +1,0 @@
-# $NetBSD: mi,v 1.1 2020/05/18 21:19:34 jmcneill Exp $
-#
-# Note: don't delete entries from here - mark them as "obsolete" instead.
-#
-./boot						dtb-base-boot		dtb
-./boot/dtb					dtb-base-boot		dtb
-./etc/mtree/set.dtb				dtb-base-boot		dtb
-./var/db/obsolete/dtb				dtb-base-boot		dtb

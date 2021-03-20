@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.290 2021/02/05 17:13:40 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.290.2.1 2021/03/20 19:33:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.290 2021/02/05 17:13:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.290.2.1 2021/03/20 19:33:39 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -360,7 +360,10 @@ acpi_disable(void)
 int
 acpi_check(device_t parent, const char *ifattr)
 {
-	return (config_search_ia(acpi_submatch, parent, ifattr, NULL) != NULL);
+	return config_search(parent, NULL,
+			     CFARG_SUBMATCH, acpi_submatch,
+			     CFARG_IATTR, ifattr,
+			     CFARG_EOL) != NULL;
 }
 
 int

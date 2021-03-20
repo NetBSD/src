@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2011/06/05 17:03:19 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.68.1 2021/03/20 19:33:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2011/06/05 17:03:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.68.1 2021/03/20 19:33:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,7 +90,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_dmat = &next68k_bus_dma_tag;
 
 	/* Search for and attach children. */
-	config_search_ia(mainbus_search, self, "mainbus", &mba);
+	config_search(self, &mba,
+	    CFARG_SUBMATCH, mainbus_search,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 
 	mainbus_attached = 1;
 }

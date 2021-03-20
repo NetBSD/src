@@ -1,9 +1,0 @@
-include start
-call OK keypad STDSCR $TRUE
-input "\eOC"
-call $KEY_RIGHT getch
-call OK keyok $KEY_RIGHT $FALSE
-input "\eOA"
-call $KEY_UP getch
-input "\eOC"
-call 27 getch

@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.c,v 1.10 2012/10/27 17:17:23 chs Exp $ */
+/* $NetBSD: rsbus.c,v 1.10.52.1 2021/03/20 19:33:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.10 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.10.52.1 2021/03/20 19:33:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,10 @@ rsbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(rsbus_search, self, "rsbus", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, rsbus_search,
+	    CFARG_IATTR, "rsbus",
+	    CFARG_EOL);
 }
 
 static int

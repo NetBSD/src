@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.75 2020/08/24 05:37:40 msaitoh Exp $ */
+/* $NetBSD: pnpbios.c,v 1.75.4.1 2021/03/20 19:33:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.75 2020/08/24 05:37:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.75.4.1 2021/03/20 19:33:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,8 +772,11 @@ pnpbios_attachchild(struct pnpbios_softc *sc,
 	locs[PNPBIOSCF_INDEX] = aa->idx;
 
 	if (matchonly)
-		return (config_search_loc(config_stdsubmatch, sc->sc_dev,
-					 "pnpbios", locs, aa) != NULL);
+		return (config_search(sc->sc_dev, aa,
+				      CFARG_SUBMATCH, config_stdsubmatch,
+				      CFARG_IATTR, "pnpbios",
+				      CFARG_LOCATORS, locs,
+				      CFARG_EOL) != NULL);
 	else 
 		return (config_found_sm_loc(sc->sc_dev, "pnpbios",
 			locs, aa, pnpbios_print, config_stdsubmatch)

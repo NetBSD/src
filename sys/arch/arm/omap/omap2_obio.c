@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.24 2016/10/15 15:14:20 kiyohara Exp $	*/
+/*	$Id: omap2_obio.c,v 1.24.30.1 2021/03/20 19:33:32 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.24 2016/10/15 15:14:20 kiyohara Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.24.30.1 2021/03/20 19:33:32 thorpej Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24 2016/10/15 15:14:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24.30.1 2021/03/20 19:33:32 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -198,7 +198,10 @@ obio_attach1(device_t self)
 	/*
 	 * Attach the rest of our devices
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SUBMATCH, obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 }
 
 static void
@@ -435,7 +438,10 @@ obio_attach_critical(struct obio_softc *sc)
 		        || oa.obio_addr >= sc->sc_base + sc->sc_size))
 			continue;
 
-		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
+		cf = config_search(sc->sc_dev, &oa,
+		    CFARG_SUBMATCH, obio_find,
+		    CFARG_IATTR, "obio",
+		    CFARG_EOL);
 		if (cf == NULL) {
 			if (critical_devs[i].required)
 				panic(

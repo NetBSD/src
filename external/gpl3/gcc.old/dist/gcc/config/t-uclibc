@@ -1,2 +1,0 @@
-MULTIARCH_DIRNAME := $(subst -linux-gnu,-linux-uclibc,$(MULTIARCH_DIRNAME))
-MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-uclibc,$(MULTILIB_OSDIRNAMES))

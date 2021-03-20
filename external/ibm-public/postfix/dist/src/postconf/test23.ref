@@ -1,2 +1,0 @@
-always_bcc = yes
-config_directory = .

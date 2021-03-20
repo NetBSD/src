@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.18 2020/11/21 21:23:48 thorpej Exp $ */
+/*	$NetBSD: plum.c,v 1.18.2.1 2021/03/20 19:33:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.18 2020/11/21 21:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.18.2.1 2021/03/20 19:33:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,12 +112,19 @@ plum_attach(device_t parent, device_t self, void *aux)
 	 * attach first.
 	 */
 	sc->sc_pri = 2;
-	config_search_ia(plum_search, self, "plumif", plum_print);
+	config_search(self, plum_print,
+	    CFARG_SUBMATCH, plum_search,
+	    CFARG_IATTR, "plumif",
+	    CFARG_EOL);
+
 	/* 
 	 * Other plum module.
 	 */
 	sc->sc_pri = 1;
-	config_search_ia(plum_search, self, "plumif", plum_print);
+	config_search(self, plum_print,
+	    CFARG_SUBMATCH, plum_search,
+	    CFARG_IATTR, "plumif",
+	    CFARG_EOL);
 }
 
 plumreg_t

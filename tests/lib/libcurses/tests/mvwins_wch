@@ -1,7 +1,0 @@
-include window
-cchar ch1 0x100 [0x3401]
-cchar ch2 0x200 "A"
-call OK mvwins_wch $win1 2 3 $ch1
-call OK wins_wch $win1 $ch2
-call OK wrefresh $win1
-compare mvwins_wch.chk

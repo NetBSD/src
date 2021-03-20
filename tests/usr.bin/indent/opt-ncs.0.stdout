@@ -1,6 +1,0 @@
-/* $NetBSD: opt-ncs.0.stdout,v 1.2 2021/03/06 23:09:17 rillig Exp $ */
-/* $FreeBSD$ */
-
-int		i0 = (int)3.0;
-int		i1 = (int)3.0;
-int		i3 = (int)3.0;

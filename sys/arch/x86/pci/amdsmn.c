@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.10 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.10.4.1 2021/03/20 19:33:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2019 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.10 2020/04/25 15:26:18 bouyer Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.10.4.1 2021/03/20 19:33:39 thorpej Exp $ ");
 
 /*
  * Driver for the AMD Family 15h (model 60+) and 17h CPU
@@ -157,7 +157,10 @@ amdsmn_rescan(device_t self, const char *ifattr, const int *flags)
 {
 	struct amdsmn_softc *sc = device_private(self);
 
-	config_search_loc(amdsmn_misc_search, self, ifattr, NULL, &sc->pa);
+	config_search(self, &sc->pa,
+	    CFARG_SUBMATCH, amdsmn_misc_search,
+	    CFARG_IATTR, ifattr,
+	    CFARG_EOL);
 
 	return 0;
 }

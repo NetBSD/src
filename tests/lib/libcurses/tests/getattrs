@@ -1,8 +1,0 @@
-include window
-call 0 getattrs $win1
-call OK wattrset $win1 ($REVERSE | $BOLD)
-call ($REVERSE | $BOLD) getattrs $win1
-call OK wattron $win1 $UNDERSCORE
-call ($REVERSE | $BOLD | $UNDERSCORE) getattrs $win1
-call OK wattroff $win1 $REVERSE
-call ($BOLD | $UNDERSCORE) getattrs $win1

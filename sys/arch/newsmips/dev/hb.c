@@ -1,7 +1,7 @@
-/*	$NetBSD: hb.c,v 1.21 2020/11/21 17:54:47 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.21.2.1 2021/03/20 19:33:37 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.21 2020/11/21 17:54:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.21.2.1 2021/03/20 19:33:37 thorpej Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -53,7 +53,10 @@ hb_attach(device_t parent, device_t self, void *aux)
 		LIST_INIT(&ip->intr_q);
 	}
 
-	config_search_ia(hb_search, self, "hb", &ha);
+	config_search(self, &ha,
+	    CFARG_SUBMATCH, hb_search,
+	    CFARG_IATTR, "hb",
+	    CFARG_EOL);
 }
 
 static int

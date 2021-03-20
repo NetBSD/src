@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.19 2016/07/07 06:55:39 msaitoh Exp $	*/
+/*	$NetBSD: mbio.c,v 1.19.32.1 2021/03/20 19:33:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.19 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.19.32.1 2021/03/20 19:33:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,12 +129,18 @@ mbio_attach(device_t parent, device_t self, void *aux)
 	/* Find all `early' mbio devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		mba.mba_name = *cpp;
-		config_search_ia(sun68k_bus_search, self, "mbio", &mba);
+		config_search(self, &mba,
+		    CFARG_SUBMATCH, sun68k_bus_search,
+		    CFARG_IATTR, "mbio",
+		    CFARG_EOL);
 	}
 
 	/* Find all other mbio devices */
 	mba.mba_name = NULL;
-	config_search_ia(sun68k_bus_search, self, "mbio", &mba);
+	config_search(self, &mba,
+	    CFARG_SUBMATCH, sun68k_bus_search,
+	    CFARG_IATTR, "mbio",
+	    CFARG_EOL);
 }
 
 int
