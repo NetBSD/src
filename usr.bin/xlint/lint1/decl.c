@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.150 2021/03/20 13:06:05 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.151 2021/03/20 13:22:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.150 2021/03/20 13:06:05 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.151 2021/03/20 13:22:06 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -870,20 +870,19 @@ static tspec_t
 merge_type_specifiers(tspec_t t, tspec_t s)
 {
 
-	if (s == SIGNED || s == UNSIGN) {
-		if (t == CHAR) {
-			t = s == SIGNED ? SCHAR : UCHAR;
-		} else if (t == SHORT) {
-			t = s == SIGNED ? SHORT : USHORT;
-		} else if (t == INT) {
-			t = s == SIGNED ? INT : UINT;
-		} else if (t == LONG) {
-			t = s == SIGNED ? LONG : ULONG;
-		} else if (t == QUAD) {
-			t = s == SIGNED ? QUAD : UQUAD;
-		}
-	}
+	if (s != SIGNED && s != UNSIGN)
+		return t;
 
+	if (t == CHAR)
+		return s == SIGNED ? SCHAR : UCHAR;
+	if (t == SHORT)
+		return s == SIGNED ? SHORT : USHORT;
+	if (t == INT)
+		return s == SIGNED ? INT : UINT;
+	if (t == LONG)
+		return s == SIGNED ? LONG : ULONG;
+	if (t == QUAD)
+		return s == SIGNED ? QUAD : UQUAD;
 	return t;
 }
 
