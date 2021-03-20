@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.11 2021/03/20 08:54:27 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.12 2021/03/20 08:59:46 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -142,6 +142,39 @@ int array_with_designator[] = {
 struct point scalar_with_several_braces = {
 	{{{3}}},		/*FIXME*//* expect: invalid initializer type int */
 	{{{{4}}}},
+};
+
+struct rectangle {
+	struct point top_left;
+	struct point bottom_right;
+};
+
+/* C99 6.7.8p18 */
+struct rectangle screen = {
+	.bottom_right = {
+		1920,
+		1080,
+	}
+};
+
+/*
+ * C99 6.7.8p22 says: At the _end_ of its initializer list, the array no
+ * longer has incomplete type.
+ */
+struct point points[] = {
+	{
+		/*
+		 * At this point, the size of the object 'points' is not known
+		 * yet since its type is still incomplete.  Lint could warn
+		 * about this, but GCC and Clang already do.
+		 *
+		 * This test case demonstrates that in
+		 * extend_if_array_of_unknown_size, setcomplete is called too
+		 * early.
+		 */
+		sizeof points,
+		4
+	}
 };
 
 // See d_struct_init_nested.c for a more complicated example.
