@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.17.52.1 2021/03/20 19:33:35 thorpej Exp $ */
+/*	$NetBSD: txsim.c,v 1.17.52.2 2021/03/20 20:49:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.17.52.1 2021/03/20 19:33:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.17.52.2 2021/03/20 20:49:43 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -90,7 +90,7 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 * so attach first.
 	 */
 	sc->sc_pri = ATTACH_FIRST;
-	config_search(self, txsim_print,
+	config_search(self, NULL,
 	    CFARG_SUBMATCH, txsim_search,
 	    CFARG_IATTR, "txsim",
 	    CFARG_EOL);
@@ -100,7 +100,7 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 * attached.
 	 */
 	sc->sc_pri = ATTACH_NORMAL;
-	config_search(self, txsim_print,
+	config_search(self, NULL,
 	    CFARG_SUBMATCH, txsim_search,
 	    CFARG_IATTR, "txsim",
 	    CFARG_EOL);
@@ -109,7 +109,7 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 * UART module uses platform dependent config_hooks.
 	 */
 	sc->sc_pri = ATTACH_LAST;
-	config_search(self, txsim_print,
+	config_search(self, NULL,
 	    CFARG_SUBMATCH, txsim_search,
 	    CFARG_IATTR, "txsim",
 	    CFARG_EOL);
