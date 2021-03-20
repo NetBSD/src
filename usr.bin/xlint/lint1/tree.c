@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.238 2021/03/20 17:18:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.239 2021/03/20 18:38:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.238 2021/03/20 17:18:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.239 2021/03/20 18:38:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1683,15 +1683,12 @@ check_assign_types_compatible(op_t op, int arg,
 static void
 check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 {
-	mod_t	*mp;
 
 	if (!eflag)
 		return;
 
-	mp = &modtab[op];
-
 	if (!(ln->tn_type->t_is_enum ||
-	      (mp->m_binary && rn->tn_type->t_is_enum))) {
+	      (modtab[op].m_binary && rn->tn_type->t_is_enum))) {
 		return;
 	}
 
@@ -1706,7 +1703,7 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 	}
 
 	/* dubious operation on enum, op %s */
-	warning(241, mp->m_name);
+	warning(241, getopname(op));
 
 }
 
