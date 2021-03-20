@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.8 2020/10/22 07:31:15 skrll Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.9 2021/03/20 06:48:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.8 2020/10/22 07:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.9 2021/03/20 06:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -53,18 +53,15 @@ arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz, enum arm_efirt_mem_typ
 
 	switch (type) {
 	case ARM_EFIRT_MEM_CODE:
-		attr = LX_BLKPAG_OS_READ | LX_BLKPAG_OS_WRITE |
-		       LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN |
+		attr = LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN |
 		       LX_BLKPAG_ATTR_NORMAL_WB;
 		break;
 	case ARM_EFIRT_MEM_DATA:
-		attr = LX_BLKPAG_OS_READ | LX_BLKPAG_OS_WRITE |
-		       LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN | LX_BLKPAG_PXN |
+		attr = LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN | LX_BLKPAG_PXN |
 		       LX_BLKPAG_ATTR_NORMAL_WB;
 		break;
 	case ARM_EFIRT_MEM_MMIO:
-		attr = LX_BLKPAG_OS_READ | LX_BLKPAG_OS_WRITE |
-		       LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN | LX_BLKPAG_PXN |
+		attr = LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN | LX_BLKPAG_PXN |
 		       LX_BLKPAG_ATTR_DEVICE_MEM;
 		break;
 	default:
