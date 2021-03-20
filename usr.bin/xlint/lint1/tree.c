@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.239 2021/03/20 18:38:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.240 2021/03/20 20:39:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.239 2021/03/20 18:38:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.240 2021/03/20 20:39:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -490,7 +490,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 tnode_t *
 build(op_t op, tnode_t *ln, tnode_t *rn)
 {
-	mod_t	*mp;
+	const mod_t *mp;
 	tnode_t	*ntn;
 	type_t	*rettp;
 
@@ -1469,7 +1469,7 @@ typeok_enum(op_t op, const mod_t *mp, int arg,
 bool
 typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
-	mod_t	*mp;
+	const mod_t *mp;
 	tspec_t	lt, rt;
 	type_t	*ltp, *rtp;
 
@@ -1542,7 +1542,7 @@ check_assign_types_compatible(op_t op, int arg,
 {
 	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
-	mod_t	*mp;
+	const mod_t *mp;
 	const	char *lts, *rts;
 
 	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
@@ -1713,7 +1713,7 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 static void
 check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
-	mod_t	*mp;
+	const mod_t *mp;
 
 	mp = &modtab[op];
 
@@ -2525,7 +2525,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 static void
 warn_incompatible_types(op_t op, tspec_t lt, tspec_t rt)
 {
-	mod_t	*mp;
+	const mod_t *mp;
 
 	mp = &modtab[op];
 
@@ -3907,7 +3907,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		bool eqwarn, bool fcall, bool rvdisc, bool szof)
 {
 	tnode_t	*ln, *rn;
-	mod_t	*mp;
+	const mod_t *mp;
 	op_t	op;
 	scl_t	sc;
 	dinfo_t	*di;
@@ -4146,7 +4146,7 @@ static void
 check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt;
-	mod_t	*mp;
+	const mod_t *mp;
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
