@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.9 2021/03/19 01:02:52 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.10 2021/03/20 08:16:30 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -131,5 +131,15 @@ int array_with_designator[] = {
 	.member = 222,		/* expect: 249 */
 	333,
 };
+
+/*
+ * C99 6.7.8p11 says that the initializer of a scalar can be "optionally
+ * enclosed in braces".  It does not explicitly set an upper limit on the
+ * number of braces.  It also doesn't restrict the term "initializer" to only
+ * mean the "outermost initializer".  Both GCC 10 and Clang 8 already warn
+ * about this, so there is no extra work for lint to do.
+ */
+// FIXME: assertion failure 'istk->i_type != NULL'
+// struct point scalar_with_several_braces = {};
 
 // See d_struct_init_nested.c for a more complicated example.
