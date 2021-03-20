@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.75 2021/03/19 08:21:26 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.76 2021/03/20 13:00:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -309,15 +309,15 @@ typedef	struct tnode {
 
 /*
  * For nested declarations a stack exists, which holds all information
- * needed for the current level. dcs points to the top element of this
+ * needed for the current level. dcs points to the innermost element of this
  * stack.
  *
  * d_ctx describes the context of the current declaration. Its value is
  * one of
  *	EXTERN		global declarations
  *	MOS or MOU	declarations of struct or union members
- *	CTCONST		declarations of enums
- *	ARG		declaration of arguments in old style function
+ *	CTCONST		declarations of enums or boolean constants
+ *	ARG		declaration of arguments in old-style function
  *			definitions
  *	PROTO_ARG	declaration of arguments in function prototypes
  *	AUTO		declaration of local symbols
