@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.20 2016/10/30 19:33:49 christos Exp $	*/
+/*	$NetBSD: cmp.c,v 1.21 2021/03/20 14:27:47 cheusov Exp $	*/
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.20 2016/10/30 19:33:49 christos Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.21 2021/03/20 14:27:47 cheusov Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,12 +125,12 @@ main(int argc, char *argv[])
 		char *ep;
 
 		errno = 0;
-		skip1 = strtoq(argv[2], &ep, 0);
+		skip1 = (off_t)strtoll(argv[2], &ep, 0);
 		if (errno || ep == argv[2])
 			usage();
 
 		if (argc == 4) {
-			skip2 = strtoq(argv[3], &ep, 0);
+			skip2 = (off_t)strtoll(argv[3], &ep, 0);
 			if (errno || ep == argv[3])
 				usage();
 		}
