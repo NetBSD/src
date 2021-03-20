@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.76 2021/01/09 15:07:42 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.77 2021/03/20 14:30:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.76 2021/01/09 15:07:42 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.77 2021/03/20 14:30:50 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -832,7 +832,7 @@ init_mmutable:
 #endif
 
 	/*
-	 * int
+	 * void
 	 * pmapboot_enter(
 	 *     x0: vaddr_t va,
 	 *     x1: paddr_t pa,
@@ -853,7 +853,6 @@ init_mmutable:
 	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN	/* attr */
 	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
-	cbnz	x0, init_mmutable_error
 #endif
 
 	/* identity mapping for kernel image */
@@ -869,7 +868,6 @@ init_mmutable:
 	orr	x4, x4, #LX_BLKPAG_UXN
 	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
-	cbnz	x0, init_mmutable_error
 
 #ifdef FDT
 	VPRINT("Creating identity mapping for FDT\n")
@@ -884,7 +882,6 @@ init_mmutable:
 	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN	/* attr */
 	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
-	cbnz	x0, init_mmutable_error
 #endif
 
 	VPRINT("Creating KVA=PA tables\n")
@@ -897,7 +894,6 @@ init_mmutable:
 	orr	x4, x4, #LX_BLKPAG_UXN
 	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
-	cbnz	x0, init_mmutable_error
 
 	VPRINT("OK\n");
 	mov	x0, xzr

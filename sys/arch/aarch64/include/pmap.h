@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.45 2021/01/31 08:14:58 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.46 2021/03/20 14:30:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -180,9 +180,9 @@ pt_entry_t pmap_kvattr(vaddr_t, vm_prot_t);
 
 /* pmapboot.c */
 pd_entry_t *pmapboot_pagealloc(void);
-int pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t, pt_entry_t,
+void pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t, pt_entry_t,
     void (*pr)(const char *, ...) __printflike(1, 2));
-int pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t,
+void pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t,
     void (*)(const char *, ...) __printflike(1, 2));
 int pmapboot_protect(vaddr_t, vaddr_t, vm_prot_t);
 void pmap_db_pte_print(pt_entry_t, int,
