@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.7 2021/03/20 20:15:37 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.8 2021/03/20 20:39:35 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -33,27 +33,21 @@
 #include "op.h"
 #include "param.h"
 
-mod_t modtab[NOPS];
-
-static const struct {
-	mod_t	m;
-	bool	ok;
-} imods[] =
+const mod_t modtab[NOPS] =
 #define begin_ops() {
 #define op(name, repr, \
 		bi, lo, tb, rb, \
 		in, ic, ar, sc, \
 		fo, va, ts, ba, \
 		se, lu, ru, pc, \
-		cm, ve, de, ew, \
-		active) \
-	{ { \
+		cm, ve, de, ew) \
+	{ \
 		bi + 0 > 0, lo + 0 > 0, tb + 0 > 0, rb + 0 > 0, \
 		in + 0 > 0, ic + 0 > 0, ar + 0 > 0, sc + 0 > 0, \
 		fo + 0 > 0, va + 0 > 0, ts + 0 > 0, ba + 0 > 0, \
 		se + 0 > 0, lu + 0 > 0, ru + 0 > 0, pc + 0 > 0, \
 		cm + 0 > 0, ve + 0 > 0, de + 0 > 0, ew + 0 > 0, \
-		repr }, (active) > 0 \
+		repr, \
 	},
 #define end_ops(n) };
 #include "ops.def"
@@ -61,15 +55,5 @@ static const struct {
 const char *
 getopname(op_t op)
 {
-	return imods[op].m.m_name;
-}
-
-void
-initmtab(void)
-{
-	size_t i;
-
-	for (i = 0; i < sizeof imods / sizeof imods[0]; i++)
-		if (imods[i].ok)
-			modtab[i] = imods[i].m;
+	return modtab[op].m_name;
 }
