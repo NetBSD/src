@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.240 2021/03/20 20:39:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.241 2021/03/20 20:56:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.240 2021/03/20 20:39:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.241 2021/03/20 20:56:58 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -96,6 +96,12 @@ static	void	check_integer_comparison(op_t, tnode_t *, tnode_t *);
 static	void	check_precedence_confusion(tnode_t *);
 
 extern sig_atomic_t fpe;
+
+static const char *
+getopname(op_t op)
+{
+	return modtab[op].m_name;
+}
 
 #ifdef DEBUG
 void
@@ -472,7 +478,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			error(105, op == POINT ? "object" : "pointer");
 		} else {
 			/* unacceptable operand of '%s' */
-			error(111, modtab[op].m_name);
+			error(111, getopname(op));
 		}
 	}
 
@@ -1781,7 +1787,7 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	default:
 		/* combination of '%s' and '%s', op %s */
 		warning(242, type_name(ln->tn_type), type_name(rn->tn_type),
-		    modtab[op].m_name);
+		    getopname(op));
 		break;
 	}
 }
@@ -2414,7 +2420,7 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			 */
 			if (nsz < osz && (v->v_quad & xmask) != 0) {
 				/* constant truncated by conv., op %s */
-				warning(306, modtab[op].m_name);
+				warning(306, getopname(op));
 			}
 		} else if (op == ANDASS || op == BITAND) {
 			/*
@@ -2427,12 +2433,12 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			    (nv->v_quad & xmask) != xmask) {
 				/* extra bits set to 0 in conv. of '%s' ... */
 				warning(309, type_name(gettyp(ot)),
-				    type_name(tp), modtab[op].m_name);
+				    type_name(tp), getopname(op));
 			} else if (nsz < osz &&
 				   (v->v_quad & xmask) != xmask &&
 				   (v->v_quad & xmask) != 0) {
 				/* constant truncated by conv., op %s */
-				warning(306, modtab[op].m_name);
+				warning(306, getopname(op));
 			}
 		} else if ((nt != PTR && is_uinteger(nt)) &&
 			   (ot != PTR && !is_uinteger(ot)) &&
@@ -2930,7 +2936,7 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 				error(212);
 			} else {
 				/* unknown operand size, op %s */
-				error(138, modtab[op].m_name);
+				error(138, getopname(op));
 			}
 			return NULL;
 		}
