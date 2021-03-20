@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.86 2020/12/03 07:45:52 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.87 2021/03/20 05:58:22 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.86 2020/12/03 07:45:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.87 2021/03/20 05:58:22 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -297,7 +297,7 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;
+	return -1;
 }
 
 static struct consdev earlycons = {
