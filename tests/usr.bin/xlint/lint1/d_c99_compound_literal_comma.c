@@ -1,17 +1,33 @@
-/*	$NetBSD: d_c99_compound_literal_comma.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_compound_literal_comma.c,v 1.3 2021/03/20 11:24:49 rillig Exp $	*/
 # 3 "d_c99_compound_literal_comma.c"
 
-struct bintime {
-	unsigned long long sec;
-	unsigned long long frac;
+/*-
+ * Ensure that compound literals can be parsed.
+ *
+ * C99 6.5.2 "Postfix operators" for the syntax.
+ * C99 6.5.2.5 "Compound literals" for the semantics.
+ */
+
+struct point {
+	int x;
+	int y;
 };
 
-struct bintime
-us2bintime(unsigned long long us)
+struct point
+point_abs(struct point point)
 {
+	/* No designators, no trailing comma. */
+	if (point.x >= 0 && point.y >= 0)
+		return (struct point){ point.x, point.y };
 
-	return (struct bintime) {
-		.sec = us / 1000000U,
-		.frac = (((us % 1000000U) >> 32)/1000000U) >> 32,
-	};
+	/* Designators, no trailing comma. */
+	if (point.x >= 0)
+		return (struct point){ .x = point.x, .y = -point.y };
+
+	/* No designators, trailing comma. */
+	if (point.y >= 0)
+		return (struct point){ point.x, point.y, };
+
+	/* Designators, trailing comma. */
+	return (struct point){ .x = point.x, .y = -point.y, };
 }
