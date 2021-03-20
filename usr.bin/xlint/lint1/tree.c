@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.241 2021/03/20 20:56:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.242 2021/03/20 21:08:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.241 2021/03/20 20:56:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.242 2021/03/20 21:08:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -251,17 +251,17 @@ fallback_symbol(sym_t *sym)
 
 /*
  * Create a node for a name (symbol table entry).
- * ntok is the token which follows the name.
+ * follow_token is the token which follows the name.
  */
 tnode_t *
-new_name_node(sym_t *sym, int ntok)
+new_name_node(sym_t *sym, int follow_token)
 {
 	tnode_t	*n;
 
 	if (sym->s_scl == NOSCL) {
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
-		if (ntok == T_LPAREN) {
+		if (follow_token == T_LPAREN) {
 			if (sflag) {
 				/* function implicitly declared to ... */
 				warning(215);
@@ -276,8 +276,7 @@ new_name_node(sym_t *sym, int ntok)
 		}
 	}
 
-	if (sym->s_kind != FVFT && sym->s_kind != FMEMBER)
-		LERROR("new_name_node(%d)", sym->s_kind);
+	lint_assert(sym->s_kind == FVFT || sym->s_kind == FMEMBER);
 
 	n = getnode();
 	n->tn_type = sym->s_type;
