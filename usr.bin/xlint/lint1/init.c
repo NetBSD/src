@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.107 2021/03/20 08:16:30 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.108 2021/03/20 08:54:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.107 2021/03/20 08:16:30 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.108 2021/03/20 08:54:27 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -411,6 +411,8 @@ initstack_init(void)
 		initstk = istk->i_enclosing;
 		free(istk);
 	}
+	while (namedmem != NULL)
+		designator_shift_name();
 
 	debug_enter();
 

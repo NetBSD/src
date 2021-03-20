@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.10 2021/03/20 08:16:30 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.11 2021/03/20 08:54:27 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -139,7 +139,9 @@ int array_with_designator[] = {
  * mean the "outermost initializer".  Both GCC 10 and Clang 8 already warn
  * about this, so there is no extra work for lint to do.
  */
-// FIXME: assertion failure 'istk->i_type != NULL'
-// struct point scalar_with_several_braces = {};
+struct point scalar_with_several_braces = {
+	{{{3}}},		/*FIXME*//* expect: invalid initializer type int */
+	{{{{4}}}},
+};
 
 // See d_struct_init_nested.c for a more complicated example.
