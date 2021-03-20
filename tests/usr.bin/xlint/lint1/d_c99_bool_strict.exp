@@ -163,3 +163,5 @@ d_c99_bool_strict.c(716): operands of '==' have incompatible types (_Bool != int
 d_c99_bool_strict.c(728): warning: expression has null effect [129]
 d_c99_bool_strict.c(740): right operand of '+' must not be bool [337]
 d_c99_bool_strict.c(757): warning: constant in conditional context [161]
+d_c99_bool_strict.c(768): operands of 'init' have incompatible types (_Bool != int) [107]
+d_c99_bool_strict.c(769): operands of 'init' have incompatible types (_Bool != int) [107]
