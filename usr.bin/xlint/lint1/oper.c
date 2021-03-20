@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.8 2021/03/20 20:39:35 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.9 2021/03/20 20:56:58 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -51,9 +51,3 @@ const mod_t modtab[NOPS] =
 	},
 #define end_ops(n) };
 #include "ops.def"
-
-const char *
-getopname(op_t op)
-{
-	return modtab[op].m_name;
-}
