@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.184 2021/03/20 14:17:56 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.185 2021/03/20 15:28:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.184 2021/03/20 14:17:56 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.185 2021/03/20 15:28:07 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -119,7 +119,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 136
+%expect 134
 
 %union {
 	int	y_int;
@@ -135,6 +135,7 @@ anonymize(sym_t *s)
 	range_t	y_range;
 	strg_t	*y_string;
 	pqinf_t	*y_pqinf;
+	int	y_seen_statement;
 };
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
@@ -328,6 +329,10 @@ anonymize(sym_t *s)
 %type	<y_string>	string2
 %type	<y_sb>		opt_asm_or_symbolrename
 %type	<y_range>	range
+%type	<y_seen_statement> block
+%type	<y_seen_statement> block_begin
+%type	<y_seen_statement> block_item_list
+%type	<y_seen_statement> block_item
 
 
 %%
@@ -1510,21 +1515,9 @@ label:
 	  }
 	;
 
-statement_d_list:
-	  statement_list
-	| statement_d_list declaration_list statement_list {
-		if (!Sflag)
-			/* declarations after statements is a C99 feature */
-			c99ism(327);
-	  }
-	;
-
 compound_statement:		/* C99 6.8.2 */
 	  compound_statement_lbrace compound_statement_rbrace
-	| compound_statement_lbrace statement_d_list compound_statement_rbrace
-	| compound_statement_lbrace declaration_list compound_statement_rbrace
-	| compound_statement_lbrace declaration_list statement_d_list
-	    compound_statement_rbrace
+	| compound_statement_lbrace block compound_statement_rbrace
 	;
 
 compound_statement_lbrace:
@@ -1545,12 +1538,35 @@ compound_statement_rbrace:
 	  }
 	;
 
-statement_list:
-	  statement
-	| statement_list statement {
+block:
+	  block_begin block_item_list
+	;
+
+block_begin:
+	  /* empty */ {
+		$$ = false;
+	  }
+	;
+
+block_item_list:
+	  block_item
+	| block_item_list block_item {
+		if (!Sflag && $1 && !$2)
+			/* declarations after statements is a C99 feature */
+			c99ism(327);
+	}
+	;
+
+block_item:
+	  statement {
+		$$ = true;
 		RESTORE_WARN_FLAGS(__FILE__, __LINE__);
 	  }
-	| statement_list error T_SEMI
+	| declaration {
+	/*fprintf(stderr, "block_item.declaration: %d\n", $$);*/
+		$$ = false;
+		RESTORE_WARN_FLAGS(__FILE__, __LINE__);
+	  }
 	;
 
 expr_statement:
