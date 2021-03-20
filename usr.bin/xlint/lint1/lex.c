@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.13 2021/03/20 19:24:56 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.14 2021/03/20 19:33:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.13 2021/03/20 19:24:56 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.14 2021/03/20 19:33:25 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -264,7 +264,7 @@ add_keyword(struct kwtab *kw, int deco)
 	char buf[256];
 	const char *name;
 
-	if (!(kw->kw_deco & deco))
+	if ((kw->kw_deco & deco) == 0)
 		return;
 
 	switch (deco) {

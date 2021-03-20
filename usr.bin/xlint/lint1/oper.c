@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.5 2021/01/18 20:02:34 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.6 2021/03/20 19:33:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -43,10 +43,14 @@ static const struct {
 #define op(name, repr, \
 		bi, lo, tb, to, in, sc, ar, fo, va, ts, ba, se, \
 		lu, ru, pc, cm, ve, de, ew, ic, active) \
-	{ { bi + 0, lo + 0, tb + 0, to + 0, in + 0, sc + 0, ar + 0, \
-	    fo + 0, va + 0, ts + 0, ba + 0, se + 0, \
-	    lu + 0, ru + 0, pc + 0, cm + 0, ve + 0, \
-	    de + 0, ew + 0, ic + 0, repr }, active },
+	{ { \
+		bi + 0 > 0, lo + 0 > 0, tb + 0 > 0, to + 0 > 0, \
+		in + 0 > 0, sc + 0 > 0, ar + 0 > 0, fo + 0 > 0, \
+		va + 0 > 0, ts + 0 > 0, ba + 0 > 0, se + 0 > 0, \
+		lu + 0 > 0, ru + 0 > 0, pc + 0 > 0, cm + 0 > 0, \
+		ve + 0 > 0, de + 0 > 0, ew + 0 > 0, ic + 0 > 0, \
+		repr }, active > 0 \
+	},
 #define end_ops(n) };
 #include "ops.def"
 
