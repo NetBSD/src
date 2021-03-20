@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.178 2021/03/19 07:54:13 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.179 2021/03/20 10:32:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.178 2021/03/19 07:54:13 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.179 2021/03/20 10:32:43 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1002,7 +1002,7 @@ notype_init_decl:
 	  }
 	| notype_decl opt_asm_or_symbolrename {
 		cgram_declare($1, true, $2);
-	  } T_ASSIGN initializer {
+	  } T_ASSIGN outermost_initializer {
 		check_size($1);
 	  }
 	;
@@ -1014,7 +1014,7 @@ type_init_decl:
 	  }
 	| type_decl opt_asm_or_symbolrename {
 		cgram_declare($1, true, $2);
-	  } T_ASSIGN initializer {
+	  } T_ASSIGN outermost_initializer {
 		check_size($1);
 	  }
 	;
@@ -1317,16 +1317,16 @@ opt_asm_or_symbolrename:		/* expect only one */
 	  }
 	;
 
-initializer:
+outermost_initializer:
 	  {
-		cgram_debug("begin initializer");
-	  } init_assign_expr {
-		cgram_debug("end initializer");
+		cgram_debug("begin initialization");
+	  } initializer {
+		cgram_debug("end initialization");
 	  }
 	;
 
-init_assign_expr:
-	| init_by_name init_base_expr	%prec T_COMMA
+initializer:			/* C99 6.7.8 "Initialization" */
+	| designation init_base_expr	%prec T_COMMA
 	| init_base_expr
 
 init_base_expr:
@@ -1336,14 +1336,14 @@ init_base_expr:
 	| init_lbrace init_rbrace {
 		/* XXX: Empty braces are not covered by C99 6.7.8. */
 	  }
-	| init_lbrace init_expr_list init_rbrace
-	| init_lbrace init_expr_list T_COMMA init_rbrace
+	| init_lbrace initializer_list init_rbrace
+	| init_lbrace initializer_list T_COMMA init_rbrace
 	| error
 	;
 
-init_expr_list:
-	  init_assign_expr		%prec T_COMMA
-	| init_expr_list T_COMMA init_assign_expr
+initializer_list:		/* C99 6.7.8 "Initialization" */
+	  initializer		%prec T_COMMA
+	| initializer_list T_COMMA initializer
 	;
 
 range:
@@ -1379,7 +1379,7 @@ designator_list:		/* C99 6.7.8 "Initialization" */
 	| designator_list designator
 	;
 
-init_by_name:
+designation:			/* C99 6.7.8 "Initialization" */
 	  designator_list T_ASSIGN
 	| identifier T_COLON {
 		/* GCC style struct or union member name in initializer */
@@ -1978,7 +1978,7 @@ term:
 	| T_LPAREN type_name T_RPAREN			%prec T_UNARY {
 		sym_t *tmp = mktempsym($2);
 		cgram_declare(tmp, true, NULL);
-	  } init_lbrace init_expr_list init_rbrace {
+	  } init_lbrace initializer_list init_rbrace {
 		if (!Sflag)
 			 /* compound literals are a C9X/GCC extension */
 			 gnuism(319);
