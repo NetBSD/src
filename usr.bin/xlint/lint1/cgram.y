@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.187 2021/03/20 16:11:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.188 2021/03/20 16:16:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.187 2021/03/20 16:11:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.188 2021/03/20 16:16:32 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1484,7 +1484,7 @@ non_expr_statement:
 	| selection_statement
 	| iteration_statement
 	| jump_statement {
-		ftflg = false;
+		seen_fallthrough = false;
 	  }
 	| asm_statement
 
@@ -1504,16 +1504,16 @@ label:
 	  }
 	| T_CASE constant_expr T_COLON {
 		case_label($2);
-		ftflg = true;
+		seen_fallthrough = true;
 	  }
 	| T_CASE constant_expr T_ELLIPSIS constant_expr T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
-		ftflg = true;
+		seen_fallthrough = true;
 	  }
 	| T_DEFAULT T_COLON {
 		default_label();
-		ftflg = true;
+		seen_fallthrough = true;
 	  }
 	;
 
@@ -1536,7 +1536,7 @@ compound_statement_rbrace:
 		freeblk();
 		mem_block_level--;
 		block_level--;
-		ftflg = false;
+		seen_fallthrough = false;
 	  }
 	;
 
@@ -1563,10 +1563,10 @@ block_item:
 expr_statement:
 	  expr T_SEMI {
 		expr($1, false, false, false, false);
-		ftflg = false;
+		seen_fallthrough = false;
 	  }
 	| T_SEMI {
-		ftflg = false;
+		seen_fallthrough = false;
 	  }
 	;
 
@@ -1582,7 +1582,7 @@ expr_statement_val:
 			$1->tn_sym->s_used = true;
 		$$ = $1;
 		expr($1, false, false, false, false);
-		ftflg = false;
+		seen_fallthrough = false;
 	  }
 	| non_expr_statement {
 		$$ = getnode();
@@ -1676,7 +1676,7 @@ iteration_statement:		/* C99 6.8.5 */
 	  }
 	| do_statement do_while_expr {
 		do2($2);
-		ftflg = false;
+		seen_fallthrough = false;
 	  }
 	| do error {
 		clear_warning_flags();
