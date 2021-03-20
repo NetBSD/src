@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.12 2021/03/17 01:15:31 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.13 2021/03/20 19:24:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.12 2021/03/17 01:15:31 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.13 2021/03/20 19:24:56 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -99,6 +99,20 @@ lex_unknown_character(int c)
 	error(250, c);
 }
 
+#define kwdef(name, token, scl, tspec, tqual,	c89, c99, gcc, attr, deco) \
+	{ \
+		name, token, scl, tspec, tqual, \
+		(c89) > 0, (c99) > 0, (gcc) > 0, (attr) > 0, deco, \
+	}
+#define kwdef_token(name, token,		c89, c99, gcc, attr, deco) \
+	kwdef(name, token, 0, 0, 0,		c89, c99, gcc, attr, deco)
+#define kwdef_sclass(name, sclass,		c89, c99, gcc, attr, deco) \
+	kwdef(name, T_SCLASS, sclass, 0, 0,	c89, c99, gcc, attr, deco)
+#define kwdef_type(name, tspec,			c89, c99, gcc, attr, deco) \
+	kwdef(name, T_TYPE, 0, tspec, 0,	c89, c99, gcc, attr, deco)
+#define kwdef_tqual(name, tqual,		c89, c99, gcc, attr, deco) \
+	kwdef(name, T_QUAL, 0, 0, tqual,	c89, c99, gcc, attr, deco)
+
 /*
  * Keywords.
  * During initialization they are written to the symbol table.
@@ -109,7 +123,7 @@ static	struct	kwtab {
 	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 	tspec_t	kw_tspec;	/* type spec. if kw_token
 				 * T_TYPE or T_STRUCT_OR_UNION */
-	tqual_t	kw_tqual;	/* type qual. fi kw_token T_QUAL */
+	tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
 	bool	kw_c89 : 1;	/* C89 keyword */
 	bool	kw_c99 : 1;	/* C99 keyword */
 	bool	kw_gcc : 1;	/* GCC keyword */
@@ -117,105 +131,110 @@ static	struct	kwtab {
 	u_int	kw_deco : 3;	/* 1 = name, 2 = __name, 4 = __name__ */
 } kwtab[] = {
 #ifdef INT128_SIZE
-	{ "__int128_t",	T_TYPE,		0,	INT128,	0,	  0,1,0,0,1 },
-	{ "__uint128_t",T_TYPE,		0,	UINT128,0,	  0,1,0,0,1 },
+	kwdef_type(	"__int128_t",	INT128,			0,1,0,0,1),
+	kwdef_type(	"__uint128_t",	UINT128,		0,1,0,0,1),
 #endif
-	{ "__thread",	T_QUAL,		0,	0,	THREAD,	  0,0,1,0,1 },
-	{ "_Alignof",	T_ALIGNOF,	0,	0,	0,	  0,0,0,0,1 },
-	{ "_Bool",	T_TYPE,		0,	BOOL,	0,	  0,1,0,0,1 },
-	{ "_Complex",	T_TYPE,		0,	COMPLEX,0,	  0,1,0,0,1 },
-	{ "_Generic",	T_GENERIC,	0,	0,	0,	  0,1,0,0,1 },
-	{ "_Noreturn",	T_NORETURN,	0,	0,	0,	  0,1,0,0,1 },
-	{ "_Thread_local",T_QUAL,	0,	0,	THREAD,	  0,1,0,0,1 },
-	{ "alias",	T_AT_ALIAS,	0,	0,	0,	  0,0,1,1,5 },
-	{ "aligned",	T_AT_ALIGNED,	0,	0,	0,	  0,0,1,1,5 },
-	{ "alignof",	T_ALIGNOF,	0,	0,	0,	  0,0,0,0,4 },
-	{ "alloc_size",	T_AT_ALLOC_SIZE,0,	0,	0,	  0,0,1,1,5 },
-	{ "always_inline", T_AT_ALWAYS_INLINE, 0,0,	0,	  0,0,1,1,5 },
-	{ "asm",	T_ASM,		0,	0,	0,	  0,0,1,0,7 },
-	{ "attribute",	T_ATTRIBUTE,	0,	0,	0,	  0,0,1,0,6 },
-	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0,0,0,0,1 },
-	{ "bounded",	T_AT_BOUNDED,	0,	0,	0,	  0,0,1,1,5 },
-	{ "break",	T_BREAK,	0,	0,	0,	  0,0,0,0,1 },
-	{ "buffer",	T_AT_BUFFER,	0,	0,	0,	  0,0,1,1,5 },
-	{ "builtin_offsetof", T_BUILTIN_OFFSETOF, 0, 0, 0,	  0,0,1,0,2 },
-	{ "case",	T_CASE,		0,	0,	0,	  0,0,0,0,1 },
-	{ "char",	T_TYPE,		0,	CHAR,	0,	  0,0,0,0,1 },
-	{ "cold",	T_AT_COLD,	0,	0,	0,	  0,0,1,1,5 },
-	{ "const",	T_QUAL,		0,	0,	CONST,	  1,0,0,0,7 },
-	{ "constructor",T_AT_CONSTRUCTOR,0,	0,	0,	  0,0,1,1,5 },
-	{ "continue",	T_CONTINUE,	0,	0,	0,	  0,0,0,0,1 },
-	{ "default",	T_DEFAULT,	0,	0,	0,	  0,0,0,0,1 },
-	{ "deprecated",	T_AT_DEPRECATED,0,	0,	0,	  0,0,1,1,5 },
-	{ "destructor",	T_AT_DESTRUCTOR,0,	0,	0,	  0,0,1,1,5 },
-	{ "do",		T_DO,		0,	0,	0,	  0,0,0,0,1 },
-	{ "double",	T_TYPE,		0,	DOUBLE,	0,	  0,0,0,0,1 },
-	{ "else",	T_ELSE,		0,	0,	0,	  0,0,0,0,1 },
-	{ "enum",	T_ENUM,		0,	0,	0,	  0,0,0,0,1 },
-	{ "extension",  T_EXTENSION,	0,	0,	0,	  0,0,1,0,4 },
-	{ "extern",	T_SCLASS,	EXTERN,	0,	0,	  0,0,0,0,1 },
-	{ "float",	T_TYPE,		0,	FLOAT,	0,	  0,0,0,0,1 },
-	{ "for",	T_FOR,		0,	0,	0,	  0,0,0,0,1 },
-	{ "format",	T_AT_FORMAT,	0,	0,	0,	  0,0,1,1,5 },
-	{ "format_arg", T_AT_FORMAT_ARG,0,	0,	0,	  0,0,1,1,5 },
-	{ "gnu_inline",	T_AT_GNU_INLINE,0,	0,	0,	  0,0,1,1,5 },
-	{ "gnu_printf",	T_AT_FORMAT_GNU_PRINTF,0,0,	0,	  0,0,1,1,5 },
-	{ "goto",	T_GOTO,		0,	0,	0,	  0,0,0,0,1 },
-	{ "if",		T_IF,		0,	0,	0,	  0,0,0,0,1 },
-	{ "imag",	T_IMAG,		0,	0,	0,	  0,1,0,0,4 },
-	{ "inline",	T_SCLASS,	INLINE,	0,	0,	  0,1,0,0,7 },
-	{ "int",	T_TYPE,		0,	INT,	0,	  0,0,0,0,1 },
-	{ "long",	T_TYPE,		0,	LONG,	0,	  0,0,0,0,1 },
-	{ "malloc",	T_AT_MALLOC,	0,	0,	0,	  0,0,1,1,5 },
-	{ "may_alias",	T_AT_MAY_ALIAS,	0,	0,	0,	  0,0,1,1,5 },
-	{ "minbytes",	T_AT_MINBYTES,	0,	0,	0,	  0,0,1,1,5 },
-	{ "mode",	T_AT_MODE,	0,	0,	0,	  0,0,1,1,5 },
-	{ "no_instrument_function", T_AT_NO_INSTRUMENT_FUNCTION,
-					0,	0,	0,	  0,0,1,1,5 },
-	{ "nonnull",	T_AT_NONNULL,	0,	0,	0,	  0,0,1,1,5 },
-	{ "noinline",	T_AT_NOINLINE,	0,	0,	0,	  0,0,1,1,5 },
-	{ "noreturn",	T_AT_NORETURN,	0,	0,	0,	  0,0,1,1,5 },
-	{ "nothrow",	T_AT_NOTHROW,	0,	0,	0,	  0,0,1,1,5 },
-	{ "optimize",	T_AT_OPTIMIZE,	0,	0,	0,	  0,0,1,1,5 },
-	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0,0,1,1,5 },
-	{ "packed",	T_PACKED,	0,	0,	0,	  0,0,0,0,2 },
-	{ "pcs",	T_AT_PCS,	0,	0,	0,	  0,0,0,0,5 },
-	{ "printf",	T_AT_FORMAT_PRINTF,0,	0,	0,	  0,0,1,1,5 },
-	{ "pure",	T_AT_PURE,	0,	0,	0,	  0,0,1,1,5 },
-	{ "real",	T_REAL,		0,	0,	0,	  0,1,0,0,4 },
-	{ "register",	T_SCLASS,	REG,	0,	0,	  0,0,0,0,1 },
-	{ "restrict",	T_QUAL,		0,	0,	RESTRICT, 0,1,0,0,5 },
-	{ "return",	T_RETURN,	0,	0,	0,	  0,0,0,0,1 },
-	{ "returns_twice", T_AT_RETURNS_TWICE,0,0,	0,	  0,0,1,1,5 },
-	{ "scanf",	T_AT_FORMAT_SCANF,0,	0,	0,	  0,0,1,1,5 },
-	{ "section",	T_AT_SECTION,	0,	0,	0,	  0,0,1,1,7 },
-	{ "sentinel",	T_AT_SENTINEL,	0,	0,	0,	  0,0,1,1,5 },
-	{ "short",	T_TYPE,		0,	SHORT,	0,	  0,0,0,0,1 },
-	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1,0,0,0,3 },
-	{ "sizeof",	T_SIZEOF,	0,	0,	0,	  0,0,0,0,1 },
-	{ "static",	T_SCLASS,	STATIC,	0,	0,	  0,0,0,0,1 },
-	{ "strfmon",	T_AT_FORMAT_STRFMON,0,	0,	0,	  0,0,1,1,5 },
-	{ "strftime",	T_AT_FORMAT_STRFTIME,0,	0,	0,	  0,0,1,1,5 },
-	{ "string",	T_AT_STRING,	0,	0,	0,	  0,0,1,1,5 },
-	{ "struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	  0,0,0,0,1 },
-	{ "switch",	T_SWITCH,	0,	0,	0,	  0,0,0,0,1 },
-	{ "symbolrename", T_SYMBOLRENAME,0,	0,	0,	  0,0,0,0,2 },
-	{ "syslog",	T_AT_FORMAT_SYSLOG,0,	0,	0,	  0,0,1,1,5 },
-	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0,0,1,1,5 },
-	{ "tls_model",	T_AT_TLS_MODEL,	0,	0,	0,	  0,0,1,1,5 },
-	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0,0,0,0,1 },
-	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0,0,1,0,7 },
-	{ "union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	  0,0,0,0,1 },
-	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0,0,0,0,1 },
-	{ "unused",	T_AT_UNUSED,	0,	0,	0,	  0,0,1,1,5 },
-	{ "used",	T_AT_USED,	0,	0,	0,	  0,0,1,1,5 },
-	{ "visibility", T_AT_VISIBILITY,0,	0,	0,	  0,0,1,1,5 },
-	{ "void",	T_TYPE,		0,	VOID,	0,	  0,0,0,0,1 },
-	{ "volatile",	T_QUAL,		0,	0,	VOLATILE, 1,0,0,0,7 },
-	{ "warn_unused_result", T_AT_WARN_UNUSED_RESULT, 0, 0, 0, 0,0,1,1,5 },
-	{ "weak",	T_AT_WEAK,	0,	0,	0,	  0,0,1,1,5 },
-	{ "while",	T_WHILE,	0,	0,	0,	  0,0,0,0,1 },
-	{ NULL,		0,		0,	0,	0,	  0,0,0,0,0 }
+	kwdef_tqual(	"__thread",	THREAD,			0,0,1,0,1),
+	kwdef_token(	"_Alignof",	T_ALIGNOF,		0,0,0,0,1),
+	kwdef_type(	"_Bool",	BOOL,			0,1,0,0,1),
+	kwdef_type(	"_Complex",	COMPLEX,		0,1,0,0,1),
+	kwdef_token(	"_Generic",	T_GENERIC,		0,1,0,0,1),
+	kwdef_token(	"_Noreturn",	T_NORETURN,		0,1,0,0,1),
+	kwdef_tqual(	"_Thread_local", THREAD,		0,1,0,0,1),
+	kwdef_token(	"alias",	T_AT_ALIAS,		0,0,1,1,5),
+	kwdef_token(	"aligned",	T_AT_ALIGNED,		0,0,1,1,5),
+	kwdef_token(	"alignof",	T_ALIGNOF,		0,0,0,0,4),
+	kwdef_token(	"alloc_size",	T_AT_ALLOC_SIZE,	0,0,1,1,5),
+	kwdef_token(	"always_inline", T_AT_ALWAYS_INLINE,	0,0,1,1,5),
+	kwdef_token(	"asm",		T_ASM,			0,0,1,0,7),
+	kwdef_token(	"attribute",	T_ATTRIBUTE,		0,0,1,0,6),
+	kwdef_sclass(	"auto",		AUTO,			0,0,0,0,1),
+	kwdef_token(	"bounded",	T_AT_BOUNDED,		0,0,1,1,5),
+	kwdef_token(	"break",	T_BREAK,		0,0,0,0,1),
+	kwdef_token(	"buffer",	T_AT_BUFFER,		0,0,1,1,5),
+	kwdef_token(	"builtin_offsetof", T_BUILTIN_OFFSETOF,	0,0,1,0,2),
+	kwdef_token(	"case",		T_CASE,			0,0,0,0,1),
+	kwdef_type(	"char",		CHAR,			0,0,0,0,1),
+	kwdef_token(	"cold",		T_AT_COLD,		0,0,1,1,5),
+	kwdef_tqual(	"const",	CONST,			1,0,0,0,7),
+	kwdef_token(	"constructor",	T_AT_CONSTRUCTOR,	0,0,1,1,5),
+	kwdef_token(	"continue",	T_CONTINUE,		0,0,0,0,1),
+	kwdef_token(	"default",	T_DEFAULT,		0,0,0,0,1),
+	kwdef_token(	"deprecated",	T_AT_DEPRECATED,	0,0,1,1,5),
+	kwdef_token(	"destructor",	T_AT_DESTRUCTOR,	0,0,1,1,5),
+	kwdef_token(	"do",		T_DO,			0,0,0,0,1),
+	kwdef_type(	"double",	DOUBLE,			0,0,0,0,1),
+	kwdef_token(	"else",		T_ELSE,			0,0,0,0,1),
+	kwdef_token(	"enum",		T_ENUM,			0,0,0,0,1),
+	kwdef_token(	"extension",	T_EXTENSION,		0,0,1,0,4),
+	kwdef_sclass(	"extern",	EXTERN,			0,0,0,0,1),
+	kwdef_type(	"float",	FLOAT,			0,0,0,0,1),
+	kwdef_token(	"for",		T_FOR,			0,0,0,0,1),
+	kwdef_token(	"format",	T_AT_FORMAT,		0,0,1,1,5),
+	kwdef_token(	"format_arg",	T_AT_FORMAT_ARG,	0,0,1,1,5),
+	kwdef_token(	"gnu_inline",	T_AT_GNU_INLINE,	0,0,1,1,5),
+	kwdef_token(	"gnu_printf",	T_AT_FORMAT_GNU_PRINTF,	0,0,1,1,5),
+	kwdef_token(	"goto",		T_GOTO,			0,0,0,0,1),
+	kwdef_token(	"if",		T_IF,			0,0,0,0,1),
+	kwdef_token(	"imag",		T_IMAG,			0,1,0,0,4),
+	kwdef_sclass(	"inline",	INLINE,			0,1,0,0,7),
+	kwdef_type(	"int",		INT,			0,0,0,0,1),
+	kwdef_type(	"long",		LONG,			0,0,0,0,1),
+	kwdef_token(	"malloc",	T_AT_MALLOC,		0,0,1,1,5),
+	kwdef_token(	"may_alias",	T_AT_MAY_ALIAS,		0,0,1,1,5),
+	kwdef_token(	"minbytes",	T_AT_MINBYTES,		0,0,1,1,5),
+	kwdef_token(	"mode",		T_AT_MODE,		0,0,1,1,5),
+	kwdef_token(	"no_instrument_function",
+				T_AT_NO_INSTRUMENT_FUNCTION,	0,0,1,1,5),
+	kwdef_token(	"nonnull",	T_AT_NONNULL,		0,0,1,1,5),
+	kwdef_token(	"noinline",	T_AT_NOINLINE,		0,0,1,1,5),
+	kwdef_token(	"noreturn",	T_AT_NORETURN,		0,0,1,1,5),
+	kwdef_token(	"nothrow",	T_AT_NOTHROW,		0,0,1,1,5),
+	kwdef_token(	"optimize",	T_AT_OPTIMIZE,		0,0,1,1,5),
+	kwdef_token(	"packed",	T_AT_PACKED,		0,0,1,1,5),
+	kwdef_token(	"packed",	T_PACKED,		0,0,0,0,2),
+	kwdef_token(	"pcs",		T_AT_PCS,		0,0,0,0,5),
+	kwdef_token(	"printf",	T_AT_FORMAT_PRINTF,	0,0,1,1,5),
+	kwdef_token(	"pure",		T_AT_PURE,		0,0,1,1,5),
+	kwdef_token(	"real",		T_REAL,			0,1,0,0,4),
+	kwdef_sclass(	"register",	REG,			0,0,0,0,1),
+	kwdef_tqual(	"restrict",	RESTRICT,		0,1,0,0,5),
+	kwdef_token(	"return",	T_RETURN,		0,0,0,0,1),
+	kwdef_token(	"returns_twice", T_AT_RETURNS_TWICE,	0,0,1,1,5),
+	kwdef_token(	"scanf",	T_AT_FORMAT_SCANF,	0,0,1,1,5),
+	kwdef_token(	"section",	T_AT_SECTION,		0,0,1,1,7),
+	kwdef_token(	"sentinel",	T_AT_SENTINEL,		0,0,1,1,5),
+	kwdef_type(	"short",	SHORT,			0,0,0,0,1),
+	kwdef_type(	"signed",	SIGNED,			1,0,0,0,3),
+	kwdef_token(	"sizeof",	T_SIZEOF,		0,0,0,0,1),
+	kwdef_sclass(	"static",	STATIC,			0,0,0,0,1),
+	kwdef_token(	"strfmon",	T_AT_FORMAT_STRFMON,	0,0,1,1,5),
+	kwdef_token(	"strftime",	T_AT_FORMAT_STRFTIME,	0,0,1,1,5),
+	kwdef_token(	"string",	T_AT_STRING,		0,0,1,1,5),
+	kwdef("struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	0,0,0,0,1),
+	kwdef_token(	"switch",	T_SWITCH,		0,0,0,0,1),
+	kwdef_token(	"symbolrename",	T_SYMBOLRENAME,		0,0,0,0,2),
+	kwdef_token(	"syslog",	T_AT_FORMAT_SYSLOG,	0,0,1,1,5),
+	kwdef_token(	"transparent_union", T_AT_TUNION,	0,0,1,1,5),
+	kwdef_token(	"tls_model",	T_AT_TLS_MODEL,		0,0,1,1,5),
+	kwdef_sclass(	"typedef",	TYPEDEF,		0,0,0,0,1),
+	kwdef_token(	"typeof",	T_TYPEOF,		0,0,1,0,7),
+	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	0,0,0,0,1),
+	kwdef_type(	"unsigned",	UNSIGN,			0,0,0,0,1),
+	kwdef_token(	"unused",	T_AT_UNUSED,		0,0,1,1,5),
+	kwdef_token(	"used",		T_AT_USED,		0,0,1,1,5),
+	kwdef_token(	"visibility",	T_AT_VISIBILITY,	0,0,1,1,5),
+	kwdef_type(	"void",		VOID,			0,0,0,0,1),
+	kwdef_tqual(	"volatile",	VOLATILE,		1,0,0,0,7),
+	kwdef_token("warn_unused_result", T_AT_WARN_UNUSED_RESULT, 0,0,1,1,5),
+	kwdef_token(	"weak",		T_AT_WEAK,		0,0,1,1,5),
+	kwdef_token(	"while",	T_WHILE,		0,0,0,0,1),
+	kwdef(NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#undef kwdef
+#undef kwdef_token
+#undef kwdef_sclass
+#undef kwdef_type
+#undef kwdef_tqual
 };
 
 /* Symbol table */
