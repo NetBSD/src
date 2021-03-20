@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.179 2021/03/20 10:32:43 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.180 2021/03/20 11:05:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.179 2021/03/20 10:32:43 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.180 2021/03/20 11:05:16 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -119,7 +119,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 138
+%expect 136
 
 %union {
 	int	y_int;
@@ -1326,10 +1326,6 @@ outermost_initializer:
 	;
 
 initializer:			/* C99 6.7.8 "Initialization" */
-	| designation init_base_expr	%prec T_COMMA
-	| init_base_expr
-
-init_base_expr:
 	  expr				%prec T_COMMA {
 		init_using_expr($1);
 	  }
@@ -1342,8 +1338,13 @@ init_base_expr:
 	;
 
 initializer_list:		/* C99 6.7.8 "Initialization" */
-	  initializer		%prec T_COMMA
-	| initializer_list T_COMMA initializer
+	  initializer_list_item		%prec T_COMMA
+	| initializer_list T_COMMA initializer_list_item
+	;
+
+initializer_list_item:
+	  designation initializer
+	| initializer
 	;
 
 range:
@@ -1978,7 +1979,7 @@ term:
 	| T_LPAREN type_name T_RPAREN			%prec T_UNARY {
 		sym_t *tmp = mktempsym($2);
 		cgram_declare(tmp, true, NULL);
-	  } init_lbrace initializer_list init_rbrace {
+	  } init_lbrace initializer_list comma_opt init_rbrace {
 		if (!Sflag)
 			 /* compound literals are a C9X/GCC extension */
 			 gnuism(319);
@@ -2044,6 +2045,10 @@ identifier:			/* C99 6.4.2.1 */
 	  }
 	;
 
+comma_opt:
+	  T_COMMA
+	| /* empty */
+	;
 %%
 
 /* ARGSUSED */
