@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.22 2021/02/27 17:16:48 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.23 2021/03/20 17:08:08 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -755,4 +755,17 @@ do_while_true(void)
 	do {
 
 	} while (__lint_true);	/* expect: 161 */
+}
+
+void
+initialization(void)
+{
+	struct {
+		_Bool b;
+	} var[] = {
+	    { __lint_false },
+	    { __lint_true },
+	    { 0 },		/* FIXME: type mismatch */
+	    { 1 },		/* FIXME: type mismatch */
+	};
 }
