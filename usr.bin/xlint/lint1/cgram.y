@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.180 2021/03/20 11:05:16 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.181 2021/03/20 11:24:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.180 2021/03/20 11:05:16 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.181 2021/03/20 11:24:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1332,8 +1332,7 @@ initializer:			/* C99 6.7.8 "Initialization" */
 	| init_lbrace init_rbrace {
 		/* XXX: Empty braces are not covered by C99 6.7.8. */
 	  }
-	| init_lbrace initializer_list init_rbrace
-	| init_lbrace initializer_list T_COMMA init_rbrace
+	| init_lbrace initializer_list %prec T_COMMA comma_opt init_rbrace
 	| error
 	;
 
