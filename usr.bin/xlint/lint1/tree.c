@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.237 2021/03/19 08:21:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.238 2021/03/20 17:18:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.237 2021/03/19 08:21:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.238 2021/03/20 17:18:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1112,7 +1112,7 @@ is_assignment_bool_or_other(op_t op)
 {
 	return op == ASSIGN ||
 	       op == ANDASS || op == XORASS || op == ORASS ||
-	       op == RETURN || op == FARG;
+	       op == RETURN || op == INIT || op == FARG;
 }
 
 static bool

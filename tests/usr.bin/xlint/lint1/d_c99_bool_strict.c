@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.23 2021/03/20 17:08:08 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.24 2021/03/20 17:18:50 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -218,7 +218,7 @@ strict_bool_bit_fields_operand_conversion(void)
 		bool bit_field: 1;
 	};
 
-	struct s s = { 0 };
+	struct s s = { 0 > 0 };
 
 	s.ordinary = s.ordinary | s.ordinary;
 	s.bit_field = s.bit_field | s.bit_field;
@@ -765,7 +765,7 @@ initialization(void)
 	} var[] = {
 	    { __lint_false },
 	    { __lint_true },
-	    { 0 },		/* FIXME: type mismatch */
-	    { 1 },		/* FIXME: type mismatch */
+	    { 0 },		/* expect: 107 */
+	    { 1 },		/* expect: 107 */
 	};
 }
