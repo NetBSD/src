@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.16.2.1 2021/03/20 19:33:35 thorpej Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.16.2.2 2021/03/20 20:49:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.16.2.1 2021/03/20 19:33:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.16.2.2 2021/03/20 20:49:43 thorpej Exp $");
 
 #define PLUMIOBUSDEBUG
 
@@ -163,7 +163,7 @@ plumiobus_attach(device_t parent, device_t self, void *aux)
 	plumiobus_dump(sc);
 #endif
 
-	config_search(self, plumiobus_print,
+	config_search(self, NULL,
 	    CFARG_SUBMATCH, plumiobus_search,
 	    CFARG_IATTR, "plumiobusif",
 	    CFARG_EOL);
