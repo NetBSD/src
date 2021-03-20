@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.183 2021/03/20 13:53:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.184 2021/03/20 14:17:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.183 2021/03/20 13:53:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.184 2021/03/20 14:17:56 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1514,7 +1514,7 @@ statement_d_list:
 	  statement_list
 	| statement_d_list declaration_list statement_list {
 		if (!Sflag)
-			/* declarations after statements is a C9X feature */
+			/* declarations after statements is a C99 feature */
 			c99ism(327);
 	  }
 	;

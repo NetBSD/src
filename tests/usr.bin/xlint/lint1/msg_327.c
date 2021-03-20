@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_327.c,v 1.3 2021/03/20 14:13:51 rillig Exp $	*/
+/*	$NetBSD: msg_327.c,v 1.4 2021/03/20 14:17:56 rillig Exp $	*/
 # 3 "msg_327.c"
 
-/* Test for message: declarations after statements is a C9X feature [327] */
+/* Test for message: declarations after statements is a C99 feature [327] */
 
 /* lint1-flags: -w */
 
