@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.22.52.1 2021/03/20 19:33:32 thorpej Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.22.52.2 2021/03/20 20:47:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.22.52.1 2021/03/20 19:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.22.52.2 2021/03/20 20:47:53 thorpej Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -230,7 +230,7 @@ pxaip_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach all other devices
 	 */
-	config_search(self, sc,
+	config_search(self, NULL,
 	    CFARG_SUBMATCH, pxaip_search,
 	    CFARG_IATTR, "pxaip",
 	    CFARG_EOL);
@@ -239,7 +239,7 @@ pxaip_attach(device_t parent, device_t self, void *aux)
 static int
 pxaip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct pxaip_softc *sc = aux;
+	struct pxaip_softc *sc = device_private(parent);
 	struct pxaip_attach_args aa;
 
 	aa.pxa_iot = sc->sc_bust;

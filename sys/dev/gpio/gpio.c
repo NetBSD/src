@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.64.10.1 2021/03/20 19:33:40 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.64.10.2 2021/03/20 20:47:53 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.1 2021/03/20 19:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.2 2021/03/20 20:47:53 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -191,7 +191,7 @@ gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct gpio_softc *sc = device_private(self);
 
-	config_search(self, sc,
+	config_search(self, NULL,
 	    CFARG_SUBMATCH, gpio_search,
 	    CFARG_IATTR, ifattr,
 	    CFARG_LOCATORS, locators,
@@ -272,7 +272,7 @@ gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct gpio_attach_args ga;
 	size_t namlen;
 
-	ga.ga_gpio = aux;
+	ga.ga_gpio = device_private(parent);
 	ga.ga_offset = cf->cf_loc[GPIOCF_OFFSET];
 	ga.ga_mask = cf->cf_loc[GPIOCF_MASK];
 	ga.ga_flags = cf->cf_loc[GPIOCF_FLAG];
