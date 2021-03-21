@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.5 2021/03/21 11:48:04 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.6 2021/03/21 11:55:59 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function %s falls off bottom without returning value [217]
@@ -23,6 +23,9 @@ random(int n)
  * 'while 0' was unreachable.  This has been fixed by allowing the 'while 0'
  * in a do-while-false loop to be unreachable.  The same could be useful for a
  * do-while-true.
+ *
+ * Before func.c 1.83 from 2021-03-21, lint wrongly reported that the function
+ * would fall off the bottom.
  */
 int
 do_while_return(int i)
@@ -30,7 +33,7 @@ do_while_return(int i)
 	do {
 		return i;
 	} while (0);
-}					/*FIXME*//* expect: 217 */
+}
 
 /*
  * C99 5.1.2.2.3 "Program termination" p1 defines that as a special exception,

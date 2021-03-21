@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.82 2021/03/21 11:38:24 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.83 2021/03/21 11:55:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.82 2021/03/21 11:38:24 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.83 2021/03/21 11:55:59 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -830,11 +830,10 @@ do2(tnode_t *tn)
 
 	expr(tn, false, true, true, true);
 
-	/*
-	 * The end of the loop is only reached if it is no endless loop
-	 * or there was a break statement which could be reached.
-	 */
-	reached = !cstmt->c_infinite || cstmt->c_break;
+	if (cstmt->c_infinite)
+		reached = false;
+	if (cstmt->c_break)
+		reached = true;
 	rchflg = false;
 
 	popctrl(T_DO);
