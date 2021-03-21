@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.93 2021/03/21 18:58:34 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.94 2021/03/21 19:08:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.93 2021/03/21 18:58:34 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.94 2021/03/21 19:08:10 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -56,10 +56,10 @@ sym_t	*funcsym;
 bool	reached = true;
 
 /*
- * Is set as long as NOTREACHED is in effect.
- * Is reset everywhere where reached can become 0.
+ * Is true by default, can be cleared by NOTREACHED.
+ * Is reset to true whenever 'reached' changes.
  */
-bool	rchflg;
+bool	warn_about_unreachable;
 
 /*
  * In conjunction with 'reached', controls printing of "fallthrough on ..."
@@ -191,7 +191,7 @@ static void
 set_reached(bool new_reached)
 {
 	reached = new_reached;
-	rchflg = false;
+	warn_about_unreachable = true;
 }
 
 /*
@@ -200,13 +200,14 @@ set_reached(bool new_reached)
 void
 check_statement_reachable(void)
 {
-	if (!reached && !rchflg) {
+	if (!reached && warn_about_unreachable) {
 		/* statement not reached */
 		warning(193);
 		/*
 		 * FIXME: Setting 'reached = true' is wrong since the
 		 * statement doesn't magically become reachable just by
-		 * issuing a warning.  This must be 'rchflg = true' instead.
+		 * issuing a warning.  This must be
+		 * 'warn_about_unreachable = false' instead.
 		 */
 		reached = true;	/* only to suppress further warnings */
 	}
@@ -930,7 +931,7 @@ for2(void)
 	csrc_pos = cstmt->c_cfpos;
 
 	/* simply "statement not reached" would be confusing */
-	if (!reached && !rchflg) {
+	if (!reached && warn_about_unreachable) {
 		/* end-of-loop code not reached */
 		warning(223);
 		set_reached(true);
@@ -1271,7 +1272,7 @@ not_reached(int n)
 {
 
 	set_reached(false);
-	rchflg = true;
+	warn_about_unreachable = false;
 }
 
 /* ARGSUSED */
