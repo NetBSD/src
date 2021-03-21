@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.83 2021/03/21 11:55:59 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.84 2021/03/21 12:03:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.83 2021/03/21 11:55:59 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.84 2021/03/21 12:03:56 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -761,7 +761,7 @@ while1(tnode_t *tn)
 	pushctrl(T_WHILE);
 	cstmt->c_loop = true;
 	if (tn != NULL && tn->tn_op == CON)
-		cstmt->c_infinite = constant_is_nonzero(tn);
+		cstmt->c_maybe_endless = constant_is_nonzero(tn);
 
 	check_getopt_begin_while(tn);
 	expr(tn, false, true, true, false);
@@ -779,7 +779,7 @@ while2(void)
 	 * The end of the loop can be reached if it is no endless loop
 	 * or there was a break statement which was reached.
 	 */
-	reached = !cstmt->c_infinite || cstmt->c_break;
+	reached = !cstmt->c_maybe_endless || cstmt->c_break;
 	rchflg = false;
 
 	check_getopt_end_while();
@@ -822,15 +822,15 @@ do2(tnode_t *tn)
 		tn = check_controlling_expression(tn);
 
 	if (tn != NULL && tn->tn_op == CON) {
-		cstmt->c_infinite = constant_is_nonzero(tn);
-		if (!cstmt->c_infinite && cstmt->c_cont)
+		cstmt->c_maybe_endless = constant_is_nonzero(tn);
+		if (!cstmt->c_maybe_endless && cstmt->c_cont)
 			/* continue in 'do ... while (0)' loop */
 			error(323);
 	}
 
 	expr(tn, false, true, true, true);
 
-	if (cstmt->c_infinite)
+	if (cstmt->c_maybe_endless)
 		reached = false;
 	if (cstmt->c_break)
 		reached = true;
@@ -877,7 +877,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	if (tn2 != NULL)
 		expr(tn2, false, true, true, false);
 
-	cstmt->c_infinite =
+	cstmt->c_maybe_endless =
 	    tn2 == NULL || (tn2->tn_op == CON && constant_is_nonzero(tn2));
 
 	/* Checking the reinitialization expression is done in for2() */
@@ -924,7 +924,8 @@ for2(void)
 	csrc_pos = cspos;
 
 	/* An endless loop without break will never terminate */
-	reached = cstmt->c_break || !cstmt->c_infinite;
+	/* TODO: What if the loop contains a 'return'? */
+	reached = cstmt->c_break || !cstmt->c_maybe_endless;
 	rchflg = false;
 
 	popctrl(T_FOR);
