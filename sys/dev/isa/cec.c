@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.14 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: cec.c,v 1.14.34.1 2021/03/21 21:09:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.14 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.14.34.1 2021/03/21 21:09:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,8 @@ cecattach(device_t parent, device_t self, void *aux)
 	ga.ga_ic = &cec_ic;
 	ga.ga_address = sc->sc_myaddr;
 	sc->sc_gpib =
-	    (struct gpib_softc *)config_found(self, &ga, gpibdevprint);
+	    (struct gpib_softc *)config_found(self, &ga, gpibdevprint,
+	    CFARG_EOL);
 }
 
 int

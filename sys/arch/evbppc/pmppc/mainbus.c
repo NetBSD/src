@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2011/07/01 19:03:08 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.68.1 2021/03/21 21:08:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2011/07/01 19:03:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.68.1 2021/03/21 21:08:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -115,7 +115,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	maa.mb_name = "cpu";
 	maa.mb_addr = MAINBUSCF_ADDR_DEFAULT;
 	maa.mb_irq = MAINBUSCF_IRQ_DEFAULT;
-	config_found(self, &maa, mainbus_print);
+	config_found(self, &maa, mainbus_print, CFARG_EOL);
 
 	if (a_config.a_has_rtc) {
 		maa.mb_name = "rtc";
@@ -146,7 +146,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	maa.mb_name = "cpc";
 	maa.mb_addr = MAINBUSCF_ADDR_DEFAULT;
 	maa.mb_irq = MAINBUSCF_IRQ_DEFAULT;
-	config_found(self, &maa, mainbus_print);
+	config_found(self, &maa, mainbus_print, CFARG_EOL);
 }
 
 static int	cpu_match(device_t, cfdata_t, void *);

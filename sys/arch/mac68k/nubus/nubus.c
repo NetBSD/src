@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.66 2019/01/08 19:41:09 jdolecek Exp $	*/
+/*	$NetBSD: nubus.c,v 1.66.14.1 2021/03/21 21:09:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.66 2019/01/08 19:41:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.66.14.1 2021/03/21 21:09:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ notfound:
 
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 
-		config_found(self, &na_args, nubus_print);
+		config_found(self, &na_args, nubus_print, CFARG_EOL);
 	}
 
 	enable_nubus_intr();

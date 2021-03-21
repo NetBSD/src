@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.114 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: fd.c,v 1.114.10.1 2021/03/21 21:09:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114.10.1 2021/03/21 21:09:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -452,7 +452,7 @@ fdcfinishattach(device_t self)
 			if (fdc->sc_present & (1 << fa.fa_drive)) {
 				fa.fa_deftype = fdc->sc_knownfds[fa.fa_drive];
 				config_found(fdc->sc_dev, (void *)&fa,
-				    fdprint);
+				    fdprint, CFARG_EOL);
 			}
 		} else {
 #if defined(atari)

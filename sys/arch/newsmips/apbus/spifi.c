@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.20 2018/10/14 00:10:11 tsutsui Exp $	*/
+/*	$NetBSD: spifi.c,v 1.20.14.1 2021/03/21 21:09:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.20 2018/10/14 00:10:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.20.14.1 2021/03/21 21:09:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -209,7 +209,7 @@ spifi_attach(device_t parent, device_t self, void *aux)
 	apbus_intr_establish(0, intr, 0, spifi_intr, sc, device_xname(self),
 	    apa->apa_ctlnum);
 
-	config_found(self, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
 }
 
 void

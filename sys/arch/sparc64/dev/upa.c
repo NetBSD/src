@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.20 2021/01/04 14:48:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.20.2.1 2021/03/21 21:09:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,7 +132,7 @@ upa_attach(device_t parent, device_t self, void *aux)
 		map.ma_name = buf;
 		map.ma_bustag = sc->sc_cbt;
 		map.ma_dmatag = ma->ma_dmatag;
-		config_found(sc->sc_dev, &map, upa_print);
+		config_found(sc->sc_dev, &map, upa_print, CFARG_EOL);
 	}
 }
 

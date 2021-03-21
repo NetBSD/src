@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_tp.c,v 1.8 2012/10/27 17:17:52 chs Exp $	*/
+/*	$NetBSD: wzero3_tp.c,v 1.8.52.1 2021/03/21 21:09:00 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.8 2012/10/27 17:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.8.52.1 2021/03/21 21:09:00 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -291,7 +291,7 @@ wzero3tp_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &wzero3tp_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
 
 	/* Initialize calibration, set default parameters. */
 	tpcalib_init(&sc->sc_tpcalib);

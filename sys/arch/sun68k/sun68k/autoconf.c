@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2012/10/13 06:38:08 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30.52.1 2021/03/21 21:09:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2012/10/13 06:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30.52.1 2021/03/21 21:09:08 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -145,16 +145,16 @@ mainbus_attach(device_t parent, device_t self, void *args)
 	/* Find all `early' mainbus buses */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		ma.ma_name = *cpp;
-		(void)config_found(self, &ma, NULL);
+		(void)config_found(self, &ma, NULL, CFARG_EOL);
 	}
 
 	/* Find the remaining buses */
 	ma.ma_name = NULL;
-	(void)config_found(self, &ma, NULL);
+	(void)config_found(self, &ma, NULL, CFARG_EOL);
 
 	/* Lastly, find the PROM console */
 	ma.ma_name = "pcons";
-	(void)config_found(self, &ma, NULL);
+	(void)config_found(self, &ma, NULL, CFARG_EOL);
 }
 
 /*

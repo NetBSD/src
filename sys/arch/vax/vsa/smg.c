@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.59 2020/11/21 22:37:11 thorpej Exp $ */
+/*	$NetBSD: smg.c,v 1.59.2.1 2021/03/21 21:09:08 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.59 2020/11/21 22:37:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.59.2.1 2021/03/21 21:09:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ smg_attach(device_t parent, device_t self, void *aux)
 	}
 	qf = console_font->data;
 
-	config_found(self, &aa, wsemuldisplaydevprint);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static	u_char *cursor;

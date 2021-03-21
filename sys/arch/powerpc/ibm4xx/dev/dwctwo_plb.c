@@ -1,4 +1,4 @@
-/* $NetBSD: dwctwo_plb.c,v 1.6 2021/02/27 20:43:58 rin Exp $ */
+/* $NetBSD: dwctwo_plb.c,v 1.6.2.1 2021/03/21 21:09:06 thorpej Exp $ */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.6 2021/02/27 20:43:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.6.2.1 2021/03/21 21:09:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,5 +137,6 @@ dwctwo_plb_deferred(device_t self)
 		    error);
 		return;
 	}
-	sc->sc_child = config_found(sc->sc_dev, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(sc->sc_dev, &sc->sc_bus, usbctlprint,
+	    CFARG_EOL);
 }

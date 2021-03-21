@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.40 2019/06/29 16:41:19 tsutsui Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.40.12.1 2021/03/21 21:08:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.40 2019/06/29 16:41:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.40.12.1 2021/03/21 21:08:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -267,7 +267,7 @@ grfccattach(device_t parent, device_t self, void *aux)
 	/*
 	 * try and attach an ite
 	 */
-	config_found(self, sc /* XXX */, grfccprint);
+	config_found(self, sc /* XXX */, grfccprint, CFARG_EOL);
 
 	/*
 	 * If attaching the first unit, go ahead and 'find' the rest of us
@@ -276,7 +276,8 @@ grfccattach(device_t parent, device_t self, void *aux)
 		first_attach = 0;
 		grf_auxp.from_bus_match = 0;
 		for (grf_auxp.unit=1; grf_auxp.unit < NGRFCC; grf_auxp.unit++) {
-			config_found(parent, &grf_auxp, grf_bus_auxp->busprint);
+			config_found(parent, &grf_auxp, grf_bus_auxp->busprint,
+			    CFARG_EOL);
 		}
 	}
 }

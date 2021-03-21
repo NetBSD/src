@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.74 2020/02/29 05:51:11 isaki Exp $	*/
+/*	$NetBSD: wss.c,v 1.74.8.1 2021/03/21 21:09:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.74 2020/02/29 05:51:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.74.8.1 2021/03/21 21:09:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ wssattach(struct wss_softc *sc)
 		arg.type = AUDIODEV_TYPE_OPL;
 		arg.hwif = 0;
 		arg.hdl = 0;
-		(void)config_found(ac->sc_dev, &arg, audioprint);
+		(void)config_found(ac->sc_dev, &arg, audioprint, CFARG_EOL);
 	}
 }
 

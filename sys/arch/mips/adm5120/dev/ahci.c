@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.23 2021/01/05 16:30:37 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.23.2.1 2021/03/21 21:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.23 2021/01/05 16:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.23.2.1 2021/03/21 21:09:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ ahci_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* Attach USB devices */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 
 }
 

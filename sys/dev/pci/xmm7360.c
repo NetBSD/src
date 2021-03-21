@@ -74,7 +74,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.6 2020/07/29 13:03:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.6.4.1 2021/03/21 21:09:14 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2138,7 +2138,7 @@ wwanc_attach_finish(struct device *self)
 	struct wwanc_attach_args wa;
 	memset(&wa, 0, sizeof(wa));
 	wa.aa_type = WWMC_TYPE_NET;
-	sc->sc_net = config_found(self, &wa, wwancprint);
+	sc->sc_net = config_found(self, &wa, wwancprint, CFARG_EOL);
 }
 
 static void

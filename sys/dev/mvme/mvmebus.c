@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.21 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.21.10.1 2021/03/21 21:09:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.21 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.21.10.1 2021/03/21 21:09:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -236,7 +236,7 @@ mvmebus_attach(struct mvmebus_softc *sc)
 	vaa.va_bdt = &sc->sc_mvmedmat;
 	vaa.va_slaveconfig = NULL;
 
-	config_found(sc->sc_dev, &vaa, 0);
+	config_found(sc->sc_dev, &vaa, 0, CFARG_EOL);
 }
 
 int

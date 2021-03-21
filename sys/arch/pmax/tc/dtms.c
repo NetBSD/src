@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.11 2011/07/09 17:32:31 matt Exp $	*/
+/*	$NetBSD: dtms.c,v 1.11.68.1 2021/03/21 21:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.11 2011/07/09 17:32:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.11.68.1 2021/03/21 21:09:05 thorpej Exp $");
 
 #include "locators.h"
 
@@ -99,7 +99,7 @@ dtms_attach(device_t parent, device_t self, void *aux)
 
 	a.accessops = &dtms_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.44 2016/08/05 05:32:02 isaki Exp $	*/
+/*	$NetBSD: zs.c,v 1.44.30.1 2021/03/21 21:09:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.44 2016/08/05 05:32:02 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.44.30.1 2021/03/21 21:09:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,8 @@ zs_attach(device_t parent, device_t self, void *aux)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		child = config_found(self, (void *)&zsc_args, zs_print);
+		child = config_found(self, (void *)&zsc_args, zs_print,
+		    CFARG_EOL);
 #if ZSTTY > 0
 		if (zc == conschan &&
 		    ((child && strcmp(device_xname(child), "zstty0")) ||

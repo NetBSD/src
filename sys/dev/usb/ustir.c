@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.47 2020/12/18 01:40:20 thorpej Exp $	*/
+/*	$NetBSD: ustir.c,v 1.47.2.1 2021/03/21 21:09:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.47 2020/12/18 01:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.47.2.1 2021/03/21 21:09:15 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -303,7 +303,7 @@ ustir_attach(device_t parent, device_t self, void *aux)
 	ia.ia_methods = &ustir_methods;
 	ia.ia_handle = sc;
 
-	sc->sc_child = config_found(self, &ia, ir_print);
+	sc->sc_child = config_found(self, &ia, ir_print, CFARG_EOL);
 	selinit(&sc->sc_rd_sel);
 	selinit(&sc->sc_wr_sel);
 	sc->sc_init_state = USTIR_INIT_INITED;

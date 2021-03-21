@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.29 2016/09/06 06:27:17 skrll Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.29.32.1 2021/03/21 21:09:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.29 2016/09/06 06:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.29.32.1 2021/03/21 21:09:11 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -219,7 +219,7 @@ btnmgrattach(device_t parent,
 	wa.accessops = &btnmgr_wskbd_accessops;
 	wa.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found(self, &wa, wskbddevprint);
+	sc->sc_wskbddev = config_found(self, &wa, wskbddevprint, CFARG_EOL);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "unable to establish power handler\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.62 2020/11/20 17:38:05 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.62.2.1 2021/03/21 21:08:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2020/11/20 17:38:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62.2.1 2021/03/21 21:08:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -431,7 +431,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 			    type, fa.fa_drive);
 		else
 			fa.fa_deftype = NULL;		/* unknown */
-		(void)config_found(self, (void *)&fa, fdprint);
+		(void)config_found(self, (void *)&fa, fdprint, CFARG_EOL);
 	}
 }
 

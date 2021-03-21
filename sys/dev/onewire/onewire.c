@@ -1,4 +1,4 @@
-/*	$NetBSD: onewire.c,v 1.20 2020/04/14 15:36:02 kre Exp $	*/
+/*	$NetBSD: onewire.c,v 1.20.4.1 2021/03/21 21:09:13 thorpej Exp $	*/
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.20 2020/04/14 15:36:02 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.20.4.1 2021/03/21 21:09:13 thorpej Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -529,7 +529,8 @@ onewire_scan(struct onewire_softc *sc)
 			mutex_exit(&sc->sc_lock);
 
 			KERNEL_LOCK(1, NULL); /* XXXSMP */
-			d->d_dev = config_found(sc->sc_dev, &oa, onewire_print);
+			d->d_dev = config_found(sc->sc_dev, &oa, onewire_print,
+			    CFARG_EOL);
 			KERNEL_UNLOCK_ONE(NULL); /* XXXSMP */
 
 			mutex_enter(&sc->sc_lock);

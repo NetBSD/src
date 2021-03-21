@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.25 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.25.10.1 2021/03/21 21:09:14 thorpej Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.25 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.25.10.1 2021/03/21 21:09:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -167,12 +167,14 @@ nfsmbc_attach(device_t parent, device_t self, void *aux)
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, baseregs[0]);
 	nfsmbca.nfsmb_num = 1;
 	nfsmbca.nfsmb_addr = NFORCE_SMBBASE(reg);
-	sc->sc_nfsmb[0] = config_found(sc->sc_dev, &nfsmbca, nfsmbc_print);
+	sc->sc_nfsmb[0] = config_found(sc->sc_dev, &nfsmbca, nfsmbc_print,
+	    CFARG_EOL);
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, baseregs[1]);
 	nfsmbca.nfsmb_num = 2;
 	nfsmbca.nfsmb_addr = NFORCE_SMBBASE(reg);
-	sc->sc_nfsmb[1] = config_found(sc->sc_dev, &nfsmbca, nfsmbc_print);
+	sc->sc_nfsmb[1] = config_found(sc->sc_dev, &nfsmbca, nfsmbc_print,
+	    CFARG_EOL);
 
 	/* This driver is similar to an ISA bridge that doesn't
 	 * need any special handling. So registering NULL handlers

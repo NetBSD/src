@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.18 2015/06/09 22:46:36 matt Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.18.32.1 2021/03/21 21:09:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.18 2015/06/09 22:46:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.18.32.1 2021/03/21 21:09:00 thorpej Exp $");
 
 #include "opt_use_poll.h"
 
@@ -147,7 +147,7 @@ tc5165buf_attach(device_t parent, device_t self, void *aux)
 	
 	haa.haa_ic = &sc->sc_chip->scc_if;
 
-	config_found(self, &haa, hpckbd_print);
+	config_found(self, &haa, hpckbd_print, CFARG_EOL);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.2 2021/03/21 17:58:40 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.3 2021/03/21 21:09:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.2 2021/03/21 17:58:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.3 2021/03/21 21:09:16 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1185,19 +1185,23 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  * functions) and attach it, and return its device_t.  If the device was
  * not configured, call the given `print' function and return NULL.
  */
-device_t
-config_found_sm_loc(device_t parent,
-		const char *ifattr, const int *locs, void *aux,
-		cfprint_t print, cfsubmatch_t submatch)
+static device_t
+config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
+    va_list ap)
 {
+	cfsubmatch_t submatch;
+	const char *ifattr;
+	const int *locs;
 	cfdata_t cf;
+
+	config_get_cfargs(tag, &submatch, &ifattr, &locs, ap);
 
 	if ((cf = config_search(parent, aux,
 				CFARG_SUBMATCH, submatch,
 				CFARG_IATTR, ifattr,
 				CFARG_LOCATORS, locs,
 				CFARG_EOL)))
-		return(config_attach_loc(parent, cf, locs, aux, print));
+		return config_attach_loc(parent, cf, locs, aux, print);
 	if (print) {
 		if (config_do_twiddle && cold)
 			twiddle();
@@ -1215,6 +1219,11 @@ config_found_sm_loc(device_t parent,
 	return NULL;
 }
 
+#if 0
+config_found_sm_loc(device_t parent,
+		const char *ifattr, const int *locs, void *aux,
+		cfprint_t print, cfsubmatch_t submatch)
+
 device_t
 config_found_ia(device_t parent, const char *ifattr, void *aux,
     cfprint_t print)
@@ -1222,12 +1231,19 @@ config_found_ia(device_t parent, const char *ifattr, void *aux,
 
 	return config_found_sm_loc(parent, ifattr, NULL, aux, print, NULL);
 }
+#endif
 
 device_t
-config_found(device_t parent, void *aux, cfprint_t print)
+config_found(device_t parent, void *aux, cfprint_t print, cfarg_t tag, ...)
 {
+	device_t dev;
+	va_list ap;
 
-	return config_found_sm_loc(parent, NULL, NULL, aux, print, NULL);
+	va_start(ap, tag);
+	dev = config_vfound(parent, aux, print, tag, ap);
+	va_end(ap);
+
+	return dev;
 }
 
 /*

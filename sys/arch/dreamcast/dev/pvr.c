@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.36 2016/03/11 13:16:55 tsutsui Exp $	*/
+/*	$NetBSD: pvr.c,v 1.36.32.1 2021/03/21 21:08:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.36 2016/03/11 13:16:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.36.32.1 2021/03/21 21:08:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ pvr_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &pvr_accessops;
 	waa.accesscookie = sc;
 
-	(void) config_found(self, &waa, wsemuldisplaydevprint);
+	(void) config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 int

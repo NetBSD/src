@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.91.2.2 2021/03/21 19:06:19 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.91.2.3 2021/03/21 21:09:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91.2.2 2021/03/21 19:06:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91.2.3 2021/03/21 21:09:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1441,7 +1441,7 @@ audio_attach_mi(const struct audio_hw_if *ahwp, void *hdlp, device_t dev)
 	arg.type = AUDIODEV_TYPE_AUDIO;
 	arg.hwif = ahwp;
 	arg.hdl = hdlp;
-	return config_found(dev, &arg, audioprint);
+	return config_found(dev, &arg, audioprint, CFARG_EOL);
 }
 
 /*
