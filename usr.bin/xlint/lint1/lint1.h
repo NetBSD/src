@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.76 2021/03/20 13:00:43 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.77 2021/03/21 10:08:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -370,12 +370,12 @@ typedef	struct pqinf {
 } pqinf_t;
 
 /*
- * Case values are stored in a list of type clst_t.
+ * Case values are stored in a list of type case_label_t.
  */
-typedef	struct clst {
+typedef	struct case_label {
 	val_t	cl_val;
-	struct	clst *cl_next;
-} clst_t;
+	struct case_label *cl_next;
+} case_label_t;
 
 /*
  * Used to keep information about nested control statements.
@@ -393,7 +393,7 @@ typedef struct control_statement {
 	bool	c_had_return_noval : 1;	/* had "return;" */
 	bool	c_had_return_value : 1;	/* had "return (e);" */
 	type_t	*c_swtype;		/* type of switch expression */
-	clst_t	*c_clst;		/* list of case values */
+	case_label_t *c_case_labels;	/* list of case values */
 	struct	mbl *c_fexprm;		/* saved memory for end of loop
 					   expression in for() */
 	tnode_t	*c_f3expr;		/* end of loop expr in for() */

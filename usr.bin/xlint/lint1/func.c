@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.78 2021/03/20 16:16:32 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.79 2021/03/21 10:08:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.78 2021/03/20 16:16:32 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.79 2021/03/21 10:08:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -170,7 +170,7 @@ void
 popctrl(int env)
 {
 	cstk_t	*ci;
-	clst_t	*cl, *next;
+	case_label_t *cl, *next;
 
 	lint_assert(cstmt != NULL);
 	lint_assert(cstmt->c_env == env);
@@ -178,7 +178,7 @@ popctrl(int env)
 	ci = cstmt;
 	cstmt = ci->c_surrounding;
 
-	for (cl = ci->c_clst; cl != NULL; cl = next) {
+	for (cl = ci->c_case_labels; cl != NULL; cl = next) {
 		next = cl->cl_next;
 		free(cl);
 	}
@@ -447,7 +447,7 @@ check_case_label_enum(const tnode_t *tn, const cstk_t *ci)
 static void
 check_case_label(tnode_t *tn, cstk_t *ci)
 {
-	clst_t	*cl;
+	case_label_t *cl;
 	val_t	*v;
 	val_t	nv;
 	tspec_t	t;
@@ -498,7 +498,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	free(v);
 
 	/* look if we had this value already */
-	for (cl = ci->c_clst; cl != NULL; cl = cl->cl_next) {
+	for (cl = ci->c_case_labels; cl != NULL; cl = cl->cl_next) {
 		if (cl->cl_val.v_quad == nv.v_quad)
 			break;
 	}
@@ -515,10 +515,10 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		 * append the value to the list of
 		 * case values
 		 */
-		cl = xcalloc(1, sizeof (clst_t));
+		cl = xcalloc(1, sizeof *cl);
 		cl->cl_val = nv;
-		cl->cl_next = ci->c_clst;
-		ci->c_clst = cl;
+		cl->cl_next = ci->c_case_labels;
+		ci->c_case_labels = cl;
 	}
 }
 
@@ -694,7 +694,7 @@ switch2(void)
 {
 	int	nenum = 0, nclab = 0;
 	sym_t	*esym;
-	clst_t	*cl;
+	case_label_t *cl;
 
 	lint_assert(cstmt->c_swtype != NULL);
 
@@ -710,7 +710,7 @@ switch2(void)
 		     esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
-		for (cl = cstmt->c_clst; cl != NULL; cl = cl->cl_next)
+		for (cl = cstmt->c_case_labels; cl != NULL; cl = cl->cl_next)
 			nclab++;
 		if (hflag && eflag && nenum != nclab && !cstmt->c_default) {
 			/* enumeration value(s) not handled in switch */
