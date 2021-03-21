@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.156 2021/03/21 10:30:28 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.157 2021/03/21 20:18:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.156 2021/03/21 10:30:28 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.157 2021/03/21 20:18:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1345,7 +1345,7 @@ add_pointer(sym_t *decl, pqinf_t *pi)
 }
 
 /*
- * If a dimension was specified, dim is 1, otherwise 0
+ * If a dimension was specified, dim is true, otherwise false
  * n is the specified dimension
  */
 sym_t *
