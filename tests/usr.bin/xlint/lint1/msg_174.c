@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_174.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_174.c,v 1.4 2021/03/21 10:43:08 rillig Exp $	*/
 # 3 "msg_174.c"
 
 // Test for message: too many initializers [174]
@@ -11,6 +11,9 @@ example(void)
 
 	int too_many = { 17, 19 };	/* expect: 174 */
 
-	/* XXX: Double-check with C99, this might be allowed. */
+	/*
+	 * An initializer list must have at least one expression, says the
+	 * syntax definition in C99 6.7.8.
+	 */
 	int too_few = {};
 }
