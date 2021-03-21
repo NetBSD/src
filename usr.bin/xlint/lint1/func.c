@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.88 2021/03/21 14:36:59 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.89 2021/03/21 14:49:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.88 2021/03/21 14:36:59 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.89 2021/03/21 14:49:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -940,7 +940,7 @@ for2(void)
  * T_GOTO identifier T_SEMI
  */
 void
-dogoto(sym_t *lab)
+do_goto(sym_t *lab)
 {
 
 	mark_as_used(lab, false, false);
@@ -954,7 +954,7 @@ dogoto(sym_t *lab)
  * T_BREAK T_SEMI
  */
 void
-dobreak(void)
+do_break(void)
 {
 	cstk_t	*ci;
 
@@ -980,7 +980,7 @@ dobreak(void)
  * T_CONTINUE T_SEMI
  */
 void
-docont(void)
+do_continue(void)
 {
 	cstk_t	*ci;
 
@@ -1005,7 +1005,7 @@ docont(void)
  * T_RETURN expr T_SEMI
  */
 void
-doreturn(tnode_t *tn)
+do_return(tnode_t *tn)
 {
 	tnode_t	*ln, *rn;
 	cstk_t	*ci;
@@ -1251,7 +1251,7 @@ fallthru(int n)
  */
 /* ARGSUSED */
 void
-notreach(int n)
+not_reached(int n)
 {
 
 	reached = false;

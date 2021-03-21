@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.14 2021/03/20 19:33:25 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.15 2021/03/21 14:49:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.14 2021/03/20 19:33:25 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.15 2021/03/21 14:49:21 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1170,7 +1170,7 @@ lex_comment(void)
 		{ "LINTED",		true,	linted		},
 		{ "LONGLONG",		false,	longlong	},
 		{ "NOSTRICT",		true,	linted		},
-		{ "NOTREACHED",		false,	notreach	},
+		{ "NOTREACHED",		false,	not_reached	},
 		{ "PRINTFLIKE",		true,	printflike	},
 		{ "PROTOLIB",		true,	protolib	},
 		{ "SCANFLIKE",		true,	scanflike	},

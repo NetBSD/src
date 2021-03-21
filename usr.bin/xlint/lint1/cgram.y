@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.195 2021/03/21 10:25:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.196 2021/03/21 14:49:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.195 2021/03/21 10:25:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.196 2021/03/21 14:49:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1753,22 +1753,22 @@ opt_expr:
 
 jump_statement:			/* C99 6.8.6 */
 	  goto identifier T_SEMI {
-		dogoto(getsym($2));
+		do_goto(getsym($2));
 	  }
 	| goto error T_SEMI {
 		symtyp = FVFT;
 	  }
 	| T_CONTINUE T_SEMI {
-		docont();
+		do_continue();
 	  }
 	| T_BREAK T_SEMI {
-		dobreak();
+		do_break();
 	  }
 	| T_RETURN T_SEMI {
-		doreturn(NULL);
+		do_return(NULL);
 	  }
 	| T_RETURN expr T_SEMI {
-		doreturn($2);
+		do_return($2);
 	  }
 	;
 
