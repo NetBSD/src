@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.243 2021/03/21 11:48:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.244 2021/03/21 18:58:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.243 2021/03/21 11:48:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.244 2021/03/21 18:58:34 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3927,6 +3927,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 
 	switch (op) {
 	case ADDR:
+		/* XXX: Taking rchflg into account here feels wrong. */
 		if (ln->tn_op == NAME && (reached || rchflg)) {
 			if (!szof)
 				mark_as_set(ln->tn_sym);
@@ -3958,6 +3959,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case SHRASS:
 	case REAL:
 	case IMAG:
+		/* XXX: Taking rchflg into account here feels wrong. */
 		if (ln->tn_op == NAME && (reached || rchflg)) {
 			sc = ln->tn_sym->s_scl;
 			/*
@@ -3979,6 +3981,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		}
 		break;
 	case ASSIGN:
+		/* XXX: Taking rchflg into account here feels wrong. */
 		if (ln->tn_op == NAME && !szof && (reached || rchflg)) {
 			mark_as_set(ln->tn_sym);
 			if (ln->tn_sym->s_scl == EXTERN)
