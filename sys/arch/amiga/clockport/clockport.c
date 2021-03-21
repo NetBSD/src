@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport.c,v 1.5.52.1 2021/03/20 19:33:30 thorpej Exp $ */
+/*      $NetBSD: clockport.c,v 1.5.52.2 2021/03/21 17:35:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@ clockport_attach(device_t parent, device_t self, void *aux)
 
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, clockport_submatch,
-	    CFARG_IATTR, "clockport",
 	    CFARG_EOL);
 }
 

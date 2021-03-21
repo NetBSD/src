@@ -1,10 +1,10 @@
-/*	$NetBSD: gemini_lpc.c,v 1.4.52.1 2021/03/20 19:33:31 thorpej Exp $	*/
+/*	$NetBSD: gemini_lpc.c,v 1.4.52.2 2021/03/21 17:35:40 thorpej Exp $	*/
 
 #include "opt_gemini.h"
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.4.52.1 2021/03/20 19:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.4.52.2 2021/03/21 17:35:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ gemini_lpc_attach(device_t parent, device_t self, void *aux)
 	 */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, gemini_lpc_search,
-	    CFARG_IATTR, "lpc",
 	    CFARG_EOL);
 }
 

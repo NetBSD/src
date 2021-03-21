@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.13.68.1 2021/03/20 19:33:36 thorpej Exp $ */
+/* $NetBSD: sbgbus.c,v 1.13.68.2 2021/03/21 17:35:45 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.13.68.1 2021/03/20 19:33:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.13.68.2 2021/03/21 17:35:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ sbgbus_attach(device_t parent, device_t self, void *aux)
 	/* Configure children using indirect configuration. */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, sbgbussearch,
-	    CFARG_IATTR, "sbgbus",
 	    CFARG_EOL);
 }
 

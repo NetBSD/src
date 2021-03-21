@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.32.52.1 2021/03/20 19:33:39 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.32.52.2 2021/03/21 17:35:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.32.52.1 2021/03/20 19:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.32.52.2 2021/03/21 17:35:48 thorpej Exp $");
 
 #include "locators.h"
 
@@ -94,7 +94,6 @@ grfbusattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, grfbussearch,
-	    CFARG_IATTR, "grfb",
 	    CFARG_EOL);
 }
 

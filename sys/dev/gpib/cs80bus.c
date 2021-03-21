@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.17.34.1 2021/03/20 19:33:40 thorpej Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.17.34.2 2021/03/21 17:35:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.17.34.1 2021/03/20 19:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.17.34.2 2021/03/21 17:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ cs80busattach(device_t parent, device_t self, void *aux)
 
 		config_search(sc->sc_dev, &ca,
 		    CFARG_SUBMATCH, cs80bussearch,
-		    CFARG_IATTR, "cs80bus",
 		    CFARG_EOL);
 	}
 }

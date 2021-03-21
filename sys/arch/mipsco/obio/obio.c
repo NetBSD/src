@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.17.68.1 2021/03/20 19:33:36 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.17.68.2 2021/03/21 17:35:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.17.68.1 2021/03/20 19:33:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.17.68.2 2021/03/21 17:35:45 thorpej Exp $");
 
 #include "locators.h"
 
@@ -88,7 +88,6 @@ obio_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 	config_search(self, ca,
 	    CFARG_SUBMATCH, obio_search,
-	    CFARG_IATTR, "obio",
 	    CFARG_EOL);
 }
 

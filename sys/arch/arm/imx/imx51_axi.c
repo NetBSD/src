@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_axi.c,v 1.7.16.1 2021/03/20 19:33:31 thorpej Exp $	*/
+/*	$NetBSD: imx51_axi.c,v 1.7.16.2 2021/03/21 17:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.7.16.1 2021/03/20 19:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.7.16.2 2021/03/21 17:35:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,11 +88,9 @@ axi_attach(device_t parent __unused, device_t self, void *aux __unused)
 	aa.aa_dmat = sc->sc_dmat;
 	config_search(self, &aa,
 	    CFARG_SUBMATCH, axi_critical_search,
-	    CFARG_IATTR, "axi",
 	    CFARG_EOL);
 	config_search(self, &aa,
 	    CFARG_SUBMATCH, axi_search,
-	    CFARG_IATTR, "axi",
 	    CFARG_EOL);
 }
 

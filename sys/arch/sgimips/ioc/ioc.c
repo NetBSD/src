@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.11.32.1 2021/03/20 19:33:38 thorpej Exp $	 */
+/* $NetBSD: ioc.c,v 1.11.32.2 2021/03/21 17:35:47 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.11.32.1 2021/03/20 19:33:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.11.32.2 2021/03/21 17:35:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,6 @@ ioc_attach(device_t parent, device_t self, void *aux)
 
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, ioc_search,
-	    CFARG_IATTR, "ioc",
 	    CFARG_EOL);
 #endif
 }

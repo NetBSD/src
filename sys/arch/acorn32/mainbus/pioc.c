@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.18.52.1 2021/03/20 19:33:30 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.18.52.2 2021/03/21 17:35:39 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.1 2021/03/20 19:33:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.2 2021/03/21 17:35:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,6 @@ piocattach(device_t parent, device_t self, void *aux)
 #if 0
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, piocsearch,
-	    CFARG_IATTR, "pioc",
 	    CFARG_EOL);
 #endif
 }

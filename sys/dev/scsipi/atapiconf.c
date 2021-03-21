@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.91.22.1 2021/03/20 19:33:41 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.91.22.2 2021/03/21 17:35:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.91.22.1 2021/03/20 19:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.91.22.2 2021/03/21 17:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,6 @@ atapi_probe_device(struct atapibus_softc *sc, int target,
 
 	if ((cf = config_search(sc->sc_dev, sa,
 				CFARG_SUBMATCH, atapibussubmatch,
-				CFARG_IATTR, "atapibus",
 				CFARG_EOL)) != NULL) {
 		scsipi_insert_periph(chan, periph);
 		/*

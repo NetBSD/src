@@ -1,4 +1,4 @@
-/* $Id: imx23_apbh.c,v 1.1.56.1 2021/03/20 19:33:31 thorpej Exp $ */
+/* $Id: imx23_apbh.c,v 1.1.56.2 2021/03/21 17:35:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -91,11 +91,9 @@ apbh_attach(device_t parent, device_t self, void *aux)
 
 	config_search(self, &aa,
 	    CFARG_SUBMATCH, apbh_search_crit_cb,
-	    CFARG_IATTR, "apbh",
 	    CFARG_EOL);
 	config_search(self, &aa,
 	    CFARG_SUBMATCH, apbh_search_cb,
-	    CFARG_IATTR, "apbh",
 	    CFARG_EOL);
 
 	apbh_attached = 1;

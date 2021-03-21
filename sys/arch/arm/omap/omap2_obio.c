@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.24.30.1 2021/03/20 19:33:32 thorpej Exp $	*/
+/*	$Id: omap2_obio.c,v 1.24.30.2 2021/03/21 17:35:41 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.24.30.1 2021/03/20 19:33:32 thorpej Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.24.30.2 2021/03/21 17:35:41 thorpej Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24.30.1 2021/03/20 19:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24.30.2 2021/03/21 17:35:41 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -200,7 +200,6 @@ obio_attach1(device_t self)
 	 */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, obio_search,
-	    CFARG_IATTR, "obio",
 	    CFARG_EOL);
 }
 
@@ -440,7 +439,6 @@ obio_attach_critical(struct obio_softc *sc)
 
 		cf = config_search(sc->sc_dev, &oa,
 		    CFARG_SUBMATCH, obio_find,
-		    CFARG_IATTR, "obio",
 		    CFARG_EOL);
 		if (cf == NULL) {
 			if (critical_devs[i].required)

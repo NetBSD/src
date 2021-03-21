@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.27.44.1 2021/03/20 19:33:39 thorpej Exp $	*/
+/*	$NetBSD: obmem.c,v 1.27.44.2 2021/03/21 17:35:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.27.44.1 2021/03/20 19:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.27.44.2 2021/03/21 17:35:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,6 @@ obmem_attach(device_t parent, device_t self, void *aux)
 	/* We know ca_bustype == BUS_OBMEM */
 	config_search(self, &obma,
 	    CFARG_SUBMATCH, bus_scan,
-	    CFARG_IATTR, "obmem",
 	    CFARG_EOL);
 }
 

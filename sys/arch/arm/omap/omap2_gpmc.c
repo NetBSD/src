@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.10.30.1 2021/03/20 19:33:32 thorpej Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.10.30.2 2021/03/21 17:35:41 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.10.30.1 2021/03/20 19:33:32 thorpej Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.10.30.2 2021/03/21 17:35:41 thorpej Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.10.30.1 2021/03/20 19:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.10.30.2 2021/03/21 17:35:41 thorpej Exp $");
 
 #include "locators.h"
 
@@ -215,7 +215,6 @@ gpmc_attach(device_t parent, device_t self, void *aux)
 	 */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, gpmc_search,
-	    CFARG_IATTR, "gpmc",
 	    CFARG_EOL);
 }
 

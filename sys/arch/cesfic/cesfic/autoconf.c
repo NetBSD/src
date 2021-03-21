@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27.10.1 2021/03/20 19:33:33 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.10.2 2021/03/21 17:35:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.10.1 2021/03/20 19:33:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.10.2 2021/03/21 17:35:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ mainbusattach(device_t parent, device_t self, void *aux)
 	/* Search for and attach children. */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, mainbussearch,
-	    CFARG_IATTR, "mainbus",
 	    CFARG_EOL);
 }
 

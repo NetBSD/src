@@ -1,4 +1,4 @@
-/*	$NetBSD: nbppcon.c,v 1.3.16.1 2021/03/20 19:33:35 thorpej Exp $ */
+/*	$NetBSD: nbppcon.c,v 1.3.16.2 2021/03/21 17:35:44 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.3.16.1 2021/03/20 19:33:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.3.16.2 2021/03/21 17:35:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,7 +109,6 @@ nbppcon_attach(device_t parent, device_t self, void *aux)
 
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, nbppcon_search,
-	    CFARG_IATTR, "nbppcon",
 	    CFARG_EOL);
 }
 
