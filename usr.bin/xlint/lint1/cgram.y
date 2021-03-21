@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.189 2021/03/21 08:46:26 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.190 2021/03/21 08:52:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.189 2021/03/21 08:46:26 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.190 2021/03/21 08:52:05 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -75,8 +75,8 @@ static	sym_t	*symbolrename(sym_t *, sbuf_t *);
 static void
 CLEAR_WARN_FLAGS(const char *file, size_t line)
 {
-	printf("%s, %d: clear flags %s %zu\n", curr_pos.p_file,
-	    curr_pos.p_line, file, line);
+	printf("%s:%d: %s:%zu: clearing flags\n",
+	    curr_pos.p_file, curr_pos.p_line, file, line);
 	clear_warn_flags();
 	olwarn = LWARN_BAD;
 }
@@ -85,8 +85,8 @@ static void
 SAVE_WARN_FLAGS(const char *file, size_t line)
 {
 	lint_assert(olwarn == LWARN_BAD);
-	printf("%s, %d: save flags %s %zu = %d\n", curr_pos.p_file,
-	    curr_pos.p_line, file, line, lwarn);
+	printf("%s:%d: %s:%zu: saving flags %d\n",
+	    curr_pos.p_file, curr_pos.p_line, file, line, lwarn);
 	olwarn = lwarn;
 }
 
@@ -95,24 +95,24 @@ RESTORE_WARN_FLAGS(const char *file, size_t line)
 {
 	if (olwarn != LWARN_BAD) {
 		lwarn = olwarn;
-		printf("%s, %d: restore flags %s %zu = %d\n", curr_pos.p_file,
-		    curr_pos.p_line, file, line, lwarn);
+		printf("%s:%d: %s:%zu: restoring flags %d\n",
+		    curr_pos.p_file, curr_pos.p_line, file, line, lwarn);
 		olwarn = LWARN_BAD;
 	} else
 		CLEAR_WARN_FLAGS(file, line);
 }
 #define cgram_debug(fmt, args...) printf("cgram_debug: " fmt "\n", ##args)
 #else
-#define CLEAR_WARN_FLAGS(f, l) clear_warn_flags(), olwarn = LWARN_BAD
+#define CLEAR_WARN_FLAGS(f, l)	clear_warn_flags(), olwarn = LWARN_BAD
 #define SAVE_WARN_FLAGS(f, l)	olwarn = lwarn
 #define RESTORE_WARN_FLAGS(f, l) \
 	(void)(olwarn == LWARN_BAD ? (clear_warn_flags(), 0) : (lwarn = olwarn))
 #define cgram_debug(fmt, args...) do { } while (false)
 #endif
 
-#define clear_warning_flags() CLEAR_WARN_FLAGS(__FILE__, __LINE__)
-#define save_warning_flags() SAVE_WARN_FLAGS(__FILE__, __LINE__)
-#define restore_warning_flags() RESTORE_WARN_FLAGS(__FILE__, __LINE__)
+#define clear_warning_flags()	CLEAR_WARN_FLAGS(__FILE__, __LINE__)
+#define save_warning_flags()	SAVE_WARN_FLAGS(__FILE__, __LINE__)
+#define restore_warning_flags()	RESTORE_WARN_FLAGS(__FILE__, __LINE__)
 
 /* unbind the anonymous struct members from the struct */
 static void
