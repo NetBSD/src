@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.153 2021/03/21 10:16:12 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.154 2021/03/21 10:21:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.153 2021/03/21 10:16:12 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.154 2021/03/21 10:21:07 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1162,15 +1162,15 @@ declarator_1_struct_union(sym_t *dsym)
 
 	lint_assert(dsym->s_scl == MOS || dsym->s_scl == MOU);
 
-	if (dcs->d_rdcsym != NULL) {
+	if (dcs->d_redeclared_symbol != NULL) {
 		/* should be ensured by storesym() */
-		lint_assert(dcs->d_rdcsym->s_scl == MOS ||
-		    dcs->d_rdcsym->s_scl == MOU);
+		lint_assert(dcs->d_redeclared_symbol->s_scl == MOS ||
+		    dcs->d_redeclared_symbol->s_scl == MOU);
 
-		if (dsym->s_styp == dcs->d_rdcsym->s_styp) {
+		if (dsym->s_styp == dcs->d_redeclared_symbol->s_styp) {
 			/* duplicate member name: %s */
 			error(33, dsym->s_name);
-			rmsym(dcs->d_rdcsym);
+			rmsym(dcs->d_redeclared_symbol);
 		}
 	}
 
@@ -1522,12 +1522,12 @@ declarator_name(sym_t *sym)
 	scl_t	sc = NOSCL;
 
 	if (sym->s_scl == NOSCL) {
-		dcs->d_rdcsym = NULL;
+		dcs->d_redeclared_symbol = NULL;
 	} else if (sym->s_defarg) {
 		sym->s_defarg = false;
-		dcs->d_rdcsym = NULL;
+		dcs->d_redeclared_symbol = NULL;
 	} else {
-		dcs->d_rdcsym = sym;
+		dcs->d_redeclared_symbol = sym;
 		sym = pushdown(sym);
 	}
 
@@ -1979,7 +1979,7 @@ decl1ext(sym_t *dsym, bool initflg)
 		outsym(dsym, dsym->s_scl, dsym->s_def);
 	}
 
-	if ((rdsym = dcs->d_rdcsym) != NULL) {
+	if ((rdsym = dcs->d_redeclared_symbol) != NULL) {
 
 		/*
 		 * If the old symbol stems from an old style function
@@ -2080,7 +2080,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 {
 	sym_t	*rsym;
 
-	if ((rsym = dcs->d_rdcsym)->s_scl == CTCONST) {
+	if ((rsym = dcs->d_redeclared_symbol)->s_scl == CTCONST) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
@@ -2407,11 +2407,11 @@ declare_argument(sym_t *sym, bool initflg)
 
 	check_type(sym);
 
-	if (dcs->d_rdcsym != NULL &&
-	    dcs->d_rdcsym->s_block_level == block_level) {
+	if (dcs->d_redeclared_symbol != NULL &&
+	    dcs->d_redeclared_symbol->s_block_level == block_level) {
 		/* redeclaration of formal parameter %s */
 		error(237, sym->s_name);
-		rmsym(dcs->d_rdcsym);
+		rmsym(dcs->d_redeclared_symbol);
 		sym->s_arg = true;
 	}
 
@@ -2583,7 +2583,8 @@ check_func_old_style_arguments(void)
 		}
 		if (msg)
 			/* prototype declaration */
-			print_previous_declaration(285, dcs->d_rdcsym);
+			print_previous_declaration(285,
+			    dcs->d_redeclared_symbol);
 
 		/* from now on the prototype is valid */
 		funcsym->s_osdef = false;
@@ -2677,7 +2678,7 @@ declare_local(sym_t *dsym, bool initflg)
 
 	check_type(dsym);
 
-	if (dcs->d_rdcsym != NULL && dsym->s_scl == EXTERN)
+	if (dcs->d_redeclared_symbol != NULL && dsym->s_scl == EXTERN)
 		declare_external_in_block(dsym);
 
 	if (dsym->s_scl == EXTERN) {
@@ -2692,9 +2693,9 @@ declare_local(sym_t *dsym, bool initflg)
 		}
 	}
 
-	if (dcs->d_rdcsym != NULL) {
+	if (dcs->d_redeclared_symbol != NULL) {
 
-		if (dcs->d_rdcsym->s_block_level == 0) {
+		if (dcs->d_redeclared_symbol->s_block_level == 0) {
 
 			switch (dsym->s_scl) {
 			case AUTO:
@@ -2722,10 +2723,11 @@ declare_local(sym_t *dsym, bool initflg)
 				lint_assert(/*CONSTCOND*/false);
 			}
 
-		} else if (dcs->d_rdcsym->s_block_level == block_level) {
+		} else if (dcs->d_redeclared_symbol->s_block_level ==
+			   block_level) {
 
 			/* no hflag, because it's illegal! */
-			if (dcs->d_rdcsym->s_arg) {
+			if (dcs->d_redeclared_symbol->s_arg) {
 				/*
 				 * if !tflag, a "redeclaration of %s" error
 				 * is produced below
@@ -2734,11 +2736,12 @@ declare_local(sym_t *dsym, bool initflg)
 					if (hflag)
 						/* decl. hides parameter: %s */
 						warning(91, dsym->s_name);
-					rmsym(dcs->d_rdcsym);
+					rmsym(dcs->d_redeclared_symbol);
 				}
 			}
 
-		} else if (dcs->d_rdcsym->s_block_level < block_level) {
+		} else if (dcs->d_redeclared_symbol->s_block_level <
+			   block_level) {
 
 			if (hflag)
 				/* declaration hides earlier one: %s */
@@ -2746,11 +2749,11 @@ declare_local(sym_t *dsym, bool initflg)
 
 		}
 
-		if (dcs->d_rdcsym->s_block_level == block_level) {
+		if (dcs->d_redeclared_symbol->s_block_level == block_level) {
 
 			/* redeclaration of %s */
 			error(27, dsym->s_name);
-			rmsym(dcs->d_rdcsym);
+			rmsym(dcs->d_redeclared_symbol);
 
 		}
 
@@ -2783,7 +2786,7 @@ declare_external_in_block(sym_t *dsym)
 	sym_t	*esym;
 
 	/* look for a symbol with the same name */
-	esym = dcs->d_rdcsym;
+	esym = dcs->d_redeclared_symbol;
 	while (esym != NULL && esym->s_block_level != 0) {
 		while ((esym = esym->s_link) != NULL) {
 			if (esym->s_kind != FVFT)
@@ -2881,7 +2884,7 @@ abstract_name(void)
 		sym->s_arg = true;
 
 	sym->s_type = dcs->d_type;
-	dcs->d_rdcsym = NULL;
+	dcs->d_redeclared_symbol = NULL;
 	dcs->d_vararg = false;
 
 	return sym;
