@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.3 2021/03/21 14:09:40 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.4 2021/03/21 14:36:59 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -52,7 +52,7 @@ test_if_statement(void)
 		reachable();
 	reachable();
 	if (0)
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	reachable();
 }
 
@@ -71,12 +71,12 @@ test_if_compound_statement(void)
 	}
 
 	if (0) {
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	}
 	if (0) {
 		{
 			{
-				unreachable();	/* TODO: expect: 193 */
+				unreachable();	/* expect: 193 */
 			}
 		}
 	}
@@ -90,7 +90,7 @@ test_if_without_else(void)
 	reachable();
 
 	if (0)
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	reachable();
 }
 
@@ -100,11 +100,11 @@ test_if_with_else(void)
 	if (1)
 		reachable();
 	else
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	reachable();
 
 	if (0)
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	else
 		reachable();
 	reachable();
@@ -115,22 +115,22 @@ test_if_else_if_else(void)
 {
 	if (1)
 		reachable();
-	else if (1)
-		unreachable();		/* TODO: expect: 193 */
+	else if (1)			/* expect: 193 */
+		unreachable();
 	else
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 
 	if (0)
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	else if (1)
 		reachable();
 	else
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 
 	if (0)
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	else if (0)
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	else
 		reachable();
 }
@@ -149,7 +149,7 @@ test_if_else_return(void)
 	if (1)
 		reachable();
 	else
-		return;
+		return;			/* expect: 193 */
 	reachable();
 }
 
@@ -194,7 +194,7 @@ test_for_if_break(void)
 	for (;;) {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			break;
 			unreachable();	/* expect: 193 */
 		}
@@ -225,7 +225,7 @@ test_for_if_continue(void)
 	for (;;) {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			continue;
 			unreachable();	/* expect: 193 */
 		}
@@ -256,7 +256,7 @@ test_for_if_return(void)
 	for (;;) {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			return;
 			unreachable();	/* expect: 193 */
 		}
@@ -303,7 +303,7 @@ test_while_if_break(void)
 	while (1) {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			break;
 			unreachable();	/* expect: 193 */
 		}
@@ -334,7 +334,7 @@ test_while_if_continue(void)
 	while (1) {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			continue;
 			unreachable();	/* expect: 193 */
 		}
@@ -365,7 +365,7 @@ test_while_if_return(void)
 	while (1) {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			return;
 			unreachable();	/* expect: 193 */
 		}
@@ -414,7 +414,7 @@ test_do_while_if_break(void)
 	do {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			break;
 			unreachable();	/* expect: 193 */
 		}
@@ -445,7 +445,7 @@ test_do_while_if_continue(void)
 	do {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			continue;
 			unreachable();	/* expect: 193 */
 		}
@@ -476,7 +476,7 @@ test_do_while_if_return(void)
 	do {
 		reachable();
 		if (0) {
-			unreachable();	/* TODO: expect: 193 */
+			unreachable();	/* expect: 193 */
 			return;
 			unreachable();	/* expect: 193 */
 		}
