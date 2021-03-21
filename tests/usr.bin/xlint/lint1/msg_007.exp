@@ -1,1 +1,1 @@
-msg_007.c(6): only one storage class allowed [7]
+msg_007.c(6): error: only one storage class allowed [7]

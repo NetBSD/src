@@ -1,2 +1,2 @@
-msg_163.c(12): a cast does not yield an lvalue [163]
-msg_163.c(12): operand of 'x++' must be lvalue [114]
+msg_163.c(12): error: a cast does not yield an lvalue [163]
+msg_163.c(12): error: operand of 'x++' must be lvalue [114]
