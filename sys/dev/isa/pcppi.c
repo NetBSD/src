@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.45.22.1 2021/03/20 19:33:40 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.45.22.2 2021/03/21 19:06:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.45.22.1 2021/03/20 19:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.45.22.2 2021/03/21 19:06:19 thorpej Exp $");
 
 #include "attimer.h"
 
@@ -233,23 +233,22 @@ pcppi_attach(struct pcppi_softc *sc)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	pcppi_rescan(self, "pcppi", NULL);
+	pcppi_rescan(self, NULL, NULL);
 }
 
 int
-pcppi_rescan(device_t self, const char *ifattr, const int *flags)
+pcppi_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct pcppi_softc *sc = device_private(self);
         struct pcppi_attach_args pa;
 
-	if (!ifattr_match(ifattr, "pcppi"))
-		return 0;
-
 	pa.pa_cookie = sc;
 	pa.pa_bell_func = pcppi_bell;
+
 	config_search(sc->sc_dv, &pa,
 	    CFARG_SUBMATCH, pcppisearch,
-	    CFARG_IATTR, "pcppi",
+	    CFARG_IATTR, ifattr,
+	    CFARG_LOCATORS, locators,
 	    CFARG_EOL);
 
 	return 0;

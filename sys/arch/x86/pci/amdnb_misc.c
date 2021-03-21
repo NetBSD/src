@@ -1,4 +1,4 @@
-/*	$NetBSD: amdnb_misc.c,v 1.3.14.2 2021/03/21 17:35:48 thorpej Exp $ */
+/*	$NetBSD: amdnb_misc.c,v 1.3.14.3 2021/03/21 19:06:19 thorpej Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.2 2021/03/21 17:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.3 2021/03/21 19:06:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -157,9 +157,6 @@ static int
 amdnb_misc_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct amdnb_misc_softc *sc = device_private(self);
-
-	if (!ifattr_match(ifattr, "amdnb_miscbus"))
-		return 0;
 
 	config_search(self, &sc->sc_pa,
 	    CFARG_SUBMATCH, amdnb_misc_search,
