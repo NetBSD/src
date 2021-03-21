@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.67 2020/12/12 09:27:31 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.68 2021/03/21 09:00:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.67 2020/12/12 09:27:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.68 2021/03/21 09:00:55 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -163,6 +163,12 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.67 2020/12/12 09:27:31 skrll Exp
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
 #define VPRINTF(...)	__nothing
+#endif
+
+#if defined(__HAVE_GENERIC_START)
+#if defined(KERNEL_BASE_VOFFSET)
+#error KERNEL_BASE_VOFFSET should not be defined with __HAVE_GENERIC_START
+#endif
 #endif
 
 struct bootmem_info bootmem_info;
