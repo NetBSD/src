@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.81 2021/03/21 11:55:59 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.82 2021/03/21 12:03:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -390,11 +390,10 @@ typedef struct control_statement {
 					 * reachable? */
 	bool	c_cont : 1;		/* loop has continue */
 	bool	c_default : 1;		/* switch has default */
-	bool	c_infinite : 1;		/* controlling expression always false
-					 * (as in for (;;) or while (1)),
-					 * there may be break statements
-					 * though.
-					 * TODO: rename to c_maybe_infinite */
+	bool	c_maybe_endless : 1;	/* the controlling expression is
+					 * always true (as in 'for (;;)' or
+					 * 'while (1)'), there may be break
+					 * statements though */
 	bool	c_rchif : 1;		/* end of if-branch reached */
 	bool	c_had_return_noval : 1;	/* had "return;" */
 	bool	c_had_return_value : 1;	/* had "return (e);" */
