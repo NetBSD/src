@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.92 2021/03/21 15:44:57 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.93 2021/03/21 18:58:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.92 2021/03/21 15:44:57 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.93 2021/03/21 18:58:34 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -187,6 +187,13 @@ popctrl(int env)
 	free(ci);
 }
 
+static void
+set_reached(bool new_reached)
+{
+	reached = new_reached;
+	rchflg = false;
+}
+
 /*
  * Prints a warning if a statement cannot be reached.
  */
@@ -196,6 +203,11 @@ check_statement_reachable(void)
 	if (!reached && !rchflg) {
 		/* statement not reached */
 		warning(193);
+		/*
+		 * FIXME: Setting 'reached = true' is wrong since the
+		 * statement doesn't magically become reachable just by
+		 * issuing a warning.  This must be 'rchflg = true' instead.
+		 */
 		reached = true;	/* only to suppress further warnings */
 	}
 }
@@ -334,7 +346,7 @@ funcdef(sym_t *fsym)
 	if (dcs->d_notyp)
 		fsym->s_return_type_implicit_int = true;
 
-	reached = true;
+	set_reached(true);
 }
 
 static void
@@ -410,7 +422,7 @@ funcend(void)
 	rmsyms(dcs->d_func_proto_syms);
 
 	/* must be set on level 0 */
-	reached = true;
+	set_reached(true);
 }
 
 void
@@ -424,7 +436,7 @@ named_label(sym_t *sym)
 		mark_as_set(sym);
 	}
 
-	reached = true;
+	set_reached(true);
 }
 
 static void
@@ -536,7 +548,7 @@ case_label(tnode_t *tn)
 
 	tfreeblk();
 
-	reached = true;
+	set_reached(true);
 }
 
 void
@@ -563,7 +575,7 @@ default_label(void)
 		ci->c_default = true;
 	}
 
-	reached = true;
+	set_reached(true);
 }
 
 static tnode_t *
@@ -607,7 +619,9 @@ if1(tnode_t *tn)
 	pushctrl(T_IF);
 
 	if (tn != NULL && tn->tn_op == CON && !tn->tn_system_dependent) {
-		reached = constant_is_nonzero(tn);
+		/* XXX: what if inside 'if (0)'? */
+		set_reached(constant_is_nonzero(tn));
+		/* XXX: what about always_else? */
 		cstmt->c_always_then = reached;
 	}
 }
@@ -621,7 +635,8 @@ if2(void)
 {
 
 	cstmt->c_reached_end_of_then = reached;
-	reached = !cstmt->c_always_then;
+	/* XXX: what if inside 'if (0)'? */
+	set_reached(!cstmt->c_always_then);
 }
 
 /*
@@ -632,11 +647,11 @@ void
 if3(bool els)
 {
 	if (cstmt->c_reached_end_of_then)
-		reached = true;
+		set_reached(true);
 	else if (cstmt->c_always_then)
-		reached = false;
+		set_reached(false);
 	else if (!els)
-		reached = true;
+		set_reached(true);
 
 	popctrl(T_IF);
 }
@@ -689,7 +704,7 @@ switch1(tnode_t *tn)
 	cstmt->c_switch = true;
 	cstmt->c_swtype = tp;
 
-	reached = rchflg = false;
+	set_reached(false);
 	seen_fallthrough = true;
 }
 
@@ -732,14 +747,14 @@ switch2(void)
 		 * end of switch always reached (c_break is only set if the
 		 * break statement can be reached).
 		 */
-		reached = true;
+		set_reached(true);
 	} else if (!cstmt->c_default &&
 		   (!hflag || !cstmt->c_swtype->t_is_enum || nenum != nclab)) {
 		/*
 		 * there are possible values which are not handled in
 		 * switch
 		 */
-		reached = true;
+		set_reached(true);
 	}	/*
 		 * otherwise the end of the switch expression is reached
 		 * if the end of the last statement inside it is reached.
@@ -759,7 +774,8 @@ while1(tnode_t *tn)
 	if (!reached) {
 		/* loop not entered at top */
 		warning(207);
-		reached = true;
+		/* FIXME: that's plain wrong. */
+		set_reached(true);
 	}
 
 	if (tn != NULL)
@@ -773,7 +789,7 @@ while1(tnode_t *tn)
 	check_getopt_begin_while(tn);
 	expr(tn, false, true, true, false);
 
-	reached = body_reached;
+	set_reached(body_reached);
 }
 
 /*
@@ -788,8 +804,7 @@ while2(void)
 	 * The end of the loop can be reached if it is no endless loop
 	 * or there was a break statement which was reached.
 	 */
-	reached = !cstmt->c_maybe_endless || cstmt->c_break;
-	rchflg = false;
+	set_reached(!cstmt->c_maybe_endless || cstmt->c_break);
 
 	check_getopt_end_while();
 	popctrl(T_WHILE);
@@ -805,7 +820,7 @@ do1(void)
 	if (!reached) {
 		/* loop not entered at top */
 		warning(207);
-		reached = true;
+		set_reached(true);
 	}
 
 	pushctrl(T_DO);
@@ -825,7 +840,7 @@ do2(tnode_t *tn)
 	 * loop is reached.
 	 */
 	if (cstmt->c_continue)
-		reached = true;
+		set_reached(true);
 
 	if (tn != NULL)
 		tn = check_controlling_expression(tn);
@@ -840,10 +855,9 @@ do2(tnode_t *tn)
 	expr(tn, false, true, true, true);
 
 	if (cstmt->c_maybe_endless)
-		reached = false;
+		set_reached(false);
 	if (cstmt->c_break)
-		reached = true;
-	rchflg = false;
+		set_reached(true);
 
 	popctrl(T_DO);
 }
@@ -862,7 +876,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	if (tn1 != NULL && !reached) {
 		/* loop not entered at top */
 		warning(207);
-		reached = true;
+		set_reached(true);
 	}
 
 	pushctrl(T_FOR);
@@ -890,7 +904,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 
 	/* Checking the reinitialization expression is done in for2() */
 
-	reached = !is_zero(tn2);
+	set_reached(!is_zero(tn2));
 }
 
 /*
@@ -904,7 +918,7 @@ for2(void)
 	tnode_t	*tn3;
 
 	if (cstmt->c_continue)
-		reached = true;
+		set_reached(true);
 
 	cpos = curr_pos;
 	cspos = csrc_pos;
@@ -919,7 +933,7 @@ for2(void)
 	if (!reached && !rchflg) {
 		/* end-of-loop code not reached */
 		warning(223);
-		reached = true;
+		set_reached(true);
 	}
 
 	if (tn3 != NULL) {
@@ -933,8 +947,7 @@ for2(void)
 
 	/* An endless loop without break will never terminate */
 	/* TODO: What if the loop contains a 'return'? */
-	reached = cstmt->c_break || !cstmt->c_maybe_endless;
-	rchflg = false;
+	set_reached(cstmt->c_break || !cstmt->c_maybe_endless);
 
 	popctrl(T_FOR);
 }
@@ -950,7 +963,7 @@ do_goto(sym_t *lab)
 
 	check_statement_reachable();
 
-	reached = rchflg = false;
+	set_reached(false);
 }
 
 /*
@@ -976,7 +989,7 @@ do_break(void)
 	if (bflag)
 		check_statement_reachable();
 
-	reached = rchflg = false;
+	set_reached(false);
 }
 
 /*
@@ -1000,7 +1013,7 @@ do_continue(void)
 
 	check_statement_reachable();
 
-	reached = rchflg = false;
+	set_reached(false);
 }
 
 /*
@@ -1068,7 +1081,7 @@ do_return(tnode_t *tn)
 
 	}
 
-	reached = rchflg = false;
+	set_reached(false);
 }
 
 /*
@@ -1257,7 +1270,7 @@ void
 not_reached(int n)
 {
 
-	reached = false;
+	set_reached(false);
 	rchflg = true;
 }
 
