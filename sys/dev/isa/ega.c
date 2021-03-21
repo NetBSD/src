@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.30 2012/10/27 17:18:24 chs Exp $ */
+/* $NetBSD: ega.c,v 1.30.54.1 2021/03/21 21:09:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.30 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.30.54.1 2021/03/21 21:09:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +520,7 @@ ega_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &ega_accessops;
 	aa.accesscookie = dc;
 
-        config_found(self, &aa, wsemuldisplaydevprint);
+        config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 

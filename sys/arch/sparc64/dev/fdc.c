@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.49 2021/01/04 14:48:51 thorpej Exp $	*/
+/*	$NetBSD: fdc.c,v 1.49.2.1 2021/03/21 21:09:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.49 2021/01/04 14:48:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.49.2.1 2021/03/21 21:09:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -856,7 +856,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
 		fa.fa_deftype = &fd_types[0];	/* XXX */
-		if (config_found(fdc->sc_dev, (void *)&fa, fdprint) != NULL)
+		if (config_found(fdc->sc_dev, (void *)&fa, fdprint,
+				 CFARG_EOL) != NULL)
 			drive_attached = 1;
 	}
 

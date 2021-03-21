@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.24 2014/02/22 18:42:47 martin Exp $ */
+/* $NetBSD: tsc.c,v 1.24.44.1 2021/03/21 21:08:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24 2014/02/22 18:42:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.44.1 2021/03/21 21:08:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,25 +147,25 @@ tscattach(device_t parent, device_t self, void * aux)
 	tsp.tsp_name = "tsp";
 	tsp.tsp_slot = 0;
 
-	config_found(self, &tsp, tscprint);
+	config_found(self, &tsp, tscprint, CFARG_EOL);
 	if (titan) {
 		tsp.tsp_slot += 2;
-		config_found(self, &tsp, tscprint);
+		config_found(self, &tsp, tscprint, CFARG_EOL);
 	}
 
 	if (csc & CSC_P1P) {
 		tsp.tsp_slot = 1;
-		config_found(self, &tsp, tscprint);
+		config_found(self, &tsp, tscprint, CFARG_EOL);
 		if (titan) {
 			tsp.tsp_slot += 2;
-			config_found(self, &tsp, tscprint);
+			config_found(self, &tsp, tscprint, CFARG_EOL);
 		}
 	}
 
 	memset(&tsciic, 0, sizeof tsciic);
 	tsciic.tsciic_name = "tsciic";
 
-	config_found(self, &tsciic, tsciicprint);
+	config_found(self, &tsciic, tsciicprint, CFARG_EOL);
 }
 
 static int

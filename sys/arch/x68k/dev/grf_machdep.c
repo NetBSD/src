@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.32.52.2 2021/03/21 17:35:48 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.32.52.3 2021/03/21 21:09:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.32.52.2 2021/03/21 17:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.32.52.3 2021/03/21 21:09:09 thorpej Exp $");
 
 #include "locators.h"
 
@@ -101,7 +101,7 @@ int
 grfbussearch(device_t self, cfdata_t match, const int *ldesc, void *aux)
 {
 
-	config_found(self, &match->cf_loc[GRFBCF_ADDR], grfbusprint);
+	config_found(self, &match->cf_loc[GRFBCF_ADDR], grfbusprint, CFARG_EOL);
 	return (0);
 }
 
@@ -157,7 +157,7 @@ grfattach(device_t parent, device_t self, void *aux)
 	/*
 	 * try and attach an ite
 	 */
-	config_found(self, gp, grfprint);
+	config_found(self, gp, grfprint, CFARG_EOL);
 }
 
 int

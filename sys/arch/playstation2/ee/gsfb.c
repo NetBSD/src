@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.22 2014/07/08 13:35:43 martin Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.22.44.1 2021/03/21 21:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.22 2014/07/08 13:35:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.22.44.1 2021/03/21 21:09:05 thorpej Exp $");
 
 #include "debug_playstation2.h"
 
@@ -300,7 +300,7 @@ gsfb_attach(device_t parent, device_t self, void *aux)
 	wa.accessops	= &_gsfb_accessops;
 	wa.accesscookie	= sc;
 
-	config_found(self, &wa, wsdisplaydevprint);
+	config_found(self, &wa, wsdisplaydevprint, CFARG_EOL);
 }
 
 /*

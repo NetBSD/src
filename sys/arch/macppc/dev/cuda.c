@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.27 2021/03/05 07:15:53 rin Exp $ */
+/*	$NetBSD: cuda.c,v 1.27.2.1 2021/03/21 21:09:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.27 2021/03/05 07:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.27.2.1 2021/03/21 21:09:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	caa.send = cuda_send;
 	caa.poll = cuda_poll;
 #if notyet
-	config_found(self, &caa, cuda_print);
+	config_found(self, &caa, cuda_print, CFARG_EOL);
 #endif
 	cfg = prop_array_create();
 	prop_dictionary_set(dict, "i2c-child-devices", cfg);

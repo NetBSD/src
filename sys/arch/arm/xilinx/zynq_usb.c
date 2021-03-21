@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usb.c,v 1.1 2019/06/11 13:01:48 skrll Exp $	*/
+/*	$NetBSD: zynq_usb.c,v 1.1.14.1 2021/03/21 21:08:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.1 2019/06/11 13:01:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.1.14.1 2021/03/21 21:08:56 thorpej Exp $");
 
 #include "opt_soc.h"
 
@@ -182,7 +182,8 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	}
 
 	/* Attach usb device. */
-	hsc->sc_child = config_found(self, &hsc->sc_bus, usbctlprint);
+	hsc->sc_child = config_found(self, &hsc->sc_bus, usbctlprint,
+	    CFARG_EOL);
 }
 
 static void

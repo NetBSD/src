@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.22.52.3 2021/03/21 17:35:41 thorpej Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.22.52.4 2021/03/21 21:08:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.22.52.3 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.22.52.4 2021/03/21 21:08:56 thorpej Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -266,7 +266,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_INTCTL_BASE;
 	aa.pxa_size = PXA2X0_INTCTL_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
 		panic("pxaip_attach_critical: failed to attach INTC!");
 
 #if NPXAGPIO > 0
@@ -276,7 +276,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_GPIO_BASE;
 	aa.pxa_size = PXA2X0_GPIO_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
 		panic("pxaip_attach_critical: failed to attach GPIO!");
 #endif
 
@@ -287,7 +287,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_DMAC_BASE;
 	aa.pxa_size = PXA2X0_DMAC_SIZE;
 	aa.pxa_intr = PXA2X0_INT_DMA;
-	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
 		panic("pxaip_attach_critical: failed to attach DMAC!");
 #endif
 }

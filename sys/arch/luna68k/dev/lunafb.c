@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.41 2019/09/22 06:06:01 rin Exp $ */
+/* $NetBSD: lunafb.c,v 1.41.10.1 2021/03/21 21:09:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.41 2019/09/22 06:06:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.41.10.1 2021/03/21 21:09:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ omfbattach(device_t parent, device_t self, void *args)
 	waa.accessops = &omfb_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 /* EXPORT */ int

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.10.2.1 2021/03/21 21:09:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.10.2.1 2021/03/21 21:09:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ dwc2_fdt_deferred(device_t self)
 		return;
 	}
 	sc->sc_dwc2.sc_child = config_found(sc->sc_dwc2.sc_dev,
-	    &sc->sc_dwc2.sc_bus, usbctlprint);
+	    &sc->sc_dwc2.sc_bus, usbctlprint, CFARG_EOL);
 }
 
 static void

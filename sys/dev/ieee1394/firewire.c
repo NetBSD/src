@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.50 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: firewire.c,v 1.50.10.1 2021/03/21 21:09:12 thorpej Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.50 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.50.10.1 2021/03/21 21:09:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -246,7 +246,7 @@ firewireattach(device_t parent, device_t self, void *aux)
 	faa.name = "fwip";
 	faa.fc = fc;
 	faa.fwdev = NULL;
-	devlist->dev = config_found(sc->dev, &faa, firewire_print);
+	devlist->dev = config_found(sc->dev, &faa, firewire_print, CFARG_EOL);
 	if (devlist->dev == NULL)
 		free(devlist, M_DEVBUF);
 	else

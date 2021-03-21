@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.61 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: magma.c,v 1.61.10.1 2021/03/21 21:09:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.61 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.61.10.1 2021/03/21 21:09:14 thorpej Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -475,8 +475,8 @@ magma_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* configure the children */
-	(void)config_found(self, mtty_match, NULL);
-	(void)config_found(self, mbpp_match, NULL);
+	(void)config_found(self, mtty_match, NULL, CFARG_EOL);
+	(void)config_found(self, mbpp_match, NULL, CFARG_EOL);
 
 	/*
 	 * Establish the interrupt handlers.

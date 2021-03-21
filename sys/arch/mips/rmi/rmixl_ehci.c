@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.6 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.6.32.1 2021/03/21 21:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.6 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.6.32.1 2021/03/21 21:09:03 thorpej Exp $");
 
 #include "locators.h"
 
@@ -138,6 +138,6 @@ rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach USB device */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 }
 

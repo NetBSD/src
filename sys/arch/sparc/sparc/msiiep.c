@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.49 2020/11/22 03:55:33 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.49.2.1 2021/03/21 21:09:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.49 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.49.2.1 2021/03/21 21:09:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -232,11 +232,11 @@ msiiep_attach(device_t parent, device_t self, void *aux)
 
 	/* config timer/counter part of PCIC */
 	msa.msa_name = "timer";
-	config_found(self, &msa, NULL);
+	config_found(self, &msa, NULL, CFARG_EOL);
 
 	/* config PCI tree */
 	msa.msa_name = "pcic";
-	config_found(self, &msa, NULL);
+	config_found(self, &msa, NULL, CFARG_EOL);
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2011/06/05 17:03:19 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21.68.1 2021/03/21 21:09:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2011/06/05 17:03:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.68.1 2021/03/21 21:09:04 thorpej Exp $");
 
 #include "vmetwo.h"
 
@@ -192,7 +192,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 		ma.ma_bust = &_mainbus_space_tag;
 		ma.ma_offset = devices[i].md_offset + intiobase_phys;
 
-		(void)config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print, CFARG_EOL);
 	}
 
 
@@ -212,9 +212,9 @@ mainbus_attach(device_t parent, device_t self, void *args)
 		ma.ma_dmat = &_mainbus_dma_tag;
 		ma.ma_bust = &_mainbus_space_tag;
 		ma.ma_offset = MAINBUS_MEMC1_OFFSET + intiobase_phys;
-		(void)config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print, CFARG_EOL);
 		ma.ma_offset = MAINBUS_MEMC2_OFFSET + intiobase_phys;
-		(void)config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print, CFARG_EOL);
 	}
 #endif
 
@@ -230,7 +230,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 		ma.ma_dmat = &_mainbus_dma_tag;
 		ma.ma_bust = &_mainbus_space_tag;
 		ma.ma_offset = MAINBUS_IPACK_OFFSET + intiobase_phys;
-		(void)config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print, CFARG_EOL);
 	}
 #endif
 }

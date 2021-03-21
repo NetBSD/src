@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.26 2012/10/27 17:17:29 chs Exp $ */
+/*	$NetBSD: gvpbus.c,v 1.26.52.1 2021/03/21 21:08:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.26 2012/10/27 17:17:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.26.52.1 2021/03/21 21:08:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -145,11 +145,11 @@ gvpbusattach(device_t parent, device_t self, void *aux)
 
 	if (flags & GVP_SCSI) {
 		ga.flags = flags0 | GVP_SCSI;
-		config_found(self, &ga, gvpbusprint);
+		config_found(self, &ga, gvpbusprint, CFARG_EOL);
 	}
 	if (flags & GVP_IO) {
 		ga.flags = flags0 | GVP_IO;
-		config_found(self, &ga, gvpbusprint);
+		config_found(self, &ga, gvpbusprint, CFARG_EOL);
 	}
 }
 

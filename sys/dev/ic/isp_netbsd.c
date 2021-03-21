@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.96 2020/12/05 17:33:53 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.96.2.1 2021/03/21 21:09:12 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.96 2020/12/05 17:33:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.96.2.1 2021/03/21 21:09:12 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -177,7 +177,8 @@ isp_config_interrupts(device_t self)
 	 * And attach children (if any).
 	 */
 	for (i = 0; i < isp->isp_osinfo.adapter.adapt_nchannels; i++) {
-		config_found(self, &isp->isp_osinfo.chan[i], scsiprint);
+		config_found(self, &isp->isp_osinfo.chan[i], scsiprint,
+		    CFARG_EOL);
 	}
 }
 

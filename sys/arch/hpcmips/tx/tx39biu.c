@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.15 2012/10/27 17:17:54 chs Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.15.52.1 2021/03/21 21:09:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.15 2012/10/27 17:17:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.15.52.1 2021/03/21 21:09:00 thorpej Exp $");
 
 #include "opt_tx39_watchdogtimer.h"
 #include "opt_tx39biu_debug.h"
@@ -130,7 +130,7 @@ tx39biu_callback(device_t self)
 
 	cba.cba_busname = "txcsbus";
 	cba.cba_tc = sc->sc_tc;
-	config_found(self, &cba, tx39biu_print);
+	config_found(self, &cba, tx39biu_print, CFARG_EOL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_dss.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: omap3_dss.c,v 1.3.2.1 2021/03/21 21:08:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.3.2.1 2021/03/21 21:08:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,7 +479,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &omapfb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 #ifdef OMAPFB_DEBUG
 #if NOMAPDMA > 0
 	omapfb_rectfill(sc, 100, 100, 100, 100, 0xe000);

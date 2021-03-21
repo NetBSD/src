@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cc_fdt.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: l2cc_fdt.c,v 1.3.2.1 2021/03/21 21:08:55 thorpej Exp $	*/
 /*
  * Copyright (c) 2018  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cc_fdt.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cc_fdt.c,v 1.3.2.1 2021/03/21 21:08:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,5 +88,5 @@ l2cc_fdt_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_off2 = 0,
 	};
 
-	config_found(self, &mpcaa, NULL);
+	config_found(self, &mpcaa, NULL, CFARG_EOL);
 }

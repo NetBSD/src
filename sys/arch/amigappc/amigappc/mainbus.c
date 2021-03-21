@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2011/07/18 17:51:17 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.68.1 2021/03/21 21:08:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Frank Wille.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2011/07/18 17:51:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.68.1 2021/03/21 21:08:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,27 +108,34 @@ mbattach(device_t parent, device_t self, void *aux)
 	 * "find" all the things that should be there.
 	 */
 	if (is_a3000() || is_a4000())
-		config_found(self, __UNCONST("a34kbbc"), simple_devprint);
+		config_found(self, __UNCONST("a34kbbc"), simple_devprint,
+		    CFARG_EOL);
 	else
-		config_found(self, __UNCONST("a2kbbc"), simple_devprint);
-	config_found(self, __UNCONST("ser"), simple_devprint);
-	config_found(self, __UNCONST("par"), simple_devprint);
-	config_found(self, __UNCONST("kbd"), simple_devprint);
-	config_found(self, __UNCONST("ms"), simple_devprint);
-	config_found(self, __UNCONST("grfcc"), simple_devprint);
-	config_found(self, __UNCONST("amidisplaycc"), simple_devprint);
-	config_found(self, __UNCONST("fdc"), simple_devprint);
+		config_found(self, __UNCONST("a2kbbc"), simple_devprint,
+		    CFARG_EOL);
+	config_found(self, __UNCONST("ser"), simple_devprint, CFARG_EOL);
+	config_found(self, __UNCONST("par"), simple_devprint, CFARG_EOL);
+	config_found(self, __UNCONST("kbd"), simple_devprint, CFARG_EOL);
+	config_found(self, __UNCONST("ms"), simple_devprint, CFARG_EOL);
+	config_found(self, __UNCONST("grfcc"), simple_devprint, CFARG_EOL);
+	config_found(self, __UNCONST("amidisplaycc"), simple_devprint,
+	    CFARG_EOL);
+	config_found(self, __UNCONST("fdc"), simple_devprint, CFARG_EOL);
 	if (is_a4000() || is_a1200())
-		config_found(self, __UNCONST("wdc"), simple_devprint);
+		config_found(self, __UNCONST("wdc"), simple_devprint,
+		    CFARG_EOL);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
-		config_found(self, __UNCONST("afsc"), simple_devprint);
+		config_found(self, __UNCONST("afsc"), simple_devprint,
+		    CFARG_EOL);
 	if (is_a3000())
-		config_found(self, __UNCONST("ahsc"), simple_devprint);
+		config_found(self, __UNCONST("ahsc"), simple_devprint,
+		    CFARG_EOL);
 	if (is_a1200())
-		config_found(self, __UNCONST("pccard"), simple_devprint);
-	config_found(self, __UNCONST("aucc"), simple_devprint);
+		config_found(self, __UNCONST("pccard"), simple_devprint,
+		    CFARG_EOL);
+	config_found(self, __UNCONST("aucc"), simple_devprint, CFARG_EOL);
 
-	config_found(self, __UNCONST("zbus"), simple_devprint);
+	config_found(self, __UNCONST("zbus"), simple_devprint, CFARG_EOL);
 }
 
 int

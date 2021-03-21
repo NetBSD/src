@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.12 2012/01/04 14:53:57 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.12.66.1 2021/03/21 21:09:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.12 2012/01/04 14:53:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.12.66.1 2021/03/21 21:09:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 	waa.accessops = &vncfb_accessops;
 	waa.accesscookie = &sc->sc_vd;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 
 	wskbd_cnattach(&vncfb_kbd_consops, sc, &vncfb_keymapdata);
 

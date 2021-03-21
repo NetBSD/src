@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.80 2020/11/21 00:27:52 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.80.2.1 2021/03/21 21:09:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.80 2020/11/21 00:27:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.80.2.1 2021/03/21 21:09:08 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -448,7 +448,7 @@ xycattach(device_t parent, device_t self, void *aux)
 
 	/* now we must look for disks using autoconfig */
 	for (xa.driveno = 0; xa.driveno < XYC_MAXDEV; xa.driveno++)
-		(void)config_found(self, (void *)&xa, xyc_print);
+		(void)config_found(self, (void *)&xa, xyc_print, CFARG_EOL);
 
 	/* start the watchdog clock */
 	callout_reset(&xyc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xyc);
