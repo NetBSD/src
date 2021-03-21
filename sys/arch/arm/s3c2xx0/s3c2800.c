@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.14.52.1 2021/03/20 19:33:32 thorpej Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.14.52.2 2021/03/21 17:35:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.14.52.1 2021/03/20 19:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.14.52.2 2021/03/21 17:35:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,6 @@ s3c2800_attach(device_t parent, device_t self, void *aux)
 	 */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, s3c2800_search,
-	    CFARG_IATTR, "ssio",
 	    CFARG_EOL);
 	return;
 

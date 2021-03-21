@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.13.52.1 2021/03/20 19:33:34 thorpej Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.13.52.2 2021/03/21 17:35:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.13.52.1 2021/03/20 19:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.13.52.2 2021/03/21 17:35:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,6 @@ sacc_obio_attach(device_t parent, device_t self, void *aux)
 	 */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, sa1111_search,
-	    CFARG_IATTR, "sacc",
 	    CFARG_EOL);
 
 	return;

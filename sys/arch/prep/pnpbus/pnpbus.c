@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.13.2.1 2021/03/20 19:33:37 thorpej Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.13.2.2 2021/03/21 17:35:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.13.2.1 2021/03/20 19:33:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.13.2.2 2021/03/21 17:35:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,6 @@ pnpbus_attach(device_t parent, device_t self, void *aux)
 
 	config_search(self, aux,
 	    CFARG_SUBMATCH, pnpbus_search,
-	    CFARG_IATTR, "pnpbus",
 	    CFARG_EOL);
 }
 

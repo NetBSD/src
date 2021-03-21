@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.290.4.1 2021/03/20 19:33:41 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.290.4.2 2021/03/21 17:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.290.4.1 2021/03/20 19:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.290.4.2 2021/03/21 17:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1015,7 +1015,6 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 
 	if ((cf = config_search(sc->sc_dev, &sa,
 				CFARG_SUBMATCH, config_stdsubmatch,
-				CFARG_IATTR, "scsibus",
 				CFARG_LOCATORS, locs,
 				CFARG_EOL)) != NULL) {
 		scsipi_insert_periph(chan, periph);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpcore_axi.c,v 1.1.74.1 2021/03/20 19:33:32 thorpej Exp $ */
+/*	$NetBSD: mpcore_axi.c,v 1.1.74.2 2021/03/21 17:35:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcore_axi.c,v 1.1.74.1 2021/03/20 19:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcore_axi.c,v 1.1.74.2 2021/03/21 17:35:41 thorpej Exp $");
 
 #include "bus_space_a2x.h"
 #include "bus_space_a4x.h"
@@ -101,11 +101,9 @@ axi_attach(device_t parent __unused, device_t self, void *aux __unused)
 
 	config_search(self, &aa,
 	    CFARG_SUBMATCH, axi_critical_search,
-	    CFARG_IATTR, "axi",
 	    CFARG_EOL);
 	config_search(self, &aa,
 	    CFARG_SUBMATCH, axi_search,
-	    CFARG_IATTR, "axi",
 	    CFARG_EOL);
 }
 

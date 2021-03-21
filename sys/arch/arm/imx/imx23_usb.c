@@ -1,4 +1,4 @@
-/* $Id: imx23_usb.c,v 1.3.2.1 2021/03/20 19:33:31 thorpej Exp $ */
+/* $Id: imx23_usb.c,v 1.3.2.2 2021/03/21 17:35:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -123,7 +123,6 @@ imx23_usb_attach(device_t parent, device_t self, void *aux)
 	/* attach OTG/EHCI host controllers */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, imxusbc_search,
-	    CFARG_IATTR, "imxusbc",
 	    CFARG_EOL);
 
 	return;

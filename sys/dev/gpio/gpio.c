@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.64.10.2 2021/03/20 20:47:53 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.64.10.3 2021/03/21 17:35:48 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.2 2021/03/20 20:47:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.3 2021/03/21 17:35:48 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -857,7 +857,6 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		locs[GPIOCF_FLAG] = ga.ga_flags;
 
 		cf = config_search(sc->sc_dev, &ga,
-		    CFARG_IATTR, "gpio",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 		if (cf != NULL) {

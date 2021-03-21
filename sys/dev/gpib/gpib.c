@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.24.10.1 2021/03/20 19:33:40 thorpej Exp $	*/
+/*	$NetBSD: gpib.c,v 1.24.10.2 2021/03/21 17:35:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.24.10.1 2021/03/20 19:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.24.10.2 2021/03/21 17:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,6 @@ gpibattach(device_t parent, device_t self, void *aux)
 		ga.ga_address = address;
 		config_search(sc->sc_dev, &ga,
 		    CFARG_SUBMATCH, gpibsubmatch1,
-		    CFARG_IATTR, "gpib",
 		    CFARG_EOL);
 	}
 
@@ -150,7 +149,6 @@ gpibattach(device_t parent, device_t self, void *aux)
 	ga.ga_ic = sc->sc_ic;
 	config_search(sc->sc_dev, &ga,
 	    CFARG_SUBMATCH, gpibsubmatch2,
-	    CFARG_IATTR, "gpib",
 	    CFARG_EOL);
 }
 

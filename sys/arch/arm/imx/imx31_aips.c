@@ -1,7 +1,7 @@
-/*	$Id: imx31_aips.c,v 1.5.52.1 2021/03/20 19:33:31 thorpej Exp $	*/
+/*	$Id: imx31_aips.c,v 1.5.52.2 2021/03/21 17:35:40 thorpej Exp $	*/
 
 /* derived from:	*/
-/*	$NetBSD: imx31_aips.c,v 1.5.52.1 2021/03/20 19:33:31 thorpej Exp $ */
+/*	$NetBSD: imx31_aips.c,v 1.5.52.2 2021/03/21 17:35:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.5.52.1 2021/03/20 19:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.5.52.2 2021/03/21 17:35:40 thorpej Exp $");
 
 #include "locators.h"
 
@@ -159,7 +159,6 @@ imxaips_attach(device_t parent, device_t self, void *aux)
 	 */
 	config_search(self, sc,
 	    CFARG_SUBMATCH, imxaips_search,
-	    CFARG_IATTR, "aips",
 	    CFARG_EOL);
 }
 

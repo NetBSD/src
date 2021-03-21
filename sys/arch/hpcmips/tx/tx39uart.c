@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.15.52.2 2021/03/20 20:49:43 thorpej Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.15.52.3 2021/03/21 17:35:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.15.52.2 2021/03/20 20:49:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.15.52.3 2021/03/21 17:35:44 thorpej Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -77,7 +77,6 @@ tx39uart_attach(device_t parent, device_t self, void *aux)
 
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, tx39uart_search,
-	    CFARG_IATTR, "txcomif",
 	    CFARG_EOL);
 }
 

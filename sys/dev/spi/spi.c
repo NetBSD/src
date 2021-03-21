@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.16.2.1 2021/03/20 19:33:41 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.16.2.2 2021/03/21 17:35:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.16.2.1 2021/03/20 19:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.16.2.2 2021/03/21 17:35:49 thorpej Exp $");
 
 #include "locators.h"
 
@@ -316,7 +316,6 @@ spi_attach(device_t parent, device_t self, void *aux)
 	/* Then do any other devices the user may have manually wired */
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, spi_search,
-	    CFARG_IATTR, "spi",
 	    CFARG_EOL);
 }
 

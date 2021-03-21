@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.81.10.1 2021/03/20 19:33:41 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.81.10.2 2021/03/21 17:35:49 thorpej Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.81.10.1 2021/03/20 19:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.81.10.2 2021/03/21 17:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -268,7 +268,6 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 	 */
 	config_search(sc->uh_dev, NULL,
 	    CFARG_SUBMATCH, ubasearch,
-	    CFARG_IATTR, "uba",
 	    CFARG_EOL);
 
 	if (sc->uh_afterscan)

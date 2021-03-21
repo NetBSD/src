@@ -1,4 +1,4 @@
-/*	$NetBSD: amdnb_misc.c,v 1.3.14.1 2021/03/20 19:33:39 thorpej Exp $ */
+/*	$NetBSD: amdnb_misc.c,v 1.3.14.2 2021/03/21 17:35:48 thorpej Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.1 2021/03/20 19:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.2 2021/03/21 17:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,7 +135,6 @@ amdnb_misc_attach(device_t parent, device_t self, void *aux)
 
 	config_search(self, &sc->sc_pa,
 	    CFARG_SUBMATCH, amdnb_misc_search,
-	    CFARG_IATTR, "amdnb_miscbus",
 	    CFARG_EOL);
 
 	return;

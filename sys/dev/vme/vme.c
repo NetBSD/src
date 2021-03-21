@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.27.4.1 2021/03/20 19:33:41 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.27.4.2 2021/03/21 17:35:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27.4.1 2021/03/20 19:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27.4.2 2021/03/21 17:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,12 +203,10 @@ vmeattach(device_t parent, device_t self, void *aux)
 		 if present */
 		config_search(self, NULL,
 		    CFARG_SUBMATCH, vmesubmatch1,
-		    CFARG_IATTR, "vme",
 		    CFARG_EOL);
 	}
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, vmesubmatch,
-	    CFARG_IATTR, "vme",
 	    CFARG_EOL);
 
 #ifdef VMEDEBUG
