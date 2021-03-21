@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.11 2021/03/10 00:02:00 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.12 2021/03/21 15:24:56 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
@@ -89,7 +89,7 @@ enum_constant_from_unnamed_type(int x)
 	if (sizeof_int == sizeof_uint)	/* expect: 130 *//* FIXME */
 		return 6;
 
-	return 0;
+	return 0;		/* expect: statement not reached */
 }
 
 /*
