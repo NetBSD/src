@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.16 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.17 2021/03/21 07:32:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -206,10 +206,14 @@ kasan_md_init(void)
 
 	CTASSERT((__MD_SHADOW_SIZE / L0_SIZE) == 64);
 
+	extern vaddr_t kasan_kernelstart;
+	extern vaddr_t kasan_kernelsize;
+
+	kasan_shadow_map((void *)kasan_kernelstart, kasan_kernelsize);
+
 	/* The VAs we've created until now. */
 	vaddr_t eva = pmap_growkernel(VM_KERNEL_VM_BASE);
-	kasan_shadow_map((void *)VM_MIN_KERNEL_ADDRESS,
-	    eva - VM_MIN_KERNEL_ADDRESS);
+	kasan_shadow_map((void *)VM_KERNEL_VM_BASE, eva - VM_KERNEL_VM_BASE);
 }
 
 static inline bool
