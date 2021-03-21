@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.85 2021/03/21 13:03:42 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.86 2021/03/21 14:36:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -289,7 +289,7 @@ typedef	struct tnode {
 	bool	tn_cast : 1;	/* if tn_op == CVT, it's an explicit cast */
 	bool	tn_parenthesized : 1;
 	bool	tn_from_system_header : 1;
-	bool	tn_system_dependent : 1;
+	bool	tn_system_dependent : 1; /* depends on sizeof or offsetof */
 	union {
 		struct {
 			struct	tnode *_tn_left;	/* (left) operand */
@@ -393,6 +393,7 @@ typedef struct control_statement {
 					 * always true (as in 'for (;;)' or
 					 * 'while (1)'), there may be break
 					 * statements though */
+	bool	c_always_then : 1;
 	bool	c_reached_end_of_then : 1;
 	bool	c_had_return_noval : 1;	/* had "return;" */
 	bool	c_had_return_value : 1;	/* had "return (e);" */
