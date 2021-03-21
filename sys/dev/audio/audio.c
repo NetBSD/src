@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.91.2.1 2021/03/20 19:33:40 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.91.2.2 2021/03/21 19:06:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91.2.1 2021/03/20 19:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91.2.2 2021/03/21 19:06:19 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1410,16 +1410,14 @@ audiosearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 }
 
 static int
-audiorescan(device_t self, const char *ifattr, const int *flags)
+audiorescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct audio_softc *sc = device_private(self);
 
-	if (!ifattr_match(ifattr, "audio"))
-		return 0;
-
 	config_search(sc->sc_dev, NULL,
 	    CFARG_SUBMATCH, audiosearch,
-	    CFARG_IATTR, "audio",
+	    CFARG_IATTR, ifattr,
+	    CFARG_LOCATORS, locators,
 	    CFARG_EOL);
 
 	return 0;
