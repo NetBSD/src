@@ -55,6 +55,7 @@ d_c99_bool_strict.c(354): operands of '=' have incompatible types (double != _Bo
 d_c99_bool_strict.c(355): operands of '=' have incompatible types (pointer != _Bool) [107]
 d_c99_bool_strict.c(345): warning: argument b unused in function strict_bool_conversion_from_bool_to_scalar [231]
 d_c99_bool_strict.c(367): warning: constant in conditional context [161]
+d_c99_bool_strict.c(368): warning: statement not reached [193]
 d_c99_bool_strict.c(370): warning: constant in conditional context [161]
 d_c99_bool_strict.c(376): controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict.c(379): controlling expression must be bool, not 'int' [333]
