@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.242 2021/03/20 21:08:09 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.243 2021/03/21 11:48:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.242 2021/03/20 21:08:09 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.243 2021/03/21 11:48:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3777,7 +3777,8 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
 	}
 
 	/* expr() is also called in global initializations */
-	if (dcs->d_ctx != EXTERN)
+	/* TODO: rename constcond_false_ok */
+	if (dcs->d_ctx != EXTERN && !constcond_false_ok)
 		check_statement_reachable();
 
 	check_expr_misc(tn, vctx, tctx, !tctx, false, false, false);
