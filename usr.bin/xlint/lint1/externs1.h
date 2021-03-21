@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.81 2021/03/21 14:49:21 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.82 2021/03/21 19:08:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -235,7 +235,7 @@ extern	void	debug_node(const tnode_t *, int);
  */
 extern	sym_t	*funcsym;
 extern	bool	reached;
-extern	bool	rchflg;
+extern	bool	warn_about_unreachable;
 extern	bool	seen_fallthrough;
 extern	int	nargusg;
 extern	pos_t	argsused_pos;
