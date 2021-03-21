@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.17 2020/11/10 07:51:19 skrll Exp $ */
+/* $NetBSD: vmparam.h,v 1.18 2021/03/21 07:32:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -133,6 +133,7 @@
  *   0xffff_8000_0000_0000  -    1G  EFI_RUNTIME
  *   0xffff_8000_4000_0000  -   64T  (not used)
  *   0xffff_c000_0000_0000  -   64T  KERNEL VM Space (including text/data/bss)
+ *  (0xffff_c000_4000_0000     -1GB) KERNEL VM start of KVM
  *   0xffff_ffff_f000_0000  -  254M  KERNEL_IO for pmap_devmap
  *   0xffff_ffff_ffe0_0000  -    2M  RESERVED
  */
@@ -146,9 +147,8 @@
 #define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
 #define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
 
-#define VM_KERNEL_VM_BASE	VM_MIN_KERNEL_ADDRESS
-#define VM_KERNEL_VM_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_VM_BASE)
-
+#define VM_KERNEL_VM_BASE	(0xffffc00040000000L)
+#define VM_KERNEL_VM_SIZE	(VM_KERNEL_IO_ADDRESS - VM_KERNEL_VM_BASE)
 /*
  * Reserved space for EFI runtime services
  */
