@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.81 2021/03/21 10:30:28 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.82 2021/03/21 11:38:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.81 2021/03/21 10:30:28 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.82 2021/03/21 11:38:24 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1008,11 +1008,10 @@ doreturn(tnode_t *tn)
 	for (ci = cstmt; ci->c_surrounding != NULL; ci = ci->c_surrounding)
 		continue;
 
-	if (tn != NULL) {
+	if (tn != NULL)
 		ci->c_had_return_value = true;
-	} else {
+	else
 		ci->c_had_return_noval = true;
-	}
 
 	if (tn != NULL && funcsym->s_type->t_subt->t_tspec == VOID) {
 		/* void function %s cannot return value */
