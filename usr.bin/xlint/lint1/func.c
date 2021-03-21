@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.86 2021/03/21 12:10:27 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.87 2021/03/21 13:03:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.86 2021/03/21 12:10:27 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.87 2021/03/21 13:03:42 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -615,8 +615,8 @@ void
 if2(void)
 {
 
-	cstmt->c_rchif = reached;
-	reached = true;
+	cstmt->c_reached_end_of_then = reached;
+	reached = true;		/* XXX: sure? */
 }
 
 /*
@@ -628,7 +628,7 @@ if3(bool els)
 {
 
 	if (els) {
-		reached |= cstmt->c_rchif;
+		reached |= cstmt->c_reached_end_of_then;
 	} else {
 		reached = true;
 	}
