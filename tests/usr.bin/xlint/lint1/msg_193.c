@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.7 2021/03/21 15:44:57 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.8 2021/03/21 19:14:40 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -203,7 +203,7 @@ test_for_if_break(void)
 			break;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	}
 	reachable();
 }
@@ -234,7 +234,7 @@ test_for_if_continue(void)
 			continue;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	}
 	unreachable();			/* expect: 193 */
 }
@@ -265,7 +265,7 @@ test_for_if_return(void)
 			return;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	}
 	unreachable();			/* expect: 193 */
 }
@@ -312,7 +312,7 @@ test_while_if_break(void)
 			break;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	}
 	reachable();
 }
@@ -343,7 +343,7 @@ test_while_if_continue(void)
 			continue;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	}
 	unreachable();			/* expect: 193 */
 }
@@ -374,7 +374,7 @@ test_while_if_return(void)
 			return;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	}
 	unreachable();			/* expect: 193 */
 }
@@ -423,7 +423,7 @@ test_do_while_if_break(void)
 			break;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	} while (1);
 	reachable();
 }
@@ -454,7 +454,7 @@ test_do_while_if_continue(void)
 			continue;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	} while (1);
 	unreachable();			/* expect: 193 */
 }
@@ -485,7 +485,7 @@ test_do_while_if_return(void)
 			return;
 			unreachable();	/* expect: 193 */
 		}
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	} while (1);
 	unreachable();			/* expect: 193 */
 }
