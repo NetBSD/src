@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.188 2021/03/20 16:16:32 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.189 2021/03/21 08:46:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.188 2021/03/20 16:16:32 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.189 2021/03/21 08:46:26 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -126,7 +126,6 @@ anonymize(sym_t *s)
 %expect 134
 
 %union {
-	int	y_int;
 	val_t	*y_val;
 	sbuf_t	*y_sb;
 	sym_t	*y_sym;
@@ -151,20 +150,20 @@ anonymize(sym_t *s)
 %token			T_TYPEOF
 %token			T_EXTENSION
 %token			T_ALIGNOF
-%token	<y_op>		T_ASTERISK
+%token			T_ASTERISK
 %token	<y_op>		T_MULTIPLICATIVE
 %token	<y_op>		T_ADDITIVE
 %token	<y_op>		T_SHIFT
 %token	<y_op>		T_RELATIONAL
 %token	<y_op>		T_EQUALITY
-%token	<y_op>		T_AMPER
-%token	<y_op>		T_XOR
-%token	<y_op>		T_BITOR
-%token	<y_op>		T_LOGAND
-%token	<y_op>		T_LOGOR
+%token			T_AMPER
+%token			T_XOR
+%token			T_BITOR
+%token			T_LOGAND
+%token			T_LOGOR
 %token			T_QUEST
 %token			T_COLON
-%token	<y_op>		T_ASSIGN
+%token			T_ASSIGN
 %token	<y_op>		T_OPASSIGN
 %token			T_COMMA
 %token			T_SEMI
