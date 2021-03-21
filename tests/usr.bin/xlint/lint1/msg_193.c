@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.8 2021/03/21 19:14:40 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.9 2021/03/21 19:18:37 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -488,6 +488,40 @@ test_do_while_if_return(void)
 		unreachable();		/* expect: 193 */
 	} while (1);
 	unreachable();			/* expect: 193 */
+}
+
+void
+test_if_nested(void)
+{
+	if (0) {
+		if (1)			/* expect: 193 */
+			unreachable();
+		else
+			unreachable();	/* expect: 193 *//* XXX: redundant */
+
+		if (0)
+			unreachable();	/* expect: 193 *//* XXX: redundant */
+		else
+			unreachable();
+
+		unreachable();
+	}
+	reachable();
+
+	if (1) {
+		if (1)
+			reachable();
+		else
+			unreachable();	/* expect: 193 */
+
+		if (0)
+			unreachable();	/* expect: 193 */
+		else
+			reachable();
+
+		reachable();
+	}
+	reachable();
 }
 
 /* TODO: switch */
