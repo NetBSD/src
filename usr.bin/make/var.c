@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.892 2021/03/16 16:21:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.893 2021/03/21 23:03:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.892 2021/03/16 16:21:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.893 2021/03/21 23:03:33 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2072,8 +2072,8 @@ typedef struct Expr {
  *	Chain 1 starts with the single modifier ':M*'.
  *	  Chain 2 starts with all modifiers from ${IND1}.
  *	  Chain 2 ends at the ':' between ${IND1} and ${IND2}.
- *	  Chain 3 starts with all modifiers from ${IND1}.
- *	  Chain 2 ends at the ':' after ${IND2}.
+ *	  Chain 3 starts with all modifiers from ${IND2}.
+ *	  Chain 3 ends at the ':' after ${IND2}.
  *	Chain 1 continues with the the 2 modifiers ':O' and ':u'.
  *	Chain 1 ends at the final '}' of the expression.
  *
