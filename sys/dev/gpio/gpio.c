@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.64.10.3 2021/03/21 17:35:48 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.64.10.4 2021/03/21 18:03:32 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.3 2021/03/21 17:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.4 2021/03/21 18:03:32 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -189,7 +189,6 @@ gpio_childdetached(device_t self, device_t child)
 static int
 gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
-	struct gpio_softc *sc = device_private(self);
 
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, gpio_search,
