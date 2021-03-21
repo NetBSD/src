@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.131 2021/01/24 09:25:16 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.132 2021/03/21 08:46:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.131 2021/01/24 09:25:16 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.132 2021/03/21 08:46:26 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -68,7 +68,7 @@ TL	([fFlL]?[i]?)
 0[xX]{HD}+\.{HD}*{HX}{TL}	|
 0[xX]{HD}+{HX}{TL}		|
 \.{D}+{EX}?{TL}			return lex_floating_constant(yytext, yyleng);
-"="				return lex_operator(T_ASSIGN, NOOP);
+"="				return T_ASSIGN;
 "*="				return lex_operator(T_OPASSIGN, MULASS);
 "/="				return lex_operator(T_OPASSIGN, DIVASS);
 "%="				return lex_operator(T_OPASSIGN, MODASS);
@@ -79,11 +79,11 @@ TL	([fFlL]?[i]?)
 "&="				return lex_operator(T_OPASSIGN, ANDASS);
 "^="				return lex_operator(T_OPASSIGN, XORASS);
 "|="				return lex_operator(T_OPASSIGN, ORASS);
-"||"				return lex_operator(T_LOGOR, NOOP);
-"&&"				return lex_operator(T_LOGAND, NOOP);
-"|"				return lex_operator(T_BITOR, NOOP);
-"&"				return lex_operator(T_AMPER, NOOP);
-"^"				return lex_operator(T_XOR, NOOP);
+"||"				return T_LOGOR;
+"&&"				return T_LOGAND;
+"|"				return T_BITOR;
+"&"				return T_AMPER;
+"^"				return T_XOR;
 "=="				return lex_operator(T_EQUALITY, EQ);
 "!="				return lex_operator(T_EQUALITY, NE);
 "<"				return lex_operator(T_RELATIONAL, LT);
@@ -98,7 +98,7 @@ TL	([fFlL]?[i]?)
 "."				return lex_operator(T_MEMBACC, POINT);
 "+"				return lex_operator(T_ADDITIVE, PLUS);
 "-"				return lex_operator(T_ADDITIVE, MINUS);
-"*"				return lex_operator(T_ASTERISK, NOOP);
+"*"				return T_ASTERISK;
 "/"				return lex_operator(T_MULTIPLICATIVE, DIV);
 "%"				return lex_operator(T_MULTIPLICATIVE, MOD);
 "!"				return lex_operator(T_UNARY, NOT);
