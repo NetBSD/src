@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.5,v 1.9 2017/02/03 07:42:43 abhinav Exp $
+.\" $NetBSD: ttyaction.5,v 1.10 2021/03/21 23:29:36 mrg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,6 +98,10 @@ tty0	getty	/somewhere/tty_clean ${TTY}
 .Xr fnmatch 3 ,
 .Xr ttyaction 3
 .Sh HISTORY
+Support for the
+.Pa /etc/ttyaction
+file first appeared in 
+.Nx 1.3 .
 The ideas for the
 .Pa /etc/ttyaction
 file were inspired by the
