@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.107 2021/02/26 21:15:20 thorpej Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.108 2021/03/21 23:41:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.107 2021/02/26 21:15:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.108 2021/03/21 23:41:52 rin Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -856,7 +856,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	evcnt_attach_dynamic(&ci->ci_ev_ali, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "user alignment traps");
 	evcnt_attach_dynamic(&ci->ci_ev_ali_fatal, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_ali, xname, "user alignment traps");
+		&ci->ci_ev_ali, xname, "user alignment failures");
 	evcnt_attach_dynamic(&ci->ci_ev_umchk, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_umchk, xname, "user MCHK failures");
 	evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
