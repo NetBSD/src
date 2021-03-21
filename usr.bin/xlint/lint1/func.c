@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.80 2021/03/21 10:21:07 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.81 2021/03/21 10:30:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.80 2021/03/21 10:21:07 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.81 2021/03/21 10:30:28 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -223,7 +223,7 @@ funcdef(sym_t *fsym)
 	 * Put all symbols declared in the argument list back to the
 	 * symbol table.
 	 */
-	for (sym = dcs->d_fpsyms; sym != NULL; sym = sym->s_dlnxt) {
+	for (sym = dcs->d_func_proto_syms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_block_level != -1) {
 			lint_assert(sym->s_block_level == 1);
 			inssym(1, sym);
@@ -282,7 +282,7 @@ funcdef(sym_t *fsym)
 	 * if this is an old style definition and we had already a
 	 * prototype.
 	 */
-	dcs->d_fdpos = fsym->s_def_pos;
+	dcs->d_func_def_pos = fsym->s_def_pos;
 
 	if ((rdsym = dcs->d_redeclared_symbol) != NULL) {
 
@@ -378,7 +378,7 @@ funcend(void)
 		warning(216, funcsym->s_name);
 
 	/* Print warnings for unused arguments */
-	arg = dcs->d_fargs;
+	arg = dcs->d_func_args;
 	n = 0;
 	while (arg != NULL && (nargusg == -1 || n < nargusg)) {
 		check_usage_sym(dcs->d_asm, arg);
@@ -396,8 +396,9 @@ funcend(void)
 	if (dcs->d_scl == EXTERN && funcsym->s_inline) {
 		outsym(funcsym, funcsym->s_scl, DECL);
 	} else {
-		outfdef(funcsym, &dcs->d_fdpos, cstmt->c_had_return_value,
-			funcsym->s_osdef, dcs->d_fargs);
+		outfdef(funcsym, &dcs->d_func_def_pos,
+		    cstmt->c_had_return_value, funcsym->s_osdef,
+		    dcs->d_func_args);
 	}
 
 	/*
@@ -406,7 +407,7 @@ funcend(void)
 	 */
 	lint_assert(dcs->d_next == NULL);
 	lint_assert(dcs->d_ctx == EXTERN);
-	rmsyms(dcs->d_fpsyms);
+	rmsyms(dcs->d_func_proto_syms);
 
 	/* must be set on level 0 */
 	reached = true;

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.79 2021/03/21 10:25:40 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.80 2021/03/21 10:30:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -350,12 +350,12 @@ typedef	struct dinfo {
 	bool	d_packed : 1;
 	bool	d_used : 1;
 	type_t	*d_tagtyp;	/* tag during member declaration */
-	sym_t	*d_fargs;	/* list of arguments during function def. */
-	pos_t	d_fdpos;	/* position of function definition */
+	sym_t	*d_func_args;	/* list of arguments during function def. */
+	pos_t	d_func_def_pos;	/* position of function definition */
 	sym_t	*d_dlsyms;	/* first symbol declared at this level */
 	sym_t	**d_ldlsym;	/* points to s_dlnxt in last symbol decl.
 				   at this level */
-	sym_t	*d_fpsyms;	/* symbols defined in prototype */
+	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
 	struct	dinfo *d_next;	/* next level */
 } dinfo_t;
 
