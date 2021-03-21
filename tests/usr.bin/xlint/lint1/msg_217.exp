@@ -1,1 +1,3 @@
 msg_217.c(11): warning: function random falls off bottom without returning value [217]
+msg_217.c(58): warning: function reachable_continue_leads_to_endless_loop falls off bottom without returning value [217]
+msg_217.c(68): warning: function unreachable_continue_falls_through falls off bottom without returning value [217]
