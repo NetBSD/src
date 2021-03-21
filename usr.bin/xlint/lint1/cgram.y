@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.193 2021/03/21 09:49:34 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.194 2021/03/21 09:54:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.193 2021/03/21 09:49:34 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.194 2021/03/21 09:54:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -406,7 +406,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 		}
 	  }
 	| declmods deftyp notype_init_decls T_SEMI
-	| declspecs deftyp T_SEMI {
+	| declaration_specifiers deftyp T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -415,7 +415,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 			warning(2);
 		}
 	  }
-	| declspecs deftyp type_init_decls T_SEMI
+	| declaration_specifiers deftyp type_init_decls T_SEMI
 	| error T_SEMI {
 		global_clean_up();
 	  }
@@ -460,7 +460,7 @@ func_decl:
 	| declmods deftyp notype_decl {
 		$$ = $3;
 	  }
-	| declspecs deftyp type_decl {
+	| declaration_specifiers deftyp type_decl {
 		$$ = $3;
 	  }
 	;
@@ -487,7 +487,7 @@ arg_declaration:
 		warning(2);
 	  }
 	| declmods deftyp notype_init_decls T_SEMI
-	| declspecs deftyp T_SEMI {
+	| declaration_specifiers deftyp T_SEMI {
 		if (!dcs->d_nedecl) {
 			/* empty declaration */
 			warning(2);
@@ -496,14 +496,14 @@ arg_declaration:
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
-	| declspecs deftyp type_init_decls T_SEMI {
+	| declaration_specifiers deftyp type_init_decls T_SEMI {
 		if (dcs->d_nedecl) {
 			/* '%s' declared in argument declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
 	| declmods error
-	| declspecs error
+	| declaration_specifiers error
 	;
 
 declaration:			/* C99 6.7 */
@@ -517,7 +517,7 @@ declaration:			/* C99 6.7 */
 		}
 	  }
 	| declmods deftyp notype_init_decls T_SEMI
-	| declspecs deftyp T_SEMI {
+	| declaration_specifiers deftyp T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -526,7 +526,7 @@ declaration:			/* C99 6.7 */
 			warning(2);
 		}
 	  }
-	| declspecs deftyp type_init_decls T_SEMI
+	| declaration_specifiers deftyp type_init_decls T_SEMI
 	| error T_SEMI
 	;
 
@@ -635,16 +635,16 @@ deftyp:
 	  }
 	;
 
-declspecs:		/* C99 6.7 calls this declaration_specifiers */
+declaration_specifiers:		/* C99 6.7 */
 	  clrtyp_typespec {
 		add_type($1);
 	  }
 	| declmods typespec {
 		add_type($2);
 	  }
-	| type_attribute declspecs
-	| declspecs declmod
-	| declspecs notype_typespec {
+	| type_attribute declaration_specifiers
+	| declaration_specifiers declmod
+	| declaration_specifiers notype_typespec {
 		add_type($2);
 	  }
 	;
@@ -1294,7 +1294,7 @@ parameter_declaration:
 	  declmods deftyp {
 		$$ = declare_argument(abstract_name(), false);
 	  }
-	| declspecs deftyp {
+	| declaration_specifiers deftyp {
 		$$ = declare_argument(abstract_name(), false);
 	  }
 	| declmods deftyp notype_param_decl {
@@ -1307,13 +1307,13 @@ parameter_declaration:
 	 * "function with an abstract argument of type function".
 	 * This grammar realizes the second case.
 	 */
-	| declspecs deftyp param_decl {
+	| declaration_specifiers deftyp param_decl {
 		$$ = declare_argument($3, false);
 	  }
 	| declmods deftyp abstract_decl {
 		$$ = declare_argument($3, false);
 	  }
-	| declspecs deftyp abstract_decl {
+	| declaration_specifiers deftyp abstract_decl {
 		$$ = declare_argument($3, false);
 	  }
 	;
@@ -1729,8 +1729,8 @@ for_start:
 	  }
 	;
 for_exprs:
-	  for_start declspecs deftyp notype_init_decls T_SEMI opt_expr
-	  T_SEMI opt_expr T_RPAREN {
+	  for_start declaration_specifiers deftyp notype_init_decls T_SEMI
+	    opt_expr T_SEMI opt_expr T_RPAREN {
 		/* variable declaration in for loop */
 		c99ism(325);
 		for1(NULL, $6, $8);
