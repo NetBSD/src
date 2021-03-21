@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.77 2021/03/21 10:08:01 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.78 2021/03/21 10:21:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -332,7 +332,7 @@ typedef	struct dinfo {
 	scl_t	d_scl;		/* storage class */
 	type_t	*d_type;	/* after deftyp() pointer to the type used
 				   for all declarators */
-	sym_t	*d_rdcsym;	/* redeclared symbol */
+	sym_t	*d_redeclared_symbol;
 	int	d_offset;	/* offset of next structure member */
 	int	d_stralign;	/* alignment required for current structure */
 	scl_t	d_ctx;		/* context of declaration */
