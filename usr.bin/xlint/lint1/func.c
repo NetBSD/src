@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.91 2021/03/21 15:34:13 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.92 2021/03/21 15:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.91 2021/03/21 15:34:13 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.92 2021/03/21 15:44:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -754,6 +754,7 @@ switch2(void)
 void
 while1(tnode_t *tn)
 {
+	bool body_reached;
 
 	if (!reached) {
 		/* loop not entered at top */
@@ -766,11 +767,13 @@ while1(tnode_t *tn)
 
 	pushctrl(T_WHILE);
 	cstmt->c_loop = true;
-	if (tn != NULL && tn->tn_op == CON)
-		cstmt->c_maybe_endless = constant_is_nonzero(tn);
+	cstmt->c_maybe_endless = is_nonzero(tn);
+	body_reached = !is_zero(tn);
 
 	check_getopt_begin_while(tn);
 	expr(tn, false, true, true, false);
+
+	reached = body_reached;
 }
 
 /*

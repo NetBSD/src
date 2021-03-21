@@ -1,3 +1,4 @@
 msg_161.c(11): warning: constant in conditional context [161]
 msg_161.c(18): warning: constant in conditional context [161]
+msg_161.c(19): warning: statement not reached [193]
 msg_161.c(41): warning: constant in conditional context [161]
