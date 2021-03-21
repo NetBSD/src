@@ -1,1 +1,1 @@
-msg_293.c(6): syntax error ':' [249]
+msg_293.c(6): error: syntax error ':' [249]

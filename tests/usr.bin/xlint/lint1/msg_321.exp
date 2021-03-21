@@ -1,1 +1,1 @@
-msg_321.c(6): syntax error ':' [249]
+msg_321.c(6): error: syntax error ':' [249]

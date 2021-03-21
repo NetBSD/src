@@ -1,1 +1,1 @@
-msg_101.c(13): undefined struct/union member: z [101]
+msg_101.c(13): error: undefined struct/union member: z [101]

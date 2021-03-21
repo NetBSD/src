@@ -1,1 +1,1 @@
-d_lint_assert.c(15): syntax error '}' [249]
+d_lint_assert.c(15): error: syntax error '}' [249]

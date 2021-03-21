@@ -1,2 +1,2 @@
-d_init_pop_member.c(48): undefined struct/union member: capital [101]
-d_init_pop_member.c(57): undefined struct/union member: capital [101]
+d_init_pop_member.c(48): error: undefined struct/union member: capital [101]
+d_init_pop_member.c(57): error: undefined struct/union member: capital [101]
