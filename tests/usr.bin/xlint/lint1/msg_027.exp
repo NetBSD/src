@@ -1,1 +1,1 @@
-msg_027.c(8): redeclaration of identifier [27]
+msg_027.c(8): error: redeclaration of identifier [27]
