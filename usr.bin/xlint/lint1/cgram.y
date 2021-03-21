@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.190 2021/03/21 08:52:05 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.191 2021/03/21 08:55:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.190 2021/03/21 08:52:05 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.191 2021/03/21 08:55:59 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -157,7 +157,7 @@ anonymize(sym_t *s)
 %token	<y_op>		T_RELATIONAL
 %token	<y_op>		T_EQUALITY
 %token			T_AMPER
-%token			T_XOR
+%token			T_BITXOR
 %token			T_BITOR
 %token			T_LOGAND
 %token			T_LOGOR
@@ -257,7 +257,7 @@ anonymize(sym_t *s)
 %left	T_LOGOR
 %left	T_LOGAND
 %left	T_BITOR
-%left	T_XOR
+%left	T_BITXOR
 %left	T_AMPER
 %left	T_EQUALITY
 %left	T_RELATIONAL
@@ -1823,7 +1823,7 @@ expr:
 	| expr T_AMPER expr {
 		$$ = build(BITAND, $1, $3);
 	  }
-	| expr T_XOR expr {
+	| expr T_BITXOR expr {
 		$$ = build(BITXOR, $1, $3);
 	  }
 	| expr T_BITOR expr {
