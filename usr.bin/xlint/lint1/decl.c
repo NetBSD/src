@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.155 2021/03/21 10:25:40 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.156 2021/03/21 10:30:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.155 2021/03/21 10:25:40 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.156 2021/03/21 10:30:28 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -639,8 +639,8 @@ popdecl(void)
 		 * parameter type list.
 		 */
 		if (di->d_dlsyms != NULL) {
-			*di->d_ldlsym = dcs->d_fpsyms;
-			dcs->d_fpsyms = di->d_dlsyms;
+			*di->d_ldlsym = dcs->d_func_proto_syms;
+			dcs->d_func_proto_syms = di->d_dlsyms;
 		}
 		break;
 	case ABSTRACT:
@@ -1396,16 +1396,16 @@ add_function(sym_t *decl, sym_t *args)
 	 * The symbols are removed from the symbol table by popdecl() after
 	 * add_function(). To be able to restore them if this is a function
 	 * definition, a pointer to the list of all symbols is stored in
-	 * dcs->d_next->d_fpsyms. Also a list of the arguments (concatenated
-	 * by s_next) is stored in dcs->d_next->d_fargs.
+	 * dcs->d_next->d_func_proto_syms. Also a list of the arguments
+	 * (concatenated by s_next) is stored in dcs->d_next->d_func_args.
 	 * (dcs->d_next must be used because *dcs is the declaration stack
 	 * element created for the list of params and is removed after
 	 * add_function())
 	 */
 	if (dcs->d_next->d_ctx == EXTERN &&
 	    decl->s_type == dcs->d_next->d_type) {
-		dcs->d_next->d_fpsyms = dcs->d_dlsyms;
-		dcs->d_next->d_fargs = args;
+		dcs->d_next->d_func_proto_syms = dcs->d_dlsyms;
+		dcs->d_next->d_func_args = args;
 	}
 
 	tpp = &decl->s_type;
@@ -1602,7 +1602,7 @@ declarator_name(sym_t *sym)
 
 	sym->s_type = dcs->d_type;
 
-	dcs->d_fpsyms = NULL;
+	dcs->d_func_proto_syms = NULL;
 
 	return sym;
 }
@@ -2483,7 +2483,7 @@ check_func_lint_directives(void)
 	 * number of arguments.
 	 */
 	narg = 0;
-	for (arg = dcs->d_fargs; arg != NULL; arg = arg->s_next)
+	for (arg = dcs->d_func_args; arg != NULL; arg = arg->s_next)
 		narg++;
 	if (nargusg > narg) {
 		/* argument number mismatch with directive: ** %s ** */
@@ -2512,7 +2512,7 @@ check_func_lint_directives(void)
 	if (printflike_argnum != -1 || scanflike_argnum != -1) {
 		narg = printflike_argnum != -1
 		    ? printflike_argnum : scanflike_argnum;
-		arg = dcs->d_fargs;
+		arg = dcs->d_func_args;
 		for (n = 1; n < narg; n++)
 			arg = arg->s_next;
 		if (arg->s_type->t_tspec != PTR ||
