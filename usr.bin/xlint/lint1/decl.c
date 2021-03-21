@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.152 2021/03/20 13:25:31 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.153 2021/03/21 10:16:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.152 2021/03/20 13:25:31 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.153 2021/03/21 10:16:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1159,13 +1159,14 @@ declarator_1_struct_union(sym_t *dsym)
 	tspec_t	t;
 	int	sz;
 	int	o = 0;	/* Appease GCC */
-	scl_t	sc;
 
-	lint_assert((sc = dsym->s_scl) == MOS || sc == MOU);
+	lint_assert(dsym->s_scl == MOS || dsym->s_scl == MOU);
 
 	if (dcs->d_rdcsym != NULL) {
 		/* should be ensured by storesym() */
-		lint_assert((sc = dcs->d_rdcsym->s_scl) == MOS || sc == MOU);
+		lint_assert(dcs->d_rdcsym->s_scl == MOS ||
+		    dcs->d_rdcsym->s_scl == MOU);
+
 		if (dsym->s_styp == dcs->d_rdcsym->s_styp) {
 			/* duplicate member name: %s */
 			error(33, dsym->s_name);
