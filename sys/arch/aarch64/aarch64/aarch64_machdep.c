@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.56 2020/12/12 09:27:31 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.57 2021/03/21 07:17:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.56 2020/12/12 09:27:31 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.57 2021/03/21 07:17:12 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -180,7 +180,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	 *
 	 *    text     rwx => r-x
 	 *    rodata   rwx => r--
-	 *    data     rwx => rw-
+	 *    data     rwx => rw-  (.bss included)
 	 *
 	 * kernel image has mapped by L2 block. (2Mbyte)
 	 */
