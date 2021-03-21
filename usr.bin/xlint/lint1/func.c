@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.94 2021/03/21 19:08:10 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.95 2021/03/21 19:14:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.94 2021/03/21 19:08:10 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.95 2021/03/21 19:14:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -203,13 +203,7 @@ check_statement_reachable(void)
 	if (!reached && warn_about_unreachable) {
 		/* statement not reached */
 		warning(193);
-		/*
-		 * FIXME: Setting 'reached = true' is wrong since the
-		 * statement doesn't magically become reachable just by
-		 * issuing a warning.  This must be
-		 * 'warn_about_unreachable = false' instead.
-		 */
-		reached = true;	/* only to suppress further warnings */
+		warn_about_unreachable = false;
 	}
 }
 
