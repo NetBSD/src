@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.34 2015/08/25 02:38:15 uebayasi Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.35 2021/03/21 09:00:55 skrll Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
@@ -20,12 +20,18 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 .include "${BOARDMKFRAG}"
 .endif
 
+#
+# All boards should use a runtime calculation of kern_vtopdiff, but
+# support the leagacy compile time method.
+#
+.if !defined(KERNEL_VOFFSET_RUNTIME)
 .if defined(KERNEL_BASE_PHYS) && defined(KERNEL_BASE_VIRT)
 . if ${KERNEL_BASE_PHYS} == ${KERNEL_BASE_VIRT}
 CPPFLAGS+=-DKERNEL_BASES_EQUAL -DKERNEL_BASE_VOFFSET=0
 . else
 CPPFLAGS+=-DKERNEL_BASE_VOFFSET="(${KERNEL_BASE_VIRT}-${KERNEL_BASE_PHYS})"
 . endif
+.endif
 .endif
 
 EXTRA_CLEAN+=	${KERNELS:=.map}
