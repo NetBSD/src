@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.1 2021/03/20 19:33:41 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.2 2021/03/21 17:58:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.1 2021/03/20 19:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.2 2021/03/21 17:58:40 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -809,6 +809,23 @@ cfdriver_get_iattr(const struct cfdriver *cd, const char *ia)
 	return 0;
 }
 
+#if defined(DIAGNOSTIC)
+static int
+cfdriver_iattr_count(const struct cfdriver *cd)
+{
+	const struct cfiattrdata * const *cpp;
+	int i;
+
+	if (cd->cd_attrs == NULL)
+		return 0;
+
+	for (i = 0, cpp = cd->cd_attrs; *cpp; cpp++) {
+		i++;
+	}
+	return i;
+}
+#endif /* DIAGNOSTIC */
+
 /*
  * Lookup an interface attribute description by name.
  * If the driver is given, consider only its supported attributes.
@@ -1071,6 +1088,7 @@ config_vsearch(device_t parent, void *aux, cfarg_t tag, va_list ap)
 
 	KASSERT(config_initialized);
 	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
+	KASSERT(ifattr || cfdriver_iattr_count(parent->dv_cfdriver) < 2);
 
 	m.fn = fn;
 	m.parent = parent;
