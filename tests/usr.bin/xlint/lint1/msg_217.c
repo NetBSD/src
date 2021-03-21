@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.6 2021/03/21 11:55:59 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.7 2021/03/21 12:19:36 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function %s falls off bottom without returning value [217]
@@ -46,3 +46,23 @@ int
 main(void)
 {
 }
+
+int
+reachable_continue_leads_to_endless_loop(void)
+{
+	for (;;) {
+		if (1)
+			continue;
+		break;
+	}
+}				/* FIXME *//* expect: 217 */
+
+int
+unreachable_continue_falls_through(void)
+{
+	for (;;) {
+		if (0)
+			continue;
+		break;
+	}
+}				/* expect: 217 */
