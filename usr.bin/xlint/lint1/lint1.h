@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.82 2021/03/21 12:03:56 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.83 2021/03/21 12:06:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -385,9 +385,8 @@ typedef struct control_statement {
 	int	c_env;			/* type of statement (T_IF, ...) */
 	bool	c_loop : 1;		/* continue && break are valid */
 	bool	c_switch : 1;		/* case && break are valid */
-	bool	c_break : 1;		/* loop/switch has break */
-					/* TODO: is the break guaranteed to be
-					 * reachable? */
+	bool	c_break : 1;		/* the loop/switch has a reachable
+					 * break statement */
 	bool	c_cont : 1;		/* loop has continue */
 	bool	c_default : 1;		/* switch has default */
 	bool	c_maybe_endless : 1;	/* the controlling expression is
