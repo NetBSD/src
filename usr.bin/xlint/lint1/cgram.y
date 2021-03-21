@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.192 2021/03/21 09:22:35 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.193 2021/03/21 09:49:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.192 2021/03/21 09:22:35 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.193 2021/03/21 09:49:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -362,13 +362,22 @@ external_declaration:		/* C99 6.9 */
 		global_clean_up_decl(false);
 		clear_warning_flags();
 	  }
-	| data_def {
+	| top_level_declaration {
 		global_clean_up_decl(false);
 		clear_warning_flags();
 	  }
 	;
 
-data_def:
+/*
+ * On the top level, lint allows several forms of declarations that it doesn't
+ * allow in functions.  For example, a single ';' is an empty declaration and
+ * is supported by some compilers, but in a function it would be an empty
+ * statement, not a declaration.  This makes a difference in C90 mode, where
+ * a statement must not be followed by a declaration.
+ *
+ * See 'declaration' for all other declarations.
+ */
+top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 	  T_SEMI {
 		if (sflag) {
 			/* empty declaration */
@@ -456,12 +465,12 @@ func_decl:
 	  }
 	;
 
-arg_declaration_list_opt:
+arg_declaration_list_opt:	/* C99 6.9.1p13 example 1 */
 	  /* empty */
 	| arg_declaration_list
 	;
 
-arg_declaration_list:
+arg_declaration_list:		/* C99 6.9.1p13 example 1 */
 	  arg_declaration
 	| arg_declaration_list arg_declaration
 	/* XXX or better "arg_declaration error" ? */
@@ -472,7 +481,6 @@ arg_declaration_list:
  * "arg_declaration" is separated from "declaration" because it
  * needs other error handling.
  */
-
 arg_declaration:
 	  declmods deftyp T_SEMI {
 		/* empty declaration */
@@ -498,7 +506,7 @@ arg_declaration:
 	| declspecs error
 	;
 
-declaration:
+declaration:			/* C99 6.7 */
 	  declmods deftyp T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
@@ -627,7 +635,7 @@ deftyp:
 	  }
 	;
 
-declspecs:
+declspecs:		/* C99 6.7 calls this declaration_specifiers */
 	  clrtyp_typespec {
 		add_type($1);
 	  }
