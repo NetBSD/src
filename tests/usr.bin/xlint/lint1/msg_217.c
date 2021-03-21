@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.7 2021/03/21 12:19:36 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.8 2021/03/21 14:36:59 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function %s falls off bottom without returning value [217]
@@ -62,7 +62,7 @@ unreachable_continue_falls_through(void)
 {
 	for (;;) {
 		if (0)
-			continue;
+			continue; /* expect: statement not reached */
 		break;
 	}
 }				/* expect: 217 */
