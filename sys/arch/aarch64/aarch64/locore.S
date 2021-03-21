@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77 2021/03/20 14:30:50 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.78 2021/03/21 09:08:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.77 2021/03/20 14:30:50 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.78 2021/03/21 09:08:40 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -175,7 +175,7 @@ vstart:
 	msr	tpidr_el0, xzr
 	msr	tpidrro_el0, xzr
 
-	/* set curcpu() */
+	/* set curlwp() */
 	adrl	x0, lwp0		/* curlwp is lwp0 */
 	msr	tpidr_el1, x0
 	DPRINTREG("curlwp           = ", x0);
