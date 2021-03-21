@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.9 2021/03/21 19:18:37 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.10 2021/03/21 19:39:01 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -22,10 +22,10 @@
  *	system-dependent constant expression
  */
 
-extern void
-reachable(void);
-extern void
-unreachable(void);
+extern void reachable(void);
+extern void unreachable(void);
+extern _Bool maybe(void);
+
 
 void
 test_statement(void)
@@ -519,6 +519,37 @@ test_if_nested(void)
 		else
 			reachable();
 
+		reachable();
+	}
+	reachable();
+}
+
+void
+test_if_maybe(void)
+{
+	if (maybe()) {
+		if (0)
+			unreachable();	/* expect: 193 */
+		else
+			reachable();
+		reachable();
+	}
+	reachable();
+
+	if (0) {
+		if (maybe())		/* expect: 193 */
+			unreachable();
+		else
+			unreachable();
+		unreachable();
+	}
+	reachable();
+
+	if (1) {
+		if (maybe())
+			reachable();
+		else
+			reachable();
 		reachable();
 	}
 	reachable();
