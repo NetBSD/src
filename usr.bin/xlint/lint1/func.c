@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.79 2021/03/21 10:08:01 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.80 2021/03/21 10:21:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.79 2021/03/21 10:08:01 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.80 2021/03/21 10:21:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -284,7 +284,7 @@ funcdef(sym_t *fsym)
 	 */
 	dcs->d_fdpos = fsym->s_def_pos;
 
-	if ((rdsym = dcs->d_rdcsym) != NULL) {
+	if ((rdsym = dcs->d_redeclared_symbol) != NULL) {
 
 		if (!check_redeclaration(fsym, (dowarn = false, &dowarn))) {
 
