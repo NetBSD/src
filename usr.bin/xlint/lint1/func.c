@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.90 2021/03/21 15:24:55 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.91 2021/03/21 15:34:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.90 2021/03/21 15:24:55 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.91 2021/03/21 15:34:13 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -883,12 +883,11 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	if (tn2 != NULL)
 		expr(tn2, false, true, true, false);
 
-	cstmt->c_maybe_endless =
-	    tn2 == NULL || (tn2->tn_op == CON && constant_is_nonzero(tn2));
+	cstmt->c_maybe_endless = tn2 == NULL || is_nonzero(tn2);
 
 	/* Checking the reinitialization expression is done in for2() */
 
-	reached = true;
+	reached = !is_zero(tn2);
 }
 
 /*

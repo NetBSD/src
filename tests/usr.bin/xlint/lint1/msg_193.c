@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.5 2021/03/21 15:24:56 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.6 2021/03/21 15:34:13 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -173,7 +173,7 @@ void
 test_for_false(void)
 {
 	for (; 0;)
-		unreachable();		/* TODO: expect: 193 */
+		unreachable();		/* expect: 193 */
 	reachable();
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.86 2021/03/21 14:36:59 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.87 2021/03/21 15:34:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -482,4 +482,16 @@ constant_is_nonzero(const tnode_t *tn)
 	lint_assert(tn->tn_op == CON);
 	lint_assert(tn->tn_type->t_tspec == tn->tn_val->v_tspec);
 	return is_nonzero_val(tn->tn_val);
+}
+
+static inline bool
+is_zero(const tnode_t *tn)
+{
+	return tn != NULL && tn->tn_op == CON && !is_nonzero_val(tn->tn_val);
+}
+
+static inline bool
+is_nonzero(const tnode_t *tn)
+{
+	return tn != NULL && tn->tn_op == CON && is_nonzero_val(tn->tn_val);
 }
