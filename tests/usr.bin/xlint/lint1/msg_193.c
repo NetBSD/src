@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.10 2021/03/21 19:39:01 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.11 2021/03/21 20:08:21 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -555,8 +555,64 @@ test_if_maybe(void)
 	reachable();
 }
 
-/* TODO: switch */
+/*
+ * To compute the reachability graph of this little monster, lint would have
+ * to keep all statements and their relations from the whole function in
+ * memory.  It doesn't do that.  Therefore it does not warn about any
+ * unreachable statements in this function.
+ */
+void
+test_goto_numbers_alphabetically(void)
+{
+	goto one;
+eight:
+	goto nine;
+five:
+	return;
+four:
+	goto five;
+nine:
+	goto ten;
+one:
+	goto two;
+seven:
+	goto eight;
+six:				/* expect: warning: label six unused */
+	goto seven;
+ten:
+	return;
+three:
+	goto four;
+two:
+	goto three;
+}
 
-/* TODO: goto */
+void
+test_while_goto(void)
+{
+	while (1) {
+		goto out;
+		break;		/* lint only warns with the -b option */
+	}
+	unreachable();		/* expect: 193 */
+out:
+	reachable();
+}
+
+void
+test_unreachable_label(void)
+{
+	if (0)
+		goto unreachable;	/* expect: 193 */
+	goto reachable;
+
+	/* named_label assumes that any label is reachable. */
+unreachable:
+	unreachable();
+reachable:
+	reachable();
+}
+
+/* TODO: switch */
 
 /* TODO: system-dependent constant expression (see tn_system_dependent) */
