@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.191 2021/03/21 08:55:59 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.192 2021/03/21 09:22:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.191 2021/03/21 08:55:59 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.192 2021/03/21 09:22:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -264,7 +264,7 @@ anonymize(sym_t *s)
 %left	T_SHIFT
 %left	T_ADDITIVE
 %left	T_ASTERISK T_MULTIPLICATIVE
-%right	T_UNARY T_INCDEC T_SIZEOF T_BUILTIN_OFFSETOF T_ALIGNOF T_REAL T_IMAG
+%right	T_UNARY T_INCDEC T_SIZEOF T_REAL T_IMAG
 %left	T_LPAREN T_LBRACK T_MEMBACC
 
 %token	<y_sb>		T_NAME
@@ -1343,7 +1343,7 @@ initializer:			/* C99 6.7.8 "Initialization" */
 	;
 
 initializer_list:		/* C99 6.7.8 "Initialization" */
-	  initializer_list_item		%prec T_COMMA
+	  initializer_list_item
 	| initializer_list T_COMMA initializer_list_item
 	;
 
@@ -1962,12 +1962,11 @@ term:
 	| T_IMAG T_LPAREN term T_RPAREN {
 		$$ = build(IMAG, $3, NULL);
 	  }
-	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN
-						    %prec T_BUILTIN_OFFSETOF {
+	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
 		symtyp = FMEMBER;
 		$$ = build_offsetof($3, getsym($5));
 	  }
-	| T_SIZEOF term					%prec T_SIZEOF {
+	| T_SIZEOF term	{
 		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
 		if ($$ != NULL)
 			check_expr_misc($2, false, false, false, false, false, true);
@@ -1975,7 +1974,7 @@ term:
 	| T_SIZEOF T_LPAREN type_name T_RPAREN		%prec T_SIZEOF {
 		$$ = build_sizeof($3);
 	  }
-	| T_ALIGNOF T_LPAREN type_name T_RPAREN		%prec T_ALIGNOF {
+	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		$$ = build_alignof($3);
 	  }
 	| T_LPAREN type_name T_RPAREN term		%prec T_UNARY {
