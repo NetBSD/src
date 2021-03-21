@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.154 2021/03/21 10:21:07 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.155 2021/03/21 10:25:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.154 2021/03/21 10:21:07 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.155 2021/03/21 10:25:40 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -717,7 +717,7 @@ clrtyp(void)
 	dcs->d_inline = false;
 	dcs->d_mscl = false;
 	dcs->d_terr = false;
-	dcs->d_nedecl = false;
+	dcs->d_nonempty_decl = false;
 	dcs->d_notyp = false;
 }
 
@@ -1659,7 +1659,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 			tag = newtag(tag, scl, decl, semi);
 		} else {
 			/* a new tag, no empty declaration */
-			dcs->d_next->d_nedecl = true;
+			dcs->d_next->d_nonempty_decl = true;
 			if (scl == ENUM_TAG && !decl) {
 				if (!tflag && (sflag || pflag))
 					/* forward reference to enum type */
@@ -1682,7 +1682,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		tag->s_block_level = -1;
 		tag->s_type = tp = getblk(sizeof (type_t));
 		tp->t_packed = dcs->d_packed;
-		dcs->d_next->d_nedecl = true;
+		dcs->d_next->d_nonempty_decl = true;
 	}
 
 	if (tp->t_tspec == NOTSPEC) {
@@ -1724,14 +1724,14 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 				warning(45, storage_class_name(tag->s_scl),
 				    tag->s_name);
 			}
-			dcs->d_next->d_nedecl = true;
+			dcs->d_next->d_nonempty_decl = true;
 		} else if (decl) {
 			/* "struct a { ... } " */
 			if (hflag)
 				/* redefinition hides earlier one: %s */
 				warning(43, tag->s_name);
 			tag = pushdown(tag);
-			dcs->d_next->d_nedecl = true;
+			dcs->d_next->d_nonempty_decl = true;
 		} else if (tag->s_scl != scl) {
 			/* base type is really '%s %s' */
 			warning(45, storage_class_name(tag->s_scl),
@@ -1743,7 +1743,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 				    tag->s_name);
 			}
 			tag = pushdown(tag);
-			dcs->d_next->d_nedecl = true;
+			dcs->d_next->d_nonempty_decl = true;
 		}
 	} else {
 		if (tag->s_scl != scl) {
@@ -1751,15 +1751,15 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			error(46, storage_class_name(tag->s_scl));
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
-			dcs->d_next->d_nedecl = true;
+			dcs->d_next->d_nonempty_decl = true;
 		} else if (decl && !is_incomplete(tag->s_type)) {
 			/* (%s) tag redeclared */
 			error(46, storage_class_name(tag->s_scl));
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
-			dcs->d_next->d_nedecl = true;
+			dcs->d_next->d_nonempty_decl = true;
 		} else if (semi || decl) {
-			dcs->d_next->d_nedecl = true;
+			dcs->d_next->d_nonempty_decl = true;
 		}
 	}
 	return tag;

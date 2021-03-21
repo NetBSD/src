@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.194 2021/03/21 09:54:02 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.195 2021/03/21 10:25:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.194 2021/03/21 09:54:02 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.195 2021/03/21 10:25:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -410,7 +410,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
-		} else if (!dcs->d_nedecl) {
+		} else if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
 			warning(2);
 		}
@@ -488,7 +488,7 @@ arg_declaration:
 	  }
 	| declmods deftyp notype_init_decls T_SEMI
 	| declaration_specifiers deftyp T_SEMI {
-		if (!dcs->d_nedecl) {
+		if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
 			warning(2);
 		} else {
@@ -497,7 +497,7 @@ arg_declaration:
 		}
 	  }
 	| declaration_specifiers deftyp type_init_decls T_SEMI {
-		if (dcs->d_nedecl) {
+		if (dcs->d_nonempty_decl) {
 			/* '%s' declared in argument declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
@@ -521,7 +521,7 @@ declaration:			/* C99 6.7 */
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
-		} else if (!dcs->d_nedecl) {
+		} else if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
 			warning(2);
 		}
