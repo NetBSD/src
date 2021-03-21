@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.78 2021/03/21 10:21:07 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.79 2021/03/21 10:25:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -341,8 +341,9 @@ typedef	struct dinfo {
 	bool	d_inline : 1;	/* inline in declaration specifiers */
 	bool	d_mscl : 1;	/* multiple storage classes */
 	bool	d_terr : 1;	/* invalid type combination */
-	bool	d_nedecl : 1;	/* if at least one tag is declared */
-	bool	d_vararg : 1;	/* ... in the current function decl. */
+	bool	d_nonempty_decl : 1; /* if at least one tag is declared
+				 * ... in the current function decl. */
+	bool	d_vararg : 1;
 	bool	d_proto : 1;	/* current function decl. is prototype */
 	bool	d_notyp : 1;	/* set if no type specifier was present */
 	bool	d_asm : 1;	/* set if d_ctx == AUTO and asm() present */
