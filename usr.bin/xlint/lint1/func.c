@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.84 2021/03/21 12:03:56 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.85 2021/03/21 12:08:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.84 2021/03/21 12:03:56 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.85 2021/03/21 12:08:34 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -815,7 +815,7 @@ do2(tnode_t *tn)
 	 * If there was a continue statement, the expression controlling the
 	 * loop is reached.
 	 */
-	if (cstmt->c_cont)
+	if (cstmt->c_continue)
 		reached = true;
 
 	if (tn != NULL)
@@ -823,7 +823,7 @@ do2(tnode_t *tn)
 
 	if (tn != NULL && tn->tn_op == CON) {
 		cstmt->c_maybe_endless = constant_is_nonzero(tn);
-		if (!cstmt->c_maybe_endless && cstmt->c_cont)
+		if (!cstmt->c_maybe_endless && cstmt->c_continue)
 			/* continue in 'do ... while (0)' loop */
 			error(323);
 	}
@@ -895,7 +895,7 @@ for2(void)
 	pos_t	cpos, cspos;
 	tnode_t	*tn3;
 
-	if (cstmt->c_cont)
+	if (cstmt->c_continue)
 		reached = true;
 
 	cpos = curr_pos;
@@ -986,7 +986,8 @@ docont(void)
 		/* continue outside loop */
 		error(209);
 	} else {
-		ci->c_cont = true;
+		/* TODO: only if reachable, for symmetry with c_break */
+		ci->c_continue = true;
 	}
 
 	check_statement_reachable();
