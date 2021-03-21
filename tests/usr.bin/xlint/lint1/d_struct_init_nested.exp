@@ -1,4 +1,4 @@
-d_struct_init_nested.c(35): cannot initialize 'enum I1' from 'struct Inner1' [185]
-d_struct_init_nested.c(37): too many struct/union initializers [172]
-d_struct_init_nested.c(62): cannot initialize 'enum I1' from 'struct Inner2' [185]
+d_struct_init_nested.c(35): error: cannot initialize 'enum I1' from 'struct Inner1' [185]
+d_struct_init_nested.c(37): error: too many struct/union initializers [172]
+d_struct_init_nested.c(62): error: cannot initialize 'enum I1' from 'struct Inner2' [185]
 d_struct_init_nested.c(64): warning: enum type mismatch between 'enum I2' and 'enum O3' in initialization [210]
