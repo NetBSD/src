@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.24 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: std.rpi,v 1.25 2021/03/21 09:00:55 skrll Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -26,3 +26,7 @@ options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.rpi"
 makeoptions 	LOADADDRESS="0x80008000"
+
+# Prevent the addition of a command line -DKERNEL_BASE_VOFFSET= as it
+# is done at runtime.
+makeoptions	KERNEL_VOFFSET_RUNTIME=1
