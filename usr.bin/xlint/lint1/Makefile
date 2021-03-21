@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2021/03/20 19:33:25 rillig Exp $
+#	$NetBSD: Makefile,v 1.64 2021/03/21 13:10:58 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -68,7 +68,7 @@ add-test: .PHONY
 		'' \
 		'/*' \
 		' * TODO: Explain the purpose of the test.' \
-		'*/' \
+		' */' \
 		'' \
 		'/* lint1-extra-flags: -p */' \
 		'' \
