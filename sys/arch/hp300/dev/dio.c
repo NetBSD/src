@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.39 2014/03/26 17:55:26 christos Exp $	*/
+/*	$NetBSD: dio.c,v 1.39.44.1 2021/03/22 02:00:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.39 2014/03/26 17:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.39.44.1 2021/03/22 02:00:56 thorpej Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -154,8 +154,10 @@ dioattach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
 
 		/* Attach matching device. */
-		config_found_sm_loc(self, "dio", NULL, &da, dioprint,
-		    diosubmatch);
+		config_found(self, &da, dioprint,
+		    CFARG_SUBMATCH, diosubmatch,
+		    CFARG_IATTR, "dio",
+		    CFARG_EOL);
 		scode += scodesize;
 	}
 }

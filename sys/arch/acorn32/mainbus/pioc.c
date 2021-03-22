@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.18.52.2 2021/03/21 17:35:39 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.18.52.3 2021/03/22 02:00:54 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.2 2021/03/21 17:35:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.3 2021/03/22 02:00:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,8 +382,10 @@ piocattach(device_t parent, device_t self, void *aux)
 			pa.pa_offset = (PIOC_WDC_PRIMARY_OFFSET << 2);
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_IATTR, "pioc",
+		    CFARG_EOL);
 	}
 
 	/*
@@ -401,8 +403,10 @@ piocattach(device_t parent, device_t self, void *aux)
 			pa.pa_offset = (PIOC_FDC_PRIMARY_OFFSET << 2);
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_IATTR, "pioc",
+		    CFARG_EOL);
 	}
 
 	/*
@@ -437,8 +441,10 @@ piocattach(device_t parent, device_t self, void *aux)
 		}
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_IATTR, "pioc",
+		    CFARG_EOL);
 	}
 
 	if (sc->sc_config[PIOC_CM_CR2] & PIOC_UART2_ENABLE) {
@@ -462,8 +468,10 @@ piocattach(device_t parent, device_t self, void *aux)
 		}
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_IATTR, "pioc",
+		    CFARG_EOL);
 	}
 
 	/*
@@ -488,8 +496,10 @@ piocattach(device_t parent, device_t self, void *aux)
 		}
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_IATTR, "pioc",
+		    CFARG_EOL);
 	}
 
 #if 0

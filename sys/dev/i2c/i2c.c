@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.77.2.2 2021/03/21 19:06:19 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.77.2.3 2021/03/22 02:01:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77.2.2 2021/03/21 19:06:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77.2.3 2021/03/22 02:01:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,9 +493,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 					    "address @ 0x%02x\n", addr);
 				} else if (sc->sc_devices[addr] == NULL) {
 					sc->sc_devices[addr] =
-					    config_found_sm_loc(self, "iic",
-					        loc, &ia, iic_print_direct,
-						NULL);
+					    config_found(self, &ia,
+					    iic_print_direct,
+					    CFARG_IATTR, "iic",
+					    CFARG_LOCATORS, loc,
+					    CFARG_EOL);
 				}
 			}
 

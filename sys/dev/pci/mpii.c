@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.27 2021/02/23 07:17:58 skrll Exp $ */
+/* $NetBSD: mpii.c,v 1.27.2.1 2021/03/22 02:01:01 thorpej Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.27 2021/02/23 07:17:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.27.2.1 2021/03/22 02:01:01 thorpej Exp $");
 
 #include "bio.h"
 
@@ -726,8 +726,10 @@ mpii_rescan(device_t self, const char *ifattr, const int *locators)
 	if (sc->sc_child != NULL)
 		return 0;
 
-	sc->sc_child = config_found_sm_loc(self, ifattr, locators, &sc->sc_chan,
-	    scsiprint, NULL);
+	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint,
+	    CFARG_IATTR, ifattr,
+	    CFARG_LOCATORS, locators,
+	    CFARG_EOL);
 
 	return 0;
 }

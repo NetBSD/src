@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.44.1 2021/03/22 02:00:56 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2014/03/18 18:20:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.44.1 2021/03/22 02:00:56 thorpej Exp $");
 
 #define __INTR_PRIVATE
 
@@ -156,7 +156,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	ma.ma_le_memt = curcpu()->ci_softc->cpu_le_bst;
 	ma.ma_dmat = &booke_bus_dma_tag;
 
-	config_found_sm_loc(self, "mainbus", NULL, &ma, mainbus_print, NULL);
+	config_found(self, &ma, mainbus_print,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 }
 
 CFATTACH_DECL_NEW(mainbus, 0, mainbus_match, mainbus_attach, NULL, NULL);

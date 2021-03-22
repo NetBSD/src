@@ -1,4 +1,4 @@
-/* $NetBSD: aupsc.c,v 1.7 2012/01/03 07:36:02 kiyohara Exp $ */
+/* $NetBSD: aupsc.c,v 1.7.62.1 2021/03/22 02:00:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.7 2012/01/03 07:36:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.7.62.1 2021/03/22 02:00:57 thorpej Exp $");
 
 #include "locators.h"
 
@@ -148,8 +148,10 @@ aupsc_attach(device_t parent, device_t self, void *aux)
 		aupsc_disable(&p);
 
 		if (s & AUPSC_STAT_SR) {
-			(void) config_found_sm_loc(self, "aupsc", NULL,
-				&pa, aupsc_print, aupsc_submatch);
+			config_found(self, &pa, aupsc_print,
+			    CFARG_SUBMATCH, aupsc_submatch,
+			    CFARG_IATTR, "aupsc",
+			    CFARG_EOL);
 		}
         }
 }

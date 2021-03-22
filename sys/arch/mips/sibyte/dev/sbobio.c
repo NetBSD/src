@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.23 2016/07/21 17:02:47 christos Exp $ */
+/* $NetBSD: sbobio.c,v 1.23.30.1 2021/03/22 02:00:58 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.23 2016/07/21 17:02:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.23.30.1 2021/03/22 02:00:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -241,8 +241,11 @@ sbobio_attach(device_t parent, device_t self, void *aux)
 		locs[SBOBIOCF_INTR + 0] = devs[i].sa_intr[0];
 		locs[SBOBIOCF_INTR + 1] = devs[i].sa_intr[1];
 
-		config_found_sm_loc(self, "sbobio", locs, &sa,
-				    sbobio_print, config_stdsubmatch);
+		config_found(self, &sa, sbobio_print,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_IATTR, "sbobio",
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 	return;
 }

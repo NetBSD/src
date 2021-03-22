@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.55 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.55.6.1 2021/03/22 02:01:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.55 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.55.6.1 2021/03/22 02:01:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -326,9 +326,11 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 				}
 			}
 			if (hasin == 1 && hasout == 1)
-				sc->sc_subdevs[i] = config_found_sm_loc(self,
-					"ucombus", NULL, &ucaa,
-					ucomprint, ucomsubmatch);
+				sc->sc_subdevs[i] =
+				    config_found(self, &ucaa, ucomprint,
+						 CFARG_SUBMATCH, ucomsubmatch,
+						 CFARG_IATTR, "ucombus",
+						 CFARG_EOL);
 			else
 				aprint_error_dev(self,
 				    "no proper endpoints for port %d (%d,%d)\n",
@@ -358,10 +360,11 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 				ucaa.ucaa_bulkin = port | UE_DIR_IN;
 				ucaa.ucaa_bulkout = port | UE_DIR_OUT;
 			}
-			sc->sc_subdevs[i] = config_found_sm_loc(self, "ucombus",
-				NULL, &ucaa, ucomprint, ucomsubmatch);
-
-
+			sc->sc_subdevs[i] =
+			    config_found(self, &ucaa, ucomprint,
+					 CFARG_SUBMATCH, ucomsubmatch,
+					 CFARG_IATTR, "ucombus",
+					 CFARG_EOL);
 		}
 	}
 

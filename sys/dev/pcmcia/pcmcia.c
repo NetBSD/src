@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.94 2011/07/26 22:24:36 dyoung Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.94.70.1 2021/03/22 02:01:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.94 2011/07/26 22:24:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.94.70.1 2021/03/22 02:01:01 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -246,9 +246,11 @@ pcmcia_rescan(device_t self, const char *ifattr,
 		paa.card = &sc->card;
 		paa.pf = pf;
 
-		pf->child = config_found_sm_loc(self, "pcmcia", locs, &paa,
-						pcmcia_print,
-						config_stdsubmatch);
+		pf->child = config_found(self, &paa, pcmcia_print,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_IATTR, "pcmcia",
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 
 	return (0);

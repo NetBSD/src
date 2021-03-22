@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.1 2021/03/21 21:09:01 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.2 2021/03/22 02:00:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.1 2021/03/21 21:09:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.2 2021/03/22 02:00:57 thorpej Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1341,7 +1341,10 @@ mb_module_callback(device_t self, struct confargs *ca)
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
 		return NULL;
 
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_IATTR, "gedoens",
+	    CFARG_EOL);
 }
 
 static device_t
@@ -1351,7 +1354,10 @@ mb_cpu_mem_callback(device_t self, struct confargs *ca)
 	     ca->ca_type.iodc_type != HPPA_TYPE_MEMORY))
 		return NULL;
 
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_IATTR, "gedoens",
+	    CFARG_EOL);
 }
 
 void

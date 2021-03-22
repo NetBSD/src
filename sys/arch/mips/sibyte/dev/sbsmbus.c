@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.17 2017/07/24 09:56:46 mrg Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.17.18.1 2021/03/22 02:00:58 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.17 2017/07/24 09:56:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.17.18.1 2021/03/22 02:00:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,8 +100,11 @@ smbus_attach(device_t parent, device_t self, void *aux)
 		locs[SMBUSCF_CHAN] = 0; /* XXX */
 		locs[SMBUSCF_DEV] = smbus_devs[i].sa_device;
 
-		config_found_sm_loc(self, "smbus", locs, &sa,
-				    smbus_print, config_stdsubmatch);
+		config_found(self, &sa, smbus_print,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_IATTR, "smbus",
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 }
 

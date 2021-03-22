@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.29 2017/03/10 15:44:24 skrll Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.29.28.1 2021/03/22 02:00:55 thorpej Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.29 2017/03/10 15:44:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.29.28.1 2021/03/22 02:00:55 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -1109,8 +1109,10 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 			continue;
 		}
 
-		config_found_sm_loc(sc->sc_dev, "mvsoc", NULL, &mva,
-		    mvsoc_print, mvsoc_search);
+		config_found(sc->sc_dev, &mva, mvsoc_print,
+		    CFARG_SUBMATCH, mvsoc_search,
+		    CFARG_IATTR, "mvsoc",
+		    CFARG_EOL);
 	}
 }
 
