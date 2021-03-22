@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.11 2020/04/21 12:16:47 roy Exp $	*/
+/*	$NetBSD: config.h,v 1.12 2021/03/22 18:41:11 christos Exp $	*/
 /*	$KAME: config.h,v 1.9 2003/08/06 04:19:40 ono Exp $	*/
 
 /*
@@ -35,7 +35,7 @@ extern void getconfig(const char *, int);
 extern void delete_prefix(struct prefix *);
 extern void invalidate_prefix(struct prefix *);
 extern void update_prefix(struct prefix *);
-extern void add_prefix(struct rainfo *, int, struct in6_addr *, int);
+extern void add_prefix(struct rainfo *, int, const struct in6_addr *, int);
 extern void make_packet(struct rainfo *);
 extern void get_prefix(struct rainfo *);
 
