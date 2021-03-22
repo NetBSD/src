@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138.76.1 2021/03/20 19:33:40 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.138.76.2 2021/03/22 02:01:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.1 2021/03/20 19:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.2 2021/03/22 02:01:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,8 +243,10 @@ isa_attach_knowndevs(struct isa_softc *sc)
 
 		/* XXX should setup locator array */
 
-		ik->ik_claimed = config_found_sm_loc(sc->sc_dev,
-		    "isa", 0, &ia, isaprint, isasubmatch);
+		ik->ik_claimed = config_found(sc->sc_dev, &ia, isaprint,
+		    CFARG_SUBMATCH, isasubmatch,
+		    CFARG_IATTR, "isa",
+		    CFARG_EOL);
 	}
 }
 

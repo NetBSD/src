@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.57 2020/10/04 06:15:54 nat Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.57.4.1 2021/03/22 02:00:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.57 2020/10/04 06:15:54 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.57.4.1 2021/03/22 02:00:59 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -146,9 +146,10 @@ cardslotattach(device_t parent, device_t self, void *aux)
 	}
 
 	if (pa != NULL) {
-		sc->sc_16_softc = config_found_sm_loc(self, "pcmciabus", NULL,
-						      pa, cardslot_16_print,
-						      cardslot_16_submatch);
+		sc->sc_16_softc = config_found(self, pa, cardslot_16_print,
+		    CFARG_SUBMATCH, cardslot_16_submatch,
+		    CFARG_IATTR, "pcmciabus",
+		    CFARG_EOL);
 		if (sc->sc_16_softc) {
 			/* pcmcia 16-bit bus found */
 			DPRINTF(("%s: found 16-bit pcmcia bus\n", __func__));

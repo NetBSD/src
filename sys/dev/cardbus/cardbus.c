@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.110 2020/06/12 15:34:20 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.110.4.1 2021/03/22 02:00:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.110 2020/06/12 15:34:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.110.4.1 2021/03/22 02:00:59 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -604,8 +604,11 @@ cardbus_rescan(device_t self, const char *ifattr,
 
 		locs[CARDBUSCF_FUNCTION] = function;
 
-		if ((csc = config_found_sm_loc(sc->sc_dev, "cardbus", locs,
-		    &ca, cardbusprint, config_stdsubmatch)) == NULL) {
+		if ((csc = config_found(sc->sc_dev, &ca, cardbusprint,
+					CFARG_SUBMATCH, config_stdsubmatch,
+					CFARG_IATTR, "cardbus",
+					CFARG_LOCATORS, locs,
+					CFARG_EOL)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
 			sc->sc_funcs[function] = NULL;

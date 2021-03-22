@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.65 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: amr.c,v 1.65.10.1 2021/03/22 02:01:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.65 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.65.10.1 2021/03/22 02:01:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,8 +528,12 @@ amr_rescan(device_t self, const char *attr, const int *flags)
 
 		locs[AMRCF_UNIT] = j;
 
-		amr->amr_drive[j].al_dv = config_found_sm_loc(amr->amr_dv,
-			attr, locs, &amra, amr_print, config_stdsubmatch);
+		amr->amr_drive[j].al_dv =
+		    config_found(amr->amr_dv, &amra, amr_print,
+				 CFARG_SUBMATCH, config_stdsubmatch,
+				 CFARG_IATTR, attr,
+				 CFARG_LOCATORS, locs,
+				 CFARG_EOL);
 	}
 	return 0;
 }

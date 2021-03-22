@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.13.52.2 2021/03/21 17:35:40 thorpej Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.13.52.3 2021/03/22 02:00:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13.52.2 2021/03/21 17:35:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13.52.3 2021/03/22 02:00:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,12 +165,20 @@ epsoc_attach(device_t parent, device_t self, void *aux)
 	sa.sa_hclk = sc->sc_hclk;
 	sa.sa_pclk = sc->sc_pclk;
 	locs[EPSOCCF_ADDR] = EP93XX_APB_HWBASE + EP93XX_APB_TIMERS;
-	config_found_sm_loc(self, "epsoc", locs, &sa,
-			    epsoc_print, epsoc_submatch);
+	config_found(self, &sa, epsoc_print,
+	    CFARG_SUBMATCH, epsoc_submatch,
+	    CFARG_IATTR, "epsoc",
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
+
 	locs[EPSOCCF_ADDR] = EP93XX_APB_HWBASE + EP93XX_APB_GPIO;
 	sa.sa_gpio = device_private(
-	  config_found_sm_loc(self, "epsoc", locs, &sa,
-			      epsoc_print, epsoc_submatch));
+	    config_found(self, &sa, epsoc_print,
+			 CFARG_SUBMATCH, epsoc_submatch,
+			 CFARG_IATTR, "epsoc",
+			 CFARG_LOCATORS, locs,
+			 CFARG_EOL));
+
 	config_search(self, &sa,
 	    CFARG_SUBMATCH, epsoc_search,
 	    CFARG_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.27.4.2 2021/03/21 17:35:40 thorpej Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.27.4.3 2021/03/22 02:00:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.27.4.2 2021/03/21 17:35:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.27.4.3 2021/03/22 02:00:54 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -580,8 +580,11 @@ at91bus_found(device_t self, bus_addr_t addr, int pid)
 	sa.sa_size = 1;
 	sa.sa_pid = pid;
 
-	return config_found_sm_loc(self, "at91bus", locs, &sa,
-				   at91bus_print, at91bus_submatch);
+	config_found(self, &sa, at91bus_print,
+	    CFARG_SUBMATCH, at91bus_submatch,
+	    CFARG_IATTR, "at91bus",
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 }
 
 static void

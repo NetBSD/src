@@ -1,4 +1,4 @@
-/*	$NetBSD: phantomas.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: phantomas.c,v 1.1.50.1 2021/03/22 02:00:56 thorpej Exp $	*/
 /*	$OpenBSD: phantomas.c,v 1.1 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
@@ -78,5 +78,8 @@ static device_t
 phantomas_callback(device_t self, struct confargs *ca)
 {
 
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_IATTR, "gedoens",
+	    CFARG_EOL);
 }
