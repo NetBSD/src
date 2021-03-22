@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.44 2020/04/21 12:16:47 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.45 2021/03/22 18:41:11 christos Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -965,7 +965,8 @@ update_prefix(struct prefix * prefix)
  * able to be specified.
  */
 void
-add_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
+add_prefix(struct rainfo *rai, int ifindex, const struct in6_addr *addr,
+    int plen)
 {
 	struct prefix *prefix;
 	char ntopbuf[INET6_ADDRSTRLEN];

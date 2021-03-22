@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.26 2018/04/20 10:39:37 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.27 2021/03/22 18:41:11 christos Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#define RTM_NAMES
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -65,7 +66,8 @@
 #endif
 
 static void
-get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
+get_rtaddrs(int addrs, const struct sockaddr *sa,
+    const struct sockaddr **rti_info)
 {
 	int i;
 
@@ -189,14 +191,14 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 }
 
 #define FILTER_MATCH(type, filter) ((0x1 << type) & filter)
-#define SIN6(s) ((struct sockaddr_in6 *)(s))
-#define SDL(s) ((struct sockaddr_dl *)(s))
+#define SIN6(s) ((const struct sockaddr_in6 *)(s))
+#define SDL(s) ((const struct sockaddr_dl *)(s))
 char *
 get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 {
 	struct rt_msghdr *rtm;
 	struct ifa_msghdr *ifam;
-	struct sockaddr *sa, *dst, *gw, *ifa, *rti_info[RTAX_MAX];
+	const struct sockaddr *sa, *dst, *gw, *ifa, *rti_info[RTAX_MAX];
 
 	*lenp = 0;
 	for (rtm = (struct rt_msghdr *)buf;
@@ -280,85 +282,85 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 }
 #undef FILTER_MATCH
 
-struct in6_addr *
-get_addr(char *buf)
+const struct in6_addr *
+get_addr(const void *buf)
 {
-	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
-	struct sockaddr *sa, *rti_info[RTAX_MAX];
+	const struct rt_msghdr *rtm = buf;
+	const struct sockaddr *sa, *rti_info[RTAX_MAX];
 
-	sa = (struct sockaddr *)(rtm + 1);
+	sa = (const struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-	return(&SIN6(rti_info[RTAX_DST])->sin6_addr);
+	return &SIN6(rti_info[RTAX_DST])->sin6_addr;
 }
 
 int
-get_rtm_ifindex(char *buf)
+get_rtm_ifindex(const void *buf)
 {
-	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
-	struct sockaddr *sa, *rti_info[RTAX_MAX];
+	const struct rt_msghdr *rtm = buf;
+	const struct sockaddr *sa, *rti_info[RTAX_MAX];
 
-	sa = (struct sockaddr *)(rtm + 1);
+	sa = (const struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-	return(((struct sockaddr_dl *)rti_info[RTAX_GATEWAY])->sdl_index);
+	return SDL(rti_info[RTAX_GATEWAY])->sdl_index;
 }
 
 int
-get_ifm_ifindex(char *buf)
+get_ifm_ifindex(const void *buf)
 {
-	struct if_msghdr *ifm = (struct if_msghdr *)buf;
+	const struct if_msghdr *ifm = buf;
 
-	return ((int)ifm->ifm_index);
+	return (int)ifm->ifm_index;
 }
 
 int
-get_ifam_ifindex(char *buf)
+get_ifam_ifindex(const void *buf)
 {
-	struct ifa_msghdr *ifam = (struct ifa_msghdr *)buf;
+	const struct ifa_msghdr *ifam = buf;
 
-	return ((int)ifam->ifam_index);
+	return (int)ifam->ifam_index;
 }
 
 int
-get_ifm_flags(char *buf)
+get_ifm_flags(const void *buf)
 {
-	struct if_msghdr *ifm = (struct if_msghdr *)buf;
+	const struct if_msghdr *ifm = buf;
 
-	return (ifm->ifm_flags);
+	return ifm->ifm_flags;
 }
 
 #ifdef RTM_IFANNOUNCE
 int
-get_ifan_ifindex(char *buf)
+get_ifan_ifindex(const void *buf)
 {
-	struct if_announcemsghdr *ifan = (struct if_announcemsghdr *)buf;
+	const struct if_announcemsghdr *ifan = buf;
 
-	return ((int)ifan->ifan_index);
+	return (int)ifan->ifan_index;
 }
 
 int
-get_ifan_what(char *buf)
+get_ifan_what(const void *buf)
 {
-	struct if_announcemsghdr *ifan = (struct if_announcemsghdr *)buf;
+	const struct if_announcemsghdr *ifan = buf;
 
-	return ((int)ifan->ifan_what);
+	return (int)ifan->ifan_what;
 }
 #endif
 
 int
-get_prefixlen(char *buf)
+get_prefixlen(const void *buf)
 {
-	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
-	struct sockaddr *sa, *rti_info[RTAX_MAX];
-	unsigned char *p, *lim;
+	const struct rt_msghdr *rtm = buf;
+	const struct sockaddr *sa, *rti_info[RTAX_MAX];
+	const unsigned char *p, *lim;
 
-	sa = (struct sockaddr *)(rtm + 1);
+	sa = (const struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 	sa = rti_info[RTAX_NETMASK];
 
-	p = (unsigned char *)(&SIN6(sa)->sin6_addr);
-	lim = (unsigned char *)sa + sa->sa_len;
+	p = (const unsigned char *)(&SIN6(sa)->sin6_addr);
+	lim = (const unsigned char *)sa + sa->sa_len;
 	return prefixlen(p, lim);
 }
 
@@ -396,25 +398,34 @@ prefixlen(const unsigned char *p, const unsigned char *lim)
 		case 0x00:
 			break;
 		default:
-			return(-1);
+			return -1;
 		}
 	}
 
-	return(masklen);
+	return masklen;
 }
 
 int
-rtmsg_type(char *buf)
+rtmsg_type(const void *buf)
 {
-	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
+	const struct rt_msghdr *rtm = buf;
 
-	return(rtm->rtm_type);
+	return rtm->rtm_type;
+}
+
+const char *
+rtmsg_typestr(const void *buf)
+{
+	const struct rt_msghdr *rtm = buf;
+
+	return rtm->rtm_type < __arraycount(rtm_names)
+	    ? rtm_names[rtm->rtm_type] : "*unknown*";
 }
 
 int
-rtmsg_len(char *buf)
+rtmsg_len(const void *buf)
 {
-	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
+	const struct rt_msghdr *rtm = buf;
 
-	return(rtm->rtm_msglen);
+	return rtm->rtm_msglen;
 }
