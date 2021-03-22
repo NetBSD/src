@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.108 2021/03/20 08:54:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.109 2021/03/22 19:29:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.108 2021/03/20 08:54:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.109 2021/03/22 19:29:43 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -211,10 +211,10 @@ bool	initerr;
 sym_t	*initsym;
 
 /* Points to the top element of the initialization stack. */
-initstack_element *initstk;
+static initstack_element *initstk;
 
 /* Points to a c9x named member; */
-namlist_t	*namedmem = NULL;
+static namlist_t *namedmem = NULL;
 
 
 static	bool	init_array_using_string(tnode_t *);
