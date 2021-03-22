@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.6 2021/02/20 10:12:52 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.7 2021/03/22 19:25:08 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.6 2021/02/20 10:12:52 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.7 2021/03/22 19:25:08 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: ckgetopt.c,v 1.6 2021/02/20 10:12:52 rillig Exp $");
  * is listed in the options string.
  */
 
-struct {
+static struct {
 	/*
 	 * 0	means outside a while loop with a getopt call.
 	 * 1	means directly inside a while loop with a getopt call.
