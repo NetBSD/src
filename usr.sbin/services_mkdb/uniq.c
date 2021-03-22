@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.6 2014/06/21 17:48:07 christos Exp $	*/
+/*	$NetBSD: uniq.c,v 1.7 2021/03/22 03:28:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uniq.c,v 1.6 2014/06/21 17:48:07 christos Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.7 2021/03/22 03:28:55 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -126,11 +126,12 @@ comp(const char *origline, char **compline, size_t *len)
 	for (p = (const unsigned char *)origline; l && *p && isspace(*p);
 	    p++, l--)
 		continue;
+	if (*p == '\0' || l == 0)
+		return 0;
+
 	cline = emalloc(l + 1);
 	(void)memcpy(cline, p, l);
 	cline[l] = '\0';
-	if (*cline == '\0')
-		return 0;
 
 	complen = 0;
 	hasalnum = 0;
@@ -160,6 +161,11 @@ comp(const char *origline, char **compline, size_t *len)
 		--complen;
 	}
 	*q = '\0';
+	if (!hasalnum) {
+		free(cline);
+		cline = NULL;
+		complen = 0;
+	}
 	*compline = cline;
 	*len = complen;
 	return hasalnum;
