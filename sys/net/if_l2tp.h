@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.2.2.4 2019/09/24 18:27:09 martin Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.2.2.5 2021/03/22 18:07:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -44,11 +44,11 @@
 #include <net/if_ether.h>
 #include <netinet/in.h>
 
-#define	SIOCSL2TPSESSION	_IOW('i', 151, struct l2tp_req)
-#define	SIOCDL2TPSESSION	_IOW('i', 152, struct l2tp_req)
-#define	SIOCSL2TPCOOKIE		_IOW('i', 153, struct l2tp_req)
-#define	SIOCDL2TPCOOKIE		_IOW('i', 154, struct l2tp_req)
-#define	SIOCSL2TPSTATE		_IOW('i', 155, struct l2tp_req)
+#define	SIOCSL2TPSESSION	_IOW('i', 151, struct ifreq)
+#define	SIOCDL2TPSESSION	_IOW('i', 152, struct ifreq)
+#define	SIOCSL2TPCOOKIE		_IOW('i', 153, struct ifreq)
+#define	SIOCDL2TPCOOKIE		_IOW('i', 154, struct ifreq)
+#define	SIOCSL2TPSTATE		_IOW('i', 155, struct ifreq)
 #define	SIOCGL2TP		SIOCGIFGENERIC
 
 struct l2tp_req {
