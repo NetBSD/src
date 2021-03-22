@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.16.2.3 2021/03/22 02:01:01 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.16.2.4 2021/03/22 16:23:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.16.2.3 2021/03/22 02:01:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.16.2.4 2021/03/22 16:23:46 thorpej Exp $");
 
 #include "locators.h"
 
@@ -250,7 +250,6 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 				prop_data_value(cdata),
 				prop_data_size(cdata), &buf);
 		config_found(parent, &sa, spi_print,
-		    CFARG_IATTR, "spi",
 		    CFARG_LOCATORS, loc,
 		    CFARG_EOL);
 

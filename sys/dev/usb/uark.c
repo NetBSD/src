@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.16.10.1 2021/03/22 02:01:02 thorpej Exp $	*/
+/*	$NetBSD: uark.c,v 1.16.10.2 2021/03/22 16:23:46 thorpej Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.16.10.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.16.10.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -192,7 +192,6 @@ uark_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
 				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_IATTR, "ucombus",
 				     CFARG_EOL);
 
 	return;

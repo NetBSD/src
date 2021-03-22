@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.34.4.1 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.34.4.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.34.4.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.34.4.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,6 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 			icp->icp_children[icpa.icpa_unit] =
 			    config_found(icp->icp_dv, &icpa, icp_print,
 					 CFARG_SUBMATCH, config_stdsubmatch,
-					 CFARG_IATTR, "icp",
 					 CFARG_LOCATORS, locs,
 					 CFARG_EOL);
 		}
@@ -388,7 +387,6 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 			icp->icp_children[icpa.icpa_unit] =
 			    config_found(icp->icp_dv, &icpa, icp_print,
 					 CFARG_SUBMATCH, config_stdsubmatch,
-					 CFARG_IATTR, "icp",
 					 CFARG_LOCATORS, locs,
 					 CFARG_EOL);
 		}
@@ -517,7 +515,6 @@ icp_rescan(struct icp_softc *icp, int unit)
 		icp->icp_children[unit] =
 		    config_found(icp->icp_dv, &icpa, icp_print,
 				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_IATTR, "icp",
 				 CFARG_LOCATORS, locs,
 				 CFARG_EOL);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.41.10.1 2021/03/22 02:01:02 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.41.10.2 2021/03/22 16:23:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.41.10.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.41.10.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -310,7 +310,6 @@ zs_ioasic_attach(device_t parent, device_t self, void *aux)
 		 */
 		if (config_found(self, (void *)&zs_args, zs_ioasic_print,
 				 CFARG_SUBMATCH, zs_ioasic_submatch,
-				 CFARG_IATTR, "zsc",
 				 CFARG_LOCATORS, locs,
 				 CFARG_EOL) == NULL) {
 			/* No sub-driver.  Just reset it. */

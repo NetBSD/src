@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.18.2.1 2021/03/22 02:01:00 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.18.2.2 2021/03/22 16:23:44 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.18.2.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.18.2.2 2021/03/22 16:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,6 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 	locs[IHIDBUSCF_REPORTID] = IHIDEV_CLAIM_ALLREPORTID;
 	dev = config_found(self, &iha, ihidev_print,
 	    CFARG_SUBMATCH, ihidev_submatch,
-	    CFARG_IATTR, "ihidbus",
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 	if (dev != NULL) {
@@ -242,7 +241,6 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 		locs[IHIDBUSCF_REPORTID] = repid;
 		dev = config_found(self, &iha, ihidev_print,
 		    CFARG_SUBMATCH, ihidev_submatch,
-		    CFARG_IATTR, "ihidbus",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 		sc->sc_subdevs[repid] = device_private(dev);

@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.22.62.1 2021/03/22 02:00:54 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.22.62.2 2021/03/22 16:23:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.22.62.1 2021/03/22 02:00:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.22.62.2 2021/03/22 16:23:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,6 @@ mcbusattach(device_t parent, device_t self, void *aux)
 	locs[MCBUSCF_MID] = 1;
 	config_found(self, &ta, mcbusprint,
 	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_IATTR, "mcbus",
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 
@@ -169,7 +168,6 @@ mcbusattach(device_t parent, device_t self, void *aux)
 		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid))
 			config_found(self, &ta, mcbusprint,
 			    CFARG_SUBMATCH, config_stdsubmatch,
-			    CFARG_IATTR, "mcbus",
 			    CFARG_LOCATORS, locs,
 			    CFARG_EOL);
 	}
@@ -200,7 +198,6 @@ mcbusattach(device_t parent, device_t self, void *aux)
 		locs[MCBUSCF_MID] = mid;
 		config_found(self, &ta, mcbusprint,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "mcbus",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 	}

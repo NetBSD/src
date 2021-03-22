@@ -1,4 +1,4 @@
-/*	$NetBSD: clpssoc.c,v 1.1.54.1 2021/03/22 02:00:55 thorpej Exp $	*/
+/*	$NetBSD: clpssoc.c,v 1.1.54.2 2021/03/22 16:23:39 thorpej Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpssoc.c,v 1.1.54.1 2021/03/22 02:00:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpssoc.c,v 1.1.54.2 2021/03/22 16:23:39 thorpej Exp $");
 
 #include "opt_com.h"
 
@@ -147,7 +147,6 @@ clpssoc_attach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &aa, clpssoc_print,
 		    CFARG_SUBMATCH, clpssoc_submatch,
-		    CFARG_IATTR, "clpssoc",
 		    CFARG_EOL);
 	}
 }

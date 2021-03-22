@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.28.32.1 2021/03/22 02:01:01 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.28.32.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.28.32.1 2021/03/22 02:01:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.28.32.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include "opt_marvell.h"
 #include "gtmpsc.h"
@@ -237,7 +237,6 @@ gt_attach_peripherals(struct gt_softc *sc)
 
 		config_found(sc->sc_dev, &mva, gt_cfprint,
 		    CFARG_SUBMATCH, gt_cfsearch,
-		    CFARG_IATTR, "gt",
 		    CFARG_EOL);
 	}
 }

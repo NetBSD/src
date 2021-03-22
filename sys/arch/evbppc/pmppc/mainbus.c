@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.68.2 2021/03/22 02:00:56 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.68.3 2021/03/22 16:23:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.68.2 2021/03/22 02:00:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.68.3 2021/03/22 16:23:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -123,7 +123,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		maa.mb_irq = PMPPC_I_RTC_INT;
 		config_found(self, &maa, mainbus_print,
 		    CFARG_SUBMATCH, mainbus_submatch,
-		    CFARG_IATTR, "mainbus",
 		    CFARG_EOL);
 	}
 
@@ -133,7 +132,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		maa.mb_irq = PMPPC_I_ETH_INT;
 		config_found(self, &maa, mainbus_print,
 		    CFARG_SUBMATCH, mainbus_submatch,
-		    CFARG_IATTR, "mainbus",
 		    CFARG_EOL);
 		maa.mb_bt = &pmppc_mem_tag;
 	}
@@ -145,7 +143,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		maa.u.mb_flash.width = a_config.a_flash_width;
 		config_found(self, &maa, mainbus_print,
 		    CFARG_SUBMATCH, mainbus_submatch,
-		    CFARG_IATTR, "mainbus",
 		    CFARG_EOL);
 	}
 

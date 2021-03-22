@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.2.24.1 2021/03/22 02:00:56 thorpej Exp $ */
+/* $NetBSD: zbbus.c,v 1.2.24.2 2021/03/22 16:23:41 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.2.24.1 2021/03/22 02:00:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.2.24.2 2021/03/22 16:23:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ zbbus_attach(device_t parent, device_t self, void *aux)
 		za.za_locs = sb1250_zbbus_devs[i];
 		config_found(self, &za, zbbus_print,
 		    CFARG_SUBMATCH, zbbus_submatch,
-		    CFARG_IATTR, "zbbus",
 		    CFARG_EOL);
 	}
 

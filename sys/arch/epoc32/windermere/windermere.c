@@ -1,4 +1,4 @@
-/*	$NetBSD: windermere.c,v 1.1.54.1 2021/03/22 02:00:55 thorpej Exp $	*/
+/*	$NetBSD: windermere.c,v 1.1.54.2 2021/03/22 16:23:40 thorpej Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: windermere.c,v 1.1.54.1 2021/03/22 02:00:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: windermere.c,v 1.1.54.2 2021/03/22 16:23:40 thorpej Exp $");
 
 #include "opt_com.h"
 
@@ -145,7 +145,6 @@ windermere_attach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &aa, windermere_print,
 		    CFARG_SUBMATCH, windermere_submatch,
-		    CFARG_IATTR, "windermere",
 		    CFARG_EOL);
 	}
 }

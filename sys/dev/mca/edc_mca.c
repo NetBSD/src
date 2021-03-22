@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.52.34.1 2021/03/22 02:01:01 thorpej Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.52.34.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.52.34.1 2021/03/22 02:01:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.52.34.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,6 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ed[devno] = device_private(
 		    config_found(self, &eda, NULL,
 				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_IATTR, "edc",
 				 CFARG_LOCATORS, locs,
 				 CFARG_EOL));
 

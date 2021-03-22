@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.61.10.1 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.61.10.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.61.10.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.61.10.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -194,7 +194,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
 	/* Attach our units */
 	sc->sc_unitmask = 0;
-	cac_rescan(sc->sc_dev, "cac", 0);
+	cac_rescan(sc->sc_dev, NULL, NULL);
 
 	/* Set our `shutdownhook' before we start any device activity. */
 	if (cac_sdh == NULL)

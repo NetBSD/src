@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.3.14.1 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.3.14.2 2021/03/22 16:23:44 thorpej Exp $	*/
 /*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
@@ -541,7 +541,6 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 			sc->sc_devices[id] =
 			    config_found(sc->sc_dev, &ha, hildevprint,
 					 CFARG_SUBMATCH, hilsubmatch,
-					 CFARG_IATTR, "hil",
 					 CFARG_EOL);
 
 #if NHILKBD > 0

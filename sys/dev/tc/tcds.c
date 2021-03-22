@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.26.22.1 2021/03/22 02:01:02 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.26.22.2 2021/03/22 16:23:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.26.22.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.26.22.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -296,7 +296,6 @@ tcdsattach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &tcdsdev, tcdsprint,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "tcds",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 #ifdef __alpha__

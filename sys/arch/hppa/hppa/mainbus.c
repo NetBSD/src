@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.2 2021/03/22 02:00:57 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.3 2021/03/22 16:23:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.2 2021/03/22 02:00:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.3 2021/03/22 16:23:42 thorpej Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1343,7 +1343,6 @@ mb_module_callback(device_t self, struct confargs *ca)
 
 	return config_found(self, ca, mbprint,
 	    CFARG_SUBMATCH, mbsubmatch,
-	    CFARG_IATTR, "gedoens",
 	    CFARG_EOL);
 }
 
@@ -1356,7 +1355,6 @@ mb_cpu_mem_callback(device_t self, struct confargs *ca)
 
 	return config_found(self, ca, mbprint,
 	    CFARG_SUBMATCH, mbsubmatch,
-	    CFARG_IATTR, "gedoens",
 	    CFARG_EOL);
 }
 
