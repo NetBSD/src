@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.79 2020/08/28 00:19:37 rjs Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.80 2021/03/22 18:41:11 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ rtmsg_input(void)
 	char ifname[IF_NAMESIZE];
 	struct prefix *prefix;
 	struct rainfo *rai;
-	struct in6_addr *addr;
+	const struct in6_addr *addr;
 	char addrbuf[INET6_ADDRSTRLEN];
 	int prefixchange = 0, argc;
 
@@ -483,8 +483,8 @@ rtmsg_input(void)
 	msg = buffer.data;
 	if (dflag > 1) {
 		logit(LOG_DEBUG, "%s: received a routing message "
-		    "(type = %d, len = %d)", __func__, rtmsg_type(msg),
-		    rtmsg_len(msg));
+		    "(type = %d [%s], len = %d)", __func__, rtmsg_type(msg),
+		    rtmsg_typestr(msg), rtmsg_len(msg));
 	}
 	if (n > rtmsg_len(msg)) {
 		/*
@@ -1323,7 +1323,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 }
 
 struct prefix *
-find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
+find_prefix(struct rainfo *rai, const struct in6_addr *prefix, int plen)
 {
 	struct prefix *pp;
 	int bytelen, bitlen;
@@ -1810,7 +1810,7 @@ logit(int level, const char *fmt, ...)
 	if (level >= LOG_INFO && !dflag)
 		return;
 
-	vwarnx(expandm(fmt, "\n", &buf), ap);
+	vwarnx(expandm(fmt, "", &buf), ap);
 	free(buf);
 	va_end(ap);
 }

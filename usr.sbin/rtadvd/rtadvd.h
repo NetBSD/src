@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.20 2019/11/11 13:42:49 roy Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.21 2021/03/22 18:41:11 christos Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -196,6 +196,6 @@ void ra_timer_set_short_delay(struct rainfo *, struct rtadvd_timer *);
 
 int prefix_match(struct in6_addr *, int, struct in6_addr *, int);
 struct rainfo *if_indextorainfo(unsigned int);
-struct prefix *find_prefix(struct rainfo *, struct in6_addr *, int);
+struct prefix *find_prefix(struct rainfo *, const struct in6_addr *, int);
 
 extern int Cflag;
