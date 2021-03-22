@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.33.4.1 2021/03/22 02:01:02 thorpej Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.33.4.2 2021/03/22 16:23:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.33.4.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.33.4.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -265,7 +265,6 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 	DPRINTF(("umodem_common_attach: sc=%p\n", sc));
 	sc->sc_subdev = config_found(self, ucaa, ucomprint,
 				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_IATTR, "ucombus",
 				     CFARG_EOL);
 
 	return 0;

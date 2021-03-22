@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.32.42.1 2021/03/22 02:00:56 thorpej Exp $	*/
+/*	$NetBSD: frodo.c,v 1.32.42.2 2021/03/22 16:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.32.42.1 2021/03/22 02:00:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.32.42.2 2021/03/22 16:23:41 thorpej Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -209,7 +209,6 @@ frodoattach(device_t parent, device_t self, void *aux)
 		fa.fa_line = fd->fd_line;
 		config_found(self, &fa, frodoprint,
 		    CFARG_SUBMATCH, frodosubmatch,
-		    CFARG_IATTR, "frodo",
 		    CFARG_EOL);
 	}
 }

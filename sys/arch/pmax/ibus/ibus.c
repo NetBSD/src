@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.21.32.1 2021/03/22 02:00:58 thorpej Exp $	*/
+/*	$NetBSD: ibus.c,v 1.21.32.2 2021/03/22 16:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.21.32.1 2021/03/22 02:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.21.32.2 2021/03/22 16:23:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -68,7 +68,6 @@ ibusattach(device_t parent, device_t self, void *aux)
 
 		config_found(self, ia, ibusprint,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "ibus",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 	}

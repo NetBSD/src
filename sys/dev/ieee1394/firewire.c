@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.50.10.2 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: firewire.c,v 1.50.10.3 2021/03/22 16:23:45 thorpej Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.50.10.2 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.50.10.3 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -2043,7 +2043,6 @@ fw_attach_dev(struct firewire_comm *fc)
 			fwa.fwdev = fwdev;
 			fwdev->dev = config_found(sc->dev, &fwa, firewire_print,
 			    CFARG_SUBMATCH, config_stdsubmatch,
-			    CFARG_IATTR, "ieee1394if",
 			    CFARG_LOCATORS, locs,
 			    CFARG_EOL);
 			if (fwdev->dev == NULL) {

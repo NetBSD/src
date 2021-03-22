@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.55.6.1 2021/03/22 02:01:02 thorpej Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.55.6.2 2021/03/22 16:23:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.55.6.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.55.6.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -329,7 +329,6 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 				sc->sc_subdevs[i] =
 				    config_found(self, &ucaa, ucomprint,
 						 CFARG_SUBMATCH, ucomsubmatch,
-						 CFARG_IATTR, "ucombus",
 						 CFARG_EOL);
 			else
 				aprint_error_dev(self,
@@ -363,7 +362,6 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 			sc->sc_subdevs[i] =
 			    config_found(self, &ucaa, ucomprint,
 					 CFARG_SUBMATCH, ucomsubmatch,
-					 CFARG_IATTR, "ucombus",
 					 CFARG_EOL);
 		}
 	}

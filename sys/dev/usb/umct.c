@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.41.6.1 2021/03/22 02:01:02 thorpej Exp $	*/
+/*	$NetBSD: umct.c,v 1.41.6.2 2021/03/22 16:23:46 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.41.6.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.41.6.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -303,7 +303,6 @@ umct_attach(device_t parent, device_t self, void *aux)
 	    ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
 				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_IATTR, "ucombus",
 				     CFARG_EOL);
 
 	return;

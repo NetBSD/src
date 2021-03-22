@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.32.34.1 2021/03/22 02:01:01 thorpej Exp $	*/
+/*	$NetBSD: mca.c,v 1.32.34.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.32.34.1 2021/03/22 02:01:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.32.34.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,6 @@ mca_attach(device_t parent, device_t self, void *aux)
 		    || mca_match_disabled(ma.ma_id))
 			config_found(self, &ma, mca_print,
 				     CFARG_SUBMATCH, config_stdsubmatch,
-				     CFARG_IATTR, "mca",
 				     CFARG_LOCATORS, locs,
 				     CFARG_EOL);
 		else {

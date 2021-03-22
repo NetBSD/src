@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138.76.2 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.138.76.3 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.2 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.3 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,6 @@ isa_attach_knowndevs(struct isa_softc *sc)
 
 		ik->ik_claimed = config_found(sc->sc_dev, &ia, isaprint,
 		    CFARG_SUBMATCH, isasubmatch,
-		    CFARG_IATTR, "isa",
 		    CFARG_EOL);
 	}
 }

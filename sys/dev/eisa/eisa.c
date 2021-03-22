@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.47.2.1 2021/03/22 02:00:59 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.47.2.2 2021/03/22 16:23:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.47.2.1 2021/03/22 02:00:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.47.2.2 2021/03/22 16:23:44 thorpej Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -183,7 +183,6 @@ eisaattach(device_t parent, device_t self, void *aux)
 		/* Attach matching device. */
 		config_found(self, &ea, eisaprint,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "eisa",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.71.14.1 2021/03/22 02:00:58 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.71.14.2 2021/03/22 16:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.71.14.1 2021/03/22 02:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.71.14.2 2021/03/22 16:23:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,12 +538,10 @@ hpc_attach(device_t parent, device_t self, void *aux)
 		if (hpctype != 3 && sc->sc_base != HPC_BASE_ADDRESS_0) {
 			config_found(self, &ha, NULL,
 			    CFARG_SUBMATCH, hpc_submatch,
-			    CFARG_IATTR, "hpc",
 			    CFARG_EOL);
 		} else {
 			config_found(self, &ha, hpc_print,
 			    CFARG_SUBMATCH, hpc_submatch,
-			    CFARG_IATTR, "hpc",
 			    CFARG_EOL);
 		}
 	}

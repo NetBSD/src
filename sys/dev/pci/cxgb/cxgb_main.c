@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.8.8.1 2021/03/22 02:01:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.8.8.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,6 @@ cxgb_controller_attach(device_t parent, device_t dev, void *context)
 	printf("\n"); // for cleaner formatting in dmesg
         child = config_found(dev, &cxgb_args, cxgb_cfprint,
 	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_IATTR, "cxgbc",
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 	printf("\n"); // for cleaner formatting in dmesg

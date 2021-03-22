@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.29.6.1 2021/03/22 02:01:02 thorpej Exp $ */
+/* $NetBSD: uslsa.c,v 1.29.6.2 2021/03/22 16:23:46 thorpej Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.29.6.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.29.6.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -238,7 +238,6 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
 				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_IATTR, "ucombus",
 				     CFARG_EOL);
 
 	if (!pmf_device_register(self, NULL, NULL))

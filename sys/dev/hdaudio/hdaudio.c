@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.13.2.1 2021/03/22 02:01:00 thorpej Exp $ */
+/* $NetBSD: hdaudio.c,v 1.13.2.2 2021/03/22 16:23:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13.2.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13.2.2 2021/03/22 16:23:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -691,7 +691,6 @@ hdaudio_attach_fg(struct hdaudio_function_group *fg, prop_array_t config)
 
 	fg->fg_device = config_found(sc->sc_dev, args, hdaudio_config_print,
 	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_IATTR, "hdaudiobus",
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 

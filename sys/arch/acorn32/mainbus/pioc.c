@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.18.52.3 2021/03/22 02:00:54 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.18.52.4 2021/03/22 16:23:38 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.3 2021/03/22 02:00:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.4 2021/03/22 16:23:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,6 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
 		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_IATTR, "pioc",
 		    CFARG_EOL);
 	}
 
@@ -405,7 +404,6 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
 		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_IATTR, "pioc",
 		    CFARG_EOL);
 	}
 
@@ -443,7 +441,6 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
 		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_IATTR, "pioc",
 		    CFARG_EOL);
 	}
 
@@ -470,7 +467,6 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
 		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_IATTR, "pioc",
 		    CFARG_EOL);
 	}
 
@@ -498,7 +494,6 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
 		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_IATTR, "pioc",
 		    CFARG_EOL);
 	}
 

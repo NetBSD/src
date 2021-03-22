@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.47.10.1 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: aac.c,v 1.47.10.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.47.10.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.47.10.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,6 @@ aac_devscan(struct aac_softc *sc)
 
 		config_found(sc->sc_dv, &aaca, aac_print,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "aac",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 	}

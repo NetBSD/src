@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.36.10.3 2021/03/22 02:00:58 thorpej Exp $	*/
+/*	$NetBSD: gio.c,v 1.36.10.4 2021/03/22 16:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.36.10.3 2021/03/22 02:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.36.10.4 2021/03/22 16:23:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -221,7 +221,6 @@ gio_attach(device_t parent, device_t self, void *aux)
 		
 		if (config_found(self, &ga, gio_print,
 				 CFARG_SUBMATCH, gio_submatch,
-				 CFARG_IATTR, "gio",
 				 CFARG_EOL) != NULL) {
 			if (ngfx == MAXGFX)
 				panic("gio_attach: MAXGFX");
@@ -271,7 +270,6 @@ gio_attach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &ga, gio_print,
 		    CFARG_SUBMATCH, gio_submatch,
-		    CFARG_IATTR, "gio",
 		    CFARG_EOL);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.13.52.3 2021/03/22 02:00:55 thorpej Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.13.52.4 2021/03/22 16:23:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13.52.3 2021/03/22 02:00:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13.52.4 2021/03/22 16:23:39 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +167,6 @@ epsoc_attach(device_t parent, device_t self, void *aux)
 	locs[EPSOCCF_ADDR] = EP93XX_APB_HWBASE + EP93XX_APB_TIMERS;
 	config_found(self, &sa, epsoc_print,
 	    CFARG_SUBMATCH, epsoc_submatch,
-	    CFARG_IATTR, "epsoc",
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 
@@ -175,7 +174,6 @@ epsoc_attach(device_t parent, device_t self, void *aux)
 	sa.sa_gpio = device_private(
 	    config_found(self, &sa, epsoc_print,
 			 CFARG_SUBMATCH, epsoc_submatch,
-			 CFARG_IATTR, "epsoc",
 			 CFARG_LOCATORS, locs,
 			 CFARG_EOL));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15.4.1 2021/03/22 02:00:55 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15.4.2 2021/03/22 16:23:40 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.4.1 2021/03/22 02:00:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.4.2 2021/03/22 16:23:40 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -159,7 +159,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		ma.ma_intr = md->md_intr;
 		config_found(self, &ma, mainbus_print,
 		    CFARG_SUBMATCH, mainbus_submatch,
-		    CFARG_IATTR, "mainbus",
 		    CFARG_EOL);
 	}
 }

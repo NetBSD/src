@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.90.10.1 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.90.10.2 2021/03/22 16:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.90.10.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.90.10.2 2021/03/22 16:23:44 thorpej Exp $");
 
 #include "iop.h"
 
@@ -585,7 +585,6 @@ iop_config_interrupts(device_t self)
 	locs[IOPCF_TID] = I2O_TID_IOP;
 	config_found(self, &ia, iop_print,
 	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_IATTR, "iop",
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 
@@ -819,7 +818,6 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 
 		dv = config_found(sc->sc_dev, &ia, iop_print,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "iop",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 		if (dv != NULL) {

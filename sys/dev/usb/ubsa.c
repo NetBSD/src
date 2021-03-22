@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.40.6.1 2021/03/22 02:01:02 thorpej Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.40.6.2 2021/03/22 16:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.40.6.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.40.6.2 2021/03/22 16:23:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -282,7 +282,6 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 	    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 	sc->sc_subdevs[0] = config_found(self, &ucaa, ucomprint,
 					 CFARG_SUBMATCH, ucomsubmatch,
-					 CFARG_IATTR, "ucombus",
 					 CFARG_EOL);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);

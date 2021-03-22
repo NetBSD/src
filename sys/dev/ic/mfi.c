@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.63.10.1 2021/03/22 02:01:00 thorpej Exp $ */
+/* $NetBSD: mfi.c,v 1.63.10.2 2021/03/22 16:23:45 thorpej Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.63.10.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.63.10.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include "bio.h"
 
@@ -1248,7 +1248,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	chan->chan_ntargets = MFI_MAX_LD;
 	chan->chan_id = MFI_MAX_LD;
 
-	mfi_rescan(sc->sc_dev, "scsi", NULL);
+	mfi_rescan(sc->sc_dev, NULL, NULL);
 
 	/* enable interrupts */
 	mfi_intr_enable(sc);

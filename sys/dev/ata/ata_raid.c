@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.43.4.1 2021/03/22 02:00:59 thorpej Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.43.4.2 2021/03/22 16:23:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.43.4.1 2021/03/22 02:00:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.43.4.2 2021/03/22 16:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -217,7 +217,6 @@ ataraid_attach(device_t parent, device_t self, void *aux)
 
 		config_found(self, aai, ataraid_print,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "ataraid",
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.65.10.1 2021/03/22 02:01:01 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.65.10.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.65.10.1 2021/03/22 02:01:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.65.10.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 		amr_sdh = shutdownhook_establish(amr_shutdown, NULL);
 
 	/* Attach sub-devices. */
-	amr_rescan(self, "amr", 0);
+	amr_rescan(self, NULL, NULL);
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
 

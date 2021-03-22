@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.39.14.1 2021/03/22 02:01:00 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.39.14.2 2021/03/22 16:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.39.14.1 2021/03/22 02:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.39.14.2 2021/03/22 16:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,6 @@ tcic_attach_socket(struct tcic_handle *h)
 
 	h->pcmcia = config_found(h->sc->sc_dev, &paa, tcic_print,
 	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_IATTR, "pcmciabus",
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 
