@@ -157,13 +157,13 @@ extern "C" {
 #define fm_panic			panic
 #define getf				fd_getfile
 #define getminor(a)			minor(a)
-#define GID_NOBODY			(-2)
+#define GID_NOBODY			(39)
 #define issig(x)			(sigispending(curlwp, 0))
 #define kmem_debugging()		0
 #define releasef			fd_putfile
 #define strfree(str)			kmem_free((str), strlen(str)+1)
 #define td_ru				l_ru
-#define UID_NOBODY			(-2)
+#define UID_NOBODY			(32767)
 #define vnode_pager_setsize(vp, size)	zfs_netbsd_setsize(vp, size)
 #define zone_get_hostid(a)		0
 
