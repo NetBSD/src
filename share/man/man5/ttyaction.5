@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.5,v 1.10 2021/03/21 23:29:36 mrg Exp $
+.\" $NetBSD: ttyaction.5,v 1.11 2021/03/22 00:09:06 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,7 +37,8 @@
 The
 .Nm ttyaction
 file specifies site-specific commands to run
-when a login session begins and ends. The
+when a login session begins and ends.
+The
 .Nm ttyaction
 file contains a list of newline separated records, where
 each record has the following three fields:
@@ -79,7 +80,8 @@ PATH=_PATH_STDPATH
 .Pp
 These variables may be used directly in the shell command
 part of the record for simple tasks such as changing the
-ownership of related devices.  For example:
+ownership of related devices.
+For example:
 .Bd -literal -offset indent
 console  *	chown ${USER}:tty /dev/mouse
 .Ed
@@ -100,7 +102,7 @@ tty0	getty	/somewhere/tty_clean ${TTY}
 .Sh HISTORY
 Support for the
 .Pa /etc/ttyaction
-file first appeared in 
+file first appeared in
 .Nx 1.3 .
 The ideas for the
 .Pa /etc/ttyaction
