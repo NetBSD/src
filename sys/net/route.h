@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.127 2020/03/09 21:20:55 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.128 2021/03/22 18:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -265,6 +265,16 @@ struct rt_msghdr {
 #define RTM_NEWADDR	0x16	/* address being added to iface */
 #define RTM_DELADDR	0x17	/* address being removed from iface */
 #define RTM_CHGADDR	0x18	/* address properties changed */
+
+#ifdef RTM_NAMES
+static const char *rtm_names[] = {
+    "*none*", "add", "delete", "change", "get",
+    "losing", "redirect", "miss", "lock", "oldadd",
+    "olddel", "*resolve*", "onewaddr", "odeladdr", "ooifinfo",
+    "oifinfo", "ifannounce", "ieee80211", "setgate", "llinfo_upd",
+    "ifinfo", "ochgaddr",  "newaddr", "deladdr", "chgaddr",
+};
+#endif
 
 /*
  * setsockopt defines used for the filtering.
