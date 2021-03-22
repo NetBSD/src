@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.31 2021/03/06 07:24:24 rin Exp $ */
+/*	$NetBSD: intr.c,v 1.32 2021/03/22 01:36:10 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2021/03/06 07:24:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2021/03/22 01:36:10 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -200,10 +200,12 @@ intr_establish_xname(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 		break;
 	}
 	if (is->is_hand == NULL) {
-		snprintf(is->is_source, sizeof(is->is_source), "%s %d",
+		snprintf(is->is_intrid, sizeof(is->is_intrid), "%s irq %d",
 		    pic->pic_name, is->is_hwirq);
+		snprintf(is->is_evname, sizeof(is->is_evname), "irq %d",
+		    is->is_hwirq);
 		evcnt_attach_dynamic(&is->is_ev, EVCNT_TYPE_INTR, NULL,
-		    pic->pic_name, is->is_source);
+		    pic->pic_name, is->is_evname);
 	}
 
 	/*
@@ -744,7 +746,7 @@ intr_get_source(const char *intrid)
 	int irq;
 
 	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
-		if (strcmp(intrid, is->is_source) == 0)
+		if (strcmp(intrid, is->is_intrid) == 0)
 			return is;
 	}
 	return NULL;
@@ -858,7 +860,7 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 		if (is->is_hand == NULL)
 			continue;
 
-		strncpy(ids[i], is->is_source, sizeof(intrid_t));
+		strncpy(ids[i], is->is_intrid, sizeof(intrid_t));
 		i++;
 	}
 
