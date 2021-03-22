@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.245 2021/03/21 19:08:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.246 2021/03/22 15:29:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.245 2021/03/21 19:08:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.246 2021/03/22 15:29:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -63,7 +63,8 @@ static	void	check_enum_int_mismatch(op_t, int,
 					const tnode_t *, const tnode_t *);
 static	tnode_t	*new_tnode(op_t, type_t *, tnode_t *, tnode_t *);
 static	void	balance(op_t, tnode_t **, tnode_t **);
-static	void	warn_incompatible_types(op_t, tspec_t, tspec_t);
+static	void	warn_incompatible_types(op_t, const type_t *, tspec_t,
+					const type_t *, tspec_t);
 static	void	warn_incompatible_pointers(const mod_t *,
 					   const type_t *, const type_t *);
 static	void	merge_qualifiers(type_t **, type_t *, type_t *);
@@ -845,11 +846,13 @@ typeok_star(tspec_t t)
 }
 
 static bool
-typeok_plus(op_t op, tspec_t lt, tspec_t rt)
+typeok_plus(op_t op,
+	    const type_t *ltp, tspec_t lt,
+	    const type_t *rtp, tspec_t rt)
 {
 	/* operands have scalar types (checked above) */
 	if ((lt == PTR && !is_integer(rt)) || (rt == PTR && !is_integer(lt))) {
-		warn_incompatible_types(op, lt, rt);
+		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		return false;
 	}
 	return true;
@@ -862,10 +865,10 @@ typeok_minus(op_t op,
 {
 	/* operands have scalar types (checked above) */
 	if (lt == PTR && (!is_integer(rt) && rt != PTR)) {
-		warn_incompatible_types(op, lt, rt);
+		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		return false;
 	} else if (rt == PTR && lt != PTR) {
-		warn_incompatible_types(op, lt, rt);
+		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		return false;
 	}
 	if (lt == PTR && rt == PTR) {
@@ -990,7 +993,7 @@ typeok_ordered_comparison(op_t op,
 		return true;
 
 	if (!is_integer(lt) && !is_integer(rt)) {
-		warn_incompatible_types(op, lt, rt);
+		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		return false;
 	}
 
@@ -1264,30 +1267,32 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 /* Check the types using the information from modtab[]. */
 static bool
-typeok_scalar(op_t op, const mod_t *mp, tspec_t lt, tspec_t rt)
+typeok_scalar(op_t op, const mod_t *mp,
+	      const type_t *ltp, tspec_t lt,
+	      const type_t *rtp, tspec_t rt)
 {
 	if (mp->m_takes_bool && lt == BOOL && rt == BOOL)
 		return true;
 	if (mp->m_requires_integer) {
 		if (!is_integer(lt) || (mp->m_binary && !is_integer(rt))) {
-			warn_incompatible_types(op, lt, rt);
+			warn_incompatible_types(op, ltp, lt, rtp, rt);
 			return false;
 		}
 	} else if (mp->m_requires_integer_or_complex) {
 		if ((!is_integer(lt) && !is_complex(lt)) ||
 		    (mp->m_binary && (!is_integer(rt) && !is_complex(rt)))) {
-			warn_incompatible_types(op, lt, rt);
+			warn_incompatible_types(op, ltp, lt, rtp, rt);
 			return false;
 		}
 	} else if (mp->m_requires_scalar) {
 		if (!is_scalar(lt) || (mp->m_binary && !is_scalar(rt))) {
-			warn_incompatible_types(op, lt, rt);
+			warn_incompatible_types(op, ltp, lt, rtp, rt);
 			return false;
 		}
 	} else if (mp->m_requires_arith) {
 		if (!is_arithmetic(lt) ||
 		    (mp->m_binary && !is_arithmetic(rt))) {
-			warn_incompatible_types(op, lt, rt);
+			warn_incompatible_types(op, ltp, lt, rtp, rt);
 			return false;
 		}
 	}
@@ -1342,7 +1347,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 			return false;
 		break;
 	case PLUS:
-		if (!typeok_plus(op, lt, rt))
+		if (!typeok_plus(op, ltp, lt, rtp, rt))
 			return false;
 		break;
 	case MINUS:
@@ -1396,7 +1401,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case SUBASS:
 		/* operands have scalar types (checked above) */
 		if ((lt == PTR && !is_integer(rt)) || rt == PTR) {
-			warn_incompatible_types(op, lt, rt);
+			warn_incompatible_types(op, ltp, lt, rtp, rt);
 			return false;
 		}
 		goto assign;
@@ -1493,7 +1498,7 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 
 	if (Tflag && !typeok_scalar_strict_bool(op, mp, arg, ln, rn))
 		return false;
-	if (!typeok_scalar(op, mp, lt, rt))
+	if (!typeok_scalar(op, mp, ltp, lt, rtp, rt))
 		return false;
 
 	if (!typeok_op(op, mp, arg, ln, ltp, lt, rn, rtp, rt))
@@ -1677,7 +1682,7 @@ check_assign_types_compatible(op_t op, int arg,
 		warning(155, arg);
 		break;
 	default:
-		warn_incompatible_types(op, lt, rt);
+		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		break;
 	}
 
@@ -2528,7 +2533,9 @@ convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
  * Prints a appropriate warning.
  */
 static void
-warn_incompatible_types(op_t op, tspec_t lt, tspec_t rt)
+warn_incompatible_types(op_t op,
+			const type_t *ltp, tspec_t lt,
+			const type_t *rtp, tspec_t rt)
 {
 	const mod_t *mp;
 
@@ -2543,8 +2550,8 @@ warn_incompatible_types(op_t op, tspec_t lt, tspec_t rt)
 			/* assignment of different structures (%s != %s) */
 			error(240, tspec_name(lt), tspec_name(rt));
 		} else {
-			/* assignment type mismatch (%s != %s) */
-			error(171, tspec_name(lt), tspec_name(rt));
+			/* cannot assign to '%s' from '%s' */
+			error(171, type_name(ltp), type_name(rtp));
 		}
 	} else if (mp->m_binary) {
 		/* operands of '%s' have incompatible types (%s != %s) */

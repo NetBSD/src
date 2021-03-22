@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.91 2021/03/21 20:44:59 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.92 2021/03/22 15:29:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.91 2021/03/21 20:44:59 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.92 2021/03/22 15:29:43 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -225,7 +225,7 @@ const	char *msgs[] = {
 	"array subscript cannot be > %d: %ld",			      /* 168 */
 	"precedence confusion possible: parenthesize!",		      /* 169 */
 	"first operand must have scalar type, op ? :",		      /* 170 */
-	"assignment type mismatch (%s != %s)",			      /* 171 */
+	"cannot assign to '%s' from '%s'",			      /* 171 */
 	"too many struct/union initializers",			      /* 172 */
 	"too many array initializers, expected %d",		      /* 173 */
 	"too many initializers",				      /* 174 */
