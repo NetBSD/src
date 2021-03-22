@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.58 2021/03/11 16:17:14 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.59 2021/03/22 18:24:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1858,4 +1858,27 @@ share/man/man4/ixv.4				1.6-1.7
 	  message, too.
 	- Fix typo in comment or debug message.
 	[msaitoh, ticket #1231]
+
+share/man/man4/pci.4				1.111-1.116 (patch, adapted)
+
+	pci(4): update the man page     
+	- add some newer drivers that were missing
+	- add many missing supported WiFi devices
+	- convert the many driver cross-references to be inline
+	[nia, ticket #1232]
+
+sys/net/if_l2tp.h				1.10
+
+	Fix l2tp(4) ioctl type.
+	[knakahara, ticket #1233]
+
+sys/dev/usb/if_urtwn.c				1.93,1.95,1.96 (patch)
+
+	urtwn(4): PR 55968: plug a few leaks.
+	[nat, ticket #1234]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/sys/zfs_context.h 1.3
+
+	PR 55042: avoid a panic when creating a directory on a NFS served ZFS.
+	[hannken, ticket #1235]
 
