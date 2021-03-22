@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_171.c,v 1.3 2021/03/22 15:05:00 rillig Exp $	*/
+/*	$NetBSD: msg_171.c,v 1.4 2021/03/22 15:29:43 rillig Exp $	*/
 # 3 "msg_171.c"
 
-// Test for message: assignment type mismatch (%s != %s) [171]
+// Test for message: cannot assign to '%s' from '%s' [171]
 
 struct s {
 	int member;
