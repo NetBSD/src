@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.114 2021/03/23 20:21:07 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.115 2021/03/23 22:58:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.114 2021/03/23 20:21:07 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.115 2021/03/23 22:58:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1128,9 +1128,10 @@ init_array_using_string(tnode_t *tn)
 		 * If the array is already partly initialized, we are
 		 * wrong here.
 		 */
-		if (istk->i_remaining != istk->i_type->t_dim)
+		if (istk->i_remaining != istk->i_type->t_dim) {
 			debug_leave();
 			return false;
+		}
 	} else {
 		debug_leave();
 		return false;

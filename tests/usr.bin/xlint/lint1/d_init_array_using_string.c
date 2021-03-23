@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.1 2021/03/23 21:19:08 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.2 2021/03/23 22:58:08 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
@@ -71,7 +71,7 @@ test_array_initialization_in_struct(void)
 	};
 
 	struct cs_ws extra_braces = {
-		{ "" },		/* expect: illegal combination *//*FIXME*/
-		{ L"" },	/* expect: illegal combination *//*FIXME*/
+		{ "" },
+		{ L"" },
 	};
 }
