@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.32 2021/03/23 07:21:15 rin Exp $ */
+/* $NetBSD: main.c,v 1.33 2021/03/23 07:21:40 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #include <machine/bootinfo.h>
 
 #include "globals.h"
+
+#ifdef DEBUG
+int debug = 1;
+#endif
 
 static const struct bootarg {
 	const char *name;
