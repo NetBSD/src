@@ -1,4 +1,4 @@
-/*	$NetBSD: align.h,v 1.3 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: align.h,v 1.4 2021/03/23 20:57:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,8 +18,3 @@
 #else /* ifdef HAVE_STDALIGN_H */
 #define alignas(x) __attribute__((__aligned__(x)))
 #endif /* ifdef HAVE_STDALIGN_H */
-#ifdef __lint__
-// XXX: bug
-#undef alignas
-#define alignas(a)
-#endif
