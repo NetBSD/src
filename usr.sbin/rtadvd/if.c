@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.27 2021/03/22 18:41:11 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.28 2021/03/23 18:16:21 christos Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ if_getmtu(const char *name)
 
 /* give interface index and its old flags, then new flags returned */
 int
-if_getflags(int ifindex, int oifflags)
+if_getflags(unsigned int ifindex, int oifflags)
 {
 	struct ifreq ifr;
 	int s;
@@ -194,7 +194,8 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 #define SIN6(s) ((const struct sockaddr_in6 *)(s))
 #define SDL(s) ((const struct sockaddr_dl *)(s))
 char *
-get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
+get_next_msg(char *buf, char *lim, unsigned int ifindex, size_t *lenp,
+    int filter)
 {
 	struct rt_msghdr *rtm;
 	struct ifa_msghdr *ifam;
@@ -294,7 +295,7 @@ get_addr(const void *buf)
 	return &SIN6(rti_info[RTAX_DST])->sin6_addr;
 }
 
-int
+unsigned int
 get_rtm_ifindex(const void *buf)
 {
 	const struct rt_msghdr *rtm = buf;
@@ -306,20 +307,20 @@ get_rtm_ifindex(const void *buf)
 	return SDL(rti_info[RTAX_GATEWAY])->sdl_index;
 }
 
-int
+unsigned int
 get_ifm_ifindex(const void *buf)
 {
 	const struct if_msghdr *ifm = buf;
 
-	return (int)ifm->ifm_index;
+	return ifm->ifm_index;
 }
 
-int
+unsigned int
 get_ifam_ifindex(const void *buf)
 {
 	const struct ifa_msghdr *ifam = buf;
 
-	return (int)ifam->ifam_index;
+	return ifam->ifam_index;
 }
 
 int
@@ -331,12 +332,12 @@ get_ifm_flags(const void *buf)
 }
 
 #ifdef RTM_IFANNOUNCE
-int
+unsigned int
 get_ifan_ifindex(const void *buf)
 {
 	const struct if_announcemsghdr *ifan = buf;
 
-	return (int)ifan->ifan_index;
+	return ifan->ifan_index;
 }
 
 int
