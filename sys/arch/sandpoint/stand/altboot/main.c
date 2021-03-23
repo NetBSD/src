@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.31 2019/06/26 22:04:12 christos Exp $ */
+/* $NetBSD: main.c,v 1.32 2021/03/23 07:21:15 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 
 		err = fdloadfile(fd, marks, LOAD_KERNEL);
 		close(fd);
-		if (err < 0)
+		if (err != 0)
 			continue;
 
 		printf("entry=%p, ssym=%p, esym=%p\n",
