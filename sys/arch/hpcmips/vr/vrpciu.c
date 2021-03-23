@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.22 2015/10/02 05:22:51 msaitoh Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.22.32.1 2021/03/23 07:14:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.22 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.22.32.1 2021/03/23 07:14:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ vrpciu_attach(device_t parent, device_t self, void *aux)
 	    PCI_FLAGS_MRL_OKAY;
 	pba.pba_pc = pc;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 #endif
 }
 

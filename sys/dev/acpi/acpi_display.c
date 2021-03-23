@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.18 2020/06/30 13:14:21 sborrill Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.18.4.1 2021/03/23 07:14:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.18 2020/06/30 13:14:21 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.18.4.1 2021/03/23 07:14:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -572,8 +572,8 @@ acpidisp_vga_scan_outdevs(struct acpidisp_vga_softc *asc)
 		aa.aa_node = ad;
 		aa.aa_mtx = &asc->sc_mtx;
 
-		ad->ad_device = config_found_ia(asc->sc_dev,
-		    "acpivga", &aa, acpidisp_acpivga_print);
+		ad->ad_device = config_found(asc->sc_dev,
+		    &aa, acpidisp_acpivga_print, CFARG_EOL);
 	}
 }
 

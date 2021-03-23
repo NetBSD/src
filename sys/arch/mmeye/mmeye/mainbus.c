@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9.68.2 2021/03/21 17:35:45 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.68.3 2021/03/23 07:14:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.68.2 2021/03/21 17:35:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.68.3 2021/03/23 07:14:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	/* CPU and SHBus */
 	maa.ma_name = "cpu";
-	config_found_ia(self, "mainbus", &maa, mainbus_print);
+	config_found(self, &maa, mainbus_print, CFARG_EOL);
 	maa.ma_name = "shb";
-	config_found_ia(self, "mainbus", &maa, mainbus_print);
+	config_found(self, &maa, mainbus_print, CFARG_EOL);
 
 	/* Devices */
 	config_search(self, NULL,

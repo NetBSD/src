@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.35 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.35.2.1 2021/03/23 07:14:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.35 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.35.2.1 2021/03/23 07:14:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -972,7 +972,7 @@ sunxi_gpio_attach_ports(struct sunxi_gpio_softc *sc)
 	gba.gba_gc = gp;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = npins;
-	sc->sc_gpiodev = config_found_ia(sc->sc_dev, "gpiobus", &gba, NULL);
+	sc->sc_gpiodev = config_found(sc->sc_dev, &gba, NULL, CFARG_EOL);
 }
 
 static int

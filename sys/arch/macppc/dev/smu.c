@@ -477,7 +477,7 @@ smu_setup_iicbus(struct smu_softc *sc)
 		ca.ca_name = name;
 		ca.ca_node = node;
 		ca.ca_tag = i2c;
-		config_found_ia(sc->sc_dev, "smu", &ca, smu_iicbus_print);
+		config_found(sc->sc_dev, &ca, smu_iicbus_print, CFARG_EOL);
 
 		sc->sc_num_iicbus++;
 	}

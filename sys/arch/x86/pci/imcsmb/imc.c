@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $ */
+/* $NetBSD: imc.c,v 1.2.16.1 2021/03/23 07:14:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.2.16.1 2021/03/23 07:14:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -248,7 +248,7 @@ imc_rescan(device_t self, const char * ifattr, const int *flags)
 		imca.ia_regs = &imcsmb_regs[unit];
 		imca.ia_pci_tag = sc->sc_pci_tag;
 		imca.ia_pci_chipset_tag = sc->sc_pci_chipset_tag;
-		child = config_found_ia(self, "imc", &imca, NULL);
+		child = config_found(self, &imca, NULL, CFARG_EOL);
 
 		if (child == NULL) {
 			aprint_debug_dev(self, "Child %d imcsmb not added\n",

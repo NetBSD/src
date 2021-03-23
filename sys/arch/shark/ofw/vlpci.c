@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.10.2.1 2021/03/23 07:14:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.10.2.1 2021/03/23 07:14:51 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -327,7 +327,7 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	vlpci_dump_window(sc, VLPCI_PCI_WND_NO_2);
 	vlpci_dump_window(sc, VLPCI_PCI_WND_NO_3);
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 static void

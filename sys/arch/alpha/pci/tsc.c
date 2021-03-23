@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.24.44.1 2021/03/21 21:08:53 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.24.44.2 2021/03/23 07:14:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.44.1 2021/03/21 21:08:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.44.2 2021/03/23 07:14:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ tspattach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 struct tsp_config *
