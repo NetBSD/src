@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.10 2021/03/22 15:12:24 rillig Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.11 2021/03/23 18:46:07 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -892,13 +892,9 @@ update_rrsetstats(dns_rbtdb_t *rbtdb, const rbtdb_rdatatype_t htype,
 	dns_rdatastatstype_t statattributes = 0;
 	dns_rdatastatstype_t base = 0;
 	dns_rdatastatstype_t type;
-#ifdef __lint__ // XXX: bug in lint; see msg_171.c 1.3
-	rdatasetheader_t *header;
-#else
 	rdatasetheader_t *header = &(rdatasetheader_t){
 		.type = htype, .attributes = ATOMIC_VAR_INIT(hattributes)
 	};
-#endif
 
 	if (!do_stats(header)) {
 		return;
