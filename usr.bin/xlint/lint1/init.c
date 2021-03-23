@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.113 2021/03/23 20:14:55 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.114 2021/03/23 20:21:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.113 2021/03/23 20:14:55 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.114 2021/03/23 20:21:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -966,6 +966,30 @@ check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
 	}
 }
 
+/*
+ * Local initialization of non-array-types with only one expression without
+ * braces is done by ASSIGN.
+ */
+static bool
+init_using_assign(tnode_t *rn)
+{
+	tnode_t *ln, *tn;
+
+	if (initsym->s_type->t_tspec == ARRAY)
+		return false;
+	if (initstk->i_enclosing != NULL)
+		return false;
+
+	debug_step("handing over to ASSIGN");
+	ln = new_name_node(initsym, 0);
+	ln->tn_type = tduptyp(ln->tn_type);
+	ln->tn_type->t_const = false;
+	tn = build(ASSIGN, ln, rn);
+	expr(tn, false, false, false, false);
+	/* XXX: why not clean up the initstack here already? */
+	return true;
+}
+
 void
 init_using_expr(tnode_t *tn)
 {
@@ -992,21 +1016,8 @@ init_using_expr(tnode_t *tn)
 	 * be enclosed by braces.
 	 */
 
-	/*
-	 * Local initialization of non-array-types with only one expression
-	 * without braces is done by ASSIGN
-	 */
-	if ((sclass == AUTO || sclass == REG) &&
-	    initsym->s_type->t_tspec != ARRAY && initstk->i_enclosing == NULL) {
-		debug_step("handing over to ASSIGN");
-		ln = new_name_node(initsym, 0);
-		ln->tn_type = tduptyp(ln->tn_type);
-		ln->tn_type->t_const = false;
-		tn = build(ASSIGN, ln, tn);
-		expr(tn, false, false, false, false);
-		/* XXX: why not clean up the initstack here already? */
+	if ((sclass == AUTO || sclass == REG) && init_using_assign(tn))
 		goto done;
-	}
 
 	initstack_pop_nobrace();
 
