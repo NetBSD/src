@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.196 2021/03/21 14:49:21 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.197 2021/03/23 17:36:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.196 2021/03/21 14:49:21 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.197 2021/03/23 17:36:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1885,24 +1885,24 @@ term:
 	    expr_statement_list {
 		block_level--;
 		mem_block_level--;
-		initsym = mktempsym(duptyp($4->tn_type));
+		*current_initsym() = mktempsym(duptyp($4->tn_type));
 		mem_block_level++;
 		block_level++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	 } compound_statement_rbrace T_RPAREN {
-		$$ = new_name_node(initsym, 0);
+		$$ = new_name_node(*current_initsym(), 0);
 	 }
 	| T_LPAREN compound_statement_lbrace expr_statement_list {
 		block_level--;
 		mem_block_level--;
-		initsym = mktempsym($3->tn_type);
+		*current_initsym() = mktempsym($3->tn_type);
 		mem_block_level++;
 		block_level++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	 } compound_statement_rbrace T_RPAREN {
-		$$ = new_name_node(initsym, 0);
+		$$ = new_name_node(*current_initsym(), 0);
 	 }
 	| term T_INCDEC {
 		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
@@ -1995,7 +1995,7 @@ term:
 		if (!Sflag)
 			 /* compound literals are a C9X/GCC extension */
 			 gnuism(319);
-		$$ = new_name_node(initsym, 0);
+		$$ = new_name_node(*current_initsym(), 0);
 	  }
 	;
 
