@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.74 2021/03/07 07:37:35 rin Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.75 2021/03/23 13:22:40 simonb Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -61,6 +61,12 @@ LDFLAGS+=	-Wl,-m,elf64btsmip
 .elif ${MACHINE_ARCH} == "mips64el" && !defined(BSD_MK_COMPAT_FILE)
 CFLAGS+=	-mabi=64
 LDFLAGS+=	-Wl,-m,elf64ltsmip
+.endif
+
+.if ${MACHINE_CPU} == "mips"
+# We can't use -msym32 with -mlong-calls as -msym32 forces all addresses
+# to be 32-bit which defeats the whole purpose of long calls.
+CFLAGS+=	-mlong-calls
 .endif
 
 .if ${MACHINE_CPU} == "sparc64"

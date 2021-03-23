@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.82 2021/03/23 11:41:53 simonb Exp $
+#	$NetBSD: files.mips,v 1.83 2021/03/23 13:22:40 simonb Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -45,6 +45,7 @@ file	arch/mips/mips/db_interface.c		ddb | kgdb
 file	arch/mips/mips/db_trace.c		ddb
 file	arch/mips/mips/ipifuncs.c		multiprocessor
 file	arch/mips/mips/kgdb_machdep.c		kgdb
+file	arch/mips/mips/kobj_machdep.c		modular
 file	arch/mips/mips/pmap_machdep.c
 file	arch/mips/mips/mips_stacktrace.c
 file	uvm/pmap/pmap.c
