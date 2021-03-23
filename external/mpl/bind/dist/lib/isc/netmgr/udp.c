@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.4 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: udp.c,v 1.5 2021/03/23 20:59:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -543,7 +543,7 @@ isc__nm_udp_send(isc_nmhandle_t *handle, isc_region_t *region, isc_nm_cb_t cb,
 
 	if (isc_nm_tid() == rsock->tid) {
 		isc__netievent_udpsend_t ievent
-#ifndef __lint__ // XXX lint broken
+#ifndef __lint__ // XXX: bug
 		= { .sock = rsock, .req = uvreq, .peer = *peer }
 #endif
 		;

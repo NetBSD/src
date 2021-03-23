@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.12 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.13 2021/03/23 20:59:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2311,8 +2311,7 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 		 * Retain these values from the existing client, but
 		 * zero every thing else.
 		 */
-#ifndef __lint__
-/* XXX: bug ? */
+#ifndef __lint__ // XXX: bug
 		*client = (ns_client_t){ .magic = 0,
 					 .mctx = oldmctx,
 					 .manager = oldmgr,
