@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.18 2019/02/03 03:19:31 mrg Exp $	*/
+/*	$NetBSD: advcap.c,v 1.19 2021/03/23 18:16:53 christos Exp $	*/
 /*	$KAME: advcap.c,v 1.11 2003/05/19 09:46:50 keiichi Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ getent(char *bp, char *name, char *cp)
 		tf = open(RM = cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		logit(LOG_INFO, "<%s> open: %m", __func__);
+		logit(LOG_INFO, "%s: open `%s': %m", __func__, cp);
 		return (-2);
 	}
 	for (;;) {

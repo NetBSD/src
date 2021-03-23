@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.17 2018/11/16 08:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: dump.c,v 1.18 2021/03/23 18:16:53 christos Exp $	*/
 /*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
@@ -265,11 +265,11 @@ if_dump(void)
 void
 rtadvd_dump_file(const char *dumpfile)
 {
-	logit(LOG_DEBUG, "<%s> dump current status to %s", __func__,
+	logit(LOG_DEBUG, "%s: dump current status to %s", __func__,
 	    dumpfile);
 
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		logit(LOG_WARNING, "<%s> open a dump file(%s): %m",
+		logit(LOG_WARNING, "%s: open a dump file(%s): %m",
 		       __func__, dumpfile);
 		return;
 	}
