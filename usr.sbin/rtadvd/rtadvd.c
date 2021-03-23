@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.80 2021/03/22 18:41:11 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.81 2021/03/23 18:06:19 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1615,7 +1615,7 @@ rtsock_open(void)
 	}
 #ifdef RO_MSGFILTER
 	if (prog_setsockopt(rtsock, PF_ROUTE, RO_MSGFILTER,
-	    &msgfilter, sizeof(msgfilter) == -1))
+	    &msgfilter, sizeof(msgfilter)) == -1)
 		logit(LOG_ERR, "%s: RO_MSGFILTER: %m", __func__);
 #endif
 }
@@ -1804,13 +1804,14 @@ logit(int level, const char *fmt, ...)
 	va_start(ap, fmt);
 	if (!Dflag && after_daemon) {
 		vsyslog(level, fmt, ap);
-		va_end(ap);
-		return;
+		goto out;
 	}
-	if (level >= LOG_INFO && !dflag)
-		return;
+	if (level >= LOG_INFO && !dflag) {
+		goto out;
+	}
 
 	vwarnx(expandm(fmt, "", &buf), ap);
 	free(buf);
+out:
 	va_end(ap);
 }
