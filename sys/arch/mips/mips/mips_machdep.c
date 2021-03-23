@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.300 2020/09/02 01:33:27 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.301 2021/03/23 13:22:40 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.300 2020/09/02 01:33:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.301 2021/03/23 13:22:40 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.300 2020/09/02 01:33:27 simonb Ex
 #include <sys/intr.h>
 #include <sys/exec.h>
 #include <sys/reboot.h>
+#include <sys/module.h>
 #include <sys/mount.h>			/* fsid_t for syscallargs */
 #include <sys/lwp.h>
 #include <sys/sysctl.h>
@@ -2454,6 +2455,18 @@ std_splsw_test(void)
 }
 
 #endif /* PARANOIA */
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+
+	/* XXX Do something board/machine specific here one day... */
+}
+#endif /* MODULAR */
 
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
