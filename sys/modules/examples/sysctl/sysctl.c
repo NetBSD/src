@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.1 2018/04/13 01:20:28 kamil Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.2 2021/03/23 13:19:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysctl.c,v 1.1 2018/04/13 01:20:28 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysctl.c,v 1.2 2021/03/23 13:19:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -104,11 +104,11 @@ sysctl_modcmd(modcmd_t cmd, void *arg)
 {
 	switch(cmd) {
 	case MODULE_CMD_INIT:
-		printf("sysctl module inserted");
+		printf("sysctl module inserted\n");
 		sysctl_example_setup(&example_sysctl_log);
 		break;
 	case MODULE_CMD_FINI:
-		printf("sysctl module unloaded");
+		printf("sysctl module unloaded\n");
 		sysctl_teardown(&example_sysctl_log);
 		break;
 	default:
