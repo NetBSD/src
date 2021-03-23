@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.19 2019/12/03 03:25:28 msaitoh Exp $	*/
+/*	$NetBSD: timer.c,v 1.20 2021/03/23 18:16:53 christos Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 	if (timespeccmp(&timer->tm, &now, <=)) {
 		if (timer->enabled)
 			logit(LOG_DEBUG,
-			       "<%s> a timer must be expired, but not yet",
+			       "%s: a timer must be expired, but not yet",
 			       __func__);
 		returnval.tv_sec = 0;
 		returnval.tv_nsec = 0;
