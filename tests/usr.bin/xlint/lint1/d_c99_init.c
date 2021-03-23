@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.12 2021/03/20 08:59:46 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.13 2021/03/23 23:12:21 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -47,7 +47,6 @@ void
 initialization_with_redundant_braces(any arg)
 {
 	any local = { arg };	/* expect: 185 */
-	// TODO: message 185 needs to be reworded to "cannot initialize '%s' from '%s'".
 	use(&arg);
 }
 
