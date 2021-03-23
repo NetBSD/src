@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.7 2017/10/28 00:37:12 pgoyette Exp $ */
+/* $NetBSD: tiotg.c,v 1.7.18.1 2021/03/23 07:14:44 thorpej Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.7 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.7.18.1 2021/03/23 07:14:44 thorpej Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -209,7 +209,7 @@ tiotg_rescan(device_t self, const char *ifattr, const int *locs)
 		aa.aa_port = i;
 		aa.aa_intr = sc->sc_intrbase + 1 + i;
 		sc->sc_motgdev[i] =
-		    config_found_ia(self, "tiotg_port", &aa, ti_motg_print);
+		    config_found(self, &aa, ti_motg_print, CFARG_EOL);
 	}
 	return 0;
 }

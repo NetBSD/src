@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2c.c,v 1.9 2019/12/22 23:23:30 thorpej Exp $	*/
+/*	$NetBSD: iopi2c.c,v 1.9.10.1 2021/03/23 07:14:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.9 2019/12/22 23:23:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.9.10.1 2021/03/23 07:14:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -77,7 +77,7 @@ iopiic_attach(struct iopiic_softc *sc)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
 }
 
 #define	IOPIIC_TIMEOUT		100	/* protocol timeout, in uSecs */

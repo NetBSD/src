@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.9 2019/08/13 17:03:10 tnn Exp $ */
+/* $NetBSD: auspi.c,v 1.9.10.1 2021/03/23 07:14:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.9 2019/08/13 17:03:10 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.9.10.1 2021/03/23 07:14:49 thorpej Exp $");
 
 #include "locators.h"
 
@@ -163,7 +163,7 @@ auspi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = au_intr_establish(aa->aupsc_irq, 0, IPL_BIO, IST_LEVEL,
 	    auspi_intr, sc);
 
-	(void) config_found_ia(self, "spibus", &sba, spibus_print);
+	config_found_ia(self, &sba, spibus_print, CFARG_EOL);
 }
 
 int

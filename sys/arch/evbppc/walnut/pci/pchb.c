@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.15.4.1 2021/03/23 07:14:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.15.4.1 2021/03/23 07:14:47 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -189,7 +189,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY;
-	config_found_ia(self, "pcibus", &pba, pchbprint);
+	config_found(self, &pba, pchbprint, CFARG_EOL);
 }
 
 

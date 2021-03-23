@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_nand.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: omap2_nand.c,v 1.3.2.1 2021/03/23 07:14:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.3.2.1 2021/03/23 07:14:45 thorpej Exp $");
 
 /* TODO move to opt_* */
 #undef OMAP2_NAND_HARDWARE_ECC
@@ -314,7 +314,7 @@ omap2_nand_attach(device_t parent, device_t self, void *aux)
 		if (flash.partinfo.part_name == NULL)
 			flash.partinfo.part_name = fdtbus_get_string(child, "name");
 
-		config_found_ia(sc->sc_nanddev, "flashbus", &flash, flash_print);
+		config_found(sc->sc_nanddev, &flash, flash_print, CFARG_EOL);
 	}
 }
 

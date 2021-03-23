@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.20 2018/03/22 21:30:34 macallan Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.20.16.1 2021/03/23 07:14:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.20 2018/03/22 21:30:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.20.16.1 2021/03/23 07:14:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -183,7 +183,7 @@ uninorth_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 static pcireg_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_gpio.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_gpio.c,v 1.3.68.1 2021/03/23 07:14:43 thorpej Exp $	*/
 
 /* adapted from
  *	$NetBSD: omap2_gpio.c,v 1.6 2008/11/19 06:26:27 matt Exp
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.3.68.1 2021/03/23 07:14:43 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -321,7 +321,7 @@ gpio_defer(device_t self)
 			: GPIO_PIN_LOW;
 	}
 
-	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+	config_found(self, &gba, gpiobus_print, CFARG_EOL);
 }
 #endif /* NGPIO > 0 */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.15 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: ttwoga.c,v 1.15.62.1 2021/03/23 07:14:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.15 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.15.62.1 2021/03/23 07:14:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ ttwogaattach(device_t parent, device_t self, void *aux)
 		memset(&pba, 0, sizeof(pba));
 		pba.pba_bus = hose;
 
-		(void) config_found_ia(self, "ttwoga", &pba, ttwogaprint);
+		config_found(self, &pba, ttwogaprint, CFARG_EOL);
 	}
 }
 

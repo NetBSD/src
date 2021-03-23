@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.68.1 2021/03/21 21:08:53 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.68.2 2021/03/23 07:14:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Frank Wille.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.68.1 2021/03/21 21:08:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.68.2 2021/03/23 07:14:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,7 +102,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Always find the CPU
 	 */
-	config_found_ia(self, "mainbus", __UNCONST("cpu"), mbprint);
+	config_found(self, __UNCONST("cpu"), mbprint, CFARG_EOL);
 
 	/*
 	 * "find" all the things that should be there.
