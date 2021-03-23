@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.4 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.5 2021/03/23 20:56:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -364,13 +364,13 @@ typedef struct isc__netievent__socket {
 } isc__netievent__socket_t;
 
 #define NETIEVENT_SOCKET_TYPE(type) \
-	typedef isc__netievent__socket_t isc__netievent_##type##_t;
+	typedef isc__netievent__socket_t isc__netievent_##type##_t
 
 #define NETIEVENT_SOCKET_DECL(type)                              \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type( \
 		isc_nm_t *nm, isc_nmsocket_t *sock);             \
 	void isc__nm_put_netievent_##type(isc_nm_t *nm,          \
-					  isc__netievent_##type##_t *ievent);
+					  isc__netievent_##type##_t *ievent)
 
 #define NETIEVENT_SOCKET_DEF(type)                                             \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(               \
@@ -394,13 +394,13 @@ typedef struct isc__netievent__socket_req {
 } isc__netievent__socket_req_t;
 
 #define NETIEVENT_SOCKET_REQ_TYPE(type) \
-	typedef isc__netievent__socket_req_t isc__netievent_##type##_t;
+	typedef isc__netievent__socket_req_t isc__netievent_##type##_t
 
 #define NETIEVENT_SOCKET_REQ_DECL(type)                                    \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(           \
 		isc_nm_t *nm, isc_nmsocket_t *sock, isc__nm_uvreq_t *req); \
 	void isc__nm_put_netievent_##type(isc_nm_t *nm,                    \
-					  isc__netievent_##type##_t *ievent);
+					  isc__netievent_##type##_t *ievent)
 
 #define NETIEVENT_SOCKET_REQ_DEF(type)                                         \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(               \
@@ -427,14 +427,14 @@ typedef struct isc__netievent__socket_req_result {
 } isc__netievent__socket_req_result_t;
 
 #define NETIEVENT_SOCKET_REQ_RESULT_TYPE(type) \
-	typedef isc__netievent__socket_req_result_t isc__netievent_##type##_t;
+	typedef isc__netievent__socket_req_result_t isc__netievent_##type##_t
 
 #define NETIEVENT_SOCKET_REQ_RESULT_DECL(type)                            \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(          \
 		isc_nm_t *nm, isc_nmsocket_t *sock, isc__nm_uvreq_t *req, \
 		isc_result_t result);                                     \
 	void isc__nm_put_netievent_##type(isc_nm_t *nm,                   \
-					  isc__netievent_##type##_t *ievent);
+					  isc__netievent_##type##_t *ievent)
 
 #define NETIEVENT_SOCKET_REQ_RESULT_DEF(type)                                  \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(               \
@@ -461,13 +461,13 @@ typedef struct isc__netievent__socket_handle {
 } isc__netievent__socket_handle_t;
 
 #define NETIEVENT_SOCKET_HANDLE_TYPE(type) \
-	typedef isc__netievent__socket_handle_t isc__netievent_##type##_t;
+	typedef isc__netievent__socket_handle_t isc__netievent_##type##_t
 
 #define NETIEVENT_SOCKET_HANDLE_DECL(type)                                   \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(             \
 		isc_nm_t *nm, isc_nmsocket_t *sock, isc_nmhandle_t *handle); \
 	void isc__nm_put_netievent_##type(isc_nm_t *nm,                      \
-					  isc__netievent_##type##_t *ievent);
+					  isc__netievent_##type##_t *ievent)
 
 #define NETIEVENT_SOCKET_HANDLE_DEF(type)                                      \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(               \
@@ -493,13 +493,13 @@ typedef struct isc__netievent__socket_quota {
 } isc__netievent__socket_quota_t;
 
 #define NETIEVENT_SOCKET_QUOTA_TYPE(type) \
-	typedef isc__netievent__socket_quota_t isc__netievent_##type##_t;
+	typedef isc__netievent__socket_quota_t isc__netievent_##type##_t
 
 #define NETIEVENT_SOCKET_QUOTA_DECL(type)                                \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(         \
 		isc_nm_t *nm, isc_nmsocket_t *sock, isc_quota_t *quota); \
 	void isc__nm_put_netievent_##type(isc_nm_t *nm,                  \
-					  isc__netievent_##type##_t *ievent);
+					  isc__netievent_##type##_t *ievent)
 
 #define NETIEVENT_SOCKET_QUOTA_DEF(type)                                       \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(               \
@@ -536,12 +536,12 @@ typedef struct isc__netievent {
 	isc__netievent_type type;
 } isc__netievent_t;
 
-#define NETIEVENT_TYPE(type) typedef isc__netievent_t isc__netievent_##type##_t;
+#define NETIEVENT_TYPE(type) typedef isc__netievent_t isc__netievent_##type##_t
 
 #define NETIEVENT_DECL(type)                                                   \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(isc_nm_t *nm); \
 	void isc__nm_put_netievent_##type(isc_nm_t *nm,                        \
-					  isc__netievent_##type##_t *ievent);
+					  isc__netievent_##type##_t *ievent)
 
 #define NETIEVENT_DEF(type)                                                    \
 	isc__netievent_##type##_t *isc__nm_get_netievent_##type(               \
