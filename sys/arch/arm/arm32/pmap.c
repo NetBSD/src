@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.427 2021/03/23 06:35:24 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.428 2021/03/23 10:21:49 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.427 2021/03/23 06:35:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.428 2021/03/23 10:21:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3985,6 +3985,8 @@ pmap_extract_coherency(pmap_t pm, vaddr_t va, paddr_t *pap, bool *coherentp)
 		 */
 		KDASSERT(pm == pmap_kernel());
 		pmap_release_pmap_lock(pm);
+		kpreempt_enable();
+
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 		if (l1pte_supersection_p(pde)) {
 			pa = (pde & L1_SS_FRAME) | (va & L1_SS_OFFSET);
