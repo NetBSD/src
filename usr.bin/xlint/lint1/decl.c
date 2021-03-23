@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.158 2021/03/23 17:36:56 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.159 2021/03/23 18:40:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.158 2021/03/23 17:36:56 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.159 2021/03/23 18:40:50 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1895,9 +1895,6 @@ void
 declare(sym_t *decl, bool initflg, sbuf_t *renaming)
 {
 	char *s;
-
-	*current_initerr() = false;
-	*current_initsym() = decl;
 
 	switch (dcs->d_ctx) {
 	case EXTERN:

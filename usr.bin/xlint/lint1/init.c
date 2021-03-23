@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.110 2021/03/23 17:36:56 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.111 2021/03/23 18:40:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.110 2021/03/23 17:36:56 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.111 2021/03/23 18:40:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -201,9 +201,10 @@ typedef struct namlist {
 
 struct initialization {
 	/*
-	 * initerr is set as soon as a fatal error occurred in an initialization.
-	 * The effect is that the rest of the initialization is ignored (parsed
-	 * by yacc, expression trees built, but no initialization takes place).
+	 * is set as soon as a fatal error occurred in the initialization.
+	 * The effect is that the rest of the initialization is ignored
+	 * (parsed by yacc, expression trees built, but no initialization
+	 * takes place).
 	 */
 	bool	initerr;
 
@@ -219,7 +220,7 @@ struct initialization {
 	struct initialization *next;
 };
 
-static struct initialization init;
+static struct initialization *init;
 
 
 static	bool	init_array_using_string(tnode_t *);
@@ -227,25 +228,29 @@ static	bool	init_array_using_string(tnode_t *);
 bool *
 current_initerr(void)
 {
-	return &init.initerr;
+	lint_assert(init != NULL);
+	return &init->initerr;
 }
 
 sym_t **
 current_initsym(void)
 {
-	return &init.initsym;
+	lint_assert(init != NULL);
+	return &init->initsym;
 }
 
 static namlist_t **
 current_namedmem(void)
 {
-	return &init.namedmem;
+	lint_assert(init != NULL);
+	return &init->namedmem;
 }
 
 static initstack_element **
 current_initstk(void)
 {
-	return &init.initstk;
+	lint_assert(init != NULL);
+	return &init->initstk;
 }
 
 #define initerr (*current_initerr())
@@ -370,6 +375,30 @@ debug_initstack(void)
 #define debug_leave() debug_leave(__func__)
 
 #endif
+
+
+void
+begin_initialization(sym_t *sym)
+{
+	struct initialization *curr_init;
+
+	debug_step("begin initialization");
+	curr_init = xcalloc(1, sizeof *curr_init);
+	curr_init->next = init;
+	init = curr_init;
+	initsym = sym;
+}
+
+void
+end_initialization(void)
+{
+	struct initialization *curr_init;
+
+	curr_init = init;
+	init = init->next;
+	free(curr_init);
+	debug_step("end initialization");
+}
 
 void
 designator_push_name(sbuf_t *sb)
