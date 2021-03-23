@@ -6,5 +6,3 @@ d_init_array_using_string.c(59): warning: illegal combination of integer (char) 
 d_init_array_using_string.c(60): warning: illegal combination of integer (char) and pointer (pointer to char) [183]
 d_init_array_using_string.c(69): warning: non-null byte ignored in string initializer [187]
 d_init_array_using_string.c(70): warning: non-null byte ignored in string initializer [187]
-d_init_array_using_string.c(74): warning: illegal combination of integer (char) and pointer (pointer to char) [183]
-d_init_array_using_string.c(75): warning: illegal combination of integer (int) and pointer (pointer to int) [183]
