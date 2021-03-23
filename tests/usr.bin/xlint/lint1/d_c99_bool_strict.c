@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.26 2021/03/21 14:36:59 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.27 2021/03/23 23:12:21 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -151,10 +151,10 @@ enum strict_bool_constant_expressions {
 	/*
 	 * Without strict bool mode, these two variants of an expression can
 	 * occur when a preprocessor macro is either defined to 1 or left
-	 * empty, as in lint1/ops.def.
+	 * empty (since C99), as in lint1/ops.def.
 	 *
-	 * TODO: figure out an elegant way to achieve the same effect in
-	 *  strict bool mode.
+	 * In strict bool mode, the resulting expression can be compared
+	 * against 0 to achieve the same effect (so +0 != 0 or 1 + 0 != 0).
 	 */
 	BINARY_PLUS = (1 + 0) ? 100 : 101, /* expect: 331 */
 	UNARY_PLUS = (+0) ? 100 : 101,	/* expect: 331 */
