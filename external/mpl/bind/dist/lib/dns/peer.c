@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.c,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: peer.c,v 1.6 2021/03/23 20:59:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -216,8 +216,7 @@ dns_peer_newprefix(isc_mem_t *mem, const isc_netaddr_t *addr,
 
 	peer = isc_mem_get(mem, sizeof(*peer));
 
-#ifndef __lint__
-// XXX: bug
+#ifndef __lint__ // XXX: bug
 	*peer = (dns_peer_t){
 		.magic = DNS_PEER_MAGIC,
 		.address = *addr,
