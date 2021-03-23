@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.81 2021/03/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.82 2021/03/23 18:13:07 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -283,6 +283,7 @@ main(int argc, char *argv[])
 		set[1].fd = -1;
 
 	logit(LOG_INFO, "dropping privileges to %s", RTADVD_USER);
+	tzset();
 	if (prog_chroot(pw->pw_dir) == -1) {
 		logit(LOG_ERR, "chroot: %s: %m", pw->pw_dir);
 		return EXIT_FAILURE;
