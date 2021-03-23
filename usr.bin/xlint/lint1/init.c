@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.111 2021/03/23 18:40:50 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.112 2021/03/23 18:51:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.111 2021/03/23 18:40:50 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.112 2021/03/23 18:51:43 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -61,10 +61,10 @@ __RCSID("$NetBSD: init.c,v 1.111 2021/03/23 18:40:50 rillig Exp $");
  *	struct { int x, y; } point = { 3, 4 };
  *	struct { int x, y; } point = { .y = 3, .x = 4 };
  *
- * The initializer that follows the '=' may be surrounded by an extra pair of
- * braces, like in the example 'number_with_braces'.  For multi-dimensional
- * arrays, the inner braces may be omitted like in array_flat or spelled out
- * like in array_nested.
+ * Any scalar expression in the initializer may be surrounded by an extra pair
+ * of braces, like in the example 'number_with_braces' (C99 6.7.8p11).  For
+ * multi-dimensional arrays, the inner braces may be omitted like in
+ * array_flat or spelled out like in array_nested.
  *
  * For the initializer, the grammar parser calls these functions:
  *
