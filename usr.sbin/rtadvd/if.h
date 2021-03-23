@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.12 2021/03/22 18:41:11 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.13 2021/03/23 18:16:21 christos Exp $	*/
 /*	$KAME: if.h,v 1.12 2003/09/21 07:17:03 itojun Exp $	*/
 
 /*
@@ -35,17 +35,17 @@
 struct nd_opt_hdr;
 struct sockaddr_dl *if_nametosdl(const char *);
 int if_getmtu(const char *);
-int if_getflags(int, int);
+int if_getflags(unsigned int, int);
 int lladdropt_length(struct sockaddr_dl *);
 void lladdropt_fill(struct sockaddr_dl *, struct nd_opt_hdr *);
-char *get_next_msg(char *, char *, int, size_t *, int);
+char *get_next_msg(char *, char *, unsigned int, size_t *, int);
 const struct in6_addr *get_addr(const void *);
-int get_rtm_ifindex(const void *);
-int get_ifm_ifindex(const void *);
-int get_ifam_ifindex(const void *);
+unsigned int get_rtm_ifindex(const void *);
+unsigned int get_ifm_ifindex(const void *);
+unsigned int get_ifam_ifindex(const void *);
 int get_ifm_flags(const void *);
 #ifdef RTM_IFANNOUNCE
-int get_ifan_ifindex(const void *);
+unsigned int get_ifan_ifindex(const void *);
 int get_ifan_what(const void *);
 #endif
 int get_prefixlen(const void *);
