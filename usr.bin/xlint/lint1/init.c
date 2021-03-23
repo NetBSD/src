@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.112 2021/03/23 18:51:43 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.113 2021/03/23 20:14:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.112 2021/03/23 18:51:43 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.113 2021/03/23 20:14:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -980,10 +980,8 @@ init_using_expr(tnode_t *tn)
 	debug_step("expr:");
 	debug_node(tn, debug_ind + 1);
 
-	if (initerr || tn == NULL) {
-		debug_leave();
-		return;
-	}
+	if (initerr || tn == NULL)
+		goto done;
 
 	sclass = initsym->s_scl;
 
@@ -1007,8 +1005,7 @@ init_using_expr(tnode_t *tn)
 		tn = build(ASSIGN, ln, tn);
 		expr(tn, false, false, false, false);
 		/* XXX: why not clean up the initstack here already? */
-		debug_leave();
-		return;
+		goto done;
 	}
 
 	initstack_pop_nobrace();
@@ -1016,17 +1013,12 @@ init_using_expr(tnode_t *tn)
 	if (init_array_using_string(tn)) {
 		debug_step("after initializing the string:");
 		/* XXX: why not clean up the initstack here already? */
-		debug_initstack();
-		debug_leave();
-		return;
+		goto done_initstack;
 	}
 
 	initstack_next_nobrace();
-	if (initerr || tn == NULL) {
-		debug_initstack();
-		debug_leave();
-		return;
-	}
+	if (initerr || tn == NULL)
+		goto done_initstack;
 
 	initstk->i_remaining--;
 	debug_step("%d elements remaining", initstk->i_remaining);
@@ -1048,11 +1040,8 @@ init_using_expr(tnode_t *tn)
 
 	debug_step("typeok '%s', '%s'",
 	    type_name(ln->tn_type), type_name(tn->tn_type));
-	if (!typeok(INIT, 0, ln, tn)) {
-		debug_initstack();
-		debug_leave();
-		return;
-	}
+	if (!typeok(INIT, 0, ln, tn))
+		goto done_initstack;
 
 	/*
 	 * Store the tree memory. This is necessary because otherwise
@@ -1072,7 +1061,9 @@ init_using_expr(tnode_t *tn)
 
 	check_non_constant_initializer(tn, sclass);
 
+done_initstack:
 	debug_initstack();
+done:
 	debug_leave();
 }
 
