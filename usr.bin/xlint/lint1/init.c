@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.109 2021/03/22 19:29:43 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.110 2021/03/23 17:36:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.109 2021/03/22 19:29:43 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.110 2021/03/23 17:36:56 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -199,25 +199,59 @@ typedef struct namlist {
 	struct namlist *n_next;
 } namlist_t;
 
+struct initialization {
+	/*
+	 * initerr is set as soon as a fatal error occurred in an initialization.
+	 * The effect is that the rest of the initialization is ignored (parsed
+	 * by yacc, expression trees built, but no initialization takes place).
+	 */
+	bool	initerr;
 
-/*
- * initerr is set as soon as a fatal error occurred in an initialization.
- * The effect is that the rest of the initialization is ignored (parsed
- * by yacc, expression trees built, but no initialization takes place).
- */
-bool	initerr;
+	/* Pointer to the symbol which is to be initialized. */
+	sym_t	*initsym;
 
-/* Pointer to the symbol which is to be initialized. */
-sym_t	*initsym;
+	/* Points to the top element of the initialization stack. */
+	initstack_element *initstk;
 
-/* Points to the top element of the initialization stack. */
-static initstack_element *initstk;
+	/* Points to a c9x named member. */
+	namlist_t *namedmem;
 
-/* Points to a c9x named member; */
-static namlist_t *namedmem = NULL;
+	struct initialization *next;
+};
+
+static struct initialization init;
 
 
 static	bool	init_array_using_string(tnode_t *);
+
+bool *
+current_initerr(void)
+{
+	return &init.initerr;
+}
+
+sym_t **
+current_initsym(void)
+{
+	return &init.initsym;
+}
+
+static namlist_t **
+current_namedmem(void)
+{
+	return &init.namedmem;
+}
+
+static initstack_element **
+current_initstk(void)
+{
+	return &init.initstk;
+}
+
+#define initerr (*current_initerr())
+#define initsym (*current_initsym())
+#define initstk (*current_initstk())
+#define namedmem (*current_namedmem())
 
 #ifndef DEBUG
 
