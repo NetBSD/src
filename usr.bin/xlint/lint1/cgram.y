@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.198 2021/03/23 18:40:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.199 2021/03/23 20:57:40 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.198 2021/03/23 18:40:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.199 2021/03/23 20:57:40 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 134
+%expect 165
 
 %union {
 	val_t	*y_val;
@@ -149,6 +149,7 @@ anonymize(sym_t *s)
 %token			T_BUILTIN_OFFSETOF
 %token			T_TYPEOF
 %token			T_EXTENSION
+%token			T_ALIGNAS
 %token			T_ALIGNOF
 %token			T_ASTERISK
 %token	<y_op>		T_MULTIPLICATIVE
@@ -605,12 +606,19 @@ type_attribute_spec_list:
 	| type_attribute_spec_list T_COMMA type_attribute_spec
 	;
 
+align_as:
+	  typespec
+	| constant_expr
+	;
+
 type_attribute:
 	  T_ATTRIBUTE T_LPAREN T_LPAREN {
 	    attron = true;
 	  } type_attribute_spec_list {
 	    attron = false;
 	  } T_RPAREN T_RPAREN
+	| T_ALIGNAS T_LPAREN align_as T_RPAREN {
+	  }
 	| T_PACKED {
 		addpacked();
 	  }
