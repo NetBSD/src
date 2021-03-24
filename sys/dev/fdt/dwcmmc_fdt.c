@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.17 2021/03/23 22:27:38 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.18 2021/03/24 18:19:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.17 2021/03/23 22:27:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.18 2021/03/24 18:19:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,7 +66,7 @@ static const struct dwcmmc_fdt_config dwcmmc_rk3288_config = {
 	.intr_cardmask = __BIT(24),
 };
 
-static const struct dwmmc_fdt_config dwmmc_default_config = {
+static const struct dwcmmc_fdt_config dwmmc_default_config = {
 	.flags = DWC_MMC_F_USE_HOLD_REG |
 		 DWC_MMC_F_DMA,
 };
@@ -164,7 +164,7 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_bus_width = 4;
 
 	sc->sc_fifo_depth = fifo_depth;
-	sc->sc_entr_cardmask = esc->sc_conf->intr_cardmask;
+	sc->sc_intr_cardmask = esc->sc_conf->intr_cardmask;
 	sc->sc_ciu_div = esc->sc_conf->ciu_div;
 	sc->sc_flags = esc->sc_conf->flags;
 	sc->sc_pre_power_on = dwcmmc_fdt_pre_power_on;
