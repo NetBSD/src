@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.13.2.2 2021/03/22 16:23:44 thorpej Exp $ */
+/* $NetBSD: hdaudio.c,v 1.13.2.3 2021/03/24 14:21:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13.2.2 2021/03/22 16:23:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13.2.3 2021/03/24 14:21:08 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -947,9 +947,6 @@ hdaudio_rescan(struct hdaudio_softc *sc, const char *ifattr, const int *locs)
 	struct hdaudio_codec *co;
 	struct hdaudio_function_group *fg;
 	unsigned int codec;
-
-	if (!ifattr_match(ifattr, "hdaudiobus"))
-		return 0;
 
 	for (codec = 0; codec < HDAUDIO_MAX_CODECS; codec++) {
 		co = &sc->sc_codec[codec];
