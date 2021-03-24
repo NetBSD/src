@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.86 2020/10/07 17:51:50 chs Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.87 2021/03/24 06:37:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.86 2020/10/07 17:51:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.87 2021/03/24 06:37:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 		 */
 		cnt = roundup2(cnt, alignment);
 		/*
-		 * The number of pages we can skip checking 
+		 * The number of pages we can skip checking
 		 * (might be 0 if cnt > num).
 		 */
 		skip = uimax(num - cnt, 0);
@@ -493,7 +493,7 @@ out:
 	/*
 	 * If that didn't work, try the more aggressive approach.
 	 */
-	
+
 	if (error) {
 		if (waitok) {
 			error = uvm_pglistalloc_contig_aggressive(num, low, high,
