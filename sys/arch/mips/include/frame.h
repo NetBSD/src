@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: frame.h,v 1.11 2021/03/24 05:35:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,5 +49,3 @@ void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif /* _LOCORE */
 
 #endif /* _MIPS_FRAME_H_ */
-
-/* End of frame.h */
