@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.7.18.1 2021/03/23 07:14:44 thorpej Exp $ */
+/* $NetBSD: tiotg.c,v 1.7.18.2 2021/03/24 14:21:08 thorpej Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.7.18.1 2021/03/23 07:14:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.7.18.2 2021/03/24 14:21:08 thorpej Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -195,8 +195,6 @@ tiotg_rescan(device_t self, const char *ifattr, const int *locs)
 
 	for (i = 0; i < TI_OTG_NPORTS; i++) {
 		if (sc->sc_motgdev[i] != NULL)
-			continue;
-		if (!ifattr_match(ifattr, "tiotg_port"))
 			continue;
 		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 		    USB_CTRL_OFFSET(i), USB_PORT_SIZE, &aa.aa_ioh) < 0) {

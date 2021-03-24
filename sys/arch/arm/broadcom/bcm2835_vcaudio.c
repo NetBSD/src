@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.17 2021/01/27 12:06:10 nia Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.17.2.1 2021/03/24 14:21:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.17 2021/01/27 12:06:10 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.17.2.1 2021/03/24 14:21:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -237,7 +237,7 @@ vcaudio_rescan(device_t self, const char *ifattr, const int *locs)
 	struct vcaudio_softc *sc = device_private(self);
 	int error;
 
-	if (ifattr_match(ifattr, "audiobus") && sc->sc_audiodev == NULL) {
+	if (sc->sc_audiodev == NULL) {
 		error = vcaudio_init(sc);
 		if (error) {
 			return error;
