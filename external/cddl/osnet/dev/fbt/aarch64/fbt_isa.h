@@ -1,3 +1,5 @@
+/*	$NetBSD: fbt_isa.h,v 1.2 2021/03/24 04:46:41 simonb Exp $	*/
+
 /*
  * CDDL HEADER START
  *
