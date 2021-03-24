@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpa.c,v 1.9 2021/01/04 17:22:59 thorpej Exp $	*/
+/*	$NetBSD: octeon_fpa.c,v 1.10 2021/03/24 08:10:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,7 +29,7 @@
 #undef	FPADEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.9 2021/01/04 17:22:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.10 2021/03/24 08:10:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.9 2021/01/04 17:22:59 thorpej Exp $
 #define	_DMA_NSEGS	1
 #define	_DMA_BUFLEN	0x01000000
 
-/* pool descriptor */
-struct octfpa_desc {
-};
-
 struct octfpa_softc {
 	int			sc_initialized;
 
@@ -68,8 +64,6 @@ struct octfpa_softc {
 	bus_space_handle_t	sc_opsh;
 
 	bus_dma_tag_t		sc_dmat;
-
-	struct octfpa_desc	sc_descs[8];
 };
 
 void			octfpa_bootstrap(struct octeon_config *);
