@@ -1,4 +1,4 @@
-/*	$NetBSD: vcio.h,v 1.1 2012/10/14 16:16:52 skrll Exp $	*/
+/*	$NetBSD: vcio.h,v 1.2 2021/03/24 05:00:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	_EVBARM_RPI_VCIO_H_
 
 #define	BCMMBOX_CHANPM		0
-#define	BCMMBOX_CHANFB		1	/* will be depreciated */
+#define	BCMMBOX_CHANFB		1	/* will be deprecated */
 #define	BCMMBOX_CHANVUART	2
 #define	BCMMBOX_CHANVCHIQ	3
 #define	BCMMBOX_CHANLEDS	4

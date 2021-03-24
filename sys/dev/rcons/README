@@ -1,3 +1,3 @@
-$NetBSD: README,v 1.1 1999/12/17 01:41:52 ad Exp $
+$NetBSD: README,v 1.2 2021/03/24 05:00:24 simonb Exp $
 
-This code is depreciated. Use wscons instead.
+This code is deprecated. Use wscons instead.
