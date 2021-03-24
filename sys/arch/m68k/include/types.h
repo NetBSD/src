@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.33 2016/01/23 22:31:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.34 2021/03/24 05:00:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,8 +44,8 @@ typedef struct label_t {		/* consistent with HP-UX */
 #endif
 
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
-typedef	unsigned long	vm_offset_t;	/* depreciated */
-typedef	unsigned long	vm_size_t;	/* depreciated */
+typedef	unsigned long	vm_offset_t;	/* deprecated */
+typedef	unsigned long	vm_size_t;	/* deprecated */
 
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
