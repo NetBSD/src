@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX,v 1.8 2020/01/03 03:44:42 thorpej Exp $
+#	$NetBSD: KUROBOX,v 1.9 2021/03/25 05:35:50 rin Exp $
 #
 # KuroBox/LinkStation support
 #
@@ -7,7 +7,8 @@ include "arch/sandpoint/conf/GENERIC"
 
 no com0
 no satmgr0
-com0	at eumb? unit 1			# console at 0x4600
+com0	at eumb? unit 1 flags 0x1	# console at 0x4600
+					# XXX flags 0x1 to work around H/W bug
 #com1	at eumb? unit 0
 satmgr0 at eumb? unit 0			# satmgr at 0x4500
 
