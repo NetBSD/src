@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.131 2021/03/25 21:51:55 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.132 2021/03/25 22:15:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.131 2021/03/25 21:51:55 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.132 2021/03/25 22:15:38 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -517,9 +517,21 @@ designation_add_name(sbuf_t *sb)
 void
 designation_add_subscript(range_t range)
 {
+	initstack_element *istk;
+
 	debug_enter();
 	debug_step("subscript range is %zu ... %zu", range.lo, range.hi);
 	debug_initstack();
+
+	istk = initstk_lvalue;
+	if (istk->i_array_of_unknown_size) {
+		int auto_dim = (int)(range.hi + 1);
+		if (auto_dim > istk->i_type->t_dim) {
+			debug_step("setting the array size to %d", auto_dim);
+			istk->i_type->t_dim = auto_dim;
+		}
+	}
+
 	debug_leave();
 }
 
@@ -1280,6 +1292,11 @@ init_array_using_string(tnode_t *tn)
 	len = strg->st_len;
 
 	if (istk->i_array_of_unknown_size) {
+		/*
+		 * FIXME: C99 6.7.8p22 explicitly says that only "at the end
+		 * of its initializer list, the array no longer has incomplete
+		 * type".
+		 */
 		istk->i_array_of_unknown_size = false;
 		istk->i_type->t_dim = len + 1;
 		setcomplete(istk->i_type, true);
