@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.125 2021/03/25 19:48:25 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.126 2021/03/25 20:11:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.125 2021/03/25 19:48:25 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.126 2021/03/25 20:11:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -324,7 +324,7 @@ free_initialization(struct initialization *in)
 #define debug_enter(a)		do { } while (false)
 #define debug_step(fmt, ...)	do { } while (false)
 #define debug_leave(a)		do { } while (false)
-#define debug_named_member()	do { } while (false)
+#define debug_designation()	do { } while (false)
 #define debug_initstack_element(elem) do { } while (false)
 #define debug_initstack()	do { } while (false)
 
@@ -373,14 +373,14 @@ debug_leave(const char *func)
 }
 
 static void
-debug_named_member(void)
+debug_designation(void)
 {
 	const namlist_t *head = current_designation(), *name;
-
 	if (head == NULL)
 		return;
+
 	debug_indent();
-	debug_printf("named member: ");
+	debug_printf("designation: ");
 	name = head;
 	do {
 		debug_printf(".%s", name->n_name);
@@ -494,7 +494,7 @@ designator_push_name(sbuf_t *sb)
 		designation->n_prev = nam;
 	}
 
-	debug_named_member();
+	debug_designation();
 }
 
 /*
@@ -527,20 +527,19 @@ designator_push_subscript(range_t range)
 static void
 designator_shift_name(void)
 {
-	namlist_t *designation = *current_designation_mod();
+	namlist_t *head = *current_designation_mod();
 
-	if (designation->n_next == designation) {
-		free(designation);
+	if (head->n_next == head) {
+		free(head);
 		*current_designation_mod() = NULL;
 	} else {
-		namlist_t *nam = designation;
-		*current_designation_mod() = designation->n_next;
-		nam->n_prev->n_next = nam->n_next;
-		nam->n_next->n_prev = nam->n_prev;
-		free(nam);
+		*current_designation_mod() = head->n_next;
+		head->n_prev->n_next = head->n_next;
+		head->n_next->n_prev = head->n_prev;
+		free(head);
 	}
 
-	debug_named_member();
+	debug_designation();
 }
 
 /*
@@ -769,7 +768,7 @@ initstack_push_array(void)
 	istk->i_subt = istk->i_type->t_subt;
 	istk->i_array_of_unknown_size = is_incomplete(istk->i_type);
 	istk->i_remaining = istk->i_type->t_dim;
-	debug_named_member();
+	debug_designation();
 	debug_step("type '%s' remaining %d",
 	    type_name(istk->i_type), istk->i_remaining);
 }
@@ -795,7 +794,7 @@ initstack_push_struct_or_union(void)
 	}
 
 	cnt = 0;
-	debug_named_member();
+	debug_designation();
 	debug_step("lookup for '%s'%s",
 	    type_name(istk->i_type),
 	    istk->i_seen_named_member ? ", seen named member" : "");
@@ -970,7 +969,7 @@ initstack_next_brace(void)
 		initstack_push();
 	if (!initerr) {
 		initstk->i_brace = true;
-		debug_named_member();
+		debug_designation();
 		debug_step("expecting type '%s'",
 		    type_name(initstk->i_type != NULL ? initstk->i_type
 			: initstk->i_subt));
@@ -1172,7 +1171,7 @@ init_using_expr(tnode_t *tn)
 
 	debug_enter();
 	debug_initstack();
-	debug_named_member();
+	debug_designation();
 	debug_step("expr:");
 	debug_node(tn, debug_ind + 1);
 
