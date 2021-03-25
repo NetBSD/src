@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.123 2021/03/25 19:20:15 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.124 2021/03/25 19:33:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.123 2021/03/25 19:20:15 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.124 2021/03/25 19:33:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -250,8 +250,11 @@ struct initialization {
 	/* Points to the top element of the initialization stack. */
 	initstack_element *initstk;
 
-	/* Points to a c9x named member. */
-	namlist_t *namedmem;
+	/*
+	 * The C99 designator, if any, for the current initialization
+	 * expression.
+	 */
+	namlist_t *designation;
 
 	struct initialization *next;
 };
@@ -283,7 +286,7 @@ static namlist_t **
 current_designation_mod(void)
 {
 	lint_assert(init != NULL);
-	return &init->namedmem;
+	return &init->designation;
 }
 
 static const namlist_t *
@@ -751,8 +754,10 @@ initstack_push_array(void)
 
 	if (istk->i_enclosing->i_seen_named_member) {
 		istk->i_brace = true;
-		debug_step("ARRAY brace=%d, namedmem=%d",
-		    istk->i_brace, istk->i_enclosing->i_seen_named_member);
+		debug_step("ARRAY%s%s",
+		    istk->i_brace ? ", needs closing brace" : "",
+		    istk->i_enclosing->i_seen_named_member
+			? ", seen named member" : "");
 	}
 
 	if (is_incomplete(istk->i_type) &&
@@ -880,8 +885,9 @@ again:
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
 		if (current_designation() != NULL) {
-			debug_step("pop array namedmem=%s brace=%d",
-			    current_designation()->n_name, istk->i_brace);
+			debug_step("pop array, named member '%s'%s",
+			    current_designation()->n_name,
+			    istk->i_brace ? ", needs closing brace" : "");
 			goto pop;
 		}
 
