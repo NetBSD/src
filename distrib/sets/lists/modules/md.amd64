@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.91 2020/11/01 18:51:34 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.92 2021/03/25 09:49:00 nia Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -190,8 +190,6 @@
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/odcm				modules-base-kernel	kmod
 ./@MODULEDIR@/odcm/odcm.kmod			modules-base-kernel	kmod
-./@MODULEDIR@/pad				modules-base-kernel	kmod
-./@MODULEDIR@/pad/pad.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/powernow				modules-base-kernel	kmod
 ./@MODULEDIR@/powernow/powernow.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/pwdog				modules-base-kernel	kmod
