@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.127 2021/03/25 20:38:16 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.128 2021/03/25 21:07:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.127 2021/03/25 20:38:16 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.128 2021/03/25 21:07:52 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -215,22 +215,24 @@ typedef	struct initstack_element {
 } initstack_element;
 
 /*
- * The names for a nested C99 initialization designator, in a circular list.
+ * Leads the path to the sub-object to initialize using the expression.
+ * Example designators are '.member' or '.member[123].member.member[1][1]'.
  *
- * Example:
- *	struct stat st = {
- *		.st_size = 123,
- *		.st_mtim.tv_sec = 45,
- *		.st_mtim.tv_nsec
- *	};
- *
- *	During initialization, this list first contains ["st_size"], then
- *	["st_mtim", "tv_sec"], then ["st_mtim", "tv_nsec"].
+ * See also: C99 6.7.8 "Initialization"
  */
-typedef struct namlist {
-	const char *n_name;
-	struct namlist *n_next;
-} namlist_t;
+typedef struct designator {
+	const char *name;		/* for struct and union */
+	/* TODO: add 'subscript' for arrays */
+	struct designator *next;
+} designator;
+
+/*
+ * See also: C99 6.7.8 "Initialization"
+ */
+typedef struct {
+	designator *head;
+	designator *tail;
+} designation;
 
 struct initialization {
 	/*
@@ -251,8 +253,7 @@ struct initialization {
 	 * The C99 designator, if any, for the current initialization
 	 * expression.
 	 */
-	namlist_t *designation;
-	namlist_t *designation_tail;
+	designation designation;
 
 	struct initialization *next;
 };
@@ -280,14 +281,14 @@ current_initsym(void)
 	return &init->initsym;
 }
 
-static namlist_t **
+static designation *
 current_designation_mod(void)
 {
 	lint_assert(init != NULL);
 	return &init->designation;
 }
 
-static const namlist_t *
+static designation
 current_designation(void)
 {
 	return *current_designation_mod();
@@ -375,17 +376,14 @@ debug_leave(const char *func)
 static void
 debug_designation(void)
 {
-	const namlist_t *head = current_designation(), *name;
+	const designator *head = current_designation().head, *p;
 	if (head == NULL)
 		return;
 
 	debug_indent();
 	debug_printf("designation: ");
-	name = head;
-	do {
-		debug_printf(".%s", name->n_name);
-		name = name->n_next;
-	} while (name != head);
+	for (p = head; p != NULL; p = p->next)
+		debug_printf(".%s", p->name);
 	debug_printf("\n");
 }
 
@@ -475,18 +473,17 @@ end_initialization(void)
 void
 designator_push_name(sbuf_t *sb)
 {
-	const namlist_t *designation = current_designation();
+	designation *dd = current_designation_mod();
 
-	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
-	nam->n_name = sb->sb_name;
+	designator *d = xcalloc(1, sizeof *d);
+	d->name = sb->sb_name;
 
-	/* TODO: remove direct access to 'init' */
-	if (designation != NULL) {
-		init->designation_tail->n_next = nam;
-		init->designation_tail = nam;
+	if (dd->head != NULL) {
+		dd->tail->next = d;
+		dd->tail = d;
 	} else {
-		init->designation = nam;
-		init->designation_tail = nam;
+		dd->head = d;
+		dd->tail = d;
 	}
 
 	debug_designation();
@@ -524,13 +521,14 @@ designator_shift_name(void)
 {
 	/* TODO: remove direct access to 'init' */
 	lint_assert(init != NULL);
-	if (init->designation == init->designation_tail) {
-		free(init->designation);
-		init->designation = NULL;
-		init->designation_tail = NULL;
+	lint_assert(init->designation.head != NULL);
+	if (init->designation.head == init->designation.tail) {
+		free(init->designation.head);
+		init->designation.head = NULL;
+		init->designation.tail = NULL;
 	} else {
-		namlist_t *head = init->designation;
-		init->designation = init->designation->n_next;
+		designator *head = init->designation.head;
+		init->designation.head = init->designation.head->next;
 		free(head);
 	}
 
@@ -552,7 +550,7 @@ initstack_init(void)
 		return;
 
 	/* TODO: merge into init_using_expr */
-	while (current_designation() != NULL)
+	while (current_designation().head != NULL)
 		designator_shift_name();
 
 	debug_enter();
@@ -585,7 +583,7 @@ initstack_pop_item_named_member(void)
 	 * related to initializing the named member.
 	 */
 	debug_step("initializing named member '%s'",
-	    current_designation()->n_name);
+	    current_designation().head->name);
 
 	if (istk->i_type->t_tspec != STRUCT &&
 	    istk->i_type->t_tspec != UNION) {
@@ -601,7 +599,7 @@ initstack_pop_item_named_member(void)
 		if (m->s_bitfield && m->s_name == unnamed)
 			continue;
 
-		if (strcmp(m->s_name, current_designation()->n_name) == 0) {
+		if (strcmp(m->s_name, current_designation().head->name) == 0) {
 			debug_step("found matching member");
 			istk->i_subt = m->s_type;
 			/* XXX: why ++? */
@@ -613,7 +611,7 @@ initstack_pop_item_named_member(void)
 	}
 
 	/* undefined struct/union member: %s */
-	error(101, current_designation()->n_name);
+	error(101, current_designation().head->name);
 
 	designator_shift_name();
 	istk->i_seen_named_member = true;
@@ -666,7 +664,7 @@ initstack_pop_item(void)
 	lint_assert(istk->i_remaining >= 0);
 	debug_step("%d elements remaining", istk->i_remaining);
 
-	if (current_designation() != NULL)
+	if (current_designation().head != NULL)
 		initstack_pop_item_named_member();
 	else
 		initstack_pop_item_unnamed();
@@ -806,12 +804,12 @@ initstack_push_struct_or_union(void)
 		 * look_up_struct_next
 		 * look_up_struct_designator
 		 */
-		if (current_designation() != NULL) {
+		if (current_designation().head != NULL) {
 			/* XXX: this log entry looks unnecessarily verbose */
 			debug_step("have member '%s', want member '%s'",
-			    m->s_name, current_designation()->n_name);
-			if (strcmp(m->s_name, current_designation()->n_name) ==
-			    0) {
+			    m->s_name, current_designation().head->name);
+			if (strcmp(m->s_name,
+			    current_designation().head->name) == 0) {
 				cnt++;
 				break;
 			} else
@@ -823,7 +821,7 @@ initstack_push_struct_or_union(void)
 		}
 	}
 
-	if (current_designation() != NULL) {
+	if (current_designation().head != NULL) {
 		if (m == NULL) {
 			debug_step("pop struct");
 			return true;
@@ -831,7 +829,8 @@ initstack_push_struct_or_union(void)
 		istk->i_next_member = m;
 		istk->i_subt = m->s_type;
 		istk->i_seen_named_member = true;
-		debug_step("named member '%s'", current_designation()->n_name);
+		debug_step("named member '%s'",
+		    current_designation().head->name);
 		designator_shift_name();
 		cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 	}
@@ -876,9 +875,9 @@ again:
 	lint_assert(istk->i_type != NULL);
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
-		if (current_designation() != NULL) {
+		if (current_designation().head != NULL) {
 			debug_step("pop array, named member '%s'%s",
-			    current_designation()->n_name,
+			    current_designation().head->name,
 			    istk->i_brace ? ", needs closing brace" : "");
 			goto pop;
 		}
@@ -896,7 +895,7 @@ again:
 			goto pop;
 		break;
 	default:
-		if (current_designation() != NULL) {
+		if (current_designation().head != NULL) {
 			debug_step("pop scalar");
 	pop:
 			/* TODO: extract this into end_initializer_level */
