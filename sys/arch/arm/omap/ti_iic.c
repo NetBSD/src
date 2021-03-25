@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $ */
+/* $NetBSD: ti_iic.c,v 1.13 2021/03/25 16:34:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.13 2021/03/25 16:34:59 thorpej Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -216,8 +216,6 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = ti_iic_acquire_bus;
-	sc->sc_ic.ic_release_bus = ti_iic_release_bus;
 	sc->sc_ic.ic_exec = ti_iic_exec;
 
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size,
