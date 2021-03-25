@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.26 2018/12/08 17:46:14 thorpej Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.27 2021/03/25 05:33:59 rin Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.26 2018/12/08 17:46:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.27 2021/03/25 05:33:59 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	} else {
-		sc->sc_hwflags |= COM_HW_POLL;
+		sc->sc_poll_ticks = 1;
 	}
 
 #if defined(amd64) || defined(i386)
