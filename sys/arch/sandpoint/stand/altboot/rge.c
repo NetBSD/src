@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.7 2012/12/25 17:07:06 phx Exp $ */
+/* $NetBSD: rge.c,v 1.8 2021/03/25 03:44:25 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -235,11 +235,15 @@ rge_send(void *dev, char *buf, unsigned len)
 	struct local *l = dev;
 	volatile struct desc *txd;
 	unsigned loop, ret;
+	char tmp[60];
 
 	ret = len;
+	/* RTL does not stretch <60 Tx frame */
 	if (len < 60) {
+		memcpy(tmp, buf, len);
+		buf = tmp;
 		memset(buf + len, 0, 60 - len);
-		len = 60; /* RTL does not stretch <60 Tx frame */
+		len = 60;
 	}
 	wbinv(buf, len);
 	txd = &l->txd[l->tx];
