@@ -1,4 +1,4 @@
-# $NetBSD: module.md.amd64,v 1.4 2020/11/01 18:51:34 pgoyette Exp $
+# $NetBSD: module.md.amd64,v 1.5 2021/03/25 21:37:10 nia Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -179,8 +179,6 @@
 ./usr/libdata/debug/@MODULEDIR@/nxt2k/nxt2k.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/odcm				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/odcm/odcm.kmod.debug			modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/pad				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/pad/pad.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/powernow				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/powernow/powernow.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/pwdog				modules-base-kernel	kmod,debug
