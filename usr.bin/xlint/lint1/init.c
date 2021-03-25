@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.119 2021/03/25 13:10:19 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.120 2021/03/25 16:30:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.119 2021/03/25 13:10:19 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.120 2021/03/25 16:30:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -380,27 +380,27 @@ debug_named_member(void)
 static void
 debug_initstack_element(const initstack_element *elem)
 {
-	/* TODO: use debug_ind++ instead of the leading spaces here */
-
 	if (elem->i_type != NULL)
-		debug_step("  i_type           = %s", type_name(elem->i_type));
+		debug_printf("type '%s'", type_name(elem->i_type));
+	if (elem->i_type != NULL && elem->i_subt != NULL)
+		debug_printf(", ");
 	if (elem->i_subt != NULL)
-		debug_step("  i_subt           = %s", type_name(elem->i_subt));
+		debug_printf("subtype '%s'", type_name(elem->i_subt));
 
 	if (elem->i_brace)
-		debug_step("  i_brace");
+		debug_printf(", needs closing brace");
 	if (elem->i_array_of_unknown_size)
-		debug_step("  i_array_of_unknown_size");
+		debug_printf(", array of unknown size");
 	if (elem->i_seen_named_member)
-		debug_step("  i_seen_named_member");
+		debug_printf(", seen named member");
 
 	const type_t *eff_type = elem->i_type != NULL
 	    ? elem->i_type : elem->i_subt;
 	if (eff_type->t_tspec == STRUCT && elem->i_current_object != NULL)
-		debug_step("  i_current_object = %s",
+		debug_printf(", current object '%s'",
 		    elem->i_current_object->s_name);
 
-	debug_step("  i_remaining      = %d", elem->i_remaining);
+	debug_printf(", remaining %d\n", elem->i_remaining);
 }
 
 /*
@@ -417,7 +417,8 @@ debug_initstack(void)
 	size_t i = 0;
 	for (const initstack_element *elem = initstk;
 	     elem != NULL; elem = elem->i_enclosing) {
-		debug_step("initstk[%zu]:", i);
+		debug_indent();
+		debug_printf("initstk[%zu]: ", i);
 		debug_initstack_element(elem);
 		i++;
 	}
@@ -642,7 +643,8 @@ initstack_pop_item(void)
 	debug_enter();
 
 	istk = initstk;
-	debug_step("popping:");
+	debug_indent();
+	debug_printf("popping: ");
 	debug_initstack_element(istk);
 
 	initstk = istk->i_enclosing;
