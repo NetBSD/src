@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.115 2021/03/23 22:58:08 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.116 2021/03/25 00:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.115 2021/03/23 22:58:08 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.116 2021/03/25 00:35:16 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -990,12 +990,55 @@ init_using_assign(tnode_t *rn)
 	return true;
 }
 
+static void
+check_init_expr(tnode_t *tn, scl_t sclass)
+{
+	tnode_t *ln;
+	tspec_t lt, rt;
+	struct mbl *tmem;
+
+	/* Create a temporary node for the left side. */
+	ln = tgetblk(sizeof (tnode_t));
+	ln->tn_op = NAME;
+	ln->tn_type = tduptyp(initstk->i_type);
+	ln->tn_type->t_const = false;
+	ln->tn_lvalue = true;
+	ln->tn_sym = initsym;		/* better than nothing */
+
+	tn = cconv(tn);
+
+	lt = ln->tn_type->t_tspec;
+	rt = tn->tn_type->t_tspec;
+
+	lint_assert(is_scalar(lt));	/* at least before C99 */
+
+	debug_step("typeok '%s', '%s'",
+	    type_name(ln->tn_type), type_name(tn->tn_type));
+	if (!typeok(INIT, 0, ln, tn))
+		return;
+
+	/*
+	 * Store the tree memory. This is necessary because otherwise
+	 * expr() would free it.
+	 */
+	tmem = tsave();
+	expr(tn, true, false, true, false);
+	trestor(tmem);
+
+	check_bit_field_init(ln, lt, rt);
+
+	/*
+	 * XXX: Is it correct to do this conversion _after_ the typeok above?
+	 */
+	if (lt != rt || (initstk->i_type->t_bitfield && tn->tn_op == CON))
+		tn = convert(INIT, 0, initstk->i_type, tn);
+
+	check_non_constant_initializer(tn, sclass);
+}
+
 void
 init_using_expr(tnode_t *tn)
 {
-	tspec_t	lt, rt;
-	tnode_t	*ln;
-	struct	mbl *tmem;
 	scl_t	sclass;
 
 	debug_enter();
@@ -1034,43 +1077,7 @@ init_using_expr(tnode_t *tn)
 	initstk->i_remaining--;
 	debug_step("%d elements remaining", initstk->i_remaining);
 
-	/* Create a temporary node for the left side. */
-	ln = tgetblk(sizeof (tnode_t));
-	ln->tn_op = NAME;
-	ln->tn_type = tduptyp(initstk->i_type);
-	ln->tn_type->t_const = false;
-	ln->tn_lvalue = true;
-	ln->tn_sym = initsym;		/* better than nothing */
-
-	tn = cconv(tn);
-
-	lt = ln->tn_type->t_tspec;
-	rt = tn->tn_type->t_tspec;
-
-	lint_assert(is_scalar(lt));	/* at least before C99 */
-
-	debug_step("typeok '%s', '%s'",
-	    type_name(ln->tn_type), type_name(tn->tn_type));
-	if (!typeok(INIT, 0, ln, tn))
-		goto done_initstack;
-
-	/*
-	 * Store the tree memory. This is necessary because otherwise
-	 * expr() would free it.
-	 */
-	tmem = tsave();
-	expr(tn, true, false, true, false);
-	trestor(tmem);
-
-	check_bit_field_init(ln, lt, rt);
-
-	/*
-	 * XXX: Is it correct to do this conversion _after_ the typeok above?
-	 */
-	if (lt != rt || (initstk->i_type->t_bitfield && tn->tn_op == CON))
-		tn = convert(INIT, 0, initstk->i_type, tn);
-
-	check_non_constant_initializer(tn, sclass);
+	check_init_expr(tn, sclass);
 
 done_initstack:
 	debug_initstack();
