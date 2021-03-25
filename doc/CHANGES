@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2786 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2787 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -340,3 +340,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSH: Import 8.5. [christos 20210304]
 	nsd: Import 4.3.5. [christos 20210315]
 	unbound(8): Import 1.13.1. [christos 20210315]
+	OpenSSL: Imported 1.1.1k. [christos 20210325]
