@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.120 2021/03/25 16:30:23 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.121 2021/03/25 16:43:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.120 2021/03/25 16:30:23 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.121 2021/03/25 16:43:51 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -293,6 +293,19 @@ current_initstk(void)
 	return &init->initstk;
 }
 
+static void
+free_initialization(struct initialization *in)
+{
+	initstack_element *el, *next;
+
+	for (el = in->initstk; el != NULL; el = next) {
+		next = el->i_enclosing;
+		free(el);
+	}
+
+	free(in);
+}
+
 #define initerr		(*current_initerr())
 #define initsym		(*current_initsym())
 #define initstk		(*current_initstk())
@@ -449,7 +462,7 @@ end_initialization(void)
 
 	curr_init = init;
 	init = init->next;
-	free(curr_init);
+	free_initialization(curr_init);
 	debug_step("end initialization");
 }
 
@@ -534,13 +547,6 @@ initstack_init(void)
 
 	if (initerr)
 		return;
-
-	/* TODO: merge into end_initialization */
-	/* free memory used in last initialization */
-	while ((istk = initstk) != NULL) {
-		initstk = istk->i_enclosing;
-		free(istk);
-	}
 
 	/* TODO: merge into init_using_expr */
 	while (namedmem != NULL)
