@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.93 2021/03/25 05:33:59 rin Exp $	*/
+/*	$NetBSD: comvar.h,v 1.94 2021/03/25 05:34:49 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,7 +61,7 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
-		/*	0x04	free for use */
+#define	COM_HW_BROKEN_ETXRDY	0x04
 #define	COM_HW_FLOW	0x08
 #define	COM_HW_DEV_OK	0x20
 #define	COM_HW_CONSOLE	0x40
