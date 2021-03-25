@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.362 2021/03/25 05:33:59 rin Exp $ */
+/* $NetBSD: com.c,v 1.363 2021/03/25 05:34:49 rin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.362 2021/03/25 05:33:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.363 2021/03/25 05:34:49 rin Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2162,14 +2162,16 @@ comintr(void *arg)
 		}
 	}
 
-	if (ISSET(iir, IIR_NOPEND)) {
-		mutex_spin_exit(&sc->sc_lock);
-		return (0);
-	}
-
 	end = sc->sc_ebuf;
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
+
+	if (ISSET(iir, IIR_NOPEND)) {
+		if (ISSET(sc->sc_hwflags, COM_HW_BROKEN_ETXRDY))
+			goto do_tx;
+		mutex_spin_exit(&sc->sc_lock);
+		return (0);
+	}
 
 again:	do {
 		u_char	msr, delta;
@@ -2306,6 +2308,7 @@ again:	do {
 	     */
 	    (iir & IIR_IMASK) != IIR_TXRDY);
 
+do_tx:
 	/*
 	 * Read LSR again, since there may be an interrupt between
 	 * the last LSR read and IIR read above.
@@ -2358,7 +2361,8 @@ again:	do {
 	mutex_spin_exit(&sc->sc_lock);
 
 	/* Wake up the poller. */
-	softint_schedule(sc->sc_si);
+	if ((sc->sc_rx_ready | sc->sc_st_check | sc->sc_tx_done) != 0)
+		softint_schedule(sc->sc_si);
 
 #ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
