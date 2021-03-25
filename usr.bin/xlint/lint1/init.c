@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.130 2021/03/25 21:45:10 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.131 2021/03/25 21:51:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.130 2021/03/25 21:45:10 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.131 2021/03/25 21:51:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -72,8 +72,8 @@ __RCSID("$NetBSD: init.c,v 1.130 2021/03/25 21:45:10 rillig Exp $");
  *
  *	begin_initialization
  *		init_lbrace			for each '{'
- *		designator_push_name		for each '.member' before '='
- *		designator_push_subscript	for each '[123]' before '='
+ *		designation_add_name		for each '.member' before '='
+ *		designation_add_subscript	for each '[123]' before '='
  *		init_using_expr			for each expression
  *		init_rbrace			for each '}'
  *	end_initialization
@@ -479,7 +479,7 @@ end_initialization(void)
 }
 
 void
-designator_push_name(sbuf_t *sb)
+designation_add_name(sbuf_t *sb)
 {
 	designation *dd = current_designation_mod();
 
@@ -515,7 +515,7 @@ designator_push_name(sbuf_t *sb)
  * }
  */
 void
-designator_push_subscript(range_t range)
+designation_add_subscript(range_t range)
 {
 	debug_enter();
 	debug_step("subscript range is %zu ... %zu", range.lo, range.hi);
@@ -525,7 +525,7 @@ designator_push_subscript(range_t range)
 
 /* TODO: add support for array subscripts, not only named members */
 static void
-designator_shift_name(void)
+designation_shift_level(void)
 {
 	/* TODO: remove direct access to 'init' */
 	lint_assert(init != NULL);
@@ -609,7 +609,7 @@ initstack_pop_item_named_member(void)
 			/* XXX: why ++? */
 			istk->i_remaining++;
 			/* XXX: why is i_seen_named_member not set? */
-			designator_shift_name();
+			designation_shift_level();
 			return;
 		}
 	}
@@ -617,7 +617,7 @@ initstack_pop_item_named_member(void)
 	/* undefined struct/union member: %s */
 	error(101, current_designation().head->name);
 
-	designator_shift_name();
+	designation_shift_level();
 	istk->i_seen_named_member = true;
 }
 
@@ -835,7 +835,7 @@ initstack_push_struct_or_union(void)
 		istk->i_seen_named_member = true;
 		debug_step("named member '%s'",
 		    current_designation().head->name);
-		designator_shift_name();
+		designation_shift_level();
 		cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 	}
 	istk->i_brace = true;
@@ -1202,7 +1202,7 @@ done_initstack:
 
 done:
 	while (current_designation().head != NULL)
-		designator_shift_name();
+		designation_shift_level();
 
 	debug_leave();
 }
