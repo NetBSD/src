@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.118 2021/03/25 01:42:53 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.119 2021/03/25 13:10:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.118 2021/03/25 01:42:53 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.119 2021/03/25 13:10:19 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -59,21 +59,30 @@ __RCSID("$NetBSD: init.c,v 1.118 2021/03/25 01:42:53 rillig Exp $");
  *	int array_nested[2][2] = { { 11, 12 }, { 21, 22 } };
  *
  *	struct { int x, y; } point = { 3, 4 };
- *	struct { int x, y; } point = { .y = 3, .x = 4 };
+ *	struct { int x, y; } point = { .y = 4, .x = 3 };
  *
- * Any scalar expression in the initializer may be surrounded by an extra pair
- * of braces, like in the example 'number_with_braces' (C99 6.7.8p11).  For
- * multi-dimensional arrays, the inner braces may be omitted like in
+ * Any scalar expression in the initializer may be surrounded by arbitrarily
+ * many extra pairs of braces, like in the example 'number_with_braces' (C99
+ * 6.7.8p11).
+ *
+ * For multi-dimensional arrays, the inner braces may be omitted like in
  * array_flat or spelled out like in array_nested.
  *
  * For the initializer, the grammar parser calls these functions:
  *
- *	init_lbrace	for each '{'
- *	init_using_expr	for each value
- *	init_rbrace	for each '}'
+ *	begin_initialization
+ *		init_lbrace			for each '{'
+ *		designator_push_name		for each '.member' before '='
+ *		designator_push_subscript	for each '[123]' before '='
+ *		init_using_expr			for each expression
+ *		init_rbrace			for each '}'
+ *	end_initialization
  *
  * The state of the current initialization is stored in initstk, a stack of
  * initstack_element, one element per type aggregate level.
+ * XXX: Or is that "one element per brace level"?  C99 mandates in 6.7.8p17
+ * that "each brace-enclosed initializer list has an associated current
+ * object".
  *
  * Most of the time, the topmost level of initstk contains a scalar type, and
  * its remaining count toggles between 1 and 0.
@@ -87,15 +96,10 @@ __RCSID("$NetBSD: init.c,v 1.118 2021/03/25 01:42:53 rillig Exp $");
 /*
  * Type of stack which is used for initialization of aggregate types.
  *
- * XXX: Since C99, a stack is an inappropriate data structure for modelling
- * an initialization, since the designators don't have to be listed in a
- * particular order and can designate parts of sub-objects.  The member names
+ * XXX: Since C99, the initializers can be listed in arbitrary order by using
+ * designators to specify the sub-object to be initialized.  The member names
  * of non-leaf structs may thus appear repeatedly, as demonstrated in
  * d_init_pop_member.c.
- *
- * XXX: During initialization, there may be members of the top-level struct
- * that are partially initialized.  The simple i_remaining cannot model this
- * appropriately.
  *
  * See C99 6.7.8, which spans 6 pages full of tricky details and carefully
  * selected examples.
@@ -107,8 +111,11 @@ typedef	struct initstack_element {
 	 *
 	 * On the outermost element, this is always NULL since the outermost
 	 * initializer-expression may be enclosed in an optional pair of
-	 * braces.  This optional pair of braces is handled by the combination
-	 * of i_type and i_subt.
+	 * braces, as of the current implementation.
+	 *
+	 * FIXME: This approach is wrong.  It's not that the outermost
+	 * initializer may be enclosed in additional braces, it's every scalar
+	 * that may be enclosed in additional braces, as of C99 6.7.8p11.
 	 *
 	 * Everywhere else it is nonnull.
 	 */
@@ -131,28 +138,48 @@ typedef	struct initstack_element {
 	 *
 	 * During initialization, only the top 2 elements of the stack are
 	 * looked at.
+	 *
+	 * XXX: Having i_subt here is the wrong approach, it should not be
+	 * necessary at all; see i_type.
 	 */
 	type_t	*i_subt;
 
 	/*
-	 * This level of the initializer requires a '}' to be completed.
+	 * Whether this level of the initializer requires a '}' to be
+	 * completed.
 	 *
 	 * Multidimensional arrays do not need a closing brace to complete
 	 * an inner array; for example, { 1, 2, 3, 4 } is a valid initializer
-	 * for int arr[2][2].
+	 * for 'int arr[2][2]'.
 	 *
 	 * TODO: Do structs containing structs need a closing brace?
 	 * TODO: Do arrays of structs need a closing brace after each struct?
+	 *
+	 * XXX: Double-check whether this is the correct approach at all; see
+	 * i_type.
 	 */
 	bool i_brace: 1;
 
 	/* Whether i_type is an array of unknown size. */
 	bool i_array_of_unknown_size: 1;
+
+	/*
+	 * XXX: This feels wrong.  Whether or not there has been a named
+	 * initializer (called 'designation' since C99) should not matter at
+	 * all.  Even after an initializer with designation, counting of the
+	 * remaining elements continues, see C99 6.7.8p17.
+	 */
 	bool i_seen_named_member: 1;
 
 	/*
 	 * For structs, the next member to be initialized by an initializer
 	 * without an optional designator.
+	 *
+	 * FIXME: The name is wrong.  C99 defines the "current object" as
+	 * being the subobject being initialized, while this is rather the
+	 * next member.  This only makes sense for structs anyway and should
+	 * be amended by i_next_subscript for arrays.  See C99 6.7.8p17 and
+	 * footnote 128 for unions.
 	 */
 	sym_t *i_current_object;
 
@@ -170,14 +197,23 @@ typedef	struct initstack_element {
 	 * XXX: for structs?
 	 * XXX: for unions?
 	 * XXX: for arrays?
+	 *
+	 * XXX: Having the count of remaining objects should not be necessary.
+	 * It is probably clearer to use i_next_member and i_next_subscript
+	 * (as suggested in i_current_object) for this purpose.
 	 */
 	int i_remaining;
 
 	/*
 	 * The initialization state of the enclosing data structure
 	 * (struct, union, array).
+	 *
+	 * XXX: Or for a scalar, for the top-level element, or for expressions
+	 * in redundant braces such as '{{{{ 0 }}}}' (not yet implemented as
+	 * of 2021-03-25).
 	 */
 	struct initstack_element *i_enclosing;
+
 } initstack_element;
 
 /*
@@ -223,7 +259,11 @@ struct initialization {
 static struct initialization *init;
 
 
+/* XXX: unnecessary prototype since it is not recursive */
 static	bool	init_array_using_string(tnode_t *);
+
+
+/* TODO: replace the following functions with current_init */
 
 bool *
 current_initerr(void)
@@ -253,10 +293,10 @@ current_initstk(void)
 	return &init->initstk;
 }
 
-#define initerr (*current_initerr())
-#define initsym (*current_initsym())
-#define initstk (*current_initstk())
-#define namedmem (*current_namedmem())
+#define initerr		(*current_initerr())
+#define initsym		(*current_initsym())
+#define initstk		(*current_initstk())
+#define namedmem	(*current_namedmem())
 
 #ifndef DEBUG
 
@@ -330,9 +370,18 @@ debug_named_member(void)
 	debug_printf("\n");
 }
 
+/*
+ * TODO: try whether a single-line output is more readable
+ *
+ * TODO: only log the top of the stack after each modifying operation
+ *
+ * TODO: wrap all write accesses to initstack_element in setter functions
+ */
 static void
 debug_initstack_element(const initstack_element *elem)
 {
+	/* TODO: use debug_ind++ instead of the leading spaces here */
+
 	if (elem->i_type != NULL)
 		debug_step("  i_type           = %s", type_name(elem->i_type));
 	if (elem->i_subt != NULL)
@@ -354,6 +403,9 @@ debug_initstack_element(const initstack_element *elem)
 	debug_step("  i_remaining      = %d", elem->i_remaining);
 }
 
+/*
+ * TODO: only call debug_initstack after each push/pop.
+ */
 static void
 debug_initstack(void)
 {
@@ -410,7 +462,7 @@ designator_push_name(sbuf_t *sb)
 		/*
 		 * XXX: Why is this a circular list?
 		 * XXX: Why is this a doubly-linked list?
-		 * A simple stack should suffice.
+		 * A simple queue should suffice.
 		 */
 		nam->n_prev = nam->n_next = nam;
 		namedmem = nam;
@@ -425,11 +477,21 @@ designator_push_name(sbuf_t *sb)
 }
 
 /*
- * A struct member that has array type is initialized using a designator.
+ * A sub-object of an array is initialized using a designator.  This does not
+ * have to be an array element directly, it can also be used to initialize
+ * only a sub-object of the array element.
  *
  * C99 example: struct { int member[4]; } var = { [2] = 12345 };
  *
  * GNU example: struct { int member[4]; } var = { [1 ... 3] = 12345 };
+ *
+ * TODO: test the following initialization with an outer and an inner type:
+ *
+ * .deeply[0].nested = {
+ *	.deeply[1].nested = {
+ *		12345,
+ *	},
+ * }
  */
 void
 designator_push_subscript(range_t range)
@@ -440,6 +502,7 @@ designator_push_subscript(range_t range)
 	debug_leave();
 }
 
+/* TODO: add support for array subscripts, not only named members */
 static void
 designator_shift_name(void)
 {
@@ -460,6 +523,8 @@ designator_shift_name(void)
 /*
  * Initialize the initialization stack by putting an entry for the object
  * which is to be initialized on it.
+ *
+ * TODO: merge into begin_initialization
  */
 void
 initstack_init(void)
@@ -469,11 +534,14 @@ initstack_init(void)
 	if (initerr)
 		return;
 
+	/* TODO: merge into end_initialization */
 	/* free memory used in last initialization */
 	while ((istk = initstk) != NULL) {
 		initstk = istk->i_enclosing;
 		free(istk);
 	}
+
+	/* TODO: merge into init_using_expr */
 	while (namedmem != NULL)
 		designator_shift_name();
 
@@ -485,6 +553,7 @@ initstack_init(void)
 	 */
 	if (initsym->s_type->t_tspec == ARRAY && is_incomplete(initsym->s_type))
 		initsym->s_type = duptyp(initsym->s_type);
+	/* TODO: does 'duptyp' create a memory leak? */
 
 	istk = initstk = xcalloc(1, sizeof (initstack_element));
 	istk->i_subt = initsym->s_type;
@@ -494,12 +563,17 @@ initstack_init(void)
 	debug_leave();
 }
 
+/* TODO: document me */
 static void
 initstack_pop_item_named_member(void)
 {
 	initstack_element *istk = initstk;
 	sym_t *m;
 
+	/*
+	 * TODO: fix wording of the debug message; this doesn't seem to be
+	 * related to initializing the named member.
+	 */
 	debug_step("initializing named member '%s'", namedmem->n_name);
 
 	if (istk->i_type->t_tspec != STRUCT &&
@@ -534,6 +608,7 @@ initstack_pop_item_named_member(void)
 	istk->i_seen_named_member = true;
 }
 
+/* TODO: think of a better name than 'pop' */
 static void
 initstack_pop_item_unnamed(void)
 {
@@ -558,6 +633,7 @@ initstack_pop_item_unnamed(void)
 	}
 }
 
+/* TODO: think of a better name than 'pop' */
 static void
 initstack_pop_item(void)
 {
@@ -600,6 +676,7 @@ initstack_pop_brace(void)
 	debug_initstack();
 	do {
 		brace = initstk->i_brace;
+		/* TODO: improve wording of the debug message */
 		debug_step("loop brace=%d", brace);
 		initstack_pop_item();
 	} while (!brace);
@@ -611,6 +688,7 @@ initstack_pop_brace(void)
  * Take all entries which cannot be used for further initializers from the
  * stack, but do this only if they do not require a closing brace.
  */
+/* TODO: think of a better name than 'pop' */
 static void
 initstack_pop_nobrace(void)
 {
@@ -647,6 +725,8 @@ extend_if_array_of_unknown_size(void)
 	debug_step("extended type is '%s'", type_name(istk->i_type));
 }
 
+/* TODO: document me */
+/* TODO: think of a better name than 'push' */
 static void
 initstack_push_array(void)
 {
@@ -674,9 +754,15 @@ initstack_push_array(void)
 	    type_name(istk->i_type), istk->i_remaining);
 }
 
+/* TODO: document me */
+/* TODO: think of a better name than 'push' */
 static bool
 initstack_push_struct_or_union(void)
 {
+	/*
+	 * TODO: remove unnecessary 'const' for variables in functions that
+	 * fit on a single screen.  Keep it for larger functions.
+	 */
 	initstack_element *const istk = initstk;
 	int cnt;
 	sym_t *m;
@@ -698,7 +784,16 @@ initstack_push_struct_or_union(void)
 	     m != NULL; m = m->s_next) {
 		if (m->s_bitfield && m->s_name == unnamed)
 			continue;
+		/*
+		 * TODO: split into separate functions:
+		 *
+		 * look_up_array_next
+		 * look_up_array_designator
+		 * look_up_struct_next
+		 * look_up_struct_designator
+		 */
 		if (namedmem != NULL) {
+			/* XXX: this log entry looks unnecessarily verbose */
 			debug_step("have member '%s', want member '%s'",
 			    m->s_name, namedmem->n_name);
 			if (strcmp(m->s_name, namedmem->n_name) == 0) {
@@ -739,6 +834,8 @@ initstack_push_struct_or_union(void)
 	return false;
 }
 
+/* TODO: document me */
+/* TODO: think of a better name than 'push' */
 static void
 initstack_push(void)
 {
@@ -786,6 +883,7 @@ again:
 		if (namedmem != NULL) {
 			debug_step("pop scalar");
 	pop:
+			/* TODO: extract this into end_initializer_level */
 			inxt = initstk->i_enclosing;
 			free(istk);
 			initstk = inxt;
@@ -807,6 +905,9 @@ check_too_many_initializers(void)
 	const initstack_element *istk = initstk;
 	if (istk->i_remaining > 0)
 		return;
+	/*
+	 * FIXME: even with named members, there can be too many initializers
+	 */
 	if (istk->i_array_of_unknown_size || istk->i_seen_named_member)
 		return;
 
@@ -857,6 +958,7 @@ initstack_next_brace(void)
 	debug_leave();
 }
 
+/* TODO: document me, or think of a better name */
 static void
 initstack_next_nobrace(tnode_t *tn)
 {
@@ -892,6 +994,7 @@ initstack_next_nobrace(tnode_t *tn)
 	debug_leave();
 }
 
+/* TODO: document me */
 void
 init_lbrace(void)
 {
@@ -951,6 +1054,7 @@ check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 static void
 check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
 {
+	/* TODO: rename CON to CONSTANT to avoid ambiguity with CONVERT */
 	if (tn == NULL || tn->tn_op == CON)
 		return;
 
@@ -969,8 +1073,8 @@ check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
 }
 
 /*
- * Local initialization of non-array-types with only one expression without
- * braces is done by ASSIGN.
+ * Initialize a non-array object with automatic storage duration and only a
+ * single initializer expression without braces by delegating to ASSIGN.
  */
 static bool
 init_using_assign(tnode_t *rn)
@@ -983,11 +1087,14 @@ init_using_assign(tnode_t *rn)
 		return false;
 
 	debug_step("handing over to ASSIGN");
+
 	ln = new_name_node(initsym, 0);
 	ln->tn_type = tduptyp(ln->tn_type);
 	ln->tn_type->t_const = false;
+
 	tn = build(ASSIGN, ln, rn);
 	expr(tn, false, false, false, false);
+
 	/* XXX: why not clean up the initstack here already? */
 	return true;
 }
@@ -1018,7 +1125,7 @@ check_init_expr(tnode_t *tn, scl_t sclass)
 		return;
 
 	/*
-	 * Store the tree memory. This is necessary because otherwise
+	 * Preserve the tree memory. This is necessary because otherwise
 	 * expr() would free it.
 	 */
 	tmem = tsave();
@@ -1110,9 +1217,14 @@ init_array_using_string(tnode_t *tn)
 			return false;
 		}
 		/* XXX: duplicate code, see below */
+
 		/* Put the array at top of stack */
 		initstack_push();
 		istk = initstk;
+
+
+		/* TODO: what if both i_type and i_subt are ARRAY? */
+
 	} else if (istk->i_type != NULL && istk->i_type->t_tspec == ARRAY) {
 		debug_step("type array");
 		t = istk->i_type->t_subt->t_tspec;
@@ -1123,6 +1235,11 @@ init_array_using_string(tnode_t *tn)
 			return false;
 		}
 		/* XXX: duplicate code, see above */
+
+		/*
+		 * TODO: is this really not needed in the branch above this
+		 * one?
+		 */
 		/*
 		 * If the array is already partly initialized, we are
 		 * wrong here.
@@ -1144,10 +1261,21 @@ init_array_using_string(tnode_t *tn)
 		istk->i_type->t_dim = len + 1;
 		setcomplete(istk->i_type, true);
 	} else {
+		/*
+		 * TODO: check for buffer overflow in the object to be
+		 * initialized
+		 */
+		/* XXX: double-check for off-by-one error */
 		if (istk->i_type->t_dim < len) {
 			/* non-null byte ignored in string initializer */
 			warning(187);
 		}
+
+		/*
+		 * TODO: C99 6.7.8p14 allows a string literal to be enclosed
+		 * in optional redundant braces, just like scalars.  Add tests
+		 * for this.
+		 */
 	}
 
 	/* In every case the array is initialized completely. */
