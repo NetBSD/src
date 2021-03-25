@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.126 2021/03/25 20:11:18 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.127 2021/03/25 20:38:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.126 2021/03/25 20:11:18 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.127 2021/03/25 20:38:16 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -229,7 +229,6 @@ typedef	struct initstack_element {
  */
 typedef struct namlist {
 	const char *n_name;
-	struct namlist *n_prev;
 	struct namlist *n_next;
 } namlist_t;
 
@@ -253,6 +252,7 @@ struct initialization {
 	 * expression.
 	 */
 	namlist_t *designation;
+	namlist_t *designation_tail;
 
 	struct initialization *next;
 };
@@ -475,23 +475,18 @@ end_initialization(void)
 void
 designator_push_name(sbuf_t *sb)
 {
-	namlist_t *designation = *current_designation_mod();
+	const namlist_t *designation = current_designation();
+
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
 	nam->n_name = sb->sb_name;
 
-	if (designation == NULL) {
-		/*
-		 * XXX: Why is this a circular list?
-		 * XXX: Why is this a doubly-linked list?
-		 * A simple queue should suffice.
-		 */
-		nam->n_prev = nam->n_next = nam;
-		*current_designation_mod() = nam;
+	/* TODO: remove direct access to 'init' */
+	if (designation != NULL) {
+		init->designation_tail->n_next = nam;
+		init->designation_tail = nam;
 	} else {
-		designation->n_prev->n_next = nam;
-		nam->n_prev = designation->n_prev;
-		nam->n_next = designation;
-		designation->n_prev = nam;
+		init->designation = nam;
+		init->designation_tail = nam;
 	}
 
 	debug_designation();
@@ -527,15 +522,15 @@ designator_push_subscript(range_t range)
 static void
 designator_shift_name(void)
 {
-	namlist_t *head = *current_designation_mod();
-
-	if (head->n_next == head) {
-		free(head);
-		*current_designation_mod() = NULL;
+	/* TODO: remove direct access to 'init' */
+	lint_assert(init != NULL);
+	if (init->designation == init->designation_tail) {
+		free(init->designation);
+		init->designation = NULL;
+		init->designation_tail = NULL;
 	} else {
-		*current_designation_mod() = head->n_next;
-		head->n_prev->n_next = head->n_next;
-		head->n_next->n_prev = head->n_prev;
+		namlist_t *head = init->designation;
+		init->designation = init->designation->n_next;
 		free(head);
 	}
 
