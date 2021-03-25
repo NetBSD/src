@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.128 2021/03/25 21:07:52 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.129 2021/03/25 21:36:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.128 2021/03/25 21:07:52 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.129 2021/03/25 21:36:41 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -294,8 +294,15 @@ current_designation(void)
 	return *current_designation_mod();
 }
 
-static initstack_element **
+static const initstack_element *
 current_initstk(void)
+{
+	lint_assert(init != NULL);
+	return init->initstk;
+}
+
+static initstack_element **
+current_initstk_lvalue(void)
 {
 	lint_assert(init != NULL);
 	return &init->initstk;
@@ -316,7 +323,8 @@ free_initialization(struct initialization *in)
 
 #define initerr		(*current_initerr())
 #define initsym		(*current_initsym())
-#define initstk		(*current_initstk())
+#define initstk		(current_initstk())
+#define initstk_lvalue	(*current_initstk_lvalue())
 
 #ifndef DEBUG
 
@@ -563,7 +571,7 @@ initstack_init(void)
 		initsym->s_type = duptyp(initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	istk = initstk = xcalloc(1, sizeof (initstack_element));
+	istk = initstk_lvalue = xcalloc(1, sizeof (initstack_element));
 	istk->i_subt = initsym->s_type;
 	istk->i_remaining = 1;
 
@@ -575,7 +583,7 @@ initstack_init(void)
 static void
 initstack_pop_item_named_member(void)
 {
-	initstack_element *istk = initstk;
+	initstack_element *istk = initstk_lvalue;
 	sym_t *m;
 
 	/*
@@ -621,7 +629,7 @@ initstack_pop_item_named_member(void)
 static void
 initstack_pop_item_unnamed(void)
 {
-	initstack_element *istk = initstk;
+	initstack_element *istk = initstk_lvalue;
 	sym_t *m;
 
 	/*
@@ -650,14 +658,14 @@ initstack_pop_item(void)
 
 	debug_enter();
 
-	istk = initstk;
+	istk = initstk_lvalue;
 	debug_indent();
 	debug_printf("popping: ");
 	debug_initstack_element(istk);
 
-	initstk = istk->i_enclosing;
+	initstk_lvalue = istk->i_enclosing;
 	free(istk);
-	istk = initstk;
+	istk = initstk_lvalue;
 	lint_assert(istk != NULL);
 
 	istk->i_remaining--;
@@ -714,7 +722,7 @@ initstack_pop_nobrace(void)
 static void
 extend_if_array_of_unknown_size(void)
 {
-	initstack_element *istk = initstk;
+	initstack_element *istk = initstk_lvalue;
 
 	if (istk->i_remaining != 0)
 		return;
@@ -740,7 +748,7 @@ extend_if_array_of_unknown_size(void)
 static void
 initstack_push_array(void)
 {
-	initstack_element *const istk = initstk;
+	initstack_element *istk = initstk_lvalue;
 
 	if (istk->i_enclosing->i_seen_named_member) {
 		istk->i_brace = true;
@@ -775,7 +783,7 @@ initstack_push_struct_or_union(void)
 	 * TODO: remove unnecessary 'const' for variables in functions that
 	 * fit on a single screen.  Keep it for larger functions.
 	 */
-	initstack_element *const istk = initstk;
+	initstack_element *istk = initstk_lvalue;
 	int cnt;
 	sym_t *m;
 
@@ -859,17 +867,17 @@ initstack_push(void)
 
 	extend_if_array_of_unknown_size();
 
-	istk = initstk;
+	istk = initstk_lvalue;
 	lint_assert(istk->i_remaining > 0);
 	lint_assert(istk->i_type == NULL || !is_scalar(istk->i_type->t_tspec));
 
-	initstk = xcalloc(1, sizeof (initstack_element));
-	initstk->i_enclosing = istk;
-	initstk->i_type = istk->i_subt;
-	lint_assert(initstk->i_type->t_tspec != FUNC);
+	initstk_lvalue = xcalloc(1, sizeof (initstack_element));
+	initstk_lvalue->i_enclosing = istk;
+	initstk_lvalue->i_type = istk->i_subt;
+	lint_assert(initstk_lvalue->i_type->t_tspec != FUNC);
 
 again:
-	istk = initstk;
+	istk = initstk_lvalue;
 
 	debug_step("expecting type '%s'", type_name(istk->i_type));
 	lint_assert(istk->i_type != NULL);
@@ -901,7 +909,7 @@ again:
 			/* TODO: extract this into end_initializer_level */
 			inxt = initstk->i_enclosing;
 			free(istk);
-			initstk = inxt;
+			initstk_lvalue = inxt;
 			goto again;
 		}
 		/* The initialization stack now expects a single scalar. */
@@ -962,7 +970,7 @@ initstack_next_brace(void)
 	if (!initerr)
 		initstack_push();
 	if (!initerr) {
-		initstk->i_brace = true;
+		initstk_lvalue->i_brace = true;
 		debug_designation();
 		debug_step("expecting type '%s'",
 		    type_name(initstk->i_type != NULL ? initstk->i_type
@@ -989,7 +997,7 @@ initstack_next_nobrace(tnode_t *tn)
 		check_too_many_initializers();
 
 	while (!initerr) {
-		initstack_element *istk = initstk;
+		initstack_element *istk = initstk_lvalue;
 
 		if (tn->tn_type->t_tspec == STRUCT &&
 		    istk->i_type == tn->tn_type &&
@@ -1188,7 +1196,7 @@ init_using_expr(tnode_t *tn)
 	if (initerr || tn == NULL)
 		goto done_initstack;
 
-	initstk->i_remaining--;
+	initstk_lvalue->i_remaining--;
 	debug_step("%d elements remaining", initstk->i_remaining);
 
 	check_init_expr(tn, sclass);
@@ -1215,7 +1223,7 @@ init_array_using_string(tnode_t *tn)
 	debug_enter();
 	debug_initstack();
 
-	istk = initstk;
+	istk = initstk_lvalue;
 	strg = tn->tn_string;
 
 	/*
@@ -1235,7 +1243,7 @@ init_array_using_string(tnode_t *tn)
 
 		/* Put the array at top of stack */
 		initstack_push();
-		istk = initstk;
+		istk = initstk_lvalue;
 
 
 		/* TODO: what if both i_type and i_subt are ARRAY? */
