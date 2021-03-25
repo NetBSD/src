@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.124 2021/03/25 19:33:44 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.125 2021/03/25 19:48:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.124 2021/03/25 19:33:44 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.125 2021/03/25 19:48:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -172,16 +172,14 @@ typedef	struct initstack_element {
 	bool i_seen_named_member: 1;
 
 	/*
-	 * For structs, the next member to be initialized by an initializer
-	 * without an optional designator.
-	 *
-	 * FIXME: The name is wrong.  C99 defines the "current object" as
-	 * being the subobject being initialized, while this is rather the
-	 * next member.  This only makes sense for structs anyway and should
-	 * be amended by i_next_subscript for arrays.  See C99 6.7.8p17 and
-	 * footnote 128 for unions.
+	 * For structs, the next member to be initialized by a designator-less
+	 * initializer.
 	 */
-	sym_t *i_current_object;
+	sym_t *i_next_member;
+
+	/* TODO: Add i_next_subscript for arrays. */
+
+	/* TODO: Understand C99 6.7.8p17 and footnote 128 for unions. */
 
 	/*
 	 * The number of remaining elements to be used by expressions without
@@ -200,7 +198,7 @@ typedef	struct initstack_element {
 	 *
 	 * XXX: Having the count of remaining objects should not be necessary.
 	 * It is probably clearer to use i_next_member and i_next_subscript
-	 * (as suggested in i_current_object) for this purpose.
+	 * for this purpose.
 	 */
 	int i_remaining;
 
@@ -417,9 +415,9 @@ debug_initstack_element(const initstack_element *elem)
 
 	const type_t *eff_type = elem->i_type != NULL
 	    ? elem->i_type : elem->i_subt;
-	if (eff_type->t_tspec == STRUCT && elem->i_current_object != NULL)
-		debug_printf(", current object '%s'",
-		    elem->i_current_object->s_name);
+	if (eff_type->t_tspec == STRUCT && elem->i_next_member != NULL)
+		debug_printf(", next member '%s'",
+		    elem->i_next_member->s_name);
 
 	debug_printf(", remaining %d\n", elem->i_remaining);
 }
@@ -641,8 +639,8 @@ initstack_pop_item_unnamed(void)
 	if (istk->i_remaining > 0 && istk->i_type->t_tspec == STRUCT &&
 	    !istk->i_seen_named_member) {
 		do {
-			m = istk->i_current_object =
-			    istk->i_current_object->s_next;
+			m = istk->i_next_member =
+			    istk->i_next_member->s_next;
 			/* XXX: can this assertion be made to fail? */
 			lint_assert(m != NULL);
 			debug_step("pop %s", m->s_name);
@@ -826,7 +824,7 @@ initstack_push_struct_or_union(void)
 				continue;
 		}
 		if (++cnt == 1) {
-			istk->i_current_object = m;
+			istk->i_next_member = m;
 			istk->i_subt = m->s_type;
 		}
 	}
@@ -836,7 +834,7 @@ initstack_push_struct_or_union(void)
 			debug_step("pop struct");
 			return true;
 		}
-		istk->i_current_object = m;
+		istk->i_next_member = m;
 		istk->i_subt = m->s_type;
 		istk->i_seen_named_member = true;
 		debug_step("named member '%s'", current_designation()->n_name);
