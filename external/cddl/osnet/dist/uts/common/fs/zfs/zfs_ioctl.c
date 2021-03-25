@@ -7194,7 +7194,6 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		/* XXXNETBSD trim is not supported yet */
 		zfs_trim_enabled = B_FALSE;
 
-		printf("WARNING: ZFS on NetBSD is under development\n");
 		availrmem = (uint64_t)physmem * PAGE_SIZE / 1048576;
 		if (availrmem < ZFS_MIN_MEGS * 80 / 100) {
 			printf("ERROR: at least %dMB of memory required to "
