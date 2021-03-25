@@ -1,4 +1,4 @@
-# $NetBSD: module.md.i386,v 1.2 2020/09/08 14:57:32 martin Exp $
+# $NetBSD: module.md.i386,v 1.3 2021/03/25 21:37:10 nia Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -135,8 +135,6 @@
 ./usr/libdata/debug/@MODULEDIR@/nxt2k/nxt2k.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/odcm				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/odcm/odcm.kmod.debug			modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/pad				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/pad/pad.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/padlock				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/padlock/padlock.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/powernow				modules-base-kernel	kmod,debug
