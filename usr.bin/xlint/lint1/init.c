@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.117 2021/03/25 00:48:58 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.118 2021/03/25 01:42:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.117 2021/03/25 00:48:58 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.118 2021/03/25 01:42:53 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -382,7 +382,7 @@ begin_initialization(sym_t *sym)
 {
 	struct initialization *curr_init;
 
-	debug_step("begin initialization");
+	debug_step("begin initialization of '%s'", type_name(sym->s_type));
 	curr_init = xcalloc(1, sizeof *curr_init);
 	curr_init->next = init;
 	init = curr_init;
@@ -858,7 +858,7 @@ initstack_next_brace(void)
 }
 
 static void
-initstack_next_nobrace(void)
+initstack_next_nobrace(tnode_t *tn)
 {
 	debug_enter();
 
@@ -871,17 +871,19 @@ initstack_next_nobrace(void)
 	if (!initerr)
 		check_too_many_initializers();
 
-	/*
-	 * Make sure an entry with a scalar type is at the top of the stack.
-	 *
-	 * FIXME: Since C99, an initializer for an object with automatic
-	 *  storage need not be a constant expression anymore.  It is
-	 *  perfectly fine to initialize a struct with a struct expression,
-	 *  see d_struct_init_nested.c for a demonstration.
-	 */
 	while (!initerr) {
-		if ((initstk->i_type != NULL &&
-		     is_scalar(initstk->i_type->t_tspec)))
+		initstack_element *istk = initstk;
+
+		if (tn->tn_type->t_tspec == STRUCT &&
+		    istk->i_type == tn->tn_type &&
+		    istk->i_enclosing != NULL &&
+		    istk->i_enclosing->i_enclosing != NULL) {
+			istk->i_brace = false;
+			istk->i_remaining = 1; /* the struct itself */
+			break;
+		}
+
+		if ((istk->i_type != NULL && is_scalar(istk->i_type->t_tspec)))
 			break;
 		initstack_push();
 	}
@@ -1010,8 +1012,6 @@ check_init_expr(tnode_t *tn, scl_t sclass)
 	lt = ln->tn_type->t_tspec;
 	rt = tn->tn_type->t_tspec;
 
-	lint_assert(is_scalar(lt));	/* at least before C99 */
-
 	debug_step("typeok '%s', '%s'",
 	    type_name(ln->tn_type), type_name(tn->tn_type));
 	if (!typeok(INIT, 0, ln, tn))
@@ -1062,7 +1062,7 @@ init_using_expr(tnode_t *tn)
 		goto done_initstack;
 	}
 
-	initstack_next_nobrace();
+	initstack_next_nobrace(tn);
 	if (initerr || tn == NULL)
 		goto done_initstack;
 
