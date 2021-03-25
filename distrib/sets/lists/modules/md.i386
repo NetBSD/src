@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.89 2020/09/08 10:05:47 yamaguchi Exp $
+# $NetBSD: md.i386,v 1.90 2021/03/25 09:49:00 nia Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -150,8 +150,6 @@
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/odcm				modules-base-kernel	kmod
 ./@MODULEDIR@/odcm/odcm.kmod			modules-base-kernel	kmod
-./@MODULEDIR@/pad				modules-base-kernel	kmod
-./@MODULEDIR@/pad/pad.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/padlock				modules-base-kernel	kmod
 ./@MODULEDIR@/padlock/padlock.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/powernow				modules-base-kernel	kmod

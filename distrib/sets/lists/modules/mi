@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.142 2020/09/26 17:49:50 jmcneill Exp $
+# $NetBSD: mi,v 1.143 2021/03/25 09:49:00 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -345,6 +345,8 @@
 ./@MODULEDIR@/opencrypto/opencrypto.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/overlay				modules-base-kernel	kmod
 ./@MODULEDIR@/overlay/overlay.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/pad				modules-base-kernel	kmod
+./@MODULEDIR@/pad/pad.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/pciverbose			modules-base-kernel	kmod
 ./@MODULEDIR@/pciverbose/pciverbose.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/pf				modules-base-kernel	kmod
