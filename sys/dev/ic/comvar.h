@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.92 2019/01/11 23:10:41 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.93 2021/03/25 05:33:59 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,7 +69,6 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
 #define	COM_HW_AFE	0x400
-#define	COM_HW_POLL	0x800
 
 /* Buffer size for character buffer */
 #ifndef COM_RING_SIZE
@@ -190,6 +189,8 @@ struct com_softc {
 #define	COM_TYPE_16650		9
 #define	COM_TYPE_16750		10
 #define	COM_TYPE_DW_APB		11	/* DesignWare APB UART */
+
+	int sc_poll_ticks;
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);

@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.361 2020/09/30 14:56:34 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.362 2021/03/25 05:33:59 rin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.361 2020/09/30 14:56:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.362 2021/03/25 05:33:59 rin Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -420,7 +420,7 @@ com_intr_poll(void *arg)
 
 	comintr(sc);
 
-	callout_schedule(&sc->sc_poll_callout, 1);
+	callout_schedule(&sc->sc_poll_callout, sc->sc_poll_ticks);
 }
 
 void
@@ -739,8 +739,8 @@ fifodone:
 
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 
-	if (ISSET(sc->sc_hwflags, COM_HW_POLL))
-		callout_schedule(&sc->sc_poll_callout, 1);
+	if (sc->sc_poll_ticks != 0)
+		callout_schedule(&sc->sc_poll_callout, sc->sc_poll_ticks);
 }
 
 void
