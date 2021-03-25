@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.116 2021/03/25 00:35:16 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.117 2021/03/25 00:48:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.116 2021/03/25 00:35:16 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.117 2021/03/25 00:48:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1051,14 +1051,6 @@ init_using_expr(tnode_t *tn)
 		goto done;
 
 	sclass = initsym->s_scl;
-
-	/*
-	 * Do not test for automatic aggregate initialization. If the
-	 * initializer starts with a brace we have the warning already.
-	 * If not, an error will be printed that the initializer must
-	 * be enclosed by braces.
-	 */
-
 	if ((sclass == AUTO || sclass == REG) && init_using_assign(tn))
 		goto done;
 
