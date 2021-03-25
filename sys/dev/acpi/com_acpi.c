@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.41 2021/01/29 15:24:00 thorpej Exp $ */
+/* $NetBSD: com_acpi.c,v 1.42 2021/03/25 05:33:59 rin Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.41 2021/01/29 15:24:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.42 2021/03/25 05:33:59 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -168,7 +168,7 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_type = dce->value;
 
 	if (sc->sc_type == COM_TYPE_DW_APB) {
-		SET(sc->sc_hwflags, COM_HW_POLL);	/* XXX */
+		sc->sc_poll_ticks = 1;	/* XXX */
 	} else {
 		if (com_probe_subr(&sc->sc_regs) == 0) {
 			aprint_error(": com probe failed\n");
@@ -185,7 +185,7 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	if (!ISSET(sc->sc_hwflags, COM_HW_POLL))
+	if (sc->sc_poll_ticks == 0)
 		asc->sc_ih = acpi_intr_establish(self,
 		    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 		    IPL_SERIAL, true, comintr, sc, device_xname(self));
