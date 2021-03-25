@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.129 2021/03/25 21:36:41 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.130 2021/03/25 21:45:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.129 2021/03/25 21:36:41 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.130 2021/03/25 21:45:10 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -556,10 +556,6 @@ initstack_init(void)
 
 	if (initerr)
 		return;
-
-	/* TODO: merge into init_using_expr */
-	while (current_designation().head != NULL)
-		designator_shift_name();
 
 	debug_enter();
 
@@ -1203,7 +1199,11 @@ init_using_expr(tnode_t *tn)
 
 done_initstack:
 	debug_initstack();
+
 done:
+	while (current_designation().head != NULL)
+		designator_shift_name();
+
 	debug_leave();
 }
 
