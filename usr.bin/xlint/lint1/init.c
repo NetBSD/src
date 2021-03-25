@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.121 2021/03/25 16:43:51 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.122 2021/03/25 19:11:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.121 2021/03/25 16:43:51 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.122 2021/03/25 19:11:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -309,7 +309,6 @@ free_initialization(struct initialization *in)
 #define initerr		(*current_initerr())
 #define initsym		(*current_initsym())
 #define initstk		(*current_initstk())
-#define namedmem	(*current_namedmem())
 
 #ifndef DEBUG
 
@@ -369,17 +368,17 @@ debug_leave(const char *func)
 static void
 debug_named_member(void)
 {
-	namlist_t *name;
+	namlist_t *head = *current_namedmem(), *name;
 
-	if (namedmem == NULL)
+	if (head == NULL)
 		return;
-	name = namedmem;
 	debug_indent();
 	debug_printf("named member: ");
+	name = head;
 	do {
 		debug_printf(".%s", name->n_name);
 		name = name->n_next;
-	} while (name != namedmem);
+	} while (name != head);
 	debug_printf("\n");
 }
 
@@ -469,22 +468,23 @@ end_initialization(void)
 void
 designator_push_name(sbuf_t *sb)
 {
+	namlist_t *designation = *current_namedmem();
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
 	nam->n_name = sb->sb_name;
 
-	if (namedmem == NULL) {
+	if (designation == NULL) {
 		/*
 		 * XXX: Why is this a circular list?
 		 * XXX: Why is this a doubly-linked list?
 		 * A simple queue should suffice.
 		 */
 		nam->n_prev = nam->n_next = nam;
-		namedmem = nam;
+		*current_namedmem() = nam;
 	} else {
-		namedmem->n_prev->n_next = nam;
-		nam->n_prev = namedmem->n_prev;
-		nam->n_next = namedmem;
-		namedmem->n_prev = nam;
+		designation->n_prev->n_next = nam;
+		nam->n_prev = designation->n_prev;
+		nam->n_next = designation;
+		designation->n_prev = nam;
 	}
 
 	debug_named_member();
@@ -520,12 +520,14 @@ designator_push_subscript(range_t range)
 static void
 designator_shift_name(void)
 {
-	if (namedmem->n_next == namedmem) {
-		free(namedmem);
-		namedmem = NULL;
+	namlist_t *designation = *current_namedmem();
+
+	if (designation->n_next == designation) {
+		free(designation);
+		*current_namedmem() = NULL;
 	} else {
-		namlist_t *nam = namedmem;
-		namedmem = namedmem->n_next;
+		namlist_t *nam = designation;
+		*current_namedmem() = designation->n_next;
 		nam->n_prev->n_next = nam->n_next;
 		nam->n_next->n_prev = nam->n_prev;
 		free(nam);
@@ -549,7 +551,7 @@ initstack_init(void)
 		return;
 
 	/* TODO: merge into init_using_expr */
-	while (namedmem != NULL)
+	while (*current_namedmem() != NULL)
 		designator_shift_name();
 
 	debug_enter();
@@ -581,7 +583,8 @@ initstack_pop_item_named_member(void)
 	 * TODO: fix wording of the debug message; this doesn't seem to be
 	 * related to initializing the named member.
 	 */
-	debug_step("initializing named member '%s'", namedmem->n_name);
+	debug_step("initializing named member '%s'",
+	    (*current_namedmem())->n_name);
 
 	if (istk->i_type->t_tspec != STRUCT &&
 	    istk->i_type->t_tspec != UNION) {
@@ -597,7 +600,7 @@ initstack_pop_item_named_member(void)
 		if (m->s_bitfield && m->s_name == unnamed)
 			continue;
 
-		if (strcmp(m->s_name, namedmem->n_name) == 0) {
+		if (strcmp(m->s_name, (*current_namedmem())->n_name) == 0) {
 			debug_step("found matching member");
 			istk->i_subt = m->s_type;
 			/* XXX: why ++? */
@@ -609,7 +612,7 @@ initstack_pop_item_named_member(void)
 	}
 
 	/* undefined struct/union member: %s */
-	error(101, namedmem->n_name);
+	error(101, (*current_namedmem())->n_name);
 
 	designator_shift_name();
 	istk->i_seen_named_member = true;
@@ -662,7 +665,7 @@ initstack_pop_item(void)
 	lint_assert(istk->i_remaining >= 0);
 	debug_step("%d elements remaining", istk->i_remaining);
 
-	if (namedmem != NULL)
+	if (*current_namedmem() != NULL)
 		initstack_pop_item_named_member();
 	else
 		initstack_pop_item_unnamed();
@@ -800,11 +803,12 @@ initstack_push_struct_or_union(void)
 		 * look_up_struct_next
 		 * look_up_struct_designator
 		 */
-		if (namedmem != NULL) {
+		if (*current_namedmem() != NULL) {
 			/* XXX: this log entry looks unnecessarily verbose */
 			debug_step("have member '%s', want member '%s'",
-			    m->s_name, namedmem->n_name);
-			if (strcmp(m->s_name, namedmem->n_name) == 0) {
+			    m->s_name, (*current_namedmem())->n_name);
+			if (strcmp(m->s_name, (*current_namedmem())->n_name) ==
+			    0) {
 				cnt++;
 				break;
 			} else
@@ -816,7 +820,7 @@ initstack_push_struct_or_union(void)
 		}
 	}
 
-	if (namedmem != NULL) {
+	if (*current_namedmem() != NULL) {
 		if (m == NULL) {
 			debug_step("pop struct");
 			return true;
@@ -824,7 +828,7 @@ initstack_push_struct_or_union(void)
 		istk->i_current_object = m;
 		istk->i_subt = m->s_type;
 		istk->i_seen_named_member = true;
-		debug_step("named member '%s'", namedmem->n_name);
+		debug_step("named member '%s'", (*current_namedmem())->n_name);
 		designator_shift_name();
 		cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 	}
@@ -869,9 +873,9 @@ again:
 	lint_assert(istk->i_type != NULL);
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
-		if (namedmem != NULL) {
+		if (*current_namedmem() != NULL) {
 			debug_step("pop array namedmem=%s brace=%d",
-			    namedmem->n_name, istk->i_brace);
+			    (*current_namedmem())->n_name, istk->i_brace);
 			goto pop;
 		}
 
@@ -888,7 +892,7 @@ again:
 			goto pop;
 		break;
 	default:
-		if (namedmem != NULL) {
+		if (*current_namedmem() != NULL) {
 			debug_step("pop scalar");
 	pop:
 			/* TODO: extract this into end_initializer_level */
