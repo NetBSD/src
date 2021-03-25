@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.132 2021/03/25 22:15:38 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.133 2021/03/25 22:53:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.132 2021/03/25 22:15:38 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.133 2021/03/25 22:53:05 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -497,6 +497,9 @@ designation_add_name(sbuf_t *sb)
 	debug_designation();
 }
 
+/* TODO: Move the function body up here, to avoid the forward declaration. */
+static void initstack_pop_nobrace(void);
+
 /*
  * A sub-object of an array is initialized using a designator.  This does not
  * have to be an array element directly, it can also be used to initialize
@@ -523,9 +526,12 @@ designation_add_subscript(range_t range)
 	debug_step("subscript range is %zu ... %zu", range.lo, range.hi);
 	debug_initstack();
 
+	initstack_pop_nobrace();
+
 	istk = initstk_lvalue;
 	if (istk->i_array_of_unknown_size) {
-		int auto_dim = (int)(range.hi + 1);
+		/* No +1 here, extend_if_array_of_unknown_size will add it. */
+		int auto_dim = (int)range.hi;
 		if (auto_dim > istk->i_type->t_dim) {
 			debug_step("setting the array size to %d", auto_dim);
 			istk->i_type->t_dim = auto_dim;
@@ -734,6 +740,11 @@ extend_if_array_of_unknown_size(void)
 
 	if (istk->i_remaining != 0)
 		return;
+	/*
+	 * XXX: According to the function name, there should be a 'return' if
+	 * i_array_of_unknown_size is false.  There's probably a test missing
+	 * for that case.
+	 */
 
 	/*
 	 * The only place where an incomplete array may appear is at the
@@ -1292,11 +1303,6 @@ init_array_using_string(tnode_t *tn)
 	len = strg->st_len;
 
 	if (istk->i_array_of_unknown_size) {
-		/*
-		 * FIXME: C99 6.7.8p22 explicitly says that only "at the end
-		 * of its initializer list, the array no longer has incomplete
-		 * type".
-		 */
 		istk->i_array_of_unknown_size = false;
 		istk->i_type->t_dim = len + 1;
 		setcomplete(istk->i_type, true);
