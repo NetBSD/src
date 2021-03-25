@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_168.c,v 1.4 2021/03/25 22:15:38 rillig Exp $	*/
+/*	$NetBSD: msg_168.c,v 1.5 2021/03/25 22:53:05 rillig Exp $	*/
 # 3 "msg_168.c"
 
 // Test for message: array subscript cannot be > %d: %ld [168]
@@ -37,6 +37,6 @@ array_with_c99_initializer(void)
 	    ['9'] = "IX"
 	};
 
-	print_string(to_roman['9']);	/*FIXME*//* expect: 168 */
+	print_string(to_roman['9']);
 	print_string(to_roman[':']);	/* expect: 168 */
 }
