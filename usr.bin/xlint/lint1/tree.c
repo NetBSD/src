@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.246 2021/03/22 15:29:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.247 2021/03/26 16:45:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.246 2021/03/22 15:29:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.247 2021/03/26 16:45:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2222,6 +2222,21 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 	}
 }
 
+static bool
+should_warn_about_pointer_cast(const type_t *tp, tspec_t nst,
+			       const tnode_t *tn, tspec_t ost)
+{
+	if (nst == STRUCT || nst == UNION)
+		if (tp->t_subt->t_str != tn->tn_type->t_subt->t_str)
+			return true;
+
+	/*
+	 * XXX: Why should it be ok to cast between arbitrary structs that
+	 * just happen to be of the same size?
+	 */
+	return portable_size_in_bits(nst) != portable_size_in_bits(ost);
+}
+
 /*
  * Print warnings for questionable pointer conversions.
  */
@@ -2238,6 +2253,7 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 	if (op != CVT)
 		return;
 
+	/* TODO: rename to 'nst' and 'ost' */
 	nt = tp->t_subt->t_tspec;
 	ot = tn->tn_type->t_subt->t_tspec;
 
@@ -2264,13 +2280,9 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 		warning(135, type_name(tn->tn_type), type_name(tp));
 	}
 
-	if (((nt == STRUCT || nt == UNION) &&
-	     tp->t_subt->t_str != tn->tn_type->t_subt->t_str) ||
-	    portable_size_in_bits(nt) != portable_size_in_bits(ot)) {
-		if (cflag) {
-			/* pointer cast from '%s' to '%s' may be troublesome */
-			warning(247, type_name(tn->tn_type), type_name(tp));
-		}
+	if (cflag && should_warn_about_pointer_cast(tp, nt, tn, ot)) {
+		/* pointer cast from '%s' to '%s' may be troublesome */
+		warning(247, type_name(tn->tn_type), type_name(tp));
 	}
 }
 
