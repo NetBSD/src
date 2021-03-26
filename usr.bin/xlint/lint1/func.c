@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.96 2021/03/26 18:54:39 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.97 2021/03/26 19:17:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.96 2021/03/26 18:54:39 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.97 2021/03/26 19:17:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -183,7 +183,7 @@ end_control_statement(control_statement_kind kind)
 		free(cl);
 	}
 
-	free(ci->c_swtype);
+	free(ci->c_switch_type);
 	free(ci);
 }
 
@@ -439,15 +439,15 @@ check_case_label_enum(const tnode_t *tn, const cstk_t *ci)
 {
 	/* similar to typeok_enum in tree.c */
 
-	if (!(tn->tn_type->t_is_enum || ci->c_swtype->t_is_enum))
+	if (!(tn->tn_type->t_is_enum || ci->c_switch_type->t_is_enum))
 		return;
-	if (tn->tn_type->t_is_enum && ci->c_swtype->t_is_enum &&
-	    tn->tn_type->t_enum == ci->c_swtype->t_enum)
+	if (tn->tn_type->t_is_enum && ci->c_switch_type->t_is_enum &&
+	    tn->tn_type->t_enum == ci->c_switch_type->t_enum)
 		return;
 
 #if 0 /* not yet ready, see msg_130.c */
 	/* enum type mismatch: '%s' '%s' '%s' */
-	warning(130, type_name(ci->c_swtype), getopname(EQ),
+	warning(130, type_name(ci->c_switch_type), getopname(EQ),
 	    type_name(tn->tn_type));
 #endif
 }
@@ -480,7 +480,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 
 	check_case_label_enum(tn, ci);
 
-	lint_assert(ci->c_swtype != NULL);
+	lint_assert(ci->c_switch_type != NULL);
 
 	if (reached && !seen_fallthrough) {
 		if (hflag)
@@ -502,7 +502,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	 */
 	v = constant(tn, true);
 	(void)memset(&nv, 0, sizeof nv);
-	convert_constant(CASE, 0, ci->c_swtype, &nv, v);
+	convert_constant(CASE, 0, ci->c_switch_type, &nv, v);
 	free(v);
 
 	/* look if we had this value already */
@@ -697,7 +697,7 @@ switch1(tnode_t *tn)
 
 	begin_control_statement(CS_SWITCH);
 	cstmt->c_switch = true;
-	cstmt->c_swtype = tp;
+	cstmt->c_switch_type = tp;
 
 	set_reached(false);
 	seen_fallthrough = true;
@@ -713,17 +713,17 @@ switch2(void)
 	sym_t	*esym;
 	case_label_t *cl;
 
-	lint_assert(cstmt->c_swtype != NULL);
+	lint_assert(cstmt->c_switch_type != NULL);
 
 	/*
 	 * If the switch expression was of type enumeration, count the case
 	 * labels and the number of enumerators. If both counts are not
 	 * equal print a warning.
 	 */
-	if (cstmt->c_swtype->t_is_enum) {
+	if (cstmt->c_switch_type->t_is_enum) {
 		nenum = nclab = 0;
-		lint_assert(cstmt->c_swtype->t_enum != NULL);
-		for (esym = cstmt->c_swtype->t_enum->en_first_enumerator;
+		lint_assert(cstmt->c_switch_type->t_enum != NULL);
+		for (esym = cstmt->c_switch_type->t_enum->en_first_enumerator;
 		     esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
@@ -744,7 +744,8 @@ switch2(void)
 		 */
 		set_reached(true);
 	} else if (!cstmt->c_default &&
-		   (!hflag || !cstmt->c_swtype->t_is_enum || nenum != nclab)) {
+		   (!hflag || !cstmt->c_switch_type->t_is_enum ||
+		    nenum != nclab)) {
 		/*
 		 * there are possible values which are not handled in
 		 * switch
@@ -882,10 +883,10 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	 * Also remember this expression itself. We must check it at
 	 * the end of the loop to get "used but not set" warnings correct.
 	 */
-	cstmt->c_fexprm = tsave();
-	cstmt->c_f3expr = tn3;
-	cstmt->c_fpos = curr_pos;
-	cstmt->c_cfpos = csrc_pos;
+	cstmt->c_for_expr3_mem = tsave();
+	cstmt->c_for_expr3 = tn3;
+	cstmt->c_for_expr3_pos = curr_pos;
+	cstmt->c_for_expr3_csrc_pos = csrc_pos;
 
 	if (tn1 != NULL)
 		expr(tn1, false, false, true, false);
@@ -919,10 +920,10 @@ for2(void)
 	cspos = csrc_pos;
 
 	/* Restore the tree memory for the reinitialization expression */
-	trestor(cstmt->c_fexprm);
-	tn3 = cstmt->c_f3expr;
-	curr_pos = cstmt->c_fpos;
-	csrc_pos = cstmt->c_cfpos;
+	trestor(cstmt->c_for_expr3_mem);
+	tn3 = cstmt->c_for_expr3;
+	curr_pos = cstmt->c_for_expr3_pos;
+	csrc_pos = cstmt->c_for_expr3_csrc_pos;
 
 	/* simply "statement not reached" would be confusing */
 	if (!reached && warn_about_unreachable) {
