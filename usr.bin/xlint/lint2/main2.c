@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.13 2021/01/16 02:40:02 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.14 2021/03/26 20:31:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.13 2021/01/16 02:40:02 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.14 2021/03/26 20:31:07 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	size_t	len;
 	char	*lname;
 
-	libs = xcalloc(1, sizeof (char *));
+	libs = xcalloc(1, sizeof *libs);
 
 	opterr = 0;
 	while ((c = getopt(argc, argv, "hpstxuC:HTFl:")) != -1) {
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 		case 'l':
 			for (i = 0; libs[i] != NULL; i++)
 				continue;
-			libs = xrealloc(libs, (i + 2) * sizeof (char *));
+			libs = xrealloc(libs, (i + 2) * sizeof *libs);
 			libs[i] = xstrdup(optarg);
 			libs[i + 1] = NULL;
 			break;
