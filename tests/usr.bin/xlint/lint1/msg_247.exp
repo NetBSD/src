@@ -1,1 +1,4 @@
 msg_247.c(31): warning: pointer cast from 'pointer to struct Other' to 'pointer to struct <unnamed>' may be troublesome [247]
+msg_247.c(48): warning: pointer cast from 'pointer to struct Other' to 'pointer to char' may be troublesome [247]
+msg_247.c(58): warning: pointer cast from 'pointer to struct Other' to 'pointer to unsigned char' may be troublesome [247]
+msg_247.c(70): warning: pointer cast from 'pointer to struct Other' to 'pointer to signed char' may be troublesome [247]

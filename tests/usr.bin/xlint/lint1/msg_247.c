@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.5 2021/03/14 22:24:24 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.6 2021/03/26 16:19:43 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -29,4 +29,49 @@ example(struct Other *arg)
 	 *  struct.
 	 */
 	display = (PDisplay)arg;	/* expect: 247 */
+}
+
+/*
+ * C code with a long history that has existed in pre-C90 times already often
+ * uses 'pointer to char' where modern code would use 'pointer to void'.
+ * Since 'char' is the most general underlying type, there is nothing wrong
+ * with casting to it.  An example for this type of code is X11.
+ *
+ * Casting to 'pointer to char' may also be used by programmers who don't know
+ * about endianness, but that's not something lint can do anything about.  The
+ * code for these two use cases looks exactly the same, so lint errs on the
+ * side of fewer false positive warnings here. (after fixing the FIXME below)
+ */
+char *
+cast_to_char_pointer(struct Other *arg)
+{
+	return (char *)arg;		/* expect: 247 *//* FIXME */
+}
+
+/*
+ * In traditional C there was 'unsigned char' as well, so the same reasoning
+ * as for plain 'char' applies here.
+ */
+unsigned char *
+cast_to_unsigned_char_pointer(struct Other *arg)
+{
+	return (unsigned char *)arg;	/* expect: 247 *//* FIXME */
+}
+
+/*
+ * Traditional C does not have the type specifier 'signed', which means that
+ * this type cannot be used by old code.  Therefore warn about this.  All code
+ * that triggers this warning should do the intermediate cast via 'void
+ * pointer'.
+ */
+signed char *
+cast_to_signed_char_pointer(struct Other *arg)
+{
+	return (signed char *)arg;	/* expect: 247 */
+}
+
+char *
+cast_to_void_pointer_then_to_char_pointer(struct Other *arg)
+{
+	return (char *)(void *)arg;
 }
