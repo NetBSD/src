@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.87 2021/03/21 15:34:13 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.88 2021/03/26 18:54:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -378,11 +378,20 @@ typedef	struct case_label {
 	struct case_label *cl_next;
 } case_label_t;
 
+typedef enum {
+	CS_DO_WHILE,
+	CS_FOR,
+	CS_FUNCTION_BODY,
+	CS_IF,
+	CS_SWITCH,
+	CS_WHILE
+} control_statement_kind;
+
 /*
  * Used to keep information about nested control statements.
  */
 typedef struct control_statement {
-	int	c_env;			/* type of statement (T_IF, ...) */
+	control_statement_kind c_kind;	/* to ensure proper nesting */
 	bool	c_loop : 1;		/* continue && break are valid */
 	bool	c_switch : 1;		/* case && break are valid */
 	bool	c_break : 1;		/* the loop/switch has a reachable
