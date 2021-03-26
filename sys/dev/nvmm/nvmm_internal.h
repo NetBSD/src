@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.19 2020/09/06 02:18:53 riastradh Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.20 2021/03/26 15:59:53 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -136,14 +136,22 @@ extern const struct nvmm_impl nvmm_x86_vmx;
 #endif
 
 static inline bool
-nvmm_return_needed(void)
+nvmm_return_needed(struct nvmm_cpu *vcpu, struct nvmm_vcpu_exit *exit)
 {
+
 	if (preempt_needed()) {
+		exit->reason = NVMM_VCPU_EXIT_NONE;
 		return true;
 	}
 	if (curlwp->l_flag & LW_USERRET) {
+		exit->reason = NVMM_VCPU_EXIT_NONE;
 		return true;
 	}
+	if (vcpu->comm->stop) {
+		exit->reason = NVMM_VCPU_EXIT_STOPPED;
+		return true;
+	}
+
 	return false;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.82 2020/10/24 07:14:30 mgorny Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.83 2021/03/26 15:59:53 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.82 2020/10/24 07:14:30 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.83 2021/03/26 15:59:53 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1612,7 +1612,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 
 		/* If no reason to return to userland, keep rolling. */
-		if (nvmm_return_needed()) {
+		if (nvmm_return_needed(vcpu, exit)) {
 			break;
 		}
 		if (exit->reason != NVMM_VCPU_EXIT_NONE) {

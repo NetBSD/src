@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.20 2020/09/05 07:22:26 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.21 2021/03/26 15:59:53 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -74,6 +74,7 @@ struct nvmm_x86_exit_invalid {
 
 /* Generic. */
 #define NVMM_VCPU_EXIT_NONE		0x0000000000000000ULL
+#define NVMM_VCPU_EXIT_STOPPED		0xFFFFFFFFFFFFFFFEULL
 #define NVMM_VCPU_EXIT_INVALID		0xFFFFFFFFFFFFFFFFULL
 /* x86: operations. */
 #define NVMM_VCPU_EXIT_MEMORY		0x0000000000000001ULL
