@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.97 2021/03/26 19:17:58 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.98 2021/03/26 20:31:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.97 2021/03/26 19:17:58 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.98 2021/03/26 20:31:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -157,7 +157,7 @@ begin_control_statement(control_statement_kind kind)
 {
 	cstk_t	*ci;
 
-	ci = xcalloc(1, sizeof (cstk_t));
+	ci = xcalloc(1, sizeof *ci);
 	ci->c_kind = kind;
 	ci->c_surrounding = cstmt;
 	cstmt = ci;
@@ -683,7 +683,7 @@ switch1(tnode_t *tn)
 	 * duplicated. This is not too complicated because it is
 	 * only an integer type.
 	 */
-	tp = xcalloc(1, sizeof (type_t));
+	tp = xcalloc(1, sizeof *tp);
 	if (tn != NULL) {
 		tp->t_tspec = tn->tn_type->t_tspec;
 		if ((tp->t_is_enum = tn->tn_type->t_is_enum) != false)
@@ -1049,7 +1049,7 @@ do_return(tnode_t *tn)
 	if (tn != NULL) {
 
 		/* Create a temporary node for the left side */
-		ln = tgetblk(sizeof (tnode_t));
+		ln = tgetblk(sizeof *ln);
 		ln->tn_op = NAME;
 		ln->tn_type = tduptyp(funcsym->s_type->t_subt);
 		ln->tn_type->t_const = false;

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.92 2021/03/22 15:29:43 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.93 2021/03/26 20:31:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.92 2021/03/22 15:29:43 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.93 2021/03/26 20:31:07 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -405,7 +405,7 @@ msglist(void)
 {
 	size_t i;
 
-	for (i = 0; i < sizeof(msgs) / sizeof(msgs[0]); i++)
+	for (i = 0; i < sizeof msgs / sizeof msgs[0]; i++)
 		printf("%zu\t%s\n", i, msgs[i]);
 }
 
