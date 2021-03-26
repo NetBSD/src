@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.247 2021/03/26 16:45:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.248 2021/03/26 16:53:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.247 2021/03/26 16:45:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.248 2021/03/26 16:53:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2238,13 +2238,13 @@ should_warn_about_pointer_cast(const type_t *tp, tspec_t nst,
 }
 
 /*
- * Print warnings for questionable pointer conversions.
+ * Warn about questionable pointer conversions.
  */
 static void
 check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 {
-	tspec_t nt, ot;
-	const	char *nts, *ots;
+	tspec_t nst, ost;
+	const char *nts, *ots;
 
 	/*
 	 * We got already an error (pointers of different types
@@ -2253,22 +2253,21 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 	if (op != CVT)
 		return;
 
-	/* TODO: rename to 'nst' and 'ost' */
-	nt = tp->t_subt->t_tspec;
-	ot = tn->tn_type->t_subt->t_tspec;
+	nst = tp->t_subt->t_tspec;
+	ost = tn->tn_type->t_subt->t_tspec;
 
-	if (nt == VOID || ot == VOID) {
-		if (sflag && (nt == FUNC || ot == FUNC)) {
-			/* (void *)0 already handled in convert() */
-			*(nt == FUNC ? &nts : &ots) = "function pointer";
-			*(nt == VOID ? &nts : &ots) = "'void *'";
+	if (nst == VOID || ost == VOID) {
+		if (sflag && (nst == FUNC || ost == FUNC)) {
+			/* null pointers are already handled in convert() */
+			*(nst == FUNC ? &nts : &ots) = "function pointer";
+			*(nst == VOID ? &nts : &ots) = "'void *'";
 			/* ANSI C forbids conversion of %s to %s */
 			warning(303, ots, nts);
 		}
 		return;
-	} else if (nt == FUNC && ot == FUNC) {
+	} else if (nst == FUNC && ost == FUNC) {
 		return;
-	} else if (nt == FUNC || ot == FUNC) {
+	} else if (nst == FUNC || ost == FUNC) {
 		/* converting '%s' to '%s' is questionable */
 		warning(229, type_name(tn->tn_type), type_name(tp));
 		return;
@@ -2280,7 +2279,7 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 		warning(135, type_name(tn->tn_type), type_name(tp));
 	}
 
-	if (cflag && should_warn_about_pointer_cast(tp, nt, tn, ot)) {
+	if (cflag && should_warn_about_pointer_cast(tp, nst, tn, ost)) {
 		/* pointer cast from '%s' to '%s' may be troublesome */
 		warning(247, type_name(tn->tn_type), type_name(tp));
 	}
