@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.88 2021/03/26 18:54:39 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.89 2021/03/26 19:17:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -392,12 +392,13 @@ typedef enum {
  */
 typedef struct control_statement {
 	control_statement_kind c_kind;	/* to ensure proper nesting */
-	bool	c_loop : 1;		/* continue && break are valid */
-	bool	c_switch : 1;		/* case && break are valid */
+	bool	c_loop : 1;		/* 'continue' and 'break' are valid */
+	bool	c_switch : 1;		/* 'case' and 'break' are valid */
 	bool	c_break : 1;		/* the loop/switch has a reachable
-					 * break statement */
-	bool	c_continue : 1;		/* loop has continue */
-	bool	c_default : 1;		/* switch has default */
+					 * 'break' statement */
+	bool	c_continue : 1;		/* the loop has a reachable 'continue'
+					 * statement */
+	bool	c_default : 1;		/* the switch has a 'default' label */
 	bool	c_maybe_endless : 1;	/* the controlling expression is
 					 * always true (as in 'for (;;)' or
 					 * 'while (1)'), there may be break
@@ -405,14 +406,17 @@ typedef struct control_statement {
 	bool	c_always_then : 1;
 	bool	c_reached_end_of_then : 1;
 	bool	c_had_return_noval : 1;	/* had "return;" */
-	bool	c_had_return_value : 1;	/* had "return (e);" */
-	type_t	*c_swtype;		/* type of switch expression */
+	bool	c_had_return_value : 1;	/* had "return expr;" */
+
+	type_t	*c_switch_type;		/* type of switch expression */
 	case_label_t *c_case_labels;	/* list of case values */
-	struct	mbl *c_fexprm;		/* saved memory for end of loop
-					   expression in for() */
-	tnode_t	*c_f3expr;		/* end of loop expr in for() */
-	pos_t	c_fpos;			/* position of end of loop expr */
-	pos_t	c_cfpos;	        /* same for csrc_pos */
+
+	struct	mbl *c_for_expr3_mem;	/* saved memory for end of loop
+					 * expression in for() */
+	tnode_t	*c_for_expr3;		/* end of loop expr in for() */
+	pos_t	c_for_expr3_pos;	/* position of end of loop expr */
+	pos_t	c_for_expr3_csrc_pos;	/* same for csrc_pos */
+
 	struct	control_statement *c_surrounding;
 } cstk_t;
 
