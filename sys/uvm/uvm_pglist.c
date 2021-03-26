@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.87 2021/03/24 06:37:27 skrll Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.88 2021/03/26 09:35:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.87 2021/03/24 06:37:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.88 2021/03/26 09:35:18 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,9 @@ uvm_pglistalloc_contig_aggressive(int num, paddr_t low, paddr_t high,
 		 * Look forward for any remaining pages.
 		 */
 
+		if (spa + ptoa(num) > rhi) {
+			continue;
+		}
 		for (; run < num; run++) {
 			pg = PHYS_TO_VM_PAGE(spa + ptoa(run));
 			if ((pg->flags & PG_PGLCA) == 0) {
