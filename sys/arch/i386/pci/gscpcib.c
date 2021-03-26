@@ -1,4 +1,4 @@
-/*	$NetBSD: gscpcib.c,v 1.18.66.1 2021/03/22 02:00:57 thorpej Exp $	*/
+/*	$NetBSD: gscpcib.c,v 1.18.66.2 2021/03/26 02:05:02 thorpej Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.18.66.1 2021/03/22 02:00:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.18.66.2 2021/03/26 02:05:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ gscpcib_rescan(device_t self, const char *ifattr, const int *loc)
 
 		sc->sc_gpiobus = config_found(self, &gba, gpiobus_print,
 		    CFARG_IATTR, "gpiobus",
-		    CFARG_LOCATORS, loc,
 		    CFARG_EOL);
 		return 0;
 	}
