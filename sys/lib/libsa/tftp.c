@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.36 2019/03/31 20:08:45 christos Exp $	 */
+/*	$NetBSD: tftp.c,v 1.37 2021/03/26 10:35:08 rin Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -288,11 +288,6 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 		int needblock;
 		size_t count;
 
-#if !defined(LIBSA_NO_TWIDDLE)
-		if (!(tc++ % 16))
-			twiddle();
-#endif
-
 		needblock = tftpfile->off / SEGSIZE + 1;
 
 		if (tftpfile->currblock > needblock) {	/* seek backwards */
@@ -305,6 +300,11 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 
 		while (tftpfile->currblock < needblock) {
 			int res;
+
+#if !defined(LIBSA_NO_TWIDDLE)
+			if (!(tc++ % 16))
+				twiddle();
+#endif
 
 			res = tftp_getnextblock(tftpfile);
 			if (res) {	/* no answer */
