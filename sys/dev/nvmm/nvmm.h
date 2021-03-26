@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.15 2020/09/05 07:22:25 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.16 2021/03/26 15:59:53 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -47,7 +47,12 @@ typedef uint32_t	nvmm_cpuid_t;
 #include <dev/nvmm/x86/nvmm_x86.h>
 #endif
 
-#define NVMM_KERN_VERSION		1
+#define NVMM_KERN_VERSION		2
+
+/*
+ * Version 1 - Initial release in NetBSD 9.0.
+ * Version 2 - Added nvmm_vcpu::stop.
+ */
 
 struct nvmm_capability {
 	uint32_t version;
@@ -80,6 +85,9 @@ struct nvmm_comm_page {
 	/* Event. */
 	bool event_commit;
 	struct nvmm_vcpu_event event;
+
+	/* Race-free exit from nvmm_vcpu_run() without signals. */
+	volatile int stop;
 };
 
 /*
