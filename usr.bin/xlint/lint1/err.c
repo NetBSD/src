@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.94 2021/03/26 21:05:27 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.95 2021/03/26 23:17:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.94 2021/03/26 21:05:27 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.95 2021/03/26 23:17:33 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -153,7 +153,7 @@ const	char *msgs[] = {
 	"cannot dereference non-pointer type",			      /* 96 */
 	"suffix U is illegal in traditional C",			      /* 97 */
 	"suffixes F and L are illegal in traditional C",	      /* 98 */
-	"%s undefined",						      /* 99 */
+	"'%s' undefined",					      /* 99 */
 	"unary + is illegal in traditional C",			      /* 100 */
 	"undefined struct/union member: %s",			      /* 101 */
 	"illegal member use: %s",				      /* 102 */
