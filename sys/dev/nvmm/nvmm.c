@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.41 2020/09/08 16:58:38 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.42 2021/03/26 15:59:53 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.41 2020/09/08 16:58:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.42 2021/03/26 15:59:53 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,8 +574,7 @@ nvmm_do_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	while (1) {
 		/* Got a signal? Or pending resched? Leave. */
-		if (__predict_false(nvmm_return_needed())) {
-			exit->reason = NVMM_VCPU_EXIT_NONE;
+		if (__predict_false(nvmm_return_needed(vcpu, exit))) {
 			return 0;
 		}
 
@@ -620,6 +619,7 @@ nvmm_vcpu_run(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_run *args)
 
 out:
 	nvmm_machine_put(mach);
+	vcpu->comm->stop = 0;
 	return error;
 }
 
