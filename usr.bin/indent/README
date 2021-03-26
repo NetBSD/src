@@ -2,7 +2,7 @@ This is the C indenter, it originally came from the University of Illinois
 via some distribution tape for PDP-11 Unix.  It has subsequently been
 hacked upon by James Gosling @ CMU.  It isn't very pretty, and really needs
 to be completely redone, but it is probably the nicest C pretty printer
-around.
+around (as of 1993 or even earlier).
 
 Further additions to provide "Kernel Normal Form" were contributed
 by the folks at Sun Microsystems.
@@ -94,4 +94,3 @@ regards..	oz
 cc: ccvaxa!willcox
     sun.com!jar
     uunet!rsalz
-
