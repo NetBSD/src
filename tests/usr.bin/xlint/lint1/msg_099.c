@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_099.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_099.c,v 1.4 2021/03/26 23:17:33 rillig Exp $	*/
 # 3 "msg_099.c"
 
-// Test for message: %s undefined [99]
+// Test for message: '%s' undefined [99]
 
 void
 example(int defined_variable)

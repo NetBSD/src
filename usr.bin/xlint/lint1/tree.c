@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.250 2021/03/26 20:31:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.251 2021/03/26 23:17:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.250 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.251 2021/03/26 23:17:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -246,7 +246,7 @@ fallback_symbol(sym_t *sym)
 		return;
 	}
 
-	/* %s undefined */
+	/* '%s' undefined */
 	error(99, sym->s_name);
 }
 
