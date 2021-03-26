@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.202 2021/03/26 17:44:52 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.203 2021/03/26 18:54:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.202 2021/03/26 17:44:52 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.203 2021/03/26 18:54:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -447,10 +447,10 @@ function_definition:		/* C99 6.9.1 */
 		block_level--;
 		check_func_lint_directives();
 		check_func_old_style_arguments();
-		pushctrl(0);
+		begin_control_statement(CS_FUNCTION_BODY);
 	  } compound_statement {
 		funcend();
-		popctrl(0);
+		end_control_statement(CS_FUNCTION_BODY);
 	  }
 	;
 
