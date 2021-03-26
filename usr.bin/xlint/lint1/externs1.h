@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.86 2021/03/26 17:44:52 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.87 2021/03/26 18:54:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -252,8 +252,8 @@ extern	bool	bitfieldtype_ok;
 extern	bool	plibflg;
 extern	bool	quadflg;
 
-extern	void	pushctrl(int);
-extern	void	popctrl(int);
+extern	void	begin_control_statement(control_statement_kind);
+extern	void	end_control_statement(control_statement_kind);
 extern	void	check_statement_reachable(void);
 extern	void	funcdef(sym_t *);
 extern	void	funcend(void);
