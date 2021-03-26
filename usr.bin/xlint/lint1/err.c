@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.93 2021/03/26 20:31:07 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.94 2021/03/26 21:05:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.93 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.94 2021/03/26 21:05:27 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -485,13 +485,13 @@ lerror(const char *file, int line, const char *msg, ...)
 	va_list	ap;
 	const	char *fn;
 
-	va_start(ap, msg);
 	fn = lbasename(curr_pos.p_file);
-	(void)fprintf(stderr, "%s(%d): lint error: %s, %d: ",
-	    fn, curr_pos.p_line, file, line);
+	(void)fprintf(stderr, "lint: internal error in %s:%d near %s:%d: ",
+	    file, line, fn, curr_pos.p_line);
+	va_start(ap, msg);
 	(void)vfprintf(stderr, msg, ap);
-	(void)fprintf(stderr, "\n");
 	va_end(ap);
+	(void)fprintf(stderr, "\n");
 	abort();
 }
 
