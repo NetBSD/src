@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.6 2021/03/26 16:19:43 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.7 2021/03/26 16:59:19 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -45,7 +45,7 @@ example(struct Other *arg)
 char *
 cast_to_char_pointer(struct Other *arg)
 {
-	return (char *)arg;		/* expect: 247 *//* FIXME */
+	return (char *)arg;
 }
 
 /*
@@ -55,7 +55,7 @@ cast_to_char_pointer(struct Other *arg)
 unsigned char *
 cast_to_unsigned_char_pointer(struct Other *arg)
 {
-	return (unsigned char *)arg;	/* expect: 247 *//* FIXME */
+	return (unsigned char *)arg;
 }
 
 /*

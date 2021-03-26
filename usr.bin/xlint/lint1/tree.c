@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.248 2021/03/26 16:53:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.249 2021/03/26 16:59:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.248 2021/03/26 16:53:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.249 2021/03/26 16:59:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2229,6 +2229,9 @@ should_warn_about_pointer_cast(const type_t *tp, tspec_t nst,
 	if (nst == STRUCT || nst == UNION)
 		if (tp->t_subt->t_str != tn->tn_type->t_subt->t_str)
 			return true;
+
+	if (nst == CHAR || nst == UCHAR)
+		return false;	/* for the sake of traditional C code */
 
 	/*
 	 * XXX: Why should it be ok to cast between arbitrary structs that
