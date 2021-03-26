@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.27 2021/03/17 01:15:31 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.28 2021/03/26 20:31:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.27 2021/03/17 01:15:31 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.28 2021/03/26 20:31:07 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ struct repl *replist;
 void
 fnaddreplsrcdir(char *arg)
 {
-	struct repl *r = xmalloc(sizeof(*r));
+	struct repl *r = xmalloc(sizeof *r);
 
 	r->orig = arg;
 	if ((r->repl = strchr(arg, '=')) == NULL)
@@ -120,7 +120,7 @@ fnxform(const char *name, size_t len)
 			break;
 	if (r == NULL)
 		return name;
-	snprintf(buf, sizeof(buf), "%s%s", r->repl, name + r->len);
+	snprintf(buf, sizeof buf, "%s%s", r->repl, name + r->len);
 	return buf;
 }
 
@@ -135,7 +135,7 @@ fnnalloc(const char *s, size_t len)
 		return NULL;
 
 	if ((fn = srchfn(s, len)) == NULL) {
-		fn = xmalloc(sizeof (fn_t));
+		fn = xmalloc(sizeof *fn);
 		/* Do not use strdup() because s is not NUL-terminated.*/
 		fn->fn_name = xmalloc(len + 1);
 		(void)memcpy(fn->fn_name, s, len);
@@ -203,7 +203,7 @@ static	mbl_t	*xnewblk(void);
 static mbl_t *
 xnewblk(void)
 {
-	mbl_t	*mb = xmalloc(sizeof (mbl_t));
+	mbl_t	*mb = xmalloc(sizeof *mb);
 
 	/* use mmap instead of malloc to avoid malloc's size overhead */
 	mb->blk = xmapalloc(mblklen);
@@ -285,7 +285,7 @@ initmem(void)
 	pgsz = getpagesize();
 	mblklen = ((MBLKSIZ + pgsz - 1) / pgsz) * pgsz;
 
-	mblks = xcalloc(nmblks = ML_INC, sizeof (mbl_t *));
+	mblks = xcalloc(nmblks = ML_INC, sizeof *mblks);
 }
 
 
@@ -295,8 +295,8 @@ getlblk(size_t l, size_t s)
 {
 
 	while (l >= nmblks) {
-		mblks = xrealloc(mblks, (nmblks + ML_INC) * sizeof (mbl_t *));
-		(void)memset(&mblks[nmblks], 0, ML_INC * sizeof (mbl_t *));
+		mblks = xrealloc(mblks, (nmblks + ML_INC) * sizeof *mblks);
+		(void)memset(&mblks[nmblks], 0, ML_INC * sizeof *mblks);
 		nmblks += ML_INC;
 	}
 	return xgetblk(&mblks[l], s);

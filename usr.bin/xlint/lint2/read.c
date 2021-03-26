@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.40 2021/02/28 17:16:50 rillig Exp $ */
+/* $NetBSD: read.c,v 1.41 2021/03/26 20:31:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.40 2021/02/28 17:16:50 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.41 2021/03/26 20:31:07 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -119,15 +119,15 @@ readfile(const char *name)
 	pos_t	pos;
 
 	if (inpfns == NULL)
-		inpfns = xcalloc(ninpfns = 128, sizeof (short));
+		inpfns = xcalloc(ninpfns = 128, sizeof *inpfns);
 	if (fnames == NULL)
-		fnames = xcalloc(nfnames = 256, sizeof (char *));
+		fnames = xcalloc(nfnames = 256, sizeof *fnames);
 	if (flines == NULL)
-		flines = xcalloc(nfnames, sizeof (size_t));
+		flines = xcalloc(nfnames, sizeof *flines);
 	if (tlstlen == 0)
-		tlst = xcalloc(tlstlen = 256, sizeof (type_t *));
+		tlst = xcalloc(tlstlen = 256, sizeof *tlst);
 	if (thtab == NULL)
-		thtab = xcalloc(THSHSIZ2, sizeof (thtab_t));
+		thtab = xcalloc(THSHSIZ2, sizeof *thtab);
 
 	_inithash(&renametab);
 
@@ -224,7 +224,7 @@ inperror(const char *file, size_t line, const char *fmt, ...)
 	char buf[1024];
 
 	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
+	(void)vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
 
 	errx(1, "%s,%zu: input file error: %s,%zu (%s)", file, line,
@@ -256,8 +256,8 @@ setfnid(int fid, const char *cp)
 		inperr("bad fid");
 
 	if ((size_t)fid >= ninpfns) {
-		inpfns = xrealloc(inpfns, (ninpfns * 2) * sizeof (short));
-		(void)memset(inpfns + ninpfns, 0, ninpfns * sizeof (short));
+		inpfns = xrealloc(inpfns, (ninpfns * 2) * sizeof *inpfns);
+		(void)memset(inpfns + ninpfns, 0, ninpfns * sizeof *inpfns);
 		ninpfns *= 2;
 	}
 	/*
@@ -282,7 +282,7 @@ funccall(pos_t *posp, const char *cp)
 	fcall_t	*fcall;
 	const char *name;
 
-	fcall = xalloc(sizeof (fcall_t));
+	fcall = xalloc(sizeof *fcall);
 	fcall->f_pos = *posp;
 
 	/* read flags */
@@ -310,7 +310,7 @@ funccall(pos_t *posp, const char *cp)
 		case 'p':
 		case 'n':
 		case 's':
-			ai = xalloc(sizeof (arginf_t));
+			ai = xalloc(sizeof *ai);
 			ai->a_num = (int)strtol(cp, &eptr, 10);
 			if (cp == eptr)
 				inperr("bad number: %s", cp);
@@ -365,7 +365,7 @@ decldef(pos_t *posp, const char *cp)
 	hte_t	*hte, *renamehte = NULL;
 	const char *name, *newname;
 
-	(void)memset(&sym, 0, sizeof (sym));
+	(void)memset(&sym, 0, sizeof sym);
 	sym.s_pos = *posp;
 	sym.s_def = NODECL;
 
@@ -501,10 +501,10 @@ decldef(pos_t *posp, const char *cp)
 	if (symp == NULL) {
 		/* allocsym does not reserve space for s_nva */
 		if (sym.s_va || sym.s_prfl || sym.s_scfl) {
-			symp = xalloc(sizeof (sym_t));
+			symp = xalloc(sizeof *symp);
 			*symp = sym;
 		} else {
-			symp = xalloc(sizeof (symp->s_s));
+			symp = xalloc(sizeof symp->s_s);
 			symp->s_s = sym.s_s;
 		}
 		*hte->h_lsym = symp;
@@ -529,7 +529,7 @@ usedsym(pos_t *posp, const char *cp)
 	hte_t	*hte;
 	const char *name;
 
-	usym = xalloc(sizeof (usym_t));
+	usym = xalloc(sizeof *usym);
 	usym->u_pos = *posp;
 
 	/* needed as delimiter between two numbers */
@@ -572,7 +572,7 @@ inptype(const char *cp, const char **epp)
 	}
 
 	/* No, we must create a new type. */
-	tp = xalloc(sizeof (type_t));
+	tp = xalloc(sizeof *tp);
 
 	tidx = storetyp(tp, cp, tlen, h);
 
@@ -664,7 +664,7 @@ inptype(const char *cp, const char **epp)
 			narg = (int)strtol(cp, &eptr, 10);
 			cp = eptr;
 			tp->t_args = xcalloc((size_t)(narg + 1),
-					     sizeof (type_t *));
+					     sizeof *tp->t_args);
 			for (i = 0; i < narg; i++) {
 				if (i == narg - 1 && *cp == 'E') {
 					tp->t_vararg = true;
@@ -1008,8 +1008,8 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 		errx(1, "sorry, too many types");
 
 	if (tidx == tlstlen - 1) {
-		tlst = xrealloc(tlst, (tlstlen * 2) * sizeof (type_t *));
-		(void)memset(tlst + tlstlen, 0, tlstlen * sizeof (type_t *));
+		tlst = xrealloc(tlst, (tlstlen * 2) * sizeof *tlst);
+		(void)memset(tlst + tlstlen, 0, tlstlen * sizeof *tlst);
 		tlstlen *= 2;
 	}
 
@@ -1020,7 +1020,7 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 	(void)memcpy(name, cp, len);
 	name[len] = '\0';
 
-	thte = xalloc(sizeof (thtab_t));
+	thte = xalloc(sizeof *thte);
 	thte->th_name = name;
 	thte->th_idx = tidx;
 	thte->th_next = thtab[h];
@@ -1039,8 +1039,8 @@ thash(const char *s, size_t len)
 
 	v = 0;
 	while (len-- != 0) {
-		v = (v << sizeof (v)) + (u_char)*s++;
-		v ^= v >> (sizeof (v) * CHAR_BIT - sizeof (v));
+		v = (v << sizeof v) + (u_char)*s++;
+		v ^= v >> (sizeof v * CHAR_BIT - sizeof v);
 	}
 	return v % THSHSIZ2;
 }
@@ -1174,10 +1174,10 @@ getfnidx(const char *fn)
 
 	if (i == nfnames - 1) {
 		size_t nlen = nfnames * 2;
-		fnames = xrealloc(fnames, nlen * sizeof(char *));
-		(void)memset(fnames + nfnames, 0, nfnames * sizeof(char *));
-		flines = xrealloc(flines, nlen * sizeof(size_t));
-		(void)memset(flines + nfnames, 0, nfnames * sizeof(size_t));
+		fnames = xrealloc(fnames, nlen * sizeof *fnames);
+		(void)memset(fnames + nfnames, 0, nfnames * sizeof *fnames);
+		flines = xrealloc(flines, nlen * sizeof *flines);
+		(void)memset(flines + nfnames, 0, nfnames * sizeof *flines);
 		nfnames = nlen;
 	}
 
@@ -1236,7 +1236,7 @@ mkstatic(hte_t *hte)
 	 */
 	for (nhte = hte; nhte->h_link != NULL; nhte = nhte->h_link)
 		continue;
-	nhte->h_link = xmalloc(sizeof (hte_t));
+	nhte->h_link = xmalloc(sizeof *nhte->h_link);
 	nhte = nhte->h_link;
 	nhte->h_name = hte->h_name;
 	nhte->h_used = true;

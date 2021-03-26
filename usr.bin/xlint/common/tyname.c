@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.34 2021/03/07 17:12:41 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.35 2021/03/26 20:31:07 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.34 2021/03/07 17:12:41 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.35 2021/03/26 20:31:07 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -74,7 +74,7 @@ new_name_tree_node(const char *name)
 {
 	name_tree_node *n;
 
-	n = xmalloc(sizeof(*n));
+	n = xmalloc(sizeof *n);
 	n->ntn_name = xstrdup(name);
 	n->ntn_less = NULL;
 	n->ntn_greater = NULL;
@@ -137,7 +137,7 @@ buf_add(buffer *buf, const char *s)
 static void
 buf_add_int(buffer *buf, int n)
 {
-	char num[1 + sizeof(n) * CHAR_BIT + 1];
+	char num[1 + sizeof n * CHAR_BIT + 1];
 
 	snprintf(num, sizeof num, "%d", n);
 	buf_add(buf, num);

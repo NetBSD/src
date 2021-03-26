@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.133 2021/03/25 22:53:05 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.134 2021/03/26 20:31:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.133 2021/03/25 22:53:05 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.134 2021/03/26 20:31:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -585,7 +585,7 @@ initstack_init(void)
 		initsym->s_type = duptyp(initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	istk = initstk_lvalue = xcalloc(1, sizeof (initstack_element));
+	istk = initstk_lvalue = xcalloc(1, sizeof *initstk_lvalue);
 	istk->i_subt = initsym->s_type;
 	istk->i_remaining = 1;
 
@@ -890,7 +890,7 @@ initstack_push(void)
 	lint_assert(istk->i_remaining > 0);
 	lint_assert(istk->i_type == NULL || !is_scalar(istk->i_type->t_tspec));
 
-	initstk_lvalue = xcalloc(1, sizeof (initstack_element));
+	initstk_lvalue = xcalloc(1, sizeof *initstk_lvalue);
 	initstk_lvalue->i_enclosing = istk;
 	initstk_lvalue->i_type = istk->i_subt;
 	lint_assert(initstk_lvalue->i_type->t_tspec != FUNC);
@@ -1149,7 +1149,7 @@ check_init_expr(tnode_t *tn, scl_t sclass)
 	struct mbl *tmem;
 
 	/* Create a temporary node for the left side. */
-	ln = tgetblk(sizeof (tnode_t));
+	ln = tgetblk(sizeof *ln);
 	ln->tn_op = NAME;
 	ln->tn_type = tduptyp(initstk->i_type);
 	ln->tn_type->t_const = false;
