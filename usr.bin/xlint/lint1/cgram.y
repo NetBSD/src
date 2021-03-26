@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.200 2021/03/25 21:51:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.201 2021/03/26 16:05:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.200 2021/03/25 21:51:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.201 2021/03/26 16:05:19 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1996,7 +1996,7 @@ term:
 	| T_LPAREN type_name T_RPAREN term		%prec T_UNARY {
 		$$ = cast($4, $2);
 	  }
-	| T_LPAREN type_name T_RPAREN			%prec T_UNARY {
+	| T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
 		sym_t *tmp = mktempsym($2);
 		begin_initialization(tmp);
 		cgram_declare(tmp, true, NULL);
