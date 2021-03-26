@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.95 2021/03/21 19:14:40 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.96 2021/03/26 18:54:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.95 2021/03/21 19:14:40 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.96 2021/03/26 18:54:39 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -153,12 +153,12 @@ bool	quadflg;
  * Puts a new element at the top of the stack used for control statements.
  */
 void
-pushctrl(int env)
+begin_control_statement(control_statement_kind kind)
 {
 	cstk_t	*ci;
 
 	ci = xcalloc(1, sizeof (cstk_t));
-	ci->c_env = env;
+	ci->c_kind = kind;
 	ci->c_surrounding = cstmt;
 	cstmt = ci;
 }
@@ -167,13 +167,13 @@ pushctrl(int env)
  * Removes the top element of the stack used for control statements.
  */
 void
-popctrl(int env)
+end_control_statement(control_statement_kind kind)
 {
 	cstk_t	*ci;
 	case_label_t *cl, *next;
 
 	lint_assert(cstmt != NULL);
-	lint_assert(cstmt->c_env == env);
+	lint_assert(cstmt->c_kind == kind);
 
 	ci = cstmt;
 	cstmt = ci->c_surrounding;
@@ -611,7 +611,7 @@ if1(tnode_t *tn)
 		tn = check_controlling_expression(tn);
 	if (tn != NULL)
 		expr(tn, false, true, false, false);
-	pushctrl(T_IF);
+	begin_control_statement(CS_IF);
 
 	if (tn != NULL && tn->tn_op == CON && !tn->tn_system_dependent) {
 		/* XXX: what if inside 'if (0)'? */
@@ -648,7 +648,7 @@ if3(bool els)
 	else if (!els)
 		set_reached(true);
 
-	popctrl(T_IF);
+	end_control_statement(CS_IF);
 }
 
 /*
@@ -695,7 +695,7 @@ switch1(tnode_t *tn)
 	check_getopt_begin_switch();
 	expr(tn, true, false, true, false);
 
-	pushctrl(T_SWITCH);
+	begin_control_statement(CS_SWITCH);
 	cstmt->c_switch = true;
 	cstmt->c_swtype = tp;
 
@@ -755,7 +755,7 @@ switch2(void)
 		 * if the end of the last statement inside it is reached.
 		 */
 
-	popctrl(T_SWITCH);
+	end_control_statement(CS_SWITCH);
 }
 
 /*
@@ -776,7 +776,7 @@ while1(tnode_t *tn)
 	if (tn != NULL)
 		tn = check_controlling_expression(tn);
 
-	pushctrl(T_WHILE);
+	begin_control_statement(CS_WHILE);
 	cstmt->c_loop = true;
 	cstmt->c_maybe_endless = is_nonzero(tn);
 	body_reached = !is_zero(tn);
@@ -802,7 +802,7 @@ while2(void)
 	set_reached(!cstmt->c_maybe_endless || cstmt->c_break);
 
 	check_getopt_end_while();
-	popctrl(T_WHILE);
+	end_control_statement(CS_WHILE);
 }
 
 /*
@@ -818,7 +818,7 @@ do1(void)
 		set_reached(true);
 	}
 
-	pushctrl(T_DO);
+	begin_control_statement(CS_DO_WHILE);
 	cstmt->c_loop = true;
 }
 
@@ -854,7 +854,7 @@ do2(tnode_t *tn)
 	if (cstmt->c_break)
 		set_reached(true);
 
-	popctrl(T_DO);
+	end_control_statement(CS_DO_WHILE);
 }
 
 /*
@@ -874,7 +874,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 		set_reached(true);
 	}
 
-	pushctrl(T_FOR);
+	begin_control_statement(CS_FOR);
 	cstmt->c_loop = true;
 
 	/*
@@ -944,7 +944,7 @@ for2(void)
 	/* TODO: What if the loop contains a 'return'? */
 	set_reached(cstmt->c_break || !cstmt->c_maybe_endless);
 
-	popctrl(T_FOR);
+	end_control_statement(CS_FOR);
 }
 
 /*
