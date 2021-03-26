@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.85 2021/03/25 21:51:55 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.86 2021/03/26 17:44:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -148,8 +148,8 @@ extern	void	add_type(type_t *);
 extern	void	add_qualifier(tqual_t);
 extern	void	addpacked(void);
 extern	void	add_attr_used(void);
-extern	void	pushdecl(scl_t);
-extern	void	popdecl(void);
+extern	void	begin_declaration_level(scl_t);
+extern	void	end_declaration_level(void);
 extern	void	setasm(void);
 extern	void	clrtyp(void);
 extern	void	deftyp(void);
