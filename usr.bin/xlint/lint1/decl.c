@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.159 2021/03/23 18:40:50 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.160 2021/03/26 17:44:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.159 2021/03/23 18:40:50 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.160 2021/03/26 17:44:52 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -588,7 +588,7 @@ add_qualifier(tqual_t q)
  * argument declaration lists ...)
  */
 void
-pushdecl(scl_t sc)
+begin_declaration_level(scl_t sc)
 {
 	dinfo_t	*di;
 
@@ -599,7 +599,8 @@ pushdecl(scl_t sc)
 	di->d_ctx = sc;
 	di->d_ldlsym = &di->d_dlsyms;
 	if (dflag)
-		(void)printf("pushdecl(%p %d)\n", dcs, (int)sc);
+		(void)printf("begin_declaration_level(%p %d)\n",
+		    dcs, (int)sc);
 
 }
 
@@ -607,12 +608,13 @@ pushdecl(scl_t sc)
  * Go back to previous declaration level
  */
 void
-popdecl(void)
+end_declaration_level(void)
 {
 	dinfo_t	*di;
 
 	if (dflag)
-		(void)printf("popdecl(%p %d)\n", dcs, (int)dcs->d_ctx);
+		(void)printf("end_declaration_level(%p %d)\n",
+		    dcs, (int)dcs->d_ctx);
 
 	lint_assert(dcs->d_next != NULL);
 	di = dcs;
@@ -1393,14 +1395,14 @@ add_function(sym_t *decl, sym_t *args)
 	}
 
 	/*
-	 * The symbols are removed from the symbol table by popdecl() after
-	 * add_function(). To be able to restore them if this is a function
-	 * definition, a pointer to the list of all symbols is stored in
-	 * dcs->d_next->d_func_proto_syms. Also a list of the arguments
-	 * (concatenated by s_next) is stored in dcs->d_next->d_func_args.
-	 * (dcs->d_next must be used because *dcs is the declaration stack
-	 * element created for the list of params and is removed after
-	 * add_function())
+	 * The symbols are removed from the symbol table by
+	 * end_declaration_level after add_function. To be able to restore
+	 * them if this is a function definition, a pointer to the list of all
+	 * symbols is stored in dcs->d_next->d_func_proto_syms. Also a list of
+	 * the arguments (concatenated by s_next) is stored in
+	 * dcs->d_next->d_func_args. (dcs->d_next must be used because *dcs is
+	 * the declaration stack element created for the list of params and is
+	 * removed after add_function.)
 	 */
 	if (dcs->d_next->d_ctx == EXTERN &&
 	    decl->s_type == dcs->d_next->d_type) {
@@ -2895,7 +2897,7 @@ global_clean_up(void)
 {
 
 	while (dcs->d_next != NULL)
-		popdecl();
+		end_declaration_level();
 
 	cleanup();
 	block_level = 0;
