@@ -1,4 +1,4 @@
-/*	$NetBSD: d_pr_22119.c,v 1.1 2021/02/28 22:12:16 rillig Exp $	*/
+/*	$NetBSD: d_pr_22119.c,v 1.2 2021/03/26 23:17:33 rillig Exp $	*/
 # 3 "d_pr_22119.c"
 
 /*
@@ -13,6 +13,6 @@ func1(void)
 {
 	void (*f1)(void);
 
-	f1 = (void (*)(void))p;		/* expect: p undefined [99] */
+	f1 = (void (*)(void))p;		/* expect: 'p' undefined [99] */
 	f1 = (void *()(void))p;		/* crash before 2021-02-28 */
 }
