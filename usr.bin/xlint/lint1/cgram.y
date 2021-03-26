@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.201 2021/03/26 16:05:19 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.202 2021/03/26 17:44:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.201 2021/03/26 16:05:19 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.202 2021/03/26 17:44:52 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -439,11 +439,11 @@ function_definition:		/* C99 6.9.1 */
 		}
 		funcdef($1);
 		block_level++;
-		pushdecl(ARG);
+		begin_declaration_level(ARG);
 		if (lwarn == LWARN_NONE)
 			$1->s_used = true;
 	  } arg_declaration_list_opt {
-		popdecl();
+		end_declaration_level();
 		block_level--;
 		check_func_lint_directives();
 		check_func_old_style_arguments();
@@ -703,11 +703,11 @@ notype_typespec:
 		$$ = $2->tn_type;
 	  }
 	| struct_spec {
-		popdecl();
+		end_declaration_level();
 		$$ = $1;
 	  }
 	| enum_spec {
-		popdecl();
+		end_declaration_level();
 		$$ = $1;
 	  }
 	;
@@ -743,7 +743,7 @@ struct:
 	  struct type_attribute
 	| T_STRUCT_OR_UNION {
 		symtyp = FTAG;
-		pushdecl($1 == STRUCT ? MOS : MOU);
+		begin_declaration_level($1 == STRUCT ? MOS : MOU);
 		dcs->d_offset = 0;
 		dcs->d_stralign = CHAR_SIZE;
 		$$ = $1;
@@ -940,7 +940,7 @@ enum_spec:
 enum:
 	  T_ENUM {
 		symtyp = FTAG;
-		pushdecl(CTCONST);
+		begin_declaration_level(CTCONST);
 	  }
 	;
 
@@ -1072,7 +1072,7 @@ notype_direct_decl:
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	| notype_direct_decl type_attribute_list
@@ -1105,7 +1105,7 @@ type_direct_decl:
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	| type_direct_decl type_attribute_list
@@ -1145,7 +1145,7 @@ direct_param_decl:
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	;
@@ -1174,7 +1174,7 @@ direct_notype_param_decl:
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	;
@@ -1236,7 +1236,7 @@ param_list:
 id_list_lparen:
 	  T_LPAREN {
 		block_level++;
-		pushdecl(PROTO_ARG);
+		begin_declaration_level(PROTO_ARG);
 	  }
 	;
 
@@ -1268,7 +1268,7 @@ abstract_decl_param_list:
 abstract_decl_lparen:
 	  T_LPAREN {
 		block_level++;
-		pushdecl(PROTO_ARG);
+		begin_declaration_level(PROTO_ARG);
 	  }
 	;
 
@@ -1420,9 +1420,9 @@ init_rbrace:
 
 type_name:
 	  {
-		pushdecl(ABSTRACT);
+		begin_declaration_level(ABSTRACT);
 	  } abstract_declaration {
-		popdecl();
+		end_declaration_level();
 		$$ = $2->s_type;
 	  }
 	;
@@ -1478,12 +1478,12 @@ direct_abstract_decl:
 	  }
 	| abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	| direct_abstract_decl abstract_decl_param_list opt_asm_or_symbolrename {
 		$$ = add_function(symbolrename($1, $3), $2);
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	| direct_abstract_decl type_attribute_list
@@ -1537,13 +1537,13 @@ compound_statement_lbrace:
 	  T_LBRACE {
 		block_level++;
 		mem_block_level++;
-		pushdecl(AUTO);
+		begin_declaration_level(AUTO);
 	  }
 	;
 
 compound_statement_rbrace:
 	  T_RBRACE {
-		popdecl();
+		end_declaration_level();
 		freeblk();
 		mem_block_level--;
 		block_level--;
@@ -1696,13 +1696,13 @@ iteration_statement:		/* C99 6.8.5 */
 	| for_exprs statement {
 		clear_warning_flags();
 		for2();
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	| for_exprs error {
 		clear_warning_flags();
 		for2();
-		popdecl();
+		end_declaration_level();
 		block_level--;
 	  }
 	;
@@ -1728,7 +1728,7 @@ do_while_expr:
 
 for_start:
 	  T_FOR T_LPAREN {
-		pushdecl(AUTO);
+		begin_declaration_level(AUTO);
 		block_level++;
 	  }
 	;
