@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.134 2021/03/26 20:31:07 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.135 2021/03/27 13:08:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.134 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.135 2021/03/27 13:08:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -215,8 +215,9 @@ typedef	struct initstack_element {
 } initstack_element;
 
 /*
- * Leads the path to the sub-object to initialize using the expression.
- * Example designators are '.member' or '.member[123].member.member[1][1]'.
+ * A single component on the path to the sub-object that is initialized by an
+ * initializer expression.  Either a struct or union member, or an array
+ * subscript.
  *
  * See also: C99 6.7.8 "Initialization"
  */
@@ -227,6 +228,10 @@ typedef struct designator {
 } designator;
 
 /*
+ * The optional designation for an initializer, saying which sub-object to
+ * initialize.  Examples for designations are '.member' or
+ * '.member[123].member.member[1][1]'.
+ *
  * See also: C99 6.7.8 "Initialization"
  */
 typedef struct {
@@ -265,27 +270,29 @@ static struct initialization *init;
 static	bool	init_array_using_string(tnode_t *);
 
 
-/* TODO: replace the following functions with current_init */
+static struct initialization *
+current_init(void)
+{
+	lint_assert(init != NULL);
+	return init;
+}
 
 bool *
 current_initerr(void)
 {
-	lint_assert(init != NULL);
-	return &init->initerr;
+	return &current_init()->initerr;
 }
 
 sym_t **
 current_initsym(void)
 {
-	lint_assert(init != NULL);
-	return &init->initsym;
+	return &current_init()->initsym;
 }
 
 static designation *
 current_designation_mod(void)
 {
-	lint_assert(init != NULL);
-	return &init->designation;
+	return &current_init()->designation;
 }
 
 static designation
@@ -297,15 +304,13 @@ current_designation(void)
 static const initstack_element *
 current_initstk(void)
 {
-	lint_assert(init != NULL);
-	return init->initstk;
+	return current_init()->initstk;
 }
 
 static initstack_element **
 current_initstk_lvalue(void)
 {
-	lint_assert(init != NULL);
-	return &init->initstk;
+	return &current_init()->initstk;
 }
 
 static void
