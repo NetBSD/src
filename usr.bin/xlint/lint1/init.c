@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.140 2021/03/27 19:59:22 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.141 2021/03/27 21:56:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.140 2021/03/27 19:59:22 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.141 2021/03/27 21:56:51 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -318,6 +318,12 @@ free_initialization(struct initialization *in)
 	}
 
 	free(in);
+}
+
+static void
+set_initerr(void)
+{
+	current_init()->initerr = true;
 }
 
 #define initerr		(*current_initerr())
@@ -607,7 +613,7 @@ initstack_pop_item_named_member(const char *name)
 	    level->bl_type->t_tspec != UNION) {
 		/* syntax error '%s' */
 		error(249, "named member must only be used with struct/union");
-		initerr = true;
+		set_initerr();
 		return;
 	}
 
@@ -782,7 +788,7 @@ initstack_push_array(void)
 	    level->bl_enclosing->bl_enclosing != NULL) {
 		/* initialization of an incomplete type */
 		error(175);
-		initerr = true;
+		set_initerr();
 		return;
 	}
 
@@ -847,7 +853,7 @@ initstack_push_struct_or_union(void)
 	if (is_incomplete(level->bl_type)) {
 		/* initialization of an incomplete type */
 		error(175);
-		initerr = true;
+		set_initerr();
 		return false;
 	}
 
@@ -880,7 +886,7 @@ initstack_push_struct_or_union(void)
 	if (cnt == 0) {
 		/* cannot init. struct/union with no named member */
 		error(179);
-		initerr = true;
+		set_initerr();
 		return false;
 	}
 	level->bl_remaining = level->bl_type->t_tspec == STRUCT ? cnt : 1;
@@ -976,7 +982,7 @@ check_too_many_initializers(void)
 		/* too many initializers */
 		error(174);
 	}
-	initerr = true;
+	set_initerr();
 }
 
 /*
@@ -995,7 +1001,7 @@ initstack_next_brace(void)
 	    is_scalar(brace_level_rvalue->bl_type->t_tspec)) {
 		/* invalid initializer type %s */
 		error(176, type_name(brace_level_rvalue->bl_type));
-		initerr = true;
+		set_initerr();
 	}
 	if (!initerr)
 		check_too_many_initializers();
