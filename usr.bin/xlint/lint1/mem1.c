@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.32 2021/03/27 12:01:49 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.33 2021/03/27 12:10:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.32 2021/03/27 12:01:49 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.33 2021/03/27 12:10:41 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,8 +61,8 @@ struct filename {
 static struct filename *fnames;
 
 /* Find the given filename, or return NULL. */
-static struct filename *
-srchfn(const char *s, size_t len)
+static const struct filename *
+search_filename(const char *s, size_t len)
 {
 	struct filename *fn;
 
@@ -121,6 +121,7 @@ fnxform(const char *name, size_t len)
 const char *
 fnnalloc(const char *s, size_t len)
 {
+	const struct filename *existing_fn;
 	struct filename *fn;
 
 	static	int	nxt_id = 0;
@@ -128,8 +129,8 @@ fnnalloc(const char *s, size_t len)
 	if (s == NULL)
 		return NULL;
 
-	if ((fn = srchfn(s, len)) != NULL)
-		return fn->fn_name;
+	if ((existing_fn = search_filename(s, len)) != NULL)
+		return existing_fn->fn_name;
 
 	fn = xmalloc(sizeof *fn);
 	/* Do not use strdup() because s is not NUL-terminated.*/
@@ -154,9 +155,9 @@ fnnalloc(const char *s, size_t len)
 int
 getfnid(const char *s)
 {
-	struct filename *fn;
+	const struct filename *fn;
 
-	if (s == NULL || (fn = srchfn(s, strlen(s))) == NULL)
+	if (s == NULL || (fn = search_filename(s, strlen(s))) == NULL)
 		return -1;
 	return fn->fn_id;
 }
