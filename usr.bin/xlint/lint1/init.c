@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.136 2021/03/27 13:17:42 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.137 2021/03/27 16:24:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.136 2021/03/27 13:17:42 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.137 2021/03/27 16:24:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -598,7 +598,7 @@ initstack_init(void)
 
 /* TODO: document me */
 static void
-initstack_pop_item_named_member(void)
+initstack_pop_item_named_member(const char *name)
 {
 	initstack_element *istk = initstk_lvalue;
 	sym_t *m;
@@ -607,8 +607,7 @@ initstack_pop_item_named_member(void)
 	 * TODO: fix wording of the debug message; this doesn't seem to be
 	 * related to initializing the named member.
 	 */
-	debug_step("initializing named member '%s'",
-	    current_designation().head->name);
+	debug_step("initializing named member '%s'", name);
 
 	if (istk->i_type->t_tspec != STRUCT &&
 	    istk->i_type->t_tspec != UNION) {
@@ -624,7 +623,7 @@ initstack_pop_item_named_member(void)
 		if (m->s_bitfield && m->s_name == unnamed)
 			continue;
 
-		if (strcmp(m->s_name, current_designation().head->name) == 0) {
+		if (strcmp(m->s_name, name) == 0) {
 			debug_step("found matching member");
 			istk->i_subt = m->s_type;
 			/* XXX: why ++? */
@@ -635,8 +634,9 @@ initstack_pop_item_named_member(void)
 		}
 	}
 
+	/* TODO: add type information to the message */
 	/* undefined struct/union member: %s */
-	error(101, current_designation().head->name);
+	error(101, name);
 
 	designation_shift_level();
 	istk->i_seen_named_member = true;
@@ -672,6 +672,7 @@ static void
 initstack_pop_item(void)
 {
 	initstack_element *istk;
+	designator *first_designator;
 
 	debug_enter();
 
@@ -689,8 +690,9 @@ initstack_pop_item(void)
 	lint_assert(istk->i_remaining >= 0);
 	debug_step("%d elements remaining", istk->i_remaining);
 
-	if (current_designation().head != NULL)
-		initstack_pop_item_named_member();
+	first_designator = current_designation().head;
+	if (first_designator != NULL && first_designator->name != NULL)
+		initstack_pop_item_named_member(first_designator->name);
 	else
 		initstack_pop_item_unnamed();
 
