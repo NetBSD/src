@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.164 2021/03/27 12:42:22 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.165 2021/03/27 22:04:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.164 2021/03/27 12:42:22 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.165 2021/03/27 22:04:39 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1891,50 +1891,11 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	return sym;
 }
 
-void
-declare(sym_t *decl, bool initflg, sbuf_t *renaming)
-{
-	char *s;
-
-	switch (dcs->d_ctx) {
-	case EXTERN:
-		if (renaming != NULL) {
-			lint_assert(decl->s_rename == NULL);
-
-			s = getlblk(1, renaming->sb_len + 1);
-			(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
-			decl->s_rename = s;
-		}
-		decl1ext(decl, initflg);
-		break;
-	case ARG:
-		if (renaming != NULL) {
-			/* symbol renaming can't be used on function arguments */
-			error(310);
-			break;
-		}
-		(void)declare_argument(decl, initflg);
-		break;
-	default:
-		lint_assert(dcs->d_ctx == AUTO);
-		if (renaming != NULL) {
-			/* symbol renaming can't be used on automatic variables */
-			error(311);
-			break;
-		}
-		declare_local(decl, initflg);
-		break;
-	}
-
-	if (initflg && !*current_initerr())
-		initstack_init();
-}
-
 /*
  * Process a single external declarator.
  */
-void
-decl1ext(sym_t *dsym, bool initflg)
+static void
+declare_extern(sym_t *dsym, bool initflg)
 {
 	bool	dowarn, rval, redec;
 	sym_t	*rdsym;
@@ -2051,6 +2012,45 @@ decl1ext(sym_t *dsym, bool initflg)
 		settdsym(dsym->s_type, dsym);
 	}
 
+}
+
+void
+declare(sym_t *decl, bool initflg, sbuf_t *renaming)
+{
+	char *s;
+
+	switch (dcs->d_ctx) {
+	case EXTERN:
+		if (renaming != NULL) {
+			lint_assert(decl->s_rename == NULL);
+
+			s = getlblk(1, renaming->sb_len + 1);
+			(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
+			decl->s_rename = s;
+		}
+		declare_extern(decl, initflg);
+		break;
+	case ARG:
+		if (renaming != NULL) {
+			/* symbol renaming can't be used on function arguments */
+			error(310);
+			break;
+		}
+		(void)declare_argument(decl, initflg);
+		break;
+	default:
+		lint_assert(dcs->d_ctx == AUTO);
+		if (renaming != NULL) {
+			/* symbol renaming can't be used on automatic variables */
+			error(311);
+			break;
+		}
+		declare_local(decl, initflg);
+		break;
+	}
+
+	if (initflg && !*current_initerr())
+		initstack_init();
 }
 
 /*
