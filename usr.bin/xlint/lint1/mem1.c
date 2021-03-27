@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.31 2021/03/27 11:54:35 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.32 2021/03/27 12:01:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.31 2021/03/27 11:54:35 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.32 2021/03/27 12:01:49 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,22 +51,20 @@ __RCSID("$NetBSD: mem1.c,v 1.31 2021/03/27 11:54:35 rillig Exp $");
 /*
  * Filenames allocated by fnalloc() and fnnalloc() are shared.
  */
-typedef struct fn {
+struct filename {
 	char	*fn_name;
 	size_t	fn_len;
 	int	fn_id;
-	struct	fn *fn_next;
-} fn_t;
+	struct	filename *fn_next;
+};
 
-static	fn_t	*fnames;
-
-static	fn_t	*srchfn(const char *, size_t);
+static struct filename *fnames;
 
 /* Find the given filename, or return NULL. */
-static fn_t *
+static struct filename *
 srchfn(const char *s, size_t len)
 {
-	fn_t	*fn;
+	struct filename *fn;
 
 	for (fn = fnames; fn != NULL; fn = fn->fn_next) {
 		if (fn->fn_len == len && memcmp(fn->fn_name, s, len) == 0)
@@ -75,19 +73,19 @@ srchfn(const char *s, size_t len)
 	return fn;
 }
 
-struct repl {
+struct filename_replacement {
 	char *orig;
 	char *repl;
 	size_t len;
-	struct repl *next;
+	struct filename_replacement *next;
 };
 
-struct repl *replist;
+static struct filename_replacement *replist;
 
 void
 add_directory_replacement(char *arg)
 {
-	struct repl *r = xmalloc(sizeof *r);
+	struct filename_replacement *r = xmalloc(sizeof *r);
 
 	r->orig = arg;
 	if ((r->repl = strchr(arg, '=')) == NULL)
@@ -105,7 +103,7 @@ const char *
 fnxform(const char *name, size_t len)
 {
 	static char buf[MAXPATHLEN];
-	struct repl *r;
+	struct filename_replacement *r;
 
 	for (r = replist; r != NULL; r = r->next)
 		if (r->len < len && memcmp(name, r->orig, r->len) == 0)
@@ -123,7 +121,7 @@ fnxform(const char *name, size_t len)
 const char *
 fnnalloc(const char *s, size_t len)
 {
-	fn_t	*fn;
+	struct filename *fn;
 
 	static	int	nxt_id = 0;
 
@@ -156,7 +154,7 @@ fnnalloc(const char *s, size_t len)
 int
 getfnid(const char *s)
 {
-	fn_t	*fn;
+	struct filename *fn;
 
 	if (s == NULL || (fn = srchfn(s, strlen(s))) == NULL)
 		return -1;
