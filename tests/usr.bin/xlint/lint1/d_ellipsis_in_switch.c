@@ -1,5 +1,7 @@
-/*	$NetBSD: d_ellipsis_in_switch.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_ellipsis_in_switch.c,v 1.4 2021/03/27 13:59:18 rillig Exp $	*/
 # 3 "d_ellipsis_in_switch.c"
+
+/* Using a range in a case label is a GCC extension. */
 
 int
 x(void)
