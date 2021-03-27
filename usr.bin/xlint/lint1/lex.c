@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.19 2021/03/27 12:32:19 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.20 2021/03/27 12:42:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.19 2021/03/27 12:32:19 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.20 2021/03/27 12:42:22 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -785,7 +785,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 			errno = 0;
 			break;
 		default:
-			LERROR("fcon(%s->%s)", cp, eptr);
+			INTERNAL_ERROR("fcon(%s->%s)", cp, eptr);
 		}
 	}
 	if (errno != 0)
@@ -1416,7 +1416,7 @@ getsym(sbuf_t *sb)
 
 	if (sym != NULL) {
 		if (sym->s_kind != symtyp)
-			LERROR("getsym(%d, %d)", sym->s_kind, symtyp);
+			INTERNAL_ERROR("getsym(%d, %d)", sym->s_kind, symtyp);
 		symtyp = FVFT;
 		freesb(sb);
 		return sym;

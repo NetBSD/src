@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.90 2021/03/27 12:32:19 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.91 2021/03/27 12:42:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -124,7 +124,7 @@ extern	void	warning(int, ...);
 extern	void	message(int, ...);
 extern	void	gnuism(int, ...);
 extern	void	c99ism(int, ...);
-extern	void	lerror(const char *, int, const char *, ...)
+extern	void	internal_error(const char *, int, const char *, ...)
      __attribute__((__noreturn__,__format__(__printf__, 3, 4)));
 extern	void	assert_failed(const char *, int, const char *, const char *)
 		__attribute__((__noreturn__));
