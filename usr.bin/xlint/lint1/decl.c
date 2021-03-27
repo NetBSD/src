@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.165 2021/03/27 22:04:39 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.166 2021/03/27 22:13:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.165 2021/03/27 22:04:39 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.166 2021/03/27 22:13:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1895,10 +1895,19 @@ enumeration_constant(sym_t *sym, int val, bool impl)
  * Process a single external declarator.
  */
 static void
-declare_extern(sym_t *dsym, bool initflg)
+declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 {
 	bool	dowarn, rval, redec;
 	sym_t	*rdsym;
+	char	*s;
+
+	if (renaming != NULL) {
+		lint_assert(dsym->s_rename == NULL);
+
+		s = getlblk(1, renaming->sb_len + 1);
+		(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
+		dsym->s_rename = s;
+	}
 
 	check_function_definition(dsym, true);
 
@@ -2017,36 +2026,22 @@ declare_extern(sym_t *dsym, bool initflg)
 void
 declare(sym_t *decl, bool initflg, sbuf_t *renaming)
 {
-	char *s;
 
-	switch (dcs->d_ctx) {
-	case EXTERN:
-		if (renaming != NULL) {
-			lint_assert(decl->s_rename == NULL);
-
-			s = getlblk(1, renaming->sb_len + 1);
-			(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
-			decl->s_rename = s;
-		}
-		declare_extern(decl, initflg);
-		break;
-	case ARG:
+	if (dcs->d_ctx == EXTERN) {
+		declare_extern(decl, initflg, renaming);
+	} else if (dcs->d_ctx == ARG) {
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on function arguments */
 			error(310);
-			break;
-		}
-		(void)declare_argument(decl, initflg);
-		break;
-	default:
+		} else
+			(void)declare_argument(decl, initflg);
+	} else {
 		lint_assert(dcs->d_ctx == AUTO);
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on automatic variables */
 			error(311);
-			break;
-		}
-		declare_local(decl, initflg);
-		break;
+		} else
+			declare_local(decl, initflg);
 	}
 
 	if (initflg && !*current_initerr())
