@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.141 2021/03/27 21:56:51 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.142 2021/03/27 22:35:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.141 2021/03/27 21:56:51 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.142 2021/03/27 22:35:10 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -481,13 +481,24 @@ end_initialization(void)
 	debug_step("end initialization");
 }
 
-void
-designation_add_name(sbuf_t *sb)
+static struct designator *
+designator_new(const char *name)
 {
-	struct designation *dd = current_designation_mod();
-
 	struct designator *d = xcalloc(1, sizeof *d);
-	d->name = sb->sb_name;
+	d->name = name;
+	return d;
+}
+
+static void
+designator_free(struct designator *d)
+{
+	free(d);
+}
+
+static void
+designation_add(struct designator *d)
+{
+	struct designation *dd = &current_init()->designation;
 
 	if (dd->head != NULL) {
 		dd->tail->next = d;
@@ -500,8 +511,23 @@ designation_add_name(sbuf_t *sb)
 	debug_designation();
 }
 
+void
+designation_add_name(sbuf_t *sb)
+{
+	designation_add(designator_new(sb->sb_name));
+}
+
 /* TODO: Move the function body up here, to avoid the forward declaration. */
 static void initstack_pop_nobrace(void);
+
+static void
+brace_level_set_array_dimension(int dim)
+{
+	debug_step("setting the array size to %d", dim);
+	brace_level_lvalue->bl_type->t_dim = dim;
+	debug_indent();
+	debug_brace_level(brace_level_rvalue);
+}
 
 /*
  * A sub-object of an array is initialized using a designator.  This does not
@@ -526,8 +552,11 @@ designation_add_subscript(range_t range)
 	struct brace_level *level;
 
 	debug_enter();
-	debug_step("subscript range is %zu ... %zu", range.lo, range.hi);
-	debug_initstack();
+	if (range.lo == range.hi)
+		debug_step("subscript is %zu", range.hi);
+	else
+		debug_step("subscript range is %zu ... %zu",
+		    range.lo, range.hi);
 
 	initstack_pop_nobrace();
 
@@ -535,10 +564,8 @@ designation_add_subscript(range_t range)
 	if (level->bl_array_of_unknown_size) {
 		/* No +1 here, extend_if_array_of_unknown_size will add it. */
 		int auto_dim = (int)range.hi;
-		if (auto_dim > level->bl_type->t_dim) {
-			debug_step("setting the array size to %d", auto_dim);
-			level->bl_type->t_dim = auto_dim;
-		}
+		if (auto_dim > level->bl_type->t_dim)
+			brace_level_set_array_dimension(auto_dim);
 	}
 
 	debug_leave();
@@ -548,17 +575,17 @@ designation_add_subscript(range_t range)
 static void
 designation_shift_level(void)
 {
-	/* TODO: remove direct access to 'init' */
-	lint_assert(init != NULL);
-	lint_assert(init->designation.head != NULL);
-	if (init->designation.head == init->designation.tail) {
-		free(init->designation.head);
-		init->designation.head = NULL;
-		init->designation.tail = NULL;
+	struct designation *des = current_designation_mod();
+	lint_assert(des->head != NULL);
+
+	if (des->head == des->tail) {
+		designator_free(des->head);
+		des->head = NULL;
+		des->tail = NULL;
 	} else {
-		struct designator *head = init->designation.head;
-		init->designation.head = init->designation.head->next;
-		free(head);
+		struct designator *head = des->head;
+		des->head = des->head->next;
+		designator_free(head);
 	}
 
 	debug_designation();
