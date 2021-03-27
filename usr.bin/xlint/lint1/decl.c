@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.162 2021/03/26 20:51:34 christos Exp $ */
+/* $NetBSD: decl.c,v 1.163 2021/03/27 11:08:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.162 2021/03/26 20:51:34 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.163 2021/03/27 11:08:00 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -148,7 +148,7 @@ duptyp(const type_t *tp)
 {
 	type_t	*ntp;
 
-	ntp = getblk(sizeof (type_t));
+	ntp = getblk(sizeof(*ntp));
 	*ntp = *tp;
 	return ntp;
 }
