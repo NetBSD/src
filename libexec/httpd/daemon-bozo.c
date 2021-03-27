@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon-bozo.c,v 1.17.8.2 2019/06/12 10:32:00 martin Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.17.8.3 2021/03/27 13:38:51 martin Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -62,26 +62,27 @@ static	void	sigchild(int);	/* SIGCHLD handler */
 #ifndef INFTIM
 #define INFTIM -1
 #endif
+#ifndef USE_ARG
+#define USE_ARG(x)	/*LINTED*/(void)&(x)
+#endif
 
 static const char* pidfile_path = NULL;
 static pid_t pidfile_pid = 0;
 
-/* ARGSUSED */
 static void
 sigchild(int signo)
 {
-
+	USE_ARG(signo);
 	while (waitpid(-1, NULL, WNOHANG) > 0)
 		/* nothing */;
 }
 
 /* Signal handler to exit in a controlled manner.  This ensures that
  * any atexit(3) handlers are properly executed. */
-/* ARGSUSED */
 BOZO_DEAD static void
 controlled_exit(int signo)
 {
-
+	USE_ARG(signo);
 	exit(EXIT_SUCCESS);
 }
 
@@ -128,8 +129,11 @@ bozo_daemon_init(bozohttpd_t *httpd)
 	const char	*portnum;
 	int e, i, on = 1;
 
-	if (!httpd->background)
+	if (!httpd->background && !httpd->foreground)
 		return;
+
+	if (!httpd->background)
+		httpd->background = 1;
 
 	portnum = (httpd->bindport) ? httpd->bindport : "http";
 	

@@ -1,4 +1,35 @@
-$NetBSD: CHANGES,v 1.25.4.3 2019/06/12 10:32:00 martin Exp $
+$NetBSD: CHANGES,v 1.25.4.4 2021/03/27 13:38:51 martin Exp $
+
+changes in bozohttpd 20210227:
+	o  new support for content types: .tar.bz2, .tar.xz, .tar.lz,
+	   .tar.zst, .tbz2, .txz, .tlz, .zipx, .xz, .zst, .sz, .lz, .lzma,
+	   .lzo, .7z, .lzo, .cab, .dmg, .jar, and .rar.  should fix
+	   netbsd PR#56026:
+	   MIME type of .tar.xz file on ny{cdn,ftp}.NetBSD.org is invalid
+
+changes in bozohttpd 20210211:
+	o  fix various NULL derefs from malformed headers.  mostly from
+	   <emily@ingalls.rocks>.
+	o  fix memory leaks in library interface: add bozo_cleanup().
+
+changes in bozohttpd 20201014:
+	o  also set -D_GNU_SOURCE in Makefile.boot.  from
+	   hadrien.lacour@posteo.net.
+	o  fix array size botch (assertion, not exploitable.)  from
+	   martin@netbsd.org.
+	o  also match %2F as well as %2f.  from leah@vuxu.org.
+	o  many manual and help fixes.  clean ups for higher lint levels,
+	   consistency/style clean ups.  various option fixes including made
+	   -f imply -b.  from <henrik@gulbra.net> for freebsd.
+
+changes in bozohttpd 20200912:
+	o  add .m4a and .m4v file extensions.
+
+changes in bozohttpd 20200820:
+	o  make this work on sun2 by reducing mmap window there.
+	o  fix SSL shutdown sequence.  from spz@netbsd.org.
+	o  add readme support to directory indexing.  from jmcneill@netbsd.org
+	o  add blocklist(8) support.  from jruoho@netbsd.org.
 
 changes in bozohttpd 20190228:
 	o  extend timeout facility to ssl and stop servers hanging forever
