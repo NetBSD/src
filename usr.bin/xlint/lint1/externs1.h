@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.89 2021/03/27 11:50:34 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.90 2021/03/27 12:32:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -93,10 +93,10 @@ extern	int	yylex(void);
 /*
  * mem1.c
  */
-extern	const	char *fnnalloc(const char *, size_t);
-extern	int	getfnid(const char *);
+extern	const	char *record_filename(const char *, size_t);
+extern	int	get_filename_id(const char *);
 extern	void	add_directory_replacement(char *);
-extern	const char *fnxform(const char *, size_t);
+extern	const char *transform_filename(const char *, size_t);
 
 extern	void	initmem(void);
 
