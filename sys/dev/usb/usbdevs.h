@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.727.2.6 2020/02/27 14:34:11 martin Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727.2.7 2021/03/27 13:10:43 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.6 2020/02/27 14:32:31 martin Exp
+ *	NetBSD: usbdevs,v 1.736.2.7 2021/03/27 13:09:46 martin Exp
  */
 
 /*-
@@ -1087,7 +1087,7 @@
 #define	USB_PRODUCT_BELKIN_F5D7051	0x7051		/* F5D7051 54g USB Network Adapter */
 #define	USB_PRODUCT_BELKIN_F5D7050A	0x705a		/* F5D705A 54g USB Network Adapter */
 #define	USB_PRODUCT_BELKIN_F5D7050C	0x705c		/* F5D705C 54g USB Network Adapter */
-#define	USB_PRODUCT_BELKIN_F5D7050E	0x705c		/* F5D705E 54g USB Network Adapter */
+#define	USB_PRODUCT_BELKIN_F5D7050E	0x705e		/* F5D705E 54g USB Network Adapter */
 #define	USB_PRODUCT_BELKIN_RT2870_1	0x8053		/* RT2870 */
 #define	USB_PRODUCT_BELKIN_RT2870_2	0x805c		/* RT2870 */
 #define	USB_PRODUCT_BELKIN_F5D8053V3	0x815c		/* F5D8053 v3 */
