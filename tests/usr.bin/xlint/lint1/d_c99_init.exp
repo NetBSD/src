@@ -4,3 +4,4 @@ d_c99_init.c(49): error: cannot initialize 'pointer to const void' from 'struct 
 d_c99_init.c(65): error: too many array initializers, expected 3 [173]
 d_c99_init.c(130): error: syntax error 'named member must only be used with struct/union' [249]
 d_c99_init.c(142): error: invalid initializer type int [176]
+d_c99_init.c(217): error: too many struct/union initializers [172]

@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.15 2021/03/27 16:13:41 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.16 2021/03/27 23:13:48 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -206,6 +206,15 @@ struct geometry geometry = {
 	.points[0][5][0] = {501, 502 },
 	/* TODO: expect+1: array index 2 must be between 0 and 1 */
 	.points[0][0][2] = {21, 22 },
+};
+
+struct ends_with_unnamed_bit_field {
+	int member;
+	int : 0;
+} ends_with_unnamed_bit_field = {
+	12345,
+	/* expect+1: too many struct/union initializers */
+	23456,
 };
 
 // See d_struct_init_nested.c for a more complicated example.
