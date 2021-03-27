@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.35 2021/03/27 12:17:22 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.36 2021/03/27 12:24:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.35 2021/03/27 12:17:22 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.36 2021/03/27 12:24:43 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,11 +87,14 @@ add_directory_replacement(char *arg)
 {
 	struct filename_replacement *r = xmalloc(sizeof *r);
 
-	r->orig = arg;
-	if ((r->repl = strchr(arg, '=')) == NULL)
+	char *sep = strchr(arg, '=');
+	if (sep == NULL)
 		err(1, "Bad replacement directory spec `%s'", arg);
-	r->orig_len = r->repl - r->orig;
-	*(r->repl)++ = '\0';
+	*sep = '\0';
+
+	r->orig = arg;
+	r->orig_len = sep - arg;
+	r->repl = sep + 1;
 	r->next = filename_replacements;
 	filename_replacements = r;
 }
@@ -117,7 +120,7 @@ fnxform(const char *name, size_t len)
  * If the filename is new, it is written to the output file.
  */
 const char *
-fnnalloc(const char *s, size_t len)
+fnnalloc(const char *s, size_t slen)
 {
 	const struct filename *existing_fn;
 	struct filename *fn;
@@ -127,15 +130,15 @@ fnnalloc(const char *s, size_t len)
 	if (s == NULL)
 		return NULL;
 
-	if ((existing_fn = search_filename(s, len)) != NULL)
+	if ((existing_fn = search_filename(s, slen)) != NULL)
 		return existing_fn->fn_name;
 
-	fn = xmalloc(sizeof *fn);
+	fn = xmalloc(sizeof(*fn));
 	/* Do not use strdup() because s is not NUL-terminated.*/
-	fn->fn_name = xmalloc(len + 1);
-	(void)memcpy(fn->fn_name, s, len);
-	fn->fn_name[len] = '\0';
-	fn->fn_len = len;
+	fn->fn_name = xmalloc(slen + 1);
+	(void)memcpy(fn->fn_name, s, slen);
+	fn->fn_name[slen] = '\0';
+	fn->fn_len = slen;
 	fn->fn_id = nxt_id++;
 	fn->fn_next = filenames;
 	filenames = fn;
