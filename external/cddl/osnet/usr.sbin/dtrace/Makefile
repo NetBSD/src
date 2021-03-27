@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2020/04/04 13:15:48 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2021/03/27 02:58:39 simonb Exp $
 
 # $FreeBSD: head/cddl/usr.sbin/dtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -39,13 +39,9 @@ COPTS.dtrace.c += -Wno-missing-field-initializers
 COPTS.dtrace.c += -Wno-format
 
 LDFLAGS+=	-pthread
+LDADD+=		   -lctf     -ldtrace     -lelf     -lproc     -ly     -ll     -lz
+DPADD+=		${LIBCTF} ${LIBDTRACE} ${LIBELF} ${LIBPROC} ${LIBY} ${LIBL} ${LIBZ}
 
-PROGDPLIBS+=	ctf ${.CURDIR}/../../lib/libctf
-PROGDPLIBS+=	dtrace ${.CURDIR}/../../lib/libdtrace
-PROGDPLIBS+=	elf ${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
-PROGDPLIBS+=	proc ${NETBSDSRCDIR}/external/bsd/libproc/lib
-PROGDPLIBS+=	y ${NETBSDSRCDIR}/lib/liby
-PROGDPLIBS+=	l ${NETBSDSRCDIR}/external/bsd/flex/lib
-PROGDPLIBS+=	z ${NETBSDSRCDIR}/lib/libz
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>
