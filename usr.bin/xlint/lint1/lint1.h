@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.89 2021/03/26 19:17:58 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.90 2021/03/27 12:42:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -442,7 +442,8 @@ typedef	struct err_set {
 	(((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS))) != 0)
 #define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
 
-#define LERROR(fmt, args...)	lerror(__FILE__, __LINE__, fmt, ##args)
+#define INTERNAL_ERROR(fmt, args...) \
+	internal_error(__FILE__, __LINE__, fmt, ##args)
 
 #define lint_assert(cond)						\
 	do {								\

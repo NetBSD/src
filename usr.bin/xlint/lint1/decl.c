@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.163 2021/03/27 11:08:00 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.164 2021/03/27 12:42:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.163 2021/03/27 11:08:00 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.164 2021/03/27 12:42:22 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -823,7 +823,7 @@ deftyp(void)
 		case LCOMPLEX:
 			break;
 		default:
-			LERROR("deftyp(%s)", tspec_name(t));
+			INTERNAL_ERROR("deftyp(%s)", tspec_name(t));
 		}
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 			dcs->d_terr = true;
@@ -909,7 +909,7 @@ length(const type_t *tp, const char *name)
 	switch (tp->t_tspec) {
 	case FUNC:
 		/* compiler takes size of function */
-		LERROR("%s", msgs[12]);
+		INTERNAL_ERROR("%s", msgs[12]);
 		/* NOTREACHED */
 	case STRUCT:
 	case UNION:
@@ -928,7 +928,7 @@ length(const type_t *tp, const char *name)
 	default:
 		elsz = size_in_bits(tp->t_tspec);
 		if (elsz <= 0)
-			LERROR("length(%d)", elsz);
+			INTERNAL_ERROR("length(%d)", elsz);
 		break;
 	}
 	return elem * elsz;

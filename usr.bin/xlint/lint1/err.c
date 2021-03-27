@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.95 2021/03/26 23:17:33 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.96 2021/03/27 12:42:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.95 2021/03/26 23:17:33 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.96 2021/03/27 12:42:22 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -480,7 +480,7 @@ void
 }
 
 void
-lerror(const char *file, int line, const char *msg, ...)
+internal_error(const char *file, int line, const char *msg, ...)
 {
 	va_list	ap;
 	const	char *fn;
