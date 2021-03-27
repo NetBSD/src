@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.30 2021/03/27 11:50:34 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.31 2021/03/27 11:54:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.30 2021/03/27 11:50:34 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.31 2021/03/27 11:54:35 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -130,22 +130,25 @@ fnnalloc(const char *s, size_t len)
 	if (s == NULL)
 		return NULL;
 
-	if ((fn = srchfn(s, len)) == NULL) {
-		fn = xmalloc(sizeof *fn);
-		/* Do not use strdup() because s is not NUL-terminated.*/
-		fn->fn_name = xmalloc(len + 1);
-		(void)memcpy(fn->fn_name, s, len);
-		fn->fn_name[len] = '\0';
-		fn->fn_len = len;
-		fn->fn_id = nxt_id++;
-		fn->fn_next = fnames;
-		fnames = fn;
-		/* Write id of this filename to the output file. */
-		outclr();
-		outint(fn->fn_id);
-		outchar('s');
-		outstrg(fnxform(fn->fn_name, fn->fn_len));
-	}
+	if ((fn = srchfn(s, len)) != NULL)
+		return fn->fn_name;
+
+	fn = xmalloc(sizeof *fn);
+	/* Do not use strdup() because s is not NUL-terminated.*/
+	fn->fn_name = xmalloc(len + 1);
+	(void)memcpy(fn->fn_name, s, len);
+	fn->fn_name[len] = '\0';
+	fn->fn_len = len;
+	fn->fn_id = nxt_id++;
+	fn->fn_next = fnames;
+	fnames = fn;
+
+	/* Write id of this filename to the output file. */
+	outclr();
+	outint(fn->fn_id);
+	outchar('s');
+	outstrg(fnxform(fn->fn_name, fn->fn_len));
+
 	return fn->fn_name;
 }
 
