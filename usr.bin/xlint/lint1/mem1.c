@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.33 2021/03/27 12:10:41 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.34 2021/03/27 12:14:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.33 2021/03/27 12:10:41 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.34 2021/03/27 12:14:49 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,15 +58,15 @@ struct filename {
 	struct	filename *fn_next;
 };
 
-static struct filename *fnames;
+static struct filename *filenames;	/* null-terminated array */
 
 /* Find the given filename, or return NULL. */
 static const struct filename *
 search_filename(const char *s, size_t len)
 {
-	struct filename *fn;
+	const struct filename *fn;
 
-	for (fn = fnames; fn != NULL; fn = fn->fn_next) {
+	for (fn = filenames; fn != NULL; fn = fn->fn_next) {
 		if (fn->fn_len == len && memcmp(fn->fn_name, s, len) == 0)
 			break;
 	}
@@ -80,7 +80,7 @@ struct filename_replacement {
 	struct filename_replacement *next;
 };
 
-static struct filename_replacement *replist;
+static struct filename_replacement *filename_replacements;
 
 void
 add_directory_replacement(char *arg)
@@ -92,20 +92,17 @@ add_directory_replacement(char *arg)
 		err(1, "Bad replacement directory spec `%s'", arg);
 	r->len = r->repl - r->orig;
 	*(r->repl)++ = '\0';
-	if (replist == NULL) {
-		r->next = NULL;
-	} else
-		r->next = replist;
-	replist = r;
+	r->next = filename_replacements;
+	filename_replacements = r;
 }
 
 const char *
 fnxform(const char *name, size_t len)
 {
 	static char buf[MAXPATHLEN];
-	struct filename_replacement *r;
+	const struct filename_replacement *r;
 
-	for (r = replist; r != NULL; r = r->next)
+	for (r = filename_replacements; r != NULL; r = r->next)
 		if (r->len < len && memcmp(name, r->orig, r->len) == 0)
 			break;
 	if (r == NULL)
@@ -139,8 +136,8 @@ fnnalloc(const char *s, size_t len)
 	fn->fn_name[len] = '\0';
 	fn->fn_len = len;
 	fn->fn_id = nxt_id++;
-	fn->fn_next = fnames;
-	fnames = fn;
+	fn->fn_next = filenames;
+	filenames = fn;
 
 	/* Write id of this filename to the output file. */
 	outclr();
