@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.35 2021/03/27 13:28:03 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.36 2021/03/27 13:59:18 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -128,57 +128,43 @@ test_case d_pr_22119
 test_case d_struct_init_nested
 
 test_case d_cast_init
-test_case d_cast_init2		"Checks cast initialization as the rhs of a" \
-				"- operand"
-test_case d_cast_lhs		"Checks whether pointer casts are valid lhs" \
-				"lvalues"
+test_case d_cast_init2
+test_case d_cast_lhs
 
-test_case d_gcc_func		"Checks GCC __FUNCTION__"
-test_case d_c99_func		"Checks C99 __func__"
+test_case d_gcc_func
+test_case d_c99_func
 
-test_case d_gcc_variable_array_init "Checks GCC variable array initializers"
+test_case d_gcc_variable_array_init
 test_case d_c9x_array_init
 test_case d_c99_decls_after_stmt
 test_case d_c99_decls_after_stmt3
-test_case d_nolimit_init	"Checks no limit initializers"
+test_case d_nolimit_init
 test_case d_zero_sized_arrays
 
 test_case d_compound_literals1
 test_case d_compound_literals2
 test_case d_gcc_compound_statements1
-test_case d_gcc_compound_statements2 "Checks GCC compound statements with" \
-				"non-expressions"
-test_case d_gcc_compound_statements3 "Checks GCC compound statements with" \
-				"void type"
+test_case d_gcc_compound_statements2
+test_case d_gcc_compound_statements3
+
 # XXX: Because of polymorphic __builtin_isnan and expression has null effect
 # test_case gcc_extension "Checks GCC __extension__ and __typeof__"
 
-test_case d_cvt_in_ternary	"Checks CVT nodes handling in ?"
-test_case d_cvt_constant		"Checks constant conversion"
-test_case d_ellipsis_in_switch	"Checks ellipsis in switch()"
-test_case d_c99_complex_num	"Checks C99 complex numbers"
-test_case d_c99_complex_split	"Checks C99 complex access"
+test_case d_cvt_in_ternary
+test_case d_cvt_constant
+test_case d_ellipsis_in_switch
+test_case d_c99_complex_num
+test_case d_c99_complex_split
 test_case d_c99_for_loops
-test_case d_alignof		"Checks __alignof__"
-test_case d_shift_to_narrower_type "Checks that type shifts that result in" \
-				"narrower types do not produce warnings"
-
-test_case d_constant_conv1	"Checks failing on information-losing" \
-				"constant conversion in argument lists"
-test_case d_constant_conv2	"Checks failing on information-losing" \
-				"constant conversion in argument lists"
-
-test_case d_type_conv1		"Checks failing on information-losing" \
-				"type conversion in argument lists"
-test_case d_type_conv2		"Checks failing on information-losing" \
-				"type conversion in argument lists"
-test_case d_type_conv3		"Checks failing on information-losing" \
-				"type conversion in argument lists"
-
+test_case d_alignof
+test_case d_shift_to_narrower_type
+test_case d_constant_conv1
+test_case d_constant_conv2
+test_case d_type_conv1
+test_case d_type_conv2
+test_case d_type_conv3
 test_case d_incorrect_array_size
-
-test_case d_long_double_int	"Checks for confusion of 'long double' with" \
-				"'long int'; PR bin/39639"
+test_case d_long_double_int
 
 test_case all_messages
 all_messages_body()
