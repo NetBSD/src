@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.18 2021/03/27 11:08:00 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.19 2021/03/27 12:32:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.18 2021/03/27 11:08:00 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.19 2021/03/27 12:32:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1127,7 +1127,7 @@ lex_directive(const char *yytext)
 			fn = "{standard input}";
 			fnl = 16;			/* strlen (fn) */
 		}
-		curr_pos.p_file = fnnalloc(fn, fnl);
+		curr_pos.p_file = record_filename(fn, fnl);
 		/*
 		 * If this is the first directive, the name is the name
 		 * of the C source file as specified at the command line.
@@ -1135,7 +1135,7 @@ lex_directive(const char *yytext)
 		 */
 		if (first) {
 			csrc_pos.p_file = curr_pos.p_file;
-			outsrc(fnxform(curr_pos.p_file,
+			outsrc(transform_filename(curr_pos.p_file,
 			    strlen(curr_pos.p_file)));
 			first = false;
 		}
