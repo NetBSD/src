@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.33 2021/02/27 14:22:07 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.34 2021/03/27 12:15:09 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,8 +73,6 @@ void	pic_mark_pending(struct pic_softc *pic, int irq);
 void	pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is);
 uint32_t pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	    uint32_t pending);
-void	pic_list_deliver_irqs(struct cpu_info *, register_t, int, void *);
-void	pic_list_unblock_irqs(struct cpu_info *);
 #endif /* __HAVE_PIC_PENDING_INTRS */
 void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	    int (*func)(void *), void *arg, const char *);
@@ -106,8 +104,6 @@ void	intr_ipi_send(const kcpuset_t *, u_long ipi);
 
 #include <sys/evcnt.h>
 #include <sys/percpu.h>
-
-#include <arm/cpufunc.h>
 
 #ifndef PIC_MAXPICS
 #define PIC_MAXPICS	32
@@ -178,30 +174,22 @@ struct pic_ops {
 #endif
 };
 
-/* Using an inline causes catch-22 problems with cpu.h */
 #ifdef __HAVE_PIC_SET_PRIORITY
 /*
  * This is used to update a hardware pic with a value corresponding
  * to the ipl being set.
  */
-#define pic_set_priority(ci, newipl)					\
-	do {								\
-		register_t __psw = cpsid(I32_bit);			\
-		(ci)->ci_cpl = (newipl);				\
-		if (__predict_true(pic_list[0] != NULL)) {		\
-			(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl); \
-		}							\
-		if ((__psw & I32_bit) == 0) {				\
-			cpsie(I32_bit);					\
-		}							\
-	} while (0)
+struct cpu_info;
+void	pic_set_priority(struct cpu_info *, int);
 #else
-#define	pic_set_priority(ci, newipl)		((void)((ci)->ci_cpl = (newipl)))
+/* Using an inline causes catch-22 problems with cpu.h */
+#define	pic_set_priority(ci, newipl)	((void)((ci)->ci_cpl = (newipl)))
 #endif
 
 #define	PIC_IRQBASE_ALLOC	(-2)
 
 int	pic_add(struct pic_softc *, int);
+void	pic_do_pending_int(void);
 #ifdef MULTIPROCESSOR
 int	pic_ipi_ast(void *);
 int	pic_ipi_nop(void *);
