@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.13 2021/03/23 23:12:21 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.14 2021/03/27 15:49:33 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -174,6 +174,35 @@ struct point points[] = {
 		sizeof points,
 		4
 	}
+};
+
+
+struct triangle {
+	struct point points[3];
+};
+
+struct pentagon {
+	struct point points[5];
+};
+
+struct geometry {
+	struct pentagon pentagons[6];
+	struct triangle triangles[10];
+	struct point points[3][5][2];
+};
+
+/*
+ * Initialization of a complex struct containing nested arrays and nested
+ * structs.
+ */
+struct geometry geometry = {
+    // FIXME: assertion "istk->i_type != NULL" failed in initstack_push
+    //.pentagons[0].points[4].x = 1,
+    .points[0][0][0] = { 0, 0 },
+    .points[2][4][1] = {301, 302 },
+    .points[3][0][0] = {3001, 3002 },
+    .points[0][5][0] = {501, 502 },
+    .points[0][0][2] = {21, 22 },
 };
 
 // See d_struct_init_nested.c for a more complicated example.
