@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.14 2021/03/27 15:49:33 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.15 2021/03/27 16:13:41 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -196,13 +196,16 @@ struct geometry {
  * structs.
  */
 struct geometry geometry = {
-    // FIXME: assertion "istk->i_type != NULL" failed in initstack_push
-    //.pentagons[0].points[4].x = 1,
-    .points[0][0][0] = { 0, 0 },
-    .points[2][4][1] = {301, 302 },
-    .points[3][0][0] = {3001, 3002 },
-    .points[0][5][0] = {501, 502 },
-    .points[0][0][2] = {21, 22 },
+	// FIXME: assertion "istk->i_type != NULL" failed in initstack_push
+	//.pentagons[0].points[4].x = 1,
+	.points[0][0][0] = { 0, 0 },
+	.points[2][4][1] = {301, 302 },
+	/* TODO: expect+1: array index 3 must be between 0 and 2 */
+	.points[3][0][0] = {3001, 3002 },
+	/* TODO: expect+1: array index 5 must be between 0 and 4 */
+	.points[0][5][0] = {501, 502 },
+	/* TODO: expect+1: array index 2 must be between 0 and 1 */
+	.points[0][0][2] = {21, 22 },
 };
 
 // See d_struct_init_nested.c for a more complicated example.
