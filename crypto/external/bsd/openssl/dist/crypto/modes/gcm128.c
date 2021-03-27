@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,12 @@
 #include <openssl/crypto.h>
 #include "modes_local.h"
 #include <string.h>
+
+#if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)
+typedef size_t size_t_aX __attribute((__aligned__(1)));
+#else
+typedef size_t size_t_aX;
+#endif
 
 #if defined(BSWAP4) && defined(STRICT_ALIGNMENT)
 /* redefine, because alignment is ensured */
@@ -668,6 +674,7 @@ void gcm_ghash_4bit_x86(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #  if __ARM_MAX_ARCH__>=7
 #   define GHASH_ASM_ARM
 #   define GCM_FUNCREF_4BIT
+#   define PMULL_CAPABLE        (OPENSSL_armcap_P & ARMV8_PMULL)
 #   if defined(__arm__) || defined(__arm)
 #    define NEON_CAPABLE        (OPENSSL_armcap_P & ARMV7_NEON)
 #   endif
@@ -675,25 +682,20 @@ void gcm_init_neon(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_neon(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_neon(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                     size_t len);
-#   if __ARM_MAX_ARCH__>=8
-#    define PMULL_CAPABLE        (OPENSSL_armcap_P & ARMV8_PMULL)
 void gcm_init_v8(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_v8(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                   size_t len);
-#   endif
 #  endif
 # elif defined(__sparc__) || defined(__sparc)
 #  include "sparc_arch.h"
-#  if defined(__arch64__)
-#   define GHASH_ASM_SPARC
-#   define GCM_FUNCREF_4BIT
+#  define GHASH_ASM_SPARC
+#  define GCM_FUNCREF_4BIT
 extern unsigned int OPENSSL_sparcv9cap_P[];
 void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                     size_t len);
-#  endif
 # elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 #  include "ppc_arch.h"
 #  define GHASH_ASM_PPC
@@ -1084,8 +1086,8 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                 size_t j = GHASH_CHUNK;
 
                 while (j) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1111,8 +1113,8 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                 size_t j = i;
 
                 while (len >= 16) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1322,8 +1324,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
                 GHASH(ctx, in, GHASH_CHUNK);
                 while (j) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1347,8 +1349,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
             if ((i = (len & (size_t)-16))) {
                 GHASH(ctx, in, i);
                 while (len >= 16) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1383,8 +1385,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
                 else
                     ctx->Yi.d[3] = ctr;
                 for (i = 0; i < 16 / sizeof(size_t); ++i) {
-                    size_t c = in[i];
-                    out[i] = c ^ ctx->EKi.t[i];
+                    size_t c = in_t[i];
+                    out_t[i] = c ^ ctx->EKi.t[i];
                     ctx->Xi.t[i] ^= c;
                 }
                 GCM_MUL(ctx);
