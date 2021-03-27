@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.39 2021/03/26 20:31:07 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.40 2021/03/27 11:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.39 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.40 2021/03/27 11:50:34 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 			return 0;
 
 		case 'R':
-			fnaddreplsrcdir(optarg);
+			add_directory_replacement(optarg);
 			break;
 
 		case 'X':
