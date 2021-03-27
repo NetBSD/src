@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.64 2020/01/05 07:12:05 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.65 2021/03/27 18:55:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.64 2020/01/05 07:12:05 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.65 2021/03/27 18:55:02 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -652,12 +652,13 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
  *       '!' could never be invoked
  */
 int
-fn_complete(EditLine *el,
-	char *(*complet_func)(const char *, int),
-	char **(*attempted_completion_function)(const char *, int, int),
-	const wchar_t *word_break, const wchar_t *special_prefixes,
-	const char *(*app_func)(const char *), size_t query_items,
-	int *completion_type, int *over, int *point, int *end)
+fn_complete2(EditLine *el,
+    char *(*complete_func)(const char *, int),
+    char **(*attempted_completion_function)(const char *, int, int),
+    const wchar_t *word_break, const wchar_t *special_prefixes,
+    const char *(*app_func)(const char *), size_t query_items,
+    int *completion_type, int *over, int *point, int *end,
+    unsigned int flags)
 {
 	const LineInfoW *li;
 	wchar_t *temp;
@@ -675,8 +676,8 @@ fn_complete(EditLine *el,
 	if (completion_type != NULL)
 		*completion_type = what_to_do;
 
-	if (!complet_func)
-		complet_func = fn_filename_completion_function;
+	if (!complete_func)
+		complete_func = fn_filename_completion_function;
 	if (!app_func)
 		app_func = append_char_function;
 
@@ -703,7 +704,7 @@ fn_complete(EditLine *el,
 	if (!attempted_completion_function ||
 	    (over != NULL && !*over && !matches))
 		matches = completion_matches(
-		    ct_encode_string(temp, &el->el_scratch), complet_func);
+		    ct_encode_string(temp, &el->el_scratch), complete_func);
 
 	if (over != NULL)
 		*over = 0;
@@ -720,7 +721,7 @@ fn_complete(EditLine *el,
 
 	if (matches[0][0] != '\0') {
 		el_deletestr(el, (int)len);
-		if (!attempted_completion_function)
+		if (flags & FN_QUOTE_MATCH)
 			completion = escape_filename(el, matches[0],
 			    single_match, app_func);
 		else
@@ -815,6 +816,20 @@ fn_complete(EditLine *el,
 out:
 	el_free(temp);
 	return retval;
+}
+
+int
+fn_complete(EditLine *el,
+    char *(*complete_func)(const char *, int),
+    char **(*attempted_completion_function)(const char *, int, int),
+    const wchar_t *word_break, const wchar_t *special_prefixes,
+    const char *(*app_func)(const char *), size_t query_items,
+    int *completion_type, int *over, int *point, int *end)
+{
+	return fn_complete2(el, complete_func, attempted_completion_function,
+	    word_break, special_prefixes, app_func, query_items,
+	    completion_type, over, point, end,
+	    attempted_completion_function ? 0 : FN_QUOTE_MATCH);
 }
 
 /*
