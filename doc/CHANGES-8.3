@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.80 2021/03/22 18:08:34 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.81 2021/03/27 13:41:50 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1800,4 +1800,38 @@ sys/net/if_l2tp.h				1.10
 
 	Fix l2tp(4) ioctl type.
 	[knakahara, ticket #1665]
+
+sys/dev/usb/usbdevs				1.793
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	PR 56056: fix usb device id for BELKIN F5D7050E.
+	[nia, ticket #1667]
+
+Makefile			1.30-1.31 (patch)
+Makefile.boot			1.7-1.9 (patch)
+auth-bozo.c			1.25-1.26 (patch)
+bozohttpd.8			1.80-1.87 (patch)
+bozohttpd.c			1.114-1.123,1.125-1.128 (patch)
+bozohttpd.h			1.61-1.68 (patch)
+cgi-bozo.c			1.49-1.53 (patch)
+content-bozo.c			1.17-1.20 (patch)
+daemon-bozo.c			1-.22 (patch)
+dir-index-bozo.c		1.33-1.34 (patch)
+main.c				1.23-1.27 (patch)
+printenv.lua			1.4-1.5 (patch)
+ssl-bozo.c			1.27-1.29 (patch)
+libbozohttpd/libbozohttpd.3	1.5-1.6 (patch)
+small/Makefile			1.4 (patch)
+testsuite/Makefile		1.14 (patch)
+testsuite/t16.in		1.1 (patch)
+testsuite/t16.out		1.1 (patch)
+testsuite/t17.in		1.1 (patch)
+testsuite/t17.out		1.1 (patch)
+testsuite/t18.in		1.1 (patch)
+testsuite/t18.out		1.1 (patch)
+
+	Update bozohttpd to 20210227.
+	[mrg, ticket #1668]
+
 
