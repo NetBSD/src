@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.59 2021/03/22 18:24:14 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.60 2021/03/27 13:02:49 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1881,4 +1881,11 @@ external/cddl/osnet/dist/uts/common/fs/zfs/sys/zfs_context.h 1.3
 
 	PR 55042: avoid a panic when creating a directory on a NFS served ZFS.
 	[hannken, ticket #1235]
+
+sys/dev/usb/usbdevs				1.793
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	PR 56056: fix usb device id for BELKIN F5D7050E.
+	[nia, ticket #1236]
 
