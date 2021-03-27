@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.142 2021/03/27 22:35:10 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.143 2021/03/27 22:53:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.142 2021/03/27 22:35:10 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.143 2021/03/27 22:53:10 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -520,6 +520,36 @@ designation_add_name(sbuf_t *sb)
 /* TODO: Move the function body up here, to avoid the forward declaration. */
 static void initstack_pop_nobrace(void);
 
+static struct brace_level *
+brace_level_new(type_t *type, type_t *subtype, int remaining)
+{
+	struct brace_level *level = xcalloc(1, sizeof(*level));
+
+	level->bl_type = type;
+	level->bl_subtype = subtype;
+	level->bl_remaining = remaining;
+
+	return level;
+}
+
+static const sym_t *
+brace_level_look_up_member(const char *name)
+{
+	const type_t *tp = current_brace_level()->bl_type;
+	const sym_t *m;
+
+	lint_assert(tp->t_tspec == STRUCT || tp->t_tspec == UNION);
+
+	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
+		if (m->s_bitfield && m->s_name == unnamed)
+			continue;
+		if (strcmp(m->s_name, name) == 0)
+			return m;
+	}
+
+	return NULL;
+}
+
 static void
 brace_level_set_array_dimension(int dim)
 {
@@ -600,7 +630,6 @@ designation_shift_level(void)
 void
 initstack_init(void)
 {
-	struct brace_level *level;
 
 	if (initerr)
 		return;
@@ -615,9 +644,7 @@ initstack_init(void)
 		initsym->s_type = duptyp(initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	level = brace_level_lvalue = xcalloc(1, sizeof *brace_level_lvalue);
-	level->bl_subtype = initsym->s_type;
-	level->bl_remaining = 1;
+	brace_level_lvalue = brace_level_new(NULL, initsym->s_type, 1);
 
 	debug_initstack();
 	debug_leave();
@@ -628,7 +655,7 @@ static void
 initstack_pop_item_named_member(const char *name)
 {
 	struct brace_level *level = brace_level_lvalue;
-	sym_t *m;
+	const sym_t *m;
 
 	/*
 	 * TODO: fix wording of the debug message; this doesn't seem to be
@@ -644,29 +671,23 @@ initstack_pop_item_named_member(const char *name)
 		return;
 	}
 
-	for (m = level->bl_type->t_str->sou_first_member;
-	     m != NULL; m = m->s_next) {
+	m = brace_level_look_up_member(name);
+	if (m == NULL) {
+		/* TODO: add type information to the message */
+		/* undefined struct/union member: %s */
+		error(101, name);
 
-		if (m->s_bitfield && m->s_name == unnamed)
-			continue;
-
-		if (strcmp(m->s_name, name) == 0) {
-			debug_step("found matching member");
-			level->bl_subtype = m->s_type;
-			/* XXX: why ++? */
-			level->bl_remaining++;
-			/* XXX: why is bl_seen_named_member not set? */
-			designation_shift_level();
-			return;
-		}
+		designation_shift_level();
+		level->bl_seen_named_member = true;
+		return;
 	}
 
-	/* TODO: add type information to the message */
-	/* undefined struct/union member: %s */
-	error(101, name);
-
+	debug_step("found matching member");
+	level->bl_subtype = m->s_type;
+	/* XXX: why ++? */
+	level->bl_remaining++;
+	/* XXX: why is bl_seen_named_member not set? */
 	designation_shift_level();
-	level->bl_seen_named_member = true;
 }
 
 /* TODO: think of a better name than 'pop' */
