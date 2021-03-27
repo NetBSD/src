@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.139 2021/03/27 19:48:00 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.140 2021/03/27 19:59:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.139 2021/03/27 19:48:00 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.140 2021/03/27 19:59:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -215,11 +215,11 @@ struct brace_level {
  *
  * See also: C99 6.7.8 "Initialization"
  */
-typedef struct designator {
+struct designator {
 	const char *name;		/* for struct and union */
 	/* TODO: add 'subscript' for arrays */
 	struct designator *next;
-} designator;
+};
 
 /*
  * The optional designation for an initializer, saying which sub-object to
@@ -228,10 +228,10 @@ typedef struct designator {
  *
  * See also: C99 6.7.8 "Initialization"
  */
-typedef struct {
-	designator *head;
-	designator *tail;
-} designation;
+struct designation {
+	struct designator *head;
+	struct designator *tail;
+};
 
 struct initialization {
 	/*
@@ -252,7 +252,7 @@ struct initialization {
 	 * The C99 designator, if any, for the current initialization
 	 * expression.
 	 */
-	designation designation;
+	struct designation designation;
 
 	struct initialization *next;
 };
@@ -283,13 +283,13 @@ current_initsym(void)
 	return &current_init()->initsym;
 }
 
-static designation *
+static struct designation *
 current_designation_mod(void)
 {
 	return &current_init()->designation;
 }
 
-static designation
+static struct designation
 current_designation(void)
 {
 	return *current_designation_mod();
@@ -383,7 +383,7 @@ debug_leave(const char *func)
 static void
 debug_designation(void)
 {
-	const designator *head = current_designation().head, *p;
+	const struct designator *head = current_designation().head, *p;
 	if (head == NULL)
 		return;
 
@@ -478,9 +478,9 @@ end_initialization(void)
 void
 designation_add_name(sbuf_t *sb)
 {
-	designation *dd = current_designation_mod();
+	struct designation *dd = current_designation_mod();
 
-	designator *d = xcalloc(1, sizeof *d);
+	struct designator *d = xcalloc(1, sizeof *d);
 	d->name = sb->sb_name;
 
 	if (dd->head != NULL) {
@@ -550,7 +550,7 @@ designation_shift_level(void)
 		init->designation.head = NULL;
 		init->designation.tail = NULL;
 	} else {
-		designator *head = init->designation.head;
+		struct designator *head = init->designation.head;
 		init->designation.head = init->designation.head->next;
 		free(head);
 	}
@@ -666,7 +666,7 @@ static void
 initstack_pop_item(void)
 {
 	struct brace_level *level;
-	designator *first_designator;
+	struct designator *first_designator;
 
 	debug_enter();
 
