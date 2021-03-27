@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.251 2021/03/26 23:17:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.252 2021/03/27 11:08:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.251 2021/03/26 23:17:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.252 2021/03/27 11:08:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3896,7 +3896,7 @@ display_expression(const tnode_t *tn, int offs)
 		    (long)uq & 0xffffffffl);
 	} else if (tn->tn_op == CON) {
 		lint_assert(tn->tn_type->t_tspec == PTR);
-		(void)printf("0x%0*lx ", (int)(sizeof (void *) * CHAR_BIT / 4),
+		(void)printf("0x%0*lx ", (int)(sizeof(void *) * CHAR_BIT / 4),
 			     (u_long)tn->tn_val->v_quad);
 	} else if (tn->tn_op == STRING) {
 		if (tn->tn_string->st_tspec == CHAR) {
