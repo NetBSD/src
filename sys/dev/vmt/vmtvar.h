@@ -1,4 +1,4 @@
-/* $NetBSD: vmtvar.h,v 1.1 2020/10/27 08:57:11 ryo Exp $ */
+/* $NetBSD: vmtvar.h,v 1.2 2021/03/27 21:23:14 ryo Exp $ */
 /* NetBSD: vmt.c,v 1.15 2016/11/10 03:32:04 ozaki-r Exp */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
@@ -25,34 +25,26 @@
 #include <sys/uuid.h>
 #include <dev/sysmon/sysmonvar.h>
 
-/* XXX: depend on little-endian */
-/* A register. */
-union vm_reg {
-	struct {
-		uint16_t low;
-		uint16_t high;
-	} part;
-	uint32_t word;
-#if defined(__amd64__) || defined(__aarch64__)
-	struct {
-		uint32_t low;
-		uint32_t high;
-	} words;
-	uint64_t quad;
-#endif
-} __packed;
-
 /* A register frame. */
 /* XXX 'volatile' as a workaround because BACKDOOR_OP is likely broken */
 struct vm_backdoor {
-	volatile union vm_reg eax;
-	volatile union vm_reg ebx;
-	volatile union vm_reg ecx;
-	volatile union vm_reg edx;
-	volatile union vm_reg esi;
-	volatile union vm_reg edi;
-	volatile union vm_reg ebp;
-} __packed;
+	volatile register_t eax;
+	volatile register_t ebx;
+	volatile register_t ecx;
+	volatile register_t edx;
+	volatile register_t esi;
+	volatile register_t edi;
+	volatile register_t ebp;
+};
+
+#define VM_REG_LOW_MASK		__BITS(15,0)
+#define VM_REG_HIGH_MASK	__BITS(31,16)
+#define VM_REG_WORD_MASK	__BITS(31,0)
+#define VM_REG_CMD(hi, low)	\
+	(__SHIFTIN((hi), VM_REG_HIGH_MASK) | __SHIFTIN((low), VM_REG_LOW_MASK))
+#define VM_REG_CMD_RPC(cmd)	VM_REG_CMD((cmd), VM_CMD_RPC)
+#define VM_REG_PORT_CMD(cmd)	VM_REG_CMD((cmd), VM_PORT_CMD)
+#define VM_REG_PORT_RPC(cmd)	VM_REG_CMD((cmd), VM_PORT_RPC)
 
 /* RPC context. */
 struct vm_rpc {
@@ -203,19 +195,19 @@ vmt_hvcall(uint8_t cmd, u_int regs[6])
 	struct vm_backdoor frame;
 
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word = VM_MAGIC;
-	frame.ebx.word = UINT_MAX;
-	frame.ecx.part.low = cmd;
-	frame.edx.part.low = VM_PORT_CMD;
+	frame.eax = VM_MAGIC;
+	frame.ebx = UINT_MAX;
+	frame.ecx = VM_REG_CMD(0, cmd);
+	frame.edx = VM_REG_PORT_CMD(0);
 
 	BACKDOOR_OP(BACKDOOR_OP_CMD, &frame);
 
-	regs[0] = frame.eax.word;
-	regs[1] = frame.ebx.word;
-	regs[2] = frame.ecx.word;
-	regs[3] = frame.edx.word;
-	regs[4] = frame.esi.word;
-	regs[5] = frame.edi.word;
+	regs[0] = __SHIFTOUT(frame.eax, VM_REG_WORD_MASK);
+	regs[1] = __SHIFTOUT(frame.ebx, VM_REG_WORD_MASK);
+	regs[2] = __SHIFTOUT(frame.ecx, VM_REG_WORD_MASK);
+	regs[3] = __SHIFTOUT(frame.edx, VM_REG_WORD_MASK);
+	regs[4] = __SHIFTOUT(frame.esi, VM_REG_WORD_MASK);
+	regs[5] = __SHIFTOUT(frame.edi, VM_REG_WORD_MASK);
 }
 
 #endif /* _DEV_VMT_VMTVAR_H_ */

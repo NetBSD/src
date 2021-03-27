@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.2 2020/11/17 17:59:31 ryo Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.3 2021/03/27 21:23:14 ryo Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -90,12 +90,10 @@ vmt_probe_cmd(struct vm_backdoor *frame, uint16_t cmd)
 {
 	memset(frame, 0, sizeof(*frame));
 
-	(frame->eax).word = VM_MAGIC;
-	(frame->ebx).word = ~VM_MAGIC;
-	(frame->ecx).part.low = cmd;
-	(frame->ecx).part.high = 0xffff;
-	(frame->edx).part.low  = VM_PORT_CMD;
-	(frame->edx).part.high = 0;
+	frame->eax = VM_MAGIC;
+	frame->ebx = ~VM_MAGIC & VM_REG_WORD_MASK;
+	frame->ecx = VM_REG_CMD(0xffff, cmd);
+	frame->edx = VM_REG_CMD(0, VM_PORT_CMD);
 
 	vm_cmd(frame);
 }
@@ -103,26 +101,18 @@ vmt_probe_cmd(struct vm_backdoor *frame, uint16_t cmd)
 bool
 vmt_probe(void)
 {
-#if BYTE_ORDER == BIG_ENDIAN
-	/*
-	 * XXX: doesn't support in big-endian.
-	 * vmt has some code depends on little-endian.
-	 */
-	return false;
-#else
 	struct vm_backdoor frame;
 
 	vmt_probe_cmd(&frame, VM_CMD_GET_VERSION);
-	if (frame.eax.word == 0xffffffff ||
-	    frame.ebx.word != VM_MAGIC)
+	if (__SHIFTOUT(frame.eax, VM_REG_WORD_MASK) == 0xffffffff ||
+	    __SHIFTOUT(frame.ebx, VM_REG_WORD_MASK) != VM_MAGIC)
 		return false;
 
 	vmt_probe_cmd(&frame, VM_CMD_GET_SPEED);
-	if (frame.eax.word == VM_MAGIC)
+	if (__SHIFTOUT(frame.eax, VM_REG_WORD_MASK) == VM_MAGIC)
 		return false;
 
 	return true;
-#endif
 }
 
 void
@@ -137,8 +127,8 @@ vmt_common_attach(struct vmt_softc *sc)
 
 	/* check again */
 	vmt_probe_cmd(&frame, VM_CMD_GET_VERSION);
-	if (frame.eax.word == 0xffffffff ||
-	    frame.ebx.word != VM_MAGIC) {
+	if (__SHIFTOUT(frame.eax, VM_REG_WORD_MASK) == 0xffffffff ||
+	    __SHIFTOUT(frame.ebx, VM_REG_WORD_MASK) != VM_MAGIC) {
 		aprint_error_dev(self, "failed to get VMware version\n");
 		return;
 	}
@@ -149,16 +139,17 @@ vmt_common_attach(struct vmt_softc *sc)
 		uint32_t u;
 
 		vmt_probe_cmd(&frame, VM_CMD_GET_BIOS_UUID);
-		uuid.time_low = htobe32(frame.eax.word);
-		u = htobe32(frame.ebx.word);
+		uuid.time_low =
+		    bswap32(__SHIFTOUT(frame.eax, VM_REG_WORD_MASK));
+		u = bswap32(__SHIFTOUT(frame.ebx, VM_REG_WORD_MASK));
 		uuid.time_mid = u >> 16;
 		uuid.time_hi_and_version = u;
-		u = htobe32(frame.ecx.word);
+		u = bswap32(__SHIFTOUT(frame.ecx, VM_REG_WORD_MASK));
 		uuid.clock_seq_hi_and_reserved = u >> 24;
 		uuid.clock_seq_low = u >> 16;
 		uuid.node[0] = u >> 8;
 		uuid.node[1] = u;
-		u = htobe32(frame.edx.word);
+		u = bswap32(__SHIFTOUT(frame.edx, VM_REG_WORD_MASK));
 		uuid.node[2] = u >> 24;
 		uuid.node[3] = u >> 16;
 		uuid.node[4] = u >> 8;
@@ -421,14 +412,16 @@ vmt_sync_guest_clock(struct vmt_softc *sc)
 	struct timespec ts;
 
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word = VM_MAGIC;
-	frame.ecx.part.low = VM_CMD_GET_TIME_FULL;
-	frame.edx.part.low  = VM_PORT_CMD;
+	frame.eax = VM_MAGIC;
+	frame.ecx = VM_CMD_GET_TIME_FULL;
+	frame.edx = VM_REG_CMD(0, VM_PORT_CMD);
 	vm_cmd(&frame);
 
-	if (frame.eax.word != 0xffffffff) {
-		ts.tv_sec = ((uint64_t)frame.esi.word << 32) | frame.edx.word;
-		ts.tv_nsec = frame.ebx.word * 1000;
+	if (__SHIFTOUT(frame.eax, VM_REG_WORD_MASK) != 0xffffffff) {
+		ts.tv_sec = ((uint64_t)(
+		    __SHIFTOUT(frame.esi, VM_REG_WORD_MASK) << 32)) |
+		    __SHIFTOUT(frame.edx, VM_REG_WORD_MASK);
+		ts.tv_nsec = __SHIFTOUT(frame.ebx, VM_REG_WORD_MASK) * 1000;
 		tc_setclock(&ts);
 	}
 }
@@ -738,25 +731,25 @@ vm_rpc_open(struct vm_rpc *rpc, uint32_t proto)
 	struct vm_backdoor frame;
 
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word      = VM_MAGIC;
-	frame.ebx.word      = proto | VM_RPC_FLAG_COOKIE;
-	frame.ecx.part.low  = VM_CMD_RPC;
-	frame.ecx.part.high = VM_RPC_OPEN;
-	frame.edx.part.low  = VM_PORT_CMD;
-	frame.edx.part.high = 0;
+	frame.eax = VM_MAGIC;
+	frame.ebx = proto | VM_RPC_FLAG_COOKIE;
+	frame.ecx = VM_REG_CMD_RPC(VM_RPC_OPEN);
+	frame.edx = VM_REG_PORT_CMD(0);
 
 	vm_cmd(&frame);
 
-	if (frame.ecx.part.high != 1 || frame.edx.part.low != 0) {
+	if (__SHIFTOUT(frame.ecx, VM_REG_HIGH_MASK) != 1 ||
+	    __SHIFTOUT(frame.edx, VM_REG_LOW_MASK) != 0) {
 		/* open-vm-tools retries without VM_RPC_FLAG_COOKIE here.. */
-		printf("vmware: open failed, eax=%08x, ecx=%08x, edx=%08x\n",
-			frame.eax.word, frame.ecx.word, frame.edx.word);
+		printf("vmware: open failed, eax=%#"PRIxREGISTER
+		    ", ecx=%#"PRIxREGISTER", edx=%#"PRIxREGISTER"\n",
+		    frame.eax, frame.ecx, frame.edx);
 		return EIO;
 	}
 
-	rpc->channel = frame.edx.part.high;
-	rpc->cookie1 = frame.esi.word;
-	rpc->cookie2 = frame.edi.word;
+	rpc->channel = __SHIFTOUT(frame.edx, VM_REG_HIGH_MASK);
+	rpc->cookie1 = __SHIFTOUT(frame.esi, VM_REG_WORD_MASK);
+	rpc->cookie2 = __SHIFTOUT(frame.edi, VM_REG_WORD_MASK);
 
 	return 0;
 }
@@ -767,20 +760,20 @@ vm_rpc_close(struct vm_rpc *rpc)
 	struct vm_backdoor frame;
 
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word      = VM_MAGIC;
-	frame.ebx.word      = 0;
-	frame.ecx.part.low  = VM_CMD_RPC;
-	frame.ecx.part.high = VM_RPC_CLOSE;
-	frame.edx.part.low  = VM_PORT_CMD;
-	frame.edx.part.high = rpc->channel;
-	frame.edi.word      = rpc->cookie2;
-	frame.esi.word      = rpc->cookie1;
+	frame.eax = VM_MAGIC;
+	frame.ebx = 0;
+	frame.ecx = VM_REG_CMD_RPC(VM_RPC_CLOSE);
+	frame.edx = VM_REG_PORT_CMD(rpc->channel);
+	frame.edi = rpc->cookie2;
+	frame.esi = rpc->cookie1;
 
 	vm_cmd(&frame);
 
-	if (frame.ecx.part.high == 0 || frame.ecx.part.low != 0) {
-		printf("vmware: close failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+	if (__SHIFTOUT(frame.ecx, VM_REG_HIGH_MASK) == 0 ||
+	    __SHIFTOUT(frame.ecx, VM_REG_LOW_MASK) != 0) {
+		printf("vmware: close failed, "
+		    "eax=%#"PRIxREGISTER", ecx=%#"PRIxREGISTER"\n",
+		    frame.eax, frame.ecx);
 		return EIO;
 	}
 
@@ -798,20 +791,20 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 
 	/* Send the length of the command. */
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word = VM_MAGIC;
-	frame.ebx.word = length;
-	frame.ecx.part.low  = VM_CMD_RPC;
-	frame.ecx.part.high = VM_RPC_SET_LENGTH;
-	frame.edx.part.low  = VM_PORT_CMD;
-	frame.edx.part.high = rpc->channel;
-	frame.esi.word = rpc->cookie1;
-	frame.edi.word = rpc->cookie2;
+	frame.eax = VM_MAGIC;
+	frame.ebx = length;
+	frame.ecx = VM_REG_CMD_RPC(VM_RPC_SET_LENGTH);
+	frame.edx = VM_REG_PORT_CMD(rpc->channel);
+	frame.esi = rpc->cookie1;
+	frame.edi = rpc->cookie2;
 
 	vm_cmd(&frame);
 
-	if ((frame.ecx.part.high & VM_RPC_REPLY_SUCCESS) == 0) {
-		printf("vmware: sending length failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+	if ((__SHIFTOUT(frame.ecx, VM_REG_HIGH_MASK) & VM_RPC_REPLY_SUCCESS) ==
+	    0) {
+		printf("vmware: sending length failed, "
+		    "eax=%#"PRIxREGISTER", ecx=%#"PRIxREGISTER"\n",
+		    frame.eax, frame.ecx);
 		return EIO;
 	}
 
@@ -820,24 +813,20 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 
 	/* Send the command using enhanced RPC. */
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word = VM_MAGIC;
-	frame.ebx.word = VM_RPC_ENH_DATA;
-	frame.ecx.word = length;
-	frame.edx.part.low  = VM_PORT_RPC;
-	frame.edx.part.high = rpc->channel;
-	frame.ebp.word = rpc->cookie1;
-	frame.edi.word = rpc->cookie2;
-#if defined(__amd64__) || defined(__aarch64__)
-	frame.esi.quad = (uint64_t)buf;
-#else
-	frame.esi.word = (uint32_t)buf;
-#endif
+	frame.eax = VM_MAGIC;
+	frame.ebx = VM_RPC_ENH_DATA;
+	frame.ecx = length;
+	frame.edx = VM_REG_PORT_RPC(rpc->channel);
+	frame.ebp = rpc->cookie1;
+	frame.edi = rpc->cookie2;
+	frame.esi = (register_t)buf;
 
 	vm_outs(&frame);
 
-	if (frame.ebx.word != VM_RPC_ENH_DATA) {
+	if (__SHIFTOUT(frame.ebx, VM_REG_WORD_MASK) != VM_RPC_ENH_DATA) {
 		/* open-vm-tools retries on VM_RPC_REPLY_CHECKPOINT */
-		printf("vmware: send failed, ebx=%08x\n", frame.ebx.word);
+		printf("vmware: send failed, ebx=%#"PRIxREGISTER"\n",
+		    frame.ebx);
 		return EIO;
 	}
 
@@ -858,46 +847,40 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 
 	/* Get data using enhanced RPC. */
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word      = VM_MAGIC;
-	frame.ebx.word      = VM_RPC_ENH_DATA;
-	frame.ecx.word      = length;
-	frame.edx.part.low  = VM_PORT_RPC;
-	frame.edx.part.high = rpc->channel;
-	frame.esi.word      = rpc->cookie1;
-#if defined(__amd64__) || defined(__aarch64__)
-	frame.edi.quad      = (uint64_t)data;
-#else
-	frame.edi.word      = (uint32_t)data;
-#endif
-	frame.ebp.word      = rpc->cookie2;
+	frame.eax = VM_MAGIC;
+	frame.ebx = VM_RPC_ENH_DATA;
+	frame.ecx = length;
+	frame.edx = VM_REG_PORT_RPC(rpc->channel);
+	frame.esi = rpc->cookie1;
+	frame.edi = (register_t)data;
+	frame.ebp = rpc->cookie2;
 
 	vm_ins(&frame);
 
 	/* NUL-terminate the data */
 	data[length] = '\0';
 
-	if (frame.ebx.word != VM_RPC_ENH_DATA) {
-		printf("vmware: get data failed, ebx=%08x\n",
-				frame.ebx.word);
+	if (__SHIFTOUT(frame.ebx, VM_REG_WORD_MASK) != VM_RPC_ENH_DATA) {
+		printf("vmware: get data failed, ebx=%#"PRIxREGISTER"\n",
+		    frame.ebx);
 		return EIO;
 	}
 
 	/* Acknowledge data received. */
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word      = VM_MAGIC;
-	frame.ebx.word      = dataid;
-	frame.ecx.part.low  = VM_CMD_RPC;
-	frame.ecx.part.high = VM_RPC_GET_END;
-	frame.edx.part.low  = VM_PORT_CMD;
-	frame.edx.part.high = rpc->channel;
-	frame.esi.word      = rpc->cookie1;
-	frame.edi.word      = rpc->cookie2;
+	frame.eax = VM_MAGIC;
+	frame.ebx = dataid;
+	frame.ecx = VM_REG_CMD_RPC(VM_RPC_GET_END);
+	frame.edx = VM_REG_PORT_CMD(rpc->channel);
+	frame.esi = rpc->cookie1;
+	frame.edi = rpc->cookie2;
 
 	vm_cmd(&frame);
 
-	if (frame.ecx.part.high == 0) {
-		printf("vmware: ack data failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+	if (__SHIFTOUT(frame.ecx, VM_REG_HIGH_MASK) == 0) {
+		printf("vmware: ack data failed, "
+		    "eax=%#"PRIxREGISTER", ecx=%#"PRIxREGISTER"\n",
+		    frame.eax, frame.ecx);
 		return EIO;
 	}
 
@@ -910,28 +893,29 @@ vm_rpc_get_length(const struct vm_rpc *rpc, uint32_t *length, uint16_t *dataid)
 	struct vm_backdoor frame;
 
 	memset(&frame, 0, sizeof(frame));
-	frame.eax.word      = VM_MAGIC;
-	frame.ebx.word      = 0;
-	frame.ecx.part.low  = VM_CMD_RPC;
-	frame.ecx.part.high = VM_RPC_GET_LENGTH;
-	frame.edx.part.low  = VM_PORT_CMD;
-	frame.edx.part.high = rpc->channel;
-	frame.esi.word      = rpc->cookie1;
-	frame.edi.word      = rpc->cookie2;
+	frame.eax = VM_MAGIC;
+	frame.ebx = 0;
+	frame.ecx = VM_REG_CMD_RPC(VM_RPC_GET_LENGTH);
+	frame.edx = VM_REG_PORT_CMD(rpc->channel);
+	frame.esi = rpc->cookie1;
+	frame.edi = rpc->cookie2;
 
 	vm_cmd(&frame);
 
-	if ((frame.ecx.part.high & VM_RPC_REPLY_SUCCESS) == 0) {
-		printf("vmware: get length failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+	if ((__SHIFTOUT(frame.ecx, VM_REG_HIGH_MASK) & VM_RPC_REPLY_SUCCESS) ==
+	    0) {
+		printf("vmware: get length failed, "
+		    "eax=%#"PRIxREGISTER", ecx=%#"PRIxREGISTER"\n",
+		    frame.eax, frame.ecx);
 		return EIO;
 	}
-	if ((frame.ecx.part.high & VM_RPC_REPLY_DORECV) == 0) {
+	if ((__SHIFTOUT(frame.ecx, VM_REG_HIGH_MASK) & VM_RPC_REPLY_DORECV) ==
+	    0) {
 		*length = 0;
 		*dataid = 0;
 	} else {
-		*length = frame.ebx.word;
-		*dataid = frame.edx.part.high;
+		*length = __SHIFTOUT(frame.ebx, VM_REG_WORD_MASK);
+		*dataid = __SHIFTOUT(frame.edx, VM_REG_HIGH_MASK);
 	}
 
 	return 0;
@@ -1011,29 +995,29 @@ vm_rpc_send_rpci_tx(struct vmt_softc *sc, const char *fmt, ...)
 
 	memset(&frame, 0, sizeof(frame));
 
-	frame.eax.word = VM_MAGIC;
-	frame.ecx.part.low = VM_CMD_GET_VERSION;
-	frame.edx.part.low  = VM_PORT_CMD;
+	frame.eax = VM_MAGIC;
+	frame.ecx = VM_CMD_GET_VERSION;
+	frame.edx = VM_PORT_CMD;
 
 	printf("\n");
-	printf("eax 0x%08x\n", frame.eax.word);
-	printf("ebx 0x%08x\n", frame.ebx.word);
-	printf("ecx 0x%08x\n", frame.ecx.word);
-	printf("edx 0x%08x\n", frame.edx.word);
-	printf("ebp 0x%08x\n", frame.ebp.word);
-	printf("edi 0x%08x\n", frame.edi.word);
-	printf("esi 0x%08x\n", frame.esi.word);
+	printf("eax %#"PRIxREGISTER"\n", frame.eax);
+	printf("ebx %#"PRIxREGISTER"\n", frame.ebx);
+	printf("ecx %#"PRIxREGISTER"\n", frame.ecx);
+	printf("edx %#"PRIxREGISTER"\n", frame.edx)
+	printf("ebp %#"PRIxREGISTER"\n", frame.ebp);
+	printf("edi %#"PRIxREGISTER"\n", frame.edi);
+	printf("esi %#"PRIxREGISTER"\n", frame.esi);
 
 	vm_cmd(&frame);
 
 	printf("-\n");
-	printf("eax 0x%08x\n", frame.eax.word);
-	printf("ebx 0x%08x\n", frame.ebx.word);
-	printf("ecx 0x%08x\n", frame.ecx.word);
-	printf("edx 0x%08x\n", frame.edx.word);
-	printf("ebp 0x%08x\n", frame.ebp.word);
-	printf("edi 0x%08x\n", frame.edi.word);
-	printf("esi 0x%08x\n", frame.esi.word);
+	printf("eax %#"PRIxREGISTER"\n", frame.eax);
+	printf("ebx %#"PRIxREGISTER"\n", frame.ebx);
+	printf("ecx %#"PRIxREGISTER"\n", frame.ecx);
+	printf("edx %#"PRIxREGISTER"\n", frame.edx);
+	printf("ebp %#"PRIxREGISTER"\n", frame.ebp);
+	printf("edi %#"PRIxREGISTER"\n", frame.edi);
+	printf("esi %#"PRIxREGISTER"\n", frame.esi);
 #endif
 
 /*
