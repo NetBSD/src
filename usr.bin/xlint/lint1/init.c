@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.138 2021/03/27 16:37:12 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.139 2021/03/27 19:48:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.138 2021/03/27 16:37:12 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.139 2021/03/27 19:48:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -78,14 +78,11 @@ __RCSID("$NetBSD: init.c,v 1.138 2021/03/27 16:37:12 rillig Exp $");
  *		init_rbrace			for each '}'
  *	end_initialization
  *
- * The state of the current initialization is stored in initstk, a stack of
- * initstack_element, one element per type aggregate level.
- * XXX: Or is that "one element per brace level"?  C99 mandates in 6.7.8p17
- * that "each brace-enclosed initializer list has an associated current
- * object".
+ * Each '{' begins a new brace level, each '}' ends the current brace level.
+ * Each brace level has an associated "current object".
  *
- * Most of the time, the topmost level of initstk contains a scalar type, and
- * its remaining count toggles between 1 and 0.
+ * Most of the time, the topmost level of brace_level contains a scalar type,
+ * and its remaining count toggles between 1 and 0.
  *
  * See also:
  *	C99 6.7.8 "Initialization"
@@ -94,7 +91,7 @@ __RCSID("$NetBSD: init.c,v 1.138 2021/03/27 16:37:12 rillig Exp $");
 
 
 /*
- * Describes a single level of an ongoing initialization.
+ * Describes a single brace level of an ongoing initialization.
  *
  * XXX: Since C99, the initializers can be listed in arbitrary order by using
  * designators to specify the sub-object to be initialized.  The member names
@@ -104,10 +101,11 @@ __RCSID("$NetBSD: init.c,v 1.138 2021/03/27 16:37:12 rillig Exp $");
  * See C99 6.7.8, which spans 6 pages full of tricky details and carefully
  * selected examples.
  */
-typedef	struct initstack_element {
+struct brace_level {
 
 	/*
-	 * The type to be initialized at this level.
+	 * The type of the current object that is initialized at this brace
+	 * level.
 	 *
 	 * On the outermost element, this is always NULL since the outermost
 	 * initializer-expression may be enclosed in an optional pair of
@@ -119,7 +117,7 @@ typedef	struct initstack_element {
 	 *
 	 * Everywhere else it is nonnull.
 	 */
-	type_t	*i_type;
+	type_t	*bl_type;
 
 	/*
 	 * The type that will be initialized at the next initialization level,
@@ -130,19 +128,19 @@ typedef	struct initstack_element {
 	 * For a struct or union type, it is one of the member types, but
 	 * without 'const'.
 	 *
-	 * The outermost stack element has no i_type but nevertheless has
-	 * i_subt.  For example, in 'int var = { 12345 }', initially there is
-	 * an initstack_element with i_subt 'int'.  When the '{' is processed,
-	 * an element with i_type 'int' is pushed to the stack.  When the
+	 * The outermost stack element has no bl_type but nevertheless has
+	 * bl_subtype.  For example, in 'int var = { 12345 }', initially there
+	 * is a brace_level with bl_subtype 'int'.  When the '{' is processed,
+	 * an element with bl_type 'int' is pushed to the stack.  When the
 	 * corresponding '}' is processed, the inner element is popped again.
 	 *
 	 * During initialization, only the top 2 elements of the stack are
 	 * looked at.
 	 *
-	 * XXX: Having i_subt here is the wrong approach, it should not be
-	 * necessary at all; see i_type.
+	 * XXX: Having bl_subtype here is the wrong approach, it should not be
+	 * necessary at all; see bl_type.
 	 */
-	type_t	*i_subt;
+	type_t	*bl_subtype;
 
 	/*
 	 * Whether this level of the initializer requires a '}' to be
@@ -152,16 +150,13 @@ typedef	struct initstack_element {
 	 * an inner array; for example, { 1, 2, 3, 4 } is a valid initializer
 	 * for 'int arr[2][2]'.
 	 *
-	 * TODO: Do structs containing structs need a closing brace?
-	 * TODO: Do arrays of structs need a closing brace after each struct?
-	 *
 	 * XXX: Double-check whether this is the correct approach at all; see
-	 * i_type.
+	 * bl_type.
 	 */
-	bool i_brace: 1;
+	bool bl_brace: 1;
 
-	/* Whether i_type is an array of unknown size. */
-	bool i_array_of_unknown_size: 1;
+	/* Whether bl_type is an array of unknown size. */
+	bool bl_array_of_unknown_size: 1;
 
 	/*
 	 * XXX: This feels wrong.  Whether or not there has been a named
@@ -169,15 +164,15 @@ typedef	struct initstack_element {
 	 * all.  Even after an initializer with designation, counting of the
 	 * remaining elements continues, see C99 6.7.8p17.
 	 */
-	bool i_seen_named_member: 1;
+	bool bl_seen_named_member: 1;
 
 	/*
 	 * For structs, the next member to be initialized by a designator-less
 	 * initializer.
 	 */
-	sym_t *i_next_member;
+	sym_t *bl_next_member;
 
-	/* TODO: Add i_next_subscript for arrays. */
+	/* TODO: Add bl_next_subscript for arrays. */
 
 	/* TODO: Understand C99 6.7.8p17 and footnote 128 for unions. */
 
@@ -197,10 +192,10 @@ typedef	struct initstack_element {
 	 * XXX: for arrays?
 	 *
 	 * XXX: Having the count of remaining objects should not be necessary.
-	 * It is probably clearer to use i_next_member and i_next_subscript
+	 * It is probably clearer to use bl_next_member and bl_next_subscript
 	 * for this purpose.
 	 */
-	int i_remaining;
+	int bl_remaining;
 
 	/*
 	 * The initialization state of the enclosing data structure
@@ -210,9 +205,8 @@ typedef	struct initstack_element {
 	 * in redundant braces such as '{{{{ 0 }}}}' (not yet implemented as
 	 * of 2021-03-25).
 	 */
-	struct initstack_element *i_enclosing;
-
-} initstack_element;
+	struct brace_level *bl_enclosing;
+};
 
 /*
  * A single component on the path to the sub-object that is initialized by an
@@ -248,11 +242,11 @@ struct initialization {
 	 */
 	bool	initerr;
 
-	/* Pointer to the symbol which is to be initialized. */
+	/* The symbol that is to be initialized. */
 	sym_t	*initsym;
 
-	/* Points to the top element of the initialization stack. */
-	initstack_element *initstk;
+	/* The innermost brace level. */
+	struct brace_level *brace_level;
 
 	/*
 	 * The C99 designator, if any, for the current initialization
@@ -301,26 +295,26 @@ current_designation(void)
 	return *current_designation_mod();
 }
 
-static const initstack_element *
-current_initstk(void)
+static const struct brace_level *
+current_brace_level(void)
 {
-	return current_init()->initstk;
+	return current_init()->brace_level;
 }
 
-static initstack_element **
-current_initstk_lvalue(void)
+static struct brace_level **
+current_brace_level_lvalue(void)
 {
-	return &current_init()->initstk;
+	return &current_init()->brace_level;
 }
 
 static void
 free_initialization(struct initialization *in)
 {
-	initstack_element *el, *next;
+	struct brace_level *level, *next;
 
-	for (el = in->initstk; el != NULL; el = next) {
-		next = el->i_enclosing;
-		free(el);
+	for (level = in->brace_level; level != NULL; level = next) {
+		next = level->bl_enclosing;
+		free(level);
 	}
 
 	free(in);
@@ -328,8 +322,8 @@ free_initialization(struct initialization *in)
 
 #define initerr		(*current_initerr())
 #define initsym		(*current_initsym())
-#define initstk		(current_initstk())
-#define initstk_lvalue	(*current_initstk_lvalue())
+#define brace_level_rvalue	(current_brace_level())
+#define brace_level_lvalue	(*current_brace_level_lvalue())
 
 #ifndef DEBUG
 
@@ -339,7 +333,7 @@ free_initialization(struct initialization *in)
 #define debug_step(fmt, ...)	do { } while (false)
 #define debug_leave(a)		do { } while (false)
 #define debug_designation()	do { } while (false)
-#define debug_initstack_element(elem) do { } while (false)
+#define debug_brace_level(level) do { } while (false)
 #define debug_initstack()	do { } while (false)
 
 #else
@@ -403,32 +397,32 @@ debug_designation(void)
 /*
  * TODO: only log the top of the stack after each modifying operation
  *
- * TODO: wrap all write accesses to initstack_element in setter functions
+ * TODO: wrap all write accesses to brace_level in setter functions
  */
 static void
-debug_initstack_element(const initstack_element *elem)
+debug_brace_level(const struct brace_level *level)
 {
-	if (elem->i_type != NULL)
-		debug_printf("type '%s'", type_name(elem->i_type));
-	if (elem->i_type != NULL && elem->i_subt != NULL)
+	if (level->bl_type != NULL)
+		debug_printf("type '%s'", type_name(level->bl_type));
+	if (level->bl_type != NULL && level->bl_subtype != NULL)
 		debug_printf(", ");
-	if (elem->i_subt != NULL)
-		debug_printf("subtype '%s'", type_name(elem->i_subt));
+	if (level->bl_subtype != NULL)
+		debug_printf("subtype '%s'", type_name(level->bl_subtype));
 
-	if (elem->i_brace)
+	if (level->bl_brace)
 		debug_printf(", needs closing brace");
-	if (elem->i_array_of_unknown_size)
+	if (level->bl_array_of_unknown_size)
 		debug_printf(", array of unknown size");
-	if (elem->i_seen_named_member)
+	if (level->bl_seen_named_member)
 		debug_printf(", seen named member");
 
-	const type_t *eff_type = elem->i_type != NULL
-	    ? elem->i_type : elem->i_subt;
-	if (eff_type->t_tspec == STRUCT && elem->i_next_member != NULL)
+	const type_t *eff_type = level->bl_type != NULL
+	    ? level->bl_type : level->bl_subtype;
+	if (eff_type->t_tspec == STRUCT && level->bl_next_member != NULL)
 		debug_printf(", next member '%s'",
-		    elem->i_next_member->s_name);
+		    level->bl_next_member->s_name);
 
-	debug_printf(", remaining %d\n", elem->i_remaining);
+	debug_printf(", remaining %d\n", level->bl_remaining);
 }
 
 /*
@@ -437,17 +431,17 @@ debug_initstack_element(const initstack_element *elem)
 static void
 debug_initstack(void)
 {
-	if (initstk == NULL) {
-		debug_step("initstk is empty");
+	if (brace_level_rvalue == NULL) {
+		debug_step("no brace level in the current initialization");
 		return;
 	}
 
 	size_t i = 0;
-	for (const initstack_element *elem = initstk;
-	     elem != NULL; elem = elem->i_enclosing) {
+	for (const struct brace_level *level = brace_level_rvalue;
+	     level != NULL; level = level->bl_enclosing) {
 		debug_indent();
-		debug_printf("initstk[%zu]: ", i);
-		debug_initstack_element(elem);
+		debug_printf("brace level %zu: ", i);
+		debug_brace_level(level);
 		i++;
 	}
 }
@@ -523,7 +517,7 @@ static void initstack_pop_nobrace(void);
 void
 designation_add_subscript(range_t range)
 {
-	initstack_element *istk;
+	struct brace_level *level;
 
 	debug_enter();
 	debug_step("subscript range is %zu ... %zu", range.lo, range.hi);
@@ -531,13 +525,13 @@ designation_add_subscript(range_t range)
 
 	initstack_pop_nobrace();
 
-	istk = initstk_lvalue;
-	if (istk->i_array_of_unknown_size) {
+	level = brace_level_lvalue;
+	if (level->bl_array_of_unknown_size) {
 		/* No +1 here, extend_if_array_of_unknown_size will add it. */
 		int auto_dim = (int)range.hi;
-		if (auto_dim > istk->i_type->t_dim) {
+		if (auto_dim > level->bl_type->t_dim) {
 			debug_step("setting the array size to %d", auto_dim);
-			istk->i_type->t_dim = auto_dim;
+			level->bl_type->t_dim = auto_dim;
 		}
 	}
 
@@ -573,7 +567,7 @@ designation_shift_level(void)
 void
 initstack_init(void)
 {
-	initstack_element *istk;
+	struct brace_level *level;
 
 	if (initerr)
 		return;
@@ -588,9 +582,9 @@ initstack_init(void)
 		initsym->s_type = duptyp(initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	istk = initstk_lvalue = xcalloc(1, sizeof *initstk_lvalue);
-	istk->i_subt = initsym->s_type;
-	istk->i_remaining = 1;
+	level = brace_level_lvalue = xcalloc(1, sizeof *brace_level_lvalue);
+	level->bl_subtype = initsym->s_type;
+	level->bl_remaining = 1;
 
 	debug_initstack();
 	debug_leave();
@@ -600,7 +594,7 @@ initstack_init(void)
 static void
 initstack_pop_item_named_member(const char *name)
 {
-	initstack_element *istk = initstk_lvalue;
+	struct brace_level *level = brace_level_lvalue;
 	sym_t *m;
 
 	/*
@@ -609,15 +603,15 @@ initstack_pop_item_named_member(const char *name)
 	 */
 	debug_step("initializing named member '%s'", name);
 
-	if (istk->i_type->t_tspec != STRUCT &&
-	    istk->i_type->t_tspec != UNION) {
+	if (level->bl_type->t_tspec != STRUCT &&
+	    level->bl_type->t_tspec != UNION) {
 		/* syntax error '%s' */
 		error(249, "named member must only be used with struct/union");
 		initerr = true;
 		return;
 	}
 
-	for (m = istk->i_type->t_str->sou_first_member;
+	for (m = level->bl_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
 
 		if (m->s_bitfield && m->s_name == unnamed)
@@ -625,10 +619,10 @@ initstack_pop_item_named_member(const char *name)
 
 		if (strcmp(m->s_name, name) == 0) {
 			debug_step("found matching member");
-			istk->i_subt = m->s_type;
+			level->bl_subtype = m->s_type;
 			/* XXX: why ++? */
-			istk->i_remaining++;
-			/* XXX: why is i_seen_named_member not set? */
+			level->bl_remaining++;
+			/* XXX: why is bl_seen_named_member not set? */
 			designation_shift_level();
 			return;
 		}
@@ -639,31 +633,31 @@ initstack_pop_item_named_member(const char *name)
 	error(101, name);
 
 	designation_shift_level();
-	istk->i_seen_named_member = true;
+	level->bl_seen_named_member = true;
 }
 
 /* TODO: think of a better name than 'pop' */
 static void
 initstack_pop_item_unnamed(void)
 {
-	initstack_element *istk = initstk_lvalue;
+	struct brace_level *level = brace_level_lvalue;
 	sym_t *m;
 
 	/*
 	 * If the removed element was a structure member, we must go
 	 * to the next structure member.
 	 */
-	if (istk->i_remaining > 0 && istk->i_type->t_tspec == STRUCT &&
-	    !istk->i_seen_named_member) {
+	if (level->bl_remaining > 0 && level->bl_type->t_tspec == STRUCT &&
+	    !level->bl_seen_named_member) {
 		do {
-			m = istk->i_next_member =
-			    istk->i_next_member->s_next;
+			m = level->bl_next_member =
+			    level->bl_next_member->s_next;
 			/* XXX: can this assertion be made to fail? */
 			lint_assert(m != NULL);
 			debug_step("pop %s", m->s_name);
 		} while (m->s_bitfield && m->s_name == unnamed);
 		/* XXX: duplicate code for skipping unnamed bit-fields */
-		istk->i_subt = m->s_type;
+		level->bl_subtype = m->s_type;
 	}
 }
 
@@ -671,24 +665,24 @@ initstack_pop_item_unnamed(void)
 static void
 initstack_pop_item(void)
 {
-	initstack_element *istk;
+	struct brace_level *level;
 	designator *first_designator;
 
 	debug_enter();
 
-	istk = initstk_lvalue;
+	level = brace_level_lvalue;
 	debug_indent();
 	debug_printf("popping: ");
-	debug_initstack_element(istk);
+	debug_brace_level(level);
 
-	initstk_lvalue = istk->i_enclosing;
-	free(istk);
-	istk = initstk_lvalue;
-	lint_assert(istk != NULL);
+	brace_level_lvalue = level->bl_enclosing;
+	free(level);
+	level = brace_level_lvalue;
+	lint_assert(level != NULL);
 
-	istk->i_remaining--;
-	lint_assert(istk->i_remaining >= 0);
-	debug_step("%d elements remaining", istk->i_remaining);
+	level->bl_remaining--;
+	lint_assert(level->bl_remaining >= 0);
+	debug_step("%d elements remaining", level->bl_remaining);
 
 	first_designator = current_designation().head;
 	if (first_designator != NULL && first_designator->name != NULL)
@@ -712,7 +706,7 @@ initstack_pop_brace(void)
 	debug_enter();
 	debug_initstack();
 	do {
-		brace = initstk->i_brace;
+		brace = brace_level_rvalue->bl_brace;
 		/* TODO: improve wording of the debug message */
 		debug_step("loop brace=%d", brace);
 		initstack_pop_item();
@@ -731,8 +725,9 @@ initstack_pop_nobrace(void)
 {
 
 	debug_enter();
-	while (!initstk->i_brace && initstk->i_remaining == 0 &&
-	       !initstk->i_array_of_unknown_size)
+	while (!brace_level_rvalue->bl_brace &&
+	       brace_level_rvalue->bl_remaining == 0 &&
+	       !brace_level_rvalue->bl_array_of_unknown_size)
 		initstack_pop_item();
 	debug_leave();
 }
@@ -741,13 +736,13 @@ initstack_pop_nobrace(void)
 static void
 extend_if_array_of_unknown_size(void)
 {
-	initstack_element *istk = initstk_lvalue;
+	struct brace_level *level = brace_level_lvalue;
 
-	if (istk->i_remaining != 0)
+	if (level->bl_remaining != 0)
 		return;
 	/*
 	 * XXX: According to the function name, there should be a 'return' if
-	 * i_array_of_unknown_size is false.  There's probably a test missing
+	 * bl_array_of_unknown_size is false.  There's probably a test missing
 	 * for that case.
 	 */
 
@@ -755,16 +750,16 @@ extend_if_array_of_unknown_size(void)
 	 * The only place where an incomplete array may appear is at the
 	 * outermost aggregate level of the object to be initialized.
 	 */
-	lint_assert(istk->i_enclosing->i_enclosing == NULL);
-	lint_assert(istk->i_type->t_tspec == ARRAY);
+	lint_assert(level->bl_enclosing->bl_enclosing == NULL);
+	lint_assert(level->bl_type->t_tspec == ARRAY);
 
 	debug_step("extending array of unknown size '%s'",
-	    type_name(istk->i_type));
-	istk->i_remaining = 1;
-	istk->i_type->t_dim++;
-	setcomplete(istk->i_type, true);
+	    type_name(level->bl_type));
+	level->bl_remaining = 1;
+	level->bl_type->t_dim++;
+	setcomplete(level->bl_type, true);
 
-	debug_step("extended type is '%s'", type_name(istk->i_type));
+	debug_step("extended type is '%s'", type_name(level->bl_type));
 }
 
 /* TODO: document me */
@@ -772,38 +767,39 @@ extend_if_array_of_unknown_size(void)
 static void
 initstack_push_array(void)
 {
-	initstack_element *istk = initstk_lvalue;
+	struct brace_level *level = brace_level_lvalue;
 
-	if (istk->i_enclosing->i_seen_named_member) {
-		istk->i_brace = true;
+	if (level->bl_enclosing->bl_seen_named_member) {
+		level->bl_brace = true;
 		debug_step("ARRAY%s%s",
-		    istk->i_brace ? ", needs closing brace" : "",
-		    istk->i_enclosing->i_seen_named_member
+		    level->bl_brace ? ", needs closing brace" : "",
+		    /* TODO: this is redundant, always true */
+		    level->bl_enclosing->bl_seen_named_member
 			? ", seen named member" : "");
 	}
 
-	if (is_incomplete(istk->i_type) &&
-	    istk->i_enclosing->i_enclosing != NULL) {
+	if (is_incomplete(level->bl_type) &&
+	    level->bl_enclosing->bl_enclosing != NULL) {
 		/* initialization of an incomplete type */
 		error(175);
 		initerr = true;
 		return;
 	}
 
-	istk->i_subt = istk->i_type->t_subt;
-	istk->i_array_of_unknown_size = is_incomplete(istk->i_type);
-	istk->i_remaining = istk->i_type->t_dim;
+	level->bl_subtype = level->bl_type->t_subt;
+	level->bl_array_of_unknown_size = is_incomplete(level->bl_type);
+	level->bl_remaining = level->bl_type->t_dim;
 	debug_designation();
 	debug_step("type '%s' remaining %d",
-	    type_name(istk->i_type), istk->i_remaining);
+	    type_name(level->bl_type), level->bl_remaining);
 }
 
 static sym_t *
-look_up_member(initstack_element *istk, int *count)
+look_up_member(struct brace_level *level, int *count)
 {
 	sym_t *m;
 
-	for (m = istk->i_type->t_str->sou_first_member;
+	for (m = level->bl_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
 		if (m->s_bitfield && m->s_name == unnamed)
 			continue;
@@ -827,8 +823,8 @@ look_up_member(initstack_element *istk, int *count)
 				continue;
 		}
 		if (++(*count) == 1) {
-			istk->i_next_member = m;
-			istk->i_subt = m->s_type;
+			level->bl_next_member = m;
+			level->bl_subtype = m->s_type;
 		}
 	}
 
@@ -844,11 +840,11 @@ initstack_push_struct_or_union(void)
 	 * TODO: remove unnecessary 'const' for variables in functions that
 	 * fit on a single screen.  Keep it for larger functions.
 	 */
-	initstack_element *istk = initstk_lvalue;
+	struct brace_level *level = brace_level_lvalue;
 	int cnt;
 	sym_t *m;
 
-	if (is_incomplete(istk->i_type)) {
+	if (is_incomplete(level->bl_type)) {
 		/* initialization of an incomplete type */
 		error(175);
 		initerr = true;
@@ -858,35 +854,36 @@ initstack_push_struct_or_union(void)
 	cnt = 0;
 	debug_designation();
 	debug_step("lookup for '%s'%s",
-	    type_name(istk->i_type),
-	    istk->i_seen_named_member ? ", seen named member" : "");
+	    type_name(level->bl_type),
+	    level->bl_seen_named_member ? ", seen named member" : "");
 
-	m = look_up_member(istk, &cnt);
+	m = look_up_member(level, &cnt);
 
 	if (current_designation().head != NULL) {
 		if (m == NULL) {
 			debug_step("pop struct");
 			return true;
 		}
-		istk->i_next_member = m;
-		istk->i_subt = m->s_type;
-		istk->i_seen_named_member = true;
+		level->bl_next_member = m;
+		level->bl_subtype = m->s_type;
+		level->bl_seen_named_member = true;
 		debug_step("named member '%s'",
 		    current_designation().head->name);
 		designation_shift_level();
-		cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
+		cnt = level->bl_type->t_tspec == STRUCT ? 2 : 1;
 	}
-	istk->i_brace = true;
+	level->bl_brace = true;
 	debug_step("unnamed element with type '%s'%s",
-	    type_name(istk->i_type != NULL ? istk->i_type : istk->i_subt),
-	    istk->i_brace ? ", needs closing brace" : "");
+	    type_name(
+		level->bl_type != NULL ? level->bl_type : level->bl_subtype),
+	    level->bl_brace ? ", needs closing brace" : "");
 	if (cnt == 0) {
 		/* cannot init. struct/union with no named member */
 		error(179);
 		initerr = true;
 		return false;
 	}
-	istk->i_remaining = istk->i_type->t_tspec == STRUCT ? cnt : 1;
+	level->bl_remaining = level->bl_type->t_tspec == STRUCT ? cnt : 1;
 	return false;
 }
 
@@ -895,32 +892,33 @@ initstack_push_struct_or_union(void)
 static void
 initstack_push(void)
 {
-	initstack_element *istk, *inxt;
+	struct brace_level *level, *enclosing;
 
 	debug_enter();
 
 	extend_if_array_of_unknown_size();
 
-	istk = initstk_lvalue;
-	lint_assert(istk->i_remaining > 0);
-	lint_assert(istk->i_type == NULL || !is_scalar(istk->i_type->t_tspec));
+	level = brace_level_lvalue;
+	lint_assert(level->bl_remaining > 0);
+	lint_assert(level->bl_type == NULL ||
+	    !is_scalar(level->bl_type->t_tspec));
 
-	initstk_lvalue = xcalloc(1, sizeof *initstk_lvalue);
-	initstk_lvalue->i_enclosing = istk;
-	initstk_lvalue->i_type = istk->i_subt;
-	lint_assert(initstk_lvalue->i_type->t_tspec != FUNC);
+	brace_level_lvalue = xcalloc(1, sizeof *brace_level_lvalue);
+	brace_level_lvalue->bl_enclosing = level;
+	brace_level_lvalue->bl_type = level->bl_subtype;
+	lint_assert(brace_level_lvalue->bl_type->t_tspec != FUNC);
 
 again:
-	istk = initstk_lvalue;
+	level = brace_level_lvalue;
 
-	debug_step("expecting type '%s'", type_name(istk->i_type));
-	lint_assert(istk->i_type != NULL);
-	switch (istk->i_type->t_tspec) {
+	debug_step("expecting type '%s'", type_name(level->bl_type));
+	lint_assert(level->bl_type != NULL);
+	switch (level->bl_type->t_tspec) {
 	case ARRAY:
 		if (current_designation().head != NULL) {
 			debug_step("pop array, named member '%s'%s",
 			    current_designation().head->name,
-			    istk->i_brace ? ", needs closing brace" : "");
+			    level->bl_brace ? ", needs closing brace" : "");
 			goto pop;
 		}
 
@@ -941,13 +939,13 @@ again:
 			debug_step("pop scalar");
 	pop:
 			/* TODO: extract this into end_initializer_level */
-			inxt = initstk->i_enclosing;
-			free(istk);
-			initstk_lvalue = inxt;
+			enclosing = brace_level_rvalue->bl_enclosing;
+			free(level);
+			brace_level_lvalue = enclosing;
 			goto again;
 		}
 		/* The initialization stack now expects a single scalar. */
-		istk->i_remaining = 1;
+		level->bl_remaining = 1;
 		break;
 	}
 
@@ -958,20 +956,19 @@ again:
 static void
 check_too_many_initializers(void)
 {
-
-	const initstack_element *istk = initstk;
-	if (istk->i_remaining > 0)
+	const struct brace_level *level = brace_level_rvalue;
+	if (level->bl_remaining > 0)
 		return;
 	/*
 	 * FIXME: even with named members, there can be too many initializers
 	 */
-	if (istk->i_array_of_unknown_size || istk->i_seen_named_member)
+	if (level->bl_array_of_unknown_size || level->bl_seen_named_member)
 		return;
 
-	tspec_t t = istk->i_type->t_tspec;
+	tspec_t t = level->bl_type->t_tspec;
 	if (t == ARRAY) {
 		/* too many array initializers, expected %d */
-		error(173, istk->i_type->t_dim);
+		error(173, level->bl_type->t_dim);
 	} else if (t == STRUCT || t == UNION) {
 		/* too many struct/union initializers */
 		error(172);
@@ -984,7 +981,7 @@ check_too_many_initializers(void)
 
 /*
  * Process a '{' in an initializer by starting the initialization of the
- * nested data structure, with i_type being the i_subt of the outer
+ * nested data structure, with bl_type being the bl_subtype of the outer
  * initialization level.
  */
 static void
@@ -994,9 +991,10 @@ initstack_next_brace(void)
 	debug_enter();
 	debug_initstack();
 
-	if (initstk->i_type != NULL && is_scalar(initstk->i_type->t_tspec)) {
+	if (brace_level_rvalue->bl_type != NULL &&
+	    is_scalar(brace_level_rvalue->bl_type->t_tspec)) {
 		/* invalid initializer type %s */
-		error(176, type_name(initstk->i_type));
+		error(176, type_name(brace_level_rvalue->bl_type));
 		initerr = true;
 	}
 	if (!initerr)
@@ -1004,11 +1002,12 @@ initstack_next_brace(void)
 	if (!initerr)
 		initstack_push();
 	if (!initerr) {
-		initstk_lvalue->i_brace = true;
+		brace_level_lvalue->bl_brace = true;
 		debug_designation();
 		debug_step("expecting type '%s'",
-		    type_name(initstk->i_type != NULL ? initstk->i_type
-			: initstk->i_subt));
+		    type_name(brace_level_rvalue->bl_type != NULL
+			? brace_level_rvalue->bl_type
+			: brace_level_rvalue->bl_subtype));
 	}
 
 	debug_initstack();
@@ -1021,7 +1020,8 @@ initstack_next_nobrace(tnode_t *tn)
 {
 	debug_enter();
 
-	if (initstk->i_type == NULL && !is_scalar(initstk->i_subt->t_tspec)) {
+	if (brace_level_rvalue->bl_type == NULL &&
+	    !is_scalar(brace_level_rvalue->bl_subtype->t_tspec)) {
 		/* {}-enclosed initializer required */
 		error(181);
 		/* XXX: maybe set initerr here */
@@ -1031,18 +1031,19 @@ initstack_next_nobrace(tnode_t *tn)
 		check_too_many_initializers();
 
 	while (!initerr) {
-		initstack_element *istk = initstk_lvalue;
+		struct brace_level *level = brace_level_lvalue;
 
 		if (tn->tn_type->t_tspec == STRUCT &&
-		    istk->i_type == tn->tn_type &&
-		    istk->i_enclosing != NULL &&
-		    istk->i_enclosing->i_enclosing != NULL) {
-			istk->i_brace = false;
-			istk->i_remaining = 1; /* the struct itself */
+		    level->bl_type == tn->tn_type &&
+		    level->bl_enclosing != NULL &&
+		    level->bl_enclosing->bl_enclosing != NULL) {
+			level->bl_brace = false;
+			level->bl_remaining = 1; /* the struct itself */
 			break;
 		}
 
-		if ((istk->i_type != NULL && is_scalar(istk->i_type->t_tspec)))
+		if (level->bl_type != NULL &&
+		    is_scalar(level->bl_type->t_tspec))
 			break;
 		initstack_push();
 	}
@@ -1062,8 +1063,9 @@ init_lbrace(void)
 	debug_initstack();
 
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
-	    initstk->i_enclosing == NULL) {
-		if (tflag && !is_scalar(initstk->i_subt->t_tspec))
+	    brace_level_rvalue->bl_enclosing == NULL) {
+		if (tflag &&
+		    !is_scalar(brace_level_rvalue->bl_subtype->t_tspec))
 			/* no automatic aggregate initialization in trad. C */
 			warning(188);
 	}
@@ -1140,7 +1142,7 @@ init_using_assign(tnode_t *rn)
 
 	if (initsym->s_type->t_tspec == ARRAY)
 		return false;
-	if (initstk->i_enclosing != NULL)
+	if (brace_level_rvalue->bl_enclosing != NULL)
 		return false;
 
 	debug_step("handing over to ASSIGN");
@@ -1166,7 +1168,7 @@ check_init_expr(tnode_t *tn, scl_t sclass)
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof *ln);
 	ln->tn_op = NAME;
-	ln->tn_type = tduptyp(initstk->i_type);
+	ln->tn_type = tduptyp(brace_level_rvalue->bl_type);
 	ln->tn_type->t_const = false;
 	ln->tn_lvalue = true;
 	ln->tn_sym = initsym;		/* better than nothing */
@@ -1194,8 +1196,9 @@ check_init_expr(tnode_t *tn, scl_t sclass)
 	/*
 	 * XXX: Is it correct to do this conversion _after_ the typeok above?
 	 */
-	if (lt != rt || (initstk->i_type->t_bitfield && tn->tn_op == CON))
-		tn = convert(INIT, 0, initstk->i_type, tn);
+	if (lt != rt ||
+	    (brace_level_rvalue->bl_type->t_bitfield && tn->tn_op == CON))
+		tn = convert(INIT, 0, brace_level_rvalue->bl_type, tn);
 
 	check_non_constant_initializer(tn, sclass);
 }
@@ -1230,8 +1233,8 @@ init_using_expr(tnode_t *tn)
 	if (initerr || tn == NULL)
 		goto done_initstack;
 
-	initstk_lvalue->i_remaining--;
-	debug_step("%d elements remaining", initstk->i_remaining);
+	brace_level_lvalue->bl_remaining--;
+	debug_step("%d elements remaining", brace_level_rvalue->bl_remaining);
 
 	check_init_expr(tn, sclass);
 
@@ -1251,7 +1254,7 @@ static bool
 init_array_using_string(tnode_t *tn)
 {
 	tspec_t	t;
-	initstack_element *istk;
+	struct brace_level *level;
 	int	len;
 	strg_t	*strg;
 
@@ -1261,16 +1264,16 @@ init_array_using_string(tnode_t *tn)
 	debug_enter();
 	debug_initstack();
 
-	istk = initstk_lvalue;
+	level = brace_level_lvalue;
 	strg = tn->tn_string;
 
 	/*
 	 * Check if we have an array type which can be initialized by
 	 * the string.
 	 */
-	if (istk->i_subt != NULL && istk->i_subt->t_tspec == ARRAY) {
+	if (level->bl_subtype != NULL && level->bl_subtype->t_tspec == ARRAY) {
 		debug_step("subt array");
-		t = istk->i_subt->t_subt->t_tspec;
+		t = level->bl_subtype->t_subt->t_tspec;
 		if (!((strg->st_tspec == CHAR &&
 		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
 		      (strg->st_tspec == WCHAR && t == WCHAR))) {
@@ -1281,14 +1284,13 @@ init_array_using_string(tnode_t *tn)
 
 		/* Put the array at top of stack */
 		initstack_push();
-		istk = initstk_lvalue;
+		level = brace_level_lvalue;
 
+		/* TODO: what if both bl_type and bl_subtype are ARRAY? */
 
-		/* TODO: what if both i_type and i_subt are ARRAY? */
-
-	} else if (istk->i_type != NULL && istk->i_type->t_tspec == ARRAY) {
+	} else if (level->bl_type != NULL && level->bl_type->t_tspec == ARRAY) {
 		debug_step("type array");
-		t = istk->i_type->t_subt->t_tspec;
+		t = level->bl_type->t_subt->t_tspec;
 		if (!((strg->st_tspec == CHAR &&
 		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
 		      (strg->st_tspec == WCHAR && t == WCHAR))) {
@@ -1305,7 +1307,7 @@ init_array_using_string(tnode_t *tn)
 		 * If the array is already partly initialized, we are
 		 * wrong here.
 		 */
-		if (istk->i_remaining != istk->i_type->t_dim) {
+		if (level->bl_remaining != level->bl_type->t_dim) {
 			debug_leave();
 			return false;
 		}
@@ -1317,17 +1319,17 @@ init_array_using_string(tnode_t *tn)
 	/* Get length without trailing NUL character. */
 	len = strg->st_len;
 
-	if (istk->i_array_of_unknown_size) {
-		istk->i_array_of_unknown_size = false;
-		istk->i_type->t_dim = len + 1;
-		setcomplete(istk->i_type, true);
+	if (level->bl_array_of_unknown_size) {
+		level->bl_array_of_unknown_size = false;
+		level->bl_type->t_dim = len + 1;
+		setcomplete(level->bl_type, true);
 	} else {
 		/*
 		 * TODO: check for buffer overflow in the object to be
 		 * initialized
 		 */
 		/* XXX: double-check for off-by-one error */
-		if (istk->i_type->t_dim < len) {
+		if (level->bl_type->t_dim < len) {
 			/* non-null byte ignored in string initializer */
 			warning(187);
 		}
@@ -1340,7 +1342,7 @@ init_array_using_string(tnode_t *tn)
 	}
 
 	/* In every case the array is initialized completely. */
-	istk->i_remaining = 0;
+	level->bl_remaining = 0;
 
 	debug_initstack();
 	debug_leave();
