@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.135 2021/03/27 13:08:20 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.136 2021/03/27 13:17:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.135 2021/03/27 13:08:20 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.136 2021/03/27 13:17:42 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -94,7 +94,7 @@ __RCSID("$NetBSD: init.c,v 1.135 2021/03/27 13:08:20 rillig Exp $");
 
 
 /*
- * Type of stack which is used for initialization of aggregate types.
+ * Describes a single level of an ongoing initialization.
  *
  * XXX: Since C99, the initializers can be listed in arbitrary order by using
  * designators to specify the sub-object to be initialized.  The member names
@@ -401,8 +401,6 @@ debug_designation(void)
 }
 
 /*
- * TODO: try whether a single-line output is more readable
- *
  * TODO: only log the top of the stack after each modifying operation
  *
  * TODO: wrap all write accesses to initstack_element in setter functions
