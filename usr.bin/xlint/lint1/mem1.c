@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.28 2021/03/26 20:31:07 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.29 2021/03/27 11:47:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.28 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.29 2021/03/27 11:47:59 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -73,14 +73,6 @@ srchfn(const char *s, size_t len)
 			break;
 	}
 	return fn;
-}
-
-/* Return a copy of the filename s with unlimited lifetime. */
-const char *
-fnalloc(const char *s)
-{
-
-	return s != NULL ? fnnalloc(s, strlen(s)) : NULL;
 }
 
 struct repl {
@@ -124,6 +116,10 @@ fnxform(const char *name, size_t len)
 	return buf;
 }
 
+/*
+ * Return a copy of the filename s with unlimited lifetime.
+ * If the filename is new, it is written to the output file.
+ */
 const char *
 fnnalloc(const char *s, size_t len)
 {
