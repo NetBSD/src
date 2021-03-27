@@ -1,7 +1,7 @@
-/*	$NetBSD: d_gcc_compound_statements1.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_gcc_compound_statements1.c,v 1.4 2021/03/27 13:59:18 rillig Exp $	*/
 # 3 "d_gcc_compound_statements1.c"
 
-/* GCC compound statements */
+/* GCC compound statement with expression */
 
 foo(unsigned long z)
 {
