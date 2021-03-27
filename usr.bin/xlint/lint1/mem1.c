@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.34 2021/03/27 12:14:49 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.35 2021/03/27 12:17:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.34 2021/03/27 12:14:49 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.35 2021/03/27 12:17:22 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -75,8 +75,8 @@ search_filename(const char *s, size_t len)
 
 struct filename_replacement {
 	char *orig;
+	size_t orig_len;
 	char *repl;
-	size_t len;
 	struct filename_replacement *next;
 };
 
@@ -90,7 +90,7 @@ add_directory_replacement(char *arg)
 	r->orig = arg;
 	if ((r->repl = strchr(arg, '=')) == NULL)
 		err(1, "Bad replacement directory spec `%s'", arg);
-	r->len = r->repl - r->orig;
+	r->orig_len = r->repl - r->orig;
 	*(r->repl)++ = '\0';
 	r->next = filename_replacements;
 	filename_replacements = r;
@@ -103,11 +103,12 @@ fnxform(const char *name, size_t len)
 	const struct filename_replacement *r;
 
 	for (r = filename_replacements; r != NULL; r = r->next)
-		if (r->len < len && memcmp(name, r->orig, r->len) == 0)
+		if (r->orig_len < len &&
+		    memcmp(name, r->orig, r->orig_len) == 0)
 			break;
 	if (r == NULL)
 		return name;
-	snprintf(buf, sizeof buf, "%s%s", r->repl, name + r->len);
+	snprintf(buf, sizeof buf, "%s%s", r->repl, name + r->orig_len);
 	return buf;
 }
 
