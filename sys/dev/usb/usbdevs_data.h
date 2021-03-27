@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.728.2.6 2020/02/27 14:34:11 martin Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.728.2.7 2021/03/27 13:10:43 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.6 2020/02/27 14:32:31 martin Exp
+ *	NetBSD: usbdevs,v 1.736.2.7 2021/03/27 13:09:46 martin Exp
  */
 
 /*-
