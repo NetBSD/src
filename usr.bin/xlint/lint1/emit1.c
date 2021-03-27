@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.42 2021/02/19 22:27:49 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.43 2021/03/27 12:32:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.42 2021/02/19 22:27:49 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.43 2021/03/27 12:32:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -212,7 +212,7 @@ outtt(sym_t *tag, sym_t *tdef)
 		outint(3);
 		outint(tag->s_def_pos.p_line);
 		outchar('.');
-		outint(getfnid(tag->s_def_pos.p_file));
+		outint(get_filename_id(tag->s_def_pos.p_file));
 		outchar('.');
 		outint(tag->s_def_pos.p_uniq);
 	}
@@ -248,7 +248,7 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	 */
 	outint(csrc_pos.p_line);
 	outchar('d');
-	outint(getfnid(sym->s_def_pos.p_file));
+	outint(get_filename_id(sym->s_def_pos.p_file));
 	outchar('.');
 	outint(sym->s_def_pos.p_line);
 
@@ -324,7 +324,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 		outint(csrc_pos.p_line);
 	}
 	outchar('d');
-	outint(getfnid(posp->p_file));
+	outint(get_filename_id(posp->p_file));
 	outchar('.');
 	outint(posp->p_line);
 
@@ -423,7 +423,7 @@ outcall(const tnode_t *tn, bool rvused, bool rvdisc)
 	 */
 	outint(csrc_pos.p_line);
 	outchar('c');
-	outint(getfnid(curr_pos.p_file));
+	outint(get_filename_id(curr_pos.p_file));
 	outchar('.');
 	outint(curr_pos.p_line);
 
@@ -604,7 +604,7 @@ outusg(const sym_t *sym)
 	 */
 	outint(csrc_pos.p_line);
 	outchar('u');
-	outint(getfnid(curr_pos.p_file));
+	outint(get_filename_id(curr_pos.p_file));
 	outchar('.');
 	outint(curr_pos.p_line);
 

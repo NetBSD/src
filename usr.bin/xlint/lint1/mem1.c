@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.36 2021/03/27 12:24:43 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.37 2021/03/27 12:32:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.36 2021/03/27 12:24:43 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.37 2021/03/27 12:32:19 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: mem1.c,v 1.36 2021/03/27 12:24:43 rillig Exp $");
 #include "lint1.h"
 
 /*
- * Filenames allocated by fnalloc() and fnnalloc() are shared.
+ * Filenames allocated by record_filename are shared.
  */
 struct filename {
 	char	*fn_name;
@@ -100,7 +100,7 @@ add_directory_replacement(char *arg)
 }
 
 const char *
-fnxform(const char *name, size_t len)
+transform_filename(const char *name, size_t len)
 {
 	static char buf[MAXPATHLEN];
 	const struct filename_replacement *r;
@@ -117,10 +117,10 @@ fnxform(const char *name, size_t len)
 
 /*
  * Return a copy of the filename s with unlimited lifetime.
- * If the filename is new, it is written to the output file.
+ * If the filename is new, write it to the output file.
  */
 const char *
-fnnalloc(const char *s, size_t slen)
+record_filename(const char *s, size_t slen)
 {
 	const struct filename *existing_fn;
 	struct filename *fn;
@@ -143,18 +143,18 @@ fnnalloc(const char *s, size_t slen)
 	fn->fn_next = filenames;
 	filenames = fn;
 
-	/* Write id of this filename to the output file. */
+	/* Write the ID of this filename to the output file. */
 	outclr();
 	outint(fn->fn_id);
 	outchar('s');
-	outstrg(fnxform(fn->fn_name, fn->fn_len));
+	outstrg(transform_filename(fn->fn_name, fn->fn_len));
 
 	return fn->fn_name;
 }
 
 /* Get the ID of a filename. */
 int
-getfnid(const char *s)
+get_filename_id(const char *s)
 {
 	const struct filename *fn;
 
