@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.137 2021/03/27 16:24:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.138 2021/03/27 16:37:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.137 2021/03/27 16:24:21 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.138 2021/03/27 16:37:12 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -798,6 +798,43 @@ initstack_push_array(void)
 	    type_name(istk->i_type), istk->i_remaining);
 }
 
+static sym_t *
+look_up_member(initstack_element *istk, int *count)
+{
+	sym_t *m;
+
+	for (m = istk->i_type->t_str->sou_first_member;
+	     m != NULL; m = m->s_next) {
+		if (m->s_bitfield && m->s_name == unnamed)
+			continue;
+		/*
+		 * TODO: split into separate functions:
+		 *
+		 * look_up_array_next
+		 * look_up_array_designator
+		 * look_up_struct_next
+		 * look_up_struct_designator
+		 */
+		if (current_designation().head != NULL) {
+			/* XXX: this log entry looks unnecessarily verbose */
+			debug_step("have member '%s', want member '%s'",
+			    m->s_name, current_designation().head->name);
+			if (strcmp(m->s_name,
+			    current_designation().head->name) == 0) {
+				(*count)++;
+				break;
+			} else
+				continue;
+		}
+		if (++(*count) == 1) {
+			istk->i_next_member = m;
+			istk->i_subt = m->s_type;
+		}
+	}
+
+	return m;
+}
+
 /* TODO: document me */
 /* TODO: think of a better name than 'push' */
 static bool
@@ -824,34 +861,7 @@ initstack_push_struct_or_union(void)
 	    type_name(istk->i_type),
 	    istk->i_seen_named_member ? ", seen named member" : "");
 
-	for (m = istk->i_type->t_str->sou_first_member;
-	     m != NULL; m = m->s_next) {
-		if (m->s_bitfield && m->s_name == unnamed)
-			continue;
-		/*
-		 * TODO: split into separate functions:
-		 *
-		 * look_up_array_next
-		 * look_up_array_designator
-		 * look_up_struct_next
-		 * look_up_struct_designator
-		 */
-		if (current_designation().head != NULL) {
-			/* XXX: this log entry looks unnecessarily verbose */
-			debug_step("have member '%s', want member '%s'",
-			    m->s_name, current_designation().head->name);
-			if (strcmp(m->s_name,
-			    current_designation().head->name) == 0) {
-				cnt++;
-				break;
-			} else
-				continue;
-		}
-		if (++cnt == 1) {
-			istk->i_next_member = m;
-			istk->i_subt = m->s_type;
-		}
-	}
+	m = look_up_member(istk, &cnt);
 
 	if (current_designation().head != NULL) {
 		if (m == NULL) {
