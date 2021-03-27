@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.29 2021/03/27 11:47:59 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.30 2021/03/27 11:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.29 2021/03/27 11:47:59 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.30 2021/03/27 11:50:34 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ struct repl {
 struct repl *replist;
 
 void
-fnaddreplsrcdir(char *arg)
+add_directory_replacement(char *arg)
 {
 	struct repl *r = xmalloc(sizeof *r);
 
