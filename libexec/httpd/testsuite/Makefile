@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.7.4.2 2019/06/12 10:32:00 martin Exp $
+#	$NetBSD: Makefile,v 1.7.4.3 2021/03/27 13:38:52 martin Exp $
 #	$eterna: Makefile,v 1.14 2009/05/22 21:51:39 mrg Exp $
 
-SIMPLETESTS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t12 t13 t14 t15
+SIMPLETESTS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t12 t13 t14 t15 t16 t17 t18
 CGITESTS=	t11
 BIGFILETESTS=	partial4000 partial8000
 

@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.65.4.2 2019/06/12 10:32:00 martin Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.65.4.3 2021/03/27 13:38:51 martin Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2019 Matthew R. Green
+.\" Copyright (c) 1997-2021 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 27, 2019
+.Dd February 27, 2021
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -34,13 +34,14 @@
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl EGHVXefhnsu
+.Op Fl EGHVXdefhnsu
 .Op Fl C Ar suffix cgihandler
 .Op Fl I Ar port
 .Op Fl L Ar prefix script
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
-.Op Fl S Ar server_software
+.Op Fl R Ar readme
+.Op Fl S Ar version
 .Op Fl T Ar type timeout
 .Op Fl U Ar username
 .Op Fl Z Ar cert privkey
@@ -119,6 +120,15 @@ Note that the CGI/1.1 interface is available with
 translation using
 .Fl E
 switch.
+.It Fl d
+Enables debug support.
+.It Fl E
+Enables CGI/1.1 interface for
+.Em ~user
+translation.
+Note that enabling this support implies that users can run commands
+as the web server user.
+This may have security implications.
 .It Fl e
 Causes
 .Nm
@@ -130,9 +140,12 @@ options.
 .It Fl f
 Stops the
 .Fl b
-flag from
+flag from detaching
 .Nm
-detaching from the tty and going into the background.
+from the tty and going into the background.
+This implies the
+.Fl b
+flag.
 .It Fl G
 Get the
 .Nm
@@ -211,12 +224,10 @@ options may be passed.
 .It Fl n
 Stops
 .Nm
-from doing IP address to name resolution of hosts for setting the
+from doing IP address to name resolution of remote hosts.
+This affects the
 .Ev REMOTE_HOST
-variable before running a CGI program.
-This option has no effect without the
-.Fl c
-option.
+environment variable for CGI programs and Lua scripts.
 .It Fl P Ar pidfile
 Causes
 .Nm
@@ -232,9 +243,13 @@ translations from
 .Dq public_html
 to
 .Ar pubdir .
-.It Fl S Ar server_software
+.It Fl R Ar readme
+When directory indexing is enabled, include the contents of the file
+.Ar readme
+in the footer of the directory index.
+.It Fl S Ar version
 Sets the internal server version to
-.Ar server_software .
+.Ar version .
 .It Fl s
 Forces logging to be set to stderr always.
 .It Fl T Ar type timeout
@@ -285,12 +300,6 @@ into the directory
 (but see the
 .Fl p
 option above).
-.It Fl E
-Enables CGI/1.1 interface for
-.Em ~user
-translation.
-Note that enabling this support implies that users can run
-commands as web server user, this may have security implications.
 .It Fl V
 Sets the backup virtual host directory to the
 .Ar slashdir
@@ -325,15 +334,15 @@ Changes the default file read for directories from
 .Dq index.html
 to
 .Ar index .
-.It Fl z Ar ciphers
-Sets the list of SSL ciphers (see
-.Xr SSL_CTX_set_cipher_list 3 ) .
 .It Fl Z Ar certificate_path privatekey_path
 Sets the path to the server certificate file and the private key file
 in PEM format.
 It also causes
 .Nm
 to start SSL mode.
+.It Fl z Ar ciphers
+Sets the list of SSL ciphers (see
+.Xr SSL_CTX_set_cipher_list 3 ) .
 .El
 .Pp
 Note that in
@@ -449,6 +458,44 @@ with
 on the compiler command line to enable this support.
 It may require linking with the crypt library, using
 .Dq -lcrypt .
+.Ss BLOCKLIST SUPPORT
+On
+.Nx ,
+.Nm
+supports
+.Xr blocklistd 8
+by default.
+The support can be disabled with the
+.Dq -DNO_BLOCKLIST_SUPPORT
+compilation option.
+.Pp
+Upon occurrence,
+.Nm
+reports two HTTP status codes to
+.Xr blocklistd 8
+as failures:
+.Em 401
+(``Unauthorized'')
+and
+.Em 403
+(``Forbidden'') .
+Of these,
+.Em 401
+is the one received upon authorization failure with the
+HTTP Basic Authorization mechanism.
+A successful authorization decreases the counter kept by
+.Xr blocklistd 8 .
+.Pp
+Note that the implementation of the HTTP Basic Authorization mechanism
+uses a redirection; a status code
+.Em 401
+is always initially received.
+Therefore, a single authorization failure of
+.Pa .htpasswd
+is reported as two failures to
+.Xr blocklistd 8 ,
+but no failures are recorded upon successful authorization
+due to the decrease of the failure counter.
 .Ss SSL SUPPORT
 .Nm
 has support for TLSv1.1 and TLSv1.2 protocols that are included by
@@ -599,7 +646,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20190116.
+version 20210227.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -652,14 +699,17 @@ added support for serving gzipped files and better SSL handling
 .Aq Mt pek@pdc.kth.se
 provided a fix for a minor (non-security) buffer overflow condition
 .It
+.Aq Mt emily@ingalls.rocks
+provided fixes for some bad request parsing
+.It
 .An Jun-ichiro itojun Hagino, KAME
 .Aq Mt itojun@iijlab.net
 provided initial IPv6 support
 .It
 .An Martin Husemann
 .Aq Mt martin@NetBSD.org
-provided .bzabsredirect and .bzredir support, and fixed various
-redirection issues
+provided .bzabsredirect and .bzredir support, fixed various
+redirection issues and more
 .It
 .An Arto Huusko
 .Aq Mt arto.huusko@pp2.inet.fi
@@ -704,6 +754,10 @@ provided man page fixes
 .Aq Mt denafcm@gmail.com
 provided a cgi-bin fix
 .It
+.An Jared McNeill
+.Aq Mt jmcneill@NetBSD.org
+added support for readme in directory indexing
+.It
 .An Julio Merino
 .Aq Mt jmmv@NetBSD.org
 Added the
@@ -742,6 +796,11 @@ provided the
 .Fl V
 option
 .It
+.An Jukka Ruohonen
+.Aq Mt jruoho@NetBSD.org
+provided support for
+.Xr blocklistd 8
+.It
 .An Thor Lancelot Simon
 .Aq Mt tls@NetBSD.org
 enhanced cgi-bin support
@@ -760,6 +819,11 @@ provided http authorization fixes
 .It
 .Aq Mt xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
+
+.It
+.An S.P.Zeidler
+.Aq Mt spz@NetBSD.org
+fixed several SSL shutdown issues
 .It
 Coyote Point provided various CGI fixes
 .El
