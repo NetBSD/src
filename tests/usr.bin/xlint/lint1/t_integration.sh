@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.34 2021/03/23 21:19:08 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.35 2021/03/27 13:28:03 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,101 +83,101 @@ test_case()
 		atf_set \"require.progs\" \"${LINT1}\"
 	}"
 	eval "${name}_body() {
-		check_lint1 d_${name}.c
+		check_lint1 ${name}.c
 	}"
 
 	Names="${Names} ${name}"
 }
 
-test_case bltinoffsetof
-test_case c99_anon_struct
-test_case c99_anon_union
-test_case c99_bool
-test_case c99_bool_strict
-test_case c99_bool_strict_syshdr
-test_case c99_compound_literal_comma
-test_case c99_decls_after_stmt2
-test_case c99_flex_array_packed
-test_case c99_init
-test_case c99_nested_struct
-test_case c99_union_cast
-test_case c99_union_init4
-test_case c99_union_init5
-test_case cast_fun_array_param
-test_case cast_typeof
-test_case decl_old_style_arguments
-test_case fold_test
-test_case gcc_extension
-test_case init_array_using_string
-test_case init_pop_member
-test_case lint_assert
-test_case return_type
-test_case type_question_colon
-test_case typefun
-test_case typename_as_var
+test_case d_bltinoffsetof
+test_case d_c99_anon_struct
+test_case d_c99_anon_union
+test_case d_c99_bool
+test_case d_c99_bool_strict
+test_case d_c99_bool_strict_syshdr
+test_case d_c99_compound_literal_comma
+test_case d_c99_decls_after_stmt2
+test_case d_c99_flex_array_packed
+test_case d_c99_init
+test_case d_c99_nested_struct
+test_case d_c99_union_cast
+test_case d_c99_union_init4
+test_case d_c99_union_init5
+test_case d_cast_fun_array_param
+test_case d_cast_typeof
+test_case d_decl_old_style_arguments
+test_case d_fold_test
+test_case d_gcc_extension
+test_case d_init_array_using_string
+test_case d_init_pop_member
+test_case d_lint_assert
+test_case d_return_type
+test_case d_type_question_colon
+test_case d_typefun
+test_case d_typename_as_var
 
-test_case c99_struct_init
-test_case c99_union_init1
-test_case c99_union_init2
-test_case c99_union_init3
-test_case c99_recursive_init
-test_case c9x_recursive_init
-test_case nested_structs
-test_case packed_structs
-test_case pr_22119
-test_case struct_init_nested
+test_case d_c99_struct_init
+test_case d_c99_union_init1
+test_case d_c99_union_init2
+test_case d_c99_union_init3
+test_case d_c99_recursive_init
+test_case d_c9x_recursive_init
+test_case d_nested_structs
+test_case d_packed_structs
+test_case d_pr_22119
+test_case d_struct_init_nested
 
-test_case cast_init
-test_case cast_init2		"Checks cast initialization as the rhs of a" \
+test_case d_cast_init
+test_case d_cast_init2		"Checks cast initialization as the rhs of a" \
 				"- operand"
-test_case cast_lhs		"Checks whether pointer casts are valid lhs" \
+test_case d_cast_lhs		"Checks whether pointer casts are valid lhs" \
 				"lvalues"
 
-test_case gcc_func		"Checks GCC __FUNCTION__"
-test_case c99_func		"Checks C99 __func__"
+test_case d_gcc_func		"Checks GCC __FUNCTION__"
+test_case d_c99_func		"Checks C99 __func__"
 
-test_case gcc_variable_array_init "Checks GCC variable array initializers"
-test_case c9x_array_init
-test_case c99_decls_after_stmt
-test_case c99_decls_after_stmt3
-test_case nolimit_init		"Checks no limit initializers"
-test_case zero_sized_arrays
+test_case d_gcc_variable_array_init "Checks GCC variable array initializers"
+test_case d_c9x_array_init
+test_case d_c99_decls_after_stmt
+test_case d_c99_decls_after_stmt3
+test_case d_nolimit_init	"Checks no limit initializers"
+test_case d_zero_sized_arrays
 
-test_case compound_literals1
-test_case compound_literals2
-test_case gcc_compound_statements1
-test_case gcc_compound_statements2 "Checks GCC compound statements with" \
+test_case d_compound_literals1
+test_case d_compound_literals2
+test_case d_gcc_compound_statements1
+test_case d_gcc_compound_statements2 "Checks GCC compound statements with" \
 				"non-expressions"
-test_case gcc_compound_statements3 "Checks GCC compound statements with" \
+test_case d_gcc_compound_statements3 "Checks GCC compound statements with" \
 				"void type"
 # XXX: Because of polymorphic __builtin_isnan and expression has null effect
 # test_case gcc_extension "Checks GCC __extension__ and __typeof__"
 
-test_case cvt_in_ternary	"Checks CVT nodes handling in ?"
-test_case cvt_constant		"Checks constant conversion"
-test_case ellipsis_in_switch	"Checks ellipsis in switch()"
-test_case c99_complex_num	"Checks C99 complex numbers"
-test_case c99_complex_split	"Checks C99 complex access"
-test_case c99_for_loops
-test_case alignof		"Checks __alignof__"
-test_case shift_to_narrower_type "Checks that type shifts that result in" \
+test_case d_cvt_in_ternary	"Checks CVT nodes handling in ?"
+test_case d_cvt_constant		"Checks constant conversion"
+test_case d_ellipsis_in_switch	"Checks ellipsis in switch()"
+test_case d_c99_complex_num	"Checks C99 complex numbers"
+test_case d_c99_complex_split	"Checks C99 complex access"
+test_case d_c99_for_loops
+test_case d_alignof		"Checks __alignof__"
+test_case d_shift_to_narrower_type "Checks that type shifts that result in" \
 				"narrower types do not produce warnings"
 
-test_case constant_conv1	"Checks failing on information-losing" \
+test_case d_constant_conv1	"Checks failing on information-losing" \
 				"constant conversion in argument lists"
-test_case constant_conv2	"Checks failing on information-losing" \
+test_case d_constant_conv2	"Checks failing on information-losing" \
 				"constant conversion in argument lists"
 
-test_case type_conv1		"Checks failing on information-losing" \
+test_case d_type_conv1		"Checks failing on information-losing" \
 				"type conversion in argument lists"
-test_case type_conv2		"Checks failing on information-losing" \
+test_case d_type_conv2		"Checks failing on information-losing" \
 				"type conversion in argument lists"
-test_case type_conv3		"Checks failing on information-losing" \
+test_case d_type_conv3		"Checks failing on information-losing" \
 				"type conversion in argument lists"
 
-test_case incorrect_array_size
+test_case d_incorrect_array_size
 
-test_case long_double_int	"Checks for confusion of 'long double' with" \
+test_case d_long_double_int	"Checks for confusion of 'long double' with" \
 				"'long int'; PR bin/39639"
 
 test_case all_messages
