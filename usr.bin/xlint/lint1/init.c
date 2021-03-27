@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.143 2021/03/27 22:53:10 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.144 2021/03/27 23:18:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.143 2021/03/27 22:53:10 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.144 2021/03/27 23:18:37 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -559,6 +559,21 @@ brace_level_set_array_dimension(int dim)
 	debug_brace_level(brace_level_rvalue);
 }
 
+static void
+brace_level_next_member(struct brace_level *level)
+{
+	const sym_t *m;
+
+	do {
+		m = level->bl_next_member = level->bl_next_member->s_next;
+		/* XXX: can this assertion be made to fail? */
+		lint_assert(m != NULL);
+	} while (m->s_bitfield && m->s_name == unnamed);
+
+	debug_indent();
+	debug_brace_level(level);
+}
+
 /*
  * A sub-object of an array is initialized using a designator.  This does not
  * have to be an array element directly, it can also be used to initialize
@@ -695,7 +710,6 @@ static void
 initstack_pop_item_unnamed(void)
 {
 	struct brace_level *level = brace_level_lvalue;
-	sym_t *m;
 
 	/*
 	 * If the removed element was a structure member, we must go
@@ -703,15 +717,8 @@ initstack_pop_item_unnamed(void)
 	 */
 	if (level->bl_remaining > 0 && level->bl_type->t_tspec == STRUCT &&
 	    !level->bl_seen_named_member) {
-		do {
-			m = level->bl_next_member =
-			    level->bl_next_member->s_next;
-			/* XXX: can this assertion be made to fail? */
-			lint_assert(m != NULL);
-			debug_step("pop %s", m->s_name);
-		} while (m->s_bitfield && m->s_name == unnamed);
-		/* XXX: duplicate code for skipping unnamed bit-fields */
-		level->bl_subtype = m->s_type;
+		brace_level_next_member(level);
+		level->bl_subtype = level->bl_next_member->s_type;
 	}
 }
 
