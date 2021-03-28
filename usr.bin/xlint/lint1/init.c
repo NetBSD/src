@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.158 2021/03/28 10:52:41 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.159 2021/03/28 10:58:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.158 2021/03/28 10:52:41 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.159 2021/03/28 10:58:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -321,79 +321,6 @@ debug_leave(const char *func)
 #endif
 
 
-static struct designator *
-designator_new(const char *name)
-{
-	struct designator *d = xcalloc(1, sizeof *d);
-	d->name = name;
-	return d;
-}
-
-static void
-designator_free(struct designator *d)
-{
-	free(d);
-}
-
-
-#ifdef DEBUG
-static void
-designation_debug(const struct designation *dn)
-{
-	const struct designator *p;
-
-	if (dn->head == NULL)
-		return;
-
-	debug_indent();
-	debug_printf("designation: ");
-	for (p = dn->head; p != NULL; p = p->next)
-		debug_printf(".%s", p->name);
-	debug_printf("\n");
-}
-#else
-#define designation_debug(dn) do { } while (false)
-#endif
-
-static void
-designation_add(struct designation *dn, struct designator *dr)
-{
-
-	if (dn->head != NULL) {
-		dn->tail->next = dr;
-		dn->tail = dr;
-	} else {
-		dn->head = dr;
-		dn->tail = dr;
-	}
-
-	designation_debug(dn);
-}
-
-/* TODO: add support for array subscripts, not only named members */
-/*
- * TODO: This function should not be necessary at all.  There is no need to
- *  remove the head of the list.
- */
-static void
-designation_shift_level(struct designation *dn)
-{
-	lint_assert(dn->head != NULL);
-
-	if (dn->head == dn->tail) {
-		designator_free(dn->head);
-		dn->head = NULL;
-		dn->tail = NULL;
-	} else {
-		struct designator *head = dn->head;
-		dn->head = dn->head->next;
-		designator_free(head);
-	}
-
-	designation_debug(dn);
-}
-
-
 /* In traditional C, bit-fields can be initialized only by integer constants. */
 static void
 check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
@@ -470,6 +397,79 @@ check_init_expr(scl_t sclass, type_t *tp, sym_t *sym, tnode_t *tn)
 		tn = convert(INIT, 0, tp, tn);
 
 	check_non_constant_initializer(tn, sclass);
+}
+
+
+static struct designator *
+designator_new(const char *name)
+{
+	struct designator *d = xcalloc(1, sizeof *d);
+	d->name = name;
+	return d;
+}
+
+static void
+designator_free(struct designator *d)
+{
+	free(d);
+}
+
+
+#ifdef DEBUG
+static void
+designation_debug(const struct designation *dn)
+{
+	const struct designator *p;
+
+	if (dn->head == NULL)
+		return;
+
+	debug_indent();
+	debug_printf("designation: ");
+	for (p = dn->head; p != NULL; p = p->next)
+		debug_printf(".%s", p->name);
+	debug_printf("\n");
+}
+#else
+#define designation_debug(dn) do { } while (false)
+#endif
+
+static void
+designation_add(struct designation *dn, struct designator *dr)
+{
+
+	if (dn->head != NULL) {
+		dn->tail->next = dr;
+		dn->tail = dr;
+	} else {
+		dn->head = dr;
+		dn->tail = dr;
+	}
+
+	designation_debug(dn);
+}
+
+/* TODO: add support for array subscripts, not only named members */
+/*
+ * TODO: This function should not be necessary at all.  There is no need to
+ *  remove the head of the list.
+ */
+static void
+designation_shift_level(struct designation *dn)
+{
+	lint_assert(dn->head != NULL);
+
+	if (dn->head == dn->tail) {
+		designator_free(dn->head);
+		dn->head = NULL;
+		dn->tail = NULL;
+	} else {
+		struct designator *head = dn->head;
+		dn->head = dn->head->next;
+		designator_free(head);
+	}
+
+	designation_debug(dn);
 }
 
 
