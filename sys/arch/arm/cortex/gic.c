@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.46 2021/02/23 10:03:04 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.47 2021/03/28 09:11:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.46 2021/02/23 10:03:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.47 2021/03/28 09:11:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -517,7 +517,11 @@ armgic_cpu_init_targets(struct armgic_softc *sc)
 		if (is != NULL && is->is_mpsafe) {
 			const u_int byte_shift = 8 * (irq & 3);
 			uint32_t targets = gicd_read(sc, targets_reg);
+#if 0
 			targets |= sc->sc_mptargets << byte_shift;
+#else
+			targets |= sc->sc_bptargets << byte_shift;
+#endif
 			gicd_write(sc, targets_reg, targets);
 		}
 	}
