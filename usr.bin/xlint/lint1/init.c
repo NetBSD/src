@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.170 2021/03/28 18:28:22 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.171 2021/03/28 18:33:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.170 2021/03/28 18:28:22 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.171 2021/03/28 18:33:27 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1179,7 +1179,6 @@ static bool
 initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 {
 	struct brace_level *level;
-	int	len;
 	strg_t	*strg;
 
 	if (tn->tn_op != STRING)
@@ -1213,12 +1212,9 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	} else
 		goto nope;
 
-	/* Get length without trailing NUL character. */
-	len = strg->st_len;
-
 	if (level->bl_array_of_unknown_size) {
 		level->bl_array_of_unknown_size = false;
-		level->bl_type->t_dim = len + 1;
+		level->bl_type->t_dim = (int)(strg->st_len + 1);
 		setcomplete(level->bl_type, true);
 	} else {
 		/*
@@ -1226,7 +1222,7 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 		 * initialized
 		 */
 		/* XXX: double-check for off-by-one error */
-		if (level->bl_type->t_dim < len) {
+		if (level->bl_type->t_dim < (int)strg->st_len) {
 			/* non-null byte ignored in string initializer */
 			warning(187);
 		}
