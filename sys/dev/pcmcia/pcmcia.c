@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.94.70.2 2021/03/22 16:23:46 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.94.70.3 2021/03/28 20:39:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.94.70.2 2021/03/22 16:23:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.94.70.3 2021/03/28 20:39:10 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -214,8 +214,7 @@ done:
 }
 
 int
-pcmcia_rescan(device_t self, const char *ifattr,
-    const int *locators)
+pcmcia_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct pcmcia_softc *sc = device_private(self);
 	struct pcmcia_function *pf;
@@ -248,7 +247,6 @@ pcmcia_rescan(device_t self, const char *ifattr,
 
 		pf->child = config_found(self, &paa, pcmcia_print,
 		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, ifattr,
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 	}
