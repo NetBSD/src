@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.154 2021/03/28 09:57:31 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.155 2021/03/28 10:03:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.154 2021/03/28 09:57:31 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.155 2021/03/28 10:03:02 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -529,6 +529,31 @@ brace_level_look_up_member_bloated(struct brace_level *level,
 	return m;
 }
 
+/* TODO: document me */
+/* TODO: think of a better name than 'push' */
+static bool
+brace_level_push_array(struct brace_level *level)
+{
+	if (level->bl_enclosing->bl_seen_named_member) {
+		level->bl_brace = true;
+		debug_step("ARRAY, seen named member, needs closing brace");
+	}
+
+	if (is_incomplete(level->bl_type) &&
+	    level->bl_enclosing->bl_enclosing != NULL) {
+		/* initialization of an incomplete type */
+		error(175);
+		return false;
+	}
+
+	level->bl_subtype = level->bl_type->t_subt;
+	level->bl_array_of_unknown_size = is_incomplete(level->bl_type);
+	level->bl_remaining = level->bl_type->t_dim;
+	debug_step("type '%s' remaining %d",
+	    type_name(level->bl_type), level->bl_remaining);
+	return true;
+}
+
 
 static struct initialization *
 initialization_new(sym_t *sym)
@@ -583,7 +608,6 @@ initialization_set_error(struct initialization *in)
 {
 	in->initerr = true;
 }
-
 
 /* XXX: unnecessary prototype since it is not recursive */
 static	bool	init_array_using_string(struct initialization *, tnode_t *);
@@ -876,33 +900,6 @@ extend_if_array_of_unknown_size(struct initialization *in)
 	debug_step("extended type is '%s'", type_name(level->bl_type));
 }
 
-/* TODO: document me */
-/* TODO: think of a better name than 'push' */
-static void
-initstack_push_array(struct initialization *in)
-{
-	struct brace_level *level = in->brace_level;
-
-	if (level->bl_enclosing->bl_seen_named_member) {
-		level->bl_brace = true;
-		debug_step("ARRAY, seen named member, needs closing brace");
-	}
-
-	if (is_incomplete(level->bl_type) &&
-	    level->bl_enclosing->bl_enclosing != NULL) {
-		/* initialization of an incomplete type */
-		error(175);
-		initialization_set_error(in);
-		return;
-	}
-
-	level->bl_subtype = level->bl_type->t_subt;
-	level->bl_array_of_unknown_size = is_incomplete(level->bl_type);
-	level->bl_remaining = level->bl_type->t_dim;
-	designation_debug(&in->designation);
-	debug_step("type '%s' remaining %d",
-	    type_name(level->bl_type), level->bl_remaining);
-}
 
 
 /* TODO: document me */
@@ -997,7 +994,8 @@ again:
 			goto pop;
 		}
 
-		initstack_push_array(in);
+		if (!brace_level_push_array(level))
+			initialization_set_error(in);
 		break;
 
 	case UNION:
