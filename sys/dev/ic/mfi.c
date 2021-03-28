@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.63.10.2 2021/03/22 16:23:45 thorpej Exp $ */
+/* $NetBSD: mfi.c,v 1.63.10.3 2021/03/28 20:31:05 thorpej Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.63.10.2 2021/03/22 16:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.63.10.3 2021/03/28 20:31:05 thorpej Exp $");
 
 #include "bio.h"
 
@@ -909,10 +909,7 @@ mfi_rescan(device_t self, const char *ifattr, const int *locators)
 	if (sc->sc_child != NULL)
 		return 0;
 
-	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint,
-	    CFARG_IATTR, ifattr,
-	    CFARG_LOCATORS, locators,
-	    CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint, CFARG_EOL);
 
 	return 0;
 }
