@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.17.14.1 2021/03/21 21:09:09 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.17.14.2 2021/03/28 19:50:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.17.14.1 2021/03/21 21:09:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.17.14.2 2021/03/28 19:50:05 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -375,7 +375,7 @@ spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
 	sc->sc_inbuf = NULL;
 	sc->sc_wsbelldev = NULL;
 
-	spkr_rescan(self, "", NULL);
+	spkr_rescan(self, NULL, NULL);
 }
 
 int
