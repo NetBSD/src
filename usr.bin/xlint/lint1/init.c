@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.172 2021/03/28 19:30:08 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.173 2021/03/28 19:53:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.172 2021/03/28 19:30:08 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.173 2021/03/28 19:53:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -589,8 +589,8 @@ brace_level_look_up_member(const struct brace_level *level, const char *name)
 
 /* TODO: merge duplicate code */
 static sym_t *
-brace_level_look_up_member_named(struct brace_level *level, const char *name,
-				 int *count)
+brace_level_look_up_first_member_named(struct brace_level *level,
+				       const char *name, int *count)
 {
 	sym_t *m;
 
@@ -609,7 +609,7 @@ brace_level_look_up_member_named(struct brace_level *level, const char *name,
 
 /* TODO: merge duplicate code */
 static sym_t *
-brace_level_look_up_member_unnamed(struct brace_level *level, int *count)
+brace_level_look_up_first_member_unnamed(struct brace_level *level, int *count)
 {
 	sym_t *m;
 
@@ -830,10 +830,10 @@ initialization_push_struct_or_union(struct initialization *in)
 	    level->bl_seen_named_member ? ", seen named member" : "");
 
 	if (in->designation.head != NULL)
-		m = brace_level_look_up_member_named(level,
+		m = brace_level_look_up_first_member_named(level,
 		    in->designation.head->name, &cnt);
 	else
-		m = brace_level_look_up_member_unnamed(level, &cnt);
+		m = brace_level_look_up_first_member_unnamed(level, &cnt);
 
 	if (in->designation.head != NULL) {
 		if (m == NULL) {
