@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.156 2021/03/28 10:05:19 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.157 2021/03/28 10:09:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.156 2021/03/28 10:05:19 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.157 2021/03/28 10:09:34 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -72,8 +72,8 @@ __RCSID("$NetBSD: init.c,v 1.156 2021/03/28 10:05:19 rillig Exp $");
  *
  *	begin_initialization
  *		init_lbrace			for each '{'
- *		designation_add_name		for each '.member' before '='
- *		designation_add_subscript	for each '[123]' before '='
+ *		add_designator_member		for each '.member' before '='
+ *		add_designator_subscript	for each '[123]' before '='
  *		init_using_expr			for each expression
  *		init_rbrace			for each '}'
  *	end_initialization
@@ -655,10 +655,8 @@ end_initialization(void)
 	debug_step("end initialization");
 }
 
-
-
 void
-designation_add_name(sbuf_t *sb)
+add_designator_member(sbuf_t *sb)
 {
 	designation_add(&current_init()->designation,
 	    designator_new(sb->sb_name));
@@ -685,7 +683,7 @@ static void initstack_pop_nobrace(struct initialization *);
  * }
  */
 void
-designation_add_subscript(range_t range)
+add_designator_subscript(range_t range)
 {
 	struct initialization *in = current_init();
 	struct brace_level *level;
