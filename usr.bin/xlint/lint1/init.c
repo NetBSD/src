@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.152 2021/03/28 09:46:55 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.153 2021/03/28 09:51:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.152 2021/03/28 09:46:55 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.153 2021/03/28 09:51:16 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -714,17 +714,16 @@ initstack_init(void)
 		initsym->s_type = duptyp(initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	current_init()->brace_level = brace_level_new(NULL, initsym->s_type, 1);
+	in->brace_level = brace_level_new(NULL, initsym->s_type, 1);
 
-	initialization_debug(current_init());
+	initialization_debug(in);
 	debug_leave();
 }
 
 /* TODO: document me */
 static void
-initstack_pop_item_named_member(const char *name)
+initstack_pop_item_named_member(struct initialization *in, const char *name)
 {
-	struct initialization *in = current_init();
 	struct brace_level *level = in->brace_level;
 	const sym_t *m;
 
@@ -801,11 +800,11 @@ initstack_pop_item(struct initialization *in)
 	debug_step("%d elements remaining", level->bl_remaining);
 
 	if (in->designation.head != NULL && in->designation.head->name != NULL)
-		initstack_pop_item_named_member(in->designation.head->name);
+		initstack_pop_item_named_member(in, in->designation.head->name);
 	else
 		initstack_pop_item_unnamed(in);
 
-	initialization_debug(current_init());
+	initialization_debug(in);
 	debug_leave();
 }
 
@@ -1029,14 +1028,13 @@ again:
 		break;
 	}
 
-	initialization_debug(current_init());
+	initialization_debug(in);
 	debug_leave();
 }
 
 static void
-check_too_many_initializers(void)
+check_too_many_initializers(struct initialization *in)
 {
-	struct initialization *in = current_init();
 	const struct brace_level *level = in->brace_level;
 
 	if (level->bl_remaining > 0)
@@ -1080,7 +1078,7 @@ initstack_next_brace(struct initialization *in)
 		initialization_set_error(in);
 	}
 	if (!in->initerr)
-		check_too_many_initializers();
+		check_too_many_initializers(in);
 	if (!in->initerr)
 		initstack_push(in);
 	if (!in->initerr) {
@@ -1092,7 +1090,7 @@ initstack_next_brace(struct initialization *in)
 			: in->brace_level->bl_subtype));
 	}
 
-	initialization_debug(current_init());
+	initialization_debug(in);
 	debug_leave();
 }
 
@@ -1110,7 +1108,7 @@ initstack_next_nobrace(struct initialization *in, tnode_t *tn)
 	}
 
 	if (!in->initerr)
-		check_too_many_initializers();
+		check_too_many_initializers(in);
 
 	while (!in->initerr) {
 		struct brace_level *level = in->brace_level;
@@ -1130,7 +1128,7 @@ initstack_next_nobrace(struct initialization *in, tnode_t *tn)
 		initstack_push(in);
 	}
 
-	initialization_debug(current_init());
+	initialization_debug(in);
 	debug_leave();
 }
 
@@ -1222,13 +1220,13 @@ check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
  * single initializer expression without braces by delegating to ASSIGN.
  */
 static bool
-init_using_assign(tnode_t *rn)
+init_using_assign(struct initialization *in, tnode_t *rn)
 {
 	tnode_t *ln, *tn;
 
 	if (initsym->s_type->t_tspec == ARRAY)
 		return false;
-	if (current_init()->brace_level->bl_enclosing != NULL)
+	if (in->brace_level->bl_enclosing != NULL)
 		return false;
 
 	debug_step("handing over to ASSIGN");
@@ -1245,9 +1243,8 @@ init_using_assign(tnode_t *rn)
 }
 
 static void
-check_init_expr(tnode_t *tn, scl_t sclass)
+check_init_expr(struct initialization *in, tnode_t *tn, scl_t sclass)
 {
-	struct initialization *in = current_init();
 	tnode_t *ln;
 	tspec_t lt, rt;
 	struct mbl *tmem;
@@ -1297,7 +1294,7 @@ init_using_expr(tnode_t *tn)
 	scl_t	sclass;
 
 	debug_enter();
-	initialization_debug(current_init());
+	initialization_debug(in);
 	designation_debug(&in->designation);
 	debug_step("expr:");
 	debug_node(tn, debug_ind + 1);
@@ -1306,7 +1303,7 @@ init_using_expr(tnode_t *tn)
 		goto done;
 
 	sclass = initsym->s_scl;
-	if ((sclass == AUTO || sclass == REG) && init_using_assign(tn))
+	if ((sclass == AUTO || sclass == REG) && init_using_assign(in, tn))
 		goto done;
 
 	initstack_pop_nobrace(in);
@@ -1324,10 +1321,10 @@ init_using_expr(tnode_t *tn)
 	in->brace_level->bl_remaining--;
 	debug_step("%d elements remaining", in->brace_level->bl_remaining);
 
-	check_init_expr(tn, sclass);
+	check_init_expr(in, tn, sclass);
 
 done_initstack:
-	initialization_debug(current_init());
+	initialization_debug(in);
 
 done:
 	while (in->designation.head != NULL)
@@ -1350,7 +1347,7 @@ init_array_using_string(struct initialization *in, tnode_t *tn)
 		return false;
 
 	debug_enter();
-	initialization_debug(current_init());
+	initialization_debug(in);
 
 	level = in->brace_level;
 	strg = tn->tn_string;
@@ -1432,7 +1429,7 @@ init_array_using_string(struct initialization *in, tnode_t *tn)
 	/* In every case the array is initialized completely. */
 	level->bl_remaining = 0;
 
-	initialization_debug(current_init());
+	initialization_debug(in);
 	debug_leave();
 	return true;
 }
