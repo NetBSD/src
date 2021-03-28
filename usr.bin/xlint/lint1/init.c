@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.153 2021/03/28 09:51:16 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.154 2021/03/28 09:57:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.153 2021/03/28 09:51:16 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.154 2021/03/28 09:57:31 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -614,22 +614,22 @@ current_initsym(void)
 void
 begin_initialization(sym_t *sym)
 {
-	struct initialization *curr_init;
+	struct initialization *in;
 
 	debug_step("begin initialization of '%s'", type_name(sym->s_type));
-	curr_init = initialization_new(sym);
-	curr_init->next = init;
-	init = curr_init;
+	in = initialization_new(sym);
+	in->next = init;
+	init = in;
 }
 
 void
 end_initialization(void)
 {
-	struct initialization *curr_init;
+	struct initialization *in;
 
-	curr_init = init;
+	in = init;
 	init = init->next;
-	initialization_free(curr_init);
+	initialization_free(in);
 	debug_step("end initialization");
 }
 
@@ -885,11 +885,7 @@ initstack_push_array(struct initialization *in)
 
 	if (level->bl_enclosing->bl_seen_named_member) {
 		level->bl_brace = true;
-		debug_step("ARRAY%s%s",
-		    level->bl_brace ? ", needs closing brace" : "",
-		    /* TODO: this is redundant, always true */
-		    level->bl_enclosing->bl_seen_named_member
-			? ", seen named member" : "");
+		debug_step("ARRAY, seen named member, needs closing brace");
 	}
 
 	if (is_incomplete(level->bl_type) &&
