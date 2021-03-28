@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.65 2021/03/27 18:55:02 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.66 2021/03/28 13:33:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.65 2021/03/27 18:55:02 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.66 2021/03/28 13:33:54 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -291,7 +291,7 @@ escape_filename(EditLine * el, const char *filename, int single_match,
 
 	if (single_match && app_func) {
 		escaped_str[offset] = 0;
-		append_char = app_func(escaped_str);
+		append_char = app_func(filename);
 		/* we want to append space only if we are not inside quotes */
 		if (append_char[0] == ' ') {
 			if (!s_quoted && !d_quoted)
