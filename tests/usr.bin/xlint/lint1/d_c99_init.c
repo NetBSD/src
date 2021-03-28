@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.18 2021/03/28 18:48:32 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.19 2021/03/28 19:53:58 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -242,4 +242,25 @@ char message_with_suffix[] = {
 	"message",
 	/* expect+1: too many array initializers */
 	'\n',
+};
+
+struct ten {
+	int i0;
+	int i1;
+	int i2;
+	int i3;
+	int i4;
+	int i5;
+	int i6;
+	int i7;
+	int i8;
+	int i9;
+};
+
+struct ten ten = {
+	.i3 = 3,
+	4,
+	// FIXME: assertion "level->bl_type->t_tspec == ARRAY" failed in brace_level_extend_if_array_of_unknown_size
+	// 5,
+	// 6,
 };
