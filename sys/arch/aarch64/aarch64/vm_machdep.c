@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.10 2021/03/01 11:37:31 jmcneill Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.11 2021/03/28 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10 2021/03/01 11:37:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11 2021/03/28 10:29:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,8 +227,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = (void *)(taddr + off);
 
 	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
+	 * The region is locked, so we expect that pmap_extract() will return
+	 * true.
 	 */
 	while (len) {
 		(void)pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
