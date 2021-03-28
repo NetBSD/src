@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.161 2021/03/28 13:09:43 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.162 2021/03/28 14:01:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.161 2021/03/28 13:09:43 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.162 2021/03/28 14:01:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -858,12 +858,13 @@ initialization_push(struct initialization *in)
 
 	level = in->brace_level;
 	lint_assert(level->bl_remaining > 0);
-	lint_assert(level->bl_type == NULL ||
-		    !is_scalar(level->bl_type->t_tspec));
 
 	in->brace_level = xcalloc(1, sizeof *in->brace_level);
 	in->brace_level->bl_enclosing = level;
 	in->brace_level->bl_type = level->bl_subtype;
+	if (in->brace_level->bl_type == NULL)
+		in->brace_level->bl_type = level->bl_type;
+	lint_assert(in->brace_level->bl_type != NULL);
 	lint_assert(in->brace_level->bl_type->t_tspec != FUNC);
 
 again:
@@ -1012,13 +1013,6 @@ initialization_next_brace(struct initialization *in)
 	debug_enter();
 	initialization_debug(in);
 
-	if (in->brace_level->bl_type != NULL &&
-	    is_scalar(in->brace_level->bl_type->t_tspec)) {
-		/* invalid initializer type %s */
-		error(176, type_name(in->brace_level->bl_type));
-		initialization_set_error(in);
-	}
-
 	if (!in->initerr &&
 	    !brace_level_check_too_many_initializers(in->brace_level))
 		initialization_set_error(in);
@@ -1029,10 +1023,9 @@ initialization_next_brace(struct initialization *in)
 	if (!in->initerr) {
 		in->brace_level->bl_brace = true;
 		designation_debug(&in->designation);
-		debug_step("expecting type '%s'",
-		    type_name(in->brace_level->bl_type != NULL
-			? in->brace_level->bl_type
-			: in->brace_level->bl_subtype));
+		if (in->brace_level->bl_type != NULL)
+			debug_step("expecting type '%s'",
+			    type_name(in->brace_level->bl_type));
 	}
 
 	initialization_debug(in);
