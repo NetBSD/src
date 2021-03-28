@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.60 2020/11/29 09:15:33 rillig Exp $ */
+/* $NetBSD: style,v 1.61 2021/03/28 14:16:16 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.60 2020/11/29 09:15:33 rillig Exp $");
+__RCSID("$NetBSD: style,v 1.61 2021/03/28 14:16:16 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -380,11 +380,13 @@ function(int a1, int a2, float fl, int a4)
 	 * the change needs to be done in one place.
 	 *
 	 * Use err/warn(3), don't roll your own!
+	 *
+	 * Prefer EXIT_FAILURE instead of random error codes.
 	 */
 	if ((four = malloc(sizeof(*four))) == NULL)
-		err(1, NULL);
+		err(EXIT_FAILURE, NULL);
 	if ((six = (int *)overflow()) == NULL)
-		errx(1, "Number overflowed.");
+		errx(EXIT_FAILURE, "Number overflowed.");
 
 	/* No parentheses are needed around the return value. */
 	return eight;
@@ -408,21 +410,21 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 	_DIAGASSERT(p != NULL);
 	_DIAGASSERT(filedesc != -1);
 
-	if (stat(p, sb) < 0)
-		err(1, "Unable to stat %s", p);
+	/* Prefer checking syscalls against -1 instead of < 0 */
+	if (stat(p, sb) == -1)
+		err(EXIT_FAILURE, "Unable to stat %s", p);
 
 	/*
-	 * To printf quantities that might be larger than "long", include
-	 * <inttypes.h>, cast quantities to intmax_t or uintmax_t and use
-	 * PRI?MAX constants.
+	 * To printf quantities that might be larger than "long",
+	 * cast quantities to intmax_t or uintmax_t and use %j
 	 */
-	(void)printf("The size of %s is %" PRIdMAX " (%#" PRIxMAX ")\n", p,
+	(void)printf("The size of %s is %jd (%#ju)\n", p,
 	    (intmax_t)sb->st_size, (uintmax_t)sb->st_size);
 
 	/*
-	 * To printf quantities of known bit-width, use the corresponding
-	 * defines (generally only done within NetBSD for quantities that
-	 * exceed 32-bits).
+	 * To printf quantities of known bit-width, include <inttypes.h> and
+	 * use the corresponding defines (generally only done within NetBSD
+	 * for quantities that exceed 32-bits).
 	 */
 	(void)printf("%s uses %" PRId64 " blocks and has flags %#" PRIx32 "\n",
 	    p, sb->st_blocks, sb->st_flags);
