@@ -202,7 +202,9 @@ options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
 #pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 wdc* 	at pci? dev ? function ?		# Kauai ATA
 svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
+siisata* at pci? dev ? function ?		# SiI SteelVine controllers
 #options 	ATADEBUG
+
 obio*	at pci? dev ? function ?
 zsc*	at obio?
 zstty*	at zsc? channel ?
