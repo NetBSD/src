@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.150 2021/03/28 09:39:04 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.151 2021/03/28 09:43:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.150 2021/03/28 09:39:04 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.151 2021/03/28 09:43:28 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -307,13 +307,16 @@ debug_leave(const char *func)
 	printf("%*s- %s\n", 2 * --debug_ind, "", func);
 }
 
+#define debug_enter() (debug_enter)(__func__)
+#define debug_leave() (debug_leave)(__func__)
+
 #else
 
 #define debug_printf(fmt, ...)	do { } while (false)
 #define debug_indent()		do { } while (false)
-#define debug_enter(function)	do { } while (false)
+#define debug_enter()		do { } while (false)
 #define debug_step(fmt, ...)	do { } while (false)
-#define debug_leave(function)	do { } while (false)
+#define debug_leave()		do { } while (false)
 
 #endif
 
@@ -564,20 +567,6 @@ current_initsym(void)
 }
 
 #define initsym		(*current_initsym())
-
-#ifndef DEBUG
-
-#define debug_designation()	do { } while (false)
-#define debug_brace_level(level) do { } while (false)
-#define debug_initstack()	do { } while (false)
-
-#else
-
-
-#define debug_enter() debug_enter(__func__)
-#define debug_leave() debug_leave(__func__)
-
-#endif
 
 
 void
