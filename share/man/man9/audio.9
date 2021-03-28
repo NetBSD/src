@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.60 2021/02/06 13:55:40 nia Exp $
+.\"	$NetBSD: audio.9,v 1.61 2021/03/28 07:42:06 isaki Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -241,17 +241,13 @@ The
 and
 .Va rec
 structures contain the encoding parameters that should be set to the hardware.
-If the driver has query_format, all parameters on
-.Va play
-and/or
-.Va rec
-are chosen from formats returned by query_format.
+All of these parameters are chosen from formats returned by
+.Va query_format .
 Therefore
 .Va play
 and/or
 .Va rec
 are always settable.
-If the driver does not have query_format, the driver has to validate the format.
 If the hardware does not support
 .Dv AUDIO_ENCODING_SLINEAR_{NE,OE}:16 ,
 conversion information should be filled the
@@ -355,7 +351,7 @@ The return value also must be non-zero and a multiple of the frame size.
 It is called in the Attach or Closed phases.
 .It Dv int commit_settings(void *hdl)
 optional, is called after all calls to
-.Va set_params ,
+.Va set_format ,
 and
 .Va set_port ,
 are done.
