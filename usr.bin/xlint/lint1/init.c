@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.168 2021/03/28 18:18:22 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.169 2021/03/28 18:21:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.168 2021/03/28 18:18:22 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.169 2021/03/28 18:21:28 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1354,21 +1354,20 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 
 	if (initialization_init_array_using_string(in, tn)) {
 		debug_step("after initializing the string:");
-		/* XXX: why not clean up the initstack here already? */
-		goto done_initstack;
+		goto done_debug;
 	}
 
 	initialization_next_nobrace(in, tn);
 	if (in->initerr || tn == NULL)
-		goto done_initstack;
-
-	in->brace_level->bl_remaining--;
-	debug_step("%d elements remaining", in->brace_level->bl_remaining);
+		goto done_debug;
 
 	/* Using initsym here is better than nothing. */
 	check_init_expr(sclass, in->brace_level->bl_type, in->initsym, tn);
 
-done_initstack:
+	in->brace_level->bl_remaining--;
+	debug_step("%d elements remaining", in->brace_level->bl_remaining);
+
+done_debug:
 	initialization_debug(in);
 
 done:
