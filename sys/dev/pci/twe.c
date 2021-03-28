@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.108.10.2 2021/03/22 16:23:46 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.108.10.3 2021/03/28 20:38:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.108.10.2 2021/03/22 16:23:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.108.10.3 2021/03/28 20:38:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	twe_describe_controller(sc);
 
 	/* Find and attach RAID array units. */
-	twe_rescan(self, "twe", 0);
+	twe_rescan(self, NULL, NULL);
 
 	/* ...and finally, enable interrupts. */
 	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
@@ -482,7 +482,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-twe_rescan(device_t self, const char *attr, const int *flags)
+twe_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct twe_softc *sc;
 	int i;
