@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 2020/11/30 05:33:32 msaitoh Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45 2021/03/28 10:29:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.44 2020/11/30 05:33:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2021/03/28 10:29:05 skrll Exp $");
 
 #include "opt_mtrr.h"
 
@@ -304,8 +304,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (void *)(taddr + off);
 	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
+	 * The region is locked, so we expect that pmap_extract() will return
+	 * true.
 	 * XXX: unwise to expect this in a multithreaded environment.
 	 * anything can happen to a pmap between the time we lock a
 	 * region, release the pmap lock, and then relock it for
