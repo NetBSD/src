@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.144 2021/03/27 23:18:37 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.145 2021/03/28 07:59:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.144 2021/03/27 23:18:37 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.145 2021/03/28 07:59:09 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -257,7 +257,65 @@ struct initialization {
 	struct initialization *next;
 };
 
+
 static struct initialization *init;
+
+#ifdef DEBUG
+static int debug_ind = 0;
+#endif
+
+
+#ifdef DEBUG
+
+static void __printflike(1, 2)
+debug_printf(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	vfprintf(stdout, fmt, va);
+	va_end(va);
+}
+
+static void
+debug_indent(void)
+{
+	debug_printf("%*s", 2 * debug_ind, "");
+}
+
+static void
+debug_enter(const char *func)
+{
+	printf("%*s+ %s\n", 2 * debug_ind++, "", func);
+}
+
+static void __printflike(1, 2)
+debug_step(const char *fmt, ...)
+{
+	va_list va;
+
+	debug_indent();
+	va_start(va, fmt);
+	vfprintf(stdout, fmt, va);
+	va_end(va);
+	printf("\n");
+}
+
+static void
+debug_leave(const char *func)
+{
+	printf("%*s- %s\n", 2 * --debug_ind, "", func);
+}
+
+#else
+
+#define debug_printf(fmt, ...)	do { } while (false)
+#define debug_indent()		do { } while (false)
+#define debug_enter(function)	do { } while (false)
+#define debug_step(fmt, ...)	do { } while (false)
+#define debug_leave(function)	do { } while (false)
+
+#endif
 
 
 /* XXX: unnecessary prototype since it is not recursive */
@@ -333,58 +391,11 @@ set_initerr(void)
 
 #ifndef DEBUG
 
-#define debug_printf(fmt, ...)	do { } while (false)
-#define debug_indent()		do { } while (false)
-#define debug_enter(a)		do { } while (false)
-#define debug_step(fmt, ...)	do { } while (false)
-#define debug_leave(a)		do { } while (false)
 #define debug_designation()	do { } while (false)
 #define debug_brace_level(level) do { } while (false)
 #define debug_initstack()	do { } while (false)
 
 #else
-
-static int debug_ind = 0;
-
-static void __printflike(1, 2)
-debug_printf(const char *fmt, ...)
-{
-	va_list va;
-
-	va_start(va, fmt);
-	vfprintf(stdout, fmt, va);
-	va_end(va);
-}
-
-static void
-debug_indent(void)
-{
-	debug_printf("%*s", 2 * debug_ind, "");
-}
-
-static void
-debug_enter(const char *func)
-{
-	printf("%*s+ %s\n", 2 * debug_ind++, "", func);
-}
-
-static void __printflike(1, 2)
-debug_step(const char *fmt, ...)
-{
-	va_list va;
-
-	printf("%*s", 2 * debug_ind, "");
-	va_start(va, fmt);
-	vfprintf(stdout, fmt, va);
-	va_end(va);
-	printf("\n");
-}
-
-static void
-debug_leave(const char *func)
-{
-	printf("%*s- %s\n", 2 * --debug_ind, "", func);
-}
 
 static void
 debug_designation(void)
