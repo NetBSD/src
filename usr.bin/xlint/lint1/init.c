@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.173 2021/03/28 19:53:58 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.174 2021/03/28 20:35:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.173 2021/03/28 19:53:58 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.174 2021/03/28 20:35:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -535,6 +535,18 @@ brace_level_debug(const struct brace_level *level)
 #define brace_level_debug(level) do { } while (false)
 #endif
 
+static void
+brace_level_assert_struct_or_union(const struct brace_level *level)
+{
+	lint_assert(is_struct_or_union(level->bl_type->t_tspec));
+}
+
+static void
+brace_level_assert_array(const struct brace_level *level)
+{
+	lint_assert(level->bl_type->t_tspec == ARRAY);
+}
+
 static type_t *
 brace_level_subtype(struct brace_level *level)
 {
@@ -548,6 +560,8 @@ brace_level_subtype(struct brace_level *level)
 static void
 brace_level_set_array_dimension(struct brace_level *level, int dim)
 {
+	brace_level_assert_array(level);
+
 	debug_step("setting the array size to %d", dim);
 	level->bl_type->t_dim = dim;
 	debug_indent();
@@ -559,6 +573,7 @@ brace_level_next_member(struct brace_level *level)
 {
 	const sym_t *m;
 
+	brace_level_assert_struct_or_union(level);
 	do {
 		m = level->bl_next_member = level->bl_next_member->s_next;
 		/* XXX: can this assertion be made to fail? */
@@ -575,7 +590,7 @@ brace_level_look_up_member(const struct brace_level *level, const char *name)
 	const type_t *tp = level->bl_type;
 	const sym_t *m;
 
-	lint_assert(is_struct_or_union(tp->t_tspec));
+	brace_level_assert_struct_or_union(level);
 
 	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
 		if (m->s_bitfield && m->s_name == unnamed)
@@ -613,6 +628,8 @@ brace_level_look_up_first_member_unnamed(struct brace_level *level, int *count)
 {
 	sym_t *m;
 
+	brace_level_assert_struct_or_union(level);
+
 	for (m = level->bl_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
 		if (m->s_bitfield && m->s_name == unnamed)
@@ -632,6 +649,8 @@ brace_level_look_up_first_member_unnamed(struct brace_level *level, int *count)
 static bool
 brace_level_push_array(struct brace_level *level)
 {
+	brace_level_assert_array(level);
+
 	if (level->bl_enclosing->bl_seen_named_member) {
 		level->bl_brace = true;
 		debug_step("ARRAY, seen named member, needs closing brace");
