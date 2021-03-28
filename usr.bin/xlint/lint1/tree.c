@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.252 2021/03/27 11:08:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.253 2021/03/28 13:09:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.252 2021/03/27 11:08:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.253 2021/03/28 13:09:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2298,7 +2298,7 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
  * v		old constant
  */
 void
-convert_constant(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
+convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 {
 	tspec_t	ot, nt;
 	ldbl_t	max = 0.0, min = 0.0;
@@ -3339,7 +3339,7 @@ fold_float(tnode_t *tn)
  * Create a constant node for sizeof.
  */
 tnode_t *
-build_sizeof(type_t *tp)
+build_sizeof(const type_t *tp)
 {
 	int64_t size_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
 	tnode_t *tn = new_integer_constant_node(SIZEOF_TSPEC, size_in_bytes);
@@ -3351,7 +3351,7 @@ build_sizeof(type_t *tp)
  * Create a constant node for offsetof.
  */
 tnode_t *
-build_offsetof(type_t *tp, sym_t *sym)
+build_offsetof(const type_t *tp, const sym_t *sym)
 {
 	tspec_t t = tp->t_tspec;
 	if (t != STRUCT && t != UNION)
@@ -3366,7 +3366,7 @@ build_offsetof(type_t *tp, sym_t *sym)
 }
 
 int64_t
-type_size_in_bits(type_t *tp)
+type_size_in_bits(const type_t *tp)
 {
 	int	elem, elsz;
 	bool	flex;
@@ -3427,7 +3427,7 @@ type_size_in_bits(type_t *tp)
 }
 
 tnode_t *
-build_alignof(type_t *tp)
+build_alignof(const type_t *tp)
 {
 	switch (tp->t_tspec) {
 	case ARRAY:
@@ -4241,9 +4241,9 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
  * representation (including width).
  */
 bool
-constant_addr(const tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
+constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 {
-	sym_t	*sym;
+	const sym_t *sym;
 	ptrdiff_t offs1, offs2;
 	tspec_t	t, ot;
 

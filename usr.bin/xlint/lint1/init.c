@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.160 2021/03/28 11:08:01 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.161 2021/03/28 13:09:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.160 2021/03/28 11:08:01 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.161 2021/03/28 13:09:43 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -341,7 +341,7 @@ check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
 	if (tn == NULL || tn->tn_op == CON)
 		return;
 
-	sym_t *sym;
+	const sym_t *sym;
 	ptrdiff_t offs;
 	if (constant_addr(tn, &sym, &offs))
 		return;

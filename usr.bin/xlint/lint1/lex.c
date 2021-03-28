@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.20 2021/03/27 12:42:22 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.21 2021/03/28 13:09:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.20 2021/03/27 12:42:22 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.21 2021/03/28 13:09:43 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1577,7 +1577,7 @@ cleanup(void)
  * Create a new symbol with the name of an existing symbol.
  */
 sym_t *
-pushdown(sym_t *sym)
+pushdown(const sym_t *sym)
 {
 	int	h;
 	sym_t	*nsym;
