@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.146 2021/03/28 08:30:22 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.147 2021/03/28 09:08:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.146 2021/03/28 08:30:22 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.147 2021/03/28 09:08:13 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -426,6 +426,64 @@ brace_level_debug(const struct brace_level *level)
 #define brace_level_debug(level) do { } while (false)
 #endif
 
+static const sym_t *
+brace_level_look_up_member(const struct brace_level *level, const char *name)
+{
+	const type_t *tp = level->bl_type;
+	const sym_t *m;
+
+	lint_assert(tp->t_tspec == STRUCT || tp->t_tspec == UNION);
+
+	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
+		if (m->s_bitfield && m->s_name == unnamed)
+			continue;
+		if (strcmp(m->s_name, name) == 0)
+			return m;
+	}
+
+	return NULL;
+}
+
+/* TODO: merge duplicate code */
+static sym_t *
+brace_level_look_up_member_bloated(struct brace_level *level,
+			   const struct designator *dr, int *count)
+{
+	sym_t *m;
+
+	for (m = level->bl_type->t_str->sou_first_member;
+	     m != NULL; m = m->s_next) {
+		if (m->s_bitfield && m->s_name == unnamed)
+			continue;
+		/*
+		 * TODO: split into separate functions:
+		 *
+		 * look_up_array_next
+		 * look_up_array_designator
+		 * look_up_struct_next
+		 * look_up_struct_designator
+		 */
+		if (dr != NULL) {
+			/* XXX: this log entry looks unnecessarily verbose */
+			debug_step("have member '%s', want member '%s'",
+			    m->s_name, dr->name);
+			if (strcmp(m->s_name, dr->name) == 0) {
+				(*count)++;
+				break;
+			} else
+				continue;
+		}
+
+		/* XXX: What is this code for? */
+		if (++(*count) == 1) {
+			level->bl_next_member = m;
+			level->bl_subtype = m->s_type;
+		}
+	}
+
+	return m;
+}
+
 
 static struct initialization *
 initialization_new(sym_t *sym)
@@ -594,24 +652,6 @@ brace_level_new(type_t *type, type_t *subtype, int remaining)
 	return level;
 }
 
-static const sym_t *
-brace_level_look_up_member(const char *name)
-{
-	const type_t *tp = current_brace_level()->bl_type;
-	const sym_t *m;
-
-	lint_assert(tp->t_tspec == STRUCT || tp->t_tspec == UNION);
-
-	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
-		if (m->s_bitfield && m->s_name == unnamed)
-			continue;
-		if (strcmp(m->s_name, name) == 0)
-			return m;
-	}
-
-	return NULL;
-}
-
 static void
 brace_level_set_array_dimension(int dim)
 {
@@ -729,7 +769,7 @@ initstack_pop_item_named_member(const char *name)
 		return;
 	}
 
-	m = brace_level_look_up_member(name);
+	m = brace_level_look_up_member(level, name);
 	if (m == NULL) {
 		/* TODO: add type information to the message */
 		/* undefined struct/union member: %s */
@@ -898,42 +938,6 @@ initstack_push_array(void)
 	    type_name(level->bl_type), level->bl_remaining);
 }
 
-static sym_t *
-look_up_member(struct brace_level *level, int *count)
-{
-	sym_t *m;
-
-	for (m = level->bl_type->t_str->sou_first_member;
-	     m != NULL; m = m->s_next) {
-		if (m->s_bitfield && m->s_name == unnamed)
-			continue;
-		/*
-		 * TODO: split into separate functions:
-		 *
-		 * look_up_array_next
-		 * look_up_array_designator
-		 * look_up_struct_next
-		 * look_up_struct_designator
-		 */
-		if (current_designation().head != NULL) {
-			/* XXX: this log entry looks unnecessarily verbose */
-			debug_step("have member '%s', want member '%s'",
-			    m->s_name, current_designation().head->name);
-			if (strcmp(m->s_name,
-			    current_designation().head->name) == 0) {
-				(*count)++;
-				break;
-			} else
-				continue;
-		}
-		if (++(*count) == 1) {
-			level->bl_next_member = m;
-			level->bl_subtype = m->s_type;
-		}
-	}
-
-	return m;
-}
 
 /* TODO: document me */
 /* TODO: think of a better name than 'push' */
@@ -961,7 +965,8 @@ initstack_push_struct_or_union(void)
 	    type_name(level->bl_type),
 	    level->bl_seen_named_member ? ", seen named member" : "");
 
-	m = look_up_member(level, &cnt);
+	m = brace_level_look_up_member_bloated(level,
+	    current_designation().head, &cnt);
 
 	if (current_designation().head != NULL) {
 		if (m == NULL) {
