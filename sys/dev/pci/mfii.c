@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.7.4.2 2021/03/22 16:23:45 thorpej Exp $ */
+/* $NetBSD: mfii.c,v 1.7.4.3 2021/03/28 20:41:04 thorpej Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.7.4.2 2021/03/22 16:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.7.4.3 2021/03/28 20:41:04 thorpej Exp $");
 
 #include "bio.h"
 
@@ -988,13 +988,11 @@ static int
 mfii_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct mfii_softc *sc = device_private(self);
+
 	if (sc->sc_child != NULL)
 		return 0;
 
-	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint,
-	    CFARG_IATTR, ifattr,
-	    CFARG_LOCATORS, locators,
-	    CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint, CFARG_EOL);
 	return 0;
 }
 
