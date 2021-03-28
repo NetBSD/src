@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.149 2021/03/28 09:34:45 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.150 2021/03/28 09:39:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.149 2021/03/28 09:34:45 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.150 2021/03/28 09:39:04 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -533,6 +533,13 @@ initialization_debug(const struct initialization *in)
 #define initialization_debug(in) do { } while (false)
 #endif
 
+static void
+initialization_set_error(struct initialization *in)
+{
+	in->initerr = true;
+}
+
+
 /* XXX: unnecessary prototype since it is not recursive */
 static	bool	init_array_using_string(struct initialization *, tnode_t *);
 
@@ -556,13 +563,6 @@ current_initsym(void)
 	return &current_init()->initsym;
 }
 
-static void
-set_initerr(void)
-{
-	current_init()->initerr = true;
-}
-
-#define initerr		(*current_initerr())
 #define initsym		(*current_initsym())
 
 #ifndef DEBUG
@@ -704,8 +704,9 @@ designation_add_subscript(range_t range)
 void
 initstack_init(void)
 {
+	struct initialization *in = current_init();
 
-	if (initerr)
+	if (in->initerr)
 		return;
 
 	debug_enter();
@@ -742,7 +743,7 @@ initstack_pop_item_named_member(const char *name)
 	    level->bl_type->t_tspec != UNION) {
 		/* syntax error '%s' */
 		error(249, "named member must only be used with struct/union");
-		set_initerr();
+		initialization_set_error(in);
 		return;
 	}
 
@@ -901,7 +902,7 @@ initstack_push_array(struct initialization *in)
 	    level->bl_enclosing->bl_enclosing != NULL) {
 		/* initialization of an incomplete type */
 		error(175);
-		set_initerr();
+		initialization_set_error(in);
 		return;
 	}
 
@@ -930,7 +931,7 @@ initstack_push_struct_or_union(struct initialization *in)
 	if (is_incomplete(level->bl_type)) {
 		/* initialization of an incomplete type */
 		error(175);
-		set_initerr();
+		initialization_set_error(in);
 		return false;
 	}
 
@@ -964,7 +965,7 @@ initstack_push_struct_or_union(struct initialization *in)
 	if (cnt == 0) {
 		/* cannot init. struct/union with no named member */
 		error(179);
-		set_initerr();
+		initialization_set_error(in);
 		return false;
 	}
 	level->bl_remaining = level->bl_type->t_tspec == STRUCT ? cnt : 1;
@@ -1040,7 +1041,9 @@ again:
 static void
 check_too_many_initializers(void)
 {
-	const struct brace_level *level = current_init()->brace_level;
+	struct initialization *in = current_init();
+	const struct brace_level *level = in->brace_level;
+
 	if (level->bl_remaining > 0)
 		return;
 	/*
@@ -1060,7 +1063,7 @@ check_too_many_initializers(void)
 		/* too many initializers */
 		error(174);
 	}
-	set_initerr();
+	initialization_set_error(in);
 }
 
 /*
@@ -1079,13 +1082,13 @@ initstack_next_brace(struct initialization *in)
 	    is_scalar(in->brace_level->bl_type->t_tspec)) {
 		/* invalid initializer type %s */
 		error(176, type_name(in->brace_level->bl_type));
-		set_initerr();
+		initialization_set_error(in);
 	}
-	if (!initerr)
+	if (!in->initerr)
 		check_too_many_initializers();
-	if (!initerr)
+	if (!in->initerr)
 		initstack_push(in);
-	if (!initerr) {
+	if (!in->initerr) {
 		in->brace_level->bl_brace = true;
 		designation_debug(&in->designation);
 		debug_step("expecting type '%s'",
@@ -1111,10 +1114,10 @@ initstack_next_nobrace(struct initialization *in, tnode_t *tn)
 		/* XXX: maybe set initerr here */
 	}
 
-	if (!initerr)
+	if (!in->initerr)
 		check_too_many_initializers();
 
-	while (!initerr) {
+	while (!in->initerr) {
 		struct brace_level *level = in->brace_level;
 
 		if (tn->tn_type->t_tspec == STRUCT &&
@@ -1142,7 +1145,7 @@ init_lbrace(void)
 {
 	struct initialization *in = current_init();
 
-	if (initerr)
+	if (in->initerr)
 		return;
 
 	debug_enter();
@@ -1175,11 +1178,13 @@ init_lbrace(void)
 void
 init_rbrace(void)
 {
-	if (initerr)
+	struct initialization *in = current_init();
+
+	if (in->initerr)
 		return;
 
 	debug_enter();
-	initstack_pop_brace(current_init());
+	initstack_pop_brace(in);
 	debug_leave();
 }
 
@@ -1302,7 +1307,7 @@ init_using_expr(tnode_t *tn)
 	debug_step("expr:");
 	debug_node(tn, debug_ind + 1);
 
-	if (initerr || tn == NULL)
+	if (in->initerr || tn == NULL)
 		goto done;
 
 	sclass = initsym->s_scl;
@@ -1318,7 +1323,7 @@ init_using_expr(tnode_t *tn)
 	}
 
 	initstack_next_nobrace(in, tn);
-	if (initerr || tn == NULL)
+	if (in->initerr || tn == NULL)
 		goto done_initstack;
 
 	in->brace_level->bl_remaining--;
