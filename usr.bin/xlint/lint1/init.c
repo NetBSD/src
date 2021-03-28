@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.148 2021/03/28 09:20:51 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.149 2021/03/28 09:34:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.148 2021/03/28 09:20:51 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.149 2021/03/28 09:34:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -556,18 +556,6 @@ current_initsym(void)
 	return &current_init()->initsym;
 }
 
-static const struct brace_level *
-current_brace_level(void)
-{
-	return current_init()->brace_level;
-}
-
-static struct brace_level **
-current_brace_level_lvalue(void)
-{
-	return &current_init()->brace_level;
-}
-
 static void
 set_initerr(void)
 {
@@ -576,8 +564,6 @@ set_initerr(void)
 
 #define initerr		(*current_initerr())
 #define initsym		(*current_initsym())
-#define brace_level_rvalue	(current_brace_level())
-#define brace_level_lvalue	(*current_brace_level_lvalue())
 
 #ifndef DEBUG
 
@@ -641,12 +627,12 @@ brace_level_new(type_t *type, type_t *subtype, int remaining)
 }
 
 static void
-brace_level_set_array_dimension(int dim)
+brace_level_set_array_dimension(struct brace_level *level, int dim)
 {
 	debug_step("setting the array size to %d", dim);
-	brace_level_lvalue->bl_type->t_dim = dim;
+	level->bl_type->t_dim = dim;
 	debug_indent();
-	brace_level_debug(brace_level_rvalue);
+	brace_level_debug(level);
 }
 
 static void
@@ -684,6 +670,7 @@ brace_level_next_member(struct brace_level *level)
 void
 designation_add_subscript(range_t range)
 {
+	struct initialization *in = current_init();
 	struct brace_level *level;
 
 	debug_enter();
@@ -694,14 +681,14 @@ designation_add_subscript(range_t range)
 		    range.lo, range.hi);
 
 	/* XXX: This call is wrong here, it must be somewhere else. */
-	initstack_pop_nobrace(current_init());
+	initstack_pop_nobrace(in);
 
-	level = brace_level_lvalue;
+	level = in->brace_level;
 	if (level->bl_array_of_unknown_size) {
 		/* No +1 here, extend_if_array_of_unknown_size will add it. */
 		int auto_dim = (int)range.hi;
 		if (auto_dim > level->bl_type->t_dim)
-			brace_level_set_array_dimension(auto_dim);
+			brace_level_set_array_dimension(level, auto_dim);
 	}
 
 	debug_leave();
@@ -731,7 +718,7 @@ initstack_init(void)
 		initsym->s_type = duptyp(initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	brace_level_lvalue = brace_level_new(NULL, initsym->s_type, 1);
+	current_init()->brace_level = brace_level_new(NULL, initsym->s_type, 1);
 
 	initialization_debug(current_init());
 	debug_leave();
@@ -780,9 +767,9 @@ initstack_pop_item_named_member(const char *name)
 
 /* TODO: think of a better name than 'pop' */
 static void
-initstack_pop_item_unnamed(void)
+initstack_pop_item_unnamed(struct initialization *in)
 {
-	struct brace_level *level = brace_level_lvalue;
+	struct brace_level *level = in->brace_level;
 
 	/*
 	 * If the removed element was a structure member, we must go
@@ -803,14 +790,14 @@ initstack_pop_item(struct initialization *in)
 
 	debug_enter();
 
-	level = brace_level_lvalue;
+	level = in->brace_level;
 	debug_indent();
 	debug_printf("popping: ");
 	brace_level_debug(level);
 
-	brace_level_lvalue = level->bl_enclosing;
+	in->brace_level = level->bl_enclosing;
 	free(level);
-	level = brace_level_lvalue;
+	level = in->brace_level;
 	lint_assert(level != NULL);
 
 	level->bl_remaining--;
@@ -820,7 +807,7 @@ initstack_pop_item(struct initialization *in)
 	if (in->designation.head != NULL && in->designation.head->name != NULL)
 		initstack_pop_item_named_member(in->designation.head->name);
 	else
-		initstack_pop_item_unnamed();
+		initstack_pop_item_unnamed(in);
 
 	initialization_debug(current_init());
 	debug_leave();
@@ -838,7 +825,7 @@ initstack_pop_brace(struct initialization *in)
 	debug_enter();
 	initialization_debug(in);
 	do {
-		brace = brace_level_rvalue->bl_brace;
+		brace = in->brace_level->bl_brace;
 		/* TODO: improve wording of the debug message */
 		debug_step("loop brace=%d", brace);
 		initstack_pop_item(in);
@@ -866,9 +853,9 @@ initstack_pop_nobrace(struct initialization *in)
 
 /* Extend an array of unknown size by one element */
 static void
-extend_if_array_of_unknown_size(void)
+extend_if_array_of_unknown_size(struct initialization *in)
 {
-	struct brace_level *level = brace_level_lvalue;
+	struct brace_level *level = in->brace_level;
 
 	if (level->bl_remaining != 0)
 		return;
@@ -936,7 +923,7 @@ initstack_push_struct_or_union(struct initialization *in)
 	 * TODO: remove unnecessary 'const' for variables in functions that
 	 * fit on a single screen.  Keep it for larger functions.
 	 */
-	struct brace_level *level = brace_level_lvalue;
+	struct brace_level *level = in->brace_level;
 	int cnt;
 	sym_t *m;
 
@@ -993,20 +980,20 @@ initstack_push(struct initialization *in)
 
 	debug_enter();
 
-	extend_if_array_of_unknown_size();
+	extend_if_array_of_unknown_size(in);
 
-	level = brace_level_lvalue;
+	level = in->brace_level;
 	lint_assert(level->bl_remaining > 0);
 	lint_assert(level->bl_type == NULL ||
 	    !is_scalar(level->bl_type->t_tspec));
 
-	brace_level_lvalue = xcalloc(1, sizeof *brace_level_lvalue);
-	brace_level_lvalue->bl_enclosing = level;
-	brace_level_lvalue->bl_type = level->bl_subtype;
-	lint_assert(brace_level_lvalue->bl_type->t_tspec != FUNC);
+	in->brace_level = xcalloc(1, sizeof *in->brace_level);
+	in->brace_level->bl_enclosing = level;
+	in->brace_level->bl_type = level->bl_subtype;
+	lint_assert(in->brace_level->bl_type->t_tspec != FUNC);
 
 again:
-	level = brace_level_lvalue;
+	level = in->brace_level;
 
 	debug_step("expecting type '%s'", type_name(level->bl_type));
 	lint_assert(level->bl_type != NULL);
@@ -1036,9 +1023,9 @@ again:
 			debug_step("pop scalar");
 	pop:
 			/* TODO: extract this into end_initializer_level */
-			enclosing = brace_level_rvalue->bl_enclosing;
+			enclosing = in->brace_level->bl_enclosing;
 			free(level);
-			brace_level_lvalue = enclosing;
+			in->brace_level = enclosing;
 			goto again;
 		}
 		/* The initialization stack now expects a single scalar. */
@@ -1053,7 +1040,7 @@ again:
 static void
 check_too_many_initializers(void)
 {
-	const struct brace_level *level = brace_level_rvalue;
+	const struct brace_level *level = current_init()->brace_level;
 	if (level->bl_remaining > 0)
 		return;
 	/*
@@ -1088,10 +1075,10 @@ initstack_next_brace(struct initialization *in)
 	debug_enter();
 	initialization_debug(in);
 
-	if (brace_level_rvalue->bl_type != NULL &&
-	    is_scalar(brace_level_rvalue->bl_type->t_tspec)) {
+	if (in->brace_level->bl_type != NULL &&
+	    is_scalar(in->brace_level->bl_type->t_tspec)) {
 		/* invalid initializer type %s */
-		error(176, type_name(brace_level_rvalue->bl_type));
+		error(176, type_name(in->brace_level->bl_type));
 		set_initerr();
 	}
 	if (!initerr)
@@ -1099,12 +1086,12 @@ initstack_next_brace(struct initialization *in)
 	if (!initerr)
 		initstack_push(in);
 	if (!initerr) {
-		brace_level_lvalue->bl_brace = true;
+		in->brace_level->bl_brace = true;
 		designation_debug(&in->designation);
 		debug_step("expecting type '%s'",
-		    type_name(brace_level_rvalue->bl_type != NULL
-			? brace_level_rvalue->bl_type
-			: brace_level_rvalue->bl_subtype));
+		    type_name(in->brace_level->bl_type != NULL
+			? in->brace_level->bl_type
+			: in->brace_level->bl_subtype));
 	}
 
 	initialization_debug(current_init());
@@ -1117,8 +1104,8 @@ initstack_next_nobrace(struct initialization *in, tnode_t *tn)
 {
 	debug_enter();
 
-	if (brace_level_rvalue->bl_type == NULL &&
-	    !is_scalar(brace_level_rvalue->bl_subtype->t_tspec)) {
+	if (in->brace_level->bl_type == NULL &&
+	    !is_scalar(in->brace_level->bl_subtype->t_tspec)) {
 		/* {}-enclosed initializer required */
 		error(181);
 		/* XXX: maybe set initerr here */
@@ -1128,7 +1115,7 @@ initstack_next_nobrace(struct initialization *in, tnode_t *tn)
 		check_too_many_initializers();
 
 	while (!initerr) {
-		struct brace_level *level = brace_level_lvalue;
+		struct brace_level *level = in->brace_level;
 
 		if (tn->tn_type->t_tspec == STRUCT &&
 		    level->bl_type == tn->tn_type &&
@@ -1162,9 +1149,9 @@ init_lbrace(void)
 	initialization_debug(in);
 
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
-	    brace_level_rvalue->bl_enclosing == NULL) {
+	    in->brace_level->bl_enclosing == NULL) {
 		if (tflag &&
-		    !is_scalar(brace_level_rvalue->bl_subtype->t_tspec))
+		    !is_scalar(in->brace_level->bl_subtype->t_tspec))
 			/* no automatic aggregate initialization in trad. C */
 			warning(188);
 	}
@@ -1241,7 +1228,7 @@ init_using_assign(tnode_t *rn)
 
 	if (initsym->s_type->t_tspec == ARRAY)
 		return false;
-	if (brace_level_rvalue->bl_enclosing != NULL)
+	if (current_init()->brace_level->bl_enclosing != NULL)
 		return false;
 
 	debug_step("handing over to ASSIGN");
@@ -1260,6 +1247,7 @@ init_using_assign(tnode_t *rn)
 static void
 check_init_expr(tnode_t *tn, scl_t sclass)
 {
+	struct initialization *in = current_init();
 	tnode_t *ln;
 	tspec_t lt, rt;
 	struct mbl *tmem;
@@ -1267,7 +1255,7 @@ check_init_expr(tnode_t *tn, scl_t sclass)
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof *ln);
 	ln->tn_op = NAME;
-	ln->tn_type = tduptyp(brace_level_rvalue->bl_type);
+	ln->tn_type = tduptyp(in->brace_level->bl_type);
 	ln->tn_type->t_const = false;
 	ln->tn_lvalue = true;
 	ln->tn_sym = initsym;		/* better than nothing */
@@ -1296,8 +1284,8 @@ check_init_expr(tnode_t *tn, scl_t sclass)
 	 * XXX: Is it correct to do this conversion _after_ the typeok above?
 	 */
 	if (lt != rt ||
-	    (brace_level_rvalue->bl_type->t_bitfield && tn->tn_op == CON))
-		tn = convert(INIT, 0, brace_level_rvalue->bl_type, tn);
+	    (in->brace_level->bl_type->t_bitfield && tn->tn_op == CON))
+		tn = convert(INIT, 0, in->brace_level->bl_type, tn);
 
 	check_non_constant_initializer(tn, sclass);
 }
@@ -1333,8 +1321,8 @@ init_using_expr(tnode_t *tn)
 	if (initerr || tn == NULL)
 		goto done_initstack;
 
-	brace_level_lvalue->bl_remaining--;
-	debug_step("%d elements remaining", brace_level_rvalue->bl_remaining);
+	in->brace_level->bl_remaining--;
+	debug_step("%d elements remaining", in->brace_level->bl_remaining);
 
 	check_init_expr(tn, sclass);
 
@@ -1364,7 +1352,7 @@ init_array_using_string(struct initialization *in, tnode_t *tn)
 	debug_enter();
 	initialization_debug(current_init());
 
-	level = brace_level_lvalue;
+	level = in->brace_level;
 	strg = tn->tn_string;
 
 	/*
@@ -1384,7 +1372,7 @@ init_array_using_string(struct initialization *in, tnode_t *tn)
 
 		/* Put the array at top of stack */
 		initstack_push(in);
-		level = brace_level_lvalue;
+		level = in->brace_level;
 
 		/* TODO: what if both bl_type and bl_subtype are ARRAY? */
 
