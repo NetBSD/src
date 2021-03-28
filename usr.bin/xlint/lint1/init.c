@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.159 2021/03/28 10:58:18 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.160 2021/03/28 11:08:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.159 2021/03/28 10:58:18 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.160 2021/03/28 11:08:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -676,6 +676,34 @@ brace_level_check_too_many_initializers(struct brace_level *level)
 	return false;
 }
 
+/* Extend an array of unknown size by one element */
+static void
+brace_level_extend_if_array_of_unknown_size(struct brace_level *level)
+{
+
+	if (level->bl_remaining != 0)
+		return;
+	/*
+	 * XXX: According to the function name, there should be a 'return' if
+	 * bl_array_of_unknown_size is false.  There's probably a test missing
+	 * for that case.
+	 */
+
+	/*
+	 * The only place where an incomplete array may appear is at the
+	 * outermost aggregate level of the object to be initialized.
+	 */
+	lint_assert(level->bl_enclosing->bl_enclosing == NULL);
+	lint_assert(level->bl_type->t_tspec == ARRAY);
+
+	debug_step("extending array of unknown size '%s'",
+	    type_name(level->bl_type));
+	level->bl_remaining = 1;
+	level->bl_type->t_dim++;
+	setcomplete(level->bl_type, true);
+
+	debug_step("extended type is '%s'", type_name(level->bl_type));
+}
 
 
 static struct initialization *
@@ -817,36 +845,6 @@ initialization_push_struct_or_union(struct initialization *in)
 	return false;
 }
 
-/* Extend an array of unknown size by one element */
-static void
-initialization_extend_if_array_of_unknown_size(struct initialization *in)
-{
-	struct brace_level *level = in->brace_level;
-
-	if (level->bl_remaining != 0)
-		return;
-	/*
-	 * XXX: According to the function name, there should be a 'return' if
-	 * bl_array_of_unknown_size is false.  There's probably a test missing
-	 * for that case.
-	 */
-
-	/*
-	 * The only place where an incomplete array may appear is at the
-	 * outermost aggregate level of the object to be initialized.
-	 */
-	lint_assert(level->bl_enclosing->bl_enclosing == NULL);
-	lint_assert(level->bl_type->t_tspec == ARRAY);
-
-	debug_step("extending array of unknown size '%s'",
-	    type_name(level->bl_type));
-	level->bl_remaining = 1;
-	level->bl_type->t_dim++;
-	setcomplete(level->bl_type, true);
-
-	debug_step("extended type is '%s'", type_name(level->bl_type));
-}
-
 /* TODO: document me */
 /* TODO: think of a better name than 'push' */
 static void
@@ -856,7 +854,7 @@ initialization_push(struct initialization *in)
 
 	debug_enter();
 
-	initialization_extend_if_array_of_unknown_size(in);
+	brace_level_extend_if_array_of_unknown_size(in->brace_level);
 
 	level = in->brace_level;
 	lint_assert(level->bl_remaining > 0);
