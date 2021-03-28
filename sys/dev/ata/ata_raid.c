@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.43.4.2 2021/03/22 16:23:44 thorpej Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.43.4.3 2021/03/28 19:53:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.43.4.2 2021/03/22 16:23:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.43.4.3 2021/03/28 19:53:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -114,7 +114,7 @@ ataraidattach(int count)
 
 /* ARGSUSED */
 static int
-ataraid_rescan(device_t self, const char *attr, const int *flags)
+ataraid_rescan(device_t self, const char *ifattr, const int *locs)
 {
 
 	finalize_done = 0;
