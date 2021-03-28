@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.91.2.3 2021/03/21 21:09:09 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.91.2.4 2021/03/28 19:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91.2.3 2021/03/21 21:09:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.91.2.4 2021/03/28 19:55:37 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1111,7 +1111,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	audio_mlog_init();
 #endif
 
-	audiorescan(self, "audio", NULL);
+	audiorescan(self, NULL, NULL);
 	sc->sc_exlock = 0;
 	return;
 
@@ -1416,8 +1416,6 @@ audiorescan(device_t self, const char *ifattr, const int *locators)
 
 	config_search(sc->sc_dev, NULL,
 	    CFARG_SUBMATCH, audiosearch,
-	    CFARG_IATTR, ifattr,
-	    CFARG_LOCATORS, locators,
 	    CFARG_EOL);
 
 	return 0;
