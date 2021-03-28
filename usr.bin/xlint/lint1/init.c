@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.163 2021/03/28 14:13:18 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.164 2021/03/28 15:39:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.163 2021/03/28 14:13:18 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.164 2021/03/28 15:39:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1032,6 +1032,22 @@ initialization_next_brace(struct initialization *in)
 }
 
 static void
+check_no_auto_aggregate(scl_t sclass, const struct brace_level *level)
+{
+	if (!tflag)
+		return;
+	if (!(sclass == AUTO || sclass == REG))
+		return;
+	if (!(level->bl_enclosing == NULL))
+		return;
+	if (is_scalar(level->bl_subtype->t_tspec))
+		return;
+
+	/* no automatic aggregate initialization in trad. C */
+	warning(188);
+}
+
+static void
 initialization_lbrace(struct initialization *in)
 {
 	if (in->initerr)
@@ -1040,13 +1056,7 @@ initialization_lbrace(struct initialization *in)
 	debug_enter();
 	initialization_debug(in);
 
-	if ((in->initsym->s_scl == AUTO || in->initsym->s_scl == REG) &&
-	    in->brace_level->bl_enclosing == NULL) {
-		if (tflag &&
-		    !is_scalar(in->brace_level->bl_subtype->t_tspec))
-			/* no automatic aggregate initialization in trad. C */
-			warning(188);
-	}
+	check_no_auto_aggregate(in->initsym->s_scl, in->brace_level);
 
 	/*
 	 * Remove all entries which cannot be used for further initializers
