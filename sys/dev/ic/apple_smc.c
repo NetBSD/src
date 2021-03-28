@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.6.50.1 2021/03/20 19:33:40 thorpej Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.6.50.2 2021/03/28 20:25:44 thorpej Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.6.50.1 2021/03/20 19:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.6.50.2 2021/03/28 20:25:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ apple_smc_attach(struct apple_smc_tag *smc)
 #endif
 
 	/* Attach any children.  */
-        (void)apple_smc_rescan(smc, APPLE_SMC_BUS, NULL);
+        (void)apple_smc_rescan(smc, NULL, NULL);
 }
 
 int
@@ -110,8 +110,6 @@ apple_smc_rescan(struct apple_smc_tag *smc, const char *ifattr,
 	/* Let autoconf(9) do the work of finding new children.  */
 	config_search(smc->smc_dev, smc,
 	    CFARG_SUBMATCH, apple_smc_search,
-	    CFARG_IATTR, APPLE_SMC_BUS,
-	    CFARG_LOCATORS, locators,
 	    CFARG_EOL);
 	return 0;
 }
