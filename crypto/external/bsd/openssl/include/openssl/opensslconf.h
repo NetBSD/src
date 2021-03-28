@@ -50,7 +50,12 @@ extern "C" {
 #  define OPENSSL_NO_DEVCRYPTOENG
 # endif
 #endif
-#if !defined(_LP64) || defined(__sparc64__)
+/*
+ * XXX
+ * This seems broken on big-endian or strictly-aligned architectures.
+ */
+#if !defined(_LP64) || \
+    defined(__AARCH64EB__) || defined(__alpha__) || defined(__sparc64__)
 # ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 #  define OPENSSL_NO_EC_NISTP_64_GCC_128
 # endif
