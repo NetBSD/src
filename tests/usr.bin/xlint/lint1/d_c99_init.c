@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.17 2021/03/28 14:01:50 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.18 2021/03/28 18:48:32 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -34,6 +34,9 @@ struct_initialization_via_assignment(any arg)
 
 // See init_using_expr, initstack_string.
 char static_duration[] = "static duration";
+signed char static_duration_signed[] = "static duration";
+unsigned char static_duration_unsigned[] = "static duration";
+int static_duration_wchar[] = L"static duration";
 
 // See init_using_expr.
 void
@@ -44,13 +47,25 @@ initialization_by_braced_string(void)
 }
 
 void
-initialization_with_redundant_braces(any arg)
+initialization_by_redundantly_braced_string(void)
+{
+	any local = {{{{ "hello" }}}};
+	use(&local);
+}
+
+/*
+ * Only scalar expressions and string literals may be enclosed by additional
+ * braces.  Since 'arg' is a struct, this is a compile-time error.
+ */
+void
+initialization_with_too_many_braces(any arg)
 {
 	any local = { arg };	/* expect: 185 */
 	use(&arg);
 }
 
-// Some of the following examples are mentioned in init.c.
+// Some of the following examples are mentioned in the introduction comment
+// in init.c.
 
 int number = 12345;
 
@@ -217,4 +232,14 @@ struct ends_with_unnamed_bit_field {
 	23456,
 };
 
-// See d_struct_init_nested.c for a more complicated example.
+char prefixed_message[] = {
+	'E', ':', ' ',
+	/* expect+1: illegal combination of integer (char) and pointer */
+	"message\n",
+};
+
+char message_with_suffix[] = {
+	"message",
+	/* expect+1: too many array initializers */
+	'\n',
+};
