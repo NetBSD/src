@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.166 2021/03/28 16:28:15 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.167 2021/03/28 18:01:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.166 2021/03/28 16:28:15 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.167 2021/03/28 18:01:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -321,6 +321,13 @@ debug_leave(const char *func)
 #endif
 
 
+static bool
+is_struct_or_union(tspec_t t)
+{
+	return t == STRUCT || t == UNION;
+}
+
+
 /* In traditional C, bit-fields can be initialized only by integer constants. */
 static void
 check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
@@ -568,7 +575,7 @@ brace_level_look_up_member(const struct brace_level *level, const char *name)
 	const type_t *tp = level->bl_type;
 	const sym_t *m;
 
-	lint_assert(tp->t_tspec == STRUCT || tp->t_tspec == UNION);
+	lint_assert(is_struct_or_union(tp->t_tspec));
 
 	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
 		if (m->s_bitfield && m->s_name == unnamed)
@@ -678,7 +685,7 @@ brace_level_check_too_many_initializers(struct brace_level *level)
 	if (t == ARRAY) {
 		/* too many array initializers, expected %d */
 		error(173, level->bl_type->t_dim);
-	} else if (t == STRUCT || t == UNION) {
+	} else if (is_struct_or_union(t)) {
 		/* too many struct/union initializers */
 		error(172);
 	} else {
@@ -940,8 +947,7 @@ initialization_pop_item_named(struct initialization *in, const char *name)
 	 */
 	debug_step("initializing named member '%s'", name);
 
-	if (level->bl_type->t_tspec != STRUCT &&
-	    level->bl_type->t_tspec != UNION) {
+	if (!is_struct_or_union(level->bl_type->t_tspec)) {
 		/* syntax error '%s' */
 		error(249, "named member must only be used with struct/union");
 		initialization_set_error(in);
