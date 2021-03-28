@@ -1,4 +1,4 @@
-/*	$NetBSD: amdnb_misc.c,v 1.3.14.3 2021/03/21 19:06:19 thorpej Exp $ */
+/*	$NetBSD: amdnb_misc.c,v 1.3.14.4 2021/03/28 01:03:19 thorpej Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.3 2021/03/21 19:06:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.4 2021/03/28 01:03:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +114,7 @@ amdnb_misc_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	if (!attach)
 		return 0;
 
-	config_attach_loc(parent, cf, locs, aux, NULL);
+	config_attach(parent, cf, aux, NULL);
 
 	return 0;
 }
@@ -160,8 +160,6 @@ amdnb_misc_rescan(device_t self, const char *ifattr, const int *locators)
 
 	config_search(self, &sc->sc_pa,
 	    CFARG_SUBMATCH, amdnb_misc_search,
-	    CFARG_IATTR, ifattr,
-	    CFARG_LOCATORS, locators,
 	    CFARG_EOL);
 
 	return 0;
