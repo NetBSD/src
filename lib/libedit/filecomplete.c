@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.66 2021/03/28 13:33:54 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.67 2021/03/28 13:39:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.66 2021/03/28 13:33:54 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.67 2021/03/28 13:39:39 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -667,7 +667,7 @@ fn_complete2(EditLine *el,
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;
-	int do_unescape = attempted_completion_function == NULL? 1: 0;
+	int do_unescape = flags & FN_QUOTE_MATCH;
 
 	if (el->el_state.lastcmd == el->el_state.thiscmd)
 		what_to_do = '?';
@@ -736,7 +736,9 @@ fn_complete2(EditLine *el,
 		el_winsertstr(el,
 		    ct_decode_string(completion, &el->el_scratch));
 
-		if (single_match && attempted_completion_function) {
+		if (single_match && attempted_completion_function &&
+		    !(flags & FN_QUOTE_MATCH))
+		{
 			/*
 			 * We found an exact match. Add a space after
 			 * it, unless we do filename completion and the
