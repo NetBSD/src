@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.43 2021/02/23 10:03:04 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.44 2021/03/28 11:13:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.43 2021/02/23 10:03:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.44 2021/03/28 11:13:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,6 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.43 2021/02/23 10:03:04 jmcneill Exp $");
 
 #define	GIC_PRIO_SHIFT_NS		4
 #define	GIC_PRIO_SHIFT_S		3
+
+/*
+ * Set to true if you want to use 1 of N interrupt distribution for SPIs
+ * when available. Disabled by default because it causes issues with the
+ * USB stack.
+ */
+bool gicv3_use_1ofn = false;
 
 static struct gicv3_softc *gicv3_softc;
 
@@ -195,7 +202,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		 * If 1 of N SPI routing is supported, route MP-safe interrupts to all
 		 * participating PEs. Otherwise, just route to the primary PE.
 		 */
-		if (is->is_mpsafe && GIC_SUPPORTS_1OFN(sc)) {
+		if (is->is_mpsafe && GIC_SUPPORTS_1OFN(sc) && gicv3_use_1ofn) {
 			irouter = GICD_IROUTER_Interrupt_Routing_mode;
 		} else {
 			irouter = sc->sc_irouter[0];
@@ -498,7 +505,7 @@ gicv3_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affinity)
 	const int set = kcpuset_countset(affinity);
 	if (set == 1) {
 		irouter = sc->sc_irouter[kcpuset_ffs(affinity) - 1];
-	} else if (set == ncpu && GIC_SUPPORTS_1OFN(sc)) {
+	} else if (set == ncpu && GIC_SUPPORTS_1OFN(sc) && gicv3_use_1ofn) {
 		irouter = GICD_IROUTER_Interrupt_Routing_mode;
 	} else {
 		return EINVAL;
