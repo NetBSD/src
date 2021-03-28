@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.61.10.2 2021/03/22 16:23:45 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.61.10.3 2021/03/28 20:30:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.61.10.2 2021/03/22 16:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.61.10.3 2021/03/28 20:30:14 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -217,11 +217,11 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 }
 
 int
-cac_rescan(device_t self, const char *attr, const int *flags)
+cac_rescan(device_t self, const char *attr, const int *locs)
 {
 	struct cac_softc *sc;
 	struct cac_attach_args caca;
-	int locs[CACCF_NLOCS];
+	int mlocs[CACCF_NLOCS];
 	int i;
 
 	sc = device_private(self);
@@ -230,12 +230,11 @@ cac_rescan(device_t self, const char *attr, const int *flags)
 			continue;
 		caca.caca_unit = i;
 
-		locs[CACCF_UNIT] = i;
+		mlocs[CACCF_UNIT] = i;
 
 		if (config_found(self, &caca, cac_print,
 				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_IATTR, attr,
-				 CFARG_LOCATORS, locs,
+				 CFARG_LOCATORS, mlocs,
 				 CFARG_EOL) != NULL)
 			sc->sc_unitmask |= 1 << i;
 	}
