@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.167 2021/03/28 18:01:57 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.168 2021/03/28 18:18:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.167 2021/03/28 18:01:57 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.168 2021/03/28 18:18:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1161,11 +1161,23 @@ initialization_add_designator_subscript(struct initialization *in,
 	debug_leave();
 }
 
+static bool
+is_string_array(const type_t *tp, tspec_t t)
+{
+	tspec_t st;
+
+	if (tp->t_tspec != ARRAY)
+		return false;
+	st = tp->t_subt->t_tspec;
+	return t == CHAR
+	    ? st == CHAR || st == UCHAR || st == SCHAR
+	    : st == WCHAR;
+}
+
 /* Initialize a character array or wchar_t array with a string literal. */
 static bool
 initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 {
-	tspec_t	t;
 	struct brace_level *level;
 	int	len;
 	strg_t	*strg;
@@ -1184,15 +1196,11 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	 * the string.
 	 */
 	if (level->bl_subtype != NULL && level->bl_subtype->t_tspec == ARRAY) {
-		debug_step("subt array");
-		t = level->bl_subtype->t_subt->t_tspec;
-		if (!((strg->st_tspec == CHAR &&
-		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
-		      (strg->st_tspec == WCHAR && t == WCHAR))) {
+		debug_step("subtype is an array");
+		if (!is_string_array(level->bl_subtype, strg->st_tspec)) {
 			debug_leave();
 			return false;
 		}
-		/* XXX: duplicate code, see below */
 
 		/* Put the array at top of stack */
 		initialization_push(in);
@@ -1201,15 +1209,11 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 		/* TODO: what if both bl_type and bl_subtype are ARRAY? */
 
 	} else if (level->bl_type != NULL && level->bl_type->t_tspec == ARRAY) {
-		debug_step("type array");
-		t = level->bl_type->t_subt->t_tspec;
-		if (!((strg->st_tspec == CHAR &&
-		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
-		      (strg->st_tspec == WCHAR && t == WCHAR))) {
+		debug_step("type is an array");
+		if (!is_string_array(level->bl_type, strg->st_tspec)) {
 			debug_leave();
 			return false;
 		}
-		/* XXX: duplicate code, see above */
 
 		/*
 		 * TODO: is this really not needed in the branch above this
