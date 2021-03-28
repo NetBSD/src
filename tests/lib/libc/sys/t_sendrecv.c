@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sendrecv.c,v 1.7 2021/03/21 16:58:07 christos Exp $	*/
+/*	$NetBSD: t_sendrecv.c,v 1.8 2021/03/28 17:30:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sendrecv.c,v 1.7 2021/03/21 16:58:07 christos Exp $");
+__RCSID("$NetBSD: t_sendrecv.c,v 1.8 2021/03/28 17:30:01 christos Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_sendrecv.c,v 1.7 2021/03/21 16:58:07 christos Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sched.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -94,6 +95,8 @@ receiver(int sd)
 				return;
 			if (p.seq != seq)
 				printf("%ju != %ju\n", p.seq, seq);
+			if (seq % 10 == 0)
+				sched_yield();
 			seq = p.seq + 1;
 		}
 //		printf("<<%zd %d %ju\n", n, errno, seq);
