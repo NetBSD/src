@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.151 2021/03/28 09:43:28 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.152 2021/03/28 09:46:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.151 2021/03/28 09:43:28 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.152 2021/03/28 09:46:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -394,6 +394,24 @@ designation_shift_level(struct designation *dn)
 }
 
 
+static struct brace_level *
+brace_level_new(type_t *type, type_t *subtype, int remaining)
+{
+	struct brace_level *level = xcalloc(1, sizeof(*level));
+
+	level->bl_type = type;
+	level->bl_subtype = subtype;
+	level->bl_remaining = remaining;
+
+	return level;
+}
+
+static void
+brace_level_free(struct brace_level *level)
+{
+	free(level);
+}
+
 #ifdef DEBUG
 /*
  * TODO: only log the top of the stack after each modifying operation
@@ -428,6 +446,30 @@ brace_level_debug(const struct brace_level *level)
 #else
 #define brace_level_debug(level) do { } while (false)
 #endif
+
+static void
+brace_level_set_array_dimension(struct brace_level *level, int dim)
+{
+	debug_step("setting the array size to %d", dim);
+	level->bl_type->t_dim = dim;
+	debug_indent();
+	brace_level_debug(level);
+}
+
+static void
+brace_level_next_member(struct brace_level *level)
+{
+	const sym_t *m;
+
+	do {
+		m = level->bl_next_member = level->bl_next_member->s_next;
+		/* XXX: can this assertion be made to fail? */
+		lint_assert(m != NULL);
+	} while (m->s_bitfield && m->s_name == unnamed);
+
+	debug_indent();
+	brace_level_debug(level);
+}
 
 static const sym_t *
 brace_level_look_up_member(const struct brace_level *level, const char *name)
@@ -505,7 +547,7 @@ initialization_free(struct initialization *in)
 
 	for (level = in->brace_level; level != NULL; level = next) {
 		next = level->bl_enclosing;
-		free(level);
+		brace_level_free(level);
 	}
 
 	free(in);
@@ -602,42 +644,6 @@ designation_add_name(sbuf_t *sb)
 
 /* TODO: Move the function body up here, to avoid the forward declaration. */
 static void initstack_pop_nobrace(struct initialization *);
-
-static struct brace_level *
-brace_level_new(type_t *type, type_t *subtype, int remaining)
-{
-	struct brace_level *level = xcalloc(1, sizeof(*level));
-
-	level->bl_type = type;
-	level->bl_subtype = subtype;
-	level->bl_remaining = remaining;
-
-	return level;
-}
-
-static void
-brace_level_set_array_dimension(struct brace_level *level, int dim)
-{
-	debug_step("setting the array size to %d", dim);
-	level->bl_type->t_dim = dim;
-	debug_indent();
-	brace_level_debug(level);
-}
-
-static void
-brace_level_next_member(struct brace_level *level)
-{
-	const sym_t *m;
-
-	do {
-		m = level->bl_next_member = level->bl_next_member->s_next;
-		/* XXX: can this assertion be made to fail? */
-		lint_assert(m != NULL);
-	} while (m->s_bitfield && m->s_name == unnamed);
-
-	debug_indent();
-	brace_level_debug(level);
-}
 
 /*
  * A sub-object of an array is initialized using a designator.  This does not
@@ -786,7 +792,7 @@ initstack_pop_item(struct initialization *in)
 	brace_level_debug(level);
 
 	in->brace_level = level->bl_enclosing;
-	free(level);
+	brace_level_free(level);
 	level = in->brace_level;
 	lint_assert(level != NULL);
 
@@ -1014,7 +1020,7 @@ again:
 	pop:
 			/* TODO: extract this into end_initializer_level */
 			enclosing = in->brace_level->bl_enclosing;
-			free(level);
+			brace_level_free(level);
 			in->brace_level = enclosing;
 			goto again;
 		}
