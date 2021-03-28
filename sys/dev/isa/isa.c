@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138.76.3 2021/03/22 16:23:45 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.138.76.4 2021/03/28 20:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.3 2021/03/22 16:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.4 2021/03/28 20:34:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,13 @@ isaattach(device_t parent, device_t self, void *aux)
 	struct isa_softc *sc = device_private(self);
 	struct isabus_attach_args *iba = aux;
 	static const int wildcard[ISACF_NLOCS] = {
-		ISACF_PORT_DEFAULT, ISACF_SIZE_DEFAULT,
-		ISACF_IOMEM_DEFAULT, ISACF_IOSIZ_DEFAULT,
-		ISACF_IRQ_DEFAULT, ISACF_DRQ_DEFAULT, ISACF_DRQ2_DEFAULT
+		[ISACF_PORT]  = ISACF_PORT_DEFAULT,
+		[ISACF_SIZE]  = ISACF_SIZE_DEFAULT,
+		[ISACF_IOMEM] = ISACF_IOMEM_DEFAULT,
+		[ISACF_IOSIZ] = ISACF_IOSIZ_DEFAULT,
+		[ISACF_IRQ]   = ISACF_IRQ_DEFAULT,
+		[ISACF_DRQ]   = ISACF_DRQ_DEFAULT,
+		[ISACF_DRQ2]  = ISACF_DRQ2_DEFAULT,
 	};
 
 	TAILQ_INIT(&sc->sc_knowndevs);
@@ -132,7 +136,7 @@ isaattach(device_t parent, device_t self, void *aux)
 		isa_free_knowndevs(sc);
 
 	/* Attach all indirect-config children. */
-	isarescan(self, "isa", wildcard);
+	isarescan(self, NULL, wildcard);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -188,7 +192,6 @@ isarescan(device_t self, const char *ifattr, const int *locators)
 
 	config_search(self, NULL,
 	    CFARG_SUBMATCH, isasearch,
-	    CFARG_IATTR, ifattr,
 	    CFARG_LOCATORS, locs,
 	    CFARG_EOL);
 	return (0);
