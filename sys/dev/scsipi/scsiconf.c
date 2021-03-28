@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.290.4.2 2021/03/21 17:35:49 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.290.4.3 2021/03/28 20:38:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.290.4.2 2021/03/21 17:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.290.4.3 2021/03/28 20:38:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,8 +433,7 @@ ret:
 }
 
 static int
-scsibusrescan(device_t sc, const char *ifattr,
-    const int *locators)
+scsibusrescan(device_t sc, const char *ifattr, const int *locators)
 {
 
 	KASSERT(ifattr && !strcmp(ifattr, "scsibus"));
