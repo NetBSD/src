@@ -304,8 +304,10 @@ run_test_case_child(void* raw_params)
 
     const std::pair< int, int > user = tools::get_required_user(
         params->metadata, params->config);
-    if (user.first != -1 && user.second != -1)
+    if (user.first != -1 && user.second != -1) {
+        tools::fs::change_ownership(params->workdir, user);
         tools::user::drop_privileges(user);
+    }
 
     // The input 'tp' parameter may be relative and become invalid once
     // we change the current working directory.

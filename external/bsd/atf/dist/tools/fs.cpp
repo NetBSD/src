@@ -683,6 +683,17 @@ impl::rmdir(const path& p)
     }
 }
 
+void
+impl::change_ownership(const path& p, const std::pair < int, int >& user)
+{
+    if (::chown(p.c_str(), user.first, user.second) == -1) {
+        std::stringstream ss;
+        ss << IMPL_NAME "::chown(" << p.str() << ", " << user.first << ", "
+           << user.second << ")";
+        throw tools::system_error(ss.str(), "chown(2) failed", errno);
+    }
+}
+
 impl::path
 impl::change_directory(const path& dir)
 {
