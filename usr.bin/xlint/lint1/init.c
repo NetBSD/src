@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.155 2021/03/28 10:03:02 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.156 2021/03/28 10:05:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.155 2021/03/28 10:03:02 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.156 2021/03/28 10:05:19 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -632,8 +632,6 @@ current_initsym(void)
 	return &current_init()->initsym;
 }
 
-#define initsym		(*current_initsym())
-
 
 void
 begin_initialization(sym_t *sym)
@@ -734,11 +732,11 @@ initstack_init(void)
 	 * If the type which is to be initialized is an incomplete array,
 	 * it must be duplicated.
 	 */
-	if (initsym->s_type->t_tspec == ARRAY && is_incomplete(initsym->s_type))
-		initsym->s_type = duptyp(initsym->s_type);
+	if (in->initsym->s_type->t_tspec == ARRAY && is_incomplete(in->initsym->s_type))
+		in->initsym->s_type = duptyp(in->initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	in->brace_level = brace_level_new(NULL, initsym->s_type, 1);
+	in->brace_level = brace_level_new(NULL, in->initsym->s_type, 1);
 
 	initialization_debug(in);
 	debug_leave();
@@ -1138,7 +1136,7 @@ init_lbrace(void)
 	debug_enter();
 	initialization_debug(in);
 
-	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
+	if ((in->initsym->s_scl == AUTO || in->initsym->s_scl == REG) &&
 	    in->brace_level->bl_enclosing == NULL) {
 		if (tflag &&
 		    !is_scalar(in->brace_level->bl_subtype->t_tspec))
@@ -1218,14 +1216,14 @@ init_using_assign(struct initialization *in, tnode_t *rn)
 {
 	tnode_t *ln, *tn;
 
-	if (initsym->s_type->t_tspec == ARRAY)
+	if (in->initsym->s_type->t_tspec == ARRAY)
 		return false;
 	if (in->brace_level->bl_enclosing != NULL)
 		return false;
 
 	debug_step("handing over to ASSIGN");
 
-	ln = new_name_node(initsym, 0);
+	ln = new_name_node(in->initsym, 0);
 	ln->tn_type = tduptyp(ln->tn_type);
 	ln->tn_type->t_const = false;
 
@@ -1249,7 +1247,7 @@ check_init_expr(struct initialization *in, tnode_t *tn, scl_t sclass)
 	ln->tn_type = tduptyp(in->brace_level->bl_type);
 	ln->tn_type->t_const = false;
 	ln->tn_lvalue = true;
-	ln->tn_sym = initsym;		/* better than nothing */
+	ln->tn_sym = in->initsym;		/* better than nothing */
 
 	tn = cconv(tn);
 
@@ -1296,7 +1294,7 @@ init_using_expr(tnode_t *tn)
 	if (in->initerr || tn == NULL)
 		goto done;
 
-	sclass = initsym->s_scl;
+	sclass = in->initsym->s_scl;
 	if ((sclass == AUTO || sclass == REG) && init_using_assign(in, tn))
 		goto done;
 
