@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.61 2021/03/28 14:16:16 christos Exp $ */
+/* $NetBSD: style,v 1.62 2021/03/28 14:28:56 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.61 2021/03/28 14:16:16 christos Exp $");
+__RCSID("$NetBSD: style,v 1.62 2021/03/28 14:28:56 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -351,10 +351,26 @@ function(int a1, int a2, float fl, int a4)
 	char fourteen, fifteen, sixteen;
 
 	/*
-	 * Casts and sizeof's are not followed by a space.  NULL is any
-	 * pointer type, and doesn't need to be cast, so use NULL instead
-	 * of (struct foo *)0 or (struct foo *)NULL.  Also, test pointers
-	 * against NULL.  I.e. use:
+	 * Casts and sizeof's are not followed by a space.
+	 *
+	 * We parenthesize sizeof expressions to clarify their precedence:
+	 *
+	 * 	sizeof(e) + 4
+	 * not:
+	 *	sizeof e + 4
+	 *
+	 * We don't put a space before the parenthesis so that it looks like
+	 * a function call. We always parenthesize the sizeof expression for
+	 * consistency.
+	 *
+	 * On the other hand, we don't parenthesize the return statement
+	 * because there is never a precedence ambiguity situation (it is
+	 * a single statement).
+	 *
+	 * NULL is any pointer type, and doesn't need to be cast, so use
+	 * NULL instead of (struct foo *)0 or (struct foo *)NULL.  Also,
+	 * test pointers against NULL because it indicates the type of the
+	 * expression to the user. I.e. use:
 	 *
 	 *	(p = f()) == NULL
 	 * not:
