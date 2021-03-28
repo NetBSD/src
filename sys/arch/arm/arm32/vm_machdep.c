@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.77 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.78 2021/03/28 10:29:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2021/03/28 10:29:05 skrll Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_cputypes.h"
@@ -223,8 +223,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = (void *)(taddr + off);
 
 	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
+	 * The region is locked, so we expect that pmap_extract() will return
+	 * true.
 	 */
 	while (len) {
 		(void) pmap_extract(pm, faddr, &fpa);
