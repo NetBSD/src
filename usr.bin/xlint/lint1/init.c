@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.145 2021/03/28 07:59:09 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.146 2021/03/28 08:30:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.145 2021/03/28 07:59:09 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.146 2021/03/28 08:30:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -318,6 +318,163 @@ debug_leave(const char *func)
 #endif
 
 
+static struct designator *
+designator_new(const char *name)
+{
+	struct designator *d = xcalloc(1, sizeof *d);
+	d->name = name;
+	return d;
+}
+
+static void
+designator_free(struct designator *d)
+{
+	free(d);
+}
+
+
+#ifdef DEBUG
+static void
+designation_debug(const struct designation *dn)
+{
+	const struct designator *p;
+
+	if (dn->head == NULL)
+		return;
+
+	debug_indent();
+	debug_printf("designation: ");
+	for (p = dn->head; p != NULL; p = p->next)
+		debug_printf(".%s", p->name);
+	debug_printf("\n");
+}
+#else
+#define designation_debug(dn) do { } while (false)
+#endif
+
+static void
+designation_add(struct designation *dn, struct designator *dr)
+{
+
+	if (dn->head != NULL) {
+		dn->tail->next = dr;
+		dn->tail = dr;
+	} else {
+		dn->head = dr;
+		dn->tail = dr;
+	}
+
+	designation_debug(dn);
+}
+
+/* TODO: add support for array subscripts, not only named members */
+/*
+ * TODO: This function should not be necessary at all.  There is no need to
+ *  remove the head of the list.
+ */
+static void
+designation_shift_level(struct designation *dn)
+{
+	lint_assert(dn->head != NULL);
+
+	if (dn->head == dn->tail) {
+		designator_free(dn->head);
+		dn->head = NULL;
+		dn->tail = NULL;
+	} else {
+		struct designator *head = dn->head;
+		dn->head = dn->head->next;
+		designator_free(head);
+	}
+
+	designation_debug(dn);
+}
+
+
+#ifdef DEBUG
+/*
+ * TODO: only log the top of the stack after each modifying operation
+ *
+ * TODO: wrap all write accesses to brace_level in setter functions
+ */
+static void
+brace_level_debug(const struct brace_level *level)
+{
+	if (level->bl_type != NULL)
+		debug_printf("type '%s'", type_name(level->bl_type));
+	if (level->bl_type != NULL && level->bl_subtype != NULL)
+		debug_printf(", ");
+	if (level->bl_subtype != NULL)
+		debug_printf("subtype '%s'", type_name(level->bl_subtype));
+
+	if (level->bl_brace)
+		debug_printf(", needs closing brace");
+	if (level->bl_array_of_unknown_size)
+		debug_printf(", array of unknown size");
+	if (level->bl_seen_named_member)
+		debug_printf(", seen named member");
+
+	const type_t *eff_type = level->bl_type != NULL
+	    ? level->bl_type : level->bl_subtype;
+	if (eff_type->t_tspec == STRUCT && level->bl_next_member != NULL)
+		debug_printf(", next member '%s'",
+		    level->bl_next_member->s_name);
+
+	debug_printf(", remaining %d\n", level->bl_remaining);
+}
+#else
+#define brace_level_debug(level) do { } while (false)
+#endif
+
+
+static struct initialization *
+initialization_new(sym_t *sym)
+{
+	struct initialization *in = xcalloc(1, sizeof(*in));
+
+	in->initsym = sym;
+
+	return in;
+}
+
+static void
+initialization_free(struct initialization *in)
+{
+	struct brace_level *level, *next;
+
+	for (level = in->brace_level; level != NULL; level = next) {
+		next = level->bl_enclosing;
+		free(level);
+	}
+
+	free(in);
+}
+
+#ifdef DEBUG
+/*
+ * TODO: only call debug_initstack after each push/pop.
+ */
+static void
+initialization_debug(const struct initialization *in)
+{
+	if (in->brace_level == NULL) {
+		debug_step("no brace level in the current initialization");
+		return;
+	}
+
+	size_t i = 0;
+	for (const struct brace_level *level = in->brace_level;
+	     level != NULL; level = level->bl_enclosing) {
+		debug_indent();
+		debug_printf("brace level %zu: ", i);
+		brace_level_debug(level);
+		i++;
+	}
+}
+#else
+#define initialization_debug(in) do { } while (false)
+#endif
+
 /* XXX: unnecessary prototype since it is not recursive */
 static	bool	init_array_using_string(tnode_t *);
 
@@ -366,19 +523,6 @@ current_brace_level_lvalue(void)
 }
 
 static void
-free_initialization(struct initialization *in)
-{
-	struct brace_level *level, *next;
-
-	for (level = in->brace_level; level != NULL; level = next) {
-		next = level->bl_enclosing;
-		free(level);
-	}
-
-	free(in);
-}
-
-static void
 set_initerr(void)
 {
 	current_init()->initerr = true;
@@ -397,71 +541,6 @@ set_initerr(void)
 
 #else
 
-static void
-debug_designation(void)
-{
-	const struct designator *head = current_designation().head, *p;
-	if (head == NULL)
-		return;
-
-	debug_indent();
-	debug_printf("designation: ");
-	for (p = head; p != NULL; p = p->next)
-		debug_printf(".%s", p->name);
-	debug_printf("\n");
-}
-
-/*
- * TODO: only log the top of the stack after each modifying operation
- *
- * TODO: wrap all write accesses to brace_level in setter functions
- */
-static void
-debug_brace_level(const struct brace_level *level)
-{
-	if (level->bl_type != NULL)
-		debug_printf("type '%s'", type_name(level->bl_type));
-	if (level->bl_type != NULL && level->bl_subtype != NULL)
-		debug_printf(", ");
-	if (level->bl_subtype != NULL)
-		debug_printf("subtype '%s'", type_name(level->bl_subtype));
-
-	if (level->bl_brace)
-		debug_printf(", needs closing brace");
-	if (level->bl_array_of_unknown_size)
-		debug_printf(", array of unknown size");
-	if (level->bl_seen_named_member)
-		debug_printf(", seen named member");
-
-	const type_t *eff_type = level->bl_type != NULL
-	    ? level->bl_type : level->bl_subtype;
-	if (eff_type->t_tspec == STRUCT && level->bl_next_member != NULL)
-		debug_printf(", next member '%s'",
-		    level->bl_next_member->s_name);
-
-	debug_printf(", remaining %d\n", level->bl_remaining);
-}
-
-/*
- * TODO: only call debug_initstack after each push/pop.
- */
-static void
-debug_initstack(void)
-{
-	if (brace_level_rvalue == NULL) {
-		debug_step("no brace level in the current initialization");
-		return;
-	}
-
-	size_t i = 0;
-	for (const struct brace_level *level = brace_level_rvalue;
-	     level != NULL; level = level->bl_enclosing) {
-		debug_indent();
-		debug_printf("brace level %zu: ", i);
-		debug_brace_level(level);
-		i++;
-	}
-}
 
 #define debug_enter() debug_enter(__func__)
 #define debug_leave() debug_leave(__func__)
@@ -475,10 +554,9 @@ begin_initialization(sym_t *sym)
 	struct initialization *curr_init;
 
 	debug_step("begin initialization of '%s'", type_name(sym->s_type));
-	curr_init = xcalloc(1, sizeof *curr_init);
+	curr_init = initialization_new(sym);
 	curr_init->next = init;
 	init = curr_init;
-	initsym = sym;
 }
 
 void
@@ -488,44 +566,17 @@ end_initialization(void)
 
 	curr_init = init;
 	init = init->next;
-	free_initialization(curr_init);
+	initialization_free(curr_init);
 	debug_step("end initialization");
 }
 
-static struct designator *
-designator_new(const char *name)
-{
-	struct designator *d = xcalloc(1, sizeof *d);
-	d->name = name;
-	return d;
-}
 
-static void
-designator_free(struct designator *d)
-{
-	free(d);
-}
-
-static void
-designation_add(struct designator *d)
-{
-	struct designation *dd = &current_init()->designation;
-
-	if (dd->head != NULL) {
-		dd->tail->next = d;
-		dd->tail = d;
-	} else {
-		dd->head = d;
-		dd->tail = d;
-	}
-
-	debug_designation();
-}
 
 void
 designation_add_name(sbuf_t *sb)
 {
-	designation_add(designator_new(sb->sb_name));
+	designation_add(current_designation_mod(),
+	    designator_new(sb->sb_name));
 }
 
 /* TODO: Move the function body up here, to avoid the forward declaration. */
@@ -567,7 +618,7 @@ brace_level_set_array_dimension(int dim)
 	debug_step("setting the array size to %d", dim);
 	brace_level_lvalue->bl_type->t_dim = dim;
 	debug_indent();
-	debug_brace_level(brace_level_rvalue);
+	brace_level_debug(brace_level_rvalue);
 }
 
 static void
@@ -582,7 +633,7 @@ brace_level_next_member(struct brace_level *level)
 	} while (m->s_bitfield && m->s_name == unnamed);
 
 	debug_indent();
-	debug_brace_level(level);
+	brace_level_debug(level);
 }
 
 /*
@@ -627,25 +678,6 @@ designation_add_subscript(range_t range)
 	debug_leave();
 }
 
-/* TODO: add support for array subscripts, not only named members */
-static void
-designation_shift_level(void)
-{
-	struct designation *des = current_designation_mod();
-	lint_assert(des->head != NULL);
-
-	if (des->head == des->tail) {
-		designator_free(des->head);
-		des->head = NULL;
-		des->tail = NULL;
-	} else {
-		struct designator *head = des->head;
-		des->head = des->head->next;
-		designator_free(head);
-	}
-
-	debug_designation();
-}
 
 /*
  * Initialize the initialization stack by putting an entry for the object
@@ -672,7 +704,7 @@ initstack_init(void)
 
 	brace_level_lvalue = brace_level_new(NULL, initsym->s_type, 1);
 
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 }
 
@@ -703,7 +735,7 @@ initstack_pop_item_named_member(const char *name)
 		/* undefined struct/union member: %s */
 		error(101, name);
 
-		designation_shift_level();
+		designation_shift_level(current_designation_mod());
 		level->bl_seen_named_member = true;
 		return;
 	}
@@ -713,7 +745,7 @@ initstack_pop_item_named_member(const char *name)
 	/* XXX: why ++? */
 	level->bl_remaining++;
 	/* XXX: why is bl_seen_named_member not set? */
-	designation_shift_level();
+	designation_shift_level(current_designation_mod());
 }
 
 /* TODO: think of a better name than 'pop' */
@@ -745,7 +777,7 @@ initstack_pop_item(void)
 	level = brace_level_lvalue;
 	debug_indent();
 	debug_printf("popping: ");
-	debug_brace_level(level);
+	brace_level_debug(level);
 
 	brace_level_lvalue = level->bl_enclosing;
 	free(level);
@@ -762,7 +794,7 @@ initstack_pop_item(void)
 	else
 		initstack_pop_item_unnamed();
 
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 }
 
@@ -776,14 +808,14 @@ initstack_pop_brace(void)
 	bool brace;
 
 	debug_enter();
-	debug_initstack();
+	initialization_debug(current_init());
 	do {
 		brace = brace_level_rvalue->bl_brace;
 		/* TODO: improve wording of the debug message */
 		debug_step("loop brace=%d", brace);
 		initstack_pop_item();
 	} while (!brace);
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 }
 
@@ -861,7 +893,7 @@ initstack_push_array(void)
 	level->bl_subtype = level->bl_type->t_subt;
 	level->bl_array_of_unknown_size = is_incomplete(level->bl_type);
 	level->bl_remaining = level->bl_type->t_dim;
-	debug_designation();
+	designation_debug(current_designation_mod());
 	debug_step("type '%s' remaining %d",
 	    type_name(level->bl_type), level->bl_remaining);
 }
@@ -924,7 +956,7 @@ initstack_push_struct_or_union(void)
 	}
 
 	cnt = 0;
-	debug_designation();
+	designation_debug(current_designation_mod());
 	debug_step("lookup for '%s'%s",
 	    type_name(level->bl_type),
 	    level->bl_seen_named_member ? ", seen named member" : "");
@@ -941,7 +973,7 @@ initstack_push_struct_or_union(void)
 		level->bl_seen_named_member = true;
 		debug_step("named member '%s'",
 		    current_designation().head->name);
-		designation_shift_level();
+		designation_shift_level(current_designation_mod());
 		cnt = level->bl_type->t_tspec == STRUCT ? 2 : 1;
 	}
 	level->bl_brace = true;
@@ -1021,7 +1053,7 @@ again:
 		break;
 	}
 
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 }
 
@@ -1061,7 +1093,7 @@ initstack_next_brace(void)
 {
 
 	debug_enter();
-	debug_initstack();
+	initialization_debug(current_init());
 
 	if (brace_level_rvalue->bl_type != NULL &&
 	    is_scalar(brace_level_rvalue->bl_type->t_tspec)) {
@@ -1075,14 +1107,14 @@ initstack_next_brace(void)
 		initstack_push();
 	if (!initerr) {
 		brace_level_lvalue->bl_brace = true;
-		debug_designation();
+		designation_debug(current_designation_mod());
 		debug_step("expecting type '%s'",
 		    type_name(brace_level_rvalue->bl_type != NULL
 			? brace_level_rvalue->bl_type
 			: brace_level_rvalue->bl_subtype));
 	}
 
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 }
 
@@ -1120,7 +1152,7 @@ initstack_next_nobrace(tnode_t *tn)
 		initstack_push();
 	}
 
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 }
 
@@ -1132,7 +1164,7 @@ init_lbrace(void)
 		return;
 
 	debug_enter();
-	debug_initstack();
+	initialization_debug(current_init());
 
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
 	    brace_level_rvalue->bl_enclosing == NULL) {
@@ -1150,7 +1182,7 @@ init_lbrace(void)
 
 	initstack_next_brace();
 
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 }
 
@@ -1281,8 +1313,8 @@ init_using_expr(tnode_t *tn)
 	scl_t	sclass;
 
 	debug_enter();
-	debug_initstack();
-	debug_designation();
+	initialization_debug(current_init());
+	designation_debug(current_designation_mod());
 	debug_step("expr:");
 	debug_node(tn, debug_ind + 1);
 
@@ -1311,11 +1343,11 @@ init_using_expr(tnode_t *tn)
 	check_init_expr(tn, sclass);
 
 done_initstack:
-	debug_initstack();
+	initialization_debug(current_init());
 
 done:
 	while (current_designation().head != NULL)
-		designation_shift_level();
+		designation_shift_level(current_designation_mod());
 
 	debug_leave();
 }
@@ -1334,7 +1366,7 @@ init_array_using_string(tnode_t *tn)
 		return false;
 
 	debug_enter();
-	debug_initstack();
+	initialization_debug(current_init());
 
 	level = brace_level_lvalue;
 	strg = tn->tn_string;
@@ -1416,7 +1448,7 @@ init_array_using_string(tnode_t *tn)
 	/* In every case the array is initialized completely. */
 	level->bl_remaining = 0;
 
-	debug_initstack();
+	initialization_debug(current_init());
 	debug_leave();
 	return true;
 }
