@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.3.10.1 2021/03/23 01:29:32 thorpej Exp $ */
+/* $NetBSD: imcsmb.c,v 1.3.10.2 2021/03/28 19:42:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.3.10.1 2021/03/23 01:29:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.3.10.2 2021/03/28 19:42:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -138,7 +138,7 @@ imcsmb_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-imcsmb_rescan(device_t self, const char *ifattr, const int *flags)
+imcsmb_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct imcsmb_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
@@ -155,7 +155,7 @@ imcsmb_rescan(device_t self, const char *ifattr, const int *flags)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_smbus = config_found_ia(self, ifattr, &iba, iicbus_print);
+	sc->sc_smbus = config_found(self, &iba, iicbus_print, CFARG_EOL);
 
 	if (sc->sc_smbus == NULL) {
 		aprint_normal_dev(self, "no child found\n");
