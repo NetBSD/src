@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.162 2021/03/28 14:01:49 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.163 2021/03/28 14:13:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.162 2021/03/28 14:01:49 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.163 2021/03/28 14:13:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -859,11 +859,10 @@ initialization_push(struct initialization *in)
 	level = in->brace_level;
 	lint_assert(level->bl_remaining > 0);
 
-	in->brace_level = xcalloc(1, sizeof *in->brace_level);
+	in->brace_level = brace_level_new(
+	    level->bl_subtype != NULL ? level->bl_subtype : level->bl_type,
+	    NULL, 0);
 	in->brace_level->bl_enclosing = level;
-	in->brace_level->bl_type = level->bl_subtype;
-	if (in->brace_level->bl_type == NULL)
-		in->brace_level->bl_type = level->bl_type;
 	lint_assert(in->brace_level->bl_type != NULL);
 	lint_assert(in->brace_level->bl_type->t_tspec != FUNC);
 
