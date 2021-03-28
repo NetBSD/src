@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.165 2021/03/28 16:19:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.166 2021/03/28 16:28:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.165 2021/03/28 16:19:21 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.166 2021/03/28 16:28:15 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -474,13 +474,15 @@ designation_shift_level(struct designation *dn)
 
 
 static struct brace_level *
-brace_level_new(type_t *type, type_t *subtype, int remaining)
+brace_level_new(type_t *type, type_t *subtype, int remaining,
+		struct brace_level *enclosing)
 {
 	struct brace_level *level = xcalloc(1, sizeof(*level));
 
 	level->bl_type = type;
 	level->bl_subtype = subtype;
 	level->bl_remaining = remaining;
+	level->bl_enclosing = enclosing;
 
 	return level;
 }
@@ -525,6 +527,16 @@ brace_level_debug(const struct brace_level *level)
 #else
 #define brace_level_debug(level) do { } while (false)
 #endif
+
+static type_t *
+brace_level_subtype(struct brace_level *level)
+{
+
+	if (level->bl_subtype != NULL)
+		return level->bl_subtype;
+
+	return level->bl_type;
+}
 
 static void
 brace_level_set_array_dimension(struct brace_level *level, int dim)
@@ -776,7 +788,7 @@ initialization_init(struct initialization *in)
 		in->initsym->s_type = duptyp(in->initsym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	in->brace_level = brace_level_new(NULL, in->initsym->s_type, 1);
+	in->brace_level = brace_level_new(NULL, in->initsym->s_type, 1, NULL);
 
 	initialization_debug(in);
 	debug_leave();
@@ -867,10 +879,8 @@ initialization_push(struct initialization *in)
 	level = in->brace_level;
 	lint_assert(level->bl_remaining > 0);
 
-	in->brace_level = brace_level_new(
-	    level->bl_subtype != NULL ? level->bl_subtype : level->bl_type,
-	    NULL, 0);
-	in->brace_level->bl_enclosing = level;
+	in->brace_level = brace_level_new(brace_level_subtype(level), NULL, 0,
+	    level);
 	lint_assert(in->brace_level->bl_type != NULL);
 	lint_assert(in->brace_level->bl_type->t_tspec != FUNC);
 
