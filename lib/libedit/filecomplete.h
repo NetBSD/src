@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.h,v 1.12 2021/03/27 18:55:02 christos Exp $	*/
+/*	$NetBSD: filecomplete.h,v 1.13 2021/03/28 13:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ int fn_complete2(EditLine *,
     char **(*)(const char *, int, int),
     const wchar_t *, const wchar_t *, const char *(*)(const char *), size_t,
     int *, int *, int *, int *, unsigned int);
-#define FN_QUOTE_MATCH 1
+#define FN_QUOTE_MATCH 1		/* Quote the returned match */
 
 void fn_display_match_list(EditLine *, char **, size_t, size_t,
 	const char *(*)(const char *));
