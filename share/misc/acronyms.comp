@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.321 2021/02/12 08:56:04 leot Exp $
+$NetBSD: acronyms.comp,v 1.322 2021/03/28 17:52:09 nia Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -446,6 +446,7 @@ DRAM	dynamic random access memory
 DRBG	deterministic random bit generator
 DRI	direct rendering infrastructure
 DRM	digital rights management
+DRM	direct rendering manager
 DRRS	display refresh rate switching
 DS	debug store
 DS	differentiated services
