@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.16 2021/03/27 23:13:48 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.17 2021/03/28 14:01:50 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -15,11 +15,11 @@ typedef struct any {
 } any;
 
 
-// C99 6.7.8p11 says "optionally enclosed in braces".  The intended
-// interpretation is "optionally enclosed in a single pair of braces".
+// C99 6.7.8p11 says "optionally enclosed in braces".  There is no limitation
+// on the number of brace pairs.
 int scalar_without_braces = 3;
 int scalar_with_optional_braces = { 3 };
-int scalar_with_too_many_braces = {{ 3 }};		/* expect: 176 */
+int scalar_with_too_many_braces = {{ 3 }};
 int scalar_with_too_many_initializers = { 3, 5 };	/* expect: 174 */
 
 
@@ -139,7 +139,7 @@ int array_with_designator[] = {
  * about this, so there is no extra work for lint to do.
  */
 struct point scalar_with_several_braces = {
-	{{{3}}},		/*FIXME*//* expect: invalid initializer type int */
+	{{{3}}},
 	{{{{4}}}},
 };
 

@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.36 2021/03/27 13:59:18 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.37 2021/03/28 14:01:50 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -169,22 +169,19 @@ test_case d_long_double_int
 test_case all_messages
 all_messages_body()
 {
-	local srcdir ok msg base flags
+	local failed msg
 
-	srcdir="$(atf_get_srcdir)"
-	ok="true"
+	failed=""
 
 	for msg in $(seq 0 340); do
-		base="$(printf '%s/msg_%03d' "${srcdir}" "${msg}")"
-		flags="$(extract_flags "${base}.c")"
-
-		# shellcheck disable=SC2154 disable=SC2086
-		${Atf_Check} -s not-exit:0 -o "file:${base}.exp" -e empty \
-		    ${LINT1} ${flags} "${base}.c" /dev/null \
-		|| ok="false"
+		name="$(printf 'msg_%03d.c' "${msg}")"
+		check_lint1 "${name}" \
+		|| failed="$failed${failed:+ }$name"
 	done
 
-	atf_check "${ok}"
+	if [ "$failed" != "" ]; then
+		atf_check "false" "$failed"
+	fi
 }
 
 

@@ -1,7 +1,14 @@
-/*	$NetBSD: msg_176.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_176.c,v 1.3 2021/03/28 14:01:50 rillig Exp $	*/
 # 3 "msg_176.c"
 
 // Test for message: invalid initializer type %s [176]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/*
+ * Before init.c 1.161 from 2021-03-28, lint wronly complained about
+ * initializers with redundant braces.
+ *
+ * C99 allows these, both GCC and Clang warn about them since they are unusual
+ * and confusing.
+ */
+
+int valid = {{{3}}};
