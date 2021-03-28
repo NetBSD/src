@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.65.10.2 2021/03/22 16:23:45 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.65.10.3 2021/03/28 20:36:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.65.10.2 2021/03/22 16:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.65.10.3 2021/03/28 20:36:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,7 +511,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-amr_rescan(device_t self, const char *attr, const int *flags)
+amr_rescan(device_t self, const char *ifattr, const int *ulocs)
 {
 	int j;
 	int locs[AMRCF_NLOCS];
@@ -531,7 +531,7 @@ amr_rescan(device_t self, const char *attr, const int *flags)
 		amr->amr_drive[j].al_dv =
 		    config_found(amr->amr_dv, &amra, amr_print,
 				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_IATTR, attr,
+				 CFARG_IATTR, ifattr,
 				 CFARG_LOCATORS, locs,
 				 CFARG_EOL);
 	}
