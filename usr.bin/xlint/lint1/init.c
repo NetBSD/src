@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.169 2021/03/28 18:21:28 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.170 2021/03/28 18:28:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.169 2021/03/28 18:21:28 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.170 2021/03/28 18:28:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1166,7 +1166,7 @@ is_string_array(const type_t *tp, tspec_t t)
 {
 	tspec_t st;
 
-	if (tp->t_tspec != ARRAY)
+	if (tp == NULL || tp->t_tspec != ARRAY)
 		return false;
 	st = tp->t_subt->t_tspec;
 	return t == CHAR
@@ -1186,7 +1186,6 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 		return false;
 
 	debug_enter();
-	initialization_debug(in);
 
 	level = in->brace_level;
 	strg = tn->tn_string;
@@ -1195,42 +1194,24 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	 * Check if we have an array type which can be initialized by
 	 * the string.
 	 */
-	if (level->bl_subtype != NULL && level->bl_subtype->t_tspec == ARRAY) {
+	if (is_string_array(level->bl_subtype, strg->st_tspec)) {
 		debug_step("subtype is an array");
-		if (!is_string_array(level->bl_subtype, strg->st_tspec)) {
-			debug_leave();
-			return false;
-		}
 
 		/* Put the array at top of stack */
 		initialization_push(in);
 		level = in->brace_level;
 
-		/* TODO: what if both bl_type and bl_subtype are ARRAY? */
-
-	} else if (level->bl_type != NULL && level->bl_type->t_tspec == ARRAY) {
+	} else if (is_string_array(level->bl_type, strg->st_tspec)) {
 		debug_step("type is an array");
-		if (!is_string_array(level->bl_type, strg->st_tspec)) {
-			debug_leave();
-			return false;
-		}
 
-		/*
-		 * TODO: is this really not needed in the branch above this
-		 * one?
-		 */
 		/*
 		 * If the array is already partly initialized, we are
 		 * wrong here.
 		 */
-		if (level->bl_remaining != level->bl_type->t_dim) {
-			debug_leave();
-			return false;
-		}
-	} else {
-		debug_leave();
-		return false;
-	}
+		if (level->bl_remaining != level->bl_type->t_dim)
+			goto nope;
+	} else
+		goto nope;
 
 	/* Get length without trailing NUL character. */
 	len = strg->st_len;
@@ -1263,6 +1244,9 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	initialization_debug(in);
 	debug_leave();
 	return true;
+nope:
+	debug_leave();
+	return false;
 }
 
 /*
