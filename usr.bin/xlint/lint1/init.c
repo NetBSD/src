@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.171 2021/03/28 18:33:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.172 2021/03/28 19:30:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.171 2021/03/28 18:33:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.172 2021/03/28 19:30:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -589,8 +589,8 @@ brace_level_look_up_member(const struct brace_level *level, const char *name)
 
 /* TODO: merge duplicate code */
 static sym_t *
-brace_level_look_up_member_bloated(struct brace_level *level,
-			   const struct designator *dr, int *count)
+brace_level_look_up_member_named(struct brace_level *level, const char *name,
+				 int *count)
 {
 	sym_t *m;
 
@@ -598,25 +598,25 @@ brace_level_look_up_member_bloated(struct brace_level *level,
 	     m != NULL; m = m->s_next) {
 		if (m->s_bitfield && m->s_name == unnamed)
 			continue;
-		/*
-		 * TODO: split into separate functions:
-		 *
-		 * look_up_array_next
-		 * look_up_array_designator
-		 * look_up_struct_next
-		 * look_up_struct_designator
-		 */
-		if (dr != NULL) {
-			/* XXX: this log entry looks unnecessarily verbose */
-			debug_step("have member '%s', want member '%s'",
-			    m->s_name, dr->name);
-			if (strcmp(m->s_name, dr->name) == 0) {
-				(*count)++;
-				break;
-			} else
-				continue;
-		}
+		if (strcmp(m->s_name, name) != 0)
+			continue;
+		(*count)++;
+		break;
+	}
 
+	return m;
+}
+
+/* TODO: merge duplicate code */
+static sym_t *
+brace_level_look_up_member_unnamed(struct brace_level *level, int *count)
+{
+	sym_t *m;
+
+	for (m = level->bl_type->t_str->sou_first_member;
+	     m != NULL; m = m->s_next) {
+		if (m->s_bitfield && m->s_name == unnamed)
+			continue;
 		/* XXX: What is this code for? */
 		if (++(*count) == 1) {
 			level->bl_next_member = m;
@@ -812,10 +812,6 @@ initialization_set_error(struct initialization *in)
 static bool
 initialization_push_struct_or_union(struct initialization *in)
 {
-	/*
-	 * TODO: remove unnecessary 'const' for variables in functions that
-	 * fit on a single screen.  Keep it for larger functions.
-	 */
 	struct brace_level *level = in->brace_level;
 	int cnt;
 	sym_t *m;
@@ -833,8 +829,11 @@ initialization_push_struct_or_union(struct initialization *in)
 	    type_name(level->bl_type),
 	    level->bl_seen_named_member ? ", seen named member" : "");
 
-	m = brace_level_look_up_member_bloated(level,
-	    in->designation.head, &cnt);
+	if (in->designation.head != NULL)
+		m = brace_level_look_up_member_named(level,
+		    in->designation.head->name, &cnt);
+	else
+		m = brace_level_look_up_member_unnamed(level, &cnt);
 
 	if (in->designation.head != NULL) {
 		if (m == NULL) {
