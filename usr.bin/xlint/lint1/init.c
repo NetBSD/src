@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.164 2021/03/28 15:39:25 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.165 2021/03/28 16:19:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.164 2021/03/28 15:39:25 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.165 2021/03/28 16:19:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -845,12 +845,20 @@ initialization_push_struct_or_union(struct initialization *in)
 	return false;
 }
 
+static void
+initialization_end_brace_level(struct initialization *in)
+{
+	struct brace_level *level = in->brace_level;
+	in->brace_level = level->bl_enclosing;
+	brace_level_free(level);
+}
+
 /* TODO: document me */
 /* TODO: think of a better name than 'push' */
 static void
 initialization_push(struct initialization *in)
 {
-	struct brace_level *level, *enclosing;
+	struct brace_level *level;
 
 	debug_enter();
 
@@ -897,10 +905,7 @@ again:
 		if (in->designation.head != NULL) {
 			debug_step("pop scalar");
 		pop:
-			/* TODO: extract this into end_initializer_level */
-			enclosing = in->brace_level->bl_enclosing;
-			brace_level_free(level);
-			in->brace_level = enclosing;
+			initialization_end_brace_level(in);
 			goto again;
 		}
 		/* The initialization stack now expects a single scalar. */
