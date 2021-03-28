@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.40 2021/03/27 11:50:34 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.41 2021/03/28 15:36:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.40 2021/03/27 11:50:34 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.41 2021/03/28 15:36:37 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ static const char builtins[] =
 static const size_t builtinlen = sizeof builtins - 1;
 
 static FILE *
-bltin(void)
+gcc_builtins(void)
 {
 #if HAVE_NBTOOL_CONFIG_H
 	char template[] = "/tmp/lint.XXXXXX";
@@ -254,10 +254,12 @@ main(int argc, char *argv[])
 	initdecl();
 	initscan();
 
-	if ((yyin = bltin()) == NULL)
-		err(1, "cannot open builtins");
-	yyparse();
-	fclose(yyin);
+	if (gflag) {
+		if ((yyin = gcc_builtins()) == NULL)
+			err(1, "cannot open builtins");
+		yyparse();
+		fclose(yyin);
+	}
 
 	/* open the input file */
 	if ((yyin = fopen(argv[0], "r")) == NULL)
