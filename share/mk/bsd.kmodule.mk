@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.75 2021/03/23 13:22:40 simonb Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.76 2021/03/29 05:22:49 simonb Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -57,9 +57,11 @@ CFLAGS+=	-fno-pic
 CFLAGS+=	-fPIC -Wa,-fno-pic
 .elif ${MACHINE_ARCH} == "mips64eb" && !defined(BSD_MK_COMPAT_FILE)
 CFLAGS+=	-mabi=64
+AFLAGS+=	-mabi=64
 LDFLAGS+=	-Wl,-m,elf64btsmip
 .elif ${MACHINE_ARCH} == "mips64el" && !defined(BSD_MK_COMPAT_FILE)
 CFLAGS+=	-mabi=64
+AFLAGS+=	-mabi=64
 LDFLAGS+=	-Wl,-m,elf64ltsmip
 .endif
 
