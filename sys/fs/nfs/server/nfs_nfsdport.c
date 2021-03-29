@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdport.c,v 1.3 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: nfs_nfsdport.c,v 1.4 2021/03/29 02:13:38 simonb Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdport.c 308212 2016-11-02 12:43:15Z kib "); */
-__RCSID("$NetBSD: nfs_nfsdport.c,v 1.3 2018/09/03 16:29:34 riastradh Exp $");
+__RCSID("$NetBSD: nfs_nfsdport.c,v 1.4 2021/03/29 02:13:38 simonb Exp $");
 
 #if 0
 #include <sys/capsicum.h>
@@ -136,7 +136,7 @@ nfsrv_sequential_heuristic(struct uio *uio, struct vnode *vp)
 
 	/* Locate best candidate. */
 	try = 32;
-	hi = ((int)(vm_offset_t)vp / sizeof(struct vnode)) % NUM_HEURISTIC;
+	hi = ((int)(vaddr_t)vp / sizeof(struct vnode)) % NUM_HEURISTIC;
 	nh = &nfsheur[hi];
 	while (try--) {
 		if (nfsheur[hi].nh_vp == vp) {
