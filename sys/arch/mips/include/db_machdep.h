@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.34 2021/02/10 07:19:54 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.35 2021/03/29 03:03:48 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,10 +83,9 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */
 
 /*
- * Interface to  disassembly (shared with mdb)
+ * Interface to disassembly (shared with mdb)
  */
 db_addr_t	db_disasm_insn(int insn, db_addr_t loc, bool altfmt);
-
 
 /*
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
