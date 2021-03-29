@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.86 2020/09/07 00:19:04 mrg Exp $
+# $NetBSD: ad.mips,v 1.87 2021/03/29 01:48:29 simonb Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
@@ -55,6 +55,7 @@
 ./usr/include/mips/endian_machdep.h		comp-c-include
 ./usr/include/mips/fenv.h			comp-c-include
 ./usr/include/mips/float.h			comp-c-include
+./usr/include/mips/frame.h			comp-c-include
 ./usr/include/mips/ieee.h			comp-c-include
 ./usr/include/mips/ieeefp.h			comp-c-include
 ./usr/include/mips/int_const.h			comp-c-include
