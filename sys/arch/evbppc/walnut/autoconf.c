@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2021/03/29 13:38:31 rin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2021/03/29 13:49:15 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2021/03/29 13:38:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2021/03/29 13:49:15 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -71,7 +71,7 @@ cpu_configure(void)
 	if (config_rootfound("plb", __UNCONST(&local_plb_devs)) == NULL)
 		panic("configure: plb not configured");
 
-	(void)spl0();
+	genppc_cpu_configure();
 }
 
 void
