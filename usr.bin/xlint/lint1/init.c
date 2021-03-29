@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.174 2021/03/28 20:35:58 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.175 2021/03/29 20:39:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.174 2021/03/28 20:35:58 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.175 2021/03/29 20:39:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -260,6 +260,7 @@ struct initialization {
 
 static struct initialization *init;
 
+
 #ifdef DEBUG
 static int debug_ind = 0;
 #endif
@@ -280,12 +281,14 @@ debug_printf(const char *fmt, ...)
 static void
 debug_indent(void)
 {
+
 	debug_printf("%*s", 2 * debug_ind, "");
 }
 
 static void
 debug_enter(const char *func)
 {
+
 	printf("%*s+ %s\n", 2 * debug_ind++, "", func);
 }
 
@@ -304,11 +307,12 @@ debug_step(const char *fmt, ...)
 static void
 debug_leave(const char *func)
 {
+
 	printf("%*s- %s\n", 2 * --debug_ind, "", func);
 }
 
-#define debug_enter() (debug_enter)(__func__)
-#define debug_leave() (debug_leave)(__func__)
+#define debug_enter()		(debug_enter)(__func__)
+#define debug_leave()		(debug_leave)(__func__)
 
 #else
 
@@ -321,9 +325,19 @@ debug_leave(const char *func)
 #endif
 
 
+static void *
+unconst_cast(const void *p)
+{
+	void *r;
+
+	memcpy(&r, &p, sizeof r);
+	return r;
+}
+
 static bool
 is_struct_or_union(tspec_t t)
 {
+
 	return t == STRUCT || t == UNION;
 }
 
@@ -332,6 +346,7 @@ is_struct_or_union(tspec_t t)
 static void
 check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 {
+
 	if (tflag &&
 	    is_integer(lt) &&
 	    ln->tn_type->t_bitfield &&
@@ -344,12 +359,12 @@ check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 static void
 check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
 {
-	/* TODO: rename CON to CONSTANT to avoid ambiguity with CONVERT */
+	const sym_t *sym;
+	ptrdiff_t offs;
+
 	if (tn == NULL || tn->tn_op == CON)
 		return;
 
-	const sym_t *sym;
-	ptrdiff_t offs;
 	if (constant_addr(tn, &sym, &offs))
 		return;
 
@@ -363,7 +378,7 @@ check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
 }
 
 static void
-check_init_expr(scl_t sclass, type_t *tp, sym_t *sym, tnode_t *tn)
+check_init_expr(scl_t sclass, const type_t *tp, sym_t *sym, tnode_t *tn)
 {
 	tnode_t *ln;
 	tspec_t lt, rt;
@@ -401,7 +416,7 @@ check_init_expr(scl_t sclass, type_t *tp, sym_t *sym, tnode_t *tn)
 	 * XXX: Is it correct to do this conversion _after_ the typeok above?
 	 */
 	if (lt != rt || (tp->t_bitfield && tn->tn_op == CON))
-		tn = convert(INIT, 0, tp, tn);
+		tn = convert(INIT, 0, unconst_cast(tp), tn);
 
 	check_non_constant_initializer(tn, sclass);
 }
@@ -418,6 +433,7 @@ designator_new(const char *name)
 static void
 designator_free(struct designator *d)
 {
+
 	free(d);
 }
 
@@ -1378,6 +1394,7 @@ done:
 static struct initialization *
 current_init(void)
 {
+
 	lint_assert(init != NULL);
 	return init;
 }
@@ -1385,12 +1402,14 @@ current_init(void)
 bool *
 current_initerr(void)
 {
+
 	return &current_init()->initerr;
 }
 
 sym_t **
 current_initsym(void)
 {
+
 	return &current_init()->initsym;
 }
 
@@ -1419,6 +1438,7 @@ end_initialization(void)
 void
 add_designator_member(sbuf_t *sb)
 {
+
 	designation_add(&current_init()->designation,
 	    designator_new(sb->sb_name));
 }
@@ -1426,29 +1446,34 @@ add_designator_member(sbuf_t *sb)
 void
 add_designator_subscript(range_t range)
 {
+
 	initialization_add_designator_subscript(current_init(), range);
 }
 
 void
 initstack_init(void)
 {
+
 	initialization_init(current_init());
 }
 
 void
 init_lbrace(void)
 {
+
 	initialization_lbrace(current_init());
 }
 
 void
 init_using_expr(tnode_t *tn)
 {
+
 	initialization_expr(current_init(), tn);
 }
 
 void
 init_rbrace(void)
 {
+
 	initialization_rbrace(current_init());
 }
