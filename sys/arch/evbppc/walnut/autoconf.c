@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2014/07/30 19:33:56 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2021/03/29 13:17:53 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2014/07/30 19:33:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2021/03/29 13:17:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -72,17 +72,6 @@ cpu_configure(void)
 		panic("configure: plb not configured");
 
 	(void)spl0();
-}
-
-/*
- * Setup root device.
- * Configure swap area.
- */
-void
-cpu_rootconf(void)
-{
-
-	rootconf();
 }
 
 void

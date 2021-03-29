@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.15 2011/06/18 06:41:41 matt Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.16 2021/03/29 13:17:53 rin Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.15 2011/06/18 06:41:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.16 2021/03/29 13:17:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,6 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.15 2011/06/18 06:41:41 matt Ex
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
+
+void
+cpu_rootconf(void)
+{
+
+	rootconf();
+}
 
 void
 ibm4xx_device_register(device_t dev, void *aux)
