@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2021/03/29 14:27:36 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2021/03/29 14:37:01 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2021/03/29 14:27:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2021/03/29 14:37:01 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -209,56 +209,12 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
 	prop_number_t pn;
 	prop_data_t pd;
-	char pbuf[9];
 
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-#if 0	/* For some reason this fails... --Artem
-	 * Besides, do we really have to put it at the end of core?
-	 * Let's use static buffer for now
-	 */
-	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE), 0,
-	    UVM_KMF_VAONLY)))
-		panic("startup: no room for message buffer");
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
-		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
-	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
-#else
-	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));
-#endif
+	ibm4xx_cpu_startup("Walnut PowerPC 405GP Evaluation Board");
 
-	printf("%s%s", copyright, version);
-	printf("Walnut PowerPC 405GP Evaluation Board\n");
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Set up the board properties dictionary.
-	 */
-	board_properties = prop_dictionary_create();
-	KASSERT(board_properties != NULL);
+	board_info_init();
 
 	pn = prop_number_create_integer(board_data.mem_size);
 	KASSERT(pn != NULL);
