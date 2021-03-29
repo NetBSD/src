@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.21 2021/03/29 22:07:00 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.22 2021/03/29 22:36:31 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -328,3 +328,22 @@ ensure_array_type_is_not_modified_during_initialization(void)
 		break;
 	}
 }
+
+struct point unknown_member_name_beginning = {
+	// FIXME: assertion "bl->bl_type != NULL" failed in initialization_push
+	// .r = 5,
+	.x = 4,
+	.y = 3,
+};
+
+struct point unknown_member_name_middle = {
+	.x = 4,
+	.r = 5,			/* expect: undefined struct/union member: r */
+	.y = 3,
+};
+
+struct point unknown_member_name_end = {
+	.x = 4,
+	.y = 3,
+	.r = 5,			/* expect: undefined struct/union member: r */
+};
