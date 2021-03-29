@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.20 2021/03/29 17:13:07 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.21 2021/03/29 22:07:00 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -306,3 +306,25 @@ short c99_6_7_8_p29_example6c[4][3][2] = {
 		{ 6 },
 	}
 };
+
+/*
+ * During initialization of an object of type array of unknown size, the type
+ * information on the symbol is updated in-place.  Ensure that this happens on
+ * a copy of the type.
+ */
+void
+ensure_array_type_is_not_modified_during_initialization(void)
+{
+	typedef int array_of_unknown_size[];
+
+	array_of_unknown_size a1 = { 1, 2, 3};
+
+	switch (4) {
+	case sizeof(array_of_unknown_size):
+	case 0:			/* expect: duplicate case in switch: 0 */
+	case 3:
+	case 4:
+	case 12:
+		break;
+	}
+}
