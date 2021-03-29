@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2020/06/11 19:20:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2021/03/29 14:21:08 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2020/06/11 19:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2021/03/29 14:21:08 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -142,10 +142,6 @@ void initppc(vaddr_t, vaddr_t, char *, void *);
 
 static void dumpsys(void);
 
-#define MEMREGIONS	8
-struct mem_region physmemr[MEMREGIONS];		/* Hard code memory */
-struct mem_region availmemr[MEMREGIONS];	/* Who's supposed to set these up? */
-
 struct board_cfg_data board_data;
 
 void
@@ -160,13 +156,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	/* Save info block */
 	memcpy(&board_data, info_block, sizeof(board_data));
 
-	memset(physmemr, 0, sizeof physmemr);
-	memset(availmemr, 0, sizeof availmemr);
-	physmemr[0].start = 0;
-	physmemr[0].size = board_data.mem_size & ~PGOFSET;
-	/* Lower memory reserved by eval board BIOS */
-	availmemr[0].start = startkernel;
-	availmemr[0].size = board_data.mem_size - availmemr[0].start;
+	ibm40x_memsize_init(board_data.mem_size, startkernel);
 
 	/* Linear map kernel memory */
 	for (vaddr_t va = 0; va < endkernel; va += TLB_PG_SIZE) {
@@ -174,7 +164,8 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	}
 
 	/* Map console after physmem (see pmap_tlbmiss()) */
-	ppc4xx_tlb_reserve(0xef000000, roundup(physmemr[0].size, TLB_PG_SIZE),
+	ppc4xx_tlb_reserve(0xef000000,
+	    roundup(board_data.mem_size, TLB_PG_SIZE),
 	    TLB_PG_SIZE, TLB_I | TLB_G);
 
 	mtspr(SPR_TCR, 0);	/* disable all timers */
@@ -388,15 +379,6 @@ cpu_reboot(int howto, char *what)
 		/* nothing */;
 #endif
 }
-
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-
-	*mem = physmemr;
-	*avail = availmemr;
-}
-
 
 int
 ibm4xx_pci_bus_maxdevs(void *v, int busno)
