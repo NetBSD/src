@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.16 2020/02/04 07:36:04 skrll Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.17 2021/03/29 13:14:13 rin Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.16 2020/02/04 07:36:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.17 2021/03/29 13:14:13 rin Exp $");
 
 
 #include <sys/param.h>
@@ -230,7 +230,7 @@ static inline void 	gmi_write_8(uint32_t, uint32_t, uint32_t);
 static inline void 	gmi_write_4(uint32_t, uint32_t);
 static inline void 	gmi_read_8(uint32_t, uint32_t *, uint32_t *);
 static inline uint32_t 	gmi_read_4(uint32_t);
-static inline void 	hif_wait_stat(uint32_t);
+static inline int 	hif_wait_stat(uint32_t);
 
 #define cdmac_rx_stat(sc) \
     bus_space_read_4((sc)->sc_dma_rxt, (sc)->sc_dma_rsh, 0 /* XXX hack */)
@@ -1029,7 +1029,7 @@ temac_txreap(struct temac_softc *sc)
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
 
-		sc->sc_if.if_opackets++;
+		if_statinc(&sc->sc_if, if_opackets);
 		sent = 1;
 
 		sc->sc_txsreap = TEMAC_TXSNEXT(sc->sc_txsreap);
