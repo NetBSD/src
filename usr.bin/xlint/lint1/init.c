@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.177 2021/03/29 21:09:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.178 2021/03/29 21:34:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.177 2021/03/29 21:09:21 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.178 2021/03/29 21:34:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -542,20 +542,20 @@ static struct brace_level *
 brace_level_new(type_t *type, type_t *subtype, int remaining,
 		struct brace_level *enclosing)
 {
-	struct brace_level *level = xcalloc(1, sizeof(*level));
+	struct brace_level *bl = xcalloc(1, sizeof(*bl));
 
-	level->bl_type = type;
-	level->bl_subtype = subtype;
-	level->bl_remaining = remaining;
-	level->bl_enclosing = enclosing;
+	bl->bl_type = type;
+	bl->bl_subtype = subtype;
+	bl->bl_remaining = remaining;
+	bl->bl_enclosing = enclosing;
 
-	return level;
+	return bl;
 }
 
 static void
-brace_level_free(struct brace_level *level)
+brace_level_free(struct brace_level *bl)
 {
-	free(level);
+	free(bl);
 }
 
 #ifdef DEBUG
@@ -565,98 +565,98 @@ brace_level_free(struct brace_level *level)
  * TODO: wrap all write accesses to brace_level in setter functions
  */
 static void
-brace_level_debug(const struct brace_level *level)
+brace_level_debug(const struct brace_level *bl)
 {
-	if (level->bl_type != NULL)
-		debug_printf("type '%s'", type_name(level->bl_type));
-	if (level->bl_type != NULL && level->bl_subtype != NULL)
+	if (bl->bl_type != NULL)
+		debug_printf("type '%s'", type_name(bl->bl_type));
+	if (bl->bl_type != NULL && bl->bl_subtype != NULL)
 		debug_printf(", ");
-	if (level->bl_subtype != NULL)
-		debug_printf("subtype '%s'", type_name(level->bl_subtype));
+	if (bl->bl_subtype != NULL)
+		debug_printf("subtype '%s'", type_name(bl->bl_subtype));
 
-	if (level->bl_brace)
+	if (bl->bl_brace)
 		debug_printf(", needs closing brace");
-	if (level->bl_array_of_unknown_size)
+	if (bl->bl_array_of_unknown_size)
 		debug_printf(", array of unknown size");
-	if (level->bl_seen_named_member)
+	if (bl->bl_seen_named_member)
 		debug_printf(", seen named member");
 
-	const type_t *eff_type = level->bl_type != NULL
-	    ? level->bl_type : level->bl_subtype;
-	if (eff_type->t_tspec == STRUCT && level->bl_next_member != NULL)
+	const type_t *eff_type = bl->bl_type != NULL
+	    ? bl->bl_type : bl->bl_subtype;
+	if (eff_type->t_tspec == STRUCT && bl->bl_next_member != NULL)
 		debug_printf(", next member '%s'",
-		    level->bl_next_member->s_name);
+		    bl->bl_next_member->s_name);
 
-	debug_printf(", remaining %d\n", level->bl_remaining);
+	debug_printf(", remaining %d\n", bl->bl_remaining);
 }
 #else
-#define brace_level_debug(level) do { } while (false)
+#define brace_level_debug(bl) do { } while (false)
 #endif
 
 static void
-brace_level_assert_struct_or_union(const struct brace_level *level)
+brace_level_assert_struct_or_union(const struct brace_level *bl)
 {
-	lint_assert(is_struct_or_union(level->bl_type->t_tspec));
+	lint_assert(is_struct_or_union(bl->bl_type->t_tspec));
 }
 
 static void
-brace_level_assert_array(const struct brace_level *level)
+brace_level_assert_array(const struct brace_level *bl)
 {
-	lint_assert(level->bl_type->t_tspec == ARRAY);
+	lint_assert(bl->bl_type->t_tspec == ARRAY);
 }
 
 static type_t *
-brace_level_subtype(struct brace_level *level)
+brace_level_subtype(struct brace_level *bl)
 {
 
-	if (level->bl_subtype != NULL)
-		return level->bl_subtype;
+	if (bl->bl_subtype != NULL)
+		return bl->bl_subtype;
 
-	return level->bl_type;
+	return bl->bl_type;
 }
 
 static void
-brace_level_set_array_dimension(struct brace_level *level, int dim)
+brace_level_set_array_dimension(struct brace_level *bl, int dim)
 {
-	brace_level_assert_array(level);
+	brace_level_assert_array(bl);
 
 	debug_step("setting the array size to %d", dim);
-	level->bl_type->t_dim = dim;
+	bl->bl_type->t_dim = dim;
 	debug_indent();
-	brace_level_debug(level);
+	brace_level_debug(bl);
 }
 
 static void
-brace_level_next_member(struct brace_level *level)
+brace_level_next_member(struct brace_level *bl)
 {
 	const sym_t *m;
 
-	brace_level_assert_struct_or_union(level);
+	brace_level_assert_struct_or_union(bl);
 	do {
-		m = level->bl_next_member = level->bl_next_member->s_next;
+		m = bl->bl_next_member = bl->bl_next_member->s_next;
 		/* XXX: can this assertion be made to fail? */
 		lint_assert(m != NULL);
 	} while (m->s_bitfield && m->s_name == unnamed);
 
 	debug_indent();
-	brace_level_debug(level);
+	brace_level_debug(bl);
 }
 
 static const sym_t *
-brace_level_look_up_member(const struct brace_level *level, const char *name)
+brace_level_look_up_member(const struct brace_level *bl, const char *name)
 {
 
-	brace_level_assert_struct_or_union(level);
-	return look_up_member(level->bl_type->t_str->sou_first_member, name);
+	brace_level_assert_struct_or_union(bl);
+	return look_up_member(bl->bl_type->t_str->sou_first_member, name);
 }
 
 static sym_t *
-brace_level_look_up_first_member_named(struct brace_level *level,
+brace_level_look_up_first_member_named(struct brace_level *bl,
 				       const char *name, int *count)
 {
 	sym_t *m;
 
-	for (m = level->bl_type->t_str->sou_first_member;
+	for (m = bl->bl_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
 		if (is_unnamed_member(m))
 			continue;
@@ -670,20 +670,20 @@ brace_level_look_up_first_member_named(struct brace_level *level,
 }
 
 static sym_t *
-brace_level_look_up_first_member_unnamed(struct brace_level *level, int *count)
+brace_level_look_up_first_member_unnamed(struct brace_level *bl, int *count)
 {
 	sym_t *m;
 
-	brace_level_assert_struct_or_union(level);
+	brace_level_assert_struct_or_union(bl);
 
-	for (m = level->bl_type->t_str->sou_first_member;
+	for (m = bl->bl_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
 		if (is_unnamed_member(m))
 			continue;
 		/* XXX: What is this code for? */
 		if (++(*count) == 1) {
-			level->bl_next_member = m;
-			level->bl_subtype = m->s_type;
+			bl->bl_next_member = m;
+			bl->bl_subtype = m->s_type;
 		}
 	}
 
@@ -693,27 +693,27 @@ brace_level_look_up_first_member_unnamed(struct brace_level *level, int *count)
 /* TODO: document me */
 /* TODO: think of a better name than 'push' */
 static bool
-brace_level_push_array(struct brace_level *level)
+brace_level_push_array(struct brace_level *bl)
 {
-	brace_level_assert_array(level);
+	brace_level_assert_array(bl);
 
-	if (level->bl_enclosing->bl_seen_named_member) {
-		level->bl_brace = true;
+	if (bl->bl_enclosing->bl_seen_named_member) {
+		bl->bl_brace = true;
 		debug_step("ARRAY, seen named member, needs closing brace");
 	}
 
-	if (is_incomplete(level->bl_type) &&
-	    level->bl_enclosing->bl_enclosing != NULL) {
+	if (is_incomplete(bl->bl_type) &&
+	    bl->bl_enclosing->bl_enclosing != NULL) {
 		/* initialization of an incomplete type */
 		error(175);
 		return false;
 	}
 
-	level->bl_subtype = level->bl_type->t_subt;
-	level->bl_array_of_unknown_size = is_incomplete(level->bl_type);
-	level->bl_remaining = level->bl_type->t_dim;
+	bl->bl_subtype = bl->bl_type->t_subt;
+	bl->bl_array_of_unknown_size = is_incomplete(bl->bl_type);
+	bl->bl_remaining = bl->bl_type->t_dim;
 	debug_step("type '%s' remaining %d",
-	    type_name(level->bl_type), level->bl_remaining);
+	    type_name(bl->bl_type), bl->bl_remaining);
 	return true;
 }
 
@@ -726,30 +726,30 @@ brace_level_push_array(struct brace_level *level)
  * TODO: think of a better name than 'pop'
  */
 static void
-brace_level_pop_item_unnamed(struct brace_level *level)
+brace_level_pop_item_unnamed(struct brace_level *bl)
 {
-	if (level->bl_remaining > 0 && level->bl_type->t_tspec == STRUCT &&
-	    !level->bl_seen_named_member) {
-		brace_level_next_member(level);
-		level->bl_subtype = level->bl_next_member->s_type;
+	if (bl->bl_remaining > 0 && bl->bl_type->t_tspec == STRUCT &&
+	    !bl->bl_seen_named_member) {
+		brace_level_next_member(bl);
+		bl->bl_subtype = bl->bl_next_member->s_type;
 	}
 }
 
 static bool
-brace_level_check_too_many_initializers(struct brace_level *level)
+brace_level_check_too_many_initializers(struct brace_level *bl)
 {
-	if (level->bl_remaining > 0)
+	if (bl->bl_remaining > 0)
 		return true;
 	/*
 	 * FIXME: even with named members, there can be too many initializers
 	 */
-	if (level->bl_array_of_unknown_size || level->bl_seen_named_member)
+	if (bl->bl_array_of_unknown_size || bl->bl_seen_named_member)
 		return true;
 
-	tspec_t t = level->bl_type->t_tspec;
+	tspec_t t = bl->bl_type->t_tspec;
 	if (t == ARRAY) {
 		/* too many array initializers, expected %d */
-		error(173, level->bl_type->t_dim);
+		error(173, bl->bl_type->t_dim);
 	} else if (is_struct_or_union(t)) {
 		/* too many struct/union initializers */
 		error(172);
@@ -762,10 +762,10 @@ brace_level_check_too_many_initializers(struct brace_level *level)
 
 /* Extend an array of unknown size by one element */
 static void
-brace_level_extend_if_array_of_unknown_size(struct brace_level *level)
+brace_level_extend_if_array_of_unknown_size(struct brace_level *bl)
 {
 
-	if (level->bl_remaining != 0)
+	if (bl->bl_remaining != 0)
 		return;
 	/*
 	 * XXX: According to the function name, there should be a 'return' if
@@ -775,18 +775,18 @@ brace_level_extend_if_array_of_unknown_size(struct brace_level *level)
 
 	/*
 	 * The only place where an incomplete array may appear is at the
-	 * outermost aggregate level of the object to be initialized.
+	 * outermost aggregate bl of the object to be initialized.
 	 */
-	lint_assert(level->bl_enclosing->bl_enclosing == NULL);
-	lint_assert(level->bl_type->t_tspec == ARRAY);
+	lint_assert(bl->bl_enclosing->bl_enclosing == NULL);
+	lint_assert(bl->bl_type->t_tspec == ARRAY);
 
 	debug_step("extending array of unknown size '%s'",
-	    type_name(level->bl_type));
-	level->bl_remaining = 1;
-	level->bl_type->t_dim++;
-	setcomplete(level->bl_type, true);
+	    type_name(bl->bl_type));
+	bl->bl_remaining = 1;
+	bl->bl_type->t_dim++;
+	setcomplete(bl->bl_type, true);
 
-	debug_step("extended type is '%s'", type_name(level->bl_type));
+	debug_step("extended type is '%s'", type_name(bl->bl_type));
 }
 
 
@@ -826,11 +826,11 @@ initialization_debug(const struct initialization *in)
 	}
 
 	size_t i = 0;
-	for (const struct brace_level *level = in->in_brace_level;
-	     level != NULL; level = level->bl_enclosing) {
+	for (const struct brace_level *bl = in->in_brace_level;
+	     bl != NULL; bl = bl->bl_enclosing) {
 		debug_indent();
 		debug_printf("brace level %zu: ", i);
-		brace_level_debug(level);
+		brace_level_debug(bl);
 		i++;
 	}
 }
@@ -877,11 +877,11 @@ initialization_set_error(struct initialization *in)
 static bool
 initialization_push_struct_or_union(struct initialization *in)
 {
-	struct brace_level *level = in->in_brace_level;
+	struct brace_level *bl = in->in_brace_level;
 	int cnt;
 	sym_t *m;
 
-	if (is_incomplete(level->bl_type)) {
+	if (is_incomplete(bl->bl_type)) {
 		/* initialization of an incomplete type */
 		error(175);
 		initialization_set_error(in);
@@ -891,49 +891,49 @@ initialization_push_struct_or_union(struct initialization *in)
 	cnt = 0;
 	designation_debug(&in->in_designation);
 	debug_step("lookup for '%s'%s",
-	    type_name(level->bl_type),
-	    level->bl_seen_named_member ? ", seen named member" : "");
+	    type_name(bl->bl_type),
+	    bl->bl_seen_named_member ? ", seen named member" : "");
 
 	if (in->in_designation.dn_head != NULL)
-		m = brace_level_look_up_first_member_named(level,
+		m = brace_level_look_up_first_member_named(bl,
 		    in->in_designation.dn_head->dr_name, &cnt);
 	else
-		m = brace_level_look_up_first_member_unnamed(level, &cnt);
+		m = brace_level_look_up_first_member_unnamed(bl, &cnt);
 
 	if (in->in_designation.dn_head != NULL) {
 		if (m == NULL) {
 			debug_step("pop struct");
 			return true;
 		}
-		level->bl_next_member = m;
-		level->bl_subtype = m->s_type;
-		level->bl_seen_named_member = true;
+		bl->bl_next_member = m;
+		bl->bl_subtype = m->s_type;
+		bl->bl_seen_named_member = true;
 		debug_step("named member '%s'",
 		    in->in_designation.dn_head->dr_name);
 		designation_shift_level(&in->in_designation);
-		cnt = level->bl_type->t_tspec == STRUCT ? 2 : 1;
+		cnt = bl->bl_type->t_tspec == STRUCT ? 2 : 1;
 	}
-	level->bl_brace = true;
+	bl->bl_brace = true;
 	debug_step("unnamed element with type '%s'%s",
 	    type_name(
-		level->bl_type != NULL ? level->bl_type : level->bl_subtype),
-	    level->bl_brace ? ", needs closing brace" : "");
+		bl->bl_type != NULL ? bl->bl_type : bl->bl_subtype),
+	    bl->bl_brace ? ", needs closing brace" : "");
 	if (cnt == 0) {
 		/* cannot init. struct/union with no named member */
 		error(179);
 		initialization_set_error(in);
 		return false;
 	}
-	level->bl_remaining = level->bl_type->t_tspec == STRUCT ? cnt : 1;
+	bl->bl_remaining = bl->bl_type->t_tspec == STRUCT ? cnt : 1;
 	return false;
 }
 
 static void
 initialization_end_brace_level(struct initialization *in)
 {
-	struct brace_level *level = in->in_brace_level;
-	in->in_brace_level = level->bl_enclosing;
-	brace_level_free(level);
+	struct brace_level *bl = in->in_brace_level;
+	in->in_brace_level = bl->bl_enclosing;
+	brace_level_free(bl);
 }
 
 /* TODO: document me */
@@ -941,35 +941,35 @@ initialization_end_brace_level(struct initialization *in)
 static void
 initialization_push(struct initialization *in)
 {
-	struct brace_level *level;
+	struct brace_level *bl;
 
 	debug_enter();
 
 	brace_level_extend_if_array_of_unknown_size(in->in_brace_level);
 
-	level = in->in_brace_level;
-	lint_assert(level->bl_remaining > 0);
+	bl = in->in_brace_level;
+	lint_assert(bl->bl_remaining > 0);
 
-	in->in_brace_level = brace_level_new(brace_level_subtype(level), NULL, 0,
-	    level);
+	in->in_brace_level = brace_level_new(brace_level_subtype(bl), NULL, 0,
+	    bl);
 	lint_assert(in->in_brace_level->bl_type != NULL);
 	lint_assert(in->in_brace_level->bl_type->t_tspec != FUNC);
 
 again:
-	level = in->in_brace_level;
+	bl = in->in_brace_level;
 
-	debug_step("expecting type '%s'", type_name(level->bl_type));
-	lint_assert(level->bl_type != NULL);
-	switch (level->bl_type->t_tspec) {
+	debug_step("expecting type '%s'", type_name(bl->bl_type));
+	lint_assert(bl->bl_type != NULL);
+	switch (bl->bl_type->t_tspec) {
 	case ARRAY:
 		if (in->in_designation.dn_head != NULL) {
 			debug_step("pop array, named member '%s'%s",
 			    in->in_designation.dn_head->dr_name,
-			    level->bl_brace ? ", needs closing brace" : "");
+			    bl->bl_brace ? ", needs closing brace" : "");
 			goto pop;
 		}
 
-		if (!brace_level_push_array(level))
+		if (!brace_level_push_array(bl))
 			initialization_set_error(in);
 		break;
 
@@ -990,7 +990,7 @@ again:
 			goto again;
 		}
 		/* The initialization stack now expects a single scalar. */
-		level->bl_remaining = 1;
+		bl->bl_remaining = 1;
 		break;
 	}
 
@@ -1002,7 +1002,7 @@ again:
 static void
 initialization_pop_item_named(struct initialization *in, const char *name)
 {
-	struct brace_level *level = in->in_brace_level;
+	struct brace_level *bl = in->in_brace_level;
 	const sym_t *m;
 
 	/*
@@ -1011,28 +1011,28 @@ initialization_pop_item_named(struct initialization *in, const char *name)
 	 */
 	debug_step("initializing named member '%s'", name);
 
-	if (!is_struct_or_union(level->bl_type->t_tspec)) {
+	if (!is_struct_or_union(bl->bl_type->t_tspec)) {
 		/* syntax error '%s' */
 		error(249, "named member must only be used with struct/union");
 		initialization_set_error(in);
 		return;
 	}
 
-	m = brace_level_look_up_member(level, name);
+	m = brace_level_look_up_member(bl, name);
 	if (m == NULL) {
 		/* TODO: add type information to the message */
 		/* undefined struct/union member: %s */
 		error(101, name);
 
 		designation_shift_level(&in->in_designation);
-		level->bl_seen_named_member = true;
+		bl->bl_seen_named_member = true;
 		return;
 	}
 
 	debug_step("found matching member");
-	level->bl_subtype = m->s_type;
+	bl->bl_subtype = m->s_type;
 	/* XXX: why ++? */
-	level->bl_remaining++;
+	bl->bl_remaining++;
 	/* XXX: why is bl_seen_named_member not set? */
 	designation_shift_level(&in->in_designation);
 }
@@ -1041,28 +1041,28 @@ initialization_pop_item_named(struct initialization *in, const char *name)
 static void
 initialization_pop_item(struct initialization *in)
 {
-	struct brace_level *level;
+	struct brace_level *bl;
 
 	debug_enter();
 
-	level = in->in_brace_level;
+	bl = in->in_brace_level;
 	debug_indent();
 	debug_printf("popping: ");
-	brace_level_debug(level);
+	brace_level_debug(bl);
 
-	in->in_brace_level = level->bl_enclosing;
-	brace_level_free(level);
-	level = in->in_brace_level;
-	lint_assert(level != NULL);
+	in->in_brace_level = bl->bl_enclosing;
+	brace_level_free(bl);
+	bl = in->in_brace_level;
+	lint_assert(bl != NULL);
 
-	level->bl_remaining--;
-	lint_assert(level->bl_remaining >= 0);
-	debug_step("%d elements remaining", level->bl_remaining);
+	bl->bl_remaining--;
+	lint_assert(bl->bl_remaining >= 0);
+	debug_step("%d elements remaining", bl->bl_remaining);
 
 	if (in->in_designation.dn_head != NULL && in->in_designation.dn_head->dr_name != NULL)
 		initialization_pop_item_named(in, in->in_designation.dn_head->dr_name);
 	else
-		brace_level_pop_item_unnamed(level);
+		brace_level_pop_item_unnamed(bl);
 
 	initialization_debug(in);
 	debug_leave();
@@ -1117,15 +1117,15 @@ initialization_next_brace(struct initialization *in)
 }
 
 static void
-check_no_auto_aggregate(scl_t sclass, const struct brace_level *level)
+check_no_auto_aggregate(scl_t sclass, const struct brace_level *bl)
 {
 	if (!tflag)
 		return;
 	if (!(sclass == AUTO || sclass == REG))
 		return;
-	if (!(level->bl_enclosing == NULL))
+	if (!(bl->bl_enclosing == NULL))
 		return;
-	if (is_scalar(level->bl_subtype->t_tspec))
+	if (is_scalar(bl->bl_subtype->t_tspec))
 		return;
 
 	/* no automatic aggregate initialization in trad. C */
@@ -1202,7 +1202,7 @@ static void
 initialization_add_designator_subscript(struct initialization *in,
 					range_t range)
 {
-	struct brace_level *level;
+	struct brace_level *bl;
 
 	debug_enter();
 	if (range.lo == range.hi)
@@ -1214,12 +1214,12 @@ initialization_add_designator_subscript(struct initialization *in,
 	/* XXX: This call is wrong here, it must be somewhere else. */
 	initialization_pop_nobrace(in);
 
-	level = in->in_brace_level;
-	if (level->bl_array_of_unknown_size) {
+	bl = in->in_brace_level;
+	if (bl->bl_array_of_unknown_size) {
 		/* No +1 here, extend_if_array_of_unknown_size will add it. */
 		int auto_dim = (int)range.hi;
-		if (auto_dim > level->bl_type->t_dim)
-			brace_level_set_array_dimension(level, auto_dim);
+		if (auto_dim > bl->bl_type->t_dim)
+			brace_level_set_array_dimension(bl, auto_dim);
 	}
 
 	debug_leave();
@@ -1229,7 +1229,7 @@ initialization_add_designator_subscript(struct initialization *in,
 static bool
 initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 {
-	struct brace_level *level;
+	struct brace_level *bl;
 	strg_t	*strg;
 
 	if (tn->tn_op != STRING)
@@ -1237,43 +1237,43 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 
 	debug_enter();
 
-	level = in->in_brace_level;
+	bl = in->in_brace_level;
 	strg = tn->tn_string;
 
 	/*
 	 * Check if we have an array type which can be initialized by
 	 * the string.
 	 */
-	if (is_string_array(level->bl_subtype, strg->st_tspec)) {
+	if (is_string_array(bl->bl_subtype, strg->st_tspec)) {
 		debug_step("subtype is an array");
 
 		/* Put the array at top of stack */
 		initialization_push(in);
-		level = in->in_brace_level;
+		bl = in->in_brace_level;
 
-	} else if (is_string_array(level->bl_type, strg->st_tspec)) {
+	} else if (is_string_array(bl->bl_type, strg->st_tspec)) {
 		debug_step("type is an array");
 
 		/*
 		 * If the array is already partly initialized, we are
 		 * wrong here.
 		 */
-		if (level->bl_remaining != level->bl_type->t_dim)
+		if (bl->bl_remaining != bl->bl_type->t_dim)
 			goto nope;
 	} else
 		goto nope;
 
-	if (level->bl_array_of_unknown_size) {
-		level->bl_array_of_unknown_size = false;
-		level->bl_type->t_dim = (int)(strg->st_len + 1);
-		setcomplete(level->bl_type, true);
+	if (bl->bl_array_of_unknown_size) {
+		bl->bl_array_of_unknown_size = false;
+		bl->bl_type->t_dim = (int)(strg->st_len + 1);
+		setcomplete(bl->bl_type, true);
 	} else {
 		/*
 		 * TODO: check for buffer overflow in the object to be
 		 * initialized
 		 */
 		/* XXX: double-check for off-by-one error */
-		if (level->bl_type->t_dim < (int)strg->st_len) {
+		if (bl->bl_type->t_dim < (int)strg->st_len) {
 			/* non-null byte ignored in string initializer */
 			warning(187);
 		}
@@ -1286,7 +1286,7 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	}
 
 	/* In every case the array is initialized completely. */
-	level->bl_remaining = 0;
+	bl->bl_remaining = 0;
 
 	initialization_debug(in);
 	debug_leave();
@@ -1341,19 +1341,19 @@ initialization_next_nobrace(struct initialization *in, tnode_t *tn)
 		initialization_set_error(in);
 
 	while (!in->in_err) {
-		struct brace_level *level = in->in_brace_level;
+		struct brace_level *bl = in->in_brace_level;
 
 		if (tn->tn_type->t_tspec == STRUCT &&
-		    level->bl_type == tn->tn_type &&
-		    level->bl_enclosing != NULL &&
-		    level->bl_enclosing->bl_enclosing != NULL) {
-			level->bl_brace = false;
-			level->bl_remaining = 1; /* the struct itself */
+		    bl->bl_type == tn->tn_type &&
+		    bl->bl_enclosing != NULL &&
+		    bl->bl_enclosing->bl_enclosing != NULL) {
+			bl->bl_brace = false;
+			bl->bl_remaining = 1; /* the struct itself */
 			break;
 		}
 
-		if (level->bl_type != NULL &&
-		    is_scalar(level->bl_type->t_tspec))
+		if (bl->bl_type != NULL &&
+		    is_scalar(bl->bl_type->t_tspec))
 			break;
 		initialization_push(in);
 	}
