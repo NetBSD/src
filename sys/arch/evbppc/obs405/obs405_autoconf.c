@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405_autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv Exp $	*/
+/*	$NetBSD: obs405_autoconf.c,v 1.7 2021/03/29 13:17:53 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.7 2021/03/29 13:17:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,14 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv 
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
-
-
-void
-cpu_rootconf(void)
-{
-
-	rootconf();
-}
 
 void
 obs405_device_register(device_t dev, void *aux, int com_freq)
