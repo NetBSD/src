@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.259 2021/03/17 11:05:37 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.260 2021/03/29 03:22:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.259 2021/03/17 11:05:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.260 2021/03/29 03:22:17 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
+#include "opt_dtrace.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 
@@ -804,6 +805,16 @@ mips_singlestep(struct lwp *l)
 	return 0;
 }
 
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+
+/* Not used for now, but needed for dtrace/fbt modules */
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+dtrace_trap_func_t		dtrace_trap_func = NULL;
+
+int				(* dtrace_invop_jump_addr)(struct trapframe *);
+#endif /* KDTRACE_HOOKS */
+
 #ifdef TRAP_SIGDEBUG
 static void
 frame_dump(const struct trapframe *tf, struct pcb *pcb)
@@ -863,4 +874,4 @@ sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi, int e,
 	    e);
 	frame_dump(tf, lwp_getpcb(l));
 }
-#endif
+#endif /* TRAP_SIGDEBUG */
