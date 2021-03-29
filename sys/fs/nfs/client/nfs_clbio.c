@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clbio.c,v 1.6 2020/09/29 03:02:19 msaitoh Exp $	*/
+/*	$NetBSD: nfs_clbio.c,v 1.7 2021/03/29 02:13:37 simonb Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clbio.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clbio.c,v 1.6 2020/09/29 03:02:19 msaitoh Exp $");
+__RCSID("$NetBSD: nfs_clbio.c,v 1.7 2021/03/29 02:13:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ ncl_getpages(struct vop_getpages_args *ap)
 	int i, error, nextoff, size, toff, count, npages;
 	struct uio uio;
 	struct iovec iov;
-	vm_offset_t kva;
+	vaddr_t kva;
 	struct buf *bp;
 	struct vnode *vp;
 	struct thread *td;
@@ -137,7 +137,7 @@ ncl_getpages(struct vop_getpages_args *ap)
 	 */
 	bp = getpbuf(&ncl_pbuf_freecnt);
 
-	kva = (vm_offset_t) bp->b_data;
+	kva = (vaddr_t) bp->b_data;
 	pmap_qenter(kva, pages, npages);
 	PCPU_INC(cnt.v_vnodein);
 	PCPU_ADD(cnt.v_vnodepgsin, npages);
@@ -221,7 +221,7 @@ ncl_putpages(struct vop_putpages_args *ap)
 {
 	struct uio uio;
 	struct iovec iov;
-	vm_offset_t kva;
+	vaddr_t kva;
 	struct buf *bp;
 	int iomode, must_commit, i, error, npages, count;
 	off_t offset;
@@ -283,7 +283,7 @@ ncl_putpages(struct vop_putpages_args *ap)
 	 */
 	bp = getpbuf(&ncl_pbuf_freecnt);
 
-	kva = (vm_offset_t) bp->b_data;
+	kva = (vaddr_t) bp->b_data;
 	pmap_qenter(kva, pages, npages);
 	PCPU_INC(cnt.v_vnodeout);
 	PCPU_ADD(cnt.v_vnodepgsout, count);
