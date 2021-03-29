@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.22 2021/03/29 22:36:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.23 2021/03/29 22:42:10 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -346,4 +346,21 @@ struct point unknown_member_name_end = {
 	.x = 4,
 	.y = 3,
 	.r = 5,			/* expect: undefined struct/union member: r */
+};
+
+union value {
+	int int_value;
+	void *pointer_value;
+};
+
+union value unknown_union_member_name_first = {
+	// FIXME: assertion "bl->bl_type != NULL" failed in initialization_push
+	// .unknown_value = 4,
+	.int_value = 3,
+};
+
+union value unknown_union_member_name_second = {
+	.int_value = 3,
+	// FIXME: assertion "bl->bl_type->t_tspec == ARRAY" failed in brace_level_extend_if_array_of_unknown_size
+	// .unknown_value = 4,
 };
