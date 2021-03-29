@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2021/03/29 14:21:08 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2021/03/29 14:27:36 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2021/03/29 14:21:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2021/03/29 14:27:36 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2021/03/29 14:21:08 rin Exp $");
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/ibm405gp.h>
 
 #include <powerpc/ibm4xx/pci_machdep.h>
 
@@ -164,7 +165,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	}
 
 	/* Map console after physmem (see pmap_tlbmiss()) */
-	ppc4xx_tlb_reserve(0xef000000,
+	ppc4xx_tlb_reserve(IBM405GP_UART0_BASE,
 	    roundup(board_data.mem_size, TLB_PG_SIZE),
 	    TLB_PG_SIZE, TLB_I | TLB_G);
 
