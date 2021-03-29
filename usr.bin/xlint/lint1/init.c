@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.175 2021/03/29 20:39:18 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.176 2021/03/29 20:52:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.175 2021/03/29 20:39:18 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.176 2021/03/29 20:52:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -216,9 +216,9 @@ struct brace_level {
  * See also: C99 6.7.8 "Initialization"
  */
 struct designator {
-	const char *name;		/* for struct and union */
-	/* TODO: add 'subscript' for arrays */
-	struct designator *next;
+	const char	*dr_name;		/* for struct and union */
+	/* TODO: add 'dr_subscript' for arrays */
+	struct designator *dr_next;
 };
 
 /*
@@ -229,8 +229,8 @@ struct designator {
  * See also: C99 6.7.8 "Initialization"
  */
 struct designation {
-	struct designator *head;
-	struct designator *tail;
+	struct designator *dn_head;
+	struct designator *dn_tail;
 };
 
 struct initialization {
@@ -240,21 +240,21 @@ struct initialization {
 	 * (parsed by yacc, expression trees built, but no initialization
 	 * takes place).
 	 */
-	bool	initerr;
+	bool		in_err;
 
 	/* The symbol that is to be initialized. */
-	sym_t	*initsym;
+	sym_t		*in_sym;
 
 	/* The innermost brace level. */
-	struct brace_level *brace_level;
+	struct brace_level *in_brace_level;
 
 	/*
 	 * The C99 designator, if any, for the current initialization
 	 * expression.
 	 */
-	struct designation designation;
+	struct designation in_designation;
 
-	struct initialization *next;
+	struct initialization *in_next;
 };
 
 
@@ -425,16 +425,18 @@ check_init_expr(scl_t sclass, const type_t *tp, sym_t *sym, tnode_t *tn)
 static struct designator *
 designator_new(const char *name)
 {
-	struct designator *d = xcalloc(1, sizeof *d);
-	d->name = name;
-	return d;
+	struct designator *dr;
+
+	dr = xcalloc(1, sizeof *dr);
+	dr->dr_name = name;
+	return dr;
 }
 
 static void
-designator_free(struct designator *d)
+designator_free(struct designator *dr)
 {
 
-	free(d);
+	free(dr);
 }
 
 
@@ -442,15 +444,15 @@ designator_free(struct designator *d)
 static void
 designation_debug(const struct designation *dn)
 {
-	const struct designator *p;
+	const struct designator *dr;
 
-	if (dn->head == NULL)
+	if (dn->dn_head == NULL)
 		return;
 
 	debug_indent();
 	debug_printf("designation: ");
-	for (p = dn->head; p != NULL; p = p->next)
-		debug_printf(".%s", p->name);
+	for (dr = dn->dn_head; dr != NULL; dr = dr->dr_next)
+		debug_printf(".%s", dr->dr_name);
 	debug_printf("\n");
 }
 #else
@@ -461,12 +463,12 @@ static void
 designation_add(struct designation *dn, struct designator *dr)
 {
 
-	if (dn->head != NULL) {
-		dn->tail->next = dr;
-		dn->tail = dr;
+	if (dn->dn_head != NULL) {
+		dn->dn_tail->dr_next = dr;
+		dn->dn_tail = dr;
 	} else {
-		dn->head = dr;
-		dn->tail = dr;
+		dn->dn_head = dr;
+		dn->dn_tail = dr;
 	}
 
 	designation_debug(dn);
@@ -480,15 +482,15 @@ designation_add(struct designation *dn, struct designator *dr)
 static void
 designation_shift_level(struct designation *dn)
 {
-	lint_assert(dn->head != NULL);
+	lint_assert(dn->dn_head != NULL);
 
-	if (dn->head == dn->tail) {
-		designator_free(dn->head);
-		dn->head = NULL;
-		dn->tail = NULL;
+	if (dn->dn_head == dn->dn_tail) {
+		designator_free(dn->dn_head);
+		dn->dn_head = NULL;
+		dn->dn_tail = NULL;
 	} else {
-		struct designator *head = dn->head;
-		dn->head = dn->head->next;
+		struct designator *head = dn->dn_head;
+		dn->dn_head = dn->dn_head->dr_next;
 		designator_free(head);
 	}
 
@@ -765,7 +767,7 @@ initialization_new(sym_t *sym)
 {
 	struct initialization *in = xcalloc(1, sizeof(*in));
 
-	in->initsym = sym;
+	in->in_sym = sym;
 
 	return in;
 }
@@ -773,11 +775,11 @@ initialization_new(sym_t *sym)
 static void
 initialization_free(struct initialization *in)
 {
-	struct brace_level *level, *next;
+	struct brace_level *bl, *next;
 
-	for (level = in->brace_level; level != NULL; level = next) {
-		next = level->bl_enclosing;
-		brace_level_free(level);
+	for (bl = in->in_brace_level; bl != NULL; bl = next) {
+		next = bl->bl_enclosing;
+		brace_level_free(bl);
 	}
 
 	free(in);
@@ -790,13 +792,13 @@ initialization_free(struct initialization *in)
 static void
 initialization_debug(const struct initialization *in)
 {
-	if (in->brace_level == NULL) {
+	if (in->in_brace_level == NULL) {
 		debug_step("no brace level in the current initialization");
 		return;
 	}
 
 	size_t i = 0;
-	for (const struct brace_level *level = in->brace_level;
+	for (const struct brace_level *level = in->in_brace_level;
 	     level != NULL; level = level->bl_enclosing) {
 		debug_indent();
 		debug_printf("brace level %zu: ", i);
@@ -817,7 +819,7 @@ initialization_debug(const struct initialization *in)
 static void
 initialization_init(struct initialization *in)
 {
-	if (in->initerr)
+	if (in->in_err)
 		return;
 
 	debug_enter();
@@ -826,11 +828,11 @@ initialization_init(struct initialization *in)
 	 * If the type which is to be initialized is an incomplete array,
 	 * it must be duplicated.
 	 */
-	if (in->initsym->s_type->t_tspec == ARRAY && is_incomplete(in->initsym->s_type))
-		in->initsym->s_type = duptyp(in->initsym->s_type);
+	if (in->in_sym->s_type->t_tspec == ARRAY && is_incomplete(in->in_sym->s_type))
+		in->in_sym->s_type = duptyp(in->in_sym->s_type);
 	/* TODO: does 'duptyp' create a memory leak? */
 
-	in->brace_level = brace_level_new(NULL, in->initsym->s_type, 1, NULL);
+	in->in_brace_level = brace_level_new(NULL, in->in_sym->s_type, 1, NULL);
 
 	initialization_debug(in);
 	debug_leave();
@@ -839,7 +841,7 @@ initialization_init(struct initialization *in)
 static void
 initialization_set_error(struct initialization *in)
 {
-	in->initerr = true;
+	in->in_err = true;
 }
 
 /* TODO: document me */
@@ -847,7 +849,7 @@ initialization_set_error(struct initialization *in)
 static bool
 initialization_push_struct_or_union(struct initialization *in)
 {
-	struct brace_level *level = in->brace_level;
+	struct brace_level *level = in->in_brace_level;
 	int cnt;
 	sym_t *m;
 
@@ -859,18 +861,18 @@ initialization_push_struct_or_union(struct initialization *in)
 	}
 
 	cnt = 0;
-	designation_debug(&in->designation);
+	designation_debug(&in->in_designation);
 	debug_step("lookup for '%s'%s",
 	    type_name(level->bl_type),
 	    level->bl_seen_named_member ? ", seen named member" : "");
 
-	if (in->designation.head != NULL)
+	if (in->in_designation.dn_head != NULL)
 		m = brace_level_look_up_first_member_named(level,
-		    in->designation.head->name, &cnt);
+		    in->in_designation.dn_head->dr_name, &cnt);
 	else
 		m = brace_level_look_up_first_member_unnamed(level, &cnt);
 
-	if (in->designation.head != NULL) {
+	if (in->in_designation.dn_head != NULL) {
 		if (m == NULL) {
 			debug_step("pop struct");
 			return true;
@@ -879,8 +881,8 @@ initialization_push_struct_or_union(struct initialization *in)
 		level->bl_subtype = m->s_type;
 		level->bl_seen_named_member = true;
 		debug_step("named member '%s'",
-		    in->designation.head->name);
-		designation_shift_level(&in->designation);
+		    in->in_designation.dn_head->dr_name);
+		designation_shift_level(&in->in_designation);
 		cnt = level->bl_type->t_tspec == STRUCT ? 2 : 1;
 	}
 	level->bl_brace = true;
@@ -901,8 +903,8 @@ initialization_push_struct_or_union(struct initialization *in)
 static void
 initialization_end_brace_level(struct initialization *in)
 {
-	struct brace_level *level = in->brace_level;
-	in->brace_level = level->bl_enclosing;
+	struct brace_level *level = in->in_brace_level;
+	in->in_brace_level = level->bl_enclosing;
 	brace_level_free(level);
 }
 
@@ -915,26 +917,26 @@ initialization_push(struct initialization *in)
 
 	debug_enter();
 
-	brace_level_extend_if_array_of_unknown_size(in->brace_level);
+	brace_level_extend_if_array_of_unknown_size(in->in_brace_level);
 
-	level = in->brace_level;
+	level = in->in_brace_level;
 	lint_assert(level->bl_remaining > 0);
 
-	in->brace_level = brace_level_new(brace_level_subtype(level), NULL, 0,
+	in->in_brace_level = brace_level_new(brace_level_subtype(level), NULL, 0,
 	    level);
-	lint_assert(in->brace_level->bl_type != NULL);
-	lint_assert(in->brace_level->bl_type->t_tspec != FUNC);
+	lint_assert(in->in_brace_level->bl_type != NULL);
+	lint_assert(in->in_brace_level->bl_type->t_tspec != FUNC);
 
 again:
-	level = in->brace_level;
+	level = in->in_brace_level;
 
 	debug_step("expecting type '%s'", type_name(level->bl_type));
 	lint_assert(level->bl_type != NULL);
 	switch (level->bl_type->t_tspec) {
 	case ARRAY:
-		if (in->designation.head != NULL) {
+		if (in->in_designation.dn_head != NULL) {
 			debug_step("pop array, named member '%s'%s",
-			    in->designation.head->name,
+			    in->in_designation.dn_head->dr_name,
 			    level->bl_brace ? ", needs closing brace" : "");
 			goto pop;
 		}
@@ -953,7 +955,7 @@ again:
 			goto pop;
 		break;
 	default:
-		if (in->designation.head != NULL) {
+		if (in->in_designation.dn_head != NULL) {
 			debug_step("pop scalar");
 		pop:
 			initialization_end_brace_level(in);
@@ -972,7 +974,7 @@ again:
 static void
 initialization_pop_item_named(struct initialization *in, const char *name)
 {
-	struct brace_level *level = in->brace_level;
+	struct brace_level *level = in->in_brace_level;
 	const sym_t *m;
 
 	/*
@@ -994,7 +996,7 @@ initialization_pop_item_named(struct initialization *in, const char *name)
 		/* undefined struct/union member: %s */
 		error(101, name);
 
-		designation_shift_level(&in->designation);
+		designation_shift_level(&in->in_designation);
 		level->bl_seen_named_member = true;
 		return;
 	}
@@ -1004,7 +1006,7 @@ initialization_pop_item_named(struct initialization *in, const char *name)
 	/* XXX: why ++? */
 	level->bl_remaining++;
 	/* XXX: why is bl_seen_named_member not set? */
-	designation_shift_level(&in->designation);
+	designation_shift_level(&in->in_designation);
 }
 
 /* TODO: think of a better name than 'pop' */
@@ -1015,22 +1017,22 @@ initialization_pop_item(struct initialization *in)
 
 	debug_enter();
 
-	level = in->brace_level;
+	level = in->in_brace_level;
 	debug_indent();
 	debug_printf("popping: ");
 	brace_level_debug(level);
 
-	in->brace_level = level->bl_enclosing;
+	in->in_brace_level = level->bl_enclosing;
 	brace_level_free(level);
-	level = in->brace_level;
+	level = in->in_brace_level;
 	lint_assert(level != NULL);
 
 	level->bl_remaining--;
 	lint_assert(level->bl_remaining >= 0);
 	debug_step("%d elements remaining", level->bl_remaining);
 
-	if (in->designation.head != NULL && in->designation.head->name != NULL)
-		initialization_pop_item_named(in, in->designation.head->name);
+	if (in->in_designation.dn_head != NULL && in->in_designation.dn_head->dr_name != NULL)
+		initialization_pop_item_named(in, in->in_designation.dn_head->dr_name);
 	else
 		brace_level_pop_item_unnamed(level);
 
@@ -1048,9 +1050,9 @@ initialization_pop_nobrace(struct initialization *in)
 {
 
 	debug_enter();
-	while (!in->brace_level->bl_brace &&
-	       in->brace_level->bl_remaining == 0 &&
-	       !in->brace_level->bl_array_of_unknown_size)
+	while (!in->in_brace_level->bl_brace &&
+	       in->in_brace_level->bl_remaining == 0 &&
+	       !in->in_brace_level->bl_array_of_unknown_size)
 		initialization_pop_item(in);
 	debug_leave();
 }
@@ -1067,19 +1069,19 @@ initialization_next_brace(struct initialization *in)
 	debug_enter();
 	initialization_debug(in);
 
-	if (!in->initerr &&
-	    !brace_level_check_too_many_initializers(in->brace_level))
+	if (!in->in_err &&
+	    !brace_level_check_too_many_initializers(in->in_brace_level))
 		initialization_set_error(in);
 
-	if (!in->initerr)
+	if (!in->in_err)
 		initialization_push(in);
 
-	if (!in->initerr) {
-		in->brace_level->bl_brace = true;
-		designation_debug(&in->designation);
-		if (in->brace_level->bl_type != NULL)
+	if (!in->in_err) {
+		in->in_brace_level->bl_brace = true;
+		designation_debug(&in->in_designation);
+		if (in->in_brace_level->bl_type != NULL)
 			debug_step("expecting type '%s'",
-			    type_name(in->brace_level->bl_type));
+			    type_name(in->in_brace_level->bl_type));
 	}
 
 	initialization_debug(in);
@@ -1105,13 +1107,13 @@ check_no_auto_aggregate(scl_t sclass, const struct brace_level *level)
 static void
 initialization_lbrace(struct initialization *in)
 {
-	if (in->initerr)
+	if (in->in_err)
 		return;
 
 	debug_enter();
 	initialization_debug(in);
 
-	check_no_auto_aggregate(in->initsym->s_scl, in->brace_level);
+	check_no_auto_aggregate(in->in_sym->s_scl, in->in_brace_level);
 
 	/*
 	 * Remove all entries which cannot be used for further initializers
@@ -1137,12 +1139,12 @@ initialization_rbrace(struct initialization *in)
 {
 	bool brace;
 
-	if (in->initerr)
+	if (in->in_err)
 		return;
 
 	debug_enter();
 	do {
-		brace = in->brace_level->bl_brace;
+		brace = in->in_brace_level->bl_brace;
 		/* TODO: improve wording of the debug message */
 		debug_step("loop brace=%d", brace);
 		initialization_pop_item(in);
@@ -1184,7 +1186,7 @@ initialization_add_designator_subscript(struct initialization *in,
 	/* XXX: This call is wrong here, it must be somewhere else. */
 	initialization_pop_nobrace(in);
 
-	level = in->brace_level;
+	level = in->in_brace_level;
 	if (level->bl_array_of_unknown_size) {
 		/* No +1 here, extend_if_array_of_unknown_size will add it. */
 		int auto_dim = (int)range.hi;
@@ -1220,7 +1222,7 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 
 	debug_enter();
 
-	level = in->brace_level;
+	level = in->in_brace_level;
 	strg = tn->tn_string;
 
 	/*
@@ -1232,7 +1234,7 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 
 		/* Put the array at top of stack */
 		initialization_push(in);
-		level = in->brace_level;
+		level = in->in_brace_level;
 
 	} else if (is_string_array(level->bl_type, strg->st_tspec)) {
 		debug_step("type is an array");
@@ -1288,14 +1290,14 @@ initialization_init_using_assign(struct initialization *in, tnode_t *rn)
 {
 	tnode_t *ln, *tn;
 
-	if (in->initsym->s_type->t_tspec == ARRAY)
+	if (in->in_sym->s_type->t_tspec == ARRAY)
 		return false;
-	if (in->brace_level->bl_enclosing != NULL)
+	if (in->in_brace_level->bl_enclosing != NULL)
 		return false;
 
 	debug_step("handing over to ASSIGN");
 
-	ln = new_name_node(in->initsym, 0);
+	ln = new_name_node(in->in_sym, 0);
 	ln->tn_type = tduptyp(ln->tn_type);
 	ln->tn_type->t_const = false;
 
@@ -1312,19 +1314,19 @@ initialization_next_nobrace(struct initialization *in, tnode_t *tn)
 {
 	debug_enter();
 
-	if (in->brace_level->bl_type == NULL &&
-	    !is_scalar(in->brace_level->bl_subtype->t_tspec)) {
+	if (in->in_brace_level->bl_type == NULL &&
+	    !is_scalar(in->in_brace_level->bl_subtype->t_tspec)) {
 		/* {}-enclosed initializer required */
 		error(181);
 		/* XXX: maybe set initerr here */
 	}
 
-	if (!in->initerr &&
-	    !brace_level_check_too_many_initializers(in->brace_level))
+	if (!in->in_err &&
+	    !brace_level_check_too_many_initializers(in->in_brace_level))
 		initialization_set_error(in);
 
-	while (!in->initerr) {
-		struct brace_level *level = in->brace_level;
+	while (!in->in_err) {
+		struct brace_level *level = in->in_brace_level;
 
 		if (tn->tn_type->t_tspec == STRUCT &&
 		    level->bl_type == tn->tn_type &&
@@ -1352,14 +1354,14 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 
 	debug_enter();
 	initialization_debug(in);
-	designation_debug(&in->designation);
+	designation_debug(&in->in_designation);
 	debug_step("expr:");
 	debug_node(tn, debug_ind + 1);
 
-	if (in->initerr || tn == NULL)
+	if (in->in_err || tn == NULL)
 		goto done;
 
-	sclass = in->initsym->s_scl;
+	sclass = in->in_sym->s_scl;
 	if ((sclass == AUTO || sclass == REG) &&
 	    initialization_init_using_assign(in, tn))
 		goto done;
@@ -1372,21 +1374,21 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 	}
 
 	initialization_next_nobrace(in, tn);
-	if (in->initerr || tn == NULL)
+	if (in->in_err || tn == NULL)
 		goto done_debug;
 
 	/* Using initsym here is better than nothing. */
-	check_init_expr(sclass, in->brace_level->bl_type, in->initsym, tn);
+	check_init_expr(sclass, in->in_brace_level->bl_type, in->in_sym, tn);
 
-	in->brace_level->bl_remaining--;
-	debug_step("%d elements remaining", in->brace_level->bl_remaining);
+	in->in_brace_level->bl_remaining--;
+	debug_step("%d elements remaining", in->in_brace_level->bl_remaining);
 
 done_debug:
 	initialization_debug(in);
 
 done:
-	while (in->designation.head != NULL)
-		designation_shift_level(&in->designation);
+	while (in->in_designation.dn_head != NULL)
+		designation_shift_level(&in->in_designation);
 
 	debug_leave();
 }
@@ -1403,14 +1405,14 @@ bool *
 current_initerr(void)
 {
 
-	return &current_init()->initerr;
+	return &current_init()->in_err;
 }
 
 sym_t **
 current_initsym(void)
 {
 
-	return &current_init()->initsym;
+	return &current_init()->in_sym;
 }
 
 void
@@ -1420,7 +1422,7 @@ begin_initialization(sym_t *sym)
 
 	debug_step("begin initialization of '%s'", type_name(sym->s_type));
 	in = initialization_new(sym);
-	in->next = init;
+	in->in_next = init;
 	init = in;
 }
 
@@ -1430,7 +1432,7 @@ end_initialization(void)
 	struct initialization *in;
 
 	in = init;
-	init = init->next;
+	init = init->in_next;
 	initialization_free(in);
 	debug_step("end initialization");
 }
@@ -1439,7 +1441,7 @@ void
 add_designator_member(sbuf_t *sb)
 {
 
-	designation_add(&current_init()->designation,
+	designation_add(&current_init()->in_designation,
 	    designator_new(sb->sb_name));
 }
 
