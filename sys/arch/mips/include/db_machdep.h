@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.35 2021/03/29 03:03:48 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.36 2021/03/29 03:07:33 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -128,9 +128,14 @@ bool ddb_running_on_any_cpu_p(void);
 void db_resume_others(void);
 void db_mips_stack_trace(void *, void *, void (*pr)(const char *, ...));
 
-extern void (*cpu_reset_address)(void);
 
 #ifdef _KERNEL
+/*
+ * Optional function to perform machine- or cpu-specific reset.
+ * Called from ddb "machine reset".
+ */
+extern void (*cpu_reset_address)(void);
+
 /*
  * We have machine-dependent commands.
  */
