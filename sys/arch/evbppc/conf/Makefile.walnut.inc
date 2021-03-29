@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.walnut.inc,v 1.9 2016/07/28 22:46:48 maya Exp $
+#	$NetBSD: Makefile.walnut.inc,v 1.10 2021/03/29 13:12:38 rin Exp $
 
 MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
-CFLAGS+=-mcpu=403
-AFLAGS+=-mcpu=403
+CFLAGS+=-mcpu=405
+AFLAGS+=-mcpu=405
 TEXTADDR?=	25000
 
 SYSTEM_FIRST_OBJ=	walnut_start.o
