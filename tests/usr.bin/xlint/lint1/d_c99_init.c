@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.19 2021/03/28 19:53:58 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.20 2021/03/29 17:13:07 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -263,4 +263,46 @@ struct ten ten = {
 	// FIXME: assertion "level->bl_type->t_tspec == ARRAY" failed in brace_level_extend_if_array_of_unknown_size
 	// 5,
 	// 6,
+};
+
+int c99_6_7_8_p26_example3[4][3] = {
+	{ 1, 3, 5 },
+	{ 2, 4, 6 },
+	{ 3, 5, 7 },
+};
+
+int c99_6_7_8_p27_example4[4][3] = {
+	{ 1 }, { 2 }, { 3 }, { 4 }
+};
+
+struct {
+	int a[3], b;
+} c99_6_7_8_p28_example5[] = {
+	{ 1 },
+	2,
+};
+
+short c99_6_7_8_p29_example6a[4][3][2] = {
+	{ 1 },
+	{ 2, 3 },
+	{ 4, 5, 6 },
+};
+
+short c99_6_7_8_p29_example6b[4][3][2] = {
+	1, 0, 0, 0, 0, 0,
+	2, 3, 0, 0, 0, 0,
+	4, 5, 6, 0, 0, 0,
+};
+
+short c99_6_7_8_p29_example6c[4][3][2] = {
+	{
+		{ 1 },
+	},
+	{
+		{ 2, 3 },
+	},
+	{
+		{ 4, 5 },
+		{ 6 },
+	}
 };
