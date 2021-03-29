@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.176 2021/03/29 20:52:00 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.177 2021/03/29 21:09:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.176 2021/03/29 20:52:00 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.177 2021/03/29 21:09:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -341,6 +341,46 @@ is_struct_or_union(tspec_t t)
 	return t == STRUCT || t == UNION;
 }
 
+static bool
+has_automatic_storage_duration(const sym_t *sym)
+{
+
+	return sym->s_scl == AUTO || sym->s_scl == REG;
+}
+
+/* C99 6.7.8p14, 6.7.8p15 */
+static bool
+is_string_array(const type_t *tp, tspec_t t)
+{
+	tspec_t st;
+
+	if (tp == NULL || tp->t_tspec != ARRAY)
+		return false;
+
+	st = tp->t_subt->t_tspec;
+	return t == CHAR
+	    ? st == CHAR || st == UCHAR || st == SCHAR
+	    : st == WCHAR;
+}
+
+/* C99 6.7.8p9 */
+static bool
+is_unnamed_member(const sym_t *m)
+{
+
+	return m->s_bitfield && m->s_name == unnamed;
+}
+
+static const sym_t *
+look_up_member(const sym_t *m, const char *name)
+{
+
+	for (; m != NULL; m = m->s_next)
+		if (!is_unnamed_member(m) && strcmp(m->s_name, name) == 0)
+			return m;
+	return NULL;
+}
+
 
 /* In traditional C, bit-fields can be initialized only by integer constants. */
 static void
@@ -357,18 +397,18 @@ check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 }
 
 static void
-check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
+check_non_constant_initializer(const tnode_t *tn, const sym_t *sym)
 {
-	const sym_t *sym;
-	ptrdiff_t offs;
+	const sym_t *unused_sym;
+	ptrdiff_t unused_offs;
 
 	if (tn == NULL || tn->tn_op == CON)
 		return;
 
-	if (constant_addr(tn, &sym, &offs))
+	if (constant_addr(tn, &unused_sym, &unused_offs))
 		return;
 
-	if (sclass == AUTO || sclass == REG) {
+	if (has_automatic_storage_duration(sym)) {
 		/* non-constant initializer */
 		c99ism(177);
 	} else {
@@ -378,7 +418,7 @@ check_non_constant_initializer(const tnode_t *tn, scl_t sclass)
 }
 
 static void
-check_init_expr(scl_t sclass, const type_t *tp, sym_t *sym, tnode_t *tn)
+check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 {
 	tnode_t *ln;
 	tspec_t lt, rt;
@@ -418,7 +458,7 @@ check_init_expr(scl_t sclass, const type_t *tp, sym_t *sym, tnode_t *tn)
 	if (lt != rt || (tp->t_bitfield && tn->tn_op == CON))
 		tn = convert(INIT, 0, unconst_cast(tp), tn);
 
-	check_non_constant_initializer(tn, sclass);
+	check_non_constant_initializer(tn, sym);
 }
 
 
@@ -605,22 +645,11 @@ brace_level_next_member(struct brace_level *level)
 static const sym_t *
 brace_level_look_up_member(const struct brace_level *level, const char *name)
 {
-	const type_t *tp = level->bl_type;
-	const sym_t *m;
 
 	brace_level_assert_struct_or_union(level);
-
-	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
-		if (m->s_bitfield && m->s_name == unnamed)
-			continue;
-		if (strcmp(m->s_name, name) == 0)
-			return m;
-	}
-
-	return NULL;
+	return look_up_member(level->bl_type->t_str->sou_first_member, name);
 }
 
-/* TODO: merge duplicate code */
 static sym_t *
 brace_level_look_up_first_member_named(struct brace_level *level,
 				       const char *name, int *count)
@@ -629,7 +658,7 @@ brace_level_look_up_first_member_named(struct brace_level *level,
 
 	for (m = level->bl_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
-		if (m->s_bitfield && m->s_name == unnamed)
+		if (is_unnamed_member(m))
 			continue;
 		if (strcmp(m->s_name, name) != 0)
 			continue;
@@ -640,7 +669,6 @@ brace_level_look_up_first_member_named(struct brace_level *level,
 	return m;
 }
 
-/* TODO: merge duplicate code */
 static sym_t *
 brace_level_look_up_first_member_unnamed(struct brace_level *level, int *count)
 {
@@ -650,7 +678,7 @@ brace_level_look_up_first_member_unnamed(struct brace_level *level, int *count)
 
 	for (m = level->bl_type->t_str->sou_first_member;
 	     m != NULL; m = m->s_next) {
-		if (m->s_bitfield && m->s_name == unnamed)
+		if (is_unnamed_member(m))
 			continue;
 		/* XXX: What is this code for? */
 		if (++(*count) == 1) {
@@ -1197,19 +1225,6 @@ initialization_add_designator_subscript(struct initialization *in,
 	debug_leave();
 }
 
-static bool
-is_string_array(const type_t *tp, tspec_t t)
-{
-	tspec_t st;
-
-	if (tp == NULL || tp->t_tspec != ARRAY)
-		return false;
-	st = tp->t_subt->t_tspec;
-	return t == CHAR
-	    ? st == CHAR || st == UCHAR || st == SCHAR
-	    : st == WCHAR;
-}
-
 /* Initialize a character array or wchar_t array with a string literal. */
 static bool
 initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
@@ -1350,7 +1365,6 @@ initialization_next_nobrace(struct initialization *in, tnode_t *tn)
 static void
 initialization_expr(struct initialization *in, tnode_t *tn)
 {
-	scl_t	sclass;
 
 	debug_enter();
 	initialization_debug(in);
@@ -1361,8 +1375,7 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 	if (in->in_err || tn == NULL)
 		goto done;
 
-	sclass = in->in_sym->s_scl;
-	if ((sclass == AUTO || sclass == REG) &&
+	if (has_automatic_storage_duration(in->in_sym) &&
 	    initialization_init_using_assign(in, tn))
 		goto done;
 
@@ -1378,7 +1391,7 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 		goto done_debug;
 
 	/* Using initsym here is better than nothing. */
-	check_init_expr(sclass, in->in_brace_level->bl_type, in->in_sym, tn);
+	check_init_expr(in->in_brace_level->bl_type, in->in_sym, tn);
 
 	in->in_brace_level->bl_remaining--;
 	debug_step("%d elements remaining", in->in_brace_level->bl_remaining);
