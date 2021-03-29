@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:42 mlelstv Exp $ */
+/*	$NetBSD: autoconf.c,v 1.6 2021/03/29 13:14:13 rin Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2021/03/29 13:14:13 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:42 mlelstv Exp $")
 
 
 /* List of port-specific devices to attach to the processor local bus. */
-static const struct plb_dev local_plb_devs [] = {
+static struct plb_dev local_plb_devs [] = {
 	{ XILVIRTEX, "xcvbus" },
 	{ 0, NULL }
 };
