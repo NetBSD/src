@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.36 2021/03/29 03:07:33 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.37 2021/03/29 03:09:41 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -98,6 +98,12 @@ db_set_ddb_regs(int type, struct reg *regs)
 {
 	ddb_regs = *regs;
 }
+
+/*
+ * Helper functions for fetching 32-bit and 64-bit kernel memory.
+ */
+bool		kdbpeek(vaddr_t, unsigned *);
+mips_reg_t	kdbrpeek(vaddr_t addr, size_t n);
 
 
 /*
