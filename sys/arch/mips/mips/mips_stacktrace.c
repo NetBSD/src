@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_stacktrace.c,v 1.7 2020/09/24 03:17:18 mrg Exp $	*/
+/*	$NetBSD: mips_stacktrace.c,v 1.8 2021/03/29 03:09:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.7 2020/09/24 03:17:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.8 2021/03/29 03:09:42 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -191,7 +191,7 @@ static const struct { void *addr; const char *name;} names[] = {
 };
 
 
-static bool
+bool
 kdbpeek(vaddr_t addr, unsigned *valp)
 {
 	if (addr & 3) {
@@ -211,7 +211,7 @@ kdbpeek(vaddr_t addr, unsigned *valp)
 	}
 }
 
-static mips_reg_t
+mips_reg_t
 kdbrpeek(vaddr_t addr, size_t n)
 {
 	mips_reg_t rc = 0;
