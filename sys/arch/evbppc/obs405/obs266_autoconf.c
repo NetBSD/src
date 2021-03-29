@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.8 2021/03/02 07:21:01 rin Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.9 2021/03/29 13:38:31 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.8 2021/03/02 07:21:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.9 2021/03/29 13:38:31 rin Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -69,5 +69,5 @@ void
 device_register(device_t dev, void *aux)
 {
 
-	obs405_device_register(dev, aux, OBS266_COM_FREQ);
+	ibm4xx_device_register(dev, aux, OBS266_COM_FREQ);
 }
