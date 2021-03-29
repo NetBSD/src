@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.131 2020/08/17 03:19:35 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.132 2021/03/29 01:47:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,6 +52,8 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #endif
+
+#include <mips/frame.h>
 
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
