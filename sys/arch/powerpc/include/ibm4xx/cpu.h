@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2021/03/29 13:40:21 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@ extern void ibm4xx_dumpsys(void);
 extern void ibm4xx_install_extint(void (*)(void));
 
 /* export from ibm4xx/ibm4xx_autoconf.c */
-extern void ibm4xx_device_register(device_t dev, void *aux);
+extern void ibm4xx_device_register(device_t, void *, int);
 
 /* export from ibm4xx/clock.c */
 extern void calc_delayconst(void);

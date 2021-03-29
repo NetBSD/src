@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.10 2021/03/02 07:27:24 rin Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.11 2021/03/29 13:38:31 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.10 2021/03/02 07:27:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.11 2021/03/29 13:38:31 rin Exp $");
 
 #include "dwctwo.h"
 
@@ -126,5 +126,5 @@ device_register(device_t dev, void *aux)
 	}
 #endif
 
-	obs405_device_register(dev, aux, OBS600_COM_FREQ);
+	ibm4xx_device_register(dev, aux, OBS600_COM_FREQ);
 }
