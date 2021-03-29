@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.2 2021/03/29 01:43:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 #define	__MUTEX_PRIVATE
 #include <sys/mutex.h>
 
-#define	mtx_owner 		u.mtxa_owner
 #define	MUTEX_THREAD		((uintptr_t)-16L)
 #define	MUTEX_OWNER(mtx)	\
 	((mtx)->mtx_owner & MUTEX_THREAD)
