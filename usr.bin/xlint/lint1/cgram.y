@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.205 2021/03/28 10:09:34 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.206 2021/03/29 20:39:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.205 2021/03/28 10:09:34 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.206 2021/03/29 20:39:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1889,7 +1889,6 @@ term:
 	    expr_statement_list {
 		block_level--;
 		mem_block_level--;
-		/* XXX: probably does not need the full initialization code */
 		begin_initialization(mktempsym(duptyp($4->tn_type)));
 		mem_block_level++;
 		block_level++;
@@ -1902,7 +1901,6 @@ term:
 	| T_LPAREN compound_statement_lbrace expr_statement_list {
 		block_level--;
 		mem_block_level--;
-		/* XXX: probably does not need the full initialization code */
 		begin_initialization(mktempsym($3->tn_type));
 		mem_block_level++;
 		block_level++;
