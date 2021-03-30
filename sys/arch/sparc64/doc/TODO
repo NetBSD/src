@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.39 2021/03/23 19:13:46 palle Exp $ */
+/* $NetBSD: TODO,v 1.40 2021/03/30 20:23:45 palle Exp $ */
 
 Things to be done:
 
@@ -17,11 +17,12 @@ sun4v:
 	   - ldom virtual network interface (vnet) is working
 	     (verified by exiting sysinst and issuing a ping command)
 	   - the sysinst tool starts, disk setup is working,
-	     but the process crashes when selecting network installation method
-		 (the pcbspill function in locore.s incorrectly only spills one register
-		 window even if more than one is are present)
+	     but the process crashes when selecting network installation method (trap 0x34 ALIGN is received)
 	 T2000 ldom with 8 VCPU and 4GB:
-	   On this platform it crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
+	   - crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
+	 S7 ldom with 8 VCPU and 16GB (primary ldom is Solaris 11.4 SRU30):
+	   - during autoconfiguration of vnet devices the call to hv_vintr_setenabled()
+	     returns error code 7 (EBADTRAP?)
 - idle handling - call hypervisor trap (openbsd code...??)	   
 - 64-bit kernel support
 - 32-bit kernel support
