@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600.h,v 1.1 2010/03/18 14:15:38 kiyohara Exp $	*/
+/*	$NetBSD: obs600.h,v 1.2 2021/03/30 03:45:34 rin Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -34,11 +34,5 @@
 
 /* UART Clock */
 #define OBS600_COM_FREQ		(COM_FREQ * 4)	/* UART CLK 7.3728 MHz */
-
-/*
- * extern variables and functions
- */
-
-#include <machine/obs405.h>
 
 #endif	/* _EVBPPC_OBS600_H_ */
