@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.22 2021/03/30 01:33:50 rin Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.23 2021/03/30 04:53:13 rin Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,23 +68,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.22 2021/03/30 01:33:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.23 2021/03/30 04:53:13 rin Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/ksyms.h>
-#include <sys/mount.h>
+#include <sys/module.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/obs200.h>
 #include <machine/century_bios.h>
@@ -95,18 +89,17 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.22 2021/03/30 01:33:50 rin Exp 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/tlb.h>
+
 #include <powerpc/ibm4xx/pci_machdep.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
-
-#include <dev/ic/comreg.h>
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-#include "ksyms.h"
+#include <dev/pci/pcivar.h>
 
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <dev/ic/comreg.h>
 
 #ifndef CONADDR
 #define CONADDR		IBM405GP_UART0_BASE
