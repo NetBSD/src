@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.32 2020/07/06 10:08:16 rin Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.33 2021/03/30 14:29:54 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.32 2020/07/06 10:08:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.33 2021/03/30 14:29:54 rin Exp $");
 
 #include "ksyms.h"
 
@@ -288,15 +288,6 @@ cpu_reboot(int howto, char *what)
 		cnpollc(1);	/* For proper keyboard command handling */
 		cngetc();
 		cnpollc(0);
-
-		printf("rebooting...\n\n");
-		goto reboot;	/* XXX for now... */
-
-#ifdef DDB
-		printf("dropping to debugger\n");
-		while(1)
-			Debugger();
-#endif
 	}
 
 	printf("rebooting\n\n");
@@ -321,7 +312,6 @@ cpu_reboot(int howto, char *what)
 	/* flush cache for msgbuf */
 	dcache_wb(msgbuf_paddr, round_page(MSGBUFSIZE));
 
- reboot:
 	__asm volatile("msync; isync");
 	(*cpu_md_ops.md_cpu_reset)();
 
