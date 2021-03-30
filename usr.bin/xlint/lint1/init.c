@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.180 2021/03/30 15:07:53 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.181 2021/03/30 15:10:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.180 2021/03/30 15:07:53 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.181 2021/03/30 15:10:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -452,10 +452,9 @@ designator_look_up(const struct designator *dr, const type_t *tp)
 		return look_up_member_type(tp, dr->dr_name);
 	case ARRAY:
 		if (dr->dr_name != NULL) {
-			/* TODO: reword; kept for compatibility */
 			/* syntax error '%s' */
 			error(249,
-			    "named member must only be used with struct/union");
+			    "designator '.member' is only for struct/union");
 		}
 		return tp->t_subt;
 	default:
