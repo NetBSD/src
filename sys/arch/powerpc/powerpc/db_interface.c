@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.55 2021/02/23 07:13:52 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.56 2021/03/30 03:15:53 rin Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2021/02/23 07:13:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56 2021/03/30 03:15:53 rin Exp $");
 
 #define USERACC
 
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2021/02/23 07:13:52 mrg Exp $"
 #ifdef PPC_IBM4XX
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <machine/tlb.h>
+#include <powerpc/ibm4xx/tlb.h>
 #include <uvm/uvm_extern.h>
 #endif
 

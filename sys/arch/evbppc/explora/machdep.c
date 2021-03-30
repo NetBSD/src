@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2021/03/30 03:04:51 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2021/03/30 03:15:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2021/03/30 03:04:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2021/03/30 03:15:53 rin Exp $");
 
 #include "opt_explora.h"
 
@@ -43,13 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2021/03/30 03:04:51 rin Exp $");
 #include <prop/proplib.h>
 
 #include <machine/explora.h>
-#include <machine/tlb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
+#include <powerpc/ibm4xx/tlb.h>
 
 #define TLB_PG_SIZE	(16*1024*1024)
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: design_gsrd2.c,v 1.5 2021/03/29 13:14:13 rin Exp $ */
+/* 	$NetBSD: design_gsrd2.c,v 1.6 2021/03/30 03:15:53 rin Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -32,7 +32,7 @@
 #include "opt_virtex.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.5 2021/03/29 13:14:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.6 2021/03/30 03:15:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.5 2021/03/29 13:14:13 rin Exp $")
 #include <sys/intr.h>
 
 #include <machine/powerpc.h>
-#include <machine/tlb.h>
 
 #include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/tlb.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 #include <evbppc/virtex/dev/xcvbusvar.h>
