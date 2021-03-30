@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.27 2021/03/30 16:07:07 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.28 2021/03/30 16:09:30 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -135,7 +135,6 @@ struct point point_with_designators = {
 struct point point_with_mixed_designators = {
 	.x = 3,
 	4,
-
 	5,			/* expect: too many struct/union initializers */
 	.x = 3,
 };
@@ -211,7 +210,6 @@ struct geometry {
  * structs.
  */
 struct geometry geometry = {
-
 	.pentagons[0].points[4].x = 1,
 	.points[0][0][0] = { 0, 0 },
 	.points[2][4][1] = {301, 302 },
