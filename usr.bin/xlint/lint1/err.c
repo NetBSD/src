@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.98 2021/03/30 15:07:53 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.99 2021/03/30 15:18:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.98 2021/03/30 15:07:53 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.99 2021/03/30 15:18:19 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -155,7 +155,7 @@ const	char *msgs[] = {
 	"suffixes F and L are illegal in traditional C",	      /* 98 */
 	"'%s' undefined",					      /* 99 */
 	"unary + is illegal in traditional C",			      /* 100 */
-	"undefined struct/union member: %s",			      /* 101 */
+	"type '%s' does not have member '%s'",			      /* 101 */
 	"illegal member use: %s",				      /* 102 */
 	"left operand of '.' must be struct/union object",	      /* 103 */
 	"left operand of '->' must be pointer to struct/union not %s",/* 104 */

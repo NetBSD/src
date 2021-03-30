@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.253 2021/03/28 13:09:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.254 2021/03/30 15:18:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.253 2021/03/28 13:09:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.254 2021/03/30 15:18:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -347,8 +347,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 * that no defined struct or union has a member with the same name.
 	 */
 	if (msym->s_scl == NOSCL) {
-		/* undefined struct/union member: %s */
-		error(101, msym->s_name);
+		/* type '%s' does not have member '%s' */
+		error(101, type_name(msym->s_type), msym->s_name);
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
