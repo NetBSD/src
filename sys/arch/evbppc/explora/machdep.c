@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2021/03/30 03:15:53 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2021/03/30 03:20:13 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2021/03/30 03:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2021/03/30 03:20:13 rin Exp $");
 
 #include "opt_explora.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
-#include <sys/bus.h>
+#include <sys/systm.h>
 
 #include <prop/proplib.h>
 
@@ -78,8 +78,8 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 			continue;
 		maddr = ((br[i] >> 24) & 0xff) << 20;
 		msize = 1 << (20 + ((br[i] >> 21) & 7));
-		if (maddr+msize > size)
-			size = maddr+msize;
+		if (maddr + msize > size)
+			size = maddr + msize;
 	}
 
 	/*
