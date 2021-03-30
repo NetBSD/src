@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2021/03/29 14:37:01 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2021/03/30 01:16:45 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2021/03/29 14:37:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2021/03/30 01:16:45 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -136,8 +136,6 @@ struct vm_map *phys_map = NULL;
  */
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-char bootpath[256];
 
 void initppc(vaddr_t, vaddr_t, char *, void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2021/03/29 13:40:21 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2021/03/30 01:16:45 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,8 +44,6 @@
 #include <powerpc/ibm4xx/dcr4xx.h>
 
 #if defined(_KERNEL)
-extern char bootpath[];
-
 struct exc_info {
 	vaddr_t exc_vector;
 	const uint32_t *exc_addr; 
