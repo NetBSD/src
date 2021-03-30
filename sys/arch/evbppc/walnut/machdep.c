@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2021/03/30 01:33:50 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2021/03/30 02:04:44 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2021/03/30 01:33:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2021/03/30 02:04:44 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -108,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2021/03/30 01:33:50 rin Exp $");
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 
+#include <powerpc/ibm4xx/openbios.h>
+
 #include <powerpc/ibm4xx/pci_machdep.h>
 
 #include <powerpc/pic/picvar.h>
@@ -139,21 +141,17 @@ char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 void initppc(vaddr_t, vaddr_t, char *, void *);
 
-struct board_cfg_data board_data;
-
 void
 initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 {
+	u_int memsize;
+
 	/* Disable all external interrupts */
 	mtdcr(DCR_UIC0_BASE + DCR_UIC_ER, 0);
 
-        /* Initialize cache info for memcpy, etc. */
-        cpu_probe_cache();
-
-	/* Save info block */
-	memcpy(&board_data, info_block, sizeof(board_data));
-
-	ibm40x_memsize_init(board_data.mem_size, startkernel);
+	/* Setup board from OpenBIOS */
+	openbios_board_init(info_block);
+	memsize = openbios_board_memsize_get();
 
 	/* Linear map kernel memory */
 	for (vaddr_t va = 0; va < endkernel; va += TLB_PG_SIZE) {
@@ -161,30 +159,16 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	}
 
 	/* Map console after physmem (see pmap_tlbmiss()) */
-	ppc4xx_tlb_reserve(IBM405GP_UART0_BASE,
-	    roundup(board_data.mem_size, TLB_PG_SIZE),
+	ppc4xx_tlb_reserve(IBM405GP_UART0_BASE, roundup(memsize, TLB_PG_SIZE),
 	    TLB_PG_SIZE, TLB_I | TLB_G);
 
 	mtspr(SPR_TCR, 0);	/* disable all timers */
 
+	ibm40x_memsize_init(memsize, startkernel);
 	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
 
 #ifdef DEBUG
-	printf("Board config data:\n");
-	printf("  usr_config_ver = %s\n", board_data.usr_config_ver);
-	printf("  rom_sw_ver = %s\n", board_data.rom_sw_ver);
-	printf("  mem_size = %u\n", board_data.mem_size);
-	printf("  mac_address_local = %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    board_data.mac_address_local[0], board_data.mac_address_local[1],
-	    board_data.mac_address_local[2], board_data.mac_address_local[3],
-	    board_data.mac_address_local[4], board_data.mac_address_local[5]);
-	printf("  mac_address_pci = %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    board_data.mac_address_pci[0], board_data.mac_address_pci[1],
-	    board_data.mac_address_pci[2], board_data.mac_address_pci[3],
-	    board_data.mac_address_pci[4], board_data.mac_address_pci[5]);
-	printf("  processor_speed = %u\n", board_data.processor_speed);
-	printf("  plb_speed = %u\n", board_data.plb_speed);
-	printf("  pci_speed = %u\n", board_data.pci_speed);
+	openbios_board_print();
 #endif
 
 #ifdef DDB
@@ -205,41 +189,10 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 void
 cpu_startup(void)
 {
-	prop_number_t pn;
-	prop_data_t pd;
 
 	ibm4xx_cpu_startup("Walnut PowerPC 405GP Evaluation Board");
 
-	board_info_init();
-
-	pn = prop_number_create_integer(board_data.mem_size);
-	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "mem-size", pn) == false)
-		panic("setting mem-size");
-	prop_object_release(pn);
-
-	pd = prop_data_create_data_nocopy(board_data.mac_address_local,
-					  sizeof(board_data.mac_address_local));
-	KASSERT(pd != NULL);
-	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
-				pd) == false)
-		panic("setting emac0-mac-addr");
-	prop_object_release(pd);
-
-	pd = prop_data_create_data_nocopy(board_data.mac_address_pci,
-					  sizeof(board_data.mac_address_pci));
-	KASSERT(pd != NULL);
-	if (prop_dictionary_set(board_properties, "sip0-mac-addr",
-				pd) == false)
-		panic("setting sip0-mac-addr");
-	prop_object_release(pd);
-
-	pn = prop_number_create_integer(board_data.processor_speed);
-	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "processor-frequency",
-				pn) == false)
-		panic("setting processor-frequency");
-	prop_object_release(pn);
+	openbios_board_info_set();
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
