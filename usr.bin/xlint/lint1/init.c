@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.181 2021/03/30 15:10:46 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.182 2021/03/30 15:18:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.181 2021/03/30 15:10:46 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.182 2021/03/30 15:18:19 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -306,9 +306,8 @@ look_up_member_type(const type_t *tp, const char *name)
 
 	member = look_up_member(tp, name);
 	if (member == NULL) {
-		/* TODO: add type information */
-		/* undefined struct/union member: %s */
-		error(101, name);
+		/* type '%s' does not have member '%s' */
+		error(101, type_name(tp), name);
 	}
 
 	return sym_type(member);

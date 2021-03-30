@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_101.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_101.c,v 1.4 2021/03/30 15:18:19 rillig Exp $	*/
 # 3 "msg_101.c"
 
-// Test for message: undefined struct/union member: %s [101]
+// Test for message: type '%s' does not have member '%s' [101]
 
 struct point {
 	int x, y;
