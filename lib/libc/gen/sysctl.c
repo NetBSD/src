@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.37 2018/05/16 20:21:39 joerg Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.38 2021/03/30 15:31:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.37 2018/05/16 20:21:39 joerg Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.38 2021/03/30 15:31:51 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,12 +120,6 @@ user_sysctl(const int *name, unsigned int namelen,
 	 * the nodes under the "user" node
 	 */
 	static const struct sysctlnode sysctl_usermib[] = {
-#if defined(lint)
-		/*
-		 * lint doesn't like my initializers
-		 */
-		0
-#else /* !lint */
 		{
 			.sysctl_flags = SYSCTL_VERSION|CTLFLAG_PERMANENT|
 				CTLTYPE_STRING,
@@ -239,7 +233,6 @@ user_sysctl(const int *name, unsigned int namelen,
 		_INT("atexit_max", USER_ATEXIT_MAX, -1,
 		     "The maximum number of functions that may be registered "
 		     "with atexit(3)"),
-#endif /* !lint */
 	};
 #undef _INT
 
