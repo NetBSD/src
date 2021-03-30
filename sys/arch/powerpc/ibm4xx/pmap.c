@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2020/09/10 04:36:24 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2021/03/30 03:15:53 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2020/09/10 04:36:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2021/03/30 03:15:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2020/09/10 04:36:24 rin Exp $");
 #include <uvm/uvm.h>
 
 #include <machine/powerpc.h>
-#include <machine/tlb.h>
 
 #include <powerpc/pcb.h>
 
@@ -94,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2020/09/10 04:36:24 rin Exp $");
 #include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/tlb.h>
 
 /*
  * kernmap is an array of PTEs large enough to map in
