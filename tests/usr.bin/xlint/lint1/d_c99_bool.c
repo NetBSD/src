@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool.c,v 1.6 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool.c,v 1.7 2021/03/30 14:25:28 rillig Exp $	*/
 # 3 "d_c99_bool.c"
 
 /*
@@ -9,7 +9,7 @@
  * invoke undefined behavior.
  */
 
-/* Below, each wrong assertion produces "negative array dimension" [20]. */
+/* Below, each false statement produces "negative array dimension" [20]. */
 
 int int_0_converts_to_false[(_Bool)0 ? -1 : 1];
 int int_0_converts_to_true_[(_Bool)0 ? 1 : -1];			/* expect: 20 */

@@ -1,2 +1,1 @@
-d_init_pop_member.c(48): error: undefined struct/union member: capital [101]
-d_init_pop_member.c(57): error: undefined struct/union member: capital [101]
+d_init_pop_member.c(38): warning: st set but not used in function func [191]
