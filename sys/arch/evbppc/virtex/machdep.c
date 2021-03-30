@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2021/03/30 01:33:50 rin Exp $ */
+/*	$NetBSD: machdep.c,v 1.29 2021/03/30 02:41:14 rin Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2021/03/30 01:33:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2021/03/30 02:41:14 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -87,17 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2021/03/30 01:33:50 rin Exp $");
 #if defined(KGDB)
 #include <sys/kgdb.h>
 #endif
-
-/*
- * Global variables used here and there
- */
-struct vm_map *phys_map = NULL;
-
-/*
- * This should probably be in autoconf!				XXX
- */
-char machine[] = MACHINE;		/* from <machine/param.h> */
-char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 void initppc(vaddr_t, vaddr_t);
 
