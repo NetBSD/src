@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_autoconf.c,v 1.9 2021/03/29 13:38:31 rin Exp $	*/
+/*	$NetBSD: obs200_autoconf.c,v 1.10 2021/03/30 04:53:13 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,19 +33,16 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.9 2021/03/29 13:38:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.10 2021/03/30 04:53:13 rin Exp $");
 
-#include <sys/systm.h>
+#include <sys/param.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <machine/obs200.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-
-#include <dev/ic/comreg.h>
-
 
 /*
  * Determine device configuration for a machine.
