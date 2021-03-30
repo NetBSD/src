@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.11 2021/03/29 13:38:31 rin Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.12 2021/03/30 04:41:30 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,21 +33,19 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.11 2021/03/29 13:38:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.12 2021/03/30 04:41:30 rin Exp $");
 
 #include "dwctwo.h"
 
-#include <sys/systm.h>
+#include <sys/param.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/systm.h>
 
 #include <machine/obs600.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-
-#include <dev/ic/comreg.h>
 
 #if NDWCTWO > 0
 #include <dev/usb/usb.h>
