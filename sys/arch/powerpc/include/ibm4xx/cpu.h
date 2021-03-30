@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2021/03/30 01:16:45 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 2021/03/30 02:04:44 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -144,24 +144,5 @@ extern char msgbuf[MSGBUFSIZE];
 /* Board info dictionary */
 extern prop_dictionary_t board_properties;
 extern void board_info_init(void);
-
-/*****************************************************************************/
-/* THIS CODE IS OBSOLETE. WILL BE REMOVED */
-/*
- * Board configuration structure from the OpenBIOS.
- */
-struct board_cfg_data {
-	unsigned char	usr_config_ver[4];
-	unsigned char	rom_sw_ver[30];
-	unsigned int	mem_size;
-	unsigned char	mac_address_local[6];
-	unsigned char	mac_address_pci[6];
-	unsigned int	processor_speed;
-	unsigned int	plb_speed;
-	unsigned int	pci_speed;
-};
-
-extern struct board_cfg_data board_data;
-/*****************************************************************************/
 
 #endif	/* _IBM4XX_CPU_H_ */
