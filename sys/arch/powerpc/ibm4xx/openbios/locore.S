@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2021/03/07 02:54:06 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.17 2021/03/30 01:57:20 rin Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -95,11 +95,6 @@
 #define BOARD_CFG_FP       0xFFFE0B50
 
 /*
- * Some instructions gas doesn't understand (yet?)
- */
-#define	bdneq	bdnzf 2,
-
-/*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
  */
@@ -192,7 +187,7 @@ __start_cpu0:
 	mtpid	%r0
 	sync
 
-	INIT_CPUINFO(8,1,9,0)
+	INIT_CPUINFO(%r8,%r1,%r9,%r0)
 	mr	%r4,%r8
 
 	lis	%r3,__start@ha
