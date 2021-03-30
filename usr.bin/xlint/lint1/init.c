@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.182 2021/03/30 15:18:19 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.183 2021/03/30 16:07:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.182 2021/03/30 15:18:19 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.183 2021/03/30 16:07:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -454,6 +454,11 @@ designator_look_up(const struct designator *dr, const type_t *tp)
 			/* syntax error '%s' */
 			error(249,
 			    "designator '.member' is only for struct/union");
+		}
+		if (!tp->t_incomplete_array &&
+		    dr->dr_subscript >= (size_t)tp->t_dim) {
+			/* array subscript cannot be > %d: %ld */
+			error(168, tp->t_dim - 1, (long)dr->dr_subscript);
 		}
 		return tp->t_subt;
 	default:
