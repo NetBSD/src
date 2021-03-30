@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.35 2021/03/06 08:08:19 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.36 2021/03/30 01:33:50 rin Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.35 2021/03/06 08:08:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.36 2021/03/30 01:33:50 rin Exp $");
 
 #include "ksyms.h"
 
@@ -81,8 +81,14 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.35 2021/03/06 08:08:19 rin Exp 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/ksyms.h>
+#include <sys/mount.h>
 #include <sys/msgbuf.h>
+#include <sys/pmf.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+
+#include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -152,6 +158,79 @@ static const struct exc_info trap_table[] = {
 	{ EXC_PGM,	accesstrap,	(uintptr_t)&accesssize },
 #endif
 };
+
+void
+cpu_reboot(int howto, char *what)
+{
+	static int syncing;
+	static char str[256];
+	char *ap = str, *ap1 = ap;
+
+	boothowto = howto;
+	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
+		syncing = 1;
+		vfs_shutdown();		/* sync */
+		resettodr();		/* set wall clock */
+	}
+
+	splhigh();
+
+	if (!cold && (howto & RB_DUMP))
+		ibm4xx_dumpsys();
+
+	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
+
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* Power off here if we know how... */
+	}
+
+	if (howto & RB_HALT) {
+		printf("The operating system has halted.\n"
+		    "Press any key to reboot.\n\n");
+
+		cnpollc(1);
+		cngetc();
+		cnpollc(0);
+	}
+
+	printf("rebooting...\n\n");
+	if (what && *what) {
+		if (strlen(what) > sizeof(str) - 5)
+			printf("boot string too large, ignored\n");
+		else {
+			strcpy(str, what);
+			ap1 = ap = str + strlen(str);
+			*ap++ = ' ';
+		}
+	}
+	*ap++ = '-';
+	if (howto & RB_SINGLE)
+		*ap++ = 's';
+	if (howto & RB_KDB)
+		*ap++ = 'd';
+	*ap++ = '\0';
+	if (ap[-2] == '-')
+		*ap1 = '\0';
+
+	/* flush cache for msgbuf */
+	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
+
+	ppc4xx_reset();
+
+	printf("ppc4xx_reset() failed!\n");
+
+	while (1 /* CONSTCOND */) {
+#if defined(DDB)
+		Debugger();
+#elif defined(KGDB)
+		kgdb_connect(1);
+#else
+		continue;
+#endif
+	}
+}
 
 /*
  * Install a trap vector. We cannot use memcpy because the
