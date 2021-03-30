@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.2 2021/03/23 22:58:08 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.3 2021/03/30 14:25:28 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
@@ -56,8 +56,8 @@ test_array_initialization_in_struct(void)
 	};
 
 	struct cs_ws type_mismatch = {
-	    	L"",		/* expect: illegal combination */
-	    	"",		/* expect: illegal combination */
+	    	L"",		/* expect: cannot initialize */
+	    	"",		/* expect: cannot initialize */
 	};
 
 	struct cs_ws no_terminating_null = {
@@ -74,4 +74,6 @@ test_array_initialization_in_struct(void)
 		{ "" },
 		{ L"" },
 	};
+	/* expect-3: illegal combination of integer (char) and pointer (pointer to char) */
+	/* expect-3: illegal combination of integer (int) and pointer (pointer to int) */
 }
