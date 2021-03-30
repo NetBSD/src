@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2021/03/30 02:04:44 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2021/03/30 02:41:15 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2021/03/30 02:04:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2021/03/30 02:41:15 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -127,17 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2021/03/30 02:04:44 rin Exp $");
 
 
 #define TLB_PG_SIZE 	(16*1024*1024)
-
-/*
- * Global variables used here and there
- */
-struct vm_map *phys_map = NULL;
-
-/*
- * This should probably be in autoconf!				XXX
- */
-char machine[] = MACHINE;		/* from <machine/param.h> */
-char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 void initppc(vaddr_t, vaddr_t, char *, void *);
 

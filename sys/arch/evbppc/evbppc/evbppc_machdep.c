@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.13 2011/07/01 20:46:39 dyoung Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.14 2021/03/30 02:41:14 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.13 2011/07/01 20:46:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.14 2021/03/30 02:41:14 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,17 @@ __KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.13 2011/07/01 20:46:39 dyoung E
 #include <machine/cpu.h>
 #include <sys/bus.h>
 #include <machine/pmap.h>
+
+/*
+ * Global variables used here and there.
+ */
+struct vm_map *phys_map = NULL;
+
+/*
+ * XXX This should probably be in autoconf.
+ */
+char machine[] = MACHINE;
+char machine_arch[] = MACHINE_ARCH;
 
 /*
  * ibm4xx kernels need to set module_machine to this for modules to work.

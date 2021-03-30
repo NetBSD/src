@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2021/03/30 01:33:50 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2021/03/30 02:41:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2021/03/30 01:33:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2021/03/30 02:41:14 rin Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -74,12 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2021/03/30 01:33:50 rin Exp $");
 
 #define TLB_PG_SIZE	(16*1024*1024)
 
-char machine[] = MACHINE;		/* from <machine/param.h> */
-char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
 static const unsigned int cpuspeed = 66000000;
-
-struct vm_map *phys_map = NULL;
 
 void		initppc(vaddr_t, vaddr_t);
 
