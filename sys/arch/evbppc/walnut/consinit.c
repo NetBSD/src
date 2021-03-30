@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9 2021/03/29 13:59:15 rin Exp $	*/
+/*	$NetBSD: consinit.c,v 1.10 2021/03/30 05:18:37 rin Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,17 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2021/03/29 13:59:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10 2021/03/30 05:18:37 rin Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
-#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include "com.h"
 #if (NCOM > 0)
@@ -45,12 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2021/03/29 13:59:15 rin Exp $");
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
-#endif
-
-#include <dev/cons.h>
-
-#ifndef CONSDEVNAME
-#define CONSDEVNAME "com"
 #endif
 
 #if (NCOM > 0)
