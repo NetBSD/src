@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.6 2020/03/05 02:14:53 rin Exp $	*/
+/*	$NetBSD: tlb.h,v 1.7 2021/03/30 03:15:53 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -104,7 +104,11 @@ int	ppc4xx_tlb_new_pid(struct pmap *);
 void	ppc4xx_tlb_reserve(paddr_t, vaddr_t, size_t, int);
 void 	*ppc4xx_tlb_mapiodev(paddr_t, psize_t);
 
+#ifndef ppc4xx_tlbflags
+#define	ppc4xx_tlbflags(va, pa)	(0)
 #endif
+
+#endif /* !_LOCORE */
 
 #define TLB_PID_INVALID 0xFFFF
 
