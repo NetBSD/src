@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2021/03/29 13:49:15 rin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 2021/03/30 05:14:00 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,20 +32,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2021/03/29 13:49:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2021/03/30 05:14:00 rin Exp $");
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/cpu.h>
 
 #include <dev/ic/comreg.h>	/* For COM_FREQ */
+
+#include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
-#include <powerpc/ibm4xx/spr.h>
 
 /*
  * List of port-specific devices to attach to the processor local bus.
