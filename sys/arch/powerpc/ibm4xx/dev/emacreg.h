@@ -1,4 +1,4 @@
-/*	$NetBSD: emacreg.h,v 1.4 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: emacreg.h,v 1.5 2021/03/30 02:25:24 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -215,6 +215,7 @@
 #define	  STACR_PHYE		  0x00004000	/* PHY error */
 #define	  STACR_WRITE		  0x00002000	/* STA command - write */
 #define	  STACR_READ		  0x00001000	/* STA command - read */
+#define	  STACR_OPBC_33MHZ	  0x0		/*   -  33MHz */
 #define	  STACR_OPBC_50MHZ	  0x0		/*   -  50MHz */
 #define	  STACR_OPBC_66MHZ	  0x1		/*   -  66MHz */
 #define	  STACR_OPBC_83MHZ	  0x2		/*   -  83MHz */
