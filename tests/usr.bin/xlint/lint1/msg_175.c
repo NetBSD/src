@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_175.c,v 1.3 2021/02/22 15:09:50 rillig Exp $	*/
+/*	$NetBSD: msg_175.c,v 1.4 2021/03/30 15:07:53 rillig Exp $	*/
 # 3 "msg_175.c"
 
-// Test for message: initialization of an incomplete type [175]
+// Test for message: initialization of incomplete type '%s' [175]
 
 struct incomplete;			/* expect: 233 */
 
