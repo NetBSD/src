@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.26 2021/03/30 15:18:19 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.27 2021/03/30 16:07:07 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -135,7 +135,7 @@ struct point point_with_designators = {
 struct point point_with_mixed_designators = {
 	.x = 3,
 	4,
-	/* TODO: remove me */
+
 	5,			/* expect: too many struct/union initializers */
 	.x = 3,
 };
@@ -211,15 +211,15 @@ struct geometry {
  * structs.
  */
 struct geometry geometry = {
-	/* TODO: remove me */
+
 	.pentagons[0].points[4].x = 1,
 	.points[0][0][0] = { 0, 0 },
 	.points[2][4][1] = {301, 302 },
-	/* TODO: expect+1: array index 3 must be between 0 and 2 */
+	/* expect+1: array subscript cannot be > 2: 3 */
 	.points[3][0][0] = {3001, 3002 },
-	/* TODO: expect+1: array index 5 must be between 0 and 4 */
+	/* expect+1: array subscript cannot be > 4: 5 */
 	.points[0][5][0] = {501, 502 },
-	/* TODO: expect+1: array index 2 must be between 0 and 1 */
+	/* expect+1: array subscript cannot be > 1: 2 */
 	.points[0][0][2] = {21, 22 },
 };
 
