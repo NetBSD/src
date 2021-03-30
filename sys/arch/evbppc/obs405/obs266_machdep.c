@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.25 2021/03/30 03:57:03 rin Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.26 2021/03/30 04:02:17 rin Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,38 +68,38 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.25 2021/03/30 03:57:03 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.26 2021/03/30 04:02:17 rin Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/module.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/bus.h>
 
 #include <machine/obs266.h>
-
-#include <powerpc/ibm4xx/dcr4xx.h>
-#include <powerpc/ibm4xx/cpu.h>
-#include <powerpc/ibm4xx/ibm405gp.h>
-#include <powerpc/ibm4xx/pci_machdep.h>
-#include <powerpc/ibm4xx/openbios.h>
-#include <powerpc/ibm4xx/tlb.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/pci/pcivar.h>
+#include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/openbios.h>
+#include <powerpc/ibm4xx/tlb.h>
+
+#include <powerpc/ibm4xx/pci_machdep.h>
 #include <dev/pci/pciconf.h>
+#include <dev/pci/pcivar.h>
 
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <dev/ic/comreg.h>
 
 #ifndef CONADDR
 #define CONADDR		IBM405GP_UART0_BASE
