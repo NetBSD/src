@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.28 2021/03/30 16:09:30 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.29 2021/03/30 19:45:04 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -375,4 +375,13 @@ union {
 	int : 16;
 } union_with_only_unnamed_members = {	/* expect: has no named members */
 	123,		/* expect: too many struct/union initializers */
+};
+
+int designator_for_scalar = {
+	.value = 3,		/* expect: scalar type cannot use designator */
+};
+
+struct point designator_for_scalar_in_struct = {
+	{ .x = 3 },		/* expect: scalar type cannot use designator */
+	{ [1] = 4 },		/* expect: scalar type cannot use designator */
 };
