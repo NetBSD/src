@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.7 2021/03/26 16:59:19 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.8 2021/03/30 15:05:05 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -40,7 +40,7 @@ example(struct Other *arg)
  * Casting to 'pointer to char' may also be used by programmers who don't know
  * about endianness, but that's not something lint can do anything about.  The
  * code for these two use cases looks exactly the same, so lint errs on the
- * side of fewer false positive warnings here. (after fixing the FIXME below)
+ * side of fewer false positive warnings here.
  */
 char *
 cast_to_char_pointer(struct Other *arg)

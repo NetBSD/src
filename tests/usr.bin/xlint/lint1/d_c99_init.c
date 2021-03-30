@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.24 2021/03/30 14:25:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.25 2021/03/30 15:05:05 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -260,9 +260,8 @@ struct ten {
 struct ten ten = {
 	.i3 = 3,
 	4,
-	// FIXME: assertion "level->bl_type->t_tspec == ARRAY" failed in brace_level_extend_if_array_of_unknown_size
-	// 5,
-	// 6,
+	5,
+	6,
 };
 
 int c99_6_7_8_p26_example3[4][3] = {
@@ -330,7 +329,6 @@ ensure_array_type_is_not_modified_during_initialization(void)
 }
 
 struct point unknown_member_name_beginning = {
-	/* TODO: remove me */
 	.r = 5,			/* expect: undefined struct/union member: r */
 	.x = 4,
 	.y = 3,
@@ -354,14 +352,12 @@ union value {
 };
 
 union value unknown_union_member_name_first = {
-	/* TODO: remove me */
 	.unknown_value = 4,	/* expect: undefined struct/union member */
 	.int_value = 3,
 };
 
 union value unknown_union_member_name_second = {
 	.int_value = 3,
-	/* TODO: remove me */
 	.unknown_value = 4,	/* expect: undefined struct/union member */
 };
 
