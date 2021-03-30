@@ -1,4 +1,4 @@
-.\" $NetBSD: siisata.4,v 1.7 2017/10/07 17:35:48 jdolecek Exp $
+.\" $NetBSD: siisata.4,v 1.8 2021/03/30 15:29:43 rin Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Jonathan A. Kollasch. All rights reserved.
 .\"
@@ -64,7 +64,7 @@ driver first appeared in
 .Nx 5.0 .
 NCQ support was added in
 .Nx
-on October 7, 2017 .
+on October 7, 2017.
 .Sh AUTHORS
 The
 .Nm
@@ -73,11 +73,10 @@ driver was written by
 NCQ support was added by him, and
 .An Jaromir Dolecek Aq Mt jdolecek@NetBSD.org .
 .Sh BUGS
-.Bl -tag -width Ds -compact
-.It Device hot swapping is not yet supported .
-.It Silicon Image's Software RAID is not yet supported by the
+Device hot swapping is not yet supported.
+.Pp
+Silicon Image's Software RAID is not yet supported by the
 .Xr ataraid 4
 driver.
 .Xr raid 4
 can be used instead.
-.El
