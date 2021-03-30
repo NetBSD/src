@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.97 2021/03/28 14:01:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.98 2021/03/30 15:07:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.97 2021/03/28 14:01:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.98 2021/03/30 15:07:53 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ const	char *msgs[] = {
 	"too many struct/union initializers",			      /* 172 */
 	"too many array initializers, expected %d",		      /* 173 */
 	"too many initializers",				      /* 174 */
-	"initialization of an incomplete type",			      /* 175 */
+	"initialization of incomplete type '%s'",		      /* 175 */
 	"",			/* no longer used */		      /* 176 */
 	"non-constant initializer",				      /* 177 */
 	"initializer does not fit",				      /* 178 */
