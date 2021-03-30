@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.183 2021/03/30 16:07:07 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.184 2021/03/30 20:23:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.183 2021/03/30 16:07:07 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.184 2021/03/30 20:23:30 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -534,6 +534,9 @@ designation_reset(struct designation *dn)
 		next = dr->dr_next;
 		designator_free(dr);
 	}
+
+	dn->dn_head = NULL;
+	dn->dn_tail = NULL;
 }
 
 
@@ -586,21 +589,6 @@ brace_level_debug(const struct brace_level *bl)
 #else
 #define brace_level_debug(level) do { } while (false)
 #endif
-
-static void
-brace_level_remove_designation(struct brace_level *bl)
-{
-	struct designator *dr, *next;
-
-	for (dr = bl->bl_designation.dn_head; dr != NULL; dr = next) {
-		next = dr->dr_next;
-		designator_free(dr);
-	}
-
-	bl->bl_designation.dn_head = NULL;
-	bl->bl_designation.dn_tail = NULL;
-}
-
 
 static const type_t *
 brace_level_sub_type_struct_or_union(const struct brace_level *bl)
@@ -847,11 +835,12 @@ initialization_end_brace_level(struct initialization *in)
 	bl = in->in_brace_level;
 	in->in_brace_level = bl->bl_enclosing;
 	brace_level_free(bl);
+	bl = in->in_brace_level;
 
-	if (in->in_brace_level != NULL) {
-		brace_level_advance(in->in_brace_level);
-		brace_level_remove_designation(in->in_brace_level);
-	}
+	if (bl != NULL)
+		brace_level_advance(bl);
+	if (bl != NULL)
+		designation_reset(&bl->bl_designation);
 
 	initialization_debug(in);
 	debug_leave();
@@ -867,14 +856,6 @@ initialization_add_designator(struct initialization *in,
 
 	lint_assert(in->in_brace_level != NULL);
 	designation_add(&in->in_brace_level->bl_designation, name, subscript);
-}
-
-static void
-initialization_remove_designation(struct initialization *in)
-{
-
-	if (in->in_brace_level != NULL)
-		brace_level_remove_designation(in->in_brace_level);
 }
 
 /*
@@ -951,13 +932,14 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 static void
 initialization_expr(struct initialization *in, tnode_t *tn)
 {
+	struct brace_level *bl;
 	const type_t *tp;
 
 	if (in->in_err)
 		return;
 
-	if (in->in_brace_level != NULL &&
-	    in->in_brace_level->bl_omitted_braces)
+	bl = in->in_brace_level;
+	if (bl != NULL && bl->bl_omitted_braces)
 		return;
 
 	debug_enter();
@@ -969,13 +951,13 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 	if (initialization_init_array_using_string(in, tn))
 		goto advance;
 
-	if (in->in_brace_level != NULL)
-		brace_level_apply_designation(in->in_brace_level);
+	if (bl != NULL)
+		brace_level_apply_designation(bl);
 	tp = initialization_sub_type(in);
 	if (tp == NULL)
 		goto done;
 
-	if (in->in_brace_level == NULL && !is_scalar(tp->t_tspec)) {
+	if (bl == NULL && !is_scalar(tp->t_tspec)) {
 		/* {}-enclosed initializer required */
 		error(181);
 		goto done;
@@ -989,8 +971,8 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 	 */
 	if (is_scalar(tn->tn_type->t_tspec) &&
 	    tp->t_tspec == ARRAY &&
-	    in->in_brace_level != NULL) {
-		in->in_brace_level->bl_omitted_braces = true;
+	    bl != NULL) {
+		bl->bl_omitted_braces = true;
 		goto done;
 	}
 
@@ -999,10 +981,12 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 	check_init_expr(tp, in->in_sym, tn);
 
 advance:
-	if (in->in_brace_level != NULL)
-		brace_level_advance(in->in_brace_level);
+	if (bl != NULL)
+		brace_level_advance(bl);
 done:
-	initialization_remove_designation(in);
+	if (bl != NULL)
+		designation_reset(&bl->bl_designation);
+
 	initialization_debug(in);
 	debug_leave();
 }
