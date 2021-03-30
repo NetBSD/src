@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2021/03/07 09:43:56 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2021/03/30 01:33:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2021/03/07 09:43:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2021/03/30 01:33:50 rin Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -177,48 +177,4 @@ cpu_startup(void)
 	 * no fake mapiodev
 	 */
 	fake_mapiodev = 0;
-}
-
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing = 0;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();
-		resettodr();
-	}
-
-	splhigh();
-
-	if (!cold && (howto & RB_DUMP))
-		/*XXX dumpsys()*/;
-
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-
-		while (1)
-			;
-	}
-
-	printf("rebooting\n\n");
-
-	/* flush cache for msgbuf */
-	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
-
-	ppc4xx_reset();
-
-#ifdef DDB
-	while (1)
-		Debugger();
-#else
-	while (1)
-		;
-#endif
 }
