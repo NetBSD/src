@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2021/03/30 02:41:15 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2021/03/30 05:08:16 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,64 +67,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2021/03/30 02:41:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2021/03/30 05:08:16 rin Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
-#include <sys/boot_flag.h>
-#include <sys/buf.h>
 #include <sys/bus.h>
-#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/exec.h>
 #include <sys/kernel.h>
-#include <sys/ksyms.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/module.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/syscallargs.h>
-#include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <prop/proplib.h>
-
-#include <machine/powerpc.h>
 #include <machine/walnut.h>
-
-#include <powerpc/trap.h>
-#include <powerpc/pcb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
-
 #include <powerpc/ibm4xx/openbios.h>
+#include <powerpc/ibm4xx/tlb.h>
 
 #include <powerpc/ibm4xx/pci_machdep.h>
-
-#include <powerpc/pic/picvar.h>
-
-#include <dev/cons.h>
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-#include "ksyms.h"
-
-#if defined(DDB)
-#include <powerpc/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
-
+#include <dev/pci/pcivar.h>
 
 #define TLB_PG_SIZE 	(16*1024*1024)
 
