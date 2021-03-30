@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.36 2021/03/30 01:33:50 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.37 2021/03/30 14:33:10 rin Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.36 2021/03/30 01:33:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.37 2021/03/30 14:33:10 rin Exp $");
 
 #include "ksyms.h"
 
@@ -221,7 +221,7 @@ cpu_reboot(int howto, char *what)
 
 	printf("ppc4xx_reset() failed!\n");
 
-	while (1 /* CONSTCOND */) {
+	for (;;) {
 #if defined(DDB)
 		Debugger();
 #elif defined(KGDB)
