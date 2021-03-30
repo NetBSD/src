@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.25 2021/03/30 15:05:05 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.26 2021/03/30 15:18:19 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -329,21 +329,21 @@ ensure_array_type_is_not_modified_during_initialization(void)
 }
 
 struct point unknown_member_name_beginning = {
-	.r = 5,			/* expect: undefined struct/union member: r */
+	.r = 5,			/* expect: does not have member 'r' */
 	.x = 4,
 	.y = 3,
 };
 
 struct point unknown_member_name_middle = {
 	.x = 4,
-	.r = 5,			/* expect: undefined struct/union member: r */
+	.r = 5,			/* expect: does not have member 'r' */
 	.y = 3,
 };
 
 struct point unknown_member_name_end = {
 	.x = 4,
 	.y = 3,
-	.r = 5,			/* expect: undefined struct/union member: r */
+	.r = 5,			/* expect: does not have member 'r' */
 };
 
 union value {
@@ -352,18 +352,18 @@ union value {
 };
 
 union value unknown_union_member_name_first = {
-	.unknown_value = 4,	/* expect: undefined struct/union member */
+	.unknown_value = 4,	/* expect: does not have member */
 	.int_value = 3,
 };
 
 union value unknown_union_member_name_second = {
 	.int_value = 3,
-	.unknown_value = 4,	/* expect: undefined struct/union member */
+	.unknown_value = 4,	/* expect: does not have member */
 };
 
 struct point designators_with_subscript = {
 	[0] = 3,		/* expect: only for arrays */
-	.member[0][0].member = 4, /* expect: undefined struct/union member */
+	.member[0][0].member = 4, /* expect: does not have member 'member' */
 	.x.y.z = 5,	/* intentionally not caught, see designator_look_up */
 };
 
