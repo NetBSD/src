@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600.h,v 1.2 2021/03/30 03:45:34 rin Exp $	*/
+/*	$NetBSD: obs600.h,v 1.3 2021/03/30 04:08:02 rin Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -27,6 +27,8 @@
 
 #ifndef	_EVBPPC_OBS600_H_
 #define	_EVBPPC_OBS600_H_
+
+#include <dev/ic/comreg.h>
 
 /*
  * Device Properties for OpenBlockS600 (AMCC 405EX 600MHz)
