@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2021/03/30 02:41:14 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2021/03/30 03:04:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,47 +30,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2021/03/30 02:41:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2021/03/30 03:04:51 rin Exp $");
 
 #include "opt_explora.h"
-#include "opt_modular.h"
-
-#include "ksyms.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/msgbuf.h>
 #include <sys/kernel.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/ksyms.h>
-#include <sys/device.h>
 #include <sys/module.h>
 #include <sys/bus.h>
-#include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
 
 #include <machine/explora.h>
-#include <machine/powerpc.h>
 #include <machine/tlb.h>
-#include <machine/pcb.h>
-#include <machine/trap.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
 
 #define TLB_PG_SIZE	(16*1024*1024)
 
