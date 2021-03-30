@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.179 2021/03/30 14:25:28 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.180 2021/03/30 15:07:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.179 2021/03/30 14:25:28 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.180 2021/03/30 15:07:53 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -802,9 +802,8 @@ initialization_begin_brace_level(struct initialization *in)
 	}
 
 	if (tp->t_tspec == STRUCT && tp->t_str->sou_incomplete) {
-		/* TODO: add type information */
-		/* initialization of an incomplete type */
-		error(175);
+		/* initialization of incomplete type '%s' */
+		error(175, type_name(tp));
 		in->in_err = true;
 		goto done;
 	}
