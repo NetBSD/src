@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.166 2021/03/27 22:13:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.167 2021/03/30 14:25:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.166 2021/03/27 22:13:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.167 2021/03/30 14:25:28 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1913,7 +1913,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 
 	check_type(dsym);
 
-	if (initflg && !(*current_initerr() = check_init(dsym)))
+	if (initflg && !check_init(dsym))
 		dsym->s_def = DEF;
 
 	/*
@@ -2043,9 +2043,6 @@ declare(sym_t *decl, bool initflg, sbuf_t *renaming)
 		} else
 			declare_local(decl, initflg);
 	}
-
-	if (initflg && !*current_initerr())
-		initstack_init();
 }
 
 /*
@@ -2416,7 +2413,6 @@ declare_argument(sym_t *sym, bool initflg)
 	if (initflg) {
 		/* cannot initialize parameter: %s */
 		error(52, sym->s_name);
-		*current_initerr() = true;
 	}
 
 	if ((t = sym->s_type->t_tspec) == ARRAY) {
@@ -2751,7 +2747,7 @@ declare_local(sym_t *dsym, bool initflg)
 
 	}
 
-	if (initflg && !(*current_initerr() = check_init(dsym))) {
+	if (initflg && !check_init(dsym)) {
 		dsym->s_def = DEF;
 		mark_as_set(dsym);
 	}

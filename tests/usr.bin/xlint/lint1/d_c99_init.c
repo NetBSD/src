@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.23 2021/03/29 22:42:10 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.24 2021/03/30 14:25:28 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -23,7 +23,7 @@ int scalar_with_too_many_braces = {{ 3 }};
 int scalar_with_too_many_initializers = { 3, 5 };	/* expect: 174 */
 
 
-// See init_using_expr, 'handing over to ASSIGN'.
+// See init_expr, 'handing over to ASSIGN'.
 void
 struct_initialization_via_assignment(any arg)
 {
@@ -32,13 +32,13 @@ struct_initialization_via_assignment(any arg)
 }
 
 
-// See init_using_expr, initstack_string.
+// See init_expr, initialization_init_array_using_string.
 char static_duration[] = "static duration";
 signed char static_duration_signed[] = "static duration";
 unsigned char static_duration_unsigned[] = "static duration";
 int static_duration_wchar[] = L"static duration";
 
-// See init_using_expr.
+// See init_expr.
 void
 initialization_by_braced_string(void)
 {
@@ -80,7 +80,7 @@ int array_with_fixed_size[3] = {
 	444,			/* expect: too many array initializers */
 };
 
-// See initstack_push, 'extending array of unknown size'.
+// See initialization_set_set_of_unknown_array.
 int array_of_unknown_size[] = {
 	111,
 	222,
@@ -135,8 +135,8 @@ struct point point_with_designators = {
 struct point point_with_mixed_designators = {
 	.x = 3,
 	4,
-	// FIXME: assertion failure '== ARRAY'
-	// 5,
+	/* TODO: remove me */
+	5,			/* expect: too many struct/union initializers */
 	.x = 3,
 };
 
@@ -211,8 +211,8 @@ struct geometry {
  * structs.
  */
 struct geometry geometry = {
-	// FIXME: assertion "istk->i_type != NULL" failed in initstack_push
-	//.pentagons[0].points[4].x = 1,
+	/* TODO: remove me */
+	.pentagons[0].points[4].x = 1,
 	.points[0][0][0] = { 0, 0 },
 	.points[2][4][1] = {301, 302 },
 	/* TODO: expect+1: array index 3 must be between 0 and 2 */
@@ -239,8 +239,8 @@ char prefixed_message[] = {
 };
 
 char message_with_suffix[] = {
-	"message",
-	/* expect+1: too many array initializers */
+	"message",		/* expect: illegal combination */
+	/* */
 	'\n',
 };
 
@@ -279,7 +279,7 @@ struct {
 	int a[3], b;
 } c99_6_7_8_p28_example5[] = {
 	{ 1 },
-	2,
+	2,			/* XXX *//* expect: cannot initialize */
 };
 
 short c99_6_7_8_p29_example6a[4][3][2] = {
@@ -330,8 +330,8 @@ ensure_array_type_is_not_modified_during_initialization(void)
 }
 
 struct point unknown_member_name_beginning = {
-	// FIXME: assertion "bl->bl_type != NULL" failed in initialization_push
-	// .r = 5,
+	/* TODO: remove me */
+	.r = 5,			/* expect: undefined struct/union member: r */
 	.x = 4,
 	.y = 3,
 };
@@ -354,13 +354,31 @@ union value {
 };
 
 union value unknown_union_member_name_first = {
-	// FIXME: assertion "bl->bl_type != NULL" failed in initialization_push
-	// .unknown_value = 4,
+	/* TODO: remove me */
+	.unknown_value = 4,	/* expect: undefined struct/union member */
 	.int_value = 3,
 };
 
 union value unknown_union_member_name_second = {
 	.int_value = 3,
-	// FIXME: assertion "bl->bl_type->t_tspec == ARRAY" failed in brace_level_extend_if_array_of_unknown_size
-	// .unknown_value = 4,
+	/* TODO: remove me */
+	.unknown_value = 4,	/* expect: undefined struct/union member */
+};
+
+struct point designators_with_subscript = {
+	[0] = 3,		/* expect: only for arrays */
+	.member[0][0].member = 4, /* expect: undefined struct/union member */
+	.x.y.z = 5,	/* intentionally not caught, see designator_look_up */
+};
+
+struct {
+	int : 16;
+} struct_with_only_unnamed_members = {	/* expect: has no named members */
+	123,		/* expect: too many struct/union initializers */
+};
+
+union {
+	int : 16;
+} union_with_only_unnamed_members = {	/* expect: has no named members */
+	123,		/* expect: too many struct/union initializers */
 };
