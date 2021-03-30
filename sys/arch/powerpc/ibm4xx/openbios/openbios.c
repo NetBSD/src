@@ -1,4 +1,4 @@
-/*	$NetBSD: openbios.c,v 1.5 2011/06/18 06:41:42 matt Exp $	*/
+/*	$NetBSD: openbios.c,v 1.6 2021/03/30 01:47:45 rin Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openbios.c,v 1.5 2011/06/18 06:41:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openbios.c,v 1.6 2021/03/30 01:47:45 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ struct board_bios_data {
 static struct board_bios_data board_bios;
 
 void
-openbios_board_init(void *info_block, u_int startkernel)
+openbios_board_init(void *info_block)
 {
 
         /* Initialize cache info for memcpy, etc. */
