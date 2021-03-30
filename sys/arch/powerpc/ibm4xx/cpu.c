@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.37 2021/03/30 02:27:00 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.38 2021/03/30 13:41:46 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2021/03/30 02:27:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2021/03/30 13:41:46 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static const struct cputab models[] = {
 		.ci = {
 			.dcache_size = 1024,
 			.dcache_line_size = 16,
-			.icache_size = 2848,
+			.icache_size = 2048,
 			.icache_line_size = 16,
 		}
 	}, {
@@ -94,7 +94,7 @@ static const struct cputab models[] = {
 		.mask = 0xffff0000,
 		.name = "401D2",
 		.ci = {
-			.dcache_size = 2848,
+			.dcache_size = 2048,
 			.dcache_line_size = 16,
 			.icache_size = 4096,
 			.icache_line_size = 16,
@@ -116,7 +116,7 @@ static const struct cputab models[] = {
 		.ci = {
 			.dcache_size = 2048,
 			.dcache_line_size = 16,
-			.icache_size = 2848,
+			.icache_size = 2048,
 			.icache_line_size = 16,
 		}
 	}, {
@@ -124,7 +124,7 @@ static const struct cputab models[] = {
 		.mask = 0xffff0000,
 		.name = "401G2",
 		.ci = {
-			.dcache_size = 2848,
+			.dcache_size = 2048,
 			.dcache_line_size = 16,
 			.icache_size = 8192,
 			.icache_line_size = 16,
