@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.893 2021/03/21 23:03:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.894 2021/03/30 14:58:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.893 2021/03/21 23:03:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.894 2021/03/30 14:58:17 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -4342,12 +4342,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 
 	Expr expr = {
 		NULL,
-#if defined(lint)
-		/* NetBSD lint cannot fully parse C99 struct initializers. */
-		{ NULL, NULL },
-#else
 		FStr_InitRefer(NULL),
-#endif
 		eflags,
 		scope,
 		DEF_REGULAR
