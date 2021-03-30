@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266.h,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: obs266.h,v 1.3 2021/03/30 03:45:34 rin Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -35,8 +35,6 @@
 
 #ifndef	_EVBPPC_OBS266_H_
 #define	_EVBPPC_OBS266_H_
-
-#include <machine/obs405.h>
 
 /*
  * Device Properties for OpenBlockS266 (IBM405GPr 266MHz)
