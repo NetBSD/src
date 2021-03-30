@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2021/03/30 01:16:45 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2021/03/30 01:33:50 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2021/03/30 01:16:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2021/03/30 01:33:50 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -138,8 +138,6 @@ char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 void initppc(vaddr_t, vaddr_t, char *, void *);
-
-static void dumpsys(void);
 
 struct board_cfg_data board_data;
 
@@ -248,91 +246,6 @@ cpu_startup(void)
 	 */
 	bus_space_mallocok();
 	fake_mapiodev = 0;
-}
-
-
-static void
-dumpsys(void)
-{
-
-	printf("dumpsys: TBD\n");
-}
-
-/*
- * Halt or reboot the machine after syncing/dumping according to howto.
- */
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
-	}
-
-	splhigh();
-
-	if (!cold && (howto & RB_DUMP))
-		dumpsys();
-
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-	  /* Power off here if we know how...*/
-	}
-
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-
-		goto reboot;	/* XXX for now... */
-
-#ifdef DDB
-		printf("dropping to debugger\n");
-		while(1)
-			Debugger();
-#endif
-	}
-
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
-	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
-
-	/* flush cache for msgbuf */
-	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
-
- reboot:
-	ppc4xx_reset();
-
-	printf("ppc4xx_reset() failed!\n");
-#ifdef DDB
-	while(1)
-		Debugger();
-#else
-	while (1)
-		/* nothing */;
-#endif
 }
 
 int

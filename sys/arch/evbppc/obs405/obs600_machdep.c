@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.13 2021/03/30 01:16:45 rin Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.14 2021/03/30 01:33:50 rin Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.13 2021/03/30 01:16:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.14 2021/03/30 01:33:50 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -129,11 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.13 2021/03/30 01:16:45 rin Exp 
 #define OBS600_MEM_SIZE	(1 * 1024 * 1024 * 1024)
 
 #define	TLB_PG_SIZE 	(16 * 1024 * 1024)
-
-/*
- * Global variables used here and there
- */
-extern paddr_t msgbuf_paddr;
 
 void initppc(vaddr_t, vaddr_t, int, char *[], char *);
 static int read_eeprom(int, char *);
@@ -261,87 +256,6 @@ cpu_startup(void)
 	fake_mapiodev = 0;
 
 	splraise(-1);
-}
-
-/*
- * Halt or reboot the machine after syncing/dumping according to howto.
- */
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
-	}
-
-	splhigh();
-
-	if (!cold && (howto & RB_DUMP))
-		ibm4xx_dumpsys();
-
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-	  /* Power off here if we know how...*/
-	}
-
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-
-#if 0
-		goto reboot;	/* XXX for now... */
-#endif
-
-#ifdef DDB
-		printf("dropping to debugger\n");
-		while(1)
-			Debugger();
-#endif
-	}
-
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
-	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
-
-	/* flush cache for msgbuf */
-	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
-
-#if 0
- reboot:
-#endif
-	ppc4xx_reset();
-
-	printf("ppc4xx_reset() failed!\n");
-#ifdef DDB
-	while(1)
-		Debugger();
-#else
-	while (1)
-		/* nothing */;
-#endif
 }
 
 /*
