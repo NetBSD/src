@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.23 2021/03/30 01:33:50 rin Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.24 2021/03/30 01:47:44 rin Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.23 2021/03/30 01:33:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.24 2021/03/30 01:47:44 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -131,7 +131,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	u_int memsize;
 
 	/* Setup board from OpenBIOS */
-	openbios_board_init(info_block, startkernel);
+	openbios_board_init(info_block);
 	memsize = openbios_board_memsize_get();
 
 	/* Linear map kernel memory */
