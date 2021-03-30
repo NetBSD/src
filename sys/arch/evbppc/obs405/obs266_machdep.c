@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.21 2018/07/15 05:16:42 maxv Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.22 2021/03/30 01:16:45 rin Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.21 2018/07/15 05:16:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.22 2021/03/30 01:16:45 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -125,8 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.21 2018/07/15 05:16:42 maxv Exp
 /*
  * Global variables used here and there
  */
-char bootpath[256];
-
 extern paddr_t msgbuf_paddr;
 
 void initppc(vaddr_t, vaddr_t, char *, void *);
