@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/09/15 19:38:09 brad Exp $
+#	$NetBSD: Makefile,v 1.6 2021/03/31 06:27:58 simonb Exp $
 
 .include "../../Makefile.zfs"
 
@@ -29,5 +29,7 @@ LDADD+= -lm -lutil -lpthread
 
 .PATH: ${.CURDIR}
 .PATH: ${ZFSDIR}/dist/cmd/zfs
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>
