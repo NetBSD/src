@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.29 2019/05/08 13:40:16 isaki Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.29.2.1 2021/03/31 13:45:54 martin Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.29 2019/05/08 13:40:16 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.29.2.1 2021/03/31 13:45:54 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -461,7 +461,7 @@ am7930swintr(void *sc0)
 
 	au = &sc->sc_au;
 
-	mutex_spin_enter(&sc->sc_am7930.sc_lock);
+	mutex_spin_enter(&sc->sc_am7930.sc_intr_lock);
 	if (au->au_rdata > au->au_rend && sc->sc_rintr != NULL) {
 		(*sc->sc_rintr)(sc->sc_rarg);
 	}
@@ -469,7 +469,7 @@ am7930swintr(void *sc0)
 	if (pint)
 		(*sc->sc_pintr)(sc->sc_parg);
 
-	mutex_spin_exit(&sc->sc_am7930.sc_lock);
+	mutex_spin_exit(&sc->sc_am7930.sc_intr_lock);
 }
 
 
