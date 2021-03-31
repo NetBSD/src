@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.156 2021/03/11 02:30:47 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.157 2021/03/31 07:52:14 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -3358,7 +3358,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    IXGBE_WORKQUEUE_FLAGS);
 	if (error) {
 		aprint_error_dev(dev,
-		    "couldn't create workqueue\n");
+		    "couldn't create workqueue for Tx/Rx\n");
 	}
 
 	/* and Mailbox */
