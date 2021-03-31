@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.26 2020/07/04 06:24:53 skrll Exp $
+# $NetBSD: named,v 1.27 2021/03/31 04:57:25 christos Exp $
 #
 
 # PROVIDE: named
@@ -61,6 +61,18 @@ named_migrate()
 )
 }
 
+copy_if_newer()
+{
+	local chrootdir="$1"
+	local dir="$2"
+	local file="$3"
+	if [ ! -x "${chrootdir}${dir}/${file}" -o \
+	    "${chrootdir}${dir}/${file}" -ot "${dir}/${file}" ]; then
+		rm -f "${chrootdir}${dir}/${file}"
+		cp -p "${dir}/${file}" "${chrootdir}${dir}/${file}"
+	fi
+}
+
 named_precmd()
 {
 	if [ ! -e "/etc/rndc.key" ]; then
@@ -87,16 +99,19 @@ named_precmd()
 	#
 	case "$($command -v)" in
 	BIND*)	# 9 no group, named-xfer, or ndc
+		named_plugindir="/usr/libexec/named"
+		if [ ! -d "${named_chrootdir}${named_plugindir}" ]; then
+		    mkdir -p -m 755 "${named_chrootdir}${named_plugindir}"
+		    chown root:wheel "${named_chrootdir}${named_plugindir}"
+		fi
+		for p in filter-aaaa.so; do
+			copy_if_newer "${named_chrootdir}" \
+			    "${named_plugindir}" "$p"
+		done
 		;;
 	named*)	# 4 and 8
 		rc_flags="-g named $rc_flags"
-		if [ ! -x "${named_chrootdir}/usr/libexec/named-xfer" -o \
-		    "${named_chrootdir}/usr/libexec/named-xfer" -ot \
-		    /usr/libexec/named-xfer ]; then
-			rm -f "${named_chrootdir}/usr/libexec/named-xfer"
-			cp -p /usr/libexec/named-xfer \
-			    "${named_chrootdir}/usr/libexec"
-		fi
+		copy_if_newer "${named_chrootdir}" "/usr/libexec" "named-xfer"
 		ln -fs "${named_chrootdir}/var/run/ndc" /var/run/ndc
 		;;
 	esac
