@@ -1419,41 +1419,53 @@ die_base_name_parse(const char *name, char **newp)
 	return (intr);
 }
 
+/*
+ * Return the CTF float encoding type.  The logic is all floating
+ * point types of 4 bytes or less are "float", 8 bytes or less are
+ * "double" and 16 bytes or less are "long double".  Anything bigger
+ * will error.
+ */
+#define	FLOAT_SIZE_SINGLE	 4
+#define	FLOAT_SIZE_DOUBLE	 8
+#define	FLOAT_SIZE_LONG_DOUBLE	16
+
 typedef struct fp_size_map {
-	size_t fsm_typesz[2];	/* size of {32,64} type */
+	size_t fsm_typesz;	/* size of type */
 	uint_t fsm_enc[3];	/* CTF_FP_* for {bare,cplx,imagry} type */
 } fp_size_map_t;
 
 static const fp_size_map_t fp_encodings[] = {
-	{ { 4, 4 }, { CTF_FP_SINGLE, CTF_FP_CPLX, CTF_FP_IMAGRY } },
-	{ { 8, 8 }, { CTF_FP_DOUBLE, CTF_FP_DCPLX, CTF_FP_DIMAGRY } },
-#ifdef __sparc
-	{ { 16, 16 }, { CTF_FP_LDOUBLE, CTF_FP_LDCPLX, CTF_FP_LDIMAGRY } },
-#else
-	{ { 12, 16 }, { CTF_FP_LDOUBLE, CTF_FP_LDCPLX, CTF_FP_LDIMAGRY } },
-#endif
-	{ { 0, 0 }, { 0, 0, 0 } }
+	{ FLOAT_SIZE_SINGLE, { CTF_FP_SINGLE, CTF_FP_CPLX, CTF_FP_IMAGRY } },
+	{ FLOAT_SIZE_DOUBLE, { CTF_FP_DOUBLE, CTF_FP_DCPLX, CTF_FP_DIMAGRY } },
+	{ FLOAT_SIZE_LONG_DOUBLE,
+	    { CTF_FP_LDOUBLE, CTF_FP_LDCPLX, CTF_FP_LDIMAGRY } },
+	{ 0, { 0, 0, 0 } }
 };
 
 static uint_t
 die_base_type2enc(dwarf_t *dw, Dwarf_Off off, Dwarf_Signed enc, size_t sz)
 {
 	const fp_size_map_t *map = fp_encodings;
-	uint_t szidx = dw->dw_ptrsz == sizeof (uint64_t);
 	uint_t mult = 1, col = 0;
 
-	if (enc == DW_ATE_complex_float) {
+	switch (enc) {
+	case DW_ATE_complex_float:
+#if defined(DW_ATE_SUN_interval_float)
+	case DW_ATE_SUN_interval_float:
+#endif
 		mult = 2;
 		col = 1;
-	} else if (enc == DW_ATE_imaginary_float
-#if defined(sun)
-	    || enc == DW_ATE_SUN_imaginary_float
+		break;
+	case DW_ATE_imaginary_float:
+#if defined(DW_ATE_SUN_imaginary_float)
+	case DW_ATE_SUN_imaginary_float:
 #endif
-	    )
 		col = 2;
+		break;
+	}
 
-	while (map->fsm_typesz[szidx] != 0) {
-		if (map->fsm_typesz[szidx] * mult == sz)
+	while (map->fsm_typesz != 0) {
+		if (sz <= map->fsm_typesz * mult)
 			return (map->fsm_enc[col]);
 		map++;
 	}
