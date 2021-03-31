@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.69 2021/03/12 01:54:29 knakahara Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.70 2021/03/31 07:53:53 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -202,7 +202,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	struct tx_ring	*txr;
-	int 		i;
+	int		i;
 #ifdef RSS
 	uint32_t bucket_id;
 #endif
@@ -1755,11 +1755,9 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	rbuf = &rxr->rx_buffers[i];
 
 	/*
-	 * With advanced descriptors the writeback
-	 * clobbers the buffer addrs, so its easier
-	 * to just free the existing mbufs and take
-	 * the normal refresh path to get new buffers
-	 * and mapping.
+	 * With advanced descriptors the writeback clobbers the buffer addrs,
+	 * so its easier to just free the existing mbufs and take the normal
+	 * refresh path to get new buffers and mapping.
 	 */
 
 	if (rbuf->fmp != NULL) {/* Partial chain ? */
