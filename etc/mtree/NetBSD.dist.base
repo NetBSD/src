@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.233 2021/01/17 19:32:53 rillig Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.234 2021/03/31 04:58:01 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -301,6 +301,7 @@
 ./usr/libexec
 ./usr/libexec/ching
 ./usr/libexec/lpr
+./usr/libexec/named
 ./usr/libexec/postfix
 ./usr/mdec
 ./usr/pkg			ignore optional
