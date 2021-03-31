@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99 2019/08/06 05:37:30 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.100 2021/03/31 09:48:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -500,7 +500,7 @@ GLOBAL(eintrnames)
 	.data
 	.even
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
 	.text
 

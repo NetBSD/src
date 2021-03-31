@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 2021/01/25 13:08:05 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 2021/03/31 09:48:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1296,5 +1296,5 @@ GLOBAL(eintrnames)
 	.even
 
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
