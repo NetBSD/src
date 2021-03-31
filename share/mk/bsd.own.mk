@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1236 2021/03/07 10:42:26 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1237 2021/03/31 06:35:35 simonb Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -833,10 +833,6 @@ MKGDB.riscv64=	no
 MKKMOD.or1k=	no
 MKKMOD.riscv32=	no
 MKKMOD.riscv64=	no
-MKKMOD.mipsel=	no
-MKKMOD.mipseb=	no
-MKKMOD.mips64el=no
-MKKMOD.mips64eb=no
 
 # No profiling for or1k (yet)
 MKPROFILE.or1k=	no
