@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.62 2021/03/28 18:23:56 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.63 2021/03/31 13:52:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2868,4 +2868,20 @@ doc/3RDPARTY					(manually edited)
 
 	Import OpenSSL 1.1.1k.
 	[christos, ticket #1237]
+
+sys/arch/arm/cortex/gic.c			1.47
+
+	PR 55243: only target the boot cpu for real with SPI interrupts.
+	[skrll, ticket #1238]
+
+sys/arch/sparc/dev/audioamd.c			(apply patch)
+
+	PR 56078: fix sparc audioamd(4) locking.
+	[tsutsui, ticket #1239]
+
+sys/arch/sparc/sparc/trap.c			1.199
+
+	PR 55573: remove kernel message about disabled coprocessor
+	instructions.
+	[christos, ticket #1240]
 
