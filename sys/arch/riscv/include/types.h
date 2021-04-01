@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.9 2020/03/22 17:33:59 ad Exp $ */
+/* $NetBSD: types.h,v 1.10 2021/04/01 04:35:47 simonb Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef	_RISCV_TYPES_H_
-#define _RISCV_TYPES_H_
+#define	_RISCV_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -41,25 +41,25 @@ typedef __UINTPTR_TYPE__	paddr_t;
 typedef __UINTPTR_TYPE__	psize_t;
 typedef __UINTPTR_TYPE__	vaddr_t;
 typedef __UINTPTR_TYPE__	vsize_t;
-#define PRIxPADDR	PRIxPTR
-#define PRIxPSIZE	PRIxPTR
-#define PRIuPSIZE	PRIuPTR
-#define PRIxVADDR	PRIxPTR
-#define PRIxVSIZE	PRIxPTR
-#define PRIuVSIZE	PRIuPTR
+#define	PRIxPADDR	PRIxPTR
+#define	PRIxPSIZE	PRIxPTR
+#define	PRIuPSIZE	PRIuPTR
+#define	PRIxVADDR	PRIxPTR
+#define	PRIxVSIZE	PRIxPTR
+#define	PRIuVSIZE	PRIuPTR
 
 #ifdef _LP64			// match <riscv/reg.h>
-#define PRIxREGISTER	PRIx64
+#define	PRIxREGISTER	PRIx64
 typedef __int64_t register_t;
 typedef __uint64_t uregister_t;
 #else
-#define PRIxREGISTER	PRIx32
+#define	PRIxREGISTER	PRIx32
 typedef __int32_t register_t;
 typedef __uint32_t uregister_t;
 #endif
 typedef signed int register32_t;
 typedef unsigned int uregister32_t;
-#define PRIxREGISTER32	"x"
+#define	PRIxREGISTER32	"x"
 
 typedef unsigned short	tlb_asid_t;
 #endif
@@ -78,33 +78,33 @@ typedef __int64_t	__register_t;
 typedef __int32_t	__register_t;
 #endif
 
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
-#define __HAVE_FAST_SOFTINTS
-#define __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-#define __HAVE_CPU_COUNTER
-#define __HAVE_SYSCALL_INTERN
-#define __HAVE_CPU_DATA_FIRST
-#define __HAVE___LWP_GETPRIVATE_FAST
-#define __HAVE_COMMON___TLS_GET_ADDR
-#define __HAVE_TLS_VARIANT_I
+#define	__HAVE_FAST_SOFTINTS
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_CPU_COUNTER
+#define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_CPU_DATA_FIRST
+#define	__HAVE___LWP_GETPRIVATE_FAST
+#define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE_TLS_VARIANT_I
 #ifdef __LP64
-#define __HAVE_ATOMIC64_OPS
-#define __HAVE_CPU_UAREA_ROUTINES
+#define	__HAVE_ATOMIC64_OPS
+#define	__HAVE_CPU_UAREA_ROUTINES
 #endif
 
-//#define __HAVE_NEW_STYLE_BUS_H
-#define __HAVE_NO_BUS_DMA
+//#define	__HAVE_NEW_STYLE_BUS_H
+#define	__HAVE_NO_BUS_DMA
 #define	__HAVE_COMPAT_NETBSD32
 
 //#if defined(_KERNEL)
-//#define __HAVE_RAS
+//#define	__HAVE_RAS
 //#endif
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
-#define PCU_FPU		0
-#define PCU_UNIT_COUNT	1
+#define	PCU_FPU		0
+#define	PCU_UNIT_COUNT	1
 #endif
 
 /* XXX temporary */
