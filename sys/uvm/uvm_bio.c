@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.125 2021/03/13 15:29:55 skrll Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.126 2021/04/01 06:26:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.125 2021/03/13 15:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.126 2021/04/01 06:26:26 simonb Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.125 2021/03/13 15:29:55 skrll Exp $");
 #include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/bitops.h>		/* for ilog2() */
 
@@ -61,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.125 2021/03/13 15:29:55 skrll Exp $");
 static int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
 			  int, int, vm_prot_t, int);
 static struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
+static int	ubchash_stats(struct hashstat_sysctl *hs, bool fill);
 #ifdef UBC_USE_PMAP_DIRECT
 static int __noinline ubc_uiomove_direct(struct uvm_object *, struct uio *, vsize_t,
 			  int, int);
@@ -215,6 +217,8 @@ ubc_init(void)
 				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 		panic("ubc_init: failed to map ubc_object");
 	}
+
+	hashstat_register("ubchash", ubchash_stats);
 }
 
 void
@@ -1103,4 +1107,36 @@ ubc_purge(struct uvm_object *uobj)
 		umap->uobj = NULL;
 	}
 	rw_exit(ubc_object.uobj.vmobjlock);
+}
+
+static int
+ubchash_stats(struct hashstat_sysctl *hs, bool fill)
+{
+	struct ubc_map *umap;
+	uint64_t chain;
+
+	strlcpy(hs->hash_name, "ubchash", sizeof(hs->hash_name));
+	strlcpy(hs->hash_desc, "ubc object hash", sizeof(hs->hash_desc));
+	if (!fill)
+		return 0;
+
+	hs->hash_size = ubc_object.hashmask + 1;
+
+	for (size_t i = 0; i < hs->hash_size; i++) {
+		chain = 0;
+		rw_enter(ubc_object.uobj.vmobjlock, RW_READER);
+		LIST_FOREACH(umap, &ubc_object.hash[i], hash) {
+			chain++;
+		}
+		rw_exit(ubc_object.uobj.vmobjlock);
+		if (chain > 0) {
+			hs->hash_used++;
+			hs->hash_items += chain;
+			if (chain > hs->hash_maxchain)
+				hs->hash_maxchain = chain;
+		}
+		preempt_point();
+	}
+
+	return 0;
 }
