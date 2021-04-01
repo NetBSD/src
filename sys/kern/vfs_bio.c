@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.297 2020/07/31 04:07:30 chs Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.298 2021/04/01 06:25:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.297 2020/07/31 04:07:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.298 2021/04/01 06:25:59 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -251,6 +251,8 @@ biohist_init(void)
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
+
+static int     bufhash_stats(struct hashstat_sysctl *, bool);
 
 static kcondvar_t needbuffer_cv;
 
@@ -536,6 +538,7 @@ bufinit(void)
 
 	sysctl_kern_buf_setup();
 	sysctl_vm_buf_setup();
+	hashstat_register("bufhash", bufhash_stats);
 }
 
 void
@@ -1951,6 +1954,40 @@ sysctl_vm_buf_setup(void)
 				    "for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
+}
+
+static int
+bufhash_stats(struct hashstat_sysctl *hs, bool fill)
+{
+	buf_t *bp;
+	uint64_t chain;
+
+	strlcpy(hs->hash_name, "bufhash", sizeof(hs->hash_name));
+	strlcpy(hs->hash_desc, "buffer hash", sizeof(hs->hash_desc));
+	if (!fill)
+		return 0;
+
+	hs->hash_size = bufhash + 1;
+
+	for (size_t i = 0; i < hs->hash_size; i++) {
+		chain = 0;
+
+		mutex_enter(&bufcache_lock);
+		LIST_FOREACH(bp, &bufhashtbl[i], b_hash) {
+			chain++;
+		}
+		mutex_exit(&bufcache_lock);
+
+		if (chain > 0) {
+			hs->hash_used++;
+			hs->hash_items += chain;
+			if (chain > hs->hash_maxchain)
+				hs->hash_maxchain = chain;
+		}
+		preempt_point();
+	}
+
+	return 0;
 }
 
 #ifdef DEBUG
