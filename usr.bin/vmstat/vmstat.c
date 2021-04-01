@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.243 2021/03/03 08:25:16 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.244 2021/04/01 05:33:50 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.243 2021/03/03 08:25:16 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.244 2021/04/01 05:33:50 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1258,6 +1258,11 @@ dointr(int verbose)
 	unsigned long long inttotal, uptime;
 	int nintr, inamlen;
 	char *intrname, *ointrname;
+
+	if (memf == NULL) {
+		doevcnt(verbose, EVCNT_TYPE_INTR);
+		return;
+	}
 
 	inttotal = 0;
 	uptime = getuptime();
