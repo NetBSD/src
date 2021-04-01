@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1275 2021/03/31 04:38:30 christos Exp $
+# $NetBSD: mi,v 1.1276 2021/04/01 10:35:24 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1602,7 +1602,6 @@
 ./usr/libexec/makekey				base-crypto-bin
 ./usr/libexec/makewhatis			base-man-bin		!makemandb
 ./usr/libexec/named				base-bind-bin
-./usr/libexec/named/filter-aaaa.so		base-bind-bin
 ./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/pfspamd				base-obsolete		obsolete
