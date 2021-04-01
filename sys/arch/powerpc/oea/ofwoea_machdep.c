@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.59 2021/03/05 18:10:06 thorpej Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.60 2021/04/01 22:02:20 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.59 2021/03/05 18:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.60 2021/04/01 22:02:20 macallan Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -377,6 +377,14 @@ restore_ofmap(void)
 
 		if (va < 0xf0000000)	/* XXX */
 			continue;
+
+		/*
+		 * XXX
+		 * my beige G3 throws a DSI trap if we try to map the last page
+		 * of the firmware ROM
+		 */
+		if (pa == 0xffc00000 && size == 0x400000)
+			size = 0x3ff000;
 
 		while (size > 0) {
 			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
