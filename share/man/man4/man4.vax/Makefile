@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.16 2013/08/06 22:33:59 soren Exp $
+#	$NetBSD: Makefile,v 1.17 2021/04/01 00:03:01 riastradh Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	acc.4 ad.4 asc.4 autoconf.4 \
-	cons.4 crl.4 css.4 ct.4 \
+	cons.4 covid.4 crl.4 css.4 ct.4 \
 	ddn.4 de.4 dh.4 dhu.4 dl.4 dmc.4 dmf.4 dmv.4 dmz.4 dn.4 dz.4 \
 	ec.4 en.4 ex.4 \
 	fl.4 \
