@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.65 2021/01/23 19:38:53 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.66 2021/04/01 04:35:46 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -75,12 +75,12 @@ typedef struct label_t {
 typedef __uint32_t tlb_asid_t;		/* for booke */
 #endif
 
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
-#define __HAVE_CPU_COUNTER
-#define __HAVE_NEW_STYLE_BUS_H
-#define __HAVE_SYSCALL_INTERN
+#define	__HAVE_CPU_COUNTER
+#define	__HAVE_NEW_STYLE_BUS_H
+#define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_CPU_UAREA_ROUTINES
 #ifdef _LP64
