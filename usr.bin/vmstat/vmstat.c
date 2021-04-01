@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.244 2021/04/01 05:33:50 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.245 2021/04/01 06:23:14 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.244 2021/04/01 05:33:50 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.245 2021/04/01 06:23:14 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.244 2021/04/01 05:33:50 simonb Exp $");
 #include <nfs/nfsproto.h>
 #include <nfs/nfsnode.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -207,31 +208,23 @@ struct nlist intrnl[] =
  */
 struct nlist hashnl[] =
 {
-#define	X_NFSNODE	0
-	{ .n_name = "_nfsnodehash" },
-#define	X_NFSNODETBL	1
-	{ .n_name = "_nfsnodehashtbl" },
-#define	X_IHASH		2
-	{ .n_name = "_ihash" },
-#define	X_IHASHTBL	3
-	{ .n_name = "_ihashtbl" },
-#define	X_BUFHASH	4
+#define	X_BUFHASH	0
 	{ .n_name = "_bufhash" },
-#define	X_BUFHASHTBL	5
+#define	X_BUFHASHTBL	1
 	{ .n_name = "_bufhashtbl" },
-#define	X_UIHASH	6
+#define	X_UIHASH	2
 	{ .n_name = "_uihash" },
-#define	X_UIHASHTBL	7
+#define	X_UIHASHTBL	3
 	{ .n_name = "_uihashtbl" },
-#define	X_IFADDRHASH	8
+#define	X_IFADDRHASH	4
 	{ .n_name = "_in_ifaddrhash" },
-#define	X_IFADDRHASHTBL	9
+#define	X_IFADDRHASHTBL	5
 	{ .n_name = "_in_ifaddrhashtbl" },
-#define	X_VCACHEHASH	10
+#define	X_VCACHEHASH	6
 	{ .n_name = "_vcache_hashmask" },
-#define	X_VCACHETBL	11
+#define	X_VCACHETBL	7
 	{ .n_name = "_vcache_hashtab" },
-#define X_HASHNL_SIZE	12	/* must be last */
+#define X_HASHNL_SIZE	8	/* must be last */
 	{ .n_name = NULL },
 };
 
@@ -300,6 +293,7 @@ void	deref_kptr(const void *, void *, size_t, const char *);
 void	drvstats(int *);
 void	doevcnt(int verbose, int type);
 void	dohashstat(int, int, const char *);
+void	dohashstat_sysctl(int, int, const char *);
 void	dointr(int verbose);
 void	dopool(int, int);
 void	dopoolcache(int);
@@ -1925,6 +1919,9 @@ dohashstat(int verbose, int todo, const char *hashname)
 	u_long	hashsize, i;
 	int	used, items, chain, maxchain;
 
+	if (memf == NULL)
+		return dohashstat_sysctl(verbose, todo, hashname);
+
 	hashbuf = NULL;
 	hashbufsize = 0;
 
@@ -2055,6 +2052,75 @@ dohashstat(int verbose, int todo, const char *hashname)
 		    hashsize, used, used * 100.0 / hashsize,
 		    items, used ? (double)items / used : 0.0, maxchain);
 	}
+}
+
+void
+dohashstat_sysctl(int verbose, int todo, const char *hashname)
+{
+	struct hashstat_sysctl hash, *data, *hs;
+	int mib[3];
+	int error;
+	size_t i, len, miblen;
+
+
+	miblen = __arraycount(mib);
+	error = sysctlnametomib("kern.hashstat", mib, &miblen);
+	if (error)
+		err(EXIT_FAILURE, "nametomib kern.hashstat failed");
+	assert(miblen < 3);
+
+	if (todo & HASHLIST) {
+		mib[miblen] = CTL_DESCRIBE;
+		miblen++;
+	};
+
+	if (hashname) {
+		mib[miblen] = CTL_QUERY;
+		miblen++;
+		memset(&hash, 0, sizeof(hash));
+		strlcpy(hash.hash_name, hashname, sizeof(hash.hash_name));
+		len = sizeof(hash);
+		error = sysctl(mib, miblen, &hash, &len, &hash, len);
+		if (error == ENOENT) {
+			err(1, "hash '%s' not found", hashname);
+			return;
+		} else if (error) {
+			err(1, "sysctl kern.hashstat query failed");
+			return;
+		}
+
+		data = &hash;
+		len = 1;
+	} else {
+		data = asysctl(mib, miblen, &len);
+		if (data == NULL)
+			err(1, "failed to read kern.hashstat");
+		len /= sizeof(*data);
+	}
+
+	if (todo & HASHLIST) {
+		printf("Supported hashes:\n");
+		for (i = 0, hs = data; i < len; i++, hs++) {
+			printf("\t%-16s%s\n", hs->hash_name, hs->hash_desc);
+		}
+	} else {
+		printf("%-16s %8s %8s %8s %8s %8s %8s\n"
+		    "%-16s %8s %8s %8s %8s %8s %8s\n",
+		    "", "total", "used", "util", "num", "average", "maximum",
+		    "hash table", "buckets", "buckets", "%", "items", "chain",
+		    "chain");
+		for (i = 0, hs = data; i < len; i++, hs++) {
+			printf("%-16s %8"PRId64" %8"PRId64" %8.2f %8"PRId64
+			    " %8.2f %8"PRId64"\n",
+			    hs->hash_name, hs->hash_size, hs->hash_used,
+			    hs->hash_used * 100.0 / hs->hash_size, hs->hash_items,
+			    hs->hash_used ? (double)hs->hash_items / hs->hash_used : 0.0,
+			    hs->hash_maxchain);
+		}
+	}
+
+	if (!hashname && (data != NULL))
+		free(data);
 }
 
 /*
@@ -2254,7 +2320,7 @@ hist_traverse_sysctl(int todo, const char *histname)
  			warnx("kernel history is not compiled into the kernel.");
 			return;
 		} else
-			err(EXIT_FAILURE, "nametomib failed");
+			err(EXIT_FAILURE, "nametomib kern.hist failed");
 	}
  
 	/* get the list of nodenames below kern.hist */
