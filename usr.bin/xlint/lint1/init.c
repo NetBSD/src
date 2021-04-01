@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.184 2021/03/30 20:23:30 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.185 2021/04/01 14:20:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.184 2021/03/30 20:23:30 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.185 2021/04/01 14:20:30 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -126,7 +126,7 @@ struct brace_level {
 	size_t		bl_array_next_subscript;
 	bool		bl_array_of_unknown_size: 1;
 	bool		bl_scalar_done: 1;	/* for scalars */
-	bool		bl_omitted_braces: 1;	/* skip further checks */
+	bool		bl_confused: 1;		/* skip further checks */
 	struct designation bl_designation;	/* .member[123].member */
 	struct brace_level *bl_enclosing;
 };
@@ -608,8 +608,7 @@ static const type_t *
 brace_level_sub_type_array(const struct brace_level *bl)
 {
 
-	if (!bl->bl_type->t_incomplete_array &&
-	    !bl->bl_omitted_braces &&
+	if (!bl->bl_confused && !bl->bl_type->t_incomplete_array &&
 	    bl->bl_array_next_subscript >= (size_t)bl->bl_type->t_dim) {
 		/* too many array initializers, expected %d */
 		error(173, bl->bl_type->t_dim);
@@ -939,7 +938,7 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 		return;
 
 	bl = in->in_brace_level;
-	if (bl != NULL && bl->bl_omitted_braces)
+	if (bl != NULL && bl->bl_confused)
 		return;
 
 	debug_enter();
@@ -967,12 +966,13 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 	 * Hack to accept initializations with omitted braces, see
 	 * c99_6_7_8_p28_example5 in test d_c99_init.c.  Since both GCC and
 	 * Clang already warn about this at level -Wall, there is no point
-	 * in letting lint check this again.
+	 * in repeating the same check in lint.  If needed, support for these
+	 * edge cases could be added, but that would increase the complexity.
 	 */
 	if (is_scalar(tn->tn_type->t_tspec) &&
-	    tp->t_tspec == ARRAY &&
+	    (tp->t_tspec == ARRAY || is_struct_or_union(tp->t_tspec)) &&
 	    bl != NULL) {
-		bl->bl_omitted_braces = true;
+		bl->bl_confused = true;
 		goto done;
 	}
 

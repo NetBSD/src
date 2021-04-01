@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.29 2021/03/30 19:45:04 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.30 2021/04/01 14:20:30 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -275,8 +275,8 @@ int c99_6_7_8_p27_example4[4][3] = {
 struct {
 	int a[3], b;
 } c99_6_7_8_p28_example5[] = {
-	{ 1 },
-	2,			/* XXX *//* expect: cannot initialize */
+	{ 1 },		/* just parsed, not checked in detail */
+	2,		/* just parsed, not checked in detail */
 };
 
 short c99_6_7_8_p29_example6a[4][3][2] = {
