@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.534 2020/12/05 18:17:01 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.535 2021/04/01 04:41:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.534 2020/12/05 18:17:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.535 2021/04/01 04:41:38 simonb Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -548,6 +548,9 @@ main(void)
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
+#ifdef __HAVE_LEGACY_INTRCNT
+	evcnt_attach_legacy_intrcnt();
+#endif
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
 	cprng_fast_init();
