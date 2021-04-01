@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.231 2020/10/17 09:06:15 mlelstv Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.232 2021/04/01 06:22:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -726,6 +726,28 @@ struct evcnt_sysctl {
 
 #define	KERN_EVCNT_COUNT_ANY		0
 #define	KERN_EVCNT_COUNT_NONZERO	1
+
+
+/*
+ * kern.hashstat returns an array of these structures, which are designed
+ * to be immune to 32/64 bit emulation issues.
+ *
+ * Hash users can register a filler function to fill the hashstat_sysctl
+ * which can then be exposed via vmstat(1).
+ *
+ * See comments for hashstat_sysctl() in kern/subr_hash.c for details
+ * on sysctl(3) usage.
+ */
+struct hashstat_sysctl {
+	char		hash_name[SYSCTL_NAMELEN];
+	char		hash_desc[SYSCTL_NAMELEN];
+	uint64_t	hash_size;
+	uint64_t	hash_used;
+	uint64_t	hash_items;
+	uint64_t	hash_maxchain;
+};
+typedef int	(*hashstat_func_t)(struct hashstat_sysctl *, bool);
+void		hashstat_register(const char *, hashstat_func_t);
 
 /*
  * CTL_VM identifiers in <uvm/uvm_param.h>
