@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.254 2021/03/30 15:18:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.255 2021/04/01 15:06:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.254 2021/03/30 15:18:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.255 2021/04/01 15:06:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2233,10 +2233,6 @@ should_warn_about_pointer_cast(const type_t *tp, tspec_t nst,
 	if (nst == CHAR || nst == UCHAR)
 		return false;	/* for the sake of traditional C code */
 
-	/*
-	 * XXX: Why should it be ok to cast between arbitrary structs that
-	 * just happen to be of the same size?
-	 */
 	return portable_size_in_bits(nst) != portable_size_in_bits(ost);
 }
 
