@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.70 2021/01/23 19:38:52 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.71 2021/04/01 04:35:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_CPU_DATA_FIRST
-#define __HAVE_CPU_BOOTCONF
+#define	__HAVE_CPU_BOOTCONF
 #define	__HAVE_MD_CPU_OFFLINE
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
@@ -109,7 +109,7 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #include "opt_kasan.h"
 #include "opt_kmsan.h"
 #ifdef KASAN
-#define __HAVE_KASAN_INSTR_BUS
+#define	__HAVE_KASAN_INSTR_BUS
 #endif
 #if defined(__x86_64__) && !defined(XENPV)
 #if !defined(KASAN) && !defined(KMSAN)

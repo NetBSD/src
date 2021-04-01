@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.6 2021/01/23 19:38:53 christos Exp $ */
+/* $NetBSD: types.h,v 1.7 2021/04/01 04:35:46 simonb Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef	_OR1K_TYPES_H_
-#define _OR1K_TYPES_H_
+#define	_OR1K_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -44,12 +44,12 @@ typedef __UINTPTR_TYPE__	paddr_t;
 typedef __UINTPTR_TYPE__	psize_t;
 typedef __UINTPTR_TYPE__	vaddr_t;
 typedef __UINTPTR_TYPE__	vsize_t;
-#define PRIxPADDR	PRIxPTR
-#define PRIxPSIZE	PRIxPTR
-#define PRIuPSIZE	PRIuPTR
-#define PRIxVADDR	PRIxPTR
-#define PRIxVSIZE	PRIxPTR
-#define PRIuVSIZE	PRIuPTR
+#define	PRIxPADDR	PRIxPTR
+#define	PRIxPSIZE	PRIxPTR
+#define	PRIuPSIZE	PRIuPTR
+#define	PRIxVADDR	PRIxPTR
+#define	PRIxVSIZE	PRIxPTR
+#define	PRIuVSIZE	PRIuPTR
 
 typedef unsigned long int register_t;
 
@@ -65,23 +65,23 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
 typedef	unsigned int	__cpu_simple_lock_nv_t;
 typedef	unsigned long int	__register_t;
 
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
-#define __HAVE_FAST_SOFTINTS
-#define __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-#define __HAVE_CPU_COUNTER
-#define __HAVE_SYSCALL_INTERN
-#define __HAVE_NEW_STYLE_BUS_H
-#define __HAVE_MINIMAL_EMUL
-#define __HAVE_CPU_DATA_FIRST
-#define __HAVE___LWP_GETPRIVATE_FAST
-#define __HAVE_COMMON___TLS_GET_ADDR
-#define __HAVE_TLS_VARIANT_I
+#define	__HAVE_FAST_SOFTINTS
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_CPU_COUNTER
+#define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_NEW_STYLE_BUS_H
+#define	__HAVE_MINIMAL_EMUL
+#define	__HAVE_CPU_DATA_FIRST
+#define	__HAVE___LWP_GETPRIVATE_FAST
+#define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE_TLS_VARIANT_I
 #define	__HAVE_BUS_SPACE_8
 
 #if defined(_KERNEL)
-#define __HAVE_RAS
+#define	__HAVE_RAS
 #endif
 
 #endif	/* _OR1K_TYPES_H_ */

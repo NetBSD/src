@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.50 2016/01/23 22:31:20 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.51 2021/04/01 04:35:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,8 +66,8 @@ typedef int		register_t;
 typedef char	__cpu_simple_lock_nv_t;
 typedef int	__register_t;
 
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
 /* The VAX does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT

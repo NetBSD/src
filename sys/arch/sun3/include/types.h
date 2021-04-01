@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 2018/05/08 19:35:17 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.21 2021/04/01 04:35:47 simonb Exp $	*/
 
 #include <m68k/types.h>
 
@@ -6,4 +6,4 @@
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_MMAP
 #define	__HAVE_MM_MD_READWRITE
-#define __HAVE_NO_PMAP_STATS
+#define	__HAVE_NO_PMAP_STATS
