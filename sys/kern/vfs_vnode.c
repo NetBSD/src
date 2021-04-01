@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.126 2020/08/04 03:00:10 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.127 2021/04/01 06:26:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.126 2020/08/04 03:00:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.127 2021/04/01 06:26:14 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1194,6 +1194,38 @@ vcache_hash(const struct vcache_key *key)
 	return hash;
 }
 
+static int
+vcache_stats(struct hashstat_sysctl *hs, bool fill)
+{
+	vnode_impl_t *vip;
+	uint64_t chain;
+
+	strlcpy(hs->hash_name, "vcache", sizeof(hs->hash_name));
+	strlcpy(hs->hash_desc, "vnode cache hash", sizeof(hs->hash_desc));
+	if (!fill)
+		return 0;
+
+	hs->hash_size = vcache_hashmask + 1;
+
+	for (size_t i = 0; i < hs->hash_size; i++) {
+		chain = 0;
+		mutex_enter(&vcache_lock);
+		SLIST_FOREACH(vip, &vcache_hashtab[i], vi_hash) {
+			chain++;
+		}
+		mutex_exit(&vcache_lock);
+		if (chain > 0) {
+			hs->hash_used++;
+			hs->hash_items += chain;
+			if (chain > hs->hash_maxchain)
+				hs->hash_maxchain = chain;
+		}
+		preempt_point();
+	}
+
+	return 0;
+}
+
 static void
 vcache_init(void)
 {
@@ -1206,6 +1238,7 @@ vcache_init(void)
 	vcache_hashsize = desiredvnodes;
 	vcache_hashtab = hashinit(desiredvnodes, HASH_SLIST, true,
 	    &vcache_hashmask);
+	hashstat_register("vcache", vcache_stats);
 }
 
 static void
