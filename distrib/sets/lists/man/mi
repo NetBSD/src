@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1716 2021/03/01 21:01:39 jakllsch Exp $
+# $NetBSD: mi,v 1.1717 2021/04/01 00:03:01 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1955,6 +1955,7 @@
 ./usr/share/man/cat4/vax/asc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/vax/cons.0			man-sys-catman		.cat
+./usr/share/man/cat4/vax/covid.0		man-sys-catman		.cat
 ./usr/share/man/cat4/vax/crl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/css.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/ct.0			man-sys-catman		.cat
@@ -5108,6 +5109,7 @@
 ./usr/share/man/html4/vax/asc.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/autoconf.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/cons.html		man-sys-htmlman		html
+./usr/share/man/html4/vax/covid.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/crl.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/css.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/ct.html		man-sys-htmlman		html
@@ -8185,6 +8187,7 @@
 ./usr/share/man/man4/vax/asc.4			man-sys-man		.man
 ./usr/share/man/man4/vax/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/vax/cons.4			man-sys-man		.man
+./usr/share/man/man4/vax/covid.4		man-sys-man		.man
 ./usr/share/man/man4/vax/crl.4			man-sys-man		.man
 ./usr/share/man/man4/vax/css.4			man-sys-man		.man
 ./usr/share/man/man4/vax/ct.4			man-sys-man		.man
