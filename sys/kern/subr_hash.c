@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.7 2016/07/06 05:20:48 ozaki-r Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.8 2021/04/01 06:22:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,13 +37,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.7 2016/07/06 05:20:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.8 2021/04/01 06:22:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/pslist.h>
+#include <sys/rwlock.h>
+#include <sys/sysctl.h>
+
+static int hashstat_sysctl(SYSCTLFN_PROTO);
 
 static size_t
 hash_list_size(enum hashtype htype)
@@ -137,4 +141,120 @@ hashdone(void *hashtbl, enum hashtype htype, u_long hashmask)
 {
 	const size_t esize = hash_list_size(htype);
 	kmem_free(hashtbl, esize * (hashmask + 1));
+}
+
+/*
+ * Support for hash statistics (vmstat -H / vmstat -h hashname).
+ */
+
+struct hashstat {
+	const char *hs_name;
+	hashstat_func_t hs_func;
+	TAILQ_ENTRY(hashstat) hs_next;
+};
+TAILQ_HEAD(, hashstat) hashstat_list =
+    TAILQ_HEAD_INITIALIZER(hashstat_list);
+static krwlock_t hashstat_lock;
+
+void
+hashstat_register(const char *name, hashstat_func_t func)
+{
+	struct hashstat *hs;
+
+	hs = kmem_alloc(sizeof(*hs), KM_SLEEP);
+
+	hs->hs_name = name;
+	hs->hs_func = func;
+
+	rw_enter(&hashstat_lock, RW_WRITER);
+	TAILQ_INSERT_TAIL(&hashstat_list, hs, hs_next);
+	rw_exit(&hashstat_lock);
+}
+
+/*
+ * sysctl support for returning kernel hash statistics.
+ *
+ * We (ab)use CTL_DESCRIBE and CTL_QUERY:
+ * When passed an OID of CTL_DESCRIBE, return a list and description
+ * of the available hashes.
+ * When passed an OID of CTL_QUERY, use the hash name passed in the
+ * "new" hash input as the name of a single hash to return stats on.
+ */
+static int
+hashstat_sysctl(SYSCTLFN_ARGS)
+{
+	struct hashstat_sysctl hs;
+	struct hashstat *hash;
+	char queryname[SYSCTL_NAMELEN];
+	size_t written;
+	bool fill, query;
+	int error;
+
+	if (oldp == NULL) {
+		*oldlenp = 0;
+		TAILQ_FOREACH(hash, &hashstat_list, hs_next)
+			*oldlenp += sizeof(hs);
+		return 0;
+	}
+
+	error = 0;
+	written = 0;
+
+	if (namelen > 0 && name[0] == CTL_DESCRIBE)
+		fill = false;
+	else
+		fill = true;
+
+	if (namelen > 0 && name[0] == CTL_QUERY) {
+		const struct hashstat_sysctl *h = newp;
+
+		if (h == NULL) {
+			/* Can't QUERY one hash without supplying the hash name. */
+			return EINVAL;
+		}
+		query = true;
+		h = newp;
+		strlcpy(queryname, h->hash_name, sizeof(queryname));
+	} else {
+		query = false;
+	}
+
+	sysctl_unlock();
+	rw_enter(&hashstat_lock, RW_READER);
+	TAILQ_FOREACH(hash, &hashstat_list, hs_next) {
+		if (query &&
+		    (strncmp(hash->hs_name, queryname, sizeof(hash->hs_name)) != 0)) {
+			continue;
+		}
+
+		memset(&hs, 0, sizeof(hs));
+		error = hash->hs_func(&hs, fill);
+		if (error)
+			break;
+
+		error = sysctl_copyout(l, &hs, oldp, sizeof(hs));
+		if (error)
+			break;
+		written += sizeof(hs);
+		oldp = (char *)oldp + sizeof(hs);
+	}
+	rw_exit(&hashstat_lock);
+	sysctl_relock();
+
+	*oldlenp = written;
+	return error;
+}
+
+
+SYSCTL_SETUP(sysctl_hash_setup, "sysctl hash stats setup")
+{
+
+	rw_init(&hashstat_lock);	/* as good a place as any for this */
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT,
+		       "hashstat", SYSCTL_DESCR("kernel hash statistics"),
+		       hashstat_sysctl, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
 }
