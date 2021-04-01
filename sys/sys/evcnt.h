@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.8 2011/01/29 18:21:22 matt Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.9 2021/04/01 04:41:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -103,6 +103,10 @@ TAILQ_HEAD(evcntlist, evcnt);
 #define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
 #define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
 #define	EVCNT_TYPE_TRAP		2	/* processor trap/execption */
+
+#ifdef __HAVE_LEGACY_INTRCNT
+void evcnt_attach_legacy_intrcnt(void);
+#endif
 
 /*
  * initializer for an event count structure.  the lengths are initted and

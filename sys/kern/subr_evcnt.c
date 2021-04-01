@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.13 2018/11/24 17:40:37 maxv Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.14 2021/04/01 04:41:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.13 2018/11/24 17:40:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.14 2021/04/01 04:41:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -85,6 +85,25 @@ __KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.13 2018/11/24 17:40:37 maxv Exp $")
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+
+/*
+ * Everything related to __HAVE_LEGACY_INTRCNT can disappear once
+ * no more ports are using old-style intrcnt/intrnames interrupt
+ * accounting.  The follow files have __HAVE_LEGACY_INTRCNT code:
+ *
+ *   sys/kern/init_main.c
+ *   sys/kern/subr_evcnt.c
+ *   sys/sys/evcnt.h
+ *   sys/arch/<port>/include/types.h
+ */
+#ifdef _RUMPKERNEL
+/* RUMP doesn't need/want to know about intrcnts */
+#undef __HAVE_LEGACY_INTRCNT
+#endif
+
+#ifdef __HAVE_LEGACY_INTRCNT
+static void evcnt_update_intrcnt(void);
+#endif
 
 /* list of all events */
 struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
@@ -271,6 +290,9 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 	needed = 0;
 
 	mutex_enter(&evcnt_lock);
+#ifdef __HAVE_LEGACY_INTRCNT
+	evcnt_update_intrcnt();
+#endif
 	TAILQ_FOREACH(ev, &allevents, ev_list) {
 		if (filter != EVCNT_TYPE_ANY && filter != ev->ev_type)
 			continue;
@@ -356,3 +378,40 @@ SYSCTL_SETUP(sysctl_evcnt_setup, "sysctl kern.evcnt subtree setup")
 		       sysctl_doevcnt, 0, NULL, 0,
 		       CTL_KERN, KERN_EVCNT, CTL_EOL);
 }
+
+#ifdef __HAVE_LEGACY_INTRCNT
+extern long intrcnt[], eintrcnt[];
+extern char intrnames[];
+static size_t nintr;
+struct evcnt *intr_evcnts;
+/*
+ * Remove the following when the last intrcnt/intrnames user is cleaned up.
+ */
+void
+evcnt_attach_legacy_intrcnt(void)
+{
+	size_t i;
+	const char *cp;
+
+	nintr = ((intptr_t)eintrcnt - (intptr_t)intrcnt) / sizeof(long);
+	intr_evcnts = kmem_alloc(sizeof(struct evcnt) * nintr, KM_SLEEP);
+	for (cp = intrnames, i = 0; i < nintr; i++) {
+		evcnt_attach_dynamic(&intr_evcnts[i], EVCNT_TYPE_INTR,
+		    NULL, "cpu", cp);
+		cp += strlen(cp) + 1;
+	}
+}
+
+static void
+evcnt_update_intrcnt(void)
+{
+	size_t i;
+
+	KASSERT(nintr > 0);
+	KASSERT(intr_evcnts != NULL);
+
+	for (i = 0; i < nintr; i++) {
+		intr_evcnts[i].ev_count = intrcnt[i];
+	}
+}
+#endif
