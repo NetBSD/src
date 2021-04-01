@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.11 2019/03/01 03:03:19 christos Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.12 2021/04/01 06:25:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.11 2019/03/01 03:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.12 2021/04/01 06:25:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,37 @@ sysctl_kern_uidinfo_setup(void)
 		       CTL_CREATE, CTL_EOL);
 }
 
+static int
+uid_stats(struct hashstat_sysctl *hs, bool fill)
+{
+	struct uidinfo *uip;
+	uint64_t chain;
+
+	strlcpy(hs->hash_name, "uihash", sizeof(hs->hash_name));
+	strlcpy(hs->hash_desc, "user info (uid->used proc) hash",
+	    sizeof(hs->hash_desc));
+	if (!fill)
+		return 0;
+
+	hs->hash_size = uihash + 1;
+
+	for (size_t i = 0; i < hs->hash_size; i++) {
+		chain = 0;
+		SLIST_FOREACH(uip, &uihashtbl[i], ui_hash) {
+			membar_datadep_consumer();
+			chain++;
+		}
+		if (chain > 0) {
+			hs->hash_used++;
+			hs->hash_items += chain;
+			if (chain > hs->hash_maxchain)
+				hs->hash_maxchain = chain;
+		}
+	}
+
+	return 0;
+}
+
 void
 uid_init(void)
 {
@@ -151,6 +182,7 @@ uid_init(void)
 	 */
 	(void)uid_find(0);
 	sysctl_kern_uidinfo_setup();
+	hashstat_register("uihash", uid_stats);
 }
 
 struct uidinfo *
