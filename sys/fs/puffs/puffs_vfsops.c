@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.125 2020/02/27 22:12:53 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.126 2021/04/01 19:00:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.125 2020/02/27 22:12:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.126 2021/04/01 19:00:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -501,6 +501,9 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 	 *
 	 * XXX: cache the copy in non-error case
 	 */
+	if (!error) {
+		puffs_statvfs_to_statvfs(&statvfs_msg->pvfsr_sb, sbp);
+	}
 	copy_statvfs_info(sbp, mp);
 	if (!error) {
 		statvfs_to_puffs_statvfs(sbp, &statvfs_msg->pvfsr_sb);
