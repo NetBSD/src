@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.255 2021/04/01 15:06:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.256 2021/04/02 09:52:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.255 2021/04/01 15:06:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.256 2021/04/02 09:52:36 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -181,7 +181,7 @@ new_constant_node(type_t *tp, val_t *v)
 {
 	tnode_t	*n;
 
-	n = getnode();
+	n = expr_zalloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = tp;
 	n->tn_val = tgetblk(sizeof *n->tn_val);
@@ -197,7 +197,7 @@ new_integer_constant_node(tspec_t t, int64_t q)
 {
 	tnode_t	*n;
 
-	n = getnode();
+	n = expr_zalloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = gettyp(t);
 	n->tn_val = tgetblk(sizeof *n->tn_val);
@@ -279,7 +279,7 @@ new_name_node(sym_t *sym, int follow_token)
 
 	lint_assert(sym->s_kind == FVFT || sym->s_kind == FMEMBER);
 
-	n = getnode();
+	n = expr_zalloc_tnode();
 	n->tn_type = sym->s_type;
 	if (sym->s_scl != CTCONST) {
 		n->tn_op = NAME;
@@ -303,7 +303,7 @@ new_string_node(strg_t *strg)
 
 	len = strg->st_len;
 
-	n = getnode();
+	n = expr_zalloc_tnode();
 
 	n->tn_op = STRING;
 	n->tn_type = tincref(gettyp(strg->st_tspec), ARRAY);
@@ -1809,7 +1809,7 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 	uint64_t rnum;
 #endif
 
-	ntn = getnode();
+	ntn = expr_zalloc_tnode();
 
 	ntn->tn_op = op;
 	ntn->tn_type = type;
@@ -2056,7 +2056,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		check_pointer_conversion(op, tn, tp);
 	}
 
-	ntn = getnode();
+	ntn = expr_zalloc_tnode();
 	ntn->tn_op = CVT;
 	ntn->tn_type = tp;
 	ntn->tn_cast = op == CVT;
@@ -3501,7 +3501,7 @@ cast(tnode_t *tn, type_t *tp)
 		}
 		for (m = str->sou_first_member; m != NULL; m = m->s_next) {
 			if (sametype(m->s_type, tn->tn_type)) {
-				tn = getnode();
+				tn = expr_zalloc_tnode();
 				tn->tn_op = CVT;
 				tn->tn_type = tp;
 				tn->tn_cast = true;
