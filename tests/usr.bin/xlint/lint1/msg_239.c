@@ -1,7 +1,18 @@
-/*	$NetBSD: msg_239.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_239.c,v 1.3 2021/04/02 22:38:42 rillig Exp $	*/
 # 3 "msg_239.c"
 
 // Test for message: constant argument to NOT [239]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -h */
+
+_Bool
+example(int n)
+{
+	_Bool b;
+
+	b = !0;		/* expect: constant in conditional context, 239 */
+	b = !1;		/* expect: constant in conditional context, 239 */
+	b = !(n > 1);
+
+	return b;
+}
