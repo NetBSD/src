@@ -1,0 +1,32 @@
+#	$NetBSD: std.dht,v 1.1 2021/04/02 07:00:33 rin Exp $
+#
+# Standard/required options for DHT Walnut 405GP Evaluation Board.
+
+machine	evbppc powerpc
+include		"conf/std"	# MI standard options
+
+# standard ("mandatory") kernel options.
+options 	PPC_IBM4XX	# IBM 40x family
+
+options 	IBM405_ERRATA77
+
+# Executable support:
+options 	EXEC_ELF32	# (native) ELF32 binary support
+options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
+options 	EXEC_SCRIPT	# shell script support
+
+makeoptions	TEXTADDR=0x100000
+makeoptions	BOARDTYPE="dht"
+makeoptions	PPCDIR="ibm4xx"
+makeoptions	NEED_BINARY="yes"
+
+options 	PPC_INTR_IMPL="<powerpc/intr.h>"
+options 	PPC_PCI_MACHDEP_IMPL="<powerpc/pci_machdep.h>"
+options 	KERNBASE=0x100000
+
+options 	INTSTK=16384
+
+options 	EVBPPC_HAS_MBR
+
+include		"arch/powerpc/conf/files.ibm4xx"
+include		"arch/evbppc/conf/files.dht"
