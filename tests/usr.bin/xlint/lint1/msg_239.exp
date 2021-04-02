@@ -1,1 +1,4 @@
-msg_239.c(6): error: syntax error ':' [249]
+msg_239.c(13): warning: constant in conditional context [161]
+msg_239.c(13): warning: constant argument to NOT [239]
+msg_239.c(14): warning: constant in conditional context [161]
+msg_239.c(14): warning: constant argument to NOT [239]
