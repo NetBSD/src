@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.14 2021/04/01 04:41:38 simonb Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.15 2021/04/02 10:39:22 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.14 2021/04/01 04:41:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.15 2021/04/02 10:39:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -380,7 +380,7 @@ SYSCTL_SETUP(sysctl_evcnt_setup, "sysctl kern.evcnt subtree setup")
 }
 
 #ifdef __HAVE_LEGACY_INTRCNT
-extern long intrcnt[], eintrcnt[];
+extern u_int intrcnt[], eintrcnt[];
 extern char intrnames[];
 static size_t nintr;
 struct evcnt *intr_evcnts;
