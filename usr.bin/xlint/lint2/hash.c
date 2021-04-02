@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.14 2021/03/26 20:31:07 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.15 2021/04/02 12:16:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.14 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.15 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 /*
@@ -66,7 +66,7 @@ _inithash(hte_t ***tablep)
 	if (tablep == NULL)
 		tablep = &htab;
 
-	*tablep = xcalloc(HSHSIZ2, sizeof **tablep);
+	*tablep = xcalloc(HSHSIZ2, sizeof(**tablep));
 }
 
 /*
@@ -80,8 +80,8 @@ hash(const char *s)
 
 	v = 0;
 	for (us = (const u_char *)s; *us != '\0'; us++) {
-		v = (v << sizeof v) + *us;
-		v ^= v >> (sizeof v * CHAR_BIT - sizeof v);
+		v = (v << sizeof(v)) + *us;
+		v ^= v >> (sizeof(v) * CHAR_BIT - sizeof(v));
 	}
 	return v % HSHSIZ2;
 }
@@ -109,7 +109,7 @@ _hsearch(hte_t **table, const char *s, bool mknew)
 		return hte;
 
 	/* create a new hte */
-	hte = xmalloc(sizeof *hte);
+	hte = xmalloc(sizeof(*hte));
 	hte->h_name = xstrdup(s);
 	hte->h_used = false;
 	hte->h_def = false;

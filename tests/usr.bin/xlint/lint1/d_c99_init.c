@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.30 2021/04/01 14:20:30 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.31 2021/04/02 12:16:50 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -185,7 +185,7 @@ struct point points[] = {
 		 * extend_if_array_of_unknown_size, setcomplete is called too
 		 * early.
 		 */
-		sizeof points,
+		sizeof(points),
 		4
 	}
 };
