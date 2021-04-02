@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.37 2021/03/27 12:32:19 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.38 2021/04/02 09:39:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.37 2021/03/27 12:32:19 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.38 2021/04/02 09:39:25 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -172,37 +172,37 @@ get_filename_id(const char *s)
  */
 #define	ML_INC	((size_t)32)		/* Increment for length of *mblks */
 
-typedef struct mbl {
+typedef struct memory_block {
 	void	*blk;			/* beginning of memory block */
 	void	*ffree;			/* first free byte */
 	size_t	nfree;			/* # of free bytes */
 	size_t	size;			/* total size of memory block */
-	struct	mbl *nxt;		/* next block */
-} mbl_t;
+	struct	memory_block *nxt;	/* next block */
+} memory_block;
 
 /*
  * Array of pointers to lists of memory blocks. mem_block_level is used as
  * index into this array.
  */
-static	mbl_t	**mblks;
+static	memory_block	**mblks;
 
 /* number of elements in *mblks */
 static	size_t	nmblks;
 
 /* free list for memory blocks */
-static	mbl_t	*frmblks;
+static	memory_block	*frmblks;
 
 /* length of new allocated memory blocks */
 static	size_t	mblklen;
 
-static	void	*xgetblk(mbl_t **, size_t);
-static	void	xfreeblk(mbl_t **);
-static	mbl_t	*xnewblk(void);
+static	void	*xgetblk(memory_block **, size_t);
+static	void	xfreeblk(memory_block **);
+static	memory_block *xnewblk(void);
 
-static mbl_t *
+static memory_block *
 xnewblk(void)
 {
-	mbl_t	*mb = xmalloc(sizeof *mb);
+	memory_block	*mb = xmalloc(sizeof *mb);
 
 	/* use mmap instead of malloc to avoid malloc's size overhead */
 	mb->blk = xmapalloc(mblklen);
@@ -213,9 +213,9 @@ xnewblk(void)
 
 /* Allocate new memory, initialized with zero. */
 static void *
-xgetblk(mbl_t **mbp, size_t s)
+xgetblk(memory_block **mbp, size_t s)
 {
-	mbl_t	*mb;
+	memory_block	*mb;
 	void	*p;
 	size_t	t = 0;
 
@@ -264,9 +264,9 @@ xgetblk(mbl_t **mbp, size_t s)
  * used memory to zero.
  */
 static void
-xfreeblk(mbl_t **fmbp)
+xfreeblk(memory_block **fmbp)
 {
-	mbl_t	*mb;
+	memory_block	*mb;
 
 	while ((mb = *fmbp) != NULL) {
 		*fmbp = mb->nxt;
@@ -323,7 +323,7 @@ freeblk(void)
 	freelblk(mem_block_level);
 }
 
-static	mbl_t	*tmblk;
+static	memory_block	*tmblk;
 
 /*
  * Return zero-initialized memory that is freed at the end of the current
@@ -358,10 +358,10 @@ tfreeblk(void)
  * is not freed by the next tfreeblk() call. The pointer returned can be
  * used to restore the memory.
  */
-mbl_t *
+memory_block *
 tsave(void)
 {
-	mbl_t	*tmem;
+	memory_block	*tmem;
 
 	tmem = tmblk;
 	tmblk = NULL;
@@ -374,7 +374,7 @@ tsave(void)
  * tfreeblk() frees the restored memory.
  */
 void
-trestor(mbl_t *tmem)
+trestor(memory_block *tmem)
 {
 
 	tfreeblk();
