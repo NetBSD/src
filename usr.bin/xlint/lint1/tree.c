@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.260 2021/04/02 15:06:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.261 2021/04/02 16:17:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.260 2021/04/02 15:06:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.261 2021/04/02 16:17:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -695,7 +695,7 @@ cconv(tnode_t *tn)
 		if (!tn->tn_lvalue) {
 			/* XXX print correct operator */
 			/* %soperand of '%s' must be lvalue */
-			gnuism(114, "", modtab[ADDR].m_name);
+			gnuism(114, "", op_name(ADDR));
 		}
 		tn = new_tnode(ADDR,
 		    expr_derive_type(tn->tn_type->t_subt, PTR), tn, NULL);
@@ -774,7 +774,7 @@ is_typeok_bool_operand(const tnode_t *tn)
 }
 
 static bool
-typeok_incdec(const mod_t *mp, const tnode_t *tn, const type_t *tp)
+typeok_incdec(op_t op, const tnode_t *tn, const type_t *tp)
 {
 	/* operand has scalar type (checked in typeok) */
 	if (!tn->tn_lvalue) {
@@ -786,12 +786,12 @@ typeok_incdec(const mod_t *mp, const tnode_t *tn, const type_t *tp)
 			error(163);
 		}
 		/* %soperand of '%s' must be lvalue */
-		error(114, "", mp->m_name);
+		error(114, "", op_name(op));
 		return false;
 	} else if (tp->t_const) {
 		if (!tflag)
 			/* %soperand of '%s' must be modifiable lvalue */
-			warning(115, "", mp->m_name);
+			warning(115, "", op_name(op));
 	}
 	return true;
 }
@@ -1334,7 +1334,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case DECAFT:
 	case INCBEF:
 	case DECBEF:
-		if (!typeok_incdec(mp, ln, ltp))
+		if (!typeok_incdec(op, ln, ltp))
 			return false;
 		break;
 	case ADDR:
@@ -2877,7 +2877,7 @@ build_colon(tnode_t *ln, tnode_t *rn)
 		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
 		if (is_incomplete(ln->tn_type)) {
 			/* unknown operand size, op %s */
-			error(138, modtab[COLON].m_name);
+			error(138, op_name(COLON));
 			return NULL;
 		}
 		rtp = ln->tn_type;
@@ -3183,7 +3183,7 @@ fold(tnode_t *tn)
 	    (q & ~mask) != 0)) {
 		if (hflag)
 			/* integer overflow detected, op %s */
-			warning(141, modtab[tn->tn_op].m_name);
+			warning(141, op_name(tn->tn_op));
 	}
 
 	v->v_quad = xsign(q, t, -1);
@@ -3317,7 +3317,7 @@ fold_float(tnode_t *tn)
 	    (t == DOUBLE &&
 	     (v->v_ldbl > DBL_MAX || v->v_ldbl < -DBL_MAX))) {
 		/* floating point overflow detected, op %s */
-		warning(142, modtab[tn->tn_op].m_name);
+		warning(142, op_name(tn->tn_op));
 		if (t == FLOAT) {
 			v->v_ldbl = v->v_ldbl < 0 ? -FLT_MAX : FLT_MAX;
 		} else if (t == DOUBLE) {
@@ -3878,7 +3878,7 @@ display_expression(const tnode_t *tn, int offs)
 		(void)printf("%*s%s\n", offs, "", "NULL");
 		return;
 	}
-	(void)printf("%*sop %s  ", offs, "", modtab[tn->tn_op].m_name);
+	(void)printf("%*sop %s  ", offs, "", op_name(tn->tn_op));
 
 	if (tn->tn_op == NAME) {
 		(void)printf("%s: %s ",
@@ -4173,11 +4173,9 @@ static void
 check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt;
-	const mod_t *mp;
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
-	mp = &modtab[op];
 
 	if (ln->tn_op != CON && rn->tn_op != CON)
 		return;
@@ -4189,14 +4187,14 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	    (rn->tn_val->v_quad < 0 ||
 	     rn->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)))) {
 		/* nonportable character comparison, op %s */
-		warning(230, mp->m_name);
+		warning(230, op_name(op));
 		return;
 	}
 	if ((hflag || pflag) && rt == CHAR && ln->tn_op == CON &&
 	    (ln->tn_val->v_quad < 0 ||
 	     ln->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)))) {
 		/* nonportable character comparison, op %s */
-		warning(230, mp->m_name);
+		warning(230, op_name(op));
 		return;
 	}
 	if (is_uinteger(lt) && !is_uinteger(rt) &&
@@ -4204,10 +4202,10 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		if (rn->tn_val->v_quad < 0) {
 			/* comparison of %s with %s, op %s */
 			warning(162, type_name(ln->tn_type),
-			    "negative constant", mp->m_name);
+			    "negative constant", op_name(op));
 		} else if (op == LT || op == GE || (hflag && op == LE)) {
 			/* comparison of %s with %s, op %s */
-			warning(162, type_name(ln->tn_type), "0", mp->m_name);
+			warning(162, type_name(ln->tn_type), "0", op_name(op));
 		}
 		return;
 	}
@@ -4216,10 +4214,10 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		if (ln->tn_val->v_quad < 0) {
 			/* comparison of %s with %s, op %s */
 			warning(162, "negative constant",
-			    type_name(rn->tn_type), mp->m_name);
+			    type_name(rn->tn_type), op_name(op));
 		} else if (op == GT || op == LE || (hflag && op == GE)) {
 			/* comparison of %s with %s, op %s */
-			warning(162, "0", type_name(rn->tn_type), mp->m_name);
+			warning(162, "0", type_name(rn->tn_type), op_name(op));
 		}
 		return;
 	}
