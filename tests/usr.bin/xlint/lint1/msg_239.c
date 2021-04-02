@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_239.c,v 1.3 2021/04/02 22:38:42 rillig Exp $	*/
+/*	$NetBSD: msg_239.c,v 1.4 2021/04/02 22:41:54 rillig Exp $	*/
 # 3 "msg_239.c"
 
-// Test for message: constant argument to NOT [239]
+// Test for message: constant argument to '!' [239]
 
 /* lint1-extra-flags: -h */
 

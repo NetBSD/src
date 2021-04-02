@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.100 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.101 2021/04/02 22:41:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.100 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.101 2021/04/02 22:41:53 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -293,7 +293,7 @@ const	char *msgs[] = {
 	"static function %s unused",				      /* 236 */
 	"redeclaration of formal parameter %s",			      /* 237 */
 	"initialization of union is illegal in traditional C",	      /* 238 */
-	"constant argument to NOT",				      /* 239 */
+	"constant argument to '!'",				      /* 239 */
 	"assignment of different structures (%s != %s)",	      /* 240 */
 	"dubious operation on enum, op %s",			      /* 241 */
 	"combination of '%s' and '%s', op %s",			      /* 242 */
