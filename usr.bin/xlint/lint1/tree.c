@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.263 2021/04/02 17:01:39 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.264 2021/04/02 17:10:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.263 2021/04/02 17:01:39 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.264 2021/04/02 17:10:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2621,12 +2621,12 @@ merge_qualifiers(type_t *tp1, const type_t *tp2)
 	bool v1 = tp1->t_subt->t_volatile;
 	bool v2 = tp2->t_subt->t_volatile;
 
-	if (c1 == (c1 | c2) && v2 == (v1 | v2))
+	if (c1 == (c1 | c2) && v1 == (v1 | v2))
 		return tp1;
 
 	nstp = expr_dup_type(tp1->t_subt);
-	nstp->t_const = c1 | c2;
-	nstp->t_volatile = v1 | v2;
+	nstp->t_const |= c2;
+	nstp->t_volatile |= v2;
 
 	ntp = expr_dup_type(tp1);
 	ntp->t_subt = nstp;
