@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.12.66.1 2021/03/21 21:09:08 thorpej Exp $ */
+/* $NetBSD: vncfb.c,v 1.12.66.2 2021/04/02 22:17:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.12.66.1 2021/03/21 21:09:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.12.66.2 2021/04/02 22:17:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,14 +273,16 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 	kaa.accessops = &vncfb_kbd_accessops;
 	kaa.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &kaa,
-	    wskbddevprint);
+	sc->sc_wskbddev = config_found(self, &kaa, wskbddevprint,
+	    CFARG_IATTR, "wskbddev",
+	    CFARG_EOL);
 
 	maa.accessops = &vncfb_mouse_accessops;
 	maa.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &maa,
-	    wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &maa, wsmousedevprint,
+	    CFARG_IATTR, "wsmousedev",
+	    CFARG_EOL);
 }
 
 static void

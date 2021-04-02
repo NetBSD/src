@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.70.32.1 2021/03/21 21:09:02 thorpej Exp $	*/
+/*	$NetBSD: ofb.c,v 1.70.32.2 2021/04/02 22:17:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.70.32.1 2021/03/21 21:09:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.70.32.2 2021/04/02 22:17:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -219,7 +219,9 @@ ofbattach(device_t parent, device_t self, void *aux)
 
 	config_found(self, &a, wsemuldisplaydevprint, CFARG_EOL);
 
-	config_found_ia(self, "drm", aux, ofb_drm_print);
+	config_found(self, aux, ofb_drm_print,
+	    CFARG_IATTR, "drm",
+	    CFARG_EOL);
 }
 
 static int

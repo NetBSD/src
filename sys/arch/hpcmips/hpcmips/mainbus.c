@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.31.70.1 2021/03/20 19:33:35 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31.70.2 2021/04/02 22:17:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.70.1 2021/03/20 19:33:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.70.2 2021/04/02 22:17:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* APM */
-	config_found_ia(self, "hpcapmif", NULL, mainbus_print);
+	config_found(self, NULL, mainbus_print,
+	    CFARG_IATTR, "hpcapmif",
+	    CFARG_EOL);
 }
 
 int

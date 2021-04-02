@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.57.4.1 2021/03/22 02:00:59 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.57.4.2 2021/04/02 22:17:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.57.4.1 2021/03/22 02:00:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.57.4.2 2021/04/02 22:17:43 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -135,8 +135,9 @@ cardslotattach(device_t parent, device_t self, void *aux)
 
 	DPRINTF(("%s attaching CardBus bus...\n", device_xname(self)));
 	if (cba != NULL) {
-		csc = device_private(config_found_ia(self, "cbbus", cba,
-				     cardslot_cb_print));
+		csc = device_private(config_found(self, cba, cardslot_cb_print,
+		    CFARG_IATTR, "cbbus",
+		    CFARG_EOL));
 		if (csc) {
 			/* cardbus found */
 			DPRINTF(("%s: found cardbus on %s\n", __func__,
