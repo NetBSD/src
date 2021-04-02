@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.184 2020/09/22 02:53:52 snj Exp $
+.\"	$NetBSD: contents,v 1.185 2021/04/02 07:09:11 rin Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,6 +206,10 @@ A kernel suitable for booting on O2.
 .\}
 .
 .if \n[evbppc] \{\
+.			It Pa netbsd-DHT.gz
+A gzipped kernel (in ELF format) for the DHT Walnut 405GP evaluation board.
+.			It Pa netbsd.bin-DHT.gz
+Same as the above, but in the raw binary format expected by the firmware.
 .			It Pa netbsd-EV64260.gz
 A gzipped kernel (in ELF format) for the Marvell EV-64260.
 .			It Pa netbsd.img-EV64260.gz
@@ -743,6 +747,15 @@ kernel, which will use multiple processors (if present), named
 .\}
 .el \{\
 .ie \n[evbppc] \{\
+.It Sy kern-DHT
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the raw binary format needed by the bootloader as
+.Pa /netbsd.bin .
+These kernels are specific to the DHT Walnut 405GP evaluation board.
 .It Sy kern-EV64260
 This set contains a
 .Nx*M

@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.8 2020/08/07 00:43:48 snj Exp $
+.\"	$NetBSD: contents,v 1.9 2021/04/02 07:09:11 rin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,6 +55,14 @@ conventions for indicating italic and bold display.
 .		It Pa kernel/
 .
 .		(tag netbsd.gz -compact \" binary/kernel
+.
+.			It Pa netbsd-DHT.gz
+.
+A gzipped kernel (in ELF format) for the DHT Walnut 405GP evaluation board.
+.
+.			It Pa netbsd.bin-DHT.gz
+.
+Same as the above, but in the raw binary format expected by the firmware.
 .
 .			It Pa netbsd-EV64260.gz
 .
@@ -222,6 +230,15 @@ This set includes the games and their manual pages.
 .
 .\" MD kernel set(s) -------------------------------------------------
 .
+.It Sy kern-DHT
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the raw binary format needed by the bootloader as
+.Pa /netbsd.bin .
+These kernels are specific to the DHT Walnut 405GP evaluation board.
 .It Sy kern-EV64260
 This set contains a
 .Nx*M
