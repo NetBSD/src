@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.257 2021/04/02 10:13:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.258 2021/04/02 11:53:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.257 2021/04/02 10:13:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.258 2021/04/02 11:53:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -711,7 +711,7 @@ cconv(tnode_t *tn)
 
 	/* lvalue to rvalue */
 	if (tn->tn_lvalue) {
-		tp = tduptyp(tn->tn_type);
+		tp = expr_dup_type(tn->tn_type);
 		tp->t_const = tp->t_volatile = false;
 		tn = new_tnode(LOAD, tp, tn, NULL);
 	}
@@ -1932,7 +1932,7 @@ promote(op_t op, bool farg, tnode_t *tn)
 	}
 
 	if (t != tn->tn_type->t_tspec) {
-		ntp = tduptyp(tn->tn_type);
+		ntp = expr_dup_type(tn->tn_type);
 		ntp->t_tspec = t;
 		/*
 		 * Keep t_is_enum so we are later able to check compatibility
@@ -2018,12 +2018,12 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	}
 
 	if (t != lt) {
-		ntp = tduptyp((*lnp)->tn_type);
+		ntp = expr_dup_type((*lnp)->tn_type);
 		ntp->t_tspec = t;
 		*lnp = convert(op, 0, ntp, *lnp);
 	}
 	if (t != rt) {
-		ntp = tduptyp((*rnp)->tn_type);
+		ntp = expr_dup_type((*rnp)->tn_type);
 		ntp->t_tspec = t;
 		*rnp = convert(op, 0, ntp, *rnp);
 	}
@@ -2627,8 +2627,8 @@ merge_qualifiers(type_t **tpp, type_t *tp1, type_t *tp2)
 		return;
 	}
 
-	*tpp = tduptyp(*tpp);
-	(*tpp)->t_subt = tduptyp((*tpp)->t_subt);
+	*tpp = expr_dup_type(*tpp);
+	(*tpp)->t_subt = expr_dup_type((*tpp)->t_subt);
 	(*tpp)->t_subt->t_const =
 		tp1->t_subt->t_const | tp2->t_subt->t_const;
 	(*tpp)->t_subt->t_volatile =
@@ -3703,7 +3703,7 @@ check_prototype_argument(
 	bool	dowarn;
 
 	ln = xcalloc(1, sizeof *ln);
-	ln->tn_type = tduptyp(tp);
+	ln->tn_type = expr_dup_type(tp);
 	ln->tn_type->t_const = false;
 	ln->tn_lvalue = true;
 	if (typeok(FARG, n, ln, tn)) {
