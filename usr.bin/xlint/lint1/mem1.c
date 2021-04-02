@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.41 2021/04/02 10:13:03 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.42 2021/04/02 10:30:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.41 2021/04/02 10:13:03 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.42 2021/04/02 10:30:35 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -172,18 +172,18 @@ get_filename_id(const char *s)
 /*
  * Memory for declarations and other things which must be available
  * until the end of a block (or the end of the translation unit)
- * are associated with the level (mem_block_level) of the block (or with 0).
+ * is associated with the corresponding mem_block_level, which may be 0.
  * Because this memory is allocated in large blocks associated with
  * a given level it can be freed easily at the end of a block.
  */
 #define	ML_INC	((size_t)32)		/* Increment for length of *mblks */
 
 typedef struct memory_block {
-	void	*blk;			/* beginning of memory block */
-	void	*ffree;			/* first free byte */
+	void	*start;			/* beginning of memory block */
+	void	*first_free;		/* first free byte */
 	size_t	nfree;			/* # of free bytes */
 	size_t	size;			/* total size of memory block */
-	struct	memory_block *nxt;	/* next block */
+	struct	memory_block *next;
 } memory_block;
 
 /*
@@ -211,7 +211,7 @@ xnewblk(void)
 	memory_block	*mb = xmalloc(sizeof *mb);
 
 	/* use mmap instead of malloc to avoid malloc's size overhead */
-	mb->blk = xmapalloc(mblklen);
+	mb->start = xmapalloc(mblklen);
 	mb->size = mblklen;
 
 	return mb;
@@ -244,20 +244,20 @@ xgetblk(memory_block **mbp, size_t s)
 			}
 			mb = xnewblk();
 #ifndef BLKDEBUG
-			(void)memset(mb->blk, 0, mb->size);
+			(void)memset(mb->start, 0, mb->size);
 #endif
 			if (t > 0)
 				mblklen = t;
 		} else {
-			frmblks = mb->nxt;
+			frmblks = mb->next;
 		}
-		mb->ffree = mb->blk;
+		mb->first_free = mb->start;
 		mb->nfree = mb->size;
-		mb->nxt = *mbp;
+		mb->next = *mbp;
 		*mbp = mb;
 	}
-	p = mb->ffree;
-	mb->ffree = (char *)mb->ffree + s;
+	p = mb->first_free;
+	mb->first_free = (char *)mb->first_free + s;
 	mb->nfree -= s;
 #ifdef BLKDEBUG
 	(void)memset(p, 0, s);
@@ -275,10 +275,10 @@ xfreeblk(memory_block **fmbp)
 	memory_block	*mb;
 
 	while ((mb = *fmbp) != NULL) {
-		*fmbp = mb->nxt;
-		mb->nxt = frmblks;
+		*fmbp = mb->next;
+		mb->next = frmblks;
 		frmblks = mb;
-		(void)memset(mb->blk, ZERO, mb->size - mb->nfree);
+		(void)memset(mb->start, ZERO, mb->size - mb->nfree);
 	}
 }
 
@@ -388,7 +388,7 @@ expr_restore_memory(memory_block *tmem)
 
 	expr_free_all();
 	if (tmblk != NULL) {
-		free(tmblk->blk);
+		free(tmblk->start);
 		free(tmblk);
 	}
 	tmblk = tmem;
