@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.261 2021/04/02 16:17:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.262 2021/04/02 16:38:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.261 2021/04/02 16:17:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.262 2021/04/02 16:38:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2854,7 +2854,7 @@ static tnode_t *
 build_colon(tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt, pdt;
-	type_t	*rtp;
+	type_t	*tp;
 	tnode_t	*ntn;
 
 	lt = ln->tn_type->t_tspec;
@@ -2866,11 +2866,11 @@ build_colon(tnode_t *ln, tnode_t *rn)
 	 * still need to be handled.
 	 */
 	if (is_arithmetic(lt) && is_arithmetic(rt)) {
-		rtp = ln->tn_type;
+		tp = ln->tn_type;
 	} else if (lt == BOOL && rt == BOOL) {
-		rtp = ln->tn_type;
+		tp = ln->tn_type;
 	} else if (lt == VOID || rt == VOID) {
-		rtp = gettyp(VOID);
+		tp = gettyp(VOID);
 	} else if (lt == STRUCT || lt == UNION) {
 		/* Both types must be identical. */
 		lint_assert(rt == STRUCT || rt == UNION);
@@ -2880,27 +2880,27 @@ build_colon(tnode_t *ln, tnode_t *rn)
 			error(138, op_name(COLON));
 			return NULL;
 		}
-		rtp = ln->tn_type;
+		tp = ln->tn_type;
 	} else if (lt == PTR && is_integer(rt)) {
 		if (rt != pdt) {
 			rn = convert(NOOP, 0, gettyp(pdt), rn);
 			rt = pdt;
 		}
-		rtp = ln->tn_type;
+		tp = ln->tn_type;
 	} else if (rt == PTR && is_integer(lt)) {
 		if (lt != pdt) {
 			ln = convert(NOOP, 0, gettyp(pdt), ln);
 			lt = pdt;
 		}
-		rtp = rn->tn_type;
+		tp = rn->tn_type;
 	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
 		lint_assert(rt == PTR);
-		rtp = rn->tn_type;
-		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
+		tp = rn->tn_type;
+		merge_qualifiers(&tp, ln->tn_type, rn->tn_type);
 	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
 		lint_assert(lt == PTR);
-		rtp = ln->tn_type;
-		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
+		tp = ln->tn_type;
+		merge_qualifiers(&tp, ln->tn_type, rn->tn_type);
 	} else {
 		lint_assert(lt == PTR);
 		lint_assert(rt == PTR);
@@ -2910,11 +2910,11 @@ build_colon(tnode_t *ln, tnode_t *rn)
 		 * and the other one, at the same place, only an old style
 		 * declaration.
 		 */
-		rtp = ln->tn_type;
-		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
+		tp = ln->tn_type;
+		merge_qualifiers(&tp, ln->tn_type, rn->tn_type);
 	}
 
-	ntn = new_tnode(COLON, rtp, ln, rn);
+	ntn = new_tnode(COLON, tp, ln, rn);
 
 	return ntn;
 }
