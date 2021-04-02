@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.40 2021/04/02 09:52:36 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.41 2021/04/02 10:13:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.40 2021/04/02 09:52:36 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.41 2021/04/02 10:13:03 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -336,24 +336,27 @@ static	memory_block	*tmblk;
  * expression.
  */
 void *
-tgetblk(size_t s)
+expr_zalloc(size_t s)
 {
 
 	return xgetblk(&tmblk, s);
 }
 
-/* Return a freshly allocated tree node. */
+/*
+ * Return a freshly allocated tree node that is freed at the end of the
+ * current expression.
+ */
 tnode_t *
 expr_zalloc_tnode(void)
 {
-	tnode_t *tn = tgetblk(sizeof *tn);
+	tnode_t *tn = expr_zalloc(sizeof *tn);
 	tn->tn_from_system_header = in_system_header;
 	return tn;
 }
 
 /* Free all memory which is allocated by the current expression. */
 void
-tfreeblk(void)
+expr_free_all(void)
 {
 
 	xfreeblk(&tmblk);
@@ -361,11 +364,11 @@ tfreeblk(void)
 
 /*
  * Save the memory which is used by the current expression. This memory
- * is not freed by the next tfreeblk() call. The pointer returned can be
+ * is not freed by the next expr_free_all() call. The pointer returned can be
  * used to restore the memory.
  */
 memory_block *
-tsave(void)
+expr_save_memory(void)
 {
 	memory_block	*tmem;
 
@@ -376,14 +379,14 @@ tsave(void)
 
 /*
  * Free all memory used for the current expression and the memory used
- * be a previous expression and saved by tsave(). The next call to
- * tfreeblk() frees the restored memory.
+ * be a previous expression and saved by expr_save_memory(). The next call to
+ * expr_free_all() frees the restored memory.
  */
 void
-trestor(memory_block *tmem)
+expr_restore_memory(memory_block *tmem)
 {
 
-	tfreeblk();
+	expr_free_all();
 	if (tmblk != NULL) {
 		free(tmblk->blk);
 		free(tmblk);
