@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.100 2021/04/02 11:53:25 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.101 2021/04/02 12:16:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.100 2021/04/02 11:53:25 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.101 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -157,7 +157,7 @@ begin_control_statement(control_statement_kind kind)
 {
 	cstk_t	*ci;
 
-	ci = xcalloc(1, sizeof *ci);
+	ci = xcalloc(1, sizeof(*ci));
 	ci->c_kind = kind;
 	ci->c_surrounding = cstmt;
 	cstmt = ci;
@@ -501,7 +501,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	 * to the type of the switch expression
 	 */
 	v = constant(tn, true);
-	(void)memset(&nv, 0, sizeof nv);
+	(void)memset(&nv, 0, sizeof(nv));
 	convert_constant(CASE, 0, ci->c_switch_type, &nv, v);
 	free(v);
 
@@ -523,7 +523,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		 * append the value to the list of
 		 * case values
 		 */
-		cl = xcalloc(1, sizeof *cl);
+		cl = xcalloc(1, sizeof(*cl));
 		cl->cl_val = nv;
 		cl->cl_next = ci->c_case_labels;
 		ci->c_case_labels = cl;
@@ -683,7 +683,7 @@ switch1(tnode_t *tn)
 	 * duplicated. This is not too complicated because it is
 	 * only an integer type.
 	 */
-	tp = xcalloc(1, sizeof *tp);
+	tp = xcalloc(1, sizeof(*tp));
 	if (tn != NULL) {
 		tp->t_tspec = tn->tn_type->t_tspec;
 		if ((tp->t_is_enum = tn->tn_type->t_is_enum) != false)
@@ -1049,7 +1049,7 @@ do_return(tnode_t *tn)
 	if (tn != NULL) {
 
 		/* Create a temporary node for the left side */
-		ln = expr_zalloc(sizeof *ln);
+		ln = expr_zalloc(sizeof(*ln));
 		ln->tn_op = NAME;
 		ln->tn_type = expr_dup_type(funcsym->s_type->t_subt);
 		ln->tn_type->t_const = false;
