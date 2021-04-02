@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.262 2021/04/02 16:38:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.263 2021/04/02 17:01:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.262 2021/04/02 16:38:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.263 2021/04/02 17:01:39 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -67,7 +67,6 @@ static	void	warn_incompatible_types(op_t, const type_t *, tspec_t,
 					const type_t *, tspec_t);
 static	void	warn_incompatible_pointers(const mod_t *,
 					   const type_t *, const type_t *);
-static	void	merge_qualifiers(type_t **, type_t *, type_t *);
 static	bool	has_constant_member(const type_t *);
 static	void	check_prototype_conversion(int, tspec_t, tspec_t, type_t *,
 					   tnode_t *);
@@ -2608,31 +2607,30 @@ warn_incompatible_pointers(const mod_t *mp,
 	}
 }
 
-/*
- * Make sure type (*tpp)->t_subt has at least the qualifiers
- * of tp1->t_subt and tp2->t_subt.
- */
-static void
-merge_qualifiers(type_t **tpp, type_t *tp1, type_t *tp2)
+/* Return a type based on tp1, with added qualifiers from tp2. */
+static type_t *
+merge_qualifiers(type_t *tp1, const type_t *tp2)
 {
+	type_t *ntp, *nstp;
 
-	lint_assert((*tpp)->t_tspec == PTR);
 	lint_assert(tp1->t_tspec == PTR);
 	lint_assert(tp2->t_tspec == PTR);
 
-	if ((*tpp)->t_subt->t_const ==
-	    (tp1->t_subt->t_const | tp2->t_subt->t_const) &&
-	    (*tpp)->t_subt->t_volatile ==
-	    (tp1->t_subt->t_volatile | tp2->t_subt->t_volatile)) {
-		return;
-	}
+	bool c1 = tp1->t_subt->t_const;
+	bool c2 = tp2->t_subt->t_const;
+	bool v1 = tp1->t_subt->t_volatile;
+	bool v2 = tp2->t_subt->t_volatile;
 
-	*tpp = expr_dup_type(*tpp);
-	(*tpp)->t_subt = expr_dup_type((*tpp)->t_subt);
-	(*tpp)->t_subt->t_const =
-		tp1->t_subt->t_const | tp2->t_subt->t_const;
-	(*tpp)->t_subt->t_volatile =
-		tp1->t_subt->t_volatile | tp2->t_subt->t_volatile;
+	if (c1 == (c1 | c2) && v2 == (v1 | v2))
+		return tp1;
+
+	nstp = expr_dup_type(tp1->t_subt);
+	nstp->t_const = c1 | c2;
+	nstp->t_volatile = v1 | v2;
+
+	ntp = expr_dup_type(tp1);
+	ntp->t_subt = nstp;
+	return ntp;
 }
 
 /*
@@ -2894,24 +2892,17 @@ build_colon(tnode_t *ln, tnode_t *rn)
 		}
 		tp = rn->tn_type;
 	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
-		lint_assert(rt == PTR);
-		tp = rn->tn_type;
-		merge_qualifiers(&tp, ln->tn_type, rn->tn_type);
+		tp = merge_qualifiers(rn->tn_type, ln->tn_type);
 	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
-		lint_assert(lt == PTR);
-		tp = ln->tn_type;
-		merge_qualifiers(&tp, ln->tn_type, rn->tn_type);
+		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
 	} else {
-		lint_assert(lt == PTR);
-		lint_assert(rt == PTR);
 		/*
 		 * XXX For now we simply take the left type. This is
 		 * probably wrong, if one type contains a function prototype
 		 * and the other one, at the same place, only an old style
 		 * declaration.
 		 */
-		tp = ln->tn_type;
-		merge_qualifiers(&tp, ln->tn_type, rn->tn_type);
+		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
 	}
 
 	ntn = new_tnode(COLON, tp, ln, rn);
