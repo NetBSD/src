@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.167 2021/03/30 14:25:28 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.168 2021/04/02 10:13:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.167 2021/03/30 14:25:28 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.168 2021/04/02 10:13:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ tduptyp(const type_t *tp)
 {
 	type_t	*ntp;
 
-	ntp = tgetblk(sizeof *ntp);
+	ntp = expr_zalloc(sizeof *ntp);
 	*ntp = *tp;
 	return ntp;
 }
@@ -1015,9 +1015,9 @@ check_type(sym_t *sym)
 				/* function returns illegal type */
 				error(15);
 				if (t == FUNC) {
-					*tpp = incref(*tpp, PTR);
+					*tpp = derive_type(*tpp, PTR);
 				} else {
-					*tpp = incref((*tpp)->t_subt, PTR);
+					*tpp = derive_type((*tpp)->t_subt, PTR);
 				}
 				return;
 			} else if (tp->t_const || tp->t_volatile) {
@@ -1183,7 +1183,7 @@ declarator_1_struct_union(sym_t *dsym)
 	} else if (t == FUNC) {
 		/* function illegal in structure or union */
 		error(38);
-		dsym->s_type = tp = incref(tp, t = PTR);
+		dsym->s_type = tp = derive_type(tp, t = PTR);
 	}
 
 	/*
@@ -2416,12 +2416,12 @@ declare_argument(sym_t *sym, bool initflg)
 	}
 
 	if ((t = sym->s_type->t_tspec) == ARRAY) {
-		sym->s_type = incref(sym->s_type->t_subt, PTR);
+		sym->s_type = derive_type(sym->s_type->t_subt, PTR);
 	} else if (t == FUNC) {
 		if (tflag)
 			/* a function is declared as an argument: %s */
 			warning(50, sym->s_name);
-		sym->s_type = incref(sym->s_type, PTR);
+		sym->s_type = derive_type(sym->s_type, PTR);
 	} else if (t == FLOAT) {
 		if (tflag)
 			sym->s_type = gettyp(DOUBLE);
@@ -3334,7 +3334,7 @@ to_int_constant(tnode_t *tn, bool required)
 	 * will be used later to match types.
 	 */
 	if (tn->tn_op != CON && dcs->d_ctx != ABSTRACT)
-		tfreeblk();
+		expr_free_all();
 
 	if ((t = v->v_tspec) == FLOAT || t == DOUBLE || t == LDOUBLE) {
 		i = (int)v->v_ldbl;

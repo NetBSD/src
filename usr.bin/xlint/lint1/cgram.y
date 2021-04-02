@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.208 2021/04/02 09:52:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.209 2021/04/02 10:13:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.208 2021/04/02 09:52:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.209 2021/04/02 10:13:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1878,7 +1878,7 @@ term:
 		$$ = new_string_node($1);
 	  }
 	| T_CON {
-		$$ = new_constant_node(gettyp($1->v_tspec), $1);
+		$$ = expr_new_constant(gettyp($1->v_tspec), $1);
 	  }
 	| T_LPAREN expr T_RPAREN {
 		if ($2 != NULL)
