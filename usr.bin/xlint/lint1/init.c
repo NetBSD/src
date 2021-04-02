@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.190 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.191 2021/04/02 14:19:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.190 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.191 2021/04/02 14:19:33 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -124,7 +124,6 @@ struct brace_level {
 	const type_t	*bl_type;
 	const sym_t	*bl_next_member;	/* for structs and unions */
 	size_t		bl_array_next_subscript;
-	bool		bl_array_of_unknown_size: 1;
 	bool		bl_scalar_done: 1;	/* for scalars */
 	bool		bl_confused: 1;		/* skip further checks */
 	struct designation bl_designation;	/* .member[123].member */
@@ -526,8 +525,6 @@ designation_look_up(const struct designation *dn, const type_t *tp)
 	return tp;
 }
 
-
-
 static void
 designation_reset(struct designation *dn)
 {
@@ -575,9 +572,6 @@ brace_level_debug(const struct brace_level *bl)
 	    !is_unnamed(bl->bl_next_member));
 
 	debug_printf("type '%s'", type_name(bl->bl_type));
-
-	if (bl->bl_array_of_unknown_size)
-		debug_printf(", array of unknown size");
 
 	if (is_struct_or_union(bl->bl_type->t_tspec) &&
 	    bl->bl_next_member != NULL)
