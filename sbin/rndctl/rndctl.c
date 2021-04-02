@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.37 2020/05/12 09:48:44 simonb Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.38 2021/04/02 07:17:56 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.37 2020/05/12 09:48:44 simonb Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.38 2021/04/02 07:17:56 nia Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ __dead static void usage(void);
 static u_int32_t find_type(const char *name);
 static const char *find_name(u_int32_t);
 static void do_ioctl(rndctl_t *);
-static char * strflags(u_int32_t);
+static char * strflags(uint32_t, u_int32_t);
 static void do_list(int, u_int32_t, char *);
 static void do_stats(void);
 
@@ -444,29 +444,21 @@ do_ioctl(rndctl_t *rctl)
 }
 
 static char *
-strflags(u_int32_t fl)
+strflags(uint32_t totalbits, u_int32_t fl)
 {
 	static char str[512];
 
 	str[0] = '\0';
-	if (fl & RND_FLAG_NO_ESTIMATE)
-		;
-	else
+	if (totalbits > 0 && (fl & RND_FLAG_NO_ESTIMATE) == 0)
 		strlcat(str, "estimate, ", sizeof(str));
 
-	if (fl & RND_FLAG_NO_COLLECT)
-		;
-	else
+	if ((fl & RND_FLAG_NO_COLLECT) == 0)
 		strlcat(str, "collect, ", sizeof(str));
 
 	if (fl & RND_FLAG_COLLECT_VALUE)
 		strlcat(str, "v, ", sizeof(str));
 	if (fl & RND_FLAG_COLLECT_TIME)
 		strlcat(str, "t, ", sizeof(str));
-	if (fl & RND_FLAG_ESTIMATE_VALUE)
-		strlcat(str, "dv, ", sizeof(str));
-	if (fl & RND_FLAG_ESTIMATE_TIME)
-		strlcat(str, "dt, ", sizeof(str));
 
 	if (str[strlen(str) - 2] == ',')
 		str[strlen(str) - 2] = '\0';
@@ -500,7 +492,8 @@ do_list(int all, u_int32_t type, char *name)
 		    rstat_name.source.rt.name,
 		    rstat_name.source.rt.total,
 		    find_name(rstat_name.source.rt.type),
-		    strflags(rstat_name.source.rt.flags));
+		    strflags(rstat_name.source.rt.total,
+			rstat_name.source.rt.flags));
 		if (vflag) {
 			printf("\tDt samples = %d\n",
 			       rstat_name.source.dt_samples);
@@ -538,7 +531,8 @@ do_list(int all, u_int32_t type, char *name)
 				    rstat.source[i].rt.name,
 				    rstat.source[i].rt.total,
 				    find_name(rstat.source[i].rt.type),
-				    strflags(rstat.source[i].rt.flags));
+				    strflags(rstat.source[i].rt.total,
+					rstat.source[i].rt.flags));
 			if (vflag) {
 				printf("\tDt samples = %d\n",
 				       rstat.source[i].dt_samples);
