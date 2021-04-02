@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr4xx.h,v 1.3 2013/11/21 13:33:15 kiyohara Exp $	*/
+/*	$NetBSD: dcr4xx.h,v 1.4 2021/04/02 03:20:53 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -303,6 +303,8 @@
 #define DCR_SDRAM0_B1CR		0x44
 #define DCR_SDRAM0_B2CR		0x48
 #define DCR_SDRAM0_B3CR		0x4c
+#define   SDRAM0_BnCR_EN	  0x00000001
+#define   SDRAM0_BnCR_SZ(n)	  (1 << ((((n) >> 17) & 7) + 22))
 #define DCR_SDRAM0_TR		0x80
 #define DCR_SDRAM0_ECCCFG	0x94
 #define DCR_SDRAM0_ECCESR	0x98
