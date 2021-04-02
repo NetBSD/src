@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1424 2021/01/30 21:24:30 jmcneill Exp $
+$NetBSD: pcidevs,v 1.1425 2021/04/02 01:07:16 rin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7253,7 +7253,7 @@ product POWERHOUSE POWERPRO	0x6073	PowerPro PowerPC System Controller
 product PROLAN NE2KETHER 0x1980 Ethernet
 
 /* Promise products */
-product PROMISE PDC20265	0x0d30	PDC20265 Ultra/66 IDE Controller
+product PROMISE PDC20265	0x0d30	PDC20265 Ultra/100 IDE Controller
 product PROMISE PDC20263	0x0d38	PDC20263 Ultra/66 IDE Controller
 product PROMISE PDC20275	0x1275	PDC20275 Ultra/133 IDE Controller
 product PROMISE PDC20318	0x3318	PDC20318 Serial ATA Controller
