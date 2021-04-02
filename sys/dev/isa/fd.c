@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.114.10.1 2021/03/21 21:09:12 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.114.10.2 2021/04/02 22:17:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114.10.1 2021/03/21 21:09:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114.10.2 2021/04/02 22:17:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -461,14 +461,18 @@ fdcfinishattach(device_t self)
 			 */
 			fa.fa_deftype = &fd_types[2];
 			 /* Atari also configures ISA fdc(4) as "fdcisa" */
-			(void)config_found_ia(fdc->sc_dev, "fdcisa", (void *)&fa, fdprint);
+			config_found(fdc->sc_dev, &fa, fdprint,
+			    CFARG_IATTR, "fdcisa",
+			    CFARG_EOL);
 #else
 			/*
 			 * Default to 1.44MB on Alpha and BeBox.  How do we tell
 			 * on these platforms?
 			 */
 			fa.fa_deftype = &fd_types[0];
-			(void)config_found_ia(fdc->sc_dev, "fdc", (void *)&fa, fdprint);
+			config_found(fdc->sc_dev, &fa, fdprint,
+			    CFARG_IATTR, "fdc",
+			    CFARG_EOL);
 #endif
 		}
 	}

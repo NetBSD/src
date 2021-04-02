@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.5.52.1 2021/03/20 19:33:31 thorpej Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.5.52.2 2021/04/02 22:17:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.5.52.1 2021/03/20 19:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.5.52.2 2021/04/02 22:17:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,9 @@ epgpio_attach(device_t parent, device_t self, void *aux)
 		gba.gba_gc = &pi->gpio_chipset;
 		gba.gba_pins = pi->pins;
 		gba.gba_npins = pin;
-		config_found_ia(self, "gpiobus", &gba, epgpiobus_print);
+		config_found(self, &gba, epgpiobus_print,
+		    CFARG_IATTR, "gpiobus",
+		    CFARG_EOL);
 	}
 #endif
 

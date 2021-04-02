@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.15.62.1 2021/03/23 07:14:42 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.15.62.2 2021/04/02 22:17:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.15.62.1 2021/03/23 07:14:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.15.62.2 2021/04/02 22:17:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,11 +263,14 @@ ttwopciattach(device_t parent, device_t self, void *aux)
 	 * Hose 0 has the STDIO module.
 	 */
 	if (pba->pba_bus == 0) {
-		(void) config_found_ia(self, "sableiobus", &npba,
-				       ttwosableioprint);
+		config_found(self, &npba, ttwosableioprint,
+		    CFARG_IATTR, "sableiobus",
+		    CFARG_EOL);
 	}
 
-	(void) config_found_ia(self, "pcibus", &npba, pcibusprint);
+	config_found(self, &npba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 }
 
 int

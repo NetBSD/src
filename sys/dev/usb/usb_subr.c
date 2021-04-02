@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.249.2.1 2021/03/22 02:01:02 thorpej Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.249.2.2 2021/04/02 22:17:45 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.249.2.1 2021/03/22 02:01:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.249.2.2 2021/04/02 22:17:45 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -851,7 +851,9 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 	uaa.uaa_proto = dd->bDeviceProtocol;
 
 	KERNEL_LOCK(1, curlwp);
-	dv = config_found_ia(parent, "usbroothubif", &uaa, 0);
+	dv = config_found(parent, &uaa, NULL,
+	    CFARG_IATTR, "usbroothubif",
+	    CFARG_EOL);
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (dv) {
 		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);

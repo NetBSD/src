@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.5 2021/03/22 17:21:09 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.6 2021/04/02 22:17:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.5 2021/03/22 17:21:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.6 2021/04/02 22:17:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1217,17 +1217,6 @@ config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
 	 */
 	rnd_add_uint32(&rnd_autoconf_source, 0);
 	return NULL;
-}
-
-/* XXX GC */
-device_t
-config_found_ia(device_t parent, const char *ifattr, void *aux,
-    cfprint_t print)
-{
-
-	return config_found(parent, aux, print,
-	    CFARG_IATTR, ifattr,
-	    CFARG_EOL);
 }
 
 device_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.28.4.1 2021/03/20 19:33:34 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.28.4.2 2021/04/02 22:17:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28.4.1 2021/03/20 19:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28.4.2 2021/04/02 22:17:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -330,7 +330,9 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 	
-	config_found_ia(self, "pcibus", &pci_pba, pcibusprint);
+	config_found(self, &pci_pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 #endif
 }
 

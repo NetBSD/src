@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.103.4.1 2021/03/21 21:09:14 thorpej Exp $	*/
+/*	$NetBSD: machfb.c,v 1.103.4.2 2021/04/02 22:17:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.103.4.1 2021/03/21 21:09:14 thorpej Exp $");
+	"$NetBSD: machfb.c,v 1.103.4.2 2021/04/02 22:17:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,7 +806,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		regw(sc, BUS_CNTL, reg);
 	}
 #endif
-	config_found_ia(self, "drm", aux, machfb_drm_print);
+	config_found(self, aux, machfb_drm_print,
+	    CFARG_IATTR, "drm",
+	    CFARG_EOL);
 }
 
 static int

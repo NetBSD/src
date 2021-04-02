@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.27.2.1 2021/03/21 21:09:02 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.27.2.2 2021/04/02 22:17:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.27.2.1 2021/03/21 21:09:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.27.2.2 2021/04/02 22:17:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,8 +232,9 @@ cuda_attach(device_t parent, device_t self, void *aux)
 			sc->sc_adbops.poll = cuda_adb_poll;
 			sc->sc_adbops.autopoll = cuda_autopoll;
 			sc->sc_adbops.set_handler = cuda_adb_set_handler;
-			config_found_ia(self, "adb_bus", &sc->sc_adbops,
-			    nadb_print);
+			config_found(self, &sc->sc_adbops, nadb_print,
+			    CFARG_IATTR, "adb_bus",
+			    CFARG_EOL);
 		} else if (strncmp(name, "rtc", 4) == 0) {
 
 			sc->sc_todr.todr_gettime = cuda_todr_get;
@@ -280,7 +281,9 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = cuda_i2c_exec;
-	config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	config_found(self, &iba, iicbus_print,
+	    CFARG_IATTR, "i2cbus",
+	    CFARG_EOL);
 
 	if (cuda0 == NULL)
 		cuda0 = &caa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.27.20.1 2021/03/20 19:33:41 thorpej Exp $	*/
+/*	$NetBSD: nand.c,v 1.27.20.2 2021/04/02 22:17:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.27.20.1 2021/03/20 19:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.27.20.2 2021/04/02 22:17:44 thorpej Exp $");
 
 #include "locators.h"
 
@@ -286,7 +286,9 @@ nand_attach_mi(struct nand_interface *nand_if, device_t parent)
 	}
 
 	arg.naa_nand_if = nand_if;
-	return config_found_ia(parent, "nandbus", &arg, nand_print);
+	return config_found(parent, &arg, nand_print,
+	    CFARG_IATTR, "nandbus",
+	    CFARG_EOL);
 }
 
 /* default everything to reasonable values, to ease future api changes */
