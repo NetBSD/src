@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.12 2021/03/21 15:24:56 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.13 2021/04/02 13:16:38 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
@@ -126,4 +126,45 @@ state_machine(const char *str)
 		return;
 	if (state == sizeof_int)	/* expect: 130 */
 		return;
+}
+
+/*
+ * For check_case_label_enum, a warning only makes sense if the type of the
+ * enum can actually be specified somehow, either explicitly by using a tag
+ * name or a typedef name, or implicitly by using a variable in a switch
+ * expression.
+ */
+
+typedef enum {
+	has_typedef = 1001
+} typedef_name;
+
+enum tag_name {
+	has_tag = 1002
+};
+
+enum {
+	has_variable = 1003
+} variable;
+
+enum {
+	inaccessible = 1004
+};
+
+/*
+ * This check is already done by Clang, so it may not be necessary to add it
+ * to lint as well.  Except if there are some cases that Clang didn't
+ * implement.
+ */
+void
+test_check_case_label_enum(enum color color)
+{
+	switch (color)
+	{
+	case has_typedef:
+	case has_tag:
+	case has_variable:
+	case inaccessible:
+		return;
+	}
 }
