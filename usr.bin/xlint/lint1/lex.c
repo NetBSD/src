@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.22 2021/04/02 12:16:50 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.23 2021/04/02 22:05:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.22 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.23 2021/04/02 22:05:43 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -56,13 +56,13 @@ __RCSID("$NetBSD: lex.c,v 1.22 2021/04/02 12:16:50 rillig Exp $");
 
 
 /* Current position (it's also updated when an included file is parsed) */
-pos_t	curr_pos = { 1, "", 0 };
+pos_t	curr_pos = { "", 1, 0 };
 
 /*
  * Current position in C source (not updated when an included file is
  * parsed).
  */
-pos_t	csrc_pos = { 1, "", 0 };
+pos_t	csrc_pos = { "", 1, 0 };
 
 /* Are we parsing a gcc attribute? */
 bool attron;

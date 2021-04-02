@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.91 2021/04/02 09:39:25 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.92 2021/04/02 22:05:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -59,8 +59,8 @@
  * Describes the position of a declaration or anything else.
  */
 typedef struct {
-	int	p_line;
 	const	char *p_file;
+	int	p_line;
 	int	p_uniq;			/* uniquifier */
 } pos_t;
 
