@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.192 2021/04/02 14:32:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.193 2021/04/02 14:50:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.192 2021/04/02 14:32:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.193 2021/04/02 14:50:47 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -117,22 +117,27 @@ struct designation {
  * See C99 6.7.8p17.
  */
 struct brace_level {
-	/*
-	 * The type of the current object that is initialized at this brace
-	 * level.
-	 */
-	const type_t	*bl_type;
+	const type_t	*bl_type;	/* The type of the current object that
+					 * is initialized at this brace
+					 * level. */
+
+	struct designation bl_designation;	/* .member[123].member */
 
 	const sym_t	*bl_member;		/* for structs and unions */
 	size_t		bl_subscript;		/* for arrays */
 	bool		bl_scalar_done: 1;	/* for scalars */
 	bool		bl_confused: 1;		/* skip further checks */
-	struct designation bl_designation;	/* .member[123].member */
 
 	struct brace_level *bl_enclosing;
 };
 
 struct initialization {
+	/* The symbol that is to be initialized. */
+	sym_t		*in_sym;
+
+	/* The innermost brace level. */
+	struct brace_level *in_brace_level;
+
 	/*
 	 * Is set as soon as a fatal error occurred in the initialization.
 	 * The effect is that the rest of the initialization is ignored
@@ -140,12 +145,6 @@ struct initialization {
 	 * takes place).
 	 */
 	bool		in_err;
-
-	/* The symbol that is to be initialized. */
-	sym_t		*in_sym;
-
-	/* The innermost brace level. */
-	struct brace_level *in_brace_level;
 
 	struct initialization *in_enclosing;
 };
