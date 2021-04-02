@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.98 2021/03/26 20:31:07 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.99 2021/04/02 10:13:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.98 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.99 2021/04/02 10:13:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -541,7 +541,7 @@ case_label(tnode_t *tn)
 
 	check_case_label(tn, ci);
 
-	tfreeblk();
+	expr_free_all();
 
 	set_reached(true);
 }
@@ -883,7 +883,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	 * Also remember this expression itself. We must check it at
 	 * the end of the loop to get "used but not set" warnings correct.
 	 */
-	cstmt->c_for_expr3_mem = tsave();
+	cstmt->c_for_expr3_mem = expr_save_memory();
 	cstmt->c_for_expr3 = tn3;
 	cstmt->c_for_expr3_pos = curr_pos;
 	cstmt->c_for_expr3_csrc_pos = csrc_pos;
@@ -920,7 +920,7 @@ for2(void)
 	cspos = csrc_pos;
 
 	/* Restore the tree memory for the reinitialization expression */
-	trestor(cstmt->c_for_expr3_mem);
+	expr_restore_memory(cstmt->c_for_expr3_mem);
 	tn3 = cstmt->c_for_expr3;
 	curr_pos = cstmt->c_for_expr3_pos;
 	csrc_pos = cstmt->c_for_expr3_csrc_pos;
@@ -935,7 +935,7 @@ for2(void)
 	if (tn3 != NULL) {
 		expr(tn3, false, false, true, false);
 	} else {
-		tfreeblk();
+		expr_free_all();
 	}
 
 	curr_pos = cpos;
@@ -1034,7 +1034,7 @@ do_return(tnode_t *tn)
 	if (tn != NULL && funcsym->s_type->t_subt->t_tspec == VOID) {
 		/* void function %s cannot return value */
 		error(213, funcsym->s_name);
-		tfreeblk();
+		expr_free_all();
 		tn = NULL;
 	} else if (tn == NULL && funcsym->s_type->t_subt->t_tspec != VOID) {
 		/*
@@ -1049,7 +1049,7 @@ do_return(tnode_t *tn)
 	if (tn != NULL) {
 
 		/* Create a temporary node for the left side */
-		ln = tgetblk(sizeof *ln);
+		ln = expr_zalloc(sizeof *ln);
 		ln->tn_op = NAME;
 		ln->tn_type = tduptyp(funcsym->s_type->t_subt);
 		ln->tn_type->t_const = false;

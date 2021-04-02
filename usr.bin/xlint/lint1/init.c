@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.187 2021/04/02 09:39:25 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.188 2021/04/02 10:13:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.187 2021/04/02 09:39:25 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.188 2021/04/02 10:13:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -383,7 +383,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	struct memory_block *tmem;
 
 	/* Create a temporary node for the left side. */
-	ln = tgetblk(sizeof *ln);
+	ln = expr_zalloc(sizeof *ln);
 	ln->tn_op = NAME;
 	ln->tn_type = tduptyp(tp);
 	ln->tn_type->t_const = false;
@@ -404,9 +404,9 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	 * Preserve the tree memory. This is necessary because otherwise
 	 * expr() would free it.
 	 */
-	tmem = tsave();
+	tmem = expr_save_memory();
 	expr(tn, true, false, true, false);
-	trestor(tmem);
+	expr_restore_memory(tmem);
 
 	check_bit_field_init(ln, lt, rt);
 

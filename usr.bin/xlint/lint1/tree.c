@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.256 2021/04/02 09:52:36 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.257 2021/04/02 10:13:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.256 2021/04/02 09:52:36 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.257 2021/04/02 10:13:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: tree.c,v 1.256 2021/04/02 09:52:36 rillig Exp $");
 #include "lint1.h"
 #include "cgram.h"
 
-static	tnode_t	*new_integer_constant_node(tspec_t, int64_t);
+static	tnode_t	*expr_new_integer_constant(tspec_t, int64_t);
 static	void	check_pointer_comparison(op_t,
 					 const tnode_t *, const tnode_t *);
 static	bool	check_assign_types_compatible(op_t, int,
@@ -144,12 +144,9 @@ debug_node(const tnode_t *tn, int indent)
 }
 #endif
 
-/*
- * Increase degree of reference.
- * This is most often used to change type "T" in type "pointer to T".
- */
+/* Build 'pointer to tp', 'array of tp' or 'function returning tp'. */
 type_t *
-incref(type_t *tp, tspec_t t)
+derive_type(type_t *tp, tspec_t t)
 {
 	type_t	*tp2;
 
@@ -160,14 +157,15 @@ incref(type_t *tp, tspec_t t)
 }
 
 /*
- * same for use in expressions
+ * Build 'pointer to tp', 'array of tp' or 'function returning tp'.  The
+ * memory is freed at the end of the current expression.
  */
 type_t *
-tincref(type_t *tp, tspec_t t)
+expr_derive_type(type_t *tp, tspec_t t)
 {
 	type_t	*tp2;
 
-	tp2 = tgetblk(sizeof *tp2);
+	tp2 = expr_zalloc(sizeof *tp2);
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -177,14 +175,14 @@ tincref(type_t *tp, tspec_t t)
  * Create a node for a constant.
  */
 tnode_t *
-new_constant_node(type_t *tp, val_t *v)
+expr_new_constant(type_t *tp, val_t *v)
 {
 	tnode_t	*n;
 
 	n = expr_zalloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = tp;
-	n->tn_val = tgetblk(sizeof *n->tn_val);
+	n->tn_val = expr_zalloc(sizeof *n->tn_val);
 	n->tn_val->v_tspec = tp->t_tspec;
 	n->tn_val->v_ansiu = v->v_ansiu;
 	n->tn_val->v_u = v->v_u;
@@ -193,14 +191,14 @@ new_constant_node(type_t *tp, val_t *v)
 }
 
 static tnode_t *
-new_integer_constant_node(tspec_t t, int64_t q)
+expr_new_integer_constant(tspec_t t, int64_t q)
 {
 	tnode_t	*n;
 
 	n = expr_zalloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = gettyp(t);
-	n->tn_val = tgetblk(sizeof *n->tn_val);
+	n->tn_val = expr_zalloc(sizeof *n->tn_val);
 	n->tn_val->v_tspec = t;
 	n->tn_val->v_quad = q;
 	return n;
@@ -232,7 +230,7 @@ fallback_symbol(sym_t *sym)
 			   strcmp(sym->s_name, "__PRETTY_FUNCTION__") == 0)) {
 		/* __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension */
 		gnuism(316);
-		sym->s_type = incref(gettyp(CHAR), PTR);
+		sym->s_type = derive_type(gettyp(CHAR), PTR);
 		sym->s_type->t_const = true;
 		return;
 	}
@@ -241,7 +239,7 @@ fallback_symbol(sym_t *sym)
 		if (!Sflag)
 			/* __func__ is a C9X feature */
 			warning(317);
-		sym->s_type = incref(gettyp(CHAR), PTR);
+		sym->s_type = derive_type(gettyp(CHAR), PTR);
 		sym->s_type->t_const = true;
 		return;
 	}
@@ -271,7 +269,7 @@ new_name_node(sym_t *sym, int follow_token)
 			 * XXX if tflag is set the symbol should be
 			 * exported to level 0
 			 */
-			sym->s_type = incref(sym->s_type, FUNC);
+			sym->s_type = derive_type(sym->s_type, FUNC);
 		} else {
 			fallback_symbol(sym);
 		}
@@ -288,7 +286,7 @@ new_name_node(sym_t *sym, int follow_token)
 			n->tn_lvalue = true;
 	} else {
 		n->tn_op = CON;
-		n->tn_val = tgetblk(sizeof *n->tn_val);
+		n->tn_val = expr_zalloc(sizeof *n->tn_val);
 		*n->tn_val = sym->s_value;
 	}
 
@@ -306,21 +304,21 @@ new_string_node(strg_t *strg)
 	n = expr_zalloc_tnode();
 
 	n->tn_op = STRING;
-	n->tn_type = tincref(gettyp(strg->st_tspec), ARRAY);
+	n->tn_type = expr_derive_type(gettyp(strg->st_tspec), ARRAY);
 	n->tn_type->t_dim = len + 1;
 	n->tn_lvalue = true;
 
-	n->tn_string = tgetblk(sizeof *n->tn_string);
+	n->tn_string = expr_zalloc(sizeof *n->tn_string);
 	n->tn_string->st_tspec = strg->st_tspec;
 	n->tn_string->st_len = len;
 
 	if (strg->st_tspec == CHAR) {
-		n->tn_string->st_cp = tgetblk(len + 1);
+		n->tn_string->st_cp = expr_zalloc(len + 1);
 		(void)memcpy(n->tn_string->st_cp, strg->st_cp, len + 1);
 		free(strg->st_cp);
 	} else {
 		size_t size = (len + 1) * sizeof *n->tn_string->st_wcp;
-		n->tn_string->st_wcp = tgetblk(size);
+		n->tn_string->st_wcp = expr_zalloc(size);
 		(void)memcpy(n->tn_string->st_wcp, strg->st_wcp, size);
 		free(strg->st_wcp);
 	}
@@ -352,8 +350,9 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
-		msym->s_styp = tgetblk(sizeof *msym->s_styp);
-		msym->s_styp->sou_tag = tgetblk(sizeof *msym->s_styp->sou_tag);
+		msym->s_styp = expr_zalloc(sizeof *msym->s_styp);
+		msym->s_styp->sou_tag = expr_zalloc(
+		    sizeof *msym->s_styp->sou_tag);
 		msym->s_styp->sou_tag->s_name = unnamed;
 		msym->s_value.v_tspec = INT;
 		return msym;
@@ -698,8 +697,8 @@ cconv(tnode_t *tn)
 			/* %soperand of '%s' must be lvalue */
 			gnuism(114, "", modtab[ADDR].m_name);
 		}
-		tn = new_tnode(ADDR, tincref(tn->tn_type->t_subt, PTR),
-			     tn, NULL);
+		tn = new_tnode(ADDR,
+		    expr_derive_type(tn->tn_type->t_subt, PTR), tn, NULL);
 	}
 
 	/*
@@ -2066,7 +2065,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		ntn->tn_left = tn;
 	} else {
 		ntn->tn_op = CON;
-		ntn->tn_val = tgetblk(sizeof *ntn->tn_val);
+		ntn->tn_val = expr_zalloc(sizeof *ntn->tn_val);
 		convert_constant(op, arg, ntn->tn_type, ntn->tn_val,
 		    tn->tn_val);
 	}
@@ -2684,13 +2683,13 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	} else if (ln->tn_type->t_tspec != PTR) {
 		lint_assert(tflag);
 		lint_assert(is_integer(ln->tn_type->t_tspec));
-		ln = convert(NOOP, 0, tincref(gettyp(VOID), PTR), ln);
+		ln = convert(NOOP, 0, expr_derive_type(gettyp(VOID), PTR), ln);
 	}
 
-	ctn = new_integer_constant_node(PTRDIFF_TSPEC,
+	ctn = expr_new_integer_constant(PTRDIFF_TSPEC,
 	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
 
-	ntn = new_tnode(PLUS, tincref(rn->tn_type, PTR), ln, ctn);
+	ntn = new_tnode(PLUS, expr_derive_type(rn->tn_type, PTR), ln, ctn);
 	if (ln->tn_op == CON)
 		ntn = fold(ntn);
 
@@ -2719,7 +2718,7 @@ build_prepost_incdec(op_t op, tnode_t *ln)
 	if (ln->tn_type->t_tspec == PTR) {
 		cn = plength(ln->tn_type);
 	} else {
-		cn = new_integer_constant_node(INT, (int64_t)1);
+		cn = expr_new_integer_constant(INT, (int64_t)1);
 	}
 	ntn = new_tnode(op, ln->tn_type, ln, cn);
 
@@ -2739,13 +2738,15 @@ build_real_imag(op_t op, tnode_t *ln)
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
 		/* XXX: integer and LDOUBLE don't match. */
-		cn = new_integer_constant_node(LDOUBLE, (int64_t)1);
+		cn = expr_new_integer_constant(LDOUBLE, (int64_t)1);
 		break;
 	case DCOMPLEX:
-		cn = new_integer_constant_node(DOUBLE, (int64_t)1);
+		/* XXX: integer and DOUBLE don't match. */
+		cn = expr_new_integer_constant(DOUBLE, (int64_t)1);
 		break;
 	case FCOMPLEX:
-		cn = new_integer_constant_node(FLOAT, (int64_t)1);
+		/* XXX: integer and FLOAT don't match. */
+		cn = expr_new_integer_constant(FLOAT, (int64_t)1);
 		break;
 	default:
 		/* __%s__ is illegal for type %s */
@@ -2780,7 +2781,7 @@ build_address(tnode_t *tn, bool noign)
 		return tn->tn_left;
 	}
 
-	return new_tnode(ADDR, tincref(tn->tn_type, PTR), tn, NULL);
+	return new_tnode(ADDR, expr_derive_type(tn->tn_type, PTR), tn, NULL);
 }
 
 /*
@@ -3037,7 +3038,7 @@ plength(type_t *tp)
 	if (elsz == 0)
 		elsz = CHAR_SIZE;
 
-	return new_integer_constant_node(PTRDIFF_TSPEC,
+	return expr_new_integer_constant(PTRDIFF_TSPEC,
 	    (int64_t)(elem * elsz / CHAR_SIZE));
 }
 
@@ -3187,7 +3188,7 @@ fold(tnode_t *tn)
 
 	v->v_quad = xsign(q, t, -1);
 
-	cn = new_constant_node(tn->tn_type, v);
+	cn = expr_new_constant(tn->tn_type, v);
 	if (tn->tn_left->tn_system_dependent)
 		cn->tn_system_dependent = true;
 	if (modtab[tn->tn_op].m_binary && tn->tn_right->tn_system_dependent)
@@ -3230,7 +3231,7 @@ fold_test(tnode_t *tn)
 		lint_assert(/*CONSTCOND*/false);
 	}
 
-	return new_constant_node(tn->tn_type, v);
+	return expr_new_constant(tn->tn_type, v);
 }
 
 /*
@@ -3327,7 +3328,7 @@ fold_float(tnode_t *tn)
 	    fpe = 0;
 	}
 
-	return new_constant_node(tn->tn_type, v);
+	return expr_new_constant(tn->tn_type, v);
 }
 
 
@@ -3338,7 +3339,7 @@ tnode_t *
 build_sizeof(const type_t *tp)
 {
 	int64_t size_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
-	tnode_t *tn = new_integer_constant_node(SIZEOF_TSPEC, size_in_bytes);
+	tnode_t *tn = expr_new_integer_constant(SIZEOF_TSPEC, size_in_bytes);
 	tn->tn_system_dependent = true;
 	return tn;
 }
@@ -3356,7 +3357,7 @@ build_offsetof(const type_t *tp, const sym_t *sym)
 
 	// XXX: wrong size, no checking for sym fixme
 	int64_t offset_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
-	tnode_t *tn = new_integer_constant_node(SIZEOF_TSPEC, offset_in_bytes);
+	tnode_t *tn = expr_new_integer_constant(SIZEOF_TSPEC, offset_in_bytes);
 	tn->tn_system_dependent = true;
 	return tn;
 }
@@ -3458,7 +3459,7 @@ build_alignof(const type_t *tp)
 		break;
 	}
 
-	return new_integer_constant_node(SIZEOF_TSPEC,
+	return expr_new_integer_constant(SIZEOF_TSPEC,
 	    (int64_t)alignment_in_bits(tp) / CHAR_SIZE);
 }
 
@@ -3567,7 +3568,7 @@ new_function_argument_node(tnode_t *args, tnode_t *arg)
 	 * will not change.
 	 */
 	if (arg == NULL)
-		arg = new_integer_constant_node(INT, (int64_t)0);
+		arg = expr_new_integer_constant(INT, 0);
 
 	ntn = new_tnode(PUSH, arg->tn_type, arg, args);
 
@@ -3789,7 +3790,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
 	lint_assert(tn != NULL || nerr != 0);
 
 	if (tn == NULL) {
-		tfreeblk();
+		expr_free_all();
 		return;
 	}
 
@@ -3824,7 +3825,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
 
 	/* free the tree memory */
 	if (dofreeblk)
-		tfreeblk();
+		expr_free_all();
 }
 
 static bool
