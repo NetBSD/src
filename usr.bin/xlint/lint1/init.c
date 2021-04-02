@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.185 2021/04/01 14:20:30 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.186 2021/04/02 08:38:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.185 2021/04/01 14:20:30 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.186 2021/04/02 08:38:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -192,6 +192,9 @@ debug_step(const char *fmt, ...)
 	va_end(va);
 	printf("\n");
 }
+#define debug_step0		debug_step
+#define debug_step1		debug_step
+#define debug_step2		debug_step
 
 static void
 debug_leave(const char *func)
@@ -205,11 +208,11 @@ debug_leave(const char *func)
 
 #else
 
-/* TODO: This is C99 */
-#define debug_printf(fmt, ...)	do { } while (false)
 #define debug_indent()		do { } while (false)
 #define debug_enter()		do { } while (false)
-#define debug_step(fmt, ...)	do { } while (false)
+#define debug_step0(msg)	do { } while (false)
+#define debug_step1(fmt, arg0)	do { } while (false)
+#define debug_step2(fmt, arg1, arg2) do { } while (false)
 #define debug_leave()		do { } while (false)
 
 #endif
@@ -392,7 +395,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	lt = ln->tn_type->t_tspec;
 	rt = tn->tn_type->t_tspec;
 
-	debug_step("typeok '%s', '%s'",
+	debug_step2("typeok '%s', '%s'",
 	    type_name(ln->tn_type), type_name(tn->tn_type));
 	if (!typeok(INIT, 0, ln, tn))
 		return;
@@ -874,7 +877,7 @@ initialization_expr_using_assign(struct initialization *in, tnode_t *rn)
 	if (in->in_sym->s_type->t_tspec == ARRAY)
 		return false;
 
-	debug_step("handing over to ASSIGN");
+	debug_step0("handing over to ASSIGN");
 
 	ln = new_name_node(in->in_sym, 0);
 	ln->tn_type = tduptyp(ln->tn_type);
@@ -976,7 +979,7 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 		goto done;
 	}
 
-	debug_step("expecting '%s', expression has '%s'",
+	debug_step2("expecting '%s', expression has '%s'",
 	    type_name(tp), type_name(tn->tn_type));
 	check_init_expr(tp, in->in_sym, tn);
 
@@ -1015,7 +1018,7 @@ begin_initialization(sym_t *sym)
 {
 	struct initialization *in;
 
-	debug_step("begin initialization of '%s'", type_name(sym->s_type));
+	debug_step1("begin initialization of '%s'", type_name(sym->s_type));
 #ifdef DEBUG
 	debug_indentation++;
 #endif
@@ -1037,7 +1040,7 @@ end_initialization(void)
 #ifdef DEBUG
 	debug_indentation--;
 #endif
-	debug_step("end initialization");
+	debug_step0("end initialization");
 }
 
 void
