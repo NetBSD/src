@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.96 2021/04/02 09:39:25 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.97 2021/04/02 09:52:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -106,7 +106,7 @@ extern	void	freeblk(void);
 extern	void	freelblk(int);
 
 extern	void	*tgetblk(size_t);
-extern	tnode_t	*getnode(void);
+extern	tnode_t	*expr_zalloc_tnode(void);
 extern	void	tfreeblk(void);
 extern	struct	memory_block *tsave(void);
 extern	void	trestor(struct memory_block *);
