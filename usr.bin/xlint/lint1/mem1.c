@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.38 2021/04/02 09:39:25 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.39 2021/04/02 09:45:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.38 2021/04/02 09:39:25 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.39 2021/04/02 09:45:55 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -115,6 +115,14 @@ transform_filename(const char *name, size_t len)
 	return buf;
 }
 
+static int
+next_filename_id(void)
+{
+	static int next_id = 0;
+
+	return next_id++;
+}
+
 /*
  * Return a copy of the filename s with unlimited lifetime.
  * If the filename is new, write it to the output file.
@@ -124,8 +132,6 @@ record_filename(const char *s, size_t slen)
 {
 	const struct filename *existing_fn;
 	struct filename *fn;
-
-	static	int	nxt_id = 0;
 
 	if (s == NULL)
 		return NULL;
@@ -139,7 +145,7 @@ record_filename(const char *s, size_t slen)
 	(void)memcpy(fn->fn_name, s, slen);
 	fn->fn_name[slen] = '\0';
 	fn->fn_len = slen;
-	fn->fn_id = nxt_id++;
+	fn->fn_id = next_filename_id();
 	fn->fn_next = filenames;
 	filenames = fn;
 
