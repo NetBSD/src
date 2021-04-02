@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.241 2020/04/13 19:23:20 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.242 2021/04/02 03:07:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.241 2020/04/13 19:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.242 2021/04/02 03:07:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -223,7 +223,6 @@ nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_ffree = tquad;
 		sbp->f_favail = tquad;
 		sbp->f_fresvd = 0;
-		sbp->f_namemax = NFS_MAXNAMLEN;
 	} else {
 		sbp->f_bsize = NFS_FABLKSIZE;
 		sbp->f_frsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
@@ -235,7 +234,6 @@ nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_ffree = 0;
 		sbp->f_favail = 0;
 		sbp->f_fresvd = 0;
-		sbp->f_namemax = NFS_MAXNAMLEN;
 	}
 	copy_statvfs_info(sbp, mp);
 	nfsm_reqdone;
@@ -706,19 +704,20 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 		nmp = VFSTONFS(mp);
 		/* update paths, file handles, etc, here	XXX */
 		m_freem(nam);
-		return (0);
-	} else {
-		nmp = kmem_zalloc(sizeof(*nmp), KM_SLEEP);
-		mp->mnt_data = nmp;
-		TAILQ_INIT(&nmp->nm_uidlruhead);
-		TAILQ_INIT(&nmp->nm_bufq);
-		rw_init(&nmp->nm_writeverflock);
-		mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&nmp->nm_rcvcv, "nfsrcv");
-		cv_init(&nmp->nm_sndcv, "nfssnd");
-		cv_init(&nmp->nm_aiocv, "nfsaio");
-		cv_init(&nmp->nm_disconcv, "nfsdis");
+		return 0;
 	}
+	nmp = kmem_zalloc(sizeof(*nmp), KM_SLEEP);
+	TAILQ_INIT(&nmp->nm_uidlruhead);
+	TAILQ_INIT(&nmp->nm_bufq);
+	rw_init(&nmp->nm_writeverflock);
+	mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&nmp->nm_rcvcv, "nfsrcv");
+	cv_init(&nmp->nm_sndcv, "nfssnd");
+	cv_init(&nmp->nm_aiocv, "nfsaio");
+	cv_init(&nmp->nm_disconcv, "nfsdis");
+
+	mp->mnt_data = nmp;
+	mp->mnt_stat.f_namemax = NFS_MAXNAMLEN;
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
 
