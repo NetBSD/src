@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.60 2021/04/01 22:02:20 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.61 2021/04/02 16:59:59 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.60 2021/04/01 22:02:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.61 2021/04/02 16:59:59 macallan Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -379,9 +379,12 @@ restore_ofmap(void)
 			continue;
 
 		/*
-		 * XXX
-		 * my beige G3 throws a DSI trap if we try to map the last page
-		 * of the firmware ROM
+		 * XXX macallan@
+		 * My beige G3 throws a DSI trap if we try to map the last page
+		 * of the 32bit address space. On old world macs the firmware
+		 * ROM occupies 4MB at 0xffc00000, triggering it when we 
+		 * restore OF translations. This just works around a bug
+		 * elsewhere in pmap and should go away once fixed there.
 		 */
 		if (pa == 0xffc00000 && size == 0x400000)
 			size = 0x3ff000;
