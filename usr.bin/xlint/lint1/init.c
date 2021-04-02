@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.188 2021/04/02 10:13:03 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.189 2021/04/02 11:53:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.188 2021/04/02 10:13:03 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.189 2021/04/02 11:53:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -321,7 +321,7 @@ update_type_of_array_of_unknown_size(sym_t *sym, size_t size)
 {
 	type_t *tp;
 
-	tp = duptyp(sym->s_type);
+	tp = dup_type(sym->s_type);
 	tp->t_dim = (int)size;
 	tp->t_incomplete_array = false;
 	sym->s_type = tp;
@@ -385,7 +385,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	/* Create a temporary node for the left side. */
 	ln = expr_zalloc(sizeof *ln);
 	ln->tn_op = NAME;
-	ln->tn_type = tduptyp(tp);
+	ln->tn_type = expr_dup_type(tp);
 	ln->tn_type->t_const = false;
 	ln->tn_lvalue = true;
 	ln->tn_sym = sym;
@@ -880,7 +880,7 @@ initialization_expr_using_assign(struct initialization *in, tnode_t *rn)
 	debug_step0("handing over to ASSIGN");
 
 	ln = new_name_node(in->in_sym, 0);
-	ln->tn_type = tduptyp(ln->tn_type);
+	ln->tn_type = expr_dup_type(ln->tn_type);
 	ln->tn_type->t_const = false;
 
 	tn = build(ASSIGN, ln, rn);

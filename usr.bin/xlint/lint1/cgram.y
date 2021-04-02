@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.209 2021/04/02 10:13:03 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.210 2021/04/02 11:53:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.209 2021/04/02 10:13:03 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.210 2021/04/02 11:53:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1889,7 +1889,7 @@ term:
 	    expr_statement_list {
 		block_level--;
 		mem_block_level--;
-		begin_initialization(mktempsym(duptyp($4->tn_type)));
+		begin_initialization(mktempsym(dup_type($4->tn_type)));
 		mem_block_level++;
 		block_level++;
 		/* ({ }) is a GCC extension */
