@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.90 2021/03/27 12:42:22 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.91 2021/04/02 09:39:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -411,7 +411,7 @@ typedef struct control_statement {
 	type_t	*c_switch_type;		/* type of switch expression */
 	case_label_t *c_case_labels;	/* list of case values */
 
-	struct	mbl *c_for_expr3_mem;	/* saved memory for end of loop
+	struct	memory_block *c_for_expr3_mem; /* saved memory for end of loop
 					 * expression in for() */
 	tnode_t	*c_for_expr3;		/* end of loop expr in for() */
 	pos_t	c_for_expr3_pos;	/* position of end of loop expr */
