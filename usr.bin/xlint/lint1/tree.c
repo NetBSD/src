@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.264 2021/04/02 17:10:52 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.265 2021/04/02 22:41:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.264 2021/04/02 17:10:52 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.265 2021/04/02 22:41:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3208,7 +3208,7 @@ fold_test(tnode_t *tn)
 	switch (tn->tn_op) {
 	case NOT:
 		if (hflag && !constcond_flag)
-			/* constant argument to NOT */
+			/* constant argument to '!' */
 			warning(239);
 		v->v_quad = !l ? 1 : 0;
 		break;
