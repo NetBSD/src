@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2009/07/08 12:23:10 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2021/04/02 12:11:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct intrhand {
 	int			ih_type;
 	int			ih_pri;
 	int			ih_vector;
-	u_long			*ih_intrcnt;
+	u_int			*ih_intrcnt;
 };
 
 void		intr_init(void);
@@ -127,9 +127,9 @@ void		intr_glue(void);
  * Exported by intrcnt.h
  */
 extern u_long	autovects[];
-extern u_long	intrcnt_auto[];
+extern u_int	intrcnt_auto[];
 extern u_long	uservects[];
-extern u_long	intrcnt_user[];
+extern u_int	intrcnt_user[];
 
 #endif /* _KERNEL */
 
