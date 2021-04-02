@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40 2013/09/06 17:43:19 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.41 2021/04/02 12:11:41 rin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2013/09/06 17:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2021/04/02 12:11:41 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2013/09/06 17:43:19 tsutsui Exp $");
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/interreg.h>
 
-extern int intrcnt[];
+extern u_int intrcnt[];
 
 #define SUN3_470	Yes
 

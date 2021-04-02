@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.35 2020/11/21 17:59:13 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.36 2021/04/02 12:11:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.35 2020/11/21 17:59:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.36 2021/04/02 12:11:41 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ struct	evcnt mvme68k_irq_evcnt[] = {
 };
 static int idepth;
 
-extern	int intrcnt[];		/* from locore.s. XXXSCW: will go away soon */
+extern	u_int intrcnt[];	/* from locore.s. XXXSCW: will go away soon */
 extern	void (*vectab[])(void);
 extern	void badtrap(void);
 extern	void intrhand_vectored(void);

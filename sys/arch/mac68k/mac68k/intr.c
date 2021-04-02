@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.31 2020/07/21 06:10:26 rin Exp $	*/
+/*	$NetBSD: intr.c,v 1.32 2021/04/02 12:11:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2020/07/21 06:10:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2021/04/02 12:11:41 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ uint16_t ipl2psl_table[NIPL];
 int idepth;
 volatile int ssir;
 
-extern	int intrcnt[];		/* from locore.s */
+extern	u_int intrcnt[];	/* from locore.s */
 
 void	intr_computeipl(void);
 

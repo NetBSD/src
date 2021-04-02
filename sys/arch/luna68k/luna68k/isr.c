@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.24 2020/12/19 21:38:30 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.25 2021/04/02 12:11:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.24 2020/12/19 21:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.25 2021/04/02 12:11:41 rin Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -51,7 +51,7 @@ isr_autovec_list_t isr_autovec[NISRAUTOVEC];
 struct	isr_vectored isr_vectored[NISRVECTORED];
 int	idepth;
 
-extern	int intrcnt[];		/* from locore.s */
+extern	u_int intrcnt[];	/* from locore.s */
 extern	void (*vectab[])(void);
 extern	void badtrap(void);
 extern	void intrhand_vectored(void);
