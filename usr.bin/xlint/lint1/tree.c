@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.259 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.260 2021/04/02 15:06:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.259 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.260 2021/04/02 15:06:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -99,7 +99,7 @@ static	void	check_precedence_confusion(tnode_t *);
 extern sig_atomic_t fpe;
 
 static const char *
-getopname(op_t op)
+op_name(op_t op)
 {
 	return modtab[op].m_name;
 }
@@ -118,7 +118,7 @@ debug_node(const tnode_t *tn, int indent)
 	op = tn->tn_op;
 	printf("%*s%s with type '%s'%s%s",
 	    2 * indent, "",
-	    op == CVT && !tn->tn_cast ? "convert" : getopname(op),
+	    op == CVT && !tn->tn_cast ? "convert" : op_name(op),
 	    type_name(tn->tn_type), tn->tn_lvalue ? ", lvalue" : "",
 	    tn->tn_parenthesized ? ", parenthesized" : "");
 
@@ -477,7 +477,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			error(105, op == POINT ? "object" : "pointer");
 		} else {
 			/* unacceptable operand of '%s' */
-			error(111, getopname(op));
+			error(111, op_name(op));
 		}
 	}
 
@@ -999,7 +999,7 @@ typeok_ordered_comparison(op_t op,
 	const char *lx = lt == PTR ? "pointer" : "integer";
 	const char *rx = rt == PTR ? "pointer" : "integer";
 	/* illegal combination of %s (%s) and %s (%s), op %s */
-	warning(123, lx, type_name(ltp), rx, type_name(rtp), getopname(op));
+	warning(123, lx, type_name(ltp), rx, type_name(rtp), op_name(op));
 	return true;
 }
 
@@ -1184,7 +1184,7 @@ typeok_strict_bool_compatible(op_t op, int arg,
 		error(211, tspec_name(lt), tspec_name(rt));
 	} else {
 		/* operands of '%s' have incompatible types (%s != %s) */
-		error(107, getopname(op), tspec_name(lt), tspec_name(rt));
+		error(107, op_name(op), tspec_name(lt), tspec_name(rt));
 	}
 
 	return false;
@@ -1222,17 +1222,17 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 		if (!binary && !lbool) {
 			/* operand of '%s' must be bool, not '%s' */
-			error(330, getopname(op), tspec_name(lt));
+			error(330, op_name(op), tspec_name(lt));
 			ok = false;
 		}
 		if (binary && !lbool) {
 			/* left operand of '%s' must be bool, not '%s' */
-			error(331, getopname(op), tspec_name(lt));
+			error(331, op_name(op), tspec_name(lt));
 			ok = false;
 		}
 		if (binary && op != QUEST && !is_typeok_bool_operand(rn)) {
 			/* right operand of '%s' must be bool, not '%s' */
-			error(332, getopname(op), tspec_name(rt));
+			error(332, op_name(op), tspec_name(rt));
 			ok = false;
 		}
 		return ok;
@@ -1245,17 +1245,17 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 		if (!binary && lbool) {
 			/* operand of '%s' must not be bool */
-			error(335, getopname(op));
+			error(335, op_name(op));
 			ok = false;
 		}
 		if (binary && lbool) {
 			/* left operand of '%s' must not be bool */
-			error(336, getopname(op));
+			error(336, op_name(op));
 			ok = false;
 		}
 		if (binary && rn->tn_type->t_tspec == BOOL) {
 			/* right operand of '%s' must not be bool */
-			error(337, getopname(op));
+			error(337, op_name(op));
 			ok = false;
 		}
 		return ok;
@@ -1712,7 +1712,7 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 	}
 
 	/* dubious operation on enum, op %s */
-	warning(241, getopname(op));
+	warning(241, op_name(op));
 
 }
 
@@ -1790,7 +1790,7 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	default:
 		/* combination of '%s' and '%s', op %s */
 		warning(242, type_name(ln->tn_type), type_name(rn->tn_type),
-		    getopname(op));
+		    op_name(op));
 		break;
 	}
 }
@@ -2433,7 +2433,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 			 */
 			if (nsz < osz && (v->v_quad & xmask) != 0) {
 				/* constant truncated by conv., op %s */
-				warning(306, getopname(op));
+				warning(306, op_name(op));
 			}
 		} else if (op == ANDASS || op == BITAND) {
 			/*
@@ -2446,12 +2446,12 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 			    (nv->v_quad & xmask) != xmask) {
 				/* extra bits set to 0 in conv. of '%s' ... */
 				warning(309, type_name(gettyp(ot)),
-				    type_name(tp), getopname(op));
+				    type_name(tp), op_name(op));
 			} else if (nsz < osz &&
 				   (v->v_quad & xmask) != xmask &&
 				   (v->v_quad & xmask) != 0) {
 				/* constant truncated by conv., op %s */
-				warning(306, getopname(op));
+				warning(306, op_name(op));
 			}
 		} else if ((nt != PTR && is_uinteger(nt)) &&
 			   (ot != PTR && !is_uinteger(ot)) &&
@@ -2953,7 +2953,7 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 				error(212);
 			} else {
 				/* unknown operand size, op %s */
-				error(138, getopname(op));
+				error(138, op_name(op));
 			}
 			return NULL;
 		}

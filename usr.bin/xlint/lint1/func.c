@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.101 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.102 2021/04/02 15:06:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.101 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.102 2021/04/02 15:06:35 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -447,7 +447,7 @@ check_case_label_enum(const tnode_t *tn, const cstk_t *ci)
 
 #if 0 /* not yet ready, see msg_130.c */
 	/* enum type mismatch: '%s' '%s' '%s' */
-	warning(130, type_name(ci->c_switch_type), getopname(EQ),
+	warning(130, type_name(ci->c_switch_type), op_name(EQ),
 	    type_name(tn->tn_type));
 #endif
 }
