@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.914 2021/04/01 10:35:24 martin Exp $
+# $NetBSD: shl.mi,v 1.915 2021/04/02 10:06:26 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1002,4 +1002,4 @@
 ./usr/lib/security/pam_u2f.so.4			base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_unix.so.4		base-sys-shlib		compatfile,pam
 ./usr/libexec/ld.elf_so				base-sys-shlib		dynamicroot
-./usr/libexec/named/filter-aaaa.so		base-bind-bin		dynamicroot
+./usr/libexec/named/filter-aaaa.so		base-bind-bin
