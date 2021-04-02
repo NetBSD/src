@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.97 2021/04/02 09:52:36 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.98 2021/04/02 10:13:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -105,11 +105,11 @@ extern	void	*getlblk(size_t, size_t);
 extern	void	freeblk(void);
 extern	void	freelblk(int);
 
-extern	void	*tgetblk(size_t);
+extern	void	*expr_zalloc(size_t);
 extern	tnode_t	*expr_zalloc_tnode(void);
-extern	void	tfreeblk(void);
-extern	struct	memory_block *tsave(void);
-extern	void	trestor(struct memory_block *);
+extern	void	expr_free_all(void);
+extern	struct	memory_block *expr_save_memory(void);
+extern	void	expr_restore_memory(struct memory_block *);
 
 /*
  * err.c
@@ -196,9 +196,9 @@ extern	int	to_int_constant(tnode_t *, bool);
 /*
  * tree.c
  */
-extern	type_t	*incref(type_t *, tspec_t);
-extern	type_t	*tincref(type_t *, tspec_t);
-extern	tnode_t	*new_constant_node(type_t *, val_t *);
+extern	type_t	*derive_type(type_t *, tspec_t);
+extern	type_t	*expr_derive_type(type_t *, tspec_t);
+extern	tnode_t	*expr_new_constant(type_t *, val_t *);
 extern	tnode_t	*new_name_node(sym_t *, int);
 extern	tnode_t	*new_string_node(strg_t *);
 extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
