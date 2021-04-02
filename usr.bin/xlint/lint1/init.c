@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.186 2021/04/02 08:38:44 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.187 2021/04/02 09:39:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.186 2021/04/02 08:38:44 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.187 2021/04/02 09:39:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -380,7 +380,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 {
 	tnode_t *ln;
 	tspec_t lt, rt;
-	struct mbl *tmem;
+	struct memory_block *tmem;
 
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof *ln);
