@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.245 2021/04/01 06:23:14 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.246 2021/04/02 06:28:55 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.245 2021/04/01 06:23:14 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.246 2021/04/02 06:28:55 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,6 @@ static const int clockrate_mib[] = { CTL_KERN, KERN_CLOCKRATE };
 static const int vmmeter_mib[] = { CTL_VM, VM_METER };
 static const int uvmexp2_mib[] = { CTL_VM, VM_UVMEXP2 };
 static const int boottime_mib[] = { CTL_KERN, KERN_BOOTTIME };
-static char kvm_errbuf[_POSIX2_LINE_MAX];
 
 int
 main(int argc, char *argv[])
@@ -336,11 +335,10 @@ main(int argc, char *argv[])
 	int c, todo, verbose, wide;
 	struct timespec interval;
 	int reps;
-	gid_t egid = getegid();
 	const char *histname, *hashname;
+	char errbuf[_POSIX2_LINE_MAX];
 
 	histname = hashname = NULL;
-	(void)setegid(getgid());
 	memf = nlistf = NULL;
 	reps = todo = verbose = wide = 0;
 	interval.tv_sec = 0;
@@ -415,34 +413,20 @@ main(int argc, char *argv[])
 	if (todo == 0)
 		todo = VMSTAT;
 
-	/*
-	 * Discard setgid privileges.  If not the running kernel, we toss
-	 * them away totally so that bad guys can't print interesting stuff
-	 * from kernel memory, otherwise switch back to kmem for the
-	 * duration of the kvm_openfiles() call.
-	 */
-	if (nlistf != NULL || memf != NULL)
-		(void)setgid(getgid());
-	else
-		(void)setegid(egid);
-
-	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, kvm_errbuf);
-	if (kd == NULL) {
-		if (nlistf != NULL || memf != NULL) {
-			errx(1, "kvm_openfiles: %s", kvm_errbuf);
-		}
+	if (memf == NULL) {
+		kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+	} else {
+		kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
+		getnlist(todo);
 	}
 
-	if (nlistf == NULL && memf == NULL)
-		(void)setgid(getgid());
-
+	if (kd == NULL)
+		errx(EXIT_FAILURE, "%s", errbuf);
 
 	if (todo & VMSTAT) {
 		struct winsize winsize;
 
 		(void)drvinit(0);/* Initialize disk stats, no disks selected. */
-
-		(void)setgid(getgid()); /* don't need privs anymore */
 
 		argv = choosedrives(argv);	/* Select disks. */
 		winsize.ws_row = 0;
@@ -466,8 +450,6 @@ main(int argc, char *argv[])
 	} else if (reps)
 		interval.tv_sec = 1;
 
-
-	getnlist(todo);
 	/*
 	 * Statistics dumping is incompatible with the default
 	 * VMSTAT/dovmstat() output. So perform the interval/reps handling
@@ -539,36 +521,30 @@ main(int argc, char *argv[])
 void
 getnlist(int todo)
 {
-	static int namelist_done = 0;
 	static int done = 0;
 	int c;
 	size_t i;
 
-	if (kd == NULL)
-		errx(1, "kvm_openfiles: %s", kvm_errbuf);
-
-	if (!namelist_done) {
-		namelist_done = 1;
-		if ((c = kvm_nlist(kd, namelist)) != 0) {
-			int doexit = 0;
-			if (c == -1)
-				errx(1, "kvm_nlist: %s %s",
-				    "namelist", kvm_geterr(kd));
-			for (i = 0; i < __arraycount(namelist)-1; i++)
-				if (namelist[i].n_type == 0) {
-					if (doexit++ == 0)
-						(void)fprintf(stderr,
-						    "%s: undefined symbols:",
-						    getprogname());
-					(void)fprintf(stderr, " %s",
-					    namelist[i].n_name);
-				}
-			if (doexit) {
-				(void)fputc('\n', stderr);
-				exit(1);
+	if ((c = kvm_nlist(kd, namelist)) != 0) {
+		int doexit = 0;
+		if (c == -1)
+			errx(1, "kvm_nlist: %s %s",
+			    "namelist", kvm_geterr(kd));
+		for (i = 0; i < __arraycount(namelist)-1; i++)
+			if (namelist[i].n_type == 0) {
+				if (doexit++ == 0)
+					(void)fprintf(stderr,
+					    "%s: undefined symbols:",
+					    getprogname());
+				(void)fprintf(stderr, " %s",
+				    namelist[i].n_name);
 			}
+		if (doexit) {
+			(void)fputc('\n', stderr);
+			exit(1);
 		}
 	}
+
 	if ((todo & (VMSTAT|INTRSTAT)) && !(done & (VMSTAT))) {
 		done |= VMSTAT;
 		if ((c = kvm_nlist(kd, timenl)) == -1 || c == X_TIMENL_SIZE)
