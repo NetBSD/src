@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.42 2021/04/02 10:30:35 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.43 2021/04/02 12:16:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.42 2021/04/02 10:30:35 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.43 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ static struct filename_replacement *filename_replacements;
 void
 add_directory_replacement(char *arg)
 {
-	struct filename_replacement *r = xmalloc(sizeof *r);
+	struct filename_replacement *r = xmalloc(sizeof(*r));
 
 	char *sep = strchr(arg, '=');
 	if (sep == NULL)
@@ -111,7 +111,7 @@ transform_filename(const char *name, size_t len)
 			break;
 	if (r == NULL)
 		return name;
-	snprintf(buf, sizeof buf, "%s%s", r->repl, name + r->orig_len);
+	snprintf(buf, sizeof(buf), "%s%s", r->repl, name + r->orig_len);
 	return buf;
 }
 
@@ -208,7 +208,7 @@ static	memory_block *xnewblk(void);
 static memory_block *
 xnewblk(void)
 {
-	memory_block	*mb = xmalloc(sizeof *mb);
+	memory_block	*mb = xmalloc(sizeof(*mb));
 
 	/* use mmap instead of malloc to avoid malloc's size overhead */
 	mb->start = xmapalloc(mblklen);
@@ -290,7 +290,7 @@ initmem(void)
 	pgsz = getpagesize();
 	mblklen = ((MBLKSIZ + pgsz - 1) / pgsz) * pgsz;
 
-	mblks = xcalloc(nmblks = ML_INC, sizeof *mblks);
+	mblks = xcalloc(nmblks = ML_INC, sizeof(*mblks));
 }
 
 
@@ -300,8 +300,8 @@ getlblk(size_t l, size_t s)
 {
 
 	while (l >= nmblks) {
-		mblks = xrealloc(mblks, (nmblks + ML_INC) * sizeof *mblks);
-		(void)memset(&mblks[nmblks], 0, ML_INC * sizeof *mblks);
+		mblks = xrealloc(mblks, (nmblks + ML_INC) * sizeof(*mblks));
+		(void)memset(&mblks[nmblks], 0, ML_INC * sizeof(*mblks));
 		nmblks += ML_INC;
 	}
 	return xgetblk(&mblks[l], s);
@@ -349,7 +349,7 @@ expr_zalloc(size_t s)
 tnode_t *
 expr_zalloc_tnode(void)
 {
-	tnode_t *tn = expr_zalloc(sizeof *tn);
+	tnode_t *tn = expr_zalloc(sizeof(*tn));
 	tn->tn_from_system_header = in_system_header;
 	return tn;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.41 2021/03/28 15:36:37 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.42 2021/04/02 12:16:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.41 2021/03/28 15:36:37 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.42 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ static const char builtins[] =
     "int __builtin_isnan(long double);\n"
     "int __builtin_copysign(long double, long double);\n"
 ;
-static const size_t builtinlen = sizeof builtins - 1;
+static const size_t builtinlen = sizeof(builtins) - 1;
 
 static FILE *
 gcc_builtins(void)

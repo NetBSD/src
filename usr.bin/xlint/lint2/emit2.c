@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.18 2021/03/26 20:31:07 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.19 2021/04/02 12:16:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.18 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.19 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -277,7 +277,7 @@ addoutfile(short num)
 	}
 
 	if (ofl == NULL) {
-		ofl = *pofl = xmalloc(sizeof **pofl);
+		ofl = *pofl = xmalloc(sizeof(**pofl));
 		ofl->ofl_num = num;
 		ofl->ofl_next = NULL;
 	}

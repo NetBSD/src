@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.57 2021/03/26 20:31:07 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.58 2021/04/02 12:16:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.57 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.58 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ appstrg(char ***lstp, char *s)
 	olst = *lstp;
 	for (i = 0; olst[i] != NULL; i++)
 		continue;
-	lst = xrealloc(olst, (i + 2) * sizeof *lst);
+	lst = xrealloc(olst, (i + 2) * sizeof(*lst));
 	lst[i] = s;
 	lst[i + 1] = NULL;
 	*lstp = lst;
@@ -182,7 +182,7 @@ applst(char ***destp, char *const *src)
 		continue;
 	for (k = 0; src[k] != NULL; k++)
 		continue;
-	dest = xrealloc(odest, (i + k + 1) * sizeof *dest);
+	dest = xrealloc(odest, (i + k + 1) * sizeof(*dest));
 	for (k = 0; src[k] != NULL; k++)
 		dest[i + k] = xstrdup(src[k]);
 	dest[i + k] = NULL;
@@ -322,7 +322,7 @@ main(int argc, char *argv[])
 		tmpdir = p;
 	}
 
-	cppout = xmalloc(strlen(tmpdir) + sizeof "lint0.XXXXXX");
+	cppout = xmalloc(strlen(tmpdir) + sizeof("lint0.XXXXXX"));
 	(void)sprintf(cppout, "%slint0.XXXXXX", tmpdir);
 	cppoutfd = mkstemp(cppout);
 	if (cppoutfd == -1) {
@@ -330,16 +330,16 @@ main(int argc, char *argv[])
 		terminate(-1);
 	}
 
-	p1out = xcalloc(1, sizeof *p1out);
-	p2in = xcalloc(1, sizeof *p2in);
-	cflags = xcalloc(1, sizeof *cflags);
-	lcflags = xcalloc(1, sizeof *lcflags);
-	l1flags = xcalloc(1, sizeof *l1flags);
-	l2flags = xcalloc(1, sizeof *l2flags);
-	l2libs = xcalloc(1, sizeof *l2libs);
-	deflibs = xcalloc(1, sizeof *deflibs);
-	libs = xcalloc(1, sizeof *libs);
-	libsrchpath = xcalloc(1, sizeof *libsrchpath);
+	p1out = xcalloc(1, sizeof(*p1out));
+	p2in = xcalloc(1, sizeof(*p2in));
+	cflags = xcalloc(1, sizeof(*cflags));
+	lcflags = xcalloc(1, sizeof(*lcflags));
+	l1flags = xcalloc(1, sizeof(*l1flags));
+	l2flags = xcalloc(1, sizeof(*l2flags));
+	l2libs = xcalloc(1, sizeof(*l2libs));
+	deflibs = xcalloc(1, sizeof(*deflibs));
+	libs = xcalloc(1, sizeof(*libs));
+	libsrchpath = xcalloc(1, sizeof(*libsrchpath));
 
 	appcstrg(&cflags, "-E");
 	appcstrg(&cflags, "-x");
@@ -481,7 +481,7 @@ main(int argc, char *argv[])
 				usage();
 			Cflag = true;
 			appstrg(&l2flags, concat2("-C", optarg));
-			p2out = xmalloc(sizeof "llib-l.ln" + strlen(optarg));
+			p2out = xmalloc(sizeof("llib-l.ln") + strlen(optarg));
 			(void)sprintf(p2out, "llib-l%s.ln", optarg);
 			freelst(&deflibs);
 			break;
@@ -674,7 +674,7 @@ fname(const char *name)
 	if (!iflag)
 		appcstrg(&p1out, ofn);
 
-	args = xcalloc(1, sizeof *args);
+	args = xcalloc(1, sizeof(*args));
 
 	/* run cc */
 	if ((CC = getenv("CC")) == NULL)
@@ -709,7 +709,7 @@ fname(const char *name)
 	/* run lint1 */
 
 	if (!Bflag) {
-		pathname = xmalloc(strlen(PATH_LIBEXEC) + sizeof "/lint1" +
+		pathname = xmalloc(strlen(PATH_LIBEXEC) + sizeof("/lint1") +
 		    strlen(target_prefix));
 		(void)sprintf(pathname, "%s/%slint1", PATH_LIBEXEC,
 		    target_prefix);
@@ -718,7 +718,7 @@ fname(const char *name)
 		 * XXX Unclear whether we should be using target_prefix
 		 * XXX here.  --thorpej@wasabisystems.com
 		 */
-		pathname = xmalloc(strlen(libexec_path) + sizeof "/lint1");
+		pathname = xmalloc(strlen(libexec_path) + sizeof("/lint1"));
 		(void)sprintf(pathname, "%s/lint1", libexec_path);
 	}
 
@@ -806,11 +806,11 @@ findlibs(char *const *liblst)
 	for (i = 0; (lib = liblst[i]) != NULL; i++) {
 		for (k = 0; (path = libsrchpath[k]) != NULL; k++) {
 			len = strlen(path) + strlen(lib);
-			lfn = xrealloc(lfn, len + sizeof "/llib-l.ln");
+			lfn = xrealloc(lfn, len + sizeof("/llib-l.ln"));
 			(void)sprintf(lfn, "%s/llib-l%s.ln", path, lib);
 			if (rdok(lfn))
 				break;
-			lfn = xrealloc(lfn, len + sizeof "/lint/llib-l.ln");
+			lfn = xrealloc(lfn, len + sizeof("/lint/llib-l.ln"));
 			(void)sprintf(lfn, "%s/lint/llib-l%s.ln", path, lib);
 			if (rdok(lfn))
 				break;
@@ -844,10 +844,10 @@ lint2(void)
 {
 	char	*path, **args;
 
-	args = xcalloc(1, sizeof *args);
+	args = xcalloc(1, sizeof(*args));
 
 	if (!Bflag) {
-		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof "/lint2" +
+		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof("/lint2") +
 		    strlen(target_prefix));
 		(void)sprintf(path, "%s/%slint2", PATH_LIBEXEC,
 		    target_prefix);
@@ -856,7 +856,7 @@ lint2(void)
 		 * XXX Unclear whether we should be using target_prefix
 		 * XXX here.  --thorpej@wasabisystems.com
 		 */
-		path = xmalloc(strlen(libexec_path) + sizeof "/lint2");
+		path = xmalloc(strlen(libexec_path) + sizeof("/lint2"));
 		(void)sprintf(path, "%s/lint2", libexec_path);
 	}
 

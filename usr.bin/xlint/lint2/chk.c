@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.41 2021/03/26 20:31:07 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.42 2021/04/02 12:16:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.41 2021/03/26 20:31:07 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.42 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1088,7 +1088,7 @@ chkrvu(hte_t *hte, sym_t *def)
 		if (hflag == 0)
 			return;
 		if (hflag == 1 && bsearch(hte->h_name, ignorelist,
-		    __arraycount(ignorelist), sizeof ignorelist[0],
+		    __arraycount(ignorelist), sizeof(ignorelist[0]),
 		    (int (*)(const void *, const void *))strcmp) != NULL)
 			return;
 

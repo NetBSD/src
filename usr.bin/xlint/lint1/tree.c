@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.258 2021/04/02 11:53:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.259 2021/04/02 12:16:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.258 2021/04/02 11:53:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.259 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -150,7 +150,7 @@ derive_type(type_t *tp, tspec_t t)
 {
 	type_t	*tp2;
 
-	tp2 = getblk(sizeof *tp2);
+	tp2 = getblk(sizeof(*tp2));
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -165,7 +165,7 @@ expr_derive_type(type_t *tp, tspec_t t)
 {
 	type_t	*tp2;
 
-	tp2 = expr_zalloc(sizeof *tp2);
+	tp2 = expr_zalloc(sizeof(*tp2));
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -182,7 +182,7 @@ expr_new_constant(type_t *tp, val_t *v)
 	n = expr_zalloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = tp;
-	n->tn_val = expr_zalloc(sizeof *n->tn_val);
+	n->tn_val = expr_zalloc(sizeof(*n->tn_val));
 	n->tn_val->v_tspec = tp->t_tspec;
 	n->tn_val->v_ansiu = v->v_ansiu;
 	n->tn_val->v_u = v->v_u;
@@ -198,7 +198,7 @@ expr_new_integer_constant(tspec_t t, int64_t q)
 	n = expr_zalloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = gettyp(t);
-	n->tn_val = expr_zalloc(sizeof *n->tn_val);
+	n->tn_val = expr_zalloc(sizeof(*n->tn_val));
 	n->tn_val->v_tspec = t;
 	n->tn_val->v_quad = q;
 	return n;
@@ -286,7 +286,7 @@ new_name_node(sym_t *sym, int follow_token)
 			n->tn_lvalue = true;
 	} else {
 		n->tn_op = CON;
-		n->tn_val = expr_zalloc(sizeof *n->tn_val);
+		n->tn_val = expr_zalloc(sizeof(*n->tn_val));
 		*n->tn_val = sym->s_value;
 	}
 
@@ -308,7 +308,7 @@ new_string_node(strg_t *strg)
 	n->tn_type->t_dim = len + 1;
 	n->tn_lvalue = true;
 
-	n->tn_string = expr_zalloc(sizeof *n->tn_string);
+	n->tn_string = expr_zalloc(sizeof(*n->tn_string));
 	n->tn_string->st_tspec = strg->st_tspec;
 	n->tn_string->st_len = len;
 
@@ -317,7 +317,7 @@ new_string_node(strg_t *strg)
 		(void)memcpy(n->tn_string->st_cp, strg->st_cp, len + 1);
 		free(strg->st_cp);
 	} else {
-		size_t size = (len + 1) * sizeof *n->tn_string->st_wcp;
+		size_t size = (len + 1) * sizeof(*n->tn_string->st_wcp);
 		n->tn_string->st_wcp = expr_zalloc(size);
 		(void)memcpy(n->tn_string->st_wcp, strg->st_wcp, size);
 		free(strg->st_wcp);
@@ -350,9 +350,9 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
-		msym->s_styp = expr_zalloc(sizeof *msym->s_styp);
+		msym->s_styp = expr_zalloc(sizeof(*msym->s_styp));
 		msym->s_styp->sou_tag = expr_zalloc(
-		    sizeof *msym->s_styp->sou_tag);
+		    sizeof(*msym->s_styp->sou_tag));
 		msym->s_styp->sou_tag->s_name = unnamed;
 		msym->s_value.v_tspec = INT;
 		return msym;
@@ -2065,7 +2065,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		ntn->tn_left = tn;
 	} else {
 		ntn->tn_op = CON;
-		ntn->tn_val = expr_zalloc(sizeof *ntn->tn_val);
+		ntn->tn_val = expr_zalloc(sizeof(*ntn->tn_val));
 		convert_constant(op, arg, ntn->tn_type, ntn->tn_val,
 		    tn->tn_val);
 	}
@@ -2173,7 +2173,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		case SHL:
 			/* suggest cast from '%s' to '%s' on op %s to ... */
 			warning(324, type_name(gettyp(ot)), type_name(tp),
-			    print_tnode(opbuf, sizeof opbuf, tn));
+			    print_tnode(opbuf, sizeof(opbuf), tn));
 			break;
 		default:
 			break;
@@ -3062,7 +3062,7 @@ fold(tnode_t *tn)
 	uint64_t ul, ur = 0;
 	tnode_t	*cn;
 
-	v = xcalloc(1, sizeof *v);
+	v = xcalloc(1, sizeof(*v));
 	v->v_tspec = t = tn->tn_type->t_tspec;
 
 	utyp = t == PTR || is_uinteger(t);
@@ -3207,7 +3207,7 @@ fold_test(tnode_t *tn)
 	bool	l, r;
 	val_t	*v;
 
-	v = xcalloc(1, sizeof *v);
+	v = xcalloc(1, sizeof(*v));
 	v->v_tspec = tn->tn_type->t_tspec;
 	lint_assert(v->v_tspec == INT || (Tflag && v->v_tspec == BOOL));
 
@@ -3245,7 +3245,7 @@ fold_float(tnode_t *tn)
 	ldbl_t	l, r = 0;
 
 	fpe = 0;
-	v = xcalloc(1, sizeof *v);
+	v = xcalloc(1, sizeof(*v));
 	v->v_tspec = t = tn->tn_type->t_tspec;
 
 	lint_assert(is_floating(t));
@@ -3702,7 +3702,7 @@ check_prototype_argument(
 	tnode_t	*ln;
 	bool	dowarn;
 
-	ln = xcalloc(1, sizeof *ln);
+	ln = xcalloc(1, sizeof(*ln));
 	ln->tn_type = expr_dup_type(tp);
 	ln->tn_type->t_const = false;
 	ln->tn_lvalue = true;
@@ -3730,7 +3730,7 @@ constant(tnode_t *tn, bool required)
 	if (tn != NULL)
 		tn = promote(NOOP, false, tn);
 
-	v = xcalloc(1, sizeof *v);
+	v = xcalloc(1, sizeof(*v));
 
 	if (tn == NULL) {
 		lint_assert(nerr != 0);

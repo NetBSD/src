@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.169 2021/04/02 11:53:25 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.170 2021/04/02 12:16:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.169 2021/04/02 11:53:25 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.170 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -91,7 +91,7 @@ initdecl(void)
 	int i;
 
 	/* declaration stack */
-	dcs = xcalloc(1, sizeof *dcs);
+	dcs = xcalloc(1, sizeof(*dcs));
 	dcs->d_ctx = EXTERN;
 	dcs->d_ldlsym = &dcs->d_dlsyms;
 
@@ -99,7 +99,7 @@ initdecl(void)
 	inittyp();
 
 	/* shared type structures */
-	typetab = xcalloc(NTSPEC, sizeof *typetab);
+	typetab = xcalloc(NTSPEC, sizeof(*typetab));
 	for (i = 0; i < NTSPEC; i++)
 		typetab[i].t_tspec = NOTSPEC;
 	typetab[BOOL].t_tspec = BOOL;
@@ -163,7 +163,7 @@ expr_dup_type(const type_t *tp)
 {
 	type_t	*ntp;
 
-	ntp = expr_zalloc(sizeof *ntp);
+	ntp = expr_zalloc(sizeof(*ntp));
 	*ntp = *tp;
 	return ntp;
 }
@@ -594,7 +594,7 @@ begin_declaration_level(scl_t sc)
 	dinfo_t	*di;
 
 	/* put a new element on the declaration stack */
-	di = xcalloc(1, sizeof *di);
+	di = xcalloc(1, sizeof(*di));
 	di->d_next = dcs;
 	dcs = di;
 	di->d_ctx = sc;
@@ -1261,7 +1261,7 @@ bitfield(sym_t *dsym, int len)
 {
 
 	if (dsym == NULL) {
-		dsym = getblk(sizeof *dsym);
+		dsym = getblk(sizeof(*dsym));
 		dsym->s_name = unnamed;
 		dsym->s_kind = FMEMBER;
 		dsym->s_scl = MOS;
@@ -1333,7 +1333,7 @@ add_pointer(sym_t *decl, pqinf_t *pi)
 		return decl;
 
 	while (pi != NULL) {
-		*tpp = tp = getblk(sizeof *tp);
+		*tpp = tp = getblk(sizeof(*tp));
 		tp->t_tspec = PTR;
 		tp->t_const = pi->p_const;
 		tp->t_volatile = pi->p_volatile;
@@ -1360,7 +1360,7 @@ add_array(sym_t *decl, bool dim, int n)
 	if (*tpp == NULL)
 	    return decl;
 
-	*tpp = tp = getblk(sizeof *tp);
+	*tpp = tp = getblk(sizeof(*tp));
 	tp->t_tspec = ARRAY;
 	tp->t_subt = dcs->d_type;
 	tp->t_dim = n;
@@ -1415,7 +1415,7 @@ add_function(sym_t *decl, sym_t *args)
 	if (*tpp == NULL)
 	    return decl;
 
-	*tpp = tp = getblk(sizeof *tp);
+	*tpp = tp = getblk(sizeof(*tp));
 	tp->t_tspec = FUNC;
 	tp->t_subt = dcs->d_next->d_type;
 	if ((tp->t_proto = dcs->d_proto) != false)
@@ -1669,19 +1669,19 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		}
 		if (tag->s_scl == NOSCL) {
 			tag->s_scl = scl;
-			tag->s_type = tp = getblk(sizeof *tp);
+			tag->s_type = tp = getblk(sizeof(*tp));
 			tp->t_packed = dcs->d_packed;
 		} else {
 			tp = tag->s_type;
 		}
 	} else {
-		tag = getblk(sizeof *tag);
+		tag = getblk(sizeof(*tag));
 		tag->s_name = unnamed;
 		UNIQUE_CURR_POS(tag->s_def_pos);
 		tag->s_kind = FTAG;
 		tag->s_scl = scl;
 		tag->s_block_level = -1;
-		tag->s_type = tp = getblk(sizeof *tp);
+		tag->s_type = tp = getblk(sizeof(*tp));
 		tp->t_packed = dcs->d_packed;
 		dcs->d_next->d_nonempty_decl = true;
 	}
@@ -1689,12 +1689,12 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	if (tp->t_tspec == NOTSPEC) {
 		tp->t_tspec = kind;
 		if (kind != ENUM) {
-			tp->t_str = getblk(sizeof *tp->t_str);
+			tp->t_str = getblk(sizeof(*tp->t_str));
 			tp->t_str->sou_align_in_bits = CHAR_SIZE;
 			tp->t_str->sou_tag = tag;
 		} else {
 			tp->t_is_enum = true;
-			tp->t_enum = getblk(sizeof *tp->t_enum);
+			tp->t_enum = getblk(sizeof(*tp->t_enum));
 			tp->t_enum->en_tag = tag;
 		}
 		setcomplete(tp, false);
@@ -2862,7 +2862,7 @@ abstract_name(void)
 
 	lint_assert(dcs->d_ctx == ABSTRACT || dcs->d_ctx == PROTO_ARG);
 
-	sym = getblk(sizeof *sym);
+	sym = getblk(sizeof(*sym));
 
 	sym->s_name = unnamed;
 	sym->s_def = DEF;
