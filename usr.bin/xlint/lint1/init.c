@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.189 2021/04/02 11:53:25 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.190 2021/04/02 12:16:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.189 2021/04/02 11:53:25 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.190 2021/04/02 12:16:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -223,7 +223,7 @@ unconst_cast(const void *p)
 {
 	void *r;
 
-	memcpy(&r, &p, sizeof r);
+	memcpy(&r, &p, sizeof(r));
 	return r;
 }
 
@@ -383,7 +383,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	struct memory_block *tmem;
 
 	/* Create a temporary node for the left side. */
-	ln = expr_zalloc(sizeof *ln);
+	ln = expr_zalloc(sizeof(*ln));
 	ln->tn_op = NAME;
 	ln->tn_type = expr_dup_type(tp);
 	ln->tn_type->t_const = false;
@@ -425,7 +425,7 @@ designator_new(const char *name, size_t subscript)
 {
 	struct designator *dr;
 
-	dr = xcalloc(1, sizeof *dr);
+	dr = xcalloc(1, sizeof(*dr));
 	dr->dr_name = name;
 	dr->dr_subscript = subscript;
 	return dr;
