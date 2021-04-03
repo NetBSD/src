@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.9 2021/02/15 07:42:35 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.10 2021/04/03 11:08:40 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -32,21 +32,6 @@ testcase() {
 
 
 testcase # just the plain default options
-
-# See whether the Boolean type is only used as a single-bit type.
-# By default it is aliased to int, and int is already used for any other
-# purpose.
-#
-testcase USER_CPPFLAGS="-DUSE_DOUBLE_BOOLEAN"
-
-# Ensure that variables of type Boolean are not assigned integers.
-# The only valid values are TRUE and FALSE.
-#
-testcase USER_CPPFLAGS="-DUSE_UCHAR_BOOLEAN"
-
-# Ensure that variables of type Boolean are not used as array index.
-#
-testcase USER_CPPFLAGS="-DUSE_CHAR_BOOLEAN"
 
 # Try a different compiler, with slightly different warnings and error
 # messages.  One feature that is missing from GCC is a little stricter

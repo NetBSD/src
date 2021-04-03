@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.256 2021/02/05 19:19:17 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.257 2021/04/03 11:08:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,45 +132,18 @@
 
 #define MAKE_INLINE static inline MAKE_ATTR_UNUSED
 
-/*
- * A boolean type is defined as an integer, not an enum, for historic reasons.
- * The only allowed values are the constants TRUE and FALSE (1 and 0).
- */
-#if defined(lint) || defined(USE_C99_BOOLEAN)
+#if __STDC_VERSION__ >= 199901L || defined(lint) || defined(USE_C99_BOOLEAN)
 #include <stdbool.h>
-typedef bool Boolean;
-#define FALSE false
-#define TRUE true
-#elif defined(USE_DOUBLE_BOOLEAN)
-/* During development, to find type mismatches in function declarations. */
-typedef double Boolean;
-#define TRUE 1.0
-#define FALSE 0.0
-#elif defined(USE_UCHAR_BOOLEAN)
-/*
- * During development, to find code that depends on the exact value of TRUE or
- * that stores other values in Boolean variables.
- */
-typedef unsigned char Boolean;
-#define TRUE ((unsigned char)0xFF)
-#define FALSE ((unsigned char)0x00)
-#elif defined(USE_CHAR_BOOLEAN)
-/*
- * During development, to find code that uses a boolean as array index, via
- * -Wchar-subscripts.
- */
-typedef char Boolean;
-#define TRUE ((char)-1)
-#define FALSE ((char)0x00)
-#elif defined(USE_ENUM_BOOLEAN)
-typedef enum Boolean { FALSE, TRUE } Boolean;
 #else
-typedef int Boolean;
-#ifndef TRUE
-#define TRUE	1
+#ifndef bool
+typedef unsigned int Boolean;
+#define bool	Boolean
 #endif
-#ifndef FALSE
-#define FALSE	0
+#ifndef true
+#define true	1
+#endif
+#ifndef false
+#define false	0
 #endif
 #endif
 
@@ -487,11 +460,11 @@ typedef enum CondEvalResult {
  */
 
 /* True if every target is precious */
-extern Boolean allPrecious;
+extern bool allPrecious;
 /* True if failed targets should be deleted */
-extern Boolean deleteOnError;
-/* TRUE while processing .depend */
-extern Boolean doing_depend;
+extern bool deleteOnError;
+/* true while processing .depend */
+extern bool doing_depend;
 /* .DEFAULT rule */
 extern GNode *defaultNode;
 
@@ -590,7 +563,7 @@ void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 	do { \
 		if (DEBUG(module)) \
 			debug_printf args; \
-	} while (/*CONSTCOND*/FALSE)
+	} while (/*CONSTCOND*/false)
 
 #define DEBUG0(module, text) \
 	DEBUG_IMPL(module, ("%s", text))
@@ -614,7 +587,7 @@ typedef enum PrintVarsMode {
 /* Command line options */
 typedef struct CmdOpts {
 	/* -B: whether we are make compatible */
-	Boolean compatMake;
+	bool compatMake;
 
 	/* -d: debug control: There is one bit per module.  It is up to the
 	 * module what debug information to print. */
@@ -627,19 +600,19 @@ typedef struct CmdOpts {
 	 *
 	 * Runs make in strict mode, with additional checks and better error
 	 * handling. */
-	Boolean strict;
+	bool strict;
 
 	/* -dV: for the -V option, print unexpanded variable values */
-	Boolean debugVflag;
+	bool debugVflag;
 
 	/* -e: check environment variables before global variables */
-	Boolean checkEnvFirst;
+	bool checkEnvFirst;
 
 	/* -f: the makefiles to read */
 	StringList makefiles;
 
 	/* -i: if true, ignore all errors from shell commands */
-	Boolean ignoreErrors;
+	bool ignoreErrors;
 
 	/* -j: the maximum number of jobs that can run in parallel;
 	 * this is coordinated with the submakes */
@@ -647,29 +620,29 @@ typedef struct CmdOpts {
 
 	/* -k: if true and an error occurs while making a node, continue
 	 * making nodes that do not depend on the erroneous node */
-	Boolean keepgoing;
+	bool keepgoing;
 
 	/* -N: execute no commands from the targets */
-	Boolean noRecursiveExecute;
+	bool noRecursiveExecute;
 
 	/* -n: execute almost no commands from the targets */
-	Boolean noExecute;
+	bool noExecute;
 
 	/*
 	 * -q: if true, do not really make anything, just see if the targets
 	 * are out-of-date
 	 */
-	Boolean queryFlag;
+	bool queryFlag;
 
 	/* -r: raw mode, do not load the builtin rules. */
-	Boolean noBuiltins;
+	bool noBuiltins;
 
 	/* -s: don't echo the shell commands before executing them */
-	Boolean beSilent;
+	bool beSilent;
 
 	/* -t: touch the targets if they are out-of-date, but don't actually
 	 * make them */
-	Boolean touchFlag;
+	bool touchFlag;
 
 	/* -[Vv]: print expanded or unexpanded selected variables */
 	PrintVarsMode printVars;
@@ -677,14 +650,14 @@ typedef struct CmdOpts {
 	StringList variables;
 
 	/* -W: if true, makefile parsing warnings are treated as errors */
-	Boolean parseWarnFatal;
+	bool parseWarnFatal;
 
 	/* -w: print 'Entering' and 'Leaving' for submakes */
-	Boolean enterFlag;
+	bool enterFlag;
 
 	/* -X: if true, do not export variables set on the command line to the
 	 * environment. */
-	Boolean varNoExportEnv;
+	bool varNoExportEnv;
 
 	/* The target names specified on the command line.
 	 * Used to resolve .if make(...) statements. */
@@ -697,24 +670,24 @@ extern CmdOpts opts;
 #include "nonints.h"
 
 void GNode_UpdateYoungestChild(GNode *, GNode *);
-Boolean GNode_IsOODate(GNode *);
+bool GNode_IsOODate(GNode *);
 void Make_ExpandUse(GNodeList *);
 time_t Make_Recheck(GNode *);
 void Make_HandleUse(GNode *, GNode *);
 void Make_Update(GNode *);
 void Make_DoAllVar(GNode *);
-Boolean Make_Run(GNodeList *);
-Boolean shouldDieQuietly(GNode *, int);
+bool Make_Run(GNodeList *);
+bool shouldDieQuietly(GNode *, int);
 void PrintOnError(GNode *, const char *);
-void Main_ExportMAKEFLAGS(Boolean);
-Boolean Main_SetObjdir(Boolean, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
+void Main_ExportMAKEFLAGS(bool);
+bool Main_SetObjdir(bool, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 int mkTempFile(const char *, char *, size_t);
 int str2Lst_Append(StringList *, char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
-Boolean GNode_ShouldExecute(GNode *gn);
+bool GNode_ShouldExecute(GNode *gn);
 
 /* See if the node was seen on the left-hand side of a dependency operator. */
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 GNode_IsTarget(const GNode *gn)
 {
 	return (gn->type & OP_OPMASK) != 0;
@@ -726,25 +699,25 @@ GNode_Path(const GNode *gn)
 	return gn->path != NULL ? gn->path : gn->name;
 }
 
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 GNode_IsWaitingFor(const GNode *gn)
 {
 	return (gn->flags & REMAKE) && gn->made <= REQUESTED;
 }
 
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 GNode_IsReady(const GNode *gn)
 {
 	return gn->made > DEFERRED;
 }
 
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 GNode_IsDone(const GNode *gn)
 {
 	return gn->made >= MADE;
 }
 
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 GNode_IsError(const GNode *gn)
 {
 	return gn->made == ERROR || gn->made == ABORTED;
@@ -791,15 +764,15 @@ GNode_VarMember(GNode *gn) { return GNode_ValueDirect(gn, MEMBER); }
 #define KILLPG(pid, sig) killpg((pid), (sig))
 #endif
 
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 ch_isalnum(char ch) { return isalnum((unsigned char)ch) != 0; }
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 ch_isalpha(char ch) { return isalpha((unsigned char)ch) != 0; }
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 ch_isupper(char ch) { return isupper((unsigned char)ch) != 0; }
 MAKE_INLINE char
 ch_tolower(char ch) { return (char)tolower((unsigned char)ch); }

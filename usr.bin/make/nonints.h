@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.206 2021/03/15 15:39:13 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.207 2021/04/03 11:08:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -76,14 +76,14 @@
 void Arch_Init(void);
 void Arch_End(void);
 
-Boolean Arch_ParseArchive(char **, GNodeList *, GNode *);
+bool Arch_ParseArchive(char **, GNodeList *, GNode *);
 void Arch_Touch(GNode *);
 void Arch_TouchLib(GNode *);
 void Arch_UpdateMTime(GNode *gn);
 void Arch_UpdateMemberMTime(GNode *gn);
 void Arch_FindLib(GNode *, SearchPath *);
-Boolean Arch_LibOODate(GNode *);
-Boolean Arch_IsLib(GNode *);
+bool Arch_LibOODate(GNode *);
+bool Arch_IsLib(GNode *);
 
 /* compat.c */
 int Compat_RunCommand(const char *, GNode *, StringListNode *);
@@ -91,7 +91,7 @@ void Compat_Run(GNodeList *);
 void Compat_Make(GNode *, GNode *);
 
 /* cond.c */
-CondEvalResult Cond_EvalCondition(const char *, Boolean *);
+CondEvalResult Cond_EvalCondition(const char *, bool *);
 CondEvalResult Cond_EvalLine(const char *);
 void Cond_restore_depth(unsigned int);
 unsigned int Cond_save_depth(void);
@@ -117,11 +117,11 @@ void SearchPath_Free(SearchPath *);
 
 /* for.c */
 int For_Eval(const char *);
-Boolean For_Accum(const char *);
+bool For_Accum(const char *);
 void For_Run(int);
 
 /* job.c */
-void JobReapChild(pid_t, int, Boolean);
+void JobReapChild(pid_t, int, bool);
 
 /* main.c */
 void Main_ParseArgLine(const char *);
@@ -134,7 +134,7 @@ void Finish(int) MAKE_ATTR_DEAD;
 int eunlink(const char *);
 void execDie(const char *, const char *);
 char *getTmpdir(void);
-Boolean ParseBoolean(const char *, Boolean);
+bool ParseBoolean(const char *, bool);
 char *cached_realpath(const char *, char *);
 
 /* parse.c */
@@ -158,7 +158,7 @@ typedef struct VarAssign {
 typedef char *(*ReadMoreProc)(void *, size_t *);
 
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
-Boolean Parse_IsVar(const char *, VarAssign *out_var);
+bool Parse_IsVar(const char *, VarAssign *out_var);
 void Parse_DoVar(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
@@ -234,7 +234,7 @@ MFStr_Done(MFStr *mfstr)
 #endif
 }
 
-Words Str_Words(const char *, Boolean);
+Words Str_Words(const char *, bool);
 MAKE_INLINE void
 Words_Free(Words w)
 {
@@ -245,14 +245,14 @@ Words_Free(Words w)
 char *str_concat2(const char *, const char *);
 char *str_concat3(const char *, const char *, const char *);
 char *str_concat4(const char *, const char *, const char *, const char *);
-Boolean Str_Match(const char *, const char *);
+bool Str_Match(const char *, const char *);
 
 /* suff.c */
 void Suff_Init(void);
 void Suff_End(void);
 
 void Suff_ClearSuffixes(void);
-Boolean Suff_IsTransform(const char *);
+bool Suff_IsTransform(const char *);
 GNode *Suff_AddTransform(const char *);
 void Suff_EndTransform(GNode *);
 void Suff_AddSuffix(const char *, GNode **);
@@ -277,7 +277,7 @@ GNode *Targ_GetNode(const char *);
 GNode *Targ_NewInternalNode(const char *);
 GNode *Targ_GetEndNode(void);
 void Targ_FindList(GNodeList *, StringList *);
-Boolean Targ_Precious(const GNode *);
+bool Targ_Precious(const GNode *);
 void Targ_SetMain(GNode *);
 void Targ_PrintCmds(GNode *);
 void Targ_PrintNode(GNode *, int);
@@ -304,13 +304,13 @@ typedef struct VarEvalFlags {
 	 *  is not set.  As of 2021-03-15, they return unspecified,
 	 *  inconsistent results.
 	 */
-	Boolean wantRes: 1;
+	bool wantRes: 1;
 
 	/*
 	 * Treat undefined variables as errors.
 	 * Must only be used in combination with wantRes.
 	 */
-	Boolean undefErr: 1;
+	bool undefErr: 1;
 
 	/*
 	 * Keep '$$' as '$$' instead of reducing it to a single '$'.
@@ -320,7 +320,7 @@ typedef struct VarEvalFlags {
 	 * expanding '$$file' to '$file' in the first assignment and
 	 * interpreting it as '${f}' followed by 'ile' in the next assignment.
 	 */
-	Boolean keepDollar: 1;
+	bool keepDollar: 1;
 
 	/*
 	 * Keep undefined variables as-is instead of expanding them to an
@@ -333,21 +333,21 @@ typedef struct VarEvalFlags {
 	 *	# way) is still undefined, the updated CFLAGS becomes
 	 *	# "-I.. $(.INCLUDES)".
 	 */
-	Boolean keepUndef: 1;
+	bool keepUndef: 1;
 
 	/*
 	 * Without this padding, GCC 9.3.0 on NetBSD 9.99.80 generates larger
 	 * code than necessary (1.2 kB), masking out the unused bits from the
-	 * int (since that is the default representation of Boolean in make),
+	 * int (since that is the default representation of bool in make),
 	 * even for initializers consisting entirely of constants.
 	 */
-	Boolean : 0;
+	bool : 0;
 } VarEvalFlags;
 
-#define VARE_PARSE_ONLY	(VarEvalFlags) { FALSE, FALSE, FALSE, FALSE }
-#define VARE_WANTRES	(VarEvalFlags) { TRUE, FALSE, FALSE, FALSE }
-#define VARE_UNDEFERR	(VarEvalFlags) { TRUE, TRUE, FALSE, FALSE }
-#define VARE_KEEP_DOLLAR_UNDEF (VarEvalFlags) { TRUE, FALSE, TRUE, TRUE }
+#define VARE_PARSE_ONLY	(VarEvalFlags) { false, false, false, false }
+#define VARE_WANTRES	(VarEvalFlags) { true, false, false, false }
+#define VARE_UNDEFERR	(VarEvalFlags) { true, true, false, false }
+#define VARE_KEEP_DOLLAR_UNDEF (VarEvalFlags) { true, false, true, true }
 
 typedef enum VarSetFlags {
 	VAR_SET_NONE		= 0,
@@ -402,8 +402,8 @@ void Var_SetWithFlags(GNode *, const char *, const char *, VarSetFlags);
 void Var_SetExpandWithFlags(GNode *, const char *, const char *, VarSetFlags);
 void Var_Append(GNode *, const char *, const char *);
 void Var_AppendExpand(GNode *, const char *, const char *);
-Boolean Var_Exists(GNode *, const char *);
-Boolean Var_ExistsExpand(GNode *, const char *);
+bool Var_Exists(GNode *, const char *);
+bool Var_ExistsExpand(GNode *, const char *);
 FStr Var_Value(GNode *, const char *);
 const char *GNode_ValueDirect(GNode *, const char *);
 VarParseResult Var_Parse(const char **, GNode *, VarEvalFlags, FStr *);
@@ -413,7 +413,7 @@ void Var_Dump(GNode *);
 void Var_ReexportVars(void);
 void Var_Export(VarExportMode, const char *);
 void Var_ExportVars(const char *);
-void Var_UnExport(Boolean, const char *);
+void Var_UnExport(bool, const char *);
 
 void Global_Set(const char *, const char *);
 void Global_SetExpand(const char *, const char *);
