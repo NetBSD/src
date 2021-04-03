@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.50 2017/05/11 10:21:55 martin Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.51 2021/04/03 07:38:11 simonb Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -297,6 +297,13 @@ aligned_alloc(size_t alignment, size_t size)
 #define MSG_NOSIGNAL 0
 #endif
 
+#if defined(__NetBSD__) && defined(__mips_n32)	/* XXX */
+/* The MIPS N32 ABI has 4 byte longs but uses 8 byte registers */
+#define	HAVE_REGISTER_T	1
+#define	RUMP_REGISTER_T uint64_t
+typedef RUMP_REGISTER_T register_t;
+#define	PRIxREGISTER	PRIx64
+#endif /* __NetBSD__ && __mips_n32 */		/* XXX */
 #if !defined(HAVE_REGISTER_T) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
