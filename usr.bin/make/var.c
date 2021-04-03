@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.899 2021/04/03 22:02:59 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.900 2021/04/03 22:06:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.899 2021/04/03 22:02:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.900 2021/04/03 22:06:23 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -346,10 +346,6 @@ static bool save_dollars = true;
 GNode *SCOPE_CMDLINE;
 GNode *SCOPE_GLOBAL;
 GNode *SCOPE_INTERNAL;
-
-ENUM_FLAGS_RTTI_6(VarFlags,
-		  VFL_IN_USE, VFL_FROM_ENV,
-		  VFL_EXPORTED, VFL_REEXPORT, VFL_FROM_CMD, VFL_READONLY);
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
@@ -2059,7 +2055,6 @@ static const char *const ExprDefined_Name[] = {
 typedef struct Expr {
 	const char *name;
 	FStr value;
-	VarFlags varFlags;
 	VarEvalFlags const_member eflags;
 	GNode *const_member scope;
 	ExprDefined defined;
@@ -4314,18 +4309,17 @@ FreeEnvVar(Var *v, FStr *inout_val)
 }
 
 #if __STDC_VERSION__ >= 199901L
-#define Expr_Literal(name, value, vflags, eflags, scope, defined) \
-	{ name, value, vflags, eflags, scope, defined }
+#define Expr_Literal(name, value, eflags, scope, defined) \
+	{ name, value, eflags, scope, defined }
 #else
 MAKE_INLINE Expr
-Expr_Literal(const char *name, FStr value, VarFlags vflags,
+Expr_Literal(const char *name, FStr value,
 	     VarEvalFlags eflags, GNode *scope, ExprDefined defined)
 {
 	Expr expr;
 
 	expr.name = name;
 	expr.value = value;
-	expr.varFlags = vflags;
 	expr.eflags = eflags;
 	expr.scope = scope;
 	expr.defined = defined;
@@ -4389,7 +4383,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	bool dynamic;
 	const char *extramodifiers;
 	Var *v;
-	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), VFL_NONE, eflags,
+	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), eflags,
 	    scope, DEF_REGULAR);
 
 	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start,
@@ -4423,7 +4417,6 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	}
 
 	expr.name = v->name.str;
-	expr.varFlags = v->flags;
 	if (v->flags & VFL_IN_USE)
 		Fatal("Variable %s is recursive.", v->name.str);
 
