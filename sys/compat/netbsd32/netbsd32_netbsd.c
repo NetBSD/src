@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.230 2020/10/10 00:00:54 rin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.230.2.1 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.230 2020/10/10 00:00:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.230.2.1 2021/04/03 22:28:42 thorpej Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -109,8 +109,6 @@ void netbsd32_syscall_intern(struct proc *);
 void syscall(void);
 #endif
 
-#define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
-
 #ifdef MODULAR
 #include <compat/netbsd32/netbsd32_syscalls_autoload.c>
 #endif
@@ -184,6 +182,9 @@ netbsd32_read(struct lwp *l, const struct netbsd32_read_args *uap, register_t *r
 	} */
 	struct sys_read_args ua;
 
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
+
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void *);
 	NETBSD32TOX_UAP(nbyte, size_t);
@@ -199,6 +200,9 @@ netbsd32_write(struct lwp *l, const struct netbsd32_write_args *uap, register_t 
 		syscallarg(netbsd32_size_t) nbyte;
 	} */
 	struct sys_write_args ua;
+
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void *);
@@ -1183,6 +1187,9 @@ netbsd32_pread(struct lwp *l, const struct netbsd32_pread_args *uap, register_t 
 	} */
 	struct sys_pread_args ua;
 
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
+
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TOX_UAP(nbyte, size_t);
@@ -1203,6 +1210,9 @@ netbsd32_pwrite(struct lwp *l, const struct netbsd32_pwrite_args *uap, register_
 		syscallarg(netbsd32_off_t) offset;
 	} */
 	struct sys_pwrite_args ua;
+
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);

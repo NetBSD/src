@@ -1,4 +1,4 @@
-/* $NetBSD: plmmc_fdt.c,v 1.2 2019/06/12 10:19:27 skrll Exp $ */
+/* $NetBSD: plmmc_fdt.c,v 1.2.10.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plmmc_fdt.c,v 1.2 2019/06/12 10:19:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plmmc_fdt.c,v 1.2.10.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,10 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: plmmc_fdt.c,v 1.2 2019/06/12 10:19:27 skrll Exp $");
 static int	plmmc_fdt_match(device_t, cfdata_t, void *);
 static void	plmmc_fdt_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"arm,pl180",
-	"arm,pl181",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,pl180" },
+	{ .compat = "arm,pl181" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(plmmc_fdt, sizeof(struct plmmc_softc),
@@ -57,7 +57,7 @@ plmmc_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -105,7 +105,8 @@ plmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0, plmmc_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0, plmmc_intr, sc,
+	    device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

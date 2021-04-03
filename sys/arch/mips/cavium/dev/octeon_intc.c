@@ -1,4 +1,4 @@
-/* $NetBSD: octeon_intc.c,v 1.1 2020/07/16 11:49:37 jmcneill Exp $ */
+/* $NetBSD: octeon_intc.c,v 1.1.2.1 2021/04/03 22:28:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.1 2020/07/16 11:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.1.2.1 2021/04/03 22:28:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,7 @@ static int	octeon_intc_match(device_t, cfdata_t, void *);
 static void	octeon_intc_attach(device_t, device_t, void *);
 
 static void *	octeon_intc_establish(device_t, u_int *, int, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 static void	octeon_intc_disestablish(device_t, void *);
 static bool	octeon_intc_intrstr(device_t, u_int *, char *, size_t);
 
@@ -69,9 +69,9 @@ struct octeon_intc_softc {
 CFATTACH_DECL_NEW(octintc, sizeof(struct octeon_intc_softc),
 	octeon_intc_match, octeon_intc_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "cavium,octeon-3860-ciu",		OCTEON_INTC_CIU },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cavium,octeon-3860-ciu",	.value = OCTEON_INTC_CIU },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -79,7 +79,7 @@ octeon_intc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -92,7 +92,7 @@ octeon_intc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 
 	switch (sc->sc_type) {
 	case OCTEON_INTC_CIU:
@@ -113,7 +113,7 @@ octeon_intc_attach(device_t parent, device_t self, void *aux)
 
 static void *
 octeon_intc_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct octeon_intc_softc * const sc = device_private(dev);
 

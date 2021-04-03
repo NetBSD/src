@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_gpc.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx7_gpc.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_gpc.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_gpc.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -78,7 +78,7 @@ static void imx7gpc_mask(struct imx7gpc_softc *, u_int, bool);
 static void imx7gpc_unmask(struct imx7gpc_softc *, u_int, bool);
 
 static void *imx7gpc_establish(device_t, u_int *, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 static void imx7gpc_disestablish(device_t, void *);
 static bool imx7gpc_intrstr(device_t, u_int *, char *, size_t);
 
@@ -91,17 +91,18 @@ struct fdtbus_interrupt_controller_func imx7gpc_funcs = {
 CFATTACH_DECL_NEW(imx7gpc, sizeof(struct imx7gpc_softc),
     imx7gpc_match, imx7gpc_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx7d-gpc" },
+	{ .compat = "fsl,imx8mq-gpc" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imx7gpc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"fsl,imx7d-gpc",
-		"fsl,imx8mq-gpc",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -201,7 +202,7 @@ imx7gpc_unmask(struct imx7gpc_softc *sc, u_int irq, bool mpsafe)
 
 static void *
 imx7gpc_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct imx7gpc_softc * const sc = device_private(dev);
 	void *ih;
@@ -225,7 +226,7 @@ imx7gpc_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	aprint_debug_dev(dev, "intr establish irq %d, level %d\n", irq, level);
 
-	ih = intr_establish(irq, ipl, level | mpsafe, func, arg);
+	ih = intr_establish_xname(irq, ipl, level | mpsafe, func, arg, xname);
 	if (ih != NULL)
 		imx7gpc_unmask(sc, irq - 32, mpsafe == IST_MPSAFE);
 

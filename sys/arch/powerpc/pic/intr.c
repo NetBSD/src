@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29 2020/07/06 10:31:23 rin Exp $ */
+/*	$NetBSD: intr.c,v 1.29.2.1 2021/04/03 22:28:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2020/07/06 10:31:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.2.1 2021/04/03 22:28:35 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -75,7 +75,7 @@ int num_pics = 0;
 int max_base = 0;
 uint8_t	virq_map[NIRQ];
 imask_t virq_mask = HWIRQ_MASK;
-imask_t	imask[NIPL];
+static imask_t imask[NIPL];
 int	primary_pic = 0;
 
 static int	fakeintr(void *);
@@ -200,10 +200,12 @@ intr_establish_xname(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 		break;
 	}
 	if (is->is_hand == NULL) {
-		snprintf(is->is_source, sizeof(is->is_source), "irq %d",
+		snprintf(is->is_intrid, sizeof(is->is_intrid), "%s irq %d",
+		    pic->pic_name, is->is_hwirq);
+		snprintf(is->is_evname, sizeof(is->is_evname), "irq %d",
 		    is->is_hwirq);
 		evcnt_attach_dynamic(&is->is_ev, EVCNT_TYPE_INTR, NULL,
-		    pic->pic_name, is->is_source);
+		    pic->pic_name, is->is_evname);
 	}
 
 	/*
@@ -617,7 +619,8 @@ splraise(int ncpl)
 	struct cpu_info *ci = curcpu();
 	int ocpl;
 
-	if (ncpl == ci->ci_cpl) return ncpl;
+	if (ncpl == ci->ci_cpl)
+		return ncpl;
 	REORDER_PROTECT();
 	ocpl = ci->ci_cpl;
 	KASSERT(ncpl < NIPL);
@@ -744,7 +747,7 @@ intr_get_source(const char *intrid)
 	int irq;
 
 	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
-		if (strcmp(intrid, is->is_source) == 0)
+		if (strcmp(intrid, is->is_intrid) == 0)
 			return is;
 	}
 	return NULL;
@@ -858,7 +861,7 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 		if (is->is_hand == NULL)
 			continue;
 
-		strncpy(ids[i], is->is_source, sizeof(intrid_t));
+		strncpy(ids[i], is->is_intrid, sizeof(intrid_t));
 		i++;
 	}
 

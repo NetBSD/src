@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usbphy.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx6_usbphy.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -61,9 +61,9 @@ static int imx6_usbphy_enable(device_t, void *, bool);
 CFATTACH_DECL_NEW(imxusbphy, sizeof(struct imx6_usbphy_softc),
     imx6_usbphy_match, imx6_usbphy_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"fsl,imx6q-usbphy",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-usbphy" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -71,7 +71,7 @@ imx6_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

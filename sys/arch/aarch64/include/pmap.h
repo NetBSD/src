@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.43 2020/09/19 13:33:08 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.43.2.1 2021/04/03 22:28:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct pmap {
 	paddr_t pm_l0table_pa;
 
 	LIST_HEAD(, vm_page) pm_vmlist;		/* for L[0123] tables */
+	LIST_HEAD(, pv_entry) pm_pvlist;	/* all pv of this process */
 
 	struct pmap_statistics pm_stats;
 	unsigned int pm_refcnt;
@@ -84,12 +85,16 @@ struct pmap {
 	bool pm_activated;
 };
 
-/* sized to reduce memory consumption & cache misses (32 bytes) */
+/*
+ * should be kept <=32 bytes sized to reduce memory consumption & cache misses,
+ * but it doesn't...
+ */
 struct pv_entry {
 	struct pv_entry *pv_next;
 	struct pmap *pv_pmap;
 	vaddr_t pv_va;	/* for embedded entry (pp_pv) also includes flags */
 	void *pv_ptep;	/* pointer for fast pte lookup */
+	LIST_ENTRY(pv_entry) pv_proc;	/* belonging to the process */
 };
 
 struct pmap_page {
@@ -175,9 +180,9 @@ pt_entry_t pmap_kvattr(vaddr_t, vm_prot_t);
 
 /* pmapboot.c */
 pd_entry_t *pmapboot_pagealloc(void);
-int pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t, pt_entry_t,
+void pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t, pt_entry_t,
     void (*pr)(const char *, ...) __printflike(1, 2));
-int pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t,
+void pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t,
     void (*)(const char *, ...) __printflike(1, 2));
 int pmapboot_protect(vaddr_t, vaddr_t, vm_prot_t);
 void pmap_db_pte_print(pt_entry_t, int,
@@ -250,7 +255,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	u_int nflag, pflag;
 
 	/*
-	 * aarch64 arch has 5 memory attribute:
+	 * aarch64 arch has 5 memory attributes defined:
 	 *
 	 *  WriteBack      - write back cache
 	 *  WriteThru      - write through cache

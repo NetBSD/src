@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_iomux.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx6_iomux.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -129,18 +129,19 @@ static void imxiomux_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(imxiomux, sizeof(struct imxiomux_softc),
     imxiomux_match, imxiomux_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-iomuxc" },
+	{ .compat = "fsl,imx7d-iomuxc" },
+	{ .compat = "fsl,imx8mq-iomuxc" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imxiomux_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"fsl,imx6q-iomuxc",
-		"fsl,imx7d-iomuxc",
-		"fsl,imx8mq-iomuxc",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

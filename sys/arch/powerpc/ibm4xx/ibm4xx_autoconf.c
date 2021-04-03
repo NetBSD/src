@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.15 2011/06/18 06:41:41 matt Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.15.66.1 2021/04/03 22:28:34 thorpej Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.15 2011/06/18 06:41:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.15.66.1 2021/04/03 22:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,12 +45,26 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.15 2011/06/18 06:41:41 matt Ex
 #include <net/if_ether.h>
 
 #include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 
 void
-ibm4xx_device_register(device_t dev, void *aux)
+cpu_rootconf(void)
+{
+
+	rootconf();
+}
+
+void
+ibm4xx_device_register(device_t dev, void *aux, int com_freq)
 {
 	device_t parent = device_parent(dev);
+
+	if (device_is_a(dev, "com") && device_is_a(parent, "opb")) {
+		/* Set the frequency of the on-chip UART. */
+		com_opb_device_register(dev, com_freq);
+		return;
+	}
 
 	if (device_is_a(dev, "emac") && device_is_a(parent, "opb")) {
 		/* Set the mac-address of the on-chip Ethernet. */

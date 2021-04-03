@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_de2_ccu.c,v 1.3 2019/01/31 01:49:28 jmcneill Exp $ */
+/* $NetBSD: sunxi_de2_ccu.c,v 1.3.14.1 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.3 2019/01/31 01:49:28 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.3.14.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,11 +97,15 @@ static const struct sunxi_de2_ccu_config sun50i_a64_de2_config = {
 	.nclks = __arraycount(sun8i_h3_de2_ccu_clks),
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-h3-de2-clk",		(uintptr_t)&sun8i_h3_de2_config },
-	{ "allwinner,sun50i-a64-de2-clk",	(uintptr_t)&sun50i_a64_de2_config },
-	{ "allwinner,sun50i-h5-de2-clk",	(uintptr_t)&sun50i_a64_de2_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-de2-clk",
+	  .data = &sun8i_h3_de2_config },
+	{ .compat = "allwinner,sun50i-a64-de2-clk",
+	  .data = &sun50i_a64_de2_config },
+	{ .compat = "allwinner,sun50i-h5-de2-clk",
+	  .data = &sun50i_a64_de2_config },
+
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -109,7 +113,7 @@ sunxi_de2_ccu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -126,7 +130,7 @@ sunxi_de2_ccu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 
-	conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	sc->sc_resets = conf->resets;
 	sc->sc_nresets = conf->nresets;

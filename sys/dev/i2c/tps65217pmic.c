@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.15 2019/12/23 21:24:59 thorpej Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.15.8.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.15 2019/12/23 21:24:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.15.8.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,8 +299,8 @@ static struct tps_reg_param tps_regulators[] = {
 static bool matched = false;
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "ti,tps65217",			0 },
-	{ NULL }
+	{ .compat = "ti,tps65217" },
+	DEVICE_COMPAT_EOL
 };
 
 static int

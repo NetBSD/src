@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.276 2020/09/06 07:20:29 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.276.2.1 2021/04/03 22:28:42 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -282,7 +282,7 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 # Generate list of *.o files to pass to ${LD}, preserving order.
 #	x/y/z/a.[csS] -> a.[csS]
 #	a.[csS] -> a.o
-OBJS=	${ALLFILES:C|^.*/([^/]*\.[csS])$$|\1|:C|^(.*)\.[csS]$$|\1.o|}
+OBJS=	${ALLFILES:C|^.*/([^/]*\.[csS])$|\1|:C|^(.*)\.[csS]$|\1.o|}
 
 CFILES=	${ALLFILES:M*.c}
 SFILES=	${ALLFILES:M*.[sS]}
@@ -297,7 +297,7 @@ SSRCS=	${_MD_SFILES} ${_SFILES}
 SRCS=	${CSRCS} ${SSRCS}
 
 .else # ___USE_SUFFIX_RULES___
-OBJS=	${ALLFILES:C|\.[csS]$$|.o|}
+OBJS=	${ALLFILES:C|\.[csS]$|.o|}
 SRCS=	${ALLFILES:M*.[csS]}
 .endif # ___USE_SUFFIX_RULES___
 

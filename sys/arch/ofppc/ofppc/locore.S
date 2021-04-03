@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50 2018/07/15 05:16:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.12.1 2021/04/03 22:28:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,8 +61,6 @@
 	.data
 GLOBAL(esym)
 	.long	0			/* end of symbol table */
-GLOBAL(oeacpufeat)
-	.long	0			/* cpu features */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -75,13 +73,24 @@ _C_LABEL(kernel_text):
 /*
  * Startup entry.  Note, this must be the first thing in the text
  * segment!
+ *
+ * Register state as transfer is passed from OpenFirmware / boot loader:
+ *
+ *	%r1	Stack provided by OpenFirmware / boot loader
+ *	%r3	Reserved for platform binding (unused here)
+ *	%r4	Reserved for platform binding (unused here)
+ *	%r5	OpenFirmware client entry point
+ *	%r6	Arguments
+ *	%r7	Arguments length
  */
 	.text
 	.globl	__start
 __start:
+	/* Save off arguments that we need preserved. */
 	mr	%r13,%r6
 	mr	%r14,%r7
-	bl	_C_LABEL(ofwinit)	/* init our OF hooks */
+
+	bl	_C_LABEL(ofwinit)	/* init OF */
 
 	li	%r0,0
 	mtmsr	%r0			/* Disable FPU/MMU/exceptions */

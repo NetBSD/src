@@ -108,7 +108,8 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
     com_attach_subr(sc);
 #if 1
     msc->sc_ih =
-        intr_establish(interrupts[0], IST_LEVEL, IPL_SERIAL, comintr, sc);
+        intr_establish_xname(interrupts[0], IST_LEVEL, IPL_SERIAL, comintr, sc,
+	    device_xname(self));
 
     if (msc->sc_ih == NULL)
         panic("failed to establish int handler");

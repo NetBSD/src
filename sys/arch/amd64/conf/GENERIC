@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.580 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: GENERIC,v 1.580.2.1 2021/04/03 22:28:14 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.580 $"
+#ident		"GENERIC-$Revision: 1.580.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -178,7 +178,6 @@ include 	"conf/compat_netbsd15.config"
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
 
@@ -298,7 +297,7 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-#IPMI support
+# IPMI support
 ipmi0		at mainbus?
 ipmi_acpi*	at acpi?
 ipmi0		at ipmi_acpi?
@@ -308,7 +307,7 @@ acpi0		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
-#options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing via ACPI
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
@@ -318,7 +317,7 @@ options 	VGA_POST		# in-kernel support for VGA POST
 acpiacad*	at acpi?		# ACPI AC Adapter
 acpibat*	at acpi?		# ACPI Battery
 acpibut*	at acpi?		# ACPI Button
-acpidalb*	at acpi?		# Direct Application Launch Button
+acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt*	at acpi?		# ACPI Embedded Controller (early)
 acpifan*	at acpi?		# ACPI Fan
@@ -354,7 +353,7 @@ sony*		at acpi?		# Sony Notebook Controller
 spic*		at acpi?		# Sony Programmable I/O Controller
 wsmouse*	at spic?		# mouse
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
-#tpm*		at acpi?		# ACPI TPM (Experimental)
+tpm*		at acpi?		# ACPI TPM (Experimental)
 ug*		at acpi?		# Abit uGuru Hardware monitor
 valz*		at acpi?		# Toshiba Dynabook hotkeys
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
@@ -457,6 +456,9 @@ nouveaufb*	at nouveaufbbus?
 # DRMUMS drivers
 #viadrmums*	at drm?
 
+#options 	DRM_MAX_RESOLUTION_HORIZONTAL=1920	# Limit DRM size in horizontal dimension
+#options 	DRM_MAX_RESOLUTION_VERTICAL=1080	# Limit DRM size in vertical dimension
+
 # Cryptographic Devices
 
 # PCI cryptographic devices
@@ -546,8 +548,9 @@ iic*	at ichsmb?
 ismt* at pci? dev ? function ?
 iic*	at ismt?
 
-# I2C controller as found in some Intel PCH devices.
-dwiic*		at pci?			# I2C controller
+# DesignWare I2C controller as found in some Intel PCH and AMD FCH devices.
+dwiic*		at acpi?		# DesignWare I2C controller
+dwiic*		at pci?			# DesignWare I2C controller
 iic*		at dwiic?
 
 # Thermal monitor and fan controller
@@ -833,6 +836,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
+rge*	at pci? dev ? function ?	# Realtek 8125
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 rtwn*	at pci? dev ? function ?	# Realtek 8188CE/8192CE 802.11b/g/n
@@ -910,6 +914,7 @@ ipgphy* at mii? phy ?			# IC PLUS IP1000A/IP1001 PHYs
 jmphy*	at mii? phy ?			# Jmicron JMP202/211 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+micphy* at mii? phy ?			# Micrel KSZ[89]xxx PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
@@ -1132,7 +1137,7 @@ pseudo-device	ccd			# concatenated/striped disk devices
 pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#Options to enable various other RAIDframe RAID types.
+# Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
 #options 	RF_INCLUDE_RAID5_RS=1
 #options 	RF_INCLUDE_PARITYLOGGING=1

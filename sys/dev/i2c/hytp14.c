@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.9.8.1 2020/12/14 14:38:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.9.8.2 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,8 @@ static struct hytp14_sensor hytp14_sensors[] = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-        { "i2c-hytp14",                   0 },
-        { NULL,                           0 }
+        { .compat = "i2c-hytp14" },
+	DEVICE_COMPAT_EOL
 }; 
 
 static int

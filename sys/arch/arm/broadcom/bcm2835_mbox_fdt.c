@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox_fdt.c,v 1.1 2019/12/30 18:43:38 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_mbox_fdt.c,v 1.1.10.1 2021/04/03 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_fdt.c,v 1.1 2019/12/30 18:43:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_fdt.c,v 1.1.10.1 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,14 +53,18 @@ static void bcmmbox_fdt_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(bcmmbox_fdt, sizeof(struct bcm2835mbox_softc),
     bcmmbox_fdt_match, bcmmbox_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-mbox" },
+	DEVICE_COMPAT_EOL
+};
+
 /* ARGSUSED */
 static int
 bcmmbox_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-mbox", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -95,8 +99,8 @@ bcmmbox_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": VC mailbox\n");
 
-	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-	    bcmmbox_intr, sc);
+	sc->sc_intrh = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    bcmmbox_intr, sc, device_xname(self));
 	if (sc->sc_intrh == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",
 		    intrstr);

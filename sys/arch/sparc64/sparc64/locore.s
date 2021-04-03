@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.423.6.1 2021/01/03 16:34:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.423.6.2 2021/04/03 22:28:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -228,13 +228,13 @@
 	.endm
 
 	.macro sun4v_tl1_uspill_normal
-	ba,a,pt	%xcc, pcbspill_normals
+	ba,a,pt	%xcc, spill_normal_to_user_stack
 	 nop
 	.align 128
 	.endm
 
 	.macro sun4v_tl1_uspill_other
-	ba,a,pt	%xcc, pcbspill_others
+	ba,a,pt	%xcc, pcbspill_other
 	 nop
 	.align 128
 	.endm
@@ -3485,6 +3485,129 @@ pcbspill_fail:
 	Debugger()
 	NOTREACHED
 
+
+pcbspill_other:
+	
+	set	CPUINFO_VA, %g6
+	ldx	[%g6 + CI_CPCB], %g6
+	
+	GET_CTXBUSY %g1
+
+	ldx	[%g1], %g1				! kernel pmap is ctx 0
+	
+	srlx	%g6, STSHIFT, %g7
+	and	%g7, STMASK, %g7
+	sll	%g7, 3, %g7				! byte offset into ctxbusy
+	add	%g7, %g1, %g1
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
+
+	srlx	%g6, PDSHIFT, %g7			! Do page directory
+	and	%g7, PDMASK, %g7
+	sll	%g7, 3, %g7
+	brz,pn	%g1, pcbspill_other_fail
+	 add	%g7, %g1, %g1
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1
+	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
+	and	%g7, PTMASK, %g7
+	brz	%g1, pcbspill_other_fail
+	 sll	%g7, 3, %g7
+	add	%g1, %g7, %g7
+	ldxa	[%g7] ASI_PHYS_CACHED, %g7		! This one is not
+	brgez	%g7, pcbspill_other_fail
+	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
+	sll	%g6, 32-PGSHIFT, %g6			! And offset
+	sllx	%g7, PGSHIFT+8, %g7			! There are 8 bits to the left of the PA in the TTE
+	srl	%g6, 32-PGSHIFT, %g6
+	srax	%g7, 8, %g7
+	or	%g7, %g6, %g6				! Then combine them to form PA
+
+	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
+
+	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Fetch current nsaved from the pcb
+	sllx	%g7, 7, %g5				! 8+8 registers each 8 bytes = 128 bytes (2^7)
+	add	%g6, %g5, %g5				! Offset into pcb_rw
+1:	
+	SPILL	stxa, %g5 + PCB_RW, 8, %asi		! Store the locals and ins
+
+	add	%g5, 16*8, %g5				! Next location for saved register windows
+
+	stxa	%o6, [%g5 + PCB_RW + (14*8)] %asi	! Save %sp so we can write these all out
+	
+	saved						! Increments %cansave and decrements %otherwin
+	
+	rdpr	%cwp, %g1				! shift register window forward
+	inc	%g1
+	wrpr	%g1, %cwp
+
+
+	inc	%g7					! increment number of saved register windows
+
+	rdpr	%otherwin, %g1				! Check to see if done spill'ing otherwin
+	brnz,pt	%g1, 1b
+	 nop
+	
+	stba	%g7, [%g6 + PCB_NSAVED] %asi
+
+	retry
+	NOTREACHED
+
+pcbspill_other_fail:
+	Debugger()
+	NOTREACHED
+
+
+spill_normal_to_user_stack:
+	mov	%sp, %g6						! calculate virtual address of destination stack
+	add	%g6, BIAS, %g6
+
+	mov	CTX_SECONDARY, %g2				! Is this context ok or should it be CTX_PRIMARY? XXX
+	GET_MMU_CONTEXTID %g3, %g2, %g1
+	sllx	%g3, 3, %g3					! Make it into an offset into ctxbusy (see below)
+	
+	GET_CTXBUSY %g1
+	ldx	[%g1 + %g3], %g1				! Fetch pmap for current context id
+
+	! Start of code to extract PA	
+	srlx	%g6, STSHIFT, %g7
+	and	%g7, STMASK, %g7
+	sll	%g7, 3, %g7						! byte offset into ctxbusy
+	add	%g7, %g1, %g1
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1	! Load pointer to directory
+	srlx	%g6, PDSHIFT, %g7			! Do page directory
+	and	%g7, PDMASK, %g7
+	sll	%g7, 3, %g7
+	brz,pn	%g1, spill_normal_to_user_stack_fail
+	 add	%g7, %g1, %g1
+
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1
+	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
+	and	%g7, PTMASK, %g7
+	brz	%g1, spill_normal_to_user_stack_fail
+	 sll	%g7, 3, %g7
+	
+	add	%g1, %g7, %g7
+	ldxa	[%g7] ASI_PHYS_CACHED, %g7	! This one is not
+	brgez	%g7, spill_normal_to_user_stack_fail
+	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
+	
+	sll	%g6, 32-PGSHIFT, %g6			! And offset
+	sllx	%g7, PGSHIFT+8, %g7			! There are 8 bits to the left of the PA in the TTE
+	srl	%g6, 32-PGSHIFT, %g6
+	srax	%g7, 8, %g7
+	or	%g7, %g6, %g6					! Then combine them to form PA
+	! End of code to extract PA
+
+	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
+	SPILL	stxa, %g6, 8, %asi			! Store the locals and ins
+	saved
+
+	retry
+	NOTREACHED
+
+spill_normal_to_user_stack_fail:
+	sir
+	 nop
+	
 /*
  * End of traps for sun4v.
  */
@@ -6496,11 +6619,19 @@ ENTRY(getfp)
 	 mov %fp, %o0
 
 /*
- * nothing MD to do in the idle loop
+ * Call optional cpu_idle handler if provided
  */
 ENTRY(cpu_idle)
-	retl
+	set	CPUINFO_VA, %o0
+	LDPTR	[%o0 + CI_IDLESPIN], %o1
+	tst	%o1
+	bz	1f
 	 nop
+	jmp	%o1
+	 nop
+1:
+	retl
+	nop
 
 /*
  * cpu_switchto() switches to an lwp to run and runs it, saving the

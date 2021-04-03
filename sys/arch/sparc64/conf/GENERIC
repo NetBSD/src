@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.233 2020/10/30 06:44:37 jdc Exp $
+# $NetBSD: GENERIC,v 1.233.2.1 2021/04/03 22:28:38 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.233 $"
+#ident		"GENERIC-$Revision: 1.233.2.1 $"
 
 maxusers	64
 
@@ -248,6 +248,7 @@ iic* 	at jbusi2c?
 # Virtual devices for sun4v systems.
 vrtc0	at vbus?
 vdsk*	at cbus?
+vnet*	at cbus?
 
 #### Serial port configuration
 
@@ -418,6 +419,9 @@ vioscsi* at virtio?			# Virtio SCSI device
 fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
 #fdc0	at ebus?				# fdthree, EXPERIMENTAL
 fd*	at fdc0					# the drive itself
+
+# Pull in optional local configuration
+cinclude "arch/sparc64/conf/GENERIC.local"
 
 #
 # accept filters

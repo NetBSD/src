@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.19 2020/02/23 04:02:46 isaki Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.19.6.1 2021/04/03 22:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.19 2020/02/23 04:02:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.19.6.1 2021/04/03 22:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,7 @@ vraiu_get_props(void *self)
 {
 	DPRINTFN(3, ("vraiu_get_props\n"));
 
-	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
+	return AUDIO_PROP_PLAYBACK;
 }
 
 void

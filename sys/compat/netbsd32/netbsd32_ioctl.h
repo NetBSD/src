@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.73 2020/09/07 03:12:51 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.73.2.1 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -41,6 +41,8 @@
 #include <netinet/in.h>
 #include <netinet/ip_mroute.h>
 #include <net80211/ieee80211_ioctl.h>
+
+#include <compat/netbsd32/netbsd32.h>
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
@@ -86,6 +88,19 @@ struct netbsd32_format_op {
 #define DIOCRFORMAT32	_IOWR('d', 105, struct netbsd32_format_op)
 #define DIOCWFORMAT32	_IOWR('d', 106, struct netbsd32_format_op)
 #endif
+
+/* from <sys/event.h> */
+
+struct netbsd32_kfilter_mapping {
+	netbsd32_charp	name;		/* name to lookup or return */
+	netbsd32_size_t	len;		/* length of name */
+	uint32_t	filter;		/* filter to lookup or return */
+};
+
+/* map filter to name (max size len) */
+#define KFILTER_BYFILTER32	_IOWR('k', 0, struct netbsd32_kfilter_mapping)
+/* map name to filter (len ignored) */
+#define KFILTER_BYNAME32	_IOWR('k', 1, struct netbsd32_kfilter_mapping)
 
 /* from <sys/ataio.h> */
 struct netbsd32_atareq {
@@ -465,6 +480,18 @@ struct netbsd32_sioc_vif_req {
 /* from <sys/sockio.h> */
 #define	SIOCGETVIFCNT32	_IOWR('u', 51, struct netbsd32_sioc_vif_req)/* vif pkt cnt */
 
+/* from <netinet6/nd6.h> */
+struct netbsd32_in6_nbrinfo {
+	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
+	struct in6_addr addr;	/* IPv6 address of the neighbor */
+	netbsd32_long	asked;	/* number of queries already sent for this addr */
+	int	isrouter;	/* if it acts as a router */
+	int	state;		/* reachability state */
+	int	expire;		/* lifetime for NDP state transition */
+};
+/* from <netinet6/in6_var.h> */
+#define SIOCGNBRINFO_IN632	_IOWR('i', 78, struct netbsd32_in6_nbrinfo)
+
 struct netbsd32_sioc_sg_req {
 	struct	in_addr src;
 	struct	in_addr grp;
@@ -475,23 +502,39 @@ struct netbsd32_sioc_sg_req {
 /* from <sys/sockio.h> */
 #define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
 
-/*
- * The next two structures are marked "__packed" as they normally end up
- * being padded in 64-bit mode.
- */
+/* from <dev/ffsvar.h> */
+struct netbsd32_fss_set {
+	netbsd32_charp	fss_mount;	/* Mount point of file system */
+	netbsd32_charp	fss_bstore;	/* Path of backing store */
+	blksize_t	fss_csize;	/* Preferred cluster size */
+	int		fss_flags;	/* Initial flags */
+};
+
+struct netbsd32_fss_get {
+	char		fsg_mount[MNAMELEN]; /* Mount point of file system */
+	struct netbsd32_timeval	fsg_time;	/* Time this snapshot was taken */
+	blksize_t	fsg_csize;	/* Current cluster size */
+	netbsd32_blkcnt_t	fsg_mount_size;	/* # clusters on file system */
+	netbsd32_blkcnt_t	fsg_bs_size;	/* # clusters on backing store */
+};
+
+/* XXX: FSSIOCSET50 and FSSIOCGET50 are not (yet) handled */
+#define FSSIOCSET32	_IOW('F', 5, struct netbsd32_fss_set)	/* Configure */
+#define FSSIOCGET32	_IOR('F', 1, struct netbsd32_fss_get)	/* Status */
+
 struct netbsd32_vnd_ioctl {
 	netbsd32_charp	vnd_file;	/* pathname of file to mount */
 	int		vnd_flags;	/* flags; see below */
 	struct vndgeom	vnd_geom;	/* geometry to emulate */
 	unsigned int	vnd_osize;	/* (returned) size of disk */
-	uint64_t	vnd_size;	/* (returned) size of disk */
-} __packed;
+	netbsd32_uint64	vnd_size;	/* (returned) size of disk */
+};
 
 struct netbsd32_vnd_user {
 	int		vnu_unit;	/* which vnd unit */
-	dev_t		vnu_dev;	/* file is on this device... */
-	ino_t		vnu_ino;	/* ...at this inode */
-} __packed;
+	netbsd32_dev_t	vnu_dev;	/* file is on this device... */
+	netbsd32_ino_t	vnu_ino;	/* ...at this inode */
+};
 
 /* from <dev/vndvar.h> */
 #define VNDIOCSET32	_IOWR('F', 0, struct netbsd32_vnd_ioctl)	/* enable disk */

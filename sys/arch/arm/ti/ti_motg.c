@@ -1,4 +1,4 @@
-/* $NetBSD: ti_motg.c,v 1.2 2020/06/03 19:16:23 jmcneill Exp $ */
+/* $NetBSD: ti_motg.c,v 1.2.2.1 2021/04/03 22:28:19 thorpej Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.2 2020/06/03 19:16:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.2.2.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,9 @@ extern int motgdebug;
 #define	MOTGHIST_FUNC()		USBHIST_FUNC()
 #define	MOTGHIST_CALLED(name)	USBHIST_CALLED(motgdebug)
 
-static const char * compatible [] = {
-	"ti,musb-am33xx",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,musb-am33xx" },
+	DEVICE_COMPAT_EOL
 };
 
 /*
@@ -93,7 +93,7 @@ ti_motg_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -126,8 +126,8 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_ctrlih = fdtbus_intr_establish(phandle, 0, IPL_USB, 0,
-	    ti_motg_intr, sc);
+	sc->sc_ctrlih = fdtbus_intr_establish_xname(phandle, 0, IPL_USB, 0,
+	    ti_motg_intr, sc, device_xname(self));
 	sc->sc_motg.sc_bus.ub_dmatag = faa->faa_dmat;
 
 	val = TIOTG_USBC_READ4(sc, USBCTRL_REV);

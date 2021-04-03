@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.165.4.1 2021/01/03 16:35:02 thorpej Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.165.4.2 2021/04/03 22:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.165.4.1 2021/01/03 16:35:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.165.4.2 2021/04/03 22:28:50 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1546,7 +1546,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	if (asid->bDescriptorType != UDESC_CS_INTERFACE ||
 	    asid->bDescriptorSubtype != AS_GENERAL)
 		return USBD_INVAL;
-	DPRINTF("asid: bTerminakLink=%d wFormatTag=%d\n",
+	DPRINTF("asid: bTerminalLink=%d wFormatTag=%d\n",
 		 asid->bTerminalLink, UGETW(asid->wFormatTag));
 	offs += asid->bLength;
 	if (offs > size)
@@ -1786,7 +1786,7 @@ uaudio_identify_as(struct uaudio_softc *sc,
 			     id->bNumEndpoints);
 			break;
 		}
-		id = uaudio_find_iface(tbuf, size, &offs,UISUBCLASS_AUDIOSTREAM);
+		id = uaudio_find_iface(tbuf, size, &offs, UISUBCLASS_AUDIOSTREAM);
 		if (id == NULL)
 			break;
 	}
@@ -3020,7 +3020,8 @@ uaudio_set_format(void *addr, int setmode,
 		raltidx = audio_indexof_format(sc->sc_formats, sc->sc_nformats,
 		    AUMODE_RECORD, rec);
 		/* Transfer should have halted */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, rec, 0);
+		uaudio_chan_init(&sc->sc_recchan, raltidx, rec,
+		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
 	}
 
 	if ((setmode & AUMODE_PLAY) && sc->sc_playchan.altidx != -1) {

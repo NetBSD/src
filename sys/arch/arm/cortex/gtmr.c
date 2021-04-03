@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.42 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.42.2.1 2021/04/03 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.42 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.42.2.1 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -178,7 +178,7 @@ gtmr_read_cntct(struct gtmr_softc *sc)
 		/*
 		 * The Allwinner A64 SoC has an unstable architectural timer.
 		 * To workaround this problem, ignore reads where the lower
-		 * 11 bits are all 0s or 1s.
+		 * 10 bits are all 0s or 1s.
 		 */
 		uint64_t val;
 		u_int bits;

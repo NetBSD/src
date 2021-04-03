@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.63 2020/07/06 11:06:52 rin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.63.2.1 2021/04/03 22:28:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -174,9 +174,6 @@ ENTRY(cpu_switchto)
 #ifdef PPC_BOOKE
 	mfmsr	%r0
 	andis.	%r0,%r0,PSL_CE@h
-	tweqi	%r0,0	
-	mfmsr	%r0
-	andi.	%r0,%r0,PSL_DE@l
 	tweqi	%r0,0	
 #endif
 
@@ -404,7 +401,7 @@ _ENTRY(softint_fast_dispatch)
 	addi	%r1, %r5, USPACE - FRAMELEN - CALLFRAMELEN
 
 #if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
-	wrteei	1			/* interrupts are okay again */
+	wrtee	%r29			/* interrupts are okay again */
 #else /* PPC_OEA */
 	mtmsr	%r29
 #endif
@@ -509,8 +506,6 @@ _ENTRY(cpu_lwp_bootstrap)
 	lis	%r30, 0xbeeffeed@h
 	ori	%r30, %r30, 0xbeeffeed@l
 	andis.	%r0,%r31,PSL_CE@h
-	tweqi	%r0,0
-	andi.	%r0,%r31,PSL_DE@l
 	tweqi	%r0,0
 #endif
 	li	%r4, 1			/* make sure userret gets called */

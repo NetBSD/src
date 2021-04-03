@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.16 2020/09/14 10:06:35 ryo Exp $ */
+/* $NetBSD: types.h,v 1.16.2.1 2021/04/03 22:28:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) ||	\
     defined(_STANDALONE)
-typedef	unsigned long	vm_offset_t;	/* depreciated */
-typedef	unsigned long	vm_size_t;	/* depreciated */
+typedef	unsigned long	vm_offset_t;	/* deprecated */
+typedef	unsigned long	vm_size_t;	/* deprecated */
 
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
@@ -93,6 +93,7 @@ typedef __uint64_t __register_t;
 #define __SIMPLELOCK_UNLOCKED	0
 
 #define __HAVE_ATOMIC64_OPS
+#define __HAVE_BUS_SPACE_8
 #define __HAVE_COMMON___TLS_GET_ADDR
 #define __HAVE_CPU_COUNTER
 #define __HAVE_CPU_DATA_FIRST

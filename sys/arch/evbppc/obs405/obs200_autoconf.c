@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_autoconf.c,v 1.7 2011/12/12 11:23:57 kiyohara Exp $	*/
+/*	$NetBSD: obs200_autoconf.c,v 1.7.60.1 2021/04/03 22:28:25 thorpej Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,19 +33,16 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.7 2011/12/12 11:23:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.7.60.1 2021/04/03 22:28:25 thorpej Exp $");
 
-#include <sys/systm.h>
+#include <sys/param.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <machine/obs200.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-
-#include <dev/ic/comreg.h>
-
 
 /*
  * Determine device configuration for a machine.
@@ -63,14 +60,11 @@ cpu_configure(void)
 	if (config_rootfound("plb", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
-
-	(void)spl0();
+	genppc_cpu_configure();
 }
 
 void device_register(device_t dev, void *aux)
 {
 
-	obs405_device_register(dev, aux, OBS200_COM_FREQ);
+	ibm4xx_device_register(dev, aux, OBS200_COM_FREQ);
 }

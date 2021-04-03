@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.17 2020/06/03 19:55:13 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.17.2.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.17 2020/06/03 19:55:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.17.2.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ cpufreq_dt_change_cb(void *arg1, void *arg2)
 	struct cpufreq_dt_softc * const sc = arg1;
 	struct cpu_info *ci = curcpu();
 
-	ci->ci_data.cpu_cc_freq = sc->sc_freq_target * 1000000;
+	ci->ci_data.cpu_cc_freq = clk_get_rate(sc->sc_clk);
 }
 
 static int
@@ -365,8 +365,12 @@ cpufreq_dt_lookup_opp_info(const int opp_table)
 	int match, best_match = 0;
 
 	__link_set_foreach(opp, fdt_opps) {
-		const char * const compat[] = { (*opp)->opp_compat, NULL };
-		match = of_match_compatible(opp_table, compat);
+		const struct device_compatible_entry compat_data[] = {
+			{ .compat = (*opp)->opp_compat },
+			DEVICE_COMPAT_EOL
+		};
+
+		match = of_compatible_match(opp_table, compat_data);
 		if (match > best_match) {
 			best_match = match;
 			best_opp = *opp;

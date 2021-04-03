@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.14 2020/02/01 09:21:49 skrll Exp $ */
+/* $NetBSD: param.h,v 1.14.6.1 2021/04/03 22:28:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -131,6 +131,12 @@
 
 #define MCLBYTES		(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
+#ifndef NFS_RSIZE
+#define NFS_RSIZE		32768	/* Default NFS read data size */
+#endif
+#ifndef NFS_WSIZE
+#define NFS_WSIZE		32768	/* Default NFS write data size */
+#endif
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE		65536	/* default message buffer size */

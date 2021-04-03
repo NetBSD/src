@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.146 2020/08/09 15:32:44 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.146.2.1 2021/04/03 22:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.146 2020/08/09 15:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.146.2.1 2021/04/03 22:28:41 thorpej Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1321,6 +1321,7 @@ static const char * const vm_guest_name[VM_LAST] = {
 	[VM_GUEST_HV] =		"Hyper-V",
 	[VM_GUEST_VMWARE] =	"VMware",
 	[VM_GUEST_KVM] =	"KVM",
+	[VM_GUEST_VIRTUALBOX] =	"VirtualBox",
 };
 
 static int
@@ -1328,7 +1329,7 @@ sysctl_machdep_hypervisor(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	const char *t = NULL;
-	char buf[10];
+	char buf[64];
 
 	node = *rnode;
 	node.sysctl_data = buf;

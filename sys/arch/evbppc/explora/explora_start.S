@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.11 2013/10/03 22:28:38 matt Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.11.42.1 2021/04/03 22:28:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -185,6 +185,11 @@ stage2:
 	stwu	3,4(7)
 	cmpw	7,4
 	bne+	1b
+
+/* Set kernel MMU context. */
+	li	0,KERNEL_PID
+	mtpid	0
+	sync
 
 	INIT_CPUINFO(4,1,9,0)
 

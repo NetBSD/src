@@ -1,4 +1,4 @@
-/*	$NetBSD: openbios.c,v 1.5 2011/06/18 06:41:42 matt Exp $	*/
+/*	$NetBSD: openbios.c,v 1.5.66.1 2021/04/03 22:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openbios.c,v 1.5 2011/06/18 06:41:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openbios.c,v 1.5.66.1 2021/04/03 22:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: openbios.c,v 1.5 2011/06/18 06:41:42 matt Exp $");
  * Board configuration structure from the OpenBIOS.
  *
  * Supported (XXX):
+ *    IBM/AMCC Walnut PowerPC 405GP Evaluation Board
  *    405GPr 1.2 ROM Monitor (5/25/02)
  */
 struct board_bios_data {
@@ -60,7 +61,7 @@ struct board_bios_data {
 static struct board_bios_data board_bios;
 
 void
-openbios_board_init(void *info_block, u_int startkernel)
+openbios_board_init(void *info_block)
 {
 
         /* Initialize cache info for memcpy, etc. */
@@ -73,6 +74,7 @@ openbios_board_init(void *info_block, u_int startkernel)
 unsigned int
 openbios_board_memsize_get(void)
 {
+
 	return board_bios.mem_size;
 }
 
@@ -141,7 +143,6 @@ openbios_board_info_set(void)
 		panic("setting pci-frequency");
 	prop_object_release(pn);
 }
-
 
 void
 openbios_board_print(void)

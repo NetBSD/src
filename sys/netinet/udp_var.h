@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.46 2020/08/20 21:21:32 riastradh Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.46.2.1 2021/04/03 22:29:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,9 +38,12 @@
  * UDP kernel structures and variables.
  */
 struct	udpiphdr {
-	struct 	ipovly ui_i;		/* overlaid ip structure */
+	struct	ipovly ui_i;		/* overlaid ip structure */
 	struct	udphdr ui_u;		/* udp header */
-} __packed;
+};
+#ifdef CTASSERT
+CTASSERT(sizeof(struct udpiphdr) == 28);
+#endif
 #define	ui_x1		ui_i.ih_x1
 #define	ui_pr		ui_i.ih_pr
 #define	ui_len		ui_i.ih_len

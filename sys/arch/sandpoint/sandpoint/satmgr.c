@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.28 2018/09/03 16:29:27 riastradh Exp $ */
+/* $NetBSD: satmgr.c,v 1.28.12.1 2021/04/03 22:28:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	struct btinfo_prodfamily *pfam;
 	struct satops *ops;
 	int i, sataddr, epicirq;
+	char intr_xname[INTRDEVNAMEBUF];
 
 	found = 1;
 
@@ -251,7 +252,8 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_repcv, "stalk");
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
-	intr_establish(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL, hwintr, sc);
+	intr_establish_xname(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL,
+	    hwintr, sc, device_xname(self));
 	aprint_normal_dev(self, "interrupting at irq %d\n",
 	    epicirq + I8259_ICU);
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, swintr, sc);
@@ -321,8 +323,10 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 			CTL_CREATE, CTL_EOL);
 	}
 	else if (strcmp(ops->family, "kurot4") == 0) {
-		intr_establish(2 + I8259_ICU,
-			IST_LEVEL, IPL_SERIAL, mbtnintr, sc);
+		snprintf(intr_xname, sizeof(intr_xname), "%s mbtn",
+		    device_xname(self));
+		intr_establish_xname(2 + I8259_ICU,
+			IST_LEVEL, IPL_SERIAL, mbtnintr, sc, intr_xname);
 	}
 
 	md_reboot = satmgr_reboot;	/* cpu_reboot() hook */
@@ -589,7 +593,7 @@ filt_rdetach(struct knote *kn)
 	struct satmgr_softc *sc = kn->kn_hook;
 
 	mutex_enter(&sc->sc_lock);
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -613,11 +617,9 @@ static int
 satkqfilter(dev_t dev, struct knote *kn)
 {
 	struct satmgr_softc *sc = device_lookup_private(&satmgr_cd, 0);
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &read_filtops;
 		break;
 
@@ -628,7 +630,7 @@ satkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	mutex_enter(&sc->sc_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_rsel, kn);
 	mutex_exit(&sc->sc_lock);
 
 	return 0;

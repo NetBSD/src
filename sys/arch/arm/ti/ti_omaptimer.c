@@ -1,7 +1,7 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.4 2019/10/30 21:40:04 jmcneill Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.4.8.1 2021/04/03 22:28:19 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.4 2019/10/30 21:40:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.4.8.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,11 +61,11 @@ static uint8_t omaptimer_regmap[_DM_NTIMER][_TIMER_NREG] = {
 	},
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "ti,am335x-timer-1ms",	DM_TIMER_AM335X },
-	{ "ti,am335x-timer",		DM_TIMER_AM335X },
-	{ "ti,omap3430-timer",		DM_TIMER_OMAP3430 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am335x-timer-1ms",	.value = DM_TIMER_AM335X },
+	{ .compat = "ti,am335x-timer",		.value = DM_TIMER_AM335X },
+	{ .compat = "ti,omap3430-timer",	.value = DM_TIMER_OMAP3430 },
+	DEVICE_COMPAT_EOL
 };
 
 struct omaptimer_softc {
@@ -106,11 +106,11 @@ omaptimer_cpu_initclocks(void)
 	KASSERT(sc != NULL);
 	if (!fdtbus_intr_str(sc->sc_phandle, 0, intrstr, sizeof(intrstr)))
 		panic("%s: failed to decode interrupt", __func__);
-	ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, omaptimer_intr, NULL);
+	ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, omaptimer_intr, NULL, device_xname(sc->sc_dev));
 	if (ih == NULL)
 		panic("%s: failed to establish timer interrupt", __func__);
-	
+
 	aprint_normal_dev(sc->sc_dev, "interrupting on %s\n", intrstr);
 
 	/* Enable interrupts */
@@ -140,7 +140,7 @@ omaptimer_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -164,7 +164,7 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		device_printf(self, "unable to map bus space");

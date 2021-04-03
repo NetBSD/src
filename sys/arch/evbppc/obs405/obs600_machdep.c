@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.10 2018/07/15 05:16:42 maxv Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.10.12.1 2021/04/03 22:28:25 thorpej Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,46 +68,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.10 2018/07/15 05:16:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.10.12.1 2021/04/03 22:28:25 thorpej Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/ksyms.h>
-#include <sys/mount.h>
+#include <sys/module.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/obs600.h>
-
-#include <powerpc/ibm4xx/amcc405ex.h>
-#include <powerpc/ibm4xx/cpu.h>
-#include <powerpc/ibm4xx/dcr4xx.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
-#include <powerpc/ibm4xx/dev/gpiicreg.h>
-#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 
-#include <dev/ic/comreg.h>
+#include <powerpc/ibm4xx/amcc405ex.h>
+#include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/tlb.h>
 
-#include "ksyms.h"
+#include <powerpc/ibm4xx/dev/gpiicreg.h>
+#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <dev/ic/comreg.h>
 
 #ifndef CONADDR
 #define CONADDR		AMCC405EX_UART0_BASE
@@ -129,13 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.10 2018/07/15 05:16:42 maxv Exp
 #define OBS600_MEM_SIZE	(1 * 1024 * 1024 * 1024)
 
 #define	TLB_PG_SIZE 	(16 * 1024 * 1024)
-
-/*
- * Global variables used here and there
- */
-char bootpath[256];
-
-extern paddr_t msgbuf_paddr;
 
 void initppc(vaddr_t, vaddr_t, int, char *[], char *);
 static int read_eeprom(int, char *);
@@ -206,15 +190,6 @@ cpu_startup(void)
 	 */
 	board_info_init();
 
-	read_eeprom(sizeof(buf), buf);
-	macaddr = &buf[0];
-	macaddr1 = &buf[8];
-
-	/*
-	 * Now that we have VM, malloc()s are OK in bus_space.
-	 */
-	bus_space_mallocok();
-
 	pn = prop_number_create_integer(OBS600_CPU_FREQ);
 	KASSERT(pn != NULL);
 	if (prop_dictionary_set(board_properties, "processor-frequency", pn) ==
@@ -228,7 +203,13 @@ cpu_startup(void)
 		panic("setting mem-size");
 	prop_object_release(pn);
 
+	calc_delayconst(); /* required by read_eeprom() */
+
 #define ETHER_ADDR_LEN	6
+
+	read_eeprom(sizeof(buf), buf);
+	macaddr = &buf[0];
+	macaddr1 = &buf[8];
 
 	pd = prop_data_create_data_nocopy(macaddr, ETHER_ADDR_LEN);
 	KASSERT(pd != NULL);
@@ -256,92 +237,16 @@ cpu_startup(void)
 	prop_object_release(pn);
 
 	/*
+	 * Now that we have VM, malloc()s are OK in bus_space.
+	 */
+	bus_space_mallocok();
+
+	/*
 	 * no fake mapiodev
 	 */
 	fake_mapiodev = 0;
 
 	splraise(-1);
-}
-
-/*
- * Halt or reboot the machine after syncing/dumping according to howto.
- */
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
-	}
-
-	splhigh();
-
-	if (!cold && (howto & RB_DUMP))
-		ibm4xx_dumpsys();
-
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-	  /* Power off here if we know how...*/
-	}
-
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-
-#if 0
-		goto reboot;	/* XXX for now... */
-#endif
-
-#ifdef DDB
-		printf("dropping to debugger\n");
-		while(1)
-			Debugger();
-#endif
-	}
-
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
-	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
-
-	/* flush cache for msgbuf */
-	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
-
-#if 0
- reboot:
-#endif
-	ppc4xx_reset();
-
-	printf("ppc4xx_reset() failed!\n");
-#ifdef DDB
-	while(1)
-		Debugger();
-#else
-	while (1)
-		/* nothing */;
-#endif
 }
 
 /*

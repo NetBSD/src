@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.72.2.1 2020/12/14 14:37:57 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.72.2.2 2021/04/03 22:28:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -98,6 +98,9 @@ typedef __uint32_t	vsize_t;
 #define	PRIdVSIZE	PRId32
 #endif
 
+typedef	vaddr_t	vm_offset_t;	/* deprecated (cddl/FreeBSD compat) */
+typedef	vsize_t	vm_size_t;	/* deprecated (cddl/FreeBSD compat) */
+
 
 typedef int		mips_prid_t;
 /* Make sure this is signed; we need pointers to be sign-extended. */
@@ -173,6 +176,7 @@ typedef __uint32_t tlb_asid_t;
 #define	__HAVE_UCAS_FULL
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB
+#define	__HAVE_BUS_SPACE_8
 
 /* XXX temporary */
 #define	__HAVE_UNLOCKED_PMAP

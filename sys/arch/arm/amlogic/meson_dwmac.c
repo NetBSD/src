@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.8.6.1 2021/01/03 16:34:50 thorpej Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.8.6.2 2021/04/03 22:28:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.8.6.1 2021/01/03 16:34:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.8.6.2 2021/04/03 22:28:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,12 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.8.6.1 2021/01/03 16:34:50 thorpej 
 #define	 TX_CLK_DELAY			__BITS(6,5)
 #define	 PHY_INTERFACE_SEL		__BIT(0)
 
-static const char * compatible[] = {
-	"amlogic,meson8b-dwmac",
-	"amlogic,meson-gx-dwmac",
-	"amlogic,meson-gxbb-dwmac",
-	"amlogic,meson-axg-dwmac",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-dwmac" },
+	{ .compat = "amlogic,meson-gx-dwmac" },
+	{ .compat = "amlogic,meson-gxbb-dwmac" },
+	{ .compat = "amlogic,meson-axg-dwmac" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -146,7 +146,7 @@ meson_dwmac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -229,8 +229,9 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
 
-	if (fdtbus_intr_establish(phandle, 0, IPL_NET, DWCGMAC_FDT_INTR_MPSAFE,
-	    meson_dwmac_intr, sc) == NULL) {
+	if (fdtbus_intr_establish_xname(phandle, 0, IPL_NET,
+	    DWCGMAC_FDT_INTR_MPSAFE, meson_dwmac_intr, sc,
+	    device_xname(sc->sc_dev)) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
 		return;
 	}

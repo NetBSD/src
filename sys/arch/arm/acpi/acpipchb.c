@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.21.2.1 2020/12/14 14:37:47 thorpej Exp $ */
+/* $NetBSD: acpipchb.c,v 1.21.2.2 2021/04/03 22:28:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.21.2.1 2020/12/14 14:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.21.2.2 2021/04/03 22:28:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,6 +149,8 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": PCI Express Host Bridge\n");
+
+	acpi_claim_childdevs(self, aa->aa_node);
 
 	if (acpi_pci_ignore_boot_config(sc->sc_handle)) {
 		if (acpimcfg_configure_bus(self, aa->aa_pc, sc->sc_handle,

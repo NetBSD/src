@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.34 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.34.12.1 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -70,9 +70,9 @@ int netbsd32_elf32_copyargs(struct lwp *, struct exec_package *,
 static __inline int netbsd32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
-void netbsd32_setregs (struct lwp *, struct exec_package *, vaddr_t stack);
-int netbsd32_sigreturn (struct proc *, void *, register_t *);
-void netbsd32_sendsig (const ksiginfo_t *, const sigset_t *);
+void netbsd32_setregs(struct lwp *, struct exec_package *, vaddr_t stack);
+int netbsd32_sigreturn(struct proc *, void *, register_t *);
+void netbsd32_sendsig(const ksiginfo_t *, const sigset_t *);
 
 extern char netbsd32_esigcode[], netbsd32_sigcode[];
 
@@ -83,9 +83,9 @@ static __inline int
 netbsd32_copyargs(struct lwp *l, struct exec_package *pack,
 		struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	u_int32_t *cpp = (u_int32_t *)*stackp;
+	uint32_t *cpp = (uint32_t *)*stackp;
 	netbsd32_pointer_t dp;
-	u_int32_t nullp = 0;
+	uint32_t nullp = 0;
 	char *sp;
 	size_t len;
 	int argc = arginfo->ps_nargvstr;

@@ -52,11 +52,17 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
 #options 	DDB_COMMANDONENTER="bt"
 
-makeoptions 	DEBUG="-g"	# compile full symbol table
-
 # Compatibility options
 include 	"conf/compat_netbsd70.config"
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances
+options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
+#options	DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
+#options	DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -65,16 +71,16 @@ file-system 	TMPFS		# memory file system
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 file-system 	NFS		# Network File System client
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-#options 	QUOTA		# legacy UFS quotas
-#options 	QUOTA2		# new, in-filesystem UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	WAPBL		# File system journaling support
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
@@ -192,6 +198,7 @@ ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
 genfb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+gffb*	at pci? dev ? function ?	# some iMacs have nvidia graphics chips
 radeonfb*	at pci? dev ? function ?
 options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
 
@@ -201,7 +208,9 @@ options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
 #pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 wdc* 	at pci? dev ? function ?		# Kauai ATA
 svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
+siisata* at pci? dev ? function ?		# SiI SteelVine controllers
 #options 	ATADEBUG
+
 obio*	at pci? dev ? function ?
 zsc*	at obio?
 zstty*	at zsc? channel ?
@@ -228,6 +237,7 @@ pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	bpfilter		# packet filter
 #pseudo-device	npf			# NPF packet filter
 
 # Enable the hooks used for initializing the ram-disk.

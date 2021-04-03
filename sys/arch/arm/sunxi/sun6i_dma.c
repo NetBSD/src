@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.9 2019/03/06 19:16:53 jakllsch Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.9.12.1 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.9 2019/03/06 19:16:53 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.9.12.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -151,12 +151,17 @@ static const struct sun6idma_config sun50i_a64_dma_config = {
 	.widths = WIDTHS_1_2_4_8,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun6i-a31-dma",	(uintptr_t)&sun6i_a31_dma_config },
-	{ "allwinner,sun8i-a83t-dma",	(uintptr_t)&sun8i_a83t_dma_config },
-	{ "allwinner,sun8i-h3-dma",	(uintptr_t)&sun8i_h3_dma_config },
-	{ "allwinner,sun50i-a64-dma",	(uintptr_t)&sun50i_a64_dma_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun6i-a31-dma",
+	  .data = &sun6i_a31_dma_config },
+	{ .compat = "allwinner,sun8i-a83t-dma",
+	  .data = &sun8i_a83t_dma_config },
+	{ .compat = "allwinner,sun8i-h3-dma",
+	  .data = &sun8i_h3_dma_config },
+	{ .compat = "allwinner,sun50i-a64-dma",
+	  .data = &sun50i_a64_dma_config },
+
+	DEVICE_COMPAT_EOL
 };
 
 struct sun6idma_channel {
@@ -409,7 +414,7 @@ sun6idma_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -459,7 +464,7 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	sc->sc_burst_mask = conf->burst_mask;
 	sc->sc_nchan = conf->num_channels;
@@ -507,8 +512,8 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 	if (conf->autogate)
 		DMA_WRITE(sc, conf->autogate_reg, conf->autogate_mask);
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SCHED, FDT_INTR_MPSAFE,
-	    sun6idma_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SCHED,
+	    FDT_INTR_MPSAFE, sun6idma_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish interrupt on %s\n", intrstr);

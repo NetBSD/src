@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.677.2.1 2020/12/14 14:38:17 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.677.2.2 2021/04/03 22:29:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	999007700	/* NetBSD 9.99.77 */
+#define	__NetBSD_Version__	999008100	/* NetBSD 9.99.81 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -281,10 +281,24 @@
 #define	ALIGN(p)		(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #endif
 #ifndef ALIGNED_POINTER
-#define	ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t) - 1)) == 0)
+#define	ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (__alignof(t) - 1)) == 0)
 #endif
 #ifndef ALIGNED_POINTER_LOAD
 #define	ALIGNED_POINTER_LOAD(q,p,t)	(*(q) = *((const t *)(p)))
+#endif
+
+/*
+ * Return if pointer p is accessible for type t. For primitive types
+ * this means that the pointer itself can be dereferenced; for structures
+ * and unions this means that any field can be dereferenced. On CPUs
+ * that allow unaligned pointer access, we always return that the pointer
+ * is accessible to prevent unnecessary copies, although this might not be
+ * necessarily faster.
+ */
+#ifdef __NO_STRICT_ALIGNMENT
+#define	ACCESSIBLE_POINTER(p, t)	1
+#else
+#define	ACCESSIBLE_POINTER(p, t)	ALIGNED_POINTER(p, t)
 #endif
 
 /*

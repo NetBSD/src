@@ -1,4 +1,4 @@
-/* $NetBSD: gpioregulator.c,v 1.2 2019/01/19 20:51:12 jmcneill Exp $ */
+/* $NetBSD: gpioregulator.c,v 1.2.12.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioregulator.c,v 1.2 2019/01/19 20:51:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioregulator.c,v 1.2.12.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,13 +83,17 @@ struct gpioregulator_softc {
 CFATTACH_DECL_NEW(gregulator, sizeof(struct gpioregulator_softc),
     gpioregulator_match, gpioregulator_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "regulator-gpio" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 gpioregulator_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "regulator-gpio", NULL };
 	const struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -189,7 +193,7 @@ gpioregulator_acquire(device_t dev)
 	return 0;
 }
 
-static void 
+static void
 gpioregulator_release(device_t dev)
 {
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_cru.c,v 1.5.10.1 2021/01/03 16:34:52 thorpej Exp $ */
+/* $NetBSD: rk3328_cru.c,v 1.5.10.2 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.5.10.1 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.5.10.2 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,9 +52,9 @@ __KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.5.10.1 2021/01/03 16:34:52 thorpej 
 static int rk3328_cru_match(device_t, cfdata_t, void *);
 static void rk3328_cru_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"rockchip,rk3328-cru",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3328-cru" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(rk3328_cru, sizeof(struct rk_cru_softc),
@@ -469,7 +469,7 @@ rk3328_cru_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

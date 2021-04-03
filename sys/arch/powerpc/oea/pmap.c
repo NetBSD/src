@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98.2.1 2021/04/03 22:28:35 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.2.1 2021/04/03 22:28:35 thorpej Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -191,6 +191,8 @@ static u_int mem_cnt, avail_cnt;
 #endif
 #define pmap_steal_memory	PMAPNAME(steal_memory)
 #define pmap_bootstrap		PMAPNAME(bootstrap)
+#define pmap_bootstrap1		PMAPNAME(bootstrap1)
+#define pmap_bootstrap2		PMAPNAME(bootstrap2)
 #else
 #define	STATIC			/* nothing */
 #endif /* PMAPNAME */
@@ -234,6 +236,8 @@ STATIC void pmap_pvo_verify(void);
 #endif
 STATIC vaddr_t pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 STATIC void pmap_bootstrap(paddr_t, paddr_t);
+STATIC void pmap_bootstrap1(paddr_t, paddr_t);
+STATIC void pmap_bootstrap2(void);
 
 #ifdef PMAPNAME
 const struct pmap_ops PMAPNAME(ops) = {
@@ -280,6 +284,8 @@ const struct pmap_ops PMAPNAME(ops) = {
 #endif
 	.pmapop_steal_memory = pmap_steal_memory,
 	.pmapop_bootstrap = pmap_bootstrap,
+	.pmapop_bootstrap1 = pmap_bootstrap1,
+	.pmapop_bootstrap2 = pmap_bootstrap2,
 };
 #endif /* !PMAPNAME */
 
@@ -589,45 +595,17 @@ tlbia(void)
 static inline register_t
 va_to_vsid(const struct pmap *pm, vaddr_t addr)
 {
-#if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
-	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID) >> SR_VSID_SHFT;
-#else /* PMAP_OEA64 */
-#if 0
-	const struct ste *ste;
-	register_t hash;
-	int i;
-
-	hash = (addr >> ADDR_ESID_SHFT) & ADDR_ESID_HASH;
-
 	/*
-	 * Try the primary group first
-	 */
-	ste = pm->pm_stes[hash].stes;
-	for (i = 0; i < 8; i++, ste++) {
-		if (ste->ste_hi & STE_V) &&
-		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
-			return ste;
-	}
-
-	/*
-	 * Then the secondary group.
-	 */
-	ste = pm->pm_stes[hash ^ ADDR_ESID_HASH].stes;
-	for (i = 0; i < 8; i++, ste++) {
-		if (ste->ste_hi & STE_V) &&
-		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
-			return addr;
-	}
-		
-	return NULL;
-#else
-	/*
-	 * Rather than searching the STE groups for the VSID, we know
-	 * how we generate that from the ESID and so do that.
+	 * Rather than searching the STE groups for the VSID or extracting
+	 * it from the SR, we know how we generate that from the ESID and
+	 * so do that.
+	 *
+	 * This makes the code the same for OEA and OEA64, and also allows
+	 * us to generate a correct-for-that-address-space VSID even if the
+	 * pmap contains a different SR value at any given moment (e.g.
+	 * kernel pmap on a 601 that is using I/O segments).
 	 */
 	return VSID_MAKE(addr >> ADDR_SR_SHFT, pm->pm_vsid) >> SR_VSID_SHFT;
-#endif
-#endif /* PMAP_OEA */
 }
 
 static inline register_t
@@ -2109,6 +2087,66 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	PMAP_UNLOCK();
 }
 
+#if defined(PMAP_OEA)
+#ifdef PPC_OEA601
+bool
+pmap_extract_ioseg601(vaddr_t va, paddr_t *pap)
+{
+	if ((MFPVR() >> 16) != MPC601)
+		return false;
+
+	const register_t sr = iosrtable[va >> ADDR_SR_SHFT];
+
+	if (SR601_VALID_P(sr) && SR601_PA_MATCH_P(sr, va)) {
+		if (pap)
+			*pap = va;
+		return true;
+	}
+	return false;
+}
+
+static bool
+pmap_extract_battable601(vaddr_t va, paddr_t *pap)
+{
+	const register_t batu = battable[va >> 23].batu;
+	const register_t batl = battable[va >> 23].batl;
+
+	if (BAT601_VALID_P(batl) && BAT601_VA_MATCH_P(batu, batl, va)) {
+		const register_t mask =
+		    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
+		if (pap)
+			*pap = (batl & mask) | (va & ~mask);
+		return true;
+	}
+	return false;
+}
+#endif /* PPC_OEA601 */
+
+bool
+pmap_extract_battable(vaddr_t va, paddr_t *pap)
+{
+#ifdef PPC_OEA601
+	if ((MFPVR() >> 16) == MPC601)
+		return pmap_extract_battable601(va, pap);
+#endif /* PPC_OEA601 */
+
+	if (oeacpufeat & OEACPU_NOBAT)
+		return false;
+
+	const register_t batu = battable[BAT_VA2IDX(va)].batu;
+
+	if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, va)) {
+		const register_t batl = battable[BAT_VA2IDX(va)].batl;
+		const register_t mask =
+		    (~(batu & (BAT_XBL|BAT_BL)) << 15) & ~0x1ffffL;
+		if (pap)
+			*pap = (batl & mask) | (va & ~mask);
+		return true;
+	}
+	return false;
+}
+#endif /* PMAP_OEA */
+
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
@@ -2121,63 +2159,42 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	PMAP_LOCK();
 
 	/*
-	 * If this is a kernel pmap lookup, also check the battable
-	 * and if we get a hit, translate the VA to a PA using the
-	 * BAT entries.  Don't check for VM_MAX_KERNEL_ADDRESS is
-	 * that will wrap back to 0.
+	 * If this is the kernel pmap, check the battable and I/O
+	 * segments for a hit.  This is done only for regions outside
+	 * VM_MIN_KERNEL_ADDRESS-VM_MAX_KERNEL_ADDRESS.
+	 *
+	 * Be careful when checking VM_MAX_KERNEL_ADDRESS; you don't
+	 * want to wrap around to 0.
 	 */
 	if (pm == pmap_kernel() &&
 	    (va < VM_MIN_KERNEL_ADDRESS ||
 	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
 		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
-#if defined (PMAP_OEA)
+#if defined(PMAP_OEA)
 #ifdef PPC_OEA601
-		if ((MFPVR() >> 16) == MPC601) {
-			register_t batu = battable[va >> 23].batu;
-			register_t batl = battable[va >> 23].batl;
-			register_t sr = iosrtable[va >> ADDR_SR_SHFT];
-			if (BAT601_VALID_P(batl) &&
-			    BAT601_VA_MATCH_P(batu, batl, va)) {
-				register_t mask =
-				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
-				if (pap)
-					*pap = (batl & mask) | (va & ~mask);
-				PMAP_UNLOCK();
-				return true;
-			} else if (SR601_VALID_P(sr) &&
-				   SR601_PA_MATCH_P(sr, va)) {
-				if (pap)
-					*pap = va;
-				PMAP_UNLOCK();
-				return true;
-			}
-		} else
-#endif /* PPC_OEA601 */
-		{
-			register_t batu = battable[BAT_VA2IDX(va)].batu;
-			if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
-				register_t batl = battable[BAT_VA2IDX(va)].batl;
-				register_t mask =
-				    (~(batu & (BAT_XBL|BAT_BL)) << 15) & ~0x1ffffL;
-				if (pap)
-					*pap = (batl & mask) | (va & ~mask);
-				PMAP_UNLOCK();
-				return true;
-			}
-		}
-		PMAP_UNLOCK();
-		return false;
-#elif defined (PMAP_OEA64_BRIDGE)
-	if (va >= SEGMENT_LENGTH)
-		panic("%s: pm: %s va >= SEGMENT_LENGTH, va: 0x%08lx\n",
-		    __func__, (pm == pmap_kernel() ? "kernel" : "user"), va);
-	else {
-		if (pap)
-			*pap = va;
+		if (pmap_extract_ioseg601(va, pap)) {
 			PMAP_UNLOCK();
 			return true;
-	}
-#elif defined (PMAP_OEA64)
+		}
+#endif /* PPC_OEA601 */
+		if (pmap_extract_battable(va, pap)) {
+			PMAP_UNLOCK();
+			return true;
+		}
+		/*
+		 * We still check the HTAB...
+		 */
+#elif defined(PMAP_OEA64_BRIDGE)
+		if (va < SEGMENT_LENGTH) {
+			if (pap)
+				*pap = va;
+			PMAP_UNLOCK();
+			return true;
+		}
+		/*
+		 * We still check the HTAB...
+		 */
+#elif defined(PMAP_OEA64)
 #error PPC_OEA64 not supported
 #endif /* PPC_OEA */
 	}
@@ -3145,12 +3162,11 @@ pmap_setup_segment0_map(int use_large_pages, ...)
 #endif /* PMAP_OEA64_BRIDGE */
 
 /*
- * This is not part of the defined PMAP interface and is specific to the
- * PowerPC architecture.  This is called during initppc, before the system
- * is really initialized.
+ * Set up the bottom level of the data structures necessary for the kernel
+ * to manage memory.  MMU hardware is programmed in pmap_bootstrap2().
  */
 void
-pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
+pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 {
 	struct mem_region *mp, tmp;
 	paddr_t s, e;
@@ -3401,46 +3417,29 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	pmap_vsid_bitmap[0] |= 1;
 
 	/*
-	 * Initialize kernel pmap and hardware.
+	 * Initialize kernel pmap.
 	 */
-
-/* PMAP_OEA64_BRIDGE does support these instructions */
-#if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
+#if defined(PMAP_OEA) || defined(PMAP_OEA64_BRIDGE)
 	for (i = 0; i < 16; i++) {
-#if defined(PPC_OEA601)
-	    /* XXX wedges for segment register 0xf , so set later */
-	    if ((iosrtable[i] & SR601_T) && ((MFPVR() >> 16) == MPC601))
-		    continue;
-#endif
  		pmap_kernel()->pm_sr[i] = KERNELN_SEGMENT(i)|SR_PRKEY;
-		__asm volatile ("mtsrin %0,%1"
- 			      :: "r"(KERNELN_SEGMENT(i)|SR_PRKEY), "r"(i << ADDR_SR_SHFT));
 	}
+	pmap_kernel()->pm_vsid = KERNEL_VSIDBITS;
 
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm volatile ("mtsr %0,%1"
-		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
 #ifdef KERNEL2_SR
 	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
-	__asm volatile ("mtsr %0,%1"
-		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
 #endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
-#if defined (PMAP_OEA)
-	for (i = 0; i < 16; i++) {
-		if (iosrtable[i] & SR601_T) {
-			pmap_kernel()->pm_sr[i] = iosrtable[i];
-			__asm volatile ("mtsrin %0,%1"
-			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
+
+#if defined(PMAP_OEA) && defined(PPC_OEA601)
+	if ((MFPVR() >> 16) == MPC601) {
+		for (i = 0; i < 16; i++) {
+			if (iosrtable[i] & SR601_T) {
+				pmap_kernel()->pm_sr[i] = iosrtable[i];
+			}
 		}
 	}
-	__asm volatile ("sync; mtsdr1 %0; isync"
-		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
-#elif defined (PMAP_OEA64) || defined (PMAP_OEA64_BRIDGE)
- 	__asm __volatile ("sync; mtsdr1 %0; isync"
- 		      :: "r"((uintptr_t)pmap_pteg_table | (32 - __builtin_clz(pmap_pteg_mask >> 11))));
-#endif
-	tlbia();
+#endif /* PMAP_OEA && PPC_OEA601 */
 
 #ifdef ALTIVEC
 	pmap_use_altivec = cpu_altivec;
@@ -3536,15 +3535,50 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			pmap_pte_create(&pt, pm, va, pa | PTE_M|PTE_BW);
 			pmap_pte_insert(ptegidx, &pt);
 		}
-#endif
-
-		__asm volatile ("mtsrin %0,%1"
- 			      :: "r"(sr), "r"(kernelstart));
+#endif /* PMAP_NEED_FULL_MAPKERNEL */
 	}
+#endif /* PMAP_NEED_MAPKERNEL */
+}
+
+/*
+ * Using the data structures prepared in pmap_bootstrap1(), program
+ * the MMU hardware.
+ */
+void
+pmap_bootstrap2(void)
+{
+#if defined(PMAP_OEA) || defined(PMAP_OEA64_BRIDGE)
+	for (int i = 0; i < 16; i++) {
+		__asm volatile("mtsrin %0,%1"
+			:: "r"(pmap_kernel()->pm_sr[i]),
+			   "r"(i << ADDR_SR_SHFT));
+	}
+#endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
+
+#if defined(PMAP_OEA)
+	 __asm volatile("sync; mtsdr1 %0; isync"
+		:: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
+#elif defined(PMAP_OEA64) || defined(PMAP_OEA64_BRIDGE)
+	__asm __volatile("sync; mtsdr1 %0; isync"
+		:: "r"((uintptr_t)pmap_pteg_table |
+		       (32 - __builtin_clz(pmap_pteg_mask >> 11))));
 #endif
+	tlbia();
 
 #if defined(PMAPDEBUG)
-	if ( pmapdebug )
+	if (pmapdebug)
 	    pmap_print_mmuregs();
 #endif
+}
+
+/*
+ * This is not part of the defined PMAP interface and is specific to the
+ * PowerPC architecture.  This is called during initppc, before the system
+ * is really initialized.
+ */
+void
+pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
+{
+	pmap_bootstrap1(kernelstart, kernelend);
+	pmap_bootstrap2();
 }

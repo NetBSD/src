@@ -1,4 +1,4 @@
-/* $NetBSD: imx8mq_usbphy.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $ */
+/* $NetBSD: imx8mq_usbphy.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: imx8mq_usbphy.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx8mq_usbphy.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: imx8mq_usbphy.c,v 1.1.2.2 2021/01/03 16:34:52 thorpe
 static int imx8mq_usbphy_match(device_t, cfdata_t, void *);
 static void imx8mq_usbphy_attach(device_t, device_t, void *);
 
-static const struct of_compat_data compat_data[] = {
-	{ "fsl,imx8mq-usb-phy",			0 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx8mq-usb-phy" },
+	DEVICE_COMPAT_EOL
 };
 
 struct imx8mq_usbphy_softc {
@@ -145,7 +145,7 @@ imx8mq_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

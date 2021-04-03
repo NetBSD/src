@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.133.2.1 2020/12/14 14:38:04 thorpej Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.133.2.2 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -58,7 +58,7 @@
 #include <nfs/rpcv2.h>
 
 /*
- * first, define the basic types we need.
+ * first define the basic types we need, and any applicable limits.
  */
 
 typedef int32_t netbsd32_long;
@@ -72,6 +72,9 @@ typedef int32_t netbsd32_clockid_t;
 typedef int32_t netbsd32_key_t;
 typedef int32_t netbsd32_intptr_t;
 typedef uint32_t netbsd32_uintptr_t;
+
+/* Note: 32-bit sparc defines ssize_t as long but still has same size as int. */
+#define	NETBSD32_SSIZE_MAX	INT32_MAX
 
 /* netbsd32_[u]int64 are machine dependent and defined below */
 
@@ -203,6 +206,7 @@ typedef netbsd32_pointer_t netbsd32_semidp_t;
 typedef netbsd32_uint64 netbsd32_dev_t;
 typedef netbsd32_int64 netbsd32_off_t;
 typedef netbsd32_uint64 netbsd32_ino_t;
+typedef netbsd32_int64 netbsd32_blkcnt_t;
 
 /* from <sys/spawn.h> */
 typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
@@ -1070,14 +1074,14 @@ typedef netbsd32_pointer_t netbsd32_nfsdp;
 struct netbsd32_nfsd_srvargs {
 	netbsd32_nfsdp	nsd_nfsd;
 	uid_t		nsd_uid;
-	u_int32_t	nsd_haddr;
+	uint32_t	nsd_haddr;
 	struct uucred	nsd_cr;
 	int		nsd_authlen;
 	netbsd32_u_charp nsd_authstr;
 	int		nsd_verflen;
 	netbsd32_u_charp nsd_verfstr;
 	struct netbsd32_timeval	nsd_timestamp;
-	u_int32_t	nsd_ttl;
+	uint32_t	nsd_ttl;
 	NFSKERBKEY_T	nsd_key;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.27 2020/01/03 03:44:42 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.27.8.1 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.27 2020/01/03 03:44:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.27.8.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,10 @@ static const struct strtc_model m48t84_model = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "st,m41t80",		(uintptr_t)&m41t80_model },
-	{ "st,m41t81",		(uintptr_t)&m41t81_model },
-	{ "st,m41t84",		(uintptr_t)&m48t84_model },
-	{ NULL,			0 },
+	{ .compat = "st,m41t80",	.data = &m41t80_model },
+	{ .compat = "st,m41t81",	.data = &m41t81_model },
+	{ .compat = "st,m41t84",	.data = &m48t84_model },
+	DEVICE_COMPAT_EOL
 };
 
 struct strtc_softc {
@@ -139,7 +139,7 @@ strtc_model_by_number(u_int model)
 		return &m41t80_model;
 	
 	for (dce = compat_data; dce->compat != NULL; dce++) {
-		sm = (void *)dce->data;
+		sm = dce->data;
 		if (sm->sm_model == model)
 			return sm;
 	}
@@ -152,8 +152,8 @@ strtc_model_by_compat(const struct i2c_attach_args *ia)
 	const struct device_compatible_entry *dce;
 	const struct strtc_model *sm = NULL;
 
-	if (iic_compatible_match(ia, compat_data, &dce))
-		sm = (void *)dce->data;
+	if ((dce = iic_compatible_lookup(ia, compat_data)) != NULL)
+		sm = dce->data;
 	
 	return sm;
 }

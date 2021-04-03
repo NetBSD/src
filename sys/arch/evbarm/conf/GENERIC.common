@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.39.2.1 2021/01/03 16:34:53 thorpej Exp $
+#	$NetBSD: GENERIC.common,v 1.39.2.2 2021/04/03 22:28:22 thorpej Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -26,13 +26,15 @@ no file-system 	CODA
 no pseudo-device vcoda
 
 # File system options
-#options 	QUOTA		# legacy UFS quotas
-#options 	QUOTA2		# new, in-filesystem UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_ACL		# UFS Access Control Lists
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 
@@ -44,9 +46,9 @@ options 	IPSEC		# IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # JIT compiler for bpfilter
@@ -67,8 +69,8 @@ options 	NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 include 	"conf/compat_netbsd60.config"
-options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries on arm
-				# or arm binaries on arm64
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+				# on arm or arm binaries on arm64
 
 # Shared memory options
 
@@ -128,6 +130,7 @@ pseudo-device	swcrypto		# software crypto implementation
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss			# file system snapshot device
 pseudo-device	drvctl			# driver control
 pseudo-device	cgd			# cryptographic disk devices

@@ -1,4 +1,4 @@
-/* $NetBSD: octeon_cib.c,v 1.1 2020/07/16 18:39:19 jmcneill Exp $ */
+/* $NetBSD: octeon_cib.c,v 1.1.2.1 2021/04/03 22:28:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_cib.c,v 1.1 2020/07/16 18:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cib.c,v 1.1.2.1 2021/04/03 22:28:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,7 +47,7 @@ static int	octeon_cib_match(device_t, cfdata_t, void *);
 static void	octeon_cib_attach(device_t, device_t, void *);
 
 static void *	octeon_cib_establish(device_t, u_int *, int, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 static void	octeon_cib_disestablish(device_t, void *);
 static bool	octeon_cib_intrstr(device_t, u_int *, char *, size_t);
 
@@ -90,9 +90,9 @@ struct octeon_cib_softc {
 CFATTACH_DECL_NEW(octcib, sizeof(struct octeon_cib_softc),
 	octeon_cib_match, octeon_cib_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "cavium,octeon-7130-cib",		1 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cavium,octeon-7130-cib" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -100,7 +100,7 @@ octeon_cib_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -173,7 +173,7 @@ octeon_cib_attach(device_t parent, device_t self, void *aux)
 
 static void *
 octeon_cib_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct octeon_cib_softc * const sc = device_private(dev);
 	struct octeon_cib_intr *ih;

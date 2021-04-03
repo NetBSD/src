@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.2.2.1 2021/01/03 16:34:51 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.2.2.2 2021/04/03 22:28:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.2.2.1 2021/01/03 16:34:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.2.2.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,13 +52,17 @@ static void bsciic_fdt_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(bsciic_fdt, sizeof(struct bsciic_softc),
     bsciic_fdt_match, bsciic_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 bsciic_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-i2c", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -114,8 +118,8 @@ bsciic_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "failed to decode interrupt\n");
 		return;
 	}
-	sc->sc_inth = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, bsciic_intr, sc);
+	sc->sc_inth = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, bsciic_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_inth == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to establish interrupt %s\n", intrstr);

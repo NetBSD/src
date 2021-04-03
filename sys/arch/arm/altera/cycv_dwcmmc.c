@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_dwcmmc.c,v 1.5 2020/03/20 06:23:51 skrll Exp $ */
+/* $NetBSD: cycv_dwcmmc.c,v 1.5.4.1 2021/04/03 22:28:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.5 2020/03/20 06:23:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.5.4.1 2021/04/03 22:28:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,9 +63,9 @@ struct cycv_dwcmmc_softc {
 CFATTACH_DECL_NEW(cycv_dwcmmc, sizeof(struct dwc_mmc_softc),
 	cycv_dwcmmc_match, cycv_dwcmmc_attach, NULL, NULL);
 
-static const char * const cycv_dwcmmc_compat[] = {
-	"altr,socfpga-dw-mshc",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "altr,socfpga-dw-mshc" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -73,7 +73,7 @@ cycv_dwcmmc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, cycv_dwcmmc_compat);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -157,8 +157,8 @@ cycv_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	if (dwc_mmc_init(sc) != 0)
 		return;
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
-	    dwc_mmc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0,
+	    dwc_mmc_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

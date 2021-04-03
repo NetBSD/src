@@ -1,0 +1,13 @@
+# $NetBSD: MIPSSIM64,v 1.1.4.2 2021/04/03 22:28:23 thorpej Exp $
+#
+include "arch/evbmips/conf/MIPSSIM"
+
+makeoptions	LP64="yes"
+
+no options 	MIPS32
+no options 	MIPS32R2
+
+options 	MIPS64
+options 	MIPS64R2
+options 	EXEC_ELF64
+options 	COMPAT_NETBSD32

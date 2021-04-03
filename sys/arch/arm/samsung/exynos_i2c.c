@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.19.4.1 2021/01/03 16:34:52 thorpej Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.19.4.2 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.19.4.1 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.19.4.2 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,13 +112,17 @@ CFATTACH_DECL_NEW(exynos_i2c, sizeof(struct exynos_i2c_softc),
 
 #define READBIT     (1<<7)
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,s3c2440-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 exynos_i2c_match(device_t self, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,s3c2440-i2c", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -155,8 +159,8 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, exynos_i2c_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, exynos_i2c_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

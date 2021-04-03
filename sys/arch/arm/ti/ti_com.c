@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.9 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: ti_com.c,v 1.9.2.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.9 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.9.2.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,10 +47,10 @@ __KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.9 2020/09/28 11:54:23 jmcneill Exp $");
 static int ti_com_match(device_t, cfdata_t, void *);
 static void ti_com_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"ti,am3352-uart",
-	"ti,omap3-uart",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am3352-uart" },
+	{ .compat = "ti,omap3-uart" },
+	DEVICE_COMPAT_EOL
 };
 
 struct ti_com_softc {
@@ -66,7 +66,7 @@ ti_com_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -118,8 +118,8 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ssc->ssc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, comintr, sc);
+	ssc->ssc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, comintr, sc, device_xname(self));
 	if (ssc->ssc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -134,7 +134,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 static int
 ti_com_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

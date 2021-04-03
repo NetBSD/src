@@ -1,4 +1,4 @@
-/* $NetBSD: meson_resets.c,v 1.2.14.1 2021/01/03 16:34:50 thorpej Exp $ */
+/* $NetBSD: meson_resets.c,v 1.2.14.2 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_resets.c,v 1.2.14.1 2021/01/03 16:34:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_resets.c,v 1.2.14.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,11 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: meson_resets.c,v 1.2.14.1 2021/01/03 16:34:50 thorpe
 
 #define	LEVEL_OFFSET		0x7c
 
-static const char * compatible[] = {
-	"amlogic,meson8b-reset",
-	"amlogic,meson-axg-reset",
-	"amlogic,meson-gxbb-reset",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-reset" },
+	{ .compat = "amlogic,meson-axg-reset" },
+	{ .compat = "amlogic,meson-gxbb-reset" },
+	DEVICE_COMPAT_EOL 
 };
 
 struct meson_resets_softc {
@@ -118,7 +118,7 @@ meson_resets_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

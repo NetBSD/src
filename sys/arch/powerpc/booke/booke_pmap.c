@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.29.2.1 2021/01/03 16:34:55 thorpej Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.29.2.2 2021/04/03 22:28:34 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.29.2.1 2021/01/03 16:34:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.29.2.2 2021/04/03 22:28:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -62,7 +62,7 @@ void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
 	struct pmap * const pmap = p->p_vmspace->vm_map.pmap;
-	vsize_t off = va & PAGE_SIZE;
+	vsize_t off = va & PAGE_MASK;
 
 	kpreempt_disable();
 	for (const vaddr_t eva = va + len; va < eva; off = 0) {
@@ -78,8 +78,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 			continue;
 		}
 		kpreempt_enable();
-		dcache_wb(pte_to_paddr(pt_entry), segeva - va);
-		icache_inv(pte_to_paddr(pt_entry), segeva - va);
+		dcache_wb(pte_to_paddr(pt_entry) + off, segeva - va);
+		icache_inv(pte_to_paddr(pt_entry) + off, segeva - va);
 		kpreempt_disable();
 		va = segeva;
 	}
@@ -205,6 +205,9 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 		pmap_limits.virtual_end = VM_MIN_KERNEL_ADDRESS
 		    + kv_nsegtabs * NBSEG;
 	}
+
+	/* update the top of the kernel VM - pmap_growkernel not required */
+	pmap_curmaxkvaddr = pmap_limits.virtual_end;
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done

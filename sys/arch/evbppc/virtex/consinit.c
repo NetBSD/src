@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2011/07/01 19:03:50 dyoung Exp $ */
+/*	$NetBSD: consinit.c,v 1.3.66.1 2021/04/03 22:28:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -33,7 +33,7 @@
 #include "xlcom.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2011/07/01 19:03:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3.66.1 2021/04/03 22:28:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ void 			xlcom_kgdbinit(void);
 #endif
 #endif
 
-struct consdev 		*cn_tab = NULL;
 bus_space_tag_t 	consdev_iot;
 bus_space_handle_t 	consdev_ioh;
 

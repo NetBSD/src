@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.20 2020/07/07 02:33:54 rin Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.20.2.1 2021/04/03 22:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -51,7 +51,6 @@ struct confargs {
 };
 
 /* there are in locore.S */
-void ofbcopy(const void *, void *, size_t);
 int badaddr(volatile void *, int);
 
 /* these are in clock.c */
@@ -63,7 +62,6 @@ void identifycpu(char *);
 
 /* these are in machdep.c */
 void initppc(u_int, u_int, char *);
-void model_init(void);
 paddr_t kvtop(void *);
 void dumpsys(void);
 void copy_disp_props(device_t, int, prop_dictionary_t);

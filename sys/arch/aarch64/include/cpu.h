@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.28.2.1 2020/12/14 14:37:44 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.28.2.2 2021/04/03 22:28:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -100,7 +100,8 @@ struct cpu_info {
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
 
-	int ci_cpl;
+	int ci_cpl;		/* current processor level (spl) */
+	int ci_hwpl;		/* current hardware priority */
 	volatile u_int ci_softints;
 	volatile u_int ci_intr_depth;
 
@@ -174,17 +175,28 @@ extern struct cpu_info cpu_info_store[];
 
 #define	LWP0_CPU_INFO	(&cpu_info_store[0])
 
+#define	__HAVE_CPU_DOSOFTINTS_CI
+
+static inline void
+cpu_dosoftints_ci(struct cpu_info *ci)
+{
+#if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
+	void dosoftints(void);
+
+	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0) {
+		dosoftints();
+	}
+#endif
+}
+
 static inline void
 cpu_dosoftints(void)
 {
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
-	void dosoftints(void);
-	struct cpu_info * const ci = curcpu();
-
-	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0)
-		dosoftints();
+	cpu_dosoftints_ci(curcpu());
 #endif
 }
+
 
 #endif /* _KERNEL */
 

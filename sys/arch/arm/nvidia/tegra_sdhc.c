@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.27 2020/09/14 07:27:19 skrll Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.27.2.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.27 2020/09/14 07:27:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.27.2.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,17 +78,18 @@ struct tegra_sdhc_softc {
 CFATTACH_DECL_NEW(tegra_sdhc, sizeof(struct tegra_sdhc_softc),
 	tegra_sdhc_match, tegra_sdhc_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-sdhci" },
+	{ .compat = "nvidia,tegra124-sdhci" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-sdhci",
-		"nvidia,tegra124-sdhci",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -228,8 +229,8 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SDMMC, 0,
-	    sdhc_intr, &sc->sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_SDMMC,
+	    0, sdhc_intr, &sc->sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.39.2.1 2021/01/03 16:34:58 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.39.2.2 2021/04/03 22:28:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #ifndef _OPENFIRM_H_
 #define _OPENFIRM_H_
 
+#include <sys/device.h>
 #include <prop/proplib.h>
 
 /*
@@ -63,11 +64,6 @@ struct ofbus_attach_args {
 	 * See also ofdisk.c.
 	 */
 	int		oba_unit;
-};
-
-struct of_compat_data {
-	const char *compat;
-	uintptr_t data;
 };
 
 /*
@@ -108,26 +104,35 @@ int	openfirmware(void *);
 /*
  * Functions and variables provided by machine-independent code.
  */
+#ifdef _KERNEL
+struct device_compatible_entry;
+
+devhandle_t	devhandle_from_of(int);
+int		devhandle_to_of(devhandle_t);
+
+#define	OF_DEVICE_CALL_REGISTER(_n_, _c_)				\
+	DEVICE_CALL_REGISTER(of_device_calls, _n_, _c_)
+
 int	of_compatible(int, const char * const *);
-int	of_match_compatible(int, const char * const *);
-int	of_match_compat_data(int, const struct of_compat_data *);
-const struct of_compat_data *
-	of_search_compatible(int, const struct of_compat_data *);
+int	of_compatible_match(int, const struct device_compatible_entry *);
+const struct device_compatible_entry *
+	of_compatible_lookup(int, const struct device_compatible_entry *);
 int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
 int	of_find_firstchild_byname(int, const char *);
 int	of_find_bycompat(int, const char *);
 int	of_getnode_byname(int, const char *);
-boolean_t	of_to_uint32_prop(prop_dictionary_t, int, const char *,
-    const char *);
-boolean_t	of_to_dataprop(prop_dictionary_t, int, const char *,
-    const char *);
+bool	of_to_uint32_prop(prop_dictionary_t, int, const char *, const char *);
+bool	of_to_dataprop(prop_dictionary_t, int, const char *, const char *);
+void	of_device_register(device_t, int);
+device_t of_device_from_phandle(int);
 
 int	*of_network_decode_media(int, int *, int *);
 char	*of_get_mode_string(char *, int);
 
 void	of_enter_i2c_devs(prop_dictionary_t, int, size_t, int);
 void	of_enter_spi_devs(prop_dictionary_t, int, size_t);
+#endif /* _KERNEL */
 
 bool	of_hasprop(int, const char *);
 #define of_getprop_bool	of_hasprop

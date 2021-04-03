@@ -1,4 +1,4 @@
-/* $NetBSD: pinctrl_single.c,v 1.1 2019/10/27 15:31:15 jmcneill Exp $ */
+/* $NetBSD: pinctrl_single.c,v 1.1.12.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.1 2019/10/27 15:31:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.1.12.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,10 +50,10 @@ static const struct pinctrl_single_config pinconf_config = {
 	.flags = PINCTRL_FLAG_PINCONF
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "pinctrl-single",		(uintptr_t)&pinctrl_config },
-	{ "pinconf-single",		(uintptr_t)&pinconf_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pinctrl-single",	.data = &pinctrl_config },
+	{ .compat = "pinconf-single",	.data = &pinconf_config },
+	DEVICE_COMPAT_EOL
 };
 
 struct pinctrl_single_softc {
@@ -140,7 +140,7 @@ pinctrl_single_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -159,7 +159,7 @@ pinctrl_single_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	conf = (const void *)of_search_compatible(phandle, compat_data)->data;
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;

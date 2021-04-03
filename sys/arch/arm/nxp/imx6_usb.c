@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -73,10 +73,10 @@ static void *imx6_usb_intr_establish(struct imxehci_softc *);
 CFATTACH_DECL_NEW(imxusbc_fdt, sizeof(struct imxusbc_fdt_softc),
     imx6_usb_match, imx6_usb_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"fsl,imx6q-usb",
-	"fsl,imx7d-usb",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-usb" },
+	{ .compat = "fsl,imx7d-usb" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -84,7 +84,7 @@ imx6_usb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -176,7 +176,7 @@ imxusbc_print(void *aux, const char *name __unused)
 
 	iaa = (struct imxusbc_attach_args *)aux;
 
-	aprint_normal(" unit %d intr %d", iaa->aa_unit, iaa->aa_irq);
+	aprint_normal(" unit %d", iaa->aa_unit);
 	return UNCONF;
 }
 
@@ -266,8 +266,8 @@ imx6_usb_intr_establish(struct imxehci_softc *sc)
 		aprint_error_dev(sc->sc_dev, "failed to decode interrupt\n");
 		return NULL;
 	}
-	ih = fdtbus_intr_establish(ifsc->sc_phandle, 0, IPL_USB,
-	    FDT_INTR_MPSAFE, ehci_intr, hsc);
+	ih = fdtbus_intr_establish_xname(ifsc->sc_phandle, 0, IPL_USB,
+	    FDT_INTR_MPSAFE, ehci_intr, hsc, device_xname(sc->sc_dev));
 	if (ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "failed to establish interrupt on %s\n",
 		    intrstr);

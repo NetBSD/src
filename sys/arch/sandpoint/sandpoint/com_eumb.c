@@ -1,4 +1,4 @@
-/* $NetBSD: com_eumb.c,v 1.10 2019/04/07 15:44:44 jdc Exp $ */
+/* $NetBSD: com_eumb.c,v 1.10.12.1 2021/04/03 22:28:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.10 2019/04/07 15:44:44 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.10.12.1 2021/04/03 22:28:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,9 +99,23 @@ com_eumb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_frequency = 4 * ticks_per_sec;
 	epicirq = (eaa->eumb_unit == 1) ? 25 : 24;
 
+	/*
+	 * XXX
+	 * At least KuroBox Classic and HG seem to have a hardware bug, by
+	 * which ETXRDY interrupt is sometimes, say, once per few hours,
+	 * lost; output stalls until next input arrives. In order to work
+	 * around this problem, push TX queue manually by low-rate.
+	 */
+#define	COM_EUMB_FLAG_BROKEN_ETXRDY	__BIT(0)
+	if (device_cfdata(self)->cf_flags & COM_EUMB_FLAG_BROKEN_ETXRDY) {
+		SET(sc->sc_hwflags, COM_HW_BROKEN_ETXRDY);
+		sc->sc_poll_ticks = 10 * hz;	/* once per 10 sec */
+	}
+
 	com_attach_subr(sc);
 
-	intr_establish(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL, comintr, sc);
+	intr_establish_xname(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL,
+	    comintr, sc, device_xname(self));
 	aprint_normal_dev(self, "interrupting at irq %d\n",
 	    epicirq + I8259_ICU);
 }

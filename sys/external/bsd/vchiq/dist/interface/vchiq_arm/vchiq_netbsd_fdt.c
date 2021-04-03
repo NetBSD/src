@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_fdt.c,v 1.1.10.1 2020/12/14 14:38:13 thorpej Exp $ */
+/* $NetBSD: vchiq_netbsd_fdt.c,v 1.1.10.2 2021/04/03 22:28:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.1.10.1 2020/12/14 14:38:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.1.10.2 2021/04/03 22:28:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,13 +65,17 @@ int vchiq_init(void);
 CFATTACH_DECL_NEW(vchiq_fdt, sizeof(struct vchiq_fdt_softc),
     vchiq_fdt_match, vchiq_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2835-vchiq" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 vchiq_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-vchiq", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -130,8 +134,8 @@ vchiq_fdt_defer(device_t self)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    vchiq_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, vchiq_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",
 		    intrstr);

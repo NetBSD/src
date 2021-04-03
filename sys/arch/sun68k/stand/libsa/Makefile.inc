@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.6 2020/04/22 11:28:56 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.6.2.1 2021/04/03 22:28:40 thorpej Exp $
 
 S!=	cd ${SA_EXTRADIR}/../../../..; pwd
 
 .PATH.c: ${SA_EXTRADIR}
 
-# prefered local sources: gets.c panic.c
+# preferred local sources: gets.c panic.c
 
 SRCS+=	clock.c dev_disk.c devopen.c \
 	idprom.c netif_sun.c \

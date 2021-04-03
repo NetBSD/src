@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.54 2020/07/06 09:34:18 rin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.54.2.1 2021/04/03 22:28:35 thorpej Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54.2.1 2021/04/03 22:28:35 thorpej Exp $");
 
 #define USERACC
 
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2020/07/06 09:34:18 rin Exp $"
 #ifdef PPC_IBM4XX
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <machine/tlb.h>
+#include <powerpc/ibm4xx/tlb.h>
 #include <uvm/uvm_extern.h>
 #endif
 
@@ -156,8 +156,7 @@ const struct db_command db_machine_command_table[] = {
 	  "switch to another cpu", "cpu-no", NULL) },
 #endif	/* MULTIPROCESSOR */
 
-	{ DDB_ADD_CMD(NULL,	NULL,			0,
-	  NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 
 void

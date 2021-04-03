@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.18 2018/05/01 07:03:33 maxv Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.18.14.1 2021/04/03 22:29:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,7 +47,7 @@ struct	tcp_debug {
 	struct {
 		struct ip ip4;
 		struct tcphdr th;
-	} __packed td_ti;
+	} __packed td_ti; /* XXX is __packed needed here? */
 	struct {
 #ifdef INET6
 		struct ip6_hdr ip6;
@@ -60,7 +60,7 @@ struct	tcp_debug {
 	struct	tcpcb td_cb;
 };
 
-#define	TA_INPUT 	0
+#define	TA_INPUT	0
 #define	TA_OUTPUT	1
 #define	TA_USER		2
 #define	TA_RESPOND	3

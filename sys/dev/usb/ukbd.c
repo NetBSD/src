@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.147 2020/09/12 18:10:37 macallan Exp $        */
+/*      $NetBSD: ukbd.c,v 1.147.2.1 2021/04/03 22:28:50 thorpej Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.147 2020/09/12 18:10:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.147.2.1 2021/04/03 22:28:50 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -435,7 +435,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 		sc->sc_flags = FLAG_GDIUM_FN;
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef USBVERBOSE
 	aprint_normal(": %d Variable keys, %d Array codes", sc->sc_nkeyloc,
 	       sc->sc_nkeycode);
 	if (sc->sc_flags & FLAG_APPLE_FN)
@@ -555,17 +555,6 @@ ukbd_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	if (sc->sc_console_keyboard) {
-#if 0
-		/*
-		 * XXX Should probably disconnect our consops,
-		 * XXX and either notify some other keyboard that
-		 * XXX it can now be the console, or if there aren't
-		 * XXX any more USB keyboards, set ukbd_is_console
-		 * XXX back to 1 so that the next USB keyboard attached
-		 * XXX to the system will get it.
-		 */
-		panic("ukbd_detach: console keyboard");
-#else
 		/*
 		 * Disconnect our consops and set ukbd_is_console
 		 * back to 1 so that the next USB keyboard attached
@@ -577,7 +566,6 @@ ukbd_detach(device_t self, int flags)
 		       device_xname(sc->sc_hdev.sc_dev));
 		wskbd_cndetach();
 		ukbd_is_console = 1;
-#endif
 	}
 	/* No need to do reference counting of ukbd, wskbd has all the goo. */
 	if (sc->sc_wskbddev != NULL)

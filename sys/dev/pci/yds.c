@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.65 2020/02/29 05:51:11 isaki Exp $	*/
+/*	$NetBSD: yds.c,v 1.65.6.1 2021/04/03 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.65 2020/02/29 05:51:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.65.6.1 2021/04/03 22:28:49 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -725,7 +725,6 @@ yds_resume(device_t dv, const pmf_qual_t *qual)
 
 	pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
 	sc->sc_enabled = 1;
-	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
 	mutex_exit(&sc->sc_lock);
 

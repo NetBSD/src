@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.74 2019/10/11 21:56:55 macallan Exp $	*/
+/*	$NetBSD: locore.S,v 1.74.8.1 2021/04/03 22:28:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,8 +62,6 @@
 	.data
 GLOBAL(esym)
 	.long	0			/* end of symbol table */
-GLOBAL(oeacpufeat)
-	.long	0			/* cpu features */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -77,74 +75,81 @@ _C_LABEL(kernel_text):
 /*
  * Startup entry.  Note, this must be the first thing in the text
  * segment!
+ *
+ * Register state as transfer is passed from OpenFirmware / boot loader:
+ *
+ *	%r1	Stack provided by OpenFirmware / boot loader
+ *	%r3	Reserved for platform binding (unused here)
+ *	%r4	Reserved for platform binding (unused here)
+ *	%r5	OpenFirmware client entry point
+ *	%r6	Arguments
+ *	%r7	Arguments length
  */
 	.text
 	.globl	__start
 __start:
-	bl	_C_LABEL(ofwinit)		/* init OF */
-	mr	13,6
-	mr	14,7
-	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
+	/* Save off arguments that we need preserved. */
+	mr	%r13,%r6
+	mr	%r14,%r7
 
-	li	0,0
+	bl	_C_LABEL(ofwinit)		/* init OF */
+
+	li	%r0,0
 #ifndef FIRMWORKSBUGS
-	mtmsr	0			/* Disable FPU/MMU/exceptions */
+	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
 #endif
-#if defined(PMAP_OEA64_BRIDGE)
-	mfmsr	0			/* Clear SF and ISF bits */
-	clrldi	0,0,3
-	mtmsrd	0
-#endif /* PMAP_OEA64_BRIDGE */
 	isync
 
+	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
+
 /* compute end of kernel memory */
-	lis	4,_C_LABEL(end)@ha
-	addi	4,4,_C_LABEL(end)@l
+	lis	%r4,_C_LABEL(end)@ha
+	addi	%r4,%r4,_C_LABEL(end)@l
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* skip symbol table */
-	mr	6,13
-	mr	7,14
-	cmpwi	6,0
+	mr	%r6,%r13
+	mr	%r7,%r14
+	cmpwi	%r6,0
 	beq	1f
-	add	9,6,7			/* r9 = args + l */
-	lwz	9,-8(9)			/* esym */
-	cmpwi	9,0
+	add	%r9,%r6,%r7		/* r9 = args + l */
+	lwz	%r9,-8(%r9)		/* esym */
+	cmpwi	%r9,0
 	beq	1f
-	mr	4,9
+	mr	%r4,%r9
 1:
 #endif
 
 #if defined (PMAC_G5) || defined (MAMBO)
 	 /* and clear HID5 DCBZ bits (56/57), need to do this early */
-	mfspr	11,SPR_HID5
-	rldimi	11,0,6,56
+	mfspr	%r11,SPR_HID5
+	rldimi	%r11,%r0,6,56
 	sync
-	mtspr	SPR_HID5,11
+	mtspr	SPR_HID5,%r11
 	isync
 	sync
 
 	/* Setup HID1 features, prefetch + i-cacheability controlled by PTE */
-	mfspr	0,SPR_HID1
-	li	11,0x1200
-	sldi	11,11,44
-	or	0,0,11
-	mtspr	SPR_HID1,0
+	mfspr	%r0,SPR_HID1
+	li	%r11,0x1200
+	sldi	%r11,%r11,44
+	or	%r0,%r0,%r11
+	mtspr	SPR_HID1,%r0
 	isync
 	sync
 
 	/* Restore r0 */
-	li	0,0
+	li	%r0,0
 #endif /* PMAC_G5 */
 
 
 	/*
 	 * Initialize cpu_info[0]
 	 */
-	INIT_CPUINFO(4,1,9,0)
+	INIT_CPUINFO(%r4,%r1,%r9,%r0)
 
-	lis	3,__start@ha
-	addi	3,3,__start@l
-	mr	5,6			/* args string */
+	lis	%r3,__start@ha
+	addi	%r3,%r3,__start@l
+	mr	%r5,%r6			/* args string */
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 	b	_C_LABEL(OF_exit)
@@ -154,17 +159,17 @@ __start:
 	.text
 	.globl _C_LABEL(mfhid4)
 _C_LABEL(mfhid4):
-	mfspr	4, SPR_HID4 
-	std	4, 0(3)
+	mfspr	%r4, SPR_HID4 
+	std	%r4, 0(%r3)
 	blr
 
 /* Set all 64 bits of HID4 */
 	.text
 	.globl _C_LABEL(mthid4)
 _C_LABEL(mthid4):
-	ld 4, 0(3)
+	ld %r4, 0(%r3)
 	sync
-	mtspr SPR_HID4, 4 
+	mtspr SPR_HID4, %r4 
 	isync 
 	isync
 	blr
@@ -172,11 +177,11 @@ _C_LABEL(mthid4):
 	.text
 	.globl _C_LABEL(change_hid4)
 _C_LABEL(change_hid4):
-	mfspr 6, SPR_HID4
-	rldicl 5, 6, 32, 0 
-	ori 5, 5, 0x100
-	rldicl 5, 5, 32, 0 
-	std 5, 0(3)
+	mfspr %r6, SPR_HID4
+	rldicl %r5, %r6, 32, 0 
+	ori %r5, %r5, 0x100
+	rldicl %r5, %r5, 32, 0 
+	std %r5, 0(%r3)
 	blr
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.3.2.1 2020/12/14 14:38:05 thorpej Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.3.2.2 2021/04/03 22:28:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.3.2.1 2020/12/14 14:38:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.3.2.2 2021/04/03 22:28:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,9 +63,9 @@ CFATTACH_DECL3_NEW(virtio_acpi, sizeof(struct virtio_acpi_softc),
     virtio_acpi_match, virtio_acpi_attach, virtio_acpi_detach, NULL,
     virtio_acpi_rescan, (void *)voidop, DVF_DETACH_SHUTDOWN);
 
-static const char * const compatible[] = {
-	"LNRO0005",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "LNRO0005" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -73,10 +73,7 @@ virtio_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
@@ -163,7 +160,10 @@ virtio_acpi_rescan(device_t self, const char *ifattr, const int *locs)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found_ia(self, ifattr, &va, virtiobusprint);
+	config_found_ia(self, ifattr, &va, NULL);
+
+	if (virtio_attach_failed(vsc))
+		return 0;
 
 	return 0;
 }

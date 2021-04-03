@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.62 2020/09/26 08:19:11 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.62.2.1 2021/04/03 22:28:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,10 @@
 #include <sys/cdefs.h>		/* for API selection */
 #include <mips/regdef.h>
 
+#if defined(_KERNEL_OPT)
+#include "opt_gprof.h"
+#endif
+
 #define	__BIT(n)	(1 << (n))
 #define	__BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
 
@@ -66,27 +70,65 @@
 
 /*
  * Define -pg profile entry code.
- * Must always be noreorder, must never use a macro instruction
- * Final addiu to t9 must always equal the size of this _KERN_MCOUNT
+ * Must always be noreorder, must never use a macro instruction.
  */
-#define	_KERN_MCOUNT						\
+#if defined(__mips_o32)		/* Old 32-bit ABI */
+/*
+ * The old ABI version must also decrement two less words off the
+ * stack and the final addiu to t9 must always equal the size of this
+ * _MIPS_ASM_MCOUNT.
+ */
+#define	_MIPS_ASM_MCOUNT					\
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
-	subu	sp,sp,16;					\
+	subu	sp,16;						\
 	sw	t9,12(sp);					\
 	move	AT,ra;						\
 	lui	t9,%hi(_mcount); 				\
 	addiu	t9,t9,%lo(_mcount);				\
 	jalr	t9;						\
-	nop;							\
+	 nop;							\
 	lw	t9,4(sp);					\
-	addiu	sp,sp,8;					\
-	addiu	t9,t9,40;					\
+	addiu	sp,8;						\
+	addiu	t9,40;						\
 	.set	pop;
+#elif defined(__mips_o64)	/* Old 64-bit ABI */
+# error yeahnah
+#else				/* New (n32/n64) ABI */
+/*
+ * The new ABI version just needs to put the return address in AT and
+ * call _mcount().  For the no abicalls case, skip the reloc dance.
+ */
+#ifdef __mips_abicalls
+#define	_MIPS_ASM_MCOUNT					\
+	.set	push;						\
+	.set	noreorder;					\
+	.set	noat;						\
+	subu	sp,16;						\
+	sw	t9,8(sp);					\
+	move	AT,ra;						\
+	lui	t9,%hi(_mcount); 				\
+	addiu	t9,t9,%lo(_mcount);				\
+	jalr	t9;						\
+	 nop;							\
+	lw	t9,8(sp);					\
+	addiu	sp,16;						\
+	.set	pop;
+#else /* !__mips_abicalls */
+#define	_MIPS_ASM_MCOUNT					\
+	.set	push;						\
+	.set	noreorder;					\
+	.set	noat;						\
+	move	AT,ra;						\
+	jal	_mcount;					\
+	 nop;							\
+	.set	pop;
+#endif /* !__mips_abicalls */
+#endif /* n32/n64 */
 
 #ifdef GPROF
-#define	MCOUNT _KERN_MCOUNT
+#define	MCOUNT _MIPS_ASM_MCOUNT
 #else
 #define	MCOUNT
 #endif
@@ -619,7 +661,7 @@ _C_LABEL(x):
 #define	SETUP_GPX(r)		/* o32 specific */
 #define	SETUP_GPX_L(r,lbl)	/* o32 specific */
 #define	SAVE_GP(x)		/* o32 specific */
-#define	SETUP_GP64(a,b)		.cpsetup $25, a, b
+#define	SETUP_GP64(a,b)		.cpsetup t9, a, b
 #define	SETUP_GPX64(a,b)	\
 				.set push;			\
 				move	b,ra;			\

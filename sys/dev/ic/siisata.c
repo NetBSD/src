@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.43.2.1 2021/01/03 16:34:58 thorpej Exp $ */
+/* $NetBSD: siisata.c,v 1.43.2.2 2021/04/03 22:28:45 thorpej Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.43.2.1 2021/01/03 16:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.43.2.2 2021/04/03 22:28:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -561,7 +561,7 @@ siisata_intr_port(struct siisata_channel *schp)
 			 * We don't expect the recovery to trigger error,
 			 * but handle this just in case.
 			 */
-			if (!ISSET(chp->ch_flags, ATACH_RECOVERING)) 
+			if (!ISSET(chp->ch_flags, ATACH_RECOVERING))
 				recover = true;
 			else {
 				aprint_error_dev(sc->sc_atac.atac_dev,
@@ -604,7 +604,7 @@ process:
 		 */
 		uint32_t aslots = ata_queue_active(chp);
 
-		for (int slot=0; slot < SIISATA_MAX_SLOTS; slot++) {
+		for (int slot = 0; slot < SIISATA_MAX_SLOTS; slot++) {
 			if ((aslots & __BIT(slot)) != 0 &&
 			    (pss & PR_PXSS(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
@@ -841,7 +841,7 @@ siisata_probe_drive(struct ata_channel *chp)
 		}
 		if (timed_out) {
 			aprint_error_dev(sc->sc_atac.atac_dev,
-			    "timed out waiting for PORT_READY on port %d, " 
+			    "timed out waiting for PORT_READY on port %d, "
 			    "reinitializing\n", chp->ch_channel);
 			if (siisata_reinit_port(chp, -1))
 				siisata_reset_channel(chp, AT_WAIT);

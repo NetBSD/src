@@ -1,4 +1,4 @@
-/* $NetBSD: idle_machdep.S,v 1.6 2020/08/12 13:19:35 skrll Exp $ */
+/* $NetBSD: idle_machdep.S,v 1.6.2.1 2021/04/03 22:28:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,13 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_intr_impl.h"
+#include "opt_ddb.h"
+#include "opt_gprof.h"
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
 #include "assym.h"
-#include "opt_arm_intr_impl.h"
-#include "opt_ddb.h"
 
-RCSID("$NetBSD: idle_machdep.S,v 1.6 2020/08/12 13:19:35 skrll Exp $");
+RCSID("$NetBSD: idle_machdep.S,v 1.6.2.1 2021/04/03 22:28:13 thorpej Exp $");
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -74,27 +75,34 @@ ENTRY(cpu_idle)
 	adr	x0, 1f
 	str	x0, [sp, #TF_PC]		/* CLKF_PC refer to tf_pc */
 
+	/*
+	 * "idle/N" lwp is allocated on a per-CPU basis,
+	 * curcpu() always return the same, and there is no need to
+	 * consider KPREEMPT. safe even with interrupt enabled.
+	 */
 	mrs	x1, tpidr_el1			/* get curlwp */
-	ldr	x1, [x1, #L_CPU]		/* get curcpu */
-	ldr	w28, [x1, #CI_INTR_DEPTH]	/* w28 = ci->ci_intr_depth */
-	add	w2, w28, #1			/* w2 = intr_depth + 1 */
+	ldr	x28, [x1, #L_CPU]		/* get curcpu */
 
+	mov	w2, #1
 	mov	x0, sp				/* get pointer to trapframe */
 
 	DISABLE_INTERRUPT
-	wfi
+	/*
+	 * assert(ci->ci_intr_depth == 0),
+	 * therefore, ci->ci_intr_depth++ would be definitely 1.
+	 */
+	str	w2, [x28, #CI_INTR_DEPTH]	/* ci->ci_intr_depth = 1 */
 
-	str	w2, [x1, #CI_INTR_DEPTH]	/* ci->ci_intr_depth++ */
+	wfi
 	bl	ARM_IRQ_HANDLER			/* irqhandler(trapframe) */
 1:
-	mrs	x1, tpidr_el1			/* get curlwp */
-	ldr	x1, [x1, #L_CPU]		/* get curcpu */
-	str	w28, [x1, #CI_INTR_DEPTH]	/* ci->ci_intr_depth = old */
+	/* x28 is curcpu() */
+	str	wzr, [x28, #CI_INTR_DEPTH]	/* ci->ci_intr_depth = 0 */
 
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
-	ldr	w3, [x1, #CI_SOFTINTS]		/* Get pending softint mask */
+	ldr	w3, [x28, #CI_SOFTINTS]		/* Get pending softint mask */
 	/* CPL should be 0 */
-	ldr	w2, [x1, #CI_CPL]		/* Get current priority level */
+	ldr	w2, [x28, #CI_CPL]		/* Get current priority level */
 	lsr	w3, w3, w2			/* shift mask by cpl */
 	cbz	w3, 1f
 	bl	_C_LABEL(dosoftints)		/* dosoftints() */

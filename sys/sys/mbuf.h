@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.227 2020/04/06 09:32:54 jdolecek Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.227.4.1 2021/04/03 22:29:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -841,6 +841,24 @@ m_copy_rcvif(struct mbuf *m, const struct mbuf *n)
 	KASSERT(m->m_flags & M_PKTHDR);
 	KASSERT(n->m_flags & M_PKTHDR);
 	m->m_pkthdr.rcvif_index = n->m_pkthdr.rcvif_index;
+}
+
+#define M_GET_ALIGNED_HDR(m, type, linkhdr) \
+    m_get_aligned_hdr((m), __alignof(type) - 1, sizeof(type), (linkhdr))
+
+static __inline int
+m_get_aligned_hdr(struct mbuf **m, int mask, size_t hlen, bool linkhdr)
+{
+#ifndef __NO_STRICT_ALIGNMENT
+	if (((uintptr_t)mtod(*m, void *) & mask) != 0)
+		*m = m_copyup(*m, hlen, 
+		      linkhdr ? (max_linkhdr + mask) & ~mask : 0);
+	else
+#endif
+	if (__predict_false((size_t)(*m)->m_len < hlen))
+		*m = m_pullup(*m, hlen);
+
+	return *m == NULL;
 }
 
 void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)

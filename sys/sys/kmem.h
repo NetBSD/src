@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.11 2018/01/09 01:53:55 christos Exp $	*/
+/*	$NetBSD: kmem.h,v 1.11.16.1 2021/04/03 22:29:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -50,6 +50,9 @@ char *	kmem_strdupsize(const char *, size_t *, km_flag_t);
 #define kmem_strdup(s, f)	kmem_strdupsize((s), NULL, (f))
 char *	kmem_strndup(const char *, size_t, km_flag_t);
 void	kmem_strfree(char *);
+
+void *	kmem_tmpbuf_alloc(size_t, void *, size_t, km_flag_t);
+void	kmem_tmpbuf_free(void *, size_t, void *);
 
 /*
  * km_flag_t values:

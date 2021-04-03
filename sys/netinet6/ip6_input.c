@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.222 2020/08/28 06:32:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.222.2.1 2021/04/03 22:29:02 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.222 2020/08/28 06:32:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.222.2.1 2021/04/03 22:29:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -301,20 +301,11 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * it.  Otherwise, if it is aligned, make sure the entire base
 	 * IPv6 header is in the first mbuf of the chain.
 	 */
-	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
-		    (max_linkhdr + 3) & ~3)) == NULL) {
-			/* XXXJRT new stat, please */
-			IP6_STATINC(IP6_STAT_TOOSMALL);
-			in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
-			return;
-		}
-	} else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
-		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-			IP6_STATINC(IP6_STAT_TOOSMALL);
-			in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
-			return;
-		}
+	if (M_GET_ALIGNED_HDR(&m, struct ip6_hdr, true) != 0) {
+		/* XXXJRT new stat, please */
+		IP6_STATINC(IP6_STAT_TOOSMALL);
+		in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
+		return;
 	}
 
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -611,7 +602,7 @@ hbhcheck:
 			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
-		KASSERT(IP6_HDR_ALIGNED_P(hbh));
+		KASSERT(ACCESSIBLE_POINTER(hbh, struct ip6_hdr));
 		nxt = hbh->ip6h_nxt;
 
 		/*
@@ -884,7 +875,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
 		IP6_STATINC(IP6_STAT_TOOSHORT);
 		return -1;
 	}
-	KASSERT(IP6_HDR_ALIGNED_P(hbh));
+	KASSERT(ACCESSIBLE_POINTER(hbh, struct ip6_hdr));
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
 
@@ -1224,7 +1215,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 				IP6_STATINC(IP6_STAT_TOOSHORT);
 				return;
 			}
-			KASSERT(IP6_HDR_ALIGNED_P(ip6e));
+			KASSERT(ACCESSIBLE_POINTER(ip6e, struct ip6_hdr));
 
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:

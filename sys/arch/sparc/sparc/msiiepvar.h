@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepvar.h,v 1.9 2013/04/16 06:57:06 jdc Exp $ */
+/*	$NetBSD: msiiepvar.h,v 1.9.48.1 2021/04/03 22:28:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -63,5 +63,8 @@ struct mspcic_pci_map {
 
 #define IOMAP_SIZE 2
 #define MEMMAP_SIZE 3
+
+extern struct mspcic_pci_map mspcic_pci_iomap[];
+extern struct mspcic_pci_map mspcic_pci_memmap[];
 
 #endif /* _SPARC_MSIIEP_VAR_H_ */

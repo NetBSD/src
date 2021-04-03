@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.18 2020/06/14 16:29:47 ad Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.18.2.1 2021/04/03 22:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.18 2020/06/14 16:29:47 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.18.2.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -318,9 +318,9 @@ sun8i_crypto_write(struct sun8i_crypto_softc *sc, bus_size_t reg, uint32_t v)
 CFATTACH_DECL_NEW(sun8i_crypto, sizeof(struct sun8i_crypto_softc),
     sun8i_crypto_match, sun8i_crypto_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun50i-a64-crypto", 0},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun50i-a64-crypto" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -328,7 +328,7 @@ sun8i_crypto_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -416,8 +416,8 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_ISR, 0);
 
 	/* Establish an interrupt handler.  */
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    &sun8i_crypto_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, &sun8i_crypto_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

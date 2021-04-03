@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.5 2019/12/23 19:22:46 thorpej Exp $ */
+/* $NetBSD: fan53555.c,v 1.5.8.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.5 2019/12/23 19:22:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.5.8.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,9 @@ static const int fan53555_slew_rates[] = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "silergy,syr827",		FAN_VENDOR_SILERGY },
-	{ "silergy,syr828",		FAN_VENDOR_SILERGY },
-	{ NULL,				0 }
+	{ .compat = "silergy,syr827",	.value = FAN_VENDOR_SILERGY },
+	{ .compat = "silergy,syr828",	.value = FAN_VENDOR_SILERGY },
+	DEVICE_COMPAT_EOL
 };
 
 static uint8_t
@@ -309,9 +309,10 @@ fan53555_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_phandle = ia->ia_cookie;
 
-	iic_compatible_match(ia, compat_data, &compat);
+	compat = iic_compatible_lookup(ia, compat_data);
+	KASSERT(compat != NULL);
 
-	if (fan53555_init(sc, compat->data) != 0)
+	if (fan53555_init(sc, compat->value) != 0)
 		return;
 
 	fdtbus_register_regulator_controller(self, sc->sc_phandle,

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1233 2020/09/27 13:48:51 roy Exp $
+# $NetBSD: GENERIC,v 1.1233.2.1 2021/04/03 22:28:27 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1233 $"
+#ident		"GENERIC-$Revision: 1.1233.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -143,8 +143,6 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # Compatibility options
 include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
@@ -1003,6 +1001,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
+rge*	at pci? dev ? function ?	# Realtek 8125
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 rtwn*	at pci? dev ? function ?	# Realtek 8188CE/8192CE 802.11b/g/n
@@ -1127,6 +1126,7 @@ ipgphy* at mii? phy ?			# IC PLUS IP1000A/IP1001 PHYs
 jmphy*	at mii? phy ?			# Jmicron JMP202/211 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+micphy* at mii? phy ?			# Micrel KSZ[89]xxx PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs

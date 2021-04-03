@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/07/06 05:59:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.72.1 2021/04/03 22:28:14 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SUBDIR+=elf2bb
 .endif
 
 # but these:
-SUBDIR+=boot bootxx_ffs
+SUBDIR+=boot bootxx_ffs bootxx_ffsv2
 
 
 .include <bsd.subdir.mk>

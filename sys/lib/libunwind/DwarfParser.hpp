@@ -239,7 +239,7 @@ bool CFI_Parser<A, R>::parseCIE(A &addressSpace, pint_t cie,
   // Parse data alignment factor
   cieInfo->dataAlignFactor = addressSpace.getSLEB128(p, cieContentEnd);
   // Parse return address register
-  cieInfo->returnAddressRegister = (uint8_t)addressSpace.getULEB128(p, cieContentEnd);
+  cieInfo->returnAddressRegister = R::dwarf2regno((uint8_t)addressSpace.getULEB128(p, cieContentEnd));
   // Parse augmentation data based on augmentation string.
   if (addressSpace.get8(strStart) == 'z') {
     // parse augmentation data length

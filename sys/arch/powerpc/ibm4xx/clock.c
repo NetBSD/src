@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2020/07/06 10:31:23 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.29.2.1 2021/04/03 22:28:34 thorpej Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,10 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2020/07/06 10:31:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29.2.1 2021/04/03 22:28:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#include "opt_ppcparam.h"
 #endif
 
 #include <sys/param.h>
@@ -104,8 +105,11 @@ stat_intr(struct clockframe *frame)
 	 */
 	__asm volatile ("wrteei 1");
 
-	if (IPL_CLOCK > s)
+	if (IPL_CLOCK > s) {
+		ci->ci_idepth++;
   		statclock(frame);
+		ci->ci_idepth--;
+	}
 	splx(s);
 }
 
@@ -155,11 +159,11 @@ decr_intr(struct clockframe *frame)
 
 		/*
 		 * Do standard timer interrupt stuff.
-		 * Do softclock stuff only on the last iteration.
 		 */
-		while (--nticks > 0)
+		ci->ci_idepth++;
+		while (nticks-- > 0)
 			hardclock(frame);
-		hardclock(frame);
+		ci->ci_idepth--;
 	}
 	splx(pcpl);
 }
@@ -194,9 +198,17 @@ calc_delayconst(void)
 	prop_number_t freq;
 
 	freq = prop_dictionary_get(board_properties, "processor-frequency");
-	KASSERT(freq != NULL);
 
-	ticks_per_sec = (u_long) prop_number_integer_value(freq);
+#ifndef PPC_CPU_FREQ
+	KASSERT(freq != NULL);
+#else
+	/* XXX hack for pckbc_cnattach() for Explora */
+	if (freq == NULL)
+		ticks_per_sec = (u_long) PPC_CPU_FREQ;
+	else
+#endif
+		ticks_per_sec = (u_long) prop_number_integer_value(freq);
+
 	ns_per_tick = 1000000000 / ticks_per_sec;
 }
 

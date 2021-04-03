@@ -1,4 +1,4 @@
-/* $NetBSD: meson_usbctrl.c,v 1.1.2.2 2021/01/03 16:34:50 thorpej Exp $ */
+/* $NetBSD: meson_usbctrl.c,v 1.1.2.3 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_usbctrl.c,v 1.1.2.2 2021/01/03 16:34:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_usbctrl.c,v 1.1.2.3 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -110,16 +110,16 @@ struct meson_usbctrl_config mesong12_conf = {
 	.num_phys = 3
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson-g12a-usb-ctrl", (uintptr_t)&mesong12_conf },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson-g12a-usb-ctrl", .data = &mesong12_conf },
+	DEVICE_COMPAT_EOL
 };
 
 struct meson_usbctrl_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
-	struct meson_usbctrl_config *sc_conf;
+	const struct meson_usbctrl_config *sc_conf;
 	struct fdtbus_regulator *sc_supply;
 	int sc_phandle;
 };
@@ -252,7 +252,7 @@ meson_usbctrl_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -267,7 +267,7 @@ meson_usbctrl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_phandle = phandle = faa->faa_phandle;
-	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

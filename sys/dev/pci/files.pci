@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.432 2020/10/14 10:19:11 ryo Exp $
+#	$NetBSD: files.pci,v 1.432.2.1 2021/04/03 22:28:46 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -664,6 +664,7 @@ file	dev/pci/ixgbe/ixgbe_phy.c	ixg | ixv
 file	dev/pci/ixgbe/ixgbe_vf.c	ixg | ixv
 file	dev/pci/ixgbe/if_bypass.c	ixg | ixv
 file	dev/pci/ixgbe/if_fdir.c		ixg | ixv
+defparam opt_ixgbe.h	IXGBE_JCLNUM_MULTI
 
 # This appears to be the driver for virtual instances of i82599.
 device	ixv: ether, ifnet, arp, mii, mii_phy
@@ -674,14 +675,14 @@ file	dev/pci/ixgbe/ixv.c		ixv
 device	wm: ether, ifnet, arp, mii, mii_bitbang
 attach	wm at pci
 file	dev/pci/if_wm.c			wm
-defflag	opt_if_wm.h	WM_EVENT_COUNTERS
+defflag	opt_if_wm.h	WM_EVENT_COUNTERS WM_DISABLE_EVENT_COUNTERS
 defparam opt_if_wm.h	WM_RX_PROCESS_LIMIT_DEFAULT
 			WM_RX_INTR_PROCESS_LIMIT_DEFAULT
 			WM_DISABLE_MSI
 			WM_DISABLE_MSIX
 
 # Mellanox 5th generation Ethernet devices
-device	mcx: ether, ifnet, arp
+device	mcx: ether, ifnet, arp, toeplitz
 attach	mcx at pci
 file	dev/pci/if_mcx.c		mcx
 
@@ -1182,4 +1183,9 @@ file    dev/pci/xmm7360.c               wwanc | wwan            needs-flag
 device	vmx: ether, ifnet, arp
 attach	vmx at pci
 file	dev/pci/if_vmx.c	vmx
+
+# Realtek RTL8125 2.5GBASE-T Ethernet
+device	rge: ether, ifnet, arp, mii
+attach	rge at pci
+file	dev/pci/if_rge.c		rge
 

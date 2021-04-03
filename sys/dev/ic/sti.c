@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.22.2.1 2021/01/03 16:34:58 thorpej Exp $	*/
+/*	$NetBSD: sti.c,v 1.22.2.2 2021/04/03 22:28:45 thorpej Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.22.2.1 2021/01/03 16:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.22.2.2 2021/04/03 22:28:45 thorpej Exp $");
 
 #include "wsdisplay.h"
 
@@ -53,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.22.2.1 2021/01/03 16:34:58 thorpej Exp $")
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
-
-#ifndef hp300	/* XXX */
-#include "sti_pci.h"
-#endif
 
 #ifdef STIDEBUG
 
@@ -139,7 +135,6 @@ void	ngle_timber_setupfb(struct sti_screen *);
 int	ngle_putcmap(struct sti_screen *, u_int, u_int);
 #endif
 
-#if NSTI_PCI > 0
 #define	STI_ENABLE_ROM(sc) \
 do { \
 	if ((sc) != NULL && (sc)->sc_enable_rom != NULL) \
@@ -150,10 +145,6 @@ do { \
 	if ((sc) != NULL && (sc)->sc_disable_rom != NULL) \
 		(*(sc)->sc_disable_rom)(sc); \
 } while (0)
-#else
-#define	STI_ENABLE_ROM(sc)		do { /* nothing */ } while (0)
-#define	STI_DISABLE_ROM(sc)		do { /* nothing */ } while (0)
-#endif
 
 /* Macros to read larger than 8 bit values from byte roms */
 #define	parseshort(o) \
@@ -1171,9 +1162,7 @@ paddr_t
 sti_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
-#if 0
 	struct sti_rom *rom = scr->scr_rom;
-#endif
 	paddr_t pa;
 
 	if ((offset & PAGE_MASK) != 0)
@@ -1182,12 +1171,14 @@ sti_mmap(void *v, void *vs, off_t offset, int prot)
 	if (offset < 0 || offset >= scr->fblen)
 		return -1;
 
-#if 0 /* XXX not all platforms provide bus_space_mmap() yet */
+	if (scr->scr_wsmode != WSDISPLAYIO_MODE_DUMBFB)
+		return -1;
+
 	pa = bus_space_mmap(rom->memt, scr->fbaddr, offset, prot,
 	    BUS_SPACE_MAP_LINEAR);
-#else
-	pa = scr->fbaddr + offset;
-#endif
+
+	if (pa == -1)
+		pa = scr->fbaddr + offset;
 
 	return pa;
 }
@@ -1260,7 +1251,7 @@ static const uint8_t
 sti_unitoroman[0x100 - 0xa0] = {
 	0xa0, 0xb8, 0xbf, 0xbb, 0xba, 0xbc,    0, 0xbd,
 	0xab,    0, 0xf9, 0xfb,    0, 0xf6,    0, 0xb0,
-	
+
 	0xb3, 0xfe,    0,    0, 0xa8, 0xf3, 0xf4, 0xf2,
 	   0,    0, 0xfa, 0xfd, 0xf7, 0xf8,    0, 0xb9,
 
@@ -1425,20 +1416,19 @@ sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
 	    WSATTR_UNDERLINE | WSATTR_WSCOLORS)) != 0)
 		return EINVAL;
 	if ((flags & WSATTR_REVERSE) != 0) {
-		fg = STI_COLOUR_BLACK; 
+		fg = STI_COLOUR_BLACK;
 		bg = STI_COLOUR_WHITE;
 	} else {
 		fg = STI_COLOUR_WHITE;
-		bg = STI_COLOUR_BLACK; 
+		bg = STI_COLOUR_BLACK;
 	}
 
 	*pattr = WSATTR_PACK(fg, bg, flags);
 	return 0;
 }
 
-#ifdef hp300	/* XXX */
 /*
- * Early console support.  Only used on hp300.
+ * Early console support.  Only used on hp300, currently
  */
 int
 sti_cnattach(struct sti_rom *rom, struct sti_screen *scr, bus_space_tag_t memt,
@@ -1474,7 +1464,6 @@ sti_cnattach(struct sti_rom *rom, struct sti_screen *scr, bus_space_tag_t memt,
 
 	return 0;
 }
-#endif
 
 int
 ngle_default_putcmap(struct sti_screen *scr, u_int idx, u_int count)

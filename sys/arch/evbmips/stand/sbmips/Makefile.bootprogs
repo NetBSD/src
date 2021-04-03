@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.3 2017/08/21 16:36:00 christos Exp $
+# $NetBSD: Makefile.bootprogs,v 1.3.22.1 2021/04/03 22:28:23 thorpej Exp $
 
 NOSSP=yes
 NOPIE=yes
@@ -10,6 +10,15 @@ S=	${.CURDIR}/../../../../..
 COMMON=	${.CURDIR}/../common
 
 .PATH:	${COMMON}
+
+.if ${MACHINE_ARCH:M*64*}
+.	if ${MACHINE_ARCH:M*eb}
+LDABI=	-melf32btsmipn32
+.	else
+LDABI=	-melf32ltsmipn32
+.	endif
+CPUFLAGS+=	-mabi=n32
+.endif
 
 STRIPFLAG=
 BINMODE= 444
@@ -25,7 +34,7 @@ STRIP?=	strip
 
 CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${COMMON}/checksize.sh
 
-AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64
+AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64 -msoft-float
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
 CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0

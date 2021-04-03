@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.53 2019/09/28 08:21:08 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.53.8.1 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.53 2019/09/28 08:21:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.53.8.1 2021/04/03 22:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,12 +105,12 @@ copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, u_int *len,
 		ktrkuser(mbuftypes[MT_CONTROL], cmsg, cmsg->cmsg_len);
 		error = copyout(&cmsg32, *q, MIN(i, sizeof(cmsg32)));
 		if (error)
-			return (error);
+			return error;
 		if (i > CMSG32_LEN(0)) {
 			error = copyout(CMSG_DATA(cmsg), *q + CMSG32_LEN(0),
 			    i - CMSG32_LEN(0));
 			if (error)
-				return (error);
+				return error;
 		}
 		j = CMSG32_SPACE(cmsg->cmsg_len - CMSG_LEN(0));
 		if (*len >= j) {
@@ -233,7 +233,7 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap,
 
 	error = copyin(SCARG_P32(uap, msg), &msg32, sizeof(msg32));
 	if (error)
-		return (error);
+		return error;
 
 	if ((error = msg_recv_copyin(l, &msg32, &msg, aiov)) != 0)
 		return error;
@@ -386,7 +386,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 	struct mbuf *ctl_mbuf;
 	ssize_t resid = mp->msg_controllen;
 	size_t clen, cidx = 0, cspace;
-	u_int8_t *control;
+	uint8_t *control;
 	int error;
 
 	ctl_mbuf = m_get(M_WAIT, MT_CONTROL);
@@ -414,7 +414,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 
 		/* Check the buffer is big enough */
 		if (__predict_false(cidx + cspace > clen)) {
-			u_int8_t *nc;
+			uint8_t *nc;
 			size_t nclen;
 
 			nclen = cidx + cspace;
@@ -637,6 +637,9 @@ netbsd32_recvfrom(struct lwp *l, const struct netbsd32_recvfrom_args *uap,
 	int		error;
 	struct mbuf	*from;
 
+	if (SCARG(uap, len) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
+
 	msg.msg_name = NULL;
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
@@ -670,6 +673,9 @@ netbsd32_sendto(struct lwp *l, const struct netbsd32_sendto_args *uap,
 	} */
 	struct msghdr msg;
 	struct iovec aiov;
+
+	if (SCARG(uap, len) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
 
 	msg.msg_name = SCARG_P32(uap, to); /* XXX kills const */
 	msg.msg_namelen = SCARG(uap, tolen);

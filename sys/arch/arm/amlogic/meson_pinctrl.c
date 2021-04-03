@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.6.8.1 2021/01/03 16:34:50 thorpej Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.6.8.2 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.6.8.1 2021/01/03 16:34:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.6.8.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,24 +71,32 @@ struct meson_pinctrl_gpio_pin {
 	bool				pin_actlo;
 };
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 #ifdef SOC_MESON8B
-	{ "amlogic,meson8b-aobus-pinctrl",	(uintptr_t)&meson8b_aobus_pinctrl_config },
-	{ "amlogic,meson8b-cbus-pinctrl",	(uintptr_t)&meson8b_cbus_pinctrl_config },
+	{ .compat = "amlogic,meson8b-aobus-pinctrl",
+	  .data = &meson8b_aobus_pinctrl_config },
+	{ .compat = "amlogic,meson8b-cbus-pinctrl",
+	  .data = &meson8b_cbus_pinctrl_config },
 #endif
 #ifdef SOC_MESONGXBB
-	{ "amlogic,meson-gxbb-aobus-pinctrl",	(uintptr_t)&mesongxbb_aobus_pinctrl_config },
-	{ "amlogic,meson-gxbb-periphs-pinctrl",	(uintptr_t)&mesongxbb_periphs_pinctrl_config },
+	{ .compat = "amlogic,meson-gxbb-aobus-pinctrl",
+	  .data = &mesongxbb_aobus_pinctrl_config },
+	{ .compat = "amlogic,meson-gxbb-periphs-pinctrl",
+	  .data = &mesongxbb_periphs_pinctrl_config },
 #endif
 #ifdef SOC_MESONGXL
-	{ "amlogic,meson-gxl-aobus-pinctrl",	(uintptr_t)&mesongxl_aobus_pinctrl_config },
-	{ "amlogic,meson-gxl-periphs-pinctrl",	(uintptr_t)&mesongxl_periphs_pinctrl_config },
+	{ .compat = "amlogic,meson-gxl-aobus-pinctrl",
+	  .data = &mesongxl_aobus_pinctrl_config },
+	{ .compat = "amlogic,meson-gxl-periphs-pinctrl",
+	  .data = &mesongxl_periphs_pinctrl_config },
 #endif
 #ifdef SOC_MESONG12
-	{ "amlogic,meson-g12a-aobus-pinctrl",	(uintptr_t)&mesong12a_aobus_pinctrl_config },
-	{ "amlogic,meson-g12a-periphs-pinctrl",	(uintptr_t)&mesong12a_periphs_pinctrl_config },
+	{ .compat = "amlogic,meson-g12a-aobus-pinctrl",
+	  .data = &mesong12a_aobus_pinctrl_config },
+	{ .compat = "amlogic,meson-g12a-periphs-pinctrl",
+	  .data = &mesong12a_periphs_pinctrl_config },
 #endif
-	{ NULL, 0 }
+	DEVICE_COMPAT_EOL
 };
 
 #define	MUX_READ(sc, reg)				\
@@ -566,7 +574,7 @@ meson_pinctrl_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -578,7 +586,7 @@ meson_pinctrl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_conf = (void *)of_search_compatible(sc->sc_phandle, compat_data)->data;
+	sc->sc_conf = of_compatible_lookup(sc->sc_phandle, compat_data)->data;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	if (meson_pinctrl_initres(sc) != 0)

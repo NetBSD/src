@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i_spi.c,v 1.5 2019/09/11 15:03:52 bouyer Exp $	*/
+/*	$NetBSD: sun4i_spi.c,v 1.5.10.1 2021/04/03 22:28:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.5 2019/09/11 15:03:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.5.10.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.5 2019/09/11 15:03:52 bouyer Exp $")
 #include <arm/sunxi/sun4i_spireg.h>
 #include <dev/fdt/fdtvar.h>
 
-static const char * const compatible[] = {
-	"allwinner,sun4i-a10-spi",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-spi" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sun4ispi_softc {
@@ -99,7 +99,7 @@ sun4ispi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -149,7 +149,8 @@ sun4ispi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, sun4ispi_intr, sc);
+	sc->sc_intrh = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    sun4ispi_intr, sc, device_xname(self));
 	if (sc->sc_intrh == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		return;

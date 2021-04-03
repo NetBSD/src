@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.32 2020/07/06 13:10:19 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.32.2.1 2021/04/03 22:28:34 thorpej Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.32 2020/07/06 13:10:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.32.2.1 2021/04/03 22:28:34 thorpej Exp $");
 
 #include "ksyms.h"
 
@@ -79,10 +79,16 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.32 2020/07/06 13:10:19 rin Exp 
 #endif
 
 #include <sys/param.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
 #include <sys/cpu.h>
 #include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/pmf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+
+#include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -96,13 +102,13 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.32 2020/07/06 13:10:19 rin Exp 
 #endif
 
 #include <machine/powerpc.h>
-#include <powerpc/pcb.h>
 #include <machine/trap.h>
 
+#include <powerpc/pcb.h>
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/spr.h>
 
 /*
  * Global variables used here and there
@@ -148,8 +154,83 @@ static const struct exc_info trap_table[] = {
 			errata51handler, (uintptr_t)&errata51size },
 #if defined(DDB)
 	{ EXC_PGM,	ddblow,		(uintptr_t)&ddbsize },
+#else
+	{ EXC_PGM,	accesstrap,	(uintptr_t)&accesssize },
 #endif
 };
+
+void
+cpu_reboot(int howto, char *what)
+{
+	static int syncing;
+	static char str[256];
+	char *ap = str, *ap1 = ap;
+
+	boothowto = howto;
+	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
+		syncing = 1;
+		vfs_shutdown();		/* sync */
+		resettodr();		/* set wall clock */
+	}
+
+	splhigh();
+
+	if (!cold && (howto & RB_DUMP))
+		ibm4xx_dumpsys();
+
+	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
+
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* Power off here if we know how... */
+	}
+
+	if (howto & RB_HALT) {
+		printf("The operating system has halted.\n"
+		    "Press any key to reboot.\n\n");
+
+		cnpollc(1);
+		cngetc();
+		cnpollc(0);
+	}
+
+	printf("rebooting...\n\n");
+	if (what && *what) {
+		if (strlen(what) > sizeof(str) - 5)
+			printf("boot string too large, ignored\n");
+		else {
+			strcpy(str, what);
+			ap1 = ap = str + strlen(str);
+			*ap++ = ' ';
+		}
+	}
+	*ap++ = '-';
+	if (howto & RB_SINGLE)
+		*ap++ = 's';
+	if (howto & RB_KDB)
+		*ap++ = 'd';
+	*ap++ = '\0';
+	if (ap[-2] == '-')
+		*ap1 = '\0';
+
+	/* flush cache for msgbuf */
+	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
+
+	ppc4xx_reset();
+
+	printf("ppc4xx_reset() failed!\n");
+
+	for (;;) {
+#if defined(DDB)
+		Debugger();
+#elif defined(KGDB)
+		kgdb_connect(1);
+#else
+		continue;
+#endif
+	}
+}
 
 /*
  * Install a trap vector. We cannot use memcpy because the
@@ -208,7 +289,7 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 	 * external interrupt handler install
 	 */
 	if (handler)
-	    ibm4xx_install_extint(handler);
+		ibm4xx_install_extint(handler);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).

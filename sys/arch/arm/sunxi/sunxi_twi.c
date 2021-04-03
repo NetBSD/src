@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.11.6.1 2021/01/03 16:34:53 thorpej Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.11.6.2 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.11.6.1 2021/01/03 16:34:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.11.6.2 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,10 +72,10 @@ static const struct sunxi_twi_config sun6i_a31_i2c_config = {
 	.iflg_rwc = true,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-i2c",	(uintptr_t)&sun4i_a10_i2c_config },
-	{ "allwinner,sun6i-a31-i2c",	(uintptr_t)&sun6i_a31_i2c_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-i2c",	.data = &sun4i_a10_i2c_config },
+	{ .compat = "allwinner,sun6i-a31-i2c",	.data = &sun6i_a31_i2c_config },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(sunxi_twi, sizeof(struct gttwsi_softc),
@@ -116,7 +116,7 @@ sunxi_twi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -161,7 +161,7 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-	conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 	prop_dictionary_set_bool(device_properties(self), "iflg-rwc",
 	    conf->iflg_rwc);
 
@@ -174,7 +174,8 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 	if (clk != NULL)
 		sunxi_twi_set_clock(sc, clk_get_rate(clk), 100000);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, gttwsi_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0, gttwsi_intr,
+	    sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.61 2020/11/01 14:42:05 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.61.2.1 2021/04/03 22:28:18 thorpej Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.61 2020/11/01 14:42:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.61.2.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -122,12 +122,13 @@ static int pic_init(void);
 void
 pic_set_priority(struct cpu_info *ci, int newipl)
 {
-	register_t psw = cpsid(I32_bit);
+	register_t psw = DISABLE_INTERRUPT_SAVE();
 	if (pic_list[0] != NULL)
 		(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl);
 	ci->ci_cpl = newipl;
-	if ((psw & I32_bit) == 0)
-		cpsie(I32_bit);
+	if ((psw & I32_bit) == 0) {
+		ENABLE_INTERRUPT();
+	}
 }
 #endif
 
@@ -447,13 +448,14 @@ pic_deliver_irqs(struct pic_pending *pend, struct pic_softc *pic, int ipl,
 			atomic_and_32(ipending, ~__BIT(irq));
 			is = pic->pic_sources[irq_base + irq];
 			if (is != NULL) {
-				cpsie(I32_bit);
+				ENABLE_INTERRUPT();
 				pic_dispatch(is, frame);
-				cpsid(I32_bit);
+				DISABLE_INTERRUPT();
 #if PIC_MAXSOURCES > 32
 				/*
 				 * There is a possibility of interrupting
-				 * from cpsie() to cpsid().
+				 * from ENABLE_INTERRUPT() to
+				 * DISABLE_INTERRUPT().
 				 */
 				poi = 1;
 #endif

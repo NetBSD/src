@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_elb.c,v 1.7.66.1 2020/12/14 14:37:53 thorpej Exp $	*/
+/*	$NetBSD: pckbc_elb.c,v 1.7.66.2 2021/04/03 22:28:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.7.66.1 2020/12/14 14:37:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.7.66.2 2021/04/03 22:28:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,19 +84,23 @@ pckbc_elb_attach(device_t parent, device_t self, void *aux)
 	msc->sc_irq = eaa->elb_irq;
 	sc->intr_establish = pckbc_elb_intr_establish;
 
-	if (pckbc_is_console(eaa->elb_bt, eaa->elb_base)) {
+	if (pckbc_is_console(eaa->elb_bt,
+	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base))) {
 		t = &pckbc_consdata;
 		pckbc_console_attached = 1;
 	} else {
 		t = kmem_zalloc(sizeof(struct pckbc_internal), KM_SLEEP);
+
+		t->t_iot = eaa->elb_bt;
+		bus_space_map(eaa->elb_bt,
+		    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base), 1, 0,
+		    &t->t_ioh_d);
+		bus_space_map(eaa->elb_bt,
+		    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base2), 1, 0,
+		    &t->t_ioh_c);
+		t->t_addr = eaa->elb_base;
 	}
 
-	t->t_iot = eaa->elb_bt;
-	bus_space_map(eaa->elb_bt,
-	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base), 1, 0, &t->t_ioh_d);
-	bus_space_map(eaa->elb_bt,
-	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base2), 1, 0, &t->t_ioh_c);
-	t->t_addr = eaa->elb_base;
 	t->t_sc = sc;
 	sc->id = t;
 
@@ -116,7 +120,8 @@ pckbc_elb_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	 */
 
 	if (irq >= 0)
-	 	intr_establish(irq, IST_LEVEL, IPL_SERIAL, pckbcintr, sc);
+	 	intr_establish_xname(irq, IST_LEVEL, IPL_TTY, pckbcintr, sc,
+		    device_xname(sc->sc_dv));
 
-	irq = -1;
+	msc->sc_irq = -1;
 }

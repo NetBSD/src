@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.4 2020/06/03 16:00:00 jmcneill Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.4.2.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,17 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.4 2020/06/03 16:00:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.4.2.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
+#include <sys/bitops.h>
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/intr.h>
-#include <sys/systm.h>
-#include <sys/mutex.h>
-#include <sys/kmem.h>
 #include <sys/gpio.h>
-#include <sys/bitops.h>
+#include <sys/intr.h>
+#include <sys/kmem.h>
+#include <sys/lwp.h>
+#include <sys/mutex.h>
+#include <sys/systm.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/gpio/gpiovar.h>
@@ -99,10 +100,10 @@ static const u_int ti_gpio_regmap[TI_NGPIO][GPIO_NREG] = {
 	},
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "ti,omap3-gpio",		TI_GPIO_OMAP3 },
-	{ "ti,omap4-gpio",		TI_GPIO_OMAP4 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,omap3-gpio",	.value = TI_GPIO_OMAP3 },
+	{ .compat = "ti,omap4-gpio",	.value = TI_GPIO_OMAP4 },
+	DEVICE_COMPAT_EOL
 };
 
 struct ti_gpio_intr {
@@ -283,7 +284,7 @@ ti_gpio_intr_disestablish(device_t dev, void *ih)
 
 static void *
 ti_gpio_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct ti_gpio_softc * const sc = device_private(dev);
 	uint32_t val;
@@ -480,7 +481,7 @@ ti_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -512,7 +513,7 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	sc->sc_modname = fdtbus_get_string(phandle, "ti,hwmods");
@@ -528,8 +529,8 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 
 	ti_gpio_attach_ports(sc);
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    ti_gpio_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, ti_gpio_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

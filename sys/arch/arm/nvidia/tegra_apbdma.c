@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_apbdma.c,v 1.7 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_apbdma.c,v 1.7.8.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.7 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.7.8.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,17 +91,18 @@ CFATTACH_DECL_NEW(tegra_apbdma, sizeof(struct tegra_apbdma_softc),
 #define	APBDMA_WRITE(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-apbdma" },
+	{ .compat = "nvidia,tegra124-apbdma" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_apbdma_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-apbdma",
-		"nvidia,tegra124-apbdma",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -217,8 +218,8 @@ tegra_apbdma_acquire(device_t dev, const void *data, size_t len,
 		return NULL;
 	}
 
-	ch->ch_ih = fdtbus_intr_establish(sc->sc_phandle, n, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_apbdma_intr, ch);
+	ch->ch_ih = fdtbus_intr_establish_xname(sc->sc_phandle, n, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_apbdma_intr, ch, device_xname(dev));
 	if (ch->ch_ih == NULL) {
 		aprint_error_dev(dev, "failed to establish interrupt on %s\n",
 		    intrstr);

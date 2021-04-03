@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -49,11 +49,11 @@ struct enet_fdt_softc {
 CFATTACH_DECL_NEW(enet_fdt, sizeof(struct enet_fdt_softc),
     enet_match, enet_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 	/* compatible			imxtype */
-	{ "fsl,imx6q-fec",		6 },
-	{ "fsl,imx6sx-fec",		7 },
-	{ NULL }
+	{ .compat = "fsl,imx6q-fec",	.value = 6 },
+	{ .compat = "fsl,imx6sx-fec",	.value = 7 },
+	DEVICE_COMPAT_EOL
 };
 
 static int enet_init_clocks(struct enet_softc *);
@@ -66,7 +66,7 @@ enet_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void
@@ -127,7 +127,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = bsh;
 	sc->sc_dmat = faa->faa_dmat;
 
-	sc->sc_imxtype = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_imxtype = of_compatible_lookup(phandle, compat_data)->value;
 	sc->sc_unit = 0;
 	sc->sc_phyid = enet_phy_id(sc, phandle);
 
@@ -183,6 +183,7 @@ static void *
 enet_intr_establish(struct enet_softc *sc, int phandle, u_int index)
 {
 	char intrstr[128];
+	char xname[16];
 	void *ih;
 
 	if (!fdtbus_intr_str(phandle, index, intrstr, sizeof(intrstr))) {
@@ -191,7 +192,10 @@ enet_intr_establish(struct enet_softc *sc, int phandle, u_int index)
 		return NULL;
 	}
 
-	ih = fdtbus_intr_establish(phandle, index, IPL_NET, 0, enet_intr, sc);
+	snprintf(xname, sizeof(xname), "%s #%u", device_xname(sc->sc_dev),
+	    index);
+	ih = fdtbus_intr_establish_xname(phandle, index, IPL_NET, 0,
+	    enet_intr, sc, xname);
 	if (ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "failed to establish interrupt on %s\n",
 		    intrstr);

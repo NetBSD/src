@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.11 2020/09/14 10:53:02 ryo Exp $ */
+/* $NetBSD: db_machdep.h,v 1.11.2.1 2021/04/03 22:28:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -96,9 +96,9 @@ int kdb_trap(int, struct trapframe *);
 #define DB_TRAP_SW_STEP		4
 
 #define IS_BREAKPOINT_TRAP(type, code) \
-	((type) == DB_TRAP_BREAKPOINT || (type) == DB_TRAP_BKPT_INSN)
+	((type) == DB_TRAP_BKPT_INSN)
 #define IS_WATCHPOINT_TRAP(type, code) \
-	((type) == DB_TRAP_WATCHPOINT)
+	((type) == DB_TRAP_BREAKPOINT || (type) == DB_TRAP_WATCHPOINT)
 
 static inline bool
 inst_return(db_expr_t insn)
@@ -217,10 +217,8 @@ const char *strdisasm(vaddr_t, uint64_t);
 void db_machdep_init(void);
 
 /* hardware breakpoint/watchpoint functions */
-void aarch64_breakpoint_clear(int);
 void aarch64_breakpoint_set(int, vaddr_t);
-void aarch64_watchpoint_clear(int);
-void aarch64_watchpoint_set(int, vaddr_t, int, int);
+void aarch64_watchpoint_set(int, vaddr_t, u_int, u_int);
 #define WATCHPOINT_ACCESS_LOAD		0x01
 #define WATCHPOINT_ACCESS_STORE		0x02
 #define WATCHPOINT_ACCESS_LOADSTORE	0x03

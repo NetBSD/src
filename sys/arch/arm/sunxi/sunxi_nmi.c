@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nmi.c,v 1.5 2020/02/16 20:29:36 thorpej Exp $ */
+/* $NetBSD: sunxi_nmi.c,v 1.5.6.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.5 2020/02/16 20:29:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.5.6.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,11 +88,15 @@ static const struct sunxi_nmi_config sun9i_a80_nmi_config = {
 	.enable_reg = 0x08,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun7i-a20-sc-nmi",	(uintptr_t)&sun7i_a20_sc_nmi_config },
-	{ "allwinner,sun6i-a31-r-intc",	(uintptr_t)&sun6i_a31_r_intc_config },
-	{ "allwinner,sun9i-a80-nmi",	(uintptr_t)&sun9i_a80_nmi_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun7i-a20-sc-nmi",
+	  .data = &sun7i_a20_sc_nmi_config },
+	{ .compat = "allwinner,sun6i-a31-r-intc",
+	  .data = &sun6i_a31_r_intc_config },
+	{ .compat = "allwinner,sun9i-a80-nmi",
+	  .data = &sun9i_a80_nmi_config },
+
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_nmi_softc {
@@ -170,7 +174,7 @@ sunxi_nmi_intr(void *priv)
 
 static void *
 sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct sunxi_nmi_softc * const sc = device_private(dev);
 	u_int irq_type;
@@ -230,8 +234,8 @@ sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	mutex_exit(&sc->sc_intr_lock);
 
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, ipl, flags,
-	    sunxi_nmi_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, ipl, flags,
+	    sunxi_nmi_intr, sc, device_xname(dev));
 
 	mutex_enter(&sc->sc_intr_lock);
 	sunxi_nmi_irq_set_type(sc, irq_type);
@@ -310,7 +314,7 @@ sunxi_nmi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -330,7 +334,7 @@ sunxi_nmi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
-	sc->sc_config = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_config = of_compatible_lookup(phandle, compat_data)->data;
 	sc->sc_bst = faa->faa_bst;
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");

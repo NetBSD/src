@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.4.2.2 2021/01/03 16:34:57 thorpej Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.4.2.3 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.4.2.2 2021/01/03 16:34:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.4.2.3 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -63,7 +63,7 @@ iicmux_gpio_get_mux_info(struct iicmux_softc * const sc)
 
 	mux_data = kmem_zalloc(sizeof(*mux_data), KM_SLEEP);
 
-	mux_data->npins = fdtbus_gpio_count(sc->sc_phandle, "mux-gpios");
+	mux_data->npins = fdtbus_gpio_count(sc->sc_handle, "mux-gpios");
 	if (mux_data->npins == 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to get mux-gpios property\n");
@@ -73,7 +73,7 @@ iicmux_gpio_get_mux_info(struct iicmux_softc * const sc)
 	mux_data->pins =
 	    kmem_zalloc(sizeof(*mux_data->pins) * mux_data->npins, KM_SLEEP);
 	for (i = 0; i < mux_data->npins; i++) {
-		mux_data->pins[i] = fdtbus_gpio_acquire_index(sc->sc_phandle,
+		mux_data->pins[i] = fdtbus_gpio_acquire_index(sc->sc_handle,
 		    "mux-gpios", i, GPIO_PIN_OUTPUT);
 		if (mux_data->pins[i] == NULL) {
 			aprint_error_dev(sc->sc_dev,
@@ -83,7 +83,7 @@ iicmux_gpio_get_mux_info(struct iicmux_softc * const sc)
 	}
 
 	mux_data->has_idle_value =
-	    of_getprop_uint32(sc->sc_phandle, "idle-state",
+	    of_getprop_uint32(sc->sc_handle, "idle-state",
 			      &mux_data->idle_value) == 0;
 
 	return mux_data;
@@ -107,7 +107,7 @@ iicmux_gpio_get_bus_info(struct iicmux_bus * const bus)
 
 	bus_info = kmem_zalloc(sizeof(*bus_info), KM_SLEEP);
 
-	error = fdtbus_get_reg(bus->phandle, 0, &bus_info->value, NULL);
+	error = fdtbus_get_reg(bus->handle, 0, &bus_info->value, NULL);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to get reg property for bus %d\n", bus->busidx);
@@ -177,7 +177,7 @@ iicmux_pinctrl_get_mux_info(struct iicmux_softc * const sc)
 	mux_info = kmem_alloc(sizeof(*mux_info), KM_SLEEP);
 
 	mux_info->has_idle_idx =
-	    fdtbus_get_index(sc->sc_phandle, "pinctrl-names", "idle",
+	    fdtbus_get_index(sc->sc_handle, "pinctrl-names", "idle",
 			     &mux_info->idle_idx) == 0;
 
 	return mux_info;
@@ -192,7 +192,7 @@ iicmux_pinctrl_get_bus_info(struct iicmux_bus * const bus)
 
 	bus_info = kmem_alloc(sizeof(*bus_info), KM_SLEEP);
 
-	error = fdtbus_get_reg(bus->phandle, 0, &bus_info->idx, NULL);
+	error = fdtbus_get_reg(bus->handle, 0, &bus_info->idx, NULL);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to get reg property for bus %d\n", bus->busidx);
@@ -210,7 +210,7 @@ iicmux_pinctrl_acquire_bus(struct iicmux_bus * const bus,
 	struct iicmux_softc * const sc = bus->mux;
 	struct bus_info_pinctrl * const bus_info = bus->bus_data;
 
-	return fdtbus_pinctrl_set_config_index(sc->sc_phandle, bus_info->idx);
+	return fdtbus_pinctrl_set_config_index(sc->sc_handle, bus_info->idx);
 }
 
 static void
@@ -221,7 +221,7 @@ iicmux_pinctrl_release_bus(struct iicmux_bus * const bus,
 	struct mux_info_pinctrl * const mux_info = sc->sc_mux_data;
 
 	if (mux_info->has_idle_idx) {
-		(void) fdtbus_pinctrl_set_config_index(sc->sc_phandle,
+		(void) fdtbus_pinctrl_set_config_index(sc->sc_handle,
 		    mux_info->idle_idx);
 	}
 }
@@ -236,14 +236,14 @@ static const struct iicmux_config iicmux_pinctrl_config = {
 
 /*****************************************************************************/
 
-static const struct of_compat_data compat_data[] = {
+static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "i2c-mux-gpio",
-	  .data = (uintptr_t)&iicmux_gpio_config },
+	  .data = &iicmux_gpio_config },
 
 	{ .compat = "i2c-mux-pinctrl",
-	  .data = (uintptr_t)&iicmux_pinctrl_config },
+	  .data = &iicmux_pinctrl_config },
 
-	{ NULL }
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -251,7 +251,7 @@ iicmux_fdt_match(device_t const parent, cfdata_t const match, void * const aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -261,14 +261,13 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 	struct fdt_attach_args * const faa = aux;
 
 	sc->sc_dev = self;
-	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_config = (const struct iicmux_config *)
-	    of_search_compatible(sc->sc_phandle, compat_data)->data;
+	sc->sc_handle = faa->faa_phandle;
+	sc->sc_config = of_compatible_lookup(sc->sc_handle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": %s I2C mux\n", sc->sc_config->desc);
 
-	sc->sc_i2c_parent = fdtbus_i2c_acquire(sc->sc_phandle, "i2c-parent");
+	sc->sc_i2c_parent = fdtbus_i2c_acquire(sc->sc_handle, "i2c-parent");
 	if (sc->sc_i2c_parent == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to acquire i2c-parent\n");
 		return;
@@ -278,4 +277,4 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 }
 
 CFATTACH_DECL_NEW(iicmux_fdt, sizeof(struct iicmux_softc),
-    iicmux_fdt_match, iicmux_fdt_attach, NULL, NULL); 
+    iicmux_fdt_match, iicmux_fdt_attach, NULL, NULL);

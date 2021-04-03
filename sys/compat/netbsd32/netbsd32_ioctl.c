@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.114 2020/07/21 05:33:51 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.114.2.1 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.114 2020/07/21 05:33:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.114.2.1 2021/04/03 22:28:42 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -86,6 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.114 2020/07/21 05:33:51 simonb 
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
 
+#include <netinet6/nd6.h>
+#include <netinet6/in6_var.h>
+
 #include <compat/sys/sockio.h>
 
 #include <compat/netbsd32/netbsd32.h>
@@ -93,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.114 2020/07/21 05:33:51 simonb 
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
+#include <dev/fssvar.h>
 #include <dev/vndvar.h>
 
 /* convert to/from different structures */
@@ -176,6 +180,20 @@ netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *s32p,
 }
 
 static inline void
+netbsd32_to_in6_nbrinfo(struct netbsd32_in6_nbrinfo *s32p, struct in6_nbrinfo *p,
+    u_long cmd)
+{
+
+	memcpy(p->ifname, s32p->ifname, sizeof p->ifname);
+	memcpy(&p->addr, &s32p->addr, sizeof p->addr);
+	p->asked = s32p->asked;
+	p->isrouter = s32p->isrouter;
+	p->state = s32p->state;
+	p->expire = s32p->expire;
+	
+}
+
+static inline void
 netbsd32_to_pppoediscparms(struct netbsd32_pppoediscparms *s32p,
     struct pppoediscparms *p, u_long cmd)
 {
@@ -243,6 +261,16 @@ netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *s32p,
 }
 
 static inline void
+netbsd32_to_kfilter_mapping(struct netbsd32_kfilter_mapping *s32p,
+    struct kfilter_mapping *p, u_long cmd)
+{
+
+	p->name = (char *)NETBSD32PTR64(s32p->name);
+	p->len = s32p->len;
+	p->filter = s32p->filter;
+}
+
+static inline void
 netbsd32_to_atareq(struct netbsd32_atareq *s32p, struct atareq *p, u_long cmd)
 {
 
@@ -258,6 +286,30 @@ netbsd32_to_atareq(struct netbsd32_atareq *s32p, struct atareq *p, u_long cmd)
 	p->timeout = s32p->timeout;
 	p->retsts = s32p->retsts;
 	p->error = s32p->error;
+}
+
+static inline void
+netbsd32_to_fss_set(struct netbsd32_fss_set *s32p, struct fss_set *p,
+    u_long cmd)
+{
+
+	p->fss_mount = (char *)NETBSD32PTR64(s32p->fss_mount);
+	p->fss_bstore = (char *)NETBSD32PTR64(s32p->fss_bstore);
+	p->fss_csize = s32p->fss_csize;
+	p->fss_flags = s32p->fss_flags;
+}
+
+static inline void
+netbsd32_to_fss_get(struct netbsd32_fss_get *s32p, struct fss_get *p,
+    u_long cmd)
+{
+
+	memcpy(p->fsg_mount, s32p->fsg_mount, MNAMELEN);
+	netbsd32_to_timeval(&s32p->fsg_time, &p->fsg_time);
+	p->fsg_csize = s32p->fsg_csize;
+	p->fsg_mount_size = s32p->fsg_mount_size;
+	p->fsg_bs_size = s32p->fsg_bs_size;
+
 }
 
 static inline void
@@ -663,6 +715,19 @@ netbsd32_from_ifmediareq(struct ifmediareq *p,
 }
 
 static inline void
+netbsd32_from_in6_nbrinfo(struct in6_nbrinfo *p, struct netbsd32_in6_nbrinfo *s32p,
+    u_long cmd)
+{
+
+	memcpy(s32p->ifname, p->ifname, sizeof s32p->ifname);
+	memcpy(&s32p->addr, &p->addr, sizeof s32p->addr);
+	s32p->asked = p->asked;
+	s32p->isrouter = p->isrouter;
+	s32p->state = p->state;
+	s32p->expire = p->expire;
+}
+
+static inline void
 netbsd32_from_pppoediscparms(struct pppoediscparms *p,
     struct netbsd32_pppoediscparms *s32p, u_long cmd)
 {
@@ -730,6 +795,16 @@ netbsd32_from_sioc_sg_req(struct sioc_sg_req *p,
 }
 
 static inline void
+netbsd32_from_kfilter_mapping(struct kfilter_mapping *p,
+    struct netbsd32_kfilter_mapping *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->name, p->name);
+	s32p->len = p->len;
+	s32p->filter = p->filter;
+}
+
+static inline void
 netbsd32_from_atareq(struct atareq *p,
     struct netbsd32_atareq *s32p, u_long cmd)
 {
@@ -746,6 +821,30 @@ netbsd32_from_atareq(struct atareq *p,
 	s32p->timeout = p->timeout;
 	s32p->retsts = p->retsts;
 	s32p->error = p->error;
+}
+
+static inline void
+netbsd32_from_fss_set(struct fss_set *p, struct netbsd32_fss_set *s32p,
+    u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->fss_mount, p->fss_mount);
+	NETBSD32PTR32(s32p->fss_bstore, p->fss_bstore);
+	s32p->fss_csize = p->fss_csize;
+	s32p->fss_flags = p->fss_flags;
+}
+
+static inline void
+netbsd32_from_fss_get(struct fss_get *p, struct netbsd32_fss_get *s32p,
+    u_long cmd)
+{
+
+	memcpy(s32p->fsg_mount, p->fsg_mount, MNAMELEN);
+	netbsd32_from_timeval(&p->fsg_time, &s32p->fsg_time);
+	s32p->fsg_csize = p->fsg_csize;
+	s32p->fsg_mount_size = p->fsg_mount_size;
+	s32p->fsg_bs_size = p->fsg_bs_size;
+
 }
 
 static inline void
@@ -1320,6 +1419,11 @@ netbsd32_ioctl(struct lwp *l,
 		IOCTL_STRUCT_CONV_TO(DIOCWFORMAT, format_op);
 #endif
 
+	case KFILTER_BYFILTER32:
+		IOCTL_STRUCT_CONV_TO(KFILTER_BYFILTER, kfilter_mapping);
+	case KFILTER_BYNAME32:
+		IOCTL_STRUCT_CONV_TO(KFILTER_BYNAME, kfilter_mapping);
+
 	case ATAIOCCOMMAND32:
 		IOCTL_STRUCT_CONV_TO(ATAIOCCOMMAND, atareq);
 
@@ -1421,6 +1525,9 @@ netbsd32_ioctl(struct lwp *l,
 	case SIOCGIFMEDIA32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
 
+	case SIOCGNBRINFO_IN632:
+		IOCTL_STRUCT_CONV_TO(SIOCGNBRINFO_IN6, in6_nbrinfo);
+
 	case SIOCGIFGENERIC32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFGENERIC, ifreq);
 	case SIOCSIFGENERIC32:
@@ -1446,18 +1553,19 @@ netbsd32_ioctl(struct lwp *l,
 	case SIOCGETSGCNT32:
 		IOCTL_STRUCT_CONV_TO(SIOCGETSGCNT, sioc_sg_req);
 
+	case FSSIOCSET32:	/* XXX FSSIOCSET50 not yet handled */
+		IOCTL_STRUCT_CONV_TO(FSSIOCSET, fss_set);
+	case FSSIOCGET32:	/* XXX FSSIOCGET50 not yet handled */
+		IOCTL_STRUCT_CONV_TO(FSSIOCGET, fss_get);
+
 	case VNDIOCSET32:
 		IOCTL_STRUCT_CONV_TO(VNDIOCSET, vnd_ioctl);
-
 	case VNDIOCCLR32:
 		IOCTL_STRUCT_CONV_TO(VNDIOCCLR, vnd_ioctl);
-
 	case VNDIOCGET32:
 		IOCTL_STRUCT_CONV_TO(VNDIOCGET, vnd_user);
-
 	case VNDIOCSET5032:
 		IOCTL_STRUCT_CONV_TO(VNDIOCSET50, vnd_ioctl50);
-
 	case VNDIOCCLR5032:
 		IOCTL_STRUCT_CONV_TO(VNDIOCCLR50, vnd_ioctl50);
 

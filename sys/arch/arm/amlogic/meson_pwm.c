@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pwm.c,v 1.1.2.2 2021/01/03 16:34:50 thorpej Exp $ */
+/* $NetBSD: meson_pwm.c,v 1.1.2.3 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.1.2.2 2021/01/03 16:34:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.1.2.3 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,11 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: meson_pwm.c,v 1.1.2.2 2021/01/03 16:34:50 thorpej Ex
 #define PWM_WRITE_REG(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg) * 4, (val))
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson-g12a-ao-pwm-ab", 0 },
-	{ "amlogic,meson-g12a-ao-pwm-cd", 0 },
-	{ "amlogic,meson-g12a-ee-pwm", 0 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson-g12a-ao-pwm-ab" },
+	{ .compat = "amlogic,meson-g12a-ao-pwm-cd" },
+	{ .compat = "amlogic,meson-g12a-ee-pwm" },
+	DEVICE_COMPAT_EOL
 };
 
 #define MESON_PWM_NCHAN	2
@@ -327,7 +327,7 @@ meson_pwm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.39 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: mesh.c,v 1.39.26.1 2021/04/03 22:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.39 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.39.26.1 2021/04/03 22:28:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -261,7 +261,8 @@ mesh_attach(device_t parent, device_t self, void *aux)
 
 	config_found(self, &sc->sc_channel, scsiprint);
 
-	intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc);
+	intr_establish_xname(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc,
+	    device_xname(self));
 
 	/* Reset SCSI bus when halt. */
 	if (!pmf_device_register1(self, NULL, NULL, mesh_shutdown))

@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.32.2.2 2021/01/03 16:34:51 thorpej Exp $ */
+/* $NetBSD: gicv3.c,v 1.32.2.3 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.32.2.2 2021/01/03 16:34:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.32.2.3 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.32.2.2 2021/01/03 16:34:51 thorpej Exp $
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/vmem.h>
+#include <sys/kmem.h>
 #include <sys/atomic.h>
 
 #include <machine/cpufunc.h>
@@ -64,6 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.32.2.2 2021/01/03 16:34:51 thorpej Exp $
 #define	GIC_PRIO_SHIFT_NS		4
 #define	GIC_PRIO_SHIFT_S		3
 
+/*
+ * Set to true if you want to use 1 of N interrupt distribution for SPIs
+ * when available. Disabled by default because it causes issues with the
+ * USB stack.
+ */
+bool gicv3_use_1ofn = false;
+
 static struct gicv3_softc *gicv3_softc;
 
 static inline uint32_t
@@ -78,11 +86,13 @@ gicd_write_4(struct gicv3_softc *sc, bus_size_t reg, uint32_t val)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_d, reg, val);
 }
 
+#ifdef MULTIPROCESSOR
 static inline uint64_t
 gicd_read_8(struct gicv3_softc *sc, bus_size_t reg)
 {
 	return bus_space_read_8(sc->sc_bst, sc->sc_bsh_d, reg);
 }
+#endif
 
 static inline void
 gicd_write_8(struct gicv3_softc *sc, bus_size_t reg, uint64_t val)
@@ -192,7 +202,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		 * If 1 of N SPI routing is supported, route MP-safe interrupts to all
 		 * participating PEs. Otherwise, just route to the primary PE.
 		 */
-		if (is->is_mpsafe && GIC_SUPPORTS_1OFN(sc)) {
+		if (is->is_mpsafe && GIC_SUPPORTS_1OFN(sc) && gicv3_use_1ofn) {
 			irouter = GICD_IROUTER_Interrupt_Routing_mode;
 		} else {
 			irouter = sc->sc_irouter[0];
@@ -219,8 +229,14 @@ static void
 gicv3_set_priority(struct pic_softc *pic, int ipl)
 {
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
+	struct cpu_info * const ci = curcpu();
+	const uint8_t newpmr = IPL_TO_PMR(sc, ipl);
 
-	icc_pmr_write(IPL_TO_PMR(sc, ipl));
+	if (newpmr > ci->ci_hwpl) {
+		/* Lowering priority mask */
+		ci->ci_hwpl = newpmr;
+		icc_pmr_write(newpmr);
+	}
 }
 
 static void
@@ -406,7 +422,8 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 		;
 
 	/* Set initial priority mask */
-	gicv3_set_priority(pic, IPL_HIGH);
+	ci->ci_hwpl = IPL_TO_PMR(sc, IPL_HIGH);
+	icc_pmr_write(ci->ci_hwpl);
 
 	/* Set the binary point field to the minimum value */
 	icc_bpr1_write(0);
@@ -423,7 +440,7 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	gicv3_redist_enable(sc, ci);
 
 	/* Allow IRQ exceptions */
-	cpsie(I32_bit);
+	ENABLE_INTERRUPT();
 }
 
 #ifdef MULTIPROCESSOR
@@ -488,7 +505,7 @@ gicv3_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affinity)
 	const int set = kcpuset_countset(affinity);
 	if (set == 1) {
 		irouter = sc->sc_irouter[kcpuset_ffs(affinity) - 1];
-	} else if (set == ncpu && GIC_SUPPORTS_1OFN(sc)) {
+	} else if (set == ncpu && GIC_SUPPORTS_1OFN(sc) && gicv3_use_1ofn) {
 		irouter = GICD_IROUTER_Interrupt_Routing_mode;
 	} else {
 		return EINVAL;
@@ -721,8 +738,17 @@ gicv3_irq_handler(void *frame)
 	struct gicv3_softc * const sc = gicv3_softc;
 	struct pic_softc *pic;
 	const int oldipl = ci->ci_cpl;
+	const uint8_t pmr = IPL_TO_PMR(sc, oldipl);
 
 	ci->ci_data.cpu_nintr++;
+
+	if (ci->ci_hwpl != pmr) {
+		ci->ci_hwpl = pmr;
+		icc_pmr_write(pmr);
+		if (oldipl == IPL_HIGH) {
+			return;
+		}
+	}
 
 	for (;;) {
 		const uint32_t iar = icc_iar1_read();
@@ -744,8 +770,8 @@ gicv3_irq_handler(void *frame)
 		if (__predict_false(ipl < ci->ci_cpl)) {
 			pic_do_pending_ints(I32_bit, ipl, frame);
 		} else if (ci->ci_cpl != ipl) {
-			gicv3_set_priority(pic, ipl);
-			ci->ci_cpl = ipl;
+			icc_pmr_write(IPL_TO_PMR(sc, ipl));
+			ci->ci_hwpl = ci->ci_cpl = ipl;
 		}
 
 		if (early_eoi) {
@@ -755,9 +781,9 @@ gicv3_irq_handler(void *frame)
 
 		const int64_t nintr = ci->ci_data.cpu_nintr;
 
-		cpsie(I32_bit);
+		ENABLE_INTERRUPT();
 		pic_dispatch(is, frame);
-		cpsid(I32_bit);
+		DISABLE_INTERRUPT();
 
 		if (nintr != ci->ci_data.cpu_nintr)
 			ci->ci_intr_preempt.ev_count++;
@@ -838,7 +864,8 @@ gicv3_init(struct gicv3_softc *sc)
 
 	LIST_INIT(&sc->sc_lpi_callbacks);
 
-	for (n = 0; n < MAXCPUS; n++)
+	sc->sc_irouter = kmem_zalloc(sizeof(*sc->sc_irouter) * ncpu, KM_SLEEP);
+	for (n = 0; n < ncpu; n++)
 		sc->sc_irouter[n] = UINT64_MAX;
 
 	sc->sc_gicd_typer = gicd_read_4(sc, GICD_TYPER);
@@ -876,6 +903,9 @@ gicv3_init(struct gicv3_softc *sc)
 	pic_add(&sc->sc_pic, 0);
 
 	if ((sc->sc_gicd_typer & GICD_TYPER_LPIS) != 0) {
+		sc->sc_lpipend = kmem_zalloc(sizeof(*sc->sc_lpipend) * ncpu, KM_SLEEP);
+		sc->sc_processor_id = kmem_zalloc(sizeof(*sc->sc_processor_id) * ncpu, KM_SLEEP);
+
 		sc->sc_lpi.pic_ops = &gicv3_lpiops;
 		sc->sc_lpi.pic_maxsources = 8192;	/* Min. required by GICv3 spec */
 		snprintf(sc->sc_lpi.pic_name, sizeof(sc->sc_lpi.pic_name), "gicv3-lpi");

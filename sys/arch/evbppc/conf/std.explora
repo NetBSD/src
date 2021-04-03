@@ -1,4 +1,4 @@
-#	$NetBSD: std.explora,v 1.5 2011/06/20 17:44:33 matt Exp $
+#	$NetBSD: std.explora,v 1.5.66.1 2021/04/03 22:28:24 thorpej Exp $
 #
 # Standard/required options for NetBSD/explora.
 
@@ -20,6 +20,8 @@ makeoptions	PPCDIR="ibm4xx"
 
 options 	PPC_INTR_IMPL="<powerpc/intr.h>"
 
-options 	INTSTK=8192
+options 	INTSTK=16384
+
+options 	PPC_CPU_FREQ=66000000	# XXX hack for pckbc_cnattach()
 
 include		"arch/evbppc/conf/files.explora"

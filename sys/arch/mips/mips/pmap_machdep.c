@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.30.2.1 2021/01/03 16:34:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.30.2.2 2021/04/03 22:28:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.30.2.1 2021/01/03 16:34:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.30.2.2 2021/04/03 22:28:31 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -482,6 +482,8 @@ pmap_bootstrap(void)
 	}
 	KASSERT(pmap_pte_lookup(pmap_kernel(), VM_MIN_KERNEL_ADDRESS) == sysmap);
 
+	/* update the top of the kernel VM - pmap_growkernel not required */
+	pmap_curmaxkvaddr = pmap_limits.virtual_end;
 	/*
 	 * Initialize the pools.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.64 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.64.42.1 2021/04/03 22:28:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64.42.1 2021/04/03 22:28:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64 2013/09/07 15:56:11 tsutsui Exp $");
 #include <dev/ic/intersil7170reg.h>
 #include <dev/ic/intersil7170var.h>
 
-extern int intrcnt[];
+extern u_int intrcnt[];
 
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)

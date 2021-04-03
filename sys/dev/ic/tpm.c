@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.16 2019/10/09 14:03:58 maxv Exp $	*/
+/*	$NetBSD: tpm.c,v 1.16.8.1 2021/04/03 22:28:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,17 +48,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.16 2019/10/09 14:03:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.16.8.1 2021/04/03 22:28:45 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/bus.h>
 #include <sys/pmf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/workqueue.h>
 
 #include <dev/ic/tpmreg.h>
 #include <dev/ic/tpmvar.h>
@@ -323,10 +327,186 @@ tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 	return 0;
 }
 
+static void
+tpm_tis12_rng_work(struct work *wk, void *cookie)
+{
+	struct tpm_softc *sc = cookie;
+	/*
+	 * TPM Specification Version 1.2, Main Part 3: Commands,
+	 * Sec. 13.6 TPM_GetRandom
+	 */
+	struct {
+		struct tpm_header hdr;
+		uint32_t bytesRequested;
+	} __packed command;
+	struct response {
+		struct tpm_header hdr;
+		uint32_t randomBytesSize;
+		uint8_t	bytes[64];
+	} __packed response;
+	bool busy, endwrite = false, endread = false;
+	size_t nread;
+	uint16_t tag;
+	uint32_t pktlen, code, nbytes;
+	int rv;
+
+	/* Acknowledge the request.  */
+	sc->sc_rndpending = 0;
+
+	/* Lock userland out of the tpm, or fail if it's already open.  */
+	mutex_enter(&sc->sc_lock);
+	busy = sc->sc_busy;
+	sc->sc_busy = true;
+	mutex_exit(&sc->sc_lock);
+	if (busy) {		/* tough */
+		aprint_debug_dev(sc->sc_dev, "%s: device in use\n", __func__);
+		return;
+	}
+
+	/* Encode the command.  */
+	memset(&command, 0, sizeof(command));
+	command.hdr.tag = htobe16(TPM_TAG_RQU_COMMAND);
+	command.hdr.length = htobe32(sizeof(command));
+	command.hdr.code = htobe32(TPM_ORD_GetRandom);
+	command.bytesRequested = htobe32(sizeof(response.bytes));
+
+	/* Write the command.   */
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE)) != 0) {
+		device_printf(sc->sc_dev, "start write failed, error=%d\n",
+		    rv);
+		goto out;
+	}
+	endwrite = true;
+	if ((rv = (*sc->sc_intf->write)(sc, &command, sizeof(command))) != 0) {
+		device_printf(sc->sc_dev, "write failed, error=%d\n", rv);
+		goto out;
+	}
+	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
+	endwrite = false;
+	if (rv) {
+		device_printf(sc->sc_dev, "end write failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Read the response header.  */
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)) != 0) {
+		device_printf(sc->sc_dev, "start write failed, error=%d\n",
+		    rv);
+		goto out;
+	}
+	endread = true;
+	if ((rv = (*sc->sc_intf->read)(sc, &response.hdr, sizeof(response.hdr),
+		    &nread, 0)) != 0) {
+		device_printf(sc->sc_dev, "read failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Verify the response header looks sensible.  */
+	if (nread != sizeof(response.hdr)) {
+		device_printf(sc->sc_dev, "read %zu bytes, expected %zu",
+		    nread, sizeof(response.hdr));
+		goto out;
+	}
+	tag = be16toh(response.hdr.tag);
+	pktlen = be32toh(response.hdr.length);
+	code = be32toh(response.hdr.code);
+	if (tag != TPM_TAG_RSP_COMMAND ||
+	    pktlen < offsetof(struct response, bytes) ||
+	    pktlen > sizeof(response) ||
+	    code != 0) {
+		/*
+		 * If the tpm itself is busy (e.g., it has yet to run a
+		 * self-test, or it's in a timeout period to defend
+		 * against brute force attacks), then we can try again
+		 * later.  Otherwise, give up.
+		 */
+		if (code & TPM_NON_FATAL) {
+			aprint_debug_dev(sc->sc_dev, "%s: tpm busy, code=%u\n",
+			    __func__, code & ~TPM_NON_FATAL);
+			rv = 0;
+		} else if (code == TPM_DEACTIVATED) {
+			device_printf(sc->sc_dev, "tpm is deactivated\n");
+			rv = ENXIO;
+		} else {
+			device_printf(sc->sc_dev, "bad tpm response:"
+			    " tag=%u len=%u code=%u\n", tag, pktlen, code);
+			hexdump(aprint_debug, "tpm response header",
+			    (const void *)&response.hdr,
+			    sizeof(response.hdr));
+			rv = EIO;
+		}
+		goto out;
+	}
+
+	/* Read the response payload.  */
+	if ((rv = (*sc->sc_intf->read)(sc,
+		    (char *)&response + nread, pktlen - nread,
+		    NULL, TPM_PARAM_SIZE)) != 0) {
+		device_printf(sc->sc_dev, "read failed, error=%d\n", rv);
+		goto out;
+	}
+	endread = false;
+	if ((rv = (*sc->sc_intf->end)(sc, UIO_READ, 0)) != 0) {
+		device_printf(sc->sc_dev, "end read failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Verify the number of bytes read looks sensible.  */
+	nbytes = be32toh(response.randomBytesSize);
+	if (nbytes > pktlen - offsetof(struct response, bytes)) {
+		device_printf(sc->sc_dev, "overlong GetRandom length:"
+		    " %u, max %zu\n",
+		    nbytes, pktlen - offsetof(struct response, bytes));
+		nbytes = pktlen - offsetof(struct response, bytes);
+	}
+
+	/*
+	 * Enter the data into the entropy pool.  Conservatively (or,
+	 * perhaps, cargocultily) estimate half a bit of entropy per
+	 * bit of data.
+	 */
+	rnd_add_data(&sc->sc_rnd, response.bytes, nbytes, (NBBY/2)*nbytes);
+
+out:	/*
+	 * If the tpm is busted, no sense in trying again -- most
+	 * likely, it is deactivated, and by the spec it cannot be
+	 * reactivated until after a reboot.
+	 */
+	if (rv) {
+		device_printf(sc->sc_dev, "deactivating entropy source\n");
+		rnd_detach_source(&sc->sc_rnd);
+		/* XXX worker thread can't workqueue_destroy its own queue */
+	}
+
+	/* End the read or write if still ongoing.  */
+	if (endread)
+		rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
+	if (endwrite)
+		rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
+
+	/* Relinquish the tpm back to userland.  */
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_busy);
+	sc->sc_busy = false;
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+tpm_tis12_rng_get(size_t nbytes, void *cookie)
+{
+	struct tpm_softc *sc = cookie;
+
+	if (atomic_swap_uint(&sc->sc_rndpending, 1) == 0)
+		workqueue_enqueue(sc->sc_rndwq, &sc->sc_rndwk, NULL);
+}
+
 static int
 tpm_tis12_init(struct tpm_softc *sc)
 {
 	int rv;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_caps = bus_space_read_4(sc->sc_bt, sc->sc_bh,
 	    TPM_INTF_CAPABILITY);
@@ -341,6 +521,15 @@ tpm_tis12_init(struct tpm_softc *sc)
 
 	/* Abort whatever it thought it was doing. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
+
+	/* XXX Run this at higher priority?  */
+	if ((rv = workqueue_create(&sc->sc_rndwq, device_xname(sc->sc_dev),
+		    tpm_tis12_rng_work, sc, PRI_NONE, IPL_VM, WQ_MPSAFE)) != 0)
+		return rv;
+	rndsource_setcb(&sc->sc_rnd, tpm_tis12_rng_get, sc);
+	rnd_attach_source(&sc->sc_rnd, device_xname(sc->sc_dev),
+	    RND_TYPE_RNG,
+	    RND_FLAG_COLLECT_VALUE|RND_FLAG_ESTIMATE_VALUE|RND_FLAG_HASCB);
 
 	return 0;
 }

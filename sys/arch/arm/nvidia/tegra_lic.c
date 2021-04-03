@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_lic.c,v 1.6 2019/01/26 14:38:29 thorpej Exp $ */
+/* $NetBSD: tegra_lic.c,v 1.6.12.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.6 2019/01/26 14:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.6.12.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ static int	tegra_lic_match(device_t, cfdata_t, void *);
 static void	tegra_lic_attach(device_t, device_t, void *);
 
 static void *	tegra_lic_establish(device_t, u_int *, int, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 static void	tegra_lic_disestablish(device_t, void *);
 static bool	tegra_lic_intrstr(device_t, u_int *, char *, size_t);
 
@@ -69,17 +69,18 @@ struct tegra_lic_softc {
 CFATTACH_DECL_NEW(tegra_lic, sizeof(struct tegra_lic_softc),
 	tegra_lic_match, tegra_lic_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-ictlr" },
+	{ .compat = "nvidia,tegra124-ictlr" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_lic_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-ictlr",
-		"nvidia,tegra124-ictlr",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -130,7 +131,7 @@ tegra_lic_attach(device_t parent, device_t self, void *aux)
 
 static void *
 tegra_lic_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
@@ -145,7 +146,8 @@ tegra_lic_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int level = (trig & FDT_INTR_TYPE_DOUBLE_EDGE)
 	    ? IST_EDGE : IST_LEVEL;
 
-	return intr_establish(irq, ipl, level | iflags, func, arg);
+	return intr_establish_xname(irq, ipl, level | iflags, func, arg,
+	    xname);
 }
 
 static void

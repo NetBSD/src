@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pwm.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx6_pwm.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pwm.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pwm.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,13 +75,17 @@ static struct fdtbus_pwm_controller_func imxpwm_funcs = {
 	.get_tag = imxpwm_get_tag
 };
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-pwm" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 imx6_pwm_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx6q-pwm", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void
@@ -116,8 +120,8 @@ imx6_pwm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    0, imxpwm_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    0, imxpwm_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

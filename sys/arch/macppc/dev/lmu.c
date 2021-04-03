@@ -1,4 +1,4 @@
-/* $NetBSD: lmu.c,v 1.5 2020/09/12 18:12:53 macallan Exp $ */
+/* $NetBSD: lmu.c,v 1.5.2.1 2021/04/03 22:28:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.5 2020/09/12 18:12:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.5.2.1 2021/04/03 22:28:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,9 @@ CFATTACH_DECL_NEW(lmu, sizeof(struct lmu_softc),
     lmu_match, lmu_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "lmu-micro",		0 },
-	{ "lmu-controller",	0 },
-	{ NULL,			0 }
+	{ .compat = "lmu-micro" },
+	{ .compat = "lmu-controller" },
+	DEVICE_COMPAT_EOL
 };
 
 /* time between polling the light sensors */

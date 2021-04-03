@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.88 2020/06/27 14:34:45 jdolecek Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.88.2.1 2021/04/03 22:28:50 thorpej Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.88 2020/06/27 14:34:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.88.2.1 2021/04/03 22:28:50 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -217,7 +217,9 @@ static const struct urtwn_dev {
 	/* URTWN_RTL8192EU */
 	URTWN_RTL8192EU_DEV(DLINK,	DWA131E),
 	URTWN_RTL8192EU_DEV(REALTEK,	RTL8192EU),
-	URTWN_RTL8192EU_DEV(TPLINK,	RTL8192EU),
+	URTWN_RTL8192EU_DEV(TPLINK,	WN821NV5),
+	URTWN_RTL8192EU_DEV(TPLINK,	WN822NV4),
+	URTWN_RTL8192EU_DEV(TPLINK,	WN823NV2),
 };
 #undef URTWN_DEV
 #undef URTWN_RTL8188E_DEV
@@ -852,6 +854,10 @@ urtwn_tx_beacon(struct urtwn_softc *sc, struct mbuf *m,
 {
 	struct urtwn_tx_data *data =
 	    urtwn_get_tx_data(sc, sc->ac2idx[WME_AC_VO]);
+
+	if (data == NULL)
+		return ENOBUFS;
+
 	return urtwn_tx(sc, m, ni, data);
 }
 
@@ -877,7 +883,7 @@ urtwn_task(void *arg)
 		}
 
 		if (urtwn_tx_beacon(sc, m, ic->ic_bss) != 0) {
-			aprint_error_dev(sc->sc_dev, "could not send beacon");
+			aprint_error_dev(sc->sc_dev, "could not send beacon\n");
 		}
 
 		/* beacon is no longer needed */
@@ -2581,6 +2587,17 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 }
 
 static void
+urtwn_put_tx_data(struct urtwn_softc *sc, struct urtwn_tx_data *data)
+{
+	size_t pidx = data->pidx;
+
+	mutex_enter(&sc->sc_tx_mtx);
+	/* Put this Tx buffer back to our free list. */
+	TAILQ_INSERT_TAIL(&sc->tx_free_list[pidx], data, next);
+	mutex_exit(&sc->sc_tx_mtx);
+}
+
+static void
 urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct urtwn_tx_data *data = priv;
@@ -2592,10 +2609,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
 	DPRINTFN(DBG_TX, "status=%jd", status, 0, 0, 0);
 
-	mutex_enter(&sc->sc_tx_mtx);
-	/* Put this Tx buffer back to our free list. */
-	TAILQ_INSERT_TAIL(&sc->tx_free_list[pidx], data, next);
-	mutex_exit(&sc->sc_tx_mtx);
+	urtwn_put_tx_data(sc, data);
 
 	s = splnet();
 	sc->tx_timer = 0;
@@ -2607,7 +2621,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				struct usbd_pipe *pipe = sc->tx_pipe[pidx];
 				usbd_clear_endpoint_stall_async(pipe);
 			}
-			printf("ERROR1\n");
+			device_printf(sc->sc_dev, "device timeout\n");
 			if_statinc(ifp, if_oerrors);
 		}
 		splx(s);
@@ -2644,8 +2658,11 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		k = ieee80211_crypto_encap(ic, ni, m);
-		if (k == NULL)
+		if (k == NULL) {
+			urtwn_put_tx_data(sc, data);
+			m_free(m);
 			return ENOBUFS;
+		}
 
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m, struct ieee80211_frame *);
@@ -2900,16 +2917,20 @@ urtwn_start(struct ifnet *ifp)
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
-			printf("ERROR6\n");
+			device_printf(sc->sc_dev, "m_pullup failed\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
+			m_freem(m);
 			continue;
 		}
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
-			m_freem(m);
-			printf("ERROR5\n");
+			device_printf(sc->sc_dev,
+			    "unable to find transmit node\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
+			m_freem(m);
 			continue;
 		}
 
@@ -2917,8 +2938,11 @@ urtwn_start(struct ifnet *ifp)
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
-			printf("ERROR4\n");
+			device_printf(sc->sc_dev,
+			    "unable to encapsulate packet\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
+			m_freem(m);
 			continue;
 		}
  sendit:
@@ -2927,7 +2951,8 @@ urtwn_start(struct ifnet *ifp)
 		if (urtwn_tx(sc, m, ni, data) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
-			printf("ERROR3\n");
+			device_printf(sc->sc_dev,
+			    "unable to transmit packet\n");
 			if_statinc(ifp, if_oerrors);
 			continue;
 		}
@@ -2949,9 +2974,8 @@ urtwn_watchdog(struct ifnet *ifp)
 
 	if (sc->tx_timer > 0) {
 		if (--sc->tx_timer == 0) {
-			aprint_error_dev(sc->sc_dev, "device timeout\n");
+			device_printf(sc->sc_dev, "device timeout\n");
 			/* urtwn_init(ifp); XXX needs a process context! */
-			printf("ERROR2\n");
 			if_statinc(ifp, if_oerrors);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.11 2019/12/16 18:50:44 ad Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.11.8.1 2021/04/03 22:29:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.11 2019/12/16 18:50:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.11.8.1 2021/04/03 22:29:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -124,7 +124,7 @@ pcq_put(pcq_t *pcq, void *item)
 	/*
 	 * Synchronization activity to wake up the consumer will ensure
 	 * that the update to pcq_items[] is visible before the wakeup
-	 * arrives.  So, we do not need an additonal memory barrier here.
+	 * arrives.  So, we do not need an additional memory barrier here.
 	 */
 	return true;
 }
@@ -180,7 +180,7 @@ pcq_get(pcq_t *pcq)
 
 	/*
 	 * Ensure that update to pcq_items[] becomes globally visible
-	 * before the update to pcq_pc.  If it were reodered to occur
+	 * before the update to pcq_pc.  If it were reordered to occur
 	 * after it, we could in theory wipe out a modification made
 	 * to pcq_items[] by pcq_put().
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_elb.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $	*/
+/*	$NetBSD: com_elb.c,v 1.10.12.1 2021/04/03 22:28:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.10.12.1 2021/04/03 22:28:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,12 +59,12 @@ CFATTACH_DECL_NEW(com_elb, sizeof(struct com_elb_softc),
 int
 com_elb_probe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct elb_attach_args *oaa = aux;
+	struct elb_attach_args *eaa = aux;
 
-	if (strcmp(oaa->elb_name, cf->cf_name) != 0)
+	if (strcmp(eaa->elb_name, cf->cf_name) != 0)
 		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -87,5 +87,6 @@ com_elb_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	intr_establish(eaa->elb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
+	intr_establish_xname(eaa->elb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc,
+	    device_xname(self));
 }

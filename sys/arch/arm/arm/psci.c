@@ -1,4 +1,4 @@
-/* $NetBSD: psci.c,v 1.3.12.1 2020/12/14 14:37:47 thorpej Exp $ */
+/* $NetBSD: psci.c,v 1.3.12.2 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_diagnostic.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.3.12.1 2020/12/14 14:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.3.12.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

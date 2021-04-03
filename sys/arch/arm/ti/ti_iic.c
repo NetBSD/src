@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.7.2.1 2021/01/03 16:34:53 thorpej Exp $ */
+/* $NetBSD: ti_iic.c,v 1.7.2.2 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.7.2.1 2021/01/03 16:34:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.7.2.2 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,11 +146,11 @@ static const u_int ti_iic_regmap[TI_NTYPES][TI_NREGS] = {
 	},
 };
 
-static const struct of_compat_data compat_data[] = {
-	/* compatible		type */
-	{ "ti,omap3-i2c",	TI_IIC_OMAP3 },
-	{ "ti,omap4-i2c",	TI_IIC_OMAP4 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	/* compatible			type */
+	{ .compat = "ti,omap3-i2c",	.value = TI_IIC_OMAP3 },
+	{ .compat = "ti,omap4-i2c",	.value = TI_IIC_OMAP4 },
+	DEVICE_COMPAT_EOL
 };
 
 /* operation in progress */
@@ -225,7 +225,7 @@ ti_iic_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct fdt_attach_args * const faa = opaque;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -269,10 +269,10 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
-	    ti_iic_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, 0,
+	    ti_iic_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": couldn't establish interrupt\n");
 		return;

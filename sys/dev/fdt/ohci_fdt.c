@@ -1,4 +1,4 @@
-/* $NetBSD: ohci_fdt.c,v 1.3 2018/08/12 16:33:58 jmcneill Exp $ */
+/* $NetBSD: ohci_fdt.c,v 1.3.14.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.3 2018/08/12 16:33:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.3.14.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,16 +52,17 @@ CFATTACH_DECL2_NEW(ohci_fdt, sizeof(struct ohci_softc),
 	ohci_fdt_match, ohci_fdt_attach, NULL,
 	ohci_activate, NULL, ohci_childdet);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "generic-ohci" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 ohci_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"generic-ohci",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -128,8 +129,8 @@ ohci_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
-	    ohci_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
+	    ohci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
