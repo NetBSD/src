@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.421 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.422 2021/04/03 14:39:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.421 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.422 2021/04/03 14:39:02 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1000,7 +1000,10 @@ JobPrintCommands(Job *job)
 {
 	StringListNode *ln;
 	bool seen = false;
-	ShellWriter wr = { job->cmdFILE, false };
+	ShellWriter wr;
+
+	wr.f = job->cmdFILE;
+	wr.xtraced = false;
 
 	for (ln = job->node->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
@@ -1216,10 +1219,12 @@ static void
 TouchRegular(GNode *gn)
 {
 	const char *file = GNode_Path(gn);
-	struct utimbuf times = { now, now };
+	struct utimbuf times;
 	int fd;
 	char c;
 
+	times.actime = now;
+	times.modtime = now;
 	if (utime(file, &times) >= 0)
 		return;
 
