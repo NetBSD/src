@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.258 2021/04/03 14:39:02 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.259 2021/04/03 15:22:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -101,7 +101,7 @@
 #define FD_CLOEXEC 1
 #endif
 
-#if defined(__GNUC__) && __STDC_VERSION__ >= 199901L
+#if defined(__GNUC__)
 #define MAKE_GNUC_PREREQ(x, y)						\
 	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
 	 (__GNUC__ > (x)))
