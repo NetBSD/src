@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.167 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.168 2021/04/03 12:01:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.167 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.168 2021/04/03 12:01:00 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -410,7 +410,7 @@ Targ_FmtTime(time_t tm)
 	static char buf[128];
 
 	struct tm *parts = localtime(&tm);
-	(void)strftime(buf, sizeof buf, "%k:%M:%S %b %d, %Y", parts);
+	(void)strftime(buf, sizeof buf, "%H:%M:%S %b %d, %Y", parts);
 	return buf;
 }
 
