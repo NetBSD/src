@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.84 2020/02/17 09:09:49 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.85 2021/04/03 17:01:24 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -183,6 +183,7 @@ define	CI_DEVMQ	offsetof(struct cpu_info, ci_devmq)
 ifdef MULTIPROCESSOR
 define	CI_IPIEVC	offsetof(struct cpu_info, ci_ipi_evcnt[0].ev_count)
 endif
+define	CI_IDLESPIN offsetof(struct cpu_info, ci_idlespin)
 
 # CPU boot arguments structure
 define	CBA_NODE	offsetof(struct cpu_bootargs, cb_node)

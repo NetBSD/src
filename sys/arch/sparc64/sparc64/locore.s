@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.426 2021/03/30 20:03:14 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.427 2021/04/03 17:01:24 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6619,11 +6619,19 @@ ENTRY(getfp)
 	 mov %fp, %o0
 
 /*
- * nothing MD to do in the idle loop
+ * Call optional cpu_idle handler if provided
  */
 ENTRY(cpu_idle)
-	retl
+	set	CPUINFO_VA, %o0
+	LDPTR	[%o0 + CI_IDLESPIN], %o1
+	tst	%o1
+	bz	1f
 	 nop
+	jmp	%o1
+	 nop
+1:
+	retl
+	nop
 
 /*
  * cpu_switchto() switches to an lwp to run and runs it, saving the

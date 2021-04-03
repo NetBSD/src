@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.138 2020/08/07 14:20:08 fcambus Exp $ */
+/*	$NetBSD: cpu.c,v 1.139 2021/04/03 17:01:24 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.138 2020/08/07 14:20:08 fcambus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.139 2021/04/03 17:01:24 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -695,8 +695,21 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		ci->ci_cpuset = pa;
 		pa += 64;
 	}
-	
+
+	/*
+	 * cpu_idle setup (currently only necessary for sun4v)
+	 */
+	if (CPU_ISSUN4V) {
+	  ci->ci_idlespin = cpu_idle_sun4v;
+	}
 }
+
+#ifdef SUN4V
+void cpu_idle_sun4v(void)
+{
+  hv_cpu_yield();
+}
+#endif
 
 int
 cpu_myid(void)
