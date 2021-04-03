@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.533 2021/02/05 19:19:17 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.534 2021/04/03 11:08:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.533 2021/02/05 19:19:17 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.534 2021/04/03 11:08:40 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -121,20 +121,20 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 CmdOpts opts;
 time_t now;			/* Time at start of make */
 GNode *defaultNode;		/* .DEFAULT node */
-Boolean allPrecious;		/* .PRECIOUS given on line by itself */
-Boolean deleteOnError;		/* .DELETE_ON_ERROR: set */
+bool allPrecious;		/* .PRECIOUS given on line by itself */
+bool deleteOnError;		/* .DELETE_ON_ERROR: set */
 
 static int maxJobTokens;	/* -j argument */
-Boolean enterFlagObj;		/* -w and objdir != srcdir */
+bool enterFlagObj;		/* -w and objdir != srcdir */
 
 static int jp_0 = -1, jp_1 = -1; /* ends of parent job pipe */
-Boolean doing_depend;		/* Set while reading .depend */
-static Boolean jobsRunning;	/* TRUE if the jobs might be running */
+bool doing_depend;		/* Set while reading .depend */
+static bool jobsRunning;	/* true if the jobs might be running */
 static const char *tracefile;
 static int ReadMakefile(const char *);
 static void purge_relative_cached_realpaths(void);
 
-static Boolean ignorePWD;	/* if we use -C, PWD is meaningless */
+static bool ignorePWD;	/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1]; /* where we chdir'ed to */
 char curdir[MAXPATHLEN + 1];	/* Startup directory */
 const char *progname;
@@ -142,7 +142,7 @@ char *makeDependfile;
 pid_t myPid;
 int makelevel;
 
-Boolean forceJobs = FALSE;
+bool forceJobs = false;
 static int main_errors = 0;
 static HashTable cached_realpaths;
 
@@ -289,7 +289,7 @@ MainParseArgDebug(const char *argvalue)
 			debug |= DEBUG_JOB;
 			break;
 		case 'L':
-			opts.strict = TRUE;
+			opts.strict = true;
 			break;
 		case 'l':
 			debug |= DEBUG_LOUD;
@@ -313,7 +313,7 @@ MainParseArgDebug(const char *argvalue)
 			debug |= DEBUG_TARG;
 			break;
 		case 'V':
-			opts.debugVflag = TRUE;
+			opts.debugVflag = true;
 			break;
 		case 'v':
 			debug |= DEBUG_VAR;
@@ -346,22 +346,22 @@ debug_setbuf:
 }
 
 /* Is path relative, or does it contain any relative component "." or ".."? */
-static Boolean
+static bool
 IsRelativePath(const char *path)
 {
 	const char *cp;
 
 	if (path[0] != '/')
-		return TRUE;
+		return true;
 	cp = path;
 	while ((cp = strstr(cp, "/.")) != NULL) {
 		cp += 2;
 		if (*cp == '.')
 			cp++;
 		if (cp[0] == '/' || cp[0] == '\0')
-			return TRUE;
+			return true;
 	}
-	return FALSE;
+	return false;
 }
 
 static void
@@ -384,7 +384,7 @@ MainParseArgChdir(const char *argvalue)
 	    sa.st_ino == sb.st_ino &&
 	    sa.st_dev == sb.st_dev)
 		strncpy(curdir, argvalue, MAXPATHLEN);
-	ignorePWD = TRUE;
+	ignorePWD = true;
 }
 
 static void
@@ -407,7 +407,7 @@ MainParseArgJobsInternal(const char *argvalue)
 #endif
 		jp_0 = -1;
 		jp_1 = -1;
-		opts.compatMake = TRUE;
+		opts.compatMake = true;
 	} else {
 		Global_Append(MAKEFLAGS, "-J");
 		Global_Append(MAKEFLAGS, argvalue);
@@ -419,7 +419,7 @@ MainParseArgJobs(const char *argvalue)
 {
 	char *p;
 
-	forceJobs = TRUE;
+	forceJobs = true;
 	opts.maxJobs = (int)strtol(argvalue, &p, 0);
 	if (*p != '\0' || opts.maxJobs < 1) {
 		(void)fprintf(stderr,
@@ -450,14 +450,14 @@ MainParseArgSysInc(const char *argvalue)
 	Global_Append(MAKEFLAGS, argvalue);
 }
 
-static Boolean
+static bool
 MainParseArg(char c, const char *argvalue)
 {
 	switch (c) {
 	case '\0':
 		break;
 	case 'B':
-		opts.compatMake = TRUE;
+		opts.compatMake = true;
 		Global_Append(MAKEFLAGS, "-B");
 		Global_Set(MAKE_MODE, "compat");
 		break;
@@ -465,7 +465,7 @@ MainParseArg(char c, const char *argvalue)
 		MainParseArgChdir(argvalue);
 		break;
 	case 'D':
-		if (argvalue[0] == '\0') return FALSE;
+		if (argvalue[0] == '\0') return false;
 		Global_SetExpand(argvalue, "1");
 		Global_Append(MAKEFLAGS, "-D");
 		Global_Append(MAKEFLAGS, argvalue);
@@ -479,12 +479,12 @@ MainParseArg(char c, const char *argvalue)
 		MainParseArgJobsInternal(argvalue);
 		break;
 	case 'N':
-		opts.noExecute = TRUE;
-		opts.noRecursiveExecute = TRUE;
+		opts.noExecute = true;
+		opts.noRecursiveExecute = true;
 		Global_Append(MAKEFLAGS, "-N");
 		break;
 	case 'S':
-		opts.keepgoing = FALSE;
+		opts.keepgoing = false;
 		Global_Append(MAKEFLAGS, "-S");
 		break;
 	case 'T':
@@ -501,11 +501,11 @@ MainParseArg(char c, const char *argvalue)
 		Global_Append(MAKEFLAGS, argvalue);
 		break;
 	case 'W':
-		opts.parseWarnFatal = TRUE;
+		opts.parseWarnFatal = true;
 		/* XXX: why no Var_Append? */
 		break;
 	case 'X':
-		opts.varNoExportEnv = TRUE;
+		opts.varNoExportEnv = true;
 		Global_Append(MAKEFLAGS, "-X");
 		break;
 	case 'd':
@@ -519,21 +519,21 @@ MainParseArg(char c, const char *argvalue)
 		MainParseArgDebug(argvalue);
 		break;
 	case 'e':
-		opts.checkEnvFirst = TRUE;
+		opts.checkEnvFirst = true;
 		Global_Append(MAKEFLAGS, "-e");
 		break;
 	case 'f':
 		Lst_Append(&opts.makefiles, bmake_strdup(argvalue));
 		break;
 	case 'i':
-		opts.ignoreErrors = TRUE;
+		opts.ignoreErrors = true;
 		Global_Append(MAKEFLAGS, "-i");
 		break;
 	case 'j':
 		MainParseArgJobs(argvalue);
 		break;
 	case 'k':
-		opts.keepgoing = TRUE;
+		opts.keepgoing = true;
 		Global_Append(MAKEFLAGS, "-k");
 		break;
 	case 'm':
@@ -541,35 +541,35 @@ MainParseArg(char c, const char *argvalue)
 		/* XXX: why no Var_Append? */
 		break;
 	case 'n':
-		opts.noExecute = TRUE;
+		opts.noExecute = true;
 		Global_Append(MAKEFLAGS, "-n");
 		break;
 	case 'q':
-		opts.queryFlag = TRUE;
+		opts.queryFlag = true;
 		/* Kind of nonsensical, wot? */
 		Global_Append(MAKEFLAGS, "-q");
 		break;
 	case 'r':
-		opts.noBuiltins = TRUE;
+		opts.noBuiltins = true;
 		Global_Append(MAKEFLAGS, "-r");
 		break;
 	case 's':
-		opts.beSilent = TRUE;
+		opts.beSilent = true;
 		Global_Append(MAKEFLAGS, "-s");
 		break;
 	case 't':
-		opts.touchFlag = TRUE;
+		opts.touchFlag = true;
 		Global_Append(MAKEFLAGS, "-t");
 		break;
 	case 'w':
-		opts.enterFlag = TRUE;
+		opts.enterFlag = true;
 		Global_Append(MAKEFLAGS, "-w");
 		break;
 	default:
 	case '?':
 		usage();
 	}
-	return TRUE;
+	return true;
 }
 
 /*
@@ -588,13 +588,13 @@ MainParseArgs(int argc, char **argv)
 	int arginc;
 	char *argvalue;
 	char *optscan;
-	Boolean inOption, dashDash = FALSE;
+	bool inOption, dashDash = false;
 
 	const char *optspecs = "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstv:w";
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 rearg:
-	inOption = FALSE;
+	inOption = false;
 	optscan = NULL;
 	while (argc > 1) {
 		const char *optspec;
@@ -606,20 +606,20 @@ rearg:
 			if (c == '\0') {
 				argv++;
 				argc--;
-				inOption = FALSE;
+				inOption = false;
 				continue;
 			}
 		} else {
 			if (c != '-' || dashDash)
 				break;
-			inOption = TRUE;
+			inOption = true;
 			c = *optscan++;
 		}
 		/* '-' found at some earlier point */
 		optspec = strchr(optspecs, c);
 		if (c != '\0' && optspec != NULL && optspec[1] == ':') {
 			/* -<something> found, and <something> should have an arg */
-			inOption = FALSE;
+			inOption = false;
 			arginc = 1;
 			argvalue = optscan;
 			if (*argvalue == '\0') {
@@ -634,10 +634,10 @@ rearg:
 		switch (c) {
 		case '\0':
 			arginc = 1;
-			inOption = FALSE;
+			inOption = false;
 			break;
 		case '-':
-			dashDash = TRUE;
+			dashDash = true;
 			break;
 		default:
 			if (!MainParseArg(c, argvalue))
@@ -698,7 +698,7 @@ Main_ParseArgLine(const char *line)
 		FStr_Done(&argv0);
 	}
 
-	words = Str_Words(buf, TRUE);
+	words = Str_Words(buf, true);
 	if (words.words == NULL) {
 		Error("Unterminated quoted string [%s]", buf);
 		free(buf);
@@ -710,14 +710,14 @@ Main_ParseArgLine(const char *line)
 	Words_Free(words);
 }
 
-Boolean
-Main_SetObjdir(Boolean writable, const char *fmt, ...)
+bool
+Main_SetObjdir(bool writable, const char *fmt, ...)
 {
 	struct stat sb;
 	char *path;
 	char buf[MAXPATHLEN + 1];
 	char buf2[MAXPATHLEN + 1];
-	Boolean rc = FALSE;
+	bool rc = false;
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -741,24 +741,24 @@ Main_SetObjdir(Boolean writable, const char *fmt, ...)
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
 			purge_relative_cached_realpaths();
-			rc = TRUE;
+			rc = true;
 			if (opts.enterFlag && strcmp(objdir, curdir) != 0)
-				enterFlagObj = TRUE;
+				enterFlagObj = true;
 		}
 	}
 
 	return rc;
 }
 
-static Boolean
-SetVarObjdir(Boolean writable, const char *var, const char *suffix)
+static bool
+SetVarObjdir(bool writable, const char *var, const char *suffix)
 {
 	FStr path = Var_Value(SCOPE_CMDLINE, var);
 	FStr xpath;
 
 	if (path.str == NULL || path.str[0] == '\0') {
 		FStr_Done(&path);
-		return FALSE;
+		return false;
 	}
 
 	/* expand variable substitutions */
@@ -774,7 +774,7 @@ SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 
 	FStr_Done(&xpath);
 	FStr_Done(&path);
-	return TRUE;
+	return true;
 }
 
 /*
@@ -823,8 +823,8 @@ MakeMode(void)
 
 	if (mode[0] != '\0') {
 		if (strstr(mode, "compat") != NULL) {
-			opts.compatMake = TRUE;
-			forceJobs = FALSE;
+			opts.compatMake = true;
+			forceJobs = false;
 		}
 #if USE_META
 		if (strstr(mode, "meta") != NULL)
@@ -836,7 +836,7 @@ MakeMode(void)
 }
 
 static void
-PrintVar(const char *varname, Boolean expandVars)
+PrintVar(const char *varname, bool expandVars)
 {
 	if (strchr(varname, '$') != NULL) {
 		char *evalue;
@@ -862,18 +862,18 @@ PrintVar(const char *varname, Boolean expandVars)
 }
 
 /*
- * Return a Boolean based on a variable.
+ * Return a bool based on a variable.
  *
  * If the knob is not set, return the fallback.
  * If set, anything that looks or smells like "No", "False", "Off", "0", etc.
- * is FALSE, otherwise TRUE.
+ * is false, otherwise true.
  */
-static Boolean
-GetBooleanVar(const char *varname, Boolean fallback)
+static bool
+GetBooleanVar(const char *varname, bool fallback)
 {
 	char *expr = str_concat3("${", varname, ":U}");
 	char *value;
-	Boolean res;
+	bool res;
 
 	(void)Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES, &value);
 	/* TODO: handle errors */
@@ -887,14 +887,14 @@ static void
 doPrintVars(void)
 {
 	StringListNode *ln;
-	Boolean expandVars;
+	bool expandVars;
 
 	if (opts.printVars == PVM_EXPANDED)
-		expandVars = TRUE;
+		expandVars = true;
 	else if (opts.debugVflag)
-		expandVars = FALSE;
+		expandVars = false;
 	else
-		expandVars = GetBooleanVar(".MAKE.EXPAND_VARIABLES", FALSE);
+		expandVars = GetBooleanVar(".MAKE.EXPAND_VARIABLES", false);
 
 	for (ln = opts.variables.first; ln != NULL; ln = ln->next) {
 		const char *varname = ln->datum;
@@ -902,11 +902,11 @@ doPrintVars(void)
 	}
 }
 
-static Boolean
+static bool
 runTargets(void)
 {
 	GNodeList targs = LST_INIT;	/* target nodes to create */
-	Boolean outOfDate;	/* FALSE if all targets up to date */
+	bool outOfDate;	/* false if all targets up to date */
 
 	/*
 	 * Have now read the entire graph and need to make a list of
@@ -929,7 +929,7 @@ runTargets(void)
 		 */
 		if (!opts.queryFlag) {
 			Job_Init();
-			jobsRunning = TRUE;
+			jobsRunning = true;
 		}
 
 		/* Traverse the graph, checking on all the targets */
@@ -940,7 +940,7 @@ runTargets(void)
 		 * targets as well as initializing the module.
 		 */
 		Compat_Run(&targs);
-		outOfDate = FALSE;
+		outOfDate = false;
 	}
 	Lst_Done(&targs);	/* Don't free the targets themselves. */
 	return outOfDate;
@@ -1083,11 +1083,11 @@ ignore_pwd:
 static void
 InitObjdir(const char *machine, const char *machine_arch)
 {
-	Boolean writable;
+	bool writable;
 
 	Dir_InitCur(curdir);
-	writable = GetBooleanVar("MAKE_OBJDIR_CHECK_WRITABLE", TRUE);
-	(void)Main_SetObjdir(FALSE, "%s", curdir);
+	writable = GetBooleanVar("MAKE_OBJDIR_CHECK_WRITABLE", true);
+	(void)Main_SetObjdir(false, "%s", curdir);
 
 	if (!SetVarObjdir(writable, "MAKEOBJDIRPREFIX", curdir) &&
 	    !SetVarObjdir(writable, "MAKEOBJDIR", "") &&
@@ -1114,27 +1114,27 @@ UnlimitFiles(void)
 static void
 CmdOpts_Init(void)
 {
-	opts.compatMake = FALSE;
+	opts.compatMake = false;
 	opts.debug = DEBUG_NONE;
 	/* opts.debug_file has already been initialized earlier */
-	opts.strict = FALSE;
-	opts.debugVflag = FALSE;
-	opts.checkEnvFirst = FALSE;
+	opts.strict = false;
+	opts.debugVflag = false;
+	opts.checkEnvFirst = false;
 	Lst_Init(&opts.makefiles);
-	opts.ignoreErrors = FALSE;	/* Pay attention to non-zero returns */
+	opts.ignoreErrors = false;	/* Pay attention to non-zero returns */
 	opts.maxJobs = 1;
-	opts.keepgoing = FALSE;		/* Stop on error */
-	opts.noRecursiveExecute = FALSE; /* Execute all .MAKE targets */
-	opts.noExecute = FALSE;		/* Execute all commands */
-	opts.queryFlag = FALSE;
-	opts.noBuiltins = FALSE;	/* Read the built-in rules */
-	opts.beSilent = FALSE;		/* Print commands as executed */
-	opts.touchFlag = FALSE;
+	opts.keepgoing = false;		/* Stop on error */
+	opts.noRecursiveExecute = false; /* Execute all .MAKE targets */
+	opts.noExecute = false;		/* Execute all commands */
+	opts.queryFlag = false;
+	opts.noBuiltins = false;	/* Read the built-in rules */
+	opts.beSilent = false;		/* Print commands as executed */
+	opts.touchFlag = false;
 	opts.printVars = PVM_NONE;
 	Lst_Init(&opts.variables);
-	opts.parseWarnFatal = FALSE;
-	opts.enterFlag = FALSE;
-	opts.varNoExportEnv = FALSE;
+	opts.parseWarnFatal = false;
+	opts.enterFlag = false;
+	opts.varNoExportEnv = false;
 	Lst_Init(&opts.create);
 }
 
@@ -1259,7 +1259,7 @@ InitMaxJobs(void)
 
 	opts.maxJobs = n;
 	maxJobTokens = opts.maxJobs;
-	forceJobs = TRUE;
+	forceJobs = true;
 	free(value);
 }
 
@@ -1400,12 +1400,12 @@ main_Init(int argc, char **argv)
 	Global_Set(MAKE_DEPENDFILE, ".depend");
 
 	CmdOpts_Init();
-	allPrecious = FALSE;	/* Remove targets when interrupted */
-	deleteOnError = FALSE;	/* Historical default behavior */
-	jobsRunning = FALSE;
+	allPrecious = false;	/* Remove targets when interrupted */
+	deleteOnError = false;	/* Historical default behavior */
+	jobsRunning = false;
 
 	maxJobTokens = opts.maxJobs;
-	ignorePWD = FALSE;
+	ignorePWD = false;
 
 	/*
 	 * Initialize the parsing, directory and variable modules to prepare
@@ -1548,9 +1548,9 @@ main_PrepareMaking(void)
 		    SCOPE_CMDLINE, VARE_WANTRES, &makeDependfile);
 		if (makeDependfile[0] != '\0') {
 			/* TODO: handle errors */
-			doing_depend = TRUE;
+			doing_depend = true;
 			(void)ReadMakefile(makeDependfile);
-			doing_depend = FALSE;
+			doing_depend = false;
 		}
 	}
 
@@ -1572,7 +1572,7 @@ main_PrepareMaking(void)
 	 * turn compatibility on.
 	 */
 	if (!opts.compatMake && !forceJobs)
-		opts.compatMake = TRUE;
+		opts.compatMake = true;
 
 	if (!opts.compatMake)
 		Job_ServerStart(maxJobTokens, jp_0, jp_1);
@@ -1580,7 +1580,7 @@ main_PrepareMaking(void)
 	    jp_0, jp_1, opts.maxJobs, maxJobTokens, opts.compatMake ? 1 : 0);
 
 	if (opts.printVars == PVM_NONE)
-		Main_ExportMAKEFLAGS(TRUE);	/* initial export */
+		Main_ExportMAKEFLAGS(true);	/* initial export */
 
 	InitVpath();
 
@@ -1605,13 +1605,13 @@ main_PrepareMaking(void)
  * If the -v or -V options are given, print variables instead.
  * Return whether any of the targets is out-of-date.
  */
-static Boolean
+static bool
 main_Run(void)
 {
 	if (opts.printVars != PVM_NONE) {
 		/* print the values of any variables requested by the user */
 		doPrintVars();
-		return FALSE;
+		return false;
 	} else {
 		return runTargets();
 	}
@@ -1657,7 +1657,7 @@ main_CleanUp(void)
 
 /* Determine the exit code. */
 static int
-main_Exit(Boolean outOfDate)
+main_Exit(bool outOfDate)
 {
 	if (opts.strict && (main_errors > 0 || Parse_GetFatals() > 0))
 		return 2;	/* Not 1 so -q can distinguish error */
@@ -1667,7 +1667,7 @@ main_Exit(Boolean outOfDate)
 int
 main(int argc, char **argv)
 {
-	Boolean outOfDate;
+	bool outOfDate;
 
 	main_Init(argc, argv);
 	main_ReadFiles();
@@ -1835,7 +1835,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 		/* Wait for the process to exit. */
 		while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
-			JobReapChild(pid, status, FALSE);
+			JobReapChild(pid, status, false);
 
 		res_len = buf.len;
 		res = Buf_DoneData(&buf);
@@ -2080,13 +2080,13 @@ cached_realpath(const char *pathname, char *resolved)
  * Return true if we should die without noise.
  * For example our failing child was a sub-make or failure happened elsewhere.
  */
-Boolean
+bool
 shouldDieQuietly(GNode *gn, int bf)
 {
 	static int quietly = -1;
 
 	if (quietly < 0) {
-		if (DEBUG(JOB) || !GetBooleanVar(".MAKE.DIE_QUIETLY", TRUE))
+		if (DEBUG(JOB) || !GetBooleanVar(".MAKE.DIE_QUIETLY", true))
 			quietly = 0;
 		else if (bf >= 0)
 			quietly = bf;
@@ -2166,15 +2166,15 @@ PrintOnError(GNode *gn, const char *msg)
 }
 
 void
-Main_ExportMAKEFLAGS(Boolean first)
+Main_ExportMAKEFLAGS(bool first)
 {
-	static Boolean once = TRUE;
+	static bool once = true;
 	const char *expr;
 	char *s;
 
 	if (once != first)
 		return;
-	once = FALSE;
+	once = false;
 
 	expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
 	(void)Var_Subst(expr, SCOPE_CMDLINE, VARE_WANTRES, &s);
@@ -2245,18 +2245,18 @@ mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 
 /*
  * Convert a string representation of a boolean into a boolean value.
- * Anything that looks like "No", "False", "Off", "0" etc. is FALSE,
- * the empty string is the fallback, everything else is TRUE.
+ * Anything that looks like "No", "False", "Off", "0" etc. is false,
+ * the empty string is the fallback, everything else is true.
  */
-Boolean
-ParseBoolean(const char *s, Boolean fallback)
+bool
+ParseBoolean(const char *s, bool fallback)
 {
 	char ch = ch_tolower(s[0]);
 	if (ch == '\0')
 		return fallback;
 	if (ch == '0' || ch == 'f' || ch == 'n')
-		return FALSE;
+		return false;
 	if (ch == 'o')
 		return ch_tolower(s[1]) != 'f';
-	return TRUE;
+	return true;
 }
