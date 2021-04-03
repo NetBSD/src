@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.898 2021/04/03 21:55:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.899 2021/04/03 22:02:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.898 2021/04/03 21:55:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.899 2021/04/03 22:02:59 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -3639,16 +3639,14 @@ static void
 LogBeforeApply(const ModChain *ch, const char *mod)
 {
 	const Expr *expr = ch->expr;
-	char vflags_str[VarFlags_ToStringSize];
 	bool is_single_char = mod[0] != '\0' && IsDelimiter(mod[1], ch);
 
 	/* At this point, only the first character of the modifier can
 	 * be used since the end of the modifier is not yet known. */
-	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
+	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s)\n",
 	    expr->name, mod[0], is_single_char ? "" : "...",
 	    expr->value.str,
 	    VarEvalFlags_ToString(expr->eflags),
-	    VarFlags_ToString(vflags_str, expr->varFlags),
 	    ExprDefined_Name[expr->defined]);
 }
 
@@ -3657,14 +3655,12 @@ LogAfterApply(const ModChain *ch, const char *p, const char *mod)
 {
 	const Expr *expr = ch->expr;
 	const char *value = expr->value.str;
-	char vflags_str[VarFlags_ToStringSize];
 	const char *quot = value == var_Error ? "" : "\"";
 
-	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
+	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s)\n",
 	    expr->name, (int)(p - mod), mod,
 	    quot, value == var_Error ? "error" : value, quot,
 	    VarEvalFlags_ToString(expr->eflags),
-	    VarFlags_ToString(vflags_str, expr->varFlags),
 	    ExprDefined_Name[expr->defined]);
 }
 

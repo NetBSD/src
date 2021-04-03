@@ -4,10 +4,10 @@ Var_Parse: ${VARNAME} (eval)
 Global:VAR.${param} = initial-value
 Var_Parse: ${${VARNAME}::=assigned-value} (eval-defined)
 Var_Parse: ${VARNAME}::=assigned-value} (eval-defined)
-Applying ${VAR.${param}::...} to "initial-value" (eval-defined, none, regular)
+Applying ${VAR.${param}::...} to "initial-value" (eval-defined, regular)
 Modifier part: "assigned-value"
 Global:VAR.${param} = assigned-value
-Result of ${VAR.${param}::=assigned-value} is "" (eval-defined, none, regular)
+Result of ${VAR.${param}::=assigned-value} is "" (eval-defined, regular)
 Var_Parse: ${${VARNAME}} != "assigned-value" (eval-defined)
 Var_Parse: ${VARNAME}} != "assigned-value" (eval-defined)
 Global:.MAKEFLAGS =  -r -k -d v -d
