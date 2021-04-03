@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.900 2021/04/03 22:06:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.901 2021/04/03 23:08:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,29 +140,27 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.900 2021/04/03 22:06:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.901 2021/04/03 23:08:30 rillig Exp $");
 
-typedef enum VarFlags {
-	VFL_NONE	= 0,
-
+typedef struct VarFlags {
 	/*
 	 * The variable's value is currently being used by Var_Parse or
 	 * Var_Subst.  This marker is used to avoid endless recursion.
 	 */
-	VFL_IN_USE	= 1 << 0,
+	bool inUse: 1;
 
 	/*
 	 * The variable comes from the environment.
 	 * These variables are not registered in any GNode, therefore they
 	 * must be freed as soon as they are not used anymore.
 	 */
-	VFL_FROM_ENV	= 1 << 1,
+	bool fromEnv: 1;
 
 	/*
 	 * The variable is exported to the environment, to be used by child
 	 * processes.
 	 */
-	VFL_EXPORTED	= 1 << 2,
+	bool exported: 1;
 
 	/*
 	 * At the point where this variable was exported, it contained an
@@ -170,10 +168,10 @@ typedef enum VarFlags {
 	 * process is started, it needs to be exported again, in the hope
 	 * that the referenced variable can then be resolved.
 	 */
-	VFL_REEXPORT	= 1 << 3,
+	bool reexport: 1;
 
 	/* The variable came from the command line. */
-	VFL_FROM_CMD	= 1 << 4,
+	bool fromCmd: 1;
 
 	/*
 	 * The variable value cannot be changed anymore, and the variable
@@ -182,7 +180,7 @@ typedef enum VarFlags {
 	 *
 	 * See VAR_SET_READONLY.
 	 */
-	VFL_READONLY	= 1 << 5
+	bool readOnly: 1;
 } VarFlags;
 
 /*
@@ -351,14 +349,17 @@ static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
 
 static Var *
-VarNew(FStr name, const char *value, VarFlags flags)
+VarNew(FStr name, const char *value, bool fromEnv, bool readOnly)
 {
 	size_t value_len = strlen(value);
+	VarFlags vflags = { false, false, false, false, false, false };
 	Var *var = bmake_malloc(sizeof *var);
 	var->name = name;
 	Buf_InitSize(&var->val, value_len + 1);
 	Buf_AddBytes(&var->val, value, value_len);
-	var->flags = flags;
+	vflags.fromEnv = fromEnv;
+	vflags.readOnly = readOnly;
+	var->flags = vflags;
 	return var;
 }
 
@@ -456,7 +457,7 @@ VarFind(const char *name, GNode *scope, bool elsewhere)
 
 		if ((env = getenv(name)) != NULL) {
 			char *varname = bmake_strdup(name);
-			return VarNew(FStr_InitOwn(varname), env, VFL_FROM_ENV);
+			return VarNew(FStr_InitOwn(varname), env, true, false);
 		}
 
 		if (opts.checkEnvFirst && scope != SCOPE_GLOBAL) {
@@ -477,7 +478,7 @@ VarFind(const char *name, GNode *scope, bool elsewhere)
 static void
 VarFreeEnv(Var *v)
 {
-	if (!(v->flags & VFL_FROM_ENV))
+	if (!v->flags.fromEnv)
 		return;
 
 	FStr_Done(&v->name);
@@ -491,7 +492,7 @@ VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
 {
 	HashEntry *he = HashTable_CreateEntry(&scope->vars, name, NULL);
 	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), value,
-	    flags & VAR_SET_READONLY ? VFL_READONLY : VFL_NONE);
+	    false, (flags & VAR_SET_READONLY) != 0);
 	HashEntry_Set(he, v);
 	DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, value);
 	return v;
@@ -514,7 +515,7 @@ Var_Delete(GNode *scope, const char *varname)
 
 	DEBUG2(VAR, "%s:delete %s\n", scope->name, varname);
 	v = he->value;
-	if (v->flags & VFL_EXPORTED)
+	if (v->flags.exported)
 		unsetenv(v->name.str);
 	if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
 		var_exportedVars = VAR_EXPORTED_NONE;
@@ -615,16 +616,16 @@ ExportVarEnv(Var *v)
 	char *val = v->val.data;
 	char *expr;
 
-	if ((v->flags & VFL_EXPORTED) && !(v->flags & VFL_REEXPORT))
+	if (v->flags.exported && !v->flags.reexport)
 		return false;	/* nothing to do */
 
 	if (strchr(val, '$') == NULL) {
-		if (!(v->flags & VFL_EXPORTED))
+		if (!v->flags.exported)
 			setenv(name, val, 1);
 		return true;
 	}
 
-	if (v->flags & VFL_IN_USE) {
+	if (v->flags.inUse) {
 		/*
 		 * We recursed while exporting in a child.
 		 * This isn't going to end well, just skip it.
@@ -647,8 +648,8 @@ ExportVarPlain(Var *v)
 {
 	if (strchr(v->val.data, '$') == NULL) {
 		setenv(v->name.str, v->val.data, 1);
-		v->flags |= VFL_EXPORTED;
-		v->flags &= ~(unsigned)VFL_REEXPORT;
+		v->flags.exported = true;
+		v->flags.reexport = false;
 		return true;
 	}
 
@@ -658,17 +659,18 @@ ExportVarPlain(Var *v)
 	 * the child process can do it at the last minute.
 	 * Avoid calling setenv more often than necessary since it can leak.
 	 */
-	v->flags |= VFL_EXPORTED | VFL_REEXPORT;
+	v->flags.exported = true;
+	v->flags.reexport = true;
 	return true;
 }
 
 static bool
 ExportVarLiteral(Var *v)
 {
-	if ((v->flags & VFL_EXPORTED) && !(v->flags & VFL_REEXPORT))
+	if (v->flags.exported && !v->flags.reexport)
 		return false;
 
-	if (!(v->flags & VFL_EXPORTED))
+	if (!v->flags.exported)
 		setenv(v->name.str, v->val.data, 1);
 
 	return true;
@@ -874,10 +876,10 @@ UnexportVar(const char *varname, UnexportWhat what)
 	}
 
 	DEBUG1(VAR, "Unexporting \"%s\"\n", varname);
-	if (what != UNEXPORT_ENV &&
-	    (v->flags & VFL_EXPORTED) && !(v->flags & VFL_REEXPORT))
+	if (what != UNEXPORT_ENV && v->flags.exported && !v->flags.reexport)
 		unsetenv(v->name.str);
-	v->flags &= ~(unsigned)(VFL_EXPORTED | VFL_REEXPORT);
+	v->flags.exported = false;
+	v->flags.reexport = false;
 
 	if (what == UNEXPORT_NAMED) {
 		/* Remove the variable names from .MAKE.EXPORTED. */
@@ -945,7 +947,7 @@ ExistsInCmdline(const char *name, const char *val)
 	if (v == NULL)
 		return false;
 
-	if (v->flags & VFL_FROM_CMD) {
+	if (v->flags.fromCmd) {
 		DEBUG3(VAR, "%s:%s = %s ignored!\n",
 		    SCOPE_GLOBAL->name, name, val);
 		return true;
@@ -990,7 +992,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		}
 		v = VarAdd(name, val, scope, flags);
 	} else {
-		if ((v->flags & VFL_READONLY) && !(flags & VAR_SET_READONLY)) {
+		if (v->flags.readOnly && !(flags & VAR_SET_READONLY)) {
 			DEBUG3(VAR, "%s:%s = %s ignored (read-only)\n",
 			    scope->name, name, val);
 			return;
@@ -999,7 +1001,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		Buf_AddStr(&v->val, val);
 
 		DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, val);
-		if (v->flags & VFL_EXPORTED)
+		if (v->flags.exported)
 			ExportVar(name, VEM_PLAIN);
 	}
 
@@ -1009,7 +1011,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 	 */
 	if (scope == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
 	    name[0] != '.') {
-		v->flags |= VFL_FROM_CMD;
+		v->flags.fromCmd = true;
 
 		/*
 		 * If requested, don't export these in the environment
@@ -1116,23 +1118,23 @@ Var_Append(GNode *scope, const char *name, const char *val)
 
 	if (v == NULL) {
 		Var_SetWithFlags(scope, name, val, VAR_SET_NONE);
-	} else if (v->flags & VFL_READONLY) {
+	} else if (v->flags.readOnly) {
 		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
 		    name);
-	} else if (scope == SCOPE_CMDLINE || !(v->flags & VFL_FROM_CMD)) {
+	} else if (scope == SCOPE_CMDLINE || !v->flags.fromCmd) {
 		Buf_AddByte(&v->val, ' ');
 		Buf_AddStr(&v->val, val);
 
 		DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, v->val.data);
 
-		if (v->flags & VFL_FROM_ENV) {
+		if (v->flags.fromEnv) {
 			/*
 			 * If the original variable came from the environment,
 			 * we have to install it in the global scope (we
 			 * could place it in the environment, but then we
 			 * should provide a way to export other variables...)
 			 */
-			v->flags &= ~(unsigned)VFL_FROM_ENV;
+			v->flags.fromEnv = false;
 			/*
 			 * This is the only place where a variable is
 			 * created whose v->name is not the same as
@@ -1254,7 +1256,7 @@ Var_Value(GNode *scope, const char *name)
 	if (v == NULL)
 		return FStr_InitRefer(NULL);
 
-	if (!(v->flags & VFL_FROM_ENV))
+	if (!v->flags.fromEnv)
 		return FStr_InitRefer(v->val.data);
 
 	/* Since environment variables are short-lived, free it now. */
@@ -4281,7 +4283,7 @@ ParseVarnameLong(
 		 * is still undefined, Var_Parse will return an empty string
 		 * instead of the actually computed value.
 		 */
-		v = VarNew(FStr_InitOwn(varname), "", VFL_NONE);
+		v = VarNew(FStr_InitOwn(varname), "", false, false);
 		*out_true_exprDefined = DEF_UNDEF;
 	} else
 		free(varname);
@@ -4417,7 +4419,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	}
 
 	expr.name = v->name.str;
-	if (v->flags & VFL_IN_USE)
+	if (v->flags.inUse)
 		Fatal("Variable %s is recursive.", v->name.str);
 
 	/*
@@ -4440,10 +4442,10 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 		VarEvalFlags nested_eflags = eflags;
 		if (opts.strict)
 			nested_eflags.undefErr = false;
-		v->flags |= VFL_IN_USE;
+		v->flags.inUse = true;
 		(void)Var_Subst(expr.value.str, scope, nested_eflags,
 		    &expanded);
-		v->flags &= ~(unsigned)VFL_IN_USE;
+		v->flags.inUse = false;
 		/* TODO: handle errors */
 		Expr_SetValueOwn(&expr, expanded);
 	}
@@ -4463,7 +4465,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 
 	*pp = p;
 
-	if (v->flags & VFL_FROM_ENV) {
+	if (v->flags.fromEnv) {
 		FreeEnvVar(v, &expr.value);
 
 	} else if (expr.defined != DEF_REGULAR) {
