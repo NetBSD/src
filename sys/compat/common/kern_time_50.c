@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.35 2020/02/27 16:41:59 pgoyette Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.36 2021/04/03 12:57:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.35 2020/02/27 16:41:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.36 2021/04/03 12:57:21 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -324,8 +324,6 @@ compat_50_sys_setitimer(struct lwp *l,
 	struct itimerval aitv;
 	int error;
 
-	if ((u_int)which > ITIMER_PROF)
-		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp &&
 	    (error = copyin(itvp, &aitv50, sizeof(aitv50))) != 0)

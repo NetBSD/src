@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.210 2020/12/08 04:09:38 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.211 2021/04/03 12:57:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.210 2020/12/08 04:09:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.211 2021/04/03 12:57:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1576,8 +1576,6 @@ sys___setitimer50(struct lwp *l, const struct sys___setitimer50_args *uap,
 	struct itimerval aitv;
 	int error;
 
-	if ((u_int)which > ITIMER_MONOTONIC)
-		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp &&
 	    (error = copyin(itvp, &aitv, sizeof(struct itimerval))) != 0)
@@ -1604,7 +1602,8 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct itlist *itl;
 	int error;
 
-	KASSERT((u_int)which <= CLOCK_MONOTONIC);
+	if ((u_int)which > ITIMER_MONOTONIC)
+		return (EINVAL);
 	if (itimerfix(&itvp->it_value) || itimerfix(&itvp->it_interval))
 		return (EINVAL);
 
