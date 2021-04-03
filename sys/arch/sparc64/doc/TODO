@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.40 2021/03/30 20:23:45 palle Exp $ */
+/* $NetBSD: TODO,v 1.41 2021/04/03 17:02:31 palle Exp $ */
 
 Things to be done:
 
@@ -23,7 +23,6 @@ sun4v:
 	 S7 ldom with 8 VCPU and 16GB (primary ldom is Solaris 11.4 SRU30):
 	   - during autoconfiguration of vnet devices the call to hv_vintr_setenabled()
 	     returns error code 7 (EBADTRAP?)
-- idle handling - call hypervisor trap (openbsd code...??)	   
 - 64-bit kernel support
 - 32-bit kernel support
 - libkvm
