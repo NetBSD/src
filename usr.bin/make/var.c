@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.896 2021/04/03 14:31:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.897 2021/04/03 14:39:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.896 2021/04/03 14:31:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.897 2021/04/03 14:39:02 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2049,12 +2049,18 @@ static const char *const ExprDefined_Name[] = {
 	"defined"
 };
 
+#if __STDC_VERSION__ >= 199901L
+#define const_member const
+#else
+#define const_member /* no const possible */
+#endif
+
 /* A variable expression such as $@ or ${VAR:Mpattern:Q}. */
 typedef struct Expr {
 	Var *var;
 	FStr value;
-	VarEvalFlags const eflags;
-	GNode *const scope;
+	VarEvalFlags const_member eflags;
+	GNode *const_member scope;
 	ExprDefined defined;
 } Expr;
 
@@ -2087,9 +2093,9 @@ typedef struct Expr {
 typedef struct ModChain {
 	Expr *expr;
 	/* '\0' or '{' or '(' */
-	const char startc;
+	char const_member startc;
 	/* '\0' or '}' or ')' */
-	const char endc;
+	char const_member endc;
 	/* Word separator in expansions (see the :ts modifier). */
 	char sep;
 	/*
@@ -2866,6 +2872,17 @@ ParsePatternFlags(const char **pp, VarPatternFlags *pflags, bool *oneBigWord)
 	}
 }
 
+#if __STDC_VERSION__ >= 199901L
+#define VarPatternFlags_Literal() (VarPatternFlags) { false, false, false, false }
+#else
+MAKE_INLINE VarPatternFlags
+VarPatternFlags_Literal(void)
+{
+	VarPatternFlags pflags = { false, false, false, false };
+	return pflags;
+}
+#endif
+
 /* :S,from,to, */
 static ApplyModifierResult
 ApplyModifier_Subst(const char **pp, ModChain *ch)
@@ -2884,7 +2901,7 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 
 	*pp += 2;
 
-	args.pflags = (VarPatternFlags){ false, false, false, false };
+	args.pflags = VarPatternFlags_Literal();
 	args.matched = false;
 
 	if (**pp == '^') {
@@ -2945,7 +2962,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 	}
 
-	args.pflags = (VarPatternFlags){ false, false, false, false };
+	args.pflags = VarPatternFlags_Literal();
 	args.matched = false;
 	oneBigWord = ch->oneBigWord;
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
@@ -3582,9 +3599,11 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	if (lhs[0] == '\0' && expr->value.str[0] == '\0') {
 		/* Do not turn an empty expression into non-empty. */
 	} else {
-		struct ModifyWord_SYSVSubstArgs args = {
-		    expr->scope, lhs, rhs
-		};
+		struct ModifyWord_SYSVSubstArgs args;
+
+		args.scope = expr->scope;
+		args.lhs = lhs;
+		args.rhs = rhs;
 		ModifyWords(ch, ModifyWord_SYSVSubst, &args, ch->oneBigWord);
 	}
 	free(lhs);
@@ -3845,6 +3864,23 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 	return AMR_OK;
 }
 
+#if __STDC_VERSION__ >= 199901L
+#define ModChain_Literal(expr, startc, endc, sep, oneBigWord) \
+	(ModChain) { expr, startc, endc, sep, oneBigWord }
+#else
+MAKE_INLINE ModChain
+ModChain_Literal(Expr *expr, char startc, char endc, char sep, bool oneBigWord)
+{
+	ModChain ch;
+	ch.expr = expr;
+	ch.startc = startc;
+	ch.endc = endc;
+	ch.sep = sep;
+	ch.oneBigWord = oneBigWord;
+	return ch;
+}
+#endif
+
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static void
 ApplyModifiers(
@@ -3854,13 +3890,7 @@ ApplyModifiers(
     char endc		/* ')' or '}'; or '\0' for indirect modifiers */
 )
 {
-	ModChain ch = {
-	    expr,
-	    startc,
-	    endc,
-	    ' ',		/* .sep */
-	    false		/* .oneBigWord */
-	};
+	ModChain ch = ModChain_Literal(expr, startc, endc, ' ', false);
 	const char *p;
 	const char *mod;
 
@@ -4121,8 +4151,12 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *scope,
 		return NULL;
 
 	{
-		char name[] = { varname[0], '\0' };
-		Var *v = VarFind(name, scope, false);
+		char name[2];
+		Var *v;
+
+		name[0] = varname[0];
+		name[1] = '\0';
+		v = VarFind(name, scope, false);
 
 		if (v != NULL) {
 			if (varname[1] == 'D') {
@@ -4283,6 +4317,25 @@ FreeEnvVar(Var *v, FStr *inout_val)
 	free(v);
 }
 
+#if __STDC_VERSION__ >= 199901L
+#define Expr_Literal(var, value, eflags, scope, defined) \
+	{ var, value, eflags, scope, defined }
+#else
+MAKE_INLINE Expr
+Expr_Literal(Var *var, FStr value, VarEvalFlags eflags, GNode *scope,
+	     ExprDefined defined)
+{
+	Expr expr;
+
+	expr.var = var;
+	expr.value = value;
+	expr.eflags = eflags;
+	expr.scope = scope;
+	expr.defined = defined;
+	return expr;
+}
+#endif
+
 /*
  * Given the start of a variable expression (such as $v, $(VAR),
  * ${VAR:Mpattern}), extract the variable name and value, and the modifiers,
@@ -4339,14 +4392,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	bool dynamic;
 	const char *extramodifiers;
 	Var *v;
-
-	Expr expr = {
-		NULL,
-		FStr_InitRefer(NULL),
-		eflags,
-		scope,
-		DEF_REGULAR
-	};
+	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), eflags, scope, DEF_REGULAR);
 
 	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start,
 	    VarEvalFlags_ToString(eflags));

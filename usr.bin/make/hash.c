@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.62 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.63 2021/04/03 14:39:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.62 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.63 2021/04/03 14:39:02 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -227,7 +227,7 @@ HashTable_Enlarge(HashTable *t)
 	t->bucketsMask = newMask;
 	t->buckets = newBuckets;
 	DEBUG5(HASH, "%s: %p size=%d entries=%d maxchain=%d\n",
-	       __func__, t, t->bucketsSize, t->numEntries, t->maxchain);
+	    __func__, (void *)t, t->bucketsSize, t->numEntries, t->maxchain);
 	t->maxchain = 0;
 }
 

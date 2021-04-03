@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.82 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.83 2021/04/03 14:39:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.82 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.83 2021/04/03 14:39:02 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -213,9 +213,15 @@ Str_Words(const char *str, bool expand)
 			word_start = NULL;
 			if (ch == '\n' || ch == '\0') {
 				if (expand && inquote != '\0') {
+					Words res;
+
 					free(words);
 					free(words_buf);
-					return (Words){ NULL, 0, NULL };
+
+					res.words = NULL;
+					res.len = 0;
+					res.freeIt = NULL;
+					return res;
 				}
 				goto done;
 			}
@@ -263,7 +269,15 @@ Str_Words(const char *str, bool expand)
 	}
 done:
 	words[words_len] = NULL;	/* useful for argv */
-	return (Words){ words, words_len, words_buf };
+
+	{
+		Words result;
+
+		result.words = words;
+		result.len = words_len;
+		result.freeIt = words_buf;
+		return result;
+	}
 }
 
 /*

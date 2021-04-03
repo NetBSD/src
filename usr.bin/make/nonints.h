@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.207 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.208 2021/04/03 14:39:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -186,18 +186,31 @@ typedef struct Words {
 	void *freeIt;
 } Words;
 
+#if __STDC_VERSION__ >= 199901L
+#  define FStr_Literal(str, freeIt) (FStr) { str, freeIt }
+#else
+MAKE_INLINE FStr
+FStr_Literal(const char *str, void *freeIt)
+{
+	FStr fstr;
+	fstr.str = str;
+	fstr.freeIt = freeIt;
+	return fstr;
+}
+#endif
+
 /* Return a string that is the sole owner of str. */
 MAKE_INLINE FStr
 FStr_InitOwn(char *str)
 {
-	return (FStr){ str, str };
+	return FStr_Literal(str, str);
 }
 
 /* Return a string that refers to the shared str. */
 MAKE_INLINE FStr
 FStr_InitRefer(const char *str)
 {
-	return (FStr){ str, NULL };
+	return FStr_Literal(str, NULL);
 }
 
 MAKE_INLINE void
@@ -210,18 +223,31 @@ FStr_Done(FStr *fstr)
 #endif
 }
 
+#if __STDC_VERSION__ >= 199901L
+#  define MFStr_Literal(str, freeIt) (MFStr) { str, freeIt }
+#else
+MAKE_INLINE MFStr
+MFStr_Literal(char *str, void *freeIt)
+{
+	MFStr mfstr;
+	mfstr.str = str;
+	mfstr.freeIt = freeIt;
+	return mfstr;
+}
+#endif
+
 /* Return a string that is the sole owner of str. */
 MAKE_INLINE MFStr
 MFStr_InitOwn(char *str)
 {
-	return (MFStr){ str, str };
+	return MFStr_Literal(str, str);
 }
 
 /* Return a string that refers to the shared str. */
 MAKE_INLINE MFStr
 MFStr_InitRefer(char *str)
 {
-	return (MFStr){ str, NULL };
+	return MFStr_Literal(str, NULL);
 }
 
 MAKE_INLINE void
@@ -344,10 +370,25 @@ typedef struct VarEvalFlags {
 	bool : 0;
 } VarEvalFlags;
 
-#define VARE_PARSE_ONLY	(VarEvalFlags) { false, false, false, false }
-#define VARE_WANTRES	(VarEvalFlags) { true, false, false, false }
-#define VARE_UNDEFERR	(VarEvalFlags) { true, true, false, false }
-#define VARE_KEEP_DOLLAR_UNDEF (VarEvalFlags) { true, false, true, true }
+#if __STDC_VERSION__ >= 199901L
+#define VarEvalFlagsLiteral(wantRes, undefErr, keep) \
+	(VarEvalFlags) { wantRes, undefErr, keep, keep }
+#else
+MAKE_INLINE VarEvalFlags
+VarEvalFlagsLiteral(bool wantRes, bool undefErr, bool keep)
+{
+	VarEvalFlags eflags;
+	eflags.wantRes = wantRes;
+	eflags.undefErr = undefErr;
+	eflags.keepDollar = keep;
+	eflags.keepUndef = keep;
+	return eflags;
+}
+#endif
+#define VARE_PARSE_ONLY		VarEvalFlagsLiteral(false, false, false)
+#define VARE_WANTRES		VarEvalFlagsLiteral(true, false, false)
+#define VARE_UNDEFERR		VarEvalFlagsLiteral(true, true, false)
+#define VARE_KEEP_DOLLAR_UNDEF	VarEvalFlagsLiteral(true, false, true)
 
 typedef enum VarSetFlags {
 	VAR_SET_NONE		= 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.257 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.258 2021/04/03 14:39:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -101,7 +101,7 @@
 #define FD_CLOEXEC 1
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && __STDC_VERSION__ >= 199901L
 #define MAKE_GNUC_PREREQ(x, y)						\
 	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
 	 (__GNUC__ > (x)))
@@ -738,7 +738,7 @@ GNode_VarArchive(GNode *gn) { return GNode_ValueDirect(gn, ARCHIVE); }
 MAKE_INLINE const char *
 GNode_VarMember(GNode *gn) { return GNode_ValueDirect(gn, MEMBER); }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && __STDC_VERSION__ >= 199901L
 #define UNCONST(ptr)	({		\
     union __unconst {			\
 	const void *__cp;		\
