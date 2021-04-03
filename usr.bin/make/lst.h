@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.97 2021/03/15 16:06:05 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.98 2021/04/03 11:08:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@ Lst_Init(List *list)
 
 /* Get information about a list */
 
-MAKE_INLINE Boolean
+MAKE_INLINE bool
 Lst_IsEmpty(List *list)
 {
 	return list->first == NULL;
