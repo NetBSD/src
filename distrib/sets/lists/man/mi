@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1711.2.1 2021/01/03 16:49:32 thorpej Exp $
+# $NetBSD: mi,v 1.1711.2.2 2021/04/03 22:43:40 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1107,6 +1107,8 @@
 ./usr/share/man/cat4/evbarm/iopaau.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopwdog.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/rktsadc.0		man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/vcaudio.0		man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/vchiq.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbmips/aupci.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbmips/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbppc/cpc.0		man-sys-catman		.cat
@@ -1953,6 +1955,7 @@
 ./usr/share/man/cat4/vax/asc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/vax/cons.0			man-sys-catman		.cat
+./usr/share/man/cat4/vax/covid.0		man-sys-catman		.cat
 ./usr/share/man/cat4/vax/crl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/css.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/ct.0			man-sys-catman		.cat
@@ -2340,6 +2343,7 @@
 ./usr/share/man/cat7/c99.0			man-reference-catman	.cat
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	.cat
 ./usr/share/man/cat7/editline.0			man-sys-catman		.cat
+./usr/share/man/cat7/entropy.0			man-reference-catman	.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
 ./usr/share/man/cat7/glob.0			man-reference-catman	.cat
 ./usr/share/man/cat7/groups.0			man-reference-catman	.cat
@@ -2367,6 +2371,7 @@
 ./usr/share/man/cat7/pcap-linktype.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pcap-tstamp.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
+./usr/share/man/cat7/random.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
 ./usr/share/man/cat7/rfc6056.0			man-reference-catman	.cat
@@ -4331,6 +4336,8 @@
 ./usr/share/man/html4/evbarm/iopaau.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopwdog.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/rktsadc.html	man-sys-htmlman		html
+./usr/share/man/html4/evbarm/vcaudio.html	man-sys-htmlman		html
+./usr/share/man/html4/evbarm/vchiq.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbmips/aupci.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbmips/intro.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbppc/cpc.html		man-sys-htmlman		html
@@ -4808,6 +4815,7 @@
 ./usr/share/man/html4/rcons.html		man-sys-htmlman		html
 ./usr/share/man/html4/rdcphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/re.html			man-sys-htmlman		html
+./usr/share/man/html4/rge.html			man-sys-htmlman		html
 ./usr/share/man/html4/rgephy.html		man-sys-htmlman		html
 ./usr/share/man/html4/rlphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/rmidi.html		man-sys-htmlman		html
@@ -5101,6 +5109,7 @@
 ./usr/share/man/html4/vax/asc.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/autoconf.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/cons.html		man-sys-htmlman		html
+./usr/share/man/html4/vax/covid.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/crl.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/css.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/ct.html		man-sys-htmlman		html
@@ -5465,6 +5474,7 @@
 ./usr/share/man/html7/c99.html			man-reference-htmlman	html
 ./usr/share/man/html7/des_modes.html		man-reference-htmlman	html
 ./usr/share/man/html7/editline.html		man-sys-htmlman		html
+./usr/share/man/html7/entropy.html		man-reference-htmlman	html
 ./usr/share/man/html7/environ.html		man-reference-htmlman	html
 ./usr/share/man/html7/glob.html			man-reference-htmlman	html
 ./usr/share/man/html7/groups.html		man-reference-htmlman	html
@@ -5488,6 +5498,7 @@
 ./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-tstamp.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
+./usr/share/man/html7/random.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
 ./usr/share/man/html7/rfc6056.html		man-reference-htmlman	html
@@ -7327,6 +7338,8 @@
 ./usr/share/man/man4/evbarm/iopaau.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopwdog.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/rktsadc.4		man-sys-man		.man
+./usr/share/man/man4/evbarm/vcaudio.4		man-sys-man		.man
+./usr/share/man/man4/evbarm/vchiq.4		man-sys-man		.man
 ./usr/share/man/man4/evbmips/aupci.4		man-sys-man		.man
 ./usr/share/man/man4/evbmips/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbppc/cpc.4		man-sys-man		.man
@@ -7869,6 +7882,7 @@
 ./usr/share/man/man4/rcons.4			man-sys-man		.man
 ./usr/share/man/man4/rdcphy.4			man-sys-man		.man
 ./usr/share/man/man4/re.4			man-sys-man		.man
+./usr/share/man/man4/rge.4			man-sys-man		.man
 ./usr/share/man/man4/rgephy.4			man-sys-man		.man
 ./usr/share/man/man4/rl.4			man-obsolete		obsolete
 ./usr/share/man/man4/rlphy.4			man-sys-man		.man
@@ -8173,6 +8187,7 @@
 ./usr/share/man/man4/vax/asc.4			man-sys-man		.man
 ./usr/share/man/man4/vax/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/vax/cons.4			man-sys-man		.man
+./usr/share/man/man4/vax/covid.4		man-sys-man		.man
 ./usr/share/man/man4/vax/crl.4			man-sys-man		.man
 ./usr/share/man/man4/vax/css.4			man-sys-man		.man
 ./usr/share/man/man4/vax/ct.4			man-sys-man		.man
@@ -8560,6 +8575,7 @@
 ./usr/share/man/man7/c99.7			man-reference-man	.man
 ./usr/share/man/man7/des_modes.7		man-reference-man	.man
 ./usr/share/man/man7/editline.7			man-sys-man		.man
+./usr/share/man/man7/entropy.7			man-reference-man	.man
 ./usr/share/man/man7/environ.7			man-reference-man	.man
 ./usr/share/man/man7/glob.7			man-reference-man	.man
 ./usr/share/man/man7/groups.7			man-reference-man	.man
@@ -8586,6 +8602,7 @@
 ./usr/share/man/man7/pcap-linktype.7		man-netutil-man		.man
 ./usr/share/man/man7/pcap-tstamp.7		man-netutil-man		.man
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
+./usr/share/man/man7/random.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
 ./usr/share/man/man7/rfc6056.7			man-reference-man	.man

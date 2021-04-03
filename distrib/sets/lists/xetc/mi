@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2020/10/10 09:17:33 nia Exp $
+# $NetBSD: mi,v 1.39.2.1 2021/04/03 22:43:41 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -88,4 +88,3 @@
 ./etc/rc.d/fccache					etc-x11-rc	xorg
 ./etc/rc.d/xdm						etc-x11-rc	xorg
 ./etc/rc.d/xfs						etc-x11-rc	xorg
-./var/db/obsolete/xetc					xbase-sys-root	xorg
