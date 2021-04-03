@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2021, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -95,6 +95,7 @@ const AH_TABLE      AcpiGbl_SupportedTables[] =
     {ACPI_SIG_BERT, "Boot Error Record Table"},
     {ACPI_SIG_BGRT, "Boot Graphics Resource Table"},
     {ACPI_SIG_BOOT, "Simple Boot Flag Table"},
+    {ACPI_SIG_CEDT, "CXL Early Discovery Table"},
     {ACPI_SIG_CPEP, "Corrected Platform Error Polling table"},
     {ACPI_SIG_CSRT, "Core System Resource Table"},
     {ACPI_SIG_DBG2, "Debug Port table type 2"},
@@ -121,9 +122,9 @@ const AH_TABLE      AcpiGbl_SupportedTables[] =
     {ACPI_SIG_MPST, "Memory Power State Table"},
     {ACPI_SIG_MSCT, "Maximum System Characteristics Table"},
     {ACPI_SIG_MSDM, "Microsoft Data Management table"},
-    {ACPI_SIG_MTMR, "MID Timer Table"},
     {ACPI_SIG_NFIT, "NVDIMM Firmware Interface Table"},
     {ACPI_SIG_PCCT, "Platform Communications Channel Table"},
+    {ACPI_SIG_PHAT, "Platform Health Assessment Table"},
     {ACPI_SIG_PDTT, "Platform Debug Trigger Table"},
     {ACPI_SIG_PMTT, "Platform Memory Topology Table"},
     {ACPI_SIG_PPTT, "Processor Properties Topology Table"},
@@ -144,7 +145,7 @@ const AH_TABLE      AcpiGbl_SupportedTables[] =
     {ACPI_SIG_TCPA, "Trusted Computing Platform Alliance table"},
     {ACPI_SIG_TPM2, "Trusted Platform Module hardware interface table"},
     {ACPI_SIG_UEFI, "UEFI Boot Optimization Table"},
-    {ACPI_SIG_VRTC, "Virtual Real-Time Clock Table"},
+    {ACPI_SIG_VIOT, "Virtual I/O Translation Table"},
     {ACPI_SIG_WAET, "Windows ACPI Emulated Devices Table"},
     {ACPI_SIG_WDAT, "Watchdog Action Table"},
     {ACPI_SIG_WDDT, "Watchdog Description Table"},
