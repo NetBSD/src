@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.903 2021/04/03 23:19:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.904 2021/04/03 23:24:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.903 2021/04/03 23:19:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.904 2021/04/03 23:24:06 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -256,26 +256,6 @@ typedef struct SepBuf {
 	char sep;
 } SepBuf;
 
-static const char *
-VarEvalFlags_ToString(VarEvalFlags eflags)
-{
-	if (!eflags.wantRes) {
-		assert(!eflags.undefErr);
-		assert(!eflags.keepDollar && !eflags.keepUndef);
-		return "parse-only";
-	}
-	if (eflags.undefErr) {
-		assert(!eflags.keepDollar && !eflags.keepUndef);
-		return "eval-defined";
-	}
-	if (eflags.keepDollar && eflags.keepUndef)
-		return "eval-keep-dollar-and-undefined";
-	if (eflags.keepDollar)
-		return "eval-keep-dollar";
-	if (eflags.keepUndef)
-		return "eval-keep-undefined";
-	return "eval";
-}
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -338,6 +318,27 @@ GNode *SCOPE_INTERNAL;
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
+
+static const char *
+VarEvalFlags_ToString(VarEvalFlags eflags)
+{
+	if (!eflags.wantRes) {
+		assert(!eflags.undefErr);
+		assert(!eflags.keepDollar && !eflags.keepUndef);
+		return "parse-only";
+	}
+	if (eflags.undefErr) {
+		assert(!eflags.keepDollar && !eflags.keepUndef);
+		return "eval-defined";
+	}
+	if (eflags.keepDollar && eflags.keepUndef)
+		return "eval-keep-dollar-and-undefined";
+	if (eflags.keepDollar)
+		return "eval-keep-dollar";
+	if (eflags.keepUndef)
+		return "eval-keep-undefined";
+	return "eval";
+}
 
 static Var *
 VarNew(FStr name, const char *value, bool fromEnv, bool readOnly)
