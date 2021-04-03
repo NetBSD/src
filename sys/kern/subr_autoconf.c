@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.8 2021/04/03 06:54:29 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.9 2021/04/03 15:37:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.8 2021/04/03 06:54:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.9 2021/04/03 15:37:07 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -168,7 +168,8 @@ struct alldevs_foray {
 
 static char *number(char *, int);
 static void mapply(struct matchinfo *, cfdata_t);
-static device_t config_devalloc(const device_t, const cfdata_t, const int *);
+static device_t config_vattach(device_t, cfdata_t, void *, cfprint_t, cfarg_t,
+			       va_list);
 static void config_devdelete(device_t);
 static void config_devunlink(device_t, struct devicelist *);
 static void config_makeroom(int, struct cfdriver *);
@@ -1189,20 +1190,17 @@ static device_t
 config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
     va_list ap)
 {
-	cfsubmatch_t submatch;
-	const char *ifattr;
-	const int *locs;
 	cfdata_t cf;
+	va_list nap;
 
-	config_get_cfargs(tag, &submatch, &ifattr, &locs, ap);
+	va_copy(nap, ap);
+	cf = config_vsearch(parent, aux, tag, nap);
+	va_end(nap);
 
-	if ((cf = config_search(parent, aux,
-				CFARG_SUBMATCH, submatch,
-				CFARG_IATTR, ifattr,
-				CFARG_LOCATORS, locs,
-				CFARG_EOL)))
-		return config_attach(parent, cf, aux, print,
-		    CFARG_LOCATORS, locs);
+	if (cf != NULL) {
+		return config_vattach(parent, cf, aux, print, tag, ap);
+	}
+
 	if (print) {
 		if (config_do_twiddle && cold)
 			twiddle();
@@ -1458,7 +1456,8 @@ config_unit_alloc(device_t dev, cfdriver_t cd, cfdata_t cf)
 }
 
 static device_t
-config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
+config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
+    va_list ap)
 {
 	cfdriver_t cd;
 	cfattach_t ca;
@@ -1470,6 +1469,9 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	void *dev_private;
 	const struct cfiattrdata *ia;
 	device_lock_t dvl;
+	const int *locs;
+
+	config_get_cfargs(tag, NULL, NULL, &locs, ap);
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
@@ -1508,7 +1510,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	xunit = number(&num[sizeof(num)], myunit);
 	lunit = &num[sizeof(num)] - xunit;
 	if (lname + lunit > sizeof(dev->dv_xname))
-		panic("config_devalloc: device name too long");
+		panic("config_vdevalloc: device name too long");
 
 	dvl = device_getlock(dev);
 
@@ -1545,6 +1547,19 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 
 	if (dev->dv_cfdriver->cd_attrs != NULL)
 		config_add_attrib_dict(dev);
+
+	return dev;
+}
+
+static device_t
+config_devalloc(const device_t parent, const cfdata_t cf, cfarg_t tag, ...)
+{
+	device_t dev;
+	va_list ap;
+
+	va_start(ap, tag);
+	dev = config_vdevalloc(parent, cf, tag, ap);
+	va_end(ap);
 
 	return dev;
 }
@@ -1638,11 +1653,8 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	device_t dev;
 	struct cftable *ct;
 	const char *drvname;
-	const int *locs;
 
-	config_get_cfargs(tag, NULL, NULL, &locs, ap);
-
-	dev = config_devalloc(parent, cf, locs);
+	dev = config_vdevalloc(parent, cf, tag, ap);
 	if (!dev)
 		panic("config_attach: allocation of device softc failed");
 
@@ -1735,7 +1747,7 @@ config_attach_pseudo(cfdata_t cf)
 {
 	device_t dev;
 
-	dev = config_devalloc(ROOT, cf, NULL);
+	dev = config_devalloc(ROOT, cf, CFARG_EOL);
 	if (!dev)
 		return NULL;
 
