@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22.16.1 2021/04/03 21:44:47 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,8 +44,6 @@
 #include <powerpc/ibm4xx/dcr4xx.h>
 
 #if defined(_KERNEL)
-extern char bootpath[];
-
 struct exc_info {
 	vaddr_t exc_vector;
 	const uint32_t *exc_addr; 
@@ -73,7 +71,7 @@ extern void ibm4xx_dumpsys(void);
 extern void ibm4xx_install_extint(void (*)(void));
 
 /* export from ibm4xx/ibm4xx_autoconf.c */
-extern void ibm4xx_device_register(device_t dev, void *aux);
+extern void ibm4xx_device_register(device_t, void *, int);
 
 /* export from ibm4xx/clock.c */
 extern void calc_delayconst(void);
@@ -146,24 +144,5 @@ extern char msgbuf[MSGBUFSIZE];
 /* Board info dictionary */
 extern prop_dictionary_t board_properties;
 extern void board_info_init(void);
-
-/*****************************************************************************/
-/* THIS CODE IS OBSOLETE. WILL BE REMOVED */
-/*
- * Board configuration structure from the OpenBIOS.
- */
-struct board_cfg_data {
-	unsigned char	usr_config_ver[4];
-	unsigned char	rom_sw_ver[30];
-	unsigned int	mem_size;
-	unsigned char	mac_address_local[6];
-	unsigned char	mac_address_pci[6];
-	unsigned int	processor_speed;
-	unsigned int	plb_speed;
-	unsigned int	pci_speed;
-};
-
-extern struct board_cfg_data board_data;
-/*****************************************************************************/
 
 #endif	/* _IBM4XX_CPU_H_ */

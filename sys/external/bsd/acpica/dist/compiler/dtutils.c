@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2021, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -330,6 +330,7 @@ DtGetFieldType (
     case ACPI_DMT_BUF16:
     case ACPI_DMT_BUF128:
     case ACPI_DMT_PCI_PATH:
+    case ACPI_DMT_PMTT_VENDOR:
 
         Type = DT_FIELD_TYPE_BUFFER;
         break;
@@ -465,6 +466,7 @@ DtGetFieldLength (
     case ACPI_DMT_CHKSUM:
     case ACPI_DMT_SPACEID:
     case ACPI_DMT_ACCWIDTH:
+    case ACPI_DMT_CEDT:
     case ACPI_DMT_IVRS:
     case ACPI_DMT_GTDT:
     case ACPI_DMT_MADT:
@@ -481,6 +483,7 @@ DtGetFieldLength (
     case ACPI_DMT_ERSTACT:
     case ACPI_DMT_ERSTINST:
     case ACPI_DMT_DMAR_SCOPE:
+    case ACPI_DMT_VIOT:
 
         ByteLength = 1;
         break;
@@ -491,6 +494,7 @@ DtGetFieldLength (
     case ACPI_DMT_HMAT:
     case ACPI_DMT_NFIT:
     case ACPI_DMT_PCI_PATH:
+    case ACPI_DMT_PHAT:
 
         ByteLength = 2;
         break;
@@ -565,6 +569,7 @@ DtGetFieldLength (
 
     case ACPI_DMT_BUFFER:
     case ACPI_DMT_RAW_BUFFER:
+    case ACPI_DMT_PMTT_VENDOR:
 
         Value = DtGetFieldValue (Field);
         if (Value)

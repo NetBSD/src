@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2021/03/07 09:43:56 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.2.1 2021/04/03 21:44:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,56 +30,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2021/03/07 09:43:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.2.1 2021/04/03 21:44:43 thorpej Exp $");
 
 #include "opt_explora.h"
-#include "opt_modular.h"
-
-#include "ksyms.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/msgbuf.h>
-#include <sys/kernel.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/ksyms.h>
-#include <sys/device.h>
-#include <sys/module.h>
 #include <sys/bus.h>
-#include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
+#include <sys/kernel.h>
+#include <sys/module.h>
+#include <sys/systm.h>
 
 #include <prop/proplib.h>
 
 #include <machine/explora.h>
-#include <machine/powerpc.h>
-#include <machine/tlb.h>
-#include <machine/pcb.h>
-#include <machine/trap.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
+#include <powerpc/ibm4xx/tlb.h>
 
 #define TLB_PG_SIZE	(16*1024*1024)
 
-char machine[] = MACHINE;		/* from <machine/param.h> */
-char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
 static const unsigned int cpuspeed = 66000000;
-
-struct vm_map *phys_map = NULL;
 
 void		initppc(vaddr_t, vaddr_t);
 
@@ -104,8 +78,8 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 			continue;
 		maddr = ((br[i] >> 24) & 0xff) << 20;
 		msize = 1 << (20 + ((br[i] >> 21) & 7));
-		if (maddr+msize > size)
-			size = maddr+msize;
+		if (maddr + msize > size)
+			size = maddr + msize;
 	}
 
 	/*
@@ -177,48 +151,4 @@ cpu_startup(void)
 	 * no fake mapiodev
 	 */
 	fake_mapiodev = 0;
-}
-
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing = 0;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();
-		resettodr();
-	}
-
-	splhigh();
-
-	if (!cold && (howto & RB_DUMP))
-		/*XXX dumpsys()*/;
-
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-
-		while (1)
-			;
-	}
-
-	printf("rebooting\n\n");
-
-	/* flush cache for msgbuf */
-	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
-
-	ppc4xx_reset();
-
-#ifdef DDB
-	while (1)
-		Debugger();
-#else
-	while (1)
-		;
-#endif
 }

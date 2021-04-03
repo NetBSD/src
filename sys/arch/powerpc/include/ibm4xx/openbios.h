@@ -1,4 +1,4 @@
-/*	$NetBSD: openbios.h,v 1.2 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: openbios.h,v 1.2.180.1 2021/04/03 21:44:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-extern void		openbios_board_init(void *, u_int);
+extern void		openbios_board_init(void *);
 extern unsigned int	openbios_board_memsize_get(void);
 extern void		openbios_board_info_set(void);
 extern void		openbios_board_print(void);

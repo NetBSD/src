@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.17.14.2 2021/03/28 19:50:05 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.17.14.3 2021/04/03 21:44:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.17.14.2 2021/03/28 19:50:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.17.14.3 2021/04/03 21:44:50 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -99,11 +99,9 @@ static void playstring(struct spkr_softc *, const char *, size_t);
  *
  * Play string interpretation is modelled on IBM BASIC 2.0's PLAY statement;
  * M[LNS] are missing and the ~ synonym and octave-tracking facility is added.
- * Requires spkr_tone(), spkr_rest(). String play is not interruptible
- * except possibly at physical block boundaries.
+ * String play is not interruptible except possibly at physical block
+ * boundaries.
  */
-
-#define dtoi(c)		((c) - '0')
 
 /*
  * Magic number avoidance...
@@ -156,45 +154,82 @@ playinit(struct spkr_softc *sc)
 	sc->sc_octprefix = true;/* act as though there was an initial O(n) */
 }
 
-/* play tone of proper duration for current rhythm signature */
+#define SPKRPRI (PZERO - 1)
+
+/* Rest for given number of ticks */
 static void
-playtone(struct spkr_softc *sc, int pitch, int val, int sustain)
+rest(struct spkr_softc *sc, int ticks)
 {
-	int sound, silence, snum = 1, sdenom = 1;
+
+#ifdef SPKRDEBUG
+	device_printf(sc->sc_dev, "%s: rest for %d ticks\n", __func__, ticks);
+#endif /* SPKRDEBUG */
+	KASSERT(ticks > 0);
+
+	tsleep(sc->sc_dev, SPKRPRI | PCATCH, device_xname(sc->sc_dev), ticks);
+}
+
+/*
+ * Play tone of proper duration for current rhythm signature.
+ * note indicates "O0C" = 0, "O0C#" = 1, "O0D" = 2, ... , and
+ * -1 indiacates a rest.
+ * val indicates the length, "L4" = 4, "L8" = 8.
+ * sustain indicates the number of subsequent dots that extend the sound
+ * by one a half.
+ */
+static void
+playtone(struct spkr_softc *sc, int note, int val, int sustain)
+{
+	int whole;
+	int total;
+	int sound;
+	int silence;
 
 	/* this weirdness avoids floating-point arithmetic */
+	whole = sc->sc_whole;
 	for (; sustain; sustain--) {
-		snum *= NUM_MULT;
-		sdenom *= DENOM_MULT;
+		whole *= NUM_MULT;
+		val *= DENOM_MULT;
 	}
 
-	if (pitch == -1) {
-		(*sc->sc_rest)(sc->sc_dev, sc->sc_whole
-		    * snum / (val * sdenom));
+	/* Total length in tick */
+	total = whole / val;
+
+	if (note == -1) {
+#ifdef SPKRDEBUG
+		device_printf(sc->sc_dev, "%s: rest for %d ticks\n",
+		    __func__, total);
+#endif /* SPKRDEBUG */
+		if (total != 0)
+			rest(sc, total);
 		return;
 	}
 
-	int fac = sc->sc_whole * (FILLTIME - sc->sc_fill);
-	int fval = FILLTIME * val;
-	sound = (sc->sc_whole * snum) / (val * sdenom) -  fac / fval;
-	silence = fac * snum / (fval * sdenom);
+	/*
+	 * Rest 1/8 (if NORMAL) or 3/8 (if STACCATO) in tick.
+	 * silence should be rounded down.
+	 */
+	silence = total * (FILLTIME - sc->sc_fill) / FILLTIME;
+	sound = total - silence;
 
 #ifdef SPKRDEBUG
-	aprint_debug_dev(sc->sc_dev,
-	    "%s: pitch %d for %d ticks, rest for %d ticks\n", __func__,
-	    pitch, sound, silence);
+	device_printf(sc->sc_dev,
+	    "%s: note %d for %d ticks, rest for %d ticks\n", __func__,
+	    note, sound, silence);
 #endif /* SPKRDEBUG */
 
-	(*sc->sc_tone)(sc->sc_dev, pitchtab[pitch], sound);
-	if (sc->sc_fill != LEGATO)
-		(*sc->sc_rest)(sc->sc_dev, silence);
+	if (sound != 0)
+		(*sc->sc_tone)(sc->sc_dev, pitchtab[note], sound);
+	if (silence != 0)
+		rest(sc, silence);
 }
 
 /* interpret and play an item from a notation string */
 static void
 playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 {
-	int		pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
+	int pitch;
+	int lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
 
 #define GETNUM(cp, v)	\
 	for (v = 0; slen > 0 && isdigit((unsigned char)cp[1]); ) { \
@@ -207,7 +242,11 @@ playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 		char c = toupper((unsigned char)*cp);
 
 #ifdef SPKRDEBUG
-		aprint_debug_dev(sc->sc_dev, "%s: %c (%x)\n", __func__, c, c);
+		if (0x20 <= c && c < 0x7f) {
+			device_printf(sc->sc_dev, "%s: '%c'\n", __func__, c);
+		} else {
+			device_printf(sc->sc_dev, "%s: (0x%x)\n", __func__, c);
+		}
 #endif /* SPKRDEBUG */
 
 		switch (c) {
@@ -353,16 +392,26 @@ playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 	}
 }
 
-/******************* UNIX DRIVER HOOKS BEGIN HERE **************************
- *
- * This section implements driver hooks to run playstring() and the spkr_tone()
- * and spkr_rest() functions defined above.
- */
+/******************* UNIX DRIVER HOOKS BEGIN HERE **************************/
 #define spkrenter(d)	device_lookup_private(&spkr_cd, d)
 
+/*
+ * Attaches spkr.  Specify tone function with the following specification:
+ *
+ * void
+ * tone(device_t self, u_int pitch, u_int tick)
+ *	plays a beep with specified parameters.
+ *	The argument 'pitch' specifies the pitch of a beep in Hz.  The argument
+ *	'tick' specifies the period of a beep in tick(9).  This function waits
+ *	to finish playing the beep and then halts it.
+ *	If the pitch is zero, it halts all sound if any (for compatibility
+ *	with the past confused specifications, but there should be no sound at
+ *	this point).  And it returns immediately, without waiting ticks.  So
+ *	you cannot use this as a rest.
+ *	If the tick is zero, it returns immediately.
+ */
 void
-spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
-    void (*rest)(device_t, int))
+spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int))
 {
 	struct spkr_softc *sc = device_private(self);
 
@@ -371,7 +420,6 @@ spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
 #endif /* SPKRDEBUG */
 	sc->sc_dev = self;
 	sc->sc_tone = tone;
-	sc->sc_rest = rest;
 	sc->sc_inbuf = NULL;
 	sc->sc_wsbelldev = NULL;
 
@@ -432,11 +480,11 @@ spkr_childdet(device_t self, device_t child)
 int
 spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 {
-#ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64"\n", __func__, dev);
-#endif /* SPKRDEBUG */
 	struct spkr_softc *sc = spkrenter(minor(dev));
 
+#ifdef SPKRDEBUG
+	device_printf(sc->sc_dev, "%s: entering\n", __func__);
+#endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf != NULL)
@@ -450,12 +498,12 @@ spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 int
 spkrwrite(dev_t dev, struct uio *uio, int flags)
 {
-#ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64", count = %zu\n",
-	    __func__, dev, uio->uio_resid);
-#endif /* SPKRDEBUG */
 	struct spkr_softc *sc = spkrenter(minor(dev));
 
+#ifdef SPKRDEBUG
+	device_printf(sc->sc_dev, "%s: entering with length = %zu\n",
+	    __func__, uio->uio_resid);
+#endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf == NULL)
@@ -472,11 +520,11 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
 int
 spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-#ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64"\n", __func__, dev);
-#endif /* SPKRDEBUG */
 	struct spkr_softc *sc = spkrenter(minor(dev));
 
+#ifdef SPKRDEBUG
+	device_printf(sc->sc_dev, "%s: entering\n", __func__);
+#endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf == NULL)
@@ -489,28 +537,35 @@ spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
+/*
+ * Play tone specified by tp.
+ * tp->frequency is the frequency (0 means a rest).
+ * tp->duration is the length in tick (returns immediately if 0).
+ */
 static void
 playonetone(struct spkr_softc *sc, tone_t *tp)
 {
-    if (tp->frequency == 0)
-	    (*sc->sc_rest)(sc->sc_dev, tp->duration);
-    else
-	    (*sc->sc_tone)(sc->sc_dev, tp->frequency, tp->duration);
+	if (tp->duration <= 0)
+		return;
+
+	if (tp->frequency == 0)
+		rest(sc, tp->duration);
+	else
+		(*sc->sc_tone)(sc->sc_dev, tp->frequency, tp->duration);
 }
 
 int
 spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	struct spkr_softc *sc = spkrenter(minor(dev));
 	tone_t *tp;
 	tone_t ttp;
 	int error;
+
 #ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64", cmd = %lx\n",
-	    __func__, dev, cmd);
+	device_printf(sc->sc_dev, "%s: entering with cmd = %lx\n",
+	    __func__, cmd);
 #endif /* SPKRDEBUG */
-
-	struct spkr_softc *sc = spkrenter(minor(dev));
-
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf == NULL)

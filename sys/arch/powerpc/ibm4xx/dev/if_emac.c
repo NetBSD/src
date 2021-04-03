@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.55 2021/02/27 20:43:58 rin Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.55.2.1 2021/04/03 21:44:47 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.55 2021/02/27 20:43:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.55.2.1 2021/04/03 21:44:47 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_emac.h"
@@ -456,6 +456,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 
 	opb_freq = opb_get_frequency();
 	switch (opb_freq) {
+	case  33333333: opbc =  STACR_OPBC_33MHZ; break;
 	case  50000000: opbc =  STACR_OPBC_50MHZ; break;
 	case  66666666: opbc =  STACR_OPBC_66MHZ; break;
 	case  83333333: opbc =  STACR_OPBC_83MHZ; break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: frame.h,v 1.10.4.1 2021/04/03 21:44:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <sys/signal.h>
 
 void *getframe(struct lwp *, int, int *);
+#define	lwp_trapframe(l)	((l)->l_md.md_utf)
+
 #if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
@@ -49,5 +51,3 @@ void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif /* _LOCORE */
 
 #endif /* _MIPS_FRAME_H_ */
-
-/* End of frame.h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.74 2021/01/23 19:38:53 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.74.2.1 2021/04/03 21:44:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -97,6 +97,9 @@ typedef __uint32_t	vsize_t;
 #define	PRIxVSIZE	PRIx32
 #define	PRIdVSIZE	PRId32
 #endif
+
+typedef	vaddr_t	vm_offset_t;	/* deprecated (cddl/FreeBSD compat) */
+typedef	vsize_t	vm_size_t;	/* deprecated (cddl/FreeBSD compat) */
 
 
 typedef int		mips_prid_t;

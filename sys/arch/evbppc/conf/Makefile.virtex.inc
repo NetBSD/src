@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.virtex.inc,v 1.1 2006/12/02 22:18:47 freza Exp $
+#	$NetBSD: Makefile.virtex.inc,v 1.1.156.1 2021/04/03 21:44:42 thorpej Exp $
 
-CFLAGS+=-mcpu=403
-AFLAGS+=-mcpu=403
+CFLAGS+=-mcpu=405
+AFLAGS+=-mcpu=405
 
 .ifndef TEXTADDR
 BEGIN:
