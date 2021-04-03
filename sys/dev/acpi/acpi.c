@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.290.2.2 2021/04/02 22:17:43 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.290.2.3 2021/04/03 16:10:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.290.2.2 2021/04/02 22:17:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.290.2.3 2021/04/03 16:10:39 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -951,6 +951,8 @@ acpi_rescan_early(struct acpi_softc *sc)
 		if (acpi_match_hid(ad->ad_devinfo, acpi_early_ids) == 0)
 			continue;
 
+		KASSERT(ad->ad_handle != NULL);
+
 		aa.aa_node = ad;
 		aa.aa_iot = sc->sc_iot;
 		aa.aa_memt = sc->sc_memt;
@@ -964,6 +966,7 @@ acpi_rescan_early(struct acpi_softc *sc)
 
 		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
 		    CFARG_IATTR, "acpinodebus",
+		    CFARG_DEVHANDLE, devhandle_from_acpi(ad->ad_handle),
 		    CFARG_EOL);
 	}
 }
@@ -1016,6 +1019,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		if (acpi_match_hid(di, hpet_ids) != 0 && sc->sc_hpet != NULL)
 			continue;
 
+		KASSERT(ad->ad_handle != NULL);
+
 		aa.aa_node = ad;
 		aa.aa_iot = sc->sc_iot;
 		aa.aa_memt = sc->sc_memt;
@@ -1029,6 +1034,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 
 		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
 		    CFARG_IATTR, "acpinodebus",
+		    CFARG_DEVHANDLE, devhandle_from_acpi(ad->ad_handle),
 		    CFARG_EOL);
 	}
 }
@@ -1151,14 +1157,7 @@ acpi_device_register(device_t dev, void *v)
 	device_t parent = device_parent(dev);
 	ACPI_HANDLE hdl = NULL;
 
-	/*
-	 * aa_node is only valid if we attached to the "acpinodebus"
-	 * interface attribute.
-	 */
-	if (device_attached_to_iattr(dev, "acpinodebus")) {
-		const struct acpi_attach_args *aa = v;
-		hdl = aa->aa_node->ad_handle;
-	} else if (device_is_a(parent, "pci")) {
+	if (device_is_a(parent, "pci")) {
 		const struct pci_attach_args *pa = v;
 		struct acpi_devnode *ad;
 		u_int segment;
