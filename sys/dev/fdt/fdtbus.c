@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.40.2.3 2021/04/03 06:54:29 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.40.2.4 2021/04/03 21:21:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40.2.3 2021/04/03 06:54:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40.2.4 2021/04/03 21:21:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,17 +396,19 @@ fdt_scan(struct fdt_softc *sc, int pass)
 			node->n_dev = config_attach(node->n_bus, node->n_cf,
 			    &faa, fdtbus_print,
 			    CFARG_LOCATORS, locs,
+			    CFARG_DEVHANDLE, devhandle_from_of(node->n_phandle),
 			    CFARG_EOL);
 		} else {
 			/*
 			 * Default pass.
 			 */
-			node->n_dev =
-			    config_found(node->n_bus, &faa, fdtbus_print,
-					 CFARG_SUBMATCH, fdt_scan_submatch,
-					 CFARG_IATTR, "fdt",
-					 CFARG_LOCATORS, locs,
-					 CFARG_EOL);
+			node->n_dev = config_found(node->n_bus, &faa,
+			    fdtbus_print,
+			    CFARG_SUBMATCH, fdt_scan_submatch,
+			    CFARG_IATTR, "fdt",
+			    CFARG_LOCATORS, locs,
+			    CFARG_DEVHANDLE, devhandle_from_of(node->n_phandle),
+			    CFARG_EOL);
 		}
 
 		if (node->n_dev != NULL)
@@ -559,21 +561,4 @@ fdtbus_print(void *aux, const char *pnp)
 		aprint_debug(" (%s)", name);
 
 	return UNCONF;
-}
-
-void
-fdtbus_device_register(device_t dev, void *aux)
-{
-	/* All we do here is set the devhandle in the device_t. */
-	int phandle = -1;
-
-	if (device_attached_to_iattr(dev, "fdt")) {
-		const struct fdt_attach_args *faa = aux;
-		phandle = faa->faa_phandle;
-	} else {
-		return;
-	}
-	KASSERT(phandle != -1);
-
-	of_device_register(dev, phandle);
 }
