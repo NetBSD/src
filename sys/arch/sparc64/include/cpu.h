@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.130 2020/03/10 03:49:56 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.131 2021/04/03 17:01:24 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,12 +212,14 @@ struct cpu_info {
 	paddr_t			ci_devmq;  /* device mondo queue address */
 	paddr_t			ci_cpuset; /* mondo recipient address */ 
 	paddr_t			ci_mondo;  /* mondo message address */
-	
+
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;
 	bool			ci_pci_fault;
 
 	volatile void		*ci_ddb_regs;	/* DDB regs */
+
+	void (*ci_idlespin)(void);
 };
 
 #endif /* _KERNEL || _KMEMUSER */
@@ -438,6 +440,9 @@ void	switchtoctx_usiii(int);
 void	next_tick(long);
 void	next_stick(long);
 void	next_stick_init(void);
+#ifdef SUN4V
+void    cpu_idle_sun4v(void);
+#endif
 /* trap.c */
 void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 int	rwindow_save(struct lwp *);
