@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.356 2020/12/18 01:08:13 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.357 2021/04/03 21:36:03 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -723,6 +723,17 @@ Notes:		No longer active due to the lack of time. If you plan to
 		(before the merge to -current) with an interop IPv6 test.
 		More info at: http://www.tahi.org/
 
+Branch:		thorpej-cfargs
+Description:	Clean up hwo arguments are passed to various autoconfiguration
+		routines.
+Status:		Active
+Start Date:	Sat March 20 2021
+End Date:
+Base Tag:	thorpej-cfargs-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/sys
+Notes:
+
 Branch:		thorpej-futex
 Description:	Overhaul of futex operations to fix thread priority issues
 Status:		Active
@@ -731,7 +742,7 @@ End Date:
 Base Tag:	thorpej-futex-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
 Scope:		src/sys src/tests/lib/libc/sys src/distrib/sets/lists
-Note:		Normal futex operataions pass the test suite, but there are
+Notes:		Normal futex operataions pass the test suite, but there are
 		issues with Linux compatibility currently, that need to be
 		addressed before merging.  Also includes new NetBSD extensions
 		to the futex interface to support reader/writer locks.  Those
