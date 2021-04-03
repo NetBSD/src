@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib.c,v 1.3.96.1 2021/03/20 19:33:39 thorpej Exp $ */
+/* $NetBSD: amdpcib.c,v 1.3.96.2 2021/04/03 06:54:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.3.96.1 2021/03/20 19:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.3.96.2 2021/04/03 06:54:28 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -83,7 +83,9 @@ amdpcib_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
 
 	if (config_match(parent, cf, aux))
-		config_attach_loc(parent, cf, locs, aux, NULL);
+		config_attach(parent, cf, aux, NULL,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 
 	return 0;
 }

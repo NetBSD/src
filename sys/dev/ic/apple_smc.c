@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.6.50.2 2021/03/28 20:25:44 thorpej Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.6.50.3 2021/04/03 06:54:29 thorpej Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.6.50.2 2021/03/28 20:25:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.6.50.3 2021/04/03 06:54:29 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,9 @@ apple_smc_search(device_t parent, cfdata_t cf, const int *locators, void *aux)
 
 	/* Looks hunky-dory.  Attach.  */
 	asa.asa_smc = smc;
-	(void)config_attach_loc(parent, cf, locators, &asa, NULL);
+	config_attach(parent, cf, &asa, NULL,
+	    CFARG_LOCATORS, locators,
+	    CFARG_EOL);
 	return 0;
 }
 

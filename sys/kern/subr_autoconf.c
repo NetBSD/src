@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.7 2021/04/03 01:57:18 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.8 2021/04/03 06:54:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.7 2021/04/03 01:57:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.8 2021/04/03 06:54:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1201,7 +1201,8 @@ config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
 				CFARG_IATTR, ifattr,
 				CFARG_LOCATORS, locs,
 				CFARG_EOL)))
-		return config_attach_loc(parent, cf, locs, aux, print);
+		return config_attach(parent, cf, aux, print,
+		    CFARG_LOCATORS, locs);
 	if (print) {
 		if (config_do_twiddle && cold)
 			twiddle();
@@ -1718,15 +1719,6 @@ config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	va_end(ap);
 
 	return dev;
-}
-
-device_t
-config_attach_loc(device_t parent, cfdata_t cf, const int *locs, void *aux,
-    cfprint_t print)
-{
-	return config_attach(parent, cf, aux, print,
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
 }
 
 /*
