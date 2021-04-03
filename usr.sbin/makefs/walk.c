@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.30 2021/04/03 14:10:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.30 2021/04/03 14:10:56 simonb Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@ static	fsinode	*link_check(fsinode *);
  */
 fsnode *
 walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
-    int replace)
+    int replace, int follow)
 {
 	fsnode		*first, *cur, *prev, *last;
 	DIR		*dirp;
@@ -127,8 +127,13 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 		if (snprintf(path + len, sizeof(path) - len, "/%s", name) >=
 		    (int)sizeof(path) - len)
 			errx(1, "Pathname too long.");
-		if (lstat(path, &stbuf) == -1)
-			err(1, "Can't lstat `%s'", path);
+		if (follow) {
+			if (stat(path, &stbuf) == -1)
+				err(1, "Can't stat `%s'", path);
+		} else {
+			if (lstat(path, &stbuf) == -1)
+				err(1, "Can't lstat `%s'", path);
+		}
 #ifdef S_ISSOCK
 		if (S_ISSOCK(stbuf.st_mode & S_IFMT)) {
 			if (debug & DEBUG_WALK_DIR_NODE)
@@ -155,7 +160,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 						printf("merging %s with %p\n",
 						    path, cur->child);
 					cur->child = walk_dir(root, rp, cur,
-					    cur->child, replace);
+					    cur->child, replace, follow);
 					continue;
 				}
 				if (!replace)
@@ -200,7 +205,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 			cur->first = first;
 			if (S_ISDIR(cur->type)) {
 				cur->child = walk_dir(root, rp, cur, NULL,
-				    replace);
+				    replace, follow);
 				continue;
 			}
 		}
