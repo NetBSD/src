@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2790 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2791 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -345,3 +345,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSL: Imported 1.1.1k. [christos 20210325]
 	evbppc: Add support for DHT Walnut 405GP evaluation board.
 		[rin 20210402]
+	acpi(4): Updated ACPICA to 20210331. [christos 20210403]
