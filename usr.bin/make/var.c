@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.902 2021/04/03 23:15:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.903 2021/04/03 23:19:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.902 2021/04/03 23:15:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.903 2021/04/03 23:19:08 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -242,15 +242,10 @@ typedef enum UnexportWhat {
 
 /* Flags for pattern matching in the :S and :C modifiers */
 typedef struct VarPatternFlags {
-
-	/* Replace as often as possible ('g') */
-	bool subGlobal: 1;
-	/* Replace only once ('1') */
-	bool subOnce: 1;
-	/* Match at start of word ('^') */
-	bool anchorStart: 1;
-	/* Match at end of word ('$') */
-	bool anchorEnd: 1;
+	bool subGlobal: 1;	/* 'g': replace as often as possible */
+	bool subOnce: 1;	/* '1': replace only once */
+	bool anchorStart: 1;	/* '^': match only at start of word */
+	bool anchorEnd: 1;	/* '$': match only at end of word */
 } VarPatternFlags;
 
 /* SepBuf builds a string from words interleaved with separators. */
