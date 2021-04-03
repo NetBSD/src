@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200.h,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: obs200.h,v 1.2.178.1 2021/04/03 22:28:24 thorpej Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
 #ifndef	_EVBPPC_OBS200_H_
 #define	_EVBPPC_OBS200_H_
 
-#include <machine/obs405.h>
+#include <dev/ic/comreg.h>
 
 /*
  * Device Properties for OpenBlockS S/R (IBM405GP 200MHz)

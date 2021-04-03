@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.53 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.53.2.1 2021/04/03 22:28:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.53 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.53.2.1 2021/04/03 22:28:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_emac.h"
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.53 2020/07/06 09:34:17 rin Exp $");
 #include <sys/ioctl.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+
+#include <sys/rndsource.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -209,6 +211,8 @@ struct emac_softc {
 	int sc_txsdirty;		/* dirty Tx jobs */
 
 	int sc_rxptr;			/* next ready RX descriptor/descsoft */
+
+	krndsource_t rnd_source;	/* random source */
 
 	void (*sc_rmii_enable)(device_t, int);		/* reduced MII enable */
 	void (*sc_rmii_disable)(device_t, int);		/* reduced MII disable*/
@@ -452,6 +456,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 
 	opb_freq = opb_get_frequency();
 	switch (opb_freq) {
+	case  33333333: opbc =  STACR_OPBC_33MHZ; break;
 	case  50000000: opbc =  STACR_OPBC_50MHZ; break;
 	case  66666666: opbc =  STACR_OPBC_66MHZ; break;
 	case  83333333: opbc =  STACR_OPBC_83MHZ; break;
@@ -503,7 +508,8 @@ emac_attach(device_t parent, device_t self, void *aux)
 		sc->sc_stacr_completed = true;
 	}
 
-	intr_establish(oaa->opb_irq, IST_LEVEL, IPL_NET, emac_intr, sc);
+	intr_establish_xname(oaa->opb_irq, IST_LEVEL, IPL_NET, emac_intr, sc,
+	    device_xname(self));
 	mal_intr_establish(sc->sc_instance, sc);
 
 	if (oaa->opb_flags & OPB_FLAGS_EMAC_HT256)
@@ -554,6 +560,9 @@ emac_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
+
+	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET,
+	    RND_FLAG_DEFAULT);
 
 #ifdef EMAC_EVENT_COUNTERS
 	/*
@@ -1254,13 +1263,14 @@ emac_txreap(struct emac_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct emac_txsoft *txs;
 	int handled, i;
-	uint32_t txstat;
+	uint32_t txstat, count;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_txreap);
 	handled = 0;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	count = 0;
 	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames that have been transmitted.
@@ -1317,6 +1327,8 @@ emac_txreap(struct emac_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
+
+		count++;
 	}
 
 	/* Update the dirty transmit buffer pointer. */
@@ -1328,6 +1340,9 @@ emac_txreap(struct emac_softc *sc)
 	 */
 	if (sc->sc_txsfree == EMAC_TXQUEUELEN)
 		ifp->if_timer = 0;
+
+	if (count != 0)
+		rnd_add_uint32(&sc->rnd_source, count);
 
 	return handled;
 }
@@ -1582,11 +1597,12 @@ emac_rxeob_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct emac_rxsoft *rxs;
 	struct mbuf *m;
-	uint32_t rxstat;
+	uint32_t rxstat, count;
 	int i, len;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_rxintr);
 
+	count = 0;
 	for (i = sc->sc_rxptr; ; i = EMAC_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
@@ -1681,10 +1697,15 @@ emac_rxeob_intr(void *arg)
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
+
+		count++;
 	}
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
+
+	if (count != 0)
+		rnd_add_uint32(&sc->rnd_source, count);
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.26 2020/07/27 14:06:58 roy Exp $	*/
+/*	$NetBSD: ip6.h,v 1.26.2.1 2021/04/03 22:29:01 thorpej Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -64,6 +64,11 @@
 #ifndef _NETINET_IP6_H_
 #define _NETINET_IP6_H_
 
+#include <sys/types.h>
+#include <sys/endian.h>
+
+#include <netinet/in.h>
+
 /*
  * Definition for internet protocol version 6.
  * RFC 2460
@@ -119,7 +124,9 @@ struct ip6_hdr_pseudo {
 	u_int32_t	ip6ph_len;
 	u_int8_t	ip6ph_zero[3];
 	u_int8_t	ip6ph_nxt;
-} __packed;
+};
+__CTASSERT(sizeof(struct ip6_hdr) == 40);
+__CTASSERT(sizeof(struct ip6_hdr_pseudo) == 40);
 #endif
 
 /*

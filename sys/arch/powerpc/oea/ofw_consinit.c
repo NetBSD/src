@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.19.2.1 2021/04/03 22:28:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.19.2.1 2021/04/03 22:28:35 thorpej Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $"
 #include <sys/bus.h>
 
 #include <powerpc/ofw_cons.h>
+#include <powerpc/ofw_machdep.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -88,25 +89,13 @@ extern struct consdev consdev_zs;
 #include <dev/ic/pckbcvar.h>
 #endif
 
-int console_node = 0, console_instance = 0;
+extern int console_node, console_instance;
 
-int chosen, stdin, stdout;
-int ofkbd_ihandle;
+int ofkbd_ihandle = -1;
 
-static void cninit_kd(void);
-static void ofwoea_bootstrap_console(void);
-static int ofwbootcons_cngetc(dev_t);
-static void ofwbootcons_cnputc(dev_t, int);
+static void ofwoea_cnprobe_keyboard(void);
 
 /*#define OFDEBUG*/
-
-struct consdev consdev_ofwbootcons = {
-	NULL, NULL,
-	ofwbootcons_cngetc,
-	ofwbootcons_cnputc,
-	nullcnpollc,
-	NULL, NULL, NULL, NODEV, CN_INTERNAL,
-};
 
 #ifdef OFDEBUG
 void ofprint(const char *, ...);
@@ -128,65 +117,76 @@ void ofprint(const char *blah, ...)
 #define OFPRINTF while(0) printf
 #endif
 
+static bool use_serial_console;
+static struct consdev *selected_serial_consdev;
+
+static int (*selected_keyboard)(void);
+
+/* XXX Gross. */
+#if NPCKBC > 0
+static int
+ofwoea_pckbd_cnattach(void)
+{
+	return pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
+	    PCKBC_KBD_SLOT, 0);
+}
+#endif
+
 void
-cninit(void)
+ofwoea_cnprobe(void)
 {
 	char name[32];
-
-	ofwoea_bootstrap_console();
 
 	OFPRINTF("console node: %08x\n", console_node);
 
 	if (console_node == -1)
-		goto nocons;
+		return;
 
 	memset(name, 0, sizeof(name));
 	if (OF_getprop(console_node, "device_type", name, sizeof(name)) == -1)
-		goto nocons;
+		return;
 
 	OFPRINTF("console type: %s\n", name);
 
 	if (strcmp(name, "serial") == 0) {
-		struct consdev *cp;
-
+		use_serial_console = true;
 #ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
 		extern struct consdev failsafe_cons;
-		cp = &failsafe_cons;
-		cn_tab = cp;
-		(*cp->cn_probe)(cp);
-		(*cp->cn_init)(cp);
-		aprint_verbose("Early G5 console initialized\n");
+		selected_serial_consdev = &failsafe_cons;
+		aprint_verbose("Early G5 console selected\n");
 		return;
 #endif /* PMAC_G5 */
 
 #if (NZSTTY > 0) && !defined(MAMBO)
 		OF_getprop(console_node, "name", name, sizeof(name));
 		if (strcmp(name, "ch-a") == 0 || strcmp(name, "ch-b") == 0) {
-			cp = &consdev_zs;
-			(*cp->cn_probe)(cp);
-			(*cp->cn_init)(cp);
-			cn_tab = cp;
+			selected_serial_consdev = &consdev_zs;
 		}
 		return;
 #endif /* NZTTY */
 
-		/* fallback to OFW boot console */
-		cp = &consdev_ofwbootcons;
-		cn_tab = cp;
+		/* fallback to OFW boot console (already set) */
 		return;
 	}
-	else
-		cninit_kd();
-nocons:
-	return;
+
+	/*
+	 * We're going to use a display console.  Probe for the keyboard
+	 * we'll use.
+	 */
+	ofwoea_cnprobe_keyboard();
 }
 
-
+/*
+ * XXX This routine is a complete disaster, filled with platform-specific
+ * XXX stuff.  Fix, plz.
+ */
 static void
-cninit_kd(void)
+ofwoea_cnprobe_keyboard(void)
 {
-	int kstdin, node;
+	extern int ofw_stdin;
+
+	int node, kstdin = ofw_stdin;
 	char name[16];
 #if (NAKBD > 0) || (NADBKBD > 0)
 	int akbd;
@@ -197,22 +197,8 @@ cninit_kd(void)
 #endif
 
 	/*
-	 * Attach the console output now (so we can see debugging messages,
-	 * if any).
-	 */
-#if NWSDISPLAY > 0
-	rascons_cnattach();
-#endif
-
-	/*
 	 * We must determine which keyboard type we have.
 	 */
-	if (OF_getprop(chosen, "stdin", &kstdin, sizeof(kstdin))
-	    != sizeof(kstdin)) {
-		printf("WARNING: no `stdin' property in /chosen\n");
-		return;
-	}
-
 	node = OF_instance_to_package(kstdin);
 	memset(name, 0, sizeof(name));
 	OF_getprop(node, "name", name, sizeof(name));
@@ -226,22 +212,21 @@ cninit_kd(void)
 #if NAKBD > 0
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");
-		akbd_cnattach();
+		selected_keyboard = akbd_cnattach;
 		goto kbd_found;
 	}
 #endif
 #if NADBKBD > 0
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");
-		adbkbd_cnattach();
+		selected_keyboard = adbkbd_cnattach;
 		goto kbd_found;
 	}
 #endif
 #if NPCKBC > 0
 	if (strcmp(name, "isa") == 0) {
 		printf("console keyboard type: PC Keyboard\n");
-		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT, 0);
+		selected_keyboard = ofwoea_pckbd_cnattach;
 		goto kbd_found;
 	}
 #endif
@@ -300,17 +285,17 @@ cninit_kd(void)
 		if (adb_node > 0) {
 			printf("ADB support found\n");
 #if NAKBD > 0
-			akbd_cnattach();
+			selected_keyboard = akbd_cnattach;
 #endif
 #if NADBKBD > 0
-			adbkbd_cnattach();
+			selected_keyboard = adbkbd_cnattach;
 #endif
 		} else {
 			/* must be USB */
 			printf("No ADB support present, assuming USB "
 			       "keyboard\n");
 #if NUKBD > 0
-			ukbd_cnattach();
+			selected_keyboard = ukbd_cnattach;
 #endif
 		}
 		goto kbd_found;
@@ -324,12 +309,12 @@ cninit_kd(void)
 	 */
 
 #if NUKBD > 0
-	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) >= 0 &&
+	if (OF_call_method("`usb-kbd-ihandles", kstdin, 0, 1, &ukbds) >= 0 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
 		printf("usb-kbd-ihandles matches\n");
 		printf("console keyboard type: USB\n");
-		ukbd_cnattach();
+		selected_keyboard = ukbd_cnattach;
 		goto kbd_found;
 	}
 	/* Try old method name. */
@@ -339,7 +324,7 @@ cninit_kd(void)
 		printf("usb-kbd-ihandle matches\n");
 		printf("console keyboard type: USB\n");
 		kstdin = ukbd;
-		ukbd_cnattach();
+		selected_keyboard = ukbd_cnattach;
 		goto kbd_found;
 	}
 #endif
@@ -352,10 +337,10 @@ cninit_kd(void)
 		printf("console keyboard type: ADB\n");
 		kstdin = akbd;
 #if NAKBD > 0
-		akbd_cnattach();
+		selected_keyboard = akbd_cnattach;
 #endif
 #if NADBKBD > 0
-		adbkbd_cnattach();
+		selected_keyboard = adbkbd_cnattach;
 #endif
 		goto kbd_found;
 	}
@@ -368,7 +353,7 @@ cninit_kd(void)
 	 */
 	printf("defaulting to USB...");
 	printf("console keyboard type: USB\n");
-	ukbd_cnattach();
+	selected_keyboard = ukbd_cnattach;
 	goto kbd_found;
 #endif
 
@@ -378,17 +363,8 @@ cninit_kd(void)
 	printf("no console keyboard\n");
 	return;
 
-kbd_found:;
-#if NAKBD + NUKBD + NADBKBD + NPCKBC > 0
-	/*
-	 * XXX This is a little gross, but we don't get to call
-	 * XXX wskbd_cnattach() twice.
-	 */
+kbd_found:
 	ofkbd_ihandle = kstdin;
-#if NWSDISPLAY > 0
-	wsdisplay_set_cons_kbd(ofkbd_cngetc, NULL, NULL);
-#endif
-#endif
 }
 
 /*
@@ -400,6 +376,8 @@ ofkbd_cngetc(dev_t dev)
 	u_char c = '\0';
 	int len;
 
+	KASSERT(ofkbd_ihandle != -1);
+
 	do {
 		len = OF_read(ofkbd_ihandle, &c, 1);
 	} while (len != 1);
@@ -407,28 +385,32 @@ ofkbd_cngetc(dev_t dev)
 	return c;
 }
 
-/*
- * Bootstrap console support functions
- */
-
-static int
-ofwbootcons_cngetc(dev_t dev)
+void
+cninit(void)
 {
-	unsigned char ch = '\0';
-	int l;
+	if (use_serial_console) {
+		if (selected_serial_consdev != NULL) {
+			cn_tab = selected_serial_consdev;
+			(*cn_tab->cn_probe)(cn_tab);
+			(*cn_tab->cn_init)(cn_tab);
+		}
+		return;
+	}
 
-	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return -1;
-	return ch;
-}
+#if NWSDISPLAY > 0
+	rascons_cnattach();
+#endif
+	if (selected_keyboard != NULL) {
+		(*selected_keyboard)();
 
-static void
-ofwbootcons_cnputc(dev_t dev, int c)
-{
-	char ch = c;
-
-	OF_write(stdout, &ch, 1);
+#if NWSDISPLAY > 0
+		/*
+		 * XXX This is a little gross, but we don't get to call
+		 * XXX wskbd_cnattach() twice.
+		 */
+		wsdisplay_set_cons_kbd(ofkbd_cngetc, NULL, NULL);
+#endif
+	}
 }
 
 void
@@ -441,34 +423,4 @@ ofwoea_consinit(void)
 
 	initted = 1;
 	cninit();
-}
-
-static void
-ofwoea_bootstrap_console(void)
-{
-	int node;
-
-	chosen = OF_finddevice("/chosen");
-	if (chosen == -1)
-		goto nocons;
-
-	if (OF_getprop(chosen, "stdout", &stdout,
-	    sizeof(stdout)) != sizeof(stdout))
-		goto nocons;
-	if (OF_getprop(chosen, "stdin", &stdin,
-	    sizeof(stdin)) != sizeof(stdin))
-		goto nocons;
-	if (stdout == 0) {
-		 /* screen should be console, but it is not open */
-		 stdout = OF_open("screen");
-	}
-	node = OF_instance_to_package(stdout);
-	console_node = node;
-	console_instance = stdout;
-
-	return;
-nocons:
-	panic("No /chosen could be found!\n");
-	console_node = -1;
-	return;
 }

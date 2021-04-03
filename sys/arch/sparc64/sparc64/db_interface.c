@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.135 2019/04/01 06:12:51 msaitoh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.135.12.1 2021/04/03 22:28:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.135 2019/04/01 06:12:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.135.12.1 2021/04/03 22:28:39 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1129,7 +1129,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("window",	db_dump_window,	0,
 	  "Print register window information",
 	  "[no]", "   no:\tstack frame number (0, i.e. top, if missing)") },
-	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
+	{ DDB_END_CMD },
 };
 #endif	/* DDB */
 

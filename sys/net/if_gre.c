@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.177 2020/01/29 04:18:34 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.177.6.1 2021/04/03 22:29:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.177 2020/01/29 04:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.177.6.1 2021/04/03 22:29:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -141,6 +141,8 @@ int gre_debug = 0;
 #else
 #define	GRE_DPRINTF(__sc, __fmt, ...)	do { } while (/*CONSTCOND*/0)
 #endif /* GRE_DEBUG */
+
+CTASSERT(sizeof(struct gre_h) == 4);
 
 int ip_gre_ttl = GRE_TTL;
 
@@ -374,7 +376,7 @@ gre_receive(struct socket *so, void *arg, int events, int waitflag)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 	int rc;
-	const struct gre_h *gh;
+	struct gre_h gh;
 	struct mbuf *m;
 
 	GRE_DPRINTF(sc, "enter\n");
@@ -395,14 +397,17 @@ gre_receive(struct socket *so, void *arg, int events, int waitflag)
 		sc->sc_error_ev.ev_count++;
 		return;
 	}
-	if (m->m_len < sizeof(*gh) && (m = m_pullup(m, sizeof(*gh))) == NULL) {
-		GRE_DPRINTF(sc, "m_pullup failed\n");
-		sc->sc_pullup_ev.ev_count++;
-		return;
-	}
-	gh = mtod(m, const struct gre_h *);
 
-	if (gre_input(sc, m, gh) == 0) {
+	if (__predict_false(m->m_len < sizeof(gh))) {
+		if ((m = m_pullup(m, sizeof(gh))) == NULL) {
+			GRE_DPRINTF(sc, "m_pullup failed\n");
+			sc->sc_pullup_ev.ev_count++;
+			return;
+		}
+	}
+	memcpy(&gh, mtod(m, void *), sizeof(gh));
+
+	if (gre_input(sc, m, &gh) == 0) {
 		sc->sc_unsupp_ev.ev_count++;
 		GRE_DPRINTF(sc, "dropping unsupported\n");
 		m_freem(m);
@@ -887,7 +892,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	int error = 0;
 	struct gre_softc *sc = ifp->if_softc;
-	struct gre_h *gh;
+	struct gre_h gh = { .flags = 0 };
 	uint16_t etype = 0;
 
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -939,17 +944,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 #endif
 
-	M_PREPEND(m, sizeof(*gh), M_DONTWAIT);
-
+	M_PREPEND(m, sizeof(gh), M_DONTWAIT);
 	if (m == NULL) {
 		IF_DROP(&ifp->if_snd);
 		error = ENOBUFS;
 		goto end;
 	}
 
-	gh = mtod(m, struct gre_h *);
-	gh->flags = 0;
-	gh->ptype = etype;
+	gh.ptype = etype;
+	memcpy(mtod(m, void *), &gh, sizeof(gh));
 	/* XXX Need to handle IP ToS.  Look at how I handle IP TTL. */
 
 	if_statadd2(ifp, if_opackets, 1, if_obytes, m->m_pkthdr.len);

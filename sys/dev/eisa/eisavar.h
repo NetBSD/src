@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.24 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.24.102.1 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -157,5 +157,13 @@ struct eisa_cfg_io {
 	bus_size_t ecio_size;
 	int ecio_shared;
 };
+
+#ifdef _KERNEL
+int	eisa_compatible_match(const struct eisa_attach_args *,
+	    const struct device_compatible_entry *);
+const struct device_compatible_entry *
+	eisa_compatible_lookup(const struct eisa_attach_args *,
+	    const struct device_compatible_entry *);
+#endif /* _KERNEL */
 
 #endif /* _DEV_EISA_EISAVAR_H_ */

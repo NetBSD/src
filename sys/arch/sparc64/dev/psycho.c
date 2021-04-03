@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.128 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: psycho.c,v 1.128.8.1 2021/04/03 22:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.128 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.128.8.1 2021/04/03 22:28:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,6 +82,7 @@ int psycho_debug = 0x0;
 #include <sys/errno.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/reboot.h>
@@ -463,8 +464,7 @@ found:
 	/*
 	 * Allocate our psycho_pbm
 	 */
-	pp = sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF,
-					 M_WAITOK | M_ZERO);
+	pp = sc->sc_psycho_this = kmem_zalloc(sizeof *pp, KM_SLEEP);
 	pp->pp_sc = sc;
 
 	/* grab the psycho ranges */
@@ -580,8 +580,7 @@ found:
 		 * Allocate bus node, this contains a prom node per bus.
 		 */
 		pp->pp_pc->spc_busnode =
-		    malloc(sizeof(*pp->pp_pc->spc_busnode), M_DEVBUF,
-				  M_WAITOK | M_ZERO);
+		    kmem_zalloc(sizeof(*pp->pp_pc->spc_busnode), KM_SLEEP);
 
 		/*
 		 * Setup IOMMU and PCI configuration if we're the first
@@ -593,8 +592,7 @@ found:
 		 *
 		 * For the moment, 32KB should be more than enough.
 		 */
-		sc->sc_is = malloc(sizeof(struct iommu_state),
-			M_DEVBUF, M_WAITOK);
+		sc->sc_is = kmem_alloc(sizeof(struct iommu_state), KM_SLEEP);
 
 		/* Point the strbuf_ctl at the iommu_state */
 		pp->pp_sb.sb_is = sc->sc_is;
@@ -725,12 +723,7 @@ psycho_register_power_button(struct psycho_softc *sc)
 	sysmon_task_queue_init();
 
 	sc->sc_powerpressed = 0;
-	sc->sc_smcontext = malloc(sizeof(struct sysmon_pswitch), M_DEVBUF, 0);
-	if (!sc->sc_smcontext) {
-		aprint_error_dev(sc->sc_dev, "could not allocate power button context\n");
-		return;
-	}
-	memset(sc->sc_smcontext, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_smcontext = kmem_zalloc(sizeof(struct sysmon_pswitch), KM_SLEEP);
 	sc->sc_smcontext->smpsw_name = device_xname(sc->sc_dev);
 	sc->sc_smcontext->smpsw_type = PSWITCH_TYPE_POWER;
 	if (sysmon_pswitch_register(sc->sc_smcontext) != 0)
@@ -758,7 +751,7 @@ psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
 {
 	pci_chipset_tag_t npc;
 	
-	npc = malloc(sizeof *npc, M_DEVBUF, M_WAITOK);
+	npc = kmem_alloc(sizeof *npc, KM_SLEEP);
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pp;
 	npc->rootnode = node;
@@ -1074,8 +1067,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 	}
 
 	/* give us a nice name.. */
-	name = malloc(32, M_DEVBUF, M_WAITOK);
-	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
+	name = kmem_asprintf("%s dvma", device_xname(sc->sc_dev));
 
 	iommu_init(name, is, tsbsize, iobase);
 }
@@ -1089,8 +1081,7 @@ psycho_alloc_bus_tag(struct psycho_pbm *pp, int type)
 	struct psycho_softc *sc = pp->pp_sc;
 	bus_space_tag_t bt;
 
-	bt = malloc(sizeof(struct sparc_bus_space_tag),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	bt = kmem_zalloc(sizeof(*bt), KM_SLEEP);
 	bt->cookie = pp;
 	bt->parent = sc->sc_bustag;
 	bt->type = type;
@@ -1106,7 +1097,7 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
 	struct psycho_softc *sc = pp->pp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmatag;
 
-	dt = malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_WAITOK | M_ZERO);
+	dt = kmem_zalloc(sizeof(*dt), KM_SLEEP);
 	dt->_cookie = pp;
 	dt->_parent = pdt;
 #define PCOPY(x)	dt->x = pdt->x
@@ -1333,7 +1324,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	}
 
 	printf("Cannot find interrupt vector %lx\n", vec);
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 	return (NULL);
 
 found:
@@ -1391,7 +1382,6 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
-	struct cpu_info *ci = curcpu();
 	pcireg_t val = (pcireg_t)~0;
 	int s;
 
@@ -1406,6 +1396,7 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 			(int)PCITAG_OFFSET(tag) + reg));
 
 		s = splhigh();
+		struct cpu_info *ci = curcpu();
 		ci->ci_pci_probe = true;
 		membar_Sync();
 		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,

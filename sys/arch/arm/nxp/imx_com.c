@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_com.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx_com.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_com.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_com.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "opt_fdt.h"
 #include "opt_imxuart.h"
@@ -46,9 +46,9 @@ static void imx_com_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(imx_com, sizeof(struct imxuart_softc),
     imx_com_match, imx_com_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"fsl,imx6q-uart",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6q-uart" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -56,7 +56,7 @@ imx_com_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -115,8 +115,8 @@ imx_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
-	    0, imxuintr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SERIAL,
+	    0, imxuintr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt\n");
 		return;
@@ -134,7 +134,7 @@ imx_com_attach(device_t parent, device_t self, void *aux)
 static int
 imx_com_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

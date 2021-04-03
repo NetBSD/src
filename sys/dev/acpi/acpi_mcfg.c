@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.20.2.1 2020/12/14 14:38:05 thorpej Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.20.2.2 2021/04/03 22:28:43 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.20.2.1 2020/12/14 14:38:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.20.2.2 2021/04/03 22:28:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -364,7 +364,7 @@ acpimcfg_init(bus_space_tag_t memt, const struct acpimcfg_ops *ops)
 		if (mcfg_ops->ao_validate != NULL &&
 		    !mcfg_ops->ao_validate(ama->Address, ama->StartBusNumber,
 		      &bus_end)) {
-			if (!acpimcfg_find_system_resource( ama->Address,
+			if (!acpimcfg_find_system_resource(ama->Address,
 			    ama->StartBusNumber, &bus_end)) {
 				aprint_debug_dev(acpi_sc->sc_dev,
 				    "MCFG: segment %d, bus %d-%d, "
@@ -507,7 +507,7 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 		force_hasextcnf = true;
 	if (qd != NULL && (qd->quirks & PCI_QUIRK_NOEXTCNF) != 0)
 		force_noextcnf = true;
-	
+
 	/* Probe extended configuration space. */
 	if ((!force_hasextcnf) && ((force_noextcnf) ||
 		((reg = pci_conf_read(pc, tag, PCI_CONF_SIZE)) == (pcireg_t)-1)

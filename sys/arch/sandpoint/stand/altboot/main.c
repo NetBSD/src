@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.31 2019/06/26 22:04:12 christos Exp $ */
+/* $NetBSD: main.c,v 1.31.10.1 2021/04/03 22:28:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #include <machine/bootinfo.h>
 
 #include "globals.h"
+
+#ifdef DEBUG
+int debug = 1;
+#endif
 
 static const struct bootarg {
 	const char *name;
@@ -345,7 +349,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 
 		err = fdloadfile(fd, marks, LOAD_KERNEL);
 		close(fd);
-		if (err < 0)
+		if (err != 0)
 			continue;
 
 		printf("entry=%p, ssym=%p, esym=%p\n",

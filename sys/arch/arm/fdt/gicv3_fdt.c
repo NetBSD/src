@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.8.10.1 2020/12/14 14:37:48 thorpej Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.8.10.2 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.8.10.1 2020/12/14 14:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.8.10.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,7 @@ static void	gicv3_fdt_attach_its(struct gicv3_fdt_softc *, bus_space_tag_t, int)
 static int	gicv3_fdt_intr(void *);
 
 static void *	gicv3_fdt_establish(device_t, u_int *, int, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 static void	gicv3_fdt_disestablish(device_t, void *);
 static bool	gicv3_fdt_intrstr(device_t, u_int *, char *, size_t);
 
@@ -107,29 +107,26 @@ struct gicv3_fdt_softc {
 	struct gicv3_fdt_irq	*sc_irq[GICV3_MAXIRQ];
 };
 
-struct gicv3_fdt_quirk {
-	const char		*compat;
-	u_int			quirks;
-};
-
-static const struct gicv3_fdt_quirk gicv3_fdt_quirks[] = {
-	{ "rockchip,rk3399",	GICV3_QUIRK_RK3399 },
+static const struct device_compatible_entry gicv3_fdt_quirks[] = {
+	{ .compat = "rockchip,rk3399",		.value = GICV3_QUIRK_RK3399 },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(gicv3_fdt, sizeof(struct gicv3_fdt_softc),
 	gicv3_fdt_match, gicv3_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,gic-v3" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 gicv3_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,gic-v3",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void
@@ -138,7 +135,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	struct gicv3_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	int error, n;
+	int error;
 
 	error = fdtbus_register_interrupt_controller(self, phandle,
 	    &gicv3_fdt_funcs);
@@ -164,11 +161,10 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_debug_dev(self, "%d redistributors\n", sc->sc_gic.sc_bsh_r_count);
 
 	/* Apply quirks */
-	for (n = 0; n < __arraycount(gicv3_fdt_quirks); n++) {
-		const char *compat[] = { gicv3_fdt_quirks[n].compat, NULL };
-		if (of_match_compatible(OF_finddevice("/"), compat)) {
-			sc->sc_gic.sc_quirks |= gicv3_fdt_quirks[n].quirks;
-		}
+	const struct device_compatible_entry *dce =
+	    of_compatible_lookup(OF_finddevice("/"), gicv3_fdt_quirks);
+	if (dce != NULL) {
+		sc->sc_gic.sc_quirks |= dce->value;
 	}
 
 	error = gicv3_init(&sc->sc_gic);
@@ -183,11 +179,16 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 		gicv3_fdt_attach_mbi(sc);
 	} else {
 		/* Interrupt Translation Services */
-		for (int child = OF_child(phandle); child; child = OF_peer(child)) {
+		static const struct device_compatible_entry its_compat[] = {
+			{ .compat = "arm,gic-v3-its" },
+			DEVICE_COMPAT_EOL
+		};
+
+		for (int child = OF_child(phandle); child;
+		     child = OF_peer(child)) {
 			if (!fdtbus_status_okay(child))
 				continue;
-			const char * const its_compat[] = { "arm,gic-v3-its", NULL };
-			if (of_match_compatible(child, its_compat))
+			if (of_compatible_match(child, its_compat))
 				gicv3_fdt_attach_its(sc, faa->faa_bst, child);
 		}
 	}
@@ -336,7 +337,7 @@ gicv3_fdt_attach_its(struct gicv3_fdt_softc *sc, bus_space_tag_t bst, int phandl
 
 static void *
 gicv3_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct gicv3_fdt_softc * const sc = device_private(dev);
 	struct gicv3_fdt_irq *firq;
@@ -368,11 +369,11 @@ gicv3_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		TAILQ_INIT(&firq->intr_handlers);
 		firq->intr_irq = irq;
 		if (arg == NULL) {
-			firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
-			    func, NULL);
+			firq->intr_ih = intr_establish_xname(irq, ipl,
+			    level | mpsafe, func, NULL, xname);
 		} else {
-			firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
-			    gicv3_fdt_intr, firq);
+			firq->intr_ih = intr_establish_xname(irq, ipl,
+			    level | mpsafe, gicv3_fdt_intr, firq, xname);
 		}
 		if (firq->intr_ih == NULL) {
 			kmem_free(firq, sizeof(*firq));

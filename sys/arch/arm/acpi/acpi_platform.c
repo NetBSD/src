@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.21.2.1 2020/12/14 14:37:47 thorpej Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.21.2.2 2021/04/03 22:28:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,13 +35,14 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.21.2.1 2020/12/14 14:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.21.2.2 2021/04/03 22:28:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/kprintf.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <arm/fdt/arm_fdtvar.h>
@@ -214,6 +215,13 @@ acpi_platform_attach_uart(ACPI_TABLE_SPCR *spcr)
 		break;
 	}
 
+	/*
+	 * UEFI firmware may leave the console in an undesireable state (wrong
+	 * foreground/background colour, etc). Reset the terminal and clear
+	 * text from the cursor to the end of the screne.
+	 */
+        printf_flags(TOCONS|NOTSTAMP, "\033[0m");
+        printf_flags(TOCONS|NOTSTAMP, "\033[0J");
 }
 
 static void
@@ -279,6 +287,10 @@ acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 acpi_platform_device_register(device_t self, void *aux)
 {
+	/* XXX Not ideal, but the only reasonable solution atm. */
+	acpi_device_register(self, aux);
+	fdtbus_device_register(self, aux);
+
 #if NCOM > 0
 	prop_dictionary_t prop = device_properties(self);
 	ACPI_STATUS rv;

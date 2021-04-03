@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cec.c,v 1.6 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_cec.c,v 1.6.8.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.6 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.6.8.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,13 +111,17 @@ CFATTACH_DECL_NEW(tegra_cec, sizeof(struct tegra_cec_softc),
 #define CEC_SET_CLEAR(sc, reg, set, clr)	\
     tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (reg), (set), (clr))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra124-cec" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_cec_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-cec", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -166,8 +170,8 @@ tegra_cec_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_cec_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_cec_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

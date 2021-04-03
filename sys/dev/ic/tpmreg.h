@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.6 2019/10/09 07:30:58 maxv Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.6.8.1 2021/04/03 22:28:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
+#ifndef	DEV_IC_TPMREG_H
+#define	DEV_IC_TPMREG_H
+
+#include <sys/types.h>
+
+#include <sys/cdefs.h>
+#include <sys/endian.h>
+
+#if (_BYTE_ORDER == _LITTLE_ENDIAN)
 #define TPM_BE16(a)	bswap16(a)
 #define TPM_BE32(a)	bswap32(a)
 #else
@@ -105,3 +113,25 @@ struct tpm_header {
  * Five localities, 4K per locality.
  */
 #define	TPM_SPACE_SIZE	0x5000
+
+#define	TPM_TAG_RQU_COMMAND		0x00c1
+#define	TPM_TAG_RSP_COMMAND		0x00c4
+
+#define	TPM_ORD_GetRandom		0x00000046
+
+/* TPM_RESULT return codes */
+#define	TPM_AUTHFAIL			1
+#define	TPM_BADINDEX			2
+#define	TPM_BAD_PARAMETER		3
+#define	TPM_AUDITFAILURE		4
+#define	TPM_CLEAR_DISABLED		5
+#define	TPM_DEACTIVATED			6
+#define	TPM_DISABLED			7
+#define	TPM_DISABLED_CMD		8
+#define	TPM_FAIL			9
+#define	TPM_BAD_ORDINAL			10
+/* ... */
+
+#define	TPM_NON_FATAL			0x800
+
+#endif	/* DEV_IC_TPMREG_H */

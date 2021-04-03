@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.25 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.25.12.1 2021/04/03 22:29:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,12 +104,6 @@
  * is defined somewhere (and that it returns a positive number).
  */
 #define	IGMP_RANDOM_DELAY(X)	(cprng_fast32() % (X) + 1)
-
-#ifdef __NO_STRICT_ALIGNMENT
-#define	IGMP_HDR_ALIGNED_P(ig)	1
-#else
-#define	IGMP_HDR_ALIGNED_P(ig)	((((vaddr_t) (ig)) & 3) == 0)
-#endif
 
 void	igmp_init(void);
 void	igmp_input(struct mbuf *, int, int);

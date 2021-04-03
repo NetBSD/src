@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.5.14.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.5.14.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,12 +60,12 @@ struct sunxi_musb_softc {
 CFATTACH_DECL_NEW(sunxi_musb, sizeof(struct sunxi_musb_softc),
 	sunxi_musb_match, sunxi_musb_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-musb",		5 },
-	{ "allwinner,sun6i-a13-musb",		5 },
-	{ "allwinner,sun8i-h3-musb",		4 },
-	{ "allwinner,sun8i-a33-musb",		5 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-musb",		.value = 5 },
+	{ .compat = "allwinner,sun6i-a13-musb",		.value = 5 },
+	{ .compat = "allwinner,sun8i-h3-musb",		.value = 4 },
+	{ .compat = "allwinner,sun8i-a33-musb",		.value = 5 },
+	DEVICE_COMPAT_EOL
 };
 
 #define	REMAPFLAG	0x8000
@@ -294,7 +294,7 @@ sunxi_musb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -370,7 +370,7 @@ sunxi_musb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_poll = sunxi_musb_poll;
 	sc->sc_intr_poll_arg = sc;
 	sc->sc_mode = MOTG_MODE_HOST;
-	sc->sc_ep_max = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_ep_max = of_compatible_lookup(phandle, compat_data)->value;
 	sc->sc_ep_fifosize = 512;
 
 	aprint_naive("\n");
@@ -381,8 +381,8 @@ sunxi_musb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
-	    sunxi_musb_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_USB, FDT_INTR_MPSAFE,
+	    sunxi_musb_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

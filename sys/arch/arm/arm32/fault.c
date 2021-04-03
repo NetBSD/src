@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.113 2020/06/20 15:45:22 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.113.2.1 2021/04/03 22:28:16 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -79,9 +79,10 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.113 2020/06/20 15:45:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.113.2.1 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -114,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.113 2020/06/20 15:45:22 skrll Exp $");
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
 #endif
 
@@ -249,7 +250,7 @@ data_abort_handler(trapframe_t *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	/* Re-enable interrupts if they were enabled previously */
-	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 #ifdef __NO_FIQ
 	if (__predict_true((tf->tf_spsr & I32_bit) != I32_bit))
 		restore_interrupts(tf->tf_spsr & IF32_bits);
@@ -451,7 +452,7 @@ data_abort_handler(trapframe_t *tf)
 	 * See if the fault is as a result of ref/mod emulation,
 	 * or domain mismatch.
 	 */
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	last_fault_code = fsr;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
@@ -799,7 +800,7 @@ prefetch_abort_fixup(trapframe_t *tf)
  * If the address is invalid and we were in SVC mode then panic as
  * the kernel should never prefetch abort.
  * If the address is invalid and the page is mapped then the user process
- * does no have read permission so send it a signal.
+ * does not have read permission so send it a signal.
  * Otherwise fault the page in and try again.
  */
 void
@@ -829,7 +830,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 #ifdef __NO_FIQ
 	if (__predict_true((tf->tf_spsr & I32_bit) != I32_bit))
 		restore_interrupts(tf->tf_spsr & IF32_bits);
@@ -841,7 +842,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* See if the CPU state needs to be fixed up */
 	switch (prefetch_abort_fixup(tf)) {
 	case ABORT_FIXUP_RETURN:
-		KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+		KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 		return;
 	case ABORT_FIXUP_FAILED:
 		/* Deliver a SIGILL to the process */
@@ -886,7 +887,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	/*
 	 * See if the pmap can handle this fault on its own...
 	 */
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	last_fault_code = -1;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ|VM_PROT_EXECUTE, 1)) {
@@ -940,7 +941,7 @@ out:
 	}
 #endif /* THUMB_CODE */
 
-	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+	KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
 	userret(l);
 }
 

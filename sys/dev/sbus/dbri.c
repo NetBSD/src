@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.43 2020/08/25 13:36:41 skrll Exp $	*/
+/*	$NetBSD: dbri.c,v 1.43.2.1 2021/04/03 22:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.43 2020/08/25 13:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.43.2.1 2021/04/03 22:28:50 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -368,7 +368,6 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 
 	sc->sc_locked = 0;
 	sc->sc_desc_used = 0;
-	sc->sc_refcount = 0;
 	sc->sc_playing = 0;
 	sc->sc_recording = 0;
 	sc->sc_init_done = 0;
@@ -1066,7 +1065,6 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 		if (error == EINTR) {
 			DPRINTF("%s: interrupted\n", device_xname(sc->sc_dev));
 			ret = -1;
-			mutex_spin_exit(&sc->sc_intr_lock);
 			goto fail;
 		}
 		bail++;
@@ -1894,8 +1892,7 @@ dbri_trigger_output(void *hdl, void *start, void *end, int blksize,
 	struct dbri_softc *sc = hdl;
 	unsigned long count, num;
 
-	if (sc->sc_playing)
-		return 0;
+	KASSERT(sc->sc_playing == 0);
 
 	count = (unsigned long)(((char *)end - (char *)start));
 	num = count / blksize;
@@ -1937,8 +1934,7 @@ dbri_trigger_input(void *hdl, void *start, void *end, int blksize,
 	struct dbri_softc *sc = hdl;
 	unsigned long count, num;
 
-	if (sc->sc_recording)
-		return 0;
+	KASSERT(sc->sc_recording == 0);
 
 	count = (unsigned long)(((char *)end - (char *)start));
 	num = count / blksize;
@@ -2051,14 +2047,9 @@ dbri_open(void *cookie, int flags)
 {
 	struct dbri_softc *sc = cookie;
 
-	DPRINTF("%s: %d\n", __func__, sc->sc_refcount);
+	DPRINTF("%s\n", __func__);
 
-	if (sc->sc_refcount == 0) {
-		dbri_bring_up(sc);
-	}
-
-	sc->sc_refcount++;
-
+	dbri_bring_up(sc);
 	return 0;
 }
 
@@ -2067,16 +2058,11 @@ dbri_close(void *cookie)
 {
 	struct dbri_softc *sc = cookie;
 
-	DPRINTF("%s: %d\n", __func__, sc->sc_refcount);
-
-	sc->sc_refcount--;
-	KASSERT(sc->sc_refcount >= 0);
-	if (sc->sc_refcount > 0)
-		return;
+	DPRINTF("%s\n", __func__);
+	KASSERT(sc->sc_playing == 0);
+	KASSERT(sc->sc_recording == 0);
 
 	dbri_set_power(sc, 0);
-	sc->sc_playing = 0;
-	sc->sc_recording = 0;
 }
 
 static bool
@@ -2097,7 +2083,7 @@ dbri_resume(device_t self, const pmf_qual_t *qual)
 
 	if (sc->sc_powerstate != 0)
 		return true;
-	aprint_verbose("resume: %d\n", sc->sc_refcount);
+	aprint_verbose("resume\n");
 	if (sc->sc_playing) {
 		volatile uint32_t *cmd;
 

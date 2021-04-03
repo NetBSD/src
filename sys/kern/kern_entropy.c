@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.24.2.1 2020/12/14 14:38:13 thorpej Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.24.2.2 2021/04/03 22:29:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.24.2.1 2020/12/14 14:38:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.24.2.2 2021/04/03 22:29:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.24.2.1 2020/12/14 14:38:13 thorpe
 #include <sys/percpu.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
+#include <sys/reboot.h>
 #include <sys/rnd.h>		/* legacy kernel API */
 #include <sys/rndio.h>		/* userland ioctl interface */
 #include <sys/rndsource.h>	/* kernel rndsource driver API */
@@ -106,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.24.2.1 2020/12/14 14:38:13 thorpe
 #include <sys/sha1.h>		/* for boot seed checksum */
 #include <sys/stdint.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/xcall.h>
@@ -140,7 +142,9 @@ struct entropy_cpu {
  *	Per-CPU rndsource state.
  */
 struct rndsource_cpu {
-	unsigned		rc_nbits; /* bits of entropy added */
+	unsigned		rc_entropybits;
+	unsigned		rc_timesamples;
+	unsigned		rc_datasamples;
 };
 
 /*
@@ -160,6 +164,7 @@ struct {
 	kcondvar_t	cv;		/* notifies state changes */
 	struct selinfo	selq;		/* notifies needed -> 0 */
 	struct lwp	*sourcelock;	/* lock on list of sources */
+	kcondvar_t	sourcelock_cv;	/* notifies sourcelock release */
 	LIST_HEAD(,krndsource) sources;	/* list of entropy sources */
 	enum entropy_stage {
 		ENTROPY_COLD = 0, /* single-threaded */
@@ -248,11 +253,12 @@ static void	filt_entropy_read_detach(struct knote *);
 static int	filt_entropy_read_event(struct knote *, long);
 static void	entropy_request(size_t);
 static void	rnd_add_data_1(struct krndsource *, const void *, uint32_t,
-		    uint32_t);
+		    uint32_t, uint32_t);
 static unsigned	rndsource_entropybits(struct krndsource *);
 static void	rndsource_entropybits_cpu(void *, void *, struct cpu_info *);
 static void	rndsource_to_user(struct krndsource *, rndsource_t *);
 static void	rndsource_to_user_est(struct krndsource *, rndsource_est_t *);
+static void	rndsource_to_user_est_cpu(void *, void *, struct cpu_info *);
 
 /*
  * entropy_timer()
@@ -366,13 +372,14 @@ entropy_init(void)
 	mutex_init(&E->lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&E->cv, "entropy");
 	selinit(&E->selq);
+	cv_init(&E->sourcelock_cv, "entsrclock");
 
 	/* Make sure the seed source is attached.  */
 	attach_seed_rndsource();
 
 	/* Note if the bootloader didn't provide a seed.  */
 	if (!E->seeded)
-		printf("entropy: no seed from bootloader\n");
+		aprint_debug("entropy: no seed from bootloader\n");
 
 	/* Allocate the per-CPU records for all early entropy sources.  */
 	LIST_FOREACH(rs, &E->sources, list)
@@ -1025,9 +1032,11 @@ entropy_do_consolidate(void)
 	atomic_store_relaxed(&E->needed, E->needed - diff);
 	E->pending -= diff;
 	if (__predict_false(E->needed > 0)) {
-		if (ratecheck(&lasttime, &interval))
+		if (ratecheck(&lasttime, &interval) &&
+		    (boothowto & AB_DEBUG) != 0) {
 			printf("entropy: WARNING:"
 			    " consolidating less than full entropy\n");
+		}
 	}
 
 	/* Advance the epoch and notify waiters.  */
@@ -1542,6 +1551,8 @@ rnd_attach_source(struct krndsource *rs, const char *name, uint32_t type,
 	/* Initialize the random source.  */
 	memset(rs->name, 0, sizeof(rs->name)); /* paranoia */
 	strlcpy(rs->name, name, sizeof(rs->name));
+	memset(&rs->time_delta, 0, sizeof(rs->time_delta));
+	memset(&rs->value_delta, 0, sizeof(rs->value_delta));
 	rs->total = 0;
 	rs->type = type;
 	rs->flags = flags;
@@ -1593,7 +1604,7 @@ rnd_detach_source(struct krndsource *rs)
 	/* Wait until the source list is not in use, and remove it.  */
 	mutex_enter(&E->lock);
 	while (E->sourcelock)
-		cv_wait(&E->cv, &E->lock);
+		cv_wait(&E->sourcelock_cv, &E->lock);
 	LIST_REMOVE(rs, list);
 	mutex_exit(&E->lock);
 
@@ -1617,7 +1628,7 @@ rnd_lock_sources(void)
 	KASSERT(mutex_owned(&E->lock));
 
 	while (E->sourcelock) {
-		error = cv_wait_sig(&E->cv, &E->lock);
+		error = cv_wait_sig(&E->sourcelock_cv, &E->lock);
 		if (error)
 			return error;
 	}
@@ -1662,7 +1673,7 @@ rnd_unlock_sources(void)
 	    curlwp, E->sourcelock);
 	E->sourcelock = NULL;
 	if (E->stage >= ENTROPY_WARM)
-		cv_broadcast(&E->cv);
+		cv_signal(&E->sourcelock_cv);
 }
 
 /*
@@ -1814,17 +1825,27 @@ rnd_add_data(struct krndsource *rs, const void *buf, uint32_t len,
 
 	/* If we are collecting data, enter them.  */
 	if (ISSET(flags, RND_FLAG_COLLECT_VALUE))
-		rnd_add_data_1(rs, buf, len, entropybits);
+		rnd_add_data_1(rs, buf, len, entropybits,
+		    RND_FLAG_COLLECT_VALUE);
 
 	/* If we are collecting timings, enter one.  */
 	if (ISSET(flags, RND_FLAG_COLLECT_TIME)) {
 		extra = entropy_timer();
-		rnd_add_data_1(rs, &extra, sizeof extra, 0);
+		rnd_add_data_1(rs, &extra, sizeof extra, 0,
+		    RND_FLAG_COLLECT_TIME);
 	}
 }
 
+static unsigned
+add_sat(unsigned a, unsigned b)
+{
+	unsigned c = a + b;
+
+	return (c < a ? UINT_MAX : c);
+}
+
 /*
- * rnd_add_data_1(rs, buf, len, entropybits)
+ * rnd_add_data_1(rs, buf, len, entropybits, flag)
  *
  *	Internal subroutine to call either entropy_enter_intr, if we're
  *	in interrupt context, or entropy_enter if not, and to count the
@@ -1832,7 +1853,7 @@ rnd_add_data(struct krndsource *rs, const void *buf, uint32_t len,
  */
 static void
 rnd_add_data_1(struct krndsource *rs, const void *buf, uint32_t len,
-    uint32_t entropybits)
+    uint32_t entropybits, uint32_t flag)
 {
 	bool fullyused;
 
@@ -1856,15 +1877,34 @@ rnd_add_data_1(struct krndsource *rs, const void *buf, uint32_t len,
 		if (E->stage < ENTROPY_HOT) {
 			if (E->stage >= ENTROPY_WARM)
 				mutex_enter(&E->lock);
-			rs->total += MIN(UINT_MAX - rs->total, entropybits);
+			rs->total = add_sat(rs->total, entropybits);
+			switch (flag) {
+			case RND_FLAG_COLLECT_TIME:
+				rs->time_delta.insamples =
+				    add_sat(rs->time_delta.insamples, 1);
+				break;
+			case RND_FLAG_COLLECT_VALUE:
+				rs->value_delta.insamples =
+				    add_sat(rs->value_delta.insamples, 1);
+				break;
+			}
 			if (E->stage >= ENTROPY_WARM)
 				mutex_exit(&E->lock);
 		} else {
 			struct rndsource_cpu *rc = percpu_getref(rs->state);
-			unsigned nbits = rc->rc_nbits;
 
-			nbits += MIN(UINT_MAX - nbits, entropybits);
-			atomic_store_relaxed(&rc->rc_nbits, nbits);
+			atomic_store_relaxed(&rc->rc_entropybits,
+			    add_sat(rc->rc_entropybits, entropybits));
+			switch (flag) {
+			case RND_FLAG_COLLECT_TIME:
+				atomic_store_relaxed(&rc->rc_timesamples,
+				    add_sat(rc->rc_timesamples, 1));
+				break;
+			case RND_FLAG_COLLECT_VALUE:
+				atomic_store_relaxed(&rc->rc_datasamples,
+				    add_sat(rc->rc_datasamples, 1));
+				break;
+			}
 			percpu_putref(rs->state);
 		}
 	}
@@ -1909,7 +1949,7 @@ rndsource_entropybits_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 	unsigned *nbitsp = cookie;
 	unsigned cpu_nbits;
 
-	cpu_nbits = atomic_load_relaxed(&rc->rc_nbits);
+	cpu_nbits = atomic_load_relaxed(&rc->rc_entropybits);
 	*nbitsp += MIN(UINT_MAX - *nbitsp, cpu_nbits);
 }
 
@@ -1954,11 +1994,24 @@ rndsource_to_user_est(struct krndsource *rs, rndsource_est_t *urse)
 	/* Copy out the rndsource description.  */
 	rndsource_to_user(rs, &urse->rt);
 
-	/* Zero out the statistics because we don't do estimation.  */
-	urse->dt_samples = 0;
+	/* Gather the statistics.  */
+	urse->dt_samples = rs->time_delta.insamples;
 	urse->dt_total = 0;
-	urse->dv_samples = 0;
-	urse->dv_total = 0;
+	urse->dv_samples = rs->value_delta.insamples;
+	urse->dv_total = urse->rt.total;
+	percpu_foreach(rs->state, rndsource_to_user_est_cpu, urse);
+}
+
+static void
+rndsource_to_user_est_cpu(void *ptr, void *cookie, struct cpu_info *ci)
+{
+	struct rndsource_cpu *rc = ptr;
+	rndsource_est_t *urse = cookie;
+
+	urse->dt_samples = add_sat(urse->dt_samples,
+	    atomic_load_relaxed(&rc->rc_timesamples));
+	urse->dv_samples = add_sat(urse->dv_samples,
+	    atomic_load_relaxed(&rc->rc_datasamples));
 }
 
 /*

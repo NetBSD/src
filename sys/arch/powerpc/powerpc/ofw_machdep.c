@@ -1,4 +1,33 @@
-/*	$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.25.42.1 2021/04/03 22:28:35 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.25.42.1 2021/04/03 22:28:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,10 +74,13 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $"
 #include <sys/stat.h>
 #include <sys/systm.h>
 
+#include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
 
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>
+
+#include <powerpc/ofw_machdep.h>
 
 #ifdef DEBUG
 #define DPRINTF aprint_error
@@ -56,36 +88,107 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $"
 #define DPRINTF while(0) printf
 #endif
 
+int	ofw_root;
+int	ofw_chosen;
+
+bool	ofw_real_mode;
+
+/*
+ * Bootstrap console support functions.
+ */
+
+int	console_node = -1, console_instance = -1;
+int	ofw_stdin, ofw_stdout;
+bool	ofwbootcons_suppress;
+
+int	ofw_address_cells;
+int	ofw_size_cells;
+
+static int
+ofwbootcons_cngetc(dev_t dev)
+{
+	unsigned char ch = '\0';
+	int l;
+
+	if (ofwbootcons_suppress) {
+		return ch;
+	}
+
+	while ((l = OF_read(ofw_stdin, &ch, 1)) != 1) {
+		if (l != -2 && l != 0) {
+			return -1;
+		}
+	}
+	return ch;
+}
+
+static void
+ofwbootcons_cnputc(dev_t dev, int c)
+{
+	char ch = c;
+
+	if (ofwbootcons_suppress) {
+		return;
+	}
+
+	OF_write(ofw_stdout, &ch, 1);
+}
+
+static struct consdev consdev_ofwbootcons = {
+	.cn_getc = ofwbootcons_cngetc,
+	.cn_putc = ofwbootcons_cnputc,
+	.cn_pollc = nullcnpollc,
+	.cn_dev = NODEV,
+	.cn_pri = CN_INTERNAL,
+};
+
+static void
+ofw_bootstrap_console(void)
+{
+	int node;
+
+	if (ofw_chosen == -1) {
+		goto nocons;
+	}
+
+	if (OF_getprop(ofw_chosen, "stdout", &ofw_stdout,
+		       sizeof(ofw_stdout)) != sizeof(ofw_stdout))
+		goto nocons;
+
+	if (OF_getprop(ofw_chosen, "stdin", &ofw_stdin,
+		       sizeof(ofw_stdin)) != sizeof(ofw_stdin))
+		goto nocons;
+	if (ofw_stdout == 0) {
+		/* screen should be console, but it is not open */
+		ofw_stdout = OF_open("screen");
+	}
+	node = OF_instance_to_package(ofw_stdout);
+	console_node = node;
+	console_instance = ofw_stdout;
+
+	cn_tab = &consdev_ofwbootcons;
+
+	return;
+ nocons:
+	panic("No /chosen could be found!\n");
+	console_node = -1;
+}
+
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 
-/*
- * This is called during initppc, before the system is really initialized.
- * It shall provide the total and the available regions of RAM.
- * Both lists must have a zero-size entry as terminator.
- * The available regions need not take the kernel into account, but needs
- * to provide space for two additional entry beyond the terminating one.
- */
-void
-mem_regions(struct mem_region **memp, struct mem_region **availp)
+static void
+ofw_bootstrap_get_memory(void)
 {
 	const char *macrisc[] = {"MacRISC", "MacRISC2", "MacRISC4", NULL};
-	int hroot, hmem, i, cnt, memcnt, regcnt, acells, scells;
+	int hmem, i, cnt, memcnt, regcnt;
 	int numregs;
 	uint32_t regs[OFMEM_REGIONS * 4]; /* 2 values + 2 for 64bit */
 
-	DPRINTF("calling mem_regions\n");
-	/* determine acell size */
-	if ((hroot = OF_finddevice("/")) == -1)
-		goto error;
-	cnt = OF_getprop(hroot, "#address-cells", &acells, sizeof(int));
-	if (cnt <= 0)
-		acells = 1;
+	int acells = ofw_address_cells;
+	int scells = ofw_size_cells;
 
-	/* determine scell size */
-	cnt = OF_getprop(hroot, "#size-cells", &scells, sizeof(int));
-	if (cnt <= 0)
-		scells = 1;
+	DPRINTF("calling mem_regions\n");
 
 	/* Get memory */
 	memset(regs, 0, sizeof(regs));
@@ -151,7 +254,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 	 * according to comments in FreeBSD all Apple OF has 32bit values in
 	 * "available", no matter what the cell sizes are
 	 */
-	if (of_compatible(hroot, macrisc) != -1) {
+	if (of_compatible(ofw_root, macrisc)) {
 		DPRINTF("this appears to be a mac...\n");
 		acells = 1;
 		scells = 1;
@@ -225,8 +328,6 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		}
 	}
 
-	*memp = OFmem;
-	*availp = OFavail;
 	return;
 
 error:
@@ -239,12 +340,165 @@ error:
 	OFavail[0].start = 0x3000;
 	OFavail[0].size = 0x20000000 - 0x3000;
 
-	*memp = OFmem;
-	*availp = OFavail;
 #else
 	panic("no memory?");
 #endif
 	return;
+}
+
+static void
+ofw_bootstrap_get_translations(void)
+{
+	/* 5 cells per: virt(1), size(1), phys(2), mode(1) */
+	uint32_t regs[OFW_MAX_TRANSLATIONS * 5];
+	uint32_t virt, size, mode;
+	uint64_t phys;
+	uint32_t *rp;
+	int proplen;
+	int mmu_ihandle, mmu_phandle;
+	int idx;
+
+	if (OF_getprop(ofw_chosen, "mmu", &mmu_ihandle,
+		       sizeof(mmu_ihandle)) <= 0) {
+		aprint_normal("No /chosen/mmu\n");
+		return;
+	}
+	mmu_phandle = OF_instance_to_package(mmu_ihandle);
+
+	proplen = OF_getproplen(mmu_phandle, "translations");
+	if (proplen <= 0) {
+		aprint_normal("No translations in /chosen/mmu\n");
+		return;
+	}
+
+	if (proplen > sizeof(regs)) {
+		panic("/chosen/mmu translations too large");
+	}
+
+	proplen = OF_getprop(mmu_phandle, "translations", regs, sizeof(regs));
+	int nregs = proplen / sizeof(regs[0]);
+
+	/* Decode into ofw_translations[]. */
+	for (idx = 0, rp = regs; rp < &regs[nregs];) {
+		virt = *rp++;
+		size = *rp++;
+		switch (ofw_address_cells) {
+		case 1:
+			phys = *rp++;
+			break;
+		case 2:
+			phys = *rp++;
+			phys = (phys << 32) | *rp++;
+			break;
+		default:
+			panic("unexpected #address-cells");
+		}
+		mode = *rp++;
+		if (rp > &regs[nregs]) {
+			panic("unexpected OFW translations format");
+		}
+
+		/* Wouldn't expect this, but... */
+		if (size == 0) {
+			continue;
+		}
+
+		aprint_normal("translation %d virt=%#"PRIx32
+		    " phys=%#"PRIx64" size=%#"PRIx32" mode=%#"PRIx32"\n",
+		    idx, virt, phys, size, mode);
+		
+		if (sizeof(paddr_t) < 8 && phys >= 0x100000000ULL) {
+			panic("translation phys out of range");
+		}
+
+		if (idx == OFW_MAX_TRANSLATIONS) {
+			panic("too many OFW translations");
+		}
+
+		ofw_translations[idx].virt = virt;
+		ofw_translations[idx].size = size;
+		ofw_translations[idx].phys = (paddr_t)phys;
+		ofw_translations[idx].mode = mode;
+		idx++;
+	}
+}
+
+static bool
+ofw_option_truefalse(const char *prop, int proplen)
+{
+	/* These are all supposed to be strings. */
+	switch (prop[0]) {
+	case 'y':
+	case 'Y':
+	case 't':
+	case 'T':
+	case '1':
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Called from ofwinit() very early in bootstrap.  We are still
+ * running on the stack provided by OpenFirmware and in the same
+ * OpenFirmware client environment as the boot loader.  Our calls
+ * to OpenFirmware are direct, and not via the trampoline that
+ * saves / restores kernel state.
+ */
+void
+ofw_bootstrap(void)
+{
+	char prop[32];
+	int handle, proplen;
+
+	/* Stash the handles for "/" and "/chosen" for convenience later. */
+	ofw_root = OF_finddevice("/");
+	ofw_chosen = OF_finddevice("/chosen");
+
+	/* Initialize the early bootstrap console. */
+	ofw_bootstrap_console();
+
+	/* Check to see if we're running in real-mode. */
+	handle = OF_finddevice("/options");
+	if (handle != -1) {
+		proplen = OF_getprop(handle, "real-mode?", prop, sizeof(prop));
+		if (proplen > 0) {
+			ofw_real_mode = ofw_option_truefalse(prop, proplen);
+		} else {
+			ofw_real_mode = false;
+		}
+	}
+	aprint_normal("OpenFirmware running in %s-mode\n",
+	    ofw_real_mode ? "real" : "virtual");
+
+	/* Get #address-cells and #size-cells to fething memory info. */
+	if (OF_getprop(ofw_root, "#address-cells", &ofw_address_cells,
+		       sizeof(ofw_address_cells)) <= 0)
+		ofw_address_cells = 1;
+
+	if (OF_getprop(ofw_root, "#size-cells", &ofw_size_cells,
+		       sizeof(ofw_size_cells)) <= 0)
+		ofw_size_cells = 1;
+
+	/* Get the system memory configuration. */
+	ofw_bootstrap_get_memory();
+
+	/* Get any translations used by OpenFirmware. */
+	ofw_bootstrap_get_translations();
+}
+
+/*
+ * This is called during initppc, before the system is really initialized.
+ * It shall provide the total and the available regions of RAM.
+ * Both lists must have a zero-size entry as terminator.
+ * The available regions need not take the kernel into account, but needs
+ * to provide space for two additional entry beyond the terminating one.
+ */
+void
+mem_regions(struct mem_region **memp, struct mem_region **availp)
+{
+	*memp = OFmem;
+	*availp = OFavail;
 }
 
 void

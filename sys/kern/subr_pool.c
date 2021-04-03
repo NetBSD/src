@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.274.2.1 2021/01/03 16:35:04 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.274.2.2 2021/04/03 22:29:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.274.2.1 2021/01/03 16:35:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.274.2.2 2021/04/03 22:29:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -3096,9 +3096,14 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 	/*
 	 * No space in the natural padding; check if we can extend a
 	 * bit the size of the pool.
+	 *
+	 * Avoid using redzone for allocations half of a page or larger.
+	 * For pagesize items, we'd waste a whole new page (could be
+	 * unmapped?), and for half pagesize items, approximately half
+	 * the space is lost (eg, 4K pages, you get one 2K allocation.)
 	 */
 	nsz = roundup(pp->pr_size + redzsz, pp->pr_align);
-	if (nsz <= pp->pr_alloc->pa_pagesz) {
+	if (nsz <= (pp->pr_alloc->pa_pagesz / 2)) {
 		/* Ok, we can */
 		pp->pr_size = nsz;
 		pp->pr_reqsize_with_redzone = requested_size + redzsz;

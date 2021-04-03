@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.10 2020/09/05 15:59:09 jakllsch Exp $	*/
+/*	$NetBSD: disasm.c,v 1.10.2.1 2021/04/03 22:28:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.10 2020/09/05 15:59:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.10.2.1 2021/04/03 22:28:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -323,9 +323,14 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 0,  0,  2, 3), "id_isar3_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  2, 4), "id_isar4_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  2, 5), "id_isar5_el1"		},
+	{	SYSREG_ENC(3, 0,  0,  2, 6), "id_mmfr4_el1"		},
+	{	SYSREG_ENC(3, 0,  0,  2, 7), "id_isar6_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  3, 0), "mvfr0_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  3, 1), "mvfr1_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  3, 2), "mvfr2_el1"		},
+	{	SYSREG_ENC(3, 0,  0,  3, 4), "id_pfr2_el1"		},
+	{	SYSREG_ENC(3, 0,  0,  3, 5), "id_dfr1_el1"		},
+	{	SYSREG_ENC(3, 0,  0,  3, 6), "id_mmfr5_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  4, 0), "id_aa64pfr0_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  4, 1), "id_aa64pfr1_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  5, 0), "id_aa64dfr0_el1"		},
@@ -336,9 +341,12 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 0,  0,  6, 1), "id_aa64isar1_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  7, 0), "id_aa64mmfr0_el1"		},
 	{	SYSREG_ENC(3, 0,  0,  7, 1), "id_aa64mmfr1_el1"		},
+	{	SYSREG_ENC(3, 0,  0,  7, 2), "id_aa64mmfr2_el1"		},
 	{	SYSREG_ENC(3, 0,  1,  0, 0), "sctlr_el1"		},
 	{	SYSREG_ENC(3, 0,  1,  0, 1), "actlr_el1"		},
 	{	SYSREG_ENC(3, 0,  1,  0, 2), "cpacr_el1"		},
+	{	SYSREG_ENC(3, 0,  1,  0, 5), "rgsr_el1"			},
+	{	SYSREG_ENC(3, 0,  1,  0, 6), "gcr_el1"			},
 	{	SYSREG_ENC(3, 0,  2,  0, 0), "ttbr0_el1"		},
 	{	SYSREG_ENC(3, 0,  2,  0, 1), "ttbr1_el1"		},
 	{	SYSREG_ENC(3, 0,  2,  0, 2), "tcr_el1"			},
@@ -362,21 +370,31 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 0,  5,  1, 0), "afsr0_el1"		},
 	{	SYSREG_ENC(3, 0,  5,  1, 1), "afsr1_el1"		},
 	{	SYSREG_ENC(3, 0,  5,  2, 0), "esr_el1"			},
+	{	SYSREG_ENC(3, 0,  5,  6, 0), "tfsr_el1"			},
+	{	SYSREG_ENC(3, 0,  5,  6, 1), "tfsre0_el1"		},
 	{	SYSREG_ENC(3, 0,  6,  0, 0), "far_el1"			},
 	{	SYSREG_ENC(3, 0,  7,  4, 0), "par_el1"			},
 	{	SYSREG_ENC(3, 0,  9, 14, 1), "pmintenset_el1"		},
 	{	SYSREG_ENC(3, 0,  9, 14, 2), "pmintenclr_el1"		},
 	{	SYSREG_ENC(3, 0, 10,  2, 0), "mair_el1"			},
 	{	SYSREG_ENC(3, 0, 10,  3, 0), "amair_el1"		},
+	{	SYSREG_ENC(3, 0, 10,  4, 0), "lorsa_el1"		},
+	{	SYSREG_ENC(3, 0, 10,  4, 1), "lorea_el1"		},
+	{	SYSREG_ENC(3, 0, 10,  4, 2), "lorn_el1"			},
+	{	SYSREG_ENC(3, 0, 10,  4, 3), "lorc_el1"			},
+	{	SYSREG_ENC(3, 0, 10,  4, 7), "lorid_el1"		},
 	{	SYSREG_ENC(3, 0, 12,  0, 0), "vbar_el1"			},
 	{	SYSREG_ENC(3, 0, 12,  0, 1), "rvbar_el1"		},
 	{	SYSREG_ENC(3, 0, 12,  0, 2), "rmr_el1"			},
 	{	SYSREG_ENC(3, 0, 12,  1, 0), "isr_el1"			},
 	{	SYSREG_ENC(3, 0, 13,  0, 1), "contextidr_el1"		},
 	{	SYSREG_ENC(3, 0, 13,  0, 4), "tpidr_el1"		},
+	{	SYSREG_ENC(3, 0, 13,  0, 7), "scxtnum_el1"		},
 	{	SYSREG_ENC(3, 0, 14,  1, 0), "cntkctl_el1"		},
 	{	SYSREG_ENC(3, 1,  0,  0, 0), "ccsidr_el1"		},
 	{	SYSREG_ENC(3, 1,  0,  0, 1), "clidr_el1"		},
+	{	SYSREG_ENC(3, 1,  0,  0, 2), "ccsidr2_el1"		},
+	{	SYSREG_ENC(3, 1,  0,  0, 4), "gmid_el1"			},
 	{	SYSREG_ENC(3, 1,  0,  0, 7), "aidr_el1"			},
 	{	SYSREG_ENC(3, 2,  0,  0, 0), "csselr_el1"		},
 	{	SYSREG_ENC(3, 3,  0,  0, 1), "ctr_el0"			},
@@ -407,6 +425,7 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 3,  9, 14, 3), "pmovsset_el0"		},
 	{	SYSREG_ENC(3, 3, 13,  0, 2), "tpidr_el0"		},
 	{	SYSREG_ENC(3, 3, 13,  0, 3), "tpidrro_el0"		},
+	{	SYSREG_ENC(3, 3, 13,  0, 7), "scxtnum_el0"		},
 	{	SYSREG_ENC(3, 3, 14,  0, 0), "cntfrq_el0"		},
 	{	SYSREG_ENC(3, 3, 14,  0, 1), "cntpct_el0"		},
 	{	SYSREG_ENC(3, 3, 14,  0, 2), "cntvct_el0"		},
@@ -487,12 +506,22 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 4,  1,  1, 1), "mdcr_el2"			},
 	{	SYSREG_ENC(3, 4,  1,  1, 2), "cptr_el2"			},
 	{	SYSREG_ENC(3, 4,  1,  1, 3), "hstr_el2"			},
+	{	SYSREG_ENC(3, 4,  1,  1, 4), "hfgrtr_el2"		},
+	{	SYSREG_ENC(3, 4,  1,  1, 5), "hfgwtr_el2"		},
+	{	SYSREG_ENC(3, 4,  1,  1, 6), "hfgitr_el2"		},
 	{	SYSREG_ENC(3, 4,  1,  1, 7), "hacr_el2"			},
 	{	SYSREG_ENC(3, 4,  2,  0, 0), "ttbr0_el2"		},
+	{	SYSREG_ENC(3, 4,  2,  0, 1), "ttbr1_el2"		},
 	{	SYSREG_ENC(3, 4,  2,  0, 2), "tcr_el2"			},
 	{	SYSREG_ENC(3, 4,  2,  1, 0), "vttbr_el2"		},
 	{	SYSREG_ENC(3, 4,  2,  1, 2), "vtcr_el2"			},
+	{	SYSREG_ENC(3, 4,  2,  2, 0), "vncr_el2"			},
+	{	SYSREG_ENC(3, 4,  2,  6, 0), "vsttbr_el2"		},
+	{	SYSREG_ENC(3, 4,  2,  6, 2), "vstcr_el2"		},
 	{	SYSREG_ENC(3, 4,  3,  0, 0), "dacr32_el2"		},
+	{	SYSREG_ENC(3, 4,  3,  1, 4), "hdfgrtr_el2"		},
+	{	SYSREG_ENC(3, 4,  3,  1, 5), "hdfgwtr_el2"		},
+	{	SYSREG_ENC(3, 4,  3,  1, 6), "hafgrtr_el2"		},
 	{	SYSREG_ENC(3, 4,  4,  0, 0), "spsr_el2"			},
 	{	SYSREG_ENC(3, 4,  4,  0, 1), "elr_el2"			},
 	{	SYSREG_ENC(3, 4,  4,  1, 0), "sp_el1"			},
@@ -505,6 +534,7 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 4,  5,  1, 1), "afsr1_el2"		},
 	{	SYSREG_ENC(3, 4,  5,  2, 0), "esr_el2"			},
 	{	SYSREG_ENC(3, 4,  5,  3, 0), "fpexc32_el2"		},
+	{	SYSREG_ENC(3, 4,  5,  6, 0), "tfsr_el2"			},
 	{	SYSREG_ENC(3, 4,  6,  0, 0), "far_el2"			},
 	{	SYSREG_ENC(3, 4,  6,  0, 4), "hpfar_el2"		},
 	{	SYSREG_ENC(3, 4, 10,  2, 0), "mair_el2"			},
@@ -512,12 +542,23 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 4, 12,  0, 0), "vbar_el2"			},
 	{	SYSREG_ENC(3, 4, 12,  0, 1), "rvbar_el2"		},
 	{	SYSREG_ENC(3, 4, 12,  0, 2), "rmr_el2"			},
+	{	SYSREG_ENC(3, 4, 13,  0, 1), "contextidr_el2"		},
 	{	SYSREG_ENC(3, 4, 13,  0, 2), "tpidr_el2"		},
+	{	SYSREG_ENC(3, 4, 13,  0, 7), "scxtnum_el2"		},
 	{	SYSREG_ENC(3, 4, 14,  0, 3), "cntvoff_el2"		},
 	{	SYSREG_ENC(3, 4, 14,  1, 0), "cnthctl_el2"		},
 	{	SYSREG_ENC(3, 4, 14,  2, 0), "cnthp_tval_el2"		},
 	{	SYSREG_ENC(3, 4, 14,  2, 1), "cnthp_ctl_el2"		},
 	{	SYSREG_ENC(3, 4, 14,  2, 2), "cnthp_cval_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  3, 0), "cnthv_tval_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  3, 1), "cnthv_ctl_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  3, 2), "cnthv_cval_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  4, 0), "cnthvs_tval_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  4, 1), "cnthvs_ctl_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  4, 2), "cnthvs_cval_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  5, 0), "cnthps_tval_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  5, 1), "cnthps_ctl_el2"		},
+	{	SYSREG_ENC(3, 4, 14,  5, 2), "cnthps_cval_el2"		},
 	{	SYSREG_ENC(3, 6,  1,  0, 0), "sctlr_el3"		},
 	{	SYSREG_ENC(3, 6,  1,  0, 1), "actlr_el3"		},
 	{	SYSREG_ENC(3, 6,  1,  1, 0), "scr_el3"			},
@@ -532,6 +573,7 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 6,  5,  1, 0), "afsr0_el3"		},
 	{	SYSREG_ENC(3, 6,  5,  1, 1), "afsr1_el3"		},
 	{	SYSREG_ENC(3, 6,  5,  2, 0), "esr_el3"			},
+	{	SYSREG_ENC(3, 6,  5,  6, 0), "tfsr_el3"			},
 	{	SYSREG_ENC(3, 6,  6,  0, 0), "far_el3"			},
 	{	SYSREG_ENC(3, 6, 10,  2, 0), "mair_el3"			},
 	{	SYSREG_ENC(3, 6, 10,  3, 0), "amair_el3"		},
@@ -539,6 +581,7 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 6, 12,  0, 1), "rvbar_el3"		},
 	{	SYSREG_ENC(3, 6, 12,  0, 2), "rmr_el3"			},
 	{	SYSREG_ENC(3, 6, 13,  0, 2), "tpidr_el3"		},
+	{	SYSREG_ENC(3, 6, 13,  0, 7), "scxtnum_el3"		},
 	{	SYSREG_ENC(3, 7, 14,  2, 0), "cntps_tval_el1"		},
 	{	SYSREG_ENC(3, 7, 14,  2, 1), "cntps_ctl_el1"		},
 	{	SYSREG_ENC(3, 7, 14,  2, 2), "cntps_cval_el1"		}
@@ -876,7 +919,7 @@ regoffset_b_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
 static void
 regoffset_h_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
     uint64_t Rm, uint64_t option, uint64_t shift, uint64_t Rn, uint64_t Rt,
-    const char *op)
+    uint64_t RtSz, const char *op)
 {
 	int r;
 
@@ -888,13 +931,13 @@ regoffset_h_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
 	if ((shift == 0) && (option == 3)) {
 		PRINTF("%s\t%s, [%s,%s]\n",
 		    op,
-		    ZREGNAME(0, Rt),
+		    ZREGNAME(RtSz, Rt),
 		    SREGNAME(1, Rn),
 		    ZREGNAME(r, Rm));
 	} else if (shift == 0) {
 		PRINTF("%s\t%s, [%s,%s,%s]\n",
 		    op,
-		    ZREGNAME(0, Rt),
+		    ZREGNAME(RtSz, Rt),
 		    SREGNAME(1, Rn),
 		    ZREGNAME(r, Rm),
 		    SHIFTOP8(option,
@@ -902,7 +945,7 @@ regoffset_h_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,
 	} else {
 		PRINTF("%s\t%s, [%s,%s,%s #%u]\n",
 		    op,
-		    ZREGNAME(0, Rt),
+		    ZREGNAME(RtSz, Rt),
 		    SREGNAME(1, Rn),
 		    ZREGNAME(r, Rm),
 		    SHIFTOP8(option,
@@ -1281,8 +1324,8 @@ static struct op_sys_table op_sys_table[] = {
 	{ SYSREG_ENC(1, 0, 7,  8, 1), OPE_XT,	"at\ts1e1w"		},
 	{ SYSREG_ENC(1, 0, 7,  8, 2), OPE_XT,	"at\ts1e0r"		},
 	{ SYSREG_ENC(1, 0, 7,  8, 3), OPE_XT,	"at\ts1e0w"		},
-	{ SYSREG_ENC(1, 0, 7,  9, 0), OPE_XT,	"at\ts1e1rp"	},
-	{ SYSREG_ENC(1, 0, 7,  9, 1), OPE_XT,	"at\ts1e1wp"	},
+	{ SYSREG_ENC(1, 0, 7,  9, 0), OPE_XT,	"at\ts1e1rp"		},
+	{ SYSREG_ENC(1, 0, 7,  9, 1), OPE_XT,	"at\ts1e1wp"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 0), OPE_XT,	"at\ts1e2r"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 1), OPE_XT,	"at\ts1e2w"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 4), OPE_XT,	"at\ts12e1r"		},
@@ -1292,9 +1335,9 @@ static struct op_sys_table op_sys_table[] = {
 	{ SYSREG_ENC(1, 6, 7,  8, 0), OPE_XT,	"at\ts1e3r"		},
 	{ SYSREG_ENC(1, 6, 7,  8, 1), OPE_XT,	"at\ts1e3w"		},
 
-	{ SYSREG_ENC(1, 3, 7,  3, 4), OPE_XT,	"cfp\trctx"			},
-	{ SYSREG_ENC(1, 3, 7,  3, 5), OPE_XT,	"dvp\trctx"			},
-	{ SYSREG_ENC(1, 3, 7,  3, 7), OPE_XT,	"cpp\trctx"			},
+	{ SYSREG_ENC(1, 3, 7,  3, 4), OPE_XT,	"cfp\trctx"		},
+	{ SYSREG_ENC(1, 3, 7,  3, 5), OPE_XT,	"dvp\trctx"		},
+	{ SYSREG_ENC(1, 3, 7,  3, 7), OPE_XT,	"cpp\trctx"		},
 
 	{ SYSREG_ENC(1, 0, 8,  3, 0), OPE_NONE,	"tlbi\tvmalle1is"	},
 	{ SYSREG_ENC(1, 0, 8,  3, 1), OPE_XT,	"tlbi\tvae1is"		},
@@ -1987,7 +2030,7 @@ OP3FUNC(op_ldrh_immunsign, imm12, Rn, Rt)
 
 OP5FUNC(op_ldrh_reg, Rm, option, shift, Rn, Rt)
 {
-	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, "ldrh");
+	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, 0, "ldrh");
 }
 
 OP4FUNC(op_ldrsb_immpostidx, opc, imm9, Rn, Rt)
@@ -2057,7 +2100,8 @@ OP4FUNC(op_ldrsh_immunsign, opc, imm12, Rn, Rt)
 
 OP6FUNC(op_ldrsh_reg, opc, Rm, option, shift, Rn, Rt)
 {
-	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, "ldrsh");
+	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, opc ^ 1,
+	    "ldrsh");
 }
 
 OP3FUNC(op_ldrsw_immpostidx, imm9, Rn, Rt)
@@ -2126,7 +2170,7 @@ OP3FUNC(op_ldtrb, imm9, Rn, Rt)
 		PRINTF("ldtrb\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 
@@ -2140,7 +2184,7 @@ OP3FUNC(op_ldtrh, imm9, Rn, Rt)
 		PRINTF("ldtrh\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 
@@ -2751,13 +2795,13 @@ OP4FUNC(op_smsubl, Rm, Ra, Rn, Rd)
 	if (Ra == 31) {
 		PRINTF("smnegl\t%s, %s, %s\n",
 		    ZREGNAME(1, Rd),
-		    ZREGNAME(1, Rn),
-		    ZREGNAME(1, Rm));
+		    ZREGNAME(0, Rn),
+		    ZREGNAME(0, Rm));
 	} else {
 		PRINTF("smsubl\t%s, %s, %s, %s\n",
 		    ZREGNAME(1, Rd),
-		    ZREGNAME(1, Rn),
-		    ZREGNAME(1, Rm),
+		    ZREGNAME(0, Rn),
+		    ZREGNAME(0, Rm),
 		    ZREGNAME(1, Ra));
 	}
 }
@@ -2973,7 +3017,7 @@ OP3FUNC(op_strh_immunsign, imm12, Rn, Rt)
 
 OP5FUNC(op_strh_reg, Rm, option, shift, Rn, Rt)
 {
-	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, "strh");
+	regoffset_h_common(di, pc, insn, Rm, option, shift, Rn, Rt, 0, "strh");
 }
 
 OP4FUNC(op_sttr, size, imm9, Rn, Rt)
@@ -3000,7 +3044,7 @@ OP3FUNC(op_sttrb, imm9, Rn, Rt)
 		PRINTF("sttrb\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 
@@ -3014,7 +3058,7 @@ OP3FUNC(op_sttrh, imm9, Rn, Rt)
 		PRINTF("sttrh\t%s, [%s,#%"PRId64"]\n",
 		    ZREGNAME(0, Rt),
 		    SREGNAME(1, Rn),
-		    SignExtend(12, imm9, 1));
+		    SignExtend(9, imm9, 1));
 	}
 }
 

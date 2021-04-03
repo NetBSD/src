@@ -1,4 +1,4 @@
-/* $NetBSD: tcagpio.c,v 1.5 2019/12/23 19:38:58 thorpej Exp $ */
+/* $NetBSD: tcagpio.c,v 1.5.8.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcagpio.c,v 1.5 2019/12/23 19:38:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcagpio.c,v 1.5.8.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ struct tcagpio_pin {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "ti,tca9539",			0 },
-	{ NULL,				0 }
+	{ .compat = "ti,tca9539" },
+	DEVICE_COMPAT_EOL
 };
 
 static uint8_t

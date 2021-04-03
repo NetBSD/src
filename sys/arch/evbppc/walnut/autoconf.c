@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2014/07/30 19:33:56 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.40.1 2021/04/03 22:28:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,20 +32,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2014/07/30 19:33:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.40.1 2021/04/03 22:28:25 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/cpu.h>
 
 #include <dev/ic/comreg.h>	/* For COM_FREQ */
+
+#include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
-#include <powerpc/ibm4xx/spr.h>
 
 /*
  * List of port-specific devices to attach to the processor local bus.
@@ -71,38 +71,12 @@ cpu_configure(void)
 	if (config_rootfound("plb", __UNCONST(&local_plb_devs)) == NULL)
 		panic("configure: plb not configured");
 
-	(void)spl0();
-}
-
-/*
- * Setup root device.
- * Configure swap area.
- */
-void
-cpu_rootconf(void)
-{
-
-	rootconf();
+	genppc_cpu_configure();
 }
 
 void
 device_register(device_t dev, void *aux)
 {
-	device_t parent = device_parent(dev);
 
-	if (device_is_a(dev, "com") && device_is_a(parent, "opb")) {
-		/* Set the frequency of the on-chip UART. */
-		prop_number_t pn = prop_number_create_integer(COM_FREQ * 6);
-		KASSERT(pn != NULL);
-
-		if (prop_dictionary_set(device_properties(dev),
-					"clock-frequency", pn) == false) {
-			printf("WARNING: unable to set clock-frequency "
-			    "property for %s\n", device_xname(dev));
-		}
-		prop_object_release(pn);
-		return;
-	}
-
-	ibm4xx_device_register(dev, aux);
+	ibm4xx_device_register(dev, aux, COM_FREQ * 6);
 }

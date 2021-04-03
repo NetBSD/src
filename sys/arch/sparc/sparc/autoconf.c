@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.261.2.1 2021/04/03 22:28:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261.2.1 2021/04/03 22:28:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $"
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/userconf.h>
+#include <sys/kgdb.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -89,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $"
 #include <machine/promlib.h>
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
+#include <machine/locore.h>
 
 #include <sparc/sparc/memreg.h>
 #include <machine/cpu.h>
@@ -96,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $"
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/timerreg.h>
+#include <sparc/dev/cons.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
@@ -119,11 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $"
  * the configuration process, and are used in initializing
  * the machine.
  */
-
-#ifdef KGDB
-extern	int kgdb_debug_panic;
-#endif
-extern void *bootinfo;
 
 #if !NKSYMS && !defined(DDB) && !defined(MODULAR)
 void bootinfo_relocate(void *);
@@ -169,8 +167,37 @@ matchbyname(device_t parent, cfdata_t cf, void *aux)
 }
 
 /*
+ * Set machine_model[] to something useful.  If late is set, then
+ * have now probed the sun4 class and can finish it.  Other systems
+ * are complete with the first call with late=false out of bootstrap.
+ */
+static void
+set_machine_model(bool late)
+{
+	char namebuf[32];
+
+	if (!CPU_ISSUN4) {
+		if (late) {
+			KASSERT(machine_model[0] != '\0');
+		} else {
+			snprintf(machine_model, sizeof machine_model, "%s",
+			    prom_getpropstringA(findroot(), "name", namebuf,
+			    sizeof(namebuf)));
+		}
+		return;
+	}
+	if (late)
+		snprintf(machine_model, sizeof machine_model, "SUN-4/%d series",
+		    cpuinfo.classlvl);
+	else
+		snprintf(machine_model, sizeof machine_model, "SUN-4 series");
+}
+
+/*
  * Get the number of CPUs in the system and the CPUs' SPARC architecture
  * version. We need this information early in the boot process.
+ *
+ * This also sets cpu_arch to 8 on sun4m and sun4d.
  */
 static int
 find_cpus(void)
@@ -187,6 +214,9 @@ find_cpus(void)
 	 * other models, presumably).
 	 */
 	cpu_arch = 7;
+
+	/* Initialise machine_model, early phase. */
+	set_machine_model(false);
 
 	/* On sun4 and sun4c we support only one CPU */
 	if (!CPU_ISSUN4M && !CPU_ISSUN4D)
@@ -268,13 +298,8 @@ static void bootstrapIIep(void);
 void
 bootstrap(void)
 {
-	extern uint8_t u0[];
-	extern struct consdev consdev_prom;
-
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
-#else
-	extern int end[];
 #endif
 	struct btinfo_boothowto *bi_howto;
 
@@ -292,7 +317,6 @@ bootstrap(void)
 #if defined(SUN4M) || defined(SUN4D)
 	/* Switch to sparc v8 multiply/divide functions on v8 machines */
 	if (cpu_arch == 8) {
-		extern void sparc_v8_muldiv(void);
 		sparc_v8_muldiv();
 	}
 #endif /* SUN4M || SUN4D */
@@ -387,7 +411,6 @@ bootstrap4m(void)
 	int nvaddrs, *vaddrs, vstore[10];
 	u_int pte;
 	int i;
-	extern void setpte4m(u_int, u_int);
 
 	if ((node = prom_opennode("/obio/interrupt")) == 0
 	    && (node = prom_finddevice("/obio/interrupt")) == 0)
@@ -457,8 +480,6 @@ bootstrap4m(void)
 static void
 bootstrapIIep(void)
 {
-	extern struct sparc_bus_space_tag mainbus_space_tag;
-
 	int node;
 	bus_space_handle_t bh;
 	pcireg_t id;
@@ -1089,9 +1110,6 @@ static int	prom_getprop_address1(int, void **);
 static void
 mainbus_attach(device_t parent, device_t dev, void *aux)
 {
-extern struct sparc_bus_dma_tag mainbus_dma_tag;
-extern struct sparc_bus_space_tag mainbus_space_tag;
-
 	struct boot_special {
 		const char *const dev;
 #define BS_EARLY	1	/* attach device early */
@@ -1181,14 +1199,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #define	openboot_special4d	((void *)0)
 #endif
 
-
-	if (CPU_ISSUN4)
-		snprintf(machine_model, sizeof machine_model, "SUN-4/%d series",
-		    cpuinfo.classlvl);
-	else
-		snprintf(machine_model, sizeof machine_model, "%s",
-		    prom_getpropstringA(findroot(), "name", namebuf,
-		    sizeof(namebuf)));
+	set_machine_model(true);
 
 	prom_getidprom();
 	printf(": %s: hostid %lx\n", machine_model, hostid);
@@ -1966,7 +1977,6 @@ bootinfo_relocate(void *newloc)
 	int bi_size;
 	struct btinfo_common *bt;
 	char *cp, *dp;
-	extern char *kernel_top;
 
 	if (bootinfo == NULL) {
 		kernel_top = newloc;

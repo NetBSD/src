@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.7 2019/06/06 23:19:07 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.7.10.1 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.7 2019/06/06 23:19:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.7.10.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -332,9 +332,9 @@ sun8i_codec_thread(struct work *wk, void *priv)
 	sun8i_codec_set_jackdet(sc, true);
 }
 
-static const char * compatible[] = {
-	"allwinner,sun8i-a33-codec",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-a33-codec" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -342,7 +342,7 @@ sun8i_codec_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -456,8 +456,8 @@ sun8i_codec_attach(device_t parent, device_t self, void *aux)
 	/* Schedule initial jack detect task */
 	workqueue_enqueue(sc->sc_workq, &sc->sc_work, NULL);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    sun8i_codec_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sun8i_codec_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

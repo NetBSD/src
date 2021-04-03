@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.64.2.1 2020/12/14 14:37:47 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.64.2.2 2021/04/03 22:28:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.64.2.1 2020/12/14 14:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.64.2.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -223,6 +223,8 @@ void
 cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
 
+	KASSERT(kpreempt_disabled());
+
 	if (flags & RESCHED_IDLE) {
 #ifdef MULTIPROCESSOR
 		/*
@@ -308,12 +310,14 @@ cpu_intr_p(void)
 struct lwp *
 arm_curlwp(void)
 {
+
 	return curlwp;
 }
 
 struct cpu_info *
 arm_curcpu(void)
 {
+
 	return curcpu();
 }
 #endif
@@ -322,18 +326,23 @@ arm_curcpu(void)
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
+
+	KASSERT(kpreempt_disabled());
+
 	return s == IPL_NONE;
 }
 
 void
 cpu_kpreempt_exit(uintptr_t where)
 {
-	atomic_and_uint(&curcpu()->ci_astpending, (unsigned int)~__BIT(1));
+
+	/* do nothing */
 }
 
 bool
 cpu_kpreempt_disabled(void)
 {
+
 	return curcpu()->ci_cpl != IPL_NONE;
 }
 #endif /* __HAVE_PREEMPTION */

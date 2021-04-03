@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft_ll.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $ */
+/* 	$NetBSD: tft_ll.c,v 1.4.66.1 2021/04/03 22:28:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft_ll.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft_ll.c,v 1.4.66.1 2021/04/03 22:28:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: tft_ll.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $");
 struct ll_tft_control {
 	struct cdmac_descr      cd_dsc;
 	u_char                  cd_img[];
-} __packed;
+};
+
+CTASSERT(offsetof(struct ll_tft_control, cd_img) == sizeof(struct cdmac_descr));
 
 struct ll_tft_softc {
 	struct tft_softc 	lsc_sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootaa64.c,v 1.2.14.1 2020/12/14 14:38:17 thorpej Exp $	*/
+/*	$NetBSD: efibootaa64.c,v 1.2.14.2 2021/04/03 22:29:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -47,18 +47,22 @@ efi_dcache_flush(u_long start, u_long size)
 void
 efi_boot_kernel(u_long marks[MARK_MAX])
 {
-	void (*kernel_entry)(register_t, register_t, register_t, register_t);
-	u_long kernel_size;
+	u_long kernel_start, kernel_size, kernel_entry;
+	u_long fdt_start, fdt_size;
 
-	kernel_entry = (void *)marks[MARK_ENTRY];
-	kernel_size = marks[MARK_END] - marks[MARK_START];
+	kernel_start = marks[MARK_START];
+	kernel_size = marks[MARK_END] - kernel_start;
+	kernel_entry = marks[MARK_ENTRY];
+	fdt_start = (u_long)efi_fdt_data();
+	fdt_size = efi_fdt_size();
 
-	aarch64_dcache_wbinv_range((u_long)kernel_entry, kernel_size);
-	if (efi_fdt_size() > 0)
-		aarch64_dcache_wbinv_range((u_long)efi_fdt_data(), efi_fdt_size());
+	aarch64_dcache_wbinv_range(kernel_start, kernel_size);
+	if (efi_fdt_size() > 0) {
+		aarch64_dcache_wbinv_range(fdt_start, fdt_size);
+	}
 	aarch64_icache_inv_all();
 
-	aarch64_exec_kernel((paddr_t)marks[MARK_ENTRY], (paddr_t)efi_fdt_data());
+	aarch64_exec_kernel((paddr_t)kernel_entry, (paddr_t)fdt_start);
 }
 
 /*

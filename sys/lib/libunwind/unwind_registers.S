@@ -272,68 +272,81 @@ ENTRY(_ZNK7_Unwind15Registers_ppc326jumptoEv)
 #ifdef __aarch64__
 	.hidden _ZN7_Unwind17Registers_aarch64C1Ev
 ENTRY(_ZN7_Unwind17Registers_aarch64C1Ev)
-	stp	x0, x1, [x0]
-	add	x0, x0, #16
-	stp	x2, x3, [x0], #16
-	stp	x4, x5, [x0], #16
-	stp	x6, x7, [x0], #16
-	stp	x8, x9, [x0], #16
-	stp	x10, x11, [x0], #16
-	stp	x12, x13, [x0], #16
-	stp	x14, x15, [x0], #16
-	stp	x16, x17, [x0], #16
-	stp	x18, x19, [x0], #16
-	stp	x20, x22, [x0], #16
-	stp	x22, x24, [x0], #16
-	stp	x24, x26, [x0], #16
-	stp	x26, x27, [x0], #16
-	stp	x28, x29, [x0], #16
-	mov	x1, sp
-	stp	x30, x1,  [x0], #16
+	stp	x0, x1,  [x0, #0x000]
+	stp	x2, x3,  [x0, #0x010]
+	stp	x4, x5,  [x0, #0x020]
+	stp	x6, x7,  [x0, #0x030]
+	stp	x8, x9,  [x0, #0x040]
+	stp	x10,x11, [x0, #0x050]
+	stp	x12,x13, [x0, #0x060]
+	stp	x14,x15, [x0, #0x070]
+	stp	x16,x17, [x0, #0x080]
+	stp	x18,x19, [x0, #0x090]
+	stp	x20,x21, [x0, #0x0A0]
+	stp	x22,x23, [x0, #0x0B0]
+	stp	x24,x25, [x0, #0x0C0]
+	stp	x26,x27, [x0, #0x0D0]
+	stp	x28,x29, [x0, #0x0E0]
+	mov	x1,sp
+	stp	x30,x1,  [x0, #0x0F0]
 
-	add	x0, x0, #8
-	str	xzr, [x0], #8
-
-	stp	q0, q1, [x0], #64
-	stp	q2, q3, [x0], #64
-	stp	q4, q5, [x0], #64
-	stp	q6, q7, [x0], #64
-	stp	q8, q9, [x0], #64
-	stp	q10, q11, [x0], #64
-	stp	q12, q13, [x0], #64
-	stp	q14, q15, [x0], #64
-	stp	q16, q17, [x0], #64
-	stp	q18, q19, [x0], #64
-	stp	q20, q21, [x0], #64
-	stp	q22, q23, [x0], #64
-	stp	q24, q25, [x0], #64
-	stp	q26, q27, [x0], #64
-	stp	q28, q29, [x0], #64
-	stp	q30, q31, [x0], #64
+	stp	q0, q1,   [x0, #0x100]
+	stp	q2, q3,   [x0, #0x120]
+	stp	q4, q5,   [x0, #0x140]
+	stp	q6, q7,   [x0, #0x160]
+	stp	q8, q9,   [x0, #0x180]
+	stp	q10, q11, [x0, #0x1a0]
+	stp	q12, q13, [x0, #0x1c0]
+	stp	q14, q15, [x0, #0x1e0]
+	stp	q16, q17, [x0, #0x200]
+	stp	q18, q19, [x0, #0x220]
+	stp	q20, q21, [x0, #0x240]
+	stp	q22, q23, [x0, #0x260]
+	stp	q24, q25, [x0, #0x280]
+	stp	q26, q27, [x0, #0x2a0]
+	stp	q28, q29, [x0, #0x2c0]
+	stp	q30, q31, [x0, #0x2e0]
 
 	ret
 END(_ZN7_Unwind17Registers_aarch64C1Ev)
 
 	.hidden _ZNK7_Unwind17Registers_aarch646jumptoEv
 ENTRY(_ZNK7_Unwind17Registers_aarch646jumptoEv)
-	ldp	x2, x3, [x0, #16]
-	ldp	x4, x6, [x0, #32]
-	ldp	x6, x7, [x0, #48]
-	ldp	x8, x9, [x0, #64]
-	ldp	x10, x11, [x0, #80]
-	ldp	x12, x13, [x0, #96]
-	ldp	x14, x16, [x0, #112]
-	ldp	x16, x17, [x0, #128]
-	ldp	x18, x19, [x0, #144]
-	ldp	x20, x21, [x0, #160]
-	ldp	x22, x23, [x0, #176]
-	ldp	x24, x26, [x0, #192]
-	ldp	x26, x27, [x0, #208]
-	ldp	x28, x29, [x0, #224]
-	ldp	x30, x1, [x0, #240]
-	mov	sp, x1
+	ldp    x2, x3,   [x0, #0x010]
+	ldp    x4, x5,   [x0, #0x020]
+	ldp    x6, x7,   [x0, #0x030]
+	ldp    x8, x9,   [x0, #0x040]
+	ldp    x10, x11, [x0, #0x050]
+	ldp    x12, x13, [x0, #0x060]
+	ldp    x14, x15, [x0, #0x070]
+	ldp    x16, x17, [x0, #0x080]
+	ldp    x18, x19, [x0, #0x090]
+	ldp    x20, x21, [x0, #0x0A0]
+	ldp    x22, x23, [x0, #0x0B0]
+	ldp    x24, x25, [x0, #0x0C0]
+	ldp    x26, x27, [x0, #0x0D0]
+	ldp    x28, x29, [x0, #0x0E0]
+	ldp    x30, x1,  [x0, #0x0F0]
+	mov    sp, x1
 
-	ldp	x0, x1, [x0, #0]
+	ldp	q0, q1,   [x0, #0x100]
+	ldp	q2, q3,   [x0, #0x120]
+	ldp	q4, q5,   [x0, #0x140]
+	ldp	q6, q7,   [x0, #0x160]
+	ldp	q8, q9,   [x0, #0x180]
+	ldp	q10, q11, [x0, #0x1a0]
+	ldp	q12, q13, [x0, #0x1c0]
+	ldp	q14, q15, [x0, #0x1e0]
+	ldp	q16, q17, [x0, #0x200]
+	ldp	q18, q19, [x0, #0x220]
+	ldp	q20, q21, [x0, #0x240]
+	ldp	q22, q23, [x0, #0x260]
+	ldp	q24, q25, [x0, #0x280]
+	ldp	q26, q27, [x0, #0x2a0]
+	ldp	q28, q29, [x0, #0x2c0]
+	ldp	q30, q31, [x0, #0x2e0]
+
+	ldp    x0, x1,  [x0, #0x000]
 	ret
 END(_ZNK7_Unwind17Registers_aarch646jumptoEv)
 #endif /* __aarch64__ */

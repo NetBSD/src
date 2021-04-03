@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.17.8.1 2020/12/14 14:37:51 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.17.8.2 2021/04/03 22:28:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17.8.1 2020/12/14 14:37:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17.8.2 2021/04/03 22:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17.8.1 2020/12/14 14:37:51 thorpej Exp $")
 typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
 
-extern	int intrcnt[];		/* from locore.s */
+extern	u_int intrcnt[];	/* from locore.s */
 
 void
 isrinit(void)

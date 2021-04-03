@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.10 2020/10/19 01:13:41 rin Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.10.2.1 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.10 2020/10/19 01:13:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.10.2.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,10 +101,10 @@ struct sunxi_debe_softc {
 #define DEBE_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun4i-a10-display-backend", DEBE_A10},
-	{"allwinner,sun7i-a20-display-backend", DEBE_A10},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-display-backend", .value = DEBE_A10 },
+	{ .compat = "allwinner,sun7i-a20-display-backend", .value = DEBE_A10 },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxifb_attach_args {
@@ -143,7 +143,7 @@ sunxi_debe_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -188,7 +188,8 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_type =
+	    of_compatible_lookup(faa->faa_phandle, compat_data)->value;
 
 	aprint_naive("\n");
 	aprint_normal(": Display Engine Backend (%s)\n",
@@ -918,15 +919,15 @@ sunxi_debe_pipeline(int phandle, bool active)
  * But we want to record the /chose/framebuffer phandle if there is one
  */
 
-static const char * const simplefb_compatible[] = {
-	"allwinner,simple-framebuffer",
-	NULL
+static const struct device_compatible_entry simplefb_compat_data[] = {
+	{ .compat = "allwinner,simple-framebuffer" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
 sunxidebe_console_match(int phandle)
 {
-	if (of_match_compatible(phandle, simplefb_compatible)) {
+	if (of_compatible_match(phandle, simplefb_compat_data)) {
 		sunxi_simplefb_phandle = phandle;
 	}
 	return 0;

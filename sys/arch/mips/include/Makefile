@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2018/07/12 10:46:45 maxv Exp $
+#	$NetBSD: Makefile,v 1.34.12.1 2021/04/03 22:28:31 thorpej Exp $
 
 INCSDIR= /usr/include/mips
 
@@ -6,7 +6,7 @@ INCS=	ansi.h asm.h \
 	bswap.h \
 	cachectl.h cdefs.h cpu.h cpuregs.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
-	fenv.h float.h \
+	fenv.h float.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h kdbparam.h \

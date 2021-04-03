@@ -1,4 +1,4 @@
-/* $NetBSD: pcf8574.c,v 1.2.2.2 2021/01/03 16:34:58 thorpej Exp $ */
+/* $NetBSD: pcf8574.c,v 1.2.2.3 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.2.2.2 2021/01/03 16:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.2.2.3 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,8 @@ CFATTACH_DECL_NEW(pcf8574io, sizeof(struct pcf8574_softc),
 	pcf8574_match, pcf8574_attach, pcf8574_detach, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "i2c-pcf8574",		0 },
-	{ NULL,				0 }
+	{ .compat = "i2c-pcf8574" },
+	DEVICE_COMPAT_EOL
 };
 
 static int

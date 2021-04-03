@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.8 2019/06/21 09:34:30 isaki Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.8.10.1 2021/04/03 22:28:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.8 2019/06/21 09:34:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.8.10.1 2021/04/03 22:28:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/audioio.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
@@ -41,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.8 2019/06/21 09:34:30 isaki Exp $")
 #include <sys/conf.h>
 #include <sys/sysctl.h>
 
-#include <dev/audio/audio_if.h>
+#include <dev/audio/audiovar.h>
 #include <dev/audio/audiobellvar.h>
 
 #include <dev/spkrvar.h>
@@ -68,30 +69,24 @@ spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
 	struct spkr_audio_softc *sc = device_private(self);
 
 #ifdef SPKRDEBUG
-	aprint_debug_dev(self, "%s: %u %d\n", __func__, xhz, ticks);
+	device_printf(self, "%s: %u %u\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
-	audiobell(sc->sc_audiodev, xhz, hztoms(ticks),
-	    sc->sc_spkr.sc_vol, 0);
-}
 
-static void
-spkr_audio_rest(device_t self, int ticks)
-{
-	struct spkr_audio_softc *sc = device_private(self);
-	
-#ifdef SPKRDEBUG
-	aprint_debug_dev(self, "%s: %d\n", __func__, ticks);
-#endif /* SPKRDEBUG */
-	if (ticks > 0)
-		audiobell(sc->sc_audiodev, 0, hztoms(ticks),
-		    sc->sc_spkr.sc_vol, 0);
+	if (xhz == 0 || ticks == 0)
+		return;
+
+	audiobell(sc->sc_audiodev, xhz, hztoms(ticks), sc->sc_spkr.sc_vol, 0);
 }
 
 static int
 spkr_audio_probe(device_t parent, cfdata_t cf, void *aux)
 {
+	struct audio_softc *asc = device_private(parent);
 
-	return 1;
+	if ((asc->sc_props & AUDIO_PROP_PLAYBACK))
+		return 1;
+
+	return 0;
 }
 
 static void
@@ -108,7 +103,7 @@ spkr_audio_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n"); 
 
-	spkr_attach(self, spkr_audio_tone, spkr_audio_rest);
+	spkr_attach(self, spkr_audio_tone);
 }
 
 static int

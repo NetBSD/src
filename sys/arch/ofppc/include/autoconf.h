@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.17 2020/07/07 02:33:54 rin Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.17.2.1 2021/04/03 22:28:33 thorpej Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -37,7 +37,6 @@ extern char model_name[64];
 
 #ifdef _KERNEL
 void initppc(u_int, u_int, char *);
-void model_init(void);
 void strayintr(int);
 void dumpsys(void);
 

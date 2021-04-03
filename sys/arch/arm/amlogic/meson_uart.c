@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.3 2019/05/28 05:08:47 ryo Exp $ */
+/* $NetBSD: meson_uart.c,v 1.3.12.1 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.3 2019/05/28 05:08:47 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.3.12.1 2021/04/03 22:28:16 thorpej Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -75,12 +75,12 @@ static int	meson_uart_param(struct tty *, struct termios *);
 
 extern struct cfdriver mesonuart_cd;
 
-static const char * const compatible[] = {
-	"amlogic,meson6-uart",
-	"amlogic,meson8-uart",
-	"amlogic,meson8b-uart",
-	"amlogic,meson-gx-uart",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson6-uart" },
+	{ .compat = "amlogic,meson8-uart" },
+	{ .compat = "amlogic,meson8b-uart" },
+	{ .compat = "amlogic,meson-gx-uart" },
+	DEVICE_COMPAT_EOL
 };
 
 struct meson_uart_softc {
@@ -151,7 +151,7 @@ meson_uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -187,8 +187,8 @@ meson_uart_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, meson_uart_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, meson_uart_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": failed to establish interrupt on %s\n",
 		    intrstr);
@@ -260,7 +260,7 @@ meson_uart_cngetc(dev_t dev)
 		return -1;
 	}
 
-	c = bus_space_read_4(bst, bsh, UART_RFIFO_REG);
+	c = bus_space_read_4(bst, bsh, UART_RFIFO_REG) & 0xff;
 #if defined(DDB)
 	extern int db_active;
 	if (!db_active)
@@ -272,7 +272,7 @@ meson_uart_cngetc(dev_t dev)
 
 	splx(s);
 
-	return c & 0xff;
+	return c;
 }
 
 static void
@@ -513,7 +513,7 @@ meson_uart_rxsoft(void *priv)
 static int
 meson_uart_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

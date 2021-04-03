@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.21 2020/10/15 09:33:17 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.21.2.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.21 2020/10/15 09:33:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.21.2.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,10 +145,10 @@ struct tegra_xhci_data tegra210_xhci_data = {
 	.txd_scale_ss_clock = false,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "nvidia,tegra124-xusb", (uintptr_t)&tegra124_xhci_data },
-	{ "nvidia,tegra210-xusb", (uintptr_t)&tegra210_xhci_data },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra124-xusb", .data = &tegra124_xhci_data },
+	{ .compat = "nvidia,tegra210-xusb", .data = &tegra210_xhci_data },
+	DEVICE_COMPAT_EOL
 };
 
 struct fw_dma {
@@ -170,7 +170,7 @@ struct tegra_xusb_softc {
 	struct fw_dma		sc_fw_dma;
 	struct clk		*sc_clk_ss_src;
 
-	struct tegra_xhci_data	*sc_txd;
+	const struct tegra_xhci_data *sc_txd;
 };
 
 static uint32_t	csb_read_4(struct tegra_xusb_softc * const, bus_size_t);
@@ -193,7 +193,7 @@ tegra_xusb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 #define tegra_xusb_attach_check(sc, cond, fmt, ...)			\
@@ -230,8 +230,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_quirks = XHCI_DEFERRED_START;
 	psc->sc_phandle = faa->faa_phandle;
 
-	uintptr_t data = of_search_compatible(faa->faa_phandle, compat_data)->data;
-	psc->sc_txd = (struct tegra_xhci_data *)data;
+	psc->sc_txd = of_compatible_lookup(faa->faa_phandle, compat_data)->data;
 
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "hcd", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -272,8 +271,8 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	psc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_USB,
-	    FDT_INTR_MPSAFE, xhci_intr, sc);
+	psc->sc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_USB,
+	    FDT_INTR_MPSAFE, xhci_intr, sc, device_xname(self));
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -286,8 +285,9 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	psc->sc_ih_mbox = fdtbus_intr_establish(faa->faa_phandle, 1, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_xusb_intr_mbox, psc);
+	psc->sc_ih_mbox = fdtbus_intr_establish_xname(faa->faa_phandle, 1,
+	    IPL_VM, FDT_INTR_MPSAFE, tegra_xusb_intr_mbox, psc,
+	    device_xname(self));
 	if (psc->sc_ih_mbox == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

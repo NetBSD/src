@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.256.2.1 2020/12/14 14:38:02 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.256.2.2 2021/04/03 22:28:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.256.2.1 2020/12/14 14:38:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.256.2.2 2021/04/03 22:28:38 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.256.2.1 2020/12/14 14:38:02 thorpej Exp $"
 #include <machine/trap.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
+#include <machine/locore.h>
 
 #if defined(MULTIPROCESSOR) && defined(DDB)
 #include <ddb/db_output.h>
@@ -115,7 +116,6 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int	cpu_arch;			/* sparc architecture version */
-extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
 struct cpu_info *cpus[_MAXNCPU+1];	/* we only support 4 CPUs. */
@@ -663,7 +663,6 @@ cpu_init_system(void)
 void
 cpu_spinup(struct cpu_info *cpi)
 {
-	extern void cpu_hatch(void); /* in locore.s */
 	struct openprom_addr oa;
 	void *pc;
 	int n;
@@ -1106,7 +1105,6 @@ int hypersparc_getmid(void);
 int viking_getmid(void);
 
 #if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
-extern int (*moduleerr_handler)(void);
 int viking_module_error(void);
 #endif
 

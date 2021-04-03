@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.247.2.1 2020/12/14 14:38:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.247.2.2 2021/04/03 22:29:01 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -129,6 +129,7 @@ SUBDIR+=	null
 SUBDIR+=	onewire
 SUBDIR+=	opencrypto
 SUBDIR+=	overlay
+SUBDIR+=	pad
 SUBDIR+=	pciverbose
 SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
@@ -342,7 +343,6 @@ SUBDIR+=	drmkms_linux
 SUBDIR+=	drmkms_pci
 SUBDIR+=	i915drm
 SUBDIR+=	i915drmkms
-SUBDIR+=	pad
 #
 # ISA modules
 #

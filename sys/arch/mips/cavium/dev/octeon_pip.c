@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.9 2020/07/16 11:49:37 jmcneill Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.9.2.1 2021/04/03 22:28:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.9 2020/07/16 11:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.9.2.1 2021/04/03 22:28:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <net/if.h>
@@ -58,14 +58,14 @@ CFATTACH_DECL_NEW(octpip_iobus, sizeof(struct octpip_softc),
 CFATTACH_DECL_NEW(octpip_fdt, sizeof(struct octpip_softc),
     octpip_fdt_match, octpip_fdt_attach, NULL, NULL);
 
-static const char * compatible[] = {
-	"cavium,octeon-3860-pip",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cavium,octeon-3860-pip" },
+	DEVICE_COMPAT_EOL
 };
 
-static const char * pip_interface_compatible[] = {
-	"cavium,octeon-3860-pip-interface",
-	NULL
+static const struct device_compatible_entry pip_compat_data[] = {
+	{ .compat = "cavium,octeon-3860-pip-interface" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -121,7 +121,7 @@ octpip_fdt_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -140,7 +140,7 @@ octpip_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!of_match_compatible(child, pip_interface_compatible))
+		if (!of_compatible_match(child, pip_compat_data))
 			continue;
 
 		if (fdtbus_get_reg(child, 0, &intno, NULL) != 0) {
@@ -177,10 +177,7 @@ octpip_init(struct octpip_attach_args *aa, struct octpip_softc **rsc)
 	struct octpip_softc *sc;
 	int status;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc == NULL)
-		panic("can't allocate memory: %s", __func__);
-
+	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_port = aa->aa_port;
 	sc->sc_regt = aa->aa_regt;
 	sc->sc_tag_type = aa->aa_tag_type;

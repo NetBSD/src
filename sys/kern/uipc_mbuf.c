@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.241 2020/05/05 20:36:48 jdolecek Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.241.2.1 2021/04/03 22:29:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.241 2020/05/05 20:36:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.241.2.1 2021/04/03 22:29:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"

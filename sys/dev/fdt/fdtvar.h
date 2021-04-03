@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.61.2.2 2021/01/03 16:34:57 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.61.2.3 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,7 +72,7 @@ struct fdt_attach_args {
 
 struct fdtbus_interrupt_controller_func {
 	void *	(*establish)(device_t, u_int *, int, int,
-			     int (*)(void *), void *);
+			     int (*)(void *), void *, const char *);
 	void	(*disestablish)(device_t, void *);
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 	void	(*mask)(device_t, void *);
@@ -317,10 +317,12 @@ i2c_tag_t	fdtbus_get_i2c_tag(int);
 i2c_tag_t	fdtbus_i2c_acquire(int, const char *);
 void *		fdtbus_intr_establish(int, u_int, int, int,
 		    int (*func)(void *), void *arg);
+void *		fdtbus_intr_establish_xname(int, u_int, int, int,
+		    int (*func)(void *), void *arg, const char *);
 void *		fdtbus_intr_establish_byname(int, const char *, int, int,
-		    int (*func)(void *), void *arg);
+		    int (*func)(void *), void *arg, const char *);
 void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
-		    int (*func)(void *), void *arg);
+		    int (*func)(void *), void *arg, const char *);
 void		fdtbus_intr_mask(int, void *);
 void		fdtbus_intr_unmask(int, void *);
 void		fdtbus_intr_disestablish(int, void *);
@@ -432,7 +434,9 @@ void		fdt_add_child(device_t, int, struct fdt_attach_args *, u_int);
 void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);
 int		fdt_find_with_property(const char *, int *);
+
 int		fdtbus_print(void *, const char *);
+void		fdtbus_device_register(device_t, void *);
 
 bus_dma_tag_t	fdtbus_dma_tag_create(int, const struct fdt_dma_range *,
 		    u_int);

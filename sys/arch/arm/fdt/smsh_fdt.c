@@ -1,4 +1,4 @@
-/* $NetBSD: smsh_fdt.c,v 1.2 2019/11/03 12:06:32 jmcneill Exp $ */
+/* $NetBSD: smsh_fdt.c,v 1.2.8.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.2 2019/11/03 12:06:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.2.8.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.2 2019/11/03 12:06:32 jmcneill Exp $"
 static int	smsh_fdt_match(device_t, cfdata_t, void *);
 static void	smsh_fdt_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"smsc,lan9118",
-	"smsc,lan9115",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "smsc,lan9118" },
+	{ .compat = "smsc,lan9115" },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(smsh_fdt, sizeof(struct lan9118_softc),
@@ -63,7 +63,7 @@ smsh_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -112,7 +112,8 @@ smsh_fdt_attach(device_t parent, device_t self, void *aux)
 	if (lan9118_attach(sc) != 0)
 		goto unmap;
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0, lan9118_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, 0, lan9118_intr, sc,
+	    device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		goto unmap;

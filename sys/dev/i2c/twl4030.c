@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.3 2019/11/03 09:34:09 jmcneill Exp $ */
+/* $NetBSD: twl4030.c,v 1.3.12.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.3 2019/11/03 09:34:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.3.12.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,13 +99,20 @@ struct twl_pin {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "ti,twl4030",			0 },
-	{ NULL,				0 }
+	{ .compat = "ti,twl4030" },
+	DEVICE_COMPAT_EOL
 };
 
 #ifdef FDT
-static const char * const rtc_compatible[] = { "ti,twl4030-rtc", NULL };
-static const char * const gpio_compatible[] = { "ti,twl4030-gpio", NULL };
+static const struct device_compatible_entry rtc_compat_data[] = {
+	{ .compat = "ti,twl4030-rtc" },
+	DEVICE_COMPAT_EOL
+};
+
+static const struct device_compatible_entry gpio_compat_data[] = {
+	{ .compat = "ti,twl4030-gpio" },
+	DEVICE_COMPAT_EOL
+};
 #endif
 
 static uint8_t
@@ -383,10 +390,10 @@ twl_attach(device_t parent, device_t self, void *aux)
 
 #ifdef FDT
 	for (int child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
-		if (of_match_compatible(child, gpio_compatible)) {
+		if (of_compatible_match(child, gpio_compat_data)) {
 			aprint_normal(", GPIO");
 			twl_gpio_attach(sc, child);
-		} else if (of_match_compatible(child, rtc_compatible)) {
+		} else if (of_compatible_match(child, rtc_compat_data)) {
 			aprint_normal(", RTC");
 			twl_rtc_attach(sc, child);
 		}

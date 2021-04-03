@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.282.2.2 2021/01/03 16:35:02 thorpej Exp $ */
+/*	$NetBSD: ehci.c,v 1.282.2.3 2021/04/03 22:28:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.282.2.2 2021/01/03 16:35:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.282.2.3 2021/04/03 22:28:50 thorpej Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2845,7 +2845,6 @@ Static ehci_soft_qtd_t *
 ehci_alloc_sqtd(ehci_softc_t *sc)
 {
 	ehci_soft_qtd_t *sqtd = NULL;
-	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
 
@@ -2856,8 +2855,10 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		err = usb_allocmem(&sc->sc_bus, EHCI_SQTD_SIZE*EHCI_SQTD_CHUNK,
-		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
+		int err = usb_allocmem(&sc->sc_bus,
+		    EHCI_SQTD_SIZE*EHCI_SQTD_CHUNK,
+		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT,
+		    &dma);
 #ifdef EHCI_DEBUG
 		if (err)
 			printf("ehci_alloc_sqtd: usb_allocmem()=%d\n", err);
@@ -3102,7 +3103,6 @@ Static ehci_soft_itd_t *
 ehci_alloc_itd(ehci_softc_t *sc)
 {
 	struct ehci_soft_itd *itd, *freeitd;
-	usbd_status err;
 	usb_dma_t dma;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
@@ -3113,8 +3113,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 	if (freeitd == NULL) {
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
-
-		err = usb_allocmem(&sc->sc_bus, EHCI_ITD_SIZE * EHCI_ITD_CHUNK,
+		int err = usb_allocmem(&sc->sc_bus, EHCI_ITD_SIZE * EHCI_ITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
 		if (err) {
@@ -3151,7 +3150,6 @@ Static ehci_soft_sitd_t *
 ehci_alloc_sitd(ehci_softc_t *sc)
 {
 	struct ehci_soft_sitd *sitd, *freesitd;
-	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
 
@@ -3162,8 +3160,7 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 	if (freesitd == NULL) {
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
-
-		err = usb_allocmem(&sc->sc_bus, EHCI_SITD_SIZE * EHCI_SITD_CHUNK,
+		int err = usb_allocmem(&sc->sc_bus, EHCI_SITD_SIZE * EHCI_SITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
 		if (err) {

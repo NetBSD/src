@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.1.2.2 2021/01/03 16:34:58 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.1.2.3 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,8 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(__i386__) || defined(__amd64__) || defined(__aarch64__)
+#include "acpica.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.1.2.2 2021/01/03 16:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.1.2.3 2021/04/03 22:28:44 thorpej Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -58,6 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.1.2.2 2021/01/03 16:34:58 thorpej Ex
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/i2c/i2cmuxvar.h>
+
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 /* There are a maximum of 8 busses supported. */
 #define	PCAIICMUX_MAX_BUSSES	8
@@ -100,53 +108,55 @@ static const struct pcaiicmux_type switch8_type = {
 static const struct device_compatible_entry compat_data[] = {
 	/* PCA9540 - 2 channel i2c mux */
 	{ .compat = "nxp,pca9540",
-	  .data = (uintptr_t)&mux2_type },
+	  .data = &mux2_type },
 
 	/* PCA9542 - 2 channel i2c mux with interrupts */
 	{ .compat = "nxp,pca9542",
-	  .data = (uintptr_t)&mux2_type },
+	  .data = &mux2_type },
 
 	/* PCA9543 - 2 channel i2c switch with interrupts */
 	{ .compat = "nxp,pca9543",
-	  .data = (uintptr_t)&switch2_type },
+	  .data = &switch2_type },
 
 	/* PCA9544 - 4 channel i2c mux with interrupts */
 	{ .compat = "nxp,pca9544",
-	  .data = (uintptr_t)&mux4_type },
+	  .data = &mux4_type },
 
 	/* PCA9545 - 4 channel i2c switch with interrupts */
 	{ .compat = "nxp,pca9545",
-	  .data = (uintptr_t)&switch4_type },
+	  .data = &switch4_type },
 
 	/* PCA9546 - 4 channel i2c switch */
 	{ .compat = "nxp,pca9546",
-	  .data = (uintptr_t)&switch4_type },
+	  .data = &switch4_type },
 
 	/* PCA9547 - 8 channel i2c mux */
 	{ .compat = "nxp,pca9547",
-	  .data = (uintptr_t)&mux8_type },
+	  .data = &mux8_type },
+	{ .compat = "NXP0002",
+	  .data = &mux8_type },
 
 	/* PCA9548 - 8 channel i2c switch */
 	{ .compat = "nxp,pca9548",
-	  .data = (uintptr_t)&switch8_type },
+	  .data = &switch8_type },
 
 	/* PCA9846 - 4 channel i2c switch */
 	{ .compat = "nxp,pca9846",
-	  .data = (uintptr_t)&switch4_type },
+	  .data = &switch4_type },
 
 	/* PCA9847 - 8 channel i2c mux */
 	{ .compat = "nxp,pca9847",
-	  .data = (uintptr_t)&mux8_type },
+	  .data = &mux8_type },
 
 	/* PCA9848 - 8 channel i2c switch */
 	{ .compat = "nxp,pca9848",
-	  .data = (uintptr_t)&switch8_type },
+	  .data = &switch8_type },
 
 	/* PCA9849 - 4 channel i2c mux */
 	{ .compat = "nxp,pca9849",
-	  .data = (uintptr_t)&mux4_type },
+	  .data = &mux4_type },
 
-	{ NULL }
+	DEVICE_COMPAT_EOL
 };
 
 struct pcaiicmux_softc {
@@ -210,10 +220,32 @@ pcaiicmux_get_bus_info(struct iicmux_bus * const bus)
 	struct pcaiicmux_bus_info * const bus_info =
 	    &sc->sc_bus_info[bus->busidx];
 
-	error = fdtbus_get_reg(bus->phandle, 0, &addr, NULL);
-	if (error) {
-		aprint_error_dev(iicmux->sc_dev,
-		    "unable to get reg property for bus %d\n", bus->busidx);
+	switch (bus->handletype) {
+	case I2C_COOKIE_OF:
+		error = fdtbus_get_reg(bus->handle, 0, &addr, NULL);
+		if (error) {
+			aprint_error_dev(iicmux->sc_dev,
+			    "unable to get reg property for bus %d\n",
+			    bus->busidx);
+			return NULL;
+		}
+		break;
+#if NACPICA > 0
+	case I2C_COOKIE_ACPI: {
+		ACPI_INTEGER val;
+		ACPI_STATUS rv;
+		rv = acpi_eval_integer((ACPI_HANDLE)bus->handle, "_ADR", &val);
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(iicmux->sc_dev,
+			    "unable to evaluate _ADR for bus %d: %s\n",
+			    bus->busidx, AcpiFormatException(rv));
+			return NULL;
+		}
+		addr = (bus_addr_t)val;
+	}	break;
+#endif
+	default:
+		aprint_error_dev(iicmux->sc_dev, "unsupported handle type\n");
 		return NULL;
 	}
 
@@ -276,8 +308,8 @@ pcaiicmux_type_by_compat(const struct i2c_attach_args * const ia)
 	const struct pcaiicmux_type *type = NULL;
 	const struct device_compatible_entry *dce;
 
-	if (iic_compatible_match(ia, compat_data, &dce))
-		type = (void *)dce->data;
+	if ((dce = iic_compatible_lookup(ia, compat_data)) != NULL)
+		type = dce->data;
 
 	return type;
 }
@@ -291,7 +323,7 @@ pcaiicmux_match(device_t parent, cfdata_t cf, void *aux)
 	if (iic_use_direct_match(ia, cf, compat_data, &match_result)) {
 		return match_result;
 	}
-	
+
 	/* This device is direct-config only. */
 
 	return 0;
@@ -302,11 +334,11 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcaiicmux_softc * const sc = device_private(self);
 	struct i2c_attach_args * const ia = aux;
-	const int phandle = (int)ia->ia_cookie;
 	int error;
 
 	sc->sc_iicmux.sc_dev = self;
-	sc->sc_iicmux.sc_phandle = phandle;
+	sc->sc_iicmux.sc_handle = ia->ia_cookie;
+	sc->sc_iicmux.sc_handletype = ia->ia_cookietype;
 	sc->sc_iicmux.sc_config = &pcaiicmux_config;
 	sc->sc_iicmux.sc_i2c_parent = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -318,18 +350,21 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PCA954x I2C %s\n",
 	    sc->sc_type->enable_bit ? "mux" : "switch");
 
-	if (of_hasprop(phandle, "i2c-mux-idle-disconnect")) {
-		sc->sc_idle_disconnect = true;
-	}
+	if (ia->ia_cookietype == I2C_COOKIE_OF) {
+		const int phandle = (int)ia->ia_cookie;
+		if (of_hasprop(phandle, "i2c-mux-idle-disconnect")) {
+			sc->sc_idle_disconnect = true;
+		}
 
-	/* Reset the mux if a reset GPIO is specified. */
-	sc->sc_reset_gpio =
-	    fdtbus_gpio_acquire(phandle, "reset-gpios", GPIO_PIN_OUTPUT);
-	if (sc->sc_reset_gpio) {
-		fdtbus_gpio_write(sc->sc_reset_gpio, 1);
-		delay(10);
-		fdtbus_gpio_write(sc->sc_reset_gpio, 0);
-		delay(10);
+		/* Reset the mux if a reset GPIO is specified. */
+		sc->sc_reset_gpio = fdtbus_gpio_acquire(phandle, "reset-gpios",
+		    GPIO_PIN_OUTPUT);
+		if (sc->sc_reset_gpio) {
+			fdtbus_gpio_write(sc->sc_reset_gpio, 1);
+			delay(10);
+			fdtbus_gpio_write(sc->sc_reset_gpio, 0);
+			delay(10);
+		}
 	}
 
 	/* Force the mux into a disconnected state. */

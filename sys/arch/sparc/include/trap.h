@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.19 2018/12/19 13:57:50 maxv Exp $ */
+/*	$NetBSD: trap.h,v 1.19.12.1 2021/04/03 22:28:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,5 +132,10 @@
 #define	ST_BREAKPOINT	(T_BREAKPOINT & 0x7f)
 #define	ST_DIV0		(T_DIV0 & 0x7f)
 #define	ST_FLUSHWIN	(T_FLUSHWIN & 0x7f)
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+extern const char *trap_type[];
+extern struct fpstate initfpstate;
+#endif
 
 #endif /* _MACHINE_TRAP_H_ */

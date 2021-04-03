@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12 2020/09/07 07:48:23 mrg Exp $	*/
+/*	$NetBSD: types.h,v 1.12.2.1 2021/04/03 22:28:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,9 +75,10 @@ typedef long int	__register_t;
 #define	__HAVE_ATOMIC64_OPS
 /* XXX: #define	__HAVE_CPU_MAXPROC */
 #define	__HAVE_TLS_VARIANT_I
+#define	__HAVE_BUS_SPACE_8
 
 #if defined(_KERNEL)
-#define __HAVE_RAS
+#define	__HAVE_RAS
 #endif
 
 #endif	/* _MACHTYPES_H_ */

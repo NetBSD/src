@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.192 2020/03/05 15:18:55 riastradh Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.192.4.1 2021/04/03 22:29:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -168,7 +168,10 @@
 struct tcpiphdr {
 	struct ipovly ti_i;		/* overlaid ip structure */
 	struct tcphdr ti_t;		/* tcp header */
-} __packed;
+};
+#ifdef CTASSERT
+CTASSERT(sizeof(struct tcpiphdr) == 40);
+#endif
 #define	ti_x1		ti_i.ih_x1
 #define	ti_pr		ti_i.ih_pr
 #define	ti_len		ti_i.ih_len
@@ -920,9 +923,8 @@ struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 void	 tcp_usrreq_init(void);
 void	 tcp_xmit_timer(struct tcpcb *, uint32_t);
-tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
-tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
-	    tcp_seq);
+tcp_seq	 tcp_new_iss(struct tcpcb *);
+tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t);
 
 void	 tcp_sack_init(void);
 void	 tcp_new_dsack(struct tcpcb *, tcp_seq, u_int32_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.5 2019/11/28 23:57:09 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.5.10.1 2021/04/03 22:28:19 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.5 2019/11/28 23:57:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.5.10.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,12 +85,17 @@ static const struct ti_sdhc_config omap4_hsmmc_config = {
 	.regoff = 0x100
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "ti,omap2-hsmmc",		(uintptr_t)&omap2_hsmmc_config },
-	{ "ti,omap3-hsmmc",		(uintptr_t)&omap2_hsmmc_config },
-	{ "ti,omap3-pre-es3-hsmmc",	(uintptr_t)&omap3_pre_es3_hsmmc_config },
-	{ "ti,omap4-hsmmc",		(uintptr_t)&omap4_hsmmc_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,omap2-hsmmc",
+	  .data = &omap2_hsmmc_config },
+	{ .compat = "ti,omap3-hsmmc",
+	  .data = &omap2_hsmmc_config },
+	{ .compat = "ti,omap3-pre-es3-hsmmc",
+	  .data = &omap3_pre_es3_hsmmc_config },
+	{ .compat = "ti,omap4-hsmmc",
+	  .data = &omap4_hsmmc_config },
+
+	DEVICE_COMPAT_EOL
 };
 
 enum {
@@ -146,7 +151,7 @@ ti_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -160,7 +165,7 @@ ti_sdhc_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	u_int bus_width;
 
-	conf = (const void *)of_search_compatible(phandle, compat_data)->data;
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
 		aprint_error(": couldn't enable module\n");
@@ -305,8 +310,8 @@ no_dma:
 		aprint_error_dev(dev, "couldn't decode interrupt\n");
 		return;
 	}
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM,
-	    0, sdhc_intr, &sc->sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_VM,
+	    0, sdhc_intr, &sc->sc, device_xname(dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(dev, "couldn't establish interrupt\n");
 		return;

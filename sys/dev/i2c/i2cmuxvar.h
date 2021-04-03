@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmuxvar.h,v 1.1.2.2 2021/01/03 16:34:58 thorpej Exp $	*/
+/*	$NetBSD: i2cmuxvar.h,v 1.1.2.3 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -26,15 +26,15 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE. 
- */     
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef _DEV_I2C_I2CMUXVAR_H_
 #define	_DEV_I2C_I2CMUXVAR_H_
 
 #include <dev/i2c/i2cvar.h>
 
-struct iicmux_softc;  
+struct iicmux_softc;
 struct iicmux_bus;
 
 struct iicmux_config {
@@ -48,14 +48,16 @@ struct iicmux_config {
 struct iicmux_bus {
 	struct i2c_controller controller;
 	struct iicmux_softc *mux;
-	int phandle;
+	uintptr_t handle;
+	enum i2c_cookie_type handletype;
 	int busidx;
 	void *bus_data;
 };
 
 struct iicmux_softc {
 	device_t			sc_dev;
-	int				sc_phandle;
+	enum i2c_cookie_type		sc_handletype;
+	uintptr_t			sc_handle;
 	int				sc_i2c_mux_phandle;
 	const struct iicmux_config *	sc_config;
 	i2c_tag_t			sc_i2c_parent;

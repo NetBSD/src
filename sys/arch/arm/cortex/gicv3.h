@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.8.6.1 2020/12/14 14:37:48 thorpej Exp $ */
+/* $NetBSD: gicv3.h,v 1.8.6.2 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -70,20 +70,20 @@ struct gicv3_softc {
 	u_int			sc_pmr_shift;
 
 	uint32_t		sc_enabled_sgippi;
-	uint64_t		sc_irouter[MAXCPUS];
+	uint64_t		*sc_irouter;
 
 	/* LPI configuration table */
 	struct gicv3_dma	sc_lpiconf;
 	bool			sc_lpiconf_flush;
 
 	/* LPI pending tables */
-	struct gicv3_dma	sc_lpipend[MAXCPUS];
+	struct gicv3_dma	*sc_lpipend;
 
 	/* LPI IDs */
 	vmem_t			*sc_lpi_pool;
 
 	/* Unique identifier for PEs */
-	u_int			sc_processor_id[MAXCPUS];
+	u_int			*sc_processor_id;
 
 	/* Callbacks */
 	LIST_HEAD(, gicv3_lpi_callback) sc_lpi_callbacks;

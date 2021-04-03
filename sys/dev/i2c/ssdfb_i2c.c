@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_i2c.c,v 1.5 2019/11/05 19:59:35 tnn Exp $ */
+/* $NetBSD: ssdfb_i2c.c,v 1.5.8.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.5 2019/11/05 19:59:35 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.5.8.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,9 +67,13 @@ CFATTACH_DECL_NEW(ssdfb_iic, sizeof(struct ssdfb_i2c_softc),
     ssdfb_i2c_match, ssdfb_i2c_attach, ssdfb_i2c_detach, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "solomon,ssd1306fb-i2c",	0 },
-	{ "sino,sh1106fb-i2c",		0 },
-	{ NULL,				0 }
+	{ .compat = "solomon,ssd1306fb-i2c",
+	  .value = SSDFB_PRODUCT_SSD1306_GENERIC },
+
+	{ .compat = "sino,sh1106fb-i2c",
+	  .value = SSDFB_PRODUCT_SH1106_GENERIC },
+
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -97,20 +101,12 @@ ssdfb_i2c_attach(device_t parent, device_t self, void *aux)
 	struct cfdata *cf = device_cfdata(self);
 	struct i2c_attach_args *ia = aux;
 	int flags = cf->cf_flags;
-	int i;
 
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN) {
-		for (i = 0; i < ia->ia_ncompat; i++) {
-			if (strncmp("solomon,ssd1306", ia->ia_compat[i], 15)
-			    == 0) {
-				flags |= SSDFB_PRODUCT_SSD1306_GENERIC;
-				break;
-			}
-			else if (strncmp("sino,sh1106", ia->ia_compat[i], 11)
-			    == 0) {
-				flags |= SSDFB_PRODUCT_SH1106_GENERIC;
-				break;
-			}
+		const struct device_compatible_entry *dce =
+		    iic_compatible_lookup(ia, compat_data);
+		if (dce != NULL) {
+			flags |= (int)dce->value;
 		}
 	}
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN)

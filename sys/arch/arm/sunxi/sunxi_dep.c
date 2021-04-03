@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_dep.c,v 1.3 2018/04/07 18:09:33 bouyer Exp $	*/
+/*	$NetBSD: sunxi_dep.c,v 1.3.14.1 2021/04/03 22:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.3 2018/04/07 18:09:33 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_dep.c,v 1.3.14.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,10 +51,10 @@ struct sunxi_dep_softc {
 	int	sc_phandle;
 };
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun4i-a10-display-engine", 0},
-	{"allwinner,sun7i-a20-display-engine", 0},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-display-engine" },
+	{ .compat = "allwinner,sun7i-a20-display-engine" },
+	DEVICE_COMPAT_EOL
 };
 
 static const char *fb_compat[] = {
@@ -74,7 +74,7 @@ sunxi_dep_match(device_t parent, cfdata_t cf, void *aux)
 #if NSUNXI_DEBE > 0
 	struct fdt_attach_args * const faa = aux;
 
-	return  of_match_compat_data(faa->faa_phandle, compat_data);
+	return  of_compatible_match(faa->faa_phandle, compat_data);
 #else
 	return 0;
 #endif

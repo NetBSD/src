@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hstimer.c,v 1.2 2019/06/14 21:48:43 tnn Exp $ */
+/* $NetBSD: sunxi_hstimer.c,v 1.2.12.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Tobias Nygren <tnn@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.2 2019/06/14 21:48:43 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.2.12.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -77,11 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.2 2019/06/14 21:48:43 tnn Exp $"
 #define	HS_TMR3_CURNT_LO_REG	0x7c
 #define	HS_TMR3_CURNT_HI_REG	0x80
 
-static const char * const compatible[] = {
-	"allwinner,sun5i-a13-hstimer",
-	"allwinner,sun6i-a31-hstimer",
-	"allwinner,sun7i-a20-hstimer",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun5i-a13-hstimer" },
+	{ .compat = "allwinner,sun6i-a31-hstimer" },
+	{ .compat = "allwinner,sun7i-a20-hstimer" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_hstimer_softc {
@@ -129,7 +129,7 @@ sunxi_hstimer_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -186,8 +186,8 @@ sunxi_hstimer_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, sunxi_hstimer_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, sunxi_hstimer_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 				 intrstr);

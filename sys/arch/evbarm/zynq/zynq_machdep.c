@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_machdep.c,v 1.14.2.1 2020/12/14 14:37:53 thorpej Exp $	*/
+/*	$NetBSD: zynq_machdep.c,v 1.14.2.2 2021/04/03 22:28:23 thorpej Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.14.2.1 2020/12/14 14:37:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.14.2.2 2021/04/03 22:28:23 thorpej Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -116,7 +116,7 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;
+	return -1;
 }
 
 static struct consdev earlycons = {

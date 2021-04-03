@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.52 2020/06/15 20:27:30 riastradh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.52.2.1 2021/04/03 22:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.52 2020/06/15 20:27:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.52.2.1 2021/04/03 22:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,6 +224,8 @@ tsc_tc_init(void)
 		invariant = false;
 	} else if (vm_guest == VM_GUEST_NO) {
 		delay_func = tsc_delay;
+	} else if (vm_guest == VM_GUEST_VIRTUALBOX) {
+		tsc_timecounter.tc_quality = -100;
 	}
 
 	if (tsc_freq != 0) {
@@ -424,8 +426,9 @@ tsc_get_timecount(struct timecounter *tc)
 		    __cpu_simple_lock_try(&lock)) {
 			ticks = getticks();
 			if (ticks - lastwarn >= hz) {
-				printf("WARNING: TSC time went backwards "
-				    " by %u\n", (unsigned)(prev - cur));
+				printf(
+				    "WARNING: TSC time went backwards by %u\n",
+				    (unsigned)(prev - cur));
 				lastwarn = ticks;
 			}
 			__cpu_simple_unlock(&lock);

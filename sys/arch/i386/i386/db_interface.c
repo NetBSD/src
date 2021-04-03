@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.85 2020/07/14 00:45:52 yamaguchi Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.85.2.1 2021/04/03 22:28:27 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.85 2020/07/14 00:45:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.85.2.1 2021/04/03 22:28:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -86,7 +86,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
 	  "switch to another cpu", "cpu-no", NULL) },
 #endif
-	{ DDB_ADD_CMD(NULL, NULL, 0, NULL, NULL, NULL) },
+	{ DDB_END_CMD },
 };
 
 void kdbprinttrap(int, int);

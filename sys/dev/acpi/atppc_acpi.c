@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.17.76.1 2020/12/14 14:38:05 thorpej Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.17.76.2 2021/04/03 22:28:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.17.76.1 2020/12/14 14:38:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.17.76.2 2021/04/03 22:28:43 thorpej Exp $");
 
 #include "opt_atppc.h"
 
@@ -64,9 +64,9 @@ CFATTACH_DECL_NEW(atppc_acpi, sizeof(struct atppc_acpi_softc), atppc_acpi_match,
  * Supported device IDs
  */
 
-static const char * const atppc_acpi_ids[] = {
-	"PNP04??",	/* Standard AT printer port */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "PNP04??" },	/* Standard AT printer port */
+	DEVICE_COMPAT_EOL
 };
 
 static int atppc_acpi_dma_start(struct atppc_softc *, void *, u_int,
@@ -85,10 +85,7 @@ atppc_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, atppc_acpi_ids);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

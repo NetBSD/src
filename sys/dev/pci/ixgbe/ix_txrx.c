@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.63 2020/04/17 02:21:25 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.63.2.1 2021/04/03 22:28:49 thorpej Exp $ */
 
 /******************************************************************************
 
@@ -202,7 +202,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	struct tx_ring	*txr;
-	int 		i;
+	int		i;
 #ifdef RSS
 	uint32_t bucket_id;
 #endif
@@ -1319,6 +1319,11 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
  *      exhaustion are unnecessary, if an mbuf cannot be obtained
  *      it just returns, keeping its placeholder, thus it can simply
  *      be recalled to try again.
+ *
+ *   XXX NetBSD TODO:
+ *    - The ixgbe_rxeof() function always preallocates mbuf cluster (jcl),
+ *      so the ixgbe_refresh_mbufs() function can be simplified.
+ *
  ************************************************************************/
 static void
 ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
@@ -1502,7 +1507,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	 * Assume all of rxr->ptag are the same.
 	 */
 	ixgbe_jcl_reinit(adapter, rxr->ptag->dt_dmat, rxr,
-	    (2 * adapter->num_rx_desc), adapter->rx_mbuf_sz);
+	    adapter->num_jcl, adapter->rx_mbuf_sz);
 
 	IXGBE_RX_LOCK(rxr);
 
@@ -1750,11 +1755,9 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	rbuf = &rxr->rx_buffers[i];
 
 	/*
-	 * With advanced descriptors the writeback
-	 * clobbers the buffer addrs, so its easier
-	 * to just free the existing mbufs and take
-	 * the normal refresh path to get new buffers
-	 * and mapping.
+	 * With advanced descriptors the writeback clobbers the buffer addrs,
+	 * so its easier to just free the existing mbufs and take the normal
+	 * refresh path to get new buffers and mapping.
 	 */
 
 	if (rbuf->fmp != NULL) {/* Partial chain ? */
@@ -1799,7 +1802,9 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct ixgbe_rx_buf	*rbuf, *nbuf;
 	int			i, nextp, processed = 0;
 	u32			staterr = 0;
-	u32			count = adapter->rx_process_limit;
+	u32			count = 0;
+	u32			limit = adapter->rx_process_limit;
+	bool			discard_multidesc = false;
 #ifdef RSS
 	u16			pkt_info;
 #endif
@@ -1816,8 +1821,16 @@ ixgbe_rxeof(struct ix_queue *que)
 	}
 #endif /* DEV_NETMAP */
 
-	for (i = rxr->next_to_check; count != 0;) {
+	/*
+	 * The max number of loop is rx_process_limit. If discard_multidesc is
+	 * true, continue processing to not to send broken packet to the upper
+	 * layer.
+	 */
+	for (i = rxr->next_to_check;
+	     (count < limit) || (discard_multidesc == true);) {
+
 		struct mbuf *sendmp, *mp;
+		struct mbuf *newmp;
 		u32         rsc, ptype;
 		u16         len;
 		u16         vtag = 0;
@@ -1836,7 +1849,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		if ((staterr & IXGBE_RXD_STAT_DD) == 0)
 			break;
 
-		count--;
+		count++;
 		sendmp = NULL;
 		nbuf = NULL;
 		rsc = 0;
@@ -1857,8 +1870,37 @@ ixgbe_rxeof(struct ix_queue *que)
 #endif
 			rxr->rx_discarded.ev_count++;
 			ixgbe_rx_discard(rxr, i);
+			discard_multidesc = false;
 			goto next_desc;
 		}
+
+		/* pre-alloc new mbuf */
+		if (!discard_multidesc)
+			newmp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT, MT_DATA,
+			    M_PKTHDR, rxr->mbuf_sz);
+		else
+			newmp = NULL;
+		if (newmp == NULL) {
+			rxr->no_jmbuf.ev_count++;
+			/*
+			 * Descriptor initialization is already done by the
+			 * above code (cur->wb.upper.status_error = 0).
+			 * So, we can reuse current rbuf->buf for new packet.
+			 *
+			 * Rewrite the buffer addr, see comment in
+			 * ixgbe_rx_discard().
+			 */
+			cur->read.pkt_addr = rbuf->addr;
+			m_freem(rbuf->fmp);
+			rbuf->fmp = NULL;
+			if (!eop) {
+				/* Discard the entire packet. */
+				discard_multidesc = true;
+			} else
+				discard_multidesc = false;
+			goto next_desc;
+		}
+		discard_multidesc = false;
 
 		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
 		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
@@ -1908,7 +1950,8 @@ ixgbe_rxeof(struct ix_queue *que)
 		 */
 		sendmp = rbuf->fmp;
 		if (sendmp != NULL) {  /* secondary frag */
-			rbuf->buf = rbuf->fmp = NULL;
+			rbuf->buf = newmp;
+			rbuf->fmp = NULL;
 			mp->m_flags &= ~M_PKTHDR;
 			sendmp->m_pkthdr.len += mp->m_len;
 		} else {
@@ -1927,10 +1970,13 @@ ixgbe_rxeof(struct ix_queue *que)
 					sendmp->m_len = len;
 					rxr->rx_copies.ev_count++;
 					rbuf->flags |= IXGBE_RX_COPY;
+
+					m_freem(newmp);
 				}
 			}
 			if (sendmp == NULL) {
-				rbuf->buf = rbuf->fmp = NULL;
+				rbuf->buf = newmp;
+				rbuf->fmp = NULL;
 				sendmp = mp;
 			}
 
@@ -2031,11 +2077,7 @@ next_desc:
 
 		/* Now send to the stack or do LRO */
 		if (sendmp != NULL) {
-			rxr->next_to_check = i;
-			IXGBE_RX_UNLOCK(rxr);
 			ixgbe_rx_input(rxr, ifp, sendmp, ptype);
-			IXGBE_RX_LOCK(rxr);
-			i = rxr->next_to_check;
 		}
 
 		/* Every 8 descriptors we go to refresh mbufs */

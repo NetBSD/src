@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.31.2.1 2020/12/14 14:37:50 thorpej Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.31.2.2 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.31.2.1 2020/12/14 14:37:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.31.2.2 2021/04/03 22:28:18 thorpej Exp $");
 
 
 /*
@@ -196,9 +196,9 @@ exynos5800_mpstart(void)
 	return ret;
 }
 
-static struct of_compat_data mp_compat_data[] = {
-	{ "samsung,exynos5800",		(uintptr_t)exynos5800_mpstart },
-	{ NULL }
+static struct device_compatible_entry mp_compat_data[] = {
+	{ .compat = "samsung,exynos5800",	.data = exynos5800_mpstart },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -207,9 +207,10 @@ exynos_platform_mpstart(void)
 
 	int (*mp_start)(void) = NULL;
 
-	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
+	const struct device_compatible_entry *cd =
+	    of_compatible_lookup(OF_finddevice("/"), mp_compat_data);
 	if (cd)
-		mp_start = (int (*)(void))cd->data;
+		mp_start = cd->data;
 
 	if (mp_start)
 		return mp_start();
@@ -247,6 +248,7 @@ exynos_platform_early_putchar(char c)
 static void
 exynos_platform_device_register(device_t self, void *aux)
 {
+	fdtbus_device_register(self, aux);
 	exynos_device_register(self, aux);
 }
 
@@ -337,8 +339,9 @@ exynos5_platform_bootstrap(void)
 	exynos_bootstrap(5);
 
 #if defined(MULTIPROCESSOR) && defined(EXYNOS5422_DISABLE_CA7_CLUSTER)
-	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
-	if (cd && cd->data == (uintptr_t)exynos5800_mpstart) {
+	const struct device_compatible_entry *cd =
+	    of_compatible_lookup(OF_finddevice("/"), mp_compat_data);
+	if (cd && cd->data == exynos5800_mpstart) {
 		void *fdt_data = __UNCONST(fdtbus_get_data());
 		int cpu_off, cpus_off, len;
 

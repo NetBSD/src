@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.34 2020/07/14 08:58:03 martin Exp $ */
+/*	$NetBSD: pmu.c,v 1.34.2.1 2021/04/03 22:28:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.34 2020/07/14 08:58:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.34.2.1 2021/04/03 22:28:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,8 @@ pmu_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map registers\n");
 		return;
 	}
-	sc->sc_ih = intr_establish(irq, type, IPL_TTY, pmu_intr, sc);
+	sc->sc_ih = intr_establish_xname(irq, type, IPL_TTY, pmu_intr, sc,
+	    device_xname(self));
 
 	pmu_init(sc);
 
@@ -428,10 +429,10 @@ next:
 	}
 
 	/* attach batteries */
-	if (of_compatible(root_node, has_legacy_battery) != -1) {
+	if (of_compatible(root_node, has_legacy_battery)) {
 
 		pmu_attach_legacy_battery(sc);
-	} else if (of_compatible(root_node, has_two_smart_batteries) != -1) {
+	} else if (of_compatible(root_node, has_two_smart_batteries)) {
 
 		pmu_attach_smart_battery(sc, 0);
 		pmu_attach_smart_battery(sc, 1);

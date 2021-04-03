@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.165.2.2 2021/01/03 16:34:53 thorpej Exp $
+#	$NetBSD: GENERIC64,v 1.165.2.3 2021/04/03 22:28:22 thorpej Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -34,6 +34,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 options 	INCLUDE_CONFIG_FILE
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
@@ -69,6 +70,15 @@ options 	ARMV81_PAN
 #options 	KASAN		# mandatory
 #options 	POOL_QUARANTINE	# optional
 #options 	KASAN_PANIC	# optional
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	ACPIVERBOSE	# verbose ACPI configuration messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -246,6 +256,7 @@ mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
+rge*		at pci? dev ? function ?	# Realtek 8125
 vmx*		at pci? dev ? function ?	# VMware VMXNET3
 wm*		at pci? dev ? function ?	# Intel Gigabit Ethernet
 
@@ -301,6 +312,7 @@ bsciic*		at acpi?
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 imxi2c*		at fdt? pass 4		# IMX I2C
+nxpiic*		at acpi?		# NXP Layerscape I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
@@ -381,6 +393,10 @@ spi*		at spibus?
 m25p*		at spi?
 spiflash*	at spiflashbus?
 
+# Broadcom VCHIQ, etc
+vchiq0 		at fdt?
+vcaudio0 	at vchiq0
+
 # Audio support
 hdaudio*	at fdt?			# Intel HDA
 hdaudio*	at pci? dev ? function ?
@@ -444,8 +460,8 @@ options 	FONT_BOLD16x32
 
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
-nouveau*	at pci? dev ? function ?
-nouveaufb*	at nouveaufbbus?
+#nouveau*	at pci? dev ? function ?
+#nouveaufb*	at nouveaufbbus?
 radeon*		at pci? dev ? function ? # AMD Radeon
 radeondrmkmsfb*	at radeonfbbus?
 

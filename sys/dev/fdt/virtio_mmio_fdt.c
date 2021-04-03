@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.3 2018/09/29 15:56:25 jmcneill Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.3.12.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.3 2018/09/29 15:56:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.3.12.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,9 @@ CFATTACH_DECL3_NEW(virtio_mmio_fdt, sizeof(struct virtio_mmio_fdt_softc),
     virtio_mmio_fdt_match, virtio_mmio_fdt_attach, virtio_mmio_fdt_detach, NULL,
     virtio_mmio_fdt_rescan, (void *)voidop, DVF_DETACH_SHUTDOWN);
 
-static const char * const compatible[] = {
-	"virtio,mmio",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "virtio,mmio" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -66,7 +66,7 @@ virtio_mmio_fdt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -119,25 +119,14 @@ virtio_mmio_fdt_rescan(device_t self, const char *attr, const int *scan_flags)
 
 	if (vsc->sc_child)	/* Child already attached? */
 		return 0;
+
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found_ia(self, attr, &va, virtiobusprint);
+	config_found_ia(self, attr, &va, NULL);
 
-	if (vsc->sc_child == NULL) {
+	if (virtio_attach_failed(vsc))
 		return 0;
-	}
-
-	if (vsc->sc_child == VIRTIO_CHILD_FAILED) {
-		aprint_error_dev(self, "virtio configuration failed\n");
-		return 0;
-	}
-
-	/*
-	 * Make sure child drivers initialize interrupts via call
-	 * to virtio_child_attach_finish().
-	 */
-	KASSERT(msc->sc_ih != NULL);
 
 	return 0;
 }
@@ -164,11 +153,12 @@ virtio_mmio_fdt_setup_interrupts(struct virtio_mmio_softc *msc)
 		return -1;
 	}
 
-	if (vsc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
+	if (vsc->sc_flags & VIRTIO_F_INTR_MPSAFE)
 		flags |= FDT_INTR_MPSAFE;
 
-	msc->sc_ih = fdtbus_intr_establish(fsc->sc_phandle, 0, vsc->sc_ipl,
-	    flags, virtio_mmio_intr, msc);
+	msc->sc_ih = fdtbus_intr_establish_xname(fsc->sc_phandle, 0,
+	    vsc->sc_ipl, flags, virtio_mmio_intr, msc,
+	    device_xname(vsc->sc_dev));
 	if (msc->sc_ih == NULL) {
 		aprint_error_dev(vsc->sc_dev,
 		    "failed to establish interrupt on %s\n", intrstr);

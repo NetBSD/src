@@ -106,9 +106,9 @@ CFATTACH_DECL_NEW(smusat, sizeof(struct smusat_softc),
     smusat_match, smusat_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "sat",		0 },
-	{ "smu-sat",		0 },
-	{ NULL,			0 }
+	{ .compat = "sat" },
+	{ .compat = "smu-sat" },
+	DEVICE_COMPAT_EOL
 };
 
 static int

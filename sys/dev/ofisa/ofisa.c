@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.26 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.26.12.1 2021/04/03 22:28:45 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.26 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.26.12.1 2021/04/03 22:28:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,16 +75,18 @@ ofisaprint(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "pnpPNP,a00" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 ofisamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
-	static const char *const compatible_strings[] = { "pnpPNP,a00", NULL };
-	int rv = 0;
+	int rv;
 
-	if (of_compatible(oba->oba_phandle, compatible_strings) != -1)
-		rv = 5;
-
+	rv = of_compatible_match(oba->oba_phandle, compat_data) ? 5 : 0;
 #ifdef _OFISA_MD_MATCH
 	if (!rv)
 		rv = ofisa_md_match(parent, cf, aux);

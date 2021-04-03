@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 2018/12/19 13:57:51 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.66.12.1 2021/04/03 22:28:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -470,9 +470,6 @@ GLOBAL(_isr_vectored)
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
-#undef	INTERRUPT_SAVEREG
-#undef	INTERRUPT_RESTOREREG
-
 /* interrupt counters (needed by vmstat) */
 GLOBAL(intrnames)
 	.asciz	"spur"	| 0
@@ -488,7 +485,7 @@ GLOBAL(eintrnames)
 	.data
 	.even
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
 	.text
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.176.2.1 2020/12/14 14:38:14 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.176.2.2 2021/04/03 22:29:01 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.176.2.1 2020/12/14 14:38:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.176.2.2 2021/04/03 22:29:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2806,18 +2806,10 @@ bridge_ip_checkbasic(struct mbuf **mp)
 	if (*mp == NULL)
 		return -1;
 
-	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(struct ip),
-			(max_linkhdr + 3) & ~3)) == NULL) {
-			/* XXXJRT new stat, please */
-			ip_statinc(IP_STAT_TOOSMALL);
-			goto bad;
-		}
-	} else if (__predict_false(m->m_len < sizeof (struct ip))) {
-		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
-			ip_statinc(IP_STAT_TOOSMALL);
-			goto bad;
-		}
+	if (M_GET_ALIGNED_HDR(&m, struct ip, true) != 0) {
+		/* XXXJRT new stat, please */
+		ip_statinc(IP_STAT_TOOSMALL);
+		goto bad;
 	}
 	ip = mtod(m, struct ip *);
 	if (ip == NULL) goto bad;
@@ -2908,22 +2900,12 @@ bridge_ip6_checkbasic(struct mbuf **mp)
 	 * it.  Otherwise, if it is aligned, make sure the entire base
 	 * IPv6 header is in the first mbuf of the chain.
 	 */
-	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
+	if (M_GET_ALIGNED_HDR(&m, struct ip6_hdr, true) != 0) {
 		struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
-		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
-		                  (max_linkhdr + 3) & ~3)) == NULL) {
-			/* XXXJRT new stat, please */
-			ip6_statinc(IP6_STAT_TOOSMALL);
-			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
-			goto bad;
-		}
-	} else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
-		struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
-		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-			ip6_statinc(IP6_STAT_TOOSMALL);
-			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
-			goto bad;
-		}
+		/* XXXJRT new stat, please */
+		ip6_statinc(IP6_STAT_TOOSMALL);
+		in6_ifstat_inc(inifp, ifs6_in_hdrerr);
+		goto bad;
 	}
 
 	ip6 = mtod(m, struct ip6_hdr *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.115 2020/07/15 08:58:51 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.115.2.1 2021/04/03 22:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -60,6 +60,31 @@ struct cache_info {
 
 #include <sys/cpu_data.h>
 
+#ifdef _KERNEL
+#define	CI_SAVETEMP	(0*CPUSAVE_LEN)
+#define	CI_SAVEDDB	(1*CPUSAVE_LEN)
+#define	CI_SAVEIPKDB	(2*CPUSAVE_LEN)	/* obsolete */
+#define	CI_SAVEMMU	(3*CPUSAVE_LEN)
+#define	CI_SAVEMAX	(4*CPUSAVE_LEN)
+#define	CPUSAVE_LEN	8
+#if defined(PPC_BOOKE) && !defined(MODULAR) && !defined(_MODULE)
+#define	CPUSAVE_SIZE	128
+#else
+#define	CPUSAVE_SIZE	(CI_SAVEMAX*CPUSAVE_LEN)
+CTASSERT(CPUSAVE_SIZE >= 128);
+#endif
+#define	CPUSAVE_R28	0		/* where r28 gets saved */
+#define	CPUSAVE_R29	1		/* where r29 gets saved */
+#define	CPUSAVE_R30	2		/* where r30 gets saved */
+#define	CPUSAVE_R31	3		/* where r31 gets saved */
+#define	CPUSAVE_DEAR	4		/* where IBM4XX SPR_DEAR gets saved */
+#define	CPUSAVE_DAR	4		/* where OEA SPR_DAR gets saved */
+#define	CPUSAVE_ESR	5		/* where IBM4XX SPR_ESR gets saved */
+#define	CPUSAVE_DSISR	5		/* where OEA SPR_DSISR gets saved */
+#define	CPUSAVE_SRR0	6		/* where SRR0 gets saved */
+#define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
+#endif /* _KERNEL */
+
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 #ifdef _KERNEL
@@ -69,6 +94,10 @@ struct cpu_info {
 	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
+#if defined(PPC_OEA) || defined(PPC_OEA601) || defined(PPC_OEA64) || \
+    defined(PPC_OEA64_BRIDGE) || defined(MODULAR) || defined(_MODULE)
+	void *ci_battable;		/* BAT table in use by this CPU */
+#endif
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 	int ci_cpuid;			/* from SPR_PIR */
 
@@ -89,39 +118,20 @@ struct cpu_info {
 	volatile uint32_t ci_pending_ipis;
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
-#if defined(PPC_IBM4XX) || defined(MODULAR) || defined(_MODULE)
+#if defined(PPC_IBM4XX) || \
+    ((defined(MODULAR) || defined(_MODULE)) && !defined(_LP64))
 	char *ci_intstk;
 #endif
-#define	CI_SAVETEMP	(0*CPUSAVE_LEN)
-#define	CI_SAVEDDB	(1*CPUSAVE_LEN)
-#define	CI_SAVEIPKDB	(2*CPUSAVE_LEN)	/* obsolete */
-#define	CI_SAVEMMU	(3*CPUSAVE_LEN)
-#define	CI_SAVEMAX	(4*CPUSAVE_LEN)
-#define	CPUSAVE_LEN	8
-#if defined(PPC_BOOKE) && !defined(MODULAR) && !defined(_MODULE)
-#define	CPUSAVE_SIZE	128
-#else
-#define	CPUSAVE_SIZE	(CI_SAVEMAX*CPUSAVE_LEN)
-// XXX CTASSERT(CPUSAVE_SIZE >= 128);
-#endif
-#define	CPUSAVE_R28	0		/* where r28 gets saved */
-#define	CPUSAVE_R29	1		/* where r29 gets saved */
-#define	CPUSAVE_R30	2		/* where r30 gets saved */
-#define	CPUSAVE_R31	3		/* where r31 gets saved */
-#define	CPUSAVE_DEAR	4		/* where IBM4XX SPR_DEAR gets saved */
-#define	CPUSAVE_DAR	4		/* where OEA SPR_DAR gets saved */
-#define	CPUSAVE_ESR	5		/* where IBM4XX SPR_ESR gets saved */
-#define	CPUSAVE_DSISR	5		/* where OEA SPR_DSISR gets saved */
-#define	CPUSAVE_SRR0	6		/* where SRR0 gets saved */
-#define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
+
 	register_t ci_savearea[CPUSAVE_SIZE];
-#if defined(PPC_BOOKE) || defined(MODULAR) || defined(_MODULE)
+#if defined(PPC_BOOKE) || \
+    ((defined(MODULAR) || defined(_MODULE)) && !defined(_LP64))
 	uint32_t ci_pmap_asid_cur;
 	union pmap_segtab *ci_pmap_segtabs[2];
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
-#endif /* PPC_BOOKE || MODULAR || _MODULE */
+#endif /* PPC_BOOKE || ((MODULAR || _MODULE) && !_LP64) */
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);

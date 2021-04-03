@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.3 2020/10/19 13:44:25 tnn Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.3.2.1 2021/04/03 22:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.3 2020/10/19 13:44:25 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.3.2.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -98,9 +98,9 @@ RKC_CTRL(struct rk_v1crypto_softc *sc, uint16_t m, uint16_t v)
 CFATTACH_DECL_NEW(rk_v1crypto, sizeof(struct rk_v1crypto_softc),
     rk_v1crypto_match, rk_v1crypto_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{"rockchip,rk3288-crypto", 0},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3288-crypto" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -108,7 +108,7 @@ rk_v1crypto_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.83.2.1 2021/01/03 16:34:58 thorpej Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.83.2.2 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.83.2.1 2021/01/03 16:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.83.2.2 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -221,10 +221,10 @@ ahci_setup_port(struct ahci_softc *sc, int i)
 
 	achp = &sc->sc_channels[i];
 
-	AHCI_WRITE(sc, AHCI_P_CLB(i), achp->ahcic_bus_cmdh);
-	AHCI_WRITE(sc, AHCI_P_CLBU(i), (uint64_t)achp->ahcic_bus_cmdh>>32);
-	AHCI_WRITE(sc, AHCI_P_FB(i), achp->ahcic_bus_rfis);
-	AHCI_WRITE(sc, AHCI_P_FBU(i), (uint64_t)achp->ahcic_bus_rfis>>32);
+	AHCI_WRITE(sc, AHCI_P_CLB(i), BUS_ADDR_LO32(achp->ahcic_bus_cmdh));
+	AHCI_WRITE(sc, AHCI_P_CLBU(i), BUS_ADDR_HI32(achp->ahcic_bus_cmdh));
+	AHCI_WRITE(sc, AHCI_P_FB(i), BUS_ADDR_LO32(achp->ahcic_bus_rfis));
+	AHCI_WRITE(sc, AHCI_P_FBU(i), BUS_ADDR_HI32(achp->ahcic_bus_rfis));
 }
 
 static void
@@ -604,7 +604,7 @@ ahci_intr(void *v)
 		while ((bit = ffs(ports)) != 0) {
 			bit--;
 			ahci_intr_port_common(&sc->sc_channels[bit].ata_channel);
-			ports &= ~(1U << bit);
+			ports &= ~__BIT(bit);
 		}
 		AHCI_WRITE(sc, AHCI_IS, is);
 	}
@@ -729,7 +729,7 @@ ahci_intr_port_common(struct ata_channel *chp)
 		 * commands active before we start processing.
 		 */
 
-		for (slot=0; slot < sc->sc_ncmds; slot++) {
+		for (slot = 0; slot < sc->sc_ncmds; slot++) {
 			if ((aslots & __BIT(slot)) != 0 &&
 			    (sact & __BIT(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);

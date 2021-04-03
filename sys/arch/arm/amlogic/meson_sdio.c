@@ -1,4 +1,4 @@
-/* $NetBSD: meson_sdio.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_sdio.c,v 1.1.16.1 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_sdio.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_sdio.c,v 1.1.16.1 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,14 +130,14 @@ static struct sdmmc_chip_functions meson_sdio_chip_functions = {
 #define SDIO_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 
-static const char * const compatible[] = {
-	"amlogic,meson8b-sdio",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-sdio" },
+	DEVICE_COMPAT_EOL
 };
 
-static const char * const slot_compatible[] = {
-	"mmc-slot",
-	NULL
+static const struct device_compatible_entry slot_compat_data[] = {
+	{ .compat = "mmc-slot" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -145,7 +145,7 @@ meson_sdio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -195,7 +195,7 @@ meson_sdio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_cur_port = -1;
 	for (child = OF_child(phandle); child; child = OF_peer(child))
-		if (of_match_compatible(child, slot_compatible) > 0) {
+		if (of_compatible_match(child, slot_compat_data)) {
 			if (fdtbus_get_reg(child, 0, &port, NULL) == 0) {
 				sc->sc_slot_phandle = child;
 				sc->sc_cur_port = port;
@@ -224,7 +224,8 @@ meson_sdio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_non_removable = of_hasprop(sc->sc_slot_phandle, "non-removable");
 	sc->sc_broken_cd = of_hasprop(sc->sc_slot_phandle, "broken-cd");
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0, meson_sdio_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0,
+	    meson_sdio_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

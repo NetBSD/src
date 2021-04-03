@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_usbdrdphy.c,v 1.2 2018/07/03 16:22:48 jmcneill Exp $ */
+/* $NetBSD: exynos_usbdrdphy.c,v 1.2.16.1 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exynos_usbdrdphy.c,v 1.2 2018/07/03 16:22:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_usbdrdphy.c,v 1.2.16.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,9 +89,9 @@ enum {
 	NPHY_ID
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "samsung,exynos5420-usbdrd-phy",	0 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "samsung,exynos5420-usbdrd-phy" },
+	DEVICE_COMPAT_EOL
 };
 
 struct exynos_usbdrdphy_softc;
@@ -227,7 +227,7 @@ exynos_usbdrdphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

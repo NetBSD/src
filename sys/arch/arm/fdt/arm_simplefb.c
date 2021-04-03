@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.4 2020/10/21 11:06:13 rin Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.4.2.1 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include "pci.h"
 #include "opt_pci.h"
+#include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.4 2020/10/21 11:06:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.4.2.1 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,10 +90,14 @@ static bus_addr_t arm_simplefb_addr;
 static bus_size_t arm_simplefb_size;
 static bus_space_handle_t arm_simplefb_bsh;
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "simple-framebuffer" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 arm_simplefb_find_node(void)
 {
-	static const char * simplefb_compatible[] = { "simple-framebuffer", NULL };
 	int chosen_phandle, child;
 
 	chosen_phandle = OF_finddevice("/chosen");
@@ -102,7 +107,7 @@ arm_simplefb_find_node(void)
 	for (child = OF_child(chosen_phandle); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
-		if (!of_match_compatible(child, simplefb_compatible))
+		if (!of_compatible_match(child, compat_data))
 			continue;
 
 		return child;
@@ -145,7 +150,8 @@ arm_simplefb_init_screen(void *cookie, struct vcons_screen *scr,
 }
 
 static int
-arm_simplefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
+arm_simplefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
+    lwp_t *l)
 {
 	return EPASSTHROUGH;
 }
@@ -171,7 +177,8 @@ arm_simplefb_reconfig(void *arg, uint64_t new_addr)
 
 	bus_space_unmap(bst, arm_simplefb_bsh, arm_simplefb_size);
 	bus_space_map(bst, new_addr, arm_simplefb_size,
-	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &arm_simplefb_bsh);
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+	    &arm_simplefb_bsh);
 
 	sc->sc_bits = bus_space_vaddr(bst, arm_simplefb_bsh);
 	ri->ri_bits = sc->sc_bits;
@@ -230,6 +237,14 @@ arm_simplefb_preattach(void)
 		return;
 	}
 
+	/*
+	 * Make sure that the size of the linear FB mapping is big enough
+	 * to fit the requested screen dimensions.
+	 */
+	if (size < stride * height) {
+		return;
+	}
+
 	if (bus_space_map(bst, addr, size,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh) != 0)
 		return;
@@ -251,12 +266,15 @@ arm_simplefb_preattach(void)
 	arm_simplefb_accessops.mmap = arm_simplefb_mmap;
 	arm_simplefb_accessops.pollc = arm_simplefb_pollc;
 
-	vcons_init(&arm_simplefb_vcons_data, sc, &arm_simplefb_stdscreen,
-		&arm_simplefb_accessops);
+	vcons_earlyinit(&arm_simplefb_vcons_data, sc, &arm_simplefb_stdscreen,
+	    &arm_simplefb_accessops);
 	arm_simplefb_vcons_data.init_screen = arm_simplefb_init_screen;
+#ifdef VCONS_DRAW_INTR
 	arm_simplefb_vcons_data.use_intr = 0;
-	vcons_init_screen(&arm_simplefb_vcons_data, &arm_simplefb_screen, 1, &defattr);
-	arm_simplefb_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;    
+#endif
+	vcons_init_screen(&arm_simplefb_vcons_data, &arm_simplefb_screen, 1,
+	    &defattr);
+	arm_simplefb_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 	if (ri->ri_rows < 1 || ri->ri_cols < 1)
 		return;

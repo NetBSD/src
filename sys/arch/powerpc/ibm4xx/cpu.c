@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2020/03/05 01:21:09 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.34.4.1 2021/04/03 22:28:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2020/03/05 01:21:09 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34.4.1 2021/04/03 22:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static const struct cputab models[] = {
 		.ci = {
 			.dcache_size = 1024,
 			.dcache_line_size = 16,
-			.icache_size = 2848,
+			.icache_size = 2048,
 			.icache_line_size = 16,
 		}
 	}, {
@@ -94,7 +94,7 @@ static const struct cputab models[] = {
 		.mask = 0xffff0000,
 		.name = "401D2",
 		.ci = {
-			.dcache_size = 2848,
+			.dcache_size = 2048,
 			.dcache_line_size = 16,
 			.icache_size = 4096,
 			.icache_line_size = 16,
@@ -116,7 +116,7 @@ static const struct cputab models[] = {
 		.ci = {
 			.dcache_size = 2048,
 			.dcache_line_size = 16,
-			.icache_size = 2848,
+			.icache_size = 2048,
 			.icache_line_size = 16,
 		}
 	}, {
@@ -124,15 +124,45 @@ static const struct cputab models[] = {
 		.mask = 0xffff0000,
 		.name = "401G2",
 		.ci = {
-			.dcache_size = 2848,
+			.dcache_size = 2048,
 			.dcache_line_size = 16,
 			.icache_size = 8192,
 			.icache_line_size = 16,
 		}
 	}, {
-		.version = PVR_403, 
-		.mask = 0xffff0000,
-		.name = "403",
+		.version = PVR_403GA,	/* XXX no MMU */
+		.mask = 0xffffff00,
+		.name = "403GA",
+		.ci = {
+			.dcache_size = 1024,
+			.dcache_line_size = 16,
+			.icache_size = 2048,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_403GB,	/* XXX no MMU */
+		.mask = 0xffffff00,
+		.name = "403GB",
+		.ci = {
+			.dcache_size = 1024,
+			.dcache_line_size = 16,
+			.icache_size = 2048,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_403GC,
+		.mask = 0xffffff00,
+		.name = "403GC",
+		.ci = {
+			.dcache_size = 1024,
+			.dcache_line_size = 16,
+			.icache_size = 2048,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_403GCX,
+		.mask = 0xffffff00,
+		.name = "403GCX",
 		.ci = {
 			.dcache_size = 8192,
 			.dcache_line_size = 16,
@@ -146,7 +176,7 @@ static const struct cputab models[] = {
 		.ci = {
 			.dcache_size = 8192,
 			.dcache_line_size = 32,
-			.icache_size = 8192,
+			.icache_size = 16384,
 			.icache_line_size = 32,
 		}
 	}, {
@@ -262,7 +292,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	if (__predict_false(cp->name == NULL))
 		cpu_setmodel("Version 0x%x", pvr);
 
-	aprint_normal(": %uMHz %s (PVR 0x%x)\n",
+	aprint_normal(": %uMHz %s (PVR 0x%08x)\n",
 	    (processor_freq + 500000) / 1000000,
 	    (cp->name != NULL ? cpu_getmodel() : "unknown model"),
 	    pvr);

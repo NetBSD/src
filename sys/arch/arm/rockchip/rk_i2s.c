@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.3.8.1 2021/01/03 16:34:52 thorpej Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.3.8.2 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.3.8.1 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.3.8.2 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,12 +117,12 @@ static const struct rk_i2s_config rk3399_i2s_config = {
 	.oe_val = 0x7,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3066-i2s",        0 },
-	{ "rockchip,rk3188-i2s",        0 },
-	{ "rockchip,rk3288-i2s",        0 },
-	{ "rockchip,rk3399-i2s",	(uintptr_t)&rk3399_i2s_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3066-i2s", },
+	{ .compat = "rockchip,rk3188-i2s", },
+	{ .compat = "rockchip,rk3288-i2s", },
+	{ .compat = "rockchip,rk3399-i2s",	.data = &rk3399_i2s_config },
+	DEVICE_COMPAT_EOL
 };
 
 struct rk_i2s_softc;
@@ -553,7 +553,7 @@ rk_i2s_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -586,7 +586,7 @@ rk_i2s_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
-	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 	if (sc->sc_conf != NULL && sc->sc_conf->oe_mask != 0) {
 		sc->sc_grf = fdtbus_syscon_acquire(phandle, "rockchip,grf");
 		if (sc->sc_grf == NULL) {
@@ -606,7 +606,8 @@ rk_i2s_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": I2S/PCM controller\n");
 
-	if (fdtbus_intr_establish(phandle, 0, IPL_AUDIO, FDT_INTR_MPSAFE, rk_i2s_intr, sc) == NULL) {
+	if (fdtbus_intr_establish_xname(phandle, 0, IPL_AUDIO, FDT_INTR_MPSAFE,
+	    rk_i2s_intr, sc, device_xname(self)) == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n", intrstr);
 		return;
 	}

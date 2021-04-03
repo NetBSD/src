@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.22 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.22.6.1 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.22 2020/01/29 15:47:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.22.6.1 2021/04/03 22:28:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,6 +170,7 @@ netbsd32____lwp_park60(struct lwp *l,
 	} */
 	struct timespec ts, *tsp;
 	struct netbsd32_timespec ts32;
+	int ret;
 	int error;
 
 	if (SCARG_P32(uap, ts) == NULL)
@@ -188,7 +189,12 @@ netbsd32____lwp_park60(struct lwp *l,
 			return error;
 	}
 
-	return lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp);
+	ret = lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp);
+	if (SCARG_P32(uap, ts) != NULL && (SCARG(uap, flags) & TIMER_ABSTIME) == 0) {
+		netbsd32_from_timespec(&ts, &ts32);
+		(void)copyout(&ts32, SCARG_P32(uap, ts), sizeof(ts32));
+	}
+	return ret;
 }
 
 int

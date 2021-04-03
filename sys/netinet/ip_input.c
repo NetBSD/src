@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.397 2020/08/28 06:31:42 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.397.2.1 2021/04/03 22:29:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.397 2020/08/28 06:31:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.397.2.1 2021/04/03 22:29:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -168,7 +168,7 @@ int ip_directedbcast = 0;
 int ip_allowsrcrt = 0;
 int ip_mtudisc = 1;
 int ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
-int ip_do_randomid = 0;
+int ip_do_randomid = 1;
 
 /*
  * XXX - Setting ip_checkinterface mostly implements the receive side of
@@ -189,7 +189,6 @@ struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 pktqueue_t *		ip_pktq			__read_mostly;
 pfil_head_t *		inet_pfil_hook		__read_mostly;
-ipid_state_t *		ip_ids			__read_mostly;
 percpu_t *		ipstat_percpu		__read_mostly;
 
 static percpu_t		*ipforward_rt_percpu	__cacheline_aligned;
@@ -291,7 +290,6 @@ ip_init(void)
 
 	ip_reass_init();
 
-	ip_ids = ip_id_init();
 	ip_id = time_uptime & 0xfffff;
 
 #ifdef GATEWAY
@@ -454,18 +452,10 @@ ip_input(struct mbuf *m, struct ifnet *ifp)
 	 * it.  Otherwise, if it is aligned, make sure the entire
 	 * base IP header is in the first mbuf of the chain.
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if ((m = m_copyup(m, sizeof(struct ip),
-		    (max_linkhdr + 3) & ~3)) == NULL) {
-			/* XXXJRT new stat, please */
-			IP_STATINC(IP_STAT_TOOSMALL);
-			goto out;
-		}
-	} else if (__predict_false(m->m_len < sizeof(struct ip))) {
-		if ((m = m_pullup(m, sizeof(struct ip))) == NULL) {
-			IP_STATINC(IP_STAT_TOOSMALL);
-			goto out;
-		}
+	if (M_GET_ALIGNED_HDR(&m, struct ip, true) != 0) {
+		/* XXXJRT new stat, please */
+		IP_STATINC(IP_STAT_TOOSMALL);
+		goto out;
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {

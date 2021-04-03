@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.7 2019/07/03 20:55:21 jmcneill Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.7.10.1 2021/04/03 22:28:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.7 2019/07/03 20:55:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.7.10.1 2021/04/03 22:28:18 thorpej Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -374,14 +374,10 @@ static const rk_data rk3399_data_table = {
 	.rd_num_sensors = 2,
 };
 
-static const char * const compatible_rk3328[] = {
-	"rockchip,rk3328-tsadc",
-	NULL
-};
-
-static const char * const compatible_rk3399[] = {
-	"rockchip,rk3399-tsadc",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3328-tsadc",	.data = &rk3328_data_table },
+	{ .compat = "rockchip,rk3399-tsadc",	.data = &rk3399_data_table },
+	DEVICE_COMPAT_EOL
 };
 
 #define	TSADC_READ(sc, reg)		\
@@ -399,8 +395,7 @@ rk_tsadc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible_rk3328) ||
-	       of_match_compatible(faa->faa_phandle, compatible_rk3399);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -430,12 +425,7 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 
 	pmf_device_register(self, NULL, NULL);
 
-	if (of_match_compatible(faa->faa_phandle, compatible_rk3328)) {
-		sc->sc_rd = &rk3328_data_table;
-	} else {
-		KASSERT(of_match_compatible(faa->faa_phandle, compatible_rk3399));
-		sc->sc_rd = &rk3399_data_table;
-	}
+	sc->sc_rd = of_compatible_lookup(faa->faa_phandle, compat_data)->data;
 
 	/* Default to tshut via gpio and tshut low is active */
 	if (of_getprop_uint32(phandle, "rockchip,hw-tshut-mode",
@@ -501,8 +491,8 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    rk_tsadc_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    rk_tsadc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

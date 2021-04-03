@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_locore.S,v 1.6 2014/08/05 16:28:39 joerg Exp $	*/
+/*	$NetBSD: obs600_locore.S,v 1.6.40.1 2021/04/03 22:28:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
@@ -25,8 +25,6 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#undef PPC_4XX_NOCACHE
 
 #include "opt_ddb.h"
 #include "opt_ppcarch.h"

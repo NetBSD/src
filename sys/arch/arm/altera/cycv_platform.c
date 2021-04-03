@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.14.2.1 2020/12/14 14:37:47 thorpej Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.14.2.2 2021/04/03 22:28:15 thorpej Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.14.2.1 2020/12/14 14:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.14.2.2 2021/04/03 22:28:15 thorpej Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -79,10 +79,12 @@ cycv_platform_bootstrap(void)
 static int
 cycv_mpstart(void)
 {
+	int ret = 0;
+
+#ifdef MULTIPROCESSOR
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh_rst;
 	bus_space_handle_t bsh_scu;
-	int ret = 0;
 
 	bus_space_map(bst, CYCV_RSTMGR_BASE, CYCV_RSTMGR_SIZE, 0, &bsh_rst);
 	bus_space_map(bst, CYCV_SCU_BASE, CYCV_SCU_SIZE, 0, &bsh_scu);
@@ -123,6 +125,7 @@ cycv_mpstart(void)
 		aprint_error("cpu%d: WARNING: AP failed to start\n", 1);
 		ret++;
 	}
+#endif
 
 	return ret;
 }
@@ -134,8 +137,11 @@ cycv_platform_init_attach_args(struct fdt_attach_args *faa) {
 }
 
 static void
-cycv_platform_device_register(device_t dev, void *aux) {
+cycv_platform_device_register(device_t dev, void *aux)
+{
 	prop_dictionary_t dict = device_properties(dev);
+
+	fdtbus_device_register(dev, aux);
 
 	if (device_is_a(dev, "arma9tmr")) {
 		prop_dictionary_set_uint32(dict, "frequency",

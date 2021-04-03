@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.6 2020/08/21 21:28:22 macallan Exp $ */
+/* $NetBSD: dstemp.c,v 1.6.2.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.6 2020/08/21 21:28:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.6.2.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,9 @@ CFATTACH_DECL_NEW(dstemp, sizeof(struct dstemp_softc),
     dstemp_match, dstemp_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "ds1631",			0 },
-	{ NULL,				0 }
+	{ .compat = "dallas,ds1631" },
+	{ .compat = "ds1631" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -109,6 +110,7 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_prop = ia->ia_prop;
+	prop_object_retain(sc->sc_prop);
 
 	aprint_naive("\n");
 	aprint_normal(": DS1361\n");
@@ -122,6 +124,7 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sensor_temp.units = ENVSYS_STEMP;
 	sc->sc_sensor_temp.state = ENVSYS_SINVALID;
+	sc->sc_sensor_temp.flags = ENVSYS_FHAS_ENTROPY;
 
 	if (prop_dictionary_get_cstring_nocopy(sc->sc_prop, "s00", &desc)) {
 		strncpy(name, desc, 64);

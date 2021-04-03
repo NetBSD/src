@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.2 2020/04/23 23:22:41 jakllsch Exp $ */
+/* $NetBSD: profile.h,v 1.2.2.1 2021/04/03 22:28:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifdef __aarch64__
 
-#define	_MCOUNT_DECL void _mcount
+#define	_MCOUNT_DECL void mcount
 
 /*
  * Cannot implement mcount in C as GCC will trash the ip register when it
@@ -39,15 +39,18 @@
  * prologue.
  */
 
-#define MCOUNT_ASM_NAME "__mcount"
+#define MCOUNT_ASM_NAME "_mcount"		/* gcc */
+#define MCOUNT_ASM_NAME_ALIAS "__mcount"	/* llvm */
 #define	PLTSYM
 
 #define	MCOUNT								\
 	__asm(".text");							\
-	__asm(".align	0");						\
+	__asm(".align	6");						\
 	__asm(".type	" MCOUNT_ASM_NAME ",@function");		\
 	__asm(".global	" MCOUNT_ASM_NAME);				\
+	__asm(".global	" MCOUNT_ASM_NAME_ALIAS);			\
 	__asm(MCOUNT_ASM_NAME ":");					\
+	__asm(MCOUNT_ASM_NAME_ALIAS ":");				\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
@@ -70,7 +73,7 @@
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
-	__asm("bl	" ___STRING(_C_LABEL(_mcount)));		\
+	__asm("bl	" ___STRING(_C_LABEL(mcount)));			\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
@@ -81,6 +84,13 @@
 	__asm("ldp	x29, x30, [sp], #80");				\
 	__asm("ret");							\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
+
+#ifdef _KERNEL
+#define MCOUNT_ENTER	\
+	__asm __volatile ("mrs %x0, daif; msr daifset, #3": "=r"(s):: "memory")
+#define MCOUNT_EXIT	\
+	__asm __volatile ("msr daif, %x0":: "r"(s): "memory")
+#endif /* _KERNEL */
 
 #elif defined(__arm__)
 

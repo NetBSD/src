@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.25.2.1 2020/12/14 14:38:09 thorpej Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.25.2.2 2021/04/03 22:28:49 thorpej Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.25.2.1 2020/12/14 14:38:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.25.2.2 2021/04/03 22:28:49 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -126,6 +126,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pcireg_t csr, memtype, usbrev;
 	uint32_t hccparams;
+	int counts[PCI_INTR_TYPE_SIZE];
 	char intrbuf[PCI_INTRSTR_LEN];
 	bus_addr_t memaddr;
 	int flags, msixoff;
@@ -211,8 +212,18 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
+	for (int i = 0; i < PCI_INTR_TYPE_SIZE; i++) {
+		counts[i] = 1;
+	}
+#ifdef XHCI_DISABLE_MSI
+	counts[PCI_INTR_TYPE_MSI] = 0;
+#endif
+#ifdef XHCI_DISABLE_MSIX
+	counts[PCI_INTR_TYPE_MSIX] = 0;
+#endif
+
 	/* Allocate and establish the interrupt. */
-	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
 		aprint_error_dev(self, "can't allocate handler\n");
 		goto fail;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.7 2017/11/30 14:51:01 skrll Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.7.18.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.7 2017/11/30 14:51:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.7.18.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,17 +54,18 @@ CFATTACH_DECL_NEW(gtmr_fdt, 0, gtmr_fdt_match, gtmr_fdt_attach, NULL, NULL);
 /* The virtual timer list entry */
 #define GTMR_VTIMER 2
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "arm,armv7-timer" },
+	{ .compat = "arm,armv8-timer" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 gtmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,armv7-timer",
-		"arm,armv8-timer",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -86,8 +87,8 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	void *ih = fdtbus_intr_establish(phandle, GTMR_VTIMER, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, gtmr_intr, NULL);
+	void *ih = fdtbus_intr_establish_xname(phandle, GTMR_VTIMER, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, gtmr_intr, NULL, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

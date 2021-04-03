@@ -1,4 +1,4 @@
-/*	$NetBSD: sun6i_spi.c,v 1.5 2019/08/13 17:03:10 tnn Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.5.8.1 2021/04/03 22:28:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.5 2019/08/13 17:03:10 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.5.8.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,16 +84,17 @@ static void sun6ispi_recv(struct sun6ispi_softc * const);
 CFATTACH_DECL_NEW(sun6i_spi, sizeof(struct sun6ispi_softc),
     sun6ispi_match, sun6ispi_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-spi" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 sun6ispi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"allwinner,sun8i-h3-spi",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -149,8 +150,8 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-	    sun6ispi_intr, sc);
+	sc->sc_intrh = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0,
+	    sun6ispi_intr, sc, device_xname(self));
 	if (sc->sc_intrh == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		return;
@@ -158,7 +159,7 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": SPI\n");
-	
+
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	gcr = SPI_GCR_SRST;
@@ -205,7 +206,7 @@ sun6ispi_configure(void *cookie, int slave, int mode, int speed)
 
 	if (slave >= sc->sc_spi.sct_nslaves)
 		return EINVAL;
-	
+
 	tcr = SPI_TCR_SS_LEVEL | SPI_TCR_SPOL;
 
 	switch (mode) {

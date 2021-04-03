@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9 2012/10/13 17:58:53 jdc Exp $	*/
+/*	$NetBSD: consinit.c,v 1.9.50.1 2021/04/03 22:28:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2012/10/13 17:58:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9.50.1 2021/04/03 22:28:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2012/10/13 17:58:53 jdc Exp $");
 #include "pckbd.h"
 
 #include <evbppc/explora/dev/elbvar.h>
+#include <powerpc/ibm4xx/cpu.h>
 
 #include "opt_explora.h"
 
@@ -61,14 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2012/10/13 17:58:53 jdc Exp $");
 #define COM_CONSOLE_SPEED	9600
 #endif
 
+extern void fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
+
 void
 consinit(void)
 {
 	bus_space_tag_t tag;
 	static int done = 0;
-#ifndef COM_IS_CONSOLE
-	extern void fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
-#endif
 
 	if (done)
 		return;
@@ -81,11 +81,11 @@ consinit(void)
 	    COM_FREQ, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #else
-	/* Clear VRam */
-	memset((void *)BASE_FB, 0, SIZE_FB);
-
 	tag = elb_get_bus_space_tag(BASE_FB);
 	fb_cnattach(tag, BASE_FB2, (void *)BASE_FB);
+
+	calc_delayconst();	/* required by pckbc_cnattach() */
+
 	tag = elb_get_bus_space_tag(BASE_PCKBC);
 	pckbc_cnattach(tag, _BUS_SPACE_UNSTRIDE(tag, BASE_PCKBC),
 	    _BUS_SPACE_UNSTRIDE(tag, BASE_PCKBC2-BASE_PCKBC), PCKBC_KBD_SLOT,

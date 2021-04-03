@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.12 2020/10/11 15:33:18 tnn Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.12.2.1 2021/04/03 22:28:18 thorpej Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.12 2020/10/11 15:33:18 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.12.2.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,16 +143,17 @@ static void rkpcie_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(rkpcie, sizeof(struct rkpcie_softc),
         rkpcie_match, rkpcie_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-pcie" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 rkpcie_match(device_t parent, cfdata_t cf, void *aux)
 {
-        const char * const compatible[] = {
-		"rockchip,rk3399-pcie",
-		NULL
-	};
 	struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void	rkpcie_atr_init(struct rkpcie_softc *);
@@ -614,7 +615,7 @@ rkpcie_conf_hook(void *v, int b, int d, int f, pcireg_t id)
 /* INTx interrupt controller */
 static void *
 rkpcie_intx_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct rkpcie_softc *sc = device_private(dev);
 	void *cookie;
@@ -628,7 +629,8 @@ rkpcie_intx_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	    PCIM_INTx_ENAB(0) | PCIM_INTx_ENAB(1) |
 	    PCIM_INTx_ENAB(2) | PCIM_INTx_ENAB(3));
 
-	cookie = fdtbus_intr_establish_byname(sc->sc_phsc.sc_phandle, "legacy", ipl, flags, func, arg);
+	cookie = fdtbus_intr_establish_byname(sc->sc_phsc.sc_phandle,
+	    "legacy", ipl, flags, func, arg, xname);
 
 	return cookie;
 }

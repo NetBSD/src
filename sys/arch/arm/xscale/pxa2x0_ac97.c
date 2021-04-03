@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.18 2020/04/19 08:18:19 isaki Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.18.2.1 2021/04/03 22:28:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -545,8 +545,6 @@ acu_close(void *arg)
 	/*
 	 * Make sure the hardware is quiescent
 	 */
-	acu_halt_output(sc);
-	acu_halt_input(sc);
 	delay(100);
 
 	/* Assert Cold Reset */
@@ -726,14 +724,12 @@ acu_halt_output(void *arg)
 {
 	struct acu_softc *sc = arg;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
 	if (sc->sc_txdma) {
 		acu_reg_write(sc, AC97_POCR, 0);
 		acu_reg_write(sc, AC97_POSR, AC97_FIFOE);
 		pxa2x0_dmac_abort_xfer(sc->sc_txdma->ad_dx);
 		sc->sc_txdma = NULL;
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
 	return (0);
 }
 
@@ -742,14 +738,12 @@ acu_halt_input(void *arg)
 {
 	struct acu_softc *sc = arg;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
 	if (sc->sc_rxdma) {
 		acu_reg_write(sc, AC97_PICR, 0);
 		acu_reg_write(sc, AC97_PISR, AC97_FIFOE);
 		pxa2x0_dmac_abort_xfer(sc->sc_rxdma->ad_dx);
 		sc->sc_rxdma = NULL;
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
 	return (0);
 }
 

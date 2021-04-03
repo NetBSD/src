@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.28.2.1 2020/12/14 14:37:57 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.28.2.2 2021/04/03 22:28:27 thorpej Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -80,8 +80,8 @@ typedef struct {
 typedef int			__register_t;
 
 
-#define __SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0} }
-#define __SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1} }
+#define	__SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0} }
+#define	__SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1} }
 
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
@@ -101,6 +101,7 @@ extern const char __CONCAT(name,_ras_start[]), __CONCAT(name,_ras_end[])
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_TLS_VARIANT_I
 #define	__HAVE_NEW_STYLE_BUS_H
+#define	__HAVE_BUS_SPACE_8
 
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC

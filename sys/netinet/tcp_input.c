@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.424 2020/09/29 02:58:53 msaitoh Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.424.2.1 2021/04/03 22:29:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.424 2020/09/29 02:58:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.424.2.1 2021/04/03 22:29:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1274,7 +1274,7 @@ tcp_input(struct mbuf *m, int off, int proto)
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
 	 */
-	if (TCP_HDR_ALIGNED_P(th) == 0) {
+	if (ACCESSIBLE_POINTER(th, struct tcphdr) == 0) {
 		m = m_copyup(m, off + sizeof(struct tcphdr), 0);
 		if (m == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
@@ -1282,7 +1282,7 @@ tcp_input(struct mbuf *m, int off, int proto)
 		}
 		th = (struct tcphdr *)(mtod(m, char *) + off);
 	}
-	KASSERT(TCP_HDR_ALIGNED_P(th));
+	KASSERT(ACCESSIBLE_POINTER(th, struct tcphdr));
 
 	/*
 	 * Get IP and TCP header.
@@ -1362,7 +1362,7 @@ tcp_input(struct mbuf *m, int off, int proto)
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
-		KASSERT(TCP_HDR_ALIGNED_P(th));
+		KASSERT(ACCESSIBLE_POINTER(th, struct tcphdr));
 		optlen = thlen - sizeof(struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
 
@@ -4258,7 +4258,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 		sc->sc_iss = tcp_new_iss1(&dstin->sin_addr,
 		    &srcin->sin_addr, dstin->sin_port,
-		    srcin->sin_port, sizeof(dstin->sin_addr), 0);
+		    srcin->sin_port, sizeof(dstin->sin_addr));
 		break;
 	    }
 #ifdef INET6
@@ -4269,7 +4269,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 		sc->sc_iss = tcp_new_iss1(&dstin6->sin6_addr,
 		    &srcin6->sin6_addr, dstin6->sin6_port,
-		    srcin6->sin6_port, sizeof(dstin6->sin6_addr), 0);
+		    srcin6->sin6_port, sizeof(dstin6->sin6_addr));
 		break;
 	    }
 #endif

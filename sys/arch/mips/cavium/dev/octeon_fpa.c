@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpa.c,v 1.8 2020/06/23 05:14:18 simonb Exp $	*/
+/*	$NetBSD: octeon_fpa.c,v 1.8.2.1 2021/04/03 22:28:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,12 +29,12 @@
 #undef	FPADEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.8 2020/06/23 05:14:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.8.2.1 2021/04/03 22:28:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/locore.h>
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.8 2020/06/23 05:14:18 simonb Exp $"
 #define	_DMA_NSEGS	1
 #define	_DMA_BUFLEN	0x01000000
 
-/* pool descriptor */
-struct octfpa_desc {
-};
-
 struct octfpa_softc {
 	int			sc_initialized;
 
@@ -68,8 +64,6 @@ struct octfpa_softc {
 	bus_space_handle_t	sc_opsh;
 
 	bus_dma_tag_t		sc_dmat;
-
-	struct octfpa_desc	sc_descs[8];
 };
 
 void			octfpa_bootstrap(struct octeon_config *);
@@ -113,10 +107,8 @@ octfpa_buf_init(int poolno, size_t size, size_t nelems, struct octfpa_buf **rfb)
 	paddr_t paddr;
 
 	nsegs = 1/* XXX */;
-	fb = malloc(sizeof(*fb) + sizeof(*fb->fb_dma_segs) * nsegs, M_DEVBUF,
-	    M_WAITOK | M_ZERO);
-	if (fb == NULL)
-		return 1;
+	fb = kmem_zalloc(sizeof(*fb) + sizeof(*fb->fb_dma_segs) * nsegs,
+	    KM_SLEEP);
 	fb->fb_poolno = poolno;
 	fb->fb_size = size;
 	fb->fb_nelems = nelems;

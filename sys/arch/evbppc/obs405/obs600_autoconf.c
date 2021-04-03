@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.8 2019/02/18 06:27:10 msaitoh Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.8.12.1 2021/04/03 22:28:25 thorpej Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,21 +33,19 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.8 2019/02/18 06:27:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.8.12.1 2021/04/03 22:28:25 thorpej Exp $");
 
 #include "dwctwo.h"
 
-#include <sys/systm.h>
+#include <sys/param.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/systm.h>
 
 #include <machine/obs600.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-
-#include <dev/ic/comreg.h>
 
 #if NDWCTWO > 0
 #include <dev/usb/usb.h>
@@ -101,8 +99,6 @@ cpu_configure(void)
 	pic_add(&pic_uic1);
 	pic_add(&pic_uic2);
 
-	calc_delayconst();
-
 	/* Make sure that timers run at CPU frequency */
 	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
 
@@ -111,10 +107,7 @@ cpu_configure(void)
 
 	pic_finish_setup();
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
-
-	(void)spl0();
+	genppc_cpu_configure();
 }
 
 void
@@ -131,5 +124,5 @@ device_register(device_t dev, void *aux)
 	}
 #endif
 
-	obs405_device_register(dev, aux, OBS600_COM_FREQ);
+	ibm4xx_device_register(dev, aux, OBS600_COM_FREQ);
 }

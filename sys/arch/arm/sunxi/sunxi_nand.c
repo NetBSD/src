@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nand.c,v 1.8 2020/08/24 07:42:02 skrll Exp $ */
+/* $NetBSD: sunxi_nand.c,v 1.8.2.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.8 2020/08/24 07:42:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.8.2.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,9 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.8 2020/08/24 07:42:02 skrll Exp $")
 
 #define	NDFC_RAM_SIZE		1024
 
-static const char * compatible[] = {
-	"allwinner,sun4i-a10-nand",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-nand" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_nand_softc;
@@ -631,7 +631,7 @@ sunxi_nand_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -667,8 +667,8 @@ sunxi_nand_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": NAND Flash Controller\n");
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    sunxi_nand_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, sunxi_nand_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

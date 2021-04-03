@@ -1,4 +1,4 @@
-/* $NetBSD: genet_fdt.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $ */
+/* $NetBSD: genet_fdt.c,v 1.2.2.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.2.2.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,16 +61,17 @@ static void	genet_fdt_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(genet_fdt, sizeof(struct genet_softc),
 	genet_fdt_match, genet_fdt_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "brcm,bcm2711-genet-v5" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 genet_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"brcm,bcm2711-genet-v5",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -125,8 +126,8 @@ genet_fdt_attach(device_t parent, device_t self, void *aux)
 	if (genet_attach(sc) != 0)
 		return;
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_NET, FDT_INTR_FLAGS,
-	    genet_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, FDT_INTR_MPSAFE,
+	    genet_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sata.c,v 1.2 2019/05/13 16:55:17 bouyer Exp $ */
+/* $NetBSD: sunxi_sata.c,v 1.2.10.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.2 2019/05/13 16:55:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.2.10.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.2 2019/05/13 16:55:17 bouyer Exp $"
 
 #include <dev/fdt/fdtvar.h>
 
-static const char * compatible[] = {
-	"allwinner,sun4i-a10-ahci",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-ahci" },
+	DEVICE_COMPAT_EOL
 };
 
 #define	SUNXI_SATA_DMACR(port)	(0x170 + AHCI_P_OFFSET(port))
@@ -65,7 +65,7 @@ sunxi_sata_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -112,7 +112,8 @@ sunxi_sata_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SATA\n");
 
-	if (fdtbus_intr_establish(phandle, 0, IPL_BIO, 0, ahci_intr, sc) == NULL) {
+	if (fdtbus_intr_establish_xname(phandle, 0, IPL_BIO, 0, ahci_intr,
+	    sc, device_xname(self)) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
 		return;
 	}

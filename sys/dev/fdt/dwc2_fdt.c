@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.5 2019/03/02 13:21:08 jmcneill Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.5.12.1 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.5 2019/03/02 13:21:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.5.12.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,17 @@ static const struct dwc2_fdt_config dwc2_fdt_meson8b_config = {
 static const struct dwc2_fdt_config dwc2_fdt_generic_config = {
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "amlogic,meson8b-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
-	{ "amlogic,meson-gxbb-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
-	{ "rockchip,rk3066-usb",	(uintptr_t)&dwc2_fdt_rk3066_config },
-	{ "snps,dwc2",			(uintptr_t)&dwc2_fdt_generic_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "amlogic,meson8b-usb",
+	  .data = &dwc2_fdt_meson8b_config },
+	{ .compat = "amlogic,meson-gxbb-usb",
+	  .data = &dwc2_fdt_meson8b_config },
+	{ .compat = "rockchip,rk3066-usb",
+	  .data = &dwc2_fdt_rk3066_config },
+	{ .compat = "snps,dwc2",
+	  .data = &dwc2_fdt_generic_config },
+
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(dwc2_fdt, sizeof(struct dwc2_fdt_softc),
@@ -99,7 +104,7 @@ dwc2_fdt_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 /* ARGSUSED */
@@ -110,7 +115,7 @@ dwc2_fdt_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	const struct dwc2_fdt_config *conf =
-	    (void *)of_search_compatible(phandle, compat_data)->data;
+	    of_compatible_lookup(phandle, compat_data)->data;
 	char intrstr[128];
 	struct fdtbus_phy *phy;
 	struct clk *clk;
@@ -166,9 +171,8 @@ dwc2_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": DesignWare USB2 OTG\n");
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    dwc2_intr, &sc->sc_dwc2);
-
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, dwc2_intr, &sc->sc_dwc2, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %s\n",
 		    intrstr);

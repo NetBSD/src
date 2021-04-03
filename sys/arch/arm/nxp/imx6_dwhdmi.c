@@ -1,4 +1,4 @@
-/* $NetBSD: imx6_dwhdmi.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $ */
+/* $NetBSD: imx6_dwhdmi.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $ */
 /*-
  * Copyright (c) 2020 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_dwhdmi.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_dwhdmi.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,10 +63,10 @@ enum {
 	DWHDMI_PORT_OUTPUT = 1,
 };
 
-static const char * const compatible[] = {
-	"fsl,imx6dl-hdmi",
-	"fsl,imx6q-hdmi",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6dl-hdmi" },
+	{ .compat = "fsl,imx6q-hdmi" },
+	DEVICE_COMPAT_EOL
 };
 
 struct imx6_dwhdmi_softc {
@@ -214,7 +214,7 @@ imx6_dwhdmi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.42.2.1 2020/12/14 14:37:48 thorpej Exp $	*/
+/*	$NetBSD: gic.c,v 1.42.2.2 2021/04/03 22:28:16 thorpej Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.42.2.1 2020/12/14 14:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.42.2.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -222,9 +222,14 @@ static void
 armgic_set_priority(struct pic_softc *pic, int ipl)
 {
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
+	struct cpu_info * const ci = curcpu();
 
 	const uint32_t priority = armgic_ipl_to_priority(ipl);
-	gicc_write(sc, GICC_PMR, priority);
+	if (priority > ci->ci_hwpl) {
+		/* Lowering priority mask */
+		ci->ci_hwpl = priority;
+		gicc_write(sc, GICC_PMR, priority);
+	}
 }
 
 #ifdef MULTIPROCESSOR
@@ -322,6 +327,15 @@ armgic_irq_handler(void *tf)
 
 	ci->ci_data.cpu_nintr++;
 
+	const uint32_t priority = armgic_ipl_to_priority(old_ipl);
+	if (ci->ci_hwpl != priority) {
+		ci->ci_hwpl = priority;
+		gicc_write(sc, GICC_PMR, priority);
+		if (old_ipl == IPL_HIGH) {
+			return;
+		}
+	}
+
 	for (;;) {
 		uint32_t iar = gicc_read(sc, GICC_IAR);
 		uint32_t irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
@@ -365,11 +379,11 @@ armgic_irq_handler(void *tf)
 			    ipl, ci->ci_cpl,
 			    gicc_read(sc, GICC_PMR));
 			gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ipl));
-			ci->ci_cpl = ipl;
+			ci->ci_hwpl = ci->ci_cpl = ipl;
 		}
-		cpsie(I32_bit);
+		ENABLE_INTERRUPT();
 		pic_dispatch(is, tf);
-		cpsid(I32_bit);
+		DISABLE_INTERRUPT();
 		gicc_write(sc, GICC_EOIR, iar);
 #ifdef DEBUG
 		n++;
@@ -503,7 +517,11 @@ armgic_cpu_init_targets(struct armgic_softc *sc)
 		if (is != NULL && is->is_mpsafe) {
 			const u_int byte_shift = 8 * (irq & 3);
 			uint32_t targets = gicd_read(sc, targets_reg);
+#if 0
 			targets |= sc->sc_mptargets << byte_shift;
+#else
+			targets |= sc->sc_bptargets << byte_shift;
+#endif
 			gicd_write(sc, targets_reg, targets);
 		}
 	}
@@ -527,9 +545,10 @@ armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 			    sc->sc_enabled_local);
 		}
 	}
+	ci->ci_hwpl = armgic_ipl_to_priority(ci->ci_cpl);
 	gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ci->ci_cpl));	// set PMR
 	gicc_write(sc, GICC_CTRL, GICC_CTRL_V1_Enable);	// enable interrupt
-	cpsie(I32_bit);					// allow IRQ exceptions
+	ENABLE_INTERRUPT();				// allow IRQ exceptions
 }
 
 void
@@ -656,7 +675,7 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	armgic_set_priority(&sc->sc_pic, ci->ci_cpl);	// set PMR
 	gicd_write(sc, GICD_CTRL, GICD_CTRL_Enable);	// enable Distributer
 	gicc_write(sc, GICC_CTRL, GICC_CTRL_V1_Enable);	// enable CPU interrupts
-	cpsie(I32_bit);					// allow interrupt exceptions
+	ENABLE_INTERRUPT();				// allow interrupt exceptions
 
 	/*
 	 * For each line that isn't valid, we set the intrsource for it to

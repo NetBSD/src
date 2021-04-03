@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.15 2020/08/04 13:20:45 kardel Exp $ */
+/* $NetBSD: spi.c,v 1.15.2.1 2021/04/03 22:28:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.15 2020/08/04 13:20:45 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.15.2.1 2021/04/03 22:28:50 thorpej Exp $");
 
 #include "locators.h"
 
@@ -266,7 +266,7 @@ spi_compatible_match(const struct spi_attach_args *sa, const cfdata_t cf,
 {
 	if (sa->sa_ncompat > 0)
 		return device_compatible_match(sa->sa_compat, sa->sa_ncompat,
-					       compats, NULL);
+					       compats);
 
 	return 1;
 }

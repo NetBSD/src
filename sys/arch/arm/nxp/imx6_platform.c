@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -119,16 +119,18 @@ imx_platform_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t prop = device_properties(self);
 
+	fdtbus_device_register(self, aux);
+
 	if (device_is_a(self, "atphy")) {
-		const char * compat[] = {
-			"fsl,imx6dl-sabresd",
-			"fsl,imx6q-sabresd",
-			"fsl,imx6qp-sabresd",
-			"solidrun,hummingboard2/q",
-			"solidrun,hummingboard2/dl",
-			NULL
+		static const struct device_compatible_entry compat_data[] = {
+			{ .compat = "fsl,imx6dl-sabresd" },
+			{ .compat = "fsl,imx6q-sabresd" },
+			{ .compat = "fsl,imx6qp-sabresd" },
+			{ .compat = "solidrun,hummingboard2/q" },
+			{ .compat = "solidrun,hummingboard2/dl" },
+			DEVICE_COMPAT_EOL
 		};
-		if (of_match_compatible(OF_finddevice("/"), compat))
+		if (of_compatible_match(OF_finddevice("/"), compat_data))
 			prop_dictionary_set_uint32(prop, "clk_25m", 125000000);
 	}
 }
@@ -191,6 +193,8 @@ imx_platform_mpstart(void)
 	bus_space_unmap(bst, bsh, AIPS1_SRC_SIZE);
 
 	return arm_fdt_cpu_mpstart();
+#else
+	return 0;
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_gpio.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $	*/
+/*	$NetBSD: imx_gpio.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_gpio.c,v 1.1.2.2 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_gpio.c,v 1.1.2.3 2021/04/03 22:28:17 thorpej Exp $");
 
 #include "opt_fdt.h"
 #include "gpio.h"
@@ -58,7 +58,7 @@ static int imx6_gpio_fdt_read(device_t, void *, bool);
 static void imx6_gpio_fdt_write(device_t, void *, int, bool);
 
 static void *imxgpio_establish(device_t, u_int *, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 static void imxgpio_disestablish(device_t, void *);
 static bool imxgpio_intrstr(device_t, u_int *, char *, size_t);
 
@@ -77,16 +77,17 @@ static struct fdtbus_gpio_controller_func imx6_gpio_funcs = {
 
 const int imxgpio_ngroups = GPIO_NGROUPS;
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx35-gpio" },
+	DEVICE_COMPAT_EOL
+};
+
 int
 imxgpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"fsl,imx35-gpio",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 void
@@ -124,8 +125,8 @@ imxgpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	sc->gpio_is = fdtbus_intr_establish(phandle, 0, IPL_HIGH, 0,
-	    pic_handle_intr, &sc->gpio_pic);
+	sc->gpio_is = fdtbus_intr_establish_xname(phandle, 0, IPL_HIGH, 0,
+	    pic_handle_intr, &sc->gpio_pic, device_xname(self));
 	if (sc->gpio_is == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
@@ -137,8 +138,8 @@ imxgpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	sc->gpio_is_high = fdtbus_intr_establish(phandle, 1, IPL_HIGH, 0,
-	    pic_handle_intr, &sc->gpio_pic);
+	sc->gpio_is_high = fdtbus_intr_establish_xname(phandle, 1, IPL_HIGH, 0,
+	    pic_handle_intr, &sc->gpio_pic, device_xname(self));
 	if (sc->gpio_is_high == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
@@ -220,7 +221,7 @@ imx6_gpio_fdt_write(device_t dev, void *priv, int val, bool raw)
 
 static void *
 imxgpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 	struct imxgpio_softc * const sc = device_private(dev);
 
@@ -246,7 +247,8 @@ imxgpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	aprint_debug_dev(dev, "intr establish irq %d, level %d\n",
 	    sc->gpio_irqbase + intr, level);
-	return intr_establish(sc->gpio_irqbase + intr, ipl, level | mpsafe, func, arg);
+	return intr_establish_xname(sc->gpio_irqbase + intr, ipl,
+	    level | mpsafe, func, arg, xname);
 }
 
 static void

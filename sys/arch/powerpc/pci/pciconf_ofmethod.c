@@ -1,4 +1,4 @@
-/* $NetBSD: pciconf_ofmethod.c,v 1.6 2020/07/06 09:34:17 rin Exp $ */
+/* $NetBSD: pciconf_ofmethod.c,v 1.6.2.1 2021/04/03 22:28:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.6 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.6.2.1 2021/04/03 22:28:35 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.6 2020/07/06 09:34:17 rin Exp
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
-
-#if NISA > 0
-#include <dev/isa/isavar.h>
-#endif
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

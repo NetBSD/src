@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.12 2009/09/01 15:20:53 tsutsui Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.12.78.1 2021/04/03 22:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -200,6 +200,8 @@ struct sonic_softc {
 	uint16_t sc_imr;		/* prototype IMR */
 	uint16_t sc_dcr;		/* prototype DCR */
 	uint16_t sc_dcr2;		/* prototype DCR2 */
+
+	krndsource_t sc_rndsource;	/* random source */
 };
 
 #define	CSR_READ(sc, reg)						\

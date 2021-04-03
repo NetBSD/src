@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.9.2.1 2020/12/14 14:38:05 thorpej Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.9.2.2 2021/04/03 22:28:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.9.2.1 2020/12/14 14:38:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.9.2.2 2021/04/03 22:28:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,11 +49,17 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.9.2.1 2020/12/14 14:38:05 thorpej Ex
 #include <dev/acpi/acpi_intr.h>
 #include <dev/acpi/acpi_usb.h>
 
-static const char * const compatible[] = {
-	"PNP0D10",	/* XHCI-compliant USB controller without standard debug */
-	"PNP0D15",	/* XHCI-compliant USB controller with standard debug */
-	"808622B7",	/* DesignWare Dual Role SuperSpeed USB controller */
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	/* XHCI-compliant USB controller without standard debug */
+	{ .compat = "PNP0D10" },
+
+	/* XHCI-compliant USB controller with standard debug */
+	{ .compat = "PNP0D15" },
+
+	/* DesignWare Dual Role SuperSpeed USB controller */
+	{ .compat = "808622B7", },
+
+	DEVICE_COMPAT_EOL
 };
 
 struct xhci_acpi_softc {
@@ -75,10 +81,7 @@ xhci_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void

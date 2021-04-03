@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.786.2.1 2021/01/03 16:35:02 thorpej Exp $
+$NetBSD: usbdevs,v 1.786.2.2 2021/04/03 22:28:50 thorpej Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -580,6 +580,7 @@ vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
 vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
+vendor COOLERMASTER	0x2516	Cooler Master Technology Inc.
 vendor HAILUCK		0x258a	HAILUCK Co., Ltd
 vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770	NHJ
@@ -960,6 +961,7 @@ product ASUSTEK RTL8192CU	0x17ab	RTL8192CU
 product ASUSTEK USBN66		0x17ad	USB-N66
 product ASUSTEK USBN10NANO	0x17ba	USB-N10 Nano
 product ASUSTEK RTL8192CU_3	0x17c0	RTL8192CU_3
+product ASUSTEK AURALED		0x18f3	AURA LED
 product ASUSTEK MYPAL_A730	0x4202	MyPal A730
 product ASUSTEK2 USBN11		0x0b05	USB-N11
 
@@ -1085,7 +1087,7 @@ product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 product BELKIN F5D7051		0x7051	F5D7051 54g USB Network Adapter
 product BELKIN F5D7050A		0x705a	F5D705A 54g USB Network Adapter
 product BELKIN F5D7050C		0x705c	F5D705C 54g USB Network Adapter
-product BELKIN F5D7050E		0x705c	F5D705E 54g USB Network Adapter
+product BELKIN F5D7050E		0x705e	F5D705E 54g USB Network Adapter
 product BELKIN RT2870_1		0x8053	RT2870
 product BELKIN RT2870_2		0x805c	RT2870
 product BELKIN F5D8053V3	0x815c	F5D8053 v3
@@ -1173,6 +1175,7 @@ product CHIC CYPRESS		0x0003	Cypress USB Mouse
 
 /* Chicony products */
 product CHICONY KB8933		0x0001	KB-8933 keyboard
+product CHICONY OPTMOUSE0939	0x0939	USB Optical Mouse
 product CHICONY RTL8188CUS_1	0xaff7	RTL8188CUS
 product CHICONY RTL8188CUS_2	0xaff8	RTL8188CUS
 product CHICONY RTL8188CUS_3	0xaff9	RTL8188CUS
@@ -1251,6 +1254,9 @@ product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
+
+/* Cooler Master Technology Inc. */
+product	COOLERMASTER AMD_SR4_LAMPLIGHT	0x0051	AMD SR4 lamplight Control
 
 /* Corega products */
 product COREGA ETHER_USB_T	0x0001	Ether USB-T
@@ -3401,7 +3407,9 @@ product TOSHIBA HSDPA_MODEM_EU870DT1	0x1302	HSDPA 3G Modem Card
 
 /* TP-Link products */
 product TPLINK RTL8192CU	0x0100	RTL8192CU
-product TPLINK RTL8192EU	0x0109	RTL8192EU
+product	TPLINK WN821NV5		0x0107	TL-WN821N v5
+product	TPLINK WN822NV4		0x0108	TL-WN822N v4
+product	TPLINK WN823NV2		0x0109	TL-WN823N v2
 product TPLINK RTL8188EU	0x010c	RTL8188EU
 product	TPLINK T4UV2		0x010d  Archer T4U ver 2
 product	TPLINK T4UHV2		0x010e  Archer T4UH ver 2

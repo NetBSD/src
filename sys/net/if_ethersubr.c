@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.289 2020/09/26 18:38:09 roy Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.289.2.1 2021/04/03 22:29:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.289 2020/09/26 18:38:09 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.289.2.1 2021/04/03 22:29:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -163,6 +163,9 @@ extern u_char	aarp_org_code[3];
 #include <netmpls/mpls.h>
 #include <netmpls/mpls_var.h>
 #endif
+
+CTASSERT(sizeof(struct ether_addr) == 6);
+CTASSERT(sizeof(struct ether_header) == 14);
 
 #ifdef DIAGNOSTIC
 static struct timeval bigpktppslim_last;
@@ -648,15 +651,16 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		goto drop;
-	if (m->m_len < sizeof(*eh)) {
-		m = m_pullup(m, sizeof(*eh));
-		if (m == NULL)
-			goto dropped;
-	}
 
 #ifdef MBUFTRACE
 	m_claimm(m, &ec->ec_rx_mowner);
 #endif
+
+	if (__predict_false(m->m_len < sizeof(*eh))) {
+		if ((m = m_pullup(m, sizeof(*eh))) == NULL)
+			goto dropped;
+	}
+
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
 	ehlen = sizeof(*eh);

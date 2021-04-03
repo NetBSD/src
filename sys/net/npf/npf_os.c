@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.19 2020/08/18 07:53:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.19.2.1 2021/04/03 22:29:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -298,8 +298,11 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 #endif
 	}
 	resp = nvlist_create(0);
-	npfctl_run_op(npf, cmd, req, resp);
-	error = nvlist_copyout(data, resp);
+
+	if ((error = npfctl_run_op(npf, cmd, req, resp)) == 0) {
+		error = nvlist_copyout(data, resp);
+	}
+
 	nvlist_destroy(resp);
 	nvlist_destroy(req);
 
@@ -321,8 +324,16 @@ npf_dev_read(dev_t dev, struct uio *uio, int flag)
 bool
 npf_autounload_p(void)
 {
+	if (npf_active_p())
+		return false;
+
 	npf_t *npf = npf_getkernctx();
-	return !npf_active_p() && npf_default_pass(npf);
+
+	npf_config_enter(npf);
+	bool pass = npf_default_pass(npf);
+	npf_config_exit(npf);
+
+	return pass;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.35 2020/08/28 07:01:57 riastradh Exp $	*/
+/*	$NetBSD: ip.h,v 1.35.2.1 2021/04/03 22:29:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -70,7 +70,7 @@ struct ip {
 	u_int8_t  ip_p;			/* protocol */
 	u_int16_t ip_sum;		/* checksum */
 	struct	  in_addr ip_src, ip_dst; /* source and dest address */
-} __packed;
+};
 
 #define	IP_MAXPACKET	65535		/* maximum packet size */
 #define	IP_MINFRAGSIZE	69		/* minumum size that can be fraged */
@@ -207,9 +207,9 @@ struct	ip_timestamp {
 		 struct	ipt_ta {
 			struct in_addr ipt_addr;
 			n_time ipt_time;
-		 } ipt_ta[1] __packed;
-	} ipt_timestamp __packed;
-} __packed;
+		 } ipt_ta[1];
+	} ipt_timestamp;
+};
 
 /* flag bits for ipt_flg */
 #define	IPOPT_TS_TSONLY		0		/* timestamps only */
@@ -246,6 +246,12 @@ struct ippseudo {
 	u_int8_t	ippseudo_pad;	/* pad, must be zero */
 	u_int8_t	ippseudo_p;	/* protocol */
 	u_int16_t	ippseudo_len;	/* protocol length */
-} __packed;
+};
+
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct ip) == 20);
+__CTASSERT(sizeof(struct ip_timestamp) == 12);
+__CTASSERT(sizeof(struct ippseudo) == 12);
+#endif
 
 #endif	/* !_NETINET_IP_H_ */

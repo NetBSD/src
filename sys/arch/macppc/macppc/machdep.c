@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 2020/07/14 08:55:07 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.1 2021/04/03 22:28:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2020/07/14 08:55:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171.2.1 2021/04/03 22:28:30 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcarch.h"
 #include "adb.h"
 #include "zsc.h"
 
@@ -78,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2020/07/14 08:55:07 martin Exp $")
 #include <powerpc/trap.h>
 #include <powerpc/fpu.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/spr.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
@@ -124,13 +126,61 @@ static int of_upd_brightness(void *, int);
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	ofwoea_initppc(startkernel, endkernel, args);
-}
+	int node, l;
 
-/* perform model-specific actions at initppc() */
-void
-model_init(void)
-{
+	node = OF_finddevice("/");
+	if (node != -1) {
+		l = OF_getprop(node, "model", model_name, sizeof(model_name));
+		if (l == -1) {
+			OF_getprop(node, "name", model_name,
+			    sizeof(model_name));
+		}
+	}
+
+	ofw_quiesce = strncmp(model_name, "PowerMac11,2", 12) == 0 ||
+		      strncmp(model_name, "PowerMac12,1", 12) == 0;
+
+	/* switch CPUs to full speed */
+	if  (strncmp(model_name, "PowerMac7,", 10) == 0) {
+		int clock_ih = OF_open("/u3/i2c/i2c-hwclock");
+		if (clock_ih != 0) {
+			OF_call_method_1("slew-high", clock_ih, 0);
+			OF_close(clock_ih);
+		}
+	}
+	if  (strncmp(model_name, "PowerMac8,", 10) == 0) {
+		int smu_ih = OF_open("/smu");
+		if (smu_ih != 0) {
+			OF_call_method_1("smu-powertune-hi", smu_ih, 0);
+			OF_close(smu_ih);
+		}
+	}
+
+	/*
+	 * Initialize BAT mappings for our I/O regions.  Note,
+	 * on the 601, we use segment mappings under the covers.
+	 */
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16 ) == MPC601) {
+		oea_batinit(
+		    0x80000000, BAT_BL_256M,
+		    0x90000000, BAT_BL_256M,
+		    0xa0000000, BAT_BL_256M,
+		    0xb0000000, BAT_BL_256M,
+		    0xf0000000, BAT_BL_256M,
+		    0);
+	} else
+#endif /* PPC_OEA601 */
+	{
+		oea_batinit(
+		    0x80000000, BAT_BL_1G,
+		    0xf0000000, BAT_BL_128M,
+		    0xf8000000, BAT_BL_64M,
+		    0xfe000000, BAT_BL_8M,	/* Grackle IO */
+		    0);
+	}
+
+	ofwoea_initppc(startkernel, endkernel, args);
 }
 
 void
@@ -318,7 +368,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 	}
 	if (!of_to_uint32_prop(dict, node, "address", "address")) {
 		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
@@ -411,27 +461,27 @@ add_model_specifics(prop_dictionary_t dict)
 
 	node = OF_finddevice("/");
 
-	if (of_compatible(node, bl_rev_models) != -1) {
+	if (of_compatible(node, bl_rev_models)) {
 		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
 	}
-	if (of_compatible(node, clamshell) != -1) {
+	if (of_compatible(node, clamshell)) {
 		prop_data_t edid;
 
 		edid = prop_data_create_nocopy(edid_clamshell, sizeof(edid_clamshell));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
 	}
-	if (of_compatible(node, pismo) != -1) {
+	if (of_compatible(node, pismo)) {
 		prop_data_t edid;
 
 		edid = prop_data_create_nocopy(edid_pismo, sizeof(edid_pismo));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
 	}
-	if (of_compatible(node, mini1) != -1) {
+	if (of_compatible(node, mini1)) {
 		prop_dictionary_set_bool(dict, "dvi-internal", 1);
 	}
-	if (of_compatible(node, mini2) != -1) {
+	if (of_compatible(node, mini2)) {
 		prop_dictionary_set_bool(dict, "dvi-external", 1);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.10 2020/08/12 13:19:35 skrll Exp $	*/
+/*	$NetBSD: fusu.S,v 1.10.2.1 2021/04/03 22:28:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_gprof.h"
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: fusu.S,v 1.10 2020/08/12 13:19:35 skrll Exp $");
+RCSID("$NetBSD: fusu.S,v 1.10.2.1 2021/04/03 22:28:13 thorpej Exp $");
 
 #ifdef ARMV81_PAN
 #define PAN_ENABLE	\

@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_dma.c,v 1.3 2018/04/20 18:04:12 bouyer Exp $ */
+/* $NetBSD: sun4i_dma.c,v 1.3.14.1 2021/04/03 22:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.3 2018/04/20 18:04:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.3.14.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,9 +96,9 @@ __KERNEL_RCSID(0, "$NetBSD: sun4i_dma.c,v 1.3 2018/04/20 18:04:12 bouyer Exp $")
 	   __SHIFTIN(2, DDMA_PARA_DST_WAIT_CLK_CYC) |	\
 	   __SHIFTIN(2, DDMA_PARA_SRC_WAIT_CLK_CYC))
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-dma",		1 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-dma" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sun4idma_channel {
@@ -345,7 +345,7 @@ sun4idma_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -408,8 +408,8 @@ sun4idma_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SCHED,
-	    FDT_INTR_MPSAFE, sun4idma_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SCHED,
+	    FDT_INTR_MPSAFE, sun4idma_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish interrupt on %s\n", intrstr);

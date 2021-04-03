@@ -203,8 +203,8 @@ struct sunxi_emac_desc {
 	uint32_t	addr;
 
 	uint32_t	next;
-} __packed __aligned(CACHE_LINE_SIZE);
+} __packed __aligned(64);
 
-__CTASSERT(sizeof(struct sunxi_emac_desc) == CACHE_LINE_SIZE);
+__CTASSERT(sizeof(struct sunxi_emac_desc) == 64);
 
 #endif /* !__SUNXI_EMAC_H__ */

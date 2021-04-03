@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.13 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: tegra_com.c,v 1.13.2.1 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.13 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.13.2.1 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,11 +51,11 @@ __KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.13 2020/09/28 11:54:23 jmcneill Exp 
 static int tegra_com_match(device_t, cfdata_t, void *);
 static void tegra_com_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"nvidia,tegra210-uart",
-	"nvidia,tegra124-uart",
-	"nvidia,tegra20-uart",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-uart" },
+	{ .compat = "nvidia,tegra124-uart" },
+	{ .compat = "nvidia,tegra20-uart" },
+	DEVICE_COMPAT_EOL
 };
 
 struct tegra_com_softc {
@@ -74,7 +74,7 @@ tegra_com_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -130,8 +130,8 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	tsc->tsc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, comintr, sc);
+	tsc->tsc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0,
+	    IPL_SERIAL, FDT_INTR_MPSAFE, comintr, sc, device_xname(self));
 	if (tsc->tsc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -146,7 +146,7 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 static int
 tegra_com_console_match(int phandle)
 {
-	return of_match_compatible(phandle, compatible);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void

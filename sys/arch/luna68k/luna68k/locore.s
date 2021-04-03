@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.64 2019/06/30 05:04:49 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.64.10.1 2021/04/03 22:28:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -662,9 +662,6 @@ ENTRY_NOPROFILE(lev5intr)
 	jra	_ASM_LABEL(rei)		| all done
 #endif
 
-#undef INTERRUPT_SAVEREG
-#undef INTERRUPT_RESTOREREG
-
 /*
  * Emulation of VAX REI instruction.
  *
@@ -970,5 +967,5 @@ GLOBAL(intrnames)
 GLOBAL(eintrnames)
 	.even
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)

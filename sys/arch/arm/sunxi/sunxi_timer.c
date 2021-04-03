@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.7 2019/06/14 21:48:43 tnn Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.7.10.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.7 2019/06/14 21:48:43 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.7.10.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,9 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.7 2019/06/14 21:48:43 tnn Exp $");
 #define  LOSC_CTRL_OSC32K_AUTO_SWT_EN	__BIT(14)
 #define	 LOSC_CTRL_OSC32K_SEL	__BIT(0)
 
-static const char * const compatible[] = {
-	"allwinner,sun4i-a10-timer",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-timer" },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_timer_softc {
@@ -144,8 +144,8 @@ sunxi_timer_cpu_initclocks(void)
 	if (!fdtbus_intr_str(sc->sc_phandle, 0, intrstr, sizeof(intrstr)))
 		panic("%s: failed to decode interrupt", __func__);
 
-	ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, sunxi_timer_intr, NULL);
+	ih = fdtbus_intr_establish_xname(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, sunxi_timer_intr, NULL, device_xname(sc->sc_dev));
 	if (ih == NULL)
 		panic("%s: failed to establish timer interrupt", __func__);
 
@@ -178,7 +178,7 @@ sunxi_timer_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

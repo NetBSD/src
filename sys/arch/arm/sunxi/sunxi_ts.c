@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ts.c,v 1.3 2019/06/04 03:03:34 thorpej Exp $ */
+/* $NetBSD: sunxi_ts.c,v 1.3.10.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.3 2019/06/04 03:03:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.3.10.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,11 +131,11 @@ static const struct sunxi_ts_config sun6i_a31_ts_config = {
 	.tp_mode_en_mask = TP_CTRL1_TP_DUAL_EN,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun4i-a10-ts",	(uintptr_t)&sun4i_a10_ts_config },
-	{ "allwinner,sun5i-a13-ts",	(uintptr_t)&sun5i_a13_ts_config },
-	{ "allwinner,sun6i-a31-ts",	(uintptr_t)&sun6i_a31_ts_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-ts",	.data = &sun4i_a10_ts_config },
+	{ .compat = "allwinner,sun5i-a13-ts",	.data = &sun5i_a13_ts_config },
+	{ .compat = "allwinner,sun6i-a31-ts",	.data = &sun6i_a31_ts_config },
+	DEVICE_COMPAT_EOL
 };
 
 static struct wsmouse_calibcoords sunxi_ts_default_calib = {
@@ -343,7 +343,7 @@ sunxi_ts_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -375,7 +375,7 @@ sunxi_ts_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	sc->sc_ts_attached = of_getprop_bool(phandle, "allwinner,ts-attached");
 	sc->sc_ts_inverted_x = of_getprop_bool(phandle,
@@ -388,7 +388,8 @@ sunxi_ts_attach(device_t parent, device_t self, void *aux)
 
 	sunxi_ts_init(sc);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, sunxi_ts_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, 0, sunxi_ts_intr,
+	    sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

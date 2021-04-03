@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.3 2020/01/29 06:05:31 thorpej Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.3.6.1 2021/04/03 22:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.3 2020/01/29 06:05:31 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.3.6.1 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,9 +85,9 @@ struct sunxi_can_softc {
 #define sc_timings	sc_cansc.csc_timings
 #define sc_linkmodes	sc_cansc.csc_linkmodes
 
-static const struct of_compat_data compat_data[] = {
-	{"allwinner,sun4i-a10-can", 0},
-	{NULL}
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun4i-a10-can" },
+	DEVICE_COMPAT_EOL
 };
 
 static int sunxi_can_match(device_t, cfdata_t, void *);
@@ -122,7 +122,7 @@ sunxi_can_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -202,8 +202,8 @@ sunxi_can_attach(device_t parent, device_t self, void *aux)
 	sunxi_can_write(sc, SUNXI_CAN_INT_REG,
 	    sunxi_can_read(sc, SUNXI_CAN_INT_REG));
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
-	    sunxi_can_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_NET, 0,
+	    sunxi_can_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);

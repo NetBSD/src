@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2016/06/09 05:43:51 martin Exp $
+# $NetBSD: Makefile.inc,v 1.10.30.1 2021/04/03 22:28:31 thorpej Exp $
 
 CFLAGS+=	-G 0 -ffixed-24
 
@@ -6,10 +6,6 @@ CFLAGS+=	-G 0 -ffixed-24
 .if !defined(RUMPKERNEL)
 CFLAGS+=	-mno-abicalls
 AFLAGS+=	-mno-abicalls
-.endif
-
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
-CFLAGS+=	-msym32
 .endif
 
 AFLAGS+=	-x assembler-with-cpp ${AOPTS}

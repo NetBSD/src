@@ -1,6 +1,6 @@
-#	$NetBSD: EXPLORA451,v 1.68 2020/09/27 13:48:51 roy Exp $
+#	$NetBSD: EXPLORA451,v 1.68.2.1 2021/04/03 22:28:24 thorpej Exp $
 #
-#	GENERIC -- everything that's currently supported
+#	EXPLORA451 -- NCD Explora 450 Series Thin Client
 #
 
 include 	"arch/evbppc/conf/std.explora"
@@ -76,6 +76,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	QUOTA		# legacy UFS quotas
@@ -120,6 +121,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_DEFAULTSCREENS=1
 
 # Options for netboot
+options 	NFS_BOOT_UDP		# for much better performance
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_DHCP
 

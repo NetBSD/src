@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.26 2020/07/14 08:58:03 martin Exp $ */
+/*	$NetBSD: cuda.c,v 1.26.2.1 2021/04/03 22:28:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.26 2020/07/14 08:58:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.26.2.1 2021/04/03 22:28:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,8 @@ cuda_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": unable to map registers\n");
 		return;
 	}
-	sc->sc_ih = intr_establish(irq, IST_EDGE, IPL_TTY, cuda_intr, sc);
+	sc->sc_ih = intr_establish_xname(irq, IST_EDGE, IPL_TTY, cuda_intr, sc,
+	    device_xname(self));
 	printf("\n");
 
 	for (i = 0; i < 16; i++) {

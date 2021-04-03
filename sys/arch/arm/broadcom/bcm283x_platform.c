@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.41.2.1 2020/12/14 14:37:48 thorpej Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.41.2.2 2021/04/03 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.41.2.1 2020/12/14 14:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.41.2.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1422,6 +1422,8 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
 
+	fdtbus_device_register(dev, aux);
+
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
 		prop_dictionary_set_uint32(dict,
@@ -1485,12 +1487,12 @@ bcm283x_platform_uart_freq(void)
 	 */
 	const int phandle = fdtbus_get_stdout_phandle();
 
-	static const char * const aux_compatible[] = {
-		"brcm,bcm2835-aux-uart",
-		NULL
+	static const struct device_compatible_entry aux_compat_data[] = {
+		{ .compat = "brcm,bcm2835-aux-uart" },
+		DEVICE_COMPAT_EOL
 	};
 
-	if (of_match_compatible(phandle, aux_compatible))
+	if (of_compatible_match(phandle, aux_compat_data))
 		return core_clk * 2;
 
 	return uart_clk;

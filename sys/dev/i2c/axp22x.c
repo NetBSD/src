@@ -1,4 +1,4 @@
-/* $NetBSD: axp22x.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: axp22x.c,v 1.6.16.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp22x.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp22x.c,v 1.6.16.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: axp22x.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "x-powers,axp221",		0 },
-	{ NULL,				0 }
+	{ .compat = "x-powers,axp221" },
+	DEVICE_COMPAT_EOL
 };
 
 #define AXP_TEMP_MON_REG	0x56	/* 2 bytes */

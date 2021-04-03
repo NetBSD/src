@@ -1,4 +1,4 @@
-/* $NetBSD: ns8250_uart.c,v 1.2 2020/07/16 16:38:40 jmcneill Exp $ */
+/* $NetBSD: ns8250_uart.c,v 1.2.2.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017-2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.2 2020/07/16 16:38:40 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.2.2.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,14 +77,14 @@ static const struct ns8250_config octeon_config = {
 	.enable = ns8250_octeon_enable,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "cavium,octeon-3860-uart",	(uintptr_t)&octeon_config },
-	{ "ns8250",			(uintptr_t)&ns8250_config },
-	{ "ns16450",			(uintptr_t)&ns8250_config },
-	{ "ns16550a",			(uintptr_t)&ns8250_config },
-	{ "ns16550",			(uintptr_t)&ns8250_config },
-	{ "ns16750",			(uintptr_t)&ns16750_config },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "cavium,octeon-3860-uart",	.data = &octeon_config },
+	{ .compat = "ns8250",			.data = &ns8250_config },
+	{ .compat = "ns16450",			.data = &ns8250_config },
+	{ .compat = "ns16550a",			.data = &ns8250_config },
+	{ .compat = "ns16550",			.data = &ns8250_config },
+	{ .compat = "ns16750",			.data = &ns16750_config },
+	DEVICE_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(ns8250_uart, sizeof(struct com_softc),
@@ -95,7 +95,7 @@ ns8250_uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -115,7 +115,7 @@ ns8250_uart_attach(device_t parent, device_t self, void *aux)
 	void *ih;
 
 	const struct ns8250_config *config =
-	    (void *)of_search_compatible(phandle, compat_data)->data;
+	    of_compatible_lookup(phandle, compat_data)->data;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -163,8 +163,8 @@ ns8250_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
-	    FDT_INTR_MPSAFE, comintr, sc);
+	ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, comintr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -180,7 +180,7 @@ ns8250_uart_attach(device_t parent, device_t self, void *aux)
 static int
 ns8250_uart_console_match(int phandle)
 {
-	return of_match_compat_data(phandle, compat_data);
+	return of_compatible_match(phandle, compat_data);
 }
 
 static void
@@ -196,7 +196,7 @@ ns8250_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 	int speed;
 
 	const struct ns8250_config *config =
-	    (void *)of_search_compatible(phandle, compat_data)->data;
+	    of_compatible_lookup(phandle, compat_data)->data;
 
 	fdtbus_get_reg(phandle, 0, &addr, NULL);
 	speed = fdtbus_get_stdout_speed();

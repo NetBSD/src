@@ -1,4 +1,4 @@
-/*	$NetBSD: oj6sh.c,v 1.5 2019/08/21 08:03:22 martin Exp $	*/
+/*	$NetBSD: oj6sh.c,v 1.5.8.1 2021/04/03 22:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.5 2019/08/21 08:03:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.5.8.1 2021/04/03 22:28:50 thorpej Exp $");
 
 #include "opt_oj6sh.h"
 
@@ -127,8 +127,8 @@ static const struct wsmouse_accessops oj6sh_accessops = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "oj6sh",	0 },
-	{ NULL,		0 }
+	{ .compat = "oj6sh" },
+	DEVICE_COMPAT_EOL
 };
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.9.2.1 2020/12/14 14:37:48 thorpej Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.9.2.2 2021/04/03 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.9.2.1 2020/12/14 14:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.9.2.2 2021/04/03 22:28:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -240,10 +240,9 @@ gic_v2m_msi_alloc(struct arm_pci_msi *msi, int *count,
 	if (exact && *count > avail)
 		return NULL;
 
-	while (*count > avail) {
-		if (avail < *count)
-			(*count) >>= 1;
-	}
+	while (*count > avail)
+		(*count) >>= 1;
+
 	if (*count == 0)
 		return NULL;
 

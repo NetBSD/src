@@ -1,4 +1,4 @@
-/*	$NetBSD: vmt_fdt.c,v 1.1 2020/10/28 08:36:40 ryo Exp $ */
+/*	$NetBSD: vmt_fdt.c,v 1.1.2.1 2021/04/03 22:28:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmt_fdt.c,v 1.1 2020/10/28 08:36:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmt_fdt.c,v 1.1.2.1 2021/04/03 22:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,9 @@ static void vmt_fdt_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(vmt_fdt, sizeof(struct vmt_softc),
     vmt_fdt_match, vmt_fdt_attach, NULL, NULL);
 
-static const struct of_compat_data compat_data[] = {
-	{ "vmware", },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "vmware" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -55,7 +55,7 @@ vmt_fdt_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (OF_finddevice("/hypervisor") != faa->faa_phandle)
 		return 0;
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void

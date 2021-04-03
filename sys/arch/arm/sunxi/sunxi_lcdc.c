@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.7 2019/11/23 20:28:04 jmcneill Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.7.8.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.7 2019/11/23 20:28:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.7.8.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,11 +106,11 @@ enum tcon_type {
 	TYPE_TCON1,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-h3-tcon-tv",		TYPE_TCON1 },
-	{ "allwinner,sun50i-a64-tcon-lcd",	TYPE_TCON0 },
-	{ "allwinner,sun50i-a64-tcon-tv",	TYPE_TCON1 },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-tcon-tv",	.value = TYPE_TCON1 },
+	{ .compat = "allwinner,sun50i-a64-tcon-lcd",	.value = TYPE_TCON0 },
+	{ .compat = "allwinner,sun50i-a64-tcon-tv",	.value = TYPE_TCON1 },
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_lcdc_softc;
@@ -467,7 +467,7 @@ sunxi_lcdc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -512,7 +512,7 @@ sunxi_lcdc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 	sc->sc_clk_ch[0] = fdtbus_clock_get(phandle, "tcon-ch0");
 	sc->sc_clk_ch[1] = fdtbus_clock_get(phandle, "tcon-ch1");
 
@@ -530,8 +530,8 @@ sunxi_lcdc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_get_data = sunxi_lcdc_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_ENCODER);
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    sunxi_lcdc_intr, sc);
+	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sunxi_lcdc_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

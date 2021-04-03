@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.80 2020/05/14 17:01:34 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.80.2.1 2021/04/03 22:29:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.80 2020/05/14 17:01:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.80.2.1 2021/04/03 22:29:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -476,13 +476,36 @@ kmem_strfree(char *str)
 	kmem_free(str, strlen(str) + 1);
 }
 
+/*
+ * Utility routine to maybe-allocate a temporary buffer if the size
+ * is larger than we're willing to put on the stack.
+ */
+void *
+kmem_tmpbuf_alloc(size_t size, void *stackbuf, size_t stackbufsize,
+    km_flag_t flags)
+{
+	if (size <= stackbufsize) {
+		return stackbuf;
+	}
+
+	return kmem_alloc(size, flags);
+}
+
+void
+kmem_tmpbuf_free(void *buf, size_t size, void *stackbuf)
+{
+	if (buf != stackbuf) {
+		kmem_free(buf, size);
+	}
+}
+
 /* --------------------------- DEBUG / DIAGNOSTIC --------------------------- */
 
 #if defined(KMEM_SIZE)
 static void
 kmem_size_set(void *p, size_t sz)
 {
-	memcpy((size_t *)((uintptr_t)p + sz), &sz, sizeof(size_t));
+	memcpy((char *)p + sz, &sz, sizeof(size_t));
 }
 
 static void
@@ -490,13 +513,13 @@ kmem_size_check(void *p, size_t sz)
 {
 	size_t hsz;
 
-	memcpy(&hsz, (size_t *)((uintptr_t)p + sz), sizeof(size_t));
+	memcpy(&hsz, (char *)p + sz, sizeof(size_t));
 
 	if (hsz != sz) {
 		panic("kmem_free(%p, %zu) != allocated size %zu; overwrote?",
 		    p, sz, hsz);
 	}
 
-	memset((size_t *)((uintptr_t)p + sz), 0xff, sizeof(size_t));
+	memset((char *)p + sz, 0xff, sizeof(size_t));
 }
 #endif /* defined(KMEM_SIZE) */

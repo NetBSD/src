@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.64 2020/06/22 05:34:57 rin Exp $	*/
+/*	$NetBSD: types.h,v 1.64.2.1 2021/04/03 22:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -75,12 +75,12 @@ typedef struct label_t {
 typedef __uint32_t tlb_asid_t;		/* for booke */
 #endif
 
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
-#define __HAVE_CPU_COUNTER
-#define __HAVE_NEW_STYLE_BUS_H
-#define __HAVE_SYSCALL_INTERN
+#define	__HAVE_CPU_COUNTER
+#define	__HAVE_NEW_STYLE_BUS_H
+#define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_CPU_UAREA_ROUTINES
 #ifdef _LP64
@@ -91,6 +91,7 @@ typedef __uint32_t tlb_asid_t;		/* for booke */
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB
 #define	__HAVE_TLS_VARIANT_I
+#define	__HAVE_BUS_SPACE_8
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define	PCU_FPU		0	/* FPU */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpioreg.h,v 1.5 2019/09/28 07:24:52 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835_gpioreg.h,v 1.5.8.1 2021/04/03 22:28:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -72,5 +72,9 @@
 #define BCM2835_GPIO_ALT1	5
 #define BCM2835_GPIO_ALT2	6
 #define BCM2835_GPIO_ALT3	7
+
+/* Undocumented register to multiplex emmc2 pins to legacy sdhc */
+#define BCM2838_GPIO_MUX		0x0d0
+#define  BCM2838_GPIO_MUX_LEGACY	0x2
 
 #endif /* _BROADCOM_BCM2835_GPIOREG_H_ */

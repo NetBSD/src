@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.12 2020/10/18 14:00:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.12.2.1 2021/04/03 22:28:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.12 2020/10/18 14:00:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.12.2.1 2021/04/03 22:28:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -198,11 +198,15 @@ struct sunxi_mixer_compat_data mixer1_data = {
 	.mixer_index = 1,
 };
 
-static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-h3-de2-mixer-0",	(uintptr_t)&mixer0_data },
-	{ "allwinner,sun50i-a64-de2-mixer-0",	(uintptr_t)&mixer0_data },
-	{ "allwinner,sun50i-a64-de2-mixer-1",	(uintptr_t)&mixer1_data },
-	{ NULL }
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-h3-de2-mixer-0",
+	  .data = &mixer0_data },
+	{ .compat = "allwinner,sun50i-a64-de2-mixer-0",
+	  .data = &mixer0_data },
+	{ .compat = "allwinner,sun50i-a64-de2-mixer-1",
+	  .data = &mixer1_data },
+
+	DEVICE_COMPAT_EOL
 };
 
 struct sunxi_mixer_softc;
@@ -1245,7 +1249,7 @@ sunxi_mixer_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -1256,7 +1260,7 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 	struct fdt_endpoint *out_ep;
 	const int phandle = faa->faa_phandle;
 	const struct sunxi_mixer_compat_data * const cd =
-	    (const void *)of_search_compatible(phandle, compat_data)->data;
+	    of_compatible_lookup(phandle, compat_data)->data;
 	struct clk *clk_bus, *clk_mod;
 	struct fdtbus_reset *rst;
 	bus_addr_t addr;

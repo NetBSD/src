@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.123.2.1 2020/12/14 14:38:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.123.2.2 2021/04/03 22:29:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.123.2.1 2020/12/14 14:38:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.123.2.2 2021/04/03 22:29:03 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.123.2.1 2020/12/14 14:38:17 thorpej Ex
 #include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/bitops.h>		/* for ilog2() */
 
@@ -61,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.123.2.1 2020/12/14 14:38:17 thorpej Ex
 static int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
 			  int, int, vm_prot_t, int);
 static struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
+static int	ubchash_stats(struct hashstat_sysctl *hs, bool fill);
 #ifdef UBC_USE_PMAP_DIRECT
 static int __noinline ubc_uiomove_direct(struct uvm_object *, struct uio *, vsize_t,
 			  int, int);
@@ -215,6 +217,8 @@ ubc_init(void)
 				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 		panic("ubc_init: failed to map ubc_object");
 	}
+
+	hashstat_register("ubchash", ubchash_stats);
 }
 
 void
@@ -342,7 +346,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	 */
 
 	access_type = umap->writelen ? VM_PROT_WRITE : VM_PROT_READ;
-	UVMHIST_LOG(ubchist, "va 0x%jx ubc_offset 0x%jx access_type %jd",
+	UVMHIST_LOG(ubchist, "va %#jx ubc_offset %#jx access_type %jd",
 	    va, ubc_offset, access_type, 0);
 
 	if ((access_type & VM_PROT_WRITE) != 0) {
@@ -374,9 +378,9 @@ again:
 	memset(pgs, 0, sizeof (pgs));
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 
-	UVMHIST_LOG(ubchist, "slot_offset 0x%jx writeoff 0x%jx writelen 0x%jx ",
+	UVMHIST_LOG(ubchist, "slot_offset %#jx writeoff %#jx writelen %#jx ",
 	    slot_offset, umap->writeoff, umap->writelen, 0);
-	UVMHIST_LOG(ubchist, "getpages uobj %#jx offset 0x%jx npages %jd",
+	UVMHIST_LOG(ubchist, "getpages uobj %#jx offset %#jx npages %jd",
 	    (uintptr_t)uobj, umap->offset + slot_offset, npages, 0);
 
 	error = (*uobj->pgops->pgo_get)(uobj, umap->offset + slot_offset, pgs,
@@ -409,7 +413,7 @@ again:
 	va = ufi->orig_rvaddr;
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
-	UVMHIST_LOG(ubchist, "va 0x%jx eva 0x%jx", va, eva, 0, 0);
+	UVMHIST_LOG(ubchist, "va %#jx eva %#jx", va, eva, 0, 0);
 
 	/*
 	 * Note: normally all returned pages would have the same UVM object.
@@ -483,7 +487,7 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	voff_t umap_offset;
 	int error;
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(ubchist, "uobj %#jx offset 0x%jx len 0x%jx",
+	UVMHIST_CALLARGS(ubchist, "uobj %#jx offset %#jx len %#jx",
 	    (uintptr_t)uobj, offset, *lenp, 0);
 
 	KASSERT(*lenp > 0);
@@ -560,7 +564,7 @@ again:
 	umap->refcount++;
 	umap->advice = advice;
 	rw_exit(ubc_object.uobj.vmobjlock);
-	UVMHIST_LOG(ubchist, "umap %#jx refs %jd va %#jx flags 0x%jx",
+	UVMHIST_LOG(ubchist, "umap %#jx refs %jd va %#jx flags %#jx",
 	    (uintptr_t)umap, umap->refcount, (uintptr_t)va, flags);
 
 	if (flags & UBC_FAULTBUSY) {
@@ -1103,4 +1107,36 @@ ubc_purge(struct uvm_object *uobj)
 		umap->uobj = NULL;
 	}
 	rw_exit(ubc_object.uobj.vmobjlock);
+}
+
+static int
+ubchash_stats(struct hashstat_sysctl *hs, bool fill)
+{
+	struct ubc_map *umap;
+	uint64_t chain;
+
+	strlcpy(hs->hash_name, "ubchash", sizeof(hs->hash_name));
+	strlcpy(hs->hash_desc, "ubc object hash", sizeof(hs->hash_desc));
+	if (!fill)
+		return 0;
+
+	hs->hash_size = ubc_object.hashmask + 1;
+
+	for (size_t i = 0; i < hs->hash_size; i++) {
+		chain = 0;
+		rw_enter(ubc_object.uobj.vmobjlock, RW_READER);
+		LIST_FOREACH(umap, &ubc_object.hash[i], hash) {
+			chain++;
+		}
+		rw_exit(ubc_object.uobj.vmobjlock);
+		if (chain > 0) {
+			hs->hash_used++;
+			hs->hash_items += chain;
+			if (chain > hs->hash_maxchain)
+				hs->hash_maxchain = chain;
+		}
+		preempt_point();
+	}
+
+	return 0;
 }

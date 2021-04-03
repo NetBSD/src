@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.23.8.1 2021/01/03 16:34:52 thorpej Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.23.8.2 2021/04/03 22:28:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.23.8.1 2021/01/03 16:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.23.8.2 2021/04/03 22:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,18 +83,19 @@ CFATTACH_DECL_NEW(tegra_i2c, sizeof(struct tegra_i2c_softc),
 #define I2C_SET_CLEAR(sc, reg, setval, clrval) \
     tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (reg), (setval), (clrval))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "nvidia,tegra210-i2c" },
+	{ .compat = "nvidia,tegra124-i2c" },
+	{ .compat = "nvidia,tegra114-i2c" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tegra_i2c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"nvidia,tegra210-i2c",
-		"nvidia,tegra124-i2c",
-		"nvidia,tegra114-i2c",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -143,8 +144,8 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tegra_i2c_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_i2c_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);

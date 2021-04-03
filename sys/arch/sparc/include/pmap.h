@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.94.2.1 2021/01/03 16:34:56 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.94.2.2 2021/04/03 22:28:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -186,6 +186,13 @@ struct segmap {
 #ifdef _KERNEL
 
 #define PMAP_NULL	((pmap_t)0)
+
+/* Mostly private data exported for a few key consumers. */
+struct memarr;
+extern struct memarr *pmemarr;
+extern int npmemarr;
+extern vaddr_t prom_vstart;
+extern vaddr_t prom_vend;
 
 /*
  * Bounds on managed physical addresses. Used by (MD) users
@@ -384,6 +391,8 @@ extern void	(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 
 #define tlb_flush_context_real()	sta(ASI_SRMMUFP_L0, ASI_SRMMUFP, 0)
 #define tlb_flush_all_real()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
+
+void setpte4m(vaddr_t va, int pte);
 
 #endif /* SUN4M || SUN4D */
 

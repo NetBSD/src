@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.32 2014/11/09 17:48:07 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.32.32.1 2021/04/03 22:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32.32.1 2021/04/03 22:28:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *v,
 	 * Make sure the processor mode has not been tampered with and
 	 * interrupts have not been disabled.
 	 */
-	if (!VALID_R15_PSR(frame.sf_sc.sc_pc, frame.sf_sc.sc_cpsr))
+	if (!VALID_PSR(frame.sf_sc.sc_cpsr))
 		return EINVAL;
 
 	/* Restore register context. */

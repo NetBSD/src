@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.108 2020/05/16 17:52:42 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.108.2.1 2021/04/03 22:28:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -489,6 +489,9 @@ extern int sparc_ncpus;
 
 /* Provide %pc of a lwp */
 #define LWP_PC(l)       ((l)->l_md.md_tf->tf_pc)
+
+/* Hardware cross-call mutex */
+extern kmutex_t xpmsg_mutex;
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for

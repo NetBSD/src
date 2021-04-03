@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3399_pcie_phy.c,v 1.2.2.1 2020/12/14 14:37:50 thorpej Exp $	*/
+/*	$NetBSD: rk3399_pcie_phy.c,v 1.2.2.2 2021/04/03 22:28:18 thorpej Exp $	*/
 /*	$OpenBSD: rkpcie.c,v 1.6 2018/08/28 09:33:18 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie_phy.c,v 1.2.2.1 2020/12/14 14:37:50 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie_phy.c,v 1.2.2.2 2021/04/03 22:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,9 @@ static void rkpciephy_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(rkpciephy, sizeof(struct rkpciephy_softc),
         rkpciephy_match, rkpciephy_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"rockchip,rk3399-pcie-phy",
-	NULL
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3399-pcie-phy" },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -57,7 +57,7 @@ rkpciephy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void rkpcie_phy_poweron(struct rkpciephy_softc *, u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.24.2.1 2020/12/14 14:37:51 thorpej Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.24.2.2 2021/04/03 22:28:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.24.2.1 2020/12/14 14:37:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.24.2.2 2021/04/03 22:28:21 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -123,7 +123,7 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;
+	return -1;
 }
 
 static struct consdev earlycons = {
