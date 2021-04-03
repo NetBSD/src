@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.64.10.6 2021/04/03 01:57:17 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.64.10.7 2021/04/03 06:54:29 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.6 2021/04/03 01:57:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.7 2021/04/03 06:54:29 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -857,8 +857,10 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		    CFARG_LOCATORS, locs,
 		    CFARG_EOL);
 		if (cf != NULL) {
-			dv = config_attach_loc(sc->sc_dev, cf, locs, &ga,
-			    gpiobus_print);
+			dv = config_attach(sc->sc_dev, cf, &ga,
+			    gpiobus_print,
+			    CFARG_LOCATORS, locs,
+			    CFARG_EOL);
 #ifdef COMPAT_50
 			if (dv != NULL) {
 				gdev = kmem_alloc(sizeof(struct gpio_dev),

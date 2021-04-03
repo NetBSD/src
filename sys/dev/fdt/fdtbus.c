@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.40.2.2 2021/03/22 02:00:59 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.40.2.3 2021/04/03 06:54:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40.2.2 2021/03/22 02:00:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40.2.3 2021/04/03 06:54:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,8 +393,10 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		fdt_pre_attach(node);
 
 		if (quiet) {
-			node->n_dev = config_attach_loc(node->n_bus, node->n_cf, locs,
-			    &faa, fdtbus_print);
+			node->n_dev = config_attach(node->n_bus, node->n_cf,
+			    &faa, fdtbus_print,
+			    CFARG_LOCATORS, locs,
+			    CFARG_EOL);
 		} else {
 			/*
 			 * Default pass.

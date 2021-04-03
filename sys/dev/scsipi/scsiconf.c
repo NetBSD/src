@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.290.4.3 2021/03/28 20:38:47 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.290.4.4 2021/04/03 06:54:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.290.4.3 2021/03/28 20:38:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.290.4.4 2021/04/03 06:54:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1033,8 +1033,9 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		 * XXX need it before config_attach() returns.  Must
 		 * XXX assign it in periph driver.
 		 */
-		config_attach_loc(sc->sc_dev, cf, locs, &sa,
-					 scsibusprint);
+		config_attach(sc->sc_dev, cf, &sa, scsibusprint,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	} else {
 		scsibusprint(&sa, device_xname(sc->sc_dev));
 		aprint_normal(" not configured\n");

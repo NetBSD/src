@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138.76.4 2021/03/28 20:34:44 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.138.76.5 2021/04/03 06:54:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.4 2021/03/28 20:34:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.5 2021/04/03 06:54:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,7 +484,9 @@ isasearch(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 			flocs[ISACF_IRQ] = ia.ia_irq[0].ir_irq;
 			flocs[ISACF_DRQ] = ia.ia_drq[0].ir_drq;
 			flocs[ISACF_DRQ2] = ia.ia_drq[1].ir_drq;
-			config_attach_loc(parent, cf, flocs, &ia, isaprint);
+			config_attach(parent, cf, &ia, isaprint,
+			    CFARG_LOCATORS, flocs,
+			    CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);
