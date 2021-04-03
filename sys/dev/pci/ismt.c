@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.7.10.1 2021/03/24 14:21:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.7.10.2 2021/04/03 01:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -810,7 +810,6 @@ ismt_rescan(device_t self, const char *ifattr, const int *locators)
 static void
 ismt_config_interrupts(device_t self)
 {
-	int flags = 0;
 
 	ismt_rescan(self, NULL, NULL);
 }
