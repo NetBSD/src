@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.20 2021/02/22 01:31:51 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.21 2021/04/03 22:20:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3946,7 +3946,7 @@ isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 		isc_thread_create(netthread, &manager->threads[i],
 				  &manager->threads[i].thread);
 		char tname[1024];
-		sprintf(tname, "isc-socket-%d", i);
+		sprintf(tname, "sock-%d", i);
 		isc_thread_setname(manager->threads[i].thread, tname);
 	}
 

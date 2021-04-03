@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.7 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.8 2021/04/03 22:20:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -716,7 +716,7 @@ isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 	isc_mem_attach(mctx, &manager->mctx);
 	isc_condition_init(&manager->wakeup);
 	isc_thread_create(run, manager, &manager->thread);
-	isc_thread_setname(manager->thread, "isc-timer");
+	isc_thread_setname(manager->thread, "timer");
 
 	*managerp = (isc_timermgr_t *)manager;
 
