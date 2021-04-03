@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.46 2020/01/03 01:24:48 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.47 2021/04/03 12:06:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.46 2020/01/03 01:24:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.47 2021/04/03 12:06:53 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,6 +89,9 @@ static int todr_settime(todr_chip_handle_t, struct timeval *);
 static kmutex_t todr_mutex;
 static todr_chip_handle_t todr_handle;
 static bool todr_initialized;
+
+/* The minimum reasonable RTC date before preposterousness */
+#define	PREPOSTEROUS_YEARS	(2021 - POSIX_BASE_YEAR)
 
 /*
  * todr_init:
@@ -213,7 +216,7 @@ todr_set_systime(time_t base)
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||
-	    (tv.tv_sec < (25 * SECS_PER_COMMON_YEAR))) {
+	    (tv.tv_sec < (PREPOSTEROUS_YEARS * SECS_PER_COMMON_YEAR))) {
 
 		if (todr_handle != NULL)
 			printf("WARNING: preposterous TOD clock time\n");
