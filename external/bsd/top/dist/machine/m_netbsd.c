@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.23 2019/04/27 14:10:01 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.24 2021/04/03 19:25:38 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.23 2019/04/27 14:10:01 christos Exp $
+ * $Id: m_netbsd.c,v 1.24 2021/04/03 19:25:38 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.23 2019/04/27 14:10:01 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.24 2021/04/03 19:25:38 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: m_netbsd.c,v 1.23 2019/04/27 14:10:01 christos Exp $");
 #include <errno.h>
 #include <kvm.h>
 #include <math.h>
+#include <ctype.h>
 #include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,18 +103,18 @@ struct handle {
  */
 
 static char Proc_header[] =
-  "  PID X        PRI NICE   SIZE   RES STATE      TIME   WCPU    CPU COMMAND";
+  "  PID X        PRI NICE   SIZE   RES STATE       TIME  WCPU   CPU   COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define PROC_UNAME_START 6
 #define Proc_format \
-	"%5d %-8.8s %3d %4d%7s %5s %-8.8s%7s %5.*f%% %5.*f%% %s"
+	"%5d %-8.8s %3d %4d%7s %5s %-9.9s%7s %5.*f%% %5.*f%% %s"
 
 static char Thread_header[] =
-  "  PID   LID X        PRI STATE      TIME   WCPU    CPU NAME      COMMAND";
+  "  PID   LID X        PRI STATE       TIME  WCPU   CPU   NAME      COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define THREAD_UNAME_START 12
 #define Thread_format \
-        "%5d %5d %-8.8s %3d %-8.8s%7s %5.2f%% %5.2f%% %-9.9s %s"
+        "%5d %5d %-8.8s %3d %-9.9s%7s %5.2f%% %5.2f%% %-9.9s %s"
 
 /* 
  * Process state names for the "STATE" column of the display.
@@ -879,19 +880,25 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 }
 
 static char *
-countable(char *p, size_t l)
+countable(char *p, size_t width)
 {
-	static const char digits[] = "0123456789";
-	size_t first = strcspn(p, digits);		// non digits
-	size_t last = strspn(p + first, digits);	// trailing digits
-	size_t len = first + last;			
-	if (p[len] || last == 0)	// should be total and must have digits
+	size_t len = strlen(p);
+	if (len < width) {		// shorter than width, ok
 		return p;
-	if (len < l)			// if shorter, done
+	}
+	size_t first, last = len - 1;
+	for (first = len - 1; isdigit((unsigned char)p[first]); first--) {
+		continue;
+	}
+	if (first == len - 1) {		// no digits, ok
 		return p;
-	if (l < last + 1)		// if not enough for digits, done
+	}
+	first++;
+	last = len - first;
+	if (width < last + 1) {		// if not enough for digits, done
 		return p;
-	size_t start = l - last - 1;	// compute starting point
+	}
+	size_t start = width - last - 1;	// compute starting point
 	p[start] = '*';			// put a star
 	memmove(p + start + 1, p + first, last + 1);	// move digits and NUL
 	return p;
