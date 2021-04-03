@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.275 2021/04/03 14:56:13 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.276 2021/04/03 15:29:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275 2021/04/03 14:56:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2021/04/03 15:29:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,7 +915,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 	const struct cpu_info *ci = curcpu();
 	const u_long this_cpu = 1UL << ci->ci_cpuid;
 	u_long active_cpus;
-	bool activation_locked;
+	bool activation_locked, activation_lock_tried;
 
 	/*
 	 * Figure out who to notify.  If it's for the kernel or
@@ -929,6 +929,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 	if (TLB_CTX_FLAGS(tlbctx) & (TLB_CTX_F_ASM | TLB_CTX_F_MULTI)) {
 		active_cpus = pmap_all_cpus();
 		activation_locked = false;
+		activation_lock_tried = false;
 	} else {
 		KASSERT(tlbctx->t_pmap != NULL);
 		activation_locked = PMAP_ACT_TRYLOCK(tlbctx->t_pmap);
@@ -938,6 +939,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 			TLB_COUNT(shootnow_over_notify);
 			active_cpus = pmap_all_cpus();
 		}
+		activation_lock_tried = true;
 	}
 
 #if defined(MULTIPROCESSOR)
@@ -959,14 +961,17 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 	 * Now that the remotes have been notified, release the
 	 * activation lock.
 	 */
-	if (activation_locked) {
-		KASSERT(tlbctx->t_pmap != NULL);
-		PMAP_ACT_UNLOCK(tlbctx->t_pmap);
+	if (activation_lock_tried) {
+		if (activation_locked) {
+			KASSERT(tlbctx->t_pmap != NULL);
+			PMAP_ACT_UNLOCK(tlbctx->t_pmap);
+		}
 		/*
-		 * When we acquired the activation lock, we
-		 * raised IPL to IPL_SCHED, which blocks out
-		 * IPIs.  Force our IPL back down to IPL_VM
-		 * so that we can receive IPIs.
+		 * When we tried to acquire the activation lock, we
+		 * raised IPL to IPL_SCHED (even if we ultimately
+		 * failed to acquire the lock), which blocks out IPIs.
+		 * Force our IPL back down to IPL_VM so that we can
+		 * receive IPIs.
 		 */
 		alpha_pal_swpipl(IPL_VM);
 	}
