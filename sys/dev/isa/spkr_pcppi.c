@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.12 2021/04/03 03:21:53 isaki Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.13 2021/04/03 04:10:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.12 2021/04/03 03:21:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.13 2021/04/03 04:10:30 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ CFATTACH_DECL3_NEW(spkr_pcppi, sizeof(struct spkr_pcppi_softc),
     spkr_pcppi_probe, spkr_pcppi_attach, spkr_pcppi_detach, NULL,
     spkr_pcppi_rescan, spkr_pcppi_childdet, 0);
 
-#define SPKRPRI (PZERO - 1)
-
 /* emit tone of frequency hz for given number of ticks */
 static void
 spkr_pcppi_tone(device_t self, u_int xhz, u_int ticks)
@@ -90,22 +88,6 @@ spkr_pcppi_tone(device_t self, u_int xhz, u_int ticks)
 #endif /* SPKRDEBUG */
 	struct spkr_pcppi_softc *sc = device_private(self);
 	(*sc->sc_bell_func)(sc->sc_pcppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
-}
-
-/* rest for given number of ticks */
-static void
-spkr_pcppi_rest(device_t self, int ticks)
-{
-	/*
-	 * Set timeout to endrest function, then give up the timeslice.
-	 * This is so other processes can execute while the rest is being
-	 * waited out.
-	 */
-#ifdef SPKRDEBUG
-	aprint_debug_dev(self, "%s: %d\n", __func__, ticks);
-#endif /* SPKRDEBUG */
-	if (ticks > 0)
-		tsleep(self, SPKRPRI | PCATCH, device_xname(self), ticks);
 }
 
 static int
@@ -125,7 +107,7 @@ spkr_pcppi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pcppicookie = pa->pa_cookie;
 	sc->sc_bell_func = pa->pa_bell_func;
-	spkr_attach(self, spkr_pcppi_tone, spkr_pcppi_rest);
+	spkr_attach(self, spkr_pcppi_tone);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
