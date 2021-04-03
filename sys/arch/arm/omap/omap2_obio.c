@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.24.30.2 2021/03/21 17:35:41 thorpej Exp $	*/
+/*	$Id: omap2_obio.c,v 1.24.30.3 2021/04/03 01:57:09 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.24.30.2 2021/03/21 17:35:41 thorpej Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.24.30.3 2021/04/03 01:57:09 thorpej Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24.30.2 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24.30.3 2021/04/03 01:57:09 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -300,7 +300,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			>= (sc->sc_base + sc->sc_size)))
 				return 1;		/* NG */
 		if (config_match(parent, cf, &oa)) {
-			config_attach(parent, cf, &oa, obio_print);
+			config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 			return 0;			/* love it */
 		}
 	}
@@ -454,7 +454,7 @@ obio_attach_critical(struct obio_softc *sc)
 			oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 		if (oa.obio_intrbase == OBIOCF_INTRBASE_DEFAULT)
 			oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
-		config_attach(sc->sc_dev, cf, &oa, obio_print);
+		config_attach(sc->sc_dev, cf, &oa, obio_print, CFARG_EOL);
 	}
 }
 

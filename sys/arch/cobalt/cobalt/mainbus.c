@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20.18.2 2021/03/21 17:35:42 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20.18.3 2021/04/03 01:57:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.18.2 2021/03/21 17:35:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.18.3 2021/04/03 01:57:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		ma->ma_level = cf->cf_loc[MAINBUSCF_LEVEL];
 		ma->ma_irq = cf->cf_loc[MAINBUSCF_IRQ];
 		if (config_match(parent, cf, ma) > 0)
-			config_attach(parent, cf, ma, mainbus_print);
+			config_attach(parent, cf, ma, mainbus_print, CFARG_EOL);
 	} while (cf->cf_fstate == FSTATE_STAR);
 
 	return 0;

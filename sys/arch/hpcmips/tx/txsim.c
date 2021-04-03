@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.17.52.3 2021/03/21 17:35:44 thorpej Exp $ */
+/*	$NetBSD: txsim.c,v 1.17.52.4 2021/04/03 01:57:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.17.52.3 2021/03/21 17:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.17.52.4 2021/04/03 01:57:13 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -127,7 +127,7 @@ txsim_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ta.ta_tc = tx_conf_get_tag();
 	
 	if (config_match(parent, cf, &ta) == sc->sc_pri)
-		config_attach(parent, cf, &ta, txsim_print);
+		config_attach(parent, cf, &ta, txsim_print, CFARG_EOL);
 
 	return (0);
 }

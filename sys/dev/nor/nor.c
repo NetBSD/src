@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.c,v 1.5.46.2 2021/04/02 22:17:44 thorpej Exp $	*/
+/*	$NetBSD: nor.c,v 1.5.46.3 2021/04/03 01:57:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NOR chips implementing the ONFI CFI specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.5.46.2 2021/04/02 22:17:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.5.46.3 2021/04/03 01:57:18 thorpej Exp $");
 
 #include "locators.h"
 #include "opt_nor.h"
@@ -220,7 +220,8 @@ nor_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	faa.flash_if = &sc->sc_flash_if;
 
 	if (config_match(parent, cf, &faa)) {
-		if (config_attach(parent, cf, &faa, nor_print) != NULL) {
+		if (config_attach(parent, cf, &faa, nor_print,
+				  CFARG_EOL) != NULL) {
 			return 0;
 		} else {
 			return 1;

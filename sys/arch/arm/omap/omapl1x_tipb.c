@@ -97,7 +97,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.1.50.2 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.1.50.3 2021/04/03 01:57:09 thorpej Exp $");
 
 #include "locators.h"
 
@@ -237,7 +237,7 @@ tipb_search(struct device *parent, struct cfdata *cf,
 	aa.tipb_mult = cf->cf_loc[TIPBCF_MULT];
 
 	if (config_match(parent, cf, &aa))
-		config_attach(parent, cf, &aa, tipb_print);
+		config_attach(parent, cf, &aa, tipb_print, CFARG_EOL);
 
 	return 0;
 }

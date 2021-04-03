@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.24.10.2 2021/03/21 17:35:48 thorpej Exp $	*/
+/*	$NetBSD: gpib.c,v 1.24.10.3 2021/04/03 01:57:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.24.10.2 2021/03/21 17:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.24.10.3 2021/04/03 01:57:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ gpibsubmatch1(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	if (config_match(parent, cf, ga) > 0) {
 		if (gpib_alloc(sc, ga->ga_address))
 			return (0);
-		config_attach(parent, cf, ga, gpibprint);
+		config_attach(parent, cf, ga, gpibprint, CFARG_EOL);
 		return (0);
 	}
 	return (0);
@@ -183,7 +183,7 @@ gpibsubmatch2(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	ga->ga_address = GPIBCF_ADDRESS_DEFAULT;
 	if (config_match(parent, cf, ga) > 0) {
-		config_attach(parent, cf, ga, gpibdevprint);
+		config_attach(parent, cf, ga, gpibdevprint, CFARG_EOL);
 		return (0);
 	}
 	return (0);

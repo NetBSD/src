@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.25.12.1 2021/03/20 19:33:40 thorpej Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.25.12.2 2021/04/03 01:57:17 thorpej Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -415,7 +415,8 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	sc->sc_ia.ia_ndrq = 0;
 	/* Store device-id to ia_aux */
 	sc->sc_ia.ia_aux = (void *)(uintptr_t)devid;
-	sc->sc_lm_dev = config_attach(parent, cf, &sc->sc_ia, wbsio_print);
+	sc->sc_lm_dev = config_attach(parent, cf, &sc->sc_ia, wbsio_print,
+	    CFARG_EOL);
 
 	return 0;
 }
@@ -523,7 +524,8 @@ wbsio_gpio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = WBSIO_GPIO_NPINS;
 
-	sc->sc_gpio_dev = config_attach(parent, cf, &gba, gpiobus_print);
+	sc->sc_gpio_dev = config_attach(parent, cf, &gba, gpiobus_print,
+	    CFARG_EOL);
 
 	return 0;
 }

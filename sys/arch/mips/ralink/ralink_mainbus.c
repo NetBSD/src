@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_mainbus.c,v 1.5.30.2 2021/03/21 17:35:45 thorpej Exp $	*/
+/*	$NetBSD: ralink_mainbus.c,v 1.5.30.3 2021/04/03 01:57:14 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.5.30.2 2021/03/21 17:35:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.5.30.3 2021/04/03 01:57:14 thorpej Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -133,7 +133,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 
 	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, mainbus_print);
+		config_attach(parent, cf, aux, mainbus_print, CFARG_EOL);
 	else
 		mainbus_print(aux, cf->cf_name);
 	return 0;
@@ -187,6 +187,6 @@ mainbus_attach_critical(struct mainbus_softc *sc)
 			    __func__, critical_devs[i].name);
 
 		ma.ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
-		config_attach(sc->sc_dev, cf, &ma, mainbus_print);
+		config_attach(sc->sc_dev, cf, &ma, mainbus_print, CFARG_EOL);
 	}
 }

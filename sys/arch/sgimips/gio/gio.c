@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.36.10.4 2021/03/22 16:23:43 thorpej Exp $	*/
+/*	$NetBSD: gio.c,v 1.36.10.5 2021/04/03 01:57:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.36.10.4 2021/03/22 16:23:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.36.10.5 2021/04/03 01:57:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -337,7 +337,7 @@ gio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		ga->ga_ioh = MIPS_PHYS_TO_KSEG1(ga->ga_addr);
 
 		if (config_match(parent, cf, ga) > 0)
-			config_attach(parent, cf, ga, gio_print);
+			config_attach(parent, cf, ga, gio_print, CFARG_EOL);
 	} while (cf->cf_fstate == FSTATE_STAR);
 
 	return 0;

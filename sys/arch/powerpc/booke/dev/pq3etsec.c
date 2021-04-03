@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.52.2.1 2021/03/20 19:33:37 thorpej Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.52.2.2 2021/04/03 01:57:15 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.52.2.1 2021/03/20 19:33:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.52.2.2 2021/04/03 01:57:15 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -721,7 +721,8 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 						 CFARG_SUBMATCH, pq3mdio_find,
 						 CFARG_EOL);
 		if (mdio_cf != NULL) {
-			sc->sc_mdio_dev = config_attach(self, mdio_cf, cna, NULL);
+			sc->sc_mdio_dev =
+			    config_attach(self, mdio_cf, cna, NULL, CFARG_EOL);
 		}
 	} else {
 		sc->sc_mdio_dev = device_find_by_driver_unit("mdio", mdio);

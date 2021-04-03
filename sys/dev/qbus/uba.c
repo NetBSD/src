@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.81.10.2 2021/03/21 17:35:49 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.81.10.3 2021/04/03 01:57:18 thorpej Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.81.10.2 2021/03/21 17:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.81.10.3 2021/04/03 01:57:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -317,7 +317,7 @@ ubasearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	sc->uh_used[ubdevreg(csr)] = 1;
 
-	config_attach(parent, cf, &ua, ubaprint);
+	config_attach(parent, cf, &ua, ubaprint, CFARG_EOL);
 	return 0;
 
 fail:

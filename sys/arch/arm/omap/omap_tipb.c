@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_tipb.c,v 1.6.44.2 2021/03/21 17:35:41 thorpej Exp $ */
+/*	$NetBSD: omap_tipb.c,v 1.6.44.3 2021/04/03 01:57:09 thorpej Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP TIPB.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.6.44.2 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.6.44.3 2021/04/03 01:57:09 thorpej Exp $");
 
 #include "locators.h"
 
@@ -230,7 +230,7 @@ tipb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.tipb_mult = cf->cf_loc[TIPBCF_MULT];
 
 	if (config_match(parent, cf, &aa))
-		config_attach(parent, cf, &aa, tipb_print);
+		config_attach(parent, cf, &aa, tipb_print, CFARG_EOL);
 
 	return 0;
 }

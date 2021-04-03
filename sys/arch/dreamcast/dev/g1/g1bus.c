@@ -1,4 +1,4 @@
-/*	$NetBSD: g1bus.c,v 1.1.36.2 2021/03/21 17:35:42 thorpej Exp $	*/
+/*	$NetBSD: g1bus.c,v 1.1.36.3 2021/04/03 01:57:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g1bus.c,v 1.1.36.2 2021/03/21 17:35:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g1bus.c,v 1.1.36.3 2021/04/03 01:57:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ g1bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, g1busprint);
+		config_attach(parent, cf, aux, g1busprint, CFARG_EOL);
 
 	return 0;
 }

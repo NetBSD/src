@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.6 2021/04/02 22:17:46 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.7 2021/04/03 01:57:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.6 2021/04/02 22:17:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.7 2021/04/03 01:57:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1241,7 +1241,7 @@ config_rootfound(const char *rootname, void *aux)
 	cfdata_t cf;
 
 	if ((cf = config_rootsearch(NULL, rootname, aux)) != NULL)
-		return config_attach(ROOT, cf, aux, NULL);
+		return config_attach(ROOT, cf, aux, NULL, CFARG_EOL);
 	aprint_error("root device %s not configured\n", rootname);
 	return NULL;
 }
@@ -1630,13 +1630,16 @@ config_add_attrib_dict(device_t dev)
 /*
  * Attach a found device.
  */
-device_t
-config_attach_loc(device_t parent, cfdata_t cf,
-	const int *locs, void *aux, cfprint_t print)
+static device_t
+config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
+    cfarg_t tag, va_list ap)
 {
 	device_t dev;
 	struct cftable *ct;
 	const char *drvname;
+	const int *locs;
+
+	config_get_cfargs(tag, NULL, NULL, &locs, ap);
 
 	dev = config_devalloc(parent, cf, locs);
 	if (!dev)
@@ -1704,10 +1707,26 @@ config_attach_loc(device_t parent, cfdata_t cf,
 }
 
 device_t
-config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print)
+config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
+    cfarg_t tag, ...)
 {
+	device_t dev;
+	va_list ap;
 
-	return config_attach_loc(parent, cf, NULL, aux, print);
+	va_start(ap, tag);
+	dev = config_vattach(parent, cf, aux, print, tag, ap);
+	va_end(ap);
+
+	return dev;
+}
+
+device_t
+config_attach_loc(device_t parent, cfdata_t cf, const int *locs, void *aux,
+    cfprint_t print)
+{
+	return config_attach(parent, cf, aux, print,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 }
 
 /*

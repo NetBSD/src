@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.7.12.2 2021/03/21 17:35:40 thorpej Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.7.12.3 2021/04/03 01:57:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.7.12.2 2021/03/21 17:35:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.7.12.3 2021/04/03 01:57:09 thorpej Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -191,7 +191,7 @@ ahb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ahba->ahba_irqbase = cf->cf_loc[AHBCF_IRQBASE];
 
 	if (config_match(parent, cf, ahba))
-		config_attach(parent, cf, ahba, ahbbus_print);
+		config_attach(parent, cf, ahba, ahbbus_print, CFARG_EOL);
 
 	return 0;
 }
@@ -272,7 +272,7 @@ ahb_attach_critical(struct ahb_softc *sc)
 		ahba.ahba_size = cf->cf_loc[AHBCF_SIZE];
 		ahba.ahba_intr = cf->cf_loc[AHBCF_INTR];
 		ahba.ahba_irqbase = cf->cf_loc[AHBCF_IRQBASE];
-		config_attach(sc->sc_dev, cf, &ahba, ahbbus_print);
+		config_attach(sc->sc_dev, cf, &ahba, ahbbus_print, CFARG_EOL);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.21.52.3 2021/03/21 17:35:44 thorpej Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.21.52.4 2021/04/03 01:57:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.21.52.3 2021/03/21 17:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.21.52.4 2021/04/03 01:57:13 thorpej Exp $");
 
 #undef TX39SIBDEBUG
 
@@ -289,7 +289,7 @@ tx39sib_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	
 	if (!(sc->sc_attached & (1 << sa.sa_slot)) &&/* not attached slot */
 	    config_match(parent, cf, &sa)) {
-		config_attach(parent, cf, &sa, tx39sib_print);
+		config_attach(parent, cf, &sa, tx39sib_print, CFARG_EOL);
 		sc->sc_attached |= (1 << sa.sa_slot);
 	}
 

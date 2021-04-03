@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.27.4.2 2021/03/21 17:35:49 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.27.4.3 2021/04/03 01:57:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27.4.2 2021/03/21 17:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27.4.3 2021/04/03 01:57:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ vmesubmatch(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 	v.va_bdt = sc->sc_bdt;
 
 	if (config_match(bus, dev, &v)) {
-		config_attach(bus, dev, &v, (cfprint_t)vmeprint);
+		config_attach(bus, dev, &v, (cfprint_t)vmeprint, CFARG_EOL);
 		return (1);
 	}
 	return (0);

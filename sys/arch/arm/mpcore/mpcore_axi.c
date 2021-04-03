@@ -1,4 +1,4 @@
-/*	$NetBSD: mpcore_axi.c,v 1.1.74.2 2021/03/21 17:35:41 thorpej Exp $ */
+/*	$NetBSD: mpcore_axi.c,v 1.1.74.3 2021/04/03 01:57:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcore_axi.c,v 1.1.74.2 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcore_axi.c,v 1.1.74.3 2021/04/03 01:57:09 thorpej Exp $");
 
 #include "bus_space_a2x.h"
 #include "bus_space_a4x.h"
@@ -137,7 +137,7 @@ axi_critical_search(device_t parent, struct cfdata *cf,
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
 	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, axi_print);
+		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;
 }
@@ -160,7 +160,7 @@ axi_search(device_t parent, struct cfdata *cf, const int *ldesc __unused,
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
 	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, axi_print);
+		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.41.2.2 2021/03/21 17:35:43 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.41.2.3 2021/04/03 01:57:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.41.2.2 2021/03/21 17:35:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.41.2.3 2021/04/03 01:57:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ hpibbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/*
 		 * This device is allowed; attach it.
 		 */
-		config_attach(parent, cf, ha, hpibbusprint);
+		config_attach(parent, cf, ha, hpibbusprint, CFARG_EOL);
 	}
  out:
 	return 0;
