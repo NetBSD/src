@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.86 2020/10/07 17:51:50 chs Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.86.4.1 2021/04/03 21:45:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.86 2020/10/07 17:51:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.86.4.1 2021/04/03 21:45:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 		 */
 		cnt = roundup2(cnt, alignment);
 		/*
-		 * The number of pages we can skip checking 
+		 * The number of pages we can skip checking
 		 * (might be 0 if cnt > num).
 		 */
 		skip = uimax(num - cnt, 0);
@@ -401,6 +401,9 @@ uvm_pglistalloc_contig_aggressive(int num, paddr_t low, paddr_t high,
 		 * Look forward for any remaining pages.
 		 */
 
+		if (spa + ptoa(num) > rhi) {
+			continue;
+		}
 		for (; run < num; run++) {
 			pg = PHYS_TO_VM_PAGE(spa + ptoa(run));
 			if ((pg->flags & PG_PGLCA) == 0) {
@@ -493,7 +496,7 @@ out:
 	/*
 	 * If that didn't work, try the more aggressive approach.
 	 */
-	
+
 	if (error) {
 		if (waitok) {
 			error = uvm_pglistalloc_contig_aggressive(num, low, high,

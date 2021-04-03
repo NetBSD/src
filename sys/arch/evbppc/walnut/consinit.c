@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.8 2011/07/01 19:03:50 dyoung Exp $	*/
+/*	$NetBSD: consinit.c,v 1.8.68.1 2021/04/03 21:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,29 +27,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8 2011/07/01 19:03:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8.68.1 2021/04/03 21:44:44 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
-#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-#endif
-
-#include <dev/cons.h>
-
-#ifndef CONSDEVNAME
-#define CONSDEVNAME "com"
+#include <powerpc/ibm4xx/dev/comopbvar.h>
 #endif
 
 #if (NCOM > 0)
@@ -92,36 +86,11 @@ int comkgdbmode = KGDB_DEVMODE;
 
 #endif /* KGDB */
 
-/*
- * consinit:
- * initialize the system console.
- * XXX - shouldn't deal with this initted thing, but then,
- * it shouldn't be called from initppc either.
- */
 void
 consinit(void)
 {
-	static int initted = 0;
-#if (NCOM > 0)
-	bus_space_tag_t tag;
-#endif
 
-	if (initted)
-		return;
-	initted = 1;
-
-#if (NCOM > 0)
-	/* We *know* the com-console attaches to opb */
-	tag = opb_get_bus_space_tag();
-
-	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ * 6,
-	    COM_TYPE_NORMAL, comcnmode))
-		panic("can't init serial console @%x", CONADDR);
-	else
-		return;
-#endif
-	panic("console device missing -- serial console not in kernel");
-	/* Of course, this is moot if there is no console... */
+	com_opb_cnattach(COM_FREQ * 6, CONADDR, CONSPEED, comcnmode);
 }
 
 #ifdef KGDB

@@ -1,4 +1,4 @@
-/* 	$NetBSD: design_gsrd2.c,v 1.4.68.1 2021/04/02 22:17:39 thorpej Exp $ */
+/* 	$NetBSD: design_gsrd2.c,v 1.4.68.2 2021/04/03 21:44:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -32,7 +32,7 @@
 #include "opt_virtex.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.4.68.1 2021/04/02 22:17:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.4.68.2 2021/04/03 21:44:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.4.68.1 2021/04/02 22:17:39 thorpe
 #include <sys/intr.h>
 
 #include <machine/powerpc.h>
-#include <machine/tlb.h>
 
 #include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/tlb.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 #include <evbppc/virtex/dev/xcvbusvar.h>
@@ -96,6 +96,7 @@ static void 			*cdmac_ih;
  * DCR bus space leaf access routines.
  */
 
+#ifndef DESIGN_DFC
 static void
 tft0_write_4(bus_space_tag_t t, bus_space_handle_t h, uint32_t addr,
     uint32_t val)
@@ -124,6 +125,7 @@ tft0_read_4(bus_space_tag_t t, bus_space_handle_t h, uint32_t addr)
 
 	return (val);
 }
+#endif /* !DESIGN_DFC */
 
 static void
 tft1_write_4(bus_space_tag_t t, bus_space_handle_t h, uint32_t addr,
@@ -232,9 +234,11 @@ static const struct powerpc_bus_space temac_bst = {
 	DCR_BST_BODY(DCR_TEMAC_BASE, temac_read_4, temac_write_4)
 };
 
+#ifndef DESIGN_DFC
 static const struct powerpc_bus_space tft0_bst = {
 	DCR_BST_BODY(DCR_TFT0_BASE, tft0_read_4, tft0_write_4)
 };
+#endif
 
 static const struct powerpc_bus_space tft1_bst = {
 	DCR_BST_BODY(DCR_TFT1_BASE, tft1_read_4, tft1_write_4)

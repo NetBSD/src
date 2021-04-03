@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.426 2021/03/14 10:36:46 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.426.2.1 2021/04/03 21:44:40 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.426 2021/03/14 10:36:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.426.2.1 2021/04/03 21:44:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3281,6 +3281,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 					pmap_free_l2_bucket(pm, l2b, 0);
 					UVMHIST_LOG(maphist, "  <-- done (ENOMEM)",
 					    0, 0, 0, 0);
+					kpreempt_enable();
+
 					return ENOMEM;
 				}
 			}
@@ -3983,6 +3985,8 @@ pmap_extract_coherency(pmap_t pm, vaddr_t va, paddr_t *pap, bool *coherentp)
 		 */
 		KDASSERT(pm == pmap_kernel());
 		pmap_release_pmap_lock(pm);
+		kpreempt_enable();
+
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 		if (l1pte_supersection_p(pde)) {
 			pa = (pde & L1_SS_FRAME) | (va & L1_SS_OFFSET);

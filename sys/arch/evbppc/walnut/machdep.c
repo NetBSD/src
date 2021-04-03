@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2020/06/11 19:20:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.4.1 2021/04/03 21:44:44 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,106 +67,48 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2020/06/11 19:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.4.1 2021/04/03 21:44:44 thorpej Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
-#include <sys/boot_flag.h>
-#include <sys/buf.h>
 #include <sys/bus.h>
-#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/exec.h>
 #include <sys/kernel.h>
-#include <sys/ksyms.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/module.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/syscallargs.h>
-#include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <prop/proplib.h>
-
-#include <machine/powerpc.h>
 #include <machine/walnut.h>
-
-#include <powerpc/trap.h>
-#include <powerpc/pcb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/openbios.h>
+#include <powerpc/ibm4xx/tlb.h>
 
 #include <powerpc/ibm4xx/pci_machdep.h>
-
-#include <powerpc/pic/picvar.h>
-
-#include <dev/cons.h>
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-#include "ksyms.h"
-
-#if defined(DDB)
-#include <powerpc/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
-
+#include <dev/pci/pcivar.h>
 
 #define TLB_PG_SIZE 	(16*1024*1024)
 
-/*
- * Global variables used here and there
- */
-struct vm_map *phys_map = NULL;
-
-/*
- * This should probably be in autoconf!				XXX
- */
-char machine[] = MACHINE;		/* from <machine/param.h> */
-char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-char bootpath[256];
-
 void initppc(vaddr_t, vaddr_t, char *, void *);
-
-static void dumpsys(void);
-
-#define MEMREGIONS	8
-struct mem_region physmemr[MEMREGIONS];		/* Hard code memory */
-struct mem_region availmemr[MEMREGIONS];	/* Who's supposed to set these up? */
-
-struct board_cfg_data board_data;
 
 void
 initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 {
+	u_int memsize;
+
 	/* Disable all external interrupts */
 	mtdcr(DCR_UIC0_BASE + DCR_UIC_ER, 0);
 
-        /* Initialize cache info for memcpy, etc. */
-        cpu_probe_cache();
-
-	/* Save info block */
-	memcpy(&board_data, info_block, sizeof(board_data));
-
-	memset(physmemr, 0, sizeof physmemr);
-	memset(availmemr, 0, sizeof availmemr);
-	physmemr[0].start = 0;
-	physmemr[0].size = board_data.mem_size & ~PGOFSET;
-	/* Lower memory reserved by eval board BIOS */
-	availmemr[0].start = startkernel;
-	availmemr[0].size = board_data.mem_size - availmemr[0].start;
+	/* Setup board from OpenBIOS */
+	openbios_board_init(info_block);
+	memsize = openbios_board_memsize_get();
 
 	/* Linear map kernel memory */
 	for (vaddr_t va = 0; va < endkernel; va += TLB_PG_SIZE) {
@@ -174,29 +116,16 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	}
 
 	/* Map console after physmem (see pmap_tlbmiss()) */
-	ppc4xx_tlb_reserve(0xef000000, roundup(physmemr[0].size, TLB_PG_SIZE),
+	ppc4xx_tlb_reserve(IBM405GP_UART0_BASE, roundup(memsize, TLB_PG_SIZE),
 	    TLB_PG_SIZE, TLB_I | TLB_G);
 
 	mtspr(SPR_TCR, 0);	/* disable all timers */
 
+	ibm40x_memsize_init(memsize, startkernel);
 	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
 
 #ifdef DEBUG
-	printf("Board config data:\n");
-	printf("  usr_config_ver = %s\n", board_data.usr_config_ver);
-	printf("  rom_sw_ver = %s\n", board_data.rom_sw_ver);
-	printf("  mem_size = %u\n", board_data.mem_size);
-	printf("  mac_address_local = %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    board_data.mac_address_local[0], board_data.mac_address_local[1],
-	    board_data.mac_address_local[2], board_data.mac_address_local[3],
-	    board_data.mac_address_local[4], board_data.mac_address_local[5]);
-	printf("  mac_address_pci = %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    board_data.mac_address_pci[0], board_data.mac_address_pci[1],
-	    board_data.mac_address_pci[2], board_data.mac_address_pci[3],
-	    board_data.mac_address_pci[4], board_data.mac_address_pci[5]);
-	printf("  processor_speed = %u\n", board_data.processor_speed);
-	printf("  plb_speed = %u\n", board_data.plb_speed);
-	printf("  pci_speed = %u\n", board_data.pci_speed);
+	openbios_board_print();
 #endif
 
 #ifdef DDB
@@ -217,85 +146,10 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	prop_number_t pn;
-	prop_data_t pd;
-	char pbuf[9];
 
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-#if 0	/* For some reason this fails... --Artem
-	 * Besides, do we really have to put it at the end of core?
-	 * Let's use static buffer for now
-	 */
-	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE), 0,
-	    UVM_KMF_VAONLY)))
-		panic("startup: no room for message buffer");
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
-		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
-	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
-#else
-	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));
-#endif
+	ibm4xx_cpu_startup("Walnut PowerPC 405GP Evaluation Board");
 
-	printf("%s%s", copyright, version);
-	printf("Walnut PowerPC 405GP Evaluation Board\n");
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Set up the board properties dictionary.
-	 */
-	board_properties = prop_dictionary_create();
-	KASSERT(board_properties != NULL);
-
-	pn = prop_number_create_integer(board_data.mem_size);
-	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "mem-size", pn) == false)
-		panic("setting mem-size");
-	prop_object_release(pn);
-
-	pd = prop_data_create_data_nocopy(board_data.mac_address_local,
-					  sizeof(board_data.mac_address_local));
-	KASSERT(pd != NULL);
-	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
-				pd) == false)
-		panic("setting emac0-mac-addr");
-	prop_object_release(pd);
-
-	pd = prop_data_create_data_nocopy(board_data.mac_address_pci,
-					  sizeof(board_data.mac_address_pci));
-	KASSERT(pd != NULL);
-	if (prop_dictionary_set(board_properties, "sip0-mac-addr",
-				pd) == false)
-		panic("setting sip0-mac-addr");
-	prop_object_release(pd);
-
-	pn = prop_number_create_integer(board_data.processor_speed);
-	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "processor-frequency",
-				pn) == false)
-		panic("setting processor-frequency");
-	prop_object_release(pn);
+	openbios_board_info_set();
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
@@ -303,100 +157,6 @@ cpu_startup(void)
 	bus_space_mallocok();
 	fake_mapiodev = 0;
 }
-
-
-static void
-dumpsys(void)
-{
-
-	printf("dumpsys: TBD\n");
-}
-
-/*
- * Halt or reboot the machine after syncing/dumping according to howto.
- */
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
-	}
-
-	splhigh();
-
-	if (!cold && (howto & RB_DUMP))
-		dumpsys();
-
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-	  /* Power off here if we know how...*/
-	}
-
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-
-		goto reboot;	/* XXX for now... */
-
-#ifdef DDB
-		printf("dropping to debugger\n");
-		while(1)
-			Debugger();
-#endif
-	}
-
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
-	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
-
-	/* flush cache for msgbuf */
-	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
-
- reboot:
-	ppc4xx_reset();
-
-	printf("ppc4xx_reset() failed!\n");
-#ifdef DDB
-	while(1)
-		Debugger();
-#else
-	while (1)
-		/* nothing */;
-#endif
-}
-
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-
-	*mem = physmemr;
-	*avail = availmemr;
-}
-
 
 int
 ibm4xx_pci_bus_maxdevs(void *v, int busno)

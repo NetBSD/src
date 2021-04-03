@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.8 2021/03/02 07:21:01 rin Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.8.2.1 2021/04/03 21:44:43 thorpej Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,18 +33,16 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.8 2021/03/02 07:21:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.8.2.1 2021/04/03 21:44:43 thorpej Exp $");
 
-#include <sys/systm.h>
+#include <sys/param.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <machine/obs266.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-
-#include <dev/ic/comreg.h>
 
 /*
  * Determine device configuration for a machine.
@@ -69,5 +67,5 @@ void
 device_register(device_t dev, void *aux)
 {
 
-	obs405_device_register(dev, aux, OBS266_COM_FREQ);
+	ibm4xx_device_register(dev, aux, OBS266_COM_FREQ);
 }

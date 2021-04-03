@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600.h,v 1.1 2010/03/18 14:15:38 kiyohara Exp $	*/
+/*	$NetBSD: obs600.h,v 1.1.80.1 2021/04/03 21:44:43 thorpej Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -28,17 +28,13 @@
 #ifndef	_EVBPPC_OBS600_H_
 #define	_EVBPPC_OBS600_H_
 
+#include <dev/ic/comreg.h>
+
 /*
  * Device Properties for OpenBlockS600 (AMCC 405EX 600MHz)
  */
 
 /* UART Clock */
 #define OBS600_COM_FREQ		(COM_FREQ * 4)	/* UART CLK 7.3728 MHz */
-
-/*
- * extern variables and functions
- */
-
-#include <machine/obs405.h>
 
 #endif	/* _EVBPPC_OBS600_H_ */

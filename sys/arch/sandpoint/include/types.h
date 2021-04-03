@@ -1,6 +1,6 @@
-/*	$NetBSD: types.h,v 1.8 2011/07/17 23:27:02 dyoung Exp $	*/
+/*	$NetBSD: types.h,v 1.8.68.1 2021/04/03 21:44:48 thorpej Exp $	*/
 
-#define __HAVE_NEW_STYLE_BUS_H
+#define	__HAVE_NEW_STYLE_BUS_H
 
 #include <powerpc/types.h>
 

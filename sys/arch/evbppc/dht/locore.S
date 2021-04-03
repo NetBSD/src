@@ -1,5 +1,9 @@
-/*	$NetBSD: walnut_start.S,v 1.24 2018/07/15 05:16:43 maxv Exp $	*/
-/*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.2.2 2021/04/03 21:44:43 thorpej Exp $	*/
+
+/*
+ * Taken from src/sys/arch/powerpc/ibm4xx/openbios/locore.s:
+ *	NetBSD: locore.S,v 1.17 2021/03/30 01:57:20 rin Exp
+ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,35 +71,28 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef PPC_4XX_NOCACHE
+#ifdef PPC_4XX_NOCACHE
+#error Not tested.
+#endif
 
-#include "opt_ddb.h"
-#include "opt_lockdebug.h"
-#include "opt_modular.h"
-#include "opt_multiprocessor.h"
-#include "opt_ppcarch.h"
-#include "opt_ppcparam.h"
 #include "assym.h"
 #include "ksyms.h"
 
-#include <sys/syscall.h>
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#include "opt_modular.h"
+#include "opt_ppcparam.h"
+#endif
 
 #include <machine/param.h>
+#include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#include <machine/asm.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+
 #include <powerpc/ibm4xx/dcr4xx.h>
-
-/* Function pointer for requesting board_config_data from openbios*/
-#define BOARD_CFG_FP       0xFFFE0B50
-
-/*
- * Some instructions gas doesn't understand (yet?)
- */
-#define	bdneq	bdnzf 2,
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -112,43 +109,30 @@ _C_LABEL(kernel_text):
 	.text
 	.globl	__start
 __start:
-	b	1f
-	/* Reserve some space for info_block required for IBM eval board bootloader */
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-
-1:
-	/* Get the board_config_data from openbios */
-	lis	%r3,BOARD_CFG_FP@h
-	ori	%r3,%r3,BOARD_CFG_FP@l
-	lwz     %r0,0x0(%r3)
-	mtctr   %r0
-	bctrl				/* call the xcoff function */
-	mr	%r31,%r3		/* Save value in r31 */
-
 	li	%r0,0
 	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
+	isync
+
+	/*
+	 * Errata 213:  Incorrect data may be flushed from the data cache.
+	 * Cores:       PPC405D5X1, PPC405D5X2
+	 * Workaround:  #1, CCR0 modification sequence #2
+	 * Note:        Meaning of bits we need to set is undocumented.
+	 */
+	sync
+	mfccr0  %r0
+	oris    %r0,%r0,0x50000000@h
+	mtccr0  %r0
 	isync
 
 	/* PPC405GP errata, item #58.
 	 * Load string instructions may write incorrect data into the last GPR
 	 * targeted in the operation.
 	 * Workaround: set OCM0_DSCNTL[DSEN]=0 and OCM0_DSCNTL[DOF]=0 */
+	li %r0,0
 	mtdcr	DCR_OCM0_DSCNTL, %r0  	/* Disable Data access to OCM */
-	mtdcr	DCR_OCM0_ISCNTL, %r0  	/* Disable Instruction access to OCM. Just in case */
-/*
- * CPU detect.
- *
- */
-__start_cpu0:
+	mtdcr	DCR_OCM0_ISCNTL, %r0  	/* Disable Instruction access to OCM.
+					   Just in case */
 #ifdef PPC_4XX_NOCACHE
 	/* Disable all caches for physical addresses */
 	li	%r0,0
@@ -163,20 +147,24 @@ __start_cpu0:
 	tlbia
 	sync
 	isync
-/* get start of bss */
+
+	/* Get start of BSS */
 	lis	%r3,_C_LABEL(_edata)-4@ha
 	addi	%r3,%r3,_C_LABEL(_edata)-4@l
-/* get end of kernel memory */
+	/* Get end of kernel memory */
 	lis	%r8,_C_LABEL(end)@ha
 	addi	%r8,%r8,_C_LABEL(end)@l
-/* zero bss */
+	/* Zero BSS */
 	li	%r4,0
 2:	stwu	%r4,4(%r3)
 	cmpw	%r3,%r8
 	bne+	2b
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* If we had symbol table location we'd store it here and would've adjusted r8 here */
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
+	/*
+	 * If we had symbol table location we'd store it here and would've
+	 * adjusted r8 here.
+	 */
 	lis	%r7,_C_LABEL(startsym)@ha
 	addi	%r7,%r7,_C_LABEL(startsym)@l
 	stw	%r8,0(%r7)

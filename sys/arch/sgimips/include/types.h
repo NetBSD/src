@@ -1,9 +1,9 @@
-/*	$NetBSD: types.h,v 1.17 2017/01/26 15:55:10 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.17.28.1 2021/04/03 21:44:49 thorpej Exp $	*/
 
 #ifndef _SGIMIPS_TYPES_H_
 #define	_SGIMIPS_TYPES_H_
 
-#define _MIPS_PADDR_T_64BIT
+#define	_MIPS_PADDR_T_64BIT
 
 #include <mips/types.h>
 

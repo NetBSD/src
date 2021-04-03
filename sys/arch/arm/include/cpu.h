@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.116 2021/02/21 15:00:04 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.116.2.1 2021/04/03 21:44:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -190,9 +190,6 @@ struct cpu_info {
 
 	volatile u_int	ci_intr_depth;	/* */
 	volatile u_int	ci_softints;
-	volatile uint32_t ci_blocked_pics;
-	volatile uint32_t ci_pending_pics;
-	volatile uint32_t ci_pending_ipls;
 
 	lwp_t *		ci_lastlwp;	/* last lwp */
 
