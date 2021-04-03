@@ -1,6 +1,6 @@
 Var_Parse: ${:U\$\$\$\$\$\$\$\$} (eval)
-Applying ${:U...} to "" (eval, none, undefined)
-Result of ${:U\$\$\$\$\$\$\$\$} is "$$$$$$$$" (eval, none, defined)
+Applying ${:U...} to "" (eval, undefined)
+Result of ${:U\$\$\$\$\$\$\$\$} is "$$$$$$$$" (eval, defined)
 Global:VAR.$$$$$$$$ = dollars
 Global:.MAKEFLAGS =  -r -k -d v -d
 Global:.MAKEFLAGS =  -r -k -d v -d 0
