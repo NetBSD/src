@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.897 2021/04/03 14:39:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.898 2021/04/03 21:55:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.897 2021/04/03 14:39:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.898 2021/04/03 21:55:27 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -2057,8 +2057,9 @@ static const char *const ExprDefined_Name[] = {
 
 /* A variable expression such as $@ or ${VAR:Mpattern:Q}. */
 typedef struct Expr {
-	Var *var;
+	const char *name;
 	FStr value;
+	VarFlags varFlags;
 	VarEvalFlags const_member eflags;
 	GNode *const_member scope;
 	ExprDefined defined;
@@ -2266,7 +2267,7 @@ ParseModifierPartSubst(
 	if (*p != delim) {
 		*pp = p;
 		Error("Unfinished modifier for \"%s\" ('%c' missing)",
-		    ch->expr->var->name.str, delim);
+		    ch->expr->name, delim);
 		*out_part = NULL;
 		return VPR_ERR;
 	}
@@ -2451,7 +2452,7 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 		Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
 		    "must not contain a dollar.",
-		    expr->var->name.str, args.tvar);
+		    expr->name, args.tvar);
 		return AMR_CLEANUP;
 	}
 
@@ -2551,7 +2552,7 @@ ApplyModifier_Literal(const char **pp, ModChain *ch)
 
 	if (expr->eflags.wantRes) {
 		Expr_Define(expr);
-		Expr_SetValueOwn(expr, bmake_strdup(expr->var->name.str));
+		Expr_SetValueOwn(expr, bmake_strdup(expr->name));
 	}
 
 	return AMR_OK;
@@ -2665,17 +2666,17 @@ ApplyModifier_Path(const char **pp, ModChain *ch)
 
 	Expr_Define(expr);
 
-	gn = Targ_FindNode(expr->var->name.str);
+	gn = Targ_FindNode(expr->name);
 	if (gn == NULL || gn->type & OP_NOPATH) {
 		path = NULL;
 	} else if (gn->path != NULL) {
 		path = bmake_strdup(gn->path);
 	} else {
 		SearchPath *searchPath = Suff_FindPath(gn);
-		path = Dir_FindFile(expr->var->name.str, searchPath);
+		path = Dir_FindFile(expr->name, searchPath);
 	}
 	if (path == NULL)
-		path = bmake_strdup(expr->var->name.str);
+		path = bmake_strdup(expr->name);
 	Expr_SetValueOwn(expr, path);
 
 	return AMR_OK;
@@ -2833,7 +2834,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch,
 	}
 
 	DEBUG3(VAR, "Pattern[%s] for [%s] is [%s]\n",
-	    expr->var->name.str, expr->value.str, pattern);
+	       expr->name, expr->value.str, pattern);
 
 	*out_pattern = pattern;
 }
@@ -3345,7 +3346,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 
 	int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
 	if (expr->eflags.wantRes) {
-		cond_rc = Cond_EvalCondition(expr->var->name.str, &value);
+		cond_rc = Cond_EvalCondition(expr->name, &value);
 		if (cond_rc != COND_INVALID && value)
 			then_eflags = expr->eflags;
 		if (cond_rc != COND_INVALID && !value)
@@ -3365,8 +3366,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 
 	if (cond_rc == COND_INVALID) {
 		Error("Bad conditional expression `%s' in %s?%s:%s",
-		    expr->var->name.str, expr->var->name.str,
-		    then_expr, else_expr);
+		    expr->name, expr->name, then_expr, else_expr);
 		return AMR_CLEANUP;
 	}
 
@@ -3424,7 +3424,7 @@ ApplyModifier_Assign(const char **pp, ModChain *ch)
 	return AMR_UNKNOWN;	/* "::<unrecognised>" */
 
 ok:
-	if (expr->var->name.str[0] == '\0') {
+	if (expr->name[0] == '\0') {
 		*pp = mod + 1;
 		return AMR_BAD;
 	}
@@ -3451,7 +3451,7 @@ ok:
 
 	scope = expr->scope;	/* scope where v belongs */
 	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL) {
-		Var *gv = VarFind(expr->var->name.str, expr->scope, false);
+		Var *gv = VarFind(expr->name, expr->scope, false);
 		if (gv == NULL)
 			scope = SCOPE_GLOBAL;
 		else
@@ -3460,7 +3460,7 @@ ok:
 
 	switch (op[0]) {
 	case '+':
-		Var_Append(scope, expr->var->name.str, val);
+		Var_Append(scope, expr->name, val);
 		break;
 	case '!': {
 		const char *errfmt;
@@ -3468,7 +3468,7 @@ ok:
 		if (errfmt != NULL)
 			Error(errfmt, val);
 		else
-			Var_Set(scope, expr->var->name.str, cmd_output);
+			Var_Set(scope, expr->name, cmd_output);
 		free(cmd_output);
 		break;
 	}
@@ -3477,7 +3477,7 @@ ok:
 			break;
 		/* FALLTHROUGH */
 	default:
-		Var_Set(scope, expr->var->name.str, val);
+		Var_Set(scope, expr->name, val);
 		break;
 	}
 	Expr_SetValueRefer(expr, "");
@@ -3645,10 +3645,10 @@ LogBeforeApply(const ModChain *ch, const char *mod)
 	/* At this point, only the first character of the modifier can
 	 * be used since the end of the modifier is not yet known. */
 	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
-	    expr->var->name.str, mod[0], is_single_char ? "" : "...",
+	    expr->name, mod[0], is_single_char ? "" : "...",
 	    expr->value.str,
 	    VarEvalFlags_ToString(expr->eflags),
-	    VarFlags_ToString(vflags_str, expr->var->flags),
+	    VarFlags_ToString(vflags_str, expr->varFlags),
 	    ExprDefined_Name[expr->defined]);
 }
 
@@ -3661,10 +3661,10 @@ LogAfterApply(const ModChain *ch, const char *p, const char *mod)
 	const char *quot = value == var_Error ? "" : "\"";
 
 	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
-	    expr->var->name.str, (int)(p - mod), mod,
+	    expr->name, (int)(p - mod), mod,
 	    quot, value == var_Error ? "error" : value, quot,
 	    VarEvalFlags_ToString(expr->eflags),
-	    VarFlags_ToString(vflags_str, expr->var->flags),
+	    VarFlags_ToString(vflags_str, expr->varFlags),
 	    ExprDefined_Name[expr->defined]);
 }
 
@@ -3793,7 +3793,7 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 	else if (*p == '\0' && ch->endc != '\0') {
 		Error("Unclosed variable expression after indirect "
 		      "modifier, expecting '%c' for variable \"%s\"",
-		    ch->endc, expr->var->name.str);
+		    ch->endc, expr->name);
 		*pp = p;
 		return AMIR_OUT;
 	}
@@ -3848,7 +3848,7 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 		    "modifier \"%.*s\" of variable \"%s\" with value \"%s\"",
 		    ch->endc,
 		    (int)(p - mod), mod,
-		    ch->expr->var->name.str, ch->expr->value.str);
+		    ch->expr->name, ch->expr->value.str);
 	} else if (*p == ':') {
 		p++;
 	} else if (opts.strict && *p != '\0' && *p != ch->endc) {
@@ -3903,7 +3903,7 @@ ApplyModifiers(
 	if (*p == '\0' && endc != '\0') {
 		Error(
 		    "Unclosed variable expression (expecting '%c') for \"%s\"",
-		    ch.endc, expr->var->name.str);
+		    ch.endc, expr->name);
 		goto cleanup;
 	}
 
@@ -3940,7 +3940,7 @@ ApplyModifiers(
 bad_modifier:
 	/* XXX: The modifier end is only guessed. */
 	Error("Bad modifier \":%.*s\" for variable \"%s\"",
-	    (int)strcspn(mod, ":)}"), mod, expr->var->name.str);
+	    (int)strcspn(mod, ":)}"), mod, expr->name);
 
 cleanup:
 	/*
@@ -4318,17 +4318,18 @@ FreeEnvVar(Var *v, FStr *inout_val)
 }
 
 #if __STDC_VERSION__ >= 199901L
-#define Expr_Literal(var, value, eflags, scope, defined) \
-	{ var, value, eflags, scope, defined }
+#define Expr_Literal(name, value, vflags, eflags, scope, defined) \
+	{ name, value, vflags, eflags, scope, defined }
 #else
 MAKE_INLINE Expr
-Expr_Literal(Var *var, FStr value, VarEvalFlags eflags, GNode *scope,
-	     ExprDefined defined)
+Expr_Literal(const char *name, FStr value, VarFlags vflags,
+	     VarEvalFlags eflags, GNode *scope, ExprDefined defined)
 {
 	Expr expr;
 
-	expr.var = var;
+	expr.name = name;
 	expr.value = value;
+	expr.varFlags = vflags;
 	expr.eflags = eflags;
 	expr.scope = scope;
 	expr.defined = defined;
@@ -4392,7 +4393,8 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	bool dynamic;
 	const char *extramodifiers;
 	Var *v;
-	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), eflags, scope, DEF_REGULAR);
+	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), VFL_NONE, eflags,
+	    scope, DEF_REGULAR);
 
 	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start,
 	    VarEvalFlags_ToString(eflags));
@@ -4411,7 +4413,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	if (startc != '(' && startc != '{') {
 		VarParseResult res;
 		if (!ParseVarnameShort(startc, pp, scope, eflags, &res,
-		    &out_val->str, &expr.var))
+		    &out_val->str, &v))
 			return res;
 		haveModifier = false;
 		p++;
@@ -4419,12 +4421,13 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 		VarParseResult res;
 		if (!ParseVarnameLong(p, startc, scope, eflags,
 		    pp, &res, out_val,
-		    &endc, &p, &expr.var, &haveModifier, &extramodifiers,
+		    &endc, &p, &v, &haveModifier, &extramodifiers,
 		    &dynamic, &expr.defined))
 			return res;
 	}
 
-	v = expr.var;
+	expr.name = v->name.str;
+	expr.varFlags = v->flags;
 	if (v->flags & VFL_IN_USE)
 		Fatal("Variable %s is recursive.", v->name.str);
 
