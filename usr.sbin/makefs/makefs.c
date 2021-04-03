@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
+/*	$NetBSD: makefs.c,v 1.54 2021/04/03 14:10:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.54 2021/04/03 14:10:56 simonb Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 		err(1, "Unable to get system time");
 
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:O:o:rs:S:t:T:xZ")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:F:LM:m:N:O:o:rs:S:t:T:xZ")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -185,6 +185,10 @@ main(int argc, char *argv[])
 
 		case 'F':
 			specfile = optarg;
+			break;
+
+		case 'L':
+			fsoptions.follow = true;
 			break;
 
 		case 'M':
@@ -286,7 +290,8 @@ main(int argc, char *argv[])
 
 				/* walk the tree */
 	TIMER_START(start);
-	root = walk_dir(argv[1], ".", NULL, NULL, fsoptions.replace);
+	root = walk_dir(argv[1], ".", NULL, NULL, fsoptions.replace,
+	    fsoptions.follow);
 	TIMER_RESULTS(start, "walk_dir");
 
 	/* append extra directory */
@@ -297,7 +302,8 @@ main(int argc, char *argv[])
 		if (!S_ISDIR(sb.st_mode))
 			errx(1, "%s: not a directory", argv[i]);
 		TIMER_START(start);
-		root = walk_dir(argv[i], ".", NULL, root, fsoptions.replace);
+		root = walk_dir(argv[i], ".", NULL, root, fsoptions.replace,
+		    fsoptions.follow);
 		TIMER_RESULTS(start, "walk_dir2");
 	}
 

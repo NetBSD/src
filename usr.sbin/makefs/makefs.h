@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
+/*	$NetBSD: makefs.h,v 1.37 2021/04/03 14:10:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -166,6 +166,7 @@ typedef struct makefs_fsinfo {
 	int	sectorsize;	/* sector size */
 	int	sparse;		/* sparse image, don't fill it with zeros */
 	int	replace;	/* replace files when merging */
+	int	follow;		/* follow symlinks */
 
 	void	*fs_specific;	/* File system specific additions. */
 	option_t *fs_options;	/* File system specific options */
@@ -180,7 +181,8 @@ const char *	inode_type(mode_t);
 int		set_option(const option_t *, const char *, char *, size_t);
 int		set_option_var(const option_t *, const char *, const char *,
     char *, size_t);
-fsnode *	walk_dir(const char *, const char *, fsnode *, fsnode *, int);
+fsnode *	walk_dir(const char *, const char *, fsnode *, fsnode *, int,
+    int);
 void		free_fsnodes(fsnode *);
 option_t *	copy_opts(const option_t *);
 
