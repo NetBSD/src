@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.96 2021/03/02 01:15:15 rin Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.97 2021/04/03 14:56:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.96 2021/03/02 01:15:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.97 2021/04/03 14:56:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -484,6 +484,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 */
 		do {
 			while (MUTEX_SPINBIT_LOCKED_P(mtx)) {
+				SPINLOCK_SPIN_HOOK;
 				SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
 				if (SPINLOCK_SPINOUT(spins))

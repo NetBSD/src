@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.30 2019/11/29 20:05:07 riastradh Exp $ */
+/* $NetBSD: lock.h,v 1.31 2021/04/03 14:56:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -151,26 +151,27 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 #if defined(MULTIPROCESSOR)
 /*
  * On the Alpha, interprocessor interrupts come in at device priority
- * level.  This can cause some problems while waiting for r/w spinlocks
- * from a high'ish priority level: IPIs that come in will not be processed.
- * This can lead to deadlock.
+ * level (ALPHA_PSL_IPL_CLOCK).  This can cause some problems while
+ * waiting for spin locks from a high'ish priority level (like spin
+ * mutexes used by the scheduler): IPIs that come in will not be
+ * processed. This can lead to deadlock.
  *
- * This hook allows IPIs to be processed while a spinlock's interlock
- * is released.
+ * This hook allows IPIs to be processed while spinning.  Note we only
+ * do the special thing if IPIs are blocked (current IPL >= IPL_CLOCK).
+ * IPIs will be processed in the normal fashion otherwise, and checking
+ * this way ensures that preemption is disabled (i.e. curcpu() is stable).
  */
 #define	SPINLOCK_SPIN_HOOK						\
 do {									\
-	struct cpu_info *__ci = curcpu();				\
-	int __s;							\
+	unsigned long _ipl_ = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;	\
 									\
-	if (__ci->ci_ipis != 0) {					\
-		/* printf("CPU %lu has IPIs pending\n",			\
-		    __ci->ci_cpuid); */					\
-		__s = splhigh();						\
-		alpha_ipi_process(__ci, NULL);				\
-		splx(__s);						\
+	if (_ipl_ >= ALPHA_PSL_IPL_CLOCK) {				\
+		struct cpu_info *__ci = curcpu();			\
+		if (atomic_load_relaxed(&__ci->ci_ipis) != 0) {		\
+			alpha_ipi_process(__ci, NULL);			\
+		}							\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 #define	SPINLOCK_BACKOFF_HOOK	(void)nullop((void *)0)
 #endif /* MULTIPROCESSOR */
 
