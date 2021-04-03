@@ -3,12 +3,12 @@ Global:VAR =
 Var_Parse: ${8_DOLLARS} (eval-keep-dollar-and-undefined)
 Global:VAR = $$$$$$$$
 Var_Parse: ${VAR:D${8_DOLLARS}} (eval-keep-dollar-and-undefined)
-Applying ${VAR:D...} to "$$$$$$$$" (eval-keep-dollar-and-undefined, none, regular)
+Applying ${VAR:D...} to "$$$$$$$$" (eval-keep-dollar-and-undefined, regular)
 Var_Parse: ${8_DOLLARS}} (eval-keep-dollar-and-undefined)
-Result of ${VAR:D${8_DOLLARS}} is "$$$$$$$$" (eval-keep-dollar-and-undefined, none, regular)
+Result of ${VAR:D${8_DOLLARS}} is "$$$$$$$$" (eval-keep-dollar-and-undefined, regular)
 Global:VAR = $$$$$$$$
 Var_Parse: ${VAR:@var@${8_DOLLARS}@} (eval-keep-dollar-and-undefined)
-Applying ${VAR:@...} to "$$$$$$$$" (eval-keep-dollar-and-undefined, none, regular)
+Applying ${VAR:@...} to "$$$$$$$$" (eval-keep-dollar-and-undefined, regular)
 Modifier part: "var"
 Modifier part: "${8_DOLLARS}"
 ModifyWords: split "$$$$$$$$" into 1 words
@@ -16,7 +16,7 @@ Global:var = $$$$$$$$
 Var_Parse: ${8_DOLLARS} (eval-keep-undefined)
 ModifyWord_Loop: in "$$$$$$$$", replace "var" with "${8_DOLLARS}" to "$$$$"
 Global:delete var
-Result of ${VAR:@var@${8_DOLLARS}@} is "$$$$" (eval-keep-dollar-and-undefined, none, regular)
+Result of ${VAR:@var@${8_DOLLARS}@} is "$$$$" (eval-keep-dollar-and-undefined, regular)
 Global:VAR = $$$$
 Global:.MAKEFLAGS =  -r -k -d v -d
 Global:.MAKEFLAGS =  -r -k -d v -d 0
