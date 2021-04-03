@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.11.2.1 2020/11/01 15:16:43 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.11.2.2 2021/04/03 21:52:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.11.2.1 2020/11/01 15:16:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.11.2.2 2021/04/03 21:52:20 thorpej Exp $");
 
 /*
  * Futexes
@@ -1367,7 +1367,15 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 		return EAGAIN;
 
 	/* Determine a deadline on the specified clock.  */
-	if (timeout == NULL || (clkflags & TIMER_ABSTIME) == TIMER_ABSTIME) {
+	if (timeout == NULL) {
+		deadline = timeout;
+	} else if ((clkflags & TIMER_ABSTIME) == TIMER_ABSTIME) {
+		/* Sanity-check the deadline. */
+		if (timeout->tv_sec < 0 ||
+		    timeout->tv_nsec < 0 ||
+		    timeout->tv_nsec >= 1000000000L) {
+			return EINVAL;
+		}
 		deadline = timeout;
 	} else {
 		struct timespec interval = *timeout;
@@ -1920,7 +1928,7 @@ futex_func_rw_wait(bool shared, int *uaddr, int val, int val3,
 	}
 
 	/*
-	 * Now wait.  futex_wait() will dop our op lock once we
+	 * Now wait.  futex_wait() will drop our op lock once we
 	 * are entered into the sleep queue, thus ensuring atomicity
 	 * of wakes with respect to waits.
 	 *
