@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.9 2021/04/03 15:37:07 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.10 2021/04/03 16:09:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.9 2021/04/03 15:37:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.10 2021/04/03 16:09:44 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1025,11 +1025,15 @@ config_get_cfargs(cfarg_t tag,
 		  cfsubmatch_t *fnp,		/* output */
 		  const char **ifattrp,		/* output */
 		  const int **locsp,		/* output */
+		  devhandle_t *handlep,		/* output */
 		  va_list ap)
 {
 	cfsubmatch_t fn = NULL;
 	const char *ifattr = NULL;
 	const int *locs = NULL;
+	devhandle_t handle;
+
+	devhandle_invalidate(&handle);
 
 	while (tag != CFARG_EOL) {
 		switch (tag) {
@@ -1043,6 +1047,10 @@ config_get_cfargs(cfarg_t tag,
 
 		case CFARG_LOCATORS:
 			locs = va_arg(ap, const int *);
+			break;
+
+		case CFARG_DEVHANDLE:
+			handle = va_arg(ap, devhandle_t);
 			break;
 
 		default:
@@ -1062,6 +1070,8 @@ config_get_cfargs(cfarg_t tag,
 		*ifattrp = ifattr;
 	if (locsp != NULL)
 		*locsp = locs;
+	if (handlep != NULL)
+		*handlep = handle;
 }
 
 /*
@@ -1085,7 +1095,7 @@ config_vsearch(device_t parent, void *aux, cfarg_t tag, va_list ap)
 	cfdata_t cf;
 	struct matchinfo m;
 
-	config_get_cfargs(tag, &fn, &ifattr, &locs, ap);
+	config_get_cfargs(tag, &fn, &ifattr, &locs, NULL, ap);
 
 	KASSERT(config_initialized);
 	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
@@ -1471,8 +1481,6 @@ config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
 	device_lock_t dvl;
 	const int *locs;
 
-	config_get_cfargs(tag, NULL, NULL, &locs, ap);
-
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
 		return NULL;
@@ -1489,6 +1497,13 @@ config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
 		dev_private = NULL;
 	}
 	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
+
+	/*
+	 * If a handle was supplied to config_attach(), we'll get it
+	 * assigned automatically here.  If not, then we'll get the
+	 * default invalid handle.
+	 */
+	config_get_cfargs(tag, NULL, NULL, &locs, &dev->dv_handle, ap);
 
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;

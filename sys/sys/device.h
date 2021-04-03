@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.167.2.6 2021/04/03 06:54:29 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.167.2.7 2021/04/03 16:09:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -532,6 +532,7 @@ typedef enum {
 	CFARG_SUBMATCH		= 0,	/* submatch function */
 	CFARG_IATTR		= 1,	/* interface attribute */
 	CFARG_LOCATORS		= 2,	/* locators array */
+	CFARG_DEVHANDLE		= 3,	/* devhandle_t (by value) */
 
 	CFARG_EOL		= 0xffffffff
 } cfarg_t;
