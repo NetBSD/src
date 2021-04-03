@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.66 2020/11/15 00:18:48 jmcneill Exp $
+.\"	$NetBSD: makefs.8,v 1.67 2021/04/03 14:10:56 simonb Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 14, 2020
+.Dd April 4, 2021
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd create a file system image from a directory tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl rxZ
+.Op Fl LrxZ
 .Op Fl B Ar endian
 .Op Fl b Ar free-blocks
 .Op Fl d Ar debug-mask
@@ -158,6 +158,8 @@ An optional
 suffix may be provided to indicate that
 .Ar free-files
 indicates a percentage of the calculated image size.
+.It Fl L
+All symbolic links are followed.
 .It Fl M Ar minimum-size
 Set the minimum size of the file system image to
 .Ar minimum-size .
