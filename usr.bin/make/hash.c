@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.61 2021/02/01 17:32:10 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.62 2021/04/03 11:08:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.61 2021/02/01 17:32:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.62 2021/04/03 11:08:40 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -236,7 +236,7 @@ HashTable_Enlarge(HashTable *t)
  * Return in out_isNew whether a new entry has been created.
  */
 HashEntry *
-HashTable_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
+HashTable_CreateEntry(HashTable *t, const char *key, bool *out_isNew)
 {
 	size_t keylen;
 	unsigned int h = hash(key, &keylen);
@@ -244,7 +244,7 @@ HashTable_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
 
 	if (he != NULL) {
 		if (out_isNew != NULL)
-			*out_isNew = FALSE;
+			*out_isNew = false;
 		return he;
 	}
 
@@ -261,7 +261,7 @@ HashTable_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
 	t->numEntries++;
 
 	if (out_isNew != NULL)
-		*out_isNew = TRUE;
+		*out_isNew = true;
 	return he;
 }
 

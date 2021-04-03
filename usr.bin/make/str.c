@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.81 2021/02/01 22:36:28 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.82 2021/04/03 11:08:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.81 2021/02/01 22:36:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.82 2021/04/03 11:08:40 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -119,14 +119,14 @@ str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
  * Fracture a string into an array of words (as delineated by tabs or spaces)
  * taking quotation marks into account.
  *
- * If expand is TRUE, quotes are removed and escape sequences such as \r, \t,
+ * If expand is true, quotes are removed and escape sequences such as \r, \t,
  * etc... are expanded. In this case, return NULL on parse errors.
  *
  * Returns the fractured words, which must be freed later using Words_Free,
  * unless the returned Words.words was NULL.
  */
 Words
-Str_Words(const char *str, Boolean expand)
+Str_Words(const char *str, bool expand)
 {
 	size_t str_len;
 	char *words_buf;
@@ -272,7 +272,7 @@ done:
  *
  * XXX: this function does not detect or report malformed patterns.
  */
-Boolean
+bool
 Str_Match(const char *str, const char *pat)
 {
 	for (;;) {
@@ -284,7 +284,7 @@ Str_Match(const char *str, const char *pat)
 		if (*pat == '\0')
 			return *str == '\0';
 		if (*str == '\0' && *pat != '*')
-			return FALSE;
+			return false;
 
 		/*
 		 * A '*' in the pattern matches any substring.  We handle this
@@ -295,13 +295,13 @@ Str_Match(const char *str, const char *pat)
 			while (*pat == '*')
 				pat++;
 			if (*pat == '\0')
-				return TRUE;
+				return true;
 			while (*str != '\0') {
 				if (Str_Match(str, pat))
-					return TRUE;
+					return true;
 				str++;
 			}
-			return FALSE;
+			return false;
 		}
 
 		/* A '?' in the pattern matches any single character. */
@@ -315,14 +315,14 @@ Str_Match(const char *str, const char *pat)
 		 * character lists, the backslash is an ordinary character.
 		 */
 		if (*pat == '[') {
-			Boolean neg = pat[1] == '^';
+			bool neg = pat[1] == '^';
 			pat += neg ? 2 : 1;
 
 			for (;;) {
 				if (*pat == ']' || *pat == '\0') {
 					if (neg)
 						break;
-					return FALSE;
+					return false;
 				}
 				/*
 				 * XXX: This naive comparison makes the
@@ -347,7 +347,7 @@ Str_Match(const char *str, const char *pat)
 				pat++;
 			}
 			if (neg && *pat != ']' && *pat != '\0')
-				return FALSE;
+				return false;
 			while (*pat != ']' && *pat != '\0')
 				pat++;
 			if (*pat == '\0')
@@ -362,11 +362,11 @@ Str_Match(const char *str, const char *pat)
 		if (*pat == '\\') {
 			pat++;
 			if (*pat == '\0')
-				return FALSE;
+				return false;
 		}
 
 		if (*pat != *str)
-			return FALSE;
+			return false;
 
 	thisCharOK:
 		pat++;
