@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.895 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.896 2021/04/03 14:31:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.895 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.896 2021/04/03 14:31:44 rillig Exp $");
 
 typedef enum VarFlags {
 	VFL_NONE	= 0,
@@ -4051,8 +4051,8 @@ ValidShortVarname(char varname, const char *start)
 static bool
 ParseVarnameShort(char varname, const char **pp, GNode *scope,
 		  VarEvalFlags eflags,
-		  VarParseResult *out_FALSE_res, const char **out_FALSE_val,
-		  Var **out_TRUE_var)
+		  VarParseResult *out_false_res, const char **out_false_val,
+		  Var **out_true_var)
 {
 	char name[2];
 	Var *v;
@@ -4061,8 +4061,8 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 	vpr = ValidShortVarname(varname, *pp);
 	if (vpr != VPR_OK) {
 		(*pp)++;
-		*out_FALSE_res = vpr;
-		*out_FALSE_val = var_Error;
+		*out_false_res = vpr;
+		*out_false_val = var_Error;
 		return false;
 	}
 
@@ -4080,8 +4080,8 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 		if (opts.strict && val == var_Error) {
 			Parse_Error(PARSE_FATAL,
 			    "Variable \"%s\" is undefined", name);
-			*out_FALSE_res = VPR_ERR;
-			*out_FALSE_val = val;
+			*out_false_res = VPR_ERR;
+			*out_false_val = val;
 			return false;
 		}
 
@@ -4095,12 +4095,12 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 		 * If undefined expressions are allowed, this should rather
 		 * be VPR_UNDEF instead of VPR_OK.
 		 */
-		*out_FALSE_res = eflags.undefErr ? VPR_UNDEF : VPR_OK;
-		*out_FALSE_val = val;
+		*out_false_res = eflags.undefErr ? VPR_UNDEF : VPR_OK;
+		*out_false_val = val;
 		return false;
 	}
 
-	*out_TRUE_var = v;
+	*out_true_var = v;
 	return true;
 }
 
@@ -4178,17 +4178,17 @@ ParseVarnameLong(
 	GNode *scope,
 	VarEvalFlags eflags,
 
-	const char **out_FALSE_pp,
-	VarParseResult *out_FALSE_res,
-	FStr *out_FALSE_val,
+	const char **out_false_pp,
+	VarParseResult *out_false_res,
+	FStr *out_false_val,
 
-	char *out_TRUE_endc,
-	const char **out_TRUE_p,
-	Var **out_TRUE_v,
-	bool *out_TRUE_haveModifier,
-	const char **out_TRUE_extraModifiers,
-	bool *out_TRUE_dynamic,
-	ExprDefined *out_TRUE_exprDefined
+	char *out_true_endc,
+	const char **out_true_p,
+	Var **out_true_v,
+	bool *out_true_haveModifier,
+	const char **out_true_extraModifiers,
+	bool *out_true_dynamic,
+	ExprDefined *out_true_exprDefined
 )
 {
 	size_t namelen;
@@ -4210,9 +4210,9 @@ ParseVarnameLong(
 	} else {
 		Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
 		free(varname);
-		*out_FALSE_pp = p;
-		*out_FALSE_val = FStr_InitRefer(var_Error);
-		*out_FALSE_res = VPR_ERR;
+		*out_false_pp = p;
+		*out_false_val = FStr_InitRefer(var_Error);
+		*out_false_res = VPR_ERR;
 		return false;
 	}
 
@@ -4223,7 +4223,7 @@ ParseVarnameLong(
 
 	if (v == NULL) {
 		v = FindLocalLegacyVar(varname, namelen, scope,
-		    out_TRUE_extraModifiers);
+		    out_true_extraModifiers);
 	}
 
 	if (v == NULL) {
@@ -4236,9 +4236,9 @@ ParseVarnameLong(
 
 		if (!haveModifier) {
 			p++;	/* skip endc */
-			*out_FALSE_pp = p;
-			*out_FALSE_res = EvalUndefined(dynamic, start, p,
-			    varname, eflags, out_FALSE_val);
+			*out_false_pp = p;
+			*out_false_res = EvalUndefined(dynamic, start, p,
+			    varname, eflags, out_false_val);
 			return false;
 		}
 
@@ -4257,15 +4257,15 @@ ParseVarnameLong(
 		 * instead of the actually computed value.
 		 */
 		v = VarNew(FStr_InitOwn(varname), "", VFL_NONE);
-		*out_TRUE_exprDefined = DEF_UNDEF;
+		*out_true_exprDefined = DEF_UNDEF;
 	} else
 		free(varname);
 
-	*out_TRUE_endc = endc;
-	*out_TRUE_p = p;
-	*out_TRUE_v = v;
-	*out_TRUE_haveModifier = haveModifier;
-	*out_TRUE_dynamic = dynamic;
+	*out_true_endc = endc;
+	*out_true_p = p;
+	*out_true_v = v;
+	*out_true_haveModifier = haveModifier;
+	*out_true_dynamic = dynamic;
 	return true;
 }
 

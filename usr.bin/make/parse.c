@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.553 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.554 2021/04/03 14:31:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.553 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.554 2021/04/03 14:31:44 rillig Exp $");
 
 /* types and constants */
 
@@ -1936,7 +1936,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 /*
  * Perform a variable assignment.
  *
- * The actual value of the variable is returned in *out_TRUE_avalue.
+ * The actual value of the variable is returned in *out_true_avalue.
  * Especially for VAR_SUBST and VAR_SHELL this can differ from the literal
  * value.
  *
@@ -1946,7 +1946,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
  */
 static bool
 VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
-	       GNode *scope, FStr *out_TRUE_avalue)
+	       GNode *scope, FStr *out_true_avalue)
 {
 	FStr avalue = FStr_InitRefer(uvalue);
 
@@ -1964,7 +1964,7 @@ VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
 		Var_SetExpand(scope, name, uvalue);
 	}
 
-	*out_TRUE_avalue = avalue;
+	*out_true_avalue = avalue;
 	return true;
 }
 
