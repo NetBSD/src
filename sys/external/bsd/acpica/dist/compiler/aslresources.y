@@ -8,7 +8,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2021, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ NoEcho('
  * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -82,7 +82,8 @@ ResourceMacroList
     ;
 
 ResourceMacroTerm
-    : DMATerm                       {}
+    : Csi2SerialBusTerm             {}
+    | DMATerm                       {}
     | DWordIOTerm                   {}
     | DWordMemoryTerm               {}
     | DWordSpaceTerm                {}
@@ -124,6 +125,23 @@ ResourceMacroTerm
     | WordIOTerm                    {}
     | WordSpaceTerm                 {}
     ;
+
+Csi2SerialBusTerm
+    : PARSEOP_CSI2_SERIALBUS
+        PARSEOP_OPEN_PAREN          {$<n>$ = TrCreateLeafOp (PARSEOP_CSI2_SERIALBUS);}
+        OptionalSlaveMode_First     {UtCheckIntegerRange ($4, 0x00, 0x01);} /* 04: SlaveMode */
+        ',' ByteConstExpr           {UtCheckIntegerRange ($7, 0x00, 0x03);} /* 07: PhyType */
+        OptionalByteConstExpr       {UtCheckIntegerRange ($9, 0x00, 0xFC);} /* 09: LocalPortInstance */
+        ',' StringData              /* 12: ResourceSource */
+        ',' ByteConstExpr           /* 14: ResourceSourceIndex */
+        OptionalResourceType        /* 15; ResourceType (ResourceUsage) */
+        OptionalNameString          /* 16: DescriptorName */
+        OptionalBuffer_Last         /* 17: VendorData */
+        PARSEOP_CLOSE_PAREN         {$$ = TrLinkOpChildren ($<n>3,8,
+                                        $4,$7,$9,$12,$14,$15,$16,$17);}
+    | PARSEOP_CSI2_SERIALBUS
+        PARSEOP_OPEN_PAREN
+        error PARSEOP_CLOSE_PAREN   {$$ = AslDoError(); yyclearin;}
 
 DMATerm
     : PARSEOP_DMA

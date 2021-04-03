@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2021, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -276,7 +276,8 @@ const char                      *AslCompilerMsgs [] =
 /*    ASL_MSG_EXTERNAL_FOUND_HERE */        "External declaration below ",
 /*    ASL_MSG_LOWER_CASE_NAMESEG */         "At least one lower case letter found in NameSeg, ASL is case insensitive - converting to upper case",
 /*    ASL_MSG_LOWER_CASE_NAMEPATH */        "At least one lower case letter found in NamePath, ASL is case insensitive - converting to upper case",
-/*    ASL_MSG_UUID_NOT_FOUND */             "Unknown UUID string"
+/*    ASL_MSG_UUID_NOT_FOUND */             "Unknown UUID string",
+/*    ASL_MSG_LEGACY_DDB_TYPE */            "DDBHandleObj has been deprecated along with the Unload operator. DDBHandlObj objects are only used in Unload"
 };
 
 /* Table compiler */
