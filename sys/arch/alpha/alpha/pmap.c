@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.274 2020/12/29 17:16:15 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.275 2021/04/03 14:56:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.274 2020/12/29 17:16:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275 2021/04/03 14:56:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,6 +962,13 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 	if (activation_locked) {
 		KASSERT(tlbctx->t_pmap != NULL);
 		PMAP_ACT_UNLOCK(tlbctx->t_pmap);
+		/*
+		 * When we acquired the activation lock, we
+		 * raised IPL to IPL_SCHED, which blocks out
+		 * IPIs.  Force our IPL back down to IPL_VM
+		 * so that we can receive IPIs.
+		 */
+		alpha_pal_swpipl(IPL_VM);
 	}
 
 	/*
