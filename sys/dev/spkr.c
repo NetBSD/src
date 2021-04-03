@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.17 2019/04/18 13:01:38 isaki Exp $	*/
+/*	$NetBSD: spkr.c,v 1.18 2021/04/03 03:21:53 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.17 2019/04/18 13:01:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.18 2021/04/03 03:21:53 isaki Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -180,7 +180,7 @@ playtone(struct spkr_softc *sc, int pitch, int val, int sustain)
 	silence = fac * snum / (fval * sdenom);
 
 #ifdef SPKRDEBUG
-	aprint_debug_dev(sc->sc_dev,
+	device_printf(sc->sc_dev,
 	    "%s: pitch %d for %d ticks, rest for %d ticks\n", __func__,
 	    pitch, sound, silence);
 #endif /* SPKRDEBUG */
@@ -207,7 +207,11 @@ playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 		char c = toupper((unsigned char)*cp);
 
 #ifdef SPKRDEBUG
-		aprint_debug_dev(sc->sc_dev, "%s: %c (%x)\n", __func__, c, c);
+		if (0x20 <= c && c < 0x7f) {
+			device_printf(sc->sc_dev, "%s: '%c'\n", __func__, c);
+		} else {
+			device_printf(sc->sc_dev, "%s: (0x%x)\n", __func__, c);
+		}
 #endif /* SPKRDEBUG */
 
 		switch (c) {
@@ -431,11 +435,11 @@ spkr_childdet(device_t self, device_t child)
 int
 spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 {
-#ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64"\n", __func__, dev);
-#endif /* SPKRDEBUG */
 	struct spkr_softc *sc = spkrenter(minor(dev));
 
+#ifdef SPKRDEBUG
+	device_printf(sc->sc_dev, "%s: entering\n", __func__);
+#endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf != NULL)
@@ -449,12 +453,12 @@ spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 int
 spkrwrite(dev_t dev, struct uio *uio, int flags)
 {
-#ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64", count = %zu\n",
-	    __func__, dev, uio->uio_resid);
-#endif /* SPKRDEBUG */
 	struct spkr_softc *sc = spkrenter(minor(dev));
 
+#ifdef SPKRDEBUG
+	device_printf(sc->sc_dev, "%s: entering with length = %zu\n",
+	    __func__, uio->uio_resid);
+#endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf == NULL)
@@ -471,11 +475,11 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
 int
 spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-#ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64"\n", __func__, dev);
-#endif /* SPKRDEBUG */
 	struct spkr_softc *sc = spkrenter(minor(dev));
 
+#ifdef SPKRDEBUG
+	device_printf(sc->sc_dev, "%s: entering\n", __func__);
+#endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf == NULL)
@@ -500,16 +504,15 @@ playonetone(struct spkr_softc *sc, tone_t *tp)
 int
 spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	struct spkr_softc *sc = spkrenter(minor(dev));
 	tone_t *tp;
 	tone_t ttp;
 	int error;
+
 #ifdef SPKRDEBUG
-	aprint_debug("%s: entering with dev = %"PRIx64", cmd = %lx\n",
-	    __func__, dev, cmd);
+	device_printf(sc->sc_dev, "%s: entering with cmd = %lx\n",
+	    __func__, cmd);
 #endif /* SPKRDEBUG */
-
-	struct spkr_softc *sc = spkrenter(minor(dev));
-
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_inbuf == NULL)

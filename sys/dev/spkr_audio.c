@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.9 2021/02/17 12:37:33 isaki Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.10 2021/04/03 03:21:53 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.9 2021/02/17 12:37:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.10 2021/04/03 03:21:53 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
 	struct spkr_audio_softc *sc = device_private(self);
 
 #ifdef SPKRDEBUG
-	aprint_debug_dev(self, "%s: %u %d\n", __func__, xhz, ticks);
+	device_printf(self, "%s: %u %u\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
 	audiobell(sc->sc_audiodev, xhz, hztoms(ticks),
 	    sc->sc_spkr.sc_vol, 0);

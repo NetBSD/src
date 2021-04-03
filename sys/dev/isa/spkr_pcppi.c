@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.11 2017/06/14 05:01:35 pgoyette Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.12 2021/04/03 03:21:53 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.11 2017/06/14 05:01:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.12 2021/04/03 03:21:53 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static void
 spkr_pcppi_tone(device_t self, u_int xhz, u_int ticks)
 {
 #ifdef SPKRDEBUG
-	aprint_debug_dev(self, "%s: %u %u\n", __func__, xhz, ticks);
+	device_printf(self, "%s: %u %u\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
 	struct spkr_pcppi_softc *sc = device_private(self);
 	(*sc->sc_bell_func)(sc->sc_pcppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
