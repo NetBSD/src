@@ -1,8 +1,10 @@
-# $NetBSD: md.amiga,v 1.56 2014/08/06 12:15:01 martin Exp $
+# $NetBSD: md.amiga,v 1.56.30.1 2021/04/03 22:43:39 thorpej Exp $
 ./sbin/binpatch					base-sysutil-root
 ./usr/mdec/boot.amiga				base-sysutil-bin
 ./usr/mdec/bootxx_fd				base-sysutil-bin
-./usr/mdec/bootxx_ffs				base-sysutil-bin
+./usr/mdec/bootxx_ffs				base-sysutil-bin	obsolete
+./usr/mdec/bootxx_ffsv1				base-sysutil-bin
+./usr/mdec/bootxx_ffsv2				base-sysutil-bin
 ./usr/mdec/fdboot				base-obsolete		obsolete
 ./usr/mdec/installboot				base-obsolete		obsolete
 ./usr/mdec/xxboot				base-obsolete		obsolete

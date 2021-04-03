@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.344.2.1 2021/01/03 16:49:31 thorpej Exp $
+# $NetBSD: mi,v 1.344.2.2 2021/04/03 22:43:40 thorpej Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -320,6 +320,7 @@
 ./usr/libdata/debug/bin/tar.debug		comp-util-debug		debug,bsdtar
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
 ./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd			comp-sysutil-debug	debug,kernel_dir
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/apmlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug
