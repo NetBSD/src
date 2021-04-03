@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.396 2021/01/11 17:18:51 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.397 2021/04/03 11:19:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.396 2021/01/11 17:18:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.397 2021/04/03 11:19:11 simonb Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -109,6 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.396 2021/01/11 17:18:51 skrll Exp $")
 #endif /* PAX_SEGVGUARD */
 
 #include <uvm/uvm_extern.h>
+
+/* Many hard-coded assumptions that there are <= 4 x 32bit signal mask bits */
+__CTASSERT(NSIG <= 128);
 
 #define	SIGQUEUE_MAX	32
 static pool_cache_t	sigacts_cache	__read_mostly;
