@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2021, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -326,6 +326,7 @@ NamePathTail                [.]{NameSeg}
 "ResourceTemplate"          { count (1); return (PARSEOP_RESOURCETEMPLATE); }
 "RawDataBuffer"             { count (1); return (PARSEOP_DATABUFFER); }
 
+"Csi2Bus"                   { count (1); return (PARSEOP_CSI2_SERIALBUS); }
 "DMA"                       { count (1); return (PARSEOP_DMA); }
 "DWordIO"                   { count (1); return (PARSEOP_DWORDIO); }
 "DWordMemory"               { count (1); return (PARSEOP_DWORDMEMORY); }
@@ -704,9 +705,9 @@ NamePathTail                [.]{NameSeg}
 "__PATH__"                  { count (0); return (PARSEOP___PATH__); }
 "__METHOD__"                { count (0); return (PARSEOP___METHOD__); }
 "__EXPECT__"{ErrorCode}     { char *s;
-                                int index = 0;
+                                unsigned int index = 0;
                                 count (0);
-                                while (!isdigit (AslCompilertext[index]))
+                                while (!isdigit ((int) AslCompilertext[index]))
                                 {
                                     index++;
                                 }
