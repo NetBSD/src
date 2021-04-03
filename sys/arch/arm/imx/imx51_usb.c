@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_usb.c,v 1.5.12.2 2021/03/21 17:35:40 thorpej Exp $	*/
+/*	$NetBSD: imx51_usb.c,v 1.5.12.3 2021/04/03 01:57:09 thorpej Exp $	*/
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.5.12.2 2021/03/21 17:35:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.5.12.3 2021/04/03 01:57:09 thorpej Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -91,7 +91,7 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 
 	if (config_match(parent, cf, &aa) > 0)
-		config_attach(parent, cf, &aa, imxusbc_print);
+		config_attach(parent, cf, &aa, imxusbc_print, CFARG_EOL);
 
 	return 0;
 }

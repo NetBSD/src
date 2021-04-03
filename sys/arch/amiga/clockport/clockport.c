@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport.c,v 1.5.52.2 2021/03/21 17:35:40 thorpej Exp $ */
+/*      $NetBSD: clockport.c,v 1.5.52.3 2021/04/03 01:57:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ clockport_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	a.cp_intr_establish = sc->cpb_aa->cp_intr_establish;
 
 	if (config_match(parent, cf, &a)) {
-		config_attach(parent, cf, &a, clockport_print);
+		config_attach(parent, cf, &a, clockport_print, CFARG_EOL);
 		return 1;
 	}
 

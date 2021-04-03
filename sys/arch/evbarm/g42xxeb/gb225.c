@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.10.68.2 2021/03/21 17:35:42 thorpej Exp $ */
+/*	$NetBSD: gb225.c,v 1.10.68.3 2021/04/03 01:57:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -191,7 +191,7 @@ opio_search(device_t parent, cfdata_t cf,
         oba.oba_intr = cf->cf_loc[OPIOCF_INTR];
 
         if (config_match(parent, cf, &oba) > 0)
-                config_attach(parent, cf, &oba, opio_print);
+                config_attach(parent, cf, &oba, opio_print, CFARG_EOL);
 
         return 0;
 }

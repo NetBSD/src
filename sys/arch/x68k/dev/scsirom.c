@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.20.44.2 2021/03/21 17:35:48 thorpej Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.20.44.3 2021/04/03 01:57:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.20.44.2 2021/03/21 17:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.20.44.3 2021/04/03 01:57:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ scsirom_attach(device_t parent, device_t self, void *aux)
 	cf = config_search(self, ia,
 	    CFARG_EOL);
 	if (cf) {
-		config_attach(self, cf, ia, NULL);
+		config_attach(self, cf, ia, NULL, CFARG_EOL);
 	} else {
 		aprint_normal_dev(self, "no matching device; ignored.\n");
 	}

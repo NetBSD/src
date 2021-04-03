@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.4.68.2 2021/03/21 17:35:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.4.68.3 2021/04/03 01:57:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,7 +110,7 @@ ioplanar_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			idaa.idaa_device = rainbow_map[i];
 			if (config_match(parent, cf, &idaa) > 0)
 				config_attach(parent, cf, &idaa,
-				    ioplanar_print);
+				    ioplanar_print, CFARG_EOL);
 		}
 		break;
 	default:

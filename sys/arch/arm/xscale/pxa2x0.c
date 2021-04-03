@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.22.52.4 2021/03/21 21:08:56 thorpej Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.22.52.5 2021/04/03 01:57:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.22.52.4 2021/03/21 21:08:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.22.52.5 2021/04/03 01:57:10 thorpej Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -250,7 +250,7 @@ pxaip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.pxa_intr = cf->cf_loc[PXAIPCF_INTR];
 
 	if (config_match(parent, cf, &aa))
-		config_attach(parent, cf, &aa, pxaip_print);
+		config_attach(parent, cf, &aa, pxaip_print, CFARG_EOL);
 
 	return 0;
 }

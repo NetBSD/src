@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.91.22.2 2021/03/21 17:35:49 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.91.22.3 2021/04/03 01:57:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.91.22.2 2021/03/21 17:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.91.22.3 2021/04/03 01:57:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,8 @@ atapi_probe_device(struct atapibus_softc *sc, int target,
 		 * XXX need it before config_attach() returns.  Must
 		 * XXX assign it in periph driver.
 		 */
-		return config_attach(sc->sc_dev, cf, sa, atapibusprint);
+		return config_attach(sc->sc_dev, cf, sa, atapibusprint,
+		    CFARG_EOL);
 	} else {
 		atapibusprint(sa, device_xname(sc->sc_dev));
 		aprint_normal(" not configured\n");

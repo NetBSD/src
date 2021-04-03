@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.10.68.2 2021/04/02 22:17:38 thorpej Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.10.68.3 2021/04/03 01:57:09 thorpej Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10.68.2 2021/04/02 22:17:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10.68.3 2021/04/03 01:57:09 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -273,7 +273,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 
 	if (config_match(parent, cf, &oa)) {
-		config_attach(parent, cf, &oa, obio_print);
+		config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 		return 0;			/* love it */
 	}
 
@@ -391,7 +391,7 @@ obio_attach_critical(struct obio_softc *sc)
 		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
 		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
-		config_attach(sc->sc_dev, cf, &oa, obio_print);
+		config_attach(sc->sc_dev, cf, &oa, obio_print, CFARG_EOL);
 	}
 }
 

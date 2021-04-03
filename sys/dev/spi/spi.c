@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.16.2.4 2021/03/22 16:23:46 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.16.2.5 2021/04/03 01:57:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.16.2.4 2021/03/22 16:23:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.16.2.5 2021/04/03 01:57:18 thorpej Exp $");
 
 #include "locators.h"
 
@@ -160,7 +160,7 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	if (config_match(parent, cf, &sa) > 0) {
 		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
-		config_attach(parent, cf, &sa, spi_print);
+		config_attach(parent, cf, &sa, spi_print, CFARG_EOL);
 	}
 
 	return 0;

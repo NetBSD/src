@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.22.52.3 2021/03/21 17:35:44 thorpej Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.22.52.4 2021/04/03 01:57:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.22.52.3 2021/03/21 17:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.22.52.4 2021/04/03 01:57:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ txcsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ca.ca_irq3		= cf->cf_loc[TXCSBUSCF_IRQ3];
 	
 	if (config_match(parent, cf, &ca) == sc->sc_pri) {
-		config_attach(parent, cf, &ca, txcsbus_print);
+		config_attach(parent, cf, &ca, txcsbus_print, CFARG_EOL);
 	}
 
 	return (0);

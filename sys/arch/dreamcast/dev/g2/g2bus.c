@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.14.74.2 2021/03/21 17:35:42 thorpej Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.14.74.3 2021/04/03 01:57:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.14.74.2 2021/03/21 17:35:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.14.74.3 2021/04/03 01:57:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ g2bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, g2busprint);
+		config_attach(parent, cf, aux, g2busprint, CFARG_EOL);
 
 	return 0;
 }

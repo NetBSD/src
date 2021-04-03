@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.24.28.3 2021/03/21 17:35:44 thorpej Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.24.28.4 2021/04/03 01:57:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.24.28.3 2021/03/21 17:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.24.28.4 2021/04/03 01:57:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ vrc4173bcu_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
 	if ((config_match(parent, cf, &va) == sc->sc_pri))
-		config_attach(parent, cf, &va, vrc4173bcu_print);
+		config_attach(parent, cf, &va, vrc4173bcu_print, CFARG_EOL);
 
 	return (0);
 }

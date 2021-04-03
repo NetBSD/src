@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.65.14.2 2021/03/21 17:35:48 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.65.14.3 2021/04/03 01:57:16 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.65.14.2 2021/03/21 17:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.65.14.3 2021/04/03 01:57:16 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -220,7 +220,7 @@ vsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_dmaaddr = sc->sc_dmaaddr;
 	va.va_dmasize = sc->sc_dmasize;
 	*sc->sc_intmsk = c; /* Allow interrupts during attach */
-	config_attach(parent, cf, &va, vsbus_print);
+	config_attach(parent, cf, &va, vsbus_print, CFARG_EOL);
 	*sc->sc_intmsk = 0;
 	return 0;
 

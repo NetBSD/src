@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_spi.c,v 1.7.52.2 2021/03/21 17:35:41 thorpej Exp $ */
+/* $NetBSD: s3c2410_spi.c,v 1.7.52.3 2021/04/03 01:57:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.7.52.2 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.7.52.3 2021/04/03 01:57:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ ssspi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	spia.spia_dmat = s3c2xx0_softc->sc_dmat;
 
         if (config_match(parent, cf, &spia))
-                config_attach(parent, cf, &spia, ssspi_print);
+                config_attach(parent, cf, &spia, ssspi_print, CFARG_EOL);
 
         return 0;
 }

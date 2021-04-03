@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.13.2.2 2021/03/21 17:35:46 thorpej Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.13.2.3 2021/04/03 01:57:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.13.2.2 2021/03/21 17:35:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.13.2.3 2021/04/03 01:57:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,8 @@ pnpbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
 		pnp_getpna(&pna, paa, &ppc_dev[i]);
 		if (config_match(parent, cf, &pna) > 0)
-			config_attach(parent, cf, &pna, pnpbus_print);
+			config_attach(parent, cf, &pna, pnpbus_print,
+			    CFARG_EOL);
 	}
 
 	return 0;

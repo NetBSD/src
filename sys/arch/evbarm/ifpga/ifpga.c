@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.28.4.2 2021/04/02 22:17:39 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.28.4.3 2021/04/03 01:57:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28.4.2 2021/04/02 22:17:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28.4.3 2021/04/03 01:57:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -124,7 +124,7 @@ ifpga_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 		tryagain = 0;
 		if (config_match(parent, cf, &ifa) > 0) {
-			config_attach(parent, cf, &ifa, ifpga_print);
+			config_attach(parent, cf, &ifa, ifpga_print, CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);

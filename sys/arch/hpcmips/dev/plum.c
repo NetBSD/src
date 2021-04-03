@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.18.2.3 2021/03/21 17:35:44 thorpej Exp $ */
+/*	$NetBSD: plum.c,v 1.18.2.4 2021/04/03 01:57:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.18.2.3 2021/03/21 17:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.18.2.4 2021/04/03 01:57:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ plum_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	pa.pa_irq	= sc->sc_irq;
 
 	if (config_match(parent, cf, &pa) == sc->sc_pri) {
-		config_attach(parent, cf, &pa, plum_print);
+		config_attach(parent, cf, &pa, plum_print, CFARG_EOL);
 	}
 
 	return 0;

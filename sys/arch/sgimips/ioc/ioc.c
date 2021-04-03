@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.11.32.2 2021/03/21 17:35:47 thorpej Exp $	 */
+/* $NetBSD: ioc.c,v 1.11.32.3 2021/04/03 01:57:16 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.11.32.2 2021/03/21 17:35:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.11.32.3 2021/04/03 01:57:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ ioc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 		tryagain = 0;
 		if (config_match(parent, cf, &iaa) > 0) {
-			config_attach(parent, cf, &iaa, ioc_print);
+			config_attach(parent, cf, &iaa, ioc_print, CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);

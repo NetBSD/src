@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.27.10.2 2021/03/21 17:35:48 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.27.10.3 2021/04/03 01:57:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.27.10.2 2021/03/21 17:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.27.10.3 2021/04/03 01:57:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,8 @@ static int
 mfp_search(device_t parent, cfdata_t cf, const int *loc, void *aux)
 {
 	if (config_match(parent, cf, __UNCONST(cf->cf_name)) > 0)
-		config_attach(parent, cf, __UNCONST(cf->cf_name), NULL);
+		config_attach(parent, cf, __UNCONST(cf->cf_name), NULL,
+		    CFARG_EOL);
 	return 0;
 }
 

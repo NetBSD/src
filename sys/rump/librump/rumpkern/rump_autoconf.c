@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_autoconf.c,v 1.1.14.1 2021/03/20 19:33:42 thorpej Exp $	*/
+/*	$NetBSD: rump_autoconf.c,v 1.1.14.2 2021/04/03 01:57:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_autoconf.c,v 1.1.14.1 2021/03/20 19:33:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_autoconf.c,v 1.1.14.2 2021/04/03 01:57:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,7 +119,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	maa.maa_unit = cf->cf_unit;
 	if (config_match(parent, cf, &maa) > 0)
-		config_attach(parent, cf, &maa, NULL);
+		config_attach(parent, cf, &maa, NULL, CFARG_EOL);
 
 	return 0;
 }

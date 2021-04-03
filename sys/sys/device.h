@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.167.2.4 2021/04/02 22:17:46 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.167.2.5 2021/04/03 01:57:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -584,7 +584,7 @@ cfdata_t config_rootsearch(cfsubmatch_t, const char *, void *);
 device_t config_found(device_t, void *, cfprint_t, cfarg_t, ...);
 device_t config_rootfound(const char *, void *);
 device_t config_attach_loc(device_t, cfdata_t, const int *, void *, cfprint_t);
-device_t config_attach(device_t, cfdata_t, void *, cfprint_t);
+device_t config_attach(device_t, cfdata_t, void *, cfprint_t, cfarg_t, ...);
 int	config_match(device_t, cfdata_t, void *);
 
 bool	ifattr_match(const char *, const char *);

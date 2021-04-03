@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.14.52.2 2021/03/21 17:35:41 thorpej Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.14.52.3 2021/04/03 01:57:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.14.52.2 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.14.52.3 2021/04/03 01:57:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ s3c2800_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.sa_intr = cf->cf_loc[SSIOCF_INTR];
 
 	if (config_match(parent, cf, &aa))
-		config_attach(parent, cf, &aa, s3c2800_print);
+		config_attach(parent, cf, &aa, s3c2800_print, CFARG_EOL);
 
 	return 0;
 }

@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_extint.c,v 1.3.4.2 2021/03/21 17:35:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_extint.c,v 1.3.4.3 2021/04/03 01:57:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ ssextio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa.sa_dmat = cpuc->sc_sx.sc_dmat;
 
 	if (config_match(parent, cf, &sa))
-		config_attach(parent, cf, &sa, ssextio_print);
+		config_attach(parent, cf, &sa, ssextio_print, CFARG_EOL);
 
 	return 0;
 }

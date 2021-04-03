@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.6.44.2 2021/03/21 17:35:40 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.6.44.3 2021/04/03 01:57:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -205,6 +205,7 @@ bcmccb_mainbus_attach(device_t parent, device_t self, void *aux)
 					    CFARG_SUBMATCH, bcmccb_find,
 					    CFARG_EOL);
 		if (cf != NULL)
-			config_attach(self, cf, &ccbaa, bcmccb_print);
+			config_attach(self, cf, &ccbaa, bcmccb_print,
+			    CFARG_EOL);
 	}
 }
