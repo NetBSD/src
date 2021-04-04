@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.7.12.3 2021/04/03 01:57:09 thorpej Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.7.12.4 2021/04/04 22:01:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.7.12.3 2021/04/03 01:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.7.12.4 2021/04/04 22:01:12 thorpej Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -176,7 +176,7 @@ ahb_attach(device_t parent, device_t self, void *aux)
 	ahba.ahba_memt = sc->sc_memt;
 	ahba.ahba_dmat = sc->sc_dmat;
 	config_search(self, &ahba,
-	    CFARG_SUBMATCH, ahb_search,
+	    CFARG_SEARCH, ahb_search,
 	    CFARG_EOL);
 }
 

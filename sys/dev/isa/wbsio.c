@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.25.12.2 2021/04/03 01:57:17 thorpej Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.25.12.3 2021/04/04 22:01:22 thorpej Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -333,7 +333,7 @@ wbsio_rescan(device_t self, const char *ifattr, const int *locators)
 #if NGPIO > 0
 	if (ifattr_match(ifattr, "gpiobus")) {
 		config_search(self, NULL,
-		    CFARG_SUBMATCH, wbsio_gpio_search,
+		    CFARG_SEARCH, wbsio_gpio_search,
 		    CFARG_IATTR, ifattr,
 		    CFARG_LOCATORS, locators,
 		    CFARG_EOL);
@@ -341,7 +341,7 @@ wbsio_rescan(device_t self, const char *ifattr, const int *locators)
 	}
 #endif
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, wbsio_search,
+	    CFARG_SEARCH, wbsio_search,
 	    CFARG_IATTR, ifattr,
 	    CFARG_LOCATORS, locators,
 	    CFARG_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_ixme.c,v 1.5.52.3 2021/04/03 01:57:10 thorpej Exp $	*/
+/*	$NetBSD: ixp425_ixme.c,v 1.5.52.4 2021/04/04 22:01:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.5.52.3 2021/04/03 01:57:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.5.52.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ ixme_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dt._dmatag_destroy = _bus_dmatag_destroy;
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, ixme_search,
+	    CFARG_SEARCH, ixme_search,
 	    CFARG_EOL);
 }
 

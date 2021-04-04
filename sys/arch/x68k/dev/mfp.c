@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.27.10.3 2021/04/03 01:57:16 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.27.10.4 2021/04/04 22:01:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.27.10.3 2021/04/03 01:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.27.10.4 2021/04/04 22:01:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ mfp_attach(device_t parent, device_t self, void *aux)
 #endif
 	bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, mfp_search,
+	    CFARG_SEARCH, mfp_search,
 	    CFARG_EOL);
 }
 

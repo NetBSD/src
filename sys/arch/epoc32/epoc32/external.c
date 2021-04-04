@@ -1,4 +1,4 @@
-/*	$NetBSD: external.c,v 1.2.50.3 2021/04/03 01:57:11 thorpej Exp $	*/
+/*	$NetBSD: external.c,v 1.2.50.4 2021/04/04 22:01:14 thorpej Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: external.c,v 1.2.50.3 2021/04/03 01:57:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: external.c,v 1.2.50.4 2021/04/04 22:01:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,7 +65,7 @@ external_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, external_search,
+	    CFARG_SEARCH, external_search,
 	    CFARG_EOL);
 }
 

@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.4.68.3 2021/04/03 01:57:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.4.68.4 2021/04/04 22:01:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,7 +87,7 @@ ioplanar_attach(device_t parent, device_t self, void *aux)
 	sc->sc_devid = ma->ma_id;
 
 	config_search(self, aux,
-	    CFARG_SUBMATCH, ioplanar_search,
+	    CFARG_SEARCH, ioplanar_search,
 	    CFARG_EOL);
 }
 

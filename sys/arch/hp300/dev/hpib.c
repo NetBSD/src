@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.41.2.3 2021/04/03 01:57:12 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.41.2.4 2021/04/04 22:01:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.41.2.3 2021/04/03 01:57:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.41.2.4 2021/04/04 22:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ hpibbus_attach_children(struct hpibbus_softc *sc)
 		 * Search though all configured children for this bus.
 		 */
 		config_search(sc->sc_dev, &ha,
-		    CFARG_SUBMATCH, hpibbussearch,
+		    CFARG_SEARCH, hpibbussearch,
 		    CFARG_EOL);
 	}
 }

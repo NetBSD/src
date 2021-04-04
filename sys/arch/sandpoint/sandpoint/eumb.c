@@ -1,4 +1,4 @@
-/* $NetBSD: eumb.c,v 1.6.62.3 2021/04/03 01:57:15 thorpej Exp $ */
+/* $NetBSD: eumb.c,v 1.6.62.4 2021/04/04 22:01:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.6.62.3 2021/04/03 01:57:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.6.62.4 2021/04/04 22:01:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,7 +70,7 @@ eumb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 	config_search(self, aux,
-	    CFARG_SUBMATCH, eumb_search,
+	    CFARG_SEARCH, eumb_search,
 	    CFARG_EOL);
 }
 

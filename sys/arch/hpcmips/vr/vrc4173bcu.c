@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.24.28.4 2021/04/03 01:57:13 thorpej Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.24.28.5 2021/04/04 22:01:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.24.28.4 2021/04/03 01:57:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.24.28.5 2021/04/04 22:01:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ vrc4173bcu_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (sc->sc_pri = 2; 0 < sc->sc_pri; sc->sc_pri--) {
 		config_search(self, NULL,
-		    CFARG_SUBMATCH, vrc4173bcu_search,
+		    CFARG_SEARCH, vrc4173bcu_search,
 		    CFARG_EOL);
 	}
 }

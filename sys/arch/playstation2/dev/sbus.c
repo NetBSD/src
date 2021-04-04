@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.17.30.3 2021/04/03 01:57:15 thorpej Exp $	*/
+/*	$NetBSD: sbus.c,v 1.17.30.4 2021/04/04 22:01:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.17.30.3 2021/04/03 01:57:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.17.30.4 2021/04/04 22:01:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,7 +113,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	sbus_init(type);
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, sbus_search,
+	    CFARG_SEARCH, sbus_search,
 	    CFARG_EOL);
 }
 

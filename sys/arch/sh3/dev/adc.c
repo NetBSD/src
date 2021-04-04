@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.13.74.3 2021/04/03 01:57:16 thorpej Exp $ */
+/*	$NetBSD: adc.c,v 1.13.74.4 2021/04/04 22:01:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.13.74.3 2021/04/03 01:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.13.74.4 2021/04/04 22:01:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,7 +80,7 @@ adc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, adc_search,
+	    CFARG_SEARCH, adc_search,
 	    CFARG_EOL);
 
 	/*

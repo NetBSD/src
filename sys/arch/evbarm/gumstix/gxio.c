@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.26.16.3 2021/04/03 01:57:11 thorpej Exp $ */
+/*	$NetBSD: gxio.c,v 1.26.16.4 2021/04/04 22:01:15 thorpej Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.26.16.3 2021/04/03 01:57:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.26.16.4 2021/04/04 22:01:15 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -391,7 +391,7 @@ gxioattach(device_t parent, device_t self, void *aux)
 	 *  Attach each gumstix(busheader)/overo expansion board devices.
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, gxiosearch,
+	    CFARG_SEARCH, gxiosearch,
 	    CFARG_EOL);
 }
 

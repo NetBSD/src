@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.21.42.3 2021/04/03 01:57:09 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.21.42.4 2021/04/04 22:01:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.42.3 2021/04/03 01:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.42.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ mainbusattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, mainbussearch,
+	    CFARG_SEARCH, mainbussearch,
 	    CFARG_EOL);
 }
 

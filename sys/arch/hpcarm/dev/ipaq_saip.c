@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.23.68.3 2021/04/03 01:57:12 thorpej Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.23.68.4 2021/04/04 22:01:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.23.68.3 2021/04/03 01:57:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.23.68.4 2021/04/04 22:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ ipaq_attach(device_t parent, device_t self, void *aux)
 	 *  Attach each devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, ipaq_search,
+	    CFARG_SEARCH, ipaq_search,
 	    CFARG_EOL);
 }
 

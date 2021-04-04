@@ -1,4 +1,4 @@
-/*	$NetBSD: nbppcon.c,v 1.3.16.3 2021/04/03 01:57:12 thorpej Exp $ */
+/*	$NetBSD: nbppcon.c,v 1.3.16.4 2021/04/04 22:01:16 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.3.16.3 2021/04/03 01:57:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.3.16.4 2021/04/04 22:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,7 +108,7 @@ nbppcon_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "NVRAM read failed\n");
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, nbppcon_search,
+	    CFARG_SEARCH, nbppcon_search,
 	    CFARG_EOL);
 }
 

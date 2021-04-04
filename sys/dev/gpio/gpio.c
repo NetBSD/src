@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.64.10.7 2021/04/03 06:54:29 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.64.10.8 2021/04/04 22:01:22 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.7 2021/04/03 06:54:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64.10.8 2021/04/04 22:01:22 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -191,7 +191,7 @@ gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, gpio_search,
+	    CFARG_SEARCH, gpio_search,
 	    CFARG_EOL);
 
 	return 0;

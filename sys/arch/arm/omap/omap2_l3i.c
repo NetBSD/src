@@ -1,7 +1,7 @@
-/*	$Id: omap2_l3i.c,v 1.6.68.3 2021/04/03 01:57:09 thorpej Exp $	*/
+/*	$Id: omap2_l3i.c,v 1.6.68.4 2021/04/04 22:01:13 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_l3i.c,v 1.6.68.3 2021/04/03 01:57:09 thorpej Exp $ */
+/*	$NetBSD: omap2_l3i.c,v 1.6.68.4 2021/04/04 22:01:13 thorpej Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.6.68.3 2021/04/03 01:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.6.68.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include "locators.h"
 
@@ -221,7 +221,7 @@ L3i_attach(device_t parent, device_t self, void *aux)
 	 * Attach all our devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, L3i_search,
+	    CFARG_SEARCH, L3i_search,
 	    CFARG_EOL);
 #endif
 }

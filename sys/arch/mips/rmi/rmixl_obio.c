@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.5.68.3 2021/04/03 01:57:14 thorpej Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.5.68.4 2021/04/04 22:01:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.5.68.3 2021/04/03 01:57:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.5.68.4 2021/04/04 22:01:17 thorpej Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -118,7 +118,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 * Attach on-board devices as specified in the kernel config file.
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, obio_search,
+	    CFARG_SEARCH, obio_search,
 	    CFARG_EOL);
 
 }

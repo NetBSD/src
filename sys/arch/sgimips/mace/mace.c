@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.23.32.3 2021/04/03 01:57:16 thorpej Exp $	*/
+/*	$NetBSD: mace.c,v 1.23.32.4 2021/04/04 22:01:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.23.32.3 2021/04/03 01:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.23.32.4 2021/04/04 22:01:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ mace_attach(device_t parent, device_t self, void *aux)
 	}
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, mace_search,
+	    CFARG_SEARCH, mace_search,
 	    CFARG_EOL);
 }
 
