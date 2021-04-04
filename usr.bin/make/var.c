@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.904 2021/04/03 23:24:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.905 2021/04/04 11:47:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.904 2021/04/03 23:24:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.905 2021/04/04 11:47:54 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1272,6 +1272,13 @@ GNode_ValueDirect(GNode *gn, const char *name)
 }
 
 
+static bool
+VarEvalFlags_ShouldEval(VarEvalFlags eflags)
+{
+	return eflags.wantRes;
+}
+
+
 static void
 SepBuf_Init(SepBuf *buf, char sep)
 {
@@ -2119,6 +2126,19 @@ Expr_SetValueRefer(Expr *expr, const char *value)
 	expr->value = FStr_InitRefer(value);
 }
 
+static bool
+Expr_ShouldEval(const Expr *expr)
+{
+	return VarEvalFlags_ShouldEval(expr->eflags);
+}
+
+static bool
+ModChain_ShouldEval(const ModChain *ch)
+{
+	return Expr_ShouldEval(ch->expr);
+}
+
+
 typedef enum ApplyModifierResult {
 	/* Continue parsing */
 	AMR_OK,
@@ -2525,7 +2545,7 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 
 	Expr_Define(expr);
 
-	if (eflags.wantRes)
+	if (VarEvalFlags_ShouldEval(eflags))
 		Expr_SetValueOwn(expr, Buf_DoneData(&buf));
 	else
 		Buf_Done(&buf);
@@ -2541,7 +2561,7 @@ ApplyModifier_Literal(const char **pp, ModChain *ch)
 
 	(*pp)++;
 
-	if (expr->eflags.wantRes) {
+	if (Expr_ShouldEval(expr)) {
 		Expr_Define(expr);
 		Expr_SetValueOwn(expr, bmake_strdup(expr->name));
 	}
@@ -2591,7 +2611,7 @@ ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 		*pp = mod + 6;
 	}
 
-	if (ch->expr->eflags.wantRes)
+	if (ModChain_ShouldEval(ch))
 		Expr_SetValueOwn(ch->expr,
 		    VarStrftime(ch->expr->value.str, true, utc));
 
@@ -2621,7 +2641,7 @@ ApplyModifier_Localtime(const char **pp, ModChain *ch)
 		*pp = mod + 9;
 	}
 
-	if (ch->expr->eflags.wantRes)
+	if (ModChain_ShouldEval(ch))
 		Expr_SetValueOwn(ch->expr,
 		    VarStrftime(ch->expr->value.str, false, utc));
 
@@ -2636,7 +2656,7 @@ ApplyModifier_Hash(const char **pp, ModChain *ch)
 		return AMR_UNKNOWN;
 	*pp += 4;
 
-	if (ch->expr->eflags.wantRes)
+	if (ModChain_ShouldEval(ch))
 		Expr_SetValueOwn(ch->expr, VarHash(ch->expr->value.str));
 
 	return AMR_OK;
@@ -2652,7 +2672,7 @@ ApplyModifier_Path(const char **pp, ModChain *ch)
 
 	(*pp)++;
 
-	if (!ch->expr->eflags.wantRes)
+	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
 	Expr_Define(expr);
@@ -2688,7 +2708,7 @@ ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 
 	errfmt = NULL;
-	if (expr->eflags.wantRes)
+	if (Expr_ShouldEval(expr))
 		Expr_SetValueOwn(expr, Cmd_Exec(cmd, &errfmt));
 	else
 		Expr_SetValueRefer(expr, "");
@@ -2729,7 +2749,7 @@ ApplyModifier_Range(const char **pp, ModChain *ch)
 		*pp = mod + 5;
 	}
 
-	if (!ch->expr->eflags.wantRes)
+	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
 	if (n == 0) {
@@ -2839,7 +2859,7 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 
 	ParseModifier_Match(pp, ch, &pattern);
 
-	if (ch->expr->eflags.wantRes) {
+	if (ModChain_ShouldEval(ch)) {
 		ModifyWordProc modifyWord =
 		    mod == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
 		ModifyWords(ch, modifyWord, pattern, ch->oneBigWord);
@@ -2959,7 +2979,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	oneBigWord = ch->oneBigWord;
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
 
-	if (!(ch->expr->eflags.wantRes)) {
+	if (!ModChain_ShouldEval(ch)) {
 		free(args.replace);
 		free(re);
 		return AMR_OK;
@@ -2995,7 +3015,7 @@ ApplyModifier_Quote(const char **pp, ModChain *ch)
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (ch->expr->eflags.wantRes)
+	if (ModChain_ShouldEval(ch))
 		Expr_SetValueOwn(ch->expr,
 		    VarQuote(ch->expr->value.str, quoteDollar));
 
@@ -3144,14 +3164,14 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 
 	if (mod[1] == 'u') {				/* :tu */
 		*pp = mod + 2;
-		if (ch->expr->eflags.wantRes)
+		if (ModChain_ShouldEval(ch))
 			Expr_SetValueOwn(expr, str_toupper(expr->value.str));
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {				/* :tl */
 		*pp = mod + 2;
-		if (ch->expr->eflags.wantRes)
+		if (ModChain_ShouldEval(ch))
 			Expr_SetValueOwn(expr, str_tolower(expr->value.str));
 		return AMR_OK;
 	}
@@ -3185,7 +3205,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	if (!IsDelimiter(**pp, ch))
 		goto bad_modifier;		/* Found junk after ']' */
 
-	if (!(expr->eflags.wantRes))
+	if (!ModChain_ShouldEval(ch))
 		goto ok;
 
 	if (estr[0] == '\0')
@@ -3309,7 +3329,7 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	} else
 		return AMR_BAD;
 
-	if (!ch->expr->eflags.wantRes)
+	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
 	words = Str_Words(ch->expr->value.str, false);
@@ -3336,7 +3356,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	VarEvalFlags else_eflags = VARE_PARSE_ONLY;
 
 	int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
-	if (expr->eflags.wantRes) {
+	if (Expr_ShouldEval(expr)) {
 		cond_rc = Cond_EvalCondition(expr->name, &value);
 		if (cond_rc != COND_INVALID && value)
 			then_eflags = expr->eflags;
@@ -3361,7 +3381,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 	}
 
-	if (!expr->eflags.wantRes) {
+	if (!ModChain_ShouldEval(ch)) {
 		free(then_expr);
 		free(else_expr);
 	} else if (value) {
@@ -3437,7 +3457,7 @@ ok:
 
 	(*pp)--;		/* Go back to the ch->endc. */
 
-	if (!expr->eflags.wantRes)
+	if (!Expr_ShouldEval(expr))
 		goto done;
 
 	scope = expr->scope;	/* scope where v belongs */
@@ -3506,7 +3526,7 @@ ApplyModifier_Remember(const char **pp, ModChain *ch)
 	} else
 		*pp = mod + 1;
 
-	if (expr->eflags.wantRes)
+	if (Expr_ShouldEval(expr))
 		Var_Set(expr->scope, name.str, expr->value.str);
 	FStr_Done(&name);
 
@@ -3525,7 +3545,7 @@ ApplyModifier_WordFunc(const char **pp, ModChain *ch,
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (ch->expr->eflags.wantRes)
+	if (ModChain_ShouldEval(ch))
 		ModifyWords(ch, modifyWord, NULL, ch->oneBigWord);
 
 	return AMR_OK;
@@ -3538,7 +3558,7 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (ch->expr->eflags.wantRes)
+	if (ModChain_ShouldEval(ch))
 		Expr_SetValueOwn(ch->expr, VarUniq(ch->expr->value.str));
 
 	return AMR_OK;
@@ -3614,7 +3634,7 @@ ApplyModifier_SunShell(const char **pp, ModChain *ch)
 		return AMR_UNKNOWN;
 	*pp = p + 2;
 
-	if (expr->eflags.wantRes) {
+	if (Expr_ShouldEval(expr)) {
 		const char *errfmt;
 		char *output = Cmd_Exec(expr->value.str, &errfmt);
 		if (errfmt != NULL)
