@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.534 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.535 2021/04/04 10:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.534 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.535 2021/04/04 10:05:08 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1588,7 +1588,7 @@ main_PrepareMaking(void)
 	 * Now that all search paths have been read for suffixes et al, it's
 	 * time to add the default search path to their lists...
 	 */
-	Suff_DoPaths();
+	Suff_ExtendPaths();
 
 	/*
 	 * Propagate attributes through :: dependency lists.

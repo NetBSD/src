@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.243 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.244 2021/04/04 10:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -85,7 +85,8 @@
  *			Update the node's youngestChild field based on the
  *			child's modification time.
  *
- *	Make_DoAllVar	Set up the various local variables for a
+ *	GNode_SetLocalVars
+ *			Set up the various local variables for a
  *			target, including the .ALLSRC variable, making
  *			sure that any variable that needs to exist
  *			at the very least has the empty value.
@@ -103,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.243 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.244 2021/04/04 10:05:08 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -868,7 +869,7 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
  * match its ALLSRC variable.
  */
 void
-Make_DoAllVar(GNode *gn)
+GNode_SetLocalVars(GNode *gn)
 {
 	GNodeListNode *ln;
 
@@ -1023,7 +1024,7 @@ MakeStartJobs(void)
 			DEBUG0(MAKE, "out-of-date\n");
 			if (opts.queryFlag)
 				return true;
-			Make_DoAllVar(gn);
+			GNode_SetLocalVars(gn);
 			Job_Make(gn);
 			have_token = false;
 		} else {
@@ -1037,7 +1038,7 @@ MakeStartJobs(void)
 				 * for .TARGET when building up the local
 				 * variables of its parent(s)...
 				 */
-				Make_DoAllVar(gn);
+				GNode_SetLocalVars(gn);
 			}
 			Make_Update(gn);
 		}
