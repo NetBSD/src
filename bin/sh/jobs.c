@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.109 2020/08/30 19:45:05 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.110 2021/04/04 13:24:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.109 2020/08/30 19:45:05 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.110 2021/04/04 13:24:07 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -785,7 +785,7 @@ waitcmd(int argc, char **argv)
 	VTRACE(DBG_WAIT, ("wait %s%s%sfound %d candidates (last %s)\n",
 	    any ? "-n " : "", *argptr ? *argptr : "",
 	    argptr[0] && argptr[1] ? "... " : " ", found,
-	    job ? (job->ref ? job->ref : "<no-arg>") : "none"));
+	    job && job->used ? (job->ref ? job->ref : "<no-arg>") : "none"));
 
 	/*
 	 * If we were given a list of jobnums:
@@ -1056,6 +1056,32 @@ getjob(const char *name, int noerror)
 }
 
 
+/*
+ * Find out if there are any running (that is, unwaited upon)
+ * background children of the current shell.
+ *
+ * Return 1/0 (yes, no).
+ *
+ * Needed as we cannot optimise away sub-shell creation if
+ * we have such a child, or a "wait" in that sub-shell would
+ * observe the already existing job.
+ */
+int
+anyjobs(void)
+{
+	struct job *jp;
+	int i;
+
+	if (jobs_invalid)
+		return 0;
+
+	for (i = njobs, jp = jobtab ; --i >= 0 ; jp++) {
+		if (jp->used)
+			return 1;
+	}
+
+	return 0;
+}
 
 /*
  * Return a new job structure,
@@ -1068,6 +1094,8 @@ makejob(union node *node, int nprocs)
 	struct job *jp;
 
 	if (jobs_invalid) {
+		VTRACE(DBG_JOBS, ("makejob(%p, %d) clearing jobtab (%d)\n",
+			(void *)node, nprocs, njobs));
 		for (i = njobs, jp = jobtab ; --i >= 0 ; jp++) {
 			if (jp->used)
 				freejob(jp);
