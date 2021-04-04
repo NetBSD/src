@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.167.2.7 2021/04/03 16:09:44 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.167.2.8 2021/04/04 19:12:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -529,10 +529,11 @@ struct pdevinit {
  * config_found().
  */
 typedef enum {
-	CFARG_SUBMATCH		= 0,	/* submatch function */
-	CFARG_IATTR		= 1,	/* interface attribute */
-	CFARG_LOCATORS		= 2,	/* locators array */
-	CFARG_DEVHANDLE		= 3,	/* devhandle_t (by value) */
+	CFARG_SUBMATCH		= 0,	/* submatch function (direct config) */
+	CFARG_SEARCH		= 1,	/* search function (indirect config) */
+	CFARG_IATTR		= 2,	/* interface attribute */
+	CFARG_LOCATORS		= 3,	/* locators array */
+	CFARG_DEVHANDLE		= 4,	/* devhandle_t (by value) */
 
 	CFARG_EOL		= 0xffffffff
 } cfarg_t;
