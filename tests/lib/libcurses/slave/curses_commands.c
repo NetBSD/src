@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.22 2021/02/13 08:14:46 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.23 2021/04/04 09:34:24 rin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1988,7 +1988,7 @@ cmd_mvscanw(int nargs, char **args)
 	ARG_STRING(2, fmt);	/* Must have a single "%s" in this test. */
 
 	report_count(2);
-	report_return(mvscanw(y, x, fmt, &string));
+	report_return(mvscanw(y, x, fmt, string));
 	report_status(string);
 }
 
