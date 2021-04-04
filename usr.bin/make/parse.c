@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.554 2021/04/03 14:31:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.555 2021/04/04 09:58:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.554 2021/04/03 14:31:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.555 2021/04/04 09:58:51 rillig Exp $");
 
 /* types and constants */
 
@@ -2837,7 +2837,7 @@ ParseSkippedBranches(void)
 		 * This check will probably duplicate some of
 		 * the code in ParseLine.  Most of the code
 		 * there cannot apply, only ParseVarassign and
-		 * ParseDependency can, and to prevent code
+		 * ParseDependencyLine can, and to prevent code
 		 * duplication, these would need to be called
 		 * with a flag called onlyCheckSyntax.
 		 *
@@ -3079,7 +3079,7 @@ FindSemicolon(char *p)
  * op		-> ':' | '::' | '!'
  */
 static void
-ParseDependency(char *line)
+ParseDependencyLine(char *line)
 {
 	VarEvalFlags eflags;
 	char *expanded_line;
@@ -3190,7 +3190,7 @@ ParseLine(char *line)
 
 	FinishDependencyGroup();
 
-	ParseDependency(line);
+	ParseDependencyLine(line);
 }
 
 /*
