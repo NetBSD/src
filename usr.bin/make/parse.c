@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.556 2021/04/04 10:13:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.557 2021/04/04 11:56:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.556 2021/04/04 10:13:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.557 2021/04/04 11:56:43 rillig Exp $");
 
 /* types and constants */
 
@@ -3075,13 +3075,13 @@ FindSemicolon(char *p)
 }
 
 /*
- * dependency	-> target... op [source...]
+ * dependency	-> target... op [source...] [';' command]
  * op		-> ':' | '::' | '!'
  */
 static void
 ParseDependencyLine(char *line)
 {
-	VarEvalFlags eflags;
+	VarEvalMode emode;
 	char *expanded_line;
 	const char *shellcmd = NULL;
 
@@ -3130,8 +3130,8 @@ ParseDependencyLine(char *line)
 	 * Var_Parse does not print any parse errors in such a case.
 	 * It simply returns the special empty string var_Error,
 	 * which cannot be detected in the result of Var_Subst. */
-	eflags = opts.strict ? VARE_WANTRES : VARE_UNDEFERR;
-	(void)Var_Subst(line, SCOPE_CMDLINE, eflags, &expanded_line);
+	emode = opts.strict ? VARE_WANTRES : VARE_UNDEFERR;
+	(void)Var_Subst(line, SCOPE_CMDLINE, emode, &expanded_line);
 	/* TODO: handle errors */
 
 	/* Need a fresh list for the target nodes */
