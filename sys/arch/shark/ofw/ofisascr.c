@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.10.68.1 2021/03/21 21:09:07 thorpej Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.10.68.2 2021/04/04 17:43:52 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.10.68.1 2021/03/21 21:09:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.10.68.2 2021/04/04 17:43:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,5 +104,7 @@ ofisascrattach(device_t parent, device_t dev, void *aux)
 
 	ia.ia_aux = (void *)oba->oba_phandle;
     
-	config_found(dev, &ia, NULL, CFARG_EOL);
+	config_found(dev, &ia, NULL,
+	    CFARG_DEVHANDLE, devhandle_from_of(oba->oba_phandle),
+	    CFARG_EOL);
 }
