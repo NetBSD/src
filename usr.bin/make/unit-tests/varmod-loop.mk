@@ -1,33 +1,11 @@
-# $NetBSD: varmod-loop.mk,v 1.13 2021/03/15 17:54:49 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.14 2021/04/04 13:20:52 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
 .MAKE.SAVE_DOLLARS=	yes
 
 all: varname-overwriting-target
-all: mod-loop-resolve
-all: mod-loop-varname-dollar
 all: mod-loop-dollar
-
-# In the :@ modifier, the name of the loop variable can even be generated
-# dynamically.  There's no practical use-case for this, and hopefully nobody
-# will ever depend on this, but technically it's possible.
-# Therefore, in -dL mode, this is forbidden, see lint.mk.
-.if ${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+"
-.  error
-.endif
-
-# ":::" is a very creative variable name, unlikely in practice.
-# The expression ${\:\:\:} would not work since backslashes can only
-# be escaped in the modifiers, but not in the variable name.
-.if ${:U1 2 3:@:::@x${${:U\:\:\:}}y@} != "x1y x2y x3y"
-.  error
-.endif
-
-# "@@" is another creative variable name.
-.if ${:U1 2 3:@\@\@@x${@@}y@} != "x1y x2y x3y"
-.  error
-.endif
 
 varname-overwriting-target:
 	# Even "@" works as a variable name since the variable is installed
@@ -37,54 +15,7 @@ varname-overwriting-target:
 	# even trigger an assertion failure somewhere.
 	@echo :$@: :${:U1 2 3:@\@@x${@}y@}: :$@:
 
-# In extreme cases, even the backslash can be used as variable name.
-# It needs to be doubled though.
-.if ${:U1 2 3:@\\@x${${:Ux:S,x,\\,}}y@} != "x1y x2y x3y"
-.  error
-.endif
 
-# The variable name can technically be empty, and in this situation
-# the variable value cannot be accessed since the empty "variable"
-# is protected to always return an empty string.
-.if ${:U1 2 3:@@x${}y@} != "xy xy xy"
-.  error
-.endif
-
-
-# The :@ modifier resolves the variables from the replacement text once more
-# than expected.  In particular, it resolves _all_ variables from the scope,
-# and not only the loop variable (in this case v).
-SRCS=		source
-CFLAGS.source=	before
-ALL_CFLAGS:=	${SRCS:@src@${CFLAGS.${src}}@}	# note the ':='
-CFLAGS.source+=	after
-.if ${ALL_CFLAGS} != "before"
-.  error
-.endif
-
-
-# In the following example, the modifier ':@' expands the '$$' to '$'.  This
-# means that when the resulting expression is evaluated, these resulting '$'
-# will be interpreted as starting a subexpression.
-#
-# The d means direct reference, the i means indirect reference.
-RESOLVE=	${RES1} $${RES1}
-RES1=		1d${RES2} 1i$${RES2}
-RES2=		2d${RES3} 2i$${RES3}
-RES3=		3
-
-# TODO: convert to '.if'.
-mod-loop-resolve:
-	@echo $@:${RESOLVE:@v@w${v}w@:Q}:
-
-
-# Until 2020-07-20, the variable name of the :@ modifier could end with one
-# or two dollar signs, which were silently ignored.
-# There's no point in allowing a dollar sign in that position.
-mod-loop-varname-dollar:
-	@echo $@:${1 2 3:L:@v$@($v)@:Q}.
-	@echo $@:${1 2 3:L:@v$$@($v)@:Q}.
-	@echo $@:${1 2 3:L:@v$$$@($v)@:Q}.
 
 # Demonstrate that it is possible to generate dollar signs using the
 # :@ modifier.
