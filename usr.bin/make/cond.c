@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.260 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.261 2021/04/04 11:56:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.260 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.261 2021/04/04 11:56:43 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -264,11 +264,11 @@ ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func,
 			 * so we don't need to do it. Nor do we return an
 			 * error, though perhaps we should.
 			 */
-			VarEvalFlags eflags = doEval
+			VarEvalMode emode = doEval
 			    ? VARE_UNDEFERR
 			    : VARE_PARSE_ONLY;
 			FStr nestedVal;
-			(void)Var_Parse(&p, SCOPE_CMDLINE, eflags, &nestedVal);
+			(void)Var_Parse(&p, SCOPE_CMDLINE, emode, &nestedVal);
 			/* TODO: handle errors */
 			Buf_AddStr(&argBuf, nestedVal.str);
 			FStr_Done(&nestedVal);
@@ -414,19 +414,19 @@ CondParser_StringExpr(CondParser *par, const char *start,
 		      bool const doEval, bool const quoted,
 		      Buffer *buf, FStr *const inout_str)
 {
-	VarEvalFlags eflags;
+	VarEvalMode emode;
 	const char *nested_p;
 	bool atStart;
 	VarParseResult parseResult;
 
 	/* if we are in quotes, an undefined variable is ok */
-	eflags = doEval && !quoted ? VARE_UNDEFERR
+	emode = doEval && !quoted ? VARE_UNDEFERR
 	    : doEval ? VARE_WANTRES
 	    : VARE_PARSE_ONLY;
 
 	nested_p = par->p;
 	atStart = nested_p == start;
-	parseResult = Var_Parse(&nested_p, SCOPE_CMDLINE, eflags, inout_str);
+	parseResult = Var_Parse(&nested_p, SCOPE_CMDLINE, emode, inout_str);
 	/* TODO: handle errors */
 	if (inout_str->str == var_Error) {
 		if (parseResult == VPR_ERR) {

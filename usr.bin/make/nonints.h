@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.210 2021/04/04 10:13:09 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.211 2021/04/04 11:56:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -318,39 +318,40 @@ const char *GNodeMade_Name(GNodeMade);
 void Var_Init(void);
 void Var_End(void);
 
-typedef struct VarEvalFlags {
+typedef enum VarEvalMode {
 
 	/*
-	 * Expand and evaluate variables during parsing.
+	 * Only parse the expression but don't evaluate any part of it.
 	 *
-	 * Without this flag, the expression is only parsed, without
-	 * evaluating any part of it.
-	 *
-	 * TODO: Document what Var_Parse and Var_Subst return when this flag
-	 *  is not set.  As of 2021-03-15, they return unspecified,
-	 *  inconsistent results.
+	 * TODO: Document what Var_Parse and Var_Subst return in this mode.
+	 *  As of 2021-03-15, they return unspecified, inconsistent results.
 	 */
-	bool wantRes: 1;
+	VARE_PARSE_ONLY,
+
+	/* Parse and evaluate the expression. */
+	VARE_WANTRES,
 
 	/*
-	 * Treat undefined variables as errors.
-	 * Must only be used in combination with wantRes.
+	 * Parse and evaluate the expression.  It is an error if a
+	 * subexpression evaluates to undefined.
 	 */
-	bool undefErr: 1;
+	VARE_UNDEFERR,
 
 	/*
-	 * Keep '$$' as '$$' instead of reducing it to a single '$'.
+	 * Parse and evaluate the expression.  Keep '$$' as '$$' instead of
+	 * reducing it to a single '$'.  Subexpressions that evaluate to
+	 * undefined expand to an empty string.
 	 *
 	 * Used in variable assignments using the ':=' operator.  It allows
 	 * multiple such assignments to be chained without accidentally
 	 * expanding '$$file' to '$file' in the first assignment and
 	 * interpreting it as '${f}' followed by 'ile' in the next assignment.
 	 */
-	bool keepDollar: 1;
+	VARE_EVAL_KEEP_DOLLAR,
 
 	/*
-	 * Keep undefined variables as-is instead of expanding them to an
-	 * empty string.
+	 * Parse and evaluate the expression.  Keep undefined variables as-is
+	 * instead of expanding them to an empty string.
 	 *
 	 * Example for a ':=' assignment:
 	 *	CFLAGS = $(.INCLUDES)
@@ -359,36 +360,14 @@ typedef struct VarEvalFlags {
 	 *	# way) is still undefined, the updated CFLAGS becomes
 	 *	# "-I.. $(.INCLUDES)".
 	 */
-	bool keepUndef: 1;
+	VARE_EVAL_KEEP_UNDEF,
 
 	/*
-	 * Without this padding, GCC 9.3.0 on NetBSD 9.99.80 generates larger
-	 * code than necessary (1.2 kB), masking out the unused bits from the
-	 * int (since that is the default representation of bool in make),
-	 * even for initializers consisting entirely of constants.
+	 * Parse and evaluate the expression.  Keep '$$' as '$$' and preserve
+	 * undefined subexpressions.
 	 */
-	bool : 0;
-} VarEvalFlags;
-
-#if __STDC_VERSION__ >= 199901L
-#define VarEvalFlagsLiteral(wantRes, undefErr, keep) \
-	(VarEvalFlags) { wantRes, undefErr, keep, keep }
-#else
-MAKE_INLINE VarEvalFlags
-VarEvalFlagsLiteral(bool wantRes, bool undefErr, bool keep)
-{
-	VarEvalFlags eflags;
-	eflags.wantRes = wantRes;
-	eflags.undefErr = undefErr;
-	eflags.keepDollar = keep;
-	eflags.keepUndef = keep;
-	return eflags;
-}
-#endif
-#define VARE_PARSE_ONLY		VarEvalFlagsLiteral(false, false, false)
-#define VARE_WANTRES		VarEvalFlagsLiteral(true, false, false)
-#define VARE_UNDEFERR		VarEvalFlagsLiteral(true, true, false)
-#define VARE_KEEP_DOLLAR_UNDEF	VarEvalFlagsLiteral(true, false, true)
+	VARE_KEEP_DOLLAR_UNDEF
+} VarEvalMode;
 
 typedef enum VarSetFlags {
 	VAR_SET_NONE		= 0,
@@ -447,8 +426,8 @@ bool Var_Exists(GNode *, const char *);
 bool Var_ExistsExpand(GNode *, const char *);
 FStr Var_Value(GNode *, const char *);
 const char *GNode_ValueDirect(GNode *, const char *);
-VarParseResult Var_Parse(const char **, GNode *, VarEvalFlags, FStr *);
-VarParseResult Var_Subst(const char *, GNode *, VarEvalFlags, char **);
+VarParseResult Var_Parse(const char **, GNode *, VarEvalMode, FStr *);
+VarParseResult Var_Subst(const char *, GNode *, VarEvalMode, char **);
 void Var_Stats(void);
 void Var_Dump(GNode *);
 void Var_ReexportVars(void);

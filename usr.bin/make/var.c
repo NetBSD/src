@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.905 2021/04/04 11:47:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.906 2021/04/04 11:56:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.905 2021/04/04 11:47:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.906 2021/04/04 11:56:43 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -318,27 +318,15 @@ GNode *SCOPE_INTERNAL;
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
+static const char *VarEvalMode_Name[] = {
+	"parse-only",
+	"eval",
+	"eval-defined",
+	"eval-keep-dollar",
+	"eval-keep-undefined",
+	"eval-keep-dollar-and-undefined",
+};
 
-static const char *
-VarEvalFlags_ToString(VarEvalFlags eflags)
-{
-	if (!eflags.wantRes) {
-		assert(!eflags.undefErr);
-		assert(!eflags.keepDollar && !eflags.keepUndef);
-		return "parse-only";
-	}
-	if (eflags.undefErr) {
-		assert(!eflags.keepDollar && !eflags.keepUndef);
-		return "eval-defined";
-	}
-	if (eflags.keepDollar && eflags.keepUndef)
-		return "eval-keep-dollar-and-undefined";
-	if (eflags.keepDollar)
-		return "eval-keep-dollar";
-	if (eflags.keepUndef)
-		return "eval-keep-undefined";
-	return "eval";
-}
 
 static Var *
 VarNew(FStr name, const char *value, bool fromEnv, bool readOnly)
@@ -1271,11 +1259,40 @@ GNode_ValueDirect(GNode *gn, const char *name)
 	return v != NULL ? v->val.data : NULL;
 }
 
+static VarEvalMode
+VarEvalMode_WithoutKeepDollar(VarEvalMode emode)
+{
+	if (emode == VARE_KEEP_DOLLAR_UNDEF)
+		return VARE_EVAL_KEEP_UNDEF;
+	if (emode == VARE_EVAL_KEEP_DOLLAR)
+		return VARE_WANTRES;
+	return emode;
+}
+
+static VarEvalMode
+VarEvalMode_UndefOk(VarEvalMode emode)
+{
+	return emode == VARE_UNDEFERR ? VARE_WANTRES : emode;
+}
 
 static bool
-VarEvalFlags_ShouldEval(VarEvalFlags eflags)
+VarEvalMode_ShouldEval(VarEvalMode emode)
 {
-	return eflags.wantRes;
+	return emode != VARE_PARSE_ONLY;
+}
+
+static bool
+VarEvalMode_ShouldKeepUndef(VarEvalMode emode)
+{
+	return emode == VARE_EVAL_KEEP_UNDEF ||
+	       emode == VARE_KEEP_DOLLAR_UNDEF;
+}
+
+static bool
+VarEvalMode_ShouldKeepDollar(VarEvalMode emode)
+{
+	return emode == VARE_EVAL_KEEP_DOLLAR ||
+	       emode == VARE_KEEP_DOLLAR_UNDEF;
 }
 
 
@@ -1710,7 +1727,7 @@ struct ModifyWord_LoopArgs {
 	GNode *scope;
 	char *tvar;		/* name of temporary variable */
 	char *str;		/* string to expand */
-	VarEvalFlags eflags;
+	VarEvalMode emode;
 };
 
 /* Callback for ModifyWords to implement the :@var@...@ modifier of ODE make. */
@@ -1727,7 +1744,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 	/* XXX: The variable name should not be expanded here. */
 	Var_SetExpandWithFlags(args->scope, args->tvar, word,
 	    VAR_SET_NO_EXPORT);
-	(void)Var_Subst(args->str, args->scope, args->eflags, &s);
+	(void)Var_Subst(args->str, args->scope, args->emode, &s);
 	/* TODO: handle errors */
 
 	DEBUG4(VAR, "ModifyWord_Loop: "
@@ -2058,7 +2075,7 @@ static const char *const ExprDefined_Name[] = {
 typedef struct Expr {
 	const char *name;
 	FStr value;
-	VarEvalFlags const_member eflags;
+	VarEvalMode const_member emode;
 	GNode *const_member scope;
 	ExprDefined defined;
 } Expr;
@@ -2129,7 +2146,7 @@ Expr_SetValueRefer(Expr *expr, const char *value)
 static bool
 Expr_ShouldEval(const Expr *expr)
 {
-	return VarEvalFlags_ShouldEval(expr->eflags);
+	return VarEvalMode_ShouldEval(expr->emode);
 }
 
 static bool
@@ -2170,7 +2187,7 @@ static VarParseResult
 ParseModifierPartSubst(
     const char **pp,
     char delim,
-    VarEvalFlags eflags,
+    VarEvalMode emode,
     ModChain *ch,
     char **out_part,
     /* Optionally stores the length of the returned string, just to save
@@ -2221,14 +2238,13 @@ ParseModifierPartSubst(
 			continue;
 		}
 
-		if (eflags.wantRes) {	/* Nested variable, evaluated */
+		if (VarEvalMode_ShouldEval(emode)) {
+			/* Nested variable, evaluated */
 			const char *nested_p = p;
 			FStr nested_val;
-			VarEvalFlags nested_eflags = eflags;
-			nested_eflags.keepDollar = false;
 
 			(void)Var_Parse(&nested_p, ch->expr->scope,
-			    nested_eflags, &nested_val);
+			    VarEvalMode_WithoutKeepDollar(emode), &nested_val);
 			/* TODO: handle errors */
 			Buf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
@@ -2309,13 +2325,13 @@ ParseModifierPart(
     const char **pp,
     /* Parsing stops at this delimiter */
     char delim,
-    /* Flags for evaluating nested variables. */
-    VarEvalFlags eflags,
+    /* Mode for evaluating nested variables. */
+    VarEvalMode emode,
     ModChain *ch,
     char **out_part
 )
 {
-	return ParseModifierPartSubst(pp, delim, eflags, ch, out_part,
+	return ParseModifierPartSubst(pp, delim, emode, ch, out_part,
 	    NULL, NULL, NULL);
 }
 
@@ -2471,11 +2487,10 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	if (!expr->eflags.wantRes)
+	if (!Expr_ShouldEval(expr))
 		goto done;
 
-	args.eflags = expr->eflags;
-	args.eflags.keepDollar = false;
+	args.emode = VarEvalMode_WithoutKeepDollar(expr->emode);
 	prev_sep = ch->sep;
 	ch->sep = ' ';		/* XXX: should be ch->sep for consistency */
 	ModifyWords(ch, ModifyWord_Loop, &args, ch->oneBigWord);
@@ -2501,10 +2516,10 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 	Buffer buf;
 	const char *p;
 
-	VarEvalFlags eflags = VARE_PARSE_ONLY;
-	if (expr->eflags.wantRes)
+	VarEvalMode emode = VARE_PARSE_ONLY;
+	if (Expr_ShouldEval(expr))
 		if ((**pp == 'D') == (expr->defined == DEF_REGULAR))
-			eflags = expr->eflags;
+			emode = expr->emode;
 
 	Buf_Init(&buf);
 	p = *pp + 1;
@@ -2529,9 +2544,9 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 		if (*p == '$') {
 			FStr nested_val;
 
-			(void)Var_Parse(&p, expr->scope, eflags, &nested_val);
+			(void)Var_Parse(&p, expr->scope, emode, &nested_val);
 			/* TODO: handle errors */
-			if (expr->eflags.wantRes)
+			if (Expr_ShouldEval(expr))
 				Buf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
 			continue;
@@ -2545,7 +2560,7 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 
 	Expr_Define(expr);
 
-	if (VarEvalFlags_ShouldEval(eflags))
+	if (VarEvalMode_ShouldEval(emode))
 		Expr_SetValueOwn(expr, Buf_DoneData(&buf));
 	else
 		Buf_Done(&buf);
@@ -2703,7 +2718,7 @@ ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 	VarParseResult res;
 
 	(*pp)++;
-	res = ParseModifierPart(pp, '!', expr->eflags, ch, &cmd);
+	res = ParseModifierPart(pp, '!', expr->emode, ch, &cmd);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
@@ -2839,7 +2854,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch,
 
 	if (needSubst) {
 		char *old_pattern = pattern;
-		(void)Var_Subst(pattern, expr->scope, expr->eflags, &pattern);
+		(void)Var_Subst(pattern, expr->scope, expr->emode, &pattern);
 		/* TODO: handle errors */
 		free(old_pattern);
 	}
@@ -2921,13 +2936,13 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 		(*pp)++;
 	}
 
-	res = ParseModifierPartSubst(pp, delim, ch->expr->eflags, ch, &lhs,
+	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &lhs,
 	    &args.lhsLen, &args.pflags, NULL);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 	args.lhs = lhs;
 
-	res = ParseModifierPartSubst(pp, delim, ch->expr->eflags, ch, &rhs,
+	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &rhs,
 	    &args.rhsLen, NULL, &args);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
@@ -2964,11 +2979,11 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 
 	*pp += 2;
 
-	res = ParseModifierPart(pp, delim, ch->expr->eflags, ch, &re);
+	res = ParseModifierPart(pp, delim, ch->expr->emode, ch, &re);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	res = ParseModifierPart(pp, delim, ch->expr->eflags, ch, &args.replace);
+	res = ParseModifierPart(pp, delim, ch->expr->emode, ch, &args.replace);
 	if (args.replace == NULL) {
 		free(re);
 		return AMR_CLEANUP;
@@ -3198,7 +3213,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	const char *p;
 
 	(*pp)++;		/* skip the '[' */
-	res = ParseModifierPart(pp, ']', expr->eflags, ch, &estr);
+	res = ParseModifierPart(pp, ']', expr->emode, ch, &estr);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
@@ -3352,24 +3367,24 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	VarParseResult res;
 
 	bool value = false;
-	VarEvalFlags then_eflags = VARE_PARSE_ONLY;
-	VarEvalFlags else_eflags = VARE_PARSE_ONLY;
+	VarEvalMode then_emode = VARE_PARSE_ONLY;
+	VarEvalMode else_emode = VARE_PARSE_ONLY;
 
 	int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
 	if (Expr_ShouldEval(expr)) {
 		cond_rc = Cond_EvalCondition(expr->name, &value);
 		if (cond_rc != COND_INVALID && value)
-			then_eflags = expr->eflags;
+			then_emode = expr->emode;
 		if (cond_rc != COND_INVALID && !value)
-			else_eflags = expr->eflags;
+			else_emode = expr->emode;
 	}
 
 	(*pp)++;			/* skip past the '?' */
-	res = ParseModifierPart(pp, ':', then_eflags, ch, &then_expr);
+	res = ParseModifierPart(pp, ':', then_emode, ch, &then_expr);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	res = ParseModifierPart(pp, ch->endc, else_eflags, ch, &else_expr);
+	res = ParseModifierPart(pp, ch->endc, else_emode, ch, &else_expr);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
@@ -3451,7 +3466,7 @@ ok:
 		break;
 	}
 
-	res = ParseModifierPart(pp, ch->endc, expr->eflags, ch, &val);
+	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &val);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
@@ -3596,12 +3611,12 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	if (*p != ch->endc || !eqFound)
 		return AMR_UNKNOWN;
 
-	res = ParseModifierPart(pp, '=', expr->eflags, ch, &lhs);
+	res = ParseModifierPart(pp, '=', expr->emode, ch, &lhs);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
 	/* The SysV modifier lasts until the end of the variable expression. */
-	res = ParseModifierPart(pp, ch->endc, expr->eflags, ch, &rhs);
+	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &rhs);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
@@ -3657,7 +3672,7 @@ LogBeforeApply(const ModChain *ch, const char *mod)
 	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s)\n",
 	    expr->name, mod[0], is_single_char ? "" : "...",
 	    expr->value.str,
-	    VarEvalFlags_ToString(expr->eflags),
+	    VarEvalMode_Name[expr->emode],
 	    ExprDefined_Name[expr->defined]);
 }
 
@@ -3671,7 +3686,7 @@ LogAfterApply(const ModChain *ch, const char *p, const char *mod)
 	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s)\n",
 	    expr->name, (int)(p - mod), mod,
 	    quot, value == var_Error ? "error" : value, quot,
-	    VarEvalFlags_ToString(expr->eflags),
+	    VarEvalMode_Name[expr->emode],
 	    ExprDefined_Name[expr->defined]);
 }
 
@@ -3773,7 +3788,7 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 	const char *p = *pp;
 	FStr mods;
 
-	(void)Var_Parse(&p, expr->scope, expr->eflags, &mods);
+	(void)Var_Parse(&p, expr->scope, expr->emode, &mods);
 	/* TODO: handle errors */
 
 	if (mods.str[0] != '\0' && *p != '\0' && !IsDelimiter(*p, ch)) {
@@ -4025,7 +4040,7 @@ UndefinedShortVarValue(char varname, const GNode *scope)
  */
 static char *
 ParseVarname(const char **pp, char startc, char endc,
-	     GNode *scope, VarEvalFlags eflags,
+	     GNode *scope, VarEvalMode emode,
 	     size_t *out_varname_len)
 {
 	Buffer buf;
@@ -4045,7 +4060,7 @@ ParseVarname(const char **pp, char startc, char endc,
 		/* A variable inside a variable, expand. */
 		if (*p == '$') {
 			FStr nested_val;
-			(void)Var_Parse(&p, scope, eflags, &nested_val);
+			(void)Var_Parse(&p, scope, emode, &nested_val);
 			/* TODO: handle errors */
 			Buf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
@@ -4087,7 +4102,7 @@ ValidShortVarname(char varname, const char *start)
  */
 static bool
 ParseVarnameShort(char varname, const char **pp, GNode *scope,
-		  VarEvalFlags eflags,
+		  VarEvalMode emode,
 		  VarParseResult *out_false_res, const char **out_false_val,
 		  Var **out_true_var)
 {
@@ -4112,7 +4127,8 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 
 		val = UndefinedShortVarValue(varname, scope);
 		if (val == NULL)
-			val = eflags.undefErr ? var_Error : varUndefined;
+			val = emode == VARE_UNDEFERR
+			    ? var_Error : varUndefined;
 
 		if (opts.strict && val == var_Error) {
 			Parse_Error(PARSE_FATAL,
@@ -4132,7 +4148,8 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 		 * If undefined expressions are allowed, this should rather
 		 * be VPR_UNDEF instead of VPR_OK.
 		 */
-		*out_false_res = eflags.undefErr ? VPR_UNDEF : VPR_OK;
+		*out_false_res = emode == VARE_UNDEFERR
+		    ? VPR_UNDEF : VPR_OK;
 		*out_false_val = val;
 		return false;
 	}
@@ -4178,7 +4195,7 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *scope,
 
 static VarParseResult
 EvalUndefined(bool dynamic, const char *start, const char *p, char *varname,
-	      VarEvalFlags eflags,
+	      VarEvalMode emode,
 	      FStr *out_val)
 {
 	if (dynamic) {
@@ -4187,7 +4204,7 @@ EvalUndefined(bool dynamic, const char *start, const char *p, char *varname,
 		return VPR_OK;
 	}
 
-	if (eflags.undefErr && opts.strict) {
+	if (emode == VARE_UNDEFERR && opts.strict) {
 		Parse_Error(PARSE_FATAL,
 		    "Variable \"%s\" is undefined", varname);
 		free(varname);
@@ -4195,7 +4212,7 @@ EvalUndefined(bool dynamic, const char *start, const char *p, char *varname,
 		return VPR_ERR;
 	}
 
-	if (eflags.undefErr) {
+	if (emode == VARE_UNDEFERR) {
 		free(varname);
 		*out_val = FStr_InitRefer(var_Error);
 		return VPR_UNDEF;	/* XXX: Should be VPR_ERR instead. */
@@ -4217,7 +4234,7 @@ ParseVarnameLong(
 	const char *p,
 	char startc,
 	GNode *scope,
-	VarEvalFlags eflags,
+	VarEvalMode emode,
 
 	const char **out_false_pp,
 	VarParseResult *out_false_res,
@@ -4242,7 +4259,7 @@ ParseVarnameLong(
 	char endc = startc == '(' ? ')' : '}';
 
 	p += 2;			/* skip "${" or "$(" or "y(" */
-	varname = ParseVarname(&p, startc, endc, scope, eflags, &namelen);
+	varname = ParseVarname(&p, startc, endc, scope, emode, &namelen);
 
 	if (*p == ':') {
 		haveModifier = true;
@@ -4279,7 +4296,7 @@ ParseVarnameLong(
 			p++;	/* skip endc */
 			*out_false_pp = p;
 			*out_false_res = EvalUndefined(dynamic, start, p,
-			    varname, eflags, out_false_val);
+			    varname, emode, out_false_val);
 			return false;
 		}
 
@@ -4381,7 +4398,7 @@ Expr_Literal(const char *name, FStr value,
  *			been printed.
  */
 VarParseResult
-Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
+Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 {
 	const char *p = *pp;
 	const char *const start = p;
@@ -4399,11 +4416,10 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	bool dynamic;
 	const char *extramodifiers;
 	Var *v;
-	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), eflags,
+	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), emode,
 	    scope, DEF_REGULAR);
 
-	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start,
-	    VarEvalFlags_ToString(eflags));
+	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start, VarEvalMode_Name[emode]);
 
 	*out_val = FStr_InitRefer(NULL);
 	extramodifiers = NULL;	/* extra modifiers to apply first */
@@ -4418,14 +4434,14 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	startc = p[1];
 	if (startc != '(' && startc != '{') {
 		VarParseResult res;
-		if (!ParseVarnameShort(startc, pp, scope, eflags, &res,
+		if (!ParseVarnameShort(startc, pp, scope, emode, &res,
 		    &out_val->str, &v))
 			return res;
 		haveModifier = false;
 		p++;
 	} else {
 		VarParseResult res;
-		if (!ParseVarnameLong(p, startc, scope, eflags,
+		if (!ParseVarnameLong(p, startc, scope, emode,
 		    pp, &res, out_val,
 		    &endc, &p, &v, &haveModifier, &extramodifiers,
 		    &dynamic, &expr.defined))
@@ -4451,13 +4467,14 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 	 * Before applying any modifiers, expand any nested expressions from
 	 * the variable value.
 	 */
-	if (strchr(expr.value.str, '$') != NULL && eflags.wantRes) {
+	if (strchr(expr.value.str, '$') != NULL &&
+	    VarEvalMode_ShouldEval(emode)) {
 		char *expanded;
-		VarEvalFlags nested_eflags = eflags;
+		VarEvalMode nested_emode = emode;
 		if (opts.strict)
-			nested_eflags.undefErr = false;
+			nested_emode = VarEvalMode_UndefOk(nested_emode);
 		v->inUse = true;
-		(void)Var_Subst(expr.value.str, scope, nested_eflags,
+		(void)Var_Subst(expr.value.str, scope, nested_emode,
 		    &expanded);
 		v->inUse = false;
 		/* TODO: handle errors */
@@ -4494,7 +4511,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 				 * return an error marker instead.
 				 */
 				Expr_SetValueRefer(&expr,
-				    eflags.undefErr
+				    emode == VARE_UNDEFERR
 					? var_Error : varUndefined);
 			}
 		}
@@ -4509,10 +4526,10 @@ Var_Parse(const char **pp, GNode *scope, VarEvalFlags eflags, FStr *out_val)
 }
 
 static void
-VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalFlags eflags)
+VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalMode emode)
 {
 	/* A dollar sign may be escaped with another dollar sign. */
-	if (save_dollars && eflags.keepDollar)
+	if (save_dollars && VarEvalMode_ShouldKeepDollar(emode))
 		Buf_AddByte(res, '$');
 	Buf_AddByte(res, '$');
 	*pp += 2;
@@ -4520,19 +4537,19 @@ VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalFlags eflags)
 
 static void
 VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
-	     VarEvalFlags eflags, bool *inout_errorReported)
+	     VarEvalMode emode, bool *inout_errorReported)
 {
 	const char *p = *pp;
 	const char *nested_p = p;
 	FStr val;
 
-	(void)Var_Parse(&nested_p, scope, eflags, &val);
+	(void)Var_Parse(&nested_p, scope, emode, &val);
 	/* TODO: handle errors */
 
 	if (val.str == var_Error || val.str == varUndefined) {
-		if (!eflags.keepUndef) {
+		if (!VarEvalMode_ShouldKeepUndef(emode)) {
 			p = nested_p;
-		} else if (eflags.undefErr || val.str == var_Error) {
+		} else if (emode == VARE_UNDEFERR || val.str == var_Error) {
 
 			/*
 			 * XXX: This condition is wrong.  If val == var_Error,
@@ -4599,7 +4616,7 @@ VarSubstPlain(const char **pp, Buffer *res)
  *	eflags		Special effects during expansion.
  */
 VarParseResult
-Var_Subst(const char *str, GNode *scope, VarEvalFlags eflags, char **out_res)
+Var_Subst(const char *str, GNode *scope, VarEvalMode emode, char **out_res)
 {
 	const char *p = str;
 	Buffer res;
@@ -4614,9 +4631,9 @@ Var_Subst(const char *str, GNode *scope, VarEvalFlags eflags, char **out_res)
 
 	while (*p != '\0') {
 		if (p[0] == '$' && p[1] == '$')
-			VarSubstDollarDollar(&p, &res, eflags);
+			VarSubstDollarDollar(&p, &res, emode);
 		else if (p[0] == '$')
-			VarSubstExpr(&p, &res, scope, eflags, &errorReported);
+			VarSubstExpr(&p, &res, scope, emode, &errorReported);
 		else
 			VarSubstPlain(&p, &res);
 	}
