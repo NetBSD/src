@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.10 2021/04/03 16:09:44 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.11 2021/04/04 19:12:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.10 2021/04/03 16:09:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.11 2021/04/04 19:12:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1037,7 +1037,18 @@ config_get_cfargs(cfarg_t tag,
 
 	while (tag != CFARG_EOL) {
 		switch (tag) {
+		/*
+		 * CFARG_SUBMATCH and CFARG_SEARCH are synonyms, but this
+		 * is merely an implementation detail.  They are distinct
+		 * from the caller's point of view.
+		 */
 		case CFARG_SUBMATCH:
+		case CFARG_SEARCH:
+			/* Only allow one function to be specified. */
+			if (fn != NULL) {
+				panic("%s: caller specified both "
+				    "SUBMATCH and SEARCH", __func__);
+			}
 			fn = va_arg(ap, cfsubmatch_t);
 			break;
 
@@ -1054,16 +1065,12 @@ config_get_cfargs(cfarg_t tag,
 			break;
 
 		default:
-			/* XXX panic? */
-			/* XXX dump stack backtrace? */
-			aprint_error("%s: unknown cfarg tag: %d\n",
+			panic("%s: unknown cfarg tag: %d\n",
 			    __func__, tag);
-			goto out;
 		}
 		tag = va_arg(ap, cfarg_t);
 	}
 
- out:
 	if (fnp != NULL)
 		*fnp = fn;
 	if (ifattrp != NULL)
