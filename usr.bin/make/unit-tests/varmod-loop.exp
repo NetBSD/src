@@ -5,7 +5,7 @@ ParseReadLine (149): 'SUBST_CONTAINING_LOOP:= ${USE_8_DOLLARS}'
 CondParser_Eval: ${SUBST_CONTAINING_LOOP} != "\$\$ \$\$\$\$ \$\$\$\$"
 lhs = "$$ $$$$ $$$$", rhs = "$$ $$$$ $$$$", op = !=
 ParseReadLine (174): '.MAKEFLAGS: -d0'
-ParseDoDependency(.MAKEFLAGS: -d0)
+ParseDependency(.MAKEFLAGS: -d0)
 :varname-overwriting-target: :x1y x2y x3y: ::
 mod-loop-resolve:w1d2d3w w2i3w w1i2d3 2i${RES3}w w1d2d3 2i${RES3} 1i${RES2}w:
 mod-loop-varname-dollar:(1) (2) (3).
