@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.906 2021/04/04 11:56:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.907 2021/04/04 13:35:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.906 2021/04/04 11:56:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.907 2021/04/04 13:35:25 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1741,9 +1741,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 		return;
 
 	args = data;
-	/* XXX: The variable name should not be expanded here. */
-	Var_SetExpandWithFlags(args->scope, args->tvar, word,
-	    VAR_SET_NO_EXPORT);
+	Var_SetWithFlags(args->scope, args->tvar, word, VAR_SET_NO_EXPORT);
 	(void)Var_Subst(args->str, args->scope, args->emode, &s);
 	/* TODO: handle errors */
 
@@ -2475,7 +2473,7 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	res = ParseModifierPart(pp, '@', VARE_PARSE_ONLY, ch, &args.tvar);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
-	if (opts.strict && strchr(args.tvar, '$') != NULL) {
+	if (strchr(args.tvar, '$') != NULL) {
 		Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
 		    "must not contain a dollar.",
@@ -2496,11 +2494,7 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	ModifyWords(ch, ModifyWord_Loop, &args, ch->oneBigWord);
 	ch->sep = prev_sep;
 	/* XXX: Consider restoring the previous variable instead of deleting. */
-	/*
-	 * XXX: The variable name should not be expanded here, see
-	 * ModifyWord_Loop.
-	 */
-	Var_DeleteExpand(expr->scope, args.tvar);
+	Var_Delete(expr->scope, args.tvar);
 
 done:
 	free(args.tvar);
