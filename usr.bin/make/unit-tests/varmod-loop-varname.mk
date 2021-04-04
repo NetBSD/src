@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop-varname.mk,v 1.1 2021/04/04 13:20:52 rillig Exp $
+# $NetBSD: varmod-loop-varname.mk,v 1.2 2021/04/04 13:35:26 rillig Exp $
 #
 # Tests for the first part of the variable modifier ':@var@...@', which
 # contains the variable name to use during the loop.
@@ -6,10 +6,10 @@
 .MAKE.SAVE_DOLLARS=	yes
 
 
-# In the :@ modifier, the name of the loop variable can be generated
-# dynamically.  There's no practical use-case for this, and hopefully nobody
-# will ever depend on this, but technically it's possible.
-# Therefore, in -dL mode, this is forbidden, see lint.mk.
+# Before 2021-04-04, the name of the loop variable could be generated
+# dynamically.  There was no practical use-case for this.
+# Since var.c 1.907 from 2021-04-04, a '$' is no longer allowed in the
+# variable name.
 .if ${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+"
 .  error
 .endif
@@ -75,13 +75,21 @@ RES3=		3
 # Until 2020-07-20, the variable name of the :@ modifier could end with one
 # or two dollar signs, which were silently ignored.
 # There's no point in allowing a dollar sign in that position.
+# Since var.c 1.907 from 2021-04-04, a '$' is no longer allowed in the
+# variable name.
 .if ${1 2 3:L:@v$@($v)@} != "(1) (2) (3)"
+.  error
+.else
 .  error
 .endif
 .if ${1 2 3:L:@v$$@($v)@} != "() () ()"
 .  error
+.else
+.  error
 .endif
 .if ${1 2 3:L:@v$$$@($v)@} != "() () ()"
+.  error
+.else
 .  error
 .endif
 

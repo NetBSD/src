@@ -1,4 +1,4 @@
-# $NetBSD: var-eval-short.mk,v 1.4 2021/03/14 20:41:39 rillig Exp $
+# $NetBSD: var-eval-short.mk,v 1.5 2021/04/04 13:35:26 rillig Exp $
 #
 # Tests for each variable modifier to ensure that they only do the minimum
 # necessary computations.  If the result of the expression is not needed, they
@@ -34,8 +34,10 @@ FAIL=	${:!echo unexpected 1>&2!}
 .if 0 && ${0:?${FAIL}:${FAIL}}
 .endif
 
-# Before var.c,v 1.870 from 2021-03-14, the expression ${FAIL} was evaluated
+# Before var.c 1.870 from 2021-03-14, the expression ${FAIL} was evaluated
 # after the loop, when undefining the temporary global loop variable.
+# Since var.c 1.907 from 2021-04-04, a '$' is no longer allowed in the
+# variable name.
 .if 0 && ${:Uword:@${FAIL}@expr@}
 .endif
 
