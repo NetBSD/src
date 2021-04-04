@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.259 2021/04/03 15:22:23 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.260 2021/04/04 10:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -675,7 +675,7 @@ void Make_ExpandUse(GNodeList *);
 time_t Make_Recheck(GNode *);
 void Make_HandleUse(GNode *, GNode *);
 void Make_Update(GNode *);
-void Make_DoAllVar(GNode *);
+void GNode_SetLocalVars(GNode *);
 bool Make_Run(GNodeList *);
 bool shouldDieQuietly(GNode *, int);
 void PrintOnError(GNode *, const char *);
