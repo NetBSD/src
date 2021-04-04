@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.24.2.1 2021/03/21 21:09:02 thorpej Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.24.2.2 2021/04/04 17:28:02 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.24.2.1 2021/03/21 21:09:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.24.2.2 2021/04/04 17:28:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -244,6 +244,7 @@ mediabay_attach_content(struct mediabay_softc *sc)
 		ca.ca_intr = intr;
 
 		content = config_found(sc->sc_dev, &ca, mediabay_print,
+		    CFARG_DEVHANDLE, devhandle_from_of(child),
 		    CFARG_EOL);
 		if (content) {
 			sc->sc_content = content;
