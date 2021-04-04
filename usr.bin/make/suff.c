@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.349 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.350 2021/04/04 10:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -77,7 +77,8 @@
  *
  *	Suff_End	Clean up the module.
  *
- *	Suff_DoPaths	Extend the search path of each suffix to include the
+ *	Suff_ExtendPaths
+ *			Extend the search path of each suffix to include the
  *			default search path.
  *
  *	Suff_ClearSuffixes
@@ -114,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.349 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.350 2021/04/04 10:05:08 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -876,7 +877,7 @@ Suff_GetPath(const char *sname)
  * ".LIBS" and the flag is '-L'.
  */
 void
-Suff_DoPaths(void)
+Suff_ExtendPaths(void)
 {
 	SuffixListNode *ln;
 	char *flags;

@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.180 2021/04/03 11:08:40 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.181 2021/04/04 10:05:08 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1116,7 +1116,7 @@ meta_oodate(GNode *gn, bool oodate)
      * requires that all variables are set in the same way that they
      * would be if the target needs to be re-built.
      */
-    Make_DoAllVar(gn);
+    GNode_SetLocalVars(gn);
 
     meta_name(fname, sizeof fname, dname.str, tname, dname.str);
 
