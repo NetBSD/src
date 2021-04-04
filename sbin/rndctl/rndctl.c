@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.38 2021/04/02 07:17:56 nia Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.39 2021/04/04 12:50:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.38 2021/04/02 07:17:56 nia Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.39 2021/04/04 12:50:31 nia Exp $");
 #endif
 
 #include <sys/param.h>
@@ -563,13 +563,8 @@ do_stats(void)
 	if (ioctl(fd, RNDGETPOOLSTAT, &rs) < 0)
 		err(1, "ioctl(RNDGETPOOLSTAT)");
 
-	printf("\t%9u bits mixed into pool\n", rs.added);
 	printf("\t%9u bits currently stored in pool (max %u)\n",
 	    rs.curentropy, rs.maxentropy);
-	printf("\t%9u bits of entropy discarded due to full pool\n",
-	    rs.discarded);
-	printf("\t%9u hard-random bits generated\n", rs.removed);
-	printf("\t%9u pseudo-random bits generated\n", rs.generated);
 
 	close(fd);
 }
