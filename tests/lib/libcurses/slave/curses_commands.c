@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.23 2021/04/04 09:34:24 rin Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.24 2021/04/04 09:42:08 rin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1980,6 +1980,7 @@ cmd_mvprintw(int nargs, char **args)
 void
 cmd_mvscanw(int nargs, char **args)
 {
+	int ret;
 	char string[256];
 
 	ARGC(3);
@@ -1988,8 +1989,12 @@ cmd_mvscanw(int nargs, char **args)
 	ARG_STRING(2, fmt);	/* Must have a single "%s" in this test. */
 
 	report_count(2);
-	report_return(mvscanw(y, x, fmt, string));
-	report_status(string);
+	report_return(ret = mvscanw(y, x, fmt, string));
+	/*
+	 * When mvscanw(3) fails, string is not modified.
+	 * Let's ignore the 2nd result for this case.
+	 */
+	report_status(ret == ERR ? "ERR" : string);
 }
 
 
