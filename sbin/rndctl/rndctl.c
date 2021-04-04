@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.39 2021/04/04 12:50:31 nia Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.40 2021/04/04 13:37:17 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.39 2021/04/04 12:50:31 nia Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.40 2021/04/04 13:37:17 nia Exp $");
 #endif
 
 #include <sys/param.h>
@@ -77,6 +77,8 @@ static const char *find_name(u_int32_t);
 static void do_ioctl(rndctl_t *);
 static char * strflags(uint32_t, u_int32_t);
 static void do_list(int, u_int32_t, char *);
+static void do_print_source(rndsource_est_t *);
+static void do_print_source_verbose(rndsource_est_t *);
 static void do_stats(void);
 
 static int iflag;
@@ -466,7 +468,26 @@ strflags(uint32_t totalbits, u_int32_t fl)
 	return (str);
 }
 
-#define HEADER "Source                 Bits Type      Flags\n"
+#define HEADER "Source       Estimated bits    Samples Type   Flags\n"
+
+static void
+do_print_source(rndsource_est_t *source)
+{
+	printf("%-16s ", source->rt.name);
+	printf("%10" PRIu32 " ", source->rt.total);
+	printf("%10" PRIu32 " ", source->dt_samples + source->dv_samples);
+	printf("%-6s ", find_name(source->rt.type));
+	printf("%s\n", strflags(source->rt.total, source->rt.flags));
+}
+
+static void
+do_print_source_verbose(rndsource_est_t *source)
+{
+	printf("\tDt samples = %d\n", source->dt_samples);
+	printf("\tDt bits = %d\n", source->dt_total);
+	printf("\tDv samples = %d\n", source->dv_samples);
+	printf("\tDv bits = %d\n", source->dv_total);
+}
 
 static void
 do_list(int all, u_int32_t type, char *name)
@@ -482,28 +503,15 @@ do_list(int all, u_int32_t type, char *name)
 	if (fd < 0)
 		err(1, "open");
 
-	if (all == 0 && type == 0xff) {
+	if (!all && type == 0xff) {
 		strncpy(rstat_name.name, name, sizeof(rstat_name.name));
 		res = ioctl(fd, RNDGETESTNAME, &rstat_name);
 		if (res < 0)
 			err(1, "ioctl(RNDGETESTNAME)");
 		printf(HEADER);
-		printf("%-16s %10u %-4s %s\n",
-		    rstat_name.source.rt.name,
-		    rstat_name.source.rt.total,
-		    find_name(rstat_name.source.rt.type),
-		    strflags(rstat_name.source.rt.total,
-			rstat_name.source.rt.flags));
-		if (vflag) {
-			printf("\tDt samples = %d\n",
-			       rstat_name.source.dt_samples);
-			printf("\tDt bits = %d\n",
-			       rstat_name.source.dt_total);
-			printf("\tDv samples = %d\n",
-				rstat_name.source.dv_samples);
-			printf("\tDv bits = %d\n",
-			       rstat_name.source.dv_total);
-		}
+		do_print_source(&rstat_name.source);
+		if (vflag)
+			do_print_source_verbose(&rstat_name.source);
 		close(fd);
 		return;
 	}
@@ -525,23 +533,10 @@ do_list(int all, u_int32_t type, char *name)
 			break;
 
 		for (i = 0; i < rstat.count; i++) {
-			if (all != 0 ||
-			    type == rstat.source[i].rt.type)
-				printf("%-16s %10u %-4s %s\n",
-				    rstat.source[i].rt.name,
-				    rstat.source[i].rt.total,
-				    find_name(rstat.source[i].rt.type),
-				    strflags(rstat.source[i].rt.total,
-					rstat.source[i].rt.flags));
-			if (vflag) {
-				printf("\tDt samples = %d\n",
-				       rstat.source[i].dt_samples);
-				printf("\tDt bits = %d\n",
-				       rstat.source[i].dt_total);
-				printf("\tDv samples = %d\n",
-				       rstat.source[i].dv_samples);
-				printf("\tDv bits = %d\n",
-				       rstat.source[i].dv_total);
+			if (all || type == rstat.source[i].rt.type) {
+				do_print_source(&rstat.source[i]);
+				if (vflag)
+					do_print_source_verbose(&rstat.source[i]);
 			}
                 }
 		start += rstat.count;
