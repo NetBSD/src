@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.24.30.3 2021/04/03 01:57:09 thorpej Exp $	*/
+/*	$Id: omap2_obio.c,v 1.24.30.4 2021/04/04 22:01:13 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.24.30.3 2021/04/03 01:57:09 thorpej Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.24.30.4 2021/04/04 22:01:13 thorpej Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24.30.3 2021/04/03 01:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24.30.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -199,7 +199,7 @@ obio_attach1(device_t self)
 	 * Attach the rest of our devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, obio_search,
+	    CFARG_SEARCH, obio_search,
 	    CFARG_EOL);
 }
 

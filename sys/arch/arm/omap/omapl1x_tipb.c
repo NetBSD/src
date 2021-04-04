@@ -97,7 +97,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.1.50.3 2021/04/03 01:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.1.50.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include "locators.h"
 
@@ -192,7 +192,7 @@ tipb_attach(struct device *parent, struct device *self, void *aux)
 		 * use __UNCONST to convince the compiler that this is ok.
 		 */
 		config_search(self, __UNCONST(*earlyp),
-		    CFARG_SUBMATCH, tipb_search,
+		    CFARG_SEARCH, tipb_search,
 		    CFARG_EOL);
 	}
 
@@ -200,7 +200,7 @@ tipb_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach all other devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, tipb_search,
+	    CFARG_SEARCH, tipb_search,
 	    CFARG_EOL);
 }
 

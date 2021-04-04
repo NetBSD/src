@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_spi.c,v 1.2.52.3 2021/04/03 01:57:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_spi.c,v 1.2.52.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ ssspi_attach(device_t parent, device_t self, void *aux)
 	 *  Attach child devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, ssspi_search,
+	    CFARG_SEARCH, ssspi_search,
 	    CFARG_EOL);
 }
 

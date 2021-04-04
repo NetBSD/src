@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.27.20.3 2021/04/03 01:57:18 thorpej Exp $	*/
+/*	$NetBSD: nand.c,v 1.27.20.4 2021/04/04 22:01:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.27.20.3 2021/04/03 01:57:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.27.20.4 2021/04/04 22:01:22 thorpej Exp $");
 
 #include "locators.h"
 
@@ -173,7 +173,7 @@ nand_attach(device_t parent, device_t self, void *aux)
 	 * Attach all our devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, nand_search,
+	    CFARG_SEARCH, nand_search,
 	    CFARG_EOL);
 
 	return;

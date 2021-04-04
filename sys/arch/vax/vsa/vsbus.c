@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.65.14.3 2021/04/03 01:57:16 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.65.14.4 2021/04/04 22:01:21 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.65.14.3 2021/04/03 01:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.65.14.4 2021/04/04 22:01:21 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -171,7 +171,7 @@ vsbus_attach(device_t parent, device_t self, void *aux)
 	 * now check for all possible devices on this "bus"
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, vsbus_search,
+	    CFARG_SEARCH, vsbus_search,
 	    CFARG_EOL);
 
 	/* Autoconfig finished, enable interrupts */

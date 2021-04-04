@@ -94,7 +94,7 @@ s3c2440_i2s_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, s3c2440_i2s_search,
+	    CFARG_SEARCH, s3c2440_i2s_search,
 	    CFARG_EOL);
 }
 

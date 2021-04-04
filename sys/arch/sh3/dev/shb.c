@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.14.78.3 2021/04/03 01:57:16 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.14.78.4 2021/04/04 22:01:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.14.78.3 2021/04/03 01:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.14.78.4 2021/04/04 22:01:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ shb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, shb_search,
+	    CFARG_SEARCH, shb_search,
 	    CFARG_EOL);
 
 	/*

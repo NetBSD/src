@@ -1,4 +1,4 @@
-/*	$NetBSD: amdnb_misc.c,v 1.3.14.5 2021/04/03 01:57:17 thorpej Exp $ */
+/*	$NetBSD: amdnb_misc.c,v 1.3.14.6 2021/04/04 22:01:21 thorpej Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.5 2021/04/03 01:57:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.3.14.6 2021/04/04 22:01:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,7 +134,7 @@ amdnb_misc_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_search(self, &sc->sc_pa,
-	    CFARG_SUBMATCH, amdnb_misc_search,
+	    CFARG_SEARCH, amdnb_misc_search,
 	    CFARG_EOL);
 
 	return;
@@ -159,7 +159,7 @@ amdnb_misc_rescan(device_t self, const char *ifattr, const int *locators)
 	struct amdnb_misc_softc *sc = device_private(self);
 
 	config_search(self, &sc->sc_pa,
-	    CFARG_SUBMATCH, amdnb_misc_search,
+	    CFARG_SEARCH, amdnb_misc_search,
 	    CFARG_EOL);
 
 	return 0;

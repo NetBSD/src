@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.77.2.6 2021/04/03 01:57:17 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.77.2.7 2021/04/04 22:01:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77.2.6 2021/04/03 01:57:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77.2.7 2021/04/04 22:01:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ static int
 iic_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, iic_search,
+	    CFARG_SEARCH, iic_search,
 	    CFARG_LOCATORS, locators,
 	    CFARG_EOL);
 	return 0;

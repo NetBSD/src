@@ -1,4 +1,4 @@
-/* $Id: imx23_apbx.c,v 1.1.56.3 2021/04/03 01:57:09 thorpej Exp $ */
+/* $Id: imx23_apbx.c,v 1.1.56.4 2021/04/04 22:01:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -90,10 +90,10 @@ apbx_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, &aa,
-	    CFARG_SUBMATCH, apbx_search_crit_cb,
+	    CFARG_SEARCH, apbx_search_crit_cb,
 	    CFARG_EOL);
 	config_search(self, &aa,
-	    CFARG_SUBMATCH, apbx_search_cb,
+	    CFARG_SEARCH, apbx_search_cb,
 	    CFARG_EOL);
 
 	apbx_attached = 1;

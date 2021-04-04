@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.22.52.4 2021/04/03 01:57:13 thorpej Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.22.52.5 2021/04/04 22:01:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.22.52.4 2021/04/03 01:57:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.22.52.5 2021/04/04 22:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,13 +144,13 @@ txcsbus_attach(device_t parent, device_t self, void *aux)
 	/* higher priority devices attach first */
 	sc->sc_pri = 2;
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, txcsbus_search,
+	    CFARG_SEARCH, txcsbus_search,
 	    CFARG_EOL);
 
 	/* then, normal priority devices */
 	sc->sc_pri = 1;
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, txcsbus_search,
+	    CFARG_SEARCH, txcsbus_search,
 	    CFARG_EOL);
 }
 

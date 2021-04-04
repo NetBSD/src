@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.74.50.3 2021/04/03 01:57:16 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.74.50.4 2021/04/04 22:01:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.74.50.3 2021/04/03 01:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.74.50.4 2021/04/04 22:01:20 thorpej Exp $");
 
 #include "locators.h"
 
@@ -165,14 +165,14 @@ obioattach(device_t parent, device_t self, void *aux)
 		for (cpp = special4; *cpp != NULL; cpp++) {
 			oa.name = *cpp;
 			config_search(self, &oa,
-			    CFARG_SUBMATCH, obiosearch,
+			    CFARG_SEARCH, obiosearch,
 			    CFARG_EOL);
 		}
 
 		/* Find all other obio devices */
 		oa.name = NULL;
 		config_search(self, &oa,
-		    CFARG_SUBMATCH, obiosearch,
+		    CFARG_SEARCH, obiosearch,
 		    CFARG_EOL);
 #endif
 		return;

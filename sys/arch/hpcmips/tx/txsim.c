@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.17.52.4 2021/04/03 01:57:13 thorpej Exp $ */
+/*	$NetBSD: txsim.c,v 1.17.52.5 2021/04/04 22:01:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.17.52.4 2021/04/03 01:57:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.17.52.5 2021/04/04 22:01:16 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -91,7 +91,7 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_pri = ATTACH_FIRST;
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, txsim_search,
+	    CFARG_SEARCH, txsim_search,
 	    CFARG_EOL);
 
 	/*
@@ -100,7 +100,7 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_pri = ATTACH_NORMAL;
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, txsim_search,
+	    CFARG_SEARCH, txsim_search,
 	    CFARG_EOL);
 
 	/* 
@@ -108,7 +108,7 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_pri = ATTACH_LAST;
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, txsim_search,
+	    CFARG_SEARCH, txsim_search,
 	    CFARG_EOL);
 }
 

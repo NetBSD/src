@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport.c,v 1.5.52.3 2021/04/03 01:57:08 thorpej Exp $ */
+/*      $NetBSD: clockport.c,v 1.5.52.4 2021/04/04 22:01:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 static int	clockport_match(device_t, cfdata_t , void *);
 static void	clockport_attach(device_t, device_t, void *);
 static int	clockport_print(void *, const char *);
-static int	clockport_submatch(device_t, cfdata_t, const int *, void *);
+static int	clockport_search(device_t, cfdata_t, const int *, void *);
 
 CFATTACH_DECL_NEW(clockport, sizeof(struct clockportbus_softc),
     clockport_match, clockport_attach, NULL, NULL);
@@ -66,12 +66,12 @@ clockport_attach(device_t parent, device_t self, void *aux)
 	sc->cpb_aa = (struct clockportbus_attach_args *) aux;
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, clockport_submatch,
+	    CFARG_SEARCH, clockport_search,
 	    CFARG_EOL);
 }
 
 static int
-clockport_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+clockport_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct clockportbus_softc *sc;
 	struct clockport_attach_args a; 

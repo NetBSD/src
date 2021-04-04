@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.19.100.3 2021/04/03 01:57:14 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.19.100.4 2021/04/04 22:01:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.19.100.3 2021/04/03 01:57:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.19.100.4 2021/04/04 22:01:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ hb_attach(device_t parent, device_t self, void *aux)
 	memset(&ha, 0, sizeof(ha));
 
 	config_search(self, &ha,
-	    CFARG_SUBMATCH, hb_search,
+	    CFARG_SEARCH, hb_search,
 	    CFARG_EOL);
 }
 

@@ -1,4 +1,4 @@
-/* $Id: imx23_ahb.c,v 1.1.50.3 2021/04/03 01:57:09 thorpej Exp $ */
+/* $Id: imx23_ahb.c,v 1.1.50.4 2021/04/04 22:01:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ ahb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, &aa,
-	    CFARG_SUBMATCH, ahb_search_cb,
+	    CFARG_SEARCH, ahb_search_cb,
 	    CFARG_EOL);
 
 	ahb_attached = 1;

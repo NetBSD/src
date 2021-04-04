@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39spi.c,v 1.5.52.4 2021/04/03 01:57:13 thorpej Exp $	*/
+/*	$NetBSD: tx39spi.c,v 1.5.52.5 2021/04/04 22:01:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tx39spi.c,v 1.5.52.4 2021/04/03 01:57:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39spi.c,v 1.5.52.5 2021/04/04 22:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ tx39spi_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, tx39spi_search,
+	    CFARG_SEARCH, tx39spi_search,
 	    CFARG_EOL);
 }
 

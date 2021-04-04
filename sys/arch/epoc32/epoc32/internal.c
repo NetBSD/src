@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.c,v 1.1.54.2 2021/04/03 01:57:11 thorpej Exp $	*/
+/*	$NetBSD: internal.c,v 1.1.54.3 2021/04/04 22:01:14 thorpej Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: internal.c,v 1.1.54.2 2021/04/03 01:57:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: internal.c,v 1.1.54.3 2021/04/04 22:01:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,7 @@ internal_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, aux,
-	    CFARG_SUBMATCH, internal_search,
+	    CFARG_SEARCH, internal_search,
 	    CFARG_EOL);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.28.4.3 2021/04/03 01:57:11 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.28.4.4 2021/04/04 22:01:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28.4.3 2021/04/03 01:57:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28.4.4 2021/04/04 22:01:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -314,7 +314,7 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 
 	/* Finally, search for children.  */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, ifpga_search,
+	    CFARG_SEARCH, ifpga_search,
 	    CFARG_IATTR, "ifpga",
 	    CFARG_EOL);
 

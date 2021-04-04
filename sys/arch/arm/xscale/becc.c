@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.16.52.3 2021/04/03 01:57:10 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.16.52.4 2021/04/04 22:01:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16.52.3 2021/04/03 01:57:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16.52.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ becc_attach(struct becc_softc *sc)
 	 * on configuration.
 	 */
 	config_search(sc->sc_dev, NULL,
-	    CFARG_SUBMATCH, becc_search,
+	    CFARG_SEARCH, becc_search,
 	    CFARG_IATTR, "becc",
 	    CFARG_EOL);
 

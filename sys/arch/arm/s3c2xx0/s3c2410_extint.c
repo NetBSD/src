@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.13.52.3 2021/04/03 01:57:10 thorpej Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.13.52.4 2021/04/04 22:01:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.13.52.3 2021/04/03 01:57:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.13.52.4 2021/04/04 22:01:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ ssextio_attach(device_t parent, device_t self, void *aux)
 	 *  Attach each devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SUBMATCH, ssextio_search,
+	    CFARG_SEARCH, ssextio_search,
 	    CFARG_EOL);
 }
 

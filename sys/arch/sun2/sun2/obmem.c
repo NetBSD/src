@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.19.32.2 2021/03/21 17:35:47 thorpej Exp $	*/
+/*	$NetBSD: obmem.c,v 1.19.32.3 2021/04/04 22:01:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.19.32.2 2021/03/21 17:35:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.19.32.3 2021/04/04 22:01:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,14 +125,14 @@ obmem_attach(device_t parent, device_t self, void *aux)
 	for (cpp = special; *cpp != NULL; cpp++) {
 		obma.obma_name = *cpp;
 		config_search(self, &obma,
-		    CFARG_SUBMATCH, sun68k_bus_search,
+		    CFARG_SEARCH, sun68k_bus_search,
 		    CFARG_EOL);
 	}
 
 	/* Find all other obmem devices */
 	obma.obma_name = NULL;
 	config_search(self, &obma,
-	    CFARG_SUBMATCH, sun68k_bus_search,
+	    CFARG_SEARCH, sun68k_bus_search,
 	    CFARG_EOL);
 }
 
