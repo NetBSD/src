@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.277.2.11 2021/04/04 19:12:27 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.277.2.12 2021/04/04 19:23:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.11 2021/04/04 19:12:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.277.2.12 2021/04/04 19:23:53 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1004,7 +1004,7 @@ config_cfdata_detach(cfdata_t cf)
 
 /*
  * Invoke the "match" routine for a cfdata entry on behalf of
- * an external caller, usually a "submatch" routine.
+ * an external caller, usually a direct config "submatch" routine.
  */
 int
 config_match(device_t parent, cfdata_t cf, void *aux)
@@ -1018,6 +1018,21 @@ config_match(device_t parent, cfdata_t cf, void *aux)
 	}
 
 	return (*ca->ca_match)(parent, cf, aux);
+}
+
+/*
+ * Invoke the "probe" routine for a cfdata entry on behalf of
+ * an external caller, usually an indirect config "search" routine.
+ */
+int
+config_probe(device_t parent, cfdata_t cf, void *aux)
+{
+	/*
+	 * This is currently a synonym for config_match(), but this
+	 * is an implementation detail; "match" and "probe" routines
+	 * have different behaviors.
+	 */
+	return config_match(parent, cf, aux);
 }
 
 static void
