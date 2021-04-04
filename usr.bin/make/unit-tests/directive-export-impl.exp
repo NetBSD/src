@@ -9,7 +9,7 @@ Applying ${UT_VAR:N...} to "<>" (eval-defined, regular)
 Pattern[UT_VAR] for [<>] is [*]
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
-ParseDoDependency(: )
+ParseDependency(: )
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" (eval-defined)
 Applying ${:!...} to "" (eval-defined, undefined)
@@ -30,7 +30,7 @@ Applying ${UT_VAR:N...} to "<>" (eval-defined, regular)
 Pattern[UT_VAR] for [<>] is [*]
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
-ParseDoDependency(: )
+ParseDependency(: )
 ParseReadLine (54): 'REF=		defined'
 Global:REF = defined
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<defined>"
@@ -47,10 +47,10 @@ Var_Parse: ${REF}> (eval)
 Result of ${:!echo "\$UT_VAR"!} is "<defined>" (eval-defined, defined)
 lhs = "<defined>", rhs = "<defined>", op = !=
 ParseReadLine (62): 'all:'
-ParseDoDependency(all:)
+ParseDependency(all:)
 Global:.ALLTARGETS =  all
 ParseReadLine (63): '.MAKEFLAGS: -d0'
-ParseDoDependency(.MAKEFLAGS: -d0)
+ParseDependency(.MAKEFLAGS: -d0)
 Global:.MAKEFLAGS =  -r -k -d cpv -d
 Global:.MAKEFLAGS =  -r -k -d cpv -d 0
 exit status 0

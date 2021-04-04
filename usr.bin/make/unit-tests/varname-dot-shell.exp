@@ -11,7 +11,7 @@ Var_Parse: ${.SHELL} != ${ORIG_SHELL} (eval-defined)
 Var_Parse: ${ORIG_SHELL} (eval-defined)
 lhs = "(details omitted)", rhs = "(details omitted)", op = !=
 ParseReadLine (19): '.MAKEFLAGS: .SHELL+=appended'
-ParseDoDependency(.MAKEFLAGS: .SHELL+=appended)
+ParseDependency(.MAKEFLAGS: .SHELL+=appended)
 Ignoring append to .SHELL since it is read-only
 CondParser_Eval: ${.SHELL} != ${ORIG_SHELL}
 Var_Parse: ${.SHELL} != ${ORIG_SHELL} (eval-defined)
@@ -26,7 +26,7 @@ Var_Parse: ${.SHELL} != ${ORIG_SHELL} (eval-defined)
 Var_Parse: ${ORIG_SHELL} (eval-defined)
 lhs = "(details omitted)", rhs = "(details omitted)", op = !=
 ParseReadLine (33): '.MAKEFLAGS: -d0'
-ParseDoDependency(.MAKEFLAGS: -d0)
+ParseDependency(.MAKEFLAGS: -d0)
 Global:.MAKEFLAGS =  -r -k -d cpv -d
 Global:.MAKEFLAGS =  -r -k -d cpv -d 0
 exit status 0

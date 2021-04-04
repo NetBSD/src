@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.209 2021/04/04 10:05:08 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.210 2021/04/04 10:13:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -159,7 +159,7 @@ typedef char *(*ReadMoreProc)(void *, size_t *);
 
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_IsVar(const char *, VarAssign *out_var);
-void Parse_DoVar(VarAssign *, GNode *);
+void Parse_Var(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
 void Parse_SetInput(const char *, int, int, ReadMoreProc, void *);

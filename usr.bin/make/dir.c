@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.271 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.272 2021/04/04 10:13:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.271 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.272 2021/04/04 10:13:09 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -217,7 +217,7 @@ struct CachedDir {
 	 * and "./." are different.
 	 *
 	 * Not sure what happens when .CURDIR is assigned a new value; see
-	 * Parse_DoVar.
+	 * Parse_Var.
 	 */
 	char *name;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.535 2021/04/04 10:05:08 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.536 2021/04/04 10:13:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.535 2021/04/04 10:05:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.536 2021/04/04 10:13:09 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -655,7 +655,7 @@ rearg:
 	for (; argc > 1; argv++, argc--) {
 		VarAssign var;
 		if (Parse_IsVar(argv[1], &var)) {
-			Parse_DoVar(&var, SCOPE_CMDLINE);
+			Parse_Var(&var, SCOPE_CMDLINE);
 		} else {
 			if (argv[1][0] == '\0')
 				Punt("illegal (null) argument.");

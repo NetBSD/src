@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-errors.mk,v 1.2 2021/04/04 09:58:51 rillig Exp $
+# $NetBSD: directive-for-errors.mk,v 1.3 2021/04/04 10:13:09 rillig Exp $
 #
 # Tests for error handling in .for loops.
 
@@ -13,8 +13,8 @@
 # XXX: The error message is misleading though.  As of 2020-12-31, it says
 # "Unknown directive "for"", but that directive is actually known.  This is
 # because ForEval does not detect the .for loop as such, so parsing
-# continues in ParseLine > ParseDependencyLine > ParseDoDependency >
-# ParseDoDependencyTargets > ParseErrorNoDependency, and there the directive
+# continues in ParseLine > ParseDependencyLine > ParseDependency >
+# ParseDependencyTargets > ParseErrorNoDependency, and there the directive
 # name is parsed a bit differently.
 .for/i in 1 2 3
 .  warning ${i}
