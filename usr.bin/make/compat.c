@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.225 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.226 2021/04/04 10:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.225 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.226 2021/04/04 10:05:08 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -536,7 +536,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 	 * We need to be re-made.
 	 * Ensure that $? (.OODATE) and $> (.ALLSRC) are both set.
 	 */
-	Make_DoAllVar(gn);
+	GNode_SetLocalVars(gn);
 
 	/*
 	 * Alter our type to tell if errors should be ignored or things

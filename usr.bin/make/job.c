@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.423 2021/04/04 09:58:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.424 2021/04/04 10:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.423 2021/04/04 09:58:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.424 2021/04/04 10:05:08 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -441,7 +441,7 @@ enum {
 static sigset_t caught_signals;	/* Set of signals we handle */
 static volatile sig_atomic_t caught_sigchld;
 
-static void JobDoOutput(Job *, bool);
+static void CollectOutput(Job *, bool);
 static void JobInterrupt(bool, int) MAKE_ATTR_DEAD;
 static void JobRestartJobs(void);
 static void JobSigReset(void);
@@ -1053,7 +1053,7 @@ JobClosePipes(Job *job)
 	(void)close(job->outPipe);
 	job->outPipe = -1;
 
-	JobDoOutput(job, true);
+	CollectOutput(job, true);
 	(void)close(job->inPipe);
 	job->inPipe = -1;
 }
@@ -1780,7 +1780,7 @@ PrintOutput(char *cp, char *endp)	/* XXX: should all be const */
  *			for this job
  */
 static void
-JobDoOutput(Job *job, bool finish)
+CollectOutput(Job *job, bool finish)
 {
 	bool gotNL;		/* true if got a newline */
 	bool fbuf;		/* true if our buffer filled up */
@@ -1800,7 +1800,7 @@ again:
 		if (errno == EAGAIN)
 			return;
 		if (DEBUG(JOB)) {
-			perror("JobDoOutput(piperead)");
+			perror("CollectOutput(piperead)");
 		}
 		nr = 0;
 	} else {
@@ -2078,7 +2078,7 @@ Job_CatchOutput(void)
 			continue;
 		job = jobByFdIndex[i];
 		if (job->status == JOB_ST_RUNNING)
-			JobDoOutput(job, false);
+			CollectOutput(job, false);
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
 		/*
 		 * With meta mode, we may have activity on the job's filemon
