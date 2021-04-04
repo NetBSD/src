@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.128 2021/02/27 12:55:25 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.129 2021/04/04 18:14:26 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -108,7 +108,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20210227"
+#define SERVER_SOFTWARE		"bozohttpd/20210403"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -851,6 +851,10 @@ bozo_read_request(bozohttpd_t *httpd)
 		}
 next_header:
 		alarm(httpd->header_timeout);
+	}
+	if (str == NULL) {
+		bozo_http_error(httpd, 413, request, "request too large");
+		goto cleanup;
 	}
 
 	/* now, clear it all out */
@@ -2124,7 +2128,7 @@ bozo_escape_html(bozohttpd_t *httpd, const char *url)
 	if (httpd)
 		tmp = bozomalloc(httpd, len);
 	else if ((tmp = malloc(len)) == 0)
-			return NULL;
+		return NULL;
 
 	for (i = 0, j = 0; url[i]; i++) {
 		switch (url[i]) {
@@ -2373,6 +2377,9 @@ bozostrnsep(char **strp, const char *delim, ssize_t	*lenp)
  * inspired by fgetln(3), but works for fd's.  should work identically
  * except it, however, does *not* return the newline, and it does nul
  * terminate the string.
+ *
+ * returns NULL if the line grows too large.  empty lines will be
+ * returned with *lenp set to 0.
  */
 char *
 bozodgetln(bozohttpd_t *httpd, int fd, ssize_t *lenp,
@@ -2386,11 +2393,8 @@ bozodgetln(bozohttpd_t *httpd, int fd, ssize_t *lenp,
 	if (httpd->getln_buflen == 0) {
 		/* should be plenty for most requests */
 		httpd->getln_buflen = 128;
-		httpd->getln_buffer = malloc((size_t)httpd->getln_buflen);
-		if (httpd->getln_buffer == NULL) {
-			httpd->getln_buflen = 0;
-			return NULL;
-		}
+		httpd->getln_buffer =
+		    bozomalloc(httpd, (size_t)httpd->getln_buflen);
 	}
 	len = 0;
 
@@ -2405,6 +2409,9 @@ bozodgetln(bozohttpd_t *httpd, int fd, ssize_t *lenp,
 	 */
 	for (; readfn(httpd, fd, &c, 1) == 1; ) {
 		debug((httpd, DEBUG_EXPLODING, "bozodgetln read %c", c));
+
+		if (httpd->getln_buflen > BOZO_HEADERS_MAX_SIZE)
+			return NULL;
 
 		if (len >= httpd->getln_buflen - 1) {
 			httpd->getln_buflen *= 2;

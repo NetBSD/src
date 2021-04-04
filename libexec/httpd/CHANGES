@@ -1,4 +1,8 @@
-$NetBSD: CHANGES,v 1.47 2021/02/27 12:55:25 mrg Exp $
+$NetBSD: CHANGES,v 1.48 2021/04/04 18:14:26 mrg Exp $
+
+changes in bozohttpd 20210403:
+	o  fix a denial of service attack against initial request contents,
+           now bounded at 16KiB.  reported by Justin Parrott in PR#56085
 
 changes in bozohttpd 20210227:
 	o  new support for content types: .tar.bz2, .tar.xz, .tar.lz,
