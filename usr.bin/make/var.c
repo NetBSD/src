@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.907 2021/04/04 13:35:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.908 2021/04/05 12:51:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.907 2021/04/04 13:35:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.908 2021/04/05 12:51:35 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1412,7 +1412,7 @@ static void
 ModifyWord_Match(const char *word, SepBuf *buf, void *data)
 {
 	const char *pattern = data;
-	DEBUG2(VAR, "VarMatch [%s] [%s]\n", word, pattern);
+
 	if (Str_Match(word, pattern))
 		SepBuf_AddStr(buf, word);
 }
@@ -1425,6 +1425,7 @@ static void
 ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
 {
 	const char *pattern = data;
+
 	if (!Str_Match(word, pattern))
 		SepBuf_AddStr(buf, word);
 }
@@ -2853,8 +2854,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch,
 		free(old_pattern);
 	}
 
-	DEBUG3(VAR, "Pattern[%s] for [%s] is [%s]\n",
-	       expr->name, expr->value.str, pattern);
+	DEBUG2(VAR, "Pattern for ':%c' is \"%s\"\n", mod[0], pattern);
 
 	*out_pattern = pattern;
 }
