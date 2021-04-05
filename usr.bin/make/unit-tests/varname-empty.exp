@@ -3,18 +3,18 @@ Evaluating modifier ${:U} on value "" (eval, undefined)
 Result of ${:U} is "" (eval, defined)
 Var_Set("${:U}", "cmdline-u", ...) name expands to empty string - ignored
 Var_Set("", "cmdline-plain", ...) name expands to empty string - ignored
-Global:.CURDIR = <curdir>
+Global: .CURDIR = <curdir>
 Var_Parse: ${MAKE_OBJDIR_CHECK_WRITABLE:U} (eval)
 Evaluating modifier ${MAKE_OBJDIR_CHECK_WRITABLE:U} on value "" (eval, undefined)
 Result of ${MAKE_OBJDIR_CHECK_WRITABLE:U} is "" (eval, defined)
-Global:.OBJDIR = <curdir>
+Global: .OBJDIR = <curdir>
 Global:delete .PATH (not found)
-Global:.PATH = .
-Global:.PATH = . <curdir>
-Global:.TARGETS = 
-Internal:MAKEFILE = varname-empty.mk
-Global:.MAKE.MAKEFILES = varname-empty.mk
-Global:.PARSEFILE = varname-empty.mk
+Global: .PATH = .
+Global: .PATH = . <curdir>
+Global: .TARGETS = 
+Internal: MAKEFILE = varname-empty.mk
+Global: .MAKE.MAKEFILES = varname-empty.mk
+Global: .PARSEFILE = varname-empty.mk
 Global:delete .INCLUDEDFROMDIR (not found)
 Global:delete .INCLUDEDFROMFILE (not found)
 Var_Set("", "default", ...) name expands to empty string - ignored
@@ -40,8 +40,8 @@ Var_Append("${:U}", "appended indirectly", ...) name expands to empty string - i
 Var_Parse: ${:Ufallback} != "fallback" (eval-defined)
 Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:Ufallback} is "fallback" (eval-defined, defined)
-Global:.MAKEFLAGS =  -r -d v -d
-Global:.MAKEFLAGS =  -r -d v -d 0
+Global: .MAKEFLAGS =  -r -d v -d
+Global: .MAKEFLAGS =  -r -d v -d 0
 out: fallback
 out: 1 2 3
 exit status 0

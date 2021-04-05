@@ -11,7 +11,7 @@ Modifier part: "${FAIL}then"
 Modifier part: "${FAIL}else"
 Result of ${0:?${FAIL}then:${FAIL}else} is "" (parse-only, defined)
 ParseReadLine (158): 'DEFINED=	defined'
-Global:DEFINED = defined
+Global: DEFINED = defined
 CondParser_Eval: 0 && ${DEFINED:L:?${FAIL}then:${FAIL}else}
 Var_Parse: ${DEFINED:L:?${FAIL}then:${FAIL}else} (parse-only)
 Parsing modifier ${DEFINED:L}
@@ -22,8 +22,8 @@ Modifier part: "${FAIL}else"
 Result of ${DEFINED:?${FAIL}then:${FAIL}else} is "defined" (parse-only, regular)
 ParseReadLine (161): '.MAKEFLAGS: -d0'
 ParseDependency(.MAKEFLAGS: -d0)
-Global:.MAKEFLAGS =  -r -k -d cpv -d
-Global:.MAKEFLAGS =  -r -k -d cpv -d 0
+Global: .MAKEFLAGS =  -r -k -d cpv -d
+Global: .MAKEFLAGS =  -r -k -d cpv -d 0
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

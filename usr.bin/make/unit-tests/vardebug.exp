@@ -1,8 +1,8 @@
 Global:delete FROM_CMDLINE (not found)
-Command:FROM_CMDLINE = 
-Global:.MAKEOVERRIDES =  FROM_CMDLINE
-Global:VAR = added
-Global:VAR = overwritten
+Command: FROM_CMDLINE = 
+Global: .MAKEOVERRIDES =  FROM_CMDLINE
+Global: VAR = added
+Global: VAR = overwritten
 Global:delete VAR
 Global:delete VAR (not found)
 Var_Parse: ${:U} (eval)
@@ -13,10 +13,10 @@ Var_Parse: ${:U} (eval)
 Evaluating modifier ${:U} on value "" (eval, undefined)
 Result of ${:U} is "" (eval, defined)
 Var_Append("${:U}", "empty name", ...) name expands to empty string - ignored
-Global:FROM_CMDLINE = overwritten ignored!
-Global:VAR = 1
-Global:VAR = 1 2
-Global:VAR = 1 2 3
+Global: FROM_CMDLINE = overwritten ignored!
+Global: VAR = 1
+Global: VAR = 1 2
+Global: VAR = 1 2 3
 Var_Parse: ${VAR:M[2]} (eval-defined)
 Evaluating modifier ${VAR:M...} on value "1 2 3"
 Pattern for ':M' is "[2]"
@@ -72,10 +72,10 @@ make: "vardebug.mk" line 44: Malformed conditional (${:Uvariable:unknown})
 Var_Parse: ${UNDEFINED} (eval-defined)
 make: "vardebug.mk" line 53: Malformed conditional (${UNDEFINED})
 Global:delete .SHELL (not found)
-Command:.SHELL = </path/to/shell>
-Command:.SHELL = overwritten ignored (read-only)
-Global:.MAKEFLAGS =  -r -k -d v -d
-Global:.MAKEFLAGS =  -r -k -d v -d 0
+Command: .SHELL = </path/to/shell>
+Command: .SHELL = overwritten ignored (read-only)
+Global: .MAKEFLAGS =  -r -k -d v -d
+Global: .MAKEFLAGS =  -r -k -d v -d 0
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
