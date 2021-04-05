@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.6 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.7 2021/04/05 11:36:55 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,6 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdlib.h>
 
 #ifdef USE_DNSRPS
 

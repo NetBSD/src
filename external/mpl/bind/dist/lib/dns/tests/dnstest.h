@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.h,v 1.5 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: dnstest.h,v 1.6 2021/04/05 11:36:55 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,6 @@
 #include <dns/diff.h>
 #include <dns/result.h>
 #include <dns/zone.h>
-
 
 typedef struct {
 	dns_diffop_t op;
