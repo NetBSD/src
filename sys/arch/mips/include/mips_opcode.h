@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.25 2021/04/05 07:00:06 simonb Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.26 2021/04/05 07:28:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -169,7 +169,7 @@ typedef union {
 #define	OP_LDL		032		/* MIPS-II, for r4000 port */
 #define	OP_LDR		033		/* MIPS-II, for r4000 port */
 
-#define	OP_SPECIAL2	034		/* QED opcodes */
+#define	OP_SPECIAL2	034		/* QED and MIPS32/MIPS64 opcodes */
 #define	OP_JALX		035
 #define	OP_MDMX		036
 #define	OP_SPECIAL3	037
@@ -303,9 +303,9 @@ typedef union {
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL2.
  */
-#define	OP_MADD		000		/* QED */
-#define	OP_MADDU	001		/* QED */
-#define	OP_MUL		002		/* QED */
+#define	OP_MADD		000		/* QED, MIPS32/64 */
+#define	OP_MADDU	001		/* QED, MIPS32/64 */
+#define	OP_MUL		002		/* QED, MIPS32/64 */
 #define	OP_CVM_DMUL	003		/* OCTEON */
 #define	OP_MSUB		004		/* MIPS32/64 */
 #define	OP_MSUBU	005		/* MIPS32/64 */
