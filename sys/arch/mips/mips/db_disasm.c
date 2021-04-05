@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.34 2021/03/16 07:34:44 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.35 2021/04/05 06:28:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.34 2021/03/16 07:34:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.35 2021/04/05 06:28:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -593,7 +593,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		case OP_BCy:
 
 			db_printf("bc0%c\t",
-			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			    "ft"[i.RType.rt & COPz_BC_TRUE]);
 			goto pr_displ;
 
 		case OP_MT:
@@ -644,7 +644,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		case OP_BCx:
 		case OP_BCy:
 			db_printf("bc1%c\t",
-			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			    "ft"[i.RType.rt & COPz_BC_TRUE]);
 			goto pr_displ;
 
 		case OP_MT:
@@ -708,7 +708,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		case OP_BCx:
 		case OP_BCy:
 			db_printf("bc2%c\t",
-			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			    "ft"[i.RType.rt & COPz_BC_TRUE]);
 			goto pr_displ;
 
 		case OP_MT:
