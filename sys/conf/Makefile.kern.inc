@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.278 2021/04/05 06:22:00 simonb Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.279 2021/04/05 22:52:03 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -262,7 +262,7 @@ SYSTEM_LD_TAIL_STAGE1=	${SYSTEM_LD_TAIL}
 SYSTEM_LD_TAIL_STAGE2=	${SYSTEM_LD_TAIL}
 .if defined(CTFMERGE)
 SYSTEM_LD_TAIL_STAGE2+= && echo ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ... \
-			&& time -t ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} \
+			&& ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} \
 			    ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 .endif
 .if defined(COPY_SYMTAB)
