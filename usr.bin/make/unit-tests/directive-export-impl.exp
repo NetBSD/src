@@ -6,7 +6,7 @@ ParseReadLine (32): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
 Applying ${UT_VAR:N...} to "<>" (eval-defined, regular)
-Pattern[UT_VAR] for [<>] is [*]
+Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
 ParseDependency(: )
@@ -27,7 +27,7 @@ ParseReadLine (50): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
 Applying ${UT_VAR:N...} to "<>" (eval-defined, regular)
-Pattern[UT_VAR] for [<>] is [*]
+Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
 ParseDependency(: )
