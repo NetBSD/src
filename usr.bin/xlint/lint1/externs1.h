@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.99 2021/04/02 11:53:25 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.100 2021/04/05 02:05:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -196,6 +196,7 @@ extern	int	to_int_constant(tnode_t *, bool);
 /*
  * tree.c
  */
+extern	const tnode_t *before_conversion(const tnode_t *);
 extern	type_t	*derive_type(type_t *, tspec_t);
 extern	type_t	*expr_derive_type(type_t *, tspec_t);
 extern	tnode_t	*expr_new_constant(type_t *, val_t *);
@@ -333,6 +334,12 @@ extern	int	lex_input(void);
  * print.c
  */
 extern	char	*print_tnode(char *, size_t, const tnode_t *);
+
+/*
+ * ckctype.c
+ */
+extern	void	check_ctype_function_call(const tnode_t *, const tnode_t *);
+extern	void	check_ctype_macro_invocation(const tnode_t *, const tnode_t *);
 
 /*
  * ckgetopt.c

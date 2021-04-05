@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.265 2021/04/02 22:41:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.266 2021/04/05 02:05:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.265 2021/04/02 22:41:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.266 2021/04/05 02:05:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -718,7 +718,7 @@ cconv(tnode_t *tn)
 	return tn;
 }
 
-static const tnode_t *
+const tnode_t *
 before_conversion(const tnode_t *tn)
 {
 	while (tn->tn_op == CVT && !tn->tn_cast)
@@ -2800,7 +2800,10 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 
 	if (ln->tn_type->t_tspec == PTR && rn->tn_type->t_tspec != PTR) {
 
+		/* XXX: this assertion should be easy to trigger */
 		lint_assert(is_integer(rn->tn_type->t_tspec));
+
+		check_ctype_macro_invocation(ln, rn);
 
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
@@ -3584,6 +3587,8 @@ new_function_call_node(tnode_t *func, tnode_t *args)
 	} else {
 		fcop = ICALL;
 	}
+
+	check_ctype_function_call(func, args);
 
 	/*
 	 * after cconv() func will always be a pointer to a function

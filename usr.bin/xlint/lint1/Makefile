@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.64 2021/03/21 13:10:58 rillig Exp $
+#	$NetBSD: Makefile,v 1.65 2021/04/05 02:05:47 rillig Exp $
 
 .include <bsd.own.mk>
 
 PROG=		lint1
-SRCS=		cgram.y ckgetopt.c decl.c emit.c emit1.c err.c \
+SRCS=		cgram.y ckctype.c ckgetopt.c decl.c emit.c emit1.c err.c \
 		func.c init.c inittyp.c lex.c \
 		main1.c mem.c mem1.c oper.c print.c scan.l tree.c tyname.c
 
