@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.37.52.6 2021/04/05 00:48:49 thorpej Exp $	*/
+/*	$NetBSD: vrip.c,v 1.37.52.7 2021/04/05 01:25:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.37.52.6 2021/04/05 00:48:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.37.52.7 2021/04/05 01:25:55 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -303,7 +303,7 @@ vrip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_cc = sc->sc_chipset.vc_cc;
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
-	if ((config_probe(parent, cf, &va) == sc->sc_pri))
+	if (/*XXX*/config_probe(parent, cf, &va) == sc->sc_pri)
 		config_attach(parent, cf, &va, vrip_print, CFARG_EOL);
 
 	return (0);
