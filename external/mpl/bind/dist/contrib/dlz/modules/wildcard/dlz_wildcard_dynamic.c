@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.4 2020/05/24 19:46:21 christos Exp $	*/
+/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.5 2021/04/05 10:54:05 rillig Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -61,8 +61,6 @@
 #include <dlz_list.h>
 #include <dlz_minimal.h>
 
-#include <ctype.h>
-
 #define DE_CONST(konst, var)           \
 	do {                           \
 		union {                \
@@ -71,7 +69,7 @@
 		} _u;                  \
 		_u.k = konst;          \
 		var = _u.v;            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /* fnmatch() return values. */
 #define FNM_NOMATCH 1 /* Match failed. */
