@@ -1,4 +1,4 @@
-/* $Id: imx23_apbh.c,v 1.1.56.6 2021/04/05 01:01:42 thorpej Exp $ */
+/* $Id: imx23_apbh.c,v 1.1.56.7 2021/04/05 01:24:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ apbh_search_crit_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	aa->aa_size = cf->cf_loc[APBHCF_SIZE];
 	aa->aa_irq = cf->cf_loc[APBHCF_IRQ];
 
-	if (config_probe(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, apbh_print, CFARG_EOL);
 
 	return 0;
