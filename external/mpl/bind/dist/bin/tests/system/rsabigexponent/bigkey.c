@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.5 2021/02/19 16:42:14 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.6 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -70,7 +70,7 @@ EVP_PKEY *pkey;
 				__LINE__);                                    \
 			exit(1);                                              \
 		}                                                             \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 int
 main(int argc, char **argv) {

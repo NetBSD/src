@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.6 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -804,7 +804,7 @@ ISC_LANG_ENDDECLS
 		ISC_LINK_INIT(_b, link);        \
 		(_b)->magic = ISC_BUFFER_MAGIC; \
 		(_b)->autore = false;           \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_INITNULL(_b) ISC__BUFFER_INIT(_b, NULL, 0)
 
@@ -816,30 +816,30 @@ ISC_LANG_ENDDECLS
 		(_b)->used = 0;    \
 		(_b)->current = 0; \
 		(_b)->active = 0;  \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_REGION(_b, _r)           \
 	do {                                 \
 		(_r)->base = (_b)->base;     \
 		(_r)->length = (_b)->length; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_USEDREGION(_b, _r)     \
 	do {                               \
 		(_r)->base = (_b)->base;   \
 		(_r)->length = (_b)->used; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_AVAILABLEREGION(_b, _r)                    \
 	do {                                                   \
 		(_r)->base = isc_buffer_used(_b);              \
 		(_r)->length = isc_buffer_availablelength(_b); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_ADD(_b, _n)     \
 	do {                        \
 		(_b)->used += (_n); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_SUBTRACT(_b, _n)                \
 	do {                                        \
@@ -848,26 +848,26 @@ ISC_LANG_ENDDECLS
 			(_b)->current = (_b)->used; \
 		if ((_b)->active > (_b)->used)      \
 			(_b)->active = (_b)->used;  \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_CLEAR(_b)      \
 	do {                       \
 		(_b)->used = 0;    \
 		(_b)->current = 0; \
 		(_b)->active = 0;  \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_CONSUMEDREGION(_b, _r)    \
 	do {                                  \
 		(_r)->base = (_b)->base;      \
 		(_r)->length = (_b)->current; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_REMAININGREGION(_b, _r)                    \
 	do {                                                   \
 		(_r)->base = isc_buffer_current(_b);           \
 		(_r)->length = isc_buffer_remaininglength(_b); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_ACTIVEREGION(_b, _r)                            \
 	do {                                                        \
@@ -878,27 +878,27 @@ ISC_LANG_ENDDECLS
 			(_r)->base = NULL;                          \
 			(_r)->length = 0;                           \
 		}                                                   \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_SETACTIVE(_b, _n)                \
 	do {                                         \
 		(_b)->active = (_b)->current + (_n); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_FIRST(_b)      \
 	do {                       \
 		(_b)->current = 0; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_FORWARD(_b, _n)    \
 	do {                           \
 		(_b)->current += (_n); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_BACK(_b, _n)       \
 	do {                           \
 		(_b)->current -= (_n); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_PUTMEM(_b, _base, _length)                            \
 	do {                                                              \
@@ -913,7 +913,7 @@ ISC_LANG_ENDDECLS
 			memmove(isc_buffer_used(_b), (_base), (_length)); \
 			(_b)->used += (_length);                          \
 		}                                                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_PUTSTR(_b, _source)                                   \
 	do {                                                              \
@@ -929,7 +929,7 @@ ISC_LANG_ENDDECLS
 		_cp = isc_buffer_used(_b);                                \
 		memmove(_cp, (_source), _length);                         \
 		(_b)->used += (_length);                                  \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_PUTUINT8(_b, _val)                              \
 	do {                                                        \
@@ -945,7 +945,7 @@ ISC_LANG_ENDDECLS
 		_cp = isc_buffer_used(_b);                          \
 		(_b)->used++;                                       \
 		_cp[0] = _val2;                                     \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_PUTUINT16(_b, _val)                             \
 	do {                                                        \
@@ -962,7 +962,7 @@ ISC_LANG_ENDDECLS
 		(_b)->used += 2;                                    \
 		_cp[0] = (unsigned char)(_val2 >> 8);               \
 		_cp[1] = (unsigned char)_val2;                      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_PUTUINT24(_b, _val)                             \
 	do {                                                        \
@@ -980,7 +980,7 @@ ISC_LANG_ENDDECLS
 		_cp[0] = (unsigned char)(_val2 >> 16);              \
 		_cp[1] = (unsigned char)(_val2 >> 8);               \
 		_cp[2] = (unsigned char)_val2;                      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC__BUFFER_PUTUINT32(_b, _val)                             \
 	do {                                                        \
@@ -999,7 +999,7 @@ ISC_LANG_ENDDECLS
 		_cp[1] = (unsigned char)(_val2 >> 16);              \
 		_cp[2] = (unsigned char)(_val2 >> 8);               \
 		_cp[3] = (unsigned char)_val2;                      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #if defined(ISC_BUFFER_USEINLINE)
 #define isc_buffer_init		   ISC__BUFFER_INIT
@@ -1057,7 +1057,7 @@ ISC_LANG_ENDDECLS
 		} _deconst;                                 \
 		_deconst._const = (_d);                     \
 		isc_buffer_init((_b), _deconst._var, (_l)); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * No inline method for this one (yet).

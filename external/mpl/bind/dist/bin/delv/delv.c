@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.8 2021/02/19 16:42:09 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.9 2021/04/05 11:27:00 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,7 +81,7 @@
 		result = (r);                \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define MAXNAME (DNS_NAME_MAXTEXT + 1)
 
@@ -1096,7 +1096,7 @@ plus_option(char *option) {
 		size_t _l = strlen(cmd);                             \
 		if (_l >= sizeof(A) || strncasecmp(cmd, A, _l) != 0) \
 			goto invalid_option;                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	switch (cmd[0]) {
 	case 'a': /* all */

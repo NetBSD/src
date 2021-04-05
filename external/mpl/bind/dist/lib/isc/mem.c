@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -221,13 +221,13 @@ struct isc__mempool {
 		if (ISC_UNLIKELY((isc_mem_debugging & TRACE_OR_RECORD) != 0 && \
 				 b != NULL))                                   \
 			add_trace_entry(a, b, c, d, e);                        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define DELETE_TRACE(a, b, c, d, e)                                            \
 	do {                                                                   \
 		if (ISC_UNLIKELY((isc_mem_debugging & TRACE_OR_RECORD) != 0 && \
 				 b != NULL))                                   \
 			delete_trace_entry(a, b, c, d, e);                     \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 static void
 print_active(isc__mem_t *ctx, FILE *out);
@@ -2092,7 +2092,7 @@ typedef struct summarystat {
 		xmlrc = (a);        \
 		if (xmlrc < 0)      \
 			goto error; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 static int
 xml_renderctx(isc__mem_t *ctx, summarystat_t *summary,
 	      xmlTextWriterPtr writer) {

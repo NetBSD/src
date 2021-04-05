@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.5 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: isctest.h,v 1.6 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 		result = (r);                \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 extern isc_mem_t *test_mctx;
 extern isc_log_t *test_lctx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.9 2021/02/19 16:42:12 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.10 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,7 +37,7 @@
 		result = (x);                \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define loginfo(...)                                           \
 	({                                                     \

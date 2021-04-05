@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.9 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.10 2021/04/05 11:27:04 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -83,7 +83,7 @@
 			      isc_result_totext(code));                  \
 		if (result != ISC_R_SUCCESS)                             \
 			goto failure;                                    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define FAILQ(code, msg, question, rdclass)                                  \
 	do {                                                                 \
@@ -98,14 +98,14 @@
 			      _buf1, _buf2, msg, isc_result_totext(code));   \
 		if (result != ISC_R_SUCCESS)                                 \
 			goto failure;                                        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECK(op)                            \
 	do {                                 \
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /**************************************************************************/
 

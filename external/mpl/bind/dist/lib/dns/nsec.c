@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.7 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,7 @@
 		result = (x);                \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 void
 dns_nsec_setbit(unsigned char *array, unsigned int type, unsigned int bit) {

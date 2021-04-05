@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.11 2021/03/23 18:46:07 rillig Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.12 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -83,7 +83,7 @@
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * This is the map file header for RBTDB images.  It is populated, and then
