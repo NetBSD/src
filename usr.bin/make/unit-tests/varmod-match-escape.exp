@@ -5,26 +5,16 @@ Applying ${SPECIALS:M...} to "\: : \\ * \*" (eval-defined, regular)
 Var_Parse: ${:U}\: (eval-defined)
 Applying ${:U} to "" (eval-defined, undefined)
 Result of ${:U} is "" (eval-defined, defined)
-Pattern[SPECIALS] for [\: : \\ * \*] is [\:]
+Pattern for ':M' is "\:"
 ModifyWords: split "\: : \\ * \*" into 5 words
-VarMatch [\:] [\:]
-VarMatch [:] [\:]
-VarMatch [\\] [\:]
-VarMatch [*] [\:]
-VarMatch [\*] [\:]
 Result of ${SPECIALS:M${:U}\:} is ":" (eval-defined, regular)
 Var_Parse: ${SPECIALS:M\:${:U}} (eval-defined)
 Applying ${SPECIALS:M...} to "\: : \\ * \*" (eval-defined, regular)
 Var_Parse: ${:U} (eval-defined)
 Applying ${:U} to "" (eval-defined, undefined)
 Result of ${:U} is "" (eval-defined, defined)
-Pattern[SPECIALS] for [\: : \\ * \*] is [:]
+Pattern for ':M' is ":"
 ModifyWords: split "\: : \\ * \*" into 5 words
-VarMatch [\:] [:]
-VarMatch [:] [:]
-VarMatch [\\] [:]
-VarMatch [*] [:]
-VarMatch [\*] [:]
 Result of ${SPECIALS:M\:${:U}} is ":" (eval-defined, regular)
 lhs = ":", rhs = ":", op = !=
 Global:VALUES = : :: :\:
@@ -34,22 +24,16 @@ Applying ${VALUES:M...} to ": :: :\:" (eval-defined, regular)
 Var_Parse: ${:U:} (eval-defined)
 Applying ${:U} to "" (eval-defined, undefined)
 Result of ${:U} is "" (eval-defined, defined)
-Pattern[VALUES] for [: :: :\:] is [:]
+Pattern for ':M' is ":"
 ModifyWords: split ": :: :\:" into 3 words
-VarMatch [:] [:]
-VarMatch [::] [:]
-VarMatch [:\:] [:]
 Result of ${VALUES:M\:${:U\:}} is ":" (eval-defined, regular)
 Var_Parse: ${VALUES:M${:U\:}\:} (eval-defined)
 Applying ${VALUES:M...} to ": :: :\:" (eval-defined, regular)
 Var_Parse: ${:U\:}\: (eval-defined)
 Applying ${:U...} to "" (eval-defined, undefined)
 Result of ${:U\:} is ":" (eval-defined, defined)
-Pattern[VALUES] for [: :: :\:] is [:\:]
+Pattern for ':M' is ":\:"
 ModifyWords: split ": :: :\:" into 3 words
-VarMatch [:] [:\:]
-VarMatch [::] [:\:]
-VarMatch [:\:] [:\:]
 Result of ${VALUES:M${:U\:}\:} is "::" (eval-defined, regular)
 lhs = ":", rhs = "::", op = !=
 make: "varmod-match-escape.mk" line 42: warning: XXX: Oops

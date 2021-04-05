@@ -19,15 +19,12 @@ Global:VAR = 1 2
 Global:VAR = 1 2 3
 Var_Parse: ${VAR:M[2]} (eval-defined)
 Applying ${VAR:M...} to "1 2 3" (eval-defined, regular)
-Pattern[VAR] for [1 2 3] is [[2]]
+Pattern for ':M' is "[2]"
 ModifyWords: split "1 2 3" into 3 words
-VarMatch [1] [[2]]
-VarMatch [2] [[2]]
-VarMatch [3] [[2]]
 Result of ${VAR:M[2]} is "2" (eval-defined, regular)
 Var_Parse: ${VAR:N[2]} (eval-defined)
 Applying ${VAR:N...} to "1 2 3" (eval-defined, regular)
-Pattern[VAR] for [1 2 3] is [[2]]
+Pattern for ':N' is "[2]"
 ModifyWords: split "1 2 3" into 3 words
 Result of ${VAR:N[2]} is "1 3" (eval-defined, regular)
 Var_Parse: ${VAR:S,2,two,} (eval-defined)
@@ -54,14 +51,12 @@ Applying ${:U...} to "" (eval-defined, undefined)
 Result of ${:UM*e} is "M*e" (eval-defined, defined)
 Indirect modifier "M*e" from "${:UM*e}"
 Applying ${:M...} to "value" (eval-defined, defined)
-Pattern[] for [value] is [*e]
+Pattern for ':M' is "*e"
 ModifyWords: split "value" into 1 words
-VarMatch [value] [*e]
 Result of ${:M*e} is "value" (eval-defined, defined)
 Applying ${:M...} to "value" (eval-defined, defined)
-Pattern[] for [value] is [valu[e]]
+Pattern for ':M' is "valu[e]"
 ModifyWords: split "value" into 1 words
-VarMatch [value] [valu[e]]
 Result of ${:Mvalu[e]} is "value" (eval-defined, defined)
 Var_Parse: ${:UVAR} (eval)
 Applying ${:U...} to "" (eval, undefined)
