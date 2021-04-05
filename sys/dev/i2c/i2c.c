@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.77.2.7 2021/04/04 22:01:22 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.77.2.8 2021/04/05 01:27:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77.2.7 2021/04/04 22:01:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77.2.8 2021/04/05 01:27:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * us from having to poke at the bus to see if anything
 		 * is there.
 		 */
-		match_result = config_match(parent, cf, &ia);
+		match_result = config_probe(parent, cf, &ia);/*XXX*/
 		if (match_result <= 0)
 			continue;
 
