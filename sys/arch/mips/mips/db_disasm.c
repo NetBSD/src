@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.38 2021/04/05 07:00:06 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.39 2021/04/05 07:27:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.38 2021/04/05 07:00:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.39 2021/04/05 07:27:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -85,7 +85,7 @@ static const char * const spec2_name[64] = {	/* QED RM4650, R5000, etc. */
 	[OP_MADDU] = "maddu",
 	[OP_MUL] = "mul",
 #ifdef __OCTEON__
-	[OP_CVM_DMUL] = "baddu",
+	[OP_CVM_DMUL] = "dmul",
 #endif
 	[OP_MSUB] = "msub",
 	[OP_MSUBU] = "msubu",
