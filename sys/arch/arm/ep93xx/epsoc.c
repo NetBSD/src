@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.13.52.7 2021/04/05 00:48:45 thorpej Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.13.52.8 2021/04/05 01:01:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13.52.7 2021/04/05 00:48:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13.52.8 2021/04/05 01:01:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -205,7 +205,7 @@ epsoc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa->sa_size = cf->cf_loc[EPSOCCF_SIZE];
 	sa->sa_intr = cf->cf_loc[EPSOCCF_INTR];
 
-	if (config_probe(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, epsoc_print, CFARG_EOL);
 
 	return (0);

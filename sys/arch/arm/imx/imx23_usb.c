@@ -1,4 +1,4 @@
-/* $Id: imx23_usb.c,v 1.3.2.5 2021/04/05 00:48:45 thorpej Exp $ */
+/* $Id: imx23_usb.c,v 1.3.2.6 2021/04/05 01:01:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
         aa.aa_unit = cf->cf_loc[IMXUSBCCF_UNIT];
         aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 
-        if (config_probe(parent, cf, &aa) > 0)
+        if (config_probe(parent, cf, &aa))
                 config_attach(parent, cf, &aa, NULL, CFARG_EOL);
 
         return 0;

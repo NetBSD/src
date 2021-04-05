@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.13.52.5 2021/04/05 00:48:47 thorpej Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.13.52.6 2021/04/05 01:01:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.13.52.5 2021/04/05 00:48:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.13.52.6 2021/04/05 01:01:43 thorpej Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -99,7 +99,7 @@ ixpsip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa.sa_index = cf->cf_loc[IXPSIPCF_INDEX];
 	sa.sa_intr = cf->cf_loc[IXPSIPCF_INTR];
 
-	if (config_probe(parent, cf, &sa) > 0)
+	if (config_probe(parent, cf, &sa))
 		config_attach(parent, cf, &sa, ixpsip_print, CFARG_EOL);
 
 	return (0);

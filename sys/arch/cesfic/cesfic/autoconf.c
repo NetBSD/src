@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27.10.5 2021/04/05 00:48:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.10.6 2021/04/05 01:01:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.10.5 2021/04/05 00:48:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.10.6 2021/04/05 01:01:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ int
 mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
-	if (config_probe(parent, cf, NULL) > 0)
+	if (config_probe(parent, cf, NULL))
 		config_attach(parent, cf, NULL, NULL, CFARG_EOL);
 	return (0);
 }

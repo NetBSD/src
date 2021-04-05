@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20.70.5 2021/04/05 00:48:52 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20.70.6 2021/04/05 01:01:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.70.5 2021/04/05 00:48:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.70.6 2021/04/05 01:01:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 		ma->ma_iot = 0;
 		ma->ma_ioh = MIPS_PHYS_TO_KSEG1(ma->ma_addr);
-		if (config_probe(parent, cf, ma) > 0)
+		if (config_probe(parent, cf, ma))
 			config_attach(parent, cf, ma, mainbus_print, CFARG_EOL);
 	} while (cf->cf_fstate == FSTATE_STAR);
 

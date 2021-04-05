@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.21.10.4 2021/04/05 00:48:54 thorpej Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.21.10.5 2021/04/05 01:01:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.21.10.4 2021/04/05 00:48:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.21.10.5 2021/04/05 01:01:48 thorpej Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -245,7 +245,7 @@ ppbus_search_children(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	device_t dev;
 	int rval = 0;
 
-	if (config_probe(parent, cf, aux) > 0) {
+	if (config_probe(parent, cf, aux)) {
 		dev = config_attach(parent, cf, aux, NULL, CFARG_EOL);
 		if (dev) {
 			child = device_private(dev);

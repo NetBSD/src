@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_axi.c,v 1.7.16.5 2021/04/05 00:48:45 thorpej Exp $	*/
+/*	$NetBSD: imx51_axi.c,v 1.7.16.6 2021/04/05 01:01:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.7.16.5 2021/04/05 00:48:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.7.16.6 2021/04/05 01:01:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,7 +115,7 @@ axi_critical_search(device_t parent, struct cfdata *cf,
 	aa->aa_irq = cf->cf_loc[AXICF_IRQ];
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
-	if (config_probe(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;
@@ -136,7 +136,7 @@ axi_search(device_t parent, struct cfdata *cf, const int *ldesc __unused,
 	aa->aa_irq = cf->cf_loc[AXICF_IRQ];
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
-	if (config_probe(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;

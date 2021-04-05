@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9.68.5 2021/04/05 00:48:50 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.9.68.6 2021/04/05 01:01:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9.68.5 2021/04/05 00:48:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9.68.6 2021/04/05 01:01:45 thorpej Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -142,7 +142,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		oa.oa_nirq = 1;
 
 		tryagain = 0;
-		if (config_probe(parent, cf, &oa) > 0) {
+		if (config_probe(parent, cf, &oa)) {
 			config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npe.c,v 1.11.34.5 2021/04/05 00:48:46 thorpej Exp $	*/
+/*	$NetBSD: ixp425_npe.c,v 1.11.34.6 2021/04/05 01:01:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -62,7 +62,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.11.34.5 2021/04/05 00:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.11.34.6 2021/04/05 01:01:43 thorpej Exp $");
 
 /*
  * Intel XScale Network Processing Engine (NPE) support.
@@ -342,7 +342,7 @@ ixpnpe_search(device_t parent, cfdata_t cf, const int *ldesc, void *arg)
 	na.na_iot = ixa->ixa_iot;
 	na.na_dt = ixa->ixa_dt;
 
-	if (config_probe(parent, cf, &na) > 0) {
+	if (config_probe(parent, cf, &na)) {
 		config_attach(parent, cf, &na, ixpnpe_print, CFARG_EOL);
 		return (1);
 	}

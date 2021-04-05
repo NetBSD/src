@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.18.52.7 2021/04/05 00:48:45 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.18.52.8 2021/04/05 01:01:41 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.7 2021/04/05 00:48:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18.52.8 2021/04/05 01:01:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ piocsearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		}
 
 		tryagain = 0;
-		if (config_probe(parent, cf, &pa) > 0) {
+		if (config_probe(parent, cf, &pa)) {
 			config_attach(parent, cf, &pa, piocprint, CFARG_EOL);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
@@ -266,7 +266,7 @@ piocsubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		if (pa->pa_irq == -1)
 			pa->pa_irq = cf->cf_loc[PIOCCF_IRQ];
 		tryagain = 0;
-		if (config_probe(parent, cf, pa) > 0) {
+		if (config_probe(parent, cf, pa)) {
 			config_attach(parent, cf, pa, piocprint, CFARG_EOL);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
