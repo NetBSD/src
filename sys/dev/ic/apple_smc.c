@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.6.50.4 2021/04/04 22:01:22 thorpej Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.6.50.5 2021/04/05 00:48:54 thorpej Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.6.50.4 2021/04/04 22:01:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.6.50.5 2021/04/05 00:48:54 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,7 +145,7 @@ apple_smc_search(device_t parent, cfdata_t cf, const int *locators, void *aux)
 		return 0;
 
 	/* If this device doesn't match, don't attach it.  */
-	if (!config_match(parent, cf, aux))
+	if (!config_probe(parent, cf, aux))
 		return 0;
 
 	/* Looks hunky-dory.  Attach.  */

@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.13.68.4 2021/04/04 22:01:18 thorpej Exp $ */
+/* $NetBSD: sbgbus.c,v 1.13.68.5 2021/04/05 00:48:50 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.13.68.4 2021/04/04 22:01:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.13.68.5 2021/04/05 00:48:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ sbgbussearch(device_t parent, cfdata_t cf,
 		}
 
 		tryagain = 0;
-		if (config_match(parent, cf, &sga) > 0) {
+		if (config_probe(parent, cf, &sga) > 0) {
 			config_attach(parent, cf, &sga, sbgbusprint, CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

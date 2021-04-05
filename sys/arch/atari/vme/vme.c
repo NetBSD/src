@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.17.68.4 2021/04/04 22:01:14 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.17.68.5 2021/04/05 00:48:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.17.68.4 2021/04/04 22:01:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.17.68.5 2021/04/05 00:48:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ vmesearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_msize  = cf->cf_msize;
 	va.va_irq    = cf->cf_irq;
 
-	if (config_match(parent, cf, &va) > 0)
+	if (config_probe(parent, cf, &va) > 0)
 		config_attach(parent, cf, &va, vmeprint, CFARG_EOL);
 	return (0);
 }

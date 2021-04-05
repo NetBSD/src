@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.17.34.4 2021/04/04 22:01:21 thorpej Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.17.34.5 2021/04/05 00:48:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.17.34.4 2021/04/04 22:01:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.17.34.5 2021/04/05 00:48:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ cs80bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	DPRINTF(DBG_FOLLOW, ("cs80bussearch: id=0x%x slave=%d punit=%d\n",
 	    ca->ca_id, ca->ca_slave, ca->ca_punit));
 
-	if (config_match(parent, cf, ca) > 0) {
+	if (config_probe(parent, cf, ca) > 0) {
 
 		DPRINTF(DBG_FOLLOW,
 		    ("cs80bussearch: got id=0x%x slave=%d punit %d\n",

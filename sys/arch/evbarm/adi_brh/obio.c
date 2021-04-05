@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.11.68.4 2021/04/04 22:01:14 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.11.68.5 2021/04/05 00:48:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11.68.4 2021/04/04 22:01:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11.68.5 2021/04/05 00:48:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	oba.oba_width = cf->cf_loc[OBIOCF_WIDTH];
 	oba.oba_irq = cf->cf_loc[OBIOCF_IRQ];
 
-	if (config_match(parent, cf, &oba) > 0)
+	if (config_probe(parent, cf, &oba) > 0)
 		config_attach(parent, cf, &oba, obio_print, CFARG_EOL);
 
 	return (0);

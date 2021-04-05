@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.27.4.6 2021/04/04 22:01:12 thorpej Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.27.4.7 2021/04/05 00:48:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.27.4.6 2021/04/04 22:01:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.27.4.7 2021/04/05 00:48:45 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -651,7 +651,7 @@ at91bus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa->sa_size = cf->cf_loc[AT91BUSCF_SIZE];
 	sa->sa_pid  = cf->cf_loc[AT91BUSCF_PID];
 
-	if (config_match(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, at91bus_print, CFARG_EOL);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.14.68.4 2021/04/04 22:01:19 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.14.68.5 2021/04/05 00:48:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.14.68.4 2021/04/04 22:01:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.14.68.5 2021/04/05 00:48:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ intiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		ia.ia_bst = NEXT68K_INTIO_BUS_SPACE;
 		ia.ia_dmat = mba->mba_dmat;
 		
-		if (config_match(parent, cf, &ia) == 0)
+		if (config_probe(parent, cf, &ia) == 0)
 			break;
 		config_attach(parent, cf, &ia, intioprint, CFARG_EOL);
 	} while (cf->cf_fstate == FSTATE_STAR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nbppcon.c,v 1.3.16.4 2021/04/04 22:01:16 thorpej Exp $ */
+/*	$NetBSD: nbppcon.c,v 1.3.16.5 2021/04/05 00:48:49 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.3.16.4 2021/04/04 22:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.3.16.5 2021/04/05 00:48:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,7 +121,7 @@ nbppcon_search(device_t self, cfdata_t cf, const int *ldesc, void *aux)
 	pcon.aa_name = cf->cf_name;
 	pcon.aa_tag = cf->cf_loc[NBPPCONCF_TAG];
 
-	if (config_match(self, cf, &pcon))
+	if (config_probe(self, cf, &pcon))
 		config_attach(self, cf, &pcon, nbppcon_print, CFARG_EOL);
 
 	return 0;

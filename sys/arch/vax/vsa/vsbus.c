@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.65.14.4 2021/04/04 22:01:21 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.65.14.5 2021/04/05 00:48:53 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.65.14.4 2021/04/04 22:01:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.65.14.5 2021/04/05 00:48:53 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -195,7 +195,7 @@ vsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	*sc->sc_intclr = 0xff;
 	scb_vecref(0, 0); /* Clear vector ref */
 
-	i = config_match(parent, cf, &va);
+	i = config_probe(parent, cf, &va);
 	vax_unmap_physmem(va.va_addr, 1);
 	c = *sc->sc_intreq & ~sc->sc_mask;
 	if (i == 0)

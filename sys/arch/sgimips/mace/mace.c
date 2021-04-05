@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.23.32.4 2021/04/04 22:01:20 thorpej Exp $	*/
+/*	$NetBSD: mace.c,v 1.23.32.5 2021/04/05 00:48:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.23.32.4 2021/04/04 22:01:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.23.32.5 2021/04/05 00:48:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ mace_search(device_t parent, struct cfdata *cf, const int *ldesc, void *aux)
 		maa.isa_ringbuffer = sc->isa_ringbuffer;
 
 		tryagain = 0;
-		if (config_match(parent, cf, &maa) > 0) {
+		if (config_probe(parent, cf, &maa) > 0) {
 			config_attach(parent, cf, &maa, mace_print, CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

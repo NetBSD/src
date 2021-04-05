@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.5.52.4 2021/04/04 22:01:12 thorpej Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.5.52.5 2021/04/05 00:48:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.5.52.4 2021/04/04 22:01:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.5.52.5 2021/04/05 00:48:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ epgpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ga.ga_bit1 = cf->cf_loc[EPGPIOCF_BIT1];
 	ga.ga_bit2 = cf->cf_loc[EPGPIOCF_BIT2];
 
-	if (config_match(parent, cf, &ga) > 0)
+	if (config_probe(parent, cf, &ga) > 0)
 		config_attach(parent, cf, &ga, epgpio_print, CFARG_EOL);
 
 	return 0;

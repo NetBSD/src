@@ -1,7 +1,7 @@
-/*	$NetBSD: hb.c,v 1.21.2.4 2021/04/04 22:01:19 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.21.2.5 2021/04/05 00:48:51 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.21.2.4 2021/04/04 22:01:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.21.2.5 2021/04/05 00:48:51 thorpej Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -67,7 +67,7 @@ hb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ha->ha_addr = cf->cf_addr;
 	ha->ha_level = cf->cf_level;
 
-	if (config_match(parent, cf, ha) > 0)
+	if (config_probe(parent, cf, ha) > 0)
 		config_attach(parent, cf, ha, hb_print, CFARG_EOL);
 
 	return 0;
