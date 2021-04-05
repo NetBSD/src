@@ -165,7 +165,7 @@ stoeplitz_hash_ip6(const struct stoeplitz_cache *scache,
 	uint32_t n32 = 0;
 	size_t i;
 
-	for (i = 0; i < nitems(faddr6->s6_addr32); i++)
+	for (i = 0; i < __arraycount(faddr6->s6_addr32); i++)
 		n32 ^= faddr6->s6_addr32[i] ^ laddr6->s6_addr32[i];
 
 	return (stoeplitz_hash_n32(scache, n32));
@@ -179,7 +179,7 @@ stoeplitz_hash_ip6port(const struct stoeplitz_cache *scache,
 	uint32_t n32 = 0;
 	size_t i;
 
-	for (i = 0; i < nitems(faddr6->s6_addr32); i++)
+	for (i = 0; i < __arraycount(faddr6->s6_addr32); i++)
 		n32 ^= faddr6->s6_addr32[i] ^ laddr6->s6_addr32[i];
 
 	n32 ^= fport ^ lport;
