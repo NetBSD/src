@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.5 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.6 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1369,7 +1369,7 @@ dns_cache_dumpstats(dns_cache_t *cache, FILE *fp) {
 		xmlrc = (a);        \
 		if (xmlrc < 0)      \
 			goto error; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 static int
 renderstat(const char *name, uint64_t value, xmlTextWriterPtr writer) {
 	int xmlrc;

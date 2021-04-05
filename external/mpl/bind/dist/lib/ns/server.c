@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.5 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.6 2021/04/05 11:27:04 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 	do {                                            \
 		result = (op);                          \
 		RUNTIME_CHECK(result == ISC_R_SUCCESS); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 isc_result_t
 ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,

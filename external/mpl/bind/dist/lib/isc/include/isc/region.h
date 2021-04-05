@@ -1,4 +1,4 @@
-/*	$NetBSD: region.h,v 1.4 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.5 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,7 +55,7 @@ struct isc_consttextregion {
 		INSIST(_r->length >= _l); \
 		_r->base += _l;           \
 		_r->length -= _l;         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define isc_textregion_consume(r, l)        \
 	do {                                \
@@ -64,7 +64,7 @@ struct isc_consttextregion {
 		INSIST(_r->length >= _l);   \
 		_r->base += _l;             \
 		_r->length -= _l;           \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define isc_constregion_consume(r, l)        \
 	do {                                 \
@@ -73,7 +73,7 @@ struct isc_consttextregion {
 		INSIST(_r->length >= _l);    \
 		_r->base += _l;              \
 		_r->length -= _l;            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 /*@}*/
 
 ISC_LANG_BEGINDECLS

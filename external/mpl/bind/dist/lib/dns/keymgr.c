@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.c,v 1.4 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: keymgr.c,v 1.5 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,7 @@
 		result = (x);                \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * Set key state to `target` state and change last changed
@@ -52,7 +52,7 @@
 			dst_key_setstate((key), (state), (target));           \
 			dst_key_settime((key), (timing), time);               \
 		}                                                             \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /* Shorter keywords for better readability. */
 #define HIDDEN	    DST_KEY_STATE_HIDDEN

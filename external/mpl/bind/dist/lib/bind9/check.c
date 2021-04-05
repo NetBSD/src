@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.10 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.11 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -615,7 +615,7 @@ check_dns64(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			if (result == ISC_R_SUCCESS)                       \
 				result = ISC_R_RANGE;                      \
 		}                                                          \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECK_RRL_RATE(rate, def, max_rate, name)                          \
 	do {                                                               \
@@ -626,7 +626,7 @@ check_dns64(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			CHECK_RRL(rate <= max_rate, name " %d > %d", rate, \
 				  max_rate);                               \
 		}                                                          \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 static isc_result_t
 check_ratelimit(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,

@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.12 2021/04/05 10:19:34 rillig Exp $	*/
+/*	$NetBSD: task.c,v 1.13 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1805,7 +1805,7 @@ isc_task_exiting(isc_task_t *t) {
 		xmlrc = (a);        \
 		if (xmlrc < 0)      \
 			goto error; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 int
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, void *writer0) {
 	isc__taskmgr_t *mgr = (isc__taskmgr_t *)mgr0;
@@ -1914,7 +1914,7 @@ error:
 			result = ISC_R_NOMEMORY; \
 			goto error;              \
 		}                                \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 isc_result_t
 isc_taskmgr_renderjson(isc_taskmgr_t *mgr0, void *tasks0) {

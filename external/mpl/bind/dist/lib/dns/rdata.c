@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.9 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.10 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,7 @@
 		isc_result_t _r = (x);   \
 		if (_r != ISC_R_SUCCESS) \
 			return ((_r));   \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define RETTOK(x)                                          \
 	do {                                               \
@@ -59,14 +59,14 @@
 			isc_lex_ungettoken(lexer, &token); \
 			return (_r);                       \
 		}                                          \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECK(op)                            \
 	do {                                 \
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECKTOK(op)                                       \
 	do {                                               \
@@ -75,7 +75,7 @@
 			isc_lex_ungettoken(lexer, &token); \
 			goto cleanup;                      \
 		}                                          \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DNS_AS_STR(t) ((t).value.as_textregion.base)
 

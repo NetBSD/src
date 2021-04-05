@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.12 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.13 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -163,12 +163,12 @@ typedef struct dns_include dns_include_t;
 		LOCK(&(z)->lock);     \
 		INSIST(!(z)->locked); \
 		(z)->locked = true;   \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define UNLOCK_ZONE(z)               \
 	do {                         \
 		(z)->locked = false; \
 		UNLOCK(&(z)->lock);  \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define LOCKED_ZONE(z) ((z)->locked)
 #define TRYLOCK_ZONE(result, z)                         \
 	do {                                            \
@@ -177,7 +177,7 @@ typedef struct dns_include dns_include_t;
 			INSIST(!(z)->locked);           \
 			(z)->locked = true;             \
 		}                                       \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #else /* ifdef DNS_ZONE_CHECKLOCK */
 #define LOCK_ZONE(z)   LOCK(&(z)->lock)
 #define UNLOCK_ZONE(z) UNLOCK(&(z)->lock)
@@ -185,7 +185,7 @@ typedef struct dns_include dns_include_t;
 #define TRYLOCK_ZONE(result, z)                         \
 	do {                                            \
 		result = isc_mutex_trylock(&(z)->lock); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #endif /* ifdef DNS_ZONE_CHECKLOCK */
 
 #define ZONEDB_INITLOCK(l)    isc_rwlock_init((l), 0, 0)
@@ -462,7 +462,7 @@ struct dns_zone {
 		dns__zonediff_t *_z = (z); \
 		(_z)->diff = (d);          \
 		(_z)->offline = false;     \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DNS_ZONE_FLAG(z, f)    ((atomic_load_relaxed(&(z)->flags) & (f)) != 0)
 #define DNS_ZONE_SETFLAG(z, f) atomic_fetch_or(&(z)->flags, (f))
@@ -540,7 +540,7 @@ typedef enum {
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 struct dns_unreachable {
 	isc_sockaddr_t remote;
@@ -915,7 +915,7 @@ static const char *dbargv_default[] = { "rbt" };
 			isc_interval_set(&_i, _j / 2, 0);                    \
 			(void)isc_time_add((a), &_i, (c));                   \
 		}                                                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DNS_ZONE_TIME_ADD(a, b, c)                                           \
 	do {                                                                 \
@@ -929,7 +929,7 @@ static const char *dbargv_default[] = { "rbt" };
 			isc_interval_set(&_i, (b) / 2, 0);                   \
 			(void)isc_time_add((a), &_i, (c));                   \
 		}                                                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 typedef struct nsec3param nsec3param_t;
 struct nsec3param {

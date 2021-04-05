@@ -1,4 +1,4 @@
-/*	$NetBSD: nstest.h,v 1.5 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: nstest.h,v 1.6 2021/04/05 11:27:04 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@ typedef struct ns_test_id {
 		result = (r);                \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 extern isc_mem_t *mctx;
 extern isc_log_t *lctx;

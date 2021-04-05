@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,6 +42,6 @@ TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
  */
 #define isc_mutex_stats(fp) \
 	do {                \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #endif /* ISC_MUTEX_H */

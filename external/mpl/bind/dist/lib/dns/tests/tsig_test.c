@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_test.c,v 1.6 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.7 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,7 +41,7 @@
 		if (result != ISC_R_SUCCESS) { \
 			goto cleanup;          \
 		}                              \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define TEST_ORIGIN "test"
 

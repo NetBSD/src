@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.9 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.10 2021/04/05 11:27:04 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,7 +88,7 @@
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * Fail unconditionally with result 'code', which must not
@@ -104,7 +104,7 @@
 		result = (code);             \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * Fail unconditionally and log as a client error.
@@ -127,12 +127,12 @@
 			   isc_result_totext(result));       \
 		if (result != ISC_R_SUCCESS)                 \
 			goto failure;                        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define PREREQFAILC(code, msg)                                            \
 	do {                                                              \
 		inc_stats(client, zone, ns_statscounter_updatebadprereq); \
 		FAILC(code, msg);                                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define FAILN(code, name, msg)                                             \
 	do {                                                               \
@@ -154,12 +154,12 @@
 		}                                                          \
 		if (result != ISC_R_SUCCESS)                               \
 			goto failure;                                      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define PREREQFAILN(code, name, msg)                                      \
 	do {                                                              \
 		inc_stats(client, zone, ns_statscounter_updatebadprereq); \
 		FAILN(code, name, msg);                                   \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define FAILNT(code, name, type, msg)                                         \
 	do {                                                                  \
@@ -183,12 +183,12 @@
 		}                                                             \
 		if (result != ISC_R_SUCCESS)                                  \
 			goto failure;                                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define PREREQFAILNT(code, name, type, msg)                               \
 	do {                                                              \
 		inc_stats(client, zone, ns_statscounter_updatebadprereq); \
 		FAILNT(code, name, type, msg);                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * Fail unconditionally and log as a server error.
@@ -202,7 +202,7 @@
 			   msg, isc_result_totext(result));                  \
 		if (result != ISC_R_SUCCESS)                                 \
 			goto failure;                                        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * Return TRUE if NS_CLIENTATTR_TCP is set in the attributes other FALSE.

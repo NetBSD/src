@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.7 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.8 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,7 @@ LIBDNS_EXTERNAL_DATA isc_stats_t *dns_dnssec_stats;
 		result = (x);                \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define TYPE_SIGN   0
 #define TYPE_VERIFY 1

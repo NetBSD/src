@@ -1,4 +1,4 @@
-/*	$NetBSD: ntgroups.c,v 1.6 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: ntgroups.c,v 1.7 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,7 +49,7 @@
 		if (result != ISC_R_SUCCESS) { \
 			goto cleanup;          \
 		}                              \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 isc_result_t
 isc_ntsecurity_getaccountgroups(char *username, char **GroupList,

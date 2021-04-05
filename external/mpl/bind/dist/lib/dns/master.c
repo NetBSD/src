@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -247,7 +247,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 			} else                                            \
 				goto log_and_cleanup;                     \
 		}                                                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define GETTOKEN(lexer, options, token, eol) \
 	GETTOKENERR(lexer, options, token, eol, {})
 
@@ -270,7 +270,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 		isc_buffer_init(&target, target_mem, target_size);             \
 		rdcount_save = rdcount;                                        \
 		rdlcount_save = rdlcount;                                      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define WARNUNEXPECTEDEOF(lexer)                                         \
 	do {                                                             \
@@ -279,7 +279,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 					   "%s: file does not end with " \
 					   "newline",                    \
 					   source);                      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define EXPECTEOL                                              \
 	do {                                                   \
@@ -295,7 +295,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 			} else if (result != ISC_R_SUCCESS)    \
 				goto log_and_cleanup;          \
 		}                                              \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define MANYERRS(lctx, result)                                     \
 	((result != ISC_R_SUCCESS) && (result != ISC_R_IOERROR) && \
@@ -305,7 +305,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 	do {                                         \
 		if ((lctx)->result == ISC_R_SUCCESS) \
 			(lctx)->result = r;          \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define LOGITFILE(result, filename)                                            \
 	if (result == ISC_R_INVALIDFILE || result == ISC_R_FILENOTFOUND ||     \

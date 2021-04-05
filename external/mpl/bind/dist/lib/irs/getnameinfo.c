@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.5 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.6 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -137,7 +137,7 @@ static struct afd {
 		result = (code);      \
 		if (result != 0)      \
 			goto cleanup; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #ifdef _WIN32
 int

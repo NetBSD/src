@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.9 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.10 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -110,7 +110,7 @@ LPFN_GETACCEPTEXSOCKADDRS ISCGetAcceptExSockaddrs;
 #else /* ifdef ISC_SOCKET_CONSISTENCY_CHECKS */
 #define CONSISTENT(sock) \
 	do {             \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #endif /* ifdef ISC_SOCKET_CONSISTENCY_CHECKS */
 static void
 consistent(isc_socket_t *sock);
@@ -295,7 +295,7 @@ struct isc_socket {
 	do {                                     \
 		(sock)->state = (_state);        \
 		(sock)->state_lineno = __LINE__; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * I/O Completion ports Info structures
@@ -3700,7 +3700,7 @@ _socktype(isc_sockettype_t type) {
 		xmlrc = (a);        \
 		if (xmlrc < 0)      \
 			goto error; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 int
 isc_socketmgr_renderxml(isc_socketmgr_t *mgr, void *writer0) {
 	isc_socket_t *sock = NULL;
@@ -3821,7 +3821,7 @@ error:
 			result = ISC_R_NOMEMORY; \
 			goto error;              \
 		}                                \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 isc_result_t
 isc_socketmgr_renderjson(isc_socketmgr_t *mgr, void *stats0) {
 	isc_result_t result = ISC_R_SUCCESS;

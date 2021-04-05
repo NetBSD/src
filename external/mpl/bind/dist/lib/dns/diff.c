@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.5 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.6 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DIFF_COMMON_LOGARGS \
 	dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_DIFF

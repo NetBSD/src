@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.12 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.13 2021/04/05 11:27:00 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -173,7 +173,7 @@
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define TCHECK(op)                               \
 	do {                                     \
@@ -182,7 +182,7 @@
 			isc_buffer_clear(*text); \
 			goto cleanup;            \
 		}                                \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECKM(op, msg)                                                        \
 	do {                                                                   \
@@ -194,7 +194,7 @@
 				      isc_result_totext(result));              \
 			goto cleanup;                                          \
 		}                                                              \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECKMF(op, msg, file)                                                 \
 	do {                                                                   \
@@ -206,14 +206,14 @@
 				      isc_result_totext(result));              \
 			goto cleanup;                                          \
 		}                                                              \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECKFATAL(op, msg)                         \
 	do {                                        \
 		result = (op);                      \
 		if (result != ISC_R_SUCCESS)        \
 			fatal(server, msg, result); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * Maximum ADB size for views that share a cache.  Use this limit to suppress

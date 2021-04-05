@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.11 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.12 2021/04/05 11:27:04 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -94,7 +94,7 @@
 		(qctx)->result = r;           \
 		(qctx)->want_restart = false; \
 		(qctx)->line = __LINE__;      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*% Partial answer? */
 #define PARTIALANSWER(c) \
@@ -210,7 +210,7 @@ client_trace(ns_client_t *client, int level, const char *message) {
 		INSIST(a == NULL); \
 		a = b;             \
 		b = NULL;          \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define RESTORE(a, b) SAVE(a, b)
 
 static bool

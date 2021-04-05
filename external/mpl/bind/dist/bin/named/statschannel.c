@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.9 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.10 2021/04/05 11:27:00 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -234,7 +234,7 @@ init_desc(void) {
 		set_desc(ns_statscounter_##counterid, ns_statscounter_max, \
 			 desc, nsstats_desc, xmldesc, nsstats_xmldesc);    \
 		nsstats_index[i++] = ns_statscounter_##counterid;          \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	i = 0;
 	SET_NSSTATDESC(requestv4, "IPv4 requests received", "Requestv4");
@@ -356,7 +356,7 @@ init_desc(void) {
 			 dns_resstatscounter_max, desc, resstats_desc, \
 			 xmldesc, resstats_xmldesc);                   \
 		resstats_index[i++] = dns_resstatscounter_##counterid; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	i = 0;
 	SET_RESSTATDESC(queryv4, "IPv4 queries sent", "Queryv4");
@@ -446,7 +446,7 @@ init_desc(void) {
 		set_desc(dns_adbstats_##id, dns_adbstats_max, desc, \
 			 adbstats_desc, xmldesc, adbstats_xmldesc); \
 		adbstats_index[i++] = dns_adbstats_##id;            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 	i = 0;
 	SET_ADBSTATDESC(nentries, "Address hash table size", "nentries");
 	SET_ADBSTATDESC(entriescnt, "Addresses in hash table", "entriescnt");
@@ -471,7 +471,7 @@ init_desc(void) {
 			 dns_zonestatscounter_max, desc, zonestats_desc, \
 			 xmldesc, zonestats_xmldesc);                    \
 		zonestats_index[i++] = dns_zonestatscounter_##counterid; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	i = 0;
 	SET_ZONESTATDESC(notifyoutv4, "IPv4 notifies sent", "NotifyOutv4");
@@ -506,7 +506,7 @@ init_desc(void) {
 			 isc_sockstatscounter_max, desc, sockstats_desc, \
 			 xmldesc, sockstats_xmldesc);                    \
 		sockstats_index[i++] = isc_sockstatscounter_##counterid; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	i = 0;
 	SET_SOCKSTATDESC(udp4open, "UDP/IPv4 sockets opened", "UDP4Open");
@@ -627,7 +627,7 @@ init_desc(void) {
 			 desc, dnssecstats_desc, xmldesc,                  \
 			 dnssecstats_xmldesc);                             \
 		dnssecstats_index[i++] = dns_dnssecstats_##counterid;      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	i = 0;
 	SET_DNSSECSTATDESC(asis,

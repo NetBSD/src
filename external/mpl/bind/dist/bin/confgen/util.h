@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.4 2021/02/19 16:42:09 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.5 2021/04/05 11:26:59 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,7 @@
 		result = function;                                        \
 		if (result != ISC_R_SUCCESS)                              \
 			fatal("%s: %s", name, isc_result_totext(result)); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 ISC_LANG_BEGINDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.8 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,7 @@ static unsigned char maptolower[] = {
 		name->length = 0;                           \
 		name->labels = 0;                           \
 		name->attributes &= ~DNS_NAMEATTR_ABSOLUTE; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * A name is "bindable" if it can be set to point to a new value, i.e.

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.11 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.12 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -111,46 +111,46 @@
 #define RTRACE(m)          \
 	do {               \
 		UNUSED(m); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define RRTRACE(r, m)      \
 	do {               \
 		UNUSED(r); \
 		UNUSED(m); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define FCTXTRACE(m)       \
 	do {               \
 		UNUSED(m); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define FCTXTRACE2(m1, m2)  \
 	do {                \
 		UNUSED(m1); \
 		UNUSED(m2); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define FCTXTRACE3(m1, res)  \
 	do {                 \
 		UNUSED(m1);  \
 		UNUSED(res); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define FCTXTRACE4(m1, m2, res) \
 	do {                    \
 		UNUSED(m1);     \
 		UNUSED(m2);     \
 		UNUSED(res);    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define FCTXTRACE5(m1, m2, v) \
 	do {                  \
 		UNUSED(m1);   \
 		UNUSED(m2);   \
 		UNUSED(v);    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define FTRACE(m)          \
 	do {               \
 		UNUSED(m); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define QTRACE(m)          \
 	do {               \
 		UNUSED(m); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #endif /* WANT_QUERYTRACE */
 
 #define US_PER_SEC  1000000U

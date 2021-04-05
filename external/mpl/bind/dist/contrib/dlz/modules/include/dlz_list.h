@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_list.h,v 1.3 2020/05/24 19:46:21 christos Exp $	*/
+/*	$NetBSD: dlz_list.h,v 1.4 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) 1997-2002, 2004, 2006, 2007, 2011-2013, 2016  Internet Systems
@@ -20,7 +20,7 @@
 	do {                        \
 		(list).head = NULL; \
 		(list).tail = NULL; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DLZ_LINK(type)             \
 	struct {                   \
@@ -30,7 +30,7 @@
 	do {                                     \
 		(elt)->link.prev = (void *)(-1); \
 		(elt)->link.next = (void *)(-1); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DLZ_LIST_HEAD(list) ((list).head)
 #define DLZ_LIST_TAIL(list) ((list).tail)
@@ -44,7 +44,7 @@
 		(elt)->link.prev = (list).tail;         \
 		(elt)->link.next = NULL;                \
 		(list).tail = (elt);                    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DLZ_LIST_PREV(elt, link) ((elt)->link.prev)
 #define DLZ_LIST_NEXT(elt, link) ((elt)->link.next)
