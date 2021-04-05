@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.37 2021/04/05 06:38:01 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.38 2021/04/05 07:00:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.37 2021/04/05 06:38:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.38 2021/04/05 07:00:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -265,18 +265,32 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	switch (i.JType.op) {
 	case OP_SPECIAL: {
 		const char *name = spec_name[i.RType.func];
-		if (i.word == 0) {
-			db_printf("nop");
+
+		/* Handle varations of NOPs */
+		if ((i.RType.func == OP_SLL) &&
+		    (i.RType.rs == 0) &&
+		    (i.RType.rt == 0) &&
+		    (i.RType.rd == 0)) {
+			switch (i.RType.shamt) {
+			case OP_SLL_NOP:
+				db_printf("nop");
+				break;
+			case OP_SLL_SSNOP:
+				db_printf("ssnop");
+				break;
+			case OP_SLL_EHB:
+				db_printf("ehb");
+				break;
+			case OP_SLL_PAUSE:
+				db_printf("pause");
+				break;
+			default:
+				db_printf("nop *");	/* "undefined" NOP */
+				break;
+			}
 			break;
 		}
-		if (i.word == (1 << 6)) {
-			db_printf("ssnop");
-			break;
-		}
-		if (i.word == (3 << 6)) {
-			db_printf("ehb");
-			break;
-		}
+
 		/*
 		 * The following are equivalents of a "move dst,src":
 		 *	addu	dst,src,zero	(in 32-bit mode)
@@ -296,6 +310,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			    reg_name[i.RType.rs]);
 			break;
 		}
+
 		if ((i.RType.func == OP_SRL || i.RType.func == OP_SRLV)
 		    && i.RType.rs == 1) {
 			name = (i.RType.func == OP_SRL) ? "rotr" : "rotrv";
