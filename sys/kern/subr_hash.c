@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.8 2021/04/01 06:22:09 simonb Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.9 2021/04/05 05:47:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.8 2021/04/01 06:22:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.9 2021/04/05 05:47:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -222,8 +222,7 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 	sysctl_unlock();
 	rw_enter(&hashstat_lock, RW_READER);
 	TAILQ_FOREACH(hash, &hashstat_list, hs_next) {
-		if (query &&
-		    (strncmp(hash->hs_name, queryname, sizeof(hash->hs_name)) != 0)) {
+		if (query && (strcmp(hash->hs_name, queryname) != 0)) {
 			continue;
 		}
 
