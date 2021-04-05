@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.908 2021/04/05 12:51:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.909 2021/04/05 13:14:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.908 2021/04/05 12:51:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.909 2021/04/05 13:14:54 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3661,11 +3661,20 @@ LogBeforeApply(const ModChain *ch, const char *mod)
 	const Expr *expr = ch->expr;
 	bool is_single_char = mod[0] != '\0' && IsDelimiter(mod[1], ch);
 
-	/* At this point, only the first character of the modifier can
-	 * be used since the end of the modifier is not yet known. */
-	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s)\n",
-	    expr->name, mod[0], is_single_char ? "" : "...",
-	    expr->value.str,
+	/*
+	 * At this point, only the first character of the modifier can
+	 * be used since the end of the modifier is not yet known.
+	 */
+
+	if (!Expr_ShouldEval(expr)) {
+		debug_printf("Parsing modifier ${%s:%c%s}\n",
+		    expr->name, mod[0], is_single_char ? "" : "...");
+		return;
+	}
+
+	debug_printf(
+	    "Evaluating modifier ${%s:%c%s} on value \"%s\" (%s, %s)\n",
+	    expr->name, mod[0], is_single_char ? "" : "...", expr->value.str,
 	    VarEvalMode_Name[expr->emode],
 	    ExprDefined_Name[expr->defined]);
 }
