@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: gen.c,v 1.9 2021/04/05 11:36:55 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -814,7 +814,7 @@ main(int argc, char **argv) {
 		fprintf(stdout, "\t\t\t*(_tp) = _d; \\\n");
 		fprintf(stdout, "\t\t\treturn (ISC_R_SUCCESS); \\\n");
 		fprintf(stdout, "\t\t} \\\n");
-		fprintf(stdout, "\t} while (/*CONSTCOND*/0)\n\n");
+		fprintf(stdout, "\t} while (0)\n\n");
 
 		fprintf(stdout, "#define RDATATYPE_FROMTEXT_SW(_hash,"
 				"_typename,_length,_typep) \\\n");

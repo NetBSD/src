@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.8 2021/04/05 11:27:01 rillig Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.9 2021/04/05 11:36:55 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -360,7 +360,7 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	}
 
 	ret = dns_rdata_fromstruct(sigrdata, sig.common.rdclass,
-				  sig.common.rdtype, &sig, buffer);
+				   sig.common.rdtype, &sig, buffer);
 
 cleanup_array:
 	isc_mem_put(mctx, rdatas, nrdatas * sizeof(dns_rdata_t));

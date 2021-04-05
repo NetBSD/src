@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.14 2021/04/05 11:29:49 rillig Exp $	*/
+/*	$NetBSD: server.c,v 1.15 2021/04/05 11:36:55 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -9198,6 +9198,7 @@ load_configuration(const char *filename, named_server_t *server,
 		goto cleanup;
 	}
 #endif
+
 #ifdef HAVE_LMDB
 	/*
 	 * Reopen NZD databases.
