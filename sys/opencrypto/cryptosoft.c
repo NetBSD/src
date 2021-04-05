@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.59 2021/04/05 01:23:15 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.60 2021/04/05 01:24:50 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.59 2021/04/05 01:23:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.60 2021/04/05 01:24:50 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ static	int swcr_combined(struct cryptop *, int);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
+static void swcr_freesession_internal(struct swcr_data *);
 
 static	int swcryptoattach_internal(void);
 
@@ -758,6 +759,7 @@ static int
 swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 {
 	struct swcr_data **swd;
+	struct swcr_data *first, *tmp;
 	const struct swcr_auth_hash *axf;
 	const struct swcr_enc_xform *txf;
 	const struct swcr_comp_algo *cxf;
@@ -802,15 +804,16 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		swcr_sessions = newsessions;
 	}
 
-	swd = &swcr_sessions[i];
-	*sid = i;
-
+	first = NULL;
+	swd = &tmp;
 	while (cri) {
 		*swd = kmem_zalloc(sizeof **swd, KM_NOSLEEP);
 		if (*swd == NULL) {
-			swcr_freesession(NULL, i);
+			if (first != NULL)
+				swcr_freesession_internal(first);
 			return ENOBUFS;
-		}
+		} else if (first == NULL)
+			first = *swd;
 
 		switch (cri->cri_alg) {
 		case CRYPTO_DES_CBC:
@@ -850,7 +853,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			error = txf->setkey(&((*swd)->sw_kschedule),
 					cri->cri_key, cri->cri_klen / 8);
 			if (error) {
-				swcr_freesession(NULL, i);
+				swcr_freesession_internal(first);
 				return error;
 			}
 			(*swd)->sw_exf = txf;
@@ -889,13 +892,13 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		authcommon:
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
-				swcr_freesession(NULL, i);
+				swcr_freesession_internal(first);
 				return ENOBUFS;
 			}
 
 			(*swd)->sw_octx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_octx == NULL) {
-				swcr_freesession(NULL, i);
+				swcr_freesession_internal(first);
 				return ENOBUFS;
 			}
 
@@ -933,7 +936,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		auth2common:
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
-				swcr_freesession(NULL, i);
+				swcr_freesession_internal(first);
 				return ENOBUFS;
 			}
 
@@ -941,7 +944,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_octx = kmem_alloc(cri->cri_klen / 8,
 			    KM_NOSLEEP);
 			if ((*swd)->sw_octx == NULL) {
-				swcr_freesession(NULL, i);
+				swcr_freesession_internal(first);
 				return ENOBUFS;
 			}
 
@@ -964,7 +967,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		auth3common:
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
-				swcr_freesession(NULL, i);
+				swcr_freesession_internal(first);
 				return ENOBUFS;
 			}
 
@@ -986,7 +989,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		auth4common:
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
-				swcr_freesession(NULL, i);
+				swcr_freesession_internal(first);
 				return ENOBUFS;
 			}
 			axf->Init((*swd)->sw_ictx);
@@ -1010,7 +1013,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_cxf = cxf;
 			break;
 		default:
-			swcr_freesession(NULL, i);
+			swcr_freesession_internal(first);
 			return EINVAL;
 		}
 
@@ -1018,30 +1021,25 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		cri = cri->cri_next;
 		swd = &((*swd)->sw_next);
 	}
+
+	swcr_sessions[i] = first;
+	*sid = i;
 	return 0;
 }
 
-/*
- * Free a session.
- */
-static int
-swcr_freesession(void *arg, u_int64_t tid)
+static void
+swcr_freesession_internal(struct swcr_data *arg)
 {
-	struct swcr_data *swd;
+	struct swcr_data *swd, *swd0;
 	const struct swcr_enc_xform *txf;
 	const struct swcr_auth_hash *axf;
-	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
-	if (sid > swcr_sesnum || swcr_sessions == NULL ||
-	    swcr_sessions[sid] == NULL)
-		return EINVAL;
+	if (arg == NULL)
+		return;
 
-	/* Silently accept and return */
-	if (sid == 0)
-		return 0;
-
-	while ((swd = swcr_sessions[sid]) != NULL) {
-		swcr_sessions[sid] = swd->sw_next;
+	swd0 = arg;
+	while ((swd = swd0) != NULL) {
+		swd0 = swd->sw_next;
 
 		switch (swd->sw_alg) {
 		case CRYPTO_DES_CBC:
@@ -1119,6 +1117,29 @@ swcr_freesession(void *arg, u_int64_t tid)
 
 		free(swd, M_CRYPTO_DATA);
 	}
+}
+
+/*
+ * Free a session.
+ */
+static int
+swcr_freesession(void *arg, u_int64_t tid)
+{
+	struct swcr_data *swd;
+	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
+
+	if (sid > swcr_sesnum || swcr_sessions == NULL ||
+	    swcr_sessions[sid] == NULL)
+		return EINVAL;
+
+	/* Silently accept and return */
+	if (sid == 0)
+		return 0;
+
+	swd = swcr_sessions[sid];
+	swcr_sessions[sid] = NULL;
+	swcr_freesession_internal(swd);
+
 	return 0;
 }
 
