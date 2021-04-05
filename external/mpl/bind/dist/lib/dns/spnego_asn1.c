@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego_asn1.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: spnego_asn1.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,7 +53,7 @@ typedef struct oid {
 				(B) = NULL;                               \
 			}                                                 \
 		}                                                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #endif /* ifndef __asn1_common_definitions__ */
 

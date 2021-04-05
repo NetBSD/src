@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,14 +60,14 @@
 		result = (code);             \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECK(op)                            \
 	do {                                 \
 		result = (op);               \
 		if (result != ISC_R_SUCCESS) \
 			goto failure;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * The states of the *XFR state machine.  We handle both IXFR and AXFR

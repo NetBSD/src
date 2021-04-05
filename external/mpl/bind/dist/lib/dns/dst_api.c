@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.8 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -175,7 +175,7 @@ addsuffix(char *filename, int len, const char *dirname, const char *ofilename,
 		result = (x);                \
 		if (result != ISC_R_SUCCESS) \
 			goto out;            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECKALG(alg)                       \
 	do {                                \
@@ -183,7 +183,7 @@ addsuffix(char *filename, int len, const char *dirname, const char *ofilename,
 		_r = algorithm_status(alg); \
 		if (_r != ISC_R_SUCCESS)    \
 			return ((_r));      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 isc_result_t
 dst_lib_init(isc_mem_t *mctx, const char *engine) {

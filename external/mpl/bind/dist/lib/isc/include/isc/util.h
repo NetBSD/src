@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.10 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.11 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -76,7 +76,7 @@
 		} _u;                  \
 		_u.k = konst;          \
 		var = _u.v;            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
@@ -109,13 +109,13 @@
 		RUNTIME_CHECK(isc_mutex_lock((lp)) == ISC_R_SUCCESS);      \
 		ISC_UTIL_TRACE(fprintf(stderr, "LOCKED %p %s %d\n", (lp),  \
 				       __FILE__, __LINE__));               \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define UNLOCK(lp)                                                          \
 	do {                                                                \
 		RUNTIME_CHECK(isc_mutex_unlock((lp)) == ISC_R_SUCCESS);     \
 		ISC_UTIL_TRACE(fprintf(stderr, "UNLOCKED %p %s %d\n", (lp), \
 				       __FILE__, __LINE__));                \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define BROADCAST(cvp)                                                        \
 	do {                                                                  \
@@ -123,13 +123,13 @@
 				       __FILE__, __LINE__));                  \
 		RUNTIME_CHECK(isc_condition_broadcast((cvp)) ==               \
 			      ISC_R_SUCCESS);                                 \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define SIGNAL(cvp)                                                          \
 	do {                                                                 \
 		ISC_UTIL_TRACE(fprintf(stderr, "SIGNAL %p %s %d\n", (cvp),   \
 				       __FILE__, __LINE__));                 \
 		RUNTIME_CHECK(isc_condition_signal((cvp)) == ISC_R_SUCCESS); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define WAIT(cvp, lp)                                                         \
 	do {                                                                  \
 		ISC_UTIL_TRACE(fprintf(stderr, "WAIT %p LOCK %p %s %d\n",     \
@@ -138,7 +138,7 @@
 			      ISC_R_SUCCESS);                                 \
 		ISC_UTIL_TRACE(fprintf(stderr, "WAITED %p LOCKED %p %s %d\n", \
 				       (cvp), (lp), __FILE__, __LINE__));     \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * isc_condition_waituntil can return ISC_R_TIMEDOUT, so we
@@ -156,13 +156,13 @@
 		RUNTIME_CHECK(isc_rwlock_lock((lp), (t)) == ISC_R_SUCCESS);   \
 		ISC_UTIL_TRACE(fprintf(stderr, "RWLOCKED %p, %d %s %d\n",     \
 				       (lp), (t), __FILE__, __LINE__));       \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define RWUNLOCK(lp, t)                                                       \
 	do {                                                                  \
 		ISC_UTIL_TRACE(fprintf(stderr, "RWUNLOCK %p, %d %s %d\n",     \
 				       (lp), (t), __FILE__, __LINE__));       \
 		RUNTIME_CHECK(isc_rwlock_unlock((lp), (t)) == ISC_R_SUCCESS); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * List Macros.

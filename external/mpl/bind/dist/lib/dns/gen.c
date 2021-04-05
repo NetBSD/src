@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -971,7 +971,7 @@ main(int argc, char **argv) {
 			"#define dns_rdataclass_%s\t"                        \
 			"((dns_rdataclass_t)dns_rdataclass_%s)\n",           \
 			s, s);                                               \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 		for (cc = classes; cc != NULL; cc = cc->next) {
 			if (cc->rdclass == 3) {
