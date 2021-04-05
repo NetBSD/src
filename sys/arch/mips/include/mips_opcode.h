@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.24 2020/08/17 03:14:08 mrg Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.25 2021/04/05 07:00:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -290,6 +290,15 @@ typedef union {
 #define	OP_DSLL32	074		/* MIPS-II, for r4000 port */
 #define	OP_DSRL32	076		/* MIPS-II, for r4000 port */
 #define	OP_DSRA32	077		/* MIPS-II, for r4000 port */
+
+/*
+ * Subvalues for SLL where the source and destination registers
+ * are both zero.
+ */
+#define	OP_SLL_NOP	0
+#define	OP_SLL_SSNOP	1
+#define	OP_SLL_EHB	3
+#define	OP_SLL_PAUSE	5
 
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL2.
