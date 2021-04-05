@@ -5,9 +5,9 @@ Global:UT_UNEXPORTED = value
 Global:.MAKE.EXPORTED = UT_EXPORTED
 make: "directive-unexport-env.mk" line 21: The directive .unexport-env does not take arguments
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
-Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_EXPORTED" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_EXPORTED"
 Result of ${.MAKE.EXPORTED:O} is "UT_EXPORTED" (eval, regular)
-Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_EXPORTED" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_EXPORTED"
 Result of ${.MAKE.EXPORTED:u} is "UT_EXPORTED" (eval, regular)
 Unexporting "UT_EXPORTED"
 Global:delete .MAKE.EXPORTED

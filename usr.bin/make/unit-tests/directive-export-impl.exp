@@ -5,7 +5,7 @@ Global:.MAKE.EXPORTED = UT_VAR
 ParseReadLine (32): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
-Evaluating modifier ${UT_VAR:N...} on value "<>" (eval-defined, regular)
+Evaluating modifier ${UT_VAR:N...} on value "<>"
 Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
@@ -15,9 +15,9 @@ Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" (eval-defined)
 Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
-Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR"
 Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, regular)
-Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR"
 Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, regular)
 Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)
@@ -26,7 +26,7 @@ lhs = "<>", rhs = "<>", op = !=
 ParseReadLine (50): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
-Evaluating modifier ${UT_VAR:N...} on value "<>" (eval-defined, regular)
+Evaluating modifier ${UT_VAR:N...} on value "<>"
 Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
@@ -38,9 +38,9 @@ Var_Parse: ${:!echo "\$UT_VAR"!} != "<defined>" (eval-defined)
 Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
-Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR"
 Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, regular)
-Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR"
 Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, regular)
 Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)
