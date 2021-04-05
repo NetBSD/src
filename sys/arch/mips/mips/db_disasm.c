@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.35 2021/04/05 06:28:31 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.36 2021/04/05 06:35:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.35 2021/04/05 06:28:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.36 2021/04/05 06:35:04 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -218,6 +218,11 @@ static void print_addr(db_addr_t);
  * "next instruction" does NOT mean the next instruction to
  * be executed but the 'linear' next instruction.
  */
+#ifdef _LP64
+#define	DISASM_KERN_START	MIPS_XKSEG_START
+#else
+#define	DISASM_KERN_START	MIPS_KSEG0_START
+#endif
 db_addr_t
 db_disasm(db_addr_t loc, bool altfmt)
 {
@@ -225,9 +230,10 @@ db_disasm(db_addr_t loc, bool altfmt)
 
 	/*
 	 * Take some care with addresses to not UTLB here as it
-	 * loses the current debugging context.  KSEG2 not checked.
+	 * loses the current debugging context.  KSEG2 and XKSEG
+	 * are not checked.
 	 */
-	if (loc < (db_addr_t)MIPS_KSEG0_START) {
+	if (loc < (db_addr_t)DISASM_KERN_START) {
 #ifdef _KERNEL
 		if (ufetch_32((void *)loc, &instr) != 0) {
 			db_printf("invalid address.\n");
