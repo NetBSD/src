@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.8 2021/01/24 09:18:42 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.9 2021/04/05 01:35:34 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -172,7 +172,7 @@ call_finite_good(double d)
 _Bool
 str_equal_bad(const char *s1, const char *s2)
 {
-	return !strcmp(s1, s2);	/* expect: 330, 214 */
+	return !strcmp(s1, s2);	/* expect: 330 *//* expect: 214 */
 }
 
 _Bool

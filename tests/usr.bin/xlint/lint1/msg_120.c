@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_120.c,v 1.4 2021/01/31 11:44:48 rillig Exp $	*/
+/*	$NetBSD: msg_120.c,v 1.5 2021/04/05 01:35:34 rillig Exp $	*/
 # 3 "msg_120.c"
 
 // Test for message: bitwise '%s' on signed value nonportable [120]
@@ -26,11 +26,11 @@ shr_lhs_constant_negative(int a)
 int
 shr_rhs_constant_positive(int a)
 {
-	return a >> 0x1234;		/* expect: 117, 122 */
+	return a >> 0x1234;		/* expect: 117 *//* expect: 122 */
 }
 
 int
 shr_rhs_constant_negative(int a)
 {
-	return a >> -0x1234;		/* expect: 117, 121 */
+	return a >> -0x1234;		/* expect: 117 *//* expect: 121 */
 }

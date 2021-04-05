@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_330.c,v 1.3 2021/01/16 16:03:47 rillig Exp $	*/
+/*	$NetBSD: msg_330.c,v 1.4 2021/04/05 01:35:34 rillig Exp $	*/
 # 3 "msg_330.c"
 
 // Test for message: operand of '%s' must be bool, not '%s' [330]
@@ -17,6 +17,6 @@ void
 example(bool b, char c, int i)
 {
 	called(!b);
-	called(!c);		/* expect: 330, 334 */
-	called(!i);		/* expect: 330, 334 */
+	called(!c);		/* expect: 330 *//* expect: 334 */
+	called(!i);		/* expect: 330 *//* expect: 334 */
 }
