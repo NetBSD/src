@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.909 2021/04/05 13:14:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.910 2021/04/05 13:27:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.909 2021/04/05 13:14:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.910 2021/04/05 13:27:30 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3672,11 +3672,19 @@ LogBeforeApply(const ModChain *ch, const char *mod)
 		return;
 	}
 
+	if ((expr->emode == VARE_WANTRES || expr->emode == VARE_UNDEFERR) &&
+	    expr->defined == DEF_REGULAR) {
+		debug_printf(
+		    "Evaluating modifier ${%s:%c%s} on value \"%s\"\n",
+		    expr->name, mod[0], is_single_char ? "" : "...",
+		    expr->value.str);
+		return;
+	}
+
 	debug_printf(
 	    "Evaluating modifier ${%s:%c%s} on value \"%s\" (%s, %s)\n",
 	    expr->name, mod[0], is_single_char ? "" : "...", expr->value.str,
-	    VarEvalMode_Name[expr->emode],
-	    ExprDefined_Name[expr->defined]);
+	    VarEvalMode_Name[expr->emode], ExprDefined_Name[expr->defined]);
 }
 
 static void
