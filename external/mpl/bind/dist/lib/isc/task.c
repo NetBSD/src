@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.11 2021/03/23 20:59:03 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.12 2021/04/05 10:19:34 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1386,10 +1386,8 @@ isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 	REQUIRE(managerp != NULL && *managerp == NULL);
 
 	manager = isc_mem_get(mctx, sizeof(*manager));
-#ifndef __lint__ // XXX: bug
 	*manager = (isc__taskmgr_t){ .common.impmagic = TASK_MANAGER_MAGIC,
 				     .common.magic = ISCAPI_TASKMGR_MAGIC };
-#endif
 
 	atomic_store(&manager->mode, isc_taskmgrmode_normal);
 	isc_mutex_init(&manager->lock);
