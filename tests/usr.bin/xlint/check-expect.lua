@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.6 2021/02/28 01:20:54 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.7 2021/04/05 01:35:34 rillig Exp $
 
 --[[
 
@@ -43,16 +43,12 @@ local function load_expect_comments_from_c(fname, errors)
 
   for lineno, line in ipairs(lines) do
 
-    for offset, comments in line:gmatch("/%* expect([+%-]%d+): (.-) %*/") do
-      for comment in comments:gmatch("[^,]+") do
-        add_expectation(lineno + tonumber(offset), comment)
-      end
+    for offset, comment in line:gmatch("/%* expect([+%-]%d+): (.-) %*/") do
+      add_expectation(lineno + tonumber(offset), comment)
     end
 
-    for comments in line:gmatch("/%* expect: (.-) %*/") do
-      for comment in comments:gmatch("[^,]+") do
-	add_expectation(lineno, comment)
-      end
+    for comment in line:gmatch("/%* expect: (.-) %*/") do
+      add_expectation(lineno, comment)
     end
 
     local pp_lineno, pp_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")

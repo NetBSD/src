@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_004.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_004.c,v 1.4 2021/04/05 01:35:34 rillig Exp $	*/
 # 3 "msg_004.c"
 
 // Test for message: illegal type combination [4]
@@ -10,7 +10,7 @@ int ok_int;
 double ok_double;
 float _Complex ok_float_complex;
 
-int _Complex illegal_int_complex;	/* expect: 4, 308 */
+int _Complex illegal_int_complex;	/* expect: 4 *//* expect: 308 */
 
 char enum {
 	CHAR
