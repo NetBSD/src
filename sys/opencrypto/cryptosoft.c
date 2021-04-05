@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.57 2020/07/04 18:07:31 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.58 2021/04/05 01:22:22 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,11 +24,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.57 2020/07/04 18:07:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.58 2021/04/05 01:22:22 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
 #include <sys/errno.h>
@@ -711,7 +711,7 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 	 * copy in a buffer.
 	 */
 
-	data = malloc(crd->crd_len, M_CRYPTO_DATA, M_NOWAIT);
+	data = kmem_alloc(crd->crd_len, KM_NOSLEEP);
 	if (data == NULL)
 		return (EINVAL);
 	COPYDATA(outtype, buf, crd->crd_skip, crd->crd_len, data);
@@ -722,7 +722,7 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 		result = cxf->decompress(data, crd->crd_len, &out,
 					 *res_size);
 
-	free(data, M_CRYPTO_DATA);
+	kmem_free(data, crd->crd_len);
 	if (result == 0)
 		return EINVAL;
 
@@ -781,8 +781,8 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		} else
 			swcr_sesnum *= 2;
 
-		swd = malloc(swcr_sesnum * sizeof(struct swcr_data *),
-		    M_CRYPTO_DATA, M_NOWAIT);
+		swd = kmem_zalloc(swcr_sesnum * sizeof(struct swcr_data *),
+		    KM_NOSLEEP);
 		if (swd == NULL) {
 			/* Reset session number */
 			if (swcr_sesnum == CRYPTO_SW_SESSIONS)
@@ -792,13 +792,12 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			return ENOBUFS;
 		}
 
-		memset(swd, 0, swcr_sesnum * sizeof(struct swcr_data *));
-
 		/* Copy existing sessions */
 		if (swcr_sessions) {
 			memcpy(swd, swcr_sessions,
 			    (swcr_sesnum / 2) * sizeof(struct swcr_data *));
-			free(swcr_sessions, M_CRYPTO_DATA);
+			kmem_free(swcr_sessions,
+                            (swcr_sesnum / 2) * sizeof(struct swcr_data *));
 		}
 
 		swcr_sessions = swd;
@@ -808,12 +807,11 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 	*sid = i;
 
 	while (cri) {
-		*swd = malloc(sizeof **swd, M_CRYPTO_DATA, M_NOWAIT);
+		*swd = kmem_zalloc(sizeof **swd, KM_NOSLEEP);
 		if (*swd == NULL) {
 			swcr_freesession(NULL, i);
 			return ENOBUFS;
 		}
-		memset(*swd, 0, sizeof(struct swcr_data));
 
 		switch (cri->cri_alg) {
 		case CRYPTO_DES_CBC:
