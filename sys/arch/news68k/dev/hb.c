@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.19.100.5 2021/04/05 00:48:51 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.19.100.6 2021/04/05 01:01:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.19.100.5 2021/04/05 00:48:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.19.100.6 2021/04/05 01:01:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ hb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ha->ha_bust = ISIIOPA(ha->ha_address) ?
 	    NEWS68K_BUS_SPACE_INTIO : NEWS68K_BUS_SPACE_EIO;
 
-	if (config_probe(parent, cf, ha) > 0)
+	if (config_probe(parent, cf, ha))
 		config_attach(parent, cf, ha, hb_print, CFARG_EOL);
 
 	return 0;

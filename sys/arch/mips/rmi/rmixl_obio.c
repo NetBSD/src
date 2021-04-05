@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.5.68.5 2021/04/05 00:48:50 thorpej Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.5.68.6 2021/04/05 01:01:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.5.68.5 2021/04/05 00:48:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.5.68.6 2021/04/05 01:01:45 thorpej Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -161,7 +161,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	obio.obio_32bit_dmat = sc->sc_32bit_dmat;
 	obio.obio_64bit_dmat = sc->sc_64bit_dmat;
 
-	if (config_probe(parent, cf, &obio) > 0)
+	if (config_probe(parent, cf, &obio))
 		config_attach(parent, cf, &obio, obio_print, CFARG_EOL);
 
 	return 0;

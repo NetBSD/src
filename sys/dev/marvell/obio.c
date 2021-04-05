@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15.76.5 2021/04/05 00:48:54 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.15.76.6 2021/04/05 01:01:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15.76.5 2021/04/05 00:48:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15.76.6 2021/04/05 01:01:48 thorpej Exp $");
 
 #include "opt_marvell.h"
 
@@ -171,7 +171,7 @@ obio_cfsearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	oa.oa_size = cf->cf_loc[OBIOCF_SIZE];
 	oa.oa_irq = cf->cf_loc[OBIOCF_IRQ];
 
-	if (config_probe(parent, cf, &oa) > 0)
+	if (config_probe(parent, cf, &oa))
 		config_attach(parent, cf, &oa, obio_cfprint, CFARG_EOL);
 
 	return 0;

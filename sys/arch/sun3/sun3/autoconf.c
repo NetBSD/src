@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.79.44.2 2021/04/05 00:48:53 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.79.44.3 2021/04/05 01:01:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79.44.2 2021/04/05 00:48:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79.44.3 2021/04/05 01:01:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ bus_scan(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	 * preserved for the related attach call.
 	 * XXX - This is a hack...
 	 */
-	if (config_probe(parent, cf, ca) > 0) {
+	if (config_probe(parent, cf, ca)) {
 		config_attach(parent, cf, ca, bus_print, CFARG_EOL);
 	}
 	return 0;

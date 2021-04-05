@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_ixme.c,v 1.5.52.5 2021/04/05 00:48:46 thorpej Exp $	*/
+/*	$NetBSD: ixp425_ixme.c,v 1.5.52.6 2021/04/05 01:01:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.5.52.5 2021/04/05 00:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.5.52.6 2021/04/05 01:01:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ ixme_search(device_t parent, cfdata_t cf, const int *ldesc, void *arg)
 	ixa.ixa_dt = &sc->sc_dt;
 	ixa.ixa_npe = cf->cf_loc[IXMECF_NPE];
 
-	if (config_probe(parent, cf, &ixa) > 0) {
+	if (config_probe(parent, cf, &ixa)) {
 		config_attach(parent, cf, &ixa, ixme_print, CFARG_EOL);
 		return (1);
 	}

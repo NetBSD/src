@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138.76.7 2021/04/05 00:48:54 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.138.76.8 2021/04/05 01:01:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.7 2021/04/05 00:48:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.76.8 2021/04/05 01:01:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ isasearch(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 			return (0);
 
 		tryagain = 0;
-		if (config_probe(parent, cf, &ia) > 0) {
+		if (config_probe(parent, cf, &ia)) {
 			/*
 			 * This is not necessary for detach, but might
 			 * still be useful to collect device information.

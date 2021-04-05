@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.16.68.5 2021/04/05 00:48:49 thorpej Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.16.68.6 2021/04/05 01:01:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.16.68.5 2021/04/05 00:48:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.16.68.6 2021/04/05 01:01:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ static int
 atmelgpio_search(device_t parent, cfdata_t cf, const int *ldesc,
 		 void *aux)
 {
-	if (config_probe(parent, cf, NULL) > 0)
+	if (config_probe(parent, cf, NULL))
 		config_attach(parent, cf, NULL, atmelgpio_print, CFARG_EOL);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30.52.3 2021/04/05 00:48:53 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30.52.4 2021/04/05 01:01:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30.52.3 2021/04/05 00:48:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30.52.4 2021/04/05 01:01:48 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -225,7 +225,7 @@ sun68k_bus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	 * preserved for the related attach call.
 	 * XXX - This is a hack...
 	 */
-	if (config_probe(parent, cf, &ma) > 0) {
+	if (config_probe(parent, cf, &ma)) {
 		config_attach(parent, cf, &ma, sun68k_bus_print, CFARG_EOL);
 	}
 	return 0;

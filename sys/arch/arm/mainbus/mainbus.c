@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.21.42.5 2021/04/05 00:48:46 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.21.42.6 2021/04/05 01:01:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.42.5 2021/04/05 00:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.42.6 2021/04/05 01:01:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		mb.mb_iot = &mainbus_bs_tag;
 
 		tryagain = 0;
-		if (config_probe(parent, cf, &mb) > 0) {
+		if (config_probe(parent, cf, &mb)) {
 			config_attach(parent, cf, &mb, mainbusprint, CFARG_EOL);
 #ifdef MULTIPROCESSOR
 			tryagain = (cf->cf_fstate == FSTATE_STAR);

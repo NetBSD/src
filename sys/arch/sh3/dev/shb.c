@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.14.78.5 2021/04/05 00:48:52 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.14.78.6 2021/04/05 01:01:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.14.78.5 2021/04/05 00:48:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.14.78.6 2021/04/05 01:01:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ static int
 shb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
-	if (config_probe(parent, cf, NULL) > 0)
+	if (config_probe(parent, cf, NULL))
 		config_attach(parent, cf, NULL, shb_print, CFARG_EOL);
 
 	return (0);
