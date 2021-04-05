@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.10 2021/04/05 11:27:00 rillig Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.11 2021/04/05 11:29:49 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -177,7 +177,7 @@ static const char *gluecachestats_xmldesc[dns_gluecachestatscounter_max];
 		xmlrc = (a);        \
 		if (xmlrc < 0)      \
 			goto error; \
-	} while(/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * Mapping arrays to represent statistics counters in the order of our
@@ -2580,7 +2580,7 @@ render_xml_traffic(const char *url, isc_httpdurl_t *urlinfo,
 		result = (m);                \
 		if (result != ISC_R_SUCCESS) \
 			goto error;          \
-	} while(/*CONSTCOND*/0)
+	} while (0)
 
 #define CHECKMEM(m)                              \
 	do {                                     \
@@ -2588,7 +2588,7 @@ render_xml_traffic(const char *url, isc_httpdurl_t *urlinfo,
 			result = ISC_R_NOMEMORY; \
 			goto error;              \
 		}                                \
-	} while(/*CONSTCOND*/0)
+	} while (0)
 
 static void
 wrap_jsonfree(isc_buffer_t *buffer, void *arg) {

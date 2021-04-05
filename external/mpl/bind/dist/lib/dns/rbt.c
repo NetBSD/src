@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: rbt.c,v 1.9 2021/04/05 11:29:49 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -772,7 +772,7 @@ cleanup:
 			result = ISC_R_INVALIDFILE; \
 			goto cleanup;               \
 		}                                   \
-	} while(/*CONSTCOND*/0)
+	} while (0)
 
 static isc_result_t
 treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
