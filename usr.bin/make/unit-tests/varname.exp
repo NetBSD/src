@@ -5,13 +5,13 @@ Var_Parse: ${VARNAME} (eval)
 Global:VAR((( = 3 open parentheses
 Var_Parse: ${VAR(((}}}}" != "3 open parentheses}}}" (eval)
 Var_Parse: ${:UVAR(((}=	try1 (eval-defined)
-Applying ${:U...} to "" (eval-defined, undefined)
+Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:UVAR(((} is "VAR(((" (eval-defined, defined)
 Global:.ALLTARGETS =  VAR(((=)
 make: "varname.mk" line 30: No closing parenthesis in archive specification
 make: "varname.mk" line 30: Error in archive specification: "VAR"
 Var_Parse: ${:UVAR\(\(\(}=	try2 (eval-defined)
-Applying ${:U...} to "" (eval-defined, undefined)
+Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:UVAR\(\(\(} is "VAR\(\(\(" (eval-defined, defined)
 Global:.ALLTARGETS =  VAR(((=) VAR\(\(\(=
 make: "varname.mk" line 35: Invalid line type

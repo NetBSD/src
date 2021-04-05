@@ -5,19 +5,19 @@ Global:.MAKE.EXPORTED = UT_VAR
 ParseReadLine (32): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
-Applying ${UT_VAR:N...} to "<>" (eval-defined, regular)
+Evaluating modifier ${UT_VAR:N...} on value "<>" (eval-defined, regular)
 Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
 ParseDependency(: )
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" (eval-defined)
-Applying ${:!...} to "" (eval-defined, undefined)
+Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
-Applying ${.MAKE.EXPORTED:O} to "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR" (eval, regular)
 Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, regular)
-Applying ${.MAKE.EXPORTED:u} to "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR" (eval, regular)
 Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, regular)
 Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)
@@ -26,7 +26,7 @@ lhs = "<>", rhs = "<>", op = !=
 ParseReadLine (50): ': ${UT_VAR:N*}'
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
-Applying ${UT_VAR:N...} to "<>" (eval-defined, regular)
+Evaluating modifier ${UT_VAR:N...} on value "<>" (eval-defined, regular)
 Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
 Result of ${UT_VAR:N*} is "" (eval-defined, regular)
@@ -35,12 +35,12 @@ ParseReadLine (54): 'REF=		defined'
 Global:REF = defined
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<defined>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<defined>" (eval-defined)
-Applying ${:!...} to "" (eval-defined, undefined)
+Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
-Applying ${.MAKE.EXPORTED:O} to "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR" (eval, regular)
 Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, regular)
-Applying ${.MAKE.EXPORTED:u} to "UT_VAR" (eval, regular)
+Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR" (eval, regular)
 Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, regular)
 Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)

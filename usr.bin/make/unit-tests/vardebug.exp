@@ -6,11 +6,11 @@ Global:VAR = overwritten
 Global:delete VAR
 Global:delete VAR (not found)
 Var_Parse: ${:U} (eval)
-Applying ${:U} to "" (eval, undefined)
+Evaluating modifier ${:U} on value "" (eval, undefined)
 Result of ${:U} is "" (eval, defined)
 Var_Set("${:U}", "empty name", ...) name expands to empty string - ignored
 Var_Parse: ${:U} (eval)
-Applying ${:U} to "" (eval, undefined)
+Evaluating modifier ${:U} on value "" (eval, undefined)
 Result of ${:U} is "" (eval, defined)
 Var_Append("${:U}", "empty name", ...) name expands to empty string - ignored
 Global:FROM_CMDLINE = overwritten ignored!
@@ -18,54 +18,54 @@ Global:VAR = 1
 Global:VAR = 1 2
 Global:VAR = 1 2 3
 Var_Parse: ${VAR:M[2]} (eval-defined)
-Applying ${VAR:M...} to "1 2 3" (eval-defined, regular)
+Evaluating modifier ${VAR:M...} on value "1 2 3" (eval-defined, regular)
 Pattern for ':M' is "[2]"
 ModifyWords: split "1 2 3" into 3 words
 Result of ${VAR:M[2]} is "2" (eval-defined, regular)
 Var_Parse: ${VAR:N[2]} (eval-defined)
-Applying ${VAR:N...} to "1 2 3" (eval-defined, regular)
+Evaluating modifier ${VAR:N...} on value "1 2 3" (eval-defined, regular)
 Pattern for ':N' is "[2]"
 ModifyWords: split "1 2 3" into 3 words
 Result of ${VAR:N[2]} is "1 3" (eval-defined, regular)
 Var_Parse: ${VAR:S,2,two,} (eval-defined)
-Applying ${VAR:S...} to "1 2 3" (eval-defined, regular)
+Evaluating modifier ${VAR:S...} on value "1 2 3" (eval-defined, regular)
 Modifier part: "2"
 Modifier part: "two"
 ModifyWords: split "1 2 3" into 3 words
 Result of ${VAR:S,2,two,} is "1 two 3" (eval-defined, regular)
 Var_Parse: ${VAR:Q} (eval-defined)
-Applying ${VAR:Q} to "1 2 3" (eval-defined, regular)
+Evaluating modifier ${VAR:Q} on value "1 2 3" (eval-defined, regular)
 Result of ${VAR:Q} is "1\ 2\ 3" (eval-defined, regular)
 Var_Parse: ${VAR:tu:tl:Q} (eval-defined)
-Applying ${VAR:t...} to "1 2 3" (eval-defined, regular)
+Evaluating modifier ${VAR:t...} on value "1 2 3" (eval-defined, regular)
 Result of ${VAR:tu} is "1 2 3" (eval-defined, regular)
-Applying ${VAR:t...} to "1 2 3" (eval-defined, regular)
+Evaluating modifier ${VAR:t...} on value "1 2 3" (eval-defined, regular)
 Result of ${VAR:tl} is "1 2 3" (eval-defined, regular)
-Applying ${VAR:Q} to "1 2 3" (eval-defined, regular)
+Evaluating modifier ${VAR:Q} on value "1 2 3" (eval-defined, regular)
 Result of ${VAR:Q} is "1\ 2\ 3" (eval-defined, regular)
 Var_Parse: ${:Uvalue:${:UM*e}:Mvalu[e]} (eval-defined)
-Applying ${:U...} to "" (eval-defined, undefined)
+Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:Uvalue} is "value" (eval-defined, defined)
 Var_Parse: ${:UM*e}:Mvalu[e]} (eval-defined)
-Applying ${:U...} to "" (eval-defined, undefined)
+Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:UM*e} is "M*e" (eval-defined, defined)
 Indirect modifier "M*e" from "${:UM*e}"
-Applying ${:M...} to "value" (eval-defined, defined)
+Evaluating modifier ${:M...} on value "value" (eval-defined, defined)
 Pattern for ':M' is "*e"
 ModifyWords: split "value" into 1 words
 Result of ${:M*e} is "value" (eval-defined, defined)
-Applying ${:M...} to "value" (eval-defined, defined)
+Evaluating modifier ${:M...} on value "value" (eval-defined, defined)
 Pattern for ':M' is "valu[e]"
 ModifyWords: split "value" into 1 words
 Result of ${:Mvalu[e]} is "value" (eval-defined, defined)
 Var_Parse: ${:UVAR} (eval)
-Applying ${:U...} to "" (eval, undefined)
+Evaluating modifier ${:U...} on value "" (eval, undefined)
 Result of ${:UVAR} is "VAR" (eval, defined)
 Global:delete VAR
 Var_Parse: ${:Uvariable:unknown} (eval-defined)
-Applying ${:U...} to "" (eval-defined, undefined)
+Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:Uvariable} is "variable" (eval-defined, defined)
-Applying ${:u...} to "variable" (eval-defined, defined)
+Evaluating modifier ${:u...} on value "variable" (eval-defined, defined)
 make: "vardebug.mk" line 44: Unknown modifier "unknown"
 Result of ${:unknown} is error (eval-defined, defined)
 make: "vardebug.mk" line 44: Malformed conditional (${:Uvariable:unknown})

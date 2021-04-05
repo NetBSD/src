@@ -4,7 +4,7 @@ Var_Parse: ${VARNAME} (eval)
 Global:VAR.${param} = initial-value
 Var_Parse: ${${VARNAME}::=assigned-value} (eval-defined)
 Var_Parse: ${VARNAME}::=assigned-value} (eval-defined)
-Applying ${VAR.${param}::...} to "initial-value" (eval-defined, regular)
+Evaluating modifier ${VAR.${param}::...} on value "initial-value" (eval-defined, regular)
 Modifier part: "assigned-value"
 Global:VAR.${param} = assigned-value
 Result of ${VAR.${param}::=assigned-value} is "" (eval-defined, regular)
