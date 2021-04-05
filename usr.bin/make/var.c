@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.910 2021/04/05 13:27:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.911 2021/04/05 13:35:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.910 2021/04/05 13:27:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.911 2021/04/05 13:35:41 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -476,7 +476,7 @@ VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
 	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), value,
 	    false, (flags & VAR_SET_READONLY) != 0);
 	HashEntry_Set(he, v);
-	DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, value);
+	DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, value);
 	return v;
 }
 
@@ -930,7 +930,7 @@ ExistsInCmdline(const char *name, const char *val)
 		return false;
 
 	if (v->fromCmd) {
-		DEBUG3(VAR, "%s:%s = %s ignored!\n",
+		DEBUG3(VAR, "%s: %s = %s ignored!\n",
 		    SCOPE_GLOBAL->name, name, val);
 		return true;
 	}
@@ -975,14 +975,14 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		v = VarAdd(name, val, scope, flags);
 	} else {
 		if (v->readOnly && !(flags & VAR_SET_READONLY)) {
-			DEBUG3(VAR, "%s:%s = %s ignored (read-only)\n",
+			DEBUG3(VAR, "%s: %s = %s ignored (read-only)\n",
 			    scope->name, name, val);
 			return;
 		}
 		Buf_Empty(&v->val);
 		Buf_AddStr(&v->val, val);
 
-		DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, val);
+		DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, val);
 		if (v->exported)
 			ExportVar(name, VEM_PLAIN);
 	}
@@ -1107,7 +1107,7 @@ Var_Append(GNode *scope, const char *name, const char *val)
 		Buf_AddByte(&v->val, ' ');
 		Buf_AddStr(&v->val, val);
 
-		DEBUG3(VAR, "%s:%s = %s\n", scope->name, name, v->val.data);
+		DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, v->val.data);
 
 		if (v->fromEnv) {
 			/*

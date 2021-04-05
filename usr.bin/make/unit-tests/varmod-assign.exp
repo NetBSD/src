@@ -1,17 +1,17 @@
-Global:param = twice
-Global:VARNAME = VAR.$${param}
+Global: param = twice
+Global: VARNAME = VAR.$${param}
 Var_Parse: ${VARNAME} (eval)
-Global:VAR.${param} = initial-value
+Global: VAR.${param} = initial-value
 Var_Parse: ${${VARNAME}::=assigned-value} (eval-defined)
 Var_Parse: ${VARNAME}::=assigned-value} (eval-defined)
 Evaluating modifier ${VAR.${param}::...} on value "initial-value"
 Modifier part: "assigned-value"
-Global:VAR.${param} = assigned-value
+Global: VAR.${param} = assigned-value
 Result of ${VAR.${param}::=assigned-value} is "" (eval-defined, regular)
 Var_Parse: ${${VARNAME}} != "assigned-value" (eval-defined)
 Var_Parse: ${VARNAME}} != "assigned-value" (eval-defined)
-Global:.MAKEFLAGS =  -r -k -d v -d
-Global:.MAKEFLAGS =  -r -k -d v -d 0
+Global: .MAKEFLAGS =  -r -k -d v -d
+Global: .MAKEFLAGS =  -r -k -d v -d 0
 mod-assign: first=1.
 mod-assign: last=3.
 mod-assign: appended=1 2 3.
