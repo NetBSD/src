@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.13 2021/04/05 11:27:00 rillig Exp $	*/
+/*	$NetBSD: server.c,v 1.14 2021/04/05 11:29:49 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3161,7 +3161,7 @@ cleanup:
 			result = ISC_R_RANGE;                              \
 			goto cleanup;                                      \
 		}                                                          \
-	} while (/*CONSTCOND*/ 0)
+	} while (0)
 
 #define CHECK_RRL_RATE(rate, def, max_rate, name)                           \
 	do {                                                                \
@@ -3176,7 +3176,7 @@ cleanup:
 			rrl->rate.r = def;                                  \
 		}                                                           \
 		rrl->rate.scaled = rrl->rate.r;                             \
-	} while (/*CONSTCOND*/ 0)
+	} while (0)
 
 static isc_result_t
 configure_rrl(dns_view_t *view, const cfg_obj_t *config, const cfg_obj_t *map) {
