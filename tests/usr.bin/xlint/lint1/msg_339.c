@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_339.c,v 1.1 2021/02/19 12:28:56 rillig Exp $	*/
+/*	$NetBSD: msg_339.c,v 1.2 2021/04/05 01:35:34 rillig Exp $	*/
 # 3 "msg_339.c"
 
 // Test for message: option '%c' should be listed in the options string [339]
@@ -11,7 +11,7 @@ main(int argc, char **argv)
 {
 	int o;
 
-	while ((o = getopt(argc, argv, "a:bc:d")) != -1) { /* expect: 338, 338 */
+	while ((o = getopt(argc, argv, "a:bc:d")) != -1) { /* expect: 338 *//* expect: 338 */
 		switch (o) {
 		case 'a':
 			break;

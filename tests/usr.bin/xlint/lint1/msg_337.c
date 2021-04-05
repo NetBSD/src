@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_337.c,v 1.2 2021/01/16 16:03:47 rillig Exp $	*/
+/*	$NetBSD: msg_337.c,v 1.3 2021/04/05 01:35:34 rillig Exp $	*/
 # 3 "msg_337.c"
 
 // Test for message: right operand of '%s' must not be bool [337]
@@ -15,7 +15,7 @@ test(bool);
 void
 example(bool b, int i)
 {
-	test(i + b);		/* expect: 337, 334 */
+	test(i + b);		/* expect: 337 *//* expect: 334 */
 	test(b);
 	test(i != 0);
 }
