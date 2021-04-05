@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.36 2021/04/05 06:35:04 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.37 2021/04/05 06:38:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.36 2021/04/05 06:35:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.37 2021/04/05 06:38:01 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -277,16 +277,19 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			db_printf("ehb");
 			break;
 		}
-		/* XXX
-		 * "addu" is a "move" only in 32-bit mode.  What's the correct
-		 * answer - never decode addu/daddu as "move"?
+		/*
+		 * The following are equivalents of a "move dst,src":
+		 *	addu	dst,src,zero	(in 32-bit mode)
+		 *	daddu	dst,src,zero	(in 64-bit mode)
+		 *	or	dst,src,zero	(in 32- and 64-bit modes)
 		 */
-		if (true
 #ifdef __mips_o32
-		    && i.RType.func == OP_ADDU
+#define	OP_MOVE_ADDU	OP_ADDU
 #else
-		    && i.RType.func == OP_DADDU
+#define	OP_MOVE_ADDU	OP_DADDU
 #endif
+		if (true &&
+		    ((i.RType.func == OP_OR) || (i.RType.func == OP_MOVE_ADDU))
 		    && i.RType.rt == 0) {
 			db_printf("move\t%s,%s",
 			    reg_name[i.RType.rd],
