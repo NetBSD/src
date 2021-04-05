@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.38 2021/04/02 17:25:04 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.39 2021/04/05 02:05:47 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -175,7 +175,7 @@ all_messages_body()
 
 	failed=""
 
-	for msg in $(seq 0 340); do
+	for msg in $(seq 0 342); do
 		name="$(printf 'msg_%03d.c' "${msg}")"
 		check_lint1 "${name}" \
 		|| failed="$failed${failed:+ }$name"
