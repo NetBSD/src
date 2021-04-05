@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.10 2021/03/23 20:59:03 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.11 2021/04/05 10:19:34 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -398,11 +398,9 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
 
 	ifp = isc_mem_get(mgr->mctx, sizeof(*ifp));
-#ifndef __lint__ // XXX: bug
 	*ifp = (ns_interface_t){ .generation = mgr->generation,
 				 .addr = *addr,
 				 .dscp = -1 };
-#endif
 
 	strlcpy(ifp->name, name, sizeof(ifp->name));
 

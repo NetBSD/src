@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.13 2021/03/23 20:59:03 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.14 2021/04/05 10:19:34 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2311,7 +2311,6 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 		 * Retain these values from the existing client, but
 		 * zero every thing else.
 		 */
-#ifndef __lint__ // XXX: bug
 		*client = (ns_client_t){ .magic = 0,
 					 .mctx = oldmctx,
 					 .manager = oldmgr,
@@ -2320,7 +2319,6 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 					 .sendbuf = sendbuf,
 					 .message = message,
 					 .query = query };
-#endif
 	}
 
 	client->query.attributes &= ~NS_QUERYATTR_ANSWERED;
