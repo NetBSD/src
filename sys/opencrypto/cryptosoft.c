@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.58 2021/04/05 01:22:22 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.59 2021/04/05 01:23:15 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.58 2021/04/05 01:22:22 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.59 2021/04/05 01:23:15 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,32 +775,31 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		i = 1;		/* NB: to silence compiler warning */
 
 	if (swcr_sessions == NULL || i == swcr_sesnum) {
+		u_int32_t newnum;
+		struct swcr_data **newsessions;
+
 		if (swcr_sessions == NULL) {
 			i = 1; /* We leave swcr_sessions[0] empty */
-			swcr_sesnum = CRYPTO_SW_SESSIONS;
+			newnum = CRYPTO_SW_SESSIONS;
 		} else
-			swcr_sesnum *= 2;
+			newnum = swcr_sesnum *= 2;
 
-		swd = kmem_zalloc(swcr_sesnum * sizeof(struct swcr_data *),
+		newsessions = kmem_zalloc(newnum * sizeof(struct swcr_data *),
 		    KM_NOSLEEP);
-		if (swd == NULL) {
-			/* Reset session number */
-			if (swcr_sesnum == CRYPTO_SW_SESSIONS)
-				swcr_sesnum = 0;
-			else
-				swcr_sesnum /= 2;
+		if (newsessions == NULL) {
 			return ENOBUFS;
 		}
 
 		/* Copy existing sessions */
 		if (swcr_sessions) {
-			memcpy(swd, swcr_sessions,
-			    (swcr_sesnum / 2) * sizeof(struct swcr_data *));
+			memcpy(newsessions, swcr_sessions,
+			    swcr_sesnum * sizeof(struct swcr_data *));
 			kmem_free(swcr_sessions,
-                            (swcr_sesnum / 2) * sizeof(struct swcr_data *));
+			    swcr_sesnum * sizeof(struct swcr_data *));
 		}
 
-		swcr_sessions = swd;
+		swcr_sesnum = newnum;
+		swcr_sessions = newsessions;
 	}
 
 	swd = &swcr_sessions[i];
