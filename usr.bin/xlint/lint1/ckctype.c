@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.1 2021/04/05 02:07:14 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.2 2021/04/05 02:17:52 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,15 +30,13 @@
  */
 
 #if HAVE_NBTOOL_CONFIG_H
-
 #include "nbtool_config.h"
-
 #endif
 
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckctype.c,v 1.1 2021/04/05 02:07:14 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.2 2021/04/05 02:17:52 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -53,12 +51,6 @@ __RCSID("$NetBSD: ckctype.c,v 1.1 2021/04/05 02:07:14 rillig Exp $");
  *
  * https://stackoverflow.com/a/60696378
  */
-
-#define NEED(cond) \
-	do {			\
-		if (!(cond))	\
-			return;	\
-	} while (false)
 
 static bool
 is_ctype_function(const char *name)
@@ -127,25 +119,23 @@ void
 check_ctype_function_call(const tnode_t *func, const tnode_t *args)
 {
 
-	NEED(func->tn_op == NAME);
-	NEED(is_ctype_function(func->tn_sym->s_name));
-	NEED(args != NULL);
-	NEED(args->tn_left != NULL);
-	NEED(args->tn_right == NULL);
-
-	check_ctype_arg(func->tn_sym->s_name, args->tn_left);
+	if (func->tn_op == NAME &&
+	    is_ctype_function(func->tn_sym->s_name) &&
+	    args != NULL &&
+	    args->tn_left != NULL &&
+	    args->tn_right == NULL)
+		check_ctype_arg(func->tn_sym->s_name, args->tn_left);
 }
 
 void
 check_ctype_macro_invocation(const tnode_t *ln, const tnode_t *rn)
 {
 
-	NEED(ln->tn_op == PLUS);
-	NEED(ln->tn_left != NULL);
-	NEED(ln->tn_left->tn_op == LOAD);
-	NEED(ln->tn_left->tn_left != NULL);
-	NEED(ln->tn_left->tn_left->tn_op == NAME);
-	NEED(is_ctype_table(ln->tn_left->tn_left->tn_sym->s_name));
-
-	check_ctype_arg("function from <ctype.h>", rn);
+	if (ln->tn_op == PLUS &&
+	    ln->tn_left != NULL &&
+	    ln->tn_left->tn_op == LOAD &&
+	    ln->tn_left->tn_left != NULL &&
+	    ln->tn_left->tn_left->tn_op == NAME &&
+	    is_ctype_table(ln->tn_left->tn_left->tn_sym->s_name))
+		check_ctype_arg("function from <ctype.h>", rn);
 }
