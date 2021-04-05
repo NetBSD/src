@@ -1,4 +1,4 @@
-/*	$NetBSD: hooks.c,v 1.6 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: hooks.c,v 1.7 2021/04/05 11:27:04 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,7 +46,7 @@
 		if (result != ISC_R_SUCCESS) { \
 			goto cleanup;          \
 		}                              \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 struct ns_plugin {
 	isc_mem_t *mctx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.6 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,14 +43,14 @@
 	do {            \
 		v = *w; \
 		w++;    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GET16(v, w)                          \
 	do {                                 \
 		v = (unsigned int)w[0] << 8; \
 		v |= (unsigned int)w[1];     \
 		w += 2;                      \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GET24(v, w)                           \
 	do {                                  \
@@ -58,7 +58,7 @@
 		v |= (unsigned int)w[1] << 8; \
 		v |= (unsigned int)w[2];      \
 		w += 3;                       \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GET32(v, w)                            \
 	do {                                   \
@@ -67,7 +67,7 @@
 		v |= (unsigned int)w[2] << 8;  \
 		v |= (unsigned int)w[3];       \
 		w += 4;                        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GET64(v, w)                        \
 	do {                               \
@@ -80,7 +80,7 @@
 		v |= (uint64_t)w[6] << 8;  \
 		v |= (uint64_t)w[7];       \
 		w += 8;                    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GETC16(v, w, d)                      \
 	do {                                 \
@@ -92,7 +92,7 @@
 			if (v == 255)        \
 				GET16(v, w); \
 		}                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GETC32(v, w)                  \
 	do {                          \
@@ -100,7 +100,7 @@
 		if (v == 0xffffffu) { \
 			GET32(v, w);  \
 		}                     \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GET_OFFSET(v, w) GET32(v, w)
 
@@ -108,7 +108,7 @@
 	do {                      \
 		memmove(v, w, c); \
 		w += c;           \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define GET_TYPE(v, w)                                                        \
 	do {                                                                  \
@@ -120,20 +120,20 @@
 				GET32(v, w);                                  \
 			}                                                     \
 		}                                                             \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUT8(v, w)                      \
 	do {                            \
 		*w = (v & 0x000000ffU); \
 		w++;                    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUT16(v, w)                            \
 	do {                                   \
 		w[0] = (v & 0x0000ff00U) >> 8; \
 		w[1] = (v & 0x000000ffU);      \
 		w += 2;                        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUT24(v, w)                             \
 	do {                                    \
@@ -141,7 +141,7 @@
 		w[1] = (v & 0x0000ff00U) >> 8;  \
 		w[2] = (v & 0x000000ffU);       \
 		w += 3;                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUT32(v, w)                             \
 	do {                                    \
@@ -150,7 +150,7 @@
 		w[2] = (v & 0x0000ff00U) >> 8;  \
 		w[3] = (v & 0x000000ffU);       \
 		w += 4;                         \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUT64(v, w)                                       \
 	do {                                              \
@@ -163,7 +163,7 @@
 		w[6] = (v & 0x000000000000ff00ULL) >> 8;  \
 		w[7] = (v & 0x00000000000000ffULL);       \
 		w += 8;                                   \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUTC16(v, w)                    \
 	do {                            \
@@ -173,7 +173,7 @@
 			PUT8(255, w);   \
 			PUT16(v, w);    \
 		}                       \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUTC32(v, w)                         \
 	do {                                 \
@@ -183,7 +183,7 @@
 			PUT24(0xffffffU, w); \
 			PUT32(v, w);         \
 		}                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define PUT_OFFSET(v, w) PUT32(v, w)
 
@@ -193,7 +193,7 @@
 	do {                      \
 		memmove(w, s, c); \
 		w += c;           \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * Regions.
@@ -204,7 +204,7 @@
 	do {                                       \
 		(r).rstart = (unsigned char *)s;   \
 		(r).rend = (r).rstart + strlen(s); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * Use this to remove the const qualifier of a variable to assign it to
@@ -222,6 +222,6 @@
 		} _u;                  \
 		_u.k = konst;          \
 		var = _u.v;            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #endif /* ISCCC_UTIL_H */

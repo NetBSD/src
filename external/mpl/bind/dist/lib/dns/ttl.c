@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,7 @@
 		isc_result_t _r = (x);   \
 		if (_r != ISC_R_SUCCESS) \
 			return ((_r));   \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 static isc_result_t
 bind_ttl(isc_textregion_t *source, uint32_t *ttl);

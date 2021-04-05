@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.11 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.12 2021/04/05 11:27:02 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -980,7 +980,7 @@ getrdata(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			result = r;          \
 			goto cleanup;        \
 		}                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 static isc_result_t
 getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
@@ -3344,7 +3344,7 @@ dns_message_checksig(dns_message_t *msg, dns_view_t *view) {
 		for (__i = 0; __i < msg->indent.count; __i++) {              \
 			ADD_STRING(target, msg->indent.string);              \
 		}                                                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 isc_result_t
 dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,

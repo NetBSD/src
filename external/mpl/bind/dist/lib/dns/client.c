@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.8 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.9 2021/04/05 11:27:01 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,7 +77,7 @@
 		result = (r);                \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  * DNS client object

@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.6 2021/04/05 11:27:03 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,7 +30,7 @@
 	do {                        \
 		(list).head = NULL; \
 		(list).tail = NULL; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LINK(type)             \
 	struct {                   \
@@ -40,7 +40,7 @@
 	do {                                     \
 		(elt)->link.prev = (type *)(-1); \
 		(elt)->link.next = (type *)(-1); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define ISC_LINK_INIT(elt, link)   ISC_LINK_INIT_TYPE(elt, link, void)
 #define ISC_LINK_LINKED(elt, link) ((void *)((elt)->link.prev) != (void *)(-1))
 
@@ -58,13 +58,13 @@
 		(elt)->link.prev = NULL;                \
 		(elt)->link.next = (list).head;         \
 		(list).head = (elt);                    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_PREPEND(list, elt, link)                     \
 	do {                                                  \
 		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link)); \
 		__ISC_LIST_PREPENDUNSAFE(list, elt, link);    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_INITANDPREPEND(list, elt, link) \
 	__ISC_LIST_PREPENDUNSAFE(list, elt, link)
@@ -79,13 +79,13 @@
 		(elt)->link.prev = (list).tail;         \
 		(elt)->link.next = NULL;                \
 		(list).tail = (elt);                    \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_APPEND(list, elt, link)                      \
 	do {                                                  \
 		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link)); \
 		__ISC_LIST_APPENDUNSAFE(list, elt, link);     \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_INITANDAPPEND(list, elt, link) \
 	__ISC_LIST_APPENDUNSAFE(list, elt, link)
@@ -108,7 +108,7 @@
 		(elt)->link.next = (type *)(-1);                        \
 		ISC_INSIST((list).head != (elt));                       \
 		ISC_INSIST((list).tail != (elt));                       \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define __ISC_LIST_UNLINKUNSAFE(list, elt, link) \
 	__ISC_LIST_UNLINKUNSAFE_TYPE(list, elt, link, void)
@@ -117,7 +117,7 @@
 	do {                                                         \
 		ISC_LINK_INSIST(ISC_LINK_LINKED(elt, link));         \
 		__ISC_LIST_UNLINKUNSAFE_TYPE(list, elt, link, type); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define ISC_LIST_UNLINK(list, elt, link) \
 	ISC_LIST_UNLINK_TYPE(list, elt, link, void)
 
@@ -134,14 +134,14 @@
 			(elt)->link.prev->link.next = (elt);    \
 			(elt)->link.next = (before);            \
 		}                                               \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_INSERTBEFORE(list, before, elt, link)                  \
 	do {                                                            \
 		ISC_LINK_INSIST(ISC_LINK_LINKED(before, link));         \
 		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link));           \
 		__ISC_LIST_INSERTBEFOREUNSAFE(list, before, elt, link); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define __ISC_LIST_INSERTAFTERUNSAFE(list, after, elt, link)   \
 	do {                                                   \
@@ -153,14 +153,14 @@
 			(elt)->link.next->link.prev = (elt);   \
 			(elt)->link.prev = (after);            \
 		}                                              \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_INSERTAFTER(list, after, elt, link)                  \
 	do {                                                          \
 		ISC_LINK_INSIST(ISC_LINK_LINKED(after, link));        \
 		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link));         \
 		__ISC_LIST_INSERTAFTERUNSAFE(list, after, elt, link); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_APPENDLIST(list1, list2, link)                 \
 	do {                                                    \
@@ -173,7 +173,7 @@
 		}                                               \
 		(list2).head = NULL;                            \
 		(list2).tail = NULL;                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_PREPENDLIST(list1, list2, link)                \
 	do {                                                    \
@@ -186,7 +186,7 @@
 		}                                               \
 		(list2).head = NULL;                            \
 		(list2).tail = NULL;                            \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define ISC_LIST_ENQUEUE(list, elt, link) ISC_LIST_APPEND(list, elt, link)
 #define __ISC_LIST_ENQUEUEUNSAFE(list, elt, link) \
