@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.6 2019/10/15 00:13:52 chs Exp $	*/
+/*	$NetBSD: ldc.c,v 1.7 2021/04/05 12:19:22 palle Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -76,24 +76,25 @@ ldc_rx_ctrl_vers(struct ldc_conn *lc, struct ldc_pkt *lp)
 {
 	switch (lp->stype) {
 	case LDC_INFO:
-		DPRINTF(("CTRL/INFO/VERS\n"));
+		DPRINTF(("CTRL/INFO/VERS major %d minor %d\n", lp->major, lp->minor));
 		if (lp->major == LDC_VERSION_MAJOR &&
 		    lp->minor == LDC_VERSION_MINOR)
 			ldc_send_ack(lc);
 		else {
 			/* XXX do nothing for now. */
+			DPRINTF(("CTRL/INFO/VERS unsupported major/minor\n"));
 		}
 		break;
 
 	case LDC_ACK:
-		if (lc->lc_state != LDC_SND_VERS) {
-			DPRINTF(("Spurious CTRL/ACK/VERS: state %d\n",
-			    lc->lc_state));
-			ldc_reset(lc);
-			return;
-		}
 		DPRINTF(("CTRL/ACK/VERS\n"));
-		ldc_send_rts(lc);
+		if (lc->lc_state != LDC_SND_VERS) {
+			DPRINTF(("Spurious CTRL/ACK/VERS: state %d major %d minor %d (ignored)\n",
+					 lc->lc_state, lp->major, lp->minor));
+		}
+		else {		
+			ldc_send_rts(lc);
+		}
 		break;
 
 	case LDC_NACK:
@@ -263,6 +264,7 @@ ldc_send_vers(struct ldc_conn *lc)
 	lp->ctrl = LDC_VERS;
 	lp->major = 1;
 	lp->minor = 0;
+	DPRINTF(("ldc_send_vers() major %d minor %d\n", lp->major, lp->minor));
 
 	tx_tail += sizeof(*lp);
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
@@ -274,6 +276,7 @@ ldc_send_vers(struct ldc_conn *lc)
 	}
 
 	lc->lc_state = LDC_SND_VERS;
+	DPRINTF(("ldc_send_vers() setting lc->lc_state to %d\n", lc->lc_state));
 	mutex_exit(&lc->lc_txq->lq_mtx);
 }
 
@@ -309,6 +312,7 @@ ldc_send_ack(struct ldc_conn *lc)
 	}
 
 	lc->lc_state = LDC_RCV_VERS;
+	DPRINTF(("ldc_send_ack() setting lc->lc_state to %d\n", lc->lc_state));
 	mutex_exit(&lc->lc_txq->lq_mtx);
 }
 
@@ -344,6 +348,7 @@ ldc_send_rts(struct ldc_conn *lc)
 	}
 
 	lc->lc_state = LDC_SND_RTS;
+	DPRINTF(("ldc_send_rts() setting lc->lc_state to %d\n", lc->lc_state));
 	mutex_exit(&lc->lc_txq->lq_mtx);
 }
 
@@ -379,6 +384,7 @@ ldc_send_rtr(struct ldc_conn *lc)
 	}
 
 	lc->lc_state = LDC_SND_RTR;
+	DPRINTF(("ldc_send_rtr() setting lc->lc_state to %d\n", lc->lc_state));
 	mutex_exit(&lc->lc_txq->lq_mtx);
 }
 
@@ -414,6 +420,7 @@ ldc_send_rdx(struct ldc_conn *lc)
 	}
 
 	lc->lc_state = LDC_SND_RDX;
+	DPRINTF(("ldc_send_rdx() setting lc->lc_state to %d\n", lc->lc_state));
 	mutex_exit(&lc->lc_txq->lq_mtx);
 }
 
