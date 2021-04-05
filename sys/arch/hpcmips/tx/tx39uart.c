@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.15.52.5 2021/04/04 22:01:16 thorpej Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.15.52.6 2021/04/05 00:48:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.15.52.5 2021/04/04 22:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.15.52.6 2021/04/05 00:48:49 thorpej Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -95,7 +95,7 @@ tx39uart_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 	
 	if (!(sc->sc_enabled & (1 << ua.ua_slot)) && /* not attached slot */
-	    config_match(parent, cf, &ua)) {
+	    config_probe(parent, cf, &ua)) {
 		config_attach(parent, cf, &ua, tx39uart_print, CFARG_EOL);
 		sc->sc_enabled |= (1 << ua.ua_slot);
 	}

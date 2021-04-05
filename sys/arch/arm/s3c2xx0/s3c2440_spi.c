@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_spi.c,v 1.2.52.4 2021/04/04 22:01:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_spi.c,v 1.2.52.5 2021/04/05 00:48:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ ssspi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	spia.spia_aux_intr = cf->cf_loc[SSSPICF_INTR];
 	spia.spia_dmat = s3c2xx0_softc->sc_dmat;
 
-	if (config_match(parent, cf, &spia))
+	if (config_probe(parent, cf, &spia))
 		config_attach(parent, cf, &spia, ssspi_print, CFARG_EOL);
 
 	return 0;

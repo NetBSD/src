@@ -1,4 +1,4 @@
-/* $Id: imx23_apbx.c,v 1.1.56.4 2021/04/04 22:01:12 thorpej Exp $ */
+/* $Id: imx23_apbx.c,v 1.1.56.5 2021/04/05 00:48:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ apbx_search_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	aa->aa_size = cf->cf_loc[APBXCF_SIZE];
 	aa->aa_irq = cf->cf_loc[APBXCF_IRQ];
 
-	if (config_match(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, apbx_print, CFARG_EOL);
 
 	return 0;
@@ -150,7 +150,7 @@ apbx_search_crit_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	aa->aa_size = cf->cf_loc[APBXCF_SIZE];
 	aa->aa_irq = cf->cf_loc[APBXCF_IRQ];
 
-	if (config_match(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, apbx_print, CFARG_EOL);
 
 	return 0;

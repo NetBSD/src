@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.26.16.4 2021/04/04 22:01:15 thorpej Exp $ */
+/*	$NetBSD: gxio.c,v 1.26.16.5 2021/04/05 00:48:48 thorpej Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.26.16.4 2021/04/04 22:01:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.26.16.5 2021/04/05 00:48:48 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -407,7 +407,7 @@ gxiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	gxa.gxa_addr = cf->cf_loc[GXIOCF_ADDR];
 	gxa.gxa_gpirq = cf->cf_loc[GXIOCF_GPIRQ];
 
-	if (config_match(parent, cf, &gxa))
+	if (config_probe(parent, cf, &gxa))
 		config_attach(parent, cf, &gxa, gxioprint, CFARG_EOL);
 
 	return 0;

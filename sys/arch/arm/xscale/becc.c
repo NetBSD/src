@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.16.52.4 2021/04/04 22:01:13 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.16.52.5 2021/04/05 00:48:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16.52.4 2021/04/04 22:01:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16.52.5 2021/04/05 00:48:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ becc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	ba.ba_dmat = &sc->sc_local_dmat;
 
-	if (config_match(parent, cf, &ba) > 0)
+	if (config_probe(parent, cf, &ba) > 0)
 		config_attach(parent, cf, &ba, becc_print, CFARG_EOL);
 
 	return (0);

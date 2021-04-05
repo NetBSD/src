@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.10.68.4 2021/04/04 22:01:12 thorpej Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.10.68.5 2021/04/05 00:48:45 thorpej Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10.68.4 2021/04/04 22:01:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10.68.5 2021/04/05 00:48:45 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -272,7 +272,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 	oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 
-	if (config_match(parent, cf, &oa)) {
+	if (config_probe(parent, cf, &oa)) {
 		config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 		return 0;			/* love it */
 	}

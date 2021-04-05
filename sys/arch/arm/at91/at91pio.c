@@ -1,5 +1,5 @@
-/*	$Id: at91pio.c,v 1.6.52.4 2021/04/04 22:01:12 thorpej Exp $	*/
-/*	$NetBSD: at91pio.c,v 1.6.52.4 2021/04/04 22:01:12 thorpej Exp $	*/
+/*	$Id: at91pio.c,v 1.6.52.5 2021/04/05 00:48:45 thorpej Exp $	*/
+/*	$NetBSD: at91pio.c,v 1.6.52.5 2021/04/05 00:48:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.6.52.4 2021/04/04 22:01:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.6.52.5 2021/04/05 00:48:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ at91pio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	paa.paa_pid = cf->cf_loc[AT91PIOCF_PID];
 	paa.paa_bit = cf->cf_loc[AT91PIOCF_BIT];
 
-	if (config_match(parent, cf, &paa) > 0)
+	if (config_probe(parent, cf, &paa) > 0)
 		config_attach(parent, cf, &paa, at91pio_print, CFARG_EOL);
 
 	return 0;

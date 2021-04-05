@@ -112,7 +112,7 @@ s3c2440_i2s_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	ia.i2sa_handle = device_private(parent);
 
-	if (config_match(parent, cf, &ia))
+	if (config_probe(parent, cf, &ia))
 		config_attach(parent, cf, &ia, s3c2440_i2s_print, CFARG_EOL);
 
 	return 1;

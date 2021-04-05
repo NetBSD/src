@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.25.68.4 2021/04/04 22:01:17 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.25.68.5 2021/04/05 00:48:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.25.68.4 2021/04/04 22:01:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.25.68.5 2021/04/05 00:48:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	oa.oa_tag = mba->mba_bst;
 	oa.oa_dmat = mba->mba_dmat;
 
-	if (config_match(parent, cf, &oa) > 0)
+	if (config_probe(parent, cf, &oa) > 0)
 		config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 
 	return (0);

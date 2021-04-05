@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_axi.c,v 1.1.38.4 2021/04/04 22:01:14 thorpej Exp $	*/
+/*	$NetBSD: zynq_axi.c,v 1.1.38.5 2021/04/05 00:48:47 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_axi.c,v 1.1.38.4 2021/04/04 22:01:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_axi.c,v 1.1.38.5 2021/04/05 00:48:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,7 +106,7 @@ axi_critical_search(device_t parent, struct cfdata *cf,
 	aa->aa_irq = cf->cf_loc[AXICF_IRQ];
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
-	if (config_match(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;
@@ -125,7 +125,7 @@ axi_search(device_t parent, struct cfdata *cf, const int *ldesc __unused,
 	aa->aa_irq = cf->cf_loc[AXICF_IRQ];
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
-	if (config_match(parent, cf, aux) > 0)
+	if (config_probe(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;

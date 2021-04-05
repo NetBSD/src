@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.81.10.4 2021/04/04 22:01:23 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.81.10.5 2021/04/05 00:48:54 thorpej Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.81.10.4 2021/04/04 22:01:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.81.10.5 2021/04/05 00:48:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -296,7 +296,7 @@ ubasearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		goto forgetit;
 
 	scb_vecref(0, 0); /* Clear vector ref */
-	i = config_match(parent, cf, &ua);
+	i = config_probe(parent, cf, &ua);
 
 	if (sc->uh_errchk)
 		if ((*sc->uh_errchk)(sc))
