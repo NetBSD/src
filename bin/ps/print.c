@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.127 2016/12/12 20:35:36 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.127.6.1 2021/04/06 18:09:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.127 2016/12/12 20:35:36 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.127.6.1 2021/04/06 18:09:52 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -810,22 +810,33 @@ lstarted(struct pinfo *pi, VARENT *ve, enum mode mode)
 	char buf[100];
 
 	v = ve->var;
-	if (!k->p_uvalid) {
-		/*
-		 * Minimum width is less than header - we don't
-		 * need to check it every time.
-		 */
-		if (mode == PRINTMODE)
-			(void)printf("%*s", v->width, "-");
-		return;
-	}
 	startt = k->p_ustart_sec;
 
-	/* assume all times are the same length */
-	if (mode != WIDTHMODE || v->width == 0) {
-		(void)strftime(buf, sizeof(buf) -1, "%c",
-		    localtime(&startt));
-		strprintorsetwidth(v, buf, mode);
+	if (mode == WIDTHMODE) {
+		/*
+		 * We only need to set the width once, as we assume
+		 * that all times are the same length.  We do need to
+		 * check against the header length as well, as "no
+		 * header" mode for this variable will set the field
+		 * width to the length of the header anyway (ref: the
+		 * P1003.1-2004 comment in findvar()).
+		 *
+		 * XXX: The hardcoded "STARTED" string.  Better or
+		 * worse than a "<= 7" or some other arbitary number?
+		 */
+		if (v->width <= (int)strlen("STARTED")) {
+			(void)strftime(buf, sizeof(buf) -1, "%c",
+			    localtime(&startt));
+			strprintorsetwidth(v, buf, mode);
+		}
+	} else {
+		if (!k->p_uvalid) {
+			(void)printf("%*s", v->width, "-");
+		} else {
+			(void)strftime(buf, sizeof(buf) -1, "%c",
+			    localtime(&startt));
+			strprintorsetwidth(v, buf, mode);
+		}
 	}
 }
 
