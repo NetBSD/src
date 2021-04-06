@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.19 2020/09/05 07:22:25 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.20 2021/04/06 08:40:17 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -310,6 +310,7 @@ nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	vcpu->cpuid = cpuid;
 	vcpu->state = &comm->state;
 	vcpu->event = &comm->event;
+	vcpu->stop = &comm->stop;
 	vcpu->exit = malloc(sizeof(*vcpu->exit));
 
 	return 0;
@@ -558,6 +559,15 @@ nvmm_ctl(int op, void *data, size_t size)
 	ret = ioctl(nvmm_fd, NVMM_IOC_CTL, &args);
 	if (ret == -1)
 		return -1;
+
+	return 0;
+}
+
+int
+nvmm_vcpu_stop(struct nvmm_vcpu *vcpu)
+{
+
+	*vcpu->stop = 1;
 
 	return 0;
 }

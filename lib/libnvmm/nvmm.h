@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.18 2020/09/05 07:22:25 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.19 2021/04/06 08:40:17 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -37,7 +37,12 @@
 #include <dev/nvmm/nvmm.h>
 #include <dev/nvmm/nvmm_ioctl.h>
 
-#define NVMM_USER_VERSION	1
+#define NVMM_USER_VERSION	2
+
+/*
+ * Version 1 - Initial release in NetBSD 9.0.
+ * Version 2 - Added nvmm_vcpu::stop.
+ */
 
 struct nvmm_io;
 struct nvmm_mem;
@@ -59,6 +64,7 @@ struct nvmm_vcpu {
 	struct nvmm_vcpu_state *state;
 	struct nvmm_vcpu_event *event;
 	struct nvmm_vcpu_exit *exit;
+	volatile int *stop;
 };
 
 struct nvmm_io {
@@ -122,5 +128,7 @@ int nvmm_assist_mem(struct nvmm_machine *, struct nvmm_vcpu *);
 int nvmm_ctl(int, void *, size_t);
 
 int nvmm_vcpu_dump(struct nvmm_machine *, struct nvmm_vcpu *);
+
+int nvmm_vcpu_stop(struct nvmm_vcpu *);
 
 #endif /* _LIBNVMM_H_ */
