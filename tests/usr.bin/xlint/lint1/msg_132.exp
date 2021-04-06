@@ -10,3 +10,4 @@ msg_132.c(51): warning: conversion from 'long long' to 'signed char' may lose ac
 msg_132.c(54): warning: conversion from 'int' to 'short' may lose accuracy [132]
 msg_132.c(55): warning: conversion from 'long long' to 'short' may lose accuracy [132]
 msg_132.c(59): warning: conversion from 'long long' to 'int' may lose accuracy [132]
+msg_132.c(70): warning: conversion from 'long' to '_Bool' may lose accuracy [132]
