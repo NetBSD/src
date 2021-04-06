@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.4 2021/04/06 21:10:37 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.5 2021/04/06 21:17:28 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -63,9 +63,14 @@ convert_signed(i8 v8, i16 v16, i32 v32, i64 v64)
 	v64 = v32;
 }
 
+/*
+ * Before tree.c 1.268 from 2021-04-06, lint wrongly warned that conversion to
+ * _Bool might lose accuracy.  C99 6.3.1.2 defines a special conversion rule
+ * from scalar to _Bool though.
+ */
 _Bool
 to_bool(long a, long b)
 {
 	/* seen in fp_lib.h, function wideRightShiftWithSticky */
-	return a | b;		/* expect: 132 *//*FIXME*/
+	return a | b;
 }
