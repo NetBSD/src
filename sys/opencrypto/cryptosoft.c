@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.60 2021/04/05 01:24:50 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.61 2021/04/06 03:38:04 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.60 2021/04/05 01:24:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.61 2021/04/06 03:38:04 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,7 +712,7 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 	 * copy in a buffer.
 	 */
 
-	data = kmem_alloc(crd->crd_len, KM_NOSLEEP);
+	data = malloc(crd->crd_len, M_CRYPTO_DATA, M_NOWAIT);
 	if (data == NULL)
 		return (EINVAL);
 	COPYDATA(outtype, buf, crd->crd_skip, crd->crd_len, data);
@@ -723,7 +723,7 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 		result = cxf->decompress(data, crd->crd_len, &out,
 					 *res_size);
 
-	kmem_free(data, crd->crd_len);
+	free(data, M_CRYPTO_DATA);
 	if (result == 0)
 		return EINVAL;
 
@@ -1115,7 +1115,7 @@ swcr_freesession_internal(struct swcr_data *arg)
 			break;
 		}
 
-		free(swd, M_CRYPTO_DATA);
+		kmem_free(swd, sizeof(*swd));
 	}
 }
 
