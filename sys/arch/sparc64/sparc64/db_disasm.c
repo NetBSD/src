@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.18 2015/10/04 08:16:14 joerg Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.19 2021/04/06 15:55:26 simonb Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.18 2015/10/04 08:16:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2021/04/06 15:55:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -223,7 +223,7 @@ struct sparc_insn sparc_i[] = {
 	/* Note: if imm22 is zero then this is actually a "nop" grrr... */
 	{(FORMAT2(0, 0x4)), "sethi", "Cd"},
 
-	/* Branch on Integer Co`ndition Codes "Bicc" */
+	/* Branch on Integer Condition Codes "Bicc" */
 	{(FORMAT2(0, 2) | COND(8)), "ba", "a,m"},
 	{(FORMAT2(0, 2) | COND(0)), "bn", "a,m"},
 	{(FORMAT2(0, 2) | COND(9)), "bne", "a,m"},
@@ -1121,4 +1121,3 @@ db_disasm(db_addr_t loc, bool altfmt)
 
 	return (loc + 4);
 }
-
