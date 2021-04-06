@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.911 2021/04/05 13:35:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.912 2021/04/06 01:38:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.911 2021/04/05 13:35:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.912 2021/04/06 01:38:39 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3693,6 +3693,15 @@ LogAfterApply(const ModChain *ch, const char *p, const char *mod)
 	const Expr *expr = ch->expr;
 	const char *value = expr->value.str;
 	const char *quot = value == var_Error ? "" : "\"";
+
+	if ((expr->emode == VARE_WANTRES || expr->emode == VARE_UNDEFERR) &&
+	    expr->defined == DEF_REGULAR) {
+
+		debug_printf("Result of ${%s:%.*s} is %s%s%s\n",
+		    expr->name, (int)(p - mod), mod,
+		    quot, value == var_Error ? "error" : value, quot);
+		return;
+	}
 
 	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s)\n",
 	    expr->name, (int)(p - mod), mod,
