@@ -8,7 +8,7 @@ Var_Parse: ${REF}> (eval-defined)
 Evaluating modifier ${UT_VAR:N...} on value "<>"
 Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
-Result of ${UT_VAR:N*} is "" (eval-defined, regular)
+Result of ${UT_VAR:N*} is ""
 ParseDependency(: )
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" (eval-defined)
@@ -16,9 +16,9 @@ Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
 Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR"
-Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, regular)
+Result of ${.MAKE.EXPORTED:O} is "UT_VAR"
 Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR"
-Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, regular)
+Result of ${.MAKE.EXPORTED:u} is "UT_VAR"
 Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)
 Result of ${:!echo "\$UT_VAR"!} is "<>" (eval-defined, defined)
@@ -29,7 +29,7 @@ Var_Parse: ${REF}> (eval-defined)
 Evaluating modifier ${UT_VAR:N...} on value "<>"
 Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 words
-Result of ${UT_VAR:N*} is "" (eval-defined, regular)
+Result of ${UT_VAR:N*} is ""
 ParseDependency(: )
 ParseReadLine (54): 'REF=		defined'
 Global: REF = defined
@@ -39,9 +39,9 @@ Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
 Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR"
-Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, regular)
+Result of ${.MAKE.EXPORTED:O} is "UT_VAR"
 Evaluating modifier ${.MAKE.EXPORTED:u} on value "UT_VAR"
-Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, regular)
+Result of ${.MAKE.EXPORTED:u} is "UT_VAR"
 Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)
 Result of ${:!echo "\$UT_VAR"!} is "<defined>" (eval-defined, defined)
