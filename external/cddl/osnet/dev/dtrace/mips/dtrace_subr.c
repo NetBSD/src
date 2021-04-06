@@ -121,7 +121,7 @@ dtrace_invop_remove(int (*func)(uintptr_t, struct trapframe *, uintptr_t))
 		prev->dtih_next = hdlr->dtih_next;
 	}
 
-	kmem_free(hdlr, 0);
+	kmem_free(hdlr, sizeof (dtrace_invop_hdlr_t));
 }
 
 /*ARGSUSED*/
