@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.27 2021/04/02 07:04:05 nia Exp $
+.\"	$NetBSD: rndctl.8,v 1.28 2021/04/06 12:32:39 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -105,11 +105,22 @@ or
 .Ar devname
 specified.
 .It Fl S
-Save entropy pool to file
-.Ar save-file .
+Save entropy to file
+.Ar save-file
+for later use with
+.Cm "rndctl -L" .
+.Pp
 The file format is specific to
 .Nm
 and includes an estimate of the amount of saved entropy and a checksum.
+The prior internal state of the system entropy pool cannot be recovered
+from
+.Ar save-file ,
+so disclosure of
+.Ar save-file
+does not compromise past secrets drawn from
+.Pa /dev/urandom
+or equivalent.
 .It Fl s
 Display statistics on the current state of the entropy pool.
 .It Fl t
