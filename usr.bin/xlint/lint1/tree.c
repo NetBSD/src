@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.270 2021/04/06 21:35:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.271 2021/04/06 21:59:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.270 2021/04/06 21:35:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.271 2021/04/06 21:59:58 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -855,7 +855,7 @@ typeok_shr(const mod_t *mp,
 		 * The left operand would become unsigned in
 		 * traditional C.
 		 */
-		if (hflag &&
+		if (hflag && !Sflag &&
 		    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
@@ -866,7 +866,7 @@ typeok_shr(const mod_t *mp,
 		 * In traditional C the left operand would be extended,
 		 * possibly with 1, and then shifted.
 		 */
-		if (hflag &&
+		if (hflag && !Sflag &&
 		    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
@@ -891,7 +891,7 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 		 * that there is really a difference between
 		 * ANSI C and traditional C.
 		 */
-		if (hflag)
+		if (hflag && !Sflag)
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 	}
