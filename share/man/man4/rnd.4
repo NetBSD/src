@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.38 2021/02/12 01:52:09 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.39 2021/04/06 22:12:16 riastradh Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -389,9 +389,6 @@ This ioctl can be used only once per boot.
 It is intended for a system that saves entropy to disk on shutdown and
 restores it on boot, so that the system can immediately be
 unpredictable without having to wait to gather entropy.
-.Pp
-This ioctl is the only way for userland to directly change the system's
-entropy estimate.
 .It Dv RNDGETPOOLSTAT Pq Vt rndpoolstat_t
 .Bd -literal
 typedef struct {
