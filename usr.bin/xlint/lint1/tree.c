@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.266 2021/04/05 02:05:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.267 2021/04/06 13:17:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.266 2021/04/05 02:05:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.267 2021/04/06 13:17:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -207,23 +207,8 @@ static void
 fallback_symbol(sym_t *sym)
 {
 
-	if (Tflag && strcmp(sym->s_name, "__lint_false") == 0) {
-		sym->s_scl = CTCONST; /* close enough */
-		sym->s_type = gettyp(BOOL);
-		sym->s_value.v_tspec = BOOL;
-		sym->s_value.v_ansiu = false;
-		sym->s_value.v_quad = 0;
+	if (fallback_symbol_strict_bool(sym))
 		return;
-	}
-
-	if (Tflag && strcmp(sym->s_name, "__lint_true") == 0) {
-		sym->s_scl = CTCONST; /* close enough */
-		sym->s_type = gettyp(BOOL);
-		sym->s_value.v_tspec = BOOL;
-		sym->s_value.v_ansiu = false;
-		sym->s_value.v_quad = 1;
-		return;
-	}
 
 	if (block_level > 0 && (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
 			   strcmp(sym->s_name, "__PRETTY_FUNCTION__") == 0)) {
@@ -736,42 +721,6 @@ is_null_pointer(const tnode_t *tn)
 	       && (tn->tn_op == CON && tn->tn_val->v_quad == 0);
 }
 
-/*
- * See if the node is valid as operand of an operator that compares its
- * argument with 0.
- */
-bool
-is_typeok_bool_operand(const tnode_t *tn)
-{
-	tspec_t t;
-
-	lint_assert(Tflag);
-
-	tn = before_conversion(tn);
-	t = tn->tn_type->t_tspec;
-
-	if (t == BOOL)
-		return true;
-
-	if (tn->tn_from_system_header && is_scalar(t))
-		return true;
-
-	/* For enums that are used as bit sets, allow "flags & FLAG". */
-	if (tn->tn_op == BITAND &&
-	    tn->tn_left->tn_op == CVT &&
-	    tn->tn_left->tn_type->t_tspec == INT && !tn->tn_left->tn_cast &&
-	    tn->tn_left->tn_left->tn_type->t_tspec == ENUM &&
-	    /*
-	     * XXX: Somehow the type information got lost here.  The type
-	     * of the enum constant on the right-hand side should still be
-	     * ENUM, but is INT.
-	     */
-	    tn->tn_right->tn_type->t_tspec == INT)
-		return true;
-
-	return false;
-}
-
 static bool
 typeok_incdec(op_t op, const tnode_t *tn, const type_t *tp)
 {
@@ -1109,159 +1058,7 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 	return true;
 }
 
-/*
- * See if in strict bool mode, the operator takes either two bool operands
- * or two arbitrary other operands.
- */
-static bool
-is_assignment_bool_or_other(op_t op)
-{
-	return op == ASSIGN ||
-	       op == ANDASS || op == XORASS || op == ORASS ||
-	       op == RETURN || op == INIT || op == FARG;
-}
 
-static bool
-is_symmetric_bool_or_other(op_t op)
-{
-	return op == EQ || op == NE ||
-	       op == BITAND || op == BITXOR || op == BITOR ||
-	       op == COLON;
-}
-
-static bool
-is_int_constant_zero(const tnode_t *tn, tspec_t t)
-{
-	return t == INT && tn->tn_op == CON && tn->tn_val->v_quad == 0;
-}
-
-static bool
-is_typeok_strict_bool(op_t op,
-		      const tnode_t *ln, tspec_t lt,
-		      const tnode_t *rn, tspec_t rt)
-{
-	if (rn == NULL)
-		return true;	/* TODO: check unary operators as well. */
-
-	if ((lt == BOOL) == (rt == BOOL))
-		return true;
-
-	if ((ln->tn_from_system_header || rn->tn_from_system_header) &&
-	    (is_int_constant_zero(ln, lt) || is_int_constant_zero(rn, rt)))
-		return true;
-
-	if (is_assignment_bool_or_other(op)) {
-		return lt != BOOL &&
-		       (ln->tn_from_system_header || rn->tn_from_system_header);
-	}
-
-	return !is_symmetric_bool_or_other(op);
-}
-
-/*
- * Some operators require that either both operands are bool or both are
- * scalar.
- *
- * Code that passes this check can be compiled in a pre-C99 environment that
- * doesn't implement the special rule C99 6.3.1.2, without silent change in
- * behavior.
- */
-static bool
-typeok_strict_bool_compatible(op_t op, int arg,
-			      const tnode_t *ln, tspec_t lt,
-			      const tnode_t *rn, tspec_t rt)
-{
-
-	if (is_typeok_strict_bool(op, ln, lt, rn, rt))
-		return true;
-
-	if (op == FARG) {
-		/* argument #%d expects '%s', gets passed '%s' */
-		error(334, arg, tspec_name(lt), tspec_name(rt));
-	} else if (op == RETURN) {
-		/* return value type mismatch (%s) and (%s) */
-		error(211, tspec_name(lt), tspec_name(rt));
-	} else {
-		/* operands of '%s' have incompatible types (%s != %s) */
-		error(107, op_name(op), tspec_name(lt), tspec_name(rt));
-	}
-
-	return false;
-}
-
-/*
- * In strict bool mode, check whether the types of the operands match the
- * operator.
- */
-static bool
-typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
-			  const tnode_t *ln,
-			  const tnode_t *rn)
-
-{
-	tspec_t lt, rt;
-
-	ln = before_conversion(ln);
-	lt = ln->tn_type->t_tspec;
-
-	if (rn != NULL) {
-		rn = before_conversion(rn);
-		rt = rn->tn_type->t_tspec;
-	} else {
-		rt = NOTSPEC;
-	}
-
-	if (!typeok_strict_bool_compatible(op, arg, ln, lt, rn, rt))
-		return false;
-
-	if (mp->m_requires_bool || op == QUEST) {
-		bool binary = mp->m_binary;
-		bool lbool = is_typeok_bool_operand(ln);
-		bool ok = true;
-
-		if (!binary && !lbool) {
-			/* operand of '%s' must be bool, not '%s' */
-			error(330, op_name(op), tspec_name(lt));
-			ok = false;
-		}
-		if (binary && !lbool) {
-			/* left operand of '%s' must be bool, not '%s' */
-			error(331, op_name(op), tspec_name(lt));
-			ok = false;
-		}
-		if (binary && op != QUEST && !is_typeok_bool_operand(rn)) {
-			/* right operand of '%s' must be bool, not '%s' */
-			error(332, op_name(op), tspec_name(rt));
-			ok = false;
-		}
-		return ok;
-	}
-
-	if (!mp->m_takes_bool) {
-		bool binary = mp->m_binary;
-		bool lbool = ln->tn_type->t_tspec == BOOL;
-		bool ok = true;
-
-		if (!binary && lbool) {
-			/* operand of '%s' must not be bool */
-			error(335, op_name(op));
-			ok = false;
-		}
-		if (binary && lbool) {
-			/* left operand of '%s' must not be bool */
-			error(336, op_name(op));
-			ok = false;
-		}
-		if (binary && rn->tn_type->t_tspec == BOOL) {
-			/* right operand of '%s' must not be bool */
-			error(337, op_name(op));
-			ok = false;
-		}
-		return ok;
-	}
-
-	return true;
-}
 
 /* Check the types using the information from modtab[]. */
 static bool
