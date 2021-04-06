@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_122.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_122.c,v 1.4 2021/04/06 21:32:57 rillig Exp $	*/
 # 3 "msg_122.c"
 
-// Test for message: shift greater than size of object [122]
+// Test for message: shift amount %llu is greater than bit-size %llu of '%s' [122]
 
 int
 example(int x)

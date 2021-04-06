@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.268 2021/04/06 21:17:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.269 2021/04/06 21:32:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.268 2021/04/06 21:17:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.269 2021/04/06 21:32:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -910,8 +910,10 @@ typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 			warning(267);
 		} else if ((uint64_t)rn->tn_val->v_quad >
 			   (uint64_t)size_in_bits(lt)) {
-			/* shift greater than size of object */
-			warning(122);
+			/* shift amount %llu is greater than bit-size %llu of '%s' */
+			warning(122, (unsigned long long)rn->tn_val->v_quad,
+			    (unsigned long long)size_in_bits(lt),
+			    tspec_name(lt));
 		}
 	}
 }
