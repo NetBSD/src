@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.279 2021/04/05 22:52:03 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.280 2021/04/06 15:05:12 simonb Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -210,6 +210,11 @@ _MD_OBJS=	${MD_OBJS}
 SYSTEM_LIB=	${MD_LIBS} ${LIBKERN}
 SYSTEM_OBJ?=	${_MD_OBJS} ${OBJS} ${SYSTEM_LIB}
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O}
+.if defined(CTFMERGE)
+SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+.else
+SYSTEM_CTFMERGE= ${_MKSHECHO}
+.endif
 
 REMOVE_SWAP=   [@]
 .for k in ${KERNELS}
@@ -237,7 +242,7 @@ LINKFLAGS?=	${LINKFORMAT} ${LINKSCRIPT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 LINKFLAGS_DEBUG?=	-X
 
 SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
-		${SIZE} $@ && chmod 755 $@
+		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@
 SYSTEM_LD_TAIL_DEBUG?=&& \
 		echo mv -f $@ $@.gdb && mv -f $@ $@.gdb && \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb && \
@@ -260,11 +265,6 @@ LINKFLAGS+=	${LINKFLAGS_NORMAL}
 SYSTEM_LD_HEAD+=	${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL_STAGE1=	${SYSTEM_LD_TAIL}
 SYSTEM_LD_TAIL_STAGE2=	${SYSTEM_LD_TAIL}
-.if defined(CTFMERGE)
-SYSTEM_LD_TAIL_STAGE2+= && echo ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ... \
-			&& ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} \
-			    ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
-.endif
 .if defined(COPY_SYMTAB)
 SYSTEM_LD_TAIL_STAGE2+=	&& echo ${DBSYM} $@ && ${DBSYM} $@
 .if !empty(DEBUG:M-g)
