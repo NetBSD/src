@@ -1,6 +1,8 @@
-# Id: Makefile 3594 2018-04-11 18:26:50Z jkoshy
+# Id: Makefile 3938 2021-04-04 18:16:18Z jkoshy
 
 TOP=	..
+
+SUBDIR=		sys
 
 INCS=		elfdefinitions.h
 INCSDIR=	/usr/include
@@ -16,3 +18,4 @@ cleandepend:
 	rm -f ${.OBJDIR}/.depend
 
 .include "${TOP}/mk/elftoolchain.inc.mk"
+.include "${TOP}/mk/elftoolchain.subdir.mk"
