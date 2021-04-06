@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.51 2021/04/06 00:47:00 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.52 2021/04/06 01:29:37 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -82,9 +82,9 @@ static bool no_input;	/* don't need more input */
 static wchar_t *vals = NULL;	/* wchars to attach to a cchar type */
 static unsigned nvals;		/* number of wchars */
 
-const char *enum_names[] = {
-	"unused", "static", "numeric", "string", "byte", "cchar", "wchar", "ERR",
-	"OK", "NULL", "not NULL", "variable", "reference", "returns count",
+const char *enum_names[] = {	/* for data_enum_t */
+	"unused", "numeric", "static", "string", "byte", "cchar", "wchar", "ERR",
+	"OK", "NULL", "not NULL", "variable", "reference", "return count",
 	"slave error"
 };
 
