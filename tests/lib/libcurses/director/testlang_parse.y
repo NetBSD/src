@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.50 2021/04/06 00:35:58 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.51 2021/04/06 00:47:00 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -148,13 +148,17 @@ static void	set_cchar(char *, void *);
 static void	set_wchar(char *);
 static wchar_t *add_to_vals(data_enum_t, void *);
 
+#define variants(fn) "" fn, "mv" fn, "w" fn, "mvw" fn
 static const char *input_functions[] = {
-	"getch", "mvgetch", "mvwgetch", "wgetch", "getnstr", "getstr", "mvgetnstr",
-	"mvgetstr", "mvwgetnstr", "mvwgetstr", "wgetnstr", "wgetstr", "mvscanw",
-	"mvwscanw", "scanw", "wscanw", "get_wch", "mvget_wch", "mvwget_wch",
-	"wget_wch", "getn_wstr", "get_wstr", "mvgetn_wstr", "mvget_wstr",
-	"mvwgetn_wstr","mvwget_wstr", "wgetn_wstr", "wget_wstr"
+	variants("getch"),
+	variants("getnstr"),
+	variants("getstr"),
+	variants("getn_wstr"),
+	variants("get_wch"),
+	variants("get_wstr"),
+	variants("scanw"),
 };
+#undef variants
 
 static const unsigned ninput_functions =
 	sizeof(input_functions) / sizeof(char *);
