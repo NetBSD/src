@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.3 2021/02/28 21:39:17 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.4 2021/04/06 21:10:37 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -61,4 +61,11 @@ convert_signed(i8 v8, i16 v16, i32 v32, i64 v64)
 	v64 = v8;
 	v64 = v16;
 	v64 = v32;
+}
+
+_Bool
+to_bool(long a, long b)
+{
+	/* seen in fp_lib.h, function wideRightShiftWithSticky */
+	return a | b;		/* expect: 132 *//*FIXME*/
 }
