@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.269 2021/04/06 21:32:57 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.270 2021/04/06 21:35:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.269 2021/04/06 21:32:57 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.270 2021/04/06 21:35:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -900,21 +900,21 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 static void
 typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
-	if (rn->tn_op == CON) {
-		if (!is_uinteger(rt) && rn->tn_val->v_quad < 0) {
-			/* negative shift */
-			warning(121);
-		} else if ((uint64_t)rn->tn_val->v_quad ==
-			   (uint64_t)size_in_bits(lt)) {
-			/* shift equal to size of object */
-			warning(267);
-		} else if ((uint64_t)rn->tn_val->v_quad >
-			   (uint64_t)size_in_bits(lt)) {
-			/* shift amount %llu is greater than bit-size %llu of '%s' */
-			warning(122, (unsigned long long)rn->tn_val->v_quad,
-			    (unsigned long long)size_in_bits(lt),
-			    tspec_name(lt));
-		}
+	if (rn->tn_op != CON)
+		return;
+
+	if (!is_uinteger(rt) && rn->tn_val->v_quad < 0) {
+		/* negative shift */
+		warning(121);
+	} else if ((uint64_t)rn->tn_val->v_quad ==
+		   (uint64_t)size_in_bits(lt)) {
+		/* shift equal to size of object */
+		warning(267);
+	} else if ((uint64_t)rn->tn_val->v_quad > (uint64_t)size_in_bits(lt)) {
+		/* shift amount %llu is greater than bit-size %llu of '%s' */
+		warning(122, (unsigned long long)rn->tn_val->v_quad,
+		    (unsigned long long)size_in_bits(lt),
+		    tspec_name(lt));
 	}
 }
 
