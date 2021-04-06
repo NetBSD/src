@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.133 2021/04/06 05:13:24 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.134 2021/04/06 13:35:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.133 2021/04/06 05:13:24 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.134 2021/04/06 13:35:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,14 @@ static time_t now;
 #ifndef LSDEAD
 #define LSDEAD 6
 #endif
+
+static void __attribute__((__format__(__strftime__, 3, 0)))
+safe_strftime(char *buf, size_t bufsiz, const char *fmt,
+    const struct tm *tp)
+{
+	if (tp == NULL || strftime(buf, bufsiz, fmt, tp) == 0)
+		strlcpy(buf, "-", sizeof(buf));
+}
 
 static int
 iwidth(u_int64_t v)
@@ -793,12 +801,12 @@ started(struct pinfo *pi, VARENT *ve, enum mode mode)
 		(void)time(&now);
 	if (now - k->p_ustart_sec < SECSPERDAY)
 		/* I *hate* SCCS... */
-		(void)strftime(buf, sizeof(buf) - 1, "%l:%" "M%p", tp);
+		safe_strftime(buf, sizeof(buf) - 1, "%l:%" "M%p", tp);
 	else if (now - k->p_ustart_sec < DAYSPERWEEK * SECSPERDAY)
 		/* I *hate* SCCS... */
-		(void)strftime(buf, sizeof(buf) - 1, "%a%" "I%p", tp);
+		safe_strftime(buf, sizeof(buf) - 1, "%a%" "I%p", tp);
 	else
-		(void)strftime(buf, sizeof(buf) - 1, "%e%b%y", tp);
+		safe_strftime(buf, sizeof(buf) - 1, "%e%b%y", tp);
 	/* %e and %l can start with a space. */
 	cp = buf;
 	if (*cp == ' ')
@@ -829,20 +837,17 @@ lstarted(struct pinfo *pi, VARENT *ve, enum mode mode)
 		 * XXX: The hardcoded "STARTED" string.  Better or
 		 * worse than a "<= 7" or some other arbitary number?
 		 */
-		if (v->width <= (int)strlen("STARTED")) {
-			(void)strftime(buf, sizeof(buf) -1, "%c",
-			    localtime(&startt));
-			strprintorsetwidth(v, buf, mode);
+		if (v->width > (int)sizeof("STARTED") - 1) {
+			return;
 		}
 	} else {
 		if (!k->p_uvalid) {
 			(void)printf("%*s", v->width, "-");
-		} else {
-			(void)strftime(buf, sizeof(buf) -1, "%c",
-			    localtime(&startt));
-			strprintorsetwidth(v, buf, mode);
+			return;
 		}
 	}
+	safe_strftime(buf, sizeof(buf) - 1, "%c", localtime(&startt));
+	strprintorsetwidth(v, buf, mode);
 }
 
 void
