@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.14 2019/11/08 11:06:21 hannken Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.15 2021/04/06 12:48:59 simonb Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -78,7 +78,7 @@ dtrace_invop_add(int (*func)(uintptr_t, struct trapframe *, uintptr_t))
 {
 	dtrace_invop_hdlr_t *hdlr;
 
-	hdlr = kmem_alloc(sizeof (dtrace_invop_hdlr_t), KM_SLEEP);
+	hdlr = kmem_alloc(sizeof(*hdlr), KM_SLEEP);
 	hdlr->dtih_func = func;
 	hdlr->dtih_next = dtrace_invop_hdlr;
 	dtrace_invop_hdlr = hdlr;
@@ -108,7 +108,7 @@ dtrace_invop_remove(int (*func)(uintptr_t, struct trapframe *, uintptr_t))
 		prev->dtih_next = hdlr->dtih_next;
 	}
 
-	kmem_free(hdlr, sizeof (dtrace_invop_hdlr_t));
+	kmem_free(hdlr, sizeof(*hdlr));
 }
 
 /*ARGSUSED*/
