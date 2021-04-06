@@ -7,7 +7,7 @@ Var_Parse: ${VARNAME}::=assigned-value} (eval-defined)
 Evaluating modifier ${VAR.${param}::...} on value "initial-value"
 Modifier part: "assigned-value"
 Global: VAR.${param} = assigned-value
-Result of ${VAR.${param}::=assigned-value} is "" (eval-defined, regular)
+Result of ${VAR.${param}::=assigned-value} is ""
 Var_Parse: ${${VARNAME}} != "assigned-value" (eval-defined)
 Var_Parse: ${VARNAME}} != "assigned-value" (eval-defined)
 Global: .MAKEFLAGS =  -r -k -d v -d

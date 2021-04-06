@@ -21,28 +21,28 @@ Var_Parse: ${VAR:M[2]} (eval-defined)
 Evaluating modifier ${VAR:M...} on value "1 2 3"
 Pattern for ':M' is "[2]"
 ModifyWords: split "1 2 3" into 3 words
-Result of ${VAR:M[2]} is "2" (eval-defined, regular)
+Result of ${VAR:M[2]} is "2"
 Var_Parse: ${VAR:N[2]} (eval-defined)
 Evaluating modifier ${VAR:N...} on value "1 2 3"
 Pattern for ':N' is "[2]"
 ModifyWords: split "1 2 3" into 3 words
-Result of ${VAR:N[2]} is "1 3" (eval-defined, regular)
+Result of ${VAR:N[2]} is "1 3"
 Var_Parse: ${VAR:S,2,two,} (eval-defined)
 Evaluating modifier ${VAR:S...} on value "1 2 3"
 Modifier part: "2"
 Modifier part: "two"
 ModifyWords: split "1 2 3" into 3 words
-Result of ${VAR:S,2,two,} is "1 two 3" (eval-defined, regular)
+Result of ${VAR:S,2,two,} is "1 two 3"
 Var_Parse: ${VAR:Q} (eval-defined)
 Evaluating modifier ${VAR:Q} on value "1 2 3"
-Result of ${VAR:Q} is "1\ 2\ 3" (eval-defined, regular)
+Result of ${VAR:Q} is "1\ 2\ 3"
 Var_Parse: ${VAR:tu:tl:Q} (eval-defined)
 Evaluating modifier ${VAR:t...} on value "1 2 3"
-Result of ${VAR:tu} is "1 2 3" (eval-defined, regular)
+Result of ${VAR:tu} is "1 2 3"
 Evaluating modifier ${VAR:t...} on value "1 2 3"
-Result of ${VAR:tl} is "1 2 3" (eval-defined, regular)
+Result of ${VAR:tl} is "1 2 3"
 Evaluating modifier ${VAR:Q} on value "1 2 3"
-Result of ${VAR:Q} is "1\ 2\ 3" (eval-defined, regular)
+Result of ${VAR:Q} is "1\ 2\ 3"
 Var_Parse: ${:Uvalue:${:UM*e}:Mvalu[e]} (eval-defined)
 Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:Uvalue} is "value" (eval-defined, defined)
