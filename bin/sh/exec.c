@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.53.2.1 2020/08/27 09:15:38 martin Exp $	*/
+/*	$NetBSD: exec.c,v 1.53.2.2 2021/04/06 17:52:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.53.2.1 2020/08/27 09:15:38 martin Exp $");
+__RCSID("$NetBSD: exec.c,v 1.53.2.2 2021/04/06 17:52:03 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -683,6 +683,7 @@ loop:
 	if (act & DO_ERR)
 		outfmt(out2, "%s: %s\n", name, errmsg(e, E_EXEC));
 	entry->cmdtype = CMDUNKNOWN;
+	entry->u.index = idx + 1;
 	return;
 
 builtin_success:
@@ -704,8 +705,10 @@ success:
 		entry->lineno = cmdp->lineno;
 		entry->lno_frel = cmdp->fn_ln1;
 		entry->u = cmdp->param;
-	} else
+	} else {
 		entry->cmdtype = CMDUNKNOWN;
+		entry->u.index = -1;
+	}
 }
 
 
