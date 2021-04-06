@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.267 2021/04/06 13:17:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.268 2021/04/06 21:17:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.267 2021/04/06 13:17:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.268 2021/04/06 21:17:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1947,6 +1947,9 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 
 	if (op == CVT)
 		return;
+
+	if (Sflag && nt == BOOL)
+		return;		/* See C99 6.3.1.2 */
 
 	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
 	    is_uinteger(nt) != is_uinteger(ot)) {
