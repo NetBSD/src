@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.63 2021/03/31 13:52:02 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.64 2021/04/06 18:08:53 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2884,4 +2884,46 @@ sys/arch/sparc/sparc/trap.c			1.199
 	PR 55573: remove kernel message about disabled coprocessor
 	instructions.
 	[christos, ticket #1240]
+
+sys/dev/audio/audiobell.c			1.4
+
+	PR 56059: avoid kernel hang when using /dev/speaker.
+	[isaki, ticket #1241]
+
+bin/sh/exec.c					1.55
+bin/sh/input.c					1.72
+
+	sh(1): PR 55979: fix unitialized memory reference
+	and handling of nul characters in shell scripts.
+	[kre, ticket #1242]
+
+external/public-domain/tz/dist/Makefile         up to 1.1.1.30
+external/public-domain/tz/dist/NEWS             up to 1.1.1.34
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.24
+external/public-domain/tz/dist/africa           up to 1.1.1.25
+external/public-domain/tz/dist/asia             up to 1.1.1.28
+external/public-domain/tz/dist/australasia      up to 1.1.1.21
+external/public-domain/tz/dist/backward         up to 1.1.1.12
+external/public-domain/tz/dist/backzone         up to 1.1.1.20
+external/public-domain/tz/dist/etcetera         up to 1.1.1.5
+external/public-domain/tz/dist/europe           up to 1.1.1.30
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.15
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.18
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.12
+external/public-domain/tz/dist/northamerica     up to 1.1.1.27
+external/public-domain/tz/dist/theory.html      up to 1.1.1.12
+external/public-domain/tz/dist/version          up to 1.1.1.21
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.6
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.19
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.21
+doc/3RDPARTY					apply patch
+
+	Updated tzdata to 2021a.
+	[kre, ticket #1243]
+
+bin/ps/print.c					1.133
+
+	Fix the column width calculation for the lstart column if an empty
+	column header is specified.
+	[simonb, ticket #1244]
 
