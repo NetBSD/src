@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.23 2021/04/02 22:05:43 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.24 2021/04/06 22:21:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.23 2021/04/02 22:05:43 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.24 2021/04/06 22:21:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -487,7 +487,7 @@ keyw(sym_t *sym)
 
 /*
  * Convert a string representing an integer into internal representation.
- * The value is returned in yylval. icon() (and yylex()) returns T_CON.
+ * Return T_CON, storing the numeric value in yylval, for yylex.
  */
 int
 lex_integer_constant(const char *yytext, size_t yyleng, int base)
