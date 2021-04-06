@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.49 2021/02/15 15:55:50 joerg Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.50 2021/04/06 00:35:58 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -876,8 +876,7 @@ check_function_table(char *function, const char *table[], int nfunctions)
 	int i;
 
 	for (i = 0; i < nfunctions; i++) {
-		if ((strlen(function) == strlen(table[i])) &&
-		    (strcmp(function, table[i]) == 0))
+		if (strcmp(function, table[i]) == 0)
 			return 1;
 	}
 
