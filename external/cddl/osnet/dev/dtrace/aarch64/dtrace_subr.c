@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.4 2020/11/12 02:15:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.5 2021/04/06 12:48:36 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ dtrace_invop_add(int (*func)(uintptr_t, struct trapframe *, uintptr_t))
 {
 	dtrace_invop_hdlr_t *hdlr;
 
-	hdlr = kmem_alloc(sizeof (dtrace_invop_hdlr_t), KM_SLEEP);
+	hdlr = kmem_alloc(sizeof(*hdlr), KM_SLEEP);
 	hdlr->dtih_func = func;
 	hdlr->dtih_next = dtrace_invop_hdlr;
 	dtrace_invop_hdlr = hdlr;
@@ -120,7 +120,7 @@ dtrace_invop_remove(int (*func)(uintptr_t, struct trapframe *, uintptr_t))
 		prev->dtih_next = hdlr->dtih_next;
 	}
 
-	kmem_free(hdlr, 0);
+	kmem_free(hdlr, sizeof(*hdlr));
 }
 
 /*ARGSUSED*/
