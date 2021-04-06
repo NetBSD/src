@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.81 2021/03/27 13:41:50 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.82 2021/04/06 18:10:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1834,4 +1834,9 @@ testsuite/t18.out		1.1 (patch)
 	Update bozohttpd to 20210227.
 	[mrg, ticket #1668]
 
+bin/ps/print.c					1.133
+
+	Fix the column width calculation for the lstart column if an empty
+	column header is specified.
+	[simonb, ticket #1669]
 
