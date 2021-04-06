@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.7 2018/05/28 21:05:00 chs Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.8 2021/04/06 07:57:03 simonb Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -81,6 +81,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 
 	void *ctfbuf = NULL;
 	uint8_t *ctfaddr;
+	uint16_t ctfmagic;
 	size_t ctfsize;
 
 	/*
@@ -137,8 +138,9 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 		goto out;
 	}
 
-	/* Check the CTF magic number. (XXX check for big endian!) */
-	if (ctfaddr[0] != 0xf1 || ctfaddr[1] != 0xcf) {
+	/* Check the CTF magic number. */
+	memcpy(&ctfmagic, ctfaddr, sizeof ctfmagic);
+	if (ctfmagic != CTF_MAGIC) {
 	    	error = EINVAL;
 		goto out;
 	}
