@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2021/04/06 19:44:24 jkoshy Exp $
+# $NetBSD: Makefile,v 1.3 2021/04/07 20:32:54 jkoshy Exp $
 SUBDIR=		common
+SUBDIR+=	.WAIT		# 'common' should be processed first.
 SUBDIR+=	lib
 
 .include <bsd.subdir.mk>
