@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_struct.h,v 1.1.1.3 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: rpc_struct.h,v 1.1.1.4 2021/04/07 02:43:14 christos Exp $	*/
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -38,6 +38,16 @@ extern "C" {
   forward compatibility: be careful!
 
  */
+
+/* Fix so that people don't have to run with <sys/queue.h> */
+#ifndef TAILQ_ENTRY
+#define EVENT_DEFINED_TQENTRY_
+#define TAILQ_ENTRY(type)						\
+struct {								\
+	struct type *tqe_next;	/* next element */			\
+	struct type **tqe_prev;	/* address of previous next element */	\
+}
+#endif /* !TAILQ_ENTRY */
 
 /**
  * provides information about the completed RPC request.
@@ -93,6 +103,10 @@ struct evrpc {
 	/* reference for further configuration */
 	struct evrpc_base *base;
 };
+
+#ifdef EVENT_DEFINED_TQENTRY_
+#undef TAILQ_ENTRY
+#endif
 
 #ifdef __cplusplus
 }

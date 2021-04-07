@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil_time.c,v 1.1.1.1 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: evutil_time.c,v 1.1.1.2 2021/04/07 02:43:13 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -27,7 +27,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evutil_time.c,v 1.1.1.1 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: evutil_time.c,v 1.1.1.2 2021/04/07 02:43:13 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: evutil_time.c,v 1.1.1.1 2017/01/31 21:14:52 christos Exp $");
 #ifndef EVENT__HAVE_GETTIMEOFDAY
 #include <sys/timeb.h>
 #endif
-#if !defined(EVENT__HAVE_NANOSLEEP) && !defined(EVENT_HAVE_USLEEP) && \
+#if !defined(EVENT__HAVE_NANOSLEEP) && !defined(EVENT__HAVE_USLEEP) && \
 	!defined(_WIN32)
 #include <sys/select.h>
 #endif
@@ -68,6 +68,9 @@ __RCSID("$NetBSD: evutil_time.c,v 1.1.1.1 2017/01/31 21:14:52 christos Exp $");
 
 #ifndef EVENT__HAVE_GETTIMEOFDAY
 /* No gettimeofday; this must be windows. */
+
+typedef void (WINAPI *GetSystemTimePreciseAsFileTime_fn_t) (LPFILETIME);
+
 int
 evutil_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
@@ -93,7 +96,22 @@ evutil_gettimeofday(struct timeval *tv, struct timezone *tz)
 	if (tv == NULL)
 		return -1;
 
-	GetSystemTimeAsFileTime(&ft.ft_ft);
+	static GetSystemTimePreciseAsFileTime_fn_t GetSystemTimePreciseAsFileTime_fn = NULL;
+	static int check_precise = 1;
+
+	if (EVUTIL_UNLIKELY(check_precise)) {
+		HMODULE h = evutil_load_windows_system_library_(TEXT("kernel32.dll"));
+		if (h != NULL)
+			GetSystemTimePreciseAsFileTime_fn =
+				(GetSystemTimePreciseAsFileTime_fn_t)
+					GetProcAddress(h, "GetSystemTimePreciseAsFileTime");
+		check_precise = 0;
+	}
+
+	if (GetSystemTimePreciseAsFileTime_fn != NULL)
+		GetSystemTimePreciseAsFileTime_fn(&ft.ft_ft);
+	else
+		GetSystemTimeAsFileTime(&ft.ft_ft);
 
 	if (EVUTIL_UNLIKELY(ft.ft_64 < EPOCH_BIAS)) {
 		/* Time before the unix epoch. */
@@ -129,8 +147,22 @@ evutil_usleep_(const struct timeval *tv)
 		return;
 #if defined(_WIN32)
 	{
-		long msec = evutil_tv_to_msec_(tv);
-		Sleep((DWORD)msec);
+		__int64 usec;
+		LARGE_INTEGER li;
+		HANDLE timer;
+
+		usec = tv->tv_sec * 1000000LL + tv->tv_usec;
+		if (!usec)
+			return;
+
+		li.QuadPart = -10LL * usec;
+		timer = CreateWaitableTimer(NULL, TRUE, NULL);
+		if (!timer)
+			return;
+
+		SetWaitableTimer(timer, &li, 0, NULL, NULL, 0);
+		WaitForSingleObject(timer, INFINITE);
+		CloseHandle(timer);
 	}
 #elif defined(EVENT__HAVE_NANOSLEEP)
 	{
@@ -144,7 +176,10 @@ evutil_usleep_(const struct timeval *tv)
 	sleep(tv->tv_sec);
 	usleep(tv->tv_usec);
 #else
-	select(0, NULL, NULL, NULL, tv);
+	{
+		struct timeval tv2 = *tv;
+		select(0, NULL, NULL, NULL, &tv2);
+	}
 #endif
 }
 
@@ -158,18 +193,28 @@ evutil_date_rfc1123(char *date, const size_t datelen, const struct tm *tm)
 
 	time_t t = time(NULL);
 
-#ifndef _WIN32
+#if defined(EVENT__HAVE__GMTIME64_S) || !defined(_WIN32)
 	struct tm sys;
 #endif
 
 	/* If `tm` is null, set system's current time. */
 	if (tm == NULL) {
-#ifdef _WIN32
-		/** TODO: detect _gmtime64()/_gmtime64_s() */
-		tm = gmtime(&t);
-#else
+#if !defined(_WIN32)
 		gmtime_r(&t, &sys);
 		tm = &sys;
+		/** detect _gmtime64()/_gmtime64_s() */
+#elif defined(EVENT__HAVE__GMTIME64_S)
+		errno_t err;
+		err = _gmtime64_s(&sys, &t);
+		if (err) {
+			event_errx(1, "Invalid argument to _gmtime64_s");
+		} else {
+			tm = &sys;
+		}
+#elif defined(EVENT__HAVE__GMTIME64)
+		tm = _gmtime64(&t);
+#else
+		tm = gmtime(&t);
 #endif
 	}
 
