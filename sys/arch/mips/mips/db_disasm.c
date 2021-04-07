@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.40 2021/04/05 07:28:19 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.41 2021/04/07 14:27:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.40 2021/04/05 07:28:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.41 2021/04/07 14:27:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -914,7 +914,7 @@ print_addr(db_addr_t loc)
 		if (diff == 0)
 			db_printf("%s", symname);
 		else
-			db_printf("<%s+%"DDB_EXPR_FMT"x>", symname, diff);
+			db_printf("<%s+%#"DDB_EXPR_FMT"x>", symname, diff);
 		db_printf("\t[addr:%#"PRIxVADDR"]", loc);
 	} else {
 		db_printf("%#"PRIxVADDR, loc);
