@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.260 2021/03/29 03:22:17 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.261 2021/04/07 02:59:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.260 2021/03/29 03:22:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.261 2021/04/07 02:59:01 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -82,6 +82,16 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.260 2021/03/29 03:22:17 simonb Exp $");
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+
+/* Not used for now, but needed for dtrace/fbt modules */
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+dtrace_trap_func_t		dtrace_trap_func = NULL;
+
+int				(* dtrace_invop_jump_addr)(struct trapframe *);
+#endif /* KDTRACE_HOOKS */
 
 const char * const trap_names[] = {
 	"external interrupt",
@@ -186,6 +196,30 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		type |= T_USER;
 		LWP_CACHE_CREDS(l, p);
 	}
+
+#ifdef KDTRACE_HOOKS
+	/*
+	 * A trap can occur while DTrace executes a probe. Before
+	 * executing the probe, DTrace blocks re-scheduling and sets
+	 * a flag in its per-cpu flags to indicate that it doesn't
+	 * want to fault. On returning from the probe, the no-fault
+	 * flag is cleared and finally re-scheduling is enabled.
+	 *
+	 * If the DTrace kernel module has registered a trap handler,
+	 * call it and if it returns non-zero, assume that it has
+	 * handled the trap and modified the trap frame so that this
+	 * function can return normally.
+	 */
+	/*
+	 * XXXDTRACE: add pid probe handler here (if ever)
+	 */
+	if (!USERMODE(status)) {
+		if ((dtrace_trap_func != NULL) &&
+		    ((*dtrace_trap_func)(tf, type) != 0)) {
+			return;
+		}
+	}
+#endif /* KDTRACE_HOOKS */
 
 	switch (type) {
 	default:
@@ -518,8 +552,15 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		}
 		break; /* SIGNAL */
 
-	case T_WATCH:
 	case T_BREAK:
+#ifdef KDTRACE_HOOKS
+		if ((dtrace_invop_jump_addr != NULL) &&
+		    (dtrace_invop_jump_addr(tf) == 0)) {
+			return;
+		}
+#endif /* KDTRACE_HOOKS */
+		/* FALLTHROUGH */
+	case T_WATCH:
 #if defined(DDB)
 		kdb_trap(type, &tf->tf_registers);
 		return;	/* KERN */
@@ -804,16 +845,6 @@ mips_singlestep(struct lwp *l)
 #endif
 	return 0;
 }
-
-#ifdef KDTRACE_HOOKS
-#include <sys/dtrace_bsd.h>
-
-/* Not used for now, but needed for dtrace/fbt modules */
-dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
-dtrace_trap_func_t		dtrace_trap_func = NULL;
-
-int				(* dtrace_invop_jump_addr)(struct trapframe *);
-#endif /* KDTRACE_HOOKS */
 
 #ifdef TRAP_SIGDEBUG
 static void
