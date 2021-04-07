@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: evthread.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $	*/
 /*
  * Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
  *
@@ -27,7 +27,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evthread.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: evthread.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $");
 #include "evconfig-private.h"
 
 #ifndef EVENT__DISABLE_THREAD_SUPPORT
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: evthread.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $");
 #endif
 
 #ifndef EVENT__DISABLE_DEBUG_MODE
-extern int event_debug_created_threadable_ctx_;                    
+extern int event_debug_created_threadable_ctx_;
 extern int event_debug_mode_on_;
 #endif
 

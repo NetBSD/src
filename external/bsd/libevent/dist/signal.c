@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: signal.c,v 1.1.1.4 2021/04/07 02:43:13 christos Exp $	*/
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: signal.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: signal.c,v 1.1.1.4 2021/04/07 02:43:13 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -88,7 +88,9 @@ __RCSID("$NetBSD: signal.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
 #ifndef _WIN32
 /* Windows wants us to call our signal handlers as __cdecl.  Nobody else
  * expects you to do anything crazy like this. */
+#ifndef __cdecl
 #define __cdecl
+#endif
 #endif
 
 static int evsig_add(struct event_base *, evutil_socket_t, short, short, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_pair.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: bufferevent_pair.c,v 1.1.1.4 2021/04/07 02:43:13 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
  *
@@ -26,7 +26,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bufferevent_pair.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: bufferevent_pair.c,v 1.1.1.4 2021/04/07 02:43:13 christos Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -59,10 +59,10 @@ static inline struct bufferevent_pair *
 upcast(struct bufferevent *bev)
 {
 	struct bufferevent_pair *bev_p;
-	if (bev->be_ops != &bufferevent_ops_pair)
+	if (!BEV_IS_PAIR(bev))
 		return NULL;
 	bev_p = EVUTIL_UPCAST(bev, struct bufferevent_pair, bev.bev);
-	EVUTIL_ASSERT(bev_p->bev.bev.be_ops == &bufferevent_ops_pair);
+	EVUTIL_ASSERT(BEV_IS_PAIR(&bev_p->bev.bev));
 	return bev_p;
 }
 

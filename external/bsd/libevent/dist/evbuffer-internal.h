@@ -1,4 +1,4 @@
-/*	$NetBSD: evbuffer-internal.h,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: evbuffer-internal.h,v 1.1.1.4 2021/04/07 02:43:13 christos Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -93,7 +93,7 @@ struct evbuffer {
 	 * If the buffer has no chains, it is NULL.
 	 *
 	 * The last_with_datap pointer points at _whatever 'next' pointer_
-	 * points at the last_with_datap chain.  If the last_with_data chain
+	 * pointing at the last_with_data chain. If the last_with_data chain
 	 * is the first chain, or it is NULL, then the last_with_datap pointer
 	 * is &buf->first.
 	 */

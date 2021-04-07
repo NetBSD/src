@@ -1,4 +1,4 @@
-/*	$NetBSD: test-eof.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: test-eof.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -28,7 +28,7 @@
 #include "../util-internal.h"
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test-eof.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $");
+__RCSID("$NetBSD: test-eof.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $");
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -105,10 +105,10 @@ main(int argc, char **argv)
 		return (1);
 	shutdown(pair[0], EVUTIL_SHUT_WR);
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	event_init();
 
-	/* Initalize one event */
+	/* Initialize one event */
 	event_set(&ev, pair[1], EV_READ | EV_TIMEOUT, read_cb, &ev);
 
 	event_add(&ev, &timeout);

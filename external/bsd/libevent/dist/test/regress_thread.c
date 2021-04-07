@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_thread.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: regress_thread.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -31,7 +31,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_thread.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $");
+__RCSID("$NetBSD: regress_thread.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -567,8 +567,8 @@ end:
 	;
 }
 
-#define TEST(name)							\
-	{ #name, thread_##name, TT_FORK|TT_NEED_THREADS|TT_NEED_BASE,	\
+#define TEST(name, f)							\
+	{ #name, thread_##name, TT_FORK|TT_NEED_THREADS|TT_NEED_BASE|(f),	\
 	  &basic_setup, NULL }
 
 struct testcase_t thread_testcases[] = {
@@ -578,7 +578,7 @@ struct testcase_t thread_testcases[] = {
 	{ "forking", thread_basic, TT_FORK|TT_NEED_THREADS|TT_NEED_BASE,
 	  &basic_setup, (char*)"forking" },
 #endif
-	TEST(conditions_simple),
+	TEST(conditions_simple, TT_RETRIABLE),
 	{ "deferred_cb_skew", thread_deferred_cb_skew,
 	  TT_FORK|TT_NEED_THREADS|TT_OFF_BY_DEFAULT,
 	  &basic_setup, NULL },
@@ -586,7 +586,7 @@ struct testcase_t thread_testcases[] = {
 	/****** XXX TODO FIXME windows seems to be having some timing trouble,
 	 * looking into it now. / ellzey
 	 ******/
-	TEST(no_events),
+	TEST(no_events, TT_RETRIABLE),
 #endif
 	END_OF_TESTCASES
 };
