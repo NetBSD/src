@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_httpclient.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: bench_httpclient.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
  * Copyright 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -114,13 +114,13 @@ errorcb(struct bufferevent *b, short what, void *arg)
 static void
 frob_socket(evutil_socket_t sock)
 {
-#ifdef HAVE_SO_LINGER
+#ifdef EVENT__HAVE_STRUCT_LINGER
 	struct linger l;
 #endif
 	int one = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&one, sizeof(one))<0)
 		perror("setsockopt(SO_REUSEADDR)");
-#ifdef HAVE_SO_LINGER
+#ifdef EVENT__HAVE_STRUCT_LINGER
 	l.l_onoff = 1;
 	l.l_linger = 0;
 	if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void*)&l, sizeof(l))<0)

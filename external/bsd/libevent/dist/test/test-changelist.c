@@ -1,4 +1,4 @@
-/*	$NetBSD: test-changelist.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: test-changelist.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
  *
@@ -27,7 +27,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test-changelist.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $");
+__RCSID("$NetBSD: test-changelist.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $");
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -185,11 +185,11 @@ main(int argc, char **argv)
 	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
 		return (1);
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	if (!(base = event_base_new()))
 		return (1);
 
-	/* Initalize a timeout to terminate the test */
+	/* Initialize a timeout to terminate the test */
 	timeout = evtimer_new(base,timeout_cb,&timeout);
 	/* and watch for writability on one end of the pipe */
 	ev = event_new(base,pair[1],EV_WRITE | EV_PERSIST, write_cb, &ev);

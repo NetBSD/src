@@ -1,4 +1,4 @@
-/*	$NetBSD: test-init.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: test-init.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +27,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test-init.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $");
+__RCSID("$NetBSD: test-init.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,7 +60,7 @@ main(int argc, char **argv)
 	(void) WSAStartup(wVersionRequested, &wsaData);
 #endif
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	event_init();
 
 	return (0);

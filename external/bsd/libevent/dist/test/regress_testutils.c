@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_testutils.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: regress_testutils.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
  *
@@ -34,7 +34,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_testutils.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $");
+__RCSID("$NetBSD: regress_testutils.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -113,7 +113,7 @@ regress_get_dnsserver(struct event_base *base,
 	memset(&my_addr, 0, sizeof(my_addr));
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(*portnum);
-	my_addr.sin_addr.s_addr = htonl(0x7f000001UL);
+	my_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	if (bind(sock, (struct sockaddr*)&my_addr, sizeof(my_addr)) < 0) {
 		evutil_closesocket(sock);
 		tt_abort_perror("bind");

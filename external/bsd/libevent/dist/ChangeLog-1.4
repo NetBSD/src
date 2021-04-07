@@ -1,4 +1,4 @@
-.\"	$NetBSD: ChangeLog-1.4,v 1.1.1.1 2017/01/31 21:14:52 christos Exp $
+.\"	$NetBSD: ChangeLog-1.4,v 1.1.1.2 2021/04/07 02:43:13 christos Exp $
 .\"
 Changes in 1.4.14b-stable
  o Set the VERSION_INFO correctly for 1.4.14
@@ -177,7 +177,7 @@ Changes in 1.4.1-beta:
  o support for 32-bit tag numbers in rpc structures; this is wire compatible, but changes the API slightly.
  o prefix {encode,decode}_tag functions with evtag to avoid collisions
  o Correctly handle DNS replies with no answers set (Fixes bug 1846282)
- o The configure script now takes an --enable-gcc-warnigns option that turns on many optional gcc warnings.  (Nick has been building with these for a while, but they might be useful to other developers.)
+ o The configure script now takes an --enable-gcc-warnings option that turns on many optional gcc warnings.  (Nick has been building with these for a while, but they might be useful to other developers.)
  o When building with GCC, use the "format" attribute to verify type correctness of calls to printf-like functions.
  o removed linger from http server socket; reported by Ilya Martynov
  o allow \r or \n individually to separate HTTP headers instead of the standard "\r\n"; from Charles Kerr.

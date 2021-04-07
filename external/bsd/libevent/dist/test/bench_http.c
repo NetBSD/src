@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_http.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: bench_http.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
  * Copyright 2008-2012 Niels Provos and Nick Mathewson
  *
@@ -101,6 +101,9 @@ main(int argc, char **argv)
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		return (1);
 #endif
+
+	setbuf(stdout, NULL);
+	setbuf(stderr, NULL);
 
 	for (i = 1; i < argc; ++i) {
 		if (*argv[i] != '-')

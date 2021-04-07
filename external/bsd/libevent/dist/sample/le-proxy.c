@@ -1,4 +1,4 @@
-/*	$NetBSD: le-proxy.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: le-proxy.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
   This example code shows how to write an (optionally encrypting) SSL proxy
   with Libevent's bufferevent layer.
@@ -31,6 +31,7 @@
 #include <event2/listener.h>
 #include <event2/util.h>
 
+#include "util-internal.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -195,6 +196,7 @@ accept_cb(struct evconnlistener *listener, evutil_socket_t fd,
 			perror("Bufferevent_openssl_new");
 			bufferevent_free(b_out);
 			bufferevent_free(b_in);
+			return;
 		}
 		b_out = b_ssl;
 	}
@@ -214,6 +216,13 @@ main(int argc, char **argv)
 
 	int use_ssl = 0;
 	struct evconnlistener *listener;
+
+#ifdef _WIN32
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	wVersionRequested = MAKEWORD(2, 2);
+	(void) WSAStartup(wVersionRequested, &wsaData);
+#endif
 
 	if (argc < 3)
 		syntax();
@@ -260,7 +269,8 @@ main(int argc, char **argv)
 
 	if (use_ssl) {
 		int r;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+	(defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x20700000L)
 		SSL_library_init();
 		ERR_load_crypto_strings();
 		SSL_load_error_strings();
@@ -287,6 +297,10 @@ main(int argc, char **argv)
 
 	evconnlistener_free(listener);
 	event_base_free(base);
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
 
 	return 0;
 }

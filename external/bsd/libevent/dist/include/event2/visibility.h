@@ -1,4 +1,4 @@
-/*	$NetBSD: visibility.h,v 1.1.1.1 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: visibility.h,v 1.1.1.2 2021/04/07 02:43:14 christos Exp $	*/
 /* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -30,22 +30,39 @@
 
 #include <event2/event-config.h>
 
-#if defined(event_EXPORTS) || defined(event_extra_EXPORTS) || defined(event_core_EXPORTS)
+#if defined(event_shared_EXPORTS) || \
+    defined(event_extra_shared_EXPORTS) || \
+    defined(event_core_shared_EXPORTS) || \
+    defined(event_pthreads_shared_EXPORTS) || \
+    defined(event_openssl_shared_EXPORTS)
+
 # if defined (__SUNPRO_C) && (__SUNPRO_C >= 0x550)
 #  define EVENT2_EXPORT_SYMBOL __global
 # elif defined __GNUC__
 #  define EVENT2_EXPORT_SYMBOL __attribute__ ((visibility("default")))
 # elif defined(_MSC_VER)
-#  define EVENT2_EXPORT_SYMBOL extern __declspec(dllexport)
+#  define EVENT2_EXPORT_SYMBOL __declspec(dllexport)
 # else
 #  define EVENT2_EXPORT_SYMBOL /* unknown compiler */
 # endif
-#else
-# if defined(EVENT__NEED_DLLIMPORT) && defined(_MSC_VER) && !defined(EVENT_BUILDING_REGRESS_TEST)
-#  define EVENT2_EXPORT_SYMBOL extern __declspec(dllimport)
-# else
-#  define EVENT2_EXPORT_SYMBOL
+
+#else /* event_*_EXPORTS */
+
+# define EVENT2_EXPORT_SYMBOL
+
+#endif /* event_*_EXPORTS */
+
+/** We need to dllimport event_debug_logging_mask_ into event_extra */
+#if defined(_MSC_VER)
+# if defined(event_core_shared_EXPORTS) /** from core export */
+#  define EVENT2_CORE_EXPORT_SYMBOL __declspec(dllexport)
+# elif defined(event_extra_shared_EXPORTS) || /** from extra import */ \
+       defined(EVENT_VISIBILITY_WANT_DLLIMPORT)
+#  define EVENT2_CORE_EXPORT_SYMBOL __declspec(dllimport)
 # endif
+#endif /* _MSC_VER */
+#if !defined(EVENT2_CORE_EXPORT_SYMBOL)
+# define EVENT2_CORE_EXPORT_SYMBOL EVENT2_EXPORT_SYMBOL
 #endif
 
 #endif /* EVENT2_VISIBILITY_H_INCLUDED_ */

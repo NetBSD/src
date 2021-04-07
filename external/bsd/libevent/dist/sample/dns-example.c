@@ -1,4 +1,4 @@
-/*	$NetBSD: dns-example.c,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: dns-example.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
 /*
   This example code shows how to use the high-level, low-level, and
   server-level interfaces of evdns.
@@ -79,6 +79,8 @@ gai_callback(int err, struct evutil_addrinfo *ai, void *arg)
 {
 	const char *name = arg;
 	int i;
+	struct evutil_addrinfo *first_ai = ai;
+
 	if (err) {
 		printf("%s: %s\n", name, evutil_gai_strerror(err));
 	}
@@ -100,6 +102,9 @@ gai_callback(int err, struct evutil_addrinfo *ai, void *arg)
 			printf("[%d] %s: %s\n",i,name,buf);
 		}
 	}
+
+	if (first_ai)
+		evutil_freeaddrinfo(first_ai);
 }
 
 static void
@@ -155,19 +160,19 @@ main(int c, char **v) {
 		const char *ns;
 	};
 	struct options o;
-	char opt;
+	int opt;
 	struct event_base *event_base = NULL;
 	struct evdns_base *evdns_base = NULL;
 
 	memset(&o, 0, sizeof(o));
-	
+
 	if (c < 2) {
 		fprintf(stderr, "syntax: %s [-x] [-v] [-c resolv.conf] [-s ns] hostname\n", v[0]);
 		fprintf(stderr, "syntax: %s [-T]\n", v[0]);
 		return 1;
 	}
 
-	while ((opt = getopt(c, v, "xvc:Ts:")) != -1) {
+	while ((opt = getopt(c, v, "xvc:Ts:g")) != -1) {
 		switch (opt) {
 			case 'x': o.reverse = 1; break;
 			case 'v': ++verbose; break;
@@ -221,8 +226,8 @@ main(int c, char **v) {
 			res = evdns_base_resolv_conf_parse(evdns_base,
 			    DNS_OPTION_NAMESERVERS, o.resolv_conf);
 
-		if (res < 0) {
-			fprintf(stderr, "Couldn't configure nameservers");
+		if (res) {
+			fprintf(stderr, "Couldn't configure nameservers\n");
 			return 1;
 		}
 	}
@@ -253,6 +258,8 @@ main(int c, char **v) {
 	}
 	fflush(stdout);
 	event_base_dispatch(event_base);
+	evdns_base_free(evdns_base, 1);
+	event_base_free(event_base);
 	return 0;
 }
 

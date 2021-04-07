@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer_compat.h,v 1.1.1.3 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: buffer_compat.h,v 1.1.1.4 2021/04/07 02:43:14 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -91,9 +91,10 @@ typedef void (*evbuffer_cb)(struct evbuffer *buffer, size_t old_len, size_t new_
   @param cb the callback function to invoke when the evbuffer is modified,
 	 or NULL to remove all callbacks.
   @param cbarg an argument to be provided to the callback function
+  @return 0 if successful, or -1 on error
  */
 EVENT2_EXPORT_SYMBOL
-void evbuffer_setcb(struct evbuffer *buffer, evbuffer_cb cb, void *cbarg);
+int evbuffer_setcb(struct evbuffer *buffer, evbuffer_cb cb, void *cbarg);
 
 
 /**

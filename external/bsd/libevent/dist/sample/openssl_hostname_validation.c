@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_hostname_validation.c,v 1.1.1.1 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: openssl_hostname_validation.c,v 1.1.1.2 2021/04/07 02:43:15 christos Exp $	*/
 /* Obtained from: https://github.com/iSECPartners/ssl-conservatory */
 
 /*
@@ -49,7 +49,8 @@ SOFTWARE.
 
 #define HOSTNAME_MAX_SIZE 255
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+	(defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x20700000L)
 #define ASN1_STRING_get0_data ASN1_STRING_data
 #endif
 
