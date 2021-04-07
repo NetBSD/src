@@ -1,4 +1,5 @@
-/*	$NetBSD: regress.h,v 1.6 2017/01/31 23:17:40 christos Exp $	*/
+/*	$NetBSD: regress.h,v 1.7 2021/04/07 03:36:48 christos Exp $	*/
+
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -44,6 +45,7 @@ extern struct testcase_t bufferevent_iocp_testcases[];
 extern struct testcase_t util_testcases[];
 extern struct testcase_t signal_testcases[];
 extern struct testcase_t http_testcases[];
+extern struct testcase_t http_iocp_testcases[];
 extern struct testcase_t dns_testcases[];
 extern struct testcase_t rpc_testcases[];
 extern struct testcase_t edgetriggered_testcases[];
@@ -95,6 +97,7 @@ extern int libevent_tests_running_in_debug_mode;
 #define TT_NO_LOGS		(TT_FIRST_USER_FLAG<<5)
 #define TT_ENABLE_IOCP_FLAG	(TT_FIRST_USER_FLAG<<6)
 #define TT_ENABLE_IOCP		(TT_ENABLE_IOCP_FLAG|TT_NEED_THREADS)
+#define TT_ENABLE_DEBUG_MODE	(TT_ENABLE_IOCP_FLAG<<7)
 
 /* All the flags that a legacy test needs. */
 #define TT_ISOLATED TT_FORK|TT_NEED_SOCKETPAIR|TT_NEED_BASE
@@ -133,10 +136,13 @@ pid_t regress_fork(void);
 #ifdef EVENT__HAVE_OPENSSL
 #include <openssl/ssl.h>
 EVP_PKEY *ssl_getkey(void);
-X509 *ssl_getcert(void);
+X509 *ssl_getcert(EVP_PKEY *key);
 SSL_CTX *get_ssl_ctx(void);
 void init_ssl(void);
 #endif
+
+void * basic_test_setup(const struct testcase_t *testcase);
+int    basic_test_cleanup(const struct testcase_t *testcase, void *ptr);
 
 #ifdef __cplusplus
 }

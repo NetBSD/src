@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: libevent2netbsd,v 1.2 2015/01/29 07:26:02 spz Exp $
+# $NetBSD: libevent2netbsd,v 1.3 2021/04/07 03:36:48 christos Exp $
 
 # Extract the new tarball and rename the libevent-X.Y.Z directory
 # to dist.  Run this script and check for additional files and
@@ -88,6 +88,7 @@ for f in $(grep -RL '\$NetBSD.*\$' $d include | grep -v CVS); do
 	*.c)
 		sed -e '1i\
 /*	\$NetBSD\$	*/
+
 ' -e '/#include "event2\/event-config.h"/ {
     a\
 #include <sys/cdefs.h>\
