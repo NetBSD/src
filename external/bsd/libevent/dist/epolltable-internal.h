@@ -1,4 +1,4 @@
-/*	$NetBSD: epolltable-internal.h,v 1.1.1.1 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: epolltable-internal.h,v 1.1.1.2 2021/04/07 02:43:12 christos Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -35,7 +35,7 @@
   Note also that this table is a little sparse, since ADD+DEL is
   nonsensical ("xxx" in the list below.)
 
-  Note also also that we are shifting old_events by only 5 bits, since
+  Note also that we are shifting old_events by only 5 bits, since
   EV_READ is 2 and EV_WRITE is 4.
 
   The table was auto-generated with a python script, according to this

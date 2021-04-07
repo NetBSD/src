@@ -1,4 +1,4 @@
-/*	$NetBSD: listener.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: listener.c,v 1.1.1.4 2021/04/07 02:43:13 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
  *
@@ -27,7 +27,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: listener.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: listener.c,v 1.1.1.4 2021/04/07 02:43:13 christos Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: listener.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
 #define _WIN32_WINNT 0x0403
 #endif
 #include <winsock2.h>
+#include <winerror.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
 #endif
@@ -248,6 +249,11 @@ evconnlistener_new_bind(struct event_base *base, evconnlistener_cb cb,
 			goto err;
 	}
 
+	if (flags & LEV_OPT_BIND_IPV6ONLY) {
+		if (evutil_make_listen_socket_ipv6only(fd) < 0)
+			goto err;
+	}
+
 	if (sa) {
 		if (bind(fd, sa, socklen)<0)
 			goto err;
@@ -424,11 +430,14 @@ listener_read_cb(evutil_socket_t fd, short what, void *p)
 		if (lev->refcnt == 1) {
 			int freed = listener_decref_and_unlock(lev);
 			EVUTIL_ASSERT(freed);
-
-			evutil_closesocket(new_fd);
 			return;
 		}
 		--lev->refcnt;
+		if (!lev->enabled) {
+			/* the callback could have disabled the listener */
+			UNLOCK(lev);
+			return;
+		}
 	}
 	err = evutil_socket_geterror(fd);
 	if (EVUTIL_ERR_ACCEPT_RETRIABLE(err)) {
@@ -507,7 +516,7 @@ new_accepting_socket(struct evconnlistener_iocp *lev, int family)
 		return NULL;
 
 	event_overlapped_init_(&res->overlapped, accepted_socket_cb);
-	res->s = INVALID_SOCKET;
+	res->s = EVUTIL_INVALID_SOCKET;
 	res->lev = lev;
 	res->buflen = buflen;
 	res->family = family;
@@ -525,7 +534,7 @@ static void
 free_and_unlock_accepting_socket(struct accepting_socket *as)
 {
 	/* requires lock. */
-	if (as->s != INVALID_SOCKET)
+	if (as->s != EVUTIL_INVALID_SOCKET)
 		closesocket(as->s);
 
 	LeaveCriticalSection(&as->lock);
@@ -545,7 +554,7 @@ start_accepting(struct accepting_socket *as)
 	if (!as->lev->base.enabled)
 		return 0;
 
-	if (s == INVALID_SOCKET) {
+	if (s == EVUTIL_INVALID_SOCKET) {
 		error = WSAGetLastError();
 		goto report_err;
 	}
@@ -592,7 +601,7 @@ stop_accepting(struct accepting_socket *as)
 {
 	/* requires lock. */
 	SOCKET s = as->s;
-	as->s = INVALID_SOCKET;
+	as->s = EVUTIL_INVALID_SOCKET;
 	closesocket(s);
 }
 
@@ -634,7 +643,7 @@ accepted_socket_invoke_user_cb(struct event_callback *dcb, void *arg)
 			&socklen_remote);
 		sock = as->s;
 		cb = lev->cb;
-		as->s = INVALID_SOCKET;
+		as->s = EVUTIL_INVALID_SOCKET;
 
 		/* We need to call this so getsockname, getpeername, and
 		 * shutdown work correctly on the accepted socket. */
@@ -682,7 +691,7 @@ accepted_socket_cb(struct event_overlapped *o, ev_uintptr_t key, ev_ssize_t n, i
 		free_and_unlock_accepting_socket(as);
 		listener_decref_and_unlock(lev);
 		return;
-	} else if (as->s == INVALID_SOCKET) {
+	} else if (as->s == EVUTIL_INVALID_SOCKET) {
 		/* This is okay; we were disabled by iocp_listener_disable. */
 		LeaveCriticalSection(&as->lock);
 	} else {
@@ -720,7 +729,7 @@ iocp_listener_enable(struct evconnlistener *lev)
 		if (!as)
 			continue;
 		EnterCriticalSection(&as->lock);
-		if (!as->free_on_cb && as->s == INVALID_SOCKET)
+		if (!as->free_on_cb && as->s == EVUTIL_INVALID_SOCKET)
 			start_accepting(as);
 		LeaveCriticalSection(&as->lock);
 	}
@@ -742,7 +751,7 @@ iocp_listener_disable_impl(struct evconnlistener *lev, int shutdown)
 		if (!as)
 			continue;
 		EnterCriticalSection(&as->lock);
-		if (!as->free_on_cb && as->s != INVALID_SOCKET) {
+		if (!as->free_on_cb && as->s != EVUTIL_INVALID_SOCKET) {
 			if (shutdown)
 				as->free_on_cb = 1;
 			stop_accepting(as);

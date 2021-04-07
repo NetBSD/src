@@ -1,4 +1,4 @@
-/*	$NetBSD: win32select.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: win32select.c,v 1.1.1.4 2021/04/07 02:43:14 christos Exp $	*/
 /*
  * Copyright 2007-2012 Niels Provos and Nick Mathewson
  * Copyright 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -28,7 +28,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: win32select.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: win32select.c,v 1.1.1.4 2021/04/07 02:43:14 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -329,6 +329,8 @@ win32_dispatch(struct event_base *base, struct timeval *tv)
 	event_debug(("%s: select returned %d", __func__, res));
 
 	if (res <= 0) {
+		event_debug(("%s: %s", __func__,
+		    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR())));
 		return res;
 	}
 
@@ -353,7 +355,6 @@ win32_dispatch(struct event_base *base, struct timeval *tv)
 		}
 	}
 	if (win32op->writeset_out->fd_count) {
-		SOCKET s;
 		i = evutil_weakrand_range_(&base->weakrand_seed,
 		    win32op->writeset_out->fd_count);
 		for (j=0; j<win32op->writeset_out->fd_count; ++j) {

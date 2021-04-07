@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer_iocp.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: buffer_iocp.c,v 1.1.1.3 2021/04/07 02:43:13 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -33,7 +33,7 @@
 */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer_iocp.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: buffer_iocp.c,v 1.1.1.3 2021/04/07 02:43:13 christos Exp $");
 #include "evconfig-private.h"
 
 #include "event2/buffer.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: buffer_iocp.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $");
 #include "mm-internal.h"
 
 #include <winsock2.h>
+#include <winerror.h>
 #include <windows.h>
 #include <stdio.h>
 
