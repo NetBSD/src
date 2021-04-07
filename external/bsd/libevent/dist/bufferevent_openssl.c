@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_openssl.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $	*/
+/*	$NetBSD: bufferevent_openssl.c,v 1.2 2021/04/07 03:36:48 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -32,7 +32,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bufferevent_openssl.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $");
+__RCSID("$NetBSD: bufferevent_openssl.c,v 1.2 2021/04/07 03:36:48 christos Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -1466,7 +1466,7 @@ bufferevent_openssl_socket_new(struct event_base *base,
 			   This is probably an error on our part.  Fail. */
 			goto err;
 		}
-		BIO_set_close(bio, 0);
+		(void)BIO_set_close(bio, 0);
 	} else {
 		/* The SSL isn't configured with a BIO with an fd. */
 		if (fd >= 0) {

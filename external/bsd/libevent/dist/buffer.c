@@ -1,4 +1,5 @@
-/*	$NetBSD: buffer.c,v 1.4 2017/01/31 23:17:39 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -28,7 +29,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.4 2017/01/31 23:17:39 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -98,6 +99,7 @@ __RCSID("$NetBSD: buffer.c,v 1.4 2017/01/31 23:17:39 christos Exp $");
 #include "evthread-internal.h"
 #include "evbuffer-internal.h"
 #include "bufferevent-internal.h"
+#include "event-internal.h"
 
 /* some systems do not have MAP_FAILED */
 #ifndef MAP_FAILED
@@ -525,8 +527,8 @@ evbuffer_invoke_callbacks_(struct evbuffer *buffer)
 			evbuffer_incref_and_lock_(buffer);
 			if (buffer->parent)
 				bufferevent_incref_(buffer->parent);
+			EVBUFFER_UNLOCK(buffer);
 		}
-		EVBUFFER_UNLOCK(buffer);
 	}
 
 	evbuffer_run_callbacks(buffer, 0);
@@ -706,13 +708,17 @@ static int
 advance_last_with_data(struct evbuffer *buf)
 {
 	int n = 0;
+	struct evbuffer_chain **chainp = buf->last_with_datap;
+
 	ASSERT_EVBUFFER_LOCKED(buf);
 
-	if (!*buf->last_with_datap)
+	if (!*chainp)
 		return 0;
 
-	while ((*buf->last_with_datap)->next && (*buf->last_with_datap)->next->off) {
-		buf->last_with_datap = &(*buf->last_with_datap)->next;
+	while ((*chainp)->next) {
+		chainp = &(*chainp)->next;
+		if ((*chainp)->off)
+			buf->last_with_datap = chainp;
 		++n;
 	}
 	return n;
@@ -1149,7 +1155,7 @@ evbuffer_drain(struct evbuffer *buf, size_t len)
 		}
 
 		buf->first = chain;
-		EVUTIL_ASSERT(chain && remaining <= chain->off);
+		EVUTIL_ASSERT(remaining <= chain->off);
 		chain->misalign += remaining;
 		chain->off -= remaining;
 	}
@@ -1301,7 +1307,7 @@ evbuffer_remove_buffer(struct evbuffer *src, struct evbuffer *dst,
 		chain = chain->next;
 	}
 
-	if (nread) {
+	if (chain != src->first) {
 		/* we can remove the chain */
 		struct evbuffer_chain **chp;
 		chp = evbuffer_free_trailing_empty_chains(dst);
@@ -1419,9 +1425,11 @@ evbuffer_pullup(struct evbuffer *buf, ev_ssize_t size)
 	for (; chain != NULL && (size_t)size >= chain->off; chain = next) {
 		next = chain->next;
 
-		memcpy(buffer, chain->buffer + chain->misalign, chain->off);
-		size -= chain->off;
-		buffer += chain->off;
+		if (chain->buffer) {
+			memcpy(buffer, chain->buffer + chain->misalign, chain->off);
+			size -= chain->off;
+			buffer += chain->off;
+		}
 		if (chain == last_with_data)
 			removed_last_with_data = 1;
 		if (&chain->next == buf->last_with_datap)
@@ -1537,11 +1545,11 @@ evbuffer_find_eol_char(struct evbuffer_ptr *it)
 	return (-1);
 }
 
-static inline int
+static inline size_t
 evbuffer_strspn(
 	struct evbuffer_ptr *ptr, const char *chrset)
 {
-	int count = 0;
+	size_t count = 0;
 	struct evbuffer_chain *chain = ptr->internal_.chain;
 	size_t i = ptr->internal_.pos_in_chain;
 
@@ -1827,6 +1835,10 @@ evbuffer_prepend(struct evbuffer *buf, const void *data, size_t datlen)
 
 	EVBUFFER_LOCK(buf);
 
+	if (datlen == 0) {
+		result = 0;
+		goto done;
+	}
 	if (buf->freeze_start) {
 		goto done;
 	}
@@ -1880,7 +1892,7 @@ evbuffer_prepend(struct evbuffer *buf, const void *data, size_t datlen)
 	if ((tmp = evbuffer_chain_new(datlen)) == NULL)
 		goto done;
 	buf->first = tmp;
-	if (buf->last_with_datap == &buf->first)
+	if (buf->last_with_datap == &buf->first && chain->off)
 		buf->last_with_datap = &tmp->next;
 
 	tmp->next = chain;
@@ -2230,11 +2242,13 @@ evbuffer_read_setup_vecs_(struct evbuffer *buf, ev_ssize_t howmuch,
 	so_far = 0;
 	/* Let firstchain be the first chain with any space on it */
 	firstchainp = buf->last_with_datap;
+	EVUTIL_ASSERT(*firstchainp);
 	if (CHAIN_SPACE_LEN(*firstchainp) == 0) {
 		firstchainp = &(*firstchainp)->next;
 	}
 
 	chain = *firstchainp;
+	EVUTIL_ASSERT(chain);
 	for (i = 0; i < n_vecs_avail && so_far < (size_t)howmuch; ++i) {
 		size_t avail = (size_t) CHAIN_SPACE_LEN(chain);
 		if (avail > (howmuch - so_far) && exact)
@@ -2468,7 +2482,7 @@ evbuffer_write_sendfile(struct evbuffer *buffer, evutil_socket_t dest_fd,
 	ev_off_t len = chain->off;
 #elif defined(SENDFILE_IS_LINUX) || defined(SENDFILE_IS_SOLARIS)
 	ev_ssize_t res;
-	ev_off_t offset = chain->misalign;
+	off_t offset = chain->misalign;
 #endif
 
 	ASSERT_EVBUFFER_LOCKED(buffer);
@@ -3201,7 +3215,6 @@ evbuffer_add_file_segment(struct evbuffer *buf,
 			}
 		}
 	}
-	++seg->refcnt;
 	EVLOCK_UNLOCK(seg->lock, 0);
 
 	if (buf->freeze_end)
@@ -3265,6 +3278,9 @@ evbuffer_add_file_segment(struct evbuffer *buf,
 		chain->off = length;
 	}
 
+	EVLOCK_LOCK(seg->lock, 0);
+	++seg->refcnt;
+	EVLOCK_UNLOCK(seg->lock, 0);
 	extra->segment = seg;
 	buf->n_add_for_cb += length;
 	evbuffer_chain_insert(buf, chain);
@@ -3296,7 +3312,7 @@ evbuffer_add_file(struct evbuffer *buf, int fd, ev_off_t offset, ev_off_t length
 	return r;
 }
 
-void
+int
 evbuffer_setcb(struct evbuffer *buffer, evbuffer_cb cb, void *cbarg)
 {
 	EVBUFFER_LOCK(buffer);
@@ -3307,10 +3323,15 @@ evbuffer_setcb(struct evbuffer *buffer, evbuffer_cb cb, void *cbarg)
 	if (cb) {
 		struct evbuffer_cb_entry *ent =
 		    evbuffer_add_cb(buffer, NULL, cbarg);
+		if (!ent) {
+			EVBUFFER_UNLOCK(buffer);
+			return -1;
+		}
 		ent->cb.cb_obsolete = cb;
 		ent->flags |= EVBUFFER_CB_OBSOLETE;
 	}
 	EVBUFFER_UNLOCK(buffer);
+	return 0;
 }
 
 struct evbuffer_cb_entry *

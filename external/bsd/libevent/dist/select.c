@@ -1,4 +1,4 @@
-/*	$NetBSD: select.c,v 1.3 2017/01/31 23:17:39 christos Exp $	*/
+/*	$NetBSD: select.c,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: select.c,v 1.3 2017/01/31 23:17:39 christos Exp $");
+__RCSID("$NetBSD: select.c,v 1.4 2021/04/07 03:36:48 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef EVENT__HAVE_SELECT
@@ -101,7 +101,7 @@ const struct eventop selectops = {
 	select_del,
 	select_dispatch,
 	select_dealloc,
-	0, /* doesn't need reinit. */
+	1, /* need_reinit. */
 	EV_FEATURE_FDS,
 	0,
 };

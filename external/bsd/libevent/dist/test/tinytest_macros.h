@@ -1,4 +1,5 @@
-/*	$NetBSD: tinytest_macros.h,v 1.4 2017/01/31 23:17:40 christos Exp $	*/
+/*	$NetBSD: tinytest_macros.h,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+
 /* tinytest_macros.h -- Copyright 2009-2012 Nick Mathewson
  *
  * Redistribution and use in source and binary forms, with or without
@@ -114,8 +115,8 @@
 #define tt_assert_test_fmt_type(a,b,str_test,type,test,printf_type,printf_fmt, \
     setup_block,cleanup_block,die_on_fail)				\
 	TT_STMT_BEGIN							\
-	type val1_ = (a);						\
-	type val2_ = (b);						\
+	type val1_ = (type)(a);						\
+	type val2_ = (type)(b);						\
 	int tt_status_ = (test);					\
 	if (!tt_status_ || tinytest_get_verbosity_()>1)	{		\
 		printf_type print_;					\
@@ -158,6 +159,14 @@
 #define tt_int_op(a,op,b)			\
 	tt_assert_test_type(a,b,#a" "#op" "#b,long,(val1_ op val2_), \
 	    "%ld",TT_EXIT_TEST_FUNCTION)
+
+/** To compare SOCKET(windows)/fd */
+#define tt_fd_op(a,op,b) do {                                          \
+	int _a = (int)(a);                                             \
+	int _b = (int)(b);                                             \
+	tt_assert_test_type(_a,_b,#a" "#op" "#b,long,(val1_ op val2_), \
+	    "%ld",TT_EXIT_TEST_FUNCTION);                              \
+} while (0)
 
 #define tt_uint_op(a,op,b)						\
 	tt_assert_test_type(a,b,#a" "#op" "#b,unsigned long,		\
