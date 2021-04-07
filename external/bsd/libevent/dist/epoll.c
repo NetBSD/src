@@ -1,4 +1,4 @@
-/*	$NetBSD: epoll.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: epoll.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $	*/
 /*
  * Copyright 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright 2007-2012 Niels Provos, Nick Mathewson
@@ -27,7 +27,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: epoll.c,v 1.1.1.2 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: epoll.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef EVENT__HAVE_EPOLL
@@ -284,7 +284,7 @@ epoll_apply_one_change(struct event_base *base,
 		return 0;
 	}
 
-	if ((ch->read_change|ch->write_change) & EV_CHANGE_ET)
+	if ((ch->read_change|ch->write_change|ch->close_change) & EV_CHANGE_ET)
 		events |= EPOLLET;
 
 	memset(&epev, 0, sizeof(epev));
@@ -404,11 +404,14 @@ epoll_nochangelist_del(struct event_base *base, evutil_socket_t fd,
 	ch.old_events = old;
 	ch.read_change = ch.write_change = ch.close_change = 0;
 	if (events & EV_WRITE)
-		ch.write_change = EV_CHANGE_DEL;
+		ch.write_change = EV_CHANGE_DEL |
+		    (events & EV_ET);
 	if (events & EV_READ)
-		ch.read_change = EV_CHANGE_DEL;
+		ch.read_change = EV_CHANGE_DEL |
+		    (events & EV_ET);
 	if (events & EV_CLOSED)
-		ch.close_change = EV_CHANGE_DEL;
+		ch.close_change = EV_CHANGE_DEL |
+		    (events & EV_ET);
 
 	return epoll_apply_one_change(base, base->evbase, &ch);
 }
@@ -486,7 +489,9 @@ epoll_dispatch(struct event_base *base, struct timeval *tv)
 			continue;
 #endif
 
-		if (what & (EPOLLHUP|EPOLLERR)) {
+		if (what & EPOLLERR) {
+			ev = EV_READ | EV_WRITE;
+		} else if ((what & EPOLLHUP) && !(what & EPOLLRDHUP)) {
 			ev = EV_READ | EV_WRITE;
 		} else {
 			if (what & EPOLLIN)
