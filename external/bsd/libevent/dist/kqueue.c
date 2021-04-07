@@ -1,4 +1,4 @@
-/*	$NetBSD: kqueue.c,v 1.2 2019/10/03 22:16:52 kamil Exp $	*/
+/*	$NetBSD: kqueue.c,v 1.3 2021/04/07 03:36:48 christos Exp $	*/
 /*	$OpenBSD: kqueue.c,v 1.5 2002/07/10 14:41:31 art Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kqueue.c,v 1.2 2019/10/03 22:16:52 kamil Exp $");
+__RCSID("$NetBSD: kqueue.c,v 1.3 2021/04/07 03:36:48 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef EVENT__HAVE_KQUEUE
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: kqueue.c,v 1.2 2019/10/03 22:16:52 kamil Exp $");
 #endif
 #include <sys/queue.h>
 #include <sys/event.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +69,7 @@ __RCSID("$NetBSD: kqueue.c,v 1.2 2019/10/03 22:16:52 kamil Exp $");
 #include "log-internal.h"
 #include "evmap-internal.h"
 #include "event2/thread.h"
+#include "event2/util.h"
 #include "evthread-internal.h"
 #include "changelist-internal.h"
 
@@ -213,9 +215,17 @@ kq_build_changes_list(const struct event_changelist *changelist,
 		struct event_change *in_ch = &changelist->changes[i];
 		struct kevent *out_ch;
 		if (n_changes >= kqop->changes_size - 1) {
-			int newsize = kqop->changes_size * 2;
+			int newsize;
 			struct kevent *newchanges;
 
+			if (kqop->changes_size > INT_MAX / 2 ||
+			    (size_t)kqop->changes_size * 2 > EV_SIZE_MAX /
+			    sizeof(struct kevent)) {
+				event_warnx("%s: int overflow", __func__);
+				return (-1);
+			}
+
+			newsize = kqop->changes_size * 2;
 			newchanges = mm_realloc(kqop->changes,
 			    newsize * sizeof(struct kevent));
 			if (newchanges == NULL) {
