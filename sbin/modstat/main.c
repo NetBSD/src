@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2019/01/27 02:08:36 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2021/04/07 14:45:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.25 2019/01/27 02:08:36 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2021/04/07 14:45:28 simonb Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -239,7 +239,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-Aaen] [name]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-Aaek] [-n name | name]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
