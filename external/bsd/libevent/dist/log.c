@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.5 2017/01/31 23:17:39 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.6 2021/04/07 03:36:48 christos Exp $	*/
 /*	$OpenBSD: err.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: log.c,v 1.5 2017/01/31 23:17:39 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.6 2021/04/07 03:36:48 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -72,16 +72,7 @@ static event_fatal_cb fatal_fn = NULL;
 #define DEFAULT_MASK 0
 #endif
 
-#ifdef USE_GLOBAL_FOR_DEBUG_LOGGING
-ev_uint32_t event_debug_logging_mask_ = DEFAULT_MASK;
-#else
-static ev_uint32_t event_debug_logging_mask_ = DEFAULT_MASK;
-ev_uint32_t
-event_debug_get_logging_mask_(void)
-{
-	return event_debug_logging_mask_;
-}
-#endif
+EVENT2_EXPORT_SYMBOL ev_uint32_t event_debug_logging_mask_ = DEFAULT_MASK;
 #endif /* EVENT_DEBUG_LOGGING_ENABLED */
 
 void

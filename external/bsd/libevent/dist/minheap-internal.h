@@ -1,4 +1,4 @@
-/*	$NetBSD: minheap-internal.h,v 1.3 2017/01/31 23:17:39 christos Exp $	*/
+/*	$NetBSD: minheap-internal.h,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -71,7 +71,7 @@ struct event* min_heap_top_(min_heap_t* s) { return s->n ? *s->p : 0; }
 
 int min_heap_push_(min_heap_t* s, struct event* e)
 {
-	if (min_heap_reserve_(s, s->n + 1))
+	if (s->n == UINT32_MAX || min_heap_reserve_(s, s->n + 1))
 		return -1;
 	min_heap_shift_up_(s, s->n++, e);
 	return 0;
@@ -139,6 +139,10 @@ int min_heap_reserve_(min_heap_t* s, unsigned n)
 		unsigned a = s->a ? s->a * 2 : 8;
 		if (a < n)
 			a = n;
+#if (SIZE_MAX == UINT32_MAX)
+		if (a > SIZE_MAX / sizeof *p)
+			return -1;
+#endif
 		if (!(p = (struct event**)mm_realloc(s->p, a * sizeof *p)))
 			return -1;
 		s->p = p;

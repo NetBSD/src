@@ -1,4 +1,5 @@
-/*	$NetBSD: event_tagging.c,v 1.4 2017/01/31 23:17:39 christos Exp $	*/
+/*	$NetBSD: event_tagging.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+
 /*
  * Copyright (c) 2003-2009 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -28,7 +29,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: event_tagging.c,v 1.4 2017/01/31 23:17:39 christos Exp $");
+__RCSID("$NetBSD: event_tagging.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef EVENT__HAVE_SYS_TYPES_H
@@ -96,9 +97,13 @@ __RCSID("$NetBSD: event_tagging.c,v 1.4 2017/01/31 23:17:39 christos Exp $");
        a final padding nibble with value 0 is appended.
 */
 
+EVENT2_EXPORT_SYMBOL
 int evtag_decode_int(ev_uint32_t *pnumber, struct evbuffer *evbuf);
+EVENT2_EXPORT_SYMBOL
 int evtag_decode_int64(ev_uint64_t *pnumber, struct evbuffer *evbuf);
+EVENT2_EXPORT_SYMBOL
 int evtag_encode_tag(struct evbuffer *evbuf, ev_uint32_t tag);
+EVENT2_EXPORT_SYMBOL
 int evtag_decode_tag(ev_uint32_t *ptag, struct evbuffer *evbuf);
 
 void

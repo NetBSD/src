@@ -1,4 +1,5 @@
-/*	$NetBSD: evrpc.c,v 1.4 2017/01/31 23:17:39 christos Exp $	*/
+/*	$NetBSD: evrpc.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +28,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evrpc.c,v 1.4 2017/01/31 23:17:39 christos Exp $");
+__RCSID("$NetBSD: evrpc.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -332,7 +333,8 @@ evrpc_request_cb(struct evhttp_request *req, void *arg)
 	return;
 
 error:
-	evrpc_reqstate_free_(rpc_state);
+	if (rpc_state)
+		evrpc_reqstate_free_(rpc_state);
 	evhttp_send_error(req, HTTP_SERVUNAVAIL, NULL);
 	return;
 }
@@ -894,8 +896,7 @@ evrpc_reply_done(struct evhttp_request *req, void *arg)
 			 * layer is going to free it.  we need to
 			 * request ownership explicitly
 			 */
-			if (req != NULL)
-				evhttp_request_own(req);
+			evhttp_request_own(req);
 
 			evrpc_pause_request(pool, ctx,
 			    evrpc_reply_done_closure);
