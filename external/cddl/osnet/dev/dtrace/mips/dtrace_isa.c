@@ -107,9 +107,8 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 	ra = (register_t)(intptr_t)__builtin_return_address(0);
 
        	__asm __volatile(
-		"jal 99f\n"
-		"nop\n"
-		"99:\n"
+		"nal\n"
+		" nop\n"
 		"move %0, $31\n" /* get ra */
 		"move $31, %1\n" /* restore ra */
 		: "=r" (pc)
