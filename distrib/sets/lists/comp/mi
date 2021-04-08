@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2377 2021/03/10 13:30:34 simonb Exp $
+#	$NetBSD: mi,v 1.2378 2021/04/08 13:04:01 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -807,6 +807,7 @@
 ./usr/include/dns_sd.h				comp-mdns-include	mdns
 ./usr/include/dwarf.h				comp-c-include
 ./usr/include/elf.h				comp-c-include
+./usr/include/elfdefinitions.h			comp-c-include
 ./usr/include/endian.h				comp-c-include
 ./usr/include/err.h				comp-c-include
 ./usr/include/errno.h				comp-c-include
@@ -3068,6 +3069,7 @@
 ./usr/include/sys/domain.h			comp-c-include
 ./usr/include/sys/drvctlio.h			comp-c-include
 ./usr/include/sys/dvdio.h			comp-c-include
+./usr/include/sys/elfdefinitions.h		comp-c-include
 ./usr/include/sys/endian.h			comp-c-include
 ./usr/include/sys/envsys.h			comp-c-include
 ./usr/include/sys/errno.h			comp-c-include
