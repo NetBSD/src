@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.64 2021/04/06 18:08:53 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.65 2021/04/08 15:22:30 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2926,4 +2926,11 @@ bin/ps/print.c					1.133
 	Fix the column width calculation for the lstart column if an empty
 	column header is specified.
 	[simonb, ticket #1244]
+
+crypto/external/bsd/openssl/dist/crypto/modes/gcm128.c 1.12
+crypto/external/bsd/openssl/lib/libcrypto/arch/sparc/modes.inc delete
+
+	Disable the assembly version of GHASH for 32 bit sparc, the code
+	requires a sparcv9 cpu.
+	[christos, ticket #1245]
 
