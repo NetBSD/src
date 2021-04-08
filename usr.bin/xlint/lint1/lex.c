@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.24 2021/04/06 22:21:53 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.25 2021/04/08 22:18:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.24 2021/04/06 22:21:53 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.25 2021/04/08 22:18:27 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1052,10 +1052,13 @@ get_escaped_char(int delim)
 
 /* See https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html */
 static void
-parse_line_directive_flags(const char *p)
+parse_line_directive_flags(const char *p,
+			   bool *is_begin, bool *is_end, bool *is_system)
 {
 
-	in_system_header = false;
+	*is_begin = false;
+	*is_end = false;
+	*is_system = false;
 
 	while (*p != '\0') {
 		while (ch_isspace(*p))
@@ -1066,13 +1069,20 @@ parse_line_directive_flags(const char *p)
 			p++;
 		const char *word_end = p;
 
+		if (word_end - word_start == 1 && word_start[0] == '1')
+			*is_begin = true;
+		if (word_end - word_start == 1 && word_start[0] == '2')
+			*is_end = true;
 		if (word_end - word_start == 1 && word_start[0] == '3')
-			in_system_header = true;
+			*is_system = true;
+		/* Flag '4' would only be interesting if lint handled C++. */
 	}
 
 #if 0
-	if (c != '\0')
-		warning("extra character(s) after directive");
+	if (*p != '\0') {
+		/* syntax error '%s' */
+		warning(249, "extra character(s) after directive");
+	}
 #endif
 }
 
@@ -1089,6 +1099,8 @@ lex_directive(const char *yytext)
 	char	c, *eptr;
 	size_t	fnl;
 	long	ln;
+	bool	is_begin, is_end, is_system;
+
 	static	bool first = true;
 
 	/* Go to first non-whitespace after # */
@@ -1120,8 +1132,6 @@ lex_directive(const char *yytext)
 			goto error;
 		if ((fnl = cp++ - fn) > PATH_MAX)
 			goto error;
-		parse_line_directive_flags(cp);
-
 		/* empty string means stdin */
 		if (fnl == 0) {
 			fn = "{standard input}";
@@ -1139,6 +1149,10 @@ lex_directive(const char *yytext)
 			    strlen(curr_pos.p_file)));
 			first = false;
 		}
+
+		parse_line_directive_flags(cp, &is_begin, &is_end, &is_system);
+		update_position(curr_pos.p_file, (int)ln,
+		    is_begin, is_end, is_system);
 	}
 	curr_pos.p_line = (int)ln - 1;
 	curr_pos.p_uniq = 0;

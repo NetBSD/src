@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.39 2021/04/05 02:05:47 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.40 2021/04/08 22:18:27 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -167,6 +167,8 @@ test_case d_incorrect_array_size
 test_case d_long_double_int
 
 test_case op_colon
+
+test_case feat_stacktrace
 
 test_case all_messages
 all_messages_body()
