@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.59 2020/05/27 09:09:50 rin Exp $ */
+/* $NetBSD: kern_tc.c,v 1.60 2021/04/08 06:06:24 simonb Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.59 2020/05/27 09:09:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.60 2021/04/08 06:06:24 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -550,6 +550,9 @@ void
 tc_init(struct timecounter *tc)
 {
 	u_int u;
+
+	KASSERTMSG(tc->tc_next == NULL, "timecounter %s already initialised",
+	    tc->tc_name);
 
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
