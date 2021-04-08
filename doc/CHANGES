@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2792 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2793 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -347,3 +347,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rin 20210402]
 	acpi(4): Updated ACPICA to 20210331. [christos 20210403]
 	libevent: Import libevent 2.1.12 [christos 20210406]
+	services(5), protocols(5): Pull iana-generated services and protocols.
+		[christos 20210408]
