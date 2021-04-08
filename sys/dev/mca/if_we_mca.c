@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.21 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.22 2021/04/08 17:36:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.21 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.22 2021/04/08 17:36:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,11 +302,9 @@ void
 we_mca_init_hook(struct we_softc *wsc)
 {
 	/*
-	 * This quirk really needs to be here, at least for WD8003W/A. Without
-	 * this, the card doesn't send any interrupts in 16bit mode. The quirk
+	 * Enable interrupts. This is required for at least WD8003W/A, without
+	 * this, the card doesn't send any interrupts in 16bit mode. The code
 	 * was taken from Linux smc-mca.c driver.
-	 * I do not know why it's necessary. I don't want to know. It works
-	 * and that is enough for me.
 	 */
 	bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE_LAAR, 0x04);
 	wsc->sc_laar_proto |= 0x04;
