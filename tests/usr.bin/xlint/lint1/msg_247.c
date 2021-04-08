@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.10 2021/04/08 19:20:54 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.11 2021/04/08 19:31:51 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -85,8 +85,8 @@ cast_to_void_pointer_then_to_char_pointer(struct Other *arg)
  * first member.  C guarantees that the pointer to the first member is at the
  * same address as the pointer to the whole struct.
  *
- * Seen in external/mpl/bind/dist/lib/isc/mem.c for struct isc_mem and
- * isc__mem.
+ * Seen in external/mpl/bind/dist/lib/isc/mem.c for 'struct isc_mem' and
+ * 'struct isc__mem'.
  */
 
 struct counter {
@@ -101,7 +101,7 @@ struct counter_impl {
 void *allocate(void);
 
 struct counter *
-new_type_interface(void)
+counter_new(void)
 {
 	struct counter_impl *impl = allocate();
 	impl->public_part.count = 12345;
