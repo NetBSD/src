@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.9 2021/04/08 19:08:17 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.10 2021/04/08 19:20:54 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -112,7 +112,10 @@ new_type_interface(void)
 void
 counter_increment(struct counter *counter)
 {
-	/* expect+1: 247 */
+	/*
+	 * Before tree.c 1.272 from 2021-04-08, lint warned about the cast
+	 * from 'struct counter' to 'struct counter_impl'.
+	 */
 	struct counter_impl *impl = (struct counter_impl *)counter;
 	impl->saved_count = impl->public_part.count;
 	impl->public_part.count++;
