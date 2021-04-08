@@ -1,8 +1,8 @@
-# $NetBSD: protocols,v 1.30 2019/01/03 17:30:06 christos Exp $
+# $NetBSD: protocols,v 1.31 2021/04/08 19:03:43 christos Exp $
 # See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #    Last Updated
-#            2017-10-13
+#            2021-02-26
 # 
 #    Available Formats
 #            [IMG]
@@ -27,8 +27,9 @@
 # 
 #  In the Internet Protocol version 4 (IPv4) [RFC791] there is a field
 #  called "Protocol" to identify the next level protocol.  This is an 8
-#  bit field.  In Internet Protocol version 6 (IPv6)
-#  [RFC8200], this field is called the "Next Header" field.
+#  bit field.  In Internet Protocol version 6 (IPv6) [RFC8200], this field
+#  is called the "Next Header" field.
+# 
 # 
 #    Note
 # 
@@ -243,7 +244,8 @@ shim6        140 Shim6        # Shim6 Protocol                     Y        [RFC
 wesp         141 WESP         # Wrapped Encapsulating                       [RFC5840]
 #                               Security Payload
 rohc         142 ROHC         # Robust Header Compression                   [RFC5858]
-#    143-239                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
+ethernet     143 Ethernet     # Ethernet                                    [RFC8986]
+#    144-252                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
 pfsync       240 PFSYNC       # PF Synchronization
 #    241-252                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
 #      253                      Use for experimentation and        Y        [RFC3692]
@@ -252,7 +254,7 @@ pfsync       240 PFSYNC       # PF Synchronization
 #                               testing
 reserved     255 Reserved     # [Internet_Assigned_Numbers_Authority]
 # 
-#                                                                         People
+#                                                                  Contact Information
 # 
 #                     ID                                  Name                                   Contact URI                   Last Updated
 #    [Barry_Boehm]                         Barry Boehm                         mailto:boehm&arpa.mil
