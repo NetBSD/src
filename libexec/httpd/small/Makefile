@@ -1,9 +1,10 @@
+#	$NetBSD: Makefile,v 1.6 2021/04/08 06:52:42 rillig Exp $
 #	$eterna: Makefile,v 1.1 2009/05/22 21:51:39 mrg Exp $
 
 # build a 100% lean bozohttpd-small.c
 PROG=	bozohttpd-small
 NOMAN=	# defined
-SRCS=	bozohttpd-small.c content-bozo-small.c ssl-bozo.c main.c:
+SRCS=	bozohttpd-small.c content-bozo-small.c ssl-bozo.c main.c
 
 LEAN_IFDEF_FLAGS=	-UDEBUG -DNO_USER_SUPPORT \
 			-DNO_CGIBIN_SUPPORT -DNO_DIRINDEX_SUPPORT \
@@ -11,7 +12,7 @@ LEAN_IFDEF_FLAGS=	-UDEBUG -DNO_USER_SUPPORT \
 			-DNO_SSL_SUPPORT -UDO_HTPASSWD \
 			-DNO_LUA_SUPPORT -DNO_BLOCKLIST_SUPPORT
 
-CFLAGS=	-I$(.CURDIR)/.. ${LEAN_IFDEF_FLAGS}
+CPPFLAGS=	-I$(.CURDIR)/.. ${LEAN_IFDEF_FLAGS}
 
 bozohttpd-small.c: bozohttpd.c
 	unifdef $(LEAN_IFDEF_FLAGS) < $> > $@.tmp;			\
