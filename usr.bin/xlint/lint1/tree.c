@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.271 2021/04/06 21:59:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.272 2021/04/08 19:20:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.271 2021/04/06 21:59:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.272 2021/04/08 19:20:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2023,11 +2023,22 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 }
 
 static bool
-should_warn_about_pointer_cast(const type_t *tp, tspec_t nst,
-			       const tnode_t *tn, tspec_t ost)
+should_warn_about_pointer_cast(const type_t *ntp, tspec_t nst,
+			       const tnode_t *otn, tspec_t ost)
 {
+	/*
+	 * Casting a pointer to 'struct S' to a pointer to another struct that
+	 * has 'struct S' as its first member is ok, see msg_247.c, 'struct
+	 * counter'.
+	 */
+	if (nst == STRUCT && ost == STRUCT &&
+	    ntp->t_subt->t_str->sou_first_member != NULL &&
+	    ntp->t_subt->t_str->sou_first_member->s_type ==
+	    otn->tn_type->t_subt)
+		return false;
+
 	if (nst == STRUCT || nst == UNION)
-		if (tp->t_subt->t_str != tn->tn_type->t_subt->t_str)
+		if (ntp->t_subt->t_str != otn->tn_type->t_subt->t_str)
 			return true;
 
 	if (nst == CHAR || nst == UCHAR)
