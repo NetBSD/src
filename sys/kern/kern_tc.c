@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.60 2021/04/08 06:06:24 simonb Exp $ */
+/* $NetBSD: kern_tc.c,v 1.61 2021/04/08 06:20:47 simonb Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,14 +40,18 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.60 2021/04/08 06:06:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.61 2021/04/08 06:20:47 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/atomic.h>
+#include <sys/evcnt.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 #include <sys/reboot.h>	/* XXX just to get AB_VERBOSE */
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
@@ -55,10 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.60 2021/04/08 06:06:24 simonb Exp $");
 #include <sys/timepps.h>
 #include <sys/timetc.h>
 #include <sys/timex.h>
-#include <sys/evcnt.h>
-#include <sys/kauth.h>
-#include <sys/mutex.h>
-#include <sys/atomic.h>
 #include <sys/xcall.h>
 
 /*
