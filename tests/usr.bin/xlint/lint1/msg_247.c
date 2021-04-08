@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.8 2021/03/30 15:05:05 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.9 2021/04/08 19:08:17 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -74,4 +74,46 @@ char *
 cast_to_void_pointer_then_to_char_pointer(struct Other *arg)
 {
 	return (char *)(void *)arg;
+}
+
+
+/*
+ * When implementing types that have a public part that is exposed to the user
+ * (in this case 'struct counter') and a private part that is only visible to
+ * the implementation (in this case 'struct counter_impl'), a common
+ * implementation technique is to use a struct in which the public part is the
+ * first member.  C guarantees that the pointer to the first member is at the
+ * same address as the pointer to the whole struct.
+ *
+ * Seen in external/mpl/bind/dist/lib/isc/mem.c for struct isc_mem and
+ * isc__mem.
+ */
+
+struct counter {
+	int count;
+};
+
+struct counter_impl {
+	struct counter public_part;
+	int saved_count;
+};
+
+void *allocate(void);
+
+struct counter *
+new_type_interface(void)
+{
+	struct counter_impl *impl = allocate();
+	impl->public_part.count = 12345;
+	impl->saved_count = 12346;
+	return &impl->public_part;
+}
+
+void
+counter_increment(struct counter *counter)
+{
+	/* expect+1: 247 */
+	struct counter_impl *impl = (struct counter_impl *)counter;
+	impl->saved_count = impl->public_part.count;
+	impl->public_part.count++;
 }
