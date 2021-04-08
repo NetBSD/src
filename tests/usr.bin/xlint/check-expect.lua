@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.7 2021/04/05 01:35:34 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.8 2021/04/08 22:18:27 rillig Exp $
 
 --[[
 
@@ -25,57 +25,67 @@ local function load_lines(fname)
   return lines
 end
 
+
 local function load_expect_comments_from_c(fname, errors)
 
   local lines = load_lines(fname)
   if lines == nil then return nil, nil end
 
-  local comment_linenos = {}
-  local comments_by_lineno = {}
-  local function add_expectation(lineno, msg)
-    if comments_by_lineno[lineno] == nil then
-      table.insert(comment_linenos, lineno)
-      comments_by_lineno[lineno] = {}
+  local pp_fname = fname
+  local pp_lineno = 0
+  local comment_locations = {}
+  local comments_by_location = {}
+
+  local function add_expectation(offset, message)
+    local location = ("%s(%d)"):format(pp_fname, pp_lineno + offset)
+    if comments_by_location[location] == nil then
+      table.insert(comment_locations, location)
+      comments_by_location[location] = {}
     end
-    local trimmed_msg = msg:match("^%s*(.-)%s*$")
-    table.insert(comments_by_lineno[lineno], trimmed_msg)
+    local trimmed_msg = message:match("^%s*(.-)%s*$")
+    table.insert(comments_by_location[location], trimmed_msg)
   end
 
-  for lineno, line in ipairs(lines) do
+  for phys_lineno, line in ipairs(lines) do
 
     for offset, comment in line:gmatch("/%* expect([+%-]%d+): (.-) %*/") do
-      add_expectation(lineno + tonumber(offset), comment)
+      add_expectation(tonumber(offset), comment)
     end
 
     for comment in line:gmatch("/%* expect: (.-) %*/") do
-      add_expectation(lineno, comment)
+      add_expectation(0, comment)
     end
 
-    local pp_lineno, pp_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")
-    if pp_lineno ~= nil then
-      if pp_fname == fname and tonumber(pp_lineno) ~= lineno + 1 then
+    pp_lineno = pp_lineno + 1
+
+    local ppl_lineno, ppl_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")
+    if ppl_lineno ~= nil then
+      if ppl_fname == fname and tonumber(ppl_lineno) ~= phys_lineno + 1 then
         errors:add("error: %s:%d: preprocessor line number must be %d",
-          fname, lineno, lineno + 1)
+          fname, phys_lineno, phys_lineno + 1)
       end
+      pp_fname = ppl_fname
+      pp_lineno = ppl_lineno
     end
   end
 
-  return comment_linenos, comments_by_lineno
+  return comment_locations, comments_by_location
 end
 
 
-local function load_actual_messages_from_exp(fname)
+local function load_actual_messages_from_exp(exp_fname, primary_fname)
 
-  local lines = load_lines(fname)
+  local lines = load_lines(exp_fname)
   if lines == nil then return nil end
 
   local messages = {}
-  for lineno, line in ipairs(lines) do
-    for c_lineno, message in line:gmatch("%S+%((%d+)%): (.+)$") do
+  for exp_lineno, line in ipairs(lines) do
+    for location, c_filename, c_lineno, message
+         in line:gmatch("((%S+)%((%d+)%)): (.+)$") do
       table.insert(messages, {
-        exp_lineno = lineno,
-        c_lineno = tonumber(c_lineno),
-        msg = message
+        exp_lineno = exp_lineno,
+        location = location,
+        message = message
       })
     end
   end
@@ -87,19 +97,19 @@ end
 local function check_test(c_fname, errors)
   local exp_fname = c_fname:gsub("%.c$", ".exp")
 
-  local comment_linenos, comments_by_lineno =
+  local comment_locations, comments_by_location =
     load_expect_comments_from_c(c_fname, errors)
-  if comment_linenos == nil then return end
+  if comment_locations == nil then return end
 
-  local messages = load_actual_messages_from_exp(exp_fname)
+  local messages = load_actual_messages_from_exp(exp_fname, c_fname)
   if messages == nil then return end
 
   for _, act in ipairs(messages) do
-    local exp = comments_by_lineno[act.c_lineno] or {}
+    local exp = comments_by_location[act.location] or {}
 
     local found = false
-    for i, msg in ipairs(exp) do
-      if msg ~= "" and act.msg:find(msg, 1, true) then
+    for i, message in ipairs(exp) do
+      if message ~= "" and act.message:find(message, 1, true) then
         exp[i] = ""
         found = true
         break
@@ -107,17 +117,16 @@ local function check_test(c_fname, errors)
     end
 
     if not found then
-      errors:add("error: %s:%d: must expect \"%s\"",
-        c_fname, act.c_lineno, act.msg)
+      errors:add("error: %s: must expect \"%s\"", act.location, act.message)
     end
   end
 
-  for _, lineno in ipairs(comment_linenos) do
-    for _, msg in ipairs(comments_by_lineno[lineno]) do
-      if msg ~= "" then
+  for _, location in ipairs(comment_locations) do
+    for _, message in ipairs(comments_by_location[location]) do
+      if message ~= "" then
         errors:add(
-          "error: %s:%d: declared message \"%s\" is not in the actual output",
-          c_fname, lineno, msg)
+          "error: %s: declared message \"%s\" is not in the actual output",
+          location, message)
       end
     end
   end

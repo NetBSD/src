@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.103 2021/04/06 21:32:57 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.104 2021/04/08 22:18:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.103 2021/04/06 21:32:57 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.104 2021/04/08 22:18:27 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -399,6 +399,53 @@ const	char *msgs[] = {
 	"argument to '%s' must be cast to 'unsigned char', not to '%s'", /* 342 */
 };
 
+static struct include_level {
+	const char *filename;
+	int lineno;
+	struct include_level *by;
+} *includes;
+
+
+void
+update_position(const char *filename, int lineno,
+		bool is_begin, bool is_end, bool is_system)
+{
+	struct include_level *top;
+
+	top = includes;
+	if (is_begin && top != NULL)
+		top->lineno = curr_pos.p_line;
+
+	if (top == NULL || is_begin) {
+		top = xmalloc(sizeof(*top));
+		top->filename = filename;
+		top->lineno = lineno;
+		top->by = includes;
+		includes = top;
+	} else {
+		if (is_end && top != NULL) {
+			includes = top->by;
+			free(top);
+			top = includes;
+		}
+		top->filename = filename;
+		top->lineno = lineno;
+	}
+
+	in_system_header = is_system;
+}
+
+static void
+print_stack_trace(void)
+{
+	struct include_level *top;
+
+	if ((top = includes) == NULL)
+		return;
+	for (top = top->by; top != NULL; top = top->by)
+		printf("\tincluded from %s(%d)\n", top->filename, top->lineno);
+}
+
 /*
  * print a list of the messages with their ids
  */
@@ -446,6 +493,7 @@ verror(int n, va_list ap)
 	(void)vprintf(msgs[n], ap);
 	(void)printf(" [%d]\n", n);
 	nerr++;
+	print_stack_trace();
 }
 
 static void
@@ -469,6 +517,7 @@ vwarning(int n, va_list ap)
 	(void)printf(" [%d]\n", n);
 	if (wflag)
 		nerr++;
+	print_stack_trace();
 }
 
 void
@@ -494,6 +543,7 @@ internal_error(const char *file, int line, const char *msg, ...)
 	(void)vfprintf(stderr, msg, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
+	print_stack_trace();
 	abort();
 }
 
@@ -506,6 +556,7 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 	(void)fprintf(stderr,
 	    "lint: assertion \"%s\" failed in %s at %s:%d near %s:%d\n",
 	    cond, func, file, line, fn, curr_pos.p_line);
+	print_stack_trace();
 	abort();
 }
 
@@ -534,6 +585,7 @@ void
 	(void)vprintf(msgs[n], ap);
 	(void)printf(" [%d]\n", n);
 	va_end(ap);
+	print_stack_trace();
 }
 
 /*
