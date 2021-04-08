@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.289 2021/04/06 21:13:04 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.290 2021/04/08 08:10:30 jkoshy Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -62,7 +62,7 @@ SUBDIR+=	../external/bsd/am-utils/lib
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
-SUBDIR+=	../external/bsd/elftoolchain/lib/libelf
+SUBDIR+=	../external/bsd/elftoolchain	# libelf and libdwarf
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
