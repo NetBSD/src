@@ -14,13 +14,21 @@ LEAN_IFDEF_FLAGS=	-UDEBUG -DNO_USER_SUPPORT \
 CFLAGS=	-I$(.CURDIR)/.. ${LEAN_IFDEF_FLAGS}
 
 bozohttpd-small.c: bozohttpd.c
-	unifdef $(LEAN_IFDEF_FLAGS) < $> > $@.tmp ;\
-	if [ $$? -ne 1 ]; then echo "unifdef returned $?, expecting 1" 2>&1; false; fi
+	unifdef $(LEAN_IFDEF_FLAGS) < $> > $@.tmp;			\
+	status=$$?;							\
+	if [ $$status -ne 1 ]; then					\
+		echo "unifdef returned $$status, expecting 1" 2>&1;	\
+		false;							\
+	fi
 	mv -f $@.tmp $@
 
 content-bozo-small.c: content-bozo.c
-	unifdef $(LEAN_IFDEF_FLAGS) < $> > $@.tmp ;\
-	if [ $$? -ne 1 ]; then echo "unifdef returned $?, expecting 1" 2>&1; false; fi
+	unifdef $(LEAN_IFDEF_FLAGS) < $> > $@.tmp;			\
+	status=$$?;							\
+	if [ $$status -ne 1 ]; then					\
+		echo "unifdef returned $$status, expecting 1" 2>&1;	\
+		false;							\
+	fi
 	mv -f $@.tmp $@
 
 CLEANFILES+=	content-bozo-small.c bozohttpd-small.c
