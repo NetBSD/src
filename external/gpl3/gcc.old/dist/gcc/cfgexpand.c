@@ -1,5 +1,5 @@
 /* A pass for lowering trees to RTL.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -74,8 +74,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-ssa-address.h"
 #include "output.h"
 #include "builtins.h"
-#include "tree-chkp.h"
-#include "rtl-chkp.h"
 
 /* Some systems use __main in a way incompatible with its use in gcc, in these
    cases use the macros NAME__MAIN to give a quoted symbol and SYMBOL__MAIN to
@@ -472,6 +470,8 @@ add_stack_var_conflict (size_t x, size_t y)
 {
   struct stack_var *a = &stack_vars[x];
   struct stack_var *b = &stack_vars[y];
+  if (x == y)
+    return;
   if (!a->conflicts)
     a->conflicts = BITMAP_ALLOC (&stack_var_bitmap_obstack);
   if (!b->conflicts)
@@ -1126,14 +1126,23 @@ expand_stack_vars (bool (*pred) (size_t), struct stack_vars_data *data)
 	      && frame_offset.is_constant (&prev_offset)
 	      && stack_vars[i].size.is_constant ())
 	    {
+	      if (data->asan_vec.is_empty ())
+		{
+		  alloc_stack_frame_space (0, ASAN_RED_ZONE_SIZE);
+		  prev_offset = frame_offset.to_constant ();
+		}
 	      prev_offset = align_base (prev_offset,
-					MAX (alignb, ASAN_RED_ZONE_SIZE),
+					ASAN_MIN_RED_ZONE_SIZE,
 					!FRAME_GROWS_DOWNWARD);
 	      tree repr_decl = NULL_TREE;
-	      offset
-		= alloc_stack_frame_space (stack_vars[i].size
-					   + ASAN_RED_ZONE_SIZE,
-					   MAX (alignb, ASAN_RED_ZONE_SIZE));
+	      unsigned HOST_WIDE_INT size
+		= asan_var_and_redzone_size (stack_vars[i].size.to_constant ());
+	      if (data->asan_vec.is_empty ())
+		size = MAX (size, ASAN_RED_ZONE_SIZE);
+
+	      unsigned HOST_WIDE_INT alignment = MAX (alignb,
+						      ASAN_MIN_RED_ZONE_SIZE);
+	      offset = alloc_stack_frame_space (size, alignment);
 
 	      data->asan_vec.safe_push (prev_offset);
 	      /* Allocating a constant amount of space from a constant
@@ -1676,7 +1685,12 @@ expand_one_var (tree var, bool toplevel, bool really_expand)
       /* Reject variables which cover more than half of the address-space.  */
       if (really_expand)
 	{
-	  error ("size of variable %q+D is too large", var);
+	  if (DECL_NONLOCAL_FRAME (var))
+	    error_at (DECL_SOURCE_LOCATION (current_function_decl),
+		      "total size of local objects is too large");
+	  else
+	    error_at (DECL_SOURCE_LOCATION (var),
+		      "size of variable %q+D is too large", var);
 	  expand_one_error_var (var);
 	}
     }
@@ -2495,6 +2509,13 @@ expand_gimple_cond (basic_block bb, gcond *stmt)
 	}
     }
 
+  /* Optimize (x % C1) == C2 or (x % C1) != C2 if it is beneficial
+     into (x - C2) * C3 < C4.  */
+  if ((code == EQ_EXPR || code == NE_EXPR)
+      && TREE_CODE (op0) == SSA_NAME
+      && TREE_CODE (op1) == INTEGER_CST)
+    code = maybe_optimize_mod_cmp (code, &op0, &op1);
+
   last2 = last = get_last_insn ();
 
   extract_true_false_edges_from_block (bb, &true_edge, &false_edge);
@@ -2634,7 +2655,7 @@ expand_call_stmt (gcall *stmt)
   exp = build_vl_exp (CALL_EXPR, gimple_call_num_args (stmt) + 3);
 
   CALL_EXPR_FN (exp) = gimple_call_fn (stmt);
-  builtin_p = decl && DECL_BUILT_IN (decl);
+  builtin_p = decl && fndecl_built_in_p (decl);
 
   /* If this is not a builtin function, the function type through which the
      call is made may be different from the type of the function.  */
@@ -2673,7 +2694,7 @@ expand_call_stmt (gcall *stmt)
   CALL_EXPR_MUST_TAIL_CALL (exp) = gimple_call_must_tail_p (stmt);
   CALL_EXPR_RETURN_SLOT_OPT (exp) = gimple_call_return_slot_opt_p (stmt);
   if (decl
-      && DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL
+      && fndecl_built_in_p (decl, BUILT_IN_NORMAL)
       && ALLOCA_FUNCTION_CODE_P (DECL_FUNCTION_CODE (decl)))
     CALL_ALLOCA_FOR_VAR_P (exp) = gimple_call_alloca_for_var_p (stmt);
   else
@@ -2681,7 +2702,6 @@ expand_call_stmt (gcall *stmt)
   CALL_EXPR_VA_ARG_PACK (exp) = gimple_call_va_arg_pack_p (stmt);
   CALL_EXPR_BY_DESCRIPTOR (exp) = gimple_call_by_descriptor_p (stmt);
   SET_EXPR_LOCATION (exp, gimple_location (stmt));
-  CALL_WITH_BOUNDS_P (exp) = gimple_call_with_bounds_p (stmt);
 
   /* Ensure RTL is created for debug args.  */
   if (decl && DECL_HAS_DEBUG_ARGS_P (decl))
@@ -2834,6 +2854,42 @@ tree_conflicts_with_clobbers_p (tree t, HARD_REG_SET *clobbered_regs)
   return false;
 }
 
+/* Check that the given REGNO spanning NREGS is a valid
+   asm clobber operand.  Some HW registers cannot be
+   saved/restored, hence they should not be clobbered by
+   asm statements.  */
+static bool
+asm_clobber_reg_is_valid (int regno, int nregs, const char *regname)
+{
+  bool is_valid = true;
+  HARD_REG_SET regset;
+
+  CLEAR_HARD_REG_SET (regset);
+
+  add_range_to_hard_reg_set (&regset, regno, nregs);
+
+  /* Clobbering the PIC register is an error.  */
+  if (PIC_OFFSET_TABLE_REGNUM != INVALID_REGNUM
+      && overlaps_hard_reg_set_p (regset, Pmode, PIC_OFFSET_TABLE_REGNUM))
+    {
+      /* ??? Diagnose during gimplification?  */
+      error ("PIC register clobbered by %qs in %<asm%>", regname);
+      is_valid = false;
+    }
+  /* Clobbering the stack pointer register is deprecated.  GCC expects
+     the value of the stack pointer after an asm statement to be the same
+     as it was before, so no asm can validly clobber the stack pointer in
+     the usual sense.  Adding the stack pointer to the clobber list has
+     traditionally had some undocumented and somewhat obscure side-effects.  */
+  if (overlaps_hard_reg_set_p (regset, Pmode, STACK_POINTER_REGNUM)
+      && warning (OPT_Wdeprecated, "listing the stack pointer register"
+		  " %qs in a clobber list is deprecated", regname))
+    inform (input_location, "the value of the stack pointer after an %<asm%>"
+	    " statement must be the same as it was before the statement");
+
+  return is_valid;
+}
+
 /* Generate RTL for an asm statement with arguments.
    STRING is the instruction template.
    OUTPUTS is a list of output arguments (lvalues); INPUTS a list of inputs.
@@ -2966,14 +3022,8 @@ expand_asm_stmt (gasm *stmt)
 	  else
 	    for (int reg = j; reg < j + nregs; reg++)
 	      {
-		/* Clobbering the PIC register is an error.  */
-		if (reg == (int) PIC_OFFSET_TABLE_REGNUM)
-		  {
-		    /* ??? Diagnose during gimplification?  */
-		    error ("PIC register clobbered by %qs in %<asm%>",
-			   regname);
-		    return;
-		  }
+		if (!asm_clobber_reg_is_valid (reg, nregs, regname))
+		  return;
 
 	        SET_HARD_REG_BIT (clobbered_regs, reg);
 	        rtx x = gen_rtx_REG (reg_raw_mode[reg], reg);
@@ -3002,6 +3052,55 @@ expand_asm_stmt (gasm *stmt)
       if (!parse_output_constraint (&constraint, i, ninputs, noutputs,
 				    &allows_mem, &allows_reg, &is_inout))
 	return;
+
+      /* If the output is a hard register, verify it doesn't conflict with
+	 any other operand's possible hard register use.  */
+      if (DECL_P (val)
+	  && REG_P (DECL_RTL (val))
+	  && HARD_REGISTER_P (DECL_RTL (val)))
+	{
+	  unsigned j, output_hregno = REGNO (DECL_RTL (val));
+	  bool early_clobber_p = strchr (constraints[i], '&') != NULL;
+	  unsigned long match;
+
+	  /* Verify the other outputs do not use the same hard register.  */
+	  for (j = i + 1; j < noutputs; ++j)
+	    if (DECL_P (output_tvec[j])
+		&& REG_P (DECL_RTL (output_tvec[j]))
+		&& HARD_REGISTER_P (DECL_RTL (output_tvec[j]))
+		&& output_hregno == REGNO (DECL_RTL (output_tvec[j])))
+	      error ("invalid hard register usage between output operands");
+
+	  /* Verify matching constraint operands use the same hard register
+	     and that the non-matching constraint operands do not use the same
+	     hard register if the output is an early clobber operand.  */
+	  for (j = 0; j < ninputs; ++j)
+	    if (DECL_P (input_tvec[j])
+		&& REG_P (DECL_RTL (input_tvec[j]))
+		&& HARD_REGISTER_P (DECL_RTL (input_tvec[j])))
+	      {
+		unsigned input_hregno = REGNO (DECL_RTL (input_tvec[j]));
+		switch (*constraints[j + noutputs])
+		  {
+		  case '0':  case '1':  case '2':  case '3':  case '4':
+		  case '5':  case '6':  case '7':  case '8':  case '9':
+		    match = strtoul (constraints[j + noutputs], NULL, 10);
+		    break;
+		  default:
+		    match = ULONG_MAX;
+		    break;
+		  }
+		if (i == match
+		    && output_hregno != input_hregno)
+		  error ("invalid hard register usage between output operand "
+			 "and matching constraint operand");
+		else if (early_clobber_p
+			 && i != match
+			 && output_hregno == input_hregno)
+		  error ("invalid hard register usage between earlyclobber "
+			 "operand and input operand");
+	      }
+	}
 
       if (! allows_reg
 	  && (allows_mem
@@ -3258,7 +3357,7 @@ expand_asm_stmt (gasm *stmt)
 	     may insert further instructions into the same basic block after
 	     asm goto and if we don't do this, insertion of instructions on
 	     the fallthru edge might misbehave.  See PR58670.  */
-	  if (fallthru_bb && label_to_block_fn (cfun, label) == fallthru_bb)
+	  if (fallthru_bb && label_to_block (cfun, label) == fallthru_bb)
 	    {
 	      if (fallthru_label == NULL_RTX)
 	        fallthru_label = gen_label_rtx ();
@@ -3460,12 +3559,11 @@ expand_value_return (rtx val)
    from the current function.  */
 
 static void
-expand_return (tree retval, tree bounds)
+expand_return (tree retval)
 {
   rtx result_rtl;
   rtx val = 0;
   tree retval_rhs;
-  rtx bounds_rtl;
 
   /* If function wants no value, give it none.  */
   if (TREE_CODE (TREE_TYPE (TREE_TYPE (current_function_decl))) == VOID_TYPE)
@@ -3490,71 +3588,6 @@ expand_return (tree retval, tree bounds)
     retval_rhs = retval;
 
   result_rtl = DECL_RTL (DECL_RESULT (current_function_decl));
-
-  /* Put returned bounds to the right place.  */
-  bounds_rtl = DECL_BOUNDS_RTL (DECL_RESULT (current_function_decl));
-  if (bounds_rtl)
-    {
-      rtx addr = NULL;
-      rtx bnd = NULL;
-
-      if (bounds && bounds != error_mark_node)
-	{
-	  bnd = expand_normal (bounds);
-	  targetm.calls.store_returned_bounds (bounds_rtl, bnd);
-	}
-      else if (REG_P (bounds_rtl))
-	{
-	  if (bounds)
-	    bnd = chkp_expand_zero_bounds ();
-	  else
-	    {
-	      addr = expand_normal (build_fold_addr_expr (retval_rhs));
-	      addr = gen_rtx_MEM (Pmode, addr);
-	      bnd = targetm.calls.load_bounds_for_arg (addr, NULL, NULL);
-	    }
-
-	  targetm.calls.store_returned_bounds (bounds_rtl, bnd);
-	}
-      else
-	{
-	  int n;
-
-	  gcc_assert (GET_CODE (bounds_rtl) == PARALLEL);
-
-	  if (bounds)
-	    bnd = chkp_expand_zero_bounds ();
-	  else
-	    {
-	      addr = expand_normal (build_fold_addr_expr (retval_rhs));
-	      addr = gen_rtx_MEM (Pmode, addr);
-	    }
-
-	  for (n = 0; n < XVECLEN (bounds_rtl, 0); n++)
-	    {
-	      rtx slot = XEXP (XVECEXP (bounds_rtl, 0, n), 0);
-	      if (!bounds)
-		{
-		  rtx offs = XEXP (XVECEXP (bounds_rtl, 0, n), 1);
-		  rtx from = adjust_address (addr, Pmode, INTVAL (offs));
-		  bnd = targetm.calls.load_bounds_for_arg (from, NULL, NULL);
-		}
-	      targetm.calls.store_returned_bounds (slot, bnd);
-	    }
-	}
-    }
-  else if (chkp_function_instrumented_p (current_function_decl)
-	   && !BOUNDED_P (retval_rhs)
-	   && chkp_type_has_pointer (TREE_TYPE (retval_rhs))
-	   && TREE_CODE (retval_rhs) != RESULT_DECL)
-    {
-      rtx addr = expand_normal (build_fold_addr_expr (retval_rhs));
-      addr = gen_rtx_MEM (Pmode, addr);
-
-      gcc_assert (MEM_P (result_rtl));
-
-      chkp_copy_bounds_for_stack_parm (result_rtl, addr, TREE_TYPE (retval_rhs));
-    }
 
   /* If we are returning the RESULT_DECL, then the value has already
      been stored into it, so we don't have to do anything special.  */
@@ -3595,6 +3628,26 @@ expand_return (tree retval, tree bounds)
       /* No hard reg used; calculate value into hard return reg.  */
       expand_expr (retval, const0_rtx, VOIDmode, EXPAND_NORMAL);
       expand_value_return (result_rtl);
+    }
+}
+
+/* Expand a clobber of LHS.  If LHS is stored it in a multi-part
+   register, tell the rtl optimizers that its value is no longer
+   needed.  */
+
+static void
+expand_clobber (tree lhs)
+{
+  if (DECL_P (lhs))
+    {
+      rtx decl_rtl = DECL_RTL_IF_SET (lhs);
+      if (decl_rtl && REG_P (decl_rtl))
+	{
+	  machine_mode decl_mode = GET_MODE (decl_rtl);
+	  if (maybe_gt (GET_MODE_SIZE (decl_mode),
+			REGMODE_NATURAL_SIZE (decl_mode)))
+	    emit_clobber (decl_rtl);
+	}
     }
 }
 
@@ -3642,18 +3695,11 @@ expand_gimple_stmt_1 (gimple *stmt)
 
     case GIMPLE_RETURN:
       {
-	tree bnd = gimple_return_retbnd (as_a <greturn *> (stmt));
 	op0 = gimple_return_retval (as_a <greturn *> (stmt));
 
 	if (op0 && op0 != error_mark_node)
 	  {
 	    tree result = DECL_RESULT (current_function_decl);
-
-	    /* Mark we have return statement with missing bounds.  */
-	    if (!bnd
-		&& chkp_function_instrumented_p (cfun->decl)
-		&& !DECL_P (op0))
-	      bnd = error_mark_node;
 
 	    /* If we are not returning the current function's RESULT_DECL,
 	       build an assignment to it.  */
@@ -3676,7 +3722,7 @@ expand_gimple_stmt_1 (gimple *stmt)
 	if (!op0)
 	  expand_null_return ();
 	else
-	  expand_return (op0, bnd);
+	  expand_return (op0);
       }
       break;
 
@@ -3703,7 +3749,7 @@ expand_gimple_stmt_1 (gimple *stmt)
 	    if (TREE_CLOBBER_P (rhs))
 	      /* This is a clobber to mark the going out of scope for
 		 this LHS.  */
-	      ;
+	      expand_clobber (lhs);
 	    else
 	      expand_assignment (lhs, rhs,
 				 gimple_assign_nontemporal_move_p (
@@ -3822,6 +3868,7 @@ expand_gimple_stmt (gimple *stmt)
 	      /* If we want exceptions for non-call insns, any
 		 may_trap_p instruction may throw.  */
 	      && GET_CODE (PATTERN (insn)) != CLOBBER
+	      && GET_CODE (PATTERN (insn)) != CLOBBER_HIGH
 	      && GET_CODE (PATTERN (insn)) != USE
 	      && insn_could_throw_p (insn))
 	    make_reg_eh_region_note (insn, 0, lp_nr);
@@ -4198,7 +4245,6 @@ expand_debug_expr (tree exp)
 	case SAD_EXPR:
 	case WIDEN_MULT_PLUS_EXPR:
 	case WIDEN_MULT_MINUS_EXPR:
-	case FMA_EXPR:
 	  goto ternary;
 
 	case TRUTH_ANDIF_EXPR:
@@ -4450,10 +4496,11 @@ expand_debug_expr (tree exp)
 	    goto component_ref;
 
 	  op1 = expand_debug_expr (TREE_OPERAND (exp, 1));
-	  if (!op1 || !CONST_INT_P (op1))
+	  poly_int64 offset;
+	  if (!op1 || !poly_int_rtx_p (op1, &offset))
 	    return NULL;
 
-	  op0 = plus_constant (inner_mode, op0, INTVAL (op1));
+	  op0 = plus_constant (inner_mode, op0, offset);
 	}
 
       as = TYPE_ADDR_SPACE (TREE_TYPE (TREE_TYPE (TREE_OPERAND (exp, 0))));
@@ -4621,6 +4668,7 @@ expand_debug_expr (tree exp)
       }
 
     case ABS_EXPR:
+    case ABSU_EXPR:
       return simplify_gen_unary (ABS, mode, op0, mode);
 
     case NEGATE_EXPR:
@@ -4967,10 +5015,11 @@ expand_debug_expr (tree exp)
 		{
 		  op1 = expand_debug_expr (TREE_OPERAND (TREE_OPERAND (exp, 0),
 							 1));
-		  if (!op1 || !CONST_INT_P (op1))
+		  poly_int64 offset;
+		  if (!op1 || !poly_int_rtx_p (op1, &offset))
 		    return NULL;
 
-		  return plus_constant (mode, op0, INTVAL (op1));
+		  return plus_constant (mode, op0, offset);
 		}
 	    }
 
@@ -5102,8 +5151,11 @@ expand_debug_expr (tree exp)
     case REALIGN_LOAD_EXPR:
     case VEC_COND_EXPR:
     case VEC_PACK_FIX_TRUNC_EXPR:
+    case VEC_PACK_FLOAT_EXPR:
     case VEC_PACK_SAT_EXPR:
     case VEC_PACK_TRUNC_EXPR:
+    case VEC_UNPACK_FIX_TRUNC_HI_EXPR:
+    case VEC_UNPACK_FIX_TRUNC_LO_EXPR:
     case VEC_UNPACK_FLOAT_HI_EXPR:
     case VEC_UNPACK_FLOAT_LO_EXPR:
     case VEC_UNPACK_HI_EXPR:
@@ -5190,9 +5242,6 @@ expand_debug_expr (tree exp)
 	}
       return NULL;
 
-    case FMA_EXPR:
-      return simplify_gen_ternary (FMA, mode, inner_mode, op0, op1, op2);
-
     default:
     flag_unsupported:
       if (flag_checking)
@@ -5215,6 +5264,10 @@ expand_debug_source_expr (tree exp)
 
   switch (TREE_CODE (exp))
     {
+    case VAR_DECL:
+      if (DECL_ABSTRACT_ORIGIN (exp))
+	return expand_debug_source_expr (DECL_ABSTRACT_ORIGIN (exp));
+      break;
     case PARM_DECL:
       {
 	mode = DECL_MODE (exp);
@@ -5879,6 +5932,8 @@ expand_gimple_basic_block (basic_block bb, bool disable_tail_calls)
     last = PREV_INSN (last);
   if (JUMP_TABLE_DATA_P (last))
     last = PREV_INSN (PREV_INSN (last));
+  if (BARRIER_P (last))
+    last = PREV_INSN (last);
   BB_END (bb) = last;
 
   update_bb_for_insn (bb);
@@ -6176,7 +6231,25 @@ stack_protect_prologue (void)
   tree guard_decl = targetm.stack_protect_guard ();
   rtx x, y;
 
+  crtl->stack_protect_guard_decl = guard_decl;
   x = expand_normal (crtl->stack_protect_guard);
+
+  if (targetm.have_stack_protect_combined_set () && guard_decl)
+    {
+      gcc_assert (DECL_P (guard_decl));
+      y = DECL_RTL (guard_decl);
+
+      /* Allow the target to compute address of Y and copy it to X without
+	 leaking Y into a register.  This combined address + copy pattern
+	 allows the target to prevent spilling of any intermediate results by
+	 splitting it after register allocator.  */
+      if (rtx_insn *insn = targetm.gen_stack_protect_combined_set (x, y))
+	{
+	  emit_insn (insn);
+	  return;
+	}
+    }
+
   if (guard_decl)
     y = expand_normal (guard_decl);
   else
@@ -6267,9 +6340,6 @@ pass_expand::execute (function *fun)
   free_dominance_info (CDI_DOMINATORS);
 
   rtl_profile_for_bb (ENTRY_BLOCK_PTR_FOR_FN (fun));
-
-  if (chkp_function_instrumented_p (current_function_decl))
-    chkp_reset_rtl_bounds ();
 
   insn_locations_init ();
   if (!DECL_IS_BUILTIN (current_function_decl))

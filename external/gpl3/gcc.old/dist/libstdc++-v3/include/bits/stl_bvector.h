@@ -1,6 +1,6 @@
 // vector<bool> specialization -*- C++ -*-
 
-// Copyright (C) 2001-2018 Free Software Foundation, Inc.
+// Copyright (C) 2001-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -78,6 +78,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     : _M_p(__x), _M_mask(__y) { }
 
     _Bit_reference() _GLIBCXX_NOEXCEPT : _M_p(0), _M_mask(0) { }
+
+#if __cplusplus >= 201103L
+    _Bit_reference(const _Bit_reference&) = default;
+#endif
 
     operator bool() const _GLIBCXX_NOEXCEPT
     { return !!(*_M_p & _M_mask); }
@@ -805,11 +809,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       iterator
       begin() _GLIBCXX_NOEXCEPT
-      { return this->_M_impl._M_start; }
+      { return iterator(this->_M_impl._M_start._M_p, 0); }
 
       const_iterator
       begin() const _GLIBCXX_NOEXCEPT
-      { return this->_M_impl._M_start; }
+      { return const_iterator(this->_M_impl._M_start._M_p, 0); }
 
       iterator
       end() _GLIBCXX_NOEXCEPT
@@ -838,7 +842,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 #if __cplusplus >= 201103L
       const_iterator
       cbegin() const noexcept
-      { return this->_M_impl._M_start; }
+      { return const_iterator(this->_M_impl._M_start._M_p, 0); }
 
       const_iterator
       cend() const noexcept
@@ -1221,7 +1225,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 		      std::input_iterator_tag)
 	{
 	  iterator __cur = begin();
-	  for (; __first != __last && __cur != end(); ++__cur, ++__first)
+	  for (; __first != __last && __cur != end(); ++__cur, (void)++__first)
 	    *__cur = *__first;
 	  if (__first == __last)
 	    _M_erase_at_end(__cur);

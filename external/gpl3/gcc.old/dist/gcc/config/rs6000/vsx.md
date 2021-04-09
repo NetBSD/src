@@ -1,5 +1,5 @@
 ;; VSX patterns.
-;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2019 Free Software Foundation, Inc.
 ;; Contributed by Michael Meissner <meissner@linux.vnet.ibm.com>
 
 ;; This file is part of GCC.
@@ -183,6 +183,18 @@
 			 (TF	"??r")
 			 (TI	"r")])
 
+;; A mode attribute used for 128-bit constant values.
+(define_mode_attr nW	[(V16QI	"W")
+			 (V8HI	"W")
+			 (V4SI	"W")
+			 (V4SF	"W")
+			 (V2DI	"W")
+			 (V2DF	"W")
+			 (V1TI	"W")
+			 (KF	"W")
+			 (TF	"W")
+			 (TI	"n")])
+
 ;; Same size integer type for floating point data
 (define_mode_attr VSi [(V4SF  "v4si")
 		       (V2DF  "v2di")
@@ -214,37 +226,21 @@
 				 (V4SF "vecfloat")
 				 (DF   "fp")])
 
-(define_mode_attr VSfptype_simple [(V2DF "fp_addsub_d")
-				   (V4SF "fp_addsub_s")
-				   (DF   "fp_addsub_d")])
-
 ;; Appropriate type for multiply ops
 (define_mode_attr VStype_mul	[(V2DF "vecdouble")
 				 (V4SF "vecfloat")
 				 (DF   "dmul")])
-
-(define_mode_attr VSfptype_mul	[(V2DF "fp_mul_d")
-				 (V4SF "fp_mul_s")
-				 (DF   "fp_mul_d")])
 
 ;; Appropriate type for divide ops.
 (define_mode_attr VStype_div	[(V2DF "vecdiv")
 				 (V4SF "vecfdiv")
 				 (DF   "ddiv")])
 
-(define_mode_attr VSfptype_div	[(V2DF "fp_div_d")
-				 (V4SF "fp_div_s")
-				 (DF   "fp_div_d")])
-
 ;; Appropriate type for sqrt ops.  For now, just lump the vector sqrt with
 ;; the scalar sqrt
 (define_mode_attr VStype_sqrt	[(V2DF "dsqrt")
 				 (V4SF "ssqrt")
 				 (DF   "dsqrt")])
-
-(define_mode_attr VSfptype_sqrt	[(V2DF "fp_sqrt_d")
-				 (V4SF "fp_sqrt_s")
-				 (DF   "fp_sqrt_d")])
 
 ;; Iterator and modes for sp<->dp conversions
 ;; Because scalar SF values are represented internally as double, use the
@@ -397,6 +393,7 @@
    UNSPEC_VSX_SIEXPDP
    UNSPEC_VSX_SIEXPQP
    UNSPEC_VSX_SCMPEXPDP
+   UNSPEC_VSX_SCMPEXPQP
    UNSPEC_VSX_STSTDC
    UNSPEC_VSX_VEXTRACT_FP_FROM_SHORTH
    UNSPEC_VSX_VEXTRACT_FP_FROM_SHORTL
@@ -404,7 +401,6 @@
    UNSPEC_VSX_VXSIG
    UNSPEC_VSX_VIEXP
    UNSPEC_VSX_VTSTDC
-   UNSPEC_VSX_VEC_INIT
    UNSPEC_VSX_VSIGNED2
 
    UNSPEC_LXVL
@@ -463,7 +459,7 @@
      allocation and the hard register destination is not in the altivec
      range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((reg_or_subregno (operands[0]) >= FIRST_PSEUDO_REGISTER)
+      && (!HARD_REGISTER_NUM_P (reg_or_subregno (operands[0]))
 	  || ALTIVEC_REGNO_P (reg_or_subregno (operands[0]))))
     {
       rtx mem_address = XEXP (mem, 0);
@@ -513,7 +509,7 @@
      allocation and the hard register destination is not in the altivec
      range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((REGNO(operands[0]) >= FIRST_PSEUDO_REGISTER)
+      && (!HARD_REGISTER_P (operands[0])
 	  || ALTIVEC_REGNO_P (REGNO(operands[0]))))
     {
       rtx mem_address = XEXP (mem, 0);
@@ -567,7 +563,7 @@
      allocation and the hard register destination is not in the altivec
      range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((REGNO(operands[0]) >= FIRST_PSEUDO_REGISTER)
+      && (!HARD_REGISTER_P (operands[0])
 	  || ALTIVEC_REGNO_P (REGNO(operands[0]))))
     {
       rtx mem_address = XEXP (mem, 0);
@@ -629,7 +625,7 @@
      allocation and the hard register destination is not in the altivec
      range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((REGNO(operands[0]) >= FIRST_PSEUDO_REGISTER)
+      && (!HARD_REGISTER_P (operands[0])
 	  || ALTIVEC_REGNO_P (REGNO(operands[0]))))
     {
       rtx mem_address = XEXP (mem, 0);
@@ -682,8 +678,8 @@
   /* Don't apply the swap optimization if we've already performed register
      allocation and the hard register source is not in the altivec range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((reg_or_subregno (operands[1]) >= FIRST_PSEUDO_REGISTER)
-          || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
+      && (!HARD_REGISTER_NUM_P (reg_or_subregno (operands[1]))
+	  || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
     {
       rtx mem_address = XEXP (mem, 0);
       enum machine_mode mode = GET_MODE (mem);
@@ -754,8 +750,8 @@
   /* Don't apply the swap optimization if we've already performed register
      allocation and the hard register source is not in the altivec range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((reg_or_subregno (operands[1]) >= FIRST_PSEUDO_REGISTER)
-          || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
+      && (!HARD_REGISTER_NUM_P (reg_or_subregno (operands[1]))
+	  || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
     {
       rtx mem_address = XEXP (mem, 0);
       enum machine_mode mode = GET_MODE (mem);
@@ -833,8 +829,8 @@
   /* Don't apply the swap optimization if we've already performed register
      allocation and the hard register source is not in the altivec range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((reg_or_subregno (operands[1]) >= FIRST_PSEUDO_REGISTER)
-          || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
+      && (!HARD_REGISTER_NUM_P (reg_or_subregno (operands[1]))
+	  || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
     {
       rtx mem_address = XEXP (mem, 0);
       enum machine_mode mode = GET_MODE (mem);
@@ -926,8 +922,8 @@
   /* Don't apply the swap optimization if we've already performed register
      allocation and the hard register source is not in the altivec range.  */
   if ((MEM_ALIGN (mem) >= 128)
-      && ((reg_or_subregno (operands[1]) >= FIRST_PSEUDO_REGISTER)
-          || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
+      && (!HARD_REGISTER_NUM_P (reg_or_subregno (operands[1]))
+	  || ALTIVEC_REGNO_P (reg_or_subregno (operands[1]))))
     {
       rtx mem_address = XEXP (mem, 0);
       enum machine_mode mode = GET_MODE (mem);
@@ -1209,17 +1205,17 @@
 
 ;;              VSX store  VSX load   VSX move  VSX->GPR   GPR->VSX    LQ (GPR)
 ;;              STQ (GPR)  GPR load   GPR store GPR move   XXSPLTIB    VSPLTISW
-;;              VSX 0/-1   GPR 0/-1   VMX const GPR const  LVX (VMX)   STVX (VMX)
-(define_insn "*vsx_mov<mode>_64bit"
+;;              VSX 0/-1   VMX const  GPR const LVX (VMX)  STVX (VMX)
+(define_insn "vsx_mov<mode>_64bit"
   [(set (match_operand:VSX_M 0 "nonimmediate_operand"
                "=ZwO,      <VSa>,     <VSa>,     r,         we,        ?wQ,
                 ?&r,       ??r,       ??Y,       <??r>,     wo,        v,
-                ?<VSa>,    *r,        v,         ??r,       wZ,        v")
+                ?<VSa>,    v,         <??r>,     wZ,        v")
 
 	(match_operand:VSX_M 1 "input_operand" 
                "<VSa>,     ZwO,       <VSa>,     we,        r,         r,
                 wQ,        Y,         r,         r,         wE,        jwM,
-                ?jwM,      jwM,       W,         W,         v,         wZ"))]
+                ?jwM,      W,         <nW>,      v,         wZ"))]
 
   "TARGET_POWERPC64 && VECTOR_MEM_VSX_P (<MODE>mode)
    && (register_operand (operands[0], <MODE>mode) 
@@ -1230,25 +1226,25 @@
   [(set_attr "type"
                "vecstore,  vecload,   vecsimple, mffgpr,    mftgpr,    load,
                 store,     load,      store,     *,         vecsimple, vecsimple,
-                vecsimple, *,         *,         *,         vecstore,  vecload")
+                vecsimple, *,         *,         vecstore,  vecload")
 
    (set_attr "length"
                "4,         4,         4,         8,         4,         8,
                 8,         8,         8,         8,         4,         4,
-                4,         8,         20,        20,        4,         4")])
+                4,         20,        8,         4,         4")])
 
 ;;              VSX store  VSX load   VSX move   GPR load   GPR store  GPR move
-;;              XXSPLTIB   VSPLTISW   VSX 0/-1   GPR 0/-1   VMX const  GPR const
+;;              XXSPLTIB   VSPLTISW   VSX 0/-1   VMX const  GPR const
 ;;              LVX (VMX)  STVX (VMX)
 (define_insn "*vsx_mov<mode>_32bit"
   [(set (match_operand:VSX_M 0 "nonimmediate_operand"
                "=ZwO,      <VSa>,     <VSa>,     ??r,       ??Y,       <??r>,
-                wo,        v,         ?<VSa>,    *r,        v,         ??r,
+                wo,        v,         ?<VSa>,    v,         <??r>,
                 wZ,        v")
 
 	(match_operand:VSX_M 1 "input_operand" 
                "<VSa>,     ZwO,       <VSa>,     Y,         r,         r,
-                wE,        jwM,       ?jwM,      jwM,       W,         W,
+                wE,        jwM,       ?jwM,      W,         <nW>,
                 v,         wZ"))]
 
   "!TARGET_POWERPC64 && VECTOR_MEM_VSX_P (<MODE>mode)
@@ -1259,12 +1255,12 @@
 }
   [(set_attr "type"
                "vecstore,  vecload,   vecsimple, load,      store,    *,
-                vecsimple, vecsimple, vecsimple, *,         *,        *,
+                vecsimple, vecsimple, vecsimple, *,         *,
                 vecstore,  vecload")
 
    (set_attr "length"
                "4,         4,         4,         16,        16,        16,
-                4,         4,         4,         16,        20,        32,
+                4,         4,         4,         20,        16,
                 4,         4")])
 
 ;; Explicit  load/store expanders for the builtin functions
@@ -1429,7 +1425,7 @@
     }
 })
 
-(define_insn "*vsx_ld_elemrev_v16qi_internal"
+(define_insn "vsx_ld_elemrev_v16qi_internal"
   [(set (match_operand:V16QI 0 "vsx_register_operand" "=wa")
         (vec_select:V16QI
           (match_operand:V16QI 1 "memory_operand" "Z")
@@ -1612,8 +1608,7 @@
 		    (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvadd<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_sub<mode>3"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -1621,8 +1616,7 @@
 		     (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvsub<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_mul<mode>3"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -1630,8 +1624,7 @@
 		    (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvmul<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_mul>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 ; Emulate vector with scalar for vec_mul in V2DImode
 (define_insn_and_split "vsx_mul_v2di"
@@ -1679,8 +1672,7 @@
 		   (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvdiv<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_div>")
-   (set_attr "fp_type" "<VSfptype_div>")])
+  [(set_attr "type" "<VStype_div>")])
 
 ; Emulate vector with scalar for vec_div in V2DImode
 (define_insn_and_split "vsx_div_v2di"
@@ -1812,8 +1804,7 @@
 		   UNSPEC_VSX_TDIV))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "x<VSv>tdiv<VSs> %0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_fre<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -1821,24 +1812,21 @@
 		      UNSPEC_FRES))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvre<VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_neg<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
         (neg:VSX_F (match_operand:VSX_F 1 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvneg<VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_abs<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
         (abs:VSX_F (match_operand:VSX_F 1 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvabs<VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_nabs<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -1847,8 +1835,7 @@
 	  (match_operand:VSX_F 1 "vsx_register_operand" "<VSr>,<VSa>"))))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvnabs<VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_smax<mode>3"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -1856,8 +1843,7 @@
 		    (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvmax<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_smin<mode>3"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -1865,16 +1851,14 @@
 		    (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvmin<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_sqrt<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
         (sqrt:VSX_F (match_operand:VSX_F 1 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvsqrt<VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_sqrt>")
-   (set_attr "fp_type" "<VSfptype_sqrt>")])
+  [(set_attr "type" "<VStype_sqrt>")])
 
 (define_insn "*vsx_rsqrte<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -1882,8 +1866,7 @@
 		      UNSPEC_RSQRT))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvrsqrte<VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 ;; *tsqrt* returning the fg flag
 (define_expand "vsx_tsqrt<mode>2_fg"
@@ -1917,8 +1900,7 @@
 		     UNSPEC_VSX_TSQRT))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "x<VSv>tsqrt<VSs> %0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 ;; Fused vector multiply/add instructions. Support the classical Altivec
 ;; versions of fma, which allows the target to be a separate register from the
@@ -1982,8 +1964,7 @@
    xvnmaddm<VSs> %x0,%x1,%x3
    xvnmadda<VSs> %x0,%x1,%x2
    xvnmaddm<VSs> %x0,%x1,%x3"
-  [(set_attr "type" "<VStype_mul>")
-   (set_attr "fp_type" "<VSfptype_mul>")])
+  [(set_attr "type" "<VStype_mul>")])
 
 (define_insn "*vsx_nfmsv4sf4"
   [(set (match_operand:V4SF 0 "vsx_register_operand" "=wf,wf,?wa,?wa,v")
@@ -2025,8 +2006,7 @@
 		  (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvcmpeq<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_gt<mode>"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -2034,8 +2014,7 @@
 		  (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvcmpgt<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_ge<mode>"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -2043,8 +2022,7 @@
 		  (match_operand:VSX_F 2 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvcmpge<VSs> %x0,%x1,%x2"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 ;; Compare vectors producing a vector result and a predicate, setting CR6 to
 ;; indicate a combined status
@@ -2119,8 +2097,7 @@
 	 UNSPEC_COPYSIGN))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvcpsgn<VSs> %x0,%x2,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 ;; For the conversions, limit the register class for the integer value to be
 ;; the fprs because we don't want to add the altivec registers to movdi/movsi.
@@ -2133,32 +2110,28 @@
 	(float:VSX_F (match_operand:<VSI> 1 "gpc_reg_operand" "<VSr2>,<VSr3>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvcvsx<VSc><VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_floatuns<VSi><mode>2"
   [(set (match_operand:VSX_F 0 "gpc_reg_operand" "=<VSr>,?<VSa>")
 	(unsigned_float:VSX_F (match_operand:<VSI> 1 "gpc_reg_operand" "<VSr2>,<VSr3>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvcvux<VSc><VSs> %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_fix_trunc<mode><VSi>2"
   [(set (match_operand:<VSI> 0 "gpc_reg_operand" "=<VSr2>,?<VSr3>")
 	(fix:<VSI> (match_operand:VSX_F 1 "gpc_reg_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "x<VSv>cv<VSs>sx<VSc>s %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_fixuns_trunc<mode><VSi>2"
   [(set (match_operand:<VSI> 0 "gpc_reg_operand" "=<VSr2>,?<VSr3>")
 	(unsigned_fix:<VSI> (match_operand:VSX_F 1 "gpc_reg_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "x<VSv>cv<VSs>ux<VSc>s %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 ;; Math rounding functions
 (define_insn "vsx_x<VSv>r<VSs>i"
@@ -2167,8 +2140,7 @@
 		      UNSPEC_VSX_ROUND_I))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "x<VSv>r<VSs>i %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_x<VSv>r<VSs>ic"
   [(set (match_operand:VSX_B 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -2176,16 +2148,14 @@
 		      UNSPEC_VSX_ROUND_IC))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "x<VSv>r<VSs>ic %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_btrunc<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
 	(fix:VSX_F (match_operand:VSX_F 1 "vsx_register_operand" "<VSr>,<VSa>")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvr<VSs>iz %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "*vsx_b2trunc<mode>2"
   [(set (match_operand:VSX_B 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -2193,8 +2163,7 @@
 		      UNSPEC_FRIZ))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "x<VSv>r<VSs>iz %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_floor<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -2202,8 +2171,7 @@
 		      UNSPEC_FRIM))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvr<VSs>im %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 (define_insn "vsx_ceil<mode>2"
   [(set (match_operand:VSX_F 0 "vsx_register_operand" "=<VSr>,?<VSa>")
@@ -2211,8 +2179,7 @@
 		      UNSPEC_FRIP))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "xvr<VSs>ip %x0,%x1"
-  [(set_attr "type" "<VStype_simple>")
-   (set_attr "fp_type" "<VSfptype_simple>")])
+  [(set_attr "type" "<VStype_simple>")])
 
 
 ;; VSX convert to/from double vector
@@ -2602,7 +2569,7 @@
    (use (match_operand:VSX_D 1 "register_operand" "wa"))]
   "VECTOR_UNIT_VSX_P (V4SFmode)"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     {
       /* Shift left one word to put even word correct location */
       rtx rtx_tmp;
@@ -2627,7 +2594,7 @@
    (use (match_operand:V2DI 1 "register_operand" "wa"))]
   "VECTOR_UNIT_VSX_P (V4SFmode)"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     {
       /* Shift left one word to put even word correct location */
       rtx rtx_tmp;
@@ -2652,7 +2619,7 @@
    (use (match_operand:VSX_D 1 "register_operand" "wa"))]
   "VECTOR_UNIT_VSX_P (V4SFmode)"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     emit_insn (gen_vsx_xvcv<VF_sxddp>sp (operands[0], operands[1]));
   else
     {
@@ -2676,7 +2643,7 @@
   (use (match_operand:V2DI 1 "register_operand" "wa"))]
  "VECTOR_UNIT_VSX_P (V4SFmode)"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     emit_insn (gen_vsx_xvcvuxdsp (operands[0], operands[1]));
   else
     {
@@ -2719,7 +2686,7 @@
 	(match_operand:V2DF 1 "register_operand" "wa"))]
   "TARGET_VSX"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     {
       rtx rtx_tmp;
       rtx rtx_val = GEN_INT (12);
@@ -2751,7 +2718,7 @@
 	(match_operand:V2DF 1 "register_operand" "v"))]
   "TARGET_VSX"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     /* Big endian word numbering for words in operand is 0 1
        Result words 0 is where they need to be.  */
     emit_insn (gen_vsx_xvcvdpsxws (operands[0], operands[1]));
@@ -2803,7 +2770,7 @@
 	(match_operand:V2DF 1 "register_operand" "v"))]
   "TARGET_VSX"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     {
       rtx rtx_tmp;
       rtx rtx_val = GEN_INT (12);
@@ -2835,7 +2802,7 @@
 	(match_operand:V2DF 1 "register_operand" "v"))]
   "TARGET_VSX"
 {
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     /* Big endian word numbering for words in operand is 0 1
        Result words 0 is where they need to be.  */
     emit_insn (gen_vsx_xvcvdpuxws (operands[0], operands[1]));
@@ -2867,12 +2834,11 @@
 	(float:V2DF
 	 (fix:V2DI
 	  (match_operand:V2DF 1 "vsx_register_operand" "wd,?wa"))))]
-  "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
+  "TARGET_HARD_FLOAT
    && VECTOR_UNIT_VSX_P (V2DFmode) && flag_unsafe_math_optimizations
    && !flag_trapping_math && TARGET_FRIZ"
   "xvrdpiz %x0,%x1"
-  [(set_attr "type" "vecdouble")
-   (set_attr "fp_type" "fp_addsub_d")])
+  [(set_attr "type" "vecdouble")])
 
 
 ;; Permute operations
@@ -2992,23 +2958,41 @@
 }
   [(set_attr "type" "vecperm")])
 
-;; V4SImode initialization splitter
-(define_insn_and_split "vsx_init_v4si"
-  [(set (match_operand:V4SI 0 "gpc_reg_operand" "=&r")
-	(unspec:V4SI
-	 [(match_operand:SI 1 "reg_or_cint_operand" "rn")
-	  (match_operand:SI 2 "reg_or_cint_operand" "rn")
-	  (match_operand:SI 3 "reg_or_cint_operand" "rn")
-	  (match_operand:SI 4 "reg_or_cint_operand" "rn")]
-	 UNSPEC_VSX_VEC_INIT))
-   (clobber (match_scratch:DI 5 "=&r"))
-   (clobber (match_scratch:DI 6 "=&r"))]
+;; Concatenate 4 SImode elements into a V4SImode reg.
+(define_expand "vsx_init_v4si"
+  [(use (match_operand:V4SI 0 "gpc_reg_operand"))
+   (use (match_operand:SI 1 "gpc_reg_operand"))
+   (use (match_operand:SI 2 "gpc_reg_operand"))
+   (use (match_operand:SI 3 "gpc_reg_operand"))
+   (use (match_operand:SI 4 "gpc_reg_operand"))]
    "VECTOR_MEM_VSX_P (V4SImode) && TARGET_DIRECT_MOVE_64BIT"
-   "#"
-   "&& reload_completed"
-   [(const_int 0)]
 {
-  rs6000_split_v4si_init (operands);
+  rtx a = gen_reg_rtx (DImode);
+  rtx b = gen_reg_rtx (DImode);
+  rtx c = gen_reg_rtx (DImode);
+  rtx d = gen_reg_rtx (DImode);
+  emit_insn (gen_zero_extendsidi2 (a, operands[1]));
+  emit_insn (gen_zero_extendsidi2 (b, operands[2]));
+  emit_insn (gen_zero_extendsidi2 (c, operands[3]));
+  emit_insn (gen_zero_extendsidi2 (d, operands[4]));
+  if (!BYTES_BIG_ENDIAN)
+    {
+      std::swap (a, b);
+      std::swap (c, d);
+    }
+
+  rtx aa = gen_reg_rtx (DImode);
+  rtx ab = gen_reg_rtx (DImode);
+  rtx cc = gen_reg_rtx (DImode);
+  rtx cd = gen_reg_rtx (DImode);
+  emit_insn (gen_ashldi3 (aa, a, GEN_INT (32)));
+  emit_insn (gen_ashldi3 (cc, c, GEN_INT (32)));
+  emit_insn (gen_iordi3 (ab, aa, b));
+  emit_insn (gen_iordi3 (cd, cc, d));
+
+  rtx abcd = gen_reg_rtx (V2DImode);
+  emit_insn (gen_vsx_concat_v2di (abcd, ab, cd));
+  emit_move_insn (operands[0], gen_lowpart (V4SImode, abcd));
   DONE;
 })
 
@@ -3294,10 +3278,9 @@
   "VECTOR_MEM_VSX_P (<MODE>mode)"
   "@
    stfd%U0%X0 %1,%0
-   stxsd%U0x %x1,%y0
+   stxsdx %x1,%y0
    stxsd %1,%0"
-  [(set_attr "type" "fpstore")
-   (set_attr "length" "4")])
+  [(set_attr "type" "fpstore")])
 
 ;; Variable V2DI/V2DF extract shift
 (define_insn "vsx_vslo_<mode>"
@@ -3544,7 +3527,7 @@
   else
     {
       HOST_WIDE_INT elt = INTVAL (operands[2]);
-      HOST_WIDE_INT elt_adj = (!VECTOR_ELT_ORDER_BIG
+      HOST_WIDE_INT elt_adj = (!BYTES_BIG_ENDIAN
 			       ? GET_MODE_NUNITS (<MODE>mode) - 1 - elt
 			       : elt);
 
@@ -3576,7 +3559,7 @@
   HOST_WIDE_INT offset = INTVAL (op2) * GET_MODE_UNIT_SIZE (<MODE>mode);
 
   emit_move_insn (op3, GEN_INT (offset));
-  if (VECTOR_ELT_ORDER_BIG)
+  if (BYTES_BIG_ENDIAN)
     emit_insn (gen_vextu<wd>lx (op0_si, op3, op1));
   else
     emit_insn (gen_vextu<wd>rx (op0_si, op3, op1));
@@ -3639,7 +3622,7 @@
   rtx vec_tmp = operands[3];
   int value;
 
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     element = GEN_INT (GET_MODE_NUNITS (V4SImode) - 1 - INTVAL (element));
 
   /* If the value is in the correct position, we can avoid doing the VSPLT<x>
@@ -3653,7 +3636,7 @@
   if (MEM_P (operands[0]))
     {
       if (can_create_pseudo_p ())
-	dest = rs6000_address_for_fpconvert (dest);
+	dest = rs6000_force_indexed_or_indirect_mem (dest);
 
       if (TARGET_P8_VECTOR)
 	emit_move_insn (dest, gen_rtx_REG (SImode, REGNO (vec_tmp)));
@@ -3690,7 +3673,7 @@
   rtx vec_tmp = operands[3];
   int value;
 
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     element = GEN_INT (GET_MODE_NUNITS (<MODE>mode) - 1 - INTVAL (element));
 
   /* If the value is in the correct position, we can avoid doing the VSPLT<x>
@@ -3798,7 +3781,7 @@
   rtx v4si_tmp = operands[3];
   int value;
 
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     element = GEN_INT (GET_MODE_NUNITS (V4SImode) - 1 - INTVAL (element));
 
   /* If the value is in the correct position, we can avoid doing the VSPLT<x>
@@ -3841,7 +3824,7 @@
   rtx df_tmp = operands[4];
   int value;
 
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     element = GEN_INT (GET_MODE_NUNITS (V4SImode) - 1 - INTVAL (element));
 
   /* If the value is in the correct position, we can avoid doing the VSPLT<x>
@@ -3941,7 +3924,7 @@
   int ele = INTVAL (operands[3]);
   int nunits = GET_MODE_NUNITS (<MODE>mode);
 
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     ele = nunits - 1 - ele;
 
   operands[3] = GEN_INT (GET_MODE_SIZE (<VS_scalar>mode) * ele);
@@ -3980,7 +3963,7 @@
 
   operands[5] = gen_rtx_REG (V4SFmode, tmp_regno);
   operands[6] = gen_rtx_REG (V4SImode, tmp_regno);
-  operands[7] = GEN_INT (VECTOR_ELT_ORDER_BIG ? 1 : 2);
+  operands[7] = GEN_INT (BYTES_BIG_ENDIAN ? 0 : 3);
   operands[8] = gen_rtx_REG (V4SImode, reg_or_subregno (operands[0]));
 }
   [(set_attr "type" "vecperm")
@@ -4026,11 +4009,11 @@
 	  (match_operand:QI 4 "const_0_to_3_operand" "n")]
 	 UNSPEC_VSX_SET))]
   "VECTOR_MEM_VSX_P (V4SFmode) && TARGET_P9_VECTOR && TARGET_POWERPC64
-   && (INTVAL (operands[3]) == (VECTOR_ELT_ORDER_BIG ? 1 : 2))"
+   && (INTVAL (operands[3]) == (BYTES_BIG_ENDIAN ? 1 : 2))"
 {
   int ele = INTVAL (operands[4]);
 
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     ele = GET_MODE_NUNITS (V4SFmode) - 1 - ele;
 
   operands[4] = GEN_INT (GET_MODE_SIZE (SFmode) * ele);
@@ -4054,7 +4037,7 @@
    (clobber (match_scratch:SI 5 "=&wJwK"))]
   "VECTOR_MEM_VSX_P (V4SFmode) && VECTOR_MEM_VSX_P (V4SImode)
    && TARGET_P9_VECTOR && TARGET_POWERPC64
-   && (INTVAL (operands[3]) != (VECTOR_ELT_ORDER_BIG ? 1 : 2))"
+   && (INTVAL (operands[3]) != (BYTES_BIG_ENDIAN ? 1 : 2))"
   "#"
   "&& 1"
   [(parallel [(set (match_dup 5)
@@ -4083,21 +4066,8 @@
    (use (match_operand:VSX_D 2 "vsx_register_operand"))]
   "VECTOR_MEM_VSX_P (<MODE>mode)"
 {
-  rtvec v;
-  rtx x;
-
-  /* Special handling for LE with -maltivec=be.  */
-  if (!BYTES_BIG_ENDIAN && VECTOR_ELT_ORDER_BIG)
-    {
-      v = gen_rtvec (2, GEN_INT (0), GEN_INT (2));
-      x = gen_rtx_VEC_CONCAT (<VS_double>mode, operands[2], operands[1]);
-    }
-  else
-    {
-      v = gen_rtvec (2, GEN_INT (1), GEN_INT (3));
-      x = gen_rtx_VEC_CONCAT (<VS_double>mode, operands[1], operands[2]);
-    }
-
+  rtvec v = gen_rtvec (2, GEN_INT (1), GEN_INT (3));
+  rtx x = gen_rtx_VEC_CONCAT (<VS_double>mode, operands[1], operands[2]);
   x = gen_rtx_VEC_SELECT (<MODE>mode, x, gen_rtx_PARALLEL (VOIDmode, v));
   emit_insn (gen_rtx_SET (operands[0], x));
   DONE;
@@ -4109,21 +4079,8 @@
    (use (match_operand:VSX_D 2 "vsx_register_operand"))]
   "VECTOR_MEM_VSX_P (<MODE>mode)"
 {
-  rtvec v;
-  rtx x;
-
-  /* Special handling for LE with -maltivec=be.  */
-  if (!BYTES_BIG_ENDIAN && VECTOR_ELT_ORDER_BIG)
-    {
-      v = gen_rtvec (2, GEN_INT (1), GEN_INT (3));
-      x = gen_rtx_VEC_CONCAT (<VS_double>mode, operands[2], operands[1]);
-    }
-  else
-    {
-      v = gen_rtvec (2, GEN_INT (0), GEN_INT (2));
-      x = gen_rtx_VEC_CONCAT (<VS_double>mode, operands[1], operands[2]);
-    }
-
+  rtvec v = gen_rtvec (2, GEN_INT (0), GEN_INT (2));
+  rtx x = gen_rtx_VEC_CONCAT (<VS_double>mode, operands[1], operands[2]);
   x = gen_rtx_VEC_SELECT (<MODE>mode, x, gen_rtx_PARALLEL (VOIDmode, v));
   emit_insn (gen_rtx_SET (operands[0], x));
   DONE;
@@ -4143,7 +4100,7 @@
 {
   rtx op1 = operands[1];
   if (MEM_P (op1))
-    operands[1] = rs6000_address_for_fpconvert (op1);
+    operands[1] = rs6000_force_indexed_or_indirect_mem (op1);
   else if (!REG_P (op1))
     op1 = force_reg (<VSX_D:VS_scalar>mode, op1);
 })
@@ -4255,8 +4212,8 @@
                       UNSPEC_VSX_XXSPLTD))]
   "VECTOR_MEM_VSX_P (<MODE>mode)"
 {
-  if ((VECTOR_ELT_ORDER_BIG && INTVAL (operands[2]) == 0)
-      || (!VECTOR_ELT_ORDER_BIG && INTVAL (operands[2]) == 1))
+  if ((BYTES_BIG_ENDIAN && INTVAL (operands[2]) == 0)
+      || (!BYTES_BIG_ENDIAN && INTVAL (operands[2]) == 1))
     return "xxpermdi %x0,%x1,%x1,0";
   else
     return "xxpermdi %x0,%x1,%x1,3";
@@ -4614,6 +4571,34 @@
 	 (match_operand:SI 3 "zero_constant" "j")))]
   "TARGET_P9_VECTOR"
   "xscmpexpdp %0,%x1,%x2"
+  [(set_attr "type" "fpcompare")])
+
+;; VSX Scalar Compare Exponents Quad-Precision
+(define_expand "xscmpexpqp_<code>_<mode>"
+  [(set (match_dup 3)
+	(compare:CCFP
+	 (unspec:IEEE128
+	  [(match_operand:IEEE128 1 "vsx_register_operand" "v")
+	   (match_operand:IEEE128 2 "vsx_register_operand" "v")]
+	  UNSPEC_VSX_SCMPEXPQP)
+	 (const_int 0)))
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(CMP_TEST:SI (match_dup 3)
+		     (const_int 0)))]
+  "TARGET_P9_VECTOR"
+{
+  operands[3] = gen_reg_rtx (CCFPmode);
+})
+
+(define_insn "*xscmpexpqp"
+  [(set (match_operand:CCFP 0 "cc_reg_operand" "=y")
+	(compare:CCFP
+	 (unspec:IEEE128 [(match_operand:IEEE128 1 "altivec_register_operand" "v")
+		          (match_operand:IEEE128 2 "altivec_register_operand" "v")]
+	  UNSPEC_VSX_SCMPEXPQP)
+	 (match_operand:SI 3 "zero_constant" "j")))]
+  "TARGET_P9_VECTOR"
+  "xscmpexpqp %0,%1,%2"
   [(set_attr "type" "fpcompare")])
 
 ;; VSX Scalar Test Data Class Quad-Precision
@@ -5107,6 +5092,22 @@
   "vcmpnezb %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
+;; Vector Compare Not Equal or Zero Byte predicate or record-form
+(define_insn "vcmpnezb_p"
+  [(set (reg:CC CR6_REGNO)
+	(unspec:CC
+	 [(match_operand:V16QI 1 "altivec_register_operand" "v")
+	  (match_operand:V16QI 2 "altivec_register_operand" "v")]
+	 UNSPEC_VCMPNEZB))
+   (set (match_operand:V16QI 0 "altivec_register_operand" "=v")
+	(unspec:V16QI
+	 [(match_dup 1)
+	  (match_dup 2)]
+	 UNSPEC_VCMPNEZB))]
+  "TARGET_P9_VECTOR"
+  "vcmpnezb. %0,%1,%2"
+  [(set_attr "type" "vecsimple")])
+
 ;; Vector Compare Not Equal Half Word (specified/not+eq:)
 (define_insn "vcmpneh"
   [(set (match_operand:V8HI 0 "altivec_register_operand" "=v")
@@ -5243,7 +5244,7 @@
                     UNSPEC_XXEXTRACTUW))]
   "TARGET_P9_VECTOR"
 {
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     operands[2] = GEN_INT (12 - INTVAL (operands[2]));
 
   return "xxextractuw %x0,%x1,%2";
@@ -5257,7 +5258,7 @@
 		   UNSPEC_XXINSERTW))]
   "TARGET_P9_VECTOR"
 {
-  if (!VECTOR_ELT_ORDER_BIG)
+  if (!BYTES_BIG_ENDIAN)
     {
       rtx op1 = operands[1];
       rtx v4si_tmp = gen_reg_rtx (V4SImode);

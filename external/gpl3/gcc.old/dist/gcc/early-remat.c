@@ -1,5 +1,5 @@
 /* Early (pre-RA) rematerialization
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -657,7 +657,7 @@ early_remat::dump_edge_list (basic_block bb, bool do_succ)
   edge e;
   edge_iterator ei;
   FOR_EACH_EDGE (e, ei, do_succ ? bb->succs : bb->preds)
-    dump_edge_info (dump_file, e, 0, do_succ);
+    dump_edge_info (dump_file, e, TDF_NONE, do_succ);
 }
 
 /* Print information about basic block BB to the dump file.  */

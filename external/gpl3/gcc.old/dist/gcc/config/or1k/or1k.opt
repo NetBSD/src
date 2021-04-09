@@ -1,7 +1,8 @@
-; Options for the OR1K port of the compiler
-; This file is part of GCC.
+; OpenRISC command line options
+
+; Copyright (C) 2010-2019 Free Software Foundation, Inc.
 ;
-; Copyright (C) 2010 Embecosm Limited
+; This file is part of GCC.
 ;
 ; GCC is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
@@ -17,80 +18,50 @@
 ; along with GCC; see the file COPYING3.  If not see
 ; <http://www.gnu.org/licenses/>.
 
-HeaderInclude
-config/or1k/or1k-opts.h
+; See the GCC internals manual (options.texi) for a description of
+; this file's format.
 
-Variable
-enum or1k_delay or1k_delay_selected = OR1K_DELAY_DEFAULT
-
-mdelay
-Target RejectNegative Negative(mno-delay) Var(or1k_delay_selected, OR1K_DELAY_ON)
-Assume branches and jumps have a delay slot
-
-mno-delay
-Target RejectNegative Negative(mcompat-delay) Var(or1k_delay_selected, OR1K_DELAY_OFF)
-Assume branches and jumps do not have a delay slot
-
-mcompat-delay
-Target RejectNegative Negative(mdelay) Var(or1k_delay_selected, OR1K_DELAY_COMPAT)
-Assume branches and jumps have a delay slot, but fill them with nops
-
-mhard-float
-Target RejectNegative Mask(HARD_FLOAT)
-Use hardware floating point
-
-msoft-float
-Target RejectNegative InverseMask(HARD_FLOAT)
-Do not use hardware floating point
-
-mdouble-float
-Target Report RejectNegative Mask(DOUBLE_FLOAT)
-Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations
+; Please try to keep this file in ASCII collating order.
 
 mhard-div
-Target RejectNegative Mask(HARD_DIV)
-Use hardware division
-
-msoft-div
-Target RejectNegative InverseMask(HARD_DIV)
-Do not use hardware division
+Target RejectNegative InverseMask(SOFT_DIV)
+Use hardware divide instructions, use -msoft-div for emulation.
 
 mhard-mul
-Target RejectNegative Mask(HARD_MUL)
-Use hardware multiplication
-
-msoft-mul
-Target RejectNegative InverseMask(HARD_MUL)
-Do not use hardware multiplication
-
-msext
-Target Mask(MASK_SEXT)
-Use sign-extending instructions
+Target RejectNegative InverseMask(SOFT_MUL).
+Use hardware multiply instructions, use -msoft-mul for emulation.
 
 mcmov
-Target Mask(MASK_CMOV)
-Use conditional move instructions
+Target RejectNegative Mask(CMOV)
+Allows generation of binaries which use the l.cmov instruction.  If your target
+does not support this the compiler will generate the equivalent using set and
+branch.
 
 mror
-Target Mask(MASK_ROR)
-Emit ROR instructions
+Target RejectNegative Mask(ROR)
+Allows generation of binaries which use the l.rori instructions.
 
-mboard=
-Target RejectNegative Joined
-Link with libgloss configuration suitable for this board
+msext
+Target RejectNegative Mask(SEXT)
+Allows generation of binaries which use sign-extension instructions.  If your
+target does not support this the compiler will use memory loads to perform sign
+extension.
 
-mnewlib
-Target Report RejectNegative
-Compile for the Linux/Gnu/newlib based toolchain
+msfimm
+Target RejectNegative Mask(SFIMM)
+Allows generation of binaries which use l.sf*i instructions.  If your target
+does not support this the compiler will generate instructions to store the
+immediate to a register first.
 
-;; provide struct padding as in previous releases.
-;; Note that this will only affect STRUCTURE_SIZE_BOUNDARY, in particular
-;; make 2 byte structs 4-byte alignned and sized.
-;; We still use ROUND_TYPE_ALIGN to increase alignment of larger structs.
-mpadstruct
-Target Report RejectNegative Mask(PADSTRUCT)
-Make structs a multiple of 4 bytes (warning: ABI altered)
+mshftimm
+Target RejectNegative Mask(SHFTIMM)
+Allows generation of binaries which support shifts and rotate instructions
+supporting immediate arguments, for example l.rori.
 
-mredzone=
-Target RejectNegative Joined UInteger Var(or1k_redzone) Init(128)
-Set the size of the stack below sp that is assumed to be safe from interrupts.
+msoft-div
+Target RejectNegative Mask(SOFT_DIV)
+Use divide emulation.
+
+msoft-mul
+Target RejectNegative Mask(SOFT_MUL).
+Use multiply emulation.

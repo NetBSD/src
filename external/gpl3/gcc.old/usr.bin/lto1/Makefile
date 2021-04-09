@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2017/07/23 01:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2021/04/09 22:33:17 mrg Exp $
 
 PROG=		lto1
 SRCS=		lto-partition.c \
@@ -16,11 +16,8 @@ COPTS.lto-lang.c+=	-Wno-stack-protector
 
 .include "../Makefile.backend"
 .include "../Makefile.backtrace"
-.include "../Makefile.common"
-.include "../Makefile.common-target"
 .include "../Makefile.libcpp"
 .include "../Makefile.libdecnumber"
-.include "../Makefile.libiberty"
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.lto-lang.c+=-O0

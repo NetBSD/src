@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for VAX.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1406,7 +1406,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
    which are not modified very often.  */
 
 const char *
-vax_output_int_add (rtx insn, rtx *operands, machine_mode mode)
+vax_output_int_add (rtx_insn *insn, rtx *operands, machine_mode mode)
 {
   switch (mode)
     {
@@ -1616,7 +1616,7 @@ vax_output_int_add (rtx insn, rtx *operands, machine_mode mode)
 }
 
 const char *
-vax_output_int_subtract (rtx insn, rtx *operands, machine_mode mode)
+vax_output_int_subtract (rtx_insn *insn, rtx *operands, machine_mode mode)
 {
   switch (mode)
     {

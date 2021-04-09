@@ -2,7 +2,7 @@
 ; Generated automatically by parsecpu.awk from arm-cpus.in.
 ; Do not edit.
 
-; Copyright (C) 2011-2018 Free Software Foundation, Inc.
+; Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
 ; This file is part of GCC.
 
@@ -21,24 +21,11 @@
 ; <http://www.gnu.org/licenses/>.
 
 (define_attr "tune"
-	"arm2,arm250,arm3,
-	arm6,arm60,arm600,
-	arm610,arm620,arm7,
-	arm7d,arm7di,arm70,
-	arm700,arm700i,arm710,
-	arm720,arm710c,arm7100,
-	arm7500,arm7500fe,arm7m,
-	arm7dm,arm7dmi,arm8,
-	arm810,strongarm,strongarm110,
-	strongarm1100,strongarm1110,fa526,
-	fa626,arm7tdmi,arm7tdmis,
-	arm710t,arm720t,arm740t,
-	arm9,arm9tdmi,arm920,
-	arm920t,arm922t,arm940t,
-	ep9312,arm10tdmi,arm1020t,
-	arm9e,arm946es,arm966es,
-	arm968es,arm10e,arm1020e,
-	arm1022e,xscale,iwmmxt,
+	"arm8,arm810,strongarm,
+	fa526,fa626,arm7tdmi,
+	arm710t,arm9,arm9tdmi,
+	arm920t,arm10tdmi,arm9e,
+	arm10e,xscale,iwmmxt,
 	iwmmxt2,fa606te,fa626te,
 	fmp626,fa726te,arm926ejs,
 	arm1026ejs,arm1136js,arm1136jfs,
@@ -57,6 +44,7 @@
 	cortexa73,exynosm1,xgene1,
 	cortexa57cortexa53,cortexa72cortexa53,cortexa73cortexa35,
 	cortexa73cortexa53,cortexa55,cortexa75,
-	cortexa75cortexa55,cortexm23,cortexm33,
+	cortexa76,neoversen1,cortexa75cortexa55,
+	cortexa76cortexa55,cortexm23,cortexm33,
 	cortexr52"
 	(const (symbol_ref "((enum attr_tune) arm_tune)")))

@@ -1,5 +1,5 @@
 /* Alias analysis for trees.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -202,7 +202,7 @@ ptr_deref_may_alias_decl_p (tree ptr, tree decl)
 	return true;
     }
 
-  /* Non-aliased variables can not be pointed to.  */
+  /* Non-aliased variables cannot be pointed to.  */
   if (!may_be_aliased (decl))
     return false;
 
@@ -710,6 +710,7 @@ ao_ref_init_from_ptr_and_size (ao_ref *ref, tree ptr, tree size)
     }
   else
     {
+      gcc_assert (POINTER_TYPE_P (TREE_TYPE (ptr)));
       ref->base = build2 (MEM_REF, char_type_node,
 			  ptr, null_pointer_node);
       ref->offset = 0;
@@ -1483,6 +1484,16 @@ refs_may_alias_p_1 (ao_ref *ref1, ao_ref *ref2, bool tbaa_p)
 				 ao_ref_alias_set (ref2)))
     return false;
 
+  /* If the reference is based on a pointer that points to memory
+     that may not be written to then the other reference cannot possibly
+     clobber it.  */
+  if ((TREE_CODE (TREE_OPERAND (base2, 0)) == SSA_NAME
+       && SSA_NAME_POINTS_TO_READONLY_MEMORY (TREE_OPERAND (base2, 0)))
+      || (ind1_p
+	  && TREE_CODE (TREE_OPERAND (base1, 0)) == SSA_NAME
+	  && SSA_NAME_POINTS_TO_READONLY_MEMORY (TREE_OPERAND (base1, 0))))
+    return false;
+
   /* Dispatch to the pointer-vs-decl or pointer-vs-pointer disambiguators.  */
   if (var1_p && ind2_p)
     return indirect_ref_may_alias_decl_p (ref2->ref, base2,
@@ -1509,21 +1520,21 @@ refs_may_alias_p_1 (ao_ref *ref1, ao_ref *ref2, bool tbaa_p)
 }
 
 static bool
-refs_may_alias_p (tree ref1, ao_ref *ref2)
+refs_may_alias_p (tree ref1, ao_ref *ref2, bool tbaa_p)
 {
   ao_ref r1;
   ao_ref_init (&r1, ref1);
-  return refs_may_alias_p_1 (&r1, ref2, true);
+  return refs_may_alias_p_1 (&r1, ref2, tbaa_p);
 }
 
 bool
-refs_may_alias_p (tree ref1, tree ref2)
+refs_may_alias_p (tree ref1, tree ref2, bool tbaa_p)
 {
   ao_ref r1, r2;
   bool res;
   ao_ref_init (&r1, ref1);
   ao_ref_init (&r2, ref2);
-  res = refs_may_alias_p_1 (&r1, &r2, true);
+  res = refs_may_alias_p_1 (&r1, &r2, tbaa_p);
   if (res)
     ++alias_stats.refs_may_alias_p_may_alias;
   else
@@ -1559,7 +1570,7 @@ refs_output_dependent_p (tree store1, tree store2)
    otherwise return false.  */
 
 static bool
-ref_maybe_used_by_call_p_1 (gcall *call, ao_ref *ref)
+ref_maybe_used_by_call_p_1 (gcall *call, ao_ref *ref, bool tbaa_p)
 {
   tree base, callee;
   unsigned i;
@@ -1860,7 +1871,7 @@ process_args:
 	{
 	  ao_ref r;
 	  ao_ref_init (&r, op);
-	  if (refs_may_alias_p_1 (&r, ref, true))
+	  if (refs_may_alias_p_1 (&r, ref, tbaa_p))
 	    return true;
 	}
     }
@@ -1869,10 +1880,10 @@ process_args:
 }
 
 static bool
-ref_maybe_used_by_call_p (gcall *call, ao_ref *ref)
+ref_maybe_used_by_call_p (gcall *call, ao_ref *ref, bool tbaa_p)
 {
   bool res;
-  res = ref_maybe_used_by_call_p_1 (call, ref);
+  res = ref_maybe_used_by_call_p_1 (call, ref, tbaa_p);
   if (res)
     ++alias_stats.ref_maybe_used_by_call_p_may_alias;
   else
@@ -1885,7 +1896,7 @@ ref_maybe_used_by_call_p (gcall *call, ao_ref *ref)
    true, otherwise return false.  */
 
 bool
-ref_maybe_used_by_stmt_p (gimple *stmt, ao_ref *ref)
+ref_maybe_used_by_stmt_p (gimple *stmt, ao_ref *ref, bool tbaa_p)
 {
   if (is_gimple_assign (stmt))
     {
@@ -1901,17 +1912,17 @@ ref_maybe_used_by_stmt_p (gimple *stmt, ao_ref *ref)
 	  || gimple_assign_rhs_code (stmt) == CONSTRUCTOR)
 	return false;
 
-      return refs_may_alias_p (rhs, ref);
+      return refs_may_alias_p (rhs, ref, tbaa_p);
     }
   else if (is_gimple_call (stmt))
-    return ref_maybe_used_by_call_p (as_a <gcall *> (stmt), ref);
+    return ref_maybe_used_by_call_p (as_a <gcall *> (stmt), ref, tbaa_p);
   else if (greturn *return_stmt = dyn_cast <greturn *> (stmt))
     {
       tree retval = gimple_return_retval (return_stmt);
       if (retval
 	  && TREE_CODE (retval) != SSA_NAME
 	  && !is_gimple_min_invariant (retval)
-	  && refs_may_alias_p (retval, ref))
+	  && refs_may_alias_p (retval, ref, tbaa_p))
 	return true;
       /* If ref escapes the function then the return acts as a use.  */
       tree base = ao_ref_base (ref);
@@ -1929,11 +1940,11 @@ ref_maybe_used_by_stmt_p (gimple *stmt, ao_ref *ref)
 }
 
 bool
-ref_maybe_used_by_stmt_p (gimple *stmt, tree ref)
+ref_maybe_used_by_stmt_p (gimple *stmt, tree ref, bool tbaa_p)
 {
   ao_ref r;
   ao_ref_init (&r, ref);
-  return ref_maybe_used_by_stmt_p (stmt, &r);
+  return ref_maybe_used_by_stmt_p (stmt, &r, tbaa_p);
 }
 
 /* If the call in statement CALL may clobber the memory reference REF
@@ -1989,6 +2000,14 @@ call_may_clobber_ref_p_1 (gcall *call, ao_ref *ref)
 	 treat as may-def.  */
       && (TREE_READONLY (base)
 	  || !is_global_var (base)))
+    return false;
+
+  /* If the reference is based on a pointer that points to memory
+     that may not be written to then the call cannot possibly clobber it.  */
+  if ((TREE_CODE (base) == MEM_REF
+       || TREE_CODE (base) == TARGET_MEM_REF)
+      && TREE_CODE (TREE_OPERAND (base, 0)) == SSA_NAME
+      && SSA_NAME_POINTS_TO_READONLY_MEMORY (TREE_OPERAND (base, 0)))
     return false;
 
   callee = gimple_call_fndecl (call);
@@ -2245,7 +2264,7 @@ call_may_clobber_ref_p (gcall *call, tree ref)
    otherwise return false.  */
 
 bool
-stmt_may_clobber_ref_p_1 (gimple *stmt, ao_ref *ref)
+stmt_may_clobber_ref_p_1 (gimple *stmt, ao_ref *ref, bool tbaa_p)
 {
   if (is_gimple_call (stmt))
     {
@@ -2255,7 +2274,7 @@ stmt_may_clobber_ref_p_1 (gimple *stmt, ao_ref *ref)
 	{
 	  ao_ref r;
 	  ao_ref_init (&r, lhs);
-	  if (refs_may_alias_p_1 (ref, &r, true))
+	  if (refs_may_alias_p_1 (ref, &r, tbaa_p))
 	    return true;
 	}
 
@@ -2268,7 +2287,7 @@ stmt_may_clobber_ref_p_1 (gimple *stmt, ao_ref *ref)
 	{
 	  ao_ref r;
 	  ao_ref_init (&r, lhs);
-	  return refs_may_alias_p_1 (ref, &r, true);
+	  return refs_may_alias_p_1 (ref, &r, tbaa_p);
 	}
     }
   else if (gimple_code (stmt) == GIMPLE_ASM)
@@ -2278,11 +2297,11 @@ stmt_may_clobber_ref_p_1 (gimple *stmt, ao_ref *ref)
 }
 
 bool
-stmt_may_clobber_ref_p (gimple *stmt, tree ref)
+stmt_may_clobber_ref_p (gimple *stmt, tree ref, bool tbaa_p)
 {
   ao_ref r;
   ao_ref_init (&r, ref);
-  return stmt_may_clobber_ref_p_1 (stmt, &r);
+  return stmt_may_clobber_ref_p_1 (stmt, &r, tbaa_p);
 }
 
 /* Return true if store1 and store2 described by corresponding tuples
@@ -2378,7 +2397,7 @@ stmt_kills_ref_p (gimple *stmt, ao_ref *ref)
 	 ???  We only need to care about the RHS throwing.  For aggregate
 	 assignments or similar calls and non-call exceptions the LHS
 	 might throw as well.  */
-      && !stmt_can_throw_internal (stmt))
+      && !stmt_can_throw_internal (cfun, stmt))
     {
       tree lhs = gimple_get_lhs (stmt);
       /* If LHS is literally a base of the access we are done.  */
@@ -2579,9 +2598,9 @@ stmt_kills_ref_p (gimple *stmt, tree ref)
    case false is returned.  The walk starts with VUSE, one argument of PHI.  */
 
 static bool
-maybe_skip_until (gimple *phi, tree target, ao_ref *ref,
-		  tree vuse, unsigned int *cnt, bitmap *visited,
-		  bool abort_on_visited,
+maybe_skip_until (gimple *phi, tree &target, basic_block target_bb,
+		  ao_ref *ref, tree vuse, bool tbaa_p, unsigned int &limit,
+		  bitmap *visited, bool abort_on_visited,
 		  void *(*translate)(ao_ref *, tree, void *, bool *),
 		  void *data)
 {
@@ -2596,13 +2615,26 @@ maybe_skip_until (gimple *phi, tree target, ao_ref *ref,
   while (vuse != target)
     {
       gimple *def_stmt = SSA_NAME_DEF_STMT (vuse);
+      /* If we are searching for the target VUSE by walking up to
+         TARGET_BB dominating the original PHI we are finished once
+	 we reach a default def or a definition in a block dominating
+	 that block.  Update TARGET and return.  */
+      if (!target
+	  && (gimple_nop_p (def_stmt)
+	      || dominated_by_p (CDI_DOMINATORS,
+				 target_bb, gimple_bb (def_stmt))))
+	{
+	  target = vuse;
+	  return true;
+	}
+
       /* Recurse for PHI nodes.  */
       if (gimple_code (def_stmt) == GIMPLE_PHI)
 	{
 	  /* An already visited PHI node ends the walk successfully.  */
 	  if (bitmap_bit_p (*visited, SSA_NAME_VERSION (PHI_RESULT (def_stmt))))
 	    return !abort_on_visited;
-	  vuse = get_continuation_for_phi (def_stmt, ref, cnt,
+	  vuse = get_continuation_for_phi (def_stmt, ref, tbaa_p, limit,
 					   visited, abort_on_visited,
 					   translate, data);
 	  if (!vuse)
@@ -2614,8 +2646,10 @@ maybe_skip_until (gimple *phi, tree target, ao_ref *ref,
       else
 	{
 	  /* A clobbering statement or the end of the IL ends it failing.  */
-	  ++*cnt;
-	  if (stmt_may_clobber_ref_p_1 (def_stmt, ref))
+	  if ((int)limit <= 0)
+	    return false;
+	  --limit;
+	  if (stmt_may_clobber_ref_p_1 (def_stmt, ref, tbaa_p))
 	    {
 	      bool disambiguate_only = true;
 	      if (translate
@@ -2642,12 +2676,13 @@ maybe_skip_until (gimple *phi, tree target, ao_ref *ref,
 /* Starting from a PHI node for the virtual operand of the memory reference
    REF find a continuation virtual operand that allows to continue walking
    statements dominating PHI skipping only statements that cannot possibly
-   clobber REF.  Increments *CNT for each alias disambiguation done.
+   clobber REF.  Decrements LIMIT for each alias disambiguation done
+   and aborts the walk, returning NULL_TREE if it reaches zero.
    Returns NULL_TREE if no suitable virtual operand can be found.  */
 
 tree
-get_continuation_for_phi (gimple *phi, ao_ref *ref,
-			  unsigned int *cnt, bitmap *visited,
+get_continuation_for_phi (gimple *phi, ao_ref *ref, bool tbaa_p,
+			  unsigned int &limit, bitmap *visited,
 			  bool abort_on_visited,
 			  void *(*translate)(ao_ref *, tree, void *, bool *),
 			  void *data)
@@ -2679,50 +2714,26 @@ get_continuation_for_phi (gimple *phi, ao_ref *ref,
       arg0 = NULL_TREE;
     }
   /* If not, look if we can reach such candidate by walking defs
-     of a PHI arg without crossing other PHIs.  */
-  if (! arg0)
-    for (i = 0; i < nargs; ++i)
-      {
-	arg0 = PHI_ARG_DEF (phi, i);
-	gimple *def = SSA_NAME_DEF_STMT (arg0);
-	/* Backedges can't work.  */
-	if (dominated_by_p (CDI_DOMINATORS,
-			    gimple_bb (def), phi_bb))
-	  continue;
-	/* See below.  */
-	if (gimple_code (def) == GIMPLE_PHI)
-	  continue;
-	while (! dominated_by_p (CDI_DOMINATORS,
-				 phi_bb, gimple_bb (def)))
-	  {
-	    arg0 = gimple_vuse (def);
-	    if (SSA_NAME_IS_DEFAULT_DEF (arg0))
-	      break;
-	    def = SSA_NAME_DEF_STMT (arg0);
-	    if (gimple_code (def) == GIMPLE_PHI)
-	      {
-		/* Do not try to look through arbitrarily complicated
-		   CFGs.  For those looking for the first VUSE starting
-		   from the end of the immediate dominator of phi_bb
-		   is likely faster.  */
-		arg0 = NULL_TREE;
-		goto next;
-	      }
-	  }
-	break;
-next:;
-      }
-  if (! arg0)
-    return NULL_TREE;
+     until we hit the immediate dominator.  maybe_skip_until will
+     do that for us.  */
+  basic_block dom = get_immediate_dominator (CDI_DOMINATORS, phi_bb);
 
-  /* Then check against the found candidate.  */
+  /* Then check against the (to be) found candidate.  */
   for (i = 0; i < nargs; ++i)
     {
       arg1 = PHI_ARG_DEF (phi, i);
       if (arg1 == arg0)
 	;
-      else if (! maybe_skip_until (phi, arg0, ref, arg1, cnt, visited,
-				   abort_on_visited, translate, data))
+      else if (! maybe_skip_until (phi, arg0, dom, ref, arg1, tbaa_p,
+				   limit, visited,
+				   abort_on_visited,
+				   /* Do not translate when walking over
+				      backedges.  */
+				   dominated_by_p
+				     (CDI_DOMINATORS,
+				      gimple_bb (SSA_NAME_DEF_STMT (arg1)),
+				      phi_bb)
+				   ? NULL : translate, data))
 	return NULL_TREE;
     }
 
@@ -2750,18 +2761,22 @@ next:;
    implement optimistic value-numbering for example.  Note that the
    VUSE argument is assumed to be valueized already.
 
+   LIMIT specifies the number of alias queries we are allowed to do,
+   the walk stops when it reaches zero and NULL is returned.  LIMIT
+   is decremented by the number of alias queries (plus adjustments
+   done by the callbacks) upon return.
+
    TODO: Cache the vector of equivalent vuses per ref, vuse pair.  */
 
 void *
-walk_non_aliased_vuses (ao_ref *ref, tree vuse,
-			void *(*walker)(ao_ref *, tree, unsigned int, void *),
+walk_non_aliased_vuses (ao_ref *ref, tree vuse, bool tbaa_p,
+			void *(*walker)(ao_ref *, tree, void *),
 			void *(*translate)(ao_ref *, tree, void *, bool *),
 			tree (*valueize)(tree),
-			void *data)
+			unsigned &limit, void *data)
 {
   bitmap visited = NULL;
   void *res;
-  unsigned int cnt = 0;
   bool translated = false;
 
   timevar_push (TV_ALIAS_STMT_WALK);
@@ -2771,7 +2786,7 @@ walk_non_aliased_vuses (ao_ref *ref, tree vuse,
       gimple *def_stmt;
 
       /* ???  Do we want to account this to TV_ALIAS_STMT_WALK?  */
-      res = (*walker) (ref, vuse, cnt, data);
+      res = (*walker) (ref, vuse, data);
       /* Abort walk.  */
       if (res == (void *)-1)
 	{
@@ -2783,17 +2798,29 @@ walk_non_aliased_vuses (ao_ref *ref, tree vuse,
 	break;
 
       if (valueize)
-	vuse = valueize (vuse);
+	{
+	  vuse = valueize (vuse);
+	  if (!vuse)
+	    {
+	      res = NULL;
+	      break;
+	    }
+	}
       def_stmt = SSA_NAME_DEF_STMT (vuse);
       if (gimple_nop_p (def_stmt))
 	break;
       else if (gimple_code (def_stmt) == GIMPLE_PHI)
-	vuse = get_continuation_for_phi (def_stmt, ref, &cnt,
+	vuse = get_continuation_for_phi (def_stmt, ref, tbaa_p, limit,
 					 &visited, translated, translate, data);
       else
 	{
-	  cnt++;
-	  if (stmt_may_clobber_ref_p_1 (def_stmt, ref))
+	  if ((int)limit <= 0)
+	    {
+	      res = NULL;
+	      break;
+	    }
+	  --limit;
+	  if (stmt_may_clobber_ref_p_1 (def_stmt, ref, tbaa_p))
 	    {
 	      if (!translate)
 		break;

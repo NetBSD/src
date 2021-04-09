@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2020/08/18 23:31:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2021/04/09 22:33:16 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 LIBISCXX = yes
@@ -16,6 +16,7 @@ UBSAN_SRCS= \
 	ubsan_flags.cc \
 	ubsan_handlers.cc \
 	ubsan_init.cc \
+	ubsan_monitor.cc \
 	ubsan_type_hash.cc \
 	ubsan_type_hash_itanium.cc \
 	ubsan_type_hash_win.cc \
@@ -31,7 +32,9 @@ COPTS.sanitizer_file.cc += -O1
 
 LIB=	ubsan
 SRCS+=	${UBSAN_SRCS}
+LIBDPLIBS+= m ${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
+LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 CPPFLAGS+=-DCAN_SANITIZE_UB=1
 
 .include <bsd.lib.mk>

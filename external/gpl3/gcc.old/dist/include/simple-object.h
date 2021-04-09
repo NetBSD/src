@@ -1,5 +1,5 @@
 /* simple-object.h -- simple routines to read and write object files
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 This program is free software; you can redistribute it and/or modify it
@@ -198,12 +198,15 @@ extern void
 simple_object_release_write (simple_object_write *);
 
 /* Copy LTO debug sections from SRC_OBJECT to DEST.
+   If RENAME is true, rename LTO debug section into debug section (i.e.
+   when producing final binary) and if it is false, keep the sections with
+   original names (when incrementally linking).
    If an error occurs, return the errno value in ERR and an error string.  */
 
 extern const char *
 simple_object_copy_lto_debug_sections (simple_object_read *src_object,
 				       const char *dest,
-				       int *err);
+				       int *err, int rename);
 
 #ifdef __cplusplus
 }

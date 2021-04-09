@@ -1,5 +1,5 @@
 /* Analyze RTL for GNU compiler.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -35,6 +35,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "recog.h"
 #include "addresses.h"
 #include "rtl-iter.h"
+#include "hard-reg-set.h"
 
 /* Forward declarations */
 static void set_of_1 (rtx, const_rtx, void *);
@@ -462,6 +463,7 @@ rtx_addr_can_trap_p_1 (const_rtx x, poly_int64 offset, poly_int64 size,
 {
   enum rtx_code code = GET_CODE (x);
   gcc_checking_assert (mode == BLKmode || known_size_p (size));
+  poly_int64 const_x1;
 
   /* The offset must be a multiple of the mode size if we are considering
      unaligned memory references on strict alignment machines.  */
@@ -519,7 +521,7 @@ rtx_addr_can_trap_p_1 (const_rtx x, poly_int64 offset, poly_int64 size,
 
 	  return (!known_size_p (decl_size) || known_eq (decl_size, 0)
 		  ? maybe_ne (offset, 0)
-		  : maybe_gt (offset + size, decl_size));
+		  : !known_subrange_p (offset, size, 0, decl_size));
         }
 
       return 0;
@@ -653,8 +655,8 @@ rtx_addr_can_trap_p_1 (const_rtx x, poly_int64 offset, poly_int64 size,
 	return 0;
 
       /* - or it is an address that can't trap plus a constant integer.  */
-      if (CONST_INT_P (XEXP (x, 1))
-	  && !rtx_addr_can_trap_p_1 (XEXP (x, 0), offset + INTVAL (XEXP (x, 1)),
+      if (poly_int_rtx_p (XEXP (x, 1), &const_x1)
+	  && !rtx_addr_can_trap_p_1 (XEXP (x, 0), offset + const_x1,
 				     size, mode, unaligned_mems))
 	return 0;
 
@@ -1196,6 +1198,10 @@ reg_referenced_p (const_rtx x, const_rtx body)
 	  return 1;
       return 0;
 
+    case CLOBBER_HIGH:
+      gcc_assert (REG_P (XEXP (body, 0)));
+      return 0;
+
     case COND_EXEC:
       if (reg_overlap_mentioned_p (x, COND_EXEC_TEST (body)))
 	return 1;
@@ -1418,7 +1424,11 @@ set_of_1 (rtx x, const_rtx pat, void *data1)
 {
   struct set_of_data *const data = (struct set_of_data *) (data1);
   if (rtx_equal_p (x, data->pat)
-      || (!MEM_P (x) && reg_overlap_mentioned_p (data->pat, x)))
+      || (GET_CODE (pat) == CLOBBER_HIGH
+	  && REGNO(data->pat) == REGNO(XEXP (pat, 0))
+	  && reg_is_clobbered_by_clobber_high (data->pat, XEXP (pat, 0)))
+      || (GET_CODE (pat) != CLOBBER_HIGH && !MEM_P (x)
+	  && reg_overlap_mentioned_p (data->pat, x)))
     data->found = pat;
 }
 
@@ -1507,6 +1517,7 @@ single_set_2 (const rtx_insn *insn, const_rtx pat)
 	    {
 	    case USE:
 	    case CLOBBER:
+	    case CLOBBER_HIGH:
 	      break;
 
 	    case SET:
@@ -1613,15 +1624,16 @@ set_noop_p (const_rtx set)
       int i;
       rtx par = XEXP (src, 1);
       rtx src0 = XEXP (src, 0);
-      int c0 = INTVAL (XVECEXP (par, 0, 0));
-      HOST_WIDE_INT offset = GET_MODE_UNIT_SIZE (GET_MODE (src0)) * c0;
+      poly_int64 c0 = rtx_to_poly_int64 (XVECEXP (par, 0, 0));
+      poly_int64 offset = GET_MODE_UNIT_SIZE (GET_MODE (src0)) * c0;
 
       for (i = 1; i < XVECLEN (par, 0); i++)
-	if (INTVAL (XVECEXP (par, 0, i)) != c0 + i)
+	if (maybe_ne (rtx_to_poly_int64 (XVECEXP (par, 0, i)), c0 + i))
 	  return 0;
       return
-	simplify_subreg_regno (REGNO (src0), GET_MODE (src0),
-			       offset, GET_MODE (dst)) == (int) REGNO (dst);
+	REG_CAN_CHANGE_MODE_P (REGNO (dst), GET_MODE (src0), GET_MODE (dst))
+	&& simplify_subreg_regno (REGNO (src0), GET_MODE (src0),
+				  offset, GET_MODE (dst)) == (int) REGNO (dst);
     }
 
   return (REG_P (src) && REG_P (dst)
@@ -1660,7 +1672,8 @@ noop_move_p (const rtx_insn *insn)
 	  rtx tem = XVECEXP (pat, 0, i);
 
 	  if (GET_CODE (tem) == USE
-	      || GET_CODE (tem) == CLOBBER)
+	      || GET_CODE (tem) == CLOBBER
+	      || GET_CODE (tem) == CLOBBER_HIGH)
 	    continue;
 
 	  if (GET_CODE (tem) != SET || ! set_noop_p (tem))
@@ -1793,7 +1806,7 @@ reg_overlap_mentioned_p (const_rtx x, const_rtx in)
 {
   unsigned int regno, endregno;
 
-  /* If either argument is a constant, then modifying X can not
+  /* If either argument is a constant, then modifying X cannot
      affect IN.  Here we look at IN, we can profitably combine
      CONSTANT_P (x) with the switch statement below.  */
   if (CONSTANT_P (in))
@@ -1893,7 +1906,9 @@ note_stores (const_rtx x, void (*fun) (rtx, const_rtx, void *), void *data)
   if (GET_CODE (x) == COND_EXEC)
     x = COND_EXEC_CODE (x);
 
-  if (GET_CODE (x) == SET || GET_CODE (x) == CLOBBER)
+  if (GET_CODE (x) == SET
+      || GET_CODE (x) == CLOBBER
+      || GET_CODE (x) == CLOBBER_HIGH)
     {
       rtx dest = SET_DEST (x);
 
@@ -2831,10 +2846,28 @@ may_trap_p_1 (const_rtx x, unsigned flags)
     case UMOD:
       if (HONOR_SNANS (x))
 	return 1;
-      if (SCALAR_FLOAT_MODE_P (GET_MODE (x)))
+      if (FLOAT_MODE_P (GET_MODE (x)))
 	return flag_trapping_math;
       if (!CONSTANT_P (XEXP (x, 1)) || (XEXP (x, 1) == const0_rtx))
 	return 1;
+      if (GET_CODE (XEXP (x, 1)) == CONST_VECTOR)
+	{
+	  /* For CONST_VECTOR, return 1 if any element is or might be zero.  */
+	  unsigned int n_elts;
+	  rtx op = XEXP (x, 1);
+	  if (!GET_MODE_NUNITS (GET_MODE (op)).is_constant (&n_elts))
+	    {
+	      if (!CONST_VECTOR_DUPLICATE_P (op))
+		return 1;
+	      for (unsigned i = 0; i < (unsigned int) XVECLEN (op, 0); i++)
+		if (CONST_VECTOR_ENCODED_ELT (op, i) == const0_rtx)
+		  return 1;
+	    }
+	  else
+	    for (unsigned i = 0; i < n_elts; i++)
+	      if (CONST_VECTOR_ELT (op, i) == const0_rtx)
+		return 1;
+	}
       break;
 
     case EXPR_LIST:
@@ -2883,12 +2916,16 @@ may_trap_p_1 (const_rtx x, unsigned flags)
     case NEG:
     case ABS:
     case SUBREG:
+    case VEC_MERGE:
+    case VEC_SELECT:
+    case VEC_CONCAT:
+    case VEC_DUPLICATE:
       /* These operations don't trap even with floating point.  */
       break;
 
     default:
       /* Any floating arithmetic may trap.  */
-      if (SCALAR_FLOAT_MODE_P (GET_MODE (x)) && flag_trapping_math)
+      if (FLOAT_MODE_P (GET_MODE (x)) && flag_trapping_math)
 	return 1;
     }
 
@@ -6536,6 +6573,20 @@ contains_symbolic_reference_p (const_rtx x)
   return false;
 }
 
+/* Return true if RTL X contains a constant pool address.  */
+
+bool
+contains_constant_pool_address_p (const_rtx x)
+{
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, x, ALL)
+    if (SYMBOL_REF_P (*iter) && CONSTANT_POOL_ADDRESS_P (*iter))
+      return true;
+
+  return false;
+}
+
+
 /* Return true if X contains a thread-local symbol.  */
 
 bool
@@ -6549,4 +6600,33 @@ tls_referenced_p (const_rtx x)
     if (GET_CODE (*iter) == SYMBOL_REF && SYMBOL_REF_TLS_MODEL (*iter) != 0)
       return true;
   return false;
+}
+
+/* Return true if reg REGNO with mode REG_MODE would be clobbered by the
+   clobber_high operand in CLOBBER_HIGH_OP.  */
+
+bool
+reg_is_clobbered_by_clobber_high (unsigned int regno, machine_mode reg_mode,
+				  const_rtx clobber_high_op)
+{
+  unsigned int clobber_regno = REGNO (clobber_high_op);
+  machine_mode clobber_mode = GET_MODE (clobber_high_op);
+  unsigned char regno_nregs = hard_regno_nregs (regno, reg_mode);
+
+  /* Clobber high should always span exactly one register.  */
+  gcc_assert (REG_NREGS (clobber_high_op) == 1);
+
+  /* Clobber high needs to match with one of the registers in X.  */
+  if (clobber_regno < regno || clobber_regno >= regno + regno_nregs)
+    return false;
+
+  gcc_assert (reg_mode != BLKmode && clobber_mode != BLKmode);
+
+  if (reg_mode == VOIDmode)
+    return clobber_mode != VOIDmode;
+
+  /* Clobber high will clobber if its size might be greater than the size of
+     register regno.  */
+  return maybe_gt (exact_div (GET_MODE_SIZE (reg_mode), regno_nregs),
+		 GET_MODE_SIZE (clobber_mode));
 }

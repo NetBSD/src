@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2021/04/09 22:33:16 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -9,10 +9,13 @@
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
-INCS=		${G_profile_headers} ${G_profile_impl_headers}
+INCS=		${G_profile_headers}
 INCSDIR=	/usr/include/g++/profile
 
 .PATH: ${DIST}/libstdc++-v3/include/profile
 
-# Get default targets including <bsd.inc.mk>.
-.include <bsd.prog.mk>
+.include "${.CURDIR}/../Makefile.includes"
+
+SUBDIR=	impl
+
+.include <bsd.subdir.mk>

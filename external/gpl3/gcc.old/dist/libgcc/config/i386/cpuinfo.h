@@ -1,5 +1,5 @@
 /* Get CPU type and Features for x86 processors.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by Sriraman Tallam (tmsriram@google.com)
 
 This file is part of GCC.
@@ -48,6 +48,9 @@ enum processor_types
   AMD_BTVER2,  
   AMDFAM17H,
   INTEL_KNM,
+  INTEL_GOLDMONT,
+  INTEL_GOLDMONT_PLUS,
+  INTEL_TREMONT,
   CPU_TYPE_MAX
 };
 
@@ -72,6 +75,8 @@ enum processor_subtypes
   INTEL_COREI7_CANNONLAKE,
   INTEL_COREI7_ICELAKE_CLIENT,
   INTEL_COREI7_ICELAKE_SERVER,
+  AMDFAM17H_ZNVER2,
+  INTEL_COREI7_CASCADELAKE,
   CPU_SUBTYPE_MAX
 };
 
