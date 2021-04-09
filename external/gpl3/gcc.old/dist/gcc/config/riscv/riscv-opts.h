@@ -1,5 +1,5 @@
 /* Definition of RISC-V target for GNU compiler.
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
    Contributed by Andrew Waterman (andrew@sifive.com).
 
 This file is part of GCC.
@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 
 enum riscv_abi_type {
   ABI_ILP32,
+  ABI_ILP32E,
   ABI_ILP32F,
   ABI_ILP32D,
   ABI_LP64,
@@ -37,5 +38,12 @@ enum riscv_code_model {
   CM_PIC
 };
 extern enum riscv_code_model riscv_cmodel;
+
+/* Keep this list in sync with define_attr "tune" in riscv.md.  */
+enum riscv_microarchitecture_type {
+  generic,
+  sifive_7
+};
+extern enum riscv_microarchitecture_type riscv_microarchitecture;
 
 #endif /* ! GCC_RISCV_OPTS_H */
