@@ -1,5 +1,5 @@
 /* Compilation switch flag type definitions for GCC.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -121,6 +121,14 @@ enum stack_reuse_level
   SR_NONE,
   SR_NAMED_VARS,
   SR_ALL
+};
+
+/* The live patching level.  */
+enum live_patching_level
+{
+  LIVE_PATCHING_NONE = 0,
+  LIVE_PATCHING_INLINE_ONLY_STATIC,
+  LIVE_PATCHING_INLINE_CLONE
 };
 
 /* The algorithm used for basic block reordering.  */
@@ -261,6 +269,15 @@ enum sanitize_code {
 				  | SANITIZE_BOUNDS_STRICT
 };
 
+/* Settings of flag_incremental_link.  */
+enum incremental_link {
+  INCREMENTAL_LINK_NONE,
+  /* Do incremental linking and produce binary.  */
+  INCREMENTAL_LINK_NOLTO,
+  /* Do incremental linking and produce IL.  */
+  INCREMENTAL_LINK_LTO
+};
+
 /* Different trace modes.  */
 enum sanitize_coverage_code {
   /* Trace PC.  */
@@ -289,6 +306,7 @@ enum lto_partition_model {
 enum lto_linker_output {
   LTO_LINKER_OUTPUT_UNKNOWN,
   LTO_LINKER_OUTPUT_REL,
+  LTO_LINKER_OUTPUT_NOLTOREL,
   LTO_LINKER_OUTPUT_DYN,
   LTO_LINKER_OUTPUT_PIE,
   LTO_LINKER_OUTPUT_EXEC

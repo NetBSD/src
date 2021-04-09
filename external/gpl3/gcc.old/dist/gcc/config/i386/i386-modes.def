@@ -1,5 +1,5 @@
 /* Definitions of target machine for GCC for IA-32.
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -97,9 +97,6 @@ VECTOR_MODE (INT, QI, 12);    /*                  V12QI */
 VECTOR_MODE (INT, QI, 14);    /*                  V14QI */
 VECTOR_MODE (INT, HI, 6);     /*                   V6HI */
 VECTOR_MODE (INT, SI, 64);    /* 		  V64SI */
-
-POINTER_BOUNDS_MODE (BND32, 8);
-POINTER_BOUNDS_MODE (BND64, 16);
 
 INT_MODE (OI, 32);
 INT_MODE (XI, 64);

@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.1.1.5 2019/09/26 05:45:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.6 2021/04/09 22:33:17 mrg Exp $
 
 .include <bsd.init.mk>
 
 PROG=           gcov
-SRCS=		${G_GCOV_OBJS:.o=.c}
+SRCS=		${G_GCOV_OBJS:S/json.o/json.cc/:.o=.c}
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+DPADD+=		${LIBZ}
+LDADD+=		-lz
 
 BINDIR=		/usr/bin
 

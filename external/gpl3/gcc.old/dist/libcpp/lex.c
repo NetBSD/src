@@ -1,5 +1,5 @@
 /* CPP Library - lexical analysis.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -1232,7 +1232,7 @@ static int
 skip_line_comment (cpp_reader *pfile)
 {
   cpp_buffer *buffer = pfile->buffer;
-  source_location orig_line = pfile->line_table->highest_line;
+  location_t orig_line = pfile->line_table->highest_line;
 
   while (*buffer->cur != '\n')
     buffer->cur++;
@@ -1627,7 +1627,7 @@ is_macro(cpp_reader *pfile, const uchar *base)
   cpp_hashnode *result = CPP_HASHNODE (ht_lookup_with_hash (pfile->hash_table,
 					base, cur - base, hash, HT_NO_INSERT));
 
-  return !result ? false : (result->type == NT_MACRO);
+  return result && cpp_macro_p (result);
 }
 
 /* Returns true if a literal suffix does not have the expected form
@@ -1894,7 +1894,7 @@ lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 	  _cpp_process_line_notes (pfile, false);
 	  if (!_cpp_get_fresh_line (pfile))
 	    {
-	      source_location src_loc = token->src_loc;
+	      location_t src_loc = token->src_loc;
 	      token->type = CPP_EOF;
 	      /* Tell the compiler the line number of the EOF token.  */
 	      token->src_loc = pfile->line_table->highest_line;
@@ -2758,8 +2758,8 @@ _cpp_lex_direct (cpp_reader *pfile)
     }
   c = *buffer->cur++;
 
-  if (pfile->forced_token_location_p)
-    result->src_loc = *pfile->forced_token_location_p;
+  if (pfile->forced_token_location)
+    result->src_loc = pfile->forced_token_location;
   else
     result->src_loc = linemap_position_for_column (pfile->line_table,
 					  CPP_BUF_COLUMN (buffer, buffer->cur));
@@ -2873,10 +2873,10 @@ _cpp_lex_direct (cpp_reader *pfile)
 		   && CPP_PEDANTIC (pfile)
 		   && ! buffer->warned_cplusplus_comments)
 	    {
-	      cpp_error (pfile, CPP_DL_PEDWARN,
-			 "C++ style comments are not allowed in ISO C90");
-	      cpp_error (pfile, CPP_DL_PEDWARN,
-			 "(this will be reported only once per input file)");
+	      if (cpp_error (pfile, CPP_DL_PEDWARN,
+			     "C++ style comments are not allowed in ISO C90"))
+		cpp_error (pfile, CPP_DL_NOTE,
+			   "(this will be reported only once per input file)");
 	      buffer->warned_cplusplus_comments = 1;
 	    }
 	  /* Or if specifically desired via -Wc90-c99-compat.  */
@@ -2884,10 +2884,10 @@ _cpp_lex_direct (cpp_reader *pfile)
 		   && ! CPP_OPTION (pfile, cplusplus)
 		   && ! buffer->warned_cplusplus_comments)
 	    {
-	      cpp_error (pfile, CPP_DL_WARNING,
-			 "C++ style comments are incompatible with C90");
-	      cpp_error (pfile, CPP_DL_WARNING,
-			 "(this will be reported only once per input file)");
+	      if (cpp_error (pfile, CPP_DL_WARNING,
+			     "C++ style comments are incompatible with C90"))
+		cpp_error (pfile, CPP_DL_NOTE,
+			   "(this will be reported only once per input file)");
 	      buffer->warned_cplusplus_comments = 1;
 	    }
 	  /* In C89/C94, C++ style comments are forbidden.  */
@@ -2907,11 +2907,12 @@ _cpp_lex_direct (cpp_reader *pfile)
 		}
 	      else if (! buffer->warned_cplusplus_comments)
 		{
-		  cpp_error (pfile, CPP_DL_ERROR,
-			     "C++ style comments are not allowed in ISO C90");
-		  cpp_error (pfile, CPP_DL_ERROR,
-			     "(this will be reported only once per input "
-			     "file)");
+		  if (cpp_error (pfile, CPP_DL_ERROR,
+				 "C++ style comments are not allowed in "
+				 "ISO C90"))
+		    cpp_error (pfile, CPP_DL_NOTE,
+			       "(this will be reported only once per input "
+			       "file)");
 		  buffer->warned_cplusplus_comments = 1;
 		}
 	    }
@@ -3725,6 +3726,25 @@ _cpp_aligned_alloc (cpp_reader *pfile, size_t len)
   return result;
 }
 
+/* Commit or allocate storage from a buffer.  */
+
+void *
+_cpp_commit_buff (cpp_reader *pfile, size_t size)
+{
+  void *ptr = BUFF_FRONT (pfile->a_buff);
+
+  if (pfile->hash_table->alloc_subobject)
+    {
+      void *copy = pfile->hash_table->alloc_subobject (size);
+      memcpy (copy, ptr, size);
+      ptr = copy;
+    }
+  else
+    BUFF_FRONT (pfile->a_buff) += size;
+
+  return ptr;
+}
+
 /* Say which field of TOK is in use.  */
 
 enum cpp_token_fld_kind
@@ -3754,14 +3774,14 @@ cpp_token_val_index (const cpp_token *tok)
     }
 }
 
-/* All tokens lexed in R after calling this function will be forced to have
-   their source_location the same as the location referenced by P, until
+/* All tokens lexed in R after calling this function will be forced to
+   have their location_t to be P, until
    cpp_stop_forcing_token_locations is called for R.  */
 
 void
-cpp_force_token_locations (cpp_reader *r, source_location *p)
+cpp_force_token_locations (cpp_reader *r, location_t loc)
 {
-  r->forced_token_location_p = p;
+  r->forced_token_location = loc;
 }
 
 /* Go back to assigning locations naturally for lexed tokens.  */
@@ -3769,5 +3789,5 @@ cpp_force_token_locations (cpp_reader *r, source_location *p)
 void
 cpp_stop_forcing_token_locations (cpp_reader *r)
 {
-  r->forced_token_location_p = NULL;
+  r->forced_token_location = 0;
 }

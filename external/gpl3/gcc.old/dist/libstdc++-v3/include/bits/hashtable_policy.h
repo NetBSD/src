@@ -1,6 +1,6 @@
 // Internal policy header for unordered_set and unordered_map -*- C++ -*-
 
-// Copyright (C) 2010-2018 Free Software Foundation, Inc.
+// Copyright (C) 2010-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,7 +32,7 @@
 #define _HASHTABLE_POLICY_H 1
 
 #include <tuple>		// for std::tuple, std::forward_as_tuple
-#include <cstdint>		// for std::uint_fast64_t
+#include <limits>		// for std::numeric_limits
 #include <bits/stl_algobase.h>	// for std::min.
 
 namespace std _GLIBCXX_VISIBILITY(default)
@@ -135,8 +135,7 @@ namespace __detail
 		}
 	      __catch(...)
 		{
-		  __node->~__node_type();
-		  __node_alloc_traits::deallocate(__a, __node, 1);
+		  _M_h._M_deallocate_node_ptr(__node);
 		  __throw_exception_again;
 		}
 	      return __node;
@@ -504,27 +503,18 @@ namespace __detail
     { return __num & (__den - 1); }
   };
 
-  /// Compute closest power of 2.
-  _GLIBCXX14_CONSTEXPR
+  /// Compute closest power of 2 not less than __n
   inline std::size_t
   __clp2(std::size_t __n) noexcept
   {
-#if __SIZEOF_SIZE_T__ >= 8
-    std::uint_fast64_t __x = __n;
-#else
-    std::uint_fast32_t __x = __n;
-#endif
-    // Algorithm from Hacker's Delight, Figure 3-3.
-    __x = __x - 1;
-    __x = __x | (__x >> 1);
-    __x = __x | (__x >> 2);
-    __x = __x | (__x >> 4);
-    __x = __x | (__x >> 8);
-    __x = __x | (__x >>16);
-#if __SIZEOF_SIZE_T__ >= 8
-    __x = __x | (__x >>32);
-#endif
-    return __x + 1;
+    // Equivalent to return __n ? std::ceil2(__n) : 0;
+    if (__n < 2)
+      return __n;
+    const unsigned __lz = sizeof(size_t) > sizeof(long)
+      ? __builtin_clzll(__n - 1ull)
+      : __builtin_clzl(__n - 1ul);
+    // Doing two shifts avoids undefined behaviour when __lz == 0.
+    return (size_t(1) << (numeric_limits<size_t>::digits - __lz - 1)) << 1;
   }
 
   /// Rehash policy providing power of 2 bucket numbers. Avoids modulo
@@ -2067,6 +2057,9 @@ namespace __detail
       void
       _M_deallocate_node(__node_type* __n);
 
+      void
+      _M_deallocate_node_ptr(__node_type* __n);
+
       // Deallocate the linked list of nodes pointed to by __n
       void
       _M_deallocate_nodes(__node_type* __n);
@@ -2106,9 +2099,16 @@ namespace __detail
     void
     _Hashtable_alloc<_NodeAlloc>::_M_deallocate_node(__node_type* __n)
     {
+      __node_alloc_traits::destroy(_M_node_allocator(), __n->_M_valptr());
+      _M_deallocate_node_ptr(__n);
+    }
+
+  template<typename _NodeAlloc>
+    void
+    _Hashtable_alloc<_NodeAlloc>::_M_deallocate_node_ptr(__node_type* __n)
+    {
       typedef typename __node_alloc_traits::pointer _Ptr;
       auto __ptr = std::pointer_traits<_Ptr>::pointer_to(*__n);
-      __node_alloc_traits::destroy(_M_node_allocator(), __n->_M_valptr());
       __n->~__node_type();
       __node_alloc_traits::deallocate(_M_node_allocator(), __ptr, 1);
     }

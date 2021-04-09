@@ -1,5 +1,5 @@
 # libgcc host-specific configuration file.
-# Copyright (C) 1997-2018 Free Software Foundation, Inc.
+# Copyright (C) 1997-2019 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -91,6 +91,10 @@ alpha*-*-*)
 am33_2.0-*-linux*)
 	cpu_type=mn10300
 	;;
+amdgcn*-*-*)
+	cpu_type=gcn
+	tmake_file="${tmake_file} t-softfp-sfdf t-softfp"
+	;;
 arc*-*-*)
 	cpu_type=arc
 	;;
@@ -107,6 +111,9 @@ cr16-*-*)
 	;;
 crisv32-*-*)
 	cpu_type=cris
+	;;
+csky*-*-*)
+	cpu_type=csky
 	;;
 fido-*-*)
 	cpu_type=m68k
@@ -162,7 +169,7 @@ nds32*-*)
 nios2*-*-*)
 	cpu_type=nios2
 	;;
-or1k-*-* | or1knd-*-*)
+or1k*-*-*)
 	cpu_type=or1k
 	;;
 powerpc*-*-*)
@@ -208,7 +215,7 @@ case ${host} in
 *-*-darwin*)
   asm_hidden_op=.private_extern
   tmake_file="$tmake_file t-darwin ${cpu_type}/t-darwin t-libgcc-pic t-slibgcc-darwin"
-  extra_parts="crt3.o crttms.o crttme.o"
+  extra_parts="crt3.o d10-uwfef.o crttms.o crttme.o"
   ;;
 *-*-dragonfly*)
   tmake_file="$tmake_file t-crtstuff-pic t-libgcc-pic t-eh-dw2-dip"
@@ -390,6 +397,10 @@ alpha*-dec-*vms*)
 	extra_parts="$extra_parts vms-dwarf2.o vms-dwarf2eh.o"
 	md_unwind_header=alpha/vms-unwind.h
 	;;
+amdgcn*-*-amdhsa)
+	tmake_file="$tmake_file gcn/t-amdgcn"
+	extra_parts="crt0.o"
+	;;
 arc*-*-elf*)
 	tmake_file="arc/t-arc"
 	extra_parts="crti.o crtn.o crtend.o crtbegin.o crtendS.o crtbeginS.o"
@@ -526,6 +537,15 @@ cris-*-elf)
 cris-*-linux* | crisv32-*-linux*)
 	tmake_file="$tmake_file cris/t-cris t-softfp-sfdf t-softfp cris/t-linux"
 	;;
+csky-*-elf*)
+	tmake_file="csky/t-csky t-fdpbit"
+	extra_parts="$extra_parts crti.o crtn.o"
+	;;
+csky-*-linux*)
+	tmake_file="$tmake_file csky/t-csky t-slibgcc-libgcc t-fdpbit csky/t-linux-csky"
+	extra_parts="$extra_parts crti.o crtn.o"
+	md_unwind_header=csky/linux-unwind.h
+	;;
 epiphany-*-elf* | epiphany-*-rtems*)
 	tmake_file="$tmake_file epiphany/t-epiphany t-fdpbit epiphany/t-custom-eqsf"
 	extra_parts="$extra_parts crti.o crtint.o crtrunc.o crtm1reg-r43.o crtm1reg-r63.o crtn.o"
@@ -633,6 +653,11 @@ i[34567]86-*-elf*)
 	;;
 x86_64-*-elf* | x86_64-*-rtems*)
 	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
+	case ${host} in
+	  x86_64-*-rtems*)
+	    extra_parts="$extra_parts crti.o crtn.o"
+	    ;;
+	esac
 	;;
 x86_64-*-fuchsia*)
 	tmake_file="$tmake_file t-libgcc-pic"
@@ -1014,16 +1039,22 @@ msp430*-*-elf)
 	tmake_file="$tm_file t-crtstuff t-fdpbit msp430/t-msp430"
         extra_parts="$extra_parts libmul_none.a libmul_16.a libmul_32.a libmul_f5.a"
 	;;
-or1k*-*-linux* | or1k*-*-uclinux*)
-	tmake_file="$tmake_file or1k/t-or1k or1k/t-linux or1k/t-crtstuff t-softfp-sfdf t-softfp"
-	md_unwind_header=or1k/linux-unwind.h
-	;;
-or1k*-*-netbsd*)
-	tmake_file="$tmake_file or1k/t-or1k"
-	;;
-or1k*-*-*)
-	tmake_file="$tmake_file or1k/t-or1k or1k/t-linux or1k/t-crtstuff t-softfp-sfdf t-softfp"
-	extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o crti.o crtn.o"
+nds32*-linux*)
+	# Basic makefile fragment and extra_parts for crt stuff.
+	# We also append c-isr library implementation.
+	tmake_file="${tmake_file} t-slibgcc-libgcc"
+	tmake_file="${tmake_file} nds32/t-nds32-glibc nds32/t-crtstuff t-softfp-sfdf t-softfp"
+	# The header file of defining MD_FALLBACK_FRAME_STATE_FOR.
+	md_unwind_header=nds32/linux-unwind.h
+	# Append library definition makefile fragment according to --with-nds32-lib=X setting.
+	case "${with_nds32_lib}" in
+	"" | glibc | uclibc )
+		;;
+	*)
+		echo "Cannot accept --with-nds32-lib=$with_nds32_lib, available values are: glibc uclibc" 1>&2
+		exit 1
+		;;
+	esac
 	;;
 nds32*-elf*)
 	# Basic makefile fragment and extra_parts for crt stuff.
@@ -1055,6 +1086,19 @@ nios2-*-linux*)
 nios2-*-*)
 	tmake_file="$tmake_file nios2/t-nios2 t-softfp-sfdf t-softfp-excl t-softfp"
 	extra_parts="$extra_parts crti.o crtn.o"
+	;;
+or1k-*-linux*)
+	tmake_file="$tmake_file or1k/t-or1k"
+	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
+	md_unwind_header=or1k/linux-unwind.h
+	;;
+or1k*-*-netbsd*)
+	tmake_file="$tmake_file or1k/t-or1k"
+	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
+	;;
+or1k-*-*)
+	tmake_file="$tmake_file or1k/t-or1k"
+	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
 	;;
 pdp11-*-*)
 	tmake_file="pdp11/t-pdp11 t-fdpbit"
@@ -1158,6 +1202,7 @@ powerpc*-*-linux*)
 	;;
 powerpc-wrs-vxworks*)
 	tmake_file="$tmake_file rs6000/t-ppccomm rs6000/t-savresfgpr t-fdpbit"
+	extra_parts="$extra_parts crtbegin.o crtend.o"
 	;;
 powerpc-*-lynxos*)
 	tmake_file="$tmake_file rs6000/t-lynx t-fdpbit"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.5 2020/08/18 23:31:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.6 2021/04/09 22:33:16 mrg Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
@@ -10,17 +10,14 @@ CPPFLAGS.prefix.c+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
 .include "../Makefile.backtrace"
-.include "../Makefile.common"
-.include "../Makefile.common-target"
 .include "../Makefile.libcpp"
 .include "../Makefile.libdecnumber"
-.include "../Makefile.libiberty"
 
 CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 		main.o \
 		${LIBBACKTRACEOBJ}/libbacktrace.a \
-		${COMMONOBJ}/libcommon.a \
 		${COMMONTARGETOBJ}/libcommon-target.a \
+		${COMMONOBJ}/libcommon.a \
 		${LIBCPPOBJ}/libcpp.a \
 		${LIBDECNUMBEROBJ}/libdecnumber.a \
 		${LIBIBERTYOBJ}/libiberty.a \
