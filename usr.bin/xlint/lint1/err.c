@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.104 2021/04/08 22:18:27 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.105 2021/04/09 15:58:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.104 2021/04/08 22:18:27 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.105 2021/04/09 15:58:43 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -407,8 +407,7 @@ static struct include_level {
 
 
 void
-update_position(const char *filename, int lineno,
-		bool is_begin, bool is_end, bool is_system)
+update_location(const char *filename, int lineno, bool is_begin, bool is_end)
 {
 	struct include_level *top;
 
@@ -431,17 +430,20 @@ update_position(const char *filename, int lineno,
 		top->filename = filename;
 		top->lineno = lineno;
 	}
-
-	in_system_header = is_system;
 }
 
 static void
 print_stack_trace(void)
 {
-	struct include_level *top;
+	const struct include_level *top;
 
 	if ((top = includes) == NULL)
 		return;
+	/*
+	 * Skip the innermost include level since it is already listed in the
+	 * diagnostic itself.  Furthermore, its lineno is the line number of
+	 * the last '#' line, not the current line.
+	 */
 	for (top = top->by; top != NULL; top = top->by)
 		printf("\tincluded from %s(%d)\n", top->filename, top->lineno);
 }

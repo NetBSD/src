@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.25 2021/04/08 22:18:27 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.26 2021/04/09 15:58:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.25 2021/04/08 22:18:27 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.26 2021/04/09 15:58:43 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1151,8 +1151,8 @@ lex_directive(const char *yytext)
 		}
 
 		parse_line_directive_flags(cp, &is_begin, &is_end, &is_system);
-		update_position(curr_pos.p_file, (int)ln,
-		    is_begin, is_end, is_system);
+		update_location(curr_pos.p_file, (int)ln, is_begin, is_end);
+		in_system_header = is_system;
 	}
 	curr_pos.p_line = (int)ln - 1;
 	curr_pos.p_uniq = 0;
