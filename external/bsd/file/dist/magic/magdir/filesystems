@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# $File: filesystems,v 1.133 2020/05/17 19:32:00 christos Exp $
+# $File: filesystems,v 1.141 2021/04/04 17:46:17 christos Exp $
 # filesystems:  file(1) magic for different filesystems
 #
 0	name	partid
@@ -261,6 +261,18 @@
 # for sector sizes with 512 or more Bytes
 >0x1FE		leshort		0xAA55		DOS/MBR boot sector
 
+# ExFAT
+3		string/w	=EXFAT
+>0x1FE		leshort		0xAA55
+>>0x6E		ubyte		1
+>>>0x6F		ubyte		0x80
+>>>0		ubyte		0xEB	DOS/MBR boot sector,
+>>>0x69		ubyte		x	ExFAT Filesystem version %d.
+>>>0x68		ubyte		x	\b%d
+>>>0x6d		ubyte		x	\b, (1<<%d) sectors per cluster
+>>>0x48		ulequad		x	\b, sectors %lld
+>>>0x64		ulelong		x	\b, serial number 0x%x
+
 # keep old DOS/MBR boot sector as dummy for mbr and bootloader displaying
 # only for sector sizes with 512 or more Bytes
 0x1FE          leshort         0xAA55         	DOS/MBR boot sector
@@ -491,7 +503,7 @@
 # updated by Joerg Jenderek at Oct 2008
 # variables according to grub-0.97/stage1/stage1.S or
 # https://www.gnu.org/software/grub/manual/grub.html#Embedded-data
-# usual values are marked with comments to get only informations of strange GRUB loaders
+# usual values are marked with comments to get only information of strange GRUB loaders
 >342		search/60	\0Geom\0
 #>0		ulelong		x		%x=0x009048EB ,	0x2a9048EB  0
 >>0x41		ubyte		<2
@@ -533,7 +545,7 @@
 # mbr partition table entries updated by Joerg Jenderek at Sep 2013
 # skip Norton Utilities disc image data
 >3		string		!IHISK
-# skip Linux style boot sector starting with assember instructions mov 0x7c0,ax;
+# skip Linux style boot sector starting with assembler instructions mov 0x7c0,ax;
 >>0		belong		!0xb8c0078e
 # not Linux kernel
 >>>514		string		!HdrS
@@ -548,7 +560,7 @@
 >>>>>0		ubelong&0xFD000000	!0xE9000000
 # skip FSInfosector
 >>>>>>0		string		!RRaA
-# skip 3rd sector of MS x86 bootloader with assember instructions cli;MOVZX EAX,BYTE PTR [BP+10];MOV ECX,
+# skip 3rd sector of MS x86 bootloader with assembler instructions cli;MOVZX EAX,BYTE PTR [BP+10];MOV ECX,
 # https://thestarman.pcministry.com/asm/mbr/MSWIN41.htm
 >>>>>>>0	ubequad		!0xfa660fb64610668b
 # skip 13rd sector of MS x86 bootloader
@@ -1296,7 +1308,7 @@
 # In the second sector (+0x200) are variables according to grub-0.97/stage2/asm.S or
 # grub-1.94/kern/i386/pc/startup.S
 # https://www.gnu.org/software/grub/manual/grub.html#Embedded-data
-# usual values are marked with comments to get only informations of strange GRUB loaders
+# usual values are marked with comments to get only information of strange GRUB loaders
 0x200	uleshort		0x70EA
 # found only version 3.{1,2}
 >0x206		ubeshort	>0x0300
@@ -1358,7 +1370,7 @@
 0		ulelong&0x804000E9	0x000000E9
 !:strength	+60
 # mtools-3.9.8/msdos.h
-# usual values are marked with comments to get only informations of strange FAT systems
+# usual values are marked with comments to get only information of strange FAT systems
 # valid sectorsize must be a power of 2 from 32 to 32768
 >11		uleshort&0x001f	0
 >>11		uleshort	<32769
@@ -1421,7 +1433,7 @@
 # in Windows NT bit 0 is a dirty flag to request chkdsk at boot time. bit 1 requests surface scan too
 >>>>>>>>37	ubyte		>0		\b, reserved 0x%x
 #>>>>>>>>37	ubyte		=0		\b, reserved 0x%x
-# extended boot signatur value is 0x80 for NTFS, 0x28 or 0x29 for others
+# extended boot signature value is 0x80 for NTFS, 0x28 or 0x29 for others
 >>>>>>>>38	ubyte		!0x29		\b, dos < 4.0 BootSector (0x%x)
 >>>>>>>>38	ubyte&0xFE	=0x28
 >>>>>>>>>39	ulelong		x		\b, serial number 0x%x
@@ -1727,12 +1739,12 @@
 >>>0x464 lelong         >0x0000007      ext4 filesystem data
 #  else large INCOMPAT?
 >>0x460	lelong          >0x000003f      ext4 filesystem data
->0x468	belong		x		\b, UUID=%08x
->0x46c	beshort		x		\b-%04x
->0x46e	beshort		x		\b-%04x
->0x470	beshort		x		\b-%04x
->0x472	belong		x		\b-%08x
->0x476	beshort		x		\b%04x
+>0x468	ubelong		x		\b, UUID=%08x
+>0x46c	ubeshort	x		\b-%04x
+>0x46e	ubeshort	x		\b-%04x
+>0x470	ubeshort	x		\b-%04x
+>0x472	ubelong		x		\b-%08x
+>0x476	ubeshort	x		\b%04x
 >0x478	string		>0		\b, volume name "%s"
 # General flags for any ext* fs
 >0x460	lelong          &0x0000004      (needs journal recovery)
@@ -1755,12 +1767,12 @@
 
 # f2fs filesystem - Tuomas Tynkkynen <tuomas.tynkkynen@iki.fi>
 0x400	lelong		0xF2F52010	F2FS filesystem
->0x46c	belong		x		\b, UUID=%08x
->0x470	beshort		x		\b-%04x
->0x472	beshort		x		\b-%04x
->0x474	beshort		x		\b-%04x
->0x476	belong		x		\b-%08x
->0x47a	beshort		x		\b%04x
+>0x46c	ubelong		x		\b, UUID=%08x
+>0x470	ubeshort	x		\b-%04x
+>0x472	ubeshort	x		\b-%04x
+>0x474	ubeshort	x		\b-%04x
+>0x476	ubelong		x		\b-%08x
+>0x47a	ubeshort	x		\b%04x
 >0x147c	lestring16	x		\b, volume name "%s"
 
 # Minix filesystems - Juan Cespedes <cespedes@debian.org>
@@ -1980,11 +1992,14 @@
 # The next line is not necessary because the MBR staff is done looking for boot signature
 >0x1FE	leshort  0xAA55     (DOS/MBR boot sector)
 # "application id" which appears to be used as a volume label
->32808	string/T  >\0       '%s'
+>32808	string/T  >\0       '%.32s'
 >34816	string    \000CD001\001EL\ TORITO\ SPECIFICATION    (bootable)
 37633	string    CD001     ISO 9660 CD-ROM filesystem data (raw 2352 byte sectors)
 !:mime	application/x-iso9660-image
 32777	string    CDROM     High Sierra CD-ROM filesystem data
+# "application id" which appears to be used as a volume label
+>32816	string/T  >\0       '%.32s'
+
 
 # CDROM Filesystems
 # https://en.wikipedia.org/wiki/ISO_9660
@@ -2281,20 +2296,20 @@
 >>0x10060        string          >\0             lockproto %s)
 
 # Russell Coker <russell@coker.com.au>
-0x10040		string	_BHRfS_M	BTRFS Filesystem
->0x1012b	string	>\0		label "%s",
->0x10090	lelong	x		sectorsize %d,
->0x10094	lelong	x		nodesize %d,
->0x10098	lelong	x		leafsize %d,
->0x10020	belong	x		UUID=%08x-
->0x10024	beshort	x		\b%04x-
->0x10026	beshort	x		\b%04x-
->0x10028	beshort	x		\b%04x-
->0x1002a	beshort	x		\b%04x
->0x1002c	belong	x		\b%08x,
->0x10078	lequad	x		%lld/
->0x10070	lequad	x		\b%lld bytes used,
->0x10088	lequad	x		%lld devices
+0x10040		string		_BHRfS_M	BTRFS Filesystem
+>0x1012b	string		>\0		label "%s",
+>0x10090	lelong		x		sectorsize %d,
+>0x10094	lelong		x		nodesize %d,
+>0x10098	lelong		x		leafsize %d,
+>0x10020	ubelong		x		UUID=%08x-
+>0x10024	ubeshort	x		\b%04x-
+>0x10026	ubeshort	x		\b%04x-
+>0x10028	ubeshort	x		\b%04x-
+>0x1002a	ubeshort	x		\b%04x
+>0x1002c	ubelong		x		\b%08x,
+>0x10078	lequad		x		%lld/
+>0x10070	lequad		x		\b%lld bytes used,
+>0x10088	lequad		x		%lld devices
 
 # dvdisaster's .ecc
 # From: "Nelson A. de Oliveira" <naoliv@gmail.com>
@@ -2433,3 +2448,28 @@
 >0x400	pstring	x			serial: %s
 #>0x500	pstring	x			unknown: %s
 !:ext	imgc
+
+# http://martin.hinner.info/fs/bfs/bfs-structure.html
+0	lelong	0x1BADFACE		SCO UnixWare BFS filesystem
+
+# https://arstechnica.com/information-technology/2018/07/the-beos-filesystem/
+32	lelong	0x42465331		BE/OS BFS1 filesystem
+>36	lelong	x			\b, byte order %d
+>40	lelong	x			\b, block size %d
+>44	lelong	x			\b, block shift %d
+>48	lequad	x			\b, total blocks %lld
+>56	lequad	x			\b, used blocks %lld
+
+
+0	name next
+>0	lelong	x			\b, size %d
+>4	string	x			\b, label %s
+
+# https://opensource.apple.com/source/IOStorageFamily/IOStorageFamily-44.3\
+# /IONeXTPartitionScheme.h
+0	string	NeXT			NeXT version 1 disklabel
+>12	use next
+0	string	dlV1			NeXT version 2 disklabel
+>12	use next
+0	string	dlV2			NeXT version 3 disklabel
+>12	use next

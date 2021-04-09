@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.25 2020/06/15 00:37:24 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.26 2021/04/09 19:11:42 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.220 2020/06/08 17:38:27 christos Exp $
+ * @(#)$File: file.h,v 1.225 2021/02/05 22:29:07 christos Exp $
  */
 
 #ifndef __file_h__
@@ -143,6 +143,14 @@
 
 #ifndef MAX
 #define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef O_CLOEXEC
+# define O_CLOEXEC 0
+#endif
+
+#ifndef FD_CLOEXEC
+# define FD_CLOEXEC 1
 #endif
 
 #define FILE_BADSIZE CAST(size_t, ~0ul)
@@ -412,14 +420,16 @@ struct level_info {
 #endif
 };
 
+struct cont {
+	size_t len;
+	struct level_info *li;
+};
+
 #define MAGIC_SETS	2
 
 struct magic_set {
 	struct mlist *mlist[MAGIC_SETS];	/* list of regular entries */
-	struct cont {
-		size_t len;
-		struct level_info *li;
-	} c;
+	struct cont c;
 	struct out {
 		char *buf;		/* Accumulation buffer */
 		size_t blen;		/* Length of buffer */
@@ -454,6 +464,7 @@ struct magic_set {
 	uint16_t elf_notes_max;
 	uint16_t regex_max;
 	size_t bytes_max;		/* number of bytes to read from file */
+	size_t encoding_max;		/* bytes to look for encoding */
 #ifndef FILE_BYTES_MAX
 # define FILE_BYTES_MAX (1024 * 1024)	/* how much of the file to look at */
 #endif
@@ -463,10 +474,11 @@ struct magic_set {
 #define	FILE_INDIR_MAX			50
 #define	FILE_NAME_MAX			50
 #define	FILE_REGEX_MAX			8192
+#define	FILE_ENCODING_MAX		(64 * 1024)
 };
 
 /* Type for Unicode characters */
-typedef unsigned long unichar;
+typedef unsigned long file_unichar_t;
 
 struct stat;
 #define FILE_T_LOCAL	1
@@ -500,9 +512,9 @@ protected int file_zmagic(struct magic_set *, const struct buffer *,
 protected int file_ascmagic(struct magic_set *, const struct buffer *,
     int);
 protected int file_ascmagic_with_encoding(struct magic_set *,
-    const struct buffer *, unichar *, size_t, const char *, const char *, int);
+    const struct buffer *, file_unichar_t *, size_t, const char *, const char *, int);
 protected int file_encoding(struct magic_set *, const struct buffer *,
-    unichar **, size_t *, const char **, const char **, const char **);
+    file_unichar_t **, size_t *, const char **, const char **, const char **);
 protected int file_is_json(struct magic_set *, const struct buffer *);
 protected int file_is_csv(struct magic_set *, const struct buffer *, int);
 protected int file_is_tar(struct magic_set *, const struct buffer *);
@@ -529,7 +541,7 @@ protected size_t file_mbswidth(const char *);
 protected const char *file_getbuffer(struct magic_set *);
 protected ssize_t sread(int, void *, size_t, int);
 protected int file_check_mem(struct magic_set *, unsigned int);
-protected int file_looks_utf8(const unsigned char *, size_t, unichar *,
+protected int file_looks_utf8(const unsigned char *, size_t, file_unichar_t *,
     size_t *);
 protected size_t file_pstring_length_size(struct magic_set *,
     const struct magic *);
@@ -540,6 +552,9 @@ protected char * file_printable(char *, size_t, const char *, size_t);
 protected int file_os2_apptype(struct magic_set *, const char *, const void *,
     size_t);
 #endif /* __EMX__ */
+protected int file_pipe_closexec(int *);
+protected int file_clear_closexec(int);
+protected char *file_strtrim(char *);
 
 protected void buffer_init(struct buffer *, int, const struct stat *,
     const void *, size_t);
