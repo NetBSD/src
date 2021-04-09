@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.193 2021/04/02 14:50:47 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.194 2021/04/09 23:03:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.193 2021/04/02 14:50:47 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.194 2021/04/09 23:03:26 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -599,7 +599,7 @@ brace_level_sub_type_struct_or_union(const struct brace_level *bl)
 }
 
 static const type_t *
-brace_level_sub_type_array(const struct brace_level *bl)
+brace_level_sub_type_array(const struct brace_level *bl, bool is_string)
 {
 
 	if (!bl->bl_confused && !bl->bl_type->t_incomplete_array &&
@@ -607,6 +607,10 @@ brace_level_sub_type_array(const struct brace_level *bl)
 		/* too many array initializers, expected %d */
 		error(173, bl->bl_type->t_dim);
 	}
+
+	if (is_string && bl->bl_subscript == 0 &&
+	    bl->bl_type->t_subt->t_tspec != ARRAY)
+		return bl->bl_type;
 
 	return bl->bl_type->t_subt;
 }
@@ -625,7 +629,7 @@ brace_level_sub_type_scalar(const struct brace_level *bl)
 
 /* Return the type of the sub-object that is currently being initialized. */
 static const type_t *
-brace_level_sub_type(const struct brace_level *bl)
+brace_level_sub_type(const struct brace_level *bl, bool is_string)
 {
 
 	if (bl->bl_designation.dn_head != NULL)
@@ -636,7 +640,7 @@ brace_level_sub_type(const struct brace_level *bl)
 	case UNION:
 		return brace_level_sub_type_struct_or_union(bl);
 	case ARRAY:
-		return brace_level_sub_type_array(bl);
+		return brace_level_sub_type_array(bl, is_string);
 	default:
 		return brace_level_sub_type_scalar(bl);
 	}
@@ -750,12 +754,12 @@ initialization_debug(const struct initialization *in)
  * initialized.
  */
 static const type_t *
-initialization_sub_type(struct initialization *in)
+initialization_sub_type(struct initialization *in, bool is_string)
 {
 	const type_t *tp;
 
 	tp = in->in_brace_level != NULL
-	    ? brace_level_sub_type(in->in_brace_level)
+	    ? brace_level_sub_type(in->in_brace_level, is_string)
 	    : in->in_sym->s_type;
 	if (tp == NULL)
 		in->in_err = true;
@@ -772,7 +776,7 @@ initialization_begin_brace_level(struct initialization *in)
 
 	debug_enter();
 
-	tp = initialization_sub_type(in);
+	tp = initialization_sub_type(in, false);
 	if (tp == NULL) {
 		in->in_err = true;
 		goto done;
@@ -893,7 +897,7 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 		return false;
 
 	bl = in->in_brace_level;
-	tp = initialization_sub_type(in);
+	tp = initialization_sub_type(in, true);
 	strg = tn->tn_string;
 
 	if (!is_string_array(tp, strg->st_tspec))
@@ -901,14 +905,15 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	if (bl != NULL && tp->t_tspec != ARRAY && bl->bl_subscript != 0)
 		return false;
 
-	if (bl != NULL && tp->t_dim < (int)strg->st_len) {
+	if (!tp->t_incomplete_array && tp->t_dim < (int)strg->st_len) {
 		/* non-null byte ignored in string initializer */
 		warning(187);
 	}
 
 	if (tp == in->in_sym->s_type && tp->t_incomplete_array) {
 		if (bl != NULL) {
-			bl->bl_subscript = strg->st_len + 1;
+			bl->bl_subscript = strg->st_len;
+			/* see brace_level_advance for the +1 */
 			/* see initialization_set_size_of_unknown_array */
 		} else
 			update_type_of_array_of_unknown_size(in->in_sym,
@@ -946,7 +951,7 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 
 	if (bl != NULL)
 		brace_level_apply_designation(bl);
-	tp = initialization_sub_type(in);
+	tp = initialization_sub_type(in, false);
 	if (tp == NULL)
 		goto done;
 

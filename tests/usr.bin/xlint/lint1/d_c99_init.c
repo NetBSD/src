@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.32 2021/04/09 22:08:14 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.33 2021/04/09 23:03:26 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -237,8 +237,8 @@ char prefixed_message[] = {
 };
 
 char message_with_suffix[] = {
-	"message",		/* expect: illegal combination */
-	/* */
+	"message",
+	/* The excess character is not detected by lint but by compilers. */
 	'\n',
 };
 
@@ -389,6 +389,5 @@ struct point designator_for_scalar_in_struct = {
 
 /* Seen in pcidevs_data.h, variable 'pci_words'. */
 const char string_initialized_with_braced_literal[] = {
-	/* FIXME: *//* expect+1: illegal combination of integer (char) and pointer (pointer to char) [183] */
 	"initializer",
 };
