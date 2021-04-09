@@ -1,4 +1,4 @@
-/*	$NetBSD: seccomp.c,v 1.1.1.5 2020/06/15 00:18:48 christos Exp $	*/
+/*	$NetBSD: seccomp.c,v 1.1.1.6 2021/04/09 18:58:01 christos Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: seccomp.c,v 1.15 2020/05/30 23:56:26 christos Exp $")
+FILE_RCSID("@(#)$File: seccomp.c,v 1.18 2021/03/14 17:01:58 christos Exp $")
 #else
-__RCSID("$NetBSD: seccomp.c,v 1.1.1.5 2020/06/15 00:18:48 christos Exp $");
+__RCSID("$NetBSD: seccomp.c,v 1.1.1.6 2021/04/09 18:58:01 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: seccomp.c,v 1.1.1.5 2020/06/15 00:18:48 christos Exp $");
 #include <sys/prctl.h> /* prctl */
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <termios.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -180,9 +181,7 @@ enable_sandbox_full(void)
  	ALLOW_RULE(fcntl64);
 	ALLOW_RULE(fstat);
  	ALLOW_RULE(fstat64);
-#ifdef XZLIBSUPPORT
 	ALLOW_RULE(futex);
-#endif
 	ALLOW_RULE(getdents);
 #ifdef __NR_getdents64
 	ALLOW_RULE(getdents64);
@@ -225,12 +224,14 @@ enable_sandbox_full(void)
 	ALLOW_RULE(rt_sigreturn);
 	ALLOW_RULE(select);
 	ALLOW_RULE(stat);
+	ALLOW_RULE(statx);
 	ALLOW_RULE(stat64);
 	ALLOW_RULE(sysinfo);
 	ALLOW_RULE(umask);	// Used in file_pipe2file()
 	ALLOW_RULE(getpid);	// Used by glibc in file_pipe2file()
 	ALLOW_RULE(unlink);
 	ALLOW_RULE(write);
+	ALLOW_RULE(writev);
 
 
 #if 0

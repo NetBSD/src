@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: linux,v 1.72 2020/06/07 21:56:13 christos Exp $
+# $File: linux,v 1.77 2021/02/24 23:05:02 christos Exp $
 # linux:  file(1) magic for Linux files
 #
 # Values for Linux/i386 binaries, from Daniel Quinlan <quinlan@yggdrasil.com>
@@ -239,14 +239,14 @@
 # From: Kevin Cernekee <cernekee@gmail.com>
 # Update: Joerg Jenderek
 0x24	lelong	0x016f2818	Linux kernel ARM boot executable zImage
-# There are three posible situations: LE, BE with LE bootloader and pure BE.
+# There are three possible situations: LE, BE with LE bootloader and pure BE.
 # In order to aid telling these apart a new endian flag was added. In order
 # to support kernels before the flag and BE with LE bootloader was added we'll
 # do a negative check against the BE variant of the flag when we see a LE magic.
 >0x30	belong	!0x04030201	(little-endian)
->0x30	belong	0x04030201	(big-endian)
 # raspian "kernel7.img", Vu+ Ultimo4K "kernel_auto.bin"
 !:ext	img/bin
+>0x30	belong	0x04030201	(big-endian)
 0x24	belong	0x016f2818	Linux kernel ARM boot executable zImage (big-endian)
 
 ############################################################################
@@ -438,17 +438,16 @@
 # Documentation/devicetree/booting-without-of.txt
 # From Christoph Biedl
 0		belong		0xd00dfeed
-# structure and strings must be within blob
+# structure must be within blob, strings are omitted to handle devicetrees > 1M
 >&(8.L)		byte		x
->>&(12.L)	byte		x
->>>20		belong		>1	Device Tree Blob version %d
->>>>4		belong		x	\b, size=%d
->>>>20		belong		>1
->>>>>28		belong		x	\b, boot CPU=%d
->>>>20		belong		>2
->>>>>32		belong		x	\b, string block size=%d
->>>>20		belong		>16
->>>>>36		belong		x	\b, DT structure block size=%d
+>>20		belong		>1	Device Tree Blob version %d
+>>>4		belong		x	\b, size=%d
+>>>20		belong		>1
+>>>>28		belong		x	\b, boot CPU=%d
+>>>20		belong		>2
+>>>>32		belong		x	\b, string block size=%d
+>>>20		belong		>16
+>>>>36		belong		x	\b, DT structure block size=%d
 
 # glibc locale archive as defined in glibc locale/locarchive.h
 0		lelong		0xde020109	locale archive
@@ -518,3 +517,21 @@
 0		search/1024	/dts-v1/	Device Tree File (v1)
 # beat c code
 !:strength +14
+
+
+# e2fsck undo file
+# David Gilman <davidgilman1@gmail.com>
+0		string		E2UNDO02	e2fsck undo file, version 2
+>44		lelong		x		\b, undo file is
+>>44		lelong&1	0		not finished
+>>44		lelong&1	1		finished
+>48		lelong		x		\b, undo file features:
+>>48		lelong&1	0		lacks filesystem offset
+>>48		lelong&1	1		has filesystem offset
+>>>64		lequad		x		at 0x%llx
+
+# ansible vault (does not really belong here)
+0		string		$ANSIBLE_VAULT;	Ansible Vault
+>&0		regex		[0-9]*\.[0-9]*	\b, version %s
+>>&0		string		;
+>>>&0		regex		[A-Z0-9]*	\b, encryption %s

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: windows,v 1.31 2020/03/15 16:44:37 christos Exp $
+# $File: windows,v 1.36 2021/02/05 22:29:07 christos Exp $
 # windows:  file(1) magic for Microsoft Windows
 #
 # This file is mainly reserved for files where programs
@@ -576,6 +576,13 @@
 >>&0	regex/c		\^(options)]\r\n				Microsoft HTML Help Project
 !:mime text/plain
 !:ext	hhp
+# From:		Joerg Jenderek
+# URL:		https://documentation.basis.com/BASISHelp/WebHelp/b3odbc/obdcdriv_character_translation.htm
+# Reference:	https://www.garykessler.net/library/file_sigs.html
+# Note:		stored in directory %WINDIR%\SysWOW64 or %WINDIR%\system
+>>&0	regex/c		\^(Windows\ Latin)				Windows codepage translator
+!:mime	text/plain
+!:ext	cpx
 # unknown keyword after opening bracket
 >>&0	default				x
 #>>>&0	string/c			x	UNKNOWN [%s
@@ -590,7 +597,7 @@
 >>>>>&0	ubyte				x
 # characters, digits, underscore and white space followed by right bracket
 # terminated by CR implies section line to skip BOOTLOG.TXT DETLOG.TXT
->>>>>>&-1	regex			\^([A-Za-z0-9_\(\)\ ]+)\]\r	Generic INItialization configuration [%-.40s
+>>>>>>&-1	regex/T			\^([A-Za-z0-9_\(\)\ ]+)\]\r	Generic INItialization configuration [%-.40s
 # NETDEF.INF multiarc.ini 
 #!:mime	application/x-setupscript
 !:mime	application/x-wine-extension-ini
@@ -918,9 +925,39 @@
 # directory like C:\Program Files\GIMP 2
 >>>>&0	lestring16	x				\b, %-.42s
 
+# URL:      https://jrsoftware.org/ishelp/index.php?topic=setup_signeduninstaller
+# Reference:https://github.com/jrsoftware/issrc/blob/main/Projects/Struct.pas
+# From:     Joerg Jenderek
+0	string	Inno\ Setup\ Messages\ (
+# null padded til 0x40 boundary
+>0x38	quad		0				InnoSetup messages
+!:mime	application/x-innosetup-msg
+# unins000.msg, unins001.msg, ...
+!:ext	msg
+# version like 5.1.1 5.1.11 5.5.0 5.5.3 6.0.0
+>>0x15	string		x				\b, version %.5s
+# look for 6th char of version string or terminating right parentheses
+>>>0x1a	ubyte		!0x29				\b%c
+# NumMessages
+>>0x40	ulelong		x				\b, %u messages
+# TotalSize: Cardinal;
+#>>0x44	ulelong		x				\b, TotalSize %u
+# NotTotalSize: Cardinal;
+#>>0x48	ulelong		x				\b, NotTotalSize %u
+# CRCMessages: Longint;
+#>>0x4C	ulelong		x				\b, CRC 0x%x
+>>0x40	ulelong		x
+# (u) after version means unicoded messages
+>>>0x1c	search/2	(u)				(UTF-16),
+>>>>0x50 lestring16	x				%s
+# ASCII coded message
+>>>0x1c	default		x				(ASCII),
+>>>>0x50 string		x				%s
+
 # Windows Imaging (WIM) Image
-# Update: Joerg Jenderek at Mar 2019
+# Update: Joerg Jenderek at Mar 2019, 2021
 # URL: https://en.wikipedia.org/wiki/Windows_Imaging_Format
+#      http://fileformats.archiveteam.org/wiki/Windows_Imaging_Format
 # Reference: https://download.microsoft.com/download/f/e/f/
 # fefdc36e-392d-4678-9e4e-771ffa2692ab/Windows%20Imaging%20File%20Format.rtf
 # Note: verified by like `7z t boot.wim` `wiminfo install.esd --header`
@@ -936,21 +973,27 @@
 # TO avoid in file version 5.36 error like
 # Magdir/windows, 760: Warning: Current entry does not yet have a description
 # file: could not find any valid magic files! (No error)
-# splitted WIM
+# split WIM
 >16	ulelong		&0x00000008		(SWM
 !:ext	swm
 # usPartNumber; 1, unless the file was split into multiple parts
 >>40	uleshort	x			\b %u
 # usTotalParts; The total number of WIM file parts in a spanned set
 >>42	uleshort	x			\b of %u) image
-# non splitted WIM
+# non split WIM
 >16	ulelong		^0x00000008
 # https://wimlib.net/man1/wimmount.html
 # solid WIMs; version 3584; usually contain LZMS-compressed and the .esd extension
 >>12	ulelong		3584			(ESD) image
 !:ext	esd
->>12	ulelong		!3584			(WIM) image
-!:ext	wim
+>>12	ulelong		!3584			(
+# look for archive member RunTime.xml like in Microsoft.Windows.Cosa.Desktop.Client.ppkg
+>>>156	search/68233/s		RunTime.xml	\bWindows provisioning package)
+!:ext	ppkg
+# if is is not a Windows provisioning package, then it is a WIM
+>>>156	default			x		\bWIM) image
+# second disk image part created by Microsoft's RecoveryDrive.exe has name Reconstruct.WIM2
+!:ext	wim/wim2
 >0	string/b	WLPWM\000\000\000	\b, wimlib pipable format
 # cbSize size of the WIM header in bytes like 208
 #>8	ulelong		x			\b, headersize %u
