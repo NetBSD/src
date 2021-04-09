@@ -1,5 +1,5 @@
 /* Target definitions for Darwin (Mac OS X) systems.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by Jack Howarth <howarth@bromo.med.uc.edu>.
 
 This file is part of GCC.
@@ -23,8 +23,9 @@ along with GCC; see the file COPYING3.  If not see
 #undef  LINK_GCC_C_SEQUENCE_SPEC
 #define LINK_GCC_C_SEQUENCE_SPEC \
 "%{!static:%{!static-libgcc: \
-   %:version-compare(>= 10.6 mmacosx-version-min= -lSystem) } } \
- %G %L"
+    %:version-compare(>= 10.6 mmacosx-version-min= -lSystem) } } \
+ %{!nostdlib:%:version-compare(>< 10.6 10.7 mmacosx-version-min= -ld10-uwfef.o)} \
+  %G %{!nolibc:%L}"
 
 #undef DEF_MIN_OSX_VERSION
 #define DEF_MIN_OSX_VERSION "10.6"

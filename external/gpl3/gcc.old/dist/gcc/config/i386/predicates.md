@@ -1,5 +1,5 @@
 ;; Predicate definitions for IA-32 and x86-64.
-;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -1042,11 +1042,6 @@
   (ior (match_operand 0 "register_operand")
        (match_operand 0 "vector_memory_operand")))
 
-; Return true when OP is operand acceptable for standard SSE move.
-(define_predicate "vector_move_operand"
-  (ior (match_operand 0 "nonimmediate_operand")
-       (match_operand 0 "const0_operand")))
-
 ;; Return true when OP is either nonimmediate operand, or any
 ;; CONST_VECTOR.
 (define_predicate "nonimmediate_or_const_vector_operand"
@@ -1061,6 +1056,11 @@
 ;; Return true if OP is a register or a zero.
 (define_predicate "reg_or_0_operand"
   (ior (match_operand 0 "register_operand")
+       (match_operand 0 "const0_operand")))
+
+; Return true when OP is a nonimmediate or zero.
+(define_predicate "nonimm_or_0_operand"
+  (ior (match_operand 0 "nonimmediate_operand")
        (match_operand 0 "const0_operand")))
 
 (define_predicate "norex_memory_operand"
@@ -1132,72 +1132,7 @@
   return true;
 })
 
-;; Return true if op is valid MPX address operand without base
-(define_predicate "address_mpx_no_base_operand"
-  (match_test "address_operand (op, VOIDmode)")
-{
-  struct ix86_address parts;
-  int ok;
-
-  ok = ix86_decompose_address (op, &parts);
-  gcc_assert (ok);
-
-  if (parts.index && parts.base)
-    return false;
-
-  if (parts.seg != ADDR_SPACE_GENERIC)
-    return false;
-
-  /* Do not support (%rip).  */
-  if (parts.disp && flag_pic && TARGET_64BIT
-      && SYMBOLIC_CONST (parts.disp))
-    {
-      if (GET_CODE (parts.disp) != CONST
-	  || GET_CODE (XEXP (parts.disp, 0)) != PLUS
-	  || GET_CODE (XEXP (XEXP (parts.disp, 0), 0)) != UNSPEC
-	  || !CONST_INT_P (XEXP (XEXP (parts.disp, 0), 1))
-	  || (XINT (XEXP (XEXP (parts.disp, 0), 0), 1) != UNSPEC_DTPOFF
-	      && XINT (XEXP (XEXP (parts.disp, 0), 0), 1) != UNSPEC_NTPOFF))
-	return false;
-    }
-
-  return true;
-})
-
-;; Return true if op is valid MPX address operand without index
-(define_predicate "address_mpx_no_index_operand"
-  (match_test "address_operand (op, VOIDmode)")
-{
-  struct ix86_address parts;
-  int ok;
-
-  ok = ix86_decompose_address (op, &parts);
-  gcc_assert (ok);
-
-  if (parts.index)
-    return false;
-
-  if (parts.seg != ADDR_SPACE_GENERIC)
-    return false;
-
-  /* Do not support (%rip).  */
-  if (parts.disp && flag_pic && TARGET_64BIT
-      && SYMBOLIC_CONST (parts.disp)
-      && (GET_CODE (parts.disp) != CONST
-	  || GET_CODE (XEXP (parts.disp, 0)) != PLUS
-	  || GET_CODE (XEXP (XEXP (parts.disp, 0), 0)) != UNSPEC
-	  || !CONST_INT_P (XEXP (XEXP (parts.disp, 0), 1))
-	  || (XINT (XEXP (XEXP (parts.disp, 0), 0), 1) != UNSPEC_DTPOFF
-	      && XINT (XEXP (XEXP (parts.disp, 0), 0), 1) != UNSPEC_NTPOFF)))
-    return false;
-
-  return true;
-})
-
 (define_predicate "vsib_mem_operator"
-  (match_code "mem"))
-
-(define_predicate "bnd_mem_operator"
   (match_code "mem"))
 
 ;; Return true if the rtx is known to be at least 32 bits aligned.
@@ -1471,36 +1406,6 @@
   (and (match_code "mem")
        (match_test "MEM_ALIGN (op) < GET_MODE_BITSIZE (mode)")))
 
-;; Return true if OP is a emms operation, known to be a PARALLEL.
-(define_predicate "emms_operation"
-  (match_code "parallel")
-{
-  unsigned i;
-
-  if (XVECLEN (op, 0) != 17)
-    return false;
-
-  for (i = 0; i < 8; i++)
-    {
-      rtx elt = XVECEXP (op, 0, i+1);
-
-      if (GET_CODE (elt) != CLOBBER
-	  || GET_CODE (SET_DEST (elt)) != REG
-	  || GET_MODE (SET_DEST (elt)) != XFmode
-	  || REGNO (SET_DEST (elt)) != FIRST_STACK_REG + i)
-        return false;
-
-      elt = XVECEXP (op, 0, i+9);
-
-      if (GET_CODE (elt) != CLOBBER
-	  || GET_CODE (SET_DEST (elt)) != REG
-	  || GET_MODE (SET_DEST (elt)) != DImode
-	  || REGNO (SET_DEST (elt)) != FIRST_MMX_REG + i)
-	return false;
-    }
-  return true;
-})
-
 ;; Return true if OP is a vzeroall operation, known to be a PARALLEL.
 (define_predicate "vzeroall_operation"
   (match_code "parallel")
@@ -1524,8 +1429,14 @@
   return true;
 })
 
-;; return true if OP is a vzeroupper operation.
-(define_predicate "vzeroupper_operation"
+;; return true if OP is a vzeroall pattern.
+(define_predicate "vzeroall_pattern"
+  (and (match_code "parallel")
+       (match_code "unspec_volatile" "a")
+       (match_test "XINT (XVECEXP (op, 0, 0), 1) == UNSPECV_VZEROALL")))
+
+;; return true if OP is a vzeroupper pattern.
+(define_predicate "vzeroupper_pattern"
   (and (match_code "unspec_volatile")
        (match_test "XINT (op, 1) == UNSPECV_VZEROUPPER")))
 

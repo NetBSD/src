@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2018 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -131,6 +131,8 @@ information have to.
 </li><li> <a href="#nds32le-x-elf">nds32le-*-elf</a>
 </li><li> <a href="#nds32be-x-elf">nds32be-*-elf</a>
 </li><li> <a href="#nvptx-x-none">nvptx-*-none</a>
+</li><li> <a href="#or1k-x-elf">or1k-*-elf</a>
+</li><li> <a href="#or1k-x-linux">or1k-*-linux</a>
 </li><li> <a href="#powerpc-x-x">powerpc*-*-*</a>
 </li><li> <a href="#powerpc-x-darwin">powerpc-*-darwin*</a>
 </li><li> <a href="#powerpc-x-elf">powerpc-*-elf</a>
@@ -206,6 +208,16 @@ The workaround is disabled by default if neither of
 <samp>--enable-fix-cortex-a53-843419</samp> or
 <samp>--disable-fix-cortex-a53-843419</samp> is given at configure time.
 </p>
+<p>To enable Branch Target Identification Mechanism and Return Address Signing by
+default at configure time use the <samp>--enable-standard-branch-protection</samp>
+option.  This is equivalent to having <samp>-mbranch-protection=standard</samp>
+during compilation.  This can be explicitly disabled during compilation by
+passing the <samp>-mbranch-protection=none</samp> option which turns off all
+types of branch protections.  Conversely,
+<samp>--disable-standard-branch-protection</samp> will disable both the
+protections by default.  This mechanism is turned off by default if neither
+of the options are given at configure time.
+</p>
 <hr />
 <a name="alpha-x-x"></a><a name="alpha*-*-*"></a>
 <h3 class="heading">alpha*-*-*</h3>
@@ -222,6 +234,25 @@ shared libraries.
 <a name="amd64-x-solaris210"></a><a name="amd64-*-solaris2_002e1_005b0-9_005d*"></a>
 <h3 class="heading">amd64-*-solaris2.1[0-9]*</h3>
 <p>This is a synonym for &lsquo;<samp>x86_64-*-solaris2.1[0-9]*</samp>&rsquo;.
+</p>
+<hr />
+<a name="amdgcn-unknown-amdhsa"></a><a name="amdgcn-unknown-amdhsa-1"></a>
+<h3 class="heading">amdgcn-unknown-amdhsa</h3>
+<p>AMD GCN GPU target.
+</p>
+<p>Instead of GNU Binutils, you will need to install LLVM 6, or later, and copy
+<samp>bin/llvm-mc</samp> to <samp>amdgcn-unknown-amdhsa/bin/as</samp>,
+<samp>bin/lld</samp> to <samp>amdgcn-unknown-amdhsa/bin/ld</samp>,
+<samp>bin/llvm-nm</samp> to <samp>amdgcn-unknown-amdhsa/bin/nm</samp>, and
+<samp>bin/llvm-ar</samp> to both <samp>bin/amdgcn-unknown-amdhsa-ar</samp> and
+<samp>bin/amdgcn-unknown-amdhsa-ranlib</samp>.
+</p>
+<p>Use Newlib (2019-01-16, or newer).
+</p>
+<p>To run the binaries, install the HSA Runtime from the
+<a href="https://rocm.github.io">ROCm Platform</a>, and use
+<samp>libexec/gcc/amdhsa-unknown-amdhsa/<var>version</var>/gcn-run</samp> to launch them
+on the GPU.
 </p>
 <hr />
 <a name="arc-x-elf32"></a><a name="arc-*-elf32"></a>
@@ -954,6 +985,17 @@ the GCC sources.
 <samp>--enable-newlib-io-long-long</samp> options when configuring.
 </p>
 <hr />
+<a name="or1k-x-elf"></a><a name="or1k-*-elf"></a>
+<h3 class="heading">or1k-*-elf</h3>
+<p>The OpenRISC 1000 32-bit processor with delay slots.
+This configuration is intended for embedded systems.
+</p>
+<hr />
+<a name="or1k-x-linux"></a><a name="or1k-*-linux"></a>
+<h3 class="heading">or1k-*-linux</h3>
+<p>The OpenRISC 1000 32-bit processor with delay slots.
+</p>
+<hr />
 <a name="powerpc-x-x"></a><a name="powerpc-*-*"></a>
 <h3 class="heading">powerpc-*-*</h3>
 <p>You can specify a default version for the <samp>-mcpu=<var>cpu_type</var></samp>
@@ -1078,9 +1120,11 @@ supported as cross-compilation target only.
 <hr />
 <a name="x-x-solaris2"></a><a name="g_t*-*-solaris2*"></a>
 <h3 class="heading">*-*-solaris2*</h3>
-<p>Support for Solaris 9 has been removed in GCC 5.  Support for Solaris
-8 has been removed in GCC 4.8.  Support for Solaris 7 has been removed
-in GCC 4.6.
+<p>Support for Solaris 10 has been obsoleted in GCC 9, but can still be
+enabled by configuring with <samp>--enable-obsolete</samp>.  Support will be
+removed in GCC 10.  Support for Solaris 9 has been removed in GCC 5.
+Support for Solaris 8 has been removed in GCC 4.8.  Support for Solaris
+7 has been removed in GCC 4.6.
 </p>
 <p>Sun does not ship a C compiler with Solaris 2 before Solaris 10, though
 you can download the Sun Studio compilers for free.  In Solaris 10 and

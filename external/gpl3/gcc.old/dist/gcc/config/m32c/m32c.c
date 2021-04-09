@@ -1,5 +1,5 @@
 /* Target Code for R8C/M16C/M32C
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -417,7 +417,7 @@ m32c_option_override (void)
   if (global_options_set.x_target_memregs)
     {
       if (target_memregs < 0 || target_memregs > 16)
-	error ("invalid target memregs value '%d'", target_memregs);
+	error ("invalid target memregs value %<%d%>", target_memregs);
     }
   else
     target_memregs = 16;

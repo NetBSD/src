@@ -1,5 +1,5 @@
 /* Expands front end tree to back end RTL for GCC.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -73,8 +73,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "shrink-wrap.h"
 #include "toplev.h"
 #include "rtl-iter.h"
-#include "tree-chkp.h"
-#include "rtl-chkp.h"
 #include "tree-dfa.h"
 #include "tree-ssa.h"
 #include "stringpool.h"
@@ -244,8 +242,15 @@ frame_offset_overflow (poly_int64 offset, tree func)
 
   if (!coeffs_in_range_p (size, 0U, limit))
     {
-      error_at (DECL_SOURCE_LOCATION (func),
-		"total size of local objects too large");
+      unsigned HOST_WIDE_INT hwisize;
+      if (size.is_constant (&hwisize))
+	error_at (DECL_SOURCE_LOCATION (func),
+		  "total size of local objects %wu exceeds maximum %wu",
+		  hwisize, limit);
+      else
+	error_at (DECL_SOURCE_LOCATION (func),
+		  "total size of local objects exceeds maximum %wu",
+		  limit);
       return true;
     }
 
@@ -394,7 +399,7 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
   if (alignment_in_bits > MAX_SUPPORTED_STACK_ALIGNMENT)
     {
       alignment_in_bits = MAX_SUPPORTED_STACK_ALIGNMENT;
-      alignment = alignment_in_bits / BITS_PER_UNIT;
+      alignment = MAX_SUPPORTED_STACK_ALIGNMENT / BITS_PER_UNIT;
     }
 
   if (SUPPORTS_STACK_ALIGNMENT)
@@ -978,25 +983,26 @@ assign_temp (tree type_or_decl, int memory_required,
 
   if (mode == BLKmode || memory_required)
     {
-      HOST_WIDE_INT size = int_size_in_bytes (type);
+      poly_int64 size;
       rtx tmp;
-
-      /* Zero sized arrays are GNU C extension.  Set size to 1 to avoid
-	 problems with allocating the stack space.  */
-      if (size == 0)
-	size = 1;
 
       /* Unfortunately, we don't yet know how to allocate variable-sized
 	 temporaries.  However, sometimes we can find a fixed upper limit on
 	 the size, so try that instead.  */
-      else if (size == -1)
+      if (!poly_int_tree_p (TYPE_SIZE_UNIT (type), &size))
 	size = max_int_size_in_bytes (type);
+
+      /* Zero sized arrays are a GNU C extension.  Set size to 1 to avoid
+	 problems with allocating the stack space.  */
+      if (known_eq (size, 0))
+	size = 1;
 
       /* The size of the temporary may be too large to fit into an integer.  */
       /* ??? Not sure this should happen except for user silliness, so limit
 	 this to things that aren't compiler-generated temporaries.  The
 	 rest of the time we'll die in assign_stack_temp_for_type.  */
-      if (decl && size == -1
+      if (decl
+	  && !known_size_p (size)
 	  && TREE_CODE (TYPE_SIZE_UNIT (type)) == INTEGER_CST)
 	{
 	  error ("size of variable %q+D is too large", decl);
@@ -2200,14 +2206,6 @@ use_register_for_decl (const_tree decl)
       return false;
     }
 
-  /* Decl is implicitly addressible by bound stores and loads
-     if it is an aggregate holding bounds.  */
-  if (chkp_function_instrumented_p (current_function_decl)
-      && TREE_TYPE (decl)
-      && !BOUNDED_P (decl)
-      && chkp_type_has_pointer (TREE_TYPE (decl)))
-    return false;
-
   /* Only register-like things go in registers.  */
   if (DECL_MODE (decl) == BLKmode)
     return false;
@@ -2277,15 +2275,6 @@ struct assign_parm_data_one
   BOOL_BITFIELD passed_pointer : 1;
   BOOL_BITFIELD on_stack : 1;
   BOOL_BITFIELD loaded_in_reg : 1;
-};
-
-struct bounds_parm_data
-{
-  assign_parm_data_one parm_data;
-  tree bounds_parm;
-  tree ptr_parm;
-  rtx ptr_entry;
-  int bound_no;
 };
 
 /* A subroutine of assign_parms.  Initialize ALL.  */
@@ -2402,23 +2391,6 @@ assign_parms_augmented_arg_list (struct assign_parm_data_all *all)
       fnargs.safe_insert (0, decl);
 
       all->function_result_decl = decl;
-
-      /* If function is instrumented then bounds of the
-	 passed structure address is the second argument.  */
-      if (chkp_function_instrumented_p (fndecl))
-	{
-	  decl = build_decl (DECL_SOURCE_LOCATION (fndecl),
-			     PARM_DECL, get_identifier (".result_bnd"),
-			     pointer_bounds_type_node);
-	  DECL_ARG_TYPE (decl) = pointer_bounds_type_node;
-	  DECL_ARTIFICIAL (decl) = 1;
-	  DECL_NAMELESS (decl) = 1;
-	  TREE_CONSTANT (decl) = 1;
-
-	  DECL_CHAIN (decl) = DECL_CHAIN (all->orig_fnargs);
-	  DECL_CHAIN (all->orig_fnargs) = decl;
-	  fnargs.safe_insert (1, decl);
-	}
     }
 
   /* If the target wants to split complex arguments into scalars, do so.  */
@@ -2561,7 +2533,7 @@ assign_parm_find_entry_rtl (struct assign_parm_data_all *all,
      it came in a register so that REG_PARM_STACK_SPACE isn't skipped.
      In this case, we call FUNCTION_ARG with NAMED set to 1 instead of 0
      as it was the previous time.  */
-  in_regs = (entry_parm != 0) || POINTER_BOUNDS_TYPE_P (data->passed_type);
+  in_regs = (entry_parm != 0);
 #ifdef STACK_PARMS_IN_REG_PARM_AREA
   in_regs = true;
 #endif
@@ -2650,12 +2622,8 @@ static bool
 assign_parm_is_stack_parm (struct assign_parm_data_all *all,
 			   struct assign_parm_data_one *data)
 {
-  /* Bounds are never passed on the stack to keep compatibility
-     with not instrumented code.  */
-  if (POINTER_BOUNDS_TYPE_P (data->passed_type))
-    return false;
   /* Trivially true if we've no incoming register.  */
-  else if (data->entry_parm == NULL)
+  if (data->entry_parm == NULL)
     ;
   /* Also true if we're partially in registers and partially not,
      since we've arranged to drop the entire argument on the stack.  */
@@ -2944,8 +2912,21 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
   if (stack_parm == 0)
     {
       SET_DECL_ALIGN (parm, MAX (DECL_ALIGN (parm), BITS_PER_WORD));
-      stack_parm = assign_stack_local (BLKmode, size_stored,
-				       DECL_ALIGN (parm));
+      if (DECL_ALIGN (parm) > MAX_SUPPORTED_STACK_ALIGNMENT)
+	{
+	  rtx allocsize = gen_int_mode (size_stored, Pmode);
+	  get_dynamic_stack_size (&allocsize, 0, DECL_ALIGN (parm), NULL);
+	  stack_parm = assign_stack_local (BLKmode, UINTVAL (allocsize),
+					   MAX_SUPPORTED_STACK_ALIGNMENT);
+	  rtx addr = align_dynamic_address (XEXP (stack_parm, 0),
+					    DECL_ALIGN (parm));
+	  mark_reg_pointer (addr, DECL_ALIGN (parm));
+	  stack_parm = gen_rtx_MEM (GET_MODE (stack_parm), addr);
+	  MEM_NOTRAP_P (stack_parm) = 1;
+	}
+      else
+	stack_parm = assign_stack_local (BLKmode, size_stored,
+					 DECL_ALIGN (parm));
       if (known_eq (GET_MODE_SIZE (GET_MODE (entry_parm)), size))
 	PUT_MODE (stack_parm, GET_MODE (entry_parm));
       set_mem_attributes (stack_parm, parm, 1);
@@ -3572,121 +3553,6 @@ assign_parms_unsplit_complex (struct assign_parm_data_all *all,
     }
 }
 
-/* Load bounds of PARM from bounds table.  */
-static void
-assign_parm_load_bounds (struct assign_parm_data_one *data,
-			 tree parm,
-			 rtx entry,
-			 unsigned bound_no)
-{
-  bitmap_iterator bi;
-  unsigned i, offs = 0;
-  int bnd_no = -1;
-  rtx slot = NULL, ptr = NULL;
-
-  if (parm)
-    {
-      bitmap slots;
-      bitmap_obstack_initialize (NULL);
-      slots = BITMAP_ALLOC (NULL);
-      chkp_find_bound_slots (TREE_TYPE (parm), slots);
-      EXECUTE_IF_SET_IN_BITMAP (slots, 0, i, bi)
-	{
-	  if (bound_no)
-	    bound_no--;
-	  else
-	    {
-	      bnd_no = i;
-	      break;
-	    }
-	}
-      BITMAP_FREE (slots);
-      bitmap_obstack_release (NULL);
-    }
-
-  /* We may have bounds not associated with any pointer.  */
-  if (bnd_no != -1)
-    offs = bnd_no * POINTER_SIZE / BITS_PER_UNIT;
-
-  /* Find associated pointer.  */
-  if (bnd_no == -1)
-    {
-      /* If bounds are not associated with any bounds,
-	 then it is passed in a register or special slot.  */
-      gcc_assert (data->entry_parm);
-      ptr = const0_rtx;
-    }
-  else if (MEM_P (entry))
-    slot = adjust_address (entry, Pmode, offs);
-  else if (REG_P (entry))
-    ptr = gen_rtx_REG (Pmode, REGNO (entry) + bnd_no);
-  else if (GET_CODE (entry) == PARALLEL)
-    ptr = chkp_get_value_with_offs (entry, GEN_INT (offs));
-  else
-    gcc_unreachable ();
-  data->entry_parm = targetm.calls.load_bounds_for_arg (slot, ptr,
-							data->entry_parm);
-}
-
-/* Assign RTL expressions to the function's bounds parameters BNDARGS.  */
-
-static void
-assign_bounds (vec<bounds_parm_data> &bndargs,
-	       struct assign_parm_data_all &all,
-	       bool assign_regs, bool assign_special,
-	       bool assign_bt)
-{
-  unsigned i, pass;
-  bounds_parm_data *pbdata;
-
-  if (!bndargs.exists ())
-    return;
-
-  /* We make few passes to store input bounds.  Firstly handle bounds
-     passed in registers.  After that we load bounds passed in special
-     slots.  Finally we load bounds from Bounds Table.  */
-  for (pass = 0; pass < 3; pass++)
-    FOR_EACH_VEC_ELT (bndargs, i, pbdata)
-      {
-	/* Pass 0 => regs only.  */
-	if (pass == 0
-	    && (!assign_regs
-		||(!pbdata->parm_data.entry_parm
-		   || GET_CODE (pbdata->parm_data.entry_parm) != REG)))
-	  continue;
-	/* Pass 1 => slots only.  */
-	else if (pass == 1
-		 && (!assign_special
-		     || (!pbdata->parm_data.entry_parm
-			 || GET_CODE (pbdata->parm_data.entry_parm) == REG)))
-	  continue;
-	/* Pass 2 => BT only.  */
-	else if (pass == 2
-		 && (!assign_bt
-		     || pbdata->parm_data.entry_parm))
-	  continue;
-
-	if (!pbdata->parm_data.entry_parm
-	    || GET_CODE (pbdata->parm_data.entry_parm) != REG)
-	  assign_parm_load_bounds (&pbdata->parm_data, pbdata->ptr_parm,
-				   pbdata->ptr_entry, pbdata->bound_no);
-
-	set_decl_incoming_rtl (pbdata->bounds_parm,
-			       pbdata->parm_data.entry_parm, false);
-
-	if (assign_parm_setup_block_p (&pbdata->parm_data))
-	  assign_parm_setup_block (&all, pbdata->bounds_parm,
-				   &pbdata->parm_data);
-	else if (pbdata->parm_data.passed_pointer
-		 || use_register_for_decl (pbdata->bounds_parm))
-	  assign_parm_setup_reg (&all, pbdata->bounds_parm,
-				 &pbdata->parm_data);
-	else
-	  assign_parm_setup_stack (&all, pbdata->bounds_parm,
-				   &pbdata->parm_data);
-      }
-}
-
 /* Assign RTL expressions to the function's parameters.  This may involve
    copying them into registers and using those registers as the DECL_RTL.  */
 
@@ -3696,11 +3562,7 @@ assign_parms (tree fndecl)
   struct assign_parm_data_all all;
   tree parm;
   vec<tree> fnargs;
-  unsigned i, bound_no = 0;
-  tree last_arg = NULL;
-  rtx last_arg_entry = NULL;
-  vec<bounds_parm_data> bndargs = vNULL;
-  bounds_parm_data bdata;
+  unsigned i;
 
   crtl->args.internal_arg_pointer
     = targetm.calls.internal_arg_pointer ();
@@ -3761,15 +3623,6 @@ assign_parms (tree fndecl)
 	      && int_size_in_bytes (data.passed_type))
 	    data.stack_parm = NULL_RTX;
 	}
-      if (!POINTER_BOUNDS_TYPE_P (data.passed_type))
-	{
-	  /* Remember where last non bounds arg was passed in case
-	     we have to load associated bounds for it from Bounds
-	     Table.  */
-	  last_arg = parm;
-	  last_arg_entry = data.entry_parm;
-	  bound_no = 0;
-	}
       /* Record permanently how this parm was passed.  */
       if (data.passed_pointer)
 	{
@@ -3783,63 +3636,20 @@ assign_parms (tree fndecl)
 
       assign_parm_adjust_stack_rtl (&data);
 
-      /* Bounds should be loaded in the particular order to
-	 have registers allocated correctly.  Collect info about
-	 input bounds and load them later.  */
-      if (POINTER_BOUNDS_TYPE_P (data.passed_type))
-	{
-	  /* Expect bounds in instrumented functions only.  */
-	  gcc_assert (chkp_function_instrumented_p (fndecl));
-
-	  bdata.parm_data = data;
-	  bdata.bounds_parm = parm;
-	  bdata.ptr_parm = last_arg;
-	  bdata.ptr_entry = last_arg_entry;
-	  bdata.bound_no = bound_no;
-	  bndargs.safe_push (bdata);
-	}
+      if (assign_parm_setup_block_p (&data))
+	assign_parm_setup_block (&all, parm, &data);
+      else if (data.passed_pointer || use_register_for_decl (parm))
+	assign_parm_setup_reg (&all, parm, &data);
       else
-	{
-	  if (assign_parm_setup_block_p (&data))
-	    assign_parm_setup_block (&all, parm, &data);
-	  else if (data.passed_pointer || use_register_for_decl (parm))
-	    assign_parm_setup_reg (&all, parm, &data);
-	  else
-	    assign_parm_setup_stack (&all, parm, &data);
-	}
+	assign_parm_setup_stack (&all, parm, &data);
 
       if (cfun->stdarg && !DECL_CHAIN (parm))
-	{
-	  int pretend_bytes = 0;
-
-	  assign_parms_setup_varargs (&all, &data, false);
-
-	  if (chkp_function_instrumented_p (fndecl))
-	    {
-	      /* We expect this is the last parm.  Otherwise it is wrong
-		 to assign bounds right now.  */
-	      gcc_assert (i == (fnargs.length () - 1));
-	      assign_bounds (bndargs, all, true, false, false);
-	      targetm.calls.setup_incoming_vararg_bounds (all.args_so_far,
-							  data.promoted_mode,
-							  data.passed_type,
-							  &pretend_bytes,
-							  false);
-	      assign_bounds (bndargs, all, false, true, true);
-	      bndargs.release ();
-	    }
-	}
+	assign_parms_setup_varargs (&all, &data, false);
 
       /* Update info on where next arg arrives in registers.  */
       targetm.calls.function_arg_advance (all.args_so_far, data.promoted_mode,
 					  data.passed_type, data.named_arg);
-
-      if (POINTER_BOUNDS_TYPE_P (data.passed_type))
-	bound_no++;
     }
-
-  assign_bounds (bndargs, all, true, true, true);
-  bndargs.release ();
 
   if (targetm.calls.split_complex_arg)
     assign_parms_unsplit_complex (&all, fnargs);
@@ -3963,10 +3773,6 @@ assign_parms (tree fndecl)
 
 	  real_decl_rtl = targetm.calls.function_value (TREE_TYPE (decl_result),
 							fndecl, true);
-	  if (chkp_function_instrumented_p (fndecl))
-	    crtl->return_bnd
-	      = targetm.calls.chkp_function_value_bounds (TREE_TYPE (decl_result),
-							  fndecl, true);
 	  REG_FUNCTION_VALUE_P (real_decl_rtl) = 1;
 	  /* The delay slot scheduler assumes that crtl->return_rtx
 	     holds the hard register containing the return value, not a
@@ -4834,6 +4640,9 @@ invoke_set_current_function_hook (tree fndecl)
       targetm.set_current_function (fndecl);
       this_fn_optabs = this_target_optabs;
 
+      /* Initialize global alignment variables after op.  */
+      parse_alignment_opts ();
+
       if (opts != optimization_default_node)
 	{
 	  init_tree_optimization_optabs (opts);
@@ -5104,21 +4913,37 @@ init_function_start (tree subr)
 void
 stack_protect_epilogue (void)
 {
-  tree guard_decl = targetm.stack_protect_guard ();
+  tree guard_decl = crtl->stack_protect_guard_decl;
   rtx_code_label *label = gen_label_rtx ();
   rtx x, y;
-  rtx_insn *seq;
+  rtx_insn *seq = NULL;
 
   x = expand_normal (crtl->stack_protect_guard);
-  if (guard_decl)
-    y = expand_normal (guard_decl);
-  else
-    y = const0_rtx;
 
-  /* Allow the target to compare Y with X without leaking either into
-     a register.  */
-  if (targetm.have_stack_protect_test ()
-      && ((seq = targetm.gen_stack_protect_test (x, y, label)) != NULL_RTX))
+  if (targetm.have_stack_protect_combined_test () && guard_decl)
+    {
+      gcc_assert (DECL_P (guard_decl));
+      y = DECL_RTL (guard_decl);
+      /* Allow the target to compute address of Y and compare it with X without
+	 leaking Y into a register.  This combined address + compare pattern
+	 allows the target to prevent spilling of any intermediate results by
+	 splitting it after register allocator.  */
+      seq = targetm.gen_stack_protect_combined_test (x, y, label);
+    }
+  else
+    {
+      if (guard_decl)
+	y = expand_normal (guard_decl);
+      else
+	y = const0_rtx;
+
+      /* Allow the target to compare Y with X without leaking either into
+	 a register.  */
+      if (targetm.have_stack_protect_test ())
+	seq = targetm.gen_stack_protect_test (x, y, label);
+    }
+
+  if (seq)
     emit_insn (seq);
   else
     emit_cmp_and_jump_insns (x, y, EQ, NULL_RTX, ptr_mode, 1, label);
@@ -5248,14 +5073,6 @@ expand_function_start (tree subr)
       /* Set DECL_REGISTER flag so that expand_function_end will copy the
 	 result to the real return register(s).  */
       DECL_REGISTER (res) = 1;
-
-      if (chkp_function_instrumented_p (current_function_decl))
-	{
-	  tree return_type = TREE_TYPE (res);
-	  rtx bounds = targetm.calls.chkp_function_value_bounds (return_type,
-								 subr, 1);
-	  SET_DECL_BOUNDS_RTL (res, bounds);
-	}
     }
 
   /* Initialize rtx for parameters and local variables.
@@ -5403,7 +5220,6 @@ diddle_return_value_1 (void (*doit) (rtx, void *), void *arg, rtx outgoing)
 void
 diddle_return_value (void (*doit) (rtx, void *), void *arg)
 {
-  diddle_return_value_1 (doit, arg, crtl->return_bnd);
   diddle_return_value_1 (doit, arg, crtl->return_rtx);
 }
 
@@ -5520,18 +5336,16 @@ expand_function_end (void)
       if (flag_exceptions)
 	sjlj_emit_function_exit_after (get_last_insn ());
     }
-  else
-    {
-      /* We want to ensure that instructions that may trap are not
-	 moved into the epilogue by scheduling, because we don't
-	 always emit unwind information for the epilogue.  */
-      if (cfun->can_throw_non_call_exceptions)
-	emit_insn (gen_blockage ());
-    }
 
   /* If this is an implementation of throw, do what's necessary to
      communicate between __builtin_eh_return and the epilogue.  */
   expand_eh_return ();
+
+  /* If stack protection is enabled for this function, check the guard.  */
+  if (crtl->stack_protect_guard
+      && targetm.stack_protect_runtime_enabled_p ()
+      && naked_return_label == NULL_RTX)
+    stack_protect_epilogue ();
 
   /* If scalar return value was computed in a pseudo-reg, or was a named
      return value that got dumped to the stack, copy that to the hard
@@ -5679,7 +5493,9 @@ expand_function_end (void)
     emit_insn (gen_blockage ());
 
   /* If stack protection is enabled for this function, check the guard.  */
-  if (crtl->stack_protect_guard && targetm.stack_protect_runtime_enabled_p ())
+  if (crtl->stack_protect_guard
+      && targetm.stack_protect_runtime_enabled_p ()
+      && naked_return_label)
     stack_protect_epilogue ();
 
   /* If we had calls to alloca, and this machine needs
@@ -6598,6 +6414,21 @@ make_pass_thread_prologue_and_epilogue (gcc::context *ctxt)
 }
 
 
+/* If CONSTRAINT is a matching constraint, then return its number.
+   Otherwise, return -1.  */
+
+static int
+matching_constraint_num (const char *constraint)
+{
+  if (*constraint == '%')
+    constraint++;
+
+  if (IN_RANGE (*constraint, '0', '9'))
+    return strtoul (constraint, NULL, 10);
+
+  return -1;
+}
+
 /* This mini-pass fixes fall-out from SSA in asm statements that have
    in-out constraints.  Say you start with
 
@@ -6656,14 +6487,10 @@ match_asm_constraints_1 (rtx_insn *insn, rtx *p_sets, int noutputs)
       rtx input, output;
       rtx_insn *insns;
       const char *constraint = ASM_OPERANDS_INPUT_CONSTRAINT (op, i);
-      char *end;
       int match, j;
 
-      if (*constraint == '%')
-	constraint++;
-
-      match = strtoul (constraint, &end, 10);
-      if (end == constraint)
+      match = matching_constraint_num (constraint);
+      if (match < 0)
 	continue;
 
       gcc_assert (match < noutputs);
@@ -6680,14 +6507,14 @@ match_asm_constraints_1 (rtx_insn *insn, rtx *p_sets, int noutputs)
       /* We can't do anything if the output is also used as input,
 	 as we're going to overwrite it.  */
       for (j = 0; j < ninputs; j++)
-        if (reg_overlap_mentioned_p (output, RTVEC_ELT (inputs, j)))
+	if (reg_overlap_mentioned_p (output, RTVEC_ELT (inputs, j)))
 	  break;
       if (j != ninputs)
 	continue;
 
       /* Avoid changing the same input several times.  For
 	 asm ("" : "=mr" (out1), "=mr" (out2) : "0" (in), "1" (in));
-	 only change in once (to out1), rather than changing it
+	 only change it once (to out1), rather than changing it
 	 first to out1 and afterwards to out2.  */
       if (i > 0)
 	{
@@ -6704,6 +6531,9 @@ match_asm_constraints_1 (rtx_insn *insn, rtx *p_sets, int noutputs)
       insns = get_insns ();
       end_sequence ();
       emit_insn_before (insns, insn);
+
+      constraint = ASM_OPERANDS_OUTPUT_CONSTRAINT(SET_SRC(p_sets[match]));
+      bool early_clobber_p = strchr (constraint, '&') != NULL;
 
       /* Now replace all mentions of the input with output.  We can't
 	 just replace the occurrence in inputs[i], as the register might
@@ -6726,7 +6556,14 @@ match_asm_constraints_1 (rtx_insn *insn, rtx *p_sets, int noutputs)
 	 value, but different pseudos) where we formerly had only one.
 	 With more complicated asms this might lead to reload failures
 	 which wouldn't have happen without this pass.  So, iterate over
-	 all operands and replace all occurrences of the register used.  */
+	 all operands and replace all occurrences of the register used.
+
+	 However, if one or more of the 'input' uses have a non-matching
+	 constraint and the matched output operand is an early clobber
+	 operand, then do not replace the input operand, since by definition
+	 it conflicts with the output operand and cannot share the same
+	 register.  See PR89313 for details.  */
+
       for (j = 0; j < noutputs; j++)
 	if (!rtx_equal_p (SET_DEST (p_sets[j]), input)
 	    && reg_overlap_mentioned_p (input, SET_DEST (p_sets[j])))
@@ -6734,8 +6571,13 @@ match_asm_constraints_1 (rtx_insn *insn, rtx *p_sets, int noutputs)
 					      input, output);
       for (j = 0; j < ninputs; j++)
 	if (reg_overlap_mentioned_p (input, RTVEC_ELT (inputs, j)))
-	  RTVEC_ELT (inputs, j) = replace_rtx (RTVEC_ELT (inputs, j),
-					       input, output);
+	  {
+	    if (!early_clobber_p
+		|| match == matching_constraint_num
+			      (ASM_OPERANDS_INPUT_CONSTRAINT (op, j)))
+	      RTVEC_ELT (inputs, j) = replace_rtx (RTVEC_ELT (inputs, j),
+						   input, output);
+	  }
 
       changed = true;
     }

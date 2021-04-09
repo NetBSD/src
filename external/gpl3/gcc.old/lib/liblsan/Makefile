@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/08/19 07:47:52 mrg Exp $
+# $NetBSD: Makefile,v 1.5 2021/04/09 23:15:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,9 @@ COPTS.sanitizer_file.cc += -O1
 
 LIB=	lsan
 SRCS+=	${LSAN_SRCS}
+LIBDPLIBS+= m ${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
+LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 
 CWARNFLAGS.clang+=	-Wno-error=unused-private-field
 

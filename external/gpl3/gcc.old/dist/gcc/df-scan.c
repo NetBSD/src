@@ -1,5 +1,5 @@
 /* Scanning of rtl for dataflow analysis.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
    Originally contributed by Michael P. Hayes
              (m.hayes@elec.canterbury.ac.nz, mhayes@redhat.com)
    Major rewrite contributed by Danny Berlin (dberlin@dberlin.org)
@@ -2208,10 +2208,7 @@ df_mw_compare (const df_mw_hardreg *mw1, const df_mw_hardreg *mw2)
   if (mw1->end_regno != mw2->end_regno)
     return mw1->end_regno - mw2->end_regno;
 
-  if (mw1->mw_reg != mw2->mw_reg)
-    return mw1->mw_order - mw2->mw_order;
-
-  return 0;
+  return mw1->mw_order - mw2->mw_order;
 }
 
 /* Like df_mw_compare, but compare two df_mw_hardreg** pointers R1 and R2.  */
@@ -2778,6 +2775,7 @@ df_find_hard_reg_defs (rtx x, HARD_REG_SET *defs)
       break;
 
     case CLOBBER:
+    case CLOBBER_HIGH:
       df_find_hard_reg_defs_1 (XEXP (x, 0), defs);
       break;
 
@@ -2835,6 +2833,10 @@ df_uses_record (struct df_collection_rec *collection_rec,
 			flags);
 
       /* If we're clobbering a REG then we have a def so ignore.  */
+      return;
+
+    case CLOBBER_HIGH:
+      gcc_assert (REG_P (XEXP (x, 0)));
       return;
 
     case MEM:
@@ -2977,7 +2979,7 @@ df_uses_record (struct df_collection_rec *collection_rec,
 	   scanned and regs_asm_clobbered is filled out.
 
 	   For all ASM_OPERANDS, we must traverse the vector of input
-	   operands.  We can not just fall through here since then we
+	   operands.  We cannot just fall through here since then we
 	   would be confused by the ASM_INPUT rtx inside ASM_OPERANDS,
 	   which do not indicate traditional asms unlike their normal
 	   usage.  */
@@ -3133,6 +3135,7 @@ df_get_call_refs (struct df_collection_rec *collection_rec,
   for (note = CALL_INSN_FUNCTION_USAGE (insn_info->insn); note;
        note = XEXP (note, 1))
     {
+      gcc_assert (GET_CODE (XEXP (note, 0)) != CLOBBER_HIGH);
       if (GET_CODE (XEXP (note, 0)) == USE)
         df_uses_record (collection_rec, &XEXP (XEXP (note, 0), 0),
 			DF_REF_REG_USE, bb, insn_info, flags);
@@ -3206,17 +3209,6 @@ df_insn_refs_collect (struct df_collection_rec *collection_rec,
      uses from CALL_INSN_FUNCTION_USAGE. */
   if (CALL_P (insn_info->insn))
     df_get_call_refs (collection_rec, bb, insn_info, flags);
-
-  if (asm_noperands (PATTERN (insn_info->insn)) >= 0)
-    for (unsigned i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-      if (global_regs[i])
-       {
-         /* As with calls, asm statements reference all global regs. */
-         df_ref_record (DF_REF_BASE, collection_rec, regno_reg_rtx[i],
-                        NULL, bb, insn_info, DF_REF_REG_USE, flags);
-         df_ref_record (DF_REF_BASE, collection_rec, regno_reg_rtx[i],
-                        NULL, bb, insn_info, DF_REF_REG_DEF, flags);
-       }
 
   /* Record other defs.  These should be mostly for DF_REF_REGULAR, so
      that a qsort on the defs is unnecessary in most cases.  */
