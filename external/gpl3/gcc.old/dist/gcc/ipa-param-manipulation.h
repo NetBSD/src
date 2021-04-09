@@ -1,6 +1,6 @@
 /* Manipulation of formal and actual parameters of functions and function
    calls.
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -74,10 +74,6 @@ struct ipa_parm_adjustment
   /* New declaration of a substitute variable that we may use to replace all
      non-default-def ssa names when a parm decl is going away.  */
   tree new_ssa_base;
-
-  /* If non-NULL and the original parameter is to be removed (copy_param below
-     is NULL), this is going to be its nonlocalized vars value.  */
-  tree nonlocal_value;
 
   /* This holds the prefix to be used for the new DECL_NAME.  */
   const char *arg_prefix;

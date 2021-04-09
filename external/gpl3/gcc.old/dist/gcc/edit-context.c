@@ -1,5 +1,5 @@
 /* Determining the results of applying fix-it hints.
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -182,7 +182,7 @@ class line_event
 {
  public:
   line_event (int start, int next, int len) : m_start (start),
-    m_next (next), m_delta (len - (next - start)) {}
+    m_delta (len - (next - start)) {}
 
   int get_effective_column (int orig_column) const
   {
@@ -194,7 +194,6 @@ class line_event
 
  private:
   int m_start;
-  int m_next;
   int m_delta;
 };
 
@@ -422,12 +421,10 @@ edited_file::print_content (pretty_printer *pp)
 	el->print_content (pp);
       else
 	{
-	  int len;
-	  const char *line
-	    = location_get_source_line (m_filename, line_num, &len);
+	  char_span line = location_get_source_line (m_filename, line_num);
 	  if (!line)
 	    return false;
-	  for (int i = 0; i < len; i++)
+	  for (size_t i = 0; i < line.length (); i++)
 	    pp_character (pp, line[i]);
 	}
       if (line_num < line_count)
@@ -543,10 +540,8 @@ edited_file::print_diff_hunk (pretty_printer *pp, int old_start_of_hunk,
       else
 	{
 	  /* Unchanged line.  */
-	  int line_len;
-	  const char *old_line
-	    = location_get_source_line (m_filename, line_num, &line_len);
-	  print_diff_line (pp, ' ', old_line, line_len);
+	  char_span old_line = location_get_source_line (m_filename, line_num);
+	  print_diff_line (pp, ' ', old_line.get_buffer (), old_line.length ());
 	  line_num++;
 	}
     }
@@ -574,10 +569,9 @@ edited_file::print_run_of_changed_lines (pretty_printer *pp,
       gcc_assert (el_in_run);
       if (el_in_run->actually_edited_p ())
 	{
-	  int line_len;
-	  const char *old_line
-	    = location_get_source_line (m_filename, line_num, &line_len);
-	  print_diff_line (pp, '-', old_line, line_len);
+	  char_span old_line = location_get_source_line (m_filename, line_num);
+	  print_diff_line (pp, '-', old_line.get_buffer (),
+			   old_line.length ());
 	}
     }
   pp_string (pp, colorize_stop (pp_show_color (pp)));
@@ -671,10 +665,8 @@ edited_file::get_num_lines (bool *missing_trailing_newline)
       m_num_lines = 0;
       while (true)
 	{
-	  int line_size;
-	  const char *line
-	    = location_get_source_line (m_filename, m_num_lines + 1,
-					&line_size);
+	  char_span line
+	    = location_get_source_line (m_filename, m_num_lines + 1);
 	  if (line)
 	    m_num_lines++;
 	  else
@@ -695,12 +687,12 @@ edited_line::edited_line (const char *filename, int line_num)
   m_line_events (),
   m_predecessors ()
 {
-  const char *line = location_get_source_line (filename, line_num,
-					       &m_len);
+  char_span line = location_get_source_line (filename, line_num);
   if (!line)
     return;
+  m_len = line.length ();
   ensure_capacity (m_len);
-  memcpy (m_content, line, m_len);
+  memcpy (m_content, line.get_buffer (), m_len);
   ensure_terminated ();
 }
 

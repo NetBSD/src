@@ -1,6 +1,6 @@
 // Filesystem directory iterator utilities -*- C++ -*-
 
-// Copyright (C) 2014-2018 Free Software Foundation, Inc.
+// Copyright (C) 2014-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -26,18 +26,15 @@
 #define _GLIBCXX_DIR_COMMON_H 1
 
 #include <string.h>  // strcmp
+#include <errno.h>
+#if _GLIBCXX_FILESYSTEM_IS_WINDOWS
+#include <wchar.h>  // wcscmp
+#endif
 #ifdef _GLIBCXX_HAVE_DIRENT_H
 # ifdef _GLIBCXX_HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 # endif
 # include <dirent.h>
-#else
-# error "the <dirent.h> header is needed to build the Filesystem TS"
-#endif
-
-#ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
-# undef opendir
-# define opendir _wopendir
 #endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
@@ -45,16 +42,44 @@ namespace std _GLIBCXX_VISIBILITY(default)
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 namespace filesystem
 {
+namespace __gnu_posix
+{
+#if _GLIBCXX_FILESYSTEM_IS_WINDOWS
+// Adapt the Windows _wxxx functions to look like POSIX xxx, but for wchar_t*.
+using char_type = wchar_t;
+using DIR = ::_WDIR;
+using dirent = _wdirent;
+inline DIR* opendir(const wchar_t* path) { return ::_wopendir(path); }
+inline dirent* readdir(DIR* dir) { return ::_wreaddir(dir); }
+inline int closedir(DIR* dir) { return ::_wclosedir(dir); }
+#elif defined _GLIBCXX_HAVE_DIRENT_H
+using char_type = char;
+using DIR = ::DIR;
+typedef struct ::dirent dirent;
+using ::opendir;
+using ::readdir;
+using ::closedir;
+#else
+using char_type = char;
+struct dirent { const char* d_name; };
+struct DIR { };
+inline DIR* opendir(const char*) { return nullptr; }
+inline dirent* readdir(DIR*) { return nullptr; }
+inline int closedir(DIR*) { return -1; }
+#endif
+} // namespace __gnu_posix
+
+namespace posix = __gnu_posix;
 
 struct _Dir_base
 {
-  _Dir_base(DIR* dirp = nullptr) : dirp(dirp) { }
+  _Dir_base(posix::DIR* dirp = nullptr) : dirp(dirp) { }
 
   // If no error occurs then dirp is non-null,
   // otherwise null (whether error ignored or not).
-  _Dir_base(const char* p, bool skip_permission_denied,
+  _Dir_base(const posix::char_type* pathname, bool skip_permission_denied,
 	    error_code& ec) noexcept
-  : dirp(::opendir(p))
+  : dirp(posix::opendir(pathname))
   {
     if (dirp)
       ec.clear();
@@ -72,22 +97,22 @@ struct _Dir_base
 
   _Dir_base& operator=(_Dir_base&&) = delete;
 
-  ~_Dir_base() { if (dirp) ::closedir(dirp); }
+  ~_Dir_base() { if (dirp) posix::closedir(dirp); }
 
-  const struct ::dirent*
+  const posix::dirent*
   advance(bool skip_permission_denied, error_code& ec) noexcept
   {
     ec.clear();
 
     int err = std::exchange(errno, 0);
-    const struct ::dirent* entp = readdir(dirp);
+    const posix::dirent* entp = posix::readdir(dirp);
     // std::swap cannot be used with Bionic's errno
     err = std::exchange(errno, err);
 
     if (entp)
       {
 	// skip past dot and dot-dot
-	if (!strcmp(entp->d_name, ".") || !strcmp(entp->d_name, ".."))
+	if (is_dot_or_dotdot(entp->d_name))
 	  return advance(skip_permission_denied, ec);
 	return entp;
       }
@@ -105,15 +130,24 @@ struct _Dir_base
       }
   }
 
-  DIR*	dirp;
+  static bool is_dot_or_dotdot(const char* s) noexcept
+  { return !strcmp(s, ".") || !strcmp(s, ".."); }
+
+#if _GLIBCXX_FILESYSTEM_IS_WINDOWS
+  static bool is_dot_or_dotdot(const wchar_t* s) noexcept
+  { return !wcscmp(s, L".") || !wcscmp(s, L".."); }
+#endif
+
+  posix::DIR*	dirp;
 };
 
 } // namespace filesystem
 
 // BEGIN/END macros must be defined before including this file.
 _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
+
 inline file_type
-get_file_type(const ::dirent& d __attribute__((__unused__)))
+get_file_type(const std::filesystem::__gnu_posix::dirent& d [[gnu::unused]])
 {
 #ifdef _GLIBCXX_HAVE_STRUCT_DIRENT_D_TYPE
   switch (d.d_type)

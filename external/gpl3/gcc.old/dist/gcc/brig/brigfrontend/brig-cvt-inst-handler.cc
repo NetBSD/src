@@ -1,5 +1,5 @@
 /* brig-cvt-inst-handler.cc -- brig cvt (convert) instruction handling
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
    Contributed by Pekka Jaaskelainen <pekka.jaaskelainen@parmance.com>
    for General Processor Tech.
 
@@ -82,6 +82,12 @@ brig_cvt_inst_handler::generate (const BrigBase *base)
   tree_stl_vec operands = build_operands (*brig_inst);
   tree &input = operands.at (1);
   tree &output = operands.at (0);
+
+  if (m_parent.m_cf->is_id_val (input))
+    {
+      input = m_parent.m_cf->id_val (input);
+      src_type = TREE_TYPE (input);
+    }
 
   size_t conv_src_size = int_size_in_bytes (src_type);
   size_t conv_dst_size = int_size_in_bytes (dest_type);

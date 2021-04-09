@@ -1,5 +1,5 @@
 /* Find near-matches for identifiers.
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,7 +25,7 @@ along with GCC; see the file COPYING3.  If not see
 /* spellcheck-tree.c  */
 
 extern edit_distance_t
-levenshtein_distance (tree ident_s, tree ident_t);
+get_edit_distance (tree ident_s, tree ident_t);
 
 extern tree
 find_closest_identifier (tree target, const auto_vec<tree> *candidates);

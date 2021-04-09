@@ -1,5 +1,5 @@
 # Manipulate the CPU, FPU and architecture descriptions for ARM.
-# Copyright (C) 2017-2018 Free Software Foundation, Inc.
+# Copyright (C) 2017-2019 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -21,6 +21,7 @@
 # where <cmd> is one of:
 #	data: Print the standard 'C' data tables for the CPUs
 #	common-data: Print the 'C' data for shared driver/compiler files
+#	native: Print the data structures used by the native driver
 #	headers: Print the standard 'C' headers for the CPUs
 #	isa: Generate the arm-isa.h header
 #	md: Print the machine description fragment
@@ -61,7 +62,7 @@ function boilerplate (style) {
     print cc "Generated automatically by parsecpu.awk from arm-cpus.in."
     print cc "Do not edit."
     print ""
-    print cc "Copyright (C) 2011-2018 Free Software Foundation, Inc."
+    print cc "Copyright (C) 2011-2019 Free Software Foundation, Inc."
     print ""
     print cc "This file is part of GCC."
     print ""
@@ -260,6 +261,18 @@ function gen_comm_data () {
 	    print "  { NULL, false, false, {isa_nobit}}"
 	    print "};\n"
 	}
+
+	if (cpus[n] in cpu_aliases) {
+	    print "static const cpu_alias cpu_aliastab_" \
+		cpu_cnames[cpus[n]] "[] = {"
+	    naliases = split (cpu_aliases[cpus[n]], aliases)
+	    for (alias = 1; alias <= naliases; alias++) {
+		print "  { \"" aliases[alias] "\", " \
+		    cpu_alias_visible[cpus[n],aliases[alias]] "},"
+	    }
+	    print "  { NULL, false}"
+	    print "};\n"
+	}
     }
 
     print "const cpu_option all_cores[] ="
@@ -289,20 +302,21 @@ function gen_comm_data () {
 	    }
 	    all_isa_bits = all_isa_bits " " arch_opt_isa[feats[1],feats[m]]
 	}
-	if (cpus[n] in cpu_fpu) {
-	    all_isa_bits = all_isa_bits " " fpu_isa[cpu_fpu[cpus[n]]]
-	}
 	if (cpus[n] in cpu_isa) {
 	    all_isa_bits = all_isa_bits " " cpu_isa[cpus[n]]
 	}
 	print_isa_bits_for(all_isa_bits, "      ")
 	print "\n    },"
+	# aliases
+	if (cpus[n] in cpu_aliases) {
+	    print "    cpu_aliastab_" cpu_cnames[cpus[n]] ","
+	} else print "    NULL,"
 	# arch
 	print "    TARGET_ARCH_" arch_cnames[feats[1]]
 	print "  },"
     }
 
-    print "  {{NULL, NULL, {isa_nobit}}, TARGET_ARCH_arm_none}"
+    print "  {{NULL, NULL, {isa_nobit}}, NULL, TARGET_ARCH_arm_none}"
     print "};"
 
     narchs = split (arch_list, archs)
@@ -394,6 +408,31 @@ function gen_comm_data () {
     print "};"
 }
 
+function gen_native () {
+    boilerplate("C")
+
+    for (vendor in vendor_ids) {
+	print "static struct vendor_cpu vendor"vendor"_cpu_table[] = {"
+	ncpus = split (cpu_list, cpus)
+
+	for (n = 1; n <= ncpus; n++) {
+	    if ((cpus[n] in cpu_vendor) && (cpus[n] in cpu_part)	\
+		&& cpu_vendor[cpus[n]] == vendor) {
+		print "  {\"0x"cpu_part[cpus[n]]"\", \""cpu_arch[cpus[n]]"\", \""cpus[n]"\"},"
+	    }
+	}
+	print "  {NULL, NULL, NULL}"
+	print "};"
+    }
+
+    print "\nstatic struct vendor vendors_table[] = {"
+    for (vendor in vendor_ids) {
+	print "  {\"0x"vendor"\", vendor"vendor"_cpu_table},"
+    }
+    print "  {NULL, NULL}"
+    print "};"
+}
+
 function gen_md () {
     boilerplate("md")
 
@@ -463,13 +502,17 @@ function gen_opt () {
 function check_cpu (name) {
     exts = split (name, extensions, "+")
 
-    if (! (extensions[1] in cpu_cnames)) {
-	return "error"
+    cpu_name = extensions[1]
+    if (! (cpu_name in cpu_cnames)) {
+	if (! (cpu_name in cpu_all_aliases)) {
+	    return "error"
+	}
+	cpu_name = cpu_all_aliases[cpu_name]
     }
 
     for (n = 2; n <= exts; n++) {
-	if (!((extensions[1], extensions[n]) in cpu_opt_remove)	\
-	    && !((extensions[1], extensions[n]) in cpu_optaliases)) {
+	if (!((cpu_name, extensions[n]) in cpu_opt_remove)	\
+	    && !((cpu_name, extensions[n]) in cpu_optaliases)) {
 	    return "error"
 	}
     }
@@ -619,12 +662,44 @@ BEGIN {
     toplevel()
     cpu_name = $3
     parse_ok = 1
+    if (cpu_name in cpu_cnames) {
+	fatal(cpu_name " is already defined")
+    }
+    if (cpu_name in cpu_all_aliases) {
+	fatal(cpu_name " has already been defined as an alias")
+    }
 }
 
 /^[ 	]*cname / {
     if (NF != 2) fatal("syntax: cname <identifier>")
     if (cpu_name == "") fatal("\"cname\" outside of cpu block")
     cpu_cnames[cpu_name] = $2
+    parse_ok = 1
+}
+
+/^[ 	]*alias / {
+    if (NF < 2) fatal("syntax: alias <name>+")
+    if (cpu_name == "") fatal("\"alias\" outside of cpu block")
+    alias_count = NF
+    for (n = 2; n <= alias_count; n++) {
+	visible = "true"
+	alias = $n
+	if (alias ~ /^!.*/) {
+	    visible = "false"
+	    gsub(/^!/, "", alias)
+	}
+	if (alias in cpu_cnames) {
+	    fatal(alias " is already defined as a cpu name")
+	}
+	if (n == 2) {
+	    cpu_aliases[cpu_name] = alias
+	} else cpu_aliases[cpu_name] = cpu_aliases[cpu_name] " " alias
+	cpu_alias_visible[cpu_name,alias] = visible
+	if (alias in cpu_all_aliases) {
+	    fatal(alias " is already an alias for " cpu_all_aliases[alias])
+	}
+	cpu_all_aliases[alias] = cpu_name
+    }
     parse_ok = 1
 }
 
@@ -659,13 +734,6 @@ BEGIN {
     if (NF != 2) fatal("syntax: architecture <arch-name>")
     if (cpu_name == "") fatal("\"architecture\" outside of cpu block")
     cpu_arch[cpu_name] = $2
-    parse_ok = 1
-}
-
-/^[ 	]*fpu / {
-    if (NF != 2) fatal("syntax: fpu <fpu-name>")
-    if (cpu_name == "") fatal("\"fpu\" outside of cpu block")
-    cpu_fpu[cpu_name] = $2
     parse_ok = 1
 }
 
@@ -736,6 +804,23 @@ BEGIN {
     parse_ok = 1
 }
 
+/^[ 	]*vendor / {
+    if (NF != 2) fatal("syntax: vendor <vendor-id>")
+    if (cpu_name == "") fatal("\"vendor\" outside of cpu block")
+    cpu_vendor[cpu_name] = $2
+    vendor_ids[$2] = 1
+    parse_ok = 1
+}
+
+/^[ 	]*part / {
+    if (NF < 2 || NF > 4) fatal("syntax: part <part-id> [minrev [maxrev]]")
+    if (cpu_name == "") fatal("\"part\" outside of cpu block")
+    cpu_part[cpu_name] = $2
+    if (NF > 2) cpu_minrev[cpu_name] = $3
+    if (NF == 4) cpu_maxrev[cpu_name] = $4
+    parse_ok = 1
+}
+
 /^end cpu / {
     if (NF != 3) fatal("syntax: end cpu <name>")
     if (cpu_name != $3) fatal("mimatched end cpu")
@@ -744,6 +829,9 @@ BEGIN {
 	gsub(/[-+.]/, "_", cpu_cnames[cpu_name])
     }
     if (! (cpu_name in cpu_arch)) fatal("cpu definition lacks an architecture")
+    if ((cpu_name in cpu_part) && !(cpu_name in cpu_vendor)) {
+	fatal("part number specified for " cpu_name " but no vendor")
+    }
     cpu_list = cpu_list " " cpu_name
     cpu_name = ""
     parse_ok = 1
@@ -761,6 +849,8 @@ END {
 	gen_data()
     } else if (cmd == "common-data") {
 	gen_comm_data()
+    } else if (cmd == "native") {
+	gen_native()
     } else if (cmd == "headers") {
 	gen_headers()
     } else if (cmd == "isa") {
