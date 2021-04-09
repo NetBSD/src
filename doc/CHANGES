@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2793 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2794 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -349,3 +349,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libevent: Import libevent 2.1.12 [christos 20210406]
 	services(5), protocols(5): Pull iana-generated services and protocols.
 		[christos 20210408]
+	file(1): Upgraded to 5.40. [christos 20210409]
