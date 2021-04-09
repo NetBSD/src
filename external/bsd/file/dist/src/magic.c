@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.15 2020/06/15 00:37:24 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.16 2021/04/09 19:11:42 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.112 2020/06/08 19:44:10 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.114 2021/02/05 21:33:49 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.15 2020/06/15 00:37:24 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.16 2021/04/09 19:11:42 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -442,7 +442,7 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 		_setmode(STDIN_FILENO, O_BINARY);
 #endif
 	if (inname != NULL) {
-		int flags = O_RDONLY|O_BINARY|O_NONBLOCK;
+		int flags = O_RDONLY|O_BINARY|O_NONBLOCK|O_CLOEXEC;
 		errno = 0;
 		if ((fd = open(inname, flags)) < 0) {
 			okstat = stat(inname, &sb) == 0;
@@ -466,6 +466,9 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 			rv = 0;
 			goto done;
 		}
+#if O_CLOEXEC == 0
+		(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
+#endif
 	}
 
 	if (fd != -1) {
@@ -620,6 +623,9 @@ magic_setparam(struct magic_set *ms, int param, const void *val)
 	case MAGIC_PARAM_BYTES_MAX:
 		ms->bytes_max = *CAST(const size_t *, val);
 		return 0;
+	case MAGIC_PARAM_ENCODING_MAX:
+		ms->encoding_max = *CAST(const size_t *, val);
+		return 0;
 	default:
 		errno = EINVAL;
 		return -1;
@@ -652,6 +658,9 @@ magic_getparam(struct magic_set *ms, int param, void *val)
 		return 0;
 	case MAGIC_PARAM_BYTES_MAX:
 		*CAST(size_t *, val) = ms->bytes_max;
+		return 0;
+	case MAGIC_PARAM_ENCODING_MAX:
+		*CAST(size_t *, val) = ms->encoding_max;
 		return 0;
 	default:
 		errno = EINVAL;
