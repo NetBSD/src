@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.11 2021/04/08 19:31:51 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.12 2021/04/09 19:32:12 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -120,3 +120,34 @@ counter_increment(struct counter *counter)
 	impl->saved_count = impl->public_part.count;
 	impl->public_part.count++;
 }
+
+
+/*
+ * In OpenSSL, the hashing API uses the incomplete 'struct lhash_st' for their
+ * type-generic hashing API while defining a separate struct for each type to
+ * be hashed.
+ *
+ * As of 2021-04-09, in a typical NetBSD build this leads to about 38,000 lint
+ * warnings about possibly troublesome pointer casts.
+ */
+
+struct lhash_st;		/* expect: struct lhash_st never defined */
+
+struct lhash_st *OPENSSL_LH_new(void);
+
+struct lhash_st_OPENSSL_STRING {
+	union lh_OPENSSL_STRING_dummy {
+		void *d1;
+		unsigned long d2;
+		int d3;
+	} dummy;
+};
+
+# 196 "lhash.h" 1 3 4
+struct lhash_st_OPENSSL_STRING *
+lh_OPENSSL_STRING_new(void)
+{
+	/* expect+1: 247 */
+	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
+}
+# 154 "msg_247.c" 2
