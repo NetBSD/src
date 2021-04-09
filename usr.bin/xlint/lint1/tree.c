@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.272 2021/04/08 19:20:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.273 2021/04/09 19:52:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.272 2021/04/08 19:20:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.273 2021/04/09 19:52:59 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -74,7 +74,7 @@ static	void	check_integer_conversion(op_t, int, tspec_t, tspec_t, type_t *,
 					 tnode_t *);
 static	void	check_pointer_integer_conversion(op_t, tspec_t, type_t *,
 						 tnode_t *);
-static	void	check_pointer_conversion(op_t, tnode_t *, type_t *);
+static	void	check_pointer_conversion(tnode_t *, type_t *);
 static	tnode_t	*build_struct_access(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*build_prepost_incdec(op_t, tnode_t *);
 static	tnode_t	*build_real_imag(op_t, tnode_t *);
@@ -1849,8 +1849,8 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		/* a null pointer may be assigned to any pointer. */
 	} else if (is_integer(nt) && nt != BOOL && ot == PTR) {
 		check_pointer_integer_conversion(op, nt, tp, tn);
-	} else if (nt == PTR && ot == PTR) {
-		check_pointer_conversion(op, tn, tp);
+	} else if (nt == PTR && ot == PTR && op == CVT) {
+		check_pointer_conversion(tn, tp);
 	}
 
 	ntn = expr_zalloc_tnode();
@@ -2023,8 +2023,8 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 }
 
 static bool
-should_warn_about_pointer_cast(const type_t *ntp, tspec_t nst,
-			       const tnode_t *otn, tspec_t ost)
+should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
+			       const type_t *ostp, tspec_t ost)
 {
 	/*
 	 * Casting a pointer to 'struct S' to a pointer to another struct that
@@ -2032,14 +2032,12 @@ should_warn_about_pointer_cast(const type_t *ntp, tspec_t nst,
 	 * counter'.
 	 */
 	if (nst == STRUCT && ost == STRUCT &&
-	    ntp->t_subt->t_str->sou_first_member != NULL &&
-	    ntp->t_subt->t_str->sou_first_member->s_type ==
-	    otn->tn_type->t_subt)
+	    nstp->t_str->sou_first_member != NULL &&
+	    nstp->t_str->sou_first_member->s_type == ostp)
 		return false;
 
-	if (nst == STRUCT || nst == UNION)
-		if (ntp->t_subt->t_str != otn->tn_type->t_subt->t_str)
-			return true;
+	if ((nst == STRUCT || nst == UNION) && nstp->t_str != ostp->t_str)
+		return true;
 
 	if (nst == CHAR || nst == UCHAR)
 		return false;	/* for the sake of traditional C code */
@@ -2051,20 +2049,17 @@ should_warn_about_pointer_cast(const type_t *ntp, tspec_t nst,
  * Warn about questionable pointer conversions.
  */
 static void
-check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
+check_pointer_conversion(tnode_t *tn, type_t *ntp)
 {
+	const type_t *nstp, *otp, *ostp;
 	tspec_t nst, ost;
 	const char *nts, *ots;
 
-	/*
-	 * We got already an error (pointers of different types
-	 * without a cast) or we will not get a warning.
-	 */
-	if (op != CVT)
-		return;
-
-	nst = tp->t_subt->t_tspec;
-	ost = tn->tn_type->t_subt->t_tspec;
+	nstp = ntp->t_subt;
+	otp = tn->tn_type;
+	ostp = otp->t_subt;
+	nst = nstp->t_tspec;
+	ost = ostp->t_tspec;
 
 	if (nst == VOID || ost == VOID) {
 		if (sflag && (nst == FUNC || ost == FUNC)) {
@@ -2079,19 +2074,18 @@ check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 		return;
 	} else if (nst == FUNC || ost == FUNC) {
 		/* converting '%s' to '%s' is questionable */
-		warning(229, type_name(tn->tn_type), type_name(tp));
+		warning(229, type_name(otp), type_name(ntp));
 		return;
 	}
 
-	if (hflag && alignment_in_bits(tp->t_subt) >
-		     alignment_in_bits(tn->tn_type->t_subt)) {
+	if (hflag && alignment_in_bits(nstp) > alignment_in_bits(ostp)) {
 		/* converting '%s' to '%s' may cause alignment problem */
-		warning(135, type_name(tn->tn_type), type_name(tp));
+		warning(135, type_name(otp), type_name(ntp));
 	}
 
-	if (cflag && should_warn_about_pointer_cast(tp, nst, tn, ost)) {
+	if (cflag && should_warn_about_pointer_cast(nstp, nst, ostp, ost)) {
 		/* pointer cast from '%s' to '%s' may be troublesome */
-		warning(247, type_name(tn->tn_type), type_name(tp));
+		warning(247, type_name(otp), type_name(ntp));
 	}
 }
 
