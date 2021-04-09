@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_267.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_267.c,v 1.3 2021/04/09 16:37:18 rillig Exp $	*/
 # 3 "msg_267.c"
 
 // Test for message: shift equal to size of object [267]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+int
+shr32(unsigned int x)
+{
+	return x >> 32;		/* expect: 267 */
+}
+
+int
+shl32(unsigned int x)
+{
+	return x << 32;		/* expect: 267 */
+}
