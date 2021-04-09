@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.273 2021/04/09 19:52:59 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.274 2021/04/09 20:00:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.273 2021/04/09 19:52:59 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.274 2021/04/09 20:00:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2034,6 +2034,9 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	if (nst == STRUCT && ost == STRUCT &&
 	    nstp->t_str->sou_first_member != NULL &&
 	    nstp->t_str->sou_first_member->s_type == ostp)
+		return false;
+
+	if (is_incomplete(nstp) || is_incomplete(ostp))
 		return false;
 
 	if ((nst == STRUCT || nst == UNION) && nstp->t_str != ostp->t_str)
