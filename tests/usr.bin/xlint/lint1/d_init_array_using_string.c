@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.3 2021/03/30 14:25:28 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.4 2021/04/09 23:03:26 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
@@ -74,6 +74,4 @@ test_array_initialization_in_struct(void)
 		{ "" },
 		{ L"" },
 	};
-	/* expect-3: illegal combination of integer (char) and pointer (pointer to char) */
-	/* expect-3: illegal combination of integer (int) and pointer (pointer to int) */
 }
