@@ -1,3 +1,33 @@
+2021-03-30  20:21  Christos Zoulas <christos@zoulas.com>
+
+	* release 5.40
+
+2021-02-05  16:31  Christos Zoulas <christos@zoulas.com>
+
+	* PR/234: Add limit to the number of bytes to scan for encoding
+	* PR/230: Fix /T (trim flag) for regex
+
+2021-02-01  12:31  Christos Zoulas <christos@zoulas.com>
+	* PR/77: Trim trailing separator.
+
+2020-12-17  15:44  Christos Zoulas <christos@zoulas.com>
+
+	* PR/211: Convert system read errors from corrupt ELF
+	  files into human readable error messages
+
+2020-12-08  16:24  Christos Zoulas <christos@zoulas.com>
+	
+	* fix multithreaded decompression file descriptor issue
+	  by using close-on-exec (Denys Vlasenko)
+
+2020-06-27  11:58  Christos Zoulas <christos@zoulas.com>
+
+	* Exclude surrogate pairs from utf-8 detection (Michael Liu)
+
+2020-06-25  12:53  Christos Zoulas <christos@zoulas.com>
+	
+	* Include # to the list of ignored format chars (Werner Fink)
+
 2020-06-14  20:02  Christos Zoulas <christos@zoulas.com>
 
 	* release 5.39

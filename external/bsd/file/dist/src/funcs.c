@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.18 2020/06/15 00:37:24 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.19 2021/04/09 19:11:42 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.115 2020/02/20 15:50:20 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.121 2021/02/05 22:29:07 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.18 2020/06/15 00:37:24 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.19 2021/04/09 19:11:42 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -42,6 +42,9 @@ __RCSID("$NetBSD: funcs.c,v 1.18 2020/06/15 00:37:24 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>	/* for pipe2() */
+#endif
 #if defined(HAVE_WCHAR_H)
 #include <wchar.h>
 #endif
@@ -99,7 +102,7 @@ file_checkfmt(char *msg, size_t mlen, const char *fmt)
 		if (*++p == '%')
 			continue;
 		// Skip uninteresting.
-		while (strchr("0.'+- ", *p) != NULL)
+		while (strchr("#0.'+- ", *p) != NULL)
 			p++;
 		if (*p == '*') {
 			if (msg)
@@ -251,11 +254,31 @@ file_badread(struct magic_set *ms)
 }
 
 #ifndef COMPILE_ONLY
+#define FILE_SEPARATOR "\n- "
 
 protected int
 file_separator(struct magic_set *ms)
 {
-	return file_printf(ms, "\n- ");
+	return file_printf(ms, FILE_SEPARATOR);
+}
+
+static void
+trim_separator(struct magic_set *ms)
+{
+	size_t l;
+
+	if (ms->o.buf == NULL)
+		return;
+
+	l = strlen(ms->o.buf);
+	if (l < sizeof(FILE_SEPARATOR))
+		return;
+
+	l -= sizeof(FILE_SEPARATOR) - 1;
+	if (strcmp(ms->o.buf + l, FILE_SEPARATOR) != 0)
+		return;
+
+	ms->o.buf[l] = '\0';
 }
 
 static int
@@ -459,6 +482,7 @@ simple:
 				rv = -1;
 	}
  done:
+	trim_separator(ms);
 	if ((ms->flags & MAGIC_MIME_ENCODING) != 0) {
 		if (ms->flags & MAGIC_MIME_TYPE)
 			if (file_printf(ms, "; charset=") == -1)
@@ -789,4 +813,40 @@ file_print_guid(char *str, size_t len, const uint64_t *guid)
 	    g->data1, g->data2, g->data3, g->data4[0], g->data4[1],
 	    g->data4[2], g->data4[3], g->data4[4], g->data4[5],
 	    g->data4[6], g->data4[7]);
+}
+
+protected int
+file_pipe_closexec(int *fds)
+{
+#ifdef HAVE_PIPE2
+	return pipe2(fds, O_CLOEXEC);
+#else
+	if (pipe(fds) == -1)
+		return -1;
+	(void)fcntl(fds[0], F_SETFD, FD_CLOEXEC);
+	(void)fcntl(fds[1], F_SETFD, FD_CLOEXEC);
+	return 0;
+#endif
+}
+
+protected int
+file_clear_closexec(int fd) {
+	return fcntl(fd, F_SETFD, 0);
+}
+
+protected char *
+file_strtrim(char *str)
+{
+	char *last;
+
+	while (isspace(CAST(unsigned char, *str)))
+		str++;
+	last = str;
+	while (*last)
+		last++;
+	--last;
+	while (isspace(CAST(unsigned char, *last)))
+		last--;
+	*++last = '\0';
+	return str;
 }
