@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2021/04/08 22:18:27 rillig Exp $
+# $NetBSD: Makefile,v 1.41 2021/04/09 21:07:39 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	342		# see lint1/err.c
@@ -22,6 +22,7 @@ FILES+=		d_c99_anon_struct.c
 FILES+=		d_c99_anon_union.c
 FILES+=		d_c99_complex_num.c
 FILES+=		d_c99_complex_split.c
+FILES+=		d_c99_complex_split.exp
 FILES+=		d_c99_compound_literal_comma.c
 FILES+=		d_c99_decls_after_stmt.c
 FILES+=		d_c99_decls_after_stmt2.c
