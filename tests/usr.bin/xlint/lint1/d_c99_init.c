@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.31 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.32 2021/04/09 22:08:14 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -384,4 +384,11 @@ int designator_for_scalar = {
 struct point designator_for_scalar_in_struct = {
 	{ .x = 3 },		/* expect: scalar type cannot use designator */
 	{ [1] = 4 },		/* expect: scalar type cannot use designator */
+};
+
+
+/* Seen in pcidevs_data.h, variable 'pci_words'. */
+const char string_initialized_with_braced_literal[] = {
+	/* FIXME: *//* expect+1: illegal combination of integer (char) and pointer (pointer to char) [183] */
+	"initializer",
 };
