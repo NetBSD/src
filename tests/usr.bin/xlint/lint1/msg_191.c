@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_191.c,v 1.2 2021/01/30 17:56:29 rillig Exp $	*/
+/*	$NetBSD: msg_191.c,v 1.3 2021/04/09 20:12:01 rillig Exp $	*/
 # 3 "msg_191.c"
 
-// Test for message: %s set but not used in function %s [191]
+// Test for message: '%s' set but not used in function '%s' [191]
 
 void
 example(void)

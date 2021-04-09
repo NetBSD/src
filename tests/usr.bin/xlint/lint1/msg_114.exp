@@ -1,4 +1,4 @@
 msg_114.c(9): error: operand of 'x++' must be lvalue [114]
 msg_114.c(17): error: operand of 'x++' has invalid type (array) [108]
 msg_114.c(19): error: operand of 'x++' must be lvalue [114]
-msg_114.c(7): warning: argument a unused in function example [231]
+msg_114.c(7): warning: argument 'a' unused in function 'example' [231]

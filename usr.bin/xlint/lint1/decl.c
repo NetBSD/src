@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.170 2021/04/02 12:16:50 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.171 2021/04/09 20:12:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.170 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.171 2021/04/09 20:12:00 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3040,7 +3040,7 @@ check_argument_usage(bool novar, sym_t *arg)
 
 	if (!arg->s_used && vflag) {
 		curr_pos = arg->s_def_pos;
-		/* argument %s unused in function %s */
+		/* argument '%s' unused in function '%s' */
 		warning(231, arg->s_name, funcsym->s_name);
 	}
 }
@@ -3073,17 +3073,17 @@ check_variable_usage(bool novar, sym_t *sym)
 	if (sc == EXTERN) {
 		if (!sym->s_used && !sym->s_set) {
 			curr_pos = sym->s_def_pos;
-			/* %s unused in function %s */
+			/* '%s' unused in function '%s' */
 			warning(192, sym->s_name, funcsym->s_name);
 		}
 	} else {
 		if (sym->s_set && !sym->s_used) {
 			curr_pos = sym->s_set_pos;
-			/* %s set but not used in function %s */
+			/* '%s' set but not used in function '%s' */
 			warning(191, sym->s_name, funcsym->s_name);
 		} else if (!sym->s_used) {
 			curr_pos = sym->s_def_pos;
-			/* %s unused in function %s */
+			/* '%s' unused in function '%s' */
 			warning(192, sym->s_name, funcsym->s_name);
 		}
 	}
