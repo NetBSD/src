@@ -1,4 +1,4 @@
-/*	$NetBSD: der.c,v 1.1.1.5 2020/06/15 00:18:48 christos Exp $	*/
+/*	$NetBSD: der.c,v 1.1.1.6 2021/04/09 18:58:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: der.c,v 1.20 2020/06/07 19:10:37 christos Exp $")
+FILE_RCSID("@(#)$File: der.c,v 1.21 2020/06/15 00:58:10 christos Exp $")
 #else
-__RCSID("$NetBSD: der.c,v 1.1.1.5 2020/06/15 00:18:48 christos Exp $");
+__RCSID("$NetBSD: der.c,v 1.1.1.6 2021/04/09 18:58:01 christos Exp $");
 #endif
 #endif
 #else
@@ -253,7 +253,6 @@ der_data(char *buf, size_t blen, uint32_t tag, const void *q, uint32_t len)
 		return snprintf(buf, blen,
 		    "20%c%c-%c%c-%c%c %c%c:%c%c:%c%c GMT", d[0], d[1], d[2],
 		    d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11]);
-		break;
 	default:
 		break;
 	}

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: fonts,v 1.43 2019/07/16 11:11:31 christos Exp $
+# $File: fonts,v 1.45 2021/01/03 21:00:11 christos Exp $
 # fonts:  file(1) magic for font data
 #
 0	search/1	FONT		ASCII vfont text
@@ -11,6 +11,7 @@
 0	string		%!PS-AdobeFont-1.	PostScript Type 1 font text
 >20	string		>\0			(%s)
 6	string		%!PS-AdobeFont-1.	PostScript Type 1 font program data
+>26	string		>\0			(%s)
 0	string		%!FontType1	PostScript Type 1 font program data
 6	string		%!FontType1	PostScript Type 1 font program data
 0	string		%!PS-Adobe-3.0\ Resource-Font	PostScript Type 1 font text
@@ -123,7 +124,15 @@
 >10	leshort		x		\b%d
 >40	string		x		%s
 # Misc. DOS VGA fonts, from Albert Cahalan (acahalan@cs.uml.edu)
+# Update:	Joerg Jenderek
+# URL:		http://fileformats.archiveteam.org/wiki/CPI
+# Reference:	http://www.delorie.com/djgpp/doc/rbinter/it/58/17.html
 0	belong		0xff464f4e	DOS code page font data collection
+!:mime	font/x-dos-cpi
+!:ext	cpi
+0	string		\x7fDRFONT	DR-DOS code page font data collection
+!:mime	font/x-drdos-cpi
+!:ext	cpi
 7	belong		0x00454741	DOS code page font data
 7	belong		0x00564944	DOS code page font data (from Linux?)
 4098	string		DOSFONT		DOSFONT2 encrypted font data
