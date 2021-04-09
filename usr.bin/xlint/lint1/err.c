@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.105 2021/04/09 15:58:43 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.106 2021/04/09 20:12:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.105 2021/04/09 15:58:43 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.106 2021/04/09 20:12:00 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -245,8 +245,8 @@ const	char *msgs[] = {
 	"no automatic aggregate initialization in traditional C",     /* 188 */
 	"",			/* no longer used */		      /* 189 */
 	"empty array declaration: %s",				      /* 190 */
-	"%s set but not used in function %s",			      /* 191 */
-	"%s unused in function %s",				      /* 192 */
+	"'%s' set but not used in function '%s'",		      /* 191 */
+	"'%s' unused in function '%s'",				      /* 192 */
 	"statement not reached",				      /* 193 */
 	"label %s redefined",					      /* 194 */
 	"case not in switch",					      /* 195 */
@@ -285,7 +285,7 @@ const	char *msgs[] = {
 	"function cannot return const or volatile object",	      /* 228 */
 	"converting '%s' to '%s' is questionable",		      /* 229 */
 	"nonportable character comparison, op %s",		      /* 230 */
-	"argument %s unused in function %s",			      /* 231 */
+	"argument '%s' unused in function '%s'",		      /* 231 */
 	"label %s unused in function %s",			      /* 232 */
 	"struct %s never defined",				      /* 233 */
 	"union %s never defined",				      /* 234 */

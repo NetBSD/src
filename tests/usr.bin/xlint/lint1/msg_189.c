@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_189.c,v 1.3 2021/03/28 15:36:37 rillig Exp $	*/
+/*	$NetBSD: msg_189.c,v 1.4 2021/04/09 20:12:01 rillig Exp $	*/
 # 3 "msg_189.c"
 
 /* Test for message: assignment of struct/union illegal in traditional C [189] */
@@ -16,5 +16,5 @@ example()
 
 	a.member = 3;
 	b = a;			/* message 189 is not triggered anymore */
-	/* expect-1: b set but not used in function example */
+	/* expect-1: 'b' set but not used in function 'example' */
 }
