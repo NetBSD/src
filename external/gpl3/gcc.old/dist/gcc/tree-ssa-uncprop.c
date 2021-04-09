@@ -1,5 +1,5 @@
 /* Routines for discovering and unpropagating edge equivalences.
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -184,7 +184,7 @@ associate_equivalences_with_edges (void)
 	      for (i = 0; i < n_labels; i++)
 		{
 		  tree label = gimple_switch_label (switch_stmt, i);
-		  basic_block bb = label_to_block (CASE_LABEL (label));
+		  basic_block bb = label_to_block (cfun, CASE_LABEL (label));
 
 		  if (CASE_HIGH (label)
 		      || !CASE_LOW (label)
@@ -268,19 +268,7 @@ associate_equivalences_with_edges (void)
    so with each value we have a list of SSA_NAMEs that have the
    same value.  */
 
-/* Traits for the hash_map to record the value to SSA name equivalences
-   mapping.  */
-struct ssa_equip_hash_traits : default_hash_traits <tree>
-{
-  static inline hashval_t hash (value_type value)
-    { return iterative_hash_expr (value, 0); }
-  static inline bool equal (value_type existing, value_type candidate)
-    { return operand_equal_p (existing, candidate, 0); }
-};
-
-typedef hash_map<tree, auto_vec<tree>,
-		 simple_hashmap_traits <ssa_equip_hash_traits,
-					auto_vec <tree> > > val_ssa_equiv_t;
+typedef hash_map<tree_operand_hash, auto_vec<tree> > val_ssa_equiv_t;
 
 /* Global hash table implementing a mapping from invariant values
    to a list of SSA_NAMEs which have the same value.  We might be

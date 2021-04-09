@@ -1,5 +1,5 @@
 ;; Load/Store Multiple patterns description of Andes NDS32 cpu for GNU compiler
-;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2019 Free Software Foundation, Inc.
 ;; Contributed by Andes Technology Corporation.for NDS32.
 ;;
 ;; This file is part of GCC.
@@ -2851,6 +2851,25 @@
 }
   [(set_attr "type"   "store_multiple")
    (set_attr "combo"               "1")
+   (set_attr "length"              "4")]
+)
+
+(define_expand "unaligned_store_update_base_dw"
+  [(parallel [(set (match_operand:SI 0 "register_operand" "=r")
+		   (plus:SI (match_operand:SI 1 "register_operand" "0") (const_int 8)))
+	      (set (mem:DI (match_dup 1))
+		   (unspec:DI [(match_operand:DI 2 "register_operand" "r")] UNSPEC_UASTORE_DW))])]
+  ""
+{
+  /* DO NOT emit unaligned_store_w_m immediately since web pass don't
+     recognize post_inc, try it again after GCC 5.0.
+     REF: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=63156  */
+  emit_insn (gen_unaligned_store_dw (gen_rtx_MEM (DImode, operands[1]), operands[2]));
+  emit_insn (gen_addsi3 (operands[0], operands[1], gen_int_mode (8, Pmode)));
+  DONE;
+}
+  [(set_attr "type"   "store_multiple")
+   (set_attr "combo"               "2")
    (set_attr "length"              "4")]
 )
 

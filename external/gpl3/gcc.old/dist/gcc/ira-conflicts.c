@@ -1,5 +1,5 @@
 /* IRA conflict builder.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -289,7 +289,7 @@ process_regs_for_copy (rtx reg1, rtx reg2, bool constraint_p,
 
   if (! IN_RANGE (allocno_preferenced_hard_regno,
 		  0, FIRST_PSEUDO_REGISTER - 1))
-    /* Can not be tied.  */
+    /* Cannot be tied.  */
     return false;
   rclass = REGNO_REG_CLASS (allocno_preferenced_hard_regno);
   mode = ALLOCNO_MODE (a);
@@ -300,7 +300,7 @@ process_regs_for_copy (rtx reg1, rtx reg2, bool constraint_p,
     return false;
   index = ira_class_hard_reg_index[aclass][allocno_preferenced_hard_regno];
   if (index < 0)
-    /* Can not be tied.  It is not in the allocno class.  */
+    /* Cannot be tied.  It is not in the allocno class.  */
     return false;
   ira_init_register_move_cost_if_necessary (mode);
   if (HARD_REGISTER_P (reg1))
@@ -633,7 +633,12 @@ print_allocno_conflicts (FILE * file, bool reg_p, ira_allocno_t a)
       ira_object_conflict_iterator oci;
 
       if (OBJECT_CONFLICT_ARRAY (obj) == NULL)
-	continue;
+	{
+	  fprintf (file, "\n;;     total conflict hard regs:\n");
+	  fprintf (file, ";;     conflict hard regs:\n\n");
+	  continue;
+	}
+
       if (n > 1)
 	fprintf (file, "\n;;   subobject %d:", i);
       FOR_EACH_OBJECT_CONFLICT (obj, conflict_obj, oci)
@@ -683,6 +688,7 @@ print_conflicts (FILE *file, bool reg_p)
 
   FOR_EACH_ALLOCNO (a, ai)
     print_allocno_conflicts (file, reg_p, a);
+  putc ('\n', file);
 }
 
 /* Print information about allocno or only regno (if REG_P) conflicts
@@ -808,7 +814,7 @@ ira_build_conflicts (void)
 		 regs must conflict with them.  */
 	      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
 		if (!TEST_HARD_REG_BIT (call_used_reg_set, regno)
-		    && targetm.hard_regno_call_part_clobbered (regno,
+		    && targetm.hard_regno_call_part_clobbered (NULL, regno,
 							       obj_mode))
 		  {
 		    SET_HARD_REG_BIT (OBJECT_CONFLICT_HARD_REGS (obj), regno);

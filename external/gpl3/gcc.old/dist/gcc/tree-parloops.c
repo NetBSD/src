@@ -1,5 +1,5 @@
 /* Loop autoparallelization.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <pop@cri.ensmp.fr> 
    Zdenek Dvorak <dvorakz@suse.cz> and Razya Ladelsky <razya@il.ibm.com>.
 
@@ -1041,7 +1041,7 @@ create_phi_for_local_result (reduction_info **slot, struct loop *loop)
   gphi *new_phi;
   basic_block store_bb, continue_bb;
   tree local_res;
-  source_location locus;
+  location_t locus;
 
   /* STORE_BB is the block where the phi
      should be stored.  It is the destination of the loop exit.
@@ -1130,7 +1130,8 @@ create_call_for_reduction_1 (reduction_info **slot, struct clsn_data *clsn_data)
 
   tmp_load = create_tmp_var (TREE_TYPE (TREE_TYPE (addr)));
   tmp_load = make_ssa_name (tmp_load);
-  load = gimple_build_omp_atomic_load (tmp_load, addr);
+  load = gimple_build_omp_atomic_load (tmp_load, addr,
+				       OMP_MEMORY_ORDER_RELAXED);
   SSA_NAME_DEF_STMT (tmp_load) = load;
   gsi = gsi_start_bb (new_bb);
   gsi_insert_after (&gsi, load, GSI_NEW_STMT);
@@ -1146,7 +1147,9 @@ create_call_for_reduction_1 (reduction_info **slot, struct clsn_data *clsn_data)
   name = force_gimple_operand_gsi (&gsi, x, true, NULL_TREE, true,
 				   GSI_CONTINUE_LINKING);
 
-  gsi_insert_after (&gsi, gimple_build_omp_atomic_store (name), GSI_NEW_STMT);
+  gimple *store = gimple_build_omp_atomic_store (name,
+						 OMP_MEMORY_ORDER_RELAXED);
+  gsi_insert_after (&gsi, store, GSI_NEW_STMT);
   return 1;
 }
 
@@ -2128,7 +2131,7 @@ create_parallel_loop (struct loop *loop, tree loop_fn, tree data,
   for (gphi_iterator gpi = gsi_start_phis (ex_bb);
        !gsi_end_p (gpi); gsi_next (&gpi))
     {
-      source_location locus;
+      location_t locus;
       gphi *phi = gpi.phi ();
       tree def = PHI_ARG_DEF_FROM_EDGE (phi, exit);
       gimple *def_stmt = SSA_NAME_DEF_STMT (def);
@@ -2570,15 +2573,14 @@ set_reduc_phi_uids (reduction_info **slot, void *data ATTRIBUTE_UNUSED)
   return 1;
 }
 
-/* Return true if the type of reduction performed by STMT is suitable
+/* Return true if the type of reduction performed by STMT_INFO is suitable
    for this pass.  */
 
 static bool
-valid_reduction_p (gimple *stmt)
+valid_reduction_p (stmt_vec_info stmt_info)
 {
   /* Parallelization would reassociate the operation, which isn't
      allowed for in-order reductions.  */
-  stmt_vec_info stmt_info = vinfo_for_stmt (stmt);
   vect_reduction_type reduc_type = STMT_VINFO_REDUC_TYPE (stmt_info);
   return reduc_type != FOLD_LEFT_REDUCTION;
 }
@@ -2593,10 +2595,8 @@ gather_scalar_reductions (loop_p loop, reduction_info_table_type *reduction_list
   auto_vec<gphi *, 4> double_reduc_phis;
   auto_vec<gimple *, 4> double_reduc_stmts;
 
-  if (!stmt_vec_info_vec.exists ())
-    init_stmt_vec_info_vec ();
-
-  simple_loop_info = vect_analyze_loop_form (loop);
+  vec_info_shared shared;
+  simple_loop_info = vect_analyze_loop_form (loop, &shared);
   if (simple_loop_info == NULL)
     goto gather_done;
 
@@ -2613,10 +2613,11 @@ gather_scalar_reductions (loop_p loop, reduction_info_table_type *reduction_list
       if (simple_iv (loop, loop, res, &iv, true))
 	continue;
 
-      gimple *reduc_stmt
-	= vect_force_simple_reduction (simple_loop_info, phi,
+      stmt_vec_info reduc_stmt_info
+	= vect_force_simple_reduction (simple_loop_info,
+				       simple_loop_info->lookup_stmt (phi),
 				       &double_reduc, true);
-      if (!reduc_stmt || !valid_reduction_p (reduc_stmt))
+      if (!reduc_stmt_info || !valid_reduction_p (reduc_stmt_info))
 	continue;
 
       if (double_reduc)
@@ -2625,17 +2626,18 @@ gather_scalar_reductions (loop_p loop, reduction_info_table_type *reduction_list
 	    continue;
 
 	  double_reduc_phis.safe_push (phi);
-	  double_reduc_stmts.safe_push (reduc_stmt);
+	  double_reduc_stmts.safe_push (reduc_stmt_info->stmt);
 	  continue;
 	}
 
-      build_new_reduction (reduction_list, reduc_stmt, phi);
+      build_new_reduction (reduction_list, reduc_stmt_info->stmt, phi);
     }
   delete simple_loop_info;
 
   if (!double_reduc_phis.is_empty ())
     {
-      simple_loop_info = vect_analyze_loop_form (loop->inner);
+      vec_info_shared shared;
+      simple_loop_info = vect_analyze_loop_form (loop->inner, &shared);
       if (simple_loop_info)
 	{
 	  gphi *phi;
@@ -2658,12 +2660,15 @@ gather_scalar_reductions (loop_p loop, reduction_info_table_type *reduction_list
 			     &iv, true))
 		continue;
 
-	      gimple *inner_reduc_stmt
-		= vect_force_simple_reduction (simple_loop_info, inner_phi,
+	      stmt_vec_info inner_phi_info
+		= simple_loop_info->lookup_stmt (inner_phi);
+	      stmt_vec_info inner_reduc_stmt_info
+		= vect_force_simple_reduction (simple_loop_info,
+					       inner_phi_info,
 					       &double_reduc, true);
 	      gcc_assert (!double_reduc);
-	      if (inner_reduc_stmt == NULL
-		  || !valid_reduction_p (inner_reduc_stmt))
+	      if (!inner_reduc_stmt_info
+		  || !valid_reduction_p (inner_reduc_stmt_info))
 		continue;
 
 	      build_new_reduction (reduction_list, double_reduc_stmts[i], phi);
@@ -2673,14 +2678,11 @@ gather_scalar_reductions (loop_p loop, reduction_info_table_type *reduction_list
     }
 
  gather_done:
-  /* Release the claim on gimple_uid.  */
-  free_stmt_vec_info_vec ();
-
   if (reduction_list->elements () == 0)
     return;
 
   /* As gimple_uid is used by the vectorizer in between vect_analyze_loop_form
-     and free_stmt_vec_info_vec, we can set gimple_uid of reduc_phi stmts only
+     and delete simple_loop_info, we can set gimple_uid of reduc_phi stmts only
      now.  */
   basic_block bb;
   FOR_EACH_BB_FN (bb, cfun)
@@ -2793,6 +2795,14 @@ try_create_reduction_list (loop_p loop,
 
       if (!virtual_operand_p (val))
 	{
+	  if (TREE_CODE (val) != SSA_NAME)
+	    {
+	      if (dump_file && (dump_flags & TDF_DETAILS))
+		fprintf (dump_file,
+			 "  FAILED: exit PHI argument invariant.\n");
+	      return false;
+	    }
+
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    {
 	      fprintf (dump_file, "phi is ");
@@ -3077,7 +3087,7 @@ oacc_entry_exit_ok_1 (bitmap in_loop_bbs, vec<basic_block> region_bbs,
 	    continue;
 	  else if (!gimple_has_side_effects (stmt)
 		   && !gimple_could_trap_p (stmt)
-		   && !stmt_could_throw_p (stmt)
+		   && !stmt_could_throw_p (cfun, stmt)
 		   && !gimple_vdef (stmt)
 		   && !gimple_vuse (stmt))
 	    continue;
@@ -3283,7 +3293,6 @@ parallelize_loops (bool oacc_kernels_p)
   struct tree_niter_desc niter_desc;
   struct obstack parloop_obstack;
   HOST_WIDE_INT estimated;
-  source_location loop_loc;
 
   /* Do not parallelize loops in the functions created by parallelization.  */
   if (!oacc_kernels_p
@@ -3408,13 +3417,16 @@ parallelize_loops (bool oacc_kernels_p)
       changed = true;
       skip_loop = loop->inner;
 
-      loop_loc = find_loop_location (loop);
-      if (loop->inner)
-	dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, loop_loc,
-			 "parallelizing outer loop %d\n", loop->num);
-      else
-	dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, loop_loc,
-			 "parallelizing inner loop %d\n", loop->num);
+      if (dump_enabled_p ())
+	{
+	  dump_user_location_t loop_loc = find_loop_location (loop);
+	  if (loop->inner)
+	    dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, loop_loc,
+			     "parallelizing outer loop %d\n", loop->num);
+	  else
+	    dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, loop_loc,
+			     "parallelizing inner loop %d\n", loop->num);
+	}
 
       gen_parallel_loop (loop, &reduction_list,
 			 n_threads, &niter_desc, oacc_kernels_p);

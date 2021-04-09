@@ -1,5 +1,5 @@
 /* Rewrite a program in Normal form into SSA.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -1436,20 +1436,12 @@ rewrite_add_phi_arguments (basic_block bb)
       for (gsi = gsi_start_phis (e->dest); !gsi_end_p (gsi);
 	   gsi_next (&gsi))
 	{
-	  tree currdef, res, argvar;
+	  tree currdef, res;
 	  location_t loc;
 
 	  phi = gsi.phi ();
 	  res = gimple_phi_result (phi);
-	  /* If we have pre-existing PHI (via the GIMPLE FE) its args may
-	     be different vars than existing vars and they may be constants
-	     as well.  Note the following supports partial SSA for PHI args.  */
-	  argvar = gimple_phi_arg_def (phi, e->dest_idx);
-	  if (argvar && ! DECL_P (argvar))
-	    continue;
-	  if (!argvar)
-	    argvar = SSA_NAME_VAR (res);
-	  currdef = get_reaching_def (argvar);
+	  currdef = get_reaching_def (SSA_NAME_VAR (res));
 	  /* Virtual operand PHI args do not need a location.  */
 	  if (virtual_operand_p (res))
 	    loc = UNKNOWN_LOCATION;
@@ -2119,7 +2111,7 @@ rewrite_update_phi_arguments (basic_block bb)
           /* Update the argument if there is a reaching def.  */
 	  if (reaching_def)
 	    {
-	      source_location locus;
+	      location_t locus;
 	      int arg_i = PHI_ARG_INDEX_FROM_USE (arg_p);
 
 	      SET_USE (arg_p, reaching_def);
@@ -2488,6 +2480,28 @@ pass_build_ssa::execute (function *fun)
 	  && !VAR_DECL_IS_VIRTUAL_OPERAND (decl)
 	  && DECL_IGNORED_P (decl))
 	SET_SSA_NAME_VAR_OR_IDENTIFIER (name, DECL_NAME (decl));
+    }
+
+  /* Initialize SSA_NAME_POINTS_TO_READONLY_MEMORY.  */
+  tree fnspec = lookup_attribute ("fn spec",
+				  TYPE_ATTRIBUTES (TREE_TYPE (fun->decl)));
+  if (fnspec)
+    {
+      fnspec = TREE_VALUE (TREE_VALUE (fnspec));
+      unsigned i = 1;
+      for (tree arg = DECL_ARGUMENTS (cfun->decl);
+	   arg; arg = DECL_CHAIN (arg), ++i)
+	{
+	  if (i >= (unsigned) TREE_STRING_LENGTH (fnspec))
+	    break;
+	  if (TREE_STRING_POINTER (fnspec)[i]  == 'R'
+	      || TREE_STRING_POINTER (fnspec)[i] == 'r')
+	    {
+	      tree name = ssa_default_def (fun, arg);
+	      if (name)
+		SSA_NAME_POINTS_TO_READONLY_MEMORY (name) = 1;
+	    }
+	}
     }
 
   return 0;

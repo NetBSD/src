@@ -1,6 +1,6 @@
 // Components for manipulating non-owning sequences of characters -*- C++ -*-
 
-// Copyright (C) 2013-2018 Free Software Foundation, Inc.
+// Copyright (C) 2013-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -78,9 +78,9 @@ inline namespace fundamentals_v1
       // types
       using traits_type = _Traits;
       using value_type = _CharT;
-      using pointer = const _CharT*;
+      using pointer = _CharT*;
       using const_pointer = const _CharT*;
-      using reference = const _CharT&;
+      using reference = _CharT&;
       using const_reference = const _CharT&;
       using const_iterator = const _CharT*;
       using iterator = const_iterator;
@@ -169,7 +169,7 @@ inline namespace fundamentals_v1
 		/ sizeof(value_type) / 4;
       }
 
-      constexpr bool
+      _GLIBCXX_NODISCARD constexpr bool
       empty() const noexcept
       { return this->_M_len == 0; }
 
@@ -566,10 +566,11 @@ inline namespace fundamentals_v1
 #ifdef _GLIBCXX_USE_WCHAR_T
   using wstring_view = basic_string_view<wchar_t>;
 #endif
-#ifdef _GLIBCXX_USE_C99_STDINT_TR1
+#ifdef _GLIBCXX_USE_CHAR8_T
+  using u8string_view = basic_string_view<char8_t>;
+#endif
   using u16string_view = basic_string_view<char16_t>;
   using u32string_view = basic_string_view<char32_t>;
-#endif
 } // namespace fundamentals_v1
 } // namespace experimental
 
@@ -607,7 +608,21 @@ inline namespace fundamentals_v1
     { };
 #endif
 
-#ifdef _GLIBCXX_USE_C99_STDINT_TR1
+#ifdef _GLIBCXX_USE_CHAR8_T
+  template<>
+    struct hash<experimental::u8string_view>
+    : public __hash_base<size_t, experimental::u8string_view>
+    {
+      size_t
+      operator()(const experimental::u8string_view& __s) const noexcept
+      { return std::_Hash_impl::hash(__s.data(), __s.length()); }
+    };
+
+  template<>
+    struct __is_fast_hash<hash<experimental::u8string_view>> : std::false_type
+    { };
+#endif
+
   template<>
     struct hash<experimental::u16string_view>
     : public __hash_base<size_t, experimental::u16string_view>
@@ -635,7 +650,6 @@ inline namespace fundamentals_v1
   template<>
     struct __is_fast_hash<hash<experimental::u32string_view>> : std::false_type
     { };
-#endif
 
 namespace experimental
 {
@@ -656,7 +670,12 @@ namespace experimental
     { return basic_string_view<wchar_t>{__str, __len}; }
 #endif
 
-#ifdef _GLIBCXX_USE_C99_STDINT_TR1
+#ifdef _GLIBCXX_USE_CHAR8_T
+    inline constexpr basic_string_view<char8_t>
+    operator""sv(const char8_t* __str, size_t __len) noexcept
+    { return basic_string_view<char8_t>{__str, __len}; }
+#endif
+
     inline constexpr basic_string_view<char16_t>
     operator""sv(const char16_t* __str, size_t __len) noexcept
     { return basic_string_view<char16_t>{__str, __len}; }
@@ -664,7 +683,6 @@ namespace experimental
     inline constexpr basic_string_view<char32_t>
     operator""sv(const char32_t* __str, size_t __len) noexcept
     { return basic_string_view<char32_t>{__str, __len}; }
-#endif
 #pragma GCC diagnostic pop
   } // namespace string_literals
   } // namespace literals

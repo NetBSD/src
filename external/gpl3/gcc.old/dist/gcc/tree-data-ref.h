@@ -1,5 +1,5 @@
 /* Data references and dependences detectors.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <pop@cri.ensmp.fr>
 
 This file is part of GCC.
@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "graphds.h"
 #include "tree-chrec.h"
+#include "opt-problem.h"
 
 /*
   innermost_loop_behavior describes the evolution of the address of the memory
@@ -137,7 +138,8 @@ struct dr_alias
    space. A vector space is a set that is closed under vector addition
    and scalar multiplication.  In this vector space, an element is a list of
    integers.  */
-typedef int *lambda_vector;
+typedef HOST_WIDE_INT lambda_int;
+typedef lambda_int *lambda_vector;
 
 /* An integer matrix.  A matrix consists of m vectors of length n (IE
    all vectors are the same length).  */
@@ -421,7 +423,8 @@ typedef struct data_dependence_relation *ddr_p;
 #define DDR_COULD_BE_INDEPENDENT_P(DDR) (DDR)->could_be_independent_p
 
 
-bool dr_analyze_innermost (innermost_loop_behavior *, tree, struct loop *);
+opt_result dr_analyze_innermost (innermost_loop_behavior *, tree,
+				 struct loop *, const gimple *);
 extern bool compute_data_dependences_for_loop (struct loop *, bool,
 					       vec<loop_p> *,
 					       vec<data_reference_p> *,
@@ -443,8 +446,8 @@ extern void free_dependence_relation (struct data_dependence_relation *);
 extern void free_dependence_relations (vec<ddr_p> );
 extern void free_data_ref (data_reference_p);
 extern void free_data_refs (vec<data_reference_p> );
-extern bool find_data_references_in_stmt (struct loop *, gimple *,
-					  vec<data_reference_p> *);
+extern opt_result find_data_references_in_stmt (struct loop *, gimple *,
+						vec<data_reference_p> *);
 extern bool graphite_find_data_references_in_stmt (edge, loop_p, gimple *,
 						   vec<data_reference_p> *);
 tree find_data_references_in_loop (struct loop *, vec<data_reference_p> *);
@@ -479,7 +482,7 @@ extern bool dr_may_alias_p (const struct data_reference *,
 extern bool dr_equal_offsets_p (struct data_reference *,
                                 struct data_reference *);
 
-extern bool runtime_alias_check_p (ddr_p, struct loop *, bool);
+extern opt_result runtime_alias_check_p (ddr_p, struct loop *, bool);
 extern int data_ref_compare_tree (tree, tree);
 extern void prune_runtime_alias_test_list (vec<dr_with_seg_len_pair_t> *,
 					   poly_uint64);
@@ -577,12 +580,11 @@ index_in_loop_nest (int var, vec<loop_p> loop_nest)
   struct loop *loopi;
   int var_index;
 
-  for (var_index = 0; loop_nest.iterate (var_index, &loopi);
-       var_index++)
+  for (var_index = 0; loop_nest.iterate (var_index, &loopi); var_index++)
     if (loopi->num == var)
-      break;
+      return var_index;
 
-  return var_index;
+  gcc_unreachable ();
 }
 
 /* Returns true when the data reference DR the form "A[i] = ..."
@@ -609,11 +611,11 @@ void split_constant_offset (tree , tree *, tree *);
 
 /* Compute the greatest common divisor of a VECTOR of SIZE numbers.  */
 
-static inline int
+static inline lambda_int
 lambda_vector_gcd (lambda_vector vector, int size)
 {
   int i;
-  int gcd1 = 0;
+  lambda_int gcd1 = 0;
 
   if (size > 0)
     {
@@ -630,7 +632,7 @@ static inline lambda_vector
 lambda_vector_new (int size)
 {
   /* ???  We shouldn't abuse the GC allocator here.  */
-  return ggc_cleared_vec_alloc<int> (size);
+  return ggc_cleared_vec_alloc<lambda_int> (size);
 }
 
 /* Clear out vector VEC1 of length SIZE.  */
@@ -684,7 +686,7 @@ lambda_matrix_new (int m, int n, struct obstack *lambda_obstack)
   mat = XOBNEWVEC (lambda_obstack, lambda_vector, m);
 
   for (i = 0; i < m; i++)
-    mat[i] = XOBNEWVEC (lambda_obstack, int, n);
+    mat[i] = XOBNEWVEC (lambda_obstack, lambda_int, n);
 
   return mat;
 }

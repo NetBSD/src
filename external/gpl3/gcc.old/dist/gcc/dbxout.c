@@ -1,5 +1,5 @@
 /* Output dbx-format symbol table information from GNU compiler.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1715,7 +1715,7 @@ dbxout_range_type (tree type, tree low, tree high)
   if (TREE_TYPE (type))
     dbxout_type (TREE_TYPE (type), 0);
   else if (TREE_CODE (type) != INTEGER_TYPE)
-    dbxout_type (type, 0); /* E.g. Pascal's ARRAY [BOOLEAN] of INTEGER */
+    dbxout_type (type, 0);
   else
     {
       /* Traditionally, we made sure 'int' was type 1, and builtin types
@@ -2379,10 +2379,6 @@ dbxout_type (tree type, int full)
       dbxout_type (TREE_TYPE (type), 0);
       break;
 
-    case POINTER_BOUNDS_TYPE:
-      /* No debug info for pointer bounds type supported yet.  */
-      break;
-
     default:
       /* A C++ function with deduced return type can have a TEMPLATE_TYPE_PARM
 	 named 'auto' in its type.
@@ -2821,7 +2817,7 @@ dbxout_symbol (tree decl, int local ATTRIBUTE_UNUSED)
                 /* Do not generate a tag for incomplete records.  */
                 && COMPLETE_TYPE_P (type)
 		/* Do not generate a tag for records of variable size,
-		   since this type can not be properly described in the
+		   since this type cannot be properly described in the
 		   DBX format, and it confuses some tools such as objdump.  */
 		&& tree_fits_uhwi_p (TYPE_SIZE (type)))
 	      {

@@ -1,5 +1,5 @@
 ;; Machine description for NVPTX.
-;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 ;; Contributed by Bernd Schmidt <bernds@codesourcery.com>
 ;;
 ;; This file is part of GCC.
@@ -56,6 +56,7 @@
    UNSPECV_XCHG
    UNSPECV_BARSYNC
    UNSPECV_MEMBAR
+   UNSPECV_MEMBAR_CTA
    UNSPECV_DIM_POS
 
    UNSPECV_FORK
@@ -67,6 +68,8 @@
 
    UNSPECV_SIMT_ENTER
    UNSPECV_SIMT_EXIT
+
+   UNSPECV_RED_PART
 ])
 
 (define_attr "subregs_ok" "false,true"
@@ -1100,14 +1103,14 @@
 (define_insn "trap"
   [(trap_if (const_int 1) (const_int 0))]
   ""
-  "trap;")
+  "trap; exit;")
 
 (define_insn "trap_if_true"
   [(trap_if (ne (match_operand:BI 0 "nvptx_register_operand" "R")
 		(const_int 0))
 	    (const_int 0))]
   ""
-  "%j0 trap;"
+  "%j0 trap; %j0 exit;"
   [(set_attr "predicable" "false")])
 
 (define_insn "trap_if_false"
@@ -1115,7 +1118,7 @@
 		(const_int 0))
 	    (const_int 0))]
   ""
-  "%J0 trap;"
+  "%J0 trap; %J0 exit;"
   [(set_attr "predicable" "false")])
 
 (define_expand "ctrap<mode>4"
@@ -1439,7 +1442,6 @@
 (define_code_iterator any_logic [and ior xor])
 (define_code_attr logic [(and "and") (ior "or") (xor "xor")])
 
-;; Currently disabled until we add better subtarget support - requires sm_32.
 (define_insn "atomic_fetch_<logic><mode>"
   [(set (match_operand:SDIM 1 "memory_operand" "+m")
 	(unspec_volatile:SDIM
@@ -1449,15 +1451,21 @@
 	  UNSPECV_LOCK))
    (set (match_operand:SDIM 0 "nvptx_register_operand" "=R")
 	(match_dup 1))]
-  "0"
+  "<MODE>mode == SImode || TARGET_SM35"
   "%.\\tatom%A1.b%T0.<logic>\\t%0, %1, %2;"
   [(set_attr "atomic" "true")])
 
 (define_insn "nvptx_barsync"
-  [(unspec_volatile [(match_operand:SI 0 "const_int_operand" "")]
+  [(unspec_volatile [(match_operand:SI 0 "nvptx_nonmemory_operand" "Ri")
+		     (match_operand:SI 1 "const_int_operand")]
 		    UNSPECV_BARSYNC)]
   ""
-  "\\tbar.sync\\t%0;"
+  {
+    if (INTVAL (operands[1]) == 0)
+      return "\\tbar.sync\\t%0;";
+    else
+      return "\\tbar.sync\\t%0, %1;";
+  }
   [(set_attr "predicable" "false")])
 
 (define_expand "memory_barrier"
@@ -1481,8 +1489,34 @@
   "\\tmembar.sys;"
   [(set_attr "predicable" "false")])
 
+(define_expand "nvptx_membar_cta"
+  [(set (match_dup 0)
+	(unspec_volatile:BLK [(match_dup 0)] UNSPECV_MEMBAR_CTA))]
+  ""
+{
+  operands[0] = gen_rtx_MEM (BLKmode, gen_rtx_SCRATCH (Pmode));
+  MEM_VOLATILE_P (operands[0]) = 1;
+})
+
+(define_insn "*nvptx_membar_cta"
+  [(set (match_operand:BLK 0 "" "")
+	(unspec_volatile:BLK [(match_dup 0)] UNSPECV_MEMBAR_CTA))]
+  ""
+  "\\tmembar.cta;"
+  [(set_attr "predicable" "false")])
+
 (define_insn "nvptx_nounroll"
   [(unspec_volatile [(const_int 0)] UNSPECV_NOUNROLL)]
   ""
   "\\t.pragma \\\"nounroll\\\";"
+  [(set_attr "predicable" "false")])
+
+(define_insn "nvptx_red_partition"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=R")
+	(unspec_volatile [(match_operand:DI 1 "const_int_operand")]
+	 UNSPECV_RED_PART))]
+  ""
+  {
+    return nvptx_output_red_partition (operands[0], operands[1]);
+  }
   [(set_attr "predicable" "false")])

@@ -1,5 +1,5 @@
 /* Forward propagation of expressions for single use variables.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -280,7 +280,7 @@ can_propagate_from (gimple *def_stmt)
     return false;
 
   /* If the definition is a conversion of a pointer to a function type,
-     then we can not apply optimizations as some targets require
+     then we cannot apply optimizations as some targets require
      function pointers to be canonicalized and in this case this
      optimization could eliminate a necessary canonicalization.  */
   if (CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def_stmt)))
@@ -1071,7 +1071,7 @@ simplify_gimple_switch_label_vec (gswitch *stmt, tree index_type)
       for (i = 0; i < gimple_switch_num_labels (stmt); i++)
 	{
 	  tree elt = gimple_switch_label (stmt, i);
-	  basic_block target = label_to_block (CASE_LABEL (elt));
+	  basic_block target = label_to_block (cfun, CASE_LABEL (elt));
 	  bitmap_set_bit (target_blocks, target->index);
 	}
       for (ei = ei_start (gimple_bb (stmt)->succs); (e = ei_safe_edge (ei)); )
@@ -1278,7 +1278,7 @@ simplify_builtin_call (gimple_stmt_iterator *gsi_p, tree callee2)
 		 constant length.  */
 	      callee1 = gimple_call_fndecl (stmt1);
 	      if (callee1 == NULL_TREE
-		  || DECL_BUILT_IN_CLASS (callee1) != BUILT_IN_NORMAL
+		  || !fndecl_built_in_p (callee1, BUILT_IN_NORMAL)
 		  || gimple_call_num_args (stmt1) != 3)
 		break;
 	      if (DECL_FUNCTION_CODE (callee1) != BUILT_IN_MEMCPY
@@ -1290,7 +1290,7 @@ simplify_builtin_call (gimple_stmt_iterator *gsi_p, tree callee2)
 	      lhs1 = gimple_call_lhs (stmt1);
 	      if (!tree_fits_uhwi_p (len1))
 		break;
-	      str1 = string_constant (src1, &off1);
+	      str1 = string_constant (src1, &off1, NULL, NULL);
 	      if (str1 == NULL_TREE)
 		break;
 	      if (!tree_fits_uhwi_p (off1)
@@ -2004,7 +2004,7 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
 {
   gimple *stmt = gsi_stmt (*gsi);
   gimple *def_stmt;
-  tree op, op2, orig, type, elem_type;
+  tree op, op2, orig[2], type, elem_type;
   unsigned elem_size, i;
   unsigned HOST_WIDE_INT nelts;
   enum tree_code code, conv_code;
@@ -2023,7 +2023,8 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
   elem_size = TREE_INT_CST_LOW (TYPE_SIZE (elem_type));
 
   vec_perm_builder sel (nelts, nelts, 1);
-  orig = NULL;
+  orig[0] = NULL;
+  orig[1] = NULL;
   conv_code = ERROR_MARK;
   maybe_ident = true;
   FOR_EACH_VEC_SAFE_ELT (CONSTRUCTOR_ELTS (op), i, elt)
@@ -2063,25 +2064,35 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
 	return false;
       op1 = gimple_assign_rhs1 (def_stmt);
       ref = TREE_OPERAND (op1, 0);
-      if (orig)
+      unsigned int j;
+      for (j = 0; j < 2; ++j)
 	{
-	  if (ref != orig)
-	    return false;
+	  if (!orig[j])
+	    {
+	      if (TREE_CODE (ref) != SSA_NAME)
+		return false;
+	      if (! VECTOR_TYPE_P (TREE_TYPE (ref))
+		  || ! useless_type_conversion_p (TREE_TYPE (op1),
+						  TREE_TYPE (TREE_TYPE (ref))))
+		return false;
+	      if (j && !useless_type_conversion_p (TREE_TYPE (orig[0]),
+						   TREE_TYPE (ref)))
+		return false;
+	      orig[j] = ref;
+	      break;
+	    }
+	  else if (ref == orig[j])
+	    break;
 	}
-      else
-	{
-	  if (TREE_CODE (ref) != SSA_NAME)
-	    return false;
-	  if (! VECTOR_TYPE_P (TREE_TYPE (ref))
-	      || ! useless_type_conversion_p (TREE_TYPE (op1),
-					      TREE_TYPE (TREE_TYPE (ref))))
-	    return false;
-	  orig = ref;
-	}
+      if (j == 2)
+	return false;
+
       unsigned int elt;
       if (maybe_ne (bit_field_size (op1), elem_size)
 	  || !constant_multiple_p (bit_field_offset (op1), elem_size, &elt))
 	return false;
+      if (j)
+	elt += nelts;
       if (elt != i)
 	maybe_ident = false;
       sel.quick_push (elt);
@@ -2089,14 +2100,15 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
   if (i < nelts)
     return false;
 
-  if (! VECTOR_TYPE_P (TREE_TYPE (orig))
+  if (! VECTOR_TYPE_P (TREE_TYPE (orig[0]))
       || maybe_ne (TYPE_VECTOR_SUBPARTS (type),
-		   TYPE_VECTOR_SUBPARTS (TREE_TYPE (orig))))
+		   TYPE_VECTOR_SUBPARTS (TREE_TYPE (orig[0]))))
     return false;
 
   tree tem;
   if (conv_code != ERROR_MARK
-      && (! supportable_convert_operation (conv_code, type, TREE_TYPE (orig),
+      && (! supportable_convert_operation (conv_code, type,
+					   TREE_TYPE (orig[0]),
 					   &tem, &conv_code)
 	  || conv_code == CALL_EXPR))
     return false;
@@ -2104,16 +2116,16 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
   if (maybe_ident)
     {
       if (conv_code == ERROR_MARK)
-	gimple_assign_set_rhs_from_tree (gsi, orig);
+	gimple_assign_set_rhs_from_tree (gsi, orig[0]);
       else
-	gimple_assign_set_rhs_with_ops (gsi, conv_code, orig,
+	gimple_assign_set_rhs_with_ops (gsi, conv_code, orig[0],
 					NULL_TREE, NULL_TREE);
     }
   else
     {
       tree mask_type;
 
-      vec_perm_indices indices (sel, 1, nelts);
+      vec_perm_indices indices (sel, orig[1] ? 2 : 1, nelts);
       if (!can_vec_perm_const_p (TYPE_MODE (type), indices))
 	return false;
       mask_type
@@ -2124,16 +2136,19 @@ simplify_vector_constructor (gimple_stmt_iterator *gsi)
 		       GET_MODE_SIZE (TYPE_MODE (type))))
 	return false;
       op2 = vec_perm_indices_to_tree (mask_type, indices);
+      if (!orig[1])
+	orig[1] = orig[0];
       if (conv_code == ERROR_MARK)
-	gimple_assign_set_rhs_with_ops (gsi, VEC_PERM_EXPR, orig, orig, op2);
+	gimple_assign_set_rhs_with_ops (gsi, VEC_PERM_EXPR, orig[0],
+					orig[1], op2);
       else
 	{
 	  gimple *perm
-	    = gimple_build_assign (make_ssa_name (TREE_TYPE (orig)),
-				   VEC_PERM_EXPR, orig, orig, op2);
-	  orig = gimple_assign_lhs (perm);
+	    = gimple_build_assign (make_ssa_name (TREE_TYPE (orig[0])),
+				   VEC_PERM_EXPR, orig[0], orig[1], op2);
+	  orig[0] = gimple_assign_lhs (perm);
 	  gsi_insert_before (gsi, perm, GSI_SAME_STMT);
-	  gimple_assign_set_rhs_with_ops (gsi, conv_code, orig,
+	  gimple_assign_set_rhs_with_ops (gsi, conv_code, orig[0],
 					  NULL_TREE, NULL_TREE);
 	}
     }
@@ -2328,7 +2343,7 @@ pass_forwprop::execute (function *fun)
 		   && !gimple_has_volatile_ops (stmt)
 		   && (TREE_CODE (gimple_assign_rhs1 (stmt))
 		       != TARGET_MEM_REF)
-		   && !stmt_can_throw_internal (stmt))
+		   && !stmt_can_throw_internal (cfun, stmt))
 	    {
 	      /* Rewrite loads used only in real/imagpart extractions to
 	         component-wise loads.  */
@@ -2525,7 +2540,7 @@ pass_forwprop::execute (function *fun)
 	      {
 		tree callee = gimple_call_fndecl (stmt);
 		if (callee != NULL_TREE
-		    && DECL_BUILT_IN_CLASS (callee) == BUILT_IN_NORMAL)
+		    && fndecl_built_in_p (callee, BUILT_IN_NORMAL))
 		  changed = simplify_builtin_call (&gsi, callee);
 		break;
 	      }

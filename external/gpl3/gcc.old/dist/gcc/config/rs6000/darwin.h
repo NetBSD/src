@@ -1,5 +1,5 @@
 /* Target definitions for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2019 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
    This file is part of GCC.
@@ -379,11 +379,11 @@
   ((CONSTANT_P (X)						\
     && reg_classes_intersect_p ((CLASS), FLOAT_REGS))		\
    ? NO_REGS							\
-   : ((GET_CODE (X) == SYMBOL_REF || GET_CODE (X) == HIGH)	\
+   : ((SYMBOL_REF_P (X) || GET_CODE (X) == HIGH)		\
       && reg_class_subset_p (BASE_REGS, (CLASS)))		\
    ? BASE_REGS							\
    : (GET_MODE_CLASS (GET_MODE (X)) == MODE_INT			\
-      && (CLASS) == NON_SPECIAL_REGS)				\
+      && (CLASS) == GEN_OR_FLOAT_REGS)				\
    ? GENERAL_REGS						\
    : (CLASS))
 

@@ -1,5 +1,5 @@
 /* Loop distribution.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
    Contributed by Georges-Andre Silber <Georges-Andre.Silber@ensmp.fr>
    and Sebastian Pop <sebastian.pop@amd.com>.
 
@@ -90,7 +90,6 @@ along with GCC; see the file COPYING3.  If not see
 	data reuse.  */
 
 #include "config.h"
-#define INCLUDE_ALGORITHM /* stable_sort */
 #include "system.h"
 #include "coretypes.h"
 #include "backend.h"
@@ -160,6 +159,9 @@ static vec<loop_p> loop_nest;
 
 /* Vector of data references in the loop to be distributed.  */
 static vec<data_reference_p> datarefs_vec;
+
+/* If there is nonaddressable data reference in above vector.  */
+static bool has_nonaddressable_dataref_p;
 
 /* Store index of data reference in aux field.  */
 #define DR_INDEX(dr)      ((uintptr_t) (dr)->aux)
@@ -468,6 +470,7 @@ create_rdg_vertices (struct graph *rdg, vec<gimple *> stmts, loop_p loop)
 	  else
 	    RDGV_HAS_MEM_WRITE (v) = true;
 	  RDGV_DATAREFS (v).safe_push (dr);
+	  has_nonaddressable_dataref_p |= may_be_nonaddressable_p (dr->ref);
 	}
     }
   return true;
@@ -1091,12 +1094,8 @@ destroy_loop (struct loop *loop)
 
   bbs = get_loop_body_in_dom_order (loop);
 
-  redirect_edge_pred (exit, src);
-  exit->flags &= ~(EDGE_TRUE_VALUE|EDGE_FALSE_VALUE);
-  exit->flags |= EDGE_FALLTHRU;
-  cancel_loop_tree (loop);
-  rescan_loop_exit (exit, false, true);
-
+  gimple_stmt_iterator dst_gsi = gsi_after_labels (exit->dest);
+  bool safe_p = single_pred_p (exit->dest);
   i = nbbs;
   do
     {
@@ -1113,14 +1112,45 @@ destroy_loop (struct loop *loop)
 	  if (virtual_operand_p (gimple_phi_result (phi)))
 	    mark_virtual_phi_result_for_renaming (phi);
 	}
-      for (gimple_stmt_iterator gsi = gsi_start_bb (bbs[i]); !gsi_end_p (gsi);
-	   gsi_next (&gsi))
+      for (gimple_stmt_iterator gsi = gsi_start_bb (bbs[i]); !gsi_end_p (gsi);)
 	{
 	  gimple *stmt = gsi_stmt (gsi);
 	  tree vdef = gimple_vdef (stmt);
 	  if (vdef && TREE_CODE (vdef) == SSA_NAME)
 	    mark_virtual_operand_for_renaming (vdef);
+	  /* Also move and eventually reset debug stmts.  We can leave
+	     constant values in place in case the stmt dominates the exit.
+	     ???  Non-constant values from the last iteration can be
+	     replaced with final values if we can compute them.  */
+	  if (gimple_debug_bind_p (stmt))
+	    {
+	      tree val = gimple_debug_bind_get_value (stmt);
+	      gsi_move_before (&gsi, &dst_gsi);
+	      if (val
+		  && (!safe_p
+		      || !is_gimple_min_invariant (val)
+		      || !dominated_by_p (CDI_DOMINATORS, exit->src, bbs[i])))
+		{
+		  gimple_debug_bind_reset_value (stmt);
+		  update_stmt (stmt);
+		}
+	    }
+	  else
+	    gsi_next (&gsi);
 	}
+    }
+  while (i != 0);
+
+  redirect_edge_pred (exit, src);
+  exit->flags &= ~(EDGE_TRUE_VALUE|EDGE_FALSE_VALUE);
+  exit->flags |= EDGE_FALLTHRU;
+  cancel_loop_tree (loop);
+  rescan_loop_exit (exit, false, true);
+
+  i = nbbs;
+  do
+    {
+      --i;
       delete_basic_block (bbs[i]);
     }
   while (i != 0);
@@ -1898,7 +1928,7 @@ pg_add_dependence_edges (struct graph *rdg, int dir,
 	      /* Be conservative.  If data references are not well analyzed,
 		 or the two data references have the same base address and
 		 offset, add dependence and consider it alias to each other.
-		 In other words, the dependence can not be resolved by
+		 In other words, the dependence cannot be resolved by
 		 runtime alias check.  */
 	      if (!DR_BASE_ADDRESS (dr1) || !DR_BASE_ADDRESS (dr2)
 		  || !DR_OFFSET (dr1) || !DR_OFFSET (dr2)
@@ -2111,7 +2141,7 @@ build_partition_graph (struct graph *rdg,
 
 	  /* Add edge to partition graph if there exists dependence.  There
 	     are two types of edges.  One type edge is caused by compilation
-	     time known dependence, this type can not be resolved by runtime
+	     time known dependence, this type cannot be resolved by runtime
 	     alias check.  The other type can be resolved by runtime alias
 	     check.  */
 	  if (dir == 1 || dir == 2
@@ -2270,21 +2300,26 @@ break_alias_scc_partitions (struct graph *rdg,
 	  for (j = 0; partitions->iterate (j, &first); ++j)
 	    if (pg->vertices[j].component == i)
 	      break;
+
+	  bool same_type = true, all_builtins = partition_builtin_p (first);
 	  for (++j; partitions->iterate (j, &partition); ++j)
 	    {
 	      if (pg->vertices[j].component != i)
 		continue;
 
-	      /* Note we Merge partitions of parallel type on purpose, though
-		 the result partition is sequential.  The reason is vectorizer
-		 can do more accurate runtime alias check in this case.  Also
-		 it results in more conservative distribution.  */
 	      if (first->type != partition->type)
 		{
-		  bitmap_clear_bit (sccs_to_merge, i);
+		  same_type = false;
 		  break;
 		}
+	      all_builtins &= partition_builtin_p (partition);
 	    }
+	  /* Merge SCC if all partitions in SCC have the same type, though the
+	     result partition is sequential, because vectorizer can do better
+	     runtime alias check.  One expecption is all partitions in SCC are
+	     builtins.  */
+	  if (!same_type || all_builtins)
+	    bitmap_clear_bit (sccs_to_merge, i);
 	}
 
       /* Initialize callback data for traversing.  */
@@ -2460,7 +2495,8 @@ compute_alias_check_pairs (struct loop *loop, vec<ddr_p> *alias_ddrs,
    checks and version LOOP under condition of these runtime alias checks.  */
 
 static void
-version_loop_by_alias_check (struct loop *loop, vec<ddr_p> *alias_ddrs)
+version_loop_by_alias_check (vec<struct partition *> *partitions,
+			     struct loop *loop, vec<ddr_p> *alias_ddrs)
 {
   profile_probability prob;
   basic_block cond_bb;
@@ -2483,9 +2519,25 @@ version_loop_by_alias_check (struct loop *loop, vec<ddr_p> *alias_ddrs)
 				      is_gimple_val, NULL_TREE);
 
   /* Depend on vectorizer to fold IFN_LOOP_DIST_ALIAS.  */
-  if (flag_tree_loop_vectorize)
+  bool cancelable_p = flag_tree_loop_vectorize;
+  if (cancelable_p)
     {
-      /* Generate internal function call for loop distribution alias check.  */
+      unsigned i = 0;
+      struct partition *partition;
+      for (; partitions->iterate (i, &partition); ++i)
+	if (!partition_builtin_p (partition))
+	  break;
+
+     /* If all partitions are builtins, distributing it would be profitable and
+	we don't want to cancel the runtime alias checks.  */
+      if (i == partitions->length ())
+	cancelable_p = false;
+    }
+
+  /* Generate internal function call for loop distribution alias check if the
+     runtime alias check should be cancelable.  */
+  if (cancelable_p)
+    {
       call_stmt = gimple_build_call_internal (IFN_LOOP_DIST_ALIAS,
 					      2, NULL_TREE, cond_expr);
       lhs = make_ssa_name (boolean_type_node);
@@ -2541,12 +2593,14 @@ version_for_distribution_p (vec<struct partition *> *partitions,
 
 /* Compare base offset of builtin mem* partitions P1 and P2.  */
 
-static bool
-offset_cmp (struct partition *p1, struct partition *p2)
+static int
+offset_cmp (const void *vp1, const void *vp2)
 {
-  gcc_assert (p1 != NULL && p1->builtin != NULL);
-  gcc_assert (p2 != NULL && p2->builtin != NULL);
-  return p1->builtin->dst_base_offset < p2->builtin->dst_base_offset;
+  struct partition *p1 = *(struct partition *const *) vp1;
+  struct partition *p2 = *(struct partition *const *) vp2;
+  unsigned HOST_WIDE_INT o1 = p1->builtin->dst_base_offset;
+  unsigned HOST_WIDE_INT o2 = p2->builtin->dst_base_offset;
+  return (o2 < o1) - (o1 < o2);
 }
 
 /* Fuse adjacent memset builtin PARTITIONS if possible.  This is a special
@@ -2598,8 +2652,8 @@ fuse_memset_builtins (vec<struct partition *> *partitions)
 	}
 
       /* Stable sort is required in order to avoid breaking dependence.  */
-      std::stable_sort (&(*partitions)[i],
-			&(*partitions)[i] + j - i, offset_cmp);
+      gcc_stablesort (&(*partitions)[i], j - i, sizeof (*partitions)[i],
+		      offset_cmp);
       /* Continue with next partition.  */
       i = j;
     }
@@ -2734,6 +2788,7 @@ distribute_loop (struct loop *loop, vec<gimple *> stmts,
     }
 
   datarefs_vec.create (20);
+  has_nonaddressable_dataref_p = false;
   rdg = build_rdg (loop, cd);
   if (!rdg)
     {
@@ -2862,8 +2917,10 @@ distribute_loop (struct loop *loop, vec<gimple *> stmts,
   if (partitions.length () > 1)
     {
       /* Don't support loop nest distribution under runtime alias check
-	 since it's not likely to enable many vectorization opportunities.  */
-      if (loop->inner)
+	 since it's not likely to enable many vectorization opportunities.
+	 Also if loop has any data reference which may be not addressable
+	 since alias check needs to take, compare address of the object.  */
+      if (loop->inner || has_nonaddressable_dataref_p)
 	merge_dep_scc_partitions (rdg, &partitions, false);
       else
 	{
@@ -2885,7 +2942,7 @@ distribute_loop (struct loop *loop, vec<gimple *> stmts,
     }
 
   if (version_for_distribution_p (&partitions, &alias_ddrs))
-    version_loop_by_alias_check (loop, &alias_ddrs);
+    version_loop_by_alias_check (&partitions, loop, &alias_ddrs);
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     {
@@ -3097,7 +3154,7 @@ pass_loop_distribution::execute (function *fun)
 	    break;
 
 	  const char *str = loop->inner ? " nest" : "";
-	  location_t loc = find_loop_location (loop);
+	  dump_user_location_t loc = find_loop_location (loop);
 	  if (!cd)
 	    {
 	      calculate_dominance_info (CDI_DOMINATORS);
@@ -3117,10 +3174,11 @@ pass_loop_distribution::execute (function *fun)
 	  if (nb_generated_loops + nb_generated_calls > 0)
 	    {
 	      changed = true;
-	      dump_printf_loc (MSG_OPTIMIZED_LOCATIONS,
-			       loc, "Loop%s %d distributed: split to %d loops "
-			       "and %d library calls.\n", str, loop->num,
-			       nb_generated_loops, nb_generated_calls);
+	      if (dump_enabled_p ())
+		dump_printf_loc (MSG_OPTIMIZED_LOCATIONS,
+				 loc, "Loop%s %d distributed: split to %d loops "
+				 "and %d library calls.\n", str, loop->num,
+				 nb_generated_loops, nb_generated_calls);
 
 	      break;
 	    }

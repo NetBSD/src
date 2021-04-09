@@ -1,5 +1,5 @@
 /* Some code common to C++ and ObjC++ front ends.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -37,7 +37,7 @@ cxx_get_alias_set (tree t)
 
   /* Punt on PMFs until we canonicalize functions properly.  */
   if (TYPE_PTRMEMFUNC_P (t)
-      || (POINTER_TYPE_P (t)
+      || (INDIRECT_TYPE_P (t)
 	  && TYPE_PTRMEMFUNC_P (TREE_TYPE (t))))
     return 0;
 
@@ -298,43 +298,6 @@ has_c_linkage (const_tree decl)
   return DECL_EXTERN_C_P (decl);
 }
 
-static GTY ((cache))
-     hash_table<tree_decl_map_cache_hasher> *shadowed_var_for_decl;
-
-/* Lookup a shadowed var for FROM, and return it if we find one.  */
-
-tree
-decl_shadowed_for_var_lookup (tree from)
-{
-  struct tree_decl_map *h, in;
-  in.base.from = from;
-
-  h = shadowed_var_for_decl->find_with_hash (&in, DECL_UID (from));
-  if (h)
-    return h->to;
-  return NULL_TREE;
-}
-
-/* Insert a mapping FROM->TO in the shadowed var hashtable.  */
-
-void
-decl_shadowed_for_var_insert (tree from, tree to)
-{
-  struct tree_decl_map *h;
-
-  h = ggc_alloc<tree_decl_map> ();
-  h->base.from = from;
-  h->to = to;
-  *shadowed_var_for_decl->find_slot_with_hash (h, DECL_UID (from), INSERT) = h;
-}
-
-void
-init_shadowed_var_for_decl (void)
-{
-  shadowed_var_for_decl
-    = hash_table<tree_decl_map_cache_hasher>::create_ggc (512);
-}
-
 /* Return true if stmt can fall through.  Used by block_may_fallthru
    default case.  */
 
@@ -387,6 +350,18 @@ tree
 identifier_global_value (tree name)
 {
   return get_global_binding (name);
+}
+
+/* Similarly, but return struct/class/union NAME instead.  */
+
+tree
+identifier_global_tag (tree name)
+{
+  tree ret = lookup_qualified_name (global_namespace, name, /*prefer_type*/2,
+				    /*complain*/false);
+  if (ret == error_mark_node)
+    return NULL_TREE;
+  return ret;
 }
 
 /* Register c++-specific dumps.  */
@@ -483,6 +458,7 @@ cp_common_init_ts (void)
   MARK_TS_TYPED (UNARY_RIGHT_FOLD_EXPR);
   MARK_TS_TYPED (BINARY_LEFT_FOLD_EXPR);
   MARK_TS_TYPED (BINARY_RIGHT_FOLD_EXPR);
+  MARK_TS_TYPED (OMP_DEPOBJ);
 }
 
 #include "gt-cp-cp-objcp-common.h"

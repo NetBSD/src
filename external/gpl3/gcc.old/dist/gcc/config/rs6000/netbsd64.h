@@ -20,6 +20,10 @@
    Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+/* Undef gnu-user.h macros we don't want.  */
+#undef CPLUSPLUS_CPP_SPEC
+#undef LINK_GCC_C_SEQUENCE_SPEC
+
 #ifndef RS6000_BI_ARCH
 
 #undef	DEFAULT_ABI
@@ -105,7 +109,7 @@ extern int dot_symbols;
 	    {							\
 	      rs6000_current_abi = ABI_ELFv2;			\
 	      if (dot_symbols)					\
-		error ("-mcall-aixdesc incompatible with -mabi=elfv2"); \
+		error ("%<-mcall-aixdesc%> incompatible with %<-mabi=elfv2%>"); \
 	    }							\
 	  if (rs6000_isa_flags & OPTION_MASK_RELOCATABLE)	\
 	    {							\
@@ -131,14 +135,14 @@ extern int dot_symbols;
 	  if ((rs6000_isa_flags & OPTION_MASK_POWERPC64) == 0)	\
 	    {							\
 	      rs6000_isa_flags |= OPTION_MASK_POWERPC64;	\
-	      error ("-m64 requires a PowerPC64 cpu");		\
+	      error ("%<-m64%> requires a PowerPC64 cpu");	\
 	    }							\
 	  if ((rs6000_isa_flags_explicit			\
 	       & OPTION_MASK_MINIMAL_TOC) != 0)			\
 	    {							\
 	      if (global_options_set.x_rs6000_current_cmodel	\
 		  && rs6000_current_cmodel != CMODEL_SMALL)	\
-		error ("-mcmodel incompatible with other toc options"); \
+		error ("%<-mcmodel%> incompatible with other toc options"); \
 	      SET_CMODEL (CMODEL_SMALL);			\
 	    }							\
 	  else							\
@@ -422,13 +426,13 @@ extern int dot_symbols;
 #undef  ASM_OUTPUT_SPECIAL_POOL_ENTRY_P
 #define ASM_OUTPUT_SPECIAL_POOL_ENTRY_P(X, MODE)                        \
   (TARGET_TOC                                                           \
-   && (GET_CODE (X) == SYMBOL_REF                                       \
+   && (SYMBOL_REF_P (X)							\
        || (GET_CODE (X) == CONST && GET_CODE (XEXP (X, 0)) == PLUS      \
-           && GET_CODE (XEXP (XEXP (X, 0), 0)) == SYMBOL_REF)           \
+           && SYMBOL_REF_P (XEXP (XEXP (X, 0), 0)))			\
        || GET_CODE (X) == LABEL_REF                                     \
-       || (GET_CODE (X) == CONST_INT                                    \
+       || (CONST_INT_P (X)						\
            && GET_MODE_BITSIZE (MODE) <= GET_MODE_BITSIZE (Pmode))      \
-       || (GET_CODE (X) == CONST_DOUBLE                                 \
+       || (CONST_DOUBLE_P (X)						\
            && ((TARGET_64BIT                                            \
                 && (TARGET_MINIMAL_TOC                                  \
                     || (SCALAR_FLOAT_MODE_P (GET_MODE (X))              \
@@ -542,6 +546,7 @@ extern int dot_symbols;
 #undef UINTMAX_TYPE
 #define UINTMAX_TYPE UINT64_TYPE
 
+#if 0
 /* Override rs6000.h definition.  */
 #undef  ASM_APP_ON
 #define ASM_APP_ON "#APP\n"
@@ -549,6 +554,7 @@ extern int dot_symbols;
 /* Override rs6000.h definition.  */
 #undef  ASM_APP_OFF
 #define ASM_APP_OFF "#NO_APP\n"
+#endif
 
 #undef  RS6000_MCOUNT
 #define RS6000_MCOUNT "_mcount"
@@ -583,9 +589,6 @@ extern int dot_symbols;
    structure return convention.  */
 #undef DRAFT_V4_STRUCT_RET
 #define DRAFT_V4_STRUCT_RET (!TARGET_64BIT)
-
-#define LINK_GCC_C_SEQUENCE_SPEC \
-  "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"
 
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED

@@ -1,5 +1,5 @@
 /* Tail call optimization on trees.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -475,8 +475,8 @@ find_tail_calls (basic_block bb, struct tailcall **ret)
 
   /* If the call might throw an exception that wouldn't propagate out of
      cfun, we can't transform to a tail or sibling call (82081).  */
-  if (stmt_could_throw_p (stmt)
-      && !stmt_can_throw_external (stmt))
+  if (stmt_could_throw_p (cfun, stmt)
+      && !stmt_can_throw_external (cfun, stmt))
     return;
 
   /* If the function returns a value, then at present, the tail call
@@ -512,7 +512,7 @@ find_tail_calls (basic_block bb, struct tailcall **ret)
   tail_recursion = false;
   func = gimple_call_fndecl (call);
   if (func
-      && !DECL_BUILT_IN (func)
+      && !fndecl_built_in_p (func)
       && recursive_call_p (current_function_decl, func))
     {
       tree arg;

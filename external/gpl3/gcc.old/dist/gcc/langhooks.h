@@ -1,5 +1,5 @@
 /* The lang_hooks data structure.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -348,8 +348,8 @@ struct lang_hooks
      location of the option.
 
      Return true if the switch is valid, false if invalid.  */
-  bool (*handle_option) (size_t code, const char *arg, int value, int kind,
-			 location_t loc,
+  bool (*handle_option) (size_t code, const char *arg, HOST_WIDE_INT value,
+			 int kind, location_t loc,
 			 const struct cl_option_handlers *handlers);
 
   /* Called when all command line options have been parsed to allow

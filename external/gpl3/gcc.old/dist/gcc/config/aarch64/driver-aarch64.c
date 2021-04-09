@@ -1,5 +1,5 @@
 /* Native CPU detection for aarch64.
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -177,19 +177,19 @@ host_detect_local_cpu (int argc, const char **argv)
   const char *res = NULL;
   static const int num_exts = ARRAY_SIZE (aarch64_extensions);
   char buf[128];
+  FILE *f = NULL;
   bool arch = false;
   bool tune = false;
   bool cpu = false;
   unsigned int i = 0;
+  unsigned char imp = INVALID_IMP;
   unsigned int cores[2] = { INVALID_CORE, INVALID_CORE };
   unsigned int n_cores = 0;
   unsigned int variants[2] = { ALL_VARIANTS, ALL_VARIANTS };
   unsigned int n_variants = 0;
-  unsigned char imp = INVALID_IMP;
   bool processed_exts = false;
   unsigned long extension_flags = 0;
   unsigned long default_flags = 0;
-  FILE *f = NULL;
 
   gcc_assert (argc);
 

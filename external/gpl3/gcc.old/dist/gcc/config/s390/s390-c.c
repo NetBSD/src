@@ -1,6 +1,6 @@
 /* Language specific subroutines used for code generation on IBM S/390
    and zSeries
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    Contributed by Andreas Krebbel (Andreas.Krebbel@de.ibm.com).
 
@@ -233,7 +233,7 @@ s390_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 
   rid_code = (enum rid)(ident->rid_code);
 
-  if (ident->type == NT_MACRO)
+  if (cpp_macro_p (ident))
     {
       /* Now actually fetch the tokens we "peeked" before and do a
 	 lookahead for the next.  */
@@ -326,7 +326,7 @@ s390_cpu_cpp_builtins_internal (cpp_reader *pfile,
   s390_def_or_undef_macro (pfile, MASK_OPT_VX, old_opts, opts,
 			   "__VX__", "__VX__");
   s390_def_or_undef_macro (pfile, MASK_ZVECTOR, old_opts, opts,
-			   "__VEC__=10302", "__VEC__");
+			   "__VEC__=10303", "__VEC__");
   s390_def_or_undef_macro (pfile, MASK_ZVECTOR, old_opts, opts,
 			   "__vector=__attribute__((vector_size(16)))",
 			   "__vector__");
@@ -335,15 +335,8 @@ s390_cpu_cpp_builtins_internal (cpp_reader *pfile,
 			   "__bool");
   {
     char macro_def[64];
-    int arch_level;
     gcc_assert (s390_arch != PROCESSOR_NATIVE);
-    arch_level = (int)s390_arch + 3;
-    if (s390_arch >= PROCESSOR_2094_Z9_EC)
-      /* Z9_EC has the same level as Z9_109.  */
-      arch_level--;
-    /* Review when a new arch is added and increase the value.  */
-    char dummy[(PROCESSOR_max > 12) ? -1 : 1] __attribute__((unused));
-    sprintf (macro_def, "__ARCH__=%d", arch_level);
+    sprintf (macro_def, "__ARCH__=%d", processor_table[s390_arch].arch_level);
     cpp_undef (pfile, "__ARCH__");
     cpp_define (pfile, macro_def);
   }
@@ -817,7 +810,13 @@ s390_fn_types_compatible (enum s390_builtin_ov_type_index typeindex,
 
     mismatch:
       if (TARGET_DEBUG_ARG)
-	fprintf (stderr, " mismatch in operand: %d\n", i + 1);
+	{
+	  fprintf (stderr, " mismatch in operand: %d incoming: ", i + 1);
+	  print_generic_expr (stderr, in_type, TDF_VOPS|TDF_MEMSYMS);
+	  fprintf (stderr, " expected: ");
+	  print_generic_expr (stderr, b_arg_type, TDF_VOPS|TDF_MEMSYMS);
+	  fprintf (stderr, "\n");
+	}
       return INT_MAX;
     }
 
@@ -896,13 +895,19 @@ s390_resolve_overloaded_builtin (location_t loc,
 
   if (!TARGET_VX && (ob_flags & B_VX))
     {
-      error_at (loc, "%qF requires -mvx", ob_fndecl);
+      error_at (loc, "%qF requires %<-mvx%>", ob_fndecl);
       return error_mark_node;
     }
 
   if (!TARGET_VXE && (ob_flags & B_VXE))
     {
       error_at (loc, "%qF requires z14 or higher", ob_fndecl);
+      return error_mark_node;
+    }
+
+  if (!TARGET_VXE2 && (ob_flags & B_VXE2))
+    {
+      error_at (loc, "%qF requires z15 or higher", ob_fndecl);
       return error_mark_node;
     }
 
@@ -980,6 +985,15 @@ s390_resolve_overloaded_builtin (location_t loc,
       && bflags_overloaded_builtin_var[last_match_index] & B_VXE)
     {
       error_at (loc, "%qs matching variant requires z14 or higher",
+		IDENTIFIER_POINTER (DECL_NAME (ob_fndecl)));
+      return error_mark_node;
+    }
+
+
+  if (!TARGET_VXE2
+      && bflags_overloaded_builtin_var[last_match_index] & B_VXE2)
+    {
+      error_at (loc, "%qs matching variant requires z15 or higher",
 		IDENTIFIER_POINTER (DECL_NAME (ob_fndecl)));
       return error_mark_node;
     }

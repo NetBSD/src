@@ -1,5 +1,5 @@
 /* Alias analysis for GNU C
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2019 Free Software Foundation, Inc.
    Contributed by John Carr (jfc@mit.edu).
 
 This file is part of GCC.
@@ -601,8 +601,7 @@ objects_must_conflict_p (tree t1, tree t2)
 /* Return the outermost parent of component present in the chain of
    component references handled by get_inner_reference in T with the
    following property:
-     - the component is non-addressable, or
-     - the parent has alias set zero,
+     - the component is non-addressable
    or NULL_TREE if no such parent exists.  In the former cases, the alias
    set of this parent is the alias set that must be used for T itself.  */
 
@@ -610,10 +609,6 @@ tree
 component_uses_parent_alias_set_from (const_tree t)
 {
   const_tree found = NULL_TREE;
-
-  if (AGGREGATE_TYPE_P (TREE_TYPE (t))
-      && TYPE_TYPELESS_STORAGE (TREE_TYPE (t)))
-    return const_cast <tree> (t);
 
   while (handled_component_p (t))
     {
@@ -651,9 +646,6 @@ component_uses_parent_alias_set_from (const_tree t)
 	default:
 	  gcc_unreachable ();
 	}
-
-      if (get_alias_set (TREE_TYPE (TREE_OPERAND (t, 0))) == 0)
-	found = t;
 
       t = TREE_OPERAND (t, 0);
     }
@@ -840,7 +832,7 @@ get_alias_set (tree t)
 {
   alias_set_type set;
 
-  /* We can not give up with -fno-strict-aliasing because we need to build
+  /* We cannot give up with -fno-strict-aliasing because we need to build
      proper type representation for possible functions which are build with
      -fstrict-aliasing.  */
 
@@ -902,7 +894,7 @@ get_alias_set (tree t)
       /* Handle structure type equality for pointer types, arrays and vectors.
 	 This is easy to do, because the code bellow ignore canonical types on
 	 these anyway.  This is important for LTO, where TYPE_CANONICAL for
-	 pointers can not be meaningfuly computed by the frotnend.  */
+	 pointers cannot be meaningfuly computed by the frotnend.  */
       if (canonical_type_used_p (t))
 	{
 	  /* In LTO we set canonical types for all types where it makes
@@ -1066,7 +1058,7 @@ get_alias_set (tree t)
 	    }
 
 	  /* Assign the alias set to both p and t.
-	     We can not call get_alias_set (p) here as that would trigger
+	     We cannot call get_alias_set (p) here as that would trigger
 	     infinite recursion when p == t.  In other cases it would just
 	     trigger unnecesary legwork of rebuilding the pointer again.  */
 	  gcc_checking_assert (p == TYPE_MAIN_VARIANT (p));
@@ -1580,6 +1572,17 @@ record_set (rtx dest, const_rtx set, void *data ATTRIBUTE_UNUSED)
 	  new_reg_base_value[regno] = 0;
 	  return;
 	}
+      /* A CLOBBER_HIGH only wipes out the old value if the mode of the old
+	 value is greater than that of the clobber.  */
+      else if (GET_CODE (set) == CLOBBER_HIGH)
+	{
+	  if (new_reg_base_value[regno] != 0
+	      && reg_is_clobbered_by_clobber_high (
+		   regno, GET_MODE (new_reg_base_value[regno]), XEXP (set, 0)))
+	    new_reg_base_value[regno] = 0;
+	  return;
+	}
+
       src = SET_SRC (set);
     }
   else
@@ -2084,7 +2087,7 @@ may_be_sp_based_p (rtx x)
 }
 
 /* BASE1 and BASE2 are decls.  Return 1 if they refer to same object, 0
-   if they refer to different objects and -1 if we can not decide.  */
+   if they refer to different objects and -1 if we cannot decide.  */
 
 int
 compare_base_decls (tree base1, tree base2)
@@ -2158,7 +2161,7 @@ compare_base_symbol_refs (const_rtx x_base, const_rtx y_base)
 
       symtab_node *x_node = symtab_node::get_create (x_decl)
 			    ->ultimate_alias_target ();
-      /* External variable can not be in section anchor.  */
+      /* External variable cannot be in section anchor.  */
       if (!x_node->definition)
 	return 0;
       x_base = XEXP (DECL_RTL (x_node->decl), 0);
@@ -2288,9 +2291,10 @@ get_addr (rtx x)
 	  rtx op0 = get_addr (XEXP (x, 0));
 	  if (op0 != XEXP (x, 0))
 	    {
+	      poly_int64 c;
 	      if (GET_CODE (x) == PLUS
-		  && GET_CODE (XEXP (x, 1)) == CONST_INT)
-		return plus_constant (GET_MODE (x), op0, INTVAL (XEXP (x, 1)));
+		  && poly_int_rtx_p (XEXP (x, 1), &c))
+		return plus_constant (GET_MODE (x), op0, c);
 	      return simplify_gen_binary (GET_CODE (x), GET_MODE (x),
 					  op0, XEXP (x, 1));
 	    }
@@ -2577,10 +2581,11 @@ memrefs_conflict_p (poly_int64 xsize, rtx x, poly_int64 ysize, rtx y,
 	    return offset_overlap_p (c, xsize, ysize);
 
 	  /* Can't properly adjust our sizes.  */
-	  if (!CONST_INT_P (x1)
-	      || !can_div_trunc_p (xsize, INTVAL (x1), &xsize)
-	      || !can_div_trunc_p (ysize, INTVAL (x1), &ysize)
-	      || !can_div_trunc_p (c, INTVAL (x1), &c))
+	  poly_int64 c1;
+	  if (!poly_int_rtx_p (x1, &c1)
+	      || !can_div_trunc_p (xsize, c1, &xsize)
+	      || !can_div_trunc_p (ysize, c1, &ysize)
+	      || !can_div_trunc_p (c, c1, &c))
 	    return -1;
 	  return memrefs_conflict_p (xsize, x0, ysize, y0, c);
 	}
@@ -2672,7 +2677,7 @@ memrefs_conflict_p (poly_int64 xsize, rtx x, poly_int64 ysize, rtx y,
    ways.
 
    If both memory references are volatile, then there must always be a
-   dependence between the two references, since their order can not be
+   dependence between the two references, since their order cannot be
    changed.  A volatile and non-volatile reference can be interchanged
    though.
 
@@ -2724,22 +2729,22 @@ adjust_offset_for_component_ref (tree x, bool *known_p,
     {
       tree xoffset = component_ref_field_offset (x);
       tree field = TREE_OPERAND (x, 1);
-      if (TREE_CODE (xoffset) != INTEGER_CST)
+      if (!poly_int_tree_p (xoffset))
 	{
 	  *known_p = false;
 	  return;
 	}
 
-      offset_int woffset
-	= (wi::to_offset (xoffset)
+      poly_offset_int woffset
+	= (wi::to_poly_offset (xoffset)
 	   + (wi::to_offset (DECL_FIELD_BIT_OFFSET (field))
-	      >> LOG2_BITS_PER_UNIT));
-      if (!wi::fits_uhwi_p (woffset))
+	      >> LOG2_BITS_PER_UNIT)
+	   + *offset);
+      if (!woffset.to_shwi (offset))
 	{
 	  *known_p = false;
 	  return;
 	}
-      *offset += woffset.to_uhwi ();
 
       x = TREE_OPERAND (x, 0);
     }
@@ -3283,15 +3288,6 @@ memory_modified_in_insn_p (const_rtx mem, const_rtx insn)
   return memory_modified;
 }
 
-/* Return TRUE if the destination of a set is rtx identical to
-   ITEM.  */
-static inline bool
-set_dest_equal_p (const_rtx set, const_rtx item)
-{
-  rtx dest = SET_DEST (set);
-  return rtx_equal_p (dest, item);
-}
-
 /* Initialize the aliasing machinery.  Initialize the REG_KNOWN_VALUE
    array.  */
 
@@ -3433,6 +3429,7 @@ init_alias_analysis (void)
 			  && DF_REG_DEF_COUNT (regno) != 1)
 			note = NULL_RTX;
 
+		      poly_int64 offset;
 		      if (note != NULL_RTX
 			  && GET_CODE (XEXP (note, 0)) != EXPR_LIST
 			  && ! rtx_varies_p (XEXP (note, 0), 1)
@@ -3447,10 +3444,9 @@ init_alias_analysis (void)
 			       && GET_CODE (src) == PLUS
 			       && REG_P (XEXP (src, 0))
 			       && (t = get_reg_known_value (REGNO (XEXP (src, 0))))
-			       && CONST_INT_P (XEXP (src, 1)))
+			       && poly_int_rtx_p (XEXP (src, 1), &offset))
 			{
-			  t = plus_constant (GET_MODE (src), t,
-					     INTVAL (XEXP (src, 1)));
+			  t = plus_constant (GET_MODE (src), t, offset);
 			  set_reg_known_value (regno, t);
 			  set_reg_known_equiv_p (regno, false);
 			}

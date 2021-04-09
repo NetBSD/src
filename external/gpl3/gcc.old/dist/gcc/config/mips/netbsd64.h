@@ -45,3 +45,5 @@ Boston, MA 02110-1301, USA.  */
    %{mips32} %{mips32r2} %{mips64} %{mips64r2} \
    %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
    %(netbsd_link_spec)"
+
+#define	MIPS_USE_GCC_DEFAULT_OUTPUT_SOURCE_FILENAME

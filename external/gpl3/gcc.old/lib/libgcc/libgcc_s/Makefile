@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/09/26 08:03:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2021/04/09 23:15:23 mrg Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes

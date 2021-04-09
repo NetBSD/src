@@ -1,5 +1,5 @@
 ;; Predicate definitions for ARM and Thumb
-;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 
 ;; This file is part of GCC.
@@ -29,6 +29,23 @@
   return (REG_P (op)
 	  && (REGNO (op) >= FIRST_PSEUDO_REGISTER
 	      || REGNO_REG_CLASS (REGNO (op)) != NO_REGS));
+})
+
+; Predicate for stack protector guard's address in
+; stack_protect_combined_set_insn and stack_protect_combined_test_insn patterns
+(define_predicate "guard_addr_operand"
+  (match_test "true")
+{
+  return (CONSTANT_ADDRESS_P (op)
+	  || !targetm.cannot_force_const_mem (mode, op));
+})
+
+; Predicate for stack protector guard in stack_protect_combined_set and
+; stack_protect_combined_test patterns
+(define_predicate "guard_operand"
+  (match_code "mem")
+{
+  return guard_addr_operand (XEXP (op, 0), mode);
 })
 
 (define_predicate "imm_for_neon_inv_logic_operand"
@@ -341,6 +358,27 @@
 (define_special_predicate "lt_ge_comparison_operator"
   (match_code "lt,ge"))
 
+;; Match a "borrow" operation for use with SBC.  The precise code will
+;; depend on the form of the comparison.  This is generally the inverse of
+;; a carry operation, since the logic of SBC uses "not borrow" in it's
+;; calculation.
+(define_special_predicate "arm_borrow_operation"
+  (match_code "geu,ltu")
+  {
+    if (XEXP (op, 1) != const0_rtx)
+      return false;
+    rtx op0 = XEXP (op, 0);
+    if (!REG_P (op0) || REGNO (op0) != CC_REGNUM)
+      return false;
+    machine_mode ccmode = GET_MODE (op0);
+    if (ccmode == CC_Cmode)
+      return GET_CODE (op) == GEU;
+    else if (ccmode == CCmode)
+      return GET_CODE (op) == LTU;
+    return false;
+  }
+)
+
 ;; The vsel instruction only accepts the ARM condition codes listed below.
 (define_special_predicate "arm_vsel_comparison_operator"
   (and (match_operand 0 "expandable_comparison_operator")
@@ -455,6 +493,24 @@
   (ior (match_code "const_double")
        (and (match_code "reg,subreg,mem")
 	    (match_operand 0 "nonimmediate_soft_df_operand"))))
+
+;; Predicate for thumb2_movsf_vfp.  Compared to general_operand, this
+;; forbids constant loaded via literal pool iff literal pools are disabled.
+(define_predicate "hard_sf_operand"
+  (and (match_operand 0 "general_operand")
+       (ior (not (match_code "const_double"))
+	    (not (match_test "arm_disable_literal_pool"))
+	    (match_test "satisfies_constraint_Dv (op)"))))
+
+;; Predicate for thumb2_movdf_vfp.  Compared to soft_df_operand used in
+;; movdf_soft_insn, this forbids constant loaded via literal pool iff
+;; literal pools are disabled.
+(define_predicate "hard_df_operand"
+  (and (match_operand 0 "soft_df_operand")
+       (ior (not (match_code "const_double"))
+	    (not (match_test "arm_disable_literal_pool"))
+	    (match_test "satisfies_constraint_Dy (op)")
+	    (match_test "satisfies_constraint_G (op)"))))
 
 (define_special_predicate "load_multiple_operation"
   (match_code "parallel")

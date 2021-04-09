@@ -1,5 +1,5 @@
 /* Tree based alias analysis and alias oracle.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
    Contributed by Richard Guenther  <rguenther@suse.de>
 
    This file is part of GCC.
@@ -118,29 +118,27 @@ extern bool ptr_derefs_may_alias_p (tree, tree);
 extern bool ptrs_compare_unequal (tree, tree);
 extern bool ref_may_alias_global_p (tree);
 extern bool ref_may_alias_global_p (ao_ref *);
-extern bool refs_may_alias_p (tree, tree);
+extern bool refs_may_alias_p (tree, tree, bool = true);
 extern bool refs_may_alias_p_1 (ao_ref *, ao_ref *, bool);
 extern bool refs_anti_dependent_p (tree, tree);
 extern bool refs_output_dependent_p (tree, tree);
-extern bool ref_maybe_used_by_stmt_p (gimple *, tree);
-extern bool ref_maybe_used_by_stmt_p (gimple *, ao_ref *);
+extern bool ref_maybe_used_by_stmt_p (gimple *, tree, bool = true);
+extern bool ref_maybe_used_by_stmt_p (gimple *, ao_ref *, bool = true);
 extern bool stmt_may_clobber_global_p (gimple *);
-extern bool stmt_may_clobber_ref_p (gimple *, tree);
-extern bool stmt_may_clobber_ref_p_1 (gimple *, ao_ref *);
+extern bool stmt_may_clobber_ref_p (gimple *, tree, bool = true);
+extern bool stmt_may_clobber_ref_p_1 (gimple *, ao_ref *, bool = true);
 extern bool call_may_clobber_ref_p (gcall *, tree);
 extern bool call_may_clobber_ref_p_1 (gcall *, ao_ref *);
 extern bool stmt_kills_ref_p (gimple *, tree);
 extern bool stmt_kills_ref_p (gimple *, ao_ref *);
-extern tree get_continuation_for_phi (gimple *, ao_ref *,
-				      unsigned int *, bitmap *, bool,
+extern tree get_continuation_for_phi (gimple *, ao_ref *, bool,
+				      unsigned int &, bitmap *, bool,
 				      void *(*)(ao_ref *, tree, void *, bool *),
 				      void *);
-extern void *walk_non_aliased_vuses (ao_ref *, tree,
-				     void *(*)(ao_ref *, tree,
-					       unsigned int, void *),
+extern void *walk_non_aliased_vuses (ao_ref *, tree, bool,
+				     void *(*)(ao_ref *, tree, void *),
 				     void *(*)(ao_ref *, tree, void *, bool *),
-				     tree (*)(tree),
-				     void *);
+				     tree (*)(tree), unsigned &, void *);
 extern int walk_aliased_vdefs (ao_ref *, tree,
 			       bool (*)(ao_ref *, tree, void *),
 			       void *, bitmap *,

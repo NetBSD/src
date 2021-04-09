@@ -1,5 +1,5 @@
 /* Subroutines used by or related to instruction recognition.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1605,6 +1605,7 @@ decode_asm_operands (rtx body, rtx *operands, rtx **operand_locs,
 	      {
 		if (GET_CODE (XVECEXP (body, 0, i)) == CLOBBER)
 		  break;		/* Past last SET */
+		gcc_assert (GET_CODE (XVECEXP (body, 0, i)) == SET);
 		if (operands)
 		  operands[i] = SET_DEST (XVECEXP (body, 0, i));
 		if (operand_locs)
@@ -2974,7 +2975,7 @@ split_all_insns (void)
 
 	     If that happens and INSN was the last reference to the
 	     given EH region, then the EH region will become unreachable.
-	     We can not leave the unreachable blocks in the CFG as that
+	     We cannot leave the unreachable blocks in the CFG as that
 	     will trigger a checking failure.
 
 	     So track if INSN has a REG_EH_REGION note.  If so and we
@@ -3723,7 +3724,8 @@ store_data_bypass_p_1 (rtx_insn *out_insn, rtx in_set)
     {
       rtx out_exp = XVECEXP (out_pat, 0, i);
 
-      if (GET_CODE (out_exp) == CLOBBER || GET_CODE (out_exp) == USE)
+      if (GET_CODE (out_exp) == CLOBBER || GET_CODE (out_exp) == USE
+	  || GET_CODE (out_exp) == CLOBBER_HIGH)
 	continue;
 
       gcc_assert (GET_CODE (out_exp) == SET);
@@ -3754,7 +3756,8 @@ store_data_bypass_p (rtx_insn *out_insn, rtx_insn *in_insn)
     {
       rtx in_exp = XVECEXP (in_pat, 0, i);
 
-      if (GET_CODE (in_exp) == CLOBBER || GET_CODE (in_exp) == USE)
+      if (GET_CODE (in_exp) == CLOBBER || GET_CODE (in_exp) == USE
+	  || GET_CODE (in_exp) == CLOBBER_HIGH)
 	continue;
 
       gcc_assert (GET_CODE (in_exp) == SET);
@@ -3806,7 +3809,7 @@ if_test_bypass_p (rtx_insn *out_insn, rtx_insn *in_insn)
 	{
 	  rtx exp = XVECEXP (out_pat, 0, i);
 
-	  if (GET_CODE (exp) == CLOBBER)
+	  if (GET_CODE (exp) == CLOBBER  || GET_CODE (exp) == CLOBBER_HIGH)
 	    continue;
 
 	  gcc_assert (GET_CODE (exp) == SET);

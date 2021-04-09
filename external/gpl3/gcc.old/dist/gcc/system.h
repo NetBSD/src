@@ -1,6 +1,6 @@
 /* Get common system includes and various definitions and declarations based
    on autoconf macros.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -924,8 +924,6 @@ extern void fancy_abort (const char *, int, const char *)
 	RETURN_POPS_ARGS UNITS_PER_SIMD_WORD OVERRIDE_OPTIONS		\
 	OPTIMIZATION_OPTIONS CLASS_LIKELY_SPILLED_P			\
 	USING_SJLJ_EXCEPTIONS TARGET_UNWIND_INFO			\
-	LABEL_ALIGN_MAX_SKIP LOOP_ALIGN_MAX_SKIP			\
-	LABEL_ALIGN_AFTER_BARRIER_MAX_SKIP JUMP_ALIGN_MAX_SKIP 		\
 	CAN_DEBUG_WITHOUT_FP UNLIKELY_EXECUTED_TEXT_SECTION_NAME	\
 	HOT_TEXT_SECTION_NAME LEGITIMATE_CONSTANT_P ALWAYS_STRIP_DOTDOT	\
 	OUTPUT_ADDR_CONST_EXTRA SMALL_REGISTER_CLASSES ASM_OUTPUT_IDENT	\
@@ -1031,7 +1029,7 @@ extern void fancy_abort (const char *, int, const char *)
 	LIBGCC2_LONG_DOUBLE_TYPE_SIZE STRUCT_VALUE			   \
 	EH_FRAME_IN_DATA_SECTION TARGET_FLT_EVAL_METHOD_NON_DEFAULT	   \
 	JCR_SECTION_NAME TARGET_USE_JCR_SECTION SDB_DEBUGGING_INFO	   \
-	SDB_DEBUG
+	SDB_DEBUG NO_IMPLICIT_EXTERN_C
 
 /* Hooks that are no longer used.  */
  #pragma GCC poison LANG_HOOKS_FUNCTION_MARK LANG_HOOKS_FUNCTION_FREE	\
@@ -1205,14 +1203,44 @@ helper_const_non_const_cast (const char *p)
 /* Get definitions of HOST_WIDE_INT.  */
 #include "hwint.h"
 
-/* qsort comparator consistency checking: except in release-checking compilers,
-   redirect 4-argument qsort calls to qsort_chk; keep 1-argument invocations
+/* GCC qsort API-compatible functions: except in release-checking compilers,
+   redirect 4-argument qsort calls to gcc_qsort; keep 1-argument invocations
    corresponding to vec::qsort (cmp): they use C qsort internally anyway.  */
-#if CHECKING_P
+void qsort_chk (void *, size_t, size_t, int (*)(const void *, const void *));
+void gcc_qsort (void *, size_t, size_t, int (*)(const void *, const void *));
+void gcc_stablesort (void *, size_t, size_t,
+		     int (*)(const void *, const void *));
 #define PP_5th(a1, a2, a3, a4, a5, ...) a5
 #undef qsort
-#define qsort(...) PP_5th (__VA_ARGS__, qsort_chk, 3, 2, qsort, 0) (__VA_ARGS__)
-void qsort_chk (void *, size_t, size_t, int (*)(const void *, const void *));
-#endif
+#define qsort(...) PP_5th (__VA_ARGS__, gcc_qsort, 3, 2, qsort, 0) (__VA_ARGS__)
+
+#define ONE_K 1024
+#define ONE_M (ONE_K * ONE_K)
+
+/* Display a number as an integer multiple of either:
+   - 1024, if said integer is >= to 10 K (in base 2)
+   - 1024 * 1024, if said integer is >= 10 M in (base 2)
+ */
+#define SIZE_SCALE(x) (((x) < 10 * ONE_K \
+			? (x) \
+			: ((x) < 10 * ONE_M \
+			   ? (x) / ONE_K \
+			   : (x) / ONE_M)))
+
+/* For a given integer, display either:
+   - the character 'k', if the number is higher than 10 K (in base 2)
+     but strictly lower than 10 M (in base 2)
+   - the character 'M' if the number is higher than 10 M (in base2)
+   - the charcter ' ' if the number is strictly lower  than 10 K  */
+#define SIZE_LABEL(x) ((x) < 10 * ONE_K ? ' ' : ((x) < 10 * ONE_M ? 'k' : 'M'))
+
+/* Display an integer amount as multiple of 1K or 1M (in base 2).
+   Display the correct unit (either k, M, or ' ') after the amount, as
+   well.  */
+#define SIZE_AMOUNT(size) (uint64_t)SIZE_SCALE (size), SIZE_LABEL (size)
+
+/* Format string particle for printing a SIZE_AMOUNT with N being the width
+   of the number.  */
+#define PRsa(n) "%" #n PRIu64 "%c"
 
 #endif /* ! GCC_SYSTEM_H */

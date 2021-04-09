@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2018 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -432,7 +432,7 @@ only for the listed packages.  For other packages, only static libraries
 will be built.  Package names currently recognized in the GCC tree are
 &lsquo;<samp>libgcc</samp>&rsquo; (also known as &lsquo;<samp>gcc</samp>&rsquo;), &lsquo;<samp>libstdc++</samp>&rsquo; (not
 &lsquo;<samp>libstdc++-v3</samp>&rsquo;), &lsquo;<samp>libffi</samp>&rsquo;, &lsquo;<samp>zlib</samp>&rsquo;, &lsquo;<samp>boehm-gc</samp>&rsquo;,
-&lsquo;<samp>ada</samp>&rsquo;, &lsquo;<samp>libada</samp>&rsquo;, &lsquo;<samp>libgo</samp>&rsquo;, and &lsquo;<samp>libobjc</samp>&rsquo;.
+&lsquo;<samp>ada</samp>&rsquo;, &lsquo;<samp>libada</samp>&rsquo;, &lsquo;<samp>libgo</samp>&rsquo;, &lsquo;<samp>libobjc</samp>&rsquo;, and &lsquo;<samp>libphobos</samp>&rsquo;.
 Note &lsquo;<samp>libiberty</samp>&rsquo; does not support shared libraries at all.
 </p>
 <p>Use <samp>--disable-shared</samp> to build only static libraries.  Note that
@@ -562,6 +562,11 @@ still be built (see <samp>--disable-libvtv</samp> to turn off building libvtv).
 <samp>--disable-vtable-verify</samp> is the default.
 </p>
 </dd>
+<dt><code>--disable-gcov</code></dt>
+<dd><p>Specify that the run-time library used for coverage analysis
+and associated host tools should not be built.
+</p>
+</dd>
 <dt><code>--disable-multilib</code></dt>
 <dd><p>Specify that multiple target
 libraries to support different target variants, calling
@@ -595,8 +600,8 @@ sysv, aix.
 <dt><code>--without-multilib-list</code></dt>
 <dd><p>Specify what multilibs to build.  <var>list</var> is a comma separated list of
 values, possibly consisting of a single value.  Currently only implemented
-for aarch64*-*-*, arm*-*-*, sh*-*-* and x86-64-*-linux*.  The accepted
-alues and meaning for each target is given below.
+for aarch64*-*-*, arm*-*-*, riscv*-*-*, sh*-*-* and x86-64-*-linux*.  The
+accepted values and meaning for each target is given below.
 </p>
 <dl compact="compact">
 <dt><code>aarch64*-*-*</code></dt>
@@ -610,18 +615,35 @@ default set of libraries is selected based on the value of
 </p>
 </dd>
 <dt><code>arm*-*-*</code></dt>
-<dd><p><var>list</var> is a comma separated list of <code>aprofile</code> and <code>rmprofile</code>
-to build multilibs for A or R and M architecture profiles respectively.  Note
-that, due to some limitation of the current multilib framework, using the
-combined <code>aprofile,rmprofile</code> multilibs selects in some cases a less
-optimal multilib than when using the multilib profile for the architecture
-targetted.  The special value <code>default</code> is also accepted and is equivalent
-to omitting the option, ie. only the default run-time library will be enabled.
+<dd><p><var>list</var> is a comma separated list of <code>aprofile</code> and
+<code>rmprofile</code> to build multilibs for A or R and M architecture
+profiles respectively.  Note that, due to some limitation of the current
+multilib framework, using the combined <code>aprofile,rmprofile</code>
+multilibs selects in some cases a less optimal multilib than when using
+the multilib profile for the architecture targetted.  The special value
+<code>default</code> is also accepted and is equivalent to omitting the
+option, i.e., only the default run-time library will be enabled.
+</p>
+<p><var>list</var> may instead contain <code>@name</code>, to use the multilib
+configuration Makefile fragment <samp>name</samp> in <samp>gcc/config/arm</samp> in
+the source tree (it is part of the corresponding sources, after all).
+It is recommended, but not required, that files used for this purpose to
+be named starting with <samp>t-ml-</samp>, to make their intended purpose
+self-evident, in line with GCC conventions.  Such files enable custom,
+user-chosen multilib lists to be configured.  Whether multiple such
+files can be used together depends on the contents of the supplied
+files.  See <samp>gcc/config/arm/t-multilib</samp> and its supplementary
+<samp>gcc/config/arm/t-*profile</samp> files for an example of what such
+Makefile fragments might look like for this version of GCC.  The macros
+expected to be defined in these fragments are not stable across GCC
+releases, so make sure they define the <code>MULTILIB</code>-related macros
+expected by the version of GCC you are building.
+See &ldquo;Target Makefile Fragments&rdquo; in the internals manual.
 </p>
 <p>The table below gives the combination of ISAs, architectures, FPUs and
-floating-point ABIs for which multilibs are built for each accepted value.
-The union of these options is considered when specifying both <code>aprofile</code>
-and <code>rmprofile</code>.
+floating-point ABIs for which multilibs are built for each predefined
+profile.  The union of these options is considered when specifying both
+<code>aprofile</code> and <code>rmprofile</code>.
 </p>
 <table>
 <tr><td width="15%">Option</td><td width="28%">aprofile</td><td width="30%">rmprofile</td></tr>
@@ -653,6 +675,14 @@ and <code>rmprofile</code>.
 <code>-mfloat-abi=hard</code></td></tr>
 </table>
 
+</dd>
+<dt><code>riscv*-*-*</code></dt>
+<dd><p><var>list</var> is a single ABI name.  The target architecture must be either
+<code>rv32gc</code> or <code>rv64gc</code>.  This will build a single multilib for the
+specified architecture and ABI pair.  If <code>--with-multilib-list</code> is not
+given, then a default set of multilibs is selected based on the value of
+<samp>--target</samp>.  This is usually a large set of multilibs.
+</p>
 </dd>
 <dt><code>sh*-*-*</code></dt>
 <dd><p><var>list</var> is a comma separated list of CPU names.  These must be of the
@@ -977,6 +1007,12 @@ SVR4-based MIPS ABIs and require support from GNU binutils
 and the runtime C library.
 </p>
 </dd>
+<dt><code>--with-stack-clash-protection-guard-size=<var>size</var></code></dt>
+<dd><p>On certain targets this option sets the default stack clash protection guard
+size as a power of two in bytes.  On AArch64 <var>size</var> is required to be either
+12 (4KB) or 16 (64KB).
+</p>
+</dd>
 <dt><code>--enable-__cxa_atexit</code></dt>
 <dd><p>Define if you want to use __cxa_atexit, rather than atexit, to
 register C++ destructors for local statics and global objects.
@@ -1190,12 +1226,12 @@ their runtime libraries should be built.  For a list of valid values for
 <pre class="smallexample">grep ^language= */config-lang.in
 </pre></div>
 <p>Currently, you can use any of the following:
-<code>all</code>, <code>default</code>, <code>ada</code>, <code>c</code>, <code>c++</code>, <code>fortran</code>,
-<code>go</code>, <code>jit</code>, <code>lto</code>, <code>objc</code>, <code>obj-c++</code>.
+<code>all</code>, <code>default</code>, <code>ada</code>, <code>c</code>, <code>c++</code>, <code>d</code>,
+<code>fortran</code>, <code>go</code>, <code>jit</code>, <code>lto</code>, <code>objc</code>, <code>obj-c++</code>.
 Building the Ada compiler has special requirements, see below.
 If you do not pass this flag, or specify the option <code>default</code>, then the
 default languages available in the <samp>gcc</samp> sub-tree will be configured.
-Ada, Go, Jit, and Objective-C++ are not default languages.  LTO is not a
+Ada, D, Go, Jit, and Objective-C++ are not default languages.  LTO is not a
 default language, but is built by default because <samp>--enable-lto</samp> is
 enabled by default.  The other languages are default languages.  If
 <code>all</code> is specified, then all available languages are built.  An
@@ -1304,6 +1340,15 @@ See &ldquo;RS/6000 and PowerPC Options&rdquo; in the main manual
 <dt><code>--enable-cld</code></dt>
 <dd><p>This option enables <samp>-mcld</samp> by default for 32-bit x86 targets.
 See &ldquo;i386 and x86-64 Options&rdquo; in the main manual
+</p>
+</dd>
+<dt><code>--enable-large-address-aware</code></dt>
+<dd><p>The <samp>--enable-large-address-aware</samp> option arranges for MinGW
+executables to be linked using the <samp>--large-address-aware</samp>
+option, that enables the use of more than 2GB of memory.  If GCC is
+configured with this option, its effects can be reversed by passing the
+<samp>-Wl,--disable-large-address-aware</samp> option to the so-configured
+compiler driver.
 </p>
 </dd>
 <dt><code>--enable-win32-registry</code></dt>
@@ -1653,14 +1698,14 @@ host system architecture.  For the case that the linker has a
 different (but run-time compatible) architecture, these flags can be
 specified to build plugins that are compatible to the linker.  For
 example, if you are building GCC for a 64-bit x86_64
-(&lsquo;<samp>x86_64-unknown-linux-gnu</samp>&rsquo;) host system, but have a 32-bit x86
+(&lsquo;<samp>x86_64-pc-linux-gnu</samp>&rsquo;) host system, but have a 32-bit x86
 GNU/Linux (&lsquo;<samp>i686-pc-linux-gnu</samp>&rsquo;) linker executable (which is
 executable on the former system), you can configure GCC as follows for
 getting compatible linker plugins:
 </p>
 <div class="smallexample">
 <pre class="smallexample">% <var>srcdir</var>/configure \
-    --host=x86_64-unknown-linux-gnu \
+    --host=x86_64-pc-linux-gnu \
     --enable-linker-plugin-configure-flags=--host=i686-pc-linux-gnu \
     --enable-linker-plugin-flags='CC=gcc\ -m32\ -Wl,-rpath,[...]/i686-pc-linux-gnu/lib'
 </pre></div>
@@ -1708,7 +1753,7 @@ specifying paths <var>path1</var>, &hellip;, <var>pathN</var>.
 </p>
 <div class="smallexample">
 <pre class="smallexample">% <var>srcdir</var>/configure \
-    --enable-offload-target=i686-unknown-linux-gnu=/path/to/i686/compiler,x86_64-pc-linux-gnu
+    --enable-offload-targets=x86_64-intelmicemul-linux-gnu=/path/to/x86_64/compiler,nvptx-none,hsa
 </pre></div>
 
 <p>If &lsquo;<samp>hsa</samp>&rsquo; is specified as one of the targets, the compiler will be
@@ -1742,6 +1787,14 @@ is used, it is enabled on Linux/x86 if target binutils
 supports <code>Intel CET</code> instructions and disabled otherwise.
 In this case the target libraries are configured to get additional
 <samp>-fcf-protection</samp> option.
+</p>
+</dd>
+<dt><code>--with-riscv-attribute=&lsquo;<samp>yes</samp>&rsquo;, &lsquo;<samp>no</samp>&rsquo; or &lsquo;<samp>default</samp>&rsquo;</code></dt>
+<dd><p>Generate RISC-V attribute by default, in order to record extra build
+information in object.
+</p>
+<p>The option is disabled by default. It is enabled on RISC-V/ELF (bare-metal)
+target if target binutils supported.
 </p></dd>
 </dl>
 
@@ -1932,6 +1985,20 @@ multilib is used (e.g. &lsquo;<samp>--with-target-bdw-gc-include=/opt/bdw-gc/inc
 &lsquo;<samp>--with-target-bdw-gc-lib=/opt/bdw-gc/lib64,32=/opt-bdw-gc/lib32</samp>&rsquo;).
 If none of these options are specified, the library is assumed in
 default locations.
+</p></dd>
+</dl>
+
+<a name="D-Specific-Options"></a>
+<h4 class="subheading">D-Specific Options</h4>
+
+<p>The following options apply to the build of the D runtime library.
+</p>
+<dl compact="compact">
+<dt><code>--with-target-system-zlib</code></dt>
+<dd><p>Use installed &lsquo;<samp>zlib</samp>&rsquo; rather than that included with GCC.  This needs
+to be available for each multilib variant, unless configured with
+<samp>--with-target-system-zlib=&lsquo;<samp>auto</samp>&rsquo;</samp> in which case the GCC&nbsp;included
+&lsquo;<samp>zlib</samp>&rsquo; is only used when the system installed library is not available.
 </p></dd>
 </dl>
 

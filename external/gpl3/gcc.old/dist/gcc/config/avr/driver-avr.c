@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by Georg-Johann Lay <avr@gjlay.de>
 
 This file is part of GCC.
@@ -103,7 +103,7 @@ avr_devicespecs_file (int argc, const char **argv)
       }
 
   return concat ("%{!nodevicespecs:-specs=device-specs", dir_separator_str,
-				 "specs-", mmcu, "%s} %<nodevicespecs"
+		 "specs-", mmcu, "%s} %<nodevicespecs"
 #if defined (WITH_AVRLIBC)
                  " %{mmcu=avr*:" X_NODEVLIB "} %{!mmcu=*:" X_NODEVLIB "}",
 #else

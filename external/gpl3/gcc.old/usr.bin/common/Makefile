@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/09/26 08:03:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2021/04/09 23:15:52 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -8,7 +8,7 @@ LIBISPRIVATE=	yes
 LIB=		common
 
 .include "${.CURDIR}/defs.mk"
-SRCS=	${G_OBJS-libcommon:S/memory-block.o/memory-block.cc/:.o=.c}
+SRCS=	${G_OBJS-libcommon:S/memory-block.o/memory-block.cc/:S/diagnostic-format-json.o/diagnostic-format-json.cc/:S/sort.o/sort.cc/:S/json.o/json.cc/:.o=.c}
 
 # XXX make sure this doesn't have more than it needs
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \

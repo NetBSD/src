@@ -1,6 +1,6 @@
 // <forward_list.h> -*- C++ -*-
 
-// Copyright (C) 2008-2018 Free Software Foundation, Inc.
+// Copyright (C) 2008-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -173,13 +173,20 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	return __tmp;
       }
 
-      bool
-      operator==(const _Self& __x) const noexcept
-      { return _M_node == __x._M_node; }
+      /**
+       *  @brief  Forward list iterator equality comparison.
+       */
+      friend bool
+      operator==(const _Self& __x, const _Self& __y) noexcept
+      { return __x._M_node == __y._M_node; }
 
-      bool
-      operator!=(const _Self& __x) const noexcept
-      { return _M_node != __x._M_node; }
+
+      /**
+       *  @brief  Forward list iterator inequality comparison.
+       */
+      friend bool
+      operator!=(const _Self& __x, const _Self& __y) noexcept
+      { return __x._M_node != __y._M_node; }
 
       _Self
       _M_next() const noexcept
@@ -244,13 +251,19 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	return __tmp;
       }
 
-      bool
-      operator==(const _Self& __x) const noexcept
-      { return _M_node == __x._M_node; }
+      /**
+       *  @brief  Forward list const_iterator equality comparison.
+       */
+      friend bool
+      operator==(const _Self& __x, const _Self& __y) noexcept
+      { return __x._M_node == __y._M_node; }
 
-      bool
-      operator!=(const _Self& __x) const noexcept
-      { return _M_node != __x._M_node; }
+      /**
+       *  @brief  Forward list const_iterator inequality comparison.
+       */
+      friend bool
+      operator!=(const _Self& __x, const _Self& __y) noexcept
+      { return __x._M_node != __y._M_node; }
 
       _Self
       _M_next() const noexcept
@@ -263,24 +276,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       const _Fwd_list_node_base* _M_node;
     };
-
-  /**
-   *  @brief  Forward list iterator equality comparison.
-   */
-  template<typename _Tp>
-    inline bool
-    operator==(const _Fwd_list_iterator<_Tp>& __x,
-	       const _Fwd_list_const_iterator<_Tp>& __y) noexcept
-    { return __x._M_node == __y._M_node; }
-
-  /**
-   *  @brief  Forward list iterator inequality comparison.
-   */
-  template<typename _Tp>
-    inline bool
-    operator!=(const _Fwd_list_iterator<_Tp>& __x,
-	       const _Fwd_list_const_iterator<_Tp>& __y) noexcept
-    { return __x._M_node != __y._M_node; }
 
   /**
    *  @brief  Base class for %forward_list.
@@ -433,8 +428,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
     private:
       typedef _Fwd_list_base<_Tp, _Alloc>		_Base;
-      typedef _Fwd_list_node<_Tp>			_Node;
       typedef _Fwd_list_node_base			_Node_base;
+      typedef typename _Base::_Node			_Node;
       typedef typename _Base::_Node_alloc_type		_Node_alloc_type;
       typedef typename _Base::_Node_alloc_traits	_Node_alloc_traits;
       typedef allocator_traits<__alloc_rebind<_Alloc, _Tp>>	_Alloc_traits;
@@ -447,8 +442,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       typedef value_type&				reference;
       typedef const value_type&				const_reference;
 
-      typedef _Fwd_list_iterator<_Tp>			iterator;
-      typedef _Fwd_list_const_iterator<_Tp>		const_iterator;
+      typedef typename _Base::iterator			iterator;
+      typedef typename _Base::const_iterator		const_iterator;
       typedef std::size_t				size_type;
       typedef std::ptrdiff_t				difference_type;
       typedef _Alloc					allocator_type;
@@ -779,7 +774,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  Returns true if the %forward_list is empty.  (Thus begin() would
        *  equal end().)
        */
-      bool
+      _GLIBCXX_NODISCARD bool
       empty() const noexcept
       { return this->_M_impl._M_head._M_next == nullptr; }
 
@@ -814,7 +809,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	return *__front->_M_valptr();
       }
 
-      // 23.3.4.5 modiﬁers:
+      // 23.3.4.5 modifiers:
 
       /**
        *  @brief  Constructs object in %forward_list at the front of the
@@ -1156,6 +1151,18 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       { _M_splice_after(__pos, __before, __last); }
       // @}
 
+    private:
+#if __cplusplus > 201703L
+# define __cpp_lib_list_remove_return_type 201806L
+      using __remove_return_type = size_type;
+# define _GLIBCXX_FWDLIST_REMOVE_RETURN_TYPE_TAG \
+      __attribute__((__abi_tag__("__cxx20")))
+#else
+      using __remove_return_type = void;
+# define _GLIBCXX_FWDLIST_REMOVE_RETURN_TYPE_TAG
+#endif
+    public:
+
       /**
        *  @brief  Remove all elements equal to value.
        *  @param  __val  The value to remove.
@@ -1167,7 +1174,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  touched in any way.  Managing the pointer is the user's
        *  responsibility.
        */
-      void
+      _GLIBCXX_FWDLIST_REMOVE_RETURN_TYPE_TAG
+      __remove_return_type
       remove(const _Tp& __val);
 
       /**
@@ -1182,7 +1190,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  responsibility.
        */
       template<typename _Pred>
-	void
+	__remove_return_type
 	remove_if(_Pred __pred);
 
       /**
@@ -1195,9 +1203,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  the pointed-to memory is not touched in any way.  Managing
        *  the pointer is the user's responsibility.
        */
-      void
+      _GLIBCXX_FWDLIST_REMOVE_RETURN_TYPE_TAG
+      __remove_return_type
       unique()
-      { unique(std::equal_to<_Tp>()); }
+      { return unique(std::equal_to<_Tp>()); }
+
+#undef _GLIBCXX_FWDLIST_REMOVE_RETURN_TYPE_TAG
 
       /**
        *  @brief  Remove consecutive elements satisfying a predicate.
@@ -1212,7 +1223,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  Managing the pointer is the user's responsibility.
        */
       template<typename _BinPred>
-	void
+	__remove_return_type
 	unique(_BinPred __binary_pred);
 
       /**

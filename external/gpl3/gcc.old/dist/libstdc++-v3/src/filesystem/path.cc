@@ -1,6 +1,6 @@
 // Class experimental::filesystem::path -*- C++ -*-
 
-// Copyright (C) 2014-2018 Free Software Foundation, Inc.
+// Copyright (C) 2014-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -61,6 +61,12 @@ path::replace_filename(const path& replacement)
   return *this;
 }
 
+#ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
+const fs::path::value_type dot = L'.';
+#else
+const fs::path::value_type dot = '.';
+#endif
+
 path&
 path::replace_extension(const path& replacement)
 {
@@ -78,8 +84,8 @@ path::replace_extension(const path& replacement)
 	  _M_pathname.erase(back._M_pos + ext.second);
 	}
     }
-  if (!replacement.empty() && replacement.native()[0] != '.')
-    _M_pathname += '.';
+  if (!replacement.empty() && replacement.native()[0] != dot)
+    _M_pathname += dot;
   _M_pathname += replacement.native();
   _M_split_cmpts();
   return *this;
@@ -297,7 +303,7 @@ path::has_filename() const
 std::pair<const path::string_type*, std::size_t>
 path::_M_find_extension() const
 {
-  const std::string* s = nullptr;
+  const string_type* s = nullptr;
 
   if (_M_type != _Type::_Multi)
     s = &_M_pathname;
@@ -312,14 +318,14 @@ path::_M_find_extension() const
     {
       if (auto sz = s->size())
 	{
-	  if (sz <= 2 && (*s)[0] == '.')
+	  if (sz <= 2 && (*s)[0] == dot)
 	    {
-	      if (sz == 1 || (*s)[1] == '.')  // filename is "." or ".."
+	      if (sz == 1 || (*s)[1] == dot)  // filename is "." or ".."
 		return { s, string_type::npos };
 	      else
 		return { s, 0 };  // filename is like ".?"
 	    }
-	  return { s, s->rfind('.') };
+	  return { s, s->rfind(dot) };
 	}
     }
   return {};
@@ -341,14 +347,14 @@ path::_M_split_cmpts()
     bool saw_non_sep = !saw_sep_last;
     for (value_type c : _M_pathname)
       {
-	if (_S_is_dir_sep(c))
-	  saw_sep_last = true;
-	else if (saw_sep_last)
-	  {
-	    ++count;
-	    saw_sep_last = false;
-	    saw_non_sep = true;
-	  }
+       if (_S_is_dir_sep(c))
+         saw_sep_last = true;
+       else if (saw_sep_last)
+         {
+           ++count;
+           saw_sep_last = false;
+           saw_non_sep = true;
+         }
       }
     if (saw_non_sep && saw_sep_last)
       ++count; // empty filename after trailing slash
@@ -452,7 +458,7 @@ path::_M_split_cmpts()
 	{
 	  const auto& last = _M_cmpts.back();
 	  pos = last._M_pos + last._M_pathname.size();
-	  _M_cmpts.emplace_back(string_type(1, '.'), _Type::_Filename, pos);
+	  _M_cmpts.emplace_back(string_type(1, dot), _Type::_Filename, pos);
 	}
     }
 
@@ -494,7 +500,7 @@ path::_S_convert_loc(const char* __first, const char* __last,
 #if _GLIBCXX_USE_WCHAR_T
   auto& __cvt = std::use_facet<codecvt<wchar_t, char, mbstate_t>>(__loc);
   basic_string<wchar_t> __ws;
-  if (!__str_codecvt_in(__first, __last, __ws, __cvt))
+  if (!__str_codecvt_in_all(__first, __last, __ws, __cvt))
     _GLIBCXX_THROW_OR_ABORT(filesystem_error(
 	  "Cannot convert character sequence",
 	  std::make_error_code(errc::illegal_byte_sequence)));
@@ -526,28 +532,34 @@ fs::hash_value(const path& p) noexcept
   return seed;
 }
 
-namespace std
+#include <experimental/string_view>
+
+std::string
+fs::filesystem_error::_M_gen_what()
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-namespace filesystem
-{
-  extern string
-  fs_err_concat(const string& __what, const string& __path1,
-		const string& __path2);
-} // namespace filesystem
-
-namespace experimental::filesystem::v1 {
-_GLIBCXX_BEGIN_NAMESPACE_CXX11
-
-  std::string filesystem_error::_M_gen_what()
-  {
-    using std::filesystem::fs_err_concat;
-    return fs_err_concat(system_error::what(), _M_path1.native(),
-			 _M_path2.native());
-  }
-
-_GLIBCXX_END_NAMESPACE_CXX11
-} // namespace experimental::filesystem::v1
-
-_GLIBCXX_END_NAMESPACE_VERSION
-} // namespace std
+  const std::string pstr1 = _M_path1.u8string();
+  const std::string pstr2 = _M_path2.u8string();
+  experimental::string_view s = this->system_error::what();
+  const size_t len = 18 + s.length()
+    + (pstr1.length() || pstr2.length() ? pstr1.length() + 3 : 0)
+    + (pstr2.length() ? pstr2.length() + 3 : 0);
+  std::string w;
+  w.reserve(len);
+  w = "filesystem error: ";
+  w.append(s.data(), s.length());
+  if (!pstr1.empty())
+    {
+      w += " [";
+      w += pstr1;
+      w += ']';
+    }
+  if (!pstr2.empty())
+    {
+      if (pstr1.empty())
+	w += " []";
+      w += " [";
+      w += pstr2;
+      w += ']';
+    }
+  return w;
+}

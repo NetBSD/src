@@ -1,5 +1,5 @@
 ;; Decimal Floating Point (DFP) patterns.
-;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
 ;; Contributed by Ben Elliston (bje@au.ibm.com) and Peter Bergner
 ;; (bergner@vnet.ibm.com).
 
@@ -37,8 +37,7 @@
    || gpc_reg_operand (operands[1], SDmode))
    && TARGET_HARD_FLOAT"
   "stfd%U0%X0 %1,%0"
-  [(set_attr "type" "fpstore")
-   (set_attr "length" "4")])
+  [(set_attr "type" "fpstore")])
 
 (define_insn "movsd_load"
   [(set (match_operand:SD 0 "nonimmediate_operand" "=f")
@@ -48,8 +47,7 @@
    || gpc_reg_operand (operands[1], DDmode))
    && TARGET_HARD_FLOAT"
   "lfd%U1%X1 %0,%1"
-  [(set_attr "type" "fpload")
-   (set_attr "length" "4")])
+  [(set_attr "type" "fpload")])
 
 ;; Hardware support for decimal floating point operations.
 

@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on the DEC Alpha.
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2019 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GCC.
@@ -67,6 +67,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "params.h"
 #include "builtins.h"
 #include "rtl-iter.h"
+#include "flags.h"
 
 /* This file should be included last.  */
 #include "target-def.h"
@@ -416,7 +417,8 @@ alpha_option_override (void)
       else if (! strcmp (alpha_tp_string, "i"))
 	alpha_tp = ALPHA_TP_INSN;
       else
-	error ("bad value %qs for -mtrap-precision switch", alpha_tp_string);
+	error ("bad value %qs for %<-mtrap-precision%> switch",
+	       alpha_tp_string);
     }
 
   if (alpha_fprm_string)
@@ -430,7 +432,7 @@ alpha_option_override (void)
       else if (! strcmp (alpha_fprm_string,"d"))
 	alpha_fprm = ALPHA_FPRM_DYN;
       else
-	error ("bad value %qs for -mfp-rounding-mode switch",
+	error ("bad value %qs for %<-mfp-rounding-mode%> switch",
 	       alpha_fprm_string);
     }
 
@@ -445,7 +447,8 @@ alpha_option_override (void)
       else if (strcmp (alpha_fptm_string, "sui") == 0)
 	alpha_fptm = ALPHA_FPTM_SUI;
       else
-	error ("bad value %qs for -mfp-trap-mode switch", alpha_fptm_string);
+	error ("bad value %qs for %<-mfp-trap-mode%> switch",
+	       alpha_fptm_string);
     }
 
   if (alpha_cpu_string)
@@ -462,7 +465,7 @@ alpha_option_override (void)
 	    break;
 	  }
       if (i == ct_size)
-	error ("bad value %qs for -mcpu switch", alpha_cpu_string);
+	error ("bad value %qs for %<-mcpu%> switch", alpha_cpu_string);
     }
 
   if (alpha_tune_string)
@@ -477,7 +480,7 @@ alpha_option_override (void)
 	    break;
 	  }
       if (i == ct_size)
-	error ("bad value %qs for -mtune switch", alpha_tune_string);
+	error ("bad value %qs for %<-mtune%> switch", alpha_tune_string);
     }
 
   if (line_size)
@@ -498,7 +501,7 @@ alpha_option_override (void)
   if ((alpha_fptm == ALPHA_FPTM_SU || alpha_fptm == ALPHA_FPTM_SUI)
       && alpha_tp != ALPHA_TP_INSN && alpha_cpu != PROCESSOR_EV6)
     {
-      warning (0, "fp software completion requires -mtrap-precision=i");
+      warning (0, "fp software completion requires %<-mtrap-precision=i%>");
       alpha_tp = ALPHA_TP_INSN;
     }
 
@@ -566,7 +569,8 @@ alpha_option_override (void)
       }
     else
       {
-	warning (0, "bad value %qs for -mmemory-latency", alpha_mlat_string);
+	warning (0, "bad value %qs for %<-mmemory-latency%>",
+		 alpha_mlat_string);
 	lat = 3;
       }
 
@@ -614,13 +618,13 @@ alpha_override_options_after_change (void)
   /* ??? Kludge these by not doing anything if we don't optimize.  */
   if (optimize > 0)
     {
-      if (align_loops <= 0)
-	align_loops = 16;
-      if (align_jumps <= 0)
-	align_jumps = 16;
+      if (flag_align_loops && !str_align_loops)
+	str_align_loops = "16";
+      if (flag_align_jumps && !str_align_jumps)
+	str_align_jumps = "16";
     }
-  if (align_functions <= 0)
-    align_functions = 16;
+  if (flag_align_functions && !str_align_functions)
+    str_align_functions = "16";
 }
 
 /* Returns 1 if VALUE is a mask that contains full bytes of zero or ones.  */
@@ -9303,10 +9307,11 @@ alpha_align_insns_1 (unsigned int max_align,
   /* Let shorten branches care for assigning alignments to code labels.  */
   shorten_branches (get_insns ());
 
-  if (align_functions < 4)
+  unsigned int option_alignment = align_functions.levels[0].get_value ();
+  if (option_alignment < 4)
     align = 4;
-  else if ((unsigned int) align_functions < max_align)
-    align = align_functions;
+  else if ((unsigned int) option_alignment < max_align)
+    align = option_alignment;
   else
     align = max_align;
 
@@ -9324,7 +9329,8 @@ alpha_align_insns_1 (unsigned int max_align,
       /* When we see a label, resync alignment etc.  */
       if (LABEL_P (i))
 	{
-	  unsigned int new_align = 1 << label_to_alignment (i);
+	  unsigned int new_align
+	    = label_to_alignment (i).levels[0].get_value ();
 
 	  if (new_align >= align)
 	    {

@@ -1,5 +1,5 @@
 /* Miscellaneous SSA utility functions.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -52,7 +52,7 @@ static hash_map<edge, auto_vec<edge_var_map> > *edge_var_maps;
 /* Add a mapping with PHI RESULT and PHI DEF associated with edge E.  */
 
 void
-redirect_edge_var_map_add (edge e, tree result, tree def, source_location locus)
+redirect_edge_var_map_add (edge e, tree result, tree def, location_t locus)
 {
   edge_var_map new_node;
 
@@ -151,7 +151,7 @@ ssa_redirect_edge (edge e, basic_block dest)
     for (gsi = gsi_start_phis (e->dest); !gsi_end_p (gsi); gsi_next (&gsi))
       {
 	tree def;
-	source_location locus ;
+	location_t locus;
 
 	phi = gsi.phi ();
 	def = gimple_phi_arg_def (phi, e->dest_idx);
@@ -554,20 +554,25 @@ release_defs_bitset (bitmap toremove)
 
   /* Performing a topological sort is probably overkill, this will
      most likely run in slightly superlinear time, rather than the
-     pathological quadratic worst case.  */
+     pathological quadratic worst case.
+     But iterate from max SSA name version to min one because
+     that mimics allocation order during code generation behavior best.
+     Use an array for this which we compact on-the-fly with a NULL
+     marker moving towards the end of the vector.  */
+  auto_vec<tree, 16> names;
+  names.reserve (bitmap_count_bits (toremove) + 1);
+  names.quick_push (NULL_TREE);
+  EXECUTE_IF_SET_IN_BITMAP (toremove, 0, j, bi)
+    names.quick_push (ssa_name (j));
+
+  bitmap_tree_view (toremove);
   while (!bitmap_empty_p (toremove))
     {
-      unsigned to_remove_bit = -1U;
-      EXECUTE_IF_SET_IN_BITMAP (toremove, 0, j, bi)
+      j = names.length () - 1;
+      for (unsigned i = names.length () - 1; names[i];)
 	{
-	  if (to_remove_bit != -1U)
-	    {
-	      bitmap_clear_bit (toremove, to_remove_bit);
-	      to_remove_bit = -1U;
-	    }
-
 	  bool remove_now = true;
-	  tree var = ssa_name (j);
+	  tree var = names[i];
 	  gimple *stmt;
 	  imm_use_iterator uit;
 
@@ -612,14 +617,15 @@ release_defs_bitset (bitmap toremove)
 		  gsi_remove (&gsi, true);
 		  release_defs (def);
 		}
-
-	      to_remove_bit = j;
+	      bitmap_clear_bit (toremove, SSA_NAME_VERSION (var));
 	    }
+	  else
+	    --i;
+	  if (--j != i)
+	    names[i] = names[j];
 	}
-      if (to_remove_bit != -1U)
-	bitmap_clear_bit (toremove, to_remove_bit);
     }
-
+  bitmap_list_view (toremove);
 }
 
 /* Verify virtual SSA form.  */
@@ -1566,6 +1572,12 @@ maybe_optimize_var (tree var, bitmap addresses_taken, bitmap not_reg_needs,
 	  || !bitmap_bit_p (not_reg_needs, DECL_UID (var))))
     {
       TREE_ADDRESSABLE (var) = 0;
+      /* If we cleared TREE_ADDRESSABLE make sure DECL_GIMPLE_REG_P
+         is unset if we cannot rewrite the var into SSA.  */
+      if ((TREE_CODE (TREE_TYPE (var)) == VECTOR_TYPE
+	   || TREE_CODE (TREE_TYPE (var)) == COMPLEX_TYPE)
+	  && bitmap_bit_p (not_reg_needs, DECL_UID (var)))
+	DECL_GIMPLE_REG_P (var) = 0;
       if (is_gimple_reg (var))
 	bitmap_set_bit (suitable_for_renaming, DECL_UID (var));
       if (dump_file)

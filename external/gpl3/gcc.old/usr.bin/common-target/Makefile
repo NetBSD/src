@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/08/19 07:48:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2021/04/09 23:15:52 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -22,6 +22,9 @@ COPTS.prefix.c+=	-Wno-stack-protector
 COPTS.opts-common.c+=	-Wno-stack-protector
 COPTS.rs6000-common.c+=	-Wno-stack-protector
 COPTS.arm-common.c+=	-Wno-stack-protector
+.if ${MACHINE_CPU} == "sh3"
+COPTS.opts.c+=		${GCC_NO_FORMAT_TRUNCATION}
+.endif
 
 GENPROG_ERROR_DEPENDS=errors.lo
 

@@ -20,14 +20,14 @@
 #include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
-// LeakSanitizer relies on some Glibc's internals (e.g. TLS machinery) thus
-// supported for Linux only. Also, LSan doesn't like 32 bit architectures
+// LeakSanitizer relies on some Glibc's internals (e.g. TLS machinery) on Linux.
+// Also, LSan doesn't like 32 bit architectures
 // because of "small" (4 bytes) pointer size that leads to high false negative
 // ratio on large leaks. But we still want to have it for some 32 bit arches
 // (e.g. x86), see https://github.com/google/sanitizers/issues/403.
-// To enable LeakSanitizer on new architecture, one need to implement
-// internal_clone function as well as (probably) adjust TLS machinery for
-// new architecture inside sanitizer library.
+// To enable LeakSanitizer on a new architecture, one needs to implement the
+// internal_clone function as well as (probably) adjust the TLS machinery for
+// the new architecture inside the sanitizer library.
 #if (SANITIZER_LINUX && !SANITIZER_ANDROID || SANITIZER_MAC || SANITIZER_NETBSD) && \
     (SANITIZER_WORDSIZE == 64) &&                               \
     (defined(__x86_64__) || defined(__mips64) || defined(__aarch64__) || \
@@ -39,12 +39,15 @@
 #elif defined(__arm__) && \
     ((SANITIZER_LINUX && !SANITIZER_ANDROID) || SANITIZER_NETBSD)
 #define CAN_SANITIZE_LEAKS 1
+#elif SANITIZER_NETBSD
+#define CAN_SANITIZE_LEAKS 1
 #else
 #define CAN_SANITIZE_LEAKS 0
 #endif
 
 namespace __sanitizer {
 class FlagParser;
+class ThreadRegistry;
 struct DTLS;
 }
 
@@ -93,7 +96,7 @@ struct LeakedObject {
 // Aggregates leaks by stack trace prefix.
 class LeakReport {
  public:
-  LeakReport() : next_id_(0), leaks_(1), leaked_objects_(1) {}
+  LeakReport() {}
   void AddLeakedChunk(uptr chunk, u32 stack_trace_id, uptr leaked_size,
                       ChunkTag tag);
   void ReportTopLeaks(uptr max_leaks);
@@ -101,12 +104,11 @@ class LeakReport {
   void ApplySuppressions();
   uptr UnsuppressedLeakCount();
 
-
  private:
   void PrintReportForLeak(uptr index);
   void PrintLeakedObjectsForLeak(uptr index);
 
-  u32 next_id_;
+  u32 next_id_ = 0;
   InternalMmapVector<Leak> leaks_;
   InternalMmapVector<LeakedObject> leaked_objects_;
 };
@@ -203,6 +205,7 @@ bool WordIsPoisoned(uptr addr);
 // Wrappers for ThreadRegistry access.
 void LockThreadRegistry();
 void UnlockThreadRegistry();
+ThreadRegistry *GetThreadRegistryLocked();
 bool GetThreadRangesLocked(tid_t os_id, uptr *stack_begin, uptr *stack_end,
                            uptr *tls_begin, uptr *tls_end, uptr *cache_begin,
                            uptr *cache_end, DTLS **dtls);

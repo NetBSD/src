@@ -1,5 +1,5 @@
 /* Top level of GCC compilers (cc1, cc1plus, etc.)
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -77,13 +77,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-vrp.h"
 #include "ipa-prop.h"
 #include "gcse.h"
-#include "tree-chkp.h"
 #include "omp-offload.h"
 #include "hsa-common.h"
 #include "edit-context.h"
 #include "tree-pass.h"
 #include "dumpfile.h"
 #include "ipa-fnsummary.h"
+#include "dump-context.h"
+#include "optinfo-emit-json.h"
 
 #if defined(DBX_DEBUGGING_INFO) || defined(XCOFF_DEBUGGING_INFO)
 #include "dbxout.h"
@@ -488,6 +489,8 @@ compile_file (void)
   if (lang_hooks.decls.post_compilation_parsing_cleanups)
     lang_hooks.decls.post_compilation_parsing_cleanups ();
 
+  dump_context::get ().finish_any_json_writer ();
+
   if (seen_error ())
     return;
 
@@ -495,7 +498,8 @@ compile_file (void)
 
   /* Compilation unit is finalized.  When producing non-fat LTO object, we are
      basically finished.  */
-  if (in_lto_p || !flag_lto || flag_fat_lto_objects)
+  if ((in_lto_p && flag_incremental_link != INCREMENTAL_LINK_LTO)
+      || !flag_lto || flag_fat_lto_objects)
     {
       /* File-scope initialization for AddressSanitizer.  */
       if (flag_sanitize & SANITIZE_ADDRESS)
@@ -503,9 +507,6 @@ compile_file (void)
 
       if (flag_sanitize & SANITIZE_THREAD)
 	tsan_finish_file ();
-
-      if (flag_check_pointer_bounds)
-	chkp_finish_file ();
 
       omp_finish_file ();
 
@@ -529,7 +530,9 @@ compile_file (void)
       dwarf2out_frame_finish ();
 #endif
 
+      debuginfo_start ();
       (*debug_hooks->finish) (main_input_filename);
+      debuginfo_stop ();
       timevar_pop (TV_SYMOUT);
 
       /* Output some stuff at end of file if nec.  */
@@ -601,7 +604,7 @@ compile_file (void)
   invoke_plugin_callbacks (PLUGIN_FINISH_UNIT, NULL);
 
   /* This must be at the end.  Some target ports emit end of file directives
-     into the assembly file here, and hence we can not output anything to the
+     into the assembly file here, and hence we cannot output anything to the
      assembly file after this point.  */
   targetm.asm_out.file_end ();
 
@@ -898,7 +901,7 @@ init_asm_output (const char *name)
 	    }
 	  else
 	    inform (UNKNOWN_LOCATION,
-		    "-frecord-gcc-switches is not supported by "
+		    "%<-frecord-gcc-switches%> is not supported by "
 		    "the current target");
 	}
 
@@ -987,7 +990,7 @@ output_stack_usage (void)
       stack_usage += current_function_dynamic_stack_size;
     }
 
-  if (flag_stack_usage)
+  if (stack_usage_file)
     {
       expanded_location loc
 	= expand_location (DECL_SOURCE_LOCATION (current_function_decl));
@@ -1024,7 +1027,7 @@ output_stack_usage (void)
 	       stack_usage_kind_str[stack_usage_kind]);
     }
 
-  if (warn_stack_usage >= 0)
+  if (warn_stack_usage >= 0 && warn_stack_usage < HOST_WIDE_INT_MAX)
     {
       const location_t loc = DECL_SOURCE_LOCATION (current_function_decl);
 
@@ -1034,10 +1037,10 @@ output_stack_usage (void)
 	{
 	  if (stack_usage_kind == DYNAMIC_BOUNDED)
 	    warning_at (loc,
-			OPT_Wstack_usage_, "stack usage might be %wd bytes",
+			OPT_Wstack_usage_, "stack usage might be %wu bytes",
 			stack_usage);
 	  else
-	    warning_at (loc, OPT_Wstack_usage_, "stack usage is %wd bytes",
+	    warning_at (loc, OPT_Wstack_usage_, "stack usage is %wu bytes",
 			stack_usage);
 	}
     }
@@ -1112,8 +1115,14 @@ general_init (const char *argv0, bool init_signals)
 
   global_dc->show_caret
     = global_options_init.x_flag_diagnostics_show_caret;
+  global_dc->show_labels_p
+    = global_options_init.x_flag_diagnostics_show_labels;
+  global_dc->show_line_numbers_p
+    = global_options_init.x_flag_diagnostics_show_line_numbers;
   global_dc->show_option_requested
     = global_options_init.x_flag_diagnostics_show_option;
+  global_dc->min_margin_width
+    = global_options_init.x_diagnostics_minimum_margin_width;
   global_dc->show_column
     = global_options_init.x_flag_show_column;
   global_dc->internal_error = internal_error_function;
@@ -1183,6 +1192,7 @@ general_init (const char *argv0, bool init_signals)
   symtab = new (ggc_cleared_alloc <symbol_table> ()) symbol_table ();
 
   statistics_early_init ();
+  debuginfo_early_init ();
   finish_params ();
 }
 
@@ -1200,29 +1210,102 @@ target_supports_section_anchors_p (void)
   return true;
 }
 
-/* Default the align_* variables to 1 if they're still unset, and
-   set up the align_*_log variables.  */
+/* Parse "N[:M][:...]" into struct align_flags A.
+   VALUES contains parsed values (in reverse order), all processed
+   values are popped.  */
+
 static void
-init_alignments (void)
+read_log_maxskip (auto_vec<unsigned> &values, align_flags_tuple *a)
 {
-  if (align_loops <= 0)
-    align_loops = 1;
-  if (align_loops_max_skip > align_loops)
-    align_loops_max_skip = align_loops - 1;
-  align_loops_log = floor_log2 (align_loops * 2 - 1);
-  if (align_jumps <= 0)
-    align_jumps = 1;
-  if (align_jumps_max_skip > align_jumps)
-    align_jumps_max_skip = align_jumps - 1;
-  align_jumps_log = floor_log2 (align_jumps * 2 - 1);
-  if (align_labels <= 0)
-    align_labels = 1;
-  align_labels_log = floor_log2 (align_labels * 2 - 1);
-  if (align_labels_max_skip > align_labels)
-    align_labels_max_skip = align_labels - 1;
-  if (align_functions <= 0)
-    align_functions = 1;
-  align_functions_log = floor_log2 (align_functions * 2 - 1);
+  unsigned n = values.pop ();
+  if (n != 0)
+    a->log = floor_log2 (n * 2 - 1);
+
+  if (values.is_empty ())
+    a->maxskip = n ? n - 1 : 0;
+  else
+    {
+      unsigned m = values.pop ();
+      /* -falign-foo=N:M means M-1 max bytes of padding, not M.  */
+      if (m > 0)
+	m--;
+      a->maxskip = m;
+    }
+
+  /* Normalize the tuple.  */
+  a->normalize ();
+}
+
+/* Parse "N[:M[:N2[:M2]]]" string FLAG into a pair of struct align_flags.  */
+
+static void
+parse_N_M (const char *flag, align_flags &a)
+{
+  if (flag)
+    {
+      static hash_map <nofree_string_hash, align_flags> cache;
+      align_flags *entry = cache.get (flag);
+      if (entry)
+	{
+	  a = *entry;
+	  return;
+	}
+
+      auto_vec<unsigned> result_values;
+      bool r = parse_and_check_align_values (flag, NULL, result_values, false,
+					     UNKNOWN_LOCATION);
+      if (!r)
+	return;
+
+      /* Reverse values for easier manipulation.  */
+      result_values.reverse ();
+
+      read_log_maxskip (result_values, &a.levels[0]);
+      if (!result_values.is_empty ())
+	read_log_maxskip (result_values, &a.levels[1]);
+#ifdef SUBALIGN_LOG
+      else
+	{
+	  /* N2[:M2] is not specified.  This arch has a default for N2.
+	     Before -falign-foo=N:M:N2:M2 was introduced, x86 had a tweak.
+	     -falign-functions=N with N > 8 was adding secondary alignment.
+	     -falign-functions=10 was emitting this before every function:
+			.p2align 4,,9
+			.p2align 3
+	     Now this behavior (and more) can be explicitly requested:
+	     -falign-functions=16:10:8
+	     Retain old behavior if N2 is missing: */
+
+	  int align = 1 << a.levels[0].log;
+	  int subalign = 1 << SUBALIGN_LOG;
+
+	  if (a.levels[0].log > SUBALIGN_LOG
+	      && a.levels[0].maxskip >= subalign - 1)
+	    {
+	      /* Set N2 unless subalign can never have any effect.  */
+	      if (align > a.levels[0].maxskip + 1)
+		{
+		  a.levels[1].log = SUBALIGN_LOG;
+		  a.levels[1].normalize ();
+		}
+	    }
+	}
+#endif
+
+      /* Cache seen value.  */
+      cache.put (flag, a);
+    }
+}
+
+/* Process -falign-foo=N[:M[:N2[:M2]]] options.  */
+
+void
+parse_alignment_opts (void)
+{
+  parse_N_M (str_align_loops, align_loops);
+  parse_N_M (str_align_jumps, align_jumps);
+  parse_N_M (str_align_labels, align_labels);
+  parse_N_M (str_align_functions, align_functions);
 }
 
 /* Process the options that have been parsed.  */
@@ -1284,8 +1367,8 @@ process_options (void)
       || flag_graphite_identity
       || flag_loop_parallelize_all)
     sorry ("Graphite loop optimizations cannot be used (isl is not available) "
-	   "(-fgraphite, -fgraphite-identity, -floop-nest-optimize, "
-	   "-floop-parallelize-all)");
+	   "(%<-fgraphite%>, %<-fgraphite-identity%>, "
+	   "%<-floop-nest-optimize%>, %<-floop-parallelize-all%>)");
 #endif
 
   if (flag_cf_protection != CF_NONE
@@ -1311,49 +1394,6 @@ process_options (void)
 		    "%<-fcf-protection=return%> is not supported for this "
 		    "target");
 	  flag_cf_protection = CF_NONE;
-	}
-    }
-
-  if (flag_check_pointer_bounds)
-    {
-      if (targetm.chkp_bound_mode () == VOIDmode)
-	{
-	  error_at (UNKNOWN_LOCATION,
-		    "%<-fcheck-pointer-bounds%> is not supported for this "
-		    "target");
-	  flag_check_pointer_bounds = 0;
-	}
-
-      if (flag_sanitize & SANITIZE_BOUNDS_STRICT)
-	{
-	  error_at (UNKNOWN_LOCATION,
-		    "%<-fcheck-pointer-bounds%> is not supported with "
-		    "%<-fsanitize=bounds-strict%>");
-	  flag_check_pointer_bounds = 0;
-	}
-      else if (flag_sanitize & SANITIZE_BOUNDS)
-	{
-	  error_at (UNKNOWN_LOCATION,
-		    "%<-fcheck-pointer-bounds%> is not supported with "
-		    "%<-fsanitize=bounds%>");
-	  flag_check_pointer_bounds = 0;
-	}
-
-      if (flag_sanitize & SANITIZE_ADDRESS)
-	{
-	  error_at (UNKNOWN_LOCATION,
-		    "%<-fcheck-pointer-bounds%> is not supported with "
-		    "Address Sanitizer");
-	  flag_check_pointer_bounds = 0;
-	}
-
-      if (flag_sanitize & SANITIZE_THREAD)
-	{
-	  error_at (UNKNOWN_LOCATION,
-		    "%<-fcheck-pointer-bounds%> is not supported with "
-		    "Thread Sanitizer");
-
-	  flag_check_pointer_bounds = 0;
 	}
     }
 
@@ -1412,7 +1452,7 @@ process_options (void)
 	}
       else
 	warning_at (UNKNOWN_LOCATION, 0,
-		    "-f%sleading-underscore not supported on this "
+		    "%<-f%sleading-underscore%> not supported on this "
 		    "target machine", flag_leading_underscore ? "" : "no-");
     }
 
@@ -1579,8 +1619,9 @@ process_options (void)
   else if (debug_variable_location_views == -1 && dwarf_version != 5)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "without -gdwarf-5, -gvariable-location-views=incompat5 "
-		  "is equivalent to -gvariable-location-views");
+		  "without %<-gdwarf-5%>, "
+		  "%<-gvariable-location-views=incompat5%> "
+		  "is equivalent to %<-gvariable-location-views%>");
       debug_variable_location_views = 1;
     }
 
@@ -1594,8 +1635,8 @@ process_options (void)
 	   && !debug_variable_location_views)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-ginternal-reset-location-views is forced disabled "
-		  "without -gvariable-location-views");
+		  "%<-ginternal-reset-location-views%> is forced disabled "
+		  "without %<-gvariable-location-views%>");
       debug_internal_reset_location_views = 0;
     }
 
@@ -1604,8 +1645,8 @@ process_options (void)
   else if (debug_inline_points && !debug_nonbind_markers_p)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-ginline-points is forced disabled without "
-		  "-gstatement-frontiers");
+		  "%<-ginline-points%> is forced disabled without "
+		  "%<-gstatement-frontiers%>");
       debug_inline_points = 0;
     }
 
@@ -1633,13 +1674,13 @@ process_options (void)
       if (flag_function_sections)
 	{
 	  warning_at (UNKNOWN_LOCATION, 0,
-		      "-ffunction-sections not supported for this target");
+		      "%<-ffunction-sections%> not supported for this target");
 	  flag_function_sections = 0;
 	}
       if (flag_data_sections)
 	{
 	  warning_at (UNKNOWN_LOCATION, 0,
-		      "-fdata-sections not supported for this target");
+		      "%<-fdata-sections%> not supported for this target");
 	  flag_data_sections = 0;
 	}
     }
@@ -1647,14 +1688,14 @@ process_options (void)
   if (flag_prefetch_loop_arrays > 0 && !targetm.code_for_prefetch)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-fprefetch-loop-arrays not supported for this target");
+		  "%<-fprefetch-loop-arrays%> not supported for this target");
       flag_prefetch_loop_arrays = 0;
     }
   else if (flag_prefetch_loop_arrays > 0 && !targetm.have_prefetch ())
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-fprefetch-loop-arrays not supported for this target "
-		  "(try -march switches)");
+		  "%<-fprefetch-loop-arrays%> not supported for this target "
+		  "(try %<-march%> switches)");
       flag_prefetch_loop_arrays = 0;
     }
 
@@ -1663,7 +1704,7 @@ process_options (void)
   if (flag_prefetch_loop_arrays > 0 && optimize_size)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-fprefetch-loop-arrays is not supported with -Os");
+		  "%<-fprefetch-loop-arrays%> is not supported with %<-Os%>");
       flag_prefetch_loop_arrays = 0;
     }
 
@@ -1675,7 +1716,7 @@ process_options (void)
   if (flag_associative_math && (flag_trapping_math || flag_signed_zeros))
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-fassociative-math disabled; other options take "
+		  "%<-fassociative-math%> disabled; other options take "
 		  "precedence");
       flag_associative_math = 0;
     }
@@ -1690,7 +1731,7 @@ process_options (void)
       flag_stack_clash_protection = 0;
     }
 
-  /* We can not support -fstack-check= and -fstack-clash-protection at
+  /* We cannot support -fstack-check= and -fstack-clash-protection at
      the same time.  */
   if (flag_stack_check != NO_STACK_CHECK && flag_stack_clash_protection)
     {
@@ -1713,7 +1754,7 @@ process_options (void)
   if (!FRAME_GROWS_DOWNWARD && flag_stack_protect)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-fstack-protector not supported for this target");
+		  "%<-fstack-protector%> not supported for this target");
       flag_stack_protect = 0;
     }
   if (!flag_stack_protect)
@@ -1725,7 +1766,7 @@ process_options (void)
       && !FRAME_GROWS_DOWNWARD)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-fsanitize=address and -fsanitize=kernel-address "
+		  "%<-fsanitize=address%> and %<-fsanitize=kernel-address%> "
 		  "are not supported for this target");
       flag_sanitize &= ~SANITIZE_ADDRESS;
     }
@@ -1734,7 +1775,7 @@ process_options (void)
       && targetm.asan_shadow_offset == NULL)
     {
       warning_at (UNKNOWN_LOCATION, 0,
-		  "-fsanitize=address not supported for this target");
+		  "%<-fsanitize=address%> not supported for this target");
       flag_sanitize &= ~SANITIZE_ADDRESS;
     }
 
@@ -1768,9 +1809,6 @@ process_options (void)
 static void
 backend_init_target (void)
 {
-  /* Initialize alignment variables.  */
-  init_alignments ();
-
   /* This depends on stack_pointer_rtx.  */
   init_fake_stack_mems ();
 
@@ -1898,7 +1936,7 @@ lang_dependent_init (const char *name)
       init_asm_output (name);
 
       /* If stack usage information is desired, open the output file.  */
-      if (flag_stack_usage)
+      if (flag_stack_usage && !flag_generate_lto)
 	stack_usage_file = open_auxiliary_file ("su");
     }
 
@@ -2050,6 +2088,7 @@ finalize (bool no_backend)
   if (!no_backend)
     {
       statistics_fini ();
+      debuginfo_fini ();
 
       g->get_passes ()->finish_optimization_passes ();
 
@@ -2093,6 +2132,11 @@ do_compile ()
       int i;
 
       timevar_start (TV_PHASE_SETUP);
+
+      if (flag_save_optimization_record)
+	{
+	  dump_context::get ().set_json_writer (new optrecord_json_writer ());
+	}
 
       /* This must be run always, because it is needed to compute the FP
 	 predefined macros, such as __LDBL_MAX__, for targets using non
@@ -2153,6 +2197,7 @@ do_compile ()
           init_final (main_input_filename);
           coverage_init (aux_base_name);
           statistics_init ();
+          debuginfo_init ();
           invoke_plugin_callbacks (PLUGIN_START_UNIT, NULL);
 
           timevar_stop (TV_PHASE_SETUP);
@@ -2211,7 +2256,7 @@ toplev::run_self_tests ()
 {
   if (no_backend)
     {
-      error_at (UNKNOWN_LOCATION, "self-tests incompatible with -E");
+      error_at (UNKNOWN_LOCATION, "self-tests incompatible with %<-E%>");
       return;
     }
 #if CHECKING_P

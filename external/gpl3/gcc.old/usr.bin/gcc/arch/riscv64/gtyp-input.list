@@ -1,6 +1,5 @@
 SRCDIR/gcc/../libcpp/include/line-map.h
 SRCDIR/gcc/../libcpp/include/cpplib.h
-SRCDIR/gcc/../libcpp/include/cpp-id-data.h
 SRCDIR/gcc/input.h
 SRCDIR/gcc/coretypes.h
 auto-host.h
@@ -83,7 +82,6 @@ SRCDIR/gcc/tree.c
 SRCDIR/gcc/varasm.c
 SRCDIR/gcc/gimple.h
 SRCDIR/gcc/gimple-ssa.h
-SRCDIR/gcc/tree-chkp.c
 SRCDIR/gcc/tree-ssanames.c
 SRCDIR/gcc/tree-eh.c
 SRCDIR/gcc/tree-ssa-address.c
@@ -126,6 +124,7 @@ SRCDIR/gcc/ipa-devirt.c
 SRCDIR/gcc/internal-fn.h
 SRCDIR/gcc/hsa-common.c
 SRCDIR/gcc/calls.c
+SRCDIR/gcc/omp-general.h
 [brig]
 SRCDIR/gcc/brig/brig-lang.c
 SRCDIR/gcc/brig/brig-c.h
@@ -181,6 +180,22 @@ SRCDIR/gcc/cp/tree.c
 SRCDIR/gcc/cp/typeck2.c
 SRCDIR/gcc/cp/vtable-class-hierarchy.c
 
+[d]
+SRCDIR/gcc/d/d-tree.h
+SRCDIR/gcc/d/d-builtins.cc
+SRCDIR/gcc/d/d-lang.cc
+SRCDIR/gcc/d/modules.cc
+SRCDIR/gcc/d/typeinfo.cc
+[fortran]
+SRCDIR/gcc/fortran/f95-lang.c
+SRCDIR/gcc/fortran/trans-decl.c
+SRCDIR/gcc/fortran/trans-intrinsic.c
+SRCDIR/gcc/fortran/trans-io.c
+SRCDIR/gcc/fortran/trans-stmt.c
+SRCDIR/gcc/fortran/trans-types.c
+SRCDIR/gcc/fortran/trans-types.h
+SRCDIR/gcc/fortran/trans.h
+SRCDIR/gcc/fortran/trans-const.h
 [jit]
 SRCDIR/gcc/jit/dummy-frontend.c
 [lto]

@@ -1,6 +1,6 @@
 /* Garbage collection for the GNU compiler.
 
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -242,6 +242,9 @@ extern const char *ggc_alloc_string (const char *contents, int length
 /* Invoke the collector.  Garbage collection occurs only when this
    function is called, not during allocations.  */
 extern void ggc_collect	(void);
+
+/* Return unused memory pages to the system.  */
+extern void ggc_trim (void);
 
 /* Assume that all GGC memory is reachable and grow the limits for next collection. */
 extern void ggc_grow (void);

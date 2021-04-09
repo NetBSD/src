@@ -1,5 +1,5 @@
 /* Target machine subroutines for Altera Nios II.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by Jonah Graham (jgraham@altera.com), 
    Will Reece (wreece@altera.com), and Jeff DaSilva (jdasilva@altera.com).
    Contributed by Mentor Graphics, Inc.
@@ -1193,7 +1193,8 @@ nios2_custom_check_insns (void)
     for (i = 0; i < ARRAY_SIZE (nios2_fpu_insn); i++)
       if (N2FPU_ENABLED_P (i) && N2FPU_UNSAFE_P (i))
 	warning (0, "switch %<-mcustom-%s%> has no effect unless "
-		 "-funsafe-math-optimizations is specified", N2FPU_NAME (i));
+		 "%<-funsafe-math-optimizations%> is specified",
+		 N2FPU_NAME (i));
 
   /* Warn if the user is trying to use -mcustom-fmins et. al, that won't
      get used without -ffinite-math-only.  See fold_builtin_fmin_fmax ()
@@ -1202,7 +1203,7 @@ nios2_custom_check_insns (void)
     for (i = 0; i < ARRAY_SIZE (nios2_fpu_insn); i++)
       if (N2FPU_ENABLED_P (i) && N2FPU_FINITE_P (i))
 	warning (0, "switch %<-mcustom-%s%> has no effect unless "
-		 "-ffinite-math-only is specified", N2FPU_NAME (i));
+		 "%<-ffinite-math-only%> is specified", N2FPU_NAME (i));
 
   /* Warn if the user is trying to use a custom rounding instruction
      that won't get used without -fno-math-errno.  See
@@ -1211,12 +1212,12 @@ nios2_custom_check_insns (void)
     for (i = 0; i < ARRAY_SIZE (nios2_fpu_insn); i++)
       if (N2FPU_ENABLED_P (i) && N2FPU_NO_ERRNO_P (i))
 	warning (0, "switch %<-mcustom-%s%> has no effect unless "
-		 "-fno-math-errno is specified", N2FPU_NAME (i));
+		 "%<-fno-math-errno%> is specified", N2FPU_NAME (i));
 
   if (errors || custom_code_conflict)
     fatal_error (input_location,
-		 "conflicting use of -mcustom switches, target attributes, "
-		 "and/or __builtin_custom_ functions");
+		 "conflicting use of %<-mcustom%> switches, target attributes, "
+		 "and/or %<__builtin_custom_%> functions");
 }
 
 static void
@@ -1362,7 +1363,7 @@ nios2_option_override (void)
     sorry ("position-independent code requires the Linux ABI");
   if (flag_pic && stack_limit_rtx
       && GET_CODE (stack_limit_rtx) == SYMBOL_REF)
-    sorry ("PIC support for -fstack-limit-symbol");
+    sorry ("PIC support for %<-fstack-limit-symbol%>");
 
   /* Function to allocate machine-dependent function status.  */
   init_machine_status = &nios2_init_machine_status;
@@ -1384,11 +1385,11 @@ nios2_option_override (void)
   if (flag_pic)
     {
       if (nios2_gpopt_option != gpopt_none)
-	error ("-mgpopt not supported with PIC.");
+	error ("%<-mgpopt%> not supported with PIC.");
       if (nios2_gprel_sec)
-	error ("-mgprel-sec= not supported with PIC.");
+	error ("%<-mgprel-sec=%> not supported with PIC.");
       if (nios2_r0rel_sec)
-	error ("-mr0rel-sec= not supported with PIC.");
+	error ("%<-mr0rel-sec=%> not supported with PIC.");
     }
 
   /* Process -mgprel-sec= and -m0rel-sec=.  */
@@ -1396,13 +1397,13 @@ nios2_option_override (void)
     {
       if (regcomp (&nios2_gprel_sec_regex, nios2_gprel_sec, 
 		   REG_EXTENDED | REG_NOSUB))
-	error ("-mgprel-sec= argument is not a valid regular expression.");
+	error ("%<-mgprel-sec=%> argument is not a valid regular expression.");
     }
   if (nios2_r0rel_sec)
     {
       if (regcomp (&nios2_r0rel_sec_regex, nios2_r0rel_sec, 
 		   REG_EXTENDED | REG_NOSUB))
-	error ("-mr0rel-sec= argument is not a valid regular expression.");
+	error ("%<-mr0rel-sec=%> argument is not a valid regular expression.");
     }
 
   /* If we don't have mul, we don't have mulx either!  */
@@ -1539,6 +1540,19 @@ nios2_rtx_costs (rtx x, machine_mode mode,
 	    *total = COSTS_N_INSNS (2);  /* Latency adjustment.  */
 	  else 
 	    *total = COSTS_N_INSNS (1);
+	  if (TARGET_HAS_MULX && GET_MODE (x) == DImode)
+	    {
+	      enum rtx_code c0 = GET_CODE (XEXP (x, 0));
+	      enum rtx_code c1 = GET_CODE (XEXP (x, 1));
+	      if ((c0 == SIGN_EXTEND && c1 == SIGN_EXTEND)
+		  || (c0 == ZERO_EXTEND && c1 == ZERO_EXTEND))
+		/* This is the <mul>sidi3 pattern, which expands into 4 insns,
+		   2 multiplies and 2 moves.  */
+		{
+		  *total = *total * 2 + COSTS_N_INSNS (2);
+		  return true;
+		}
+	    }
           return false;
         }
 
@@ -2358,6 +2372,22 @@ nios2_in_small_data_p (const_tree exp)
 	  const char *section = DECL_SECTION_NAME (exp);
 	  if (nios2_small_section_name_p (section))
 	    return true;
+	}
+      else if (flexible_array_type_p (TREE_TYPE (exp))
+	       && (!TREE_PUBLIC (exp) || DECL_EXTERNAL (exp)))
+	{
+	  /* We really should not consider any objects of any flexibly-sized
+	     type to be small data, but pre-GCC 10 did not test
+	     for this and just fell through to the next case.  Thus older
+	     code compiled with -mgpopt=global could contain GP-relative
+	     accesses to objects defined in this compilation unit with
+	     external linkage.  We retain the possible small-data treatment
+	     of such definitions for backward ABI compatibility, but
+	     no longer generate GP-relative accesses for external
+	     references (so that the ABI could be changed in the future
+	     with less potential impact), or objects with internal
+	     linkage.  */
+	  return false;
 	}
       else
 	{
@@ -3686,7 +3716,7 @@ nios2_expand_custom_builtin (tree exp, unsigned int index, rtx target)
 	{
 	  if (!custom_insn_opcode (value, VOIDmode))
 	    error ("custom instruction opcode must be compile time "
-		   "constant in the range 0-255 for __builtin_custom_%s",
+		   "constant in the range 0-255 for %<__builtin_custom_%s%>",
 		   custom_builtin_name[index]);
 	}
       else
@@ -4264,8 +4294,8 @@ nios2_valid_target_attribute_rec (tree args)
 			    continue;
 			  if (!ISDIGIT (*t))
 			    {			 
-			      error ("`custom-%s=' argument requires "
-				     "numeric digits", N2FPU_NAME (code));
+			      error ("%<custom-%s=%> argument should be "
+				     "a non-negative integer", N2FPU_NAME (code));
 			      return false;
 			    }
 			}
@@ -5403,8 +5433,8 @@ nios2_label_align (rtx label)
   int n = CODE_LABEL_NUMBER (label);
 
   if (label_align && n >= min_labelno && n <= max_labelno)
-    return MAX (label_align[n - min_labelno], align_labels_log);
-  return align_labels_log;
+    return MAX (label_align[n - min_labelno], align_labels.levels[0].log);
+  return align_labels.levels[0].log;
 }
 
 /* Implement ADJUST_REG_ALLOC_ORDER.  We use the default ordering
@@ -5571,6 +5601,9 @@ nios2_adjust_reg_alloc_order (void)
 
 #undef TARGET_CONSTANT_ALIGNMENT
 #define TARGET_CONSTANT_ALIGNMENT constant_alignment_word_strings
+
+#undef TARGET_HAVE_SPECULATION_SAFE_VALUE
+#define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -64,7 +64,7 @@ spu_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
       if (ident)
 	{
 	  enum rid rid_code = (enum rid)(ident->rid_code);
-	  if (ident->type == NT_MACRO)
+	  if (cpp_macro_p (ident))
 	    {
 	      (void) cpp_get_token (pfile);
 	      tok = cpp_peek_token (pfile, 0);

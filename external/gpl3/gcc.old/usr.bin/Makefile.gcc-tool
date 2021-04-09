@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gcc-tool,v 1.6 2019/09/26 08:03:59 mrg Exp $
+#	$NetBSD: Makefile.gcc-tool,v 1.7 2021/04/09 23:15:51 mrg Exp $
 
 PROG=	gcc-${GCC_TOOL}
 SRCS=	gcc-ar.c file-find.c

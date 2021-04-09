@@ -1,5 +1,5 @@
 /* Induction variable canonicalization and loop peeling.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,6 +63,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-inline.h"
 #include "tree-cfgcleanup.h"
 #include "builtins.h"
+#include "tree-ssa-sccvn.h"
 
 /* Specifies types of loops that may be unrolled.  */
 
@@ -691,7 +692,7 @@ try_unroll_loop_completely (struct loop *loop,
 			    edge exit, tree niter, bool may_be_zero,
 			    enum unroll_level ul,
 			    HOST_WIDE_INT maxiter,
-			    location_t locus, bool allow_peel)
+			    dump_user_location_t locus, bool allow_peel)
 {
   unsigned HOST_WIDE_INT n_unroll = 0;
   bool n_unroll_found = false;
@@ -717,7 +718,7 @@ try_unroll_loop_completely (struct loop *loop,
       if (edge_to_cancel == exit)
 	edge_to_cancel = EDGE_SUCC (exit->src, 1);
     }
-  /* We do not know the number of iterations and thus we can not eliminate
+  /* We do not know the number of iterations and thus we cannot eliminate
      the EXIT edge.  */
   else
     exit = NULL;
@@ -729,7 +730,7 @@ try_unroll_loop_completely (struct loop *loop,
     {
       n_unroll = maxiter;
       n_unroll_found = true;
-      /* Loop terminates before the IV variable test, so we can not
+      /* Loop terminates before the IV variable test, so we cannot
 	 remove it in the last iteration.  */
       edge_to_cancel = NULL;
     }
@@ -1138,10 +1139,10 @@ try_peel_loop (struct loop *loop,
     if (e->src != loop->latch)
       {
 	if (e->src->count.initialized_p ())
-	  entry_count = e->src->count + e->src->count;
+	  entry_count += e->src->count;
 	gcc_assert (!flow_bb_inside_loop_p (loop, e->src));
       }
-  profile_probability p = profile_probability::very_unlikely ();
+  profile_probability p;
   p = entry_count.probability_in (loop->header->count);
   scale_loop_profile (loop, p, 0);
   bitmap_set_bit (peeled_loops, loop->num);
@@ -1162,7 +1163,7 @@ canonicalize_loop_induction_variables (struct loop *loop,
   tree niter;
   HOST_WIDE_INT maxiter;
   bool modified = false;
-  location_t locus = UNKNOWN_LOCATION;
+  dump_user_location_t locus;
   struct tree_niter_desc niter_desc;
   bool may_be_zero = false;
 
@@ -1177,7 +1178,7 @@ canonicalize_loop_induction_variables (struct loop *loop,
 	= niter_desc.may_be_zero && !integer_zerop (niter_desc.may_be_zero);
     }
   if (TREE_CODE (niter) == INTEGER_CST)
-    locus = gimple_location_safe (last_stmt (exit->src));
+    locus = last_stmt (exit->src);
   else
     {
       /* For non-constant niter fold may_be_zero into niter again.  */
@@ -1204,7 +1205,7 @@ canonicalize_loop_induction_variables (struct loop *loop,
 	niter = find_loop_niter_by_eval (loop, &exit);
 
       if (exit)
-        locus = gimple_location_safe (last_stmt (exit->src));
+        locus = last_stmt (exit->src);
 
       if (TREE_CODE (niter) != INTEGER_CST)
 	exit = NULL;
@@ -1318,50 +1319,6 @@ canonicalize_induction_variables (void)
   return 0;
 }
 
-/* Propagate constant SSA_NAMEs defined in basic block BB.  */
-
-static void
-propagate_constants_for_unrolling (basic_block bb)
-{
-  /* Look for degenerate PHI nodes with constant argument.  */
-  for (gphi_iterator gsi = gsi_start_phis (bb); !gsi_end_p (gsi); )
-    {
-      gphi *phi = gsi.phi ();
-      tree result = gimple_phi_result (phi);
-      tree arg = gimple_phi_arg_def (phi, 0);
-
-      if (! SSA_NAME_OCCURS_IN_ABNORMAL_PHI (result)
-	  && gimple_phi_num_args (phi) == 1
-	  && CONSTANT_CLASS_P (arg))
-	{
-	  replace_uses_by (result, arg);
-	  gsi_remove (&gsi, true);
-	  release_ssa_name (result);
-	}
-      else
-	gsi_next (&gsi);
-    }
-
-  /* Look for assignments to SSA names with constant RHS.  */
-  for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi); )
-    {
-      gimple *stmt = gsi_stmt (gsi);
-      tree lhs;
-
-      if (is_gimple_assign (stmt)
-	  && TREE_CODE_CLASS (gimple_assign_rhs_code (stmt)) == tcc_constant
-	  && (lhs = gimple_assign_lhs (stmt), TREE_CODE (lhs) == SSA_NAME)
-	  && !SSA_NAME_OCCURS_IN_ABNORMAL_PHI (lhs))
-	{
-	  replace_uses_by (lhs, gimple_assign_rhs1 (stmt));
-	  gsi_remove (&gsi, true);
-	  release_ssa_name (lhs);
-	}
-      else
-	gsi_next (&gsi);
-    }
-}
-
 /* Process loops from innermost to outer, stopping at the innermost
    loop we unrolled.  */
 
@@ -1378,17 +1335,37 @@ tree_unroll_loops_completely_1 (bool may_increase_size, bool unroll_outer,
   /* Process inner loops first.  Don't walk loops added by the recursive
      calls because SSA form is not up-to-date.  They can be handled in the
      next iteration.  */
+  bitmap child_father_bbs = NULL;
   for (inner = loop->inner; inner != NULL; inner = inner->next)
     if ((unsigned) inner->num < num)
-      changed |= tree_unroll_loops_completely_1 (may_increase_size,
-						 unroll_outer, father_bbs,
-						 inner);
+      {
+	if (!child_father_bbs)
+	  child_father_bbs = BITMAP_ALLOC (NULL);
+	if (tree_unroll_loops_completely_1 (may_increase_size, unroll_outer,
+					    child_father_bbs, inner))
+	  {
+	    bitmap_ior_into (father_bbs, child_father_bbs);
+	    bitmap_clear (child_father_bbs);
+	    changed = true;
+	  }
+      }
+  if (child_father_bbs)
+    BITMAP_FREE (child_father_bbs);
 
   /* If we changed an inner loop we cannot process outer loops in this
      iteration because SSA form is not up-to-date.  Continue with
      siblings of outer loops instead.  */
   if (changed)
-    return true;
+    {
+      /* If we are recorded as father clear all other fathers that
+         are necessarily covered already to avoid redundant work.  */
+      if (bitmap_bit_p (father_bbs, loop->header->index))
+	{
+	  bitmap_clear (father_bbs);
+	  bitmap_set_bit (father_bbs, loop->header->index);
+	}
+      return true;
+    }
 
   /* Don't unroll #pragma omp simd loops until the vectorizer
      attempts to vectorize those.  */
@@ -1418,7 +1395,13 @@ tree_unroll_loops_completely_1 (bool may_increase_size, bool unroll_outer,
 	 computations; otherwise, the size might blow up before the
 	 iteration is complete and the IR eventually cleaned up.  */
       if (loop_outer (loop_father))
-	bitmap_set_bit (father_bbs, loop_father->header->index);
+	{
+	  /* Once we process our father we will have processed
+	     the fathers of our children as well, so avoid doing
+	     redundant work and clear fathers we've gathered sofar.  */
+	  bitmap_clear (father_bbs);
+	  bitmap_set_bit (father_bbs, loop_father->header->index);
+	}
 
       return true;
     }
@@ -1460,7 +1443,7 @@ tree_unroll_loops_completely (bool may_increase_size, bool unroll_outer)
 
           unloop_loops (loop_closed_ssa_invalidated, &irred_invalidated);
 
-	  /* We can not use TODO_update_ssa_no_phi because VOPS gets confused.  */
+	  /* We cannot use TODO_update_ssa_no_phi because VOPS gets confused.  */
 	  if (loop_closed_ssa_invalidated
 	      && !bitmap_empty_p (loop_closed_ssa_invalidated))
             rewrite_into_loop_closed_ssa (loop_closed_ssa_invalidated,
@@ -1486,10 +1469,14 @@ tree_unroll_loops_completely (bool may_increase_size, bool unroll_outer)
 	  EXECUTE_IF_SET_IN_BITMAP (fathers, 0, i, bi)
 	    {
 	      loop_p father = get_loop (cfun, i);
-	      basic_block *body = get_loop_body_in_dom_order (father);
-	      for (unsigned j = 0; j < father->num_nodes; j++)
-		propagate_constants_for_unrolling (body[j]);
-	      free (body);
+	      bitmap exit_bbs = BITMAP_ALLOC (NULL);
+	      loop_exit *exit = father->exits->next;
+	      while (exit->e)
+		{
+		  bitmap_set_bit (exit_bbs, exit->e->dest->index);
+		  exit = exit->next;
+		}
+	      do_rpo_vn (cfun, loop_preheader_edge (father), exit_bbs);
 	    }
 	  BITMAP_FREE (fathers);
 

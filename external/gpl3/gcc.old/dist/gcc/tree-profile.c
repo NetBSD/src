@@ -1,5 +1,5 @@
 /* Calculate branch probabilities, and basic block execution counts.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
    Contributed by James E. Wilson, UC Berkeley/Cygnus Support;
    based on some ideas from Dain Samples of UC Berkeley.
    Further mangling by Bob Manson, Cygnus Support.
@@ -53,6 +53,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "stringpool.h"
 #include "attribs.h"
 #include "tree-pretty-print.h"
+#include "langhooks.h"
+#include "stor-layout.h"
+#include "xregex.h"
 
 static GTY(()) tree gcov_type_node;
 static GTY(()) tree tree_interval_profiler_fn;
@@ -64,9 +67,9 @@ static GTY(()) tree tree_ior_profiler_fn;
 static GTY(()) tree tree_time_profiler_counter;
 
 
-static GTY(()) tree ic_void_ptr_var;
-static GTY(()) tree ic_gcov_type_ptr_var;
-static GTY(()) tree ptr_void;
+static GTY(()) tree ic_tuple_var;
+static GTY(()) tree ic_tuple_counters_field;
+static GTY(()) tree ic_tuple_callee_field;
 
 /* Do initialization work for the edge profiler.  */
 
@@ -80,39 +83,35 @@ init_ic_make_global_vars (void)
 {
   tree gcov_type_ptr;
 
-  ptr_void = build_pointer_type (void_type_node);
-
-  ic_void_ptr_var
-    = build_decl (UNKNOWN_LOCATION, VAR_DECL,
-		  get_identifier (
-			  (PARAM_VALUE (PARAM_INDIR_CALL_TOPN_PROFILE) ?
-			   "__gcov_indirect_call_topn_callee" :
-			   "__gcov_indirect_call_callee")),
-		  ptr_void);
-  TREE_PUBLIC (ic_void_ptr_var) = 1;
-  DECL_EXTERNAL (ic_void_ptr_var) = 1;
-  TREE_STATIC (ic_void_ptr_var) = 1;
-  DECL_ARTIFICIAL (ic_void_ptr_var) = 1;
-  DECL_INITIAL (ic_void_ptr_var) = NULL;
-  if (targetm.have_tls)
-    set_decl_tls_model (ic_void_ptr_var, decl_default_tls_model (ic_void_ptr_var));
-
   gcov_type_ptr = build_pointer_type (get_gcov_type ());
 
-  ic_gcov_type_ptr_var
+  tree tuple_type = lang_hooks.types.make_type (RECORD_TYPE);
+
+  /* callee */
+  ic_tuple_callee_field = build_decl (BUILTINS_LOCATION, FIELD_DECL, NULL_TREE,
+				      ptr_type_node);
+
+  /* counters */
+  ic_tuple_counters_field = build_decl (BUILTINS_LOCATION, FIELD_DECL,
+					NULL_TREE, gcov_type_ptr);
+  DECL_CHAIN (ic_tuple_counters_field) = ic_tuple_callee_field;
+
+  finish_builtin_struct (tuple_type, "indirect_call_tuple",
+			 ic_tuple_counters_field, NULL_TREE);
+
+  ic_tuple_var
     = build_decl (UNKNOWN_LOCATION, VAR_DECL,
 		  get_identifier (
 			  (PARAM_VALUE (PARAM_INDIR_CALL_TOPN_PROFILE) ?
-			   "__gcov_indirect_call_topn_counters" :
-			   "__gcov_indirect_call_counters")),
-		  gcov_type_ptr);
-  TREE_PUBLIC (ic_gcov_type_ptr_var) = 1;
-  DECL_EXTERNAL (ic_gcov_type_ptr_var) = 1;
-  TREE_STATIC (ic_gcov_type_ptr_var) = 1;
-  DECL_ARTIFICIAL (ic_gcov_type_ptr_var) = 1;
-  DECL_INITIAL (ic_gcov_type_ptr_var) = NULL;
+			   "__gcov_indirect_call_topn" :
+			   "__gcov_indirect_call")),
+		  tuple_type);
+  TREE_PUBLIC (ic_tuple_var) = 1;
+  DECL_ARTIFICIAL (ic_tuple_var) = 1;
+  DECL_INITIAL (ic_tuple_var) = NULL;
+  DECL_EXTERNAL (ic_tuple_var) = 1;
   if (targetm.have_tls)
-    set_decl_tls_model (ic_gcov_type_ptr_var, decl_default_tls_model (ic_gcov_type_ptr_var));
+    set_decl_tls_model (ic_tuple_var, decl_default_tls_model (ic_tuple_var));
 }
 
 /* Create the type and function decls for the interface with gcov.  */
@@ -185,9 +184,9 @@ gimple_init_gcov_profiler (void)
       ic_profiler_fn_type
 	       = build_function_type_list (void_type_node,
 					  gcov_type_node,
-					  ptr_void,
+					  ptr_type_node,
 					  NULL_TREE);
-      profiler_fn_name = "__gcov_indirect_call_profiler_v2";
+      profiler_fn_name = "__gcov_indirect_call_profiler_v3";
       if (PARAM_VALUE (PARAM_INDIR_CALL_TOPN_PROFILE))
 	profiler_fn_name = "__gcov_indirect_call_topn_profiler";
 
@@ -388,22 +387,29 @@ gimple_gen_ic_profiler (histogram_value value, unsigned tag, unsigned base)
 
   /* Insert code:
 
-    stmt1: __gcov_indirect_call_counters = get_relevant_counter_ptr ();
+    stmt1: __gcov_indirect_call.counters = get_relevant_counter_ptr ();
     stmt2: tmp1 = (void *) (indirect call argument value)
-    stmt3: __gcov_indirect_call_callee = tmp1;
+    stmt3: __gcov_indirect_call.callee = tmp1;
 
     Example:
       f_1 = foo;
-      __gcov_indirect_call_counters = &__gcov4.main[0];
+      __gcov_indirect_call.counters = &__gcov4.main[0];
       PROF_9 = f_1;
       __gcov_indirect_call_callee = PROF_9;
       _4 = f_1 ();
    */
 
-  stmt1 = gimple_build_assign (ic_gcov_type_ptr_var, ref_ptr);
-  tmp1 = make_temp_ssa_name (ptr_void, NULL, "PROF");
+  tree gcov_type_ptr = build_pointer_type (get_gcov_type ());
+
+  tree counter_ref = build3 (COMPONENT_REF, gcov_type_ptr,
+			     ic_tuple_var, ic_tuple_counters_field, NULL_TREE);
+
+  stmt1 = gimple_build_assign (counter_ref, ref_ptr);
+  tmp1 = make_temp_ssa_name (ptr_type_node, NULL, "PROF");
   stmt2 = gimple_build_assign (tmp1, unshare_expr (value->hvalue.value));
-  stmt3 = gimple_build_assign (ic_void_ptr_var, gimple_assign_lhs (stmt2));
+  tree callee_ref = build3 (COMPONENT_REF, ptr_type_node,
+			     ic_tuple_var, ic_tuple_callee_field, NULL_TREE);
+  stmt3 = gimple_build_assign (callee_ref, tmp1);
 
   gsi_insert_before (&gsi, stmt1, GSI_SAME_STMT);
   gsi_insert_before (&gsi, stmt2, GSI_SAME_STMT);
@@ -453,15 +459,18 @@ gimple_gen_ic_func_profiler (void)
   /* Insert code:
 
      if (__gcov_indirect_call_callee != NULL)
-       __gcov_indirect_call_profiler_v2 (profile_id, &current_function_decl);
+       __gcov_indirect_call_profiler_v3 (profile_id, &current_function_decl);
 
-     The function __gcov_indirect_call_profiler_v2 is responsible for
+     The function __gcov_indirect_call_profiler_v3 is responsible for
      resetting __gcov_indirect_call_callee to NULL.  */
 
   gimple_stmt_iterator gsi = gsi_start_bb (cond_bb);
-  void0 = build_int_cst (build_pointer_type (void_type_node), 0);
+  void0 = build_int_cst (ptr_type_node, 0);
 
-  tree ref = force_gimple_operand_gsi (&gsi, ic_void_ptr_var, true, NULL_TREE,
+  tree callee_ref = build3 (COMPONENT_REF, ptr_type_node,
+			    ic_tuple_var, ic_tuple_callee_field, NULL_TREE);
+
+  tree ref = force_gimple_operand_gsi (&gsi, callee_ref, true, NULL_TREE,
 				       true, GSI_SAME_STMT);
 
   gcond *cond = gimple_build_cond (NE_EXPR, ref,
@@ -602,6 +611,82 @@ gimple_gen_ior_profiler (histogram_value value, unsigned tag, unsigned base)
   gsi_insert_before (&gsi, call, GSI_NEW_STMT);
 }
 
+static vec<regex_t> profile_filter_files;
+static vec<regex_t> profile_exclude_files;
+
+/* Parse list of provided REGEX (separated with semi-collon) and
+   create expressions (of type regex_t) and save them into V vector.
+   If there is a regular expression parsing error, error message is
+   printed for FLAG_NAME.  */
+
+static void
+parse_profile_filter (const char *regex, vec<regex_t> *v,
+		      const char *flag_name)
+{
+  v->create (4);
+  if (regex != NULL)
+    {
+      char *str = xstrdup (regex);
+      for (char *p = strtok (str, ";"); p != NULL; p = strtok (NULL, ";"))
+	{
+	  regex_t r;
+	  if (regcomp (&r, p, REG_EXTENDED | REG_NOSUB) != 0)
+	    {
+	      error ("invalid regular expression %qs in %qs",
+		     p, flag_name);
+	      return;
+	    }
+
+	  v->safe_push (r);
+	}
+    }
+}
+
+/* Parse values of -fprofile-filter-files and -fprofile-exclude-files
+   options.  */
+
+static void
+parse_profile_file_filtering ()
+{
+  parse_profile_filter (flag_profile_filter_files, &profile_filter_files,
+			"-fprofile-filter-files");
+  parse_profile_filter (flag_profile_exclude_files, &profile_exclude_files,
+			"-fprofile-exclude-files");
+}
+
+/* Parse vectors of regular expressions.  */
+
+static void
+release_profile_file_filtering ()
+{
+  profile_filter_files.release ();
+  profile_exclude_files.release ();
+}
+
+/* Return true when FILENAME should be instrumented based on
+   -fprofile-filter-files and -fprofile-exclude-files options.  */
+
+static bool
+include_source_file_for_profile (const char *filename)
+{
+  /* First check whether file is included in flag_profile_exclude_files.  */
+  for (unsigned i = 0; i < profile_exclude_files.length (); i++)
+    if (regexec (&profile_exclude_files[i],
+		 filename, 0, NULL, 0) == REG_NOERROR)
+      return false;
+
+  /* For non-empty flag_profile_filter_files include only files matching a
+     regex in the flag.  */
+  if (profile_filter_files.is_empty ())
+    return true;
+
+  for (unsigned i = 0; i < profile_filter_files.length (); i++)
+    if (regexec (&profile_filter_files[i], filename, 0, NULL, 0) == REG_NOERROR)
+      return true;
+
+  return false;
+}
+
 #ifndef HAVE_sync_compare_and_swapsi
 #define HAVE_sync_compare_and_swapsi 0
 #endif
@@ -650,6 +735,7 @@ tree_profiling (void)
   gcc_assert (symtab->state == IPA_SSA);
 
   init_node_map (true);
+  parse_profile_file_filtering ();
 
   FOR_EACH_DEFINED_FUNCTION (node)
     {
@@ -671,9 +757,13 @@ tree_profiling (void)
 	  && flag_test_coverage)
 	continue;
 
+      const char *file = LOCATION_FILE (DECL_SOURCE_LOCATION (node->decl));
+      if (!include_source_file_for_profile (file))
+	continue;
+
       if (node->thunk.thunk_p)
 	{
-	  /* We can not expand variadic thunks to Gimple.  */
+	  /* We cannot expand variadic thunks to Gimple.  */
 	  if (stdarg_p (TREE_TYPE (node->decl)))
 	    continue;
 	  thunk = true;
@@ -719,6 +809,8 @@ tree_profiling (void)
       free_dominance_info (CDI_POST_DOMINATORS);
       pop_cfun ();
     }
+
+  release_profile_file_filtering ();
 
   /* Drop pure/const flags from instrumented functions.  */
   if (profile_arc_flag || flag_test_coverage)

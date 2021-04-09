@@ -1,5 +1,5 @@
 /* Back-propagation of usage information to definitions.
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -380,6 +380,9 @@ backprop::process_builtin_call_use (gcall *call, tree rhs, usage_info *info)
 
     CASE_CFN_FMA:
     CASE_CFN_FMA_FN:
+    case CFN_FMS:
+    case CFN_FNMA:
+    case CFN_FNMS:
       /* In X * X + Y, where Y is distinct from X, the sign of X doesn't
 	 matter.  */
       if (gimple_call_arg (call, 0) == rhs
@@ -410,6 +413,7 @@ backprop::process_assign_use (gassign *assign, tree rhs, usage_info *info)
   switch (gimple_assign_rhs_code (assign))
     {
     case ABS_EXPR:
+    case ABSU_EXPR:
       /* The sign of the input doesn't matter.  */
       info->flags.ignore_sign = true;
       break;
@@ -423,15 +427,6 @@ backprop::process_assign_use (gassign *assign, tree rhs, usage_info *info)
 	  if (lhs_info)
 	    *info = *lhs_info;
 	}
-      break;
-
-    case FMA_EXPR:
-      /* In X * X + Y, where Y is distinct from X, the sign of X doesn't
-	 matter.  */
-      if (gimple_assign_rhs1 (assign) == rhs
-	  && gimple_assign_rhs2 (assign) == rhs
-	  && gimple_assign_rhs3 (assign) != rhs)
-	info->flags.ignore_sign = true;
       break;
 
     case MULT_EXPR:
@@ -692,6 +687,7 @@ strip_sign_op_1 (tree rhs)
     switch (gimple_assign_rhs_code (assign))
       {
       case ABS_EXPR:
+      case ABSU_EXPR:
       case NEGATE_EXPR:
 	return gimple_assign_rhs1 (assign);
 

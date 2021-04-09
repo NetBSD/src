@@ -1,5 +1,5 @@
 /* Conversion of SESE regions to Polyhedra.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@amd.com>.
 
 This file is part of GCC.
@@ -57,14 +57,6 @@ along with GCC; see the file COPYING3.  If not see
 #include <isl/val.h>
 
 #include "graphite.h"
-
-/* Assigns to RES the value of the INTEGER_CST T.  */
-
-static inline void
-tree_int_to_gmp (tree t, mpz_t res)
-{
-  wi::to_mpz (wi::to_wide (t), res, TYPE_SIGN (TREE_TYPE (t)));
-}
 
 /* Return an isl identifier for the polyhedral basic block PBB.  */
 
@@ -272,7 +264,8 @@ extract_affine (scop_p s, tree e, __isl_take isl_space *space)
       lhs = extract_affine (s, integer_minus_one_node, isl_space_copy (space));
       rhs = extract_affine (s, TREE_OPERAND (e, 0), space);
       res = isl_pw_aff_sub (lhs, rhs);
-      break;
+      /* We need to always wrap the result of a bitwise operation.  */
+      return wrap (res, TYPE_PRECISION (type) - (TYPE_UNSIGNED (type) ? 0 : 1));
 
     case NEGATE_EXPR:
       lhs = extract_affine (s, TREE_OPERAND (e, 0), isl_space_copy (space));
@@ -285,8 +278,8 @@ extract_affine (scop_p s, tree e, __isl_take isl_space *space)
 	gcc_assert (! defined_in_sese_p (e, s->scop_info->region));
 	int dim = parameter_index_in_region (e, s->scop_info);
 	gcc_assert (dim != -1);
-	res = extract_affine_name (dim, space);
-	break;
+	/* No need to wrap a parameter.  */
+	return extract_affine_name (dim, space);
       }
 
     case INTEGER_CST:
@@ -301,11 +294,15 @@ extract_affine (scop_p s, tree e, __isl_take isl_space *space)
 	/* Signed values, even if overflow is undefined, get modulo-reduced.
 	   But only if not all values of the old type fit in the new.  */
 	if (! TYPE_UNSIGNED (type)
-	    && ((TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (e, 0)))
+	    && ((TYPE_UNSIGNED (itype)
 		 && TYPE_PRECISION (type) <= TYPE_PRECISION (itype))
 		|| TYPE_PRECISION (type) < TYPE_PRECISION (itype)))
 	  res = wrap (res, TYPE_PRECISION (type) - 1);
-	break;
+	else if (TYPE_UNSIGNED (type)
+		 && (!TYPE_UNSIGNED (itype)
+		     || TYPE_PRECISION (type) < TYPE_PRECISION (itype)))
+	  res = wrap (res, TYPE_PRECISION (type));
+	return res;
       }
 
     case NON_LVALUE_EXPR:
@@ -317,7 +314,8 @@ extract_affine (scop_p s, tree e, __isl_take isl_space *space)
       break;
     }
 
-  if (TYPE_UNSIGNED (type))
+  /* For all wrapping arithmetic wrap the result.  */
+  if (TYPE_OVERFLOW_WRAPS (type))
     res = wrap (res, TYPE_PRECISION (type));
 
   return res;
@@ -330,7 +328,7 @@ create_pw_aff_from_tree (poly_bb_p pbb, loop_p loop, tree t)
 {
   scop_p scop = PBB_SCOP (pbb);
 
-  t = scalar_evolution_in_region (scop->scop_info->region, loop, t);
+  t = cached_scalar_evolution_in_region (scop->scop_info->region, loop, t);
 
   gcc_assert (!chrec_contains_undetermined (t));
   gcc_assert (!automatically_generated_chrec_p (t));
@@ -784,7 +782,7 @@ add_loop_constraints (scop_p scop, __isl_take isl_set *domain, loop_p loop,
     }
   /* loop_i <= expr_nb_iters */
   gcc_assert (!chrec_contains_undetermined (nb_iters));
-  nb_iters = scalar_evolution_in_region (region, loop, nb_iters);
+  nb_iters = cached_scalar_evolution_in_region (region, loop, nb_iters);
   gcc_assert (!chrec_contains_undetermined (nb_iters));
 
   isl_pw_aff *aff_nb_iters = extract_affine (scop, nb_iters,
@@ -1220,7 +1218,8 @@ build_poly_scop (scop_p scop)
   enum isl_error err = isl_ctx_last_error (scop->isl_context);
   isl_ctx_reset_error (scop->isl_context);
   isl_options_set_on_error (scop->isl_context, old_err);
-  if (err != isl_error_none)
+  if (err != isl_error_none
+      && dump_enabled_p ())
     dump_printf (MSG_MISSED_OPTIMIZATION,
 		 "ISL error while building poly scop\n");
 

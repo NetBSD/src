@@ -1,5 +1,5 @@
 // -*- C++ -*- The GNU C++ exception personality routine.
-// Copyright (C) 2001-2018 Free Software Foundation, Inc.
+// Copyright (C) 2001-2019 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -343,6 +343,7 @@ extern "C"
 #endif
 _Unwind_Reason_Code
 #ifdef __ARM_EABI_UNWINDER__
+__attribute__((target ("general-regs-only")))
 PERSONALITY_FUNCTION (_Unwind_State state,
 		      struct _Unwind_Exception* ue_header,
 		      struct _Unwind_Context* context)

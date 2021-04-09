@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/09/26 08:03:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2021/04/09 23:15:50 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -9,8 +9,3 @@
 
 INCS=		${G_tr1_impl_headers}
 INCSDIR=	/usr/include/g++/tr1_impl
-
-# Get default targets including <bsd.inc.mk>.
-.include <bsd.prog.mk>
-
-.PATH: ${DIST}/libstdc++-v3/include/tr1_impl

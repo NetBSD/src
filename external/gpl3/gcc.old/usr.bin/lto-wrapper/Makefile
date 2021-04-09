@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/07/01 07:54:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2021/04/09 23:16:04 mrg Exp $
 
 NOMAN=1
 PROG=		lto-wrapper

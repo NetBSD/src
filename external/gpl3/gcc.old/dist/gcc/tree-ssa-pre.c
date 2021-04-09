@@ -1,5 +1,5 @@
 /* Full and partial redundancy elimination and code hoisting on SSA GIMPLE.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Daniel Berlin <dan@dberlin.org> and Steven Bosscher
    <stevenb@suse.de>
 
@@ -663,6 +663,7 @@ get_expr_value_id (pre_expr expr)
       id = VN_INFO (PRE_EXPR_NAME (expr))->value_id;
       break;
     case NARY:
+      gcc_assert (!PRE_EXPR_NARY (expr)->predicated_values);
       id = PRE_EXPR_NARY (expr)->value_id;
       break;
     case REFERENCE:
@@ -677,10 +678,10 @@ get_expr_value_id (pre_expr expr)
   return id;
 }
 
-/* Return a SCCVN valnum (SSA name or constant) for the PRE value-id VAL.  */
+/* Return a VN valnum (SSA name or constant) for the PRE value-id VAL.  */
 
 static tree
-sccvn_valnum_from_value_id (unsigned int val)
+vn_valnum_from_value_id (unsigned int val)
 {
   bitmap_iterator bi;
   unsigned int i;
@@ -822,12 +823,6 @@ bitmap_set_contains_value (bitmap_set_t set, unsigned int value_id)
     return true;
 
   return bitmap_bit_p (&set->values, value_id);
-}
-
-static inline bool
-bitmap_set_contains_expr (bitmap_set_t set, const pre_expr expr)
-{
-  return bitmap_bit_p (&set->expressions, get_expression_id (expr));
 }
 
 /* Return true if two bitmap sets are equal.  */
@@ -1156,6 +1151,7 @@ translate_vuse_through_block (vec<vn_reference_op_s> operands,
   if (gimple_bb (phi) != phiblock)
     return vuse;
 
+  unsigned int cnt = PARAM_VALUE (PARAM_SCCVN_MAX_ALIAS_QUERIES_PER_ACCESS);
   use_oracle = ao_ref_init_from_vn_reference (&ref, set, type, operands);
 
   /* Use the alias-oracle to find either the PHI node in this block,
@@ -1164,8 +1160,10 @@ translate_vuse_through_block (vec<vn_reference_op_s> operands,
   if (gimple_code (phi) == GIMPLE_PHI)
     e = find_edge (block, phiblock);
   else if (use_oracle)
-    while (!stmt_may_clobber_ref_p_1 (phi, &ref))
+    while (cnt > 0
+	   && !stmt_may_clobber_ref_p_1 (phi, &ref))
       {
+	--cnt;
 	vuse = gimple_vuse (phi);
 	phi = SSA_NAME_DEF_STMT (vuse);
 	if (gimple_bb (phi) != phiblock)
@@ -1184,11 +1182,10 @@ translate_vuse_through_block (vec<vn_reference_op_s> operands,
       if (use_oracle)
 	{
 	  bitmap visited = NULL;
-	  unsigned int cnt;
 	  /* Try to find a vuse that dominates this phi node by skipping
 	     non-clobbering statements.  */
-	  vuse = get_continuation_for_phi (phi, &ref, &cnt, &visited, false,
-					   NULL, NULL);
+	  vuse = get_continuation_for_phi (phi, &ref, true,
+					   cnt, &visited, false, NULL, NULL);
 	  if (visited)
 	    BITMAP_FREE (visited);
 	}
@@ -1267,7 +1264,7 @@ get_representative_for (const pre_expr e, basic_block b = NULL)
   switch (e->kind)
     {
     case NAME:
-      return VN_INFO (PRE_EXPR_NAME (e))->valnum;
+      return PRE_EXPR_NAME (e);
     case CONSTANT:
       return PRE_EXPR_CONSTANT (e);
     case NARY:
@@ -1308,9 +1305,9 @@ get_representative_for (const pre_expr e, basic_block b = NULL)
      ???  We should be able to re-use this when we insert the statement
      to compute it.  */
   name = make_temp_ssa_name (get_expr_type (e), gimple_build_nop (), "pretmp");
-  VN_INFO_GET (name)->value_id = value_id;
+  VN_INFO (name)->value_id = value_id;
   VN_INFO (name)->valnum = valnum ? valnum : name;
-  /* ???  For now mark this SSA name for release by SCCVN.  */
+  /* ???  For now mark this SSA name for release by VN.  */
   VN_INFO (name)->needs_insertion = true;
   add_to_value (value_id, get_or_alloc_expr_for_name (name));
   if (dump_file && (dump_flags & TDF_DETAILS))
@@ -1404,7 +1401,22 @@ phi_translate_1 (bitmap_set_t dest,
 			constant = find_leader_in_sets (value_id, dest,
 							AVAIL_OUT (pred));
 			if (constant)
-			  return constant;
+			  {
+			    if (dump_file && (dump_flags & TDF_DETAILS))
+			      {
+				fprintf (dump_file, "simplifying ");
+				print_pre_expr (dump_file, expr);
+				fprintf (dump_file, " translated %d -> %d to ",
+					 phiblock->index, pred->index);
+				PRE_EXPR_NARY (expr) = newnary;
+				print_pre_expr (dump_file, expr);
+				PRE_EXPR_NARY (expr) = nary;
+				fprintf (dump_file, " to ");
+				print_pre_expr (dump_file, constant);
+				fprintf (dump_file, "\n");
+			      }
+			    return constant;
+			  }
 		      }
 		  }
 		else
@@ -1426,7 +1438,7 @@ phi_translate_1 (bitmap_set_t dest,
 	    expr = pre_expr_pool.allocate ();
 	    expr->kind = NARY;
 	    expr->id = 0;
-	    if (nary)
+	    if (nary && !nary->predicated_values)
 	      {
 		PRE_EXPR_NARY (expr) = nary;
 		new_val_id = nary->value_id;
@@ -1664,7 +1676,10 @@ phi_translate (bitmap_set_t dest, pre_expr expr,
     }
 
   /* Translate.  */
+  basic_block saved_valueize_bb = vn_context_bb;
+  vn_context_bb = e->src;
   phitrans = phi_translate_1 (dest, expr, set1, set2, e);
+  vn_context_bb = saved_valueize_bb;
 
   if (slot)
     {
@@ -2414,9 +2429,7 @@ compute_antic (void)
     {
       /* For partial antic we ignore backedges and thus we do not need
          to perform any iteration when we process blocks in postorder.  */
-      int postorder_num
-	= pre_and_rev_post_order_compute (NULL, postorder.address (), false);
-      for (i = postorder_num - 1 ; i >= 0; i--)
+      for (i = postorder.length () - 1; i >= 0; i--)
 	{
 	  basic_block block = BASIC_BLOCK_FOR_FN (cfun, postorder[i]);
 	  compute_partial_antic_aux (block,
@@ -2781,10 +2794,10 @@ create_expression_by_pieces (basic_block block, pre_expr expr,
 	      args.quick_push (arg);
 	    }
 	  gcall *call = gimple_build_call_vec (fn, args);
-	  gimple_call_set_with_bounds (call, currop->with_bounds);
+	  gimple_call_set_fntype (call, currop->type);
 	  if (sc)
 	    gimple_call_set_chain (call, sc);
-	  tree forcedname = make_ssa_name (currop->type);
+	  tree forcedname = make_ssa_name (TREE_TYPE (currop->type));
 	  gimple_call_set_lhs (call, forcedname);
 	  /* There's no CCP pass after PRE which would re-compute alignment
 	     information so make sure we re-materialize this here.  */
@@ -2926,7 +2939,7 @@ create_expression_by_pieces (basic_block block, pre_expr expr,
 
 	  if (forcedname != folded)
 	    {
-	      VN_INFO_GET (forcedname)->valnum = forcedname;
+	      VN_INFO (forcedname)->valnum = forcedname;
 	      VN_INFO (forcedname)->value_id = get_next_value_id ();
 	      nameexpr = get_or_alloc_expr_for_name (forcedname);
 	      add_to_value (VN_INFO (forcedname)->value_id, nameexpr);
@@ -2952,8 +2965,8 @@ create_expression_by_pieces (basic_block block, pre_expr expr,
      the expression may have been represented.  There is no harm in replacing
      here.  */
   value_id = get_expr_value_id (expr);
-  VN_INFO_GET (name)->value_id = value_id;
-  VN_INFO (name)->valnum = sccvn_valnum_from_value_id (value_id);
+  VN_INFO (name)->value_id = value_id;
+  VN_INFO (name)->valnum = vn_valnum_from_value_id (value_id);
   if (VN_INFO (name)->valnum == NULL_TREE)
     VN_INFO (name)->valnum = name;
   gcc_assert (VN_INFO (name)->valnum != NULL_TREE);
@@ -3058,8 +3071,8 @@ insert_into_preds_of_block (basic_block block, unsigned int exprnum,
   temp = make_temp_ssa_name (type, NULL, "prephitmp");
   phi = create_phi_node (temp, block);
 
-  VN_INFO_GET (temp)->value_id = val;
-  VN_INFO (temp)->valnum = sccvn_valnum_from_value_id (val);
+  VN_INFO (temp)->value_id = val;
+  VN_INFO (temp)->valnum = vn_valnum_from_value_id (val);
   if (VN_INFO (temp)->valnum == NULL_TREE)
     VN_INFO (temp)->valnum = temp;
   bitmap_set_bit (inserted_exprs, SSA_NAME_VERSION (temp));
@@ -3303,8 +3316,8 @@ do_pre_regular_insertion (basic_block block, basic_block dom)
 	      gimple_stmt_iterator gsi = gsi_after_labels (block);
 	      gsi_insert_before (&gsi, assign, GSI_NEW_STMT);
 
-	      VN_INFO_GET (temp)->value_id = val;
-	      VN_INFO (temp)->valnum = sccvn_valnum_from_value_id (val);
+	      VN_INFO (temp)->value_id = val;
+	      VN_INFO (temp)->valnum = vn_valnum_from_value_id (val);
 	      if (VN_INFO (temp)->valnum == NULL_TREE)
 		VN_INFO (temp)->valnum = temp;
 	      bitmap_set_bit (inserted_exprs, SSA_NAME_VERSION (temp));
@@ -3745,6 +3758,7 @@ compute_avail (void)
 
       /* Pick a block from the worklist.  */
       block = worklist[--sp];
+      vn_context_bb = block;
 
       /* Initially, the set of available values in BLOCK is that of
 	 its immediate dominator.  */
@@ -3816,7 +3830,7 @@ compute_avail (void)
 	    BB_LIVE_VOP_ON_EXIT (block) = gimple_vdef (stmt);
 
 	  if (gimple_has_side_effects (stmt)
-	      || stmt_could_throw_p (stmt)
+	      || stmt_could_throw_p (cfun, stmt)
 	      || is_gimple_debug (stmt))
 	    continue;
 
@@ -3886,7 +3900,7 @@ compute_avail (void)
 			continue;
 
 		      vn_nary_op_lookup_stmt (stmt, &nary);
-		      if (!nary)
+		      if (!nary || nary->predicated_values)
 			continue;
 
 		      /* If the NARY traps and there was a preceding
@@ -4053,6 +4067,7 @@ compute_avail (void)
 	   son = next_dom_son (CDI_DOMINATORS, son))
 	worklist[sp++] = son;
     }
+  vn_context_bb = NULL;
 
   free (worklist);
 }
@@ -4143,6 +4158,34 @@ public:
 
 }; // class pass_pre
 
+/* Valueization hook for RPO VN when we are calling back to it
+   at ANTIC compute time.  */
+
+static tree
+pre_valueize (tree name)
+{
+  if (TREE_CODE (name) == SSA_NAME)
+    {
+      tree tem = VN_INFO (name)->valnum;
+      if (tem != VN_TOP && tem != name)
+	{
+	  if (TREE_CODE (tem) != SSA_NAME
+	      || SSA_NAME_IS_DEFAULT_DEF (tem))
+	    return tem;
+	  /* We create temporary SSA names for representatives that
+	     do not have a definition (yet) but are not default defs either
+	     assume they are fine to use.  */
+	  basic_block def_bb = gimple_bb (SSA_NAME_DEF_STMT (tem));
+	  if (! def_bb
+	      || dominated_by_p (CDI_DOMINATORS, vn_context_bb, def_bb))
+	    return tem;
+	  /* ??? Now we could look for a leader.  Ideally we'd somehow
+	     expose RPO VN leaders and get rid of AVAIL_OUT as well...  */
+	}
+    }
+  return name;
+}
+
 unsigned int
 pass_pre::execute (function *fun)
 {
@@ -4151,15 +4194,18 @@ pass_pre::execute (function *fun)
   do_partial_partial =
     flag_tree_partial_pre && optimize_function_for_speed_p (fun);
 
-  /* This has to happen before SCCVN runs because
+  /* This has to happen before VN runs because
      loop_optimizer_init may create new phis, etc.  */
   loop_optimizer_init (LOOPS_NORMAL);
   split_critical_edges ();
   scev_initialize ();
+  calculate_dominance_info (CDI_DOMINATORS);
 
-  run_scc_vn (VN_WALK);
+  run_rpo_vn (VN_WALK);
 
   init_pre ();
+
+  vn_valueize = pre_valueize;
 
   /* Insert can get quite slow on an incredibly large number of basic
      blocks due to some quadratic behavior.  Until this behavior is
@@ -4189,8 +4235,9 @@ pass_pre::execute (function *fun)
   statistics_counter_event (fun, "HOIST inserted", pre_stats.hoist_insert);
   statistics_counter_event (fun, "New PHIs", pre_stats.phis);
 
-  /* Remove all the redundant expressions.  */
-  todo |= vn_eliminate (inserted_exprs);
+  todo |= eliminate_with_rpo_vn (inserted_exprs);
+
+  vn_valueize = NULL;
 
   /* Because we don't follow exactly the standard PRE algorithm, and decide not
      to insert PHI nodes sometimes, and because value numbering of casts isn't
@@ -4203,9 +4250,6 @@ pass_pre::execute (function *fun)
   scev_finalize ();
   loop_optimizer_finalize ();
 
-  /* Restore SSA info before tail-merging as that resets it as well.  */
-  scc_vn_restore_ssa_info ();
-
   /* TODO: tail_merge_optimize may merge all predecessors of a block, in which
      case we can merge the block with the remaining predecessor of the block.
      It should either:
@@ -4215,7 +4259,7 @@ pass_pre::execute (function *fun)
      - share the cfg cleanup with fini_pre.  */
   todo |= tail_merge_optimize (todo);
 
-  free_scc_vn ();
+  free_rpo_vn ();
 
   /* Tail merging invalidates the virtual SSA web, together with
      cfg-cleanup opportunities exposed by PRE this will wreck the

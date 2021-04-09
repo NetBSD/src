@@ -1,5 +1,5 @@
 /* Machine description patterns for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -23,8 +23,7 @@ You should have received a copy of the GNU General Public License
         (plus:DI (match_operand:DI 1 "gpc_reg_operand" "b")
                  (high:DI (match_operand 2 "" ""))))]
   "TARGET_MACHO && TARGET_64BIT"
-  "addis %0,%1,ha16(%2)"
-  [(set_attr "length" "4")])
+  "addis %0,%1,ha16(%2)")
 
 (define_insn "movdf_low_si"
   [(set (match_operand:DF 0 "gpc_reg_operand" "=f,!r")
@@ -61,19 +60,10 @@ You should have received a copy of the GNU General Public License
         (mem:DF (lo_sum:DI (match_operand:DI 1 "gpc_reg_operand" "b,b")
                            (match_operand 2 "" ""))))]
   "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_64BIT"
-{
-  switch (which_alternative)
-    {
-      case 0:
-	return "lfd %0,lo16(%2)(%1)";
-      case 1:
-	return "ld %0,lo16(%2)(%1)";
-      default:
-	gcc_unreachable ();
-    }
-}
-  [(set_attr "type" "load")
-   (set_attr "length" "4,4")])
+  "@
+   lfd %0,lo16(%2)(%1)
+   ld %0,lo16(%2)(%1)"
+  [(set_attr "type" "load")])
 
 (define_insn "movdf_low_st_si"
   [(set (mem:DF (lo_sum:SI (match_operand:SI 1 "gpc_reg_operand" "b")
@@ -81,8 +71,7 @@ You should have received a copy of the GNU General Public License
 	(match_operand:DF 0 "gpc_reg_operand" "f"))]
   "TARGET_MACHO && TARGET_HARD_FLOAT && ! TARGET_64BIT"
   "stfd %0,lo16(%2)(%1)"
-  [(set_attr "type" "store")
-   (set_attr "length" "4")])
+  [(set_attr "type" "store")])
 
 (define_insn "movdf_low_st_di"
   [(set (mem:DF (lo_sum:DI (match_operand:DI 1 "gpc_reg_operand" "b")
@@ -90,8 +79,7 @@ You should have received a copy of the GNU General Public License
 	(match_operand:DF 0 "gpc_reg_operand" "f"))]
   "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_64BIT"
   "stfd %0,lo16(%2)(%1)"
-  [(set_attr "type" "store")
-   (set_attr "length" "4")])
+  [(set_attr "type" "store")])
 
 (define_insn "movsf_low_si"
   [(set (match_operand:SF 0 "gpc_reg_operand" "=f,!r")
@@ -101,8 +89,7 @@ You should have received a copy of the GNU General Public License
   "@
    lfs %0,lo16(%2)(%1)
    lwz %0,lo16(%2)(%1)"
-  [(set_attr "type" "load")
-   (set_attr "length" "4")])
+  [(set_attr "type" "load")])
 
 (define_insn "movsf_low_di"
   [(set (match_operand:SF 0 "gpc_reg_operand" "=f,!r")
@@ -112,8 +99,7 @@ You should have received a copy of the GNU General Public License
   "@
    lfs %0,lo16(%2)(%1)
    lwz %0,lo16(%2)(%1)"
-  [(set_attr "type" "load")
-   (set_attr "length" "4")])
+  [(set_attr "type" "load")])
 
 (define_insn "movsf_low_st_si"
   [(set (mem:SF (lo_sum:SI (match_operand:SI 1 "gpc_reg_operand" "b,b")
@@ -123,8 +109,7 @@ You should have received a copy of the GNU General Public License
   "@
    stfs %0,lo16(%2)(%1)
    stw %0,lo16(%2)(%1)"
-  [(set_attr "type" "store")
-   (set_attr "length" "4")])
+  [(set_attr "type" "store")])
 
 (define_insn "movsf_low_st_di"
   [(set (mem:SF (lo_sum:DI (match_operand:DI 1 "gpc_reg_operand" "b,b")
@@ -134,8 +119,9 @@ You should have received a copy of the GNU General Public License
   "@
    stfs %0,lo16(%2)(%1)
    stw %0,lo16(%2)(%1)"
-  [(set_attr "type" "store")
-   (set_attr "length" "4")])
+  [(set_attr "type" "store")])
+
+;; 64-bit MachO load/store support
 
 ;; Mach-O PIC trickery.
 (define_expand "macho_high"
@@ -231,8 +217,7 @@ You should have received a copy of the GNU General Public License
   return "bcl 20,31,%0\n%0:";
 }
   [(set_attr "type" "branch")
-   (set_attr "cannot_copy" "yes")
-   (set_attr "length" "4")])
+   (set_attr "cannot_copy" "yes")])
 
 (define_insn "load_macho_picbase_di"
   [(set (reg:DI LR_REGNO)
@@ -248,8 +233,7 @@ You should have received a copy of the GNU General Public License
   return "bcl 20,31,%0\n%0:";
 }
   [(set_attr "type" "branch")
-   (set_attr "cannot_copy" "yes")
-   (set_attr "length" "4")])
+   (set_attr "cannot_copy" "yes")])
 
 (define_expand "macho_correct_pic"
   [(set (match_operand 0 "")
@@ -289,66 +273,6 @@ You should have received a copy of the GNU General Public License
   "addis %0,%1,ha16(%2-%3)\n\taddi %0,%0,lo16(%2-%3)"
   [(set_attr "length" "8")])
 
-(define_insn "*call_indirect_nonlocal_darwin64"
-  [(call (mem:SI (match_operand:DI 0 "register_operand" "c,*l,c,*l"))
-	 (match_operand 1 "" "g,g,g,g"))
-   (use (match_operand:SI 2 "immediate_operand" "O,O,n,n"))
-   (clobber (reg:SI LR_REGNO))]
-  "DEFAULT_ABI == ABI_DARWIN && TARGET_64BIT"
-{
-  return "b%T0l";
-}
-  [(set_attr "type" "jmpreg,jmpreg,jmpreg,jmpreg")
-   (set_attr "length" "4,4,8,8")])
-
-(define_insn "*call_nonlocal_darwin64"
-  [(call (mem:SI (match_operand:DI 0 "symbol_ref_operand" "s,s"))
-	 (match_operand 1 "" "g,g"))
-   (use (match_operand:SI 2 "immediate_operand" "O,n"))
-   (clobber (reg:SI LR_REGNO))]
-  "(DEFAULT_ABI == ABI_DARWIN)
-   && (INTVAL (operands[2]) & CALL_LONG) == 0"
-{
-#if TARGET_MACHO
-  return output_call(insn, operands, 0, 2);
-#else
-  gcc_unreachable ();
-#endif
-}
-  [(set_attr "type" "branch,branch")
-   (set_attr "length" "4,8")])
-
-(define_insn "*call_value_indirect_nonlocal_darwin64"
-  [(set (match_operand 0 "" "")
-	(call (mem:SI (match_operand:DI 1 "register_operand" "c,*l,c,*l"))
-	      (match_operand 2 "" "g,g,g,g")))
-   (use (match_operand:SI 3 "immediate_operand" "O,O,n,n"))
-   (clobber (reg:SI LR_REGNO))]
-  "DEFAULT_ABI == ABI_DARWIN"
-{
-  return "b%T1l";
-}
-  [(set_attr "type" "jmpreg,jmpreg,jmpreg,jmpreg")
-   (set_attr "length" "4,4,8,8")])
-
-(define_insn "*call_value_nonlocal_darwin64"
-  [(set (match_operand 0 "" "")
-	(call (mem:SI (match_operand:DI 1 "symbol_ref_operand" "s,s"))
-	      (match_operand 2 "" "g,g")))
-   (use (match_operand:SI 3 "immediate_operand" "O,n"))
-   (clobber (reg:SI LR_REGNO))]
-  "(DEFAULT_ABI == ABI_DARWIN)
-   && (INTVAL (operands[3]) & CALL_LONG) == 0"
-{
-#if TARGET_MACHO
-  return output_call(insn, operands, 1, 3);
-#else
-  gcc_unreachable ();
-#endif
-}
-  [(set_attr "type" "branch,branch")
-   (set_attr "length" "4,8")])
-
 (define_expand "reload_macho_picbase"
   [(set (reg:SI LR_REGNO)
         (unspec [(match_operand 0 "")]
@@ -384,8 +308,7 @@ You should have received a copy of the GNU General Public License
     return "bcl 20,31,%0\n%0:";
 }
   [(set_attr "type" "branch")
-   (set_attr "cannot_copy" "yes")
-   (set_attr "length" "4")])
+   (set_attr "cannot_copy" "yes")])
 
 (define_insn "reload_macho_picbase_di"
   [(set (reg:DI LR_REGNO)
@@ -408,8 +331,7 @@ You should have received a copy of the GNU General Public License
     return "bcl 20,31,%0\n%0:";
 }
   [(set_attr "type" "branch")
-   (set_attr "cannot_copy" "yes")
-   (set_attr "length" "4")])
+   (set_attr "cannot_copy" "yes")])
 
 ;; We need to restore the PIC register, at the site of nonlocal label.
 

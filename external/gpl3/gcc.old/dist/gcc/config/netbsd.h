@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-8"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-9"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -180,10 +180,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef TARGET_POSIX_IO
 #define TARGET_POSIX_IO
-
-/* Don't assume anything about the header files.  */
-#undef  NO_IMPLICIT_EXTERN_C
-#define NO_IMPLICIT_EXTERN_C    1
 
 /* Define some types that are the same on all NetBSD platforms,
    making them agree with <machine/ansi.h>.  */

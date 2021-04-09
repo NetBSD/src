@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.  
    Vitesse IQ2000 processors
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -489,7 +489,7 @@ while (0)
 
 #define ASM_OUTPUT_ALIGN(STREAM,LOG)					\
   if ((LOG) != 0)                       				\
-    fprintf (STREAM, "\t.balign %d\n", 1<<(LOG))
+    fprintf (STREAM, "\t.balign %d\n", 1 << (LOG))
 
 
 /* Macros Affecting all Debug Formats.  */

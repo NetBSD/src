@@ -1,5 +1,5 @@
 /* Code for RTL register eliminations.
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -654,6 +654,7 @@ lra_eliminate_regs_1 (rtx_insn *insn, rtx x, machine_mode mem_mode,
       return x;
 
     case CLOBBER:
+    case CLOBBER_HIGH:
     case SET:
       gcc_unreachable ();
 
@@ -804,6 +805,16 @@ mark_not_eliminable (rtx x, machine_mode mem_mode)
 	  if (ep->to_rtx == XEXP (x, 0)
 	      && ep->to_rtx != hard_frame_pointer_rtx)
 	    setup_can_eliminate (ep, false);
+      return;
+
+    case CLOBBER_HIGH:
+      gcc_assert (REG_P (XEXP (x, 0)));
+      gcc_assert (REGNO (XEXP (x, 0)) < FIRST_PSEUDO_REGISTER);
+      for (ep = reg_eliminate;
+	   ep < &reg_eliminate[NUM_ELIMINABLE_REGS];
+	   ep++)
+	if (reg_is_clobbered_by_clobber_high (ep->to_rtx, XEXP (x, 0)))
+	  setup_can_eliminate (ep, false);
       return;
 
     case SET:
@@ -1098,7 +1109,7 @@ eliminate_regs_in_insn (rtx_insn *insn, bool replace_p, bool first_p,
 	    {
 	      /* If we are assigning to a hard register that can be
 		 eliminated, it must be as part of a PARALLEL, since
-		 the code above handles single SETs.  This reg can not
+		 the code above handles single SETs.  This reg cannot
 		 be longer eliminated -- it is forced by
 		 mark_not_eliminable.  */
 	      for (ep = reg_eliminate;
@@ -1225,7 +1236,7 @@ update_reg_eliminate (bitmap insns_with_changed_offsets)
 		     "	Elimination %d to %d is not possible anymore\n",
 		     ep->from, ep->to);
 	  /* If after processing RTL we decides that SP can be used as
-	     a result of elimination, it can not be changed.  */
+	     a result of elimination, it cannot be changed.  */
 	  gcc_assert ((ep->to_rtx != stack_pointer_rtx)
 		      || (ep->from < FIRST_PSEUDO_REGISTER
 			  && fixed_regs [ep->from]));
@@ -1264,13 +1275,13 @@ update_reg_eliminate (bitmap insns_with_changed_offsets)
   CLEAR_HARD_REG_SET (temp_hard_reg_set);
   for (ep = reg_eliminate; ep < &reg_eliminate[NUM_ELIMINABLE_REGS]; ep++)
     if (elimination_map[ep->from] == NULL)
-      SET_HARD_REG_BIT (temp_hard_reg_set, ep->from);
+      add_to_hard_reg_set (&temp_hard_reg_set, Pmode, ep->from);
     else if (elimination_map[ep->from] == ep)
       {
 	/* Prevent the hard register into which we eliminate from
 	   the usage for pseudos.  */
         if (ep->from != ep->to)
-	  SET_HARD_REG_BIT (temp_hard_reg_set, ep->to);
+	  add_to_hard_reg_set (&temp_hard_reg_set, Pmode, ep->to);
 	if (maybe_ne (ep->previous_offset, ep->offset))
 	  {
 	    bitmap_ior_into (insns_with_changed_offsets,
