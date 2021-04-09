@@ -1,5 +1,5 @@
 /* Swing Modulo Scheduling implementation.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
    Contributed by Ayal Zaks and Mustafa Hagog <zaks,mustafa@il.ibm.com>
 
 This file is part of GCC.
@@ -1449,10 +1449,6 @@ sms_schedule (void)
                   fprintf (dump_file, "%" PRId64 "max %" PRId64,
                            (int64_t) trip_count, (int64_t) max_trip_count);
                   fprintf (dump_file, "\n");
-	      	  fprintf (dump_file, "SMS profile-sum-max ");
-	      	  fprintf (dump_file, "%" PRId64,
-	          	   (int64_t) profile_info->sum_max);
-	      	  fprintf (dump_file, "\n");
 	    	}
 	    }
           continue;
@@ -1566,10 +1562,6 @@ sms_schedule (void)
 	      fprintf (dump_file, "SMS loop-count ");
 	      fprintf (dump_file, "%" PRId64,
 	               (int64_t) bb->count.to_gcov_type ());
-	      fprintf (dump_file, "\n");
-	      fprintf (dump_file, "SMS profile-sum-max ");
-	      fprintf (dump_file, "%" PRId64,
-	               (int64_t) profile_info->sum_max);
 	      fprintf (dump_file, "\n");
 	    }
 	  fprintf (dump_file, "SMS doloop\n");

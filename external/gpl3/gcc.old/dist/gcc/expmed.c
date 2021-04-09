@@ -1,6 +1,6 @@
 /* Medium-level subroutines: convert bit-field store and extract
    and shifts, multiplies and divides to rtl instructions.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -2413,6 +2413,10 @@ extract_low_bits (machine_mode mode, machine_mode src_mode, rtx src)
     return NULL_RTX;
 
   src = gen_lowpart (src_int_mode, src);
+  if (!validate_subreg (int_mode, src_int_mode, src,
+			subreg_lowpart_offset (int_mode, src_int_mode)))
+    return NULL_RTX;
+
   src = convert_modes (int_mode, src_int_mode, src, true);
   src = gen_lowpart (mode, src);
   return src;
@@ -3708,7 +3712,7 @@ choose_multiplier (unsigned HOST_WIDE_INT d, int n, int precision,
     {
       unsigned HOST_WIDE_INT mask = (HOST_WIDE_INT_1U << n) - 1;
       *multiplier_ptr = mhigh.to_uhwi () & mask;
-      return mhigh.to_uhwi () >= mask;
+      return mhigh.to_uhwi () > mask;
     }
   else
     {
@@ -3900,7 +3904,7 @@ expmed_mult_highpart_optab (scalar_int_mode mode, rtx op0, rtx op1,
 
 /* Emit code to multiply OP0 and OP1 (where OP1 is an integer constant),
    putting the high half of the result in TARGET if that is convenient,
-   and return where the result is.  If the operation can not be performed,
+   and return where the result is.  If the operation cannot be performed,
    0 is returned.
 
    MODE is the mode of operation and result.
@@ -5488,11 +5492,14 @@ emit_cstore (rtx target, enum insn_code icode, enum rtx_code code,
      If STORE_FLAG_VALUE does not have the sign bit set when
      interpreted in MODE, we can do this conversion as unsigned, which
      is usually more efficient.  */
-  if (GET_MODE_SIZE (int_target_mode) > GET_MODE_SIZE (result_mode))
+  if (GET_MODE_PRECISION (int_target_mode) > GET_MODE_PRECISION (result_mode))
     {
-      convert_move (target, subtarget,
-		    val_signbit_known_clear_p (result_mode,
-					       STORE_FLAG_VALUE));
+      gcc_assert (GET_MODE_PRECISION (result_mode) != 1
+		  || STORE_FLAG_VALUE == 1 || STORE_FLAG_VALUE == -1);
+
+      bool unsignedp = (STORE_FLAG_VALUE >= 0);
+      convert_move (target, subtarget, unsignedp);
+
       op0 = target;
       result_mode = int_target_mode;
     }
@@ -5570,6 +5577,9 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
 
   if (mode == VOIDmode)
     mode = GET_MODE (op0);
+
+  if (CONST_SCALAR_INT_P (op1))
+    canonicalize_comparison (mode, &code, &op1);
 
   /* For some comparisons with 1 and -1, we can convert this to
      comparisons with zero.  This will often produce more opportunities for
@@ -6191,6 +6201,106 @@ emit_store_flag_force (rtx target, enum rtx_code code, rtx op0, rtx op1,
 
   return target;
 }
+
+/* Helper function for canonicalize_cmp_for_target.  Swap between inclusive
+   and exclusive ranges in order to create an equivalent comparison.  See
+   canonicalize_cmp_for_target for the possible cases.  */
+
+static enum rtx_code
+equivalent_cmp_code (enum rtx_code code)
+{
+  switch (code)
+    {
+    case GT:
+      return GE;
+    case GE:
+      return GT;
+    case LT:
+      return LE;
+    case LE:
+      return LT;
+    case GTU:
+      return GEU;
+    case GEU:
+      return GTU;
+    case LTU:
+      return LEU;
+    case LEU:
+      return LTU;
+
+    default:
+      return code;
+    }
+}
+
+/* Choose the more appropiate immediate in scalar integer comparisons.  The
+   purpose of this is to end up with an immediate which can be loaded into a
+   register in fewer moves, if possible.
+
+   For each integer comparison there exists an equivalent choice:
+     i)   a >  b or a >= b + 1
+     ii)  a <= b or a <  b + 1
+     iii) a >= b or a >  b - 1
+     iv)  a <  b or a <= b - 1
+
+   MODE is the mode of the first operand.
+   CODE points to the comparison code.
+   IMM points to the rtx containing the immediate.  *IMM must satisfy
+   CONST_SCALAR_INT_P on entry and continues to satisfy CONST_SCALAR_INT_P
+   on exit.  */
+
+void
+canonicalize_comparison (machine_mode mode, enum rtx_code *code, rtx *imm)
+{
+  if (!SCALAR_INT_MODE_P (mode))
+    return;
+
+  int to_add = 0;
+  enum signop sgn = unsigned_condition_p (*code) ? UNSIGNED : SIGNED;
+
+  /* Extract the immediate value from the rtx.  */
+  wide_int imm_val = rtx_mode_t (*imm, mode);
+
+  if (*code == GT || *code == GTU || *code == LE || *code == LEU)
+    to_add = 1;
+  else if (*code == GE || *code == GEU || *code == LT || *code == LTU)
+    to_add = -1;
+  else
+    return;
+
+  /* Check for overflow/underflow in the case of signed values and
+     wrapping around in the case of unsigned values.  If any occur
+     cancel the optimization.  */
+  wi::overflow_type overflow = wi::OVF_NONE;
+  wide_int imm_modif;
+
+  if (to_add == 1)
+    imm_modif = wi::add (imm_val, 1, sgn, &overflow);
+  else
+    imm_modif = wi::sub (imm_val, 1, sgn, &overflow);
+
+  if (overflow)
+    return;
+
+  /* The following creates a pseudo; if we cannot do that, bail out.  */
+  if (!can_create_pseudo_p ())
+    return;
+
+  rtx reg = gen_rtx_REG (mode, LAST_VIRTUAL_REGISTER + 1);
+  rtx new_imm = immed_wide_int_const (imm_modif, mode);
+
+  rtx_insn *old_rtx = gen_move_insn (reg, *imm);
+  rtx_insn *new_rtx = gen_move_insn (reg, new_imm);
+
+  /* Update the immediate and the code.  */
+  if (insn_cost (old_rtx, true) > insn_cost (new_rtx, true))
+    {
+      *code = equivalent_cmp_code (*code);
+      *imm = new_imm;
+    }
+}
+
+
 
 /* Perform possibly multi-word comparison and conditional jump to LABEL
    if ARG1 OP ARG2 true where ARG1 and ARG2 are of mode MODE.  This is

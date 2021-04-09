@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for IBM RS/6000 POWER running AIX.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -22,6 +22,9 @@
 #define DEFAULT_ABI ABI_AIX
 #undef  TARGET_AIX
 #define TARGET_AIX 1
+
+/* System headers are not C++-aware.  */
+#define SYSTEM_IMPLICIT_EXTERN_C 1
 
 /* Linux64.h wants to redefine TARGET_AIX based on -m64, but it can't be used
    in the #if conditional in options-default.h, so provide another macro.  */

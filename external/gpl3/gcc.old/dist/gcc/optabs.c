@@ -1,5 +1,5 @@
 /* Expand the basic unary and binary arithmetic operations, for GNU compiler.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -257,11 +257,35 @@ expand_widen_pattern_expr (sepops ops, rtx op0, rtx op1, rtx wide_op,
   enum insn_code icode;
   int nops = TREE_CODE_LENGTH (ops->code);
   int op;
+  bool sbool = false;
 
   oprnd0 = ops->op0;
   tmode0 = TYPE_MODE (TREE_TYPE (oprnd0));
-  widen_pattern_optab =
-    optab_for_tree_code (ops->code, TREE_TYPE (oprnd0), optab_default);
+  if (ops->code == VEC_UNPACK_FIX_TRUNC_HI_EXPR
+      || ops->code == VEC_UNPACK_FIX_TRUNC_LO_EXPR)
+    /* The sign is from the result type rather than operand's type
+       for these ops.  */
+    widen_pattern_optab
+      = optab_for_tree_code (ops->code, ops->type, optab_default);
+  else if ((ops->code == VEC_UNPACK_HI_EXPR
+	    || ops->code == VEC_UNPACK_LO_EXPR)
+	   && VECTOR_BOOLEAN_TYPE_P (ops->type)
+	   && VECTOR_BOOLEAN_TYPE_P (TREE_TYPE (oprnd0))
+	   && TYPE_MODE (ops->type) == TYPE_MODE (TREE_TYPE (oprnd0))
+	   && SCALAR_INT_MODE_P (TYPE_MODE (ops->type)))
+    {
+      /* For VEC_UNPACK_{LO,HI}_EXPR if the mode of op0 and result is
+	 the same scalar mode for VECTOR_BOOLEAN_TYPE_P vectors, use
+	 vec_unpacks_sbool_{lo,hi}_optab, so that we can pass in
+	 the pattern number of elements in the wider vector.  */
+      widen_pattern_optab
+	= (ops->code == VEC_UNPACK_HI_EXPR
+	   ? vec_unpacks_sbool_hi_optab : vec_unpacks_sbool_lo_optab);
+      sbool = true;
+    }
+  else
+    widen_pattern_optab
+      = optab_for_tree_code (ops->code, TREE_TYPE (oprnd0), optab_default);
   if (ops->code == WIDEN_MULT_PLUS_EXPR
       || ops->code == WIDEN_MULT_MINUS_EXPR)
     icode = find_widening_optab_handler (widen_pattern_optab,
@@ -275,6 +299,12 @@ expand_widen_pattern_expr (sepops ops, rtx op0, rtx op1, rtx wide_op,
     {
       oprnd1 = ops->op1;
       tmode1 = TYPE_MODE (TREE_TYPE (oprnd1));
+    }
+  else if (sbool)
+    {
+      nops = 2;
+      op1 = GEN_INT (TYPE_VECTOR_SUBPARTS (TREE_TYPE (oprnd0)).to_constant ());
+      tmode1 = tmode0;
     }
 
   /* The last operand is of a wider mode than the rest of the operands.  */
@@ -1069,7 +1099,9 @@ expand_binop_directly (enum insn_code icode, machine_mode mode, optab binoptab,
       || binoptab == vec_pack_usat_optab
       || binoptab == vec_pack_ssat_optab
       || binoptab == vec_pack_ufix_trunc_optab
-      || binoptab == vec_pack_sfix_trunc_optab)
+      || binoptab == vec_pack_sfix_trunc_optab
+      || binoptab == vec_packu_float_optab
+      || binoptab == vec_packs_float_optab)
     {
       /* The mode of the result is different then the mode of the
 	 arguments.  */
@@ -1369,12 +1401,18 @@ expand_binop (machine_mode mode, optab binoptab, rtx op0, rtx op1,
       start_sequence ();
 
       /* Do the actual arithmetic.  */
+      machine_mode op0_mode = GET_MODE (op0);
+      machine_mode op1_mode = GET_MODE (op1);
+      if (op0_mode == VOIDmode)
+	op0_mode = int_mode;
+      if (op1_mode == VOIDmode)
+	op1_mode = int_mode;
       for (i = 0; i < GET_MODE_BITSIZE (int_mode) / BITS_PER_WORD; i++)
 	{
 	  rtx target_piece = operand_subword (target, i, 1, int_mode);
 	  rtx x = expand_binop (word_mode, binoptab,
-				operand_subword_force (op0, i, int_mode),
-				operand_subword_force (op1, i, int_mode),
+				operand_subword_force (op0, i, op0_mode),
+				operand_subword_force (op1, i, op1_mode),
 				target_piece, unsignedp, next_methods);
 
 	  if (x == 0)
@@ -3804,6 +3842,9 @@ prepare_cmp_insn (rtx x, rtx y, enum rtx_code comparison, rtx size,
   /* The other methods are not needed.  */
   gcc_assert (methods == OPTAB_DIRECT || methods == OPTAB_WIDEN
 	      || methods == OPTAB_LIB_WIDEN);
+
+  if (CONST_SCALAR_INT_P (y))
+    canonicalize_comparison (mode, &comparison, &y);
 
   /* If we are optimizing, force expensive constants into a register.  */
   if (CONSTANT_P (x) && optimize
@@ -7228,6 +7269,44 @@ create_convert_operand_from_type (struct expand_operand *op,
 			       TYPE_UNSIGNED (type));
 }
 
+/* Return true if the requirements on operands OP1 and OP2 of instruction
+   ICODE are similar enough for the result of legitimizing OP1 to be
+   reusable for OP2.  OPNO1 and OPNO2 are the operand numbers associated
+   with OP1 and OP2 respectively.  */
+
+static inline bool
+can_reuse_operands_p (enum insn_code icode,
+		      unsigned int opno1, unsigned int opno2,
+		      const struct expand_operand *op1,
+		      const struct expand_operand *op2)
+{
+  /* Check requirements that are common to all types.  */
+  if (op1->type != op2->type
+      || op1->mode != op2->mode
+      || (insn_data[(int) icode].operand[opno1].mode
+	  != insn_data[(int) icode].operand[opno2].mode))
+    return false;
+
+  /* Check the requirements for specific types.  */
+  switch (op1->type)
+    {
+    case EXPAND_OUTPUT:
+      /* Outputs must remain distinct.  */
+      return false;
+
+    case EXPAND_FIXED:
+    case EXPAND_INPUT:
+    case EXPAND_ADDRESS:
+    case EXPAND_INTEGER:
+      return true;
+
+    case EXPAND_CONVERT_TO:
+    case EXPAND_CONVERT_FROM:
+      return op1->unsigned_p == op2->unsigned_p;
+    }
+  gcc_unreachable ();
+}
+
 /* Try to make operands [OPS, OPS + NOPS) match operands [OPNO, OPNO + NOPS)
    of instruction ICODE.  Return true on success, leaving the new operand
    values in the OPS themselves.  Emit no code on failure.  */
@@ -7236,16 +7315,36 @@ bool
 maybe_legitimize_operands (enum insn_code icode, unsigned int opno,
 			   unsigned int nops, struct expand_operand *ops)
 {
-  rtx_insn *last;
-  unsigned int i;
+  rtx_insn *last = get_last_insn ();
+  rtx *orig_values = XALLOCAVEC (rtx, nops);
+  for (unsigned int i = 0; i < nops; i++)
+    {
+      orig_values[i] = ops[i].value;
 
-  last = get_last_insn ();
-  for (i = 0; i < nops; i++)
-    if (!maybe_legitimize_operand (icode, opno + i, &ops[i]))
-      {
-	delete_insns_since (last);
-	return false;
-      }
+      /* First try reusing the result of an earlier legitimization.
+	 This avoids duplicate rtl and ensures that tied operands
+	 remain tied.
+
+	 This search is linear, but NOPS is bounded at compile time
+	 to a small number (current a single digit).  */
+      unsigned int j = 0;
+      for (; j < i; ++j)
+	if (can_reuse_operands_p (icode, opno + j, opno + i, &ops[j], &ops[i])
+	    && rtx_equal_p (orig_values[j], orig_values[i])
+	    && ops[j].value
+	    && insn_operand_matches (icode, opno + i, ops[j].value))
+	  {
+	    ops[i].value = copy_rtx (ops[j].value);
+	    break;
+	  }
+
+      /* Otherwise try legitimizing the operand on its own.  */
+      if (j == i && !maybe_legitimize_operand (icode, opno + i, &ops[i]))
+	{
+	  delete_insns_since (last);
+	  return false;
+	}
+    }
   return true;
 }
 

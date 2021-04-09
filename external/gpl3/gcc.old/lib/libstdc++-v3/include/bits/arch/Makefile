@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2019/09/26 08:03:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2021/04/09 23:15:48 mrg Exp $
 
 # install multilib c++config.h files
 

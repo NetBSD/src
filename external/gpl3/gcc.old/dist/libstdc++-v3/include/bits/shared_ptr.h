@@ -1,6 +1,6 @@
 // shared_ptr and weak_ptr implementation -*- C++ -*-
 
-// Copyright (C) 2007-2018 Free Software Foundation, Inc.
+// Copyright (C) 2007-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -379,37 +379,37 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // 20.7.2.2.7 shared_ptr comparisons
   template<typename _Tp, typename _Up>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator==(const shared_ptr<_Tp>& __a, const shared_ptr<_Up>& __b) noexcept
     { return __a.get() == __b.get(); }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator==(const shared_ptr<_Tp>& __a, nullptr_t) noexcept
     { return !__a; }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator==(nullptr_t, const shared_ptr<_Tp>& __a) noexcept
     { return !__a; }
 
   template<typename _Tp, typename _Up>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator!=(const shared_ptr<_Tp>& __a, const shared_ptr<_Up>& __b) noexcept
     { return __a.get() != __b.get(); }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator!=(const shared_ptr<_Tp>& __a, nullptr_t) noexcept
     { return (bool)__a; }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator!=(nullptr_t, const shared_ptr<_Tp>& __a) noexcept
     { return (bool)__a; }
 
   template<typename _Tp, typename _Up>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<(const shared_ptr<_Tp>& __a, const shared_ptr<_Up>& __b) noexcept
     {
       using _Tp_elt = typename shared_ptr<_Tp>::element_type;
@@ -419,7 +419,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<(const shared_ptr<_Tp>& __a, nullptr_t) noexcept
     {
       using _Tp_elt = typename shared_ptr<_Tp>::element_type;
@@ -427,7 +427,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<(nullptr_t, const shared_ptr<_Tp>& __a) noexcept
     {
       using _Tp_elt = typename shared_ptr<_Tp>::element_type;
@@ -435,53 +435,49 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   template<typename _Tp, typename _Up>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<=(const shared_ptr<_Tp>& __a, const shared_ptr<_Up>& __b) noexcept
     { return !(__b < __a); }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<=(const shared_ptr<_Tp>& __a, nullptr_t) noexcept
     { return !(nullptr < __a); }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<=(nullptr_t, const shared_ptr<_Tp>& __a) noexcept
     { return !(__a < nullptr); }
 
   template<typename _Tp, typename _Up>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>(const shared_ptr<_Tp>& __a, const shared_ptr<_Up>& __b) noexcept
     { return (__b < __a); }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>(const shared_ptr<_Tp>& __a, nullptr_t) noexcept
     { return nullptr < __a; }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>(nullptr_t, const shared_ptr<_Tp>& __a) noexcept
     { return __a < nullptr; }
 
   template<typename _Tp, typename _Up>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>=(const shared_ptr<_Tp>& __a, const shared_ptr<_Up>& __b) noexcept
     { return !(__a < __b); }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>=(const shared_ptr<_Tp>& __a, nullptr_t) noexcept
     { return !(__a < nullptr); }
 
   template<typename _Tp>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>=(nullptr_t, const shared_ptr<_Tp>& __a) noexcept
     { return !(nullptr < __a); }
-
-  template<typename _Tp>
-    struct less<shared_ptr<_Tp>> : public _Sp_less<shared_ptr<_Tp>>
-    { };
 
   // 20.7.2.2.8 shared_ptr specialized algorithms.
   template<typename _Tp>
@@ -735,6 +731,27 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     };
 
   // @} group pointer_abstractions
+
+#if __cplusplus >= 201703L
+  namespace __detail::__variant
+  {
+    template<typename> struct _Never_valueless_alt; // see <variant>
+
+    // Provide the strong exception-safety guarantee when emplacing a
+    // shared_ptr into a variant.
+    template<typename _Tp>
+      struct _Never_valueless_alt<std::shared_ptr<_Tp>>
+      : std::true_type
+      { };
+
+    // Provide the strong exception-safety guarantee when emplacing a
+    // weak_ptr into a variant.
+    template<typename _Tp>
+      struct _Never_valueless_alt<std::weak_ptr<_Tp>>
+      : std::true_type
+      { };
+  }  // namespace __detail::__variant
+#endif // C++17
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

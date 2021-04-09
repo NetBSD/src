@@ -1,6 +1,6 @@
 ; Options for the language- and target-independent parts of the compiler.
 
-; Copyright (C) 2003-2018 Free Software Foundation, Inc.
+; Copyright (C) 2003-2019 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -48,9 +48,10 @@ bool in_lto_p = false
 
 ; This variable is set to non-0 only by LTO front-end.  1 indicates that
 ; the output produced will be used for incrmeental linking (thus weak symbols
-; can still be bound).
+; can still be bound) and 2 indicates that the IL is going to be linked and
+; and output to LTO object file.
 Variable
-int flag_incremental_link = 0
+enum incremental_link flag_incremental_link = INCREMENTAL_LINK_NONE
 
 ; 0 means straightforward implementation of complex divide acceptable.
 ; 1 means wide ranges of inputs must work for complex divide.
@@ -72,23 +73,6 @@ int flag_generate_lto
 ; Nonzero if we should write GIMPLE bytecode for offload compilation.
 Variable
 int flag_generate_offload = 0
-
-; True to warn about any objects definitions whose size is larger
-; than N bytes.  Also want about function definitions whose returned
-; values are larger than N bytes, where N is 'larger_than_size'.
-Variable
-bool warn_larger_than
-
-Variable
-HOST_WIDE_INT larger_than_size
-
-; True to warn about any function whose frame size is larger
-; than N bytes.
-Variable
-bool warn_frame_larger_than
-
-Variable
-HOST_WIDE_INT frame_larger_than_size
 
 ; Nonzero means we should be saving declaration info into a .X file.
 Variable
@@ -253,6 +237,10 @@ Driver Alias(S)
 
 -compile
 Driver Alias(c)
+
+-completion=
+Common Driver Joined Undocumented
+Provide bash completion for options starting with provided string.
 
 -coverage
 Driver Alias(coverage)
@@ -563,8 +551,17 @@ Common Var(warn_attributes) Init(1) Warning
 Warn about inappropriate attribute usage.
 
 Wattribute-alias
-Common Var(warn_attributes) Init(1) Warning
-Warn about type safety and similar errors in attribute alias and related.
+Common Alias(Wattribute_alias=, 1, 0) Warning
+Warn about type safety and similar errors and mismatches in declarations with alias attributes.
+
+Wattribute-alias=
+Common Joined RejectNegative UInteger Var(warn_attribute_alias) Init(1) Warning IntegerRange(0, 2)
+Warn about type safety and similar errors and mismatches in declarations with alias attributes.
+
+Wcannot-profile
+Common Var(warn_cannot_profile) Init(1) Warning
+Warn when profiling instrumentation was requested, but could not be applied to
+a certain function.
 
 Wcast-align
 Common Var(warn_cast_align) Warning
@@ -577,6 +574,14 @@ Warn about pointer casts which increase alignment.
 Wcpp
 Common Var(warn_cpp) Init(1) Warning
 Warn when a #warning directive is encountered.
+
+Wattribute-warning
+Common Var(warn_attribute_warning) Init(1) Warning
+Warn about uses of __attribute__((warning)) declarations.
+
+Wdeprecated
+Common Var(warn_deprecated) Init(1) Warning
+Warn if a deprecated compiler feature, class, method, or field is used.
 
 Wdeprecated-declarations
 Common Var(warn_deprecated_decl) Init(1) Warning
@@ -603,8 +608,8 @@ Common Var(flag_fatal_errors)
 Exit on the first error occurred.
 
 Wframe-larger-than=
-Common RejectNegative Joined UInteger Warning
--Wframe-larger-than=<number>	Warn if a function's stack frame requires more than <number> bytes.
+Common RejectNegative Joined Host_Wide_Int ByteSize Warning Var(warn_frame_larger_than_size) Init(HOST_WIDE_INT_MAX)
+-Wframe-larger-than=<byte-size>	Warn if a function's stack frame requires in excess of <byte-size>.
 
 Wfree-nonheap-object
 Common Var(warn_free_nonheap_object) Init(1) Warning
@@ -633,8 +638,8 @@ Wlarger-than-
 Common RejectNegative Joined Warning Undocumented Alias(Wlarger-than=)
 
 Wlarger-than=
-Common RejectNegative Joined UInteger Warning
--Wlarger-than=<number>	Warn if an object is larger than <number> bytes.
+Common RejectNegative Joined Host_Wide_Int ByteSize Warning Var(warn_larger_than_size) Init(HOST_WIDE_INT_MAX)
+-Wlarger-than=<byte-size>	Warn if an object's size exceeds <byte-size>.
 
 Wnonnull-compare
 Var(warn_nonnull_compare) Warning
@@ -706,8 +711,8 @@ Common Var(warn_stack_protect) Warning
 Warn when not issuing stack smashing protection for some reason.
 
 Wstack-usage=
-Common Joined RejectNegative UInteger Var(warn_stack_usage) Warning
--Wstack-usage=<number>	Warn if stack usage might be larger than specified amount.
+Common Joined RejectNegative Host_Wide_Int ByteSize Var(warn_stack_usage) Warning Init(HOST_WIDE_INT_MAX)
+-Wstack-usage=<byte-size>	Warn if stack usage might exceed <byte-size>.
 
 Wstrict-aliasing
 Common Warning
@@ -817,6 +822,10 @@ Warn when a variable is unused.
 Wcoverage-mismatch
 Common Var(warn_coverage_mismatch) Init(1) Warning
 Warn in case profiles in -fprofile-use do not match.
+
+Wmissing-profile
+Common Var(warn_missing_profile) Init(1) Warning
+Warn in case profiles in -fprofile-use do not exist.
 
 Wvector-operation-performance
 Common Var(warn_vector_operation_performance) Warning
@@ -954,35 +963,35 @@ Common Report Var(flag_aggressive_loop_optimizations) Optimization Init(1)
 Aggressively optimize loops using language constraints.
 
 falign-functions
-Common Report Var(align_functions,0) Optimization UInteger
+Common Report Var(flag_align_functions) Optimization
 Align the start of functions.
 
 falign-functions=
-Common RejectNegative Joined UInteger Var(align_functions) Optimization
+Common RejectNegative Joined Var(str_align_functions) Optimization
 
 flimit-function-alignment
 Common Report Var(flag_limit_function_alignment) Optimization Init(0)
 
 falign-jumps
-Common Report Var(align_jumps,0) Optimization UInteger
+Common Report Var(flag_align_jumps) Optimization
 Align labels which are only reached by jumping.
 
 falign-jumps=
-Common RejectNegative Joined UInteger Var(align_jumps) Optimization
+Common RejectNegative Joined Var(str_align_jumps) Optimization
 
 falign-labels
-Common Report Var(align_labels,0) Optimization UInteger
+Common Report Var(flag_align_labels) Optimization
 Align all labels.
 
 falign-labels=
-Common RejectNegative Joined UInteger Var(align_labels) Optimization
+Common RejectNegative Joined Var(str_align_labels) Optimization
 
 falign-loops
-Common Report Var(align_loops,0) Optimization UInteger
+Common Report Var(flag_align_loops) Optimization
 Align the start of loops.
 
 falign-loops=
-Common RejectNegative Joined UInteger Var(align_loops) Optimization
+Common RejectNegative Joined Var(str_align_loops) Optimization
 
 fargument-alias
 Common Ignore
@@ -1094,7 +1103,7 @@ Common Report Var(flag_caller_saves) Optimization
 Save registers around function calls.
 
 fcheck-data-deps
-Common Report Var(flag_check_data_deps)
+Common Ignore
 This switch is deprecated; do not use.
 
 fcheck-new
@@ -1175,7 +1184,7 @@ List all available debugging counters with their limits and counts.
 
 fdbg-cnt=
 Common RejectNegative Joined Var(common_deferred_options) Defer
--fdbg-cnt=<counter>:<limit>[,<counter>:<limit>,...]	Set the debug counter limit.
+-fdbg-cnt=<counter>[:<lower_limit>]:<upper_limit>[,<counter>:...]	Set the debug counter limit.
 
 fdebug-prefix-map=
 Common Joined RejectNegative Var(common_deferred_options) Defer
@@ -1246,6 +1255,14 @@ fdiagnostics-show-caret
 Common Var(flag_diagnostics_show_caret) Init(1)
 Show the source line with a caret indicating the column.
 
+fdiagnostics-show-labels
+Common Var(flag_diagnostics_show_labels) Init(1)
+Show labels annotating ranges of source code when showing source.
+
+fdiagnostics-show-line-numbers
+Common Var(flag_diagnostics_show_line_numbers) Init(1)
+Show line numbers in the left margin when showing source.
+
 fdiagnostics-color
 Common Alias(fdiagnostics-color=,always,never)
 ;
@@ -1270,6 +1287,23 @@ Enum(diagnostic_color_rule) String(always) Value(DIAGNOSTICS_COLOR_YES)
 EnumValue
 Enum(diagnostic_color_rule) String(auto) Value(DIAGNOSTICS_COLOR_AUTO)
 
+fdiagnostics-format=
+Common Joined RejectNegative Enum(diagnostics_output_format)
+-fdiagnostics-format=[text|json] Select output format.
+
+; Required for these enum values.
+SourceInclude
+diagnostic.h
+
+Enum
+Name(diagnostics_output_format) Type(int)
+
+EnumValue
+Enum(diagnostics_output_format) String(text) Value(DIAGNOSTICS_OUTPUT_FORMAT_TEXT)
+
+EnumValue
+Enum(diagnostics_output_format) String(json) Value(DIAGNOSTICS_OUTPUT_FORMAT_JSON)
+
 fdiagnostics-parseable-fixits
 Common Var(flag_diagnostics_parseable_fixits)
 Print fix-it hints in machine-readable form.
@@ -1281,6 +1315,10 @@ Print fix-it hints to stderr in unified diff format.
 fdiagnostics-show-option
 Common Var(flag_diagnostics_show_option) Init(1)
 Amend appropriate diagnostic messages with the command line option that controls them.
+
+fdiagnostics-minimum-margin-width=
+Common Joined UInteger Var(diagnostics_minimum_margin_width) Init(6)
+Set minimum width of left margin of source code when showing source.
 
 fdisable-
 Common Joined RejectNegative Var(common_deferred_options) Defer
@@ -1489,7 +1527,7 @@ Enum(dwarf_gnat_encodings) String(minimal) Value(DWARF_GNAT_ENCODINGS_MINIMAL)
 
 fgnat-encodings=
 Common Enum(dwarf_gnat_encodings) Joined RejectNegative Report Undocumented Var(gnat_encodings)
--fgnat-encodings=[all|gdb|minimal]	Select the balance between GNAT encodings and standard DWARF emitted in the debug information
+-fgnat-encodings=[all|gdb|minimal]	Select the balance between GNAT encodings and standard DWARF emitted in the debug information.
 
 ; This option is not documented yet as its semantics will change.
 fgraphite
@@ -1715,7 +1753,15 @@ Perform Identical Code Folding for variables.
 
 fipa-reference
 Common Report Var(flag_ipa_reference) Init(0) Optimization
-Discover readonly and non addressable static variables.
+Discover read-only and non addressable static variables.
+
+fipa-reference-addressable
+Common Report Var(flag_ipa_reference_addressable) Init(0) Optimization
+Discover read-only, write-only and non-addressable static variables.
+
+fipa-stack-alignment
+Common Report Var(flag_ipa_stack_alignment) Init(1) Optimization
+Reduce stack alignment on call sites if possible.
 
 fipa-matrix-reorg
 Common Ignore
@@ -1951,6 +1997,10 @@ fopt-info-
 Common Joined RejectNegative Var(common_deferred_options) Defer
 -fopt-info[-<type>=filename]	Dump compiler optimization details.
 
+fsave-optimization-record
+Common Report Var(flag_save_optimization_record) Optimization
+Write a SRCFILE.opt-record.json file detailing what optimizations were performed.
+
 foptimize-register-move
 Common Ignore
 Does nothing. Preserved for backward compatibility.
@@ -2056,6 +2106,14 @@ fprofile-update=
 Common Joined RejectNegative Enum(profile_update) Var(flag_profile_update) Init(PROFILE_UPDATE_SINGLE)
 -fprofile-update=[single|atomic|prefer-atomic]	Set the profile update method.
 
+fprofile-filter-files=
+Common Joined RejectNegative Var(flag_profile_filter_files)
+Instrument only functions from files where names match any regular expression (separated by a semi-colon).
+
+fprofile-exclude-files=
+Common Joined RejectNegative Var(flag_profile_exclude_files)
+Instrument only functions from files where names do not match all the regular expressions (separated by a semi-colon).
+
 Enum
 Name(profile_update) Type(enum profile_update) UnknownError(unknown profile update method %qs)
 
@@ -2132,6 +2190,24 @@ starts and when the destructor finishes.
 
 flifetime-dse=
 Common Joined RejectNegative UInteger Var(flag_lifetime_dse) Optimization IntegerRange(0, 2)
+
+flive-patching
+Common RejectNegative Alias(flive-patching=,inline-clone) Optimization
+
+flive-patching=
+Common Report Joined RejectNegative Enum(live_patching_level) Var(flag_live_patching) Init(LIVE_PATCHING_NONE) Optimization
+-flive-patching=[inline-only-static|inline-clone]	Control IPA
+optimizations to provide a safe compilation for live-patching.  At the same
+time, provides multiple-level control on the enabled IPA optimizations.
+
+Enum
+Name(live_patching_level) Type(enum live_patching_level) UnknownError(unknown Live-Patching Level %qs)
+
+EnumValue
+Enum(live_patching_level) String(inline-only-static) Value(LIVE_PATCHING_INLINE_ONLY_STATIC)
+
+EnumValue
+Enum(live_patching_level) String(inline-clone) Value(LIVE_PATCHING_INLINE_CLONE)
 
 flive-range-shrinkage
 Common Report Var(flag_live_range_shrinkage) Init(0) Optimization
@@ -2709,6 +2785,10 @@ fsplit-loops
 Common Report Var(flag_split_loops) Optimization
 Perform loop splitting.
 
+fversion-loops-for-strides
+Common Report Var(flag_version_loops_for_strides) Optimization
+Version loops based on whether indices have a stride of one.
+
 funwind-tables
 Common Report Var(flag_unwind_tables) Optimization
 Just generate unwind tables for exception handling.
@@ -2720,6 +2800,10 @@ Use the bfd linker instead of the default linker.
 fuse-ld=gold
 Common Driver Negative(fuse-ld=bfd)
 Use the gold linker instead of the default linker.
+
+fuse-ld=lld
+Common Driver Negative(fuse-ld=lld)
+Use the lld LLVM linker instead of the default linker.
 
 fuse-linker-plugin
 Common Undocumented Var(flag_use_linker_plugin)
@@ -2774,7 +2858,6 @@ Enable basic block vectorization (SLP) on trees.
 
 fvect-cost-model=
 Common Joined RejectNegative Enum(vect_cost_model) Var(flag_vect_cost_model) Init(VECT_COST_MODEL_DEFAULT) Optimization
-Specifies the cost model for vectorization.
 -fvect-cost-model=[unlimited|dynamic|cheap]	Specifies the cost model for vectorization.
 
 fsimd-cost-model=
@@ -2892,26 +2975,26 @@ Generate debug information in default format.
 
 gas-loc-support
 Common Driver Var(dwarf2out_as_loc_support) Init(2)
-Assume assembler support for (DWARF2+) .loc directives
+Assume assembler support for (DWARF2+) .loc directives.
 
 gas-locview-support
 Common Driver Var(dwarf2out_as_locview_support) Init(2)
-Assume assembler support for view in (DWARF2+) .loc directives
+Assume assembler support for view in (DWARF2+) .loc directives.
 
 gcoff
-Common Driver Ignore Warn(switch %qs no longer supported)
+Common Driver Deprecated
 Does nothing.  Preserved for backward compatibility.
 
 gcoff1
-Common Driver Ignore Warn(switch %qs no longer supported)
+Common Driver Deprecated
 Does nothing.  Preserved for backward compatibility.
 
 gcoff2
-Common Driver Ignore Warn(switch %qs no longer supported)
+Common Driver Deprecated
 Does nothing.  Preserved for backward compatibility.
 
 gcoff3
-Common Driver Ignore Warn(switch %qs no longer supported)
+Common Driver Deprecated
 Does nothing.  Preserved for backward compatibility.
 
 gcolumn-info
@@ -2932,11 +3015,11 @@ Generate debug information in default extended format.
 
 ginline-points
 Common Driver Var(debug_inline_points) Init(2)
-Generate extended entry point information for inlined functions
+Generate extended entry point information for inlined functions.
 
 ginternal-reset-location-views
 Common Driver Var(debug_internal_reset_location_views) Init(2)
-Compute locview reset points based on insn length estimates
+Compute locview reset points based on insn length estimates.
 
 gno-
 RejectNegative Joined Undocumented
@@ -2977,6 +3060,10 @@ Emit progressive recommended breakpoint locations.
 gstrict-dwarf
 Common Driver Report Var(dwarf_strict) Init(0)
 Don't emit DWARF additions beyond selected version.
+
+gdescribe-dies
+Common Driver Report Var(flag_describe_dies) Init(0)
+Add description attributes to some DWARF DIEs that have no name attribute.
 
 gtoggle
 Common Driver Report Var(flag_gtoggle)
@@ -3047,6 +3134,9 @@ nodefaultlibs
 Driver
 
 nostartfiles
+Driver
+
+nolibc
 Driver
 
 nostdlib

@@ -1,6 +1,6 @@
 // Streambuf iterators
 
-// Copyright (C) 1997-2018 Free Software Foundation, Inc.
+// Copyright (C) 1997-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -120,6 +120,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       ///  Construct start of streambuf iterator.
       istreambuf_iterator(streambuf_type* __s) _GLIBCXX_USE_NOEXCEPT
       : _M_sbuf(__s), _M_c(traits_type::eof()) { }
+
+#if __cplusplus >= 201103L
+      istreambuf_iterator&
+      operator=(const istreambuf_iterator&) noexcept = default;
+#endif
 
       ///  Return the current character pointed to by iterator.  This returns
       ///  streambuf.sgetc().  It cannot be assigned.  NB: The result of

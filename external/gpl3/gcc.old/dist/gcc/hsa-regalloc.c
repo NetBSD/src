@@ -1,5 +1,5 @@
 /* HSAIL IL Register allocation and out-of-SSA.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
    Contributed by Michael Matz <matz@suse.de>
 
 This file is part of GCC.
@@ -27,9 +27,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "dominance.h"
 #include "basic-block.h"
-#include "cfg.h"
-#include "cfganal.h"
 #include "function.h"
+#include "cfganal.h"
+#include "cfg.h"
 #include "bitmap.h"
 #include "dumpfile.h"
 #include "cgraph.h"

@@ -1,5 +1,5 @@
 /* Target Code for ft32
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
    Contributed by FTDI <support@ftdi.com>
 
    This file is part of GCC.
@@ -178,7 +178,7 @@ ft32_print_operand (FILE * file, rtx x, int code)
 
     case 'h':
       if (GET_CODE (operand) != REG)
-        internal_error ("'h' applied to non-register operand");
+	internal_error ("%<h%> applied to non-register operand");
       fprintf (file, "%s", reg_names[REGNO (operand) + 1]);
       return;
 

@@ -1,5 +1,5 @@
 /* Name mangling for the 3.0 -*- C++ -*- ABI.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Written by Alex Samuel <samuel@codesourcery.com>
 
    This file is part of GCC.
@@ -233,7 +233,6 @@ static void write_discriminator (const int);
 static void write_local_name (tree, const tree, const tree);
 static void dump_substitution_candidates (void);
 static tree mangle_decl_string (const tree);
-static int local_class_index (tree);
 static void maybe_check_abi_tags (tree, tree = NULL_TREE, int = 10);
 static bool equal_abi_tags (tree, tree);
 
@@ -1555,26 +1554,6 @@ write_abi_tags (tree tags)
   release_tree_vector (vec);
 }
 
-/* Simplified unique_ptr clone to release a tree vec on exit.  */
-
-struct releasing_vec
-{
-  typedef vec<tree, va_gc> vec_t;
-
-  releasing_vec (vec_t *v): v(v) { }
-  releasing_vec (): v(make_tree_vector ()) { }
-
-  vec_t &operator* () const { return *v; }
-  vec_t *operator-> () const { return v; }
-  vec_t *get () const { return v; }
-  operator vec_t *() const { return v; }
-  tree& operator[] (unsigned i) const { return (*v)[i]; }
-
-  ~releasing_vec() { release_tree_vector (v); }
-private:
-  vec_t *v;
-};
-
 /* True iff the TREE_LISTS T1 and T2 of ABI tags are equivalent.  */
 
 static bool
@@ -1647,7 +1626,7 @@ write_unnamed_type_name (const tree type)
   MANGLE_TRACE_TREE ("unnamed-type-name", type);
 
   if (TYPE_FUNCTION_SCOPE_P (type))
-    discriminator = local_class_index (type);
+    discriminator = discriminator_for_local_entity (TYPE_NAME (type));
   else if (TYPE_CLASS_SCOPE_P (type))
     discriminator = nested_anon_class_index (type);
   else
@@ -1918,58 +1897,25 @@ write_special_name_destructor (const tree dtor)
     }
 }
 
-/* Scan the vector of local classes and return how many others with the
-   same name (or same no name) and context precede ENTITY.  */
-
-static int
-local_class_index (tree entity)
-{
-  int ix, discriminator = 0;
-  tree name = (TYPE_UNNAMED_P (entity) ? NULL_TREE
-	       : TYPE_IDENTIFIER (entity));
-  tree ctx = TYPE_CONTEXT (entity);
-  for (ix = 0; ; ix++)
-    {
-      tree type = (*local_classes)[ix];
-      if (type == entity)
-	return discriminator;
-      if (TYPE_CONTEXT (type) == ctx
-	  && (name ? TYPE_IDENTIFIER (type) == name
-	      : TYPE_UNNAMED_P (type)))
-	++discriminator;
-    }
-  gcc_unreachable ();
-}
-
 /* Return the discriminator for ENTITY appearing inside
-   FUNCTION.  The discriminator is the lexical ordinal of VAR among
-   entities with the same name in the same FUNCTION.  */
+   FUNCTION.  The discriminator is the lexical ordinal of VAR or TYPE among
+   entities with the same name and kind in the same FUNCTION.  */
 
 static int
 discriminator_for_local_entity (tree entity)
 {
-  if (DECL_DISCRIMINATOR_P (entity))
+  if (!DECL_LANG_SPECIFIC (entity))
     {
-      if (DECL_DISCRIMINATOR_SET_P (entity))
-	return DECL_DISCRIMINATOR (entity);
-      else
-	/* The first entity with a particular name doesn't get
-	   DECL_DISCRIMINATOR set up.  */
-	return 0;
+      /* Some decls, like __FUNCTION__, don't need a discriminator.  */
+      gcc_checking_assert (DECL_ARTIFICIAL (entity));
+      return 0;
     }
-  else if (TREE_CODE (entity) == TYPE_DECL)
-    {
-      /* Scan the list of local classes.  */
-      entity = TREE_TYPE (entity);
-
-      /* Lambdas and unnamed types have their own discriminators.  */
-      if (LAMBDA_TYPE_P (entity) || TYPE_UNNAMED_P (entity))
-	return 0;
-
-      return local_class_index (entity);
-    }
+  else if (tree disc = DECL_DISCRIMINATOR (entity))
+    return TREE_INT_CST_LOW (disc);
   else
-    gcc_unreachable ();
+    /* The first entity with a particular name doesn't get
+       DECL_DISCRIMINATOR set up.  */
+    return 0;
 }
 
 /* Return the discriminator for STRING, a string literal used inside
@@ -2067,7 +2013,11 @@ write_local_name (tree function, const tree local_entity,
 	 from <local-name>, so it doesn't try to process the enclosing
 	 function scope again.  */
       write_name (entity, /*ignore_local_scope=*/1);
-      write_discriminator (discriminator_for_local_entity (local_entity));
+      if (DECL_DISCRIMINATOR_P (local_entity)
+	  && !(TREE_CODE (local_entity) == TYPE_DECL
+	       && (LAMBDA_TYPE_P (TREE_TYPE (local_entity))
+		   || TYPE_UNNAMED_P (TREE_TYPE (local_entity)))))
+	write_discriminator (discriminator_for_local_entity (local_entity));
     }
 }
 
@@ -2164,11 +2114,7 @@ write_type (tree type)
       type = TYPE_MAIN_VARIANT (type);
       if (TREE_CODE (type) == FUNCTION_TYPE
 	  || TREE_CODE (type) == METHOD_TYPE)
-	{
-	  type = build_ref_qualified_type (type, type_memfn_rqual (type_orig));
-	  type = build_exception_variant (type,
-					  TYPE_RAISES_EXCEPTIONS (type_orig));
-	}
+	type = cxx_copy_lang_qualifiers (type, type_orig);
 
       /* According to the C++ ABI, some library classes are passed the
 	 same as the scalar type of their single member and use the same
@@ -2536,10 +2482,12 @@ write_builtin_type (tree type)
       break;
 
     case INTEGER_TYPE:
-      /* TYPE may still be wchar_t, char16_t, or char32_t, since that
+      /* TYPE may still be wchar_t, char8_t, char16_t, or char32_t, since that
 	 isn't in integer_type_nodes.  */
       if (type == wchar_type_node)
 	write_char ('w');
+      else if (type == char8_type_node)
+	write_string ("Du");
       else if (type == char16_type_node)
 	write_string ("Ds");
       else if (type == char32_type_node)
@@ -2899,13 +2847,21 @@ write_expression (tree expr)
 {
   enum tree_code code = TREE_CODE (expr);
 
+  if (TREE_CODE (expr) == TARGET_EXPR)
+    {
+      expr = TARGET_EXPR_INITIAL (expr);
+      code = TREE_CODE (expr);
+    }
+
   /* Skip NOP_EXPR and CONVERT_EXPR.  They can occur when (say) a pointer
      argument is converted (via qualification conversions) to another type.  */
   while (CONVERT_EXPR_CODE_P (code)
 	 || location_wrapper_p (expr)
 	 /* Parentheses aren't mangled.  */
 	 || code == PAREN_EXPR
-	 || code == NON_LVALUE_EXPR)
+	 || code == NON_LVALUE_EXPR
+	 || (code == VIEW_CONVERT_EXPR
+	     && TREE_CODE (TREE_OPERAND (expr, 0)) == TEMPLATE_PARM_INDEX))
     {
       expr = TREE_OPERAND (expr, 0);
       code = TREE_CODE (expr);
@@ -3081,7 +3037,7 @@ write_expression (tree expr)
     }
   else if (INDIRECT_REF_P (expr)
 	   && TREE_TYPE (TREE_OPERAND (expr, 0))
-	   && TREE_CODE (TREE_TYPE (TREE_OPERAND (expr, 0))) == REFERENCE_TYPE)
+	   && TYPE_REF_P (TREE_TYPE (TREE_OPERAND (expr, 0))))
     {
       write_expression (TREE_OPERAND (expr, 0));
     }
@@ -3189,18 +3145,58 @@ write_expression (tree expr)
     }
   else if (code == CONSTRUCTOR)
     {
-      vec<constructor_elt, va_gc> *elts = CONSTRUCTOR_ELTS (expr);
-      unsigned i; tree val;
+      bool braced_init = BRACE_ENCLOSED_INITIALIZER_P (expr);
+      tree etype = TREE_TYPE (expr);
 
-      if (BRACE_ENCLOSED_INITIALIZER_P (expr))
+      if (braced_init)
 	write_string ("il");
       else
 	{
 	  write_string ("tl");
-	  write_type (TREE_TYPE (expr));
+	  write_type (etype);
 	}
-      FOR_EACH_CONSTRUCTOR_VALUE (elts, i, val)
-	write_expression (val);
+
+      if (!initializer_zerop (expr) || !trivial_type_p (etype))
+	{
+	  /* Convert braced initializer lists to STRING_CSTs so that
+	     A<"Foo"> mangles the same as A<{'F', 'o', 'o', 0}> while
+	     still using the latter mangling for strings that
+	     originated as braced initializer lists.  */
+	  expr = braced_lists_to_strings (etype, expr);
+
+	  if (TREE_CODE (expr) == CONSTRUCTOR)
+	    {
+	      vec<constructor_elt, va_gc> *elts = CONSTRUCTOR_ELTS (expr);
+	      unsigned last_nonzero = -1, i;
+	      tree val;
+
+	      FOR_EACH_CONSTRUCTOR_VALUE (elts, i, val)
+		if (!initializer_zerop (val))
+		  last_nonzero = i;
+
+	      FOR_EACH_CONSTRUCTOR_VALUE (elts, i, val)
+		{
+		  if (i > last_nonzero)
+		    break;
+		  write_expression (val);
+		}
+	    }
+	  else
+	    {
+	      gcc_assert (TREE_CODE (expr) == STRING_CST);
+	      write_expression (expr);
+	    }
+	}
+      write_char ('E');
+    }
+  else if (code == LAMBDA_EXPR)
+    {
+      /* [temp.over.link] Two lambda-expressions are never considered
+	 equivalent.
+
+	 So just use the closure type mangling.  */
+      write_string ("tl");
+      write_type (LAMBDA_EXPR_CLOSURE (expr));
       write_char ('E');
     }
   else if (dependent_name (expr))
@@ -3219,7 +3215,7 @@ write_expression (tree expr)
 	 don't actually want to output a mangling code for the `&'.  */
       if (TREE_CODE (expr) == ADDR_EXPR
 	  && TREE_TYPE (expr)
-	  && TREE_CODE (TREE_TYPE (expr)) == REFERENCE_TYPE)
+	  && TYPE_REF_P (TREE_TYPE (expr)))
 	{
 	  expr = TREE_OPERAND (expr, 0);
 	  if (DECL_P (expr))
@@ -3396,8 +3392,14 @@ write_expression (tree expr)
 static void
 write_template_arg_literal (const tree value)
 {
-  write_char ('L');
-  write_type (TREE_TYPE (value));
+  if (TREE_CODE (value) == STRING_CST)
+    /* Temporarily mangle strings as braced initializer lists.  */
+    write_string ("tl");
+  else
+    write_char ('L');
+
+  tree valtype = TREE_TYPE (value);
+  write_type (valtype);
 
   /* Write a null member pointer value as (type)0, regardless of its
      real representation.  */
@@ -3440,8 +3442,31 @@ write_template_arg_literal (const tree value)
 	break;
 
       case STRING_CST:
-	sorry ("string literal in function template signature");
-	break;
+	{
+	  /* Mangle strings the same as braced initializer lists.  */
+	  unsigned n = TREE_STRING_LENGTH (value);
+	  const char *str = TREE_STRING_POINTER (value);
+
+	  /* Count the number of trailing nuls and subtract them from
+	     STRSIZE because they don't need to be mangled.  */
+	  for (const char *p = str + n - 1; ; --p)
+	    {
+	      if (*p || p == str)
+		{
+		  n -= str + n - !!*p - p;
+		  break;
+		}
+	    }
+	  tree eltype = TREE_TYPE (valtype);
+	  for (const char *p = str; n--; ++p)
+	    {
+	      write_char ('L');
+	      write_type (eltype);
+	      write_unsigned_number (*(const unsigned char*)p);
+	      write_string ("E");
+	    }
+	  break;
+	}
 
       default:
 	gcc_unreachable ();
@@ -3477,13 +3502,17 @@ write_template_arg (tree node)
 	}
     }
 
+  if (template_parm_object_p (node))
+    /* We want to mangle the argument, not the var we stored it in.  */
+    node = DECL_INITIAL (node);
+
   /* Strip a conversion added by convert_nontype_argument.  */
   if (TREE_CODE (node) == IMPLICIT_CONV_EXPR)
     node = TREE_OPERAND (node, 0);
   if (REFERENCE_REF_P (node))
     node = TREE_OPERAND (node, 0);
   if (TREE_CODE (node) == NOP_EXPR
-      && TREE_CODE (TREE_TYPE (node)) == REFERENCE_TYPE)
+      && TYPE_REF_P (TREE_TYPE (node)))
     {
       /* Template parameters can be of reference type. To maintain
 	 internal consistency, such arguments use a conversion from
@@ -3876,8 +3905,7 @@ mangle_decl (const tree decl)
   if (id != DECL_NAME (decl)
       /* Don't do this for a fake symbol we aren't going to emit anyway.  */
       && TREE_CODE (decl) != TYPE_DECL
-      && !DECL_MAYBE_IN_CHARGE_CONSTRUCTOR_P (decl)
-      && !DECL_MAYBE_IN_CHARGE_DESTRUCTOR_P (decl))
+      && !DECL_MAYBE_IN_CHARGE_CDTOR_P (decl))
     {
       int save_ver = flag_abi_version;
       tree id2 = NULL_TREE;
@@ -4195,18 +4223,18 @@ maybe_check_abi_tags (tree t, tree for_decl, int ver)
       if (for_decl && DECL_THUNK_P (for_decl))
 	warning_at (DECL_SOURCE_LOCATION (t), OPT_Wabi,
 		    "the mangled name of a thunk for %qD changes between "
-		    "-fabi-version=%d and -fabi-version=%d",
+		    "%<-fabi-version=%d%> and %<-fabi-version=%d%>",
 		    t, flag_abi_version, warn_abi_version);
       else if (for_decl)
 	warning_at (DECL_SOURCE_LOCATION (for_decl), OPT_Wabi,
 		    "the mangled name of %qD changes between "
-		    "-fabi-version=%d and -fabi-version=%d",
+		    "%<-fabi-version=%d%> and %<-fabi-version=%d%>",
 		    for_decl, flag_abi_version, warn_abi_version);
       else
 	warning_at (DECL_SOURCE_LOCATION (t), OPT_Wabi,
 		    "the mangled name of the initialization guard variable "
-		    "for %qD changes between -fabi-version=%d and "
-		    "-fabi-version=%d",
+		    "for %qD changes between %<-fabi-version=%d%> and "
+		    "%<-fabi-version=%d%>",
 		    t, flag_abi_version, warn_abi_version);
     }
 }
@@ -4281,10 +4309,7 @@ decl_tls_wrapper_p (const tree fn)
 }
 
 /* Return an identifier for the name of a temporary variable used to
-   initialize a static reference.  This isn't part of the ABI, but we might
-   as well call them something readable.  */
-
-static GTY(()) int temp_count;
+   initialize a static reference.  This is now part of the ABI.  */
 
 tree
 mangle_ref_init_variable (const tree variable)
@@ -4295,7 +4320,20 @@ mangle_ref_init_variable (const tree variable)
   write_name (variable, /*ignore_local_scope=*/0);
   /* Avoid name clashes with aggregate initialization of multiple
      references at once.  */
-  write_unsigned_number (temp_count++);
+  write_compact_number (current_ref_temp_count++);
+  return finish_mangling_get_identifier ();
+}
+
+/* Return an identifier for the mangled name of a C++20 template parameter
+   object for template argument EXPR.  */
+
+tree
+mangle_template_parm_object (tree expr)
+{
+  start_mangling (expr);
+  write_string ("_ZTAX");
+  write_expression (expr);
+  write_char ('E');
   return finish_mangling_get_identifier ();
 }
 

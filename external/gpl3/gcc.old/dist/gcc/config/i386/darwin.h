@@ -1,5 +1,5 @@
 /* Target definitions for x86 running Darwin.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -25,10 +25,10 @@ along with GCC; see the file COPYING3.  If not see
 #undef DARWIN_X86
 #define DARWIN_X86 1
 
-#undef  TARGET_64BIT
-#undef	TARGET_64BIT_P
+#undef TARGET_64BIT
 #define TARGET_64BIT TARGET_ISA_64BIT
-#define	TARGET_64BIT_P(x) TARGET_ISA_64BIT_P(x)
+#undef TARGET_64BIT_P
+#define TARGET_64BIT_P(x) TARGET_ISA_64BIT_P(x)
 
 #ifdef IN_LIBGCC2
 #undef TARGET_64BIT
@@ -71,14 +71,15 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef TARGET_FPMATH_DEFAULT
 #define TARGET_FPMATH_DEFAULT (TARGET_SSE ? FPMATH_SSE : FPMATH_387)
+#undef TARGET_FPMATH_DEFAULT_P
+#define TARGET_FPMATH_DEFAULT_P(x) \
+  (TARGET_SSE_P(x) ? FPMATH_SSE : FPMATH_387)
 
 #define TARGET_OS_CPP_BUILTINS()                \
-  do                                            \
-    {                                           \
-      builtin_define ("__LITTLE_ENDIAN__");     \
-      darwin_cpp_builtins (pfile);		\
-    }                                           \
-  while (0)
+  do {						\
+    builtin_define ("__LITTLE_ENDIAN__");	\
+    darwin_cpp_builtins (pfile);		\
+  } while (0)
 
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
@@ -120,7 +121,7 @@ along with GCC; see the file COPYING3.  If not see
    than 128 bits for Darwin, but it's easier to up the alignment if
    it's below the minimum.  */
 #undef PREFERRED_STACK_BOUNDARY
-#define PREFERRED_STACK_BOUNDARY			\
+#define PREFERRED_STACK_BOUNDARY \
   MAX (128, ix86_preferred_stack_boundary)
 
 /* We want -fPIC by default, unless we're using -static to compile for
@@ -130,7 +131,8 @@ along with GCC; see the file COPYING3.  If not see
 #define CC1_SPEC "%(cc1_cpu) \
   %{!mkernel:%{!static:%{!mdynamic-no-pic:-fPIC}}} \
   %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} \
-  %{mx32:%eDarwin is not an mx32 platform}" \
+  %{mx32:%eDarwin is not an mx32 platform} \
+  %{mfentry*:%eDarwin does not support -mfentry or associated options}" \
   DARWIN_CC1_SPEC
 
 #undef ASM_SPEC
@@ -179,15 +181,15 @@ along with GCC; see the file COPYING3.  If not see
    and returns float values in the 387.  */
 
 #undef TARGET_SUBTARGET_DEFAULT
-#define TARGET_SUBTARGET_DEFAULT (MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS | MASK_128BIT_LONG_DOUBLE)
+#define TARGET_SUBTARGET_DEFAULT \
+  (MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS | MASK_128BIT_LONG_DOUBLE)
 
 /* For darwin we want to target specific processor features as a minimum,
    but these unfortunately don't correspond to a specific processor.  */
 #undef TARGET_SUBTARGET32_ISA_DEFAULT
-#define TARGET_SUBTARGET32_ISA_DEFAULT (OPTION_MASK_ISA_MMX		\
-					| OPTION_MASK_ISA_SSE		\
-					| OPTION_MASK_ISA_SSE2		\
-					| OPTION_MASK_ISA_SSE3)
+#define TARGET_SUBTARGET32_ISA_DEFAULT			\
+  (OPTION_MASK_ISA_MMX | OPTION_MASK_ISA_SSE		\
+   | OPTION_MASK_ISA_SSE2 | OPTION_MASK_ISA_SSE3)
 
 #undef TARGET_SUBTARGET64_ISA_DEFAULT
 #define TARGET_SUBTARGET64_ISA_DEFAULT TARGET_SUBTARGET32_ISA_DEFAULT
@@ -209,15 +211,16 @@ along with GCC; see the file COPYING3.  If not see
 #define SUBTARGET_ENCODE_SECTION_INFO  darwin_encode_section_info
 
 #undef ASM_OUTPUT_ALIGN
-#define ASM_OUTPUT_ALIGN(FILE,LOG)	\
- do { if ((LOG) != 0)			\
-        {				\
-          if (in_section == text_section) \
-            fprintf (FILE, "\t%s %d,0x90\n", ALIGN_ASM_OP, (LOG)); \
-          else				\
-            fprintf (FILE, "\t%s %d\n", ALIGN_ASM_OP, (LOG)); \
-        }				\
-    } while (0)
+#define ASM_OUTPUT_ALIGN(FILE,LOG)				   \
+  do {								   \
+    if ((LOG) != 0)						   \
+      {								   \
+	if (in_section == text_section)				   \
+	  fprintf (FILE, "\t%s %d,0x90\n", ALIGN_ASM_OP, (LOG));   \
+	else							   \
+	  fprintf (FILE, "\t%s %d\n", ALIGN_ASM_OP, (LOG));	   \
+      }								   \
+  } while (0)
 
 #ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
 #define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE,LOG,MAX_SKIP)                    \
@@ -256,11 +259,11 @@ along with GCC; see the file COPYING3.  If not see
   } while (0)
 
 #undef SUBTARGET_OVERRIDE_OPTIONS
-#define SUBTARGET_OVERRIDE_OPTIONS \
-do {									\
-  if (TARGET_64BIT && MACHO_DYNAMIC_NO_PIC_P)				\
-    target_flags &= ~MASK_MACHO_DYNAMIC_NO_PIC;				\
-} while (0)
+#define SUBTARGET_OVERRIDE_OPTIONS					\
+  do {									\
+    if (TARGET_64BIT && MACHO_DYNAMIC_NO_PIC_P)				\
+      target_flags &= ~MASK_MACHO_DYNAMIC_NO_PIC;			\
+  } while (0)
 
 /* Darwin on x86_64 uses dwarf-2 by default.  Pre-darwin9 32-bit
    compiles default to stabs+.  darwin9+ defaults to dwarf-2.  */
@@ -301,24 +304,24 @@ do {									\
    end of the instruction, but without the 4 we'd only have the right
    address for the start of the instruction.  */
 #undef ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX
-#define ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX(FILE, ENCODING, SIZE, ADDR, DONE)	\
-  if (TARGET_64BIT)				                                \
-    {                                                                           \
-      if ((SIZE) == 4 && ((ENCODING) & 0x70) == DW_EH_PE_pcrel)			\
-        {                                                                       \
-	   fputs (ASM_LONG, FILE);                                              \
-	   assemble_name (FILE, XSTR (ADDR, 0));				\
-	   fputs ("+4@GOTPCREL", FILE);                                         \
-	   goto DONE;                                                           \
-        }									\
-    }										\
-  else                                                                          \
-    {										\
-      if (ENCODING == ASM_PREFERRED_EH_DATA_FORMAT (2, 1))                      \
-        {                                                                       \
-          darwin_non_lazy_pcrel (FILE, ADDR);                                   \
-          goto DONE;								\
-        }                                                                       \
+#define ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX(FILE, ENCODING, SIZE, ADDR, DONE) \
+  if (TARGET_64BIT)							\
+    {									\
+      if ((SIZE) == 4 && ((ENCODING) & 0x70) == DW_EH_PE_pcrel)		\
+	{								\
+	  fputs (ASM_LONG, FILE);					\
+	  assemble_name (FILE, XSTR (ADDR, 0));				\
+	  fputs ("+4@GOTPCREL", FILE);					\
+	  goto DONE;							\
+	}								\
+    }									\
+  else									\
+    {									\
+      if (ENCODING == ASM_PREFERRED_EH_DATA_FORMAT (2, 1))		\
+        {								\
+          darwin_non_lazy_pcrel (FILE, ADDR);				\
+          goto DONE;							\
+        }								\
     }
 
 /* First available SYMBOL flag bit for use by subtargets.  */
@@ -331,9 +334,9 @@ do {									\
 #define SUBTARGET32_DEFAULT_CPU "i686"
 
 #undef  SUBTARGET_INIT_BUILTINS
-#define SUBTARGET_INIT_BUILTINS					\
-do {								\
-  ix86_builtins[(int) IX86_BUILTIN_CFSTRING]			\
-    = darwin_init_cfstring_builtins ((unsigned) (IX86_BUILTIN_CFSTRING));	\
-  darwin_rename_builtins ();					\
-} while(0)
+#define SUBTARGET_INIT_BUILTINS						\
+  do {									\
+    ix86_builtins[(int) IX86_BUILTIN_CFSTRING]				\
+      = darwin_init_cfstring_builtins ((unsigned) (IX86_BUILTIN_CFSTRING)); \
+    darwin_rename_builtins ();						\
+  } while(0)

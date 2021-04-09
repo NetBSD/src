@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2019/09/26 08:03:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2021/04/09 23:15:42 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -62,8 +62,11 @@ SUBDIR=		include
 
 SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 
+GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
+
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
+CPPFLAGS+=	-I${DIST}/gcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
 .if ${G_CLOCALE_CC:M*dragonfly*} != ""
@@ -163,12 +166,21 @@ SRCS+=	c98-codecvt.cc c11-codecvt.cc
 CXX11_ALWAYS=	localename.cc \
 		locale_init.cc
 
+FCHAR8_SRCS+=	localename.cc \
+		locale_init.cc \
+		c11-codecvt.cc \
+		limits.cc
+
 .for _s in ${G_cxx11_sources} ${CXX11_ALWAYS}
 COPTS.${_s}+= -std=gnu++11
 .endfor
 
 .for _s in ${G_cxx98_sources}
 COPTS.${_s}+= -std=gnu++98
+.endfor
+
+.for _s in ${FCHAR8_SRCS}
+COPTS.${_s}+= -fchar8_t
 .endfor
 
 COPTS.cp-demangle.c += -Wno-unused-function
@@ -190,6 +202,7 @@ COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 .PATH:	${DIST}/libstdc++-v3/src \
 	${DIST}/libstdc++-v3/src/c++98 \
 	${DIST}/libstdc++-v3/src/c++11 \
+	${DIST}/libstdc++-v3/src/c++17 \
 	${DIST}/libstdc++-v3/src/filesystem \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libstdc++-v3/config/os/bsd/netbsd \

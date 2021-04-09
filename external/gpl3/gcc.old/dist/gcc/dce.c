@@ -1,5 +1,5 @@
 /* RTL dead code elimination.
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -174,6 +174,7 @@ deletable_insn_p (rtx_insn *insn, bool fast, bitmap arg_stores)
       return false;
 
     case CLOBBER:
+    case CLOBBER_HIGH:
       if (fast)
 	{
 	  /* A CLOBBER of a dead pseudo register serves no purpose.
@@ -243,7 +244,10 @@ static void
 mark_nonreg_stores_1 (rtx dest, const_rtx pattern, void *data)
 {
   if (GET_CODE (pattern) != CLOBBER && !REG_P (dest))
-    mark_insn ((rtx_insn *) data, true);
+    {
+      gcc_checking_assert (GET_CODE (pattern) != CLOBBER_HIGH);
+      mark_insn ((rtx_insn *) data, true);
+    }
 }
 
 
@@ -254,7 +258,10 @@ static void
 mark_nonreg_stores_2 (rtx dest, const_rtx pattern, void *data)
 {
   if (GET_CODE (pattern) != CLOBBER && !REG_P (dest))
-    mark_insn ((rtx_insn *) data, false);
+    {
+      gcc_checking_assert (GET_CODE (pattern) != CLOBBER_HIGH);
+      mark_insn ((rtx_insn *) data, false);
+    }
 }
 
 
@@ -650,6 +657,7 @@ delete_unmarked_insns (void)
   /* Deleted a pure or const call.  */
   if (must_clean)
     {
+      gcc_assert (can_alter_cfg);
       delete_unreachable_blocks ();
       free_dominance_info (CDI_DOMINATORS);
     }

@@ -1,5 +1,5 @@
 /* Top-level LTO routines.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by CodeSourcery, Inc.
 
 This file is part of GCC.
@@ -290,7 +290,7 @@ hash_canonical_type (tree type)
   enum tree_code code;
 
   /* We compute alias sets only for types that needs them.
-     Be sure we do not recurse to something else as we can not hash incomplete
+     Be sure we do not recurse to something else as we cannot hash incomplete
      types in a way they would have same hash value as compatible complete
      types.  */
   gcc_checking_assert (type_with_alias_set_p (type));
@@ -894,7 +894,7 @@ lto_maybe_register_decl (struct data_in *data_in, tree t, unsigned ix)
   if (TREE_CODE (t) == VAR_DECL)
     lto_register_var_decl_in_symtab (data_in, t, ix);
   else if (TREE_CODE (t) == FUNCTION_DECL
-	   && !DECL_BUILT_IN (t))
+	   && !fndecl_built_in_p (t))
     lto_register_function_decl_in_symtab (data_in, t, ix);
 }
 
@@ -1222,8 +1222,8 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
       return false;
 
   if (CODE_CONTAINS_STRUCT (code, TS_OPTIMIZATION))
-    if (memcmp (TREE_OPTIMIZATION (t1), TREE_OPTIMIZATION (t2),
-		sizeof (struct cl_optimization)) != 0)
+    if (!cl_optimization_option_eq (TREE_OPTIMIZATION (t1),
+				    TREE_OPTIMIZATION (t2)))
       return false;
 
   if (CODE_CONTAINS_STRUCT (code, TS_BINFO))
@@ -1638,6 +1638,21 @@ unify_scc (struct data_in *data_in, unsigned from,
 	     to the tree node mapping computed by compare_tree_sccs.  */
 	  if (len == 1)
 	    {
+	      /* If we got a debug reference queued, see if the prevailing
+	         tree has a debug reference and if not, register the one
+		 for the tree we are about to throw away.  */
+	      if (dref_queue.length () == 1)
+		{
+		  dref_entry e = dref_queue.pop ();
+		  gcc_assert (e.decl
+			      == streamer_tree_cache_get_tree (cache, from));
+		  const char *sym;
+		  unsigned HOST_WIDE_INT off;
+		  if (!debug_hooks->die_ref_for_decl (pscc->entries[0], &sym,
+						      &off))
+		    debug_hooks->register_external_die (pscc->entries[0],
+							e.sym, e.off);
+		}
 	      lto_maybe_register_decl (data_in, pscc->entries[0], from);
 	      streamer_tree_cache_replace_tree (cache, pscc->entries[0], from);
 	    }
@@ -1669,7 +1684,9 @@ unify_scc (struct data_in *data_in, unsigned from,
 	      free_node (scc->entries[i]);
 	    }
 
-	  /* Drop DIE references.  */
+	  /* Drop DIE references.
+	     ???  Do as in the size-one SCC case which involves sorting
+	     the queue.  */
 	  dref_queue.truncate (0);
 
 	  break;
@@ -1695,40 +1712,6 @@ unify_scc (struct data_in *data_in, unsigned from,
 }
 
 
-/* Compare types based on source file location.  */
-
-static int
-cmp_type_location (const void *p1_, const void *p2_)
-{
-  tree *p1 = (tree*)(const_cast<void *>(p1_));
-  tree *p2 = (tree*)(const_cast<void *>(p2_));
-  if (*p1 == *p2)
-    return 0;
-
-  tree tname1 = TYPE_NAME (*p1);
-  tree tname2 = TYPE_NAME (*p2);
-
-  const char *f1 = DECL_SOURCE_FILE (tname1);
-  const char *f2 = DECL_SOURCE_FILE (tname2);
-
-  int r = strcmp (f1, f2);
-  if (r == 0)
-    {
-      int l1 = DECL_SOURCE_LINE (tname1);
-      int l2 = DECL_SOURCE_LINE (tname2);
-      if (l1 == l2)
-       {
-	 int l1 = DECL_SOURCE_COLUMN (tname1);
-	 int l2 = DECL_SOURCE_COLUMN (tname2);
-	 return l1 - l2;
-       }
-      else
-       return l1 - l2;
-    }
-  else
-    return r;
-}
-
 /* Read all the symbols from buffer DATA, using descriptors in DECL_DATA.
    RESOLUTIONS is the set of symbols picked by the linker (read from the
    resolution file when the linker plugin is being used).  */
@@ -1745,7 +1728,6 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
   unsigned int i;
   const uint32_t *data_ptr, *data_end;
   uint32_t num_decl_states;
-  auto_vec<tree> odr_types;
 
   lto_input_block ib_main ((const char *) data + main_offset,
 			   header->main_size, decl_data->mode_table);
@@ -1782,7 +1764,8 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
 						     from);
 	  if (len == 1
 	      && (TREE_CODE (first) == IDENTIFIER_NODE
-		  || TREE_CODE (first) == INTEGER_CST))
+		  || (TREE_CODE (first) == INTEGER_CST
+		      && !TREE_OVERFLOW (first))))
 	    continue;
 
 	  /* Try to unify the SCC with already existing ones.  */
@@ -1814,8 +1797,8 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
 		     type canonical of a derived type in the same SCC.  */
 		  if (!TYPE_CANONICAL (t))
 		    gimple_register_canonical_type (t);
-		  if (odr_type_p (t))
-		    odr_types.safe_push (t);
+		  if (TYPE_MAIN_VARIANT (t) == t && odr_type_p (t))
+		    register_odr_type (t);
 		}
 	      /* Link shared INTEGER_CSTs into TYPE_CACHED_VALUEs of its
 		 type which is also member of this SCC.  */
@@ -1876,15 +1859,6 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
       gcc_assert (*slot == NULL);
       *slot = state;
     }
-
-  /* Sort types for the file before registering in ODR machinery.  */
-  if (lto_location_cache::current_cache)
-    lto_location_cache::current_cache->apply_location_cache ();
-  odr_types.qsort (cmp_type_location);
-
-  /* Register ODR types.  */
-  for (unsigned i = 0; i < odr_types.length (); i++)
-    register_odr_type (odr_types[i]);
 
   if (data_ptr != data_end)
     internal_error ("bytecode stream: garbage at the end of symbols section");
@@ -2330,13 +2304,15 @@ static lto_file *current_lto_file;
 /* Actually stream out ENCODER into TEMP_FILENAME.  */
 
 static void
-do_stream_out (char *temp_filename, lto_symtab_encoder_t encoder)
+stream_out (char *temp_filename, lto_symtab_encoder_t encoder, int part)
 {
   lto_file *file = lto_obj_file_open (temp_filename, true);
   if (!file)
     fatal_error (input_location, "lto_obj_file_open() failed");
   lto_set_current_out_file (file);
 
+  gcc_assert (!dump_file);
+  streamer_dump_file = dump_begin (TDI_lto_stream_out, NULL, part);
   ipa_write_optimization_summaries (encoder);
 
   free (CONST_CAST (char *, file->filename));
@@ -2344,6 +2320,11 @@ do_stream_out (char *temp_filename, lto_symtab_encoder_t encoder)
   lto_set_current_out_file (NULL);
   lto_obj_file_close (file);
   free (file);
+  if (streamer_dump_file)
+    {
+      dump_end (TDI_lto_stream_out, streamer_dump_file);
+      streamer_dump_file = NULL;
+    }
 }
 
 /* Wait for forked process and signal errors.  */
@@ -2371,19 +2352,31 @@ wait_for_child ()
 }
 #endif
 
+static void
+stream_out_partitions_1 (char *temp_filename, int blen, int min, int max)
+{
+   /* Write all the nodes in SET.  */
+   for (int p = min; p < max; p ++)
+     {
+       sprintf (temp_filename + blen, "%u.o", p);
+       stream_out (temp_filename, ltrans_partitions[p]->encoder, p);
+       ltrans_partitions[p]->encoder = NULL;
+     }
+}
+
 /* Stream out ENCODER into TEMP_FILENAME
    Fork if that seems to help.  */
 
 static void
-stream_out (char *temp_filename, lto_symtab_encoder_t encoder,
-	    bool ARG_UNUSED (last))
+stream_out_partitions (char *temp_filename, int blen, int min, int max,
+		       bool ARG_UNUSED (last))
 {
 #ifdef HAVE_WORKING_FORK
   static int nruns;
 
   if (lto_parallelism <= 1)
     {
-      do_stream_out (temp_filename, encoder);
+      stream_out_partitions_1 (temp_filename, blen, min, max);
       return;
     }
 
@@ -2403,12 +2396,12 @@ stream_out (char *temp_filename, lto_symtab_encoder_t encoder,
       if (!cpid)
 	{
 	  setproctitle ("lto1-wpa-streaming");
-	  do_stream_out (temp_filename, encoder);
+          stream_out_partitions_1 (temp_filename, blen, min, max);
 	  exit (0);
 	}
       /* Fork failed; lets do the job ourseleves.  */
       else if (cpid == -1)
-        do_stream_out (temp_filename, encoder);
+        stream_out_partitions_1 (temp_filename, blen, min, max);
       else
 	nruns++;
     }
@@ -2416,13 +2409,13 @@ stream_out (char *temp_filename, lto_symtab_encoder_t encoder,
   else
     {
       int i;
-      do_stream_out (temp_filename, encoder);
+      stream_out_partitions_1 (temp_filename, blen, min, max);
       for (i = 0; i < nruns; i++)
 	wait_for_child ();
     }
   asm_nodes_output = true;
 #else
-  do_stream_out (temp_filename, encoder);
+  stream_out_partitions_1 (temp_filename, blen, min, max);
 #endif
 }
 
@@ -2453,6 +2446,15 @@ lto_wpa_write_files (void)
 
   timevar_push (TV_WHOPR_WPA_IO);
 
+  ggc_trim ();
+
+  cgraph_node *node;
+  /* Do body modifications needed for streaming before we fork out
+     worker processes.  */
+  FOR_EACH_FUNCTION_WITH_GIMPLE_BODY (node)
+    if (!node->clone_of && gimple_has_body_p (node->decl))
+      lto_prepare_function_for_streaming (node);
+
   /* Generate a prefix for the LTRANS unit files.  */
   blen = strlen (ltrans_output_list);
   temp_filename = (char *) xmalloc (blen + sizeof ("2147483648.o"));
@@ -2464,6 +2466,13 @@ lto_wpa_write_files (void)
   blen = strlen (temp_filename);
 
   n_sets = ltrans_partitions.length ();
+  unsigned sets_per_worker = n_sets;
+  if (lto_parallelism > 1)
+    {
+      if (lto_parallelism > (int)n_sets)
+	lto_parallelism = n_sets;
+      sets_per_worker = (n_sets + lto_parallelism - 1) / lto_parallelism;
+    }
 
   for (i = 0; i < n_sets; i++)
     {
@@ -2512,13 +2521,17 @@ lto_wpa_write_files (void)
 	}
       gcc_checking_assert (lto_symtab_encoder_size (part->encoder) || !i);
 
-      stream_out (temp_filename, part->encoder, i == n_sets - 1);
-
-      part->encoder = NULL;
-
       temp_priority.safe_push (part->insns);
       temp_filenames.safe_push (xstrdup (temp_filename));
     }
+
+  for (int set = 0; set < MAX (lto_parallelism, 1); set++)
+    {
+      stream_out_partitions (temp_filename, blen, set * sets_per_worker,
+			     MIN ((set + 1) * sets_per_worker, n_sets),
+			     set == MAX (lto_parallelism, 1) - 1);
+    }
+
   ltrans_output_list_stream = fopen (ltrans_output_list, "w");
   if (ltrans_output_list_stream == NULL)
     fatal_error (input_location,
@@ -2903,7 +2916,8 @@ read_cgraph_and_symbols (unsigned nfiles, const char **fnames)
   FOR_EACH_SYMBOL (snode)
     if (snode->externally_visible && snode->real_symbol_p ()
 	&& snode->lto_file_data && snode->lto_file_data->resolution_map
-	&& !is_builtin_fn (snode->decl)
+	&& !(TREE_CODE (snode->decl) == FUNCTION_DECL
+	     && fndecl_built_in_p (snode->decl))
 	&& !(VAR_P (snode->decl) && DECL_HARD_REGISTER (snode->decl)))
       {
 	ld_plugin_symbol_resolution_t *res;
@@ -2976,29 +2990,43 @@ read_cgraph_and_symbols (unsigned nfiles, const char **fnames)
       all_file_decl_data[i]->current_decl_state = NULL; 
     }
 
-  /* Finally merge the cgraph according to the decl merging decisions.  */
-  timevar_push (TV_IPA_LTO_CGRAPH_MERGE);
-  if (symtab->dump_file)
-    {
-      fprintf (symtab->dump_file, "Before merging:\n");
-      symtab->dump (symtab->dump_file);
-    }
   if (!flag_ltrans)
     {
+      /* Finally merge the cgraph according to the decl merging decisions.  */
+      timevar_push (TV_IPA_LTO_CGRAPH_MERGE);
+
+      gcc_assert (!dump_file);
+      dump_file = dump_begin (lto_link_dump_id, NULL);
+
+      if (dump_file)
+	{
+	  fprintf (dump_file, "Before merging:\n");
+	  symtab->dump (dump_file);
+	}
       lto_symtab_merge_symbols ();
       /* Removal of unreachable symbols is needed to make verify_symtab to pass;
 	 we are still having duplicated comdat groups containing local statics.
 	 We could also just remove them while merging.  */
       symtab->remove_unreachable_nodes (dump_file);
-    }
-  ggc_collect ();
-  symtab->state = IPA_SSA;
-  /* FIXME: Technically all node removals happening here are useless, because
-     WPA should not stream them.  */
-  if (flag_ltrans)
-    symtab->remove_unreachable_nodes (dump_file);
+      ggc_collect ();
 
-  timevar_pop (TV_IPA_LTO_CGRAPH_MERGE);
+      if (dump_file)
+        dump_end (lto_link_dump_id, dump_file);
+      dump_file = NULL;
+      timevar_pop (TV_IPA_LTO_CGRAPH_MERGE);
+    }
+  symtab->state = IPA_SSA;
+  /* All node removals happening here are useless, because
+     WPA should not stream them.  Still always perform remove_unreachable_nodes
+     because we may reshape clone tree, get rid of dead masters of inline
+     clones and remove symbol entries for read-only variables we keep around
+     only to be able to constant fold them.  */
+  if (flag_ltrans)
+    {
+      if (symtab->dump_file)
+	 symtab->dump (symtab->dump_file);
+      symtab->remove_unreachable_nodes (symtab->dump_file);
+    }
 
   /* Indicate that the cgraph is built and ready.  */
   symtab->function_flags_ready = true;
@@ -3117,14 +3145,16 @@ do_whole_program_analysis (void)
 
   lto_parallelism = 1;
 
-  /* TODO: jobserver communicatoin is not supported, yet.  */
+  /* TODO: jobserver communication is not supported, yet.  */
   if (!strcmp (flag_wpa, "jobserver"))
-    lto_parallelism = -1;
+    lto_parallelism = PARAM_VALUE (PARAM_MAX_LTO_STREAMING_PARALLELISM);
   else
     {
       lto_parallelism = atoi (flag_wpa);
       if (lto_parallelism <= 0)
 	lto_parallelism = 0;
+      if (lto_parallelism >= PARAM_VALUE (PARAM_MAX_LTO_STREAMING_PARALLELISM))
+	lto_parallelism = PARAM_VALUE (PARAM_MAX_LTO_STREAMING_PARALLELISM);
     }
 
   timevar_start (TV_PHASE_OPT_GEN);
@@ -3156,19 +3186,19 @@ do_whole_program_analysis (void)
   if (seen_error ())
     return;
 
-  if (symtab->dump_file)
-    {
-      fprintf (symtab->dump_file, "Optimized ");
-      symtab->dump (symtab->dump_file);
-    }
-
-  symtab_node::checking_verify_symtab_nodes ();
-  bitmap_obstack_release (NULL);
-
   /* We are about to launch the final LTRANS phase, stop the WPA timer.  */
   timevar_pop (TV_WHOPR_WPA);
 
   timevar_push (TV_WHOPR_PARTITIONING);
+
+  gcc_assert (!dump_file);
+  dump_file = dump_begin (partition_dump_id, NULL);
+
+  if (dump_file)
+    symtab->dump (dump_file);
+
+  symtab_node::checking_verify_symtab_nodes ();
+  bitmap_obstack_release (NULL);
   if (flag_lto_partition == LTO_PARTITION_1TO1)
     lto_1_to_1_map ();
   else if (flag_lto_partition == LTO_PARTITION_MAX)
@@ -3196,6 +3226,9 @@ do_whole_program_analysis (void)
      to globals with hidden visibility because they are accessed from multiple
      partitions.  */
   lto_promote_cross_file_statics ();
+  if (dump_file)
+     dump_end (partition_dump_id, dump_file);
+  dump_file = NULL;
   timevar_pop (TV_WHOPR_PARTITIONING);
 
   timevar_stop (TV_PHASE_OPT_GEN);
@@ -3257,7 +3290,8 @@ static void
 lto_process_name (void)
 {
   if (flag_lto)
-    setproctitle ("lto1-lto");
+    setproctitle (flag_incremental_link == INCREMENTAL_LINK_LTO
+		  ? "lto1-inclink" : "lto1-lto");
   if (flag_wpa)
     setproctitle ("lto1-wpa");
   if (flag_ltrans)
@@ -3381,7 +3415,9 @@ lto_main (void)
 	    lto_promote_statics_nonwpa ();
 
 	  /* Annotate the CU DIE and mark the early debug phase as finished.  */
+	  debuginfo_early_start ();
 	  debug_hooks->early_finish ("<artificial>");
+	  debuginfo_early_stop ();
 
 	  /* Let the middle end know that we have read and merged all of
 	     the input files.  */ 

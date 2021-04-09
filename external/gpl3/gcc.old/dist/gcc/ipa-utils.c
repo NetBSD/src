@@ -1,5 +1,5 @@
 /* Utilities for ipa analysis.
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -85,7 +85,7 @@ searchc (struct searchc_env* env, struct cgraph_node *v,
 
   /* mark node as old */
   v_info->new_node = false;
-  splay_tree_remove (env->nodes_marked_new, v->uid);
+  splay_tree_remove (env->nodes_marked_new, v->get_uid ());
 
   v_info->dfn_number = env->count;
   v_info->low_link = env->count;
@@ -192,7 +192,7 @@ ipa_reduced_postorder (struct cgraph_node **order,
 	  node->aux = info;
 
 	  splay_tree_insert (env.nodes_marked_new,
-			     (splay_tree_key)node->uid,
+			     (splay_tree_key)node->get_uid (),
 			     (splay_tree_value)node);
 	}
       else
@@ -665,7 +665,8 @@ ipa_merge_profiles (struct cgraph_node *dst,
 	}
       if (!preserve_body)
         src->release_body ();
-      ipa_update_overall_fn_summary (dst);
+      /* Update summary.  */
+      compute_fn_summary (dst, 0);
     }
   /* We can't update CFG profile, but we can scale IPA profile. CFG
      will be scaled according to dst->count after IPA passes.  */
