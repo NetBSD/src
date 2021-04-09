@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: games,v 1.20 2020/02/01 16:32:33 christos Exp $
+# $File: games,v 1.22 2021/02/23 00:51:10 christos Exp $
 # games:  file(1) for games
 
 # Fabio Bonelli <fabiobonelli@libero.it>
@@ -276,7 +276,7 @@
 # Summary: NetImmerse game engine file
 # Extension .nif
 # Created by: Abel Cheung <abelcheung@gmail.com>
-0		string		NetImmerse\ File\ Format,\ Versio
+0		string		NetImmerse\ File\ Format,\ Version
 >&0		string		n\ 					NetImmerse game engine file
 >>&0		regex		[0-9a-z.]+				\b, version %s
 
@@ -313,3 +313,10 @@
 >>12	regex	[0-9a-z.]+	saved by game version %s
 
 0	string	CIV6		Sid Meier's Civilization VI saved game
+
+# https://syzygy-tables.info/
+# From Michel Van den Bergh
+0	string	\327f\f\245	Syzygy DTZ tablebase
+!:mime	application/syzygy
+0	string	q\350#]		Syzygy WDL tablebase
+!:mime	application/syzygy

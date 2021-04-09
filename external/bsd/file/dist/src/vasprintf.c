@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.1.1.8 2019/12/17 02:23:53 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.1.1.9 2021/04/09 18:58:01 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -111,9 +111,9 @@ you use strange formats.
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: vasprintf.c,v 1.17 2019/11/15 21:03:14 christos Exp $")
+FILE_RCSID("@(#)$File: vasprintf.c,v 1.19 2021/02/23 00:51:11 christos Exp $")
 #else
-__RCSID("$NetBSD: vasprintf.c,v 1.1.1.8 2019/12/17 02:23:53 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.1.1.9 2021/04/09 18:58:01 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -137,7 +137,7 @@ __RCSID("$NetBSD: vasprintf.c,v 1.1.1.8 2019/12/17 02:23:53 christos Exp $");
  *  structure, which is passed among nearly every sub-functions.
  */
 typedef struct {
-  const char * src_string;        /* current position into intput string */
+  const char * src_string;        /* current position into input string */
   char *       buffer_base;       /* output buffer */
   char *       dest_string;       /* current position into output string */
   size_t       buffer_len;        /* length of output buffer */
@@ -152,7 +152,7 @@ typedef struct {
 /*
  *  Realloc buffer if needed
  *  Return value:  0 = ok
- *               EOF = not enought memory
+ *               EOF = not enough memory
  */
 static int realloc_buff(xprintf_struct *s, size_t len)
 {
@@ -184,7 +184,7 @@ static int usual_char(xprintf_struct * s)
 {
   size_t len;
 
-  len = strcspn(s->src_string, "%");     /* reachs the next '%' or end of input string */
+  len = strcspn(s->src_string, "%");     /* reaches the next '%' or end of input string */
   /* note: 'len' is never 0 because the presence of '%' */
   /* or end-of-line is checked in the calling function  */
 
@@ -251,7 +251,7 @@ static int type_s(xprintf_struct *s, int width, int prec,
   if (arg_string == NULL)
     return print_it(s, (size_t)6, "(null)", 0);
 
-  /* hand-made strlen() whitch stops when 'prec' is reached. */
+  /* hand-made strlen() which stops when 'prec' is reached. */
   /* if 'prec' is -1 then it is never reached. */
   string_len = 0;
   while (arg_string[string_len] != 0 && (size_t)prec != string_len)
@@ -264,7 +264,7 @@ static int type_s(xprintf_struct *s, int width, int prec,
 }
 
 /*
- *  Read a serie of digits. Stop when non-digit is found.
+ *  Read a series of digits. Stop when non-digit is found.
  *  Return value: the value read (between 0 and 32767).
  *  Note: no checks are made against overflow. If the string contain a big
  *  number, then the return value won't be what we want (but, in this case,
