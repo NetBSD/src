@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_complex_split.c,v 1.6 2021/04/09 21:07:39 rillig Exp $	*/
+/*	$NetBSD: d_c99_complex_split.c,v 1.7 2021/04/09 21:42:12 rillig Exp $	*/
 # 3 "d_c99_complex_split.c"
 
 /*
@@ -22,32 +22,62 @@ a(void)
 
 void sink(double _Complex);
 
+/*
+ * Before tree.c 1.275 from 2021-04-09, lint wrongly warned that when
+ * '__real__ c' was assigned, 'c may be used before set'.
+ *
+ * As of 2021-04-09, support for _Complex is still very incomplete, see
+ * build_real_imag for details.  For example, lint does not know that after
+ * the assignment to '__real__ c', the variable is partially initialized.
+ */
 void
 set_complex_complete(double re, double im)
 {
 	double _Complex c;
 
-	__real__ c = re; /* FIXME *//* expect: may be used before set */
+	__real__ c = re;
 	__imag__ c = im;
 	sink(c);
 }
 
+/*
+ * Before tree.c 1.275 from 2021-04-09, lint wrongly warned that when
+ * '__real__ c' was assigned, 'c may be used before set'.
+ *
+ * As of 2021-04-09, support for _Complex is still very incomplete, see
+ * build_real_imag for details.
+ */
 void
 set_complex_only_real(double re)
 {
 	double _Complex c;
 
-	__real__ c = re; /* FIXME *//* expect: may be used before set */
+	__real__ c = re;
 	/* __imag__ c is left uninitialized */
 	sink(c);		/* XXX: may be used before set */
 }
 
+/*
+ * Before tree.c 1.275 from 2021-04-09, lint wrongly warned that when
+ * '__imag__ c' was assigned, 'c may be used before set'.
+ *
+ * As of 2021-04-09, support for _Complex is still very incomplete, see
+ * build_real_imag for details.
+ */
 void
 set_complex_only_imag(double im)
 {
 	double _Complex c;
 
 	/* __real__ c is left uninitialized */
-	__imag__ c = im; /* FIXME *//* expect: may be used before set */
+	__imag__ c = im;
 	sink(c);		/* XXX: may be used before set */
+}
+
+/* Just to keep the .exp file alive. */
+void
+trigger_warning(double _Complex c)
+{
+	c += 1.0;
+	return c | c;		/* expect: incompatible types */
 }

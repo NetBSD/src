@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.274 2021/04/09 20:00:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.275 2021/04/09 21:42:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.274 2021/04/09 20:00:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.275 2021/04/09 21:42:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2542,6 +2542,15 @@ build_real_imag(op_t op, tnode_t *ln)
 	tnode_t	*cn, *ntn;
 
 	lint_assert(ln != NULL);
+
+	if (ln->tn_op == NAME) {
+		/*
+		 * This may be too much, but it avoids wrong warnings.
+		 * See d_c99_complex_split.c.
+		 */
+		mark_as_used(ln->tn_sym, false, false);
+		mark_as_set(ln->tn_sym);
+	}
 
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
