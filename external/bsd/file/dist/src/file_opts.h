@@ -1,4 +1,4 @@
-/*	$NetBSD: file_opts.h,v 1.1.1.10 2020/06/15 00:18:48 christos Exp $	*/
+/*	$NetBSD: file_opts.h,v 1.1.1.11 2021/04/09 18:58:01 christos Exp $	*/
 
 /*
  * Table of command-line options
@@ -6,7 +6,7 @@
  * The first column specifies the short name, if any, or 0 if none.
  * The second column specifies the long name.
  * The third column specifies whether it takes a parameter.
- * The fourth colums specifies whether is is marked as "default"
+ * The fourth columns specifies whether is is marked as "default"
  *      if POSIXLY_CORRECT is defined: 1,
  *      if POSIXLY_CORRECT is not defined: 2.
  * The fifth column is the documentation.
