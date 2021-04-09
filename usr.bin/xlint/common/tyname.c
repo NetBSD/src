@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.37 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.38 2021/04/09 19:37:39 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.37 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.38 2021/04/09 19:37:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -354,6 +354,10 @@ type_name(const type_t *tp)
 	if (tp->t_volatile)
 		buf_add(&buf, "volatile ");
 
+#ifdef t_str
+	if ((t == STRUCT || t == UNION) && tp->t_str->sou_incomplete)
+		buf_add(&buf, "incomplete ");
+#endif
 	buf_add(&buf, tspec_name(t));
 
 	switch (t) {
