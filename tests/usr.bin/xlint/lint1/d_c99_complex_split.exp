@@ -1,0 +1,3 @@
+d_c99_complex_split.c(30): warning: c may be used before set [158]
+d_c99_complex_split.c(40): warning: c may be used before set [158]
+d_c99_complex_split.c(51): warning: c may be used before set [158]
