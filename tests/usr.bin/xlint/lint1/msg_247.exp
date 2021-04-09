@@ -1,5 +1,3 @@
 msg_247.c(31): warning: pointer cast from 'pointer to struct Other' to 'pointer to struct <unnamed>' may be troublesome [247]
 msg_247.c(70): warning: pointer cast from 'pointer to struct Other' to 'pointer to signed char' may be troublesome [247]
-lhash.h(200): warning: pointer cast from 'pointer to incomplete struct lhash_st' to 'pointer to struct lhash_st_OPENSSL_STRING' may be troublesome [247]
-	included from msg_247.c(146)
 msg_247.c(134): warning: struct lhash_st never defined [233]

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.12 2021/04/09 19:32:12 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.13 2021/04/09 20:00:07 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -127,7 +127,7 @@ counter_increment(struct counter *counter)
  * type-generic hashing API while defining a separate struct for each type to
  * be hashed.
  *
- * As of 2021-04-09, in a typical NetBSD build this leads to about 38,000 lint
+ * Before 2021-04-09, in a typical NetBSD build this led to about 38,000 lint
  * warnings about possibly troublesome pointer casts.
  */
 
@@ -147,7 +147,10 @@ struct lhash_st_OPENSSL_STRING {
 struct lhash_st_OPENSSL_STRING *
 lh_OPENSSL_STRING_new(void)
 {
-	/* expect+1: 247 */
+	/*
+	 * Since tree.c 1.274 from 2021-04-09, lint does not warn about casts
+	 * to or from incomplete structs anymore.
+	 */
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
-# 154 "msg_247.c" 2
+# 157 "msg_247.c" 2
