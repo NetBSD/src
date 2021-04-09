@@ -1,6 +1,6 @@
 // Algorithm implementation -*- C++ -*-
 
-// Copyright (C) 2001-2018 Free Software Foundation, Inc.
+// Copyright (C) 2001-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1253,7 +1253,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
       if (__first == __middle)
 	return __last;
-      else if (__last  == __middle)
+      else if (__last == __middle)
 	return __first;
 
       _ForwardIterator __first2 = __middle;
@@ -1298,7 +1298,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       if (__first == __middle)
 	return __last;
-      else if (__last  == __middle)
+      else if (__last == __middle)
 	return __first;
 
       std::__reverse(__first,  __middle, bidirectional_iterator_tag());
@@ -1336,7 +1336,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       if (__first == __middle)
 	return __last;
-      else if (__last  == __middle)
+      else if (__last == __middle)
 	return __first;
 
       typedef typename iterator_traits<_RandomAccessIterator>::difference_type
@@ -1601,9 +1601,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 					   __right_len,
 					   __buffer, __buffer_size);
 
-      std::rotate(__left_split, __middle, __right_split);
-      std::advance(__left_split, std::distance(__middle, __right_split));
-      return __left_split;
+      return std::rotate(__left_split, __middle, __right_split);
     }
 
   template<typename _ForwardIterator, typename _Predicate>
@@ -1621,7 +1619,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef typename iterator_traits<_ForwardIterator>::difference_type
 	_DistanceType;
 
-      _Temporary_buffer<_ForwardIterator, _ValueType> __buf(__first, __last);
+      _Temporary_buffer<_ForwardIterator, _ValueType>
+	__buf(__first, std::distance(__first, __last));
       return
 	std::__stable_partition_adaptive(__first, __last, __pred,
 					 _DistanceType(__buf.requested_size()),
@@ -2401,11 +2400,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    return __last;
 	}
       else
-	{
-	  std::rotate(__first, __middle, __last);
-	  std::advance(__first, std::distance(__middle, __last));
-	  return __first;
-	}
+	return std::rotate(__first, __middle, __last);
     }
 
   /// This is a helper function for the merge routines.
@@ -2512,9 +2507,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __len11 = std::distance(__first, __first_cut);
 	}
 
-      std::rotate(__first_cut, __middle, __second_cut);
-      _BidirectionalIterator __new_middle = __first_cut;
-      std::advance(__new_middle, std::distance(__middle, __second_cut));
+      _BidirectionalIterator __new_middle
+	= std::rotate(__first_cut, __middle, __second_cut);
       std::__merge_without_buffer(__first, __first_cut, __new_middle,
 				  __len11, __len22, __comp);
       std::__merge_without_buffer(__new_middle, __second_cut, __last,
@@ -2540,7 +2534,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       const _DistanceType __len2 = std::distance(__middle, __last);
 
       typedef _Temporary_buffer<_BidirectionalIterator, _ValueType> _TmpBuf;
-      _TmpBuf __buf(__first, __last);
+      _TmpBuf __buf(__first, __len1 + __len2);
 
       if (__buf.begin() == 0)
 	std::__merge_without_buffer
@@ -3883,6 +3877,45 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
       return __f; // N.B. [alg.foreach] says std::move(f) but it's redundant.
     }
 
+#if __cplusplus >= 201703L
+  /**
+   *  @brief Apply a function to every element of a sequence.
+   *  @ingroup non_mutating_algorithms
+   *  @param  __first  An input iterator.
+   *  @param  __n      A value convertible to an integer.
+   *  @param  __f      A unary function object.
+   *  @return   `__first+__n`
+   *
+   *  Applies the function object `__f` to each element in the range
+   *  `[first, first+n)`.  `__f` must not modify the order of the sequence.
+   *  If `__f` has a return value it is ignored.
+  */
+  template<typename _InputIterator, typename _Size, typename _Function>
+    _InputIterator
+    for_each_n(_InputIterator __first, _Size __n, _Function __f)
+    {
+      typename iterator_traits<_InputIterator>::difference_type __n2 = __n;
+      using _Cat = typename iterator_traits<_InputIterator>::iterator_category;
+      if constexpr (is_base_of_v<random_access_iterator_tag, _Cat>)
+	{
+	  if (__n2 <= 0)
+	    return __first;
+	  auto __last = __first + __n2;
+	  std::for_each(__first, __last, std::move(__f));
+	  return __last;
+	}
+      else
+	{
+	  while (__n2-->0)
+	    {
+	      __f(*__first);
+	      ++__first;
+	    }
+	  return __first;
+	}
+    }
+#endif // C++17
+
   /**
    *  @brief Find the first occurrence of a value in a sequence.
    *  @ingroup non_mutating_algorithms
@@ -4998,7 +5031,7 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
 	_DistanceType;
 
       typedef _Temporary_buffer<_RandomAccessIterator, _ValueType> _TmpBuf;
-      _TmpBuf __buf(__first, __last);
+      _TmpBuf __buf(__first, std::distance(__first, __last));
 
       if (__buf.begin() == 0)
 	std::__inplace_stable_sort(__first, __last, __comp);

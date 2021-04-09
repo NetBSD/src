@@ -1,6 +1,6 @@
 /* Convert language-specific tree expression to rtl instructions,
    for GNU compiler.
-   Copyright (C) 1988-2018 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -144,7 +144,7 @@ mark_use (tree expr, bool rvalue_p, bool read_p,
 	    input_location = loc;
 	  expr = process_outer_var_ref (expr, tf_warning_or_error, true);
 	  if (!(TREE_TYPE (oexpr)
-		&& TREE_CODE (TREE_TYPE (oexpr)) == REFERENCE_TYPE))
+		&& TYPE_REF_P (TREE_TYPE (oexpr))))
 	    expr = convert_from_reference (expr);
 	}
       break;
@@ -169,7 +169,7 @@ mark_use (tree expr, bool rvalue_p, bool read_p,
 	    {
 	      /* Look through capture by reference.  */
 	      tree cap = DECL_CAPTURED_VARIABLE (ref);
-	      if (TREE_CODE (TREE_TYPE (cap)) != REFERENCE_TYPE
+	      if (!TYPE_REF_P (TREE_TYPE (cap))
 		  && decl_constant_var_p (cap))
 		{
 		  tree val = RECUR (cap);
@@ -187,10 +187,23 @@ mark_use (tree expr, bool rvalue_p, bool read_p,
 	}
       break;
 
-    CASE_CONVERT:
     case VIEW_CONVERT_EXPR:
       if (location_wrapper_p (expr))
-	loc = EXPR_LOCATION (expr);
+	{
+	  loc = EXPR_LOCATION (expr);
+	  tree op = TREE_OPERAND (expr, 0);
+	  tree nop = RECUR (op);
+	  if (nop == error_mark_node)
+	    return error_mark_node;
+	  TREE_OPERAND (expr, 0) = nop;
+	  /* If we're replacing a DECL with a constant, we also need to change
+	     the TREE_CODE of the location wrapper.  */
+	  if (op != nop && rvalue_p)
+	    TREE_SET_CODE (expr, NON_LVALUE_EXPR);
+	  return expr;
+	}
+      gcc_fallthrough();
+    CASE_CONVERT:
       recurse_op[0] = true;
       break;
 
@@ -262,6 +275,8 @@ mark_discarded_use (tree expr)
        expressions.  */
   if (expr == NULL_TREE)
     return expr;
+
+  STRIP_ANY_LOCATION_WRAPPER (expr);
 
   switch (TREE_CODE (expr))
     {
@@ -353,7 +368,13 @@ fold_for_warn (tree x)
   /* It's not generally safe to fully fold inside of a template, so
      call fold_non_dependent_expr instead.  */
   if (processing_template_decl)
-    return fold_non_dependent_expr (x);
+    {
+      tree f = fold_non_dependent_expr (x, tf_none);
+      if (f == error_mark_node)
+	return x;
+      else
+	return f;
+    }
 
   return c_fully_fold (x, /*for_init*/false, /*maybe_constp*/NULL);
 }

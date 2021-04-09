@@ -1,5 +1,5 @@
 /* Header file for gimplification.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -83,6 +83,7 @@ extern enum gimplify_status gimplify_arg (tree *, gimple_seq *, location_t,
 extern void gimplify_function_tree (tree);
 extern enum gimplify_status gimplify_va_arg_expr (tree *, gimple_seq *,
 						  gimple_seq *);
+extern bool generic_expr_could_trap_p (tree expr);
 gimple *gimplify_assign (tree, tree, gimple_seq *);
 
 #endif /* GCC_GIMPLIFY_H */

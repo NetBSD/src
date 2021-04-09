@@ -1,5 +1,5 @@
 /* Definitions of target machine GNU compiler.  IA-64 version.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
    Contributed by Steve Ellcey <sje@cup.hp.com> and
                   Reva Cuthbertson <reva@cup.hp.com>
 
@@ -184,9 +184,6 @@ do {								\
 #define TARGET_INIT_LIBFUNCS ia64_hpux_init_libfuncs
 
 #define FLOAT_LIB_COMPARE_RETURNS_BOOL(MODE, COMPARISON) ((MODE) == TFmode)
-
-/* HP-UX headers are C++-compatible.  */
-#define NO_IMPLICIT_EXTERN_C
 
 /* HP-UX uses PROFILE_HOOK instead of FUNCTION_PROFILER but we need a
    FUNCTION_PROFILER defined because its use is not ifdefed.  When using

@@ -1,5 +1,5 @@
 ;; DImode/DFmode patterns description of Andes NDS32 cpu for GNU compiler
-;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2019 Free Software Foundation, Inc.
 ;; Contributed by Andes Technology Corporation.
 ;;
 ;; This file is part of GCC.
@@ -139,7 +139,7 @@
 (define_split
   [(set (match_operand:DIDF 0 "register_operand"     "")
 	(match_operand:DIDF 1 "const_double_operand" ""))]
-  "reload_completed"
+  "flag_pic || reload_completed"
   [(set (match_dup 2) (match_dup 3))
    (set (match_dup 4) (match_dup 5))]
 {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2020/01/22 15:10:31 mgorny Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2021/04/09 23:15:20 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -103,7 +103,11 @@ LIB2_DIVMOD_FUNCS:=${LIB2_DIVMOD_FUNCS:N${f}}
 .endfor
 
 LIB2FUNCS=	${LIB2FUNCS_SHORT:=.c}
-LIB2FUNCS_ST=	${G_LIB2FUNCS_ST:=.c}
+_LIB2FUNCS=	${G_LIB2FUNCS_ST}
+.for _f in ${LIB2FUNCS_EXCLUDE}
+_LIB2FUNCS=	${_LIB2FUNCS:N${_f}}
+.endfor
+LIB2FUNCS_ST=	${_LIB2FUNCS:=.c}
 LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 .if ${HAVE_LIBGCC_EH} == "no"
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c:Nunwind-arm.c:Npr-support.c}

@@ -1,6 +1,6 @@
 # Pretty-printers for libstdc++.
 
-# Copyright (C) 2008-2018 Free Software Foundation, Inc.
+# Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -101,12 +101,14 @@ def find_type(orig, name):
 
 _versioned_namespace = '__8::'
 
-def is_specialization_of(type, template_name):
+def is_specialization_of(x, template_name):
     "Test if a type is a given template instantiation."
     global _versioned_namespace
+    if type(x) is gdb.Type:
+        x = x.tag
     if _versioned_namespace:
-        return re.match('^std::(%s)?%s<.*>$' % (_versioned_namespace, template_name), type) is not None
-    return re.match('^std::%s<.*>$' % template_name, type) is not None
+        return re.match('^std::(%s)?%s<.*>$' % (_versioned_namespace, template_name), x) is not None
+    return re.match('^std::%s<.*>$' % template_name, x) is not None
 
 def strip_versioned_namespace(typename):
     global _versioned_namespace
@@ -413,17 +415,26 @@ class StdTuplePrinter:
     "Print a std::tuple"
 
     class _iterator(Iterator):
+        @staticmethod
+        def _is_nonempty_tuple (nodes):
+            if len (nodes) == 2:
+                if is_specialization_of (nodes[1].type, '__tuple_base'):
+                    return True
+            elif len (nodes) == 1:
+                return True
+            elif len (nodes) == 0:
+                return False
+            raise ValueError("Top of tuple tree does not consist of a single node.")
+
         def __init__ (self, head):
             self.head = head
 
             # Set the base class as the initial head of the
             # tuple.
             nodes = self.head.type.fields ()
-            if len (nodes) == 1:
+            if self._is_nonempty_tuple (nodes):
                 # Set the actual head to the first pair.
                 self.head  = self.head.cast (nodes[0].type)
-            elif len (nodes) != 0:
-                raise ValueError("Top of tuple tree does not consist of a single node.")
             self.count = 0
 
         def __iter__ (self):
@@ -1045,7 +1056,7 @@ class StdExpAnyPrinter(SingleObjContainerPrinter):
             func = gdb.block_for_pc(int(mgr.cast(gdb.lookup_type('intptr_t'))))
             if not func:
                 raise ValueError("Invalid function pointer in %s" % self.typename)
-            rx = r"""({0}::_Manager_\w+<.*>)::_S_manage""".format(typename)
+            rx = r"""({0}::_Manager_\w+<.*>)::_S_manage\((enum )?{0}::_Op, (const {0}|{0} const) ?\*, (union )?{0}::_Arg ?\*\)""".format(typename)
             m = re.match(rx, func.function.name)
             if not m:
                 raise ValueError("Unknown manager function in %s" % self.typename)
@@ -1082,13 +1093,23 @@ class StdExpOptionalPrinter(SingleObjContainerPrinter):
 
     def __init__ (self, typename, val):
         valtype = self._recognize (val.type.template_argument(0))
-        self.typename = strip_versioned_namespace(typename)
-        self.typename = re.sub('^std::(experimental::|)(fundamentals_v\d::|)(.*)', r'std::\1\3<%s>' % valtype, self.typename, 1)
-        if not self.typename.startswith('std::experimental'):
-            val = val['_M_payload']
-        self.val = val
-        contained_value = val['_M_payload'] if self.val['_M_engaged'] else None
-        visualizer = gdb.default_visualizer (val['_M_payload'])
+        typename = strip_versioned_namespace(typename)
+        self.typename = re.sub('^std::(experimental::|)(fundamentals_v\d::|)(.*)', r'std::\1\3<%s>' % valtype, typename, 1)
+        payload = val['_M_payload']
+        if self.typename.startswith('std::experimental'):
+            engaged = val['_M_engaged']
+            contained_value = payload
+        else:
+            engaged = payload['_M_engaged']
+            contained_value = payload['_M_payload']
+            try:
+                # Since GCC 9
+                contained_value = contained_value['_M_value']
+            except:
+                pass
+        visualizer = gdb.default_visualizer (contained_value)
+        if not engaged:
+            contained_value = None
         super (StdExpOptionalPrinter, self).__init__ (contained_value, visualizer)
 
     def to_string (self):
@@ -1232,6 +1253,77 @@ class StdExpPathPrinter:
 
     def children(self):
         return self._iterator(self.val['_M_cmpts'])
+
+class StdPathPrinter:
+    "Print a std::filesystem::path"
+
+    def __init__ (self, typename, val):
+        self.val = val
+        self.typename = typename
+        impl = self.val['_M_cmpts']['_M_impl']['_M_t']['_M_t']['_M_head_impl']
+        self.type = impl.cast(gdb.lookup_type('uintptr_t')) & 3
+        if self.type == 0:
+            self.impl = impl
+        else:
+            self.impl = None
+
+    def _path_type(self):
+        t = str(self.type.cast(gdb.lookup_type(self.typename + '::_Type')))
+        if t[-9:] == '_Root_dir':
+            return "root-directory"
+        if t[-10:] == '_Root_name':
+            return "root-name"
+        return None
+
+    def to_string (self):
+        path = "%s" % self.val ['_M_pathname']
+        if self.type != 0:
+            t = self._path_type()
+            if t:
+                path = '%s [%s]' % (path, t)
+        return "filesystem::path %s" % path
+
+    class _iterator(Iterator):
+        def __init__(self, impl, pathtype):
+            if impl:
+                # We can't access _Impl::_M_size because _Impl is incomplete
+                # so cast to int* to access the _M_size member at offset zero,
+                int_type = gdb.lookup_type('int')
+                cmpt_type = gdb.lookup_type(pathtype+'::_Cmpt')
+                char_type = gdb.lookup_type('char')
+                impl = impl.cast(int_type.pointer())
+                size = impl.dereference()
+                #self.capacity = (impl + 1).dereference()
+                if hasattr(gdb.Type, 'alignof'):
+                    sizeof_Impl = max(2 * int_type.sizeof, cmpt_type.alignof)
+                else:
+                    sizeof_Impl = 2 * int_type.sizeof
+                begin = impl.cast(char_type.pointer()) + sizeof_Impl
+                self.item = begin.cast(cmpt_type.pointer())
+                self.finish = self.item + size
+                self.count = 0
+            else:
+                self.item = None
+                self.finish = None
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            if self.item == self.finish:
+                raise StopIteration
+            item = self.item.dereference()
+            count = self.count
+            self.count = self.count + 1
+            self.item = self.item + 1
+            path = item['_M_pathname']
+            t = StdPathPrinter(item.type.name, item)._path_type()
+            if not t:
+                t = count
+            return ('[%s]' % t, path)
+
+    def children(self):
+        return self._iterator(self.impl, self.typename)
 
 
 class StdPairPrinter:
@@ -1548,8 +1640,10 @@ def register_type_printers(obj):
         return
 
     # Add type printers for typedefs std::string, std::wstring etc.
-    for ch in ('', 'w', 'u16', 'u32'):
+    for ch in ('', 'w', 'u8', 'u16', 'u32'):
         add_one_type_printer(obj, 'basic_string', ch + 'string')
+        add_one_type_printer(obj, '__cxx11::basic_string', ch + 'string')
+        # Typedefs for __cxx11::basic_string used to be in namespace __cxx11:
         add_one_type_printer(obj, '__cxx11::basic_string',
                              '__cxx11::' + ch + 'string')
         add_one_type_printer(obj, 'basic_string_view', ch + 'string_view')
@@ -1562,7 +1656,7 @@ def register_type_printers(obj):
         for x in ('stringbuf', 'istringstream', 'ostringstream',
                   'stringstream'):
             add_one_type_printer(obj, 'basic_' + x, ch + x)
-            # <sstream> types are in __cxx11 namespace, but typedefs aren'x:
+            # <sstream> types are in __cxx11 namespace, but typedefs aren't:
             add_one_type_printer(obj, '__cxx11::basic_' + x, ch + x)
 
     # Add type printers for typedefs regex, wregex, cmatch, wcmatch etc.
@@ -1596,7 +1690,7 @@ def register_type_printers(obj):
 
     # Add type printers for experimental::basic_string_view typedefs.
     ns = 'experimental::fundamentals_v1::'
-    for ch in ('', 'w', 'u16', 'u32'):
+    for ch in ('', 'w', 'u8', 'u16', 'u32'):
         add_one_type_printer(obj, ns + 'basic_string_view',
                              ns + ch + 'string_view')
 
@@ -1746,9 +1840,9 @@ def build_libstdcxx_dictionary ():
     libstdcxx_printer.add_version('std::experimental::filesystem::v1::__cxx11::',
                                   'path', StdExpPathPrinter)
     libstdcxx_printer.add_version('std::filesystem::',
-                                  'path', StdExpPathPrinter)
+                                  'path', StdPathPrinter)
     libstdcxx_printer.add_version('std::filesystem::__cxx11::',
-                                  'path', StdExpPathPrinter)
+                                  'path', StdPathPrinter)
 
     # C++17 components
     libstdcxx_printer.add_version('std::',

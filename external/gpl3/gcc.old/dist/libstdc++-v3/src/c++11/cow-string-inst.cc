@@ -1,6 +1,6 @@
 // Reference-counted COW string instantiations -*- C++ -*-
 
-// Copyright (C) 2014-2018 Free Software Foundation, Inc.
+// Copyright (C) 2014-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -77,8 +77,9 @@ namespace std _GLIBCXX_VISIBILITY(default)
   }
 
   void
-  random_device::_M_init_pretr1(const std::string& token)
+  random_device::_M_init_pretr1(const std::string& token [[gnu::unused]])
   {
+#ifndef _GLIBCXX_USE_CRT_RAND_S
     unsigned long __seed = 5489UL;
     if (token != "mt19937")
       {
@@ -90,6 +91,7 @@ namespace std _GLIBCXX_VISIBILITY(default)
 					 "(const std::string&)"));
       }
     _M_mt.seed(__seed);
+#endif
   }
 } // namespace
 #endif

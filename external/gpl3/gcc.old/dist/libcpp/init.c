@@ -1,5 +1,5 @@
 /* CPP Library.
-   Copyright (C) 1986-2018 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -100,11 +100,13 @@ static const struct lang_flags lang_defaults[] =
   /* GNUC99   */  { 1,  0,  1,  1,  0,  0,  1,   1,   1,   0,    0,     0,     0,   0,      1 },
   /* GNUC11   */  { 1,  0,  1,  1,  1,  0,  1,   1,   1,   0,    0,     0,     0,   0,      1 },
   /* GNUC17   */  { 1,  0,  1,  1,  1,  0,  1,   1,   1,   0,    0,     0,     0,   0,      1 },
+  /* GNUC2X   */  { 1,  0,  1,  1,  1,  0,  1,   1,   1,   0,    0,     0,     0,   0,      1 },
   /* STDC89   */  { 0,  0,  0,  0,  0,  1,  0,   0,   0,   0,    0,     0,     1,   0,      0 },
   /* STDC94   */  { 0,  0,  0,  0,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0,      0 },
   /* STDC99   */  { 1,  0,  1,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0,      0 },
   /* STDC11   */  { 1,  0,  1,  1,  1,  1,  1,   1,   0,   0,    0,     0,     1,   0,      0 },
   /* STDC17   */  { 1,  0,  1,  1,  1,  1,  1,   1,   0,   0,    0,     0,     1,   0,      0 },
+  /* STDC2X   */  { 1,  0,  1,  1,  1,  1,  1,   1,   0,   0,    0,     0,     1,   0,      0 },
   /* GNUCXX   */  { 0,  1,  1,  1,  0,  0,  1,   0,   0,   0,    0,     0,     0,   0,      1 },
   /* CXX98    */  { 0,  1,  0,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0,      0 },
   /* GNUCXX11 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    0,     0,     0,   0,      1 },
@@ -262,7 +264,7 @@ cpp_create_reader (enum c_lang lang, cpp_hash_table *table,
   pfile->pushed_macros = 0;
 
   /* Do not force token locations by default.  */
-  pfile->forced_token_location_p = NULL;
+  pfile->forced_token_location = 0;
 
   /* Initialize source_date_epoch to -2 (not yet set).  */
   pfile->source_date_epoch = (time_t) -2;
@@ -480,8 +482,7 @@ cpp_init_special_builtins (cpp_reader *pfile)
 	      || pfile->cb.has_attribute == NULL))
 	continue;
       cpp_hashnode *hp = cpp_lookup (pfile, b->name, b->len);
-      hp->type = NT_MACRO;
-      hp->flags |= NODE_BUILTIN;
+      hp->type = NT_BUILTIN_MACRO;
       if (b->always_warn_if_redefined)
 	hp->flags |= NODE_WARN;
       hp->value.builtin = (enum cpp_builtin_type) b->value;
@@ -500,8 +501,7 @@ _cpp_restore_special_builtin (cpp_reader *pfile, struct def_pragma_macro *c)
     if (b->len == len && memcmp (c->name, b->name, len + 1) == 0)
       {
 	cpp_hashnode *hp = cpp_lookup (pfile, b->name, b->len);
-	hp->type = NT_MACRO;
-	hp->flags |= NODE_BUILTIN;
+	hp->type = NT_BUILTIN_MACRO;
 	if (b->always_warn_if_redefined)
 	  hp->flags |= NODE_WARN;
 	hp->value.builtin = (enum cpp_builtin_type) b->value;
@@ -542,6 +542,9 @@ cpp_init_builtins (cpp_reader *pfile, int hosted)
     _cpp_define_builtin (pfile, "__ASSEMBLER__ 1");
   else if (CPP_OPTION (pfile, lang) == CLK_STDC94)
     _cpp_define_builtin (pfile, "__STDC_VERSION__ 199409L");
+  else if (CPP_OPTION (pfile, lang) == CLK_STDC2X
+	   || CPP_OPTION (pfile, lang) == CLK_GNUC2X)
+    _cpp_define_builtin (pfile, "__STDC_VERSION__ 202000L");
   else if (CPP_OPTION (pfile, lang) == CLK_STDC17
 	   || CPP_OPTION (pfile, lang) == CLK_GNUC17)
     _cpp_define_builtin (pfile, "__STDC_VERSION__ 201710L");
@@ -649,7 +652,7 @@ cpp_post_options (cpp_reader *pfile)
 const char *
 cpp_read_main_file (cpp_reader *pfile, const char *fname)
 {
-  const source_location loc = 0;
+  const location_t loc = 0;
 
   if (CPP_OPTION (pfile, deps.style) != DEPS_NONE)
     {
