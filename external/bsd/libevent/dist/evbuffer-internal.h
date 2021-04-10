@@ -1,4 +1,4 @@
-/*	$NetBSD: evbuffer-internal.h,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: evbuffer-internal.h,v 1.6 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -287,19 +287,19 @@ struct evbuffer_multicast_parent {
 #define EVBUFFER_LOCK(buffer)						\
 	do {								\
 		EVLOCK_LOCK((buffer)->lock, 0);				\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define EVBUFFER_UNLOCK(buffer)						\
 	do {								\
 		EVLOCK_UNLOCK((buffer)->lock, 0);			\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define EVBUFFER_LOCK2(buffer1, buffer2)				\
 	do {								\
 		EVLOCK_LOCK2((buffer1)->lock, (buffer2)->lock, 0, 0);	\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define EVBUFFER_UNLOCK2(buffer1, buffer2)				\
 	do {								\
 		EVLOCK_UNLOCK2((buffer1)->lock, (buffer2)->lock, 0, 0);	\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /** Increase the reference count of buf by one. */
 void evbuffer_incref_(struct evbuffer *buf);
@@ -332,7 +332,7 @@ int evbuffer_read_setup_vecs_(struct evbuffer *buf, ev_ssize_t howmuch,
 #define WSABUF_FROM_EVBUFFER_IOV(i,ei) do {		\
 		(i)->buf = (ei)->iov_base;		\
 		(i)->len = (unsigned long)(ei)->iov_len;	\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 /* XXXX the cast above is safe for now, but not if we allow mmaps on win64.
  * See note in buffer_iocp's launch_write function */
 

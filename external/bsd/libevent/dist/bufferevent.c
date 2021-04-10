@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: bufferevent.c,v 1.6 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
@@ -29,7 +29,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bufferevent.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: bufferevent.c,v 1.6 2021/04/10 19:02:37 rillig Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -238,7 +238,7 @@ bufferevent_run_deferred_callbacks_unlocked(struct event_callback *cb, void *arg
 			    (bevp)->bev.ev_base,			\
 			&(bevp)->deferred))				\
 			bufferevent_incref_(&(bevp)->bev);		\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: evdns.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: evdns.c,v 1.6 2021/04/10 19:02:37 rillig Exp $	*/
 
 /* Copyright 2006-2007 Niels Provos
  * Copyright 2007-2012 Nick Mathewson and Niels Provos
@@ -52,7 +52,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evdns.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: evdns.c,v 1.6 2021/04/10 19:02:37 rillig Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -1080,7 +1080,7 @@ reply_parse(struct evdns_base *base, u8 *packet, int length) {
 		if (name_parse(packet, length, &j, tmp_name,	\
 			sizeof(tmp_name))<0)			\
 			goto err;				\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	reply.type = req->request_type;
 
@@ -1629,14 +1629,14 @@ dnsname_to_labels(u8 *const buf, size_t buf_len, off_t j,
 		t_ = htons(x);						\
 		memcpy(buf + j, &t_, 2);				\
 		j += 2;							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define APPEND32(x) do {						\
 		if (j + 4 > (off_t)buf_len)				\
 			goto overflow;					\
 		t32_ = htonl(x);					\
 		memcpy(buf + j, &t32_, 4);				\
 		j += 4;							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	if (name_len > 255) return -2;
 

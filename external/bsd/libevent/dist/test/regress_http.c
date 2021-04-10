@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.7 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.8 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_http.c,v 1.7 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: regress_http.c,v 1.8 2021/04/10 19:02:37 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2926,7 +2926,7 @@ http_uriencode_test(void *ptr)
 		free(s);					\
 		free(s2);					\
 		s = s2 = NULL;					\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define DEC(from,want,dp) do {					\
 		s = evhttp_uridecode((from),(dp),&sz);		\
@@ -2935,7 +2935,7 @@ http_uriencode_test(void *ptr)
 		tt_int_op(sz,==,strlen(want));			\
 		free(s);					\
 		s = NULL;					\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define OLD_DEC(from,want)  do {				\
 		s = evhttp_decode_uri((from));			\
@@ -2943,7 +2943,7 @@ http_uriencode_test(void *ptr)
 		tt_str_op(s,==,(want));				\
 		free(s);					\
 		s = NULL;					\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 
       	ENC("Hello", "Hello",0);

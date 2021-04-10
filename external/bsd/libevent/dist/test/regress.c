@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.c,v 1.10 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: regress.c,v 1.11 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress.c,v 1.10 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: regress.c,v 1.11 2021/04/10 19:02:37 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -293,7 +293,7 @@ combined_write_cb(evutil_socket_t fd, short event, void *arg)
 		TT_FAIL(("Legacy test %s not wrapped properly", x));	\
 		return;							\
 	}								\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define cleanup_test() setup_test("cleanup")
 
 static void

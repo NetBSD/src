@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_util.c,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: regress_util.c,v 1.5 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Nick Mathewson and Niels Provos
@@ -39,7 +39,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_util.c,v 1.4 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: regress_util.c,v 1.5 2021/04/10 19:02:37 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -628,12 +628,12 @@ test_evutil_log(void *ptr)
 		logsev = 0;	\
 		if (logmsg) free(logmsg);	\
 		logmsg = NULL;			\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define LOGEQ(sev,msg) do {			\
 		tt_int_op(logsev,==,sev);	\
 		tt_assert(logmsg != NULL);	\
 		tt_str_op(logmsg,==,msg);	\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #ifdef CAN_CHECK_ERR
 	/* We need to disable these tests for now.  Previously, the logging
