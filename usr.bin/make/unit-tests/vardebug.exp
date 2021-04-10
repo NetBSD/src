@@ -5,8 +5,8 @@ Global: VAR = added
 Global: VAR = overwritten
 Global:delete VAR
 Global:delete VAR (not found)
-Var_Set("${:U}", "empty name", ...) name expands to empty string - ignored
-Var_Append("${:U}", "empty name", ...) name expands to empty string - ignored
+Var_SetExpand: variable name "${:U}" expands to empty string, with value "empty name" - ignored
+Var_AppendExpand: variable name "${:U}" expands to empty string, with value "empty name" - ignored
 Global: FROM_CMDLINE = overwritten ignored!
 Global: VAR = 1
 Global: VAR = 1 2

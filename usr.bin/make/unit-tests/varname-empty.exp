@@ -1,5 +1,5 @@
-Var_Set("${:U}", "cmdline-u", ...) name expands to empty string - ignored
-Var_Set("", "cmdline-plain", ...) name expands to empty string - ignored
+Var_SetExpand: variable name "${:U}" expands to empty string, with value "cmdline-u" - ignored
+Var_SetExpand: variable name "" expands to empty string, with value "cmdline-plain" - ignored
 Global: .CURDIR = <curdir>
 Var_Parse: ${MAKE_OBJDIR_CHECK_WRITABLE:U} (eval)
 Evaluating modifier ${MAKE_OBJDIR_CHECK_WRITABLE:U} on value "" (eval, undefined)
@@ -14,14 +14,14 @@ Global: .MAKE.MAKEFILES = varname-empty.mk
 Global: .PARSEFILE = varname-empty.mk
 Global:delete .INCLUDEDFROMDIR (not found)
 Global:delete .INCLUDEDFROMFILE (not found)
-Var_Set("", "default", ...) name expands to empty string - ignored
-Var_Set("", "assigned", ...) name expands to empty string - ignored
+Var_SetExpand: variable name "" expands to empty string, with value "default" - ignored
+Var_SetExpand: variable name "" expands to empty string, with value "assigned" - ignored
 SetVar: variable name is empty - ignored
-Var_Set("", "", ...) name expands to empty string - ignored
-Var_Set("", "subst", ...) name expands to empty string - ignored
-Var_Set("", "shell-output", ...) name expands to empty string - ignored
-Var_Set("${:U}", "assigned indirectly", ...) name expands to empty string - ignored
-Var_Append("${:U}", "appended indirectly", ...) name expands to empty string - ignored
+Var_SetExpand: variable name "" expands to empty string, with value "" - ignored
+Var_SetExpand: variable name "" expands to empty string, with value "subst" - ignored
+Var_SetExpand: variable name "" expands to empty string, with value "shell-output" - ignored
+Var_SetExpand: variable name "${:U}" expands to empty string, with value "assigned indirectly" - ignored
+Var_AppendExpand: variable name "${:U}" expands to empty string, with value "appended indirectly" - ignored
 Global: .MAKEFLAGS =  -r -d v -d
 Global: .MAKEFLAGS =  -r -d v -d 0
 out: fallback
