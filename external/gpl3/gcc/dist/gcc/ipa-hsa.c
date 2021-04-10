@@ -1,5 +1,5 @@
 /* Callgraph based analysis of static variables.
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
    Contributed by Martin Liska <mliska@suse.cz>
 
 This file is part of GCC.
@@ -40,6 +40,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "stringpool.h"
 #include "cgraph.h"
 #include "print-tree.h"
+#include "alloc-pool.h"
 #include "symbol-summary.h"
 #include "hsa-common.h"
 
@@ -51,11 +52,11 @@ namespace {
 static bool
 check_warn_node_versionable (cgraph_node *node)
 {
-  if (!node->local.versionable)
+  if (!node->versionable)
     {
       warning_at (EXPR_LOCATION (node->decl), OPT_Whsa,
 		  "could not emit HSAIL for function %s: function cannot be "
-		  "cloned", node->name ());
+		  "cloned", node->dump_name ());
       return false;
     }
   return true;
@@ -97,7 +98,7 @@ process_hsa_functions (void)
 
 	  if (dump_file)
 	    fprintf (dump_file, "Created a new HSA clone: %s, type: %s\n",
-		     clone->name (),
+		     clone->dump_name (),
 		     s->m_kind == HSA_KERNEL ? "kernel" : "function");
 	}
       else if (hsa_callable_function_p (node->decl)
@@ -113,13 +114,13 @@ process_hsa_functions (void)
 	  TREE_PUBLIC (clone->decl) = TREE_PUBLIC (node->decl);
 	  clone->externally_visible = node->externally_visible;
 
-	  if (!node->local.local)
+	  if (!node->local)
 	    clone->force_output = true;
 	  hsa_summaries->link_functions (clone, node, HSA_FUNCTION, false);
 
 	  if (dump_file)
 	    fprintf (dump_file, "Created a new HSA function clone: %s\n",
-		     clone->name ());
+		     clone->dump_name ());
 	}
     }
 
@@ -140,8 +141,8 @@ process_hsa_functions (void)
 		  if (dump_file)
 		    fprintf (dump_file,
 			     "Redirecting edge to HSA function: %s->%s\n",
-			     xstrdup_for_dump (e->caller->name ()),
-			     xstrdup_for_dump (e->callee->name ()));
+			     e->caller->dump_name (),
+			     e->callee->dump_name ());
 		}
 	    }
 
@@ -221,7 +222,7 @@ ipa_hsa_read_section (struct lto_file_decl_data *file_data, const char *data,
   const int cfg_offset = sizeof (struct lto_function_header);
   const int main_offset = cfg_offset + header->cfg_size;
   const int string_offset = main_offset + header->main_size;
-  struct data_in *data_in;
+  class data_in *data_in;
   unsigned int i;
   unsigned int count;
 
@@ -277,9 +278,8 @@ ipa_hsa_read_summary (void)
   while ((file_data = file_data_vec[j++]))
     {
       size_t len;
-      const char *data = lto_get_section_data (file_data, LTO_section_ipa_hsa,
-					       NULL, &len);
-
+      const char *data
+	= lto_get_summary_section_data (file_data, LTO_section_ipa_hsa, &len);
       if (data)
 	ipa_hsa_read_section (file_data, data, len);
     }

@@ -1,5 +1,5 @@
 /* SSA Dominator optimizations for trees
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -39,7 +39,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "domwalk.h"
 #include "tree-ssa-propagate.h"
 #include "tree-ssa-threadupdate.h"
-#include "params.h"
 #include "tree-ssa-scopedtables.h"
 #include "tree-ssa-threadedge.h"
 #include "tree-ssa-dom.h"
@@ -50,6 +49,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-vrp.h"
 #include "vr-values.h"
 #include "gimple-ssa-evrp-analyze.h"
+#include "alias.h"
 
 /* This file implements optimizations on the dominator tree.  */
 
@@ -395,7 +395,7 @@ edge_info::record_simple_equiv (tree lhs, tree rhs)
 void
 free_dom_edge_info (edge e)
 {
-  class edge_info *edge_info = (struct edge_info *)e->aux;
+  class edge_info *edge_info = (class edge_info *)e->aux;
 
   if (edge_info)
     delete edge_info;
@@ -543,7 +543,7 @@ record_edge_info (basic_block bb)
               bool can_infer_simple_equiv
                 = !(HONOR_SIGNED_ZEROS (op0)
                     && real_zerop (op0));
-              struct edge_info *edge_info;
+	      class edge_info *edge_info;
 
 	      edge_info = new class edge_info (true_edge);
               record_conditions (&edge_info->cond_equivalences, cond, inverted);
@@ -567,7 +567,7 @@ record_edge_info (basic_block bb)
               bool can_infer_simple_equiv
                 = !(HONOR_SIGNED_ZEROS (op1)
                     && (TREE_CODE (op1) == SSA_NAME || real_zerop (op1)));
-              struct edge_info *edge_info;
+	      class edge_info *edge_info;
 
 	      edge_info = new class edge_info (true_edge);
               record_conditions (&edge_info->cond_equivalences, cond, inverted);
@@ -875,7 +875,7 @@ simplify_stmt_for_jump_threading (gimple *stmt,
 				  class avail_exprs_stack *avail_exprs_stack,
 				  basic_block bb ATTRIBUTE_UNUSED)
 {
-  /* First query our hash table to see if the the expression is available
+  /* First query our hash table to see if the expression is available
      there.  A non-NULL return value will be either a constant or another
      SSA_NAME.  */
   tree cached_lhs =  avail_exprs_stack->lookup_avail_expr (stmt, false, true);
@@ -901,7 +901,7 @@ simplify_stmt_for_jump_threading (gimple *stmt,
       if (TREE_CODE (op) != SSA_NAME)
 	return NULL_TREE;
 
-      value_range *vr = x_vr_values->get_value_range (op);
+      const value_range_equiv *vr = x_vr_values->get_value_range (op);
       if (vr->undefined_p ()
 	  || vr->varying_p ()
 	  || vr->symbolic_p ())
@@ -913,21 +913,26 @@ simplify_stmt_for_jump_threading (gimple *stmt,
 
 	  find_case_label_range (switch_stmt, vr->min (), vr->max (), &i, &j);
 
+	  /* Is there only one such label?  */
 	  if (i == j)
 	    {
 	      tree label = gimple_switch_label (switch_stmt, i);
 	      tree singleton;
 
+	      /* The i'th label will only be taken if the value range of the
+		 operand is entirely within the bounds of this label.  */
 	      if (CASE_HIGH (label) != NULL_TREE
 		  ? (tree_int_cst_compare (CASE_LOW (label), vr->min ()) <= 0
 		     && tree_int_cst_compare (CASE_HIGH (label), vr->max ()) >= 0)
 		  : (vr->singleton_p (&singleton)
 		     && tree_int_cst_equal (CASE_LOW (label), singleton)))
 		return label;
-
-	      if (i > j)
-		return gimple_switch_label (switch_stmt, 0);
 	    }
+
+	  /* If there are no such labels, then the default label
+	     will be taken.  */
+	  if (i > j)
+	    return gimple_switch_label (switch_stmt, 0);
 	}
 
       if (vr->kind () == VR_ANTI_RANGE)
@@ -958,9 +963,9 @@ simplify_stmt_for_jump_threading (gimple *stmt,
 	{
 	  edge dummy_e;
 	  tree dummy_tree;
-	  value_range new_vr;
+	  value_range_equiv new_vr;
 	  x_vr_values->extract_range_from_stmt (stmt, &dummy_e,
-					      &dummy_tree, &new_vr);
+						&dummy_tree, &new_vr);
 	  tree singleton;
 	  if (new_vr.singleton_p (&singleton))
 	    return singleton;
@@ -1720,11 +1725,10 @@ record_equivalences_from_stmt (gimple *stmt, int may_optimize_p,
       tree op0 = gimple_assign_rhs1 (stmt);
       tree op1 = gimple_assign_rhs2 (stmt);
       tree new_rhs
-	= build_fold_addr_expr (fold_build2 (MEM_REF,
-					     TREE_TYPE (TREE_TYPE (op0)),
-					     unshare_expr (op0),
-					     fold_convert (ptr_type_node,
-							   op1)));
+	= build1 (ADDR_EXPR, TREE_TYPE (op0),
+		  fold_build2 (MEM_REF, TREE_TYPE (TREE_TYPE (op0)),
+			       unshare_expr (op0), fold_convert (ptr_type_node,
+								 op1)));
       if (dump_file && (dump_flags & TDF_DETAILS))
 	{
 	  fprintf (dump_file, "==== ASGN ");
@@ -2151,9 +2155,14 @@ dom_opt_dom_walker::optimize_stmt (basic_block bb, gimple_stmt_iterator *si,
 	  else
 	    new_stmt = gimple_build_assign (rhs, lhs);
 	  gimple_set_vuse (new_stmt, gimple_vuse (stmt));
+	  expr_hash_elt *elt = NULL;
 	  cached_lhs = m_avail_exprs_stack->lookup_avail_expr (new_stmt, false,
-							       false);
-	  if (cached_lhs && operand_equal_p (rhs, cached_lhs, 0))
+							       false, &elt);
+	  if (cached_lhs
+	      && operand_equal_p (rhs, cached_lhs, 0)
+	      && refs_same_for_tbaa_p (elt->expr ()->kind == EXPR_SINGLE
+				       ? elt->expr ()->ops.single.rhs
+				       : NULL_TREE, lhs))
 	    {
 	      basic_block bb = gimple_bb (stmt);
 	      unlink_stmt_vdef (stmt);

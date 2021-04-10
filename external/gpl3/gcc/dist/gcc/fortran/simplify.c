@@ -1,5 +1,5 @@
 /* Simplify intrinsic functions at compile-time.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Andy Vaught & Katherine Holcomb
 
 This file is part of GCC.
@@ -210,26 +210,6 @@ gfc_convert_mpz_to_signed (mpz_t x, int bitsize)
 
       mpz_clear (mask);
     }
-}
-
-
-/* In-place convert BOZ to REAL of the specified kind.  */
-
-static gfc_expr *
-convert_boz (gfc_expr *x, int kind)
-{
-  if (x && x->ts.type == BT_INTEGER && x->is_boz)
-    {
-      gfc_typespec ts;
-      gfc_clear_ts (&ts);
-      ts.type = BT_REAL;
-      ts.kind = kind;
-
-      if (!gfc_convert_boz (x, &ts))
-	return &gfc_bad_expr;
-    }
-
-  return x;
 }
 
 
@@ -1127,6 +1107,91 @@ gfc_simplify_asin (gfc_expr *x)
 }
 
 
+/* Convert radians to degrees, i.e., x * 180 / pi.  */
+
+static void
+rad2deg (mpfr_t x)
+{
+  mpfr_t tmp;
+
+  mpfr_init (tmp);
+  mpfr_const_pi (tmp, GFC_RND_MODE);
+  mpfr_mul_ui (x, x, 180, GFC_RND_MODE);
+  mpfr_div (x, x, tmp, GFC_RND_MODE);
+  mpfr_clear (tmp);
+}
+
+
+/* Simplify ACOSD(X) where the returned value has units of degree.  */
+
+gfc_expr *
+gfc_simplify_acosd (gfc_expr *x)
+{
+  gfc_expr *result;
+
+  if (x->expr_type != EXPR_CONSTANT)
+    return NULL;
+
+  if (mpfr_cmp_si (x->value.real, 1) > 0
+      || mpfr_cmp_si (x->value.real, -1) < 0)
+    {
+      gfc_error ("Argument of ACOSD at %L must be between -1 and 1",
+		 &x->where);
+      return &gfc_bad_expr;
+    }
+
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_acos (result->value.real, x->value.real, GFC_RND_MODE);
+  rad2deg (result->value.real);
+
+  return range_check (result, "ACOSD");
+}
+
+
+/* Simplify asind (x) where the returned value has units of degree. */
+
+gfc_expr *
+gfc_simplify_asind (gfc_expr *x)
+{
+  gfc_expr *result;
+
+  if (x->expr_type != EXPR_CONSTANT)
+    return NULL;
+
+  if (mpfr_cmp_si (x->value.real, 1) > 0
+      || mpfr_cmp_si (x->value.real, -1) < 0)
+    {
+      gfc_error ("Argument of ASIND at %L must be between -1 and 1",
+		 &x->where);
+      return &gfc_bad_expr;
+    }
+
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_asin (result->value.real, x->value.real, GFC_RND_MODE);
+  rad2deg (result->value.real);
+
+  return range_check (result, "ASIND");
+}
+
+
+/* Simplify atand (x) where the returned value has units of degree. */
+
+gfc_expr *
+gfc_simplify_atand (gfc_expr *x)
+{
+  gfc_expr *result;
+
+  if (x->expr_type != EXPR_CONSTANT)
+    return NULL;
+
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_atan (result->value.real, x->value.real, GFC_RND_MODE);
+  rad2deg (result->value.real);
+
+  return range_check (result, "ATAND");
+}
+
+
 gfc_expr *
 gfc_simplify_asinh (gfc_expr *x)
 {
@@ -1228,8 +1293,8 @@ gfc_simplify_atan2 (gfc_expr *y, gfc_expr *x)
 
   if (mpfr_zero_p (y->value.real) && mpfr_zero_p (x->value.real))
     {
-      gfc_error ("If first argument of ATAN2 %L is zero, then the "
-		 "second argument must not be zero", &x->where);
+      gfc_error ("If first argument of ATAN2 at %L is zero, then the "
+		 "second argument must not be zero", &y->where);
       return &gfc_bad_expr;
     }
 
@@ -1662,12 +1727,6 @@ simplify_cmplx (const char *name, gfc_expr *x, gfc_expr *y, int kind)
 {
   gfc_expr *result;
 
-  if (convert_boz (x, kind) == &gfc_bad_expr)
-    return &gfc_bad_expr;
-
-  if (convert_boz (y, kind) == &gfc_bad_expr)
-    return &gfc_bad_expr;
-
   if (x->expr_type != EXPR_CONSTANT
       || (y != NULL && y->expr_type != EXPR_CONSTANT))
     return NULL;
@@ -1762,150 +1821,31 @@ gfc_simplify_conjg (gfc_expr *e)
   return range_check (result, "CONJG");
 }
 
-/* Return the simplification of the constant expression in icall, or NULL
-   if the expression is not constant.  */
 
-static gfc_expr *
-simplify_trig_call (gfc_expr *icall)
-{
-  gfc_isym_id func = icall->value.function.isym->id;
-  gfc_expr *x = icall->value.function.actual->expr;
-
-  /* The actual simplifiers will return NULL for non-constant x.  */
-  switch (func)
-    {
-    case GFC_ISYM_ACOS:
-      return gfc_simplify_acos (x);
-    case GFC_ISYM_ASIN:
-      return gfc_simplify_asin (x);
-    case GFC_ISYM_ATAN:
-      return gfc_simplify_atan (x);
-    case GFC_ISYM_COS:
-      return gfc_simplify_cos (x);
-    case GFC_ISYM_COTAN:
-      return gfc_simplify_cotan (x);
-    case GFC_ISYM_SIN:
-      return gfc_simplify_sin (x);
-    case GFC_ISYM_TAN:
-      return gfc_simplify_tan (x);
-    default:
-      gfc_internal_error ("in simplify_trig_call(): Bad intrinsic");
-    }
-}
-
-/* Convert a floating-point number from radians to degrees.  */
-
-static void
-degrees_f (mpfr_t x, mp_rnd_t rnd_mode)
-{
-  mpfr_t tmp;
-  mpfr_init (tmp);
-
-  /* Set x = x % 2pi to avoid offsets with large angles.  */
-  mpfr_const_pi (tmp, rnd_mode);
-  mpfr_mul_ui (tmp, tmp, 2, rnd_mode);
-  mpfr_fmod (tmp, x, tmp, rnd_mode);
-
-  /* Set x = x * 180.  */
-  mpfr_mul_ui (x, x, 180, rnd_mode);
-
-  /* Set x = x / pi.  */
-  mpfr_const_pi (tmp, rnd_mode);
-  mpfr_div (x, x, tmp, rnd_mode);
-
-  mpfr_clear (tmp);
-}
-
-/* Convert a floating-point number from degrees to radians.  */
-
-static void
-radians_f (mpfr_t x, mp_rnd_t rnd_mode)
-{
-  mpfr_t tmp;
-  mpfr_init (tmp);
-
-  /* Set x = x % 360 to avoid offsets with large angles.  */
-  mpfr_set_ui (tmp, 360, rnd_mode);
-  mpfr_fmod (tmp, x, tmp, rnd_mode);
-
-  /* Set x = x * pi.  */
-  mpfr_const_pi (tmp, rnd_mode);
-  mpfr_mul (x, x, tmp, rnd_mode);
-
-  /* Set x = x / 180.  */
-  mpfr_div_ui (x, x, 180, rnd_mode);
-
-  mpfr_clear (tmp);
-}
-
-
-/* Convert argument to radians before calling a trig function.  */
-
-gfc_expr *
-gfc_simplify_trigd (gfc_expr *icall)
-{
-  gfc_expr *arg;
-
-  arg = icall->value.function.actual->expr;
-
-  if (arg->ts.type != BT_REAL)
-    gfc_internal_error ("in gfc_simplify_trigd(): Bad type");
-
-  if (arg->expr_type == EXPR_CONSTANT)
-    /* Convert constant to radians before passing off to simplifier.  */
-    radians_f (arg->value.real, GFC_RND_MODE);
-
-  /* Let the usual simplifier take over - we just simplified the arg.  */
-  return simplify_trig_call (icall);
-}
-
-/* Convert result of an inverse trig function to degrees.  */
-
-gfc_expr *
-gfc_simplify_atrigd (gfc_expr *icall)
-{
-  gfc_expr *result;
-
-  if (icall->value.function.actual->expr->ts.type != BT_REAL)
-    gfc_internal_error ("in gfc_simplify_atrigd(): Bad type");
-
-  /* See if another simplifier has work to do first.  */
-  result = simplify_trig_call (icall);
-
-  if (result && result->expr_type == EXPR_CONSTANT)
-    {
-      /* Convert constant to degrees after passing off to actual simplifier.  */
-      degrees_f (result->value.real, GFC_RND_MODE);
-      return result;
-    }
-
-  /* Let gfc_resolve_atrigd take care of the non-constant case.  */
-  return NULL;
-}
-
-/* Convert the result of atan2 to degrees.  */
+/* Simplify atan2d (x) where the unit is degree.  */
 
 gfc_expr *
 gfc_simplify_atan2d (gfc_expr *y, gfc_expr *x)
 {
   gfc_expr *result;
 
-  if (x->ts.type != BT_REAL || y->ts.type != BT_REAL)
-    gfc_internal_error ("in gfc_simplify_atan2d(): Bad type");
+  if (x->expr_type != EXPR_CONSTANT || y->expr_type != EXPR_CONSTANT)
+    return NULL;
 
-  if (x->expr_type == EXPR_CONSTANT && y->expr_type == EXPR_CONSTANT)
+  if (mpfr_zero_p (y->value.real) && mpfr_zero_p (x->value.real))
     {
-      result = gfc_simplify_atan2 (y, x);
-      if (result != NULL)
-	{
-	  degrees_f (result->value.real, GFC_RND_MODE);
-	  return result;
-	}
+      gfc_error ("If first argument of ATAN2D at %L is zero, then the "
+		 "second argument must not be zero", &y->where);
+      return &gfc_bad_expr;
     }
 
-  /* Let gfc_resolve_atan2d take care of the non-constant case.  */
-  return NULL;
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_atan2 (result->value.real, y->value.real, x->value.real, GFC_RND_MODE);
+  rad2deg (result->value.real);
+
+  return range_check (result, "ATAN2D");
 }
+
 
 gfc_expr *
 gfc_simplify_cos (gfc_expr *x)
@@ -1933,6 +1873,101 @@ gfc_simplify_cos (gfc_expr *x)
     }
 
   return range_check (result, "COS");
+}
+
+
+static void
+deg2rad (mpfr_t x)
+{
+  mpfr_t d2r;
+
+  mpfr_init (d2r);
+  mpfr_const_pi (d2r, GFC_RND_MODE);
+  mpfr_div_ui (d2r, d2r, 180, GFC_RND_MODE);
+  mpfr_mul (x, x, d2r, GFC_RND_MODE);
+  mpfr_clear (d2r);
+}
+
+
+/* Simplification routines for SIND, COSD, TAND.  */
+#include "trigd_fe.inc"
+
+
+/* Simplify COSD(X) where X has the unit of degree.  */
+
+gfc_expr *
+gfc_simplify_cosd (gfc_expr *x)
+{
+  gfc_expr *result;
+
+  if (x->expr_type != EXPR_CONSTANT)
+    return NULL;
+
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_set (result->value.real, x->value.real, GFC_RND_MODE);
+  simplify_cosd (result->value.real);
+
+  return range_check (result, "COSD");
+}
+
+
+/* Simplify SIND(X) where X has the unit of degree.  */
+
+gfc_expr *
+gfc_simplify_sind (gfc_expr *x)
+{
+  gfc_expr *result;
+
+  if (x->expr_type != EXPR_CONSTANT)
+    return NULL;
+
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_set (result->value.real, x->value.real, GFC_RND_MODE);
+  simplify_sind (result->value.real);
+
+  return range_check (result, "SIND");
+}
+
+
+/* Simplify TAND(X) where X has the unit of degree.  */
+
+gfc_expr *
+gfc_simplify_tand (gfc_expr *x)
+{
+  gfc_expr *result;
+
+  if (x->expr_type != EXPR_CONSTANT)
+    return NULL;
+
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_set (result->value.real, x->value.real, GFC_RND_MODE);
+  simplify_tand (result->value.real);
+
+  return range_check (result, "TAND");
+}
+
+
+/* Simplify COTAND(X) where X has the unit of degree.  */
+
+gfc_expr *
+gfc_simplify_cotand (gfc_expr *x)
+{
+  gfc_expr *result;
+
+  if (x->expr_type != EXPR_CONSTANT)
+    return NULL;
+
+  /* Implement COTAND = -TAND(x+90).
+     TAND offers correct exact values for multiples of 30 degrees.
+     This implementation is also compatible with the behavior of some legacy
+     compilers.  Keep this consistent with gfc_conv_intrinsic_cotand.  */
+  result = gfc_get_constant_expr (x->ts.type, x->ts.kind, &x->where);
+  mpfr_set (result->value.real, x->value.real, GFC_RND_MODE);
+  mpfr_add_ui (result->value.real, result->value.real, 90, GFC_RND_MODE);
+  simplify_tand (result->value.real);
+  mpfr_neg (result->value.real, result->value.real, GFC_RND_MODE);
+
+  return range_check (result, "COTAND");
 }
 
 
@@ -2217,14 +2252,22 @@ gfc_expr *
 gfc_simplify_dble (gfc_expr *e)
 {
   gfc_expr *result = NULL;
+  int tmp1, tmp2;
 
   if (e->expr_type != EXPR_CONSTANT)
     return NULL;
 
-  if (convert_boz (e, gfc_default_double_kind) == &gfc_bad_expr)
-    return &gfc_bad_expr;
+  /* For explicit conversion, turn off -Wconversion and -Wconversion-extra
+     warnings.  */
+  tmp1 = warn_conversion;
+  tmp2 = warn_conversion_extra;
+  warn_conversion = warn_conversion_extra = 0;
 
   result = gfc_convert_constant (e, BT_REAL, gfc_default_double_kind);
+
+  warn_conversion = tmp1;
+  warn_conversion_extra = tmp2;
+
   if (result == &gfc_bad_expr)
     return &gfc_bad_expr;
 
@@ -2701,7 +2744,7 @@ gfc_simplify_erfc (gfc_expr *x)
 static void
 fullprec_erfc_scaled (mpfr_t res, mpfr_t arg)
 {
-  mp_prec_t prec;
+  mpfr_prec_t prec;
   mpfr_t a, b;
 
   prec = mpfr_get_default_prec ();
@@ -2738,7 +2781,7 @@ asympt_erfc_scaled (mpfr_t res, mpfr_t arg)
 {
   mpfr_t sum, x, u, v, w, oldsum, sumtrunc;
   mpz_t num;
-  mp_prec_t prec;
+  mpfr_prec_t prec;
   unsigned i;
 
   prec = mpfr_get_default_prec ();
@@ -2967,15 +3010,7 @@ gfc_simplify_float (gfc_expr *a)
   if (a->expr_type != EXPR_CONSTANT)
     return NULL;
 
-  if (a->is_boz)
-    {
-      if (convert_boz (a, gfc_default_real_kind) == &gfc_bad_expr)
-	return &gfc_bad_expr;
-
-      result = gfc_copy_expr (a);
-    }
-  else
-    result = gfc_int2real (a, gfc_default_real_kind);
+  result = gfc_int2real (a, gfc_default_real_kind);
 
   return range_check (result, "FLOAT");
 }
@@ -3104,12 +3139,7 @@ gfc_expr *
 gfc_simplify_fraction (gfc_expr *x)
 {
   gfc_expr *result;
-
-#if MPFR_VERSION < MPFR_VERSION_NUM(3,1,0)
-  mpfr_t absv, exp, pow2;
-#else
   mpfr_exp_t e;
-#endif
 
   if (x->expr_type != EXPR_CONSTANT)
     return NULL;
@@ -3123,40 +3153,8 @@ gfc_simplify_fraction (gfc_expr *x)
       return result;
     }
 
-#if MPFR_VERSION < MPFR_VERSION_NUM(3,1,0)
-
-  /* MPFR versions before 3.1.0 do not include mpfr_frexp.
-     TODO: remove the kludge when MPFR 3.1.0 or newer will be required */
-
-  if (mpfr_sgn (x->value.real) == 0)
-    {
-      mpfr_set (result->value.real, x->value.real, GFC_RND_MODE);
-      return result;
-    }
-
-  gfc_set_model_kind (x->ts.kind);
-  mpfr_init (exp);
-  mpfr_init (absv);
-  mpfr_init (pow2);
-
-  mpfr_abs (absv, x->value.real, GFC_RND_MODE);
-  mpfr_log2 (exp, absv, GFC_RND_MODE);
-
-  mpfr_trunc (exp, exp);
-  mpfr_add_ui (exp, exp, 1, GFC_RND_MODE);
-
-  mpfr_ui_pow (pow2, 2, exp, GFC_RND_MODE);
-
-  mpfr_div (result->value.real, x->value.real, pow2, GFC_RND_MODE);
-
-  mpfr_clears (exp, absv, pow2, NULL);
-
-#else
-
   /* mpfr_frexp() correctly handles zeros and NaNs.  */
   mpfr_frexp (&e, result->value.real, x->value.real, GFC_RND_MODE);
-
-#endif
 
   return range_check (result, "FRACTION");
 }
@@ -3611,11 +3609,31 @@ static gfc_expr *
 simplify_intconv (gfc_expr *e, int kind, const char *name)
 {
   gfc_expr *result = NULL;
+  int tmp1, tmp2;
+
+  /* Convert BOZ to integer, and return without range checking.  */
+  if (e->ts.type == BT_BOZ)
+    {
+      if (!gfc_boz2int (e, kind))
+	return NULL;
+      result = gfc_copy_expr (e);
+      return result;
+    }
 
   if (e->expr_type != EXPR_CONSTANT)
     return NULL;
 
+  /* For explicit conversion, turn off -Wconversion and -Wconversion-extra
+     warnings.  */
+  tmp1 = warn_conversion;
+  tmp2 = warn_conversion_extra;
+  warn_conversion = warn_conversion_extra = 0;
+
   result = gfc_convert_constant (e, BT_INTEGER, kind);
+
+  warn_conversion = tmp1;
+  warn_conversion_extra = tmp2;
+
   if (result == &gfc_bad_expr)
     return &gfc_bad_expr;
 
@@ -4118,7 +4136,17 @@ simplify_bound_dim (gfc_expr *array, gfc_expr *kind, int d, int upper,
     {
       if (upper)
 	{
-	  if (!gfc_ref_dimen_size (&ref->u.ar, d - 1, &result->value.integer, NULL))
+	  int d2 = 0, cnt = 0;
+	  for (int idx = 0; idx < ref->u.ar.dimen; ++idx)
+	    {
+	      if (ref->u.ar.dimen_type[idx] == DIMEN_ELEMENT)
+		d2++;
+	      else if (cnt < d - 1)
+		cnt++;
+	      else
+		break;
+	    }
+	  if (!gfc_ref_dimen_size (&ref->u.ar, d2 + d - 1, &result->value.integer, NULL))
 	    goto returnNull;
 	}
       else
@@ -4139,6 +4167,7 @@ simplify_bound (gfc_expr *array, gfc_expr *dim, gfc_expr *kind, int upper)
 {
   gfc_ref *ref;
   gfc_array_spec *as;
+  ar_type type = AR_UNKNOWN;
   int d;
 
   if (array->ts.type == BT_CLASS)
@@ -4151,6 +4180,10 @@ simplify_bound (gfc_expr *array, gfc_expr *dim, gfc_expr *kind, int upper)
       goto done;
     }
 
+  /* Do not attempt to resolve if error has already been issued.  */
+  if (array->symtree->n.sym->error)
+    return NULL;
+
   /* Follow any component references.  */
   as = array->symtree->n.sym->as;
   for (ref = array->ref; ref; ref = ref->next)
@@ -4158,6 +4191,7 @@ simplify_bound (gfc_expr *array, gfc_expr *dim, gfc_expr *kind, int upper)
       switch (ref->type)
 	{
 	case REF_ARRAY:
+	  type = ref->u.ar.type;
 	  switch (ref->u.ar.type)
 	    {
 	    case AR_ELEMENT:
@@ -4211,7 +4245,7 @@ simplify_bound (gfc_expr *array, gfc_expr *dim, gfc_expr *kind, int upper)
       int k;
 
       /* UBOUND(ARRAY) is not valid for an assumed-size array.  */
-      if (upper && as && as->type == AS_ASSUMED_SIZE)
+      if (upper && type == AR_FULL && as && as->type == AS_ASSUMED_SIZE)
 	{
 	  /* An error message will be emitted in
 	     check_assumed_size_reference (resolve.c).  */
@@ -4229,7 +4263,11 @@ simplify_bound (gfc_expr *array, gfc_expr *dim, gfc_expr *kind, int upper)
 
 	      for (j = 0; j < d; j++)
 		gfc_free_expr (bounds[j]);
-	      return bounds[d];
+
+	      if (gfc_seen_div0)
+		return &gfc_bad_expr;
+	      else
+		return bounds[d];
 	    }
 	}
 
@@ -4716,7 +4754,7 @@ gfc_simplify_matmul (gfc_expr *matrix_a, gfc_expr *matrix_b)
   else
     gcc_unreachable();
 
-  offset_a = offset_b = 0;
+  offset_b = 0;
   for (col = 0; col < result_columns; ++col)
     {
       offset_a = 0;
@@ -4812,6 +4850,7 @@ gfc_simplify_merge (gfc_expr *tsource, gfc_expr *fsource, gfc_expr *mask)
   if (mask->expr_type == EXPR_CONSTANT)
     {
       result = gfc_copy_expr (mask->value.logical ? tsource : fsource);
+      /* Parenthesis is needed to get lower bounds of 1.  */
       result = gfc_get_parentheses (result);
       gfc_simplify_expr (result, 1);
       return result;
@@ -5958,7 +5997,7 @@ gfc_expr *
 gfc_simplify_nearest (gfc_expr *x, gfc_expr *s)
 {
   gfc_expr *result;
-  mp_exp_t emin, emax;
+  mpfr_exp_t emin, emax;
   int kind;
 
   if (x->expr_type != EXPR_CONSTANT || s->expr_type != EXPR_CONSTANT)
@@ -5972,20 +6011,20 @@ gfc_simplify_nearest (gfc_expr *x, gfc_expr *s)
 
   /* Set emin and emax for the current model number.  */
   kind = gfc_validate_kind (BT_REAL, x->ts.kind, 0);
-  mpfr_set_emin ((mp_exp_t) gfc_real_kinds[kind].min_exponent -
+  mpfr_set_emin ((mpfr_exp_t) gfc_real_kinds[kind].min_exponent -
 		mpfr_get_prec(result->value.real) + 1);
-  mpfr_set_emax ((mp_exp_t) gfc_real_kinds[kind].max_exponent - 1);
-  mpfr_check_range (result->value.real, 0, GMP_RNDU);
+  mpfr_set_emax ((mpfr_exp_t) gfc_real_kinds[kind].max_exponent - 1);
+  mpfr_check_range (result->value.real, 0, MPFR_RNDU);
 
   if (mpfr_sgn (s->value.real) > 0)
     {
       mpfr_nextabove (result->value.real);
-      mpfr_subnormalize (result->value.real, 0, GMP_RNDU);
+      mpfr_subnormalize (result->value.real, 0, MPFR_RNDU);
     }
   else
     {
       mpfr_nextbelow (result->value.real);
-      mpfr_subnormalize (result->value.real, 0, GMP_RNDD);
+      mpfr_subnormalize (result->value.real, 0, MPFR_RNDD);
     }
 
   mpfr_set_emin (emin);
@@ -6067,8 +6106,8 @@ norm2_add_squared (gfc_expr *result, gfc_expr *e)
 
   gfc_set_model_kind (result->ts.kind);
   int index = gfc_validate_kind (BT_REAL, result->ts.kind, false);
-  mp_exp_t exp;
-  if (mpfr_number_p (result->value.real) && !mpfr_zero_p (result->value.real))
+  mpfr_exp_t exp;
+  if (mpfr_regular_p (result->value.real))
     {
       exp = mpfr_get_exp (result->value.real);
       /* If result is getting close to overflowing, scale down.  */
@@ -6082,7 +6121,7 @@ norm2_add_squared (gfc_expr *result, gfc_expr *e)
     }
 
   mpfr_init (tmp);
-  if (mpfr_number_p (e->value.real) && !mpfr_zero_p (e->value.real))
+  if (mpfr_regular_p (e->value.real))
     {
       exp = mpfr_get_exp (e->value.real);
       /* If e**2 would overflow or close to overflowing, scale down.  */
@@ -6123,9 +6162,7 @@ norm2_do_sqrt (gfc_expr *result, gfc_expr *e)
   if (result != e)
     mpfr_set (result->value.real, e->value.real, GFC_RND_MODE);
   mpfr_sqrt (result->value.real, result->value.real, GFC_RND_MODE);
-  if (norm2_scale
-      && mpfr_number_p (result->value.real)
-      && !mpfr_zero_p (result->value.real))
+  if (norm2_scale && mpfr_regular_p (result->value.real))
     {
       mpfr_t tmp;
       mpfr_init (tmp);
@@ -6164,9 +6201,7 @@ gfc_simplify_norm2 (gfc_expr *e, gfc_expr *dim)
       result = simplify_transformation_to_scalar (result, e, NULL,
 						  norm2_add_squared);
       mpfr_sqrt (result->value.real, result->value.real, GFC_RND_MODE);
-      if (norm2_scale
-	  && mpfr_number_p (result->value.real)
-	  && !mpfr_zero_p (result->value.real))
+      if (norm2_scale && mpfr_regular_p (result->value.real))
 	{
 	  mpfr_t tmp;
 	  mpfr_init (tmp);
@@ -6501,7 +6536,22 @@ gfc_expr *
 gfc_simplify_real (gfc_expr *e, gfc_expr *k)
 {
   gfc_expr *result = NULL;
-  int kind;
+  int kind, tmp1, tmp2;
+
+  /* Convert BOZ to real, and return without range checking.  */
+  if (e->ts.type == BT_BOZ)
+    {
+      /* Determine kind for conversion of the BOZ.  */
+      if (k)
+	gfc_extract_int (k, &kind);
+      else
+	kind = gfc_default_real_kind;
+
+      if (!gfc_boz2real (e, kind))
+	return NULL;
+      result = gfc_copy_expr (e);
+      return result;
+    }
 
   if (e->ts.type == BT_COMPLEX)
     kind = get_kind (BT_REAL, k, "REAL", e->ts.kind);
@@ -6514,10 +6564,17 @@ gfc_simplify_real (gfc_expr *e, gfc_expr *k)
   if (e->expr_type != EXPR_CONSTANT)
     return NULL;
 
-  if (convert_boz (e, kind) == &gfc_bad_expr)
-    return &gfc_bad_expr;
+  /* For explicit conversion, turn off -Wconversion and -Wconversion-extra
+     warnings.  */
+  tmp1 = warn_conversion;
+  tmp2 = warn_conversion_extra;
+  warn_conversion = warn_conversion_extra = 0;
 
   result = gfc_convert_constant (e, BT_REAL, kind);
+
+  warn_conversion = tmp1;
+  warn_conversion_extra = tmp2;
+
   if (result == &gfc_bad_expr)
     return &gfc_bad_expr;
 
@@ -7041,20 +7098,17 @@ gfc_simplify_scan (gfc_expr *e, gfc_expr *c, gfc_expr *b, gfc_expr *kind)
 	    indx = 0;
 	}
       else
-	{
-	  i = 0;
-	  for (indx = len; indx > 0; indx--)
-	    {
-	      for (i = 0; i < lenc; i++)
-		{
-		  if (c->value.character.string[i]
-		      == e->value.character.string[indx - 1])
-		    break;
-		}
-	      if (i < lenc)
-		break;
-	    }
-	}
+	for (indx = len; indx > 0; indx--)
+	  {
+	    for (i = 0; i < lenc; i++)
+	      {
+		if (c->value.character.string[i]
+		    == e->value.character.string[indx - 1])
+		  break;
+	      }
+	    if (i < lenc)
+	      break;
+	  }
     }
 
   result = gfc_get_int_expr (k, &e->where, indx);
@@ -7583,11 +7637,22 @@ gfc_expr *
 gfc_simplify_sngl (gfc_expr *a)
 {
   gfc_expr *result;
+  int tmp1, tmp2;
 
   if (a->expr_type != EXPR_CONSTANT)
     return NULL;
 
+  /* For explicit conversion, turn off -Wconversion and -Wconversion-extra
+     warnings.  */
+  tmp1 = warn_conversion;
+  tmp2 = warn_conversion_extra;
+  warn_conversion = warn_conversion_extra = 0;
+
   result = gfc_real2real (a, gfc_default_real_kind);
+
+  warn_conversion = tmp1;
+  warn_conversion_extra = tmp2;
+
   return range_check (result, "SNGL");
 }
 
@@ -7799,6 +7864,8 @@ gfc_simplify_sum (gfc_expr *array, gfc_expr *dim, gfc_expr *mask)
 }
 
 
+/* Simplify COTAN(X) where X has the unit of radian.  */
+
 gfc_expr *
 gfc_simplify_cotan (gfc_expr *x)
 {
@@ -7820,8 +7887,8 @@ gfc_simplify_cotan (gfc_expr *x)
       /* There is no builtin mpc_cot, so compute cot = cos / sin.  */
       val = &result->value.complex;
       mpc_init2 (swp, mpfr_get_default_prec ());
-      mpc_cos (swp, x->value.complex, GFC_MPC_RND_MODE);
-      mpc_sin (*val, x->value.complex, GFC_MPC_RND_MODE);
+      mpc_sin_cos (*val, swp, x->value.complex, GFC_MPC_RND_MODE,
+		   GFC_MPC_RND_MODE);
       mpc_div (*val, swp, *val, GFC_MPC_RND_MODE);
       mpc_clear (swp);
       break;
@@ -8008,8 +8075,8 @@ gfc_simplify_transpose (gfc_expr *matrix)
 			       &matrix->where);
   result->rank = 2;
   result->shape = gfc_get_shape (result->rank);
-  mpz_set (result->shape[0], matrix->shape[1]);
-  mpz_set (result->shape[1], matrix->shape[0]);
+  mpz_init_set (result->shape[0], matrix->shape[1]);
+  mpz_init_set (result->shape[1], matrix->shape[0]);
 
   if (matrix->ts.type == BT_CHARACTER)
     result->ts.u.cl = matrix->ts.u.cl;
@@ -8503,10 +8570,31 @@ gfc_convert_constant (gfc_expr *e, bt type, int kind)
       break;
 
     case BT_CHARACTER:
-      if (type == BT_CHARACTER)
-	f = gfc_character2character;
-      else
-	goto oops;
+      switch (type)
+	{
+	case BT_INTEGER:
+	  f = gfc_character2int;
+	  break;
+
+	case BT_REAL:
+	  f = gfc_character2real;
+	  break;
+
+	case BT_COMPLEX:
+	  f = gfc_character2complex;
+	  break;
+
+	case BT_CHARACTER:
+	  f = gfc_character2character;
+	  break;
+
+	case BT_LOGICAL:
+	  f = gfc_character2logical;
+	  break;
+
+	default:
+	  goto oops;
+	}
       break;
 
     default:
@@ -8540,10 +8628,10 @@ gfc_convert_constant (gfc_expr *e, bt type, int kind)
 	    {
 	      if (c->expr->expr_type == EXPR_ARRAY)
 		tmp = gfc_convert_constant (c->expr, type, kind);
-	      else if (c->expr->expr_type == EXPR_OP
-			&& c->expr->value.op.op == INTRINSIC_PARENTHESES)
+	      else if (c->expr->expr_type == EXPR_OP)
 		{
-		  gfc_simplify_expr (c->expr, 1);
+		  if (!gfc_simplify_expr (c->expr, 1))
+		    return &gfc_bad_expr;
 		  tmp = f (c->expr, kind);
 		}
 	      else

@@ -1,5 +1,5 @@
 /* Basic IPA optimizations based on profile.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -51,7 +51,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-iterator.h"
 #include "ipa-utils.h"
 #include "profile.h"
-#include "params.h"
 #include "value-prof.h"
 #include "tree-inline.h"
 #include "symbol-summary.h"
@@ -135,7 +134,8 @@ static void
 dump_histogram (FILE *file, vec<histogram_entry *> histogram)
 {
   unsigned int i;
-  gcov_type overall_time = 0, cumulated_time = 0, cumulated_size = 0, overall_size = 0;
+  gcov_type overall_time = 0, cumulated_time = 0, cumulated_size = 0,
+	    overall_size = 0;
   
   fprintf (dump_file, "Histogram:\n");
   for (i = 0; i < histogram.length (); i++)
@@ -160,7 +160,99 @@ dump_histogram (FILE *file, vec<histogram_entry *> histogram)
    }
 }
 
-/* Collect histogram from CFG profiles.  */
+/* Structure containing speculative target information from profile.  */
+
+struct speculative_call_target
+{
+  speculative_call_target (unsigned int id = 0, int prob = 0)
+    : target_id (id), target_probability (prob)
+  {
+  }
+
+  /* Profile_id of target obtained from profile.  */
+  unsigned int target_id;
+  /* Probability that call will land in function with target_id.  */
+  unsigned int target_probability;
+};
+
+class speculative_call_summary
+{
+public:
+  speculative_call_summary () : speculative_call_targets ()
+  {}
+
+  auto_vec<speculative_call_target> speculative_call_targets;
+
+  void dump (FILE *f);
+
+};
+
+  /* Class to manage call summaries.  */
+
+class ipa_profile_call_summaries
+  : public call_summary<speculative_call_summary *>
+{
+public:
+  ipa_profile_call_summaries (symbol_table *table)
+    : call_summary<speculative_call_summary *> (table)
+  {}
+
+  /* Duplicate info when an edge is cloned.  */
+  virtual void duplicate (cgraph_edge *, cgraph_edge *,
+			  speculative_call_summary *old_sum,
+			  speculative_call_summary *new_sum);
+};
+
+static ipa_profile_call_summaries *call_sums = NULL;
+
+/* Dump all information in speculative call summary to F.  */
+
+void
+speculative_call_summary::dump (FILE *f)
+{
+  cgraph_node *n2;
+
+  unsigned spec_count = speculative_call_targets.length ();
+  for (unsigned i = 0; i < spec_count; i++)
+    {
+      speculative_call_target item = speculative_call_targets[i];
+      n2 = find_func_by_profile_id (item.target_id);
+      if (n2)
+	fprintf (f, "    The %i speculative target is %s with prob %3.2f\n", i,
+		 n2->dump_name (),
+		 item.target_probability / (float) REG_BR_PROB_BASE);
+      else
+	fprintf (f, "    The %i speculative target is %u with prob %3.2f\n", i,
+		 item.target_id,
+		 item.target_probability / (float) REG_BR_PROB_BASE);
+    }
+}
+
+/* Duplicate info when an edge is cloned.  */
+
+void
+ipa_profile_call_summaries::duplicate (cgraph_edge *, cgraph_edge *,
+				       speculative_call_summary *old_sum,
+				       speculative_call_summary *new_sum)
+{
+  if (!old_sum)
+    return;
+
+  unsigned old_count = old_sum->speculative_call_targets.length ();
+  if (!old_count)
+    return;
+
+  new_sum->speculative_call_targets.reserve_exact (old_count);
+  new_sum->speculative_call_targets.quick_grow_cleared (old_count);
+
+  for (unsigned i = 0; i < old_count; i++)
+    {
+      new_sum->speculative_call_targets[i]
+	= old_sum->speculative_call_targets[i];
+    }
+}
+
+/* Collect histogram and speculative target summaries from CFG profiles.  */
 
 static void
 ipa_profile_generate_summary (void)
@@ -170,9 +262,13 @@ ipa_profile_generate_summary (void)
   basic_block bb;
 
   hash_table<histogram_hash> hashtable (10);
-  
+
+  gcc_checking_assert (!call_sums);
+  call_sums = new ipa_profile_call_summaries (symtab);
+
   FOR_EACH_FUNCTION_WITH_GIMPLE_BODY (node)
-    if (ENTRY_BLOCK_PTR_FOR_FN (DECL_STRUCT_FUNCTION (node->decl))->count.ipa_p ())
+    if (ENTRY_BLOCK_PTR_FOR_FN
+	  (DECL_STRUCT_FUNCTION (node->decl))->count.ipa_p ())
       FOR_EACH_BB_FN (bb, DECL_STRUCT_FUNCTION (node->decl))
 	{
 	  int time = 0;
@@ -191,36 +287,76 @@ ipa_profile_generate_summary (void)
 		     takes away bad histograms.  */
 		  if (h)
 		    {
-		      /* counter 0 is target, counter 1 is number of execution we called target,
-			 counter 2 is total number of executions.  */
-		      if (h->hvalue.counters[2])
+		      gcov_type val, count, all;
+		      struct cgraph_edge *e = node->get_edge (stmt);
+		      if (e && !e->indirect_unknown_callee)
+			continue;
+
+		      speculative_call_summary *csum
+			= call_sums->get_create (e);
+
+		      for (unsigned j = 0; j < GCOV_TOPN_VALUES; j++)
 			{
-			  struct cgraph_edge * e = node->get_edge (stmt);
-			  if (e && !e->indirect_unknown_callee)
+			  if (!get_nth_most_common_value (NULL, "indirect call",
+							  h, &val, &count, &all,
+							  j))
 			    continue;
-			  e->indirect_info->common_target_id
-			    = h->hvalue.counters [0];
-			  e->indirect_info->common_target_probability
-			    = GCOV_COMPUTE_SCALE (h->hvalue.counters [1], h->hvalue.counters [2]);
-			  if (e->indirect_info->common_target_probability > REG_BR_PROB_BASE)
+
+			  if (val == 0 || count == 0)
+			    continue;
+
+			  if (count > all)
 			    {
 			      if (dump_file)
-				fprintf (dump_file, "Probability capped to 1\n");
-			      e->indirect_info->common_target_probability = REG_BR_PROB_BASE;
+				fprintf (dump_file,
+					 "Probability capped to 1\n");
+			      count = all;
 			    }
+			  speculative_call_target item (
+			    val, GCOV_COMPUTE_SCALE (count, all));
+			  csum->speculative_call_targets.safe_push (item);
 			}
-		      gimple_remove_histogram_value (DECL_STRUCT_FUNCTION (node->decl),
-						      stmt, h);
+
+		      gimple_remove_histogram_value
+			 (DECL_STRUCT_FUNCTION (node->decl), stmt, h);
 		    }
 		}
 	      time += estimate_num_insns (stmt, &eni_time_weights);
 	      size += estimate_num_insns (stmt, &eni_size_weights);
 	    }
 	  if (bb->count.ipa_p () && bb->count.initialized_p ())
-	    account_time_size (&hashtable, histogram, bb->count.ipa ().to_gcov_type (),
+	    account_time_size (&hashtable, histogram,
+			       bb->count.ipa ().to_gcov_type (),
 			       time, size);
 	}
   histogram.qsort (cmp_counts);
+}
+
+/* Serialize the speculative summary info for LTO.  */
+
+static void
+ipa_profile_write_edge_summary (lto_simple_output_block *ob,
+				speculative_call_summary *csum)
+{
+  unsigned len = 0;
+
+  len = csum->speculative_call_targets.length ();
+
+  gcc_assert (len <= GCOV_TOPN_VALUES);
+
+  streamer_write_hwi_stream (ob->main_stream, len);
+
+  if (len)
+    {
+      unsigned spec_count = csum->speculative_call_targets.length ();
+      for (unsigned i = 0; i < spec_count; i++)
+	{
+	  speculative_call_target item = csum->speculative_call_targets[i];
+	  gcc_assert (item.target_id);
+	  streamer_write_hwi_stream (ob->main_stream, item.target_id);
+	  streamer_write_hwi_stream (ob->main_stream, item.target_probability);
+	}
+    }
 }
 
 /* Serialize the ipa info for lto.  */
@@ -239,10 +375,123 @@ ipa_profile_write_summary (void)
       streamer_write_uhwi_stream (ob->main_stream, histogram[i]->time);
       streamer_write_uhwi_stream (ob->main_stream, histogram[i]->size);
     }
+
+  if (!call_sums)
+    return;
+
+  /* Serialize speculative targets information.  */
+  unsigned int count = 0;
+  lto_symtab_encoder_t encoder = ob->decl_state->symtab_node_encoder;
+  lto_symtab_encoder_iterator lsei;
+  cgraph_node *node;
+
+  for (lsei = lsei_start_function_in_partition (encoder); !lsei_end_p (lsei);
+       lsei_next_function_in_partition (&lsei))
+    {
+      node = lsei_cgraph_node (lsei);
+      if (node->definition && node->has_gimple_body_p ()
+	  && node->indirect_calls)
+	count++;
+    }
+
+  streamer_write_uhwi_stream (ob->main_stream, count);
+
+  /* Process all of the functions.  */
+  for (lsei = lsei_start_function_in_partition (encoder);
+       !lsei_end_p (lsei) && count; lsei_next_function_in_partition (&lsei))
+    {
+      cgraph_node *node = lsei_cgraph_node (lsei);
+      if (node->definition && node->has_gimple_body_p ()
+	  && node->indirect_calls)
+	{
+	  int node_ref = lto_symtab_encoder_encode (encoder, node);
+	  streamer_write_uhwi_stream (ob->main_stream, node_ref);
+
+	  for (cgraph_edge *e = node->indirect_calls; e; e = e->next_callee)
+	    {
+	      speculative_call_summary *csum = call_sums->get_create (e);
+	      ipa_profile_write_edge_summary (ob, csum);
+	    }
+      }
+    }
+
   lto_destroy_simple_output_block (ob);
 }
 
-/* Deserialize the ipa info for lto.  */
+/* Dump all profile summary data for all cgraph nodes and edges to file F.  */
+
+static void
+ipa_profile_dump_all_summaries (FILE *f)
+{
+  fprintf (dump_file,
+	   "\n========== IPA-profile speculative targets: ==========\n");
+  cgraph_node *node;
+  FOR_EACH_FUNCTION_WITH_GIMPLE_BODY (node)
+    {
+      fprintf (f, "\nSummary for node %s:\n", node->dump_name ());
+      for (cgraph_edge *e = node->indirect_calls; e; e = e->next_callee)
+	{
+	  fprintf (f, "  Summary for %s of indirect edge %d:\n",
+		   e->caller->dump_name (), e->lto_stmt_uid);
+	  speculative_call_summary *csum = call_sums->get_create (e);
+	  csum->dump (f);
+	}
+    }
+  fprintf (f, "\n\n");
+}
+
+/* Read speculative targets information about edge for LTO WPA.  */
+
+static void
+ipa_profile_read_edge_summary (class lto_input_block *ib, cgraph_edge *edge)
+{
+  unsigned i, len;
+
+  len = streamer_read_hwi (ib);
+  gcc_assert (len <= GCOV_TOPN_VALUES);
+
+  speculative_call_summary *csum = call_sums->get_create (edge);
+
+  for (i = 0; i < len; i++)
+  {
+    unsigned int target_id = streamer_read_hwi (ib);
+    int target_probability = streamer_read_hwi (ib);
+    speculative_call_target item (target_id, target_probability);
+    csum->speculative_call_targets.safe_push (item);
+  }
+}
+
+/* Read profile speculative targets section information for LTO WPA.  */
+
+static void
+ipa_profile_read_summary_section (struct lto_file_decl_data *file_data,
+				  class lto_input_block *ib)
+{
+  if (!ib)
+    return;
+
+  lto_symtab_encoder_t encoder = file_data->symtab_node_encoder;
+
+  unsigned int count = streamer_read_uhwi (ib);
+
+  unsigned int i;
+  unsigned int index;
+  cgraph_node * node;
+
+  for (i = 0; i < count; i++)
+    {
+      index = streamer_read_uhwi (ib);
+      encoder = file_data->symtab_node_encoder;
+      node
+	= dyn_cast<cgraph_node *> (lto_symtab_encoder_deref (encoder, index));
+
+      for (cgraph_edge *e = node->indirect_calls; e; e = e->next_callee)
+	ipa_profile_read_edge_summary (ib, e);
+    }
+}
+
+/* Deserialize the IPA histogram and speculative targets summary info for LTO.
+   */
 
 static void
 ipa_profile_read_summary (void)
@@ -254,11 +503,14 @@ ipa_profile_read_summary (void)
 
   hash_table<histogram_hash> hashtable (10);
 
+  gcc_checking_assert (!call_sums);
+  call_sums = new ipa_profile_call_summaries (symtab);
+
   while ((file_data = file_data_vec[j++]))
     {
       const char *data;
       size_t len;
-      struct lto_input_block *ib
+      class lto_input_block *ib
 	= lto_create_simple_input_block (file_data,
 					 LTO_section_ipa_profile,
 					 &data, &len);
@@ -274,6 +526,9 @@ ipa_profile_read_summary (void)
 	      account_time_size (&hashtable, histogram,
 				 count, time, size);
 	    }
+
+	  ipa_profile_read_summary_section (file_data, ib);
+
 	  lto_destroy_simple_input_block (file_data,
 					  LTO_section_ipa_profile,
 					  ib, data, len);
@@ -326,8 +581,8 @@ ipa_propagate_frequency_1 (struct cgraph_node *node, void *data)
       if (profile_info
 	  && !(edge->callee->count.ipa () == profile_count::zero ())
 	  && (edge->caller->frequency != NODE_FREQUENCY_UNLIKELY_EXECUTED
-	      || (edge->caller->global.inlined_to
-		  && edge->caller->global.inlined_to->frequency
+	      || (edge->caller->inlined_to
+		  && edge->caller->inlined_to->frequency
 		     != NODE_FREQUENCY_UNLIKELY_EXECUTED)))
 	  d->maybe_unlikely_executed = false;
       if (edge->count.ipa ().initialized_p ()
@@ -341,7 +596,7 @@ ipa_propagate_frequency_1 (struct cgraph_node *node, void *data)
 	  {
 	    if (dump_file && (dump_flags & TDF_DETAILS))
 	      fprintf (dump_file, "  Called by %s that is executed once\n",
-		       edge->caller->name ());
+		       edge->caller->dump_name ());
 	    d->maybe_unlikely_executed = false;
 	    ipa_call_summary *s = ipa_call_summaries->get (edge);
 	    if (s != NULL && s->loop_depth)
@@ -356,7 +611,7 @@ ipa_propagate_frequency_1 (struct cgraph_node *node, void *data)
 	case NODE_FREQUENCY_NORMAL:
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    fprintf (dump_file, "  Called by %s that is normal or hot\n",
-		     edge->caller->name ());
+		     edge->caller->dump_name ());
 	  d->maybe_unlikely_executed = false;
 	  d->maybe_executed_once = false;
 	  break;
@@ -393,14 +648,14 @@ ipa_propagate_frequency (struct cgraph_node *node)
 
   /* We cannot propagate anything useful about externally visible functions
      nor about virtuals.  */
-  if (!node->local.local
+  if (!node->local
       || node->alias
       || (opt_for_fn (node->decl, flag_devirtualize)
 	  && DECL_VIRTUAL_P (node->decl)))
     return false;
   gcc_assert (node->analyzed);
   if (dump_file && (dump_flags & TDF_DETAILS))
-    fprintf (dump_file, "Processing frequency %s\n", node->name ());
+    fprintf (dump_file, "Processing frequency %s\n", node->dump_name ());
 
   node->call_for_symbol_and_aliases (ipa_propagate_frequency_1, &d,
 				     true);
@@ -411,7 +666,7 @@ ipa_propagate_frequency (struct cgraph_node *node)
        node->only_called_at_startup = true;
        if (dump_file)
          fprintf (dump_file, "Node %s promoted to only called at startup.\n",
-		  node->name ());
+		  node->dump_name ());
        changed = true;
     }
   if ((d.only_called_at_exit && !d.only_called_at_startup)
@@ -420,7 +675,7 @@ ipa_propagate_frequency (struct cgraph_node *node)
        node->only_called_at_exit = true;
        if (dump_file)
          fprintf (dump_file, "Node %s promoted to only called at exit.\n",
-		  node->name ());
+		  node->dump_name ());
        changed = true;
     }
 
@@ -439,7 +694,7 @@ ipa_propagate_frequency (struct cgraph_node *node)
 	    {
 	      if (dump_file)
 		fprintf (dump_file, "Node %s promoted to hot.\n",
-			 node->name ());
+			 node->dump_name ());
 	      node->frequency = NODE_FREQUENCY_HOT;
 	      return true;
 	    }
@@ -449,7 +704,7 @@ ipa_propagate_frequency (struct cgraph_node *node)
 	{
 	  if (dump_file)
 	    fprintf (dump_file, "Node %s reduced to normal.\n",
-		     node->name ());
+		     node->dump_name ());
 	  node->frequency = NODE_FREQUENCY_NORMAL;
 	  changed = true;
 	}
@@ -463,7 +718,7 @@ ipa_propagate_frequency (struct cgraph_node *node)
       node->frequency = NODE_FREQUENCY_UNLIKELY_EXECUTED;
       if (dump_file)
 	fprintf (dump_file, "Node %s promoted to unlikely executed.\n",
-		 node->name ());
+		 node->dump_name ());
       changed = true;
     }
   else if (d.maybe_executed_once && node->frequency != NODE_FREQUENCY_EXECUTED_ONCE)
@@ -471,10 +726,31 @@ ipa_propagate_frequency (struct cgraph_node *node)
       node->frequency = NODE_FREQUENCY_EXECUTED_ONCE;
       if (dump_file)
 	fprintf (dump_file, "Node %s promoted to executed once.\n",
-		 node->name ());
+		 node->dump_name ());
       changed = true;
     }
   return changed;
+}
+
+/* Check that number of arguments of N agrees with E.
+   Be conservative when summaries are not present.  */
+
+static bool
+check_argument_count (struct cgraph_node *n, struct cgraph_edge *e)
+{
+  if (!ipa_node_params_sum || !ipa_edge_args_sum)
+    return true;
+  class ipa_node_params *info = IPA_NODE_REF (n->function_symbol ());
+  if (!info)
+    return true;
+  ipa_edge_args *e_info = IPA_EDGE_REF (e);
+  if (!e_info)
+    return true;
+  if (ipa_get_param_count (info) != ipa_get_cs_argument_count (e_info)
+      && (ipa_get_param_count (info) >= ipa_get_cs_argument_count (e_info)
+	  || !stdarg_p (TREE_TYPE (n->decl))))
+    return false;
+  return true;
 }
 
 /* Simple ipa profile pass propagating frequencies across the callgraph.  */
@@ -492,6 +768,7 @@ ipa_profile (void)
   int nindirect = 0, ncommon = 0, nunknown = 0, nuseless = 0, nconverted = 0;
   int nmismatch = 0, nimpossible = 0;
   bool node_map_initialized = false;
+  gcov_type threshold;
 
   if (dump_file)
     dump_histogram (dump_file, histogram);
@@ -500,14 +777,12 @@ ipa_profile (void)
       overall_time += histogram[i]->count * histogram[i]->time;
       overall_size += histogram[i]->size;
     }
+  threshold = 0;
   if (overall_time)
     {
-      gcov_type threshold;
-
       gcc_assert (overall_size);
 
-      cutoff = (overall_time * PARAM_VALUE (HOT_BB_COUNT_WS_PERMILLE) + 500) / 1000;
-      threshold = 0;
+      cutoff = (overall_time * param_hot_bb_count_ws_permille + 500) / 1000;
       for (i = 0; cumulated < cutoff; i++)
 	{
 	  cumulated += histogram[i]->count * histogram[i]->time;
@@ -543,9 +818,20 @@ ipa_profile (void)
   histogram.release ();
   histogram_pool.release ();
 
-  /* Produce speculative calls: we saved common traget from porfiling into
-     e->common_target_id.  Now, at link time, we can look up corresponding
+  /* Produce speculative calls: we saved common target from profiling into
+     e->target_id.  Now, at link time, we can look up corresponding
      function node and produce speculative call.  */
+
+  gcc_checking_assert (call_sums);
+
+  if (dump_file)
+    {
+      if (!node_map_initialized)
+	init_node_map (false);
+      node_map_initialized = true;
+
+      ipa_profile_dump_all_summaries (dump_file);
+    }
 
   FOR_EACH_DEFINED_FUNCTION (n)
     {
@@ -558,107 +844,130 @@ ipa_profile (void)
 	{
 	  if (n->count.initialized_p ())
 	    nindirect++;
-	  if (e->indirect_info->common_target_id)
+
+	  speculative_call_summary *csum = call_sums->get_create (e);
+	  unsigned spec_count = csum->speculative_call_targets.length ();
+	  if (spec_count)
 	    {
 	      if (!node_map_initialized)
-	        init_node_map (false);
+		init_node_map (false);
 	      node_map_initialized = true;
 	      ncommon++;
-	      n2 = find_func_by_profile_id (e->indirect_info->common_target_id);
-	      if (n2)
+
+	      if (in_lto_p)
 		{
 		  if (dump_file)
 		    {
-		      fprintf (dump_file, "Indirect call -> direct call from"
-			       " other module %s => %s, prob %3.2f\n",
-			       n->dump_name (),
-			       n2->dump_name (),
-			       e->indirect_info->common_target_probability
-			       / (float)REG_BR_PROB_BASE);
+		      fprintf (dump_file,
+			       "Updating hotness threshold in LTO mode.\n");
+		      fprintf (dump_file, "Updated min count: %" PRId64 "\n",
+			       (int64_t) threshold / spec_count);
 		    }
-		  if (e->indirect_info->common_target_probability
-		      < REG_BR_PROB_BASE / 2)
+		  set_hot_bb_threshold (threshold / spec_count);
+		}
+
+	      unsigned speculative_id = 0;
+	      profile_count orig = e->count;
+	      for (unsigned i = 0; i < spec_count; i++)
+		{
+		  speculative_call_target item
+		    = csum->speculative_call_targets[i];
+		  n2 = find_func_by_profile_id (item.target_id);
+		  if (n2)
 		    {
-		      nuseless++;
 		      if (dump_file)
-			fprintf (dump_file,
-				 "Not speculating: probability is too low.\n");
-		    }
-		  else if (!e->maybe_hot_p ())
-		    {
-		      nuseless++;
-		      if (dump_file)
-			fprintf (dump_file,
-				 "Not speculating: call is cold.\n");
-		    }
-		  else if (n2->get_availability () <= AVAIL_INTERPOSABLE
-			   && n2->can_be_discarded_p ())
-		    {
-		      nuseless++;
-		      if (dump_file)
-			fprintf (dump_file,
-				 "Not speculating: target is overwritable "
-				 "and can be discarded.\n");
-		    }
-		  else if (ipa_node_params_sum && ipa_edge_args_sum
-			   && (!vec_safe_is_empty
-			       (IPA_NODE_REF (n2)->descriptors))
-			   && ipa_get_param_count (IPA_NODE_REF (n2))
-			      != ipa_get_cs_argument_count (IPA_EDGE_REF (e))
-			    && (ipa_get_param_count (IPA_NODE_REF (n2))
-				>= ipa_get_cs_argument_count (IPA_EDGE_REF (e))
-				|| !stdarg_p (TREE_TYPE (n2->decl))))
-		    {
-		      nmismatch++;
-		      if (dump_file)
-			fprintf (dump_file,
-				 "Not speculating: "
-				 "parameter count mistmatch\n");
-		    }
-		  else if (e->indirect_info->polymorphic
-			   && !opt_for_fn (n->decl, flag_devirtualize)
-			   && !possible_polymorphic_call_target_p (e, n2))
-		    {
-		      nimpossible++;
-		      if (dump_file)
-			fprintf (dump_file,
-				 "Not speculating: "
-				 "function is not in the polymorphic "
-				 "call target list\n");
+			{
+			  fprintf (dump_file,
+				   "Indirect call -> direct call from"
+				   " other module %s => %s, prob %3.2f\n",
+				   n->dump_name (),
+				   n2->dump_name (),
+				   item.target_probability
+				     / (float) REG_BR_PROB_BASE);
+			}
+		      if (item.target_probability
+		 	  < REG_BR_PROB_BASE / GCOV_TOPN_VALUES / 2)
+			{
+			  nuseless++;
+			  if (dump_file)
+			    fprintf (dump_file,
+				     "Not speculating: "
+				     "probability is too low.\n");
+			}
+		      else if (!e->maybe_hot_p ())
+			{
+			  nuseless++;
+			  if (dump_file)
+			    fprintf (dump_file,
+				     "Not speculating: call is cold.\n");
+			}
+		      else if (n2->get_availability () <= AVAIL_INTERPOSABLE
+			       && n2->can_be_discarded_p ())
+			{
+			  nuseless++;
+			  if (dump_file)
+			    fprintf (dump_file,
+				     "Not speculating: target is overwritable "
+				     "and can be discarded.\n");
+			}
+		      else if (!check_argument_count (n2, e))
+			{
+			  nmismatch++;
+			  if (dump_file)
+			    fprintf (dump_file,
+				     "Not speculating: "
+				     "parameter count mismatch\n");
+			}
+		      else if (e->indirect_info->polymorphic
+			       && !opt_for_fn (n->decl, flag_devirtualize)
+			       && !possible_polymorphic_call_target_p (e, n2))
+			{
+			  nimpossible++;
+			  if (dump_file)
+			    fprintf (dump_file,
+				     "Not speculating: "
+				     "function is not in the polymorphic "
+				     "call target list\n");
+			}
+		      else
+			{
+			  /* Target may be overwritable, but profile says that
+			     control flow goes to this particular implementation
+			     of N2.  Speculate on the local alias to allow
+			     inlining.  */
+			  if (!n2->can_be_discarded_p ())
+			    {
+			      cgraph_node *alias;
+			      alias = dyn_cast<cgraph_node *>
+				   (n2->noninterposable_alias ());
+			      if (alias)
+				n2 = alias;
+			    }
+			  nconverted++;
+			  profile_probability prob
+				 = profile_probability::from_reg_br_prob_base
+					(item.target_probability).adjusted ();
+			  e->make_speculative (n2,
+					       orig.apply_probability (prob),
+					       speculative_id);
+			  update = true;
+			  speculative_id++;
+			}
 		    }
 		  else
 		    {
-		      /* Target may be overwritable, but profile says that
-			 control flow goes to this particular implementation
-			 of N2.  Speculate on the local alias to allow inlining.
-		       */
-		      if (!n2->can_be_discarded_p ())
-			{
-			  cgraph_node *alias;
-			  alias = dyn_cast<cgraph_node *> (n2->noninterposable_alias ());
-			  if (alias)
-			    n2 = alias;
-			}
-		      nconverted++;
-		      e->make_speculative
-			(n2,
-			 e->count.apply_probability
-				     (e->indirect_info->common_target_probability));
-		      update = true;
+		      if (dump_file)
+			fprintf (dump_file,
+				 "Function with profile-id %i not found.\n",
+				 item.target_id);
+		      nunknown++;
 		    }
 		}
-	      else
-		{
-		  if (dump_file)
-		    fprintf (dump_file, "Function with profile-id %i not found.\n",
-			     e->indirect_info->common_target_id);
-		  nunknown++;
-		}
 	    }
-	 }
-       if (update)
-	 ipa_update_overall_fn_summary (n);
-     }
+	}
+      if (update)
+	ipa_update_overall_fn_summary (n);
+    }
   if (node_map_initialized)
     del_node_map ();
   if (dump_file && nindirect)
@@ -682,12 +991,12 @@ ipa_profile (void)
   order_pos = ipa_reverse_postorder (order);
   for (i = order_pos - 1; i >= 0; i--)
     {
-      if (order[i]->local.local
+      if (order[i]->local
 	  && opt_for_fn (order[i]->decl, flag_ipa_profile)
 	  && ipa_propagate_frequency (order[i]))
 	{
 	  for (e = order[i]->callees; e; e = e->next_callee)
-	    if (e->callee->local.local && !e->callee->aux)
+	    if (e->callee->local && !e->callee->aux)
 	      {
 	        something_changed = true;
 	        e->callee->aux = (void *)1;
@@ -706,7 +1015,7 @@ ipa_profile (void)
 	      && ipa_propagate_frequency (order[i]))
 	    {
 	      for (e = order[i]->callees; e; e = e->next_callee)
-		if (e->callee->local.local && !e->callee->aux)
+		if (e->callee->local && !e->callee->aux)
 		  {
 		    something_changed = true;
 		    e->callee->aux = (void *)1;
@@ -716,6 +1025,13 @@ ipa_profile (void)
 	}
     }
   free (order);
+
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    symtab->dump (dump_file);
+
+  delete call_sums;
+  call_sums = NULL;
+
   return 0;
 }
 

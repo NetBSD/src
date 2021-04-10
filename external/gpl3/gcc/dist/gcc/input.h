@@ -1,6 +1,6 @@
 /* Declarations for variables relating to reading the source file.
    Used by parsers, lexical analyzers, and error message routines.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,8 +23,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "line-map.h"
 
-extern GTY(()) struct line_maps *line_table;
-extern GTY(()) struct line_maps *saved_line_table;
+extern GTY(()) class line_maps *line_table;
+extern GTY(()) class line_maps *saved_line_table;
 
 /* A value which will never be used to represent a real location.  */
 #define UNKNOWN_LOCATION ((location_t) 0)
@@ -38,6 +38,7 @@ STATIC_ASSERT (BUILTINS_LOCATION < RESERVED_LOCATION_COUNT);
 
 extern bool is_location_from_builtin_token (location_t);
 extern expanded_location expand_location (location_t);
+extern int location_compute_display_column (expanded_location);
 
 /* A class capturing the bounds of a buffer, to allow for run-time
    bounds-checking in a checked build.  */
@@ -175,8 +176,9 @@ void diagnostics_file_cache_fini (void);
 
 void diagnostics_file_cache_forcibly_evict_file (const char *file_path);
 
-struct GTY(()) string_concat
+class GTY(()) string_concat
 {
+public:
   string_concat (int num, location_t *locs);
 
   int m_num;

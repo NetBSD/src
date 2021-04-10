@@ -1,5 +1,5 @@
 /* Compilation switch flag type definitions for GCC.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -200,6 +200,22 @@ enum stack_check_type
   FULL_BUILTIN_STACK_CHECK
 };
 
+/* Type of callgraph information.  */
+enum callgraph_info_type
+{
+  /* No information.  */
+  NO_CALLGRAPH_INFO = 0,
+
+  /* Naked callgraph.  */
+  CALLGRAPH_INFO_NAKED = 1,
+
+  /* Callgraph decorated with stack usage information.  */
+  CALLGRAPH_INFO_STACK_USAGE = 2,
+
+  /* Callgraph decoration with dynamic allocation information.  */
+  CALLGRAPH_INFO_DYNAMIC_ALLOC = 4
+};
+
 /* Floating-point contraction mode.  */
 enum fp_contract_mode {
   FP_CONTRACT_OFF = 0,
@@ -352,6 +368,18 @@ enum cf_protection_level
   CF_BRANCH = 1 << 0,
   CF_RETURN = 1 << 1,
   CF_FULL = CF_BRANCH | CF_RETURN,
-  CF_SET = 1 << 2
+  CF_SET = 1 << 2,
+  CF_CHECK = 1 << 3
 };
+
+/* Parloops schedule type.  */
+enum parloops_schedule_type
+{
+  PARLOOPS_SCHEDULE_STATIC = 0,
+  PARLOOPS_SCHEDULE_DYNAMIC,
+  PARLOOPS_SCHEDULE_GUIDED,
+  PARLOOPS_SCHEDULE_AUTO,
+  PARLOOPS_SCHEDULE_RUNTIME
+};
+
 #endif /* ! GCC_FLAG_TYPES_H */

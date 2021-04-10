@@ -1,5 +1,5 @@
 /* Vector API for GNU compiler.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
    Re-implemented in C++ by Diego Novillo <dnovillo@google.com>
 
@@ -295,6 +295,11 @@ va_heap::reserve (vec<T, va_heap, vl_embed> *&v, unsigned reserve, bool exact
 }
 
 
+#if GCC_VERSION >= 4007
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+#endif
+
 /* Free the heap space allocated for vector V.  */
 
 template<typename T>
@@ -312,6 +317,9 @@ va_heap::release (vec<T, va_heap, vl_embed> *&v)
   v = NULL;
 }
 
+#if GCC_VERSION >= 4007
+#pragma GCC diagnostic pop
+#endif
 
 /* Allocator type for GC vectors.  Notice that we need the structure
    declaration even if GC is not enabled.  */
@@ -593,7 +601,10 @@ public:
   void unordered_remove (unsigned);
   void block_remove (unsigned, unsigned);
   void qsort (int (*) (const void *, const void *));
+  void sort (int (*) (const void *, const void *, void *), void *);
   T *bsearch (const void *key, int (*compar)(const void *, const void *));
+  T *bsearch (const void *key,
+	      int (*compar)(const void *, const void *, void *), void *);
   unsigned lower_bound (T, bool (*)(const T &, const T &)) const;
   bool contains (const T &search) const;
   static size_t embedded_size (unsigned);
@@ -740,6 +751,17 @@ vec_safe_grow_cleared (vec<T, va_heap, vl_ptr> *&v,
 		       unsigned len CXX_MEM_STAT_INFO)
 {
   v->safe_grow_cleared (len PASS_MEM_STAT);
+}
+
+/* If V does not have space for NELEMS elements, call
+   V->reserve(NELEMS, EXACT).  */
+
+template<typename T>
+inline bool
+vec_safe_reserve (vec<T, va_heap, vl_ptr> *&v, unsigned nelems, bool exact = false
+		  CXX_MEM_STAT_INFO)
+{
+  return v->reserve (nelems, exact);
 }
 
 
@@ -1111,7 +1133,19 @@ inline void
 vec<T, A, vl_embed>::qsort (int (*cmp) (const void *, const void *))
 {
   if (length () > 1)
-    ::qsort (address (), length (), sizeof (T), cmp);
+    gcc_qsort (address (), length (), sizeof (T), cmp);
+}
+
+/* Sort the contents of this vector with qsort.  CMP is the comparison
+   function to pass to qsort.  */
+
+template<typename T, typename A>
+inline void
+vec<T, A, vl_embed>::sort (int (*cmp) (const void *, const void *, void *),
+			   void *data)
+{
+  if (length () > 1)
+    gcc_sort_r (address (), length (), sizeof (T), cmp, data);
 }
 
 
@@ -1138,6 +1172,41 @@ vec<T, A, vl_embed>::bsearch (const void *key,
       idx = (l + u) / 2;
       p = (const void *) (((const char *) base) + (idx * size));
       comparison = (*compar) (key, p);
+      if (comparison < 0)
+	u = idx;
+      else if (comparison > 0)
+	l = idx + 1;
+      else
+	return (T *)const_cast<void *>(p);
+    }
+
+  return NULL;
+}
+
+/* Search the contents of the sorted vector with a binary search.
+   CMP is the comparison function to pass to bsearch.  */
+
+template<typename T, typename A>
+inline T *
+vec<T, A, vl_embed>::bsearch (const void *key,
+			      int (*compar) (const void *, const void *,
+					     void *), void *data)
+{
+  const void *base = this->address ();
+  size_t nmemb = this->length ();
+  size_t size = sizeof (T);
+  /* The following is a copy of glibc stdlib-bsearch.h.  */
+  size_t l, u, idx;
+  const void *p;
+  int comparison;
+
+  l = 0;
+  u = nmemb;
+  while (l < u)
+    {
+      idx = (l + u) / 2;
+      p = (const void *) (((const char *) base) + (idx * size));
+      comparison = (*compar) (key, p, data);
       if (comparison < 0)
 	u = idx;
       else if (comparison > 0)
@@ -1401,7 +1470,10 @@ public:
   void unordered_remove (unsigned);
   void block_remove (unsigned, unsigned);
   void qsort (int (*) (const void *, const void *));
+  void sort (int (*) (const void *, const void *, void *), void *);
   T *bsearch (const void *key, int (*compar)(const void *, const void *));
+  T *bsearch (const void *key,
+	      int (*compar)(const void *, const void *, void *), void *);
   unsigned lower_bound (T, bool (*)(const T &, const T &)) const;
   bool contains (const T &search) const;
   void reverse (void);
@@ -1484,6 +1556,31 @@ class auto_string_vec : public auto_vec <char *>
 {
  public:
   ~auto_string_vec ();
+};
+
+/* A subclass of auto_vec <T *> that deletes all of its elements on
+   destruction.
+
+   This is a crude way for a vec to "own" the objects it points to
+   and clean up automatically.
+
+   For example, no attempt is made to delete elements when an item
+   within the vec is overwritten.
+
+   We can't rely on gnu::unique_ptr within a container,
+   since we can't rely on move semantics in C++98.  */
+
+template <typename T>
+class auto_delete_vec : public auto_vec <T *>
+{
+ public:
+  auto_delete_vec () {}
+  auto_delete_vec (size_t s) : auto_vec <T *> (s) {}
+
+  ~auto_delete_vec ();
+
+private:
+  DISABLE_COPY_AND_ASSIGN(auto_delete_vec);
 };
 
 /* Conditionally allocate heap memory for VEC and its internal vector.  */
@@ -1588,6 +1685,19 @@ auto_string_vec::~auto_string_vec ()
   char *str;
   FOR_EACH_VEC_ELT (*this, i, str)
     free (str);
+}
+
+/* auto_delete_vec's dtor, deleting all contained items, automatically
+   chaining up to ~auto_vec <T*>, which frees the internal buffer.  */
+
+template <typename T>
+inline
+auto_delete_vec<T>::~auto_delete_vec ()
+{
+  int i;
+  T *item;
+  FOR_EACH_VEC_ELT (*this, i, item)
+    delete item;
 }
 
 
@@ -1898,6 +2008,18 @@ vec<T, va_heap, vl_ptr>::qsort (int (*cmp) (const void *, const void *))
     m_vec->qsort (cmp);
 }
 
+/* Sort the contents of this vector with qsort.  CMP is the comparison
+   function to pass to qsort.  */
+
+template<typename T>
+inline void
+vec<T, va_heap, vl_ptr>::sort (int (*cmp) (const void *, const void *,
+					   void *), void *data)
+{
+  if (m_vec)
+    m_vec->sort (cmp, data);
+}
+
 
 /* Search the contents of the sorted vector with a binary search.
    CMP is the comparison function to pass to bsearch.  */
@@ -1909,6 +2031,20 @@ vec<T, va_heap, vl_ptr>::bsearch (const void *key,
 {
   if (m_vec)
     return m_vec->bsearch (key, cmp);
+  return NULL;
+}
+
+/* Search the contents of the sorted vector with a binary search.
+   CMP is the comparison function to pass to bsearch.  */
+
+template<typename T>
+inline T *
+vec<T, va_heap, vl_ptr>::bsearch (const void *key,
+				  int (*cmp) (const void *, const void *,
+					      void *), void *data)
+{
+  if (m_vec)
+    return m_vec->bsearch (key, cmp, data);
   return NULL;
 }
 

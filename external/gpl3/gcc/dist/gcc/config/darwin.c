@@ -1,5 +1,5 @@
 /* Functions for generic Darwin as target machine for GNU C compiler.
-   Copyright (C) 1989-2019 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -17,8 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
-
-#define IN_TARGET_CODE 1
 
 #include "config.h"
 #include "system.h"
@@ -47,19 +45,26 @@ along with GCC; see the file COPYING3.  If not see
 #include "toplev.h"
 #include "lto-section-names.h"
 #include "intl.h"
+#include "optabs.h"
 
-/* Darwin supports a feature called fix-and-continue, which is used
-   for rapid turn around debugging.  When code is compiled with the
-   -mfix-and-continue flag, two changes are made to the generated code
-   that allow the system to do things that it would normally not be
-   able to do easily.  These changes allow gdb to load in
-   recompilation of a translation unit that has been changed into a
-   running program and replace existing functions and methods of that
-   translation unit with versions of those functions and methods
-   from the newly compiled translation unit.  The new functions access
-   the existing static symbols from the old translation unit, if the
-   symbol existed in the unit to be replaced, and from the new
-   translation unit, otherwise.
+/* Fix and Continue.
+
+   NOTES:
+   1) this facility requires suitable support from a modified version
+   of GDB, which is not provided on any system after MacOS 10.7/Darwin11.
+   2) There is no support for this in any X86 version of the FSF compiler.
+
+   Fix and continue was used on some earlier MacOS systems for rapid turn
+   around debugging.  When code is compiled with the -mfix-and-continue
+   flag, two changes are made to the generated code that allow the system
+   to do things that it would normally not be able to do easily.  These
+   changes allow gdb to load in recompilation of a translation unit that
+   has been changed into a running program and replace existing functions
+   and methods of that translation unit with versions of those functions
+   and methods from the newly compiled translation unit.  The new functions
+   access the existing static symbols from the old translation unit, if the
+   symbol existed in the unit to be replaced, and from the new translation
+   unit, otherwise.
 
    The changes are to insert 5 nops at the beginning of all functions
    and to use indirection to get at static symbols.  The 5 nops
@@ -108,14 +113,14 @@ section * darwin_sections[NUM_DARWIN_SECTIONS];
 
 /* While we transition to using in-tests instead of ifdef'd code.  */
 #if !HAVE_lo_sum
-#define gen_macho_high(a,b) (a)
-#define gen_macho_low(a,b,c) (a)
+#define gen_macho_high(m,a,b) (a)
+#define gen_macho_low(m,a,b,c) (a)
 #endif
 
 /* True if we're setting __attribute__ ((ms_struct)).  */
 int darwin_ms_struct = false;
 
-/* Earlier versions of Darwin as do not recognize an alignment field in 
+/* Earlier versions of Darwin as do not recognize an alignment field in
    .comm directives, this should be set for versions that allow it.  */
 int emit_aligned_common = false;
 
@@ -127,11 +132,11 @@ output_objc_section_asm_op (const void *directive)
 {
   static bool been_here = false;
 
-  /* The NeXT ObjC Runtime requires these sections to be present and in 
-     order in the object.  The code below implements this by emitting 
+  /* The NeXT ObjC Runtime requires these sections to be present and in
+     order in the object.  The code below implements this by emitting
      a section header for each ObjC section the first time that an ObjC
      section is requested.  */
-  if (! been_here)
+  if (darwin_symbol_stubs && ! been_here)
     {
       section *saved_in_section = in_section;
       static const enum darwin_section_enum tomark[] =
@@ -169,20 +174,23 @@ output_objc_section_asm_op (const void *directive)
       /* ABI=2 */
       static const enum darwin_section_enum tomarkv2[] =
 	{
+	  objc2_method_names_section,
 	  objc2_message_refs_section,
+	  objc2_selector_refs_section,
+	  objc2_ivar_section,
 	  objc2_classdefs_section,
 	  objc2_metadata_section,
 	  objc2_classrefs_section,
+	  objc2_class_names_section,
 	  objc2_classlist_section,
 	  objc2_categorylist_section,
-	  objc2_selector_refs_section,
 	  objc2_nonlazy_class_section,
 	  objc2_nonlazy_category_section,
 	  objc2_protocollist_section,
 	  objc2_protocolrefs_section,
 	  objc2_super_classrefs_section,
+	  objc2_constant_string_object_section,
 	  objc2_image_info_section,
-	  objc2_constant_string_object_section
 	} ;
       size_t i;
 
@@ -238,7 +246,7 @@ name_needs_quotes (const char *name)
 {
   int c;
   while ((c = *name++) != '\0')
-    if (! ISIDNUM (c) 
+    if (! ISIDNUM (c)
 	  && c != '.' && c != '$' && c != '_' )
       return 1;
   return 0;
@@ -374,20 +382,22 @@ machopic_gen_offset (rtx orig)
     }
 }
 
-static GTY(()) const char * function_base_func_name;
-static GTY(()) int current_pic_label_num;
-static GTY(()) int emitted_pic_label_num;
+static GTY(()) const char * function_base_func_name = NULL;
+static GTY(()) unsigned current_pic_label_num = 0;
+static GTY(()) unsigned emitted_pic_label_num = 0;
 
+/* We need to keep one picbase label per function, but (when we emit code
+   to reload the picbase for setjump receiver) we might need to check for
+   a second use.  So, only update the picbase label counter when we see a
+   new function.  When there's no function decl, we assume that the call is
+   from the x86 stub generation code.  */
 static void
 update_pic_label_number_if_needed (void)
 {
-  const char *current_name;
-
-  /* When we are generating _get_pc thunks within stubs, there is no current
-     function.  */
   if (current_function_decl)
     {
-      current_name =
+
+      const char *current_name =
 	IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (current_function_decl));
       if (function_base_func_name != current_name)
 	{
@@ -405,11 +415,11 @@ update_pic_label_number_if_needed (void)
 void
 machopic_output_function_base_name (FILE *file)
 {
-  /* If dynamic-no-pic is on, we should not get here.  */
-  gcc_assert (!MACHO_DYNAMIC_NO_PIC_P);
+  /* We should only get here for -fPIC.  */
+  gcc_checking_assert (MACHOPIC_PURE);
 
   update_pic_label_number_if_needed ();
-  fprintf (file, "L%d$pb", current_pic_label_num);
+  fprintf (file, "L%u$pb", current_pic_label_num);
 }
 
 char curr_picbasename[32];
@@ -417,11 +427,11 @@ char curr_picbasename[32];
 const char *
 machopic_get_function_picbase (void)
 {
-  /* If dynamic-no-pic is on, we should not get here.  */
-  gcc_assert (!MACHO_DYNAMIC_NO_PIC_P);
+  /* We should only get here for -fPIC.  */
+  gcc_checking_assert (MACHOPIC_PURE);
 
   update_pic_label_number_if_needed ();
-  snprintf (curr_picbasename, 32, "L%d$pb", current_pic_label_num);
+  snprintf (curr_picbasename, 32, "L%u$pb", current_pic_label_num);
   return (const char *) curr_picbasename;
 }
 
@@ -592,15 +602,6 @@ machopic_indirection_name (rtx sym_ref, bool stub_p)
   return p->ptr_name;
 }
 
-/* Return the name of the stub for the mcount function.  */
-
-const char*
-machopic_mcount_stub_name (void)
-{
-  rtx symbol = gen_rtx_SYMBOL_REF (Pmode, "*mcount");
-  return machopic_indirection_name (symbol, /*stub_p=*/true);
-}
-
 /* If NAME is the name of a stub or a non-lazy pointer , mark the stub
    or non-lazy pointer as used -- and mark the object to which the
    pointer/stub refers as used as well, since the pointer/stub will
@@ -651,8 +652,8 @@ machopic_indirect_data_reference (rtx orig, rtx reg)
 	    {
 	  /* Create a new register for CSE opportunities.  */
 	  rtx hi_reg = (!can_create_pseudo_p () ? reg : gen_reg_rtx (Pmode));
- 	  emit_insn (gen_macho_high (hi_reg, orig));
- 	  emit_insn (gen_macho_low (reg, hi_reg, orig));
+	  emit_insn (gen_macho_high (Pmode, hi_reg, orig));
+	  emit_insn (gen_macho_low (Pmode, reg, hi_reg, orig));
 	      return reg;
  	    }
 	  else if (DARWIN_X86)
@@ -708,8 +709,8 @@ machopic_indirect_data_reference (rtx orig, rtx reg)
       ptr_ref = gen_const_mem (Pmode, ptr_ref);
       machopic_define_symbol (ptr_ref);
 
-      if (DARWIN_X86 
-          && reg 
+      if (DARWIN_X86
+          && reg
           && MACHO_DYNAMIC_NO_PIC_P)
 	{
 	    emit_insn (gen_rtx_SET (reg, ptr_ref));
@@ -725,33 +726,18 @@ machopic_indirect_data_reference (rtx orig, rtx reg)
 	 appropriate.  */
       if (GET_CODE (XEXP (orig, 0)) == PLUS)
 	return machopic_indirect_data_reference (XEXP (orig, 0), reg);
-      else 
+      else
 	return orig;
     }
   else if (GET_CODE (orig) == MEM)
     {
-      XEXP (ptr_ref, 0) = 
+      XEXP (ptr_ref, 0) =
 		machopic_indirect_data_reference (XEXP (orig, 0), reg);
       return ptr_ref;
     }
   else if (GET_CODE (orig) == PLUS)
     {
       rtx base, result;
-      /* When the target is i386, this code prevents crashes due to the
-	compiler's ignorance on how to move the PIC base register to
-	other registers.  (The reload phase sometimes introduces such
-	insns.)  */
-      if (GET_CODE (XEXP (orig, 0)) == REG
-	   && REGNO (XEXP (orig, 0)) == PIC_OFFSET_TABLE_REGNUM
-	   /* Prevent the same register from being erroneously used
-	      as both the base and index registers.  */
-	   && (DARWIN_X86 && (GET_CODE (XEXP (orig, 1)) == CONST))
-	   && reg)
-	{
-	  emit_move_insn (reg, XEXP (orig, 0));
-	  XEXP (ptr_ref, 0) = reg;
-	  return ptr_ref;
-	}
 
       /* Legitimize both operands of the PLUS.  */
       base = machopic_indirect_data_reference (XEXP (orig, 0), reg);
@@ -856,7 +842,7 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 	      rtx asym = XEXP (orig, 0);
 	      rtx mem;
 
-	      emit_insn (gen_macho_high (temp_reg, asym));
+	      emit_insn (gen_macho_high (Pmode, temp_reg, asym));
 	      mem = gen_const_mem (GET_MODE (orig),
 				   gen_rtx_LO_SUM (Pmode, temp_reg,
 						   copy_rtx (asym)));
@@ -924,7 +910,7 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 	      emit_use (gen_rtx_REG (Pmode, PIC_OFFSET_TABLE_REGNUM));
 #endif
 
-	      if (lra_in_progress)
+	      if (lra_in_progress && HARD_REGISTER_P (pic))
 		df_set_regs_ever_live (REGNO (pic), true);
 	      pic_ref = gen_rtx_PLUS (Pmode, pic,
 				      machopic_gen_offset (XEXP (orig, 0)));
@@ -994,7 +980,8 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 #if 0
 		  emit_use (pic_offset_table_rtx);
 #endif
-		  if (lra_in_progress)
+
+		  if (lra_in_progress && HARD_REGISTER_P (pic))
 		    df_set_regs_ever_live (REGNO (pic), true);
 		  pic_ref = gen_rtx_PLUS (Pmode,
 					  pic,
@@ -1295,6 +1282,17 @@ darwin_encode_section_info (tree decl, rtx rtl, int first)
       || (DECL_WEAK (decl) && ! MACHO_SYMBOL_HIDDEN_VIS_P (sym_ref))
       || lookup_attribute ("weakref", DECL_ATTRIBUTES (decl)))
      SYMBOL_REF_FLAGS (sym_ref) |= MACHO_SYMBOL_FLAG_MUST_INDIRECT;
+
+#if DARWIN_PPC
+  /* Objective C V2 (m64) IVAR offset refs from Apple GCC-4.x have an
+     indirection for m64 code on PPC.  Historically, these indirections
+     also appear in the .data section.  */
+  tree o2meta = lookup_attribute ("OBJC2META", DECL_ATTRIBUTES (decl));
+  o2meta = o2meta ? TREE_VALUE (o2meta) : NULL_TREE;
+
+  if (o2meta && strncmp (IDENTIFIER_POINTER (o2meta), "V2_IVRF",7) == 0)
+    SYMBOL_REF_FLAGS (sym_ref) |= MACHO_SYMBOL_FLAG_MUST_INDIRECT;
+#endif
 }
 
 void
@@ -1324,8 +1322,8 @@ static section *
 darwin_mergeable_string_section (tree exp,
 				 unsigned HOST_WIDE_INT align)
 {
-  /* Darwin's ld expects to see non-writable string literals in the .cstring 
-     section.  Later versions of ld check and complain when CFStrings are 
+  /* Darwin's ld expects to see non-writable string literals in the .cstring
+     section.  Later versions of ld check and complain when CFStrings are
      enabled.  Therefore we shall force the strings into .cstring since we
      don't support writable ones anyway.  */
   if ((darwin_constant_cfstrings || flag_merge_constants)
@@ -1355,36 +1353,40 @@ darwin_mergeable_constant_section (tree exp,
 				   unsigned HOST_WIDE_INT align,
 				   bool zsize)
 {
-  machine_mode mode = DECL_MODE (exp);
-  unsigned int modesize = GET_MODE_BITSIZE (mode);
-
-  if (DARWIN_SECTION_ANCHORS 
-      && flag_section_anchors 
-      && zsize)
+  if (zsize)
     return darwin_sections[zobj_const_section];
 
-  if (flag_merge_constants
-      && mode != VOIDmode
-      && mode != BLKmode
-      && modesize <= align
-      && align >= 8
-      && align <= 256
-      && (align & (align -1)) == 0)
-    {
-      tree size = TYPE_SIZE_UNIT (TREE_TYPE (exp));
+  machine_mode mode = DECL_MODE (exp);
+  if (!flag_merge_constants
+      || mode == VOIDmode
+      || mode == BLKmode
+      || align < 8
+      || align > 256
+      || (align & (align -1)) != 0)
+    return readonly_data_section;
 
-      if (TREE_CODE (size) == INTEGER_CST)
-	{
-	  if (wi::to_wide (size) == 4)
-	    return darwin_sections[literal4_section];
-	  else if (wi::to_wide (size) == 8)
-	    return darwin_sections[literal8_section];
-	  else if (HAVE_GAS_LITERAL16
-		   && TARGET_64BIT
-		   && wi::to_wide (size) == 16)
-	    return darwin_sections[literal16_section];
-	}
-    }
+  /* This will ICE if the mode is not a constant size, but that is reasonable,
+     since one cannot put a variable-sized thing into a constant section, we
+     shouldn't be trying.  */
+  const unsigned int modesize = GET_MODE_BITSIZE (mode).to_constant ();
+
+  if (modesize > align)
+    return readonly_data_section;
+
+  tree size = TYPE_SIZE_UNIT (TREE_TYPE (exp));
+
+  if (TREE_CODE (size) != INTEGER_CST)
+    return readonly_data_section;
+
+  unsigned isize = TREE_INT_CST_LOW (size);
+  if (isize == 4)
+    return darwin_sections[literal4_section];
+  else if (isize == 8)
+    return darwin_sections[literal8_section];
+  else if (HAVE_GAS_LITERAL16
+	   && TARGET_64BIT
+	   && isize == 16)
+    return darwin_sections[literal16_section];
 
   return readonly_data_section;
 }
@@ -1405,14 +1407,14 @@ machopic_reloc_rw_mask (void)
 
 /* We have to deal with ObjC/C++ metadata section placement in the common
    code, since it will also be called from LTO.
-   
+
    Return metadata attributes, if present (searching for ABI=2 first)
    Return NULL_TREE if no such attributes are found.  */
 
 static tree
 is_objc_metadata (tree decl)
 {
-  if (DECL_P (decl) 
+  if (DECL_P (decl)
       && (TREE_CODE (decl) == VAR_DECL || TREE_CODE (decl) == CONST_DECL)
       && DECL_ATTRIBUTES (decl))
     {
@@ -1438,7 +1440,7 @@ darwin_objc2_section (tree decl ATTRIBUTE_UNUSED, tree meta, section * base)
   gcc_assert (TREE_CODE (ident) == IDENTIFIER_NODE);
   p = IDENTIFIER_POINTER (ident);
 
-  gcc_checking_assert (flag_next_runtime == 1 && flag_objc_abi == 2);
+  gcc_checking_assert (flag_next_runtime >= 1 && flag_objc_abi == 2);
 
   objc_metadata_seen = 1;
 
@@ -1449,11 +1451,20 @@ darwin_objc2_section (tree decl ATTRIBUTE_UNUSED, tree meta, section * base)
      first.  */
   if      (!strncmp (p, "V2_BASE", 7))
     return base;
+  else if (!strncmp (p, "V2_CNAM", 7))
+    return darwin_sections[objc2_class_names_section];
+  else if (!strncmp (p, "V2_MNAM", 7))
+    return darwin_sections[objc2_method_names_section];
+  else if (!strncmp (p, "V2_MTYP", 7))
+    return darwin_sections[objc2_method_types_section];
   else if (!strncmp (p, "V2_STRG", 7))
     return darwin_sections[cstring_section];
 
   else if (!strncmp (p, "G2_META", 7) || !strncmp (p, "G2_CLAS", 7))
     return darwin_sections[objc2_classdefs_section];
+  else if (!strncmp (p, "V2_PCOL", 7))
+    return ld_uses_coal_sects ? darwin_sections[data_coal_section]
+			      : darwin_sections[objc2_data_section];
   else if (!strncmp (p, "V2_MREF", 7))
     return darwin_sections[objc2_message_refs_section];
   else if (!strncmp (p, "V2_CLRF", 7))
@@ -1489,6 +1500,9 @@ darwin_objc2_section (tree decl ATTRIBUTE_UNUSED, tree meta, section * base)
   else if (!strncmp (p, "V2_CSTR", 7))
     return darwin_sections[objc2_constant_string_object_section];
 
+  else if (!strncmp (p, "V2_IVRF", 7))
+    return darwin_sections[objc2_ivar_section];
+
   /* Not recognized, default.  */
   return base;
 }
@@ -1502,7 +1516,7 @@ darwin_objc1_section (tree decl ATTRIBUTE_UNUSED, tree meta, section * base)
   gcc_assert (TREE_CODE (ident) == IDENTIFIER_NODE);
   p = IDENTIFIER_POINTER (ident);
 
-  gcc_checking_assert (flag_next_runtime == 1 && flag_objc_abi < 2);
+  gcc_checking_assert (flag_next_runtime >= 1 && flag_objc_abi < 2);
 
   objc_metadata_seen = 1;
 
@@ -1590,12 +1604,27 @@ machopic_select_section (tree decl,
 	  && DECL_WEAK (decl)
 	  && !lookup_attribute ("weak_import", DECL_ATTRIBUTES (decl)));
 
-  zsize = (DECL_P (decl)
-	   && (TREE_CODE (decl) == VAR_DECL || TREE_CODE (decl) == CONST_DECL) 
+  /* Darwin pads zero-sized objects with at least one byte, so that the ld64
+     atom model is preserved (objects must have distinct regions starting with
+     a unique linker-visible symbol).
+     In order to support section anchors, we need to move objects with zero
+     size into sections which are marked as "no section anchors"; the padded
+     objects, obviously, have real sizes that differ from their DECL sizes.  */
+  zsize = DARWIN_SECTION_ANCHORS && flag_section_anchors;
+
+  /* In the streaming of LTO symbol data, we might have a situation where the
+     var is incomplete or layout not finished (DECL_SIZE_UNIT is NULL_TREE).
+     We cannot tell if it is zero-sized then, but we can get the section
+     category correct so that nm reports the right kind of section
+     (e.g. BSS c.f. data).  */
+  zsize = (zsize
+	   && DECL_P (decl)
+	   && (TREE_CODE (decl) == VAR_DECL || TREE_CODE (decl) == CONST_DECL)
+	   && DECL_SIZE_UNIT (decl)
 	   && tree_to_uhwi (DECL_SIZE_UNIT (decl)) == 0);
 
   one = DECL_P (decl)
-	&& TREE_CODE (decl) == VAR_DECL 
+	&& TREE_CODE (decl) == VAR_DECL
 	&& DECL_COMDAT_GROUP (decl);
 
   use_coal = (weak || one) && ld_uses_coal_sects;
@@ -1636,18 +1665,14 @@ machopic_select_section (tree decl,
 	{
 	  if (ro)
 	    base_section = darwin_sections[const_data_coal_section];
-	  else 
+	  else
 	    base_section = darwin_sections[data_coal_section];
 	}
-      else if (DARWIN_SECTION_ANCHORS 
-	       && flag_section_anchors
-	       && zsize)
+      else if (zsize)
 	{
 	  /* If we're doing section anchors, then punt zero-sized objects into
 	     their own sections so that they don't interfere with offset
-	     computation for the remaining vars.  This does not need to be done
-	     for stuff in mergeable sections, since these are ineligible for 
-	     anchors.  */
+	     computation for the remaining vars.  */
 	  if (ro)
 	    base_section = darwin_sections[zobj_const_data_section];
 	  else
@@ -1678,10 +1703,10 @@ machopic_select_section (tree decl,
       gcc_unreachable ();
     }
 
-  /* Darwin weird special cases.  
+  /* Darwin weird special cases.
      a) OBJC Meta-data. */
-  if (DECL_P (decl) 
-      && (TREE_CODE (decl) == VAR_DECL 
+  if (DECL_P (decl)
+      && (TREE_CODE (decl) == VAR_DECL
 	  || TREE_CODE (decl) == CONST_DECL)
       && DECL_ATTRIBUTES (decl))
     {
@@ -1723,83 +1748,14 @@ machopic_select_section (tree decl,
       else
 	return base_section;
     }
-  /* c) legacy meta-data selection.  */
-  else if (TREE_CODE (decl) == VAR_DECL
+  else if (flag_next_runtime
+	   && VAR_P (decl)
 	   && DECL_NAME (decl)
 	   && TREE_CODE (DECL_NAME (decl)) == IDENTIFIER_NODE
 	   && IDENTIFIER_POINTER (DECL_NAME (decl))
-	   && flag_next_runtime
 	   && !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "_OBJC_", 6))
-    {
-      const char *name = IDENTIFIER_POINTER (DECL_NAME (decl));
-      static bool warned_objc_46 = false;
-      /* We shall assert that zero-sized objects are an error in ObjC 
-         meta-data.  */
-      gcc_assert (tree_to_uhwi (DECL_SIZE_UNIT (decl)) != 0);
-      
-      /* ??? This mechanism for determining the metadata section is
-	 broken when LTO is in use, since the frontend that generated
-	 the data is not identified.  We will keep the capability for
-	 the short term - in case any non-Objective-C programs are using
-	 it to place data in specified sections.  */
-      if (!warned_objc_46)
-	{
-	  location_t loc = DECL_SOURCE_LOCATION (decl);
-	  warning_at (loc, 0, "the use of _OBJC_-prefixed variable names"
-		      " to select meta-data sections is deprecated at 4.6"
-		      " and will be removed in 4.7");
-	  warned_objc_46 = true;
-	}
-      
-      if (!strncmp (name, "_OBJC_CLASS_METHODS_", 20))
-        return darwin_sections[objc_cls_meth_section];
-      else if (!strncmp (name, "_OBJC_INSTANCE_METHODS_", 23))
-        return darwin_sections[objc_inst_meth_section];
-      else if (!strncmp (name, "_OBJC_CATEGORY_CLASS_METHODS_", 29))
-        return darwin_sections[objc_cat_cls_meth_section];
-      else if (!strncmp (name, "_OBJC_CATEGORY_INSTANCE_METHODS_", 32))
-        return darwin_sections[objc_cat_inst_meth_section];
-      else if (!strncmp (name, "_OBJC_CLASS_VARIABLES_", 22))
-        return darwin_sections[objc_class_vars_section];
-      else if (!strncmp (name, "_OBJC_INSTANCE_VARIABLES_", 25))
-        return darwin_sections[objc_instance_vars_section];
-      else if (!strncmp (name, "_OBJC_CLASS_PROTOCOLS_", 22))
-        return darwin_sections[objc_cat_cls_meth_section];
-      else if (!strncmp (name, "_OBJC_CLASS_NAME_", 17))
-        return darwin_sections[objc_class_names_section];
-      else if (!strncmp (name, "_OBJC_METH_VAR_NAME_", 20))
-        return darwin_sections[objc_meth_var_names_section];
-      else if (!strncmp (name, "_OBJC_METH_VAR_TYPE_", 20))
-        return darwin_sections[objc_meth_var_types_section];
-      else if (!strncmp (name, "_OBJC_CLASS_REFERENCES", 22))
-        return darwin_sections[objc_cls_refs_section];
-      else if (!strncmp (name, "_OBJC_CLASS_", 12))
-        return darwin_sections[objc_class_section];
-      else if (!strncmp (name, "_OBJC_METACLASS_", 16))
-        return darwin_sections[objc_meta_class_section];
-      else if (!strncmp (name, "_OBJC_CATEGORY_", 15))
-        return darwin_sections[objc_category_section];
-      else if (!strncmp (name, "_OBJC_SELECTOR_REFERENCES", 25))
-        return darwin_sections[objc_selector_refs_section];
-      else if (!strncmp (name, "_OBJC_SELECTOR_FIXUP", 20))
-        return darwin_sections[objc_selector_fixup_section];
-      else if (!strncmp (name, "_OBJC_SYMBOLS", 13))
-        return darwin_sections[objc_symbols_section];
-      else if (!strncmp (name, "_OBJC_MODULES", 13))
-        return darwin_sections[objc_module_info_section];
-      else if (!strncmp (name, "_OBJC_IMAGE_INFO", 16))
-        return darwin_sections[objc_image_info_section];
-      else if (!strncmp (name, "_OBJC_PROTOCOL_INSTANCE_METHODS_", 32))
-        return darwin_sections[objc_cat_inst_meth_section];
-      else if (!strncmp (name, "_OBJC_PROTOCOL_CLASS_METHODS_", 29))
-        return darwin_sections[objc_cat_cls_meth_section];
-      else if (!strncmp (name, "_OBJC_PROTOCOL_REFS_", 20))
-        return darwin_sections[objc_cat_cls_meth_section];
-      else if (!strncmp (name, "_OBJC_PROTOCOL_", 15))
-        return darwin_sections[objc_protocol_section];
-      else
-        return base_section;
-    }
+    /* c) legacy meta-data selection was deprecated at 4.6, removed now.  */
+    gcc_unreachable ();
 
   return base_section;
 }
@@ -1811,19 +1767,19 @@ section *
 machopic_select_rtx_section (machine_mode mode, rtx x,
 			     unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED)
 {
-  if (GET_MODE_SIZE (mode) == 8
+  if (known_eq (GET_MODE_SIZE (mode), 8)
       && (GET_CODE (x) == CONST_INT
 	  || GET_CODE (x) == CONST_WIDE_INT
 	  || GET_CODE (x) == CONST_DOUBLE))
     return darwin_sections[literal8_section];
-  else if (GET_MODE_SIZE (mode) == 4
+  else if (known_eq (GET_MODE_SIZE (mode), 4)
 	   && (GET_CODE (x) == CONST_INT
 	       || GET_CODE (x) == CONST_WIDE_INT
 	       || GET_CODE (x) == CONST_DOUBLE))
     return darwin_sections[literal4_section];
   else if (HAVE_GAS_LITERAL16
 	   && TARGET_64BIT
-	   && GET_MODE_SIZE (mode) == 16
+	   && known_eq (GET_MODE_SIZE (mode), 16)
 	   && (GET_CODE (x) == CONST_INT
 	       || GET_CODE (x) == CONST_WIDE_INT
 	       || GET_CODE (x) == CONST_DOUBLE
@@ -1876,12 +1832,12 @@ sort_cdtor_records (const void * a, const void * b)
   return 0;
 }
 
-static void 
+static void
 finalize_ctors ()
 {
   unsigned int i;
   cdtor_record *elt;
- 
+
   if (MACHOPIC_INDIRECT)
     switch_to_section (darwin_sections[mod_init_section]);
   else
@@ -1921,13 +1877,21 @@ darwin_globalize_label (FILE *stream, const char *name)
 {
   if (!!strncmp (name, "_OBJC_", 6))
     default_globalize_label (stream, name);
+  /* We have some Objective C cases that need to be global, but only on newer
+     OS versions.  */
+  if (flag_objc_abi < 2 || flag_next_runtime < 100700)
+    return;
+  if (!strncmp (name+6, "LabelPro", 8))
+    default_globalize_label (stream, name);
+  if (!strncmp (name+6, "Protocol_", 9))
+    default_globalize_label (stream, name);
 }
 
-/* This routine returns non-zero if 'name' starts with the special objective-c 
-   anonymous file-scope static name.  It accommodates c++'s mangling of such 
+/* This routine returns non-zero if 'name' starts with the special objective-c
+   anonymous file-scope static name.  It accommodates c++'s mangling of such
    symbols (in this case the symbols will have form _ZL{d}*_OBJC_* d=digit).  */
-   
-int 
+
+int
 darwin_label_is_anonymous_local_objc_name (const char *name)
 {
   const unsigned char *p = (const unsigned char *) name;
@@ -1939,7 +1903,49 @@ darwin_label_is_anonymous_local_objc_name (const char *name)
     while (*p >= '0' && *p <= '9')
       p++;
   }
-  return (!strncmp ((const char *)p, "_OBJC_", 6));
+  if (strncmp ((const char *)p, "_OBJC_", 6) != 0)
+    return false;
+
+  /* We need some of the objective c meta-data symbols to be visible to the
+     linker (when the target OS version is newer).  FIXME: this is horrible,
+     we need a better mechanism.  */
+
+  if (flag_objc_abi < 2 || flag_next_runtime < 100700)
+    return true;
+
+  p += 6;
+  if (!strncmp ((const char *)p, "ClassRef", 8))
+    return false;
+  else if (!strncmp ((const char *)p, "SelRef", 6))
+    return false;
+  else if (!strncmp ((const char *)p, "Category", 8))
+    {
+      if (p[8] == '_' || p[8] == 'I' || p[8] == 'P' || p[8] == 'C' )
+	return false;
+      return true;
+    }
+  else if (!strncmp ((const char *)p, "ClassMethods", 12))
+    return false;
+  else if (!strncmp ((const char *)p, "Instance", 8))
+    {
+      if (p[8] == 'I' || p[8] == 'M')
+	return false;
+      return true;
+    }
+  else if (!strncmp ((const char *)p, "CLASS_RO", 8))
+    return false;
+  else if (!strncmp ((const char *)p, "METACLASS_RO", 12))
+    return false;
+  else if (!strncmp ((const char *)p, "Protocol", 8))
+    {
+      if (p[8] == '_' || p[8] == 'I' || p[8] == 'P'
+	  || p[8] == 'M' || p[8] == 'C' || p[8] == 'O')
+	return false;
+      return true;
+    }
+  else if (!strncmp ((const char *)p, "LabelPro", 8))
+    return false;
+  return true;
 }
 
 /* LTO support for Mach-O.
@@ -2145,7 +2151,7 @@ darwin_emit_unwind_label (FILE *file, tree decl, int for_eh, int empty)
   char buf[32];
   static int invok_count = 0;
   static tree last_fun_decl = NULL_TREE;
-  
+
   /* Modern linkers can produce distinct FDEs without compiler support.  */
   if (! for_eh || ! ld_needs_eh_markers)
     return;
@@ -2157,7 +2163,7 @@ darwin_emit_unwind_label (FILE *file, tree decl, int for_eh, int empty)
      function.  This is of limited use, probably, since we do not currently
      enable partitioning.  */
   strcpy (buf, ".eh");
-  if (decl && TREE_CODE (decl) == FUNCTION_DECL) 
+  if (decl && TREE_CODE (decl) == FUNCTION_DECL)
     {
       if (decl == last_fun_decl)
         {
@@ -2219,6 +2225,30 @@ darwin_emit_except_table_label (FILE *file)
 			       except_table_label_num++);
   ASM_OUTPUT_LABEL (file, section_start_label);
 }
+
+/* The unwinders in earlier Darwin versions are based on an old version
+   of libgcc_s and need current frame address stateto be reset after a
+   DW_CFA_restore_state recovers the register values.  */
+
+bool
+darwin_should_restore_cfa_state (void)
+{
+  return generating_for_darwin_version <= 10;
+}
+
+/* Return, and mark as used, the name of the stub for the mcount function.
+   Currently, this is only called by X86 code in the expansion of the
+   FUNCTION_PROFILER macro, when stubs are enabled.  */
+
+const char*
+machopic_mcount_stub_name (void)
+{
+  rtx symbol = gen_rtx_SYMBOL_REF (Pmode, "*mcount");
+  const char *name = machopic_indirection_name (symbol, /*stub_p=*/true);
+  machopic_validate_stub_or_non_lazy_ptr (name);
+  return name;
+}
+
 /* Generate a PC-relative reference to a Mach-O non-lazy-symbol.  */
 
 void
@@ -2253,8 +2283,8 @@ darwin_non_lazy_pcrel (FILE *file, rtx addr)
    The machopic_define_symbol calls are telling the machopic subsystem
    that the name *is* defined in this module, so it doesn't need to
    make them indirect.  */
-void 
-darwin_asm_declare_object_name (FILE *file, 
+void
+darwin_asm_declare_object_name (FILE *file,
 				const char *nam, tree decl)
 {
   const char *xname = nam;
@@ -2263,11 +2293,11 @@ darwin_asm_declare_object_name (FILE *file,
 
   weak = (DECL_P (decl)
 	  && DECL_WEAK (decl)
-	  && !lookup_attribute ("weak_import", 
+	  && !lookup_attribute ("weak_import",
 				 DECL_ATTRIBUTES (decl)));
 
-  local_def = DECL_INITIAL (decl) || (TREE_STATIC (decl) 
-				      && (!DECL_COMMON (decl) 
+  local_def = DECL_INITIAL (decl) || (TREE_STATIC (decl)
+				      && (!DECL_COMMON (decl)
 					  || !TREE_PUBLIC (decl)));
 
   if (GET_CODE (XEXP (DECL_RTL (decl), 0)) != SYMBOL_REF)
@@ -2285,17 +2315,17 @@ darwin_asm_declare_object_name (FILE *file,
 #ifdef DEBUG_DARWIN_MEM_ALLOCATORS
 fprintf (file, "# dadon: %s %s (%llu, %u) local %d weak %d"
 	       " stat %d com %d pub %d t-const %d t-ro %d init %lx\n",
-	xname, (TREE_CODE (decl) == VAR_DECL?"var":"const"), 
-	(unsigned long long)size, DECL_ALIGN (decl), local_def, 
+	xname, (TREE_CODE (decl) == VAR_DECL?"var":"const"),
+	(unsigned long long)size, DECL_ALIGN (decl), local_def,
 	DECL_WEAK (decl), TREE_STATIC (decl), DECL_COMMON (decl),
 	TREE_PUBLIC (decl), TREE_CONSTANT (decl), TREE_READONLY (decl),
-	(unsigned long)DECL_INITIAL (decl)); 
+	(unsigned long)DECL_INITIAL (decl));
 #endif
 
-  /* Darwin needs help to support local zero-sized objects. 
+  /* Darwin needs help to support local zero-sized objects.
      They must be made at least one byte, and the section containing must be
      marked as unsuitable for section-anchors (see storage allocators below).
-     
+
      For non-zero objects this output is handled by varasm.c.
   */
   if (!size)
@@ -2316,7 +2346,7 @@ fprintf (file, "# dadon: %s %s (%llu, %u) local %d weak %d"
       /* Check that we've correctly picked up the zero-sized item and placed it
          properly.  */
       gcc_assert ((!DARWIN_SECTION_ANCHORS || !flag_section_anchors)
-		  || (in_section 
+		  || (in_section
 		      && (in_section->common.flags & SECTION_NO_ANCHOR)));
     }
   else
@@ -2337,7 +2367,7 @@ darwin_asm_declare_constant_name (FILE *file, const char *name,
       /* Check that we've correctly picked up the zero-sized item and placed it
          properly.  */
       gcc_assert ((!DARWIN_SECTION_ANCHORS || !flag_section_anchors)
-		  || (in_section 
+		  || (in_section
 		      && (in_section->common.flags & SECTION_NO_ANCHOR)));
     }
 }
@@ -2363,7 +2393,7 @@ darwin_asm_declare_constant_name (FILE *file, const char *name,
 /* Emit a chunk of data for items coalesced by the linker.  */
 static void
 darwin_emit_weak_or_comdat (FILE *fp, tree decl, const char *name,
-				  unsigned HOST_WIDE_INT size, 
+				  unsigned HOST_WIDE_INT size,
 				  bool use_coal,
 				  unsigned int align)
 {
@@ -2385,7 +2415,7 @@ darwin_emit_weak_or_comdat (FILE *fp, tree decl, const char *name,
   if (TREE_PUBLIC (decl))
     darwin_globalize_label (fp, name);
 
-  /* ... and we let it deal with outputting one byte of zero for them too.  */ 
+  /* ... and we let it deal with outputting one byte of zero for them too.  */
   darwin_asm_declare_object_name (fp, name, decl);
   if (size)
     assemble_zeros (size);
@@ -2394,7 +2424,7 @@ darwin_emit_weak_or_comdat (FILE *fp, tree decl, const char *name,
 /* Emit a chunk of data for ObjC meta-data that got placed in BSS erroneously.  */
 static void
 darwin_emit_objc_zeroed (FILE *fp, tree decl, const char *name,
-				  unsigned HOST_WIDE_INT size, 
+				  unsigned HOST_WIDE_INT size,
 				  unsigned int align, tree meta)
 {
   section *ocs = data_section;
@@ -2410,14 +2440,14 @@ darwin_emit_objc_zeroed (FILE *fp, tree decl, const char *name,
   gcc_assert (size);
   fprintf (fp, "\t.align\t%d\n", floor_log2 (align / BITS_PER_UNIT));
 
-  /* ... and we let it deal with outputting one byte of zero for them too.  */ 
+  /* ... and we let it deal with outputting one byte of zero for them too.  */
   darwin_asm_declare_object_name (fp, name, decl);
   assemble_zeros (size);
 }
 
 /* This routine emits 'local' storage:
 
-   When Section Anchors are off this routine emits .zerofill commands in 
+   When Section Anchors are off this routine emits .zerofill commands in
    sections named for their alignment.
 
    When Section Anchors are on, smaller (non-zero-sized) items are placed in
@@ -2426,15 +2456,11 @@ darwin_emit_objc_zeroed (FILE *fp, tree decl, const char *name,
    The routine has no checking - it is all assumed to be done by the caller.
 */
 static void
-darwin_emit_local_bss (FILE *fp, tree decl, const char *name, 
-			unsigned HOST_WIDE_INT size, 
+darwin_emit_local_bss (FILE *fp, tree decl, const char *name,
+			unsigned HOST_WIDE_INT size,
 			unsigned int l2align)
 {
-   /* FIXME: We have a fudge to make this work with Java even when the target does
-   not use sections anchors -- Java seems to need at least one small item in a
-   non-zerofill segment.   */
-   if ((DARWIN_SECTION_ANCHORS && flag_section_anchors && size < BYTES_ZFILL)
-       || (size && size <= 2))
+   if (DARWIN_SECTION_ANCHORS && flag_section_anchors && size < BYTES_ZFILL)
     {
       /* Put smaller objects in _static_data, where the section anchors system
 	 can get them.
@@ -2455,21 +2481,18 @@ darwin_emit_local_bss (FILE *fp, tree decl, const char *name,
       if (l2align)
 	fprintf (fp, "\t.align\t%u\n", l2align);
 
-      assemble_name (fp, name);        
+      assemble_name (fp, name);
       fprintf (fp, ":\n\t.space\t" HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
     }
-  else 
+  else
     {
-      /* When we are on a non-section anchor target, we can get zero-sized
-	 items here.  However, all we need to do is to bump them to one byte
-	 and the section alignment will take care of the rest.  */
+      /* When we are on a non-section anchor target (or not using section
+	 anchors, we can get zero-sized items here.  However, all we need to
+	 do is to bump them to one byte and the section alignment will take
+	 care of the rest.  */
       char secnam[64];
-      unsigned int flags ;
-      snprintf (secnam, 64, "__DATA,__%sbss%u", ((size)?"":"zo_"), 
-						(unsigned) l2align);
-      /* We can't anchor (yet, if ever) in zerofill sections, because we can't
-	 switch to them and emit a label.  */
-      flags = SECTION_BSS|SECTION_WRITE|SECTION_NO_ANCHOR;
+      snprintf (secnam, 64, "__DATA,__bss");
+      unsigned int flags = SECTION_BSS|SECTION_WRITE|SECTION_NO_ANCHOR;
       in_section = get_section (secnam, flags, NULL);
       fprintf (fp, "\t.zerofill %s,", secnam);
       assemble_name (fp, name);
@@ -2480,7 +2503,7 @@ darwin_emit_local_bss (FILE *fp, tree decl, const char *name,
 	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",
 		 size, (unsigned) l2align);
       else
-	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
+	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED",0\n", size);
     }
 
   (*targetm.encode_section_info) (decl, DECL_RTL (decl), false);
@@ -2491,12 +2514,12 @@ darwin_emit_local_bss (FILE *fp, tree decl, const char *name,
 /* Emit a chunk of common.  */
 static void
 darwin_emit_common (FILE *fp, const char *name,
-		    unsigned HOST_WIDE_INT size, unsigned int align) 
+		    unsigned HOST_WIDE_INT size, unsigned int align)
 {
   unsigned HOST_WIDE_INT rounded;
   unsigned int l2align;
 
-  /* Earlier systems complain if the alignment exceeds the page size. 
+  /* Earlier systems complain if the alignment exceeds the page size.
      The magic number is 4096 * 8 - hard-coded for legacy systems.  */
   if (!emit_aligned_common && (align > 32768UL))
     align = 4096UL; /* In units.  */
@@ -2507,9 +2530,9 @@ darwin_emit_common (FILE *fp, const char *name,
   if (!align)
     align = 1;
 
-  /* For earlier toolchains, we need to emit the var as a rounded size to 
+  /* For earlier toolchains, we need to emit the var as a rounded size to
      tell ld the alignment.  */
-  if (size < align) 
+  if (size < align)
     rounded = align;
   else
     rounded = (size + (align-1)) & ~(align-1);
@@ -2530,7 +2553,7 @@ darwin_emit_common (FILE *fp, const char *name,
 
   fputs ("\t.comm\t", fp);
   assemble_name (fp, name);
-  fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED, 
+  fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED,
 	   emit_aligned_common?size:rounded);
   if (l2align && emit_aligned_common)
     fprintf (fp, ",%u", l2align);
@@ -2552,18 +2575,18 @@ darwin_output_aligned_bss (FILE *fp, tree decl, const char *name,
   one = DECL_ONE_ONLY (decl);
   weak = (DECL_P (decl)
 	  && DECL_WEAK (decl)
-	  && !lookup_attribute ("weak_import", 
+	  && !lookup_attribute ("weak_import",
 				 DECL_ATTRIBUTES (decl)));
 
 #ifdef DEBUG_DARWIN_MEM_ALLOCATORS
 fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
 	     " pub %d weak %d one %d init %lx\n",
-	name, (long long)size, (int)align, TREE_READONLY (decl), 
+	name, (long long)size, (int)align, TREE_READONLY (decl),
 	TREE_CONSTANT (decl), TREE_STATIC (decl), DECL_COMMON (decl),
-	pub, weak, one, (unsigned long)DECL_INITIAL (decl)); 
+	pub, weak, one, (unsigned long)DECL_INITIAL (decl));
 #endif
 
-  /* ObjC metadata can get put in BSS because varasm.c decides it's BSS 
+  /* ObjC metadata can get put in BSS because varasm.c decides it's BSS
      before the target has a chance to comment.  */
   if ((meta = is_objc_metadata (decl)))
     {
@@ -2572,8 +2595,8 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
     }
 
   /* Check that any initializer is valid.  */
-  gcc_assert ((DECL_INITIAL (decl) == NULL) 
-	       || (DECL_INITIAL (decl) == error_mark_node) 
+  gcc_assert ((DECL_INITIAL (decl) == NULL)
+	       || (DECL_INITIAL (decl) == error_mark_node)
 	       || initializer_zerop (DECL_INITIAL (decl)));
 
   gcc_assert (DECL_SECTION_NAME (decl) == NULL);
@@ -2585,7 +2608,7 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
 
   l2align = floor_log2 (align / BITS_PER_UNIT);
   gcc_assert (l2align <= L2_MAX_OFILE_ALIGNMENT);
-  
+
   last_assemble_variable_decl = decl;
 
   /* We would rather not have to check this here - but it seems that we might
@@ -2593,24 +2616,23 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
   if (one || weak)
     {
       /* Weak or COMDAT objects are put in mergeable sections.  */
-      darwin_emit_weak_or_comdat (fp, decl, name, size, 
+      darwin_emit_weak_or_comdat (fp, decl, name, size,
 				  ld_uses_coal_sects, DECL_ALIGN (decl));
       return;
-    } 
+    }
 
   /* If this is not public, then emit according to local rules.  */
   if (!pub)
     {
-      darwin_emit_local_bss (fp, decl, name, size, l2align);	
+      darwin_emit_local_bss (fp, decl, name, size, l2align);
       return;
     }
 
-  /* So we have a public symbol (small item fudge for Java, see above).  */
-  if ((DARWIN_SECTION_ANCHORS && flag_section_anchors && size < BYTES_ZFILL) 
-       || (size && size <= 2))
+  /* So we have a public symbol.  */
+  if (DARWIN_SECTION_ANCHORS && flag_section_anchors && size < BYTES_ZFILL)
     {
       /* Put smaller objects in data, where the section anchors system can get
-	 them.  However, if they are zero-sized punt them to yet a different 
+	 them.  However, if they are zero-sized punt them to yet a different
 	 section (that is not allowed to participate in anchoring).  */
       if (!size)
 	{
@@ -2630,18 +2652,12 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
       assemble_name (fp, name);
       fprintf (fp, ":\n\t.space\t" HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
     }
-  else 
+  else
     {
+      /* Section anchors not in use.  */
+      unsigned int flags = SECTION_BSS|SECTION_WRITE|SECTION_NO_ANCHOR;
       char secnam[64];
-      unsigned int flags ;
-      /* When we are on a non-section anchor target, we can get zero-sized
-	 items here.  However, all we need to do is to bump them to one byte
-	 and the section alignment will take care of the rest.  */
-      snprintf (secnam, 64, "__DATA,__%spu_bss%u", ((size)?"":"zo_"), l2align);
-
-      /* We can't anchor in zerofill sections, because we can't switch
-	 to them and emit a label.  */
-      flags = SECTION_BSS|SECTION_WRITE|SECTION_NO_ANCHOR;
+      snprintf (secnam, 64, "__DATA,__common");
       in_section = get_section (secnam, flags, NULL);
       fprintf (fp, "\t.zerofill %s,", secnam);
       assemble_name (fp, name);
@@ -2651,7 +2667,7 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
       if (l2align)
 	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED",%u\n", size, l2align);
       else
-	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
+	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED",0\n", size);
     }
   (* targetm.encode_section_info) (decl, DECL_RTL (decl), false);
 }
@@ -2660,7 +2676,7 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
    supports this).  */
 void
 darwin_asm_output_aligned_decl_common (FILE *fp, tree decl, const char *name,
-				       unsigned HOST_WIDE_INT size, 
+				       unsigned HOST_WIDE_INT size,
 				       unsigned int align)
 {
   unsigned int l2align;
@@ -2671,7 +2687,7 @@ darwin_asm_output_aligned_decl_common (FILE *fp, tree decl, const char *name,
   if (decl==NULL)
     {
 #ifdef DEBUG_DARWIN_MEM_ALLOCATORS
-fprintf (fp, "# adcom: %s (%d,%d) decl=0x0\n", name, (int)size, (int)align); 
+fprintf (fp, "# adcom: %s (%d,%d) decl=0x0\n", name, (int)size, (int)align);
 #endif
       darwin_emit_common (fp, name, size, align);
       return;
@@ -2680,18 +2696,18 @@ fprintf (fp, "# adcom: %s (%d,%d) decl=0x0\n", name, (int)size, (int)align);
   one = DECL_ONE_ONLY (decl);
   weak = (DECL_P (decl)
 	  && DECL_WEAK (decl)
-	  && !lookup_attribute ("weak_import", 
+	  && !lookup_attribute ("weak_import",
 				 DECL_ATTRIBUTES (decl)));
 
 #ifdef DEBUG_DARWIN_MEM_ALLOCATORS
 fprintf (fp, "# adcom: %s (%lld,%d) ro %d cst %d stat %d com %d pub %d"
 	     " weak %d one %d init %lx\n",
-	name,  (long long)size, (int)align, TREE_READONLY (decl), 
+	name,  (long long)size, (int)align, TREE_READONLY (decl),
 	TREE_CONSTANT (decl), TREE_STATIC (decl), DECL_COMMON (decl),
-	TREE_PUBLIC (decl), weak, one, (unsigned long)DECL_INITIAL (decl)); 
+	TREE_PUBLIC (decl), weak, one, (unsigned long)DECL_INITIAL (decl));
 #endif
 
-  /* ObjC metadata can get put in BSS because varasm.c decides it's BSS 
+  /* ObjC metadata can get put in BSS because varasm.c decides it's BSS
      before the target has a chance to comment.  */
   if ((meta = is_objc_metadata (decl)))
     {
@@ -2707,24 +2723,24 @@ fprintf (fp, "# adcom: %s (%lld,%d) ro %d cst %d stat %d com %d pub %d"
   if (one || weak)
     {
       /* Weak or COMDAT objects are put in mergable sections.  */
-      darwin_emit_weak_or_comdat (fp, decl, name, size, 
+      darwin_emit_weak_or_comdat (fp, decl, name, size,
 				  ld_uses_coal_sects, DECL_ALIGN (decl));
       return;
-    } 
+    }
 
-  /* We should only get here for DECL_COMMON, with a zero init (and, in 
+  /* We should only get here for DECL_COMMON, with a zero init (and, in
      principle, only for public symbols too - although we deal with local
      ones below).  */
 
   /* Check the initializer is OK.  */
-  gcc_assert (DECL_COMMON (decl) 
-	      && ((DECL_INITIAL (decl) == NULL) 
-	       || (DECL_INITIAL (decl) == error_mark_node) 
+  gcc_assert (DECL_COMMON (decl)
+	      && ((DECL_INITIAL (decl) == NULL)
+	       || (DECL_INITIAL (decl) == error_mark_node)
 	       || initializer_zerop (DECL_INITIAL (decl))));
 
   last_assemble_variable_decl = decl;
 
-  if (!size || !align) 
+  if (!size || !align)
     align = DECL_ALIGN (decl);
 
   l2align = floor_log2 (align / BITS_PER_UNIT);
@@ -2734,13 +2750,13 @@ fprintf (fp, "# adcom: %s (%lld,%d) ro %d cst %d stat %d com %d pub %d"
   if (TREE_PUBLIC (decl) != 0)
     darwin_emit_common (fp, name, size, align);
   else
-    darwin_emit_local_bss (fp, decl, name, size, l2align);	
+    darwin_emit_local_bss (fp, decl, name, size, l2align);
 }
 
 /* Output a chunk of BSS with alignment specfied.  */
 void
-darwin_asm_output_aligned_decl_local (FILE *fp, tree decl, const char *name, 
-				      unsigned HOST_WIDE_INT size, 
+darwin_asm_output_aligned_decl_local (FILE *fp, tree decl, const char *name,
+				      unsigned HOST_WIDE_INT size,
 				      unsigned int align)
 {
   unsigned long l2align;
@@ -2750,18 +2766,18 @@ darwin_asm_output_aligned_decl_local (FILE *fp, tree decl, const char *name,
   one = DECL_ONE_ONLY (decl);
   weak = (DECL_P (decl)
 	  && DECL_WEAK (decl)
-	  && !lookup_attribute ("weak_import", 
+	  && !lookup_attribute ("weak_import",
 				 DECL_ATTRIBUTES (decl)));
 
 #ifdef DEBUG_DARWIN_MEM_ALLOCATORS
 fprintf (fp, "# adloc: %s (%lld,%d) ro %d cst %d stat %d one %d pub %d"
 	     " weak %d init %lx\n",
-	name, (long long)size, (int)align, TREE_READONLY (decl), 
+	name, (long long)size, (int)align, TREE_READONLY (decl),
 	TREE_CONSTANT (decl), TREE_STATIC (decl), one, TREE_PUBLIC (decl),
-	weak , (unsigned long)DECL_INITIAL (decl)); 
+	weak , (unsigned long)DECL_INITIAL (decl));
 #endif
 
-  /* ObjC metadata can get put in BSS because varasm.c decides it's BSS 
+  /* ObjC metadata can get put in BSS because varasm.c decides it's BSS
      before the target has a chance to comment.  */
   if ((meta = is_objc_metadata (decl)))
     {
@@ -2777,16 +2793,16 @@ fprintf (fp, "# adloc: %s (%lld,%d) ro %d cst %d stat %d one %d pub %d"
   if (one || weak)
     {
       /* Weak or COMDAT objects are put in mergable sections.  */
-      darwin_emit_weak_or_comdat (fp, decl, name, size, 
+      darwin_emit_weak_or_comdat (fp, decl, name, size,
 				  ld_uses_coal_sects, DECL_ALIGN (decl));
       return;
-    } 
+    }
 
   /* .. and it should be suitable for placement in local mem.  */
   gcc_assert(!TREE_PUBLIC (decl) && !DECL_COMMON (decl));
   /* .. and any initializer must be all-zero.  */
-  gcc_assert ((DECL_INITIAL (decl) == NULL) 
-	       || (DECL_INITIAL (decl) == error_mark_node) 
+  gcc_assert ((DECL_INITIAL (decl) == NULL)
+	       || (DECL_INITIAL (decl) == error_mark_node)
 	       || initializer_zerop (DECL_INITIAL (decl)));
 
   last_assemble_variable_decl = decl;
@@ -2825,7 +2841,7 @@ darwin_assemble_visibility (tree decl, int vis)
 
 /* vec used by darwin_asm_dwarf_section.
    Maybe a hash tab would be better here - but the intention is that this is
-   a very short list (fewer than 16 items) and each entry should (ideally, 
+   a very short list (fewer than 16 items) and each entry should (ideally,
    eventually) only be presented once.
 
    A structure to hold a dwarf debug section used entry.  */
@@ -2840,7 +2856,7 @@ dwarf_sect_used_entry;
 /* A list of used __DWARF sections.  */
 static GTY (()) vec<dwarf_sect_used_entry, va_gc> *dwarf_sect_names_table;
 
-/* This is called when we are asked to assemble a named section and the 
+/* This is called when we are asked to assemble a named section and the
    name begins with __DWARF,.  We keep a list of the section names (without
    the __DWARF, prefix) and use this to emit our required start label on the
    first switch to each section.  */
@@ -2881,7 +2897,7 @@ darwin_asm_dwarf_section (const char *name, unsigned int flags,
   if (dwarf_sect_names_table == NULL)
     vec_alloc (dwarf_sect_names_table, 16);
   else
-    for (i = 0; 
+    for (i = 0;
 	 dwarf_sect_names_table->iterate (i, &ref);
 	 i++)
       {
@@ -3014,8 +3030,9 @@ darwin_file_end (void)
      }
 
   machopic_finish (asm_out_file);
-  if (lang_GNU_CXX ())
+  if (flag_apple_kext)
     {
+      /* These sections are only used for kernel code.  */
       switch_to_section (darwin_sections[constructor_section]);
       switch_to_section (darwin_sections[destructor_section]);
       ASM_OUTPUT_ALIGN (asm_out_file, 1);
@@ -3118,8 +3135,14 @@ darwin_file_end (void)
 bool
 darwin_binds_local_p (const_tree decl)
 {
-  return default_binds_local_p_1 (decl,
-				  TARGET_KEXTABI && DARWIN_VTABLE_P (decl));
+  /* We use the "shlib" input to indicate that a symbol should be
+     considered overridable; only relevant for vtables in kernel modules
+     on earlier system versions, and with a TODO to complete.  */
+  bool force_overridable = TARGET_KEXTABI && DARWIN_VTABLE_P (decl);
+  return default_binds_local_p_3 (decl, force_overridable /* shlib */,
+				  false /* weak dominate */,
+				  false /* extern_protected_data */,
+				  false /* common_local_p */);
 }
 
 /* The Darwin's implementation of TARGET_ASM_OUTPUT_ANCHOR.  Define the
@@ -3180,10 +3203,14 @@ darwin_override_options (void)
   /* Keep track of which (major) version we're generating code for.  */
   if (darwin_macosx_version_min)
     {
-      if (strverscmp (darwin_macosx_version_min, "10.6") >= 0)
+      if (strverscmp (darwin_macosx_version_min, "10.7") >= 0)
+	generating_for_darwin_version = 11;
+      else if (strverscmp (darwin_macosx_version_min, "10.6") >= 0)
 	generating_for_darwin_version = 10;
       else if (strverscmp (darwin_macosx_version_min, "10.5") >= 0)
 	generating_for_darwin_version = 9;
+      else if (strverscmp (darwin_macosx_version_min, "10.4") >= 0)
+	generating_for_darwin_version = 8;
 
       /* Earlier versions are not specifically accounted, until required.  */
     }
@@ -3198,6 +3225,20 @@ darwin_override_options (void)
      set sensible defaults for LTO as well, since the section selection stuff
      should check for correctness re. the ABI.  TODO: check and provide the
      flags (runtime & ABI) from the lto wrapper).  */
+
+  /* At present, make a hard update to the runtime version based on the target
+     OS version.  */
+  if (flag_next_runtime)
+    {
+      if (generating_for_darwin_version > 10)
+	flag_next_runtime = 100705;
+      else if (generating_for_darwin_version > 9)
+	flag_next_runtime = 100608;
+      else if (generating_for_darwin_version > 8)
+	flag_next_runtime = 100508;
+      else
+	flag_next_runtime = 100000;
+    }
 
   /* Unless set, force ABI=2 for NeXT and m64, 0 otherwise.  */
   if (!global_options_set.x_flag_objc_abi)
@@ -3223,9 +3264,9 @@ darwin_override_options (void)
 		  global_options.x_flag_objc_abi);
     }
 
-  /* Don't emit DWARF3/4 unless specifically selected.  This is a 
+  /* Don't emit DWARF3/4 unless specifically selected.  This is a
      workaround for tool bugs.  */
-  if (!global_options_set.x_dwarf_strict) 
+  if (!global_options_set.x_dwarf_strict)
     dwarf_strict = 1;
   if (!global_options_set.x_dwarf_version)
     dwarf_version = 2;
@@ -3238,7 +3279,7 @@ darwin_override_options (void)
       global_options_set.x_dwarf_split_debug_info = 0;
     }
 
-  /* Do not allow unwind tables to be generated by default for m32.  
+  /* Do not allow unwind tables to be generated by default for m32.
      fnon-call-exceptions will override this, regardless of what we do.  */
   if (generating_for_darwin_version < 10
       && !global_options_set.x_flag_asynchronous_unwind_tables
@@ -3272,7 +3313,7 @@ darwin_override_options (void)
     /* FIXME: flag_objc_sjlj_exceptions is no longer needed since there is only
        one valid choice of exception scheme for each runtime.  */
     if (!global_options_set.x_flag_objc_sjlj_exceptions)
-      global_options.x_flag_objc_sjlj_exceptions = 
+      global_options.x_flag_objc_sjlj_exceptions =
 				flag_next_runtime && !TARGET_64BIT;
 
     /* FIXME: and this could be eliminated then too.  */
@@ -3354,7 +3395,8 @@ darwin_override_options (void)
   else if (DARWIN_X86 && darwin_symbol_stubs && TARGET_64BIT)
     {
       inform (input_location,
-	      "%<-msymbol-stubs%> is not required for 64b code (ignored)");
+	      "%<-mpic-symbol-stubs%> is not required for 64-bit code "
+	      "(ignored)");
       darwin_symbol_stubs = false;
     }
 
@@ -3441,7 +3483,7 @@ static GTY (()) hash_table<cfstring_hasher> *cfstring_htab;
 static tree
 add_builtin_field_decl (tree type, const char *name, tree **chain)
 {
-  tree field = build_decl (BUILTINS_LOCATION, FIELD_DECL, 
+  tree field = build_decl (BUILTINS_LOCATION, FIELD_DECL,
 			    get_identifier (name), type);
 
   if (*chain != NULL)
@@ -3457,9 +3499,9 @@ darwin_init_cfstring_builtins (unsigned builtin_cfstring)
   tree cfsfun, fields, pccfstring_ftype_pcchar;
   tree *chain = NULL;
 
-  darwin_builtin_cfstring = 
+  darwin_builtin_cfstring =
     (enum built_in_function) builtin_cfstring;
-  
+
   /* struct __builtin_CFString {
        const int *isa;		(will point at
        int flags;		 __CFConstantStringClassReference)
@@ -3467,10 +3509,10 @@ darwin_init_cfstring_builtins (unsigned builtin_cfstring)
        long length;
      };  */
 
-  pcint_type_node = build_pointer_type 
+  pcint_type_node = build_pointer_type
 		   (build_qualified_type (integer_type_node, TYPE_QUAL_CONST));
 
-  pcchar_type_node = build_pointer_type 
+  pcchar_type_node = build_pointer_type
 		   (build_qualified_type (char_type_node, TYPE_QUAL_CONST));
 
   cfstring_type_node = (*lang_hooks.types.make_type) (RECORD_TYPE);
@@ -3486,13 +3528,13 @@ darwin_init_cfstring_builtins (unsigned builtin_cfstring)
   /* const struct __builtin_CFstring *
      __builtin___CFStringMakeConstantString (const char *); */
 
-  ccfstring_type_node = build_qualified_type 
+  ccfstring_type_node = build_qualified_type
 			(cfstring_type_node, TYPE_QUAL_CONST);
   pccfstring_type_node = build_pointer_type (ccfstring_type_node);
-  pccfstring_ftype_pcchar = build_function_type_list 
+  pccfstring_ftype_pcchar = build_function_type_list
 			(pccfstring_type_node, pcchar_type_node, NULL_TREE);
 
-  cfsfun  = build_decl (BUILTINS_LOCATION, FUNCTION_DECL, 
+  cfsfun  = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
 			get_identifier ("__builtin___CFStringMakeConstantString"),
 			pccfstring_ftype_pcchar);
 
@@ -3503,8 +3545,7 @@ darwin_init_cfstring_builtins (unsigned builtin_cfstring)
      in place of the existing, which may be NULL.  */
   DECL_LANG_SPECIFIC (cfsfun) = NULL;
   (*lang_hooks.dup_lang_specific_decl) (cfsfun);
-  DECL_BUILT_IN_CLASS (cfsfun) = BUILT_IN_MD;
-  DECL_FUNCTION_CODE (cfsfun) = darwin_builtin_cfstring;
+  set_decl_built_in_function (cfsfun, BUILT_IN_MD, darwin_builtin_cfstring);
   lang_hooks.builtin_function (cfsfun);
 
   /* extern int __CFConstantStringClassReference[];  */
@@ -3517,7 +3558,7 @@ darwin_init_cfstring_builtins (unsigned builtin_cfstring)
   (*lang_hooks.decls.pushdecl) (cfstring_class_reference);
   DECL_EXTERNAL (cfstring_class_reference) = 1;
   rest_of_decl_compilation (cfstring_class_reference, 0, 0);
-  
+
   /* Initialize the hash table used to hold the constant CFString objects.  */
   cfstring_htab = hash_table<cfstring_hasher>::create_ggc (31);
 
@@ -3525,16 +3566,16 @@ darwin_init_cfstring_builtins (unsigned builtin_cfstring)
 }
 
 tree
-darwin_fold_builtin (tree fndecl, int n_args, tree *argp, 
+darwin_fold_builtin (tree fndecl, int n_args, tree *argp,
 		     bool ARG_UNUSED (ignore))
 {
-  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
-  
+  unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
+
   if (fcode == darwin_builtin_cfstring)
     {
       if (!darwin_constant_cfstrings)
 	{
-	  error ("built-in function %qD requires the" 
+	  error ("built-in function %qD requires the"
 		 " %<-mconstant-cfstrings%> flag", fndecl);
 	  return error_mark_node;
 	}
@@ -3584,7 +3625,8 @@ bool
 darwin_libc_has_function (enum function_class fn_class)
 {
   if (fn_class == function_sincos)
-    return false;
+    return (strverscmp (darwin_macosx_version_min, "10.9") >= 0);
+
   if (fn_class == function_c99_math_complex
       || fn_class == function_c99_misc)
     return (TARGET_64BIT
@@ -3673,12 +3715,12 @@ darwin_build_constant_cfstring (tree str)
 
       /* isa *. */
       field = TYPE_FIELDS (ccfstring_type_node);
-      CONSTRUCTOR_APPEND_ELT(v, NULL_TREE, 
-			     build1 (ADDR_EXPR,  TREE_TYPE (field),  
+      CONSTRUCTOR_APPEND_ELT(v, NULL_TREE,
+			     build1 (ADDR_EXPR,  TREE_TYPE (field),
 				     cfstring_class_reference));
       /* flags */
       field = DECL_CHAIN (field);
-      CONSTRUCTOR_APPEND_ELT(v, NULL_TREE, 
+      CONSTRUCTOR_APPEND_ELT(v, NULL_TREE,
 			     build_int_cst (TREE_TYPE (field), 0x000007c8));
       /* string *. */
       field = DECL_CHAIN (field);
@@ -3702,7 +3744,7 @@ darwin_build_constant_cfstring (tree str)
 	TREE_LANG_FLAG_4 (constructor) = 1;  /* TREE_HAS_CONSTRUCTOR  */
 
       /* Create an anonymous global variable for this CFString.  */
-      var = build_decl (input_location, CONST_DECL, 
+      var = build_decl (input_location, CONST_DECL,
 			NULL, TREE_TYPE (constructor));
       DECL_ARTIFICIAL (var) = 1;
       TREE_STATIC (var) = 1;
@@ -3736,7 +3778,7 @@ darwin_cfstring_p (tree str)
 
   key.literal = str;
   cfstring_descriptor **loc = cfstring_htab->find_slot (&key, NO_INSERT);
-  
+
   if (loc)
     return true;
 
@@ -3768,7 +3810,7 @@ darwin_function_section (tree decl, enum node_frequency freq,
   bool weak = (decl
 	       && DECL_WEAK (decl)
 	       && (!DECL_ATTRIBUTES (decl)
-		   || !lookup_attribute ("weak_import", 
+		   || !lookup_attribute ("weak_import",
 					  DECL_ATTRIBUTES (decl))));
 
   bool use_coal = weak && ld_uses_coal_sects;

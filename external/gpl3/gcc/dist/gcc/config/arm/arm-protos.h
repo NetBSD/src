@@ -1,5 +1,5 @@
 /* Prototypes for exported functions defined in arm.c and pe.c
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rearnsha@arm.com)
    Minor hacks by Nick Clifton (nickc@cygnus.com)
 
@@ -28,6 +28,8 @@ extern enum unwind_info_type arm_except_unwind_info (struct gcc_options *);
 extern int use_return_insn (int, rtx);
 extern bool use_simple_return_p (void);
 extern enum reg_class arm_regno_class (int);
+extern bool arm_check_builtin_call (location_t , vec<location_t> , tree,
+				    tree, unsigned int, tree *);
 extern void arm_load_pic_register (unsigned long, rtx);
 extern int arm_volatile_func (void);
 extern void arm_expand_prologue (void);
@@ -57,8 +59,13 @@ extern rtx arm_simd_vect_par_cnst_half (machine_mode mode, bool high);
 extern bool arm_simd_check_vect_par_cnst_half_p (rtx op, machine_mode mode,
 						 bool high);
 extern void arm_emit_speculation_barrier_function (void);
+extern void arm_decompose_di_binop (rtx, rtx, rtx *, rtx *, rtx *, rtx *);
+extern bool arm_q_bit_access (void);
+extern bool arm_ge_bits_access (void);
 
 #ifdef RTX_CODE
+enum reg_class
+arm_mode_base_reg_class (machine_mode);
 extern void arm_gen_unlikely_cbranch (enum rtx_code, machine_mode cc_mode,
 				      rtx label_ref);
 extern bool arm_vector_mode_supported_p (machine_mode);
@@ -78,9 +85,10 @@ extern int thumb_legitimate_offset_p (machine_mode, HOST_WIDE_INT);
 extern int thumb1_legitimate_address_p (machine_mode, rtx, int);
 extern bool ldm_stm_operation_p (rtx, bool, machine_mode mode,
                                  bool, bool);
+extern bool clear_operation_p (rtx, bool);
 extern int arm_const_double_rtx (rtx);
 extern int vfp3_const_double_rtx (rtx);
-extern int neon_immediate_valid_for_move (rtx, machine_mode, rtx *, int *);
+extern int simd_immediate_valid_for_move (rtx, machine_mode, rtx *, int *);
 extern int neon_immediate_valid_for_logic (rtx, machine_mode, int, rtx *,
 					   int *);
 extern int neon_immediate_valid_for_shift (rtx, machine_mode, rtx *,
@@ -91,7 +99,7 @@ extern char *neon_output_shift_immediate (const char *, char, rtx *,
 					  machine_mode, int, bool);
 extern void neon_pairwise_reduce (rtx, rtx, machine_mode,
 				  rtx (*) (rtx, rtx, rtx));
-extern rtx neon_make_constant (rtx);
+extern rtx neon_make_constant (rtx, bool generate = true);
 extern tree arm_builtin_vectorized_function (unsigned int, tree, tree);
 extern void neon_expand_vector_init (rtx, rtx);
 extern void neon_lane_bounds (rtx, HOST_WIDE_INT, HOST_WIDE_INT, const_tree);
@@ -107,7 +115,10 @@ extern enum reg_class coproc_secondary_reload_class (machine_mode, rtx,
 extern bool arm_tls_referenced_p (rtx);
 
 extern int arm_coproc_mem_operand (rtx, bool);
+extern int arm_coproc_mem_operand_no_writeback (rtx);
+extern int arm_coproc_mem_operand_wb (rtx, int);
 extern int neon_vector_mem_operand (rtx, int, bool);
+extern int mve_vector_mem_operand (machine_mode, rtx, bool);
 extern int neon_struct_mem_operand (rtx);
 
 extern rtx *neon_vcmla_lane_prepare_operands (rtx *);
@@ -127,8 +138,8 @@ extern bool offset_ok_for_ldrd_strd (HOST_WIDE_INT);
 extern bool operands_ok_ldrd_strd (rtx, rtx, rtx, HOST_WIDE_INT, bool, bool);
 extern bool gen_operands_ldrd_strd (rtx *, bool, bool, bool);
 extern bool valid_operands_ldrd_strd (rtx *, bool);
-extern int arm_gen_movmemqi (rtx *);
-extern bool gen_movmem_ldrd_strd (rtx *);
+extern int arm_gen_cpymemqi (rtx *);
+extern bool gen_cpymem_ldrd_strd (rtx *);
 extern machine_mode arm_select_cc_mode (RTX_CODE, rtx, rtx);
 extern machine_mode arm_select_dominance_cc_mode (rtx, rtx,
 						       HOST_WIDE_INT);
@@ -140,6 +151,7 @@ extern int arm_max_const_double_inline_cost (void);
 extern int arm_const_double_inline_cost (rtx);
 extern bool arm_const_double_by_parts (rtx);
 extern bool arm_const_double_by_immediates (rtx);
+extern rtx arm_load_function_descriptor (rtx funcdesc);
 extern void arm_emit_call_insn (rtx, rtx, bool);
 bool detect_cmse_nonsecure_call (tree);
 extern const char *output_call (rtx *);
@@ -204,7 +216,7 @@ extern void thumb2_final_prescan_insn (rtx_insn *);
 extern const char *thumb_load_double_from_address (rtx *);
 extern const char *thumb_output_move_mem_multiple (int, rtx *);
 extern const char *thumb_call_via_reg (rtx);
-extern void thumb_expand_movmemqi (rtx *);
+extern void thumb_expand_cpymemqi (rtx *);
 extern rtx arm_return_addr (int, rtx);
 extern void thumb_reload_out_hi (rtx *);
 extern void thumb_set_return_address (rtx, rtx);
@@ -328,7 +340,6 @@ struct tune_params
   /* Prefer 32-bit encoding instead of flag-setting 16-bit encoding.  */
   enum {DISPARAGE_FLAGS_NEITHER, DISPARAGE_FLAGS_PARTIAL, DISPARAGE_FLAGS_ALL}
     disparage_flag_setting_t16_encodings: 2;
-  enum {PREF_NEON_64_FALSE, PREF_NEON_64_TRUE} prefer_neon_for_64bits: 1;
   /* Prefer to inline string operations like memset by using Neon.  */
   enum {PREF_NEON_STRINGOPS_FALSE, PREF_NEON_STRINGOPS_TRUE}
     string_ops_prefer_neon: 1;
@@ -473,10 +484,6 @@ extern int arm_arch_thumb_hwdiv;
 /* Nonzero if chip disallows volatile memory access in IT block.  */
 extern int arm_arch_no_volatile_ce;
 
-/* Nonzero if we should use Neon to handle 64-bits operations rather
-   than core registers.  */
-extern int prefer_neon_for_64bits;
-
 /* Structure defining the current overall architectural target and tuning.  */
 struct arm_build_target
 {
@@ -575,4 +582,7 @@ void arm_parse_option_features (sbitmap, const cpu_arch_option *,
 
 void arm_initialize_isa (sbitmap, const enum isa_feature *);
 
+const char * arm_gen_far_branch (rtx *, int, const char * , const char *);
+
+bool arm_mve_immediate_check(rtx, machine_mode, bool);
 #endif /* ! GCC_ARM_PROTOS_H */

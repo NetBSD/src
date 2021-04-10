@@ -1,5 +1,5 @@
 /* Definitions for PA_RISC with ELF-32 format
-   Copyright (C) 2000, 2002 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -32,6 +32,6 @@ Boston, MA 02111-1307, USA.  */
 "	.text\n"							\
 "	.word __canonicalize_funcptr_for_compare-$PIC_pcrel$0");	\
   STATIC func_ptr __CTOR_LIST__[1]					\
-    __attribute__ ((__unused__, section(".ctors"),			\
+    __attribute__ ((__used__, section(".ctors"),			\
 		    aligned(sizeof(func_ptr))))				\
     = { (func_ptr) (-1) }

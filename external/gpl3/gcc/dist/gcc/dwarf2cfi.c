@@ -1,5 +1,5 @@
 /* Dwarf2 Call Frame Information helper routines.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -71,6 +71,9 @@ struct GTY(()) dw_cfi_row
 
   /* True if the register window is saved.  */
   bool window_save;
+
+  /* True if the return address is in a mangled state.  */
+  bool ra_mangled;
 };
 
 /* The caller's ORIG_REG is saved in SAVED_IN_REG.  */
@@ -772,6 +775,9 @@ cfi_row_equal_p (dw_cfi_row *a, dw_cfi_row *b)
   if (a->window_save != b->window_save)
     return false;
 
+  if (a->ra_mangled != b->ra_mangled)
+    return false;
+
   return true;
 }
 
@@ -1370,20 +1376,33 @@ dwarf2out_frame_debug_cfa_restore (rtx reg)
 }
 
 /* A subroutine of dwarf2out_frame_debug, process a REG_CFA_WINDOW_SAVE.
-   FAKE is true if this is not really a window save but something else.
 
    ??? Perhaps we should note in the CIE where windows are saved (instead
    of assuming 0(cfa)) and what registers are in the window.  */
 
 static void
-dwarf2out_frame_debug_cfa_window_save (bool fake)
+dwarf2out_frame_debug_cfa_window_save (void)
 {
   dw_cfi_ref cfi = new_cfi ();
 
   cfi->dw_cfi_opc = DW_CFA_GNU_window_save;
   add_cfi (cfi);
-  if (!fake)
-    cur_row->window_save = true;
+  cur_row->window_save = true;
+}
+
+/* A subroutine of dwarf2out_frame_debug, process a REG_CFA_TOGGLE_RA_MANGLE.
+   Note: DW_CFA_GNU_window_save dwarf opcode is reused for toggling RA mangle
+   state, this is a target specific operation on AArch64 and can only be used
+   on other targets if they don't use the window save operation otherwise.  */
+
+static void
+dwarf2out_frame_debug_cfa_toggle_ra_mangle (void)
+{
+  dw_cfi_ref cfi = new_cfi ();
+
+  cfi->dw_cfi_opc = DW_CFA_GNU_window_save;
+  add_cfi (cfi);
+  cur_row->ra_mangled = !cur_row->ra_mangled;
 }
 
 /* Record call frame debugging information for an expression EXPR,
@@ -1676,9 +1695,19 @@ dwarf2out_frame_debug_expr (rtx expr)
 	      if (fde
 		  && fde->stack_realign
 		  && REGNO (src) == STACK_POINTER_REGNUM)
-		gcc_assert (REGNO (dest) == HARD_FRAME_POINTER_REGNUM
-			    && fde->drap_reg != INVALID_REGNUM
-			    && cur_cfa->reg != dwf_regno (src));
+		{
+		  gcc_assert (REGNO (dest) == HARD_FRAME_POINTER_REGNUM
+			      && fde->drap_reg != INVALID_REGNUM
+			      && cur_cfa->reg != dwf_regno (src)
+			      && fde->rule18);
+		  fde->rule18 = 0;
+		  /* The save of hard frame pointer has been deferred
+		     until this point when Rule 18 applied.  Emit it now.  */
+		  queue_reg_save (dest, NULL_RTX, 0);
+		  /* And as the instruction modifies the hard frame pointer,
+		     flush the queue as well.  */
+		  dwarf2out_flush_queued_reg_saves ();
+		}
 	      else
 		queue_reg_save (src, dest, 0);
 	    }
@@ -1888,6 +1917,7 @@ dwarf2out_frame_debug_expr (rtx expr)
 	    {
 	      gcc_assert (cur_cfa->reg != dw_frame_pointer_regnum);
 	      cur_trace->cfa_store.offset = 0;
+	      fde->rule18 = 1;
 	    }
 
 	  if (cur_cfa->reg == dw_stack_pointer_regnum)
@@ -2022,7 +2052,17 @@ dwarf2out_frame_debug_expr (rtx expr)
 	span = NULL;
 
       if (!span)
-	queue_reg_save (src, NULL_RTX, offset);
+	{
+	  if (fde->rule18)
+	    /* Just verify the hard frame pointer save when doing dynamic
+	       realignment uses expected offset.  The actual queue_reg_save
+	       needs to be deferred until the instruction that sets
+	       hard frame pointer to stack pointer, see PR99334 for
+	       details.  */
+	    gcc_assert (known_eq (offset, 0));
+	  else
+	    queue_reg_save (src, NULL_RTX, offset);
+	}
       else
 	{
 	  /* We have a PARALLEL describing where the contents of SRC live.
@@ -2143,13 +2183,12 @@ dwarf2out_frame_debug (rtx_insn *insn)
 	break;
 
       case REG_CFA_TOGGLE_RA_MANGLE:
-	/* This uses the same DWARF opcode as the next operation.  */
-	dwarf2out_frame_debug_cfa_window_save (true);
+	dwarf2out_frame_debug_cfa_toggle_ra_mangle ();
 	handled_one = true;
 	break;
 
       case REG_CFA_WINDOW_SAVE:
-	dwarf2out_frame_debug_cfa_window_save (false);
+	dwarf2out_frame_debug_cfa_window_save ();
 	handled_one = true;
 	break;
 
@@ -2218,6 +2257,17 @@ change_cfi_row (dw_cfi_row *old_row, dw_cfi_row *new_row)
     {
       dw_cfi_ref cfi = new_cfi ();
 
+      gcc_assert (!old_row->ra_mangled && !new_row->ra_mangled);
+      cfi->dw_cfi_opc = DW_CFA_GNU_window_save;
+      add_cfi (cfi);
+    }
+
+  if (old_row->ra_mangled != new_row->ra_mangled)
+    {
+      dw_cfi_ref cfi = new_cfi ();
+
+      gcc_assert (!old_row->window_save && !new_row->window_save);
+      /* DW_CFA_GNU_window_save is reused for toggling RA mangle state.  */
       cfi->dw_cfi_opc = DW_CFA_GNU_window_save;
       add_cfi (cfi);
     }
@@ -2443,6 +2493,13 @@ create_trace_edges (rtx_insn *insn)
 	  for (i = 0; i < n; ++i)
 	    {
 	      rtx_insn *lab = as_a <rtx_insn *> (XEXP (RTVEC_ELT (vec, i), 0));
+	      maybe_record_trace_start (lab, insn);
+	    }
+
+	  /* Handle casesi dispatch insns.  */
+	  if ((tmp = tablejump_casesi_pattern (insn)) != NULL_RTX)
+	    {
+	      rtx_insn * lab = label_ref_label (XEXP (SET_SRC (tmp), 2));
 	      maybe_record_trace_start (lab, insn);
 	    }
 	}
@@ -2696,6 +2753,7 @@ scan_trace (dw_trace_info *trace, bool entry)
       create_trace_edges (control);
     }
 
+  gcc_assert (!cfun->fde || !cfun->fde->rule18);
   add_cfi_insn = NULL;
   cur_row = NULL;
   cur_trace = NULL;
@@ -2811,6 +2869,12 @@ connect_traces (void)
 	      cfi = new_cfi ();
 	      cfi->dw_cfi_opc = DW_CFA_restore_state;
 	      add_cfi (cfi);
+
+	      /* If the target unwinder does not save the CFA as part of the
+		 register state, we need to restore it separately.  */
+	      if (targetm.asm_out.should_restore_cfa_state ()
+		  && (cfi = def_cfa_0 (&old_row->cfa, &ti->beg_row->cfa)))
+		add_cfi (cfi);
 
 	      old_row = prev_ti->beg_row;
 	    }

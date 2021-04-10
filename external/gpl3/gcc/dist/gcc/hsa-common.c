@@ -1,5 +1,5 @@
 /* Implementation of commonly needed HSAIL related functions and methods.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Martin Jambor <mjambor@suse.cz> and
    Martin Liska <mliska@suse.cz>.
 
@@ -95,7 +95,7 @@ hsa_callable_function_p (tree fndecl)
 	  && !lookup_attribute ("oacc function", DECL_ATTRIBUTES (fndecl)));
 }
 
-/* Allocate HSA structures that are are used when dealing with different
+/* Allocate HSA structures that are used when dealing with different
    functions.  */
 
 void

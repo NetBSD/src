@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -160,9 +160,9 @@
 
 #define FIXED_REGISTERS {			    \
     /* Scalars.  */				    \
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		    \
+    1, 1, 0, 0, 1, 1, 1, 1, 1, 1,		    \
 /*		fp    sp    lr.  */		    \
-    0, 0, 0, 0, 1, 1, 1, 1, 0, 0,		    \
+    1, 1, 0, 0, 0, 0, 1, 1, 0, 0,		    \
 /*  exec_save, cc_save */			    \
     1, 1, 1, 1, 0, 0, 0, 0, 0, 0,		    \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		    \
@@ -180,7 +180,7 @@
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, \
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		    \
     /* VGRPs */					    \
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+    0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
@@ -203,7 +203,7 @@
 #define CALL_USED_REGISTERS {			    \
     /* Scalars.  */				    \
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 		    \
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 		    \
+    1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 		    \
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 		    \
     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 		    \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 		    \
@@ -607,6 +607,10 @@ enum gcn_builtin_codes
 #define SLOW_BYTE_ACCESS 0
 #define WORD_REGISTER_OPERATIONS 1
 
+/* Flag values are either BImode or DImode, but either way the compiler
+   should assume that all the bits are live.  */
+#define STORE_FLAG_VALUE -1
+
 /* Definitions for register eliminations.
 
    This is an array of structures.  Each structure initializes one pair
@@ -643,6 +647,10 @@ enum gcn_builtin_codes
 
 /* This needs to match gcn_function_value.  */
 #define LIBCALL_VALUE(MODE) gen_rtx_REG (MODE, SGPR_REGNO (RETURN_VALUE_REG))
+
+/* The s_ff0 and s_flbit instructions return -1 if no input bits are set.  */
+#define CLZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) ((VALUE) = -1, 2)
+#define CTZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) ((VALUE) = -1, 2)
 
 
 /* Costs.  */
