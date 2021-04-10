@@ -202,6 +202,7 @@ void Type::_init()
     sizeTy[Terror] = sizeof(TypeError);
     sizeTy[Tnull] = sizeof(TypeNull);
     sizeTy[Tvector] = sizeof(TypeVector);
+    sizeTy[Ttraits] = sizeof(TypeTraits);
 
     initTypeMangle();
 
@@ -2201,7 +2202,7 @@ Expression *Type::noMember(Scope *sc, Expression *e, Identifier *ident, int flag
 
     static int nest;      // https://issues.dlang.org/show_bug.cgi?id=17380
 
-    if (++nest > 500)
+    if (++nest > global.recursionLimit)
     {
       ::error(e->loc, "cannot resolve identifier `%s`", ident->toChars());
       --nest;
@@ -2515,6 +2516,33 @@ void Type::checkComplexTransition(Loc loc)
                     "use `%s` instead\n", toChars(), rt->toChars());
         }
     }
+}
+
+/*******************************************
+ * Compute number of elements for a (possibly multidimensional) static array,
+ * or 1 for other types.
+ * Params:
+ *  loc = for error message
+ * Returns:
+ *  number of elements, uint.max on overflow
+ */
+unsigned Type::numberOfElems(const Loc &loc)
+{
+  //printf("Type::numberOfElems()\n");
+  uinteger_t n = 1;
+  Type *tb = this;
+  while ((tb = tb->toBasetype())->ty == Tsarray)
+    {
+      bool overflow = false;
+      n = mulu(n, ((TypeSArray *)tb)->dim->toUInteger(), overflow);
+      if (overflow || n >= UINT32_MAX)
+      {
+          error(loc, "static array `%s` size overflowed to %llu", toChars(), (unsigned long long)n);
+          return UINT32_MAX;
+      }
+      tb = ((TypeSArray *)tb)->next;
+    }
+  return (unsigned)n;
 }
 
 /****************************************
@@ -3900,25 +3928,17 @@ Type *TypeSArray::syntaxCopy()
 d_uns64 TypeSArray::size(Loc loc)
 {
     //printf("TypeSArray::size()\n");
-    dinteger_t sz;
-    if (!dim)
-        return Type::size(loc);
-    sz = dim->toInteger();
-
+    uinteger_t n = numberOfElems(loc);
+    uinteger_t elemsize = baseElemOf()->size();
+    bool overflow = false;
+    uinteger_t sz = mulu(n, elemsize, overflow);
+    if (overflow || sz >= UINT32_MAX)
     {
-        bool overflow = false;
-
-        sz = mulu(next->size(), sz, overflow);
-        if (overflow)
-            goto Loverflow;
+        if (elemsize != SIZE_INVALID && n != UINT32_MAX)
+            error(loc, "static array `%s` size overflowed to %lld", toChars(), (long long)sz);
+        return SIZE_INVALID;
     }
-    if (sz > UINT32_MAX)
-        goto Loverflow;
     return sz;
-
-Loverflow:
-    error(loc, "static array %s size overflowed to %lld", toChars(), (long long)sz);
-    return SIZE_INVALID;
 }
 
 unsigned TypeSArray::alignsize()
@@ -4134,8 +4154,7 @@ Type *TypeSArray::semantic(Loc loc, Scope *sc)
              * when the bottom of element type is opaque.
              */
         }
-        else if (tbn->isintegral() ||
-                 tbn->isfloating() ||
+        else if (tbn->isTypeBasic() ||
                  tbn->ty == Tpointer ||
                  tbn->ty == Tarray ||
                  tbn->ty == Tsarray ||
@@ -4468,6 +4487,8 @@ Expression *TypeDArray::dotExp(Scope *sc, Expression *e, Identifier *ident, int 
         }
         if (e->op == TOKnull)
             return new IntegerExp(e->loc, 0, Type::tsize_t);
+        if (checkNonAssignmentArrayOp(e))
+            return new ErrorExp();
         e = new ArrayLengthExp(e->loc, e);
         e->type = Type::tsize_t;
         return e;
@@ -4652,7 +4673,7 @@ Type *TypeAArray::semantic(Loc loc, Scope *sc)
         /* AA's need typeid(index).equals() and getHash(). Issue error if not correctly set up.
          */
         StructDeclaration *sd = ((TypeStruct *)tbase)->sym;
-        if (sd->_scope)
+        if (sd->semanticRun < PASSsemanticdone)
             sd->semantic(NULL);
 
         // duplicate a part of StructDeclaration::semanticTypeInfoMembers
@@ -4719,7 +4740,7 @@ Type *TypeAArray::semantic(Loc loc, Scope *sc)
     else if (tbase->ty == Tclass && !((TypeClass *)tbase)->sym->isInterfaceDeclaration())
     {
         ClassDeclaration *cd = ((TypeClass *)tbase)->sym;
-        if (cd->_scope)
+        if (cd->semanticRun < PASSsemanticdone)
             cd->semantic(NULL);
 
         if (!ClassDeclaration::object)
@@ -5316,7 +5337,7 @@ int Type::covariant(Type *t, StorageClass *pstc, bool fix17349)
 
         // If t1n is forward referenced:
         ClassDeclaration *cd = ((TypeClass *)t1n)->sym;
-        if (cd->_scope)
+        if (cd->semanticRun < PASSsemanticdone && !cd->isBaseInfoComplete())
             cd->semantic(NULL);
         if (!cd->isBaseInfoComplete())
         {
@@ -5428,6 +5449,13 @@ Type *TypeFunction::semantic(Loc loc, Scope *sc)
 
     bool errors = false;
 
+    if (inuse > global.recursionLimit)
+    {
+        inuse = 0;
+        ::error(loc, "recursive type");
+        return Type::terror;
+    }
+
     /* Copy in order to not mess up original.
      * This can produce redundant copies if inferring return type,
      * as semantic() will get called again on this.
@@ -5512,9 +5540,9 @@ Type *TypeFunction::semantic(Loc loc, Scope *sc)
         for (size_t i = 0; i < dim; i++)
         {
             Parameter *fparam = Parameter::getNth(tf->parameters, i);
-            tf->inuse++;
+            inuse++;
             fparam->type = fparam->type->semantic(loc, argsc);
-            if (tf->inuse == 1) tf->inuse--;
+            inuse--;
 
             if (fparam->type->ty == Terror)
             {
@@ -5755,13 +5783,6 @@ Type *TypeFunction::semantic(Loc loc, Scope *sc)
         errors = true;
     }
     tf->iswild = wildparams;
-
-    if (tf->inuse)
-    {
-        error(loc, "recursive type");
-        tf->inuse = 0;
-        errors = true;
-    }
 
     if (tf->isproperty && (tf->varargs || Parameter::dim(tf->parameters) > 2))
     {
@@ -6439,7 +6460,7 @@ Type *TypeDelegate::addStorageClass(StorageClass stc)
      *  alias dg_t = void* delegate();
      *  scope dg_t dg = ...;
      */
-    if(stc & STCscope)
+    if (stc & STCscope)
     {
         Type *n = t->next->addStorageClass(STCscope | STCscopeinferred);
         if (n != t->next)
@@ -6534,7 +6555,156 @@ bool TypeDelegate::hasPointers()
     return true;
 }
 
+/***************************** TypeTraits ********************************/
 
+TypeTraits::TypeTraits(const Loc &loc, TraitsExp *exp)
+     : Type(Ttraits)
+{
+    this->loc = loc;
+    this->exp = exp;
+    this->sym = NULL;
+}
+
+Type *TypeTraits::syntaxCopy()
+{
+    TraitsExp *te = (TraitsExp *) exp->syntaxCopy();
+    TypeTraits *tt = new TypeTraits(loc, te);
+    tt->mod = mod;
+    return tt;
+}
+
+Type *TypeTraits::semantic(Loc, Scope *sc)
+{
+    if (ty == Terror)
+        return this;
+
+    const int inAlias = (sc->flags & SCOPEalias) != 0;
+    if (exp->ident != Id::allMembers &&
+        exp->ident != Id::derivedMembers &&
+        exp->ident != Id::getMember &&
+        exp->ident != Id::parent &&
+        exp->ident != Id::getOverloads &&
+        exp->ident != Id::getVirtualFunctions &&
+        exp->ident != Id::getVirtualMethods &&
+        exp->ident != Id::getAttributes &&
+        exp->ident != Id::getUnitTests &&
+        exp->ident != Id::getAliasThis)
+    {
+        static const char *ctxt[2] = {"as type", "in alias"};
+        ::error(loc, "trait `%s` is either invalid or not supported %s",
+                exp->ident->toChars(), ctxt[inAlias]);
+        ty = Terror;
+        return this;
+    }
+
+    Type *result = NULL;
+
+    if (Expression *e = semanticTraits(exp, sc))
+    {
+        switch (e->op)
+        {
+        case TOKdotvar:
+            sym = ((DotVarExp *)e)->var;
+            break;
+        case TOKvar:
+            sym = ((VarExp *)e)->var;
+            break;
+        case TOKfunction:
+        {
+            FuncExp *fe = (FuncExp *)e;
+            if (fe->td)
+                sym = fe->td;
+            else
+                sym = fe->fd;
+            break;
+        }
+        case TOKdottd:
+            sym = ((DotTemplateExp*)e)->td;
+            break;
+        case TOKdsymbol:
+            sym = ((DsymbolExp *)e)->s;
+            break;
+        case TOKtemplate:
+            sym = ((TemplateExp *)e)->td;
+            break;
+        case TOKscope:
+            sym = ((ScopeExp *)e)->sds;
+            break;
+        case TOKtuple:
+        {
+            TupleExp *te = e->toTupleExp();
+            Objects *elems = new Objects;
+            elems->setDim(te->exps->dim);
+            for (size_t i = 0; i < elems->dim; i++)
+            {
+                Expression *src = (*te->exps)[i];
+                switch (src->op)
+                {
+                case TOKtype:
+                    (*elems)[i] = ((TypeExp *)src)->type;
+                    break;
+                case TOKdottype:
+                    (*elems)[i] = ((DotTypeExp *)src)->type;
+                    break;
+                case TOKoverloadset:
+                    (*elems)[i] = ((OverExp *)src)->type;
+                    break;
+                default:
+                    if (Dsymbol *sym = isDsymbol(src))
+                        (*elems)[i] = sym;
+                    else
+                        (*elems)[i] = src;
+                }
+            }
+            TupleDeclaration *td = new TupleDeclaration(e->loc,
+                Identifier::generateId("__aliastup"), elems);
+            sym = td;
+            break;
+        }
+        case TOKdottype:
+            result = isType(((DotTypeExp *)e)->sym);
+            break;
+        case TOKtype:
+            result = ((TypeExp *)e)->type;
+            break;
+        case TOKoverloadset:
+            result = ((OverExp *)e)->type;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (result)
+        result = result->addMod(mod);
+    if (!inAlias && !result)
+    {
+        if (!global.errors)
+            ::error(loc, "`%s` does not give a valid type", toChars());
+        return Type::terror;
+    }
+
+    return result;
+}
+
+void TypeTraits::resolve(Loc loc, Scope *sc, Expression **pe, Type **pt, Dsymbol **ps, bool)
+{
+    *pt = NULL;
+    *pe = NULL;
+    *ps = NULL;
+
+    if (Type *t = semantic(loc, sc))
+        *pt = t;
+    else if (sym)
+        *ps = sym;
+    else
+        *pt = Type::terror;
+}
+
+d_uns64 TypeTraits::size(Loc)
+{
+    return SIZE_INVALID;
+}
 
 /***************************** TypeQualified *****************************/
 
@@ -6734,6 +6904,10 @@ void TypeQualified::resolveHelper(Loc loc, Scope *sc,
                 goto L3;
             if (VarDeclaration *v = s->isVarDeclaration())
             {
+                // https://issues.dlang.org/show_bug.cgi?id=19913
+                // v->type would be null if it is a forward referenced member.
+                if (v->type == NULL)
+                    v->semantic(sc);
                 if (v->storage_class & (STCconst | STCimmutable | STCmanifest) ||
                     v->type->isConst() || v->type->isImmutable())
                 {
@@ -7145,6 +7319,12 @@ void TypeTypeof::resolve(Loc loc, Scope *sc, Expression **pe, Type **pt, Dsymbol
 
     //printf("TypeTypeof::resolve(sc = %p, idents = '%s')\n", sc, toChars());
     //static int nest; if (++nest == 50) *(char*)0=0;
+    if (sc == NULL)
+    {
+        *pt = Type::terror;
+        error(loc, "Invalid scope.");
+        return;
+    }
     if (inuse)
     {
         inuse = 2;
@@ -7420,8 +7600,8 @@ Expression *TypeEnum::dotExp(Scope *sc, Expression *e, Identifier *ident, int fl
     if (ident == Id::_mangleof)
         return getProperty(e->loc, ident, flag & 1);
 
-    if (sym->_scope)
-        sym->semantic(sym->_scope);
+    if (sym->semanticRun < PASSsemanticdone)
+        sym->semantic(NULL);
     if (!sym->members)
     {
         if (sym->isSpecial())
@@ -7890,8 +8070,8 @@ L1:
                 return e;
             }
         }
-        if (d->semanticRun == PASSinit && d->_scope)
-            d->semantic(d->_scope);
+        if (d->semanticRun == PASSinit)
+            d->semantic(NULL);
         checkAccess(e->loc, sc, e, d);
         VarExp *ve = new VarExp(e->loc, d);
         if (d->isVarDeclaration() && d->needThis())
@@ -8344,7 +8524,12 @@ L1:
 
         if (ident == Id::classinfo)
         {
-            assert(Type::typeinfoclass);
+            if (!Type::typeinfoclass)
+            {
+                error(e->loc, "`object.TypeInfo_Class` could not be found, but is implicitly used");
+                return new ErrorExp();
+            }
+
             Type *t = Type::typeinfoclass->type;
             if (e->op == TOKtype || e->op == TOKdottype)
             {
@@ -8414,7 +8599,7 @@ L1:
 
         if (ident == Id::outer && sym->vthis)
         {
-            if (sym->vthis->_scope)
+            if (sym->vthis->semanticRun == PASSinit)
                 sym->vthis->semantic(NULL);
 
             if (ClassDeclaration *cdp = sym->toParent2()->isClassDeclaration())
@@ -8641,8 +8826,8 @@ L1:
             }
         }
         //printf("e = %s, d = %s\n", e->toChars(), d->toChars());
-        if (d->semanticRun == PASSinit && d->_scope)
-            d->semantic(d->_scope);
+        if (d->semanticRun == PASSinit)
+            d->semantic(NULL);
         checkAccess(e->loc, sc, e, d);
         VarExp *ve = new VarExp(e->loc, d);
         if (d->isVarDeclaration() && d->needThis())
@@ -8698,9 +8883,9 @@ MATCH TypeClass::implicitConvTo(Type *to)
     if (cdto)
     {
         //printf("TypeClass::implicitConvTo(to = '%s') %s, isbase = %d %d\n", to->toChars(), toChars(), cdto->isBaseInfoComplete(), sym->isBaseInfoComplete());
-        if (cdto->_scope && !cdto->isBaseInfoComplete())
+        if (cdto->semanticRun < PASSsemanticdone && !cdto->isBaseInfoComplete())
             cdto->semantic(NULL);
-        if (sym->_scope && !sym->isBaseInfoComplete())
+        if (sym->semanticRun < PASSsemanticdone && !sym->isBaseInfoComplete())
             sym->semantic(NULL);
         if (cdto->isBaseOf(sym, NULL) && MODimplicitConv(mod, to->mod))
         {

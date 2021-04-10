@@ -1,5 +1,5 @@
 /* Default common target hook functions.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -84,15 +84,6 @@ vec<const char *>
 default_get_valid_option_values (int, const char *)
 {
   return vec<const char *> ();
-}
-
-/* Default version of TARGET_OPTION_VALIDATE_PARAM.  */
-
-bool
-default_option_validate_param (const int value ATTRIBUTE_UNUSED,
-			       const int param ATTRIBUTE_UNUSED)
-{
-  return true;
 }
 
 const struct default_options empty_optimization_table[] =

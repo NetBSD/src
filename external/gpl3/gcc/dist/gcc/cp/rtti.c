@@ -1,5 +1,5 @@
 /* RunTime Type Identification
-   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Mostly written by Jason Merrill (jason@cygnus.com).
 
 This file is part of GCC.
@@ -123,7 +123,7 @@ static GTY (()) vec<tinfo_s, va_gc> *tinfo_descs;
 
 static tree ifnonnull (tree, tree, tsubst_flags_t);
 static tree tinfo_name (tree, bool);
-static tree build_dynamic_cast_1 (tree, tree, tsubst_flags_t);
+static tree build_dynamic_cast_1 (location_t, tree, tree, tsubst_flags_t);
 static tree throw_bad_cast (void);
 static tree throw_bad_typeid (void);
 static tree get_tinfo_ptr (tree);
@@ -168,10 +168,10 @@ init_rtti_processing (void)
 {
   tree type_info_type;
 
-  push_namespace (std_identifier);
+  push_nested_namespace (std_node);
   type_info_type = xref_tag (class_type, get_identifier ("type_info"),
 			     /*tag_scope=*/ts_current, false);
-  pop_namespace ();
+  pop_nested_namespace (std_node);
   const_type_info_type_node
     = cp_build_qualified_type (type_info_type, TYPE_QUAL_CONST);
   type_info_ptr_type = build_pointer_type (const_type_info_type_node);
@@ -209,8 +209,8 @@ build_headof (tree exp)
   offset = build_vtbl_ref (cp_build_fold_indirect_ref (exp),
                            index);
 
-  type = cp_build_qualified_type (ptr_type_node,
-				  cp_type_quals (TREE_TYPE (exp)));
+  cp_build_qualified_type (ptr_type_node,
+			   cp_type_quals (TREE_TYPE (exp)));
   return fold_build_pointer_plus (exp, offset);
 }
 
@@ -272,11 +272,11 @@ get_tinfo_decl_dynamic (tree exp, tsubst_flags_t complain)
 
   exp = resolve_nondeduced_context (exp, complain);
 
-  /* peel back references, so they match.  */
+  /* Peel back references, so they match.  */
   type = non_reference (unlowered_expr_type (exp));
 
   /* Peel off cv qualifiers.  */
-  type = TYPE_MAIN_VARIANT (type);
+  type = cv_unqualified (type);
 
   /* For UNKNOWN_TYPEs call complete_type_or_else to get diagnostics.  */
   if (CLASS_TYPE_P (type) || type == unknown_type_node
@@ -300,7 +300,7 @@ get_tinfo_decl_dynamic (tree exp, tsubst_flags_t complain)
     }
   else
     /* Otherwise return the type_info for the static type of the expr.  */
-    t = get_tinfo_ptr (TYPE_MAIN_VARIANT (type));
+    t = get_tinfo_ptr (type);
 
   return cp_build_fold_indirect_ref (t);
 }
@@ -353,8 +353,6 @@ build_typeid (tree exp, tsubst_flags_t complain)
   if (processing_template_decl)
     return build_min (TYPEID_EXPR, const_type_info_type_node, exp);
 
-  /* FIXME when integrating with c_fully_fold, mark
-     resolves_to_fixed_type_p case as a non-constant expression.  */
   if (TYPE_POLYMORPHIC_P (TREE_TYPE (exp))
       && ! resolves_to_fixed_type_p (exp, &nonnull)
       && ! nonnull)
@@ -512,13 +510,13 @@ get_typeid (tree type, tsubst_flags_t complain)
 	  || type_memfn_rqual (type) != REF_QUAL_NONE))
     {
       if (complain & tf_error)
-	error ("typeid of qualified function type %qT", type);
+	error ("%<typeid%> of qualified function type %qT", type);
       return error_mark_node;
     }
 
   /* The top-level cv-qualifiers of the lvalue expression or the type-id
      that is the operand of typeid are always ignored.  */
-  type = TYPE_MAIN_VARIANT (type);
+  type = cv_unqualified (type);
 
   /* For UNKNOWN_TYPEs call complete_type_or_else to get diagnostics.  */
   if (CLASS_TYPE_P (type) || type == unknown_type_node
@@ -550,7 +548,8 @@ ifnonnull (tree test, tree result, tsubst_flags_t complain)
    paper.  */
 
 static tree
-build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
+build_dynamic_cast_1 (location_t loc, tree type, tree expr,
+		      tsubst_flags_t complain)
 {
   enum tree_code tc = TREE_CODE (type);
   tree exprtype;
@@ -648,7 +647,7 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
     tree binfo = lookup_base (TREE_TYPE (exprtype), TREE_TYPE (type),
 			      ba_check, NULL, complain);
     if (binfo)
-      return build_static_cast (type, expr, complain);
+      return build_static_cast (loc, type, expr, complain);
   }
 
   /* Apply trivial conversion T -> T& for dereferenced ptrs.  */
@@ -693,8 +692,9 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
 		{
 		  tree expr = throw_bad_cast ();
                   if (complain & tf_warning)
-                    warning (0, "dynamic_cast of %q#D to %q#T can never succeed",
-                             old_expr, type);
+	            warning_at (loc, 0,
+				"%<dynamic_cast<%#T>(%#D)%> can never succeed",
+				type, old_expr);
 		  /* Bash it to the expected type.  */
 		  TREE_TYPE (expr) = type;
 		  return expr;
@@ -708,8 +708,9 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
 		  && TREE_CODE (TREE_TYPE (op)) == RECORD_TYPE)
 		{
                   if (complain & tf_warning)
-                    warning (0, "dynamic_cast of %q#D to %q#T can never succeed",
-                             op, type);
+	            warning_at (loc, 0,
+				"%<dynamic_cast<%#T>(%#D)%> can never succeed",
+				type, op);
 		  retval = build_int_cst (type, 0);
 		  return retval;
 		}
@@ -719,7 +720,8 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
 	  if (!flag_rtti)
 	    {
               if (complain & tf_error)
-		error ("%<dynamic_cast%> not permitted with %<-fno-rtti%>");
+		error_at (loc,
+			  "%<dynamic_cast%> not permitted with %<-fno-rtti%>");
 	      return error_mark_node;
 	    }
 
@@ -775,6 +777,7 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
 	      dynamic_cast_node = dcast_fn;
 	    }
 	  result = build_cxx_call (dcast_fn, 4, elems, complain);
+	  SET_EXPR_LOCATION (result, loc);
 
 	  if (tc == REFERENCE_TYPE)
 	    {
@@ -782,7 +785,7 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
 	      tree neq;
 
 	      result = save_expr (result);
-	      neq = cp_truthvalue_conversion (result);
+	      neq = cp_truthvalue_conversion (result, complain);
 	      return cp_convert (type,
 				 build3 (COND_EXPR, TREE_TYPE (result),
 					 neq, result, bad), complain);
@@ -798,13 +801,15 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
 
  fail:
   if (complain & tf_error)
-    error ("cannot dynamic_cast %qE (of type %q#T) to type %q#T (%s)",
-           old_expr, TREE_TYPE (old_expr), type, errstr);
+    error_at (loc, "cannot %<dynamic_cast%> %qE (of type %q#T) "
+	      "to type %q#T (%s)",
+	      old_expr, TREE_TYPE (old_expr), type, errstr);
   return error_mark_node;
 }
 
 tree
-build_dynamic_cast (tree type, tree expr, tsubst_flags_t complain)
+build_dynamic_cast (location_t loc, tree type, tree expr,
+		    tsubst_flags_t complain)
 {
   tree r;
 
@@ -815,12 +820,16 @@ build_dynamic_cast (tree type, tree expr, tsubst_flags_t complain)
     {
       expr = build_min (DYNAMIC_CAST_EXPR, type, expr);
       TREE_SIDE_EFFECTS (expr) = 1;
-      return convert_from_reference (expr);
+      r = convert_from_reference (expr);
+      protected_set_expr_location (r, loc);
+      return r;
     }
 
-  r = convert_from_reference (build_dynamic_cast_1 (type, expr, complain));
+  r = convert_from_reference (build_dynamic_cast_1 (loc, type, expr,
+						    complain));
   if (r != error_mark_node)
-    maybe_warn_about_useless_cast (type, expr, complain);
+    maybe_warn_about_useless_cast (loc, type, expr, complain);
+  protected_set_expr_location (r, loc);
   return r;
 }
 
@@ -1015,8 +1024,7 @@ ptr_initializer (tinfo_s *ti, tree target)
       to = tx_unsafe_fn_variant (to);
     }
   if (flag_noexcept_type
-      && (TREE_CODE (to) == FUNCTION_TYPE
-	  || TREE_CODE (to) == METHOD_TYPE)
+      && FUNC_OR_METHOD_TYPE_P (to)
       && TYPE_NOTHROW_P (to))
     {
       flags |= 0x40;
@@ -1464,6 +1472,7 @@ get_tinfo_desc (unsigned ix)
   /* Pass the fields chained in reverse.  */
   finish_builtin_struct (pseudo_type, pseudo_name, fields, NULL_TREE);
   CLASSTYPE_AS_BASE (pseudo_type) = pseudo_type;
+  xref_basetypes (pseudo_type, /*bases=*/NULL_TREE);
 
   res->type = cp_build_qualified_type (pseudo_type, TYPE_QUAL_CONST);
   res->name = get_identifier (real_name);
@@ -1554,7 +1563,7 @@ emit_support_tinfos (void)
 
   /* Look for a defined class.  */
   tree bltn_type = lookup_qualified_name
-    (abi_node, get_identifier ("__fundamental_type_info"), true, false, false);
+    (abi_node, "__fundamental_type_info", true, false);
   if (TREE_CODE (bltn_type) != TYPE_DECL)
     return;
 
@@ -1579,6 +1588,20 @@ emit_support_tinfos (void)
       }
   for (tree t = registered_builtin_types; t; t = TREE_CHAIN (t))
     emit_support_tinfo_1 (TREE_VALUE (t));
+  /* For compatibility, emit DFP typeinfos even when DFP isn't enabled,
+     because we've emitted that in the past.  */
+  if (!targetm.decimal_float_supported_p ())
+    {
+      gcc_assert (dfloat32_type_node == NULL_TREE
+		  && dfloat64_type_node == NULL_TREE
+		  && dfloat128_type_node == NULL_TREE);
+      fallback_dfloat32_type = make_node (REAL_TYPE);
+      fallback_dfloat64_type = make_node (REAL_TYPE);
+      fallback_dfloat128_type = make_node (REAL_TYPE);
+      emit_support_tinfo_1 (fallback_dfloat32_type);
+      emit_support_tinfo_1 (fallback_dfloat64_type);
+      emit_support_tinfo_1 (fallback_dfloat128_type);
+    }
   input_location = saved_loc;
 }
 

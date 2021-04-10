@@ -13,6 +13,7 @@
 
 #include "errors.h"
 #include "statement.h"
+#include "attrib.h"
 #include "expression.h"
 #include "cond.h"
 #include "init.h"
@@ -95,6 +96,8 @@ public:
             s->exp = semantic(s->exp, sc);
             s->exp = resolveProperties(sc, s->exp);
             s->exp = s->exp->addDtorHook(sc);
+            if (checkNonAssignmentArrayOp(s->exp))
+                s->exp = new ErrorExp();
             if (FuncDeclaration *f = isFuncAddress(s->exp))
             {
                 if (f->checkForwardRef(s->exp->loc))
@@ -301,11 +304,10 @@ public:
 
     void visit(ScopeStatement *ss)
     {
-        ScopeDsymbol *sym;
         //printf("ScopeStatement::semantic(sc = %p)\n", sc);
         if (ss->statement)
         {
-            sym = new ScopeDsymbol();
+            ScopeDsymbol *sym = new ScopeDsymbol();
             sym->parent = sc->scopesym;
             sym->endlinnum = ss->endloc.linnum;
             sc = sc->push(sym);
@@ -346,6 +348,22 @@ public:
         result = ss;
     }
 
+    void visit(ForwardingStatement *ss)
+    {
+        assert(ss->sym);
+        for (Scope *csc = sc; !ss->sym->forward; csc = csc->enclosing)
+        {
+            assert(csc);
+            ss->sym->forward = csc->scopesym;
+        }
+        sc = sc->push(ss->sym);
+        sc->sbreak = ss;
+        sc->scontinue = ss;
+        ss->statement = semantic(ss->statement, sc);
+        sc = sc->pop();
+        result = ss->statement;
+    }
+
     void visit(WhileStatement *ws)
     {
         /* Rewrite as a for(;condition;) loop
@@ -370,6 +388,8 @@ public:
 
         ds->condition = semantic(ds->condition, sc);
         ds->condition = resolveProperties(sc, ds->condition);
+        if (checkNonAssignmentArrayOp(ds->condition))
+            ds->condition = new ErrorExp();
         ds->condition = ds->condition->optimize(WANTvalue);
         ds->condition = checkGC(sc, ds->condition);
 
@@ -440,6 +460,8 @@ public:
 
             fs->condition = semantic(fs->condition, sc);
             fs->condition = resolveProperties(sc, fs->condition);
+            if (checkNonAssignmentArrayOp(fs->condition))
+                fs->condition = new ErrorExp();
             fs->condition = fs->condition->optimize(WANTvalue);
             fs->condition = checkGC(sc, fs->condition);
             fs->condition = fs->condition->toBoolean(sc);
@@ -450,6 +472,8 @@ public:
                 ((CommaExp *)fs->increment)->allowCommaExp = true;
             fs->increment = semantic(fs->increment, sc);
             fs->increment = resolveProperties(sc, fs->increment);
+            if (checkNonAssignmentArrayOp(fs->increment))
+                fs->increment = new ErrorExp();
             fs->increment = fs->increment->optimize(WANTvalue);
             fs->increment = checkGC(sc, fs->increment);
         }
@@ -468,6 +492,347 @@ public:
             return setError();
 
         result = fs;
+    }
+
+    /***********************
+     * Declares a unrolled `foreach` loop variable or a `static foreach` variable.
+     *
+     * Params:
+     *     storageClass = The storage class of the variable.
+     *     type = The declared type of the variable.
+     *     ident = The name of the variable.
+     *     e = The initializer of the variable (i.e. the current element of the looped over aggregate).
+     *     t = The type of the initializer.
+     * Returns:
+     *     `true` iff the declaration was successful.
+     */
+    bool declareVariable(ForeachStatement *fs, Type *paramtype, TupleExp *te,
+        bool needExpansion, bool isStatic, Statements *statements, Dsymbols *declarations,
+        StorageClass storageClass, Type *type, Identifier *ident, Expression *e, Type *t)
+    {
+        Loc loc = fs->loc;
+        if (storageClass & (STCout | STClazy) ||
+            (storageClass & STCref && !te))
+        {
+            fs->error("no storage class for value %s", ident->toChars());
+            return false;
+        }
+        Declaration *var;
+        if (e)
+        {
+            Type *tb = e->type->toBasetype();
+            Dsymbol *ds = NULL;
+            if (!(storageClass & STCmanifest))
+            {
+                if ((isStatic || tb->ty == Tfunction || tb->ty == Tsarray || storageClass & STCalias) && e->op == TOKvar)
+                    ds = ((VarExp *)e)->var;
+                else if (e->op == TOKtemplate)
+                    ds = ((TemplateExp *)e)->td;
+                else if (e->op == TOKscope)
+                    ds = ((ScopeExp *)e)->sds;
+                else if (e->op == TOKfunction)
+                {
+                    FuncExp *fe = (FuncExp *)e;
+                    ds = fe->td ? (Dsymbol *)fe->td : fe->fd;
+                }
+            }
+            else if (storageClass & STCalias)
+            {
+                fs->error("foreach loop variable cannot be both enum and alias");
+                return false;
+            }
+
+            if (ds)
+            {
+                var = new AliasDeclaration(loc, ident, ds);
+                if (storageClass & STCref)
+                {
+                    fs->error("symbol %s cannot be ref", ds->toChars());
+                    return false;
+                }
+                if (paramtype)
+                {
+                    fs->error("cannot specify element type for symbol %s", ds->toChars());
+                    return false;
+                }
+            }
+            else if (e->op == TOKtype)
+            {
+                var = new AliasDeclaration(loc, ident, e->type);
+                if (paramtype)
+                {
+                    fs->error("cannot specify element type for type %s", e->type->toChars());
+                    return false;
+                }
+            }
+            else
+            {
+                e = resolveProperties(sc, e);
+                type = e->type;
+                if (paramtype)
+                    type = paramtype;
+                Initializer *ie = new ExpInitializer(Loc(), e);
+                VarDeclaration *v = new VarDeclaration(loc, type, ident, ie);
+                if (storageClass & STCref)
+                    v->storage_class |= STCref | STCforeach;
+                if (isStatic || storageClass & STCmanifest || e->isConst() ||
+                    e->op == TOKstring ||
+                    e->op == TOKstructliteral ||
+                    e->op == TOKarrayliteral)
+                {
+                    if (v->storage_class & STCref)
+                    {
+                        if (!isStatic || !needExpansion)
+                        {
+                            fs->error("constant value %s cannot be ref", ie->toChars());
+                        }
+                        else 
+                        {
+                            fs->error("constant value %s cannot be ref", ident->toChars());
+                        }
+                        return false;
+                    }
+                    else
+                        v->storage_class |= STCmanifest;
+                }
+                var = v;
+            }
+        }
+        else
+        {
+            var = new AliasDeclaration(loc, ident, t);
+            if (paramtype)
+            {
+                fs->error("cannot specify element type for symbol %s", fs->toChars());
+                return false;
+            }
+        }
+        if (isStatic)
+            var->storage_class |= STClocal;
+        if (statements)
+            statements->push(new ExpStatement(loc, var));
+        else if (declarations)
+            declarations->push(var);
+        else
+            assert(0);
+        return true;
+    }
+
+    bool makeTupleForeachBody(ForeachStatement *fs, size_t k,
+        Type *paramtype, TupleExp *te, TypeTuple *tuple,
+        bool needExpansion, bool isStatic, bool isDecl,
+        Statements *statements, Dsymbols *declarations, Dsymbols *dbody)
+    {
+        Loc loc = fs->loc;
+        Expression *e = NULL;
+        Type *t = NULL;
+        if (te)
+            e = (*te->exps)[k];
+        else
+            t = Parameter::getNth(tuple->arguments, k)->type;
+        Parameter *p = (*fs->parameters)[0];
+        Statements *stmts = (isDecl) ? NULL : new Statements();
+        Dsymbols *decls = (isDecl) ? new Dsymbols() : NULL;
+
+        size_t dim = fs->parameters->dim;
+        if (!needExpansion && dim == 2)
+        {
+            // Declare key
+            if (p->storageClass & (STCout | STCref | STClazy))
+            {
+                fs->error("no storage class for key %s", p->ident->toChars());
+                return false;
+            }
+            if (isStatic)
+            {
+                if (!p->type)
+                {
+                    p->type = Type::tsize_t;
+                }
+            }
+            p->type = p->type->semantic(loc, sc);
+            TY keyty = p->type->ty;
+            if (keyty != Tint32 && keyty != Tuns32)
+            {
+                if (global.params.isLP64)
+                {
+                    if (keyty != Tint64 && keyty != Tuns64)
+                    {
+                        fs->error("foreach: key type must be int or uint, long or ulong, not %s", p->type->toChars());
+                        return false;
+                    }
+                }
+                else
+                {
+                    fs->error("foreach: key type must be int or uint, not %s", p->type->toChars());
+                    return false;
+                }
+            }
+            Initializer *ie = new ExpInitializer(Loc(), new IntegerExp(k));
+            VarDeclaration *var = new VarDeclaration(loc, p->type, p->ident, ie);
+            var->storage_class |= STCmanifest;
+            if (isStatic)
+                var->storage_class |= STClocal;
+            if (!isDecl)
+                stmts->push(new ExpStatement(loc, var));
+            else
+                decls->push(var);
+            p = (*fs->parameters)[1];  // value
+        }
+
+        if (!isStatic || !needExpansion)
+        {
+            // Declare value
+            if (!declareVariable(fs, paramtype, te, needExpansion, isStatic, stmts, decls,
+                                 p->storageClass, p->type, p->ident, e, t))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            // expand tuples into multiple `static foreach` variables.
+            assert(e && !t);
+            Identifier *ident = Identifier::generateId("__value");
+            declareVariable(fs, paramtype, te, needExpansion, isStatic, stmts, decls,
+                            0, e->type, ident, e, NULL);
+            Identifier *field = Identifier::idPool("tuple");
+            Expression *access = new DotIdExp(loc, e, field);
+            access = semantic(access, sc);
+            if (!tuple)
+                return false;
+            //printf("%s\n", tuple->toChars());
+            for (size_t l = 0; l < dim; l++)
+            {
+                Parameter *cp = (*fs->parameters)[l];
+                Expression *init_ = new IndexExp(loc, access, new IntegerExp(loc, l, Type::tsize_t));
+                init_ = semantic(init_, sc);
+                assert(init_->type);
+                declareVariable(fs, paramtype, te, needExpansion, isStatic, stmts, decls,
+                                p->storageClass, init_->type, cp->ident, init_, NULL);
+            }
+        }
+        Statement *fwdstmt = NULL;
+        Dsymbol *fwddecl = NULL;
+        if (!isDecl)
+        {
+            if (fs->_body)
+                stmts->push(fs->_body->syntaxCopy());
+            fwdstmt = new CompoundStatement(loc, stmts);
+        }
+        else
+        {
+            decls->append(Dsymbol::arraySyntaxCopy(dbody));
+        }
+        if (!isStatic)
+        {
+            fwdstmt = new ScopeStatement(loc, fwdstmt, fs->endloc);
+        }
+        else if (!isDecl)
+        {
+            fwdstmt = new ForwardingStatement(loc, fwdstmt);
+        }
+        else
+        {
+            fwddecl = new ForwardingAttribDeclaration(decls);
+        }
+
+        if (statements)
+            statements->push(fwdstmt);
+        else if (declarations)
+            declarations->push(fwddecl);
+        else
+            assert(0);
+        return true;
+    }
+
+    /*******************
+     * Type check and unroll `foreach` over an expression tuple as well
+     * as `static foreach` statements and `static foreach`
+     * declarations. For `static foreach` statements and `static
+     * foreach` declarations, the visitor interface is used (and the
+     * result is written into the `result` field.) For `static
+     * foreach` declarations, the resulting Dsymbols* are returned
+     * directly.
+     *
+     * The unrolled body is wrapped into a
+     *  - UnrolledLoopStatement, for `foreach` over an expression tuple.
+     *  - ForwardingStatement, for `static foreach` statements.
+     *  - ForwardingAttribDeclaration, for `static foreach` declarations.
+     *
+     * `static foreach` variables are declared as `STClocal`, such
+     * that they are inserted into the local symbol tables of the
+     * forwarding constructs instead of forwarded. For `static
+     * foreach` with multiple foreach loop variables whose aggregate
+     * has been lowered into a sequence of tuples, this function
+     * expands the tuples into multiple `STClocal` `static foreach`
+     * variables.
+     */
+    bool makeTupleForeach(ForeachStatement *fs, bool needExpansion, bool isStatic, bool isDecl,
+                          Statements *statements, Dsymbols *declarations, Dsymbols *dbody)
+    {
+        Loc loc = fs->loc;
+        size_t dim = fs->parameters->dim;
+        if (!needExpansion && (dim < 1 || dim > 2))
+        {
+            fs->error("only one (value) or two (key,value) arguments for tuple foreach");
+            return false;
+        }
+
+        Type *paramtype = (*fs->parameters)[dim-1]->type;
+        if (paramtype)
+        {
+            paramtype = paramtype->semantic(loc, sc);
+            if (paramtype->ty == Terror)
+                return false;
+        }
+
+        Type *tab = fs->aggr->type->toBasetype();
+        TypeTuple *tuple = (TypeTuple *)tab;
+        //printf("aggr: op = %d, %s\n", fs->aggr->op, fs->aggr->toChars());
+        size_t n;
+        TupleExp *te = NULL;
+        if (fs->aggr->op == TOKtuple)       // expression tuple
+        {
+            te = (TupleExp *)fs->aggr;
+            n = te->exps->dim;
+        }
+        else if (fs->aggr->op == TOKtype)   // type tuple
+        {
+            n = Parameter::dim(tuple->arguments);
+        }
+        else
+            assert(0);
+        for (size_t j = 0; j < n; j++)
+        {
+            size_t k = (fs->op == TOKforeach) ? j : n - 1 - j;
+            if (!makeTupleForeachBody(fs, k, paramtype, te, tuple,
+                                      needExpansion, isStatic, isDecl,
+                                      statements, declarations, dbody))
+                return false;
+        }
+        return true;
+    }
+
+    Dsymbols *makeTupleForeachStaticDecl(ForeachStatement *fs, Dsymbols *dbody, bool needExpansion)
+    {
+        assert(sc);
+        Dsymbols *declarations = new Dsymbols();
+        if (!makeTupleForeach(fs, needExpansion, true, true, NULL, declarations, dbody))
+            return NULL;
+
+        return declarations;
+    }
+
+    void makeTupleForeachStatic(ForeachStatement *fs, bool needExpansion)
+    {
+        Loc loc = fs->loc;
+        assert(sc);
+        Statements *statements = new Statements();
+        if (!makeTupleForeach(fs, needExpansion, true, false, statements, NULL, NULL))
+            return setError();
+
+        result = new CompoundStatement(loc, statements);
     }
 
     void visit(ForeachStatement *fs)
@@ -567,177 +932,22 @@ public:
 
         if (tab->ty == Ttuple)      // don't generate new scope for tuple loops
         {
-            if (dim < 1 || dim > 2)
-            {
-                fs->error("only one (value) or two (key,value) arguments for tuple foreach");
-                return setError();
-            }
-
-            Type *paramtype = (*fs->parameters)[dim-1]->type;
-            if (paramtype)
-            {
-                paramtype = paramtype->semantic(loc, sc);
-                if (paramtype->ty == Terror)
-                    return setError();
-            }
-
-            TypeTuple *tuple = (TypeTuple *)tab;
             Statements *statements = new Statements();
-            //printf("aggr: op = %d, %s\n", fs->aggr->op, fs->aggr->toChars());
-            size_t n;
-            TupleExp *te = NULL;
-            if (fs->aggr->op == TOKtuple)       // expression tuple
-            {
-                te = (TupleExp *)fs->aggr;
-                n = te->exps->dim;
-            }
-            else if (fs->aggr->op == TOKtype)   // type tuple
-            {
-                n = Parameter::dim(tuple->arguments);
-            }
-            else
-                assert(0);
-            for (size_t j = 0; j < n; j++)
-            {
-                size_t k = (fs->op == TOKforeach) ? j : n - 1 - j;
-                Expression *e = NULL;
-                Type *t = NULL;
-                if (te)
-                    e = (*te->exps)[k];
-                else
-                    t = Parameter::getNth(tuple->arguments, k)->type;
-                Parameter *p = (*fs->parameters)[0];
-                Statements *st = new Statements();
+            if (!makeTupleForeach(fs, false, false, false, statements, NULL, NULL))
+                return setError();
 
-                if (dim == 2)
-                {
-                    // Declare key
-                    if (p->storageClass & (STCout | STCref | STClazy))
-                    {
-                        fs->error("no storage class for key %s", p->ident->toChars());
-                        return setError();
-                    }
-                    p->type = p->type->semantic(loc, sc);
-                    TY keyty = p->type->ty;
-                    if (keyty != Tint32 && keyty != Tuns32)
-                    {
-                        if (global.params.isLP64)
-                        {
-                            if (keyty != Tint64 && keyty != Tuns64)
-                            {
-                                fs->error("foreach: key type must be int or uint, long or ulong, not %s", p->type->toChars());
-                                return setError();
-                            }
-                        }
-                        else
-                        {
-                            fs->error("foreach: key type must be int or uint, not %s", p->type->toChars());
-                            return setError();
-                        }
-                    }
-                    Initializer *ie = new ExpInitializer(Loc(), new IntegerExp(k));
-                    VarDeclaration *var = new VarDeclaration(loc, p->type, p->ident, ie);
-                    var->storage_class |= STCmanifest;
-                    st->push(new ExpStatement(loc, var));
-                    p = (*fs->parameters)[1];  // value
-                }
-                // Declare value
-                if (p->storageClass & (STCout | STClazy) ||
-                    (p->storageClass & STCref && !te))
-                {
-                    fs->error("no storage class for value %s", p->ident->toChars());
-                    return setError();
-                }
-                Dsymbol *var;
-                if (te)
-                {
-                    Type *tb = e->type->toBasetype();
-                    Dsymbol *ds = NULL;
-                    if ((tb->ty == Tfunction || tb->ty == Tsarray) && e->op == TOKvar)
-                        ds = ((VarExp *)e)->var;
-                    else if (e->op == TOKtemplate)
-                        ds = ((TemplateExp *)e)->td;
-                    else if (e->op == TOKscope)
-                        ds = ((ScopeExp *)e)->sds;
-                    else if (e->op == TOKfunction)
-                    {
-                        FuncExp *fe = (FuncExp *)e;
-                        ds = fe->td ? (Dsymbol *)fe->td : fe->fd;
-                    }
-
-                    if (ds)
-                    {
-                        var = new AliasDeclaration(loc, p->ident, ds);
-                        if (p->storageClass & STCref)
-                        {
-                            fs->error("symbol %s cannot be ref", s->toChars());
-                            return setError();
-                        }
-                        if (paramtype)
-                        {
-                            fs->error("cannot specify element type for symbol %s", ds->toChars());
-                            return setError();
-                        }
-                    }
-                    else if (e->op == TOKtype)
-                    {
-                        var = new AliasDeclaration(loc, p->ident, e->type);
-                        if (paramtype)
-                        {
-                            fs->error("cannot specify element type for type %s", e->type->toChars());
-                            return setError();
-                        }
-                    }
-                    else
-                    {
-                        p->type = e->type;
-                        if (paramtype)
-                            p->type = paramtype;
-                        Initializer *ie = new ExpInitializer(Loc(), e);
-                        VarDeclaration *v = new VarDeclaration(loc, p->type, p->ident, ie);
-                        if (p->storageClass & STCref)
-                            v->storage_class |= STCref | STCforeach;
-                        if (e->isConst() || e->op == TOKstring ||
-                            e->op == TOKstructliteral || e->op == TOKarrayliteral)
-                        {
-                            if (v->storage_class & STCref)
-                            {
-                                fs->error("constant value %s cannot be ref", ie->toChars());
-                                return setError();
-                            }
-                            else
-                                v->storage_class |= STCmanifest;
-                        }
-                        var = v;
-                    }
-                }
-                else
-                {
-                    var = new AliasDeclaration(loc, p->ident, t);
-                    if (paramtype)
-                    {
-                        fs->error("cannot specify element type for symbol %s", s->toChars());
-                        return setError();
-                    }
-                }
-                st->push(new ExpStatement(loc, var));
-
-                if (fs->_body)
-                    st->push(fs->_body->syntaxCopy());
-                s = new CompoundStatement(loc, st);
-                s = new ScopeStatement(loc, s, fs->endloc);
-                statements->push(s);
-            }
-
-            s = new UnrolledLoopStatement(loc, statements);
+            result = new UnrolledLoopStatement(loc, statements);
             if (LabelStatement *ls = checkLabeledLoop(sc, fs))
-                ls->gotoTarget = s;
-            if (te && te->e0)
-                s = new CompoundStatement(loc, new ExpStatement(te->e0->loc, te->e0), s);
+                ls->gotoTarget = result;
+            if (fs->aggr->op == TOKtuple)
+            {
+                TupleExp *te = (TupleExp *)fs->aggr;
+                if (te->e0)
+                    result = new CompoundStatement(loc, new ExpStatement(te->e0->loc, te->e0), result);
+            }
             if (vinit)
-                s = new CompoundStatement(loc, new ExpStatement(loc, vinit), s);
-            s = semantic(s, sc);
-            result = s;
+                result = new CompoundStatement(loc, new ExpStatement(loc, vinit), result);
+            result = semantic(result, sc);
             return;
         }
 
@@ -747,6 +957,19 @@ public:
         Scope *sc2 = sc->push(sym);
 
         sc2->noctor++;
+
+        for (size_t i = 0; i < dim; i++)
+        {
+            Parameter *p = (*fs->parameters)[i];
+            if (p->storageClass & STCmanifest)
+            {
+                fs->error("cannot declare enum loop variables for non-unrolled foreach");
+            }
+            if (p->storageClass & STCalias)
+            {
+                fs->error("cannot declare alias loop variables for non-unrolled foreach");
+            }
+        }
 
         switch (tab->ty)
         {
@@ -765,16 +988,48 @@ public:
                         goto Lerror2;
                     }
 
+                    // Finish semantic on all foreach parameter types.
+                    for (size_t i = 0; i < dim; i++)
+                    {
+                        Parameter *p = (*fs->parameters)[i];
+                        p->type = p->type->semantic(loc, sc2);
+                        p->type = p->type->addStorageClass(p->storageClass);
+                    }
+
+                    tn = tab->nextOf()->toBasetype();
+
+                    if (dim == 2)
+                    {
+                        Type *tindex = (*fs->parameters)[0]->type;
+                        if (!tindex->isintegral())
+                        {
+                            fs->error("foreach: key cannot be of non-integral type `%s`",
+                                      tindex->toChars());
+                            goto Lerror2;
+                        }
+                        /* What cases to deprecate implicit conversions for:
+                         *  1. foreach aggregate is a dynamic array
+                         *  2. foreach body is lowered to _aApply (see special case below).
+                         */
+                        Type *tv = (*fs->parameters)[1]->type->toBasetype();
+                        if ((tab->ty == Tarray ||
+                             (tn->ty != tv->ty &&
+                              (tn->ty == Tchar || tn->ty == Twchar || tn->ty == Tdchar) &&
+                              (tv->ty == Tchar || tv->ty == Twchar || tv->ty == Tdchar))) &&
+                            !Type::tsize_t->implicitConvTo(tindex))
+                        {
+                            fs->deprecation("foreach: loop index implicitly converted from `size_t` to `%s`",
+                                            tindex->toChars());
+                        }
+                    }
+
                     /* Look for special case of parsing char types out of char type
                      * array.
                      */
-                    tn = tab->nextOf()->toBasetype();
                     if (tn->ty == Tchar || tn->ty == Twchar || tn->ty == Tdchar)
                     {
                         int i = (dim == 1) ? 0 : 1;     // index of value
                         Parameter *p = (*fs->parameters)[i];
-                        p->type = p->type->semantic(loc, sc2);
-                        p->type = p->type->addStorageClass(p->storageClass);
                         tnv = p->type->toBasetype();
                         if (tnv->ty != tn->ty &&
                             (tnv->ty == Tchar || tnv->ty == Twchar || tnv->ty == Tdchar))
@@ -801,8 +1056,6 @@ public:
                     {
                         // Declare parameterss
                         Parameter *p = (*fs->parameters)[i];
-                        p->type = p->type->semantic(loc, sc2);
-                        p->type = p->type->addStorageClass(p->storageClass);
                         VarDeclaration *var;
 
                         if (dim == 2 && i == 0)
@@ -899,6 +1152,10 @@ public:
                         Identifier *idkey = Identifier::generateId("__key");
                         fs->key = new VarDeclaration(loc, Type::tsize_t, idkey, NULL);
                         fs->key->storage_class |= STCtemp;
+                    }
+                    else if (fs->key->type->ty != Tsize_t)
+                    {
+                        tmp_length = new CastExp(loc, tmp_length, fs->key->type);
                     }
                     if (fs->op == TOKforeach_reverse)
                         fs->key->_init = new ExpInitializer(loc, tmp_length);
@@ -1032,6 +1289,7 @@ public:
                     else
                     {
                         r = copyToTemp(0, "__r", fs->aggr);
+                        r->semantic(sc);
                         init = new ExpStatement(loc, r);
                         if (vinit)
                             init = new CompoundStatement(loc, new ExpStatement(loc, vinit), init);
@@ -1064,6 +1322,7 @@ public:
                     else
                     {
                         VarDeclaration *vd = copyToTemp(STCref, "__front", einit);
+                        vd->semantic(sc);
                         makeargs = new ExpStatement(loc, vd);
 
                         Type *tfront = NULL;
@@ -1723,6 +1982,8 @@ public:
             ifs->condition = resolveProperties(sc, ifs->condition);
             ifs->condition = ifs->condition->addDtorHook(sc);
         }
+        if (checkNonAssignmentArrayOp(ifs->condition))
+            ifs->condition = new ErrorExp();
         ifs->condition = checkGC(sc, ifs->condition);
 
         // Convert to boolean after declaring prm so this works:
@@ -1903,6 +2164,11 @@ public:
 
         if (ps->_body)
         {
+            if (ps->ident == Id::msg || ps->ident == Id::startaddress)
+            {
+                ps->error("`pragma(%s)` is missing a terminating `;`", ps->ident->toChars());
+                return setError();
+            }
             ps->_body = semantic(ps->_body, sc);
         }
         result = ps->_body;
@@ -1971,6 +2237,8 @@ public:
                 break;
             }
         }
+        if (checkNonAssignmentArrayOp(ss->condition))
+            ss->condition = new ErrorExp();
         ss->condition = ss->condition->optimize(WANTvalue);
         ss->condition = checkGC(sc, ss->condition);
         if (ss->condition->op == TOKerror)
@@ -1989,7 +2257,7 @@ public:
         ss->_body = semantic(ss->_body, sc);
         sc->noctor--;
 
-        if (conditionError || ss->_body->isErrorStatement())
+        if (conditionError || (ss->_body && ss->_body->isErrorStatement()))
             goto Lerror;
 
         // Resolve any goto case's with exp
@@ -2065,7 +2333,7 @@ public:
         {
             ss->hasNoDefault = 1;
 
-            if (!ss->isFinal && !ss->_body->isErrorStatement())
+            if (!ss->isFinal && (!ss->_body || !ss->_body->isErrorStatement()))
                 ss->error("switch statement without a default; use 'final switch' or add 'default: assert(0);' or add 'default: break;'");
 
             // Generate runtime error if the default is hit
@@ -2814,6 +3082,10 @@ public:
                 bs->error("break is not inside a loop or switch");
             return setError();
         }
+        else if (sc->sbreak->isForwardingStatement())
+        {
+            bs->error("must use labeled `break` within `static foreach`");
+        }
         result = bs;
     }
 
@@ -2896,6 +3168,10 @@ public:
                 cs->error("continue is not inside a loop");
             return setError();
         }
+        else if (sc->scontinue->isForwardingStatement())
+        {
+            cs->error("must use labeled `continue` within `static foreach`");
+        }
         result = cs;
     }
 
@@ -2940,6 +3216,7 @@ public:
              *  try { body } finally { _d_monitorexit(tmp); }
              */
             VarDeclaration *tmp = copyToTemp(0, "__sync", ss->exp);
+            tmp->semantic(sc);
 
             Statements *cs = new Statements();
             cs->push(new ExpStatement(ss->loc, tmp));
@@ -3087,6 +3364,7 @@ public:
                      * }
                      */
                     VarDeclaration *tmp = copyToTemp(0, "__withtmp", ws->exp);
+                    tmp->semantic(sc);
                     ExpStatement *es = new ExpStatement(ws->loc, tmp);
                     ws->exp = new VarExp(ws->loc, tmp);
                     Statement *ss = new ScopeStatement(ws->loc, new CompoundStatement(ws->loc, es, ws), ws->endloc);
@@ -3480,12 +3758,18 @@ public:
             }
 
             s->semantic(sc);
-            Module::addDeferredSemantic2(s);     // Bugzilla 14666
-            sc->insert(s);
-
-            for (size_t j = 0; j < s->aliasdecls.dim; j++)
+            // https://issues.dlang.org/show_bug.cgi?id=19942
+            // If the module that's being imported doesn't exist, don't add it to the symbol table
+            // for the current scope.
+            if (s->mod != NULL)
             {
-                sc->insert(s->aliasdecls[j]);
+                Module::addDeferredSemantic2(s);     // Bugzilla 14666
+                sc->insert(s);
+
+                for (size_t j = 0; j < s->aliasdecls.dim; j++)
+                {
+                    sc->insert(s->aliasdecls[j]);
+                }
             }
         }
         result = imps;
@@ -3606,4 +3890,21 @@ Statement *semanticScope(Statement *s, Scope *sc, Statement *sbreak, Statement *
     s = semanticNoScope(s, scd);
     scd->pop();
     return s;
+}
+
+/*******************
+ * See StatementSemanticVisitor.makeTupleForeach.  This is a simple
+ * wrapper that returns the generated statements/declarations.
+ */
+Statement *makeTupleForeachStatic(Scope *sc, ForeachStatement *fs, bool needExpansion)
+{
+    StatementSemanticVisitor v = StatementSemanticVisitor(sc);
+    v.makeTupleForeachStatic(fs, needExpansion);
+    return v.result;
+}
+
+Dsymbols *makeTupleForeachStaticDecl(Scope *sc, ForeachStatement *fs, Dsymbols *dbody, bool needExpansion)
+{
+    StatementSemanticVisitor v = StatementSemanticVisitor(sc);
+    return v.makeTupleForeachStaticDecl(fs, dbody, needExpansion);
 }

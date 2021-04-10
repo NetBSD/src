@@ -1,5 +1,5 @@
 /* Target hook definitions for common hooks.
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -48,20 +48,6 @@ DEFHOOKPOD
 (option_optimization_table,
  "",
  const struct default_options *, empty_optimization_table)
-
-DEFHOOK
-(option_default_params,
-"Set target-dependent default values for @option{--param} settings, using\
- calls to @code{set_default_param_value}.",
- void, (void),
- hook_void_void)
-
-DEFHOOK
-(option_validate_param,
-"Validate target-dependent value for @option{--param} settings, using\
- calls to @code{set_param_value}.",
- bool, (int, int),
- default_option_validate_param)
 
 /* The initial value of target_flags.  */
 DEFHOOKPOD
