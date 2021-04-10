@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -238,6 +238,18 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #endif /* C11 */
 
+#if defined __STDC_VERSION__ && __STDC_VERSION__ > 201710L
+/* Maximum finite positive value with MANT_DIG digits in the
+   significand taking their maximum value.  */
+#undef FLT_NORM_MAX
+#undef DBL_NORM_MAX
+#undef LDBL_NORM_MAX
+#define FLT_NORM_MAX	__FLT_NORM_MAX__
+#define DBL_NORM_MAX	__DBL_NORM_MAX__
+#define LDBL_NORM_MAX	__LDBL_NORM_MAX__
+
+#endif /* C2X */
+
 #ifdef __STDC_WANT_IEC_60559_BFP_EXT__
 /* Number of decimal digits for which conversions between decimal
    character strings and binary formats, in both directions, are
@@ -426,9 +438,13 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #endif /* __STDC_WANT_IEC_60559_TYPES_EXT__.  */
 
-#ifdef __STDC_WANT_DEC_FP__
-/* Draft Technical Report 24732, extension for decimal floating-point
-   arithmetic: Characteristic of decimal floating types <float.h>.  */
+#ifdef __DEC32_MANT_DIG__
+#if (defined __STDC_WANT_DEC_FP__ \
+     || defined __STDC_WANT_IEC_60559_DFP_EXT__ \
+     || (defined __STDC_VERSION__ && __STDC_VERSION__ > 201710L))
+/* C2X; formerly Technical Report 24732, extension for decimal
+   floating-point arithmetic: Characteristic of decimal floating types
+   <float.h>, and TS 18661-2.  */
 
 /* Number of base-FLT_RADIX digits in the significand, p.  */
 #undef DEC32_MANT_DIG
@@ -480,14 +496,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define DEC64_MIN	__DEC64_MIN__
 #define DEC128_MIN	__DEC128_MIN__
 
-/* Minimum subnormal positive floating-point number. */
-#undef DEC32_SUBNORMAL_MIN
-#undef DEC64_SUBNORMAL_MIN
-#undef DEC128_SUBNORMAL_MIN
-#define DEC32_SUBNORMAL_MIN       __DEC32_SUBNORMAL_MIN__
-#define DEC64_SUBNORMAL_MIN       __DEC64_SUBNORMAL_MIN__
-#define DEC128_SUBNORMAL_MIN      __DEC128_SUBNORMAL_MIN__
-
 /* The floating-point expression evaluation method.
          -1  indeterminate
          0  evaluate all operations and constants just to the range and
@@ -502,6 +510,33 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #undef DEC_EVAL_METHOD
 #define DEC_EVAL_METHOD	__DEC_EVAL_METHOD__
 
-#endif /* __STDC_WANT_DEC_FP__ */
+#endif /* __STDC_WANT_DEC_FP__ || __STDC_WANT_IEC_60559_DFP_EXT__ || C2X.  */
+
+#ifdef __STDC_WANT_DEC_FP__
+
+/* Minimum subnormal positive floating-point number. */
+#undef DEC32_SUBNORMAL_MIN
+#undef DEC64_SUBNORMAL_MIN
+#undef DEC128_SUBNORMAL_MIN
+#define DEC32_SUBNORMAL_MIN       __DEC32_SUBNORMAL_MIN__
+#define DEC64_SUBNORMAL_MIN       __DEC64_SUBNORMAL_MIN__
+#define DEC128_SUBNORMAL_MIN      __DEC128_SUBNORMAL_MIN__
+
+#endif /* __STDC_WANT_DEC_FP__.  */
+
+#if (defined __STDC_WANT_IEC_60559_DFP_EXT__ \
+     || (defined __STDC_VERSION__ && __STDC_VERSION__ > 201710L))
+
+/* Minimum subnormal positive floating-point number. */
+#undef DEC32_TRUE_MIN
+#undef DEC64_TRUE_MIN
+#undef DEC128_TRUE_MIN
+#define DEC32_TRUE_MIN       __DEC32_SUBNORMAL_MIN__
+#define DEC64_TRUE_MIN       __DEC64_SUBNORMAL_MIN__
+#define DEC128_TRUE_MIN      __DEC128_SUBNORMAL_MIN__
+
+#endif /* __STDC_WANT_IEC_60559_DFP_EXT__ || C2X.  */
+
+#endif /* __DEC32_MANT_DIG__ */
 
 #endif /* _FLOAT_H___ */
