@@ -1,6 +1,6 @@
 // The template and inlines for the -*- C++ -*- slice_array class.
 
-// Copyright (C) 1997-2019 Free Software Foundation, Inc.
+// Copyright (C) 1997-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -77,6 +77,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     size_t size() const;
     ///  Return array stride of slice.
     size_t stride() const;
+
+#if __cpp_impl_three_way_comparison >= 201907L
+    /// Equality comparison
+    friend bool operator==(const slice&, const slice&) = default;
+#endif
 
   private:
     size_t _M_off;                      // offset

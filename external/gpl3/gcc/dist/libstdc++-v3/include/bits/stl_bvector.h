@@ -1,6 +1,6 @@
 // vector<bool> specialization -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -182,45 +182,60 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       _M_offset = static_cast<unsigned int>(__n);
     }
 
-    bool
-    operator==(const _Bit_iterator_base& __i) const
-    { return _M_p == __i._M_p && _M_offset == __i._M_offset; }
+    friend _GLIBCXX20_CONSTEXPR bool
+    operator==(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    { return __x._M_p == __y._M_p && __x._M_offset == __y._M_offset; }
 
-    bool
-    operator<(const _Bit_iterator_base& __i) const
+#if __cpp_lib_three_way_comparison
+    friend constexpr strong_ordering
+    operator<=>(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    noexcept
     {
-      return _M_p < __i._M_p
-	    || (_M_p == __i._M_p && _M_offset < __i._M_offset);
+      if (const auto __cmp = __x._M_p <=> __y._M_p; __cmp != 0)
+	return __cmp;
+      return __x._M_offset <=> __y._M_offset;
+    }
+#else
+    friend bool
+    operator<(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    {
+      return __x._M_p < __y._M_p
+	    || (__x._M_p == __y._M_p && __x._M_offset < __y._M_offset);
     }
 
-    bool
-    operator!=(const _Bit_iterator_base& __i) const
-    { return !(*this == __i); }
+    friend bool
+    operator!=(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    { return !(__x == __y); }
 
-    bool
-    operator>(const _Bit_iterator_base& __i) const
-    { return __i < *this; }
+    friend bool
+    operator>(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    { return __y < __x; }
 
-    bool
-    operator<=(const _Bit_iterator_base& __i) const
-    { return !(__i < *this); }
+    friend bool
+    operator<=(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    { return !(__y < __x); }
 
-    bool
-    operator>=(const _Bit_iterator_base& __i) const
-    { return !(*this < __i); }
+    friend bool
+    operator>=(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    { return !(__x < __y); }
+#endif // three-way comparison
+
+    friend ptrdiff_t
+    operator-(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
+    {
+      return (int(_S_word_bit) * (__x._M_p - __y._M_p)
+	      + __x._M_offset - __y._M_offset);
+    }
   };
-
-  inline ptrdiff_t
-  operator-(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
-  {
-    return (int(_S_word_bit) * (__x._M_p - __y._M_p)
-	    + __x._M_offset - __y._M_offset);
-  }
 
   struct _Bit_iterator : public _Bit_iterator_base
   {
     typedef _Bit_reference  reference;
+#if __cplusplus > 201703L
+    typedef void	    pointer;
+#else
     typedef _Bit_reference* pointer;
+#endif
     typedef _Bit_iterator   iterator;
 
     _Bit_iterator() : _Bit_iterator_base(0, 0) { }
@@ -280,34 +295,40 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       return *this;
     }
 
-    iterator
-    operator+(difference_type __i) const
-    {
-      iterator __tmp = *this;
-      return __tmp += __i;
-    }
-
-    iterator
-    operator-(difference_type __i) const
-    {
-      iterator __tmp = *this;
-      return __tmp -= __i;
-    }
-
     reference
     operator[](difference_type __i) const
     { return *(*this + __i); }
-  };
 
-  inline _Bit_iterator
-  operator+(ptrdiff_t __n, const _Bit_iterator& __x)
-  { return __x + __n; }
+    friend iterator
+    operator+(const iterator& __x, difference_type __n)
+    {
+      iterator __tmp = __x;
+      __tmp += __n;
+      return __tmp;
+    }
+
+    friend iterator
+    operator+(difference_type __n, const iterator& __x)
+    { return __x + __n; }
+
+    friend iterator
+    operator-(const iterator& __x, difference_type __n)
+    {
+      iterator __tmp = __x;
+      __tmp -= __n;
+      return __tmp;
+    }
+  };
 
   struct _Bit_const_iterator : public _Bit_iterator_base
   {
     typedef bool                 reference;
     typedef bool                 const_reference;
+#if __cplusplus > 201703L
+    typedef void	    pointer;
+#else
     typedef const bool*          pointer;
+#endif
     typedef _Bit_const_iterator  const_iterator;
 
     _Bit_const_iterator() : _Bit_iterator_base(0, 0) { }
@@ -370,28 +391,30 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       return *this;
     }
 
-    const_iterator
-    operator+(difference_type __i) const
-    {
-      const_iterator __tmp = *this;
-      return __tmp += __i;
-    }
-
-    const_iterator
-    operator-(difference_type __i) const
-    {
-      const_iterator __tmp = *this;
-      return __tmp -= __i;
-    }
-
     const_reference
     operator[](difference_type __i) const
     { return *(*this + __i); }
-  };
 
-  inline _Bit_const_iterator
-  operator+(ptrdiff_t __n, const _Bit_const_iterator& __x)
-  { return __x + __n; }
+    friend const_iterator
+    operator+(const const_iterator& __x, difference_type __n)
+    {
+      const_iterator __tmp = __x;
+      __tmp += __n;
+      return __tmp;
+    }
+
+    friend const_iterator
+    operator-(const const_iterator& __x, difference_type __n)
+    {
+      const_iterator __tmp = __x;
+      __tmp -= __n;
+      return __tmp;
+    }
+
+    friend const_iterator
+    operator+(difference_type __n, const const_iterator& __x)
+    { return __x + __n; }
+  };
 
   inline void
   __fill_bvector(_Bit_type * __v,
@@ -878,7 +901,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       { return size_type(const_iterator(this->_M_impl._M_end_addr(), 0)
 			 - begin()); }
 
-      bool
+      _GLIBCXX_NODISCARD bool
       empty() const _GLIBCXX_NOEXCEPT
       { return begin() == end(); }
 

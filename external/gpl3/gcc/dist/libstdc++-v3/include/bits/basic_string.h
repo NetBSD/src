@@ -1,6 +1,6 @@
 // Components for manipulating sequences of characters -*- C++ -*-
 
-// Copyright (C) 1997-2019 Free Software Foundation, Inc.
+// Copyright (C) 1997-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -664,35 +664,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
       basic_string&
       operator=(const basic_string& __str)
       {
-#if __cplusplus >= 201103L
-	if (_Alloc_traits::_S_propagate_on_copy_assign())
-	  {
-	    if (!_Alloc_traits::_S_always_equal() && !_M_is_local()
-		&& _M_get_allocator() != __str._M_get_allocator())
-	      {
-		// Propagating allocator cannot free existing storage so must
-		// deallocate it before replacing current allocator.
-		if (__str.size() <= _S_local_capacity)
-		  {
-		    _M_destroy(_M_allocated_capacity);
-		    _M_data(_M_local_data());
-		    _M_set_length(0);
-		  }
-		else
-		  {
-		    const auto __len = __str.size();
-		    auto __alloc = __str._M_get_allocator();
-		    // If this allocation throws there are no effects:
-		    auto __ptr = _Alloc_traits::allocate(__alloc, __len + 1);
-		    _M_destroy(_M_allocated_capacity);
-		    _M_data(__ptr);
-		    _M_capacity(__len);
-		    _M_set_length(__len);
-		  }
-	      }
-	    std::__alloc_on_copy(_M_get_allocator(), __str._M_get_allocator());
-	  }
-#endif
 	return this->assign(__str);
       }
 
@@ -1363,6 +1334,35 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
       basic_string&
       assign(const basic_string& __str)
       {
+#if __cplusplus >= 201103L
+	if (_Alloc_traits::_S_propagate_on_copy_assign())
+	  {
+	    if (!_Alloc_traits::_S_always_equal() && !_M_is_local()
+		&& _M_get_allocator() != __str._M_get_allocator())
+	      {
+		// Propagating allocator cannot free existing storage so must
+		// deallocate it before replacing current allocator.
+		if (__str.size() <= _S_local_capacity)
+		  {
+		    _M_destroy(_M_allocated_capacity);
+		    _M_data(_M_local_data());
+		    _M_set_length(0);
+		  }
+		else
+		  {
+		    const auto __len = __str.size();
+		    auto __alloc = __str._M_get_allocator();
+		    // If this allocation throws there are no effects:
+		    auto __ptr = _Alloc_traits::allocate(__alloc, __len + 1);
+		    _M_destroy(_M_allocated_capacity);
+		    _M_data(__ptr);
+		    _M_capacity(__len);
+		    _M_set_length(__len);
+		  }
+	      }
+	    std::__alloc_on_copy(_M_get_allocator(), __str._M_get_allocator());
+	  }
+#endif
 	this->_M_assign(__str);
 	return *this;
       }
@@ -1625,7 +1625,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert value of a string.
-       *  @param __pos1  Iterator referencing location in string to insert at.
+       *  @param __pos1 Position in string to insert at.
        *  @param __str  The string to insert.
        *  @return  Reference to this string.
        *  @throw  std::length_error  If new length exceeds @c max_size().
@@ -1642,8 +1642,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a substring.
-       *  @param __pos1  Iterator referencing location in string to insert at.
-       *  @param __str  The string to insert.
+       *  @param __pos1  Position in string to insert at.
+       *  @param __str   The string to insert.
        *  @param __pos2  Start of characters in str to insert.
        *  @param __n  Number of characters to insert.
        *  @return  Reference to this string.
@@ -1667,7 +1667,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a C substring.
-       *  @param __pos  Iterator referencing location in string to insert at.
+       *  @param __pos  Position in string to insert at.
        *  @param __s  The C string to insert.
        *  @param __n  The number of characters to insert.
        *  @return  Reference to this string.
@@ -1687,7 +1687,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a C string.
-       *  @param __pos  Iterator referencing location in string to insert at.
+       *  @param __pos  Position in string to insert at.
        *  @param __s  The C string to insert.
        *  @return  Reference to this string.
        *  @throw  std::length_error  If new length exceeds @c max_size().
@@ -1754,7 +1754,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 #if __cplusplus >= 201703L
       /**
        *  @brief  Insert a string_view.
-       *  @param __pos  Iterator referencing position in string to insert at.
+       *  @param __pos  Position in string to insert at.
        *  @param __svt  The object convertible to string_view to insert.
        *  @return  Reference to this string.
       */
@@ -1768,10 +1768,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a string_view.
-       *  @param __pos  Iterator referencing position in string to insert at.
-       *  @param __svt  The object convertible to string_view to insert from.
-       *  @param __pos  Iterator referencing position in string_view to insert
-       *  from.
+       *  @param __pos1  Position in string to insert at.
+       *  @param __svt   The object convertible to string_view to insert from.
+       *  @param __pos2  Start of characters in str to insert.
        *  @param __n    The number of characters to insert.
        *  @return  Reference to this string.
       */
@@ -3139,15 +3138,17 @@ _GLIBCXX_END_NAMESPACE_CXX11
   template<typename _CharT, typename _Traits, typename _Alloc>
     class basic_string
     {
-      typedef typename _Alloc::template rebind<_CharT>::other _CharT_alloc_type;
+      typedef typename __gnu_cxx::__alloc_traits<_Alloc>::template
+	rebind<_CharT>::other _CharT_alloc_type;
+      typedef __gnu_cxx::__alloc_traits<_CharT_alloc_type> _CharT_alloc_traits;
 
       // Types:
     public:
       typedef _Traits					    traits_type;
       typedef typename _Traits::char_type		    value_type;
       typedef _Alloc					    allocator_type;
-      typedef typename _CharT_alloc_type::size_type	    size_type;
-      typedef typename _CharT_alloc_type::difference_type   difference_type;
+      typedef typename _CharT_alloc_traits::size_type	    size_type;
+      typedef typename _CharT_alloc_traits::difference_type difference_type;
 #if __cplusplus < 201103L
       typedef typename _CharT_alloc_type::reference	    reference;
       typedef typename _CharT_alloc_type::const_reference   const_reference;
@@ -3155,8 +3156,8 @@ _GLIBCXX_END_NAMESPACE_CXX11
       typedef value_type&				    reference;
       typedef const value_type&				    const_reference;
 #endif
-      typedef typename _CharT_alloc_type::pointer	    pointer;
-      typedef typename _CharT_alloc_type::const_pointer	    const_pointer;
+      typedef typename _CharT_alloc_traits::pointer	    pointer;
+      typedef typename _CharT_alloc_traits::const_pointer   const_pointer;
       typedef __gnu_cxx::__normal_iterator<pointer, basic_string>  iterator;
       typedef __gnu_cxx::__normal_iterator<const_pointer, basic_string>
                                                             const_iterator;
@@ -3192,7 +3193,8 @@ _GLIBCXX_END_NAMESPACE_CXX11
       struct _Rep : _Rep_base
       {
 	// Types:
-	typedef typename _Alloc::template rebind<char>::other _Raw_bytes_alloc;
+	typedef typename __gnu_cxx::__alloc_traits<_Alloc>::template
+	  rebind<char>::other _Raw_bytes_alloc;
 
 	// (Public) Data members:
 
@@ -3603,12 +3605,22 @@ _GLIBCXX_END_NAMESPACE_CXX11
        */
       basic_string(const _CharT* __s, size_type __n,
 		   const _Alloc& __a = _Alloc());
+
       /**
        *  @brief  Construct string as copy of a C string.
        *  @param  __s  Source C string.
        *  @param  __a  Allocator to use (default is default allocator).
        */
-      basic_string(const _CharT* __s, const _Alloc& __a = _Alloc());
+#if __cpp_deduction_guides && ! defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 3076. basic_string CTAD ambiguity
+      template<typename = _RequireAllocator<_Alloc>>
+#endif
+      basic_string(const _CharT* __s, const _Alloc& __a = _Alloc())
+      : _M_dataplus(_S_construct(__s, __s ? __s + traits_type::length(__s) :
+                                 __s + npos, __a), __a)
+      { }
+
       /**
        *  @brief  Construct string as multiple characters.
        *  @param  __n  Number of characters.
@@ -4519,7 +4531,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert value of a string.
-       *  @param __pos1  Iterator referencing location in string to insert at.
+       *  @param __pos1  Position in string to insert at.
        *  @param __str  The string to insert.
        *  @return  Reference to this string.
        *  @throw  std::length_error  If new length exceeds @c max_size().
@@ -4535,7 +4547,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a substring.
-       *  @param __pos1  Iterator referencing location in string to insert at.
+       *  @param __pos1  Position in string to insert at.
        *  @param __str  The string to insert.
        *  @param __pos2  Start of characters in str to insert.
        *  @param __n  Number of characters to insert.
@@ -4560,7 +4572,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a C substring.
-       *  @param __pos  Iterator referencing location in string to insert at.
+       *  @param __pos  Position in string to insert at.
        *  @param __s  The C string to insert.
        *  @param __n  The number of characters to insert.
        *  @return  Reference to this string.
@@ -4579,7 +4591,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a C string.
-       *  @param __pos  Iterator referencing location in string to insert at.
+       *  @param __pos  Position in string to insert at.
        *  @param __s  The C string to insert.
        *  @return  Reference to this string.
        *  @throw  std::length_error  If new length exceeds @c max_size().
@@ -4646,7 +4658,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
 #if __cplusplus >= 201703L
       /**
        *  @brief  Insert a string_view.
-       *  @param __pos  Iterator referencing position in string to insert at.
+       *  @param __pos  Position in string to insert at.
        *  @param __svt  The object convertible to string_view to insert.
        *  @return  Reference to this string.
       */
@@ -4660,9 +4672,9 @@ _GLIBCXX_END_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a string_view.
-       *  @param __pos  Iterator referencing position in string to insert at.
+       *  @param __pos  Position in string to insert at.
        *  @param __svt  The object convertible to string_view to insert from.
-       *  @param __pos  Iterator referencing position in string_view to insert
+       *  @param __pos  Position in string_view to insert
        *  from.
        *  @param __n    The number of characters to insert.
        *  @return  Reference to this string.
@@ -6097,11 +6109,21 @@ _GLIBCXX_END_NAMESPACE_CXX11
     operator+(basic_string<_CharT, _Traits, _Alloc>&& __lhs,
 	      basic_string<_CharT, _Traits, _Alloc>&& __rhs)
     {
-      const auto __size = __lhs.size() + __rhs.size();
-      const bool __cond = (__size > __lhs.capacity()
-			   && __size <= __rhs.capacity());
-      return __cond ? std::move(__rhs.insert(0, __lhs))
-	            : std::move(__lhs.append(__rhs));
+#if _GLIBCXX_USE_CXX11_ABI
+      using _Alloc_traits = allocator_traits<_Alloc>;
+      bool __use_rhs = false;
+      if _GLIBCXX17_CONSTEXPR (typename _Alloc_traits::is_always_equal{})
+	__use_rhs = true;
+      else if (__lhs.get_allocator() == __rhs.get_allocator())
+	__use_rhs = true;
+      if (__use_rhs)
+#endif
+	{
+	  const auto __size = __lhs.size() + __rhs.size();
+	  if (__size > __lhs.capacity() && __size <= __rhs.capacity())
+	    return std::move(__rhs.insert(0, __lhs));
+	}
+      return std::move(__lhs.append(__rhs));
     }
 
   template<typename _CharT, typename _Traits, typename _Alloc>
@@ -6153,18 +6175,6 @@ _GLIBCXX_END_NAMESPACE_CXX11
 						    __lhs.size())); }
 
   /**
-   *  @brief  Test equivalence of C string and string.
-   *  @param __lhs  C string.
-   *  @param __rhs  String.
-   *  @return  True if @a __rhs.compare(@a __lhs) == 0.  False otherwise.
-   */
-  template<typename _CharT, typename _Traits, typename _Alloc>
-    inline bool
-    operator==(const _CharT* __lhs,
-	       const basic_string<_CharT, _Traits, _Alloc>& __rhs)
-    { return __rhs.compare(__lhs) == 0; }
-
-  /**
    *  @brief  Test equivalence of string and C string.
    *  @param __lhs  String.
    *  @param __rhs  C string.
@@ -6175,6 +6185,47 @@ _GLIBCXX_END_NAMESPACE_CXX11
     operator==(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
 	       const _CharT* __rhs)
     { return __lhs.compare(__rhs) == 0; }
+
+#if __cpp_lib_three_way_comparison
+  /**
+   *  @brief  Three-way comparison of a string and a C string.
+   *  @param __lhs  A string.
+   *  @param __rhs  A null-terminated string.
+   *  @return  A value indicating whether `__lhs` is less than, equal to,
+   *	       greater than, or incomparable with `__rhs`.
+   */
+  template<typename _CharT, typename _Traits, typename _Alloc>
+    inline auto
+    operator<=>(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+		const basic_string<_CharT, _Traits, _Alloc>& __rhs) noexcept
+    -> decltype(__detail::__char_traits_cmp_cat<_Traits>(0))
+    { return __detail::__char_traits_cmp_cat<_Traits>(__lhs.compare(__rhs)); }
+
+  /**
+   *  @brief  Three-way comparison of a string and a C string.
+   *  @param __lhs  A string.
+   *  @param __rhs  A null-terminated string.
+   *  @return  A value indicating whether `__lhs` is less than, equal to,
+   *	       greater than, or incomparable with `__rhs`.
+   */
+  template<typename _CharT, typename _Traits, typename _Alloc>
+    inline auto
+    operator<=>(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+		const _CharT* __rhs) noexcept
+    -> decltype(__detail::__char_traits_cmp_cat<_Traits>(0))
+    { return __detail::__char_traits_cmp_cat<_Traits>(__lhs.compare(__rhs)); }
+#else
+  /**
+   *  @brief  Test equivalence of C string and string.
+   *  @param __lhs  C string.
+   *  @param __rhs  String.
+   *  @return  True if @a __rhs.compare(@a __lhs) == 0.  False otherwise.
+   */
+  template<typename _CharT, typename _Traits, typename _Alloc>
+    inline bool
+    operator==(const _CharT* __lhs,
+	       const basic_string<_CharT, _Traits, _Alloc>& __rhs)
+    { return __rhs.compare(__lhs) == 0; }
 
   // operator !=
   /**
@@ -6365,6 +6416,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
     operator>=(const _CharT* __lhs,
 	     const basic_string<_CharT, _Traits, _Alloc>& __rhs)
     { return __rhs.compare(__lhs) <= 0; }
+#endif // three-way comparison
 
   /**
    *  @brief  Swap contents of two strings.
@@ -6491,6 +6543,7 @@ _GLIBCXX_END_NAMESPACE_VERSION
 #if __cplusplus >= 201103L
 
 #include <ext/string_conversions.h>
+#include <bits/charconv.h>
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -6538,43 +6591,68 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
   { return __gnu_cxx::__stoa(&std::strtold, "stold", __str.c_str(), __idx); }
 #endif // _GLIBCXX_USE_C99_STDLIB
 
-#if _GLIBCXX_USE_C99_STDIO
-  // NB: (v)snprintf vs sprintf.
+  // DR 1261. Insufficent overloads for to_string / to_wstring
 
-  // DR 1261.
   inline string
   to_string(int __val)
-  { return __gnu_cxx::__to_xstring<string>(&std::vsnprintf, 4 * sizeof(int),
-					   "%d", __val); }
+  {
+    const bool __neg = __val < 0;
+    const unsigned __uval = __neg ? (unsigned)~__val + 1u : __val;
+    const auto __len = __detail::__to_chars_len(__uval);
+    string __str(__neg + __len, '-');
+    __detail::__to_chars_10_impl(&__str[__neg], __len, __uval);
+    return __str;
+  }
 
   inline string
   to_string(unsigned __val)
-  { return __gnu_cxx::__to_xstring<string>(&std::vsnprintf,
-					   4 * sizeof(unsigned),
-					   "%u", __val); }
+  {
+    string __str(__detail::__to_chars_len(__val), '\0');
+    __detail::__to_chars_10_impl(&__str[0], __str.size(), __val);
+    return __str;
+  }
 
   inline string
   to_string(long __val)
-  { return __gnu_cxx::__to_xstring<string>(&std::vsnprintf, 4 * sizeof(long),
-					   "%ld", __val); }
+  {
+    const bool __neg = __val < 0;
+    const unsigned long __uval = __neg ? (unsigned long)~__val + 1ul : __val;
+    const auto __len = __detail::__to_chars_len(__uval);
+    string __str(__neg + __len, '-');
+    __detail::__to_chars_10_impl(&__str[__neg], __len, __uval);
+    return __str;
+  }
 
   inline string
   to_string(unsigned long __val)
-  { return __gnu_cxx::__to_xstring<string>(&std::vsnprintf,
-					   4 * sizeof(unsigned long),
-					   "%lu", __val); }
+  {
+    string __str(__detail::__to_chars_len(__val), '\0');
+    __detail::__to_chars_10_impl(&__str[0], __str.size(), __val);
+    return __str;
+  }
 
   inline string
   to_string(long long __val)
-  { return __gnu_cxx::__to_xstring<string>(&std::vsnprintf,
-					   4 * sizeof(long long),
-					   "%lld", __val); }
+  {
+    const bool __neg = __val < 0;
+    const unsigned long long __uval
+      = __neg ? (unsigned long long)~__val + 1ull : __val;
+    const auto __len = __detail::__to_chars_len(__uval);
+    string __str(__neg + __len, '-');
+    __detail::__to_chars_10_impl(&__str[__neg], __len, __uval);
+    return __str;
+  }
 
   inline string
   to_string(unsigned long long __val)
-  { return __gnu_cxx::__to_xstring<string>(&std::vsnprintf,
-					   4 * sizeof(unsigned long long),
-					   "%llu", __val); }
+  {
+    string __str(__detail::__to_chars_len(__val), '\0');
+    __detail::__to_chars_10_impl(&__str[0], __str.size(), __val);
+    return __str;
+  }
+
+#if _GLIBCXX_USE_C99_STDIO
+  // NB: (v)snprintf vs sprintf.
 
   inline string
   to_string(float __val)

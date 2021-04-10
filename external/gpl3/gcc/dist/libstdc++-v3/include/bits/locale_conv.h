@@ -1,6 +1,6 @@
 // wstring_convert implementation -*- C++ -*-
 
-// Copyright (C) 2015-2019 Free Software Foundation, Inc.
+// Copyright (C) 2015-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -78,7 +78,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __outchars = __outnext - &__outstr.front();
 	}
       while (__result == codecvt_base::partial && __next != __last
-	     && (__outstr.size() - __outchars) < __maxlen);
+	     && ptrdiff_t(__outstr.size() - __outchars) < __maxlen);
 
       if (__result == codecvt_base::error)
 	{
@@ -142,7 +142,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _State __state = {};
       size_t __n;
       return __str_codecvt_in(__first, __last, __outstr, __cvt, __state, __n)
-	&& (__n == (__last - __first));
+	&& (__n == size_t(__last - __first));
     }
 
   // Convert wide character string to narrow.
@@ -185,7 +185,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _State __state = {};
       size_t __n;
       return __str_codecvt_out(__first, __last, __outstr, __cvt, __state, __n)
-	&& (__n == (__last - __first));
+	&& (__n == size_t(__last - __first));
     }
 
 #ifdef _GLIBCXX_USE_CHAR8_T
