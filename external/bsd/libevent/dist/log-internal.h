@@ -1,4 +1,4 @@
-/*	$NetBSD: log-internal.h,v 1.6 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: log-internal.h,v 1.7 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -84,7 +84,7 @@ void event_logv_(int severity, const char *errstr, const char *fmt, va_list ap)
 	}					\
 	} while (0)
 #else
-#define event_debug(x) do {;} while (/*CONSTCOND*/0)
+#define event_debug(x) do {;} while (0)
 #endif
 
 #undef EV_CHECK_FMT

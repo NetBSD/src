@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread-internal.h,v 1.5 2021/04/10 19:02:37 rillig Exp $	*/
+/*	$NetBSD: evthread-internal.h,v 1.6 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
@@ -384,7 +384,7 @@ void *evthread_setup_global_lock_(void *lock_, unsigned locktype,
 			event_warn("Couldn't allocate %s", #lockvar);	\
 			return -1;					\
 		}							\
-	} while (/*CONSTCOND*/0);
+	} while (0);
 
 int event_global_setup_locks_(const int enable_locks);
 int evsig_global_setup_locks_(const int enable_locks);

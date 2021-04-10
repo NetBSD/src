@@ -1,4 +1,4 @@
-/*	$NetBSD: tinytest_macros.h,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: tinytest_macros.h,v 1.6 2021/04/10 19:18:45 rillig Exp $	*/
 
 /* tinytest_macros.h -- Copyright 2009-2012 Nick Mathewson
  *
@@ -30,7 +30,7 @@
 
 /* Helpers for defining statement-like macros */
 #define TT_STMT_BEGIN do {
-#define TT_STMT_END } while (/*CONSTCOND*/0)
+#define TT_STMT_END } while (0)
 
 /* Redefine this if your test functions want to abort with something besides
  * "goto end;" */

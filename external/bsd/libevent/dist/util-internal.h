@@ -1,4 +1,4 @@
-/*	$NetBSD: util-internal.h,v 1.6 2021/04/10 19:02:37 rillig Exp $	*/
+/*	$NetBSD: util-internal.h,v 1.7 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -97,7 +97,7 @@ extern "C" {
  */
 #define EVUTIL_NIL_CONDITION_(condition) do { \
 	(void)sizeof(!(condition));  \
-} while(/*CONSTCOND*/0)
+} while(0)
 
 /* Internal use only: macros to match patterns of error codes in a
    cross-platform way.  We need these macros because of two historical

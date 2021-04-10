@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.8 2021/04/10 19:02:37 rillig Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.9 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_http.c,v 1.8 2021/04/10 19:02:37 rillig Exp $");
+__RCSID("$NetBSD: regress_http.c,v 1.9 2021/04/10 19:18:45 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2541,7 +2541,7 @@ http_parse_uri_test(void *ptr)
 	tt_want(ret == url_tmp);					\
 	if (strcmp(ret,want) != 0)					\
 		TT_FAIL(("\"%s\" != \"%s\"",ret,want));			\
-	} while(/*CONSTCOND*/0)
+	} while(0)
 
 	tt_want(evhttp_uri_join(NULL, 0, 0) == NULL);
 	tt_want(evhttp_uri_join(NULL, url_tmp, 0) == NULL);
@@ -2551,7 +2551,7 @@ http_parse_uri_test(void *ptr)
 #define BAD(s) do {							\
 		if (URI_PARSE(s) != NULL)				\
 			TT_FAIL(("Expected error parsing \"%s\"",s));	\
-	} while(/*CONSTCOND*/0)
+	} while(0)
 	/* Nonconformant URIs we can parse: parsing */
 #define NCF(s) do {							\
 		uri = URI_PARSE(s);					\
@@ -2566,7 +2566,7 @@ http_parse_uri_test(void *ptr)
 				sizeof(url_tmp)));			\
 			evhttp_uri_free(uri);				\
 		}							\
-	} while(/*CONSTCOND*/0)
+	} while(0)
 
 	NCF("http://www.test.com/ why hello");
 	NCF("http://www.test.com/why-hello\x01");

@@ -1,4 +1,4 @@
-/*	$NetBSD: evdns.c,v 1.6 2021/04/10 19:02:37 rillig Exp $	*/
+/*	$NetBSD: evdns.c,v 1.7 2021/04/10 19:18:45 rillig Exp $	*/
 
 /* Copyright 2006-2007 Niels Provos
  * Copyright 2007-2012 Nick Mathewson and Niels Provos
@@ -52,7 +52,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evdns.c,v 1.6 2021/04/10 19:02:37 rillig Exp $");
+__RCSID("$NetBSD: evdns.c,v 1.7 2021/04/10 19:18:45 rillig Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -982,9 +982,9 @@ name_parse(u8 *packet, int length, int *idx, char *name_out, int name_out_len) {
 	int name_end = -1;
 	int j = *idx;
 	int ptr_count = 0;
-#define GET32(x) do { if (j + 4 > length) goto err; memcpy(&t32_, packet + j, 4); j += 4; x = ntohl(t32_); } while (/*CONSTCOND*/0)
-#define GET16(x) do { if (j + 2 > length) goto err; memcpy(&t_, packet + j, 2); j += 2; x = ntohs(t_); } while (/*CONSTCOND*/0)
-#define GET8(x) do { if (j >= length) goto err; x = packet[j++]; } while (/*CONSTCOND*/0)
+#define GET32(x) do { if (j + 4 > length) goto err; memcpy(&t32_, packet + j, 4); j += 4; x = ntohl(t32_); } while (0)
+#define GET16(x) do { if (j + 2 > length) goto err; memcpy(&t_, packet + j, 2); j += 2; x = ntohs(t_); } while (0)
+#define GET8(x) do { if (j >= length) goto err; x = packet[j++]; } while (0)
 
 	char *cp = name_out;
 	const char *const end = name_out + name_out_len;
