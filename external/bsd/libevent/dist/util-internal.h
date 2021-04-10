@@ -1,4 +1,4 @@
-/*	$NetBSD: util-internal.h,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: util-internal.h,v 1.6 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -375,7 +375,7 @@ ev_int32_t evutil_weakrand_range_(struct evutil_weakrand_state *seed, ev_int32_t
 			    __FILE__,__LINE__,#cond,__func__);		\
 			abort();					\
 		}							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define EVUTIL_FAILURE_CHECK(cond) EVUTIL_UNLIKELY(cond)
 #endif
 

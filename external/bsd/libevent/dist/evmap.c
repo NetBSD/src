@@ -1,4 +1,4 @@
-/*	$NetBSD: evmap.c,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: evmap.c,v 1.5 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +27,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evmap.c,v 1.4 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: evmap.c,v 1.5 2021/04/10 19:02:37 rillig Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -141,7 +141,7 @@ HT_GENERATE(event_io_map, event_map_entry, map_node, hashsocket, eqsocket,
 			    HT_FOI_INSERT_(map_node, map, &key_, ent_, ptr) \
 				});					\
 		(x) = &ent_->ent.type;					\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 void evmap_io_initmap_(struct event_io_map *ctx)
 {
@@ -180,7 +180,7 @@ void evmap_io_clear_(struct event_io_map *ctx)
 			(ctor)((struct type *)(map)->entries[slot]);	\
 		}							\
 		(x) = (struct type *)((map)->entries[slot]);		\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /* If we aren't using hashtables, then define the IO_SLOT macros and functions
    as thin aliases over the SIGNAL_SLOT versions. */

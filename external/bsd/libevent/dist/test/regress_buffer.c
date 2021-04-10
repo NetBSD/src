@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_buffer.c,v 1.7 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: regress_buffer.c,v 1.8 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_buffer.c,v 1.7 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: regress_buffer.c,v 1.8 2021/04/10 19:02:37 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2567,7 +2567,7 @@ test_evbuffer_freeze(void *ptr)
 	    } else {					\
 		    tt_int_op((a), ==, (endcase));	\
 	    }						\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 
 	orig_length = evbuffer_get_length(buf);

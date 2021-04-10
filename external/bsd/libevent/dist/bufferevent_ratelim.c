@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_ratelim.c,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: bufferevent_ratelim.c,v 1.5 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -484,7 +484,7 @@ bev_group_random_element_(struct bufferevent_rate_limit_group *group)
 		    bev = LIST_NEXT(bev, rate_limiting->next_in_group)) { \
 			block ;						\
 		}							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 static void
 bev_group_unsuspend_reading_(struct bufferevent_rate_limit_group *g)
