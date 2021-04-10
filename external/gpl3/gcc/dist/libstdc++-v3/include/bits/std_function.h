@@ -1,6 +1,6 @@
 // Implementation of std::function -*- C++ -*-
 
-// Copyright (C) 2004-2019 Free Software Foundation, Inc.
+// Copyright (C) 2004-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -108,21 +108,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     __clone_functor,
     __destroy_functor
   };
-
-  // Simple type wrapper that helps avoid annoying const problems
-  // when casting between void pointers and pointers-to-pointers.
-  template<typename _Tp>
-    struct _Simple_type_wrapper
-    {
-      _Simple_type_wrapper(_Tp __value) : __value(__value) { }
-
-      _Tp __value;
-    };
-
-  template<typename _Tp>
-    struct __is_location_invariant<_Simple_type_wrapper<_Tp> >
-    : __is_location_invariant<_Tp>
-    { };
 
   template<typename _Signature>
     class function;
@@ -279,56 +264,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef _Function_base::_Base_manager<_Functor> _Base;
 
     public:
-      static _Res
-      _M_invoke(const _Any_data& __functor, _ArgTypes&&... __args)
-      {
-	return (*_Base::_M_get_pointer(__functor))(
-	    std::forward<_ArgTypes>(__args)...);
-      }
-    };
-
-  template<typename _Functor, typename... _ArgTypes>
-    class _Function_handler<void(_ArgTypes...), _Functor>
-    : public _Function_base::_Base_manager<_Functor>
-    {
-      typedef _Function_base::_Base_manager<_Functor> _Base;
-
-     public:
-      static void
-      _M_invoke(const _Any_data& __functor, _ArgTypes&&... __args)
-      {
-	(*_Base::_M_get_pointer(__functor))(
-	    std::forward<_ArgTypes>(__args)...);
-      }
-    };
-
-  template<typename _Class, typename _Member, typename _Res,
-	   typename... _ArgTypes>
-    class _Function_handler<_Res(_ArgTypes...), _Member _Class::*>
-    : public _Function_handler<void(_ArgTypes...), _Member _Class::*>
-    {
-      typedef _Function_handler<void(_ArgTypes...), _Member _Class::*>
-	_Base;
-
-     public:
-      static _Res
-      _M_invoke(const _Any_data& __functor, _ArgTypes&&... __args)
-      {
-	return std::__invoke(_Base::_M_get_pointer(__functor)->__value,
-			     std::forward<_ArgTypes>(__args)...);
-      }
-    };
-
-  template<typename _Class, typename _Member, typename... _ArgTypes>
-    class _Function_handler<void(_ArgTypes...), _Member _Class::*>
-    : public _Function_base::_Base_manager<
-		 _Simple_type_wrapper< _Member _Class::* > >
-    {
-      typedef _Member _Class::* _Functor;
-      typedef _Simple_type_wrapper<_Functor> _Wrapper;
-      typedef _Function_base::_Base_manager<_Wrapper> _Base;
-
-    public:
       static bool
       _M_manager(_Any_data& __dest, const _Any_data& __source,
 		 _Manager_operation __op)
@@ -341,8 +276,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    break;
 #endif
 	  case __get_functor_ptr:
-	    __dest._M_access<_Functor*>() =
-	      &_Base::_M_get_pointer(__source)->__value;
+	    __dest._M_access<_Functor*>() = _Base::_M_get_pointer(__source);
 	    break;
 
 	  default:
@@ -351,11 +285,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return false;
       }
 
-      static void
+      static _Res
       _M_invoke(const _Any_data& __functor, _ArgTypes&&... __args)
       {
-	std::__invoke(_Base::_M_get_pointer(__functor)->__value,
-		      std::forward<_ArgTypes>(__args)...);
+	return std::__invoke_r<_Res>(*_Base::_M_get_pointer(__functor),
+				     std::forward<_ArgTypes>(__args)...);
       }
     };
 
@@ -746,6 +680,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator==(const function<_Res(_Args...)>& __f, nullptr_t) noexcept
     { return !static_cast<bool>(__f); }
 
+#if __cpp_impl_three_way_comparison < 201907L
   /// @overload
   template<typename _Res, typename... _Args>
     inline bool
@@ -769,7 +704,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline bool
     operator!=(nullptr_t, const function<_Res(_Args...)>& __f) noexcept
     { return static_cast<bool>(__f); }
-
+#endif
 
   // [20.7.15.2.7] specialized algorithms
 

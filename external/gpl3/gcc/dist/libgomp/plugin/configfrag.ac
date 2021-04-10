@@ -1,6 +1,6 @@
 # Plugins for offload execution, configure.ac fragment.  -*- mode: autoconf -*-
 #
-# Copyright (C) 2014-2019 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Contributed by Mentor Embedded.
 #
@@ -137,6 +137,15 @@ AC_SUBST(PLUGIN_HSA_CPPFLAGS)
 AC_SUBST(PLUGIN_HSA_LDFLAGS)
 AC_SUBST(PLUGIN_HSA_LIBS)
 
+PLUGIN_GCN=0
+PLUGIN_GCN_CPPFLAGS=
+PLUGIN_GCN_LDFLAGS=
+PLUGIN_GCN_LIBS=
+AC_SUBST(PLUGIN_GCN)
+AC_SUBST(PLUGIN_GCN_CPPFLAGS)
+AC_SUBST(PLUGIN_GCN_LDFLAGS)
+AC_SUBST(PLUGIN_GCN_LIBS)
+
 # Parse '--enable-offload-targets', figure out the corresponding libgomp
 # plugins, and configure to find the corresponding offload compilers.
 # 'offload_plugins' and 'offload_targets' will be populated in the same order.
@@ -158,51 +167,68 @@ if test x"$enable_offload_targets" != x; then
 	tgt_plugin=intelmic
 	;;
       nvptx*)
-	tgt_plugin=nvptx
-	PLUGIN_NVPTX=$tgt
-	if test "x$CUDA_DRIVER_LIB" != xno \
-	   && test "x$CUDA_DRIVER_LIB" != xno; then
-	  PLUGIN_NVPTX_CPPFLAGS=$CUDA_DRIVER_CPPFLAGS
-	  PLUGIN_NVPTX_LDFLAGS=$CUDA_DRIVER_LDFLAGS
-	  PLUGIN_NVPTX_LIBS='-lcuda'
+	case "${target}" in
+	  aarch64*-*-* | powerpc64le-*-* | x86_64-*-*)
+	    case " ${CC} ${CFLAGS} " in
+	      *" -m32 "* | *" -mx32 "*)
+		# PR libgomp/65099: Currently, we only support offloading in
+		# 64-bit configurations.
+		PLUGIN_NVPTX=0
+		;;
+	      *)
+		tgt_plugin=nvptx
+		PLUGIN_NVPTX=$tgt
+		if test "x$CUDA_DRIVER_LIB" != xno \
+		   && test "x$CUDA_DRIVER_LIB" != xno; then
+		  PLUGIN_NVPTX_CPPFLAGS=$CUDA_DRIVER_CPPFLAGS
+		  PLUGIN_NVPTX_LDFLAGS=$CUDA_DRIVER_LDFLAGS
+		  PLUGIN_NVPTX_LIBS='-lcuda'
 
-	  PLUGIN_NVPTX_save_CPPFLAGS=$CPPFLAGS
-	  CPPFLAGS="$PLUGIN_NVPTX_CPPFLAGS $CPPFLAGS"
-	  PLUGIN_NVPTX_save_LDFLAGS=$LDFLAGS
-	  LDFLAGS="$PLUGIN_NVPTX_LDFLAGS $LDFLAGS"
-	  PLUGIN_NVPTX_save_LIBS=$LIBS
-	  LIBS="$PLUGIN_NVPTX_LIBS $LIBS"
-	  AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-	      [#include "cuda.h"],
-		[CUresult r = cuCtxPushCurrent (NULL);])],
-	    [PLUGIN_NVPTX=1])
-	  CPPFLAGS=$PLUGIN_NVPTX_save_CPPFLAGS
-	  LDFLAGS=$PLUGIN_NVPTX_save_LDFLAGS
-	  LIBS=$PLUGIN_NVPTX_save_LIBS
-	fi
-	case $PLUGIN_NVPTX in
-	  nvptx*)
-	    if (test "x$CUDA_DRIVER_INCLUDE" = x \
-		|| test "x$CUDA_DRIVER_INCLUDE" = xno) \
-	       && (test "x$CUDA_DRIVER_LIB" = x \
-		   || test "x$CUDA_DRIVER_LIB" = xno); then
-	      PLUGIN_NVPTX=1
-	      PLUGIN_NVPTX_CPPFLAGS='-I$(srcdir)/plugin/cuda'
-	      PLUGIN_NVPTX_LIBS='-ldl'
-	      PLUGIN_NVPTX_DYNAMIC=1
-	    else
-	      PLUGIN_NVPTX=0
-	      AC_MSG_ERROR([CUDA driver package required for nvptx support])
-	    fi
-	  ;;
+		  PLUGIN_NVPTX_save_CPPFLAGS=$CPPFLAGS
+		  CPPFLAGS="$PLUGIN_NVPTX_CPPFLAGS $CPPFLAGS"
+		  PLUGIN_NVPTX_save_LDFLAGS=$LDFLAGS
+		  LDFLAGS="$PLUGIN_NVPTX_LDFLAGS $LDFLAGS"
+		  PLUGIN_NVPTX_save_LIBS=$LIBS
+		  LIBS="$PLUGIN_NVPTX_LIBS $LIBS"
+		  AC_LINK_IFELSE(
+		    [AC_LANG_PROGRAM(
+		      [#include "cuda.h"],
+			[CUresult r = cuCtxPushCurrent (NULL);])],
+		    [PLUGIN_NVPTX=1])
+		  CPPFLAGS=$PLUGIN_NVPTX_save_CPPFLAGS
+		  LDFLAGS=$PLUGIN_NVPTX_save_LDFLAGS
+		  LIBS=$PLUGIN_NVPTX_save_LIBS
+		fi
+		case $PLUGIN_NVPTX in
+		  nvptx*)
+		    if (test "x$CUDA_DRIVER_INCLUDE" = x \
+			|| test "x$CUDA_DRIVER_INCLUDE" = xno) \
+		       && (test "x$CUDA_DRIVER_LIB" = x \
+			   || test "x$CUDA_DRIVER_LIB" = xno); then
+		      PLUGIN_NVPTX=1
+		      PLUGIN_NVPTX_CPPFLAGS='-I$(srcdir)/plugin/cuda'
+		      PLUGIN_NVPTX_LIBS='-ldl'
+		      PLUGIN_NVPTX_DYNAMIC=1
+		    else
+		      PLUGIN_NVPTX=0
+		      AC_MSG_ERROR([CUDA driver package required for nvptx support])
+		    fi
+		    ;;
+		esac
+		;;
+	    esac
+	    ;;
+	  *-*-*)
+	    # Target architecture not supported.
+	    PLUGIN_NVPTX=0
+	    ;;
 	esac
 	;;
       hsa*)
 	case "${target}" in
 	  x86_64-*-*)
 	    case " ${CC} ${CFLAGS} " in
-	      *" -m32 "*)
+	      *" -m32 "*|*" -mx32 "*)
 	        PLUGIN_HSA=0
 		;;
 	      *)
@@ -237,6 +263,29 @@ if test x"$enable_offload_targets" != x; then
             ;;
         esac
         ;;
+
+      amdgcn*)
+	case "${target}" in
+	  x86_64-*-*)
+	    case " ${CC} ${CFLAGS} " in
+	      *" -m32 "*|*" -mx32 "*)
+		PLUGIN_GCN=0
+		;;
+	      *)
+		tgt_plugin=gcn
+		PLUGIN_GCN=$tgt
+		PLUGIN_GCN_CPPFLAGS=$HSA_RUNTIME_CPPFLAGS
+		PLUGIN_GCN_LDFLAGS="$HSA_RUNTIME_LDFLAGS"
+		PLUGIN_GCN_LIBS="-ldl"
+		PLUGIN_GCN=1
+		;;
+	      esac
+	    ;;
+	  *-*-*)
+	    PLUGIN_GCN=0
+	     ;;
+	esac
+	;;
       *)
 	AC_MSG_ERROR([unknown offload target specified])
 	;;
@@ -275,10 +324,6 @@ AC_DEFINE_UNQUOTED([PLUGIN_NVPTX_DYNAMIC], [$PLUGIN_NVPTX_DYNAMIC],
 AM_CONDITIONAL([PLUGIN_HSA], [test $PLUGIN_HSA = 1])
 AC_DEFINE_UNQUOTED([PLUGIN_HSA], [$PLUGIN_HSA],
   [Define to 1 if the HSA plugin is built, 0 if not.])
-
-if test "$HSA_RUNTIME_LIB" != ""; then
-  HSA_RUNTIME_LIB="$HSA_RUNTIME_LIB/"
-fi
-
-AC_DEFINE_UNQUOTED([HSA_RUNTIME_LIB], ["$HSA_RUNTIME_LIB"],
-  [Define path to HSA runtime.])
+AM_CONDITIONAL([PLUGIN_GCN], [test $PLUGIN_GCN = 1])
+AC_DEFINE_UNQUOTED([PLUGIN_GCN], [$PLUGIN_GCN],
+  [Define to 1 if the GCN plugin is built, 0 if not.])

@@ -1,6 +1,6 @@
 // <forward_list.h> -*- C++ -*-
 
-// Copyright (C) 2008-2019 Free Software Foundation, Inc.
+// Copyright (C) 2008-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -180,13 +180,14 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       operator==(const _Self& __x, const _Self& __y) noexcept
       { return __x._M_node == __y._M_node; }
 
-
+#if __cpp_impl_three_way_comparison < 201907L
       /**
        *  @brief  Forward list iterator inequality comparison.
        */
       friend bool
       operator!=(const _Self& __x, const _Self& __y) noexcept
       { return __x._M_node != __y._M_node; }
+#endif
 
       _Self
       _M_next() const noexcept
@@ -258,12 +259,14 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       operator==(const _Self& __x, const _Self& __y) noexcept
       { return __x._M_node == __y._M_node; }
 
+#if __cpp_impl_three_way_comparison < 201907L
       /**
        *  @brief  Forward list const_iterator inequality comparison.
        */
       friend bool
       operator!=(const _Self& __x, const _Self& __y) noexcept
       { return __x._M_node != __y._M_node; }
+#endif
 
       _Self
       _M_next() const noexcept
@@ -421,7 +424,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     {
       static_assert(is_same<typename remove_cv<_Tp>::type, _Tp>::value,
 	  "std::forward_list must have a non-const, non-volatile value_type");
-#ifdef __STRICT_ANSI__
+#if __cplusplus > 201703L || defined __STRICT_ANSI__
       static_assert(is_same<typename _Alloc::value_type, _Tp>::value,
 	  "std::forward_list must have the same value_type as its allocator");
 #endif
@@ -1336,8 +1339,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	else
 	  // The rvalue's allocator cannot be moved, or is not equal,
 	  // so we need to individually move each element.
-	  this->assign(std::__make_move_if_noexcept_iterator(__list.begin()),
-		       std::__make_move_if_noexcept_iterator(__list.end()));
+	  this->assign(std::make_move_iterator(__list.begin()),
+		       std::make_move_iterator(__list.end()));
       }
 
       // Called by assign(_InputIterator, _InputIterator) if _Tp is
@@ -1426,6 +1429,28 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     operator==(const forward_list<_Tp, _Alloc>& __lx,
 	       const forward_list<_Tp, _Alloc>& __ly);
 
+#if __cpp_lib_three_way_comparison
+  /**
+   *  @brief  Forward list ordering relation.
+   *  @param  __x  A `forward_list`.
+   *  @param  __y  A `forward_list` of the same type as `__x`.
+   *  @return  A value indicating whether `__x` is less than, equal to,
+   *           greater than, or incomparable with `__y`.
+   *
+   *  See `std::lexicographical_compare_three_way()` for how the determination
+   *  is made. This operator is used to synthesize relational operators like
+   *  `<` and `>=` etc.
+  */
+  template<typename _Tp, typename _Alloc>
+    inline __detail::__synth3way_t<_Tp>
+    operator<=>(const forward_list<_Tp, _Alloc>& __x,
+		const forward_list<_Tp, _Alloc>& __y)
+    {
+      return std::lexicographical_compare_three_way(__x.begin(), __x.end(),
+						    __y.begin(), __y.end(),
+						    __detail::__synth3way);
+    }
+#else
   /**
    *  @brief  Forward list ordering relation.
    *  @param  __lx  A %forward_list.
@@ -1472,6 +1497,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     operator<=(const forward_list<_Tp, _Alloc>& __lx,
 	       const forward_list<_Tp, _Alloc>& __ly)
     { return !(__ly < __lx); }
+#endif // three-way comparison
 
   /// See std::forward_list::swap().
   template<typename _Tp, typename _Alloc>
