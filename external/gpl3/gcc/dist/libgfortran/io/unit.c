@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    F2003 I/O support contributed by Jerry DeLisle
 
@@ -767,9 +767,12 @@ close_unit_1 (gfc_unit *u, int locked)
 void
 unlock_unit (gfc_unit *u)
 {
-  NOTE ("unlock_unit = %d", u->unit_number);
-  UNLOCK (&u->lock);
-  NOTE ("unlock_unit done");
+  if (u)
+    {
+      NOTE ("unlock_unit = %d", u->unit_number);
+      UNLOCK (&u->lock);
+      NOTE ("unlock_unit done");
+    }
 }
 
 /* close_unit()-- Close a unit.  The stream is closed, and any memory

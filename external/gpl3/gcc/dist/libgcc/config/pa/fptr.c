@@ -1,5 +1,5 @@
 /* Subroutine for function pointer canonicalization on PA-RISC with ELF32.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by John David Anglin (dave.anglin@nrc.ca).
 
 This file is part of GCC.
@@ -61,6 +61,9 @@ _dl_read_access_allowed (unsigned int addr)
 
   return result;
 }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
 
 /* __canonicalize_funcptr_for_compare must be hidden so that it is not
    placed in the dynamic symbol table.  Like millicode functions, it
@@ -145,3 +148,5 @@ __canonicalize_funcptr_for_compare (fptr_t fptr)
 
   return plabel[0];
 }
+
+#pragma GCC diagnostic pop

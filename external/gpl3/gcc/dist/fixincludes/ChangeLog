@@ -1,18 +1,35 @@
-2020-03-12  Release Manager
+2021-04-08  Release Manager
 
-	* GCC 9.3.0 released.
+	* GCC 10.3.0 released.
 
-2020-02-26  Segher Boessenkool  <segher@kernel.crashing.org>
+2020-07-23  Release Manager
 
-	Backport from trunk
-	2020-02-13  Matheus Castanho  <msc@linux.ibm.com>
+	* GCC 10.2.0 released.
+
+2020-05-07  Release Manager
+
+	* GCC 10.1.0 released.
+
+2020-02-20  Alexandre Oliva <oliva@adacore.com>
+
+	* mkheaders.in: Don't require build-time shell on host.
+
+2020-02-13  Matheus Castanho  <msc@linux.ibm.com>
 
 	* fixinc.in: Skip machine_name fix on powerpc*-*-linux*.
 
-2020-01-01  John David Anglin  <danglin@gcc.gnu.org>
+2020-02-13  Alexandre Oliva <oliva@adacore.com>
 
-	Backport from mainline
-	2019-12-30  John David Anglin  <danglin@gcc.gnu.org>
+	* mkheaders.in: Re-create subdirs, copy limits.h into subdir.
+	* mkfixinc.sh: Create dummy fixinc for *-*-vxworks7*.
+
+2020-01-25  John David Anglin  <danglin@gcc.gnu.org>
+
+	* inclhack.def (hpux_c99_inttypes4): New, add missing SCNuMAX defines.
+	* fixincl.x: Regenerate.
+	* tests/base/inttypes.h: Update for above fix.
+
+2019-12-30  John David Anglin  <danglin@gcc.gnu.org>
 
 	PR libgomp/93066
 	* inclhack.def (hpux_c99_inttypes3): Fix defines for INTPTR_MAX
@@ -20,26 +37,16 @@
 	* fixincl.x: Regenerate.
 	* tests/base/inttypes.h: Update for above fix.
 
-2019-08-21  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backport from mainline.
-	2019-08-18  C.G. Dogan <gcc+cgdogan.00@gmail.com>
-		    Iain Sandoe  <iain@sandoe.co.uk>
+2019-08-18  C.G. Dogan <gcc+cgdogan.00@gmail.com>
+	    Iain Sandoe  <iain@sandoe.co.uk>
 
 	PR target/83531
-	* inclhack.def (darwin_api_availability): New; strip leading
+	* inclhack.def (darwin_api_availability): New, strip leading
 	underscores from API_XXXX defines.
 	* fixincl.x: Regenerate.
 	* tests/base/os/availability.h: New file.
 
-2019-08-12  Release Manager
-
-	* GCC 9.2.0 released.
-
-2019-08-03  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backport from mainline.
-	2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
+2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* inclhack.def: Replace the complex test using __STRICT_ANSI__ and
 	__STDC_VERSION__ with a test using __DARWIN_NO_LONG_LONG.
@@ -49,10 +56,7 @@
 	* tests/base/architecture/ppc/math.h: Update test to include the
 	__DARWIN_NO_LONG_LONG case.
 
-2019-08-03  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backport from mainline.
-	2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
+2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* inclhack.def: Guard __has_attribute and __has_extension in
 	os/base.h.
@@ -61,20 +65,12 @@
 	* tests/base/dispatch/object.h: New file.
 	* tests/base/os/base.h: New file.
 
-2019-05-13  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backport from mainline.
-	2019-05-11  Iain Sandoe  <iain@sandoe.co.uk>
-
+2019-05-11  Iain Sandoe  <iain@sandoe.co.uk>
 	PR target/90379
 	PR bootstrap/89864
 	* inclhack.def (darwin_ucred__Atomic): Do not supply test_text
 	for wrap fixes.
 	* fixincl.x: Regenerated.
-
-2019-05-03  Release Manager
-
-	* GCC 9.1.0 released.
 
 2019-04-18  Erik Schnetter  <schnetter@gmail.com>
 	  Jakub Jelinek  <jakub@redhat.com>

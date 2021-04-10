@@ -1,6 +1,6 @@
 // <memory> -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -38,6 +38,7 @@
 
 /** @file include/memory
  *  This is a Standard C++ Library header.
+ *  @ingroup memory
  */
 
 #ifndef _GLIBCXX_MEMORY
@@ -65,6 +66,7 @@
 #include <bits/stl_uninitialized.h>
 #include <bits/stl_tempbuf.h>
 #include <bits/stl_raw_storage_iter.h>
+#include <bits/ranges_uninitialized.h>
 
 #if __cplusplus >= 201103L
 #  include <exception>        	  // std::exception
@@ -75,6 +77,7 @@
 #  include <bits/functexcept.h>
 #  include <bits/stl_function.h>  // std::less
 #  include <bits/uses_allocator.h>
+#  include <bits/alloc_traits.h>
 #  include <type_traits>
 #  include <debug/debug.h>
 #  include <bits/unique_ptr.h>
@@ -90,7 +93,7 @@
 #if __cplusplus >= 201103L
 #include <cstdint>
 #if __cplusplus > 201703L
-# include <bit>			// for ispow2
+# include <bit>			// for has_single_bit
 # include <new>			// for placement operator new
 # include <tuple>		// for tuple, make_tuple, make_from_tuple
 #endif
@@ -100,19 +103,21 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 /**
  *  @brief Fit aligned storage in buffer.
- *
- *  [ptr.align]
+ *  @ingroup memory
  *
  *  This function tries to fit @a __size bytes of storage with alignment
  *  @a __align into the buffer @a __ptr of size @a __space bytes.  If such
  *  a buffer fits then @a __ptr is changed to point to the first byte of the
  *  aligned storage and @a __space is reduced by the bytes used for alignment.
  *
+ *  C++11 20.6.5 [ptr.align]
+ *
  *  @param __align   A fundamental or extended alignment value.
  *  @param __size    Size of the aligned storage required.
  *  @param __ptr     Pointer to a buffer of @a __space bytes.
  *  @param __space   Size of the buffer pointed to by @a __ptr.
  *  @return the updated pointer if the aligned storage fits, otherwise nullptr.
+ *
  */
 inline void*
 align(size_t __align, size_t __size, void*& __ptr, size_t& __space) noexcept
@@ -136,35 +141,71 @@ align(size_t __align, size_t __size, void*& __ptr, size_t& __space) noexcept
     }
 }
 
-// 20.7.4 [util.dynamic.safety], pointer safety
+/** @defgroup ptr_safety Pointer Safety and Garbage Collection
+ *  @ingroup memory
+ *
+ * Utilities to assist with garbage collection in an implementation
+ * that supports <em>strict pointer safety</em>.
+ * This implementation only supports <em>relaxed pointer safety</em>
+ * and so these functions have no effect.
+ *
+ * C++11 20.6.4 [util.dynamic.safety], Pointer safety
+ *
+ * @{
+ */
 
+/// Constants representing the different types of pointer safety.
 enum class pointer_safety { relaxed, preferred, strict };
 
+/// Inform a garbage collector that an object is still in use.
 inline void
 declare_reachable(void*) { }
 
+/// Unregister an object previously registered with declare_reachable.
 template <typename _Tp>
   inline _Tp*
   undeclare_reachable(_Tp* __p) { return __p; }
 
+/// Inform a garbage collector that a region of memory need not be traced.
 inline void
 declare_no_pointers(char*, size_t) { }
 
+/// Unregister a range previously registered with declare_no_pointers.
 inline void
 undeclare_no_pointers(char*, size_t) { }
 
+/// The type of pointer safety supported by the implementation.
 inline pointer_safety
 get_pointer_safety() noexcept { return pointer_safety::relaxed; }
+// @}
 
 #if __cplusplus > 201703L
-  /// Inform the compiler that a pointer is aligned.
+#define __cpp_lib_assume_aligned 201811L
+  /** @brief Inform the compiler that a pointer is aligned.
+   *
+   *  @tparam _Align An alignment value (i.e. a power of two)
+   *  @tparam _Tp    An object type
+   *  @param  __ptr  A pointer that is aligned to _Align
+   *
+   *  C++20 20.10.6 [ptr.align]
+   *
+   *  @ingroup memory
+   */
   template<size_t _Align, class _Tp>
     [[nodiscard,__gnu__::__always_inline__]]
-    constexpr _Tp* assume_aligned(_Tp* __ptr)
+    constexpr _Tp*
+    assume_aligned(_Tp* __ptr) noexcept
     {
-      static_assert(std::ispow2(_Align));
-      _GLIBCXX_DEBUG_ASSERT((std::uintptr_t)__ptr % _Align == 0);
-      return static_cast<_Tp*>(__builtin_assume_aligned(__ptr, _Align));
+      static_assert(std::has_single_bit(_Align));
+      if (std::is_constant_evaluated())
+	return __ptr;
+      else
+	{
+	  // This function is expected to be used in hot code, where
+	  // __glibcxx_assert would add unwanted overhead.
+	  _GLIBCXX_DEBUG_ASSERT((std::uintptr_t)__ptr % _Align == 0);
+	  return static_cast<_Tp*>(__builtin_assume_aligned(__ptr, _Align));
+	}
     }
 #endif // C++2a
 
@@ -176,6 +217,9 @@ get_pointer_safety() noexcept { return pointer_safety::relaxed; }
   template<typename _Tp, typename _Up>
     struct __is_pair<const pair<_Tp, _Up>> : true_type { };
 
+/** @addtogroup allocators
+ *  @{
+ */
   template<typename _Tp, typename __ = _Require<__not_<__is_pair<_Tp>>>,
 	   typename _Alloc, typename... _Args>
     constexpr auto
@@ -355,10 +399,12 @@ get_pointer_safety() noexcept { return pointer_safety::relaxed; }
     uninitialized_construct_using_allocator(_Tp* __p, const _Alloc& __a,
 					    _Args&&... __args)
     {
-      void* __vp = const_cast<void*>(static_cast<const volatile void*>(__p));
-      return ::new(__vp) _Tp(std::make_obj_using_allocator<_Tp>(__a,
-	    std::forward<_Args>(__args)...));
+      return std::apply([&](auto&&... __xs) {
+	return std::construct_at(__p, std::forward<decltype(__xs)>(__xs)...);
+      }, std::uses_allocator_construction_args<_Tp>(__a,
+	std::forward<_Args>(__args)...));
     }
+// @}
 
 #endif // C++2a
 
@@ -368,7 +414,7 @@ _GLIBCXX_END_NAMESPACE_VERSION
 
 #if __cplusplus > 201402L
 // Parallel STL algorithms
-# if __PSTL_EXECUTION_POLICIES_DEFINED
+# if _PSTL_EXECUTION_POLICIES_DEFINED
 // If <execution> has already been included, pull in implementations
 #  include <pstl/glue_memory_impl.h>
 # else

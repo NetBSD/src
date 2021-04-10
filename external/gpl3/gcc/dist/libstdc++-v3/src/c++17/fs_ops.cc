@@ -1,6 +1,6 @@
 // Filesystem operations -*- C++ -*-
 
-// Copyright (C) 2014-2019 Free Software Foundation, Inc.
+// Copyright (C) 2014-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -690,7 +690,7 @@ fs::create_hard_link(const path& to, const path& new_hard_link,
   if (CreateHardLinkW(new_hard_link.c_str(), to.c_str(), NULL))
     ec.clear();
   else
-    ec.assign((int)GetLastError(), generic_category());
+    ec.assign((int)GetLastError(), system_category());
 #else
   ec = std::make_error_code(std::errc::not_supported);
 #endif
@@ -882,12 +882,12 @@ fs::equivalent(const path& p1, const path& p2, error_code& ec) noexcept
       if (!h1 || !h2)
 	{
 	  if (!h1 && !h2)
-	    ec.assign((int)GetLastError(), generic_category());
+	    ec.assign((int)GetLastError(), system_category());
 	  return false;
 	}
       if (!h1.get_info() || !h2.get_info())
 	{
-	  ec.assign((int)GetLastError(), generic_category());
+	  ec.assign((int)GetLastError(), system_category());
 	  return false;
 	}
       return h1.info.dwVolumeSerialNumber == h2.info.dwVolumeSerialNumber
@@ -1175,11 +1175,17 @@ fs::path fs::read_symlink(const path& p, error_code& ec)
   path result;
 #if defined(_GLIBCXX_HAVE_READLINK) && defined(_GLIBCXX_HAVE_SYS_STAT_H)
   stat_type st;
-  if (::lstat(p.c_str(), &st))
+  if (posix::lstat(p.c_str(), &st))
     {
       ec.assign(errno, std::generic_category());
       return result;
     }
+  else if (!fs::is_symlink(make_file_status(st)))
+    {
+      ec.assign(EINVAL, std::generic_category());
+      return result;
+    }
+
   std::string buf(st.st_size ? st.st_size + 1 : 128, '\0');
   do
     {
@@ -1257,7 +1263,7 @@ fs::remove(const path& p, error_code& ec) noexcept
 	  return true;
 	}
       else if (!ec)
-	ec.assign((int)GetLastError(), generic_category());
+	ec.assign((int)GetLastError(), system_category());
     }
   else if (status_known(st))
     ec.clear();
@@ -1275,47 +1281,105 @@ fs::remove(const path& p, error_code& ec) noexcept
   return false;
 }
 
+namespace std::filesystem
+{
+namespace
+{
+  struct ErrorReporter
+  {
+    explicit
+    ErrorReporter(error_code& ec) : code(&ec)
+    { }
+
+    explicit
+    ErrorReporter(const char* s, const path& p)
+    : code(nullptr), msg(s), path1(&p)
+    { }
+
+    error_code* code;
+    const char* msg;
+    const path* path1;
+
+    void
+    report(const error_code& ec) const
+    {
+      if (code)
+	*code = ec;
+      else
+	_GLIBCXX_THROW_OR_ABORT(filesystem_error(msg, *path1, ec));
+    }
+
+    void
+    report(const error_code& ec, const path& path2) const
+    {
+      if (code)
+	*code = ec;
+      else if (path2 != *path1)
+	_GLIBCXX_THROW_OR_ABORT(filesystem_error(msg, *path1, path2, ec));
+      else
+	_GLIBCXX_THROW_OR_ABORT(filesystem_error(msg, *path1, ec));
+    }
+  };
+
+  uintmax_t
+  do_remove_all(const path& p, const ErrorReporter& err)
+  {
+    error_code ec;
+    const auto s = symlink_status(p, ec);
+    if (!status_known(s))
+      {
+	if (ec)
+	  err.report(ec, p);
+	return -1;
+      }
+
+    ec.clear();
+    if (s.type() == file_type::not_found)
+      return 0;
+
+    uintmax_t count = 0;
+    if (s.type() == file_type::directory)
+      {
+	directory_iterator d(p, ec), end;
+	while (d != end)
+	  {
+	    const auto removed = fs::do_remove_all(d->path(), err);
+	    if (removed == numeric_limits<uintmax_t>::max())
+	      return -1;
+	    count += removed;
+
+	    d.increment(ec);
+	    if (ec)
+	      {
+		err.report(ec, p);
+		return -1;
+	      }
+	  }
+      }
+
+    if (fs::remove(p, ec))
+      ++count;
+    if (ec)
+      {
+	err.report(ec, p);
+	return -1;
+      }
+    return count;
+  }
+}
+}
 
 std::uintmax_t
 fs::remove_all(const path& p)
 {
-  error_code ec;
-  const auto result = remove_all(p, ec);
-  if (ec)
-    _GLIBCXX_THROW_OR_ABORT(filesystem_error("cannot remove all", p, ec));
-  return result;
+  return fs::do_remove_all(p, ErrorReporter{"cannot remove all", p});
 }
 
 std::uintmax_t
 fs::remove_all(const path& p, error_code& ec)
 {
-  const auto s = symlink_status(p, ec);
-  if (!status_known(s))
-    return -1;
-
   ec.clear();
-  if (s.type() == file_type::not_found)
-    return 0;
-
-  uintmax_t count = 0;
-  if (s.type() == file_type::directory)
-    {
-      directory_iterator d(p, ec), end;
-      while (!ec && d != end)
-	{
-	  const auto removed = fs::remove_all(d->path(), ec);
-	  if (removed == numeric_limits<uintmax_t>::max())
-	    return -1;
-	  count += removed;
-	  d.increment(ec);
-	  if (ec)
-	    return -1;
-	}
-    }
-
-  if (fs::remove(p, ec))
-    ++count;
-  return ec ? -1 : count;
+  return fs::do_remove_all(p, ErrorReporter{ec});
 }
 
 void
@@ -1330,6 +1394,36 @@ fs::rename(const path& from, const path& to)
 void
 fs::rename(const path& from, const path& to, error_code& ec) noexcept
 {
+#if _GLIBCXX_FILESYSTEM_IS_WINDOWS
+  const auto to_status = fs::status(to, ec);
+  if (to_status.type() == file_type::not_found)
+    ec.clear();
+  else if (ec)
+    return;
+
+  if (fs::exists(to_status))
+  {
+    const auto from_status = fs::status(from, ec);
+    if (ec)
+      return;
+
+    if (fs::is_directory(to_status))
+    {
+      if (!fs::is_directory(from_status))
+      {
+	// Cannot rename a non-directory over an existing directory.
+	ec = std::make_error_code(std::errc::is_a_directory);
+	return;
+      }
+    }
+    else if (fs::is_directory(from_status))
+    {
+      // Cannot rename a directory over an existing non-directory.
+      ec = std::make_error_code(std::errc::not_a_directory);
+      return;
+    }
+  }
+#endif
   if (posix::rename(from.c_str(), to.c_str()))
     ec.assign(errno, std::generic_category());
   else
@@ -1398,7 +1492,6 @@ fs::status(const fs::path& p, error_code& ec) noexcept
   auto str = p.c_str();
 
 #if _GLIBCXX_FILESYSTEM_IS_WINDOWS
-#if ! defined __MINGW64_VERSION_MAJOR || __MINGW64_VERSION_MAJOR < 6
   // stat() fails if there's a trailing slash (PR 88881)
   path p2;
   if (p.has_relative_path() && !p.has_filename())
@@ -1415,7 +1508,6 @@ fs::status(const fs::path& p, error_code& ec) noexcept
 	}
       str = p2.c_str();
     }
-#endif
 #endif
 
   stat_type st;
@@ -1445,7 +1537,6 @@ fs::symlink_status(const fs::path& p, std::error_code& ec) noexcept
   auto str = p.c_str();
 
 #if _GLIBCXX_FILESYSTEM_IS_WINDOWS
-#if ! defined __MINGW64_VERSION_MAJOR || __MINGW64_VERSION_MAJOR < 6
   // stat() fails if there's a trailing slash (PR 88881)
   path p2;
   if (p.has_relative_path() && !p.has_filename())
@@ -1462,7 +1553,6 @@ fs::symlink_status(const fs::path& p, std::error_code& ec) noexcept
 	}
       str = p2.c_str();
     }
-#endif
 #endif
 
   stat_type st;

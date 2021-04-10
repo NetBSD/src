@@ -1,6 +1,6 @@
 // Debugging bitset implementation -*- C++ -*-
 
-// Copyright (C) 2003-2019 Free Software Foundation, Inc.
+// Copyright (C) 2003-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -353,11 +353,13 @@ namespace __debug
 
       bool
       operator==(const bitset<_Nb>& __rhs) const _GLIBCXX_NOEXCEPT
-      { return _M_base() == __rhs; }
+      { return _M_base() == __rhs._M_base(); }
 
+#if __cpp_impl_three_way_comparison < 201907L
       bool
       operator!=(const bitset<_Nb>& __rhs) const _GLIBCXX_NOEXCEPT
-      { return _M_base() != __rhs; }
+      { return _M_base() != __rhs._M_base(); }
+#endif
 
       using _Base::test;
       using _Base::all;

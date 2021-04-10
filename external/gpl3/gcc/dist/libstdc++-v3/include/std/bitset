@@ -1,6 +1,6 @@
 // <bitset> -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1306,9 +1306,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       operator==(const bitset<_Nb>& __rhs) const _GLIBCXX_NOEXCEPT
       { return this->_M_is_equal(__rhs); }
 
+#if __cpp_impl_three_way_comparison < 201907L
       bool
       operator!=(const bitset<_Nb>& __rhs) const _GLIBCXX_NOEXCEPT
       { return !this->_M_is_equal(__rhs); }
+#endif
       //@}
 
       /**
@@ -1591,10 +1593,6 @@ _GLIBCXX_END_NAMESPACE_VERSION
 
 #ifdef _GLIBCXX_DEBUG
 # include <debug/bitset>
-#endif
-
-#ifdef _GLIBCXX_PROFILE
-# include <profile/bitset>
 #endif
 
 #endif /* _GLIBCXX_BITSET */

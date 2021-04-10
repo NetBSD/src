@@ -1,6 +1,6 @@
 // Filesystem operation utilities -*- C++ -*-
 
-// Copyright (C) 2014-2019 Free Software Foundation, Inc.
+// Copyright (C) 2014-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -71,14 +71,14 @@ namespace __gnu_posix
   inline int close(int fd)
   { return ::_close(fd); }
 
-  typedef struct ::_stat stat_type;
+  typedef struct ::__stat64 stat_type;
 
   inline int stat(const wchar_t* path, stat_type* buffer)
-  { return ::_wstat(path, buffer); }
+  { return ::_wstat64(path, buffer); }
 
   inline int lstat(const wchar_t* path, stat_type* buffer)
   {
-    // TODO symlinks not currently supported
+    // FIXME: symlinks not currently supported
     return stat(path, buffer);
   }
 
@@ -104,7 +104,16 @@ namespace __gnu_posix
 #endif
 
   inline int rename(const wchar_t* oldname, const wchar_t* newname)
-  { return _wrename(oldname, newname); }
+  {
+    if (MoveFileExW(oldname, newname,
+		    MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED))
+      return 0;
+    if (GetLastError() == ERROR_ACCESS_DENIED)
+      errno = EACCES;
+    else
+      errno = EIO;
+    return -1;
+  }
 
   inline int truncate(const wchar_t* path, _off64_t length)
   {

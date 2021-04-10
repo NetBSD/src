@@ -1,6 +1,6 @@
 // Raw memory manipulators -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -57,16 +57,24 @@
 #define _STL_UNINITIALIZED_H 1
 
 #if __cplusplus > 201402L
-#include <utility>
+#include <bits/stl_pair.h>
 #endif
 
 #if __cplusplus >= 201103L
 #include <type_traits>
 #endif
 
+#include <ext/alloc_traits.h>
+
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+  /** @addtogroup memory
+   *  @{
+   */
+
+  /// @cond undocumented
 
   template<bool _TrivialValueTypes>
     struct __uninitialized_copy
@@ -100,6 +108,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		      _ForwardIterator __result)
         { return std::copy(__first, __last, __result); }
     };
+
+  /// @endcond
 
   /**
    *  @brief Copies the range [first,last) into result.
@@ -140,6 +150,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__uninit_copy(__first, __last, __result);
     }
 
+  /// @cond undocumented
 
   template<bool _TrivialValueType>
     struct __uninitialized_fill
@@ -172,6 +183,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		      const _Tp& __x)
         { std::fill(__first, __last, __x); }
     };
+
+  /// @endcond
 
   /**
    *  @brief Copies the value x into the range [first,last).
@@ -206,6 +219,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__uninit_fill(__first, __last, __x);
     }
 
+  /// @cond undocumented
 
   template<bool _TrivialValueType>
     struct __uninitialized_fill_n
@@ -240,6 +254,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         { return std::fill_n(__first, __n, __x); }
     };
 
+  /// @endcond
+
    // _GLIBCXX_RESOLVE_LIB_DEFECTS
    // DR 1339. uninitialized_fill_n should return the end of its range
   /**
@@ -272,6 +288,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __uninitialized_fill_n<__is_trivial(_ValueType) && __assignable>::
 	__uninit_fill_n(__first, __n, __x);
     }
+
+  /// @cond undocumented
 
   // Extensions: versions of uninitialized_copy, uninitialized_fill,
   //  and uninitialized_fill_n that take an allocator parameter.
@@ -492,7 +510,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	}
     }
 
+  /// @endcond
+
 #if __cplusplus >= 201103L
+  /// @cond undocumented
+
   // Extensions: __uninitialized_default, __uninitialized_default_n,
   // __uninitialized_default_a, __uninitialized_default_n_a.
 
@@ -816,6 +838,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return {__first_res, __second_res};
     }
 
+  /// @endcond
+
   /**
    *  @brief Copies the range [first,first+n) into result.
    *  @param  __first  An input iterator.
@@ -832,6 +856,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     { return std::__uninitialized_copy_n(__first, __n, __result,
 					 std::__iterator_category(__first)); }
 
+  /// @cond undocumented
   template<typename _InputIterator, typename _Size, typename _ForwardIterator>
     inline pair<_InputIterator, _ForwardIterator>
     __uninitialized_copy_n_pair(_InputIterator __first, _Size __n,
@@ -841,12 +866,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	std::__uninitialized_copy_n_pair(__first, __n, __result,
 					 std::__iterator_category(__first));
     }
-
+  /// @endcond
 #endif
 
 #if __cplusplus >= 201703L
 # define __cpp_lib_raw_memory_algorithms 201606L
 
+  /**
+   *  @brief Default-initializes objects in the range [first,last).
+   *  @param  __first  A forward iterator.
+   *  @param  __last   A forward iterator.
+  */
   template <typename _ForwardIterator>
     inline void
     uninitialized_default_construct(_ForwardIterator __first,
@@ -855,6 +885,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __uninitialized_default_novalue(__first, __last);
     }
 
+  /**
+   *  @brief Default-initializes objects in the range [first,first+count).
+   *  @param  __first  A forward iterator.
+   *  @param  __count  The number of objects to construct.
+   *  @return   __first + __count
+  */
   template <typename _ForwardIterator, typename _Size>
     inline _ForwardIterator
     uninitialized_default_construct_n(_ForwardIterator __first, _Size __count)
@@ -862,6 +898,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __uninitialized_default_novalue_n(__first, __count);
     }
 
+  /**
+   *  @brief Value-initializes objects in the range [first,last).
+   *  @param  __first  A forward iterator.
+   *  @param  __last   A forward iterator.
+  */
   template <typename _ForwardIterator>
     inline void
     uninitialized_value_construct(_ForwardIterator __first,
@@ -870,6 +911,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __uninitialized_default(__first, __last);
     }
 
+  /**
+   *  @brief Value-initializes objects in the range [first,first+count).
+   *  @param  __first  A forward iterator.
+   *  @param  __count  The number of objects to construct.
+   *  @return   __result + __count
+  */
   template <typename _ForwardIterator, typename _Size>
     inline _ForwardIterator
     uninitialized_value_construct_n(_ForwardIterator __first, _Size __count)
@@ -877,6 +924,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __uninitialized_default_n(__first, __count);
     }
 
+  /**
+   *  @brief Move-construct from the range [first,last) into result.
+   *  @param  __first  An input iterator.
+   *  @param  __last   An input iterator.
+   *  @param  __result An output iterator.
+   *  @return   __result + (__first - __last)
+  */
   template <typename _InputIterator, typename _ForwardIterator>
     inline _ForwardIterator
     uninitialized_move(_InputIterator __first, _InputIterator __last,
@@ -887,6 +941,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	 _GLIBCXX_MAKE_MOVE_ITERATOR(__last), __result);
     }
 
+  /**
+   *  @brief Move-construct from the range [first,first+count) into result.
+   *  @param  __first  An input iterator.
+   *  @param  __count  The number of objects to initialize.
+   *  @param  __result An output iterator.
+   *  @return  __result + __count
+  */
   template <typename _InputIterator, typename _Size, typename _ForwardIterator>
     inline pair<_InputIterator, _ForwardIterator>
     uninitialized_move_n(_InputIterator __first, _Size __count,
@@ -900,9 +961,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif // C++17
 
 #if __cplusplus >= 201103L
+  /// @cond undocumented
+
   template<typename _Tp, typename _Up, typename _Allocator>
     inline void
-    __relocate_object_a(_Tp* __dest, _Up* __orig, _Allocator& __alloc)
+    __relocate_object_a(_Tp* __restrict __dest, _Up* __restrict __orig,
+			_Allocator& __alloc)
     noexcept(noexcept(std::allocator_traits<_Allocator>::construct(__alloc,
 			 __dest, std::move(*__orig)))
 	     && noexcept(std::allocator_traits<_Allocator>::destroy(
@@ -965,7 +1029,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 			    std::__niter_base(__last),
 			    std::__niter_base(__result), __alloc);
     }
+
+  /// @endcond
 #endif
+
+  // @} group memory
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

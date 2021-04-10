@@ -1,6 +1,6 @@
 // shared_ptr and weak_ptr implementation details -*- C++ -*-
 
-// Copyright (C) 2007-2019 Free Software Foundation, Inc.
+// Copyright (C) 2007-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -54,6 +54,9 @@
 #include <bits/refwrap.h>
 #include <bits/stl_function.h>
 #include <ext/aligned_buffer.h>
+#if __cplusplus > 201703L
+# include <compare>
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -1158,11 +1161,22 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	: _M_ptr(0), _M_refcount(__p, std::move(__d), std::move(__a))
 	{ }
 
+      // Aliasing constructor
       template<typename _Yp>
 	__shared_ptr(const __shared_ptr<_Yp, _Lp>& __r,
 		     element_type* __p) noexcept
 	: _M_ptr(__p), _M_refcount(__r._M_refcount) // never throws
 	{ }
+
+      // Aliasing constructor
+      template<typename _Yp>
+	__shared_ptr(__shared_ptr<_Yp, _Lp>&& __r,
+		     element_type* __p) noexcept
+	: _M_ptr(__p), _M_refcount()
+	{
+	  _M_refcount._M_swap(__r._M_refcount);
+	  __r._M_ptr = 0;
+	}
 
       __shared_ptr(const __shared_ptr&) noexcept = default;
       __shared_ptr& operator=(const __shared_ptr&) noexcept = default;
@@ -1305,21 +1319,26 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	reset(_Yp* __p, _Deleter __d, _Alloc __a)
         { __shared_ptr(__p, std::move(__d), std::move(__a)).swap(*this); }
 
+      /// Return the stored pointer.
       element_type*
       get() const noexcept
       { return _M_ptr; }
 
+      /// Return true if the stored pointer is not null.
       explicit operator bool() const // never throws
       { return _M_ptr == 0 ? false : true; }
 
+      /// Return true if use_count() == 1.
       bool
       unique() const noexcept
       { return _M_refcount._M_unique(); }
 
+      /// If *this owns a pointer, return the number of owners, otherwise zero.
       long
       use_count() const noexcept
       { return _M_refcount._M_get_use_count(); }
 
+      /// Exchange both the owned pointer and the stored pointer.
       void
       swap(__shared_ptr<_Tp, _Lp>& __other) noexcept
       {
@@ -1327,6 +1346,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_M_refcount._M_swap(__other._M_refcount);
       }
 
+      /** @brief Define an ordering based on ownership.
+       *
+       * This function defines a strict weak ordering between two shared_ptr
+       * or weak_ptr objects, such that one object is less than the other
+       * unless they share ownership of the same pointer, or are both empty.
+       * @{
+      */
       template<typename _Tp1>
 	bool
 	owner_before(__shared_ptr<_Tp1, _Lp> const& __rhs) const noexcept
@@ -1336,6 +1362,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	bool
 	owner_before(__weak_ptr<_Tp1, _Lp> const& __rhs) const noexcept
 	{ return _M_refcount._M_less(__rhs._M_refcount); }
+      // @}
 
     protected:
       // This constructor is non-standard, it is used by allocate_shared.
@@ -1418,6 +1445,21 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator==(const __shared_ptr<_Tp, _Lp>& __a, nullptr_t) noexcept
     { return !__a; }
 
+#ifdef __cpp_lib_three_way_comparison
+  template<typename _Tp, typename _Up, _Lock_policy _Lp>
+    inline strong_ordering
+    operator<=>(const __shared_ptr<_Tp, _Lp>& __a,
+		const __shared_ptr<_Up, _Lp>& __b) noexcept
+    { return compare_three_way()(__a.get(), __b.get()); }
+
+  template<typename _Tp, _Lock_policy _Lp>
+    inline strong_ordering
+    operator<=>(const __shared_ptr<_Tp, _Lp>& __a, nullptr_t) noexcept
+    {
+      using pointer = typename __shared_ptr<_Tp, _Lp>::element_type*;
+      return compare_three_way()(__a.get(), static_cast<pointer>(nullptr));
+    }
+#else
   template<typename _Tp, _Lock_policy _Lp>
     inline bool
     operator==(nullptr_t, const __shared_ptr<_Tp, _Lp>& __a) noexcept
@@ -1513,6 +1555,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline bool
     operator>=(nullptr_t, const __shared_ptr<_Tp, _Lp>& __a) noexcept
     { return !(nullptr < __a); }
+#endif // three-way comparison
 
   // 20.7.2.2.8 shared_ptr specialized algorithms.
   template<typename _Tp, _Lock_policy _Lp>

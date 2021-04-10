@@ -1,5 +1,5 @@
 /* Preprocess only, using cpplib.
-   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Per Bothner, 1994-95.
 
    This program is free software; you can redistribute it and/or modify it
@@ -151,6 +151,7 @@ init_pp_output (FILE *out_stream)
     }
 
   cb->has_attribute = c_common_has_attribute;
+  cb->has_builtin = c_common_has_builtin;
   cb->get_source_date_epoch = cb_get_source_date_epoch;
   cb->remap_filename = remap_macro_filename;
 

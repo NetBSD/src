@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    Namelist output contributed by Paul Thomas
    F2003 I/O support contributed by Jerry DeLisle
@@ -685,9 +685,8 @@ write_l (st_parameter_dt *dtp, const fnode *f, char *source, int len)
   p[wlen - 1] = (n) ? 'T' : 'F';
 }
 
-
 static void
-write_boz (st_parameter_dt *dtp, const fnode *f, const char *q, int n)
+write_boz (st_parameter_dt *dtp, const fnode *f, const char *q, int n, int len)
 {
   int w, m, digits, nzero, nblank;
   char *p;
@@ -719,6 +718,9 @@ write_boz (st_parameter_dt *dtp, const fnode *f, const char *q, int n)
 
   /* Select a width if none was specified.  The idea here is to always
      print something.  */
+
+  if (w == DEFAULT_WIDTH)
+    w = default_width_for_integer (len);
 
   if (w == 0)
     w = ((digits < m) ? m : digits);
@@ -846,6 +848,8 @@ write_decimal (st_parameter_dt *dtp, const fnode *f, const char *source,
 
   /* Select a width if none was specified.  The idea here is to always
      print something.  */
+  if (w == DEFAULT_WIDTH)
+    w = default_width_for_integer (len);
 
   if (w == 0)
     w = ((digits < m) ? m : digits) + nsign;
@@ -1044,8 +1048,6 @@ btoa_big (const char *s, char *buffer, int len, GFC_UINTEGER_LARGEST *n)
 	}
     }
 
-  *q = '\0';
-
   if (*n == 0)
     return "0";
 
@@ -1203,16 +1205,19 @@ write_b (st_parameter_dt *dtp, const fnode *f, const char *source, int len)
   char itoa_buf[GFC_BTOA_BUF_SIZE];
   GFC_UINTEGER_LARGEST n = 0;
 
+  /* Ensure we end up with a null terminated string.  */
+  memset(itoa_buf, '\0', GFC_BTOA_BUF_SIZE);
+
   if (len > (int) sizeof (GFC_UINTEGER_LARGEST))
     {
       p = btoa_big (source, itoa_buf, len, &n);
-      write_boz (dtp, f, p, n);
+      write_boz (dtp, f, p, n, len);
     }
   else
     {
       n = extract_uint (source, len);
       p = btoa (n, itoa_buf, sizeof (itoa_buf));
-      write_boz (dtp, f, p, n);
+      write_boz (dtp, f, p, n, len);
     }
 }
 
@@ -1227,13 +1232,13 @@ write_o (st_parameter_dt *dtp, const fnode *f, const char *source, int len)
   if (len > (int) sizeof (GFC_UINTEGER_LARGEST))
     {
       p = otoa_big (source, itoa_buf, len, &n);
-      write_boz (dtp, f, p, n);
+      write_boz (dtp, f, p, n, len);
     }
   else
     {
       n = extract_uint (source, len);
       p = otoa (n, itoa_buf, sizeof (itoa_buf));
-      write_boz (dtp, f, p, n);
+      write_boz (dtp, f, p, n, len);
     }
 }
 
@@ -1247,13 +1252,13 @@ write_z (st_parameter_dt *dtp, const fnode *f, const char *source, int len)
   if (len > (int) sizeof (GFC_UINTEGER_LARGEST))
     {
       p = ztoa_big (source, itoa_buf, len, &n);
-      write_boz (dtp, f, p, n);
+      write_boz (dtp, f, p, n, len);
     }
   else
     {
       n = extract_uint (source, len);
       p = gfc_xtoa (n, itoa_buf, sizeof (itoa_buf));
-      write_boz (dtp, f, p, n);
+      write_boz (dtp, f, p, n, len);
     }
 }
 
@@ -1491,7 +1496,7 @@ size_from_kind (st_parameter_dt *dtp, const fnode *f, int kind)
 {
   int size;
 
-  if (f->format == FMT_F && f->u.real.w == 0)
+  if ((f->format == FMT_F && f->u.real.w == 0) || f->u.real.w == DEFAULT_WIDTH)
     {
       switch (kind)
       {
@@ -1715,37 +1720,48 @@ write_real (st_parameter_dt *dtp, const char *source, int kind)
    compensate for the extra digit.  */
 
 void
-write_real_g0 (st_parameter_dt *dtp, const char *source, int kind, int d)
+write_real_w0 (st_parameter_dt *dtp, const char *source, int kind,
+	       const fnode* f)
 {
-  fnode f;
+  fnode ff;
   char buf_stack[BUF_STACK_SZ];
   char str_buf[BUF_STACK_SZ];
   char *buffer, *result;
   size_t buf_size, res_len, flt_str_len;
-  int comp_d;
-  set_fnode_default (dtp, &f, kind);
+  int comp_d = 0;
 
-  if (d > 0)
-    f.u.real.d = d;
+  set_fnode_default (dtp, &ff, kind);
 
-  /* Compensate for extra digits when using scale factor, d is not
-     specified, and the magnitude is such that E editing is used.  */
-  if (dtp->u.p.scale_factor > 0 && d == 0)
-    comp_d = 1;
-  else
-    comp_d = 0;
+  if (f->u.real.d > 0)
+    ff.u.real.d = f->u.real.d;
+  ff.format = f->format;
+
+  /* For FMT_G, Compensate for extra digits when using scale factor, d
+     is not specified, and the magnitude is such that E editing
+     is used.  */
+  if (f->format == FMT_G)
+    {
+      if (dtp->u.p.scale_factor > 0 && f->u.real.d == 0)
+	comp_d = 1;
+      else
+	comp_d = 0;
+    }
+
+  if (f->u.real.e >= 0)
+    ff.u.real.e = f->u.real.e;
+
   dtp->u.p.g0_no_blanks = 1;
 
   /* Precision for snprintf call.  */
-  int precision = get_precision (dtp, &f, source, kind);
+  int precision = get_precision (dtp, &ff, source, kind);
 
   /* String buffer to hold final result.  */
-  result = select_string (dtp, &f, str_buf, &res_len, kind);
+  result = select_string (dtp, &ff, str_buf, &res_len, kind);
 
-  buffer = select_buffer (dtp, &f, precision, buf_stack, &buf_size, kind);
+  buffer = select_buffer (dtp, &ff, precision, buf_stack, &buf_size, kind);
 
-  get_float_string (dtp, &f, source , kind, comp_d, buffer,
-                           precision, buf_size, result, &flt_str_len);
+  get_float_string (dtp, &ff, source , kind, comp_d, buffer,
+		    precision, buf_size, result, &flt_str_len);
   write_float_string (dtp, result, flt_str_len);
 
   dtp->u.p.g0_no_blanks = 0;

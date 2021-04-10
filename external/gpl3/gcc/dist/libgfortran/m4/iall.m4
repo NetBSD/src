@@ -1,5 +1,5 @@
 `/* Implementation of the IALL intrinsic
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Tobias Burnus <burnus@net-b.de>
 
 This file is part of the GNU Fortran runtime library (libgfortran).
@@ -35,7 +35,7 @@ ARRAY_FUNCTION(0,
 `  result &= *src;')
 
 MASKED_ARRAY_FUNCTION(0,
-`  result = 0;',
+`  result = ('rtype_name`) -1;',
 `  if (*msrc)
     result &= *src;')
 

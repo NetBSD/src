@@ -1,5 +1,5 @@
 /* Subroutines common to both C and C++ pretty-printers.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -29,6 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "tree-pretty-print.h"
 #include "selftest.h"
+#include "langhooks.h"
 
 /* The pretty-printer code is primarily designed to closely follow
    (GNU) C and C++ grammars.  That is to be contrasted with spaghetti
@@ -278,7 +279,11 @@ pp_c_pointer (c_pretty_printer *pp, tree t)
       if (TREE_CODE (t) == POINTER_TYPE)
 	pp_c_star (pp);
       else
-	pp_c_ampersand (pp);
+	{
+	  pp_c_ampersand (pp);
+	  if (TYPE_REF_IS_RVALUE (t))
+	    pp_c_ampersand (pp);
+	}
       pp_c_type_qualifier_list (pp, t);
       break;
 
@@ -470,6 +475,16 @@ pp_c_specifier_qualifier_list (c_pretty_printer *pp, tree t)
 			     ? "_Complex" : "__complex__"));
       else if (code == VECTOR_TYPE)
 	{
+	  /* The syntax we print for vector types isn't real C or C++ syntax,
+	     so it's better to print the type name if we have one.  */
+	  tree name = TYPE_NAME (t);
+	  if (!(pp->flags & pp_c_flag_gnu_v3)
+	      && name
+	      && TREE_CODE (name) == TYPE_DECL)
+	    {
+	      pp->id_expression (name);
+	      break;
+	    }
 	  pp_c_ws_string (pp, "__vector");
 	  pp_c_left_paren (pp);
 	  pp_wide_integer (pp, TYPE_VECTOR_SUBPARTS (t));
@@ -525,7 +540,7 @@ pp_c_parameter_type_list (c_pretty_printer *pp, tree t)
       if (!first && !parms)
 	{
 	  pp_separate_with (pp, ',');
-	  pp_c_ws_string (pp, "...");
+	  pp_string (pp, "...");
 	}
     }
   pp_c_right_paren (pp);
@@ -571,16 +586,22 @@ c_pretty_printer::direct_abstract_declarator (tree t)
 
     case ARRAY_TYPE:
       pp_c_left_bracket (this);
-      if (TYPE_DOMAIN (t) && TYPE_MAX_VALUE (TYPE_DOMAIN (t)))
+      if (tree dom = TYPE_DOMAIN (t))
 	{
-	  tree maxval = TYPE_MAX_VALUE (TYPE_DOMAIN (t));
-	  tree type = TREE_TYPE (maxval);
+	  if (tree maxval = TYPE_MAX_VALUE (dom))
+	    {
+	      tree type = TREE_TYPE (maxval);
 
-	  if (tree_fits_shwi_p (maxval))
-	    pp_wide_integer (this, tree_to_shwi (maxval) + 1);
-	  else
-	    expression (fold_build2 (PLUS_EXPR, type, maxval,
-                                     build_int_cst (type, 1)));
+	      if (tree_fits_shwi_p (maxval))
+		pp_wide_integer (this, tree_to_shwi (maxval) + 1);
+	      else
+		expression (fold_build2 (PLUS_EXPR, type, maxval,
+					 build_int_cst (type, 1)));
+	    }
+	  else if (TYPE_SIZE (t))
+	    /* Print zero for zero-length arrays but not for flexible
+	       array members whose TYPE_SIZE is null.  */
+	    pp_string (this, "0");
 	}
       pp_c_right_bracket (this);
       direct_abstract_declarator (TREE_TYPE (t));
@@ -1620,6 +1641,7 @@ c_pretty_printer::postfix_expression (tree e)
       break;
 
     case MEM_REF:
+    case TARGET_MEM_REF:
       expression (e);
       break;
 
@@ -1769,8 +1791,9 @@ c_pretty_printer::unary_expression (tree e)
 	  if (!integer_zerop (TREE_OPERAND (e, 1)))
 	    {
 	      pp_c_left_paren (this);
-	      if (!integer_onep (TYPE_SIZE_UNIT
-				 (TREE_TYPE (TREE_TYPE (TREE_OPERAND (e, 0))))))
+	      tree type = TREE_TYPE (TREE_TYPE (TREE_OPERAND (e, 0)));
+	      if (TYPE_SIZE_UNIT (type) == NULL_TREE
+		  || !integer_onep (TYPE_SIZE_UNIT (type)))
 		pp_c_type_cast (this, ptr_type_node);
 	    }
 	  pp_c_cast_expression (this, TREE_OPERAND (e, 0));
@@ -1783,6 +1806,62 @@ c_pretty_printer::unary_expression (tree e)
 	      pp_c_right_paren (this);
 	    }
 	}
+      break;
+
+    case TARGET_MEM_REF:
+      /* TARGET_MEM_REF can't appear directly from source, but can appear
+	 during late GIMPLE optimizations and through late diagnostic we might
+	 need to support it.  Print it as dereferencing of a pointer after
+	 cast to the TARGET_MEM_REF type, with pointer arithmetics on some
+	 pointer to single byte types, so
+	 *(type *)((char *) ptr + step * index + index2) if all the operands
+	 are present and the casts are needed.  */
+      pp_c_star (this);
+      if (TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (TMR_BASE (e)))) == NULL_TREE
+	  || !integer_onep (TYPE_SIZE_UNIT
+				(TREE_TYPE (TREE_TYPE (TMR_BASE (e))))))
+	{
+	  if (TYPE_SIZE_UNIT (TREE_TYPE (e))
+	      && integer_onep (TYPE_SIZE_UNIT (TREE_TYPE (e))))
+	    {
+	      pp_c_left_paren (this);
+	      pp_c_type_cast (this, build_pointer_type (TREE_TYPE (e)));
+	    }
+	  else
+	    {
+	      pp_c_type_cast (this, build_pointer_type (TREE_TYPE (e)));
+	      pp_c_left_paren (this);
+	      pp_c_type_cast (this, build_pointer_type (char_type_node));
+	    }
+	}
+      else if (!lang_hooks.types_compatible_p
+		  (TREE_TYPE (e), TREE_TYPE (TREE_TYPE (TMR_BASE (e)))))
+	{
+	  pp_c_type_cast (this, build_pointer_type (TREE_TYPE (e)));
+	  pp_c_left_paren (this);
+	}
+      else
+	pp_c_left_paren (this);
+      pp_c_cast_expression (this, TMR_BASE (e));
+      if (TMR_STEP (e) && TMR_INDEX (e))
+	{
+	  pp_plus (this);
+	  pp_c_cast_expression (this, TMR_INDEX (e));
+	  pp_c_star (this);
+	  pp_c_cast_expression (this, TMR_STEP (e));
+	}
+      if (TMR_INDEX2 (e))
+	{
+	  pp_plus (this);
+	  pp_c_cast_expression (this, TMR_INDEX2 (e));
+	}
+      if (!integer_zerop (TMR_OFFSET (e)))
+	{
+	  pp_plus (this);
+	  pp_c_integer_constant (this,
+				 fold_convert (ssizetype, TMR_OFFSET (e)));
+	}
+      pp_c_right_paren (this);
       break;
 
     case REALPART_EXPR:
@@ -2212,6 +2291,7 @@ c_pretty_printer::expression (tree e)
     case ADDR_EXPR:
     case INDIRECT_REF:
     case MEM_REF:
+    case TARGET_MEM_REF:
     case NEGATE_EXPR:
     case BIT_NOT_EXPR:
     case TRUTH_NOT_EXPR:
@@ -2358,6 +2438,13 @@ c_pretty_printer::c_pretty_printer ()
   parameter_list            = pp_c_parameter_type_list;
 }
 
+/* c_pretty_printer's implementation of pretty_printer::clone vfunc.  */
+
+pretty_printer *
+c_pretty_printer::clone () const
+{
+  return new c_pretty_printer (*this);
+}
 
 /* Print the tree T in full, on file FILE.  */
 

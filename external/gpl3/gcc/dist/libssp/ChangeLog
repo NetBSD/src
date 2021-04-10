@@ -1,14 +1,42 @@
-2020-03-12  Release Manager
+2021-04-08  Release Manager
 
-	* GCC 9.3.0 released.
+	* GCC 10.3.0 released.
 
-2019-08-12  Release Manager
+2021-01-03  Iain Sandoe  <iain@sandoe.co.uk>
+	    Jakub Jelinek   <jakub@redhat.com>
 
-	* GCC 9.2.0 released.
+	PR target/97865
+	* configure: Regenerate.
 
-2019-05-03  Release Manager
+2020-07-23  Release Manager
 
-	* GCC 9.1.0 released.
+	* GCC 10.2.0 released.
+
+2020-05-07  Release Manager
+
+	* GCC 10.1.0 released.
+
+2020-02-12  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR libstdc++/79193
+	PR libstdc++/88999
+
+	* configure: Regenerated.
+
+2020-01-24  Maciej W. Rozycki  <macro@wdc.com>
+
+	* configure.ac: Handle `--with-toolexeclibdir='.
+	* Makefile.in: Regenerate.
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+
+2020-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2019-09-27  Maciej W. Rozycki  <macro@wdc.com>
+
+	* configure: Regenerate.
 
 2019-01-01  Jakub Jelinek  <jakub@redhat.com>
 

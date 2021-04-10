@@ -1,5 +1,5 @@
 /* Perform optimizations on tree structure.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Written by Mark Michell (mark@codesourcery.com).
 
 This file is part of GCC.
@@ -223,9 +223,6 @@ can_alias_cdtor (tree fn)
   /* We can't use an alias if there are virtual bases.  */
   if (CLASSTYPE_VBASECLASSES (DECL_CONTEXT (fn)))
     return false;
-  /* ??? Why not use aliases with -frepo?  */
-  if (flag_use_repository)
-    return false;
   gcc_assert (DECL_MAYBE_IN_CHARGE_CDTOR_P (fn));
   /* Don't use aliases for weak/linkonce definitions unless we can put both
      symbols in the same COMDAT group.  */
@@ -247,8 +244,6 @@ populate_clone_array (tree fn, tree *fns)
   fns[1] = NULL_TREE;
   fns[2] = NULL_TREE;
 
-  /* Look for the complete destructor which may be used to build the
-     delete destructor.  */
   FOR_EACH_CLONE (clone, fn)
     if (DECL_NAME (clone) == complete_dtor_identifier
 	|| DECL_NAME (clone) == complete_ctor_identifier)

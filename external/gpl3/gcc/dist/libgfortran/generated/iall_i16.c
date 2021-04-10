@@ -1,5 +1,5 @@
 /* Implementation of the IALL intrinsic
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Tobias Burnus <burnus@net-b.de>
 
 This file is part of the GNU Fortran runtime library (libgfortran).
@@ -345,7 +345,7 @@ miall_i16 (gfc_array_i16 * const restrict retarray,
       msrc = mbase;
       {
 
-  result = 0;
+  result = (GFC_INTEGER_16) -1;
 	for (n = 0; n < len; n++, src += delta, msrc += mdelta)
 	  {
 

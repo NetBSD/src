@@ -1,6 +1,6 @@
 // <chrono> -*- C++ -*-
 
-// Copyright (C) 2008-2019 Free Software Foundation, Inc.
+// Copyright (C) 2008-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,6 +24,7 @@
 
 /** @file include/chrono
  *  This is a Standard C++ Library header.
+ *  @ingroup chrono
  */
 
 #ifndef _GLIBCXX_CHRONO
@@ -40,10 +41,18 @@
 #include <limits>
 #include <ctime>
 #include <bits/parse_numbers.h> // for literals support.
+#if __cplusplus > 201703L
+# include <concepts>
+# include <compare>
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+#if __cplusplus >= 201703L
+  namespace filesystem { struct __file_clock; };
+#endif
 
   /**
    * @defgroup chrono Time
@@ -54,7 +63,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
 
   /** @namespace std::chrono
-   *  @brief ISO C++ 2011 entities sub-namespace for time and date.
+   *  @brief ISO C++ 2011 namespace for date and time utilities
    */
   namespace chrono
   {
@@ -67,52 +76,104 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // 20.11.4.3 specialization of common_type (for duration, sfinae-friendly)
 
+  /// @cond undocumented
+
+  template<typename _CT, typename _Period1, typename _Period2, typename = void>
+    struct __duration_common_type
+    { };
+
   template<typename _CT, typename _Period1, typename _Period2>
-    struct __duration_common_type_wrapper
+    struct __duration_common_type<_CT, _Period1, _Period2,
+				  __void_t<typename _CT::type>>
     {
     private:
-      typedef __static_gcd<_Period1::num, _Period2::num> __gcd_num;
-      typedef __static_gcd<_Period1::den, _Period2::den> __gcd_den;
-      typedef typename _CT::type __cr;
-      typedef ratio<__gcd_num::value,
-        (_Period1::den / __gcd_den::value) * _Period2::den> __r;
+      using __gcd_num = __static_gcd<_Period1::num, _Period2::num>;
+      using __gcd_den = __static_gcd<_Period1::den, _Period2::den>;
+      using __cr = typename _CT::type;
+      using __r = ratio<__gcd_num::value,
+			(_Period1::den / __gcd_den::value) * _Period2::den>;
+
     public:
-      typedef __success_type<chrono::duration<__cr, __r>> type;
+      using type = chrono::duration<__cr, typename __r::type>;
     };
 
-  template<typename _Period1, typename _Period2>
-    struct __duration_common_type_wrapper<__failure_type, _Period1, _Period2>
-    { typedef __failure_type type; };
+  /// @endcond
 
+  /// Specialization of common_type for chrono::duration types.
+  /// @relates duration
   template<typename _Rep1, typename _Period1, typename _Rep2, typename _Period2>
     struct common_type<chrono::duration<_Rep1, _Period1>,
-             chrono::duration<_Rep2, _Period2>>
-    : public __duration_common_type_wrapper<typename __member_type_wrapper<
-             common_type<_Rep1, _Rep2>>::type, _Period1, _Period2>::type
+		       chrono::duration<_Rep2, _Period2>>
+    : __duration_common_type<common_type<_Rep1, _Rep2>,
+			     typename _Period1::type,
+			     typename _Period2::type>
     { };
+
+  /// Specialization of common_type for two identical chrono::duration types.
+  /// @relates duration
+  template<typename _Rep, typename _Period>
+    struct common_type<chrono::duration<_Rep, _Period>,
+		       chrono::duration<_Rep, _Period>>
+    {
+      using type = chrono::duration<typename common_type<_Rep>::type,
+				    typename _Period::type>;
+    };
+
+  /// Specialization of common_type for one chrono::duration type.
+  /// @relates duration
+  template<typename _Rep, typename _Period>
+    struct common_type<chrono::duration<_Rep, _Period>>
+    {
+      using type = chrono::duration<typename common_type<_Rep>::type,
+				    typename _Period::type>;
+    };
 
   // 20.11.4.3 specialization of common_type (for time_point, sfinae-friendly)
 
+  /// @cond undocumented
+
+  template<typename _CT, typename _Clock, typename = void>
+    struct __timepoint_common_type
+    { };
+
   template<typename _CT, typename _Clock>
-    struct __timepoint_common_type_wrapper
+    struct __timepoint_common_type<_CT, _Clock, __void_t<typename _CT::type>>
     {
-      typedef __success_type<chrono::time_point<_Clock, typename _CT::type>>
-        type;
+      using type = chrono::time_point<_Clock, typename _CT::type>;
     };
 
-  template<typename _Clock>
-    struct __timepoint_common_type_wrapper<__failure_type, _Clock>
-    { typedef __failure_type type; };
+  /// @endcond
 
+  /// Specialization of common_type for chrono::time_point types.
+  /// @relates time_point
   template<typename _Clock, typename _Duration1, typename _Duration2>
     struct common_type<chrono::time_point<_Clock, _Duration1>,
-             chrono::time_point<_Clock, _Duration2>>
-    : public __timepoint_common_type_wrapper<typename __member_type_wrapper<
-             common_type<_Duration1, _Duration2>>::type, _Clock>::type
+		       chrono::time_point<_Clock, _Duration2>>
+    : __timepoint_common_type<common_type<_Duration1, _Duration2>, _Clock>
     { };
+
+  /// Specialization of common_type for two identical chrono::time_point types.
+  /// @relates time_point
+  template<typename _Clock, typename _Duration>
+    struct common_type<chrono::time_point<_Clock, _Duration>,
+		       chrono::time_point<_Clock, _Duration>>
+    { using type = chrono::time_point<_Clock, _Duration>; };
+
+  /// Specialization of common_type for one chrono::time_point type.
+  /// @relates time_point
+  template<typename _Clock, typename _Duration>
+    struct common_type<chrono::time_point<_Clock, _Duration>>
+    { using type = chrono::time_point<_Clock, _Duration>; };
+
+  // @} group chrono
 
   namespace chrono
   {
+    /// @addtogroup chrono
+    /// @{
+
+    /// @cond undocumented
+
     // Primary template for duration_cast impl.
     template<typename _ToDur, typename _CF, typename _CR,
 	     bool _NumIsOne = false, bool _DenIsOne = false>
@@ -185,6 +246,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       using __disable_if_is_duration
 	= typename enable_if<!__is_duration<_Tp>::value, _Tp>::type;
 
+    /// @endcond
+
     /// duration_cast
     template<typename _ToDur, typename _Rep, typename _Period>
       constexpr __enable_if_is_duration<_ToDur>
@@ -211,6 +274,60 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       inline constexpr bool treat_as_floating_point_v =
         treat_as_floating_point<_Rep>::value;
 #endif // C++17
+
+#if __cplusplus > 201703L
+    template<typename _Tp>
+      struct is_clock;
+
+    template<typename _Tp>
+      inline constexpr bool is_clock_v = is_clock<_Tp>::value;
+
+#if __cpp_lib_concepts
+    template<typename _Tp>
+      struct is_clock : false_type
+      { };
+
+    template<typename _Tp>
+      requires requires {
+	typename _Tp::rep;
+	typename _Tp::period;
+	typename _Tp::duration;
+	typename _Tp::time_point::clock;
+	typename _Tp::time_point::duration;
+	{ &_Tp::is_steady } -> same_as<const bool*>;
+	{ _Tp::now() } -> same_as<typename _Tp::time_point>;
+	requires same_as<typename _Tp::duration,
+			 duration<typename _Tp::rep, typename _Tp::period>>;
+	requires same_as<typename _Tp::time_point::duration,
+			 typename _Tp::duration>;
+      }
+      struct is_clock<_Tp> : true_type
+      { };
+#else
+    template<typename _Tp, typename = void>
+      struct __is_clock_impl : false_type
+      { };
+
+    template<typename _Tp>
+      struct __is_clock_impl<_Tp,
+			     void_t<typename _Tp::rep, typename _Tp::period,
+				    typename _Tp::duration,
+				    typename _Tp::time_point::duration,
+				    decltype(_Tp::is_steady),
+				    decltype(_Tp::now())>>
+      : __and_<is_same<typename _Tp::duration,
+		       duration<typename _Tp::rep, typename _Tp::period>>,
+	       is_same<typename _Tp::time_point::duration,
+		       typename _Tp::duration>,
+	       is_same<decltype(&_Tp::is_steady), const bool*>,
+	       is_same<decltype(_Tp::now()), typename _Tp::time_point>>::type
+      { };
+
+    template<typename _Tp>
+      struct is_clock : __is_clock_impl<_Tp>::type
+      { };
+#endif
+#endif // C++20
 
 #if __cplusplus >= 201703L
 # define __cpp_lib_chrono 201611
@@ -285,6 +402,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{ return numeric_limits<_Rep>::lowest(); }
       };
 
+    /// @cond undocumented
+
     template<typename _Tp>
       struct __is_ratio
       : std::false_type
@@ -295,6 +414,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       : std::true_type
       { };
 
+    /// @endcond
+
     /// duration
     template<typename _Rep, typename _Period>
       struct duration
@@ -303,15 +424,33 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	template<typename _Rep2>
 	  using __is_float = treat_as_floating_point<_Rep2>;
 
+	static constexpr intmax_t
+	_S_gcd(intmax_t __m, intmax_t __n) noexcept
+	{
+	  // Duration only allows positive periods so we don't need to
+	  // support negative values here (unlike __static_gcd and std::gcd).
+	  return (__m == 0) ? __n : (__n == 0) ? __m : _S_gcd(__n, __m % __n);
+	}
+
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 2094. overflow shouldn't participate in overload resolution
+	// 3090. What is [2094] intended to mean?
+	// This only produces a valid type if no overflow occurs.
+	template<typename _R1, typename _R2,
+		 intmax_t __gcd1 = _S_gcd(_R1::num, _R2::num),
+		 intmax_t __gcd2 = _S_gcd(_R1::den, _R2::den)>
+	  using __divide = ratio<(_R1::num / __gcd1) * (_R2::den / __gcd2),
+				 (_R1::den / __gcd2) * (_R2::num / __gcd1)>;
+
 	// _Period2 is an exact multiple of _Period
 	template<typename _Period2>
 	  using __is_harmonic
-	    = __bool_constant<ratio_divide<_Period2, _Period>::den == 1>;
+	    = __bool_constant<__divide<_Period2, _Period>::den == 1>;
 
       public:
 
-	typedef _Rep						rep;
-	typedef _Period 					period;
+	using rep = _Rep;
+	using period = typename _Period::type;
 
 	static_assert(!__is_duration<_Rep>::value, "rep cannot be a duration");
 	static_assert(__is_ratio<_Period>::value,
@@ -332,6 +471,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  : __r(static_cast<rep>(__rep)) { }
 
 	template<typename _Rep2, typename _Period2, typename = _Require<
+		 is_convertible<const _Rep2&, rep>,
 		 __or_<__is_float<rep>,
 		       __and_<__is_harmonic<_Period2>,
 			      __not_<__is_float<_Rep2>>>>>>
@@ -347,13 +487,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{ return __r; }
 
 	// 20.11.5.3 arithmetic
-	constexpr duration
-	operator+() const
-	{ return *this; }
 
-	constexpr duration
+	constexpr duration<typename common_type<rep>::type, period>
+	operator+() const
+	{ return duration<typename common_type<rep>::type, period>(__r); }
+
+	constexpr duration<typename common_type<rep>::type, period>
 	operator-() const
-	{ return duration(-__r); }
+	{ return duration<typename common_type<rep>::type, period>(-__r); }
 
 	_GLIBCXX17_CONSTEXPR duration&
 	operator++()
@@ -443,6 +584,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	rep __r;
       };
 
+    /// @relates duration @{
+
+    /// The sum of two durations.
     template<typename _Rep1, typename _Period1,
 	     typename _Rep2, typename _Period2>
       constexpr typename common_type<duration<_Rep1, _Period1>,
@@ -456,6 +600,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return __cd(__cd(__lhs).count() + __cd(__rhs).count());
       }
 
+    /// The difference between two durations.
     template<typename _Rep1, typename _Period1,
 	     typename _Rep2, typename _Period2>
       constexpr typename common_type<duration<_Rep1, _Period1>,
@@ -469,6 +614,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return __cd(__cd(__lhs).count() - __cd(__rhs).count());
       }
 
+    /// @}
+
+    /// @cond undocumented
+
     // SFINAE helper to obtain common_type<_Rep1, _Rep2> only if _Rep2
     // is implicitly convertible to it.
     // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -478,6 +627,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       using __common_rep_t = typename
 	enable_if<is_convertible<const _Rep2&, _CRep>::value, _CRep>::type;
 
+    /// @endcond
+
+    /// @relates duration @{
+
+    /// Multiply a duration by a scalar value.
     template<typename _Rep1, typename _Period, typename _Rep2>
       constexpr duration<__common_rep_t<_Rep1, _Rep2>, _Period>
       operator*(const duration<_Rep1, _Period>& __d, const _Rep2& __s)
@@ -487,6 +641,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return __cd(__cd(__d).count() * __s);
       }
 
+    /// Multiply a duration by a scalar value.
     template<typename _Rep1, typename _Rep2, typename _Period>
       constexpr duration<__common_rep_t<_Rep2, _Rep1>, _Period>
       operator*(const _Rep1& __s, const duration<_Rep2, _Period>& __d)
@@ -539,6 +694,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 
     // comparisons
+
     template<typename _Rep1, typename _Period1,
 	     typename _Rep2, typename _Period2>
       constexpr bool
@@ -563,12 +719,26 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return __ct(__lhs).count() < __ct(__rhs).count();
       }
 
+#if __cpp_lib_three_way_comparison
+    template<typename _Rep1, typename _Period1,
+	     typename _Rep2, typename _Period2>
+      requires three_way_comparable<common_type_t<_Rep1, _Rep2>>
+      constexpr auto
+      operator<=>(const duration<_Rep1, _Period1>& __lhs,
+		  const duration<_Rep2, _Period2>& __rhs)
+      {
+	using __ct = common_type_t<duration<_Rep1, _Period1>,
+				   duration<_Rep2, _Period2>>;
+	return __ct(__lhs).count() <=> __ct(__rhs).count();
+      }
+#else
     template<typename _Rep1, typename _Period1,
 	     typename _Rep2, typename _Period2>
       constexpr bool
       operator!=(const duration<_Rep1, _Period1>& __lhs,
 		 const duration<_Rep2, _Period2>& __rhs)
       { return !(__lhs == __rhs); }
+#endif
 
     template<typename _Rep1, typename _Period1,
 	     typename _Rep2, typename _Period2>
@@ -591,6 +761,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		 const duration<_Rep2, _Period2>& __rhs)
       { return !(__lhs < __rhs); }
 
+    /// @}
+
 #ifdef _GLIBCXX_USE_C99_STDINT_TR1
 # define _GLIBCXX_CHRONO_INT64_T int64_t
 #elif defined __INT64_TYPE__
@@ -602,22 +774,36 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
 
     /// nanoseconds
-    typedef duration<_GLIBCXX_CHRONO_INT64_T, nano> 	    nanoseconds;
+    using nanoseconds	= duration<_GLIBCXX_CHRONO_INT64_T, nano>;
 
     /// microseconds
-    typedef duration<_GLIBCXX_CHRONO_INT64_T, micro> 	    microseconds;
+    using microseconds	= duration<_GLIBCXX_CHRONO_INT64_T, micro>;
 
     /// milliseconds
-    typedef duration<_GLIBCXX_CHRONO_INT64_T, milli> 	    milliseconds;
+    using milliseconds	= duration<_GLIBCXX_CHRONO_INT64_T, milli>;
 
     /// seconds
-    typedef duration<_GLIBCXX_CHRONO_INT64_T> 		    seconds;
+    using seconds	= duration<_GLIBCXX_CHRONO_INT64_T>;
 
     /// minutes
-    typedef duration<_GLIBCXX_CHRONO_INT64_T, ratio< 60>>   minutes;
+    using minutes	= duration<_GLIBCXX_CHRONO_INT64_T, ratio< 60>>;
 
     /// hours
-    typedef duration<_GLIBCXX_CHRONO_INT64_T, ratio<3600>>  hours;
+    using hours		= duration<_GLIBCXX_CHRONO_INT64_T, ratio<3600>>;
+
+#if __cplusplus > 201703L
+    /// days
+    using days		= duration<_GLIBCXX_CHRONO_INT64_T, ratio<86400>>;
+
+    /// weeks
+    using weeks		= duration<_GLIBCXX_CHRONO_INT64_T, ratio<604800>>;
+
+    /// years
+    using years		= duration<_GLIBCXX_CHRONO_INT64_T, ratio<31556952>>;
+
+    /// months
+    using months	= duration<_GLIBCXX_CHRONO_INT64_T, ratio<2629746>>;
+#endif // C++20
 
 #undef _GLIBCXX_CHRONO_INT64_T
 
@@ -625,9 +811,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     template<typename _Clock, typename _Dur>
       struct time_point
       {
-	typedef _Clock			  			clock;
-	typedef _Dur		  				duration;
-	typedef typename duration::rep	  			rep;
+	static_assert(__is_duration<_Dur>::value,
+	    "duration must be a specialization of std::chrono::duration");
+
+	typedef _Clock						clock;
+	typedef _Dur						duration;
+	typedef typename duration::rep				rep;
 	typedef typename duration::period			period;
 
 	constexpr time_point() : __d(duration::zero())
@@ -683,7 +872,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 				   time_point<_Clock, _ToDur>>::type
       time_point_cast(const time_point<_Clock, _Dur>& __t)
       {
-	typedef time_point<_Clock, _ToDur> 			__time_point;
+	typedef time_point<_Clock, _ToDur>			__time_point;
 	return __time_point(duration_cast<_ToDur>(__t.time_since_epoch()));
       }
 
@@ -718,6 +907,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 #endif // C++17
 
+    /// @relates time_point @{
+
+    /// Adjust a time point forwards by the given duration.
     template<typename _Clock, typename _Dur1,
 	     typename _Rep2, typename _Period2>
       constexpr time_point<_Clock,
@@ -727,10 +919,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       {
 	typedef duration<_Rep2, _Period2>			__dur2;
 	typedef typename common_type<_Dur1,__dur2>::type	__ct;
-	typedef time_point<_Clock, __ct> 			__time_point;
+	typedef time_point<_Clock, __ct>			__time_point;
 	return __time_point(__lhs.time_since_epoch() + __rhs);
       }
 
+    /// Adjust a time point forwards by the given duration.
     template<typename _Rep1, typename _Period1,
 	     typename _Clock, typename _Dur2>
       constexpr time_point<_Clock,
@@ -740,10 +933,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       {
 	typedef duration<_Rep1, _Period1>			__dur1;
 	typedef typename common_type<__dur1,_Dur2>::type	__ct;
-	typedef time_point<_Clock, __ct> 			__time_point;
+	typedef time_point<_Clock, __ct>			__time_point;
 	return __time_point(__rhs.time_since_epoch() + __lhs);
       }
 
+    /// Adjust a time point backwards by the given duration.
     template<typename _Clock, typename _Dur1,
 	     typename _Rep2, typename _Period2>
       constexpr time_point<_Clock,
@@ -753,10 +947,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       {
 	typedef duration<_Rep2, _Period2>			__dur2;
 	typedef typename common_type<_Dur1,__dur2>::type	__ct;
-	typedef time_point<_Clock, __ct> 			__time_point;
+	typedef time_point<_Clock, __ct>			__time_point;
 	return __time_point(__lhs.time_since_epoch() -__rhs);
       }
 
+    /// @}
+
+    /// @relates time_point @{
+
+    /// The difference between two time points (as a duration)
     template<typename _Clock, typename _Dur1, typename _Dur2>
       constexpr typename common_type<_Dur1, _Dur2>::type
       operator-(const time_point<_Clock, _Dur1>& __lhs,
@@ -769,11 +968,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		 const time_point<_Clock, _Dur2>& __rhs)
       { return __lhs.time_since_epoch() == __rhs.time_since_epoch(); }
 
+#if __cpp_lib_three_way_comparison
+    template<typename _Clock, typename _Dur1,
+	     three_way_comparable_with<_Dur1> _Dur2>
+      constexpr auto
+      operator<=>(const time_point<_Clock, _Dur1>& __lhs,
+		  const time_point<_Clock, _Dur2>& __rhs)
+      { return __lhs.time_since_epoch() <=> __rhs.time_since_epoch(); }
+#else
     template<typename _Clock, typename _Dur1, typename _Dur2>
       constexpr bool
       operator!=(const time_point<_Clock, _Dur1>& __lhs,
 		 const time_point<_Clock, _Dur2>& __rhs)
       { return !(__lhs == __rhs); }
+#endif
 
     template<typename _Clock, typename _Dur1, typename _Dur2>
       constexpr bool
@@ -799,6 +1007,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		 const time_point<_Clock, _Dur2>& __rhs)
       { return !(__lhs < __rhs); }
 
+    // @}
 
     // Clocks.
 
@@ -824,12 +1033,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
      *  @brief System clock.
      *
      *  Time returned represents wall time from the system-wide clock.
+     *  @ingroup chrono
     */
     struct system_clock
     {
-      typedef chrono::nanoseconds     				duration;
-      typedef duration::rep    					rep;
-      typedef duration::period 					period;
+      typedef chrono::nanoseconds				duration;
+      typedef duration::rep					rep;
+      typedef duration::period					period;
       typedef chrono::time_point<system_clock, duration> 	time_point;
 
       static_assert(system_clock::duration::min()
@@ -863,13 +1073,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
      *  @brief Monotonic clock
      *
      *  Time returned has the property of only increasing at a uniform rate.
+     *  @ingroup chrono
     */
     struct steady_clock
     {
-      typedef chrono::nanoseconds 				duration;
-      typedef duration::rep	  				rep;
-      typedef duration::period	  				period;
-      typedef chrono::time_point<steady_clock, duration> 	time_point;
+      typedef chrono::nanoseconds				duration;
+      typedef duration::rep					rep;
+      typedef duration::period					period;
+      typedef chrono::time_point<steady_clock, duration>	time_point;
 
       static constexpr bool is_steady = true;
 
@@ -884,10 +1095,39 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
      *  This is the clock "with the shortest tick period." Alias to
      *  std::system_clock until higher-than-nanosecond definitions
      *  become feasible.
+     *  @ingroup chrono
     */
     using high_resolution_clock = system_clock;
 
     } // end inline namespace _V2
+
+#if __cplusplus > 201703L
+    template<typename _Duration>
+      using sys_time = time_point<system_clock, _Duration>;
+    using sys_seconds = sys_time<seconds>;
+    using sys_days = sys_time<days>;
+
+    using file_clock = ::std::filesystem::__file_clock;
+
+    template<typename _Duration>
+      using file_time = time_point<file_clock, _Duration>;
+
+    template<> struct is_clock<system_clock> : true_type { };
+    template<> struct is_clock<steady_clock> : true_type { };
+    template<> struct is_clock<file_clock> : true_type { };
+
+    template<> inline constexpr bool is_clock_v<system_clock> = true;
+    template<> inline constexpr bool is_clock_v<steady_clock> = true;
+    template<> inline constexpr bool is_clock_v<file_clock> = true;
+
+    struct local_t { };
+    template<typename _Duration>
+      using local_time = time_point<local_t, _Duration>;
+    using local_seconds = local_time<seconds>;
+    using local_days = local_time<days>;
+#endif // C++20
+
+    // @}
   } // namespace chrono
 
 #if __cplusplus > 201103L
@@ -896,10 +1136,34 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   inline namespace literals
   {
+  /** ISO C++ 2014  namespace for suffixes for duration literals.
+   *
+   * These suffixes can be used to create `chrono::duration` values with
+   * tick periods of hours, minutes, seconds, milliseconds, microseconds
+   * or nanoseconds. For example, `std::chrono::seconds(5)` can be written
+   * as `5s` after making the suffix visible in the current scope.
+   * The suffixes can be made visible by a using-directive or
+   * using-declaration such as:
+   *  - `using namespace std::chrono_literals;`
+   *  - `using namespace std::literals;`
+   *  - `using namespace std::chrono;`
+   *  - `using namespace std;`
+   *  - `using std::chrono_literals::operator""s;`
+   *
+   * The result of these suffixes on an integer literal is one of the
+   * standard typedefs such as `std::chrono::hours`.
+   * The result on a floating-point literal is a duration type with the
+   * specified tick period and an unspecified floating-point representation,
+   * for example `1.5e2ms` might be equivalent to
+   * `chrono::duration<long double, chrono::milli>(1.5e2)`.
+   *
+   * @ingroup chrono
+   */
   inline namespace chrono_literals
   {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wliteral-suffix"
+    /// @cond undocumented
     template<typename _Dur, char... _Digits>
       constexpr _Dur __check_overflow()
       {
@@ -909,56 +1173,69 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		      "literal value cannot be represented by duration type");
 	return _Dur(__repval);
       }
+    /// @endcond
 
+    /// Literal suffix for durations representing non-integer hours
     constexpr chrono::duration<long double, ratio<3600,1>>
     operator""h(long double __hours)
     { return chrono::duration<long double, ratio<3600,1>>{__hours}; }
 
+    /// Literal suffix for durations of type `std::chrono::hours`
     template <char... _Digits>
       constexpr chrono::hours
       operator""h()
       { return __check_overflow<chrono::hours, _Digits...>(); }
 
+    /// Literal suffix for durations representing non-integer minutes
     constexpr chrono::duration<long double, ratio<60,1>>
     operator""min(long double __mins)
     { return chrono::duration<long double, ratio<60,1>>{__mins}; }
 
+    /// Literal suffix for durations of type `std::chrono::minutes`
     template <char... _Digits>
       constexpr chrono::minutes
       operator""min()
       { return __check_overflow<chrono::minutes, _Digits...>(); }
 
+    /// Literal suffix for durations representing non-integer seconds
     constexpr chrono::duration<long double>
     operator""s(long double __secs)
     { return chrono::duration<long double>{__secs}; }
 
+    /// Literal suffix for durations of type `std::chrono::seconds`
     template <char... _Digits>
       constexpr chrono::seconds
       operator""s()
       { return __check_overflow<chrono::seconds, _Digits...>(); }
 
+    /// Literal suffix for durations representing non-integer milliseconds
     constexpr chrono::duration<long double, milli>
     operator""ms(long double __msecs)
     { return chrono::duration<long double, milli>{__msecs}; }
 
+    /// Literal suffix for durations of type `std::chrono::milliseconds`
     template <char... _Digits>
       constexpr chrono::milliseconds
       operator""ms()
       { return __check_overflow<chrono::milliseconds, _Digits...>(); }
 
+    /// Literal suffix for durations representing non-integer microseconds
     constexpr chrono::duration<long double, micro>
     operator""us(long double __usecs)
     { return chrono::duration<long double, micro>{__usecs}; }
 
+    /// Literal suffix for durations of type `std::chrono::microseconds`
     template <char... _Digits>
       constexpr chrono::microseconds
       operator""us()
       { return __check_overflow<chrono::microseconds, _Digits...>(); }
 
+    /// Literal suffix for durations representing non-integer nanoseconds
     constexpr chrono::duration<long double, nano>
     operator""ns(long double __nsecs)
     { return chrono::duration<long double, nano>{__nsecs}; }
 
+    /// Literal suffix for durations of type `std::chrono::nanoseconds`
     template <char... _Digits>
       constexpr chrono::nanoseconds
       operator""ns()
@@ -973,9 +1250,68 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     using namespace literals::chrono_literals;
   } // namespace chrono
 
-#endif // C++14
+#if __cplusplus >= 201703L
+  namespace filesystem
+  {
+    struct __file_clock
+    {
+      using duration                  = chrono::nanoseconds;
+      using rep                       = duration::rep;
+      using period                    = duration::period;
+      using time_point                = chrono::time_point<__file_clock>;
+      static constexpr bool is_steady = false;
 
-  // @} group chrono
+      static time_point
+      now() noexcept
+      { return _S_from_sys(chrono::system_clock::now()); }
+
+#if __cplusplus > 201703L
+      template<typename _Dur>
+	static
+	chrono::file_time<_Dur>
+	from_sys(const chrono::sys_time<_Dur>& __t) noexcept
+	{ return _S_from_sys(__t); }
+
+      // For internal use only
+      template<typename _Dur>
+	static
+	chrono::sys_time<_Dur>
+	to_sys(const chrono::file_time<_Dur>& __t) noexcept
+	{ return _S_to_sys(__t); }
+#endif // C++20
+
+    private:
+      using __sys_clock = chrono::system_clock;
+
+      // This clock's (unspecified) epoch is 2174-01-01 00:00:00 UTC.
+      // A signed 64-bit duration with nanosecond resolution gives roughly
+      // +/- 292 years, which covers the 1901-2446 date range for ext4.
+      static constexpr chrono::seconds _S_epoch_diff{6437664000};
+
+    protected:
+      // For internal use only
+      template<typename _Dur>
+	static
+	chrono::time_point<__file_clock, _Dur>
+	_S_from_sys(const chrono::time_point<__sys_clock, _Dur>& __t) noexcept
+	{
+	  using __file_time = chrono::time_point<__file_clock, _Dur>;
+	  return __file_time{__t.time_since_epoch()} - _S_epoch_diff;
+	}
+
+      // For internal use only
+      template<typename _Dur>
+	static
+	chrono::time_point<__sys_clock, _Dur>
+	_S_to_sys(const chrono::time_point<__file_clock, _Dur>& __t) noexcept
+	{
+	  using __sys_time = chrono::time_point<__sys_clock, _Dur>;
+	  return __sys_time{__t.time_since_epoch()} + _S_epoch_diff;
+	}
+    };
+  } // namespace filesystem
+#endif // C++17
+#endif // C++14
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std

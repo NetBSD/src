@@ -1,6 +1,6 @@
 /* Plugin for HSAIL execution.
 
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
    Contributed by Martin Jambor <mjambor@suse.cz> and
    Martin Liska <mliska@suse.cz>.
@@ -28,11 +28,14 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include <stdbool.h>
 #include <hsa.h>
 #include <plugin/hsa_ext_finalize.h>
@@ -40,6 +43,13 @@
 #include "libgomp-plugin.h"
 #include "gomp-constants.h"
 #include "secure_getenv.h"
+
+#ifdef HAVE_INTTYPES_H
+typedef uint64_t print_uint64_t;
+#else
+#define PRIu64 "lu"
+typedef unsigned long print_uint64_t; 
+#endif
 
 /* As an HSA runtime is dlopened, following structure defines function
    pointers utilized by the HSA plug-in.  */
@@ -244,7 +254,7 @@ init_enviroment_variables (void)
 
   hsa_runtime_lib = secure_getenv ("HSA_RUNTIME_LIB");
   if (hsa_runtime_lib == NULL)
-    hsa_runtime_lib = HSA_RUNTIME_LIB "libhsa-runtime64.so";
+    hsa_runtime_lib = "libhsa-runtime64.so";
 
   support_cpu_devices = secure_getenv ("HSA_SUPPORT_CPU_DEVICES");
 }
@@ -279,7 +289,7 @@ hsa_warn (const char *str, hsa_status_t status)
   if (!debug)
     return;
 
-  const char *hsa_error_msg;
+  const char *hsa_error_msg = "[unknown]";
   hsa_fns.hsa_status_string_fn (status, &hsa_error_msg);
 
   fprintf (stderr, "HSA warning: %s\nRuntime message: %s", str, hsa_error_msg);
@@ -291,7 +301,7 @@ hsa_warn (const char *str, hsa_status_t status)
 static void
 hsa_fatal (const char *str, hsa_status_t status)
 {
-  const char *hsa_error_msg;
+  const char *hsa_error_msg = "[unknown]";
   hsa_fns.hsa_status_string_fn (status, &hsa_error_msg);
   GOMP_PLUGIN_fatal ("HSA fatal error: %s\nRuntime message: %s", str,
 		     hsa_error_msg);
@@ -303,7 +313,7 @@ hsa_fatal (const char *str, hsa_status_t status)
 static bool
 hsa_error (const char *str, hsa_status_t status)
 {
-  const char *hsa_error_msg;
+  const char *hsa_error_msg = "[unknown]";
   hsa_fns.hsa_status_string_fn (status, &hsa_error_msg);
   GOMP_PLUGIN_error ("HSA fatal error: %s\nRuntime message: %s", str,
 		     hsa_error_msg);
@@ -1155,7 +1165,7 @@ static void
 release_kernel_dispatch (struct GOMP_hsa_kernel_dispatch *shadow)
 {
   HSA_DEBUG ("Released kernel dispatch: %p has value: %" PRIu64 " (%p)\n",
-	     shadow, shadow->debug,
+	     shadow, (print_uint64_t) shadow->debug,
 	     (void *) (uintptr_t) shadow->debug);
 
   hsa_fns.hsa_memory_free_fn (shadow->kernarg_address);
@@ -1277,9 +1287,9 @@ print_kernel_dispatch (struct GOMP_hsa_kernel_dispatch *dispatch, unsigned inden
   indent_stream (stderr, indent);
   fprintf (stderr, "kernarg_address: %p\n", dispatch->kernarg_address);
   indent_stream (stderr, indent);
-  fprintf (stderr, "object: %" PRIu64 "\n", dispatch->object);
+  fprintf (stderr, "object: %" PRIu64 "\n", (print_uint64_t) dispatch->object);
   indent_stream (stderr, indent);
-  fprintf (stderr, "signal: %" PRIu64 "\n", dispatch->signal);
+  fprintf (stderr, "signal: %" PRIu64 "\n", (print_uint64_t) dispatch->signal);
   indent_stream (stderr, indent);
   fprintf (stderr, "private_segment_size: %u\n",
 	   dispatch->private_segment_size);
@@ -1288,7 +1298,7 @@ print_kernel_dispatch (struct GOMP_hsa_kernel_dispatch *dispatch, unsigned inden
 	   dispatch->group_segment_size);
   indent_stream (stderr, indent);
   fprintf (stderr, "children dispatches: %" PRIu64 "\n",
-	   dispatch->kernel_dispatch_count);
+	   (print_uint64_t) dispatch->kernel_dispatch_count);
   indent_stream (stderr, indent);
   fprintf (stderr, "omp_num_threads: %u\n",
 	   dispatch->omp_num_threads);
@@ -1596,7 +1606,7 @@ run_kernel (struct kernel_info *kernel, void *vars,
 	child_s.handle = shadow->children_dispatches[i]->signal;
 
 	HSA_DEBUG ("Waiting for children completion signal: %" PRIu64 "\n",
-		   shadow->children_dispatches[i]->signal);
+		   (print_uint64_t) shadow->children_dispatches[i]->signal);
 	hsa_fns.hsa_signal_load_acquire_fn (child_s);
       }
 

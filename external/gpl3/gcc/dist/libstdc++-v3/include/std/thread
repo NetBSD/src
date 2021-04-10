@@ -1,6 +1,6 @@
 // <thread> -*- C++ -*-
 
-// Copyright (C) 2008-2019 Free Software Foundation, Inc.
+// Copyright (C) 2008-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,16 +35,27 @@
 # include <bits/c++0x_warning.h>
 #else
 
-#include <chrono>
-#include <memory>
-#include <tuple>
-#include <cerrno>
-#include <bits/functexcept.h>
-#include <bits/functional_hash.h>
-#include <bits/invoke.h>
-#include <bits/gthr.h>
+#include <bits/c++config.h>
 
 #if defined(_GLIBCXX_HAS_GTHREADS)
+#include <bits/gthr.h>
+
+#include <chrono> // std::chrono::*
+#include <memory> // std::unique_ptr
+#include <tuple>  // std::tuple
+
+#if __cplusplus > 201703L
+# include <compare>	// std::strong_ordering
+# include <stop_token>	// std::stop_source, std::stop_token, std::nostopstate
+#endif
+
+#ifdef _GLIBCXX_USE_NANOSLEEP
+# include <cerrno>  // errno, EINTR
+# include <time.h>  // nanosleep
+#endif
+
+#include <bits/functional_hash.h> // std::hash
+#include <bits/invoke.h>	  // std::__invoke
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -86,17 +97,22 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     private:
       friend class thread;
-      friend class hash<thread::id>;
+      friend class hash<id>;
 
       friend bool
-      operator==(thread::id __x, thread::id __y) noexcept;
+      operator==(id __x, id __y) noexcept;
 
+#if __cpp_lib_three_way_comparison
+      friend strong_ordering
+      operator<=>(id __x, id __y) noexcept;
+#else
       friend bool
-      operator<(thread::id __x, thread::id __y) noexcept;
+      operator<(id __x, id __y) noexcept;
+#endif
 
       template<class _CharT, class _Traits>
 	friend basic_ostream<_CharT, _Traits>&
-	operator<<(basic_ostream<_CharT, _Traits>& __out, thread::id __id);
+	operator<<(basic_ostream<_CharT, _Traits>& __out, id __id);
     };
 
   private:
@@ -127,9 +143,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #else
 	auto __depend = nullptr;
 #endif
-        _M_start_thread(_S_make_state(
-	      __make_invoker(std::forward<_Callable>(__f),
-			     std::forward<_Args>(__args)...)),
+	// A call wrapper holding tuple{DECAY_COPY(__f), DECAY_COPY(__args)...}
+	using _Invoker_type = _Invoker<__decayed_tuple<_Callable, _Args...>>;
+
+	_M_start_thread(_S_make_state<_Invoker_type>(
+	      std::forward<_Callable>(__f), std::forward<_Args>(__args)...),
 	    __depend);
       }
 
@@ -168,7 +186,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     void
     detach();
 
-    thread::id
+    id
     get_id() const noexcept
     { return _M_id; }
 
@@ -188,8 +206,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       {
 	_Callable		_M_func;
 
-	_State_impl(_Callable&& __f) : _M_func(std::forward<_Callable>(__f))
-	{ }
+	template<typename... _Args>
+	  _State_impl(_Args&&... __args)
+	  : _M_func{{std::forward<_Args>(__args)...}}
+	  { }
 
 	void
 	_M_run() { _M_func(); }
@@ -198,12 +218,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     void
     _M_start_thread(_State_ptr, void (*)());
 
-    template<typename _Callable>
+    template<typename _Callable, typename... _Args>
       static _State_ptr
-      _S_make_state(_Callable&& __f)
+      _S_make_state(_Args&&... __args)
       {
 	using _Impl = _State_impl<_Callable>;
-	return _State_ptr{new _Impl{std::forward<_Callable>(__f)}};
+	return _State_ptr{new _Impl{std::forward<_Args>(__args)...}};
       }
 #if _GLIBCXX_THREAD_ABI_COMPAT
   public:
@@ -282,6 +302,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     return __x._M_thread == __y._M_thread;
   }
 
+#if __cpp_lib_three_way_comparison
+  inline strong_ordering
+  operator<=>(thread::id __x, thread::id __y) noexcept
+  { return __x._M_thread <=> __y._M_thread; }
+#else
   inline bool
   operator!=(thread::id __x, thread::id __y) noexcept
   { return !(__x == __y); }
@@ -305,6 +330,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   inline bool
   operator>=(thread::id __x, thread::id __y) noexcept
   { return !(__x < __y); }
+#endif // __cpp_lib_three_way_comparison
 
   // DR 889.
   /// std::hash specialization for thread::id.
@@ -328,8 +354,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   /** @namespace std::this_thread
-   *  @brief ISO C++ 2011 entities sub-namespace for thread.
-   *  30.3.2 Namespace this_thread.
+   *  @brief ISO C++ 2011 namespace for interacting with the current thread
+   *
+   *  C++11 30.3.2 [thread.thread.this] Namespace this_thread.
    */
   namespace this_thread
   {
@@ -337,15 +364,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline thread::id
     get_id() noexcept
     {
-#ifdef __GLIBC__
-      // For the GNU C library pthread_self() is usable without linking to
-      // libpthread.so but returns 0, so we cannot use it in single-threaded
-      // programs, because this_thread::get_id() != thread::id{} must be true.
-      // We know that pthread_t is an integral type in the GNU C library.
-      if (!__gthread_active_p())
-	return thread::id(1);
-#endif
+#ifdef _GLIBCXX_NATIVE_THREAD_ID
+      return thread::id(_GLIBCXX_NATIVE_THREAD_ID);
+#else
       return thread::id(__gthread_self());
+#endif
     }
 
     /// yield
@@ -387,6 +410,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       inline void
       sleep_until(const chrono::time_point<_Clock, _Duration>& __atime)
       {
+#if __cplusplus > 201703L
+	static_assert(chrono::is_clock_v<_Clock>);
+#endif
 	auto __now = _Clock::now();
 	if (_Clock::is_steady)
 	  {
@@ -404,11 +430,140 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // @} group threads
 
+#ifdef __cpp_lib_jthread
+
+  class jthread
+  {
+  public:
+    using id = thread::id;
+    using native_handle_type = thread::native_handle_type;
+
+    jthread() noexcept
+    : _M_stop_source{nostopstate}
+    { }
+
+    template<typename _Callable, typename... _Args,
+	     typename = enable_if_t<!is_same_v<remove_cvref_t<_Callable>,
+					       jthread>>>
+      explicit
+      jthread(_Callable&& __f, _Args&&... __args)
+      : _M_thread{_S_create(_M_stop_source, std::forward<_Callable>(__f),
+			    std::forward<_Args>(__args)...)}
+      { }
+
+    jthread(const jthread&) = delete;
+    jthread(jthread&&) noexcept = default;
+
+    ~jthread()
+    {
+      if (joinable())
+        {
+          request_stop();
+          join();
+        }
+    }
+
+    jthread&
+    operator=(const jthread&) = delete;
+
+    jthread&
+    operator=(jthread&& __other) noexcept
+    {
+      std::jthread(std::move(__other)).swap(*this);
+      return *this;
+    }
+
+    void
+    swap(jthread& __other) noexcept
+    {
+      std::swap(_M_stop_source, __other._M_stop_source);
+      std::swap(_M_thread, __other._M_thread);
+    }
+
+    [[nodiscard]] bool
+    joinable() const noexcept
+    {
+      return _M_thread.joinable();
+    }
+
+    void
+    join()
+    {
+      _M_thread.join();
+    }
+
+    void
+    detach()
+    {
+      _M_thread.detach();
+    }
+
+    [[nodiscard]] id
+    get_id() const noexcept
+    {
+      return _M_thread.get_id();
+    }
+
+    [[nodiscard]] native_handle_type
+    native_handle()
+    {
+      return _M_thread.native_handle();
+    }
+
+    [[nodiscard]] static unsigned
+    hardware_concurrency() noexcept
+    {
+      return thread::hardware_concurrency();
+    }
+
+    [[nodiscard]] stop_source
+    get_stop_source() noexcept
+    {
+      return _M_stop_source;
+    }
+
+    [[nodiscard]] stop_token
+    get_stop_token() const noexcept
+    {
+      return _M_stop_source.get_token();
+    }
+
+    bool request_stop() noexcept
+    {
+      return _M_stop_source.request_stop();
+    }
+
+    friend void swap(jthread& __lhs, jthread& __rhs) noexcept
+    {
+      __lhs.swap(__rhs);
+    }
+
+  private:
+    template<typename _Callable, typename... _Args>
+      static thread
+      _S_create(stop_source& __ssrc, _Callable&& __f, _Args&&... __args)
+      {
+	if constexpr(is_invocable_v<decay_t<_Callable>, stop_token,
+				    decay_t<_Args>...>)
+	  return thread{std::forward<_Callable>(__f), __ssrc.get_token(),
+			std::forward<_Args>(__args)...};
+	else
+	  {
+	    static_assert(is_invocable_v<decay_t<_Callable>,
+					 decay_t<_Args>...>,
+			  "std::thread arguments must be invocable after"
+			  " conversion to rvalues");
+	    return thread{std::forward<_Callable>(__f),
+			  std::forward<_Args>(__args)...};
+	  }
+      }
+
+    stop_source _M_stop_source;
+    thread _M_thread;
+  };
+#endif // __cpp_lib_jthread
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
-
 #endif // _GLIBCXX_HAS_GTHREADS
-
 #endif // C++11
-
 #endif // _GLIBCXX_THREAD

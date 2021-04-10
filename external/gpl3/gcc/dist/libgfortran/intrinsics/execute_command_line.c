@@ -1,5 +1,5 @@
 /* Implementation of the EXECUTE_COMMAND_LINE intrinsic.
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by François-Xavier Coudert.
 
 This file is part of the GNU Fortran runtime library (libgfortran).
@@ -34,7 +34,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #endif
 #ifdef HAVE_POSIX_SPAWN
 #include <spawn.h>
+# ifdef __APPLE__
+#  include <crt_externs.h>
+#  define environ (*_NSGetEnviron ())
+# else
 extern char **environ;
+# endif
 #endif
 #if defined(HAVE_POSIX_SPAWN) || defined(HAVE_FORK)
 #include <signal.h>

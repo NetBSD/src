@@ -1,5 +1,5 @@
 /* Implementation of various C99 functions 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of the GNU Fortran 95 runtime library (libgfortran).
 
@@ -229,6 +229,17 @@ ceilf (float x)
 }
 #endif
 
+#if !defined(HAVE_COPYSIGN) && defined(HAVE_INLINE_BUILTIN_COPYSIGN)
+#define HAVE_COPYSIGN 1
+double copysign (double x, double y);
+
+double
+copysign (double x, double y)
+{
+  return __builtin_copysign (x, y);
+}
+#endif
+
 #ifndef HAVE_COPYSIGNF
 #define HAVE_COPYSIGNF 1
 float copysignf (float x, float y);
@@ -237,6 +248,17 @@ float
 copysignf (float x, float y)
 {
   return (float) copysign (x, y);
+}
+#endif
+
+#if !defined(HAVE_COPYSIGNL) && defined(HAVE_INLINE_BUILTIN_COPYSIGNL)
+#define HAVE_COPYSIGNL 1
+long double copysignl (long double x, long double y);
+
+long double
+copysignl (long double x, long double y)
+{
+  return __builtin_copysignl (x, y);
 }
 #endif
 
@@ -273,6 +295,17 @@ expf (float x)
 }
 #endif
 
+#if !defined(HAVE_FABS) && defined(HAVE_INLINE_BUILTIN_FABS)
+#define HAVE_FABS 1
+double fabs (double x);
+
+double
+fabs (double x)
+{
+  return __builtin_fabs (x);
+}
+#endif
+
 #ifndef HAVE_FABSF
 #define HAVE_FABSF 1
 float fabsf (float x);
@@ -281,6 +314,17 @@ float
 fabsf (float x)
 {
   return (float) fabs (x);
+}
+#endif
+
+#if !defined(HAVE_FABSL) && defined(HAVE_INLINE_BUILTIN_FABSL)
+#define HAVE_FABSL 1
+long double fabsl (long double x);
+
+long double
+fabsl (long double x)
+{
+  return __builtin_fabsl (x);
 }
 #endif
 
@@ -2110,5 +2154,38 @@ float
 lgammaf (float x)
 {
   return (float) lgamma ((double) x);
+}
+#endif
+
+#ifndef HAVE_FMA
+#define HAVE_FMA 1
+double fma (double, double, double);
+
+double
+fma (double x, double y, double z)
+{
+  return x * y + z;
+}
+#endif
+
+#ifndef HAVE_FMAF
+#define HAVE_FMAF 1
+float fmaf (float, float, float);
+
+float
+fmaf (float x, float y, float z)
+{
+  return fma (x, y, z);
+}
+#endif
+
+#ifndef HAVE_FMAL
+#define HAVE_FMAL 1
+long double fmal (long double, long double, long double);
+
+long double
+fmal (long double x, long double y, long double z)
+{
+  return x * y + z;
 }
 #endif

@@ -1,6 +1,6 @@
 # Pretty-printers for libstdc++.
 
-# Copyright (C) 2008-2019 Free Software Foundation, Inc.
+# Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,12 +94,76 @@ def find_type(orig, name):
         # The type was not found, so try the superclass.  We only need
         # to check the first superclass, so we don't bother with
         # anything fancier here.
-        field = typ.fields()[0]
-        if not field.is_base_class:
+        fields = typ.fields()
+        if len(fields) and fields[0].is_base_class:
+            typ = fields[0].type
+        else:
             raise ValueError("Cannot find type %s::%s" % (str(orig), name))
-        typ = field.type
 
 _versioned_namespace = '__8::'
+
+def lookup_templ_spec(templ, *args):
+    """
+    Lookup template specialization templ<args...>
+    """
+    t = '{}<{}>'.format(templ, ', '.join([str(a) for a in args]))
+    try:
+        return gdb.lookup_type(t)
+    except gdb.error as e:
+        # Type not found, try again in versioned namespace.
+        global _versioned_namespace
+        if _versioned_namespace and _versioned_namespace not in templ:
+            t = t.replace('::', '::' + _versioned_namespace, 1)
+            try:
+                return gdb.lookup_type(t)
+            except gdb.error:
+                # If that also fails, rethrow the original exception
+                pass
+        raise e
+
+# Use this to find container node types instead of find_type,
+# see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=91997 for details.
+def lookup_node_type(nodename, containertype):
+    """
+    Lookup specialization of template NODENAME corresponding to CONTAINERTYPE.
+    e.g. if NODENAME is '_List_node' and CONTAINERTYPE is std::list<int>
+    then return the type std::_List_node<int>.
+    Returns None if not found.
+    """
+    # If nodename is unqualified, assume it's in namespace std.
+    if '::' not in nodename:
+        nodename = 'std::' + nodename
+    try:
+        valtype = find_type(containertype, 'value_type')
+    except:
+        valtype = containertype.template_argument(0)
+    valtype = valtype.strip_typedefs()
+    try:
+        return lookup_templ_spec(nodename, valtype)
+    except gdb.error as e:
+        # For debug mode containers the node is in std::__cxx1998.
+        if is_member_of_namespace(nodename, 'std'):
+            if is_member_of_namespace(containertype, 'std::__cxx1998',
+                                      'std::__debug', '__gnu_debug'):
+                nodename = nodename.replace('::', '::__cxx1998::', 1)
+                try:
+                    return lookup_templ_spec(nodename, valtype)
+                except gdb.error:
+                    pass
+        return None
+
+def is_member_of_namespace(typ, *namespaces):
+    """
+    Test whether a type is a member of one of the specified namespaces.
+    The type can be specified as a string or a gdb.Type object.
+    """
+    if type(typ) is gdb.Type:
+        typ = str(typ)
+    typ = strip_versioned_namespace(typ)
+    for namespace in namespaces:
+        if typ.startswith(namespace + '::'):
+            return True
+    return False
 
 def is_specialization_of(x, template_name):
     "Test if a type is a given template instantiation."
@@ -181,13 +245,24 @@ class UniquePointerPrinter:
 
     def __init__ (self, typename, val):
         self.val = val
-        impl_type = val.type.fields()[0].type.tag
-        if is_specialization_of(impl_type, '__uniq_ptr_impl'): # New implementation
-            self.pointer = val['_M_t']['_M_t']['_M_head_impl']
+        impl_type = val.type.fields()[0].type.strip_typedefs()
+        # Check for new implementations first:
+        if is_specialization_of(impl_type, '__uniq_ptr_data') \
+            or is_specialization_of(impl_type, '__uniq_ptr_impl'):
+            tuple_member = val['_M_t']['_M_t']
         elif is_specialization_of(impl_type, 'tuple'):
-            self.pointer = val['_M_t']['_M_head_impl']
+            tuple_member = val['_M_t']
         else:
-            raise ValueError("Unsupported implementation for unique_ptr: %s" % impl_type)
+            raise ValueError("Unsupported implementation for unique_ptr: %s" % str(impl_type))
+        tuple_impl_type = tuple_member.type.fields()[0].type # _Tuple_impl
+        tuple_head_type = tuple_impl_type.fields()[1].type   # _Head_base
+        head_field = tuple_head_type.fields()[0]
+        if head_field.name == '_M_head_impl':
+            self.pointer = tuple_member['_M_head_impl']
+        elif head_field.is_base_class:
+            self.pointer = tuple_member.cast(head_field.type)
+        else:
+            raise ValueError("Unsupported implementation for tuple in unique_ptr: %s" % str(impl_type))
 
     def children (self):
         return SmartPtrIterator(self.pointer)
@@ -242,40 +317,40 @@ class StdListPrinter:
         self.val = val
 
     def children(self):
-        nodetype = find_type(self.val.type, '_Node')
-        nodetype = nodetype.strip_typedefs().pointer()
+        nodetype = lookup_node_type('_List_node', self.val.type).pointer()
         return self._iterator(nodetype, self.val['_M_impl']['_M_node'])
 
     def to_string(self):
-        if self.val['_M_impl']['_M_node'].address == self.val['_M_impl']['_M_node']['_M_next']:
+        headnode = self.val['_M_impl']['_M_node']
+        if headnode['_M_next'] == headnode.address:
             return 'empty %s' % (self.typename)
         return '%s' % (self.typename)
 
 class NodeIteratorPrinter:
-    def __init__(self, typename, val, contname):
+    def __init__(self, typename, val, contname, nodename):
         self.val = val
         self.typename = typename
         self.contname = contname
+        self.nodetype = lookup_node_type(nodename, val.type)
 
     def to_string(self):
         if not self.val['_M_node']:
             return 'non-dereferenceable iterator for std::%s' % (self.contname)
-        nodetype = find_type(self.val.type, '_Node')
-        nodetype = nodetype.strip_typedefs().pointer()
-        node = self.val['_M_node'].cast(nodetype).dereference()
+        node = self.val['_M_node'].cast(self.nodetype.pointer()).dereference()
         return str(get_value_from_list_node(node))
 
 class StdListIteratorPrinter(NodeIteratorPrinter):
     "Print std::list::iterator"
 
     def __init__(self, typename, val):
-        NodeIteratorPrinter.__init__(self, typename, val, 'list')
+        NodeIteratorPrinter.__init__(self, typename, val, 'list', '_List_node')
 
 class StdFwdListIteratorPrinter(NodeIteratorPrinter):
     "Print std::forward_list::iterator"
 
     def __init__(self, typename, val):
-        NodeIteratorPrinter.__init__(self, typename, val, 'forward_list')
+        NodeIteratorPrinter.__init__(self, typename, val, 'forward_list',
+                                     '_Fwd_list_node')
 
 class StdSlistPrinter:
     "Print a __gnu_cxx::slist"
@@ -302,9 +377,8 @@ class StdSlistPrinter:
         self.val = val
 
     def children(self):
-        nodetype = find_type(self.val.type, '_Node')
-        nodetype = nodetype.strip_typedefs().pointer()
-        return self._iterator(nodetype, self.val)
+        nodetype = lookup_node_type('__gnu_cxx::_Slist_node', self.val.type)
+        return self._iterator(nodetype.pointer(), self.val)
 
     def to_string(self):
         if self.val['_M_head']['_M_next'] == 0:
@@ -320,8 +394,7 @@ class StdSlistIteratorPrinter:
     def to_string(self):
         if not self.val['_M_node']:
             return 'non-dereferenceable iterator for __gnu_cxx::slist'
-        nodetype = find_type(self.val.type, '_Node')
-        nodetype = nodetype.strip_typedefs().pointer()
+        nodetype = lookup_node_type('__gnu_cxx::_Slist_node', self.val.type).pointer()
         return str(self.val['_M_node'].cast(nodetype).dereference()['_M_data'])
 
 class StdVectorPrinter:
@@ -351,16 +424,12 @@ class StdVectorPrinter:
             if self.bitvec:
                 if self.item == self.finish and self.so >= self.fo:
                     raise StopIteration
-                elt = self.item.dereference()
-                if elt & (1 << self.so):
-                    obit = 1
-                else:
-                    obit = 0
+                elt = bool(self.item.dereference() & (1 << self.so))
                 self.so = self.so + 1
                 if self.so >= self.isize:
                     self.item = self.item + 1
                     self.so = 0
-                return ('[%d]' % count, obit)
+                return ('[%d]' % count, elt)
             else:
                 if self.item == self.finish:
                     raise StopIteration
@@ -371,7 +440,7 @@ class StdVectorPrinter:
     def __init__(self, typename, val):
         self.typename = strip_versioned_namespace(typename)
         self.val = val
-        self.is_bool = val.type.template_argument(0).code  == gdb.TYPE_CODE_BOOL
+        self.is_bool = val.type.template_argument(0).code == gdb.TYPE_CODE_BOOL
 
     def children(self):
         return self._iterator(self.val['_M_impl']['_M_start'],
@@ -410,6 +479,8 @@ class StdVectorIteratorPrinter:
         if not self.val['_M_current']:
             return 'non-dereferenceable iterator for std::vector'
         return str(self.val['_M_current'].dereference())
+
+# TODO add printer for vector<bool>'s _Bit_iterator and _Bit_const_iterator
 
 class StdTuplePrinter:
     "Print a std::tuple"
@@ -574,12 +645,8 @@ class StdRbtreeIteratorPrinter:
 
     def __init__ (self, typename, val):
         self.val = val
-        valtype = self.val.type.template_argument(0).strip_typedefs()
-        nodetype = '_Rb_tree_node<' + str(valtype) + '>'
-        if _versioned_namespace and typename.startswith('std::' + _versioned_namespace):
-            nodetype = _versioned_namespace + nodetype
-        nodetype = gdb.lookup_type('std::' + nodetype)
-        self.link_type = nodetype.strip_typedefs().pointer()
+        nodetype = lookup_node_type('_Rb_tree_node', self.val.type)
+        self.link_type = nodetype.pointer()
 
     def to_string (self):
         if not self.val['_M_node']:
@@ -644,9 +711,7 @@ class StdMapPrinter:
                                num_elements(len(RbtreeIterator (self.val))))
 
     def children (self):
-        rep_type = find_type(self.val.type, '_Rep_type')
-        node = find_type(rep_type, '_Link_type')
-        node = node.strip_typedefs()
+        node = lookup_node_type('_Rb_tree_node', self.val.type).pointer()
         return self._iter (RbtreeIterator (self.val), node)
 
     def display_hint (self):
@@ -684,9 +749,7 @@ class StdSetPrinter:
                                num_elements(len(RbtreeIterator (self.val))))
 
     def children (self):
-        rep_type = find_type(self.val.type, '_Rep_type')
-        node = find_type(rep_type, '_Link_type')
-        node = node.strip_typedefs()
+        node = lookup_node_type('_Rb_tree_node', self.val.type).pointer()
         return self._iter (RbtreeIterator (self.val), node)
 
 class StdBitsetPrinter:
@@ -844,11 +907,11 @@ class StdStringPrinter:
         return 'string'
 
 class Tr1HashtableIterator(Iterator):
-    def __init__ (self, hash):
-        self.buckets = hash['_M_buckets']
+    def __init__ (self, hashtable):
+        self.buckets = hashtable['_M_buckets']
         self.bucket = 0
-        self.bucket_count = hash['_M_bucket_count']
-        self.node_type = find_type(hash.type, '_Node').pointer()
+        self.bucket_count = hashtable['_M_bucket_count']
+        self.node_type = find_type(hashtable.type, '_Node').pointer()
         self.node = 0
         while self.bucket != self.bucket_count:
             self.node = self.buckets[self.bucket]
@@ -875,9 +938,13 @@ class Tr1HashtableIterator(Iterator):
         return result
 
 class StdHashtableIterator(Iterator):
-    def __init__(self, hash):
-        self.node = hash['_M_before_begin']['_M_nxt']
-        self.node_type = find_type(hash.type, '__node_type').pointer()
+    def __init__(self, hashtable):
+        self.node = hashtable['_M_before_begin']['_M_nxt']
+        valtype = hashtable.type.template_argument(1)
+        cached = hashtable.type.template_argument(9).template_argument(0)
+        node_type = lookup_templ_spec('std::__detail::_Hash_node', str(valtype),
+                                      'true' if cached else 'false')
+        self.node_type = node_type.pointer()
 
     def __iter__(self):
         return self
@@ -892,7 +959,7 @@ class StdHashtableIterator(Iterator):
         return valptr.dereference()
 
 class Tr1UnorderedSetPrinter:
-    "Print a tr1::unordered_set"
+    "Print a std::unordered_set or tr1::unordered_set"
 
     def __init__ (self, typename, val):
         self.typename = strip_versioned_namespace(typename)
@@ -918,7 +985,7 @@ class Tr1UnorderedSetPrinter:
         return izip (counter, StdHashtableIterator (self.hashtable()))
 
 class Tr1UnorderedMapPrinter:
-    "Print a tr1::unordered_map"
+    "Print a std::unordered_map or tr1::unordered_map"
 
     def __init__ (self, typename, val):
         self.typename = strip_versioned_namespace(typename)
@@ -989,8 +1056,7 @@ class StdForwardListPrinter:
         self.typename = strip_versioned_namespace(typename)
 
     def children(self):
-        nodetype = find_type(self.val.type, '_Node')
-        nodetype = nodetype.strip_typedefs().pointer()
+        nodetype = lookup_node_type('_Fwd_list_node', self.val.type).pointer()
         return self._iterator(nodetype, self.val['_M_impl']['_M_head'])
 
     def to_string(self):
@@ -1041,6 +1107,29 @@ class SingleObjContainerPrinter(object):
             return self.visualizer.display_hint ()
         return self.hint
 
+def function_pointer_to_name(f):
+    "Find the name of the function referred to by the gdb.Value f, "
+    " which should contain a function pointer from the program."
+
+    # Turn the function pointer into an actual address.
+    # This is needed to unpack ppc64 function descriptors.
+    f = f.dereference().address
+
+    if sys.version_info[0] == 2:
+        # Older versions of GDB need to use long for Python 2,
+        # because int(f) on 64-bit big-endian values raises a
+        # gdb.error saying "Cannot convert value to int."
+        f = long(f)
+    else:
+        f = int(f)
+
+    try:
+        # If the function can't be found older versions of GDB raise a
+        # RuntimeError saying "Cannot locate object file for block."
+        return gdb.block_for_pc(f).function.name
+    except:
+        return None
+
 class StdExpAnyPrinter(SingleObjContainerPrinter):
     "Print a std::any or std::experimental::any"
 
@@ -1053,11 +1142,11 @@ class StdExpAnyPrinter(SingleObjContainerPrinter):
         visualizer = None
         mgr = self.val['_M_manager']
         if mgr != 0:
-            func = gdb.block_for_pc(int(mgr.cast(gdb.lookup_type('intptr_t'))))
+            func = function_pointer_to_name(mgr)
             if not func:
-                raise ValueError("Invalid function pointer in %s" % self.typename)
+                raise ValueError("Invalid function pointer in %s" % (self.typename))
             rx = r"""({0}::_Manager_\w+<.*>)::_S_manage\((enum )?{0}::_Op, (const {0}|{0} const) ?\*, (union )?{0}::_Arg ?\*\)""".format(typename)
-            m = re.match(rx, func.function.name)
+            m = re.match(rx, func)
             if not m:
                 raise ValueError("Unknown manager function in %s" % self.typename)
 
@@ -1209,6 +1298,7 @@ class StdExpPathPrinter:
 
     def __init__ (self, typename, val):
         self.val = val
+        self.typename = typename
         start = self.val['_M_cmpts']['_M_impl']['_M_start']
         finish = self.val['_M_cmpts']['_M_impl']['_M_finish']
         self.num_cmpts = int (finish - start)
@@ -1227,10 +1317,11 @@ class StdExpPathPrinter:
             t = self._path_type()
             if t:
                 path = '%s [%s]' % (path, t)
-        return "filesystem::path %s" % path
+        return "experimental::filesystem::path %s" % path
 
     class _iterator(Iterator):
-        def __init__(self, cmpts):
+        def __init__(self, cmpts, pathtype):
+            self.pathtype = pathtype
             self.item = cmpts['_M_impl']['_M_start']
             self.finish = cmpts['_M_impl']['_M_finish']
             self.count = 0
@@ -1246,13 +1337,13 @@ class StdExpPathPrinter:
             self.count = self.count + 1
             self.item = self.item + 1
             path = item['_M_pathname']
-            t = StdExpPathPrinter(item.type.name, item)._path_type()
+            t = StdExpPathPrinter(self.pathtype, item)._path_type()
             if not t:
                 t = count
             return ('[%s]' % t, path)
 
     def children(self):
-        return self._iterator(self.val['_M_cmpts'])
+        return self._iterator(self.val['_M_cmpts'], self.typename)
 
 class StdPathPrinter:
     "Print a std::filesystem::path"
@@ -1285,6 +1376,7 @@ class StdPathPrinter:
 
     class _iterator(Iterator):
         def __init__(self, impl, pathtype):
+            self.pathtype = pathtype
             if impl:
                 # We can't access _Impl::_M_size because _Impl is incomplete
                 # so cast to int* to access the _M_size member at offset zero,
@@ -1317,7 +1409,7 @@ class StdPathPrinter:
             self.count = self.count + 1
             self.item = self.item + 1
             path = item['_M_pathname']
-            t = StdPathPrinter(item.type.name, item)._path_type()
+            t = StdPathPrinter(self.pathtype, item)._path_type()
             if not t:
                 t = count
             return ('[%s]' % t, path)
@@ -1358,6 +1450,20 @@ class StdPairPrinter:
     def to_string(self):
         return None
 
+class StdCmpCatPrinter:
+    "Print a comparison category object"
+
+    def __init__ (self, typename, val):
+        self.typename = typename[typename.rfind(':')+1:]
+        self.val = val['_M_value']
+
+    def to_string (self):
+        if self.typename == 'strong_ordering' and self.val == 0:
+            name = 'equal'
+        else:
+            names = {2:'unordered', -1:'less', 0:'equivalent', 1:'greater'}
+            name = names[int(self.val)]
+        return 'std::{}::{}'.format(self.typename, name)
 
 # A "regular expression" printer which conforms to the
 # "SubPrettyPrinter" protocol from gdb.printing.
@@ -1565,6 +1671,11 @@ def add_one_template_type_printer(obj, name, defargs):
     """
     printer = TemplateTypePrinter('std::'+name, defargs)
     gdb.types.register_type_printer(obj, printer)
+
+    # Add type printer for same type in debug namespace:
+    printer = TemplateTypePrinter('std::__debug::'+name, defargs)
+    gdb.types.register_type_printer(obj, printer)
+
     if _versioned_namespace:
         # Add second type printer for same type in versioned namespace:
         ns = 'std::' + _versioned_namespace
@@ -1855,6 +1966,11 @@ def build_libstdcxx_dictionary ():
                                   'variant', StdVariantPrinter)
     libstdcxx_printer.add_version('std::',
                                   '_Node_handle', StdNodeHandlePrinter)
+
+    # C++20 components
+    libstdcxx_printer.add_version('std::', 'partial_ordering', StdCmpCatPrinter)
+    libstdcxx_printer.add_version('std::', 'weak_ordering', StdCmpCatPrinter)
+    libstdcxx_printer.add_version('std::', 'strong_ordering', StdCmpCatPrinter)
 
     # Extensions.
     libstdcxx_printer.add_version('__gnu_cxx::', 'slist', StdSlistPrinter)

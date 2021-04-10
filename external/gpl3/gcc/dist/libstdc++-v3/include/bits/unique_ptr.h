@@ -1,6 +1,6 @@
 // unique_ptr implementation -*- C++ -*-
 
-// Copyright (C) 2008-2019 Free Software Foundation, Inc.
+// Copyright (C) 2008-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -37,6 +37,10 @@
 #include <tuple>
 #include <bits/stl_function.h>
 #include <bits/functional_hash.h>
+#if __cplusplus > 201703L
+# include <compare>
+# include <ostream>
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -54,7 +58,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #pragma GCC diagnostic pop
 #endif
 
-  /// Primary template of default_delete, used by unique_ptr
+  /// Primary template of default_delete, used by unique_ptr for single objects
   template<typename _Tp>
     struct default_delete
     {
@@ -63,14 +67,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       /** @brief Converting constructor.
        *
-       * Allows conversion from a deleter for arrays of another type, @p _Up,
-       * only if @p _Up* is convertible to @p _Tp*.
+       * Allows conversion from a deleter for objects of another type, `_Up`,
+       * only if `_Up*` is convertible to `_Tp*`.
        */
-      template<typename _Up, typename = typename
-	       enable_if<is_convertible<_Up*, _Tp*>::value>::type>
+      template<typename _Up,
+	       typename = _Require<is_convertible<_Up*, _Tp*>>>
         default_delete(const default_delete<_Up>&) noexcept { }
 
-      /// Calls @c delete @p __ptr
+      /// Calls `delete __ptr`
       void
       operator()(_Tp* __ptr) const
       {
@@ -84,7 +88,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // _GLIBCXX_RESOLVE_LIB_DEFECTS
   // DR 740 - omit specialization for array objects with a compile time length
-  /// Specialization for arrays, default_delete.
+
+  /// Specialization of default_delete for arrays, used by `unique_ptr<T[]>`
   template<typename _Tp>
     struct default_delete<_Tp[]>
     {
@@ -95,27 +100,30 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       /** @brief Converting constructor.
        *
        * Allows conversion from a deleter for arrays of another type, such as
-       * a const-qualified version of @p _Tp.
+       * a const-qualified version of `_Tp`.
        *
-       * Conversions from types derived from @c _Tp are not allowed because
-       * it is unsafe to @c delete[] an array of derived types through a
+       * Conversions from types derived from `_Tp` are not allowed because
+       * it is undefined to `delete[]` an array of derived types through a
        * pointer to the base type.
        */
-      template<typename _Up, typename = typename
-	       enable_if<is_convertible<_Up(*)[], _Tp(*)[]>::value>::type>
+      template<typename _Up,
+	       typename = _Require<is_convertible<_Up(*)[], _Tp(*)[]>>>
         default_delete(const default_delete<_Up[]>&) noexcept { }
 
-      /// Calls @c delete[] @p __ptr
+      /// Calls `delete[] __ptr`
       template<typename _Up>
-      typename enable_if<is_convertible<_Up(*)[], _Tp(*)[]>::value>::type
+	typename enable_if<is_convertible<_Up(*)[], _Tp(*)[]>::value>::type
 	operator()(_Up* __ptr) const
-      {
-	static_assert(sizeof(_Tp)>0,
-		      "can't delete pointer to incomplete type");
-	delete [] __ptr;
-      }
+	{
+	  static_assert(sizeof(_Tp)>0,
+			"can't delete pointer to incomplete type");
+	  delete [] __ptr;
+	}
     };
 
+  /// @cond undocumented
+
+  // Manages the pointer and deleter of a unique_ptr
   template <typename _Tp, typename _Dp>
     class __uniq_ptr_impl
     {
@@ -150,10 +158,36 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __uniq_ptr_impl(pointer __p, _Del&& __d)
 	: _M_t(__p, std::forward<_Del>(__d)) { }
 
+      __uniq_ptr_impl(__uniq_ptr_impl&& __u) noexcept
+      : _M_t(std::move(__u._M_t))
+      { __u._M_ptr() = nullptr; }
+
+      __uniq_ptr_impl& operator=(__uniq_ptr_impl&& __u) noexcept
+      {
+	reset(__u.release());
+	_M_deleter() = std::forward<_Dp>(__u._M_deleter());
+	return *this;
+      }
+
       pointer&   _M_ptr() { return std::get<0>(_M_t); }
       pointer    _M_ptr() const { return std::get<0>(_M_t); }
       _Dp&       _M_deleter() { return std::get<1>(_M_t); }
       const _Dp& _M_deleter() const { return std::get<1>(_M_t); }
+
+      void reset(pointer __p) noexcept
+      {
+	const pointer __old_p = _M_ptr();
+	_M_ptr() = __p;
+	if (__old_p)
+	  _M_deleter()(__old_p);
+      }
+
+      pointer release() noexcept
+      {
+	pointer __p = _M_ptr();
+	_M_ptr() = nullptr;
+	return __p;
+      }
 
       void
       swap(__uniq_ptr_impl& __rhs) noexcept
@@ -167,6 +201,42 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       tuple<pointer, _Dp> _M_t;
     };
 
+  // Defines move construction + assignment as either defaulted or deleted.
+  template <typename _Tp, typename _Dp,
+	    bool = is_move_constructible<_Dp>::value,
+	    bool = is_move_assignable<_Dp>::value>
+    struct __uniq_ptr_data : __uniq_ptr_impl<_Tp, _Dp>
+    {
+      using __uniq_ptr_impl<_Tp, _Dp>::__uniq_ptr_impl;
+      __uniq_ptr_data(__uniq_ptr_data&&) = default;
+      __uniq_ptr_data& operator=(__uniq_ptr_data&&) = default;
+    };
+
+  template <typename _Tp, typename _Dp>
+    struct __uniq_ptr_data<_Tp, _Dp, true, false> : __uniq_ptr_impl<_Tp, _Dp>
+    {
+      using __uniq_ptr_impl<_Tp, _Dp>::__uniq_ptr_impl;
+      __uniq_ptr_data(__uniq_ptr_data&&) = default;
+      __uniq_ptr_data& operator=(__uniq_ptr_data&&) = delete;
+    };
+
+  template <typename _Tp, typename _Dp>
+    struct __uniq_ptr_data<_Tp, _Dp, false, true> : __uniq_ptr_impl<_Tp, _Dp>
+    {
+      using __uniq_ptr_impl<_Tp, _Dp>::__uniq_ptr_impl;
+      __uniq_ptr_data(__uniq_ptr_data&&) = delete;
+      __uniq_ptr_data& operator=(__uniq_ptr_data&&) = default;
+    };
+
+  template <typename _Tp, typename _Dp>
+    struct __uniq_ptr_data<_Tp, _Dp, false, false> : __uniq_ptr_impl<_Tp, _Dp>
+    {
+      using __uniq_ptr_impl<_Tp, _Dp>::__uniq_ptr_impl;
+      __uniq_ptr_data(__uniq_ptr_data&&) = delete;
+      __uniq_ptr_data& operator=(__uniq_ptr_data&&) = delete;
+    };
+  /// @endcond
+
   /// 20.7.1.2 unique_ptr for single objects.
   template <typename _Tp, typename _Dp = default_delete<_Tp>>
     class unique_ptr
@@ -175,7 +245,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	using _DeleterConstraint =
 	  typename __uniq_ptr_impl<_Tp, _Up>::_DeleterConstraint::type;
 
-      __uniq_ptr_impl<_Tp, _Dp> _M_t;
+      __uniq_ptr_data<_Tp, _Dp> _M_t;
 
     public:
       using pointer	  = typename __uniq_ptr_impl<_Tp, _Dp>::pointer;
@@ -254,8 +324,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // Move constructors.
 
       /// Move constructor.
-      unique_ptr(unique_ptr&& __u) noexcept
-      : _M_t(__u.release(), std::forward<deleter_type>(__u.get_deleter())) { }
+      unique_ptr(unique_ptr&&) = default;
 
       /** @brief Converting constructor from another type
        *
@@ -297,24 +366,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       /** @brief Move assignment operator.
        *
-       * @param __u  The object to transfer ownership from.
-       *
-       * Invokes the deleter first if this object owns a pointer.
+       * Invokes the deleter if this object owns a pointer.
        */
-      unique_ptr&
-      operator=(unique_ptr&& __u) noexcept
-      {
-	reset(__u.release());
-	get_deleter() = std::forward<deleter_type>(__u.get_deleter());
-	return *this;
-      }
+      unique_ptr& operator=(unique_ptr&&) = default;
 
       /** @brief Assignment from another type.
        *
        * @param __u  The object to transfer ownership from, which owns a
        *             convertible pointer to a non-array object.
        *
-       * Invokes the deleter first if this object owns a pointer.
+       * Invokes the deleter if this object owns a pointer.
        */
       template<typename _Up, typename _Ep>
         typename enable_if< __and_<
@@ -379,11 +440,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       /// Release ownership of any stored pointer.
       pointer
       release() noexcept
-      {
-	pointer __p = get();
-	_M_t._M_ptr() = pointer();
-	return __p;
-      }
+      { return _M_t.release(); }
 
       /** @brief Replace the stored pointer.
        *
@@ -396,10 +453,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       {
 	static_assert(__is_invocable<deleter_type&, pointer>::value,
 		      "unique_ptr's deleter must be invocable with a pointer");
-	using std::swap;
-	swap(_M_t._M_ptr(), __p);
-	if (__p != pointer())
-	  get_deleter()(std::move(__p));
+	_M_t.reset(std::move(__p));
       }
 
       /// Exchange the pointer and deleter with another object.
@@ -426,7 +480,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       using _DeleterConstraint =
 	typename __uniq_ptr_impl<_Tp, _Up>::_DeleterConstraint::type;
 
-      __uniq_ptr_impl<_Tp, _Dp> _M_t;
+      __uniq_ptr_data<_Tp, _Dp> _M_t;
 
       template<typename _Up>
 	using __remove_cv = typename remove_cv<_Up>::type;
@@ -533,8 +587,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 				 _DelUnref&&>) = delete;
 
       /// Move constructor.
-      unique_ptr(unique_ptr&& __u) noexcept
-      : _M_t(__u.release(), std::forward<deleter_type>(__u.get_deleter())) { }
+      unique_ptr(unique_ptr&&) = default;
 
       /// Creates a unique_ptr that owns nothing.
       template<typename _Del = _Dp, typename = _DeleterConstraint<_Del>>
@@ -564,24 +617,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       /** @brief Move assignment operator.
        *
-       * @param __u  The object to transfer ownership from.
-       *
-       * Invokes the deleter first if this object owns a pointer.
+       * Invokes the deleter if this object owns a pointer.
        */
       unique_ptr&
-      operator=(unique_ptr&& __u) noexcept
-      {
-	reset(__u.release());
-	get_deleter() = std::forward<deleter_type>(__u.get_deleter());
-	return *this;
-      }
+      operator=(unique_ptr&&) = default;
 
       /** @brief Assignment from another type.
        *
        * @param __u  The object to transfer ownership from, which owns a
        *             convertible pointer to an array object.
        *
-       * Invokes the deleter first if this object owns a pointer.
+       * Invokes the deleter if this object owns a pointer.
        */
       template<typename _Up, typename _Ep>
 	typename
@@ -638,11 +684,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       /// Release ownership of any stored pointer.
       pointer
       release() noexcept
-      {
-	pointer __p = get();
-	_M_t._M_ptr() = pointer();
-	return __p;
-      }
+      { return _M_t.release(); }
 
       /** @brief Replace the stored pointer.
        *
@@ -664,18 +706,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
                >>
       void
       reset(_Up __p) noexcept
-      {
-	pointer __ptr = __p;
-	using std::swap;
-	swap(_M_t._M_ptr(), __ptr);
-	if (__ptr != nullptr)
-	  get_deleter()(__ptr);
-      }
+      { _M_t.reset(std::move(__p)); }
 
       void reset(nullptr_t = nullptr) noexcept
-      {
-        reset(pointer());
-      }
+      { reset(pointer()); }
 
       /// Exchange the pointer and deleter with another object.
       void
@@ -690,6 +724,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       unique_ptr& operator=(const unique_ptr&) = delete;
     };
 
+  /// @relates unique_ptr @{
+
+  /// Swap overload for unique_ptr
   template<typename _Tp, typename _Dp>
     inline
 #if __cplusplus > 201402L || !defined(__STRICT_ANSI__) // c++1z or gnu++11
@@ -709,6 +746,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	 unique_ptr<_Tp, _Dp>&) = delete;
 #endif
 
+  /// Equality operator for unique_ptr objects, compares the owned pointers
   template<typename _Tp, typename _Dp,
 	   typename _Up, typename _Ep>
     _GLIBCXX_NODISCARD inline bool
@@ -716,16 +754,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	       const unique_ptr<_Up, _Ep>& __y)
     { return __x.get() == __y.get(); }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator==(const unique_ptr<_Tp, _Dp>& __x, nullptr_t) noexcept
     { return !__x; }
 
+#ifndef __cpp_lib_three_way_comparison
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator==(nullptr_t, const unique_ptr<_Tp, _Dp>& __x) noexcept
     { return !__x; }
 
+  /// Inequality operator for unique_ptr objects, compares the owned pointers
   template<typename _Tp, typename _Dp,
 	   typename _Up, typename _Ep>
     _GLIBCXX_NODISCARD inline bool
@@ -733,16 +775,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	       const unique_ptr<_Up, _Ep>& __y)
     { return __x.get() != __y.get(); }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator!=(const unique_ptr<_Tp, _Dp>& __x, nullptr_t) noexcept
     { return (bool)__x; }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator!=(nullptr_t, const unique_ptr<_Tp, _Dp>& __x) noexcept
     { return (bool)__x; }
+#endif // three way comparison
 
+  /// Relational operator for unique_ptr objects, compares the owned pointers
   template<typename _Tp, typename _Dp,
 	   typename _Up, typename _Ep>
     _GLIBCXX_NODISCARD inline bool
@@ -755,18 +801,25 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return std::less<_CT>()(__x.get(), __y.get());
     }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator<(const unique_ptr<_Tp, _Dp>& __x, nullptr_t)
-    { return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(__x.get(),
-								 nullptr); }
+    {
+      return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(__x.get(),
+								 nullptr);
+    }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator<(nullptr_t, const unique_ptr<_Tp, _Dp>& __x)
-    { return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(nullptr,
-								 __x.get()); }
+    {
+      return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(nullptr,
+								 __x.get());
+    }
 
+  /// Relational operator for unique_ptr objects, compares the owned pointers
   template<typename _Tp, typename _Dp,
 	   typename _Up, typename _Ep>
     _GLIBCXX_NODISCARD inline bool
@@ -774,16 +827,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	       const unique_ptr<_Up, _Ep>& __y)
     { return !(__y < __x); }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator<=(const unique_ptr<_Tp, _Dp>& __x, nullptr_t)
     { return !(nullptr < __x); }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator<=(nullptr_t, const unique_ptr<_Tp, _Dp>& __x)
     { return !(__x < nullptr); }
 
+  /// Relational operator for unique_ptr objects, compares the owned pointers
   template<typename _Tp, typename _Dp,
 	   typename _Up, typename _Ep>
     _GLIBCXX_NODISCARD inline bool
@@ -791,18 +847,25 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      const unique_ptr<_Up, _Ep>& __y)
     { return (__y < __x); }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator>(const unique_ptr<_Tp, _Dp>& __x, nullptr_t)
-    { return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(nullptr,
-								 __x.get()); }
+    {
+      return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(nullptr,
+								 __x.get());
+    }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator>(nullptr_t, const unique_ptr<_Tp, _Dp>& __x)
-    { return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(__x.get(),
-								 nullptr); }
+    {
+      return std::less<typename unique_ptr<_Tp, _Dp>::pointer>()(__x.get(),
+								 nullptr);
+    }
 
+  /// Relational operator for unique_ptr objects, compares the owned pointers
   template<typename _Tp, typename _Dp,
 	   typename _Up, typename _Ep>
     _GLIBCXX_NODISCARD inline bool
@@ -810,33 +873,73 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	       const unique_ptr<_Up, _Ep>& __y)
     { return !(__x < __y); }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator>=(const unique_ptr<_Tp, _Dp>& __x, nullptr_t)
     { return !(__x < nullptr); }
 
+  /// unique_ptr comparison with nullptr
   template<typename _Tp, typename _Dp>
     _GLIBCXX_NODISCARD inline bool
     operator>=(nullptr_t, const unique_ptr<_Tp, _Dp>& __x)
     { return !(nullptr < __x); }
 
+#ifdef __cpp_lib_three_way_comparison
+  template<typename _Tp, typename _Dp, typename _Up, typename _Ep>
+    requires three_way_comparable_with<typename unique_ptr<_Tp, _Dp>::pointer,
+				       typename unique_ptr<_Up, _Ep>::pointer>
+    inline
+    compare_three_way_result_t<typename unique_ptr<_Tp, _Dp>::pointer,
+			       typename unique_ptr<_Up, _Ep>::pointer>
+    operator<=>(const unique_ptr<_Tp, _Dp>& __x,
+		const unique_ptr<_Up, _Ep>& __y)
+    { return compare_three_way()(__x.get(), __y.get()); }
+
+  template<typename _Tp, typename _Dp>
+    requires three_way_comparable<typename unique_ptr<_Tp, _Dp>::pointer>
+    inline
+    compare_three_way_result_t<typename unique_ptr<_Tp, _Dp>::pointer>
+    operator<=>(const unique_ptr<_Tp, _Dp>& __x, nullptr_t)
+    {
+      using pointer = typename unique_ptr<_Tp, _Dp>::pointer;
+      return compare_three_way()(__x.get(), static_cast<pointer>(nullptr));
+    }
+#endif
+  // @} relates unique_ptr
+
+  /// @cond undocumented
+  template<typename _Up, typename _Ptr = typename _Up::pointer,
+	   bool = __poison_hash<_Ptr>::__enable_hash_call>
+    struct __uniq_ptr_hash
+#if ! _GLIBCXX_INLINE_VERSION
+    : private __poison_hash<_Ptr>
+#endif
+    {
+      size_t
+      operator()(const _Up& __u) const
+      noexcept(noexcept(std::declval<hash<_Ptr>>()(std::declval<_Ptr>())))
+      { return hash<_Ptr>()(__u.get()); }
+    };
+
+  template<typename _Up, typename _Ptr>
+    struct __uniq_ptr_hash<_Up, _Ptr, false>
+    : private __poison_hash<_Ptr>
+    { };
+  /// @endcond
+
   /// std::hash specialization for unique_ptr.
   template<typename _Tp, typename _Dp>
     struct hash<unique_ptr<_Tp, _Dp>>
     : public __hash_base<size_t, unique_ptr<_Tp, _Dp>>,
-    private __poison_hash<typename unique_ptr<_Tp, _Dp>::pointer>
-    {
-      size_t
-      operator()(const unique_ptr<_Tp, _Dp>& __u) const noexcept
-      {
-	typedef unique_ptr<_Tp, _Dp> _UP;
-	return std::hash<typename _UP::pointer>()(__u.get());
-      }
-    };
+      public __uniq_ptr_hash<unique_ptr<_Tp, _Dp>>
+    { };
 
-#if __cplusplus > 201103L
-
+#if __cplusplus >= 201402L
+  /// @relates unique_ptr @{
 #define __cpp_lib_make_unique 201304
+
+  /// @cond undocumented
 
   template<typename _Tp>
     struct _MakeUniq
@@ -849,6 +952,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp, size_t _Bound>
     struct _MakeUniq<_Tp[_Bound]>
     { struct __invalid_type { }; };
+
+  /// @endcond
 
   /// std::make_unique for single objects
   template<typename _Tp, typename... _Args>
@@ -866,7 +971,23 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp, typename... _Args>
     inline typename _MakeUniq<_Tp>::__invalid_type
     make_unique(_Args&&...) = delete;
-#endif
+  // @} relates unique_ptr
+#endif // C++14
+
+#if __cplusplus > 201703L && __cpp_concepts
+  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+  // 2948. unique_ptr does not define operator<< for stream output
+  /// Stream output operator for unique_ptr
+  template<typename _CharT, typename _Traits, typename _Tp, typename _Dp>
+    inline basic_ostream<_CharT, _Traits>&
+    operator<<(basic_ostream<_CharT, _Traits>& __os,
+	       const unique_ptr<_Tp, _Dp>& __p)
+    requires requires { __os << __p.get(); }
+    {
+      __os << __p.get();
+      return __os;
+    }
+#endif // C++20
 
   // @} group pointer_abstractions
 

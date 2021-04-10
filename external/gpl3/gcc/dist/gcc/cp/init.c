@@ -1,5 +1,5 @@
 /* Handle initialization things in C++.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -33,6 +33,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "stringpool.h"
 #include "attribs.h"
 #include "asan.h"
+#include "stor-layout.h"
 
 static bool begin_init_stmts (tree *, tree *);
 static tree finish_init_stmts (bool, tree, tree);
@@ -245,9 +246,12 @@ build_zero_init_1 (tree type, tree nelts, bool static_storage_p,
 
       /* Iterate over the array elements, building initializations.  */
       if (nelts)
-	max_index = fold_build2_loc (input_location,
-				 MINUS_EXPR, TREE_TYPE (nelts),
-				 nelts, integer_one_node);
+	max_index = fold_build2_loc (input_location, MINUS_EXPR,
+				     TREE_TYPE (nelts), nelts,
+				     build_one_cst (TREE_TYPE (nelts)));
+      /* Treat flexible array members like [0] arrays.  */
+      else if (TYPE_DOMAIN (type) == NULL_TREE)
+	return NULL_TREE;
       else
 	max_index = array_type_nelts (type);
 
@@ -259,20 +263,19 @@ build_zero_init_1 (tree type, tree nelts, bool static_storage_p,
 
       /* A zero-sized array, which is accepted as an extension, will
 	 have an upper bound of -1.  */
-      if (!tree_int_cst_equal (max_index, integer_minus_one_node))
+      if (!integer_minus_onep (max_index))
 	{
 	  constructor_elt ce;
 
 	  /* If this is a one element array, we just use a regular init.  */
-	  if (tree_int_cst_equal (size_zero_node, max_index))
+	  if (integer_zerop (max_index))
 	    ce.index = size_zero_node;
 	  else
 	    ce.index = build2 (RANGE_EXPR, sizetype, size_zero_node,
-				max_index);
+			       max_index);
 
-	  ce.value = build_zero_init_1 (TREE_TYPE (type),
-					 /*nelts=*/NULL_TREE,
-					 static_storage_p, NULL_TREE);
+	  ce.value = build_zero_init_1 (TREE_TYPE (type), /*nelts=*/NULL_TREE,
+					static_storage_p, NULL_TREE);
 	  if (ce.value)
 	    {
 	      vec_alloc (v, 1);
@@ -286,10 +289,7 @@ build_zero_init_1 (tree type, tree nelts, bool static_storage_p,
   else if (VECTOR_TYPE_P (type))
     init = build_zero_cst (type);
   else
-    {
-      gcc_assert (TYPE_REF_P (type));
-      init = build_zero_cst (type);
-    }
+    gcc_assert (TYPE_REF_P (type));
 
   /* In all cases, the initializer is a constant.  */
   if (init)
@@ -347,14 +347,12 @@ build_value_init (tree type, tsubst_flags_t complain)
   gcc_assert (!processing_template_decl
 	      || (SCALAR_TYPE_P (type) || TREE_CODE (type) == ARRAY_TYPE));
 
-  if (CLASS_TYPE_P (type)
-      && type_build_ctor_call (type))
+  if (CLASS_TYPE_P (type) && type_build_ctor_call (type))
     {
-      tree ctor =
-	 build_special_member_call (NULL_TREE, complete_ctor_identifier,
-				    NULL, type, LOOKUP_NORMAL,
-				    complain);
-      if (ctor == error_mark_node)
+      tree ctor
+	= build_special_member_call (NULL_TREE, complete_ctor_identifier,
+				     NULL, type, LOOKUP_NORMAL, complain);
+      if (ctor == error_mark_node || TREE_CONSTANT (ctor))
 	return ctor;
       tree fn = NULL_TREE;
       if (TREE_CODE (ctor) == CALL_EXPR)
@@ -536,7 +534,8 @@ perform_target_ctor (tree init)
 				     tf_warning_or_error));
   if (type_build_dtor_call (type))
     {
-      tree expr = build_delete (type, decl, sfk_complete_destructor,
+      tree expr = build_delete (input_location,
+				type, decl, sfk_complete_destructor,
 				LOOKUP_NORMAL
 				|LOOKUP_NONVIRTUAL
 				|LOOKUP_DESTRUCTOR,
@@ -549,7 +548,7 @@ perform_target_ctor (tree init)
 
 /* Return the non-static data initializer for FIELD_DECL MEMBER.  */
 
-static GTY((cache)) tree_cache_map *nsdmi_inst;
+static GTY((cache)) decl_tree_cache_map *nsdmi_inst;
 
 tree
 get_nsdmi (tree member, bool in_ctor, tsubst_flags_t complain)
@@ -563,10 +562,9 @@ get_nsdmi (tree member, bool in_ctor, tsubst_flags_t complain)
       init = DECL_INITIAL (DECL_TI_TEMPLATE (member));
       location_t expr_loc
 	= cp_expr_loc_or_loc (init, DECL_SOURCE_LOCATION (member));
-      tree *slot;
-      if (TREE_CODE (init) == DEFAULT_ARG)
+      if (TREE_CODE (init) == DEFERRED_PARSE)
 	/* Unparsed.  */;
-      else if (nsdmi_inst && (slot = nsdmi_inst->get (member)))
+      else if (tree *slot = hash_map_safe_get (nsdmi_inst, member))
 	init = *slot;
       /* Check recursive instantiation.  */
       else if (DECL_INSTANTIATING_NSDMI_P (member))
@@ -586,16 +584,18 @@ get_nsdmi (tree member, bool in_ctor, tsubst_flags_t complain)
 	  DECL_INSTANTIATING_NSDMI_P (member) = 1;
 
 	  bool pushed = false;
-	  if (!currently_open_class (DECL_CONTEXT (member)))
+	  tree ctx = DECL_CONTEXT (member);
+	  if (!currently_open_class (ctx)
+	      && !LOCAL_CLASS_P (ctx))
 	    {
 	      push_to_top_level ();
-	      push_nested_class (DECL_CONTEXT (member));
+	      push_nested_class (ctx);
 	      pushed = true;
 	    }
 
 	  gcc_checking_assert (!processing_template_decl);
 
-	  inject_this_parameter (DECL_CONTEXT (member), TYPE_UNQUALIFIED);
+	  inject_this_parameter (ctx, TYPE_UNQUALIFIED);
 
 	  start_lambda_scope (member);
 
@@ -611,11 +611,7 @@ get_nsdmi (tree member, bool in_ctor, tsubst_flags_t complain)
 	  DECL_INSTANTIATING_NSDMI_P (member) = 0;
 
 	  if (init != error_mark_node)
-	    {
-	      if (!nsdmi_inst)
-		nsdmi_inst = tree_cache_map::create_ggc (37);
-	      nsdmi_inst->put (member, init);
-	    }
+	    hash_map_safe_put<hm_ggc> (nsdmi_inst, member, init);
 
 	  if (pushed)
 	    {
@@ -629,7 +625,7 @@ get_nsdmi (tree member, bool in_ctor, tsubst_flags_t complain)
   else
     init = DECL_INITIAL (member);
 
-  if (init && TREE_CODE (init) == DEFAULT_ARG)
+  if (init && TREE_CODE (init) == DEFERRED_PARSE)
     {
       if (complain & tf_error)
 	{
@@ -660,6 +656,10 @@ get_nsdmi (tree member, bool in_ctor, tsubst_flags_t complain)
   if (simple_target)
     init = TARGET_EXPR_INITIAL (init);
   init = break_out_target_exprs (init, /*loc*/true);
+  if (in_ctor && init && TREE_CODE (init) == TARGET_EXPR)
+    /* This expresses the full initialization, prevent perform_member_init from
+       calling another constructor (58162).  */
+    TARGET_EXPR_DIRECT_INIT_P (init) = true;
   if (simple_target && TREE_CODE (init) != CONSTRUCTOR)
     /* Now put it back so C++17 copy elision works.  */
     init = get_target_expr (init);
@@ -749,7 +749,7 @@ maybe_warn_list_ctor (tree member, tree init)
   if (!begin)
     return;
 
-  location_t loc = cp_expr_loc_or_loc (init, input_location);
+  location_t loc = cp_expr_loc_or_input_loc (init);
   warning_at (loc, OPT_Winit_list_lifetime,
 	     "initializing %qD from %qE does not extend the lifetime "
 	     "of the underlying array", member, begin);
@@ -802,6 +802,20 @@ perform_member_init (tree member, tree init)
 		    member);
     }
 
+  if (array_of_unknown_bound_p (type))
+    {
+      maybe_reject_flexarray_init (member, init);
+      return;
+    }
+
+  if (init && TREE_CODE (init) == TREE_LIST
+      && (DIRECT_LIST_INIT_P (TREE_VALUE (init))
+	  /* FIXME C++20 parenthesized aggregate init (PR 92812).  */
+	  || !(/* cxx_dialect >= cxx2a ? CP_AGGREGATE_TYPE_P (type) */
+	       /* :  */CLASS_TYPE_P (type))))
+    init = build_x_compound_expr_from_list (init, ELK_MEM_INIT,
+					    tf_warning_or_error);
+
   if (init == void_type_node)
     {
       /* mem() means value-initialization.  */
@@ -833,12 +847,7 @@ perform_member_init (tree member, tree init)
     }
   else if (init
 	   && (TYPE_REF_P (type)
-	       /* Pre-digested NSDMI.  */
-	       || (((TREE_CODE (init) == CONSTRUCTOR
-		     && TREE_TYPE (init) == type)
-		    /* { } mem-initializer.  */
-		    || (TREE_CODE (init) == TREE_LIST
-			&& DIRECT_LIST_INIT_P (TREE_VALUE (init))))
+	       || (TREE_CODE (init) == CONSTRUCTOR
 		   && (CP_AGGREGATE_TYPE_P (type)
 		       || is_std_init_list (type)))))
     {
@@ -847,11 +856,8 @@ perform_member_init (tree member, tree init)
 	 reference member in a constructor’s ctor-initializer (12.6.2)
 	 persists until the constructor exits."  */
       unsigned i; tree t;
-      vec<tree, va_gc> *cleanups = make_tree_vector ();
-      if (TREE_CODE (init) == TREE_LIST)
-	init = build_x_compound_expr_from_list (init, ELK_MEM_INIT,
-						tf_warning_or_error);
-      if (TREE_TYPE (init) != type)
+      releasing_vec cleanups;
+      if (!same_type_ignoring_top_level_qualifiers_p (TREE_TYPE (init), type))
 	{
 	  if (BRACE_ENCLOSED_INITIALIZER_P (init)
 	      && CP_AGGREGATE_TYPE_P (type))
@@ -876,30 +882,12 @@ perform_member_init (tree member, tree init)
       finish_expr_stmt (init);
       FOR_EACH_VEC_ELT (*cleanups, i, t)
 	push_cleanup (decl, t, false);
-      release_tree_vector (cleanups);
     }
   else if (type_build_ctor_call (type)
 	   || (init && CLASS_TYPE_P (strip_array_types (type))))
     {
       if (TREE_CODE (type) == ARRAY_TYPE)
 	{
-	  if (init)
-	    {
-	      /* Check to make sure the member initializer is valid and
-		 something like a CONSTRUCTOR in: T a[] = { 1, 2 } and
-		 if it isn't, return early to avoid triggering another
-		 error below.  */
-	      if (maybe_reject_flexarray_init (member, init))
-		return;
-
-	      if (TREE_CODE (init) != TREE_LIST || TREE_CHAIN (init))
-		init = error_mark_node;
-	      else
-		init = TREE_VALUE (init);
-
-	      if (BRACE_ENCLOSED_INITIALIZER_P (init))
-		init = digest_init (type, init, tf_warning_or_error);
-	    }
 	  if (init == NULL_TREE
 	      || same_type_ignoring_top_level_qualifiers_p (type,
 							    TREE_TYPE (init)))
@@ -969,16 +957,10 @@ perform_member_init (tree member, tree init)
 						      /*using_new=*/false,
 						      /*complain=*/true);
 	}
-      else if (TREE_CODE (init) == TREE_LIST)
-	/* There was an explicit member initialization.  Do some work
-	   in that case.  */
-	init = build_x_compound_expr_from_list (init, ELK_MEM_INIT,
-						tf_warning_or_error);
 
       maybe_warn_list_ctor (member, init);
 
-      /* Reject a member initializer for a flexible array member.  */
-      if (init && !maybe_reject_flexarray_init (member, init))
+      if (init)
 	finish_expr_stmt (cp_build_modify_expr (input_location, decl,
 						INIT_EXPR, init,
 						tf_warning_or_error));
@@ -992,7 +974,8 @@ perform_member_init (tree member, tree init)
 					     /*access_path=*/NULL_TREE,
 					     /*preserve_reference=*/false,
 					     tf_warning_or_error);
-      expr = build_delete (type, expr, sfk_complete_destructor,
+      expr = build_delete (input_location,
+			   type, expr, sfk_complete_destructor,
 			   LOOKUP_NONVIRTUAL|LOOKUP_DESTRUCTOR, 0,
 			   tf_warning_or_error);
 
@@ -1755,7 +1738,7 @@ build_aggr_init (tree exp, tree init, int flags, tsubst_flags_t complain)
     return error_mark_node;
 
   location_t init_loc = (init
-			 ? cp_expr_loc_or_loc (init, input_location)
+			 ? cp_expr_loc_or_input_loc (init)
 			 : location_of (exp));
 
   TREE_READONLY (exp) = 0;
@@ -1905,7 +1888,8 @@ expand_default_init (tree binfo, tree true_exp, tree exp, tree init, int flags,
     }
 
   if (init && TREE_CODE (init) != TREE_LIST
-      && (flags & LOOKUP_ONLYCONVERTING))
+      && (flags & LOOKUP_ONLYCONVERTING)
+      && !unsafe_return_slot_p (exp))
     {
       /* Base subobjects should only get direct-initialization.  */
       gcc_assert (true_exp == exp);
@@ -1957,7 +1941,7 @@ expand_default_init (tree binfo, tree true_exp, tree exp, tree init, int flags,
       tree elt; unsigned i;
 
       /* Unshare the arguments for the second call.  */
-      vec<tree, va_gc> *parms2 = make_tree_vector ();
+      releasing_vec parms2;
       FOR_EACH_VEC_SAFE_ELT (parms, i, elt)
 	{
 	  elt = break_out_target_exprs (elt);
@@ -1967,7 +1951,6 @@ expand_default_init (tree binfo, tree true_exp, tree exp, tree init, int flags,
 					    &parms2, binfo, flags,
 					    complain);
       complete = fold_build_cleanup_point_expr (void_type_node, complete);
-      release_tree_vector (parms2);
 
       base = build_special_member_call (exp, base_ctor_identifier,
 					&parms, binfo, flags,
@@ -2289,10 +2272,12 @@ build_offset_ref (tree type, tree member, bool address_p,
    recursively); otherwise, return DECL.  If STRICT_P, the
    initializer is only returned if DECL is a
    constant-expression.  If RETURN_AGGREGATE_CST_OK_P, it is ok to
-   return an aggregate constant.  */
+   return an aggregate constant.  If UNSHARE_P, return an unshared
+   copy of the initializer.  */
 
 static tree
-constant_value_1 (tree decl, bool strict_p, bool return_aggregate_cst_ok_p)
+constant_value_1 (tree decl, bool strict_p, bool return_aggregate_cst_ok_p,
+		  bool unshare_p)
 {
   while (TREE_CODE (decl) == CONST_DECL
 	 || decl_constant_var_p (decl)
@@ -2360,9 +2345,9 @@ constant_value_1 (tree decl, bool strict_p, bool return_aggregate_cst_ok_p)
 	  && !DECL_INITIALIZED_BY_CONSTANT_EXPRESSION_P (decl)
 	  && DECL_NONTRIVIALLY_INITIALIZED_P (decl))
 	break;
-      decl = unshare_expr (init);
+      decl = init;
     }
-  return decl;
+  return unshare_p ? unshare_expr (decl) : decl;
 }
 
 /* If DECL is a CONST_DECL, or a constant VAR_DECL initialized by constant
@@ -2374,26 +2359,36 @@ tree
 scalar_constant_value (tree decl)
 {
   return constant_value_1 (decl, /*strict_p=*/true,
-			   /*return_aggregate_cst_ok_p=*/false);
+			   /*return_aggregate_cst_ok_p=*/false,
+			   /*unshare_p=*/true);
 }
 
-/* Like scalar_constant_value, but can also return aggregate initializers.  */
+/* Like scalar_constant_value, but can also return aggregate initializers.
+   If UNSHARE_P, return an unshared copy of the initializer.  */
 
 tree
-decl_really_constant_value (tree decl)
+decl_really_constant_value (tree decl, bool unshare_p /*= true*/)
 {
   return constant_value_1 (decl, /*strict_p=*/true,
-			   /*return_aggregate_cst_ok_p=*/true);
+			   /*return_aggregate_cst_ok_p=*/true,
+			   /*unshare_p=*/unshare_p);
 }
 
-/* A more relaxed version of scalar_constant_value, used by the
+/* A more relaxed version of decl_really_constant_value, used by the
    common C/C++ code.  */
+
+tree
+decl_constant_value (tree decl, bool unshare_p)
+{
+  return constant_value_1 (decl, /*strict_p=*/processing_template_decl,
+			   /*return_aggregate_cst_ok_p=*/true,
+			   /*unshare_p=*/unshare_p);
+}
 
 tree
 decl_constant_value (tree decl)
 {
-  return constant_value_1 (decl, /*strict_p=*/processing_template_decl,
-			   /*return_aggregate_cst_ok_p=*/true);
+  return decl_constant_value (decl, /*unshare_p=*/true);
 }
 
 /* Common subroutines of build_new and build_vec_delete.  */
@@ -2407,8 +2402,8 @@ decl_constant_value (tree decl)
    creates and returns a NEW_EXPR.  */
 
 static tree
-build_raw_new_expr (vec<tree, va_gc> *placement, tree type, tree nelts,
-		    vec<tree, va_gc> *init, int use_global_new)
+build_raw_new_expr (location_t loc, vec<tree, va_gc> *placement, tree type,
+		    tree nelts, vec<tree, va_gc> *init, int use_global_new)
 {
   tree init_list;
   tree new_expr;
@@ -2424,9 +2419,9 @@ build_raw_new_expr (vec<tree, va_gc> *placement, tree type, tree nelts,
   else
     init_list = build_tree_list_vec (init);
 
-  new_expr = build4 (NEW_EXPR, build_pointer_type (type),
-		     build_tree_list_vec (placement), type, nelts,
-		     init_list);
+  new_expr = build4_loc (loc, NEW_EXPR, build_pointer_type (type),
+			 build_tree_list_vec (placement), type, nelts,
+			 init_list);
   NEW_EXPR_USE_GLOBAL (new_expr) = use_global_new;
   TREE_SIDE_EFFECTS (new_expr) = 1;
 
@@ -2585,7 +2580,7 @@ find_flexarray_init (tree t, tree init)
 static void
 warn_placement_new_too_small (tree type, tree nelts, tree size, tree oper)
 {
-  location_t loc = cp_expr_loc_or_loc (oper, input_location);
+  location_t loc = cp_expr_loc_or_input_loc (oper);
 
   /* The number of bytes to add to or subtract from the size of the provided
      buffer based on an offset into an array or an array element reference.
@@ -2858,8 +2853,7 @@ malloc_alignment ()
 }
 
 /* Determine whether an allocation function is a namespace-scope
-   non-replaceable placement new function. See DR 1748.
-   TODO: Enable in all standard modes.  */
+   non-replaceable placement new function. See DR 1748.  */
 static bool
 std_placement_new_fn_p (tree alloc_fn)
 {
@@ -2871,6 +2865,82 @@ std_placement_new_fn_p (tree alloc_fn)
 	return true;
     }
   return false;
+}
+
+/* For element type ELT_TYPE, return the appropriate type of the heap object
+   containing such element(s).  COOKIE_SIZE is NULL or the size of cookie
+   in bytes.  FULL_SIZE is NULL if it is unknown how big the heap allocation
+   will be, otherwise size of the heap object.  If COOKIE_SIZE is NULL,
+   return array type ELT_TYPE[FULL_SIZE / sizeof(ELT_TYPE)], otherwise return
+   struct { size_t[COOKIE_SIZE/sizeof(size_t)]; ELT_TYPE[N]; }
+   where N is nothing (flexible array member) if FULL_SIZE is NULL, otherwise
+   it is computed such that the size of the struct fits into FULL_SIZE.  */
+
+tree
+build_new_constexpr_heap_type (tree elt_type, tree cookie_size, tree full_size)
+{
+  gcc_assert (cookie_size == NULL_TREE || tree_fits_uhwi_p (cookie_size));
+  gcc_assert (full_size == NULL_TREE || tree_fits_uhwi_p (full_size));
+  unsigned HOST_WIDE_INT csz = cookie_size ? tree_to_uhwi (cookie_size) : 0;
+  tree itype2 = NULL_TREE;
+  if (full_size)
+    {
+      unsigned HOST_WIDE_INT fsz = tree_to_uhwi (full_size);
+      gcc_assert (fsz >= csz);
+      fsz -= csz;
+      fsz /= int_size_in_bytes (elt_type);
+      itype2 = build_index_type (size_int (fsz - 1));
+      if (!cookie_size)
+	return build_cplus_array_type (elt_type, itype2);
+    }
+  else
+    gcc_assert (cookie_size);
+  csz /= int_size_in_bytes (sizetype);
+  tree itype1 = build_index_type (size_int (csz - 1));
+  tree atype1 = build_cplus_array_type (sizetype, itype1);
+  tree atype2 = build_cplus_array_type (elt_type, itype2);
+  tree rtype = cxx_make_type (RECORD_TYPE);
+  TYPE_NAME (rtype) = heap_identifier;
+  tree fld1 = build_decl (UNKNOWN_LOCATION, FIELD_DECL, NULL_TREE, atype1);
+  tree fld2 = build_decl (UNKNOWN_LOCATION, FIELD_DECL, NULL_TREE, atype2);
+  DECL_FIELD_CONTEXT (fld1) = rtype;
+  DECL_FIELD_CONTEXT (fld2) = rtype;
+  DECL_ARTIFICIAL (fld1) = true;
+  DECL_ARTIFICIAL (fld2) = true;
+  TYPE_FIELDS (rtype) = fld1;
+  DECL_CHAIN (fld1) = fld2;
+  layout_type (rtype);
+  return rtype;
+}
+
+/* Help the constexpr code to find the right type for the heap variable
+   by adding a NOP_EXPR around ALLOC_CALL if needed for cookie_size.
+   Return ALLOC_CALL or ALLOC_CALL cast to a pointer to
+   struct { size_t[cookie_size/sizeof(size_t)]; elt_type[]; }.  */
+
+static tree
+maybe_wrap_new_for_constexpr (tree alloc_call, tree elt_type, tree cookie_size)
+{
+  if (cxx_dialect < cxx2a)
+    return alloc_call;
+
+  if (current_function_decl != NULL_TREE
+      && !DECL_DECLARED_CONSTEXPR_P (current_function_decl))
+    return alloc_call;
+  
+  tree call_expr = extract_call_expr (alloc_call);
+  if (call_expr == error_mark_node)
+    return alloc_call;
+
+  tree alloc_call_fndecl = cp_get_callee_fndecl_nofold (call_expr);
+  if (alloc_call_fndecl == NULL_TREE
+      || !IDENTIFIER_NEW_OP_P (DECL_NAME (alloc_call_fndecl))
+      || CP_DECL_CONTEXT (alloc_call_fndecl) != global_namespace)
+    return alloc_call;
+
+  tree rtype = build_new_constexpr_heap_type (elt_type, cookie_size,
+					      NULL_TREE);
+  return build_nop (build_pointer_type (rtype), alloc_call);
 }
 
 /* Generate code for a new-expression, including calling the "operator
@@ -2983,7 +3053,7 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
 	{
 	  if (complain & tf_error)
 	    {
-	      error_at (cp_expr_loc_or_loc (inner_nelts, input_location),
+	      error_at (cp_expr_loc_or_input_loc (inner_nelts),
 			"array size in new-expression must be constant");
 	      cxx_constant_value(inner_nelts);
 	    }
@@ -2995,6 +3065,10 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
 				    inner_nelts_cst,
 				    complain);
     }
+
+  if (!verify_type_context (input_location, TCTX_ALLOCATION, elt_type,
+			    !(complain & tf_error)))
+    return error_mark_node;
 
   if (variably_modified_type_p (elt_type, NULL_TREE) && (complain & tf_error))
     {
@@ -3012,10 +3086,10 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
     {
       if (complain & tf_warning_or_error)
 	{
-	  pedwarn (cp_expr_loc_or_loc (outer_nelts, input_location), OPT_Wvla,
+	  pedwarn (cp_expr_loc_or_input_loc (outer_nelts), OPT_Wvla,
 		   typedef_variant_p (orig_type)
 		   ? G_("non-constant array new length must be specified "
-			"directly, not by typedef")
+			"directly, not by %<typedef%>")
 		   : G_("non-constant array new length must be specified "
 			"without parentheses around the type-id"));
 	}
@@ -3026,13 +3100,13 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
   if (VOID_TYPE_P (elt_type))
     {
       if (complain & tf_error)
-        error ("invalid type %<void%> for new");
+	error ("invalid type %<void%> for %<new%>");
       return error_mark_node;
     }
 
   if (is_std_init_list (elt_type))
     warning (OPT_Winit_list_lifetime,
-	     "%<new%> of initializer_list does not "
+	     "%<new%> of %<initializer_list%> does not "
 	     "extend the lifetime of the underlying array");
 
   if (abstract_virtuals_error_sfinae (ACU_NEW, elt_type, complain))
@@ -3340,6 +3414,14 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
 	}
     }
 
+  tree alloc_call_expr = extract_call_expr (alloc_call);
+  if (TREE_CODE (alloc_call_expr) == CALL_EXPR)
+    CALL_FROM_NEW_OR_DELETE_P (alloc_call_expr) = 1;
+
+  if (cookie_size)
+    alloc_call = maybe_wrap_new_for_constexpr (alloc_call, elt_type,
+					       cookie_size);
+
   /* In the simple case, we can stop now.  */
   pointer_type = build_pointer_type (type);
   if (!cookie_size && !is_initialized)
@@ -3538,10 +3620,22 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
 	      tree ie;
 
 	      /* We are processing something like `new int (10)', which
-		 means allocate an int, and initialize it with 10.  */
+		 means allocate an int, and initialize it with 10.
 
-	      ie = build_x_compound_expr_from_vec (*init, "new initializer",
-						   complain);
+		 In C++20, also handle `new A(1, 2)'.  */
+	      if (cxx_dialect >= cxx2a
+		  && AGGREGATE_TYPE_P (type)
+		  && (*init)->length () > 1)
+		{
+		  ie = build_tree_list_vec (*init);
+		  ie = build_constructor_from_list (init_list_type_node, ie);
+		  CONSTRUCTOR_IS_DIRECT_INIT (ie) = true;
+		  CONSTRUCTOR_IS_PAREN_INIT (ie) = true;
+		  ie = digest_init (type, ie, complain);
+		}
+	      else
+		ie = build_x_compound_expr_from_vec (*init, "new initializer",
+						     complain);
 	      init_expr = cp_build_modify_expr (input_location, init_expr,
 						INIT_EXPR, ie, complain);
 	    }
@@ -3691,8 +3785,9 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
    rather than just "new".  This may change PLACEMENT and INIT.  */
 
 tree
-build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
-	   vec<tree, va_gc> **init, int use_global_new, tsubst_flags_t complain)
+build_new (location_t loc, vec<tree, va_gc> **placement, tree type,
+	   tree nelts, vec<tree, va_gc> **init, int use_global_new,
+	   tsubst_flags_t complain)
 {
   tree rval;
   vec<tree, va_gc> *orig_placement = NULL;
@@ -3742,7 +3837,7 @@ build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
 	  || (nelts && type_dependent_expression_p (nelts))
 	  || (nelts && *init)
 	  || any_type_dependent_arguments_p (*init))
-	return build_raw_new_expr (*placement, type, nelts, *init,
+	return build_raw_new_expr (loc, *placement, type, nelts, *init,
 				   use_global_new);
 
       orig_placement = make_tree_vector_copy (*placement);
@@ -3768,10 +3863,12 @@ build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
 
   if (nelts)
     {
+      location_t nelts_loc = cp_expr_loc_or_loc (nelts, loc);
       if (!build_expr_type_conversion (WANT_INT | WANT_ENUM, nelts, false))
         {
           if (complain & tf_error)
-            permerror (input_location, "size in array new must have integral type");
+	    permerror (nelts_loc,
+		       "size in array new must have integral type");
           else
             return error_mark_node;
         }
@@ -3786,7 +3883,7 @@ build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
 	 less than zero. ... If the expression is a constant expression,
 	 the program is ill-fomed.  */
       if (TREE_CODE (cst_nelts) == INTEGER_CST
-	  && !valid_array_size_p (input_location, cst_nelts, NULL_TREE,
+	  && !valid_array_size_p (nelts_loc, cst_nelts, NULL_TREE,
 				  complain & tf_error))
 	return error_mark_node;
 
@@ -3800,7 +3897,7 @@ build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
   if (TYPE_REF_P (type))
     {
       if (complain & tf_error)
-        error ("new cannot be applied to a reference type");
+        error_at (loc, "new cannot be applied to a reference type");
       else
         return error_mark_node;
       type = TREE_TYPE (type);
@@ -3809,7 +3906,7 @@ build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
   if (TREE_CODE (type) == FUNCTION_TYPE)
     {
       if (complain & tf_error)
-        error ("new cannot be applied to a function type");
+        error_at (loc, "new cannot be applied to a function type");
       return error_mark_node;
     }
 
@@ -3825,7 +3922,7 @@ build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
 
   if (processing_template_decl)
     {
-      tree ret = build_raw_new_expr (orig_placement, type, orig_nelts,
+      tree ret = build_raw_new_expr (loc, orig_placement, type, orig_nelts,
 				     orig_init, use_global_new);
       release_tree_vector (orig_placement);
       release_tree_vector (orig_init);
@@ -3833,14 +3930,14 @@ build_new (vec<tree, va_gc> **placement, tree type, tree nelts,
     }
 
   /* Wrap it in a NOP_EXPR so warn_if_unused_value doesn't complain.  */
-  rval = build1 (NOP_EXPR, TREE_TYPE (rval), rval);
+  rval = build1_loc (loc, NOP_EXPR, TREE_TYPE (rval), rval);
   TREE_NO_WARNING (rval) = 1;
 
   return rval;
 }
 
 static tree
-build_vec_delete_1 (tree base, tree maxindex, tree type,
+build_vec_delete_1 (location_t loc, tree base, tree maxindex, tree type,
 		    special_function_kind auto_delete_vec,
 		    int use_global_delete, tsubst_flags_t complain)
 {
@@ -3874,19 +3971,23 @@ build_vec_delete_1 (tree base, tree maxindex, tree type,
   if (base == error_mark_node || maxindex == error_mark_node)
     return error_mark_node;
 
+  if (!verify_type_context (loc, TCTX_DEALLOCATION, type,
+			    !(complain & tf_error)))
+    return error_mark_node;
+
   if (!COMPLETE_TYPE_P (type))
     {
       if (complain & tf_warning)
 	{
 	  auto_diagnostic_group d;
-	  if (warning (OPT_Wdelete_incomplete,
-			 "possible problem detected in invocation of "
-			 "delete [] operator:"))
+	  if (warning_at (loc, OPT_Wdelete_incomplete,
+			  "possible problem detected in invocation of "
+			  "operator %<delete []%>"))
 	    {
 	      cxx_incomplete_type_diagnostic (base, type, DK_WARNING);
-	      inform (input_location, "neither the destructor nor the "
-			"class-specific operator delete [] will be called, "
-			"even if they are declared when the class is defined");
+	      inform (loc, "neither the destructor nor the "
+		      "class-specific operator %<delete []%> will be called, "
+		      "even if they are declared when the class is defined");
 	    }
 	}
       /* This size won't actually be used.  */
@@ -3903,7 +4004,7 @@ build_vec_delete_1 (tree base, tree maxindex, tree type,
       /* Make sure the destructor is callable.  */
       if (type_build_dtor_call (type))
 	{
-	  tmp = build_delete (ptype, base, sfk_complete_destructor,
+	  tmp = build_delete (loc, ptype, base, sfk_complete_destructor,
 			      LOOKUP_NORMAL|LOOKUP_DESTRUCTOR, 1,
 			      complain);
 	  if (tmp == error_mark_node)
@@ -3917,37 +4018,31 @@ build_vec_delete_1 (tree base, tree maxindex, tree type,
 			     fold_convert (sizetype, maxindex));
 
   tbase = create_temporary_var (ptype);
-  tbase_init
-    = cp_build_modify_expr (input_location, tbase, NOP_EXPR,
-			    fold_build_pointer_plus_loc (input_location,
-							 fold_convert (ptype,
-								       base),
-							 virtual_size),
-			    complain);
-  if (tbase_init == error_mark_node)
-    return error_mark_node;
-  controller = build3 (BIND_EXPR, void_type_node, tbase,
-		       NULL_TREE, NULL_TREE);
+  DECL_INITIAL (tbase)
+    = fold_build_pointer_plus_loc (loc, fold_convert (ptype, base),
+				   virtual_size);
+  tbase_init = build_stmt (loc, DECL_EXPR, tbase);
+  controller = build3 (BIND_EXPR, void_type_node, tbase, NULL_TREE, NULL_TREE);
   TREE_SIDE_EFFECTS (controller) = 1;
 
   body = build1 (EXIT_EXPR, void_type_node,
 		 build2 (EQ_EXPR, boolean_type_node, tbase,
 			 fold_convert (ptype, base)));
-  tmp = fold_build1_loc (input_location, NEGATE_EXPR, sizetype, size_exp);
+  tmp = fold_build1_loc (loc, NEGATE_EXPR, sizetype, size_exp);
   tmp = fold_build_pointer_plus (tbase, tmp);
-  tmp = cp_build_modify_expr (input_location, tbase, NOP_EXPR, tmp, complain);
+  tmp = cp_build_modify_expr (loc, tbase, NOP_EXPR, tmp, complain);
   if (tmp == error_mark_node)
     return error_mark_node;
-  body = build_compound_expr (input_location, body, tmp);
-  tmp = build_delete (ptype, tbase, sfk_complete_destructor,
+  body = build_compound_expr (loc, body, tmp);
+  tmp = build_delete (loc, ptype, tbase, sfk_complete_destructor,
 		      LOOKUP_NORMAL|LOOKUP_DESTRUCTOR, 1,
 		      complain);
   if (tmp == error_mark_node)
     return error_mark_node;
-  body = build_compound_expr (input_location, body, tmp);
+  body = build_compound_expr (loc, body, tmp);
 
   loop = build1 (LOOP_EXPR, void_type_node, body);
-  loop = build_compound_expr (input_location, tbase_init, loop);
+  loop = build_compound_expr (loc, tbase_init, loop);
 
  no_destructor:
   /* Delete the storage if appropriate.  */
@@ -3967,7 +4062,7 @@ build_vec_delete_1 (tree base, tree maxindex, tree type,
 	  tree cookie_size;
 
 	  cookie_size = targetm.cxx.get_cookie_size (type);
-	  base_tbd = cp_build_binary_op (input_location,
+	  base_tbd = cp_build_binary_op (loc,
 					 MINUS_EXPR,
 					 cp_convert (string_type_node,
 						     base, complain),
@@ -3986,6 +4081,10 @@ build_vec_delete_1 (tree base, tree maxindex, tree type,
 					      /*placement=*/NULL_TREE,
 					      /*alloc_fn=*/NULL_TREE,
 					      complain);
+
+      tree deallocate_call_expr = extract_call_expr (deallocate_expr);
+      if (TREE_CODE (deallocate_call_expr) == CALL_EXPR)
+	CALL_FROM_NEW_OR_DELETE_P (deallocate_call_expr) = 1;
     }
 
   body = loop;
@@ -3994,7 +4093,7 @@ build_vec_delete_1 (tree base, tree maxindex, tree type,
   else if (!body)
     body = deallocate_expr;
   else
-    /* The delete operator mist be called, even if a destructor
+    /* The delete operator must be called, even if a destructor
        throws.  */
     body = build2 (TRY_FINALLY_EXPR, void_type_node, body, deallocate_expr);
 
@@ -4002,12 +4101,12 @@ build_vec_delete_1 (tree base, tree maxindex, tree type,
     body = integer_zero_node;
 
   /* Outermost wrapper: If pointer is null, punt.  */
-  tree cond = build2_loc (input_location, NE_EXPR, boolean_type_node, base,
+  tree cond = build2_loc (loc, NE_EXPR, boolean_type_node, base,
 			  fold_convert (TREE_TYPE (base), nullptr_node));
   /* This is a compiler generated comparison, don't emit
      e.g. -Wnonnull-compare warning for it.  */
   TREE_NO_WARNING (cond) = 1;
-  body = build3_loc (input_location, COND_EXPR, void_type_node,
+  body = build3_loc (loc, COND_EXPR, void_type_node,
 		     cond, body, integer_zero_node);
   COND_EXPR_IS_VEC_DELETE (body) = true;
   body = build1 (NOP_EXPR, void_type_node, body);
@@ -4152,7 +4251,7 @@ build_vec_init (tree base, tree maxindex, tree init,
   tree obase = base;
   bool xvalue = false;
   bool errors = false;
-  location_t loc = (init ? cp_expr_loc_or_loc (init, input_location)
+  location_t loc = (init ? cp_expr_loc_or_input_loc (init)
 		    : location_of (base));
 
   if (TREE_CODE (atype) == ARRAY_TYPE && TYPE_DOMAIN (atype))
@@ -4353,6 +4452,8 @@ build_vec_init (tree base, tree maxindex, tree init,
 	    errors = true;
 	  if (try_const)
 	    {
+	      if (!field)
+		field = size_int (idx);
 	      tree e = maybe_constant_init (one_init);
 	      if (reduced_constant_expression_p (e))
 		{
@@ -4628,7 +4729,7 @@ build_vec_init (tree base, tree maxindex, tree init,
 				complain);
 
       finish_cleanup_try_block (try_block);
-      e = build_vec_delete_1 (rval, m,
+      e = build_vec_delete_1 (input_location, rval, m,
 			      inner_elt_type, sfk_complete_destructor,
 			      /*use_global_delete=*/0, complain);
       if (e == error_mark_node)
@@ -4715,7 +4816,8 @@ build_dtor_call (tree exp, special_function_kind dtor_kind, int flags,
    flags.  See cp-tree.h for more info.  */
 
 tree
-build_delete (tree otype, tree addr, special_function_kind auto_delete,
+build_delete (location_t loc, tree otype, tree addr,
+	      special_function_kind auto_delete,
 	      int flags, int use_global_delete, tsubst_flags_t complain)
 {
   tree expr;
@@ -4738,10 +4840,10 @@ build_delete (tree otype, tree addr, special_function_kind auto_delete,
       if (TYPE_DOMAIN (type) == NULL_TREE)
 	{
 	  if (complain & tf_error)
-	    error ("unknown array size in delete");
+	    error_at (loc, "unknown array size in delete");
 	  return error_mark_node;
 	}
-      return build_vec_delete (addr, array_type_nelts (type),
+      return build_vec_delete (loc, addr, array_type_nelts (type),
 			       auto_delete, use_global_delete, complain);
     }
 
@@ -4761,20 +4863,25 @@ build_delete (tree otype, tree addr, special_function_kind auto_delete,
       if (!VOID_TYPE_P (type))
 	{
 	  complete_type (type);
+	  if (deleting
+	      && !verify_type_context (loc, TCTX_DEALLOCATION, type,
+				       !(complain & tf_error)))
+	    return error_mark_node;
+
 	  if (!COMPLETE_TYPE_P (type))
 	    {
 	      if (complain & tf_warning)
 		{
 		  auto_diagnostic_group d;
-		  if (warning (OPT_Wdelete_incomplete,
-				 "possible problem detected in invocation of "
-				 "delete operator:"))
+		  if (warning_at (loc, OPT_Wdelete_incomplete,
+				  "possible problem detected in invocation of "
+				  "%<operator delete%>"))
 		    {
 		      cxx_incomplete_type_diagnostic (addr, type, DK_WARNING);
-		      inform (input_location,
-				"neither the destructor nor the class-specific "
-				"operator delete will be called, even if they "
-				"are declared when the class is defined");
+		      inform (loc,
+			      "neither the destructor nor the class-specific "
+			      "%<operator delete%> will be called, even if "
+			      "they are declared when the class is defined");
 		    }
 		}
 	    }
@@ -4786,15 +4893,15 @@ build_delete (tree otype, tree addr, special_function_kind auto_delete,
 	      if (!dtor || !DECL_VINDEX (dtor))
 		{
 		  if (CLASSTYPE_PURE_VIRTUALS (type))
-		    warning (OPT_Wdelete_non_virtual_dtor,
-			     "deleting object of abstract class type %qT"
-			     " which has non-virtual destructor"
-			     " will cause undefined behavior", type);
+		    warning_at (loc, OPT_Wdelete_non_virtual_dtor,
+				"deleting object of abstract class type %qT"
+				" which has non-virtual destructor"
+				" will cause undefined behavior", type);
 		  else
-		    warning (OPT_Wdelete_non_virtual_dtor,
-			     "deleting object of polymorphic class type %qT"
-			     " which has non-virtual destructor"
-			     " might cause undefined behavior", type);
+		    warning_at (loc, OPT_Wdelete_non_virtual_dtor,
+				"deleting object of polymorphic class type %qT"
+				" which has non-virtual destructor"
+				" might cause undefined behavior", type);
 		}
 	    }
 	}
@@ -4893,7 +5000,17 @@ build_delete (tree otype, tree addr, special_function_kind auto_delete,
     return error_mark_node;
 
   if (!deleting)
-    return expr;
+    {
+      protected_set_expr_location (expr, loc);
+      return expr;
+    }
+
+  if (do_delete)
+    {
+      tree do_delete_call_expr = extract_call_expr (do_delete);
+      if (TREE_CODE (do_delete_call_expr) == CALL_EXPR)
+	CALL_FROM_NEW_OR_DELETE_P (do_delete_call_expr) = 1;
+    }
 
   if (do_delete && !TREE_SIDE_EFFECTS (expr))
     expr = do_delete;
@@ -4912,7 +5029,7 @@ build_delete (tree otype, tree addr, special_function_kind auto_delete,
 
   /* Handle deleting a null pointer.  */
   warning_sentinel s (warn_address);
-  tree ifexp = cp_build_binary_op (input_location, NE_EXPR, addr,
+  tree ifexp = cp_build_binary_op (loc, NE_EXPR, addr,
 				   nullptr_node, complain);
   ifexp = cp_fully_fold (ifexp);
 
@@ -4926,6 +5043,7 @@ build_delete (tree otype, tree addr, special_function_kind auto_delete,
   if (!integer_nonzerop (ifexp))
     expr = build3 (COND_EXPR, void_type_node, ifexp, expr, void_node);
 
+  protected_set_expr_location (expr, loc);
   return expr;
 }
 
@@ -5014,7 +5132,7 @@ push_base_cleanups (void)
 			       /*access_path=*/NULL_TREE,
 			       /*preserve_reference=*/false,
 			       tf_warning_or_error));
-	  expr = build_delete (this_type, this_member,
+	  expr = build_delete (input_location, this_type, this_member,
 			       sfk_complete_destructor,
 			       LOOKUP_NONVIRTUAL|LOOKUP_DESTRUCTOR|LOOKUP_NORMAL,
 			       0, tf_warning_or_error);
@@ -5041,7 +5159,7 @@ push_base_cleanups (void)
    be worth bothering.)  */
 
 tree
-build_vec_delete (tree base, tree maxindex,
+build_vec_delete (location_t loc, tree base, tree maxindex,
 		  special_function_kind auto_delete_vec,
 		  int use_global_delete, tsubst_flags_t complain)
 {
@@ -5064,7 +5182,7 @@ build_vec_delete (tree base, tree maxindex,
 	  base = TARGET_EXPR_SLOT (base_init);
 	}
       type = strip_array_types (TREE_TYPE (type));
-      cookie_addr = fold_build1_loc (input_location, NEGATE_EXPR,
+      cookie_addr = fold_build1_loc (loc, NEGATE_EXPR,
 				 sizetype, TYPE_SIZE_UNIT (sizetype));
       cookie_addr = fold_build_pointer_plus (fold_convert (size_ptr_type, base),
 					     cookie_addr);
@@ -5088,15 +5206,17 @@ build_vec_delete (tree base, tree maxindex,
   else
     {
       if (base != error_mark_node && !(complain & tf_error))
-	error ("type to vector delete is neither pointer or array type");
+	error_at (loc,
+		  "type to vector delete is neither pointer or array type");
       return error_mark_node;
     }
 
-  rval = build_vec_delete_1 (base, maxindex, type, auto_delete_vec,
+  rval = build_vec_delete_1 (loc, base, maxindex, type, auto_delete_vec,
 			     use_global_delete, complain);
   if (base_init && rval != error_mark_node)
     rval = build2 (COMPOUND_EXPR, TREE_TYPE (rval), base_init, rval);
 
+  protected_set_expr_location (rval, loc);
   return rval;
 }
 

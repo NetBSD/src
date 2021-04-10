@@ -1,6 +1,6 @@
 // Map implementation -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -118,9 +118,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       __glibcxx_class_requires2(value_type, _Alloc_value_type, _SameTypeConcept)
 #endif
 
-#if __cplusplus >= 201103L && defined(__STRICT_ANSI__)
+#if __cplusplus >= 201103L
+#if __cplusplus > 201703L || defined __STRICT_ANSI__
       static_assert(is_same<typename _Alloc::value_type, value_type>::value,
 	  "std::map must have the same value_type as its allocator");
+#endif
 #endif
 
     public:
@@ -635,30 +637,30 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       template<typename, typename>
 	friend class std::_Rb_tree_merge_helper;
 
-      template<typename _C2>
+      template<typename _Cmp2>
 	void
-	merge(map<_Key, _Tp, _C2, _Alloc>& __source)
+	merge(map<_Key, _Tp, _Cmp2, _Alloc>& __source)
 	{
-	  using _Merge_helper = _Rb_tree_merge_helper<map, _C2>;
+	  using _Merge_helper = _Rb_tree_merge_helper<map, _Cmp2>;
 	  _M_t._M_merge_unique(_Merge_helper::_S_get_tree(__source));
 	}
 
-      template<typename _C2>
+      template<typename _Cmp2>
 	void
-	merge(map<_Key, _Tp, _C2, _Alloc>&& __source)
+	merge(map<_Key, _Tp, _Cmp2, _Alloc>&& __source)
 	{ merge(__source); }
 
-      template<typename _C2>
+      template<typename _Cmp2>
 	void
-	merge(multimap<_Key, _Tp, _C2, _Alloc>& __source)
+	merge(multimap<_Key, _Tp, _Cmp2, _Alloc>& __source)
 	{
-	  using _Merge_helper = _Rb_tree_merge_helper<map, _C2>;
+	  using _Merge_helper = _Rb_tree_merge_helper<map, _Cmp2>;
 	  _M_t._M_merge_unique(_Merge_helper::_S_get_tree(__source));
 	}
 
-      template<typename _C2>
+      template<typename _Cmp2>
 	void
-	merge(multimap<_Key, _Tp, _C2, _Alloc>&& __source)
+	merge(multimap<_Key, _Tp, _Cmp2, _Alloc>&& __source)
 	{ merge(__source); }
 #endif // C++17
 
@@ -892,7 +894,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	{ _M_t._M_insert_range_unique(__first, __last); }
 
 #if __cplusplus > 201402L
-#define __cpp_lib_map_insertion 201411
       /**
        *  @brief Attempts to insert or assign a std::pair into the %map.
        *  @param __k    Key to use for finding a possibly existing pair in
@@ -1398,10 +1399,17 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	operator==(const map<_K1, _T1, _C1, _A1>&,
 		   const map<_K1, _T1, _C1, _A1>&);
 
+#if __cpp_lib_three_way_comparison
+      template<typename _K1, typename _T1, typename _C1, typename _A1>
+	friend __detail::__synth3way_t<pair<const _K1, _T1>>
+	operator<=>(const map<_K1, _T1, _C1, _A1>&,
+		    const map<_K1, _T1, _C1, _A1>&);
+#else
       template<typename _K1, typename _T1, typename _C1, typename _A1>
 	friend bool
 	operator<(const map<_K1, _T1, _C1, _A1>&,
 		  const map<_K1, _T1, _C1, _A1>&);
+#endif
     };
 
 
@@ -1438,7 +1446,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     map(initializer_list<pair<_Key, _Tp>>, _Allocator)
     -> map<_Key, _Tp, less<_Key>, _Allocator>;
 
-#endif
+#endif // deduction guides
 
   /**
    *  @brief  Map equality comparison.
@@ -1456,6 +1464,27 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	       const map<_Key, _Tp, _Compare, _Alloc>& __y)
     { return __x._M_t == __y._M_t; }
 
+#if __cpp_lib_three_way_comparison
+  /**
+   *  @brief  Map ordering relation.
+   *  @param  __x  A `map`.
+   *  @param  __y  A `map` of the same type as `x`.
+   *  @return  A value indicating whether `__x` is less than, equal to,
+   *           greater than, or incomparable with `__y`.
+   *
+   *  This is a total ordering relation.  It is linear in the size of the
+   *  maps.  The elements must be comparable with @c <.
+   *
+   *  See `std::lexicographical_compare_three_way()` for how the determination
+   *  is made. This operator is used to synthesize relational operators like
+   *  `<` and `>=` etc.
+  */
+  template<typename _Key, typename _Tp, typename _Compare, typename _Alloc>
+    inline __detail::__synth3way_t<pair<const _Key, _Tp>>
+    operator<=>(const map<_Key, _Tp, _Compare, _Alloc>& __x,
+		const map<_Key, _Tp, _Compare, _Alloc>& __y)
+    { return __x._M_t <=> __y._M_t; }
+#else
   /**
    *  @brief  Map ordering relation.
    *  @param  __x  A %map.
@@ -1500,6 +1529,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     operator>=(const map<_Key, _Tp, _Compare, _Alloc>& __x,
 	       const map<_Key, _Tp, _Compare, _Alloc>& __y)
     { return !(__x < __y); }
+#endif // three-way comparison
 
   /// See std::map::swap().
   template<typename _Key, typename _Tp, typename _Compare, typename _Alloc>

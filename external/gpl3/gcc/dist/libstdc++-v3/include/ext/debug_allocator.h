@@ -1,6 +1,6 @@
 // Allocators -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -50,8 +50,6 @@ namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  using std::size_t;
-
   /**
    *  @brief  A meta-allocator with debugging bits.
    *  @ingroup allocators
@@ -91,7 +89,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _Alloc			_M_allocator;
 
       template<typename _Alloc2,
-	       typename = typename _Alloc2::template rebind<value_type>::other>
+	       typename = typename __alloc_traits<_Alloc2>::template
+			   rebind<value_type>::other>
 	struct __convertible
 	{ };
 
@@ -103,7 +102,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       size_type _S_extra()
       {
-	const size_t __obj_size = sizeof(value_type);
+	const std::size_t __obj_size = sizeof(value_type);
 	return (sizeof(size_type) + __obj_size - 1) / __obj_size; 
       }
 
@@ -180,11 +179,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		   const debug_allocator<_Alloc2>& __rhs) _GLIBCXX_NOTHROW
 	{ return __lhs._M_allocator == debug_allocator(__rhs)._M_allocator; }
 
+#if __cpp_impl_three_way_comparison < 201907L
       template<typename _Alloc2>
 	friend bool
 	operator!=(const debug_allocator& __lhs,
 		   const debug_allocator<_Alloc2>& __rhs) _GLIBCXX_NOTHROW
 	{ return !(__lhs == __rhs); }
+#endif
     };
 
 _GLIBCXX_END_NAMESPACE_VERSION

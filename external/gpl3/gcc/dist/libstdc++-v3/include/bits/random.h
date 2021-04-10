@@ -1,6 +1,6 @@
 // random number generation -*- C++ -*-
 
-// Copyright (C) 2009-2019 Free Software Foundation, Inc.
+// Copyright (C) 2009-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -47,6 +47,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    * A facility for generating random numbers on selected distributions.
    * @{
    */
+
+  // std::uniform_random_bit_generator is defined in <bits/uniform_int_dist.h>
 
   /**
    * @brief A function template for converting the output of a (integral)
@@ -144,7 +146,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     template<typename _Tp, _Tp __m, _Tp __a = 1, _Tp __c = 0>
       inline _Tp
       __mod(_Tp __x)
-      { return _Mod<_Tp, __m, __a, __c>::__calc(__x); }
+      {
+	if _GLIBCXX17_CONSTEXPR (__a == 0)
+	  return __c;
+	else
+	  {
+	    // _Mod must not be instantiated with a == 0
+	    constexpr _Tp __a1 = __a ? __a : 1;
+	    return _Mod<_Tp, __m, __a1, __c>::__calc(__x);
+	  }
+      }
 
     /*
      * An adaptor class for converting the output of any Generator into
@@ -1602,20 +1613,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     // constructors, destructors and member functions
 
-#ifdef _GLIBCXX_USE_DEV_RANDOM
     random_device() { _M_init("default"); }
 
     explicit
     random_device(const std::string& __token) { _M_init(__token); }
 
+#if defined _GLIBCXX_USE_DEV_RANDOM
     ~random_device()
     { _M_fini(); }
-#else
-    random_device() { _M_init_pretr1("mt19937"); }
-
-    explicit
-    random_device(const std::string& __token)
-    { _M_init_pretr1(__token); }
 #endif
 
     static constexpr result_type
@@ -1638,13 +1643,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     result_type
     operator()()
-    {
-#ifdef _GLIBCXX_USE_DEV_RANDOM
-      return this->_M_getval();
-#else
-      return this->_M_getval_pretr1();
-#endif
-    }
+    { return this->_M_getval(); }
 
     // No copy functions.
     random_device(const random_device&) = delete;
@@ -1660,9 +1659,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     result_type _M_getval_pretr1();
     double _M_getentropy() const noexcept;
 
+    void _M_init(const char*, size_t); // not exported from the shared library
+
     union
     {
-      void*      _M_file;
+      struct
+      {
+	void*      _M_file;
+	result_type (*_M_func)(void*);
+	int _M_fd;
+      };
       mt19937    _M_mt;
     };
   };
@@ -2016,12 +2022,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       explicit
       normal_distribution(result_type __mean,
 			  result_type __stddev = result_type(1))
-      : _M_param(__mean, __stddev), _M_saved_available(false)
+      : _M_param(__mean, __stddev)
       { }
 
       explicit
       normal_distribution(const param_type& __p)
-      : _M_param(__p), _M_saved_available(false)
+      : _M_param(__p)
       { }
 
       /**
@@ -2158,8 +2164,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 			const param_type& __p);
 
       param_type  _M_param;
-      result_type _M_saved;
-      bool        _M_saved_available;
+      result_type _M_saved = 0;
+      bool        _M_saved_available = false;
     };
 
   /**
@@ -3710,7 +3716,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    * @returns The input stream with @p __x extracted or in an error state.
    */
   template<typename _CharT, typename _Traits>
-    std::basic_istream<_CharT, _Traits>&
+    inline std::basic_istream<_CharT, _Traits>&
     operator>>(std::basic_istream<_CharT, _Traits>& __is,
 	       std::bernoulli_distribution& __x)
     {
@@ -6066,7 +6072,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     { }
 
     template<typename _IntType>
-      seed_seq(std::initializer_list<_IntType> il);
+      seed_seq(std::initializer_list<_IntType> __il);
 
     template<typename _InputIterator>
       seed_seq(_InputIterator __begin, _InputIterator __end);

@@ -1,5 +1,5 @@
 /* Name mangling for the 3.0 -*- C++ -*- ABI.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Written by Alex Samuel <samuel@codesourcery.com>
 
    This file is part of GCC.
@@ -414,8 +414,7 @@ canonicalize_for_substitution (tree node)
       else
 	node = cp_build_qualified_type (TYPE_MAIN_VARIANT (node),
 					cp_type_quals (node));
-      if (TREE_CODE (node) == FUNCTION_TYPE
-	  || TREE_CODE (node) == METHOD_TYPE)
+      if (FUNC_OR_METHOD_TYPE_P (node))
 	{
 	  node = build_ref_qualified_type (node, type_memfn_rqual (orig));
 	  tree r = canonical_eh_spec (TYPE_RAISES_EXCEPTIONS (orig));
@@ -629,6 +628,8 @@ find_substitution (tree node)
 	    {
 	      tree args = CLASSTYPE_TI_ARGS (type);
 	      if (TREE_VEC_LENGTH (args) == 3
+		  && (TREE_CODE (TREE_VEC_ELT (args, 0))
+		      == TREE_CODE (char_type_node))
 		  && same_type_p (TREE_VEC_ELT (args, 0), char_type_node)
 		  && is_std_substitution_char (TREE_VEC_ELT (args, 1),
 					       SUBID_CHAR_TRAITS)
@@ -653,7 +654,7 @@ find_substitution (tree node)
 	 args <char, std::char_traits<char> > .  */
       tree args = CLASSTYPE_TI_ARGS (type);
       if (TREE_VEC_LENGTH (args) == 2
-	  && TYPE_P (TREE_VEC_ELT (args, 0))
+	  && TREE_CODE (TREE_VEC_ELT (args, 0)) == TREE_CODE (char_type_node)
 	  && same_type_p (TREE_VEC_ELT (args, 0), char_type_node)
 	  && is_std_substitution_char (TREE_VEC_ELT (args, 1),
 				       SUBID_CHAR_TRAITS))
@@ -1375,8 +1376,7 @@ write_unqualified_name (tree decl)
 	      type = TREE_TYPE (fn_type);
 	    }
 	  else if (FNDECL_USED_AUTO (decl))
-	    type = (DECL_STRUCT_FUNCTION (decl)->language
-		    ->x_auto_return_pattern);
+	    type = DECL_SAVED_AUTO_RETURN_TYPE (decl);
 	  else
 	    type = DECL_CONV_FN_TYPE (decl);
 	  write_conversion_operator_name (type);
@@ -2015,8 +2015,7 @@ write_local_name (tree function, const tree local_entity,
       write_name (entity, /*ignore_local_scope=*/1);
       if (DECL_DISCRIMINATOR_P (local_entity)
 	  && !(TREE_CODE (local_entity) == TYPE_DECL
-	       && (LAMBDA_TYPE_P (TREE_TYPE (local_entity))
-		   || TYPE_UNNAMED_P (TREE_TYPE (local_entity)))))
+	       && TYPE_ANON_P (TREE_TYPE (local_entity))))
 	write_discriminator (discriminator_for_local_entity (local_entity));
     }
 }
@@ -2080,8 +2079,7 @@ write_type (tree type)
 	  t = cp_build_type_attribute_variant (t, attrs);
 	}
       gcc_assert (t != type);
-      if (TREE_CODE (t) == FUNCTION_TYPE
-	  || TREE_CODE (t) == METHOD_TYPE)
+      if (FUNC_OR_METHOD_TYPE_P (t))
 	{
 	  t = build_ref_qualified_type (t, type_memfn_rqual (type));
 	  if (flag_noexcept_type)
@@ -2112,8 +2110,7 @@ write_type (tree type)
 
       /* See through any typedefs.  */
       type = TYPE_MAIN_VARIANT (type);
-      if (TREE_CODE (type) == FUNCTION_TYPE
-	  || TREE_CODE (type) == METHOD_TYPE)
+      if (FUNC_OR_METHOD_TYPE_P (type))
 	type = cxx_copy_lang_qualifiers (type, type_orig);
 
       /* According to the C++ ABI, some library classes are passed the
@@ -2318,11 +2315,11 @@ write_type (tree type)
 	      break;
 
 	    case TYPEOF_TYPE:
-	      sorry ("mangling typeof, use decltype instead");
+	      sorry ("mangling %<typeof%>, use %<decltype%> instead");
 	      break;
 
 	    case UNDERLYING_TYPE:
-	      sorry ("mangling __underlying_type");
+	      sorry ("mangling %<__underlying_type%>");
 	      break;
 
 	    case LANG_TYPE:
@@ -2353,6 +2350,34 @@ attr_strcmp (const void *p1, const void *p2)
   return strcmp (as1->name, as2->name);
 }
 
+/* Return true if we should mangle a type attribute with name NAME.  */
+
+static bool
+mangle_type_attribute_p (tree name)
+{
+  const attribute_spec *as = lookup_attribute_spec (name);
+  if (!as || !as->affects_type_identity)
+    return false;
+
+  /* Skip internal-only attributes, which are distinguished from others
+     by having a space.  At present, all internal-only attributes that
+     affect type identity are target-specific and are handled by
+     targetm.mangle_type instead.
+
+     Another reason to do this is that a space isn't a valid identifier
+     character for most file formats.  */
+  if (strchr (IDENTIFIER_POINTER (name), ' '))
+    return false;
+
+  /* The following attributes are mangled specially.  */
+  if (is_attribute_p ("transaction_safe", name))
+    return false;
+  if (is_attribute_p ("abi_tag", name))
+    return false;
+
+  return true;
+}
+
 /* Non-terminal <CV-qualifiers> for type nodes.  Returns the number of
    CV-qualifiers written for TYPE.
 
@@ -2378,14 +2403,8 @@ write_CV_qualifiers_for_type (const tree type)
     {
       auto_vec<tree> vec;
       for (tree a = TYPE_ATTRIBUTES (type); a; a = TREE_CHAIN (a))
-	{
-	  tree name = get_attribute_name (a);
-	  const attribute_spec *as = lookup_attribute_spec (name);
-	  if (as && as->affects_type_identity
-	      && !is_attribute_p ("transaction_safe", name)
-	      && !is_attribute_p ("abi_tag", name))
-	    vec.safe_push (a);
-	}
+	if (mangle_type_attribute_p (get_attribute_name (a)))
+	  vec.safe_push (a);
       if (abi_warn_or_compat_version_crosses (10) && !vec.is_empty ())
 	G.need_abi_warning = true;
       if (abi_version_at_least (10))
@@ -2552,11 +2571,11 @@ write_builtin_type (tree type)
 	write_char ('d');
       else if (type == long_double_type_node)
 	write_char ('e');
-      else if (type == dfloat32_type_node)
+      else if (type == dfloat32_type_node || type == fallback_dfloat32_type)
 	write_string ("Df");
-      else if (type == dfloat64_type_node)
+      else if (type == dfloat64_type_node || type == fallback_dfloat64_type)
 	write_string ("Dd");
-      else if (type == dfloat128_type_node)
+      else if (type == dfloat128_type_node || type == fallback_dfloat128_type)
 	write_string ("De");
       else
 	gcc_unreachable ();
@@ -2856,6 +2875,7 @@ write_expression (tree expr)
   /* Skip NOP_EXPR and CONVERT_EXPR.  They can occur when (say) a pointer
      argument is converted (via qualification conversions) to another type.  */
   while (CONVERT_EXPR_CODE_P (code)
+	 || code == IMPLICIT_CONV_EXPR
 	 || location_wrapper_p (expr)
 	 /* Parentheses aren't mangled.  */
 	 || code == PAREN_EXPR
@@ -3156,7 +3176,8 @@ write_expression (tree expr)
 	  write_type (etype);
 	}
 
-      if (!initializer_zerop (expr) || !trivial_type_p (etype))
+      bool nontriv = !trivial_type_p (etype);
+      if (nontriv || !zero_init_expr_p (expr))
 	{
 	  /* Convert braced initializer lists to STRING_CSTs so that
 	     A<"Foo"> mangles the same as A<{'F', 'o', 'o', 0}> while
@@ -3167,19 +3188,22 @@ write_expression (tree expr)
 	  if (TREE_CODE (expr) == CONSTRUCTOR)
 	    {
 	      vec<constructor_elt, va_gc> *elts = CONSTRUCTOR_ELTS (expr);
-	      unsigned last_nonzero = -1, i;
+	      unsigned last_nonzero = UINT_MAX, i;
 	      tree val;
 
-	      FOR_EACH_CONSTRUCTOR_VALUE (elts, i, val)
-		if (!initializer_zerop (val))
-		  last_nonzero = i;
+	      if (!nontriv)
+		FOR_EACH_CONSTRUCTOR_VALUE (elts, i, val)
+		  if (!zero_init_expr_p (val))
+		    last_nonzero = i;
 
-	      FOR_EACH_CONSTRUCTOR_VALUE (elts, i, val)
-		{
-		  if (i > last_nonzero)
-		    break;
-		  write_expression (val);
-		}
+	      if (nontriv || last_nonzero != UINT_MAX)
+		FOR_EACH_CONSTRUCTOR_VALUE (elts, i, val)
+		  {
+		    if (i > last_nonzero)
+		      break;
+		    /* FIXME handle RANGE_EXPR */
+		    write_expression (val);
+		  }
 	    }
 	  else
 	    {
@@ -3291,8 +3315,7 @@ write_expression (tree expr)
 
 	    /* Mangle a dependent name as the name, not whatever happens to
 	       be the first function in the overload set.  */
-	    if ((TREE_CODE (fn) == FUNCTION_DECL
-		 || TREE_CODE (fn) == OVERLOAD)
+	    if (OVL_P (fn)
 		&& type_dependent_expression_p_push (expr))
 	      fn = OVL_NAME (fn);
 
@@ -3415,7 +3438,9 @@ write_template_arg_literal (const tree value)
       case INTEGER_CST:
 	gcc_assert (!same_type_p (TREE_TYPE (value), boolean_type_node)
 		    || integer_zerop (value) || integer_onep (value));
-	write_integer_cst (value);
+	if (!(abi_version_at_least (14)
+	      && NULLPTR_TYPE_P (TREE_TYPE (value))))
+	  write_integer_cst (value);
 	break;
 
       case REAL_CST:
@@ -3504,7 +3529,7 @@ write_template_arg (tree node)
 
   if (template_parm_object_p (node))
     /* We want to mangle the argument, not the var we stored it in.  */
-    node = DECL_INITIAL (node);
+    node = tparm_object_argument (node);
 
   /* Strip a conversion added by convert_nontype_argument.  */
   if (TREE_CODE (node) == IMPLICIT_CONV_EXPR)
@@ -3806,7 +3831,6 @@ static tree
 mangle_decl_string (const tree decl)
 {
   tree result;
-  location_t saved_loc = input_location;
   tree saved_fn = NULL_TREE;
   bool template_p = false;
 
@@ -3824,7 +3848,7 @@ mangle_decl_string (const tree decl)
 	  current_function_decl = NULL_TREE;
 	}
     }
-  input_location = DECL_SOURCE_LOCATION (decl);
+  iloc_sentinel ils (DECL_SOURCE_LOCATION (decl));
 
   start_mangling (decl);
 
@@ -3843,7 +3867,6 @@ mangle_decl_string (const tree decl)
       pop_tinst_level ();
       current_function_decl = saved_fn;
     }
-  input_location = saved_loc;
 
   return result;
 }

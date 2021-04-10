@@ -1,6 +1,6 @@
 // Variable Templates For Type Traits -*- C++ -*-
 
-// Copyright (C) 2014-2019 Free Software Foundation, Inc.
+// Copyright (C) 2014-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,6 +24,7 @@
 
 /** @file experimental/type_traits
  *  This is a TS C++ Library header.
+ *  @ingroup libfund-ts
  */
 
 //
@@ -109,10 +110,13 @@ template <typename _Tp>
   constexpr bool is_trivially_copyable_v = is_trivially_copyable<_Tp>::value;
 template <typename _Tp>
   constexpr bool is_standard_layout_v = is_standard_layout<_Tp>::value;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 template <typename _Tp>
   constexpr bool is_pod_v = is_pod<_Tp>::value;
 template <typename _Tp>
   constexpr bool is_literal_type_v = is_literal_type<_Tp>::value;
+#pragma GCC diagnostic pop
 template <typename _Tp>
   constexpr bool is_empty_v = is_empty<_Tp>::value;
 template <typename _Tp>
@@ -226,13 +230,16 @@ inline namespace fundamentals_v2
 
 template<typename...> using void_t = void;
 
-struct nonesuch
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+struct __nonesuchbase {};
+struct nonesuch : private __nonesuchbase
 {
-  nonesuch() = delete;
   ~nonesuch() = delete;
   nonesuch(nonesuch const&) = delete;
   void operator=(nonesuch const&) = delete;
 };
+#pragma GCC diagnostic pop
 
 template<template<typename...> class _Op, typename... _Args>
   using is_detected

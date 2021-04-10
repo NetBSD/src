@@ -1,5 +1,5 @@
 /*  -*- Mode: Asm -*-  */
-/* Copyright (C) 1998-2019 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <chertykov@gmail.com>
 
 This file is free software; you can redistribute it and/or modify it
@@ -169,11 +169,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 .endm
 
 ;; Skip next instruction, typically a jump target
-#if defined(__AVR_TINY__)
-#define skip cpse 0,0
-#else
 #define skip cpse 16,16
-#endif
 
 ;; Negate a 2-byte value held in consecutive registers
 .macro NEG2  reg

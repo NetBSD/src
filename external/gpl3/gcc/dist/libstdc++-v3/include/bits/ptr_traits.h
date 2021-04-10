@@ -1,6 +1,6 @@
 // Pointer Traits -*- C++ -*-
 
-// Copyright (C) 2011-2019 Free Software Foundation, Inc.
+// Copyright (C) 2011-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -33,6 +33,11 @@
 #if __cplusplus >= 201103L
 
 #include <bits/move.h>
+
+#if __cplusplus > 201703L
+#define __cpp_lib_constexpr_memory 201811L
+namespace __gnu_debug { struct _Safe_iterator_base; }
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -169,7 +174,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Ptr, typename... _None>
     constexpr auto
     __to_address(const _Ptr& __ptr, _None...) noexcept
-    { return std::__to_address(__ptr.operator->()); }
+    {
+      if constexpr (is_base_of_v<__gnu_debug::_Safe_iterator_base, _Ptr>)
+	return std::__to_address(__ptr.base().operator->());
+      else
+	return std::__to_address(__ptr.operator->());
+    }
+
+#define __cpp_lib_to_address 201711L
 
   /**
    * @brief Obtain address referenced by a pointer to an object

@@ -1,5 +1,5 @@
 /* Common declarations for all of libgfortran.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Paul Brook <paul@nowt.org>, and
    Andy Vaught <andy@xena.eas.asu.edu>
 
@@ -727,6 +727,10 @@ internal_proto(gfc_xtoa);
 
 extern _Noreturn void os_error (const char *);
 iexport_proto(os_error);
+
+extern _Noreturn void os_error_at (const char *, const char *, ...)
+  __attribute__ ((format (gfc_printf, 2, 3)));
+iexport_proto(os_error_at);
 
 extern void show_locus (st_parameter_common *);
 internal_proto(show_locus);

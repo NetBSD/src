@@ -1,6 +1,6 @@
 /* Implementation of the GETENV g77, and
    GET_ENVIRONMENT_VARIABLE F2003, intrinsics. 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Janne Blomqvist.
 
 This file is part of the GNU Fortran 95 runtime library (libgfortran).
@@ -110,10 +110,7 @@ get_environment_variable_i4 (char *name, char *value, GFC_INTEGER_4 *length,
 
   if (value != NULL)
     { 
-      if (value_len < 1)
-	runtime_error ("Zero-length string passed as value to "
-		       "get_environment_variable.");
-      else
+      if (value_len > 0)
 	memset (value, ' ', value_len); /* Blank the string.  */
     }
 
@@ -138,7 +135,7 @@ get_environment_variable_i4 (char *name, char *value, GFC_INTEGER_4 *length,
 	      memcpy (value, res, value_len);
 	      stat = GFC_VALUE_TOO_SHORT;
 	    }
-	  else
+	  else if (res_len > 0)
 	    memcpy (value, res, res_len);
 	}
     }
