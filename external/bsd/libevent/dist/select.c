@@ -1,4 +1,4 @@
-/*	$NetBSD: select.c,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: select.c,v 1.5 2021/04/10 19:18:45 rillig Exp $	*/
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: select.c,v 1.4 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: select.c,v 1.5 2021/04/10 19:18:45 rillig Exp $");
 #include "evconfig-private.h"
 
 #ifdef EVENT__HAVE_SELECT
@@ -136,7 +136,7 @@ check_selectop(struct selectop *sop)
 	/* nothing to be done here */
 }
 #else
-#define check_selectop(sop) do { (void) sop; } while (/*CONSTCOND*/0)
+#define check_selectop(sop) do { (void) sop; } while (0)
 #endif
 
 static int

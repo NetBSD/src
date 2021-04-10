@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_ratelim.c,v 1.5 2021/04/10 19:02:37 rillig Exp $	*/
+/*	$NetBSD: bufferevent_ratelim.c,v 1.6 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -213,7 +213,7 @@ bufferevent_get_rlim_max_(struct bufferevent_private *bev, int is_write)
 	do {					\
 		if (max_so_far > (x))		\
 			max_so_far = (x);	\
-	} while (/*CONSTCOND*/0);
+	} while (0);
 
 	if (!bev->rate_limiting)
 		return max_so_far;
