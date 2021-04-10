@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: pkgsrc.sh,v 1.2 2017/04/20 13:18:23 joerg Exp $
+# $NetBSD: pkgsrc.sh,v 1.3 2021/04/10 19:49:59 nia Exp $
 #
 
 CA="openssl ca -config pkgsrc.cnf"
