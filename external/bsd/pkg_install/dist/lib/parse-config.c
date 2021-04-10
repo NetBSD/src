@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.13 2020/12/12 10:59:12 wiz Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.14 2021/04/10 19:26:04 nia Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.13 2020/12/12 10:59:12 wiz Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.14 2021/04/10 19:26:04 nia Exp $");
 
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.8 2017/04/20 13:12:47 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.9 2021/04/10 19:26:04 nia Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.8 2017/04/20 13:12:47 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.9 2021/04/10 19:26:04 nia Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.

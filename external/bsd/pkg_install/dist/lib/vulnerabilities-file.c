@@ -1,4 +1,4 @@
-/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.8 2020/12/02 13:49:26 wiz Exp $	*/
+/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.9 2021/04/10 19:26:04 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -38,7 +38,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.8 2020/12/02 13:49:26 wiz Exp $");
+__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.9 2021/04/10 19:26:04 nia Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>

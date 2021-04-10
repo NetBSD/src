@@ -1,4 +1,4 @@
-# $NetBSD: pkgsrc.cnf,v 1.1.1.1 2009/02/02 20:44:09 joerg Exp $
+# $NetBSD: pkgsrc.cnf,v 1.1.1.2 2021/04/10 19:26:04 nia Exp $
 #
 # OpenSSL sample configuration file for use by pkgsrc.sh
 #
