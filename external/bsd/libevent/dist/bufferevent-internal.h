@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent-internal.h,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: bufferevent-internal.h,v 1.5 2021/04/10 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2008-2012 Niels Provos and Nick Mathewson
@@ -461,14 +461,14 @@ bufferevent_socket_set_conn_address_(struct bufferevent *bev, struct sockaddr *a
 	do {								\
 		if (evutil_timerisset(&(bev)->timeout_read))		\
 			event_add(&(bev)->ev_read, &(bev)->timeout_read); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 /** Internal use: We have just successfully written data from an inbuf, so
  * reset the read timeout (if any). */
 #define BEV_RESET_GENERIC_WRITE_TIMEOUT(bev)				\
 	do {								\
 		if (evutil_timerisset(&(bev)->timeout_write))		\
 			event_add(&(bev)->ev_write, &(bev)->timeout_write); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define BEV_DEL_GENERIC_READ_TIMEOUT(bev)	\
 		event_del(&(bev)->ev_read)
 #define BEV_DEL_GENERIC_WRITE_TIMEOUT(bev)	\
@@ -487,13 +487,13 @@ bufferevent_socket_set_conn_address_(struct bufferevent *bev, struct sockaddr *a
 #define BEV_LOCK(b) do {						\
 		struct bufferevent_private *locking =  BEV_UPCAST(b);	\
 		EVLOCK_LOCK(locking->lock, 0);				\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /** Internal: Release the lock (if any) on a bufferevent */
 #define BEV_UNLOCK(b) do {						\
 		struct bufferevent_private *locking =  BEV_UPCAST(b);	\
 		EVLOCK_UNLOCK(locking->lock, 0);			\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #endif
 
 
